@@ -1,0 +1,22 @@
+# read-only copies of sibling projects, mined for reference only — never committed
+external/
+# copyrighted reference PDFs
+ref/
+# hot-loop CSV / telemetry logs
+runs/
+# vendored soft-core / toolchain trees
+rtl_src/
+sw_src/
+# python / build noise
+__pycache__/
+*.pyc
+.env/
+# vivado / build outputs
+build/
+*.jou
+*.log
+*.str
+.Xil/
+hd_visual/
+# board capture scratch
+*.raw
