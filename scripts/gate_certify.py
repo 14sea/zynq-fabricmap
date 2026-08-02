@@ -103,7 +103,7 @@ def main() -> int:
         wanted = {addr_key(a) for a in p["predicted_assignments"]}
 
         observed_assignments, observed_diff = [], []
-        for rec in d_res["attributed"] + d_res["in_tile_only"]:
+        for rec in d_res["attributed"] + d_res["ownership_unknown"]:
             k = (rec["far"].lower(), rec["word"], rec["bit"])
             if k not in wanted:
                 continue

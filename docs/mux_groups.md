@@ -98,6 +98,78 @@ commits `da1fbcb` and `0a3de1c` said "silicon-grade", which overstates it —
 `da1fbcb` is already pushed and its message cannot be corrected in place, so the
 correction is recorded here instead.
 
+## Driving a mux structurally, and what the diff really contains
+
+`vivado/specimen/specimen_mux.v` + `build_mux.tcl` build a LUT6 and an `FDRE` pinned
+to one slice, with a parameter that changes **one netlist edge**: the FF's data source
+is either the LUT output or a package pin. A mux selection is not a property that can
+be set on a routed design, so each variant is its own implementation run — which is
+exactly why isolation has to be re-established rather than assumed.
+
+Measured on `SLICE_X2Y25` / `CLBLL_L_X2Y25`:
+
+| variant | FF `D` source | decoded `AFFMUX` |
+|---|---|---|
+| `FFSRC=0` | LUT6 output | **`O6`** |
+| `FFSRC=1` | package pin | **`AX`** |
+
+That is a 4-bit, negation-bearing group switching with the netlist, and the member
+*names* line up with the structure — `O6` when the data comes from the LUT's O6 output,
+`AX` when it comes from the slice's bypass input. **This is netlist-level
+corroboration, not silicon**: it says the database's naming agrees with what Vivado
+built, not that the hardware behaves that way.
+
+The diff between the two variants, classified by **who claims each bit**:
+
+| class | bits | |
+|---|---|---|
+| uniquely db-attributed | **23** | 2 in `CLBLL_L_X2Y25` — `30_01` and `30_03`, exactly the `AFFMUX` members' differing bits — and 21 in INT tiles, routing that legitimately had to move |
+| claimed by two databases | **0** | checked, not assumed |
+| **ownership unknown** | **11** | inside a tile's geometric range but claimed by no frozen rule anywhere |
+| frame ECC | 140 | excluded by the stated rule |
+| outside every tile | 0 | |
+
+**The 11 are not "INT bits".** Every one of them has both a CLB and an INT geometric
+candidate — that is what the shared `baseaddr`/offset means — and **four of them list
+the tile under test, `CLBLL_L_X2Y25`**, at frames `00` and `01`, precisely the overlap
+region. Calling them INT-owned would be an assumption dressed as a measurement; the
+honest label is that ownership is undetermined, and `specimen_diff.py` now reports them
+as `ownership_unknown` with every candidate listed.
+
+### What this means for the scoring contract
+
+A structural class cannot use the whole-bitstream `fp_count == 0` rule that
+`clb_lut_init` used, because the routing legitimately moves. But the replacement is
+**not** "tile-wide exactness" either — that phrasing would quietly assert ownership of
+those four bits. The contract is:
+
+- **Prediction scope is an explicit bit-address set** — the mux group's own bits,
+  enumerated — never "the tile".
+- Every changed bit outside that scope is listed and labelled `db_attributed` (with the
+  claiming tile and features) or `ownership_unknown` (with all candidates). Nothing is
+  dropped and nothing is assigned by assumption.
+- If a certificate ever wants to claim tile-wide exactness, then any
+  `ownership_unknown` bit inside that tile's geometric range **must block a production
+  PASS**. Unknown is not clean.
+
+The unknown bits also have nothing to check them against: prjxray ships **no mask file
+for INT tiles at all**, and the CLB mask does not list them.
+
+### Ownership is decided by the database, not by the grid
+
+Attributing those bits turned up a structural fact worth stating: **a CLB tile and its
+neighbouring INT tile share the same `baseaddr` and the same word offset.**
+`CLBLL_L_X2Y25` and `INT_L_X2Y25` are both `0x00400A00`, offset 51, words 2, and their
+declared frame spans (36 and 28) overlap; the CLB database really does use frames
+`00`, `01`, `26`–`35` while the INT database uses `00`–`25`.
+
+Geometry therefore cannot say which tile owns a changed bit. The databases can, and do:
+across all four CLB/INT pairings, **not one coordinate is claimed by both**
+(648 vs 1598 claimed coordinates, empty intersection). `scripts/specimen_diff.py` now
+resolves ownership by which database claims the coordinate, and records a finding if
+two ever claim the same one — an assumption that stays a check rather than becoming a
+belief.
+
 ## Not yet propagated to the consumer side
 
 `zynq-autoehw/docs/schema.md` §5 still states `one_selected_input_per_mux_group`

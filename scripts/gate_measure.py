@@ -92,7 +92,7 @@ def main() -> int:
 
         d_res = diff(base_bit, var_bit)
         observed = {}
-        for rec in d_res["attributed"] + d_res["in_tile_only"]:
+        for rec in d_res["attributed"] + d_res["ownership_unknown"]:
             observed[(rec["far"].lower(), rec["word"], rec["bit"])] = rec
         unattributed = d_res["unattributed"]
 

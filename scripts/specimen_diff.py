@@ -11,8 +11,11 @@ configuration bit as one of:
   attributed     inside a tile the frozen tilegrid describes, at a segbit coordinate
                  that at least one frozen feature rule uses.  The candidate features
                  are named.
-  in_tile_only   inside a described tile, but no frozen feature uses that coordinate
-                 (reported with whether the frozen mask lists it).
+  ownership_unknown  inside the geometric range of one or more tiles, but claimed by
+                 no frozen rule in any of them, so the owning tile is NOT determined.
+                 Reported with every geometric candidate. These may not be described as
+                 belonging to any particular tile — in a measured CLB/INT column each
+                 such bit has both a CLB and an INT candidate.
   unattributed   outside every described tile.  Always suspicious.
 
 Addresses use `docs/freeze_format.md` §5 in reverse: from `(FAR, word, bit)` back to
@@ -61,7 +64,16 @@ def tile_index() -> dict:
 
 
 def locate(idx: dict, far: int, word: int, bit: int) -> list[dict]:
-    """All tiles that own (far, word, bit), with the segbit coordinate in each."""
+    """All tiles that could own (far, word, bit), with the segbit coordinate in each.
+
+    Geometry alone does not decide ownership.  A CLB tile and the INT tile beside it
+    share the **same baseaddr and the same word offset** — `CLBLL_L_X2Y25` and
+    `INT_L_X2Y25` are both `0x00400A00`, offset 51, words 2 — and their declared frame
+    spans (36 and 28) overlap.  Their feature sets do not overlap at all, though: over
+    all four CLB/INT pairings, not one coordinate is claimed by both databases
+    (648 vs 1598 claimed coordinates, intersection empty).  So the databases resolve
+    what the grid cannot, and `attribute` below uses that rather than guessing.
+    """
     f = far_fields(far)
     hits = []
     for t in idx.get((f["block_type"], f["top"], f["row"], f["major"]), []):
@@ -115,7 +127,7 @@ def diff(base: Path, variant: Path) -> dict:
            "exclusion_rules": [{"reason": "frame_ecc", "rule": ECC_RULE,
                                 "why": "the frame ECC field is recomputed whenever any "
                                        "other bit in the same frame changes"}],
-           "excluded_diff": [], "attributed": [], "in_tile_only": [],
+           "excluded_diff": [], "attributed": [], "ownership_unknown": [],
            "unattributed": [], "findings": []}
 
     for far in sorted(a):
@@ -143,13 +155,19 @@ def diff(base: Path, variant: Path) -> dict:
                     named.append({"tile": h["tile"], "tile_type": h["type"],
                                   "segbit": h["segbit"], "features": feats,
                                   "masked": masked(h["type"], h["segbit"])})
-                rec["tiles"] = named
-                (out["attributed"] if any(n["features"] for n in named)
-                 else out["in_tile_only"]).append(rec)
+                claiming = [n for n in named if n["features"]]
+                if len(claiming) > 1:
+                    # never observed; an assumption that must stay a check
+                    out["findings"].append(
+                        f"{rec['far']} word {rec['word']} bit {rec['bit']}: claimed by "
+                        f"{[n['tile'] for n in claiming]} — ownership ambiguous")
+                rec["tiles"] = claiming or named
+                rec["candidates"] = [n["tile"] for n in named]
+                (out["attributed"] if claiming else out["ownership_unknown"]).append(rec)
 
     # An ECC change in a frame with no data change cannot be explained by the
     # exclusion rule's own rationale, so it is a finding rather than an exclusion.
-    data_frames = {r["far"] for r in out["attributed"] + out["in_tile_only"]
+    data_frames = {r["far"] for r in out["attributed"] + out["ownership_unknown"]
                    + out["unattributed"]}
     ecc_frames = {r["far"] for r in out["excluded_diff"]}
     for far in sorted(ecc_frames - data_frames):
@@ -177,11 +195,10 @@ def main() -> int:
                 print(f"    {r['far']} word {r['word']:>3} bit {r['bit']:>2} "
                       f"{r['before']}->{r['after']}  {t['tile']} segbit {t['segbit']}"
                       f"  {', '.join(t['features'])}")
-    print(f"  in-tile, no rule : {len(d['in_tile_only'])}")
-    for r in d["in_tile_only"][:8]:
-        t = r["tiles"][0]
-        print(f"    {r['far']} word {r['word']:>3} bit {r['bit']:>2}  {t['tile']} "
-              f"segbit {t['segbit']} masked={t['masked']}")
+    print(f"  ownership unknown: {len(d['ownership_unknown'])}")
+    for r in d["ownership_unknown"][:8]:
+        print(f"    {r['far']} word {r['word']:>3} bit {r['bit']:>2}  "
+              f"candidates={r['candidates']}")
     print(f"  unattributed     : {len(d['unattributed'])}")
     for r in d["unattributed"][:8]:
         print(f"    {r['far']} word {r['word']:>3} bit {r['bit']:>2}")
