@@ -93,6 +93,37 @@ naming result paper over one.
 - **Holdout completeness** by `(specimen_id, group)` pairs, same discipline as 1.2:
   every committed holdout pair reported exactly once.
 
+### Semantic evidence — auditable, still outside the decision
+
+`member_identity` names a netlist edge, so reporting it as passing is only meaningful
+if the edge is in the record. Each result carries `netlist_basis` (the pre-registered
+sentence, verbatim), `expected_edge` (derived from it), and `attested_edge` (read back
+from the routed checkpoint: `ff_bel`, `ff_d_net`, `ff_d_driver_pin`,
+`ff_d_driver_cell`, `ff_d_driver_ref`, `ff_d_source_port`,
+`ff_d_source_package_pin`, `ff_d_net_route_status`, `checkpoint`).
+
+Both variants are proved **positively**. `ffsrc=0` requires `driver_ref == LUT6` *and*
+`driver_cell` to be the LUT under test; `ffsrc=1` requires `driver_ref == IBUF` *and* a
+top-level source port on a named package pin. "Not a LUT6" would be satisfied by
+anything and is not used.
+
+Requested verifier behaviour:
+
+- `attested_edge.checkpoint` must equal the attestation's top-level `checkpoint` hash;
+- `ff_d_net_route_status` must be `ROUTED`;
+- rebuild `expected_edge` independently from `netlist_basis` rather than reading the
+  producer's copy;
+- recompute consistency from `expected_edge` + `attested_edge`.
+  `netlist_basis_consistent` in the record is a **summary only** and must never be
+  trusted as the check.
+- The result stays **out of the address production decision** either way.
+
+**Limit to state in the schema doc, not to assume away:** hashing the DCP and the
+bitstream together pins both against later substitution. It does *not* independently
+prove the bitstream was produced from that checkpoint — that link is asserted by the
+attestation and can only be re-established by rebuilding with Vivado. Treat the
+checkpoint hash as an integrity anchor, not as provenance proof.
+
 ## Fixtures requested
 
 Positive: one conforming group-scoped pass.

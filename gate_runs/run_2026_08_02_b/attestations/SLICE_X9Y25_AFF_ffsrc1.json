@@ -20,8 +20,11 @@
     "requested_bel": "A6LUT+AFF",
     "resolved_loc": "SLICE_X9Y25",
     "resolved_bel": "SLICEL.A6LUT",
+    "ff_loc": "SLICE_X9Y25",
+    "ff_bel": "SLICEL.AFF",
     "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
     "tile": "CLBLM_L_X6Y25",
+    "ff_d_source": "SLICE_X9Y25/AFF/D",
     "pin_mapping": {
       "I0": "SLICE_X9Y25/A6LUT/A1",
       "I1": "SLICE_X9Y25/A6LUT/A2",
@@ -30,7 +33,21 @@
       "I4": "SLICE_X9Y25/A6LUT/A5",
       "I5": "SLICE_X9Y25/A6LUT/A6"
     },
+    "lut_bel": "SLICEL.A6LUT",
+    "ff_d_bel_pin": "SLICE_X9Y25/AFF/D",
+    "ff_d_net": "i_IBUF[0]",
+    "ff_d_net_route_status": "ROUTED",
+    "ff_d_driver_pin": "i_IBUF[0]_inst/O",
+    "ff_d_driver_cell": "i_IBUF[0]_inst",
+    "ff_d_driver_ref": "IBUF",
+    "ff_d_source_port": "i[0]",
+    "ff_d_source_package_pin": "A20",
+    "lut_o_net": "o_OBUF",
     "pin_mapping_is_identity": true
+  },
+  "checkpoint": {
+    "file": "base.dcp",
+    "sha256": "fe2a76555e831dc8c2d4309797a33bc30efa43d8c7e16974989c9fdc741f8164"
   },
   "outputs": {
     "spec_AFF_ffsrc1.bit": "8cc807365f58ff0bb2c3d79a29bb547cde08338543d8a63e29ce9d73633f883f"

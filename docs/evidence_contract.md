@@ -92,6 +92,21 @@ correct ECC". It is not proposed as mandatory for 1.1.0 because the payoff is sm
 next to (a)-(d), but the producer can supply frame contents in the record if the
 consumer wants it.
 
+## 2b. What hashing the checkpoint does and does not prove
+
+`specimen_attestation` now also carries `checkpoint: {file: base.dcp, sha256}`, so a
+semantic claim's readback is bound to the routed design it was taken from.
+
+State the limit precisely, because the strong reading is tempting and wrong. Hashing
+the DCP and the bitstream together **pins both against later substitution** — neither
+can be swapped without breaking the record. It does **not** independently prove that
+the bitstream was produced from that checkpoint. Nothing in the artifacts establishes
+that link; it is *asserted* by the attestation, and re-establishing it means rebuilding
+with Vivado, which is exactly what a consumer-side verifier cannot do.
+
+So a verifier should treat the checkpoint hash as an integrity anchor, not as
+provenance proof, and say so where the claim is recorded.
+
 ## 3. Version note
 
 Both items add required evidence, so under the compatibility policy they cannot be

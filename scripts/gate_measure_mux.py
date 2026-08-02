@@ -128,13 +128,27 @@ def main() -> int:
             att = json.loads(att_path.read_text())
             kept = att_dir / f"{spec['specimen_id']}.json"
             kept.write_bytes(att_path.read_bytes())
+            res = att["resolved"]
             rec["attestation"] = {
                 "path": str(kept.resolve().relative_to(REPO)),
                 "sha256": sha256_file(att_path),
                 "schema_version": att["schema_version"],
-                "resolved_loc": att["resolved"]["resolved_loc"],
-                "resolved_bel": att["resolved"]["resolved_bel"],
-                "pin_mapping_is_identity": att["resolved"]["pin_mapping_is_identity"],
+                "resolved_loc": res["resolved_loc"],
+                "resolved_bel": res["resolved_bel"],
+                "pin_mapping_is_identity": res["pin_mapping_is_identity"],
+                # The netlist edge itself, read back from the routed checkpoint. Without
+                # this the attestation shows only that the recipe ASKED for an edge.
+                # Note the limit: the checkpoint hash pins the DCP against substitution
+                # but does not prove the bitstream came from it — that link is asserted.
+                "ff_loc": res.get("ff_loc"), "ff_bel": res.get("ff_bel"),
+                "ff_d_net": res.get("ff_d_net"),
+                "ff_d_driver_pin": res.get("ff_d_driver_pin"),
+                "ff_d_driver_cell": res.get("ff_d_driver_cell"),
+                "ff_d_driver_ref": res.get("ff_d_driver_ref"),
+                "ff_d_source_port": res.get("ff_d_source_port"),
+                "ff_d_source_package_pin": res.get("ff_d_source_package_pin"),
+                "ff_d_net_route_status": res.get("ff_d_net_route_status"),
+                "checkpoint": att.get("checkpoint"),
             }
             if att["outputs"].get(bp.name) != rec["bitstream_sha256"]:
                 problems.append(f"{spec['specimen_id']}: bitstream does not match its attestation")
@@ -172,8 +186,45 @@ def main() -> int:
                 detail = {"mismatched": bad}
             elif a["kind"] == "member_identity":
                 ok = hits == [a["predicted_member"]]
+                # A semantic claim names the netlist edge Vivado built, so reporting it
+                # as passing is only auditable if the attested edge is carried with it.
+                att_rec = next((r for r in specimen_records
+                                if r["specimen_id"] == spec["specimen_id"]), {})
+                edge = att_rec.get("attestation", {})
+                # Both variants are proved POSITIVELY. "not a LUT6" would be satisfied
+                # by anything, so the bypass variant must show an IBUF fed by a
+                # top-level port on a package pin.
+                expected = ({"driver_ref": "LUT6", "driver_cell": "target"}
+                            if spec["ffsrc"] == 0
+                            else {"driver_ref": "IBUF", "requires_source_port": True})
+                basis_ok = edge.get("ff_d_driver_ref") == expected["driver_ref"]
+                if basis_ok and expected.get("driver_cell"):
+                    basis_ok = edge.get("ff_d_driver_cell") == expected["driver_cell"]
+                if basis_ok and expected.get("requires_source_port"):
+                    basis_ok = bool(edge.get("ff_d_source_port")
+                                    and edge.get("ff_d_source_package_pin"))
                 detail = {"predicted_member": a["predicted_member"],
-                          "decoded_members": hits}
+                          "decoded_members": hits,
+                          # raw evidence, so a verifier can recompute rather than trust
+                          "netlist_basis": a["netlist_basis"],
+                          "expected_edge": expected,
+                          "attested_edge": {k: edge.get(k) for k in
+                                            ("ff_bel", "ff_d_net", "ff_d_driver_pin",
+                                             "ff_d_driver_cell", "ff_d_driver_ref",
+                                             "ff_d_source_port",
+                                             "ff_d_source_package_pin",
+                                             "ff_d_net_route_status", "checkpoint")},
+                          # summary only: the certificate verifier must recompute this
+                          # from expected_edge + attested_edge independently
+                          "netlist_basis_consistent": basis_ok}
+                if not basis_ok:
+                    problems.append(
+                        f"{spec['specimen_id']}: attested edge does not match the "
+                        f"pre-registered basis for ffsrc={spec['ffsrc']} "
+                        f"(expected {expected}, attested "
+                        f"{edge.get('ff_d_driver_ref')!r} / "
+                        f"{edge.get('ff_d_source_port')!r}) — the semantic claim is "
+                        "not auditable")
             outcomes.append({"kind": a["kind"], "semantic": a["semantic"],
                              "passed": ok, **detail})
             totals[split][a["kind"]]["pass" if ok else "fail"] += 1
