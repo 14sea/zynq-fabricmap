@@ -1,0 +1,2605 @@
+{
+  "schema": "gate_predictions",
+  "schema_version": "1.1.0",
+  "bit_class": "clb_mux",
+  "seed": "0xb17d",
+  "scope_policy": {
+    "unit": "mux group bit-address set",
+    "note": "scope is the group's COMPLETE bit set; claims are group-scoped only. ownership_unknown bits lie outside every group scope and therefore cannot falsify these claims, but no tile-wide claim is made here and none may be added while such bits exist."
+  },
+  "split_policy": {
+    "mine_sites": [
+      "SLICE_X2Y25"
+    ],
+    "rule": "a site whose evidence established the harness rules may inform predictions but never score them"
+  },
+  "frozen_inputs": {
+    "manifest_freeze_stamp": "2026-08-02T01:29:26Z",
+    "spec_sha256": "ffe4fb9f6bdc118904a6dcbb5625f87d12b12e633ad4dee8c6772fbe45da8e37",
+    "files": {
+      "prjxray/zynq7/segbits_clbll_l.db": "9bf6bdffdc814569a7da53c696e46207aab23ea66c9dd92c47e50a6211dd739b",
+      "prjxray/zynq7/segbits_clblm_l.db": "07dca7c6b00f07a2a255f5178153c42bf16aff202623f2e3bc4bb0f2b974ba41",
+      "prjxray/zynq7/xc7z010/tilegrid.json": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee",
+      "prjxray/zynq7/xc7z010clg400-1/part.yaml": "43a136f26603c51bd97e9489d223bbc80f278fcc234225ed9fde404402f22683"
+    }
+  },
+  "specimens": [
+    {
+      "specimen_id": "SLICE_X2Y25_AFF_ffsrc0",
+      "site": "SLICE_X2Y25",
+      "ff_bel": "AFF",
+      "ffsrc": 0,
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "site_prefix": "SLICEL_X0",
+      "split": "mine"
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_AFF_ffsrc1",
+      "site": "SLICE_X2Y25",
+      "ff_bel": "AFF",
+      "ffsrc": 1,
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "site_prefix": "SLICEL_X0",
+      "split": "mine"
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_BFF_ffsrc0",
+      "site": "SLICE_X2Y25",
+      "ff_bel": "BFF",
+      "ffsrc": 0,
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "site_prefix": "SLICEL_X0",
+      "split": "mine"
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_BFF_ffsrc1",
+      "site": "SLICE_X2Y25",
+      "ff_bel": "BFF",
+      "ffsrc": 1,
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "site_prefix": "SLICEL_X0",
+      "split": "mine"
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_CFF_ffsrc0",
+      "site": "SLICE_X2Y25",
+      "ff_bel": "CFF",
+      "ffsrc": 0,
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "site_prefix": "SLICEL_X0",
+      "split": "mine"
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_CFF_ffsrc1",
+      "site": "SLICE_X2Y25",
+      "ff_bel": "CFF",
+      "ffsrc": 1,
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "site_prefix": "SLICEL_X0",
+      "split": "mine"
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_DFF_ffsrc0",
+      "site": "SLICE_X2Y25",
+      "ff_bel": "DFF",
+      "ffsrc": 0,
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "site_prefix": "SLICEL_X0",
+      "split": "mine"
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_DFF_ffsrc1",
+      "site": "SLICE_X2Y25",
+      "ff_bel": "DFF",
+      "ffsrc": 1,
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "site_prefix": "SLICEL_X0",
+      "split": "mine"
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_AFF_ffsrc0",
+      "site": "SLICE_X8Y25",
+      "ff_bel": "AFF",
+      "ffsrc": 0,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEM_X0",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_AFF_ffsrc1",
+      "site": "SLICE_X8Y25",
+      "ff_bel": "AFF",
+      "ffsrc": 1,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEM_X0",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_BFF_ffsrc0",
+      "site": "SLICE_X8Y25",
+      "ff_bel": "BFF",
+      "ffsrc": 0,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEM_X0",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_BFF_ffsrc1",
+      "site": "SLICE_X8Y25",
+      "ff_bel": "BFF",
+      "ffsrc": 1,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEM_X0",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_CFF_ffsrc0",
+      "site": "SLICE_X8Y25",
+      "ff_bel": "CFF",
+      "ffsrc": 0,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEM_X0",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_CFF_ffsrc1",
+      "site": "SLICE_X8Y25",
+      "ff_bel": "CFF",
+      "ffsrc": 1,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEM_X0",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_DFF_ffsrc0",
+      "site": "SLICE_X8Y25",
+      "ff_bel": "DFF",
+      "ffsrc": 0,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEM_X0",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_DFF_ffsrc1",
+      "site": "SLICE_X8Y25",
+      "ff_bel": "DFF",
+      "ffsrc": 1,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEM_X0",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_AFF_ffsrc0",
+      "site": "SLICE_X9Y25",
+      "ff_bel": "AFF",
+      "ffsrc": 0,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEL_X1",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_AFF_ffsrc1",
+      "site": "SLICE_X9Y25",
+      "ff_bel": "AFF",
+      "ffsrc": 1,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEL_X1",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_BFF_ffsrc0",
+      "site": "SLICE_X9Y25",
+      "ff_bel": "BFF",
+      "ffsrc": 0,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEL_X1",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_BFF_ffsrc1",
+      "site": "SLICE_X9Y25",
+      "ff_bel": "BFF",
+      "ffsrc": 1,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEL_X1",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_CFF_ffsrc0",
+      "site": "SLICE_X9Y25",
+      "ff_bel": "CFF",
+      "ffsrc": 0,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEL_X1",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_CFF_ffsrc1",
+      "site": "SLICE_X9Y25",
+      "ff_bel": "CFF",
+      "ffsrc": 1,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEL_X1",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_DFF_ffsrc0",
+      "site": "SLICE_X9Y25",
+      "ff_bel": "DFF",
+      "ffsrc": 0,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEL_X1",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_DFF_ffsrc1",
+      "site": "SLICE_X9Y25",
+      "ff_bel": "DFF",
+      "ffsrc": 1,
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "site_prefix": "SLICEL_X1",
+      "split": "holdout"
+    }
+  ],
+  "predictions": [
+    {
+      "specimen_id": "SLICE_X2Y25_AFF_ffsrc0",
+      "split": "mine",
+      "group": "CLBLL_L.SLICEL_X0.AFFMUX[AX|CY|F7|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "scope": [
+        {
+          "segbit": "30_00",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 0
+          }
+        },
+        {
+          "segbit": "30_01",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 1
+          }
+        },
+        {
+          "segbit": "30_02",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 2
+          }
+        },
+        {
+          "segbit": "30_03",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 3
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_00",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 0
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_01",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 1
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_02",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 2
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_03",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 3
+              },
+              "expected_value": 1
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is O6",
+          "predicted_member": "O6",
+          "netlist_basis": "FF.D driven by the LUT6 output"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_AFF_ffsrc1",
+      "split": "mine",
+      "group": "CLBLL_L.SLICEL_X0.AFFMUX[AX|CY|F7|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "scope": [
+        {
+          "segbit": "30_00",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 0
+          }
+        },
+        {
+          "segbit": "30_01",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 1
+          }
+        },
+        {
+          "segbit": "30_02",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 2
+          }
+        },
+        {
+          "segbit": "30_03",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 3
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_00",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 0
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_01",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 1
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "30_02",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 2
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_03",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 3
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is AX",
+          "predicted_member": "AX",
+          "netlist_basis": "FF.D driven by a package pin through the slice bypass"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_BFF_ffsrc0",
+      "split": "mine",
+      "group": "CLBLL_L.SLICEL_X0.BFFMUX[BX|CY|F8|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "scope": [
+        {
+          "segbit": "30_24",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 24
+          }
+        },
+        {
+          "segbit": "30_25",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 25
+          }
+        },
+        {
+          "segbit": "30_26",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 26
+          }
+        },
+        {
+          "segbit": "30_27",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 27
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_24",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 24
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "30_25",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 25
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_26",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 26
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_27",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 27
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is O6",
+          "predicted_member": "O6",
+          "netlist_basis": "FF.D driven by the LUT6 output"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_BFF_ffsrc1",
+      "split": "mine",
+      "group": "CLBLL_L.SLICEL_X0.BFFMUX[BX|CY|F8|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "scope": [
+        {
+          "segbit": "30_24",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 24
+          }
+        },
+        {
+          "segbit": "30_25",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 25
+          }
+        },
+        {
+          "segbit": "30_26",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 26
+          }
+        },
+        {
+          "segbit": "30_27",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 51,
+            "bit": 27
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_24",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 24
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_25",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 25
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_26",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 26
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "30_27",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 51,
+                "bit": 27
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is BX",
+          "predicted_member": "BX",
+          "netlist_basis": "FF.D driven by a package pin through the slice bypass"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_CFF_ffsrc0",
+      "split": "mine",
+      "group": "CLBLL_L.SLICEL_X0.CFFMUX[CX|CY|F7|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "scope": [
+        {
+          "segbit": "30_35",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 3
+          }
+        },
+        {
+          "segbit": "30_36",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 4
+          }
+        },
+        {
+          "segbit": "30_37",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 5
+          }
+        },
+        {
+          "segbit": "30_38",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 6
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_35",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 3
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_36",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 4
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_37",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 5
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_38",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 6
+              },
+              "expected_value": 1
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is O6",
+          "predicted_member": "O6",
+          "netlist_basis": "FF.D driven by the LUT6 output"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_CFF_ffsrc1",
+      "split": "mine",
+      "group": "CLBLL_L.SLICEL_X0.CFFMUX[CX|CY|F7|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "scope": [
+        {
+          "segbit": "30_35",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 3
+          }
+        },
+        {
+          "segbit": "30_36",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 4
+          }
+        },
+        {
+          "segbit": "30_37",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 5
+          }
+        },
+        {
+          "segbit": "30_38",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 6
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_35",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 3
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_36",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 4
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "30_37",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 5
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_38",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 6
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is CX",
+          "predicted_member": "CX",
+          "netlist_basis": "FF.D driven by a package pin through the slice bypass"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_DFF_ffsrc0",
+      "split": "mine",
+      "group": "CLBLL_L.SLICEL_X0.DFFMUX[CY|DX|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "scope": [
+        {
+          "segbit": "30_59",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 27
+          }
+        },
+        {
+          "segbit": "30_60",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 28
+          }
+        },
+        {
+          "segbit": "30_61",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 29
+          }
+        },
+        {
+          "segbit": "30_62",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 30
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_59",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 27
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "30_60",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 28
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_61",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 29
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_62",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 30
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is O6",
+          "predicted_member": "O6",
+          "netlist_basis": "FF.D driven by the LUT6 output"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X2Y25_DFF_ffsrc1",
+      "split": "mine",
+      "group": "CLBLL_L.SLICEL_X0.DFFMUX[CY|DX|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "scope": [
+        {
+          "segbit": "30_59",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 27
+          }
+        },
+        {
+          "segbit": "30_60",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 28
+          }
+        },
+        {
+          "segbit": "30_61",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 29
+          }
+        },
+        {
+          "segbit": "30_62",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 30
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_59",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 27
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_60",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 28
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_61",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 29
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "30_62",
+              "address": {
+                "far": "0x00400A1E",
+                "word": 52,
+                "bit": 30
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is DX",
+          "predicted_member": "DX",
+          "netlist_basis": "FF.D driven by a package pin through the slice bypass"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_AFF_ffsrc0",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEM_X0.AFFMUX[AX|CY|F7|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "30_00",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 0
+          }
+        },
+        {
+          "segbit": "30_01",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 1
+          }
+        },
+        {
+          "segbit": "30_02",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 2
+          }
+        },
+        {
+          "segbit": "30_03",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 3
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_00",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 0
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_01",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 1
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_02",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 2
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_03",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 3
+              },
+              "expected_value": 1
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is O6",
+          "predicted_member": "O6",
+          "netlist_basis": "FF.D driven by the LUT6 output"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_AFF_ffsrc1",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEM_X0.AFFMUX[AX|CY|F7|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "30_00",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 0
+          }
+        },
+        {
+          "segbit": "30_01",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 1
+          }
+        },
+        {
+          "segbit": "30_02",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 2
+          }
+        },
+        {
+          "segbit": "30_03",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 3
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_00",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 0
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_01",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 1
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "30_02",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 2
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_03",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 3
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is AX",
+          "predicted_member": "AX",
+          "netlist_basis": "FF.D driven by a package pin through the slice bypass"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_BFF_ffsrc0",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEM_X0.BFFMUX[BX|CY|F8|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "30_24",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 24
+          }
+        },
+        {
+          "segbit": "30_25",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 25
+          }
+        },
+        {
+          "segbit": "30_26",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 26
+          }
+        },
+        {
+          "segbit": "30_27",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 27
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_24",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 24
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "30_25",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 25
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_26",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 26
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_27",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 27
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is O6",
+          "predicted_member": "O6",
+          "netlist_basis": "FF.D driven by the LUT6 output"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_BFF_ffsrc1",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEM_X0.BFFMUX[BX|CY|F8|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "30_24",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 24
+          }
+        },
+        {
+          "segbit": "30_25",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 25
+          }
+        },
+        {
+          "segbit": "30_26",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 26
+          }
+        },
+        {
+          "segbit": "30_27",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 27
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_24",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 24
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_25",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 25
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_26",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 26
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "30_27",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 27
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is BX",
+          "predicted_member": "BX",
+          "netlist_basis": "FF.D driven by a package pin through the slice bypass"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_CFF_ffsrc0",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEM_X0.CFFMUX[CX|CY|F7|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "30_35",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 3
+          }
+        },
+        {
+          "segbit": "30_36",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 4
+          }
+        },
+        {
+          "segbit": "30_37",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 5
+          }
+        },
+        {
+          "segbit": "30_38",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 6
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_35",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 3
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_36",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 4
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_37",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 5
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_38",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 6
+              },
+              "expected_value": 1
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is O6",
+          "predicted_member": "O6",
+          "netlist_basis": "FF.D driven by the LUT6 output"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_CFF_ffsrc1",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEM_X0.CFFMUX[CX|CY|F7|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "30_35",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 3
+          }
+        },
+        {
+          "segbit": "30_36",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 4
+          }
+        },
+        {
+          "segbit": "30_37",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 5
+          }
+        },
+        {
+          "segbit": "30_38",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 6
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_35",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 3
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_36",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 4
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "30_37",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 5
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_38",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 6
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is CX",
+          "predicted_member": "CX",
+          "netlist_basis": "FF.D driven by a package pin through the slice bypass"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_DFF_ffsrc0",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEM_X0.DFFMUX[CY|DX|MC31|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "30_59",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 27
+          }
+        },
+        {
+          "segbit": "30_60",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 28
+          }
+        },
+        {
+          "segbit": "30_61",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 29
+          }
+        },
+        {
+          "segbit": "30_62",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 30
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_59",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 27
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "30_60",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 28
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_61",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 29
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_62",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 30
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is O6",
+          "predicted_member": "O6",
+          "netlist_basis": "FF.D driven by the LUT6 output"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X8Y25_DFF_ffsrc1",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEM_X0.DFFMUX[CY|DX|MC31|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "30_59",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 27
+          }
+        },
+        {
+          "segbit": "30_60",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 28
+          }
+        },
+        {
+          "segbit": "30_61",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 29
+          }
+        },
+        {
+          "segbit": "30_62",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 30
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_59",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 27
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_60",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 28
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "30_61",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 29
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "30_62",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 30
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is DX",
+          "predicted_member": "DX",
+          "netlist_basis": "FF.D driven by a package pin through the slice bypass"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_AFF_ffsrc0",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEL_X1.AFFMUX[AX|CY|F7|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "30_04",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 4
+          }
+        },
+        {
+          "segbit": "31_00",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 0
+          }
+        },
+        {
+          "segbit": "31_01",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 1
+          }
+        },
+        {
+          "segbit": "31_02",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 2
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_04",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 4
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "31_00",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 0
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_01",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 1
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_02",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 2
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is O6",
+          "predicted_member": "O6",
+          "netlist_basis": "FF.D driven by the LUT6 output"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_AFF_ffsrc1",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEL_X1.AFFMUX[AX|CY|F7|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "30_04",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 51,
+            "bit": 4
+          }
+        },
+        {
+          "segbit": "31_00",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 0
+          }
+        },
+        {
+          "segbit": "31_01",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 1
+          }
+        },
+        {
+          "segbit": "31_02",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 2
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_04",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 51,
+                "bit": 4
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_00",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 0
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_01",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 1
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "31_02",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 2
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is AX",
+          "predicted_member": "AX",
+          "netlist_basis": "FF.D driven by a package pin through the slice bypass"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_BFF_ffsrc0",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEL_X1.BFFMUX[BX|CY|F8|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "31_24",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 24
+          }
+        },
+        {
+          "segbit": "31_25",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 25
+          }
+        },
+        {
+          "segbit": "31_26",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 26
+          }
+        },
+        {
+          "segbit": "31_27",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 27
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "31_24",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 24
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "31_25",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 25
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_26",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 26
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_27",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 27
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is O6",
+          "predicted_member": "O6",
+          "netlist_basis": "FF.D driven by the LUT6 output"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_BFF_ffsrc1",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEL_X1.BFFMUX[BX|CY|F8|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "31_24",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 24
+          }
+        },
+        {
+          "segbit": "31_25",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 25
+          }
+        },
+        {
+          "segbit": "31_26",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 26
+          }
+        },
+        {
+          "segbit": "31_27",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 51,
+            "bit": 27
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "31_24",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 24
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_25",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 25
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_26",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 26
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_27",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 51,
+                "bit": 27
+              },
+              "expected_value": 1
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is BX",
+          "predicted_member": "BX",
+          "netlist_basis": "FF.D driven by a package pin through the slice bypass"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_CFF_ffsrc0",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEL_X1.CFFMUX[CX|CY|F7|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "31_35",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 3
+          }
+        },
+        {
+          "segbit": "31_36",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 4
+          }
+        },
+        {
+          "segbit": "31_37",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 5
+          }
+        },
+        {
+          "segbit": "31_38",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 6
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "31_35",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 3
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_36",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 4
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "31_37",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 5
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_38",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 6
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is O6",
+          "predicted_member": "O6",
+          "netlist_basis": "FF.D driven by the LUT6 output"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_CFF_ffsrc1",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEL_X1.CFFMUX[CX|CY|F7|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "31_35",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 3
+          }
+        },
+        {
+          "segbit": "31_36",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 4
+          }
+        },
+        {
+          "segbit": "31_37",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 5
+          }
+        },
+        {
+          "segbit": "31_38",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 6
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "31_35",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 3
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_36",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 4
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_37",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 5
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_38",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 6
+              },
+              "expected_value": 1
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is CX",
+          "predicted_member": "CX",
+          "netlist_basis": "FF.D driven by a package pin through the slice bypass"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_DFF_ffsrc0",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEL_X1.DFFMUX[CY|DX|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "30_58",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 26
+          }
+        },
+        {
+          "segbit": "31_60",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 28
+          }
+        },
+        {
+          "segbit": "31_61",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 29
+          }
+        },
+        {
+          "segbit": "31_62",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 30
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_58",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 26
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_60",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 28
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "31_61",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 29
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_62",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 30
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is O6",
+          "predicted_member": "O6",
+          "netlist_basis": "FF.D driven by the LUT6 output"
+        }
+      ]
+    },
+    {
+      "specimen_id": "SLICE_X9Y25_DFF_ffsrc1",
+      "split": "holdout",
+      "group": "CLBLM_L.SLICEL_X1.DFFMUX[CY|DX|O5|O6|XOR]",
+      "rule_file": "prjxray/zynq7/segbits_clblm_l.db",
+      "scope": [
+        {
+          "segbit": "30_58",
+          "address": {
+            "far": "0x00400C1E",
+            "word": 52,
+            "bit": 26
+          }
+        },
+        {
+          "segbit": "31_60",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 28
+          }
+        },
+        {
+          "segbit": "31_61",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 29
+          }
+        },
+        {
+          "segbit": "31_62",
+          "address": {
+            "far": "0x00400C1F",
+            "word": 52,
+            "bit": 30
+          }
+        }
+      ],
+      "assertions": [
+        {
+          "kind": "group_exclusivity",
+          "semantic": false,
+          "claim": "at most one member of this group decodes"
+        },
+        {
+          "kind": "scope_assignment",
+          "semantic": false,
+          "claim": "every bit in scope holds its expected value",
+          "expected_assignment": [
+            {
+              "segbit": "30_58",
+              "address": {
+                "far": "0x00400C1E",
+                "word": 52,
+                "bit": 26
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_60",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 28
+              },
+              "expected_value": 0
+            },
+            {
+              "segbit": "31_61",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 29
+              },
+              "expected_value": 1
+            },
+            {
+              "segbit": "31_62",
+              "address": {
+                "far": "0x00400C1F",
+                "word": 52,
+                "bit": 30
+              },
+              "expected_value": 0
+            }
+          ]
+        },
+        {
+          "kind": "member_identity",
+          "semantic": true,
+          "claim": "the decoded member is DX",
+          "predicted_member": "DX",
+          "netlist_basis": "FF.D driven by a package pin through the slice bypass"
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "specimens": 24,
+    "predictions": 24,
+    "holdout_predictions": 16,
+    "assertions": 72,
+    "semantic_assertions": 24
+  }
+}
