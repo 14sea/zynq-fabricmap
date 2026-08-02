@@ -51,6 +51,27 @@ zynq-autoehw. Its load-bearing findings:
   the EBAZ boards; autonomous *routing*-class fuzzing goes to sacrificial
   hardware, never the working boards.
 
+## Planning decisions carried in (2026-08-02)
+
+**The first drop inverts the usual division of labour.** In the sibling repos the
+default is: the other author writes code, Claude gates and boards it. That
+assumes host-side logic. Extraction + per-bit-class certification is a Vivado
+specimen-diff activity end to end, so here **Claude builds the infrastructure and
+the author writes schemas, host verifiers and known-answer fixtures against it.**
+Rationale is concrete: in the M1 engineering addendum, five of six blockers
+across six rounds were invisible on the authoring side (no RISC-V toolchain, no
+Vivado). Keeping the default split for a Vivado-centric drop would make that
+ratio worse. See `zynq-autoehw/docs/workflow.md`.
+
+**No sacrificial hardware is being bought yet.** The prework's safety split says
+content-bit classes are safe on the EBAZ boards; only *routing*-class autonomous
+fuzzing needs sacrificial silicon. The XC7K70T's original rationale is also
+materially weaker than when it was proposed — the 2026-07-11 prjxray audit killed
+the coverage argument, four spare same-part Zynqs killed the sacrificial-economics
+argument, and its J7 UART header is unpopulated while this whole control plane is
+UART-mailbox based, a cost the old plan never carried. **Revisit only when this
+line actually hits the routing wall.**
+
 ## Hardware
 
 Board plumbing is copied in from zynq-autoehw and is deliberately board-agnostic
