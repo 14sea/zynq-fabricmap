@@ -1,0 +1,54 @@
+{
+  "schema": "mux_group_scan",
+  "schema_version": "1.0.0",
+  "class": "clb_mux",
+  "clb_tiles_per_bitstream": 2200,
+  "groups_per_tile_type": {
+    "CLBLL_L": 42,
+    "CLBLL_R": 42,
+    "CLBLM_L": 43,
+    "CLBLM_R": 43
+  },
+  "group_definition": "maximal set of features sharing an identical bit-address set (polarity ignored); the name prefix is a label only",
+  "bitstreams": [
+    {
+      "path": "build/gate/SLICE_X2Y25_A6LUT/spec_0000000000000000.bit",
+      "name": "spec_0000000000000000.bit",
+      "sha256": "8711ee7a0deb6d85d2f4741d7a91336c9b8460e766f425033967f49ae8900339",
+      "size_bytes": 2083864,
+      "evaluations": 93900,
+      "decoded_to_one": 4400,
+      "unset": 89500,
+      "violations": 0,
+      "violation_examples": {}
+    },
+    {
+      "path": "/home/test/zynq_autoehw/build/dfx/dfx.runs/impl_1/dfx_top.bit",
+      "name": "dfx_top.bit",
+      "sha256": "08552db39fcc567c4cc48d394f9fd6de45fe64c8a8278c7555c12596913dbb3c",
+      "size_bytes": 2083859,
+      "evaluations": 93900,
+      "decoded_to_one": 14941,
+      "unset": 78959,
+      "violations": 0,
+      "violation_examples": {}
+    },
+    {
+      "path": "/home/test/test_devices/work/boardtest/xsa/design_1_wrapper.bit",
+      "name": "design_1_wrapper.bit",
+      "sha256": "7c6d1d14f408925da8c86412e6665e7c805c9016abddca3ecfb05f650d184859",
+      "size_bytes": 2083852,
+      "evaluations": 93900,
+      "decoded_to_one": 4569,
+      "unset": 89331,
+      "violations": 0,
+      "violation_examples": {}
+    }
+  ],
+  "totals": {
+    "evaluations": 281700,
+    "decoded_to_one": 23910,
+    "unset": 257790,
+    "violations": 0
+  }
+}

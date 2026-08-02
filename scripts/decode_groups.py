@@ -18,11 +18,13 @@ decode at a time; more than one is a contradiction in the database, in our addre
 arithmetic, or in the grouping itself, and zero means the group is unset.
 
     scripts/decode_groups.py <file.bit> --tile CLBLL_L_X2Y25 [--class clb_mux]
+    scripts/decode_groups.py --sweep a.bit b.bit --json scan.json   # every CLB tile
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -109,15 +111,79 @@ def decode(groups: dict, bits: dict[str, int]) -> dict:
     return out
 
 
+def sweep(bitfiles: list[Path], class_id: str) -> dict:
+    """Decode every CLB tile of the die in each bitstream. Reproducible + hashed."""
+    grid = json.loads(TILEGRID.read_text())
+    cols, layout = column_map(), device_layout()
+    gsets = {t: groups_for(t, class_id)
+             for t in ("CLBLL_L", "CLBLL_R", "CLBLM_L", "CLBLM_R")}
+    tiles = [(n, t) for n, t in grid.items() if t["type"] in gsets and t.get("bits")]
+
+    out = {"schema": "mux_group_scan", "schema_version": "1.0.0",
+           "class": class_id, "clb_tiles_per_bitstream": len(tiles),
+           "groups_per_tile_type": {k: len(v) for k, v in gsets.items()},
+           "group_definition": "maximal set of features sharing an identical bit-address "
+                               "set (polarity ignored); the name prefix is a label only",
+           "bitstreams": [], "totals": {"evaluations": 0, "decoded_to_one": 0,
+                                        "unset": 0, "violations": 0}}
+    for bf in bitfiles:
+        frames = parse_frames(bf, cols, layout)["frames"]
+        one = unset = multi = 0
+        examples = {}
+        for name, tile in tiles:
+            bits = read_tile_bits(frames, tile["bits"]["CLB_IO_CLK"])
+            for g, m in decode(gsets[tile["type"]], bits).items():
+                if len(m) > 1:
+                    multi += 1
+                    examples.setdefault(f"{name} {g}", m)
+                elif m:
+                    one += 1
+                else:
+                    unset += 1
+        out["bitstreams"].append({
+            "path": str(bf), "name": bf.name,
+            "sha256": hashlib.sha256(bf.read_bytes()).hexdigest(),
+            "size_bytes": bf.stat().st_size,
+            "evaluations": one + unset + multi, "decoded_to_one": one,
+            "unset": unset, "violations": multi,
+            "violation_examples": dict(list(examples.items())[:5]),
+        })
+        t = out["totals"]
+        t["evaluations"] += one + unset + multi
+        t["decoded_to_one"] += one
+        t["unset"] += unset
+        t["violations"] += multi
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("bitfile", type=Path)
-    ap.add_argument("--tile", required=True)
+    ap.add_argument("bitfile", type=Path, nargs="?")
+    ap.add_argument("--sweep", type=Path, nargs="*", help="scan every CLB tile of the die")
+    ap.add_argument("--tile")
     ap.add_argument("--class", dest="class_id", default="clb_mux")
     ap.add_argument("--json", type=Path)
     args = ap.parse_args()
 
+    if args.sweep:
+        res = sweep(args.sweep, args.class_id)
+        t = res["totals"]
+        print(f"mux-group sweep, class {res['class']}, "
+              f"{res['clb_tiles_per_bitstream']} CLB tiles per bitstream")
+        for b in res["bitstreams"]:
+            print(f"  {b['name']:<46} decoded={b['decoded_to_one']:>6} "
+                  f"unset={b['unset']:>6} violations={b['violations']}")
+            print(f"    sha256 {b['sha256']}")
+        print(f"  TOTAL evaluations={t['evaluations']:,} "
+              f"decoded_to_one={t['decoded_to_one']:,} violations={t['violations']}")
+        if args.json:
+            args.json.write_text(json.dumps(res, indent=2) + "\n")
+            print(f"  wrote {args.json}")
+        return 1 if t["violations"] else 0
+
+    if not (args.bitfile and args.tile):
+        ap.error("give a bitfile and --tile, or use --sweep")
     grid = json.loads(TILEGRID.read_text())
     tile = grid[args.tile]
     block = tile["bits"]["CLB_IO_CLK"]

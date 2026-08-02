@@ -49,8 +49,28 @@ Decoding every CLB tile of the die (2,200 tiles × 42-43 groups) out of real bit
 | by name prefix | 61,600 per bitstream | — | **160** in `dfx_top.bit`, all `CARRY4` |
 | by bit set | 281,700 over 3 bitstreams | 23,910 | **0** |
 
-The three bitstreams are independent and not ours in two cases: a full `zynq-autoehw`
-DFX design, the EBAZ4203 vendor `boardtest` design, and one of our LUT specimens.
+### The evidence, pinned
+
+Two of the three bitstreams are not ours, which is what makes the sample worth
+something:
+
+| bitstream | origin | sha256 |
+|---|---|---|
+| `spec_0000000000000000.bit` | our LUT specimen, `run_2026_08_02_a` | `8711ee7a0deb6d85d2f4741d7a91336c9b8460e766f425033967f49ae8900339` |
+| `dfx_top.bit` | `zynq-autoehw` DFX design (2026-07-11) | `08552db39fcc567c4cc48d394f9fd6de45fe64c8a8278c7555c12596913dbb3c` |
+| `design_1_wrapper.bit` | EBAZ4203 **vendor** `boardtest` design | `7c6d1d14f408925da8c86412e6665e7c805c9016abddca3ecfb05f650d184859` |
+
+Full per-bitstream counts: `gate_runs/mux_group_scan_2026_08_02/scan.json`
+(schema `mux_group_scan` 1.0.0). Reproduce:
+
+```sh
+scripts/decode_groups.py --sweep <the three .bit files> \
+    --json gate_runs/mux_group_scan_2026_08_02/scan.json
+```
+
+It exits non-zero if any group decodes to more than one member, so the claim is a
+check rather than a report. The counts are recomputable from the frozen data plus
+those three files alone.
 
 ## The rule, corrected
 
@@ -68,8 +88,24 @@ Consequences worth carrying forward:
   that demands a selection everywhere is equally wrong.
 - The composition rule itself survives contact with real data: zero violations in
   281,700 evaluations, once groups are derived correctly. That is the first
-  silicon-grade evidence for the rule the safety whitelist depends on — previously it
-  was only ever exercised by fixtures.
+  **real-bitstream** evidence for the rule the safety whitelist depends on — previously
+  it was only ever exercised by fixtures.
+
+**Wording, deliberately.** This is real-bitstream evidence, not silicon evidence.
+Every bitstream here came out of Vivado; nothing was loaded onto a board, and this
+line has never touched one. An earlier version of this document and the messages of
+commits `da1fbcb` and `0a3de1c` said "silicon-grade", which overstates it —
+`da1fbcb` is already pushed and its message cannot be corrected in place, so the
+correction is recorded here instead.
+
+## Not yet propagated to the consumer side
+
+`zynq-autoehw/docs/schema.md` §5 still states `one_selected_input_per_mux_group`
+without defining group membership. **This document is evidence, not a fix**: the
+sibling repo is a read-only source from here (`docs/workflow.md`, isolation rule) and
+has not been modified. Anything that implements the whitelist — here or there — needs
+the bit-set definition carried across explicitly before it can be relied on; until
+then, treat any name-derived grouping as unvalidated.
 
 Tool: `scripts/decode_groups.py`, which reads absolute bit values (not a diff) and
 decodes each group.

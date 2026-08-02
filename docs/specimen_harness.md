@@ -86,8 +86,12 @@ mining key may have to grow, exactly as the EP4CE6 campaign's key eventually had
   `INIT[00] 32_15`, `INIT[01] 33_15`, `INIT[04] 32_13`, `INIT[63] 34_00`, all in
   `CLBLL_L_X2Y25` at `SLICE_X2Y25`, with **zero** unattributed bits after ECC
   exclusion. `INIT[00]` is the same known answer as the author's fixture
-  `clbll_l_lut_init_crosses_clock_row`, so fixture, producer cross-check and silicon
-  all agree on it.
+  `clbll_l_lut_init_crosses_clock_row`, so fixture, producer cross-check and a real
+  Vivado bitstream all agree on it.
+
+  Wording: **real-bitstream** evidence, not silicon evidence. Every bitstream in this
+  repo came out of Vivado and none has been loaded onto a board. See
+  `docs/mux_groups.md` for the same correction applied there.
 
 This is evidence, not a certificate. A certificate requires the full mine → holdout →
 emit → fresh-gold run with `fp_count == 0 and fn_count == 0` over a holdout the
