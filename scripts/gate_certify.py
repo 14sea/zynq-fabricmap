@@ -65,6 +65,10 @@ def main() -> int:
         print(f"note: emitting a FAILED certificate (measurement decision "
               f"{meas['decision']})", file=sys.stderr)
 
+    # Same reason as gate_measure_mux: build/ is gitignored, so the attestations a
+    # certificate pins are copied into the run directory and referenced there.
+    att_dir = args.run / "attestations"
+    att_dir.mkdir(exist_ok=True)
     hdl_sha = sha256_file(HDL)
     specimens, feature_results = [], []
     diff_cache: dict[tuple[str, str], dict] = {}
@@ -74,7 +78,9 @@ def main() -> int:
         base_bit = d / f"spec_{spec['base_init']}.bit"
         var_bit = d / f"spec_{spec['variant_init']}.bit"
         att_path = d / "attestation.json"
-        att_rel = str(att_path.resolve().relative_to(REPO))
+        kept = att_dir / f"{spec['site']}_{spec['bel']}.json"
+        kept.write_bytes(att_path.read_bytes())
+        att_rel = str(kept.resolve().relative_to(REPO))
         att = json.loads(att_path.read_text())
         tile_base = json.loads((REPO / "data/prjxray/zynq7/xc7z010/tilegrid.json").read_text())
         frame_base = tile_base[spec["tile"]]["bits"]["CLB_IO_CLK"]["baseaddr"].upper().replace("0X", "0x")

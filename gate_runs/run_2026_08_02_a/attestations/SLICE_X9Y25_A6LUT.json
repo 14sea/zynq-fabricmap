@@ -1,0 +1,41 @@
+{
+  "schema": "specimen_attestation",
+  "schema_version": "1.0.0",
+  "inputs": {
+    "files": {
+      "vivado/specimen/specimen_lut.v": "7dc6bb9eb8479aac1be660e15516d28ea5d167ce0ed2be1fdd5432eb4a22ef02",
+      "vivado/specimen/build_specimen.tcl": "21787c2b03579313bd97d0a443cf7a5ee404ceff5149271718177453a06e822a"
+    },
+    "tclargs": [
+      "SLICE_X9Y25",
+      "A6LUT",
+      "0000000000000000",
+      "7f899b1589a99f49",
+      "85f00cb7e229f231"
+    ],
+    "part": "xc7z010clg400-1",
+    "vivado_version": "2025.2"
+  },
+  "resolved": {
+    "requested_site": "SLICE_X9Y25",
+    "requested_bel": "A6LUT",
+    "resolved_loc": "SLICE_X9Y25",
+    "resolved_bel": "SLICEL.A6LUT",
+    "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+    "tile": "CLBLM_L_X6Y25",
+    "pin_mapping": {
+      "I0": "SLICE_X9Y25/A6LUT/A1",
+      "I1": "SLICE_X9Y25/A6LUT/A2",
+      "I2": "SLICE_X9Y25/A6LUT/A3",
+      "I3": "SLICE_X9Y25/A6LUT/A4",
+      "I4": "SLICE_X9Y25/A6LUT/A5",
+      "I5": "SLICE_X9Y25/A6LUT/A6"
+    },
+    "pin_mapping_is_identity": true
+  },
+  "outputs": {
+    "spec_0000000000000000.bit": "bdb7feba637d7b5577c26eb91ca4059ada3131857574357b2628ab4ed1cd4598",
+    "spec_7f899b1589a99f49.bit": "48078f4786a02a8c355128033a1f62d2eca1f0007737e8c5756f9a7dcb44e552",
+    "spec_85f00cb7e229f231.bit": "4a579569d156fee1505afae9535c6407c61a15fd9b929216b24513614703cb6c"
+  }
+}

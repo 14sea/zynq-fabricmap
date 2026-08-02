@@ -4,15 +4,34 @@ Producer → author. `clb_mux` is measured and passing, but it cannot be certifi
 certificate 1.2 models a per-feature list of bit assignments, and a mux claim is not
 that shape. This is the ask for the extension.
 
-Everything below can be written against two committed artifacts, no Vivado and no
+Everything below can be written against committed artifacts alone — no Vivado, no
 producer source:
 
 ```
-gate_runs/run_2026_08_02_b/predictions.json    schema gate_predictions 1.1.0
-gate_runs/run_2026_08_02_b/measurement.json    schema gate_measurement 1.1.0
+gate_runs/run_2026_08_02_b/predictions.json        gate_predictions 1.1.0
+gate_runs/run_2026_08_02_b/measurement.json        gate_measurement 1.1.0
+gate_runs/run_2026_08_02_b/attestations/*.json     specimen_attestation 1.0.0 (24)
 ```
 
-Both are real output of the run described in `7d73915`, not mock-ups.
+All real output, not mock-ups. **An earlier draft of this request claimed the same and
+was wrong**; the author's review caught three gaps and they are now closed:
+
+- `results[]` carries one record per `(specimen_id, group)` — decoded members, the
+  absolute observed assignment for **every** scope bit (expected and observed side by
+  side), and an outcome per assertion — recorded whether it passed or failed. Recording
+  only failures makes a passing run unauditable, which is exactly when someone wants to
+  audit it.
+- `accounting[].buckets` carries **bit identity**, not just counts: every bucket lists
+  its `{far, word, bit}` entries, so disjointness and coverage can be checked directly
+  instead of inferred from arithmetic.
+- `specimens[]` carries `bitstream_sha256` and an `attestation` reference (path,
+  sha256, resolved LOC/BEL, `pin_mapping_is_identity`), and the measure step fails the
+  run if a bitstream does not match its attestation.
+
+The attestations are **copied into the run directory** and referenced there. They are
+produced under `build/`, which is gitignored, so a record pointing at them would name
+evidence a fresh clone cannot resolve. The same fix was applied to
+`run_2026_08_02_a`'s certificate, which had the identical defect.
 
 ## Why 1.2 does not fit
 
@@ -41,8 +60,8 @@ naming result paper over one.
    every bit of the group, including the ones that do not change. A certificate whose
    scope lists only the movers must be rejected — see the adversarial fixture below.
 3. **Per-pair accounting**, shape already in `measurement.json.accounting[]`:
-   `raw_diff_bits`, `in_scope`, `frame_ecc`, `db_attributed`, `ownership_unknown`,
-   `unattributed`, `partition_exact`.
+   `raw_diff_bits`, `counts{}` per bucket, `buckets{}` with the `{far, word, bit}`
+   entries of each, and `partition_exact`.
 4. **`prediction_commitment`** exactly as in 1.2 — unchanged, still pinned and
    compared.
 
@@ -58,11 +77,15 @@ naming result paper over one.
 - **Semantic isolation.** `member_identity` results are reported but excluded from the
   pass/fail decision. A certificate that folds them in should be rejected as malformed
   rather than accepted as stricter.
-- **Partition integrity.** Buckets must be pairwise disjoint and their sizes must sum to
-  `raw_diff_bits`, with `partition_exact` consistent with that arithmetic. Note the
-  honest limit: without the bitstreams a verifier cannot confirm the raw diff itself —
-  it can only confirm internal consistency plus the attestation's pinned bitstream
-  hashes. Please state that limit in the schema doc rather than let it be assumed away.
+- **Partition integrity, from the bit lists.** `buckets{}` carries every bit's
+  identity, so check disjointness directly — pairwise empty intersections — and check
+  that the union's size equals `raw_diff_bits` and each `counts{}` entry equals its
+  list length. Do not settle for the arithmetic alone; that was the gap that made the
+  first version of this request unimplementable.
+  The honest limit remains: without the bitstreams a verifier cannot confirm the raw
+  diff *itself* — it confirms internal consistency plus the attestation's pinned
+  bitstream hashes. Please state that limit in the schema doc rather than let it be
+  assumed away.
 - **Tile-wide claims are forbidden while ownership is unknown.** If a certificate ever
   declares a tile-wide scope, any `ownership_unknown` bit inside that tile's geometric
   range must force FAIL. Run B declares only group scopes, so this rule has nothing to

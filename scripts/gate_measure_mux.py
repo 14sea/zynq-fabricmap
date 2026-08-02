@@ -86,6 +86,12 @@ def main() -> int:
     print(f"predictions: {digest}"
           + ("  (matches the committed hash)" if args.expect_sha256 else ""))
 
+    # Attestations are copied into the run directory and referenced there.  They live
+    # under build/, which is gitignored, so a measurement that pointed at them would
+    # name evidence a fresh clone cannot resolve.
+    att_dir = args.run / "attestations"
+    att_dir.mkdir(exist_ok=True)
+
     grid = json.loads(TILEGRID.read_text())
     cols, layout = column_map(), device_layout()
     idx = tile_index()
@@ -104,9 +110,38 @@ def main() -> int:
     totals = {s: {k: {"pass": 0, "fail": 0} for k in
                   ("group_exclusivity", "scope_assignment", "member_identity")}
               for s in ("mine", "holdout")}
-    problems, details = [], []
+    problems, results, specimen_records = [], [], []
 
     # ---- per specimen: absolute assignment + assert-iff -------------------------
+    # Every result is recorded whether it passes or fails.  A run that only records
+    # failures cannot be audited when it passes, which is exactly when someone will
+    # want to check it.
+    for spec in doc["specimens"]:
+        bp = bit_path(args.build, spec)
+        att_path = bp.parent / "attestation.json"
+        rec = {"specimen_id": spec["specimen_id"], "split": spec["split"],
+               "site": spec["site"], "ff_bel": spec["ff_bel"], "ffsrc": spec["ffsrc"],
+               "tile": spec["tile"], "tile_type": spec["tile_type"],
+               "bitstream": str(bp.resolve().relative_to(REPO)) if bp.is_file() else None,
+               "bitstream_sha256": sha256_file(bp) if bp.is_file() else None}
+        if att_path.is_file():
+            att = json.loads(att_path.read_text())
+            kept = att_dir / f"{spec['specimen_id']}.json"
+            kept.write_bytes(att_path.read_bytes())
+            rec["attestation"] = {
+                "path": str(kept.resolve().relative_to(REPO)),
+                "sha256": sha256_file(att_path),
+                "schema_version": att["schema_version"],
+                "resolved_loc": att["resolved"]["resolved_loc"],
+                "resolved_bel": att["resolved"]["resolved_bel"],
+                "pin_mapping_is_identity": att["resolved"]["pin_mapping_is_identity"],
+            }
+            if att["outputs"].get(bp.name) != rec["bitstream_sha256"]:
+                problems.append(f"{spec['specimen_id']}: bitstream does not match its attestation")
+        else:
+            problems.append(f"{spec['specimen_id']}: no attestation")
+        specimen_records.append(rec)
+
     for p in doc["predictions"]:
         spec = by_id[p["specimen_id"]]
         try:
@@ -120,29 +155,33 @@ def main() -> int:
         hits = decode({p["group"]: members}, bits)[p["group"]]
         split = p["split"]
 
+        observed = [{"segbit": x["segbit"], "address": x["address"],
+                     "expected_value": x["expected_value"],
+                     "observed_value": bits.get(x["segbit"])}
+                    for a in p["assertions"] if a["kind"] == "scope_assignment"
+                    for x in a["expected_assignment"]]
+        outcomes = []
         for a in p["assertions"]:
-            ok = True
+            ok, detail = True, {}
             if a["kind"] == "group_exclusivity":
                 ok = len(hits) <= 1
-                if not ok:
-                    details.append({"specimen_id": spec["specimen_id"],
-                                    "kind": a["kind"], "decoded": hits})
+                detail = {"decoded_members": hits}
             elif a["kind"] == "scope_assignment":
-                bad = [x for x in a["expected_assignment"]
-                       if bits.get(x["segbit"]) != x["expected_value"]]
+                bad = [x for x in observed if x["observed_value"] != x["expected_value"]]
                 ok = not bad
-                if bad:
-                    details.append({"specimen_id": spec["specimen_id"], "kind": a["kind"],
-                                    "mismatched": [{"segbit": x["segbit"],
-                                                    "expected": x["expected_value"],
-                                                    "observed": bits.get(x["segbit"])}
-                                                   for x in bad]})
+                detail = {"mismatched": bad}
             elif a["kind"] == "member_identity":
                 ok = hits == [a["predicted_member"]]
-                if not ok:
-                    details.append({"specimen_id": spec["specimen_id"], "kind": a["kind"],
-                                    "predicted": a["predicted_member"], "decoded": hits})
+                detail = {"predicted_member": a["predicted_member"],
+                          "decoded_members": hits}
+            outcomes.append({"kind": a["kind"], "semantic": a["semantic"],
+                             "passed": ok, **detail})
             totals[split][a["kind"]]["pass" if ok else "fail"] += 1
+        results.append({"specimen_id": spec["specimen_id"], "group": p["group"],
+                        "split": split, "rule_file": p["rule_file"],
+                        "decoded_members": hits,
+                        "observed_assignment": observed,
+                        "assertion_outcomes": outcomes})
 
     # ---- per pair: the partition must cover the raw diff exactly ----------------
     accounting = []
@@ -188,9 +227,19 @@ def main() -> int:
             problems.append(f"{site}/{bel}: {len(uncovered)} raw diff bits in no bucket")
         if union - raw:
             problems.append(f"{site}/{bel}: {len(union - raw)} bucketed bits not in the raw diff")
-        accounting.append({"site": site, "ff_bel": bel, "raw_diff_bits": len(raw),
-                           **{k: len(v) for k, v in buckets.items()},
-                           "partition_exact": not (overlaps or uncovered or (union - raw))})
+        def as_addr(s):
+            return sorted(({"far": f"0x{f:08X}", "word": w, "bit": b}
+                           for f, w, b in s), key=lambda a: (a["far"], a["word"], a["bit"]))
+
+        accounting.append({
+            "site": site, "ff_bel": bel,
+            "specimen_ids": [variants[0]["specimen_id"], variants[1]["specimen_id"]],
+            "raw_diff_bits": len(raw),
+            "counts": {k: len(v) for k, v in buckets.items()},
+            # bit identity, so a verifier can check disjointness and coverage itself
+            # instead of trusting the arithmetic
+            "buckets": {k: as_addr(v) for k, v in buckets.items()},
+            "partition_exact": not (overlaps or uncovered or (union - raw))})
 
     # ---- report ----------------------------------------------------------------
     print("\n  per-specimen assertions      pass  fail")
@@ -200,9 +249,10 @@ def main() -> int:
     print("\n  pair accounting (raw diff must be partitioned exactly)")
     print(f"    {'site/bel':<26}{'raw':>5}{'scope':>7}{'ecc':>6}{'db':>5}{'unk':>5}{'unatt':>7}  exact")
     for a in accounting:
+        c = a["counts"]
         print(f"    {a['site'] + '/' + a['ff_bel']:<26}{a['raw_diff_bits']:>5}"
-              f"{a['in_scope']:>7}{a['frame_ecc']:>6}{a['db_attributed']:>5}"
-              f"{a['ownership_unknown']:>5}{a['unattributed']:>7}  {a['partition_exact']}")
+              f"{c['in_scope']:>7}{c['frame_ecc']:>6}{c['db_attributed']:>5}"
+              f"{c['ownership_unknown']:>5}{c['unattributed']:>7}  {a['partition_exact']}")
 
     h = totals["holdout"]
     hard_fail = (h["group_exclusivity"]["fail"] or h["scope_assignment"]["fail"]
@@ -213,8 +263,10 @@ def main() -> int:
           f"{h['member_identity']['fail']} fail")
     for p in problems[:15]:
         print(f"  PROBLEM {p}")
-    for d in details[:15]:
-        print(f"  DETAIL {d}")
+    for r in results:
+        for o in r["assertion_outcomes"]:
+            if not o["passed"]:
+                print(f"  FAILED {r['specimen_id']} {r['group']} {o}")
 
     if args.out:
         args.out.write_text(json.dumps({
@@ -226,8 +278,9 @@ def main() -> int:
                                       "schema_version": doc["schema_version"],
                                       "seed": doc["seed"], "totals": doc["totals"]},
             "scope_policy": doc["scope_policy"],
-            "totals": totals, "accounting": accounting, "decision": decision,
-            "problems": problems, "details": details}, indent=2) + "\n")
+            "specimens": specimen_records,
+            "totals": totals, "results": results, "accounting": accounting,
+            "decision": decision, "problems": problems}, indent=2) + "\n")
         print(f"  wrote {args.out}")
     return 0 if decision == "PASS" else 1
 

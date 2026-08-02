@@ -25,8 +25,15 @@ import json
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-DESIGN_INPUTS = [REPO / "vivado/specimen/specimen_lut.v",
-                 REPO / "vivado/specimen/build_specimen.tcl"]
+# Which design inputs a specimen family was built from.  Passed explicitly rather
+# than assumed: a mux specimen is a different HDL and a different Tcl, and attesting
+# the wrong pair would produce a record that hashes cleanly and means nothing.
+DESIGN_INPUTS = {
+    "lut": [REPO / "vivado/specimen/specimen_lut.v",
+            REPO / "vivado/specimen/build_specimen.tcl"],
+    "mux": [REPO / "vivado/specimen/specimen_mux.v",
+            REPO / "vivado/specimen/build_mux.tcl"],
+}
 
 
 def sha256(p: Path) -> str:
@@ -38,6 +45,8 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--dir", type=Path, required=True, help="specimen output directory")
     ap.add_argument("--tclargs", nargs="*", default=[], help="the tclargs used")
+    ap.add_argument("--family", choices=sorted(DESIGN_INPUTS), default="lut",
+                    help="which specimen family's design inputs to attest")
     args = ap.parse_args()
 
     placement = json.loads((args.dir / "placement.json").read_text())
@@ -45,14 +54,17 @@ def main() -> int:
         "schema": "specimen_attestation",
         "schema_version": "1.0.0",
         "inputs": {
-            "files": {str(p.relative_to(REPO)): sha256(p) for p in DESIGN_INPUTS},
+            "family": args.family,
+            "files": {str(p.relative_to(REPO)): sha256(p)
+                      for p in DESIGN_INPUTS[args.family]},
             "tclargs": args.tclargs,
             "part": placement["part"],
             "vivado_version": placement["vivado_version"],
         },
         "resolved": {k: placement[k] for k in
                      ("requested_site", "requested_bel", "resolved_loc", "resolved_bel",
-                      "lock_pins", "tile", "pin_mapping")},
+                      "lock_pins", "tile", "pin_mapping")
+                     if k in placement},
         "outputs": {p.name: sha256(p) for p in sorted(args.dir.glob("*.bit"))},
     }
     # The claim the pin mapping exists to support, checked here rather than trusted.
