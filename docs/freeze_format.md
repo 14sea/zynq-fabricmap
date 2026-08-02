@@ -1,4 +1,7 @@
-# Freeze format — `prjxray_subset_spec` 1.0.0 / `frozen_db_subset` 1.0.0
+# Freeze format — `prjxray_subset_spec` 1.0.0 / `frozen_db_subset` 1.1.0
+
+> `frozen_db_subset` 1.1.0 is a MINOR bump over 1.0.0: it adds `files[].classified`
+> and `totals.provenance_features`. Both are additive; a 1.0.0 consumer stays valid.
 
 The contract for `data/`. Written so a second author can build verifiers, fixtures
 and the certificate consumers against it without reading the extractor.
@@ -50,13 +53,29 @@ a set of files: one `.db` file contributes to several classes.
 | `feature_regex` | anchored regex over the full feature name (e.g. `CLBLL_L.SLICEL_X0.ALUT.INIT[0]`) |
 | `board_safety` | free text, but it is what decides which board a class may ever be exercised on |
 
+**Which files participate in classification (normative).** A group lists both the
+rule files and their `*.origin_info.db` companions, but **only files with
+`role: segbits` or `role: ppips` that are not `*.origin_info.db` contribute features
+to the taxonomy.** The other two kinds are frozen for provenance and diffing, not for
+counting:
+
+- `*.origin_info.db` restates its parent file's feature set with an added
+  `origin:<fuzzer>` token. Counting it double-counts the taxonomy.
+- `role: mask` files have no features at all; their lines are `bit <F>_<B>`.
+
+Every `.db` record in the manifest carries an explicit `classified: true|false` so
+this rule is machine-readable and not a matter of reading prose. `totals` reports
+`classified_features` and `provenance_features` separately; for the current freeze
+they are 10,896 and 10,038, and their sum, 20,934, is the count of all feature lines
+in the frozen `.db` files — **not** the size of the taxonomy.
+
 **Invariants the extractor enforces**
 
 1. **Partition, not tagging.** Within a group, a feature matching two classes is a
    fatal ambiguity — fix the spec, do not add precedence rules.
-2. **Total coverage.** With `unclassified_policy: fail` (the default), a feature that
-   matches no class aborts the extraction. This is what makes a narrow subset
-   valuable: the frozen set is fully understood, or it does not freeze.
+2. **Total coverage.** With `unclassified_policy: fail` (the default), a feature in a
+   classified file that matches no class aborts the extraction. This is what makes a
+   narrow subset valuable: the frozen set is fully understood, or it does not freeze.
 3. **Verbatim.** Files are copied byte-for-byte. Any transformation belongs in a
    derived artifact, never in `data/prjxray/`.
 
@@ -74,8 +93,8 @@ feature in it, re-extract. That is a MINOR spec bump.
 | `device_summary` | `tiles_total` + full tile-type histogram, parsed from the frozen `tilegrid.json` |
 | `consistency` | `unclassified_features` (must be 0), `origin_info_feature_mismatch[]`, `origin_info_empty_upstream[]` |
 | `bit_classes[]` | per class: `entries`, `distinct_features`, `tile_types[]`, `sample_features[]`, and a `certification` slot |
-| `files[]` | per file: `path`, `source_path`, `group`, `role`, `tier`, `sha256`, `size_bytes`, `lines`, `features`, `bit_classes{}`, `cross_family{}` |
-| `totals` | files, bytes, classified features |
+| `files[]` | per file: `path`, `source_path`, `group`, `role`, `tier`, `sha256`, `size_bytes`, `lines`, `classified`, `features`, `bit_classes{}`, `cross_family{}` |
+| `totals` | `files`, `bytes`, `classified_features`, `provenance_features` |
 | `freeze_stamp` | UTC time of extraction — **the one volatile field** |
 
 **Cross-family semantics.** `identical` is a byte comparison. When bytes differ, `.db`
@@ -131,3 +150,87 @@ Certified classes are what instantiate `local_map` (`zynq-autoehw/docs/schema.md
 §3): a class certificate is the evidence behind a token's `symbolic` field, while
 `spatial_scope` comes from the frozen `tilegrid.json`. That link is the Claim B
 foundation; it is not implemented yet.
+
+---
+
+## 5. Bit address arithmetic (normative)
+
+`feature name + tile instance -> absolute configuration bit` is shared contract, not
+an implementation detail: the gate and any independent fixture must compute the same
+address or neither can adjudicate the other. This section is the specification both
+sides code against. **It is a shared *contract*, not a shared implementation — an
+independent fixture reimplements it from this text and the frozen data, never by
+reading `scripts/`.** Every constant below was read out of the frozen files; the
+commands are given so it can be re-derived rather than believed.
+
+### 5.1 Inputs
+
+- `data/prjxray/zynq7/segbits_<tiletype>.db` — lines `FEATURE <tok> [<tok> ...]`,
+  each token `[!]<F>_<B>`.
+- `data/prjxray/zynq7/mask_<tiletype>.db` — lines `bit <F>_<B>`, same coordinate
+  space, no feature and no polarity.
+- `data/prjxray/zynq7/xc7z010/tilegrid.json` — per tile instance:
+  `bits.<block>.{baseaddr, frames, offset, words}`.
+
+### 5.2 Block selection
+
+Every tile in the frozen subset exposes exactly one block, **`CLB_IO_CLK`** — the
+configuration-array block. Use it unconditionally for `CLBLL_*`, `CLBLM_*`, `INT_*`.
+(`BLOCK_RAM`, the separate BRAM-content array, appears only on BRAM tiles, which are
+not in this subset. If a future group adds them, block selection becomes a real
+decision and this section gets a MAJOR bump.)
+
+### 5.3 The mapping
+
+For tile instance `T` and segbit token `[!]F_B`:
+
+```
+blk  = tilegrid[T].bits["CLB_IO_CLK"]
+FAR        = int(blk.baseaddr, 16) + F        # requires 0 <= F < blk.frames
+word_index = blk.offset + B // 32             # word within the 101-word frame
+bit_index  = B % 32                           # LSB-first within that word
+expected   = 0 if the token was "!"-negated else 1
+```
+
+A feature is **asserted** iff *every* non-negated token's bit is 1 **and** *every*
+negated token's bit is 0. Polarity is part of the prediction: a certificate that
+records only a bit set, without the expected value per bit, cannot express what
+`INT_L.BYP_ALT0.FAN_BOUNCE2 21_07 !22_07 23_07 24_07 25_07` actually predicts.
+
+### 5.4 Constraints, and what they are worth
+
+Read off the frozen data (`data/prjxray/zynq7/`), so a fixture can assert them:
+
+| constraint | value | how to re-derive |
+|---|---|---|
+| block, all frozen tile types | `CLB_IO_CLK` only | keys of `bits` in `tilegrid.json` |
+| `words` per tile | 2 → `0 <= B <= 63` | `tilegrid.json`; max `B` seen is 63 |
+| `frames` per tile | CLB 36, INT 28 | max `F` seen is 35 (CLB) / 25 (INT) |
+| `offset` values | `0,2,…,48, 51,53,…,99` | 50 distinct values, 108 tiles each |
+| negated tokens exist | 3264 in `segbits_int_l.db` alone | count tokens starting `!` |
+
+**`offset` already skips frame word 50** — the observed jump 48 → 51 is the clock-row
+word, and `tilegrid.json` has accounted for it. Do not apply a second skip. Likewise
+`baseaddr` already encodes block type / half / row / column: add `F` to it, never
+re-derive it from the grid coordinates.
+
+### 5.5 Site to feature prefix
+
+CLB feature names are tile-local (`CLBLM_L.SLICEM_X0.…`), while a Vivado constraint
+names a device site (`SLICE_X8Y0`). The mapping is positional: within a tile's `sites`
+dict, the site with the **lower X** is index 0 and the higher X is index 1, and the
+`SLICEL`/`SLICEM` token must match that site's type. Example from the frozen grid:
+`CLBLM_L_X6Y0` has `SLICE_X8Y0: SLICEM` and `SLICE_X9Y0: SLICEL`, so `SLICEM_X0` is
+`SLICE_X8Y0` and `SLICEL_X1` is `SLICE_X9Y0`.
+
+### 5.6 Frame geometry, and what is *not* yet certified
+
+A 7-series configuration frame is 101 words × 32 bits, word 50 being the clock row.
+That is the only claim in this section not derivable from the frozen data alone — it
+comes from UG470 and from the whole `zynq-xpart` ICAP line working. The frame layout
+is what the first specimen run measures, and a fixture may treat it as an assumption
+to be discharged rather than as established fact.
+
+Everything above describes an address. **Nothing in this section is evidence that the
+bit at that address means what the feature name says** — that is exactly what the
+prediction gate is for, and why prjxray stays an index until a certificate exists.

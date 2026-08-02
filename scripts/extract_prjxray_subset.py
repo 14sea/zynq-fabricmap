@@ -52,7 +52,7 @@ MANIFEST_PATH = DATA / "MANIFEST.json"
 PAYLOAD_DIR = DATA / "prjxray"
 
 MANIFEST_SCHEMA = "frozen_db_subset"
-MANIFEST_SCHEMA_VERSION = "1.0.0"
+MANIFEST_SCHEMA_VERSION = "1.1.0"   # +files[].classified, +totals.provenance_features
 SUPPORTED_SPEC_MAJOR = 1
 
 
@@ -250,10 +250,16 @@ def build(spec: dict, src: Path | None, *, copy: bool, strict: bool = True) -> d
             if rel.endswith(".db"):
                 feats, lines = parse_db(frozen, group["role"])
                 rec["lines"] = lines
+                # Explicit, machine-readable answer to "does this file's feature list
+                # enter the bit-class taxonomy?".  mask files have no features, and
+                # *.origin_info.db restates its parent's feature set with a fuzzer
+                # label — counting either would double-count the taxonomy.
+                rec["classified"] = (group["role"] in ("segbits", "ppips")
+                                     and not is_origin_info(rel))
                 if group["role"] != "mask":
                     rec["features"] = len(feats)
                     feature_sets[rel] = set(feats)
-                    if not is_origin_info(rel):
+                    if rec["classified"]:
                         assigned, unc = classify(feats, group["id"], classes)
                         rec["bit_classes"] = {k: len(v) for k, v in assigned.items() if v}
                         for cid, fl in assigned.items():
@@ -379,7 +385,13 @@ def build(spec: dict, src: Path | None, *, copy: bool, strict: bool = True) -> d
         "totals": {
             "files": len(files),
             "bytes": sum(f["size_bytes"] for f in files),
+            # classified + provenance = every feature line in the frozen .db files.
+            # They are reported separately so a reimplementation cannot silently sum
+            # them: only classified_features is the size of the taxonomy.
             "classified_features": sum(len(v) for v in class_features.values()),
+            "provenance_features": sum(f.get("features", 0) for f in files
+                                       if f.get("classified") is False
+                                       and "features" in f),
         },
         "freeze_stamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
