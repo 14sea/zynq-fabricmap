@@ -473,6 +473,7 @@ def group_semantic_errors(
         str,
         dict[frozenset[tuple[int, int]], dict[str, list[tuple[int, int, bool]]]],
     ] = {}
+    all_rule_coordinates_cache: dict[str, set[tuple[int, int]]] = {}
 
     def load_rule_groups(rule_file: str) -> dict[
         frozenset[tuple[int, int]], dict[str, list[tuple[int, int, bool]]]
@@ -498,6 +499,23 @@ def group_semantic_errors(
         rule_group_cache[rule_file] = groups
         return groups
 
+    def load_all_rule_coordinates(rule_file: str) -> set[tuple[int, int]]:
+        cached = all_rule_coordinates_cache.get(rule_file)
+        if cached is not None:
+            return cached
+        coordinates: set[tuple[int, int]] = set()
+        rule_path = safe_child(data_dir, rule_file)
+        for line_number, line in enumerate(rule_path.read_text(encoding="utf-8").splitlines(), 1):
+            fields = line.split()
+            for token in fields[1:]:
+                parsed = parse_segbit_token(token)
+                if parsed is None:
+                    errors.append(f"{rule_file}:{line_number}: invalid frozen segbit token {token!r}")
+                    continue
+                coordinates.add((parsed[0], parsed[1]))
+        all_rule_coordinates_cache[rule_file] = coordinates
+        return coordinates
+
     def computed_address(tile_name: str, frame_offset: int, bit_offset: int) -> tuple[str, int, int] | None:
         block = tilegrid.get(tile_name, {}).get("bits", {}).get("CLB_IO_CLK")
         if block is None:
@@ -518,6 +536,7 @@ def group_semantic_errors(
         "scope_assignment": {"pass_count": 0, "fail_count": 0},
     }
     semantic_counts = {"member_identity": {"pass_count": 0, "fail_count": 0}}
+    asserted_addresses_by_tile: dict[str, set[tuple[str, int, int]]] = {}
 
     for result in certificate["group_results"]:
         specimen_id = result["prediction_specimen_id"]
@@ -578,6 +597,7 @@ def group_semantic_errors(
             declared_coordinates.add(coordinate)
             address = address_key(item["address"])
             declared_scope[coordinate] = address
+            asserted_addresses_by_tile.setdefault(specimen["tile"], set()).add(address)
             expected_address = computed_address(specimen["tile"], *coordinate)
             if expected_address is None or address != expected_address:
                 errors.append(f"group result key {key!r}: scope address disagrees with normative arithmetic")
@@ -847,7 +867,30 @@ def group_semantic_errors(
         and address_counts["group_exclusivity"]["fail_count"] == 0
         and address_counts["scope_assignment"]["fail_count"] == 0
     )
+    uncovered_by_tile: dict[str, int] = {}
     if certificate["claim_scope"] == "tile":
+        for tile_name in {specimen["tile"] for specimen in specimen_by_id.values()}:
+            tile_type = tilegrid.get(tile_name, {}).get("type")
+            if not isinstance(tile_type, str):
+                continue
+            rule_file = f"prjxray/zynq7/segbits_{tile_type.lower()}.db"
+            if rule_file not in pinned_paths:
+                errors.append(f"tile-wide claim lacks pinned frozen DB for {tile_name}")
+                continue
+            try:
+                required_addresses = {
+                    computed_address(tile_name, frame, bit)
+                    for frame, bit in load_all_rule_coordinates(rule_file)
+                }
+            except (OSError, ValueError) as exc:
+                errors.append(f"tile-wide claim cannot read frozen DB for {tile_name}: {exc}")
+                continue
+            required_addresses.discard(None)
+            uncovered = required_addresses - asserted_addresses_by_tile.get(tile_name, set())
+            if uncovered:
+                uncovered_by_tile[tile_name] = len(uncovered)
+        if uncovered_by_tile:
+            address_passed = False
         has_unknown = False
         for accounting in certificate["pair_accounting"]:
             blocks = [
@@ -874,7 +917,12 @@ def group_semantic_errors(
     semantic_passed = semantic_counts["member_identity"]["fail_count"] == 0
     expected_semantic_status = "passed" if semantic_passed else "failed"
     if certificate["status"] != expected_status:
-        errors.append(f"status={certificate['status']} but address evidence requires {expected_status}")
+        detail = ""
+        if certificate["claim_scope"] == "tile" and uncovered_by_tile:
+            detail = f"; tile-wide DB coverage leaves uncovered addresses {uncovered_by_tile}"
+        errors.append(
+            f"status={certificate['status']} but address evidence requires {expected_status}{detail}"
+        )
     if certificate["semantic_status"] != expected_semantic_status:
         errors.append(
             f"semantic_status={certificate['semantic_status']} but semantic evidence requires {expected_semantic_status}"

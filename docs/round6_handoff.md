@@ -72,7 +72,8 @@ needs structured `failure_reasons`; a semantic-only failure keeps
 - rebuilds expected routed edges from preregistered `netlist_basis`, compares raw edge
   evidence with each pinned attestation, and recomputes semantic identity separately;
 - checks five-bucket duplicate freedom, pairwise disjointness, counts, and union size;
-- rejects tile-wide authority in the presence of `ownership_unknown`.
+- rejects tile-wide authority in the presence of geometric `ownership_unknown` or any
+  frozen-DB coordinate absent from the asserted-scope union for that physical tile.
 
 The verifier can check only the recorded partition and pinned hashes without the
 bitstreams. It cannot recreate the raw diff. A DCP hash is an integrity anchor, not
@@ -93,3 +94,15 @@ python3 host/verify_certificate.py <certificate.json> --require-production
 
 The final command should report `address_pass=32 address_fail=0` and
 `semantic_status=passed semantic_pass=16 semantic_fail=0` for Run B.
+
+## Round 7 correction — tile authority also requires coverage
+
+The first formal group certificate exposed an overclaim path: changing only
+`claim_scope` from `group_bit_set` to `tile` passed when `ownership_unknown` happened
+to be empty. That condition proves attribution of observed movers, not coverage.
+
+The verifier now independently derives every coordinate in each specimen tile's full
+frozen segbits DB and compares it with the union of scopes asserted for that physical
+tile. Both the coverage requirement and the original unknown-ownership requirement
+must pass. Run B remains valid at group scope; promoting the same evidence to tile
+scope fails with 632 and 634 uncovered addresses in its two tiles.

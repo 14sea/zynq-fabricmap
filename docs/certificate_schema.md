@@ -181,6 +181,15 @@ summary. A tile-wide `claim_scope: tile` cannot pass while any pair contains
 `claim_scope: group_bit_set` and currently records no unknown bits; its narrower claim
 would not silently acquire tile-wide authority if that bucket became nonempty later.
 
+Absence of unknown ownership is not coverage. For a tile-wide claim the verifier also
+reads every token coordinate in the frozen `segbits_<tile_type>.db`, instantiates that
+set at each physical specimen tile, and requires it to be a subset of the union of all
+asserted scopes for that tile. No producer-supplied coverage count or `uncovered_bits`
+summary is trusted. An uncovered coordinate makes the address decision fail even when
+every observed changed bit was attributable. The Run B certificate leaves 632 DB
+addresses uncovered in `CLBLL_L_X2Y25` and 634 in `CLBLM_L_X6Y25`, so changing only
+its `claim_scope` to `tile` is rejected.
+
 The verifier does not possess the bitstreams and therefore cannot independently
 recompute `raw_diff_bits`. It validates the partition's internal completeness and the
 attestations' pinned bitstream hashes. Likewise, hashing a checkpoint and bitstream in

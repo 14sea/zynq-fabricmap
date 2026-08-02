@@ -17,6 +17,7 @@ PYTHON = sys.executable
 RUN_DIR = REPO_ROOT / "gate_runs/run_2026_08_02_b"
 PREDICTIONS_PATH = RUN_DIR / "predictions.json"
 MEASUREMENT_PATH = RUN_DIR / "measurement.json"
+REAL_GROUP_CERTIFICATE = RUN_DIR / "certificate.json"
 FEATURE_CERTIFICATE = REPO_ROOT / "gate_runs/run_2026_08_02_a/certificate.json"
 
 
@@ -239,6 +240,15 @@ class Round6Tests(unittest.TestCase):
         self.assertIn("status=passed", checked.stdout)
         self.assertIn("address_pass=32 address_fail=0", checked.stdout)
         self.assertIn("semantic_status=passed semantic_pass=16 semantic_fail=0", checked.stdout)
+
+    def test_first_real_group_certificate_passes_production_verification(self) -> None:
+        checked = run(
+            "host/verify_certificate.py",
+            str(REAL_GROUP_CERTIFICATE),
+            "--require-production",
+        )
+        self.assertEqual(checked.returncode, 0, checked.stdout)
+        self.assertIn("address_pass=32 address_fail=0", checked.stdout)
 
     def test_truncated_scope_is_rejected_even_when_commitment_matches(self) -> None:
         value = build_certificate()
@@ -472,6 +482,12 @@ class Round6Tests(unittest.TestCase):
         checked = verify_temporary(value)
         self.assertEqual(checked.returncode, 2, checked.stdout)
         self.assertIn("CERTIFICATION FAILED", checked.stdout)
+
+    def test_real_group_certificate_cannot_be_promoted_to_tile_scope(self) -> None:
+        value = load(REAL_GROUP_CERTIFICATE)
+        value["claim_scope"] = "tile"
+        checked = verify_temporary(value)
+        self.assert_fails(checked, "tile-wide DB coverage leaves uncovered addresses")
 
     def test_name_derived_carry4_grouping_is_rejected(self) -> None:
         value = build_certificate()
