@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/14sea/zynq-fabricmap/schemas/certificate.schema.json",
   "title": "Zynq fabric bit-class certificate",
-  "description": "Consumer-owned record emitted by the specimen-diff prediction gate. This schema validates certificate 1.0.0 and the additive 1.1.0 evidence fields. Unknown fields are permitted so 1.x consumers can ignore later MINOR additions.",
+  "description": "Consumer-owned record emitted by the specimen-diff prediction gate. This schema validates certificate 1.0.0 through the additive 1.2.0 lifecycle evidence fields. Unknown fields are permitted so 1.x consumers can ignore later MINOR additions.",
   "type": "object",
   "required": [
     "schema",
@@ -21,6 +21,7 @@
     "schema": {"const": "fabric_bit_class_certificate"},
     "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"},
     "profile": {"enum": ["conformance", "production"]},
+    "prediction_commitment": {"$ref": "#/$defs/prediction_commitment"},
     "certificate_id": {"$ref": "#/$defs/nonempty_string"},
     "status": {"enum": ["passed", "failed"]},
     "failure_reasons": {
@@ -131,6 +132,30 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "required": ["profile", "schema_version"],
+        "properties": {
+          "profile": {"const": "production"},
+          "schema_version": {"pattern": "^1\\.(?:[2-9]|[1-9][0-9]+)\\.[0-9]+$"}
+        }
+      },
+      "then": {
+        "required": ["prediction_commitment"],
+        "properties": {
+          "feature_results": {
+            "items": {
+              "required": ["prediction_specimen_id", "expected_transition"],
+              "properties": {
+                "predicted_assignments": {
+                  "items": {"required": ["token"]}
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -185,6 +210,27 @@
         "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"}
       }
     },
+    "prediction_totals": {
+      "type": "object",
+      "required": ["specimens", "predictions", "holdout_predictions"],
+      "properties": {
+        "specimens": {"type": "integer", "minimum": 1},
+        "predictions": {"type": "integer", "minimum": 1},
+        "holdout_predictions": {"type": "integer", "minimum": 1}
+      }
+    },
+    "prediction_commitment": {
+      "type": "object",
+      "required": ["run_id", "path", "sha256", "schema_version", "seed", "totals"],
+      "properties": {
+        "run_id": {"$ref": "#/$defs/nonempty_string"},
+        "path": {"$ref": "#/$defs/nonempty_string"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"},
+        "seed": {"$ref": "#/$defs/nonempty_string"},
+        "totals": {"$ref": "#/$defs/prediction_totals"}
+      }
+    },
     "address": {
       "type": "object",
       "required": ["far", "word", "bit"],
@@ -198,6 +244,7 @@
       "type": "object",
       "required": ["segbit", "address", "expected_value"],
       "properties": {
+        "token": {"$ref": "#/$defs/nonempty_string"},
         "segbit": {
           "type": "object",
           "required": ["frame_offset", "bit_offset", "negated"],
@@ -209,6 +256,14 @@
         },
         "address": {"$ref": "#/$defs/address"},
         "expected_value": {"enum": [0, 1]}
+      }
+    },
+    "expected_transition": {
+      "type": "object",
+      "required": ["before", "after"],
+      "properties": {
+        "before": {"enum": [0, 1]},
+        "after": {"enum": [0, 1]}
       }
     },
     "observed_assignment": {
@@ -308,6 +363,7 @@
       ],
       "properties": {
         "feature": {"$ref": "#/$defs/nonempty_string"},
+        "prediction_specimen_id": {"$ref": "#/$defs/nonempty_string"},
         "split": {"enum": ["mine", "holdout"]},
         "rule_file": {"$ref": "#/$defs/nonempty_string"},
         "baseline_specimen_id": {"$ref": "#/$defs/nonempty_string"},
@@ -316,6 +372,7 @@
           "type": "array",
           "items": {"$ref": "#/$defs/predicted_assignment"}
         },
+        "expected_transition": {"$ref": "#/$defs/expected_transition"},
         "observed_assignments": {
           "type": "array",
           "items": {"$ref": "#/$defs/observed_assignment"}

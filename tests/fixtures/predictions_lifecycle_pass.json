@@ -1,0 +1,61 @@
+{
+  "schema": "gate_predictions",
+  "schema_version": "1.0.0",
+  "bit_class": "clb_lut_init",
+  "seed": "fixture-round4",
+  "split_policy": {
+    "kind": "fixture"
+  },
+  "frozen_inputs": {
+    "manifest_freeze_stamp": "2026-08-02T01:29:26Z",
+    "spec_sha256": "ffe4fb9f6bdc118904a6dcbb5625f87d12b12e633ad4dee8c6772fbe45da8e37",
+    "files": {
+      "prjxray/zynq7/segbits_clbll_l.db": "9bf6bdffdc814569a7da53c696e46207aab23ea66c9dd92c47e50a6211dd739b"
+    }
+  },
+  "specimens": [
+    {
+      "specimen_id": "fixture_prediction_a"
+    },
+    {
+      "specimen_id": "fixture_prediction_b"
+    }
+  ],
+  "predictions": [
+    {
+      "specimen_id": "fixture_prediction_a",
+      "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[01]",
+      "split": "holdout",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "predicted_assignments": [
+        {
+          "token": "33_15",
+          "segbit": {"frame_offset": 33, "bit_offset": 15, "negated": false},
+          "address": {"far": "0x00400A21", "word": 51, "bit": 15},
+          "expected_value": 1
+        }
+      ],
+      "expected_transition": {"before": 0, "after": 1}
+    },
+    {
+      "specimen_id": "fixture_prediction_b",
+      "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[01]",
+      "split": "holdout",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "predicted_assignments": [
+        {
+          "token": "33_15",
+          "segbit": {"frame_offset": 33, "bit_offset": 15, "negated": false},
+          "address": {"far": "0x00400A21", "word": 51, "bit": 15},
+          "expected_value": 1
+        }
+      ],
+      "expected_transition": {"before": 0, "after": 1}
+    }
+  ],
+  "totals": {
+    "specimens": 2,
+    "predictions": 2,
+    "holdout_predictions": 2
+  }
+}

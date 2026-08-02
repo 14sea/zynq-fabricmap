@@ -83,6 +83,143 @@ def validate_external_schema(value: dict[str, Any], schema_path: Path, label: st
     return findings
 
 
+PredictionKey = tuple[str, str]
+
+
+def load_prediction_commitment(
+    certificate: dict[str, Any],
+    repo_root: Path,
+) -> tuple[list[str], dict[PredictionKey, dict[str, Any]], set[PredictionKey]]:
+    """Load and independently validate the preregistered prediction artifact."""
+
+    errors: list[str] = []
+    committed_by_key: dict[PredictionKey, dict[str, Any]] = {}
+    holdout_keys: set[PredictionKey] = set()
+    reference = certificate.get("prediction_commitment")
+    if reference is None:
+        return ["production 1.2 requires prediction_commitment"], committed_by_key, holdout_keys
+
+    try:
+        path = safe_child(repo_root, reference["path"])
+        if not path.is_file():
+            raise ValueError(f"prediction artifact does not exist: {reference['path']}")
+        actual_hash = hash_file(path)
+        if actual_hash != reference["sha256"]:
+            raise ValueError(
+                f"prediction commitment hash mismatch (pinned={reference['sha256']} actual={actual_hash})"
+            )
+        artifact = load_json(path)
+    except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        return [f"cannot validate prediction commitment: {exc}"], committed_by_key, holdout_keys
+
+    expected_root_fields = {
+        "schema",
+        "schema_version",
+        "bit_class",
+        "seed",
+        "split_policy",
+        "frozen_inputs",
+        "specimens",
+        "predictions",
+        "totals",
+    }
+    missing_root = sorted(expected_root_fields - set(artifact))
+    if missing_root:
+        return [f"prediction artifact is missing fields: {missing_root}"], committed_by_key, holdout_keys
+    if artifact["schema"] != "gate_predictions":
+        errors.append("prediction artifact schema is not 'gate_predictions'")
+    if artifact["schema_version"] != reference["schema_version"]:
+        errors.append("prediction commitment schema_version differs from artifact")
+    if artifact["seed"] != reference["seed"]:
+        errors.append("prediction commitment seed differs from artifact")
+    if artifact["bit_class"] != certificate["bit_class"]["id"]:
+        errors.append("prediction artifact bit_class differs from certificate")
+
+    frozen = artifact["frozen_inputs"]
+    certificate_frozen = certificate["frozen_inputs"]
+    if not isinstance(frozen, dict):
+        errors.append("prediction artifact frozen_inputs is not an object")
+    else:
+        if frozen.get("manifest_freeze_stamp") != certificate_frozen["freeze_stamp"]:
+            errors.append("prediction artifact manifest_freeze_stamp differs from certificate")
+        if frozen.get("spec_sha256") != certificate_frozen["spec"]["sha256"]:
+            errors.append("prediction artifact spec_sha256 differs from certificate")
+
+    artifact_specimens = artifact["specimens"]
+    predictions = artifact["predictions"]
+    totals = artifact["totals"]
+    if not isinstance(artifact_specimens, list) or not isinstance(predictions, list) or not isinstance(totals, dict):
+        errors.append("prediction artifact specimens, predictions, or totals has the wrong type")
+        return errors, committed_by_key, holdout_keys
+
+    prediction_specimen_ids: set[str] = set()
+    for index, specimen in enumerate(artifact_specimens):
+        if not isinstance(specimen, dict) or not isinstance(specimen.get("specimen_id"), str):
+            errors.append(f"prediction artifact specimens[{index}] lacks a string specimen_id")
+            continue
+        specimen_id = specimen["specimen_id"]
+        if specimen_id in prediction_specimen_ids:
+            errors.append(f"prediction artifact duplicates specimen_id {specimen_id!r}")
+        prediction_specimen_ids.add(specimen_id)
+
+    expected_prediction_fields = {
+        "specimen_id",
+        "feature",
+        "split",
+        "rule_file",
+        "predicted_assignments",
+        "expected_transition",
+    }
+    for index, prediction in enumerate(predictions):
+        if not isinstance(prediction, dict):
+            errors.append(f"prediction artifact predictions[{index}] is not an object")
+            continue
+        if set(prediction) != expected_prediction_fields:
+            errors.append(
+                f"prediction artifact predictions[{index}] fields differ from the 1.0.0 contract"
+            )
+            continue
+        specimen_id = prediction["specimen_id"]
+        feature = prediction["feature"]
+        if not isinstance(specimen_id, str) or not specimen_id or not isinstance(feature, str) or not feature:
+            errors.append(f"prediction artifact predictions[{index}] has an invalid pair key")
+            continue
+        key = specimen_id, feature
+        if key in committed_by_key:
+            errors.append(f"prediction artifact duplicates pair key {key!r}")
+            continue
+        if specimen_id not in prediction_specimen_ids:
+            errors.append(f"prediction artifact pair key {key!r} names an unknown specimen")
+        if prediction["split"] not in ("mine", "holdout"):
+            errors.append(f"prediction artifact pair key {key!r} has an invalid split")
+        assignments = prediction["predicted_assignments"]
+        if not isinstance(assignments, list) or any(
+            not isinstance(item, dict)
+            or set(item) != {"token", "segbit", "address", "expected_value"}
+            for item in assignments
+        ):
+            errors.append(f"prediction artifact pair key {key!r} has malformed assignments")
+        transition = prediction["expected_transition"]
+        if not isinstance(transition, dict) or set(transition) != {"before", "after"}:
+            errors.append(f"prediction artifact pair key {key!r} has a malformed expected_transition")
+        committed_by_key[key] = prediction
+        if prediction["split"] == "holdout":
+            holdout_keys.add(key)
+
+    recomputed_totals = {
+        "specimens": len(artifact_specimens),
+        "predictions": len(predictions),
+        "holdout_predictions": len(holdout_keys),
+    }
+    if totals != recomputed_totals:
+        errors.append(
+            f"prediction artifact totals mismatch (recorded={totals} computed={recomputed_totals})"
+        )
+    if reference["totals"] != totals:
+        errors.append("prediction commitment totals differ from artifact")
+    return errors, committed_by_key, holdout_keys
+
+
 def semantic_errors(
     certificate: dict[str, Any],
     repo_root: Path,
@@ -100,6 +237,9 @@ def semantic_errors(
         errors.append("production verification requires profile='production'")
     if profile == "production" and version < (1, 1, 0):
         errors.append("the production profile requires certificate schema_version >= 1.1.0")
+    if require_production and version < (1, 2, 0):
+        errors.append("current production verification requires certificate schema_version >= 1.2.0")
+    lifecycle_profile = profile == "production" and version >= (1, 2, 0)
 
     target = certificate["target"]
     for field in ("family", "device", "part"):
@@ -170,6 +310,15 @@ def semantic_errors(
         errors.append(f"mine and holdout overlap: {sorted(mine_set & holdout_set)[0]}")
     expected_features = mine_set | holdout_set
 
+    committed_by_key: dict[PredictionKey, dict[str, Any]] = {}
+    committed_holdout_keys: set[PredictionKey] = set()
+    if lifecycle_profile:
+        commitment_errors, committed_by_key, committed_holdout_keys = load_prediction_commitment(
+            certificate,
+            repo_root,
+        )
+        errors.extend(commitment_errors)
+
     specimens = certificate["specimens"]
     specimen_by_id: dict[str, dict[str, Any]] = {}
     specimen_attestations: dict[str, dict[str, Any]] = {}
@@ -234,21 +383,59 @@ def semantic_errors(
                     errors.append(f"specimen {specimen_id}: bitstream_sha256 is absent from attestation outputs")
 
     results = certificate["feature_results"]
-    result_by_feature: dict[str, dict[str, Any]] = {}
+    result_by_key: dict[str | PredictionKey, dict[str, Any]] = {}
+    actual_mine_features: set[str] = set()
+    actual_holdout_features: set[str] = set()
+    actual_holdout_keys: set[PredictionKey] = set()
     used_specimens: set[str] = set()
     computed_tp = 0
     computed_fn = 0
     computed_fp = 0
     for result in results:
         feature = result["feature"]
-        if feature in result_by_feature:
-            errors.append(f"duplicate feature result {feature!r}")
-        result_by_feature[feature] = result
-        expected_split = "mine" if feature in mine_set else "holdout" if feature in holdout_set else None
+        if lifecycle_profile:
+            prediction_key: str | PredictionKey = result["prediction_specimen_id"], feature
+        else:
+            prediction_key = feature
+        if prediction_key in result_by_key:
+            errors.append(f"duplicate feature result key {prediction_key!r}")
+        result_by_key[prediction_key] = result
+
+        committed_prediction = (
+            committed_by_key.get(prediction_key)
+            if lifecycle_profile and isinstance(prediction_key, tuple)
+            else None
+        )
+        if lifecycle_profile:
+            expected_split = committed_prediction["split"] if committed_prediction is not None else None
+            if committed_prediction is None:
+                errors.append(f"feature result key {prediction_key!r} is absent from prediction commitment")
+            else:
+                recorded_prediction = {
+                    "specimen_id": result["prediction_specimen_id"],
+                    "feature": feature,
+                    "split": result["split"],
+                    "rule_file": result["rule_file"],
+                    "predicted_assignments": result["predicted_assignments"],
+                    "expected_transition": result["expected_transition"],
+                }
+                if recorded_prediction != committed_prediction:
+                    errors.append(
+                        f"feature result key {prediction_key!r} differs from preregistered prediction"
+                    )
+        else:
+            expected_split = "mine" if feature in mine_set else "holdout" if feature in holdout_set else None
         if expected_split is None:
-            errors.append(f"feature result is absent from split membership: {feature}")
+            if not lifecycle_profile:
+                errors.append(f"feature result is absent from split membership: {feature}")
         elif result["split"] != expected_split:
             errors.append(f"feature {feature}: result split disagrees with membership")
+        if result["split"] == "mine":
+            actual_mine_features.add(feature)
+        else:
+            actual_holdout_features.add(feature)
+            if lifecycle_profile and isinstance(prediction_key, tuple):
+                actual_holdout_keys.add(prediction_key)
 
         pair: list[dict[str, Any]] = []
         for field in ("baseline_specimen_id", "feature_specimen_id"):
@@ -283,6 +470,13 @@ def semantic_errors(
             expected_from_polarity = 0 if item["segbit"]["negated"] else 1
             if item["expected_value"] != expected_from_polarity:
                 errors.append(f"feature {feature}: expected_value disagrees with segbit polarity at {key}")
+            if "token" in item:
+                expected_token = (
+                    ("!" if item["segbit"]["negated"] else "")
+                    + f"{item['segbit']['frame_offset']}_{item['segbit']['bit_offset']}"
+                )
+                if item["token"] != expected_token:
+                    errors.append(f"feature {feature}: token disagrees with segbit coordinate at {key}")
             if block is not None:
                 frame_offset = item["segbit"]["frame_offset"]
                 bit_offset = item["segbit"]["bit_offset"]
@@ -447,16 +641,28 @@ def semantic_errors(
                 computed_fn += 1
             computed_fp += len(expected_unattributed)
 
-    actual_features = set(result_by_feature)
-    if actual_features != expected_features:
-        missing = sorted(expected_features - actual_features)
-        extra = sorted(actual_features - expected_features)
-        errors.append(f"feature_results membership mismatch (missing={missing[:1]} extra={extra[:1]})")
+    if lifecycle_profile:
+        if actual_mine_features != mine_set or actual_holdout_features != holdout_set:
+            errors.append("feature_results split projections differ from declared feature membership")
+        if actual_holdout_keys != committed_holdout_keys:
+            missing = sorted(committed_holdout_keys - actual_holdout_keys)
+            extra = sorted(actual_holdout_keys - committed_holdout_keys)
+            errors.append(
+                "holdout prediction completeness mismatch "
+                f"(missing={len(missing)} {missing[:1]} extra={len(extra)} {extra[:1]})"
+            )
+    else:
+        actual_features = set(result_by_key)
+        if actual_features != expected_features:
+            missing = sorted(expected_features - actual_features)
+            extra = sorted(actual_features - expected_features)
+            errors.append(f"feature_results membership mismatch (missing={missing[:1]} extra={extra[:1]})")
     if used_specimens != set(specimen_by_id):
         errors.append("specimens must be referenced by at least one feature result")
 
     coverage = class_record["coverage"]
-    if coverage["attested_count"] != len(expected_features):
+    expected_attested_count = len(results) if lifecycle_profile else len(expected_features)
+    if coverage["attested_count"] != expected_attested_count:
         errors.append("coverage.attested_count differs from explicit split membership")
     if coverage["class_entry_count"] != current_entries:
         errors.append("coverage.class_entry_count differs from current manifest")
@@ -470,7 +676,8 @@ def semantic_errors(
     if recorded_accounting != computed_accounting:
         errors.append(f"accounting mismatch (recorded={recorded_accounting} computed={computed_accounting})")
 
-    criterion_passed = computed_tp == len(holdout) and computed_fn == 0 and computed_fp == 0
+    holdout_count = len(committed_holdout_keys) if lifecycle_profile else len(holdout)
+    criterion_passed = computed_tp == holdout_count and computed_fn == 0 and computed_fp == 0
     expected_status = "passed" if criterion_passed else "failed"
     if certificate["status"] != expected_status:
         errors.append(

@@ -63,13 +63,20 @@ class Round3Tests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout)
         self.assertIn(text, result.stdout)
 
-    def test_production_profile_passes(self) -> None:
+    def test_legacy_production_profile_remains_generically_valid(self) -> None:
+        result = run(
+            "host/verify_certificate.py",
+            str(CERTIFICATE_FIXTURE),
+        )
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_current_production_rejects_precommitment_profile(self) -> None:
         result = run(
             "host/verify_certificate.py",
             str(CERTIFICATE_FIXTURE),
             "--require-production",
         )
-        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assert_fails(result, "requires certificate schema_version >= 1.2.0")
 
     def test_production_mode_rejects_legacy_profile_omission(self) -> None:
         result = run(

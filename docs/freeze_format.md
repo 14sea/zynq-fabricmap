@@ -192,6 +192,19 @@ bit_index  = B % 32                           # LSB-first within that word
 expected   = 0 if the token was "!"-negated else 1
 ```
 
+**Token text is `%02d_%02d` (normative).** Both fields are zero-padded to exactly
+two digits in the frozen data — `32_09`, not `32_9`; `00_25`, not `0_25`. Verified
+across all 14,142 segbit tokens in `segbits_clbll_l.db`, `segbits_clblm_l.db` and
+`segbits_int_l.db`: zero exceptions. A consumer that reconstructs a token from the
+parsed `frame_offset`/`bit_offset` must format it the same way, and the safer
+comparison is against the verbatim db text rather than against a reconstruction. An
+emitted `token` field is the db string copied, never re-rendered.
+
+This was ambiguous in the first version of this section, which said only `[!]<F>_<B>`.
+Two independent implementations read it two different ways and the disagreement
+surfaced on the first real certificate (round 4/5) — the spec was at fault, not either
+implementation.
+
 A feature is **asserted** iff *every* non-negated token's bit is 1 **and** *every*
 negated token's bit is 0. Polarity is part of the prediction: a certificate that
 records only a bit set, without the expected value per bit, cannot express what
