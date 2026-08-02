@@ -84,6 +84,9 @@ def validate_external_schema(value: dict[str, Any], schema_path: Path, label: st
 
 
 PredictionKey = tuple[str, str]
+GROUP_BASIS_LUT = "FF.D driven by the LUT6 output"
+GROUP_BASIS_PIN = "FF.D driven by a package pin through the slice bypass"
+GROUP_BUCKETS = ("in_scope", "frame_ecc", "db_attributed", "ownership_unknown", "unattributed")
 
 
 def load_prediction_commitment(
@@ -97,7 +100,7 @@ def load_prediction_commitment(
     holdout_keys: set[PredictionKey] = set()
     reference = certificate.get("prediction_commitment")
     if reference is None:
-        return ["production 1.2 requires prediction_commitment"], committed_by_key, holdout_keys
+        return ["production lifecycle verification requires prediction_commitment"], committed_by_key, holdout_keys
 
     try:
         path = safe_child(repo_root, reference["path"])
@@ -162,29 +165,40 @@ def load_prediction_commitment(
             errors.append(f"prediction artifact duplicates specimen_id {specimen_id!r}")
         prediction_specimen_ids.add(specimen_id)
 
-    expected_prediction_fields = {
-        "specimen_id",
-        "feature",
-        "split",
-        "rule_file",
-        "predicted_assignments",
-        "expected_transition",
-    }
+    group_model = certificate.get("evidence_model") == "group"
+    if group_model:
+        expected_prediction_fields = {
+            "specimen_id",
+            "group",
+            "split",
+            "rule_file",
+            "scope",
+            "assertions",
+        }
+    else:
+        expected_prediction_fields = {
+            "specimen_id",
+            "feature",
+            "split",
+            "rule_file",
+            "predicted_assignments",
+            "expected_transition",
+        }
     for index, prediction in enumerate(predictions):
         if not isinstance(prediction, dict):
             errors.append(f"prediction artifact predictions[{index}] is not an object")
             continue
         if set(prediction) != expected_prediction_fields:
             errors.append(
-                f"prediction artifact predictions[{index}] fields differ from the 1.0.0 contract"
+                f"prediction artifact predictions[{index}] fields differ from the evidence-model contract"
             )
             continue
         specimen_id = prediction["specimen_id"]
-        feature = prediction["feature"]
-        if not isinstance(specimen_id, str) or not specimen_id or not isinstance(feature, str) or not feature:
+        subject = prediction["group"] if group_model else prediction["feature"]
+        if not isinstance(specimen_id, str) or not specimen_id or not isinstance(subject, str) or not subject:
             errors.append(f"prediction artifact predictions[{index}] has an invalid pair key")
             continue
-        key = specimen_id, feature
+        key = specimen_id, subject
         if key in committed_by_key:
             errors.append(f"prediction artifact duplicates pair key {key!r}")
             continue
@@ -192,16 +206,22 @@ def load_prediction_commitment(
             errors.append(f"prediction artifact pair key {key!r} names an unknown specimen")
         if prediction["split"] not in ("mine", "holdout"):
             errors.append(f"prediction artifact pair key {key!r} has an invalid split")
-        assignments = prediction["predicted_assignments"]
-        if not isinstance(assignments, list) or any(
-            not isinstance(item, dict)
-            or set(item) != {"token", "segbit", "address", "expected_value"}
-            for item in assignments
-        ):
-            errors.append(f"prediction artifact pair key {key!r} has malformed assignments")
-        transition = prediction["expected_transition"]
-        if not isinstance(transition, dict) or set(transition) != {"before", "after"}:
-            errors.append(f"prediction artifact pair key {key!r} has a malformed expected_transition")
+        if group_model:
+            scope = prediction["scope"]
+            assertions = prediction["assertions"]
+            if not isinstance(scope, list) or not scope or not isinstance(assertions, list):
+                errors.append(f"prediction artifact pair key {key!r} has malformed group evidence")
+        else:
+            assignments = prediction["predicted_assignments"]
+            if not isinstance(assignments, list) or any(
+                not isinstance(item, dict)
+                or set(item) != {"token", "segbit", "address", "expected_value"}
+                for item in assignments
+            ):
+                errors.append(f"prediction artifact pair key {key!r} has malformed assignments")
+            transition = prediction["expected_transition"]
+            if not isinstance(transition, dict) or set(transition) != {"before", "after"}:
+                errors.append(f"prediction artifact pair key {key!r} has a malformed expected_transition")
         committed_by_key[key] = prediction
         if prediction["split"] == "holdout":
             holdout_keys.add(key)
@@ -211,6 +231,23 @@ def load_prediction_commitment(
         "predictions": len(predictions),
         "holdout_predictions": len(holdout_keys),
     }
+    if group_model:
+        assertion_count = sum(
+            len(prediction.get("assertions", []))
+            for prediction in predictions
+            if isinstance(prediction, dict)
+        )
+        semantic_count = sum(
+            1
+            for prediction in predictions
+            if isinstance(prediction, dict)
+            for assertion in prediction.get("assertions", [])
+            if isinstance(assertion, dict) and assertion.get("semantic") is True
+        )
+        recomputed_totals.update(
+            assertions=assertion_count,
+            semantic_assertions=semantic_count,
+        )
     if totals != recomputed_totals:
         errors.append(
             f"prediction artifact totals mismatch (recorded={totals} computed={recomputed_totals})"
@@ -220,11 +257,538 @@ def load_prediction_commitment(
     return errors, committed_by_key, holdout_keys
 
 
+def parse_segbit_token(token: str) -> tuple[int, int, bool] | None:
+    match = re.fullmatch(r"(!?)([0-9]+)_([0-9]+)", token)
+    if match is None:
+        return None
+    return int(match.group(2)), int(match.group(3)), bool(match.group(1))
+
+
+def group_semantic_errors(
+    certificate: dict[str, Any],
+    repo_root: Path,
+    require_production: bool = False,
+) -> list[str]:
+    """Validate certificate 1.3 group evidence without consulting producer code."""
+
+    errors: list[str] = []
+    data_dir = repo_root / "data"
+    manifest = load_json(data_dir / "MANIFEST.json")
+    spec = load_json(data_dir / "subset_spec.json")
+    tilegrid = load_json(data_dir / "prjxray/zynq7/xc7z010/tilegrid.json")
+
+    version = tuple(int(part) for part in certificate["schema_version"].split("."))
+    profile = certificate.get("profile")
+    if require_production and profile != "production":
+        errors.append("production verification requires profile='production'")
+    if profile == "production" and version < (1, 3, 0):
+        errors.append("the group production profile requires certificate schema_version >= 1.3.0")
+
+    target = certificate["target"]
+    for field in ("family", "device", "part"):
+        if target[field] != manifest["target"][field]:
+            errors.append(f"target.{field} differs from current manifest")
+
+    frozen = certificate["frozen_inputs"]
+    if frozen["manifest_schema_version"] != manifest["schema_version"]:
+        errors.append("frozen_inputs.manifest_schema_version is stale")
+    if frozen["freeze_stamp"] != manifest["freeze_stamp"]:
+        errors.append("frozen_inputs.freeze_stamp is stale")
+    pinned_spec = frozen["spec"]
+    if pinned_spec["path"] != manifest["spec"]["path"]:
+        errors.append("frozen_inputs.spec.path differs from manifest")
+    if pinned_spec["sha256"] != manifest["spec"]["sha256"]:
+        errors.append("frozen_inputs.spec.sha256 differs from manifest")
+    spec_path = repo_root / manifest["spec"]["path"]
+    if not spec_path.is_file() or hash_file(spec_path) != pinned_spec["sha256"]:
+        errors.append("frozen_inputs.spec does not match current file bytes")
+
+    manifest_files = {entry["path"]: entry for entry in manifest["files"]}
+    pinned_paths: set[str] = set()
+    for index, pinned in enumerate(frozen["files"]):
+        path_text = pinned["path"]
+        if path_text in pinned_paths:
+            errors.append(f"frozen_inputs.files[{index}] duplicates {path_text}")
+            continue
+        pinned_paths.add(path_text)
+        current = manifest_files.get(path_text)
+        if current is None:
+            errors.append(f"frozen input is absent from current manifest: {path_text}")
+            continue
+        if pinned["sha256"] != current["sha256"]:
+            errors.append(f"frozen input hash is stale: {path_text}")
+        try:
+            actual_path = safe_child(data_dir, path_text)
+        except ValueError as exc:
+            errors.append(str(exc))
+            continue
+        if not actual_path.is_file() or hash_file(actual_path) != pinned["sha256"]:
+            errors.append(f"frozen input does not match current file bytes: {path_text}")
+
+    class_record = certificate["bit_class"]
+    current_class = next(
+        (entry for entry in manifest["bit_classes"] if entry["id"] == class_record["id"]),
+        None,
+    )
+    if current_class is None:
+        errors.append(f"bit class {class_record['id']!r} is absent from current manifest")
+        current_entries = class_record["manifest_entries"]
+    else:
+        current_entries = current_class["entries"]
+        if class_record["tier"] != current_class["tier"]:
+            errors.append("bit_class.tier differs from current manifest")
+        if class_record["manifest_entries"] != current_entries:
+            errors.append("bit_class.manifest_entries differs from current manifest")
+    spec_class = next(
+        (entry for entry in spec["bit_classes"] if entry["id"] == class_record["id"]),
+        None,
+    )
+    if spec_class is None:
+        errors.append(f"bit class {class_record['id']!r} is absent from subset spec")
+        feature_pattern = None
+    else:
+        feature_pattern = re.compile(spec_class["feature_regex"])
+
+    commitment_errors, committed_by_key, committed_holdout_keys = load_prediction_commitment(
+        certificate,
+        repo_root,
+    )
+    errors.extend(commitment_errors)
+
+    specimen_by_id: dict[str, dict[str, Any]] = {}
+    specimen_attestations: dict[str, dict[str, Any]] = {}
+    for specimen in certificate["specimens"]:
+        specimen_id = specimen["specimen_id"]
+        if specimen_id in specimen_by_id:
+            errors.append(f"duplicate specimen_id {specimen_id!r}")
+        specimen_by_id[specimen_id] = specimen
+        tile = tilegrid.get(specimen["tile"])
+        if tile is None:
+            errors.append(f"specimen {specimen_id}: unknown tile {specimen['tile']!r}")
+            continue
+        if specimen["tile_type"] != tile["type"]:
+            errors.append(f"specimen {specimen_id}: tile_type differs from tilegrid")
+        if specimen["site"] not in tile.get("sites", {}):
+            errors.append(f"specimen {specimen_id}: site is absent from tilegrid tile")
+
+        reference = specimen["attestation"]
+        try:
+            attestation_path = safe_child(repo_root, reference["path"])
+            if not attestation_path.is_file():
+                raise ValueError(f"attestation file does not exist: {reference['path']}")
+            actual_hash = hash_file(attestation_path)
+            if actual_hash != reference["sha256"]:
+                raise ValueError(
+                    f"attestation hash mismatch (pinned={reference['sha256']} actual={actual_hash})"
+                )
+            attestation = load_json(attestation_path)
+            external_findings = validate_external_schema(
+                attestation,
+                repo_root / "schemas/specimen_attestation.schema.json",
+                f"specimen {specimen_id} attestation",
+            )
+            errors.extend(external_findings)
+            if external_findings:
+                continue
+            specimen_attestations[specimen_id] = attestation
+            resolved = attestation["resolved"]
+            if attestation["schema_version"] != reference["schema_version"]:
+                errors.append(f"specimen {specimen_id}: pinned attestation schema_version differs from file")
+            if resolved["resolved_loc"] != specimen["site"] or reference["resolved_loc"] != specimen["site"]:
+                errors.append(f"specimen {specimen_id}: attested resolved_loc differs from site")
+            if resolved["resolved_bel"] != reference["resolved_bel"]:
+                errors.append(f"specimen {specimen_id}: pinned resolved_bel differs from attestation")
+            if resolved["tile"] != specimen["tile"]:
+                errors.append(f"specimen {specimen_id}: attested tile differs from specimen tile")
+            if resolved["pin_mapping_is_identity"] != reference["pin_mapping_is_identity"]:
+                errors.append(f"specimen {specimen_id}: pinned pin mapping summary differs from attestation")
+            if attestation["checkpoint"] != reference["checkpoint"]:
+                errors.append(f"specimen {specimen_id}: pinned checkpoint differs from attestation")
+            if attestation["inputs"]["part"] != target["part"]:
+                errors.append(f"specimen {specimen_id}: attested part differs from certificate target")
+            if specimen["bitstream_sha256"] not in attestation["outputs"].values():
+                errors.append(f"specimen {specimen_id}: bitstream_sha256 is absent from attestation outputs")
+        except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+            errors.append(f"specimen {specimen_id}: cannot validate attestation: {exc}")
+
+    rule_group_cache: dict[
+        str,
+        dict[frozenset[tuple[int, int]], dict[str, list[tuple[int, int, bool]]]],
+    ] = {}
+
+    def load_rule_groups(rule_file: str) -> dict[
+        frozenset[tuple[int, int]], dict[str, list[tuple[int, int, bool]]]
+    ]:
+        cached = rule_group_cache.get(rule_file)
+        if cached is not None:
+            return cached
+        groups: dict[
+            frozenset[tuple[int, int]], dict[str, list[tuple[int, int, bool]]]
+        ] = {}
+        rule_path = safe_child(data_dir, rule_file)
+        for line_number, line in enumerate(rule_path.read_text(encoding="utf-8").splitlines(), 1):
+            fields = line.split()
+            if not fields or feature_pattern is None or feature_pattern.fullmatch(fields[0]) is None:
+                continue
+            parsed = [parse_segbit_token(token) for token in fields[1:]]
+            if not parsed or any(item is None for item in parsed):
+                errors.append(f"{rule_file}:{line_number}: invalid or empty mux segbits rule")
+                continue
+            tokens = [item for item in parsed if item is not None]
+            coordinates = frozenset((frame, bit) for frame, bit, _ in tokens)
+            groups.setdefault(coordinates, {})[fields[0]] = tokens
+        rule_group_cache[rule_file] = groups
+        return groups
+
+    def computed_address(tile_name: str, frame_offset: int, bit_offset: int) -> tuple[str, int, int] | None:
+        block = tilegrid.get(tile_name, {}).get("bits", {}).get("CLB_IO_CLK")
+        if block is None:
+            return None
+        return (
+            f"0x{int(block['baseaddr'], 16) + frame_offset:08X}",
+            block["offset"] + bit_offset // 32,
+            bit_offset % 32,
+        )
+
+    actual_holdout_keys: set[PredictionKey] = set()
+    result_keys: set[PredictionKey] = set()
+    used_specimens: set[str] = set()
+    mine_groups: set[str] = set()
+    holdout_groups: set[str] = set()
+    address_counts = {
+        "group_exclusivity": {"pass_count": 0, "fail_count": 0},
+        "scope_assignment": {"pass_count": 0, "fail_count": 0},
+    }
+    semantic_counts = {"member_identity": {"pass_count": 0, "fail_count": 0}}
+
+    for result in certificate["group_results"]:
+        specimen_id = result["prediction_specimen_id"]
+        key = specimen_id, result["group"]
+        if key in result_keys:
+            errors.append(f"duplicate group result key {key!r}")
+        result_keys.add(key)
+        specimen = specimen_by_id.get(specimen_id)
+        if specimen is None:
+            errors.append(f"group result key {key!r} names an unknown specimen")
+            continue
+        used_specimens.add(specimen_id)
+        committed = committed_by_key.get(key)
+        if committed is None:
+            errors.append(f"group result key {key!r} is absent from prediction commitment")
+        else:
+            recorded_prediction = {
+                "specimen_id": specimen_id,
+                "split": result["split"],
+                "group": result["group"],
+                "rule_file": result["rule_file"],
+                "scope": result["scope"],
+                "assertions": result["assertions"],
+            }
+            if recorded_prediction != committed:
+                errors.append(f"group result key {key!r} differs from preregistered prediction")
+        if specimen["split"] != result["split"]:
+            errors.append(f"group result key {key!r}: specimen split differs from result")
+        if result["split"] == "holdout":
+            actual_holdout_keys.add(key)
+            holdout_groups.add(result["group"])
+        else:
+            mine_groups.add(result["group"])
+
+        rule_file = result["rule_file"]
+        rule_record = manifest_files.get(rule_file)
+        if rule_file not in pinned_paths:
+            errors.append(f"group result key {key!r}: rule_file is not pinned")
+        if rule_record is None or rule_record.get("role") != "segbits":
+            errors.append(f"group result key {key!r}: rule_file is not a frozen segbits file")
+            continue
+        if spec_class is not None and rule_record.get("group") not in spec_class["from_groups"]:
+            errors.append(f"group result key {key!r}: rule_file group is outside the certificate class")
+
+        declared_coordinates: set[tuple[int, int]] = set()
+        declared_scope: dict[tuple[int, int], tuple[str, int, int]] = {}
+        for item in result["scope"]:
+            parsed = parse_segbit_token(item["segbit"])
+            if parsed is None or parsed[2]:
+                errors.append(f"group result key {key!r}: invalid scope segbit {item['segbit']!r}")
+                continue
+            coordinate = parsed[0], parsed[1]
+            if coordinate in declared_coordinates:
+                errors.append(f"group result key {key!r}: duplicate scope coordinate {coordinate}")
+            declared_coordinates.add(coordinate)
+            address = address_key(item["address"])
+            declared_scope[coordinate] = address
+            expected_address = computed_address(specimen["tile"], *coordinate)
+            if expected_address is None or address != expected_address:
+                errors.append(f"group result key {key!r}: scope address disagrees with normative arithmetic")
+
+        try:
+            rule_groups = load_rule_groups(rule_file)
+        except (OSError, ValueError) as exc:
+            errors.append(f"group result key {key!r}: cannot read rule_file: {exc}")
+            continue
+        frozen_members = rule_groups.get(frozenset(declared_coordinates))
+        if frozen_members is None:
+            errors.append(
+                f"group result key {key!r}: declared scope is not a complete frozen bit-set group"
+            )
+            continue
+        if len(result["scope"]) != len(declared_coordinates):
+            errors.append(f"group result key {key!r}: scope is not a unique complete bit set")
+        label_match = re.search(r"\[([^]]+)\]$", result["group"])
+        if label_match is not None:
+            labelled_members = set(label_match.group(1).split("|"))
+            frozen_member_names = {feature.rsplit(".", 1)[-1] for feature in frozen_members}
+            if labelled_members != frozen_member_names:
+                errors.append(
+                    f"group result key {key!r}: group label members differ from the bit-set-derived group"
+                )
+
+        assertions = {item["kind"]: item for item in result["assertions"]}
+        outcomes = {item["kind"]: item for item in result["assertion_outcomes"]}
+        required_kinds = {"group_exclusivity", "scope_assignment", "member_identity"}
+        if set(assertions) != required_kinds or set(outcomes) != required_kinds:
+            errors.append(f"group result key {key!r}: assertion kinds are not exactly {sorted(required_kinds)}")
+            continue
+
+        expected_items = assertions["scope_assignment"]["expected_assignment"]
+        expected_values: dict[tuple[int, int], int] = {}
+        for item in expected_items:
+            parsed = parse_segbit_token(item["segbit"])
+            if parsed is None or parsed[2]:
+                errors.append(f"group result key {key!r}: invalid expected segbit")
+                continue
+            coordinate = parsed[0], parsed[1]
+            if coordinate in expected_values:
+                errors.append(f"group result key {key!r}: duplicate expected coordinate {coordinate}")
+            expected_values[coordinate] = item["expected_value"]
+            if declared_scope.get(coordinate) != address_key(item["address"]):
+                errors.append(f"group result key {key!r}: expected assignment address differs from scope")
+        if set(expected_values) != declared_coordinates:
+            errors.append(f"group result key {key!r}: expected assignment is not the complete scope")
+
+        member_encodings: dict[str, dict[tuple[int, int], int]] = {}
+        for feature, tokens in frozen_members.items():
+            member_encodings[feature.rsplit(".", 1)[-1]] = {
+                (frame, bit): 0 if negated else 1
+                for frame, bit, negated in tokens
+            }
+        expected_matches = sorted(
+            member for member, encoding in member_encodings.items() if encoding == expected_values
+        )
+        if not expected_matches:
+            errors.append(f"group result key {key!r}: expected assignment matches no frozen member")
+
+        observed_values: dict[tuple[int, int], int] = {}
+        mismatched_addresses: list[tuple[str, int, int]] = []
+        for item in result["observed_assignment"]:
+            parsed = parse_segbit_token(item["segbit"])
+            if parsed is None or parsed[2]:
+                errors.append(f"group result key {key!r}: invalid observed segbit")
+                continue
+            coordinate = parsed[0], parsed[1]
+            if coordinate in observed_values:
+                errors.append(f"group result key {key!r}: duplicate observed coordinate {coordinate}")
+            observed_values[coordinate] = item["observed_value"]
+            if declared_scope.get(coordinate) != address_key(item["address"]):
+                errors.append(f"group result key {key!r}: observed assignment address differs from scope")
+            if item["expected_value"] != expected_values.get(coordinate):
+                errors.append(f"group result key {key!r}: observed expected_value differs from prediction")
+            if item["observed_value"] != item["expected_value"]:
+                mismatched_addresses.append(address_key(item["address"]))
+        if set(observed_values) != declared_coordinates:
+            errors.append(f"group result key {key!r}: observed assignment is not the complete scope")
+
+        decoded_members = sorted(
+            member
+            for member, encoding in member_encodings.items()
+            if all(observed_values.get(coordinate) == value for coordinate, value in encoding.items())
+        )
+        if result["decoded_members"] != decoded_members:
+            errors.append(f"group result key {key!r}: decoded_members differs from frozen assert-iff")
+
+        exclusivity_passed = len(decoded_members) <= 1
+        scope_passed = not mismatched_addresses and set(observed_values) == declared_coordinates
+        exclusivity_outcome = outcomes["group_exclusivity"]
+        scope_outcome = outcomes["scope_assignment"]
+        if exclusivity_outcome["decoded_members"] != decoded_members or exclusivity_outcome["passed"] != exclusivity_passed:
+            errors.append(f"group result key {key!r}: group_exclusivity outcome is wrong")
+        recorded_mismatched = sorted(address_key(item) for item in scope_outcome["mismatched"])
+        if recorded_mismatched != sorted(mismatched_addresses) or scope_outcome["passed"] != scope_passed:
+            errors.append(f"group result key {key!r}: scope_assignment outcome is wrong")
+
+        semantic_assertion = assertions["member_identity"]
+        semantic_outcome = outcomes["member_identity"]
+        basis = semantic_assertion["netlist_basis"]
+        if basis == GROUP_BASIS_LUT:
+            rebuilt_expected_edge: dict[str, Any] = {"driver_ref": "LUT6", "driver_cell": "target"}
+        elif basis == GROUP_BASIS_PIN:
+            rebuilt_expected_edge = {"driver_ref": "IBUF", "requires_source_port": True}
+        else:
+            errors.append(f"group result key {key!r}: unrecognized netlist_basis")
+            rebuilt_expected_edge = {}
+        if semantic_outcome["netlist_basis"] != basis:
+            errors.append(f"group result key {key!r}: outcome netlist_basis differs from prediction")
+        if semantic_outcome["expected_edge"] != rebuilt_expected_edge:
+            errors.append(f"group result key {key!r}: producer expected_edge differs from independent rebuild")
+        attested_edge = semantic_outcome["attested_edge"]
+        attestation = specimen_attestations.get(specimen_id)
+        if attestation is not None:
+            resolved = attestation["resolved"]
+            raw_edge = {
+                "ff_bel": resolved["ff_bel"],
+                "ff_d_net": resolved["ff_d_net"],
+                "ff_d_driver_pin": resolved["ff_d_driver_pin"],
+                "ff_d_driver_cell": resolved["ff_d_driver_cell"],
+                "ff_d_driver_ref": resolved["ff_d_driver_ref"],
+                "ff_d_source_port": resolved["ff_d_source_port"],
+                "ff_d_source_package_pin": resolved["ff_d_source_package_pin"],
+                "ff_d_net_route_status": resolved["ff_d_net_route_status"],
+                "checkpoint": attestation["checkpoint"],
+            }
+            if attested_edge != raw_edge:
+                errors.append(f"group result key {key!r}: attested_edge differs from pinned attestation")
+        route_ok = attested_edge["ff_d_net_route_status"] == "ROUTED"
+        checkpoint_ok = attested_edge["checkpoint"] == specimen["attestation"]["checkpoint"]
+        if basis == GROUP_BASIS_LUT:
+            edge_consistent = (
+                route_ok
+                and checkpoint_ok
+                and attested_edge["ff_d_driver_ref"] == "LUT6"
+                and attested_edge["ff_d_driver_cell"] == "target"
+            )
+        elif basis == GROUP_BASIS_PIN:
+            edge_consistent = (
+                route_ok
+                and checkpoint_ok
+                and attested_edge["ff_d_driver_ref"] == "IBUF"
+                and bool(attested_edge["ff_d_source_port"])
+                and bool(attested_edge["ff_d_source_package_pin"])
+            )
+        else:
+            edge_consistent = False
+        identity_passed = decoded_members == [semantic_assertion["predicted_member"]]
+        semantic_passed = identity_passed and edge_consistent
+        if semantic_outcome["predicted_member"] != semantic_assertion["predicted_member"]:
+            errors.append(f"group result key {key!r}: semantic predicted_member differs from prediction")
+        if semantic_outcome["decoded_members"] != decoded_members:
+            errors.append(f"group result key {key!r}: semantic decoded_members is wrong")
+        if semantic_outcome["netlist_basis_consistent"] != edge_consistent:
+            errors.append(f"group result key {key!r}: netlist_basis_consistent summary is wrong")
+        if semantic_outcome["passed"] != semantic_passed:
+            errors.append(f"group result key {key!r}: member_identity outcome is wrong")
+
+        if result["split"] == "holdout":
+            for kind, passed in (
+                ("group_exclusivity", exclusivity_passed),
+                ("scope_assignment", scope_passed),
+            ):
+                address_counts[kind]["pass_count" if passed else "fail_count"] += 1
+            semantic_counts["member_identity"]["pass_count" if semantic_passed else "fail_count"] += 1
+
+    if actual_holdout_keys != committed_holdout_keys:
+        missing = sorted(committed_holdout_keys - actual_holdout_keys)
+        extra = sorted(actual_holdout_keys - committed_holdout_keys)
+        errors.append(
+            "holdout group completeness mismatch "
+            f"(missing={len(missing)} {missing[:1]} extra={len(extra)} {extra[:1]})"
+        )
+    if result_keys != set(committed_by_key):
+        errors.append("group_results do not report every committed mine/holdout pair exactly once")
+    if used_specimens != set(specimen_by_id):
+        errors.append("specimens must be referenced by at least one group result")
+
+    recorded_split = class_record["split"]
+    if set(recorded_split["mine_groups"]) != mine_groups:
+        errors.append("bit_class.split.mine_groups differs from group_results projection")
+    if set(recorded_split["holdout_groups"]) != holdout_groups:
+        errors.append("bit_class.split.holdout_groups differs from group_results projection")
+    coverage = class_record["coverage"]
+    if coverage["attested_count"] != len(certificate["group_results"]):
+        errors.append("coverage.attested_count differs from group_results count")
+    if coverage["class_entry_count"] != current_entries:
+        errors.append("coverage.class_entry_count differs from current manifest")
+
+    partition_ok = True
+    accounted_specimens: set[str] = set()
+    for index, accounting in enumerate(certificate["pair_accounting"]):
+        pair_ids = accounting["specimen_ids"]
+        accounted_specimens.update(pair_ids)
+        pair = [specimen_by_id.get(specimen_id) for specimen_id in pair_ids]
+        if any(item is None for item in pair):
+            errors.append(f"pair_accounting[{index}] names an unknown specimen")
+        else:
+            first, second = pair
+            assert first is not None and second is not None
+            if first["site"] != second["site"] or first["ff_bel"] != second["ff_bel"]:
+                errors.append(f"pair_accounting[{index}] does not pair one site/FF BEL")
+            if {first["ffsrc"], second["ffsrc"]} != {0, 1}:
+                errors.append(f"pair_accounting[{index}] does not pair ffsrc 0 and 1")
+        union: set[tuple[str, int, int]] = set()
+        disjoint = True
+        for bucket in GROUP_BUCKETS:
+            values = [address_key(item) for item in accounting["buckets"][bucket]]
+            value_set = set(values)
+            if len(value_set) != len(values):
+                errors.append(f"pair_accounting[{index}].{bucket} duplicates a bit")
+                disjoint = False
+            overlap = union & value_set
+            if overlap:
+                errors.append(f"pair_accounting[{index}] bucket overlap at {sorted(overlap)[:1]}")
+                disjoint = False
+            union |= value_set
+            if accounting["counts"][bucket] != len(values):
+                errors.append(f"pair_accounting[{index}].counts.{bucket} differs from bit list length")
+                disjoint = False
+        exact = disjoint and len(union) == accounting["raw_diff_bits"]
+        if len(union) != accounting["raw_diff_bits"]:
+            errors.append(f"pair_accounting[{index}] bucket union size differs from raw_diff_bits")
+        if accounting["partition_exact"] != exact:
+            errors.append(f"pair_accounting[{index}].partition_exact summary is wrong")
+        partition_ok = partition_ok and exact
+    if accounted_specimens != set(specimen_by_id):
+        errors.append("pair_accounting does not cover every specimen")
+
+    if class_record["address_accounting"] != address_counts:
+        errors.append(
+            f"address_accounting mismatch (recorded={class_record['address_accounting']} computed={address_counts})"
+        )
+    if class_record["semantic_accounting"] != semantic_counts:
+        errors.append(
+            f"semantic_accounting mismatch (recorded={class_record['semantic_accounting']} computed={semantic_counts})"
+        )
+
+    address_passed = (
+        partition_ok
+        and address_counts["group_exclusivity"]["fail_count"] == 0
+        and address_counts["scope_assignment"]["fail_count"] == 0
+    )
+    if certificate["claim_scope"] == "tile":
+        has_unknown = any(
+            accounting["counts"]["ownership_unknown"] > 0
+            for accounting in certificate["pair_accounting"]
+        )
+        if has_unknown:
+            address_passed = False
+    expected_status = "passed" if address_passed else "failed"
+    semantic_passed = semantic_counts["member_identity"]["fail_count"] == 0
+    expected_semantic_status = "passed" if semantic_passed else "failed"
+    if certificate["status"] != expected_status:
+        errors.append(f"status={certificate['status']} but address evidence requires {expected_status}")
+    if certificate["semantic_status"] != expected_semantic_status:
+        errors.append(
+            f"semantic_status={certificate['semantic_status']} but semantic evidence requires {expected_semantic_status}"
+        )
+    return errors
+
+
 def semantic_errors(
     certificate: dict[str, Any],
     repo_root: Path,
     require_production: bool = False,
 ) -> list[str]:
+    if certificate.get("evidence_model") == "group":
+        return group_semantic_errors(certificate, repo_root, require_production)
+
     errors: list[str] = []
     data_dir = repo_root / "data"
     manifest = load_json(data_dir / "MANIFEST.json")
@@ -730,6 +1294,27 @@ def main() -> int:
             print(f"  - {error}", file=sys.stderr)
         return 1
     certificate = load_json(args.certificate)
+    if certificate.get("evidence_model") == "group":
+        address = certificate["bit_class"]["address_accounting"]
+        semantic = certificate["bit_class"]["semantic_accounting"]["member_identity"]
+        address_pass = sum(item["pass_count"] for item in address.values())
+        address_fail = sum(item["fail_count"] for item in address.values())
+        if certificate["status"] == "failed" and not args.allow_failed:
+            print(
+                "CERTIFICATE VERIFY: CERTIFICATION FAILED — "
+                f"address_pass={address_pass} address_fail={address_fail} "
+                f"semantic_status={certificate['semantic_status']} "
+                f"semantic_pass={semantic['pass_count']} semantic_fail={semantic['fail_count']}",
+                file=sys.stderr,
+            )
+            return 2
+        print(
+            f"CERTIFICATE VERIFY: OK — status={certificate['status']} "
+            f"address_pass={address_pass} address_fail={address_fail} "
+            f"semantic_status={certificate['semantic_status']} "
+            f"semantic_pass={semantic['pass_count']} semantic_fail={semantic['fail_count']}"
+        )
+        return 0
     accounting = certificate["bit_class"]["accounting"]
     if certificate["status"] == "failed" and not args.allow_failed:
         print(

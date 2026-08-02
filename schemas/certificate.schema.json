@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/14sea/zynq-fabricmap/schemas/certificate.schema.json",
   "title": "Zynq fabric bit-class certificate",
-  "description": "Consumer-owned record emitted by the specimen-diff prediction gate. This schema validates certificate 1.0.0 through the additive 1.2.0 lifecycle evidence fields. Unknown fields are permitted so 1.x consumers can ignore later MINOR additions.",
+  "description": "Consumer-owned record emitted by the specimen-diff prediction gate. This schema validates the feature evidence model through 1.2.0 and the additive group evidence model introduced in 1.3.0. Unknown fields are permitted so 1.x consumers can ignore later MINOR additions.",
   "type": "object",
   "required": [
     "schema",
@@ -14,12 +14,12 @@
     "target",
     "frozen_inputs",
     "bit_class",
-    "specimens",
-    "feature_results"
+    "specimens"
   ],
   "properties": {
     "schema": {"const": "fabric_bit_class_certificate"},
     "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"},
+    "evidence_model": {"enum": ["feature", "group"]},
     "profile": {"enum": ["conformance", "production"]},
     "prediction_commitment": {"$ref": "#/$defs/prediction_commitment"},
     "certificate_id": {"$ref": "#/$defs/nonempty_string"},
@@ -65,53 +65,58 @@
         }
       }
     },
-    "bit_class": {
-      "type": "object",
-      "required": ["id", "tier", "manifest_entries", "split", "coverage", "accounting", "decision_rule"],
-      "properties": {
-        "id": {"$ref": "#/$defs/nonempty_string"},
-        "tier": {"enum": ["content", "routing"]},
-        "manifest_entries": {"type": "integer", "minimum": 0},
-        "split": {
-          "type": "object",
-          "required": ["mine_features", "holdout_features"],
-          "properties": {
-            "mine_features": {"$ref": "#/$defs/feature_list"},
-            "holdout_features": {"$ref": "#/$defs/nonempty_feature_list"}
-          }
-        },
-        "coverage": {
-          "type": "object",
-          "required": ["attested_count", "class_entry_count"],
-          "properties": {
-            "attested_count": {"type": "integer", "minimum": 0},
-            "class_entry_count": {"type": "integer", "minimum": 0}
-          }
-        },
-        "accounting": {
-          "type": "object",
-          "required": ["tp_count", "fp_count", "fn_count"],
-          "properties": {
-            "tp_count": {"type": "integer", "minimum": 0},
-            "fp_count": {"type": "integer", "minimum": 0},
-            "fn_count": {"type": "integer", "minimum": 0}
-          }
-        },
-        "decision_rule": {"const": "holdout_exact_match: fp_count == 0 and fn_count == 0"}
-      }
-    },
+    "bit_class": {"type": "object"},
     "specimens": {
       "type": "array",
       "minItems": 1,
-      "items": {"$ref": "#/$defs/specimen"}
+      "items": {"type": "object"}
     },
     "feature_results": {
       "type": "array",
       "minItems": 1,
       "items": {"$ref": "#/$defs/feature_result"}
+    },
+    "claim_scope": {"enum": ["group_bit_set", "tile"]},
+    "semantic_status": {"enum": ["passed", "failed"]},
+    "group_results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/group_result"}
+    },
+    "pair_accounting": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/pair_accounting"}
     }
   },
   "allOf": [
+    {
+      "if": {
+        "required": ["evidence_model"],
+        "properties": {"evidence_model": {"const": "group"}}
+      },
+      "then": {
+        "required": [
+          "claim_scope",
+          "semantic_status",
+          "group_results",
+          "pair_accounting",
+          "prediction_commitment"
+        ],
+        "properties": {
+          "schema_version": {"pattern": "^1\\.(?:[3-9]|[1-9][0-9]+)\\.[0-9]+$"},
+          "bit_class": {"$ref": "#/$defs/group_bit_class"},
+          "specimens": {"items": {"$ref": "#/$defs/group_specimen"}}
+        }
+      },
+      "else": {
+        "required": ["feature_results"],
+        "properties": {
+          "bit_class": {"$ref": "#/$defs/feature_bit_class"},
+          "specimens": {"items": {"$ref": "#/$defs/specimen"}}
+        }
+      }
+    },
     {
       "if": {"properties": {"status": {"const": "passed"}}},
       "then": {"properties": {"failure_reasons": {"maxItems": 0}}},
@@ -175,6 +180,99 @@
       "uniqueItems": true,
       "items": {"$ref": "#/$defs/nonempty_string"}
     },
+    "feature_bit_class": {
+      "type": "object",
+      "required": ["id", "tier", "manifest_entries", "split", "coverage", "accounting", "decision_rule"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonempty_string"},
+        "tier": {"enum": ["content", "routing"]},
+        "manifest_entries": {"type": "integer", "minimum": 0},
+        "split": {
+          "type": "object",
+          "required": ["mine_features", "holdout_features"],
+          "properties": {
+            "mine_features": {"$ref": "#/$defs/feature_list"},
+            "holdout_features": {"$ref": "#/$defs/nonempty_feature_list"}
+          }
+        },
+        "coverage": {"$ref": "#/$defs/coverage"},
+        "accounting": {
+          "type": "object",
+          "required": ["tp_count", "fp_count", "fn_count"],
+          "properties": {
+            "tp_count": {"type": "integer", "minimum": 0},
+            "fp_count": {"type": "integer", "minimum": 0},
+            "fn_count": {"type": "integer", "minimum": 0}
+          }
+        },
+        "decision_rule": {"const": "holdout_exact_match: fp_count == 0 and fn_count == 0"}
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "required": ["attested_count", "class_entry_count"],
+      "properties": {
+        "attested_count": {"type": "integer", "minimum": 0},
+        "class_entry_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "pass_fail_count": {
+      "type": "object",
+      "required": ["pass_count", "fail_count"],
+      "properties": {
+        "pass_count": {"type": "integer", "minimum": 0},
+        "fail_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "group_bit_class": {
+      "type": "object",
+      "required": [
+        "id",
+        "tier",
+        "manifest_entries",
+        "split",
+        "coverage",
+        "address_accounting",
+        "semantic_accounting",
+        "decision_rule",
+        "semantic_rule"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonempty_string"},
+        "tier": {"enum": ["content", "routing"]},
+        "manifest_entries": {"type": "integer", "minimum": 0},
+        "split": {
+          "type": "object",
+          "required": ["mine_groups", "holdout_groups"],
+          "properties": {
+            "mine_groups": {"$ref": "#/$defs/feature_list"},
+            "holdout_groups": {"$ref": "#/$defs/nonempty_feature_list"}
+          }
+        },
+        "coverage": {"$ref": "#/$defs/coverage"},
+        "address_accounting": {
+          "type": "object",
+          "required": ["group_exclusivity", "scope_assignment"],
+          "properties": {
+            "group_exclusivity": {"$ref": "#/$defs/pass_fail_count"},
+            "scope_assignment": {"$ref": "#/$defs/pass_fail_count"}
+          }
+        },
+        "semantic_accounting": {
+          "type": "object",
+          "required": ["member_identity"],
+          "properties": {
+            "member_identity": {"$ref": "#/$defs/pass_fail_count"}
+          }
+        },
+        "decision_rule": {
+          "const": "holdout_address_assertions: group_exclusivity.fail_count == 0 and scope_assignment.fail_count == 0"
+        },
+        "semantic_rule": {
+          "const": "member_identity is reported independently and never contributes to status"
+        }
+      }
+    },
     "failure_reason": {
       "type": "object",
       "required": ["code", "detail"],
@@ -183,6 +281,10 @@
           "enum": [
             "holdout_false_positive",
             "holdout_false_negative",
+            "holdout_group_exclusivity",
+            "holdout_scope_assignment",
+            "partition_integrity",
+            "tile_ownership_unknown",
             "incomplete_coverage",
             "stale_frozen_input",
             "specimen_build_error",
@@ -208,6 +310,27 @@
         "path": {"$ref": "#/$defs/nonempty_string"},
         "sha256": {"$ref": "#/$defs/sha256"},
         "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"}
+      }
+    },
+    "group_attestation_ref": {
+      "type": "object",
+      "required": [
+        "path",
+        "sha256",
+        "schema_version",
+        "resolved_loc",
+        "resolved_bel",
+        "pin_mapping_is_identity",
+        "checkpoint"
+      ],
+      "properties": {
+        "path": {"$ref": "#/$defs/nonempty_string"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"},
+        "resolved_loc": {"$ref": "#/$defs/nonempty_string"},
+        "resolved_bel": {"$ref": "#/$defs/nonempty_string"},
+        "pin_mapping_is_identity": {"type": "boolean"},
+        "checkpoint": {"$ref": "#/$defs/checkpoint"}
       }
     },
     "prediction_totals": {
@@ -238,6 +361,258 @@
         "far": {"$ref": "#/$defs/far"},
         "word": {"type": "integer", "minimum": 0, "maximum": 100},
         "bit": {"type": "integer", "minimum": 0, "maximum": 31}
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "required": ["file", "sha256"],
+      "properties": {
+        "file": {"$ref": "#/$defs/nonempty_string"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "group_scope_bit": {
+      "type": "object",
+      "required": ["segbit", "address"],
+      "properties": {
+        "segbit": {"type": "string", "pattern": "^[0-9]+_[0-9]+$"},
+        "address": {"$ref": "#/$defs/address"}
+      }
+    },
+    "group_expected_bit": {
+      "type": "object",
+      "required": ["segbit", "address", "expected_value"],
+      "properties": {
+        "segbit": {"type": "string", "pattern": "^[0-9]+_[0-9]+$"},
+        "address": {"$ref": "#/$defs/address"},
+        "expected_value": {"enum": [0, 1]}
+      }
+    },
+    "group_observed_bit": {
+      "type": "object",
+      "required": ["segbit", "address", "expected_value", "observed_value"],
+      "properties": {
+        "segbit": {"type": "string", "pattern": "^[0-9]+_[0-9]+$"},
+        "address": {"$ref": "#/$defs/address"},
+        "expected_value": {"enum": [0, 1]},
+        "observed_value": {"enum": [0, 1]}
+      }
+    },
+    "group_assertion": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "semantic", "claim"],
+          "properties": {
+            "kind": {"const": "group_exclusivity"},
+            "semantic": {"const": false},
+            "claim": {"$ref": "#/$defs/nonempty_string"}
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "semantic", "claim", "expected_assignment"],
+          "properties": {
+            "kind": {"const": "scope_assignment"},
+            "semantic": {"const": false},
+            "claim": {"$ref": "#/$defs/nonempty_string"},
+            "expected_assignment": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/$defs/group_expected_bit"}
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "semantic", "claim", "predicted_member", "netlist_basis"],
+          "properties": {
+            "kind": {"const": "member_identity"},
+            "semantic": {"const": true},
+            "claim": {"$ref": "#/$defs/nonempty_string"},
+            "predicted_member": {"$ref": "#/$defs/nonempty_string"},
+            "netlist_basis": {"$ref": "#/$defs/nonempty_string"}
+          }
+        }
+      ]
+    },
+    "attested_edge": {
+      "type": "object",
+      "required": [
+        "ff_bel",
+        "ff_d_net",
+        "ff_d_driver_pin",
+        "ff_d_driver_cell",
+        "ff_d_driver_ref",
+        "ff_d_source_port",
+        "ff_d_source_package_pin",
+        "ff_d_net_route_status",
+        "checkpoint"
+      ],
+      "properties": {
+        "ff_bel": {"$ref": "#/$defs/nonempty_string"},
+        "ff_d_net": {"$ref": "#/$defs/nonempty_string"},
+        "ff_d_driver_pin": {"$ref": "#/$defs/nonempty_string"},
+        "ff_d_driver_cell": {"$ref": "#/$defs/nonempty_string"},
+        "ff_d_driver_ref": {"$ref": "#/$defs/nonempty_string"},
+        "ff_d_source_port": {"type": "string"},
+        "ff_d_source_package_pin": {"type": "string"},
+        "ff_d_net_route_status": {"$ref": "#/$defs/nonempty_string"},
+        "checkpoint": {"$ref": "#/$defs/checkpoint"}
+      }
+    },
+    "assertion_outcome": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "semantic", "passed", "decoded_members"],
+          "properties": {
+            "kind": {"const": "group_exclusivity"},
+            "semantic": {"const": false},
+            "passed": {"type": "boolean"},
+            "decoded_members": {"$ref": "#/$defs/feature_list"}
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "semantic", "passed", "mismatched"],
+          "properties": {
+            "kind": {"const": "scope_assignment"},
+            "semantic": {"const": false},
+            "passed": {"type": "boolean"},
+            "mismatched": {"type": "array", "items": {"$ref": "#/$defs/address"}}
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "semantic",
+            "passed",
+            "predicted_member",
+            "decoded_members",
+            "netlist_basis",
+            "expected_edge",
+            "attested_edge",
+            "netlist_basis_consistent"
+          ],
+          "properties": {
+            "kind": {"const": "member_identity"},
+            "semantic": {"const": true},
+            "passed": {"type": "boolean"},
+            "predicted_member": {"$ref": "#/$defs/nonempty_string"},
+            "decoded_members": {"$ref": "#/$defs/feature_list"},
+            "netlist_basis": {"$ref": "#/$defs/nonempty_string"},
+            "expected_edge": {"type": "object"},
+            "attested_edge": {"$ref": "#/$defs/attested_edge"},
+            "netlist_basis_consistent": {"type": "boolean"}
+          }
+        }
+      ]
+    },
+    "group_result": {
+      "type": "object",
+      "required": [
+        "prediction_specimen_id",
+        "group",
+        "split",
+        "rule_file",
+        "scope",
+        "assertions",
+        "decoded_members",
+        "observed_assignment",
+        "assertion_outcomes"
+      ],
+      "properties": {
+        "prediction_specimen_id": {"$ref": "#/$defs/nonempty_string"},
+        "group": {"$ref": "#/$defs/nonempty_string"},
+        "split": {"enum": ["mine", "holdout"]},
+        "rule_file": {"$ref": "#/$defs/nonempty_string"},
+        "scope": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/group_scope_bit"}},
+        "assertions": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {"$ref": "#/$defs/group_assertion"}
+        },
+        "decoded_members": {"$ref": "#/$defs/feature_list"},
+        "observed_assignment": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/group_observed_bit"}
+        },
+        "assertion_outcomes": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {"$ref": "#/$defs/assertion_outcome"}
+        }
+      }
+    },
+    "group_specimen": {
+      "type": "object",
+      "required": [
+        "specimen_id",
+        "split",
+        "site",
+        "ff_bel",
+        "ffsrc",
+        "tile",
+        "tile_type",
+        "bitstream_sha256",
+        "attestation"
+      ],
+      "properties": {
+        "specimen_id": {"$ref": "#/$defs/nonempty_string"},
+        "split": {"enum": ["mine", "holdout"]},
+        "site": {"$ref": "#/$defs/nonempty_string"},
+        "ff_bel": {"$ref": "#/$defs/nonempty_string"},
+        "ffsrc": {"enum": [0, 1]},
+        "tile": {"$ref": "#/$defs/nonempty_string"},
+        "tile_type": {"$ref": "#/$defs/nonempty_string"},
+        "bitstream_sha256": {"$ref": "#/$defs/sha256"},
+        "attestation": {"$ref": "#/$defs/group_attestation_ref"}
+      }
+    },
+    "bucket_counts": {
+      "type": "object",
+      "required": ["in_scope", "frame_ecc", "db_attributed", "ownership_unknown", "unattributed"],
+      "properties": {
+        "in_scope": {"type": "integer", "minimum": 0},
+        "frame_ecc": {"type": "integer", "minimum": 0},
+        "db_attributed": {"type": "integer", "minimum": 0},
+        "ownership_unknown": {"type": "integer", "minimum": 0},
+        "unattributed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "bucket_bits": {
+      "type": "object",
+      "required": ["in_scope", "frame_ecc", "db_attributed", "ownership_unknown", "unattributed"],
+      "properties": {
+        "in_scope": {"type": "array", "items": {"$ref": "#/$defs/address"}},
+        "frame_ecc": {"type": "array", "items": {"$ref": "#/$defs/address"}},
+        "db_attributed": {"type": "array", "items": {"$ref": "#/$defs/address"}},
+        "ownership_unknown": {"type": "array", "items": {"$ref": "#/$defs/address"}},
+        "unattributed": {"type": "array", "items": {"$ref": "#/$defs/address"}}
+      }
+    },
+    "pair_accounting": {
+      "type": "object",
+      "required": ["site", "ff_bel", "specimen_ids", "raw_diff_bits", "counts", "buckets", "partition_exact"],
+      "properties": {
+        "site": {"$ref": "#/$defs/nonempty_string"},
+        "ff_bel": {"$ref": "#/$defs/nonempty_string"},
+        "specimen_ids": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/nonempty_string"}
+        },
+        "raw_diff_bits": {"type": "integer", "minimum": 0},
+        "counts": {"$ref": "#/$defs/bucket_counts"},
+        "buckets": {"$ref": "#/$defs/bucket_bits"},
+        "partition_exact": {"type": "boolean"}
       }
     },
     "predicted_assignment": {

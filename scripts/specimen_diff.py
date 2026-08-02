@@ -80,7 +80,10 @@ def locate(idx: dict, far: int, word: int, bit: int) -> list[dict]:
         frame_off = far - t["baseaddr"]
         word_off = word - t["offset"]
         if 0 <= frame_off < t["frames"] and 0 <= word_off < t["words"]:
-            hits.append({**t, "segbit": f"{frame_off}_{word_off * 32 + bit:02d}"})
+            # %02d on BOTH fields — freeze_format §5.3. This line had it on the bit
+            # offset only, so every coordinate in frames 00-09 failed to match
+            # the database and was mislabelled ownership_unknown.
+            hits.append({**t, "segbit": f"{frame_off:02d}_{word_off * 32 + bit:02d}"})
     return hits
 
 

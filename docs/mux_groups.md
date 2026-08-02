@@ -123,18 +123,25 @@ The diff between the two variants, classified by **who claims each bit**:
 
 | class | bits | |
 |---|---|---|
-| uniquely db-attributed | **23** | 2 in `CLBLL_L_X2Y25` — `30_01` and `30_03`, exactly the `AFFMUX` members' differing bits — and 21 in INT tiles, routing that legitimately had to move |
+| uniquely db-attributed | **34** | 2 in `CLBLL_L_X2Y25` — `30_01` and `30_03`, exactly the `AFFMUX` members' differing bits — and 32 in INT tiles, routing that legitimately had to move |
 | claimed by two databases | **0** | checked, not assumed |
-| **ownership unknown** | **11** | inside a tile's geometric range but claimed by no frozen rule anywhere |
+| ownership unknown | **0** | |
 | frame ECC | 140 | excluded by the stated rule |
 | outside every tile | 0 | |
 
-**The 11 are not "INT bits".** Every one of them has both a CLB and an INT geometric
-candidate — that is what the shared `baseaddr`/offset means — and **four of them list
-the tile under test, `CLBLL_L_X2Y25`**, at frames `00` and `01`, precisely the overlap
-region. Calling them INT-owned would be an assumption dressed as a measurement; the
-honest label is that ownership is undetermined, and `specimen_diff.py` now reports them
-as `ownership_unknown` with every candidate listed.
+> **Corrected 2026-08-02.** An earlier version of this table reported 11
+> `ownership_unknown` bits, four of them listing the tile under test, and argued at
+> length that they must not be called INT bits. **That measurement was wrong and the
+> argument rested on it.** `specimen_diff.locate()` formatted the segbit's frame offset
+> without zero-padding (`f"{frame_off}_..."`), so every coordinate in frames `00`–`09`
+> failed to match the database and fell into `ownership_unknown`. This is the **same
+> `%02d_%02d` ambiguity** that broke the consumer's verifier in round 4 — and which
+> `docs/freeze_format.md` §5.3 was written to pin down. Writing the normative fix and
+> not auditing our own code for it is the whole of the mistake.
+>
+> After the fix, `ownership_unknown` across the entire run B is **zero**: 136 bits that
+> had been reported as unowned are claimed by the frozen database. The rule below still
+> stands as a rule; what changed is that it currently has nothing to bite on.
 
 ### What this means for the scoring contract
 
@@ -150,10 +157,11 @@ those four bits. The contract is:
   dropped and nothing is assigned by assumption.
 - If a certificate ever wants to claim tile-wide exactness, then any
   `ownership_unknown` bit inside that tile's geometric range **must block a production
-  PASS**. Unknown is not clean.
+  PASS**. Unknown is not clean. As measured today the category is empty, so the rule is
+  written before it is needed rather than after.
 
-The unknown bits also have nothing to check them against: prjxray ships **no mask file
-for INT tiles at all**, and the CLB mask does not list them.
+Were such bits to appear, nothing would check them: prjxray ships **no mask file for
+INT tiles at all**, and the CLB mask does not list them.
 
 ### Ownership is decided by the database, not by the grid
 

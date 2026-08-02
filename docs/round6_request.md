@@ -88,8 +88,17 @@ naming result paper over one.
   assumed away.
 - **Tile-wide claims are forbidden while ownership is unknown.** If a certificate ever
   declares a tile-wide scope, any `ownership_unknown` bit inside that tile's geometric
-  range must force FAIL. Run B declares only group scopes, so this rule has nothing to
-  bite on yet — which is exactly when it should be written.
+  range must force FAIL. Run B declares only group scopes, and after the padding fix
+  below its `ownership_unknown` count is **zero**, so the rule has nothing to bite on —
+  which is exactly when it should be written.
+
+  **Correction, 2026-08-02:** an earlier version of run B's measurement reported 136
+  `ownership_unknown` bits. They were an artifact: `specimen_diff.locate()` built the
+  segbit coordinate with an unpadded frame offset, so everything in frames `00`–`09`
+  missed the database. Same `%02d_%02d` ambiguity that broke the verifier in round 4.
+  The re-measured artifact in this repo has `db_attributed` 328 and
+  `ownership_unknown` 0; the decision, the partition exactness and every assertion
+  count are unchanged. If you already coded against the old numbers, re-pull.
 - **Holdout completeness** by `(specimen_id, group)` pairs, same discipline as 1.2:
   every committed holdout pair reported exactly once.
 
