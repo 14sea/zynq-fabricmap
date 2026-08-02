@@ -45,7 +45,7 @@ def safe_child(parent: Path, relative: str) -> Path:
     path = (parent / relative).resolve()
     resolved_parent = parent.resolve()
     if resolved_parent not in path.parents:
-        raise ValueError(f"path escapes data directory: {relative!r}")
+        raise ValueError(f"path escapes allowed root: {relative!r}")
     return path
 
 
@@ -70,12 +70,36 @@ def schema_errors(certificate: dict[str, Any], schema_path: Path) -> list[str]:
     return findings
 
 
-def semantic_errors(certificate: dict[str, Any], repo_root: Path) -> list[str]:
+def validate_external_schema(value: dict[str, Any], schema_path: Path, label: str) -> list[str]:
+    if Draft202012Validator is None:
+        return ["Python package 'jsonschema' is required for attestation validation"]
+    schema = load_json(schema_path)
+    Draft202012Validator.check_schema(schema)
+    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    findings: list[str] = []
+    for error in sorted(validator.iter_errors(value), key=lambda item: list(item.absolute_path)):
+        location = ".".join(str(part) for part in error.absolute_path) or "<root>"
+        findings.append(f"{label} schema {location}: {error.message}")
+    return findings
+
+
+def semantic_errors(
+    certificate: dict[str, Any],
+    repo_root: Path,
+    require_production: bool = False,
+) -> list[str]:
     errors: list[str] = []
     data_dir = repo_root / "data"
     manifest = load_json(data_dir / "MANIFEST.json")
     spec = load_json(data_dir / "subset_spec.json")
     tilegrid = load_json(data_dir / "prjxray/zynq7/xc7z010/tilegrid.json")
+
+    version = tuple(int(part) for part in certificate["schema_version"].split("."))
+    profile = certificate.get("profile")
+    if require_production and profile != "production":
+        errors.append("production verification requires profile='production'")
+    if profile == "production" and version < (1, 1, 0):
+        errors.append("the production profile requires certificate schema_version >= 1.1.0")
 
     target = certificate["target"]
     for field in ("family", "device", "part"):
@@ -148,6 +172,8 @@ def semantic_errors(certificate: dict[str, Any], repo_root: Path) -> list[str]:
 
     specimens = certificate["specimens"]
     specimen_by_id: dict[str, dict[str, Any]] = {}
+    specimen_attestations: dict[str, dict[str, Any]] = {}
+    attestation_cache: dict[tuple[str, str], dict[str, Any]] = {}
     for specimen in specimens:
         specimen_id = specimen["specimen_id"]
         if specimen_id in specimen_by_id:
@@ -166,6 +192,46 @@ def semantic_errors(certificate: dict[str, Any], repo_root: Path) -> list[str]:
             errors.append(f"specimen {specimen_id}: tile lacks CLB_IO_CLK block")
         elif specimen["tile_frame_base"] != block["baseaddr"]:
             errors.append(f"specimen {specimen_id}: tile_frame_base differs from tilegrid")
+        attestation_ref = specimen.get("attestation")
+        if attestation_ref is not None:
+            cache_key = (attestation_ref["path"], attestation_ref["sha256"])
+            attestation = attestation_cache.get(cache_key)
+            if attestation is None:
+                try:
+                    attestation_path = safe_child(repo_root, attestation_ref["path"])
+                    if not attestation_path.is_file():
+                        raise ValueError(f"attestation file does not exist: {attestation_ref['path']}")
+                    actual_hash = hash_file(attestation_path)
+                    if actual_hash != attestation_ref["sha256"]:
+                        raise ValueError(
+                            f"attestation hash mismatch (pinned={attestation_ref['sha256']} actual={actual_hash})"
+                        )
+                    attestation = load_json(attestation_path)
+                    external_findings = validate_external_schema(
+                        attestation,
+                        repo_root / "schemas/specimen_attestation.schema.json",
+                        f"specimen {specimen_id} attestation",
+                    )
+                    errors.extend(external_findings)
+                    if external_findings:
+                        attestation = None
+                    else:
+                        attestation_cache[cache_key] = attestation
+                except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+                    errors.append(f"specimen {specimen_id}: cannot validate attestation: {exc}")
+                    attestation = None
+            if attestation is not None:
+                specimen_attestations[specimen_id] = attestation
+                if attestation["schema_version"] != attestation_ref["schema_version"]:
+                    errors.append(f"specimen {specimen_id}: pinned attestation schema_version differs from file")
+                if attestation["resolved"]["resolved_loc"] != specimen["loc_site"]:
+                    errors.append(f"specimen {specimen_id}: attested resolved_loc differs from loc_site")
+                if attestation["resolved"]["tile"] != specimen["tile"]:
+                    errors.append(f"specimen {specimen_id}: attested tile differs from specimen tile")
+                if attestation["inputs"]["part"] != specimen["part"]:
+                    errors.append(f"specimen {specimen_id}: attested input part differs from specimen part")
+                if specimen["bitstream_sha256"] not in attestation["outputs"].values():
+                    errors.append(f"specimen {specimen_id}: bitstream_sha256 is absent from attestation outputs")
 
     results = certificate["feature_results"]
     result_by_feature: dict[str, dict[str, Any]] = {}
@@ -197,6 +263,13 @@ def semantic_errors(certificate: dict[str, Any], repo_root: Path) -> list[str]:
                     errors.append(f"feature {feature}: specimen {specimen_id} has wrong split")
         if len(pair) == 2 and (pair[0]["tile"] != pair[1]["tile"] or pair[0]["tile_type"] != pair[1]["tile_type"]):
             errors.append(f"feature {feature}: specimen pair uses different tiles")
+        if class_record["id"] == "clb_lut_init":
+            for specimen_id in (result["baseline_specimen_id"], result["feature_specimen_id"]):
+                attestation = specimen_attestations.get(specimen_id)
+                if attestation is not None and not attestation["resolved"]["pin_mapping_is_identity"]:
+                    errors.append(
+                        f"feature {feature}: specimen {specimen_id} does not attest identity LUT pin mapping"
+                    )
 
         predicted: dict[tuple[str, int, int], int] = {}
         feature_specimen = specimen_by_id.get(result["feature_specimen_id"])
@@ -293,6 +366,39 @@ def semantic_errors(certificate: dict[str, Any], repo_root: Path) -> list[str]:
                 errors.append(f"feature {feature}: diff after_value disagrees with observed assignment at {key}")
             diff[key] = transition
 
+        excluded: dict[tuple[str, int, int], tuple[int, int]] = {}
+        if "exclusion_rules" in result:
+            rules = result["exclusion_rules"]
+            rule_keys = {(item["reason"], item["rule"]) for item in rules}
+            supported_rule = ("frame_ecc", "word == 50 and 0 <= bit <= 12")
+            if rule_keys != {supported_rule} or len(rules) != 1:
+                errors.append(f"feature {feature}: exclusion_rules must contain exactly the supported frame_ecc rule")
+            for item in result["excluded_diff"]:
+                key = address_key(item["address"])
+                transition = item["before_value"], item["after_value"]
+                if key in excluded:
+                    errors.append(f"feature {feature}: duplicate excluded diff address {key}")
+                if transition[0] == transition[1]:
+                    errors.append(f"feature {feature}: excluded diff address {key} did not change")
+                if (item["reason"], item["rule"]) not in rule_keys:
+                    errors.append(f"feature {feature}: excluded diff at {key} cites no declared rule")
+                if key[1] != 50 or not 0 <= key[2] <= 12:
+                    errors.append(f"feature {feature}: excluded diff at {key} does not satisfy frame_ecc rule")
+                if key in diff:
+                    errors.append(f"feature {feature}: address {key} is both observed and excluded")
+                if key in predicted:
+                    errors.append(f"feature {feature}: predicted address {key} cannot be excluded")
+                excluded[key] = transition
+            for key in diff:
+                if key[1] == 50 and 0 <= key[2] <= 12:
+                    errors.append(f"feature {feature}: ECC-shaped observed diff at {key} must be excluded")
+            observed_frames = {
+                key[0] for key in diff if not (key[1] == 50 and 0 <= key[2] <= 12)
+            }
+            for key in excluded:
+                if key[0] not in observed_frames:
+                    errors.append(f"feature {feature}: excluded ECC-only frame {key[0]} has no observed diff")
+
         unattributed: dict[tuple[str, int, int], tuple[int, int, bool]] = {}
         for item in result["unattributed_diff"]:
             key = address_key(item["address"])
@@ -373,7 +479,12 @@ def semantic_errors(certificate: dict[str, Any], repo_root: Path) -> list[str]:
     return errors
 
 
-def verify(certificate_path: Path, repo_root: Path, schema_path: Path) -> list[str]:
+def verify(
+    certificate_path: Path,
+    repo_root: Path,
+    schema_path: Path,
+    require_production: bool = False,
+) -> list[str]:
     try:
         certificate = load_json(certificate_path)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
@@ -382,7 +493,7 @@ def verify(certificate_path: Path, repo_root: Path, schema_path: Path) -> list[s
     if errors:
         return errors
     try:
-        errors.extend(semantic_errors(certificate, repo_root))
+        errors.extend(semantic_errors(certificate, repo_root, require_production))
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
         errors.append(f"semantic validation could not complete: {exc}")
     return errors
@@ -398,8 +509,18 @@ def main() -> int:
         action="store_true",
         help="return success for a well-formed failed record (schema conformance use only)",
     )
+    parser.add_argument(
+        "--require-production",
+        action="store_true",
+        help="reject certificates that do not claim and satisfy the production profile",
+    )
     args = parser.parse_args()
-    errors = verify(args.certificate.resolve(), repo_root, args.schema.resolve())
+    errors = verify(
+        args.certificate.resolve(),
+        repo_root,
+        args.schema.resolve(),
+        args.require_production,
+    )
     if errors:
         print(f"CERTIFICATE VERIFY: FAIL — {len(errors)} finding(s)", file=sys.stderr)
         for error in errors:

@@ -1,0 +1,201 @@
+{
+  "schema": "fabric_bit_class_certificate",
+  "schema_version": "1.1.0",
+  "profile": "production",
+  "certificate_id": "fixture_clb_lut_init_production_pass_v1_1",
+  "status": "passed",
+  "failure_reasons": [],
+  "gate_run": {
+    "gate_id": "fixture_production_gate_pass",
+    "started_at": "2026-08-02T04:00:00Z",
+    "completed_at": "2026-08-02T04:01:00Z",
+    "tool_versions": {
+      "gate": "conformance-fixture-3",
+      "bitstream_differ": "conformance-fixture-3",
+      "vivado": "Vivado v2025.2"
+    }
+  },
+  "target": {
+    "family": "zynq7",
+    "device": "xc7z010",
+    "part": "xc7z010clg400-1"
+  },
+  "frozen_inputs": {
+    "manifest_schema_version": "1.1.0",
+    "freeze_stamp": "2026-08-02T01:29:26Z",
+    "spec": {
+      "path": "data/subset_spec.json",
+      "sha256": "ffe4fb9f6bdc118904a6dcbb5625f87d12b12e633ad4dee8c6772fbe45da8e37"
+    },
+    "files": [
+      {
+        "path": "prjxray/zynq7/segbits_clbll_l.db",
+        "sha256": "9bf6bdffdc814569a7da53c696e46207aab23ea66c9dd92c47e50a6211dd739b"
+      },
+      {
+        "path": "prjxray/zynq7/xc7z010/tilegrid.json",
+        "sha256": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee"
+      }
+    ]
+  },
+  "bit_class": {
+    "id": "clb_lut_init",
+    "tier": "content",
+    "manifest_entries": 2048,
+    "split": {
+      "mine_features": [],
+      "holdout_features": ["CLBLL_L.SLICEL_X0.ALUT.INIT[01]"]
+    },
+    "coverage": {
+      "attested_count": 1,
+      "class_entry_count": 2048
+    },
+    "accounting": {
+      "tp_count": 1,
+      "fp_count": 0,
+      "fn_count": 0
+    },
+    "decision_rule": "holdout_exact_match: fp_count == 0 and fn_count == 0"
+  },
+  "specimens": [
+    {
+      "specimen_id": "fixture_production_base",
+      "split": "holdout",
+      "design_source_sha256": "7dc6bb9eb8479aac1be660e15516d28ea5d167ce0ed2be1fdd5432eb4a22ef02",
+      "vivado_version": "Vivado v2025.2",
+      "part": "xc7z010clg400-1",
+      "loc_site": "SLICE_X2Y25",
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "tile_frame_base": "0x00400A00",
+      "build_seed": 1,
+      "bitstream_sha256": "e51f9142d708fc83f41e02737d8f52aa445fa6c2f93afc3c908ad9f4a1c75279",
+      "attestation": {
+        "path": "tests/samples/specimen_attestation.sample.json",
+        "sha256": "76a951dbec6484b33c5dda70df1ca81183335f913863f88c4fe9fce8df4935ab",
+        "schema_version": "1.0.0"
+      }
+    },
+    {
+      "specimen_id": "fixture_production_feature",
+      "split": "holdout",
+      "design_source_sha256": "7dc6bb9eb8479aac1be660e15516d28ea5d167ce0ed2be1fdd5432eb4a22ef02",
+      "vivado_version": "Vivado v2025.2",
+      "part": "xc7z010clg400-1",
+      "loc_site": "SLICE_X2Y25",
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "tile_frame_base": "0x00400A00",
+      "build_seed": 1,
+      "bitstream_sha256": "76966a81ebdd1f22f68134b9b7e5f72e782eb538af7ed2ae2542f3fdf0a4deaf",
+      "attestation": {
+        "path": "tests/samples/specimen_attestation.sample.json",
+        "sha256": "76a951dbec6484b33c5dda70df1ca81183335f913863f88c4fe9fce8df4935ab",
+        "schema_version": "1.0.0"
+      }
+    }
+  ],
+  "feature_results": [
+    {
+      "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[01]",
+      "split": "holdout",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "baseline_specimen_id": "fixture_production_base",
+      "feature_specimen_id": "fixture_production_feature",
+      "predicted_assignments": [
+        {
+          "segbit": {"frame_offset": 33, "bit_offset": 15, "negated": false},
+          "address": {"far": "0x00400A21", "word": 51, "bit": 15},
+          "expected_value": 1
+        }
+      ],
+      "observed_assignments": [
+        {
+          "address": {"far": "0x00400A21", "word": 51, "bit": 15},
+          "observed_value": 1
+        }
+      ],
+      "observed_diff": [
+        {
+          "address": {"far": "0x00400A21", "word": 51, "bit": 15},
+          "before_value": 0,
+          "after_value": 1
+        }
+      ],
+      "unattributed_diff": [],
+      "exclusion_rules": [
+        {
+          "reason": "frame_ecc",
+          "rule": "word == 50 and 0 <= bit <= 12",
+          "why": "the frame ECC field is recomputed whenever any other bit in the same frame changes"
+        }
+      ],
+      "excluded_diff": [
+        {
+          "address": {"far": "0x00400A21", "word": 50, "bit": 0},
+          "before_value": 0,
+          "after_value": 1,
+          "reason": "frame_ecc",
+          "rule": "word == 50 and 0 <= bit <= 12"
+        },
+        {
+          "address": {"far": "0x00400A21", "word": 50, "bit": 1},
+          "before_value": 0,
+          "after_value": 1,
+          "reason": "frame_ecc",
+          "rule": "word == 50 and 0 <= bit <= 12"
+        },
+        {
+          "address": {"far": "0x00400A21", "word": 50, "bit": 2},
+          "before_value": 0,
+          "after_value": 1,
+          "reason": "frame_ecc",
+          "rule": "word == 50 and 0 <= bit <= 12"
+        },
+        {
+          "address": {"far": "0x00400A21", "word": 50, "bit": 3},
+          "before_value": 0,
+          "after_value": 1,
+          "reason": "frame_ecc",
+          "rule": "word == 50 and 0 <= bit <= 12"
+        },
+        {
+          "address": {"far": "0x00400A21", "word": 50, "bit": 6},
+          "before_value": 0,
+          "after_value": 1,
+          "reason": "frame_ecc",
+          "rule": "word == 50 and 0 <= bit <= 12"
+        },
+        {
+          "address": {"far": "0x00400A21", "word": 50, "bit": 7},
+          "before_value": 0,
+          "after_value": 1,
+          "reason": "frame_ecc",
+          "rule": "word == 50 and 0 <= bit <= 12"
+        },
+        {
+          "address": {"far": "0x00400A21", "word": 50, "bit": 8},
+          "before_value": 0,
+          "after_value": 1,
+          "reason": "frame_ecc",
+          "rule": "word == 50 and 0 <= bit <= 12"
+        },
+        {
+          "address": {"far": "0x00400A21", "word": 50, "bit": 11},
+          "before_value": 0,
+          "after_value": 1,
+          "reason": "frame_ecc",
+          "rule": "word == 50 and 0 <= bit <= 12"
+        },
+        {
+          "address": {"far": "0x00400A21", "word": 50, "bit": 12},
+          "before_value": 0,
+          "after_value": 1,
+          "reason": "frame_ecc",
+          "rule": "word == 50 and 0 <= bit <= 12"
+        }
+      ],
+      "verdict": "matched"
+    }
+  ]
+}
