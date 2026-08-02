@@ -135,9 +135,27 @@ def main() -> int:
         print(f"  {r['verdict']}: {r.get('feature', '')} {r.get('observed') or r.get('predicted')}")
 
     if args.out:
-        args.out.write_text(json.dumps(
-            {"predictions_sha256": digest, "totals": totals, "decision": decision,
-             "problems": problems, "discrepancies": results}, indent=2) + "\n")
+        # The commitment is carried as a first-class record, and every scored item is
+        # keyed by (specimen_id, feature).  A feature name alone cannot join back to
+        # the pre-registered predictions: the same feature appears in many specimens
+        # (different site, BEL and INIT pattern), so a name-only join collapses them
+        # and the ordering guarantee degrades into a self-assertion.
+        args.out.write_text(json.dumps({
+            "schema": "gate_measurement",
+            "schema_version": "1.0.0",
+            "prediction_commitment": {
+                "run_id": args.run.name,
+                "path": str(pred_path.resolve().relative_to(REPO)),
+                "sha256": digest,
+                "schema_version": doc["schema_version"],
+                "seed": doc["seed"],
+                "totals": doc["totals"],
+            },
+            "bit_class": doc["bit_class"],
+            "scored_keys": [list(k) for k in sorted({(p["specimen_id"], p["feature"])
+                                                    for p in doc["predictions"]})],
+            "totals": totals, "decision": decision,
+            "problems": problems, "discrepancies": results}, indent=2) + "\n")
         print(f"  wrote {args.out}")
     return 0 if decision == "PASS" else 1
 
