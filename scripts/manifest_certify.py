@@ -70,19 +70,32 @@ def main() -> int:
             print(f"  - {p}", file=sys.stderr)
         return 1
 
-    acc = cert["bit_class"]["accounting"]
-    cov = cert["bit_class"]["coverage"]
+    bc = cert["bit_class"]
+    cov = bc["coverage"]
+    # 1.2 records per-feature tp/fp/fn; 1.3 records pass/fail per address assertion and
+    # keeps semantics in its own bucket. The slot stores whichever the certificate
+    # actually carries rather than flattening one into the other's vocabulary.
+    if "accounting" in bc:
+        acc = bc["accounting"]
+        model, extra = "feature", {"tp": acc["tp_count"], "fp": acc["fp_count"],
+                                   "fn": acc["fn_count"]}
+    else:
+        model = "group"
+        extra = {"address_accounting": bc["address_accounting"],
+                 "semantic_accounting": bc["semantic_accounting"],
+                 "semantic_status": cert.get("semantic_status"),
+                 "claim_scope": cert.get("claim_scope")}
     slot["certification"] = {
         "status": "certified",
+        "evidence_model": model,
         "gate": cert["gate_run"]["gate_id"],
         "certificate": str(args.certificate.resolve().relative_to(REPO)),
         "certificate_schema_version": cert["schema_version"],
         "profile": cert["profile"],
         "prediction_commitment_sha256": cert["prediction_commitment"]["sha256"],
-        "tp": acc["tp_count"],
-        "fp": acc["fp_count"],
-        "fn": acc["fn_count"],
-        "holdout_pairs": len(cert["bit_class"]["split"]["holdout_features"]),
+        **extra,
+        "holdout_pairs": len(bc["split"].get("holdout_features")
+                             or bc["split"].get("holdout_groups", [])),
         "attested_pairs": cov["attested_count"],
         "scope": "address prediction from the frozen rules; NOT on-silicon semantics",
     }
@@ -92,7 +105,7 @@ def main() -> int:
 
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n")
     print(f"{cls_id}: certified by {cert['certificate_id']} "
-          f"(tp={acc['tp_count']} fp={acc['fp_count']} fn={acc['fn_count']})")
+          f"(evidence_model={model})")
     print(f"  recorded in {MANIFEST.relative_to(REPO)}")
     return 0
 

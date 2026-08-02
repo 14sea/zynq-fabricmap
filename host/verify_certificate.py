@@ -98,6 +98,7 @@ def load_prediction_commitment(
     errors: list[str] = []
     committed_by_key: dict[PredictionKey, dict[str, Any]] = {}
     holdout_keys: set[PredictionKey] = set()
+    group_model = certificate.get("evidence_model") == "group"
     reference = certificate.get("prediction_commitment")
     if reference is None:
         return ["production lifecycle verification requires prediction_commitment"], committed_by_key, holdout_keys
@@ -147,6 +148,19 @@ def load_prediction_commitment(
             errors.append("prediction artifact manifest_freeze_stamp differs from certificate")
         if frozen.get("spec_sha256") != certificate_frozen["spec"]["sha256"]:
             errors.append("prediction artifact spec_sha256 differs from certificate")
+        if group_model:
+            committed_files = frozen.get("files")
+            certificate_files = {
+                item["path"]: item["sha256"] for item in certificate_frozen["files"]
+            }
+            if not isinstance(committed_files, dict):
+                errors.append("group prediction artifact frozen_inputs.files is not an object")
+            else:
+                for path_text, digest in committed_files.items():
+                    if certificate_files.get(path_text) != digest:
+                        errors.append(
+                            f"prediction artifact frozen file differs from certificate: {path_text}"
+                        )
 
     artifact_specimens = artifact["specimens"]
     predictions = artifact["predictions"]
@@ -156,6 +170,21 @@ def load_prediction_commitment(
         return errors, committed_by_key, holdout_keys
 
     prediction_specimen_ids: set[str] = set()
+    certificate_specimens = {
+        specimen["specimen_id"]: specimen
+        for specimen in certificate.get("specimens", [])
+        if isinstance(specimen, dict) and isinstance(specimen.get("specimen_id"), str)
+    }
+    expected_group_specimen_fields = {
+        "specimen_id",
+        "site",
+        "ff_bel",
+        "ffsrc",
+        "tile",
+        "tile_type",
+        "site_prefix",
+        "split",
+    }
     for index, specimen in enumerate(artifact_specimens):
         if not isinstance(specimen, dict) or not isinstance(specimen.get("specimen_id"), str):
             errors.append(f"prediction artifact specimens[{index}] lacks a string specimen_id")
@@ -164,8 +193,33 @@ def load_prediction_commitment(
         if specimen_id in prediction_specimen_ids:
             errors.append(f"prediction artifact duplicates specimen_id {specimen_id!r}")
         prediction_specimen_ids.add(specimen_id)
+        if group_model:
+            if set(specimen) != expected_group_specimen_fields:
+                errors.append(
+                    f"prediction artifact specimens[{index}] fields differ from the group contract"
+                )
+                continue
+            certificate_specimen = certificate_specimens.get(specimen_id)
+            if certificate_specimen is None:
+                errors.append(
+                    f"prediction artifact specimen {specimen_id!r} is absent from certificate specimens"
+                )
+                continue
+            preregistered_projection = {
+                field: specimen[field]
+                for field in ("specimen_id", "site", "ff_bel", "ffsrc", "tile", "tile_type", "split")
+            }
+            certificate_projection = {
+                field: certificate_specimen[field]
+                for field in preregistered_projection
+            }
+            if preregistered_projection != certificate_projection:
+                errors.append(
+                    f"certificate specimen {specimen_id!r} differs from preregistered specimen identity"
+                )
+    if group_model and prediction_specimen_ids != set(certificate_specimens):
+        errors.append("certificate specimen IDs differ from preregistered specimen IDs")
 
-    group_model = certificate.get("evidence_model") == "group"
     if group_model:
         expected_prediction_fields = {
             "specimen_id",
@@ -400,6 +454,10 @@ def group_semantic_errors(
                 errors.append(f"specimen {specimen_id}: pinned resolved_bel differs from attestation")
             if resolved["tile"] != specimen["tile"]:
                 errors.append(f"specimen {specimen_id}: attested tile differs from specimen tile")
+            if resolved.get("ff_loc") != specimen["site"]:
+                errors.append(f"specimen {specimen_id}: attested FF LOC differs from specimen site")
+            if resolved.get("ff_bel", "").rsplit(".", 1)[-1] != specimen["ff_bel"]:
+                errors.append(f"specimen {specimen_id}: attested FF BEL differs from specimen FF BEL")
             if resolved["pin_mapping_is_identity"] != reference["pin_mapping_is_identity"]:
                 errors.append(f"specimen {specimen_id}: pinned pin mapping summary differs from attestation")
             if attestation["checkpoint"] != reference["checkpoint"]:
@@ -503,6 +561,9 @@ def group_semantic_errors(
             continue
         if spec_class is not None and rule_record.get("group") not in spec_class["from_groups"]:
             errors.append(f"group result key {key!r}: rule_file group is outside the certificate class")
+        expected_rule_file = f"prjxray/zynq7/segbits_{specimen['tile_type'].lower()}.db"
+        if rule_file != expected_rule_file:
+            errors.append(f"group result key {key!r}: rule_file does not match specimen tile type")
 
         declared_coordinates: set[tuple[int, int]] = set()
         declared_scope: dict[tuple[int, int], tuple[str, int, int]] = {}
@@ -535,13 +596,29 @@ def group_semantic_errors(
         if len(result["scope"]) != len(declared_coordinates):
             errors.append(f"group result key {key!r}: scope is not a unique complete bit set")
         label_match = re.search(r"\[([^]]+)\]$", result["group"])
-        if label_match is not None:
+        if label_match is None:
+            errors.append(f"group result key {key!r}: group label lacks an explicit member projection")
+        else:
             labelled_members = set(label_match.group(1).split("|"))
             frozen_member_names = {feature.rsplit(".", 1)[-1] for feature in frozen_members}
             if labelled_members != frozen_member_names:
                 errors.append(
                     f"group result key {key!r}: group label members differ from the bit-set-derived group"
                 )
+        tile = tilegrid[specimen["tile"]]
+        ordered_sites = sorted(
+            tile.get("sites", {}),
+            key=lambda site_name: int(re.search(r"_X([0-9]+)Y", site_name).group(1)),
+        )
+        site_index = ordered_sites.index(specimen["site"])
+        expected_site_prefix = f"{tile['sites'][specimen['site']]}_X{site_index}"
+        for feature in frozen_members:
+            fields = feature.split(".")
+            if fields[:2] != [specimen["tile_type"], expected_site_prefix]:
+                errors.append(
+                    f"group result key {key!r}: bit-set-derived feature does not match specimen tile/site instance"
+                )
+                break
 
         assertions = {item["kind"]: item for item in result["assertions"]}
         outcomes = {item["kind"]: item for item in result["assertion_outcomes"]}
@@ -577,6 +654,11 @@ def group_semantic_errors(
         )
         if not expected_matches:
             errors.append(f"group result key {key!r}: expected assignment matches no frozen member")
+        claimed_member = assertions["member_identity"]["predicted_member"]
+        if expected_matches != [claimed_member]:
+            errors.append(
+                f"group result key {key!r}: expected assignment differs from the frozen rule for the claimed member"
+            )
 
         observed_values: dict[tuple[int, int], int] = {}
         mismatched_addresses: list[tuple[str, int, int]] = []
@@ -619,6 +701,9 @@ def group_semantic_errors(
         semantic_assertion = assertions["member_identity"]
         semantic_outcome = outcomes["member_identity"]
         basis = semantic_assertion["netlist_basis"]
+        expected_basis = GROUP_BASIS_LUT if specimen["ffsrc"] == 0 else GROUP_BASIS_PIN
+        if basis != expected_basis:
+            errors.append(f"group result key {key!r}: netlist_basis disagrees with specimen ffsrc")
         if basis == GROUP_BASIS_LUT:
             rebuilt_expected_edge: dict[str, Any] = {"driver_ref": "LUT6", "driver_cell": "target"}
         elif basis == GROUP_BASIS_PIN:
@@ -763,10 +848,26 @@ def group_semantic_errors(
         and address_counts["scope_assignment"]["fail_count"] == 0
     )
     if certificate["claim_scope"] == "tile":
-        has_unknown = any(
-            accounting["counts"]["ownership_unknown"] > 0
-            for accounting in certificate["pair_accounting"]
-        )
+        has_unknown = False
+        for accounting in certificate["pair_accounting"]:
+            blocks = [
+                tilegrid.get(specimen_by_id.get(specimen_id, {}).get("tile", ""), {})
+                .get("bits", {})
+                .get("CLB_IO_CLK")
+                for specimen_id in accounting["specimen_ids"]
+            ]
+            for bit in accounting["buckets"]["ownership_unknown"]:
+                far = int(bit["far"], 16)
+                if any(
+                    block is not None
+                    and int(block["baseaddr"], 16) <= far < int(block["baseaddr"], 16) + block["frames"]
+                    and block["offset"] <= bit["word"] < block["offset"] + block["words"]
+                    for block in blocks
+                ):
+                    has_unknown = True
+                    break
+            if has_unknown:
+                break
         if has_unknown:
             address_passed = False
     expected_status = "passed" if address_passed else "failed"

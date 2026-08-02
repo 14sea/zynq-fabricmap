@@ -160,3 +160,35 @@ four slice positions. Holdout `group_exclusivity` 16/16, `scope_assignment` 16/1
 unattributed bits. `in_scope` is 2 in every pair — `O6` and the bypass member differ in
 two of the group's four bits, and the other two are scored anyway. That is the whole
 reason scope is the complete set.
+
+---
+
+## Round 7 request — a tile-wide claim needs coverage, not just absence of unknowns
+
+Found by the producer while emitting the 1.3 certificate, and reported because it was
+**created by the producer's own fix**.
+
+`verify_certificate.py` gates `claim_scope: "tile"` on there being no
+`ownership_unknown` bit inside the tile. That was the right guard when the category was
+non-empty. After the `%02d` padding fix in `specimen_diff.locate()`, run B's
+`ownership_unknown` count is **zero everywhere** — so the guard no longer fires, and a
+certificate that simply sets `claim_scope: "tile"` is accepted:
+
+```
+$ python3 host/verify_certificate.py <run B certificate with claim_scope=tile> --require-production
+CERTIFICATE VERIFY: OK — status=passed address_pass=32 address_fail=0 ...
+```
+
+That certificate asserts authority over a whole CLB tile on the strength of four bits
+per group. The tile also holds 2048 LUT-INIT bits, 32 ZINI/ZRST bits and the other mux
+groups, none of which any assertion in run B touches.
+
+**Requested rule:** a tile-wide claim additionally requires the union of asserted
+scopes to cover every coordinate the frozen database attributes to that tile — or, if
+that is too strong to be useful, an explicit `uncovered_bits` list that must be empty.
+Absence of `ownership_unknown` says nothing about coverage; it only says every bit that
+*did* move was attributable.
+
+This is exactly the failure mode the split exists to catch: a producer-side fix
+silently removed the only thing blocking a claim the evidence never supported, and no
+self-consistency check on either side would have noticed.

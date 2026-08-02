@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -17,7 +18,6 @@ RUN_DIR = REPO_ROOT / "gate_runs/run_2026_08_02_b"
 PREDICTIONS_PATH = RUN_DIR / "predictions.json"
 MEASUREMENT_PATH = RUN_DIR / "measurement.json"
 FEATURE_CERTIFICATE = REPO_ROOT / "gate_runs/run_2026_08_02_a/certificate.json"
-BUCKETS = ("in_scope", "frame_ecc", "db_attributed", "ownership_unknown", "unattributed")
 
 
 def load(path: Path) -> dict[str, Any]:
@@ -198,6 +198,36 @@ def verify_with_predictions(
         return run("host/verify_certificate.py", str(certificate_path), "--require-production")
 
 
+def inject_semantic_edge_failure(value: dict[str, Any], temporary: Path) -> None:
+    """Create pinned routed evidence that disagrees only with semantic edge identity."""
+
+    result = next(
+        item
+        for item in value["group_results"]
+        if item["split"] == "holdout"
+        and next(
+            assertion for assertion in item["assertions"] if assertion["kind"] == "member_identity"
+        )["netlist_basis"]
+        == "FF.D driven by a package pin through the slice bypass"
+    )
+    specimen = next(
+        item for item in value["specimens"] if item["specimen_id"] == result["prediction_specimen_id"]
+    )
+    attestation = load(REPO_ROOT / specimen["attestation"]["path"])
+    attestation["resolved"]["ff_d_driver_ref"] = "BUFG"
+    semantic = next(item for item in result["assertion_outcomes"] if item["kind"] == "member_identity")
+    semantic["attested_edge"]["ff_d_driver_ref"] = "BUFG"
+    semantic["netlist_basis_consistent"] = False
+    semantic["passed"] = False
+    value["semantic_status"] = "failed"
+    semantic_count = value["bit_class"]["semantic_accounting"]["member_identity"]
+    semantic_count["pass_count"] -= 1
+    semantic_count["fail_count"] += 1
+    attestation_path = temporary / "attestation.json"
+    specimen["attestation"]["sha256"] = write_json(attestation_path, attestation)
+    specimen["attestation"]["path"] = attestation_path.relative_to(REPO_ROOT).as_posix()
+
+
 class Round6Tests(unittest.TestCase):
     def assert_fails(self, checked: subprocess.CompletedProcess[str], text: str) -> None:
         self.assertNotEqual(checked.returncode, 0, checked.stdout)
@@ -234,6 +264,97 @@ class Round6Tests(unittest.TestCase):
         self.assert_fails(checked, "declared scope is not a complete frozen bit-set group")
         self.assertNotIn("differs from preregistered prediction", checked.stdout)
 
+    def test_group_segbit_text_requires_frozen_zero_padding(self) -> None:
+        value = build_certificate()
+        predictions = load(PREDICTIONS_PATH)
+        result = value["group_results"][0]
+        key = result["prediction_specimen_id"], result["group"]
+        prediction = next(
+            item for item in predictions["predictions"] if (item["specimen_id"], item["group"]) == key
+        )
+        padded = next(item["segbit"] for item in result["scope"] if re.search(r"_0[0-9]$", item["segbit"]))
+        unpadded = re.sub(r"_0([0-9])$", r"_\1", padded)
+        for collection in (
+            result["scope"],
+            next(
+                item for item in result["assertions"] if item["kind"] == "scope_assignment"
+            )["expected_assignment"],
+            result["observed_assignment"],
+        ):
+            next(item for item in collection if item["segbit"] == padded)["segbit"] = unpadded
+        prediction["scope"] = copy.deepcopy(result["scope"])
+        prediction["assertions"] = copy.deepcopy(result["assertions"])
+
+        checked = verify_with_predictions(value, predictions)
+        self.assert_fails(checked, "does not match '^[0-9]{2}_[0-9]{2}$'")
+
+    def test_every_committed_holdout_group_pair_is_required(self) -> None:
+        value = build_certificate()
+        removed = next(item for item in value["group_results"] if item["split"] == "holdout")
+        value["group_results"].remove(removed)
+        value["bit_class"]["coverage"]["attested_count"] -= 1
+        checked = verify_temporary(value)
+        self.assert_fails(checked, "holdout group completeness mismatch (missing=1")
+
+    def test_group_commitment_totals_are_independently_recounted(self) -> None:
+        value = build_certificate()
+        predictions = load(PREDICTIONS_PATH)
+        predictions["totals"]["assertions"] -= 1
+        value["prediction_commitment"]["totals"] = copy.deepcopy(predictions["totals"])
+        checked = verify_with_predictions(value, predictions)
+        self.assert_fails(checked, "prediction artifact totals mismatch")
+
+    def test_group_commitment_frozen_file_hash_must_match_certificate(self) -> None:
+        value = build_certificate()
+        predictions = load(PREDICTIONS_PATH)
+        rule_file = value["group_results"][0]["rule_file"]
+        predictions["frozen_inputs"]["files"][rule_file] = "0" * 64
+        checked = verify_with_predictions(value, predictions)
+        self.assert_fails(checked, "prediction artifact frozen file differs from certificate")
+
+    def test_group_rule_must_match_the_specimen_site_instance(self) -> None:
+        value = build_certificate()
+        predictions = load(PREDICTIONS_PATH)
+        result = next(
+            item
+            for item in value["group_results"]
+            if item["prediction_specimen_id"].startswith("SLICE_X8Y25_AFF_ffsrc0")
+        )
+        wrong_instance = next(
+            item
+            for item in value["group_results"]
+            if item["prediction_specimen_id"].startswith("SLICE_X9Y25_AFF_ffsrc0")
+        )
+        old_group = result["group"]
+        for field in (
+            "group",
+            "rule_file",
+            "scope",
+            "assertions",
+            "decoded_members",
+            "observed_assignment",
+            "assertion_outcomes",
+        ):
+            result[field] = copy.deepcopy(wrong_instance[field])
+        prediction = next(
+            item
+            for item in predictions["predictions"]
+            if (item["specimen_id"], item["group"])
+            == (result["prediction_specimen_id"], old_group)
+        )
+        for field in ("group", "rule_file", "scope", "assertions"):
+            prediction[field] = copy.deepcopy(result[field])
+
+        checked = verify_with_predictions(value, predictions)
+        self.assert_fails(checked, "feature does not match specimen tile/site instance")
+        self.assertNotIn("differs from preregistered prediction", checked.stdout)
+
+    def test_certificate_specimen_identity_is_pinned_by_commitment(self) -> None:
+        value = build_certificate()
+        value["specimens"][0]["ffsrc"] = 1
+        checked = verify_temporary(value)
+        self.assert_fails(checked, "differs from preregistered specimen identity")
+
     def test_claimed_two_member_decode_is_rejected(self) -> None:
         value = build_certificate()
         result = next(item for item in value["group_results"] if item["split"] == "holdout")
@@ -263,36 +384,11 @@ class Round6Tests(unittest.TestCase):
 
     def test_semantic_only_failure_passes_address_decision_and_is_loud(self) -> None:
         value = build_certificate()
-        result = next(
-            item
-            for item in value["group_results"]
-            if item["split"] == "holdout"
-            and next(
-                assertion for assertion in item["assertions"] if assertion["kind"] == "member_identity"
-            )["netlist_basis"]
-            == "FF.D driven by a package pin through the slice bypass"
-        )
-        specimen = next(
-            item for item in value["specimens"] if item["specimen_id"] == result["prediction_specimen_id"]
-        )
-        attestation = load(REPO_ROOT / specimen["attestation"]["path"])
-        attestation["resolved"]["ff_d_driver_ref"] = "BUFG"
-        semantic = next(item for item in result["assertion_outcomes"] if item["kind"] == "member_identity")
-        semantic["attested_edge"]["ff_d_driver_ref"] = "BUFG"
-        semantic["netlist_basis_consistent"] = False
-        semantic["passed"] = False
-        value["semantic_status"] = "failed"
-        semantic_count = value["bit_class"]["semantic_accounting"]["member_identity"]
-        semantic_count["pass_count"] -= 1
-        semantic_count["fail_count"] += 1
-
         build_dir = REPO_ROOT / "build"
         build_dir.mkdir(exist_ok=True)
         with tempfile.TemporaryDirectory(dir=build_dir) as directory:
             temporary = Path(directory)
-            attestation_path = temporary / "attestation.json"
-            specimen["attestation"]["sha256"] = write_json(attestation_path, attestation)
-            specimen["attestation"]["path"] = attestation_path.relative_to(REPO_ROOT).as_posix()
+            inject_semantic_edge_failure(value, temporary)
             certificate_path = temporary / "certificate.json"
             write_json(certificate_path, value)
             checked = run(
@@ -306,6 +402,42 @@ class Round6Tests(unittest.TestCase):
         self.assertIn("address_fail=0", checked.stdout)
         self.assertIn("semantic_status=failed", checked.stdout)
         self.assertIn("semantic_fail=1", checked.stdout)
+
+    def test_semantic_failure_must_not_be_folded_into_address_status(self) -> None:
+        value = build_certificate()
+        value["status"] = "failed"
+        value["failure_reasons"] = [{"code": "other", "detail": "semantic folded into address"}]
+
+        build_dir = REPO_ROOT / "build"
+        build_dir.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=build_dir) as directory:
+            temporary = Path(directory)
+            inject_semantic_edge_failure(value, temporary)
+            certificate_path = temporary / "certificate.json"
+            write_json(certificate_path, value)
+            checked = run(
+                "host/verify_certificate.py",
+                str(certificate_path),
+                "--require-production",
+            )
+
+        self.assert_fails(checked, "address evidence requires passed")
+
+    def test_producer_expected_edge_copy_is_not_trusted(self) -> None:
+        value = build_certificate()
+        result = value["group_results"][0]
+        semantic = next(item for item in result["assertion_outcomes"] if item["kind"] == "member_identity")
+        semantic["expected_edge"] = {"driver_ref": "IBUF", "requires_source_port": True}
+        checked = verify_temporary(value)
+        self.assert_fails(checked, "expected_edge differs from independent rebuild")
+
+    def test_producer_consistency_boolean_is_not_trusted(self) -> None:
+        value = build_certificate()
+        result = value["group_results"][0]
+        semantic = next(item for item in result["assertion_outcomes"] if item["kind"] == "member_identity")
+        semantic["netlist_basis_consistent"] = False
+        checked = verify_temporary(value)
+        self.assert_fails(checked, "netlist_basis_consistent summary is wrong")
 
     def test_bucket_overlap_is_rejected_from_bit_identity(self) -> None:
         value = build_certificate()
@@ -324,6 +456,22 @@ class Round6Tests(unittest.TestCase):
         accounting["partition_exact"] = False
         checked = verify_temporary(value)
         self.assert_fails(checked, "bucket union size differs from raw_diff_bits")
+
+    def test_tile_wide_claim_fails_when_geometry_contains_unknown_bits(self) -> None:
+        value = build_certificate()
+        value["claim_scope"] = "tile"
+        accounting = value["pair_accounting"][0]
+        unknown = accounting["buckets"]["in_scope"].pop()
+        accounting["counts"]["in_scope"] -= 1
+        accounting["buckets"]["ownership_unknown"].append(unknown)
+        accounting["counts"]["ownership_unknown"] += 1
+        value["status"] = "failed"
+        value["failure_reasons"] = [
+            {"code": "tile_ownership_unknown", "detail": "tile-wide exactness is not established"}
+        ]
+        checked = verify_temporary(value)
+        self.assertEqual(checked.returncode, 2, checked.stdout)
+        self.assertIn("CERTIFICATION FAILED", checked.stdout)
 
     def test_name_derived_carry4_grouping_is_rejected(self) -> None:
         value = build_certificate()

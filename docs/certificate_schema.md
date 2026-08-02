@@ -1,10 +1,12 @@
-# Certificate schema — `fabric_bit_class_certificate` 1.2.0
+# Certificate schema — `fabric_bit_class_certificate` 1.3.0
 
 Version 1.1.0 adds optional specimen-attestation and explicit diff-exclusion evidence
 to 1.0.0. Version 1.2.0 adds an optional preregistered prediction commitment and a
 specimen-qualified prediction key. All additions are optional in the generic 1.x
-schema, so older records remain valid under generic validation. The current
-production acceptance profile makes all three evidence classes mandatory.
+schema. Version 1.3.0 adds a selectable group evidence model for mux claims. Selecting
+that model makes its group fields mandatory, while records that omit
+`evidence_model` continue to validate as feature-model records. Older records remain
+valid and the feature production profile is unchanged.
 
 Machine-readable schema: `schemas/certificate.schema.json`. This document defines
 the semantic checks that JSON Schema cannot express. The certificate is emitted by
@@ -16,7 +18,19 @@ changes only add optional fields. A consumer rejects an unsupported MAJOR and ig
 unknown fields in a supported MAJOR. The JSON Schema therefore deliberately permits
 unknown properties.
 
-## Evidence model
+## Evidence-model selector
+
+`evidence_model` is `feature` or `group`. Omission means `feature` for compatibility.
+The two result shapes are deliberately not mixed:
+
+- `feature` uses `feature_results[]` and the 1.2 TP/FP/FN decision described below;
+- `group` requires schema 1.3 or later and uses `group_results[]`,
+  `pair_accounting[]`, `claim_scope`, and an independent `semantic_status`.
+
+A group certificate cannot gain authority by also carrying feature results. The host
+verifier dispatches solely on `evidence_model` and recomputes the selected model.
+
+## Feature evidence model (1.0–1.2)
 
 - `frozen_inputs` pins the spec hash, every declared consumed frozen-file hash, the
   manifest schema version and `freeze_stamp`. The verifier compares all of them with
@@ -65,7 +79,7 @@ unknown properties.
   distinct-name projections of the result records. Every preregistered holdout pair
   must appear exactly once; reporting only the successful pairs is invalid.
 
-## Accounting and falsifier
+## Feature accounting and falsifier
 
 On holdout evidence:
 
@@ -99,15 +113,90 @@ pass.
 production its numerator equals the number of specimen-feature result records; its
 denominator equals the current manifest class entry count.
 
-## Current production profile 1.2
+## Group evidence model (1.3)
+
+`group_results[]` is keyed by `(prediction_specimen_id, group)`. Every result copies
+the preregistered `group`, `split`, `rule_file`, complete `scope`, and `assertions`
+verbatim. The verifier compares that projection with the pinned `gate_predictions`
+artifact and requires every committed mine and holdout pair exactly once.
+The preregistered specimen's site, FF BEL/source variant, tile, tile type, split, and
+ID must also equal the certificate specimen projection; the ID alone is not identity.
+
+Group membership is recomputed from the frozen DB by bit identity, never by name: it
+is the maximal set of class features with the same coordinate set after polarity is
+removed. The declared scope must equal one such complete set, including bits that did
+not move. Its absolute addresses are independently recomputed from the specimen tile
+and the normative arithmetic in `docs/freeze_format.md`. A bracketed group label is
+only reconciled with the members after bit-set grouping; it never selects the group.
+Thus a name-derived `CARRY4` union and a mover-only truncated scope are invalid.
+Every polarity-free `segbit` coordinate retains the frozen DB's canonical
+`%02d_%02d` spelling; integer-equivalent unpadded text is invalid.
+The rule filename must match the specimen tile type, and the bit-set-derived feature
+prefix must match the specimen's independently derived site type/index. This prevents
+a valid group from a neighbouring site instance being substituted into the record.
+
+Each group has exactly three assertions:
+
+| assertion | decision class | verifier recomputation |
+|---|---|---|
+| `group_exclusivity` | address | at most one frozen member satisfies assert-iff |
+| `scope_assignment` | address | every complete-scope observed value equals its preregistered value, and that value pattern encodes a frozen member |
+| `member_identity` | semantic | decoded DB member name and routed netlist edge agree with the preregistered claim |
+
+Assert-iff means every positive token is 1 and every negated token is 0. The verifier
+rereads all member rules and decodes the absolute observed assignment; copied decoded
+member lists and outcome booleans are summaries, not inputs to the decision.
+
+Only holdout address outcomes enter `status`. A pass requires both address
+`fail_count` values to be zero and every pair partition to be exact. The independently
+recomputed `member_identity` outcomes enter `semantic_status` and
+`semantic_accounting` only. A semantic failure with correct addressing therefore has
+`status: passed`, `semantic_status: failed`, and verifier exit 0 with the semantic
+failure counts printed prominently. Setting address `status: failed` merely because
+semantic identity failed is malformed, not a stricter certificate.
+
+### Semantic edge evidence
+
+The verifier derives the expected edge from the preregistered `netlist_basis`; it does
+not trust the producer's `expected_edge` copy or `netlist_basis_consistent` boolean.
+It compares `attested_edge` with the pinned attestation and requires:
+
+- edge checkpoint equality with the attestation's top-level checkpoint;
+- route status `ROUTED`;
+- LUT-output basis: `driver_ref == LUT6` and `driver_cell == target`;
+- package-pin basis: `driver_ref == IBUF`, a nonempty top-level source port, and a
+  nonempty named package pin.
+
+These checks make a semantic PASS auditable without putting it into the address
+decision.
+
+### Diff partition and its limit
+
+Every `pair_accounting[]` record lists bit identities for five buckets:
+`in_scope`, `frame_ecc`, `db_attributed`, `ownership_unknown`, and `unattributed`.
+The verifier checks duplicates, pairwise disjointness, each recorded count against the
+list length, and union size against `raw_diff_bits`; `partition_exact` is only a
+summary. A tile-wide `claim_scope: tile` cannot pass while any pair contains
+`ownership_unknown` in a claimed tile's geometric range. Run B uses
+`claim_scope: group_bit_set` and currently records no unknown bits; its narrower claim
+would not silently acquire tile-wide authority if that bucket became nonempty later.
+
+The verifier does not possess the bitstreams and therefore cannot independently
+recompute `raw_diff_bits`. It validates the partition's internal completeness and the
+attestations' pinned bitstream hashes. Likewise, hashing a checkpoint and bitstream in
+one attestation anchors both against substitution but does not prove that the latter
+was produced from the former. Re-establishing either relation requires a Vivado
+rebuild; the checkpoint hash is an integrity anchor, not independent provenance proof.
+
+## Current production profiles 1.2 and 1.3
 
 The profile is selected by `profile: production`. Production consumers invoke the
-verifier with `--require-production`; this currently requires certificate 1.2 or
-later, so emitting a 1.1 record cannot bypass lifecycle verification. A historical
-1.1 production fixture remains accepted by generic validation for compatibility,
-but it is not current production authority.
+verifier with `--require-production`. A feature record requires certificate 1.2 or
+later; a group record requires 1.3 or later. Emitting a 1.1 record cannot bypass
+lifecycle verification. A historical 1.1 production fixture remains accepted by
+generic validation for compatibility, but it is not current production authority.
 
-The current profile requires:
+The feature profile requires:
 
 - certificate `schema_version >= 1.2.0`;
 - an attestation reference on every specimen;
@@ -118,7 +207,16 @@ The current profile requires:
 - exact field equality for every reported prediction and complete inclusion of all
   preregistered holdout pairs.
 
-Only one exclusion rule is supported: `frame_ecc`, exactly
+The group profile requires:
+
+- `schema_version >= 1.3.0` and `evidence_model: group`;
+- a valid prediction commitment and complete `(specimen_id, group)` reporting;
+- attestation and checkpoint references on every specimen;
+- complete frozen-DB-derived group scopes and independently decoded assert-iff;
+- separate address and semantic accounting/status;
+- identity-bearing, exact five-bucket partition records for every variant pair.
+
+For the feature profile, only one exclusion rule is supported: `frame_ecc`, exactly
 `word == 50 and 0 <= bit <= 12`. The verifier rejects an excluded bit outside that
 shape, observed/excluded overlap, predicted/excluded overlap, unchanged "diff" bits,
 undeclared rules, ECC-shaped bits left in `observed_diff`, and any excluded FAR with
