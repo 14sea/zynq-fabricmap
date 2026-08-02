@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/14sea/zynq-fabricmap/schemas/certificate.schema.json",
   "title": "Zynq fabric bit-class certificate",
-  "description": "Consumer-owned record emitted by the specimen-diff prediction gate. Unknown fields are permitted so 1.x consumers can ignore additive fields from later MINOR versions.",
+  "description": "Consumer-owned record emitted by the specimen-diff prediction gate. This schema validates certificate 1.0.0 and the additive 1.1.0 evidence fields. Unknown fields are permitted so 1.x consumers can ignore later MINOR additions.",
   "type": "object",
   "required": [
     "schema",
@@ -20,6 +20,7 @@
   "properties": {
     "schema": {"const": "fabric_bit_class_certificate"},
     "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"},
+    "profile": {"enum": ["conformance", "production"]},
     "certificate_id": {"$ref": "#/$defs/nonempty_string"},
     "status": {"enum": ["passed", "failed"]},
     "failure_reasons": {
@@ -114,6 +115,22 @@
       "if": {"properties": {"status": {"const": "passed"}}},
       "then": {"properties": {"failure_reasons": {"maxItems": 0}}},
       "else": {"properties": {"failure_reasons": {"minItems": 1}}}
+    },
+    {
+      "if": {
+        "required": ["profile"],
+        "properties": {"profile": {"const": "production"}}
+      },
+      "then": {
+        "properties": {
+          "specimens": {
+            "items": {"required": ["attestation"]}
+          },
+          "feature_results": {
+            "items": {"required": ["exclusion_rules", "excluded_diff"]}
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -157,6 +174,15 @@
       "properties": {
         "path": {"$ref": "#/$defs/nonempty_string"},
         "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "attestation_ref": {
+      "type": "object",
+      "required": ["path", "sha256", "schema_version"],
+      "properties": {
+        "path": {"$ref": "#/$defs/nonempty_string"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"}
       }
     },
     "address": {
@@ -212,6 +238,26 @@
         "listed_in_frozen_mask": {"type": "boolean"}
       }
     },
+    "exclusion_rule": {
+      "type": "object",
+      "required": ["reason", "rule", "why"],
+      "properties": {
+        "reason": {"const": "frame_ecc"},
+        "rule": {"const": "word == 50 and 0 <= bit <= 12"},
+        "why": {"$ref": "#/$defs/nonempty_string"}
+      }
+    },
+    "excluded_diff_bit": {
+      "type": "object",
+      "required": ["address", "before_value", "after_value", "reason", "rule"],
+      "properties": {
+        "address": {"$ref": "#/$defs/address"},
+        "before_value": {"enum": [0, 1]},
+        "after_value": {"enum": [0, 1]},
+        "reason": {"const": "frame_ecc"},
+        "rule": {"const": "word == 50 and 0 <= bit <= 12"}
+      }
+    },
     "specimen": {
       "type": "object",
       "required": [
@@ -238,11 +284,16 @@
         "tile_type": {"$ref": "#/$defs/nonempty_string"},
         "tile_frame_base": {"$ref": "#/$defs/far"},
         "build_seed": {"type": "integer", "minimum": 0},
-        "bitstream_sha256": {"$ref": "#/$defs/sha256"}
+        "bitstream_sha256": {"$ref": "#/$defs/sha256"},
+        "attestation": {"$ref": "#/$defs/attestation_ref"}
       }
     },
     "feature_result": {
       "type": "object",
+      "dependentRequired": {
+        "exclusion_rules": ["excluded_diff"],
+        "excluded_diff": ["exclusion_rules"]
+      },
       "required": [
         "feature",
         "split",
@@ -276,6 +327,15 @@
         "unattributed_diff": {
           "type": "array",
           "items": {"$ref": "#/$defs/unattributed_diff_bit"}
+        },
+        "exclusion_rules": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/exclusion_rule"}
+        },
+        "excluded_diff": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/excluded_diff_bit"}
         },
         "verdict": {"enum": ["matched", "mismatched"]}
       }

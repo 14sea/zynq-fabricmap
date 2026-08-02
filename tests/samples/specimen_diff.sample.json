@@ -1,0 +1,117 @@
+{
+  "base": "build/spec_attested/spec_0000000000000000.bit",
+  "variant": "build/spec_attested/spec_0000000000000002.bit",
+  "exclusion_rules": [
+    {
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12",
+      "why": "the frame ECC field is recomputed whenever any other bit in the same frame changes"
+    }
+  ],
+  "excluded_diff": [
+    {
+      "far": "0x00400a21",
+      "word": 50,
+      "bit": 0,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400a21",
+      "word": 50,
+      "bit": 1,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400a21",
+      "word": 50,
+      "bit": 2,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400a21",
+      "word": 50,
+      "bit": 3,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400a21",
+      "word": 50,
+      "bit": 6,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400a21",
+      "word": 50,
+      "bit": 7,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400a21",
+      "word": 50,
+      "bit": 8,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400a21",
+      "word": 50,
+      "bit": 11,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400a21",
+      "word": 50,
+      "bit": 12,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    }
+  ],
+  "attributed": [
+    {
+      "far": "0x00400a21",
+      "word": 51,
+      "bit": 15,
+      "before": 0,
+      "after": 1,
+      "tiles": [
+        {
+          "tile": "CLBLL_L_X2Y25",
+          "tile_type": "CLBLL_L",
+          "segbit": "33_15",
+          "features": [
+            "CLBLL_L.SLICEL_X0.ALUT.INIT[01]"
+          ],
+          "masked": true
+        }
+      ]
+    }
+  ],
+  "in_tile_only": [],
+  "unattributed": [],
+  "findings": []
+}
