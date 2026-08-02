@@ -74,6 +74,7 @@ def semantic_errors(certificate: dict[str, Any], repo_root: Path) -> list[str]:
     errors: list[str] = []
     data_dir = repo_root / "data"
     manifest = load_json(data_dir / "MANIFEST.json")
+    spec = load_json(data_dir / "subset_spec.json")
     tilegrid = load_json(data_dir / "prjxray/zynq7/xc7z010/tilegrid.json")
 
     target = certificate["target"]
@@ -131,6 +132,10 @@ def semantic_errors(certificate: dict[str, Any], repo_root: Path) -> list[str]:
             errors.append("bit_class.tier differs from current manifest")
         if class_record["manifest_entries"] != current_entries:
             errors.append("bit_class.manifest_entries differs from current manifest")
+    spec_class = next(
+        (entry for entry in spec["bit_classes"] if entry["id"] == class_record["id"]),
+        None,
+    )
 
     split = class_record["split"]
     mine = split["mine_features"]
@@ -219,6 +224,56 @@ def semantic_errors(certificate: dict[str, Any], repo_root: Path) -> list[str]:
                     errors.append(f"feature {feature}: absolute address disagrees with normative arithmetic at {key}")
             predicted[key] = item["expected_value"]
 
+        rule_file = result["rule_file"]
+        rule_record = manifest_files.get(rule_file)
+        if rule_file not in pinned_paths:
+            errors.append(f"feature {feature}: rule_file is not pinned in frozen_inputs.files")
+        if rule_record is None:
+            errors.append(f"feature {feature}: rule_file is absent from current manifest")
+        else:
+            if spec_class is not None and rule_record.get("group") not in spec_class["from_groups"]:
+                errors.append(f"feature {feature}: rule_file group is outside the certificate class")
+            try:
+                rule_path = safe_child(data_dir, rule_file)
+                matching_payloads = []
+                for line in rule_path.read_text(encoding="utf-8").splitlines():
+                    fields = line.split()
+                    if fields and fields[0] == feature:
+                        matching_payloads.append(fields[1:])
+                if len(matching_payloads) != 1:
+                    errors.append(
+                        f"feature {feature}: expected one frozen rule, found {len(matching_payloads)}"
+                    )
+                else:
+                    payload = matching_payloads[0]
+                    if rule_record.get("role") == "segbits":
+                        frozen_coordinates = []
+                        for token in payload:
+                            match = re.fullmatch(r"(!?)([0-9]+)_([0-9]+)", token)
+                            if match is None:
+                                errors.append(f"feature {feature}: invalid frozen segbit token {token!r}")
+                                continue
+                            frozen_coordinates.append(
+                                (int(match.group(2)), int(match.group(3)), bool(match.group(1)))
+                            )
+                        recorded_coordinates = [
+                            (
+                                item["segbit"]["frame_offset"],
+                                item["segbit"]["bit_offset"],
+                                item["segbit"]["negated"],
+                            )
+                            for item in result["predicted_assignments"]
+                        ]
+                        if recorded_coordinates != frozen_coordinates:
+                            errors.append(f"feature {feature}: prediction differs from complete frozen segbits rule")
+                    elif rule_record.get("role") == "ppips":
+                        if result["predicted_assignments"]:
+                            errors.append(f"feature {feature}: ppip rule must have no predicted bits")
+                    else:
+                        errors.append(f"feature {feature}: rule_file role is not segbits or ppips")
+            except (OSError, ValueError) as exc:
+                errors.append(f"feature {feature}: cannot read rule_file: {exc}")
+
         observed: dict[tuple[str, int, int], int] = {}
         for item in result["observed_assignments"]:
             key = address_key(item["address"])
@@ -305,8 +360,9 @@ def semantic_errors(certificate: dict[str, Any], repo_root: Path) -> list[str]:
         "fp_count": computed_fp,
         "fn_count": computed_fn,
     }
-    if accounting != computed_accounting:
-        errors.append(f"accounting mismatch (recorded={accounting} computed={computed_accounting})")
+    recorded_accounting = {field: accounting[field] for field in computed_accounting}
+    if recorded_accounting != computed_accounting:
+        errors.append(f"accounting mismatch (recorded={recorded_accounting} computed={computed_accounting})")
 
     criterion_passed = computed_tp == len(holdout) and computed_fn == 0 and computed_fp == 0
     expected_status = "passed" if criterion_passed else "failed"
@@ -337,6 +393,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("certificate", type=Path)
     parser.add_argument("--schema", type=Path, default=repo_root / "schemas/certificate.schema.json")
+    parser.add_argument(
+        "--allow-failed",
+        action="store_true",
+        help="return success for a well-formed failed record (schema conformance use only)",
+    )
     args = parser.parse_args()
     errors = verify(args.certificate.resolve(), repo_root, args.schema.resolve())
     if errors:
@@ -346,6 +407,13 @@ def main() -> int:
         return 1
     certificate = load_json(args.certificate)
     accounting = certificate["bit_class"]["accounting"]
+    if certificate["status"] == "failed" and not args.allow_failed:
+        print(
+            "CERTIFICATE VERIFY: CERTIFICATION FAILED — "
+            f"tp={accounting['tp_count']} fp={accounting['fp_count']} fn={accounting['fn_count']}",
+            file=sys.stderr,
+        )
+        return 2
     print(
         f"CERTIFICATE VERIFY: OK — status={certificate['status']} "
         f"tp={accounting['tp_count']} fp={accounting['fp_count']} fn={accounting['fn_count']}"

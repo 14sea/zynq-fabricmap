@@ -67,9 +67,17 @@ class Round1Tests(unittest.TestCase):
         self.assert_ok(run("host/verify_certificate.py", "tests/fixtures/certificate_pass.json"))
 
     def test_failed_certificate_is_a_valid_record(self) -> None:
-        result = run("host/verify_certificate.py", "tests/fixtures/certificate_fail.json")
+        result = run(
+            "host/verify_certificate.py",
+            "tests/fixtures/certificate_fail.json",
+            "--allow-failed",
+        )
         self.assert_ok(result)
         self.assertIn("status=failed", result.stdout)
+
+    def test_failed_certificate_is_not_honored_by_default(self) -> None:
+        result = run("host/verify_certificate.py", "tests/fixtures/certificate_fail.json")
+        self.assert_fails(result, "CERTIFICATION FAILED")
 
     def test_certificate_verifier_rejects_false_pass(self) -> None:
         certificate = json.loads(

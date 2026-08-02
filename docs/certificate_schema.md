@@ -20,6 +20,9 @@ unknown properties.
   result names its baseline and feature specimens, making the compared pair explicit.
 - `predicted_assignments[]` retains both the raw segbit coordinate and the absolute
   address. `expected_value` is 0 for a negated `!F_B` token and 1 otherwise.
+- `rule_file` identifies the frozen `.db` record behind a feature. It must be among
+  `frozen_inputs.files`; the verifier rereads that exact feature line and rejects a
+  prediction whose complete token sequence differs from the frozen rule.
 - `observed_assignments[]` records the value read from the feature specimen at every
   predicted address. `observed_diff[]` records every changed address and its direction.
   `unattributed_diff[]` is exactly the subset of changed addresses absent from the
@@ -51,6 +54,11 @@ malformed: it has `status: failed`, at least one structured `failure_reasons[]` 
 the same evidence fields as a pass, and the non-passing counts and feature verdicts.
 A record that says `passed` while its evidence or counts falsify the decision is
 invalid and the verifier exits nonzero.
+
+The verifier also exits nonzero for a valid `status: failed` record so it cannot be
+mistaken for a usable certificate. `--allow-failed` is available only for validating
+that a failure record conforms to this schema; it does not turn the decision into a
+pass.
 
 `coverage` stores integer numerator and denominator, not a rounded rate. The verifier
 requires its numerator to equal the number of explicitly attested features and its

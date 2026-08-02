@@ -246,6 +246,7 @@
       "required": [
         "feature",
         "split",
+        "rule_file",
         "baseline_specimen_id",
         "feature_specimen_id",
         "predicted_assignments",
@@ -257,6 +258,7 @@
       "properties": {
         "feature": {"$ref": "#/$defs/nonempty_string"},
         "split": {"enum": ["mine", "holdout"]},
+        "rule_file": {"$ref": "#/$defs/nonempty_string"},
         "baseline_specimen_id": {"$ref": "#/$defs/nonempty_string"},
         "feature_specimen_id": {"$ref": "#/$defs/nonempty_string"},
         "predicted_assignments": {
