@@ -1,0 +1,224 @@
+{
+  "schema": "prjxray_subset_spec",
+  "schema_version": "1.0.0",
+  "spec_id": "xc7z010_evolution_subset_v1",
+  "description": "Declarative list of prjxray-db files this repo freezes into data/, plus the bit-class taxonomy those files are cut into. The extractor (scripts/extract_prjxray_subset.py) reads this file; it is the only place the subset is defined.",
+  "source": {
+    "name": "prjxray-db",
+    "url": "https://github.com/f4pga/prjxray-db.git",
+    "license": "CC0-1.0",
+    "default_path": "/home/test/prjxray-db",
+    "note": "Upstream is archived. Freezing the static .db/.json text fully resolves the dependency; the fuzzers that produced it are NOT a dependency and are never resurrected (docs/kickoff_fuzz_and_map.md §4)."
+  },
+  "target": {
+    "family": "zynq7",
+    "device": "xc7z010",
+    "part": "xc7z010clg400-1",
+    "board": "EBAZ4205 / EBAZ4203 (XC7Z010-1CLG400I)"
+  },
+  "cross_family_reference": {
+    "family": "artix7",
+    "claim": "7-series shares one fabric: prjxray's zynq7 rule files are byte-identical to artix7. Groups with cross_family_check=true are re-verified at every extraction, so the 2026-07-11 audit is a machine-checked fact in the manifest, not a remembered one.",
+    "audit": "docs/kickoff_fuzz_and_map.md §3"
+  },
+  "groups": [
+    {
+      "id": "int_segbits",
+      "tier": "routing",
+      "role": "segbits",
+      "cross_family_check": true,
+      "rationale": "INT switchbox PIP rules. The routing-class inventory; certified host-side now, exercised on silicon only on sacrificial hardware (kickoff §1 electrical layer).",
+      "files": [
+        "zynq7/segbits_int_l.db",
+        "zynq7/segbits_int_r.db",
+        "zynq7/segbits_int_l.origin_info.db",
+        "zynq7/segbits_int_r.origin_info.db"
+      ]
+    },
+    {
+      "id": "int_ppips",
+      "tier": "routing",
+      "role": "ppips",
+      "cross_family_check": true,
+      "rationale": "Pseudo-PIPs in INT tiles: connections with no configuration bits (always/default). Needed so the gate does not go looking for bits that cannot exist.",
+      "files": [
+        "zynq7/ppips_int_l.db",
+        "zynq7/ppips_int_r.db",
+        "zynq7/ppips_int_l.origin_info.db",
+        "zynq7/ppips_int_r.origin_info.db"
+      ]
+    },
+    {
+      "id": "int_interface_ppips",
+      "tier": "routing",
+      "role": "ppips",
+      "cross_family_check": true,
+      "rationale": "INT_INTERFACE tiles bridge CLB pins to the INT switchbox and are entirely pseudo-PIP (no segbits file upstream). Required to walk a route from a slice pin into the switchbox.",
+      "files": [
+        "zynq7/ppips_int_interface_l.db",
+        "zynq7/ppips_int_interface_r.db"
+      ]
+    },
+    {
+      "id": "clb_segbits",
+      "tier": "content",
+      "role": "segbits",
+      "cross_family_check": true,
+      "rationale": "CLB configuration bits: LUT INIT, LUTRAM/SRL mode, FF config, and the slice-local output/carry muxes. This is the class evolution consumes today (worst case of a wrong write is logic garbage, never contention).",
+      "files": [
+        "zynq7/segbits_clbll_l.db",
+        "zynq7/segbits_clbll_r.db",
+        "zynq7/segbits_clblm_l.db",
+        "zynq7/segbits_clblm_r.db",
+        "zynq7/segbits_clbll_l.origin_info.db",
+        "zynq7/segbits_clbll_r.origin_info.db",
+        "zynq7/segbits_clblm_l.origin_info.db",
+        "zynq7/segbits_clblm_r.origin_info.db"
+      ]
+    },
+    {
+      "id": "clb_ppips",
+      "tier": "content",
+      "role": "ppips",
+      "cross_family_check": true,
+      "rationale": "Bit-less connections inside CLB tiles; same purpose as int_ppips.",
+      "files": [
+        "zynq7/ppips_clbll_l.db",
+        "zynq7/ppips_clbll_r.db",
+        "zynq7/ppips_clblm_l.db",
+        "zynq7/ppips_clblm_r.db",
+        "zynq7/ppips_clbll_l.origin_info.db",
+        "zynq7/ppips_clbll_r.origin_info.db",
+        "zynq7/ppips_clblm_l.origin_info.db",
+        "zynq7/ppips_clblm_r.origin_info.db"
+      ]
+    },
+    {
+      "id": "clb_masks",
+      "tier": "content",
+      "role": "mask",
+      "cross_family_check": true,
+      "rationale": "Per-tile-type bit masks. A specimen diff hits bits that belong to no documented feature; the mask says which of those are known-uninteresting, so an uncertified-bit alarm means something.",
+      "files": [
+        "zynq7/mask_clbll_l.db",
+        "zynq7/mask_clbll_r.db",
+        "zynq7/mask_clblm_l.db",
+        "zynq7/mask_clblm_r.db",
+        "zynq7/mask_clbll_l.origin_info.db",
+        "zynq7/mask_clbll_r.origin_info.db",
+        "zynq7/mask_clblm_l.origin_info.db",
+        "zynq7/mask_clblm_r.origin_info.db"
+      ]
+    },
+    {
+      "id": "device_geometry",
+      "tier": "geometry",
+      "role": "geometry",
+      "cross_family_check": false,
+      "rationale": "Device-specific, not fabric rules: which tile sits where on this die, which frame address and bit offset a tile's bits live at, and how tiles' wires connect. Maps a feature name to an actual bit in an actual bitstream.",
+      "files": [
+        "zynq7/xc7z010/tilegrid.json",
+        "zynq7/xc7z010/tileconn.json",
+        "zynq7/xc7z010/node_wires.json"
+      ]
+    },
+    {
+      "id": "part_data",
+      "tier": "geometry",
+      "role": "part",
+      "cross_family_check": false,
+      "rationale": "Our exact part. required_features.fasm is what any generated bitstream must carry to be loadable.",
+      "files": [
+        "zynq7/xc7z010clg400-1/part.yaml",
+        "zynq7/xc7z010clg400-1/part.json",
+        "zynq7/xc7z010clg400-1/package_pins.csv",
+        "zynq7/xc7z010clg400-1/required_features.fasm"
+      ]
+    },
+    {
+      "id": "device_mapping",
+      "tier": "geometry",
+      "role": "index",
+      "cross_family_check": false,
+      "rationale": "part -> device -> fabric resolution, and the element census used as a sanity check on tilegrid parsing.",
+      "files": [
+        "zynq7/mapping/devices.yaml",
+        "zynq7/mapping/parts.yaml",
+        "zynq7/element_counts.csv"
+      ]
+    },
+    {
+      "id": "provenance",
+      "tier": "provenance",
+      "role": "provenance",
+      "cross_family_check": false,
+      "rationale": "Upstream licence (CC0-1.0) and README, frozen alongside the data so the vendoring is self-documenting.",
+      "files": [
+        "LICENSE",
+        "README.md"
+      ]
+    }
+  ],
+  "bit_classes": [
+    {
+      "id": "clb_lut_init",
+      "tier": "content",
+      "priority": 1,
+      "from_groups": ["clb_segbits"],
+      "feature_regex": "^CLB(LL|LM)_[LR]\\.SLICE[LM]_X[01]\\.[A-D]LUT\\.INIT\\[[0-9]+\\]$",
+      "rationale": "LUT truth-table bits. Silicon-proven across the whole zynq-ehw / zynq-xpart / zynq-autoehw line; certified first because M2 consumes it immediately.",
+      "board_safety": "content — a wrong write is a logic error, not a short"
+    },
+    {
+      "id": "clb_lutram",
+      "tier": "content",
+      "priority": 3,
+      "from_groups": ["clb_segbits"],
+      "feature_regex": "^CLB(LL|LM)_[LR]\\.SLICE[LM]_X[01]\\.(([A-D]LUT\\.(RAM|SMALL|SRL))|([A-D]LUT\\.DI1MUX\\.[A-Z0-9_]+)|(WA[78]USED)|(WEMUX\\.[A-Z0-9_]+))$",
+      "rationale": "SLICEM distributed-RAM / SRL mode selects. Changes what the LUT bits mean, so it must be certified before LUT-INIT edits are trusted inside a SLICEM.",
+      "board_safety": "content"
+    },
+    {
+      "id": "clb_ff_config",
+      "tier": "content",
+      "priority": 2,
+      "from_groups": ["clb_segbits"],
+      "feature_regex": "^CLB(LL|LM)_[LR]\\.SLICE[LM]_X[01]\\.(([A-D]5?FF\\.(ZINI|ZRST))|(LATCH|FFSYNC|CLKINV|NOCLKINV|CEUSEDMUX|SRUSEDMUX))$",
+      "rationale": "Flip-flop init/reset/clock-enable configuration. Content-class and directly useful as extra genome real estate.",
+      "board_safety": "content"
+    },
+    {
+      "id": "clb_mux",
+      "tier": "content",
+      "priority": 4,
+      "from_groups": ["clb_segbits"],
+      "feature_regex": "^CLB(LL|LM)_[LR]\\.SLICE[LM]_X[01]\\.(([A-D]5?(FFMUX|OUTMUX)\\.[A-Z0-9_]+)|(PRECYINIT\\.[A-Z0-9_]+)|(CARRY4\\.[A-D]CY0))$",
+      "rationale": "Slice-local selects (FF input, slice output, carry init). Fan-in selectors, so an invalid encoding is a bad select rather than a driver conflict — but they are the first class where the one-selected-input-per-mux-group rule of the safety_whitelist actually bites.",
+      "board_safety": "content, mux-grouped — composition rule applies"
+    },
+    {
+      "id": "int_pip",
+      "tier": "routing",
+      "priority": 5,
+      "from_groups": ["int_segbits"],
+      "feature_regex": "^INT_[LR]\\.[A-Z0-9_]+\\.[A-Z0-9_]+$",
+      "rationale": "Switchbox PIPs. Host-side certification is free and builds inventory; on-silicon routing evolution waits for sacrificial hardware (kickoff §1).",
+      "board_safety": "routing — contention-capable, NEVER autonomously fuzzed on a working EBAZ"
+    },
+    {
+      "id": "ppip_bitless",
+      "tier": "routing",
+      "priority": 6,
+      "from_groups": ["int_ppips", "int_interface_ppips", "clb_ppips"],
+      "feature_regex": "^[A-Z0-9_]+\\.[A-Z0-9_]+\\.[A-Z0-9_]+$",
+      "rationale": "Bit-less pseudo-PIPs across INT, INT_INTERFACE and CLB tiles. Certification is a negative assertion: a specimen that routes through one of these must produce an empty frame diff.",
+      "board_safety": "no bits"
+    }
+  ],
+  "unclassified_policy": "fail",
+  "notes": [
+    "IOB/IOI, BRAM, DSP, CLK and HCLK tile classes are deliberately NOT frozen in v1.0.0: nothing in this line touches them, and a subset whose every line is classified is what makes the unclassified_policy=fail invariant meaningful. Adding a group is a MINOR spec bump plus a re-extraction.",
+    "mask_int_*.db does not exist upstream (INT tiles have no mask file); this is expected, not a missing file.",
+    "Certification status does not live here. This spec says what is frozen and how it is cut into classes; the prediction gate writes certificates, and MANIFEST.json carries the current status per class."
+  ]
+}

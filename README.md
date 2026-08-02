@@ -4,9 +4,9 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
-**Status: kickoff only.** Nothing is implemented, nothing is board-verified, and
-no research direction here is ratified yet. This repo exists so the work has a
-clean home from day one.
+**Status: the frozen database subset is in (2026-08-02).** The approach is ratified
+(see below), `data/` is frozen and self-verifying, and no bit class is certified
+yet. Nothing has been board-verified from this repo.
 
 ## Relationship to the other repos
 
@@ -79,6 +79,31 @@ Pure host-side, zero board risk. Split per the inversion below:
 |---|---|
 | Claude | the extraction + certification infrastructure: subset extractor into `data/`, Vivado specimen-diff harness, the prediction gate itself, and its TP/FP accounting |
 | author | `local_map` schema instantiation, host verifiers over the emitted certificates, and known-answer fixtures the gate must reproduce |
+
+### Landed so far
+
+**Step 1 — extraction + freeze format (done).**
+
+```bash
+scripts/extract_prjxray_subset.py --src /path/to/prjxray-db   # (re-)freeze
+scripts/extract_prjxray_subset.py --verify                    # integrity gate, no deps
+```
+
+- `data/subset_spec.json` declares the subset and the bit-class taxonomy; it is the
+  only place the subset is defined.
+- `data/prjxray/` holds 46 verbatim upstream files (16.6 MB) from prjxray-db
+  `0a0adde`, CC0; `data/MANIFEST.json` pins every hash, count and provenance field.
+- **10,896 features, 100% classified** into six classes — `clb_lut_init` (2048),
+  `clb_mux` (500), `clb_ff_config` (176), `clb_lutram` (42), `int_pip` (7272),
+  `ppip_bitless` (858). An unclassifiable feature aborts the extraction on purpose.
+- The 2026-07-11 "7-series shares one fabric" audit is now **machine-checked at every
+  extraction**: 28/34 rule files byte-identical to artix7, 2 rule-equivalent
+  (provenance labels only) — and 4 CLB mask files carry a real 4-bit delta, recorded
+  rather than smoothed over (`data/README.md`).
+- Format contract for the other author: `docs/freeze_format.md`, including the
+  `certification` slot the prediction gate writes back into and its staleness rule.
+
+**Step 2 — the Vivado specimen-diff harness and the prediction gate itself — is next.**
 
 ## Planning decisions carried in (2026-08-02)
 
