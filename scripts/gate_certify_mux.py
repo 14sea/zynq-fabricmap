@@ -29,12 +29,45 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from specimen_diff import locate, tile_index  # noqa: E402
+
 REPO = Path(__file__).resolve().parent.parent
 MANIFEST = REPO / "data/MANIFEST.json"
 
 
 def sha256_file(p: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def needed_files(manifest: dict, meas: dict, doc: dict) -> list[dict]:
+    """Every frozen file a verifier needs to recompute this record, derived from it.
+
+    A hardcoded list was wrong twice over: it missed the INT databases the bucket
+    labels depend on, and it would have gone on missing whatever a future run happened
+    to touch.  So the set is computed from the evidence instead — walk every bucket
+    bit to its geometrically candidate tiles, take their tile types, and pin those
+    databases along with the group rule files, the tilegrid and the part.
+
+    Over-pinning is harmless; under-pinning silently removes an integrity anchor the
+    verifier's recomputation actually rests on.
+    """
+    idx = tile_index()
+    types: set[str] = set()
+    for acc in meas["accounting"]:
+        for bits in acc["buckets"].values():
+            for b in bits:
+                for h in locate(idx, int(b["far"], 16), b["word"], b["bit"]):
+                    types.add(h["type"])
+
+    wanted = {f"prjxray/zynq7/segbits_{t.lower()}.db" for t in types}
+    wanted |= {p["rule_file"] for p in doc["predictions"]}
+    by_path = {f["path"]: f for f in manifest["files"]}
+    files = [{"path": p, "sha256": by_path[p]["sha256"]}
+             for p in sorted(wanted) if p in by_path]
+    files += [{"path": f["path"], "sha256": f["sha256"]} for f in manifest["files"]
+              if f["path"].endswith(("xc7z010/tilegrid.json", "part.yaml"))]
+    return files
 
 
 def main() -> int:
@@ -116,9 +149,7 @@ def main() -> int:
             "manifest_schema_version": manifest["schema_version"],
             "freeze_stamp": manifest["freeze_stamp"],
             "spec": {"path": "data/subset_spec.json", "sha256": manifest["spec"]["sha256"]},
-            "files": [{"path": f["path"], "sha256": f["sha256"]} for f in manifest["files"]
-                      if f["path"].endswith(("segbits_clbll_l.db", "segbits_clblm_l.db",
-                                             "xc7z010/tilegrid.json", "part.yaml"))],
+            "files": needed_files(manifest, meas, doc),
         },
         "bit_class": {
             "id": doc["bit_class"], "tier": "content", "manifest_entries": entries,

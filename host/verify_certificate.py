@@ -537,6 +537,7 @@ def group_semantic_errors(
     }
     semantic_counts = {"member_identity": {"pass_count": 0, "fail_count": 0}}
     asserted_addresses_by_tile: dict[str, set[tuple[str, int, int]]] = {}
+    asserted_addresses_by_specimen: dict[str, set[tuple[str, int, int]]] = {}
 
     for result in certificate["group_results"]:
         specimen_id = result["prediction_specimen_id"]
@@ -598,6 +599,7 @@ def group_semantic_errors(
             address = address_key(item["address"])
             declared_scope[coordinate] = address
             asserted_addresses_by_tile.setdefault(specimen["tile"], set()).add(address)
+            asserted_addresses_by_specimen.setdefault(specimen_id, set()).add(address)
             expected_address = computed_address(specimen["tile"], *coordinate)
             if expected_address is None or address != expected_address:
                 errors.append(f"group result key {key!r}: scope address disagrees with normative arithmetic")
@@ -815,6 +817,68 @@ def group_semantic_errors(
 
     partition_ok = True
     accounted_specimens: set[str] = set()
+    unpinned_claiming_db_counts: dict[str, int] = {}
+
+    # Index every physical CLB_IO_CLK geometry interval independently from the
+    # producer's ownership labels.  CLB and INT tiles deliberately overlap in
+    # this coordinate space, so all candidates must be retained.
+    geometry_by_far_word: dict[tuple[int, int], list[tuple[str, str, int, int]]] = {}
+    for tile_name, tile in tilegrid.items():
+        block = tile.get("bits", {}).get("CLB_IO_CLK")
+        if block is None:
+            continue
+        baseaddr = int(block["baseaddr"], 16)
+        for frame_offset in range(block["frames"]):
+            for word_offset in range(block["words"]):
+                geometry_by_far_word.setdefault(
+                    (baseaddr + frame_offset, block["offset"] + word_offset),
+                    [],
+                ).append((tile_name, tile["type"], frame_offset, word_offset))
+
+    bucket_evidence_cache: dict[
+        tuple[str, int, int],
+        tuple[str, set[str], set[str]],
+    ] = {}
+
+    def independently_classify_bucket(
+        address: tuple[str, int, int],
+    ) -> tuple[str, set[str], set[str]]:
+        """Return (bucket, candidate DBs, claiming DBs) for an out-of-scope bit."""
+
+        cached = bucket_evidence_cache.get(address)
+        if cached is not None:
+            return cached
+        far_text, word, bit = address
+        candidates = geometry_by_far_word.get((int(far_text, 16), word), [])
+        if not candidates:
+            result = "unattributed", set(), set()
+            bucket_evidence_cache[address] = result
+            return result
+
+        candidate_dbs: set[str] = set()
+        claiming_dbs: set[str] = set()
+        for _tile_name, tile_type, frame_offset, word_offset in candidates:
+            rule_file = f"prjxray/zynq7/segbits_{tile_type.lower()}.db"
+            record = manifest_files.get(rule_file)
+            if (
+                record is None
+                or record.get("role") != "segbits"
+                or not record.get("classified", False)
+                or rule_file.endswith(".origin_info.db")
+            ):
+                continue
+            candidate_dbs.add(rule_file)
+            coordinate = frame_offset, word_offset * 32 + bit
+            if coordinate in load_all_rule_coordinates(rule_file):
+                claiming_dbs.add(rule_file)
+        result = (
+            "db_attributed" if claiming_dbs else "ownership_unknown",
+            candidate_dbs,
+            claiming_dbs,
+        )
+        bucket_evidence_cache[address] = result
+        return result
+
     for index, accounting in enumerate(certificate["pair_accounting"]):
         pair_ids = accounting["specimen_ids"]
         accounted_specimens.update(pair_ids)
@@ -849,7 +913,46 @@ def group_semantic_errors(
             errors.append(f"pair_accounting[{index}] bucket union size differs from raw_diff_bits")
         if accounting["partition_exact"] != exact:
             errors.append(f"pair_accounting[{index}].partition_exact summary is wrong")
+
+        pair_scope: set[tuple[str, int, int]] = set()
+        for specimen_id in pair_ids:
+            pair_scope.update(asserted_addresses_by_specimen.get(specimen_id, set()))
+        for recorded_bucket in GROUP_BUCKETS:
+            for bit_record in accounting["buckets"][recorded_bucket]:
+                address = address_key(bit_record)
+                if address in pair_scope:
+                    expected_bucket = "in_scope"
+                    candidate_dbs: set[str] = set()
+                    claiming_dbs: set[str] = set()
+                elif address[1] == 50 and 0 <= address[2] <= 12:
+                    expected_bucket = "frame_ecc"
+                    candidate_dbs = set()
+                    claiming_dbs = set()
+                else:
+                    expected_bucket, candidate_dbs, claiming_dbs = independently_classify_bucket(address)
+                if recorded_bucket != expected_bucket:
+                    errors.append(
+                        f"pair_accounting[{index}] bit {address} is labelled {recorded_bucket} "
+                        f"but frozen geometry/DB evidence requires {expected_bucket}"
+                    )
+                if expected_bucket == "db_attributed" and not (claiming_dbs & pinned_paths):
+                    for rule_file in claiming_dbs:
+                        unpinned_claiming_db_counts[rule_file] = (
+                            unpinned_claiming_db_counts.get(rule_file, 0) + 1
+                        )
+                if expected_bucket == "ownership_unknown":
+                    missing_candidate_dbs = candidate_dbs - pinned_paths
+                    if missing_candidate_dbs:
+                        errors.append(
+                            f"pair_accounting[{index}] ownership_unknown bit {address} lacks pinned "
+                            f"candidate frozen DBs {sorted(missing_candidate_dbs)}"
+                        )
         partition_ok = partition_ok and exact
+    if unpinned_claiming_db_counts:
+        errors.append(
+            "pair accounting consumes unpinned claiming frozen DBs "
+            f"{dict(sorted(unpinned_claiming_db_counts.items()))}"
+        )
     if accounted_specimens != set(specimen_by_id):
         errors.append("pair_accounting does not cover every specimen")
 

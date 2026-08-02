@@ -176,7 +176,26 @@ Every `pair_accounting[]` record lists bit identities for five buckets:
 `in_scope`, `frame_ecc`, `db_attributed`, `ownership_unknown`, and `unattributed`.
 The verifier checks duplicates, pairwise disjointness, each recorded count against the
 list length, and union size against `raw_diff_bits`; `partition_exact` is only a
-summary. A tile-wide `claim_scope: tile` cannot pass while any pair contains
+summary. It also independently recomputes every label. A changed address in either
+specimen's asserted group scope is `in_scope`; word 50 bits 0 through 12 are
+`frame_ecc`; all other addresses are classified from every geometrically candidate
+tile in `tilegrid.json` and the corresponding classified frozen segbits DBs:
+
+- at least one candidate DB feature claims the local coordinate: `db_attributed`;
+- candidates exist but none claims it: `ownership_unknown`;
+- no geometric candidate exists: `unattributed`.
+
+CLB/INT geometry may overlap, so checking only the named specimen tile is invalid.
+A `db_attributed` record requires at least one claiming DB to be pinned in
+`frozen_inputs.files`. Proving `ownership_unknown` requires every available candidate
+segbits DB to be pinned. Prediction inputs and accounting inputs need not be the same:
+Run B's out-of-scope routing changes are claimed by `segbits_int_l.db` and
+`segbits_int_r.db`, so both are accounting inputs even though neither supplied a mux
+prediction. `frame_ecc` is independently limited to word 50 bits 0 through 12; unlike
+the feature model's exclusion record, group accounting does not require every
+ECC-labelled FAR to contain another changed bit in that same pair.
+
+A tile-wide `claim_scope: tile` cannot pass while any pair contains
 `ownership_unknown` in a claimed tile's geometric range. Run B uses
 `claim_scope: group_bit_set` and currently records no unknown bits; its narrower claim
 would not silently acquire tile-wide authority if that bucket became nonempty later.

@@ -19,6 +19,10 @@ PREDICTIONS_PATH = RUN_DIR / "predictions.json"
 MEASUREMENT_PATH = RUN_DIR / "measurement.json"
 REAL_GROUP_CERTIFICATE = RUN_DIR / "certificate.json"
 FEATURE_CERTIFICATE = REPO_ROOT / "gate_runs/run_2026_08_02_a/certificate.json"
+INT_ACCOUNTING_DBS = {
+    "prjxray/zynq7/segbits_int_l.db",
+    "prjxray/zynq7/segbits_int_r.db",
+}
 
 
 def load(path: Path) -> dict[str, Any]:
@@ -119,6 +123,16 @@ def build_certificate() -> dict[str, Any]:
             }
         )
 
+    frozen_inputs = copy.deepcopy(feature_certificate["frozen_inputs"])
+    pinned_paths = {item["path"] for item in frozen_inputs["files"]}
+    # Bucket ownership is consumer-verified against the routing databases that
+    # actually claim Run B's out-of-scope changes.  They are certificate inputs
+    # even though they were not prediction inputs.
+    for path in ("prjxray/zynq7/segbits_int_l.db", "prjxray/zynq7/segbits_int_r.db"):
+        if path not in pinned_paths:
+            record = next(item for item in manifest["files"] if item["path"] == path)
+            frozen_inputs["files"].append({"path": path, "sha256": record["sha256"]})
+
     return {
         "schema": "fabric_bit_class_certificate",
         "schema_version": "1.3.0",
@@ -137,7 +151,7 @@ def build_certificate() -> dict[str, Any]:
             "tool_versions": {"fixture": "round6-consumer/1.0.0"},
         },
         "target": copy.deepcopy(feature_certificate["target"]),
-        "frozen_inputs": copy.deepcopy(feature_certificate["frozen_inputs"]),
+        "frozen_inputs": frozen_inputs,
         "bit_class": {
             "id": "clb_mux",
             "tier": current_class["tier"],
@@ -247,6 +261,35 @@ class Round6Tests(unittest.TestCase):
             str(REAL_GROUP_CERTIFICATE),
             "--require-production",
         )
+        self.assertEqual(checked.returncode, 0, checked.stdout)
+        self.assertIn("address_pass=32 address_fail=0", checked.stdout)
+
+    def test_synthetic_missing_claiming_dbs_is_rejected(self) -> None:
+        value = load(REAL_GROUP_CERTIFICATE)
+        value["frozen_inputs"]["files"] = [
+            item
+            for item in value["frozen_inputs"]["files"]
+            if item["path"] not in INT_ACCOUNTING_DBS
+        ]
+
+        checked = verify_temporary(value)
+        self.assert_fails(checked, "pair accounting consumes unpinned claiming frozen DBs")
+
+    def test_synthetic_missing_claiming_dbs_passes_after_they_are_pinned(self) -> None:
+        value = load(REAL_GROUP_CERTIFICATE)
+        value["frozen_inputs"]["files"] = [
+            item
+            for item in value["frozen_inputs"]["files"]
+            if item["path"] not in INT_ACCOUNTING_DBS
+        ]
+        manifest = load(REPO_ROOT / "data/MANIFEST.json")
+        records = {item["path"]: item for item in manifest["files"]}
+        for path in sorted(INT_ACCOUNTING_DBS):
+            value["frozen_inputs"]["files"].append(
+                {"path": path, "sha256": records[path]["sha256"]}
+            )
+
+        checked = verify_temporary(value)
         self.assertEqual(checked.returncode, 0, checked.stdout)
         self.assertIn("address_pass=32 address_fail=0", checked.stdout)
 
@@ -467,14 +510,96 @@ class Round6Tests(unittest.TestCase):
         checked = verify_temporary(value)
         self.assert_fails(checked, "bucket union size differs from raw_diff_bits")
 
+    def test_unclaimed_geometric_bit_cannot_be_labelled_db_attributed(self) -> None:
+        value = build_certificate()
+        accounting = value["pair_accounting"][0]
+        specimen = next(
+            item for item in value["specimens"] if item["specimen_id"] in accounting["specimen_ids"]
+        )
+        tilegrid = load(REPO_ROOT / "data/prjxray/zynq7/xc7z010/tilegrid.json")
+        block = tilegrid[specimen["tile"]]["bits"]["CLB_IO_CLK"]
+        unclaimed = {
+            "far": f"0x{int(block['baseaddr'], 16):08X}",
+            "word": block["offset"],
+            "bit": 0,
+        }
+        accounting["buckets"]["db_attributed"].append(unclaimed)
+        accounting["counts"]["db_attributed"] += 1
+        accounting["raw_diff_bits"] += 1
+
+        checked = verify_temporary(value)
+        self.assert_fails(checked, "frozen geometry/DB evidence requires ownership_unknown")
+
+    def test_unknown_label_is_valid_for_unclaimed_out_of_scope_geometry(self) -> None:
+        value = build_certificate()
+        accounting = value["pair_accounting"][0]
+        specimen = next(
+            item for item in value["specimens"] if item["specimen_id"] in accounting["specimen_ids"]
+        )
+        tilegrid = load(REPO_ROOT / "data/prjxray/zynq7/xc7z010/tilegrid.json")
+        block = tilegrid[specimen["tile"]]["bits"]["CLB_IO_CLK"]
+        unknown = {
+            "far": f"0x{int(block['baseaddr'], 16):08X}",
+            "word": block["offset"],
+            "bit": 0,
+        }
+        accounting["buckets"]["ownership_unknown"].append(unknown)
+        accounting["counts"]["ownership_unknown"] += 1
+        accounting["raw_diff_bits"] += 1
+
+        checked = verify_temporary(value)
+        self.assertEqual(checked.returncode, 0, checked.stdout)
+
+    def test_claimed_bit_cannot_be_relabelled_as_ownership_unknown(self) -> None:
+        value = build_certificate()
+        accounting = value["pair_accounting"][0]
+        claimed = accounting["buckets"]["db_attributed"].pop()
+        accounting["counts"]["db_attributed"] -= 1
+        accounting["buckets"]["ownership_unknown"].append(claimed)
+        accounting["counts"]["ownership_unknown"] += 1
+
+        checked = verify_temporary(value)
+        self.assert_fails(checked, "frozen geometry/DB evidence requires db_attributed")
+
+    def test_geometric_bit_cannot_be_relabelled_as_unattributed(self) -> None:
+        value = build_certificate()
+        accounting = value["pair_accounting"][0]
+        claimed = accounting["buckets"]["db_attributed"].pop()
+        accounting["counts"]["db_attributed"] -= 1
+        accounting["buckets"]["unattributed"].append(claimed)
+        accounting["counts"]["unattributed"] += 1
+
+        checked = verify_temporary(value)
+        self.assert_fails(checked, "frozen geometry/DB evidence requires db_attributed")
+
+    def test_scope_bit_cannot_be_relabelled_as_db_attributed(self) -> None:
+        value = build_certificate()
+        accounting = value["pair_accounting"][0]
+        scoped = accounting["buckets"]["in_scope"].pop()
+        accounting["counts"]["in_scope"] -= 1
+        accounting["buckets"]["db_attributed"].append(scoped)
+        accounting["counts"]["db_attributed"] += 1
+
+        checked = verify_temporary(value)
+        self.assert_fails(checked, "frozen geometry/DB evidence requires in_scope")
+
     def test_tile_wide_claim_fails_when_geometry_contains_unknown_bits(self) -> None:
         value = build_certificate()
         value["claim_scope"] = "tile"
         accounting = value["pair_accounting"][0]
-        unknown = accounting["buckets"]["in_scope"].pop()
-        accounting["counts"]["in_scope"] -= 1
+        specimen = next(
+            item for item in value["specimens"] if item["specimen_id"] in accounting["specimen_ids"]
+        )
+        tilegrid = load(REPO_ROOT / "data/prjxray/zynq7/xc7z010/tilegrid.json")
+        block = tilegrid[specimen["tile"]]["bits"]["CLB_IO_CLK"]
+        unknown = {
+            "far": f"0x{int(block['baseaddr'], 16):08X}",
+            "word": block["offset"],
+            "bit": 0,
+        }
         accounting["buckets"]["ownership_unknown"].append(unknown)
         accounting["counts"]["ownership_unknown"] += 1
+        accounting["raw_diff_bits"] += 1
         value["status"] = "failed"
         value["failure_reasons"] = [
             {"code": "tile_ownership_unknown", "detail": "tile-wide exactness is not established"}
