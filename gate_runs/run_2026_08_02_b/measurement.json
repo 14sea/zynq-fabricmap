@@ -1,0 +1,190 @@
+{
+  "schema": "gate_measurement",
+  "schema_version": "1.1.0",
+  "bit_class": "clb_mux",
+  "prediction_commitment": {
+    "run_id": "run_2026_08_02_b",
+    "path": "gate_runs/run_2026_08_02_b/predictions.json",
+    "sha256": "c5b1c48a075a3b565f58a59b8ede708ccab3ec59cda6be4f8eacc5e281673541",
+    "schema_version": "1.1.0",
+    "seed": "0xb17d",
+    "totals": {
+      "specimens": 24,
+      "predictions": 24,
+      "holdout_predictions": 16,
+      "assertions": 72,
+      "semantic_assertions": 24
+    }
+  },
+  "scope_policy": {
+    "unit": "mux group bit-address set",
+    "note": "scope is the group's COMPLETE bit set; claims are group-scoped only. ownership_unknown bits lie outside every group scope and therefore cannot falsify these claims, but no tile-wide claim is made here and none may be added while such bits exist."
+  },
+  "totals": {
+    "mine": {
+      "group_exclusivity": {
+        "pass": 8,
+        "fail": 0
+      },
+      "scope_assignment": {
+        "pass": 8,
+        "fail": 0
+      },
+      "member_identity": {
+        "pass": 8,
+        "fail": 0
+      }
+    },
+    "holdout": {
+      "group_exclusivity": {
+        "pass": 16,
+        "fail": 0
+      },
+      "scope_assignment": {
+        "pass": 16,
+        "fail": 0
+      },
+      "member_identity": {
+        "pass": 16,
+        "fail": 0
+      }
+    }
+  },
+  "accounting": [
+    {
+      "site": "SLICE_X2Y25",
+      "ff_bel": "AFF",
+      "raw_diff_bits": 174,
+      "in_scope": 2,
+      "frame_ecc": 140,
+      "db_attributed": 21,
+      "ownership_unknown": 11,
+      "unattributed": 0,
+      "partition_exact": true
+    },
+    {
+      "site": "SLICE_X2Y25",
+      "ff_bel": "BFF",
+      "raw_diff_bits": 190,
+      "in_scope": 2,
+      "frame_ecc": 150,
+      "db_attributed": 29,
+      "ownership_unknown": 9,
+      "unattributed": 0,
+      "partition_exact": true
+    },
+    {
+      "site": "SLICE_X2Y25",
+      "ff_bel": "CFF",
+      "raw_diff_bits": 72,
+      "in_scope": 2,
+      "frame_ecc": 62,
+      "db_attributed": 6,
+      "ownership_unknown": 2,
+      "unattributed": 0,
+      "partition_exact": true
+    },
+    {
+      "site": "SLICE_X2Y25",
+      "ff_bel": "DFF",
+      "raw_diff_bits": 72,
+      "in_scope": 2,
+      "frame_ecc": 62,
+      "db_attributed": 6,
+      "ownership_unknown": 2,
+      "unattributed": 0,
+      "partition_exact": true
+    },
+    {
+      "site": "SLICE_X8Y25",
+      "ff_bel": "AFF",
+      "raw_diff_bits": 296,
+      "in_scope": 2,
+      "frame_ecc": 236,
+      "db_attributed": 28,
+      "ownership_unknown": 30,
+      "unattributed": 0,
+      "partition_exact": true
+    },
+    {
+      "site": "SLICE_X8Y25",
+      "ff_bel": "BFF",
+      "raw_diff_bits": 278,
+      "in_scope": 2,
+      "frame_ecc": 228,
+      "db_attributed": 19,
+      "ownership_unknown": 29,
+      "unattributed": 0,
+      "partition_exact": true
+    },
+    {
+      "site": "SLICE_X8Y25",
+      "ff_bel": "CFF",
+      "raw_diff_bits": 178,
+      "in_scope": 2,
+      "frame_ecc": 152,
+      "db_attributed": 14,
+      "ownership_unknown": 10,
+      "unattributed": 0,
+      "partition_exact": true
+    },
+    {
+      "site": "SLICE_X8Y25",
+      "ff_bel": "DFF",
+      "raw_diff_bits": 172,
+      "in_scope": 2,
+      "frame_ecc": 146,
+      "db_attributed": 14,
+      "ownership_unknown": 10,
+      "unattributed": 0,
+      "partition_exact": true
+    },
+    {
+      "site": "SLICE_X9Y25",
+      "ff_bel": "AFF",
+      "raw_diff_bits": 146,
+      "in_scope": 2,
+      "frame_ecc": 124,
+      "db_attributed": 10,
+      "ownership_unknown": 10,
+      "unattributed": 0,
+      "partition_exact": true
+    },
+    {
+      "site": "SLICE_X9Y25",
+      "ff_bel": "BFF",
+      "raw_diff_bits": 140,
+      "in_scope": 2,
+      "frame_ecc": 114,
+      "db_attributed": 20,
+      "ownership_unknown": 4,
+      "unattributed": 0,
+      "partition_exact": true
+    },
+    {
+      "site": "SLICE_X9Y25",
+      "ff_bel": "CFF",
+      "raw_diff_bits": 44,
+      "in_scope": 2,
+      "frame_ecc": 38,
+      "db_attributed": 4,
+      "ownership_unknown": 0,
+      "unattributed": 0,
+      "partition_exact": true
+    },
+    {
+      "site": "SLICE_X9Y25",
+      "ff_bel": "DFF",
+      "raw_diff_bits": 234,
+      "in_scope": 2,
+      "frame_ecc": 192,
+      "db_attributed": 21,
+      "ownership_unknown": 19,
+      "unattributed": 0,
+      "partition_exact": true
+    }
+  ],
+  "decision": "PASS",
+  "problems": [],
+  "details": []
+}

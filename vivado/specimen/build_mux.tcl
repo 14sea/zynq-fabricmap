@@ -1,10 +1,15 @@
 # Build one clb_mux specimen variant.  One implementation run per variant, because a
 # mux selection is structural — see specimen_mux.v.
 #
-#   vivado -mode batch -source build_mux.tcl -tclargs <outdir> <site> <ffsrc>
+#   vivado -mode batch -source build_mux.tcl -tclargs <outdir> <site> <ffsrc> [ff_bel]
 set outdir [lindex $argv 0]
 set site   [lindex $argv 1]
 set ffsrc  [lindex $argv 2]
+set ffbel  [lindex $argv 3]
+if {$ffbel eq ""} { set ffbel AFF }
+# The LUT must sit in the same slice position as the FF it feeds, or the FF's data
+# would have to arrive through a different mux than the one under test.
+set lutbel [string index $ffbel 0]6LUT
 
 set part xc7z010clg400-1
 set here [file dirname [file normalize [info script]]]
@@ -33,10 +38,10 @@ set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins bufg_in
 set lut [get_cells target]
 set ff  [get_cells ff]
 set_property LOC $site $lut
-set_property BEL A6LUT $lut
+set_property BEL $lutbel $lut
 set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} $lut
 set_property LOC $site $ff
-set_property BEL AFF $ff
+set_property BEL $ffbel $ff
 
 place_design
 route_design
@@ -47,7 +52,7 @@ puts $fh "{"
 puts $fh "  \"part\": \"$part\","
 puts $fh "  \"vivado_version\": \"[version -short]\","
 puts $fh "  \"requested_site\": \"$site\","
-puts $fh "  \"requested_bel\": \"A6LUT+AFF\","
+puts $fh "  \"requested_bel\": \"$lutbel+$ffbel\","
 puts $fh "  \"resolved_loc\": \"[get_property LOC $lut]\","
 puts $fh "  \"resolved_bel\": \"[get_property BEL $lut]\","
 puts $fh "  \"ff_loc\": \"[get_property LOC $ff]\","
@@ -66,6 +71,6 @@ puts $fh "  \"variants\": \"ffsrc$ffsrc\""
 puts $fh "}"
 close $fh
 
-write_bitstream -force $outdir/spec_ffsrc$ffsrc.bit
-puts "SPECIMEN_VARIANT ffsrc=$ffsrc"
+write_bitstream -force $outdir/spec_${ffbel}_ffsrc$ffsrc.bit
+puts "SPECIMEN_VARIANT bel=$ffbel ffsrc=$ffsrc"
 puts "SPECIMEN_DONE"
