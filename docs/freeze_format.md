@@ -223,13 +223,25 @@ dict, the site with the **lower X** is index 0 and the higher X is index 1, and 
 `CLBLM_L_X6Y0` has `SLICE_X8Y0: SLICEM` and `SLICE_X9Y0: SLICEL`, so `SLICEM_X0` is
 `SLICE_X8Y0` and `SLICEL_X1` is `SLICE_X9Y0`.
 
-### 5.6 Frame geometry, and what is *not* yet certified
+### 5.6 Frame geometry — discharged 2026-08-02
 
 A 7-series configuration frame is 101 words × 32 bits, word 50 being the clock row.
-That is the only claim in this section not derivable from the frozen data alone — it
-comes from UG470 and from the whole `zynq-xpart` ICAP line working. The frame layout
-is what the first specimen run measures, and a fixture may treat it as an assumption
-to be discharged rather than as established fact.
+This was the one claim in this section not derivable from the frozen data; it is no
+longer an assumption.
+
+`scripts/bitstream_frames.py` reconstructs the device's frame sequence from the frozen
+`part.yaml` (5,144 frames over 122 columns) plus 2 pad frames per bus/half/row group,
+and that sequence consumes the FDRI payload of a real xc7z010 bitstream **exactly**:
+5,152 × 101 = 520,352 words, verified on two independently produced bitstreams. No
+other frame size or pad rule reproduces that. See `docs/specimen_harness.md`.
+
+Two related facts a consumer of this section needs, both measured rather than assumed:
+
+- **Word 50 bits 0..12 are the frame ECC**, recomputed whenever anything else in the
+  frame changes, so a one-bit edit appears as ~10 changed bits. They are excluded from
+  attribution but must be *listed* — see `docs/evidence_contract.md` §2.
+- **Word 50 is shared**: `HCLK_*` tiles place their bits there (`tilegrid` offset 50).
+  Only bits 0..12 are ECC.
 
 Everything above describes an address. **Nothing in this section is evidence that the
 bit at that address means what the feature name says** — that is exactly what the

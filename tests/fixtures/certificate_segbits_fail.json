@@ -1,0 +1,117 @@
+{
+  "schema": "fabric_bit_class_certificate",
+  "schema_version": "1.0.0",
+  "certificate_id": "fixture_clb_lut_init_segbits_fail_v1",
+  "status": "failed",
+  "failure_reasons": [
+    {
+      "code": "holdout_false_negative",
+      "detail": "The predicted INIT[01] assignment was not observed in the feature specimen."
+    }
+  ],
+  "gate_run": {
+    "gate_id": "fixture_segbits_gate_fail",
+    "started_at": "2026-08-02T03:00:00Z",
+    "completed_at": "2026-08-02T03:01:00Z",
+    "tool_versions": {
+      "gate": "conformance-fixture-2",
+      "bitstream_differ": "conformance-fixture-2",
+      "vivado": "Vivado v2025.2"
+    }
+  },
+  "target": {
+    "family": "zynq7",
+    "device": "xc7z010",
+    "part": "xc7z010clg400-1"
+  },
+  "frozen_inputs": {
+    "manifest_schema_version": "1.1.0",
+    "freeze_stamp": "2026-08-02T01:29:26Z",
+    "spec": {
+      "path": "data/subset_spec.json",
+      "sha256": "ffe4fb9f6bdc118904a6dcbb5625f87d12b12e633ad4dee8c6772fbe45da8e37"
+    },
+    "files": [
+      {
+        "path": "prjxray/zynq7/segbits_clbll_l.db",
+        "sha256": "9bf6bdffdc814569a7da53c696e46207aab23ea66c9dd92c47e50a6211dd739b"
+      },
+      {
+        "path": "prjxray/zynq7/xc7z010/tilegrid.json",
+        "sha256": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee"
+      }
+    ]
+  },
+  "bit_class": {
+    "id": "clb_lut_init",
+    "tier": "content",
+    "manifest_entries": 2048,
+    "split": {
+      "mine_features": [],
+      "holdout_features": ["CLBLL_L.SLICEL_X0.ALUT.INIT[01]"]
+    },
+    "coverage": {
+      "attested_count": 1,
+      "class_entry_count": 2048
+    },
+    "accounting": {
+      "tp_count": 0,
+      "fp_count": 0,
+      "fn_count": 1
+    },
+    "decision_rule": "holdout_exact_match: fp_count == 0 and fn_count == 0"
+  },
+  "specimens": [
+    {
+      "specimen_id": "fixture_segbits_base",
+      "split": "holdout",
+      "design_source_sha256": "3000000000000000000000000000000000000000000000000000000000000001",
+      "vivado_version": "Vivado v2025.2",
+      "part": "xc7z010clg400-1",
+      "loc_site": "SLICE_X2Y25",
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "tile_frame_base": "0x00400A00",
+      "build_seed": 1,
+      "bitstream_sha256": "4000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "specimen_id": "fixture_segbits_feature",
+      "split": "holdout",
+      "design_source_sha256": "3000000000000000000000000000000000000000000000000000000000000002",
+      "vivado_version": "Vivado v2025.2",
+      "part": "xc7z010clg400-1",
+      "loc_site": "SLICE_X2Y25",
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "tile_frame_base": "0x00400A00",
+      "build_seed": 1,
+      "bitstream_sha256": "4000000000000000000000000000000000000000000000000000000000000002"
+    }
+  ],
+  "feature_results": [
+    {
+      "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[01]",
+      "split": "holdout",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "baseline_specimen_id": "fixture_segbits_base",
+      "feature_specimen_id": "fixture_segbits_feature",
+      "predicted_assignments": [
+        {
+          "segbit": {"frame_offset": 33, "bit_offset": 15, "negated": false},
+          "address": {"far": "0x00400A21", "word": 51, "bit": 15},
+          "expected_value": 1
+        }
+      ],
+      "observed_assignments": [
+        {
+          "address": {"far": "0x00400A21", "word": 51, "bit": 15},
+          "observed_value": 0
+        }
+      ],
+      "observed_diff": [],
+      "unattributed_diff": [],
+      "verdict": "mismatched"
+    }
+  ]
+}

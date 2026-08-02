@@ -50,9 +50,32 @@ set placed [get_property LOC  $cell]
 set pbel   [get_property BEL  $cell]
 puts "SPECIMEN_PLACEMENT site=$placed bel=$pbel"
 puts "SPECIMEN_TILE [get_tiles -of_objects [get_sites $site]]"
+# Placement attestation, read back from the ROUTED DESIGN rather than restated from
+# this script: a script hash proves what was asked for, only a read-back proves what
+# the tool did.  The resolved LUT input mapping is the thing that protects the feature
+# index from the pin-swapping trap, so it is evidence, not configuration.
+set fh [open $outdir/placement.json w]
+puts $fh "{"
+puts $fh "  \"part\": \"$part\","
+puts $fh "  \"vivado_version\": \"[version -short]\","
+puts $fh "  \"requested_site\": \"$site\","
+puts $fh "  \"requested_bel\": \"$bel\","
+puts $fh "  \"resolved_loc\": \"[get_property LOC $cell]\","
+puts $fh "  \"resolved_bel\": \"[get_property BEL $cell]\","
+puts $fh "  \"lock_pins\": \"[get_property LOCK_PINS $cell]\","
+puts $fh "  \"tile\": \"[get_tiles -of_objects [get_sites $site]]\","
+puts $fh "  \"pin_mapping\": {"
+set sep ""
 foreach pin {I0 I1 I2 I3 I4 I5} {
-    puts "SPECIMEN_PINMAP $pin -> [get_property BEL_PIN [get_pins target/$pin]]"
+    set bp [get_bel_pins -quiet -of_objects [get_pins target/$pin]]
+    puts $fh "$sep    \"$pin\": \"$bp\""
+    set sep ","
 }
+puts $fh "  },"
+puts $fh "  \"variants\": \"$inits\""
+puts $fh "}"
+close $fh
+puts "SPECIMEN_PLACEMENT_JSON $outdir/placement.json"
 
 foreach init $inits {
     set_property INIT 64'h$init $cell

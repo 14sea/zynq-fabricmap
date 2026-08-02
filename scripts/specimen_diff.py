@@ -37,8 +37,9 @@ REPO = Path(__file__).resolve().parent.parent
 DB = REPO / "data/prjxray/zynq7"
 TILEGRID = DB / "xc7z010/tilegrid.json"
 
-ECC_WORD = 50          # the frame's middle word
+ECC_WORD = 50            # the frame's middle word
 ECC_BITS = range(0, 13)  # 13-bit ECC field; measured to change on any frame edit
+ECC_RULE = f"word == {ECC_WORD} and 0 <= bit <= {max(ECC_BITS)}"
 
 
 def tile_index() -> dict:
@@ -108,8 +109,14 @@ def diff(base: Path, variant: Path) -> dict:
         raise SystemExit("bitstreams describe different frame sets — not comparable")
 
     idx = tile_index()
+    # Excluded bits are LISTED, never silently dropped: a consumer must be able to
+    # recompute the exclusion rule over them and confirm nothing else was hidden.
     out = {"base": str(base), "variant": str(variant),
-           "frame_ecc": [], "attributed": [], "in_tile_only": [], "unattributed": []}
+           "exclusion_rules": [{"reason": "frame_ecc", "rule": ECC_RULE,
+                                "why": "the frame ECC field is recomputed whenever any "
+                                       "other bit in the same frame changes"}],
+           "excluded_diff": [], "attributed": [], "in_tile_only": [],
+           "unattributed": [], "findings": []}
 
     for far in sorted(a):
         wa, wb = a[far], b[far]
@@ -123,7 +130,8 @@ def diff(base: Path, variant: Path) -> dict:
                 rec = {"far": f"{far:#010x}", "word": word, "bit": bit,
                        "before": (wa[word] >> bit) & 1, "after": (wb[word] >> bit) & 1}
                 if word == ECC_WORD and bit in ECC_BITS:
-                    out["frame_ecc"].append(rec)
+                    out["excluded_diff"].append({**rec, "reason": "frame_ecc",
+                                                 "rule": ECC_RULE})
                     continue
                 hits = locate(idx, far, word, bit)
                 if not hits:
@@ -138,6 +146,16 @@ def diff(base: Path, variant: Path) -> dict:
                 rec["tiles"] = named
                 (out["attributed"] if any(n["features"] for n in named)
                  else out["in_tile_only"]).append(rec)
+
+    # An ECC change in a frame with no data change cannot be explained by the
+    # exclusion rule's own rationale, so it is a finding rather than an exclusion.
+    data_frames = {r["far"] for r in out["attributed"] + out["in_tile_only"]
+                   + out["unattributed"]}
+    ecc_frames = {r["far"] for r in out["excluded_diff"]}
+    for far in sorted(ecc_frames - data_frames):
+        out["findings"].append(
+            f"{far}: ECC bits changed with no other change in that frame — "
+            "not explainable as recomputation, do not exclude silently")
     return out
 
 
@@ -151,7 +169,7 @@ def main() -> int:
 
     d = diff(args.base, args.variant)
     print(f"{args.base.name} -> {args.variant.name}")
-    print(f"  frame ECC bits   : {len(d['frame_ecc'])} (word {ECC_WORD}, recomputed — ignored)")
+    print(f"  excluded (ECC)   : {len(d['excluded_diff'])} bits, rule: {ECC_RULE}")
     print(f"  attributed bits  : {len(d['attributed'])}")
     for r in d["attributed"]:
         for t in r["tiles"]:
@@ -167,6 +185,8 @@ def main() -> int:
     print(f"  unattributed     : {len(d['unattributed'])}")
     for r in d["unattributed"][:8]:
         print(f"    {r['far']} word {r['word']:>3} bit {r['bit']:>2}")
+    for f in d["findings"]:
+        print(f"  FINDING: {f}")
     if args.json:
         args.json.write_text(json.dumps(d, indent=2))
         print(f"  wrote {args.json}")
