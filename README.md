@@ -51,6 +51,35 @@ zynq-autoehw. Its load-bearing findings:
   the EBAZ boards; autonomous *routing*-class fuzzing goes to sacrificial
   hardware, never the working boards.
 
+## ★ Ratified 2026-08-02 — the approach is now decided, not proposed
+
+The prework's core recommendation is **approved by the user**. It is no longer a
+recommendation; it is what this repo does:
+
+- **Do not complete prjxray.** Its fuzzers are archived and pinned to Vivado
+  2017.2, there is no ground truth in them, and nothing here consumes them.
+- **Extract the needed subset and freeze it into `data/`.** The 2026-07-11 audit
+  established that the zynq7 fabric rules are md5-identical to artix7 (7-series
+  shares one fabric) and that the real gaps — GTP, PCIe, XADC MONITOR,
+  cells_data/gridinfo — do not intersect what evolution needs. Licence is CC0, so
+  vendoring is clean.
+- **Certify per bit-class with our own Vivado specimen-diff prediction gate**,
+  porting the EP4CE6 method (mine → holdout → emit → fresh-gold, TP=1 / FP=0).
+  The certificates become the authority.
+- **prjxray is demoted to an index**, and completion becomes lazy: targeted
+  mini-fuzz only where a certificate actually fails.
+
+This instantiates the `local_map` schema and is the foundation for Claim B.
+
+### First drop, concretely
+
+Pure host-side, zero board risk. Split per the inversion below:
+
+| side | owns |
+|---|---|
+| Claude | the extraction + certification infrastructure: subset extractor into `data/`, Vivado specimen-diff harness, the prediction gate itself, and its TP/FP accounting |
+| author | `local_map` schema instantiation, host verifiers over the emitted certificates, and known-answer fixtures the gate must reproduce |
+
 ## Planning decisions carried in (2026-08-02)
 
 **The first drop inverts the usual division of labour.** In the sibling repos the
