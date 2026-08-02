@@ -1,0 +1,128 @@
+{
+  "schema": "address_known_answers",
+  "schema_version": "1.0.0",
+  "cases": [
+    {
+      "id": "clbll_l_lut_init_crosses_clock_row",
+      "kind": "feature",
+      "bit_class": "clb_lut_init",
+      "database": "zynq7/segbits_clbll_l.db",
+      "tile": "CLBLL_L_X2Y25",
+      "site": "SLICE_X2Y25",
+      "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[00]",
+      "expected_block": {
+        "baseaddr": "0x00400A00",
+        "frames": 36,
+        "offset": 51,
+        "words": 2
+      },
+      "expected_assignments": [
+        {
+          "token": "32_15",
+          "segbit": {"frame_offset": 32, "bit_offset": 15, "negated": false},
+          "address": {"far": "0x00400A20", "word": 51, "bit": 15},
+          "expected_value": 1
+        }
+      ]
+    },
+    {
+      "id": "clblm_l_slicem_lutram_uses_second_tile_word",
+      "kind": "feature",
+      "bit_class": "clb_lutram",
+      "database": "zynq7/segbits_clblm_l.db",
+      "tile": "CLBLM_L_X6Y25",
+      "site": "SLICE_X8Y25",
+      "feature": "CLBLM_L.SLICEM_X0.CLUT.RAM",
+      "expected_block": {
+        "baseaddr": "0x00400C00",
+        "frames": 36,
+        "offset": 51,
+        "words": 2
+      },
+      "expected_assignments": [
+        {
+          "token": "31_46",
+          "segbit": {"frame_offset": 31, "bit_offset": 46, "negated": false},
+          "address": {"far": "0x00400C1F", "word": 52, "bit": 14},
+          "expected_value": 1
+        }
+      ]
+    },
+    {
+      "id": "int_l_pip_preserves_negated_assignments",
+      "kind": "feature",
+      "bit_class": "int_pip",
+      "database": "zynq7/segbits_int_l.db",
+      "tile": "INT_L_X0Y25",
+      "feature": "INT_L.BYP_ALT0.BYP_BOUNCE_N3_3",
+      "expected_block": {
+        "baseaddr": "0x00400900",
+        "frames": 28,
+        "offset": 51,
+        "words": 2
+      },
+      "expected_assignments": [
+        {
+          "token": "21_07",
+          "segbit": {"frame_offset": 21, "bit_offset": 7, "negated": false},
+          "address": {"far": "0x00400915", "word": 51, "bit": 7},
+          "expected_value": 1
+        },
+        {
+          "token": "!22_07",
+          "segbit": {"frame_offset": 22, "bit_offset": 7, "negated": true},
+          "address": {"far": "0x00400916", "word": 51, "bit": 7},
+          "expected_value": 0
+        },
+        {
+          "token": "!23_07",
+          "segbit": {"frame_offset": 23, "bit_offset": 7, "negated": true},
+          "address": {"far": "0x00400917", "word": 51, "bit": 7},
+          "expected_value": 0
+        },
+        {
+          "token": "24_07",
+          "segbit": {"frame_offset": 24, "bit_offset": 7, "negated": false},
+          "address": {"far": "0x00400918", "word": 51, "bit": 7},
+          "expected_value": 1
+        },
+        {
+          "token": "!25_07",
+          "segbit": {"frame_offset": 25, "bit_offset": 7, "negated": true},
+          "address": {"far": "0x00400919", "word": 51, "bit": 7},
+          "expected_value": 0
+        }
+      ]
+    },
+    {
+      "id": "int_l_default_ppip_has_no_bits",
+      "kind": "bitless",
+      "bit_class": "ppip_bitless",
+      "database": "zynq7/ppips_int_l.db",
+      "tile": "INT_L_X0Y25",
+      "feature": "INT_L.BYP_ALT0.VCC_WIRE",
+      "expected_payload": "default",
+      "expected_block": {
+        "baseaddr": "0x00400900",
+        "frames": 28,
+        "offset": 51,
+        "words": 2
+      },
+      "expected_assignments": []
+    },
+    {
+      "id": "clbll_l_frozen_mask_bit_uses_same_coordinates",
+      "kind": "mask",
+      "database": "zynq7/mask_clbll_l.db",
+      "tile": "CLBLL_L_X2Y25",
+      "mask_token": "35_63",
+      "expected_block": {
+        "baseaddr": "0x00400A00",
+        "frames": 36,
+        "offset": 51,
+        "words": 2
+      },
+      "expected_address": {"far": "0x00400A23", "word": 52, "bit": 31}
+    }
+  ]
+}

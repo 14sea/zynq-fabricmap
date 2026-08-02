@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/14sea/zynq-fabricmap/schemas/certificate.schema.json",
+  "title": "Zynq fabric bit-class certificate",
+  "description": "Consumer-owned record emitted by the specimen-diff prediction gate. Unknown fields are permitted so 1.x consumers can ignore additive fields from later MINOR versions.",
+  "type": "object",
+  "required": [
+    "schema",
+    "schema_version",
+    "certificate_id",
+    "status",
+    "failure_reasons",
+    "gate_run",
+    "target",
+    "frozen_inputs",
+    "bit_class",
+    "specimens",
+    "feature_results"
+  ],
+  "properties": {
+    "schema": {"const": "fabric_bit_class_certificate"},
+    "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"},
+    "certificate_id": {"$ref": "#/$defs/nonempty_string"},
+    "status": {"enum": ["passed", "failed"]},
+    "failure_reasons": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/failure_reason"}
+    },
+    "gate_run": {
+      "type": "object",
+      "required": ["gate_id", "started_at", "completed_at", "tool_versions"],
+      "properties": {
+        "gate_id": {"$ref": "#/$defs/nonempty_string"},
+        "started_at": {"$ref": "#/$defs/timestamp"},
+        "completed_at": {"$ref": "#/$defs/timestamp"},
+        "tool_versions": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"$ref": "#/$defs/nonempty_string"}
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "required": ["family", "device", "part"],
+      "properties": {
+        "family": {"$ref": "#/$defs/nonempty_string"},
+        "device": {"$ref": "#/$defs/nonempty_string"},
+        "part": {"$ref": "#/$defs/nonempty_string"}
+      }
+    },
+    "frozen_inputs": {
+      "type": "object",
+      "required": ["manifest_schema_version", "freeze_stamp", "spec", "files"],
+      "properties": {
+        "manifest_schema_version": {"$ref": "#/$defs/semver"},
+        "freeze_stamp": {"$ref": "#/$defs/timestamp"},
+        "spec": {"$ref": "#/$defs/pinned_file"},
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/pinned_file"}
+        }
+      }
+    },
+    "bit_class": {
+      "type": "object",
+      "required": ["id", "tier", "manifest_entries", "split", "coverage", "accounting", "decision_rule"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonempty_string"},
+        "tier": {"enum": ["content", "routing"]},
+        "manifest_entries": {"type": "integer", "minimum": 0},
+        "split": {
+          "type": "object",
+          "required": ["mine_features", "holdout_features"],
+          "properties": {
+            "mine_features": {"$ref": "#/$defs/feature_list"},
+            "holdout_features": {"$ref": "#/$defs/nonempty_feature_list"}
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "required": ["attested_count", "class_entry_count"],
+          "properties": {
+            "attested_count": {"type": "integer", "minimum": 0},
+            "class_entry_count": {"type": "integer", "minimum": 0}
+          }
+        },
+        "accounting": {
+          "type": "object",
+          "required": ["tp_count", "fp_count", "fn_count"],
+          "properties": {
+            "tp_count": {"type": "integer", "minimum": 0},
+            "fp_count": {"type": "integer", "minimum": 0},
+            "fn_count": {"type": "integer", "minimum": 0}
+          }
+        },
+        "decision_rule": {"const": "holdout_exact_match: fp_count == 0 and fn_count == 0"}
+      }
+    },
+    "specimens": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/specimen"}
+    },
+    "feature_results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/feature_result"}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "passed"}}},
+      "then": {"properties": {"failure_reasons": {"maxItems": 0}}},
+      "else": {"properties": {"failure_reasons": {"minItems": 1}}}
+    }
+  ],
+  "$defs": {
+    "nonempty_string": {"type": "string", "minLength": 1},
+    "semver": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "far": {"type": "string", "pattern": "^0x[0-9A-F]{8}$"},
+    "feature_list": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/nonempty_string"}
+    },
+    "nonempty_feature_list": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/nonempty_string"}
+    },
+    "failure_reason": {
+      "type": "object",
+      "required": ["code", "detail"],
+      "properties": {
+        "code": {
+          "enum": [
+            "holdout_false_positive",
+            "holdout_false_negative",
+            "incomplete_coverage",
+            "stale_frozen_input",
+            "specimen_build_error",
+            "tool_error",
+            "other"
+          ]
+        },
+        "detail": {"$ref": "#/$defs/nonempty_string"}
+      }
+    },
+    "pinned_file": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/nonempty_string"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "address": {
+      "type": "object",
+      "required": ["far", "word", "bit"],
+      "properties": {
+        "far": {"$ref": "#/$defs/far"},
+        "word": {"type": "integer", "minimum": 0, "maximum": 100},
+        "bit": {"type": "integer", "minimum": 0, "maximum": 31}
+      }
+    },
+    "predicted_assignment": {
+      "type": "object",
+      "required": ["segbit", "address", "expected_value"],
+      "properties": {
+        "segbit": {
+          "type": "object",
+          "required": ["frame_offset", "bit_offset", "negated"],
+          "properties": {
+            "frame_offset": {"type": "integer", "minimum": 0},
+            "bit_offset": {"type": "integer", "minimum": 0, "maximum": 63},
+            "negated": {"type": "boolean"}
+          }
+        },
+        "address": {"$ref": "#/$defs/address"},
+        "expected_value": {"enum": [0, 1]}
+      }
+    },
+    "observed_assignment": {
+      "type": "object",
+      "required": ["address", "observed_value"],
+      "properties": {
+        "address": {"$ref": "#/$defs/address"},
+        "observed_value": {"enum": [0, 1]}
+      }
+    },
+    "diff_bit": {
+      "type": "object",
+      "required": ["address", "before_value", "after_value"],
+      "properties": {
+        "address": {"$ref": "#/$defs/address"},
+        "before_value": {"enum": [0, 1]},
+        "after_value": {"enum": [0, 1]}
+      }
+    },
+    "unattributed_diff_bit": {
+      "type": "object",
+      "required": ["address", "before_value", "after_value", "listed_in_frozen_mask"],
+      "properties": {
+        "address": {"$ref": "#/$defs/address"},
+        "before_value": {"enum": [0, 1]},
+        "after_value": {"enum": [0, 1]},
+        "listed_in_frozen_mask": {"type": "boolean"}
+      }
+    },
+    "specimen": {
+      "type": "object",
+      "required": [
+        "specimen_id",
+        "split",
+        "design_source_sha256",
+        "vivado_version",
+        "part",
+        "loc_site",
+        "tile",
+        "tile_type",
+        "tile_frame_base",
+        "build_seed",
+        "bitstream_sha256"
+      ],
+      "properties": {
+        "specimen_id": {"$ref": "#/$defs/nonempty_string"},
+        "split": {"enum": ["mine", "holdout"]},
+        "design_source_sha256": {"$ref": "#/$defs/sha256"},
+        "vivado_version": {"$ref": "#/$defs/nonempty_string"},
+        "part": {"$ref": "#/$defs/nonempty_string"},
+        "loc_site": {"$ref": "#/$defs/nonempty_string"},
+        "tile": {"$ref": "#/$defs/nonempty_string"},
+        "tile_type": {"$ref": "#/$defs/nonempty_string"},
+        "tile_frame_base": {"$ref": "#/$defs/far"},
+        "build_seed": {"type": "integer", "minimum": 0},
+        "bitstream_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "feature_result": {
+      "type": "object",
+      "required": [
+        "feature",
+        "split",
+        "baseline_specimen_id",
+        "feature_specimen_id",
+        "predicted_assignments",
+        "observed_assignments",
+        "observed_diff",
+        "unattributed_diff",
+        "verdict"
+      ],
+      "properties": {
+        "feature": {"$ref": "#/$defs/nonempty_string"},
+        "split": {"enum": ["mine", "holdout"]},
+        "baseline_specimen_id": {"$ref": "#/$defs/nonempty_string"},
+        "feature_specimen_id": {"$ref": "#/$defs/nonempty_string"},
+        "predicted_assignments": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/predicted_assignment"}
+        },
+        "observed_assignments": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/observed_assignment"}
+        },
+        "observed_diff": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/diff_bit"}
+        },
+        "unattributed_diff": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/unattributed_diff_bit"}
+        },
+        "verdict": {"enum": ["matched", "mismatched"]}
+      }
+    }
+  }
+}

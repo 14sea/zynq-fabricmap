@@ -1,0 +1,121 @@
+{
+  "schema": "fabric_bit_class_certificate",
+  "schema_version": "1.0.0",
+  "certificate_id": "fixture_ppip_fail_v1",
+  "status": "failed",
+  "failure_reasons": [
+    {
+      "code": "holdout_false_positive",
+      "detail": "A bit-less ppip produced one unattributed changed bit."
+    },
+    {
+      "code": "holdout_false_negative",
+      "detail": "The ppip negative assertion did not match exactly."
+    }
+  ],
+  "gate_run": {
+    "gate_id": "fixture_gate_fail",
+    "started_at": "2026-08-02T02:30:00Z",
+    "completed_at": "2026-08-02T02:31:00Z",
+    "tool_versions": {
+      "gate": "conformance-fixture-1",
+      "bitstream_differ": "conformance-fixture-1"
+    }
+  },
+  "target": {
+    "family": "zynq7",
+    "device": "xc7z010",
+    "part": "xc7z010clg400-1"
+  },
+  "frozen_inputs": {
+    "manifest_schema_version": "1.1.0",
+    "freeze_stamp": "2026-08-02T01:29:26Z",
+    "spec": {
+      "path": "data/subset_spec.json",
+      "sha256": "ffe4fb9f6bdc118904a6dcbb5625f87d12b12e633ad4dee8c6772fbe45da8e37"
+    },
+    "files": [
+      {
+        "path": "prjxray/zynq7/ppips_int_l.db",
+        "sha256": "d300ad4128a192e416a958471013b7554f141fd1f816715828b1e5a87838f18d"
+      },
+      {
+        "path": "prjxray/zynq7/xc7z010/tilegrid.json",
+        "sha256": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee"
+      }
+    ]
+  },
+  "bit_class": {
+    "id": "ppip_bitless",
+    "tier": "routing",
+    "manifest_entries": 858,
+    "split": {
+      "mine_features": [],
+      "holdout_features": ["INT_L.BYP_ALT0.VCC_WIRE"]
+    },
+    "coverage": {
+      "attested_count": 1,
+      "class_entry_count": 858
+    },
+    "accounting": {
+      "tp_count": 0,
+      "fp_count": 1,
+      "fn_count": 1
+    },
+    "decision_rule": "holdout_exact_match: fp_count == 0 and fn_count == 0"
+  },
+  "specimens": [
+    {
+      "specimen_id": "fixture_base",
+      "split": "holdout",
+      "design_source_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+      "vivado_version": "Vivado v2025.2",
+      "part": "xc7z010clg400-1",
+      "loc_site": "TIEOFF_X0Y25",
+      "tile": "INT_L_X0Y25",
+      "tile_type": "INT_L",
+      "tile_frame_base": "0x00400900",
+      "build_seed": 1,
+      "bitstream_sha256": "1000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "specimen_id": "fixture_feature",
+      "split": "holdout",
+      "design_source_sha256": "0000000000000000000000000000000000000000000000000000000000000002",
+      "vivado_version": "Vivado v2025.2",
+      "part": "xc7z010clg400-1",
+      "loc_site": "TIEOFF_X0Y25",
+      "tile": "INT_L_X0Y25",
+      "tile_type": "INT_L",
+      "tile_frame_base": "0x00400900",
+      "build_seed": 1,
+      "bitstream_sha256": "2000000000000000000000000000000000000000000000000000000000000002"
+    }
+  ],
+  "feature_results": [
+    {
+      "feature": "INT_L.BYP_ALT0.VCC_WIRE",
+      "split": "holdout",
+      "baseline_specimen_id": "fixture_base",
+      "feature_specimen_id": "fixture_feature",
+      "predicted_assignments": [],
+      "observed_assignments": [],
+      "observed_diff": [
+        {
+          "address": {"far": "0x00400900", "word": 51, "bit": 0},
+          "before_value": 0,
+          "after_value": 1
+        }
+      ],
+      "unattributed_diff": [
+        {
+          "address": {"far": "0x00400900", "word": 51, "bit": 0},
+          "before_value": 0,
+          "after_value": 1,
+          "listed_in_frozen_mask": false
+        }
+      ],
+      "verdict": "mismatched"
+    }
+  ]
+}
