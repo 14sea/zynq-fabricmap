@@ -44,6 +44,8 @@ The verifier independently:
 - rejects duplicate artifact specimen IDs and duplicate pair keys;
 - recounts all three commitment totals;
 - compares each certificate prediction projection field-for-field;
+- compares emitted token text directly with the frozen rule-file text, while checking
+  parsed coordinates separately;
 - requires exact set equality between committed and reported holdout pair keys;
 - computes TP/FP/FN and coverage by pair rather than by distinct feature name.
 

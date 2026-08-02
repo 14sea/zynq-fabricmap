@@ -31,8 +31,10 @@ unknown properties.
   and requires its routed `resolved_loc`, tile, part and output bitstream hash to agree
   with the specimen record. For `clb_lut_init`, the current production profile accepts
   identity pin mapping only; permutation application is deliberately not implemented.
-- `predicted_assignments[]` retains both the raw segbit coordinate and the absolute
-  address. `expected_value` is 0 for a negated `!F_B` token and 1 otherwise.
+- `predicted_assignments[]` retains the verbatim frozen-db token, the parsed segbit
+  coordinate and the absolute address. Token text uses the normative `%02d_%02d`
+  spelling from `docs/freeze_format.md` §5.3. `expected_value` is 0 for a negated
+  `!F_B` token and 1 otherwise.
 - Certificate 1.2 may pin the pre-gold `gate_predictions` file with
   `prediction_commitment: {run_id, path, sha256, schema_version, seed, totals}`.
   The verifier checks the file hash, artifact version, seed and class; compares its
@@ -46,7 +48,9 @@ unknown properties.
   a substitute for this comparison.
 - `rule_file` identifies the frozen `.db` record behind a feature. It must be among
   `frozen_inputs.files`; the verifier rereads that exact feature line and rejects a
-  prediction whose complete token sequence differs from the frozen rule.
+  prediction whose complete token sequence differs string-for-string from the frozen
+  rule. It does not reconstruct token text from integer coordinates. The independently
+  parsed coordinate sequence must also agree.
 - `observed_assignments[]` records the value read from the feature specimen at every
   predicted address. `observed_diff[]` records every non-excluded changed address and
   its direction. In 1.1, `excluded_diff[]` lists excluded changes explicitly and

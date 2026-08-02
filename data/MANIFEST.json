@@ -209,11 +209,18 @@
       ],
       "board_safety": "content \u2014 a wrong write is a logic error, not a short",
       "certification": {
-        "status": "uncertified",
-        "gate": null,
-        "certificate": null,
-        "tp": null,
-        "fp": null
+        "status": "certified",
+        "gate": "run_2026_08_02_a",
+        "certificate": "gate_runs/run_2026_08_02_a/certificate.json",
+        "certificate_schema_version": "1.2.0",
+        "profile": "production",
+        "prediction_commitment_sha256": "590b28beff79454135b0588dbe7ee4a060280033a3fe3c75499b8529912c8827",
+        "tp": 262,
+        "fp": 0,
+        "fn": 0,
+        "holdout_pairs": 194,
+        "attested_pairs": 388,
+        "scope": "address prediction from the frozen rules; NOT on-silicon semantics"
       }
     },
     {

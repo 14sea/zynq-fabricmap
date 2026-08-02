@@ -470,13 +470,6 @@ def semantic_errors(
             expected_from_polarity = 0 if item["segbit"]["negated"] else 1
             if item["expected_value"] != expected_from_polarity:
                 errors.append(f"feature {feature}: expected_value disagrees with segbit polarity at {key}")
-            if "token" in item:
-                expected_token = (
-                    ("!" if item["segbit"]["negated"] else "")
-                    + f"{item['segbit']['frame_offset']}_{item['segbit']['bit_offset']}"
-                )
-                if item["token"] != expected_token:
-                    errors.append(f"feature {feature}: token disagrees with segbit coordinate at {key}")
             if block is not None:
                 frame_offset = item["segbit"]["frame_offset"]
                 bit_offset = item["segbit"]["bit_offset"]
@@ -514,6 +507,9 @@ def semantic_errors(
                 else:
                     payload = matching_payloads[0]
                     if rule_record.get("role") == "segbits":
+                        recorded_tokens = [item.get("token") for item in result["predicted_assignments"]]
+                        if any(token is not None for token in recorded_tokens) and recorded_tokens != payload:
+                            errors.append(f"feature {feature}: token sequence differs from frozen rule text")
                         frozen_coordinates = []
                         for token in payload:
                             match = re.fullmatch(r"(!?)([0-9]+)_([0-9]+)", token)
