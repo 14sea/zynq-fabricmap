@@ -192,3 +192,42 @@ Absence of `ownership_unknown` says nothing about coverage; it only says every b
 This is exactly the failure mode the split exists to catch: a producer-side fix
 silently removed the only thing blocking a claim the evidence never supported, and no
 self-consistency check on either side would have noticed.
+
+---
+
+## Round 8 request — bucket *labels* are producer assertions the verifier can recompute
+
+Found while checking the round 7 fix, by pushing in the opposite direction.
+
+The verifier checks the five buckets for disjointness, counts and union size, but does
+not recompute what each listed bit is **labelled**. Whether a coordinate is claimed by
+some frozen feature is fully derivable from `rule_file` + `tilegrid`, exactly like the
+group scopes it already recomputes.
+
+Demonstrated on the real run B certificate. `00_00` in `CLBLL_L_X2Y25` is claimed by no
+frozen feature:
+
+```python
+features_using('CLBLL_L', '00_00') -> []
+```
+
+Appending it to `pair_accounting[0].buckets.db_attributed` (with `counts` and
+`raw_diff_bits` kept consistent) is accepted:
+
+```
+CERTIFICATE VERIFY: OK — status=passed address_pass=32 address_fail=0 ...
+```
+
+**Why it matters.** `ownership_unknown` and `unattributed` are the alarm buckets, and
+the round 7 coverage guard reads `ownership_unknown`. If an unattributable bit can be
+relabelled `db_attributed`, both the alarm and the guard go quiet — and it need not be
+deliberate: my padding bug did exactly this kind of mislabelling in the opposite
+direction, silently, for the whole of run B.
+
+**Requested rule:** for every bit listed in `db_attributed`, recompute from the frozen
+database that at least one feature claims its coordinate in some geometrically
+candidate tile, and reject the certificate otherwise. Symmetrically, a bit in
+`ownership_unknown` must be claimed by no candidate tile's database, and a bit in
+`unattributed` must fall inside no tile's geometric range at all. The producer's labels
+then carry no authority of their own, which is the same standard already applied to
+scope, addresses, assert-iff and the semantic edge.
