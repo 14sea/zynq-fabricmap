@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/14sea/zynq-fabricmap/schemas/certificate.schema.json",
   "title": "Zynq fabric bit-class certificate",
-  "description": "Consumer-owned record emitted by the specimen-diff prediction gate. This schema validates the feature evidence model through 1.2.0 and the additive group evidence model introduced in 1.3.0. Unknown fields are permitted so 1.x consumers can ignore later MINOR additions.",
+  "description": "Consumer-owned record emitted by the specimen-diff prediction gate. This schema validates the legacy feature evidence model through 1.2.0, the group evidence model introduced in 1.3.0, and the 1.4.0 shared-accounting and verifier-derived group-consistency additions. Unknown fields are permitted so 1.x consumers can ignore later MINOR additions.",
   "type": "object",
   "required": [
     "schema",
@@ -105,16 +105,84 @@
         ],
         "properties": {
           "schema_version": {"pattern": "^1\\.(?:[3-9]|[1-9][0-9]+)\\.[0-9]+$"},
-          "bit_class": {"$ref": "#/$defs/group_bit_class"},
           "specimens": {"items": {"$ref": "#/$defs/group_specimen"}}
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "schema_version": {"pattern": "^1\\.(?:[4-9]|[1-9][0-9]+)\\.[0-9]+$"}
+              }
+            },
+            "then": {
+              "properties": {
+                "bit_class": {"$ref": "#/$defs/group_bit_class_1_4"},
+                "group_results": {
+                  "items": {
+                    "properties": {
+                      "assertion_outcomes": {"minItems": 4, "maxItems": 4}
+                    }
+                  }
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "bit_class": {"$ref": "#/$defs/group_bit_class"},
+                "group_results": {
+                  "items": {
+                    "properties": {
+                      "assertion_outcomes": {"minItems": 3, "maxItems": 3}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       },
       "else": {
         "required": ["feature_results"],
-        "properties": {
-          "bit_class": {"$ref": "#/$defs/feature_bit_class"},
-          "specimens": {"items": {"$ref": "#/$defs/specimen"}}
-        }
+        "properties": {"specimens": {"items": {"$ref": "#/$defs/specimen"}}},
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "schema_version": {"pattern": "^1\\.(?:[4-9]|[1-9][0-9]+)\\.[0-9]+$"}
+              }
+            },
+            "then": {
+              "required": ["prediction_commitment", "pair_accounting", "semantic_status"],
+              "properties": {
+                "bit_class": {"$ref": "#/$defs/feature_bit_class_1_4"},
+                "feature_results": {
+                  "items": {
+                    "required": [
+                      "prediction_specimen_id",
+                      "expected_transition",
+                      "semantic_assertion",
+                      "semantic_outcome"
+                    ],
+                    "properties": {
+                      "observed_assignments": {
+                        "items": {"required": ["before_value", "after_value"]}
+                      },
+                      "predicted_assignments": {"items": {"required": ["token"]}}
+                    }
+                  }
+                }
+              }
+            },
+            "else": {
+              "properties": {
+                "bit_class": {"$ref": "#/$defs/feature_bit_class"},
+                "feature_results": {
+                  "items": {"required": ["observed_diff", "unattributed_diff"]}
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -132,6 +200,21 @@
           "specimens": {
             "items": {"required": ["attestation"]}
           },
+          "feature_results": {"items": {"type": "object"}}
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["profile", "schema_version"],
+        "properties": {
+          "profile": {"const": "production"},
+          "schema_version": {"pattern": "^1\\.(?:[0-3])\\.[0-9]+$"},
+          "evidence_model": {"not": {"const": "group"}}
+        }
+      },
+      "then": {
+        "properties": {
           "feature_results": {
             "items": {"required": ["exclusion_rules", "excluded_diff"]}
           }
@@ -208,6 +291,54 @@
         "decision_rule": {"const": "holdout_exact_match: fp_count == 0 and fn_count == 0"}
       }
     },
+    "feature_bit_class_1_4": {
+      "type": "object",
+      "required": [
+        "id",
+        "tier",
+        "manifest_entries",
+        "split",
+        "coverage",
+        "accounting",
+        "semantic_accounting",
+        "decision_rule",
+        "semantic_rule"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonempty_string"},
+        "tier": {"enum": ["content", "routing"]},
+        "manifest_entries": {"type": "integer", "minimum": 0},
+        "split": {
+          "type": "object",
+          "required": ["mine_features", "holdout_features"],
+          "properties": {
+            "mine_features": {"$ref": "#/$defs/feature_list"},
+            "holdout_features": {"$ref": "#/$defs/nonempty_feature_list"}
+          }
+        },
+        "coverage": {"$ref": "#/$defs/coverage"},
+        "accounting": {
+          "type": "object",
+          "required": ["tp_count", "fp_count", "fn_count"],
+          "properties": {
+            "tp_count": {"type": "integer", "minimum": 0},
+            "fp_count": {"type": "integer", "minimum": 0},
+            "fn_count": {"type": "integer", "minimum": 0}
+          }
+        },
+        "semantic_accounting": {
+          "type": "object",
+          "required": ["member_identity"],
+          "properties": {"member_identity": {"$ref": "#/$defs/pass_fail_count"}}
+        },
+        "decision_rule": {
+          "const": "holdout_assignment_transition_exact and partition_exact and fp_count == 0 and fn_count == 0"
+        },
+        "semantic_rule": {
+          "const": "member_identity is reported independently and never contributes to status"
+        }
+      }
+    },
     "coverage": {
       "type": "object",
       "required": ["attested_count", "class_entry_count"],
@@ -267,6 +398,68 @@
         },
         "decision_rule": {
           "const": "holdout_address_assertions: group_exclusivity.fail_count == 0 and scope_assignment.fail_count == 0"
+        },
+        "semantic_rule": {
+          "const": "member_identity is reported independently and never contributes to status"
+        }
+      }
+    },
+    "group_bit_class_1_4": {
+      "type": "object",
+      "required": [
+        "id",
+        "tier",
+        "manifest_entries",
+        "split",
+        "coverage",
+        "address_accounting",
+        "diagnostic_accounting",
+        "semantic_accounting",
+        "decision_rule",
+        "semantic_rule"
+      ],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonempty_string"},
+        "tier": {"enum": ["content", "routing"]},
+        "manifest_entries": {"type": "integer", "minimum": 0},
+        "split": {
+          "type": "object",
+          "required": ["mine_groups", "holdout_groups"],
+          "properties": {
+            "mine_groups": {"$ref": "#/$defs/feature_list"},
+            "holdout_groups": {"$ref": "#/$defs/nonempty_feature_list"}
+          }
+        },
+        "coverage": {"$ref": "#/$defs/coverage"},
+        "address_accounting": {
+          "type": "object",
+          "required": ["strict_codeword_equality"],
+          "properties": {
+            "strict_codeword_equality": {"$ref": "#/$defs/pass_fail_count"}
+          }
+        },
+        "diagnostic_accounting": {
+          "type": "object",
+          "required": ["group_exclusivity", "decode_validity"],
+          "properties": {
+            "group_exclusivity": {
+              "type": "object",
+              "required": ["vacuous_count", "ambiguity_count"],
+              "properties": {
+                "vacuous_count": {"type": "integer", "minimum": 0},
+                "ambiguity_count": {"type": "integer", "minimum": 0}
+              }
+            },
+            "decode_validity": {"$ref": "#/$defs/pass_fail_count"}
+          }
+        },
+        "semantic_accounting": {
+          "type": "object",
+          "required": ["member_identity"],
+          "properties": {"member_identity": {"$ref": "#/$defs/pass_fail_count"}}
+        },
+        "decision_rule": {
+          "const": "holdout_address_assertions: strict_codeword_equality.fail_count == 0"
         },
         "semantic_rule": {
           "const": "member_identity is reported independently and never contributes to status"
@@ -476,6 +669,27 @@
         },
         {
           "type": "object",
+          "required": ["kind", "semantic", "classification", "decoded_members"],
+          "properties": {
+            "kind": {"const": "group_exclusivity"},
+            "semantic": {"const": false},
+            "classification": {"const": "vacuous"},
+            "decoded_members": {"$ref": "#/$defs/feature_list"}
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "semantic", "diagnostic", "passed", "decoded_members"],
+          "properties": {
+            "kind": {"const": "decode_validity"},
+            "semantic": {"const": false},
+            "diagnostic": {"const": true},
+            "passed": {"type": "boolean"},
+            "decoded_members": {"$ref": "#/$defs/feature_list"}
+          }
+        },
+        {
+          "type": "object",
           "required": ["kind", "semantic", "passed", "mismatched"],
           "properties": {
             "kind": {"const": "scope_assignment"},
@@ -545,7 +759,7 @@
         "assertion_outcomes": {
           "type": "array",
           "minItems": 3,
-          "maxItems": 3,
+          "maxItems": 4,
           "items": {"$ref": "#/$defs/assertion_outcome"}
         }
       }
@@ -599,7 +813,7 @@
     },
     "pair_accounting": {
       "type": "object",
-      "required": ["site", "ff_bel", "specimen_ids", "raw_diff_bits", "counts", "buckets", "partition_exact"],
+      "required": ["specimen_ids", "raw_diff_bits", "counts", "buckets", "partition_exact"],
       "properties": {
         "site": {"$ref": "#/$defs/nonempty_string"},
         "ff_bel": {"$ref": "#/$defs/nonempty_string"},
@@ -647,8 +861,56 @@
       "required": ["address", "observed_value"],
       "properties": {
         "address": {"$ref": "#/$defs/address"},
-        "observed_value": {"enum": [0, 1]}
+        "observed_value": {"enum": [0, 1]},
+        "before_value": {"enum": [0, 1]},
+        "after_value": {"enum": [0, 1]}
       }
+    },
+    "feature_semantic_assertion": {
+      "type": "object",
+      "required": [
+        "kind",
+        "semantic",
+        "claim",
+        "predicted_member",
+        "attestation_field",
+        "expected_value"
+      ],
+      "properties": {
+        "kind": {"const": "member_identity"},
+        "semantic": {"const": true},
+        "claim": {"$ref": "#/$defs/nonempty_string"},
+        "predicted_member": {"$ref": "#/$defs/nonempty_string"},
+        "attestation_field": {
+          "type": "string",
+          "pattern": "^/(?:[^/~]|~[01])+(?:/(?:[^/~]|~[01])+)*$"
+        },
+        "expected_value": {"$ref": "#/$defs/semantic_scalar"}
+      }
+    },
+    "feature_semantic_outcome": {
+      "type": "object",
+      "required": [
+        "kind",
+        "semantic",
+        "passed",
+        "predicted_member",
+        "attestation_field",
+        "expected_value",
+        "observed_value"
+      ],
+      "properties": {
+        "kind": {"const": "member_identity"},
+        "semantic": {"const": true},
+        "passed": {"type": "boolean"},
+        "predicted_member": {"$ref": "#/$defs/nonempty_string"},
+        "attestation_field": {"$ref": "#/$defs/nonempty_string"},
+        "expected_value": {"$ref": "#/$defs/semantic_scalar"},
+        "observed_value": {"$ref": "#/$defs/semantic_scalar"}
+      }
+    },
+    "semantic_scalar": {
+      "type": ["string", "integer", "boolean", "null"]
     },
     "diff_bit": {
       "type": "object",
@@ -733,8 +995,6 @@
         "feature_specimen_id",
         "predicted_assignments",
         "observed_assignments",
-        "observed_diff",
-        "unattributed_diff",
         "verdict"
       ],
       "properties": {
@@ -749,6 +1009,8 @@
           "items": {"$ref": "#/$defs/predicted_assignment"}
         },
         "expected_transition": {"$ref": "#/$defs/expected_transition"},
+        "semantic_assertion": {"$ref": "#/$defs/feature_semantic_assertion"},
+        "semantic_outcome": {"$ref": "#/$defs/feature_semantic_outcome"},
         "observed_assignments": {
           "type": "array",
           "items": {"$ref": "#/$defs/observed_assignment"}

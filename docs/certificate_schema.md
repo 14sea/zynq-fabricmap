@@ -1,12 +1,13 @@
-# Certificate schema — `fabric_bit_class_certificate` 1.3.0
+# Certificate schema — `fabric_bit_class_certificate` 1.4.0
 
 Version 1.1.0 adds optional specimen-attestation and explicit diff-exclusion evidence
 to 1.0.0. Version 1.2.0 adds an optional preregistered prediction commitment and a
 specimen-qualified prediction key. All additions are optional in the generic 1.x
-schema. Version 1.3.0 adds a selectable group evidence model for mux claims. Selecting
-that model makes its group fields mandatory, while records that omit
-`evidence_model` continue to validate as feature-model records. Older records remain
-valid and the feature production profile is unchanged.
+schema. Version 1.3.0 adds a selectable group evidence model for mux claims. Version
+1.4.0 adds shared five-bucket accounting to feature records, verifier-derived group
+consistency, observation consistency, a fixed pair-level FP definition, and corrects
+the group model's vacuous address accounting. Selecting a newer record version makes
+that version's evidence mandatory. Older records retain their original semantics.
 
 Machine-readable schema: `schemas/certificate.schema.json`. This document defines
 the semantic checks that JSON Schema cannot express. The certificate is emitted by
@@ -23,7 +24,8 @@ unknown properties.
 `evidence_model` is `feature` or `group`. Omission means `feature` for compatibility.
 The two result shapes are deliberately not mixed:
 
-- `feature` uses `feature_results[]` and the 1.2 TP/FP/FN decision described below;
+- `feature` uses `feature_results[]`; 1.2 uses per-result diffs, while 1.4 uses shared
+  pair accounting and the revised TP/FP/FN decision described below;
 - `group` requires schema 1.3 or later and uses `group_results[]`,
   `pair_accounting[]`, `claim_scope`, and an independent `semantic_status`.
 
@@ -113,6 +115,112 @@ pass.
 production its numerator equals the number of specimen-feature result records; its
 denominator equals the current manifest class entry count.
 
+## Feature evidence model 1.4
+
+Certificate 1.4 keeps a single feature namespace. A result remains keyed by
+`(prediction_specimen_id, feature)` and its preregistered projection is unchanged.
+There is no `mixed` evidence model and no producer-declared group namespace.
+
+The raw diff is recorded once per endpoint pair in `pair_accounting[]`, using the five
+identity-bearing buckets described below. The legacy per-result `observed_diff`,
+`excluded_diff`, and `unattributed_diff` arrays are not inputs to a 1.4 decision.
+Every 1.4 feature result instead records endpoint evidence at each predicted address:
+
+```json
+{
+  "address": {"far": "0x00400A01", "word": 52, "bit": 19},
+  "before_value": 0,
+  "after_value": 1,
+  "observed_value": 1
+}
+```
+
+`observed_value` is a compatibility summary and must equal `after_value`. The complete
+address set must equal the preregistered assignment set. A matched result requires,
+at every address, the recorded before/after values to equal `expected_transition` and
+the after value to equal the preregistered assignment. TP and FN are computed only
+from these holdout endpoint assignments and transitions, never from whether a bit
+appears in the diff.
+
+For every `(specimen_id, absolute address)`, all result records must report the same
+value. A contradiction is malformed evidence. Opposite values in different specimens
+are valid and are how complementary states are certified.
+
+### Feature semantic evidence
+
+Every 1.4 feature prediction preregisters one `semantic_assertion` of kind
+`member_identity`. It names the predicted frozen member and identifies a scalar
+readback value by RFC 6901 JSON pointer into the selected endpoint's pinned
+attestation, together with the expected value. The certificate copies that assertion
+verbatim and records a `semantic_outcome` summary. For example:
+
+```json
+{
+  "kind": "member_identity",
+  "semantic": true,
+  "predicted_member": "CLBLL_L.SLICEL_X0.CLKINV",
+  "attestation_field": "/resolved/clock_mode",
+  "expected_value": "CLKINV"
+}
+```
+
+The verifier resolves the pointer itself, compares the attested value with the
+preregistered expectation, and rebuilds the outcome. A missing field, an unpinned
+attestation, or a copied `passed` boolean inconsistent with the readback is invalid.
+The assertion says what the producer claims the frozen name means; the pinned readback
+makes whether the implemented specimen has that basis independently auditable. It
+does not turn the naming claim into a silicon-behaviour claim.
+
+Holdout semantic outcomes are reported in `semantic_status` and
+`semantic_accounting.member_identity`. They never contribute to address `status`.
+A semantic-only failure therefore retains `status: passed`, exits zero, and prints its
+semantic failure count prominently.
+
+### Verifier-derived group consistency
+
+The verifier rereads every consumed class rule and groups features by their complete
+polarity-free coordinate set. Each member is converted to a full 0/1 codeword over
+that scope. Two distinct frozen feature names carrying the same codeword are a
+`frozen-group ambiguity` and make the record invalid. Group membership, polarity and
+complementary relations are therefore freeze-derived facts, not producer assertions.
+
+This derivation does not create additional address passes. Strict equality to the
+preregistered feature's codeword is already the feature assignment check. In
+particular, the verifier does not count codeword exclusivity or decode validity beside
+that same observation.
+
+### 1.4 FP definition and decision
+
+FP is fixed by the profile; a producer cannot select a weaker policy:
+
+```text
+FP = ownership_unknown
+   union unattributed
+   union {db_attributed bits in an asserted tile that are claimed by this bit class
+          and lie in no preregistered scope}
+```
+
+Each FP is counted once per `(endpoint pair, address)`. A `db_attributed` change owned
+by another class, such as legal INT routing outside a CLB content assertion, does not
+become this class's FP. Every `in_scope` bit must be covered at least once by the
+union of preregistered scopes belonging to that endpoint pair; both endpoints covering
+the same address is valid.
+
+The 1.4 feature decision is:
+
+```text
+status = passed iff
+    every committed result is present exactly once
+    and every pair partition is exact
+    and tp_count == committed holdout prediction count
+    and fn_count == 0
+    and fp_count == 0
+```
+
+`coverage.attested_count` is the number of distinct asserted class entries, not the
+number of result records. `coverage.class_entry_count` remains the current manifest
+denominator.
+
 ## Group evidence model (1.3)
 
 `group_results[]` is keyed by `(prediction_specimen_id, group)`. Every result copies
@@ -135,7 +243,7 @@ The rule filename must match the specimen tile type, and the bit-set-derived fea
 prefix must match the specimen's independently derived site type/index. This prevents
 a valid group from a neighbouring site instance being substituted into the record.
 
-Each group has exactly three assertions:
+In 1.3 each group has exactly three assertions:
 
 | assertion | decision class | verifier recomputation |
 |---|---|---|
@@ -154,6 +262,31 @@ recomputed `member_identity` outcomes enter `semantic_status` and
 `status: passed`, `semantic_status: failed`, and verifier exit 0 with the semantic
 failure counts printed prominently. Setting address `status: failed` merely because
 semantic identity failed is malformed, not a stricter certificate.
+
+### Group accounting correction in 1.4
+
+Because bit-set group members are complete codewords, pairwise-distinct codewords make
+`group_exclusivity` true for every possible observation. It is therefore a vacuous
+DB-consistency diagnostic, not an address pass. A codeword collision is instead the
+same `frozen-group ambiguity` format failure defined above. `decode_validity` is also
+a diagnostic: strict equality to the preregistered codeword entails it, so scoring both
+would count one observation twice.
+
+A 1.4 group result keeps the three preregistered assertions but carries four outcomes:
+
+- `group_exclusivity` has `classification: vacuous`, no `passed` field, and the
+  independently decoded members;
+- `decode_validity` has `diagnostic: true`, a recomputed boolean, and decoded members;
+- `scope_assignment` is strict preregistered codeword equality and is the sole address
+  pass;
+- `member_identity` remains semantic and isolated.
+
+Accordingly, 1.4 `address_accounting` contains only
+`strict_codeword_equality`. `diagnostic_accounting` records exclusivity
+`vacuous_count`/`ambiguity_count` and decode-validity pass/fail counts. Neither
+diagnostic contributes to `status`. Recounting Run B under this rule yields
+`falsifiable 16/16`, `vacuous 16`, and semantic `16/16`; the evidence and certification
+decision are unchanged.
 
 ### Semantic edge evidence
 
@@ -216,13 +349,14 @@ one attestation anchors both against substitution but does not prove that the la
 was produced from the former. Re-establishing either relation requires a Vivado
 rebuild; the checkpoint hash is an integrity anchor, not independent provenance proof.
 
-## Current production profiles 1.2 and 1.3
+## Current production profiles 1.2, 1.3 and 1.4
 
 The profile is selected by `profile: production`. Production consumers invoke the
-verifier with `--require-production`. A feature record requires certificate 1.2 or
-later; a group record requires 1.3 or later. Emitting a 1.1 record cannot bypass
-lifecycle verification. A historical 1.1 production fixture remains accepted by
-generic validation for compatibility, but it is not current production authority.
+verifier with `--require-production`. A legacy feature record requires certificate
+1.2 or later; a group record requires 1.3 or later. Classes using shared endpoint-pair
+accounting require 1.4. Emitting a lower version cannot bypass the semantic checks
+selected by its record version. A historical 1.1 production fixture remains accepted
+by generic validation for compatibility, but it is not current production authority.
 
 The feature profile requires:
 
@@ -243,6 +377,17 @@ The group profile requires:
 - complete frozen-DB-derived group scopes and independently decoded assert-iff;
 - separate address and semantic accounting/status;
 - identity-bearing, exact five-bucket partition records for every variant pair.
+
+The 1.4 feature profile additionally requires:
+
+- a single complete feature commitment and no producer group namespace;
+- before/after endpoint observations at every predicted address;
+- a preregistered semantic assertion backed by a scalar field in the selected
+  endpoint's pinned attestation, with independently rebuilt semantic accounting;
+- global specimen/address observation consistency;
+- one exact five-bucket accounting record per endpoint pair;
+- independently recomputed bucket labels and the fixed pair-level FP rule;
+- freeze-derived group/codeword consistency with collisions treated as format errors.
 
 For the feature profile, only one exclusion rule is supported: `frame_ecc`, exactly
 `word == 50 and 0 <= bit <= 12`. The verifier rejects an excluded bit outside that

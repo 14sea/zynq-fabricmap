@@ -89,6 +89,32 @@ GROUP_BASIS_PIN = "FF.D driven by a package pin through the slice bypass"
 GROUP_BUCKETS = ("in_scope", "frame_ecc", "db_attributed", "ownership_unknown", "unattributed")
 
 
+def frozen_codeword_collisions(
+    member_encodings: dict[str, dict[tuple[int, int], int]],
+) -> list[list[str]]:
+    """Return distinct frozen feature names that carry an identical full codeword."""
+
+    by_codeword: dict[tuple[tuple[int, int, int], ...], list[str]] = {}
+    for member, encoding in member_encodings.items():
+        codeword = tuple(
+            sorted((frame, bit, value) for (frame, bit), value in encoding.items())
+        )
+        by_codeword.setdefault(codeword, []).append(member)
+    return [sorted(members) for members in by_codeword.values() if len(members) > 1]
+
+
+def resolve_json_pointer(value: Any, pointer: str) -> Any:
+    """Resolve an RFC 6901 JSON pointer without accepting array traversal."""
+
+    current = value
+    for raw_part in pointer.removeprefix("/").split("/"):
+        part = raw_part.replace("~1", "/").replace("~0", "~")
+        if not isinstance(current, dict) or part not in current:
+            raise ValueError(f"JSON pointer {pointer!r} does not exist")
+        current = current[part]
+    return current
+
+
 def load_prediction_commitment(
     certificate: dict[str, Any],
     repo_root: Path,
@@ -99,6 +125,10 @@ def load_prediction_commitment(
     committed_by_key: dict[PredictionKey, dict[str, Any]] = {}
     holdout_keys: set[PredictionKey] = set()
     group_model = certificate.get("evidence_model") == "group"
+    certificate_version = tuple(
+        int(part) for part in certificate.get("schema_version", "0.0.0").split(".")
+    )
+    feature_1_4 = not group_model and certificate_version >= (1, 4, 0)
     reference = certificate.get("prediction_commitment")
     if reference is None:
         return ["production lifecycle verification requires prediction_commitment"], committed_by_key, holdout_keys
@@ -148,7 +178,7 @@ def load_prediction_commitment(
             errors.append("prediction artifact manifest_freeze_stamp differs from certificate")
         if frozen.get("spec_sha256") != certificate_frozen["spec"]["sha256"]:
             errors.append("prediction artifact spec_sha256 differs from certificate")
-        if group_model:
+        if group_model or feature_1_4:
             committed_files = frozen.get("files")
             certificate_files = {
                 item["path"]: item["sha256"] for item in certificate_frozen["files"]
@@ -217,6 +247,28 @@ def load_prediction_commitment(
                 errors.append(
                     f"certificate specimen {specimen_id!r} differs from preregistered specimen identity"
                 )
+        elif feature_1_4:
+            certificate_specimen = certificate_specimens.get(specimen_id)
+            if certificate_specimen is None:
+                errors.append(
+                    f"prediction artifact specimen {specimen_id!r} is absent from certificate specimens"
+                )
+                continue
+            projection_fields = {
+                "split": "split",
+                "site": "loc_site",
+                "tile": "tile",
+                "tile_type": "tile_type",
+            }
+            for artifact_field, certificate_field in projection_fields.items():
+                if (
+                    artifact_field in specimen
+                    and specimen[artifact_field] != certificate_specimen.get(certificate_field)
+                ):
+                    errors.append(
+                        f"certificate specimen {specimen_id!r} differs from preregistered "
+                        f"{artifact_field}"
+                    )
     if group_model and prediction_specimen_ids != set(certificate_specimens):
         errors.append("certificate specimen IDs differ from preregistered specimen IDs")
 
@@ -238,6 +290,8 @@ def load_prediction_commitment(
             "predicted_assignments",
             "expected_transition",
         }
+        if feature_1_4:
+            expected_prediction_fields.add("semantic_assertion")
     for index, prediction in enumerate(predictions):
         if not isinstance(prediction, dict):
             errors.append(f"prediction artifact predictions[{index}] is not an object")
@@ -276,6 +330,26 @@ def load_prediction_commitment(
             transition = prediction["expected_transition"]
             if not isinstance(transition, dict) or set(transition) != {"before", "after"}:
                 errors.append(f"prediction artifact pair key {key!r} has a malformed expected_transition")
+            if feature_1_4:
+                semantic = prediction.get("semantic_assertion")
+                required_semantic_fields = {
+                    "kind",
+                    "semantic",
+                    "claim",
+                    "predicted_member",
+                    "attestation_field",
+                    "expected_value",
+                }
+                if (
+                    not isinstance(semantic, dict)
+                    or set(semantic) != required_semantic_fields
+                    or semantic.get("kind") != "member_identity"
+                    or semantic.get("semantic") is not True
+                    or semantic.get("predicted_member") != subject
+                ):
+                    errors.append(
+                        f"prediction artifact pair key {key!r} has malformed semantic evidence"
+                    )
         committed_by_key[key] = prediction
         if prediction["split"] == "holdout":
             holdout_keys.add(key)
@@ -323,7 +397,7 @@ def group_semantic_errors(
     repo_root: Path,
     require_production: bool = False,
 ) -> list[str]:
-    """Validate certificate 1.3 group evidence without consulting producer code."""
+    """Validate certificate 1.3/1.4 group evidence without consulting producer code."""
 
     errors: list[str] = []
     data_dir = repo_root / "data"
@@ -332,6 +406,7 @@ def group_semantic_errors(
     tilegrid = load_json(data_dir / "prjxray/zynq7/xc7z010/tilegrid.json")
 
     version = tuple(int(part) for part in certificate["schema_version"].split("."))
+    certificate_1_4 = version >= (1, 4, 0)
     profile = certificate.get("profile")
     if require_production and profile != "production":
         errors.append("production verification requires profile='production'")
@@ -531,9 +606,17 @@ def group_semantic_errors(
     used_specimens: set[str] = set()
     mine_groups: set[str] = set()
     holdout_groups: set[str] = set()
-    address_counts = {
-        "group_exclusivity": {"pass_count": 0, "fail_count": 0},
-        "scope_assignment": {"pass_count": 0, "fail_count": 0},
+    address_counts = (
+        {"strict_codeword_equality": {"pass_count": 0, "fail_count": 0}}
+        if certificate_1_4
+        else {
+            "group_exclusivity": {"pass_count": 0, "fail_count": 0},
+            "scope_assignment": {"pass_count": 0, "fail_count": 0},
+        }
+    )
+    diagnostic_counts = {
+        "group_exclusivity": {"vacuous_count": 0, "ambiguity_count": 0},
+        "decode_validity": {"pass_count": 0, "fail_count": 0},
     }
     semantic_counts = {"member_identity": {"pass_count": 0, "fail_count": 0}}
     asserted_addresses_by_tile: dict[str, set[tuple[str, int, int]]] = {}
@@ -644,9 +727,13 @@ def group_semantic_errors(
 
         assertions = {item["kind"]: item for item in result["assertions"]}
         outcomes = {item["kind"]: item for item in result["assertion_outcomes"]}
-        required_kinds = {"group_exclusivity", "scope_assignment", "member_identity"}
-        if set(assertions) != required_kinds or set(outcomes) != required_kinds:
-            errors.append(f"group result key {key!r}: assertion kinds are not exactly {sorted(required_kinds)}")
+        required_assertions = {"group_exclusivity", "scope_assignment", "member_identity"}
+        required_outcomes = required_assertions | ({"decode_validity"} if certificate_1_4 else set())
+        if set(assertions) != required_assertions or set(outcomes) != required_outcomes:
+            errors.append(
+                f"group result key {key!r}: assertion/outcome kinds are not exactly "
+                f"{sorted(required_assertions)} / {sorted(required_outcomes)}"
+            )
             continue
 
         expected_items = assertions["scope_assignment"]["expected_assignment"]
@@ -671,6 +758,12 @@ def group_semantic_errors(
                 (frame, bit): 0 if negated else 1
                 for frame, bit, negated in tokens
             }
+        collisions = frozen_codeword_collisions(member_encodings)
+        if certificate_1_4 and collisions:
+            errors.append(
+                f"group result key {key!r}: frozen-group ambiguity; distinct names share a codeword "
+                f"{collisions[:1]}"
+            )
         expected_matches = sorted(
             member for member, encoding in member_encodings.items() if encoding == expected_values
         )
@@ -711,10 +804,27 @@ def group_semantic_errors(
             errors.append(f"group result key {key!r}: decoded_members differs from frozen assert-iff")
 
         exclusivity_passed = len(decoded_members) <= 1
+        decode_validity_passed = bool(decoded_members)
         scope_passed = not mismatched_addresses and set(observed_values) == declared_coordinates
         exclusivity_outcome = outcomes["group_exclusivity"]
         scope_outcome = outcomes["scope_assignment"]
-        if exclusivity_outcome["decoded_members"] != decoded_members or exclusivity_outcome["passed"] != exclusivity_passed:
+        if certificate_1_4:
+            if (
+                exclusivity_outcome["decoded_members"] != decoded_members
+                or exclusivity_outcome.get("classification") != "vacuous"
+                or "passed" in exclusivity_outcome
+            ):
+                errors.append(f"group result key {key!r}: group_exclusivity vacuity outcome is wrong")
+            decode_outcome = outcomes["decode_validity"]
+            if (
+                decode_outcome["decoded_members"] != decoded_members
+                or decode_outcome["passed"] != decode_validity_passed
+            ):
+                errors.append(f"group result key {key!r}: decode_validity diagnostic is wrong")
+        elif (
+            exclusivity_outcome["decoded_members"] != decoded_members
+            or exclusivity_outcome["passed"] != exclusivity_passed
+        ):
             errors.append(f"group result key {key!r}: group_exclusivity outcome is wrong")
         recorded_mismatched = sorted(address_key(item) for item in scope_outcome["mismatched"])
         if recorded_mismatched != sorted(mismatched_addresses) or scope_outcome["passed"] != scope_passed:
@@ -785,11 +895,22 @@ def group_semantic_errors(
             errors.append(f"group result key {key!r}: member_identity outcome is wrong")
 
         if result["split"] == "holdout":
-            for kind, passed in (
-                ("group_exclusivity", exclusivity_passed),
-                ("scope_assignment", scope_passed),
-            ):
-                address_counts[kind]["pass_count" if passed else "fail_count"] += 1
+            if certificate_1_4:
+                address_counts["strict_codeword_equality"][
+                    "pass_count" if scope_passed else "fail_count"
+                ] += 1
+                diagnostic_counts["group_exclusivity"][
+                    "ambiguity_count" if collisions else "vacuous_count"
+                ] += 1
+                diagnostic_counts["decode_validity"][
+                    "pass_count" if decode_validity_passed else "fail_count"
+                ] += 1
+            else:
+                for kind, passed in (
+                    ("group_exclusivity", exclusivity_passed),
+                    ("scope_assignment", scope_passed),
+                ):
+                    address_counts[kind]["pass_count" if passed else "fail_count"] += 1
             semantic_counts["member_identity"]["pass_count" if semantic_passed else "fail_count"] += 1
 
     if actual_holdout_keys != committed_holdout_keys:
@@ -960,14 +1081,20 @@ def group_semantic_errors(
         errors.append(
             f"address_accounting mismatch (recorded={class_record['address_accounting']} computed={address_counts})"
         )
+    if certificate_1_4 and class_record["diagnostic_accounting"] != diagnostic_counts:
+        errors.append(
+            "diagnostic_accounting mismatch "
+            f"(recorded={class_record['diagnostic_accounting']} computed={diagnostic_counts})"
+        )
     if class_record["semantic_accounting"] != semantic_counts:
         errors.append(
             f"semantic_accounting mismatch (recorded={class_record['semantic_accounting']} computed={semantic_counts})"
         )
 
-    address_passed = (
-        partition_ok
-        and address_counts["group_exclusivity"]["fail_count"] == 0
+    address_passed = partition_ok and (
+        address_counts["strict_codeword_equality"]["fail_count"] == 0
+        if certificate_1_4
+        else address_counts["group_exclusivity"]["fail_count"] == 0
         and address_counts["scope_assignment"]["fail_count"] == 0
     )
     uncovered_by_tile: dict[str, int] = {}
@@ -1033,6 +1160,602 @@ def group_semantic_errors(
     return errors
 
 
+def feature_1_4_semantic_errors(
+    certificate: dict[str, Any],
+    repo_root: Path,
+    require_production: bool = False,
+) -> list[str]:
+    """Validate 1.4 feature evidence and derive its group consistency from the freeze."""
+
+    errors: list[str] = []
+    data_dir = repo_root / "data"
+    manifest = load_json(data_dir / "MANIFEST.json")
+    spec = load_json(data_dir / "subset_spec.json")
+    tilegrid = load_json(data_dir / "prjxray/zynq7/xc7z010/tilegrid.json")
+
+    if require_production and certificate.get("profile") != "production":
+        errors.append("production verification requires profile='production'")
+
+    target = certificate["target"]
+    for field in ("family", "device", "part"):
+        if target[field] != manifest["target"][field]:
+            errors.append(f"target.{field} differs from current manifest")
+
+    frozen = certificate["frozen_inputs"]
+    if frozen["manifest_schema_version"] != manifest["schema_version"]:
+        errors.append("frozen_inputs.manifest_schema_version is stale")
+    if frozen["freeze_stamp"] != manifest["freeze_stamp"]:
+        errors.append("frozen_inputs.freeze_stamp is stale")
+    pinned_spec = frozen["spec"]
+    if pinned_spec["path"] != manifest["spec"]["path"]:
+        errors.append("frozen_inputs.spec.path differs from manifest")
+    if pinned_spec["sha256"] != manifest["spec"]["sha256"]:
+        errors.append("frozen_inputs.spec.sha256 differs from manifest")
+    spec_path = repo_root / manifest["spec"]["path"]
+    if not spec_path.is_file() or hash_file(spec_path) != pinned_spec["sha256"]:
+        errors.append("frozen_inputs.spec does not match current file bytes")
+
+    manifest_files = {entry["path"]: entry for entry in manifest["files"]}
+    pinned_paths: set[str] = set()
+    for index, pinned in enumerate(frozen["files"]):
+        path_text = pinned["path"]
+        if path_text in pinned_paths:
+            errors.append(f"frozen_inputs.files[{index}] duplicates {path_text}")
+            continue
+        pinned_paths.add(path_text)
+        current = manifest_files.get(path_text)
+        if current is None:
+            errors.append(f"frozen input is absent from current manifest: {path_text}")
+            continue
+        if pinned["sha256"] != current["sha256"]:
+            errors.append(f"frozen input hash is stale: {path_text}")
+        try:
+            actual_path = safe_child(data_dir, path_text)
+        except ValueError as exc:
+            errors.append(str(exc))
+            continue
+        if not actual_path.is_file() or hash_file(actual_path) != pinned["sha256"]:
+            errors.append(f"frozen input does not match current file bytes: {path_text}")
+
+    class_record = certificate["bit_class"]
+    current_class = next(
+        (entry for entry in manifest["bit_classes"] if entry["id"] == class_record["id"]),
+        None,
+    )
+    if current_class is None:
+        errors.append(f"bit class {class_record['id']!r} is absent from current manifest")
+        current_entries = class_record["manifest_entries"]
+    else:
+        current_entries = current_class["entries"]
+        if class_record["tier"] != current_class["tier"]:
+            errors.append("bit_class.tier differs from current manifest")
+        if class_record["manifest_entries"] != current_entries:
+            errors.append("bit_class.manifest_entries differs from current manifest")
+    spec_class = next(
+        (entry for entry in spec["bit_classes"] if entry["id"] == class_record["id"]),
+        None,
+    )
+    if spec_class is None:
+        errors.append(f"bit class {class_record['id']!r} is absent from subset spec")
+        feature_pattern = None
+    else:
+        feature_pattern = re.compile(spec_class["feature_regex"])
+
+    commitment_errors, committed_by_key, committed_holdout_keys = load_prediction_commitment(
+        certificate,
+        repo_root,
+    )
+    errors.extend(commitment_errors)
+
+    specimens = certificate["specimens"]
+    specimen_by_id: dict[str, dict[str, Any]] = {}
+    attestation_cache: dict[tuple[str, str], dict[str, Any]] = {}
+    specimen_attestations: dict[str, dict[str, Any]] = {}
+    for specimen in specimens:
+        specimen_id = specimen["specimen_id"]
+        if specimen_id in specimen_by_id:
+            errors.append(f"duplicate specimen_id {specimen_id!r}")
+        specimen_by_id[specimen_id] = specimen
+        if specimen["part"] != target["part"]:
+            errors.append(f"specimen {specimen_id}: part differs from certificate target")
+        tile = tilegrid.get(specimen["tile"])
+        if tile is None:
+            errors.append(f"specimen {specimen_id}: unknown tile {specimen['tile']!r}")
+            continue
+        if specimen["tile_type"] != tile["type"]:
+            errors.append(f"specimen {specimen_id}: tile_type differs from tilegrid")
+        block = tile.get("bits", {}).get("CLB_IO_CLK")
+        if block is None:
+            errors.append(f"specimen {specimen_id}: tile lacks CLB_IO_CLK geometry")
+        elif specimen["tile_frame_base"] != block["baseaddr"]:
+            errors.append(f"specimen {specimen_id}: tile_frame_base differs from tilegrid")
+
+        reference = specimen.get("attestation")
+        if certificate.get("profile") == "production" and reference is None:
+            errors.append(f"specimen {specimen_id}: 1.4 production evidence requires attestation")
+        if reference is None:
+            continue
+        cache_key = reference["path"], reference["sha256"]
+        attestation = attestation_cache.get(cache_key)
+        if attestation is None:
+            try:
+                path = safe_child(repo_root, reference["path"])
+                if not path.is_file():
+                    raise ValueError(f"attestation file does not exist: {reference['path']}")
+                if hash_file(path) != reference["sha256"]:
+                    raise ValueError("attestation hash mismatch")
+                attestation = load_json(path)
+                findings = validate_external_schema(
+                    attestation,
+                    repo_root / "schemas/specimen_attestation.schema.json",
+                    f"specimen {specimen_id} attestation",
+                )
+                errors.extend(findings)
+                if findings:
+                    attestation = None
+                else:
+                    attestation_cache[cache_key] = attestation
+            except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+                errors.append(f"specimen {specimen_id}: cannot validate attestation: {exc}")
+                attestation = None
+        if attestation is not None:
+            specimen_attestations[specimen_id] = attestation
+            if attestation["schema_version"] != reference["schema_version"]:
+                errors.append(f"specimen {specimen_id}: pinned attestation schema_version differs from file")
+            if attestation["resolved"]["resolved_loc"] != specimen["loc_site"]:
+                errors.append(f"specimen {specimen_id}: attested resolved_loc differs from loc_site")
+            if attestation["resolved"]["tile"] != specimen["tile"]:
+                errors.append(f"specimen {specimen_id}: attested tile differs from specimen tile")
+            if attestation["inputs"]["part"] != specimen["part"]:
+                errors.append(f"specimen {specimen_id}: attested input part differs from specimen part")
+            if specimen["bitstream_sha256"] not in attestation["outputs"].values():
+                errors.append(f"specimen {specimen_id}: bitstream_sha256 is absent from attestation outputs")
+
+    rule_lines_cache: dict[str, dict[str, list[str]]] = {}
+    coordinate_claims_cache: dict[str, dict[tuple[int, int], set[str]]] = {}
+
+    def load_rule_lines(rule_file: str) -> dict[str, list[str]]:
+        cached = rule_lines_cache.get(rule_file)
+        if cached is not None:
+            return cached
+        lines: dict[str, list[str]] = {}
+        path = safe_child(data_dir, rule_file)
+        for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            fields = line.split()
+            if not fields:
+                continue
+            if fields[0] in lines:
+                errors.append(f"{rule_file}:{line_number}: duplicate frozen feature {fields[0]!r}")
+            lines[fields[0]] = fields[1:]
+        rule_lines_cache[rule_file] = lines
+        return lines
+
+    def load_coordinate_claims(rule_file: str) -> dict[tuple[int, int], set[str]]:
+        cached = coordinate_claims_cache.get(rule_file)
+        if cached is not None:
+            return cached
+        claims: dict[tuple[int, int], set[str]] = {}
+        for feature, tokens in load_rule_lines(rule_file).items():
+            for token in tokens:
+                parsed = parse_segbit_token(token)
+                if parsed is not None:
+                    claims.setdefault((parsed[0], parsed[1]), set()).add(feature)
+        coordinate_claims_cache[rule_file] = claims
+        return claims
+
+    def computed_address(tile_name: str, frame_offset: int, bit_offset: int) -> tuple[str, int, int] | None:
+        block = tilegrid.get(tile_name, {}).get("bits", {}).get("CLB_IO_CLK")
+        if block is None:
+            return None
+        return (
+            f"0x{int(block['baseaddr'], 16) + frame_offset:08X}",
+            block["offset"] + bit_offset // 32,
+            bit_offset % 32,
+        )
+
+    split = class_record["split"]
+    mine_set = set(split["mine_features"])
+    holdout_set = set(split["holdout_features"])
+    if mine_set & holdout_set:
+        errors.append(f"mine and holdout feature projections overlap: {sorted(mine_set & holdout_set)[:1]}")
+
+    result_keys: set[PredictionKey] = set()
+    actual_holdout_keys: set[PredictionKey] = set()
+    actual_mine_features: set[str] = set()
+    actual_holdout_features: set[str] = set()
+    used_specimens: set[str] = set()
+    pair_scopes: dict[frozenset[str], set[tuple[str, int, int]]] = {}
+    observations: dict[tuple[str, tuple[str, int, int]], int] = {}
+    computed_tp = 0
+    computed_fn = 0
+    semantic_counts = {"member_identity": {"pass_count": 0, "fail_count": 0}}
+
+    def record_observation(specimen_id: str, address: tuple[str, int, int], value: int) -> None:
+        key = specimen_id, address
+        prior = observations.get(key)
+        if prior is not None and prior != value:
+            errors.append(
+                f"observation inconsistency for specimen/address {key!r}: {prior} versus {value}"
+            )
+        observations[key] = value
+
+    used_rule_files: set[str] = set()
+    for result in certificate["feature_results"]:
+        feature = result["feature"]
+        key = result["prediction_specimen_id"], feature
+        if key in result_keys:
+            errors.append(f"duplicate feature result key {key!r}")
+        result_keys.add(key)
+        committed = committed_by_key.get(key)
+        if committed is None:
+            errors.append(f"feature result key {key!r} is absent from prediction commitment")
+        else:
+            projection = {
+                "specimen_id": result["prediction_specimen_id"],
+                "feature": feature,
+                "split": result["split"],
+                "rule_file": result["rule_file"],
+                "predicted_assignments": result["predicted_assignments"],
+                "expected_transition": result["expected_transition"],
+                "semantic_assertion": result["semantic_assertion"],
+            }
+            if projection != committed:
+                errors.append(f"feature result key {key!r} differs from preregistered prediction")
+
+        if result["split"] == "holdout":
+            actual_holdout_keys.add(key)
+            actual_holdout_features.add(feature)
+        else:
+            actual_mine_features.add(feature)
+
+        baseline_id = result["baseline_specimen_id"]
+        feature_id = result["feature_specimen_id"]
+        baseline = specimen_by_id.get(baseline_id)
+        feature_specimen = specimen_by_id.get(feature_id)
+        if baseline is None or feature_specimen is None:
+            errors.append(f"feature result key {key!r} names an unknown endpoint specimen")
+            continue
+        used_specimens.update((baseline_id, feature_id))
+        if feature_id != result["prediction_specimen_id"]:
+            errors.append(f"feature result key {key!r}: feature endpoint differs from prediction specimen")
+        if baseline["split"] != result["split"] or feature_specimen["split"] != result["split"]:
+            errors.append(f"feature result key {key!r}: endpoint split differs from result")
+        if baseline["tile"] != feature_specimen["tile"]:
+            errors.append(f"feature result key {key!r}: endpoints are not in the same physical tile")
+
+        pair_key = frozenset((baseline_id, feature_id))
+        if len(pair_key) != 2:
+            errors.append(f"feature result key {key!r}: endpoint pair is not distinct")
+        scope = pair_scopes.setdefault(pair_key, set())
+
+        rule_file = result["rule_file"]
+        used_rule_files.add(rule_file)
+        record = manifest_files.get(rule_file)
+        if rule_file not in pinned_paths:
+            errors.append(f"feature result key {key!r}: rule_file is not pinned")
+        if record is None or record.get("role") != "segbits" or not record.get("classified", False):
+            errors.append(f"feature result key {key!r}: rule_file is not a classified frozen segbits file")
+            continue
+        if spec_class is not None and record.get("group") not in spec_class["from_groups"]:
+            errors.append(f"feature result key {key!r}: rule_file group is outside the certificate class")
+        if feature_pattern is not None and feature_pattern.fullmatch(feature) is None:
+            errors.append(f"feature result key {key!r}: feature is outside the certificate class")
+        try:
+            frozen_tokens = load_rule_lines(rule_file).get(feature)
+        except (OSError, ValueError) as exc:
+            errors.append(f"feature result key {key!r}: cannot read rule_file: {exc}")
+            continue
+        if frozen_tokens is None:
+            errors.append(f"feature result key {key!r}: feature is absent from rule_file")
+            continue
+        assignments = result["predicted_assignments"]
+        if [item["token"] for item in assignments] != frozen_tokens:
+            errors.append(f"feature result key {key!r}: prediction differs from exact frozen token sequence")
+
+        predicted: dict[tuple[str, int, int], int] = {}
+        for item in assignments:
+            token = parse_segbit_token(item["token"])
+            segbit = item["segbit"]
+            parsed_segbit = segbit["frame_offset"], segbit["bit_offset"], segbit["negated"]
+            if token is None or token != parsed_segbit:
+                errors.append(f"feature result key {key!r}: token and parsed segbit disagree")
+                continue
+            expected_value = 0 if token[2] else 1
+            if item["expected_value"] != expected_value:
+                errors.append(f"feature result key {key!r}: expected polarity is wrong")
+            address = address_key(item["address"])
+            if address in predicted:
+                errors.append(f"feature result key {key!r}: duplicate predicted address {address}")
+            predicted[address] = item["expected_value"]
+            scope.add(address)
+            expected_address = computed_address(feature_specimen["tile"], token[0], token[1])
+            if expected_address is None or expected_address != address:
+                errors.append(f"feature result key {key!r}: address disagrees with normative arithmetic")
+
+        observed: dict[tuple[str, int, int], tuple[int, int]] = {}
+        transition = result["expected_transition"]
+        for item in result["observed_assignments"]:
+            address = address_key(item["address"])
+            if address in observed:
+                errors.append(f"feature result key {key!r}: duplicate observed address {address}")
+            before_after = item["before_value"], item["after_value"]
+            observed[address] = before_after
+            if item["observed_value"] != item["after_value"]:
+                errors.append(f"feature result key {key!r}: observed_value is not the after endpoint value")
+            record_observation(baseline_id, address, item["before_value"])
+            record_observation(feature_id, address, item["after_value"])
+        complete = set(observed) == set(predicted)
+        transition_exact = complete and all(
+            before == transition["before"]
+            and after == transition["after"]
+            and after == predicted[address]
+            for address, (before, after) in observed.items()
+        )
+        computed_verdict = "matched" if transition_exact else "mismatched"
+        if result["verdict"] != computed_verdict:
+            errors.append(
+                f"feature result key {key!r}: verdict={result['verdict']} but endpoint evidence computes "
+                f"{computed_verdict}"
+            )
+        if result["split"] == "holdout":
+            if transition_exact:
+                computed_tp += 1
+            else:
+                computed_fn += 1
+
+        semantic_assertion = result["semantic_assertion"]
+        semantic_outcome = result["semantic_outcome"]
+        if semantic_assertion["predicted_member"] != feature:
+            errors.append(f"feature result key {key!r}: semantic predicted_member differs from feature")
+        attestation = specimen_attestations.get(feature_id)
+        if attestation is None:
+            errors.append(f"feature result key {key!r}: semantic claim has no auditable attestation")
+            attested_value: Any = None
+            basis_consistent = False
+        else:
+            try:
+                attested_value = resolve_json_pointer(
+                    attestation,
+                    semantic_assertion["attestation_field"],
+                )
+                basis_consistent = attested_value == semantic_assertion["expected_value"]
+            except ValueError as exc:
+                errors.append(f"feature result key {key!r}: {exc}")
+                attested_value = None
+                basis_consistent = False
+        semantic_passed = transition_exact and basis_consistent
+        expected_semantic_summary = {
+            "kind": "member_identity",
+            "semantic": True,
+            "passed": semantic_passed,
+            "predicted_member": feature,
+            "attestation_field": semantic_assertion["attestation_field"],
+            "expected_value": semantic_assertion["expected_value"],
+            "observed_value": attested_value,
+        }
+        if semantic_outcome != expected_semantic_summary:
+            errors.append(
+                f"feature result key {key!r}: semantic_outcome differs from pinned attestation rebuild"
+            )
+        if result["split"] == "holdout":
+            semantic_counts["member_identity"][
+                "pass_count" if semantic_passed else "fail_count"
+            ] += 1
+
+    completeness_ok = result_keys == set(committed_by_key)
+    if actual_holdout_keys != committed_holdout_keys:
+        missing = sorted(committed_holdout_keys - actual_holdout_keys)
+        extra = sorted(actual_holdout_keys - committed_holdout_keys)
+        errors.append(
+            "holdout prediction completeness mismatch "
+            f"(missing={len(missing)} {missing[:1]} extra={len(extra)} {extra[:1]})"
+        )
+    if not completeness_ok:
+        errors.append("feature_results do not report every committed mine/holdout pair exactly once")
+    if actual_mine_features != mine_set or actual_holdout_features != holdout_set:
+        errors.append("feature_results split projections differ from declared feature membership")
+    if used_specimens != set(specimen_by_id):
+        errors.append("specimens must be referenced by at least one feature result endpoint")
+
+    # A group is freeze-derived by a shared polarity-free bit set.  Duplicate
+    # codewords under distinct names are an ambiguity in the frozen format, not
+    # an address pass or a producer-selectable assertion.
+    for rule_file in used_rule_files:
+        try:
+            groups: dict[frozenset[tuple[int, int]], dict[tuple[int, ...], list[str]]] = {}
+            for feature, tokens in load_rule_lines(rule_file).items():
+                if feature_pattern is None or feature_pattern.fullmatch(feature) is None:
+                    continue
+                parsed = [parse_segbit_token(token) for token in tokens]
+                if not parsed or any(item is None for item in parsed):
+                    errors.append(
+                        f"{rule_file}: invalid or empty frozen rule for class feature {feature!r}"
+                    )
+                    continue
+                values = [item for item in parsed if item is not None]
+                coordinates = frozenset((frame, bit) for frame, bit, _ in values)
+                ordered = sorted(values, key=lambda item: (item[0], item[1]))
+                codeword = tuple(0 if negated else 1 for _, _, negated in ordered)
+                groups.setdefault(coordinates, {}).setdefault(codeword, []).append(feature)
+            for coordinates, codewords in groups.items():
+                collisions = [names for names in codewords.values() if len(names) > 1]
+                if collisions:
+                    errors.append(
+                        f"{rule_file}: frozen-group ambiguity at {sorted(coordinates)}; "
+                        f"distinct names share a codeword {collisions[:1]}"
+                    )
+        except (OSError, ValueError) as exc:
+            errors.append(f"cannot derive group consistency from {rule_file}: {exc}")
+
+    # Shared five-bucket accounting.  The verifier can recompute labels and the
+    # frozen ownership evidence, though not raw_diff_bits without bitstreams.
+    geometry_by_far_word: dict[tuple[int, int], list[tuple[str, str, int, int]]] = {}
+    for tile_name, tile in tilegrid.items():
+        block = tile.get("bits", {}).get("CLB_IO_CLK")
+        if block is None:
+            continue
+        baseaddr = int(block["baseaddr"], 16)
+        for frame_offset in range(block["frames"]):
+            for word_offset in range(block["words"]):
+                geometry_by_far_word.setdefault(
+                    (baseaddr + frame_offset, block["offset"] + word_offset),
+                    [],
+                ).append((tile_name, tile["type"], frame_offset, word_offset))
+
+    accounting_by_pair: dict[frozenset[str], dict[str, Any]] = {}
+    partition_ok = True
+    computed_fp = 0
+    for index, accounting in enumerate(certificate["pair_accounting"]):
+        pair_key = frozenset(accounting["specimen_ids"])
+        if pair_key in accounting_by_pair:
+            errors.append(f"pair_accounting[{index}] duplicates an endpoint pair")
+        accounting_by_pair[pair_key] = accounting
+        pair_scope = pair_scopes.get(pair_key, set())
+        pair_specimens = [specimen_by_id.get(specimen_id) for specimen_id in pair_key]
+        if len(pair_key) != 2 or any(item is None for item in pair_specimens):
+            errors.append(f"pair_accounting[{index}] names an unknown or malformed endpoint pair")
+            asserted_tiles: set[str] = set()
+        else:
+            asserted_tiles = {item["tile"] for item in pair_specimens if item is not None}
+
+        union: set[tuple[str, int, int]] = set()
+        disjoint = True
+        for bucket in GROUP_BUCKETS:
+            values = [address_key(item) for item in accounting["buckets"][bucket]]
+            value_set = set(values)
+            if len(value_set) != len(values):
+                errors.append(f"pair_accounting[{index}].{bucket} duplicates a bit")
+                disjoint = False
+            overlap = union & value_set
+            if overlap:
+                errors.append(f"pair_accounting[{index}] bucket overlap at {sorted(overlap)[:1]}")
+                disjoint = False
+            union |= value_set
+            if accounting["counts"][bucket] != len(values):
+                errors.append(f"pair_accounting[{index}].counts.{bucket} differs from bit list length")
+                disjoint = False
+        exact = disjoint and len(union) == accounting["raw_diff_bits"]
+        if len(union) != accounting["raw_diff_bits"]:
+            errors.append(f"pair_accounting[{index}] bucket union size differs from raw_diff_bits")
+        if accounting["partition_exact"] != exact:
+            errors.append(f"pair_accounting[{index}].partition_exact summary is wrong")
+        partition_ok = partition_ok and exact
+
+        for recorded_bucket in GROUP_BUCKETS:
+            for bit_record in accounting["buckets"][recorded_bucket]:
+                address = address_key(bit_record)
+                candidates = geometry_by_far_word.get((int(address[0], 16), address[1]), [])
+                candidate_dbs: set[str] = set()
+                claims: list[tuple[str, str, str]] = []
+                for tile_name, tile_type, frame_offset, word_offset in candidates:
+                    rule_file = f"prjxray/zynq7/segbits_{tile_type.lower()}.db"
+                    record = manifest_files.get(rule_file)
+                    if (
+                        record is None
+                        or record.get("role") != "segbits"
+                        or not record.get("classified", False)
+                        or rule_file.endswith(".origin_info.db")
+                    ):
+                        continue
+                    candidate_dbs.add(rule_file)
+                    coordinate = frame_offset, word_offset * 32 + address[2]
+                    try:
+                        for claiming_feature in load_coordinate_claims(rule_file).get(coordinate, set()):
+                            claims.append((tile_name, rule_file, claiming_feature))
+                    except (OSError, ValueError) as exc:
+                        errors.append(f"pair_accounting[{index}] cannot read {rule_file}: {exc}")
+                claiming_dbs = {rule_file for _, rule_file, _ in claims}
+                if address in pair_scope:
+                    expected_bucket = "in_scope"
+                elif address[1] == 50 and 0 <= address[2] <= 12:
+                    expected_bucket = "frame_ecc"
+                elif claims:
+                    expected_bucket = "db_attributed"
+                elif candidates:
+                    expected_bucket = "ownership_unknown"
+                else:
+                    expected_bucket = "unattributed"
+                if recorded_bucket != expected_bucket:
+                    errors.append(
+                        f"pair_accounting[{index}] bit {address} is labelled {recorded_bucket} "
+                        f"but frozen geometry/DB evidence requires {expected_bucket}"
+                    )
+                if expected_bucket == "db_attributed" and not (claiming_dbs & pinned_paths):
+                    errors.append(
+                        f"pair_accounting[{index}] db_attributed bit {address} consumes no pinned claiming DB"
+                    )
+                if expected_bucket == "ownership_unknown" and candidate_dbs - pinned_paths:
+                    errors.append(
+                        f"pair_accounting[{index}] ownership_unknown bit {address} lacks pinned candidate "
+                        f"DBs {sorted(candidate_dbs - pinned_paths)}"
+                    )
+
+                if expected_bucket in {"ownership_unknown", "unattributed"}:
+                    computed_fp += 1
+                elif expected_bucket == "db_attributed" and address not in pair_scope:
+                    same_class_asserted_claim = any(
+                        tile_name in asserted_tiles
+                        and feature_pattern is not None
+                        and feature_pattern.fullmatch(claiming_feature) is not None
+                        for tile_name, _rule_file, claiming_feature in claims
+                    )
+                    if same_class_asserted_claim:
+                        computed_fp += 1
+
+    accounting_complete = set(accounting_by_pair) == set(pair_scopes)
+    if not accounting_complete:
+        missing = set(pair_scopes) - set(accounting_by_pair)
+        extra = set(accounting_by_pair) - set(pair_scopes)
+        errors.append(
+            "pair_accounting endpoint-pair completeness mismatch "
+            f"(missing={len(missing)} extra={len(extra)})"
+        )
+
+    coverage = class_record["coverage"]
+    asserted_entries = actual_mine_features | actual_holdout_features
+    if coverage["attested_count"] != len(asserted_entries):
+        errors.append("coverage.attested_count differs from distinct asserted class entries")
+    if coverage["class_entry_count"] != current_entries:
+        errors.append("coverage.class_entry_count differs from current manifest")
+    computed_accounting = {
+        "tp_count": computed_tp,
+        "fp_count": computed_fp,
+        "fn_count": computed_fn,
+    }
+    recorded_accounting = {
+        field: class_record["accounting"][field] for field in computed_accounting
+    }
+    if recorded_accounting != computed_accounting:
+        errors.append(
+            f"accounting mismatch (recorded={recorded_accounting} computed={computed_accounting})"
+        )
+    if class_record["semantic_accounting"] != semantic_counts:
+        errors.append(
+            "semantic_accounting mismatch "
+            f"(recorded={class_record['semantic_accounting']} computed={semantic_counts})"
+        )
+
+    criterion_passed = (
+        completeness_ok
+        and accounting_complete
+        and partition_ok
+        and computed_fn == 0
+        and computed_fp == 0
+        and computed_tp == len(committed_holdout_keys)
+    )
+    expected_status = "passed" if criterion_passed else "failed"
+    if certificate["status"] != expected_status:
+        errors.append(f"status={certificate['status']} but 1.4 feature evidence requires {expected_status}")
+    semantic_passed = semantic_counts["member_identity"]["fail_count"] == 0
+    expected_semantic_status = "passed" if semantic_passed else "failed"
+    if certificate["semantic_status"] != expected_semantic_status:
+        errors.append(
+            f"semantic_status={certificate['semantic_status']} but semantic evidence requires "
+            f"{expected_semantic_status}"
+        )
+    return errors
+
+
 def semantic_errors(
     certificate: dict[str, Any],
     repo_root: Path,
@@ -1041,13 +1764,16 @@ def semantic_errors(
     if certificate.get("evidence_model") == "group":
         return group_semantic_errors(certificate, repo_root, require_production)
 
+    version = tuple(int(part) for part in certificate["schema_version"].split("."))
+    if version >= (1, 4, 0):
+        return feature_1_4_semantic_errors(certificate, repo_root, require_production)
+
     errors: list[str] = []
     data_dir = repo_root / "data"
     manifest = load_json(data_dir / "MANIFEST.json")
     spec = load_json(data_dir / "subset_spec.json")
     tilegrid = load_json(data_dir / "prjxray/zynq7/xc7z010/tilegrid.json")
 
-    version = tuple(int(part) for part in certificate["schema_version"].split("."))
     profile = certificate.get("profile")
     if require_production and profile != "production":
         errors.append("production verification requires profile='production'")
@@ -1551,10 +2277,23 @@ def main() -> int:
         semantic = certificate["bit_class"]["semantic_accounting"]["member_identity"]
         address_pass = sum(item["pass_count"] for item in address.values())
         address_fail = sum(item["fail_count"] for item in address.values())
+        version = tuple(int(part) for part in certificate["schema_version"].split("."))
+        diagnostic_text = ""
+        if version >= (1, 4, 0):
+            diagnostics = certificate["bit_class"]["diagnostic_accounting"]
+            exclusivity = diagnostics["group_exclusivity"]
+            decode = diagnostics["decode_validity"]
+            diagnostic_text = (
+                f"vacuous={exclusivity['vacuous_count']} "
+                f"ambiguity={exclusivity['ambiguity_count']} "
+                f"decode_validity_pass={decode['pass_count']} "
+                f"decode_validity_fail={decode['fail_count']} "
+            )
         if certificate["status"] == "failed" and not args.allow_failed:
             print(
                 "CERTIFICATE VERIFY: CERTIFICATION FAILED — "
                 f"address_pass={address_pass} address_fail={address_fail} "
+                f"{diagnostic_text}"
                 f"semantic_status={certificate['semantic_status']} "
                 f"semantic_pass={semantic['pass_count']} semantic_fail={semantic['fail_count']}",
                 file=sys.stderr,
@@ -1563,21 +2302,32 @@ def main() -> int:
         print(
             f"CERTIFICATE VERIFY: OK — status={certificate['status']} "
             f"address_pass={address_pass} address_fail={address_fail} "
+            f"{diagnostic_text}"
             f"semantic_status={certificate['semantic_status']} "
             f"semantic_pass={semantic['pass_count']} semantic_fail={semantic['fail_count']}"
         )
         return 0
     accounting = certificate["bit_class"]["accounting"]
+    version = tuple(int(part) for part in certificate["schema_version"].split("."))
+    semantic_text = ""
+    if version >= (1, 4, 0):
+        semantic = certificate["bit_class"]["semantic_accounting"]["member_identity"]
+        semantic_text = (
+            f" semantic_status={certificate['semantic_status']}"
+            f" semantic_pass={semantic['pass_count']} semantic_fail={semantic['fail_count']}"
+        )
     if certificate["status"] == "failed" and not args.allow_failed:
         print(
             "CERTIFICATE VERIFY: CERTIFICATION FAILED — "
-            f"tp={accounting['tp_count']} fp={accounting['fp_count']} fn={accounting['fn_count']}",
+            f"tp={accounting['tp_count']} fp={accounting['fp_count']} fn={accounting['fn_count']}"
+            f"{semantic_text}",
             file=sys.stderr,
         )
         return 2
     print(
         f"CERTIFICATE VERIFY: OK — status={certificate['status']} "
         f"tp={accounting['tp_count']} fp={accounting['fp_count']} fn={accounting['fn_count']}"
+        f"{semantic_text}"
     )
     return 0
 

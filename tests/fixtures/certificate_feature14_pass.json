@@ -1,0 +1,254 @@
+{
+  "schema": "fabric_bit_class_certificate",
+  "schema_version": "1.4.0",
+  "evidence_model": "feature",
+  "profile": "conformance",
+  "certificate_id": "consumer_feature14_complementary_known_answer",
+  "status": "passed",
+  "semantic_status": "passed",
+  "failure_reasons": [],
+  "prediction_commitment": {
+    "run_id": "consumer_feature14_fixture",
+    "path": "tests/fixtures/predictions_feature14_pass.json",
+    "sha256": "baf0f9fe7954bf15077b6a1f1161a48860fc506be20a66b149e047cd90137e20",
+    "schema_version": "1.4.0",
+    "seed": "consumer-feature14-known-answer",
+    "totals": {"specimens": 2, "predictions": 2, "holdout_predictions": 2}
+  },
+  "gate_run": {
+    "gate_id": "consumer_feature14_fixture",
+    "started_at": "2026-08-03T10:00:00Z",
+    "completed_at": "2026-08-03T10:00:01Z",
+    "tool_versions": {"fixture": "consumer-known-answer/1.0.0"}
+  },
+  "target": {
+    "family": "zynq7",
+    "device": "xc7z010",
+    "part": "xc7z010clg400-1"
+  },
+  "frozen_inputs": {
+    "manifest_schema_version": "1.1.0",
+    "freeze_stamp": "2026-08-02T01:29:26Z",
+    "spec": {
+      "path": "data/subset_spec.json",
+      "sha256": "ffe4fb9f6bdc118904a6dcbb5625f87d12b12e633ad4dee8c6772fbe45da8e37"
+    },
+    "files": [
+      {
+        "path": "prjxray/zynq7/segbits_clbll_l.db",
+        "sha256": "9bf6bdffdc814569a7da53c696e46207aab23ea66c9dd92c47e50a6211dd739b"
+      },
+      {
+        "path": "prjxray/zynq7/xc7z010/tilegrid.json",
+        "sha256": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee"
+      },
+      {
+        "path": "prjxray/zynq7/xc7z010clg400-1/part.yaml",
+        "sha256": "43a136f26603c51bd97e9489d223bbc80f278fcc234225ed9fde404402f22683"
+      }
+    ]
+  },
+  "bit_class": {
+    "id": "clb_ff_config",
+    "tier": "content",
+    "manifest_entries": 176,
+    "split": {
+      "mine_features": [],
+      "holdout_features": [
+        "CLBLL_L.SLICEL_X0.CLKINV",
+        "CLBLL_L.SLICEL_X0.NOCLKINV"
+      ]
+    },
+    "coverage": {"attested_count": 2, "class_entry_count": 176},
+    "accounting": {"tp_count": 2, "fp_count": 0, "fn_count": 0},
+    "semantic_accounting": {
+      "member_identity": {"pass_count": 2, "fail_count": 0}
+    },
+    "decision_rule": "holdout_assignment_transition_exact and partition_exact and fp_count == 0 and fn_count == 0",
+    "semantic_rule": "member_identity is reported independently and never contributes to status"
+  },
+  "specimens": [
+    {
+      "specimen_id": "fixture_ff_clkinv__base",
+      "split": "holdout",
+      "design_source_sha256": "0000000000000000000000000000000000000000000000000000000000000001",
+      "vivado_version": "fixture",
+      "part": "xc7z010clg400-1",
+      "loc_site": "SLICE_X2Y25",
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "tile_frame_base": "0x00400A00",
+      "build_seed": 1,
+      "bitstream_sha256": "1000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "specimen_id": "fixture_ff_clkinv",
+      "split": "holdout",
+      "design_source_sha256": "0000000000000000000000000000000000000000000000000000000000000002",
+      "vivado_version": "fixture",
+      "part": "xc7z010clg400-1",
+      "loc_site": "SLICE_X2Y25",
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "tile_frame_base": "0x00400A00",
+      "build_seed": 1,
+      "bitstream_sha256": "1000000000000000000000000000000000000000000000000000000000000002",
+      "attestation": {
+        "path": "tests/fixtures/attestation_feature14_clkinv.json",
+        "sha256": "b0eb7c03ab3d283bb3f9404bdf5f14bff5bea7be0087ffd557dcfdb1b8f67812",
+        "schema_version": "1.0.0"
+      }
+    },
+    {
+      "specimen_id": "fixture_ff_noclkinv__base",
+      "split": "holdout",
+      "design_source_sha256": "0000000000000000000000000000000000000000000000000000000000000003",
+      "vivado_version": "fixture",
+      "part": "xc7z010clg400-1",
+      "loc_site": "SLICE_X2Y25",
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "tile_frame_base": "0x00400A00",
+      "build_seed": 1,
+      "bitstream_sha256": "1000000000000000000000000000000000000000000000000000000000000003"
+    },
+    {
+      "specimen_id": "fixture_ff_noclkinv",
+      "split": "holdout",
+      "design_source_sha256": "0000000000000000000000000000000000000000000000000000000000000004",
+      "vivado_version": "fixture",
+      "part": "xc7z010clg400-1",
+      "loc_site": "SLICE_X2Y25",
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "tile_frame_base": "0x00400A00",
+      "build_seed": 1,
+      "bitstream_sha256": "1000000000000000000000000000000000000000000000000000000000000004",
+      "attestation": {
+        "path": "tests/fixtures/attestation_feature14_noclkinv.json",
+        "sha256": "50dc7f6aae618e2e6216b7f26937d6fa5b4bd9d870bf3fe7731931bd293c5a63",
+        "schema_version": "1.0.0"
+      }
+    }
+  ],
+  "feature_results": [
+    {
+      "prediction_specimen_id": "fixture_ff_clkinv",
+      "feature": "CLBLL_L.SLICEL_X0.CLKINV",
+      "split": "holdout",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "baseline_specimen_id": "fixture_ff_clkinv__base",
+      "feature_specimen_id": "fixture_ff_clkinv",
+      "predicted_assignments": [
+        {
+          "token": "01_51",
+          "segbit": {"frame_offset": 1, "bit_offset": 51, "negated": false},
+          "address": {"far": "0x00400A01", "word": 52, "bit": 19},
+          "expected_value": 1
+        }
+      ],
+      "expected_transition": {"before": 0, "after": 1},
+      "semantic_assertion": {
+        "kind": "member_identity",
+        "semantic": true,
+        "claim": "the selected clock member matches the implemented clock mode",
+        "predicted_member": "CLBLL_L.SLICEL_X0.CLKINV",
+        "attestation_field": "/resolved/clock_mode",
+        "expected_value": "CLKINV"
+      },
+      "observed_assignments": [
+        {
+          "address": {"far": "0x00400A01", "word": 52, "bit": 19},
+          "observed_value": 1,
+          "before_value": 0,
+          "after_value": 1
+        }
+      ],
+      "semantic_outcome": {
+        "kind": "member_identity",
+        "semantic": true,
+        "passed": true,
+        "predicted_member": "CLBLL_L.SLICEL_X0.CLKINV",
+        "attestation_field": "/resolved/clock_mode",
+        "expected_value": "CLKINV",
+        "observed_value": "CLKINV"
+      },
+      "verdict": "matched"
+    },
+    {
+      "prediction_specimen_id": "fixture_ff_noclkinv",
+      "feature": "CLBLL_L.SLICEL_X0.NOCLKINV",
+      "split": "holdout",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "baseline_specimen_id": "fixture_ff_noclkinv__base",
+      "feature_specimen_id": "fixture_ff_noclkinv",
+      "predicted_assignments": [
+        {
+          "token": "!01_51",
+          "segbit": {"frame_offset": 1, "bit_offset": 51, "negated": true},
+          "address": {"far": "0x00400A01", "word": 52, "bit": 19},
+          "expected_value": 0
+        }
+      ],
+      "expected_transition": {"before": 1, "after": 0},
+      "semantic_assertion": {
+        "kind": "member_identity",
+        "semantic": true,
+        "claim": "the selected clock member matches the implemented clock mode",
+        "predicted_member": "CLBLL_L.SLICEL_X0.NOCLKINV",
+        "attestation_field": "/resolved/clock_mode",
+        "expected_value": "NOCLKINV"
+      },
+      "observed_assignments": [
+        {
+          "address": {"far": "0x00400A01", "word": 52, "bit": 19},
+          "observed_value": 0,
+          "before_value": 1,
+          "after_value": 0
+        }
+      ],
+      "semantic_outcome": {
+        "kind": "member_identity",
+        "semantic": true,
+        "passed": true,
+        "predicted_member": "CLBLL_L.SLICEL_X0.NOCLKINV",
+        "attestation_field": "/resolved/clock_mode",
+        "expected_value": "NOCLKINV",
+        "observed_value": "NOCLKINV"
+      },
+      "verdict": "matched"
+    }
+  ],
+  "pair_accounting": [
+    {
+      "site": "SLICE_X2Y25",
+      "ff_bel": "AFF",
+      "specimen_ids": ["fixture_ff_clkinv__base", "fixture_ff_clkinv"],
+      "raw_diff_bits": 1,
+      "counts": {"in_scope": 1, "frame_ecc": 0, "db_attributed": 0, "ownership_unknown": 0, "unattributed": 0},
+      "buckets": {
+        "in_scope": [{"far": "0x00400A01", "word": 52, "bit": 19}],
+        "frame_ecc": [],
+        "db_attributed": [],
+        "ownership_unknown": [],
+        "unattributed": []
+      },
+      "partition_exact": true
+    },
+    {
+      "site": "SLICE_X2Y25",
+      "ff_bel": "AFF",
+      "specimen_ids": ["fixture_ff_noclkinv__base", "fixture_ff_noclkinv"],
+      "raw_diff_bits": 1,
+      "counts": {"in_scope": 1, "frame_ecc": 0, "db_attributed": 0, "ownership_unknown": 0, "unattributed": 0},
+      "buckets": {
+        "in_scope": [{"far": "0x00400A01", "word": 52, "bit": 19}],
+        "frame_ecc": [],
+        "db_attributed": [],
+        "ownership_unknown": [],
+        "unattributed": []
+      },
+      "partition_exact": true
+    }
+  ]
+}

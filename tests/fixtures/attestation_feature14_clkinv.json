@@ -1,0 +1,26 @@
+{
+  "schema": "specimen_attestation",
+  "schema_version": "1.0.0",
+  "inputs": {
+    "files": {
+      "tests/fixtures/predictions_feature14_pass.json": "baf0f9fe7954bf15077b6a1f1161a48860fc506be20a66b149e047cd90137e20"
+    },
+    "tclargs": ["SLICE_X2Y25", "AFF", "CLKINV"],
+    "part": "xc7z010clg400-1",
+    "vivado_version": "consumer-known-answer"
+  },
+  "resolved": {
+    "requested_site": "SLICE_X2Y25",
+    "requested_bel": "AFF",
+    "resolved_loc": "SLICE_X2Y25",
+    "resolved_bel": "SLICEL.AFF",
+    "lock_pins": "not applicable to the synthetic conformance fixture",
+    "tile": "CLBLL_L_X2Y25",
+    "pin_mapping": {"D": "SLICE_X2Y25/AFF/D"},
+    "pin_mapping_is_identity": true,
+    "clock_mode": "CLKINV"
+  },
+  "outputs": {
+    "fixture_ff_clkinv.bit": "1000000000000000000000000000000000000000000000000000000000000002"
+  }
+}
