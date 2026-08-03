@@ -1,5 +1,12 @@
 # Round 9 request — how a class with two assertion shapes gets certified
 
+> **RULED 2026-08-03 — see `docs/round9_ruling.md`.** Candidate **B** was adopted
+> (one feature namespace + verifier-derived group consistency, certificate 1.4);
+> candidate A is the rejected alternative and its A-only fixtures are out of scope.
+> The vacuity/counting rules and the FP definition were accepted as requested, with
+> the per-run declared-FP fallback refused. This document is kept as the record of
+> what was asked and why, not as a spec.
+
 Producer → author. `clb_ff_config` is inventoried, isolated and really diffed, but
 pre-registration is **on hold** until this is settled, because 1.3's single
 `evidence_model` selector determines the commitment key, the completeness rule and the

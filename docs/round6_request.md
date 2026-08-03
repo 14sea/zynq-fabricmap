@@ -237,4 +237,6 @@ scope, addresses, assert-iff and the semantic edge.
 Round 9 asks how a class carrying two assertion shapes gets certified at all, so it lives
 in its own file: **`docs/round9_request.md`**. It puts two candidate models to the author
 and asks for a ruling between them; it also carries a vacuity erratum against the already
-certified `clb_mux`. Pre-registration for `clb_ff_config` is held until it is settled.
+certified `clb_mux`. **Ruled 2026-08-03 — `docs/round9_ruling.md`**: candidate B,
+certificate 1.4. Pre-registration for `clb_ff_config` stays held until the 1.4 schema,
+verifier and fixtures land and pass.
