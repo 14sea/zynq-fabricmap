@@ -128,8 +128,16 @@ def main() -> int:
             "tile": p.get("tile"), "tile_type": p.get("tile_type"),
             "requested_bel": p.get("requested_bel"),
             "bel_after_constraint": p.get("bel_after_constraint"),
+            # The anchor is part of the recipe: ANCHOR, its site, and the resolved
+            # LOC/BEL of each of its cells. An anchor that moved between modes would
+            # put back the structural variation it exists to remove.
+            "anchor": p.get("anchor"),
+            "anchor_site": p.get("anchor_site"),
+            "anchor_site2": p.get("anchor_site2"),
+            "anchor_cells": p.get("anchor_cells", []),
             "cells": [{k: c.get(k) for k in ("ref", "loc", "bel", "init", "lock_pins")}
                       for c in p.get("cells", [])],
+            "nets": p.get("nets", []),
             "occupied_bels": p.get("occupied_bels", []),
         })
 
@@ -143,16 +151,21 @@ def main() -> int:
         # into build/ -- gitignored, so the record would name evidence a fresh clone
         # cannot resolve and would leak this host's directory layout. Replaced by the
         # logical specimen id plus the sha256 that actually pins the artifact.
+        # The build directory is a parameter, so it is read from it -- an earlier
+        # version hardcoded "build/lutram", which made every anchored record name a
+        # directory its bitstreams were not in.
+        rel = args.build.relative_to(REPO) if args.build.is_absolute() else args.build
         d["base"] = {"specimen": f"mode{a}", "bitstream": modes[a]["bit"].name,
                      "sha256": modes[a]["sha256"],
-                     "path_in_build_tree": f"build/lutram/mode{a}/{modes[a]['bit'].name}"}
+                     "path_in_build_tree": f"{rel}/mode{a}/{modes[a]['bit'].name}"}
         d["variant"] = {"specimen": f"mode{b}", "bitstream": modes[b]["bit"].name,
                         "sha256": modes[b]["sha256"],
-                        "path_in_build_tree": f"build/lutram/mode{b}/{modes[b]['bit'].name}"}
+                        "path_in_build_tree": f"{rel}/mode{b}/{modes[b]['bit'].name}"}
         d["bitstreams_in_version_control"] = False
         d["note"] = ("bitstreams are NOT committed (build/ is gitignored); they are "
-                     "identified by sha256 and reproducible from "
-                     "vivado/specimen/build_lutram.tcl at the pinned Vivado version")
+                     "identified by sha256 and rebuildable from the specimen harness "
+                     "AT THE REPOSITORY COMMIT THAT PRODUCED THIS RECORD -- not "
+                     "necessarily from HEAD, since the harness changes between runs")
         (out / "diffs" / f"{name}.json").write_text(json.dumps(d, indent=2) + "\n")
 
         in_class = defaultdict(list)

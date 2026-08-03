@@ -9,11 +9,17 @@
 # and the RAM/SRL mode Vivado actually chose -- are recorded from the routed design
 # rather than assumed from what was requested.
 #
-#   vivado -mode batch -source build_lutram.tcl -tclargs <outdir> <site> <mode> [bel]
+#   vivado -mode batch -source build_lutram.tcl -tclargs <outdir> <site> <mode> [bel] [anchor] [anchorsite]
 set outdir [lindex $argv 0]
 set site   [lindex $argv 1]
 set mode   [lindex $argv 2]
 set bel    [lindex $argv 3]
+set anchor [lindex $argv 4]
+set asite  [lindex $argv 5]
+set asite2 [lindex $argv 6]
+if {$anchor eq ""} { set anchor 0 }
+if {$asite  eq ""} { set asite SLICE_X2Y25 }
+if {$asite2 eq ""} { set asite2 SLICE_X8Y20 }
 
 set part xc7z010clg400-1
 set here [file dirname [file normalize [info script]]]
@@ -22,7 +28,7 @@ file mkdir $outdir
 create_project -in_memory -part $part
 read_verilog $here/specimen_lutram.v
 synth_design -top specimen_lutram -part $part -flatten_hierarchy none \
-             -generic MODE=$mode
+             -generic MODE=$mode -generic ANCHOR=$anchor
 
 # 8 address bits + clk/we/d/o. Fixed pins so the IO ring is identical across modes
 # and cannot itself be the thing that moved.
@@ -34,6 +40,8 @@ set_property PACKAGE_PIN E18 [get_ports clk]
 set_property PACKAGE_PIN E19 [get_ports we]
 set_property PACKAGE_PIN F16 [get_ports d]
 set_property PACKAGE_PIN F17 [get_ports o]
+set_property PACKAGE_PIN F19 [get_ports anchor_o]
+set_property PACKAGE_PIN F20 [get_ports anchor_o2]
 set_property IOSTANDARD LVCMOS33 [get_ports *]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins bufg_inst/I]]
 
@@ -51,8 +59,25 @@ set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -of_objects [get_pins bufg_in
 # So: everything that is not a MACRO and not an IO/clock buffer.
 set cells [get_cells -hierarchical -filter {IS_PRIMITIVE && PRIMITIVE_LEVEL != "MACRO" && \
                                             REF_NAME != "BUFG" && \
-                                            REF_NAME !~ "IBUF*" && REF_NAME !~ "OBUF*"}]
+                                            REF_NAME !~ "IBUF*" && REF_NAME !~ "OBUF*" && \
+                                            REF_NAME != "GND" && REF_NAME != "VCC" && \
+                                            NAME !~ "g_anchor*"}]
 if {[llength $cells] == 0} { error "no target cells matched -- refusing to build an unconstrained specimen" }
+
+# The anchor is pinned to fixed BELs in another tile so it is bit-identical in every
+# mode and contributes nothing to any pair's diff.
+if {$anchor} {
+    set_property LOC $asite [get_cells g_anchor.anchor_lut1]
+    set_property BEL A6LUT  [get_cells g_anchor.anchor_lut1]
+    set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} [get_cells g_anchor.anchor_lut1]
+    set_property LOC $asite [get_cells g_anchor.anchor_lut2]
+    set_property BEL B6LUT  [get_cells g_anchor.anchor_lut2]
+    set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} [get_cells g_anchor.anchor_lut2]
+    set_property LOC $asite [get_cells g_anchor.anchor_ff]
+    set_property BEL AFF    [get_cells g_anchor.anchor_ff]
+    set_property LOC $asite2 [get_cells g_anchor.anchor_ff2]
+    set_property BEL AFF     [get_cells g_anchor.anchor_ff2]
+}
 foreach c $cells { set_property LOC $site $c }
 # A BEL is only forced for the single-leaf modes: RAM128/RAM256 span several LUTs and
 # forcing one would either fail or hide the placement freedom this specimen exposes.
@@ -93,6 +118,9 @@ kv $fh vivado_version [version -short]
 kv $fh mode $mode
 kv $fh requested_site $site
 kv $fh requested_bel $bel
+kv $fh anchor $anchor
+kv $fh anchor_site $asite
+kv $fh anchor_site2 $asite2
 kv $fh bel_after_constraint $bel_effective
 kv $fh site_type [get_property SITE_TYPE $st]
 kv $fh tile [get_tiles -of_objects $st]
@@ -108,6 +136,32 @@ foreach c $cells {
     foreach p [get_pins -of_objects $c] {
         kv $fh cell.$n.belpin.[lindex [split $p /] end] [get_bel_pins -quiet -of_objects $p]
     }
+    incr n
+}
+# The anchor is part of the recipe, so it is read back like anything else: an anchor
+# that silently moved between modes would reintroduce exactly the structural variation
+# it exists to remove, and the diff alone could not tell that apart from the mode
+# change under test.
+set n 0
+if {$anchor} {
+    foreach ac [get_cells -hierarchical -filter {NAME =~ "g_anchor*" && IS_PRIMITIVE}] {
+        kv $fh anchor.$n.name      [get_property NAME $ac]
+        kv $fh anchor.$n.ref       [get_property REF_NAME $ac]
+        kv $fh anchor.$n.loc       [get_property LOC $ac]
+        kv $fh anchor.$n.bel       [get_property BEL $ac]
+        kv $fh anchor.$n.lock_pins [get_property -quiet LOCK_PINS $ac]
+        kv $fh anchor.$n.init      [get_property -quiet INIT $ac]
+        incr n
+    }
+}
+# Route status of every net. This records COMPLETION only -- two builds can both report
+# ROUTED over entirely different paths, so this field does not establish that routing
+# matched between modes. Proving that would mean recording the actual route (the ROUTE
+# property or the per-net PIP list) and diffing it; that is deliberately not claimed here.
+set n 0
+foreach net [get_nets -hierarchical] {
+    kv $fh net.$n.name         [get_property NAME $net]
+    kv $fh net.$n.route_status [get_property -quiet ROUTE_STATUS $net]
     incr n
 }
 # Every BEL of the site that ended up occupied -- the multi-LUT modes are the reason

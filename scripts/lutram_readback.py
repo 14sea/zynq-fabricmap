@@ -26,9 +26,11 @@ def parse(tsv: Path) -> dict:
             continue
         k, _, v = line.partition("\t")
         flat[k] = v
-    out: dict = {"cells": [], "occupied_bels": []}
+    out: dict = {"cells": [], "anchor_cells": [], "nets": [], "occupied_bels": []}
     cells: dict[int, dict] = {}
     occ: dict[int, dict] = {}
+    anchor: dict[int, dict] = {}
+    nets: dict[int, dict] = {}
     for k, v in flat.items():
         parts = k.split(".")
         if parts[0] == "cell":
@@ -37,11 +39,17 @@ def parse(tsv: Path) -> dict:
                 c["bel_pins"][parts[3]] = v
             else:
                 c[parts[2]] = v
+        elif parts[0] == "anchor" and len(parts) == 3:
+            anchor.setdefault(int(parts[1]), {})[parts[2]] = v
+        elif parts[0] == "net":
+            nets.setdefault(int(parts[1]), {})[parts[2]] = v
         elif parts[0] == "occupied":
             occ.setdefault(int(parts[1]), {})[parts[2]] = v
         else:
             out[k] = v
     out["cells"] = [cells[i] for i in sorted(cells)]
+    out["anchor_cells"] = [anchor[i] for i in sorted(anchor)]
+    out["nets"] = [nets[i] for i in sorted(nets)]
     out["occupied_bels"] = [occ[i] for i in sorted(occ)]
     return out
 

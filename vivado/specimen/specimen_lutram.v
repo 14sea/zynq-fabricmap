@@ -18,17 +18,69 @@
 // measured, not assumed.
 `timescale 1ns / 1ps
 
+// ANCHOR=1 adds a fixed consumer of every input port and of the buffered clock,
+// placed in a different tile. Without it each mode uses a different subset of the
+// ports -- MODE 0 touches a[5:0] and never clk -- so Vivado trims a different set of
+// IBUFs and may drop the BUFG, and the IO ring and clock tree differ between the two
+// endpoints of a pair. Those tiles are not in the freeze, so the resulting changes
+// land in `ownership_unknown`, which certificate 1.4 counts as FP.
+//
+// ANCHOR=0 means "no anchor cells". It is NOT a compatibility mode: this module now
+// declares anchor_o/anchor_o2 unconditionally and build_lutram.tcl pins them
+// unconditionally, so even at ANCHOR=0 the design has two extra output ports and their
+// OBUFs. `evidence/lutram_isolation_2026_08_03/` is reproduced by commit 044b204, not
+// by this file. Making ANCHOR=0 a real compatibility mode would need a wrapper without
+// those ports plus a measurement that all seven bitstream hashes match.
 module specimen_lutram #(
-    parameter MODE = 0
+    parameter MODE   = 0,
+    parameter ANCHOR = 0
 ) (
     input  wire [7:0] a,
     input  wire       clk,
     input  wire       we,
     input  wire       d,
-    output wire       o
+    output wire       o,
+    output wire       anchor_o,
+    output wire       anchor_o2
 );
     wire clk_g;
     BUFG bufg_inst (.I(clk), .O(clk_g));
+
+    generate
+        if (ANCHOR) begin : g_anchor
+            // Two LUT6s and one FF, all LOC'd and BEL'd by the Tcl to a fixed site in
+            // another tile, consuming a[7:0], d, we and clk_g. Identical in every
+            // mode, so it contributes no changed bit to any pair -- its only job is to
+            // stop the IO/clock structure from varying.
+            wire w1, w2;
+            (* DONT_TOUCH = "TRUE" *)
+            LUT6 #(.INIT(64'h6996966996696996)) anchor_lut1 (
+                .I0(a[0]), .I1(a[1]), .I2(a[2]), .I3(a[3]), .I4(a[4]), .I5(a[5]),
+                .O(w1)
+            );
+            (* DONT_TOUCH = "TRUE" *)
+            LUT6 #(.INIT(64'h6996966996696996)) anchor_lut2 (
+                .I0(a[6]), .I1(a[7]), .I2(d), .I3(we), .I4(w1), .I5(w1),
+                .O(w2)
+            );
+            (* DONT_TOUCH = "TRUE" *)
+            FDRE #(.INIT(1'b0)) anchor_ff (
+                .C(clk_g), .CE(1'b1), .R(1'b0), .D(w2), .Q(anchor_o)
+            );
+            // Second clocked keeper, placed by the Tcl in the SAME CLB COLUMN as the
+            // site under test. Without it, MODE 0 is the only mode whose target does
+            // not clock anything, so that column's clock branch is enabled in every
+            // other mode and three HCLK_L bits move in every pair based on mode 0.
+            // HCLK_L is not in the freeze, so those land in ownership_unknown.
+            (* DONT_TOUCH = "TRUE" *)
+            FDRE #(.INIT(1'b0)) anchor_ff2 (
+                .C(clk_g), .CE(1'b1), .R(1'b0), .D(w2), .Q(anchor_o2)
+            );
+        end else begin : g_no_anchor
+            assign anchor_o  = 1'b0;
+            assign anchor_o2 = 1'b0;
+        end
+    endgenerate
 
     generate
         if (MODE == 0) begin : g_lut6

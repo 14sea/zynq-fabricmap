@@ -1,0 +1,2149 @@
+{
+  "schema": "lutram_isolation_evidence",
+  "schema_version": "1.0.0",
+  "bit_class": "clb_lutram",
+  "note": "measurement only; no prediction, commitment or certificate",
+  "specimens": [
+    {
+      "mode": 0,
+      "bitstream": "spec_mode0.bit",
+      "bitstream_sha256": "b4e6af881833ba67581b9ecafd33d8adb8b3eef1cf8aebca6ce15b1d4af876ac",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "D6LUT",
+      "bel_after_constraint": "SLICEM.D6LUT",
+      "anchor": "1",
+      "anchor_site": "SLICE_X2Y25",
+      "anchor_site2": "SLICE_X9Y25",
+      "anchor_cells": [
+        {
+          "name": "g_anchor.anchor_ff",
+          "ref": "FDRE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_ff2",
+          "ref": "FDRE",
+          "loc": "SLICE_X9Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_lut1",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        },
+        {
+          "name": "g_anchor.anchor_lut2",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        }
+      ],
+      "cells": [
+        {
+          "ref": "LUT6",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.D6LUT",
+          "init": "64'hA5A5A5A5A5A5A5A5",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6"
+        }
+      ],
+      "nets": [
+        {
+          "name": "<const0>",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "<const1>",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[0]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[1]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[2]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[3]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[4]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[5]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[6]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[7]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a_IBUF[0]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[1]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[2]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[3]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[4]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[5]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[6]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[7]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "clk_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk_g",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "d",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "d_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w1",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w2",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "we",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "we_IBUF",
+          "route_status": "ROUTED"
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/D6LUT",
+          "cell": "g_lut6.target",
+          "ref": "LUT6"
+        }
+      ]
+    },
+    {
+      "mode": 1,
+      "bitstream": "spec_mode1.bit",
+      "bitstream_sha256": "8732670abdede967cd2ce02640cb69c5cdc1c5bba6d813c76129d3270eff655f",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "D6LUT",
+      "bel_after_constraint": "SLICEM.D6LUT",
+      "anchor": "1",
+      "anchor_site": "SLICE_X2Y25",
+      "anchor_site2": "SLICE_X9Y25",
+      "anchor_cells": [
+        {
+          "name": "g_anchor.anchor_ff",
+          "ref": "FDRE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_ff2",
+          "ref": "FDRE",
+          "loc": "SLICE_X9Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_lut1",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        },
+        {
+          "name": "g_anchor.anchor_lut2",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        }
+      ],
+      "cells": [
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.D6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        }
+      ],
+      "nets": [
+        {
+          "name": "<const0>",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "<const1>",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[0]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[1]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[2]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[3]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[4]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[5]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[6]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[7]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a_IBUF[0]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[1]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[2]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[3]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[4]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[5]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[6]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[7]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "clk_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk_g",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "d",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "d_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w1",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w2",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "we",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "we_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram64.target/A0",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram64.target/A1",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram64.target/A2",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram64.target/A3",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram64.target/A4",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram64.target/A5",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram64.target/D",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram64.target/O",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram64.target/WCLK",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram64.target/WE",
+          "route_status": "ROUTED"
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/D6LUT",
+          "cell": "g_ram64.target/SP",
+          "ref": "RAMS64E"
+        }
+      ]
+    },
+    {
+      "mode": 2,
+      "bitstream": "spec_mode2.bit",
+      "bitstream_sha256": "6a46fe6a56b9c6eaf868c886a6d3869b5f3b972c5de5547a501beb9413fb517e",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "D6LUT",
+      "bel_after_constraint": "SLICEM.D6LUT",
+      "anchor": "1",
+      "anchor_site": "SLICE_X2Y25",
+      "anchor_site2": "SLICE_X9Y25",
+      "anchor_cells": [
+        {
+          "name": "g_anchor.anchor_ff",
+          "ref": "FDRE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_ff2",
+          "ref": "FDRE",
+          "loc": "SLICE_X9Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_lut1",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        },
+        {
+          "name": "g_anchor.anchor_lut2",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        }
+      ],
+      "cells": [
+        {
+          "ref": "RAMS32",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.D6LUT",
+          "init": "32'h00000000",
+          "lock_pins": ""
+        }
+      ],
+      "nets": [
+        {
+          "name": "<const0>",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "<const1>",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a[0]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[1]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[2]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[3]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[4]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[5]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[6]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[7]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a_IBUF[0]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[1]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[2]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[3]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[4]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[5]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[6]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[7]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "clk_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk_g",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "d",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "d_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w1",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w2",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "we",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "we_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram32.target/A0",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram32.target/A1",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram32.target/A2",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram32.target/A3",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram32.target/A4",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram32.target/D",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram32.target/O",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram32.target/WCLK",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram32.target/WE",
+          "route_status": "ROUTED"
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/D6LUT",
+          "cell": "g_ram32.target/SP",
+          "ref": "RAMS32"
+        }
+      ]
+    },
+    {
+      "mode": 3,
+      "bitstream": "spec_mode3.bit",
+      "bitstream_sha256": "f1915bee583205e1ad22e29f790731213cfea5cb550d64cb702447fd4a1f1376",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "D6LUT",
+      "bel_after_constraint": "SLICEM.D6LUT",
+      "anchor": "1",
+      "anchor_site": "SLICE_X2Y25",
+      "anchor_site2": "SLICE_X9Y25",
+      "anchor_cells": [
+        {
+          "name": "g_anchor.anchor_ff",
+          "ref": "FDRE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_ff2",
+          "ref": "FDRE",
+          "loc": "SLICE_X9Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_lut1",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        },
+        {
+          "name": "g_anchor.anchor_lut2",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        }
+      ],
+      "cells": [
+        {
+          "ref": "SRLC32E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.D6LUT",
+          "init": "32'h00000000",
+          "lock_pins": ""
+        }
+      ],
+      "nets": [
+        {
+          "name": "<const0>",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "<const1>",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a[0]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[1]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[2]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[3]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[4]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[5]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[6]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[7]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a_IBUF[0]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[1]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[2]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[3]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[4]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[5]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[6]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[7]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "clk_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk_g",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "d",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "d_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w1",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w2",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "we",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "we_IBUF",
+          "route_status": "ROUTED"
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/D6LUT",
+          "cell": "g_srl32.target",
+          "ref": "SRLC32E"
+        }
+      ]
+    },
+    {
+      "mode": 4,
+      "bitstream": "spec_mode4.bit",
+      "bitstream_sha256": "e5abd4bf50f52479fd85f43e759c04ced4c34d9f92e5815b351ffd1372329af3",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "",
+      "bel_after_constraint": "",
+      "anchor": "1",
+      "anchor_site": "SLICE_X2Y25",
+      "anchor_site2": "SLICE_X9Y25",
+      "anchor_cells": [
+        {
+          "name": "g_anchor.anchor_ff",
+          "ref": "FDRE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_ff2",
+          "ref": "FDRE",
+          "loc": "SLICE_X9Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_lut1",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        },
+        {
+          "name": "g_anchor.anchor_lut2",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        }
+      ],
+      "cells": [
+        {
+          "ref": "MUXF7",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.F7BMUX",
+          "init": "",
+          "lock_pins": ""
+        },
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.C6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        },
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.D6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        }
+      ],
+      "nets": [
+        {
+          "name": "<const0>",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "<const1>",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[0]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[1]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[2]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[3]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[4]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[5]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[6]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[7]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a_IBUF[0]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[1]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[2]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[3]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[4]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[5]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[6]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[7]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "clk_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk_g",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "d",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "d_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w1",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w2",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "we",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "we_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram128.target/A0",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram128.target/A1",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram128.target/A2",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram128.target/A3",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram128.target/A4",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram128.target/A5",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram128.target/A6",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram128.target/D",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram128.target/O",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram128.target/O0",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "g_ram128.target/O1",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "g_ram128.target/WCLK",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram128.target/WE",
+          "route_status": "ROUTED"
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/D6LUT",
+          "cell": "g_ram128.target/LOW",
+          "ref": "RAMS64E"
+        },
+        {
+          "bel": "SLICE_X8Y25/C6LUT",
+          "cell": "g_ram128.target/HIGH",
+          "ref": "RAMS64E"
+        },
+        {
+          "bel": "SLICE_X8Y25/F7BMUX",
+          "cell": "g_ram128.target/F7",
+          "ref": "MUXF7"
+        }
+      ]
+    },
+    {
+      "mode": 5,
+      "bitstream": "spec_mode5.bit",
+      "bitstream_sha256": "fdcd28252abfb5d3e91f3048732ff179bb5f92cf807cfdb8859a59a118c3b7c5",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "",
+      "bel_after_constraint": "",
+      "anchor": "1",
+      "anchor_site": "SLICE_X2Y25",
+      "anchor_site2": "SLICE_X9Y25",
+      "anchor_cells": [
+        {
+          "name": "g_anchor.anchor_ff",
+          "ref": "FDRE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_ff2",
+          "ref": "FDRE",
+          "loc": "SLICE_X9Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_lut1",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        },
+        {
+          "name": "g_anchor.anchor_lut2",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        }
+      ],
+      "cells": [
+        {
+          "ref": "MUXF7",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.F7AMUX",
+          "init": "",
+          "lock_pins": ""
+        },
+        {
+          "ref": "MUXF7",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.F7BMUX",
+          "init": "",
+          "lock_pins": ""
+        },
+        {
+          "ref": "MUXF8",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.F8MUX",
+          "init": "",
+          "lock_pins": ""
+        },
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.A6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        },
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.B6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        },
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.C6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        },
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.D6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        }
+      ],
+      "nets": [
+        {
+          "name": "<const0>",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "<const1>",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[0]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[1]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[2]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[3]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[4]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[5]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[6]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[7]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a_IBUF[0]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[1]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[2]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[3]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[4]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[5]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[6]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[7]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "clk_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk_g",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "d",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "d_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w1",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w2",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "we",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "we_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram256.target/A0",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram256.target/A1",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram256.target/A2",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram256.target/A3",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram256.target/A4",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram256.target/A5",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram256.target/A6",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram256.target/A7",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram256.target/D",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram256.target/O",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram256.target/O0",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "g_ram256.target/O1",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "g_ram256.target/OA",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "g_ram256.target/OB",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "g_ram256.target/OC",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "g_ram256.target/OD",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "g_ram256.target/WCLK",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_ram256.target/WE",
+          "route_status": "ROUTED"
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/D6LUT",
+          "cell": "g_ram256.target/RAMS64E_D",
+          "ref": "RAMS64E"
+        },
+        {
+          "bel": "SLICE_X8Y25/C6LUT",
+          "cell": "g_ram256.target/RAMS64E_C",
+          "ref": "RAMS64E"
+        },
+        {
+          "bel": "SLICE_X8Y25/B6LUT",
+          "cell": "g_ram256.target/RAMS64E_B",
+          "ref": "RAMS64E"
+        },
+        {
+          "bel": "SLICE_X8Y25/A6LUT",
+          "cell": "g_ram256.target/RAMS64E_A",
+          "ref": "RAMS64E"
+        },
+        {
+          "bel": "SLICE_X8Y25/F8MUX",
+          "cell": "g_ram256.target/F8",
+          "ref": "MUXF8"
+        },
+        {
+          "bel": "SLICE_X8Y25/F7BMUX",
+          "cell": "g_ram256.target/F7.B",
+          "ref": "MUXF7"
+        },
+        {
+          "bel": "SLICE_X8Y25/F7AMUX",
+          "cell": "g_ram256.target/F7.A",
+          "ref": "MUXF7"
+        }
+      ]
+    },
+    {
+      "mode": 6,
+      "bitstream": "spec_mode6.bit",
+      "bitstream_sha256": "ff31fa91a7712d9094198c611f5524c066951b3f85434d1952b8596fad39aa37",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "",
+      "bel_after_constraint": "",
+      "anchor": "1",
+      "anchor_site": "SLICE_X2Y25",
+      "anchor_site2": "SLICE_X9Y25",
+      "anchor_cells": [
+        {
+          "name": "g_anchor.anchor_ff",
+          "ref": "FDRE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_ff2",
+          "ref": "FDRE",
+          "loc": "SLICE_X9Y25",
+          "bel": "SLICEL.AFF",
+          "lock_pins": "",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_anchor.anchor_lut1",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        },
+        {
+          "name": "g_anchor.anchor_lut2",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B6LUT",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6",
+          "init": "64'h6996966996696996"
+        }
+      ],
+      "cells": [
+        {
+          "ref": "SRLC32E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.B6LUT",
+          "init": "32'h00000000",
+          "lock_pins": ""
+        },
+        {
+          "ref": "SRLC32E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.A6LUT",
+          "init": "32'h00000000",
+          "lock_pins": ""
+        }
+      ],
+      "nets": [
+        {
+          "name": "<const0>",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "<const1>",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a[0]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[1]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[2]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[3]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[4]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[5]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[6]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a[7]",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "a_IBUF[0]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[1]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[2]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[3]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[4]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[5]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[6]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "a_IBUF[7]",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "anchor_o2_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "anchor_o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "clk_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "clk_g",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "d",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "d_IBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w1",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_anchor.w2",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "g_srl_cascade.q31",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "o",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "o_OBUF",
+          "route_status": "ROUTED"
+        },
+        {
+          "name": "we",
+          "route_status": "INTRASITE"
+        },
+        {
+          "name": "we_IBUF",
+          "route_status": "ROUTED"
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/B6LUT",
+          "cell": "g_srl_cascade.target",
+          "ref": "SRLC32E"
+        },
+        {
+          "bel": "SLICE_X8Y25/A6LUT",
+          "cell": "g_srl_cascade.target2",
+          "ref": "SRLC32E"
+        }
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "pair": "mode0_to_mode1",
+      "hypothesis": "LUT6 -> RAM64X1S : xLUT.RAM",
+      "base_sha256": "b4e6af881833ba67581b9ecafd33d8adb8b3eef1cf8aebca6ce15b1d4af876ac",
+      "variant_sha256": "8732670abdede967cd2ce02640cb69c5cdc1c5bba6d813c76129d3270eff655f",
+      "counts": {
+        "attributed": 214,
+        "frame_ecc_excluded": 688,
+        "ownership_unknown": 0,
+        "unattributed": 0,
+        "in_class_features_moved": 2
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.DLUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 52,
+            "bit": 15,
+            "segbit": "31_47",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WEMUX.CE": [
+          {
+            "far": "0x00400c01",
+            "word": 51,
+            "bit": 23,
+            "segbit": "01_23",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode0_to_mode1.json"
+    },
+    {
+      "pair": "mode1_to_mode2",
+      "hypothesis": "RAM64X1S -> RAM32X1S : xLUT.SMALL",
+      "base_sha256": "8732670abdede967cd2ce02640cb69c5cdc1c5bba6d813c76129d3270eff655f",
+      "variant_sha256": "6a46fe6a56b9c6eaf868c886a6d3869b5f3b972c5de5547a501beb9413fb517e",
+      "counts": {
+        "attributed": 121,
+        "frame_ecc_excluded": 569,
+        "ownership_unknown": 0,
+        "unattributed": 0,
+        "in_class_features_moved": 1
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.DLUT.SMALL": [
+          {
+            "far": "0x00400c01",
+            "word": 52,
+            "bit": 27,
+            "segbit": "01_59",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode1_to_mode2.json"
+    },
+    {
+      "pair": "mode0_to_mode3",
+      "hypothesis": "LUT6 -> SRLC32E : xLUT.SRL",
+      "base_sha256": "b4e6af881833ba67581b9ecafd33d8adb8b3eef1cf8aebca6ce15b1d4af876ac",
+      "variant_sha256": "f1915bee583205e1ad22e29f790731213cfea5cb550d64cb702447fd4a1f1376",
+      "counts": {
+        "attributed": 350,
+        "frame_ecc_excluded": 970,
+        "ownership_unknown": 0,
+        "unattributed": 0,
+        "in_class_features_moved": 2
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.DLUT.SRL": [
+          {
+            "far": "0x00400c1e",
+            "word": 52,
+            "bit": 15,
+            "segbit": "30_47",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WEMUX.CE": [
+          {
+            "far": "0x00400c01",
+            "word": 51,
+            "bit": 23,
+            "segbit": "01_23",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode0_to_mode3.json"
+    },
+    {
+      "pair": "mode1_to_mode4",
+      "hypothesis": "RAM64X1S -> RAM128X1S : WA7USED",
+      "base_sha256": "8732670abdede967cd2ce02640cb69c5cdc1c5bba6d813c76129d3270eff655f",
+      "variant_sha256": "e5abd4bf50f52479fd85f43e759c04ced4c34d9f92e5815b351ffd1372329af3",
+      "counts": {
+        "attributed": 250,
+        "frame_ecc_excluded": 858,
+        "ownership_unknown": 0,
+        "unattributed": 0,
+        "in_class_features_moved": 2
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.CLUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 52,
+            "bit": 14,
+            "segbit": "31_46",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WA7USED": [
+          {
+            "far": "0x00400c00",
+            "word": 52,
+            "bit": 8,
+            "segbit": "00_40",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode1_to_mode4.json"
+    },
+    {
+      "pair": "mode4_to_mode5",
+      "hypothesis": "RAM128X1S -> RAM256X1S : WA8USED",
+      "base_sha256": "e5abd4bf50f52479fd85f43e759c04ced4c34d9f92e5815b351ffd1372329af3",
+      "variant_sha256": "fdcd28252abfb5d3e91f3048732ff179bb5f92cf807cfdb8859a59a118c3b7c5",
+      "counts": {
+        "attributed": 485,
+        "frame_ecc_excluded": 1067,
+        "ownership_unknown": 0,
+        "unattributed": 0,
+        "in_class_features_moved": 3
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.ALUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 51,
+            "bit": 16,
+            "segbit": "31_16",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.BLUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 51,
+            "bit": 17,
+            "segbit": "31_17",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WA8USED": [
+          {
+            "far": "0x00400c01",
+            "word": 51,
+            "bit": 27,
+            "segbit": "01_27",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode4_to_mode5.json"
+    },
+    {
+      "pair": "mode3_to_mode6",
+      "hypothesis": "SRLC32E -> cascaded SRLC32E : DI1MUX cascade member",
+      "base_sha256": "f1915bee583205e1ad22e29f790731213cfea5cb550d64cb702447fd4a1f1376",
+      "variant_sha256": "ff31fa91a7712d9094198c611f5524c066951b3f85434d1952b8596fad39aa37",
+      "counts": {
+        "attributed": 302,
+        "frame_ecc_excluded": 848,
+        "ownership_unknown": 0,
+        "unattributed": 0,
+        "in_class_features_moved": 5
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.ALUT.SRL": [
+          {
+            "far": "0x00400c1e",
+            "word": 51,
+            "bit": 16,
+            "segbit": "30_16",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.BLUT.DI1MUX.BI": [
+          {
+            "far": "0x00400c00",
+            "word": 51,
+            "bit": 20,
+            "segbit": "00_20",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.BLUT.DI1MUX.DI_CMC31": [
+          {
+            "far": "0x00400c00",
+            "word": 51,
+            "bit": 20,
+            "segbit": "00_20",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "negated",
+            "before": 0,
+            "after": 1,
+            "decodes_before": true,
+            "decodes_after": false
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.BLUT.SRL": [
+          {
+            "far": "0x00400c1e",
+            "word": 51,
+            "bit": 17,
+            "segbit": "30_17",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.DLUT.SRL": [
+          {
+            "far": "0x00400c1e",
+            "word": 52,
+            "bit": 15,
+            "segbit": "30_47",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 1,
+            "after": 0,
+            "decodes_before": true,
+            "decodes_after": false
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode3_to_mode6.json"
+    },
+    {
+      "pair": "mode0_to_mode5",
+      "hypothesis": "LUT6 -> RAM256X1S : whole-slice reference",
+      "base_sha256": "b4e6af881833ba67581b9ecafd33d8adb8b3eef1cf8aebca6ce15b1d4af876ac",
+      "variant_sha256": "fdcd28252abfb5d3e91f3048732ff179bb5f92cf807cfdb8859a59a118c3b7c5",
+      "counts": {
+        "attributed": 565,
+        "frame_ecc_excluded": 1227,
+        "ownership_unknown": 0,
+        "unattributed": 0,
+        "in_class_features_moved": 7
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.ALUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 51,
+            "bit": 16,
+            "segbit": "31_16",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.BLUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 51,
+            "bit": 17,
+            "segbit": "31_17",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.CLUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 52,
+            "bit": 14,
+            "segbit": "31_46",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.DLUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 52,
+            "bit": 15,
+            "segbit": "31_47",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WA7USED": [
+          {
+            "far": "0x00400c00",
+            "word": 52,
+            "bit": 8,
+            "segbit": "00_40",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WA8USED": [
+          {
+            "far": "0x00400c01",
+            "word": 51,
+            "bit": 27,
+            "segbit": "01_27",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WEMUX.CE": [
+          {
+            "far": "0x00400c01",
+            "word": 51,
+            "bit": 23,
+            "segbit": "01_23",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode0_to_mode5.json"
+    }
+  ]
+}
