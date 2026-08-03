@@ -1,0 +1,2607 @@
+{
+  "base": {
+    "specimen": "mode1",
+    "bitstream": "spec_mode1.bit",
+    "sha256": "7d7552406967295db41cd9b39cf6349adda4354e75d0dee08f7b74173214f86d",
+    "path_in_build_tree": "build/lutram/mode1/spec_mode1.bit"
+  },
+  "variant": {
+    "specimen": "mode2",
+    "bitstream": "spec_mode2.bit",
+    "sha256": "92ef4fdf51299d17c71f1af84529a4d0cad38e6f60af044847f12b00b3945dd0",
+    "path_in_build_tree": "build/lutram/mode2/spec_mode2.bit"
+  },
+  "exclusion_rules": [
+    {
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12",
+      "why": "the frame ECC field is recomputed whenever any other bit in the same frame changes"
+    }
+  ],
+  "excluded_diff": [
+    {
+      "far": "0x00001481",
+      "word": 50,
+      "bit": 1,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001481",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001a81",
+      "word": 50,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001a81",
+      "word": 50,
+      "bit": 12,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b84",
+      "word": 50,
+      "bit": 1,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b84",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b84",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b84",
+      "word": 50,
+      "bit": 9,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b84",
+      "word": 50,
+      "bit": 10,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b84",
+      "word": 50,
+      "bit": 11,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b84",
+      "word": 50,
+      "bit": 12,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b86",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b86",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b86",
+      "word": 50,
+      "bit": 9,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b86",
+      "word": 50,
+      "bit": 10,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b86",
+      "word": 50,
+      "bit": 11,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b9d",
+      "word": 50,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b9d",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b9d",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b9d",
+      "word": 50,
+      "bit": 5,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b9d",
+      "word": 50,
+      "bit": 9,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b9d",
+      "word": 50,
+      "bit": 10,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001b9d",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001ba6",
+      "word": 50,
+      "bit": 1,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001ba6",
+      "word": 50,
+      "bit": 2,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001ba6",
+      "word": 50,
+      "bit": 4,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001ba6",
+      "word": 50,
+      "bit": 9,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001ba6",
+      "word": 50,
+      "bit": 10,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001ba6",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001ba6",
+      "word": 50,
+      "bit": 12,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001ba7",
+      "word": 50,
+      "bit": 1,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00001ba7",
+      "word": 50,
+      "bit": 12,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c01",
+      "word": 50,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c01",
+      "word": 50,
+      "bit": 1,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c01",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c01",
+      "word": 50,
+      "bit": 4,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c01",
+      "word": 50,
+      "bit": 5,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c01",
+      "word": 50,
+      "bit": 6,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c01",
+      "word": 50,
+      "bit": 7,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c01",
+      "word": 50,
+      "bit": 8,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c01",
+      "word": 50,
+      "bit": 11,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c11",
+      "word": 50,
+      "bit": 0,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c11",
+      "word": 50,
+      "bit": 1,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c11",
+      "word": 50,
+      "bit": 2,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c11",
+      "word": 50,
+      "bit": 3,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c12",
+      "word": 50,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c12",
+      "word": 50,
+      "bit": 1,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c12",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c12",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c12",
+      "word": 50,
+      "bit": 4,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c12",
+      "word": 50,
+      "bit": 6,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c12",
+      "word": 50,
+      "bit": 7,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c12",
+      "word": 50,
+      "bit": 8,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c12",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c16",
+      "word": 50,
+      "bit": 0,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c16",
+      "word": 50,
+      "bit": 1,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c16",
+      "word": 50,
+      "bit": 2,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c16",
+      "word": 50,
+      "bit": 4,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c16",
+      "word": 50,
+      "bit": 5,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c16",
+      "word": 50,
+      "bit": 6,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c16",
+      "word": 50,
+      "bit": 7,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c16",
+      "word": 50,
+      "bit": 8,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c16",
+      "word": 50,
+      "bit": 11,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c17",
+      "word": 50,
+      "bit": 1,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c17",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c17",
+      "word": 50,
+      "bit": 5,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c17",
+      "word": 50,
+      "bit": 12,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c18",
+      "word": 50,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c18",
+      "word": 50,
+      "bit": 4,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c18",
+      "word": 50,
+      "bit": 6,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c18",
+      "word": 50,
+      "bit": 7,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c18",
+      "word": 50,
+      "bit": 8,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c18",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c18",
+      "word": 50,
+      "bit": 12,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c19",
+      "word": 50,
+      "bit": 0,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c19",
+      "word": 50,
+      "bit": 4,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c19",
+      "word": 50,
+      "bit": 6,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c19",
+      "word": 50,
+      "bit": 7,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c19",
+      "word": 50,
+      "bit": 8,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c19",
+      "word": 50,
+      "bit": 11,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c19",
+      "word": 50,
+      "bit": 12,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8b",
+      "word": 50,
+      "bit": 0,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8b",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8b",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8b",
+      "word": 50,
+      "bit": 5,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8b",
+      "word": 50,
+      "bit": 6,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8b",
+      "word": 50,
+      "bit": 7,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8b",
+      "word": 50,
+      "bit": 8,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8b",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8b",
+      "word": 50,
+      "bit": 12,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8d",
+      "word": 50,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8d",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8d",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8d",
+      "word": 50,
+      "bit": 5,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8d",
+      "word": 50,
+      "bit": 6,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8d",
+      "word": 50,
+      "bit": 7,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8d",
+      "word": 50,
+      "bit": 8,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8d",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400c8d",
+      "word": 50,
+      "bit": 12,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d08",
+      "word": 50,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d08",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d08",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d08",
+      "word": 50,
+      "bit": 4,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d08",
+      "word": 50,
+      "bit": 5,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d08",
+      "word": 50,
+      "bit": 6,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d08",
+      "word": 50,
+      "bit": 7,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d08",
+      "word": 50,
+      "bit": 8,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d08",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d0d",
+      "word": 50,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d0d",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d0d",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d0d",
+      "word": 50,
+      "bit": 4,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d0d",
+      "word": 50,
+      "bit": 5,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d0d",
+      "word": 50,
+      "bit": 6,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d0d",
+      "word": 50,
+      "bit": 7,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d0d",
+      "word": 50,
+      "bit": 8,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d0d",
+      "word": 50,
+      "bit": 11,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d87",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d87",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d87",
+      "word": 50,
+      "bit": 9,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d87",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d87",
+      "word": 50,
+      "bit": 12,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d8c",
+      "word": 50,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d8c",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d8c",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d8c",
+      "word": 50,
+      "bit": 9,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00400d8c",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401284",
+      "word": 50,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401284",
+      "word": 50,
+      "bit": 4,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401284",
+      "word": 50,
+      "bit": 9,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401284",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401284",
+      "word": 50,
+      "bit": 12,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401285",
+      "word": 50,
+      "bit": 4,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401285",
+      "word": 50,
+      "bit": 9,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401285",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401383",
+      "word": 50,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401383",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401383",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401383",
+      "word": 50,
+      "bit": 8,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401383",
+      "word": 50,
+      "bit": 9,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401383",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401383",
+      "word": 50,
+      "bit": 12,
+      "before": 0,
+      "after": 1,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401385",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401385",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401385",
+      "word": 50,
+      "bit": 8,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401385",
+      "word": 50,
+      "bit": 9,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401385",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401484",
+      "word": 50,
+      "bit": 1,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401484",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401484",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401484",
+      "word": 50,
+      "bit": 10,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401484",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401485",
+      "word": 50,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401485",
+      "word": 50,
+      "bit": 3,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401485",
+      "word": 50,
+      "bit": 10,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401485",
+      "word": 50,
+      "bit": 11,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    },
+    {
+      "far": "0x00401485",
+      "word": 50,
+      "bit": 12,
+      "before": 1,
+      "after": 0,
+      "reason": "frame_ecc",
+      "rule": "word == 50 and 0 <= bit <= 12"
+    }
+  ],
+  "attributed": [
+    {
+      "far": "0x00001481",
+      "word": 4,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X17Y52",
+          "tile_type": "INT_R",
+          "segbit": "01_02",
+          "features": [
+            "INT_R.LV18.LH0",
+            "INT_R.LV18.LH6",
+            "INT_R.LV18.LH12",
+            "INT_R.LV18.SW6END0"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_R_X17Y52",
+        "INT_R_X17Y52"
+      ]
+    },
+    {
+      "far": "0x00001481",
+      "word": 4,
+      "bit": 8,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X17Y52",
+          "tile_type": "INT_R",
+          "segbit": "01_08",
+          "features": [
+            "INT_R.LV18.SR1BEG_S0",
+            "INT_R.LV18.LH12",
+            "INT_R.LV18.WW4END0"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_R_X17Y52",
+        "INT_R_X17Y52"
+      ]
+    },
+    {
+      "far": "0x00001a81",
+      "word": 5,
+      "bit": 24,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X29Y52",
+          "tile_type": "INT_R",
+          "segbit": "01_56",
+          "features": [
+            "INT_R.LH0.LH12",
+            "INT_R.LH0.LV0",
+            "INT_R.LH0.LV9",
+            "INT_R.LH0.LV18"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_R_X29Y52",
+        "INT_R_X29Y52"
+      ]
+    },
+    {
+      "far": "0x00001a81",
+      "word": 5,
+      "bit": 26,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X29Y52",
+          "tile_type": "INT_R",
+          "segbit": "01_58",
+          "features": [
+            "INT_R.LH0.LV0",
+            "INT_R.LH0.NE6END3",
+            "INT_R.LH0.SS6END3"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_R_X29Y52",
+        "INT_R_X29Y52"
+      ]
+    },
+    {
+      "far": "0x00001a81",
+      "word": 40,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X29Y70",
+          "tile_type": "INT_R",
+          "segbit": "01_00",
+          "features": [
+            "INT_R.LV18.LV0",
+            "INT_R.LV18.NN6END0",
+            "INT_R.LV18.SW6END0"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_R_X29Y70",
+        "INT_R_X29Y70"
+      ]
+    },
+    {
+      "far": "0x00001a81",
+      "word": 40,
+      "bit": 1,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X29Y70",
+          "tile_type": "INT_R",
+          "segbit": "01_01",
+          "features": [
+            "INT_R.LV18.LV0",
+            "INT_R.LV18.NW6END0",
+            "INT_R.LV18.WR1END0",
+            "INT_R.LV18.WW4END0"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_R_X29Y70",
+        "INT_R_X29Y70"
+      ]
+    },
+    {
+      "far": "0x00001a81",
+      "word": 77,
+      "bit": 0,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X29Y88",
+          "tile_type": "INT_R",
+          "segbit": "01_00",
+          "features": [
+            "INT_R.LV18.LV0",
+            "INT_R.LV18.NN6END0",
+            "INT_R.LV18.SW6END0"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_R_X29Y88",
+        "INT_R_X29Y88"
+      ]
+    },
+    {
+      "far": "0x00001a81",
+      "word": 77,
+      "bit": 2,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X29Y88",
+          "tile_type": "INT_R",
+          "segbit": "01_02",
+          "features": [
+            "INT_R.LV18.LH0",
+            "INT_R.LV18.LH6",
+            "INT_R.LV18.LH12",
+            "INT_R.LV18.SW6END0"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_R_X29Y88",
+        "INT_R_X29Y88"
+      ]
+    },
+    {
+      "far": "0x00001b84",
+      "word": 85,
+      "bit": 14,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X31Y92",
+          "tile_type": "INT_R",
+          "segbit": "04_14",
+          "features": [
+            "INT_R.SW6BEG0.LOGIC_OUTS4",
+            "INT_R.SW6BEG0.LOGIC_OUTS8",
+            "INT_R.SW6BEG0.LOGIC_OUTS18",
+            "INT_R.SW6BEG0.LV0"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "INT_R_X31Y92",
+        "RIOB33_X31Y91",
+        "RIOI3_X31Y91"
+      ]
+    },
+    {
+      "far": "0x00001b86",
+      "word": 85,
+      "bit": 12,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X31Y92",
+          "tile_type": "INT_R",
+          "segbit": "06_12",
+          "features": [
+            "INT_R.SW6BEG0.LOGIC_OUTS18",
+            "INT_R.SW6BEG0.LOGIC_OUTS22",
+            "INT_R.SW6BEG0.NW6END1",
+            "INT_R.SW6BEG0.SE6END0",
+            "INT_R.SW6BEG0.SS6END0"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "INT_R_X31Y92",
+        "RIOB33_X31Y91",
+        "RIOI3_X31Y91"
+      ]
+    },
+    {
+      "far": "0x00400c01",
+      "word": 52,
+      "bit": 27,
+      "before": 0,
+      "after": 1,
+      "tiles": [
+        {
+          "tile": "CLBLM_L_X6Y25",
+          "tile_type": "CLBLM_L",
+          "segbit": "01_59",
+          "features": [
+            "CLBLM_L.SLICEM_X0.DLUT.SMALL"
+          ],
+          "masked": true
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c11",
+      "word": 52,
+      "bit": 23,
+      "before": 0,
+      "after": 1,
+      "tiles": [
+        {
+          "tile": "INT_L_X6Y25",
+          "tile_type": "INT_L",
+          "segbit": "17_55",
+          "features": [
+            "INT_L.BYP_ALT6.ER1END3",
+            "INT_L.BYP_ALT6.NW2END3",
+            "INT_L.BYP_ALT6.WL1END3",
+            "INT_L.BYP_ALT6.WW2END2"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c11",
+      "word": 52,
+      "bit": 24,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_L_X6Y25",
+          "tile_type": "INT_L",
+          "segbit": "17_56",
+          "features": [
+            "INT_L.FAN_ALT3.ER1END3",
+            "INT_L.FAN_ALT3.NE2END3",
+            "INT_L.FAN_ALT3.NN2END3",
+            "INT_L.FAN_ALT3.WL1END3"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c12",
+      "word": 51,
+      "bit": 31,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_L_X6Y25",
+          "tile_type": "INT_L",
+          "segbit": "18_31",
+          "features": [
+            "INT_L.IMUX_L43.ER1END1",
+            "INT_L.IMUX_L43.NE2END2",
+            "INT_L.IMUX_L43.NN2END2",
+            "INT_L.IMUX_L43.WL1END1"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c16",
+      "word": 52,
+      "bit": 23,
+      "before": 0,
+      "after": 1,
+      "tiles": [
+        {
+          "tile": "INT_L_X6Y25",
+          "tile_type": "INT_L",
+          "segbit": "22_55",
+          "features": [
+            "INT_L.BYP_ALT6.BYP_BOUNCE3",
+            "INT_L.BYP_ALT6.BYP_BOUNCE5",
+            "INT_L.BYP_ALT6.FAN_BOUNCE_S3_0",
+            "INT_L.BYP_ALT6.FAN_BOUNCE_S3_2",
+            "INT_L.BYP_ALT6.LOGIC_OUTS_L7",
+            "INT_L.BYP_ALT6.LOGIC_OUTS_L11",
+            "INT_L.BYP_ALT6.LOGIC_OUTS_L17",
+            "INT_L.BYP_ALT6.NL1BEG_N3",
+            "INT_L.BYP_ALT6.EE2END3",
+            "INT_L.BYP_ALT6.EL1END3",
+            "INT_L.BYP_ALT6.ER1END3",
+            "INT_L.BYP_ALT6.GFAN1",
+            "INT_L.BYP_ALT6.NE2END3",
+            "INT_L.BYP_ALT6.NN2END3",
+            "INT_L.BYP_ALT6.NR1END3",
+            "INT_L.BYP_ALT6.NW2END3",
+            "INT_L.BYP_ALT6.SE2END3",
+            "INT_L.BYP_ALT6.SL1END3",
+            "INT_L.BYP_ALT6.SR1END2",
+            "INT_L.BYP_ALT6.SS2END3",
+            "INT_L.BYP_ALT6.SW2END3",
+            "INT_L.BYP_ALT6.WL1END3",
+            "INT_L.BYP_ALT6.WR1END3",
+            "INT_L.BYP_ALT6.WW2END2"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c17",
+      "word": 51,
+      "bit": 30,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_L_X6Y25",
+          "tile_type": "INT_L",
+          "segbit": "23_30",
+          "features": [
+            "INT_L.IMUX_L43.BYP_BOUNCE_N3_7",
+            "INT_L.IMUX_L43.BYP_BOUNCE1",
+            "INT_L.IMUX_L43.FAN_BOUNCE3",
+            "INT_L.IMUX_L43.FAN_BOUNCE5",
+            "INT_L.IMUX_L43.LOGIC_OUTS_L1",
+            "INT_L.IMUX_L43.LOGIC_OUTS_L13",
+            "INT_L.IMUX_L43.LOGIC_OUTS_L23",
+            "INT_L.IMUX_L43.EE2END1",
+            "INT_L.IMUX_L43.EL1END2",
+            "INT_L.IMUX_L43.ER1END1",
+            "INT_L.IMUX_L43.GFAN0",
+            "INT_L.IMUX_L43.NE2END2",
+            "INT_L.IMUX_L43.NL1END2",
+            "INT_L.IMUX_L43.NN2END2",
+            "INT_L.IMUX_L43.NR1END1",
+            "INT_L.IMUX_L43.NW2END2",
+            "INT_L.IMUX_L43.SE2END1",
+            "INT_L.IMUX_L43.SL1END1",
+            "INT_L.IMUX_L43.SR1END1",
+            "INT_L.IMUX_L43.SS2END1",
+            "INT_L.IMUX_L43.SW2END1",
+            "INT_L.IMUX_L43.WL1END1",
+            "INT_L.IMUX_L43.WR1END2",
+            "INT_L.IMUX_L43.WW2END1"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c17",
+      "word": 52,
+      "bit": 24,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_L_X6Y25",
+          "tile_type": "INT_L",
+          "segbit": "23_56",
+          "features": [
+            "INT_L.FAN_ALT3.BYP_BOUNCE3",
+            "INT_L.FAN_ALT3.BYP_BOUNCE5",
+            "INT_L.FAN_ALT3.FAN_BOUNCE_S3_0",
+            "INT_L.FAN_ALT3.FAN_BOUNCE_S3_2",
+            "INT_L.FAN_ALT3.LOGIC_OUTS_L3",
+            "INT_L.FAN_ALT3.LOGIC_OUTS_L15",
+            "INT_L.FAN_ALT3.LOGIC_OUTS_L21",
+            "INT_L.FAN_ALT3.NL1END_S3_0",
+            "INT_L.FAN_ALT3.NW2END_S0_0",
+            "INT_L.FAN_ALT3.EE2END3",
+            "INT_L.FAN_ALT3.EL1END3",
+            "INT_L.FAN_ALT3.ER1END3",
+            "INT_L.FAN_ALT3.GFAN1",
+            "INT_L.FAN_ALT3.NE2END3",
+            "INT_L.FAN_ALT3.NN2END3",
+            "INT_L.FAN_ALT3.NR1END3",
+            "INT_L.FAN_ALT3.SE2END3",
+            "INT_L.FAN_ALT3.SL1END3",
+            "INT_L.FAN_ALT3.SR1END3",
+            "INT_L.FAN_ALT3.SS2END3",
+            "INT_L.FAN_ALT3.SW2END3",
+            "INT_L.FAN_ALT3.WL1END3",
+            "INT_L.FAN_ALT3.WR1END3",
+            "INT_L.FAN_ALT3.WW2END3"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c18",
+      "word": 51,
+      "bit": 30,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_L_X6Y25",
+          "tile_type": "INT_L",
+          "segbit": "24_30",
+          "features": [
+            "INT_L.IMUX_L43.BYP_BOUNCE_N3_7",
+            "INT_L.IMUX_L43.BYP_BOUNCE1",
+            "INT_L.IMUX_L43.FAN_BOUNCE3",
+            "INT_L.IMUX_L43.FAN_BOUNCE5",
+            "INT_L.IMUX_L43.LOGIC_OUTS_L1",
+            "INT_L.IMUX_L43.LOGIC_OUTS_L13",
+            "INT_L.IMUX_L43.LOGIC_OUTS_L23",
+            "INT_L.IMUX_L43.EE2END1",
+            "INT_L.IMUX_L43.EL1END2",
+            "INT_L.IMUX_L43.ER1END1",
+            "INT_L.IMUX_L43.GFAN0",
+            "INT_L.IMUX_L43.NE2END2",
+            "INT_L.IMUX_L43.NL1END2",
+            "INT_L.IMUX_L43.NN2END2",
+            "INT_L.IMUX_L43.NR1END1",
+            "INT_L.IMUX_L43.NW2END2",
+            "INT_L.IMUX_L43.SE2END1",
+            "INT_L.IMUX_L43.SL1END1",
+            "INT_L.IMUX_L43.SR1END1",
+            "INT_L.IMUX_L43.SS2END1",
+            "INT_L.IMUX_L43.SW2END1",
+            "INT_L.IMUX_L43.WL1END1",
+            "INT_L.IMUX_L43.WR1END2",
+            "INT_L.IMUX_L43.WW2END1"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c18",
+      "word": 52,
+      "bit": 23,
+      "before": 0,
+      "after": 1,
+      "tiles": [
+        {
+          "tile": "INT_L_X6Y25",
+          "tile_type": "INT_L",
+          "segbit": "24_55",
+          "features": [
+            "INT_L.BYP_ALT6.BYP_BOUNCE3",
+            "INT_L.BYP_ALT6.BYP_BOUNCE5",
+            "INT_L.BYP_ALT6.FAN_BOUNCE_S3_0",
+            "INT_L.BYP_ALT6.FAN_BOUNCE_S3_2",
+            "INT_L.BYP_ALT6.LOGIC_OUTS_L7",
+            "INT_L.BYP_ALT6.LOGIC_OUTS_L11",
+            "INT_L.BYP_ALT6.LOGIC_OUTS_L17",
+            "INT_L.BYP_ALT6.NL1BEG_N3",
+            "INT_L.BYP_ALT6.EE2END3",
+            "INT_L.BYP_ALT6.EL1END3",
+            "INT_L.BYP_ALT6.ER1END3",
+            "INT_L.BYP_ALT6.GFAN1",
+            "INT_L.BYP_ALT6.NE2END3",
+            "INT_L.BYP_ALT6.NN2END3",
+            "INT_L.BYP_ALT6.NR1END3",
+            "INT_L.BYP_ALT6.NW2END3",
+            "INT_L.BYP_ALT6.SE2END3",
+            "INT_L.BYP_ALT6.SL1END3",
+            "INT_L.BYP_ALT6.SR1END2",
+            "INT_L.BYP_ALT6.SS2END3",
+            "INT_L.BYP_ALT6.SW2END3",
+            "INT_L.BYP_ALT6.WL1END3",
+            "INT_L.BYP_ALT6.WR1END3",
+            "INT_L.BYP_ALT6.WW2END2"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c18",
+      "word": 52,
+      "bit": 24,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_L_X6Y25",
+          "tile_type": "INT_L",
+          "segbit": "24_56",
+          "features": [
+            "INT_L.FAN_ALT3.BYP_BOUNCE3",
+            "INT_L.FAN_ALT3.BYP_BOUNCE5",
+            "INT_L.FAN_ALT3.FAN_BOUNCE_S3_0",
+            "INT_L.FAN_ALT3.FAN_BOUNCE_S3_2",
+            "INT_L.FAN_ALT3.LOGIC_OUTS_L3",
+            "INT_L.FAN_ALT3.LOGIC_OUTS_L15",
+            "INT_L.FAN_ALT3.LOGIC_OUTS_L21",
+            "INT_L.FAN_ALT3.NL1END_S3_0",
+            "INT_L.FAN_ALT3.NW2END_S0_0",
+            "INT_L.FAN_ALT3.EE2END3",
+            "INT_L.FAN_ALT3.EL1END3",
+            "INT_L.FAN_ALT3.ER1END3",
+            "INT_L.FAN_ALT3.GFAN1",
+            "INT_L.FAN_ALT3.NE2END3",
+            "INT_L.FAN_ALT3.NN2END3",
+            "INT_L.FAN_ALT3.NR1END3",
+            "INT_L.FAN_ALT3.SE2END3",
+            "INT_L.FAN_ALT3.SL1END3",
+            "INT_L.FAN_ALT3.SR1END3",
+            "INT_L.FAN_ALT3.SS2END3",
+            "INT_L.FAN_ALT3.SW2END3",
+            "INT_L.FAN_ALT3.WL1END3",
+            "INT_L.FAN_ALT3.WR1END3",
+            "INT_L.FAN_ALT3.WW2END3"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c19",
+      "word": 51,
+      "bit": 30,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_L_X6Y25",
+          "tile_type": "INT_L",
+          "segbit": "25_30",
+          "features": [
+            "INT_L.IMUX_L43.BYP_BOUNCE_N3_7",
+            "INT_L.IMUX_L43.BYP_BOUNCE1",
+            "INT_L.IMUX_L43.FAN_BOUNCE3",
+            "INT_L.IMUX_L43.FAN_BOUNCE5",
+            "INT_L.IMUX_L43.LOGIC_OUTS_L1",
+            "INT_L.IMUX_L43.LOGIC_OUTS_L13",
+            "INT_L.IMUX_L43.LOGIC_OUTS_L23",
+            "INT_L.IMUX_L43.EE2END1",
+            "INT_L.IMUX_L43.EL1END2",
+            "INT_L.IMUX_L43.ER1END1",
+            "INT_L.IMUX_L43.GFAN0",
+            "INT_L.IMUX_L43.NE2END2",
+            "INT_L.IMUX_L43.NL1END2",
+            "INT_L.IMUX_L43.NN2END2",
+            "INT_L.IMUX_L43.NR1END1",
+            "INT_L.IMUX_L43.NW2END2",
+            "INT_L.IMUX_L43.SE2END1",
+            "INT_L.IMUX_L43.SL1END1",
+            "INT_L.IMUX_L43.SR1END1",
+            "INT_L.IMUX_L43.SS2END1",
+            "INT_L.IMUX_L43.SW2END1",
+            "INT_L.IMUX_L43.WL1END1",
+            "INT_L.IMUX_L43.WR1END2",
+            "INT_L.IMUX_L43.WW2END1"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c19",
+      "word": 52,
+      "bit": 23,
+      "before": 0,
+      "after": 1,
+      "tiles": [
+        {
+          "tile": "INT_L_X6Y25",
+          "tile_type": "INT_L",
+          "segbit": "25_55",
+          "features": [
+            "INT_L.BYP_ALT6.BYP_BOUNCE3",
+            "INT_L.BYP_ALT6.BYP_BOUNCE5",
+            "INT_L.BYP_ALT6.FAN_BOUNCE_S3_0",
+            "INT_L.BYP_ALT6.FAN_BOUNCE_S3_2",
+            "INT_L.BYP_ALT6.LOGIC_OUTS_L7",
+            "INT_L.BYP_ALT6.LOGIC_OUTS_L11",
+            "INT_L.BYP_ALT6.LOGIC_OUTS_L17",
+            "INT_L.BYP_ALT6.NL1BEG_N3",
+            "INT_L.BYP_ALT6.EE2END3",
+            "INT_L.BYP_ALT6.EL1END3",
+            "INT_L.BYP_ALT6.ER1END3",
+            "INT_L.BYP_ALT6.GFAN1",
+            "INT_L.BYP_ALT6.NE2END3",
+            "INT_L.BYP_ALT6.NN2END3",
+            "INT_L.BYP_ALT6.NR1END3",
+            "INT_L.BYP_ALT6.NW2END3",
+            "INT_L.BYP_ALT6.SE2END3",
+            "INT_L.BYP_ALT6.SL1END3",
+            "INT_L.BYP_ALT6.SR1END2",
+            "INT_L.BYP_ALT6.SS2END3",
+            "INT_L.BYP_ALT6.SW2END3",
+            "INT_L.BYP_ALT6.WL1END3",
+            "INT_L.BYP_ALT6.WR1END3",
+            "INT_L.BYP_ALT6.WW2END2"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c19",
+      "word": 52,
+      "bit": 24,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_L_X6Y25",
+          "tile_type": "INT_L",
+          "segbit": "25_56",
+          "features": [
+            "INT_L.FAN_ALT3.BYP_BOUNCE3",
+            "INT_L.FAN_ALT3.BYP_BOUNCE5",
+            "INT_L.FAN_ALT3.FAN_BOUNCE_S3_0",
+            "INT_L.FAN_ALT3.FAN_BOUNCE_S3_2",
+            "INT_L.FAN_ALT3.LOGIC_OUTS_L3",
+            "INT_L.FAN_ALT3.LOGIC_OUTS_L15",
+            "INT_L.FAN_ALT3.LOGIC_OUTS_L21",
+            "INT_L.FAN_ALT3.NL1END_S3_0",
+            "INT_L.FAN_ALT3.NW2END_S0_0",
+            "INT_L.FAN_ALT3.EE2END3",
+            "INT_L.FAN_ALT3.EL1END3",
+            "INT_L.FAN_ALT3.ER1END3",
+            "INT_L.FAN_ALT3.GFAN1",
+            "INT_L.FAN_ALT3.NE2END3",
+            "INT_L.FAN_ALT3.NN2END3",
+            "INT_L.FAN_ALT3.NR1END3",
+            "INT_L.FAN_ALT3.SE2END3",
+            "INT_L.FAN_ALT3.SL1END3",
+            "INT_L.FAN_ALT3.SR1END3",
+            "INT_L.FAN_ALT3.SS2END3",
+            "INT_L.FAN_ALT3.SW2END3",
+            "INT_L.FAN_ALT3.WL1END3",
+            "INT_L.FAN_ALT3.WR1END3",
+            "INT_L.FAN_ALT3.WW2END3"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X6Y25",
+        "INT_L_X6Y25"
+      ]
+    },
+    {
+      "far": "0x00400c8b",
+      "word": 52,
+      "bit": 13,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X7Y25",
+          "tile_type": "INT_R",
+          "segbit": "11_45",
+          "features": [
+            "INT_R.WL1BEG1.LOGIC_OUTS2",
+            "INT_R.WL1BEG1.NW2END3",
+            "INT_R.WL1BEG1.NW6END3",
+            "INT_R.WL1BEG1.WL1END2"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "DSP_R_X7Y25",
+        "INT_R_X7Y25"
+      ]
+    },
+    {
+      "far": "0x00400c8d",
+      "word": 52,
+      "bit": 13,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X7Y25",
+          "tile_type": "INT_R",
+          "segbit": "13_45",
+          "features": [
+            "INT_R.WL1BEG1.LOGIC_OUTS14",
+            "INT_R.WL1BEG1.SL1END2",
+            "INT_R.WL1BEG1.SR1END2",
+            "INT_R.WL1BEG1.WL1END2",
+            "INT_R.WL1BEG1.WR1END3"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "DSP_R_X7Y25",
+        "INT_R_X7Y25"
+      ]
+    },
+    {
+      "far": "0x00400d08",
+      "word": 52,
+      "bit": 29,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_L_X8Y25",
+          "tile_type": "INT_L",
+          "segbit": "08_61",
+          "features": [
+            "INT_L.WL1BEG2.LOGIC_OUTS_L17",
+            "INT_L.WL1BEG2.SS2END3",
+            "INT_L.WL1BEG2.SS6END3",
+            "INT_L.WL1BEG2.WL1END3"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X8Y25",
+        "INT_L_X8Y25"
+      ]
+    },
+    {
+      "far": "0x00400d0d",
+      "word": 52,
+      "bit": 29,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_L_X8Y25",
+          "tile_type": "INT_L",
+          "segbit": "13_61",
+          "features": [
+            "INT_L.WL1BEG2.LOGIC_OUTS_L11",
+            "INT_L.WL1BEG2.WR1END_S1_0",
+            "INT_L.WL1BEG2.SL1END3",
+            "INT_L.WL1BEG2.SR1END3",
+            "INT_L.WL1BEG2.WL1END3"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_L_X8Y25",
+        "INT_L_X8Y25"
+      ]
+    },
+    {
+      "far": "0x00400d87",
+      "word": 53,
+      "bit": 12,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X9Y26",
+          "tile_type": "INT_R",
+          "segbit": "07_12",
+          "features": [
+            "INT_R.WL1BEG_N3.LOGIC_OUTS4",
+            "INT_R.WL1BEG_N3.SR1BEG_S0",
+            "INT_R.WL1BEG_N3.WW2END0",
+            "INT_R.WL1BEG_N3.WW4END1"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_R_X9Y26",
+        "INT_R_X9Y26"
+      ]
+    },
+    {
+      "far": "0x00400d8c",
+      "word": 53,
+      "bit": 13,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X9Y26",
+          "tile_type": "INT_R",
+          "segbit": "12_13",
+          "features": [
+            "INT_R.WL1BEG_N3.NW6END1",
+            "INT_R.WL1BEG_N3.SE6END0",
+            "INT_R.WL1BEG_N3.SS6END0",
+            "INT_R.WL1BEG_N3.SW6END0",
+            "INT_R.WL1BEG_N3.WW4END1"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_R_X9Y26",
+        "INT_R_X9Y26"
+      ]
+    },
+    {
+      "far": "0x00401284",
+      "word": 53,
+      "bit": 17,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X13Y26",
+          "tile_type": "INT_R",
+          "segbit": "04_17",
+          "features": [
+            "INT_R.WW4BEG1.SS2END0",
+            "INT_R.WW4BEG1.SS6END0",
+            "INT_R.WW4BEG1.SW2END0",
+            "INT_R.WW4BEG1.SW6END0"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLL_R_X13Y26",
+        "INT_R_X13Y26"
+      ]
+    },
+    {
+      "far": "0x00401285",
+      "word": 53,
+      "bit": 16,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X13Y26",
+          "tile_type": "INT_R",
+          "segbit": "05_16",
+          "features": [
+            "INT_R.WW4BEG1.LH6",
+            "INT_R.WW4BEG1.LV9",
+            "INT_R.WW4BEG1.NE6END1",
+            "INT_R.WW4BEG1.SW6END0",
+            "INT_R.WW4BEG1.WW4END1"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLL_R_X13Y26",
+        "INT_R_X13Y26"
+      ]
+    },
+    {
+      "far": "0x00401383",
+      "word": 61,
+      "bit": 13,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X15Y30",
+          "tile_type": "INT_R",
+          "segbit": "03_13",
+          "features": [
+            "INT_R.SW6BEG0.SS2END0",
+            "INT_R.SW6BEG0.SS6END0",
+            "INT_R.SW6BEG0.SW2END0",
+            "INT_R.SW6BEG0.SW6END0"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "INT_R_X15Y30"
+      ]
+    },
+    {
+      "far": "0x00401385",
+      "word": 61,
+      "bit": 12,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X15Y30",
+          "tile_type": "INT_R",
+          "segbit": "05_12",
+          "features": [
+            "INT_R.SW6BEG0.EE4END0",
+            "INT_R.SW6BEG0.LH12",
+            "INT_R.SW6BEG0.LV0",
+            "INT_R.SW6BEG0.SW6END0",
+            "INT_R.SW6BEG0.WW4END1"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "INT_R_X15Y30"
+      ]
+    },
+    {
+      "far": "0x00401484",
+      "word": 69,
+      "bit": 14,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X17Y34",
+          "tile_type": "INT_R",
+          "segbit": "04_14",
+          "features": [
+            "INT_R.SW6BEG0.LOGIC_OUTS4",
+            "INT_R.SW6BEG0.LOGIC_OUTS8",
+            "INT_R.SW6BEG0.LOGIC_OUTS18",
+            "INT_R.SW6BEG0.LV0"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_R_X17Y34",
+        "INT_R_X17Y34"
+      ]
+    },
+    {
+      "far": "0x00401485",
+      "word": 69,
+      "bit": 12,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "INT_R_X17Y34",
+          "tile_type": "INT_R",
+          "segbit": "05_12",
+          "features": [
+            "INT_R.SW6BEG0.EE4END0",
+            "INT_R.SW6BEG0.LH12",
+            "INT_R.SW6BEG0.LV0",
+            "INT_R.SW6BEG0.SW6END0",
+            "INT_R.SW6BEG0.WW4END1"
+          ],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "CLBLM_R_X17Y34",
+        "INT_R_X17Y34"
+      ]
+    }
+  ],
+  "ownership_unknown": [
+    {
+      "far": "0x00001b9d",
+      "word": 86,
+      "bit": 13,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "RIOB33_X31Y91",
+          "tile_type": "RIOB33",
+          "segbit": "29_109",
+          "features": [],
+          "masked": false
+        },
+        {
+          "tile": "RIOI3_X31Y91",
+          "tile_type": "RIOI3",
+          "segbit": "29_109",
+          "features": [],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "RIOB33_X31Y91",
+        "RIOI3_X31Y91"
+      ]
+    },
+    {
+      "far": "0x00001ba6",
+      "word": 85,
+      "bit": 22,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "RIOB33_X31Y91",
+          "tile_type": "RIOB33",
+          "segbit": "38_86",
+          "features": [],
+          "masked": false
+        },
+        {
+          "tile": "RIOI3_X31Y91",
+          "tile_type": "RIOI3",
+          "segbit": "38_86",
+          "features": [],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "RIOB33_X31Y91",
+        "RIOI3_X31Y91"
+      ]
+    },
+    {
+      "far": "0x00001ba7",
+      "word": 85,
+      "bit": 21,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "RIOB33_X31Y91",
+          "tile_type": "RIOB33",
+          "segbit": "39_85",
+          "features": [],
+          "masked": false
+        },
+        {
+          "tile": "RIOI3_X31Y91",
+          "tile_type": "RIOI3",
+          "segbit": "39_85",
+          "features": [],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "RIOB33_X31Y91",
+        "RIOI3_X31Y91"
+      ]
+    },
+    {
+      "far": "0x00001ba7",
+      "word": 85,
+      "bit": 23,
+      "before": 1,
+      "after": 0,
+      "tiles": [
+        {
+          "tile": "RIOB33_X31Y91",
+          "tile_type": "RIOB33",
+          "segbit": "39_87",
+          "features": [],
+          "masked": false
+        },
+        {
+          "tile": "RIOI3_X31Y91",
+          "tile_type": "RIOI3",
+          "segbit": "39_87",
+          "features": [],
+          "masked": false
+        }
+      ],
+      "candidates": [
+        "RIOB33_X31Y91",
+        "RIOI3_X31Y91"
+      ]
+    }
+  ],
+  "unattributed": [],
+  "findings": [],
+  "bitstreams_in_version_control": false,
+  "note": "bitstreams are NOT committed (build/ is gitignored); they are identified by sha256 and reproducible from vivado/specimen/build_lutram.tcl at the pinned Vivado version"
+}

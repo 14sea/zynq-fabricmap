@@ -1,0 +1,748 @@
+{
+  "schema": "lutram_isolation_evidence",
+  "schema_version": "1.0.0",
+  "bit_class": "clb_lutram",
+  "note": "measurement only; no prediction, commitment or certificate",
+  "specimens": [
+    {
+      "mode": 0,
+      "bitstream": "spec_mode0.bit",
+      "bitstream_sha256": "097542dadd11e61912a20aa515397cce4fe49665fbd112fcadb7d1db8d07bb41",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "D6LUT",
+      "bel_after_constraint": "SLICEM.D6LUT",
+      "cells": [
+        {
+          "ref": "LUT6",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.D6LUT",
+          "init": "64'hA5A5A5A5A5A5A5A5",
+          "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6"
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/D6LUT",
+          "cell": "g_lut6.target",
+          "ref": "LUT6"
+        }
+      ]
+    },
+    {
+      "mode": 1,
+      "bitstream": "spec_mode1.bit",
+      "bitstream_sha256": "7d7552406967295db41cd9b39cf6349adda4354e75d0dee08f7b74173214f86d",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "D6LUT",
+      "bel_after_constraint": "SLICEM.D6LUT",
+      "cells": [
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.D6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/D6LUT",
+          "cell": "g_ram64.target/SP",
+          "ref": "RAMS64E"
+        }
+      ]
+    },
+    {
+      "mode": 2,
+      "bitstream": "spec_mode2.bit",
+      "bitstream_sha256": "92ef4fdf51299d17c71f1af84529a4d0cad38e6f60af044847f12b00b3945dd0",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "D6LUT",
+      "bel_after_constraint": "SLICEM.D6LUT",
+      "cells": [
+        {
+          "ref": "RAMS32",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.D6LUT",
+          "init": "32'h00000000",
+          "lock_pins": ""
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/D6LUT",
+          "cell": "g_ram32.target/SP",
+          "ref": "RAMS32"
+        }
+      ]
+    },
+    {
+      "mode": 3,
+      "bitstream": "spec_mode3.bit",
+      "bitstream_sha256": "6f97beafd49a7ce562622dcd5bda640ce6bd5fefef5fb7ea3a80e43d5fd2111f",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "D6LUT",
+      "bel_after_constraint": "SLICEM.D6LUT",
+      "cells": [
+        {
+          "ref": "SRLC32E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.D6LUT",
+          "init": "32'h00000000",
+          "lock_pins": ""
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/D6LUT",
+          "cell": "g_srl32.target",
+          "ref": "SRLC32E"
+        }
+      ]
+    },
+    {
+      "mode": 4,
+      "bitstream": "spec_mode4.bit",
+      "bitstream_sha256": "ca2699053997f92bba5644505aaa5d0f2b96cf54d82441a6a0f49aede7cf735d",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "",
+      "bel_after_constraint": "",
+      "cells": [
+        {
+          "ref": "MUXF7",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.F7BMUX",
+          "init": "",
+          "lock_pins": ""
+        },
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.C6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        },
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.D6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/D6LUT",
+          "cell": "g_ram128.target/LOW",
+          "ref": "RAMS64E"
+        },
+        {
+          "bel": "SLICE_X8Y25/C6LUT",
+          "cell": "g_ram128.target/HIGH",
+          "ref": "RAMS64E"
+        },
+        {
+          "bel": "SLICE_X8Y25/F7BMUX",
+          "cell": "g_ram128.target/F7",
+          "ref": "MUXF7"
+        }
+      ]
+    },
+    {
+      "mode": 5,
+      "bitstream": "spec_mode5.bit",
+      "bitstream_sha256": "bc88138a60bc49333b55a1f7b8d567d24ab19f6ae1d6897e26896e0d7749bf9b",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "",
+      "bel_after_constraint": "",
+      "cells": [
+        {
+          "ref": "MUXF7",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.F7AMUX",
+          "init": "",
+          "lock_pins": ""
+        },
+        {
+          "ref": "MUXF7",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.F7BMUX",
+          "init": "",
+          "lock_pins": ""
+        },
+        {
+          "ref": "MUXF8",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.F8MUX",
+          "init": "",
+          "lock_pins": ""
+        },
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.A6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        },
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.B6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        },
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.C6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        },
+        {
+          "ref": "RAMS64E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.D6LUT",
+          "init": "64'h0000000000000000",
+          "lock_pins": ""
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/D6LUT",
+          "cell": "g_ram256.target/RAMS64E_D",
+          "ref": "RAMS64E"
+        },
+        {
+          "bel": "SLICE_X8Y25/C6LUT",
+          "cell": "g_ram256.target/RAMS64E_C",
+          "ref": "RAMS64E"
+        },
+        {
+          "bel": "SLICE_X8Y25/B6LUT",
+          "cell": "g_ram256.target/RAMS64E_B",
+          "ref": "RAMS64E"
+        },
+        {
+          "bel": "SLICE_X8Y25/A6LUT",
+          "cell": "g_ram256.target/RAMS64E_A",
+          "ref": "RAMS64E"
+        },
+        {
+          "bel": "SLICE_X8Y25/F8MUX",
+          "cell": "g_ram256.target/F8",
+          "ref": "MUXF8"
+        },
+        {
+          "bel": "SLICE_X8Y25/F7BMUX",
+          "cell": "g_ram256.target/F7.B",
+          "ref": "MUXF7"
+        },
+        {
+          "bel": "SLICE_X8Y25/F7AMUX",
+          "cell": "g_ram256.target/F7.A",
+          "ref": "MUXF7"
+        }
+      ]
+    },
+    {
+      "mode": 6,
+      "bitstream": "spec_mode6.bit",
+      "bitstream_sha256": "292b25a667ab3eae56a3a36493f6ab32f0bb0a272b8d29a6d9e648cb521da20b",
+      "part": "xc7z010clg400-1",
+      "vivado_version": "2025.2",
+      "requested_site": "SLICE_X8Y25",
+      "site_type": "SLICEM",
+      "tile": "CLBLM_L_X6Y25",
+      "tile_type": "CLBLM_L",
+      "requested_bel": "",
+      "bel_after_constraint": "",
+      "cells": [
+        {
+          "ref": "SRLC32E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.B6LUT",
+          "init": "32'h00000000",
+          "lock_pins": ""
+        },
+        {
+          "ref": "SRLC32E",
+          "loc": "SLICE_X8Y25",
+          "bel": "SLICEM.A6LUT",
+          "init": "32'h00000000",
+          "lock_pins": ""
+        }
+      ],
+      "occupied_bels": [
+        {
+          "bel": "SLICE_X8Y25/B6LUT",
+          "cell": "g_srl_cascade.target",
+          "ref": "SRLC32E"
+        },
+        {
+          "bel": "SLICE_X8Y25/A6LUT",
+          "cell": "g_srl_cascade.target2",
+          "ref": "SRLC32E"
+        }
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "pair": "mode0_to_mode1",
+      "hypothesis": "LUT6 -> RAM64X1S : xLUT.RAM",
+      "base_sha256": "097542dadd11e61912a20aa515397cce4fe49665fbd112fcadb7d1db8d07bb41",
+      "variant_sha256": "7d7552406967295db41cd9b39cf6349adda4354e75d0dee08f7b74173214f86d",
+      "counts": {
+        "attributed": 130,
+        "frame_ecc_excluded": 442,
+        "ownership_unknown": 22,
+        "unattributed": 0,
+        "in_class_features_moved": 2
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.DLUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 52,
+            "bit": 15,
+            "segbit": "31_47",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WEMUX.CE": [
+          {
+            "far": "0x00400c01",
+            "word": 51,
+            "bit": 23,
+            "segbit": "01_23",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode0_to_mode1.json"
+    },
+    {
+      "pair": "mode1_to_mode2",
+      "hypothesis": "RAM64X1S -> RAM32X1S : xLUT.SMALL",
+      "base_sha256": "7d7552406967295db41cd9b39cf6349adda4354e75d0dee08f7b74173214f86d",
+      "variant_sha256": "92ef4fdf51299d17c71f1af84529a4d0cad38e6f60af044847f12b00b3945dd0",
+      "counts": {
+        "attributed": 35,
+        "frame_ecc_excluded": 157,
+        "ownership_unknown": 4,
+        "unattributed": 0,
+        "in_class_features_moved": 1
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.DLUT.SMALL": [
+          {
+            "far": "0x00400c01",
+            "word": 52,
+            "bit": 27,
+            "segbit": "01_59",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode1_to_mode2.json"
+    },
+    {
+      "pair": "mode0_to_mode3",
+      "hypothesis": "LUT6 -> SRLC32E : xLUT.SRL",
+      "base_sha256": "097542dadd11e61912a20aa515397cce4fe49665fbd112fcadb7d1db8d07bb41",
+      "variant_sha256": "6f97beafd49a7ce562622dcd5bda640ce6bd5fefef5fb7ea3a80e43d5fd2111f",
+      "counts": {
+        "attributed": 200,
+        "frame_ecc_excluded": 592,
+        "ownership_unknown": 26,
+        "unattributed": 0,
+        "in_class_features_moved": 2
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.DLUT.SRL": [
+          {
+            "far": "0x00400c1e",
+            "word": 52,
+            "bit": 15,
+            "segbit": "30_47",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WEMUX.CE": [
+          {
+            "far": "0x00400c01",
+            "word": 51,
+            "bit": 23,
+            "segbit": "01_23",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode0_to_mode3.json"
+    },
+    {
+      "pair": "mode1_to_mode4",
+      "hypothesis": "RAM64X1S -> RAM128X1S : WA7USED",
+      "base_sha256": "7d7552406967295db41cd9b39cf6349adda4354e75d0dee08f7b74173214f86d",
+      "variant_sha256": "ca2699053997f92bba5644505aaa5d0f2b96cf54d82441a6a0f49aede7cf735d",
+      "counts": {
+        "attributed": 162,
+        "frame_ecc_excluded": 486,
+        "ownership_unknown": 4,
+        "unattributed": 0,
+        "in_class_features_moved": 2
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.CLUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 52,
+            "bit": 14,
+            "segbit": "31_46",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WA7USED": [
+          {
+            "far": "0x00400c00",
+            "word": 52,
+            "bit": 8,
+            "segbit": "00_40",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode1_to_mode4.json"
+    },
+    {
+      "pair": "mode4_to_mode5",
+      "hypothesis": "RAM128X1S -> RAM256X1S : WA8USED",
+      "base_sha256": "ca2699053997f92bba5644505aaa5d0f2b96cf54d82441a6a0f49aede7cf735d",
+      "variant_sha256": "bc88138a60bc49333b55a1f7b8d567d24ab19f6ae1d6897e26896e0d7749bf9b",
+      "counts": {
+        "attributed": 375,
+        "frame_ecc_excluded": 853,
+        "ownership_unknown": 4,
+        "unattributed": 0,
+        "in_class_features_moved": 3
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.ALUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 51,
+            "bit": 16,
+            "segbit": "31_16",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.BLUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 51,
+            "bit": 17,
+            "segbit": "31_17",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WA8USED": [
+          {
+            "far": "0x00400c01",
+            "word": 51,
+            "bit": 27,
+            "segbit": "01_27",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode4_to_mode5.json"
+    },
+    {
+      "pair": "mode3_to_mode6",
+      "hypothesis": "SRLC32E -> cascaded SRLC32E : DI1MUX cascade member",
+      "base_sha256": "6f97beafd49a7ce562622dcd5bda640ce6bd5fefef5fb7ea3a80e43d5fd2111f",
+      "variant_sha256": "292b25a667ab3eae56a3a36493f6ab32f0bb0a272b8d29a6d9e648cb521da20b",
+      "counts": {
+        "attributed": 204,
+        "frame_ecc_excluded": 488,
+        "ownership_unknown": 0,
+        "unattributed": 0,
+        "in_class_features_moved": 5
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.ALUT.SRL": [
+          {
+            "far": "0x00400c1e",
+            "word": 51,
+            "bit": 16,
+            "segbit": "30_16",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.BLUT.DI1MUX.BI": [
+          {
+            "far": "0x00400c00",
+            "word": 51,
+            "bit": 20,
+            "segbit": "00_20",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.BLUT.DI1MUX.DI_CMC31": [
+          {
+            "far": "0x00400c00",
+            "word": 51,
+            "bit": 20,
+            "segbit": "00_20",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "negated",
+            "before": 0,
+            "after": 1,
+            "decodes_before": true,
+            "decodes_after": false
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.BLUT.SRL": [
+          {
+            "far": "0x00400c1e",
+            "word": 51,
+            "bit": 17,
+            "segbit": "30_17",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.DLUT.SRL": [
+          {
+            "far": "0x00400c1e",
+            "word": 52,
+            "bit": 15,
+            "segbit": "30_47",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 1,
+            "after": 0,
+            "decodes_before": true,
+            "decodes_after": false
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode3_to_mode6.json"
+    },
+    {
+      "pair": "mode0_to_mode5",
+      "hypothesis": "LUT6 -> RAM256X1S : whole-slice reference",
+      "base_sha256": "097542dadd11e61912a20aa515397cce4fe49665fbd112fcadb7d1db8d07bb41",
+      "variant_sha256": "bc88138a60bc49333b55a1f7b8d567d24ab19f6ae1d6897e26896e0d7749bf9b",
+      "counts": {
+        "attributed": 389,
+        "frame_ecc_excluded": 827,
+        "ownership_unknown": 30,
+        "unattributed": 0,
+        "in_class_features_moved": 7
+      },
+      "class_features_moved": {
+        "CLBLM_L.SLICEM_X0.ALUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 51,
+            "bit": 16,
+            "segbit": "31_16",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.BLUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 51,
+            "bit": 17,
+            "segbit": "31_17",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.CLUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 52,
+            "bit": 14,
+            "segbit": "31_46",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.DLUT.RAM": [
+          {
+            "far": "0x00400c1f",
+            "word": 52,
+            "bit": 15,
+            "segbit": "31_47",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WA7USED": [
+          {
+            "far": "0x00400c00",
+            "word": 52,
+            "bit": 8,
+            "segbit": "00_40",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WA8USED": [
+          {
+            "far": "0x00400c01",
+            "word": 51,
+            "bit": 27,
+            "segbit": "01_27",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ],
+        "CLBLM_L.SLICEM_X0.WEMUX.CE": [
+          {
+            "far": "0x00400c01",
+            "word": 51,
+            "bit": 23,
+            "segbit": "01_23",
+            "tile": "CLBLM_L_X6Y25",
+            "polarity": "positive",
+            "before": 0,
+            "after": 1,
+            "decodes_before": false,
+            "decodes_after": true
+          }
+        ]
+      },
+      "findings": [],
+      "diff_file": "diffs/mode0_to_mode5.json"
+    }
+  ]
+}

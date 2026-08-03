@@ -18,5 +18,7 @@ build/
 *.str
 .Xil/
 hd_visual/
+# write_bitstream drops this in whatever directory Vivado was launched from
+clockInfo.txt
 # board capture scratch
 *.raw
