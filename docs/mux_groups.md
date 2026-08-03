@@ -84,12 +84,63 @@ Consequences worth carrying forward:
 - A whitelist implementation that groups by name will **falsely reject legal
   configurations** — every carry-using design, on this evidence.
 - `at most one`, not `exactly one`: 89,331 of 93,900 group evaluations in the vendor
-  design decode to no member at all. An unset group is the normal state, so a checker
-  that demands a selection everywhere is equally wrong.
-- The composition rule itself survives contact with real data: zero violations in
+  design match **no listed member**, so a checker that demands a selection everywhere
+  would reject a real vendor bitstream. **Wording corrected 2026-08-03:** this said "an
+  unset group is the normal state", which reads the scan as evidence that those groups
+  are *unset* and benign. It is not. The scan establishes only that no listed codeword
+  matched; what such a pattern does to the silicon is not recorded by the frozen DB. See
+  the erratum below.
+- ~~The composition rule itself survives contact with real data: zero violations in
   281,700 evaluations, once groups are derived correctly. That is the first
   **real-bitstream** evidence for the rule the safety whitelist depends on — previously
-  it was only ever exercised by fixtures.
+  it was only ever exercised by fixtures.~~ **Retracted 2026-08-03 — see the erratum
+  below. That zero is a tautology, not evidence.**
+
+**Erratum 2026-08-03: "zero violations in 281,700 evaluations" is unfalsifiable.**
+Raised in review of `docs/round9_request.md` and confirmed by recomputation from the
+freeze. A group is the maximal set of features sharing one polarity-free coordinate set,
+so every member is a full 0/1 codeword over the same complete scope, and assert-iff means
+"the observed assignment equals this member's codeword". If the members' codewords are
+pairwise distinct, at most one can match **any** observation — so
+`scripts/decode_groups.py`'s violation test (`len(matched) > 1`) can never fire. All
+**170/170** `clb_mux` groups have pairwise-distinct codewords, six-member `AFFMUX`
+included; so do all 168 `clb_ff_config` groups. The scan could not have reported
+anything but zero.
+
+What the scan does establish stands: 23,910 of 281,700 evaluations decoded to exactly one
+listed member and 257,790 matched no listed codeword. That is a statement about the
+database's coverage of observed patterns and nothing more — "unmatched" is not "unset",
+and neither is evidence of safety. And the name-derived comparison above is **unaffected** — name-grouped "members"
+do not share a scope, which is exactly why that variant could and did produce 160 real
+violations.
+
+**What the composition rule is, restated.** It is a
+**DB/group/address consistency invariant**: a violation means the database, our address
+arithmetic, or our grouping is broken. It is worth asserting and worth running for that
+reason. It is **not** a safety gatekeeper, and the earlier wording here claimed too much:
+under unique codewords it cannot reject any bitstream pattern whatsoever, so it can never
+stop a bad write. The rule that *can* gate at runtime is decode-validity — the observed
+pattern must be a listed codeword — and that one has teeth: across the 170 `clb_mux`
+groups, **844 patterns are listed by no member**. Any safety whitelist should be built on
+decode-validity, not on exclusivity.
+
+**Caveat, and it is load-bearing.** 162 of those 844 are the all-zero pattern of a group
+that does not list it (8 mux groups do list all-zero as a real member). Exempting
+all-zero as "unset, therefore safe" drops the figure to 682 and makes `clb_ff_config`'s
+168 groups and `clb_lutram`'s 36 look like they forbid **nothing** — their raw unlisted
+counts are 160 and 30, every one the all-zero pattern of a one-bit group. **The frozen DB
+does not establish that.** segbits files record which patterns name a member; they say
+nothing about what an unnamed pattern does to the silicon, and nothing about all-zero
+being benign. So the safe formulation is to require a listed codeword only for groups a
+write actually touches, and to treat "all-zero = unset = safe" as an explicit policy
+assumption if it is ever relied on. Either way, for the one-bit classes the write-safety
+argument has to come from somewhere other than these rules.
+
+Consequence for certification: run B's certificate reports 32/32 holdout address
+assertions, of which the 16 `group_exclusivity` ones are tautologies. `clb_mux` remains
+certified — `scope_assignment` is falsifiable and passed 16/16 — but the headline count
+overstates the evidence by 2×. The corrected accounting is requested in
+`docs/round9_request.md` and the certificate will be re-emitted under it.
 
 **Wording, deliberately.** This is real-bitstream evidence, not silicon evidence.
 Every bitstream here came out of Vivado; nothing was loaded onto a board, and this

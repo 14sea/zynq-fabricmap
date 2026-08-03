@@ -231,3 +231,10 @@ candidate tile, and reject the certificate otherwise. Symmetrically, a bit in
 `unattributed` must fall inside no tile's geometric range at all. The producer's labels
 then carry no authority of their own, which is the same standard already applied to
 scope, addresses, assert-iff and the semantic edge.
+
+---
+
+Round 9 asks how a class carrying two assertion shapes gets certified at all, so it lives
+in its own file: **`docs/round9_request.md`**. It puts two candidate models to the author
+and asks for a ruling between them; it also carries a vacuity erratum against the already
+certified `clb_mux`. Pre-registration for `clb_ff_config` is held until it is settled.

@@ -15,7 +15,30 @@ documents why deriving it from the feature name instead is wrong and how real da
 falsifies that. A group decodes to a member when every non-negated bit of that member
 is 1 and every negated bit is 0. The composition rule says **at most one** member may
 decode at a time; more than one is a contradiction in the database, in our address
-arithmetic, or in the grouping itself, and zero means the group is unset.
+arithmetic, or in the grouping itself.
+
+Zero matches is reported in the legacy field `unset`, and that name overpromises: it
+means only that **no listed codeword matched**. It is not evidence that the group is
+unset, inactive or safe — the frozen DB records which patterns name a member and says
+nothing about what an unnamed pattern does. Read the field as `unmatched`; the name is
+kept for artifact compatibility with `gate_runs/mux_group_scan_2026_08_02/scan.json`.
+
+**Do not report the violation count as evidence** (erratum 2026-08-03,
+`docs/mux_groups.md`). Every member of a bit-set group is a full codeword over the same
+scope, and all 170 `clb_mux` / 168 `clb_ff_config` groups have pairwise-distinct
+codewords, so `len(matched) > 1` is structurally impossible and the counter can only
+ever print 0. It is still worth running as a **DB/group/address consistency invariant** —
+a nonzero result means the database, the address arithmetic or the grouping is broken —
+but a zero says nothing about the fabric, and it cannot gate a write: it rejects no
+bitstream pattern at all. The runtime-enforceable rule is decode-validity (the observed
+pattern must be a listed codeword), which leaves 844 patterns unlisted across the 170
+`clb_mux` groups, 160 across `clb_ff_config` and 30 across `clb_lutram`. Exempting the
+all-zero "unset" pattern drops those to 682 / 0 / 0 — but that exemption is a **policy
+assumption, not something the frozen DB establishes**, so do not quote the reduced
+figures without it (`docs/mux_groups.md`). The informative outputs of
+a sweep are `decoded_to_one` and `unset`. The violation test *is* meaningful for
+name-derived grouping, where "members" do not share a scope; that is the comparison in
+`groups_for`.
 
     scripts/decode_groups.py <file.bit> --tile CLBLL_L_X2Y25 [--class clb_mux]
     scripts/decode_groups.py --sweep a.bit b.bit --json scan.json   # every CLB tile
@@ -173,7 +196,7 @@ def main() -> int:
               f"{res['clb_tiles_per_bitstream']} CLB tiles per bitstream")
         for b in res["bitstreams"]:
             print(f"  {b['name']:<46} decoded={b['decoded_to_one']:>6} "
-                  f"unset={b['unset']:>6} violations={b['violations']}")
+                  f"unmatched={b['unset']:>6} violations={b['violations']}")
             print(f"    sha256 {b['sha256']}")
         print(f"  TOTAL evaluations={t['evaluations']:,} "
               f"decoded_to_one={t['decoded_to_one']:,} violations={t['violations']}")
@@ -199,7 +222,7 @@ def main() -> int:
     print(f"{args.bitfile.name}  tile {args.tile} ({tile['type']})  class {args.class_id}")
     print(f"  groups            : {len(groups)}")
     print(f"  decoded to one    : {len(single)}")
-    print(f"  unset (no member) : {len(empty)}")
+    print(f"  unmatched         : {len(empty)}   (no listed codeword; NOT 'unset')")
     print(f"  MULTIPLE members  : {len(multi)}   <-- composition-rule violations")
     for g, m in sorted(single.items()):
         print(f"    {g.split('.', 1)[-1]:<44} = {m}")
