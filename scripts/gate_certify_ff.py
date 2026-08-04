@@ -151,10 +151,14 @@ def main() -> int:
         "fail_count": holdout["member_identity"]["fail"]}}
 
     partition_exact = all(record["partition_exact"] for record in pair_accounting)
+    # `address_problems` only. `semantic_findings` is never an input here: a semantic
+    # failure keeps status=passed and shows up in semantic_status alone, and reading the
+    # measurement's merged problem list would put a naming claim back into the address
+    # decision one layer down from where the measurement tool already isolates it.
     address_failed = (accounting["fn_count"] or accounting["fp_count"]
                       or accounting["tp_count"] != doc["totals"]["holdout_predictions"]
                       or not partition_exact
-                      or bool(measurement["problems"]))
+                      or bool(measurement["address_problems"]))
     semantic_failed = bool(semantic["member_identity"]["fail_count"])
 
     failure_reasons = []
@@ -170,7 +174,7 @@ def main() -> int:
         if not partition_exact:
             failure_reasons.append({"code": "partition_integrity",
                                     "detail": "at least one endpoint pair is not partitioned exactly"})
-        for problem in measurement["problems"][:8]:
+        for problem in measurement["address_problems"][:8]:
             failure_reasons.append({"code": "holdout_false_negative", "detail": problem})
 
     entries = next(c["entries"] for c in manifest["bit_classes"] if c["id"] == BIT_CLASS)

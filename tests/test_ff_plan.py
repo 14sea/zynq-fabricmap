@@ -11,6 +11,8 @@ could be talked into writing a commitment by passing a path is not held at all.
 
 from __future__ import annotations
 
+import copy
+import hashlib
 import json
 import re
 import subprocess
@@ -23,7 +25,11 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 EMITTER = REPO_ROOT / "scripts/gate_emit_ff.py"
+CERTIFIER = REPO_ROOT / "scripts/gate_certify_ff.py"
 DB = REPO_ROOT / "data/prjxray/zynq7"
+
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+from gate_measure_ff import address_decision, semantic_verdict  # noqa: E402
 
 
 def emit(out: Path) -> subprocess.CompletedProcess[str]:
@@ -169,6 +175,223 @@ class FfPlanTests(unittest.TestCase):
         self.assertNotEqual(checked.returncode, 0, checked.stdout)
         self.assertIn("pre-registration is HELD", checked.stdout)
         self.assertFalse((REPO_ROOT / "gate_runs/ff_hold_probe").exists())
+
+
+def totals(tp: int, fn: int, fp: int, semantic_pass: int, semantic_fail: int) -> dict:
+    return {
+        "mine": {"tp": 0, "fn": 0, "fp": 0, "member_identity": {"pass": 0, "fail": 0}},
+        "holdout": {"tp": tp, "fn": fn, "fp": fp,
+                    "member_identity": {"pass": semantic_pass, "fail": semantic_fail}},
+    }
+
+
+EXACT_PAIR = [{"partition_exact": True}]
+
+
+class SemanticIsolationTests(unittest.TestCase):
+    """A naming claim must never be able to fail an addressing result.
+
+    The defect these tests exist against was real: the measurement tool appended a
+    semantic mismatch to the same `problems` list that sank the address decision, so a
+    wrong attestation field would have failed a class whose addressing the bitstream
+    itself confirmed. 1.4 isolates the two, and isolation that is not tested is a
+    comment.
+    """
+
+    def test_semantic_only_failure_keeps_the_address_decision_passing(self) -> None:
+        self.assertEqual(
+            address_decision(totals(154, 0, 0, 153, 1), EXACT_PAIR, [], 154), "PASS")
+
+    def test_address_problems_still_sink_the_address_decision(self) -> None:
+        for problems, description in (
+            (["specimen X: no attestation"], "evidence integrity"),
+            (["base/variant: buckets overlap"], "partition integrity"),
+        ):
+            with self.subTest(description):
+                self.assertEqual(
+                    address_decision(totals(154, 0, 0, 154, 0), EXACT_PAIR, problems, 154),
+                    "FAIL")
+
+    def test_the_address_decision_cannot_see_semantics_at_all(self) -> None:
+        # Same call, every semantic count swept from clean to broken: the decision is a
+        # function of address evidence only, so it must not move.
+        for semantic_pass, semantic_fail in ((154, 0), (77, 77), (0, 154)):
+            self.assertEqual(
+                address_decision(totals(154, 0, 0, semantic_pass, semantic_fail),
+                                 EXACT_PAIR, [], 154),
+                "PASS")
+
+    def test_fn_fp_and_short_holdout_counts_still_fail(self) -> None:
+        self.assertEqual(address_decision(totals(153, 1, 0, 154, 0), EXACT_PAIR, [], 154), "FAIL")
+        self.assertEqual(address_decision(totals(154, 0, 1, 154, 0), EXACT_PAIR, [], 154), "FAIL")
+        self.assertEqual(address_decision(totals(153, 0, 0, 154, 0), EXACT_PAIR, [], 154), "FAIL")
+        self.assertEqual(
+            address_decision(totals(154, 0, 0, 154, 0), [{"partition_exact": False}], [], 154),
+            "FAIL")
+
+    def test_semantic_pass_is_the_verifier_rule_not_the_attestation_alone(self) -> None:
+        # host/verify_certificate.py rebuilds `passed` as
+        # transition_exact and attestation_basis_consistent, and rejects a record whose
+        # copied boolean disagrees. A producer that passed on the attestation alone
+        # would emit certificates the consumer refuses.
+        self.assertTrue(semantic_verdict(True, "CLKINV", "CLKINV"))
+        self.assertFalse(semantic_verdict(False, "CLKINV", "CLKINV"))
+        self.assertFalse(semantic_verdict(True, "NOCLKINV", "CLKINV"))
+        self.assertFalse(semantic_verdict(True, None, "CLKINV"))
+
+
+class CertifierSemanticIsolationTests(unittest.TestCase):
+    """The same isolation, end to end through `gate_certify_ff.py`.
+
+    Built from the real draft plan rather than a hand-written stub, so the projection
+    comparison the certifier performs is exercised against genuine preregistered
+    records. No Vivado: the certifier reads JSON.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._directory = tempfile.TemporaryDirectory(dir=REPO_ROOT / "build")
+        root = Path(cls._directory.name)
+        draft = root / "draft.json"
+        checked = emit(draft)
+        assert checked.returncode == 0, checked.stdout
+        cls.plan = json.loads(draft.read_text())
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls._directory.cleanup()
+
+    def build_run(self, root: Path, *, semantic_ok: bool, address_problems: list[str]) -> Path:
+        """A two-key run: one clkinv pair, both endpoints, everything matched."""
+        plan = copy.deepcopy(self.plan)
+        site = "SLICE_X3Y25"          # holdout, so the keys actually score
+        keep = [p for p in plan["predictions"]
+                if p["feature"].endswith(("CLKINV", "NOCLKINV"))
+                and p["specimen_id"].startswith(site + "_")]
+        specimen_ids = {f"{site}_base", f"{site}_clkinv"}
+        plan["specimens"] = [s for s in plan["specimens"] if s["specimen_id"] in specimen_ids]
+        plan["predictions"] = keep
+        plan["totals"] = {"specimens": len(plan["specimens"]), "predictions": len(keep),
+                          "holdout_predictions": len(keep)}
+
+        run = root / "run"
+        run.mkdir()
+        predictions_path = run / "predictions.json"
+        predictions_path.write_text(json.dumps(plan, indent=2) + "\n")
+
+        results = []
+        for index, prediction in enumerate(keep):
+            other = (specimen_ids - {prediction["specimen_id"]}).pop()
+            item = prediction["predicted_assignments"][0]
+            transition = prediction["expected_transition"]
+            assertion = prediction["semantic_assertion"]
+            observed = assertion["expected_value"] if semantic_ok or index else "WRONG_MODE"
+            results.append({
+                "prediction_specimen_id": prediction["specimen_id"],
+                "feature": prediction["feature"],
+                "split": prediction["split"],
+                "rule_file": prediction["rule_file"],
+                "baseline_specimen_id": other,
+                "feature_specimen_id": prediction["specimen_id"],
+                "predicted_assignments": prediction["predicted_assignments"],
+                "expected_transition": transition,
+                "semantic_assertion": assertion,
+                "observed_assignments": [{
+                    "address": item["address"],
+                    "observed_value": transition["after"],
+                    "before_value": transition["before"],
+                    "after_value": transition["after"],
+                }],
+                "semantic_outcome": {
+                    "kind": "member_identity", "semantic": True,
+                    "passed": semantic_verdict(True, observed, assertion["expected_value"]),
+                    "predicted_member": assertion["predicted_member"],
+                    "attestation_field": assertion["attestation_field"],
+                    "expected_value": assertion["expected_value"],
+                    "observed_value": observed,
+                },
+                "verdict": "matched",
+            })
+        semantic_fail = sum(1 for r in results if not r["semantic_outcome"]["passed"])
+        measurement = {
+            "schema": "gate_measurement", "schema_version": "1.4.0",
+            "bit_class": "clb_ff_config",
+            "prediction_commitment": {
+                "run_id": "run", "path": "build/x/predictions.json",
+                "sha256": hashlib.sha256(predictions_path.read_bytes()).hexdigest(),
+                "schema_version": plan["schema_version"], "seed": plan["seed"],
+                "totals": plan["totals"],
+            },
+            "split_policy": plan["split_policy"],
+            "specimens": [{
+                "specimen_id": s["specimen_id"], "split": s["split"],
+                "loc_site": s["site"], "tile": s["tile"], "tile_type": s["tile_type"],
+                "tile_frame_base": "0x00400A00", "build_seed": s["build_seed"],
+                "bitstream_sha256": "00" * 32, "design_source_sha256": "11" * 32,
+                "vivado_version": "test", "part": "xc7z010clg400-1",
+            } for s in plan["specimens"]],
+            "totals": totals(len(results) - 0, 0, 0, len(results) - semantic_fail, semantic_fail),
+            "results": results,
+            "accounting": [{
+                "site": site, "variant": "clkinv",
+                "specimen_ids": sorted(specimen_ids), "raw_diff_bits": 0,
+                "counts": {k: 0 for k in ("in_scope", "frame_ecc", "db_attributed",
+                                          "ownership_unknown", "unattributed")},
+                "buckets": {k: [] for k in ("in_scope", "frame_ecc", "db_attributed",
+                                            "ownership_unknown", "unattributed")},
+                "partition_exact": True,
+                "false_positive_addresses": [],
+            }],
+            "decision": "PASS",
+            "semantic_decision": "FAIL" if semantic_fail else "PASS",
+            "address_problems": address_problems,
+            "semantic_findings": ["synthetic semantic mismatch"] if semantic_fail else [],
+        }
+        (run / "measurement.json").write_text(json.dumps(measurement, indent=2) + "\n")
+        return run
+
+    def certify(self, run: Path) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [PYTHON, str(CERTIFIER), "--run", str(run), "--out", str(run / "certificate.json")],
+            cwd=REPO_ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            check=False,
+        )
+
+    def test_semantic_only_failure_certifies_as_address_passed(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT / "build") as directory:
+            run = self.build_run(Path(directory), semantic_ok=False, address_problems=[])
+            checked = self.certify(run)
+            self.assertEqual(checked.returncode, 0, checked.stdout)
+            certificate = json.loads((run / "certificate.json").read_text())
+            self.assertEqual(certificate["status"], "passed")
+            self.assertEqual(certificate["semantic_status"], "failed")
+            self.assertEqual(certificate["failure_reasons"], [])
+            self.assertEqual(certificate["bit_class"]["accounting"],
+                             {"tp_count": 2, "fp_count": 0, "fn_count": 0})
+            self.assertEqual(
+                certificate["bit_class"]["semantic_accounting"]["member_identity"],
+                {"pass_count": 1, "fail_count": 1})
+
+    def test_an_address_problem_still_fails_the_certificate(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT / "build") as directory:
+            run = self.build_run(Path(directory), semantic_ok=True,
+                                 address_problems=["specimen: no attestation"])
+            checked = self.certify(run)
+            self.assertEqual(checked.returncode, 0, checked.stdout)
+            certificate = json.loads((run / "certificate.json").read_text())
+            self.assertEqual(certificate["status"], "failed")
+            self.assertEqual(certificate["semantic_status"], "passed")
+            self.assertTrue(certificate["failure_reasons"])
+
+    def test_a_clean_run_certifies_both_ways(self) -> None:
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT / "build") as directory:
+            run = self.build_run(Path(directory), semantic_ok=True, address_problems=[])
+            checked = self.certify(run)
+            self.assertEqual(checked.returncode, 0, checked.stdout)
+            certificate = json.loads((run / "certificate.json").read_text())
+            self.assertEqual(certificate["status"], "passed")
+            self.assertEqual(certificate["semantic_status"], "passed")
+            self.assertEqual(certificate["bit_class"]["coverage"]["class_entry_count"], 176)
 
 
 if __name__ == "__main__":

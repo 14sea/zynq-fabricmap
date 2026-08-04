@@ -50,11 +50,11 @@ region never varies across the run:
 That gives **22 mine keys and 154 holdout keys, denominator 176, `attested_count` 176 —
 the whole class**.
 
-> **Open question 1.** `SLICE_X9Y25` (instance 6) was the anchor *keeper* site for the
-> `clb_lutram` isolation work. Nothing about its own configuration bits was measured or
-> asserted there — it was held clocked and untouched — so this plan treats it as
-> holdout. If the author considers "we already know this site tolerates every mode" to
-> be spent evidence, instance 6 moves to `mine` and the split becomes 44 / 132.
+> **Ruled 2026-08-04: 22 / 154 stands, instance 6 stays holdout.** `SLICE_X9Y25` was the
+> anchor *keeper* site for the `clb_lutram` isolation work, but a keeper discloses
+> nothing about its own FF bit mapping — it was held clocked and untouched, and no
+> configuration bit of it was ever measured or asserted. Tolerating a mode is not
+> knowledge of where its bits live, so its evidence is not spent.
 
 ## 2. Specimen family, per site instance
 
@@ -157,10 +157,18 @@ emit if any committed holdout key would go unreported.
 3. **`LATCH` changes the primitive to `LDCE`**, which has no `CE`/`R` in the same shape.
    The control-set bits of that variant will differ from B by more than the `LATCH` bit;
    those movers are `db_attributed` **and** claimed by this class **and** outside the
-   pair's single preregistered scope, which makes them FP by the 1.4 rule. This pair
-   probably needs its scope to preregister the whole slice-wide control set rather than
-   one bit. **This is the one place where the plan is not yet safe, and it is why the
-   draft exists before the commitment.**
+   pair's single preregistered scope, which makes them FP by the 1.4 rule.
+
+   > **Ruled 2026-08-04: `LATCH` stays in the key space, and its scope is not guessed.**
+   > Before the commitment, the `LATCH` pair is explored **on the mine site only**
+   > (`SLICE_X2Y25`, whose evidence is already spent and cannot score). The first
+   > design attempt is a **control-matched baseline** — a baseline built so that the
+   > only difference from the `latch` variant is the storage kind, rather than the
+   > default B reused unchanged. If that reduces the pair to the single `LATCH` bit, the
+   > plan is unchanged. If same-class movers remain, they are **reported back and
+   > preregistered feature by feature**, never absorbed into a widened scope on
+   > suspicion. Dropping `LATCH` and certifying 175 is explicitly refused: a class
+   > certificate that quietly omits an entry is not a class certificate.
 4. **8 site instances × 14 P&R is ~112 Vivado runs.** Nothing about that is risky, but a
    failed run in the middle must not tempt anyone to certify the subset that worked —
    hence the all-or-nothing completeness rule above.
@@ -189,18 +197,35 @@ and the hold refusing a write into `gate_runs/`.
 specimens exist. Both refuse rather than improvise: measure refuses to score if the
 predictions hash moved, certify refuses if any committed key is unmeasured, if a
 measured key was never committed, if a measured projection differs from the
-preregistered one, or if any holdout key would go unreported. The fourth tool —
+preregistered one, or if any holdout key would go unreported.
+
+**Semantic isolation is enforced structurally, not by convention.** The measurement
+keeps two lists — `address_problems`, which sinks the address decision, and
+`semantic_findings`, which never can — and `address_decision()` takes only the first,
+so a naming claim cannot be passed into it by accident. The certifier reads
+`address_problems` alone for the same reason. Semantic pass is the verifier's own rule,
+`transition_exact and attestation_basis_consistent`: a semantic claim about a specimen
+whose addressing did not match names a member the evidence did not select, and
+`host/verify_certificate.py` rebuilds that boolean and rejects a record that disagrees.
+A semantic-only failure therefore certifies as `status: passed`,
+`semantic_status: failed`, exit 0, with the failure count printed prominently. The fourth tool —
 `gate_build_ff.py`, the Vivado-facing one — is deliberately **not** written yet: its
 variant list is exactly what §2 and the rulings below decide, and writing it first would
 put the plan in two places.
 
-## 7. What the author is asked to rule
+## 7. Rulings (author, 2026-08-04)
 
-1. Split: `mine = {SLICE_X2Y25}` (22 / 154), or does instance 6 join it (44 / 132)?
-2. Coverage: full class (`attested_count = 176`), or a smaller committed subset with the
-   rest left uncertified?
-3. Risk 3 — for the `LATCH` pair, preregister a **scope of the whole per-slice control
-   set** for that pair, or drop `LATCH` from the committed key space and certify 175?
-4. Whether the four "baseline asserts the feature" polarity predictions stand as written.
+1. **Split: 22 / 154.** `mine = {SLICE_X2Y25}`; instance 6 stays holdout — a keeper does
+   not disclose its own FF bit mapping.
+2. **Coverage must be the full 176.** A subset may not be presented as the class being
+   certified, so `attested_count = class_entry_count = 176` is a condition of emitting
+   at all, not a target.
+3. **`LATCH` stays**, explored on the mine site only before the commitment, with a
+   control-matched baseline tried first; remaining same-class movers get preregistered
+   feature by feature. No guessed scope, no dropped entry. (§5 risk 3.)
+4. **The twelve directional predictions stand as written** — they are explicit,
+   refutable hypotheses, and softening them would remove the only thing a bitstream
+   could contradict.
 
-Nothing is built and no hash is emitted until these are answered.
+Pre-registration itself remains **held**: nothing is built and no commitment hash is
+emitted. What the rulings settle is what the commitment would say when it is lifted.

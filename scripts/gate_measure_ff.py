@@ -86,6 +86,35 @@ def as_addresses(items) -> list[dict]:
                   key=lambda a: (a["far"], a["word"], a["bit"]))
 
 
+def semantic_verdict(transition_exact: bool, observed, expected) -> bool:
+    """`transition_exact and attestation_basis_consistent`, the verifier's rule.
+
+    Kept as its own function because the producer must not invent a weaker or stronger
+    semantic pass than the consumer recomputes: `host/verify_certificate.py` rebuilds
+    the outcome summary and rejects the record if the copied `passed` disagrees. A
+    semantic claim about a specimen whose addressing did not match is not a passing
+    naming claim — it names a member the evidence did not select.
+    """
+    return transition_exact and observed == expected
+
+
+def address_decision(totals: dict, accounting: list, address_problems: list,
+                     committed_holdout: int) -> str:
+    """The address decision, with semantics deliberately absent from its inputs.
+
+    1.4 isolates the two: a semantic-only failure keeps `status: passed`, exits zero and
+    reports its failure count prominently. Passing `semantic_findings` in here — or
+    folding them into `address_problems` — would silently make a naming claim able to
+    fail an addressing result, which is the defect this signature exists to prevent.
+    """
+    holdout = totals["holdout"]
+    failed = (holdout["fn"] or holdout["fp"]
+              or holdout["tp"] != committed_holdout
+              or any(not record["partition_exact"] for record in accounting)
+              or address_problems)
+    return "FAIL" if failed else "PASS"
+
+
 def resolve_pointer(value, pointer: str):
     """RFC 6901, objects only — the same restriction the verifier applies."""
     for raw in pointer.removeprefix("/").split("/"):
@@ -131,7 +160,8 @@ def main() -> int:
 
     frames_cache: dict[str, dict] = {}
     attestation_cache: dict[str, dict] = {}
-    problems: list[str] = []
+    address_problems: list[str] = []
+    semantic_findings: list[str] = []
 
     def frames_of(specimen: dict) -> dict:
         path = bit_path(args.build, specimen)
@@ -173,9 +203,9 @@ def main() -> int:
             record["vivado_version"] = attestation["inputs"].get("vivado_version")
             record["part"] = attestation["inputs"].get("part")
             if attestation["outputs"].get(path.name) != record["bitstream_sha256"]:
-                problems.append(f"{specimen['specimen_id']}: bitstream does not match its attestation")
+                address_problems.append(f"{specimen['specimen_id']}: bitstream does not match its attestation")
         else:
-            problems.append(f"{specimen['specimen_id']}: no attestation")
+            address_problems.append(f"{specimen['specimen_id']}: no attestation")
         specimen_records.append(record)
 
     # ---- endpoint pairs: (base, variant) per site instance ----------------------
@@ -204,7 +234,7 @@ def main() -> int:
         try:
             base_frames, variant_frames = frames_of(base), frames_of(variant)
         except FileNotFoundError as exc:
-            problems.append(f"{base_id}/{variant_id}: missing bitstream {exc}")
+            address_problems.append(f"{base_id}/{variant_id}: missing bitstream {exc}")
             continue
         asserted_tiles = {base["tile"], variant["tile"]}
         raw = raw_diff(base_frames, variant_frames)
@@ -239,11 +269,11 @@ def main() -> int:
                     if buckets[a] & buckets[b]]
         uncovered = raw - union
         if overlaps:
-            problems.append(f"{base_id}/{variant_id}: buckets overlap {overlaps}")
+            address_problems.append(f"{base_id}/{variant_id}: buckets overlap {overlaps}")
         if uncovered:
-            problems.append(f"{base_id}/{variant_id}: {len(uncovered)} raw diff bits in no bucket")
+            address_problems.append(f"{base_id}/{variant_id}: {len(uncovered)} raw diff bits in no bucket")
         if union - raw:
-            problems.append(f"{base_id}/{variant_id}: {len(union - raw)} bucketed bits not in the raw diff")
+            address_problems.append(f"{base_id}/{variant_id}: {len(union - raw)} bucketed bits not in the raw diff")
 
         fp_bits = (buckets["ownership_unknown"] | buckets["unattributed"]
                    | class_claimed_out_of_scope)
@@ -269,7 +299,7 @@ def main() -> int:
         feature_specimen = by_id[prediction["specimen_id"]]
         pair = pair_of_feature.get(prediction["feature"])
         if pair is None:
-            problems.append(f"{prediction['feature']}: no endpoint pair — cannot score")
+            address_problems.append(f"{prediction['feature']}: no endpoint pair — cannot score")
             continue
         base_id, variant_id = pair
         other_id = variant_id if prediction["specimen_id"] == base_id else base_id
@@ -281,7 +311,7 @@ def main() -> int:
                 frames_of(by_id[other_id]),
                 grid[by_id[other_id]["tile"]]["bits"]["CLB_IO_CLK"])
         except FileNotFoundError as exc:
-            problems.append(f"{prediction['feature']}: missing bitstream {exc}")
+            address_problems.append(f"{prediction['feature']}: missing bitstream {exc}")
             continue
 
         split = prediction["split"]
@@ -305,19 +335,29 @@ def main() -> int:
                 seen = observed_by_specimen.setdefault(specimen_id, {})
                 key = address_tuple(item["address"])
                 if seen.setdefault(key, value) != value:
-                    problems.append(
+                    address_problems.append(
                         f"{specimen_id}: two observed values for {item['address']}")
 
         assertion = prediction["semantic_assertion"]
         attestation = attestation_cache.get(prediction["specimen_id"])
         observed_semantic = (resolve_pointer(attestation, assertion["attestation_field"])
                              if attestation is not None else None)
-        semantic_passed = observed_semantic == assertion["expected_value"]
+        semantic_passed = semantic_verdict(matched, observed_semantic,
+                                           assertion["expected_value"])
         if not semantic_passed:
-            problems.append(
-                f"{prediction['feature']}: attestation field {assertion['attestation_field']} "
-                f"is {observed_semantic!r}, preregistered {assertion['expected_value']!r} — "
-                "the naming claim is not auditable")
+            # A semantic finding, never an address problem. `semantic_findings` is
+            # reported and carried into the record; it must not reach the address
+            # decision, or a naming claim could sink an addressing result that the
+            # bitstream itself confirmed. Both ways of failing are recorded, so the
+            # count and the findings list cannot disagree.
+            reason = (f"attestation field {assertion['attestation_field']} is "
+                      f"{observed_semantic!r}, preregistered "
+                      f"{assertion['expected_value']!r}"
+                      if matched else
+                      "the addressing did not match, so the member this names was not "
+                      "the one the evidence selected")
+            semantic_findings.append(
+                f"{prediction['feature']}: {reason} — the naming claim is not auditable")
 
         totals[split]["tp" if matched else "fn"] += 1
         totals[split]["member_identity"]["pass" if semantic_passed else "fail"] += 1
@@ -368,17 +408,22 @@ def main() -> int:
 
     holdout = totals["holdout"]
     committed_holdout = doc["totals"]["holdout_predictions"]
-    hard_fail = (holdout["fn"] or holdout["fp"]
-                 or holdout["tp"] != committed_holdout
-                 or any(not record["partition_exact"] for record in accounting)
-                 or problems)
-    decision = "FAIL" if hard_fail else "PASS"
-    print(f"\n  holdout decision (address claims only, semantic reported separately): {decision}")
+    decision = address_decision(totals, accounting, address_problems, committed_holdout)
+    semantic_decision = "FAIL" if holdout["member_identity"]["fail"] else "PASS"
+    print(f"\n  holdout ADDRESS decision: {decision}")
     print(f"  tp={holdout['tp']}/{committed_holdout} fn={holdout['fn']} fp={holdout['fp']}")
-    for problem in problems[:15]:
-        print(f"  PROBLEM {problem}")
-    if len(problems) > 15:
-        print(f"  ... and {len(problems) - 15} more")
+    print(f"  holdout SEMANTIC decision (isolated, never contributes to the above): "
+          f"{semantic_decision}")
+    print(f"  member_identity pass={holdout['member_identity']['pass']} "
+          f"fail={holdout['member_identity']['fail']}")
+    for problem in address_problems[:15]:
+        print(f"  ADDRESS PROBLEM {problem}")
+    if len(address_problems) > 15:
+        print(f"  ... and {len(address_problems) - 15} more")
+    for finding in semantic_findings[:15]:
+        print(f"  SEMANTIC FINDING {finding}")
+    if len(semantic_findings) > 15:
+        print(f"  ... and {len(semantic_findings) - 15} more")
 
     if args.out:
         args.out.write_text(json.dumps({
@@ -399,9 +444,16 @@ def main() -> int:
             "results": results,
             "accounting": accounting,
             "decision": decision,
-            "problems": problems,
+            "semantic_decision": semantic_decision,
+            # Two lists, deliberately. `address_problems` sinks the address decision;
+            # `semantic_findings` is reported and never does. Merging them back into one
+            # `problems` field would restore the isolation defect at the record level.
+            "address_problems": address_problems,
+            "semantic_findings": semantic_findings,
         }, indent=2) + "\n")
         print(f"  wrote {args.out}")
+    # The exit code follows the ADDRESS decision. A semantic-only failure exits zero and
+    # says so loudly above; that is the 1.4 contract, not leniency.
     return 0 if decision == "PASS" else 1
 
 
