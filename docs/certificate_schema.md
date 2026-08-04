@@ -1,4 +1,4 @@
-# Certificate schema — `fabric_bit_class_certificate` 1.4.0
+# Certificate schema — `fabric_bit_class_certificate` 1.5.0
 
 Version 1.1.0 adds optional specimen-attestation and explicit diff-exclusion evidence
 to 1.0.0. Version 1.2.0 adds an optional preregistered prediction commitment and a
@@ -6,8 +6,10 @@ specimen-qualified prediction key. All additions are optional in the generic 1.x
 schema. Version 1.3.0 adds a selectable group evidence model for mux claims. Version
 1.4.0 adds shared five-bucket accounting to feature records, verifier-derived group
 consistency, observation consistency, a fixed pair-level FP definition, and corrects
-the group model's vacuous address accounting. Selecting a newer record version makes
-that version's evidence mandatory. Older records retain their original semantics.
+the group model's vacuous address accounting. Version 1.5.0 preregisters the feature
+comparison endpoint and derives the exact endpoint-pair accounting set from that
+commitment. Selecting a newer record version makes that version's evidence mandatory.
+Older records retain their original semantics.
 
 Machine-readable schema: `schemas/certificate.schema.json`. This document defines
 the semantic checks that JSON Schema cannot express. The certificate is emitted by
@@ -15,9 +17,10 @@ the producer-owned gate and judged by the consumer-owned
 `host/verify_certificate.py`.
 
 Versioning follows the repository contract: MAJOR changes are incompatible; MINOR
-changes only add optional fields. A consumer rejects an unsupported MAJOR and ignores
-unknown fields in a supported MAJOR. The JSON Schema therefore deliberately permits
-unknown properties.
+changes add fields without invalidating records emitted under an older 1.x version.
+Those fields may become mandatory when a producer explicitly selects the newer MINOR
+version. A consumer rejects an unsupported MAJOR and ignores unknown fields in a
+supported MAJOR. The JSON Schema therefore deliberately permits unknown properties.
 
 ## Evidence-model selector
 
@@ -221,6 +224,39 @@ status = passed iff
 number of result records. `coverage.class_entry_count` remains the current manifest
 denominator.
 
+## Feature comparison lifecycle (1.5)
+
+In 1.4, `baseline_specimen_id` made the compared endpoint explicit only in the final
+certificate. It was not part of the preregistered prediction, so a producer could
+choose that endpoint after the bitstreams existed. Version 1.5 closes that lifecycle
+gap. The pinned `gate_predictions` artifact selects schema 1.5 or later, and every
+feature prediction in it additionally requires:
+
+```json
+{"comparison_specimen_id": "SLICE_X2Y25_latch_base"}
+```
+
+The comparison specimen must be a distinct, named member of the artifact's
+`specimens[]`. The prediction's `specimen_id` remains the selected feature endpoint.
+For each certificate result, the verifier requires:
+
+```text
+feature_specimen_id  == committed specimen_id
+baseline_specimen_id == committed comparison_specimen_id
+```
+
+The verifier derives the authoritative set of distinct unordered endpoint pairs
+directly from all committed `(specimen_id, comparison_specimen_id)` values.
+`pair_accounting[]` must contain that set exactly once each: no post-build pair may be
+added, omitted, or substituted. Each pair's in-scope address union is likewise
+derived from the committed predictions rather than from result-selected endpoints.
+
+This rule applies to feature records selecting schema 1.5 or later. Published 1.4
+feature records keep their prior lifecycle semantics. Group records compare a single
+specimen's absolute assignment with a committed codeword and therefore have no second
+endpoint to preregister. Historical feature 1.2 records also retain their original
+decision semantics and require no erratum.
+
 ## Group evidence model (1.3)
 
 `group_results[]` is keyed by `(prediction_specimen_id, group)`. Every result copies
@@ -349,12 +385,13 @@ one attestation anchors both against substitution but does not prove that the la
 was produced from the former. Re-establishing either relation requires a Vivado
 rebuild; the checkpoint hash is an integrity anchor, not independent provenance proof.
 
-## Current production profiles 1.2, 1.3 and 1.4
+## Current production profiles 1.2 through 1.5
 
 The profile is selected by `profile: production`. Production consumers invoke the
 verifier with `--require-production`. A legacy feature record requires certificate
 1.2 or later; a group record requires 1.3 or later. Classes using shared endpoint-pair
-accounting require 1.4. Emitting a lower version cannot bypass the semantic checks
+accounting require 1.4. New feature commitments whose decision consumes a comparison
+endpoint require 1.5. Emitting a lower version cannot bypass the semantic checks
 selected by its record version. A historical 1.1 production fixture remains accepted
 by generic validation for compatibility, but it is not current production authority.
 
@@ -388,6 +425,15 @@ The 1.4 feature profile additionally requires:
 - one exact five-bucket accounting record per endpoint pair;
 - independently recomputed bucket labels and the fixed pair-level FP rule;
 - freeze-derived group/codeword consistency with collisions treated as format errors.
+
+The 1.5 feature profile additionally requires:
+
+- `comparison_specimen_id` on every committed prediction, naming a distinct specimen
+  already present in the prediction artifact;
+- `gate_predictions` and its pinned reference selecting schema 1.5 or later;
+- exact result endpoint equality with both committed endpoint identities;
+- an exact `pair_accounting[]` pair set and pair scope derived solely from the
+  commitment.
 
 For the feature profile, only one exclusion rule is supported: `frame_ecc`, exactly
 `word == 50 and 0 <= bit <= 12`. The verifier rejects an excluded bit outside that

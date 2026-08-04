@@ -1,0 +1,105 @@
+{
+  "schema": "gate_predictions",
+  "schema_version": "1.5.0",
+  "bit_class": "clb_ff_config",
+  "seed": "consumer-feature15-known-answer",
+  "split_policy": "both complementary states and comparison endpoints are holdout",
+  "frozen_inputs": {
+    "manifest_freeze_stamp": "2026-08-02T01:29:26Z",
+    "spec_sha256": "ffe4fb9f6bdc118904a6dcbb5625f87d12b12e633ad4dee8c6772fbe45da8e37",
+    "files": {
+      "prjxray/zynq7/segbits_clbll_l.db": "9bf6bdffdc814569a7da53c696e46207aab23ea66c9dd92c47e50a6211dd739b",
+      "prjxray/zynq7/xc7z010/tilegrid.json": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee",
+      "prjxray/zynq7/xc7z010clg400-1/part.yaml": "43a136f26603c51bd97e9489d223bbc80f278fcc234225ed9fde404402f22683"
+    }
+  },
+  "specimens": [
+    {
+      "specimen_id": "fixture_ff_clkinv__base",
+      "site": "SLICE_X2Y25",
+      "ff_bel": "AFF",
+      "variant": "NOCLKINV_BASE",
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "fixture_ff_clkinv",
+      "site": "SLICE_X2Y25",
+      "ff_bel": "AFF",
+      "variant": "CLKINV",
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "fixture_ff_noclkinv__base",
+      "site": "SLICE_X2Y25",
+      "ff_bel": "AFF",
+      "variant": "CLKINV_BASE",
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "split": "holdout"
+    },
+    {
+      "specimen_id": "fixture_ff_noclkinv",
+      "site": "SLICE_X2Y25",
+      "ff_bel": "AFF",
+      "variant": "NOCLKINV",
+      "tile": "CLBLL_L_X2Y25",
+      "tile_type": "CLBLL_L",
+      "split": "holdout"
+    }
+  ],
+  "predictions": [
+    {
+      "specimen_id": "fixture_ff_clkinv",
+      "comparison_specimen_id": "fixture_ff_clkinv__base",
+      "feature": "CLBLL_L.SLICEL_X0.CLKINV",
+      "split": "holdout",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "predicted_assignments": [
+        {
+          "token": "01_51",
+          "segbit": {"frame_offset": 1, "bit_offset": 51, "negated": false},
+          "address": {"far": "0x00400A01", "word": 52, "bit": 19},
+          "expected_value": 1
+        }
+      ],
+      "expected_transition": {"before": 0, "after": 1},
+      "semantic_assertion": {
+        "kind": "member_identity",
+        "semantic": true,
+        "claim": "the selected clock member matches the implemented clock mode",
+        "predicted_member": "CLBLL_L.SLICEL_X0.CLKINV",
+        "attestation_field": "/resolved/clock_mode",
+        "expected_value": "CLKINV"
+      }
+    },
+    {
+      "specimen_id": "fixture_ff_noclkinv",
+      "comparison_specimen_id": "fixture_ff_noclkinv__base",
+      "feature": "CLBLL_L.SLICEL_X0.NOCLKINV",
+      "split": "holdout",
+      "rule_file": "prjxray/zynq7/segbits_clbll_l.db",
+      "predicted_assignments": [
+        {
+          "token": "!01_51",
+          "segbit": {"frame_offset": 1, "bit_offset": 51, "negated": true},
+          "address": {"far": "0x00400A01", "word": 52, "bit": 19},
+          "expected_value": 0
+        }
+      ],
+      "expected_transition": {"before": 1, "after": 0},
+      "semantic_assertion": {
+        "kind": "member_identity",
+        "semantic": true,
+        "claim": "the selected clock member matches the implemented clock mode",
+        "predicted_member": "CLBLL_L.SLICEL_X0.NOCLKINV",
+        "attestation_field": "/resolved/clock_mode",
+        "expected_value": "NOCLKINV"
+      }
+    }
+  ],
+  "totals": {"specimens": 4, "predictions": 2, "holdout_predictions": 2}
+}

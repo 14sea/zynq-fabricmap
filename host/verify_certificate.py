@@ -129,6 +129,7 @@ def load_prediction_commitment(
         int(part) for part in certificate.get("schema_version", "0.0.0").split(".")
     )
     feature_1_4 = not group_model and certificate_version >= (1, 4, 0)
+    feature_1_5 = not group_model and certificate_version >= (1, 5, 0)
     reference = certificate.get("prediction_commitment")
     if reference is None:
         return ["production lifecycle verification requires prediction_commitment"], committed_by_key, holdout_keys
@@ -164,6 +165,16 @@ def load_prediction_commitment(
         errors.append("prediction artifact schema is not 'gate_predictions'")
     if artifact["schema_version"] != reference["schema_version"]:
         errors.append("prediction commitment schema_version differs from artifact")
+    if feature_1_5:
+        artifact_version = artifact.get("schema_version")
+        if (
+            not isinstance(artifact_version, str)
+            or re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", artifact_version) is None
+            or tuple(int(part) for part in artifact_version.split(".")) < (1, 5, 0)
+        ):
+            errors.append(
+                "feature certificate 1.5 requires gate_predictions schema_version >= 1.5.0"
+            )
     if artifact["seed"] != reference["seed"]:
         errors.append("prediction commitment seed differs from artifact")
     if artifact["bit_class"] != certificate["bit_class"]["id"]:
@@ -292,6 +303,8 @@ def load_prediction_commitment(
         }
         if feature_1_4:
             expected_prediction_fields.add("semantic_assertion")
+        if feature_1_5:
+            expected_prediction_fields.add("comparison_specimen_id")
     for index, prediction in enumerate(predictions):
         if not isinstance(prediction, dict):
             errors.append(f"prediction artifact predictions[{index}] is not an object")
@@ -312,6 +325,20 @@ def load_prediction_commitment(
             continue
         if specimen_id not in prediction_specimen_ids:
             errors.append(f"prediction artifact pair key {key!r} names an unknown specimen")
+        if feature_1_5:
+            comparison_id = prediction.get("comparison_specimen_id")
+            if not isinstance(comparison_id, str) or not comparison_id:
+                errors.append(
+                    f"prediction artifact pair key {key!r} has an invalid comparison specimen"
+                )
+            elif comparison_id == specimen_id:
+                errors.append(
+                    f"prediction artifact pair key {key!r} compares a specimen with itself"
+                )
+            elif comparison_id not in prediction_specimen_ids:
+                errors.append(
+                    f"prediction artifact pair key {key!r} names an unknown comparison specimen"
+                )
         if prediction["split"] not in ("mine", "holdout"):
             errors.append(f"prediction artifact pair key {key!r} has an invalid split")
         if group_model:
@@ -1165,9 +1192,13 @@ def feature_1_4_semantic_errors(
     repo_root: Path,
     require_production: bool = False,
 ) -> list[str]:
-    """Validate 1.4 feature evidence and derive its group consistency from the freeze."""
+    """Validate feature evidence from 1.4 onward and derive freeze-owned facts."""
 
     errors: list[str] = []
+    certificate_version = tuple(
+        int(part) for part in certificate["schema_version"].split(".")
+    )
+    feature_1_5 = certificate_version >= (1, 5, 0)
     data_dir = repo_root / "data"
     manifest = load_json(data_dir / "MANIFEST.json")
     spec = load_json(data_dir / "subset_spec.json")
@@ -1370,6 +1401,33 @@ def feature_1_4_semantic_errors(
     computed_fn = 0
     semantic_counts = {"member_identity": {"pass_count": 0, "fail_count": 0}}
 
+    # From 1.5 onward both endpoint identity and pair scope are commitment-owned.
+    # Deriving them here prevents a post-build certificate from selecting a new
+    # comparison endpoint and then making its accounting self-consistent with it.
+    if feature_1_5:
+        for key, prediction in committed_by_key.items():
+            specimen_id = prediction.get("specimen_id")
+            comparison_id = prediction.get("comparison_specimen_id")
+            if (
+                not isinstance(specimen_id, str)
+                or not isinstance(comparison_id, str)
+                or specimen_id == comparison_id
+            ):
+                continue
+            pair_key = frozenset((specimen_id, comparison_id))
+            if len(pair_key) != 2:
+                continue
+            scope = pair_scopes.setdefault(pair_key, set())
+            try:
+                scope.update(
+                    address_key(item["address"])
+                    for item in prediction["predicted_assignments"]
+                )
+            except (KeyError, TypeError):
+                errors.append(
+                    f"prediction artifact pair key {key!r} has malformed committed addresses"
+                )
+
     def record_observation(specimen_id: str, address: tuple[str, int, int], value: int) -> None:
         key = specimen_id, address
         prior = observations.get(key)
@@ -1399,8 +1457,22 @@ def feature_1_4_semantic_errors(
                 "expected_transition": result["expected_transition"],
                 "semantic_assertion": result["semantic_assertion"],
             }
-            if projection != committed:
+            committed_projection = {
+                field: value
+                for field, value in committed.items()
+                if field != "comparison_specimen_id"
+            }
+            if projection != committed_projection:
                 errors.append(f"feature result key {key!r} differs from preregistered prediction")
+            if (
+                feature_1_5
+                and result["baseline_specimen_id"]
+                != committed.get("comparison_specimen_id")
+            ):
+                errors.append(
+                    f"feature result key {key!r}: baseline endpoint differs from preregistered "
+                    "comparison specimen"
+                )
 
         if result["split"] == "holdout":
             actual_holdout_keys.add(key)
@@ -1426,7 +1498,11 @@ def feature_1_4_semantic_errors(
         pair_key = frozenset((baseline_id, feature_id))
         if len(pair_key) != 2:
             errors.append(f"feature result key {key!r}: endpoint pair is not distinct")
-        scope = pair_scopes.setdefault(pair_key, set())
+        scope = (
+            pair_scopes.get(pair_key, set())
+            if feature_1_5
+            else pair_scopes.setdefault(pair_key, set())
+        )
 
         rule_file = result["rule_file"]
         used_rule_files.add(rule_file)
@@ -1467,7 +1543,8 @@ def feature_1_4_semantic_errors(
             if address in predicted:
                 errors.append(f"feature result key {key!r}: duplicate predicted address {address}")
             predicted[address] = item["expected_value"]
-            scope.add(address)
+            if not feature_1_5:
+                scope.add(address)
             expected_address = computed_address(feature_specimen["tile"], token[0], token[1])
             if expected_address is None or expected_address != address:
                 errors.append(f"feature result key {key!r}: address disagrees with normative arithmetic")
@@ -1745,7 +1822,10 @@ def feature_1_4_semantic_errors(
     )
     expected_status = "passed" if criterion_passed else "failed"
     if certificate["status"] != expected_status:
-        errors.append(f"status={certificate['status']} but 1.4 feature evidence requires {expected_status}")
+        errors.append(
+            f"status={certificate['status']} but {certificate['schema_version']} feature evidence "
+            f"requires {expected_status}"
+        )
     semantic_passed = semantic_counts["member_identity"]["fail_count"] == 0
     expected_semantic_status = "passed" if semantic_passed else "failed"
     if certificate["semantic_status"] != expected_semantic_status:
