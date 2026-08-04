@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Emit a certificate 1.4 (feature evidence model) from a measured `clb_ff_config` run.
+"""Emit a certificate 1.5 (feature evidence model) from a measured `clb_ff_config` run.
 
 The three rules this gate has always run on, unchanged:
 
@@ -14,10 +14,16 @@ The three rules this gate has always run on, unchanged:
   `member_identity` on its own; a semantic failure is never laundered into an address
   failure, nor an address failure hidden behind a passing semantic result.
 
-What 1.4 adds for this class: TP and FN are the measured endpoint verdicts, which come
+What 1.4 added for this class: TP and FN are the measured endpoint verdicts, which come
 from the preregistered transition rather than from diff membership; FP is the fixed
 profile rule recomputed per `(pair, address)`; `coverage.attested_count` is the number
 of distinct asserted class entries, not the number of result records.
+
+What 1.5 adds: `baseline_specimen_id` is no longer a field the certificate is free to
+fill in. It is the preregistered `comparison_specimen_id`, and the verifier rejects any
+other value, rebuilds the endpoint-pair set from the commitment and requires
+`pair_accounting[]` to be exactly that set. So the pairing is copied here like every
+other preregistered projection, never chosen.
 
     scripts/gate_certify_ff.py --run gate_runs/<run> --out gate_runs/<run>/certificate.json
 """
@@ -113,6 +119,17 @@ def main() -> int:
         if projection != {field: prediction[field] for field in PREREGISTERED_RESULT_FIELDS}:
             raise SystemExit(f"{key}: measured projection differs from the preregistered "
                              "prediction — refusing to emit")
+        # Both endpoints are preregistered from 1.5, so a measurement that scored against
+        # some other baseline is caught here rather than at the verifier: emitting a
+        # record we already know the consumer rejects would waste the reviewer's time and
+        # look like an attempt to see whether it slips through.
+        if result["baseline_specimen_id"] != prediction["comparison_specimen_id"]:
+            raise SystemExit(f"{key}: measured baseline {result['baseline_specimen_id']!r} "
+                             f"is not the preregistered comparison endpoint "
+                             f"{prediction['comparison_specimen_id']!r} — refusing to emit")
+        if result["feature_specimen_id"] != prediction["specimen_id"]:
+            raise SystemExit(f"{key}: measured feature endpoint is not the preregistered "
+                             "asserting specimen — refusing to emit")
         feature_results.append({
             # preregistered projection, verbatim
             "prediction_specimen_id": prediction["specimen_id"],
@@ -137,7 +154,7 @@ def main() -> int:
         raise SystemExit("holdout coverage incomplete — refusing to emit")
 
     specimens = [{k: v for k, v in s.items()
-                  if k not in ("bitstream", "variant", "pair_features")}
+                  if k not in ("bitstream", "variant", "pair_features", "pair_with")}
                  for s in measurement["specimens"]]
     pair_accounting = [{k: v for k, v in record.items()
                         if k != "false_positive_addresses"}
@@ -182,7 +199,7 @@ def main() -> int:
     now = args.gate_timestamp or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     certificate = {
         "schema": "fabric_bit_class_certificate",
-        "schema_version": "1.4.0",
+        "schema_version": "1.5.0",
         "evidence_model": "feature",
         "profile": "production",
         "certificate_id": f"{args.run.name}_{BIT_CLASS}",
@@ -191,9 +208,9 @@ def main() -> int:
         "failure_reasons": failure_reasons,
         "prediction_commitment": measurement["prediction_commitment"],
         "gate_run": {"gate_id": args.run.name, "started_at": now, "completed_at": now,
-                     "tool_versions": {"gate": "gate_measure_ff.py/1.4.0",
+                     "tool_versions": {"gate": "gate_measure_ff.py/1.5.0",
                                        "bitstream_differ": "specimen_diff.py/1.0.0",
-                                       "certifier": "gate_certify_ff.py/1.4.0"}},
+                                       "certifier": "gate_certify_ff.py/1.5.0"}},
         "target": {"family": "zynq7", "device": "xc7z010", "part": "xc7z010clg400-1"},
         "frozen_inputs": {
             "manifest_schema_version": manifest["schema_version"],

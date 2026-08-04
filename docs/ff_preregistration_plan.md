@@ -82,8 +82,14 @@ driven from ports, synchronous reset, non-inverted clock.
 | 17 | `ce_tied` | `CE` tied to `1'b1` | `CEUSEDMUX` | **B** |
 | 18 | `sr_tied` | `R` tied to `1'b0` | `SRUSEDMUX` | **B** |
 | 19 | `async` | `FDCE` (asynchronous clear) | `FFSYNC` | **B** |
-| 20 | `latch` | `LDCE` | `LATCH` | the variant |
-| 21–22 | `clkinv` | `IS_C_INVERTED` on the clock pin | `CLKINV` (variant) and `NOCLKINV` (**B**) | both |
+| 20 | `latch` | four `LDCE` on `AFF..DFF` | `LATCH` | the variant |
+| 21 | `latch_base` | four `FDCE` with `IS_C_INVERTED` on `AFF..DFF` | — | it is the `LATCH` pair's comparison endpoint |
+| 22–23 | `clkinv` | `IS_C_INVERTED` on the clock pin | `CLKINV` (variant) and `NOCLKINV` (**B**) | both |
+
+`latch` and `latch_base` are the one pair that is **not** against B, and the one pair
+with four storage elements rather than eight. Both facts are measured, not chosen:
+`A5FF` and its siblings will not hold an `LDCE`, and a latch differenced against B moves
+`FFSYNC` and `CLKINV` as well as `LATCH` (`docs/ff_latch_probe.md`).
 
 **The "feature endpoint" column is a falsifiable prediction, not bookkeeping.** Four of
 these features are predicted to be asserted in the *baseline*, because of the `Z`
@@ -95,13 +101,20 @@ the same reading to `ZRST = 1 ⟺ SRVAL = 0`, `CEUSEDMUX = 1 ⟺ CE actually dri
 records FN on that key and the certificate fails. That is the intended behaviour and the
 reason not to soften them into "either direction counts".
 
-Per site instance: **14 place-and-route runs** (B, eight `zrst_*`, and five slice-wide
-variants) and **22 bitstreams** — the eight `zini_*` bitstreams come from B's single
+Per site instance: **15 place-and-route runs** (B, eight `zrst_*`, and six slice-wide
+designs) and **23 bitstreams** — the eight `zini_*` bitstreams come from B's single
 routed checkpoint, because `INIT` is a cell property and `write_bitstream` can be re-run
-without re-placing anything. B is one endpoint of all 21 pairs, and the `clkinv` pair
+without re-placing anything. B is one endpoint of 20 of the 21 pairs; the `clkinv` pair
 carries two features (the complementary `CLKINV`/`NOCLKINV`), which is how 21 pairs
-assert 22 features. Across all eight instances: **112 P&R runs, 176 bitstreams, 168
+assert 22 features. Across all eight instances: **120 P&R runs, 184 bitstreams, 168
 endpoint pairs, 176 predictions**.
+
+**Both endpoints of every pair are preregistered.** From schema 1.5 each prediction
+carries `comparison_specimen_id` alongside `specimen_id`, and the verifier requires the
+certificate's `baseline_specimen_id` to equal it and `pair_accounting[]` to be exactly
+the pair set the commitment implies. Without that the plan would fix what is claimed
+while leaving what it is compared against open until after the build
+(`docs/round10_request.md`, `docs/round10_handoff.md`).
 
 Per-FF features get **one pair each** rather than one pair moving eight bits. A single
 design with all eight `INIT`s flipped would be one P&R cheaper and strictly weaker: if
@@ -205,8 +218,9 @@ scripts/gate_emit_ff.py --out build/ff_draft/predictions.json   # draft, commits
 PYTHONPATH=. python3 -m unittest tests.test_ff_plan -q          # 12 checks on the plan
 ```
 
-The draft under review is **176 specimens, 176 predictions, 154 holdout**, sha256
-`4b06f78b9ea3edeb8f151dc0c19f81ac824d49d3ec533c7ebd43056ccba7eb8a`. That hash is a
+The draft under review is `gate_predictions` **1.5.0**: **184 specimens, 176
+predictions, 154 holdout, 168 committed endpoint pairs**, sha256
+`5440ef27acbd5b4f624cae54f4ffad89b3f656c1e6e5fa35b29226ff0d1b2e51`. That hash is a
 fingerprint of this document's decisions, not a commitment: it changes whenever the plan
 does, and `scripts/gate_emit_ff.py` will not write outside `build/` while
 `PREREGISTRATION_HOLD` is `True`.
@@ -252,11 +266,14 @@ put the plan in two places.
    refutable hypotheses, and softening them would remove the only thing a bitstream
    could contradict.
 
-Pre-registration itself remains **held**, and since 2026-08-04 there is a second,
-independent reason for it: **the comparison endpoint is not part of the commitment**.
-A 1.4 feature prediction names only the asserted specimen, so which specimen supplies
-the `before` value of the transition stays a producer choice made after the bitstreams
-exist. `docs/round10_request.md` asks for a preregistered `comparison_specimen_id` and a
-verifier equality against `baseline_specimen_id`. Until that lands, the variant list may
-be recorded as a plan but must not become a commitment — a frozen key space whose
-comparison endpoints are not frozen with it cannot be repaired afterwards.
+The second, independent blocker raised on 2026-08-04 — **the comparison endpoint was not
+part of the commitment** — is **closed**. `docs/round10_handoff.md` shipped schema
+1.5.0: `comparison_specimen_id` is required and locked in advance, the verifier rebuilds
+the whole pair set and the in-scope union from the commitment, and substituting a
+baseline *together with* its accounting record still fails. The producer half now emits
+and reads it, and the variant list above is the one that would be frozen.
+
+Pre-registration itself remains **held**. Every technical precondition is met; what is
+left is the author's decision to freeze, which is deliberately a separate act —
+`PREREGISTRATION_HOLD` in `scripts/gate_emit_ff.py`, one line, so the record shows who
+lifted it and when.

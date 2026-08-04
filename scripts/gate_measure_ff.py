@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Score a `clb_ff_config` run against its committed predictions — certificate 1.4.
+"""Score a `clb_ff_config` run against its committed predictions — certificate 1.5.
 
 Refuses to score unless `predictions.json` still hashes to the committed value. That
 check is the whole point of the ordering: a measurement of predictions that were edited
@@ -25,10 +25,12 @@ What 1.4 changed, and what this tool therefore does differently from `gate_measu
   reject a record that reports two values for one bit of one specimen. Opposite values
   in *different* specimens are valid and are how complementary states get certified.
 
-Every pair in a site instance is `(base, variant)`; which of the two endpoints is
-claimed to assert the feature comes from the prediction's own `specimen_id`, and which
-variant forms the pair comes from the committed `pair_features` — neither is re-derived
-here, because a second copy of the plan is a plan that can drift.
+Both endpoints of every pair are committed: the prediction's `specimen_id` is the one
+claimed to assert the feature and `comparison_specimen_id` — required from schema 1.5 —
+is the other. Neither is derived here. An earlier version worked the second one out from
+the specimen plan, which was fine only while every pair happened to be `(base, variant)`
+and, worse, left the choice of what an assertion is differenced against open until after
+the bitstreams existed (`docs/round10_request.md`).
 
     scripts/gate_measure_ff.py --run gate_runs/<run> --build build/gate_ff \\
                                --expect-sha256 <committed> --out <run>/measurement.json
@@ -123,6 +125,58 @@ def classify_diff(raw, scope, index, pattern, asserted_tiles):
         else:
             buckets["ownership_unknown"].add((far, word, bit))
     return buckets, class_claimed_out_of_scope
+
+
+def committed_pairs(doc: dict) -> tuple[dict, dict]:
+    """`(scopes_by_pair, direction_of_feature)` from the commitment alone.
+
+    Two different things, deliberately separated:
+
+    * **the pair** is an UNORDERED set of two specimens. It is what gets diffed, what
+      carries one five-bucket accounting record, and what the verifier rebuilds from the
+      commitment — so it is keyed canonically. A complementary pair like
+      `CLKINV`/`NOCLKINV` asserts in both directions over one bit, and keying by
+      `(comparison, asserting)` recorded it twice: 176 predictions produced 176
+      accounting records where the commitment implies 168, double-counting any FP in
+      those eight pairs and failing the verifier's completeness check outright.
+    * **the direction** is per feature: which endpoint asserts and which supplies the
+      `before` value. That stays `(comparison, asserting)`, because the transition is
+      read from a specific end.
+    """
+    scopes: dict[tuple[str, str], set[tuple[int, int, int]]] = {}
+    direction: dict[str, tuple[str, str]] = {}
+    for prediction in doc["predictions"]:
+        asserting = prediction["specimen_id"]
+        comparison = prediction.get("comparison_specimen_id")
+        if comparison is None:
+            raise SystemExit(f"{prediction['feature']}: predictions predate schema 1.5 "
+                             "and do not commit a comparison endpoint — refusing to score")
+        if comparison == asserting:
+            raise SystemExit(f"{prediction['feature']}: committed endpoint pair is a "
+                             "single specimen — refusing to score")
+        direction[prediction["feature"]] = (comparison, asserting)
+        canonical = tuple(sorted((comparison, asserting)))
+        scopes.setdefault(canonical, set()).update(
+            address_tuple(item["address"]) for item in prediction["predicted_assignments"])
+    return scopes, direction
+
+
+def format_pair_alarm(record: dict) -> str:
+    """One line for a pair that carries unexplained bits or false positives.
+
+    Extracted only so it can be tested. This branch runs exactly when something has
+    gone wrong, which is precisely when nobody wants to discover that it names a field
+    the accounting record stopped having — it read `record['variant']` for one commit
+    after the field became `variants`, and would have raised KeyError at the moment the
+    report mattered.
+    """
+    counts = record["counts"]
+    label = f"{record['site']}/{'+'.join(record['variants'])}"
+    return (f"{label:<34} raw={record['raw_diff_bits']:>4} "
+            f"scope={counts['in_scope']:>3} ecc={counts['frame_ecc']:>3} "
+            f"db={counts['db_attributed']:>3} unk={counts['ownership_unknown']:>3} "
+            f"unatt={counts['unattributed']:>3} "
+            f"FP={len(record['false_positive_addresses'])}")
 
 
 def semantic_verdict(transition_exact: bool, observed, expected) -> bool:
@@ -247,29 +301,26 @@ def main() -> int:
             address_problems.append(f"{specimen['specimen_id']}: no attestation")
         specimen_records.append(record)
 
-    # ---- endpoint pairs: (base, variant) per site instance ----------------------
-    predictions_by_feature = {p["feature"]: p for p in doc["predictions"]}
-    scopes_by_pair: dict[tuple[str, str], set[tuple[int, int, int]]] = {}
-    pair_of_feature: dict[str, tuple[str, str]] = {}
-    for specimen in doc["specimens"]:
-        if not specimen["pair_features"]:
-            continue
-        base_id = f"{specimen['site']}_base"
-        if base_id not in by_id:
-            raise SystemExit(f"{specimen['specimen_id']}: no base specimen for its site")
-        key = (base_id, specimen["specimen_id"])
-        scope = scopes_by_pair.setdefault(key, set())
-        for feature in specimen["pair_features"]:
-            prediction = predictions_by_feature.get(feature)
-            if prediction is None:
-                raise SystemExit(f"{feature}: named as a pair feature but never predicted")
-            pair_of_feature[feature] = key
-            scope |= {address_tuple(a["address"]) for a in prediction["predicted_assignments"]}
+    # ---- endpoint pairs, read from the commitment -------------------------------
+    # From schema 1.5 the other endpoint is `comparison_specimen_id`, preregistered per
+    # prediction. It is READ here, never derived: deriving it — as this tool did while
+    # every pair happened to be (base, variant) — would leave the producer free to pick
+    # what an assertion is differenced against after the bitstreams exist, which is the
+    # hole `docs/round10_request.md` closed. The verifier rebuilds the same pair set and
+    # the same in-scope union from the same committed fields.
+    scopes_by_pair, pair_of_feature = committed_pairs(doc)
+    for feature, (comparison, asserting) in pair_of_feature.items():
+        if comparison not in by_id or asserting not in by_id:
+            raise SystemExit(f"{feature}: committed endpoint pair "
+                             f"({asserting}, {comparison}) is not two known specimens")
 
     accounting = []
     false_positives: dict[tuple[str, str], list[dict]] = {}
     for (base_id, variant_id), scope in sorted(scopes_by_pair.items()):
         base, variant = by_id[base_id], by_id[variant_id]
+        if base["split"] != variant["split"]:
+            address_problems.append(
+                f"{base_id}/{variant_id}: endpoints are in different splits")
         try:
             base_frames, variant_frames = frames_of(base), frames_of(variant)
         except FileNotFoundError as exc:
@@ -296,7 +347,9 @@ def main() -> int:
         false_positives[(base_id, variant_id)] = as_addresses(fp_bits)
         accounting.append({
             "site": base["site"],
-            "variant": variant["variant"],
+            # Both ends by name: labelling a pair with one variant reads as "base" for
+            # every key whose asserting endpoint is the baseline design.
+            "variants": [base["variant"], variant["variant"]],
             "specimen_ids": [base_id, variant_id],
             "raw_diff_bits": len(raw),
             "counts": {name: len(value) for name, value in buckets.items()},
@@ -317,8 +370,12 @@ def main() -> int:
         if pair is None:
             address_problems.append(f"{prediction['feature']}: no endpoint pair — cannot score")
             continue
-        base_id, variant_id = pair
-        other_id = variant_id if prediction["specimen_id"] == base_id else base_id
+        # `pair` is (committed comparison endpoint, asserting endpoint), so the other end
+        # is the comparison endpoint by construction — not something to work out here.
+        other_id, asserting_id = pair
+        if asserting_id != prediction["specimen_id"]:
+            raise SystemExit(f"{prediction['feature']}: pair does not name its own "
+                             "asserting specimen — refusing")
         try:
             feature_bits = read_tile_bits(
                 frames_of(feature_specimen),
@@ -382,7 +439,9 @@ def main() -> int:
             "feature": prediction["feature"],
             "split": split,
             "rule_file": prediction["rule_file"],
-            "baseline_specimen_id": other_id if other_id != prediction["specimen_id"] else base_id,
+            # the preregistered comparison endpoint, copied — the verifier compares this
+            # field with the commitment and rejects any other value
+            "baseline_specimen_id": other_id,
             "feature_specimen_id": prediction["specimen_id"],
             "predicted_assignments": prediction["predicted_assignments"],
             "expected_transition": transition,
@@ -402,9 +461,11 @@ def main() -> int:
 
     # FP is a pair-level count, not a per-result one: one address wrong in one pair is
     # one FP however many features that pair carries. Charged to the pair's split.
-    for (base_id, variant_id), addresses in false_positives.items():
-        split = by_id[variant_id]["split"]
-        totals[split]["fp"] += len(addresses)
+    # Both ends of a pair are the same site instance and therefore the same split; the
+    # accounting loop above records a problem if that ever stops being true, so reading
+    # it off either end is safe here.
+    for (base_id, _variant_id), addresses in false_positives.items():
+        totals[by_id[base_id]["split"]]["fp"] += len(addresses)
 
     print(f"\n  results: {len(results)} of {len(doc['predictions'])} predictions scored")
     for split in ("mine", "holdout"):
@@ -417,10 +478,7 @@ def main() -> int:
     for record in accounting:
         counts = record["counts"]
         if counts["ownership_unknown"] or counts["unattributed"] or record["false_positive_addresses"]:
-            print(f"    {record['site']}/{record['variant']:<12} raw={record['raw_diff_bits']:>4} "
-                  f"scope={counts['in_scope']:>3} ecc={counts['frame_ecc']:>3} "
-                  f"db={counts['db_attributed']:>3} unk={counts['ownership_unknown']:>3} "
-                  f"unatt={counts['unattributed']:>3} FP={len(record['false_positive_addresses'])}")
+            print(f"    {format_pair_alarm(record)}")
 
     holdout = totals["holdout"]
     committed_holdout = doc["totals"]["holdout_predictions"]

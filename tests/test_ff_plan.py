@@ -164,17 +164,139 @@ class FfPlanTests(unittest.TestCase):
             self.assertTrue(assertion["attestation_field"].startswith("/resolved/"))
             self.assertIsInstance(assertion["expected_value"], str)
 
-    def test_prediction_records_carry_exactly_the_1_4_contract_fields(self) -> None:
-        expected = {"specimen_id", "feature", "split", "rule_file",
-                    "predicted_assignments", "expected_transition", "semantic_assertion"}
+    def test_prediction_records_carry_exactly_the_1_5_contract_fields(self) -> None:
+        self.assertEqual(self.plan["schema_version"], "1.5.0")
+        expected = {"specimen_id", "comparison_specimen_id", "feature", "split",
+                    "rule_file", "predicted_assignments", "expected_transition",
+                    "semantic_assertion"}
         for prediction in self.plan["predictions"]:
             self.assertEqual(set(prediction), expected)
+
+    def test_both_endpoints_of_every_pair_are_committed(self) -> None:
+        # The round-10 rule: the comparison endpoint is preregistered, so it cannot be
+        # chosen after the bitstreams exist. Every value it takes must be a real
+        # specimen, must differ from the asserting one, and must agree with the
+        # specimen plan's own pairing.
+        ids = {s["specimen_id"] for s in self.plan["specimens"]}
+        owners = {feature: s for s in self.plan["specimens"]
+                  for feature in s["pair_features"]}
+        for prediction in self.plan["predictions"]:
+            comparison = prediction["comparison_specimen_id"]
+            self.assertIn(comparison, ids)
+            self.assertNotEqual(comparison, prediction["specimen_id"])
+            owner = owners[prediction["feature"]]
+            ends = {owner["specimen_id"], owner["pair_with"]}
+            self.assertEqual({prediction["specimen_id"], comparison}, ends)
+
+    def test_the_latch_pair_is_against_its_control_matched_baseline(self) -> None:
+        # Measured, not assumed: pairing LATCH against the shared base moves FFSYNC and
+        # CLKINV too, and eight latches per slice will not build at all.
+        for prediction in self.plan["predictions"]:
+            if not prediction["feature"].endswith(".LATCH"):
+                continue
+            self.assertTrue(prediction["specimen_id"].endswith("_latch"))
+            self.assertTrue(prediction["comparison_specimen_id"].endswith("_latch_base"))
+
+    def test_the_pair_set_is_a_consequence_of_the_commitment(self) -> None:
+        pairs = {frozenset((p["specimen_id"], p["comparison_specimen_id"]))
+                 for p in self.plan["predictions"]}
+        self.assertEqual(len(pairs), 168)
+        self.assertEqual(len(self.plan["specimens"]), 184)
+        # no specimen is committed that no pair uses
+        used = {name for pair in pairs for name in pair}
+        self.assertEqual(used, {s["specimen_id"] for s in self.plan["specimens"]})
 
     def test_the_emitter_refuses_to_write_a_commitment_while_the_hold_stands(self) -> None:
         checked = emit(REPO_ROOT / "gate_runs/ff_hold_probe/predictions.json")
         self.assertNotEqual(checked.returncode, 0, checked.stdout)
         self.assertIn("pre-registration is HELD", checked.stdout)
         self.assertFalse((REPO_ROOT / "gate_runs/ff_hold_probe").exists())
+
+
+class CommittedPairAccountingTests(unittest.TestCase):
+    """176 predictions must produce 168 accounting records, not 176.
+
+    A pair is an unordered set of two specimens: one diff, one five-bucket record. The
+    eight complementary `CLKINV`/`NOCLKINV` pairs assert in both directions over one
+    bit, so keying the accounting by `(comparison, asserting)` recorded each of them
+    twice — which double-counts any FP they carry and fails the verifier's
+    "exactly the committed pair set, once per pair" check outright. The direction is
+    still per feature, because the transition is read from a specific end.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls._directory = tempfile.TemporaryDirectory(dir=REPO_ROOT / "build")
+        out = Path(cls._directory.name) / "predictions.json"
+        checked = emit(out)
+        assert checked.returncode == 0, checked.stdout
+        cls.plan = json.loads(out.read_text())
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls._directory.cleanup()
+
+    def pairs(self):
+        sys.path.insert(0, str(REPO_ROOT / "scripts"))
+        from gate_measure_ff import committed_pairs  # noqa: PLC0415
+
+        return committed_pairs(self.plan)
+
+    def test_the_accounting_key_is_the_unordered_pair(self) -> None:
+        scopes, direction = self.pairs()
+        self.assertEqual(len(self.plan["predictions"]), 176)
+        self.assertEqual(len(scopes), 168)
+        self.assertEqual(len(direction), 176)
+        # and it agrees with the commitment read independently of the tool
+        expected = {tuple(sorted((p["specimen_id"], p["comparison_specimen_id"])))
+                    for p in self.plan["predictions"]}
+        self.assertEqual(set(scopes), expected)
+
+    def test_complementary_features_share_one_accounting_record(self) -> None:
+        scopes, direction = self.pairs()
+        clkinv = next(f for f in direction if f.endswith(".CLKINV"))
+        noclkinv = clkinv.replace(".CLKINV", ".NOCLKINV")
+        # opposite directions, one pair, one scope entry
+        self.assertEqual(direction[clkinv], tuple(reversed(direction[noclkinv])))
+        self.assertEqual(tuple(sorted(direction[clkinv])),
+                         tuple(sorted(direction[noclkinv])))
+        self.assertEqual(len(scopes[tuple(sorted(direction[clkinv]))]), 1)
+
+    def test_the_direction_still_names_which_end_asserts(self) -> None:
+        _scopes, direction = self.pairs()
+        for prediction in self.plan["predictions"]:
+            comparison, asserting = direction[prediction["feature"]]
+            self.assertEqual(asserting, prediction["specimen_id"])
+            self.assertEqual(comparison, prediction["comparison_specimen_id"])
+
+    def test_every_pair_scope_covers_all_of_its_features(self) -> None:
+        scopes, _direction = self.pairs()
+        for prediction in self.plan["predictions"]:
+            key = tuple(sorted((prediction["specimen_id"],
+                                prediction["comparison_specimen_id"])))
+            for item in prediction["predicted_assignments"]:
+                address = (int(item["address"]["far"], 16),
+                           item["address"]["word"], item["address"]["bit"])
+                self.assertIn(address, scopes[key])
+
+    def test_the_pair_alarm_names_fields_the_record_actually_has(self) -> None:
+        # This branch only runs when something is already wrong, so it is the one most
+        # likely to be broken and least likely to be noticed.
+        sys.path.insert(0, str(REPO_ROOT / "scripts"))
+        from gate_measure_ff import format_pair_alarm  # noqa: PLC0415
+
+        record = {
+            "site": "SLICE_X3Y25", "variants": ["base", "clkinv"],
+            "specimen_ids": ["SLICE_X3Y25_base", "SLICE_X3Y25_clkinv"],
+            "raw_diff_bits": 7,
+            "counts": {"in_scope": 1, "frame_ecc": 5, "db_attributed": 0,
+                       "ownership_unknown": 1, "unattributed": 0},
+            "false_positive_addresses": [{"far": "0x00400A01", "word": 52, "bit": 19}],
+        }
+        line = format_pair_alarm(record)
+        self.assertIn("base+clkinv", line)
+        self.assertIn("unk=  1", line)
+        self.assertIn("FP=1", line)
 
 
 class LatchProbeScopeTests(unittest.TestCase):

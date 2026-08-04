@@ -74,18 +74,6 @@ SLICE_WIDE = {
     "NOCLKINV": ("base", "/resolved/clock_mode", "NOCLKINV"),
 }
 
-# The variant each slice-wide feature is paired against, i.e. the other endpoint of the
-# diff. Recorded in the specimen plan because the pairing is part of the commitment even
-# though the certificate is what names it per result.
-SLICE_WIDE_PAIR = {
-    "CEUSEDMUX": "ce_tied",
-    "SRUSEDMUX": "sr_tied",
-    "FFSYNC": "async",
-    "LATCH": "base",
-    "CLKINV": "base",
-    "NOCLKINV": "clkinv",
-}
-
 CLAIMS = {
     "ZINI": "the flip-flop's INIT value is the one this feature names",
     "ZRST": "the flip-flop's reset/set value is the one this feature names",
@@ -150,17 +138,20 @@ def plan_for_site(grid: dict, site: str, pattern: re.Pattern[str]) -> tuple[list
     def feature(tail: str) -> str:
         return f"{tile_type}.{prefix}.{tail}"
 
-    # `pair_features` is what makes the endpoint pairing part of the commitment. Every
-    # pair in a site instance is (base, variant) — the base design is one endpoint of
-    # all 22 — so naming the variant names the pair, and the prediction's own
-    # `specimen_id` says which of the two endpoints is claimed to assert the feature.
-    # Without this the measurement tool would have to re-derive the plan from feature
-    # names, i.e. keep a second copy of the plan that could drift from this one.
-    def specimen(variant: str, pair_features: list[str], **extra) -> dict:
+    # `pair_features` names the features whose endpoint pair this specimen owns, and
+    # `pair_with` names the other end of that pair. Most pairs are (base, variant), but
+    # not all — the LATCH pair is (latch_base, latch), because a latch endpoint has to
+    # match the baseline's reset kind and clock polarity or the pair moves FFSYNC and
+    # CLKINV too (measured: `docs/ff_latch_probe.md`). The prediction's own
+    # `specimen_id` says which end asserts, and `comparison_specimen_id` — required from
+    # schema 1.5 — commits the other end so it cannot be chosen after the build.
+    def specimen(variant: str, pair_features: list[str], pair_with: str | None = None,
+                 **extra) -> dict:
         specimen_id = f"{site}_{variant}"
         return {"specimen_id": specimen_id, "site": site, "variant": variant,
                 "tile": tile_name, "tile_type": tile_type, "site_prefix": prefix,
                 "split": split, "pair_features": pair_features,
+                "pair_with": f"{site}_{pair_with}" if pair_with else None,
                 # The certificate schema requires a build seed per specimen. Deriving it
                 # from the specimen id keeps the plan reproducible and keeps the build
                 # tool from choosing one after the fact.
@@ -170,19 +161,27 @@ def plan_for_site(grid: dict, site: str, pattern: re.Pattern[str]) -> tuple[list
     specimens = [specimen("base", [],
                           description="8x FDRE, INIT=1, CE and R driven, sync, "
                                       "non-inverted clock, anchored; one endpoint of "
-                                      "every pair in this site instance")]
-    specimens += [specimen(f"zini_{bel}", [feature(f"{bel}.ZINI")], ff_bel=bel,
+                                      "every pair in this site instance except LATCH")]
+    specimens += [specimen(f"zini_{bel}", [feature(f"{bel}.ZINI")], "base", ff_bel=bel,
                            description=f"{bel} INIT=0; same P&R as base")
                   for bel in FF_BELS]
-    specimens += [specimen(f"zrst_{bel}", [feature(f"{bel}.ZRST")], ff_bel=bel,
+    specimens += [specimen(f"zrst_{bel}", [feature(f"{bel}.ZRST")], "base", ff_bel=bel,
                            description=f"{bel} is FDSE (SRVAL=1)")
                   for bel in FF_BELS]
     specimens += [
-        specimen("ce_tied", [feature("CEUSEDMUX")], description="CE tied to 1'b1"),
-        specimen("sr_tied", [feature("SRUSEDMUX")], description="R tied to 1'b0"),
-        specimen("async", [feature("FFSYNC")], description="FDCE, asynchronous clear"),
-        specimen("latch", [feature("LATCH")], description="LDCE"),
-        specimen("clkinv", [feature("CLKINV"), feature("NOCLKINV")],
+        specimen("ce_tied", [feature("CEUSEDMUX")], "base", description="CE tied to 1'b1"),
+        specimen("sr_tied", [feature("SRUSEDMUX")], "base", description="R tied to 1'b0"),
+        specimen("async", [feature("FFSYNC")], "base",
+                 description="FDCE, asynchronous clear"),
+        # Four elements, not eight: A5FF and its siblings are BEL type FF_INIT and
+        # Vivado refuses an LDCE on one. The baseline matches the latch's reset kind and
+        # clock polarity so the pair moves the LATCH bit alone.
+        specimen("latch_base", [],
+                 description="4x FDCE with IS_C_INVERTED on AFF..DFF; the LATCH pair's "
+                             "control-matched baseline"),
+        specimen("latch", [feature("LATCH")], "latch_base",
+                 description="4x LDCE on AFF..DFF"),
+        specimen("clkinv", [feature("CLKINV"), feature("NOCLKINV")], "base",
                  description="IS_C_INVERTED on the clock pin; complementary pair, so "
                              "both endpoints assert"),
     ]
@@ -196,12 +195,21 @@ def plan_for_site(grid: dict, site: str, pattern: re.Pattern[str]) -> tuple[list
             raise SystemExit(f"{feature}: no frozen rule — cannot predict")
         if len(tokens) != 1:
             raise SystemExit(f"{feature}: expected a single-bit rule, got {tokens}")
-        if not any(feature in s["pair_features"] for s in specimens):
+        owner = next((s for s in specimens if feature in s["pair_features"]), None)
+        if owner is None:
             raise SystemExit(f"{feature}: no specimen names it as a pair — refusing")
+        # The other end of this pair, committed rather than derived at measurement time.
+        asserting = f"{site}_{variant}"
+        comparison = owner["pair_with"] if asserting == owner["specimen_id"] else owner["specimen_id"]
+        if comparison is None or comparison == asserting:
+            raise SystemExit(f"{feature}: comparison endpoint is missing or self — refusing")
+        if not any(s["specimen_id"] == comparison for s in specimens):
+            raise SystemExit(f"{feature}: comparison endpoint {comparison} is not a specimen")
         item = assignment(block, tokens[0])
         value = item["expected_value"]
         predictions.append({
-            "specimen_id": f"{site}_{variant}",
+            "specimen_id": asserting,
+            "comparison_specimen_id": comparison,
             "feature": feature,
             "split": split,
             "rule_file": rule_file,
@@ -279,7 +287,7 @@ def main() -> int:
     rule_files = sorted({p["rule_file"] for p in predictions})
     doc = {
         "schema": "gate_predictions",
-        "schema_version": "1.4.0",
+        "schema_version": "1.5.0",
         "bit_class": "clb_ff_config",
         "seed": args.seed,
         "split_policy": {
