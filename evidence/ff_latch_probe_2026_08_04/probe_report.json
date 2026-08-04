@@ -1,0 +1,1671 @@
+{
+  "schema": "ff_latch_probe",
+  "schema_version": "1.1.0",
+  "status": "exploration \u2014 not evidence for any certificate",
+  "bit_class": "clb_ff_config",
+  "site": "SLICE_X2Y25",
+  "site_split": "mine (evidence already spent; can never score)",
+  "tile": "CLBLL_L_X2Y25",
+  "tile_type": "CLBLL_L",
+  "latch_feature": {
+    "feature": "CLBLL_L.SLICEL_X0.LATCH",
+    "token": "30_32",
+    "address": {
+      "far": "0x00400A1E",
+      "word": 52,
+      "bit": 0
+    }
+  },
+  "recipe": {
+    "vivado/specimen/specimen_ff_probe.v": "e1ece6fe9635277b7307a97f4bff7a41c8f421a76d608349f67b6f10d98805d9",
+    "vivado/specimen/build_ff_probe.tcl": "889898db455343a8dc4f93a047f5e62173cec3e1ca4e531c055245300f74c5c9",
+    "scripts/gate_build_ff.py": "dd30995b693fa9ac5f9984497e76c7ffba8982b8416800f3b4c429afb2d600a7"
+  },
+  "unbuildable_modes": {
+    "full_latch": "build failed; see run.out"
+  },
+  "artifacts": {
+    "fdce": {
+      "mode": 0,
+      "description": "control-matched baseline: FDCE, asynchronous clear, CE and CLR driven",
+      "built": true,
+      "bitstream": "build/ff_latch_probe/fdce/spec.bit",
+      "bitstream_sha256": "7f5c03b89c3612edc7f0615c16c4196ffacadec1b30a59947c8df93bc09245ec",
+      "checkpoint_sha256": "1035206cc13a23b712d30f063aed01fa4e01c2bf53b717d423f7350b7a59e358",
+      "readback_sha256": "33eb8db8020cffe33cf4f02cf247e8b1d3ff34631f3c8a1a6e688968959f0f0b",
+      "vivado_version": "2025.2",
+      "part": "xc7z010clg400-1",
+      "storage": {
+        "ref": "FDCE",
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.AFF",
+        "init": "1'b0"
+      },
+      "storage_inversions": {
+        "IS_CLR_INVERTED": "1'b0",
+        "IS_C_INVERTED": "1'b0",
+        "IS_D_INVERTED": "1'b0"
+      },
+      "lut": {
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.A6LUT",
+        "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6"
+      },
+      "control_pins": {
+        "C": "clk_g",
+        "CE": "ce_IBUF",
+        "CLR": "rst_IBUF",
+        "D": "o_OBUF",
+        "Q": "q_OBUF"
+      },
+      "storage_count": "1",
+      "storage_cells": [
+        {
+          "name": "g_single.g_fdce.storage",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "init": "1'b0"
+        }
+      ],
+      "lut_cells": [
+        {
+          "name": "g_single.target_lut",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT"
+        }
+      ],
+      "occupied_bels": [
+        "SLICE_X2Y25/A6LUT",
+        "SLICE_X2Y25/AFF"
+      ],
+      "anchor_placement": {
+        "anchor.0.bel": "SLICEM.AFF",
+        "anchor.0.loc": "SLICE_X4Y20",
+        "anchor.0.name": "g_anchor.anchor_ff",
+        "anchor.0.ref": "FDRE",
+        "anchor.1.bel": "SLICEL.AFF",
+        "anchor.1.loc": "SLICE_X2Y20",
+        "anchor.1.name": "g_anchor.anchor_ff2",
+        "anchor.1.ref": "FDRE",
+        "anchor.2.bel": "SLICEM.A6LUT",
+        "anchor.2.loc": "SLICE_X4Y20",
+        "anchor.2.name": "g_anchor.anchor_lut1",
+        "anchor.2.ref": "LUT6",
+        "anchor.3.bel": "SLICEM.B6LUT",
+        "anchor.3.loc": "SLICE_X4Y20",
+        "anchor.3.name": "g_anchor.anchor_lut2",
+        "anchor.3.ref": "LUT6"
+      }
+    },
+    "ldce": {
+      "mode": 1,
+      "description": "the latch under test: LDCE, GE and CLR driven",
+      "built": true,
+      "bitstream": "build/ff_latch_probe/ldce/spec.bit",
+      "bitstream_sha256": "d04545ce12f227eca5852670551def1d4f2fe1b8d0607f2ef7f16d786f34180e",
+      "checkpoint_sha256": "d4cd67390179f03d9444ccee861f099bdf6ab7d1516d65e0d6545c42dcc3a8d1",
+      "readback_sha256": "e7815325056d9440fb32d73641f0215f1ba2284ad631c65b32f13b97708014ea",
+      "vivado_version": "2025.2",
+      "part": "xc7z010clg400-1",
+      "storage": {
+        "ref": "LDCE",
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.AFF",
+        "init": "1'b0"
+      },
+      "storage_inversions": {
+        "IS_CLR_INVERTED": "1'b0",
+        "IS_G_INVERTED": "1'b0"
+      },
+      "lut": {
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.A6LUT",
+        "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6"
+      },
+      "control_pins": {
+        "CLR": "rst_IBUF",
+        "D": "o_OBUF",
+        "G": "clk_g",
+        "GE": "ce_IBUF",
+        "Q": "q_OBUF"
+      },
+      "storage_count": "1",
+      "storage_cells": [
+        {
+          "name": "g_single.g_ldce.storage",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "init": "1'b0"
+        }
+      ],
+      "lut_cells": [
+        {
+          "name": "g_single.target_lut",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT"
+        }
+      ],
+      "occupied_bels": [
+        "SLICE_X2Y25/A6LUT",
+        "SLICE_X2Y25/AFF"
+      ],
+      "anchor_placement": {
+        "anchor.0.bel": "SLICEM.AFF",
+        "anchor.0.loc": "SLICE_X4Y20",
+        "anchor.0.name": "g_anchor.anchor_ff",
+        "anchor.0.ref": "FDRE",
+        "anchor.1.bel": "SLICEL.AFF",
+        "anchor.1.loc": "SLICE_X2Y20",
+        "anchor.1.name": "g_anchor.anchor_ff2",
+        "anchor.1.ref": "FDRE",
+        "anchor.2.bel": "SLICEM.A6LUT",
+        "anchor.2.loc": "SLICE_X4Y20",
+        "anchor.2.name": "g_anchor.anchor_lut1",
+        "anchor.2.ref": "LUT6",
+        "anchor.3.bel": "SLICEM.B6LUT",
+        "anchor.3.loc": "SLICE_X4Y20",
+        "anchor.3.name": "g_anchor.anchor_lut2",
+        "anchor.3.ref": "LUT6"
+      }
+    },
+    "fdre": {
+      "mode": 2,
+      "description": "the plan's default baseline B: FDRE, synchronous reset",
+      "built": true,
+      "bitstream": "build/ff_latch_probe/fdre/spec.bit",
+      "bitstream_sha256": "3459a7b51a0de0c1895eade191a06ee16800581e975b02832a571b141f767f2a",
+      "checkpoint_sha256": "06545b257ca341dc26b3c22da737058f765a64f2ab33ed91ca128c4938fa32dd",
+      "readback_sha256": "3f66d96b3dd15936bd1b5634bc765682e013bfab2d64da8c7836de8e366ee1ed",
+      "vivado_version": "2025.2",
+      "part": "xc7z010clg400-1",
+      "storage": {
+        "ref": "FDRE",
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.AFF",
+        "init": "1'b0"
+      },
+      "storage_inversions": {
+        "IS_C_INVERTED": "1'b0",
+        "IS_D_INVERTED": "1'b0",
+        "IS_R_INVERTED": "1'b0"
+      },
+      "lut": {
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.A6LUT",
+        "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6"
+      },
+      "control_pins": {
+        "C": "clk_g",
+        "CE": "ce_IBUF",
+        "D": "o_OBUF",
+        "Q": "q_OBUF",
+        "R": "rst_IBUF"
+      },
+      "storage_count": "1",
+      "storage_cells": [
+        {
+          "name": "g_single.g_fdre.storage",
+          "ref": "FDRE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "init": "1'b0"
+        }
+      ],
+      "lut_cells": [
+        {
+          "name": "g_single.target_lut",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT"
+        }
+      ],
+      "occupied_bels": [
+        "SLICE_X2Y25/A6LUT",
+        "SLICE_X2Y25/AFF"
+      ],
+      "anchor_placement": {
+        "anchor.0.bel": "SLICEM.AFF",
+        "anchor.0.loc": "SLICE_X4Y20",
+        "anchor.0.name": "g_anchor.anchor_ff",
+        "anchor.0.ref": "FDRE",
+        "anchor.1.bel": "SLICEL.AFF",
+        "anchor.1.loc": "SLICE_X2Y20",
+        "anchor.1.name": "g_anchor.anchor_ff2",
+        "anchor.1.ref": "FDRE",
+        "anchor.2.bel": "SLICEM.A6LUT",
+        "anchor.2.loc": "SLICE_X4Y20",
+        "anchor.2.name": "g_anchor.anchor_lut1",
+        "anchor.2.ref": "LUT6",
+        "anchor.3.bel": "SLICEM.B6LUT",
+        "anchor.3.loc": "SLICE_X4Y20",
+        "anchor.3.name": "g_anchor.anchor_lut2",
+        "anchor.3.ref": "LUT6"
+      }
+    },
+    "fdce_inv": {
+      "mode": 3,
+      "description": "second control match: FDCE with the clock inverted, added after mode 0 measured a residual CLKINV mover",
+      "built": true,
+      "bitstream": "build/ff_latch_probe/fdce_inv/spec.bit",
+      "bitstream_sha256": "87d8aa20ceb78ea05dda6b585127b2cf3cacd169dee55b29acd21e27791ba971",
+      "checkpoint_sha256": "fa30db37757350332b341f11e765f76dc78c6ee912bdbfcccf6d93858dfd3afe",
+      "readback_sha256": "0ab4f3d6bc188d35a639711c9de3af4355bd4b09e7597e8eabbb541853a11c0a",
+      "vivado_version": "2025.2",
+      "part": "xc7z010clg400-1",
+      "storage": {
+        "ref": "FDCE",
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.AFF",
+        "init": "1'b0"
+      },
+      "storage_inversions": {
+        "IS_CLR_INVERTED": "1'b0",
+        "IS_C_INVERTED": "1'b1",
+        "IS_D_INVERTED": "1'b0"
+      },
+      "lut": {
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.A6LUT",
+        "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6"
+      },
+      "control_pins": {
+        "C": "clk_g",
+        "CE": "ce_IBUF",
+        "CLR": "rst_IBUF",
+        "D": "o_OBUF",
+        "Q": "q_OBUF"
+      },
+      "storage_count": "1",
+      "storage_cells": [
+        {
+          "name": "g_single.g_fdce_inv.storage",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "init": "1'b0"
+        }
+      ],
+      "lut_cells": [
+        {
+          "name": "g_single.target_lut",
+          "ref": "LUT6",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT"
+        }
+      ],
+      "occupied_bels": [
+        "SLICE_X2Y25/A6LUT",
+        "SLICE_X2Y25/AFF"
+      ],
+      "anchor_placement": {
+        "anchor.0.bel": "SLICEM.AFF",
+        "anchor.0.loc": "SLICE_X4Y20",
+        "anchor.0.name": "g_anchor.anchor_ff",
+        "anchor.0.ref": "FDRE",
+        "anchor.1.bel": "SLICEL.AFF",
+        "anchor.1.loc": "SLICE_X2Y20",
+        "anchor.1.name": "g_anchor.anchor_ff2",
+        "anchor.1.ref": "FDRE",
+        "anchor.2.bel": "SLICEM.A6LUT",
+        "anchor.2.loc": "SLICE_X4Y20",
+        "anchor.2.name": "g_anchor.anchor_lut1",
+        "anchor.2.ref": "LUT6",
+        "anchor.3.bel": "SLICEM.B6LUT",
+        "anchor.3.loc": "SLICE_X4Y20",
+        "anchor.3.name": "g_anchor.anchor_lut2",
+        "anchor.3.ref": "LUT6"
+      }
+    },
+    "full_base": {
+      "mode": 4,
+      "description": "formal topology: 8 storage elements, FDCE with the clock inverted",
+      "built": true,
+      "bitstream": "build/ff_latch_probe/full_base/spec.bit",
+      "bitstream_sha256": "8ab8fb7d57a5fadc10f291261998049a34a30bc4f7c587d96676f30ec01c48d8",
+      "checkpoint_sha256": "bebac28ef550745c77e0c97b1051ec90a984f96d3832c01e503c496a21d3557b",
+      "readback_sha256": "e338a0a5ef99c5f2d4c1a3d875aae731051911232244c632ad2df52533515b7e",
+      "vivado_version": "2025.2",
+      "part": "xc7z010clg400-1",
+      "storage": {
+        "ref": "FDCE",
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.AFF",
+        "init": "1'b0"
+      },
+      "storage_inversions": {
+        "IS_CLR_INVERTED": "1'b0",
+        "IS_C_INVERTED": "1'b1",
+        "IS_D_INVERTED": "1'b0"
+      },
+      "lut": {
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.A6LUT",
+        "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5"
+      },
+      "control_pins": {
+        "C": "clk_g",
+        "CE": "ce_IBUF",
+        "CLR": "rst_IBUF",
+        "D": "o_OBUF",
+        "Q": "g_full.qb[0]"
+      },
+      "storage_count": "8",
+      "storage_cells": [
+        {
+          "name": "g_full.g_store[0].g_used.g_ff.s",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[1].g_used.g_ff.s",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A5FF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[2].g_used.g_ff.s",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.BFF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[3].g_used.g_ff.s",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B5FF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[4].g_used.g_ff.s",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.CFF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[5].g_used.g_ff.s",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.C5FF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[6].g_used.g_ff.s",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.DFF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[7].g_used.g_ff.s",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.D5FF",
+          "init": "1'b0"
+        }
+      ],
+      "lut_cells": [
+        {
+          "name": "g_full.g_hi[0].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT"
+        },
+        {
+          "name": "g_full.g_hi[1].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B6LUT"
+        },
+        {
+          "name": "g_full.g_hi[2].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.C6LUT"
+        },
+        {
+          "name": "g_full.g_hi[3].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.D6LUT"
+        },
+        {
+          "name": "g_full.g_lo[0].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A5LUT"
+        },
+        {
+          "name": "g_full.g_lo[1].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B5LUT"
+        },
+        {
+          "name": "g_full.g_lo[2].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.C5LUT"
+        },
+        {
+          "name": "g_full.g_lo[3].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.D5LUT"
+        }
+      ],
+      "occupied_bels": [
+        "SLICE_X2Y25/D5FF",
+        "SLICE_X2Y25/C5FF",
+        "SLICE_X2Y25/A6LUT",
+        "SLICE_X2Y25/A5LUT",
+        "SLICE_X2Y25/DFF",
+        "SLICE_X2Y25/CFF",
+        "SLICE_X2Y25/BFF",
+        "SLICE_X2Y25/AFF",
+        "SLICE_X2Y25/B5FF",
+        "SLICE_X2Y25/A5FF",
+        "SLICE_X2Y25/D6LUT",
+        "SLICE_X2Y25/D5LUT",
+        "SLICE_X2Y25/C6LUT",
+        "SLICE_X2Y25/C5LUT",
+        "SLICE_X2Y25/B6LUT",
+        "SLICE_X2Y25/B5LUT"
+      ],
+      "anchor_placement": {
+        "anchor.0.bel": "SLICEM.AFF",
+        "anchor.0.loc": "SLICE_X4Y20",
+        "anchor.0.name": "g_anchor.anchor_ff",
+        "anchor.0.ref": "FDRE",
+        "anchor.1.bel": "SLICEL.AFF",
+        "anchor.1.loc": "SLICE_X2Y20",
+        "anchor.1.name": "g_anchor.anchor_ff2",
+        "anchor.1.ref": "FDRE",
+        "anchor.2.bel": "SLICEM.A6LUT",
+        "anchor.2.loc": "SLICE_X4Y20",
+        "anchor.2.name": "g_anchor.anchor_lut1",
+        "anchor.2.ref": "LUT6",
+        "anchor.3.bel": "SLICEM.B6LUT",
+        "anchor.3.loc": "SLICE_X4Y20",
+        "anchor.3.name": "g_anchor.anchor_lut2",
+        "anchor.3.ref": "LUT6"
+      }
+    },
+    "full_latch": {
+      "mode": 5,
+      "description": "formal topology: 8 storage elements, LDCE",
+      "built": false,
+      "why": "build failed; see run.out"
+    },
+    "main_base": {
+      "mode": 6,
+      "description": "4 storage elements (main only), FDCE with the clock inverted",
+      "built": true,
+      "bitstream": "build/ff_latch_probe/main_base/spec.bit",
+      "bitstream_sha256": "f7d22a2c9d2efc16388363ae483892cc2ae362e872f8dce95c95eef35556d009",
+      "checkpoint_sha256": "e037d159f11a69bb31cc23254a82aa0af3fee79899c7517f13c65299096da76e",
+      "readback_sha256": "33ca4e51f225e800192959c8e81b353243a4024f2c48533a0c3995d0eb52a541",
+      "vivado_version": "2025.2",
+      "part": "xc7z010clg400-1",
+      "storage": {
+        "ref": "FDCE",
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.AFF",
+        "init": "1'b0"
+      },
+      "storage_inversions": {
+        "IS_CLR_INVERTED": "1'b0",
+        "IS_C_INVERTED": "1'b1",
+        "IS_D_INVERTED": "1'b0"
+      },
+      "lut": {
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.A6LUT",
+        "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5"
+      },
+      "control_pins": {
+        "C": "clk_g",
+        "CE": "ce_IBUF",
+        "CLR": "rst_IBUF",
+        "D": "o_OBUF",
+        "Q": "g_full.qb[0]"
+      },
+      "storage_count": "4",
+      "storage_cells": [
+        {
+          "name": "g_full.g_store[0].g_used.g_ff.s",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[1].g_used.g_ff.s",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.BFF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[2].g_used.g_ff.s",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.CFF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[3].g_used.g_ff.s",
+          "ref": "FDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.DFF",
+          "init": "1'b0"
+        }
+      ],
+      "lut_cells": [
+        {
+          "name": "g_full.g_hi[0].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT"
+        },
+        {
+          "name": "g_full.g_hi[1].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B6LUT"
+        },
+        {
+          "name": "g_full.g_hi[2].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.C6LUT"
+        },
+        {
+          "name": "g_full.g_hi[3].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.D6LUT"
+        },
+        {
+          "name": "g_full.g_lo[0].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A5LUT"
+        },
+        {
+          "name": "g_full.g_lo[1].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B5LUT"
+        },
+        {
+          "name": "g_full.g_lo[2].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.C5LUT"
+        },
+        {
+          "name": "g_full.g_lo[3].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.D5LUT"
+        }
+      ],
+      "occupied_bels": [
+        "SLICE_X2Y25/D6LUT",
+        "SLICE_X2Y25/D5LUT",
+        "SLICE_X2Y25/BFF",
+        "SLICE_X2Y25/AFF",
+        "SLICE_X2Y25/C6LUT",
+        "SLICE_X2Y25/C5LUT",
+        "SLICE_X2Y25/B6LUT",
+        "SLICE_X2Y25/B5LUT",
+        "SLICE_X2Y25/A6LUT",
+        "SLICE_X2Y25/A5LUT",
+        "SLICE_X2Y25/DFF",
+        "SLICE_X2Y25/CFF"
+      ],
+      "anchor_placement": {
+        "anchor.0.bel": "SLICEM.AFF",
+        "anchor.0.loc": "SLICE_X4Y20",
+        "anchor.0.name": "g_anchor.anchor_ff",
+        "anchor.0.ref": "FDRE",
+        "anchor.1.bel": "SLICEL.AFF",
+        "anchor.1.loc": "SLICE_X2Y20",
+        "anchor.1.name": "g_anchor.anchor_ff2",
+        "anchor.1.ref": "FDRE",
+        "anchor.2.bel": "SLICEM.A6LUT",
+        "anchor.2.loc": "SLICE_X4Y20",
+        "anchor.2.name": "g_anchor.anchor_lut1",
+        "anchor.2.ref": "LUT6",
+        "anchor.3.bel": "SLICEM.B6LUT",
+        "anchor.3.loc": "SLICE_X4Y20",
+        "anchor.3.name": "g_anchor.anchor_lut2",
+        "anchor.3.ref": "LUT6"
+      }
+    },
+    "main_latch": {
+      "mode": 7,
+      "description": "4 storage elements (main only), LDCE",
+      "built": true,
+      "bitstream": "build/ff_latch_probe/main_latch/spec.bit",
+      "bitstream_sha256": "12c77db214e31a4caa63c7c9ceeaf88251e48c1f3d3457fe679135335ec1d4dd",
+      "checkpoint_sha256": "c427ac136edd317d94941e484b5a7a522952169b97e1b47813189938e38d26de",
+      "readback_sha256": "067c3a407518a433917914caf6421fbfac69cf9c4dc353d999335c2e00916efe",
+      "vivado_version": "2025.2",
+      "part": "xc7z010clg400-1",
+      "storage": {
+        "ref": "LDCE",
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.AFF",
+        "init": "1'b0"
+      },
+      "storage_inversions": {
+        "IS_CLR_INVERTED": "1'b0",
+        "IS_G_INVERTED": "1'b0"
+      },
+      "lut": {
+        "loc": "SLICE_X2Y25",
+        "bel": "SLICEL.A6LUT",
+        "lock_pins": "I0:A1 I1:A2 I2:A3 I3:A4 I4:A5"
+      },
+      "control_pins": {
+        "CLR": "rst_IBUF",
+        "D": "o_OBUF",
+        "G": "clk_g",
+        "GE": "ce_IBUF",
+        "Q": "g_full.qb[0]"
+      },
+      "storage_count": "4",
+      "storage_cells": [
+        {
+          "name": "g_full.g_store[0].g_used.g_latch.s",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[1].g_used.g_latch.s",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.BFF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[2].g_used.g_latch.s",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.CFF",
+          "init": "1'b0"
+        },
+        {
+          "name": "g_full.g_store[3].g_used.g_latch.s",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.DFF",
+          "init": "1'b0"
+        }
+      ],
+      "lut_cells": [
+        {
+          "name": "g_full.g_hi[0].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A6LUT"
+        },
+        {
+          "name": "g_full.g_hi[1].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B6LUT"
+        },
+        {
+          "name": "g_full.g_hi[2].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.C6LUT"
+        },
+        {
+          "name": "g_full.g_hi[3].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.D6LUT"
+        },
+        {
+          "name": "g_full.g_lo[0].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.A5LUT"
+        },
+        {
+          "name": "g_full.g_lo[1].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.B5LUT"
+        },
+        {
+          "name": "g_full.g_lo[2].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.C5LUT"
+        },
+        {
+          "name": "g_full.g_lo[3].l",
+          "ref": "LUT5",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.D5LUT"
+        }
+      ],
+      "occupied_bels": [
+        "SLICE_X2Y25/D6LUT",
+        "SLICE_X2Y25/D5LUT",
+        "SLICE_X2Y25/BFF",
+        "SLICE_X2Y25/AFF",
+        "SLICE_X2Y25/C6LUT",
+        "SLICE_X2Y25/C5LUT",
+        "SLICE_X2Y25/B6LUT",
+        "SLICE_X2Y25/B5LUT",
+        "SLICE_X2Y25/A6LUT",
+        "SLICE_X2Y25/A5LUT",
+        "SLICE_X2Y25/DFF",
+        "SLICE_X2Y25/CFF"
+      ],
+      "anchor_placement": {
+        "anchor.0.bel": "SLICEM.AFF",
+        "anchor.0.loc": "SLICE_X4Y20",
+        "anchor.0.name": "g_anchor.anchor_ff",
+        "anchor.0.ref": "FDRE",
+        "anchor.1.bel": "SLICEL.AFF",
+        "anchor.1.loc": "SLICE_X2Y20",
+        "anchor.1.name": "g_anchor.anchor_ff2",
+        "anchor.1.ref": "FDRE",
+        "anchor.2.bel": "SLICEM.A6LUT",
+        "anchor.2.loc": "SLICE_X4Y20",
+        "anchor.2.name": "g_anchor.anchor_lut1",
+        "anchor.2.ref": "LUT6",
+        "anchor.3.bel": "SLICEM.B6LUT",
+        "anchor.3.loc": "SLICE_X4Y20",
+        "anchor.3.name": "g_anchor.anchor_lut2",
+        "anchor.3.ref": "LUT6"
+      }
+    }
+  },
+  "pairs": [
+    {
+      "pair": "control_matched",
+      "question": "first candidate: does matching the reset kind isolate LATCH?",
+      "modes": [
+        "fdce",
+        "ldce"
+      ],
+      "raw_diff_bits": 16,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 14,
+        "db_attributed": 1,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "buckets": {
+        "in_scope": [
+          {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 0
+          }
+        ],
+        "frame_ecc": [
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 0
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 1
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 4
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 5
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 6
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 7
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 8
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 11
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 12
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 5
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 6
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 7
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 8
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 11
+          }
+        ],
+        "db_attributed": [
+          {
+            "far": "0x00400A01",
+            "word": 52,
+            "bit": 19
+          }
+        ],
+        "ownership_unknown": [],
+        "unattributed": []
+      },
+      "preregistered_scope": [
+        {
+          "far": "0x00400A1E",
+          "word": 52,
+          "bit": 0
+        }
+      ],
+      "same_class_movers": [
+        {
+          "segbit": "01_51",
+          "address": {
+            "far": "0x00400A01",
+            "word": 52,
+            "bit": 19
+          },
+          "before": 0,
+          "after": 1,
+          "direction": "0->1",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.CLKINV",
+            "CLBLL_L.SLICEL_X0.NOCLKINV"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.CLKINV",
+            "CLBLL_L.SLICEL_X0.NOCLKINV"
+          ]
+        },
+        {
+          "segbit": "30_32",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 0
+          },
+          "before": 0,
+          "after": 1,
+          "direction": "0->1",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.LATCH"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.LATCH"
+          ]
+        }
+      ],
+      "same_class_movers_outside_scope": [
+        {
+          "segbit": "01_51",
+          "address": {
+            "far": "0x00400A01",
+            "word": 52,
+            "bit": 19
+          },
+          "before": 0,
+          "after": 1,
+          "direction": "0->1",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.CLKINV",
+            "CLBLL_L.SLICEL_X0.NOCLKINV"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.CLKINV",
+            "CLBLL_L.SLICEL_X0.NOCLKINV"
+          ]
+        }
+      ],
+      "false_positive_count_under_1_4": 1,
+      "false_positive_addresses": [
+        {
+          "far": "0x00400A01",
+          "word": 52,
+          "bit": 19
+        }
+      ],
+      "claims_latch": true,
+      "isolated_to_latch_bit": false
+    },
+    {
+      "pair": "control_matched_clkinv",
+      "question": "second candidate: reset kind AND clock polarity matched",
+      "modes": [
+        "fdce_inv",
+        "ldce"
+      ],
+      "raw_diff_bits": 6,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 5,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "buckets": {
+        "in_scope": [
+          {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 0
+          }
+        ],
+        "frame_ecc": [
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 5
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 6
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 7
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 8
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 11
+          }
+        ],
+        "db_attributed": [],
+        "ownership_unknown": [],
+        "unattributed": []
+      },
+      "preregistered_scope": [
+        {
+          "far": "0x00400A1E",
+          "word": 52,
+          "bit": 0
+        }
+      ],
+      "same_class_movers": [
+        {
+          "segbit": "30_32",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 0
+          },
+          "before": 0,
+          "after": 1,
+          "direction": "0->1",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.LATCH"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.LATCH"
+          ]
+        }
+      ],
+      "same_class_movers_outside_scope": [],
+      "false_positive_count_under_1_4": 0,
+      "false_positive_addresses": [],
+      "claims_latch": true,
+      "isolated_to_latch_bit": true
+    },
+    {
+      "pair": "full_slice",
+      "question": "THE ONE THAT DECIDES IT: the formal 8-element topology",
+      "modes": [
+        "full_base",
+        "full_latch"
+      ],
+      "not_measured": "an endpoint of this pair could not be built"
+    },
+    {
+      "pair": "main_only",
+      "question": "fallback topology if the slice cannot hold 8 latches",
+      "modes": [
+        "main_base",
+        "main_latch"
+      ],
+      "raw_diff_bits": 6,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 5,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "buckets": {
+        "in_scope": [
+          {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 0
+          }
+        ],
+        "frame_ecc": [
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 5
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 6
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 7
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 8
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 11
+          }
+        ],
+        "db_attributed": [],
+        "ownership_unknown": [],
+        "unattributed": []
+      },
+      "preregistered_scope": [
+        {
+          "far": "0x00400A1E",
+          "word": 52,
+          "bit": 0
+        }
+      ],
+      "same_class_movers": [
+        {
+          "segbit": "30_32",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 0
+          },
+          "before": 0,
+          "after": 1,
+          "direction": "0->1",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.LATCH"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.LATCH"
+          ]
+        }
+      ],
+      "same_class_movers_outside_scope": [],
+      "false_positive_count_under_1_4": 0,
+      "false_positive_addresses": [],
+      "claims_latch": true,
+      "isolated_to_latch_bit": true
+    },
+    {
+      "pair": "plan_default",
+      "question": "what the plan as written would have diffed",
+      "modes": [
+        "fdre",
+        "ldce"
+      ],
+      "raw_diff_bits": 24,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 21,
+        "db_attributed": 2,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "buckets": {
+        "in_scope": [
+          {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 0
+          }
+        ],
+        "frame_ecc": [
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 4
+          },
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 5
+          },
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 6
+          },
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 7
+          },
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 8
+          },
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 11
+          },
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 12
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 0
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 1
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 4
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 5
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 6
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 7
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 8
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 11
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 12
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 5
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 6
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 7
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 8
+          },
+          {
+            "far": "0x00400A1E",
+            "word": 50,
+            "bit": 11
+          }
+        ],
+        "db_attributed": [
+          {
+            "far": "0x00400A00",
+            "word": 52,
+            "bit": 16
+          },
+          {
+            "far": "0x00400A01",
+            "word": 52,
+            "bit": 19
+          }
+        ],
+        "ownership_unknown": [],
+        "unattributed": []
+      },
+      "preregistered_scope": [
+        {
+          "far": "0x00400A1E",
+          "word": 52,
+          "bit": 0
+        }
+      ],
+      "same_class_movers": [
+        {
+          "segbit": "00_48",
+          "address": {
+            "far": "0x00400A00",
+            "word": 52,
+            "bit": 16
+          },
+          "before": 1,
+          "after": 0,
+          "direction": "1->0",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.FFSYNC"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.FFSYNC"
+          ]
+        },
+        {
+          "segbit": "01_51",
+          "address": {
+            "far": "0x00400A01",
+            "word": 52,
+            "bit": 19
+          },
+          "before": 0,
+          "after": 1,
+          "direction": "0->1",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.CLKINV",
+            "CLBLL_L.SLICEL_X0.NOCLKINV"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.CLKINV",
+            "CLBLL_L.SLICEL_X0.NOCLKINV"
+          ]
+        },
+        {
+          "segbit": "30_32",
+          "address": {
+            "far": "0x00400A1E",
+            "word": 52,
+            "bit": 0
+          },
+          "before": 0,
+          "after": 1,
+          "direction": "0->1",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.LATCH"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.LATCH"
+          ]
+        }
+      ],
+      "same_class_movers_outside_scope": [
+        {
+          "segbit": "00_48",
+          "address": {
+            "far": "0x00400A00",
+            "word": 52,
+            "bit": 16
+          },
+          "before": 1,
+          "after": 0,
+          "direction": "1->0",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.FFSYNC"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.FFSYNC"
+          ]
+        },
+        {
+          "segbit": "01_51",
+          "address": {
+            "far": "0x00400A01",
+            "word": 52,
+            "bit": 19
+          },
+          "before": 0,
+          "after": 1,
+          "direction": "0->1",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.CLKINV",
+            "CLBLL_L.SLICEL_X0.NOCLKINV"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.CLKINV",
+            "CLBLL_L.SLICEL_X0.NOCLKINV"
+          ]
+        }
+      ],
+      "false_positive_count_under_1_4": 2,
+      "false_positive_addresses": [
+        {
+          "far": "0x00400A00",
+          "word": 52,
+          "bit": 16
+        },
+        {
+          "far": "0x00400A01",
+          "word": 52,
+          "bit": 19
+        }
+      ],
+      "claims_latch": true,
+      "isolated_to_latch_bit": false
+    },
+    {
+      "pair": "control_match_cost",
+      "question": "what matching the reset kind itself moves",
+      "modes": [
+        "fdre",
+        "fdce"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 0,
+        "frame_ecc": 7,
+        "db_attributed": 1,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "buckets": {
+        "in_scope": [],
+        "frame_ecc": [
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 4
+          },
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 5
+          },
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 6
+          },
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 7
+          },
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 8
+          },
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 11
+          },
+          {
+            "far": "0x00400A00",
+            "word": 50,
+            "bit": 12
+          }
+        ],
+        "db_attributed": [
+          {
+            "far": "0x00400A00",
+            "word": 52,
+            "bit": 16
+          }
+        ],
+        "ownership_unknown": [],
+        "unattributed": []
+      },
+      "preregistered_scope": [],
+      "same_class_movers": [
+        {
+          "segbit": "00_48",
+          "address": {
+            "far": "0x00400A00",
+            "word": 52,
+            "bit": 16
+          },
+          "before": 1,
+          "after": 0,
+          "direction": "1->0",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.FFSYNC"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.FFSYNC"
+          ]
+        }
+      ],
+      "same_class_movers_outside_scope": [
+        {
+          "segbit": "00_48",
+          "address": {
+            "far": "0x00400A00",
+            "word": 52,
+            "bit": 16
+          },
+          "before": 1,
+          "after": 0,
+          "direction": "1->0",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.FFSYNC"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.FFSYNC"
+          ]
+        }
+      ],
+      "false_positive_count_under_1_4": 1,
+      "false_positive_addresses": [
+        {
+          "far": "0x00400A00",
+          "word": 52,
+          "bit": 16
+        }
+      ],
+      "claims_latch": false,
+      "isolated_to_latch_bit": false
+    },
+    {
+      "pair": "clock_inversion_cost",
+      "question": "what matching the clock polarity itself moves",
+      "modes": [
+        "fdce",
+        "fdce_inv"
+      ],
+      "raw_diff_bits": 10,
+      "counts": {
+        "in_scope": 0,
+        "frame_ecc": 9,
+        "db_attributed": 1,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "buckets": {
+        "in_scope": [],
+        "frame_ecc": [
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 0
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 1
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 4
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 5
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 6
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 7
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 8
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 11
+          },
+          {
+            "far": "0x00400A01",
+            "word": 50,
+            "bit": 12
+          }
+        ],
+        "db_attributed": [
+          {
+            "far": "0x00400A01",
+            "word": 52,
+            "bit": 19
+          }
+        ],
+        "ownership_unknown": [],
+        "unattributed": []
+      },
+      "preregistered_scope": [],
+      "same_class_movers": [
+        {
+          "segbit": "01_51",
+          "address": {
+            "far": "0x00400A01",
+            "word": 52,
+            "bit": 19
+          },
+          "before": 0,
+          "after": 1,
+          "direction": "0->1",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.CLKINV",
+            "CLBLL_L.SLICEL_X0.NOCLKINV"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.CLKINV",
+            "CLBLL_L.SLICEL_X0.NOCLKINV"
+          ]
+        }
+      ],
+      "same_class_movers_outside_scope": [
+        {
+          "segbit": "01_51",
+          "address": {
+            "far": "0x00400A01",
+            "word": 52,
+            "bit": 19
+          },
+          "before": 0,
+          "after": 1,
+          "direction": "0->1",
+          "class_features": [
+            "CLBLL_L.SLICEL_X0.CLKINV",
+            "CLBLL_L.SLICEL_X0.NOCLKINV"
+          ],
+          "all_features": [
+            "CLBLL_L.SLICEL_X0.CLKINV",
+            "CLBLL_L.SLICEL_X0.NOCLKINV"
+          ]
+        }
+      ],
+      "false_positive_count_under_1_4": 1,
+      "false_positive_addresses": [
+        {
+          "far": "0x00400A01",
+          "word": 52,
+          "bit": 19
+        }
+      ],
+      "claims_latch": false,
+      "isolated_to_latch_bit": false
+    }
+  ],
+  "commitment": "none emitted; PREREGISTRATION_HOLD untouched"
+}

@@ -59,7 +59,10 @@ the whole class**.
 ## 2. Specimen family, per site instance
 
 Every design instantiates **all eight storage elements of the slice under test**, so
-every per-FF bit exists and can be moved individually. This is a change from
+every per-FF bit exists and can be moved individually — **except the `LATCH` pair, which
+cannot**: `A5FF` and its siblings are BEL type `FF_INIT` and will not hold an `LDCE`
+(measured, `docs/ff_latch_probe.md`). That pair is four elements on `AFF..DFF` at both
+endpoints. This is a change from
 `vivado/specimen/specimen_ff.v`, which pins exactly one FF per slice: that was right for
 establishing isolation, and is wrong for covering `[A-D]5?FF.*`.
 
@@ -159,16 +162,27 @@ emit if any committed holdout key would go unreported.
    those movers are `db_attributed` **and** claimed by this class **and** outside the
    pair's single preregistered scope, which makes them FP by the 1.4 rule.
 
-   > **MEASURED 2026-08-04 — `docs/ff_latch_probe.md`.** The concern was real and the
-   > fix is a baseline, not a scope. `fdre → ldce` leaves two same-class movers
-   > (`FFSYNC` 1→0, `CLKINV` 0→1) and FP=2; matching the reset kind (`fdce → ldce`)
-   > leaves one, `CLKINV`, and FP=1; matching the reset kind **and** the clock polarity
-   > (`FDCE` with `IS_C_INVERTED` → `LDCE`) leaves **only the `LATCH` bit, FP=0**. Two
-   > control pairs attribute each removed mover separately. `LATCH` = `30_32` moves
-   > **0→1** into the latch, as preregistered. The proposed pairing change — one extra
-   > `latch_base` specimen per site instance, pairs and predictions unchanged at 168 and
-   > 176 — is written up there and is **not applied**: the variant list is fixed only
-   > once the author confirms the exploration.
+   > **MEASURED 2026-08-04 — `docs/ff_latch_probe.md`, two results.** The concern was
+   > real and the fix is a baseline, not a scope; and the topology of §2 turns out to be
+   > impossible for this one variant.
+   >
+   > *The isolation.* `fdre → ldce` leaves two same-class movers (`FFSYNC` 1→0,
+   > `CLKINV` 0→1) and FP=2; matching the reset kind leaves one, `CLKINV`, FP=1;
+   > matching the reset kind **and** the clock polarity (`FDCE` with `IS_C_INVERTED` →
+   > `LDCE`) leaves **only the `LATCH` bit, FP=0**. Two control pairs attribute each
+   > removed mover separately. `LATCH` = `30_32` moves **0→1** into the latch, as
+   > preregistered.
+   >
+   > *The topology.* **A slice cannot hold eight latches.** `A5FF` and its siblings are
+   > BEL type `FF_INIT` and Vivado refuses `LDCE` on them outright; the eight-element
+   > FDCE baseline builds fine, so the restriction is specific to latch mode. The
+   > `LATCH` pair is therefore a **four-element** pair on `AFF..DFF`, and the formal
+   > four-element pair reproduces the single-FF result exactly: raw 6, one mover, FP=0.
+   >
+   > The resulting change — `latch` redefined to four `LDCE`, one new `latch_base`
+   > specimen per site instance, pairs and predictions unchanged at 168 and 176 — is
+   > written up there and is **not applied**: the variant list is fixed only once the
+   > author confirms the exploration.
 
    > **Ruled 2026-08-04: `LATCH` stays in the key space, and its scope is not guessed.**
    > Before the commitment, the `LATCH` pair is explored **on the mine site only**

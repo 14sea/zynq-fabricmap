@@ -60,22 +60,84 @@ if {$anchor} {
     set_property BEL AFF     [get_cells g_anchor.anchor_ff2]
 }
 
-# The target LUT and the storage element, both pinned. `LOCK_PINS` on the LUT for the
-# reason `docs/mux_groups.md` records: Vivado permutes I0..I5 onto A1..A6 and rewrites
-# INIT, so without it the LUT content bits are not where the frozen rule says.
-set lut [get_cells target_lut]
-set_property LOC $site $lut
-set_property BEL A6LUT $lut
-set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} $lut
+# Pin the target cells. `LOCK_PINS` on every LUT for the reason `docs/mux_groups.md`
+# records: Vivado permutes I0..I5 onto A1..A6 and rewrites INIT, so without it the LUT
+# content bits are not where the frozen rule says they are.
+#
+# Cells are selected by REF_NAME and a name glob rather than by their generate-block
+# paths: those paths contain square brackets, which are Tcl command substitution AND
+# glob metacharacters, and getting that escaping subtly wrong is a silent no-op — the
+# same failure mode build_lutram.tcl hit twice.
+set lut_bels   {A6LUT B6LUT C6LUT D6LUT A5LUT B5LUT C5LUT D5LUT}
+set store_bels {AFF A5FF BFF B5FF CFF C5FF DFF D5FF}
 
-set cell [get_cells -hierarchical -filter {NAME =~ "*storage" && IS_PRIMITIVE && \
-                                           PRIMITIVE_LEVEL != "MACRO"}]
-if {[llength $cell] != 1} { error "expected exactly one storage cell, got [llength $cell]" }
-set_property LOC $site $cell
-catch {set_property BEL $bel $cell}
-set bel_effective [get_property BEL $cell]
-if {![string match "*$bel" $bel_effective]} {
-    puts "SPECIMEN_WARN requested BEL $bel but cell reads $bel_effective -- constraint did not take"
+if {$mode <= 3} {
+    # `target_lut` now lives inside a generate block, so it must be found by glob
+    # rather than by bare name — the same "matched nothing, constrained nothing,
+    # exited 0" failure build_lutram.tcl records twice.
+    set luts   [get_cells -hierarchical -filter {NAME =~ "*target_lut"}]
+    if {[llength $luts] != 1} { error "expected one target LUT, got [llength $luts]" }
+    set stores [get_cells -hierarchical -filter {NAME =~ "*storage" && IS_PRIMITIVE && \
+                                                 PRIMITIVE_LEVEL != "MACRO"}]
+    if {[llength $stores] != 1} { error "expected one storage cell, got [llength $stores]" }
+    set store_bels [list $bel]
+} else {
+    # x6LUT group first, then x5LUT group, matching $lut_bels.
+    set luts [concat [lsort [get_cells -hierarchical -filter {NAME =~ "*g_hi*" && IS_PRIMITIVE}]] \
+                     [lsort [get_cells -hierarchical -filter {NAME =~ "*g_lo*" && IS_PRIMITIVE}]]]
+    set stores [lsort [get_cells -hierarchical -filter {NAME =~ "*g_store*" && IS_PRIMITIVE}]]
+    if {[llength $luts] != 8} { error "expected 8 LUT5, got [llength $luts]" }
+    set want [expr {$mode < 6 ? 8 : 4}]
+    if {[llength $stores] != $want} {
+        error "expected $want storage cells, got [llength $stores]"
+    }
+    # The 4-element modes occupy the four MAIN storage elements. The 5FF BELs are type
+    # FF_INIT and Vivado refuses to place an LDCE on one, so a "first four" BEL list
+    # would ask for A5FF and fail for a reason that has nothing to do with the question.
+    if {$want == 4} { set store_bels {AFF BFF CFF DFF} }
+}
+
+# BEL before LOC: with LOC first Vivado picks a BEL itself and the next cell then
+# collides with that choice ("bel is occupied"), which is how this script failed the
+# first time the full-slice modes were built.
+set k 0
+foreach c $luts {
+    set_property BEL [lindex $lut_bels $k] $c
+    set_property LOC $site $c
+    if {[get_property REF_NAME $c] eq "LUT6"} {
+        set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} $c
+    } else {
+        set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5} $c
+    }
+    incr k
+}
+set k 0
+set bel_effective ""
+foreach c $stores {
+    set want_bel [lindex $store_bels $k]
+    catch {set_property BEL $want_bel $c}
+    set_property LOC $site $c
+    set got [get_property BEL $c]
+    if {![string match "*$want_bel" $got]} {
+        puts "SPECIMEN_WARN requested BEL $want_bel but cell reads $got -- constraint did not take"
+    }
+    if {$k == 0} { set bel_effective $got }
+    incr k
+}
+set lut  [lindex $luts 0]
+set cell [lindex $stores 0]
+
+# The Q-reduction LUTs of the full-slice modes go into the anchor tile, so the reduction
+# is bit-identical between the two endpoints of a pair and contributes nothing to it.
+if {$mode > 3} {
+    set r1 [get_cells -hierarchical -filter {NAME =~ "*q_reduce1"}]
+    set r2 [get_cells -hierarchical -filter {NAME =~ "*q_reduce2"}]
+    set_property LOC $asite $r1
+    set_property BEL C6LUT  $r1
+    set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} $r1
+    set_property LOC $asite $r2
+    set_property BEL D6LUT  $r2
+    set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} $r2
 }
 
 place_design
@@ -101,10 +163,32 @@ kv $fh anchor_site2 $asite2
 kv $fh site_type [get_property SITE_TYPE $st]
 kv $fh tile [get_tiles -of_objects $st]
 kv $fh tile_type [get_property TYPE [get_tiles -of_objects $st]]
+kv $fh storage_count [llength $stores]
+kv $fh lut_count [llength $luts]
 kv $fh storage_ref [get_property REF_NAME $cell]
 kv $fh storage_loc [get_property LOC $cell]
 kv $fh storage_bel [get_property BEL $cell]
 kv $fh storage_init [get_property -quiet INIT $cell]
+# Every storage element, not just the first: on the full-slice modes the question is
+# what the whole slice did, and a per-cell record is what makes "all eight landed where
+# they were asked to" checkable instead of assumed.
+set n 0
+foreach c $stores {
+    kv $fh store.$n.name [get_property NAME $c]
+    kv $fh store.$n.ref  [get_property REF_NAME $c]
+    kv $fh store.$n.loc  [get_property LOC $c]
+    kv $fh store.$n.bel  [get_property BEL $c]
+    kv $fh store.$n.init [get_property -quiet INIT $c]
+    incr n
+}
+set n 0
+foreach c $luts {
+    kv $fh lut.$n.name [get_property NAME $c]
+    kv $fh lut.$n.ref  [get_property REF_NAME $c]
+    kv $fh lut.$n.loc  [get_property LOC $c]
+    kv $fh lut.$n.bel  [get_property BEL $c]
+    incr n
+}
 # Pin-inversion properties are the control modes this class encodes, so they are read
 # back rather than inferred from the primitive name: a latch that arrives with its gate
 # inverted and a flip-flop that does not are two different control-set configurations,

@@ -11,46 +11,65 @@ slice-wide control set than the single `LATCH` bit — and every extra mover wou
 `db_attributed`, claimed by this class, outside the pair's one preregistered scope, i.e.
 a false positive under the fixed 1.4 rule with FP=0 required.
 
-The author's ruling was: keep `LATCH`, try a control-matched baseline first, and if
-movers remain, report all of them with their directions rather than guess a wider scope.
+Portable copy of everything below, with full bucket addresses, raw readbacks and the
+recipe hashes: `evidence/ff_latch_probe_2026_08_04/`.
 
-## Result
+## Two results, and the second one changes the specimen plan
 
-**A doubly control-matched baseline isolates `LATCH` to its single bit, FP = 0.** One
-control match was not enough; two are.
+**1. The `LATCH` bit isolates, but it takes two control matches.** One is not enough.
 
-| pair | raw | in_scope | ecc | db_attr | unknown | unattr | same-class movers | FP (1.4) |
-|---|---|---|---|---|---|---|---|---|
-| `fdre → ldce` (plan as written) | 24 | 1 | 21 | 2 | 0 | 0 | `FFSYNC` 1→0, `CLKINV` 0→1, `LATCH` 0→1 | **2** |
-| `fdce → ldce` (reset kind matched) | 16 | 1 | 14 | 1 | 0 | 0 | `CLKINV` 0→1, `LATCH` 0→1 | **1** |
-| **`fdce_inv → ldce`** (reset kind **and** clock polarity matched) | **6** | **1** | 5 | **0** | 0 | 0 | **`LATCH` 0→1 only** | **0** |
-| `fdre → fdce` (control) | 8 | — | 7 | 1 | 0 | 0 | `FFSYNC` 1→0 | — |
-| `fdce → fdce_inv` (control) | 10 | — | 9 | 1 | 0 | 0 | `CLKINV` 0→1 | — |
+**2. A slice cannot hold eight latches.** `A5FF` and its siblings are BEL type
+`FF_INIT`, and Vivado refuses outright:
+
+```
+ERROR: [Vivado 12-2285] Illegal to place instance ... g_latch.s on site SLICE_X2Y25.
+The location site type (SLICEL) and bel type (FF_INIT) do not match the cell type (LDCE).
+```
+
+This is not a constraint that can be worked around — it is what the site is. The plan's
+formal topology (all eight storage elements per slice) is therefore **impossible for the
+latch endpoint**, and the `LATCH` pair has to be a four-element pair on the main storage
+elements. The eight-element **baseline** builds fine (mode `full_base`, all of
+`AFF, A5FF, BFF, B5FF, CFF, C5FF, DFF, D5FF` occupied by `FDCE`), so the restriction is
+specific to latch mode, exactly as UG474 says.
+
+## Measurements
+
+| pair | topology | raw | in_scope | ecc | db_attr | unknown | unattr | same-class movers | FP (1.4) |
+|---|---|---|---|---|---|---|---|---|---|
+| `fdre → ldce` (plan as written) | 1 FF | 24 | 1 | 21 | 2 | 0 | 0 | `FFSYNC` 1→0, `CLKINV` 0→1, `LATCH` 0→1 | **2** |
+| `fdce → ldce` (reset kind matched) | 1 FF | 16 | 1 | 14 | 1 | 0 | 0 | `CLKINV` 0→1, `LATCH` 0→1 | **1** |
+| `fdce_inv → ldce` (reset **and** clock matched) | 1 FF | 6 | 1 | 5 | 0 | 0 | 0 | `LATCH` 0→1 only | **0** |
+| **`main_base → main_latch`** (**the formal pair**) | **4 FF** | **6** | **1** | 5 | **0** | 0 | 0 | **`LATCH` 0→1 only** | **0** |
+| `full_base → full_latch` | 8 FF | — | — | — | — | — | — | **NOT MEASURABLE** — the latch endpoint cannot be built | — |
+| `fdre → fdce` (control) | 1 FF | 8 | — | 7 | 1 | 0 | 0 | `FFSYNC` 1→0 | — |
+| `fdce → fdce_inv` (control) | 1 FF | 10 | — | 9 | 1 | 0 | 0 | `CLKINV` 0→1 | — |
 
 The two control pairs are what make this a measurement rather than a story: each removed
 mover is separately attributable. Matching the reset kind removes exactly `FFSYNC`;
-matching the clock polarity removes exactly `CLKINV`.
+matching the clock polarity removes exactly `CLKINV`. And the four-element pair
+reproduces the one-element result rather than merely agreeing with it in spirit — same
+raw count, same single mover, same FP.
 
-`LATCH` = `CLBLL_L.SLICEL_X0.LATCH` = segbit `30_32` = `0x00400A1E` word 52 bit 0, and it
-moves **0→1** into the latch — the direction the plan preregisters.
+`LATCH` = `CLBLL_L.SLICEL_X0.LATCH` = segbit `30_32` = `0x00400A1E` word 52 bit 0,
+moving **0→1** into the latch, the direction the plan preregisters.
 
-## The baseline that works
+## The pair that works
 
-`FDCE` with `IS_C_INVERTED`, i.e. asynchronous clear like `LDCE`'s `CLR`, **and** an
-inverted clock. Both endpoints then carry `CLKINV = 1` and `FFSYNC = 0`, so neither bit
-appears in the diff at all.
+Both endpoints are four-element designs on the **main** storage elements, fed by four
+`LUT5`s on `A6LUT..D6LUT` (with four more on `A5LUT..D5LUT` present in both endpoints so
+the LUT occupancy cannot vary):
 
 ```
-mode 0  fdce      FDCE                       CE, CLR driven   IS_C_INVERTED=0
-mode 1  ldce      LDCE   <- under test       GE, CLR driven   IS_G_INVERTED=0
-mode 2  fdre      FDRE   <- plan default      CE, R driven     IS_C_INVERTED=0
-mode 3  fdce_inv  FDCE   <- the fix          CE, CLR driven   IS_C_INVERTED=1
+main_base    4x FDCE, IS_C_INVERTED=1, CE and CLR driven   -> AFF BFF CFF DFF
+main_latch   4x LDCE, IS_G_INVERTED=0, GE and CLR driven   -> AFF BFF CFF DFF
 ```
 
-All four resolved to `SLICEL.AFF` in `CLBLL_L_X2Y25` with the target LUT6 on `A6LUT`
-under `LOCK_PINS`, occupying exactly `{A6LUT, AFF}`; anchor placement and LUT placement
-are byte-identical across all four readbacks, so nothing structural varied except the
-storage element itself.
+Both endpoints occupy exactly the same twelve BELs
+(`A6LUT..D6LUT`, `A5LUT..D5LUT`, `AFF..DFF`); the readbacks differ only in the storage
+`REF_NAME` and its inversion properties. The Q outputs are reduced to the single `q`
+port by two `LUT6`s pinned into the anchor tile, so the reduction is bit-identical
+between endpoints and contributes nothing to the diff.
 
 ## The finding worth keeping
 
@@ -59,40 +78,42 @@ asked for no inversion anywhere; the bitstream has `01_51` set. So `CLKINV` is n
 faithful readout of "the netlist inverted this clock" — in latch mode the slice asserts
 it regardless. What is *measured* is that matching the baseline's clock polarity removes
 the mover; that latch mode implies the inverted-clock encoding is the obvious mechanism
-but is an inference, not something this probe establishes.
+but is an inference this probe does not establish.
 
 Two consequences, both narrow:
 
-1. The plan's semantic assertion for the `CLKINV`/`NOCLKINV` keys reads
-   `/resolved/clock_mode`, which is derived from the netlist inversion property. That
-   remains right for the `clkinv` pair (mode 3 confirms `IS_C_INVERTED = 1` ⇒ bit 0→1)
-   and would be **wrong if it were ever applied to a latch specimen**. It is not, and
-   must not be.
-2. `CLKINV = 1` will be true of the `LATCH` pair's baseline as well as of the `clkinv`
-   variant. That is not a conflict: observation consistency is per specimen, and these
-   are different specimens.
+1. The plan's semantic assertion for `CLKINV`/`NOCLKINV` reads `/resolved/clock_mode`,
+   derived from the netlist inversion property. That stays right for the `clkinv` pair
+   (mode `fdce_inv` confirms `IS_C_INVERTED = 1` ⇒ bit 0→1) and would be **wrong if ever
+   applied to a latch specimen**. It is not, and must not be.
+2. `CLKINV = 1` holds for the `LATCH` pair's baseline as well as for the `clkinv`
+   variant. Not a conflict: observation consistency is per specimen, and these are
+   different specimens.
 
 Two of the plan's twelve directional predictions were incidentally confirmed on the mine
 site, which is what a mine site is for — they inform, they do not score:
 `FFSYNC = 1 ⟺ synchronous` and `CLKINV = 1 ⟺ inverted clock`.
 
-## Artifacts
+## Artifacts and reproduction
 
-`build/ff_latch_probe/` (gitignored), Vivado 2025.2, `xc7z010clg400-1`. Full five-bucket
-records, per-bit directions, resolved LOC/BEL, control-pin nets, pin-inversion
-properties and occupied BELs are in `probe_report.json`.
+`build/ff_latch_probe/` (gitignored) holds the bitstreams and checkpoints;
+`evidence/ff_latch_probe_2026_08_04/` holds the portable record — the full report with
+every bucket address, the seven raw `readback.tsv` files, and a manifest pinning the
+recipe (`specimen_ff_probe.v`, `build_ff_probe.tcl`, `gate_build_ff.py`) plus every
+bitstream/checkpoint/readback hash. Bitstreams themselves are not copied: they are large
+and rebuildable from the pinned recipe, and their hashes travel with the manifest.
 
-| mode | bitstream sha256 | checkpoint sha256 | readback sha256 |
-|---|---|---|---|
-| fdce | `65df5a6e5c723857…` | `ce1d2741f09d1351…` | `26d485c7bfff616f…` |
-| ldce | `f5acd7e03868f8e5…` | `7157b089671b5761…` | `c61d2f4f9c13f81d…` |
-| fdre | `464089a15547a303…` | `a75bd0ff2a1f31d6…` | `a7736b3809d1ec1d…` |
-| fdce_inv | `c30341a8d184ffdb…` | `86f5e9ba272cb542…` | `04bfc13fee61fae0…` |
+Vivado 2025.2, `xc7z010clg400-1`. Reproduce with
+`scripts/gate_build_ff.py --out build/ff_latch_probe`.
 
-Reproduce with `scripts/gate_build_ff.py --out build/ff_latch_probe`. As
-`docs/mux_groups.md` records for the other classes: hashing a checkpoint and a bitstream
-together anchors both against substitution but does not prove the bitstream came from
-that checkpoint.
+Build reuse is verified rather than assumed: each mode's directory carries a
+`stamp.json` written only after `SPECIMEN_DONE`, naming the mode, the site, the hash of
+every source that produced it and the hash of every artifact. A non-empty directory
+without a matching stamp is **refused**, not overwritten and not reused — the first run
+of this probe after the stamp landed did exactly that to its own predecessor's output.
+As `docs/mux_groups.md` records for the other classes: hashing a checkpoint and a
+bitstream together anchors both against substitution but does not prove the bitstream
+came from that checkpoint.
 
 ## Proposed adjustment to the 176-key plan — NOT applied
 
@@ -100,18 +121,20 @@ that checkpoint.
 `4b06f78b9ea3edeb8f151dc0c19f81ac824d49d3ec533c7ebd43056ccba7eb8a`. The variant list is
 the author's to fix once this result is confirmed. What it would become:
 
-- add one specimen per site instance, `latch_base` = `FDCE` with `IS_C_INVERTED`;
+- the `latch` variant is redefined: **four** `LDCE` on `AFF..DFF`, not eight — eight is
+  not buildable;
+- a new `latch_base` specimen per site instance: four `FDCE` with `IS_C_INVERTED` on the
+  same four BELs;
 - the `LATCH` pair becomes `(latch_base, latch)` instead of `(base, latch)`;
 - specimens per site instance 22 → 23 (**184 total**), P&R runs 14 → 15 (**120 total**),
   bitstreams **184**;
-- **endpoint pairs stay 168 and predictions stay 176** — the `LATCH` pair changes which
-  specimen it is paired against, not how many keys exist. Coverage stays 176/176 and the
-  split stays 22 / 154.
+- **endpoint pairs stay 168 and predictions stay 176.** Coverage stays 176/176, split
+  stays 22 / 154. The `LATCH` key keeps its one-bit scope.
 
-This needs one mechanical change to the emitter beyond the extra specimen: `pair_features`
-currently assumes every pair is `(base, variant)`, so each variant needs an explicit
-`pair_with` naming its other endpoint, and `gate_measure_ff.py` must read it instead of
-deriving `{site}_base`. Nothing about the key space moves.
+Mechanically it needs one change beyond the extra specimen: `pair_features` currently
+assumes every pair is `(base, variant)`, so each variant needs an explicit `pair_with`
+naming its other endpoint, and `gate_measure_ff.py` must read that instead of deriving
+`{site}_base`.
 
-**Not done, and deliberately: no wider scope was guessed and no entry was dropped.** The
-`LATCH` key keeps a one-bit scope, which is what the freeze says it is.
+**No wider scope was guessed and no entry was dropped.** The plan's other 175 keys are
+untouched by this: only the `LATCH` pair's two endpoints change.

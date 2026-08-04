@@ -209,6 +209,76 @@ class LatchProbeScopeTests(unittest.TestCase):
         self.assertNotIn("PREREGISTRATION_HOLD =", source)
         self.assertNotIn("predictions.json", source)
 
+    def test_a_stale_or_unstamped_output_directory_is_refused(self) -> None:
+        # Artifacts existing is not evidence that they are THIS run's artifacts. The
+        # cases below all look like a successful build from the outside.
+        sys.path.insert(0, str(REPO_ROOT / "scripts"))
+        from gate_build_ff import cache_state, recipe_hashes  # noqa: PLC0415
+
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT / "build") as directory:
+            outdir = Path(directory) / "mode"
+            outdir.mkdir()
+            for name in ("spec.bit", "readback.tsv", "base.dcp"):
+                (outdir / name).write_bytes(b"stale")
+            self.assertEqual(cache_state(outdir, 0)[0], "refuse")
+
+            def stamp(**overrides) -> None:
+                value = {
+                    "completed": True, "mode": 0, "site": "SLICE_X2Y25",
+                    "recipe": recipe_hashes(),
+                    "artifacts": {name: hashlib.sha256(b"stale").hexdigest()
+                                  for name in ("spec.bit", "readback.tsv", "base.dcp")},
+                }
+                value.update(overrides)
+                (outdir / "stamp.json").write_text(json.dumps(value))
+
+            stamp()
+            self.assertEqual(cache_state(outdir, 0)[0], "reuse")
+            stamp(mode=3)
+            self.assertEqual(cache_state(outdir, 0)[0], "refuse")
+            stamp(site="SLICE_X9Y25")
+            self.assertEqual(cache_state(outdir, 0)[0], "refuse")
+            stamp(completed=False)
+            self.assertEqual(cache_state(outdir, 0)[0], "refuse")
+            stamp(recipe={"vivado/specimen/specimen_ff_probe.v": "0" * 64})
+            self.assertEqual(cache_state(outdir, 0)[0], "refuse")
+            stamp()
+            (outdir / "spec.bit").write_bytes(b"different")
+            self.assertEqual(cache_state(outdir, 0)[0], "refuse")
+
+
+class LatchProbeEvidenceTests(unittest.TestCase):
+    """The committed evidence must be self-describing, because build/ is gitignored.
+
+    A record that pointed at artifacts a fresh clone cannot resolve is a record nobody
+    can check — the same reason measurements copy their attestations into the run
+    directory.
+    """
+
+    EVIDENCE = REPO_ROOT / "evidence/ff_latch_probe_2026_08_04"
+
+    def test_the_manifest_hashes_match_the_files_it_names(self) -> None:
+        manifest = json.loads((self.EVIDENCE / "manifest.json").read_text())
+        self.assertTrue(manifest["files"])
+        for name, digest in manifest["files"].items():
+            path = self.EVIDENCE / name
+            self.assertTrue(path.is_file(), name)
+            self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), digest, name)
+
+    def test_the_recorded_result_is_the_one_the_documents_cite(self) -> None:
+        report = json.loads((self.EVIDENCE / "probe_report.json").read_text())
+        pairs = {item["pair"]: item for item in report["pairs"]}
+        formal = pairs["main_only"]
+        self.assertTrue(formal["isolated_to_latch_bit"])
+        self.assertEqual(formal["false_positive_count_under_1_4"], 0)
+        self.assertEqual(formal["counts"]["in_scope"], 1)
+        self.assertEqual(len(formal["same_class_movers"]), 1)
+        self.assertEqual(formal["same_class_movers"][0]["direction"], "0->1")
+        # eight latches per slice is not buildable, and the record must say so
+        self.assertIn("full_latch", report["unbuildable_modes"])
+        self.assertIn("not_measured", pairs["full_slice"])
+        self.assertTrue(report["recipe"])
+
 
 def totals(tp: int, fn: int, fp: int, semantic_pass: int, semantic_fail: int) -> dict:
     return {

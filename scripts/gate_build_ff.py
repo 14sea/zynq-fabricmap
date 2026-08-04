@@ -51,6 +51,7 @@ from specimen_diff import features_using, locate, tile_index  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
 TCL = REPO / "vivado/specimen/build_ff_probe.tcl"
+SOURCE = REPO / "vivado/specimen/specimen_ff_probe.v"
 RUN_VIVADO = REPO / "scripts/run_vivado.sh"
 TILEGRID = REPO / "data/prjxray/zynq7/xc7z010/tilegrid.json"
 SPEC = REPO / "data/subset_spec.json"
@@ -66,15 +67,30 @@ MODES = {
     2: ("fdre", "the plan's default baseline B: FDRE, synchronous reset"),
     3: ("fdce_inv", "second control match: FDCE with the clock inverted, added after "
                     "mode 0 measured a residual CLKINV mover"),
+    4: ("full_base", "formal topology: 8 storage elements, FDCE with the clock inverted"),
+    5: ("full_latch", "formal topology: 8 storage elements, LDCE"),
+    6: ("main_base", "4 storage elements (main only), FDCE with the clock inverted"),
+    7: ("main_latch", "4 storage elements (main only), LDCE"),
 }
 
 PAIRS = (
     (0, 1, "control_matched", "first candidate: does matching the reset kind isolate LATCH?"),
     (3, 1, "control_matched_clkinv", "second candidate: reset kind AND clock polarity matched"),
+    (4, 5, "full_slice", "THE ONE THAT DECIDES IT: the formal 8-element topology"),
+    (6, 7, "main_only", "fallback topology if the slice cannot hold 8 latches"),
     (2, 1, "plan_default", "what the plan as written would have diffed"),
     (2, 0, "control_match_cost", "what matching the reset kind itself moves"),
     (0, 3, "clock_inversion_cost", "what matching the clock polarity itself moves"),
 )
+LATCH_PAIRS = ("control_matched", "control_matched_clkinv", "full_slice", "main_only",
+               "plan_default")
+
+# A mode that legitimately cannot be built. UG474 says the "5FF" storage elements are
+# unavailable while the slice is in latch mode; if that is what Vivado enforces, mode 5
+# fails and the 4-element pair is the answer. A build failure here is evidence, so it is
+# recorded rather than aborting the run — but only for the modes where it is a real
+# question, never as a blanket "carry on regardless".
+MAY_FAIL = {5}
 
 
 def sha256_file(path: Path) -> str:
@@ -90,18 +106,78 @@ def read_tsv(path: Path) -> dict[str, str]:
     return out
 
 
+def recipe_hashes() -> dict[str, str]:
+    """The sources that decide what a build means. Any change invalidates a cache hit."""
+    return {str(path.relative_to(REPO)): sha256_file(path)
+            for path in (SOURCE, TCL, Path(__file__).resolve())}
+
+
+def cache_state(outdir: Path, mode: int) -> tuple[str, str]:
+    """`(state, why)` for an existing output directory.
+
+    The presence of artifacts is NOT evidence that they are the artifacts this run
+    wants. A stale `spec.bit` from an earlier mode, an earlier site or an earlier
+    version of the Verilog looks exactly like a successful build, and a probe that
+    accepted it would report yesterday's answer to today's question with today's
+    confidence. So a reuse requires a stamp written only after `SPECIMEN_DONE`, naming
+    the mode, the site and the hash of every source that produced it; anything else in
+    a non-empty directory is refused rather than overwritten.
+    """
+    if not outdir.exists() or not any(outdir.iterdir()):
+        return "build", "empty"
+    stamp_path = outdir / "stamp.json"
+    if not stamp_path.is_file():
+        return "refuse", "output directory is not empty and carries no build stamp"
+    try:
+        stamp = json.loads(stamp_path.read_text())
+    except json.JSONDecodeError as exc:
+        return "refuse", f"build stamp is unreadable: {exc}"
+    if not stamp.get("completed"):
+        return "refuse", "build stamp records an unfinished build"
+    if stamp.get("mode") != mode:
+        return "refuse", f"stamp is for mode {stamp.get('mode')}, this run wants {mode}"
+    if stamp.get("site") != MINE_SITE:
+        return "refuse", f"stamp is for site {stamp.get('site')!r}"
+    if stamp.get("recipe") != recipe_hashes():
+        return "refuse", "stamp was produced by different sources (recipe hash mismatch)"
+    for name in ("spec.bit", "readback.tsv", "base.dcp"):
+        if not (outdir / name).is_file():
+            return "refuse", f"stamp claims success but {name} is missing"
+        if stamp.get("artifacts", {}).get(name) != sha256_file(outdir / name):
+            return "refuse", f"{name} does not match the hash the stamp recorded"
+    return "reuse", "stamp matches"
+
+
 def build(mode: int, outdir: Path, timeout: int) -> bool:
-    outdir.mkdir(parents=True, exist_ok=True)
-    if (outdir / "spec.bit").is_file() and (outdir / "readback.tsv").is_file():
-        print(f"  mode {mode} ({MODES[mode][0]}): already built")
+    state, why = cache_state(outdir, mode)
+    if state == "reuse":
+        print(f"  mode {mode} ({MODES[mode][0]}): reusing verified artifacts ({why})")
         return True
+    if state == "refuse":
+        raise SystemExit(
+            f"mode {mode}: refusing to touch {outdir} — {why}.\n"
+            "  Delete it deliberately if that is what you mean; a probe that reused it\n"
+            "  would answer a question nobody asked with artifacts nobody checked.")
+
+    outdir.mkdir(parents=True, exist_ok=True)
     tclargs = [str(outdir.resolve()), MINE_SITE, str(mode)]
     checked = subprocess.run(
         [str(RUN_VIVADO), "-mode", "batch", "-nojournal", "-notrace",
          "-log", str(outdir / "vivado.log"), "-source", str(TCL), "-tclargs", *tclargs],
         cwd=outdir, capture_output=True, text=True, timeout=timeout)
     (outdir / "run.out").write_text(checked.stdout + checked.stderr)
-    ok = checked.returncode == 0 and "SPECIMEN_DONE" in checked.stdout
+    produced = all((outdir / name).is_file()
+                   for name in ("spec.bit", "readback.tsv", "base.dcp"))
+    ok = checked.returncode == 0 and "SPECIMEN_DONE" in checked.stdout and produced
+    (outdir / "stamp.json").write_text(json.dumps({
+        "completed": ok,
+        "mode": mode,
+        "site": MINE_SITE,
+        "recipe": recipe_hashes(),
+        "artifacts": {name: sha256_file(outdir / name)
+                      for name in ("spec.bit", "readback.tsv", "base.dcp")
+                      if (outdir / name).is_file()},
+    }, indent=2) + "\n")
     print(f"  mode {mode} ({MODES[mode][0]}): {'ok' if ok else 'FAILED'}")
     if not ok:
         for line in (checked.stdout + checked.stderr).splitlines():
@@ -118,6 +194,9 @@ def main() -> int:
     ap.add_argument("--timeout", type=int, default=1800)
     ap.add_argument("--report-only", action="store_true",
                     help="skip Vivado and re-derive the report from existing artifacts")
+    ap.add_argument("--evidence", type=Path,
+                    default=REPO / "evidence/ff_latch_probe_2026_08_04",
+                    help="portable copy: report, readbacks and hashes, no bitstreams")
     args = ap.parse_args()
 
     if args.site != MINE_SITE:
@@ -140,10 +219,15 @@ def main() -> int:
     tile_type = grid[tile_name]["type"]
 
     print(f"LATCH probe on {MINE_SITE} ({tile_name}, {tile_type}) -> {out}")
+    unbuildable: dict[str, str] = {}
     if not args.report_only:
         for mode in sorted(MODES):
             if not build(mode, out / MODES[mode][0], args.timeout):
-                return 1
+                if mode not in MAY_FAIL:
+                    return 1
+                unbuildable[MODES[mode][0]] = "build failed; see run.out"
+                print(f"    recorded as unbuildable — this mode is a real question, "
+                      f"not an accident")
 
     cols, layout = column_map(), device_layout()
     artifacts, frames, tile_bits = {}, {}, {}
@@ -151,6 +235,11 @@ def main() -> int:
         directory = out / name
         bitstream = directory / "spec.bit"
         if not bitstream.is_file():
+            if mode in MAY_FAIL:
+                unbuildable.setdefault(name, "no bitstream produced")
+                artifacts[name] = {"mode": mode, "description": description,
+                                   "built": False, "why": unbuildable[name]}
+                continue
             raise SystemExit(f"mode {mode}: no bitstream at {bitstream}")
         readback = read_tsv(directory / "readback.tsv")
         frames[mode] = parse_frames(bitstream, cols, layout)["frames"]
@@ -158,6 +247,7 @@ def main() -> int:
         artifacts[name] = {
             "mode": mode,
             "description": description,
+            "built": True,
             "bitstream": str(bitstream.relative_to(REPO)),
             "bitstream_sha256": sha256_file(bitstream),
             "checkpoint_sha256": sha256_file(directory / "base.dcp"),
@@ -174,6 +264,18 @@ def main() -> int:
             "control_pins": {key.split(".")[1]: value
                              for key, value in sorted(readback.items())
                              if key.startswith("pin.") and key.endswith(".net")},
+            "storage_count": readback.get("storage_count"),
+            "storage_cells": [{"name": readback.get(f"store.{n}.name"),
+                               "ref": readback.get(f"store.{n}.ref"),
+                               "loc": readback.get(f"store.{n}.loc"),
+                               "bel": readback.get(f"store.{n}.bel"),
+                               "init": readback.get(f"store.{n}.init")}
+                              for n in range(int(readback.get("storage_count", 0) or 0))],
+            "lut_cells": [{"name": readback.get(f"lut.{n}.name"),
+                           "ref": readback.get(f"lut.{n}.ref"),
+                           "loc": readback.get(f"lut.{n}.loc"),
+                           "bel": readback.get(f"lut.{n}.bel")}
+                          for n in range(int(readback.get("lut_count", 0) or 0))],
             "occupied_bels": [value for key, value in sorted(readback.items())
                               if re.fullmatch(r"occupied\.\d+\.bel", key)],
             "anchor_placement": {key: value for key, value in sorted(readback.items())
@@ -218,12 +320,17 @@ def main() -> int:
 
     pairs = []
     for a, b, name, question in PAIRS:
+        if a not in frames or b not in frames:
+            pairs.append({"pair": name, "question": question,
+                          "modes": [MODES[a][0], MODES[b][0]],
+                          "not_measured": "an endpoint of this pair could not be built"})
+            continue
         raw = raw_diff(frames[a], frames[b])
         # The scope a real LATCH pair would preregister: exactly the one LATCH bit. The
         # two "cost" pairs make no LATCH claim, so they get no scope and every mover in
         # them is out of scope by construction — that is what makes them a control, not
         # a candidate.
-        claims_latch = name in ("control_matched", "control_matched_clkinv", "plan_default")
+        claims_latch = name in LATCH_PAIRS
         scope = {latch_address} if claims_latch else set()
         buckets, class_out_of_scope = classify_diff(
             raw, scope, index, pattern, {tile_name})
@@ -252,7 +359,7 @@ def main() -> int:
 
     report = {
         "schema": "ff_latch_probe",
-        "schema_version": "1.0.0",
+        "schema_version": "1.1.0",
         "status": "exploration — not evidence for any certificate",
         "bit_class": BIT_CLASS,
         "site": MINE_SITE,
@@ -262,6 +369,8 @@ def main() -> int:
         "latch_feature": {"feature": latch_feature[0], "token": latch_feature[1],
                           "address": {"far": f"0x{latch_address[0]:08X}",
                                       "word": latch_address[1], "bit": latch_address[2]}},
+        "recipe": recipe_hashes(),
+        "unbuildable_modes": unbuildable,
         "artifacts": artifacts,
         "pairs": pairs,
         "commitment": "none emitted; PREREGISTRATION_HOLD untouched",
@@ -269,9 +378,51 @@ def main() -> int:
     report_path = out / "probe_report.json"
     report_path.write_text(json.dumps(report, indent=2) + "\n")
 
+    # A portable copy. `build/` is gitignored, so a report that lived only there names
+    # evidence a fresh clone cannot resolve — the same reason measurements copy their
+    # attestations into the run directory. The bitstreams stay behind (they are large
+    # and rebuildable from the pinned recipe); what travels is the full bucket
+    # addresses, the raw readbacks, and every hash needed to tell whether a rebuild
+    # produced the same thing.
+    if args.evidence:
+        evidence = args.evidence.resolve()
+        evidence.mkdir(parents=True, exist_ok=True)
+        (evidence / "probe_report.json").write_text(json.dumps(report, indent=2) + "\n")
+        readbacks = evidence / "readbacks"
+        readbacks.mkdir(exist_ok=True)
+        for mode, (name, _) in sorted(MODES.items()):
+            source = out / name / "readback.tsv"
+            if source.is_file():
+                (readbacks / f"{name}.tsv").write_bytes(source.read_bytes())
+        (evidence / "manifest.json").write_text(json.dumps({
+            "schema": "ff_latch_probe_evidence",
+            "schema_version": "1.0.0",
+            "bit_class": BIT_CLASS,
+            "note": "exploration on the mine site; no prediction, commitment or certificate",
+            "site": MINE_SITE, "tile": tile_name, "tile_type": tile_type,
+            "recipe": recipe_hashes(),
+            "vivado_version": sorted({a.get("vivado_version") for a in artifacts.values()
+                                      if a.get("vivado_version")}),
+            "part": sorted({a.get("part") for a in artifacts.values() if a.get("part")}),
+            "unbuildable_modes": unbuildable,
+            "bitstreams_not_copied": {
+                name: {"bitstream_sha256": a.get("bitstream_sha256"),
+                       "checkpoint_sha256": a.get("checkpoint_sha256"),
+                       "readback_sha256": a.get("readback_sha256")}
+                for name, a in artifacts.items() if a.get("built")},
+            "files": {"probe_report.json": sha256_file(evidence / "probe_report.json"),
+                      **{f"readbacks/{path.name}": sha256_file(path)
+                         for path in sorted(readbacks.iterdir())}},
+        }, indent=2) + "\n")
+        print(f"  portable evidence -> {evidence.relative_to(REPO)}")
+
     print(f"\n  LATCH bit: {latch_feature[0]} = {latch_feature[1]} "
           f"-> 0x{latch_address[0]:08X}/w{latch_address[1]}/b{latch_address[2]}")
     for record in pairs:
+        if "not_measured" in record:
+            print(f"\n  pair {record['pair']} ({' -> '.join(record['modes'])}): "
+                  f"NOT MEASURED — {record['not_measured']}")
+            continue
         counts = record["counts"]
         print(f"\n  pair {record['pair']} ({' -> '.join(record['modes'])}): "
               f"raw={record['raw_diff_bits']}")
