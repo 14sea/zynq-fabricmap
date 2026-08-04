@@ -177,6 +177,39 @@ class FfPlanTests(unittest.TestCase):
         self.assertFalse((REPO_ROOT / "gate_runs/ff_hold_probe").exists())
 
 
+class LatchProbeScopeTests(unittest.TestCase):
+    """The probe's scope limits, which are enforcement rather than documentation.
+
+    Exploration runs on the mine site because that site's evidence is already spent.
+    A probe that could be pointed at a holdout site would quietly destroy the only
+    thing a holdout is for, and it would do so through a flag nobody reviews.
+    """
+
+    PROBE = REPO_ROOT / "scripts/gate_build_ff.py"
+
+    def run_probe(self, *arguments: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [PYTHON, str(self.PROBE), *arguments],
+            cwd=REPO_ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            check=False)
+
+    def test_a_holdout_site_is_refused(self) -> None:
+        for site in ("SLICE_X3Y25", "SLICE_X8Y25", "SLICE_X25Y25"):
+            with self.subTest(site):
+                checked = self.run_probe("--site", site, "--report-only")
+                self.assertIn("builds SLICE_X2Y25 only", checked.stdout)
+
+    def test_writing_into_the_committed_evidence_tree_is_refused(self) -> None:
+        checked = self.run_probe("--out", "gate_runs/latch_probe", "--report-only")
+        self.assertIn("writes under build/ only", checked.stdout)
+        self.assertFalse((REPO_ROOT / "gate_runs/latch_probe").exists())
+
+    def test_the_probe_never_touches_the_pre_registration_hold(self) -> None:
+        source = self.PROBE.read_text()
+        self.assertNotIn("PREREGISTRATION_HOLD =", source)
+        self.assertNotIn("predictions.json", source)
+
+
 def totals(tp: int, fn: int, fp: int, semantic_pass: int, semantic_fail: int) -> dict:
     return {
         "mine": {"tp": 0, "fn": 0, "fp": 0, "member_identity": {"pass": 0, "fail": 0}},

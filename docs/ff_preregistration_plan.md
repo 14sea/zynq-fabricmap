@@ -159,6 +159,17 @@ emit if any committed holdout key would go unreported.
    those movers are `db_attributed` **and** claimed by this class **and** outside the
    pair's single preregistered scope, which makes them FP by the 1.4 rule.
 
+   > **MEASURED 2026-08-04 — `docs/ff_latch_probe.md`.** The concern was real and the
+   > fix is a baseline, not a scope. `fdre → ldce` leaves two same-class movers
+   > (`FFSYNC` 1→0, `CLKINV` 0→1) and FP=2; matching the reset kind (`fdce → ldce`)
+   > leaves one, `CLKINV`, and FP=1; matching the reset kind **and** the clock polarity
+   > (`FDCE` with `IS_C_INVERTED` → `LDCE`) leaves **only the `LATCH` bit, FP=0**. Two
+   > control pairs attribute each removed mover separately. `LATCH` = `30_32` moves
+   > **0→1** into the latch, as preregistered. The proposed pairing change — one extra
+   > `latch_base` specimen per site instance, pairs and predictions unchanged at 168 and
+   > 176 — is written up there and is **not applied**: the variant list is fixed only
+   > once the author confirms the exploration.
+
    > **Ruled 2026-08-04: `LATCH` stays in the key space, and its scope is not guessed.**
    > Before the commitment, the `LATCH` pair is explored **on the mine site only**
    > (`SLICE_X2Y25`, whose evidence is already spent and cannot score). The first

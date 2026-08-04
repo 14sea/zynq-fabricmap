@@ -86,6 +86,45 @@ def as_addresses(items) -> list[dict]:
                   key=lambda a: (a["far"], a["word"], a["bit"]))
 
 
+BUCKETS = ("in_scope", "frame_ecc", "db_attributed", "ownership_unknown", "unattributed")
+
+
+def classify_diff(raw, scope, index, pattern, asserted_tiles):
+    """Label every changed bit into the five 1.4 buckets, plus the same-class subset.
+
+    Returns `(buckets, class_claimed_out_of_scope)`. The second value is the part of
+    `db_attributed` that this class itself claims inside a tile the pair asserted and
+    that no preregistered scope covers — the only FP contribution that is not simply
+    "we cannot explain this bit". Another class's changed bit, such as legal INT routing
+    beside a CLB content assertion, is not this class's FP.
+
+    Shared with `gate_build_ff.py` on purpose: an exploration that bucketed bits even
+    slightly differently from the gate would answer a question nobody is going to ask.
+    """
+    buckets = {name: set() for name in BUCKETS}
+    class_claimed_out_of_scope = set()
+    for far, word, bit in raw:
+        if (far, word, bit) in scope:
+            buckets["in_scope"].add((far, word, bit))
+            continue
+        if word == ECC_WORD and bit in ECC_BITS:
+            buckets["frame_ecc"].add((far, word, bit))
+            continue
+        hits = locate(index, far, word, bit)
+        if not hits:
+            buckets["unattributed"].add((far, word, bit))
+        elif any(features_using(hit["type"], hit["segbit"]) for hit in hits):
+            buckets["db_attributed"].add((far, word, bit))
+            if any(hit["tile"] in asserted_tiles
+                   and any(pattern.fullmatch(f)
+                           for f in features_using(hit["type"], hit["segbit"]))
+                   for hit in hits):
+                class_claimed_out_of_scope.add((far, word, bit))
+        else:
+            buckets["ownership_unknown"].add((far, word, bit))
+    return buckets, class_claimed_out_of_scope
+
+
 def semantic_verdict(transition_exact: bool, observed, expected) -> bool:
     """`transition_exact and attestation_basis_consistent`, the verifier's rule.
 
@@ -238,31 +277,8 @@ def main() -> int:
             continue
         asserted_tiles = {base["tile"], variant["tile"]}
         raw = raw_diff(base_frames, variant_frames)
-        buckets = {name: set() for name in
-                   ("in_scope", "frame_ecc", "db_attributed", "ownership_unknown", "unattributed")}
-        class_claimed_out_of_scope = set()
-        for far, word, bit in raw:
-            if (far, word, bit) in scope:
-                buckets["in_scope"].add((far, word, bit))
-                continue
-            if word == ECC_WORD and bit in ECC_BITS:
-                buckets["frame_ecc"].add((far, word, bit))
-                continue
-            hits = locate(index, far, word, bit)
-            if not hits:
-                buckets["unattributed"].add((far, word, bit))
-            elif any(features_using(hit["type"], hit["segbit"]) for hit in hits):
-                buckets["db_attributed"].add((far, word, bit))
-                # The one part of FP that is not simply "we cannot explain it": a bit
-                # this very class claims, in a tile we asserted, that no preregistered
-                # scope of this pair covers. Another class's bit is not our FP.
-                if any(hit["tile"] in asserted_tiles
-                       and any(pattern.fullmatch(f)
-                               for f in features_using(hit["type"], hit["segbit"]))
-                       for hit in hits):
-                    class_claimed_out_of_scope.add((far, word, bit))
-            else:
-                buckets["ownership_unknown"].add((far, word, bit))
+        buckets, class_claimed_out_of_scope = classify_diff(
+            raw, scope, index, pattern, asserted_tiles)
 
         union = set().union(*buckets.values())
         overlaps = [(a, b) for i, a in enumerate(buckets) for b in list(buckets)[i + 1:]
