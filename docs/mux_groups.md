@@ -136,11 +136,18 @@ write actually touches, and to treat "all-zero = unset = safe" as an explicit po
 assumption if it is ever relied on. Either way, for the one-bit classes the write-safety
 argument has to come from somewhere other than these rules.
 
-Consequence for certification: run B's certificate reports 32/32 holdout address
-assertions, of which the 16 `group_exclusivity` ones are tautologies. `clb_mux` remains
-certified — `scope_assignment` is falsifiable and passed 16/16 — but the headline count
-overstates the evidence by 2×. The corrected accounting is requested in
-`docs/round9_request.md` and the certificate will be re-emitted under it.
+Consequence for certification, **now applied**: run B's certificate used to report 32/32
+holdout address assertions, of which the 16 `group_exclusivity` ones were tautologies.
+It was re-emitted under certificate 1.4 (`docs/round9_ruling.md`) with the same
+predictions, the same measurement and the same specimens — a recount, not a re-run — and
+now reports **16/16 falsifiable address passes** (`strict_codeword_equality`), 16
+**vacuous** exclusivity diagnostics, `decode_validity` 16/16 as a diagnostic, and
+semantic `member_identity` 16/16. `clb_mux` was certified before and after; only the
+count was wrong, and the old headline overstated the evidence by 2×. The 1.3 record is
+archived byte-for-byte at `tests/fixtures/certificate_group13_run_b.json`, and
+`tests/test_run_b_erratum.py` holds the boundary: it fails if any observation, hash or
+pair-accounting record differs between the two, and if the vacuous outcome is ever put
+back into `address_accounting`.
 
 **Wording, deliberately.** This is real-bitstream evidence, not silicon evidence.
 Every bitstream here came out of Vivado; nothing was loaded onto a board, and this

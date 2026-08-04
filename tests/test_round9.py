@@ -16,7 +16,11 @@ from host.verify_certificate import frozen_codeword_collisions
 REPO_ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 FEATURE14_FIXTURE = REPO_ROOT / "tests/fixtures/certificate_feature14_pass.json"
-GROUP13_FIXTURE = REPO_ROOT / "gate_runs/run_2026_08_02_b/certificate.json"
+# The 1.3 record run B was certified under, archived byte-for-byte when the committed
+# certificate was re-emitted at 1.4. `group14_certificate()` below still derives the
+# recount from 1.3 evidence, independently of whatever the producer's emitter now
+# writes; `tests/test_run_b_erratum.py` is what compares the emitted artifact to it.
+GROUP13_FIXTURE = REPO_ROOT / "tests/fixtures/certificate_group13_run_b.json"
 
 
 def load(path: Path) -> dict[str, Any]:

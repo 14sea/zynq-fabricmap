@@ -73,18 +73,24 @@ def main() -> int:
     bc = cert["bit_class"]
     cov = bc["coverage"]
     # 1.2 records per-feature tp/fp/fn; 1.3 records pass/fail per address assertion and
-    # keeps semantics in its own bucket. The slot stores whichever the certificate
-    # actually carries rather than flattening one into the other's vocabulary.
+    # keeps semantics in its own bucket; 1.4 splits that address bucket again, into the
+    # one falsifiable assertion and the diagnostics that must never be read as passes.
+    # The slot stores whichever the certificate actually carries rather than flattening
+    # one into the other's vocabulary — an index that renamed them would be the same
+    # overcount the 1.4 ruling exists to remove.
     if "accounting" in bc:
         acc = bc["accounting"]
         model, extra = "feature", {"tp": acc["tp_count"], "fp": acc["fp_count"],
                                    "fn": acc["fn_count"]}
     else:
         model = "group"
-        extra = {"address_accounting": bc["address_accounting"],
-                 "semantic_accounting": bc["semantic_accounting"],
-                 "semantic_status": cert.get("semantic_status"),
-                 "claim_scope": cert.get("claim_scope")}
+        extra = {"address_accounting": bc["address_accounting"]}
+        if "diagnostic_accounting" in bc:
+            extra["diagnostic_accounting"] = bc["diagnostic_accounting"]
+            extra["diagnostics_are_not_address_passes"] = True
+        extra |= {"semantic_accounting": bc["semantic_accounting"],
+                  "semantic_status": cert.get("semantic_status"),
+                  "claim_scope": cert.get("claim_scope")}
     slot["certification"] = {
         "status": "certified",
         "evidence_model": model,

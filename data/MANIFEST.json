@@ -308,19 +308,26 @@
         "evidence_model": "group",
         "gate": "run_2026_08_02_b",
         "certificate": "gate_runs/run_2026_08_02_b/certificate.json",
-        "certificate_schema_version": "1.3.0",
+        "certificate_schema_version": "1.4.0",
         "profile": "production",
         "prediction_commitment_sha256": "c5b1c48a075a3b565f58a59b8ede708ccab3ec59cda6be4f8eacc5e281673541",
         "address_accounting": {
-          "group_exclusivity": {
-            "pass_count": 16,
-            "fail_count": 0
-          },
-          "scope_assignment": {
+          "strict_codeword_equality": {
             "pass_count": 16,
             "fail_count": 0
           }
         },
+        "diagnostic_accounting": {
+          "group_exclusivity": {
+            "vacuous_count": 16,
+            "ambiguity_count": 0
+          },
+          "decode_validity": {
+            "pass_count": 16,
+            "fail_count": 0
+          }
+        },
+        "diagnostics_are_not_address_passes": true,
         "semantic_accounting": {
           "member_identity": {
             "pass_count": 16,

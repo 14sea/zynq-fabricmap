@@ -1,6 +1,6 @@
 {
   "schema": "fabric_bit_class_certificate",
-  "schema_version": "1.4.0",
+  "schema_version": "1.3.0",
   "evidence_model": "group",
   "profile": "production",
   "claim_scope": "group_bit_set",
@@ -28,8 +28,7 @@
     "completed_at": "2026-08-02T06:09:28Z",
     "tool_versions": {
       "gate": "gate_measure_mux.py/1.1.0",
-      "bitstream_differ": "specimen_diff.py/1.0.0",
-      "certifier": "gate_certify_mux.py/1.4.0"
+      "bitstream_differ": "specimen_diff.py/1.0.0"
     }
   },
   "target": {
@@ -106,17 +105,11 @@
       "class_entry_count": 500
     },
     "address_accounting": {
-      "strict_codeword_equality": {
+      "group_exclusivity": {
         "pass_count": 16,
         "fail_count": 0
-      }
-    },
-    "diagnostic_accounting": {
-      "group_exclusivity": {
-        "vacuous_count": 16,
-        "ambiguity_count": 0
       },
-      "decode_validity": {
+      "scope_assignment": {
         "pass_count": 16,
         "fail_count": 0
       }
@@ -127,7 +120,7 @@
         "fail_count": 0
       }
     },
-    "decision_rule": "holdout_address_assertions: strict_codeword_equality.fail_count == 0",
+    "decision_rule": "holdout_address_assertions: group_exclusivity.fail_count == 0 and scope_assignment.fail_count == 0",
     "semantic_rule": "member_identity is reported independently and never contributes to status"
   },
   "specimens": [
@@ -1022,15 +1015,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "O6"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "O6"
@@ -1218,15 +1202,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "AX"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "AX"
@@ -1414,15 +1389,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "O6"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "O6"
@@ -1610,15 +1576,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "BX"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "BX"
@@ -1806,15 +1763,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "O6"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "O6"
@@ -2002,15 +1950,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "CX"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "CX"
@@ -2198,15 +2137,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "O6"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "O6"
@@ -2394,15 +2324,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "DX"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "DX"
@@ -2590,15 +2511,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "O6"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "O6"
@@ -2786,15 +2698,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "AX"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "AX"
@@ -2982,15 +2885,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "O6"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "O6"
@@ -3178,15 +3072,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "BX"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "BX"
@@ -3374,15 +3259,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "O6"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "O6"
@@ -3570,15 +3446,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "CX"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "CX"
@@ -3766,15 +3633,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "O6"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "O6"
@@ -3962,15 +3820,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "DX"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "DX"
@@ -4158,15 +4007,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "O6"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "O6"
@@ -4354,15 +4194,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "AX"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "AX"
@@ -4550,15 +4381,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "O6"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "O6"
@@ -4746,15 +4568,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "BX"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "BX"
@@ -4942,15 +4755,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "O6"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "O6"
@@ -5138,15 +4942,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "CX"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "CX"
@@ -5334,15 +5129,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "O6"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "O6"
@@ -5530,15 +5316,6 @@
         {
           "kind": "group_exclusivity",
           "semantic": false,
-          "classification": "vacuous",
-          "decoded_members": [
-            "DX"
-          ]
-        },
-        {
-          "kind": "decode_validity",
-          "semantic": false,
-          "diagnostic": true,
           "passed": true,
           "decoded_members": [
             "DX"

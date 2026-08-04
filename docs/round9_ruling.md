@@ -102,6 +102,15 @@ and passing. Nothing below emits a commitment hash before then.
 4. Re-emit run B's certificate under 1.4 (same predictions, same measurement, same
    specimens — recounted only) and update `data/MANIFEST.json`'s `clb_mux`
    `address_accounting` to carry the vacuous count.
+   **DONE 2026-08-04**, out of order and ahead of 1–3: it needs no commitment, so it did
+   not wait on the pre-registration hold. `gate_certify_mux.py` emits 1.4;
+   `gate_runs/run_2026_08_02_b/certificate.json` now reports `address_pass=16`,
+   `vacuous=16 ambiguity=0`, `decode_validity 16/16`, `semantic 16/16`, and verifies
+   under `--require-production`. The gate timestamp was preserved rather than redated
+   (`--gate-timestamp`) — the gate ran on 2026-08-02; only the record was rewritten. The
+   1.3 record is archived at `tests/fixtures/certificate_group13_run_b.json` so round 9's
+   own derivation test still starts from 1.3 evidence, and `tests/test_run_b_erratum.py`
+   proves nothing but the accounting moved.
 5. `clb_lutram` follows the same route; its shape is already known to match
    (42 entries → 36 groups, 30 singleton + 6 complementary, all one bit wide).
 

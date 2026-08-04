@@ -256,13 +256,18 @@ class Round6Tests(unittest.TestCase):
         self.assertIn("semantic_status=passed semantic_pass=16 semantic_fail=0", checked.stdout)
 
     def test_first_real_group_certificate_passes_production_verification(self) -> None:
+        # The committed artifact was re-emitted under certificate 1.4 (round 9 erratum):
+        # same predictions, same measurement, same observations, recounted. Its printed
+        # address total therefore drops from 32 to 16 — the vacuous exclusivity outcome
+        # stops being counted. `build_certificate()` above still exercises 1.3, which
+        # keeps its original semantics.
         checked = run(
             "host/verify_certificate.py",
             str(REAL_GROUP_CERTIFICATE),
             "--require-production",
         )
         self.assertEqual(checked.returncode, 0, checked.stdout)
-        self.assertIn("address_pass=32 address_fail=0", checked.stdout)
+        self.assertIn("address_pass=16 address_fail=0", checked.stdout)
 
     def test_synthetic_missing_claiming_dbs_is_rejected(self) -> None:
         value = load(REAL_GROUP_CERTIFICATE)
@@ -291,7 +296,7 @@ class Round6Tests(unittest.TestCase):
 
         checked = verify_temporary(value)
         self.assertEqual(checked.returncode, 0, checked.stdout)
-        self.assertIn("address_pass=32 address_fail=0", checked.stdout)
+        self.assertIn("address_pass=16 address_fail=0", checked.stdout)
 
     def test_truncated_scope_is_rejected_even_when_commitment_matches(self) -> None:
         value = build_certificate()
