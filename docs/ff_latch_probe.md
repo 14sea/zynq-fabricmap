@@ -98,19 +98,32 @@ site, which is what a mine site is for — they inform, they do not score:
 
 `build/ff_latch_probe/` (gitignored) holds the bitstreams and checkpoints;
 `evidence/ff_latch_probe_2026_08_04/` holds the portable record — the full report with
-every bucket address, the seven raw `readback.tsv` files, and a manifest pinning the
-recipe (`specimen_ff_probe.v`, `build_ff_probe.tcl`, `gate_build_ff.py`) plus every
-bitstream/checkpoint/readback hash. Bitstreams themselves are not copied: they are large
-and rebuildable from the pinned recipe, and their hashes travel with the manifest.
+every bucket address, the seven raw `readback.tsv` files, **the `full_latch` failure log
+and its stamp under `failures/`**, and a manifest pinning the recipe
+(`specimen_ff_probe.v`, `build_ff_probe.tcl`, `gate_build_ff.py`) plus every
+bitstream/checkpoint/readback hash and the hash of every file it carries. A mode that
+cannot be built is a result, so its log travels with the record: "see run.out" pointing
+into gitignored `build/` was the same defect as leaving the report there, one level
+down. Bitstreams themselves are not copied — large and rebuildable from the pinned
+recipe, with their hashes in the manifest.
 
 Vivado 2025.2, `xc7z010clg400-1`. Reproduce with
 `scripts/gate_build_ff.py --out build/ff_latch_probe`.
 
-Build reuse is verified rather than assumed: each mode's directory carries a
-`stamp.json` written only after `SPECIMEN_DONE`, naming the mode, the site, the hash of
-every source that produced it and the hash of every artifact. A non-empty directory
-without a matching stamp is **refused**, not overwritten and not reused — the first run
-of this probe after the stamp landed did exactly that to its own predecessor's output.
+Build reuse is verified rather than assumed. Each mode's directory carries a
+`stamp.json` naming the mode, the site, the hash of every source that produced it and
+the hash of every artifact. **A stamp is written on every attempt, successful or not** —
+a failure that left no stamp would be indistinguishable from a directory nobody ever
+built in — and only `completed: true` is reusable; a stamp that matches the recipe but
+records a failure is reported as an unbuildable mode, which for `full_latch` is the
+answer rather than an accident. A non-empty directory whose stamp does not match is
+**refused**, not overwritten and not reused; two runs of this probe did exactly that to
+their own predecessor's output.
+
+The same verification gates `--report-only`. That flag exists to rebuild nothing, which
+made it the one path that would have stamped the current recipe's hashes onto an older
+run's bitstreams; export and build now go through the identical check, and a single
+tampered byte in a `spec.bit` makes the export refuse.
 As `docs/mux_groups.md` records for the other classes: hashing a checkpoint and a
 bitstream together anchors both against substitution but does not prove the bitstream
 came from that checkpoint.
@@ -135,6 +148,13 @@ Mechanically it needs one change beyond the extra specimen: `pair_features` curr
 assumes every pair is `(base, variant)`, so each variant needs an explicit `pair_with`
 naming its other endpoint, and `gate_measure_ff.py` must read that instead of deriving
 `{site}_base`.
+
+**And that is exactly what cannot be done producer-side alone.** The pairing would live
+in producer metadata the verifier never reads, leaving the comparison endpoint free
+after the commitment — see `docs/round10_request.md`. The formal predictions must
+pre-register a `comparison_specimen_id` and the verifier must require it to equal the
+result's `baseline_specimen_id`. **The variant list may be recorded as a plan; it may
+not become a commitment until that contract lands.**
 
 **No wider scope was guessed and no entry was dropped.** The plan's other 175 keys are
 untouched by this: only the `LATCH` pair's two endpoints change.

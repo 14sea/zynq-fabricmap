@@ -238,13 +238,40 @@ class LatchProbeScopeTests(unittest.TestCase):
             self.assertEqual(cache_state(outdir, 0)[0], "refuse")
             stamp(site="SLICE_X9Y25")
             self.assertEqual(cache_state(outdir, 0)[0], "refuse")
+            # a stamp of THIS recipe that did not complete is "failed", not "refuse" —
+            # it is a real outcome, and the next test pins the difference
             stamp(completed=False)
-            self.assertEqual(cache_state(outdir, 0)[0], "refuse")
+            self.assertEqual(cache_state(outdir, 0)[0], "failed")
             stamp(recipe={"vivado/specimen/specimen_ff_probe.v": "0" * 64})
             self.assertEqual(cache_state(outdir, 0)[0], "refuse")
             stamp()
             (outdir / "spec.bit").write_bytes(b"different")
             self.assertEqual(cache_state(outdir, 0)[0], "refuse")
+
+    def test_a_failed_build_of_this_recipe_is_distinguished_from_a_stale_one(self) -> None:
+        # "This exact recipe failed here" is an answer for a MAY_FAIL mode; "something
+        # else was built here" never is. Collapsing the two would let a stale directory
+        # be reported as an unbuildable mode.
+        sys.path.insert(0, str(REPO_ROOT / "scripts"))
+        from gate_build_ff import cache_state, recipe_hashes, verified_state  # noqa: PLC0415
+
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT / "build") as directory:
+            outdir = Path(directory) / "mode"
+            outdir.mkdir()
+            (outdir / "run.out").write_text("ERROR: nope\n")
+            (outdir / "stamp.json").write_text(json.dumps({
+                "completed": False, "mode": 5, "site": "SLICE_X2Y25",
+                "recipe": recipe_hashes(), "artifacts": {}}))
+            self.assertEqual(cache_state(outdir, 5)[0], "failed")
+            self.assertEqual(verified_state(5, outdir)[0], "failed")
+            # a failure stamped under a different recipe is stale, not an answer
+            (outdir / "stamp.json").write_text(json.dumps({
+                "completed": False, "mode": 5, "site": "SLICE_X2Y25",
+                "recipe": {"vivado/specimen/specimen_ff_probe.v": "0" * 64},
+                "artifacts": {}}))
+            self.assertEqual(cache_state(outdir, 5)[0], "refuse")
+            with self.assertRaises(SystemExit):
+                verified_state(5, outdir)
 
 
 class LatchProbeEvidenceTests(unittest.TestCase):
@@ -278,6 +305,15 @@ class LatchProbeEvidenceTests(unittest.TestCase):
         self.assertIn("full_latch", report["unbuildable_modes"])
         self.assertIn("not_measured", pairs["full_slice"])
         self.assertTrue(report["recipe"])
+
+    def test_the_unbuildable_mode_carries_its_own_log_not_a_pointer_into_build(self) -> None:
+        manifest = json.loads((self.EVIDENCE / "manifest.json").read_text())
+        for name, record in manifest["unbuildable_modes"].items():
+            self.assertTrue(record["error_lines"], name)
+            self.assertIn("FF_INIT", " ".join(record["error_lines"]))
+            log = record["log"]
+            self.assertIn(log, manifest["files"])
+            self.assertTrue((self.EVIDENCE / log).is_file())
 
 
 def totals(tp: int, fn: int, fp: int, semantic_pass: int, semantic_fail: int) -> dict:

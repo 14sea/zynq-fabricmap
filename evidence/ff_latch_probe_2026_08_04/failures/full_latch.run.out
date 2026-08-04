@@ -1,0 +1,172 @@
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 12:34:56 MST 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Tue Aug  4 12:34:23 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /home/test/zynq_fabricmap/vivado/specimen/build_ff_probe.tcl -notrace
+Command: synth_design -top specimen_ff_probe -part xc7z010clg400-1 -flatten_hierarchy none -generic MODE=5 -generic ANCHOR=1
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7z010'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7z010'
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 59074
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 2018.039 ; gain = 397.672 ; free physical = 19930 ; free virtual = 30462
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'specimen_ff_probe' [/home/test/zynq_fabricmap/vivado/specimen/specimen_ff_probe.v:44]
+	Parameter MODE bound to: 5 - type: integer 
+	Parameter ANCHOR bound to: 1 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'LUT6' [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95553]
+	Parameter INIT bound to: 64'b0110100110010110100101100110100110010110011010010110100110010110 
+INFO: [Synth 8-6155] done synthesizing module 'LUT6' (0#1) [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95553]
+INFO: [Synth 8-6157] synthesizing module 'FDRE' [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:49396]
+	Parameter INIT bound to: 1'b0 
+INFO: [Synth 8-6155] done synthesizing module 'FDRE' (0#1) [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:49396]
+INFO: [Synth 8-6157] synthesizing module 'LUT5' [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95503]
+	Parameter INIT bound to: 32'b10100101101001011010010110100101 
+INFO: [Synth 8-6155] done synthesizing module 'LUT5' (0#1) [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95503]
+INFO: [Synth 8-6157] synthesizing module 'LUT5__parameterized0' [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95503]
+	Parameter INIT bound to: 32'b01011010010110100101101001011010 
+INFO: [Synth 8-6155] done synthesizing module 'LUT5__parameterized0' (0#1) [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:95503]
+INFO: [Synth 8-6157] synthesizing module 'LDCE' [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:91173]
+	Parameter INIT bound to: 1'b0 
+INFO: [Synth 8-6155] done synthesizing module 'LDCE' (0#1) [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:91173]
+INFO: [Synth 8-6157] synthesizing module 'BUFG' [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:2678]
+INFO: [Synth 8-6155] done synthesizing module 'BUFG' (0#1) [/home/test/Xilinx/2025.2/Vivado/scripts/rt/data/unisim_comp.v:2678]
+INFO: [Synth 8-6155] done synthesizing module 'specimen_ff_probe' (0#1) [/home/test/zynq_fabricmap/vivado/specimen/specimen_ff_probe.v:44]
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:05 ; elapsed = 00:00:06 . Memory (MB): peak = 2102.008 ; gain = 481.641 ; free physical = 19872 ; free virtual = 30406
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2116.852 ; gain = 496.484 ; free physical = 19872 ; free virtual = 30405
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7z010clg400-1
+INFO: [Device 21-403] Loading part xc7z010clg400-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2116.852 ; gain = 496.484 ; free physical = 19872 ; free virtual = 30406
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2125.758 ; gain = 505.391 ; free physical = 19865 ; free virtual = 30400
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 80 (col length:40)
+BRAMs: 120 (col length: RAMB18 40 RAMB36 20)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:09 ; elapsed = 00:00:09 . Memory (MB): peak = 2218.695 ; gain = 598.328 ; free physical = 19783 ; free virtual = 30320
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:09 ; elapsed = 00:00:09 . Memory (MB): peak = 2242.508 ; gain = 622.141 ; free physical = 19777 ; free virtual = 30314
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:09 ; elapsed = 00:00:09 . Memory (MB): peak = 2242.508 ; gain = 622.141 ; free physical = 19769 ; free virtual = 30306
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2429.320 ; gain = 808.953 ; free physical = 19648 ; free virtual = 30186
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2429.320 ; gain = 808.953 ; free physical = 19648 ; free virtual = 30186
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2429.320 ; gain = 808.953 ; free physical = 19648 ; free virtual = 30186
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+-----+------+
+|      |Cell |Count |
++------+-----+------+
+|1     |BUFG |     1|
+|2     |LUT5 |     8|
+|3     |LUT6 |     4|
+|4     |FDRE |     2|
+|5     |LDCE |     8|
+|6     |IBUF |     9|
+|7     |OBUF |     4|
++------+-----+------+
+
+Report Instance Areas: 
++------+---------+-------+------+
+|      |Instance |Module |Cells |
++------+---------+-------+------+
+|1     |top      |       |    36|
++------+---------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2429.320 ; gain = 808.953 ; free physical = 19648 ; free virtual = 30186
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 0 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2429.320 ; gain = 808.953 ; free physical = 19648 ; free virtual = 30186
+Synthesis Optimization Complete : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 2429.328 ; gain = 808.953 ; free physical = 19648 ; free virtual = 30186
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2444.195 ; gain = 0.000 ; free physical = 19799 ; free virtual = 30337
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2548.758 ; gain = 0.000 ; free physical = 19702 ; free virtual = 30239
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: cf7bc55f
+INFO: [Common 17-83] Releasing license: Synthesis
+24 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:18 ; elapsed = 00:00:15 . Memory (MB): peak = 2548.793 ; gain = 928.426 ; free physical = 19702 ; free virtual = 30239
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2010.674; main = 2010.674; forked = 345.686
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 3255.102; main = 2548.758; forked = 986.594
+INFO: [Common 17-206] Exiting Vivado at Tue Aug  4 12:34:43 2026...
+ERROR: [Vivado 12-2285] Cannot set LOC property of instance 'g_full.g_store[1].g_used.g_latch.s'... g_full.g_store[1].g_used.g_latch.s. Illegal to place instance g_full.g_store[1].g_used.g_latch.s on site SLICE_X2Y25. The location site type (SLICEL) and bel type (FF_INIT) do not match the cell type (LDCE). Please choose a compatible site for the instance.
+Resolution: When using BEL constraints, ensure the BEL constraints are defined before the LOC constraints to avoid conflicts at a given site.

@@ -252,5 +252,11 @@ put the plan in two places.
    refutable hypotheses, and softening them would remove the only thing a bitstream
    could contradict.
 
-Pre-registration itself remains **held**: nothing is built and no commitment hash is
-emitted. What the rulings settle is what the commitment would say when it is lifted.
+Pre-registration itself remains **held**, and since 2026-08-04 there is a second,
+independent reason for it: **the comparison endpoint is not part of the commitment**.
+A 1.4 feature prediction names only the asserted specimen, so which specimen supplies
+the `before` value of the transition stays a producer choice made after the bitstreams
+exist. `docs/round10_request.md` asks for a preregistered `comparison_specimen_id` and a
+verifier equality against `baseline_specimen_id`. Until that lands, the variant list may
+be recorded as a plan but must not become a commitment — a frozen key space whose
+comparison endpoints are not frozen with it cannot be repaired afterwards.

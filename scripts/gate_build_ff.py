@@ -113,15 +113,23 @@ def recipe_hashes() -> dict[str, str]:
 
 
 def cache_state(outdir: Path, mode: int) -> tuple[str, str]:
-    """`(state, why)` for an existing output directory.
+    """`(state, why)` for an existing output directory: build / reuse / failed / refuse.
 
     The presence of artifacts is NOT evidence that they are the artifacts this run
     wants. A stale `spec.bit` from an earlier mode, an earlier site or an earlier
     version of the Verilog looks exactly like a successful build, and a probe that
     accepted it would report yesterday's answer to today's question with today's
-    confidence. So a reuse requires a stamp written only after `SPECIMEN_DONE`, naming
-    the mode, the site and the hash of every source that produced it; anything else in
-    a non-empty directory is refused rather than overwritten.
+    confidence.
+
+    So reuse requires a stamp naming the mode, the site, the hash of every source that
+    produced it and the hash of every artifact. **A stamp is written on every attempt,
+    successful or not** — a failure that left no stamp would be indistinguishable from
+    a directory nobody ever built in — and only `completed: true` is reusable. A
+    non-empty directory whose stamp does not match is refused rather than overwritten.
+
+    `failed` is distinct from `refuse` on purpose: it means "this exact recipe was run
+    at this mode and site and did not complete", which for `MAY_FAIL` modes is the
+    answer rather than an accident.
     """
     if not outdir.exists() or not any(outdir.iterdir()):
         return "build", "empty"
@@ -132,14 +140,14 @@ def cache_state(outdir: Path, mode: int) -> tuple[str, str]:
         stamp = json.loads(stamp_path.read_text())
     except json.JSONDecodeError as exc:
         return "refuse", f"build stamp is unreadable: {exc}"
-    if not stamp.get("completed"):
-        return "refuse", "build stamp records an unfinished build"
     if stamp.get("mode") != mode:
         return "refuse", f"stamp is for mode {stamp.get('mode')}, this run wants {mode}"
     if stamp.get("site") != MINE_SITE:
         return "refuse", f"stamp is for site {stamp.get('site')!r}"
     if stamp.get("recipe") != recipe_hashes():
         return "refuse", "stamp was produced by different sources (recipe hash mismatch)"
+    if not stamp.get("completed"):
+        return "failed", "stamp records a build of this recipe that did not complete"
     for name in ("spec.bit", "readback.tsv", "base.dcp"):
         if not (outdir / name).is_file():
             return "refuse", f"stamp claims success but {name} is missing"
@@ -148,11 +156,31 @@ def cache_state(outdir: Path, mode: int) -> tuple[str, str]:
     return "reuse", "stamp matches"
 
 
+def verified_state(mode: int, outdir: Path) -> tuple[str, str]:
+    """The single gate every artifact passes before it is read, on every code path.
+
+    `--report-only` used to skip straight to parsing whatever was on disk, which meant
+    the one flag that exists to avoid rebuilding was also the one that would stamp the
+    current recipe's hashes onto an older run's bitstreams. Export and build now go
+    through the same check.
+    """
+    state, why = cache_state(outdir, mode)
+    if state in ("reuse", "failed"):
+        return state, why
+    raise SystemExit(
+        f"mode {mode} ({MODES[mode][0]}): refusing to use {outdir} — {why}.\n"
+        "  Rebuild it, or delete it deliberately if that is what you mean; a report\n"
+        "  built on unverified artifacts answers a question nobody asked.")
+
+
 def build(mode: int, outdir: Path, timeout: int) -> bool:
     state, why = cache_state(outdir, mode)
     if state == "reuse":
         print(f"  mode {mode} ({MODES[mode][0]}): reusing verified artifacts ({why})")
         return True
+    if state == "failed":
+        print(f"  mode {mode} ({MODES[mode][0]}): previously FAILED with this recipe ({why})")
+        return False
     if state == "refuse":
         raise SystemExit(
             f"mode {mode}: refusing to touch {outdir} — {why}.\n"
@@ -219,28 +247,39 @@ def main() -> int:
     tile_type = grid[tile_name]["type"]
 
     print(f"LATCH probe on {MINE_SITE} ({tile_name}, {tile_type}) -> {out}")
-    unbuildable: dict[str, str] = {}
+    unbuildable: dict[str, dict] = {}
     if not args.report_only:
         for mode in sorted(MODES):
-            if not build(mode, out / MODES[mode][0], args.timeout):
-                if mode not in MAY_FAIL:
-                    return 1
-                unbuildable[MODES[mode][0]] = "build failed; see run.out"
-                print(f"    recorded as unbuildable — this mode is a real question, "
-                      f"not an accident")
+            if not build(mode, out / MODES[mode][0], args.timeout) and mode not in MAY_FAIL:
+                return 1
+
+    # Every mode is verified against its stamp before anything is read, whether it was
+    # just built or is being reported from disk.
+    states = {}
+    for mode, (name, _) in sorted(MODES.items()):
+        state, why = verified_state(mode, out / name)
+        states[mode] = state
+        if state == "failed":
+            if mode not in MAY_FAIL:
+                raise SystemExit(f"mode {mode} ({name}) failed and is not a mode whose "
+                                 "failure is a permitted answer")
+            errors = [line.strip() for line in
+                      (out / name / "run.out").read_text().splitlines()
+                      if "ERROR" in line] if (out / name / "run.out").is_file() else []
+            unbuildable[name] = {"why": why, "error_lines": errors[:5],
+                                 "log": f"failures/{name}.run.out"}
+            print(f"  mode {mode} ({name}): recorded as unbuildable — this mode is a "
+                  f"real question, not an accident")
 
     cols, layout = column_map(), device_layout()
     artifacts, frames, tile_bits = {}, {}, {}
     for mode, (name, description) in sorted(MODES.items()):
         directory = out / name
+        if states[mode] == "failed":
+            artifacts[name] = {"mode": mode, "description": description,
+                               "built": False, **unbuildable[name]}
+            continue
         bitstream = directory / "spec.bit"
-        if not bitstream.is_file():
-            if mode in MAY_FAIL:
-                unbuildable.setdefault(name, "no bitstream produced")
-                artifacts[name] = {"mode": mode, "description": description,
-                                   "built": False, "why": unbuildable[name]}
-                continue
-            raise SystemExit(f"mode {mode}: no bitstream at {bitstream}")
         readback = read_tsv(directory / "readback.tsv")
         frames[mode] = parse_frames(bitstream, cols, layout)["frames"]
         tile_bits[mode] = read_tile_bits(frames[mode], block)
@@ -394,6 +433,19 @@ def main() -> int:
             source = out / name / "readback.tsv"
             if source.is_file():
                 (readbacks / f"{name}.tsv").write_bytes(source.read_bytes())
+        # A mode that cannot be built is a RESULT, so its log travels with the record.
+        # Saying "see run.out" while run.out lives only under gitignored build/ names
+        # evidence nobody else can read — which is the same defect as leaving the report
+        # there, one level further down.
+        failures = evidence / "failures"
+        failures.mkdir(exist_ok=True)
+        for name in unbuildable:
+            source = out / name / "run.out"
+            if source.is_file():
+                (failures / f"{name}.run.out").write_bytes(source.read_bytes())
+            stamp = out / name / "stamp.json"
+            if stamp.is_file():
+                (failures / f"{name}.stamp.json").write_bytes(stamp.read_bytes())
         (evidence / "manifest.json").write_text(json.dumps({
             "schema": "ff_latch_probe_evidence",
             "schema_version": "1.0.0",
@@ -412,7 +464,9 @@ def main() -> int:
                 for name, a in artifacts.items() if a.get("built")},
             "files": {"probe_report.json": sha256_file(evidence / "probe_report.json"),
                       **{f"readbacks/{path.name}": sha256_file(path)
-                         for path in sorted(readbacks.iterdir())}},
+                         for path in sorted(readbacks.iterdir())},
+                      **{f"failures/{path.name}": sha256_file(path)
+                         for path in sorted(failures.iterdir())}},
         }, indent=2) + "\n")
         print(f"  portable evidence -> {evidence.relative_to(REPO)}")
 

@@ -9,7 +9,7 @@
   "recipe": {
     "vivado/specimen/specimen_ff_probe.v": "e1ece6fe9635277b7307a97f4bff7a41c8f421a76d608349f67b6f10d98805d9",
     "vivado/specimen/build_ff_probe.tcl": "889898db455343a8dc4f93a047f5e62173cec3e1ca4e531c055245300f74c5c9",
-    "scripts/gate_build_ff.py": "dd30995b693fa9ac5f9984497e76c7ffba8982b8416800f3b4c429afb2d600a7"
+    "scripts/gate_build_ff.py": "1ff5a6bf5150ad680063b9dbb8d93235de175b9bf715e1b9badb3fd797fb4387"
   },
   "vivado_version": [
     "2025.2"
@@ -18,53 +18,61 @@
     "xc7z010clg400-1"
   ],
   "unbuildable_modes": {
-    "full_latch": "build failed; see run.out"
+    "full_latch": {
+      "why": "stamp records a build of this recipe that did not complete",
+      "error_lines": [
+        "ERROR: [Vivado 12-2285] Cannot set LOC property of instance 'g_full.g_store[1].g_used.g_latch.s'... g_full.g_store[1].g_used.g_latch.s. Illegal to place instance g_full.g_store[1].g_used.g_latch.s on site SLICE_X2Y25. The location site type (SLICEL) and bel type (FF_INIT) do not match the cell type (LDCE). Please choose a compatible site for the instance."
+      ],
+      "log": "failures/full_latch.run.out"
+    }
   },
   "bitstreams_not_copied": {
     "fdce": {
-      "bitstream_sha256": "7f5c03b89c3612edc7f0615c16c4196ffacadec1b30a59947c8df93bc09245ec",
-      "checkpoint_sha256": "1035206cc13a23b712d30f063aed01fa4e01c2bf53b717d423f7350b7a59e358",
+      "bitstream_sha256": "37979b8c3687027faabac6954eee74b46e78bd3df8fd97bb1a96dfbeacd44fa8",
+      "checkpoint_sha256": "fbfe50e5ab062a46ed923ab210a9737902e036cace9f992394004a6aa7924865",
       "readback_sha256": "33eb8db8020cffe33cf4f02cf247e8b1d3ff34631f3c8a1a6e688968959f0f0b"
     },
     "ldce": {
-      "bitstream_sha256": "d04545ce12f227eca5852670551def1d4f2fe1b8d0607f2ef7f16d786f34180e",
-      "checkpoint_sha256": "d4cd67390179f03d9444ccee861f099bdf6ab7d1516d65e0d6545c42dcc3a8d1",
+      "bitstream_sha256": "9e5120d25f5f520809f82ec9ca5e6bb88a43bf4c506ac8a26cc3292dad39f00e",
+      "checkpoint_sha256": "1fb870eaaf6528cf9220d351ea571b513e4f70975b5a7850a09e3a94ebc66fa0",
       "readback_sha256": "e7815325056d9440fb32d73641f0215f1ba2284ad631c65b32f13b97708014ea"
     },
     "fdre": {
-      "bitstream_sha256": "3459a7b51a0de0c1895eade191a06ee16800581e975b02832a571b141f767f2a",
-      "checkpoint_sha256": "06545b257ca341dc26b3c22da737058f765a64f2ab33ed91ca128c4938fa32dd",
+      "bitstream_sha256": "b1f4f074dee4cd74cc7e6dc2cf14b92036e172f9797cb81e52465eadce8c4d68",
+      "checkpoint_sha256": "7ba93541d6b3416cfec79fcd9134184e2629294478a540d9821c5f4ad95845a6",
       "readback_sha256": "3f66d96b3dd15936bd1b5634bc765682e013bfab2d64da8c7836de8e366ee1ed"
     },
     "fdce_inv": {
-      "bitstream_sha256": "87d8aa20ceb78ea05dda6b585127b2cf3cacd169dee55b29acd21e27791ba971",
-      "checkpoint_sha256": "fa30db37757350332b341f11e765f76dc78c6ee912bdbfcccf6d93858dfd3afe",
+      "bitstream_sha256": "d2b5573f08cb4daceca35e2f48b64d5cf276699abe691145410d826702197661",
+      "checkpoint_sha256": "13f8a8b61d8feff822607b85711914a42f354f013353f1634a8e67ec28e673a4",
       "readback_sha256": "0ab4f3d6bc188d35a639711c9de3af4355bd4b09e7597e8eabbb541853a11c0a"
     },
     "full_base": {
-      "bitstream_sha256": "8ab8fb7d57a5fadc10f291261998049a34a30bc4f7c587d96676f30ec01c48d8",
-      "checkpoint_sha256": "bebac28ef550745c77e0c97b1051ec90a984f96d3832c01e503c496a21d3557b",
+      "bitstream_sha256": "2c0b2eb264a1eb4ba838fcc9b5b6bcff37a7d2e8700906f302755ca0173047f2",
+      "checkpoint_sha256": "5790390d31b149adce9ebe4f69f8a8d4e57f00b69977c340ec0503bef5582966",
       "readback_sha256": "e338a0a5ef99c5f2d4c1a3d875aae731051911232244c632ad2df52533515b7e"
     },
     "main_base": {
-      "bitstream_sha256": "f7d22a2c9d2efc16388363ae483892cc2ae362e872f8dce95c95eef35556d009",
-      "checkpoint_sha256": "e037d159f11a69bb31cc23254a82aa0af3fee79899c7517f13c65299096da76e",
+      "bitstream_sha256": "a5089deac926b5588efb9b4d4a1cad12bf85a6a8cc58a1b9500e86bba9fd1772",
+      "checkpoint_sha256": "085610568755f5282e9b25d271dae932aa0eb67feea0494c27a589a31be5fa6c",
       "readback_sha256": "33ca4e51f225e800192959c8e81b353243a4024f2c48533a0c3995d0eb52a541"
     },
     "main_latch": {
-      "bitstream_sha256": "12c77db214e31a4caa63c7c9ceeaf88251e48c1f3d3457fe679135335ec1d4dd",
-      "checkpoint_sha256": "c427ac136edd317d94941e484b5a7a522952169b97e1b47813189938e38d26de",
+      "bitstream_sha256": "e260d4fc2ea5e7ade0bee50341307da391ca05fab88d7c34c82e5ca604bf83ef",
+      "checkpoint_sha256": "1007a818ee2fef77336c7d44bf7ed9db9f99cbbc49affc77b299cc3fc2e8d8c2",
       "readback_sha256": "067c3a407518a433917914caf6421fbfac69cf9c4dc353d999335c2e00916efe"
     }
   },
   "files": {
-    "probe_report.json": "999e1f640ed7735ed31d403c73fd90ceb3c7bc224b46f1193ab7dc4e456e3b27",
+    "probe_report.json": "3fe1c709c49b6a7358ddbae6ff7b1c490ca0c84ea651258a60d3de78dc8a59db",
     "readbacks/fdce.tsv": "33eb8db8020cffe33cf4f02cf247e8b1d3ff34631f3c8a1a6e688968959f0f0b",
     "readbacks/fdce_inv.tsv": "0ab4f3d6bc188d35a639711c9de3af4355bd4b09e7597e8eabbb541853a11c0a",
     "readbacks/fdre.tsv": "3f66d96b3dd15936bd1b5634bc765682e013bfab2d64da8c7836de8e366ee1ed",
     "readbacks/full_base.tsv": "e338a0a5ef99c5f2d4c1a3d875aae731051911232244c632ad2df52533515b7e",
     "readbacks/ldce.tsv": "e7815325056d9440fb32d73641f0215f1ba2284ad631c65b32f13b97708014ea",
     "readbacks/main_base.tsv": "33ca4e51f225e800192959c8e81b353243a4024f2c48533a0c3995d0eb52a541",
-    "readbacks/main_latch.tsv": "067c3a407518a433917914caf6421fbfac69cf9c4dc353d999335c2e00916efe"
+    "readbacks/main_latch.tsv": "067c3a407518a433917914caf6421fbfac69cf9c4dc353d999335c2e00916efe",
+    "failures/full_latch.run.out": "e7d5c00c3f62edabb7db84ffb76ba80593630595db22d7204838d87be704442b",
+    "failures/full_latch.stamp.json": "69370dd0330405c9e4aca8d170aefd0f5de7bf6eebd31595ac6a1009a52136eb"
   }
 }
