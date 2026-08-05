@@ -6,7 +6,10 @@ arithmetic, and to predict a direction for each feature that a bitstream can ref
 Each of those is checked here rather than asserted in prose.
 
 The hold itself is tested too. Pre-registration is the author's to lift, and a tool that
-could be talked into writing a commitment by passing a path is not held at all.
+could be talked into writing a commitment by passing a path is not held at all. The
+author lifted it on 2026-08-05 and the commitment is emitted, so the guard is now
+exercised with the flag forced on rather than as it ships — and the test that matters
+most is the new one: the emitter must still reproduce the committed hash exactly.
 """
 
 from __future__ import annotations
@@ -15,6 +18,7 @@ import copy
 import hashlib
 import json
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -32,9 +36,34 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from gate_measure_ff import address_decision, semantic_verdict  # noqa: E402
 
 
+COMMITMENT = REPO_ROOT / "gate_runs/run_2026_08_05_ff/predictions.json"
+COMMITTED_SHA256 = "5440ef27acbd5b4f624cae54f4ffad89b3f656c1e6e5fa35b29226ff0d1b2e51"
+
+
 def emit(out: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [PYTHON, str(EMITTER), "--out", str(out)],
+        cwd=REPO_ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        check=False,
+    )
+
+
+def emit_with_the_hold_forced_on(out: Path) -> subprocess.CompletedProcess[str]:
+    """Run the shipped guard, not a copy of it, with `PREREGISTRATION_HOLD` set True.
+
+    The flag is False since the author lifted it, so the refusal path can no longer be
+    reached the way the tool ships. Setting the module global in a child process still
+    executes the real `main()`, which is the code that has to refuse.
+    """
+    driver = (
+        "import sys; sys.path.insert(0, 'scripts');"
+        "import gate_emit_ff as emitter;"
+        "emitter.PREREGISTRATION_HOLD = True;"
+        "sys.argv = ['gate_emit_ff.py', '--out', sys.argv[1]];"
+        "sys.exit(emitter.main())"
+    )
+    return subprocess.run(
+        [PYTHON, "-c", driver, str(out)],
         cwd=REPO_ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         check=False,
     )
@@ -207,10 +236,28 @@ class FfPlanTests(unittest.TestCase):
         self.assertEqual(used, {s["specimen_id"] for s in self.plan["specimens"]})
 
     def test_the_emitter_refuses_to_write_a_commitment_while_the_hold_stands(self) -> None:
-        checked = emit(REPO_ROOT / "gate_runs/ff_hold_probe/predictions.json")
+        probe = REPO_ROOT / "gate_runs/ff_hold_probe"
+        self.addCleanup(lambda: shutil.rmtree(probe, ignore_errors=True))
+        checked = emit_with_the_hold_forced_on(probe / "predictions.json")
         self.assertNotEqual(checked.returncode, 0, checked.stdout)
         self.assertIn("pre-registration is HELD", checked.stdout)
-        self.assertFalse((REPO_ROOT / "gate_runs/ff_hold_probe").exists())
+        self.assertFalse(probe.exists())
+
+    def test_the_hold_is_lifted_and_the_committed_plan_is_frozen(self) -> None:
+        # With the hold lifted nothing in the tool stops an edit to the plan from
+        # silently changing what a re-emission produces. `gate_measure_ff.py` would
+        # catch it at scoring time by hash; this catches it at the commit that causes
+        # it. The ordering is the evidence, so the hash is not allowed to move.
+        self.assertTrue(COMMITMENT.is_file(), f"{COMMITMENT} is the commitment of record")
+        digest = hashlib.sha256(COMMITMENT.read_bytes()).hexdigest()
+        self.assertEqual(digest, COMMITTED_SHA256)
+
+        with tempfile.TemporaryDirectory(dir=REPO_ROOT / "build") as directory:
+            fresh = Path(directory) / "predictions.json"
+            checked = emit(fresh)
+            self.assertEqual(checked.returncode, 0, checked.stdout)
+            self.assertIn("COMMIT THIS HASH", checked.stdout)
+            self.assertEqual(fresh.read_bytes(), COMMITMENT.read_bytes())
 
 
 class CommittedPairAccountingTests(unittest.TestCase):
