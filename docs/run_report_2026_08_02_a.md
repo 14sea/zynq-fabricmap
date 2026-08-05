@@ -1,5 +1,12 @@
 # Run report — `run_2026_08_02_a`, first certified bit class
 
+> **STATUS UPDATE 2026-08-05.** This report preserves what was known after Run A.
+> `clb_mux` has since been certified and its old 32/32 headline corrected to 16/16
+> falsifiable address evidence plus 16 vacuous diagnostics. `clb_ff_config` now has a
+> committed 1.5 prediction plan but no bitstreams. The "What is next" section is the
+> historical queue at the time of this report; its exclusivity-as-safety wording is
+> superseded by `docs/mux_groups.md` and `docs/board_roles.md`.
+
 **Result: `clb_lut_init` is certified. Holdout 262/262, fp=0, fn=0.**
 First certificate accepted by `host/verify_certificate.py --require-production`.
 

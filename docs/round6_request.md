@@ -1,5 +1,11 @@
 # Round 6 request — certificate 1.3, group-scoped assertions
 
+> **HISTORICAL REQUEST — CLOSED.** Round 6 shipped the group model; Rounds 7–8 hardened
+> coverage and bucket ownership; Round 9 corrected vacuous accounting; Round 10 added
+> the separate feature comparison lifecycle. Current normative behavior is in
+> `docs/certificate_schema.md`. Status and `address_pass=32` examples below record the
+> artifacts as they existed during this request.
+
 Producer → author. `clb_mux` is measured and passing, but it cannot be certified:
 certificate 1.2 models a per-feature list of bit assignments, and a mux claim is not
 that shape. This is the ask for the extension.

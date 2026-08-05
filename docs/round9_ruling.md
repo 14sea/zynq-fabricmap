@@ -1,5 +1,11 @@
 # Round 9 ruling — accepted, and what the producer builds against
 
+> **EXECUTION UPDATE 2026-08-05.** The 1.4 schema/verifier/fixtures landed, Run B was
+> recounted, and the FF emitter/measure/certifier queue below was implemented. Round 10
+> subsequently upgraded new feature commitments to 1.5 by preregistering the comparison
+> endpoint. `clb_ff_config` is now committed at `2b40693` / `5440ef27…`; its complete
+> builder and bitstreams do not yet exist. The body remains the Round 9 ruling as issued.
+
 Author's ruling on `docs/round9_request.md`, received 2026-08-03. This file is the
 producer-side record of what was decided; the normative text belongs in
 `docs/certificate_schema.md` once 1.4 lands. Where the two ever disagree, the schema

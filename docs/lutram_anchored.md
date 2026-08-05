@@ -123,3 +123,7 @@ the fix was to the specimen plan, which is where the problem was. What is now sh
 that a `clb_lutram` specimen family can reach `ownership_unknown = 0` and
 `unattributed = 0` on every intended pair, which is the precondition an FP-clean
 measurement run needs.
+
+Any future commitment for this class must use certificate/`gate_predictions` 1.5 and
+preregister both endpoints. The FP rule above remains the fixed rule introduced by 1.4;
+the 1.5 lifecycle addition does not weaken or replace it.

@@ -1,5 +1,11 @@
 # Round 10 request — the comparison endpoint is not pre-registered
 
+> **RESOLVED 2026-08-05.** Certificate and `gate_predictions` 1.5 implement the
+> comparison-endpoint lifecycle rule (`8a8142d`). The producer adopted it, the hold was
+> lifted in `c45e76e`, and the exact 176-prediction commitment was recorded in
+> `2b40693` before any specimen bitstream. The request below is retained as the defect
+> report and acceptance rationale, not as an open blocker.
+
 Producer → author. **This is a lifecycle hole in certificate 1.4, found while preparing
 `clb_ff_config`, and it is why the pre-registration hold must stay on.** Nothing below
 needs Vivado or producer source: it is a property of the schema and the verifier.

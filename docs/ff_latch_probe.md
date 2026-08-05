@@ -1,5 +1,10 @@
 # LATCH probe — measured on the mine site, 2026-08-04
 
+> **APPLIED 2026-08-05.** This is the mine-site exploration record. Its four-latch
+> topology and control-matched `latch_base` were incorporated into the 1.5 commitment
+> at `2b40693` (sha256 `5440ef27…`). References below to an unchanged emitter, the old
+> `4b06f78b…` draft or a held commitment describe the probe moment, not current state.
+
 **Exploration, not evidence for any certificate.** Everything below was built on
 `SLICE_X2Y25`, the mine site, whose evidence is already spent and can never score. No
 holdout site was built, no holdout bitstream was read, no commitment was emitted and

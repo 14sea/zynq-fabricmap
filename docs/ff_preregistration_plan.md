@@ -1,12 +1,12 @@
-# `clb_ff_config` pre-registration plan — for review before any commitment hash
+# `clb_ff_config` pre-registration plan — committed before any specimen bitstream
 
-**Status: DRAFT, no commitment emitted.** The hold on pre-registration is not lifted by
-this document. `scripts/gate_emit_ff.py` refuses to write into `gate_runs/`; it writes a
-draft under `build/` (gitignored) so the key space can be read, counted and argued with
-while nothing is frozen.
+**Status: COMMITTED 2026-08-05, no specimen bitstream built.** Commit `c45e76e` lifted
+the explicit hold; commit `2b40693` then recorded
+`gate_runs/run_2026_08_05_ff/predictions.json` at sha256
+`5440ef27acbd5b4f624cae54f4ffad89b3f656c1e6e5fa35b29226ff0d1b2e51`.
+The git ordering is the evidence: this exact plan existed before the first build.
 
-What a commitment would permanently fix, and therefore what this document asks the
-author to rule on:
+The commitment permanently fixes the four items this document put to the author:
 
 1. the **key space** — which `(specimen, feature)` pairs exist at all;
 2. the **completeness rule** — which of them must be reported for the certificate to be
@@ -14,7 +14,7 @@ author to rule on:
 3. the **coverage denominator** — and the numerator, `attested_count`;
 4. the **split** — which keys can never score.
 
-None of these can be reshaped afterwards. The ordering is the evidence.
+None of these may now be reshaped for this run.
 
 ## 1. The class, recomputed from the freeze
 
@@ -207,30 +207,40 @@ emit if any committed holdout key would go unreported.
    > preregistered feature by feature**, never absorbed into a widened scope on
    > suspicion. Dropping `LATCH` and certifying 175 is explicitly refused: a class
    > certificate that quietly omits an entry is not a class certificate.
-4. **8 site instances × 14 P&R is ~112 Vivado runs.** Nothing about that is risky, but a
+4. **8 site instances × 15 P&R is 120 Vivado runs.** Nothing about that is risky, but a
    failed run in the middle must not tempt anyone to certify the subset that worked —
    hence the all-or-nothing completeness rule above.
 
-## 6. What exists now, and how to re-read it
+## 6. The committed artifact, and how to re-read it
 
 ```sh
-scripts/gate_emit_ff.py --out build/ff_draft/predictions.json   # draft, commits nothing
-PYTHONPATH=. python3 -m unittest tests.test_ff_plan -q          # 12 checks on the plan
+sha256sum gate_runs/run_2026_08_05_ff/predictions.json
+git show 2b40693:gate_runs/run_2026_08_05_ff/predictions.json | sha256sum
 ```
 
-The draft under review is `gate_predictions` **1.5.0**: **184 specimens, 176
+The committed `gate_predictions` **1.5.0** record contains **184 specimens, 176
 predictions, 154 holdout, 168 committed endpoint pairs**, sha256
-`5440ef27acbd5b4f624cae54f4ffad89b3f656c1e6e5fa35b29226ff0d1b2e51`. That hash is a
-fingerprint of this document's decisions, not a commitment: it changes whenever the plan
-does, and `scripts/gate_emit_ff.py` will not write outside `build/` while
-`PREREGISTRATION_HOLD` is `True`.
+`5440ef27acbd5b4f624cae54f4ffad89b3f656c1e6e5fa35b29226ff0d1b2e51`. Both commands
+above must print that value. A different plan is a different run, not an amendment to
+this commitment.
+
+**The post-hold test transition is done.** One pre-freeze case expected an emitter
+write into `gate_runs/` to be refused while the hold was true; after `c45e76e` that
+premise is intentionally false, and running it unchanged would have created
+`gate_runs/ff_hold_probe/` before failing. The refusal is still tested — the child
+process sets `PREREGISTRATION_HOLD` back to `True` and runs the shipped `main()`, so
+the guard itself is exercised rather than a copy of it — and a stronger case replaces
+what the flag used to give: **the emitter must reproduce the committed bytes exactly**,
+sha256 `5440ef27…`. Both were confirmed to fail for the right reason by mutating the
+emitter (a one-character seed change; the guard deleted). Suite: **136 tests**.
 
 `tests/test_ff_plan.py` checks on the freeze, not on prose: all 176 entries asserted
 exactly once, every rule single-bit, every address equal to the normative arithmetic,
 every transition the complement of its asserted value, the eight negated tokens exactly
 the `NOCLKINV` features, the complementary pair sharing one address across two
-specimens, one endpoint pair per feature, the 1.4 prediction contract fields exactly,
-and the hold refusing a write into `gate_runs/`.
+specimens, one endpoint pair per feature, the exact 1.5 prediction and
+comparison-endpoint contract, 168 canonical accounting pairs, and 176 directed feature
+observations.
 
 `gate_measure_ff.py` and `gate_certify_ff.py` are written and will not run until
 specimens exist. Both refuse rather than improvise: measure refuses to score if the
@@ -271,9 +281,9 @@ part of the commitment** — is **closed**. `docs/round10_handoff.md` shipped sc
 1.5.0: `comparison_specimen_id` is required and locked in advance, the verifier rebuilds
 the whole pair set and the in-scope union from the commitment, and substituting a
 baseline *together with* its accounting record still fails. The producer half now emits
-and reads it, and the variant list above is the one that would be frozen.
+and reads it, and the variant list above is the one frozen in `2b40693`.
 
-Pre-registration itself remains **held**. Every technical precondition is met; what is
-left is the author's decision to freeze, which is deliberately a separate act —
-`PREREGISTRATION_HOLD` in `scripts/gate_emit_ff.py`, one line, so the record shows who
-lifted it and when.
+Pre-registration is **complete**. The author approved the freeze, `c45e76e` records the
+one-line hold release, and `2b40693` records the artifact. The next task is a complete
+184-specimen builder implementing this fixed plan; the existing `gate_build_ff.py`
+remains the mine-site LATCH probe and must not be mistaken for that builder.

@@ -4,9 +4,12 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
-**Status: the frozen database subset is in (2026-08-02).** The approach is ratified
-(see below), `data/` is frozen and self-verifying, and no bit class is certified
-yet. Nothing has been board-verified from this repo.
+**Status (2026-08-05): host-side certification is active.** The approach is ratified
+(see below), `data/` is frozen and self-verifying, and two bit classes are certified:
+`clb_lut_init` and `clb_mux`. `clb_ff_config` has a committed certificate-1.5
+prediction plan (`gate_runs/run_2026_08_05_ff/predictions.json`, sha256
+`5440ef27…`) but no specimen bitstream has been built for that run. Nothing has been
+board-verified from this repo.
 
 ## Relationship to the other repos
 
@@ -69,7 +72,8 @@ recommendation; it is what this repo does:
 - **prjxray is demoted to an index**, and completion becomes lazy: targeted
   mini-fuzz only where a certificate actually fails.
 
-This instantiates the `local_map` schema and is the foundation for Claim B.
+This is the evidence foundation from which a `local_map` instance will be built for
+Claim B. The actual `local_map` consumer artifact has not been implemented yet.
 
 ### First drop, concretely
 
@@ -103,7 +107,19 @@ scripts/extract_prjxray_subset.py --verify                    # integrity gate, 
 - Format contract for the other author: `docs/freeze_format.md`, including the
   `certification` slot the prediction gate writes back into and its staleness rule.
 
-**Step 2 — the Vivado specimen-diff harness and the prediction gate itself — is next.**
+**Step 2 — host-side certification infrastructure (active).**
+
+- Certificate schema 1.5, the independent host verifier and known-answer fixtures are
+  shipped. Feature records can preregister both endpoints of every comparison; group
+  records retain their absolute-assignment model.
+- `clb_lut_init` is certified at holdout 262/262 with fp=0/fn=0.
+- `clb_mux` is certified at 16/16 falsifiable address passes, with 16 vacuous
+  exclusivity diagnostics and semantic identity 16/16 reported separately.
+- `clb_ff_config` is preregistered at full 176/176 coverage. Its complete
+  184-specimen/120-P&R builder is the next implementation task; the existing
+  `gate_build_ff.py` is only the mine-site LATCH probe.
+- `clb_lutram` has inventory, isolation and real-diff evidence, but no commitment or
+  certificate. `int_pip` and `ppip_bitless` remain unstarted.
 
 ## Planning decisions carried in (2026-08-02)
 

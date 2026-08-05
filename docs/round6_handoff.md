@@ -1,5 +1,12 @@
 # Round 6 certificate 1.3 handoff
 
+> **ACCOUNTING ERRATUM 2026-08-04.** The `address_pass=32` acceptance headline below
+> counted 16 vacuous `group_exclusivity` outcomes as address evidence. Run B was
+> re-emitted under certificate 1.4 without changing predictions, measurements or
+> specimens. Its current result is 16/16 falsifiable strict-codeword passes, 16 vacuous
+> exclusivity diagnostics, decode-validity 16/16 diagnostic, and semantic 16/16. See
+> `docs/round9_ruling.md` and `tests/test_run_b_erratum.py`.
+
 Certificate 1.3 adds the consumer-owned `group` evidence model needed to certify
 `clb_mux`. It is additive: certificate 1.2 feature records and the already certified
 Run A remain valid production authority.

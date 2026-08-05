@@ -1,9 +1,11 @@
 # `clb_lutram` — inventory
 
 Step 1 of the three that precede pre-registration (inventory → specimen isolation →
-real diff), done under the round 9 ruling: certificate 1.4, one feature namespace,
-`(specimen, feature)` keys. **No gate emitter, no commitment hash, no manifest
-certification slot is touched by this work.**
+real diff), done under the model selected by the round 9 ruling: one feature namespace
+and `(specimen, feature)` keys. That model was introduced in certificate 1.4; after
+Round 10, any new comparison-based commitment for this class must select 1.5 and pin
+both endpoints. **No gate emitter, no commitment hash, no manifest certification slot
+is touched by this work.**
 
 Everything here is recomputed from `data/` at the freeze pinned in
 `data/MANIFEST.json`. Nothing below claims anything about RAM behaviour on silicon;

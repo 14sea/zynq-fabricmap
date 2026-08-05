@@ -53,9 +53,12 @@ exhausted before the next:
 1. **Host-side certification** (where this repo is now). Free, unlimited, no board.
 2. **Readback-only on the sacrificial board.** ICAP/`bitread` readback and compare
    against predictions. Reads cannot cause contention.
-3. **Certified writes under the composition rules** — one driver per node, one selected
-   input per mux group, candidate diff fully contained in the whitelist
-   (`zynq-autoehw/docs/schema.md` §5). Still expected to be non-destructive.
+3. **Certified writes under the composition rules** — one driver per node; for every
+   group whose bits the write touches, the resulting pattern must be a listed frozen-DB
+   codeword; and the candidate diff must be fully contained in the whitelist. Codeword
+   exclusivity is only a DB/group/address consistency diagnostic and cannot reject a
+   bitstream when codewords are unique. All-zero is not presumed safe
+   (`docs/mux_groups.md` §"Erratum"). Still expected to be non-destructive.
 4. **Unconstrained routing mutation.** Only here is the board genuinely at risk, and
    only with a current-limited 5 V supply so a contention short trips the limit
    instead of cooking a die.

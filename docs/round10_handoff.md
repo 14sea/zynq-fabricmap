@@ -1,5 +1,11 @@
 # Round 10 consumer handoff — comparison lifecycle
 
+> **APPLIED 2026-08-05.** The producer adopted this contract and committed
+> `gate_runs/run_2026_08_05_ff/predictions.json` at sha256 `5440ef27…` in `2b40693`,
+> after the separately recorded hold release `c45e76e`. No specimen bitstream existed
+> when the commitment was made. Statements below about what the then-held producer
+> "can now" do describe the handoff moment.
+
 Status: **shipped**. The lifecycle rule requested in `docs/round10_request.md` is
 implemented as certificate and `gate_predictions` schema 1.5.0. Published 1.4 and
 1.2 records retain their original semantics.

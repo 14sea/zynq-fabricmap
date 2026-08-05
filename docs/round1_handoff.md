@@ -1,5 +1,10 @@
 # Round 1 consumer-side handoff
 
+> **GEOMETRY UPDATE 2026-08-02.** The 101-word frame-size assumption described below
+> was discharged after this handoff: `(5,144 frames + 8 pad) × 101 words` exactly
+> consumes the real FDRI payload, independently reproduced on two bitstreams. Current
+> normative text is `docs/freeze_format.md` §5.6 and `docs/evidence_contract.md`.
+
 This drop implements the author-owned side of `docs/workflow.md` Round 1 without
 reading or importing the producer-owned extractor, specimen harness, differ, or gate.
 
