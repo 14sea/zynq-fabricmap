@@ -46,7 +46,7 @@ SPEC = REPO / "data/subset_spec.json"
 # emitter will only write a draft under `build/` (gitignored), so the plan can be read
 # and argued with while nothing is frozen. Lifting the hold is a one-line commit, which
 # is the point — it leaves a reviewable record of who lifted it and when.
-PREREGISTRATION_HOLD = True
+PREREGISTRATION_HOLD = False
 
 # Sites whose evidence established the harness rules: they may inform predictions and
 # can never score them.
