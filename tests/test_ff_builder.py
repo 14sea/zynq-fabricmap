@@ -446,6 +446,15 @@ class MineDiagnosticTests(unittest.TestCase):
         self.assertNotIn("BUCKETS = (", source)
 
     def test_only_the_committed_mine_site_is_accepted(self) -> None:
+        """Checked through the pure scope function, for the second time in this file.
+
+        The subprocess form of this test failed from a `git archive`: the diagnostic
+        checks authority B before the site scope, so with no `.git` present it exits on
+        the missing history and the assertion never sees "not mine". Exactly the trap
+        already fixed for the builder's copy of this test — and reintroduced here, which
+        is why the rule is now written down: **never assert a late refusal through a
+        subprocess when an earlier refusal can fire first.**
+        """
         import json as _json
 
         doc = _json.loads(builder.COMMITMENT.read_text())
@@ -455,13 +464,27 @@ class MineDiagnosticTests(unittest.TestCase):
         self.assertEqual(diag.mine_site(doc), "SLICE_X2Y25")
         holdouts = sorted({s["site"] for s in doc["specimens"] if s["split"] == "holdout"})
         self.assertEqual(len(holdouts), 7)
+        # The diagnostic calls the builder's scope function, so this is the same rule the
+        # tool enforces, not a restatement of it.
+        self.assertIs(diag.check_instance_scope, builder.check_instance_scope)
         for site in holdouts:
-            checked = subprocess.run(
-                [PYTHON, str(self.DIAG), "--build", str(REPO_ROOT / "build/nonexistent"),
-                 "--site", site, "--out", os.devnull],
-                cwd=REPO_ROOT, capture_output=True, text=True, check=False)
-            self.assertIn("not mine", checked.stdout + checked.stderr)
-            self.assertNotEqual(checked.returncode, 0)
+            with self.subTest(site), self.assertRaises(SystemExit) as caught:
+                diag.check_instance_scope(doc, site)
+            self.assertIn("not mine", str(caught.exception))
+
+    def test_the_false_positive_rule_has_exactly_one_definition_in_the_repo(self) -> None:
+        """Lives here, not with the artifact-gated negatives, because it needs no build.
+
+        It sat in a class whose `setUp` skips when `build/` has no smoke artifacts, so a
+        cold checkout skipped the one check that the FP rule is not duplicated — a silent
+        pass for the property most worth guarding.
+        """
+        definitions = [path for path in (REPO_ROOT / "scripts").glob("*.py")
+                       if "def false_positive_bits(" in path.read_text()]
+        self.assertEqual([p.name for p in definitions], ["gate_measure_ff.py"])
+        for consumer in ("scripts/gate_measure_ff.py", "scripts/diag_measure_ff_mine.py"):
+            self.assertIn("false_positive_bits(buckets, class_claimed_out_of_scope)",
+                          (REPO_ROOT / consumer).read_text(), consumer)
 
     def test_the_output_cannot_be_mistaken_for_a_certificate(self) -> None:
         source = self.DIAG.read_text()
@@ -519,8 +542,17 @@ def builder_buckets():
     return BUCKETS
 
 
+@unittest.skipUnless(has_history(), "the diagnostic itself requires a clone (§1.3)")
 class DiagnosticArtifactGateTests(unittest.TestCase):
     """The diagnostic must not score anything the builder's own gate would refuse.
+
+    **Clone-only, and for the tool's own reason rather than a testing convenience.** The
+    diagnostic checks authority B before anything else, so from a `git archive` every
+    case here exits on the missing history and none of them tests what it claims to.
+    That is the same trap that has now caught this file three times: a subprocess
+    asserting a late refusal, with an earlier refusal able to fire first. The tamper
+    negatives themselves need no real bitstreams — they run on a synthetic tree — so in
+    a clone they run whether or not `build/` has been populated.
 
     It read `spec.bit` straight off a path convention until this was caught. A
     substituted bitstream, or a stamp whose recipe had drifted from the committed
@@ -534,9 +566,36 @@ class DiagnosticArtifactGateTests(unittest.TestCase):
     DIAG = REPO_ROOT / "scripts/diag_measure_ff_mine.py"
     BUILD = REPO_ROOT / "build/gate_ff_formal"
 
-    def setUp(self) -> None:
-        if not (self.BUILD / "SLICE_X2Y25" / "base" / "spec.bit").is_file():
-            self.skipTest("mine smoke artifacts not present in build/")
+    def synthetic_tree(self, root: Path) -> dict:
+        """A build tree that PASSES the artifact gate, with placeholder artifacts.
+
+        Every refusal below fires before a frame is parsed, so the tamper negatives do
+        not need real bitstreams — and building them synthetically is what stops them
+        from being skipped on a cold checkout, where `build/` is empty. A skipped
+        negative is a silent pass, and these guard the number that decides whether the
+        ladder proceeds.
+        """
+        doc = json.loads(builder.COMMITMENT.read_text())
+        mapping = builder.check_site_mapping(doc)
+        nodes = builder.plan_nodes(doc, mapping, root, "SLICE_X2Y25")
+        base_dir = root / "SLICE_X2Y25" / "base"
+        for node in nodes:
+            node["outdir"].mkdir(parents=True, exist_ok=True)
+            for name in builder.ARTIFACTS[node["node_type"]]:
+                (node["outdir"] / name).write_text(f"placeholder {node['variant']} {name}")
+        base_dcp = builder.sha256_file(base_dir / "base.dcp")
+        for node in nodes:
+            stamp = {"schema": "ff_formal_stamp/1", "node_type": node["node_type"],
+                     "instance": node["instance"], "variant": node["variant"],
+                     "sites": node["sites"], "recipe": node["recipe"], "completed": True,
+                     "artifacts": {name: builder.sha256_file(node["outdir"] / name)
+                                   for name in builder.ARTIFACTS[node["node_type"]]}}
+            if node["node_type"] == "derived":
+                node["base_dcp_sha256"] = base_dcp
+                stamp["derived_from"] = {"specimen_id": "SLICE_X2Y25_base",
+                                         "base_dcp_sha256": base_dcp}
+            (node["outdir"] / "stamp.json").write_text(json.dumps(stamp, indent=2))
+        return {n["specimen_id"]: n for n in nodes}
 
     def run_diag(self, build: Path) -> subprocess.CompletedProcess[str]:
         with tempfile.NamedTemporaryFile(suffix=".json") as out:
@@ -565,13 +624,18 @@ class DiagnosticArtifactGateTests(unittest.TestCase):
         return target
 
     def test_the_untampered_tree_passes(self) -> None:
+        # The only case here that needs REAL bitstreams: it parses frames. The tamper
+        # negatives all refuse earlier and run everywhere on a synthetic tree.
+        if not (self.BUILD / "SLICE_X2Y25" / "base" / "spec.bit").is_file():
+            self.skipTest("mine smoke artifacts not present in build/ (gitignored)")
         checked = self.run_diag(self.BUILD)
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
         self.assertIn("false positives     : 0", checked.stdout)
 
     def test_a_substituted_bitstream_is_refused(self) -> None:
         with scratch() as directory:
-            build = self.copy_tree(directory)
+            build = Path(directory) / "build"
+            self.synthetic_tree(build)
             victim = build / "SLICE_X2Y25" / "zrst_AFF" / "spec.bit"
             shutil.copy(build / "SLICE_X2Y25" / "clkinv" / "spec.bit", victim)
             checked = self.run_diag(build)
@@ -581,7 +645,8 @@ class DiagnosticArtifactGateTests(unittest.TestCase):
 
     def test_a_drifted_stamp_source_hash_is_refused(self) -> None:
         with scratch() as directory:
-            build = self.copy_tree(directory)
+            build = Path(directory) / "build"
+            self.synthetic_tree(build)
             stamp_path = build / "SLICE_X2Y25" / "base" / "stamp.json"
             stamp = json.loads(stamp_path.read_text())
             key = "scripts/gate_build_ff_formal.py"
@@ -593,7 +658,8 @@ class DiagnosticArtifactGateTests(unittest.TestCase):
 
     def test_a_missing_specimen_is_refused(self) -> None:
         with scratch() as directory:
-            build = self.copy_tree(directory)
+            build = Path(directory) / "build"
+            self.synthetic_tree(build)
             shutil.rmtree(build / "SLICE_X2Y25" / "latch")
             checked = self.run_diag(build)
             self.assertNotEqual(checked.returncode, 0)
@@ -601,7 +667,8 @@ class DiagnosticArtifactGateTests(unittest.TestCase):
 
     def test_a_derived_specimen_pinned_to_another_base_is_refused(self) -> None:
         with scratch() as directory:
-            build = self.copy_tree(directory)
+            build = Path(directory) / "build"
+            self.synthetic_tree(build)
             stamp_path = build / "SLICE_X2Y25" / "zini_AFF" / "stamp.json"
             stamp = json.loads(stamp_path.read_text())
             stamp["derived_from"]["base_dcp_sha256"] = "0" * 64
@@ -611,14 +678,3 @@ class DiagnosticArtifactGateTests(unittest.TestCase):
             self.assertIn("derives from a different base checkpoint",
                           checked.stdout + checked.stderr)
 
-    def test_the_false_positive_rule_has_exactly_one_definition_in_the_repo(self) -> None:
-        # The blocker this class shares a commit with: the measurement computed FP
-        # inline while the diagnostic defined its own copy, so the two could drift and
-        # only one was pinned by a test.
-        definitions = [path for path in (REPO_ROOT / "scripts").glob("*.py")
-                       if "def false_positive_bits(" in path.read_text()]
-        self.assertEqual([p.name for p in definitions], ["gate_measure_ff.py"])
-        self.assertIn("false_positive_bits(buckets, class_claimed_out_of_scope)",
-                      (REPO_ROOT / "scripts/gate_measure_ff.py").read_text())
-        self.assertIn("false_positive_bits(buckets, class_claimed_out_of_scope)",
-                      self.DIAG.read_text())
