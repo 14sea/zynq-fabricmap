@@ -40,6 +40,20 @@ COMMITMENT = REPO_ROOT / "gate_runs/run_2026_08_05_ff/predictions.json"
 COMMITTED_SHA256 = "5440ef27acbd5b4f624cae54f4ffad89b3f656c1e6e5fa35b29226ff0d1b2e51"
 
 
+def scratch() -> tempfile.TemporaryDirectory:
+    """A scratch directory inside `build/`, created if it is not there.
+
+    The location is load-bearing, not a habit: the emitter's hold permits a draft only
+    under `build/`, so a test that exercises the held path cannot scratch anywhere else.
+    But `build/` is gitignored, so it does not exist in a fresh clone — and this suite
+    exists precisely so that someone who clones the repo can try to falsify its
+    artifacts. Without this, nine tests error out on a clean checkout and twenty-four
+    more never run.
+    """
+    (REPO_ROOT / "build").mkdir(exist_ok=True)
+    return tempfile.TemporaryDirectory(dir=REPO_ROOT / "build")
+
+
 def emit(out: Path) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         [PYTHON, str(EMITTER), "--out", str(out)],
@@ -72,7 +86,7 @@ def emit_with_the_hold_forced_on(out: Path) -> subprocess.CompletedProcess[str]:
 class FfPlanTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls._directory = tempfile.TemporaryDirectory(dir=REPO_ROOT / "build")
+        cls._directory = scratch()
         out = Path(cls._directory.name) / "predictions.json"
         checked = emit(out)
         assert checked.returncode == 0, checked.stdout
@@ -252,7 +266,7 @@ class FfPlanTests(unittest.TestCase):
         digest = hashlib.sha256(COMMITMENT.read_bytes()).hexdigest()
         self.assertEqual(digest, COMMITTED_SHA256)
 
-        with tempfile.TemporaryDirectory(dir=REPO_ROOT / "build") as directory:
+        with scratch() as directory:
             fresh = Path(directory) / "predictions.json"
             checked = emit(fresh)
             self.assertEqual(checked.returncode, 0, checked.stdout)
@@ -273,7 +287,7 @@ class CommittedPairAccountingTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls._directory = tempfile.TemporaryDirectory(dir=REPO_ROOT / "build")
+        cls._directory = scratch()
         out = Path(cls._directory.name) / "predictions.json"
         checked = emit(out)
         assert checked.returncode == 0, checked.stdout
@@ -384,7 +398,7 @@ class LatchProbeScopeTests(unittest.TestCase):
         sys.path.insert(0, str(REPO_ROOT / "scripts"))
         from gate_build_ff import cache_state, recipe_hashes  # noqa: PLC0415
 
-        with tempfile.TemporaryDirectory(dir=REPO_ROOT / "build") as directory:
+        with scratch() as directory:
             outdir = Path(directory) / "mode"
             outdir.mkdir()
             for name in ("spec.bit", "readback.tsv", "base.dcp"):
@@ -424,7 +438,7 @@ class LatchProbeScopeTests(unittest.TestCase):
         sys.path.insert(0, str(REPO_ROOT / "scripts"))
         from gate_build_ff import cache_state, recipe_hashes, verified_state  # noqa: PLC0415
 
-        with tempfile.TemporaryDirectory(dir=REPO_ROOT / "build") as directory:
+        with scratch() as directory:
             outdir = Path(directory) / "mode"
             outdir.mkdir()
             (outdir / "run.out").write_text("ERROR: nope\n")
@@ -558,7 +572,7 @@ class CertifierSemanticIsolationTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        cls._directory = tempfile.TemporaryDirectory(dir=REPO_ROOT / "build")
+        cls._directory = scratch()
         root = Path(cls._directory.name)
         draft = root / "draft.json"
         checked = emit(draft)
@@ -666,7 +680,7 @@ class CertifierSemanticIsolationTests(unittest.TestCase):
         )
 
     def test_semantic_only_failure_certifies_as_address_passed(self) -> None:
-        with tempfile.TemporaryDirectory(dir=REPO_ROOT / "build") as directory:
+        with scratch() as directory:
             run = self.build_run(Path(directory), semantic_ok=False, address_problems=[])
             checked = self.certify(run)
             self.assertEqual(checked.returncode, 0, checked.stdout)
@@ -681,7 +695,7 @@ class CertifierSemanticIsolationTests(unittest.TestCase):
                 {"pass_count": 1, "fail_count": 1})
 
     def test_an_address_problem_still_fails_the_certificate(self) -> None:
-        with tempfile.TemporaryDirectory(dir=REPO_ROOT / "build") as directory:
+        with scratch() as directory:
             run = self.build_run(Path(directory), semantic_ok=True,
                                  address_problems=["specimen: no attestation"])
             checked = self.certify(run)
@@ -692,7 +706,7 @@ class CertifierSemanticIsolationTests(unittest.TestCase):
             self.assertTrue(certificate["failure_reasons"])
 
     def test_a_clean_run_certifies_both_ways(self) -> None:
-        with tempfile.TemporaryDirectory(dir=REPO_ROOT / "build") as directory:
+        with scratch() as directory:
             run = self.build_run(Path(directory), semantic_ok=True, address_problems=[])
             checked = self.certify(run)
             self.assertEqual(checked.returncode, 0, checked.stdout)
