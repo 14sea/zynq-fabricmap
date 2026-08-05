@@ -127,6 +127,24 @@ def classify_diff(raw, scope, index, pattern, asserted_tiles):
     return buckets, class_claimed_out_of_scope
 
 
+def false_positive_bits(buckets: dict, class_claimed_out_of_scope: set) -> set:
+    """The fixed 1.4 false-positive profile. **The only definition of it in the repo.**
+
+    `ownership_unknown ∪ unattributed ∪ {db_attributed claimed by THIS class inside an
+    asserted tile and covered by no preregistered scope}`, counted once per
+    `(pair, address)` — automatic here, because these are address sets and callers key
+    them by pair.
+
+    A function rather than three inline lines, for two reasons that both cost something:
+    while it was inline, replacing it with `set()` passed the entire test suite; and the
+    mine diagnostic briefly carried its own copy, so the rule that decides whether the
+    ladder stops existed twice and only one copy was pinned by a test. Every consumer
+    calls this one.
+    """
+    return (set(buckets["ownership_unknown"]) | set(buckets["unattributed"])
+            | set(class_claimed_out_of_scope))
+
+
 def committed_pairs(doc: dict) -> tuple[dict, dict]:
     """`(scopes_by_pair, direction_of_feature)` from the commitment alone.
 
@@ -342,8 +360,7 @@ def main() -> int:
         if union - raw:
             address_problems.append(f"{base_id}/{variant_id}: {len(union - raw)} bucketed bits not in the raw diff")
 
-        fp_bits = (buckets["ownership_unknown"] | buckets["unattributed"]
-                   | class_claimed_out_of_scope)
+        fp_bits = false_positive_bits(buckets, class_claimed_out_of_scope)
         false_positives[(base_id, variant_id)] = as_addresses(fp_bits)
         accounting.append({
             "site": base["site"],

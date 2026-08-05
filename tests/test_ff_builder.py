@@ -422,3 +422,203 @@ class ScopeDisciplineTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MineDiagnosticTests(unittest.TestCase):
+    """The mine-only bit-accounting diagnostic — `scripts/diag_measure_ff_mine.py`.
+
+    It exists because §10's stop-on-FP condition is not evaluable by the smoke: FP,
+    `ownership_unknown` and `unattributed` come from the measurement, and §7.6 forbids
+    that on an incomplete run. What must be true of it is that it reuses the measurement
+    core rather than reimplementing it, that it cannot be pointed at a holdout instance,
+    and that nothing downstream can mistake it for a certificate.
+    """
+
+    DIAG = REPO_ROOT / "scripts/diag_measure_ff_mine.py"
+
+    def test_it_reuses_the_measurement_core_and_defines_no_classifier_of_its_own(self) -> None:
+        source = self.DIAG.read_text()
+        for name in ("classify_diff", "raw_diff", "committed_pairs", "as_addresses"):
+            self.assertIn(f"    {name},", source, f"{name} must be imported, not rewritten")
+        # A second implementation of the bucket rule is the failure this guards against.
+        self.assertNotIn("def classify_diff", source)
+        self.assertNotIn("def raw_diff", source)
+        self.assertNotIn("BUCKETS = (", source)
+
+    def test_only_the_committed_mine_site_is_accepted(self) -> None:
+        import json as _json
+
+        doc = _json.loads(builder.COMMITMENT.read_text())
+        sys.path.insert(0, str(REPO_ROOT / "scripts"))
+        import diag_measure_ff_mine as diag  # noqa: PLC0415
+
+        self.assertEqual(diag.mine_site(doc), "SLICE_X2Y25")
+        holdouts = sorted({s["site"] for s in doc["specimens"] if s["split"] == "holdout"})
+        self.assertEqual(len(holdouts), 7)
+        for site in holdouts:
+            checked = subprocess.run(
+                [PYTHON, str(self.DIAG), "--build", str(REPO_ROOT / "build/nonexistent"),
+                 "--site", site, "--out", os.devnull],
+                cwd=REPO_ROOT, capture_output=True, text=True, check=False)
+            self.assertIn("not mine", checked.stdout + checked.stderr)
+            self.assertNotEqual(checked.returncode, 0)
+
+    def test_the_output_cannot_be_mistaken_for_a_certificate(self) -> None:
+        source = self.DIAG.read_text()
+        self.assertIn('"diagnostic_only": True', source)
+        self.assertIn('"certifiable": False', source)
+        self.assertIn('"complete": False', source)
+        # No schema_version, so the consumer's very first check rejects it.
+        self.assertNotIn('"schema_version"', source)
+
+    def test_it_refuses_to_write_into_the_certification_path(self) -> None:
+        # Checked by running it, not by grepping for "gate_runs/": the tool legitimately
+        # READS the commitment from there, so a source scan would either miss the real
+        # rule or ban a necessary line. What matters is that it will not WRITE there.
+        checked = subprocess.run(
+            [PYTHON, str(self.DIAG), "--build", str(REPO_ROOT / "build/gate_ff_formal"),
+             "--out", str(REPO_ROOT / "gate_runs/run_2026_08_05_ff/sneaked.json")],
+            cwd=REPO_ROOT, capture_output=True, text=True, check=False)
+        self.assertNotEqual(checked.returncode, 0)
+        self.assertIn("refusing to write a diagnostic into the certification path",
+                      checked.stdout + checked.stderr)
+        self.assertFalse((REPO_ROOT / "gate_runs/run_2026_08_05_ff/sneaked.json").exists())
+
+    def test_the_false_positive_rule_is_exercised_and_not_merely_present(self) -> None:
+        # Neutering the FP computation used to pass the whole suite. Each of the three
+        # contributing sets is checked to reach the result, and the three that must NOT
+        # contribute are checked to stay out.
+        sys.path.insert(0, str(REPO_ROOT / "scripts"))
+        import diag_measure_ff_mine as diag  # noqa: PLC0415
+
+        empty = {name: set() for name in builder_buckets()}
+        self.assertEqual(diag.false_positive_bits(empty, set()), set())
+
+        for contributing in ("ownership_unknown", "unattributed"):
+            with self.subTest(contributing):
+                buckets = {name: set() for name in builder_buckets()}
+                buckets[contributing] = {(1, 2, 3)}
+                self.assertEqual(diag.false_positive_bits(buckets, set()), {(1, 2, 3)})
+
+        for excluded in ("in_scope", "frame_ecc", "db_attributed"):
+            with self.subTest(excluded):
+                buckets = {name: set() for name in builder_buckets()}
+                buckets[excluded] = {(4, 5, 6)}
+                self.assertEqual(diag.false_positive_bits(buckets, set()), set())
+
+        # db_attributed contributes only through the class-claimed-out-of-scope subset.
+        buckets = {name: set() for name in builder_buckets()}
+        buckets["db_attributed"] = {(7, 8, 9)}
+        self.assertEqual(diag.false_positive_bits(buckets, {(7, 8, 9)}), {(7, 8, 9)})
+
+
+def builder_buckets():
+    sys.path.insert(0, str(REPO_ROOT / "scripts"))
+    from gate_measure_ff import BUCKETS  # noqa: PLC0415
+
+    return BUCKETS
+
+
+class DiagnosticArtifactGateTests(unittest.TestCase):
+    """The diagnostic must not score anything the builder's own gate would refuse.
+
+    It read `spec.bit` straight off a path convention until this was caught. A
+    substituted bitstream, or a stamp whose recipe had drifted from the committed
+    sources, would still have produced a confident FP=0 — the most dangerous shape a
+    result can have, since it is the number that decides whether the ladder proceeds.
+
+    Every case below must be refused BEFORE any frame is parsed, which is checked by
+    asserting the refusal names the gate rather than a bitstream-parsing error.
+    """
+
+    DIAG = REPO_ROOT / "scripts/diag_measure_ff_mine.py"
+    BUILD = REPO_ROOT / "build/gate_ff_formal"
+
+    def setUp(self) -> None:
+        if not (self.BUILD / "SLICE_X2Y25" / "base" / "spec.bit").is_file():
+            self.skipTest("mine smoke artifacts not present in build/")
+
+    def run_diag(self, build: Path) -> subprocess.CompletedProcess[str]:
+        with tempfile.NamedTemporaryFile(suffix=".json") as out:
+            return subprocess.run(
+                [PYTHON, str(self.DIAG), "--build", str(build), "--out", out.name],
+                cwd=REPO_ROOT, capture_output=True, text=True, check=False)
+
+    def copy_tree(self, directory: str) -> Path:
+        """Copy the build tree and relocate the absolute paths inside each stamp.
+
+        `recipe.tclargs` records the invocation verbatim, absolute paths and all, so a
+        copied tree fails the recipe check for a reason that has nothing to do with what
+        these tests are probing. Rewriting the root is what makes each negative below
+        fail for its OWN reason rather than all of them failing identically — and it is
+        also the concrete cost of absolute paths in the recipe domain: a build tree is
+        not relocatable without rewriting its stamps.
+        """
+        target = Path(directory) / "build"
+        shutil.copytree(self.BUILD, target)
+        for stamp_path in target.glob("*/*/stamp.json"):
+            stamp = json.loads(stamp_path.read_text())
+            stamp["recipe"]["tclargs"] = [
+                arg.replace(str(self.BUILD.resolve()), str(target.resolve()))
+                for arg in stamp["recipe"]["tclargs"]]
+            stamp_path.write_text(json.dumps(stamp))
+        return target
+
+    def test_the_untampered_tree_passes(self) -> None:
+        checked = self.run_diag(self.BUILD)
+        self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
+        self.assertIn("false positives     : 0", checked.stdout)
+
+    def test_a_substituted_bitstream_is_refused(self) -> None:
+        with scratch() as directory:
+            build = self.copy_tree(directory)
+            victim = build / "SLICE_X2Y25" / "zrst_AFF" / "spec.bit"
+            shutil.copy(build / "SLICE_X2Y25" / "clkinv" / "spec.bit", victim)
+            checked = self.run_diag(build)
+            self.assertNotEqual(checked.returncode, 0)
+            self.assertIn("does not match the hash the stamp recorded",
+                          checked.stdout + checked.stderr)
+
+    def test_a_drifted_stamp_source_hash_is_refused(self) -> None:
+        with scratch() as directory:
+            build = self.copy_tree(directory)
+            stamp_path = build / "SLICE_X2Y25" / "base" / "stamp.json"
+            stamp = json.loads(stamp_path.read_text())
+            key = "scripts/gate_build_ff_formal.py"
+            stamp["recipe"]["sources"][key] = "0" * 64
+            stamp_path.write_text(json.dumps(stamp))
+            checked = self.run_diag(build)
+            self.assertNotEqual(checked.returncode, 0)
+            self.assertIn("different recipe", checked.stdout + checked.stderr)
+
+    def test_a_missing_specimen_is_refused(self) -> None:
+        with scratch() as directory:
+            build = self.copy_tree(directory)
+            shutil.rmtree(build / "SLICE_X2Y25" / "latch")
+            checked = self.run_diag(build)
+            self.assertNotEqual(checked.returncode, 0)
+            self.assertIn("refusing to use", checked.stdout + checked.stderr)
+
+    def test_a_derived_specimen_pinned_to_another_base_is_refused(self) -> None:
+        with scratch() as directory:
+            build = self.copy_tree(directory)
+            stamp_path = build / "SLICE_X2Y25" / "zini_AFF" / "stamp.json"
+            stamp = json.loads(stamp_path.read_text())
+            stamp["derived_from"]["base_dcp_sha256"] = "0" * 64
+            stamp_path.write_text(json.dumps(stamp))
+            checked = self.run_diag(build)
+            self.assertNotEqual(checked.returncode, 0)
+            self.assertIn("derives from a different base checkpoint",
+                          checked.stdout + checked.stderr)
+
+    def test_the_false_positive_rule_has_exactly_one_definition_in_the_repo(self) -> None:
+        # The blocker this class shares a commit with: the measurement computed FP
+        # inline while the diagnostic defined its own copy, so the two could drift and
+        # only one was pinned by a test.
+        definitions = [path for path in (REPO_ROOT / "scripts").glob("*.py")
+                       if "def false_positive_bits(" in path.read_text()]
+        self.assertEqual([p.name for p in definitions], ["gate_measure_ff.py"])
+        self.assertIn("false_positive_bits(buckets, class_claimed_out_of_scope)",
+                      (REPO_ROOT / "scripts/gate_measure_ff.py").read_text())
+        self.assertIn("false_positive_bits(buckets, class_claimed_out_of_scope)",
+                      self.DIAG.read_text())
