@@ -1,0 +1,1101 @@
+schema	ff_formal_readback/1
+part	xc7z010clg400-1
+vivado_version	2025.2
+variant	zini_D5FF
+mode	derived
+idx	7
+site	SLICE_X2Y25
+anchor_site	SLICE_X4Y20
+keeper_site	SLICE_X2Y20
+tile	CLBLL_L_X2Y25
+tile_type	CLBLL_L
+site_type	SLICEL
+storage_count	8
+lut_count	8
+store.0.name	g_store[0].g_used.g_s.s
+store.0.ref	FDRE
+store.0.loc	SLICE_X2Y25
+store.0.bel	SLICEL.AFF
+store.0.init	1'b1
+store.0.lock_pins	
+store.0.prop.IS_C_INVERTED	1'b0
+store.0.prop.IS_G_INVERTED	
+store.0.prop.IS_CLR_INVERTED	
+store.0.prop.IS_PRE_INVERTED	
+store.0.prop.IS_R_INVERTED	1'b0
+store.0.prop.IS_S_INVERTED	
+store.0.prop.IS_CE_INVERTED	
+store.0.prop.IS_GE_INVERTED	
+store.0.prop.IS_D_INVERTED	1'b0
+store.0.pin.Q.net	qb[0]
+store.0.pin.Q.dir	OUT
+store.0.pin.Q.belpin	SLICE_X2Y25/AFF/Q
+store.0.pin.C.net	clk_g
+store.0.pin.C.dir	IN
+store.0.pin.C.belpin	SLICE_X2Y25/AFF/CK
+store.0.pin.CE.net	ce_IBUF
+store.0.pin.CE.dir	IN
+store.0.pin.CE.belpin	SLICE_X2Y25/AFF/CE
+store.0.pin.D.net	o_OBUF
+store.0.pin.D.dir	IN
+store.0.pin.D.belpin	SLICE_X2Y25/AFF/D
+store.0.pin.R.net	rst_IBUF
+store.0.pin.R.dir	IN
+store.0.pin.R.belpin	SLICE_X2Y25/AFF/SR
+store.1.name	g_store[1].g_used.g_s.s
+store.1.ref	FDRE
+store.1.loc	SLICE_X2Y25
+store.1.bel	SLICEL.A5FF
+store.1.init	1'b1
+store.1.lock_pins	
+store.1.prop.IS_C_INVERTED	1'b0
+store.1.prop.IS_G_INVERTED	
+store.1.prop.IS_CLR_INVERTED	
+store.1.prop.IS_PRE_INVERTED	
+store.1.prop.IS_R_INVERTED	1'b0
+store.1.prop.IS_S_INVERTED	
+store.1.prop.IS_CE_INVERTED	
+store.1.prop.IS_GE_INVERTED	
+store.1.prop.IS_D_INVERTED	1'b0
+store.1.pin.Q.net	qb[1]
+store.1.pin.Q.dir	OUT
+store.1.pin.Q.belpin	SLICE_X2Y25/A5FF/Q
+store.1.pin.C.net	clk_g
+store.1.pin.C.dir	IN
+store.1.pin.C.belpin	SLICE_X2Y25/A5FF/CK
+store.1.pin.CE.net	ce_IBUF
+store.1.pin.CE.dir	IN
+store.1.pin.CE.belpin	SLICE_X2Y25/A5FF/CE
+store.1.pin.D.net	g_store[1].g_used.d_k
+store.1.pin.D.dir	IN
+store.1.pin.D.belpin	SLICE_X2Y25/A5FF/D
+store.1.pin.R.net	rst_IBUF
+store.1.pin.R.dir	IN
+store.1.pin.R.belpin	SLICE_X2Y25/A5FF/SR
+store.2.name	g_store[2].g_used.g_s.s
+store.2.ref	FDRE
+store.2.loc	SLICE_X2Y25
+store.2.bel	SLICEL.BFF
+store.2.init	1'b1
+store.2.lock_pins	
+store.2.prop.IS_C_INVERTED	1'b0
+store.2.prop.IS_G_INVERTED	
+store.2.prop.IS_CLR_INVERTED	
+store.2.prop.IS_PRE_INVERTED	
+store.2.prop.IS_R_INVERTED	1'b0
+store.2.prop.IS_S_INVERTED	
+store.2.prop.IS_CE_INVERTED	
+store.2.prop.IS_GE_INVERTED	
+store.2.prop.IS_D_INVERTED	1'b0
+store.2.pin.Q.net	qb[2]
+store.2.pin.Q.dir	OUT
+store.2.pin.Q.belpin	SLICE_X2Y25/BFF/Q
+store.2.pin.C.net	clk_g
+store.2.pin.C.dir	IN
+store.2.pin.C.belpin	SLICE_X2Y25/BFF/CK
+store.2.pin.CE.net	ce_IBUF
+store.2.pin.CE.dir	IN
+store.2.pin.CE.belpin	SLICE_X2Y25/BFF/CE
+store.2.pin.D.net	g_store[2].g_used.d_k
+store.2.pin.D.dir	IN
+store.2.pin.D.belpin	SLICE_X2Y25/BFF/D
+store.2.pin.R.net	rst_IBUF
+store.2.pin.R.dir	IN
+store.2.pin.R.belpin	SLICE_X2Y25/BFF/SR
+store.3.name	g_store[3].g_used.g_s.s
+store.3.ref	FDRE
+store.3.loc	SLICE_X2Y25
+store.3.bel	SLICEL.B5FF
+store.3.init	1'b1
+store.3.lock_pins	
+store.3.prop.IS_C_INVERTED	1'b0
+store.3.prop.IS_G_INVERTED	
+store.3.prop.IS_CLR_INVERTED	
+store.3.prop.IS_PRE_INVERTED	
+store.3.prop.IS_R_INVERTED	1'b0
+store.3.prop.IS_S_INVERTED	
+store.3.prop.IS_CE_INVERTED	
+store.3.prop.IS_GE_INVERTED	
+store.3.prop.IS_D_INVERTED	1'b0
+store.3.pin.Q.net	qb[3]
+store.3.pin.Q.dir	OUT
+store.3.pin.Q.belpin	SLICE_X2Y25/B5FF/Q
+store.3.pin.C.net	clk_g
+store.3.pin.C.dir	IN
+store.3.pin.C.belpin	SLICE_X2Y25/B5FF/CK
+store.3.pin.CE.net	ce_IBUF
+store.3.pin.CE.dir	IN
+store.3.pin.CE.belpin	SLICE_X2Y25/B5FF/CE
+store.3.pin.D.net	g_store[3].g_used.d_k
+store.3.pin.D.dir	IN
+store.3.pin.D.belpin	SLICE_X2Y25/B5FF/D
+store.3.pin.R.net	rst_IBUF
+store.3.pin.R.dir	IN
+store.3.pin.R.belpin	SLICE_X2Y25/B5FF/SR
+store.4.name	g_store[4].g_used.g_s.s
+store.4.ref	FDRE
+store.4.loc	SLICE_X2Y25
+store.4.bel	SLICEL.CFF
+store.4.init	1'b1
+store.4.lock_pins	
+store.4.prop.IS_C_INVERTED	1'b0
+store.4.prop.IS_G_INVERTED	
+store.4.prop.IS_CLR_INVERTED	
+store.4.prop.IS_PRE_INVERTED	
+store.4.prop.IS_R_INVERTED	1'b0
+store.4.prop.IS_S_INVERTED	
+store.4.prop.IS_CE_INVERTED	
+store.4.prop.IS_GE_INVERTED	
+store.4.prop.IS_D_INVERTED	1'b0
+store.4.pin.Q.net	qb[4]
+store.4.pin.Q.dir	OUT
+store.4.pin.Q.belpin	SLICE_X2Y25/CFF/Q
+store.4.pin.C.net	clk_g
+store.4.pin.C.dir	IN
+store.4.pin.C.belpin	SLICE_X2Y25/CFF/CK
+store.4.pin.CE.net	ce_IBUF
+store.4.pin.CE.dir	IN
+store.4.pin.CE.belpin	SLICE_X2Y25/CFF/CE
+store.4.pin.D.net	g_store[4].g_used.d_k
+store.4.pin.D.dir	IN
+store.4.pin.D.belpin	SLICE_X2Y25/CFF/D
+store.4.pin.R.net	rst_IBUF
+store.4.pin.R.dir	IN
+store.4.pin.R.belpin	SLICE_X2Y25/CFF/SR
+store.5.name	g_store[5].g_used.g_s.s
+store.5.ref	FDRE
+store.5.loc	SLICE_X2Y25
+store.5.bel	SLICEL.C5FF
+store.5.init	1'b1
+store.5.lock_pins	
+store.5.prop.IS_C_INVERTED	1'b0
+store.5.prop.IS_G_INVERTED	
+store.5.prop.IS_CLR_INVERTED	
+store.5.prop.IS_PRE_INVERTED	
+store.5.prop.IS_R_INVERTED	1'b0
+store.5.prop.IS_S_INVERTED	
+store.5.prop.IS_CE_INVERTED	
+store.5.prop.IS_GE_INVERTED	
+store.5.prop.IS_D_INVERTED	1'b0
+store.5.pin.Q.net	qb[5]
+store.5.pin.Q.dir	OUT
+store.5.pin.Q.belpin	SLICE_X2Y25/C5FF/Q
+store.5.pin.C.net	clk_g
+store.5.pin.C.dir	IN
+store.5.pin.C.belpin	SLICE_X2Y25/C5FF/CK
+store.5.pin.CE.net	ce_IBUF
+store.5.pin.CE.dir	IN
+store.5.pin.CE.belpin	SLICE_X2Y25/C5FF/CE
+store.5.pin.D.net	g_store[5].g_used.d_k
+store.5.pin.D.dir	IN
+store.5.pin.D.belpin	SLICE_X2Y25/C5FF/D
+store.5.pin.R.net	rst_IBUF
+store.5.pin.R.dir	IN
+store.5.pin.R.belpin	SLICE_X2Y25/C5FF/SR
+store.6.name	g_store[6].g_used.g_s.s
+store.6.ref	FDRE
+store.6.loc	SLICE_X2Y25
+store.6.bel	SLICEL.DFF
+store.6.init	1'b1
+store.6.lock_pins	
+store.6.prop.IS_C_INVERTED	1'b0
+store.6.prop.IS_G_INVERTED	
+store.6.prop.IS_CLR_INVERTED	
+store.6.prop.IS_PRE_INVERTED	
+store.6.prop.IS_R_INVERTED	1'b0
+store.6.prop.IS_S_INVERTED	
+store.6.prop.IS_CE_INVERTED	
+store.6.prop.IS_GE_INVERTED	
+store.6.prop.IS_D_INVERTED	1'b0
+store.6.pin.Q.net	qb[6]
+store.6.pin.Q.dir	OUT
+store.6.pin.Q.belpin	SLICE_X2Y25/DFF/Q
+store.6.pin.C.net	clk_g
+store.6.pin.C.dir	IN
+store.6.pin.C.belpin	SLICE_X2Y25/DFF/CK
+store.6.pin.CE.net	ce_IBUF
+store.6.pin.CE.dir	IN
+store.6.pin.CE.belpin	SLICE_X2Y25/DFF/CE
+store.6.pin.D.net	g_store[6].g_used.d_k
+store.6.pin.D.dir	IN
+store.6.pin.D.belpin	SLICE_X2Y25/DFF/D
+store.6.pin.R.net	rst_IBUF
+store.6.pin.R.dir	IN
+store.6.pin.R.belpin	SLICE_X2Y25/DFF/SR
+store.7.name	g_store[7].g_used.g_s.s
+store.7.ref	FDRE
+store.7.loc	SLICE_X2Y25
+store.7.bel	SLICEL.D5FF
+store.7.init	1'b0
+store.7.lock_pins	
+store.7.prop.IS_C_INVERTED	1'b0
+store.7.prop.IS_G_INVERTED	
+store.7.prop.IS_CLR_INVERTED	
+store.7.prop.IS_PRE_INVERTED	
+store.7.prop.IS_R_INVERTED	1'b0
+store.7.prop.IS_S_INVERTED	
+store.7.prop.IS_CE_INVERTED	
+store.7.prop.IS_GE_INVERTED	
+store.7.prop.IS_D_INVERTED	1'b0
+store.7.pin.Q.net	qb[7]
+store.7.pin.Q.dir	OUT
+store.7.pin.Q.belpin	SLICE_X2Y25/D5FF/Q
+store.7.pin.C.net	clk_g
+store.7.pin.C.dir	IN
+store.7.pin.C.belpin	SLICE_X2Y25/D5FF/CK
+store.7.pin.CE.net	ce_IBUF
+store.7.pin.CE.dir	IN
+store.7.pin.CE.belpin	SLICE_X2Y25/D5FF/CE
+store.7.pin.D.net	g_store[7].g_used.d_k
+store.7.pin.D.dir	IN
+store.7.pin.D.belpin	SLICE_X2Y25/D5FF/D
+store.7.pin.R.net	rst_IBUF
+store.7.pin.R.dir	IN
+store.7.pin.R.belpin	SLICE_X2Y25/D5FF/SR
+lut.0.name	g_hi[0].l
+lut.0.ref	LUT5
+lut.0.loc	SLICE_X2Y25
+lut.0.bel	SLICEL.A6LUT
+lut.0.init	32'hA5A5A5A5
+lut.0.lock_pins	I0:A1 I1:A2 I2:A3 I3:A4 I4:A5
+lut.0.prop.IS_C_INVERTED	
+lut.0.prop.IS_G_INVERTED	
+lut.0.prop.IS_CLR_INVERTED	
+lut.0.prop.IS_PRE_INVERTED	
+lut.0.prop.IS_R_INVERTED	
+lut.0.prop.IS_S_INVERTED	
+lut.0.prop.IS_CE_INVERTED	
+lut.0.prop.IS_GE_INVERTED	
+lut.0.prop.IS_D_INVERTED	
+lut.0.pin.O.net	o_OBUF
+lut.0.pin.O.dir	OUT
+lut.0.pin.O.belpin	SLICE_X2Y25/A6LUT/O6
+lut.0.pin.I0.net	i_IBUF[0]
+lut.0.pin.I0.dir	IN
+lut.0.pin.I0.belpin	SLICE_X2Y25/A6LUT/A1
+lut.0.pin.I1.net	i_IBUF[1]
+lut.0.pin.I1.dir	IN
+lut.0.pin.I1.belpin	SLICE_X2Y25/A6LUT/A2
+lut.0.pin.I2.net	i_IBUF[2]
+lut.0.pin.I2.dir	IN
+lut.0.pin.I2.belpin	SLICE_X2Y25/A6LUT/A3
+lut.0.pin.I3.net	i_IBUF[3]
+lut.0.pin.I3.dir	IN
+lut.0.pin.I3.belpin	SLICE_X2Y25/A6LUT/A4
+lut.0.pin.I4.net	i_IBUF[4]
+lut.0.pin.I4.dir	IN
+lut.0.pin.I4.belpin	SLICE_X2Y25/A6LUT/A5
+lut.1.name	g_hi[1].l
+lut.1.ref	LUT5
+lut.1.loc	SLICE_X2Y25
+lut.1.bel	SLICEL.B6LUT
+lut.1.init	32'hA5A5A5A5
+lut.1.lock_pins	I0:A1 I1:A2 I2:A3 I3:A4 I4:A5
+lut.1.prop.IS_C_INVERTED	
+lut.1.prop.IS_G_INVERTED	
+lut.1.prop.IS_CLR_INVERTED	
+lut.1.prop.IS_PRE_INVERTED	
+lut.1.prop.IS_R_INVERTED	
+lut.1.prop.IS_S_INVERTED	
+lut.1.prop.IS_CE_INVERTED	
+lut.1.prop.IS_GE_INVERTED	
+lut.1.prop.IS_D_INVERTED	
+lut.1.pin.O.net	g_store[2].g_used.d_k
+lut.1.pin.O.dir	OUT
+lut.1.pin.O.belpin	SLICE_X2Y25/B6LUT/O6
+lut.1.pin.I0.net	i_IBUF[0]
+lut.1.pin.I0.dir	IN
+lut.1.pin.I0.belpin	SLICE_X2Y25/B6LUT/A1
+lut.1.pin.I1.net	i_IBUF[1]
+lut.1.pin.I1.dir	IN
+lut.1.pin.I1.belpin	SLICE_X2Y25/B6LUT/A2
+lut.1.pin.I2.net	i_IBUF[2]
+lut.1.pin.I2.dir	IN
+lut.1.pin.I2.belpin	SLICE_X2Y25/B6LUT/A3
+lut.1.pin.I3.net	i_IBUF[3]
+lut.1.pin.I3.dir	IN
+lut.1.pin.I3.belpin	SLICE_X2Y25/B6LUT/A4
+lut.1.pin.I4.net	i_IBUF[4]
+lut.1.pin.I4.dir	IN
+lut.1.pin.I4.belpin	SLICE_X2Y25/B6LUT/A5
+lut.2.name	g_hi[2].l
+lut.2.ref	LUT5
+lut.2.loc	SLICE_X2Y25
+lut.2.bel	SLICEL.C6LUT
+lut.2.init	32'hA5A5A5A5
+lut.2.lock_pins	I0:A1 I1:A2 I2:A3 I3:A4 I4:A5
+lut.2.prop.IS_C_INVERTED	
+lut.2.prop.IS_G_INVERTED	
+lut.2.prop.IS_CLR_INVERTED	
+lut.2.prop.IS_PRE_INVERTED	
+lut.2.prop.IS_R_INVERTED	
+lut.2.prop.IS_S_INVERTED	
+lut.2.prop.IS_CE_INVERTED	
+lut.2.prop.IS_GE_INVERTED	
+lut.2.prop.IS_D_INVERTED	
+lut.2.pin.O.net	g_store[4].g_used.d_k
+lut.2.pin.O.dir	OUT
+lut.2.pin.O.belpin	SLICE_X2Y25/C6LUT/O6
+lut.2.pin.I0.net	i_IBUF[0]
+lut.2.pin.I0.dir	IN
+lut.2.pin.I0.belpin	SLICE_X2Y25/C6LUT/A1
+lut.2.pin.I1.net	i_IBUF[1]
+lut.2.pin.I1.dir	IN
+lut.2.pin.I1.belpin	SLICE_X2Y25/C6LUT/A2
+lut.2.pin.I2.net	i_IBUF[2]
+lut.2.pin.I2.dir	IN
+lut.2.pin.I2.belpin	SLICE_X2Y25/C6LUT/A3
+lut.2.pin.I3.net	i_IBUF[3]
+lut.2.pin.I3.dir	IN
+lut.2.pin.I3.belpin	SLICE_X2Y25/C6LUT/A4
+lut.2.pin.I4.net	i_IBUF[4]
+lut.2.pin.I4.dir	IN
+lut.2.pin.I4.belpin	SLICE_X2Y25/C6LUT/A5
+lut.3.name	g_hi[3].l
+lut.3.ref	LUT5
+lut.3.loc	SLICE_X2Y25
+lut.3.bel	SLICEL.D6LUT
+lut.3.init	32'hA5A5A5A5
+lut.3.lock_pins	I0:A1 I1:A2 I2:A3 I3:A4 I4:A5
+lut.3.prop.IS_C_INVERTED	
+lut.3.prop.IS_G_INVERTED	
+lut.3.prop.IS_CLR_INVERTED	
+lut.3.prop.IS_PRE_INVERTED	
+lut.3.prop.IS_R_INVERTED	
+lut.3.prop.IS_S_INVERTED	
+lut.3.prop.IS_CE_INVERTED	
+lut.3.prop.IS_GE_INVERTED	
+lut.3.prop.IS_D_INVERTED	
+lut.3.pin.O.net	g_store[6].g_used.d_k
+lut.3.pin.O.dir	OUT
+lut.3.pin.O.belpin	SLICE_X2Y25/D6LUT/O6
+lut.3.pin.I0.net	i_IBUF[0]
+lut.3.pin.I0.dir	IN
+lut.3.pin.I0.belpin	SLICE_X2Y25/D6LUT/A1
+lut.3.pin.I1.net	i_IBUF[1]
+lut.3.pin.I1.dir	IN
+lut.3.pin.I1.belpin	SLICE_X2Y25/D6LUT/A2
+lut.3.pin.I2.net	i_IBUF[2]
+lut.3.pin.I2.dir	IN
+lut.3.pin.I2.belpin	SLICE_X2Y25/D6LUT/A3
+lut.3.pin.I3.net	i_IBUF[3]
+lut.3.pin.I3.dir	IN
+lut.3.pin.I3.belpin	SLICE_X2Y25/D6LUT/A4
+lut.3.pin.I4.net	i_IBUF[4]
+lut.3.pin.I4.dir	IN
+lut.3.pin.I4.belpin	SLICE_X2Y25/D6LUT/A5
+lut.4.name	g_lo[0].l
+lut.4.ref	LUT5
+lut.4.loc	SLICE_X2Y25
+lut.4.bel	SLICEL.A5LUT
+lut.4.init	32'h5A5A5A5A
+lut.4.lock_pins	I0:A1 I1:A2 I2:A3 I3:A4 I4:A5
+lut.4.prop.IS_C_INVERTED	
+lut.4.prop.IS_G_INVERTED	
+lut.4.prop.IS_CLR_INVERTED	
+lut.4.prop.IS_PRE_INVERTED	
+lut.4.prop.IS_R_INVERTED	
+lut.4.prop.IS_S_INVERTED	
+lut.4.prop.IS_CE_INVERTED	
+lut.4.prop.IS_GE_INVERTED	
+lut.4.prop.IS_D_INVERTED	
+lut.4.pin.O.net	g_store[1].g_used.d_k
+lut.4.pin.O.dir	OUT
+lut.4.pin.O.belpin	SLICE_X2Y25/A5LUT/O5
+lut.4.pin.I0.net	i_IBUF[0]
+lut.4.pin.I0.dir	IN
+lut.4.pin.I0.belpin	SLICE_X2Y25/A5LUT/A1
+lut.4.pin.I1.net	i_IBUF[1]
+lut.4.pin.I1.dir	IN
+lut.4.pin.I1.belpin	SLICE_X2Y25/A5LUT/A2
+lut.4.pin.I2.net	i_IBUF[2]
+lut.4.pin.I2.dir	IN
+lut.4.pin.I2.belpin	SLICE_X2Y25/A5LUT/A3
+lut.4.pin.I3.net	i_IBUF[3]
+lut.4.pin.I3.dir	IN
+lut.4.pin.I3.belpin	SLICE_X2Y25/A5LUT/A4
+lut.4.pin.I4.net	i_IBUF[4]
+lut.4.pin.I4.dir	IN
+lut.4.pin.I4.belpin	SLICE_X2Y25/A5LUT/A5
+lut.5.name	g_lo[1].l
+lut.5.ref	LUT5
+lut.5.loc	SLICE_X2Y25
+lut.5.bel	SLICEL.B5LUT
+lut.5.init	32'h5A5A5A5A
+lut.5.lock_pins	I0:A1 I1:A2 I2:A3 I3:A4 I4:A5
+lut.5.prop.IS_C_INVERTED	
+lut.5.prop.IS_G_INVERTED	
+lut.5.prop.IS_CLR_INVERTED	
+lut.5.prop.IS_PRE_INVERTED	
+lut.5.prop.IS_R_INVERTED	
+lut.5.prop.IS_S_INVERTED	
+lut.5.prop.IS_CE_INVERTED	
+lut.5.prop.IS_GE_INVERTED	
+lut.5.prop.IS_D_INVERTED	
+lut.5.pin.O.net	g_store[3].g_used.d_k
+lut.5.pin.O.dir	OUT
+lut.5.pin.O.belpin	SLICE_X2Y25/B5LUT/O5
+lut.5.pin.I0.net	i_IBUF[0]
+lut.5.pin.I0.dir	IN
+lut.5.pin.I0.belpin	SLICE_X2Y25/B5LUT/A1
+lut.5.pin.I1.net	i_IBUF[1]
+lut.5.pin.I1.dir	IN
+lut.5.pin.I1.belpin	SLICE_X2Y25/B5LUT/A2
+lut.5.pin.I2.net	i_IBUF[2]
+lut.5.pin.I2.dir	IN
+lut.5.pin.I2.belpin	SLICE_X2Y25/B5LUT/A3
+lut.5.pin.I3.net	i_IBUF[3]
+lut.5.pin.I3.dir	IN
+lut.5.pin.I3.belpin	SLICE_X2Y25/B5LUT/A4
+lut.5.pin.I4.net	i_IBUF[4]
+lut.5.pin.I4.dir	IN
+lut.5.pin.I4.belpin	SLICE_X2Y25/B5LUT/A5
+lut.6.name	g_lo[2].l
+lut.6.ref	LUT5
+lut.6.loc	SLICE_X2Y25
+lut.6.bel	SLICEL.C5LUT
+lut.6.init	32'h5A5A5A5A
+lut.6.lock_pins	I0:A1 I1:A2 I2:A3 I3:A4 I4:A5
+lut.6.prop.IS_C_INVERTED	
+lut.6.prop.IS_G_INVERTED	
+lut.6.prop.IS_CLR_INVERTED	
+lut.6.prop.IS_PRE_INVERTED	
+lut.6.prop.IS_R_INVERTED	
+lut.6.prop.IS_S_INVERTED	
+lut.6.prop.IS_CE_INVERTED	
+lut.6.prop.IS_GE_INVERTED	
+lut.6.prop.IS_D_INVERTED	
+lut.6.pin.O.net	g_store[5].g_used.d_k
+lut.6.pin.O.dir	OUT
+lut.6.pin.O.belpin	SLICE_X2Y25/C5LUT/O5
+lut.6.pin.I0.net	i_IBUF[0]
+lut.6.pin.I0.dir	IN
+lut.6.pin.I0.belpin	SLICE_X2Y25/C5LUT/A1
+lut.6.pin.I1.net	i_IBUF[1]
+lut.6.pin.I1.dir	IN
+lut.6.pin.I1.belpin	SLICE_X2Y25/C5LUT/A2
+lut.6.pin.I2.net	i_IBUF[2]
+lut.6.pin.I2.dir	IN
+lut.6.pin.I2.belpin	SLICE_X2Y25/C5LUT/A3
+lut.6.pin.I3.net	i_IBUF[3]
+lut.6.pin.I3.dir	IN
+lut.6.pin.I3.belpin	SLICE_X2Y25/C5LUT/A4
+lut.6.pin.I4.net	i_IBUF[4]
+lut.6.pin.I4.dir	IN
+lut.6.pin.I4.belpin	SLICE_X2Y25/C5LUT/A5
+lut.7.name	g_lo[3].l
+lut.7.ref	LUT5
+lut.7.loc	SLICE_X2Y25
+lut.7.bel	SLICEL.D5LUT
+lut.7.init	32'h5A5A5A5A
+lut.7.lock_pins	I0:A1 I1:A2 I2:A3 I3:A4 I4:A5
+lut.7.prop.IS_C_INVERTED	
+lut.7.prop.IS_G_INVERTED	
+lut.7.prop.IS_CLR_INVERTED	
+lut.7.prop.IS_PRE_INVERTED	
+lut.7.prop.IS_R_INVERTED	
+lut.7.prop.IS_S_INVERTED	
+lut.7.prop.IS_CE_INVERTED	
+lut.7.prop.IS_GE_INVERTED	
+lut.7.prop.IS_D_INVERTED	
+lut.7.pin.O.net	g_store[7].g_used.d_k
+lut.7.pin.O.dir	OUT
+lut.7.pin.O.belpin	SLICE_X2Y25/D5LUT/O5
+lut.7.pin.I0.net	i_IBUF[0]
+lut.7.pin.I0.dir	IN
+lut.7.pin.I0.belpin	SLICE_X2Y25/D5LUT/A1
+lut.7.pin.I1.net	i_IBUF[1]
+lut.7.pin.I1.dir	IN
+lut.7.pin.I1.belpin	SLICE_X2Y25/D5LUT/A2
+lut.7.pin.I2.net	i_IBUF[2]
+lut.7.pin.I2.dir	IN
+lut.7.pin.I2.belpin	SLICE_X2Y25/D5LUT/A3
+lut.7.pin.I3.net	i_IBUF[3]
+lut.7.pin.I3.dir	IN
+lut.7.pin.I3.belpin	SLICE_X2Y25/D5LUT/A4
+lut.7.pin.I4.net	i_IBUF[4]
+lut.7.pin.I4.dir	IN
+lut.7.pin.I4.belpin	SLICE_X2Y25/D5LUT/A5
+ak.anchor_lut1.name	anchor_lut1
+ak.anchor_lut1.ref	LUT6
+ak.anchor_lut1.loc	SLICE_X4Y20
+ak.anchor_lut1.bel	SLICEM.A6LUT
+ak.anchor_lut1.init	64'h6996966996696996
+ak.anchor_lut1.lock_pins	I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6
+ak.anchor_lut1.prop.IS_C_INVERTED	
+ak.anchor_lut1.prop.IS_G_INVERTED	
+ak.anchor_lut1.prop.IS_CLR_INVERTED	
+ak.anchor_lut1.prop.IS_PRE_INVERTED	
+ak.anchor_lut1.prop.IS_R_INVERTED	
+ak.anchor_lut1.prop.IS_S_INVERTED	
+ak.anchor_lut1.prop.IS_CE_INVERTED	
+ak.anchor_lut1.prop.IS_GE_INVERTED	
+ak.anchor_lut1.prop.IS_D_INVERTED	
+ak.anchor_lut1.pin.O.net	w1
+ak.anchor_lut1.pin.O.dir	OUT
+ak.anchor_lut1.pin.O.belpin	SLICE_X4Y20/A6LUT/O6
+ak.anchor_lut1.pin.I0.net	i_IBUF[0]
+ak.anchor_lut1.pin.I0.dir	IN
+ak.anchor_lut1.pin.I0.belpin	SLICE_X4Y20/A6LUT/A1
+ak.anchor_lut1.pin.I1.net	i_IBUF[1]
+ak.anchor_lut1.pin.I1.dir	IN
+ak.anchor_lut1.pin.I1.belpin	SLICE_X4Y20/A6LUT/A2
+ak.anchor_lut1.pin.I2.net	i_IBUF[2]
+ak.anchor_lut1.pin.I2.dir	IN
+ak.anchor_lut1.pin.I2.belpin	SLICE_X4Y20/A6LUT/A3
+ak.anchor_lut1.pin.I3.net	i_IBUF[3]
+ak.anchor_lut1.pin.I3.dir	IN
+ak.anchor_lut1.pin.I3.belpin	SLICE_X4Y20/A6LUT/A4
+ak.anchor_lut1.pin.I4.net	i_IBUF[4]
+ak.anchor_lut1.pin.I4.dir	IN
+ak.anchor_lut1.pin.I4.belpin	SLICE_X4Y20/A6LUT/A5
+ak.anchor_lut1.pin.I5.net	i_IBUF[5]
+ak.anchor_lut1.pin.I5.dir	IN
+ak.anchor_lut1.pin.I5.belpin	SLICE_X4Y20/A6LUT/A6
+ak.anchor_lut2.name	anchor_lut2
+ak.anchor_lut2.ref	LUT6
+ak.anchor_lut2.loc	SLICE_X4Y20
+ak.anchor_lut2.bel	SLICEM.B6LUT
+ak.anchor_lut2.init	64'h6996966996696996
+ak.anchor_lut2.lock_pins	I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6
+ak.anchor_lut2.prop.IS_C_INVERTED	
+ak.anchor_lut2.prop.IS_G_INVERTED	
+ak.anchor_lut2.prop.IS_CLR_INVERTED	
+ak.anchor_lut2.prop.IS_PRE_INVERTED	
+ak.anchor_lut2.prop.IS_R_INVERTED	
+ak.anchor_lut2.prop.IS_S_INVERTED	
+ak.anchor_lut2.prop.IS_CE_INVERTED	
+ak.anchor_lut2.prop.IS_GE_INVERTED	
+ak.anchor_lut2.prop.IS_D_INVERTED	
+ak.anchor_lut2.pin.O.net	w2
+ak.anchor_lut2.pin.O.dir	OUT
+ak.anchor_lut2.pin.O.belpin	SLICE_X4Y20/B6LUT/O6
+ak.anchor_lut2.pin.I0.net	ce_IBUF
+ak.anchor_lut2.pin.I0.dir	IN
+ak.anchor_lut2.pin.I0.belpin	SLICE_X4Y20/B6LUT/A1
+ak.anchor_lut2.pin.I1.net	rst_IBUF
+ak.anchor_lut2.pin.I1.dir	IN
+ak.anchor_lut2.pin.I1.belpin	SLICE_X4Y20/B6LUT/A2
+ak.anchor_lut2.pin.I2.net	w1
+ak.anchor_lut2.pin.I2.dir	IN
+ak.anchor_lut2.pin.I2.belpin	SLICE_X4Y20/B6LUT/A3
+ak.anchor_lut2.pin.I3.net	w1
+ak.anchor_lut2.pin.I3.dir	IN
+ak.anchor_lut2.pin.I3.belpin	SLICE_X4Y20/B6LUT/A4
+ak.anchor_lut2.pin.I4.net	w1
+ak.anchor_lut2.pin.I4.dir	IN
+ak.anchor_lut2.pin.I4.belpin	SLICE_X4Y20/B6LUT/A5
+ak.anchor_lut2.pin.I5.net	w1
+ak.anchor_lut2.pin.I5.dir	IN
+ak.anchor_lut2.pin.I5.belpin	SLICE_X4Y20/B6LUT/A6
+ak.anchor_ff.name	anchor_ff
+ak.anchor_ff.ref	FDRE
+ak.anchor_ff.loc	SLICE_X4Y20
+ak.anchor_ff.bel	SLICEM.AFF
+ak.anchor_ff.init	1'b0
+ak.anchor_ff.lock_pins	
+ak.anchor_ff.prop.IS_C_INVERTED	1'b0
+ak.anchor_ff.prop.IS_G_INVERTED	
+ak.anchor_ff.prop.IS_CLR_INVERTED	
+ak.anchor_ff.prop.IS_PRE_INVERTED	
+ak.anchor_ff.prop.IS_R_INVERTED	1'b0
+ak.anchor_ff.prop.IS_S_INVERTED	
+ak.anchor_ff.prop.IS_CE_INVERTED	
+ak.anchor_ff.prop.IS_GE_INVERTED	
+ak.anchor_ff.prop.IS_D_INVERTED	1'b0
+ak.anchor_ff.pin.Q.net	anchor_o_OBUF
+ak.anchor_ff.pin.Q.dir	OUT
+ak.anchor_ff.pin.Q.belpin	SLICE_X4Y20/AFF/Q
+ak.anchor_ff.pin.C.net	clk_g
+ak.anchor_ff.pin.C.dir	IN
+ak.anchor_ff.pin.C.belpin	SLICE_X4Y20/AFF/CK
+ak.anchor_ff.pin.CE.net	<const1>
+ak.anchor_ff.pin.CE.dir	IN
+ak.anchor_ff.pin.CE.belpin	SLICE_X4Y20/AFF/CE
+ak.anchor_ff.pin.D.net	w2
+ak.anchor_ff.pin.D.dir	IN
+ak.anchor_ff.pin.D.belpin	SLICE_X4Y20/AFF/D
+ak.anchor_ff.pin.R.net	<const0>
+ak.anchor_ff.pin.R.dir	IN
+ak.anchor_ff.pin.R.belpin	SLICE_X4Y20/AFF/SR
+ak.anchor_ff2.name	anchor_ff2
+ak.anchor_ff2.ref	FDRE
+ak.anchor_ff2.loc	SLICE_X2Y20
+ak.anchor_ff2.bel	SLICEL.AFF
+ak.anchor_ff2.init	1'b0
+ak.anchor_ff2.lock_pins	
+ak.anchor_ff2.prop.IS_C_INVERTED	1'b0
+ak.anchor_ff2.prop.IS_G_INVERTED	
+ak.anchor_ff2.prop.IS_CLR_INVERTED	
+ak.anchor_ff2.prop.IS_PRE_INVERTED	
+ak.anchor_ff2.prop.IS_R_INVERTED	1'b0
+ak.anchor_ff2.prop.IS_S_INVERTED	
+ak.anchor_ff2.prop.IS_CE_INVERTED	
+ak.anchor_ff2.prop.IS_GE_INVERTED	
+ak.anchor_ff2.prop.IS_D_INVERTED	1'b0
+ak.anchor_ff2.pin.Q.net	anchor_o2_OBUF
+ak.anchor_ff2.pin.Q.dir	OUT
+ak.anchor_ff2.pin.Q.belpin	SLICE_X2Y20/AFF/Q
+ak.anchor_ff2.pin.C.net	clk_g
+ak.anchor_ff2.pin.C.dir	IN
+ak.anchor_ff2.pin.C.belpin	SLICE_X2Y20/AFF/CK
+ak.anchor_ff2.pin.CE.net	<const1>
+ak.anchor_ff2.pin.CE.dir	IN
+ak.anchor_ff2.pin.CE.belpin	SLICE_X2Y20/AFF/CE
+ak.anchor_ff2.pin.D.net	w2
+ak.anchor_ff2.pin.D.dir	IN
+ak.anchor_ff2.pin.D.belpin	SLICE_X2Y20/AFF/D
+ak.anchor_ff2.pin.R.net	<const0>
+ak.anchor_ff2.pin.R.dir	IN
+ak.anchor_ff2.pin.R.belpin	SLICE_X2Y20/AFF/SR
+ak.q_reduce1.name	q_reduce1
+ak.q_reduce1.ref	LUT6
+ak.q_reduce1.loc	SLICE_X4Y20
+ak.q_reduce1.bel	SLICEM.C6LUT
+ak.q_reduce1.init	64'h6996966996696996
+ak.q_reduce1.lock_pins	I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6
+ak.q_reduce1.prop.IS_C_INVERTED	
+ak.q_reduce1.prop.IS_G_INVERTED	
+ak.q_reduce1.prop.IS_CLR_INVERTED	
+ak.q_reduce1.prop.IS_PRE_INVERTED	
+ak.q_reduce1.prop.IS_R_INVERTED	
+ak.q_reduce1.prop.IS_S_INVERTED	
+ak.q_reduce1.prop.IS_CE_INVERTED	
+ak.q_reduce1.prop.IS_GE_INVERTED	
+ak.q_reduce1.prop.IS_D_INVERTED	
+ak.q_reduce1.pin.O.net	qr1
+ak.q_reduce1.pin.O.dir	OUT
+ak.q_reduce1.pin.O.belpin	SLICE_X4Y20/C6LUT/O6
+ak.q_reduce1.pin.I0.net	qb[0]
+ak.q_reduce1.pin.I0.dir	IN
+ak.q_reduce1.pin.I0.belpin	SLICE_X4Y20/C6LUT/A1
+ak.q_reduce1.pin.I1.net	qb[1]
+ak.q_reduce1.pin.I1.dir	IN
+ak.q_reduce1.pin.I1.belpin	SLICE_X4Y20/C6LUT/A2
+ak.q_reduce1.pin.I2.net	qb[2]
+ak.q_reduce1.pin.I2.dir	IN
+ak.q_reduce1.pin.I2.belpin	SLICE_X4Y20/C6LUT/A3
+ak.q_reduce1.pin.I3.net	qb[3]
+ak.q_reduce1.pin.I3.dir	IN
+ak.q_reduce1.pin.I3.belpin	SLICE_X4Y20/C6LUT/A4
+ak.q_reduce1.pin.I4.net	qb[4]
+ak.q_reduce1.pin.I4.dir	IN
+ak.q_reduce1.pin.I4.belpin	SLICE_X4Y20/C6LUT/A5
+ak.q_reduce1.pin.I5.net	qb[5]
+ak.q_reduce1.pin.I5.dir	IN
+ak.q_reduce1.pin.I5.belpin	SLICE_X4Y20/C6LUT/A6
+ak.q_reduce2.name	q_reduce2
+ak.q_reduce2.ref	LUT6
+ak.q_reduce2.loc	SLICE_X4Y20
+ak.q_reduce2.bel	SLICEM.D6LUT
+ak.q_reduce2.init	64'h6996966996696996
+ak.q_reduce2.lock_pins	I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6
+ak.q_reduce2.prop.IS_C_INVERTED	
+ak.q_reduce2.prop.IS_G_INVERTED	
+ak.q_reduce2.prop.IS_CLR_INVERTED	
+ak.q_reduce2.prop.IS_PRE_INVERTED	
+ak.q_reduce2.prop.IS_R_INVERTED	
+ak.q_reduce2.prop.IS_S_INVERTED	
+ak.q_reduce2.prop.IS_CE_INVERTED	
+ak.q_reduce2.prop.IS_GE_INVERTED	
+ak.q_reduce2.prop.IS_D_INVERTED	
+ak.q_reduce2.pin.O.net	q_OBUF
+ak.q_reduce2.pin.O.dir	OUT
+ak.q_reduce2.pin.O.belpin	SLICE_X4Y20/D6LUT/O6
+ak.q_reduce2.pin.I0.net	qr1
+ak.q_reduce2.pin.I0.dir	IN
+ak.q_reduce2.pin.I0.belpin	SLICE_X4Y20/D6LUT/A1
+ak.q_reduce2.pin.I1.net	qb[6]
+ak.q_reduce2.pin.I1.dir	IN
+ak.q_reduce2.pin.I1.belpin	SLICE_X4Y20/D6LUT/A2
+ak.q_reduce2.pin.I2.net	qb[7]
+ak.q_reduce2.pin.I2.dir	IN
+ak.q_reduce2.pin.I2.belpin	SLICE_X4Y20/D6LUT/A3
+ak.q_reduce2.pin.I3.net	qr1
+ak.q_reduce2.pin.I3.dir	IN
+ak.q_reduce2.pin.I3.belpin	SLICE_X4Y20/D6LUT/A4
+ak.q_reduce2.pin.I4.net	qr1
+ak.q_reduce2.pin.I4.dir	IN
+ak.q_reduce2.pin.I4.belpin	SLICE_X4Y20/D6LUT/A5
+ak.q_reduce2.pin.I5.net	qr1
+ak.q_reduce2.pin.I5.dir	IN
+ak.q_reduce2.pin.I5.belpin	SLICE_X4Y20/D6LUT/A6
+net.0.name	<const0>
+net.0.driver	GND/G
+net.0.sinks	anchor_ff/R anchor_ff2/R
+net.0.ports	
+net.0.route_status	INTRASITE
+net.0.route	{}
+net.0.pips	
+net.1.name	<const1>
+net.1.driver	VCC/P
+net.1.sinks	anchor_ff/CE anchor_ff2/CE
+net.1.ports	
+net.1.route_status	ROUTED
+net.1.route	 { INT_L_X2Y25/VCC_WIRE  { INT_L_X2Y25/IMUX_L4 CLBLL_L_X2Y25/CLBLL_LL_A6 }   { INT_L_X2Y25/IMUX_L12 CLBLL_L_X2Y25/CLBLL_LL_B6 }   { INT_L_X2Y25/IMUX_L35 CLBLL_L_X2Y25/CLBLL_LL_C6 }  INT_L_X2Y25/IMUX_L43 CLBLL_L_X2Y25/CLBLL_LL_D6 }  
+net.1.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX12->CLBLL_LL_B6 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX35->CLBLL_LL_C6 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX4->CLBLL_LL_A6 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX43->CLBLL_LL_D6 INT_L_X2Y25/INT_L.VCC_WIRE->>IMUX_L12 INT_L_X2Y25/INT_L.VCC_WIRE->>IMUX_L35 INT_L_X2Y25/INT_L.VCC_WIRE->>IMUX_L4 INT_L_X2Y25/INT_L.VCC_WIRE->>IMUX_L43
+net.2.name	anchor_o
+net.2.driver	anchor_o_OBUF_inst/O
+net.2.sinks	
+net.2.ports	anchor_o
+net.2.route_status	INTRASITE
+net.2.route	{}
+net.2.pips	
+net.3.name	anchor_o2
+net.3.driver	anchor_o2_OBUF_inst/O
+net.3.sinks	
+net.3.ports	anchor_o2
+net.3.route_status	INTRASITE
+net.3.route	{}
+net.3.pips	
+net.4.name	anchor_o2_OBUF
+net.4.driver	anchor_ff2/Q
+net.4.sinks	anchor_o2_OBUF_inst/I
+net.4.ports	
+net.4.route_status	ROUTED
+net.4.route	 { CLBLL_LL_AQ CLBLL_LOGIC_OUTS4 EE4BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NR1BEG0 EE2BEG0 IMUX34 IOI_OLOGIC1_D1 RIOI_OLOGIC1_OQ RIOI_O1 }  
+net.4.pips	CLBLL_L_X2Y20/CLBLL_L.CLBLL_LL_AQ->CLBLL_LOGIC_OUTS4 INT_L_X10Y28/INT_L.NE6END0->>NE6BEG0 INT_L_X12Y32/INT_L.NE6END0->>NE6BEG0 INT_L_X14Y36/INT_L.NE6END0->>NE6BEG0 INT_L_X16Y40/INT_L.NE6END0->>NE6BEG0 INT_L_X18Y44/INT_L.NE6END0->>NE6BEG0 INT_L_X20Y48/INT_L.NE6END0->>NE6BEG0 INT_L_X22Y52/INT_L.NE6END0->>NE6BEG0 INT_L_X24Y56/INT_L.NE6END0->>NE6BEG0 INT_L_X26Y60/INT_L.NE6END0->>NE6BEG0 INT_L_X28Y64/INT_L.NE6END0->>NE6BEG0 INT_L_X2Y20/INT_L.LOGIC_OUTS_L4->>EE4BEG0 INT_L_X30Y68/INT_L.NE6END0->>NR1BEG0 INT_L_X30Y69/INT_L.NR1END0->>EE2BEG0 INT_L_X6Y20/INT_L.EE4END0->>NE6BEG0 INT_L_X8Y24/INT_L.NE6END0->>NE6BEG0 INT_R_X31Y69/INT_R.WW2END0->>IMUX34 RIOI3_TBYTESRC_X31Y69/RIOI3_TBYTESRC.IOI_IMUX34_0->IOI_OLOGIC1_D1 RIOI3_TBYTESRC_X31Y69/RIOI3_TBYTESRC.IOI_OLOGIC1_D1->>RIOI_OLOGIC1_OQ RIOI3_TBYTESRC_X31Y69/RIOI3_TBYTESRC.RIOI_OLOGIC1_OQ->>RIOI_O1
+net.5.name	anchor_o_OBUF
+net.5.driver	anchor_ff/Q
+net.5.sinks	anchor_o_OBUF_inst/I
+net.5.ports	
+net.5.route_status	ROUTED
+net.5.route	 { CLBLM_M_AQ CLBLM_LOGIC_OUTS4 EE4BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NN6BEG0 EE2BEG0 ER1BEG1 IMUX34 IOI_OLOGIC0_D1 RIOI_OLOGIC0_OQ RIOI_O0 }  
+net.5.pips	CLBLM_R_X3Y20/CLBLM_R.CLBLM_M_AQ->CLBLM_LOGIC_OUTS4 INT_R_X11Y28/INT_R.NE6END0->>NE6BEG0 INT_R_X13Y32/INT_R.NE6END0->>NE6BEG0 INT_R_X15Y36/INT_R.NE6END0->>NE6BEG0 INT_R_X17Y40/INT_R.NE6END0->>NE6BEG0 INT_R_X19Y44/INT_R.NE6END0->>NE6BEG0 INT_R_X21Y48/INT_R.NE6END0->>NE6BEG0 INT_R_X23Y52/INT_R.NE6END0->>NE6BEG0 INT_R_X25Y56/INT_R.NE6END0->>NE6BEG0 INT_R_X27Y60/INT_R.NE6END0->>NE6BEG0 INT_R_X29Y64/INT_R.NE6END0->>NN6BEG0 INT_R_X29Y70/INT_R.NN6END0->>EE2BEG0 INT_R_X31Y70/INT_R.EE2END0->>ER1BEG1 INT_R_X31Y70/INT_R.WR1END1->>IMUX34 INT_R_X3Y20/INT_R.LOGIC_OUTS4->>EE4BEG0 INT_R_X7Y20/INT_R.EE4END0->>NE6BEG0 INT_R_X9Y24/INT_R.NE6END0->>NE6BEG0 RIOI3_TBYTESRC_X31Y69/RIOI3_TBYTESRC.IOI_IMUX34_1->IOI_OLOGIC0_D1 RIOI3_TBYTESRC_X31Y69/RIOI3_TBYTESRC.IOI_OLOGIC0_D1->>RIOI_OLOGIC0_OQ RIOI3_TBYTESRC_X31Y69/RIOI3_TBYTESRC.RIOI_OLOGIC0_OQ->>RIOI_O0
+net.6.name	ce
+net.6.driver	
+net.6.sinks	ce_IBUF_inst/I
+net.6.ports	ce
+net.6.route_status	INTRASITE
+net.6.route	{}
+net.6.pips	
+net.7.name	ce_IBUF
+net.7.driver	ce_IBUF_inst/O
+net.7.sinks	anchor_lut2/I0 {g_store[0].g_used.g_s.s/CE} {g_store[1].g_used.g_s.s/CE} {g_store[2].g_used.g_s.s/CE} {g_store[3].g_used.g_s.s/CE} {g_store[4].g_used.g_s.s/CE} {g_store[5].g_used.g_s.s/CE} {g_store[6].g_used.g_s.s/CE} {g_store[7].g_used.g_s.s/CE}
+net.7.ports	
+net.7.route_status	ROUTED
+net.7.route	 { IOB_IBUF1 RIOI_I1 RIOI_ILOGIC1_D IOI_ILOGIC1_O IOI_LOGIC_OUTS18_0 INT_INTERFACE_LOGIC_OUTS18 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 LV18 SS6BEG0 WW4BEG1 SW6BEG0 SW6BEG0 WW4BEG1  { WR1BEG2 FAN_ALT7 FAN_L7 CLBLL_LL_CE }  SS2BEG0 SR1BEG1 SR1BEG2 SR1BEG3 IMUX15 CLBLM_M_B1 }  
+net.7.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_FAN7->CLBLL_LL_CE CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX15->CLBLM_M_B1 INT_L_X2Y25/INT_L.FAN_ALT7->>FAN_L7 INT_L_X2Y25/INT_L.WR1END2->>FAN_ALT7 INT_R_X11Y33/INT_R.WW4END1->>SW6BEG0 INT_R_X15Y33/INT_R.SS6END0->>WW4BEG1 INT_R_X15Y39/INT_R.LV0->>SS6BEG0 INT_R_X15Y57/INT_R.SW6END0->>LV18 INT_R_X17Y61/INT_R.SW6END0->>SW6BEG0 INT_R_X19Y65/INT_R.SW6END0->>SW6BEG0 INT_R_X21Y69/INT_R.SW6END0->>SW6BEG0 INT_R_X23Y73/INT_R.SW6END0->>SW6BEG0 INT_R_X25Y77/INT_R.SW6END0->>SW6BEG0 INT_R_X27Y81/INT_R.SW6END0->>SW6BEG0 INT_R_X29Y85/INT_R.SW6END0->>SW6BEG0 INT_R_X31Y89/INT_R.LOGIC_OUTS18->>SW6BEG0 INT_R_X3Y20/INT_R.SR1END3->>IMUX15 INT_R_X3Y21/INT_R.SR1END2->>SR1BEG3 INT_R_X3Y22/INT_R.SR1END1->>SR1BEG2 INT_R_X3Y23/INT_R.SS2END0->>SR1BEG1 INT_R_X3Y25/INT_R.WW4END1->>SS2BEG0 INT_R_X3Y25/INT_R.WW4END1->>WR1BEG2 INT_R_X7Y25/INT_R.SW6END0->>WW4BEG1 INT_R_X9Y29/INT_R.SW6END0->>SW6BEG0 IO_INT_INTERFACE_R_X31Y89/IO_INT_INTERFACE_R.INT_INTERFACE_LOGIC_OUTS_B18->>INT_INTERFACE_LOGIC_OUTS18 RIOI3_X31Y89/RIOI3.IOI_ILOGIC1_O->>IOI_LOGIC_OUTS18_0 RIOI3_X31Y89/RIOI3.RIOI_I1->RIOI_ILOGIC1_D RIOI3_X31Y89/RIOI3.RIOI_IBUF1->RIOI_I1 RIOI3_X31Y89/RIOI3.RIOI_ILOGIC1_D->>IOI_ILOGIC1_O
+net.8.name	clk
+net.8.driver	
+net.8.sinks	clk_IBUF_inst/I
+net.8.ports	clk
+net.8.route_status	INTRASITE
+net.8.route	{}
+net.8.pips	
+net.9.name	clk_IBUF
+net.9.driver	clk_IBUF_inst/O
+net.9.sinks	bufg_inst/I
+net.9.ports	
+net.9.route_status	ROUTED
+net.9.route	 { IOB_IBUF0 RIOI_I0 RIOI_ILOGIC0_D IOI_ILOGIC0_O IOI_LOGIC_OUTS18_1 INT_INTERFACE_LOGIC_OUTS18 SS6BEG0 SS6BEG0 WW4BEG1 SS6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SS2BEG0 IMUX24 CLK_BUFG_BUFGCTRL0_I0 }  
+net.9.pips	CLK_BUFG_BOT_R_X82Y48/CLK_BUFG_BOT_R.CLK_BUFG_IMUX24_0->>CLK_BUFG_BUFGCTRL0_I0 INT_R_X15Y46/INT_R.SS2END0->>IMUX24 INT_R_X15Y48/INT_R.SW6END0->>SS2BEG0 INT_R_X17Y52/INT_R.SW6END0->>SW6BEG0 INT_R_X19Y56/INT_R.SW6END0->>SW6BEG0 INT_R_X21Y60/INT_R.SW6END0->>SW6BEG0 INT_R_X23Y64/INT_R.SW6END0->>SW6BEG0 INT_R_X25Y68/INT_R.SW6END0->>SW6BEG0 INT_R_X27Y72/INT_R.SS6END0->>SW6BEG0 INT_R_X27Y78/INT_R.WW4END1->>SS6BEG0 INT_R_X31Y78/INT_R.SS6END0->>WW4BEG1 INT_R_X31Y84/INT_R.SS6END0->>SS6BEG0 INT_R_X31Y90/INT_R.LOGIC_OUTS18->>SS6BEG0 IO_INT_INTERFACE_R_X31Y90/IO_INT_INTERFACE_R.INT_INTERFACE_LOGIC_OUTS_B18->>INT_INTERFACE_LOGIC_OUTS18 RIOI3_X31Y89/RIOI3.IOI_ILOGIC0_O->>IOI_LOGIC_OUTS18_1 RIOI3_X31Y89/RIOI3.RIOI_I0->RIOI_ILOGIC0_D RIOI3_X31Y89/RIOI3.RIOI_IBUF0->RIOI_I0 RIOI3_X31Y89/RIOI3.RIOI_ILOGIC0_D->>IOI_ILOGIC0_O
+net.10.name	clk_g
+net.10.driver	bufg_inst/O
+net.10.sinks	anchor_ff/C anchor_ff2/C {g_store[0].g_used.g_s.s/C} {g_store[1].g_used.g_s.s/C} {g_store[2].g_used.g_s.s/C} {g_store[3].g_used.g_s.s/C} {g_store[4].g_used.g_s.s/C} {g_store[5].g_used.g_s.s/C} {g_store[6].g_used.g_s.s/C} {g_store[7].g_used.g_s.s/C}
+net.10.ports	
+net.10.route_status	ROUTED
+net.10.route	 { CLK_BUFG_BUFGCTRL0_O CLK_BUFG_CK_GCLK0 CLK_BUFG_REBUF_R_CK_GCLK0_BOT CLK_HROW_CK_MUX_OUT_L8 CLK_HROW_CK_HCLK_OUT_L8 CLK_HROW_CK_BUFHCLK_L8  { <7>HCLK_LEAF_CLK_B_TOPL5 GCLK_L_B11_WEST CLK_L1 CLBLL_LL_CLK }  <7>HCLK_LEAF_CLK_B_BOTL5  { <5>GCLK_L_B11_WEST CLK_L1 CLBLL_LL_CLK }  <5>GCLK_L_B11_EAST CLK1 CLBLM_M_CLK }  
+net.10.pips	CLBLL_L_X2Y20/CLBLL_L.CLBLL_CLK1->CLBLL_LL_CLK CLBLL_L_X2Y25/CLBLL_L.CLBLL_CLK1->CLBLL_LL_CLK CLBLM_R_X3Y20/CLBLM_R.CLBLM_CLK1->CLBLM_M_CLK CLK_BUFG_BOT_R_X82Y48/CLK_BUFG_BOT_R.CLK_BUFG_BUFGCTRL0_O->>CLK_BUFG_CK_GCLK0 CLK_BUFG_REBUF_X82Y38/CLK_BUFG_REBUF.CLK_BUFG_REBUF_R_CK_GCLK0_BOT<<->>CLK_BUFG_REBUF_R_CK_GCLK0_TOP CLK_HROW_BOT_R_X82Y26/CLK_HROW_BOT_R.CLK_HROW_CK_HCLK_OUT_L8->>CLK_HROW_CK_BUFHCLK_L8 CLK_HROW_BOT_R_X82Y26/CLK_HROW_BOT_R.CLK_HROW_CK_MUX_OUT_L8->>CLK_HROW_CK_HCLK_OUT_L8 CLK_HROW_BOT_R_X82Y26/CLK_HROW_BOT_R.CLK_HROW_R_CK_GCLK0->>CLK_HROW_CK_MUX_OUT_L8 HCLK_L_X36Y26/HCLK_L.HCLK_CK_BUFHCLK8->>HCLK_LEAF_CLK_B_BOTL5 HCLK_L_X36Y26/HCLK_L.HCLK_CK_BUFHCLK8->>HCLK_LEAF_CLK_B_TOPL5 INT_L_X2Y20/INT_L.GCLK_L_B11->>GCLK_L_B11_EAST INT_L_X2Y20/INT_L.GCLK_L_B11->>GCLK_L_B11_WEST INT_L_X2Y20/INT_L.GCLK_L_B11_WEST->>CLK_L1 INT_L_X2Y25/INT_L.GCLK_L_B11->>GCLK_L_B11_WEST INT_L_X2Y25/INT_L.GCLK_L_B11_WEST->>CLK_L1 INT_R_X3Y20/INT_R.GCLK_B11->>CLK1
+net.11.name	g_store[1].g_used.d_k
+net.11.driver	g_lo[0].l/O
+net.11.sinks	{g_store[1].g_used.g_s.s/D}
+net.11.ports	
+net.11.route_status	INTRASITE
+net.11.route	{}
+net.11.pips	
+net.12.name	g_store[2].g_used.d_k
+net.12.driver	g_hi[1].l/O
+net.12.sinks	{g_store[2].g_used.g_s.s/D}
+net.12.ports	
+net.12.route_status	INTRASITE
+net.12.route	{}
+net.12.pips	
+net.13.name	g_store[3].g_used.d_k
+net.13.driver	g_lo[1].l/O
+net.13.sinks	{g_store[3].g_used.g_s.s/D}
+net.13.ports	
+net.13.route_status	INTRASITE
+net.13.route	{}
+net.13.pips	
+net.14.name	g_store[4].g_used.d_k
+net.14.driver	g_hi[2].l/O
+net.14.sinks	{g_store[4].g_used.g_s.s/D}
+net.14.ports	
+net.14.route_status	INTRASITE
+net.14.route	{}
+net.14.pips	
+net.15.name	g_store[5].g_used.d_k
+net.15.driver	g_lo[2].l/O
+net.15.sinks	{g_store[5].g_used.g_s.s/D}
+net.15.ports	
+net.15.route_status	INTRASITE
+net.15.route	{}
+net.15.pips	
+net.16.name	g_store[6].g_used.d_k
+net.16.driver	g_hi[3].l/O
+net.16.sinks	{g_store[6].g_used.g_s.s/D}
+net.16.ports	
+net.16.route_status	INTRASITE
+net.16.route	{}
+net.16.pips	
+net.17.name	g_store[7].g_used.d_k
+net.17.driver	g_lo[3].l/O
+net.17.sinks	{g_store[7].g_used.g_s.s/D}
+net.17.ports	
+net.17.route_status	INTRASITE
+net.17.route	{}
+net.17.pips	
+net.18.name	i[0]
+net.18.driver	
+net.18.sinks	{i_IBUF[0]_inst/I}
+net.18.ports	{i[0]}
+net.18.route_status	INTRASITE
+net.18.route	{}
+net.18.pips	
+net.19.name	i[1]
+net.19.driver	
+net.19.sinks	{i_IBUF[1]_inst/I}
+net.19.ports	{i[1]}
+net.19.route_status	INTRASITE
+net.19.route	{}
+net.19.pips	
+net.20.name	i[2]
+net.20.driver	
+net.20.sinks	{i_IBUF[2]_inst/I}
+net.20.ports	{i[2]}
+net.20.route_status	INTRASITE
+net.20.route	{}
+net.20.pips	
+net.21.name	i[3]
+net.21.driver	
+net.21.sinks	{i_IBUF[3]_inst/I}
+net.21.ports	{i[3]}
+net.21.route_status	INTRASITE
+net.21.route	{}
+net.21.pips	
+net.22.name	i[4]
+net.22.driver	
+net.22.sinks	{i_IBUF[4]_inst/I}
+net.22.ports	{i[4]}
+net.22.route_status	INTRASITE
+net.22.route	{}
+net.22.pips	
+net.23.name	i[5]
+net.23.driver	
+net.23.sinks	{i_IBUF[5]_inst/I}
+net.23.ports	{i[5]}
+net.23.route_status	INTRASITE
+net.23.route	{}
+net.23.pips	
+net.24.name	i_IBUF[0]
+net.24.driver	i_IBUF[0]_inst/O
+net.24.sinks	anchor_lut1/I0 {g_hi[0].l/I0} {g_hi[1].l/I0} {g_hi[2].l/I0} {g_hi[3].l/I0} {g_lo[0].l/I0} {g_lo[1].l/I0} {g_lo[2].l/I0} {g_lo[3].l/I0}
+net.24.ports	
+net.24.route_status	ROUTED
+net.24.route	 { IOB_IBUF1 RIOI_I1 RIOI_ILOGIC1_D IOI_ILOGIC1_O IOI_LOGIC_OUTS18_0 INT_INTERFACE_LOGIC_OUTS18 SW6BEG0 LV18 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 WL1BEG_N3 WL1BEG2  { SR1BEG3 SL1BEG3 SS2BEG3 IMUX7 CLBLM_M_A1 }   { NL1BEG2 WR1BEG3  { IMUX_L7 CLBLL_LL_A1 }  IMUX_L15 CLBLL_LL_B1 }  WR1BEG_S0  { IMUX_L32 CLBLL_LL_C1 }  IMUX_L40 CLBLL_LL_D1 }  
+net.24.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX15->CLBLL_LL_B1 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX32->CLBLL_LL_C1 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX40->CLBLL_LL_D1 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX7->CLBLL_LL_A1 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX7->CLBLM_M_A1 INT_L_X2Y25/INT_L.WR1END0->>IMUX_L32 INT_L_X2Y25/INT_L.WR1END0->>IMUX_L40 INT_L_X2Y25/INT_L.WR1END3->>IMUX_L15 INT_L_X2Y25/INT_L.WR1END3->>IMUX_L7 INT_L_X4Y24/INT_L.WL1END3->>WL1BEG2 INT_R_X11Y37/INT_R.SW6END0->>SW6BEG0 INT_R_X13Y41/INT_R.SW6END0->>SW6BEG0 INT_R_X15Y45/INT_R.SW6END0->>SW6BEG0 INT_R_X17Y49/INT_R.SW6END0->>SW6BEG0 INT_R_X19Y53/INT_R.SW6END0->>SW6BEG0 INT_R_X21Y57/INT_R.SW6END0->>SW6BEG0 INT_R_X23Y61/INT_R.SW6END0->>SW6BEG0 INT_R_X25Y65/INT_R.SW6END0->>SW6BEG0 INT_R_X27Y69/INT_R.SW6END0->>SW6BEG0 INT_R_X29Y73/INT_R.LV0->>SW6BEG0 INT_R_X29Y91/INT_R.SW6END0->>LV18 INT_R_X31Y95/INT_R.LOGIC_OUTS18->>SW6BEG0 INT_R_X3Y20/INT_R.SS2END3->>IMUX7 INT_R_X3Y22/INT_R.SL1END3->>SS2BEG3 INT_R_X3Y23/INT_R.SR1END3->>SL1BEG3 INT_R_X3Y24/INT_R.WL1END2->>NL1BEG2 INT_R_X3Y24/INT_R.WL1END2->>SR1BEG3 INT_R_X3Y24/INT_R.WL1END2->>WR1BEG_S0 INT_R_X3Y25/INT_R.NL1END2->>WR1BEG3 INT_R_X5Y25/INT_R.SW6END0->>WL1BEG_N3 INT_R_X7Y29/INT_R.SW6END0->>SW6BEG0 INT_R_X9Y33/INT_R.SW6END0->>SW6BEG0 IO_INT_INTERFACE_R_X31Y95/IO_INT_INTERFACE_R.INT_INTERFACE_LOGIC_OUTS_B18->>INT_INTERFACE_LOGIC_OUTS18 RIOI3_X31Y95/RIOI3.IOI_ILOGIC1_O->>IOI_LOGIC_OUTS18_0 RIOI3_X31Y95/RIOI3.RIOI_I1->RIOI_ILOGIC1_D RIOI3_X31Y95/RIOI3.RIOI_IBUF1->RIOI_I1 RIOI3_X31Y95/RIOI3.RIOI_ILOGIC1_D->>IOI_ILOGIC1_O
+net.25.name	i_IBUF[1]
+net.25.driver	i_IBUF[1]_inst/O
+net.25.sinks	anchor_lut1/I1 {g_hi[0].l/I1} {g_hi[1].l/I1} {g_hi[2].l/I1} {g_hi[3].l/I1} {g_lo[0].l/I1} {g_lo[1].l/I1} {g_lo[2].l/I1} {g_lo[3].l/I1}
+net.25.ports	
+net.25.route_status	ROUTED
+net.25.route	 { IOB_IBUF0 RIOI_I0 RIOI_ILOGIC0_D IOI_ILOGIC0_O IOI_LOGIC_OUTS18_1 INT_INTERFACE_LOGIC_OUTS18 SW6BEG0 LV18 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW2BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 WW2BEG0  { BYP_ALT1 BYP_BOUNCE1  { IMUX_L29 CLBLL_LL_C2 }  IMUX_L45 CLBLL_LL_D2 }   { IMUX_L2 CLBLL_LL_A2 }   { SS6BEG0 ER1BEG1 NR1BEG1 IMUX2 CLBLM_M_A2 }  IMUX_L18 CLBLL_LL_B2 }  
+net.25.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX18->CLBLL_LL_B2 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX2->CLBLL_LL_A2 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX29->CLBLL_LL_C2 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX45->CLBLL_LL_D2 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX2->CLBLM_M_A2 INT_L_X10Y37/INT_L.SW6END0->>SW6BEG0 INT_L_X12Y41/INT_L.SW6END0->>SW6BEG0 INT_L_X14Y45/INT_L.SW6END0->>SW6BEG0 INT_L_X16Y49/INT_L.SW6END0->>SW6BEG0 INT_L_X18Y53/INT_L.SW6END0->>SW6BEG0 INT_L_X20Y57/INT_L.SW2END0->>SW6BEG0 INT_L_X2Y19/INT_L.SS6END0->>ER1BEG1 INT_L_X2Y25/INT_L.BYP_ALT1->>BYP_BOUNCE1 INT_L_X2Y25/INT_L.BYP_BOUNCE1->>IMUX_L29 INT_L_X2Y25/INT_L.BYP_BOUNCE1->>IMUX_L45 INT_L_X2Y25/INT_L.WW2END0->>BYP_ALT1 INT_L_X2Y25/INT_L.WW2END0->>IMUX_L18 INT_L_X2Y25/INT_L.WW2END0->>IMUX_L2 INT_L_X2Y25/INT_L.WW2END0->>SS6BEG0 INT_L_X4Y25/INT_L.SW6END0->>WW2BEG0 INT_L_X6Y29/INT_L.SW6END0->>SW6BEG0 INT_L_X8Y33/INT_L.SW6END0->>SW6BEG0 INT_R_X21Y58/INT_R.SW6END0->>SW2BEG0 INT_R_X23Y62/INT_R.SW6END0->>SW6BEG0 INT_R_X25Y66/INT_R.SW6END0->>SW6BEG0 INT_R_X27Y70/INT_R.SW6END0->>SW6BEG0 INT_R_X29Y74/INT_R.LV0->>SW6BEG0 INT_R_X29Y92/INT_R.SW6END0->>LV18 INT_R_X31Y96/INT_R.LOGIC_OUTS18->>SW6BEG0 INT_R_X3Y19/INT_R.ER1END1->>NR1BEG1 INT_R_X3Y20/INT_R.NR1END1->>IMUX2 IO_INT_INTERFACE_R_X31Y96/IO_INT_INTERFACE_R.INT_INTERFACE_LOGIC_OUTS_B18->>INT_INTERFACE_LOGIC_OUTS18 RIOI3_X31Y95/RIOI3.IOI_ILOGIC0_O->>IOI_LOGIC_OUTS18_1 RIOI3_X31Y95/RIOI3.RIOI_I0->RIOI_ILOGIC0_D RIOI3_X31Y95/RIOI3.RIOI_IBUF0->RIOI_I0 RIOI3_X31Y95/RIOI3.RIOI_ILOGIC0_D->>IOI_ILOGIC0_O
+net.26.name	i_IBUF[2]
+net.26.driver	i_IBUF[2]_inst/O
+net.26.sinks	anchor_lut1/I2 {g_hi[0].l/I2} {g_hi[1].l/I2} {g_hi[2].l/I2} {g_hi[3].l/I2} {g_lo[0].l/I2} {g_lo[1].l/I2} {g_lo[2].l/I2} {g_lo[3].l/I2}
+net.26.ports	
+net.26.route_status	ROUTED
+net.26.route	 { IOB_IBUF1 RIOI_I1 RIOI_ILOGIC1_D IOI_ILOGIC1_O IOI_LOGIC_OUTS18_0 INT_INTERFACE_LOGIC_OUTS18 SW6BEG0 LV18 WW4BEG0 SS6BEG3 SS6BEG3 SW6BEG3 SW6BEG3 SW6BEG3 SW6BEG3 SW6BEG3 SW6BEG3 SW6BEG3 SW6BEG3 SW6BEG3 SW2BEG3 WW4BEG0  { SS6BEG3 ER1BEG_S0 IMUX1 CLBLM_M_A3 }  SR1BEG_S0  { BYP_ALT4 BYP_BOUNCE4  { IMUX_L22 CLBLL_LL_C3 }  IMUX_L38 CLBLL_LL_D3 }   { IMUX_L1 CLBLL_LL_A3 }  IMUX_L17 CLBLL_LL_B3 }  
+net.26.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX1->CLBLL_LL_A3 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX17->CLBLL_LL_B3 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX22->CLBLL_LL_C3 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX38->CLBLL_LL_D3 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX1->CLBLM_M_A3 INT_L_X2Y19/INT_L.SS6END3->>ER1BEG_S0 INT_L_X2Y25/INT_L.BYP_ALT4->>BYP_BOUNCE4 INT_L_X2Y25/INT_L.BYP_BOUNCE4->>IMUX_L22 INT_L_X2Y25/INT_L.BYP_BOUNCE4->>IMUX_L38 INT_L_X2Y25/INT_L.SR1BEG_S0->>BYP_ALT4 INT_L_X2Y25/INT_L.SR1BEG_S0->>IMUX_L1 INT_L_X2Y25/INT_L.SR1BEG_S0->>IMUX_L17 INT_L_X2Y25/INT_L.WW4END_S0_0->>SR1BEG_S0 INT_L_X2Y25/INT_L.WW4END_S0_0->>SS6BEG3 INT_L_X6Y26/INT_L.SW2END_N0_3->>WW4BEG0 INT_R_X11Y34/INT_R.SW6END3->>SW6BEG3 INT_R_X13Y38/INT_R.SW6END3->>SW6BEG3 INT_R_X15Y42/INT_R.SW6END3->>SW6BEG3 INT_R_X17Y46/INT_R.SW6END3->>SW6BEG3 INT_R_X19Y50/INT_R.SW6END3->>SW6BEG3 INT_R_X21Y54/INT_R.SW6END3->>SW6BEG3 INT_R_X23Y58/INT_R.SW6END3->>SW6BEG3 INT_R_X25Y62/INT_R.SS6END3->>SW6BEG3 INT_R_X25Y68/INT_R.SS6END3->>SS6BEG3 INT_R_X25Y74/INT_R.WW4END_S0_0->>SS6BEG3 INT_R_X29Y75/INT_R.LV0->>WW4BEG0 INT_R_X29Y93/INT_R.SW6END0->>LV18 INT_R_X31Y97/INT_R.LOGIC_OUTS18->>SW6BEG0 INT_R_X3Y20/INT_R.ER1END0->>IMUX1 INT_R_X7Y26/INT_R.SW6END3->>SW2BEG3 INT_R_X9Y30/INT_R.SW6END3->>SW6BEG3 IO_INT_INTERFACE_R_X31Y97/IO_INT_INTERFACE_R.INT_INTERFACE_LOGIC_OUTS_B18->>INT_INTERFACE_LOGIC_OUTS18 RIOI3_X31Y97/RIOI3.IOI_ILOGIC1_O->>IOI_LOGIC_OUTS18_0 RIOI3_X31Y97/RIOI3.RIOI_I1->RIOI_ILOGIC1_D RIOI3_X31Y97/RIOI3.RIOI_IBUF1->RIOI_I1 RIOI3_X31Y97/RIOI3.RIOI_ILOGIC1_D->>IOI_ILOGIC1_O
+net.27.name	i_IBUF[3]
+net.27.driver	i_IBUF[3]_inst/O
+net.27.sinks	anchor_lut1/I3 {g_hi[0].l/I3} {g_hi[1].l/I3} {g_hi[2].l/I3} {g_hi[3].l/I3} {g_lo[0].l/I3} {g_lo[1].l/I3} {g_lo[2].l/I3} {g_lo[3].l/I3}
+net.27.ports	
+net.27.route_status	ROUTED
+net.27.route	 { IOB_IBUF0 RIOI_I0 RIOI_ILOGIC0_D IOI_ILOGIC0_O IOI_LOGIC_OUTS18_1 INT_INTERFACE_LOGIC_OUTS18 SW6BEG0 LV18 SS6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 WW4BEG1 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0  { SS2BEG0 SS2BEG0 SL1BEG0 SR1BEG1 IMUX11 CLBLM_M_A4 }  WL1BEG_N3 FAN_ALT3 FAN_BOUNCE3  { IMUX_L11 CLBLL_LL_A4 }   { IMUX_L27 CLBLL_LL_B4 }  FAN_ALT1 FAN_BOUNCE1  { IMUX_L28 CLBLL_LL_C4 }  IMUX_L44 CLBLL_LL_D4 }  
+net.27.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX11->CLBLL_LL_A4 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX27->CLBLL_LL_B4 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX28->CLBLL_LL_C4 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX44->CLBLL_LL_D4 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX11->CLBLM_M_A4 INT_L_X2Y25/INT_L.FAN_ALT1->>FAN_BOUNCE1 INT_L_X2Y25/INT_L.FAN_ALT3->>FAN_BOUNCE3 INT_L_X2Y25/INT_L.FAN_BOUNCE1->>IMUX_L28 INT_L_X2Y25/INT_L.FAN_BOUNCE1->>IMUX_L44 INT_L_X2Y25/INT_L.FAN_BOUNCE3->>FAN_ALT1 INT_L_X2Y25/INT_L.FAN_BOUNCE3->>IMUX_L11 INT_L_X2Y25/INT_L.FAN_BOUNCE3->>IMUX_L27 INT_L_X2Y25/INT_L.WL1END3->>FAN_ALT3 INT_R_X11Y42/INT_R.SW6END0->>SW6BEG0 INT_R_X13Y46/INT_R.SW6END0->>SW6BEG0 INT_R_X15Y50/INT_R.SW6END0->>SW6BEG0 INT_R_X17Y54/INT_R.SW6END0->>SW6BEG0 INT_R_X19Y58/INT_R.WW4END1->>SW6BEG0 INT_R_X23Y58/INT_R.SW6END0->>WW4BEG1 INT_R_X25Y62/INT_R.SW6END0->>SW6BEG0 INT_R_X27Y66/INT_R.SW6END0->>SW6BEG0 INT_R_X29Y70/INT_R.SS6END0->>SW6BEG0 INT_R_X29Y76/INT_R.LV0->>SS6BEG0 INT_R_X29Y94/INT_R.SW6END0->>LV18 INT_R_X31Y98/INT_R.LOGIC_OUTS18->>SW6BEG0 INT_R_X3Y20/INT_R.SR1END1->>IMUX11 INT_R_X3Y21/INT_R.SL1END0->>SR1BEG1 INT_R_X3Y22/INT_R.SS2END0->>SL1BEG0 INT_R_X3Y24/INT_R.SS2END0->>SS2BEG0 INT_R_X3Y26/INT_R.SW6END0->>SS2BEG0 INT_R_X3Y26/INT_R.SW6END0->>WL1BEG_N3 INT_R_X5Y30/INT_R.SW6END0->>SW6BEG0 INT_R_X7Y34/INT_R.SW6END0->>SW6BEG0 INT_R_X9Y38/INT_R.SW6END0->>SW6BEG0 IO_INT_INTERFACE_R_X31Y98/IO_INT_INTERFACE_R.INT_INTERFACE_LOGIC_OUTS_B18->>INT_INTERFACE_LOGIC_OUTS18 RIOI3_X31Y97/RIOI3.IOI_ILOGIC0_O->>IOI_LOGIC_OUTS18_1 RIOI3_X31Y97/RIOI3.RIOI_I0->RIOI_ILOGIC0_D RIOI3_X31Y97/RIOI3.RIOI_IBUF0->RIOI_I0 RIOI3_X31Y97/RIOI3.RIOI_ILOGIC0_D->>IOI_ILOGIC0_O
+net.28.name	i_IBUF[4]
+net.28.driver	i_IBUF[4]_inst/O
+net.28.sinks	anchor_lut1/I4 {g_hi[0].l/I4} {g_hi[1].l/I4} {g_hi[2].l/I4} {g_hi[3].l/I4} {g_lo[0].l/I4} {g_lo[1].l/I4} {g_lo[2].l/I4} {g_lo[3].l/I4}
+net.28.ports	
+net.28.route_status	ROUTED
+net.28.route	 { IOB_IBUF1 RIOI_I1 RIOI_ILOGIC1_D IOI_ILOGIC1_O IOI_LOGIC_OUTS18_0 INT_INTERFACE_LOGIC_OUTS18 SS6BEG0 SS6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0  { SS6BEG0 NR1BEG0 IMUX8 CLBLM_M_A5 }   { SW2BEG0 NL1BEG0 IMUX_L24 CLBLL_LL_B5 }  WL1BEG_N3  { NL1BEG_N3 BYP_ALT3 BYP_BOUNCE3  { IMUX_L31 CLBLL_LL_C5 }  IMUX_L47 CLBLL_LL_D5 }  IMUX_L8 CLBLL_LL_A5 }  
+net.28.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX24->CLBLL_LL_B5 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX31->CLBLL_LL_C5 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX47->CLBLL_LL_D5 CLBLL_L_X2Y25/CLBLL_L.CLBLL_IMUX8->CLBLL_LL_A5 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX8->CLBLM_M_A5 INT_L_X2Y24/INT_L.SW2END0->>NL1BEG0 INT_L_X2Y25/INT_L.BYP_ALT3->>BYP_BOUNCE3 INT_L_X2Y25/INT_L.BYP_BOUNCE3->>IMUX_L31 INT_L_X2Y25/INT_L.BYP_BOUNCE3->>IMUX_L47 INT_L_X2Y25/INT_L.NL1BEG_N3->>BYP_ALT3 INT_L_X2Y25/INT_L.NL1END0->>IMUX_L24 INT_L_X2Y25/INT_L.WL1END_N1_3->>IMUX_L8 INT_L_X2Y25/INT_L.WL1END_N1_3->>NL1BEG_N3 INT_R_X11Y41/INT_R.SW6END0->>SW6BEG0 INT_R_X13Y45/INT_R.SW6END0->>SW6BEG0 INT_R_X15Y49/INT_R.SW6END0->>SW6BEG0 INT_R_X17Y53/INT_R.SW6END0->>SW6BEG0 INT_R_X19Y57/INT_R.SW6END0->>SW6BEG0 INT_R_X21Y61/INT_R.SW6END0->>SW6BEG0 INT_R_X23Y65/INT_R.SW6END0->>SW6BEG0 INT_R_X25Y69/INT_R.SW6END0->>SW6BEG0 INT_R_X27Y73/INT_R.SW6END0->>SW6BEG0 INT_R_X29Y77/INT_R.SW6END0->>SW6BEG0 INT_R_X31Y81/INT_R.SS6END0->>SW6BEG0 INT_R_X31Y87/INT_R.SS6END0->>SS6BEG0 INT_R_X31Y93/INT_R.LOGIC_OUTS18->>SS6BEG0 INT_R_X3Y19/INT_R.SS6END0->>NR1BEG0 INT_R_X3Y20/INT_R.NR1END0->>IMUX8 INT_R_X3Y25/INT_R.SW6END0->>SS6BEG0 INT_R_X3Y25/INT_R.SW6END0->>SW2BEG0 INT_R_X3Y25/INT_R.SW6END0->>WL1BEG_N3 INT_R_X5Y29/INT_R.SW6END0->>SW6BEG0 INT_R_X7Y33/INT_R.SW6END0->>SW6BEG0 INT_R_X9Y37/INT_R.SW6END0->>SW6BEG0 IO_INT_INTERFACE_R_X31Y93/IO_INT_INTERFACE_R.INT_INTERFACE_LOGIC_OUTS_B18->>INT_INTERFACE_LOGIC_OUTS18 RIOI3_TBYTESRC_X31Y93/RIOI3_TBYTESRC.IOI_ILOGIC1_O->>IOI_LOGIC_OUTS18_0 RIOI3_TBYTESRC_X31Y93/RIOI3_TBYTESRC.RIOI_I1->RIOI_ILOGIC1_D RIOI3_TBYTESRC_X31Y93/RIOI3_TBYTESRC.RIOI_IBUF1->RIOI_I1 RIOI3_TBYTESRC_X31Y93/RIOI3_TBYTESRC.RIOI_ILOGIC1_D->>IOI_ILOGIC1_O
+net.29.name	i_IBUF[5]
+net.29.driver	i_IBUF[5]_inst/O
+net.29.sinks	anchor_lut1/I5
+net.29.ports	
+net.29.route_status	ROUTED
+net.29.route	 { IOB_IBUF0 RIOI_I0 RIOI_ILOGIC0_D IOI_ILOGIC0_O IOI_LOGIC_OUTS18_1 INT_INTERFACE_LOGIC_OUTS18 SW6BEG0 LV18 LV18 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 WW4BEG1 WW2BEG0 WW4BEG1 GFAN1 IMUX4 CLBLM_M_A6 }  
+net.29.pips	CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX4->CLBLM_M_A6 INT_R_X13Y20/INT_R.SW6END0->>WW4BEG1 INT_R_X15Y24/INT_R.SW6END0->>SW6BEG0 INT_R_X17Y28/INT_R.SW6END0->>SW6BEG0 INT_R_X19Y32/INT_R.SW6END0->>SW6BEG0 INT_R_X21Y36/INT_R.SW6END0->>SW6BEG0 INT_R_X23Y40/INT_R.SW6END0->>SW6BEG0 INT_R_X25Y44/INT_R.SW6END0->>SW6BEG0 INT_R_X27Y48/INT_R.SW6END0->>SW6BEG0 INT_R_X29Y52/INT_R.LV0->>SW6BEG0 INT_R_X29Y70/INT_R.LV0<<->>LV18 INT_R_X29Y88/INT_R.SW6END0->>LV18 INT_R_X31Y92/INT_R.LOGIC_OUTS18->>SW6BEG0 INT_R_X3Y20/INT_R.GFAN1->>IMUX4 INT_R_X3Y20/INT_R.WW4END1->>GFAN1 INT_R_X7Y20/INT_R.WW2END0->>WW4BEG1 INT_R_X9Y20/INT_R.WW4END1->>WW2BEG0 IO_INT_INTERFACE_R_X31Y92/IO_INT_INTERFACE_R.INT_INTERFACE_LOGIC_OUTS_B18->>INT_INTERFACE_LOGIC_OUTS18 RIOI3_X31Y91/RIOI3.IOI_ILOGIC0_O->>IOI_LOGIC_OUTS18_1 RIOI3_X31Y91/RIOI3.RIOI_I0->RIOI_ILOGIC0_D RIOI3_X31Y91/RIOI3.RIOI_IBUF0->RIOI_I0 RIOI3_X31Y91/RIOI3.RIOI_ILOGIC0_D->>IOI_ILOGIC0_O
+net.30.name	o
+net.30.driver	o_OBUF_inst/O
+net.30.sinks	
+net.30.ports	o
+net.30.route_status	INTRASITE
+net.30.route	{}
+net.30.pips	
+net.31.name	o_OBUF
+net.31.driver	g_hi[0].l/O
+net.31.sinks	{g_store[0].g_used.g_s.s/D} o_OBUF_inst/I
+net.31.ports	
+net.31.route_status	ROUTED
+net.31.route	 { CLBLL_LL_A CLBLL_LOGIC_OUTS12 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NE6BEG0 NN6BEG0 EE2BEG0 IMUX34 IOI_OLOGIC1_D1 RIOI_OLOGIC1_OQ RIOI_O1 }  
+net.31.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_LL_A->CLBLL_LOGIC_OUTS12 INT_L_X10Y41/INT_L.NE6END0->>NE6BEG0 INT_L_X12Y45/INT_L.NE6END0->>NE6BEG0 INT_L_X14Y49/INT_L.NE6END0->>NE6BEG0 INT_L_X16Y53/INT_L.NE6END0->>NE6BEG0 INT_L_X18Y57/INT_L.NE6END0->>NE6BEG0 INT_L_X20Y61/INT_L.NE6END0->>NE6BEG0 INT_L_X22Y65/INT_L.NE6END0->>NE6BEG0 INT_L_X24Y69/INT_L.NE6END0->>NE6BEG0 INT_L_X26Y73/INT_L.NE6END0->>NE6BEG0 INT_L_X28Y77/INT_L.NE6END0->>NE6BEG0 INT_L_X2Y25/INT_L.LOGIC_OUTS_L12->>NE6BEG0 INT_L_X30Y81/INT_L.NE6END0->>NN6BEG0 INT_L_X30Y87/INT_L.NN6END0->>EE2BEG0 INT_L_X4Y29/INT_L.NE6END0->>NE6BEG0 INT_L_X6Y33/INT_L.NE6END0->>NE6BEG0 INT_L_X8Y37/INT_L.NE6END0->>NE6BEG0 INT_R_X31Y87/INT_R.WW2END0->>IMUX34 RIOI3_TBYTETERM_X31Y87/RIOI3_TBYTETERM.IOI_IMUX34_0->IOI_OLOGIC1_D1 RIOI3_TBYTETERM_X31Y87/RIOI3_TBYTETERM.IOI_OLOGIC1_D1->>RIOI_OLOGIC1_OQ RIOI3_TBYTETERM_X31Y87/RIOI3_TBYTETERM.RIOI_OLOGIC1_OQ->>RIOI_O1
+net.32.name	q
+net.32.driver	q_OBUF_inst/O
+net.32.sinks	
+net.32.ports	q
+net.32.route_status	INTRASITE
+net.32.route	{}
+net.32.pips	
+net.33.name	q_OBUF
+net.33.driver	q_reduce2/O
+net.33.sinks	q_OBUF_inst/I
+net.33.ports	
+net.33.route_status	ROUTED
+net.33.route	 { CLBLM_M_D CLBLM_LOGIC_OUTS15 NE6BEG3 NE6BEG3 NE6BEG3 NE6BEG3 NE6BEG3 NE6BEG3 NE6BEG3 NE6BEG3 NE6BEG3 NE6BEG3 EE2BEG3 NE6BEG3 NE6BEG3 NE6BEG3 NN6BEG3 NN6BEG3 NN6BEG3 NL1BEG2 EL1BEG1 IMUX34 IOI_OLOGIC1_D1 RIOI_OLOGIC1_OQ RIOI_O1 }  
+net.33.pips	CLBLM_R_X3Y20/CLBLM_R.CLBLM_M_D->CLBLM_LOGIC_OUTS15 INT_R_X11Y36/INT_R.NE6END3->>NE6BEG3 INT_R_X13Y40/INT_R.NE6END3->>NE6BEG3 INT_R_X15Y44/INT_R.NE6END3->>NE6BEG3 INT_R_X17Y48/INT_R.NE6END3->>NE6BEG3 INT_R_X19Y52/INT_R.NE6END3->>NE6BEG3 INT_R_X21Y56/INT_R.NE6END3->>NE6BEG3 INT_R_X23Y60/INT_R.NE6END3->>EE2BEG3 INT_R_X25Y60/INT_R.EE2END3->>NE6BEG3 INT_R_X27Y64/INT_R.NE6END3->>NE6BEG3 INT_R_X29Y68/INT_R.NE6END3->>NE6BEG3 INT_R_X31Y72/INT_R.NE6END3->>NN6BEG3 INT_R_X31Y78/INT_R.NN6END3->>NN6BEG3 INT_R_X31Y84/INT_R.NN6END3->>NN6BEG3 INT_R_X31Y90/INT_R.NN6END3->>NL1BEG2 INT_R_X31Y91/INT_R.NL1END2->>EL1BEG1 INT_R_X31Y91/INT_R.WL1END1->>IMUX34 INT_R_X3Y20/INT_R.LOGIC_OUTS15->>NE6BEG3 INT_R_X5Y24/INT_R.NE6END3->>NE6BEG3 INT_R_X7Y28/INT_R.NE6END3->>NE6BEG3 INT_R_X9Y32/INT_R.NE6END3->>NE6BEG3 RIOI3_X31Y91/RIOI3.IOI_IMUX34_0->IOI_OLOGIC1_D1 RIOI3_X31Y91/RIOI3.IOI_OLOGIC1_D1->>RIOI_OLOGIC1_OQ RIOI3_X31Y91/RIOI3.RIOI_OLOGIC1_OQ->>RIOI_O1
+net.34.name	qb[0]
+net.34.driver	g_store[0].g_used.g_s.s/Q
+net.34.sinks	q_reduce1/I0
+net.34.ports	
+net.34.route_status	ROUTED
+net.34.route	 { CLBLL_LL_AQ CLBLL_LOGIC_OUTS4 SE6BEG0 SW2BEG0 IMUX32 CLBLM_M_C1 }  
+net.34.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_LL_AQ->CLBLL_LOGIC_OUTS4 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX32->CLBLM_M_C1 INT_L_X2Y25/INT_L.LOGIC_OUTS_L4->>SE6BEG0 INT_L_X4Y21/INT_L.SE6END0->>SW2BEG0 INT_R_X3Y20/INT_R.SW2END0->>IMUX32
+net.35.name	qb[1]
+net.35.driver	g_store[1].g_used.g_s.s/Q
+net.35.sinks	q_reduce1/I1
+net.35.ports	
+net.35.route_status	ROUTED
+net.35.route	 { CLBLL_LL_AMUX CLBLL_LOGIC_OUTS20 SE6BEG2 SW2BEG2 IMUX29 CLBLM_M_C2 }  
+net.35.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_LL_AMUX->CLBLL_LOGIC_OUTS20 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX29->CLBLM_M_C2 INT_L_X2Y25/INT_L.LOGIC_OUTS_L20->>SE6BEG2 INT_L_X4Y21/INT_L.SE6END2->>SW2BEG2 INT_R_X3Y20/INT_R.SW2END2->>IMUX29
+net.36.name	qb[2]
+net.36.driver	g_store[2].g_used.g_s.s/Q
+net.36.sinks	q_reduce1/I2
+net.36.ports	
+net.36.route_status	ROUTED
+net.36.route	 { CLBLL_LL_BQ CLBLL_LOGIC_OUTS5 SE6BEG1 SW2BEG1 BYP_ALT4 BYP_BOUNCE4 IMUX22 CLBLM_M_C3 }  
+net.36.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_LL_BQ->CLBLL_LOGIC_OUTS5 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX22->CLBLM_M_C3 INT_L_X2Y25/INT_L.LOGIC_OUTS_L5->>SE6BEG1 INT_L_X4Y21/INT_L.SE6END1->>SW2BEG1 INT_R_X3Y20/INT_R.BYP_ALT4->>BYP_BOUNCE4 INT_R_X3Y20/INT_R.BYP_BOUNCE4->>IMUX22 INT_R_X3Y20/INT_R.SW2END1->>BYP_ALT4
+net.37.name	qb[3]
+net.37.driver	g_store[3].g_used.g_s.s/Q
+net.37.sinks	q_reduce1/I3
+net.37.ports	
+net.37.route_status	ROUTED
+net.37.route	 { CLBLL_LL_BMUX CLBLL_LOGIC_OUTS21 NW2BEG3 SS6BEG2 EE2BEG2 IMUX28 CLBLM_M_C4 }  
+net.37.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_LL_BMUX->CLBLL_LOGIC_OUTS21 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX28->CLBLM_M_C4 INT_L_X2Y25/INT_L.LOGIC_OUTS_L21->>NW2BEG3 INT_R_X1Y20/INT_R.SS6END2->>EE2BEG2 INT_R_X1Y26/INT_R.NW2END3->>SS6BEG2 INT_R_X3Y20/INT_R.EE2END2->>IMUX28
+net.38.name	qb[4]
+net.38.driver	g_store[4].g_used.g_s.s/Q
+net.38.sinks	q_reduce1/I4
+net.38.ports	
+net.38.route_status	ROUTED
+net.38.route	 { CLBLL_LL_CQ CLBLL_LOGIC_OUTS6 SS6BEG2 ER1BEG3 NR1BEG3 IMUX31 CLBLM_M_C5 }  
+net.38.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_LL_CQ->CLBLL_LOGIC_OUTS6 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX31->CLBLM_M_C5 INT_L_X2Y19/INT_L.SS6END2->>ER1BEG3 INT_L_X2Y25/INT_L.LOGIC_OUTS_L6->>SS6BEG2 INT_R_X3Y19/INT_R.ER1END3->>NR1BEG3 INT_R_X3Y20/INT_R.NR1END3->>IMUX31
+net.39.name	qb[5]
+net.39.driver	g_store[5].g_used.g_s.s/Q
+net.39.sinks	q_reduce1/I5
+net.39.ports	
+net.39.route_status	ROUTED
+net.39.route	 { CLBLL_LL_CMUX CLBLL_LOGIC_OUTS22 SW6BEG0 WW4BEG1 SL1BEG1 IMUX35 CLBLM_M_C6 }  
+net.39.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_LL_CMUX->CLBLL_LOGIC_OUTS22 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX35->CLBLM_M_C6 INT_L_X0Y21/INT_L.SW6END0->>WW4BEG1 INT_L_X2Y25/INT_L.LOGIC_OUTS_L22->>SW6BEG0 INT_R_X3Y20/INT_R.SL1END1->>IMUX35 INT_R_X3Y21/INT_R.EE4END1->>SL1BEG1
+net.40.name	qb[6]
+net.40.driver	g_store[6].g_used.g_s.s/Q
+net.40.sinks	q_reduce2/I1
+net.40.ports	
+net.40.route_status	ROUTED
+net.40.route	 { CLBLL_LL_DQ CLBLL_LOGIC_OUTS7 SE6BEG3 SL1BEG3 WL1BEG2 IMUX45 CLBLM_M_D2 }  
+net.40.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_LL_DQ->CLBLL_LOGIC_OUTS7 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX45->CLBLM_M_D2 INT_L_X2Y25/INT_L.LOGIC_OUTS_L7->>SE6BEG3 INT_L_X4Y20/INT_L.SL1END3->>WL1BEG2 INT_L_X4Y21/INT_L.SE6END3->>SL1BEG3 INT_R_X3Y20/INT_R.WL1END2->>IMUX45
+net.41.name	qb[7]
+net.41.driver	g_store[7].g_used.g_s.s/Q
+net.41.sinks	q_reduce2/I2
+net.41.ports	
+net.41.route_status	ROUTED
+net.41.route	 { CLBLL_LL_DMUX CLBLL_LOGIC_OUTS23 SS2BEG1 SS2BEG1 SR1BEG2 ER1BEG3 IMUX38 CLBLM_M_D3 }  
+net.41.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_LL_DMUX->CLBLL_LOGIC_OUTS23 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX38->CLBLM_M_D3 INT_L_X2Y20/INT_L.SR1END2->>ER1BEG3 INT_L_X2Y21/INT_L.SS2END1->>SR1BEG2 INT_L_X2Y23/INT_L.SS2END1->>SS2BEG1 INT_L_X2Y25/INT_L.LOGIC_OUTS_L23->>SS2BEG1 INT_R_X3Y20/INT_R.ER1END3->>IMUX38
+net.42.name	qr1
+net.42.driver	q_reduce1/O
+net.42.sinks	q_reduce2/I0 q_reduce2/I3 q_reduce2/I4 q_reduce2/I5
+net.42.ports	
+net.42.route_status	ROUTED
+net.42.route	 { CLBLM_M_C  { CLBLM_M_CMUX CLBLM_LOGIC_OUTS22 IMUX40 CLBLM_M_D1 }  CLBLM_LOGIC_OUTS14  { BYP_ALT2 BYP_BOUNCE2 BYP_ALT3 BYP_BOUNCE3  { FAN_ALT3 FAN_BOUNCE3 IMUX43 CLBLM_M_D6 }  IMUX47 CLBLM_M_D5 }  IMUX44 CLBLM_M_D4 }  
+net.42.pips	CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX40->CLBLM_M_D1 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX43->CLBLM_M_D6 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX44->CLBLM_M_D4 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX47->CLBLM_M_D5 CLBLM_R_X3Y20/CLBLM_R.CLBLM_M_C->>CLBLM_M_CMUX CLBLM_R_X3Y20/CLBLM_R.CLBLM_M_C->CLBLM_LOGIC_OUTS14 CLBLM_R_X3Y20/CLBLM_R.CLBLM_M_CMUX->CLBLM_LOGIC_OUTS22 INT_R_X3Y20/INT_R.BYP_ALT2->>BYP_BOUNCE2 INT_R_X3Y20/INT_R.BYP_ALT3->>BYP_BOUNCE3 INT_R_X3Y20/INT_R.BYP_BOUNCE2->>BYP_ALT3 INT_R_X3Y20/INT_R.BYP_BOUNCE3->>FAN_ALT3 INT_R_X3Y20/INT_R.BYP_BOUNCE3->>IMUX47 INT_R_X3Y20/INT_R.FAN_ALT3->>FAN_BOUNCE3 INT_R_X3Y20/INT_R.FAN_BOUNCE3->>IMUX43 INT_R_X3Y20/INT_R.LOGIC_OUTS14->>BYP_ALT2 INT_R_X3Y20/INT_R.LOGIC_OUTS14->>IMUX44 INT_R_X3Y20/INT_R.LOGIC_OUTS22->>IMUX40
+net.43.name	rst
+net.43.driver	
+net.43.sinks	rst_IBUF_inst/I
+net.43.ports	rst
+net.43.route_status	INTRASITE
+net.43.route	{}
+net.43.pips	
+net.44.name	rst_IBUF
+net.44.driver	rst_IBUF_inst/O
+net.44.sinks	anchor_lut2/I1 {g_store[0].g_used.g_s.s/R} {g_store[1].g_used.g_s.s/R} {g_store[2].g_used.g_s.s/R} {g_store[3].g_used.g_s.s/R} {g_store[4].g_used.g_s.s/R} {g_store[5].g_used.g_s.s/R} {g_store[6].g_used.g_s.s/R} {g_store[7].g_used.g_s.s/R}
+net.44.ports	
+net.44.route_status	ROUTED
+net.44.route	 { IOB_IBUF0 RIOI_I0 RIOI_ILOGIC0_D IOI_ILOGIC0_O IOI_LOGIC_OUTS18_1 INT_INTERFACE_LOGIC_OUTS18 SS6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 SW6BEG0 LV18 SS6BEG0 SW6BEG0 SW6BEG0 WW4BEG1 WW4BEG1 SW2BEG0  { WW4BEG1 GFAN0 CTRL_L1 CLBLL_LL_SR }  SW6BEG0 WL1BEG_N3 SR1BEG_S0 IMUX18 CLBLM_M_B2 }  
+net.44.pips	CLBLL_L_X2Y25/CLBLL_L.CLBLL_CTRL1->CLBLL_LL_SR CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX18->CLBLM_M_B2 INT_L_X2Y25/INT_L.GFAN0->>CTRL_L1 INT_L_X2Y25/INT_L.WW4END1->>GFAN0 INT_L_X4Y21/INT_L.SW6END0->>WL1BEG_N3 INT_L_X6Y25/INT_L.SW2END0->>SW6BEG0 INT_L_X6Y25/INT_L.SW2END0->>WW4BEG1 INT_R_X11Y26/INT_R.WW4END1->>WW4BEG1 INT_R_X15Y26/INT_R.SW6END0->>WW4BEG1 INT_R_X17Y30/INT_R.SW6END0->>SW6BEG0 INT_R_X19Y34/INT_R.SS6END0->>SW6BEG0 INT_R_X19Y40/INT_R.LV0->>SS6BEG0 INT_R_X19Y58/INT_R.SW6END0->>LV18 INT_R_X21Y62/INT_R.SW6END0->>SW6BEG0 INT_R_X23Y66/INT_R.SW6END0->>SW6BEG0 INT_R_X25Y70/INT_R.SW6END0->>SW6BEG0 INT_R_X27Y74/INT_R.SW6END0->>SW6BEG0 INT_R_X29Y78/INT_R.SW6END0->>SW6BEG0 INT_R_X31Y82/INT_R.SS6END0->>SW6BEG0 INT_R_X31Y88/INT_R.LOGIC_OUTS18->>SS6BEG0 INT_R_X3Y20/INT_R.SR1BEG_S0->>IMUX18 INT_R_X3Y20/INT_R.WL1END3->>SR1BEG_S0 INT_R_X7Y26/INT_R.WW4END1->>SW2BEG0 IO_INT_INTERFACE_R_X31Y88/IO_INT_INTERFACE_R.INT_INTERFACE_LOGIC_OUTS_B18->>INT_INTERFACE_LOGIC_OUTS18 RIOI3_TBYTETERM_X31Y87/RIOI3_TBYTETERM.IOI_ILOGIC0_O->>IOI_LOGIC_OUTS18_1 RIOI3_TBYTETERM_X31Y87/RIOI3_TBYTETERM.RIOI_I0->RIOI_ILOGIC0_D RIOI3_TBYTETERM_X31Y87/RIOI3_TBYTETERM.RIOI_IBUF0->RIOI_I0 RIOI3_TBYTETERM_X31Y87/RIOI3_TBYTETERM.RIOI_ILOGIC0_D->>IOI_ILOGIC0_O
+net.45.name	w1
+net.45.driver	anchor_lut1/O
+net.45.sinks	anchor_lut2/I2 anchor_lut2/I3 anchor_lut2/I4 anchor_lut2/I5
+net.45.ports	
+net.45.route_status	ROUTED
+net.45.route	 { CLBLM_M_A  { CLBLM_M_AMUX CLBLM_LOGIC_OUTS20 IMUX12 CLBLM_M_B6 }  CLBLM_LOGIC_OUTS12  { IMUX24 CLBLM_M_B5 }  NL1BEG_N3 FAN_ALT5 FAN_BOUNCE5  { IMUX17 CLBLM_M_B3 }  IMUX27 CLBLM_M_B4 }  
+net.45.pips	CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX12->CLBLM_M_B6 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX17->CLBLM_M_B3 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX24->CLBLM_M_B5 CLBLM_R_X3Y20/CLBLM_R.CLBLM_IMUX27->CLBLM_M_B4 CLBLM_R_X3Y20/CLBLM_R.CLBLM_M_A->>CLBLM_M_AMUX CLBLM_R_X3Y20/CLBLM_R.CLBLM_M_A->CLBLM_LOGIC_OUTS12 CLBLM_R_X3Y20/CLBLM_R.CLBLM_M_AMUX->CLBLM_LOGIC_OUTS20 INT_R_X3Y20/INT_R.FAN_ALT5->>FAN_BOUNCE5 INT_R_X3Y20/INT_R.FAN_BOUNCE5->>IMUX17 INT_R_X3Y20/INT_R.FAN_BOUNCE5->>IMUX27 INT_R_X3Y20/INT_R.LOGIC_OUTS12->>IMUX24 INT_R_X3Y20/INT_R.LOGIC_OUTS12->>NL1BEG_N3 INT_R_X3Y20/INT_R.LOGIC_OUTS20->>IMUX12 INT_R_X3Y20/INT_R.NL1BEG_N3->>FAN_ALT5
+net.46.name	w2
+net.46.driver	anchor_lut2/O
+net.46.sinks	anchor_ff/D anchor_ff2/D
+net.46.ports	
+net.46.route_status	ROUTED
+net.46.route	 { CLBLM_M_B CLBLM_LOGIC_OUTS13  { WL1BEG0 BYP_ALT1 BYP_L1 CLBLL_LL_AX }  FAN_ALT6 FAN_BOUNCE6 BYP_ALT1 BYP1 CLBLM_M_AX }  
+net.46.pips	CLBLL_L_X2Y20/CLBLL_L.CLBLL_BYP1->CLBLL_LL_AX CLBLM_R_X3Y20/CLBLM_R.CLBLM_BYP1->CLBLM_M_AX CLBLM_R_X3Y20/CLBLM_R.CLBLM_M_B->CLBLM_LOGIC_OUTS13 INT_L_X2Y20/INT_L.BYP_ALT1->>BYP_L1 INT_L_X2Y20/INT_L.WL1END0->>BYP_ALT1 INT_R_X3Y20/INT_R.BYP_ALT1->>BYP1 INT_R_X3Y20/INT_R.FAN_ALT6->>FAN_BOUNCE6 INT_R_X3Y20/INT_R.FAN_BOUNCE6->>BYP_ALT1 INT_R_X3Y20/INT_R.LOGIC_OUTS13->>FAN_ALT6 INT_R_X3Y20/INT_R.LOGIC_OUTS13->>WL1BEG0
+net_count	47
+occupied.0.bel	SLICE_X2Y25/D5FF
+occupied.0.cell	g_store[7].g_used.g_s.s
+occupied.0.ref	FDRE
+occupied.1.bel	SLICE_X2Y25/C5FF
+occupied.1.cell	g_store[5].g_used.g_s.s
+occupied.1.ref	FDRE
+occupied.2.bel	SLICE_X2Y25/B5FF
+occupied.2.cell	g_store[3].g_used.g_s.s
+occupied.2.ref	FDRE
+occupied.3.bel	SLICE_X2Y25/A5FF
+occupied.3.cell	g_store[1].g_used.g_s.s
+occupied.3.ref	FDRE
+occupied.4.bel	SLICE_X2Y25/D6LUT
+occupied.4.cell	g_hi[3].l
+occupied.4.ref	LUT5
+occupied.5.bel	SLICE_X2Y25/D5LUT
+occupied.5.cell	g_lo[3].l
+occupied.5.ref	LUT5
+occupied.6.bel	SLICE_X2Y25/C6LUT
+occupied.6.cell	g_hi[2].l
+occupied.6.ref	LUT5
+occupied.7.bel	SLICE_X2Y25/C5LUT
+occupied.7.cell	g_lo[2].l
+occupied.7.ref	LUT5
+occupied.8.bel	SLICE_X2Y25/B6LUT
+occupied.8.cell	g_hi[1].l
+occupied.8.ref	LUT5
+occupied.9.bel	SLICE_X2Y25/B5LUT
+occupied.9.cell	g_lo[1].l
+occupied.9.ref	LUT5
+occupied.10.bel	SLICE_X2Y25/A6LUT
+occupied.10.cell	g_hi[0].l
+occupied.10.ref	LUT5
+occupied.11.bel	SLICE_X2Y25/A5LUT
+occupied.11.cell	g_lo[0].l
+occupied.11.ref	LUT5
+occupied.12.bel	SLICE_X2Y25/DFF
+occupied.12.cell	g_store[6].g_used.g_s.s
+occupied.12.ref	FDRE
+occupied.13.bel	SLICE_X2Y25/CFF
+occupied.13.cell	g_store[4].g_used.g_s.s
+occupied.13.ref	FDRE
+occupied.14.bel	SLICE_X2Y25/BFF
+occupied.14.cell	g_store[2].g_used.g_s.s
+occupied.14.ref	FDRE
+occupied.15.bel	SLICE_X2Y25/AFF
+occupied.15.cell	g_store[0].g_used.g_s.s
+occupied.15.ref	FDRE
+occupied_count	16

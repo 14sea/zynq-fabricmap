@@ -1,0 +1,41 @@
+{
+  "schema": "ff_formal_stamp/1",
+  "node_type": "implementation",
+  "instance": "SLICE_X2Y25",
+  "variant": "zrst_BFF",
+  "attempt_id": "705b1e73c979-20260805T074826Z-4",
+  "sites": {
+    "target": "SLICE_X2Y25",
+    "keeper": "SLICE_X2Y20",
+    "anchor": "SLICE_X4Y20"
+  },
+  "recipe": {
+    "sources": {
+      "vivado/specimen/specimen_ff_formal.v": "47b2e3fade7a194361d4b9ab7e55c04feda7bcff4b60646bdc7fe65880b1ec54",
+      "vivado/specimen/build_ff_formal.tcl": "a54a546a8e1ada440ffc1fbe69eb578586fec08147c2b46685ee1ed51624799a",
+      "vivado/specimen/derive_ff_formal.tcl": "9f3ebcfb704838b3bcc27d067ac827c20246c275f9a397e09564bd5147b3a97f",
+      "vivado/specimen/ff_formal_readback.tcl": "ad69919d6cf2caa018f8ed4d2377f773ab951d0c874863108e06c3d9bac356d2",
+      "scripts/gate_build_ff_formal.py": "4bda6899a1965b349c63f3a66a466b613ae6f5885c71a23e14ba1a95dcb2f858"
+    },
+    "commitment": "5440ef27acbd5b4f624cae54f4ffad89b3f656c1e6e5fa35b29226ff0d1b2e51",
+    "preregistration_plan": "ac9dbab8ba299360b924dec20507ed3c4f014b276cd1e20d82c25d3e92997a64",
+    "part": "xc7z010clg400-1",
+    "vivado_version": "2025.2",
+    "tclargs": [
+      "/home/test/zynq_fabricmap/build/gate_ff_formal/SLICE_X2Y25/zrst_BFF",
+      "SLICE_X2Y25",
+      "SLICE_X4Y20",
+      "SLICE_X2Y20",
+      "zrst_BFF",
+      "1",
+      "2"
+    ],
+    "build_seed": 1990610967
+  },
+  "completed": true,
+  "artifacts": {
+    "spec.bit": "54ac57de26a4b85ffda88c933452c4646b6d252cbcfc2a112da2843192f6bc84",
+    "readback.tsv": "eda517899f36c0cfc4db28a03a0a6015529036852cbfbb6c4967e9ea4da4b0b4",
+    "base.dcp": "ee13edaf018879278b6df548ce5e8db485802aa4a7a01d3bdf6ab29d543009a9"
+  }
+}
