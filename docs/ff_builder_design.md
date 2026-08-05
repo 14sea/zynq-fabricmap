@@ -487,14 +487,34 @@ six anchor/keeper cells themselves:
 | **the local driver/sink identity seen at each anchor/keeper pin** — which net, driven by which cell pin | catches a rewired anchor without asserting anything about the rest of that net |
 
 **Tier 2 — hard equality on dedicated nets only.** A net is *dedicated* when its driver
-and **every** sink lie inside the anchor/keeper subgraph. For those, full endpoint sets and
-the sorted `ROUTE`/PIP list must match. The builder **computes** the dedicated set from the
-netlist and asserts it equals the expected set — so a net silently gaining a target sink is
-itself a failure, rather than quietly dropping out of tier 2. Expected, from the specimen
-source: `w1` (`anchor_lut1` → `anchor_lut2`), `w2` (`anchor_lut2` → `anchor_ff.D` and
-`anchor_ff2.D`), and the `anchor_o` / `anchor_o2` output nets. `w2` is the one that
-physically spans the anchor column and the keeper column, so it is the most valuable member
-of this tier, not an incidental one.
+and **every** sink lie inside the anchor/keeper subgraph, where an output buffer fed by an
+anchor or keeper cell counts as a member because it has exactly one input and that input is
+anchor-exclusive. For those, full endpoint sets and the sorted `ROUTE`/PIP list must match.
+
+**The set is computed from the netlist. The constant is only a drift detector.** The
+builder derives the dedicated set from the readback and then asserts it equals a
+preregistered constant — so a net silently gaining a target sink fails loudly instead of
+quietly dropping out of tier 2. The direction of authority matters: the constant does not
+*define* membership, it detects a change in topology.
+
+**Erratum, 2026-08-05 (measured, revision 3 had this wrong).** The illustrative list here
+named four nets. The computed set on a real build is **nine**, confirmed against
+`SLICE_X2Y25/base`:
+
+| net | driver → sinks | why it qualifies |
+|---|---|---|
+| `w1` | `anchor_lut1` → `anchor_lut2` | wholly inside the anchor slice |
+| `w2` | `anchor_lut2` → `anchor_ff.D`, `anchor_ff2.D` | **spans the anchor column and the keeper column** — the most valuable member of this tier, not an incidental one |
+| `qr1` | `q_reduce1` → `q_reduce2` | both reduction cells are anchor cells |
+| `q_OBUF` | `q_reduce2` → pad buffer | anchor-driven, single sink |
+| `anchor_o_OBUF` | `anchor_ff` → pad buffer | anchor-driven, single sink |
+| `anchor_o2_OBUF` | `anchor_ff2` → pad buffer | keeper-driven, single sink |
+| `q`, `anchor_o`, `anchor_o2` | pad buffer → port | the pad nets themselves |
+
+The four-net list was not a wrong *rule*, it was an incomplete reading of the specimen: the
+`q_reduce` **output** chain lies entirely inside the anchor subgraph even though its
+**inputs** come from the target. Inputs and outputs of the same cell land in different
+tiers, and that is the tiering working as intended rather than an exception to it.
 
 **Tier 3 — diagnostic only, never a FAIL.** Nets shared with the target: full readback
 (endpoints, `ROUTE`, PIP list) is captured and preserved in the run record, and is
