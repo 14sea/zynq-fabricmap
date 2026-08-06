@@ -118,11 +118,13 @@ scripts/extract_prjxray_subset.py --verify                    # integrity gate, 
   exclusivity diagnostics and semantic identity 16/16 reported separately.
 - `clb_ff_config` is preregistered at full 176/176 coverage. Its formal
   184-specimen/120-P&R builder exists; the mine instance is built and independently
-  diagnosed at TP=22, FP=0, FN=0 (23/184 specimens, holdout untouched). The next
-  producer step is the host-side attestation converter and stager. Mine attestations
-  can be checked individually, but the published commitment admits no mine-only
-  staging manifest: exact staging is evaluated only after the remaining 161 specimens
-  exist, without creating a reduced commitment.
+  diagnosed at TP=22, FP=0, FN=0 (23/184 specimens, holdout untouched). The host-side
+  attestation converter and stager (`scripts/gate_stage_ff_formal.py`,
+  `docs/ff_staging_producer.md`) now exist and need no Vivado run: all 23 mine
+  specimens convert and pass the consumer's own rules. Mine attestations are checked
+  individually with `--check`; the published commitment admits no mine-only staging
+  manifest, so `--stage` refuses at 23 of 184 and exact staging is evaluated only
+  after the remaining 161 specimens exist, without creating a reduced commitment.
 - `clb_lutram` has inventory, isolation and real-diff evidence, but no commitment or
   certificate. `int_pip` and `ppip_bitless` remain unstarted.
 
