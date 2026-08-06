@@ -1,0 +1,113 @@
+{
+  "criteria": [
+    "the current flow, under two congestion conditions, routes at least one dedicated net differently (the freedom is reproduced)",
+    "the pinned flow, under the same conditions, variants and directives, yields one route set",
+    "no dedicated net moves after the freeze, in any pinned run",
+    "endpoints, drivers and sinks are identical across every run",
+    "the six routable nets read IS_ROUTE_FIXED=1 in the six pinned runs",
+    "the three pad nets stay INTRASITE with empty route and pips in all ten runs"
+  ],
+  "runs_required": 10,
+  "runs_present": 10,
+  "scope": {
+    "committed_sites": [
+      "SLICE_X10Y20",
+      "SLICE_X11Y20",
+      "SLICE_X14Y20",
+      "SLICE_X14Y25",
+      "SLICE_X15Y20",
+      "SLICE_X15Y25",
+      "SLICE_X16Y20",
+      "SLICE_X17Y20",
+      "SLICE_X24Y20",
+      "SLICE_X24Y25",
+      "SLICE_X25Y20",
+      "SLICE_X25Y25",
+      "SLICE_X26Y20",
+      "SLICE_X27Y20",
+      "SLICE_X2Y20",
+      "SLICE_X2Y25",
+      "SLICE_X3Y20",
+      "SLICE_X3Y25",
+      "SLICE_X4Y20",
+      "SLICE_X5Y20",
+      "SLICE_X8Y20",
+      "SLICE_X8Y25",
+      "SLICE_X9Y20",
+      "SLICE_X9Y25"
+    ],
+    "probe_roles": {
+      "target": {
+        "site": "SLICE_X31Y25",
+        "tile": "CLBLM_R_X21Y25",
+        "tile_type": "CLBLM_R",
+        "site_type": "SLICEL"
+      },
+      "keeper": {
+        "site": "SLICE_X31Y20",
+        "tile": "CLBLM_R_X21Y20",
+        "tile_type": "CLBLM_R",
+        "site_type": "SLICEL"
+      },
+      "anchor": {
+        "site": "SLICE_X33Y20",
+        "tile": "CLBLM_R_X23Y20",
+        "tile_type": "CLBLM_R",
+        "site_type": "SLICEL"
+      }
+    },
+    "congestion_sites": [
+      {
+        "site": "SLICE_X32Y20",
+        "tile_type": "CLBLM_R"
+      },
+      {
+        "site": "SLICE_X34Y20",
+        "tile_type": "CLBLM_L"
+      },
+      {
+        "site": "SLICE_X30Y20",
+        "tile_type": "CLBLM_R"
+      },
+      {
+        "site": "SLICE_X35Y20",
+        "tile_type": "CLBLM_L"
+      },
+      {
+        "site": "SLICE_X32Y21",
+        "tile_type": "CLBLM_R"
+      },
+      {
+        "site": "SLICE_X34Y21",
+        "tile_type": "CLBLM_L"
+      },
+      {
+        "site": "SLICE_X30Y21",
+        "tile_type": "CLBLM_R"
+      },
+      {
+        "site": "SLICE_X33Y21",
+        "tile_type": "CLBLM_R"
+      }
+    ]
+  },
+  "freedom_reproduced": true,
+  "nets_that_moved_under_current_flow": [
+    "qr1"
+  ],
+  "pinned_route_sets": 1,
+  "problems": [],
+  "runs": [
+    "current/base/Default/c0",
+    "current/base/Default/c32",
+    "current/ce_tied/Default/c0",
+    "current/ce_tied/Default/c32",
+    "pinned/base/Default/c0",
+    "pinned/base/Default/c32",
+    "pinned/base/Explore/c32",
+    "pinned/ce_tied/Default/c0",
+    "pinned/ce_tied/Default/c32",
+    "pinned/latch/Default/c32"
+  ],
+  "claim_limit": "reproduced and removed on a non-committed site of the same geometry; NOT a repair of the observed SLICE_X25Y25 failure"
+}

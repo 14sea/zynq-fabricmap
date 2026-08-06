@@ -1,0 +1,16 @@
+scope check passed — no committed site is touched
+  target   SLICE_X31Y25   CLBLM_R_X21Y25   CLBLM_R   SLICEL
+  keeper   SLICE_X31Y20   CLBLM_R_X21Y20   CLBLM_R   SLICEL
+  anchor   SLICE_X33Y20   CLBLM_R_X23Y20   CLBLM_R   SLICEL
+
+1. freedom reproduced under the current flow : True  nets=['qr1']
+2. pinned flow route sets                    : 1 over 6 runs
+3. nets moving after the freeze               : 0 run(s)
+4. nets whose driver/sinks differ anywhere    : 0
+5. routable pinned / pad nets still INTRASITE : ok
+
+problems: 0
+
+Wording this may support, and no more: the routing freedom was reproduced and removed
+on a NON-COMMITTED site of the same geometry. It is not evidence that the observed
+SLICE_X25Y25 failure is repaired — that site was not built.

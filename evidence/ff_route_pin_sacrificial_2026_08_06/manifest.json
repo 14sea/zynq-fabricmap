@@ -1,0 +1,270 @@
+{
+  "schema": "probe_evidence/1",
+  "probe": "sacrificial_site_congestion",
+  "note": "Hashes are integrity anchors: they detect substitution of these files. They do not prove Vivado produced these snapshots, and they are not a target for any later run to reproduce.",
+  "vivado_version": "2025.2",
+  "part": "xc7z010clg400-1",
+  "criteria": [
+    "the current flow, under two congestion conditions, routes at least one dedicated net differently (the freedom is reproduced)",
+    "the pinned flow, under the same conditions, variants and directives, yields one route set",
+    "no dedicated net moves after the freeze, in any pinned run",
+    "endpoints, drivers and sinks are identical across every run",
+    "the six routable nets read IS_ROUTE_FIXED=1 in the six pinned runs",
+    "the three pad nets stay INTRASITE with empty route and pips in all ten runs"
+  ],
+  "claim_limit": "reproduced and removed on a non-committed site of the same geometry; NOT a repair of the observed SLICE_X25Y25 failure",
+  "scope": {
+    "committed_sites": [
+      "SLICE_X10Y20",
+      "SLICE_X11Y20",
+      "SLICE_X14Y20",
+      "SLICE_X14Y25",
+      "SLICE_X15Y20",
+      "SLICE_X15Y25",
+      "SLICE_X16Y20",
+      "SLICE_X17Y20",
+      "SLICE_X24Y20",
+      "SLICE_X24Y25",
+      "SLICE_X25Y20",
+      "SLICE_X25Y25",
+      "SLICE_X26Y20",
+      "SLICE_X27Y20",
+      "SLICE_X2Y20",
+      "SLICE_X2Y25",
+      "SLICE_X3Y20",
+      "SLICE_X3Y25",
+      "SLICE_X4Y20",
+      "SLICE_X5Y20",
+      "SLICE_X8Y20",
+      "SLICE_X8Y25",
+      "SLICE_X9Y20",
+      "SLICE_X9Y25"
+    ],
+    "probe_roles": {
+      "target": {
+        "site": "SLICE_X31Y25",
+        "tile": "CLBLM_R_X21Y25",
+        "tile_type": "CLBLM_R",
+        "site_type": "SLICEL"
+      },
+      "keeper": {
+        "site": "SLICE_X31Y20",
+        "tile": "CLBLM_R_X21Y20",
+        "tile_type": "CLBLM_R",
+        "site_type": "SLICEL"
+      },
+      "anchor": {
+        "site": "SLICE_X33Y20",
+        "tile": "CLBLM_R_X23Y20",
+        "tile_type": "CLBLM_R",
+        "site_type": "SLICEL"
+      }
+    },
+    "congestion_sites": [
+      {
+        "site": "SLICE_X32Y20",
+        "tile_type": "CLBLM_R"
+      },
+      {
+        "site": "SLICE_X34Y20",
+        "tile_type": "CLBLM_L"
+      },
+      {
+        "site": "SLICE_X30Y20",
+        "tile_type": "CLBLM_R"
+      },
+      {
+        "site": "SLICE_X35Y20",
+        "tile_type": "CLBLM_L"
+      },
+      {
+        "site": "SLICE_X32Y21",
+        "tile_type": "CLBLM_R"
+      },
+      {
+        "site": "SLICE_X34Y21",
+        "tile_type": "CLBLM_L"
+      },
+      {
+        "site": "SLICE_X30Y21",
+        "tile_type": "CLBLM_R"
+      },
+      {
+        "site": "SLICE_X33Y21",
+        "tile_type": "CLBLM_R"
+      }
+    ]
+  },
+  "matrix": [
+    {
+      "label": "current/base/Default/c0",
+      "variant": "base",
+      "flow": "current",
+      "directive": "Default",
+      "congest": 0
+    },
+    {
+      "label": "current/base/Default/c32",
+      "variant": "base",
+      "flow": "current",
+      "directive": "Default",
+      "congest": 32
+    },
+    {
+      "label": "current/ce_tied/Default/c0",
+      "variant": "ce_tied",
+      "flow": "current",
+      "directive": "Default",
+      "congest": 0
+    },
+    {
+      "label": "current/ce_tied/Default/c32",
+      "variant": "ce_tied",
+      "flow": "current",
+      "directive": "Default",
+      "congest": 32
+    },
+    {
+      "label": "pinned/base/Default/c0",
+      "variant": "base",
+      "flow": "pinned",
+      "directive": "Default",
+      "congest": 0
+    },
+    {
+      "label": "pinned/base/Default/c32",
+      "variant": "base",
+      "flow": "pinned",
+      "directive": "Default",
+      "congest": 32
+    },
+    {
+      "label": "pinned/ce_tied/Default/c0",
+      "variant": "ce_tied",
+      "flow": "pinned",
+      "directive": "Default",
+      "congest": 0
+    },
+    {
+      "label": "pinned/ce_tied/Default/c32",
+      "variant": "ce_tied",
+      "flow": "pinned",
+      "directive": "Default",
+      "congest": 32
+    },
+    {
+      "label": "pinned/base/Explore/c32",
+      "variant": "base",
+      "flow": "pinned",
+      "directive": "Explore",
+      "congest": 32
+    },
+    {
+      "label": "pinned/latch/Default/c32",
+      "variant": "latch",
+      "flow": "pinned",
+      "directive": "Default",
+      "congest": 32
+    }
+  ],
+  "probe_tools": {
+    "scripts/probe_sacrificial_site.py": "59bac09ebb7c7ec814a7795247d034eee0d26502f2b051f831ebc9cffd78907a",
+    "vivado/probe/route_pin/probe_congest.tcl": "16bd560355c00402848cc46d69e5c8e7ac38ff043bf9cd56e3b49d4e5dfaa713"
+  },
+  "inputs_read": {
+    "vivado/specimen/specimen_ff_formal.v": "47b2e3fade7a194361d4b9ab7e55c04feda7bcff4b60646bdc7fe65880b1ec54",
+    "vivado/specimen/ff_formal_readback.tcl": "ad69919d6cf2caa018f8ed4d2377f773ab951d0c874863108e06c3d9bac356d2",
+    "gate_runs/run_2026_08_05_ff/predictions.json": "5440ef27acbd5b4f624cae54f4ffad89b3f656c1e6e5fa35b29226ff0d1b2e51",
+    "data/prjxray/zynq7/xc7z010/tilegrid.json": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee"
+  },
+  "files": {
+    "current_base_Default_c0.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "4d0acd4eef3ec073ef81764082872490c81720db0d7dc9390f12072f1dcbbc8c"
+    },
+    "current_base_Default_c0.readback.tsv": {
+      "role": "structural readback",
+      "sha256": "77feedc22cce7c3db557bedce90cd5b529f527c6c66361cfa5018398b942c779"
+    },
+    "current_base_Default_c32.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "0dbdb50d3e740694f877134b2748dab8e2cc8e259a7355ec264dfa01597fda29"
+    },
+    "current_base_Default_c32.readback.tsv": {
+      "role": "structural readback",
+      "sha256": "9ee9c41fe2b15ba97e15c3dd0550b5319f2a265f3fd645b94ddff79700e1efd6"
+    },
+    "current_ce_tied_Default_c0.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "0552774036cc8d4be312acce724ca270ea1999c46cbe1903ed66deeea4f46678"
+    },
+    "current_ce_tied_Default_c0.readback.tsv": {
+      "role": "structural readback",
+      "sha256": "35505a51d27c6908fbca99bbf6ec675cfa3a4a2e13b0040cb1d2a6a2e759bbf3"
+    },
+    "current_ce_tied_Default_c32.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "ac63a8bbc52e720bd1abbdfd97039717570f27975246f0870a8b246e2246c96d"
+    },
+    "current_ce_tied_Default_c32.readback.tsv": {
+      "role": "structural readback",
+      "sha256": "a980cd93c4acbfa87ba74314872d11db87eb9d4151932f1e3a414757cdd1d1fc"
+    },
+    "pinned_base_Default_c0.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "2ef127c98e14eb199355cec5f0ee6ca2dcec1772595112f16caba1b1390f1799"
+    },
+    "pinned_base_Default_c0.readback.tsv": {
+      "role": "structural readback",
+      "sha256": "77feedc22cce7c3db557bedce90cd5b529f527c6c66361cfa5018398b942c779"
+    },
+    "pinned_base_Default_c32.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "be1dcd4db6be58152d95f884aff34be9bf64fd6bc59a5f252dc4fc39348204e0"
+    },
+    "pinned_base_Default_c32.readback.tsv": {
+      "role": "structural readback",
+      "sha256": "2db8d0cec7aa85aabd8a2ea060cd132aae0ac43d101e66e00515547f3bba419a"
+    },
+    "pinned_base_Explore_c32.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "07ff326b3f1a4519c3e1dedb9286876333c674df62494be52acc42ed56f94e83"
+    },
+    "pinned_base_Explore_c32.readback.tsv": {
+      "role": "structural readback",
+      "sha256": "2db8d0cec7aa85aabd8a2ea060cd132aae0ac43d101e66e00515547f3bba419a"
+    },
+    "pinned_ce_tied_Default_c0.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "d633d6b50ed11313ed0a4e4419f420e86fbb634319e5c000231a21017bf2f7d2"
+    },
+    "pinned_ce_tied_Default_c0.readback.tsv": {
+      "role": "structural readback",
+      "sha256": "35505a51d27c6908fbca99bbf6ec675cfa3a4a2e13b0040cb1d2a6a2e759bbf3"
+    },
+    "pinned_ce_tied_Default_c32.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "5080fe048ef2ca360c474debc2cf008ac868d6fdfdc1c9ee900199f6ea734e5f"
+    },
+    "pinned_ce_tied_Default_c32.readback.tsv": {
+      "role": "structural readback",
+      "sha256": "e5c16370f6e32b6168d78d632b80454645ec13775868b4232ed81c732a03b5dd"
+    },
+    "pinned_latch_Default_c32.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "3b2ab707145f5d1b34e7ca9f6720b098dd0f08c2438d35fdc885b911a5f4da0a"
+    },
+    "pinned_latch_Default_c32.readback.tsv": {
+      "role": "structural readback",
+      "sha256": "adb494cda04e4774393ef1a098c7fd21a58eb658313c90ded26c1c69811e14b9"
+    },
+    "probe_run.txt": {
+      "role": "driver transcript",
+      "sha256": "e931eb09facbbaada1055c2d2e57fe74b7317a538c6fb196484f70d38dbc4997"
+    },
+    "verdict.json": {
+      "role": "verdict",
+      "sha256": "be872773cc9fc15e653a9045985e490dd3092508d963f432363381df3e89ab0f"
+    }
+  }
+}

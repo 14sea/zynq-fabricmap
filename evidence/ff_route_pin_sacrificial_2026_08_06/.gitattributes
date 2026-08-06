@@ -1,0 +1,5 @@
+# Raw Vivado readback output. `emit_readback` writes a tab and then whatever the property
+# returned, so an empty property leaves a trailing tab — that is what the tool produced
+# and this evidence is worthless if it is tidied. The exception is scoped to this
+# directory: nothing here is source, and every file is pinned in manifest.json.
+* -whitespace
