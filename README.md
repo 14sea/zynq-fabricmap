@@ -109,15 +109,20 @@ scripts/extract_prjxray_subset.py --verify                    # integrity gate, 
 
 **Step 2 — host-side certification infrastructure (active).**
 
-- Certificate schema 1.5, the independent host verifier and known-answer fixtures are
-  shipped. Feature records can preregister both endpoints of every comparison; group
-  records retain their absolute-assignment model.
+- Certificate schema 1.6, multi-cell specimen attestation 2.0, exact staging-set
+  validation, the independent host verifier and known-answer fixtures are shipped.
+  Feature records preregister both endpoints; group records retain their
+  absolute-assignment model.
 - `clb_lut_init` is certified at holdout 262/262 with fp=0/fn=0.
 - `clb_mux` is certified at 16/16 falsifiable address passes, with 16 vacuous
   exclusivity diagnostics and semantic identity 16/16 reported separately.
-- `clb_ff_config` is preregistered at full 176/176 coverage. Its complete
-  184-specimen/120-P&R builder is the next implementation task; the existing
-  `gate_build_ff.py` is only the mine-site LATCH probe.
+- `clb_ff_config` is preregistered at full 176/176 coverage. Its formal
+  184-specimen/120-P&R builder exists; the mine instance is built and independently
+  diagnosed at TP=22, FP=0, FN=0 (23/184 specimens, holdout untouched). The next
+  producer step is the host-side attestation converter and stager. Mine attestations
+  can be checked individually, but the published commitment admits no mine-only
+  staging manifest: exact staging is evaluated only after the remaining 161 specimens
+  exist, without creating a reduced commitment.
 - `clb_lutram` has inventory, isolation and real-diff evidence, but no commitment or
   certificate. `int_pip` and `ppip_bitless` remain unstarted.
 

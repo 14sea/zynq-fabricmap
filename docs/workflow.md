@@ -43,8 +43,8 @@ separation has to be re-established on the other side, deliberately:
 | `docs/freeze_format.md` — spec/manifest contract, incl. the `certification` slot and its staleness rule | Claude → author | **shipped** (`28363a4`) |
 | `data/MANIFEST.json` + `data/prjxray/**` — the frozen subset, self-verifying via `--verify` | Claude → author | **shipped** (46 files, 10,896 classified features) |
 | **claims inventory** — what evidence the gate can physically produce (below) | Claude → author | in this document |
-| **certificate schema** — versioned, per the `zynq-autoehw/docs/schema.md` policy | author → Claude | **shipped through 1.5** (`8a8142d`) |
-| **known-answer fixtures** — what the gate must reproduce | author → Claude | **shipped and active** (address, feature, group and lifecycle fixtures) |
+| **certificate schema** — versioned, per the `zynq-autoehw/docs/schema.md` policy | author → Claude | **shipped through 1.6** (multi-cell attestation + exact staging) |
+| **known-answer fixtures** — what the gate must reproduce | author → Claude | **shipped and active** (address, feature, group, lifecycle, multi-cell and staging fixtures) |
 | **verifiers** — run over emitted certificates + manifest | author → Claude | **shipped and active** (`host/verify_certificate.py`, `host/verify_data.py`) |
 | `local_map` instantiation consuming certified classes | author → Claude | **not started** |
 
@@ -84,7 +84,7 @@ hashes do not match the current manifest is stale by construction.
 ## Historical Round 1 ask — completed
 
 The three items below were the initial request. They are retained as the original
-boundary contract, not as current work: the certificate schema is now 1.5, the data
+boundary contract, not as current work: the certificate schema is now 1.6, the data
 and address verifiers are active, and the known-answer fixtures have caught real
 producer and consumer defects.
 

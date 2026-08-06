@@ -122,3 +122,17 @@ longer "an assumption pending the first specimen run". It was discharged by
 `scripts/bitstream_frames.py` against real bitstreams — 5,144 frames from `part.yaml`
 plus 8 pad frames, at 101 words each, consume the FDRI payload exactly. The finding
 was correctly reported by the consumer side; the inconsistency was ours.
+
+## 5. Multi-cell formal FF evidence — consumer ruling (2026-08-06)
+
+The single-target 1.x shape remains valid for its historical LUT and mux records. It
+is not widened to describe the formal FF run: singular `requested_bel` and
+`resolved_bel` cannot honestly represent 8 storage cells, 8 target LUTs and 6
+anchor/keeper cells (or the four-storage latch topology).
+
+The consumer therefore defined incompatible `specimen_attestation` **2.0.0** and
+certificate **1.6.0**. The machine-readable shapes are
+`schemas/specimen_attestation.schema.json` and
+`schemas/specimen_staging.schema.json`; the field-level and staging rules are in
+`docs/ff_attestation_contract.md`. Legacy 1.x records remain accepted by a separate
+schema branch and retain their original meaning.

@@ -9,6 +9,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from pathlib import PurePosixPath
 from typing import Any
 
 try:
@@ -42,6 +43,8 @@ def address_key(value: dict[str, Any]) -> tuple[str, int, int]:
 
 
 def safe_child(parent: Path, relative: str) -> Path:
+    if Path(relative).is_absolute():
+        raise ValueError(f"artifact path must be repository-relative: {relative!r}")
     path = (parent / relative).resolve()
     resolved_parent = parent.resolve()
     if resolved_parent not in path.parents:
@@ -113,6 +116,362 @@ def resolve_json_pointer(value: Any, pointer: str) -> Any:
             raise ValueError(f"JSON pointer {pointer!r} does not exist")
         current = current[part]
     return current
+
+
+FF_ALL_BELS = ("AFF", "A5FF", "BFF", "B5FF", "CFF", "C5FF", "DFF", "D5FF")
+FF_MAIN_BELS = ("AFF", "BFF", "CFF", "DFF")
+FF_LUT_BELS = ("A6LUT", "B6LUT", "C6LUT", "D6LUT", "A5LUT", "B5LUT", "C5LUT", "D5LUT")
+FF_SUPPORT = {
+    "anchor_lut1": ("anchor", "lut", "A6LUT"),
+    "anchor_lut2": ("anchor", "lut", "B6LUT"),
+    "q_reduce1": ("anchor", "lut", "C6LUT"),
+    "q_reduce2": ("anchor", "lut", "D6LUT"),
+    "anchor_ff": ("anchor", "storage", "AFF"),
+    "anchor_ff2": ("keeper", "storage", "AFF"),
+}
+
+
+def bel_leaf(value: str) -> str:
+    """Return the BEL leaf from either `AFF`, `SLICEL.AFF`, or a site path."""
+
+    return value.rsplit("/", 1)[-1].rsplit(".", 1)[-1]
+
+
+def logic_bit(value: str) -> str | None:
+    """Normalize the Vivado scalar spellings used in routed-property readback."""
+
+    match = re.fullmatch(r"(?:[0-9]+(?:'b|'h))?([01])", value.strip().lower())
+    return match.group(1) if match else None
+
+
+def tied_net(value: str) -> bool:
+    text = value.strip().upper()
+    return text in {"<CONST0>", "<CONST1>", "GND", "VCC"}
+
+
+def ff_formal_attestation_errors(
+    attestation: dict[str, Any],
+    specimen: dict[str, Any],
+    committed_specimen: dict[str, Any],
+    commitment_reference: dict[str, Any],
+    repo_root: Path,
+) -> list[str]:
+    """Rebuild the 2.0 FF summaries from routed multi-cell facts.
+
+    The `/resolved/*` values are convenient semantic-pointer targets, not producer-owned
+    truth.  This routine derives each one from the cell list and rejects disagreement.
+    """
+
+    errors: list[str] = []
+    specimen_id = specimen["specimen_id"]
+    prefix = f"specimen {specimen_id} attestation"
+    if attestation.get("schema_version") != "2.0.0" or attestation.get("profile") != "ff_formal":
+        return [f"{prefix}: feature 1.6 requires specimen_attestation 2.0.0 ff_formal"]
+    if attestation.get("specimen_id") != specimen_id:
+        errors.append(f"{prefix}: specimen_id differs from certificate")
+    if attestation.get("prediction_commitment") != commitment_reference:
+        errors.append(f"{prefix}: prediction commitment reference differs from certificate")
+
+    build = attestation["source_build"]
+    recipe = build["recipe"]
+    sites = build["sites"]
+    variant = committed_specimen.get("variant")
+    if build["instance"] != specimen["loc_site"] or sites["target"] != specimen["loc_site"]:
+        errors.append(f"{prefix}: source instance/target site differs from specimen loc_site")
+    if build["variant"] != variant:
+        errors.append(f"{prefix}: source variant differs from committed specimen")
+    if recipe["commitment"] != commitment_reference["sha256"]:
+        errors.append(f"{prefix}: source recipe pins a different commitment")
+    if recipe["part"] != specimen["part"] or recipe["vivado_version"] != specimen["vivado_version"]:
+        errors.append(f"{prefix}: source recipe part/tool differs from specimen")
+    if recipe["build_seed"] != specimen["build_seed"]:
+        errors.append(f"{prefix}: source recipe build_seed differs from specimen")
+    for relative, expected_hash in recipe["sources"].items():
+        try:
+            source_path = safe_child(repo_root, relative)
+            if not source_path.is_file() or hash_file(source_path) != expected_hash:
+                errors.append(f"{prefix}: source recipe file differs from repository: {relative}")
+        except (OSError, ValueError) as exc:
+            errors.append(f"{prefix}: cannot validate source recipe file {relative!r}: {exc}")
+    if build["artifacts"]["spec.bit"] != specimen["bitstream_sha256"]:
+        errors.append(f"{prefix}: source stamp bitstream hash differs from specimen")
+    if attestation["outputs"]["spec.bit"] != specimen["bitstream_sha256"]:
+        errors.append(f"{prefix}: output bitstream hash differs from specimen")
+
+    target = attestation["resolved"]["target"]
+    if target["requested_site"] != specimen["loc_site"] or target["resolved_site"] != specimen["loc_site"]:
+        errors.append(f"{prefix}: requested/resolved target site differs from specimen")
+    if target["tile"] != specimen["tile"] or target["tile_type"] != specimen["tile_type"]:
+        errors.append(f"{prefix}: resolved target tile differs from specimen")
+
+    cells = attestation["resolved"]["cells"]
+    seen_names: set[str] = set()
+    target_storage: dict[str, dict[str, Any]] = {}
+    target_luts: dict[str, dict[str, Any]] = {}
+    support: dict[str, dict[str, Any]] = {}
+    for cell in cells:
+        name = cell["logical_name"]
+        leaf = bel_leaf(cell["logical_bel"])
+        if name in seen_names:
+            errors.append(f"{prefix}: duplicate logical cell name {name!r}")
+        seen_names.add(name)
+        requested = cell["requested"]
+        resolved = cell["resolved"]
+        # `requested` is pinned producer intent, not another Vivado readback. These
+        # comparisons reject an internally contradictory record; only `resolved` plus
+        # the independently derived topology carries routed-design evidence.
+        if requested["ref_name"] != resolved["ref_name"]:
+            errors.append(f"{prefix}: cell {name!r} requested/resolved REF_NAME is inconsistent")
+        if requested["loc"] != resolved["loc"] or requested["bel"] != bel_leaf(resolved["bel"]):
+            errors.append(f"{prefix}: cell {name!r} requested/resolved placement is inconsistent")
+        if leaf != bel_leaf(resolved["bel"]):
+            errors.append(f"{prefix}: cell {name!r} logical_bel differs from resolved BEL")
+        if cell["kind"] == "lut" and (not cell["lock_pins"] or not cell["pin_mapping"]):
+            errors.append(f"{prefix}: LUT cell {name!r} lacks LOCK_PINS/pin mapping evidence")
+        if cell["role"] == "target" and cell["kind"] == "storage":
+            if leaf in target_storage:
+                errors.append(f"{prefix}: duplicate target storage BEL {leaf}")
+            target_storage[leaf] = cell
+        elif cell["role"] == "target" and cell["kind"] == "lut":
+            if leaf in target_luts:
+                errors.append(f"{prefix}: duplicate target LUT BEL {leaf}")
+            target_luts[leaf] = cell
+        else:
+            support[name] = cell
+
+    expected_storage = set(FF_MAIN_BELS if variant in {"latch", "latch_base"} else FF_ALL_BELS)
+    if set(target_storage) != expected_storage:
+        errors.append(
+            f"{prefix}: target storage cells differ from variant topology "
+            f"(missing={sorted(expected_storage - set(target_storage))} "
+            f"extra={sorted(set(target_storage) - expected_storage)})"
+        )
+    if set(target_luts) != set(FF_LUT_BELS):
+        errors.append(
+            f"{prefix}: target LUT cells differ from formal topology "
+            f"(missing={sorted(set(FF_LUT_BELS) - set(target_luts))} "
+            f"extra={sorted(set(target_luts) - set(FF_LUT_BELS))})"
+        )
+    if set(support) != set(FF_SUPPORT):
+        errors.append(
+            f"{prefix}: anchor/keeper cells differ from formal topology "
+            f"(missing={sorted(set(FF_SUPPORT) - set(support))} "
+            f"extra={sorted(set(support) - set(FF_SUPPORT))})"
+        )
+    for name, (role, kind, bel) in FF_SUPPORT.items():
+        cell = support.get(name)
+        if cell is None:
+            continue
+        expected_site = sites[role]
+        if cell["role"] != role or cell["kind"] != kind or bel_leaf(cell["logical_bel"]) != bel:
+            errors.append(f"{prefix}: support cell {name!r} has the wrong role/kind/BEL")
+        if cell["resolved"]["loc"] != expected_site:
+            errors.append(f"{prefix}: support cell {name!r} resolved at the wrong site")
+    for cell in [*target_storage.values(), *target_luts.values()]:
+        if cell["resolved"]["loc"] != sites["target"]:
+            errors.append(f"{prefix}: target cell {cell['logical_name']!r} resolved outside target site")
+
+    # Rebuild the semantic-pointer summaries. Unknown/mixed raw facts are an invalid
+    # attestation, never a producer-selectable summary value.
+    ff_init: dict[str, str] = {}
+    ff_srval: dict[str, str] = {}
+    ce_tied: set[bool] = set()
+    sr_tied: set[bool] = set()
+    sr_kinds: set[str] = set()
+    storage_kinds: set[str] = set()
+    clock_modes: set[str] = set()
+    for bel, cell in target_storage.items():
+        ref = cell["resolved"]["ref_name"].upper()
+        init = logic_bit(cell["properties"].get("INIT", ""))
+        if init is None:
+            errors.append(f"{prefix}: storage BEL {bel} has no scalar INIT readback")
+        else:
+            ff_init[bel] = init
+        if ref in {"FDSE", "FDPE"}:
+            ff_srval[bel] = "1"
+        elif ref in {"FDRE", "FDCE", "LDCE"}:
+            ff_srval[bel] = "0"
+        else:
+            errors.append(f"{prefix}: storage BEL {bel} has unsupported REF_NAME {ref!r}")
+
+        ce_pin = "GE" if ref == "LDCE" else "CE"
+        sr_pin = "CLR" if ref in {"FDCE", "LDCE"} else ("S" if ref in {"FDSE", "FDPE"} else "R")
+        if ce_pin not in cell["pins"] or sr_pin not in cell["pins"]:
+            errors.append(f"{prefix}: storage BEL {bel} lacks {ce_pin}/{sr_pin} pin evidence")
+        else:
+            ce_tied.add(tied_net(cell["pins"][ce_pin]["net"]))
+            sr_tied.add(tied_net(cell["pins"][sr_pin]["net"]))
+        sr_kinds.add("ASYNC" if ref in {"FDCE", "LDCE"} else "SYNC")
+        storage_kinds.add("LATCH" if ref == "LDCE" else "FF")
+        if ref == "LDCE":
+            clock_modes.add("LATCH")
+        else:
+            inverted = logic_bit(cell["properties"].get("IS_C_INVERTED", ""))
+            if inverted is None:
+                errors.append(f"{prefix}: storage BEL {bel} lacks scalar IS_C_INVERTED")
+            else:
+                clock_modes.add("CLKINV" if inverted == "1" else "NOCLKINV")
+
+    def uniform(values: set[Any], false_value: str, true_value: str, field: str) -> str | None:
+        if len(values) != 1:
+            errors.append(f"{prefix}: raw cell facts do not define one {field}")
+            return None
+        return true_value if next(iter(values)) else false_value
+
+    rebuilt: dict[str, Any] = {
+        "ff_init": ff_init,
+        "ff_srval": ff_srval,
+        "ce_mode": uniform(ce_tied, "DRIVEN", "TIED", "ce_mode"),
+        "sr_mode": uniform(sr_tied, "DRIVEN", "TIED", "sr_mode"),
+        "sr_kind": next(iter(sr_kinds)) if len(sr_kinds) == 1 else None,
+        "storage_kind": next(iter(storage_kinds)) if len(storage_kinds) == 1 else None,
+        "clock_mode": next(iter(clock_modes)) if len(clock_modes) == 1 else None,
+    }
+    if len(sr_kinds) != 1:
+        errors.append(f"{prefix}: raw cell facts do not define one sr_kind")
+    if len(storage_kinds) != 1:
+        errors.append(f"{prefix}: raw cell facts do not define one storage_kind")
+    if len(clock_modes) != 1:
+        errors.append(f"{prefix}: raw cell facts do not define one clock_mode")
+    for field, expected in rebuilt.items():
+        if attestation["resolved"].get(field) != expected:
+            errors.append(f"{prefix}: resolved.{field} differs from independent cell rebuild")
+
+    checkpoint = attestation["checkpoint"]
+    if checkpoint["kind"] != build["node_type"]:
+        errors.append(f"{prefix}: checkpoint kind differs from source node_type")
+    artifact = checkpoint["artifact"]
+    if build["artifacts"].get(artifact["file"]) != artifact["sha256"]:
+        errors.append(f"{prefix}: checkpoint artifact differs from source stamp")
+    if build["node_type"] == "derived":
+        source = checkpoint.get("source", {})
+        derived_from = build.get("derived_from", {})
+        if source.get("specimen_id") != derived_from.get("specimen_id") or source.get(
+            "sha256"
+        ) != derived_from.get("base_dcp_sha256"):
+            errors.append(f"{prefix}: derived checkpoint source differs from source stamp")
+    return errors
+
+
+def load_feature_staging(
+    certificate: dict[str, Any],
+    repo_root: Path,
+    committed_specimens: dict[str, dict[str, Any]],
+) -> tuple[list[str], dict[str, dict[str, Any]], dict[str, dict[str, Any]]]:
+    """Validate and load the exact staged set selected by certificate 1.6.
+
+    This proves what a host verifier can prove: exact set, byte hashes, embedded completed
+    stamps, and checkpoint linkage. It does not claim to observe a Python function call.
+    """
+
+    errors: list[str] = []
+    entries: dict[str, dict[str, Any]] = {}
+    attestations: dict[str, dict[str, Any]] = {}
+    reference = certificate["staging_manifest"]
+    try:
+        path = safe_child(repo_root, reference["path"])
+        if not path.is_file():
+            raise ValueError(f"staging manifest does not exist: {reference['path']}")
+        if hash_file(path) != reference["sha256"]:
+            raise ValueError("staging manifest hash mismatch")
+        manifest = load_json(path)
+        findings = validate_external_schema(
+            manifest,
+            repo_root / "schemas/specimen_staging.schema.json",
+            "staging manifest",
+        )
+        errors.extend(findings)
+        if findings:
+            return errors, entries, attestations
+    except (OSError, ValueError, KeyError, json.JSONDecodeError) as exc:
+        return [f"cannot validate staging manifest: {exc}"], entries, attestations
+
+    if manifest["schema_version"] != reference["schema_version"]:
+        errors.append("pinned staging schema_version differs from file")
+    if manifest["run_id"] != certificate["prediction_commitment"]["run_id"]:
+        errors.append("staging run_id differs from prediction commitment")
+    if manifest["prediction_commitment"] != certificate["prediction_commitment"]:
+        errors.append("staging prediction commitment differs from certificate")
+
+    used_paths: set[str] = set()
+    staging_roots: set[Path] = set()
+    for index, entry in enumerate(manifest["specimens"]):
+        specimen_id = entry["specimen_id"]
+        if specimen_id in entries:
+            errors.append(f"staging specimens[{index}] duplicates specimen_id {specimen_id!r}")
+            continue
+        entries[specimen_id] = entry
+        bit_ref = entry["bitstream"]
+        att_ref = entry["attestation"]
+        for label, pinned, expected_name in (
+            ("bitstream", bit_ref, "spec.bit"),
+            ("attestation", att_ref, "attestation.json"),
+        ):
+            relative = pinned["path"]
+            if relative in used_paths:
+                errors.append(f"staging specimens[{index}] duplicates artifact path {relative!r}")
+            used_paths.add(relative)
+            posix = PurePosixPath(relative)
+            if posix.name != expected_name or posix.parent.name != specimen_id:
+                errors.append(
+                    f"staging specimen {specimen_id}: {label} path must be "
+                    f"<root>/{specimen_id}/{expected_name}"
+                )
+            try:
+                artifact_path = safe_child(repo_root, relative)
+                if not artifact_path.is_file():
+                    raise ValueError(f"file does not exist: {relative}")
+                if hash_file(artifact_path) != pinned["sha256"]:
+                    raise ValueError(f"hash mismatch: {relative}")
+                staging_roots.add(artifact_path.parent.parent)
+            except (OSError, ValueError) as exc:
+                errors.append(f"staging specimen {specimen_id}: {exc}")
+        try:
+            att_path = safe_child(repo_root, att_ref["path"])
+            if att_path.is_file() and hash_file(att_path) == att_ref["sha256"]:
+                attestation = load_json(att_path)
+                if attestation.get("source_build", {}).get("completed") is not True:
+                    errors.append(
+                        f"staging specimen {specimen_id}: source build is not completed/verified"
+                    )
+                findings = validate_external_schema(
+                    attestation,
+                    repo_root / "schemas/specimen_attestation.schema.json",
+                    f"staging specimen {specimen_id} attestation",
+                )
+                errors.extend(findings)
+                if not findings:
+                    attestations[specimen_id] = attestation
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            errors.append(f"staging specimen {specimen_id}: cannot load attestation: {exc}")
+
+    expected_ids = set(committed_specimens)
+    if set(entries) != expected_ids:
+        errors.append(
+            "staging specimen completeness mismatch "
+            f"(missing={len(expected_ids - set(entries))} "
+            f"extra={len(set(entries) - expected_ids)})"
+        )
+    if len(staging_roots) != 1:
+        errors.append("staging artifacts do not share one staging root")
+    else:
+        root = next(iter(staging_roots))
+        actual_dirs = {item.name for item in root.iterdir() if item.is_dir()}
+        actual_files = {item.name for item in root.iterdir() if item.is_file()}
+        if actual_dirs != expected_ids or actual_files:
+            errors.append(
+                "staging root contents differ from committed specimen set "
+                f"(missing={len(expected_ids - actual_dirs)} extra={len(actual_dirs - expected_ids)} "
+                f"root_files={len(actual_files)})"
+            )
+        for specimen_id in actual_dirs & expected_ids:
+            names = {item.name for item in (root / specimen_id).iterdir()}
+            if names != {"spec.bit", "attestation.json"}:
+                errors.append(
+                    f"staging specimen {specimen_id}: directory must contain exactly "
+                    "spec.bit and attestation.json"
+                )
+    return errors, entries, attestations
 
 
 def load_prediction_commitment(
@@ -1199,6 +1558,7 @@ def feature_1_4_semantic_errors(
         int(part) for part in certificate["schema_version"].split(".")
     )
     feature_1_5 = certificate_version >= (1, 5, 0)
+    feature_1_6 = certificate_version >= (1, 6, 0)
     data_dir = repo_root / "data"
     manifest = load_json(data_dir / "MANIFEST.json")
     spec = load_json(data_dir / "subset_spec.json")
@@ -1278,6 +1638,31 @@ def feature_1_4_semantic_errors(
     )
     errors.extend(commitment_errors)
 
+    committed_specimens: dict[str, dict[str, Any]] = {}
+    staging_entries: dict[str, dict[str, Any]] = {}
+    staged_attestations: dict[str, dict[str, Any]] = {}
+    if feature_1_6:
+        try:
+            commitment_path = safe_child(
+                repo_root, certificate["prediction_commitment"]["path"]
+            )
+            commitment_document = load_json(commitment_path)
+            for item in commitment_document["specimens"]:
+                specimen_id = item["specimen_id"]
+                if specimen_id in committed_specimens:
+                    errors.append(
+                        f"prediction commitment duplicates specimen_id {specimen_id!r}"
+                    )
+                committed_specimens[specimen_id] = item
+            staging_errors, staging_entries, staged_attestations = load_feature_staging(
+                certificate,
+                repo_root,
+                committed_specimens,
+            )
+            errors.extend(staging_errors)
+        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+            errors.append(f"cannot load 1.6 staged specimen contract: {exc}")
+
     specimens = certificate["specimens"]
     specimen_by_id: dict[str, dict[str, Any]] = {}
     attestation_cache: dict[tuple[str, str], dict[str, Any]] = {}
@@ -1306,8 +1691,26 @@ def feature_1_4_semantic_errors(
             errors.append(f"specimen {specimen_id}: 1.4 production evidence requires attestation")
         if reference is None:
             continue
+        if feature_1_6:
+            staged = staging_entries.get(specimen_id)
+            if staged is None:
+                errors.append(f"specimen {specimen_id}: absent from staging manifest")
+            else:
+                if reference != staged["attestation"]:
+                    errors.append(
+                        f"specimen {specimen_id}: attestation reference differs from staging"
+                    )
+                if specimen["bitstream_sha256"] != staged["bitstream"]["sha256"]:
+                    errors.append(
+                        f"specimen {specimen_id}: bitstream hash differs from staging"
+                    )
         cache_key = reference["path"], reference["sha256"]
-        attestation = attestation_cache.get(cache_key)
+        attestation = staged_attestations.get(specimen_id) if feature_1_6 else None
+        if feature_1_6 and attestation is None:
+            errors.append(f"specimen {specimen_id}: staged attestation did not validate")
+            continue
+        if attestation is None:
+            attestation = attestation_cache.get(cache_key)
         if attestation is None:
             try:
                 path = safe_child(repo_root, reference["path"])
@@ -1333,14 +1736,60 @@ def feature_1_4_semantic_errors(
             specimen_attestations[specimen_id] = attestation
             if attestation["schema_version"] != reference["schema_version"]:
                 errors.append(f"specimen {specimen_id}: pinned attestation schema_version differs from file")
-            if attestation["resolved"]["resolved_loc"] != specimen["loc_site"]:
-                errors.append(f"specimen {specimen_id}: attested resolved_loc differs from loc_site")
-            if attestation["resolved"]["tile"] != specimen["tile"]:
-                errors.append(f"specimen {specimen_id}: attested tile differs from specimen tile")
-            if attestation["inputs"]["part"] != specimen["part"]:
-                errors.append(f"specimen {specimen_id}: attested input part differs from specimen part")
-            if specimen["bitstream_sha256"] not in attestation["outputs"].values():
-                errors.append(f"specimen {specimen_id}: bitstream_sha256 is absent from attestation outputs")
+            if attestation["schema_version"].startswith("1."):
+                if attestation["resolved"]["resolved_loc"] != specimen["loc_site"]:
+                    errors.append(f"specimen {specimen_id}: attested resolved_loc differs from loc_site")
+                if attestation["resolved"]["tile"] != specimen["tile"]:
+                    errors.append(f"specimen {specimen_id}: attested tile differs from specimen tile")
+                if attestation["inputs"]["part"] != specimen["part"]:
+                    errors.append(f"specimen {specimen_id}: attested input part differs from specimen part")
+                if specimen["bitstream_sha256"] not in attestation["outputs"].values():
+                    errors.append(f"specimen {specimen_id}: bitstream_sha256 is absent from attestation outputs")
+            else:
+                committed_specimen = committed_specimens.get(specimen_id)
+                if committed_specimen is None:
+                    errors.append(
+                        f"specimen {specimen_id}: absent from prediction commitment specimen plan"
+                    )
+                else:
+                    errors.extend(
+                        ff_formal_attestation_errors(
+                            attestation,
+                            specimen,
+                            committed_specimen,
+                            certificate["prediction_commitment"],
+                            repo_root,
+                        )
+                    )
+
+    if feature_1_6 and set(specimen_by_id) != set(committed_specimens):
+        errors.append(
+            "certificate specimen completeness differs from prediction commitment "
+            f"(missing={len(set(committed_specimens) - set(specimen_by_id))} "
+            f"extra={len(set(specimen_by_id) - set(committed_specimens))})"
+        )
+    if feature_1_6:
+        for specimen_id, attestation in specimen_attestations.items():
+            if attestation.get("schema_version") != "2.0.0":
+                continue
+            checkpoint = attestation["checkpoint"]
+            if checkpoint["kind"] != "derived":
+                continue
+            source = checkpoint["source"]
+            source_attestation = specimen_attestations.get(source["specimen_id"])
+            if source_attestation is None:
+                errors.append(
+                    f"specimen {specimen_id}: derived checkpoint source specimen is absent"
+                )
+                continue
+            source_checkpoint = source_attestation.get("checkpoint", {})
+            if source_checkpoint.get("kind") != "implementation" or source_checkpoint.get(
+                "artifact"
+            ) != {"file": source["file"], "sha256": source["sha256"]}:
+                errors.append(
+                    f"specimen {specimen_id}: derived source checkpoint does not match "
+                    "the pinned source specimen"
+                )
 
     rule_lines_cache: dict[str, dict[str, list[str]]] = {}
     coordinate_claims_cache: dict[str, dict[tuple[int, int], set[str]]] = {}

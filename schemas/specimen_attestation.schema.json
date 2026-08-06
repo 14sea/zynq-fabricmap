@@ -2,65 +2,406 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/14sea/zynq-fabricmap/schemas/specimen_attestation.schema.json",
   "title": "Vivado specimen attestation",
-  "description": "Consumer validation shape for producer-emitted specimen_attestation 1.x records. Unknown fields are permitted for additive MINOR evolution.",
-  "type": "object",
-  "required": ["schema", "schema_version", "inputs", "resolved", "outputs"],
-  "properties": {
-    "schema": {"const": "specimen_attestation"},
-    "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"},
-    "inputs": {
+  "description": "Consumer validation shape for legacy single-target specimen_attestation 1.x records and routed multi-cell specimen_attestation 2.0 records.",
+  "oneOf": [
+    {"$ref": "#/$defs/legacy_1_x"},
+    {"$ref": "#/$defs/ff_formal_2_0"}
+  ],
+  "$defs": {
+    "nonempty_string": {"type": "string", "minLength": 1},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "pinned_file": {
       "type": "object",
-      "required": ["files", "tclargs", "part", "vivado_version"],
+      "required": ["path", "sha256"],
       "properties": {
-        "files": {
+        "path": {"$ref": "#/$defs/repo_path"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "legacy_1_x": {
+      "type": "object",
+      "required": ["schema", "schema_version", "inputs", "resolved", "outputs"],
+      "properties": {
+        "schema": {"const": "specimen_attestation"},
+        "schema_version": {"type": "string", "pattern": "^1\\.[0-9]+\\.[0-9]+$"},
+        "inputs": {
+          "type": "object",
+          "required": ["files", "tclargs", "part", "vivado_version"],
+          "properties": {
+            "files": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": {"$ref": "#/$defs/sha256"}
+            },
+            "tclargs": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"type": "string"}
+            },
+            "part": {"$ref": "#/$defs/nonempty_string"},
+            "vivado_version": {"$ref": "#/$defs/nonempty_string"}
+          }
+        },
+        "resolved": {
+          "type": "object",
+          "required": [
+            "requested_site",
+            "requested_bel",
+            "resolved_loc",
+            "resolved_bel",
+            "lock_pins",
+            "tile",
+            "pin_mapping",
+            "pin_mapping_is_identity"
+          ],
+          "properties": {
+            "requested_site": {"$ref": "#/$defs/nonempty_string"},
+            "requested_bel": {"$ref": "#/$defs/nonempty_string"},
+            "resolved_loc": {"$ref": "#/$defs/nonempty_string"},
+            "resolved_bel": {"$ref": "#/$defs/nonempty_string"},
+            "lock_pins": {"$ref": "#/$defs/nonempty_string"},
+            "tile": {"$ref": "#/$defs/nonempty_string"},
+            "pin_mapping": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": {"$ref": "#/$defs/nonempty_string"}
+            },
+            "pin_mapping_is_identity": {"type": "boolean"}
+          }
+        },
+        "outputs": {
           "type": "object",
           "minProperties": 1,
           "additionalProperties": {"$ref": "#/$defs/sha256"}
+        }
+      }
+    },
+    "attestation_prediction_commitment": {
+      "type": "object",
+      "required": ["path", "sha256", "schema_version"],
+      "properties": {
+        "path": {"$ref": "#/$defs/repo_path"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "schema_version": {"type": "string", "pattern": "^1\\.(?:[5-9]|[1-9][0-9]+)\\.[0-9]+$"}
+      }
+    },
+    "site_map": {
+      "type": "object",
+      "required": ["target", "anchor", "keeper"],
+      "properties": {
+        "target": {"$ref": "#/$defs/nonempty_string"},
+        "anchor": {"$ref": "#/$defs/nonempty_string"},
+        "keeper": {"$ref": "#/$defs/nonempty_string"}
+      },
+      "additionalProperties": false
+    },
+    "source_recipe": {
+      "type": "object",
+      "required": [
+        "sources",
+        "commitment",
+        "preregistration_plan",
+        "part",
+        "vivado_version",
+        "tclargs",
+        "build_seed"
+      ],
+      "properties": {
+        "sources": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {"$ref": "#/$defs/repo_path"},
+          "additionalProperties": {"$ref": "#/$defs/sha256"}
         },
+        "commitment": {"$ref": "#/$defs/sha256"},
+        "preregistration_plan": {"$ref": "#/$defs/sha256"},
+        "part": {"$ref": "#/$defs/nonempty_string"},
+        "vivado_version": {"$ref": "#/$defs/nonempty_string"},
         "tclargs": {
+          "description": "Raw invocation history. Entries may be absolute; they are not artifact references.",
           "type": "array",
           "minItems": 1,
           "items": {"type": "string"}
         },
-        "part": {"$ref": "#/$defs/nonempty_string"},
-        "vivado_version": {"$ref": "#/$defs/nonempty_string"}
+        "build_seed": {"type": "integer", "minimum": 0}
       }
     },
-    "resolved": {
+    "source_build": {
       "type": "object",
       "required": [
-        "requested_site",
-        "requested_bel",
-        "resolved_loc",
-        "resolved_bel",
-        "lock_pins",
-        "tile",
-        "pin_mapping",
-        "pin_mapping_is_identity"
+        "schema",
+        "node_type",
+        "instance",
+        "variant",
+        "attempt_id",
+        "sites",
+        "recipe",
+        "completed",
+        "artifacts"
       ],
       "properties": {
-        "requested_site": {"$ref": "#/$defs/nonempty_string"},
-        "requested_bel": {"$ref": "#/$defs/nonempty_string"},
-        "resolved_loc": {"$ref": "#/$defs/nonempty_string"},
-        "resolved_bel": {"$ref": "#/$defs/nonempty_string"},
-        "lock_pins": {"$ref": "#/$defs/nonempty_string"},
-        "tile": {"$ref": "#/$defs/nonempty_string"},
-        "pin_mapping": {
+        "schema": {"const": "ff_formal_stamp/1"},
+        "node_type": {"enum": ["implementation", "derived"]},
+        "instance": {"$ref": "#/$defs/nonempty_string"},
+        "variant": {"$ref": "#/$defs/nonempty_string"},
+        "attempt_id": {"$ref": "#/$defs/nonempty_string"},
+        "sites": {"$ref": "#/$defs/site_map"},
+        "recipe": {"$ref": "#/$defs/source_recipe"},
+        "completed": {"const": true},
+        "artifacts": {
+          "type": "object",
+          "required": ["spec.bit", "readback.tsv"],
+          "properties": {
+            "spec.bit": {"$ref": "#/$defs/sha256"},
+            "readback.tsv": {"$ref": "#/$defs/sha256"},
+            "base.dcp": {"$ref": "#/$defs/sha256"},
+            "derived.dcp": {"$ref": "#/$defs/sha256"}
+          },
+          "additionalProperties": false
+        },
+        "derived_from": {
+          "type": "object",
+          "required": ["specimen_id", "base_dcp_sha256"],
+          "properties": {
+            "specimen_id": {"$ref": "#/$defs/nonempty_string"},
+            "base_dcp_sha256": {"$ref": "#/$defs/sha256"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"node_type": {"const": "derived"}}},
+          "then": {
+            "required": ["derived_from"],
+            "properties": {
+              "artifacts": {"required": ["derived.dcp"]}
+            }
+          },
+          "else": {
+            "properties": {
+              "artifacts": {"required": ["base.dcp"]}
+            },
+            "not": {"required": ["derived_from"]}
+          }
+        }
+      ]
+    },
+    "requested_cell": {
+      "type": "object",
+      "required": ["ref_name", "loc", "bel"],
+      "properties": {
+        "ref_name": {"$ref": "#/$defs/nonempty_string"},
+        "loc": {"$ref": "#/$defs/nonempty_string"},
+        "bel": {"$ref": "#/$defs/nonempty_string"}
+      },
+      "additionalProperties": false
+    },
+    "resolved_cell": {
+      "type": "object",
+      "required": ["ref_name", "loc", "bel"],
+      "properties": {
+        "ref_name": {"$ref": "#/$defs/nonempty_string"},
+        "loc": {"$ref": "#/$defs/nonempty_string"},
+        "bel": {"$ref": "#/$defs/nonempty_string"}
+      },
+      "additionalProperties": false
+    },
+    "cell_pin": {
+      "type": "object",
+      "required": ["net", "direction", "bel_pin"],
+      "properties": {
+        "net": {"type": "string"},
+        "direction": {"enum": ["IN", "OUT", "INOUT"]},
+        "bel_pin": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "cell": {
+      "type": "object",
+      "required": [
+        "logical_name",
+        "logical_bel",
+        "role",
+        "kind",
+        "requested",
+        "resolved",
+        "properties",
+        "lock_pins",
+        "pin_mapping",
+        "pins"
+      ],
+      "properties": {
+        "logical_name": {"$ref": "#/$defs/nonempty_string"},
+        "logical_bel": {"$ref": "#/$defs/nonempty_string"},
+        "role": {"enum": ["target", "anchor", "keeper"]},
+        "kind": {"enum": ["storage", "lut"]},
+        "requested": {"$ref": "#/$defs/requested_cell"},
+        "resolved": {"$ref": "#/$defs/resolved_cell"},
+        "properties": {
           "type": "object",
           "minProperties": 1,
+          "additionalProperties": {"type": "string"}
+        },
+        "lock_pins": {"type": "string"},
+        "pin_mapping": {
+          "type": "object",
           "additionalProperties": {"$ref": "#/$defs/nonempty_string"}
         },
-        "pin_mapping_is_identity": {"type": "boolean"}
+        "pins": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"$ref": "#/$defs/cell_pin"}
+        }
       }
     },
-    "outputs": {
+    "net": {
       "type": "object",
-      "minProperties": 1,
-      "additionalProperties": {"$ref": "#/$defs/sha256"}
+      "required": ["driver", "sinks", "ports", "route_status", "route", "pips"],
+      "properties": {
+        "driver": {"type": "string"},
+        "sinks": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "ports": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "route_status": {"enum": ["ROUTED", "INTRASITE"]},
+        "route": {"type": "string"},
+        "pips": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      }
+    },
+    "checkpoint_artifact": {
+      "type": "object",
+      "required": ["file", "sha256"],
+      "properties": {
+        "file": {"enum": ["base.dcp", "derived.dcp"]},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "checkpoint_source": {
+      "type": "object",
+      "required": ["specimen_id", "file", "sha256"],
+      "properties": {
+        "specimen_id": {"$ref": "#/$defs/nonempty_string"},
+        "file": {"const": "base.dcp"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "checkpoint_chain": {
+      "type": "object",
+      "required": ["kind", "artifact"],
+      "properties": {
+        "kind": {"enum": ["implementation", "derived"]},
+        "artifact": {"$ref": "#/$defs/checkpoint_artifact"},
+        "source": {"$ref": "#/$defs/checkpoint_source"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "derived"}}},
+          "then": {
+            "required": ["source"],
+            "properties": {
+              "artifact": {"properties": {"file": {"const": "derived.dcp"}}}
+            }
+          },
+          "else": {
+            "properties": {
+              "artifact": {"properties": {"file": {"const": "base.dcp"}}}
+            },
+            "not": {"required": ["source"]}
+          }
+        }
+      ]
+    },
+    "ff_resolved": {
+      "type": "object",
+      "required": [
+        "target",
+        "cells",
+        "nets",
+        "ff_init",
+        "ff_srval",
+        "ce_mode",
+        "sr_mode",
+        "sr_kind",
+        "storage_kind",
+        "clock_mode"
+      ],
+      "properties": {
+        "target": {
+          "type": "object",
+          "required": ["requested_site", "resolved_site", "tile", "tile_type"],
+          "properties": {
+            "requested_site": {"$ref": "#/$defs/nonempty_string"},
+            "resolved_site": {"$ref": "#/$defs/nonempty_string"},
+            "tile": {"$ref": "#/$defs/nonempty_string"},
+            "tile_type": {"$ref": "#/$defs/nonempty_string"}
+          },
+          "additionalProperties": false
+        },
+        "cells": {
+          "type": "array",
+          "minItems": 18,
+          "maxItems": 22,
+          "items": {"$ref": "#/$defs/cell"}
+        },
+        "nets": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {"$ref": "#/$defs/net"}
+        },
+        "ff_init": {
+          "type": "object",
+          "minProperties": 4,
+          "maxProperties": 8,
+          "additionalProperties": {"enum": ["0", "1"]}
+        },
+        "ff_srval": {
+          "type": "object",
+          "minProperties": 4,
+          "maxProperties": 8,
+          "additionalProperties": {"enum": ["0", "1"]}
+        },
+        "ce_mode": {"enum": ["DRIVEN", "TIED"]},
+        "sr_mode": {"enum": ["DRIVEN", "TIED"]},
+        "sr_kind": {"enum": ["SYNC", "ASYNC"]},
+        "storage_kind": {"enum": ["FF", "LATCH"]},
+        "clock_mode": {"enum": ["CLKINV", "NOCLKINV", "LATCH"]}
+      }
+    },
+    "ff_formal_2_0": {
+      "type": "object",
+      "required": [
+        "schema",
+        "schema_version",
+        "profile",
+        "specimen_id",
+        "prediction_commitment",
+        "source_build",
+        "resolved",
+        "checkpoint",
+        "outputs"
+      ],
+      "properties": {
+        "schema": {"const": "specimen_attestation"},
+        "schema_version": {"const": "2.0.0"},
+        "profile": {"const": "ff_formal"},
+        "specimen_id": {"$ref": "#/$defs/nonempty_string"},
+        "prediction_commitment": {"$ref": "#/$defs/attestation_prediction_commitment"},
+        "source_build": {"$ref": "#/$defs/source_build"},
+        "resolved": {"$ref": "#/$defs/ff_resolved"},
+        "checkpoint": {"$ref": "#/$defs/checkpoint_chain"},
+        "outputs": {
+          "type": "object",
+          "required": ["spec.bit"],
+          "properties": {"spec.bit": {"$ref": "#/$defs/sha256"}},
+          "additionalProperties": false
+        }
+      }
     }
-  },
-  "$defs": {
-    "nonempty_string": {"type": "string", "minLength": 1},
-    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
   }
 }

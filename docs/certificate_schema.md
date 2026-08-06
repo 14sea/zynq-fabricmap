@@ -1,4 +1,4 @@
-# Certificate schema — `fabric_bit_class_certificate` 1.5.0
+# Certificate schema — `fabric_bit_class_certificate` 1.6.0
 
 Version 1.1.0 adds optional specimen-attestation and explicit diff-exclusion evidence
 to 1.0.0. Version 1.2.0 adds an optional preregistered prediction commitment and a
@@ -8,7 +8,9 @@ schema. Version 1.3.0 adds a selectable group evidence model for mux claims. Ver
 consistency, observation consistency, a fixed pair-level FP definition, and corrects
 the group model's vacuous address accounting. Version 1.5.0 preregisters the feature
 comparison endpoint and derives the exact endpoint-pair accounting set from that
-commitment. Selecting a newer record version makes that version's evidence mandatory.
+commitment. Version 1.6.0 pins an exact post-build staging set and selects the routed
+multi-cell `specimen_attestation` 2.0 profile. Selecting a newer record version makes
+that version's evidence mandatory.
 Older records retain their original semantics.
 
 Machine-readable schema: `schemas/certificate.schema.json`. This document defines
@@ -173,6 +175,13 @@ attestation, or a copied `passed` boolean inconsistent with the readback is inva
 The assertion says what the producer claims the frozen name means; the pinned readback
 makes whether the implemented specimen has that basis independently auditable. It
 does not turn the naming claim into a silicon-behaviour claim.
+
+For certificate 1.6, the scalar pointer targets in `resolved` are summaries, not an
+additional producer authority. The verifier rebuilds `ff_init`, `ff_srval`, `ce_mode`,
+`sr_mode`, `sr_kind`, `storage_kind`, and `clock_mode` from the complete routed cell
+list, including primitive type, properties, pins and constant/non-constant nets. A
+summary which agrees with the prediction but disagrees with the routed cell facts is
+invalid. The full contract is in `docs/ff_attestation_contract.md`.
 
 Holdout semantic outcomes are reported in `semantic_status` and
 `semantic_accounting.member_identity`. They never contribute to address `status`.
@@ -385,7 +394,7 @@ one attestation anchors both against substitution but does not prove that the la
 was produced from the former. Re-establishing either relation requires a Vivado
 rebuild; the checkpoint hash is an integrity anchor, not independent provenance proof.
 
-## Current production profiles 1.2 through 1.5
+## Current production profiles 1.2 through 1.6
 
 The profile is selected by `profile: production`. Production consumers invoke the
 verifier with `--require-production`. A legacy feature record requires certificate
@@ -434,6 +443,44 @@ The 1.5 feature profile additionally requires:
 - exact result endpoint equality with both committed endpoint identities;
 - an exact `pair_accounting[]` pair set and pair scope derived solely from the
   commitment.
+
+The 1.6 formal-FF feature profile is selected only for `clb_ff_config` and additionally
+requires:
+
+- `staging_manifest: {path, sha256, schema_version}` selecting
+  `specimen_staging` 1.0;
+- exact set equality among the commitment's specimen plan, the staging manifest,
+  the staging-root directories and the certificate's `specimens[]`;
+- exactly `<staging-root>/<specimen_id>/{spec.bit,attestation.json}` for every
+  committed specimen, with no extra directory, file, ID or duplicate path;
+- `specimen_attestation` 2.0 on every specimen. Its embedded completed source stamp,
+  source hashes, bitstream hash, routed multi-cell facts, checkpoint and semantic
+  summaries are independently cross-checked;
+- for a derived specimen, equality among its embedded `derived_from`, checkpoint
+  source, and the independently pinned source specimen's `base.dcp` hash;
+- repository-relative paths for the commitment, staging manifest, staged bitstreams,
+  and attestations. Absolute strings may remain inside raw `tclargs` solely as
+  invocation history; they are not artifact references.
+
+Within attestation 2.0, `requested` is pinned producer intent. Equality with
+`resolved` detects an internally contradictory record; it is not an independent
+readback proving that Vivado received the request. Likewise, `resolved.nets` preserves
+routed facts but the host does not reconstruct the producer's dedicated-net set or
+pairwise tier-2 equality from them. Those remain producer-gate claims, while the host's
+independent checks derive the required cell topology and semantic summaries from the
+routed `resolved.cells` facts.
+
+Exact staging is indivisible for the selected commitment. In particular, the public
+184-specimen FF commitment cannot have a valid 23-specimen mine-only staging manifest.
+Mine attestations may be checked individually and staging conformance may use the
+consumer-owned synthetic commitment, but creating a reduced `predictions.json` is not
+an accepted substitute for the public commitment.
+
+The host can verify those preserved facts. It cannot observe that the producer called
+a function named `verified_state()`, nor prove a DCP produced a bitstream. No boolean
+field is accepted as a substitute for either fact: the former is represented by the
+completed stamp and hashes the function is meant to check, and the latter remains an
+explicit integrity-anchor limitation.
 
 For the feature profile, only one exclusion rule is supported: `frame_ecc`, exactly
 `word == 50 and 0 <= bit <= 12`. The verifier rejects an excluded bit outside that

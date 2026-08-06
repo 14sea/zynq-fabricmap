@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/14sea/zynq-fabricmap/schemas/specimen_staging.schema.json",
+  "title": "Verified specimen staging manifest",
+  "description": "Pins the exact post-build specimen set exposed to a certificate measurement. Source verification evidence lives inside each attestation; this manifest makes the staged set and its paths complete and immutable.",
+  "type": "object",
+  "required": [
+    "schema",
+    "schema_version",
+    "run_id",
+    "prediction_commitment",
+    "complete",
+    "specimens"
+  ],
+  "properties": {
+    "schema": {"const": "specimen_staging"},
+    "schema_version": {"const": "1.0.0"},
+    "run_id": {"$ref": "#/$defs/nonempty_string"},
+    "prediction_commitment": {"$ref": "#/$defs/artifact_ref"},
+    "complete": {"const": true},
+    "specimens": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["specimen_id", "bitstream", "attestation"],
+        "properties": {
+          "specimen_id": {"$ref": "#/$defs/nonempty_string"},
+          "bitstream": {"$ref": "#/$defs/pinned_file"},
+          "attestation": {
+            "type": "object",
+            "required": ["path", "sha256", "schema_version"],
+            "properties": {
+              "path": {"$ref": "#/$defs/repo_path"},
+              "sha256": {"$ref": "#/$defs/sha256"},
+              "schema_version": {"const": "2.0.0"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "nonempty_string": {"type": "string", "minLength": 1},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "repo_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "pinned_file": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/repo_path"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "artifact_ref": {
+      "type": "object",
+      "required": ["run_id", "path", "sha256", "schema_version", "seed", "totals"],
+      "properties": {
+        "run_id": {"$ref": "#/$defs/nonempty_string"},
+        "path": {"$ref": "#/$defs/repo_path"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "schema_version": {"type": "string", "pattern": "^1\\.(?:[5-9]|[1-9][0-9]+)\\.[0-9]+$"},
+        "seed": {"$ref": "#/$defs/nonempty_string"},
+        "totals": {
+          "type": "object",
+          "required": ["specimens", "predictions", "holdout_predictions"],
+          "properties": {
+            "specimens": {"type": "integer", "minimum": 1},
+            "predictions": {"type": "integer", "minimum": 1},
+            "holdout_predictions": {"type": "integer", "minimum": 1}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
