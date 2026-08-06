@@ -120,23 +120,32 @@ def readback_text(variant: str) -> str:
         else:
             storage_cell(lines, f"ak.{name}", name, ref, loc, bel,
                          init="1'b0", inverted="1'b0", ce_net="ce_IBUF", sr_net="rst_IBUF")
-    lines += [
-        "net.0.name\tw2",
-        "net.0.driver\tanchor_lut2/O",
-        "net.0.sinks\tanchor_ff/D anchor_ff2/D",
-        "net.0.ports\t",
-        "net.0.route_status\tROUTED",
-        "net.0.route\t{ CLBLL_LL_A }",
-        "net.0.pips\tsynthetic/pip",
-        "net.1.name\tclk_g",
-        "net.1.driver\tbufg_inst/O",
-        "net.1.sinks\tanchor_ff/C",
-        "net.1.ports\t",
-        "net.1.route_status\tROUTED",
-        "net.1.route\t{ HCLK }",
-        "net.1.pips\tsynthetic/clkpip",
-        "net_count\t2",
+    # The nine nets `EXPECTED_DEDICATED` must compute to, plus a shared one. Anything
+    # less and `compare_pair` fails every pair with `dedicated_unexpected`, which would
+    # mask the very mismatch these fixtures exist to inject.
+    nets = [
+        ("w2", "anchor_lut2/O", "anchor_ff/D anchor_ff2/D"),
+        ("w1", "anchor_lut1/O", "anchor_lut2/I0"),
+        ("qr1", "q_reduce1/O", "q_reduce2/I0"),
+        ("q_OBUF", "q_reduce2/O", "q_OBUF_inst/I"),
+        ("anchor_o_OBUF", "anchor_ff/Q", "anchor_o_OBUF_inst/I"),
+        ("anchor_o2_OBUF", "anchor_ff2/Q", "anchor_o2_OBUF_inst/I"),
+        ("q", "q_OBUF_inst/O", ""),
+        ("anchor_o", "anchor_o_OBUF_inst/O", ""),
+        ("anchor_o2", "anchor_o2_OBUF_inst/O", ""),
+        ("clk_g", "bufg_inst/O", "anchor_ff/C"),
     ]
+    for index, (name, driver, sinks) in enumerate(nets):
+        lines += [
+            f"net.{index}.name\t{name}",
+            f"net.{index}.driver\t{driver}",
+            f"net.{index}.sinks\t{sinks}",
+            f"net.{index}.ports\t",
+            f"net.{index}.route_status\tROUTED",
+            f"net.{index}.route\t{{ {name}_ROUTE }}",
+            f"net.{index}.pips\t{name}_PIP",
+        ]
+    lines.append(f"net_count\t{len(nets)}")
     return "\n".join(lines) + "\n"
 
 
@@ -157,6 +166,25 @@ class Tree:
                 for variant in variants
             ],
         }
+        # One committed pair over the two specimens, so `committed_pairs()` — and
+        # therefore the T1/T2 gate — has something real to recompute.
+        first, second = (f"{SITE}_{variant}" for variant in variants[:2]) if len(variants) > 1 \
+            else (f"{SITE}_{variants[0]}", None)
+        if second is not None:
+            self.plan["predictions"] = [{
+                "feature": "CLBLL_L.SLICEL_X0.FIXTURE",
+                "specimen_id": first,
+                "comparison_specimen_id": second,
+                "split": "mine",
+                "expected_transition": {"before": 0, "after": 1},
+                "predicted_assignments": [
+                    {"token": "31_03", "segbit": {"frame_offset": 31, "bit_offset": 3,
+                                                  "negated": False},
+                     "address": {"far": "0x00400A1F", "word": 51, "bit": 3},
+                     "expected_value": 1}],
+            }]
+        else:
+            self.plan["predictions"] = []
         self.nodes = builder.plan_nodes(self.plan, {SITE: SITES}, self.build.resolve(), None)
         for node in self.nodes:
             self.write_node(node)
@@ -491,6 +519,302 @@ class ToolInvocationTests(unittest.TestCase):
         self.assertIn("--stage", checked.stdout)
 
 
+class StructuralGateTests(unittest.TestCase):
+    """The 2026-08-06 hole: the run built 184/184 and exited 0 with one committed pair
+    structurally incomparable, and the stager would have staged it."""
+
+    def setUp(self) -> None:
+        scratch = REPO_ROOT / "build"
+        scratch.mkdir(exist_ok=True)
+        self.directory = tempfile.TemporaryDirectory(dir=scratch)
+        self.addCleanup(self.directory.cleanup)
+        self.tree = Tree(Path(self.directory.name))
+        self.out = Path(self.directory.name) / "staging"
+
+    def break_a_dedicated_route(self) -> None:
+        """Give one endpoint of the committed pair a different route for `w2`.
+
+        `w2` is dedicated by the netlist rule (driver and both sinks are anchor/keeper
+        cells), so this is the same tier and the same shape as the real failure: same
+        driver, same sinks, one PIP different.
+        """
+        self.tree.edit_readback("zini_AFF", "net.0.pips\tw2_PIP", "net.0.pips\tw2_OTHER_PIP")
+        self.tree.edit_readback("zini_AFF", "net.0.route\t{ w2_ROUTE }",
+                                "net.0.route\t{ w2_OTHER_ROUTE }")
+
+    def test_the_fixture_pair_passes_before_it_is_broken(self) -> None:
+        self.assertEqual(stager.structural_problems(self.tree.plan, self.tree.nodes), [])
+
+    def test_a_t2_route_mismatch_fails_the_gate(self) -> None:
+        self.break_a_dedicated_route()
+        problems = stager.structural_problems(self.tree.plan, self.tree.nodes)
+        pair_problems = [item for item in problems if item.startswith("pair ")]
+        self.assertEqual(len(pair_problems), 1, problems)
+        self.assertIn("w2.pips", pair_problems[0])
+        self.assertIn("w2.route", pair_problems[0])
+
+    def test_the_stager_refuses_and_writes_nothing(self) -> None:
+        self.break_a_dedicated_route()
+        with self.assertRaises(SystemExit) as caught:
+            stager.stage(self.tree.plan, self.tree.nodes, self.out, verbose=False)
+        self.assertIn("structural gate does not pass", str(caught.exception))
+        self.assertFalse(self.out.exists())
+        self.assertFalse(self.out.with_name(self.out.name + ".partial").exists())
+
+    def test_check_exits_non_zero_on_a_failing_pair(self) -> None:
+        self.break_a_dedicated_route()
+        self.assertEqual(stager.check(self.tree.plan, self.tree.nodes, None, verbose=False), 1)
+
+    def test_a_drifted_recipe_stops_the_gate_before_any_readback_is_read(self) -> None:
+        """Verification precedes comparison, and this pins the order rather than the
+        message: with a drifted stamp, `compare_pair` must never be called at all.
+
+        The 2026-08-06 tree is in exactly this state, and the first version of this
+        stager reported that run's stale T2 finding instead of the drift.
+        """
+        node = next(item for item in self.tree.nodes if item["variant"] == "base")
+        stamp_path = node["outdir"] / "stamp.json"
+        stamp = json.loads(stamp_path.read_text())
+        stamp["recipe"]["sources"]["scripts/gate_build_ff_formal.py"] = "0" * 64
+        stamp_path.write_text(json.dumps(stamp), encoding="utf-8")
+
+        def must_not_run(*_args, **_kwargs):
+            raise AssertionError("compare_pair was called on unverified artifacts")
+
+        with unittest.mock.patch.object(builder, "compare_pair", side_effect=must_not_run):
+            with unittest.mock.patch.object(builder, "compare_derived",
+                                            side_effect=must_not_run):
+                problems = stager.structural_problems(self.tree.plan, self.tree.nodes)
+                with self.assertRaises(SystemExit) as caught:
+                    stager.stage(self.tree.plan, self.tree.nodes, self.out, verbose=False)
+        self.assertTrue(any("different recipe" in item for item in problems), problems)
+        self.assertIn("different recipe", str(caught.exception))
+        self.assertFalse(self.out.exists())
+
+    def test_a_derived_specimen_with_an_unexpected_change_blocks_staging(self) -> None:
+        """T1 and T2 pass; the derived gate does not. `ready_for_measurement` is a
+        three-part conjunction, and staging used to enforce two of them."""
+        # A shared net's route: diagnostic for a pair (T3, never a FAIL), but an
+        # unexpected difference between a derived specimen and the base it was made from.
+        self.tree.edit_readback("zini_AFF", "net.9.route\t{ clk_g_ROUTE }",
+                                "net.9.route\t{ clk_g_OTHER_ROUTE }")
+        gate = builder.structural_gate(self.tree.plan, self.tree.nodes)
+        self.assertEqual([p["status"] for p in gate["pairs"]], ["pass"],
+                         "the pair gate must still pass, or this proves nothing")
+        self.assertEqual([d["status"] for d in gate["derived"]], ["FAIL"])
+        with self.assertRaises(SystemExit) as caught:
+            stager.stage(self.tree.plan, self.tree.nodes, self.out, verbose=False)
+        self.assertIn("structural gate does not pass", str(caught.exception))
+        self.assertFalse(self.out.exists())
+        self.assertFalse(self.out.with_name(self.out.name + ".partial").exists())
+
+    def test_a_half_scoped_pair_is_a_failure_when_the_scope_is_not_partial(self) -> None:
+        """A committed pair with one endpoint outside the node set can never be compared.
+        Over a declared partial scope that is a scope fact; over a full one it is a hole."""
+        half = [node for node in self.tree.nodes if node["variant"] == "base"]
+        problems = stager.structural_problems(self.tree.plan, half)
+        self.assertTrue(any("only one endpoint is in scope" in item for item in problems),
+                        problems)
+        self.assertEqual(
+            stager.structural_problems(self.tree.plan, half, partial_scope=True), [])
+
+    def test_an_uncomparable_gate_is_not_a_pass(self) -> None:
+        """No pair compared means the gate did not run, which is not the same as passing."""
+        problems = stager.structural_problems({"specimens": [], "predictions": []}, [])
+        self.assertTrue(problems)
+        self.assertTrue(any("an unrun gate is not a pass" in item for item in problems), problems)
+
+    def test_the_stager_does_not_read_the_producers_verdict(self) -> None:
+        """A run report claiming success must not be able to unlock staging."""
+        self.break_a_dedicated_route()
+        (self.tree.build.resolve() / "run_report.json").write_text(json.dumps({
+            "schema": "ff_formal_run/2", "complete": True, "build_complete": True,
+            "pair_gate_pass": True, "derived_gate_pass": True,
+            "ready_for_measurement": True, "pairs": [], "derived": []}), encoding="utf-8")
+        with self.assertRaises(SystemExit):
+            stager.stage(self.tree.plan, self.tree.nodes, self.out, verbose=False)
+        self.assertFalse(self.out.exists())
+
+
+class BuilderReadinessTests(unittest.TestCase):
+    """`ready_for_measurement`, and the exit code that must follow it."""
+
+    def report(self, *, pair_status: str = "pass", derived_status: str = "pass",
+               impls: int = 120, specimens: int = 184) -> dict:
+        return {
+            "implementations_built": impls, "implementations_required": 120,
+            "specimens_built": specimens, "specimens_required": 184,
+            "verification_problems": [],
+            "pairs_required": 1, "pairs_required_ids": [["a", "b"]],
+            "derived_required": 1, "derived_required_ids": ["d"],
+            "pairs": [{"pair": ["a", "b"], "status": pair_status}],
+            "derived": [{"specimen": "d", "status": derived_status}],
+        }
+
+    def test_a_complete_green_run_is_ready(self) -> None:
+        verdict = builder.readiness(self.report())
+        self.assertTrue(verdict["ready_for_measurement"])
+        self.assertEqual(builder.exit_code(self.report()), 0)
+
+    def test_a_t2_failure_blocks_a_fully_built_run(self) -> None:
+        report = self.report(pair_status="FAIL")
+        verdict = builder.readiness(report)
+        self.assertTrue(verdict["build_complete"], "the build really did finish")
+        self.assertFalse(verdict["pair_gate_pass"])
+        self.assertFalse(verdict["ready_for_measurement"])
+        self.assertEqual(verdict["pair_failures"], [["a", "b"]])
+        self.assertEqual(builder.exit_code(report), 1)
+
+    def test_a_derived_failure_blocks_it_too(self) -> None:
+        self.assertEqual(builder.exit_code(self.report(derived_status="FAIL")), 1)
+
+    def test_an_incomplete_build_is_not_ready(self) -> None:
+        self.assertEqual(builder.exit_code(self.report(impls=119, specimens=183)), 1)
+
+    def test_an_unbuilt_pair_is_not_a_pass(self) -> None:
+        report = self.report()
+        report["pairs"].append({"pair": ["c", "d"], "status": "unbuilt"})
+        self.assertFalse(builder.readiness(report)["pair_gate_pass"])
+        self.assertEqual(builder.exit_code(report), 1)
+
+    def test_no_pairs_at_all_is_not_a_pass(self) -> None:
+        report = self.report()
+        report["pairs"] = []
+        self.assertFalse(builder.readiness(report)["pair_gate_pass"])
+        self.assertEqual(builder.exit_code(report), 1)
+
+    def test_dropping_one_passing_pair_still_fails(self) -> None:
+        """The trimmed-report attack: keep the counts, keep every surviving record
+        passing, and delete one. "All present passed" is not coverage."""
+        report = self.report()
+        report["pairs_required"] = 2
+        report["pairs_required_ids"] = [["a", "b"], ["c", "d"]]
+        verdict = builder.readiness(report)
+        self.assertFalse(verdict["ready_for_measurement"])
+        self.assertTrue(any("do not cover the required set" in item
+                            for item in verdict["structural_problems"]), verdict)
+        self.assertEqual(builder.exit_code(report), 1)
+
+    def test_dropping_one_passing_derived_record_still_fails(self) -> None:
+        report = self.report()
+        report["derived_required"] = 2
+        report["derived_required_ids"] = ["d", "e"]
+        self.assertFalse(builder.readiness(report)["derived_gate_pass"])
+        self.assertEqual(builder.exit_code(report), 1)
+
+    def test_a_duplicated_record_is_not_coverage(self) -> None:
+        report = self.report()
+        report["pairs_required"] = 2
+        report["pairs_required_ids"] = [["a", "b"], ["c", "d"]]
+        report["pairs"].append({"pair": ["a", "b"], "status": "pass"})
+        problems = builder.readiness(report)["structural_problems"]
+        self.assertTrue(any("duplicates" in item for item in problems), problems)
+        self.assertEqual(builder.exit_code(report), 1)
+
+    def test_a_declared_count_that_contradicts_the_declared_identities_fails(self) -> None:
+        """The count is not redundant with the identity check: it cross-checks the two
+        declarations against each other, so a record cannot say "168 required" while
+        listing one identity and reporting one passing record."""
+        report = self.report()
+        report["pairs_required"] = 168
+        problems = builder.readiness(report)["structural_problems"]
+        self.assertTrue(any("record count" in item for item in problems), problems)
+        self.assertEqual(builder.exit_code(report), 1)
+
+    def test_a_report_that_declares_no_required_set_cannot_be_judged(self) -> None:
+        report = self.report()
+        del report["pairs_required_ids"]
+        problems = builder.readiness(report)["structural_problems"]
+        self.assertTrue(any("does not declare its required pair set" in item
+                            for item in problems), problems)
+        self.assertEqual(builder.exit_code(report), 1)
+
+    def test_a_missing_pair_declaration_sinks_the_pair_gate_field(self) -> None:
+        """The field must follow the category, not the wording. This message begins with
+        "the", so classifying by `startswith("pair")` reported pair_gate_pass True about a
+        gate that could not be evaluated at all."""
+        report = self.report()
+        del report["pairs_required_ids"]
+        verdict = builder.readiness(report)
+        self.assertFalse(verdict["pair_gate_pass"])
+        self.assertTrue(verdict["derived_gate_pass"])
+        self.assertFalse(verdict["ready_for_measurement"])
+
+    def test_a_missing_derived_declaration_sinks_only_the_derived_gate_field(self) -> None:
+        report = self.report()
+        del report["derived_required_ids"]
+        verdict = builder.readiness(report)
+        self.assertTrue(verdict["pair_gate_pass"])
+        self.assertFalse(verdict["derived_gate_pass"])
+        self.assertFalse(verdict["ready_for_measurement"])
+
+    def test_pair_count_and_duplicate_problems_sink_only_the_pair_gate(self) -> None:
+        for mutate in (lambda r: r.__setitem__("pairs_required", 168),
+                       lambda r: r["pairs"].append({"pair": ["a", "b"], "status": "pass"})):
+            with self.subTest(mutation=mutate):
+                report = self.report()
+                mutate(report)
+                verdict = builder.readiness(report)
+                self.assertFalse(verdict["pair_gate_pass"])
+                self.assertTrue(verdict["derived_gate_pass"])
+                self.assertFalse(verdict["ready_for_measurement"])
+
+    def test_derived_count_and_duplicate_problems_sink_only_the_derived_gate(self) -> None:
+        for mutate in (lambda r: r.__setitem__("derived_required", 64),
+                       lambda r: r["derived"].append({"specimen": "d", "status": "pass"})):
+            with self.subTest(mutation=mutate):
+                report = self.report()
+                mutate(report)
+                verdict = builder.readiness(report)
+                self.assertTrue(verdict["pair_gate_pass"])
+                self.assertFalse(verdict["derived_gate_pass"])
+                self.assertFalse(verdict["ready_for_measurement"])
+
+    def test_one_verification_problem_sinks_both_gate_fields(self) -> None:
+        report = self.report()
+        report["verification_problems"] = ["SLICE_X2Y25_base: refusing to use … — "
+                                           "stamp was produced by a different recipe."]
+        verdict = builder.readiness(report)
+        self.assertFalse(verdict["pair_gate_pass"])
+        self.assertFalse(verdict["derived_gate_pass"])
+        self.assertFalse(verdict["ready_for_measurement"])
+        # and nothing else is asserted about pairs or derived, because nothing was compared
+        self.assertEqual(verdict["structural_problems"], report["verification_problems"])
+
+    def test_the_categories_are_buckets_not_string_prefixes(self) -> None:
+        """Every finding must arrive already classified, so no consumer has to parse."""
+        report = self.report(pair_status="FAIL", derived_status="FAIL")
+        findings = builder.gate_findings(report)
+        self.assertEqual(sorted(findings), ["derived", "pair", "verification"])
+        self.assertEqual(len(findings["pair"]), 1, findings)
+        self.assertEqual(len(findings["derived"]), 1, findings)
+        self.assertEqual(findings["verification"], [])
+        self.assertEqual(builder.gate_problems(report),
+                         findings["verification"] + findings["pair"] + findings["derived"])
+
+    def test_a_verification_problem_stops_the_verdict_before_any_comparison(self) -> None:
+        report = self.report()
+        report["verification_problems"] = ["SLICE_X2Y25_base: stamp was produced by a "
+                                           "different recipe"]
+        verdict = builder.readiness(report)
+        self.assertFalse(verdict["pair_gate_pass"])
+        self.assertFalse(verdict["derived_gate_pass"])
+        self.assertFalse(verdict["ready_for_measurement"])
+        self.assertEqual(verdict["structural_problems"], report["verification_problems"])
+
+    def test_the_preserved_failing_run_is_refused_by_the_new_gate(self) -> None:
+        """The real artifact of 2026-08-06, versioned in evidence/, must not be ready."""
+        report = json.loads((REPO_ROOT / "evidence/ff_holdout_2026_08_06_t2fail"
+                             / "run_report.json").read_text())
+        verdict = builder.readiness(report)
+        self.assertTrue(verdict["build_complete"])
+        self.assertEqual(verdict["pairs_compared"], 168)
+        self.assertEqual(verdict["pair_failures"],
+                         [["SLICE_X25Y25_base", "SLICE_X25Y25_ce_tied"]])
+        self.assertFalse(verdict["ready_for_measurement"])
+        self.assertEqual(builder.exit_code(report), 1)
+
+
 class CheckScopeTests(unittest.TestCase):
     """`--check` may not report success about a set nobody chose."""
 
@@ -540,8 +864,23 @@ class RealMineArtifactTests(unittest.TestCase):
 
     MINE = REPO_ROOT / "build/gate_ff_formal" / SITE
 
+    @staticmethod
+    def matches_current_recipe() -> bool:
+        """A recipe-domain change invalidates every artifact on disk, by design. When
+        that has happened the precondition for this case is absent — which is a fact
+        about the tree, not a silent pass: the synthetic cases above carry the logic."""
+        stamp = RealMineArtifactTests.MINE / "base" / "stamp.json"
+        if not stamp.is_file():
+            return False
+        recorded = json.loads(stamp.read_text())["recipe"]["sources"]
+        return all(builder.sha256_file(REPO_ROOT / path) == digest
+                   for path, digest in recorded.items())
+
     @unittest.skipUnless(MINE.is_dir(), f"no built mine instance at {MINE}")
     def test_the_real_mine_instance_converts(self) -> None:
+        if not self.matches_current_recipe():
+            self.skipTest("the built mine artifacts predate the current recipe — "
+                          "they are invalidated until rebuilt")
         plan = builder.load_commitment()
         mapping = builder.check_site_mapping(plan)
         nodes = builder.plan_nodes(plan, mapping, (REPO_ROOT / "build/gate_ff_formal").resolve(),

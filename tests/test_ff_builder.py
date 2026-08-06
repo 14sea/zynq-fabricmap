@@ -14,6 +14,7 @@ readback file precisely so it can be falsified at this level.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil  # noqa: F401  (kept for evidence-path tests)
@@ -626,8 +627,18 @@ class DiagnosticArtifactGateTests(unittest.TestCase):
     def test_the_untampered_tree_passes(self) -> None:
         # The only case here that needs REAL bitstreams: it parses frames. The tamper
         # negatives all refuse earlier and run everywhere on a synthetic tree.
+        stamp_path = self.BUILD / "SLICE_X2Y25" / "base" / "stamp.json"
         if not (self.BUILD / "SLICE_X2Y25" / "base" / "spec.bit").is_file():
             self.skipTest("mine smoke artifacts not present in build/ (gitignored)")
+        # A recipe-domain change invalidates every artifact on disk by design, and the
+        # diagnostic refuses them for that reason. Say so, rather than reporting the
+        # deliberate invalidation as a broken diagnostic.
+        recorded = json.loads(stamp_path.read_text())["recipe"]["sources"]
+        drifted = [path for path, digest in recorded.items()
+                   if hashlib.sha256((REPO_ROOT / path).read_bytes()).hexdigest() != digest]
+        if drifted:
+            self.skipTest("built artifacts predate the current recipe and are invalidated "
+                          f"until rebuilt (changed: {', '.join(sorted(drifted))})")
         checked = self.run_diag(self.BUILD)
         self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
         self.assertIn("false positives     : 0", checked.stdout)

@@ -42,6 +42,23 @@ Staging roots are refused outside the repository (manifest paths must be
 repository-relative), inside `gate_runs/`, `data/`, `evidence/` or any source namespace,
 and on top of an existing directory.
 
+**The whole structural gate runs before anything is converted or written**, and
+verification runs before any artifact is read. `--stage` calls the builder's
+`structural_gate()`, which passes every node through `verified_state()` first and only
+then opens readbacks, and it covers all three parts of `ready_for_measurement` —
+verification, the committed pair gate and the derived gate — because enforcing a subset
+of a conjunction enforces nothing. The identities it must cover come from the commitment,
+so a report that lost records cannot pass by having every surviving record pass.
+
+The run report is deliberately *not* consulted: a stager that trusted a producer-written
+verdict would accept exactly the run this gate exists to stop.
+On 2026-08-06 it would have, because `run_report.complete` meant "everything was built"
+while one committed pair was structurally incomparable
+(`evidence/ff_holdout_2026_08_06_t2fail/`). `--check` reports the same gate, and over a
+complete scope its exit code follows it; over a half-built tree the pairs it cannot
+compare are out of scope rather than failures — that selects which pairs are judged, it
+never changes the rule.
+
 Two guarantees make "all or nothing" true rather than intended:
 
 * the write phase builds `<root>.partial` and only ever ends in the rename or in
@@ -101,12 +118,15 @@ Recorded from commands, not from a report:
 * hiding one mine specimen makes `--check --instance SLICE_X2Y25` exit 1 with
   *asserts all 23 of its committed specimens; 22 are built*, where it previously reported
   a clean 22/22.
-* `tests/test_ff_stager.py`: 30 cases, all synthetic except one clearly named
+* `tests/test_ff_stager.py`: 58 cases, all synthetic except one clearly named
   artifact-dependent case, so the suite runs on a cold checkout. Two of them cost
   nothing and pin what a docs command line assumes: the tool carries a shebang **and**
   the executable bit, and `scripts/gate_stage_ff_formal.py --help` actually runs. Mode
   `100644` makes every command line in this file exit 126.
-* 21 adversarial mutations of this tool, **20 caught**. The survivor — filling
+* 34 adversarial mutations of this tool and the shared gate, **33 caught** — including
+  reading a readback while verification is failing, ignoring the required identity set,
+  tolerating duplicate or miscounted records, dropping the derived half of the
+  conjunction, and an exit code that follows build completeness. The survivor — filling
   `requested` from the readback — is an equivalent mutant while the three drift guards
   stand, because they make the two values provably equal; `test_requested_is_the_plan_
   intent_spelled_out` exercises the intent path on its own so the table cannot move

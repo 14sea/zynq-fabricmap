@@ -120,11 +120,17 @@ scripts/extract_prjxray_subset.py --verify                    # integrity gate, 
   184-specimen/120-P&R builder exists; the mine instance is built and independently
   diagnosed at TP=22, FP=0, FN=0 (23/184 specimens, holdout untouched). The host-side
   attestation converter and stager (`scripts/gate_stage_ff_formal.py`,
-  `docs/ff_staging_producer.md`) now exist and need no Vivado run: all 23 mine
-  specimens convert and pass the consumer's own rules. Mine attestations are checked
-  individually with `--check`; the published commitment admits no mine-only staging
-  manifest, so `--stage` refuses at 23 of 184 and exact staging is evaluated only
-  after the remaining 161 specimens exist, without creating a reduced commitment.
+  `docs/ff_staging_producer.md`) exist and need no Vivado run.
+  **The first full holdout run (2026-08-06) built 184/184 and is refused**: one
+  committed holdout pair is structurally incomparable (T2, dedicated net `w1` routed
+  differently at `SLICE_X25Y25`), so it may not be staged or measured, and the
+  affected prediction is not dropped. Preserved in
+  `evidence/ff_holdout_2026_08_06_t2fail/`. The stop condition stays a stop condition:
+  T1/T2 is not relaxed after firing. The run verdict is now `ready_for_measurement`
+  (`ff_formal_run/2`), the builder's exit status follows it, and the stager recomputes
+  the pair gate itself before staging anything. Next: pin dedicated-net routing in the
+  specimen design, which invalidates all 184 artifacts and requires a full rebuild
+  that must come back 168/168 green.
 - `clb_lutram` has inventory, isolation and real-diff evidence, but no commitment or
   certificate. `int_pip` and `ppip_bitless` remain unstarted.
 

@@ -849,3 +849,59 @@ tightened past what it was checking.**
   "the site is **legal**" is narrowed to "exists and is not marked prohibited in the
   freeze" — whether it can host the requested cells is Vivado's answer, read back and
   hard-checked (§3.3, §5.2).
+
+---
+
+## Addendum, 2026-08-06 — the run verdict is `ready_for_measurement`, not `complete`
+
+Written after the first full holdout run, which exposed a hole in this document's own
+stop condition rather than in its execution. §5.3 says a T1 or T2 difference fails the
+run. It did not say *what fails*, and the implementation answered "the report records
+it": `run_report.complete` meant `120/120 && 184/184`, the exit code followed that
+field, and nothing downstream consulted the pair records at all. So a run that built
+every specimen and had one structurally incomparable committed pair exited 0, and the
+stager — which never read the report — would have staged its 184 artifacts.
+
+The run report is now `ff_formal_run/2` and carries one shared decision, computed by
+`readiness()` and used by every consumer:
+
+```
+build_complete        = implementations_built == 120 && specimens_built == 184
+pair_gate_pass        = every committed pair in scope was compared and passed  (T1, T2)
+derived_gate_pass     = every derived specimen in scope was checked and passed
+ready_for_measurement = build_complete && pair_gate_pass && derived_gate_pass
+```
+
+`complete` is retained with its original meaning — everything was **built** — and is
+deliberately no longer a verdict. The builder's exit status is `exit_code(report)`,
+which follows `ready_for_measurement`. An empty set is not a pass in either gate: a run
+that compared no pair has not passed the pair gate, it has not run it.
+
+One structural gate, `structural_gate()`, produces both the pair records and the derived
+records, and in that order: **every node passes `verified_state()` before a single
+`readback.tsv` is opened**, so a tree whose recipe has drifted reports the drift instead
+of stale comparisons of artifacts nobody should be reading. The identities it must cover
+— `pairs_required_ids`, `derived_required_ids` and their counts — are derived from the
+commitment restricted to the node scope and travel in the record, because "every record
+present passed" is not coverage: a report that lost half its records satisfies it.
+`gate_findings()` is the one place those are judged (missing, extra, duplicated,
+miscounted, undeclared, failing) and it returns them **already classified** as
+verification / pair / derived — `gate_problems()` only flattens that for display. The
+categories decide the named fields, because classifying by message text does not work:
+a missing `pairs_required_ids` reads "the record does not declare its required pair set",
+which starts with "the", so a `startswith("pair")` test reported `pair_gate_pass: True`
+about a gate that could not be evaluated at all. `gate_stage_ff_formal.py` calls it on a
+gate it recomputes itself, so no producer-written verdict can unlock staging and no part of the
+three-way conjunction can be enforced separately from the rest.
+
+**Why it is written this way and not the other way.** T2 fired on a holdout pair, and
+the accounting that might have shown the difference to be harmless has not been looked
+at and must not be. A stop condition that is relaxed after it fires, using evidence it
+was placed in front of, is not a stop condition. The affected run is preserved in
+`evidence/ff_holdout_2026_08_06_t2fail/` and its artifacts are invalidated, not measured.
+
+What this addendum does **not** do is fix the cause: the specimen design pins cells,
+LOC and BEL, but not the routing of its own dedicated nets, so two specimens of one pair
+can legitimately be built with `w1` on different paths. That is a §4/§5.3 design task,
+it changes a recipe-domain file, and it therefore invalidates every artifact built
+before it.

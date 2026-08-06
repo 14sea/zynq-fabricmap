@@ -743,12 +743,211 @@ def main() -> int:
         out.write_text(json.dumps(report, indent=2) + "\n")
         print_summary(report)
         print(f"\nreport: {out}")
-    return 0 if report["complete"] else 1
+    return exit_code(report)
+
+
+def pair_status(result: dict) -> str:
+    """`pass` or `FAIL` for one compared pair — the ONE definition of the T1/T2 gate.
+
+    Extracted because it has two consumers that must not drift: this builder, and the
+    stager, which recomputes the gate from the readbacks before it will stage anything.
+    T3 is absent on purpose: shared nets are diagnostic and never a FAIL.
+    """
+    return "pass" if (not result["t1_diffs"] and not result["t2_diffs"]
+                      and not result["dedicated_mismatch"]
+                      and "dedicated_unexpected" not in result) else "FAIL"
+
+
+def required_identities(plan: dict, nodes: list[dict]) -> tuple[list, list, list]:
+    """The exact pair and derived identities a gate over these nodes must cover.
+
+    Derived from the commitment restricted to the node scope, never from what happens to
+    have been compared — "every record present passed" is not a gate, because a run that
+    lost half its records satisfies it.
+    """
+    ids = {node["specimen_id"] for node in nodes}
+    scopes, _direction = committed_pairs(plan)
+    pairs, straddling = [], []
+    for key in scopes:
+        members = set(key)
+        if members <= ids:
+            pairs.append(sorted(key))
+        elif members & ids:
+            straddling.append(sorted(key))
+    derived = sorted(node["specimen_id"] for node in nodes if node["kind"] == "derived")
+    return sorted(pairs), derived, straddling
+
+
+def structural_gate(plan: dict, nodes: list[dict], *, partial_scope: bool = False) -> dict:
+    """Verify every artifact, then compare exactly what the commitment requires.
+
+    Order is the point. Every node passes `verified_state` BEFORE a single `readback.tsv`
+    is opened, so a tree whose recipe has drifted reports the drift — it does not report
+    stale T1/T2 findings computed from artifacts nobody should be reading. Both the pair
+    comparison and the derived comparison live here, so there is one structural gate and
+    not two that can be enforced separately.
+    """
+    verification: list[str] = []
+    for node in sorted(nodes, key=lambda item: item["specimen_id"]):
+        try:
+            state, why = verified_state(node["outdir"], node)
+        except SystemExit as refusal:
+            # `verified_state` already names the specimen; prefixing it again reads as
+            # two different specimens on one line.
+            verification.append(str(refusal).splitlines()[0].strip())
+            continue
+        if state != "reuse":
+            verification.append(f"{node['specimen_id']}: {why}")
+
+    pairs_required, derived_required, straddling = required_identities(plan, nodes)
+    for pair in [] if partial_scope else straddling:
+        verification.append(
+            f"committed pair {pair[0]} <-> {pair[1]}: only one endpoint is in scope, "
+            "so the pair can never be compared")
+
+    gate = {
+        "partial_scope": partial_scope,
+        "pairs_required": len(pairs_required),
+        "pairs_required_ids": pairs_required,
+        "derived_required": len(derived_required),
+        "derived_required_ids": derived_required,
+        "verification_problems": verification,
+        "pairs": [],
+        "derived": [],
+    }
+    if verification:
+        return gate  # nothing has been read, and nothing will be
+
+    by_id = {node["specimen_id"]: node for node in nodes}
+    readbacks = {node["specimen_id"]: read_tsv(node["outdir"] / "readback.tsv")
+                 for node in nodes}
+    for a_id, b_id in pairs_required:
+        result = compare_pair(readbacks[a_id], readbacks[b_id])
+        result["pair"] = [a_id, b_id]
+        result["status"] = pair_status(result)
+        gate["pairs"].append(result)
+    for specimen_id in derived_required:
+        node = by_id[specimen_id]
+        base_id = f"{node['instance']}_base"
+        if base_id not in readbacks:
+            gate["verification_problems"].append(
+                f"{specimen_id}: its base specimen {base_id} is not in scope")
+            continue
+        result = compare_derived(readbacks[base_id], readbacks[specimen_id],
+                                 VARIANTS[node["variant"]]["bel"])
+        result["specimen"] = specimen_id
+        result["status"] = "pass" if len(result["expected_init_changes"]) == 1 \
+            and not result["unexpected"] else "FAIL"
+        gate["derived"].append(result)
+    return gate
+
+
+def gate_findings(gate: dict) -> dict[str, list[str]]:
+    """Every reason a structural gate result is not measurable, **per category**.
+
+    Structured rather than flat because the categories decide named fields. Classifying a
+    finding by whether its sentence starts with the word "pair" is not classification: a
+    missing `pairs_required_ids` produced the message "the record does not declare its
+    required pair set", which begins with "the", so `pair_gate_pass` reported True about
+    a gate that could not be evaluated at all. Strings are for display; the buckets are
+    the decision.
+    """
+    findings: dict[str, list[str]] = {
+        "verification": list(gate.get("verification_problems", [])),
+        "pair": [],
+        "derived": [],
+    }
+    if findings["verification"]:
+        # Nothing was compared; saying more about pairs or derived would be inventing it.
+        return findings
+
+    # Key names are spelled out rather than pluralised from the label: "derived" does not
+    # pluralise, and a KeyError-shaped bug here reads as a missing declaration.
+    for label, records, key, ids_key, count_key in (
+            ("pair", gate["pairs"], "pair", "pairs_required_ids", "pairs_required"),
+            ("derived", gate["derived"], "specimen", "derived_required_ids",
+             "derived_required")):
+        bucket = findings[label]
+        if ids_key not in gate or count_key not in gate:
+            # A record that does not declare what it had to cover cannot be judged, and
+            # "every record present passed" is the shape a trimmed report arrives in.
+            bucket.append(f"the record does not declare its required {label} set")
+            continue
+        required = [tuple(item) if isinstance(item, list) else item
+                    for item in gate[ids_key]]
+        reported = [tuple(record[key]) if isinstance(record[key], list) else record[key]
+                    for record in records]
+        if len(reported) != len(set(reported)):
+            bucket.append(f"{label} records contain duplicates")
+        missing = sorted(set(required) - set(reported))
+        extra = sorted(set(reported) - set(required))
+        if missing or extra:
+            bucket.append(
+                f"{label} records do not cover the required set "
+                f"(required {len(required)}, reported {len(reported)}, "
+                f"missing {len(missing)}, extra {len(extra)}): first missing {missing[:2]}")
+        if len(records) != gate[count_key]:
+            bucket.append(f"{label} record count {len(records)} != required "
+                          f"{gate[count_key]}")
+        if not required and not gate.get("partial_scope"):
+            bucket.append(f"no {label} is in scope: an unrun gate is not a pass")
+        for record in records:
+            if record["status"] != "pass":
+                keys = [d["key"] for d in record.get("t1_diffs", [])
+                        + record.get("t2_diffs", [])]
+                keys += [d["key"] for d in record.get("unexpected", [])]
+                detail = f" keys={keys[:4]}" if keys else ""
+                bucket.append(f"{label} {record[key]}: {record['status']}{detail}")
+    return findings
+
+
+def gate_problems(gate: dict) -> list[str]:
+    """`gate_findings` flattened for display and refusal messages, in evaluation order."""
+    findings = gate_findings(gate)
+    return findings["verification"] + findings["pair"] + findings["derived"]
+
+
+def readiness(report: dict) -> dict:
+    """The single decision every consumer of a run shares.
+
+    `complete` answers "was everything built", and the exit code used to follow it alone.
+    That is how the 2026-08-06 run exited 0 with a failing pair, and why the stager would
+    have accepted its artifacts: build completeness is a *component* of readiness, never
+    a synonym for it. An empty set is not a pass in either gate — a run that compared no
+    pair has not passed the pair gate, it has not run it.
+    """
+    build_complete = (
+        report["implementations_built"] == report["implementations_required"]
+        and report["specimens_built"] == report["specimens_required"])
+    findings = gate_findings(report)
+    blocked = bool(findings["verification"])
+    return {
+        "build_complete": build_complete,
+        "pair_gate_pass": not blocked and not findings["pair"],
+        "derived_gate_pass": not blocked and not findings["derived"],
+        "ready_for_measurement": build_complete and not any(findings.values()),
+        "pairs_compared": len(report["pairs"]),
+        "structural_problems": (findings["verification"] + findings["pair"]
+                                + findings["derived"]),
+        "pair_failures": [p["pair"] for p in report["pairs"] if p["status"] == "FAIL"],
+        "derived_failures": [d["specimen"] for d in report["derived"]
+                             if d["status"] == "FAIL"],
+    }
+
+
+def exit_code(report: dict) -> int:
+    """The builder's exit status follows readiness, not build completeness."""
+    return 0 if readiness(report)["ready_for_measurement"] else 1
 
 
 def assemble_report(plan: dict, nodes: list[dict], mapping: dict,
                     attempt_id: str, only_instance: str | None) -> dict:
-    by_id = {n["specimen_id"]: n for n in nodes}
+    """The run record. Every structural fact in it comes from `structural_gate()`.
+
+    It used to build its own pair and derived comparisons, which is how the stager could
+    enforce two thirds of a three-part verdict: two implementations of one gate are two
+    gates. The counting stays here; the judging does not.
+    """
     states = {}
     for node in nodes:
         state, why = cache_state(node["outdir"], node)
@@ -758,49 +957,17 @@ def assemble_report(plan: dict, nodes: list[dict], mapping: dict,
                      and states[n["specimen_id"]]["state"] == "reuse")
     built_all = sum(1 for n in nodes if states[n["specimen_id"]]["state"] == "reuse")
 
-    scopes, _ = committed_pairs(plan)
-    pair_reports = []
-    for key in sorted(scopes, key=lambda k: sorted(k)):
-        a_id, b_id = sorted(key)
-        if a_id not in by_id or b_id not in by_id:
-            continue
-        a_node, b_node = by_id[a_id], by_id[b_id]
-        if states[a_id]["state"] != "reuse" or states[b_id]["state"] != "reuse":
-            pair_reports.append({"pair": [a_id, b_id], "status": "unbuilt"})
-            continue
-        a = read_tsv(a_node["outdir"] / "readback.tsv")
-        b = read_tsv(b_node["outdir"] / "readback.tsv")
-        result = compare_pair(a, b)
-        result["pair"] = [a_id, b_id]
-        result["status"] = "pass" if not result["t1_diffs"] and not result["t2_diffs"] \
-            and not result["dedicated_mismatch"] and "dedicated_unexpected" not in result \
-            else "FAIL"
-        pair_reports.append(result)
+    gate = structural_gate(plan, nodes)
+    by_id = {n["specimen_id"]: n for n in nodes}
+    for record in gate["derived"]:
+        node = by_id[record["specimen"]]
+        record["base_dcp_sha256"] = node["base_dcp_sha256"]
+        record["derived_dcp_sha256"] = sha256_file(node["outdir"] / "derived.dcp")
+        record["bitstream_sha256"] = sha256_file(node["outdir"] / "spec.bit")
+        record["readback_sha256"] = sha256_file(node["outdir"] / "readback.tsv")
 
-    derived_reports = []
-    for node in nodes:
-        if node["kind"] != "derived":
-            continue
-        base_node = by_id.get(f"{node['instance']}_base")
-        if base_node is None or states[node["specimen_id"]]["state"] != "reuse" \
-                or states[base_node["specimen_id"]]["state"] != "reuse":
-            derived_reports.append({"specimen": node["specimen_id"], "status": "unbuilt"})
-            continue
-        base = read_tsv(base_node["outdir"] / "readback.tsv")
-        drv = read_tsv(node["outdir"] / "readback.tsv")
-        result = compare_derived(base, drv, VARIANTS[node["variant"]]["bel"])
-        result["specimen"] = node["specimen_id"]
-        result["base_dcp_sha256"] = node["base_dcp_sha256"]
-        result["derived_dcp_sha256"] = sha256_file(node["outdir"] / "derived.dcp")
-        result["bitstream_sha256"] = sha256_file(node["outdir"] / "spec.bit")
-        result["readback_sha256"] = sha256_file(node["outdir"] / "readback.tsv")
-        result["status"] = "pass" if len(result["expected_init_changes"]) == 1 \
-            and not result["unexpected"] else "FAIL"
-        derived_reports.append(result)
-
-    complete = built_impl == 120 and built_all == 184
-    return {
-        "schema": "ff_formal_run/1",
+    report = {
+        "schema": "ff_formal_run/2",
         "attempt_id": attempt_id,
         "scope": only_instance or "all",
         "commitment_sha256": COMMITTED_SHA256,
@@ -810,18 +977,21 @@ def assemble_report(plan: dict, nodes: list[dict], mapping: dict,
         "implementations_required": 120,
         "specimens_built": built_all,
         "specimens_required": 184,
-        "complete": complete,
         "node_states": states,
-        "pairs": pair_reports,
-        "derived": derived_reports,
+        **gate,
     }
+    # `complete` is retained with its original meaning — everything was BUILT — and is
+    # deliberately no longer the run's verdict. `readiness()` is.
+    report["complete"] = (built_impl == 120 and built_all == 184)
+    report.update(readiness(report))
+    return report
 
 
 def print_summary(report: dict) -> None:
     print("\n--- run accounting -------------------------------------------------")
     print(f"  implementations : {report['implementations_built']} / 120")
     print(f"  specimens       : {report['specimens_built']} / 184")
-    print(f"  complete        : {report['complete']}")
+    print(f"  build complete  : {report['build_complete']}")
     pairs = [p for p in report["pairs"] if p["status"] != "unbuilt"]
     failed = [p for p in pairs if p["status"] == "FAIL"]
     t3 = sum(len(p.get("t3_diffs", [])) for p in pairs)
@@ -830,6 +1000,14 @@ def print_summary(report: dict) -> None:
     drv = [d for d in report["derived"] if d["status"] != "unbuilt"]
     bad = [d for d in drv if d["status"] == "FAIL"]
     print(f"  derived checked : {len(drv)}  failures: {len(bad)}")
+    print(f"  pair gate       : {'pass' if report['pair_gate_pass'] else 'FAIL'}"
+          f"   derived gate: {'pass' if report['derived_gate_pass'] else 'FAIL'}")
+    print(f"  READY FOR MEASUREMENT: {report['ready_for_measurement']}")
+    for pair in report["pair_failures"]:
+        print(f"    pair FAIL: {pair[0]} <-> {pair[1]}")
+    if not report["ready_for_measurement"]:
+        print("  This run may not be staged or measured. A built artifact is not a\n"
+              "  comparable one, and the pair gate is a stop condition, not a report.")
 
 
 if __name__ == "__main__":

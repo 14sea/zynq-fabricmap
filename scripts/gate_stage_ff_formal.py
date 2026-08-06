@@ -372,6 +372,25 @@ def encode(value: dict) -> bytes:
     return (json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n").encode()
 
 
+def structural_problems(plan: dict, nodes: list[dict], *, partial_scope: bool = False) -> list[str]:
+    """The builder's whole structural gate, recomputed here from the artifacts.
+
+    Not `run_report.json`: a producer-written verdict must never be what unlocks staging.
+    Not a pair-only recomputation either — `ready_for_measurement` is a three-part
+    conjunction, and enforcing two of the three is how a derived specimen with an
+    unexpected change would have walked straight through.
+
+    `builder.structural_gate` verifies every node before it opens a single readback, so a
+    tree whose recipe has drifted reports the drift rather than stale comparisons of
+    artifacts nobody should be reading. `partial_scope` says the node set is knowingly a
+    subset — a diagnostic over a half-built tree — so pairs and derived specimens it
+    cannot cover are out of scope rather than failures. It selects which identities are
+    required; it never changes the rule applied to them.
+    """
+    return builder.gate_problems(
+        builder.structural_gate(plan, nodes, partial_scope=partial_scope))
+
+
 def check_scope(plan: dict, instance: str | None, built: set[str]) -> list[str]:
     """What `--check` may call a success.
 
@@ -405,14 +424,24 @@ def check(plan: dict, nodes: list[dict], instance: str | None, *, verbose: bool 
     if verbose:
         print(f"checking {len(built)} built of {len(nodes)} planned "
               f"({len(plan['specimens'])} committed)")
+    built_ids = {node["specimen_id"] for node in built}
+    in_scope = {item["specimen_id"] for item in plan["specimens"]
+                if instance is None or item["site"] == instance}
+    # Verification first, for every node, before a single artifact is converted — the
+    # same order the stager uses. A drifted recipe must be reported as drift, not as
+    # comparisons of artifacts nobody should be reading.
+    gate = builder.structural_gate(plan, built, partial_scope=built_ids != in_scope)
+    gate_problems = builder.gate_problems(gate)
+    verification = gate["verification_problems"]
+    if verification:
+        if verbose:
+            print(f"REFUSED before reading any artifact: {len(verification)} problem(s)")
+            for problem in verification[:5]:
+                print(f"  {problem}")
+        return 1
+
     failures = 0
     for node in sorted(built, key=lambda item: item["specimen_id"]):
-        state, why = builder.verified_state(node["outdir"], node)
-        if state != "reuse":
-            if verbose:
-                print(f"  {node['specimen_id']:34} REFUSED  {why}")
-            failures += 1
-            continue
         _record, problems = convert_node(node, by_id[node["specimen_id"]], reference)
         if verbose:
             print(f"  {node['specimen_id']:34} {'OK' if not problems else 'FAIL'}")
@@ -420,15 +449,21 @@ def check(plan: dict, nodes: list[dict], instance: str | None, *, verbose: bool 
                 print(f"      {problem}")
         failures += 1 if problems else 0
 
-    scope_problems = check_scope(plan, instance, {node["specimen_id"] for node in built})
+    scope_problems = check_scope(plan, instance, built_ids)
+    # The same gate the stager enforces, reported here too: otherwise a full `--check`
+    # prints "184/184 OK" over a run that may not be measured. The scope is expressed by
+    # which nodes are passed — over a half-built tree the pairs and derived specimens it
+    # cannot cover are simply not required, which is a scope fact, not a relaxed rule.
     if verbose:
         print(f"converted {len(built) - failures}/{len(built)} without problems")
+        for problem in gate_problems:
+            print(f"  STRUCTURAL GATE: {problem}")
         for problem in scope_problems:
             print(f"  SCOPE: {problem}")
         if len(built) != len(plan["specimens"]):
             print("NOTE: this is a check, not a staging — the committed set is "
                   f"{len(plan['specimens'])} specimens and nothing was written.")
-    return 1 if (failures or scope_problems) else 0
+    return 1 if (failures or scope_problems or gate_problems) else 0
 
 
 def check_staging_root(out: Path) -> Path:
@@ -470,14 +505,21 @@ def stage(plan: dict, nodes: list[dict], out: Path, *, verbose: bool = True) -> 
             "  successfully built subset is not a smaller staging — it is no staging.\n"
             f"  First missing: {missing[:3]}")
 
+    # Before any conversion and long before any write: the run must be measurable, not
+    # merely built. Recomputed from the artifacts, never read from run_report.json, and
+    # it covers all three parts of `ready_for_measurement` — verification, the pair gate
+    # and the derived gate — because enforcing a subset of a conjunction enforces nothing.
+    gate = structural_problems(plan, nodes)
+    if gate:
+        raise SystemExit(
+            "refusing to stage: the structural gate does not pass ({} problem(s)).\n"
+            "  A built artifact is not a comparable one.\n  {}".format(
+                len(gate), "\n  ".join(gate[:5])))
+
     records: dict[str, dict] = {}
     problems: list[str] = []
     for specimen_id in sorted(staged):
         node = staged[specimen_id]
-        state, why = builder.verified_state(node["outdir"], node)
-        if state != "reuse":
-            problems.append(f"{specimen_id}: not a completed build ({why})")
-            continue
         attestation, found = convert_node(node, by_id[specimen_id], reference)
         records[specimen_id] = attestation
         problems.extend(found)
