@@ -1,0 +1,172 @@
+{
+  "schema": "probe_evidence/1",
+  "probe": "route_pin",
+  "note": "Hashes are integrity anchors: they detect substitution of these files. They do not prove Vivado produced these snapshots, and they are not a target for any later run to reproduce.",
+  "vivado_version": "2025.2",
+  "part": "xc7z010clg400-1",
+  "site_mapping": {
+    "target": "SLICE_X2Y25",
+    "anchor": "SLICE_X4Y20",
+    "keeper": "SLICE_X2Y20"
+  },
+  "matrix": [
+    {
+      "label": "current/base/Default",
+      "variant": "base",
+      "flow": "current",
+      "directive": "Default"
+    },
+    {
+      "label": "current/base/Explore",
+      "variant": "base",
+      "flow": "current",
+      "directive": "Explore"
+    },
+    {
+      "label": "current/base/AlternateCLBRouting",
+      "variant": "base",
+      "flow": "current",
+      "directive": "AlternateCLBRouting"
+    },
+    {
+      "label": "current/base/NoTimingRelaxation",
+      "variant": "base",
+      "flow": "current",
+      "directive": "NoTimingRelaxation"
+    },
+    {
+      "label": "current/ce_tied/Default",
+      "variant": "ce_tied",
+      "flow": "current",
+      "directive": "Default"
+    },
+    {
+      "label": "current/ce_tied/Explore",
+      "variant": "ce_tied",
+      "flow": "current",
+      "directive": "Explore"
+    },
+    {
+      "label": "pinned/base/Default",
+      "variant": "base",
+      "flow": "pinned",
+      "directive": "Default"
+    },
+    {
+      "label": "pinned/base/Explore",
+      "variant": "base",
+      "flow": "pinned",
+      "directive": "Explore"
+    },
+    {
+      "label": "pinned/base/AlternateCLBRouting",
+      "variant": "base",
+      "flow": "pinned",
+      "directive": "AlternateCLBRouting"
+    },
+    {
+      "label": "pinned/ce_tied/Default",
+      "variant": "ce_tied",
+      "flow": "pinned",
+      "directive": "Default"
+    },
+    {
+      "label": "pinned/ce_tied/Explore",
+      "variant": "ce_tied",
+      "flow": "pinned",
+      "directive": "Explore"
+    },
+    {
+      "label": "pinned/latch/Default",
+      "variant": "latch",
+      "flow": "pinned",
+      "directive": "Default"
+    },
+    {
+      "label": "pinned/async/Default",
+      "variant": "async",
+      "flow": "pinned",
+      "directive": "Default"
+    },
+    {
+      "label": "pinned/clkinv/Default",
+      "variant": "clkinv",
+      "flow": "pinned",
+      "directive": "Default"
+    }
+  ],
+  "probe_tools": {
+    "scripts/probe_route_pin.py": "7d9e67683f04ed254bf42e82d94c1b8a3bc8588e15164d5079acbc99fbc7af5c",
+    "vivado/probe/route_pin/probe_route_pin.tcl": "bdf004768507a23586c3f83e3e4c3c498cc556181e7be6eed96446d5f135c0b8"
+  },
+  "recipe_sources_read": {
+    "vivado/specimen/specimen_ff_formal.v": "47b2e3fade7a194361d4b9ab7e55c04feda7bcff4b60646bdc7fe65880b1ec54",
+    "vivado/specimen/ff_formal_readback.tcl": "ad69919d6cf2caa018f8ed4d2377f773ab951d0c874863108e06c3d9bac356d2"
+  },
+  "files": {
+    "current_base_AlternateCLBRouting.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "bb4ba4762a7dea45f4aaaa9fe46b965d6dc698e729313b144edea70c0268ad69"
+    },
+    "current_base_Default.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "c0174defa47662eb5a0af87d4df52fbfda9ee74d5c7644087ae13b99f5418c18"
+    },
+    "current_base_Explore.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "f2e584ca0f80251bb9e8390771530257fe24a8b09a1f616e04c559d3a704b145"
+    },
+    "current_base_NoTimingRelaxation.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "8f82b20c432700b37fec85c28ebe6d92e5c561e8b589f16046717478f7c13914"
+    },
+    "current_ce_tied_Default.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "bb281dd9bc869cc0c567e8035de7632f27d2901141cdeb378d2fc583110b1aad"
+    },
+    "current_ce_tied_Explore.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "53efeefd356ed800f8152db68bba28b4a676cd1b859ff6a5686df255aa18d08b"
+    },
+    "pinned_async_Default.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "622e791fedb1d478e5e3c080412af987a02d468141fe947ce2744f85bf0d3cb0"
+    },
+    "pinned_base_AlternateCLBRouting.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "eceb5cf806952e56591fdf0328c4148b2f76bccf21565a613561abe72b40705b"
+    },
+    "pinned_base_Default.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "6eedc8ad6ac7b992135ed32aaacba94df7ee5e37c4cadebb9c34373f33b2305c"
+    },
+    "pinned_base_Explore.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "744d88a7a829fb1856f43961e9de124e876576f75feecca0b0be3c147918c74b"
+    },
+    "pinned_ce_tied_Default.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "adf22bdc4d8c589c75bc4a144aa23a4cf6df1f2f21a929bc022254edfded7888"
+    },
+    "pinned_ce_tied_Explore.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "6e74bcaf28626c84b5a1555dd0730cd83bf929e39deef9c23bb87c27eb3a048b"
+    },
+    "pinned_clkinv_Default.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "1b37968b9a73f7de109e9346d9c9a14fe3d7a1a2b2d40b615c6a5c3477bd2b69"
+    },
+    "pinned_latch_Default.probe_routes.tsv": {
+      "role": "route snapshot",
+      "sha256": "a39176ab54d2d12da8afd0fc38018a131c1598b5374c296f6efb0607773203c8"
+    },
+    "probe_run.txt": {
+      "role": "driver transcript",
+      "sha256": "20033b98cdb2506d2515fe528bfba7d8f870eec29eb7865da88361f941fde036"
+    },
+    "verdict.json": {
+      "role": "verdict",
+      "sha256": "60af0dbbe4f98ad3bace38b8dde831bcba331357771be37caef3efa038bb4fef"
+    }
+  }
+}

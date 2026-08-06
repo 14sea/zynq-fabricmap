@@ -1,0 +1,42 @@
+  current/base/Default       ok         48.6s
+  current/base/Explore       ok         48.2s
+  current/base/AlternateCLBRouting ok         48.0s
+  current/base/NoTimingRelaxation ok         48.1s
+  current/ce_tied/Default    ok         47.9s
+  current/ce_tied/Explore    ok         48.1s
+  pinned/base/Default        ok         48.0s
+  pinned/base/Explore        ok         48.2s
+  pinned/base/AlternateCLBRouting ok         48.1s
+  pinned/ce_tied/Default     ok         51.8s
+  pinned/ce_tied/Explore     ok         48.1s
+  pinned/latch/Default       ok         48.1s
+  pinned/async/Default       ok         48.0s
+  pinned/clkinv/Default      ok         48.7s
+
+--- each run: did the second pass move what the first pass routed? ------
+  current/base/Default       moved_after_first_pass= 0  is_route_fixed=['0']
+  current/base/Explore       moved_after_first_pass= 0  is_route_fixed=['0']
+  current/base/AlternateCLBRouting moved_after_first_pass= 0  is_route_fixed=['0']
+  current/base/NoTimingRelaxation moved_after_first_pass= 0  is_route_fixed=['0']
+  current/ce_tied/Default    moved_after_first_pass= 0  is_route_fixed=['0']
+  current/ce_tied/Explore    moved_after_first_pass= 0  is_route_fixed=['0']
+  pinned/base/Default        moved_after_first_pass= 0  is_route_fixed=['0', '1']
+  pinned/base/Explore        moved_after_first_pass= 0  is_route_fixed=['0', '1']
+  pinned/base/AlternateCLBRouting moved_after_first_pass= 0  is_route_fixed=['0', '1']
+  pinned/ce_tied/Default     moved_after_first_pass= 0  is_route_fixed=['0', '1']
+  pinned/ce_tied/Explore     moved_after_first_pass= 0  is_route_fixed=['0', '1']
+  pinned/latch/Default       moved_after_first_pass= 0  is_route_fixed=['0', '1']
+  pinned/async/Default       moved_after_first_pass= 0  is_route_fixed=['0', '1']
+  pinned/clkinv/Default      moved_after_first_pass= 0  is_route_fixed=['0', '1']
+
+--- do runs agree on the nine dedicated routes? --------------------------
+  current  runs=6  distinct route sets=1
+      ['current/base/Default', 'current/base/Explore', 'current/base/AlternateCLBRouting', 'current/base/NoTimingRelaxation', 'current/ce_tied/Default', 'current/ce_tied/Explore']
+  pinned   runs=8  distinct route sets=1
+      ['pinned/base/Default', 'pinned/base/Explore', 'pinned/base/AlternateCLBRouting', 'pinned/ce_tied/Default', 'pinned/ce_tied/Explore', 'pinned/latch/Default', 'pinned/async/Default', 'pinned/clkinv/Default']
+
+--- verdict --------------------------------------------------------------
+  reproducible trigger on the mine site (current flow disagrees): False
+    NOTE: without a trigger the mine site cannot show the fix WORKING,
+    only that it did not regress. Say so rather than claiming a fix.
+  pinned flow problems: 0
