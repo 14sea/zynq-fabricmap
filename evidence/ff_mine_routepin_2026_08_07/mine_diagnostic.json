@@ -1,0 +1,606 @@
+{
+  "kind": "clb_ff_config mine bit-accounting diagnostic",
+  "diagnostic_only": true,
+  "certifiable": false,
+  "complete": false,
+  "not_a_measurement": "Produced outside the certification path against an incomplete matrix (15/120 implementations, 23/184 specimens). It evaluates the mine stop condition of docs/ff_builder_design.md \u00a710 and nothing else. It is not a measurement record, must not be copied into gate_runs/, and is not input to gate_certify_ff.py or host/verify_certificate.py.",
+  "commitment_sha256": "5440ef27acbd5b4f624cae54f4ffad89b3f656c1e6e5fa35b29226ff0d1b2e51",
+  "site": "SLICE_X2Y25",
+  "split": "mine",
+  "pairs_scored": 21,
+  "predictions_scored": 22,
+  "totals": {
+    "false_positives": 0,
+    "ownership_unknown": 0,
+    "unattributed": 0,
+    "true_positives": 22,
+    "false_negatives": 0,
+    "partition_exact": true,
+    "accounting_problems": 0
+  },
+  "buckets_order": [
+    "in_scope",
+    "frame_ecc",
+    "db_attributed",
+    "ownership_unknown",
+    "unattributed"
+  ],
+  "accounting": [
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_async",
+        "SLICE_X2Y25_base"
+      ],
+      "variants": [
+        "async",
+        "base"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 7,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_ce_tied"
+      ],
+      "variants": [
+        "base",
+        "ce_tied"
+      ],
+      "raw_diff_bits": 558,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 465,
+        "db_attributed": 92,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_clkinv"
+      ],
+      "variants": [
+        "base",
+        "clkinv"
+      ],
+      "raw_diff_bits": 10,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 9,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_sr_tied"
+      ],
+      "variants": [
+        "base",
+        "sr_tied"
+      ],
+      "raw_diff_bits": 386,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 309,
+        "db_attributed": 76,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_A5FF"
+      ],
+      "variants": [
+        "base",
+        "zini_A5FF"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 7,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_AFF"
+      ],
+      "variants": [
+        "base",
+        "zini_AFF"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 7,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_B5FF"
+      ],
+      "variants": [
+        "base",
+        "zini_B5FF"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 7,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_BFF"
+      ],
+      "variants": [
+        "base",
+        "zini_BFF"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 7,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_C5FF"
+      ],
+      "variants": [
+        "base",
+        "zini_C5FF"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 7,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_CFF"
+      ],
+      "variants": [
+        "base",
+        "zini_CFF"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 7,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_D5FF"
+      ],
+      "variants": [
+        "base",
+        "zini_D5FF"
+      ],
+      "raw_diff_bits": 10,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 9,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_DFF"
+      ],
+      "variants": [
+        "base",
+        "zini_DFF"
+      ],
+      "raw_diff_bits": 10,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 9,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_A5FF"
+      ],
+      "variants": [
+        "base",
+        "zrst_A5FF"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 7,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_AFF"
+      ],
+      "variants": [
+        "base",
+        "zrst_AFF"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 7,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_B5FF"
+      ],
+      "variants": [
+        "base",
+        "zrst_B5FF"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 7,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_BFF"
+      ],
+      "variants": [
+        "base",
+        "zrst_BFF"
+      ],
+      "raw_diff_bits": 10,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 9,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_C5FF"
+      ],
+      "variants": [
+        "base",
+        "zrst_C5FF"
+      ],
+      "raw_diff_bits": 10,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 9,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_CFF"
+      ],
+      "variants": [
+        "base",
+        "zrst_CFF"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 7,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_D5FF"
+      ],
+      "variants": [
+        "base",
+        "zrst_D5FF"
+      ],
+      "raw_diff_bits": 10,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 9,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_DFF"
+      ],
+      "variants": [
+        "base",
+        "zrst_DFF"
+      ],
+      "raw_diff_bits": 8,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 7,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    },
+    {
+      "specimen_ids": [
+        "SLICE_X2Y25_latch",
+        "SLICE_X2Y25_latch_base"
+      ],
+      "variants": [
+        "latch",
+        "latch_base"
+      ],
+      "raw_diff_bits": 6,
+      "counts": {
+        "in_scope": 1,
+        "frame_ecc": 5,
+        "db_attributed": 0,
+        "ownership_unknown": 0,
+        "unattributed": 0
+      },
+      "class_claimed_out_of_scope": 0,
+      "false_positive_addresses": [],
+      "partition_exact": true
+    }
+  ],
+  "predictions": [
+    {
+      "feature": "CLBLL_L.SLICEL_X0.A5FF.ZINI",
+      "specimen_id": "SLICE_X2Y25_zini_A5FF",
+      "comparison_specimen_id": "SLICE_X2Y25_base",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.A5FF.ZRST",
+      "specimen_id": "SLICE_X2Y25_base",
+      "comparison_specimen_id": "SLICE_X2Y25_zrst_A5FF",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.AFF.ZINI",
+      "specimen_id": "SLICE_X2Y25_zini_AFF",
+      "comparison_specimen_id": "SLICE_X2Y25_base",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.AFF.ZRST",
+      "specimen_id": "SLICE_X2Y25_base",
+      "comparison_specimen_id": "SLICE_X2Y25_zrst_AFF",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.B5FF.ZINI",
+      "specimen_id": "SLICE_X2Y25_zini_B5FF",
+      "comparison_specimen_id": "SLICE_X2Y25_base",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.B5FF.ZRST",
+      "specimen_id": "SLICE_X2Y25_base",
+      "comparison_specimen_id": "SLICE_X2Y25_zrst_B5FF",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.BFF.ZINI",
+      "specimen_id": "SLICE_X2Y25_zini_BFF",
+      "comparison_specimen_id": "SLICE_X2Y25_base",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.BFF.ZRST",
+      "specimen_id": "SLICE_X2Y25_base",
+      "comparison_specimen_id": "SLICE_X2Y25_zrst_BFF",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.C5FF.ZINI",
+      "specimen_id": "SLICE_X2Y25_zini_C5FF",
+      "comparison_specimen_id": "SLICE_X2Y25_base",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.C5FF.ZRST",
+      "specimen_id": "SLICE_X2Y25_base",
+      "comparison_specimen_id": "SLICE_X2Y25_zrst_C5FF",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.CEUSEDMUX",
+      "specimen_id": "SLICE_X2Y25_base",
+      "comparison_specimen_id": "SLICE_X2Y25_ce_tied",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.CFF.ZINI",
+      "specimen_id": "SLICE_X2Y25_zini_CFF",
+      "comparison_specimen_id": "SLICE_X2Y25_base",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.CFF.ZRST",
+      "specimen_id": "SLICE_X2Y25_base",
+      "comparison_specimen_id": "SLICE_X2Y25_zrst_CFF",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.CLKINV",
+      "specimen_id": "SLICE_X2Y25_clkinv",
+      "comparison_specimen_id": "SLICE_X2Y25_base",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.D5FF.ZINI",
+      "specimen_id": "SLICE_X2Y25_zini_D5FF",
+      "comparison_specimen_id": "SLICE_X2Y25_base",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.D5FF.ZRST",
+      "specimen_id": "SLICE_X2Y25_base",
+      "comparison_specimen_id": "SLICE_X2Y25_zrst_D5FF",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.DFF.ZINI",
+      "specimen_id": "SLICE_X2Y25_zini_DFF",
+      "comparison_specimen_id": "SLICE_X2Y25_base",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.DFF.ZRST",
+      "specimen_id": "SLICE_X2Y25_base",
+      "comparison_specimen_id": "SLICE_X2Y25_zrst_DFF",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.FFSYNC",
+      "specimen_id": "SLICE_X2Y25_base",
+      "comparison_specimen_id": "SLICE_X2Y25_async",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.LATCH",
+      "specimen_id": "SLICE_X2Y25_latch",
+      "comparison_specimen_id": "SLICE_X2Y25_latch_base",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.NOCLKINV",
+      "specimen_id": "SLICE_X2Y25_base",
+      "comparison_specimen_id": "SLICE_X2Y25_clkinv",
+      "matched": true
+    },
+    {
+      "feature": "CLBLL_L.SLICEL_X0.SRUSEDMUX",
+      "specimen_id": "SLICE_X2Y25_base",
+      "comparison_specimen_id": "SLICE_X2Y25_sr_tied",
+      "matched": true
+    }
+  ],
+  "problems": []
+}

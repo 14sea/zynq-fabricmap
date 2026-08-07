@@ -1,0 +1,962 @@
+{
+  "schema": "ff_formal_run/2",
+  "attempt_id": "c9a686c55342-20260807T055106Z",
+  "scope": "SLICE_X2Y25",
+  "commitment_sha256": "5440ef27acbd5b4f624cae54f4ffad89b3f656c1e6e5fa35b29226ff0d1b2e51",
+  "preregistration_plan_sha256": "ac9dbab8ba299360b924dec20507ed3c4f014b276cd1e20d82c25d3e92997a64",
+  "site_mapping": {
+    "SLICE_X14Y25": {
+      "target": "SLICE_X14Y25",
+      "keeper": "SLICE_X14Y20",
+      "anchor": "SLICE_X16Y20"
+    },
+    "SLICE_X15Y25": {
+      "target": "SLICE_X15Y25",
+      "keeper": "SLICE_X15Y20",
+      "anchor": "SLICE_X17Y20"
+    },
+    "SLICE_X24Y25": {
+      "target": "SLICE_X24Y25",
+      "keeper": "SLICE_X24Y20",
+      "anchor": "SLICE_X26Y20"
+    },
+    "SLICE_X25Y25": {
+      "target": "SLICE_X25Y25",
+      "keeper": "SLICE_X25Y20",
+      "anchor": "SLICE_X27Y20"
+    },
+    "SLICE_X2Y25": {
+      "target": "SLICE_X2Y25",
+      "keeper": "SLICE_X2Y20",
+      "anchor": "SLICE_X4Y20"
+    },
+    "SLICE_X3Y25": {
+      "target": "SLICE_X3Y25",
+      "keeper": "SLICE_X3Y20",
+      "anchor": "SLICE_X5Y20"
+    },
+    "SLICE_X8Y25": {
+      "target": "SLICE_X8Y25",
+      "keeper": "SLICE_X8Y20",
+      "anchor": "SLICE_X10Y20"
+    },
+    "SLICE_X9Y25": {
+      "target": "SLICE_X9Y25",
+      "keeper": "SLICE_X9Y20",
+      "anchor": "SLICE_X11Y20"
+    }
+  },
+  "implementations_built": 15,
+  "implementations_required": 120,
+  "specimens_built": 23,
+  "specimens_required": 184,
+  "node_states": {
+    "SLICE_X2Y25_base": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zini_AFF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zini_A5FF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zini_BFF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zini_B5FF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zini_CFF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zini_C5FF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zini_DFF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zini_D5FF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zrst_AFF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zrst_A5FF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zrst_BFF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zrst_B5FF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zrst_CFF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zrst_C5FF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zrst_DFF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_zrst_D5FF": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_ce_tied": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_sr_tied": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_async": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_latch_base": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_latch": {
+      "state": "reuse",
+      "why": "stamp matches"
+    },
+    "SLICE_X2Y25_clkinv": {
+      "state": "reuse",
+      "why": "stamp matches"
+    }
+  },
+  "partial_scope": false,
+  "pairs_required": 21,
+  "pairs_required_ids": [
+    [
+      "SLICE_X2Y25_async",
+      "SLICE_X2Y25_base"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_ce_tied"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_clkinv"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_sr_tied"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zini_A5FF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zini_AFF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zini_B5FF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zini_BFF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zini_C5FF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zini_CFF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zini_D5FF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zini_DFF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zrst_A5FF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zrst_AFF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zrst_B5FF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zrst_BFF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zrst_C5FF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zrst_CFF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zrst_D5FF"
+    ],
+    [
+      "SLICE_X2Y25_base",
+      "SLICE_X2Y25_zrst_DFF"
+    ],
+    [
+      "SLICE_X2Y25_latch",
+      "SLICE_X2Y25_latch_base"
+    ]
+  ],
+  "derived_required": 8,
+  "derived_required_ids": [
+    "SLICE_X2Y25_zini_A5FF",
+    "SLICE_X2Y25_zini_AFF",
+    "SLICE_X2Y25_zini_B5FF",
+    "SLICE_X2Y25_zini_BFF",
+    "SLICE_X2Y25_zini_C5FF",
+    "SLICE_X2Y25_zini_CFF",
+    "SLICE_X2Y25_zini_D5FF",
+    "SLICE_X2Y25_zini_DFF"
+  ],
+  "verification_problems": [],
+  "pairs": [
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [
+        {
+          "net": "rst_IBUF",
+          "what": "sinks"
+        }
+      ],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_async",
+        "SLICE_X2Y25_base"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [
+        {
+          "net": "<const1>",
+          "what": "sinks"
+        },
+        {
+          "net": "ce_IBUF",
+          "what": "sinks"
+        },
+        {
+          "net": "ce_IBUF",
+          "what": "route"
+        },
+        {
+          "net": "ce_IBUF",
+          "what": "pips"
+        },
+        {
+          "net": "rst_IBUF",
+          "what": "route"
+        },
+        {
+          "net": "rst_IBUF",
+          "what": "pips"
+        }
+      ],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_ce_tied"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_clkinv"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [
+        {
+          "net": "<const0>",
+          "what": "sinks"
+        },
+        {
+          "net": "rst_IBUF",
+          "what": "sinks"
+        },
+        {
+          "net": "rst_IBUF",
+          "what": "route"
+        },
+        {
+          "net": "rst_IBUF",
+          "what": "pips"
+        }
+      ],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_sr_tied"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_A5FF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_AFF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_B5FF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_BFF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_C5FF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_CFF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_D5FF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zini_DFF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [
+        {
+          "net": "rst_IBUF",
+          "what": "sinks"
+        }
+      ],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_A5FF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [
+        {
+          "net": "rst_IBUF",
+          "what": "sinks"
+        }
+      ],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_AFF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [
+        {
+          "net": "rst_IBUF",
+          "what": "sinks"
+        }
+      ],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_B5FF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [
+        {
+          "net": "rst_IBUF",
+          "what": "sinks"
+        }
+      ],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_BFF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [
+        {
+          "net": "rst_IBUF",
+          "what": "sinks"
+        }
+      ],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_C5FF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [
+        {
+          "net": "rst_IBUF",
+          "what": "sinks"
+        }
+      ],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_CFF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [
+        {
+          "net": "rst_IBUF",
+          "what": "sinks"
+        }
+      ],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_D5FF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [
+        {
+          "net": "rst_IBUF",
+          "what": "sinks"
+        }
+      ],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_base",
+        "SLICE_X2Y25_zrst_DFF"
+      ],
+      "status": "pass"
+    },
+    {
+      "t1_diffs": [],
+      "t2_diffs": [],
+      "t3_diffs": [
+        {
+          "net": "ce_IBUF",
+          "what": "sinks"
+        },
+        {
+          "net": "clk_g",
+          "what": "sinks"
+        }
+      ],
+      "dedicated": [
+        "anchor_o",
+        "anchor_o2",
+        "anchor_o2_OBUF",
+        "anchor_o_OBUF",
+        "q",
+        "q_OBUF",
+        "qr1",
+        "w1",
+        "w2"
+      ],
+      "dedicated_mismatch": null,
+      "pair": [
+        "SLICE_X2Y25_latch",
+        "SLICE_X2Y25_latch_base"
+      ],
+      "status": "pass"
+    }
+  ],
+  "derived": [
+    {
+      "expected_init_changes": [
+        {
+          "key": "store.1.init",
+          "base": "1'b1",
+          "derived": "1'b0"
+        }
+      ],
+      "unexpected": [],
+      "changed_key": "store.1.init",
+      "expected_bel": "A5FF",
+      "specimen": "SLICE_X2Y25_zini_A5FF",
+      "status": "pass",
+      "base_dcp_sha256": "e38c9cdd12b7cbf91ca97ea91557fa5eac1dbe8a5b2ba11de0117c717accc623",
+      "derived_dcp_sha256": "ecaf9ec9dc7d04655cc849d9229bfc457fbd0f8445227bd64f2fd8ddc1db8dd6",
+      "bitstream_sha256": "6b3ff8b019c37439e4d8bbac430072dc987033f08037711cac44b4576247a8a4",
+      "readback_sha256": "c1a0fbbec0654583bd648c0fced1fdf0dd3c6eb4faa68eebc74eb109c5baa2f2"
+    },
+    {
+      "expected_init_changes": [
+        {
+          "key": "store.0.init",
+          "base": "1'b1",
+          "derived": "1'b0"
+        }
+      ],
+      "unexpected": [],
+      "changed_key": "store.0.init",
+      "expected_bel": "AFF",
+      "specimen": "SLICE_X2Y25_zini_AFF",
+      "status": "pass",
+      "base_dcp_sha256": "e38c9cdd12b7cbf91ca97ea91557fa5eac1dbe8a5b2ba11de0117c717accc623",
+      "derived_dcp_sha256": "1d0fa948c9b41066a0cc314c643dc87db9c958a1bf9477e490e4a5861bf1fdfa",
+      "bitstream_sha256": "12c097c8fed83abd84a4b06b72978c6181658e7e5d564e2fbc1a78764ba94554",
+      "readback_sha256": "af69a98225475e60247f1ae97c6a80d091cfa084f2b877b0b2072d7c2f318906"
+    },
+    {
+      "expected_init_changes": [
+        {
+          "key": "store.3.init",
+          "base": "1'b1",
+          "derived": "1'b0"
+        }
+      ],
+      "unexpected": [],
+      "changed_key": "store.3.init",
+      "expected_bel": "B5FF",
+      "specimen": "SLICE_X2Y25_zini_B5FF",
+      "status": "pass",
+      "base_dcp_sha256": "e38c9cdd12b7cbf91ca97ea91557fa5eac1dbe8a5b2ba11de0117c717accc623",
+      "derived_dcp_sha256": "1b84c1cfb0fbb9fe45e254a704d5e7a6afc902a660b9151cd9e367738b543dca",
+      "bitstream_sha256": "416821c312354d44e761376dcc489c100f67bd335ac5502af5ad086800d7d70c",
+      "readback_sha256": "e3baf7395bfa65d8205df4577ca2e729f28639bb5aee833c8e8728c18c40cff8"
+    },
+    {
+      "expected_init_changes": [
+        {
+          "key": "store.2.init",
+          "base": "1'b1",
+          "derived": "1'b0"
+        }
+      ],
+      "unexpected": [],
+      "changed_key": "store.2.init",
+      "expected_bel": "BFF",
+      "specimen": "SLICE_X2Y25_zini_BFF",
+      "status": "pass",
+      "base_dcp_sha256": "e38c9cdd12b7cbf91ca97ea91557fa5eac1dbe8a5b2ba11de0117c717accc623",
+      "derived_dcp_sha256": "ec94c51574a5206360c4fee7a3f822dfedda3ad61569cd686dc3c9972fc27a39",
+      "bitstream_sha256": "8fc94e97e658cd293912417920b1a8f6455cf34cd948f6c40d2d1987648f3f8a",
+      "readback_sha256": "004cc51c1e19c16c56b9d6f2a17541e945d7fedbdcf7a50f3d870e063e73fb10"
+    },
+    {
+      "expected_init_changes": [
+        {
+          "key": "store.5.init",
+          "base": "1'b1",
+          "derived": "1'b0"
+        }
+      ],
+      "unexpected": [],
+      "changed_key": "store.5.init",
+      "expected_bel": "C5FF",
+      "specimen": "SLICE_X2Y25_zini_C5FF",
+      "status": "pass",
+      "base_dcp_sha256": "e38c9cdd12b7cbf91ca97ea91557fa5eac1dbe8a5b2ba11de0117c717accc623",
+      "derived_dcp_sha256": "550071bc8b8aa6465ff63c9b86f15f71b49ba22cdd1d148129bad70f30997235",
+      "bitstream_sha256": "9ed8be1c3769d97746861e9baa36ef507738ecd9fe0479a92f7853b223fbab37",
+      "readback_sha256": "84e82ff785113893e3697c17475599f5de2943e0772b0de1530f1f74a6c5407c"
+    },
+    {
+      "expected_init_changes": [
+        {
+          "key": "store.4.init",
+          "base": "1'b1",
+          "derived": "1'b0"
+        }
+      ],
+      "unexpected": [],
+      "changed_key": "store.4.init",
+      "expected_bel": "CFF",
+      "specimen": "SLICE_X2Y25_zini_CFF",
+      "status": "pass",
+      "base_dcp_sha256": "e38c9cdd12b7cbf91ca97ea91557fa5eac1dbe8a5b2ba11de0117c717accc623",
+      "derived_dcp_sha256": "4d60143811d965159450ebca65220d468bd027a6d72ffea37221a961c6263474",
+      "bitstream_sha256": "f7a7b5edf144d379dea4a1f7db5d23c15b2282c7388e75817cc59348e4cb6647",
+      "readback_sha256": "548bd2b0822f7641599e65cc85a39ea477e615834724a5a085de631cfbe01dc5"
+    },
+    {
+      "expected_init_changes": [
+        {
+          "key": "store.7.init",
+          "base": "1'b1",
+          "derived": "1'b0"
+        }
+      ],
+      "unexpected": [],
+      "changed_key": "store.7.init",
+      "expected_bel": "D5FF",
+      "specimen": "SLICE_X2Y25_zini_D5FF",
+      "status": "pass",
+      "base_dcp_sha256": "e38c9cdd12b7cbf91ca97ea91557fa5eac1dbe8a5b2ba11de0117c717accc623",
+      "derived_dcp_sha256": "36e77267c9c5744542cac1bda65a5cc8dceeb0533a72c1e3fe1b87bf0f3ceff6",
+      "bitstream_sha256": "27fb0c017c64de7b27bcbe85c2cd52084d7a10ddc25f4f9b3f9742ced79c498f",
+      "readback_sha256": "b9f17c3bc8abfdfe2466219c98beb82278f5a1224076f573ffb026db5f73686b"
+    },
+    {
+      "expected_init_changes": [
+        {
+          "key": "store.6.init",
+          "base": "1'b1",
+          "derived": "1'b0"
+        }
+      ],
+      "unexpected": [],
+      "changed_key": "store.6.init",
+      "expected_bel": "DFF",
+      "specimen": "SLICE_X2Y25_zini_DFF",
+      "status": "pass",
+      "base_dcp_sha256": "e38c9cdd12b7cbf91ca97ea91557fa5eac1dbe8a5b2ba11de0117c717accc623",
+      "derived_dcp_sha256": "b01626e63ce1f161878d0b49acaf64e4bc7d0878f79e4497f8901dd65bff78a3",
+      "bitstream_sha256": "47ffcc81e404fae9952db81ff25a24247a75ac96aabbc5593d8d285021995cca",
+      "readback_sha256": "8aa6d59d9327117691a59eaf41d74debf2e15afe6246fb3ed5ff852d75171a06"
+    }
+  ],
+  "complete": false,
+  "build_complete": false,
+  "pair_gate_pass": true,
+  "derived_gate_pass": true,
+  "ready_for_measurement": false,
+  "pairs_compared": 21,
+  "structural_problems": [],
+  "pair_failures": [],
+  "derived_failures": []
+}

@@ -1,0 +1,5 @@
+# Raw Vivado readback output: `emit_readback` writes a tab and then whatever the property
+# returned, so an empty property leaves a trailing tab. That is what the tool produced,
+# and this evidence is worthless if it is tidied. Scoped to this directory, where nothing
+# is source and every file is a record.
+* -whitespace
