@@ -50,6 +50,22 @@ if {$before ne "1'b1"} {
     error "$variant: expected base INIT 1'b1 on [get_property NAME $c], found $before"
 }
 
+# The dedicated nets arrive already routed and frozen in the base checkpoint. A cell
+# property is not supposed to move any of them, so the same first/final record is written
+# here too: it is the only place that shows the INIT change left the routing alone.
+set expect_dedicated {w1 w2 qr1 q_OBUF anchor_o_OBUF anchor_o2_OBUF q anchor_o anchor_o2}
+set dedicated [require_dedicated $expect_dedicated]
+set routable {}
+set intrasite {}
+foreach name $dedicated {
+    if {[get_property -quiet ROUTE_STATUS [get_nets $name]] eq "INTRASITE"} {
+        lappend intrasite $name
+    } else {
+        lappend routable $name
+    }
+}
+routepin_capture_first $dedicated $routable $intrasite
+
 set_property INIT 1'b0 $c
 
 set after [get_property INIT $c]

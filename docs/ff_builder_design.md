@@ -905,3 +905,58 @@ LOC and BEL, but not the routing of its own dedicated nets, so two specimens of 
 can legitimately be built with `w1` on different paths. That is a §4/§5.3 design task,
 it changes a recipe-domain file, and it therefore invalidates every artifact built
 before it.
+
+---
+
+## Addendum, 2026-08-07 — dedicated-net routing is pinned, and the record is auditable
+
+§5.3 requires the two ends of a committed pair to route their dedicated nets identically.
+The design did not make that true; it only checked it. Cells, LOC and BEL are constrained,
+routing was not, and on 2026-08-06 the router answered congestion at `SLICE_X25Y25`
+differently for `base` and `ce_tied`, putting `w1` on another path.
+
+The flow now routes the dedicated nets **first**, into a fabric where nothing else is
+routed — their endpoints are fully constrained and identical in every variant, so the
+target slice's contents cannot present as congestion — and then freezes them:
+
+```tcl
+place_design
+require_dedicated {…the nine…}        ;# recomputed from the netlist, or error
+route_design -nets $routable          ;# the six that have an interconnect route
+#   the other three are pad nets: read back and REQUIRED to be intrasite
+set_property IS_ROUTE_FIXED 1 $routable
+#   read back per net and REQUIRED to be 1
+routepin_capture_first …
+route_design                          ;# everything else
+```
+
+Three of the nine have no route to pin. `q`, `anchor_o` and `anchor_o2` are pad nets that
+Vivado skips as intrasite; that is a net with no routing degree of freedom, not a net that
+resisted pinning, and **T2's comparison domain still contains all nine**.
+
+**The record, and why it is inside `readback.tsv`.** Both phases of all nine nets — route,
+PIPs, driver, sinks, status, fixed — are written under the `routepin.` namespace of the
+readback. That artifact's hash is already in the stamp, so `verified_state()` covers the
+record without a sidecar file and without widening the consumer's attestation schema. The
+first phase is captured before the full routing pass; the final phase is read by
+`emit_routepin` at the moment it writes, so no "final" value can be one captured before
+routing finished, and `emit_readback` **fails** rather than write a readback that looks
+complete without a first-phase snapshot.
+
+Nothing in the record is a verdict. There is no `routepin_passed` field, `build_node`
+recomputes the checks from the raw fields before it writes `completed: true`, and
+`structural_gate()` recomputes them again rather than trusting that. The partition into
+routed and intrasite is not read from the file either: it comes from `classify_nets()` and
+from `ROUTE_STATUS`, and the readback's own net section has to agree with the route-pin
+section about the same fact.
+
+A node that fails these checks still gets a stamp — `completed: false`, the reason under
+`failure`, and the hashes of whatever that attempt produced. A directory holding half an
+artifact set and no record of the attempt is the state the stamp contract exists to
+prevent, and "the verification failed" is a result worth keeping, not a reason to leave no
+trace.
+
+Evidence for the mechanism: `evidence/ff_route_pin_probe_2026_08_06/` (mine site — the
+freedom is *not* reproducible there) and `evidence/ff_route_pin_sacrificial_2026_08_06/`
+(a non-committed site of the same geometry, where it was reproduced and removed). Whether
+this repairs the observed `SLICE_X25Y25` failure is a question only a full run answers.

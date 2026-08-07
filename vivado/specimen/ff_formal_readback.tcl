@@ -115,5 +115,137 @@ proc emit_readback {outdir site asite asite2 part variant mode idx} {
         }
     }
     kv $fh occupied_count $n
+
+    # ---- route pinning ------------------------------------------------------------
+    # Fails if no first-phase snapshot was captured, rather than writing a readback that
+    # would look complete without one.
+    emit_routepin $fh
     close $fh
+}
+
+# ---------------------------------------------------------------------------------------
+# Route pinning (design addendum 2026-08-07)
+# ---------------------------------------------------------------------------------------
+# The dedicated nets are routed before anything else and then frozen, so that two
+# specimens of one committed pair cannot route them differently — the failure that stopped
+# the 2026-08-06 holdout run. Everything here is RAW: which nets were computed, what they
+# carried before the second routing pass and what they carry after. Nothing decides
+# anything; the Python side recomputes the classification independently from `readback.tsv`
+# and compares, so a drift between the two is a loud failure rather than a shared mistake.
+
+proc cell_of_pin {pin} {
+    set p [string trim $pin]
+    set p [string trim $p "{}"]
+    set slash [string last "/" $p]
+    if {$slash < 0} { return $p }
+    return [string range $p 0 [expr {$slash - 1}]]
+}
+
+# The anchor/keeper subgraph, extended by output buffers an anchor/keeper cell drives —
+# the same rule the Python `classify_nets` applies to the readback.
+proc ak_extended {} {
+    set ak [ak_cells]
+    set ext $ak
+    foreach net [get_nets -hierarchical] {
+        set drv [get_pins -quiet -of_objects $net -filter {DIRECTION == OUT}]
+        if {[lsearch -exact $ak [cell_of_pin $drv]] < 0} { continue }
+        foreach sink [get_pins -quiet -of_objects $net -filter {DIRECTION == IN}] {
+            set cell [cell_of_pin $sink]
+            if {[string match "*_OBUF_inst" $cell]} { lappend ext $cell }
+        }
+    }
+    return [lsort -unique $ext]
+}
+
+proc dedicated_from_netlist {} {
+    set ext [ak_extended]
+    set out {}
+    foreach net [get_nets -hierarchical] {
+        set drv [get_pins -quiet -of_objects $net -filter {DIRECTION == OUT}]
+        if {$drv eq "" || [lsearch -exact $ext [cell_of_pin $drv]] < 0} { continue }
+        set inside 1
+        foreach sink [get_pins -quiet -of_objects $net -filter {DIRECTION == IN}] {
+            if {[lsearch -exact $ext [cell_of_pin $sink]] < 0} { set inside 0 ; break }
+        }
+        if {$inside} { lappend out [get_property NAME $net] }
+    }
+    return [lsort $out]
+}
+
+# Fail loudly rather than pin whatever happens to be there.
+proc require_dedicated {expected} {
+    set got [dedicated_from_netlist]
+    if {$got ne [lsort $expected]} {
+        error "dedicated set recomputed from the netlist is {$got}, expected {[lsort $expected]}"
+    }
+    return $got
+}
+
+# The first-phase snapshot is taken before the full routing pass and kept in a global
+# array; `emit_routepin` takes the final one itself, at the moment it writes, so there is
+# no window in which a "final" record could be captured before routing finished. Both go
+# into `readback.tsv` under the `routepin.` namespace, which means the record is pinned by
+# that artifact's hash in the stamp and verified by `verified_state` — no sidecar file and
+# no change to the attestation schema.
+
+proc routepin_fields {} { return {route pips driver sinks status fixed} }
+
+proc routepin_read {name} {
+    set n [get_nets -quiet $name]
+    if {$n eq ""} { error "dedicated net $name does not exist" }
+    set drv [get_pins -quiet -of_objects $n -filter {DIRECTION == OUT}]
+    set snk [lsort [get_pins -quiet -of_objects $n -filter {DIRECTION == IN}]]
+    return [list \
+        route  [get_property -quiet ROUTE $n] \
+        pips   [lsort [get_pips -quiet -of_objects $n]] \
+        driver $drv \
+        sinks  $snk \
+        status [get_property -quiet ROUTE_STATUS $n] \
+        fixed  [get_property -quiet IS_ROUTE_FIXED $n]]
+}
+
+proc routepin_capture_first {nets routable intrasite} {
+    global ROUTEPIN
+    array unset ROUTEPIN
+    foreach name $nets {
+        array set one [routepin_read $name]
+        foreach field [routepin_fields] { set ROUTEPIN(first.$name.$field) $one($field) }
+        array unset one
+    }
+    set ROUTEPIN(nets)      $nets
+    set ROUTEPIN(routable)  $routable
+    set ROUTEPIN(intrasite) $intrasite
+}
+
+proc emit_routepin {fh} {
+    global ROUTEPIN
+    if {![info exists ROUTEPIN(nets)]} {
+        error "no first-phase route-pin snapshot was captured — refusing to write a\
+               readback that would look complete"
+    }
+    set nets $ROUTEPIN(nets)
+    if {[llength $nets] != 9} {
+        error "route-pin snapshot covers [llength $nets] nets, expected 9"
+    }
+    puts $fh "routepin.schema\tff_formal_routepin/2"
+    puts $fh "routepin.dedicated\t$nets"
+    puts $fh "routepin.routable\t$ROUTEPIN(routable)"
+    puts $fh "routepin.intrasite\t$ROUTEPIN(intrasite)"
+    foreach name $nets {
+        foreach field [routepin_fields] {
+            if {![info exists ROUTEPIN(first.$name.$field)]} {
+                error "route-pin record is missing first.$name.$field"
+            }
+            puts $fh "routepin.first.$name.$field\t$ROUTEPIN(first.$name.$field)"
+        }
+    }
+    # The final phase is read here, not earlier: this proc runs after the full routing
+    # pass, so "final" cannot be a value captured before routing finished.
+    foreach name $nets {
+        array set one [routepin_read $name]
+        foreach field [routepin_fields] {
+            puts $fh "routepin.final.$name.$field\t$one($field)"
+        }
+        array unset one
+    }
 }

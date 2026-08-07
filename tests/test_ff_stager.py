@@ -37,6 +37,10 @@ SITES = {"target": SITE, "anchor": "SLICE_X4Y20", "keeper": "SLICE_X2Y20"}
 TILE = "CLBLL_L_X2Y25"
 TILE_TYPE = "CLBLL_L"
 
+PAD_NETS = ("q", "anchor_o", "anchor_o2")
+DEDICATED = ("w1", "w2", "qr1", "q_OBUF", "anchor_o_OBUF", "anchor_o2_OBUF",
+             "q", "anchor_o", "anchor_o2")
+
 PINS = {
     "FDRE": ("C", "CE", "R"),
     "FDSE": ("C", "CE", "S"),
@@ -81,6 +85,31 @@ def lut_cell(lines: list[str], prefix: str, name: str, ref: str, loc: str, bel: 
     put(f"{prefix}.pin.O.net\t{name}_o")
     put(f"{prefix}.pin.O.dir\tOUT")
     put(f"{prefix}.pin.O.belpin\t{loc}/{bel}/O6")
+
+
+def routepin_lines() -> list[str]:
+    """The `routepin.` section of a readback: nine nets, two phases, six fields, and
+    first == final because a correct build does not move them."""
+    routable = [n for n in DEDICATED if n not in PAD_NETS]
+    intrasite = [n for n in DEDICATED if n in PAD_NETS]
+    lines = [
+        "routepin.schema\tff_formal_routepin/2",
+        "routepin.dedicated\t" + " ".join(DEDICATED),
+        "routepin.routable\t" + " ".join(routable),
+        "routepin.intrasite\t" + " ".join(intrasite),
+    ]
+    for phase in ("first", "final"):
+        for name in DEDICATED:
+            pad = name in PAD_NETS
+            lines += [
+                f"routepin.{phase}.{name}.route\t" + ("{}" if pad else f"{{ {name}_ROUTE }}"),
+                f"routepin.{phase}.{name}.pips\t" + ("" if pad else f"{name}_PIP"),
+                f"routepin.{phase}.{name}.driver\t{name}_driver/O",
+                f"routepin.{phase}.{name}.sinks\t{name}_sink/I",
+                f"routepin.{phase}.{name}.status\t" + ("INTRASITE" if pad else "ROUTED"),
+                f"routepin.{phase}.{name}.fixed\t" + ("0" if pad else "1"),
+            ]
+    return lines
 
 
 def readback_text(variant: str) -> str:
@@ -136,16 +165,20 @@ def readback_text(variant: str) -> str:
         ("clk_g", "bufg_inst/O", "anchor_ff/C"),
     ]
     for index, (name, driver, sinks) in enumerate(nets):
+        # The three pad nets have no interconnect route at all, exactly as Vivado reports
+        # them; a fixture that routed them would hide the case the gate has to handle.
+        pad = name in PAD_NETS
         lines += [
             f"net.{index}.name\t{name}",
             f"net.{index}.driver\t{driver}",
             f"net.{index}.sinks\t{sinks}",
             f"net.{index}.ports\t",
-            f"net.{index}.route_status\tROUTED",
-            f"net.{index}.route\t{{ {name}_ROUTE }}",
-            f"net.{index}.pips\t{name}_PIP",
+            f"net.{index}.route_status\t{'INTRASITE' if pad else 'ROUTED'}",
+            f"net.{index}.route\t{'{}' if pad else f'{{ {name}_ROUTE }}'}",
+            f"net.{index}.pips\t{'' if pad else f'{name}_PIP'}",
         ]
     lines.append(f"net_count\t{len(nets)}")
+    lines += routepin_lines()
     return "\n".join(lines) + "\n"
 
 
@@ -898,6 +931,164 @@ class RealMineArtifactTests(unittest.TestCase):
             self.assertEqual(problems, [], node["specimen_id"])
             converted += 1
         self.assertEqual(converted, 23)
+
+
+
+class RoutePinTamperTests(unittest.TestCase):
+    """The route-pin record lives inside `readback.tsv`, so it is pinned by that
+    artifact's hash — and the gate still recomputes it from the raw fields rather than
+    trusting that the hash matched. Both layers are checked here, because either alone
+    is defeated by the other's blind spot."""
+
+    def setUp(self) -> None:
+        scratch = REPO_ROOT / "build"
+        scratch.mkdir(exist_ok=True)
+        self.directory = tempfile.TemporaryDirectory(dir=scratch)
+        self.addCleanup(self.directory.cleanup)
+        self.tree = Tree(Path(self.directory.name))
+        self.out = Path(self.directory.name) / "staging"
+        self.node = next(n for n in self.tree.nodes if n["variant"] == "base")
+
+    def edit_routepin(self, old: str, new: str, *, forge_stamp: bool) -> None:
+        path = self.node["outdir"] / "readback.tsv"
+        text = path.read_text(encoding="utf-8")
+        self.assertIn(old, text, "the anchor is not in the fixture readback")
+        path.write_text(text.replace(old, new, 1), encoding="utf-8")
+        if forge_stamp:
+            stamp_path = self.node["outdir"] / "stamp.json"
+            stamp = json.loads(stamp_path.read_text())
+            stamp["artifacts"]["readback.tsv"] = builder.sha256_file(path)
+            stamp_path.write_text(json.dumps(stamp, indent=1), encoding="utf-8")
+
+    def test_layer_one_an_edited_record_without_a_matching_stamp_is_refused(self) -> None:
+        self.edit_routepin("routepin.final.w1.pips\tw1_PIP",
+                           "routepin.final.w1.pips\tw1_OTHER_PIP", forge_stamp=False)
+        problems = stager.structural_problems(self.tree.plan, self.tree.nodes)
+        self.assertTrue(any("does not match the hash the stamp recorded" in item
+                            for item in problems), problems)
+        with self.assertRaises(SystemExit):
+            stager.stage(self.tree.plan, self.tree.nodes, self.out, verbose=False)
+        self.assertFalse(self.out.exists())
+
+    def test_layer_two_a_forged_stamp_hash_does_not_help(self) -> None:
+        """Hash agreement is not agreement with the facts: the record now says the final
+        PIPs differ from the first, and that is read from the fields themselves."""
+        self.edit_routepin("routepin.final.w1.pips\tw1_PIP",
+                           "routepin.final.w1.pips\tw1_OTHER_PIP", forge_stamp=True)
+        problems = stager.structural_problems(self.tree.plan, self.tree.nodes)
+        self.assertFalse(any("hash" in item for item in problems),
+                         f"the hash layer should be satisfied now: {problems}")
+        self.assertTrue(any("pips changed between the first and the final record" in item
+                            for item in problems), problems)
+        with self.assertRaises(SystemExit):
+            stager.stage(self.tree.plan, self.tree.nodes, self.out, verbose=False)
+        self.assertFalse(self.out.exists())
+
+    def test_a_forged_stamp_cannot_hide_an_unfrozen_net(self) -> None:
+        self.edit_routepin("routepin.final.w1.fixed\t1", "routepin.final.w1.fixed\t0",
+                           forge_stamp=True)
+        problems = stager.structural_problems(self.tree.plan, self.tree.nodes)
+        self.assertTrue(any("IS_ROUTE_FIXED reads '0'" in item for item in problems),
+                        problems)
+
+    def test_a_forged_stamp_cannot_hide_a_missing_field(self) -> None:
+        self.edit_routepin("routepin.final.w1.sinks\tw1_sink/I\n", "", forge_stamp=True)
+        problems = stager.structural_problems(self.tree.plan, self.tree.nodes)
+        self.assertTrue(any("the namespace is not exactly" in item for item in problems),
+                        problems)
+
+    def test_a_forged_stamp_cannot_hide_a_shrunken_dedicated_set(self) -> None:
+        self.edit_routepin("routepin.dedicated\t" + " ".join(DEDICATED),
+                           "routepin.dedicated\t" + " ".join(DEDICATED[:8]),
+                           forge_stamp=True)
+        problems = stager.structural_problems(self.tree.plan, self.tree.nodes)
+        self.assertTrue(any("dedicated set is not the nine" in item for item in problems),
+                        problems)
+
+    def test_a_forged_stamp_cannot_hide_a_pad_net_that_grew_a_route(self) -> None:
+        self.edit_routepin("routepin.final.q.pips\t", "routepin.final.q.pips\tq_PIP",
+                           forge_stamp=True)
+        problems = stager.structural_problems(self.tree.plan, self.tree.nodes)
+        self.assertTrue(any("intrasite but carries route/pips" in item
+                            or "changed between the first and the final" in item
+                            for item in problems), problems)
+
+
+class RoutePinFailOpenTests(unittest.TestCase):
+    """Three checks that a correct record satisfies whatever the gate does — so the only
+    way to know they exist is to hand the gate a wrong one. Each of these passed before
+    the gate was tightened, on data that happened to be clean."""
+
+    def setUp(self) -> None:
+        scratch = REPO_ROOT / "build"
+        scratch.mkdir(exist_ok=True)
+        self.directory = tempfile.TemporaryDirectory(dir=scratch)
+        self.addCleanup(self.directory.cleanup)
+        self.tree = Tree(Path(self.directory.name))
+        self.node = next(n for n in self.tree.nodes if n["variant"] == "base")
+        self.path = self.node["outdir"] / "readback.tsv"
+
+    def rewrite(self, text: str) -> None:
+        self.path.write_text(text, encoding="utf-8")
+        stamp_path = self.node["outdir"] / "stamp.json"
+        stamp = json.loads(stamp_path.read_text())
+        stamp["artifacts"]["readback.tsv"] = builder.sha256_file(self.path)
+        stamp_path.write_text(json.dumps(stamp, indent=1), encoding="utf-8")
+
+    def problems(self) -> list[str]:
+        return stager.structural_problems(self.tree.plan, self.tree.nodes)
+
+    def test_a_duplicated_key_is_refused_rather_than_overwritten(self) -> None:
+        """A dict assignment keeps the last value, so a second `pips` line would pass
+        every "exactly these fields" check while the reader saw only one of them."""
+        text = self.path.read_text(encoding="utf-8")
+        self.rewrite(text + "routepin.final.w1.pips\tw1_SECOND_VALUE\n")
+        self.assertTrue(any("duplicate keys in the record" in item
+                            for item in self.problems()), self.problems())
+
+    def test_an_extra_key_in_the_namespace_is_refused(self) -> None:
+        text = self.path.read_text(encoding="utf-8")
+        self.rewrite(text + "routepin.note\tlooks harmless\n")
+        self.assertTrue(any("the namespace is not exactly" in item
+                            for item in self.problems()), self.problems())
+
+    def test_a_repeated_member_in_the_routable_list_is_refused(self) -> None:
+        text = self.path.read_text(encoding="utf-8")
+        routable = [n for n in DEDICATED if n not in PAD_NETS]
+        self.rewrite(text.replace("routepin.routable\t" + " ".join(routable),
+                                  "routepin.routable\t" + " ".join(routable + ["w1"]), 1))
+        self.assertTrue(any("routable list repeats a net" in item
+                            for item in self.problems()), self.problems())
+
+    def test_a_list_member_outside_the_dedicated_set_is_refused(self) -> None:
+        text = self.path.read_text(encoding="utf-8")
+        self.rewrite(text.replace("routepin.intrasite\tq anchor_o anchor_o2",
+                                  "routepin.intrasite\tq anchor_o clk_g", 1))
+        self.assertTrue(any("names something outside the dedicated set" in item
+                            for item in self.problems()), self.problems())
+
+    def test_a_net_that_lost_its_freeze_between_phases_is_refused(self) -> None:
+        """`fixed` used to be excluded from the first/final comparison. The flow sets
+        IS_ROUTE_FIXED before it captures `first`, so the two cannot legitimately differ."""
+        text = self.path.read_text(encoding="utf-8")
+        self.rewrite(text.replace("routepin.final.w1.fixed\t1",
+                                  "routepin.final.w1.fixed\t0", 1))
+        problems = self.problems()
+        self.assertTrue(any("fixed changed between the first and the final record" in item
+                            for item in problems), problems)
+
+    def test_an_unrouted_net_is_not_treated_as_completed(self) -> None:
+        """"not INTRASITE" is not "routed": UNROUTED is neither, and counting it as
+        completion is how an unfinished route passes as a pinned one."""
+        text = self.path.read_text(encoding="utf-8")
+        text = text.replace("routepin.first.w1.status\tROUTED",
+                            "routepin.first.w1.status\tUNROUTED", 1)
+        text = text.replace("routepin.final.w1.status\tROUTED",
+                            "routepin.final.w1.status\tUNROUTED", 1)
+        self.rewrite(text)
+        problems = self.problems()
+        self.assertTrue(any("neither ROUTED nor INTRASITE" in item for item in problems),
+                        problems)
 
 
 if __name__ == "__main__":

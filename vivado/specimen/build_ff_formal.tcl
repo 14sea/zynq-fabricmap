@@ -115,7 +115,47 @@ foreach c $stores {
 }
 
 place_design
+
+# ---- route pinning -------------------------------------------------------------------
+# Two specimens of one committed pair differ in the target slice and nowhere else, yet on
+# 2026-08-06 the router answered the surrounding congestion differently and put `w1` on
+# another path, failing T2 at SLICE_X25Y25. The dedicated nets are therefore routed FIRST,
+# into a fabric where nothing else is routed — their endpoints are fully constrained and
+# identical in every variant, so the target's contents cannot present as congestion —
+# and then frozen. Reproduced and removed on a non-committed site of the same geometry in
+# `evidence/ff_route_pin_sacrificial_2026_08_06/`; whether it repairs SLICE_X25Y25 is a
+# question only a full run can answer.
+set expect_dedicated {w1 w2 qr1 q_OBUF anchor_o_OBUF anchor_o2_OBUF q anchor_o anchor_o2}
+set dedicated [require_dedicated $expect_dedicated]
+
+# Three of the nine are pad nets with no interconnect route at all — Vivado skips them as
+# intrasite. Routing is attempted for the six that have a route; the other three are read
+# back and REQUIRED to be intrasite, so "not routed" is asserted rather than assumed.
+set routable {}
+set intrasite {}
+foreach name $dedicated {
+    set n [get_nets $name]
+    if {[get_property -quiet ROUTE_STATUS $n] eq "INTRASITE"} {
+        lappend intrasite $name
+    } else {
+        lappend routable $name
+    }
+}
+route_design -nets [get_nets $routable]
+foreach name $intrasite {
+    set st [get_property -quiet ROUTE_STATUS [get_nets $name]]
+    if {$st ne "INTRASITE"} { error "$name was expected to stay intrasite, reads $st" }
+}
+set_property IS_ROUTE_FIXED 1 [get_nets $routable]
+foreach name $routable {
+    set fx [get_property -quiet IS_ROUTE_FIXED [get_nets $name]]
+    if {$fx ne "1"} { error "$name did not take IS_ROUTE_FIXED, reads '$fx'" }
+}
+
+routepin_capture_first $dedicated $routable $intrasite
+
 route_design
+
 write_checkpoint -force $outdir/base.dcp
 write_bitstream -force $outdir/spec.bit
 

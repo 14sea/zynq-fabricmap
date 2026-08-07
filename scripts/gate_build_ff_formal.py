@@ -295,6 +295,9 @@ def recipe(build_seed: int, tclargs: list[str]) -> dict:
 ARTIFACTS = {"implementation": ("spec.bit", "readback.tsv", "base.dcp"),
              "derived": ("spec.bit", "readback.tsv", "derived.dcp")}
 
+# The six fields every dedicated net must carry, in both the first and the final record.
+ROUTEPIN_FIELDS = ("route", "pips", "driver", "sinks", "status", "fixed")
+
 
 def cache_state(outdir: Path, node: dict) -> tuple[str, str]:
     """`(state, why)`: build / reuse / failed / refuse.
@@ -494,6 +497,21 @@ def build_node(node: dict, timeout: int, attempt_id: str, seq: int) -> str:
 
     tcl = BUILD_TCL if node["kind"] == "impl" else DERIVE_TCL
     ok, output = run_vivado(node, tcl, timeout)
+    failure: dict | None = None if ok else {"stage": "vivado",
+                                            "problems": ["vivado exited non-zero"]}
+    if ok:
+        # A node is not complete because Vivado exited 0. The route-pin record is checked
+        # here, and a failure still writes a stamp — `completed: false` with the reason and
+        # the hashes of whatever this attempt produced. A directory holding half an
+        # artifact set and no record of the attempt is the state this contract exists to
+        # prevent.
+        try:
+            problems = routepin_problems(read_tsv(node["outdir"] / "readback.tsv"))
+        except (OSError, ValueError) as exc:
+            problems = [f"cannot read the readback: {exc}"]
+        if problems:
+            ok = False
+            failure = {"stage": "route_pin", "problems": problems}
     stamp = {
         "schema": "ff_formal_stamp/1",
         "node_type": node["node_type"],
@@ -510,8 +528,13 @@ def build_node(node: dict, timeout: int, attempt_id: str, seq: int) -> str:
     if node["node_type"] == "derived":
         stamp["derived_from"] = {"specimen_id": f"{node['instance']}_base",
                                  "base_dcp_sha256": node["base_dcp_sha256"]}
+    if failure is not None:
+        stamp["failure"] = failure
     write_stamp(node["outdir"], stamp, f"{attempt_id}-{seq}")
     if not ok:
+        if failure and failure["stage"] == "route_pin":
+            for problem in failure["problems"][:4]:
+                print(f"    route-pin: {problem}")
         for line in output.splitlines():
             if "ERROR" in line:
                 print(f"    {line.strip()}")
@@ -523,11 +546,26 @@ def build_node(node: dict, timeout: int, attempt_id: str, seq: int) -> str:
 # --------------------------------------------------------------------------------------
 
 def read_tsv(path: Path) -> dict[str, str]:
+    """Key/value readback, refusing duplicate keys.
+
+    A dict assignment silently keeps the last value, so a record could carry two
+    `routepin.final.w1.pips` lines and every "exactly these fields" check would still
+    pass while the reader saw only one of them. A duplicate is a malformed record, not a
+    preference for the later line.
+    """
     out: dict[str, str] = {}
-    for line in path.read_text().splitlines():
-        if "\t" in line:
-            key, value = line.split("\t", 1)
-            out[key] = value
+    duplicates: list[str] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line:
+            continue
+        key, _, value = line.partition("\t")
+        if key in out:
+            duplicates.append(key)
+            continue
+        out[key] = value
+    if duplicates:
+        raise ValueError(f"{path}: duplicate keys in the record: "
+                         f"{sorted(set(duplicates))[:5]}")
     return out
 
 
@@ -746,6 +784,132 @@ def main() -> int:
     return exit_code(report)
 
 
+def parse_routepin(readback: dict[str, str]) -> dict:
+    """The `routepin.` namespace of `readback.tsv` -> `{net: {phase: {field: value}}}`.
+
+    Raw fields only. Nothing in the record is a verdict and nothing here reads one: a
+    producer boolean saying "route pinning passed" would be exactly the summary the gate
+    exists to do without. The record lives inside the readback, so it is pinned by that
+    artifact's hash in the stamp and `verified_state` covers it without a sidecar file.
+    """
+    if readback.get("routepin.schema") != "ff_formal_routepin/2":
+        raise ValueError("route-pin record: unexpected schema "
+                         f"{readback.get('routepin.schema')!r}")
+    declared = split_pins(readback.get("routepin.dedicated", ""))
+    if len(declared) != len(set(declared)):
+        raise ValueError(f"route-pin record: the dedicated list repeats a net: {declared}")
+    if set(declared) != set(EXPECTED_DEDICATED):
+        missing = sorted(set(EXPECTED_DEDICATED) - set(declared))
+        extra = sorted(set(declared) - set(EXPECTED_DEDICATED))
+        raise ValueError("route-pin record: the dedicated set is not the nine "
+                         f"(missing {missing}, extra {extra})")
+
+    for label in ("routable", "intrasite"):
+        members = split_pins(readback.get(f"routepin.{label}", ""))
+        if len(members) != len(set(members)):
+            raise ValueError(f"route-pin record: the {label} list repeats a net: {members}")
+        if not set(members) <= set(declared):
+            raise ValueError(f"route-pin record: the {label} list names something outside "
+                             f"the dedicated set: {sorted(set(members) - set(declared))}")
+
+    prefix = "routepin."
+    phases = ("first", "final")
+    # The WHOLE namespace, not just the phase fields: an unexamined `routepin.foo` would
+    # otherwise ride along, and a record that can carry anything is not an exact record.
+    seen = {key for key in readback if key.startswith(prefix)}
+    expected_keys = {f"{prefix}{key}" for key in
+                     ("schema", "dedicated", "routable", "intrasite")}
+    expected_keys |= {f"{prefix}{phase}.{name}.{field}"
+                      for phase in phases for name in declared
+                      for field in ROUTEPIN_FIELDS}
+    if seen != expected_keys:
+        missing = sorted(expected_keys - seen)
+        extra = sorted(seen - expected_keys)
+        raise ValueError(f"route-pin record: the namespace is not exactly "
+                         f"4 + {len(declared)} nets x 2 phases x {len(ROUTEPIN_FIELDS)} "
+                         f"fields (missing {missing[:3]}, extra {extra[:3]})")
+
+    record = {name: {phase: {field: readback[f"{prefix}{phase}.{name}.{field}"]
+                             for field in ROUTEPIN_FIELDS}
+                     for phase in phases}
+              for name in declared}
+    return {"nets": record,
+            "routable": split_pins(readback.get("routepin.routable", "")),
+            "intrasite": split_pins(readback.get("routepin.intrasite", ""))}
+
+
+def empty_route(value: str) -> bool:
+    """Vivado prints an empty route as the empty Tcl list `{}`, and `bool("{}")` is True."""
+    return (value or "").strip().strip("{}").strip() == ""
+
+
+def routepin_problems(readback: dict[str, str]) -> list[str]:
+    """Every reason a node's route-pin record is not acceptable, recomputed from raw fields.
+
+    The partition into routed and intrasite is not taken from the file: it is recomputed
+    from the readback by `classify_nets` and by `ROUTE_STATUS`, and the file has to agree.
+    """
+    try:
+        record = parse_routepin(readback)
+    except ValueError as exc:
+        return [str(exc)]
+
+    problems: list[str] = []
+    dedicated, _shared = classify_nets(readback)
+    if dedicated != set(EXPECTED_DEDICATED):
+        problems.append(f"the readback's dedicated set is {sorted(dedicated)}, "
+                        f"not the nine")
+
+    nets = record["nets"]
+    # "not intrasite" is not the same as routed: UNROUTED and ANTENNAS are neither, and
+    # treating them as completion is how an unfinished route passes as a pinned one.
+    routed_by_status = {name for name, tags in nets.items()
+                        if tags["final"]["status"] == "ROUTED"}
+    intrasite_by_status = {name for name, tags in nets.items()
+                           if tags["final"]["status"] == "INTRASITE"}
+    other = set(nets) - routed_by_status - intrasite_by_status
+    if other:
+        problems.append("nets whose final ROUTE_STATUS is neither ROUTED nor INTRASITE: "
+                        + ", ".join(f"{n}={nets[n]['final']['status']!r}"
+                                    for n in sorted(other)))
+    if set(record["routable"]) != routed_by_status:
+        problems.append(f"declared routable {sorted(record['routable'])} differs from "
+                        f"what ROUTE_STATUS says {sorted(routed_by_status)}")
+    if set(record["intrasite"]) != intrasite_by_status:
+        problems.append(f"declared intrasite {sorted(record['intrasite'])} differs from "
+                        f"what ROUTE_STATUS says {sorted(intrasite_by_status)}")
+
+    # Two records emitted independently by the same run must agree about the same fact.
+    from_readback = nets_of(readback)
+    for name in sorted(nets):
+        recorded = from_readback.get(name, {}).get("route_status")
+        if recorded is not None and recorded != nets[name]["final"]["status"]:
+            problems.append(f"{name}: readback says ROUTE_STATUS {recorded!r} but the "
+                            f"route-pin record says {nets[name]['final']['status']!r}")
+
+    for name, tags in sorted(nets.items()):
+        first, final = tags["first"], tags["final"]
+        # `fixed` is included: the flow sets IS_ROUTE_FIXED before it captures `first`,
+        # so the two have no legitimate reason to differ, and excluding the field is
+        # exactly how a net that lost its freeze would pass.
+        for field in ROUTEPIN_FIELDS:
+            if first[field] != final[field]:
+                problems.append(f"{name}: {field} changed between the first and the "
+                                f"final record")
+        if name in routed_by_status:
+            if final["fixed"] != "1":
+                problems.append(f"{name} is routed but IS_ROUTE_FIXED reads "
+                                f"{final['fixed']!r}")
+            if empty_route(final["route"]):
+                problems.append(f"{name} is routed but its ROUTE is empty")
+        else:
+            if final["status"] != "INTRASITE":
+                problems.append(f"{name}: status is {final['status']!r}, not INTRASITE")
+            if not empty_route(final["route"]) or final["pips"].strip():
+                problems.append(f"{name} is intrasite but carries route/pips")
+    return problems
+
+
 def pair_status(result: dict) -> str:
     """`pass` or `FAIL` for one compared pair — the ONE definition of the T1/T2 gate.
 
@@ -819,8 +983,26 @@ def structural_gate(plan: dict, nodes: list[dict], *, partial_scope: bool = Fals
         return gate  # nothing has been read, and nothing will be
 
     by_id = {node["specimen_id"]: node for node in nodes}
-    readbacks = {node["specimen_id"]: read_tsv(node["outdir"] / "readback.tsv")
-                 for node in nodes}
+    # A malformed readback is a refusal, not a traceback: `read_tsv` rejects duplicate
+    # keys, and a gate that crashes on bad input has not judged it.
+    readbacks: dict[str, dict[str, str]] = {}
+    for node in sorted(nodes, key=lambda item: item["specimen_id"]):
+        try:
+            readbacks[node["specimen_id"]] = read_tsv(node["outdir"] / "readback.tsv")
+        except (OSError, ValueError) as exc:
+            gate["verification_problems"].append(f"{node['specimen_id']}: {exc}")
+    if gate["verification_problems"]:
+        return gate
+
+    # The route-pin record, recomputed here as well. `build_node` checked it before it
+    # wrote `completed: true`, and this does not take that on trust: the stamp's boolean
+    # is a producer summary, and the gate reads the raw fields for itself.
+    for node in sorted(nodes, key=lambda item: item["specimen_id"]):
+        for problem in routepin_problems(readbacks[node["specimen_id"]]):
+            gate["verification_problems"].append(f"{node['specimen_id']}: {problem}")
+    if gate["verification_problems"]:
+        return gate
+
     for a_id, b_id in pairs_required:
         result = compare_pair(readbacks[a_id], readbacks[b_id])
         result["pair"] = [a_id, b_id]

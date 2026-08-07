@@ -128,9 +128,17 @@ scripts/extract_prjxray_subset.py --verify                    # integrity gate, 
   `evidence/ff_holdout_2026_08_06_t2fail/`. The stop condition stays a stop condition:
   T1/T2 is not relaxed after firing. The run verdict is now `ready_for_measurement`
   (`ff_formal_run/2`), the builder's exit status follows it, and the stager recomputes
-  the pair gate itself before staging anything. Next: pin dedicated-net routing in the
-  specimen design, which invalidates all 184 artifacts and requires a full rebuild
-  that must come back 168/168 green.
+  the whole structural gate itself before staging anything.
+  **The specimen design now pins dedicated-net routing** (`docs/ff_builder_design.md`,
+  addendum 2026-08-07): the nine are recomputed from the netlist, the six with an
+  interconnect route are routed first into an empty fabric and frozen, the three pad
+  nets are required to stay intrasite, and both phases of all nine are recorded in
+  `readback.tsv` under `routepin.` — pinned by that artifact's hash and recomputed from
+  raw fields by both the builder and the gate. That change invalidates all 184 previous
+  artifacts, which are preserved under
+  `build/gate_ff_formal.invalidated_t2fail_2026_08_06/`. Next: rebuild the mine
+  instance and evaluate its gate; a full rebuild that comes back 168/168 is what would
+  answer whether `SLICE_X25Y25` is repaired.
 - `clb_lutram` has inventory, isolation and real-diff evidence, but no commitment or
   certificate. `int_pip` and `ppip_bitless` remain unstarted.
 
