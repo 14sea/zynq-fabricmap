@@ -182,6 +182,23 @@ def readback_text(variant: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def staging_scratch(case: unittest.TestCase) -> Path:
+    """A staging root under the real publish namespace.
+
+    `build/` is gitignored, and the stager now refuses to stage anywhere git excludes —
+    a root that cannot be committed could only ever be copied to the published location
+    afterwards, and that copy is an unverified publishing step. So the fixtures stage
+    where a real run would, and clean up after themselves.
+    """
+    base = REPO_ROOT / "staging"
+    base.mkdir(exist_ok=True)
+    directory = tempfile.TemporaryDirectory(dir=base)
+    case.addCleanup(lambda: base.rmdir() if base.is_dir() and not any(base.iterdir())
+                    else None)
+    case.addCleanup(directory.cleanup)
+    return Path(directory.name) / "staged"
+
+
 class Tree:
     """A synthetic commitment plus a build root holding completed nodes for it."""
 
@@ -390,7 +407,7 @@ class StagingTests(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory(dir=scratch)
         self.addCleanup(self.directory.cleanup)
         self.tree = Tree(Path(self.directory.name))
-        self.out = Path(self.directory.name) / "staging"
+        self.out = staging_scratch(self)
 
     def test_a_complete_set_stages_exactly_two_files_per_specimen(self) -> None:
         stager.stage(self.tree.plan, self.tree.nodes, self.out, verbose=False)
@@ -562,7 +579,7 @@ class StructuralGateTests(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory(dir=scratch)
         self.addCleanup(self.directory.cleanup)
         self.tree = Tree(Path(self.directory.name))
-        self.out = Path(self.directory.name) / "staging"
+        self.out = staging_scratch(self)
 
     def break_a_dedicated_route(self) -> None:
         """Give one endpoint of the committed pair a different route for `w2`.
@@ -946,7 +963,7 @@ class RoutePinTamperTests(unittest.TestCase):
         self.directory = tempfile.TemporaryDirectory(dir=scratch)
         self.addCleanup(self.directory.cleanup)
         self.tree = Tree(Path(self.directory.name))
-        self.out = Path(self.directory.name) / "staging"
+        self.out = staging_scratch(self)
         self.node = next(n for n in self.tree.nodes if n["variant"] == "base")
 
     def edit_routepin(self, old: str, new: str, *, forge_stamp: bool) -> None:
@@ -1089,6 +1106,23 @@ class RoutePinFailOpenTests(unittest.TestCase):
         problems = self.problems()
         self.assertTrue(any("neither ROUTED nor INTRASITE" in item for item in problems),
                         problems)
+
+
+
+class PublishPathTests(unittest.TestCase):
+    """A staging root that git excludes cannot be the published one, so staging there
+    could only ever be followed by a copy — an unverified publishing step nobody gates."""
+
+    def test_a_gitignored_root_is_refused(self) -> None:
+        with self.assertRaises(SystemExit) as caught:
+            stager.check_staging_root(REPO_ROOT / "build/ff_staging")
+        self.assertIn("excluded by .gitignore", str(caught.exception))
+        self.assertIn("staging/<run_id>/", str(caught.exception))
+
+    def test_the_intended_publish_location_is_accepted(self) -> None:
+        resolved = stager.check_staging_root(REPO_ROOT / "staging/run_2026_08_05_ff")
+        self.assertEqual(resolved, (REPO_ROOT / "staging/run_2026_08_05_ff").resolve())
+        self.assertFalse(resolved.exists(), "the check must not create anything")
 
 
 if __name__ == "__main__":

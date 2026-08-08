@@ -40,6 +40,7 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -480,7 +481,24 @@ def check_staging_root(out: Path) -> Path:
             "committed evidence, not build output")
     if resolved.exists():
         raise SystemExit(f"staging root {out} already exists; stage into a fresh path")
+    if is_ignored(relative):
+        # A staging root under `build/` cannot be committed, so it could only ever be
+        # copied to the published location afterwards — and that copy is an unverified
+        # publishing step nobody gates. Stage where it will live.
+        raise SystemExit(
+            f"refusing to stage into {relative}: it is excluded by .gitignore, so this "
+            "staging root could never be the published one. Certificate 1.6 pins the "
+            "manifest and every artifact by repository-relative path; stage directly "
+            "where they will be committed, for example staging/<run_id>/.")
     return resolved
+
+
+def is_ignored(relative: Path) -> bool:
+    """Whether git would exclude this path. A tree without git cannot answer, and says so
+    by not objecting — the check is a guard against a mistake, not an authority."""
+    checked = subprocess.run(["git", "check-ignore", "-q", str(relative)],
+                             cwd=REPO, capture_output=True, check=False)
+    return checked.returncode == 0
 
 
 def stage(plan: dict, nodes: list[dict], out: Path, *, verbose: bool = True) -> Path:
