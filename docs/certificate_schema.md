@@ -447,6 +447,10 @@ The 1.5 feature profile additionally requires:
 The 1.6 formal-FF feature profile is selected only for `clb_ff_config` and additionally
 requires:
 
+- every production `clb_ff_config` feature certificate to declare schema 1.6 or later;
+  removing `staging_manifest` and relabelling the same record 1.5 is a version downgrade,
+  not a legacy production profile, and the verifier rejects it;
+
 - `staging_manifest: {path, sha256, schema_version}` selecting
   `specimen_staging` 1.0;
 - exact set equality among the commitment's specimen plan, the staging manifest,

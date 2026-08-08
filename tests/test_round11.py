@@ -51,9 +51,9 @@ def repo_path(path: Path) -> str:
     return path.relative_to(REPO_ROOT).as_posix()
 
 
-def run(path: Path) -> subprocess.CompletedProcess[str]:
+def run(path: Path, *args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [PYTHON, "host/verify_certificate.py", str(path)],
+        [PYTHON, "host/verify_certificate.py", str(path), *args],
         cwd=REPO_ROOT,
         text=True,
         stdout=subprocess.PIPE,
@@ -439,6 +439,30 @@ class Round11AttestationAndStagingTests(unittest.TestCase):
                 *(item["attestation"] for item in bundle.certificate["specimens"]),
             ):
                 self.assertFalse(Path(reference["path"]).is_absolute())
+
+        self.with_bundle(check)
+
+    def test_production_ff_cannot_downgrade_to_1_5_to_omit_staging(self) -> None:
+        """A version downgrade must not turn the exact staging contract off.
+
+        Apart from the two fields that select 1.6, this is the same complete,
+        self-consistent certificate as the passing known answer.  Under the old policy it
+        passed as production 1.5 and the verifier never attempted to load staging at all.
+        """
+        def check(bundle: Feature16Bundle) -> None:
+            bundle.certificate["schema_version"] = "1.5.0"
+            bundle.certificate["profile"] = "production"
+            bundle.certificate.pop("staging_manifest")
+            bundle.write_certificate()
+            checked = run(bundle.certificate_path, "--require-production")
+            self.assert_fails(
+                checked,
+                "production clb_ff_config feature evidence requires certificate "
+                "schema_version >= 1.6.0",
+            )
+            # This is the only finding: deleting the lower-bound rule makes this exact
+            # downgraded record green, rather than merely exposing some unrelated reject.
+            self.assertIn("FAIL — 1 finding(s)", checked.stdout)
 
         self.with_bundle(check)
 

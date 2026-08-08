@@ -1567,6 +1567,22 @@ def feature_1_4_semantic_errors(
     if require_production and certificate.get("profile") != "production":
         errors.append("production verification requires profile='production'")
 
+    # The formal FF profile acquired an exact staged-artifact contract in 1.6.  That
+    # contract cannot be optional for a production clb_ff_config record: otherwise an
+    # emitter can remove staging_manifest, label the same record 1.5, and make every
+    # staging completeness check disappear.  Historical 1.5 conformance fixtures remain
+    # valid; the lower bound belongs to this class's production policy, not to the generic
+    # 1.x JSON grammar.
+    if (
+        certificate.get("profile") == "production"
+        and certificate.get("bit_class", {}).get("id") == "clb_ff_config"
+        and certificate_version < (1, 6, 0)
+    ):
+        errors.append(
+            "production clb_ff_config feature evidence requires "
+            "certificate schema_version >= 1.6.0"
+        )
+
     target = certificate["target"]
     for field in ("family", "device", "part"):
         if target[field] != manifest["target"][field]:
@@ -1641,7 +1657,12 @@ def feature_1_4_semantic_errors(
     committed_specimens: dict[str, dict[str, Any]] = {}
     staging_entries: dict[str, dict[str, Any]] = {}
     staged_attestations: dict[str, dict[str, Any]] = {}
-    if feature_1_6:
+    # Attestation 2.0 rebuilds requested/resolved topology against the committed
+    # specimen identity, so the plan is needed from 1.5 onward even though exact staging
+    # is a 1.6 rule.  Keeping both operations under `feature_1_6` made a downgraded 1.5
+    # record fail accidentally with "absent from ... specimen plan" rather than because
+    # production FF evidence is forbidden to downgrade.
+    if feature_1_5:
         try:
             commitment_path = safe_child(
                 repo_root, certificate["prediction_commitment"]["path"]
@@ -1654,6 +1675,11 @@ def feature_1_4_semantic_errors(
                         f"prediction commitment duplicates specimen_id {specimen_id!r}"
                     )
                 committed_specimens[specimen_id] = item
+        except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
+            errors.append(f"cannot load committed specimen plan: {exc}")
+
+    if feature_1_6:
+        try:
             staging_errors, staging_entries, staged_attestations = load_feature_staging(
                 certificate,
                 repo_root,
