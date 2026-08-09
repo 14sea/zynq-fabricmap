@@ -1,9 +1,40 @@
 #!/usr/bin/env python3
-"""Score a `clb_ff_config` run against its committed predictions — certificate 1.5.
+"""Score a `clb_ff_config` run against its committed predictions — certificate 1.6.
 
 Refuses to score unless `predictions.json` still hashes to the committed value. That
 check is the whole point of the ordering: a measurement of predictions that were edited
 after the bitstreams existed measures nothing.
+
+What 1.6 changed, and it changed where this tool gets its evidence
+------------------------------------------------------------------
+Every specimen, bitstream and attestation now comes from a `specimen_staging` 1.0.0
+manifest, and from nothing else. There is no `--build`: this tool cannot read a build
+tree, cannot join `<root>/<specimen_id>/spec.bit` and cannot copy an attestation into the
+run directory.
+
+That is not tidying. While the tool built its own paths under `build/`, three separate
+things were true at once: it read artifacts no fresh clone has; the `<specimen_id>/`
+layout it assumed was a *second* naming rule beside the stager's, free to drift from it;
+and the attestation a record pointed at was a **copy this tool made**, so the reference
+in the measurement was never the reference the certificate would carry. 1.6 requires the
+certificate's attestation reference to equal the staging entry **verbatim**
+(`host/verify_certificate.load_feature_staging`), which a re-hashed copy cannot.
+
+So the manifest is now the only door, and it is verified before a single frame is parsed:
+its own hash, the commitment it pins recomputed from `predictions.json`, exact set
+equality with the 184 committed specimens, every artifact hash recomputed from the staged
+bytes, and every reference required to be **in HEAD with exactly those bytes** — tracked
+is not enough, because a staging that was only `git add`ed, or committed and then edited,
+is not what a verifier's clone would get. Missing, extra, duplicate, escaping, mismatched
+or unpublished references each refuse the whole run **before** any measurement is written
+— a partially trusted staging is not a smaller measurement, it is no measurement.
+
+Paths are parsed from the manifest and safely resolved; they are never reconstructed from
+a specimen id, because a tool that can rebuild the name can disagree with the manifest
+about which file it read. Identity between references is decided on the **resolved** file,
+so two spellings of one artifact are one artifact; the raw strings still travel into the
+record unchanged. And every document is hashed and parsed **in one read** — hashing a path
+and then re-opening it is how a record comes to pin bytes nobody scored.
 
 What 1.4 changed, and what this tool therefore does differently from `gate_measure.py`:
 
@@ -32,7 +63,8 @@ the specimen plan, which was fine only while every pair happened to be `(base, v
 and, worse, left the choice of what an assertion is differenced against open until after
 the bitstreams existed (`docs/round10_request.md`).
 
-    scripts/gate_measure_ff.py --run gate_runs/<run> --build build/gate_ff \\
+    scripts/gate_measure_ff.py --run gate_runs/<run> \\
+                               --staging-manifest staging/<run>/staging_manifest.json \\
                                --expect-sha256 <committed> --out <run>/measurement.json
 """
 
@@ -42,26 +74,31 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
 import sys
+from collections import OrderedDict
 from pathlib import Path
 
+REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(REPO))
 from bitstream_frames import FRAME_WORDS, column_map, device_layout, parse_frames  # noqa: E402
 from decode_groups import read_tile_bits  # noqa: E402
+from host.verify_certificate import (  # noqa: E402  — the consumer's own boundary rules
+    hash_file,
+    safe_child,
+    validate_external_schema,
+)
 from specimen_diff import ECC_BITS, ECC_WORD, features_using, locate, tile_index  # noqa: E402
 
-REPO = Path(__file__).resolve().parent.parent
 TILEGRID = REPO / "data/prjxray/zynq7/xc7z010/tilegrid.json"
 SPEC = REPO / "data/subset_spec.json"
+STAGING_SCHEMA = REPO / "schemas/specimen_staging.schema.json"
 BIT_CLASS = "clb_ff_config"
 
 
 def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def bit_path(build: Path, specimen: dict) -> Path:
-    return build / specimen["specimen_id"] / "spec.bit"
 
 
 def raw_diff(a: dict, b: dict) -> set[tuple[int, int, int]]:
@@ -226,6 +263,55 @@ def address_decision(totals: dict, accounting: list, address_problems: list,
     return "FAIL" if failed else "PASS"
 
 
+FRAME_CACHE_SIZE = 4
+
+
+class FrameCache:
+    """Parsed frame maps, bounded. Keeping 184 of them resident is not an option.
+
+    The staged set is 365.7 MiB of bitstream, but the parsed form is what costs: 5,152
+    frames x 101 words per specimen becomes ~20 MB of Python objects, so holding all 184
+    is several GB and the run dies of memory where nothing is wrong with the evidence.
+    The old unbounded dict simply never met a set this size.
+
+    A small LRU rather than a per-pair teardown, because the access pattern is not
+    arbitrary: both ends of a pair are needed at once, and every pair in an instance
+    shares one baseline endpoint, so a handful of slots keeps the hit rate high while the
+    footprint stays a constant that does not move when the committed set grows.
+
+    Eviction is not a correctness risk, and it is a small integrity gain. Every parse —
+    first or repeat — goes through `load`, which re-reads the file and re-checks it
+    against the pinned hash, so a bitstream swapped between two uses of the same specimen
+    is refused rather than mixed into one accounting.
+    """
+
+    def __init__(self, load, size: int | None = None) -> None:
+        size = FRAME_CACHE_SIZE if size is None else size
+        if size < 2:
+            raise ValueError("a frame cache must be able to hold both endpoints of the "
+                             "pair being compared")
+        self.load = load
+        self.size = size
+        self.parses = 0
+        self.evictions = 0
+        self._entries: OrderedDict[str, dict] = OrderedDict()
+
+    def __len__(self) -> int:
+        return len(self._entries)
+
+    def frames_of(self, specimen_id: str) -> dict:
+        if specimen_id in self._entries:
+            self._entries.move_to_end(specimen_id)
+            return self._entries[specimen_id]
+        frames = self.load(specimen_id)
+        self.parses += 1
+        self._entries[specimen_id] = frames
+        while len(self._entries) > self.size:
+            self._entries.popitem(last=False)
+            self.evictions += 1
+        return frames
+
+
 def resolve_pointer(value, pointer: str):
     """RFC 6901, objects only — the same restriction the verifier applies."""
     for raw in pointer.removeprefix("/").split("/"):
@@ -236,11 +322,300 @@ def resolve_pointer(value, pointer: str):
     return value
 
 
+# ---------------------------------------------------------------------------------------
+# The staging manifest is the only door
+# ---------------------------------------------------------------------------------------
+
+def uncommitted_references(relatives: list[str]) -> list[str]:
+    """Problems: each of these paths must exist in HEAD with exactly its current bytes.
+
+    "Tracked" is not the property that matters and this check used to ask for it, which
+    passed three states it should not have: a staging merely `git add`ed and never
+    committed, a committed file edited afterwards, and — worst — no git at all, where
+    returning "nothing is untracked" read as approval.
+
+    What a certificate actually needs is that an independent verifier cloning this
+    repository gets the same bytes the measurement scored. That is `HEAD`, not the index
+    and not the working tree, so the question is asked twice: is the path in HEAD, and
+    does anything differ between HEAD and what is on disk now.
+
+    Neither question proves the working tree **has** the artifact, and for the bitstreams
+    that distinction is real: under Git LFS a pointer-only checkout generally shows a clean
+    `git diff HEAD`, because the comparison is the cleaned working file against the pointer
+    blob and cleaning a pointer yields that pointer. What establishes possession is the
+    SHA-256 comparison every caller already does against the manifest pin — a pointer file
+    does not hash to the pinned bitstream. See `docs/ff_staging_producer.md` §2b/§2c; the
+    LFS-side check of the pointer oid itself is listed there and is not implemented yet.
+
+    **Absent git authority this refuses.** The stager's `is_ignored()` may decline to
+    answer because it guards against a mistake before any evidence exists; here the
+    answer *is* the evidence, and a measurement that cannot establish its artifacts are
+    published is not a measurement with a caveat. A cold `git archive` export can exercise
+    this function against a scratch repository — it cannot produce a measurement, and that
+    is the intended consequence.
+    """
+    if not relatives:
+        return []
+    head = subprocess.run(["git", "rev-parse", "--verify", "HEAD"], cwd=REPO,
+                          capture_output=True, text=True, check=False)
+    if head.returncode != 0:
+        return ["no git authority in this tree: the staged artifacts cannot be shown to "
+                "be committed, and a certificate pins them by repository-relative path "
+                "— refusing rather than assuming"]
+    listed = subprocess.run(["git", "ls-tree", "-r", "-z", "--name-only", "HEAD", "--",
+                             *relatives], cwd=REPO, capture_output=True, text=True,
+                            check=False)
+    changed = subprocess.run(["git", "diff", "--name-only", "-z", "HEAD", "--", *relatives],
+                             cwd=REPO, capture_output=True, text=True, check=False)
+    if listed.returncode != 0 or changed.returncode != 0:
+        return [f"git could not report on the staged references: "
+                f"{(listed.stderr or changed.stderr).strip()}"]
+
+    in_head = {entry for entry in listed.stdout.split("\0") if entry}
+    differing = {entry for entry in changed.stdout.split("\0") if entry}
+    problems: list[str] = []
+    absent = [relative for relative in relatives if relative not in in_head]
+    if absent:
+        problems.append(
+            f"{len(absent)} reference(s) are not in HEAD — staging that is only written, "
+            f"or only `git add`ed, is not published (first: {absent[:2]})")
+    if differing:
+        problems.append(
+            f"{len(differing)} reference(s) differ from HEAD, so what a clone would get "
+            f"is not what would be scored (first: {sorted(differing)[:2]})")
+    return problems
+
+
+def attestation_problems(specimen_id: str, attestation: dict, entry: dict,
+                         plan_specimen: dict, commitment_sha256: str) -> list[str]:
+    """Identity and integrity of one staged attestation — deliberately not more.
+
+    Whether the routed cell facts rebuild into the `/resolved/*` summaries is
+    `host.verify_certificate.ff_formal_attestation_errors`' question, and the verifier
+    asks it of the certificate. Re-asking it here would put a producer-side imitation of
+    the consumer's rule in the measurement path, where it could drift and agree with
+    itself. What this tool must establish is narrower and it must establish it itself:
+    that the record staged under this specimen id really describes this committed
+    specimen and really pins the bytes that are about to be parsed.
+    """
+    problems: list[str] = []
+    prefix = f"staged {specimen_id}"
+    if attestation.get("specimen_id") != specimen_id:
+        problems.append(f"{prefix}: attestation names specimen "
+                        f"{attestation.get('specimen_id')!r}")
+    if attestation.get("schema_version") != entry["attestation"]["schema_version"]:
+        problems.append(f"{prefix}: attestation schema_version differs from the manifest entry")
+    if attestation.get("prediction_commitment", {}).get("sha256") != commitment_sha256:
+        problems.append(f"{prefix}: attestation pins a different prediction commitment")
+    if attestation.get("outputs", {}).get("spec.bit") != entry["bitstream"]["sha256"]:
+        problems.append(f"{prefix}: attested output bitstream is not the staged one")
+
+    build = attestation.get("source_build") or {}
+    if build.get("completed") is not True:
+        problems.append(f"{prefix}: source build is not completed")
+    if build.get("variant") != plan_specimen["variant"]:
+        problems.append(f"{prefix}: built variant {build.get('variant')!r} is not the "
+                        f"committed {plan_specimen['variant']!r}")
+    if build.get("instance") != plan_specimen["site"]:
+        problems.append(f"{prefix}: built instance {build.get('instance')!r} is not the "
+                        f"committed {plan_specimen['site']!r}")
+    if build.get("artifacts", {}).get("spec.bit") != entry["bitstream"]["sha256"]:
+        problems.append(f"{prefix}: stamped bitstream is not the staged one")
+
+    recipe = build.get("recipe") or {}
+    if recipe.get("commitment") != commitment_sha256:
+        problems.append(f"{prefix}: build recipe pins a different commitment")
+    if recipe.get("build_seed") != plan_specimen["build_seed"]:
+        problems.append(f"{prefix}: build recipe seed {recipe.get('build_seed')!r} is not "
+                        f"the committed {plan_specimen['build_seed']!r}")
+    for field in ("part", "vivado_version"):
+        # Copied into the specimen record below, so their absence is a refusal rather
+        # than a null field the certificate would carry into the verifier.
+        if not recipe.get(field):
+            problems.append(f"{prefix}: build recipe has no {field}")
+    return problems
+
+
+def load_staging(manifest_path: Path, commitment_path: Path, commitment_sha256: str,
+                 doc: dict, run_id: str, *, tracked_check=None) -> tuple[dict, dict, dict]:
+    """`(manifest_reference, entries_by_id, attestations_by_id)`, or refuse the whole run.
+
+    Every check here runs before the caller opens one bitstream, and every failure is a
+    refusal rather than a recorded problem. Both properties are deliberate: a measurement
+    is a claim about a *complete* committed set, so "we scored the 183 specimens whose
+    references verified" is not a weaker result — it is a result about a set nobody
+    committed to, wearing the accounting of one that was.
+
+    Nothing is reconstructed. `specimen_id` selects an entry; the paths inside that entry
+    are what get resolved and read. The manifest is the only place this tool learns where
+    an artifact lives.
+    """
+    tracked_check = tracked_check or uncommitted_references
+    problems: list[str] = []
+
+    if not manifest_path.is_file():
+        raise SystemExit(f"staging manifest does not exist: {manifest_path}")
+    try:
+        manifest_relative = str(manifest_path.resolve().relative_to(REPO))
+    except ValueError:
+        raise SystemExit(
+            f"staging manifest {manifest_path} is outside the repository; certificate 1.6 "
+            "pins it by repository-relative path") from None
+    try:
+        # One read: the hash that goes into the certificate and the document every check
+        # below reads are the same bytes. Hashing the file and then re-opening it lets a
+        # swap in between produce a record that pins A and was computed from B.
+        manifest_bytes = manifest_path.read_bytes()
+        manifest = json.loads(manifest_bytes)
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SystemExit(f"cannot read staging manifest {manifest_relative}: {exc}") from None
+    manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
+
+    # Shape first, and it is fatal on its own: every check below reads named fields, and
+    # reading them out of a document whose shape was never established is how a
+    # reassuring pass gets computed over something that is not a manifest.
+    findings = validate_external_schema(manifest, STAGING_SCHEMA, "staging manifest")
+    if findings:
+        raise SystemExit("refusing to measure: staging manifest does not validate:\n  "
+                         + "\n  ".join(findings[:10]))
+
+    reference = manifest["prediction_commitment"]
+    if manifest["run_id"] != run_id:
+        problems.append(f"staging run_id {manifest['run_id']!r} is not the run being "
+                        f"measured ({run_id!r})")
+    if reference["run_id"] != run_id:
+        problems.append(f"staged commitment run_id {reference['run_id']!r} is not {run_id!r}")
+    if reference["sha256"] != commitment_sha256:
+        problems.append("staged commitment hash differs from the predictions being scored")
+    for field, expected in (("schema_version", doc["schema_version"]),
+                            ("seed", str(doc["seed"])),
+                            ("totals", dict(doc["totals"]))):
+        # Recomputed from the commitment document, never copied from the manifest: a
+        # reference that describes itself proves nothing about what it points at.
+        if reference[field] != expected:
+            problems.append(f"staged commitment {field} differs from predictions.json")
+    try:
+        pinned_commitment = safe_child(REPO, reference["path"])
+    except ValueError as exc:
+        problems.append(f"staged commitment path: {exc}")
+        pinned_commitment = None
+    if pinned_commitment is not None:
+        if not pinned_commitment.is_file():
+            problems.append(f"staged commitment file does not exist: {reference['path']}")
+        elif pinned_commitment != commitment_path.resolve():
+            problems.append(f"staging pins a different predictions.json: {reference['path']}")
+        elif hash_file(pinned_commitment) != commitment_sha256:
+            problems.append("staged commitment file no longer hashes to its pinned value")
+
+    committed = {item["specimen_id"]: item for item in doc["specimens"]}
+    entries: dict[str, dict] = {}
+    attestations: dict[str, dict] = {}
+    # Keyed by the *resolved* file, not the reference string. Two spellings of one path —
+    # `d/spec.bit` and `d/./spec.bit`, or a symlink alias — are two references and one
+    # artifact, and a string-keyed check calls that two staged specimens. The raw strings
+    # still travel into the measurement unchanged; only the identity test is canonical.
+    seen_targets: dict[Path, str] = {}
+    to_check: list[str] = [manifest_relative, reference["path"]]
+
+    for index, entry in enumerate(manifest["specimens"]):
+        specimen_id = entry["specimen_id"]
+        if specimen_id in entries:
+            problems.append(f"staging specimens[{index}] duplicates {specimen_id!r}")
+            continue
+        entries[specimen_id] = entry
+        verified: dict[str, bytes | Path] = {}
+        for label in ("bitstream", "attestation"):
+            pinned = entry[label]
+            relative = pinned["path"]
+            to_check.append(relative)
+            try:
+                path = safe_child(REPO, relative)
+            except ValueError as exc:
+                problems.append(f"staged {specimen_id} {label}: {exc}")
+                continue
+            owner = seen_targets.setdefault(path, f"{specimen_id}/{label}")
+            if owner != f"{specimen_id}/{label}":
+                problems.append(f"staged {specimen_id}: {label} {relative!r} resolves to "
+                                f"the same file as {owner}")
+            if not path.is_file():
+                problems.append(f"staged {specimen_id} {label} does not exist: {relative}")
+                continue
+            if label == "attestation":
+                # Read once, hash and parse the same bytes — the record's own hash must
+                # describe the document that was read, not a re-open of the path.
+                try:
+                    payload = path.read_bytes()
+                except OSError as exc:
+                    problems.append(f"staged {specimen_id}: cannot read attestation: {exc}")
+                    continue
+                actual = hashlib.sha256(payload).hexdigest()
+            else:
+                # Streamed: 184 bitstreams are not held in memory. `frames_of` re-reads
+                # and re-checks against this same pinned hash before parsing, so the bytes
+                # that get scored are hashed in the same read that parses them.
+                payload = path
+                actual = hash_file(path)
+            if actual != pinned["sha256"]:
+                problems.append(f"staged {specimen_id} {label} does not match its pinned "
+                                f"hash: {relative}")
+                continue
+            verified[label] = payload
+
+        plan_specimen = committed.get(specimen_id)
+        if plan_specimen is None:
+            # Reported by the set-equality check below; nothing further can be said about
+            # a specimen the commitment never named.
+            continue
+        if "attestation" not in verified:
+            continue
+        try:
+            attestation = json.loads(verified["attestation"])
+        except json.JSONDecodeError as exc:
+            problems.append(f"staged {specimen_id}: cannot parse attestation: {exc}")
+            continue
+        found = attestation_problems(specimen_id, attestation, entry, plan_specimen,
+                                     commitment_sha256)
+        problems.extend(found)
+        # `not found` is an equivalent mutant today and is kept deliberately: any problem
+        # refuses the whole run below, so nothing can read this record either way. It is
+        # here for the day someone softens one of these refusals into a report — that is
+        # the moment a record that failed its own identity checks becomes reachable.
+        if not found and "bitstream" in verified:
+            attestations[specimen_id] = attestation
+
+    missing = sorted(set(committed) - set(entries))
+    extra = sorted(set(entries) - set(committed))
+    if missing or extra:
+        problems.append(
+            f"staging is not the committed set: {len(entries)} entries for "
+            f"{len(committed)} committed specimens (missing {len(missing)}, "
+            f"extra {len(extra)}; first missing {missing[:2]}, first extra {extra[:2]})")
+
+    # Last, because it is the most expensive and the least informative when something
+    # simpler is already wrong — but not optional: a measurement whose evidence is not
+    # published is one no verifier can repeat.
+    problems.extend(tracked_check(to_check))
+
+    if problems:
+        raise SystemExit(
+            "refusing to measure: the staging manifest does not verify "
+            f"({len(problems)} problem(s)). Nothing was scored and nothing was written.\n  "
+            + "\n  ".join(problems[:12])
+            + (f"\n  ... and {len(problems) - 12} more" if len(problems) > 12 else ""))
+
+    return ({"path": manifest_relative, "sha256": manifest_digest,
+             "schema_version": manifest["schema_version"]},
+            entries, attestations)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run", type=Path, required=True)
-    ap.add_argument("--build", type=Path, required=True)
+    ap.add_argument("--staging-manifest", type=Path, required=True,
+                    help="the specimen_staging 1.0.0 manifest written by "
+                         "gate_stage_ff_formal.py --stage; the only source of specimens, "
+                         "bitstreams and attestations")
     ap.add_argument("--expect-sha256")
     ap.add_argument("--out", type=Path)
     args = ap.parse_args()
@@ -263,31 +638,44 @@ def main() -> int:
     index = tile_index()
     by_id = {s["specimen_id"]: s for s in doc["specimens"]}
 
-    # Attestations are copied into the run directory: they live under build/, which is
-    # gitignored, so a record pointing at them there names evidence a fresh clone cannot
-    # resolve.
-    attestation_dir = args.run / "attestations"
-    attestation_dir.mkdir(exist_ok=True)
+    # The whole evidence set, verified before a frame is parsed. Every reference below is
+    # the manifest's own; nothing is copied into the run directory and no path is built
+    # from a specimen id.
+    staging_reference, staged, attestation_cache = load_staging(
+        args.staging_manifest, pred_path, digest, doc, args.run.name)
+    print(f"staging:     {staging_reference['sha256']}  "
+          f"{len(staged)} specimens from {staging_reference['path']}")
 
-    frames_cache: dict[str, dict] = {}
-    attestation_cache: dict[str, dict] = {}
     address_problems: list[str] = []
     semantic_findings: list[str] = []
 
+    def load_frames(specimen_id: str) -> dict:
+        pinned = staged[specimen_id]["bitstream"]
+        path = safe_child(REPO, pinned["path"])
+        # `load_staging` hashed this file; that read is over. These are the bytes that
+        # will actually be scored, so they are hashed and parsed in one read: without
+        # that, a file swapped between verification and parsing produces a measurement
+        # carrying one hash and the frames of another. A mismatch is fatal, not a
+        # recorded problem — nothing has been written yet and nothing will be. Every
+        # re-parse after an eviction repeats this, so the check covers the whole run.
+        data = path.read_bytes()
+        if hashlib.sha256(data).hexdigest() != pinned["sha256"]:
+            raise SystemExit(
+                f"refusing to measure: {specimen_id} bitstream changed after staging "
+                f"verification ({pinned['path']}) — nothing was written")
+        return parse_frames(path, cols, layout, data=data)["frames"]
+
+    frames = FrameCache(load_frames)
+
     def frames_of(specimen: dict) -> dict:
-        path = bit_path(args.build, specimen)
-        if specimen["specimen_id"] not in frames_cache:
-            if not path.is_file():
-                raise FileNotFoundError(path)
-            frames_cache[specimen["specimen_id"]] = parse_frames(path, cols, layout)["frames"]
-        return frames_cache[specimen["specimen_id"]]
+        return frames.frames_of(specimen["specimen_id"])
 
     specimen_records = []
     for specimen in doc["specimens"]:
-        path = bit_path(args.build, specimen)
-        attestation_path = path.parent / "attestation.json"
+        entry = staged[specimen["specimen_id"]]
+        recipe = attestation_cache[specimen["specimen_id"]]["source_build"]["recipe"]
         block = grid[specimen["tile"]]["bits"]["CLB_IO_CLK"]
-        record = {
+        specimen_records.append({
             "specimen_id": specimen["specimen_id"],
             "split": specimen["split"],
             "variant": specimen["variant"],
@@ -295,29 +683,19 @@ def main() -> int:
             "tile": specimen["tile"],
             "tile_type": specimen["tile_type"],
             "tile_frame_base": block["baseaddr"],
-            "bitstream": str(path.resolve().relative_to(REPO)) if path.is_file() else None,
-            "bitstream_sha256": sha256_file(path) if path.is_file() else None,
-        }
-        if attestation_path.is_file():
-            attestation = json.loads(attestation_path.read_text())
-            attestation_cache[specimen["specimen_id"]] = attestation
-            kept = attestation_dir / f"{specimen['specimen_id']}.json"
-            kept.write_bytes(attestation_path.read_bytes())
-            record["attestation"] = {
-                "path": str(kept.resolve().relative_to(REPO)),
-                "sha256": sha256_file(attestation_path),
-                "schema_version": attestation["schema_version"],
-                "resolved_loc": attestation["resolved"]["resolved_loc"],
-                "checkpoint": attestation.get("checkpoint"),
-            }
-            record["design_source_sha256"] = attestation["inputs"].get("design_sha256")
-            record["vivado_version"] = attestation["inputs"].get("vivado_version")
-            record["part"] = attestation["inputs"].get("part")
-            if attestation["outputs"].get(path.name) != record["bitstream_sha256"]:
-                address_problems.append(f"{specimen['specimen_id']}: bitstream does not match its attestation")
-        else:
-            address_problems.append(f"{specimen['specimen_id']}: no attestation")
-        specimen_records.append(record)
+            # preregistered, so the certificate carries the committed seed and the
+            # verifier can compare it with the one the build stamped
+            "build_seed": specimen["build_seed"],
+            "part": recipe["part"],
+            "vivado_version": recipe["vivado_version"],
+            # Both references verbatim from the manifest entry. Certificate 1.6 requires
+            # the attestation reference to equal the staging entry exactly, so adding a
+            # convenience field here — or re-hashing a copy — breaks the record one layer
+            # down, where it reads as the consumer rejecting the producer's evidence.
+            "bitstream": dict(entry["bitstream"]),
+            "bitstream_sha256": entry["bitstream"]["sha256"],
+            "attestation": dict(entry["attestation"]),
+        })
 
     # ---- endpoint pairs, read from the commitment -------------------------------
     # From schema 1.5 the other endpoint is `comparison_specimen_id`, preregistered per
@@ -339,11 +717,7 @@ def main() -> int:
         if base["split"] != variant["split"]:
             address_problems.append(
                 f"{base_id}/{variant_id}: endpoints are in different splits")
-        try:
-            base_frames, variant_frames = frames_of(base), frames_of(variant)
-        except FileNotFoundError as exc:
-            address_problems.append(f"{base_id}/{variant_id}: missing bitstream {exc}")
-            continue
+        base_frames, variant_frames = frames_of(base), frames_of(variant)
         asserted_tiles = {base["tile"], variant["tile"]}
         raw = raw_diff(base_frames, variant_frames)
         buckets, class_claimed_out_of_scope = classify_diff(
@@ -393,16 +767,12 @@ def main() -> int:
         if asserting_id != prediction["specimen_id"]:
             raise SystemExit(f"{prediction['feature']}: pair does not name its own "
                              "asserting specimen — refusing")
-        try:
-            feature_bits = read_tile_bits(
-                frames_of(feature_specimen),
-                grid[feature_specimen["tile"]]["bits"]["CLB_IO_CLK"])
-            other_bits = read_tile_bits(
-                frames_of(by_id[other_id]),
-                grid[by_id[other_id]["tile"]]["bits"]["CLB_IO_CLK"])
-        except FileNotFoundError as exc:
-            address_problems.append(f"{prediction['feature']}: missing bitstream {exc}")
-            continue
+        feature_bits = read_tile_bits(
+            frames_of(feature_specimen),
+            grid[feature_specimen["tile"]]["bits"]["CLB_IO_CLK"])
+        other_bits = read_tile_bits(
+            frames_of(by_id[other_id]),
+            grid[by_id[other_id]["tile"]]["bits"]["CLB_IO_CLK"])
 
         split = prediction["split"]
         transition = prediction["expected_transition"]
@@ -429,9 +799,11 @@ def main() -> int:
                         f"{specimen_id}: two observed values for {item['address']}")
 
         assertion = prediction["semantic_assertion"]
-        attestation = attestation_cache.get(prediction["specimen_id"])
-        observed_semantic = (resolve_pointer(attestation, assertion["attestation_field"])
-                             if attestation is not None else None)
+        # Read straight out of the staged record whose hash the manifest pins — not out
+        # of a copy this tool made, which is what the reference in the certificate would
+        # then have described.
+        attestation = attestation_cache[prediction["specimen_id"]]
+        observed_semantic = resolve_pointer(attestation, assertion["attestation_field"])
         semantic_passed = semantic_verdict(matched, observed_semantic,
                                            assertion["expected_value"])
         if not semantic_passed:
@@ -490,7 +862,9 @@ def main() -> int:
         print(f"    {split:<8} tp={t['tp']:>4} fn={t['fn']:>4} fp={t['fp']:>4}  "
               f"member_identity {t['member_identity']['pass']}/"
               f"{t['member_identity']['pass'] + t['member_identity']['fail']}")
-    print(f"\n  pair accounting: {len(accounting)} pairs, "
+    print(f"\n  frames: {frames.parses} parse(s) over {len(doc['specimens'])} specimens, "
+          f"cache {frames.size}, {frames.evictions} eviction(s)")
+    print(f"  pair accounting: {len(accounting)} pairs, "
           f"{sum(1 for a in accounting if not a['partition_exact'])} not exact")
     for record in accounting:
         counts = record["counts"]
@@ -519,8 +893,11 @@ def main() -> int:
     if args.out:
         args.out.write_text(json.dumps({
             "schema": "gate_measurement",
-            "schema_version": "1.4.0",
+            "schema_version": "1.6.0",
             "bit_class": doc["bit_class"],
+            # The manifest reference, recomputed here and carried unchanged, so the
+            # certifier copies it rather than re-deriving where the evidence lived.
+            "staging_manifest": staging_reference,
             "prediction_commitment": {
                 "run_id": args.run.name,
                 "path": str(pred_path.resolve().relative_to(REPO)),

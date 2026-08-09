@@ -7,7 +7,8 @@ records, and stages the committed set in the layout certificate 1.6 consumes
 1.0.0 manifest).
 
 It is the answer to the last mismatch in the handoff: the builder's native layout is
-`<site>/<variant>/` and `gate_measure_ff.py` reads `<specimen_id>/`. Nothing else about
+`<site>/<variant>/`, and the measurement needs `<specimen_id>/` — which from 1.6 it no
+longer knows how to spell, and reads only out of this manifest (§2b). Nothing else about
 the build changes; in particular **no Vivado run is required**, because
 `ff_formal_readback.tcl` already records every cell and pin fact 2.0 asks for and
 `stamp.json` already *is* the `ff_formal_stamp/1` record the schema embeds.
@@ -95,6 +96,115 @@ The five `/resolved/*` summaries are written because the schema requires them; t
 consumer's verifier rebuilds every one of them from `cells` and rejects disagreement, so
 nothing the producer puts there is load-bearing.
 
+## 2b. What consumes it: `gate_measure_ff.py` 1.6
+
+The measurement is now the manifest's only reader, and it has no other door. There is no
+`--build`: it cannot open a build tree, cannot join `<root>/<specimen_id>/spec.bit` and
+does not create `run/attestations/`.
+
+```
+scripts/gate_measure_ff.py --run gate_runs/<run> \
+  --staging-manifest staging/<run_id>/staging_manifest.json \
+  --expect-sha256 <committed> --out gate_runs/<run>/measurement.json
+```
+
+That closes three things at once. The tool used to read artifacts no fresh clone has; the
+`<specimen_id>/` layout it assumed was a **second naming rule** beside this one, free to
+drift from it; and the attestation each record pointed at was a *copy the measurement
+made*, so its hash described the copy. Certificate 1.6 requires the certificate's
+attestation reference to equal the staging entry **verbatim**
+(`load_feature_staging` compares the dicts), and a re-hashed copy in the run directory
+can never satisfy that.
+
+Before one frame is parsed, `load_staging()` establishes, independently:
+
+* the manifest validates against `schemas/specimen_staging.schema.json` — fatal on its
+  own, because every check below it reads named fields;
+* its own sha256, **recomputed from the bytes** and carried into the measurement as
+  `staging_manifest`, which the certifier then copies rather than re-deriving. The
+  manifest and every attestation are **hashed and parsed in one read**: hash a path, then
+  re-open it, and a swap in between yields a record pinning bytes nobody scored;
+* the commitment it pins is the one being scored: hash equal to `predictions.json`'s, the
+  path resolving to *that* file, and `schema_version`/`seed`/`totals` recomputed from the
+  commitment document rather than read back from the manifest;
+* **exact set equality with the 184 committed specimens** — missing, extra or duplicated
+  ids each refuse, and so do two entries naming one file. That identity is decided on the
+  **resolved** path: `d/spec.bit` and `d/./spec.bit`, or a symlink alias, are two
+  reference strings and one artifact, which a string-keyed check would count as two
+  staged specimens. The raw strings still travel into the record unchanged;
+* every artifact hash recomputed from the staged bytes, every path resolved through
+  `safe_child` (the schema's `repo_path` pattern already rejects `..` and absolute paths;
+  the resolver catches the symlink that neither spelling shows). A bitstream is streamed
+  rather than held — 184 of them — so `frames_of()` re-reads it and re-checks the pinned
+  hash immediately before parsing, and hands the parser **those bytes** (`parse_frames(…,
+  data=…)`) instead of a path it would read a third time;
+* every reference — the manifest, the commitment and all 184×2 artifacts — **published**:
+  present in HEAD and identical to what is on disk. Tracked is not the property: a staging
+  only `git add`ed, or committed and then edited, is tracked and is not what a verifier's
+  clone would get. So the order is stage → **commit the staging** → measure. **Without git
+  authority this refuses**, unlike the stager's `is_ignored()`, which guards against a
+  mistake before evidence exists; here the answer *is* the evidence. A cold `git archive`
+  export can exercise the function against a scratch repository and can never satisfy it,
+  so such an export cannot produce a measurement — intended, not incidental.
+
+  "Identical to HEAD" means two different things by file kind, and the distinction is not
+  cosmetic (§2c). For the manifest, the commitment and every `attestation.json` — ordinary
+  Git files — **the HEAD blob is those bytes**. For `staging/**/*.bit` under Git LFS, HEAD
+  holds a *pointer*, and the property wanted is that the pointer's oid reconstructs exactly
+  the working bytes the measurement hashed.
+
+  Which check establishes which part matters, because they are not interchangeable:
+
+  * `git ls-tree HEAD` — the path **exists in HEAD**;
+  * `git diff HEAD` — Git's own view, filters included, shows **no uncommitted drift**;
+  * the **working bytes' SHA-256 against the manifest pin** — and this is the only one of
+    the three that shows the tree actually **has the bitstream** rather than a pointer.
+
+  A pointer-only checkout is the case to keep in mind: with the filter configured but the
+  objects never fetched, `git diff HEAD` is generally **clean**, because what it compares
+  is the cleaned working file against the pointer blob, and cleaning a pointer yields that
+  pointer. So `git diff` does *not* prove materialisation and must not be read as proving
+  it. What refuses such a tree is the hash comparison — a pointer file is 130-odd bytes and
+  does not hash to the pinned bitstream — which `load_staging()` already performs on every
+  artifact, and which `frames_of()` repeats before parsing;
+* per specimen, that the staged record describes *that committed specimen*: id, variant,
+  instance, build seed, completion, and both bitstream hashes. Whether the routed facts
+  rebuild is `ff_formal_attestation_errors`' question and the verifier asks it — a
+  producer-side imitation of the consumer's rule in this path could only drift.
+
+Any of those refuses the **whole run before anything is written**: a measurement over the
+specimens that happened to verify would carry the accounting of a complete one.
+
+## 2c. The 365.7 MiB question, ruled: LFS for `.bit`, ordinary Git for everything else
+
+Requiring publication has a price, and it is not small: the committed set is **365.7 MiB**
+of bitstream that has to enter the repository before a measurement may read it.
+
+**Ruled (2026-08-09, user): keep certificate 1.6's repo-relative artifact model; carry the
+`.bit` files in Git LFS.** The manifest, the attestations, the measurement and the
+certificate stay ordinary Git files — they are what gets reviewed and diffed. Nothing in
+any schema changes: the materialised working-tree paths are the same paths and the SHA-256
+values are the same values, which is why this is a storage decision and not an evidence
+one.
+
+**None of it is implemented yet, and formal staging is blocked until it is.** What has to
+land, deliberately as its own change rather than folded into the measurement:
+
+1. a `.gitattributes` scoped to **`staging/**/*.bit` only** — no repository-wide rule;
+2. the stager and the publication gate refuse a staged bitstream that did **not** go
+   through the LFS filter, so a misconfigured tree cannot quietly push 366 MiB of ordinary
+   blobs into history — the one mistake that cannot be undone by a later commit;
+3. the measurement keeps verifying the **working bytes'** SHA-256 (it already does — and
+   that is the check that distinguishes a materialised bitstream from a pointer), and
+   **must** additionally check that **HEAD's LFS pointer oid sha256 equals the manifest
+   pin**. Not "should": without it, HEAD could name a different object than the one on
+   disk while both the ls-tree and the diff look right;
+4. acceptance is a **fresh clone that actually materialises LFS**, re-hashes all 184
+   artifacts and runs the verifier — not a clone that resolved pointers to nothing;
+5. if remote LFS is unavailable, **stop**. The fallbacks are both forbidden: untracked
+   staging (a measurement no verifier can repeat) and ordinary giant blobs (unrecoverable
+   history). The next move in that case is the consumer's — change the artifact model.
+
 ## 3. What this does not prove
 
 * The record is an **integrity anchor**, not a provenance proof: hashes detect
@@ -131,6 +241,41 @@ Recorded from commands, not from a report:
   stand, because they make the two values provably equal; `test_requested_is_the_plan_
   intent_spelled_out` exercises the intent path on its own so the table cannot move
   unnoticed.
+
+The measurement also stopped keeping every parsed bitstream. 365.7 MiB of `.bit` becomes
+several GB once parsed — ~20 MB of Python objects per specimen, times 184 — and the old
+unbounded dict simply never met a set this size. `FrameCache` is a small LRU (4), sized so
+both endpoints of the pair under comparison stay resident and the shared baseline survives
+across an instance; the footprint is now a constant that does not move when the committed
+set grows. Eviction is also a small integrity gain: a re-parse goes back through the same
+loader, so the pinned-hash check covers every use of a specimen rather than the first.
+
+For the consumer side of §2b, `tests/test_ff_measure_staging.py`: **45 cases**, every one
+synthetic — no real bitstream is touched, because measuring the committed 184 is not
+something a test may decide to do. The bitstreams in those fixtures are deliberately not
+bitstreams, so a case that started to reach frame parsing would fail loudly rather than
+quietly measure something. Five cases run `main()` end to end with frame parsing stubbed,
+which is what pins the record shape: `schema_version` 1.6.0, the `staging_manifest`
+reference, and each specimen's `attestation`/`bitstream` reference equal to the manifest
+entry. The publication check runs against **purpose-built scratch repositories** rather
+than this one, so its four states — clean HEAD, index-only, edited-after-commit, no git —
+are real git answers that still run from a cold checkout. Three tamper hooks cover the
+windows a single pass cannot: a file rewritten during the read (the parse must see the
+verified bytes), a bitstream swapped between `load_staging` and scoring, and a bitstream
+swapped while it is evicted (refused on its next use). The cache bound is held to be a
+memory decision and not an evidence one by running one committed set twice — once with
+room for every specimen, once with a cache small enough to evict on nearly every access —
+and requiring the two measurements to be equal. **26 adversarial mutations, all caught.** One
+further mutation is kept out of that count and left alive on purpose — keeping an
+attestation that failed its own identity checks. It is equivalent while any problem
+refuses the whole run, and is commented as such in the source rather than removed: it
+becomes reachable the moment one of those refusals is softened into a report.
+
+Two operational consequences worth stating plainly rather than discovering later. The
+staging must be **committed before it can be measured** — that is what "published" means
+above, and it is a real cost: 184 bitstreams, 365.7 MiB, enter the repository, which is
+what §2c rules on. And measuring is still not authorised: this contract says what a
+measurement would have to satisfy, not that one may run.
 
 Holdout stays where it was: the 161 unbuilt specimens are not authorised by this tool
 existing. What it removes is the excuse that the staging format was unknown.

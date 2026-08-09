@@ -188,8 +188,14 @@ def column_map(tilegrid_path: Path = TILEGRID) -> dict:
 
 # ------------------------------------------------------------- bitstream parse
 
-def config_words(path: Path) -> tuple[list[int], int]:
-    raw = path.read_bytes()
+def config_words(path: Path, data: bytes | None = None) -> tuple[list[int], int]:
+    """`data` lets a caller parse bytes it has already hashed.
+
+    Without it there are two reads — one to hash, one to parse — and a file swapped
+    between them yields a record whose pinned hash describes bytes nobody scored. Callers
+    that pin what they parse pass the bytes; `path` stays for error messages.
+    """
+    raw = path.read_bytes() if data is None else data
     s = raw.find(SYNC)
     if s < 0:
         raise SystemExit(f"{path}: no sync word — not a 7-series .bit?")
@@ -198,11 +204,14 @@ def config_words(path: Path) -> tuple[list[int], int]:
 
 
 def parse_frames(path: Path, cols: dict | None = None,
-                 groups: list[dict] | None = None) -> dict:
-    """Return {'frames': {far: [words]}, 'idcode':…, 'blocks':[…], 'pad_frames':n}."""
+                 groups: list[dict] | None = None, data: bytes | None = None) -> dict:
+    """Return {'frames': {far: [words]}, 'idcode':…, 'blocks':[…], 'pad_frames':n}.
+
+    `data`, when given, is parsed instead of re-reading `path` — see `config_words`.
+    """
     cols = cols if cols is not None else column_map()
     groups = groups if groups is not None else device_layout()
-    words, sync_off = config_words(path)
+    words, sync_off = config_words(path, data)
 
     frames: dict[int, list[int]] = {}
     blocks: list[dict] = []
