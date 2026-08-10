@@ -132,21 +132,29 @@ Their pblock must state explicitly whether `CONTAIN_ROUTING` (or the equivalent)
 required. **A placement-only pblock may not be described as a routing constraint**;
 routing is free to cross a region no cell occupies.
 
-### Quiescing — how a transient on the data path is made harmless
+### Quiescing — a HARDWARE interlock, ruled 2026-08-10
 
 Because target-frame writes may perturb the evolvable data path, the scorer must not be
-sampling across a write. The rule:
+sampling across a write. **Firmware calling things in the right order is not sufficient**:
+that is trusted code, and the whole point of an interlock is to hold when the trusted code
+does not run. The scorer is gated in hardware and is **fail-closed**:
 
-1. the scorer is **held quiescent** (evaluation disabled, accumulator frozen) before the
-   first envelope is sent;
+1. the interlock **freezes the scorer** — evaluation disabled and accumulator held —
+   whenever reconfiguration is in progress **or** the readback has not been confirmed;
 2. all three envelopes are written;
-3. the 12 target frames are **read back and compared** to the candidate (§6 item 8 of the
-   preregistration);
-4. only then is the scorer released, and its result is sampled only after it reports
-   completion.
+3. the 12 target frames are **read back and compared** to the candidate (preregistration
+   §6 item 8);
+4. only an explicit *readback-confirmed* signal releases the interlock, and the result is
+   sampled only after the scorer reports completion.
+
+**Default state is frozen.** A reset, a lost control connection, or any condition in which
+the release signal is absent or indeterminate leaves the scorer held — never running. An
+interlock whose failure mode is "sampling" would produce a fitness number for a device
+state nobody verified, and that number is indistinguishable from a real one.
 
 A fitness sampled without that sequence is not scored — the run log's `scored` flag already
-requires a matching readback, and this is the ordering that makes the flag meaningful.
+requires a matching readback, and this ordering is what makes the flag meaningful rather
+than a claim the runner makes about itself.
 
 **A pblock is an instruction to the tools and is not evidence** (§4).
 
@@ -248,16 +256,24 @@ Only then is the measurement run, and the target follows from the frozen rule ap
 the measured set. If every draw turns out unreachable, that is a **result about the space**
 to report, not a licence to widen the family.
 
-## 9. Open questions for review
+## 9. Scorer placement — the region choice is frozen before the first build
 
-1. **Where does the scorer live?** It must be outside four column segments in the same
-   clock region as the targets. If placement pressure makes that awkward, the alternative is
-   another clock region entirely, at the cost of longer nets — but nets must still avoid
-   `INT_R_X3` and `INT_R_X7`, and must satisfy the target-column allowlist.
-2. **Does the quiescing in §3 need a hardware interlock**, or is a firmware ordering
-   sufficient? A firmware-only order is trusted code; an interlock that physically gates the
-   accumulator during a write is evidence. My inclination is the interlock, on the same
-   reasoning that made the identity gate session-scoped.
+Ruled 2026-08-10: **where** the scorer ends up may be decided by engineering results, but
+the candidate regions and the rule that picks among them are frozen **before the first
+build**, so a region is never chosen after seeing behavioural results.
+
+Frozen in `specs/carrier_placement_spec.json` alongside the RTL, before any build:
+
+- a **named preferred region** and a **named ordered fallback list**;
+- a **deterministic selection rule**: take the first region in the order that satisfies
+  every §4 check and meets timing; record which one was taken and why each earlier one was
+  rejected;
+- all regions must, by construction, lie outside the four column segments and satisfy the
+  target-column net allowlist.
+
+What may not happen: building in several regions, comparing fitness, and keeping the one
+that scored best. That would make placement a tuned parameter of the result.
 
 *(Settled by review v3: all six LUTs are used — a one-slice carrier would erase most of the
-cross-LUT and cross-frame structure whose navigational value is the thing under test.)*
+cross-LUT and cross-frame structure whose navigational value is the thing under test.
+Settled 2026-08-10: the quiescing interlock is hardware, see §3.)*
