@@ -111,10 +111,18 @@ def lcg_permutation(seed: int, n: int) -> list[int]:
 
 # ---------------------------------------------------------------- the executable rules
 #
-# These are the rules themselves, not a description of them. The report producer and any
-# independent verifier call THESE functions; review v4 showed why prose is not enough —
-# the same words admitted a per-LUT and a six-LUT-conjunction reading, and the second one
-# silently reinstated the exhaustion failure the ceiling threshold had just removed.
+# These are the rules themselves, not a description of them. **The report producer calls
+# these functions. An independent verifier must NOT** — it reimplements the algorithm from
+# the committed spec, without importing this module or the report producer, because a
+# defect in `target_vector`, the ceiling, k advancement or the exhaustion path would
+# otherwise both produce the report and certify it. The literal known answer below is the
+# rendezvous point where the two implementations must agree.
+#
+# Review v4 showed why prose is not enough — the same words admitted a per-LUT and a
+# six-LUT-conjunction reading, and the second silently reinstated the exhaustion failure
+# the ceiling threshold had just removed. Review v5 caught the opposite error in the fix:
+# telling the verifier to call the producer's code says the reverse of this repo's own
+# writer/verifier contract.
 
 
 def target_vector(seed: int, k: int) -> list[int]:
@@ -159,6 +167,8 @@ def select_target_for_lut(lut: dict, seed: int, start_k: int,
     The scope is the correction of review v4: another LUT's mask does not judge a target
     that will never be installed there. `k` advances across both accepted and rejected
     draws, so no two LUTs can share a target.
+
+    Producer-side. A verifier reimplements this from the spec instead of calling it.
     """
     fixed = lut["fixed_indices"]
     base = int(lut["base_init"].split("h")[1], 16)
@@ -374,7 +384,11 @@ def build_spec(map_path: Path) -> dict:
                 "removed. Both sides reproduced both readings independently before the "
                 "wording was corrected"
             ),
-            "implemented_by": "scripts/build_reachability_spec.py:attainable_ceiling",
+            "producer_implementation": (
+                "scripts/build_reachability_spec.py:attainable_ceiling — the report "
+                "PRODUCER calls this. An independent verifier reimplements the rule from "
+                "this field and must not import the producer"
+            ),
         },
         "target_family": {
             "family": "balanced 6-input Boolean functions",
@@ -396,7 +410,14 @@ def build_spec(map_path: Path) -> dict:
                 ),
                 "init_integer": "sum(entry[v] << v)",
                 "known_answer": known_answer_literal(),
-                "implemented_by": "scripts/build_reachability_spec.py:target_vector",
+                "producer_implementation": (
+                    "scripts/build_reachability_spec.py:target_vector — producer side "
+                    "only; a verifier builds the vector from the fields above"
+                ),
+                "cross_check": (
+                    "`known_answer` is the rendezvous point: two independent "
+                    "implementations must agree on it before either is trusted"
+                ),
             },
             "per_lut": (
                 "one target is drawn per LUT, in the LUT order listed in `phenotype.luts`, "
@@ -404,10 +425,17 @@ def build_spec(map_path: Path) -> dict:
                 "target. Each draw is offered to the LUT currently being assigned and is "
                 "judged by that LUT's mask alone"
             ),
-            "selection_implemented_by": (
-                "scripts/build_reachability_spec.py:select_targets — the report producer "
-                "and any independent verifier call this function rather than "
-                "reimplementing the prose"
+            "producer_implementation": (
+                "scripts/build_reachability_spec.py:select_targets — the report PRODUCER "
+                "calls this rather than reimplementing the prose"
+            ),
+            "verifier_independence": (
+                "an independent verifier MUST reimplement this algorithm from the "
+                "machine-readable fields of this spec and MUST NOT import "
+                "build_reachability_spec, the report producer, or their helpers. A defect "
+                "in the producer's draw, ceiling, k-advancement or exhaustion logic would "
+                "otherwise produce the report AND certify it, which is not a gate. The two "
+                "implementations meet at `bit_vector_convention.known_answer`"
             ),
             "replacement_rule": (
                 "if a drawn target is UNREACHABLE by the test above, it is discarded and "

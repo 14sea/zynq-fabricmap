@@ -337,6 +337,49 @@ class RefusalTests(unittest.TestCase):
         self.assertIn("out of range", str(ctx.exception))
 
 
+class VerifierIndependenceTests(unittest.TestCase):
+    """review v5: the spec must not tell a verifier to call the producer.
+
+    The first fix for v4 said the producer "and any independent verifier" call these
+    functions — the reverse of this repo's writer/verifier contract. A defect in the draw,
+    the ceiling, k advancement or the exhaustion path would then produce the report AND
+    certify it. These cases pin the wording so an edit cannot quietly restore it.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        cls.spec = brs.build_spec(MAP_PATH)
+
+    def test_the_spec_requires_an_independent_reimplementation(self):
+        rule = self.spec["target_family"]["verifier_independence"]
+        self.assertIn("MUST reimplement", rule)
+        self.assertIn("MUST NOT import", rule)
+        self.assertIn("build_reachability_spec", rule)
+
+    def test_producer_and_verifier_roles_are_named_separately(self):
+        family = self.spec["target_family"]
+        self.assertIn("producer_implementation", family)
+        self.assertIn("verifier_independence", family)
+        self.assertNotIn("selection_implemented_by", family)
+
+    def test_no_field_tells_a_verifier_to_call_the_producer(self):
+        blob = json.dumps(self.spec)
+        for phrase in (
+            "and any independent verifier call",
+            "any independent verifier call this function",
+        ):
+            self.assertNotIn(phrase, blob)
+
+    def test_the_known_answer_is_named_as_the_rendezvous(self):
+        cross = self.spec["target_family"]["bit_vector_convention"]["cross_check"]
+        self.assertIn("known_answer", cross)
+        self.assertIn("independent", cross)
+
+    def test_the_source_comment_matches_the_spec(self):
+        source = (REPO_ROOT / "scripts/build_reachability_spec.py").read_text()
+        self.assertIn("An independent verifier must NOT", source)
+
+
 class CommittedSpecTests(unittest.TestCase):
     def setUp(self):
         if not SPEC_PATH.exists():

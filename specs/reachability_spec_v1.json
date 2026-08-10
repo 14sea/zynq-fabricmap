@@ -767,7 +767,7 @@
     "scope": "per_lut",
     "unreachable_test": "a drawn target is UNREACHABLE FOR THE LUT IT WAS DRAWN FOR when attainable_ceiling(that LUT, target) < 58. The predicate is per LUT and never a conjunction over the six: another LUT's mask does not judge a target that will never be installed there",
     "scope_erratum": "review v4 (against commit 16804b8) found this field previously read 'for any of the six LUTs', which contradicted the per-LUT draw rule two fields below. Executed literally the conjunction accepts about 0.0005 of draws, so 256 draws exhaust with probability ~0.88 and NONE of k=0..255 passes under the frozen seed \u2014 reinstating, through the predicate's scope, exactly the dead-experiment failure the ceiling threshold had just removed. Both sides reproduced both readings independently before the wording was corrected",
-    "implemented_by": "scripts/build_reachability_spec.py:attainable_ceiling"
+    "producer_implementation": "scripts/build_reachability_spec.py:attainable_ceiling \u2014 the report PRODUCER calls this. An independent verifier reimplements the rule from this field and must not import the producer"
   },
   "target_family": {
     "family": "balanced 6-input Boolean functions",
@@ -794,10 +794,12 @@
         ],
         "ones": 32
       },
-      "implemented_by": "scripts/build_reachability_spec.py:target_vector"
+      "producer_implementation": "scripts/build_reachability_spec.py:target_vector \u2014 producer side only; a verifier builds the vector from the fields above",
+      "cross_check": "`known_answer` is the rendezvous point: two independent implementations must agree on it before either is trusted"
     },
     "per_lut": "one target is drawn per LUT, in the LUT order listed in `phenotype.luts`, advancing k across accepted AND rejected draws so no two LUTs share a target. Each draw is offered to the LUT currently being assigned and is judged by that LUT's mask alone",
-    "selection_implemented_by": "scripts/build_reachability_spec.py:select_targets \u2014 the report producer and any independent verifier call this function rather than reimplementing the prose",
+    "producer_implementation": "scripts/build_reachability_spec.py:select_targets \u2014 the report PRODUCER calls this rather than reimplementing the prose",
+    "verifier_independence": "an independent verifier MUST reimplement this algorithm from the machine-readable fields of this spec and MUST NOT import build_reachability_spec, the report producer, or their helpers. A defect in the producer's draw, ceiling, k-advancement or exhaustion logic would otherwise produce the report AND certify it, which is not a gate. The two implementations meet at `bit_vector_convention.known_answer`",
     "replacement_rule": "if a drawn target is UNREACHABLE by the test above, it is discarded and the next k is drawn. Discards are recorded with their ceiling",
     "redraw_cap": 256,
     "exhaustion_rule": "if 256 consecutive draws are unreachable for one LUT, the measurement STOPS and reports exhaustion. It does not widen the family, lower the ceiling threshold, or change the seed. Exhaustion is a result about the space and is reported as one"
