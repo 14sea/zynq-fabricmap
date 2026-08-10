@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/14sea/zynq-fabricmap/schemas/reachability_report.schema.json",
+  "title": "Claim B reachability report",
+  "description": "Consumer-owned authority schema for reachability_report 1.0.0. The schema fixes record shape; host/verify_reachability_report.py independently re-derives every target, rejection, ceiling and exhaustion decision from the pinned reachability spec.",
+  "type": "object",
+  "required": [
+    "schema",
+    "schema_version",
+    "report_id",
+    "spec",
+    "spec_sha256",
+    "status",
+    "per_lut",
+    "totals",
+    "tool_versions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "reachability_report"},
+    "schema_version": {"const": "1.0.0"},
+    "report_id": {"$ref": "#/$defs/nonempty_string"},
+    "spec": {
+      "type": "object",
+      "required": ["path", "schema_version", "spec_id"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {"$ref": "#/$defs/repo_relative_path"},
+        "schema_version": {"const": "1.0.0"},
+        "spec_id": {"$ref": "#/$defs/nonempty_string"}
+      }
+    },
+    "spec_sha256": {"$ref": "#/$defs/sha256"},
+    "status": {"enum": ["complete", "exhausted"]},
+    "per_lut": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {"$ref": "#/$defs/selected_lut"},
+          {"$ref": "#/$defs/exhausted_lut"}
+        ]
+      }
+    },
+    "totals": {
+      "type": "object",
+      "required": [
+        "expected_luts",
+        "reported_luts",
+        "selected_luts",
+        "discarded_draws",
+        "attainable_ceiling",
+        "exhausted"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "expected_luts": {"type": "integer", "minimum": 1},
+        "reported_luts": {"type": "integer", "minimum": 1},
+        "selected_luts": {"type": "integer", "minimum": 0},
+        "discarded_draws": {"type": "integer", "minimum": 0},
+        "attainable_ceiling": {"type": "integer", "minimum": 0},
+        "exhausted": {"type": "boolean"}
+      }
+    },
+    "tool_versions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/nonempty_string"}
+    }
+  },
+  "$defs": {
+    "nonempty_string": {"type": "string", "minLength": 1},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "repo_relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).*$"
+    },
+    "truth_table": {"type": "string", "pattern": "^64'h[0-9A-F]{16}$"},
+    "positions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "integer", "minimum": 0, "maximum": 63}
+    },
+    "discard": {
+      "type": "object",
+      "required": ["draw_index", "attainable_ceiling", "blocked_positions"],
+      "additionalProperties": false,
+      "properties": {
+        "draw_index": {"type": "integer", "minimum": 0},
+        "attainable_ceiling": {"type": "integer", "minimum": 0, "maximum": 64},
+        "blocked_positions": {"$ref": "#/$defs/positions"}
+      }
+    },
+    "lut_common": {
+      "type": "object",
+      "required": [
+        "site",
+        "bel",
+        "mutable_count",
+        "target_truth_table",
+        "draw_index",
+        "discarded_draws",
+        "attainable_ceiling",
+        "blocked_positions",
+        "exhausted"
+      ],
+      "properties": {
+        "site": {"$ref": "#/$defs/nonempty_string"},
+        "bel": {"$ref": "#/$defs/nonempty_string"},
+        "mutable_count": {"type": "integer", "minimum": 0, "maximum": 64},
+        "discarded_draws": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/discard"}
+        }
+      }
+    },
+    "selected_lut": {
+      "allOf": [
+        {"$ref": "#/$defs/lut_common"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "site": {},
+            "bel": {},
+            "mutable_count": {},
+            "target_truth_table": {"$ref": "#/$defs/truth_table"},
+            "draw_index": {"type": "integer", "minimum": 0},
+            "discarded_draws": {},
+            "attainable_ceiling": {"type": "integer", "minimum": 0, "maximum": 64},
+            "blocked_positions": {"$ref": "#/$defs/positions"},
+            "exhausted": {"const": false}
+          }
+        }
+      ]
+    },
+    "exhausted_lut": {
+      "allOf": [
+        {"$ref": "#/$defs/lut_common"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "site": {},
+            "bel": {},
+            "mutable_count": {},
+            "target_truth_table": {"type": "null"},
+            "draw_index": {"type": "null"},
+            "discarded_draws": {},
+            "attainable_ceiling": {"type": "null"},
+            "blocked_positions": {"type": "null"},
+            "exhausted": {"const": true}
+          }
+        }
+      ]
+    }
+  }
+}

@@ -29,6 +29,7 @@ device write has been authorised.
 |---|---|
 | preregistration | **DRAFT** — `docs/claimb_preregistration.md`; §6 budget unfrozen |
 | `local_map` 1.0.0 | built from the `clb_lut_init` certificate — 292 addresses, 12 frames, 6 LUTs |
+| reachability | spec frozen before target selection; consumer report schema/verifier and known-bad fixtures built; **production report not run** |
 | `phenotype_manifest` | emitter written; **no carrier bitstream exists yet**, so no instance is committed |
 | ICAP write path | 3 envelopes × 536 words = 6,432 bytes; flush frames derived from the device frame sequence |
 | candidate gate | judges the **serialized** sequence, under two frame semantics |

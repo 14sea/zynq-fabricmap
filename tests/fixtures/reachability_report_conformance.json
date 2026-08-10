@@ -1,0 +1,53 @@
+{
+  "schema": "reachability_report",
+  "schema_version": "1.0.0",
+  "report_id": "consumer_reachability_conformance_report_v1",
+  "spec": {
+    "path": "tests/fixtures/reachability_spec_conformance.json",
+    "schema_version": "1.0.0",
+    "spec_id": "consumer_reachability_conformance_v1"
+  },
+  "spec_sha256": "d3f6d3f85e3b6a2111547ed08640f6691b3d9ce4e2012e2b9f237585dde6d58d",
+  "status": "complete",
+  "per_lut": [
+    {
+      "site": "SLICE_TEST0",
+      "bel": "A6LUT",
+      "mutable_count": 64,
+      "target_truth_table": "64'h197787B4D6152EC4",
+      "draw_index": 0,
+      "discarded_draws": [],
+      "attainable_ceiling": 64,
+      "blocked_positions": [],
+      "exhausted": false
+    },
+    {
+      "site": "SLICE_TEST1",
+      "bel": "D6LUT",
+      "mutable_count": 57,
+      "target_truth_table": "64'h33D53591D3EB1710",
+      "draw_index": 2,
+      "discarded_draws": [
+        {
+          "draw_index": 1,
+          "attainable_ceiling": 57,
+          "blocked_positions": [1, 2, 4, 5, 7, 10, 18]
+        }
+      ],
+      "attainable_ceiling": 62,
+      "blocked_positions": [4, 10],
+      "exhausted": false
+    }
+  ],
+  "totals": {
+    "expected_luts": 2,
+    "reported_luts": 2,
+    "selected_luts": 2,
+    "discarded_draws": 1,
+    "attainable_ceiling": 126,
+    "exhausted": false
+  },
+  "tool_versions": {
+    "fixture": "consumer-known-answer/1.0.0"
+  }
+}
