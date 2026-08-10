@@ -33,14 +33,12 @@ set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} [get_cells evolvabl
 
 # ------------------------------------------------------- keep everything else outside
 # The scorer/guard/control region: the frozen preferred region (carrier design §9).
-create_pblock pb_logic
-add_cells_to_pblock pb_logic [get_cells -quiet -hierarchical -filter \
-    {PRIMITIVE_GROUP != LUT || NAME !~ "evolvable_*"}]
-resize_pblock pb_logic -add {SLICE_X12Y0:SLICE_X43Y49}
-set_property CONTAIN_ROUTING false [get_pblocks pb_logic]
+# The logic pblock is NOT created here. `add_cells_to_pblock` in an XDC runs at
+# constraint-read time, before opt_design, and the cell set changes underneath it: of 865
+# matching cells only 35 were captured, so the constraint was barely applied and the
+# floorplan looked geometrically impossible when it had simply not been asked. It is
+# created in build_carrier.tcl after opt_design instead.
 
-# The four column segments. PROHIBIT is per-site, and the six evolvable BELs are excluded
-# from the target-column prohibition by listing the sites individually.
 # Flush and target column segments are enforced by the pblock above plus the routed-design
 # checks in isolation_checks.tcl. A PROHIBIT list is not used here: XDC accepts no `if`,
 # and a bare set_property over an empty site list is an error rather than a no-op — the
