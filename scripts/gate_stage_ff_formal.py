@@ -505,6 +505,91 @@ def is_ignored(relative: Path) -> bool:
 SPECIMENS_DIR = "specimens"
 
 
+def publication_attribute_problems(resolved_out: Path, specimen_ids: list[str]) -> list[str]:
+    """Every path about to be written must resolve the way `.gitattributes` says.
+
+    Asked of the *prospective* paths, before anything is created, because the failure
+    being prevented is a staging published under a rule that was edited, narrowed or
+    never committed. `git check-attr` answers about paths, not files, so this can run
+    while the tree is still empty — which is the only time the answer is useful, since
+    once 366 MiB of ordinary blobs are in history no later commit takes them out.
+
+    Both directions, for the same reason the measurement checks both: a `.bit` that does
+    not resolve to `filter=lfs` becomes permanent repository weight, and a JSON that does
+    means a mis-scoped rule has moved the reviewable half of the evidence out of the
+    repository. A tree without git cannot answer and says so — this guards a mistake
+    before any evidence exists, unlike the measurement's gate, where the answer *is* the
+    evidence.
+
+    Resolved from **HEAD and the working tree**, both of which must satisfy, and HEAD must
+    actually carry a root `.gitattributes`. An earlier version asked only the working tree
+    — `git check-attr`'s default — so a correct but **uncommitted** rule passed, which is
+    precisely the case this docstring claimed to refuse. Its own fixtures were temporary
+    repositories with no commit at all, so the test suite was demonstrating the hole.
+
+    **This is a pre-check, not the publication gate.** It says the paths would be stored
+    correctly *if* they are added under this rule; it cannot say what actually entered the
+    index, because that happens later and can be done with the filter overridden or the
+    rule edited. `scripts/gate_publish_ff_staging.py` is the gate that reads the index.
+    """
+    expected: dict[str, str] = {}
+    for specimen_id in specimen_ids:
+        directory = resolved_out / SPECIMENS_DIR / specimen_id
+        expected[str((directory / "spec.bit").relative_to(REPO))] = "lfs"
+        expected[str((directory / "attestation.json").relative_to(REPO))] = "ordinary"
+    expected[str((resolved_out / "staging_manifest.json").relative_to(REPO))] = "ordinary"
+
+    if subprocess.run(["git", "rev-parse", "--git-dir"], cwd=REPO,
+                      capture_output=True, check=False).returncode != 0:
+        return []
+
+    def resolve(source: list[str]) -> tuple[dict, str]:
+        asked = subprocess.run(["git", "check-attr", *source, "-z", "filter", "--",
+                                *expected], cwd=REPO, capture_output=True, text=True,
+                               check=False)
+        if asked.returncode != 0:
+            return {}, asked.stderr.strip()
+        # `-z` output is a flat NUL-separated (path, attribute, value) stream.
+        fields = [item for item in asked.stdout.split("\0") if item]
+        return ({fields[index]: fields[index + 2]
+                 for index in range(0, len(fields) - 2, 3)}, "")
+
+    problems: list[str] = []
+    # Both sources, and both must satisfy. The working tree alone would accept a rule
+    # that is correct and **uncommitted** — the docstring's "never committed" case, which
+    # this check claimed to refuse and did not, because `git check-attr` reads the working
+    # tree by default. HEAD alone would miss a rule that has since been edited or narrowed
+    # in the tree the stager is about to write into.
+    committed = subprocess.run(["git", "cat-file", "-e", "HEAD:.gitattributes"], cwd=REPO,
+                               capture_output=True, check=False).returncode == 0
+    if not committed:
+        problems.append(
+            "HEAD has no root .gitattributes: the rule that keeps staged bitstreams in "
+            "LFS is not published, so a clone would not apply it")
+    for label, source in (("HEAD", ["--source=HEAD"]), ("the working tree", [])):
+        if label == "HEAD" and not committed:
+            continue
+        resolved, failure = resolve(source)
+        if failure:
+            problems.append(f"git could not resolve the staging attributes from {label}: "
+                            f"{failure}")
+            continue
+        for relative, kind in sorted(expected.items()):
+            value = resolved.get(relative, "unspecified")
+            if kind == "lfs" and value != "lfs":
+                problems.append(f"{relative} resolves to filter={value} in {label}, not "
+                                "lfs — staging it would commit the bitstream into "
+                                "ordinary Git history")
+            if kind == "ordinary" and value == "lfs":
+                problems.append(f"{relative} resolves to filter=lfs in {label}, but it is "
+                                "an ordinary Git file by ruling — the attribute rule is "
+                                "mis-scoped")
+    if problems:
+        problems.append("fix .gitattributes AND commit it before staging: "
+                        "`staging/**/*.bit filter=lfs diff=lfs merge=lfs -text`")
+    return problems
+
+
 def stage(plan: dict, nodes: list[dict], out: Path, *, verbose: bool = True) -> Path:
     """All or nothing: convert every committed specimen, then write, or write nothing.
 
@@ -525,6 +610,14 @@ def stage(plan: dict, nodes: list[dict], out: Path, *, verbose: bool = True) -> 
     resolved_out = check_staging_root(out)
     reference = commitment_reference(plan)
     by_id = {item["specimen_id"]: item for item in plan["specimens"]}
+
+    # Before anything is converted or written: the paths must resolve the way the
+    # published attribute rule says they will be stored.
+    attributes = publication_attribute_problems(resolved_out, sorted(by_id))
+    if attributes:
+        raise SystemExit(
+            "refusing to stage: {} attribute problem(s), nothing was written.\n  {}".format(
+                len(attributes), "\n  ".join(attributes[:6])))
 
     planned = {node["specimen_id"]: node for node in nodes}
     # Completeness is measured against what exists on disk, not against the node plan:

@@ -1161,6 +1161,131 @@ class RoutePinFailOpenTests(unittest.TestCase):
 
 
 
+class PublicationAttributeTests(unittest.TestCase):
+    """A staging may only be published under the rule that says how it is stored.
+
+    Asked of the paths before anything exists, because after 366 MiB of ordinary blobs
+    reach history no later commit removes them.
+    """
+
+    def setUp(self) -> None:
+        scratch = REPO_ROOT / "build"
+        scratch.mkdir(exist_ok=True)
+        self.directory = tempfile.TemporaryDirectory(dir=scratch)
+        self.addCleanup(self.directory.cleanup)
+        self.tree = Tree(Path(self.directory.name))
+        self.out = staging_scratch(self)
+        self.ids = sorted(item["specimen_id"] for item in self.tree.plan["specimens"])
+
+    def test_this_repository_resolves_the_staged_paths_correctly(self) -> None:
+        """Against the repository's own committed `.gitattributes`, not a fixture."""
+        self.assertEqual(
+            stager.publication_attribute_problems(self.out.resolve(), self.ids), [])
+
+    def asked(self, attributes: str, ids: list[str] | None = None,
+              *, commit: bool = True) -> list[str]:
+        """The same question under a different rule, by pointing git at another tree.
+
+        `commit=True` by default because the rule has to be published to count: these
+        fixtures used to leave it uncommitted, which meant they were exercising the very
+        hole the check claimed to close.
+        """
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=root, check=True)
+        (root / ".gitattributes").write_text(attributes)
+        if commit:
+            subprocess.run(["git", "-c", "user.email=t@example.invalid",
+                            "-c", "user.name=test", "add", ".gitattributes"],
+                           cwd=root, check=True)
+            subprocess.run(["git", "-c", "user.email=t@example.invalid",
+                            "-c", "user.name=test", "commit", "-q", "-m", "rule"],
+                           cwd=root, check=True)
+        out = root / "staging" / "run"
+        with unittest.mock.patch.object(stager, "REPO", root):
+            return stager.publication_attribute_problems(out, ids or ["FIXTURE_base"])
+
+    def test_a_correct_but_uncommitted_rule_is_refused(self) -> None:
+        """The gap: `git check-attr` reads the working tree, so a rule that would keep
+        the bitstreams in LFS but is not published passed — and a clone applies HEAD."""
+        problems = self.asked("staging/**/*.bit filter=lfs -text\n", commit=False)
+        self.assertTrue(any("HEAD has no root .gitattributes" in item
+                            for item in problems), problems)
+
+    def test_a_rule_edited_after_it_was_committed_is_refused(self) -> None:
+        """Committed correct, then narrowed in the tree the stager is about to write."""
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=root, check=True)
+        (root / ".gitattributes").write_text("staging/**/*.bit filter=lfs -text\n")
+        for command in (["add", ".gitattributes"], ["commit", "-q", "-m", "rule"]):
+            subprocess.run(["git", "-c", "user.email=t@example.invalid",
+                            "-c", "user.name=test", *command], cwd=root, check=True)
+        (root / ".gitattributes").write_text("# narrowed after publication\n")
+        with unittest.mock.patch.object(stager, "REPO", root):
+            problems = stager.publication_attribute_problems(
+                root / "staging" / "run", ["FIXTURE_base"])
+        self.assertTrue(any("in the working tree" in item for item in problems), problems)
+        self.assertFalse(any("in HEAD" in item and "resolves" in item
+                             for item in problems), problems)
+
+    def test_a_rule_excepting_one_specimen_is_refused(self) -> None:
+        """Attribute rules are per path, so "the rule covers bitstreams" is not the same
+        claim as "it covers these 184". One exception is all it takes."""
+        problems = self.asked(
+            "staging/**/*.bit filter=lfs -text\n"
+            "staging/run/specimens/ODD_ONE/spec.bit -filter\n",
+            ["FIXTURE_base", "ODD_ONE", "FIXTURE_clkinv"])
+        self.assertEqual(
+            [item for item in problems if "not lfs" in item],
+            ["staging/run/specimens/ODD_ONE/spec.bit resolves to filter=unset in HEAD, "
+             "not lfs — staging it would commit the bitstream into ordinary Git history",
+             "staging/run/specimens/ODD_ONE/spec.bit resolves to filter=unset in the "
+             "working tree, not lfs — staging it would commit the bitstream into "
+             "ordinary Git history"])
+
+    def test_a_bitstream_outside_the_rule_is_refused(self) -> None:
+        problems = self.asked("staging/**/*.other filter=lfs -text\n")
+        self.assertTrue(any("resolves to filter=unspecified in HEAD, not lfs" in item
+                            for item in problems), problems)
+        self.assertTrue(any("fix .gitattributes" in item for item in problems), problems)
+
+    def test_no_rule_at_all_is_refused(self) -> None:
+        problems = self.asked("# nothing here\n")
+        self.assertTrue(any("ordinary Git history" in item for item in problems), problems)
+
+    def test_a_rule_that_swallows_the_json_is_refused(self) -> None:
+        problems = self.asked("staging/**/*.bit filter=lfs -text\n"
+                              "staging/**/*.json filter=lfs -text\n")
+        self.assertTrue(any("staging_manifest.json resolves to filter=lfs" in item
+                            for item in problems), problems)
+        self.assertTrue(any("attestation.json resolves to filter=lfs" in item
+                            for item in problems), problems)
+
+    def test_the_gate_runs_before_anything_is_written(self) -> None:
+        """A refused staging must leave no root and no `.partial`."""
+        with unittest.mock.patch.object(
+                stager, "publication_attribute_problems",
+                lambda root, ids: ["staged/x/spec.bit resolves to filter=unspecified"]):
+            with self.assertRaises(SystemExit) as caught:
+                stager.stage(self.tree.plan, self.tree.nodes, self.out, verbose=False)
+        self.assertIn("attribute problem", str(caught.exception))
+        self.assertFalse(self.out.exists())
+        self.assertFalse(self.out.with_name(self.out.name + ".partial").exists())
+
+    def test_without_git_the_check_does_not_object(self) -> None:
+        """It guards a mistake before evidence exists, so it may decline to answer —
+        unlike the measurement's pointer gate, where the answer *is* the evidence."""
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        with unittest.mock.patch.object(stager, "REPO", Path(directory.name)):
+            self.assertEqual(
+                stager.publication_attribute_problems(
+                    Path(directory.name) / "staging/run", ["FIXTURE_base"]), [])
+
+
 class PublishPathTests(unittest.TestCase):
     """A staging root that git excludes cannot be the published one, so staging there
     could only ever be followed by a copy — an unverified publishing step nobody gates."""

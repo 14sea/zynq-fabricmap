@@ -1,0 +1,19 @@
+# Staged specimen bitstreams live in Git LFS. A published staging is 184 files and
+# 365.7 MiB; committed as ordinary blobs that is permanent repository weight, and unlike
+# almost every other mistake in this pipeline a later commit does not undo it.
+#
+# Deliberately narrow. Only staged bitstreams match: the manifest, the attestations, the
+# prediction commitment and every certificate stay ordinary Git files, because they are
+# what a reviewer reads and diffs, and `gate_measure_ff.lfs_pointer_problems()` refuses a
+# run where any of them turns out to be a pointer.
+#
+# Two gates enforce this, because a rule nobody checks is a comment:
+#   * `scripts/gate_stage_ff_formal.py` refuses to stage unless every path it is about to
+#     write resolves the way this file says, in HEAD and in the working tree both;
+#   * `scripts/gate_publish_ff_staging.py` is the one that decides what enters history.
+#     Run it between `git add` and `git commit`: it reads the index and refuses unless
+#     this file is present unchanged in the index — a publication commit does not
+#     stage policy — every path resolves under that copy of it, and
+#     every bitstream blob is an LFS pointer whose oid is the manifest's pin. The stager
+#     alone cannot promise that — `git add` happens after it has finished.
+staging/**/*.bit filter=lfs diff=lfs merge=lfs -text

@@ -303,29 +303,112 @@ land, deliberately as its own change rather than folded into the measurement:
    staging (a measurement no verifier can repeat) and ordinary giant blobs (unrecoverable
    history). The next move in that case is the consumer's — change the artifact model.
 
-### What has to land before a staging may be published, as of 2026-08-10
+### The lifecycle, and the ordering mistake it corrects (2026-08-10)
 
-Three items, **one still open**, and staging is blocked until all three are done and
-cross-reviewed:
+An earlier version of this section listed "a fresh clone that materialises LFS, re-hashes
+all 184 artifacts and runs the verifier" as a **prerequisite for staging**. That is
+circular: there is nothing to clone until the staging has been published. It is an
+acceptance of a published staging, not a gate in front of one. Ruled and reordered:
 
-* ~~**consumer** — independent recomputation of `design_source_sha256` plus the three
-  failing fixtures (§2b-ii)~~ **done** (`acd7e05`);
-* ~~**producer** — the nested staging layout (§1)~~ **done**;
-* **both** — the Git LFS policy: ~~the pointer-oid gate~~ **done** (measurement side,
-  above; exercised against real local LFS repositories), ~~and remote availability~~
-  **answered 2026-08-10** — a one-off throwaway branch pushed a 2.2 KB object, the remote
-  accepted it, and a fresh clone materialised it back to the exact bytes
-  (`evidence/lfs_remote_probe_2026_08_10/`), so the ruling's "stop and hand back" branch
-  is not taken. Still open: this repository's own `.gitattributes`, and the **fresh-clone
-  materialisation acceptance for the real set** — 184 artifacts, 365.7 MiB, re-hashed with
-  the verifier run against them.
+1. **land the root `.gitattributes` and the producer prepublication gate** — done, below;
+2. review it, then **ask for staging authorisation separately**;
+3. generate, commit and push the 184-specimen staging;
+4. **fresh clone + `git lfs pull`, re-hash all 184, run the verifier** — the acceptance,
+   which can only happen here;
+5. only once that passes, **ask for measurement authorisation**.
 
-  The probe also produced the empirical form of the §2b correction: in a pointer-only
-  clone the path is in HEAD, `git diff HEAD` is **clean**, and the pointer gate passes,
-  while the working file is 129 bytes of pointer text. Only the working-bytes hash against
-  the manifest pin refuses that tree.
+Step 1 is one item, not two, because a rule nobody enforces and an enforcement with no
+rule are each worthless — and it needs **two layers**, because they answer different
+questions.
 
-Measurement is not authorised either, and none of this authorises it.
+**Stage-time pre-check** (`publication_attribute_problems()`, in the stager). Before
+anything is created, every prospective path must resolve correctly — each `.bit` to
+`filter=lfs`, each JSON not to it — **from HEAD and from the working tree, both**. HEAD
+must actually carry a root `.gitattributes`. Asking only the working tree, which is
+`git check-attr`'s default, accepts a rule that is correct and *uncommitted*: a clone
+applies HEAD, so that rule governs nothing. Asking only HEAD would miss one narrowed in
+the tree the stager is about to write into. It asks about **all** paths, since attribute
+rules are per path and "the rule covers bitstreams" is not the claim "it covers these
+184" — a single `-filter` exception is refused by name.
+
+**Index gate** (`scripts/gate_publish_ff_staging.py`), and this is the one that decides
+what enters history:
+
+```
+git add staging/<run_id> .gitattributes
+scripts/gate_publish_ff_staging.py --run-root staging/<run_id>   # must pass
+git commit -m "staging: …"
+```
+
+The pre-check is about intent; `git add` is what actually happens, and between them the
+rule can be edited or the filter overridden. Both bypasses are real and both are covered
+by cases: appending one `-filter` line to the working `.gitattributes` before `git add`
+needs no flags at all, and the filter can be turned off on the command line. Worth
+recording precisely, because the obvious spelling does **not** work: `git -c
+filter.lfs.clean=cat -c filter.lfs.required=false add` still produces pointers wherever
+git-lfs installed its long-running process filter, which is every standard install —
+`filter.lfs.process` has to be cleared as well. Verified before the case was written.
+
+So the gate reads **index blobs**, and everything it reads comes from there — the
+manifest, the attestations, `.gitattributes`, and the commitment when that is being
+published in the same commit:
+
+* the manifest validates against `specimen_staging` 1.0.0 and declares `complete: true`;
+* **the specimen set is rebuilt from the frozen commitment** — the canonical path and
+  `5440ef27…`, hash-pinned in `gate_build_ff_formal` — read **from the index** and
+  required to be exactly those bytes, with no fallback to HEAD. Not "the commitment the
+  manifest points at": commitment, manifest and index are three records one commit can
+  rewrite together, and checking them against each other calls that self-consistent set a
+  complete publication. The manifest must name that path and that hash, its copy of the
+  commitment's schema version, seed and totals must match the document, the document's
+  ids must be unique and `totals.specimens` must equal how many it lists;
+* no duplicate specimen id, and no two entries naming one artifact path;
+* every bitstream a strict LFS pointer whose oid equals the pinned sha256;
+* every attestation an ordinary blob **whose bytes hash to the pin** — "ordinary" alone
+  passes an attestation that was edited and added without touching the manifest;
+* the staged set under the run root exactly the manifest plus two artifacts per specimen;
+* `.gitattributes` in HEAD **and** in the index, every path re-resolved by
+  `git check-attr --cached`. "In HEAD or in the index" was wrong: HEAD can carry the rule
+  while the index stages its deletion, and then the commit has no rule at all;
+* **the staged change set is exactly this staging and nothing else.** This is what makes
+  "an authority outside the commit" structural instead of hopeful. The frozen path and
+  hash are read from `gate_build_ff_formal`, a working-tree Python file — so without the
+  seal a commit could stage an edited builder, a new commitment and a manifest cut to
+  match, and be judged by the authority it was rewriting. Pinning yet another hash does
+  not help: whatever names the authority can be staged too. So the publication command is
+
+      git add staging/<run_id>
+      scripts/gate_publish_ff_staging.py --run-root staging/<run_id>
+      git commit …
+
+  with `.gitattributes` deliberately absent from it — policy lands in its own reviewed
+  commit first, and so does everything else the gate consults;
+* **no tracked file differs between the working tree and the index.** The index seal says
+  what the commit contains; this says what *judged* it. The frozen pin, the pointer parser
+  and the schemas are read from the working tree, so an unstaged edit to any of them
+  changes the verdict while the staged diff stays exactly a staging — the same hole one
+  level further out. Deliberately broader than a list of this gate's imports: a list would
+  be a claim about which files can change a verdict, and we do not know all of them. It
+  also catches an artifact swapped after `git add`, since a materialised `.bit` cleans
+  back to its own pointer and otherwise reads clean.
+
+Together those three say: the commit contains only the staging, the sources that judged it
+match that index, and the authority files in that index match HEAD.
+
+Pointer well-formedness is `gate_measure_ff.parse_lfs_pointer` and the manifest's shape is
+the consumer's own validator, both reused rather than re-derived.
+
+Without that layer there is a window between the last check and the commit that nobody
+verifies, and a commit that put 366 MiB of binary into ordinary history is the one mistake
+here that no later commit undoes.
+
+Unlike the measurement's pointer gate, this one declines to answer without git rather than
+refusing: it guards a mistake *before* any evidence exists, whereas there the answer is
+the evidence.
+
+Still open, in order: **staging authorisation** (not requested), then step 4's
+materialisation acceptance for the real set — 184 artifacts, 365.7 MiB. Remote LFS
+availability is no longer among the unknowns (§2c).
 
 ## 3. What this does not prove
 
