@@ -238,6 +238,12 @@ frames and the per-envelope overhead, and it is the number a naive estimate prod
    frame-diff hash. Fitness is scored **only** if the readback equals the candidate.
 9. **The phenotype manifest pins** the base bitstream, the 12 base frames, the 3 flush
    frames, and all of their hashes.
+10. **Frame ownership is explicit, and the gate never relaxes for our own logic.** The
+    evolvable LUTs, the scorer, and the HWICAP/control logic must be placed so their
+    ownership of frames is separated and stated. Within the 12 target and 3 flush frames,
+    **every bit except the 292 whitelisted addresses is determined by the pinned base
+    authority** — including bits that belong to our own scorer. "That is my own logic, so
+    it is safe to differ" is exactly the reasoning that turns a gate into a formality.
 
 ### The budget still cannot be frozen here
 
