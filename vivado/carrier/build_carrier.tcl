@@ -24,7 +24,7 @@ create_project -in_memory -part $part
 set_property verilog_define {} [current_fileset]
 add_files -norecurse [list \
     $here/carrier_top.v $here/carrier_axil.v $here/carrier_envelope.v \
-    $here/carrier_guard.v $here/carrier_scorer.v]
+    $here/carrier_txn.v $here/carrier_crc32.v $here/carrier_scorer.v]
 set_property include_dirs [list $here/generated] [current_fileset]
 add_files -fileset constrs_1 -norecurse $here/carrier.xdc
 
@@ -55,14 +55,14 @@ add_cells_to_pblock pb_logic $logic_cells
 # Three disjoint islands routed, but asking for CONTAIN_ROUTING on them produced 3
 # unroutable pins and 196 reachable-but-unrouted pins: disjoint islands are not a usable
 # routing topology, whatever they are as a placement constraint.
-# Region 1 of the frozen order (design §9): a contiguous block clear of all four column
-# segments.
+# LEFT of the first flush column, where PS7 also is. With the one-envelope buffer as
+# LUTRAM (288 LUTs) there is no BRAM in the design at all, so nothing pulls the logic to
+# the right-hand side of tile column X3.
 #
-# Region 2 (SLICE_X0..X1, left of the flush column) was TRIED and is worse: 190 flush nets
-# against 124, because the BRAM the buffer needs then sits across INT_R_X7 from the logic
-# and axi_buf_rdata crosses instead. Recorded so it is not re-tried as an idea.
-resize_pblock pb_logic -add {SLICE_X10Y0:SLICE_X43Y99}
-resize_pblock pb_logic -add {RAMB36_X1Y0:RAMB36_X2Y19}
+# The right-hand region was tried at 124 crossers and the left-hand one with a BRAM buffer
+# at 190; both were broken by CONTROL-class nets, which is what the one-envelope contract
+# exists to remove. Recorded so neither is re-tried as an idea.
+resize_pblock pb_logic -add {SLICE_X0Y0:SLICE_X1Y99}
 
 # THE PROPERTY THAT ACTUALLY MAKES IT A BOUNDARY. Vivado pblocks default to IS_SOFT=1,
 # which the placer may cross; the range is a preference until this is false. Every

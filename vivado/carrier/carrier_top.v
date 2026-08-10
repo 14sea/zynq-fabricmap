@@ -14,7 +14,7 @@
 
 module carrier_top #(
     parameter integer LUTS      = 6,
-    parameter integer BUF_WORDS = 1608
+    parameter integer BUF_WORDS = 536    // one envelope; see the two-pass contract
 ) (
     output wire [3:0] led    // tied off; the design has no board IO of its own
 );
@@ -68,11 +68,16 @@ module carrier_top #(
     wire [11:0] buf_raddr;
     wire [31:0] buf_rdata;
     wire [11:0] loaded_words;
-    wire        ctrl_go, ctrl_arm, ctrl_mode_holdout;
+    wire        ctrl_begin_txn, ctrl_validate, ctrl_write, ctrl_arm, ctrl_mode_holdout;
+    wire [1:0]  ctrl_env_index;
 
-    wire        guard_busy, guard_fault, configuration_valid;
-    wire [3:0]  guard_fault_code;
-    wire [11:0] guard_fault_word;
+    wire        txn_busy, txn_fault, configuration_valid, pass1_complete,
+                recovery_required;
+    wire [3:0]  txn_fault_code;
+    wire [1:0]  expect_env;
+    wire        txn_we;
+    wire [11:0] txn_waddr;
+    wire [31:0] txn_wdata;
     wire        scorer_busy, scorer_done, scorer_armed;
     wire [LUTS*8-1:0] score_flat;
 
@@ -83,50 +88,64 @@ module carrier_top #(
         .s_bresp(m_bresp), .s_bvalid(m_bvalid), .s_bready(m_bready),
         .s_araddr(m_araddr[15:0]), .s_arvalid(m_arvalid), .s_arready(m_arready),
         .s_rdata(m_rdata), .s_rresp(m_rresp), .s_rvalid(m_rvalid), .s_rready(m_rready),
-        .buf_raddr(buf_raddr), .buf_rdata(buf_rdata), .loaded_words(loaded_words),
-        .ctrl_go(ctrl_go), .ctrl_arm(ctrl_arm), .ctrl_mode_holdout(ctrl_mode_holdout),
-        .guard_busy(guard_busy), .guard_fault(guard_fault),
-        .guard_fault_code(guard_fault_code), .guard_fault_word(guard_fault_word),
+        .buf_raddr(buf_raddr), .buf_read_busy(val_busy || txn_busy),
+        .buf_raddr_out(), .buf_rdata(buf_rdata), .loaded_words(loaded_words),
+        .txn_we(txn_we), .txn_waddr(txn_waddr), .txn_wdata(txn_wdata),
+        .ctrl_begin_txn(ctrl_begin_txn), .ctrl_validate(ctrl_validate),
+        .ctrl_write(ctrl_write), .ctrl_env_index(ctrl_env_index),
+        .ctrl_arm(ctrl_arm), .ctrl_mode_holdout(ctrl_mode_holdout),
+        .txn_busy(txn_busy), .txn_fault(txn_fault), .txn_fault_code(txn_fault_code),
+        .pass1_complete(pass1_complete), .recovery_required(recovery_required),
+        .expect_env(expect_env),
         .configuration_valid(configuration_valid),
         .scorer_busy(scorer_busy), .scorer_done(scorer_done), .scorer_armed(scorer_armed),
         .score_flat(score_flat)
     );
 
-    // ---------------------------------------------- validator, then guard, then ICAPE2
-    wire [11:0] val_addr, guard_addr;
+    // ------------------------------------- validator + CRC + transaction, then ICAPE2
+    wire [11:0] val_addr, txn_addr;
     wire        val_busy, val_ok, val_fault;
     wire [3:0]  val_fault_code;
     wire [11:0] val_fault_word;
-    wire        guard_start;
+    wire        val_start, crc_clear, crc_valid;
+    wire [31:0] crc_value;
 
     carrier_envelope validator (
         .clk(clk), .rst_n(rst_n),
-        .start(ctrl_go), .loaded_words(loaded_words),
+        .start(val_start), .env_index(ctrl_env_index), .loaded_words(loaded_words),
         .buf_addr(val_addr), .buf_data(buf_rdata),
         .busy(val_busy), .ok(val_ok), .fault(val_fault),
         .fault_code(val_fault_code), .fault_word(val_fault_word)
     );
 
-    // The guard runs ONLY on a validated buffer: validation is a complete pass, and the
-    // start pulse is its `ok`. Nothing reaches ICAPE2 before the whole stream has been
-    // judged.
-    assign guard_start = val_ok;
+    carrier_crc32 crc (
+        .clk(clk), .rst_n(rst_n),
+        .clear(crc_clear), .valid(crc_valid), .data(buf_rdata), .crc(crc_value)
+    );
 
     wire        icap_csib, icap_rdwrb;
     wire [31:0] icap_din, icap_dout;
 
-    carrier_guard guard (
+    carrier_txn txn (
         .clk(clk), .rst_n(rst_n),
-        .start(guard_start),
-        .busy(guard_busy), .fault(guard_fault), .fault_code(guard_fault_code),
+        .begin_txn(ctrl_begin_txn), .validate_env(ctrl_validate),
+        .write_env(ctrl_write), .env_index(ctrl_env_index),
+        .busy(txn_busy), .fault(txn_fault), .fault_code(txn_fault_code),
+        .expect_env(expect_env), .pass1_complete(pass1_complete),
         .configuration_valid(configuration_valid),
-        .buf_addr(guard_addr), .buf_data(buf_rdata),
+        .recovery_required(recovery_required),
+        .buf_addr(txn_addr), .buf_data(buf_rdata),
+        .buf_we(txn_we), .buf_waddr(txn_waddr), .buf_wdata(txn_wdata),
+        .val_start(val_start), .val_busy(val_busy),
+        .val_ok(val_ok), .val_fault(val_fault),
+        .crc_clear(crc_clear), .crc_valid(crc_valid), .crc_value(crc_value),
         .icap_csib(icap_csib), .icap_rdwrb(icap_rdwrb),
         .icap_din(icap_din), .icap_dout(icap_dout)
     );
 
-    assign guard_fault_word = val_fault ? val_fault_word : 12'd0;
-    assign buf_raddr = val_busy ? val_addr : guard_addr;
+    // one shared read port: the validator drives it while it is busy, the transaction
+    // otherwise. They never contend, because the transaction waits for the validator.
+    assign buf_raddr = val_busy ? val_addr : txn_addr;
 
     ICAPE2 #(.ICAP_WIDTH("X32")) icap (
         .CLK(clk), .CSIB(icap_csib), .RDWRB(icap_rdwrb),
