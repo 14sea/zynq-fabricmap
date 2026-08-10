@@ -245,6 +245,38 @@ frames and the per-envelope overhead, and it is the number a naive estimate prod
     authority** — including bits that belong to our own scorer. "That is my own logic, so
     it is safe to differ" is exactly the reasoning that turns a gate into a formality.
 
+### The two gate semantics — they are different rules, not one rule twice
+
+Ruled 2026-08-10. A single "must match the base except the whitelist" rule applied to all
+15 frames would be wrong, because the flush frames admit no exception at all:
+
+| frames | what may differ |
+|---|---|
+| **12 target frames** | **only** the 292 whitelisted bits, plus the frame ECC *correctly recomputed* for the resulting content. Nothing else, in any word. |
+| **3 flush frames** | **nothing.** All 101 words must equal the pinned base **verbatim, including word 50's ECC.** Zero difference. |
+
+The three successor relations — `0x00400A23`→`0x00400A80`, `0x00400C1D`→`0x00400C1E`,
+`0x00400C23`→`0x00400C80` — are **derived from the device frame sequence and pinned into
+the manifest**, never recomputed as integer FAR+1 at use time.
+
+### Carrier placement constraints on the flush frames (stronger than "no dynamic content")
+
+The two cross-column flush frames (`major 21 minor 0`, `major 25 minor 0`) must carry:
+
+- **no live carrier cell**, and
+- **no scorer, HWICAP or control logic**, and
+- **no routing that crosses the resources those frames own**.
+
+Writing identical bytes back is not sufficient grounds to relax this: a reconfiguration
+write can disturb the frame's resources **transiently** even when the content is
+unchanged. The case that must never exist is **HWICAP writing a frame that carries its own
+control path** — the write would be able to interrupt the mechanism performing it.
+
+**And placement constraints are not proof.** The routed carrier must *demonstrate* target
+and flush frame ownership isolation from the DCP or from readback. A pblock is an
+instruction to the tools; what the tools actually did is a separate question, and only the
+second one is evidence.
+
 ### The budget still cannot be frozen here
 
 The transfer size is not the evaluation rate. Before the arms run, an **engineering
