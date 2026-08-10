@@ -152,6 +152,25 @@ def parse_sequence(words: list[int]) -> dict:
     single most interesting thing a gate can be told about, and a parser that ignored it
     would hand the gate a clean-looking record of a stream it did not read.
     """
+    def truncated(reg, declared, available, index):
+        """One rule for every payload read, type 1 and type 2 alike.
+
+        Patching the four `payload[0]` sites would fix four symptoms of one defect: the
+        parser read a declared length without proving the stream carries it. A truncated
+        packet is DATA about a malformed stream — it becomes a trace entry and a record,
+        never an exception. A gate that crashes has not judged anything
+        (docs/claimb_preregistration.md).
+        """
+        entry = {
+            "kind": "truncated",
+            "reg": reg,
+            "declared": declared,
+            "available": available,
+            "index": index,
+        }
+        record["truncated"].append(entry)
+        trace.append(entry)
+
     record = {
         "leading_dummies": 0,
         "synced": False,
@@ -161,6 +180,7 @@ def parse_sequence(words: list[int]) -> dict:
         "fdri": [],
         "crc_writes": [],
         "unknown": [],
+        "truncated": [],
         "trailing_words": 0,
         "total_words": len(words),
         "trace": [],
@@ -189,6 +209,10 @@ def parse_sequence(words: list[int]) -> dict:
         htype = word >> 29
         if htype == 1:
             op, reg, count = (word >> 27) & 3, (word >> 13) & 0x3FFF, word & 0x7FF
+            available = len(words) - (i + 1)
+            if op == 2 and count > available:
+                truncated(reg, count, available, i)
+                break
             payload = words[i + 1: i + 1 + count] if op == 2 else []
             if op == 2 and reg == REG_CMD and count == 1:
                 record["commands"].append(payload[0])
@@ -216,6 +240,10 @@ def parse_sequence(words: list[int]) -> dict:
             i += 1 + (count if op == 2 else 0)
         elif htype == 2:
             count = word & 0x7FFFFFF
+            available = len(words) - (i + 1)
+            if count > available:
+                truncated(None, count, available, i)
+                break
             block = {"far": record["far_sets"][-1] if record["far_sets"] else None,
                      "words": count, "start": i + 1,
                      "payload": words[i + 1: i + 1 + count]}

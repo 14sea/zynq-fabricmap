@@ -37,9 +37,12 @@ from test_claimb_consumer_fixtures import (  # noqa: E402
     DESYNC,
     NOOP,
     RCRC,
+    TYPE2_WRITE_202,
     WCFG,
     WRITE_CMD_1,
     WRITE_CRC_1,
+    WRITE_FAR_1,
+    WRITE_IDCODE_1,
     independent_envelope,
     manifest,
 )
@@ -138,6 +141,79 @@ class OrderAndExtraTests(unittest.TestCase):
         verdict = judge(words)
         self.assertFalse(verdict["writable"])
         self.assertGreater(verdict["buckets"]["skeleton"], 0)
+
+
+class TruncationTests(unittest.TestCase):
+    """review.v2: a recognised but truncated packet must REFUSE, never throw.
+
+    The parser used to slice a declared payload and index it immediately, so a header
+    claiming one word with nothing after it raised IndexError and the gate returned no
+    verdict at all. The fix is one rule applied before ANY payload is read — patching the
+    four `payload[0]` sites would have fixed four symptoms of one defect, and left type 2
+    silently truncating instead.
+    """
+
+    def truncated_tail(self, header: int) -> dict:
+        words = independent_envelope(CLEAN, CLEAN)
+        words.append(header)  # a header whose declared payload is not there
+        return judge(words)
+
+    def test_a_truncated_crc_write_refuses(self):
+        verdict = self.truncated_tail(WRITE_CRC_1)
+        self.assertFalse(verdict["writable"])
+        self.assertGreater(verdict["buckets"]["structure"], 0)
+
+    def test_a_truncated_cmd_write_refuses(self):
+        verdict = self.truncated_tail(WRITE_CMD_1)
+        self.assertFalse(verdict["writable"])
+        self.assertGreater(verdict["buckets"]["structure"], 0)
+
+    def test_a_truncated_far_write_refuses(self):
+        verdict = self.truncated_tail(WRITE_FAR_1)
+        self.assertFalse(verdict["writable"])
+        self.assertGreater(verdict["buckets"]["structure"], 0)
+
+    def test_a_truncated_idcode_write_refuses(self):
+        verdict = self.truncated_tail(WRITE_IDCODE_1)
+        self.assertFalse(verdict["writable"])
+        self.assertGreater(verdict["buckets"]["structure"], 0)
+
+    def test_a_type2_overrun_refuses(self):
+        """The rule is total, not four special cases: type 2 declares a length too."""
+        verdict = self.truncated_tail(TYPE2_WRITE_202)
+        self.assertFalse(verdict["writable"])
+        self.assertGreater(verdict["buckets"]["structure"], 0)
+
+    def test_a_type2_overrun_inside_the_stream_refuses(self):
+        """Not only at the tail: a declared length that overruns anywhere is malformed."""
+        words = independent_envelope(CLEAN, CLEAN)
+        at = words.index(TYPE2_WRITE_202)
+        words[at] = iseq.type2(100_000)
+        verdict = judge(words)
+        self.assertFalse(verdict["writable"])
+        self.assertGreater(verdict["buckets"]["structure"], 0)
+
+    def test_the_parser_reports_truncation_as_data(self):
+        """It must be observable in the record, not only in the gate's verdict."""
+        words = independent_envelope(CLEAN, CLEAN)
+        words.append(WRITE_CRC_1)
+        record = iseq.parse_sequence(words)
+        self.assertEqual(len(record["truncated"]), 1)
+        entry = record["truncated"][0]
+        self.assertEqual(entry["declared"], 1)
+        self.assertEqual(entry["available"], 0)
+        self.assertEqual(record["trace"][-1]["kind"], "truncated")
+
+    def test_no_exception_escapes_for_any_recognised_header(self):
+        """The class, not the four instances: every count-one header, one assertion."""
+        for header in (WRITE_CRC_1, WRITE_CMD_1, WRITE_FAR_1, WRITE_IDCODE_1):
+            with self.subTest(header=hex(header)):
+                words = independent_envelope(CLEAN, CLEAN) + [header]
+                try:
+                    verdict = gc.gate_candidate(manifest(), [words])
+                except Exception as exc:  # noqa: BLE001 - the whole point
+                    self.fail(f"{header:#010x} raised {type(exc).__name__}: {exc}")
+                self.assertFalse(verdict["writable"])
 
 
 class ExpectedTraceTests(unittest.TestCase):

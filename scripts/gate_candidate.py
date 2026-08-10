@@ -236,6 +236,17 @@ def envelope_findings(
 
     if not record["synced"]:
         out.append(finding("structure", f"envelope {index}: no sync word"))
+    if record["truncated"]:
+        first = record["truncated"][0]
+        out.append(
+            finding(
+                "structure",
+                f"envelope {index}: a packet at word {first['index']} declares "
+                f"{first['declared']} payload word(s) but only {first['available']} "
+                "remain — the stream is truncated",
+                truncated=first,
+            )
+        )
     if record["unknown"]:
         out.append(
             finding(
