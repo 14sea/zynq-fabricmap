@@ -1113,11 +1113,28 @@ class PublishPathTests(unittest.TestCase):
     """A staging root that git excludes cannot be the published one, so staging there
     could only ever be followed by a copy — an unverified publishing step nobody gates."""
 
-    def test_a_gitignored_root_is_refused(self) -> None:
-        with self.assertRaises(SystemExit) as caught:
-            stager.check_staging_root(REPO_ROOT / "build/ff_staging")
+    def test_an_excluded_root_is_refused(self) -> None:
+        """Through the pure path, because the refusal must be testable where git is not.
+
+        Asserting it through the real `is_ignored()` alone is how this case spent two
+        commits as a silent pass on cold trees: without history the checker deliberately
+        cannot answer and does not object, so `assertRaises` simply never fired. The rule
+        being tested is what `check_staging_root` does with the answer, not how the answer
+        is obtained.
+        """
+        with unittest.mock.patch.object(stager, "is_ignored", lambda relative: True):
+            with self.assertRaises(SystemExit) as caught:
+                stager.check_staging_root(REPO_ROOT / "build/ff_staging")
         self.assertIn("excluded by .gitignore", str(caught.exception))
         self.assertIn("staging/<run_id>/", str(caught.exception))
+
+    def test_git_really_excludes_the_build_scratch(self) -> None:
+        """And the answer the pure case stubs is the answer git gives — where there is
+        git. Skipped rather than vacuous from a `git archive` export."""
+        if not (REPO_ROOT / ".git").exists():
+            self.skipTest("no .git: is_ignored() cannot answer without history")
+        self.assertTrue(stager.is_ignored(Path("build/ff_staging")))
+        self.assertFalse(stager.is_ignored(Path("staging/run_2026_08_05_ff")))
 
     def test_the_intended_publish_location_is_accepted(self) -> None:
         resolved = stager.check_staging_root(REPO_ROOT / "staging/run_2026_08_05_ff")
