@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/14sea/zynq-fabricmap/schemas/local_map.schema.json",
+  "title": "Device-local fabric map (PROPOSAL — consumer owns the final schema)",
+  "description": "PROPOSAL ONLY. docs/workflow.md puts the local_map schema and the verifiers that judge its output on the author's side, because a gate written by the party that wrote the thing under test is not a gate. This file exists so the producer has something concrete to emit and so the author has something concrete to reject; it is not the authority. A local_map is a NAVIGATIONAL RE-INDEXING of evidence a certificate already carries — it must add no knowledge of its own. Round 1 admits provenance kind 'certificate_inherited' only; on-board self-cartography is a strictly stronger claim and gets its own round.",
+  "type": "object",
+  "required": [
+    "schema",
+    "schema_version",
+    "map_id",
+    "provenance",
+    "target",
+    "bit_class",
+    "universe",
+    "collateral",
+    "index",
+    "tool_versions"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "local_map"},
+    "schema_version": {"const": "1.0.0"},
+    "map_id": {"$ref": "#/$defs/nonempty_string"},
+
+    "provenance": {
+      "type": "object",
+      "description": "Where the map's knowledge came from. Round 1 is certificate-inherited, so the certificate is the authority and this map is derived from it mechanically.",
+      "required": ["kind", "certificate", "frozen_data"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "certificate_inherited",
+          "description": "Deliberately a const, not an enum. A later kind ('self_cartography', 'search_byproduct') is a different claim and must arrive with its own schema version, so that a round-1 verifier cannot silently accept round-3 evidence."
+        },
+        "certificate": {
+          "type": "object",
+          "required": ["path", "sha256", "schema_version", "certificate_id", "status", "profile", "bit_class_id"],
+          "additionalProperties": false,
+          "properties": {
+            "path": {"$ref": "#/$defs/repo_relative_path"},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "schema_version": {"$ref": "#/$defs/nonempty_string"},
+            "certificate_id": {"$ref": "#/$defs/nonempty_string"},
+            "status": {"const": "passed", "description": "A map may not descend from a failed certification."},
+            "profile": {"const": "production", "description": "A conformance certificate is a self-test against synthetic fixtures; it says nothing about this device."},
+            "bit_class_id": {"$ref": "#/$defs/nonempty_string"}
+          }
+        },
+        "frozen_data": {
+          "type": "object",
+          "required": ["path", "sha256", "freeze_stamp"],
+          "additionalProperties": false,
+          "properties": {
+            "path": {"$ref": "#/$defs/repo_relative_path"},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "freeze_stamp": {"$ref": "#/$defs/nonempty_string"}
+          }
+        }
+      }
+    },
+
+    "target": {
+      "type": "object",
+      "required": ["family", "device", "part"],
+      "additionalProperties": false,
+      "properties": {
+        "family": {"$ref": "#/$defs/nonempty_string"},
+        "device": {"$ref": "#/$defs/nonempty_string"},
+        "part": {"$ref": "#/$defs/nonempty_string"}
+      }
+    },
+
+    "bit_class": {
+      "type": "object",
+      "required": ["id", "tier", "class_entry_count", "attested_count"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/nonempty_string"},
+        "tier": {
+          "enum": ["content", "routing"],
+          "description": "Carried so a gate can refuse a routing-class map on a non-sacrificial board without having to know class names."
+        },
+        "class_entry_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Entries the frozen DB names for this class. Deliberately recorded ALONGSIDE attested_count so the gap is visible in the artifact: the class is larger than what has been certified, and only the certified part is writable."
+        },
+        "attested_count": {"type": "integer", "minimum": 1}
+      }
+    },
+
+    "universe": {
+      "type": "object",
+      "description": "The complete, exclusive set of addresses a mutation operator may write. Anything not here is out of bounds, including entries the frozen DB names but no specimen pair ever attested.",
+      "required": ["address_count", "far_count", "words", "addresses"],
+      "additionalProperties": false,
+      "properties": {
+        "address_count": {"type": "integer", "minimum": 1},
+        "far_count": {"type": "integer", "minimum": 1},
+        "words": {"type": "array", "minItems": 1, "items": {"type": "integer", "minimum": 0}},
+        "addresses": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/address_entry"}
+        }
+      }
+    },
+
+    "collateral": {
+      "type": "object",
+      "description": "Bit changes that are consequences of a legitimate write rather than violations. Carried in the map because the diff gate must distinguish them, and the rule must come from the certificate's own exclusion record rather than from a gate's private knowledge.",
+      "required": ["frame_ecc"],
+      "additionalProperties": false,
+      "properties": {
+        "frame_ecc": {
+          "type": "object",
+          "required": ["rule", "word", "bit_low", "bit_high", "why", "scope"],
+          "additionalProperties": false,
+          "properties": {
+            "rule": {"$ref": "#/$defs/nonempty_string"},
+            "word": {"type": "integer", "minimum": 0},
+            "bit_low": {"type": "integer", "minimum": 0},
+            "bit_high": {"type": "integer", "minimum": 0},
+            "why": {"$ref": "#/$defs/nonempty_string"},
+            "scope": {
+              "const": "touched_frames_only",
+              "description": "An ECC change in a frame the candidate did not touch is a violation, not collateral. Stating the scope in the artifact stops a gate from widening it to 'any frame' for convenience."
+            }
+          }
+        }
+      }
+    },
+
+    "index": {
+      "type": "object",
+      "description": "The re-indexing itself, and the only part of the map that is not a restatement of the certificate. Certificates are ordered per feature for auditing; a mutation operator needs the inverse. Whether this indexing measurably helps navigation IS Claim B.",
+      "required": ["by_far", "by_lut"],
+      "additionalProperties": false,
+      "properties": {
+        "by_far": {
+          "type": "object",
+          "description": "FAR -> the writable addresses inside that frame. Lets an operator (and the diff gate) know which frames a candidate touches, hence which ECC fields are legitimate collateral.",
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"$ref": "#/$defs/address_key"}
+          }
+        },
+        "by_lut": {
+          "type": "object",
+          "description": "LUT (feature prefix, e.g. 'CLBLL_L.SLICEL_X0.ALUT') -> its writable INIT bits, ordered by INIT index. This is the structural relation a map-guided operator can exploit and a blind one cannot: these bits are one truth table, not 64 unrelated bits.",
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["init_index", "address_key"],
+              "additionalProperties": false,
+              "properties": {
+                "init_index": {"type": "integer", "minimum": 0},
+                "address_key": {"$ref": "#/$defs/address_key"}
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "tool_versions": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/nonempty_string"}
+    }
+  },
+
+  "$defs": {
+    "nonempty_string": {"type": "string", "minLength": 1},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "repo_relative_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).*$",
+      "description": "Repo-relative, never absolute and never escaping upward. Absolute paths make a tree non-relocatable and describe a filesystem the verifier does not have."
+    },
+    "address_key": {
+      "type": "string",
+      "pattern": "^0x[0-9A-F]{8}/[0-9]+/[0-9]+$",
+      "description": "Canonical 'FAR/word/bit'. A single string so the two indexes reference addresses rather than duplicating them, and so a mismatch is an exact-equality question."
+    },
+    "address_entry": {
+      "type": "object",
+      "required": ["key", "far", "word", "bit", "feature", "expected_value", "split", "rule_file"],
+      "additionalProperties": false,
+      "properties": {
+        "key": {"$ref": "#/$defs/address_key"},
+        "far": {"type": "string", "pattern": "^0x[0-9A-F]{8}$"},
+        "word": {"type": "integer", "minimum": 0},
+        "bit": {"type": "integer", "minimum": 0, "maximum": 31},
+        "feature": {"$ref": "#/$defs/nonempty_string"},
+        "expected_value": {
+          "enum": [0, 1],
+          "description": "The polarity from the certificate: 0 for a '!'-negated segbit token, 1 otherwise. An operator that ignores polarity writes the wrong value for negated bits."
+        },
+        "split": {
+          "enum": ["mine", "holdout"],
+          "description": "The ADDRESS-certification split, carried for provenance only. It is not a Claim B train/holdout split and must never be used as one."
+        },
+        "rule_file": {"$ref": "#/$defs/nonempty_string"}
+      }
+    }
+  }
+}
