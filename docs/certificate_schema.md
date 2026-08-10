@@ -460,6 +460,8 @@ requires:
 - `specimen_attestation` 2.0 on every specimen. Its embedded completed source stamp,
   source hashes, bitstream hash, routed multi-cell facts, checkpoint and semantic
   summaries are independently cross-checked;
+- `design_source_sha256` equal to the hash of the unique `.v` entry independently
+  selected from `source_build.recipe.sources`; no `.v` or more than one is invalid;
 - for a derived specimen, equality among its embedded `derived_from`, checkpoint
   source, and the independently pinned source specimen's `base.dcp` hash;
 - repository-relative paths for the commitment, staging manifest, staged bitstreams,

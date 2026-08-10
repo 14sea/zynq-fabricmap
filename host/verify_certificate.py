@@ -186,6 +186,32 @@ def ff_formal_attestation_errors(
         errors.append(f"{prefix}: source recipe part/tool differs from specimen")
     if recipe["build_seed"] != specimen["build_seed"]:
         errors.append(f"{prefix}: source recipe build_seed differs from specimen")
+    # Certificate 1.6 keeps the legacy singular `design_source_sha256` field, while
+    # specimen_attestation 2.0 pins the complete recipe as a sources map.  For the
+    # ff_formal profile the singular field is defined as the hash of the one Verilog
+    # design source in that map.  Recompute it here: otherwise the field is merely a
+    # well-shaped producer assertion that may name arbitrary bytes while the richer
+    # attestation beside it tells a different story.
+    verilog_sources = [
+        (relative, source_hash)
+        for relative, source_hash in recipe["sources"].items()
+        if relative.endswith(".v")
+    ]
+    if len(verilog_sources) != 1:
+        errors.append(
+            f"{prefix}: source recipe must name exactly one .v design source "
+            f"(found {len(verilog_sources)})"
+        )
+    # The full certificate schema requires this field.  Some producer conformance tools
+    # call this routed-fact oracle earlier, with a provisional specimen projection; do not
+    # turn that integration point into a KeyError or make it duplicate the schema.  Once
+    # invoked by the verifier the field is present and this comparison is unconditional.
+    elif specimen.get("design_source_sha256") is not None \
+            and specimen["design_source_sha256"] != verilog_sources[0][1]:
+        errors.append(
+            f"{prefix}: design_source_sha256 differs from the independently selected "
+            f".v recipe source {verilog_sources[0][0]!r}"
+        )
     for relative, expected_hash in recipe["sources"].items():
         try:
             source_path = safe_child(repo_root, relative)

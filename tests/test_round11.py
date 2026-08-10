@@ -18,7 +18,8 @@ PYTHON = sys.executable
 CERTIFICATE15 = REPO_ROOT / "tests/fixtures/certificate_feature15_pass.json"
 PREDICTIONS15 = REPO_ROOT / "tests/fixtures/predictions_feature15_pass.json"
 FF_COMMITMENT = REPO_ROOT / "gate_runs/run_2026_08_05_ff/predictions.json"
-FIXTURE_RECIPE = REPO_ROOT / "tests/fixtures/ff20_recipe_source.txt"
+FIXTURE_RECIPE = REPO_ROOT / "tests/fixtures/ff20_recipe_source.v"
+NON_DESIGN_RECIPE = REPO_ROOT / "tests/fixtures/ff20_recipe_source.txt"
 ALL_BELS = ("AFF", "A5FF", "BFF", "B5FF", "CFF", "C5FF", "DFF", "D5FF")
 LUT_BELS = ("A6LUT", "B6LUT", "C6LUT", "D6LUT", "A5LUT", "B5LUT", "C5LUT", "D5LUT")
 SUPPORT = {
@@ -257,7 +258,7 @@ def standalone_variant(variant: str) -> tuple[dict[str, Any], dict[str, Any], di
     specimen = {
         "specimen_id": specimen_id,
         "split": "mine",
-        "design_source_sha256": "1" * 64,
+        "design_source_sha256": file_digest(FIXTURE_RECIPE),
         "vivado_version": "fixture",
         "part": "xc7z010clg400-1",
         "loc_site": "SLICE_X2Y25",
@@ -340,6 +341,7 @@ class Feature16Bundle:
         derived_source_id = "fixture_ff_clkinv__base"
         for specimen in self.certificate["specimens"]:
             specimen_id = specimen["specimen_id"]
+            specimen["design_source_sha256"] = file_digest(FIXTURE_RECIPE)
             specimen_dir = self.stage / specimen_id
             specimen_dir.mkdir()
             bit_path = specimen_dir / "spec.bit"
@@ -517,6 +519,41 @@ class Round11AttestationAndStagingTests(unittest.TestCase):
             attestation, specimen, committed, reference, REPO_ROOT
         )
         self.assertTrue(any("source stamp bitstream hash differs" in item for item in errors), errors)
+
+    def test_design_source_hash_is_recomputed_from_the_single_verilog_source(self) -> None:
+        def check(bundle: Feature16Bundle) -> None:
+            bundle.certificate["specimens"][0]["design_source_sha256"] = "f" * 64
+            bundle.write_certificate()
+            self.assert_fails(run(bundle.certificate_path), "design_source_sha256 differs")
+
+        self.with_bundle(check)
+
+    def test_a_recipe_without_a_verilog_design_source_is_rejected(self) -> None:
+        def check(bundle: Feature16Bundle) -> None:
+            specimen_id = bundle.certificate["specimens"][0]["specimen_id"]
+            bundle.attestations[specimen_id]["source_build"]["recipe"]["sources"] = {
+                repo_path(NON_DESIGN_RECIPE): file_digest(NON_DESIGN_RECIPE)
+            }
+            bundle.rewrite_attestation(specimen_id)
+            self.assert_fails(
+                run(bundle.certificate_path), "exactly one .v design source (found 0)"
+            )
+
+        self.with_bundle(check)
+
+    def test_a_recipe_with_two_verilog_design_sources_is_rejected(self) -> None:
+        def check(bundle: Feature16Bundle) -> None:
+            specimen_id = bundle.certificate["specimens"][0]["specimen_id"]
+            second = REPO_ROOT / "vivado/specimen/specimen_ff.v"
+            bundle.attestations[specimen_id]["source_build"]["recipe"]["sources"][
+                repo_path(second)
+            ] = file_digest(second)
+            bundle.rewrite_attestation(specimen_id)
+            self.assert_fails(
+                run(bundle.certificate_path), "exactly one .v design source (found 2)"
+            )
+
+        self.with_bundle(check)
 
     def test_missing_required_cell_is_rejected(self) -> None:
         def check(bundle: Feature16Bundle) -> None:

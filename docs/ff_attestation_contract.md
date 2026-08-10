@@ -84,6 +84,13 @@ hashes, part, tool version, raw Tcl arguments, seed and artifact hashes. The ver
 checks current repository source bytes, specimen identity, seed, part/tool,
 commitment, staged bitstream and checkpoint against it.
 
+Certificate 1.6 retains the singular `design_source_sha256` field. For an
+`ff_formal` 2.0 attestation it means the hash of the **unique `.v` entry** in
+`source_build.recipe.sources`. The verifier selects that entry independently and
+requires the certificate value to match; zero or multiple `.v` entries are invalid.
+The positive fixture uses `tests/fixtures/ff20_recipe_source.v`; the companion `.txt`
+file exists to exercise the zero-design-source rejection.
+
 An implementation pins `base.dcp`. A derived specimen pins `derived.dcp` and a source
 `{specimen_id, base.dcp hash}`. That source must equal both the embedded
 `derived_from` record and the independently staged source specimen's checkpoint.
@@ -97,17 +104,20 @@ requires rebuilding with Vivado.
 ## 4. Exact staging before measurement
 
 The builder's native layout is `<site>/<variant>/`. Certificate 1.6 does not consume
-that layout directly. After producer verification, the stager emits one root with
-exactly:
+that layout directly. After producer verification, the stager publishes one run
+directory with a manifest beside one artifact-only specimen root:
 
 ```text
-<staging-root>/
-  <specimen_id>/
-    spec.bit
-    attestation.json
+staging/<run-id>/
+  staging_manifest.json
+  specimens/
+    <specimen_id>/
+      spec.bit
+      attestation.json
 ```
 
-and a pinned `specimen_staging` manifest. The verifier independently requires set
+The pinned `specimen_staging` manifest refers into `specimens/` verbatim. The verifier
+independently requires set
 equality among:
 
 1. every specimen in the prediction commitment;
@@ -173,6 +183,6 @@ source-stamp bitstream link. These cases exist specifically so those rules canno
 changed while the CLKINV/NOCLKINV fixture remains green.
 
 The synthetic recipe input is the consumer-owned
-`tests/fixtures/ff20_recipe_source.txt`; the known answer does not read or imitate the
+`tests/fixtures/ff20_recipe_source.v`; the known answer does not read or imitate the
 producer's builder source. The older Run A and Run B production certificates continue
 to validate under their original 1.2 and 1.4 contracts.
