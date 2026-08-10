@@ -220,6 +220,10 @@ comparing the latter two is meaningful, and the former pins what was actually tr
 One conjunct per link of §3b: the host gate's verdict, the fabric's own confirmation, and
 the host's independent check that what came back is what went out.
 
+**The third conjunct is computed by the HOST from readback bytes it actually received**, in
+the same transaction and epoch — never from a match bit the PL reports. The PL's compare is
+an interlock; this is the evidence.
+
 ## 3c. The flush-column exception — RULED 2026-08-10, before the routed names were known
 
 The only nets that may cross a flush column are the **twelve** derived mechanically from
@@ -294,13 +298,29 @@ The contract:
 3. **Pass 2 buffers each envelope in full (536 words) before writing it**, re-runs the
    control-trace/FAR/FDRI rules on it, and requires the digest to equal pass 1's for THAT
    envelope. Only then is it written.
-4. **Digest strength.** SHA-256 is the authority, and it is held **host-side**: the PL has
-   800 LUTs available on the left of the flush column and 432 are already logic, so a
-   hardware SHA-256 does not fit. The PL computes its own independent **CRC-32 per
-   envelope** in pass 1 and re-checks it in pass 2 — enough to catch transmission error,
-   which is what it is for. **The CRC is not the authority**: the authority is the
-   host's SHA-256 plus the unchanged word-by-word control and FAR rules, both of which
-   still run in both passes.
+4. **Digest strength, and what each digest can actually authorise.** The PL computes its
+   own **CRC-32 per envelope** in pass 1 and re-checks it in pass 2. A hardware SHA-256
+   does not fit — the left-of-flush region has 800 LUTs and the logic already uses 432 —
+   so the fallback the ruling allows is taken and named.
+
+   The word-by-word control and FAR rules run in both passes, but be exact about what that
+   buys: **they guarantee only that a CRC collision cannot silently change the control
+   skeleton or the write addresses. They cannot authorise payload CONTENT.**
+
+   > **The payload's final authority is
+   > `host-gated candidate SHA-256 == streamed readback SHA-256`, and nothing may arm
+   > before that comparison passes.**
+
+   The per-envelope PL CRC and the immediate readback compare are a **transmission and
+   hardware interlock**, nothing more. The host must obtain the complete **15-frame
+   readback BYTES** and compute the SHA-256 itself, within the same transaction and epoch —
+   **receiving the PL's "match" bit is not the same thing and does not substitute for it.**
+
+   Data path consequence: after each envelope is written and read back, the readback words
+   are placed in the buffer where the host reads them over AXI, so the host assembles all
+   15 frames itself. A design where the host only ever learns a boolean would make
+   `configuration_valid` the authority over payload content, which §3b already says it is
+   not.
 5. `configuration_valid` is cleared **when the first write command of pass 2 is accepted**,
    and the scorer stays frozen until pass 2, the full 15-frame readback and the hash
    comparison have all completed.
