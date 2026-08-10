@@ -55,6 +55,12 @@ add_cells_to_pblock pb_logic $logic_cells
 # Three disjoint islands routed, but asking for CONTAIN_ROUTING on them produced 3
 # unroutable pins and 196 reachable-but-unrouted pins: disjoint islands are not a usable
 # routing topology, whatever they are as a placement constraint.
+# Region 1 of the frozen order (design §9): a contiguous block clear of all four column
+# segments.
+#
+# Region 2 (SLICE_X0..X1, left of the flush column) was TRIED and is worse: 190 flush nets
+# against 124, because the BRAM the buffer needs then sits across INT_R_X7 from the logic
+# and axi_buf_rdata crosses instead. Recorded so it is not re-tried as an idea.
 resize_pblock pb_logic -add {SLICE_X10Y0:SLICE_X43Y99}
 resize_pblock pb_logic -add {RAMB36_X1Y0:RAMB36_X2Y19}
 
