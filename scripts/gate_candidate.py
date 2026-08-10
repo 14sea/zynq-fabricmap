@@ -44,12 +44,88 @@ TOOL_VERSION = "gate_candidate.py/1.0.0"
 
 KINDS = (
     "structure",       # the envelope shape itself
+    "skeleton",        # the non-payload packet trace differing from the pinned envelope
     "addressing",      # FAR sets, IDCODE, FDRI lengths
     "forbidden",       # commands that must never appear
     "target_frame",    # a target frame differing outside the whitelist
     "flush_frame",     # a flush frame differing at all
     "ecc",             # an ECC field that is not a correct recomputation
 )
+
+
+def expected_trace(far: int, idcode: int, payload_words: int) -> list[dict]:
+    """The one control skeleton a candidate write may have.
+
+    Written out here independently rather than obtained by calling the builder: a gate
+    that asked the builder what it should expect would agree with it by construction,
+    including when the builder is wrong. This list is the preregistered envelope of §6
+    transcribed, and the only free values are the FAR, the IDCODE and the payload length.
+    """
+    return (
+        [{"kind": "dummy", "count": 8}, {"kind": "sync"}, {"kind": "noop"}]
+        + [{"kind": "cmd", "value": iseq.CMD_RCRC}]
+        + [{"kind": "noop"}, {"kind": "noop"}]
+        + [{"kind": "idcode", "value": idcode}]
+        + [{"kind": "cmd", "value": iseq.CMD_WCFG}, {"kind": "noop"}]
+        + [{"kind": "far", "value": far}]
+        + [{"kind": "fdri_header", "words": 0},
+           {"kind": "fdri_data", "words": payload_words}]
+        + [{"kind": "crc", "value": 0}]
+        + [{"kind": "cmd", "value": iseq.CMD_DESYNC}]
+        + [{"kind": "noop"}] * 4
+    )
+
+
+def describe(entry: dict) -> str:
+    kind = entry.get("kind")
+    if kind in ("cmd", "far", "idcode", "crc"):
+        return f"{kind}={entry['value']:#010x}"
+    if kind in ("fdri_header", "fdri_data"):
+        return f"{kind}[{entry['words']}]"
+    if kind == "dummy":
+        return f"dummy x{entry['count']}"
+    if kind == "write":
+        return f"write reg={entry['reg']} count={entry['count']}"
+    if kind == "unknown":
+        return f"unknown word {entry['word']:#010x}"
+    return str(kind)
+
+
+def skeleton_findings(index: int, trace: list, expected: list) -> list[dict]:
+    """Compare the non-payload packet trace element by element.
+
+    A membership check cannot see an ABSENT command or a wrong CRC value — it only sees
+    what is present. The consumer demonstrated the consequence: removing WCFG, removing
+    RCRC, and writing a non-zero CRC each passed the previous gate with zero findings,
+    because none of them adds a forbidden command and DESYNC was still there.
+    """
+    if trace == expected:
+        return []
+    out = []
+    for position, (got, want) in enumerate(zip(trace, expected)):
+        if got != want:
+            out.append(
+                finding(
+                    "skeleton",
+                    f"envelope {index}: packet {position} is {describe(got)}, "
+                    f"the pinned envelope has {describe(want)}",
+                    position=position,
+                    got=got,
+                    expected=want,
+                )
+            )
+            break
+    if len(trace) != len(expected):
+        out.append(
+            finding(
+                "skeleton",
+                f"envelope {index}: {len(trace)} control packets, the pinned envelope "
+                f"has {len(expected)}",
+                got_length=len(trace),
+                expected_length=len(expected),
+            )
+        )
+    return out
 
 
 def finding(kind: str, message: str, **detail) -> dict:
@@ -181,6 +257,17 @@ def envelope_findings(
                     command=f"{cmd:#010x}",
                 )
             )
+
+    # The skeleton comparison subsumes the membership checks above and catches what they
+    # structurally cannot: an omission. Both are kept — the named forbidden commands give
+    # a better message for the case that matters most, and the trace gives completeness.
+    out.extend(
+        skeleton_findings(
+            index,
+            record["trace"],
+            expected_trace(int(spec["far_set"], 16), idcode, spec["payload_words"]),
+        )
+    )
 
     if record["idcodes"] != [idcode]:
         out.append(

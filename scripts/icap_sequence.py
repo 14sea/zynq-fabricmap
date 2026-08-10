@@ -140,9 +140,17 @@ def build_sequence(manifest: dict, candidate_frames: dict[int, list[int]]) -> li
 def parse_sequence(words: list[int]) -> dict:
     """Read one envelope's words back into structure, judging nothing.
 
-    Anything that is not understood is recorded rather than skipped: an unknown packet is
-    the single most interesting thing a gate can be told about, and a parser that ignored
-    it would hand the gate a clean-looking record of a stream it did not understand.
+    Two outputs, and the second one is why this function was rewritten. The summary lists
+    (`commands`, `far_sets`, …) answer "what appears anywhere"; **`trace`** is the ordered
+    sequence of non-payload packets, which answers "what exactly is sent, in what order".
+    A gate built only on the summaries cannot see a MISSING command or a wrong CRC value —
+    it can only see what is present and forbidden. The consumer demonstrated exactly that
+    hole: removing WCFG, removing RCRC and writing a non-zero CRC each passed with zero
+    findings.
+
+    Anything not understood is recorded rather than skipped: an unknown packet is the
+    single most interesting thing a gate can be told about, and a parser that ignored it
+    would hand the gate a clean-looking record of a stream it did not read.
     """
     record = {
         "leading_dummies": 0,
@@ -155,14 +163,19 @@ def parse_sequence(words: list[int]) -> dict:
         "unknown": [],
         "trailing_words": 0,
         "total_words": len(words),
+        "trace": [],
     }
+    trace = record["trace"]
 
     i = 0
     while i < len(words) and words[i] == DUMMY:
         record["leading_dummies"] += 1
         i += 1
+    if record["leading_dummies"]:
+        trace.append({"kind": "dummy", "count": record["leading_dummies"]})
     if i < len(words) and words[i] == SYNC:
         record["synced"] = True
+        trace.append({"kind": "sync"})
         i += 1
 
     pending_fdri = None
@@ -170,6 +183,7 @@ def parse_sequence(words: list[int]) -> dict:
         word = words[i]
         if word == NOOP:
             record["trailing_words"] += 1
+            trace.append({"kind": "noop"})
             i += 1
             continue
         htype = word >> 29
@@ -178,21 +192,27 @@ def parse_sequence(words: list[int]) -> dict:
             payload = words[i + 1: i + 1 + count] if op == 2 else []
             if op == 2 and reg == REG_CMD and count == 1:
                 record["commands"].append(payload[0])
+                trace.append({"kind": "cmd", "value": payload[0]})
             elif op == 2 and reg == REG_FAR and count == 1:
                 record["far_sets"].append(payload[0])
+                trace.append({"kind": "far", "value": payload[0]})
             elif op == 2 and reg == REG_IDCODE and count == 1:
                 record["idcodes"].append(payload[0])
+                trace.append({"kind": "idcode", "value": payload[0]})
             elif op == 2 and reg == REG_CRC and count == 1:
                 record["crc_writes"].append(payload[0])
+                trace.append({"kind": "crc", "value": payload[0]})
             elif op == 2 and reg == REG_FDRI:
                 pending_fdri = {"far": record["far_sets"][-1] if record["far_sets"] else None,
                                 "words": count, "start": i + 1}
+                trace.append({"kind": "fdri_header", "words": count})
                 if count:
                     pending_fdri["payload"] = words[i + 1: i + 1 + count]
                     record["fdri"].append(pending_fdri)
                     pending_fdri = None
             else:
                 record["unknown"].append({"index": i, "word": word})
+                trace.append({"kind": "write", "reg": reg, "op": op, "count": count})
             i += 1 + (count if op == 2 else 0)
         elif htype == 2:
             count = word & 0x7FFFFFF
@@ -203,9 +223,11 @@ def parse_sequence(words: list[int]) -> dict:
                 block["far"] = pending_fdri["far"]
                 pending_fdri = None
             record["fdri"].append(block)
+            trace.append({"kind": "fdri_data", "words": count})
             i += 1 + count
         else:
             record["unknown"].append({"index": i, "word": word})
+            trace.append({"kind": "unknown", "word": word})
             i += 1
 
     return record
