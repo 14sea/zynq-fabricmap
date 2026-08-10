@@ -12,11 +12,22 @@ variable. The required identity is module-level constants, so widening it is a s
 edit that shows up in a diff and in review — not a flag someone can add at 2am. A test
 asserts the argument parser exposes nothing that could relax a requirement.
 
-**2. Identity and the write share one open session.** `BoardSession` owns the transport.
-Verifying identity and then re-resolving `/dev/ebaz-uart` for the write would leave a
-window in which the symlink moves to another CH340, or the boards are swapped — and the
-write would land on a board that never passed. `authorise_write()` refuses unless *this*
-object holds a verification, so a caller cannot construct one and use another.
+**2. Identity and the write share one open session, and one EPOCH.** `BoardSession` owns
+the transport. Verifying identity and then re-resolving `/dev/ebaz-uart` for the write
+would leave a window in which the symlink moves to another CH340, or the boards are
+swapped — and the write would land on a board that never passed. `authorise_write()`
+refuses unless *this* object holds a verification, so a caller cannot construct one and
+use another.
+
+An authorisation is additionally scoped to an **epoch**. Any transport reopen, timeout,
+UART disconnect, prompt-mode change, soft reset, power cycle or recovery calls
+`note_disruption()`, which increments the epoch and clears the identity; the next write
+must re-verify. Within one stable epoch a run may write many candidates without asking
+U-Boot again — an evolution loop cannot afford a `printenv` per candidate — but an
+authorisation never survives the event that could have changed which board is on the wire.
+That is the stale-authorisation failure in its general form: the first version of this
+gate kept an identity across a *failed* re-verification, and only a verify-swap-verify
+sequence exposed it.
 
 **3. Silence, duplication and ambiguity are refusals, not defaults.** A missing variable,
 two assignments, an unparseable reply and a timeout all refuse. `board_serial.md1` takes
@@ -162,12 +173,68 @@ def read_register(transport, addr: int, timeout: float = 1.5) -> int:
 # -------------------------------------------------------------------------- the gate
 
 
+# Events that end an epoch. Named rather than free-form so a run log cannot record a
+# disruption the reader has to interpret, and so adding a new one is a source change.
+DISRUPTIONS = frozenset(
+    {
+        "transport_reopen",
+        "timeout",
+        "uart_disconnect",
+        "prompt_mode_change",
+        "soft_reset",
+        "power_cycle",
+        "recovery",
+    }
+)
+
+
 class BoardSession:
-    """One open transport, one identity, and no way to write without both."""
+    """One open transport, one identity, one epoch — and no write without all three."""
 
     def __init__(self, transport):
         self.transport = transport
         self._identity: dict | None = None
+        self.epoch = 0
+        self.disruptions: list[dict] = []
+        self._prompt_mode: str | None = None
+
+    # -- epoch ------------------------------------------------------------------
+
+    def note_disruption(self, kind: str, detail: str = "") -> int:
+        """End the current epoch. Returns the new epoch number.
+
+        Clearing the identity here rather than at the next write is deliberate: the
+        window between the event and the next authorisation is exactly where a stale
+        authorisation would otherwise be usable.
+        """
+        if kind not in DISRUPTIONS:
+            raise IdentityError(
+                f"unknown disruption {kind!r} — it must be one of {sorted(DISRUPTIONS)}, "
+                "so a run log never carries an event a reader has to interpret"
+            )
+        self.epoch += 1
+        self._identity = None
+        self.disruptions.append(
+            {"epoch_ended": self.epoch - 1, "kind": kind, "detail": detail,
+             "at": time.time()}
+        )
+        return self.epoch
+
+    def observe_prompt(self, prompt: str) -> None:
+        """A changed prompt means a changed control plane; that ends the epoch.
+
+        `zynq-uboot>` is the 4205's vendor U-Boot and `Zynq>` the 4203's mainline build,
+        so a change is either a different board or a different firmware — and a Linux
+        shell prompt means U-Boot is gone entirely.
+        """
+        if self._prompt_mode is None:
+            self._prompt_mode = prompt
+            return
+        if prompt != self._prompt_mode:
+            previous, self._prompt_mode = self._prompt_mode, prompt
+            self.note_disruption(
+                "prompt_mode_change", f"{previous!r} -> {prompt!r}"
+            )
 
     # -- identity ---------------------------------------------------------------
 
@@ -238,6 +305,7 @@ class BoardSession:
                 "bit_class_tier": bit_class_tier,
             },
             "elapsed_s": round(time.time() - started, 3),
+            "epoch": self.epoch,
             "findings": findings,
         }
 
@@ -266,12 +334,17 @@ class BoardSession:
         return self._identity
 
     def authorise_write(self) -> dict:
-        """The only door to a device write, and it opens for this session alone."""
+        """The only door to a device write. It opens for this session and epoch alone."""
         if self._identity is None:
             raise IdentityError(
                 "no verified identity on this session — verify_identity() must succeed on "
                 "the SAME open session that performs the write, so the port cannot be "
                 "re-resolved to another board in between"
+            )
+        if self._identity.get("epoch") != self.epoch:
+            raise IdentityError(
+                f"identity was verified in epoch {self._identity.get('epoch')} but the "
+                f"session is now in epoch {self.epoch} — re-verify before writing"
             )
         return self._identity
 

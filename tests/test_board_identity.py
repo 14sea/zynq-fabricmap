@@ -272,6 +272,81 @@ class InterlockTests(unittest.TestCase):
         self.assertEqual(identity["transport"], transport.descriptor())
 
 
+class EpochTests(unittest.TestCase):
+    """An authorisation is scoped to an epoch, and recovery ends an epoch."""
+
+    def verified(self) -> gbi.BoardSession:
+        session = gbi.BoardSession(FakeTransport(regs=good_regs()))
+        session.verify_identity()
+        return session
+
+    def test_many_writes_within_one_stable_epoch(self):
+        """An evolution loop cannot afford a printenv per candidate."""
+        session = self.verified()
+        for _ in range(1000):
+            session.authorise_write()
+        self.assertEqual(session.epoch, 0)
+        self.assertEqual(session.transport.commands.count("printenv boardid"), 1)
+
+    def test_every_disruption_kind_revokes(self):
+        for kind in sorted(gbi.DISRUPTIONS):
+            with self.subTest(kind=kind):
+                session = self.verified()
+                session.note_disruption(kind, "detail")
+                with self.assertRaises(gbi.IdentityError):
+                    session.authorise_write()
+
+    def test_disruption_increments_the_epoch(self):
+        session = self.verified()
+        self.assertEqual(session.epoch, 0)
+        self.assertEqual(session.note_disruption("power_cycle"), 1)
+        self.assertEqual(session.note_disruption("recovery"), 2)
+
+    def test_re_verification_restores_authorisation_in_the_new_epoch(self):
+        session = self.verified()
+        session.note_disruption("soft_reset")
+        identity = session.verify_identity()
+        self.assertEqual(identity["epoch"], 1)
+        self.assertEqual(session.authorise_write()["epoch"], 1)
+
+    def test_an_identity_from_an_older_epoch_is_refused(self):
+        """The epoch moves without clearing: the authorisation must still not travel."""
+        session = self.verified()
+        stale = dict(session.identity)
+        session.epoch += 1
+        session._identity = stale
+        with self.assertRaises(gbi.IdentityError) as ctx:
+            session.authorise_write()
+        self.assertIn("re-verify before writing", str(ctx.exception))
+
+    def test_an_unknown_disruption_kind_is_refused(self):
+        session = self.verified()
+        with self.assertRaises(gbi.IdentityError) as ctx:
+            session.note_disruption("something_happened")
+        self.assertIn("must be one of", str(ctx.exception))
+        self.assertEqual(session.epoch, 0)
+
+    def test_a_prompt_change_ends_the_epoch(self):
+        session = self.verified()
+        session.observe_prompt("Zynq>")
+        self.assertEqual(session.epoch, 0)
+        session.observe_prompt("Zynq>")
+        self.assertEqual(session.epoch, 0)
+        session.observe_prompt("zynq-uboot>")  # a different board's U-Boot
+        self.assertEqual(session.epoch, 1)
+        with self.assertRaises(gbi.IdentityError):
+            session.authorise_write()
+
+    def test_disruptions_are_recorded_for_the_run_log(self):
+        session = self.verified()
+        session.note_disruption("uart_disconnect", "CH340 brownout")
+        self.assertEqual(len(session.disruptions), 1)
+        entry = session.disruptions[0]
+        self.assertEqual(entry["kind"], "uart_disconnect")
+        self.assertEqual(entry["detail"], "CH340 brownout")
+        self.assertEqual(entry["epoch_ended"], 0)
+
+
 class NoOverrideTests(unittest.TestCase):
     def test_no_argument_can_relax_a_requirement(self):
         source = (REPO_ROOT / "scripts/gate_board_identity.py").read_text()
