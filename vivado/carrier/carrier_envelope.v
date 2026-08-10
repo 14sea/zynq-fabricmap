@@ -230,6 +230,13 @@ module carrier_envelope #(
                             fault_code <= (pos_d == 22) ? E_LENGTH : E_CONTROL;
                             fault_word <= pos_d;
                             state      <= S_BAD;
+                        // Mutation note: relaxing this to `pos_d >= ENV_WORDS - 2` is an
+                        // EQUIVALENT mutant, and the reason is `issued_last`. That flag is
+                        // set in the cycle position 535 is ISSUED, which is the same cycle
+                        // pos_d holds 534 — so the relaxed condition cannot fire until
+                        // pos_d reaches 535 anyway, and 535 is still judged. Diagnosed by
+                        // tracing the flag rather than by adding more corrupted-word cases:
+                        // corrupting 534 and 535 separately does not separate them either.
                         end else if (issued_last && pos_d == ENV_WORDS - 1) begin
                             state <= S_OK;   // the last word has now been JUDGED, not
                                              // merely issued: the pipeline is drained

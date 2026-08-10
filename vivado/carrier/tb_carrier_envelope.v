@@ -176,6 +176,10 @@ module tb_carrier_envelope;
         check("recovers on a full load", ok, 1);
 
         // 7. the LAST word of the LAST envelope: a walk that stops early accepts here
+        // The last TWO words, separately. A walk that stops one position early still
+        // judges 534 and misses 535, so corrupting only one of them cannot tell a
+        // complete walk from a nearly complete one.
+        expect_refusal("second-to-last word", TOTAL - 2, 32'h30000001, 4'd1);
         expect_refusal("last word of the envelope",
                        TOTAL - 1, 32'h30000001, 4'd1);
 
