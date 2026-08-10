@@ -220,6 +220,73 @@ comparing the latter two is meaningful, and the former pins what was actually tr
 One conjunct per link of §3b: the host gate's verdict, the fabric's own confirmation, and
 the host's independent check that what came back is what went out.
 
+## 3c. The flush-column exception — RULED 2026-08-10, before the routed names were known
+
+The only nets that may cross a flush column are the **twelve** derived mechanically from
+the six evolvable LUTs' pins: `vector[0..5]` and `lut_q[0..5]`. The allowlist is generated
+from the LUT and scorer endpoints **before** a build, never chosen from a list of
+post-route violators — the exception is fixed by the six LUTs' data interface, which
+existed before any of this floorplanning.
+
+Conditions, all of which must hold together:
+
+* flush **cells** remain 0;
+* none of the twelve may fan out to the guard, ICAPE2 control, AXI, clock/reset, the
+  watchdog, `configuration_valid`, `arm` or `done`;
+* the scorer is already disabled before a write, and cannot re-arm until the readback
+  matches in full;
+* flush frame bytes still equal the pinned base verbatim.
+
+The physical reason, and it is a real distinction rather than a convenience: these data
+paths may be transiently unstable during quiesce, because they are what is being mutated.
+The paths that PERFORM the write, CONFIRM it, or AUTHORISE scoring may not be.
+
+**Any control-class net crossing a flush column stops the work at the architecture, and the
+allowlist is not widened to admit it.**
+
+## 3d. ■ ARCHITECTURE STOP — the buffer cannot sit on the left, and PS7 cannot move
+
+The stop condition of §3c is met, and the cause is device geometry rather than constraint
+tuning. Measured tile columns:
+
+| resource | tile column | side of the first flush column (tile X3) |
+|---|---|---|
+| PS7 | far left | left |
+| `CLBLL_L_X2` — targets, `evolvable_0/1` | X2 | left |
+| **`CLBLM_R_X3` — FLUSH** | **X3** | — |
+| `RAMB36_X0` (`BRAM_L_X4`) | X4 | right |
+| `DSP_R_X7` — FLUSH | X7 | right |
+| `CLBLM_L_X6` — targets, `evolvable_2..5` | X6 | right |
+
+**There is no BRAM column to the left of the first flush column.** So:
+
+* **logic on the right** (`SLICE_X10..X43`): the AXI bus from PS7 must cross tile columns
+  X3 and X7. 124 crossing nets, including the AXI bus and `guard/configuration_valid` —
+  control class.
+* **logic on the left** (`SLICE_X0..X1`): AXI stays left, but the buffer's BRAM is at tile
+  X4, so `axi_buf_rdata` crosses instead. 190 crossing nets — also control class.
+
+And the left region cannot hold the buffer as LUTRAM instead:
+
+    SLICE_X0Y0:X1Y99      200 slices = 800 LUTs
+    buffer 1608 x 32      832 LUTs   (32 bits x ceil(1608/64) per SLICEM LUT)
+    logic (measured)      432 LUTs
+    required             1264 LUTs   -> short by 464
+
+### The option that does fit, and what it costs
+
+A **one-envelope buffer** (536 words) is 288 LUTs, so 288 + 432 = 720 of 800 fits on the
+left with no BRAM at all. But it gives up the property that closed a real window and was
+explicitly approved: *validate all 1608 words before streaming any of them.* With one
+envelope resident, envelope 0 would be written before envelope 2 had been looked at.
+
+That is recoverable — the host can send the stream **twice**, once for a validation pass
+over all three envelopes and once to write, with the mismatch flag accumulated across
+passes so `configuration_valid` still requires all 15 frames to match. The cost is a second
+6,432-byte transfer, which is nothing beside the 2 MB a full reload would need.
+
+It is a change to an approved property, so it is not made unilaterally.
+
 ## 4. Proving the isolation — from the routed design, not from constraints
 
 Three checks, each producing a machine-readable record. All are host-side and none needs a
