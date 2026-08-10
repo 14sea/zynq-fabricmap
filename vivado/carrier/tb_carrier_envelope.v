@@ -9,12 +9,13 @@
 module tb_carrier_envelope;
     localparam integer ENVELOPES = 3;
     localparam integer ENV_WORDS = 536;
-    localparam integer TOTAL     = ENVELOPES * ENV_WORDS;
+    localparam integer TOTAL     = ENV_WORDS;   // ONE resident envelope
 
     reg         clk = 1'b0;
     reg         rst_n = 1'b0;
     reg         start = 1'b0;
     reg  [11:0] loaded_words = TOTAL;
+    reg  [1:0]  env_index = 2'd0;
     wire [11:0] buf_addr;
     reg  [31:0] buf_data;
     wire        busy, ok, fault;
@@ -30,7 +31,8 @@ module tb_carrier_envelope;
     always #5 clk = ~clk;
 
     carrier_envelope dut (
-        .clk(clk), .rst_n(rst_n), .start(start), .loaded_words(loaded_words),
+        .clk(clk), .rst_n(rst_n), .start(start), .env_index(env_index),
+        .loaded_words(loaded_words),
         .buf_addr(buf_addr), .buf_data(buf_data),
         .busy(busy), .ok(ok), .fault(fault),
         .fault_code(fault_code), .fault_word(fault_word)
@@ -104,9 +106,7 @@ module tb_carrier_envelope;
     endtask
 
     initial begin
-        build_envelope(0*ENV_WORDS, FAR0);
-        build_envelope(1*ENV_WORDS, FAR1);
-        build_envelope(2*ENV_WORDS, FAR2);
+        build_envelope(0, FAR0);
         for (i = 0; i < TOTAL; i = i + 1) golden[i] = buffer[i];
 
         repeat (3) @(negedge clk);
@@ -143,15 +143,30 @@ module tb_carrier_envelope;
         expect_refusal("envelope 0 addressing a flush frame",  20, 32'h00400A80, 4'd2);
         expect_refusal("envelope 0 addressing envelope 1",     20, 32'h00400C1A, 4'd2);
         expect_refusal("envelope 0 addressing a neighbour",    20, 32'h00400A1F, 4'd2);
-        expect_refusal("envelope 1 addressing envelope 0",
-                       ENV_WORDS + 20, 32'h00400A20, 4'd2);
-        expect_refusal("envelope 2 addressing envelope 1",
-                       2*ENV_WORDS + 20, 32'h00400C1A, 4'd2);
-        // a routing-class frame, the case the guard exists for
-        expect_refusal("a frame outside the class entirely",
-                       2*ENV_WORDS + 20, 32'h00000000, 4'd2);
+        // envelope 1 and 2, each resident in turn. `env_index` is the host's claim about
+        // which envelope these bytes are; a wrong claim is caught because the FAR parsed
+        // from the STREAM will not match that index's permitted FAR.
+        build_envelope(0, FAR1); env_index = 2'd1;
+        run(); check("envelope 1 validates when declared as 1", ok, 1);
+        env_index = 2'd0;
+        run(); check("the same bytes declared as envelope 0 are refused", ok, 0);
+        check("and it is a FAR fault", fault_code, 4'd2);
 
-        // 6. RULE 2 — a short load. The buffer does not hold what the envelopes declare.
+        build_envelope(0, FAR2); env_index = 2'd2;
+        run(); check("envelope 2 validates when declared as 2", ok, 1);
+        env_index = 2'd1;
+        run(); check("the same bytes declared as envelope 1 are refused", ok, 0);
+
+        // a routing-class frame, the case the guard exists for
+        build_envelope(0, 32'h00000000); env_index = 2'd0;
+        run(); check("a frame outside the class entirely is refused", ok, 0);
+        check("FAR fault", fault_code, 4'd2);
+
+        build_envelope(0, FAR0); env_index = 2'd0;
+        for (i = 0; i < TOTAL; i = i + 1) golden[i] = buffer[i];
+        run(); check("back to a clean envelope 0", ok, 1);
+
+        // 6. RULE 2 — a short load. The buffer does not hold a whole envelope.
         loaded_words = TOTAL - 1;
         run();
         check("short load refuses", ok, 0);
@@ -161,7 +176,7 @@ module tb_carrier_envelope;
         check("recovers on a full load", ok, 1);
 
         // 7. the LAST word of the LAST envelope: a walk that stops early accepts here
-        expect_refusal("last word of the last envelope",
+        expect_refusal("last word of the envelope",
                        TOTAL - 1, 32'h30000001, 4'd1);
 
         // 8. and a corrupted PAYLOAD word is NOT a control fault — the payload is the

@@ -50,6 +50,17 @@
 //
 `default_nettype none
 
+// TWO-PASS FORM. This module now validates ONE resident envelope, named by `env_index`,
+// because the buffer holds 536 words rather than 1608 — the left-of-flush region has no
+// BRAM column and cannot hold the whole candidate as LUTRAM. Pass 1 runs it over each of
+// the three in turn with ICAPE2 untouched; pass 2 runs it again on the reloaded envelope
+// before that envelope is written.
+//
+// `env_index` selects WHICH permitted FAR is expected. It is the host's declaration, and
+// it is not trusted: if the host declares 1 while loading envelope 0's bytes, the FAR
+// parsed from the stream will not equal permitted_far(1) and the envelope is refused.
+// Order is enforced separately, by the transaction, which requires 0, 1, 2 in sequence.
+
 module carrier_envelope #(
     parameter integer ENVELOPES     = 3,
     parameter integer ENV_WORDS     = 536,
@@ -62,6 +73,7 @@ module carrier_envelope #(
     input  wire        rst_n,
 
     input  wire        start,
+    input  wire [1:0]  env_index,      // which envelope the resident words claim to be
     input  wire [11:0] loaded_words,   // how many words the host actually wrote
 
     output wire [11:0] buf_addr,
@@ -71,7 +83,7 @@ module carrier_envelope #(
     output reg         ok,
     output reg         fault,
     output reg  [3:0]  fault_code,
-    output reg  [11:0] fault_word      // where, so a refusal is diagnosable
+    output reg  [11:0] fault_word      // word position WITHIN the envelope
 );
     localparam [3:0] E_NONE      = 4'd0,
                      E_CONTROL   = 4'd1,  // a control word is not the pinned constant
@@ -153,7 +165,9 @@ module carrier_envelope #(
     // recomputed from the issuing counter — comparing `buf_data` against `expected_at(pos)`
     // would judge every word against its successor's expectation, which is the same
     // off-by-one that made the guard's first version never confirm.
-    assign buf_addr = env * ENV_WORDS + pos;
+    // One envelope resident: the buffer is addressed from 0 regardless of which envelope
+    // these words claim to be.
+    assign buf_addr = pos;
 
     wire [32:0] want_d = expected_at(pos_d);
 
@@ -186,12 +200,12 @@ module carrier_envelope #(
                 // every word the envelopes declare. A short load is a fault, never a
                 // silently truncated read.
                 S_LEN: begin
-                    if (loaded_words != ENVELOPES * ENV_WORDS) begin
+                    if (loaded_words != ENV_WORDS) begin
                         fault_code <= E_TRUNCATED;
                         fault_word <= loaded_words;
                         state      <= S_BAD;
                     end else begin
-                        env     <= 2'd0;
+                        env     <= env_index;
                         pos     <= 10'd0;
                         valid_d <= 1'b0;
                         issued_last <= 1'b0;
@@ -207,17 +221,16 @@ module carrier_envelope #(
                             // be sent, read out of the stream at the FAR packet's position.
                             if (buf_data != permitted_far(env_d)) begin
                                 fault_code <= E_FAR;
-                                fault_word <= env_d * ENV_WORDS + pos_d;
+                                fault_word <= pos_d;
                                 state      <= S_BAD;
                             end
                         end else if (want_d[32] && buf_data != want_d[31:0]) begin
                             // RULE 1: any control word that is not the pinned constant —
                             // missing, duplicated, reordered or extra all land here.
                             fault_code <= (pos_d == 22) ? E_LENGTH : E_CONTROL;
-                            fault_word <= env_d * ENV_WORDS + pos_d;
+                            fault_word <= pos_d;
                             state      <= S_BAD;
-                        end else if (issued_last && env_d == ENVELOPES - 1 &&
-                                     pos_d == ENV_WORDS - 1) begin
+                        end else if (issued_last && pos_d == ENV_WORDS - 1) begin
                             state <= S_OK;   // the last word has now been JUDGED, not
                                              // merely issued: the pipeline is drained
                         end
@@ -228,9 +241,7 @@ module carrier_envelope #(
                     pos_d   <= pos;
                     valid_d <= 1'b1;
                     if (pos == ENV_WORDS - 1) begin
-                        pos <= 10'd0;
-                        if (env == ENVELOPES - 1) issued_last <= 1'b1;
-                        else                      env <= env + 2'd1;
+                        issued_last <= 1'b1;
                     end else if (!issued_last) begin
                         pos <= pos + 10'd1;
                     end
