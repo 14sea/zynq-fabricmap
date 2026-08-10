@@ -285,18 +285,17 @@ any schema changes: the materialised working-tree paths are the same paths and t
 values are the same values, which is why this is a storage decision and not an evidence
 one.
 
-**None of it is implemented yet, and formal staging is blocked until it is.** What has to
-land, deliberately as its own change rather than folded into the measurement:
+**Landed, in its own commits ahead of any publication** — which is the point: every one
+of these is authority a publication commit is then forbidden to touch.
 
-1. a `.gitattributes` scoped to **`staging/**/*.bit` only** — no repository-wide rule;
-2. the stager and the publication gate refuse a staged bitstream that did **not** go
+1. **done** — `/.gitattributes` scoped to `staging/**/*.bit` only, no repository-wide rule;
+2. **done** — the stager and the publication gate refuse a staged bitstream that did not go
    through the LFS filter, so a misconfigured tree cannot quietly push 366 MiB of ordinary
    blobs into history — the one mistake that cannot be undone by a later commit;
-3. the measurement keeps verifying the **working bytes'** SHA-256 (it already does — and
-   that is the check that distinguishes a materialised bitstream from a pointer), and
-   **must** additionally check that **HEAD's LFS pointer oid sha256 equals the manifest
-   pin**. Not "should": without it, HEAD could name a different object than the one on
-   disk while both the ls-tree and the diff look right;
+3. **done** — the measurement verifies the **working bytes'** SHA-256, which is the check
+   that distinguishes a materialised bitstream from a pointer, **and** that HEAD's LFS
+   pointer oid equals the manifest pin. Not "should": without the second, HEAD could name
+   a different object than the one on disk while both the ls-tree and the diff look right;
 4. acceptance is a **fresh clone that actually materialises LFS**, re-hashes all 184
    artifacts and runs the verifier — not a clone that resolved pointers to nothing;
 5. if remote LFS is unavailable, **stop**. The fallbacks are both forbidden: untracked
@@ -335,10 +334,15 @@ rules are per path and "the rule covers bitstreams" is not the claim "it covers 
 what enters history:
 
 ```
-git add staging/<run_id> .gitattributes
+git add staging/<run_id>
 scripts/gate_publish_ff_staging.py --run-root staging/<run_id>   # must pass
 git commit -m "staging: …"
 ```
+
+`.gitattributes` is **not** in that `git add`, and neither is anything else the gate
+consults. A publication commit is staging-only; policy and authority land in their own
+reviewed commits first, and the change-set seal below refuses a commit that tries to carry
+both.
 
 The pre-check is about intent; `git add` is what actually happens, and between them the
 rule can be edited or the filter overridden. Both bypasses are real and both are covered
@@ -350,8 +354,8 @@ git-lfs installed its long-running process filter, which is every standard insta
 `filter.lfs.process` has to be cleared as well. Verified before the case was written.
 
 So the gate reads **index blobs**, and everything it reads comes from there — the
-manifest, the attestations, `.gitattributes`, and the commitment when that is being
-published in the same commit:
+manifest, the attestations, `.gitattributes` and the frozen commitment — all of which are
+already in HEAD, since a publication commit may add nothing but the staging itself:
 
 * the manifest validates against `specimen_staging` 1.0.0 and declares `complete: true`;
 * **the specimen set is rebuilt from the frozen commitment** — the canonical path and
