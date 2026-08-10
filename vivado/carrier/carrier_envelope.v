@@ -141,12 +141,21 @@ module carrier_envelope #(
                      S_BAD  = 3'd4;
 
     reg [2:0]  state;
-    reg [1:0]  env;
+    reg [1:0]  env;      // address being ISSUED this cycle
     reg [9:0]  pos;
+    reg [1:0]  env_d;    // the address whose datum is on buf_data NOW
+    reg [9:0]  pos_d;
+    reg        valid_d;  // ... and whether that datum is meaningful yet
+    reg        issued_last;
 
+    // The buffer read is SYNCHRONOUS: `buf_data` belongs to the address presented on the
+    // previous cycle. So the expectation is pipelined alongside the address rather than
+    // recomputed from the issuing counter — comparing `buf_data` against `expected_at(pos)`
+    // would judge every word against its successor's expectation, which is the same
+    // off-by-one that made the guard's first version never confirm.
     assign buf_addr = env * ENV_WORDS + pos;
 
-    wire [32:0] want = expected_at(pos);
+    wire [32:0] want_d = expected_at(pos_d);
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -182,32 +191,47 @@ module carrier_envelope #(
                         fault_word <= loaded_words;
                         state      <= S_BAD;
                     end else begin
-                        state <= S_WALK;
+                        env     <= 2'd0;
+                        pos     <= 10'd0;
+                        valid_d <= 1'b0;
+                        issued_last <= 1'b0;
+                        state   <= S_WALK;
                     end
                 end
 
                 S_WALK: begin
-                    if (pos == FAR_POS) begin
-                        // RULE 3: the allowlist judges the word that will physically be
-                        // sent, read out of the stream at the FAR packet's position.
-                        if (buf_data != permitted_far(env)) begin
-                            fault_code <= E_FAR;
-                            fault_word <= env * ENV_WORDS + pos;
+                    // 1. judge the datum that has arrived, for the address issued last
+                    if (valid_d) begin
+                        if (pos_d == FAR_POS) begin
+                            // RULE 3: the allowlist judges the word that will physically
+                            // be sent, read out of the stream at the FAR packet's position.
+                            if (buf_data != permitted_far(env_d)) begin
+                                fault_code <= E_FAR;
+                                fault_word <= env_d * ENV_WORDS + pos_d;
+                                state      <= S_BAD;
+                            end
+                        end else if (want_d[32] && buf_data != want_d[31:0]) begin
+                            // RULE 1: any control word that is not the pinned constant —
+                            // missing, duplicated, reordered or extra all land here.
+                            fault_code <= (pos_d == 22) ? E_LENGTH : E_CONTROL;
+                            fault_word <= env_d * ENV_WORDS + pos_d;
                             state      <= S_BAD;
-                        end else begin
-                            pos <= pos + 10'd1;
+                        end else if (issued_last && env_d == ENVELOPES - 1 &&
+                                     pos_d == ENV_WORDS - 1) begin
+                            state <= S_OK;   // the last word has now been JUDGED, not
+                                             // merely issued: the pipeline is drained
                         end
-                    end else if (want[32] && buf_data != want[31:0]) begin
-                        // RULE 1: any control word that is not the pinned constant —
-                        // missing, duplicated, reordered or extra all land here.
-                        fault_code <= (pos == 22) ? E_LENGTH : E_CONTROL;
-                        fault_word <= env * ENV_WORDS + pos;
-                        state      <= S_BAD;
-                    end else if (pos == ENV_WORDS - 1) begin
+                    end
+
+                    // 2. issue the next address, and remember what it was
+                    env_d   <= env;
+                    pos_d   <= pos;
+                    valid_d <= 1'b1;
+                    if (pos == ENV_WORDS - 1) begin
                         pos <= 10'd0;
-                        if (env == ENVELOPES - 1) state <= S_OK;
-                        else                      env   <= env + 2'd1;
-                    end else begin
+                        if (env == ENVELOPES - 1) issued_last <= 1'b1;
+                        else                      env <= env + 2'd1;
+                    end else if (!issued_last) begin
                         pos <= pos + 10'd1;
                     end
                 end

@@ -51,7 +51,7 @@ module carrier_axil #(
 
     // candidate buffer, read side (to the validator and the guard)
     input  wire [11:0] buf_raddr,
-    output reg  [31:0] buf_rdata,   // combinational; see the note at the read port
+    output reg  [31:0] buf_rdata,   // SYNCHRONOUS: valid one cycle after buf_raddr
     output reg  [11:0] loaded_words,
 
     // control pulses
@@ -72,14 +72,17 @@ module carrier_axil #(
 );
     localparam [15:0] REG_BASE = 16'h2000;
 
-    // DISTRIBUTED, explicitly. The validator and the guard both read combinationally —
-    // address and datum have to be in the same cycle or every comparison is off by one —
-    // and an asynchronous read cannot be BRAM. Left to infer, Vivado dissolved 1608x32
-    // into 51,456 flip-flops (FDRE required 51,456 against 35,200 available, and LUTs
-    // 29,641 against 17,600): the same failure recorded in the autoehw campaign, where a
-    // 2048x32 array became 65,536 FFs. LUTRAM gives 64x1 per SLICEM LUT, so this is
-    // 32 x ceil(1608/64) = 832 LUTs.
-    (* ram_style = "distributed" *) reg [31:0] buffer [0:BUF_WORDS-1];
+    // BLOCK RAM, and the reads are SYNCHRONOUS. 1608 x 32 = 51,456 bits is about two
+    // RAMB36 and costs no SLICEM at all — which matters because CLBLM_L_X6 is a SLICEM
+    // column and two of the evolvable LUTs live in it, so a LUTRAM buffer competes for
+    // exactly the resources the isolation checks must keep clear.
+    //
+    // The one-cycle latency is affordable because validation completes before any
+    // streaming, so there is exactly one sequential reader at a time: address out, datum
+    // and its expectation compared on the next cycle. An earlier note claiming BRAM was
+    // impossible here confused a property of the then-current RTL with an architectural
+    // fact.
+    (* ram_style = "block" *) reg [31:0] buffer [0:BUF_WORDS-1];
 
     // ------------------------------------------------------------------ write channel
     wire        wr_fire = s_awvalid && s_wvalid && !s_bvalid;
@@ -171,6 +174,8 @@ module carrier_axil #(
                     end
                 endcase
             end else if (s_araddr[13:2] < BUF_WORDS) begin
+                // one cycle behind: the AXI read of the buffer is a diagnostic path, and
+                // a host that reads back a word it just wrote gets it on the next beat
                 s_rdata <= axi_buf_rdata;
             end else begin
                 s_rdata <= 32'd0;
@@ -190,16 +195,15 @@ module carrier_axil #(
     wire buf_we = wr_fire && !wr_is_reg && (wr_word < BUF_WORDS);
     always @(posedge clk) if (buf_we) buffer[wr_word] <= s_wdata;
 
-    wire [31:0] axi_buf_rdata = buffer[s_araddr[13:2]];
+    reg [31:0] axi_buf_rdata;
+    always @(posedge clk) axi_buf_rdata <= buffer[s_araddr[13:2]];
 
     // ------------------------------------- buffer read port for the validator and guard
     //
-    // COMBINATIONAL, not registered. The validator and the guard both drive an address and
-    // compare the datum in the same cycle; a registered read port returns the previous
-    // address's word and every comparison is off by one. That exact bug already cost a
-    // debugging round in `carrier_guard`, where the address, the datum and the ICAP strobe
-    // had to be brought into one cycle for any clean run to confirm.
-    always @* buf_rdata = buffer[buf_raddr];
+    // SYNCHRONOUS: `buf_rdata` is the word at the address presented on the PREVIOUS cycle.
+    // Both consumers pipeline their expectation to match, which is the whole content of
+    // the change from a LUTRAM buffer.
+    always @(posedge clk) buf_rdata <= buffer[buf_raddr];
 endmodule
 
 `default_nettype wire

@@ -22,6 +22,7 @@ module tb_carrier_guard;
     wire [11:0] buf_addr;
     reg  [31:0] buf_data;
     wire        icap_csib, icap_rdwrb;
+    wire [11:0] stream_addr;
     wire [31:0] icap_din;
     reg  [31:0] icap_dout;
 
@@ -46,19 +47,20 @@ module tb_carrier_guard;
         .configuration_valid(configuration_valid),
         .buf_addr(buf_addr), .buf_data(buf_data),
         .icap_csib(icap_csib), .icap_rdwrb(icap_rdwrb),
-        .icap_din(icap_din), .icap_dout(icap_dout)
+        .icap_din(icap_din), .icap_dout(icap_dout), .stream_addr(stream_addr)
     );
 
-    // the candidate buffer the guard reads
-    always @* buf_data = candidate[buf_addr];
+    // the candidate buffer the guard reads — SYNCHRONOUS, like the AXI slave's BRAM
+    always @(posedge clk) buf_data <= candidate[buf_addr];
 
-    // the mock device: writes land, reads come back (optionally corrupted)
+    // the mock device. It is indexed by `stream_addr` — the address whose word is on the
+    // wire — not by the issuing address, because that is what the guard is transferring.
     always @(posedge clk) begin
-        if (!icap_csib && !icap_rdwrb) device[buf_addr] <= icap_din;
+        if (!icap_csib && !icap_rdwrb) device[stream_addr] <= icap_din;
     end
     always @* begin
-        icap_dout = device[buf_addr];
-        if (corrupt_at >= 0 && buf_addr == corrupt_at) icap_dout = ~device[buf_addr];
+        icap_dout = device[stream_addr];
+        if (corrupt_at >= 0 && stream_addr == corrupt_at) icap_dout = ~device[stream_addr];
     end
 
     always @(posedge clk) if (busy && configuration_valid) valid_while_busy <= 1'b1;

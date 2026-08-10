@@ -36,7 +36,10 @@ module tb_carrier_envelope;
         .fault_code(fault_code), .fault_word(fault_word)
     );
 
-    always @* buf_data = buffer[buf_addr];
+    // SYNCHRONOUS, matching the AXI slave's BRAM read: the datum belongs to the address
+    // presented on the previous cycle. A combinational model here would let a validator
+    // with the off-by-one bug pass the bench and fail on hardware.
+    always @(posedge clk) buf_data <= buffer[buf_addr];
 
     task check(input [255:0] what, input integer got, input integer want);
         begin

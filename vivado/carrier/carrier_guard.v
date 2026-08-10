@@ -73,9 +73,12 @@ module carrier_guard #(
     // the ONLY driver of this signal in the design
     output reg         configuration_valid,
 
-    // candidate buffer: the host-loaded frames, addressed as frame*FRAME_WORDS + word
+    // candidate buffer: the host-loaded frames, addressed as frame*FRAME_WORDS + word.
+    // The read is SYNCHRONOUS — `buf_data` belongs to the address presented on the
+    // previous cycle — so the address is issued one step ahead of the transfer.
     output wire [11:0] buf_addr,
     input  wire [31:0] buf_data,
+    output wire [11:0] stream_addr,   // the address whose word is on the wire NOW
 
     // ICAPE2, abstracted: one word in, one word out, csib/rdwrb as the primitive has them
     output wire        icap_csib,
@@ -131,8 +134,12 @@ module carrier_guard #(
                      S_FAULT  = 4'd6;
 
     reg [3:0]  state;
-    reg [3:0]  frame;          // 0 .. TOTAL_FRAMES-1
-    reg [6:0]  word;           // 0 .. FRAME_WORDS-1
+    reg [3:0]  frame;          // address being ISSUED
+    reg [6:0]  word;
+    reg [3:0]  frame_d;        // the address whose datum is on buf_data NOW
+    reg [6:0]  word_d;
+    reg        valid_d;
+    reg        last_issued;
     reg [31:0] watchdog;
     reg        mismatch;
 
@@ -142,10 +149,14 @@ module carrier_guard #(
     // every comparison was off by one and a clean run never confirmed. Driving them from
     // the same counters that select the word keeps the address, the datum and the strobe
     // in one cycle.
-    assign buf_addr   = frame * FRAME_WORDS + word;
-    assign icap_din   = buf_data;
-    assign icap_csib  = !(state == S_WRITE || state == S_RDBACK);
-    assign icap_rdwrb = (state == S_RDBACK);
+    assign buf_addr    = frame * FRAME_WORDS + word;
+    assign stream_addr = frame_d * FRAME_WORDS + word_d;
+    assign icap_din    = buf_data;
+    // The strobe follows the DATUM, not the address: with a synchronous buffer the word
+    // for an address arrives a cycle later, and driving ICAP from the issuing counter
+    // would send each frame shifted by one word.
+    assign icap_csib   = !((state == S_WRITE || state == S_RDBACK) && valid_d);
+    assign icap_rdwrb  = (state == S_RDBACK);
 
     // A FAR is permitted only if it is in the compiled-in list. Kept as a function so the
     // rule has one definition and a test can call it directly.
@@ -169,6 +180,10 @@ module carrier_guard #(
             word                <= 7'd0;
             watchdog            <= 32'd0;
             mismatch            <= 1'b0;
+            frame_d             <= 4'd0;
+            word_d              <= 7'd0;
+            valid_d             <= 1'b0;
+            last_issued         <= 1'b0;
         end else begin
             case (state)
                 S_IDLE: begin
@@ -182,6 +197,8 @@ module carrier_guard #(
                         mismatch            <= 1'b0;
                         frame               <= 4'd0;
                         word                <= 7'd0;
+                        valid_d             <= 1'b0;
+                        last_issued         <= 1'b0;
                         watchdog            <= 32'd0;
                         busy                <= 1'b1;
                         state               <= S_CLEAR;
@@ -200,17 +217,25 @@ module carrier_guard #(
                         fault_code <= FAULT_TIMEOUT;
                         state      <= S_FAULT;
                     end else begin
-                        if (word == FRAME_WORDS - 1) begin
-                            word <= 7'd0;
-                            if (frame == TOTAL_FRAMES - 1) begin
-                                frame    <= 4'd0;
-                                watchdog <= 32'd0;
-                                state    <= S_RDBACK;
+                        frame_d <= frame;
+                        word_d  <= word;
+                        valid_d <= 1'b1;
+                        if (valid_d && last_issued && frame_d == TOTAL_FRAMES - 1 &&
+                            word_d == FRAME_WORDS - 1) begin
+                            frame       <= 4'd0;
+                            word        <= 7'd0;
+                            valid_d     <= 1'b0;
+                            last_issued <= 1'b0;
+                            watchdog    <= 32'd0;
+                            state       <= S_RDBACK;
+                        end else if (!last_issued) begin
+                            if (word == FRAME_WORDS - 1) begin
+                                word <= 7'd0;
+                                if (frame == TOTAL_FRAMES - 1) last_issued <= 1'b1;
+                                else                           frame <= frame + 4'd1;
                             end else begin
-                                frame <= frame + 4'd1;
+                                word <= word + 7'd1;
                             end
-                        end else begin
-                            word <= word + 7'd1;
                         end
                     end
                 end
@@ -223,16 +248,21 @@ module carrier_guard #(
                     end else begin
                         // RULE 3: every frame, target AND flush, is compared. A flush
                         // frame that came back different is a violation, not collateral.
-                        if (icap_dout !== buf_data) mismatch <= 1'b1;
-                        if (word == FRAME_WORDS - 1) begin
-                            word <= 7'd0;
-                            if (frame == TOTAL_FRAMES - 1) begin
-                                state <= S_CMP;
+                        if (valid_d && icap_dout !== buf_data) mismatch <= 1'b1;
+                        frame_d <= frame;
+                        word_d  <= word;
+                        valid_d <= 1'b1;
+                        if (valid_d && last_issued && frame_d == TOTAL_FRAMES - 1 &&
+                            word_d == FRAME_WORDS - 1) begin
+                            state <= S_CMP;
+                        end else if (!last_issued) begin
+                            if (word == FRAME_WORDS - 1) begin
+                                word <= 7'd0;
+                                if (frame == TOTAL_FRAMES - 1) last_issued <= 1'b1;
+                                else                           frame <= frame + 4'd1;
                             end else begin
-                                frame <= frame + 4'd1;
+                                word <= word + 7'd1;
                             end
-                        end else begin
-                            word <= word + 7'd1;
                         end
                     end
                 end

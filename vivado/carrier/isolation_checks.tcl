@@ -22,6 +22,57 @@ proc cells_in {tiles} {
     return [get_cells -quiet -of_objects $sites]
 }
 
+# POSITIVE CONTROL. A query that returns nothing answers "clean" for both a clean design
+# and a broken question — which is exactly how the first version reported the six
+# evolvable LUTs missing from tiles they are in. Before judging anything, the checker must
+# SEE what it knows is there; if it cannot, it fails rather than passing.
+proc positive_control {target_tiles} {
+    set problems {}
+    set expected {evolvable_0 evolvable_1 evolvable_2 evolvable_3 evolvable_4 evolvable_5}
+    set seen [cells_in $target_tiles]
+    set names {}
+    foreach c $seen { lappend names [get_property NAME $c] }
+    foreach e $expected {
+        if {[lsearch -exact $names $e] < 0} {
+            lappend problems "positive control: $e was not seen in the target columns"
+        }
+    }
+    # and their named data nets must be visible too
+    set nets {}
+    foreach e $expected {
+        foreach pin [get_pins -quiet -of_objects [get_cells -quiet $e]] {
+            set n [get_nets -quiet -of_objects $pin]
+            if {[llength $n]} { lappend nets [get_property NAME $n] }
+        }
+    }
+    if {![llength $nets]} {
+        lappend problems "positive control: no data nets found on the evolvable LUTs"
+    }
+    return $problems
+}
+
+# Net ownership by ROUTED RESOURCE, not by logical net. A net is "in" a column segment
+# when a PIP or node it actually uses is in that segment; a logical net whose name merely
+# appears in a tile query may be routed nowhere near it, and — more importantly — a net
+# that IS routed through cannot be excused by being global or constant without an argument
+# about frame ownership. So nothing is filtered by name here.
+proc nets_routed_through {tiles} {
+    set hits {}
+    set nodes [get_nodes -quiet -of_objects $tiles]
+    if {[llength $nodes]} {
+        foreach n [get_nets -quiet -of_objects $nodes] {
+            lappend hits [get_property NAME $n]
+        }
+    }
+    set pips [get_pips -quiet -of_objects $tiles]
+    if {[llength $pips]} {
+        foreach n [get_nets -quiet -of_objects $pips] {
+            lappend hits [get_property NAME $n]
+        }
+    }
+    return [lsort -unique $hits]
+}
+
 proc carrier_isolation_checks {outdir} {
     set problems {}
 
@@ -46,8 +97,11 @@ proc carrier_isolation_checks {outdir} {
         lappend problems "target columns hold [llength $target_cells] cells, expected 6"
     }
 
-    # ---- 2. net ownership
-    set flush_nets [get_nets -quiet -of_objects $flush_tiles]
+    # ---- 1b. positive control, before any verdict is trusted
+    foreach p [positive_control $target_tiles] { lappend problems $p }
+
+    # ---- 2. net ownership, judged on routed resources
+    set flush_nets [nets_routed_through $flush_tiles]
     if {[llength $flush_nets]} {
         lappend problems "flush columns carry [llength $flush_nets] net(s): $flush_nets"
     }
@@ -59,9 +113,9 @@ proc carrier_isolation_checks {outdir} {
         }
     }
     set allow [lsort -unique $allow]
-    foreach n [get_nets -quiet -of_objects $target_tiles] {
-        if {[lsearch -exact $allow [get_property NAME $n]] < 0} {
-            lappend problems "net crosses a target column but is not an evolvable data net: [get_property NAME $n]"
+    foreach n [nets_routed_through $target_tiles] {
+        if {[lsearch -exact $allow $n] < 0} {
+            lappend problems "net routed through a target column is not an evolvable data net: $n"
         }
     }
 
