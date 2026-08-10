@@ -26,7 +26,28 @@
 // Validation is a SEPARATE PASS over the whole buffer, completed before a single word is
 // streamed. Checking as it goes would already have written envelopes 0 and 1 by the time
 // it refused envelope 2.
-
+//
+// WHAT configuration_valid DOES AND DOES NOT AUTHORISE
+// ----------------------------------------------------
+// A readback compare proves ONE thing: the fabric now holds what the guard actually
+// received and wrote. It says nothing about whether that candidate was allowed to be
+// written. Whether the payload changes only the 292 whitelisted bits, whether the flush
+// frames equal the pinned base verbatim, and whether each ECC is a correct recomputation
+// are judgements of the HOST gate, `scripts/gate_candidate.py`, and they are not
+// re-implemented here.
+//
+// What has to hold before a score means anything is a three-part conjunction:
+//
+//     bytes the host candidate gate ACCEPTED
+//       == bytes actually HANDED TO the guard
+//       == bytes READ BACK from the fabric
+//
+// `configuration_valid` establishes the second and third links. The first is the host's,
+// and scoring requires it too. Two consequences for the data path, so the chain cannot be
+// broken between the links: the transport must send the SAME in-memory bytes the gate
+// parsed — never re-read the file after gating — and the run log's candidate hash and
+// readback hash must be equal before an arm is issued.
+//
 `default_nettype none
 
 module carrier_envelope #(

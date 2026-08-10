@@ -179,6 +179,34 @@ than a claim the runner makes about itself.
 
 **A pblock is an instruction to the tools and is not evidence** (§4).
 
+## 3b. What `configuration_valid` authorises — a three-part conjunction
+
+Ruled 2026-08-10, after the phrase "set only on the complete candidate" was noticed to be
+doing more work than it can carry.
+
+**A readback compare proves exactly one thing: the fabric now holds what the guard actually
+received and wrote.** It does not prove that candidate was *permitted*. Whether the payload
+changes only the 292 whitelisted bits, whether the flush frames equal the pinned base
+verbatim, and whether each ECC is a correct recomputation are judgements of the **host**
+gate, `scripts/gate_candidate.py`. The PL does **not** re-implement a 292-bit content gate;
+it must simply not be described as one.
+
+What has to hold before a score means anything:
+
+> **bytes the host candidate gate ACCEPTED
+> == bytes actually HANDED TO the guard
+> == bytes READ BACK from the fabric**
+
+`configuration_valid` establishes links 2 and 3. Link 1 is the host's, and scoring needs it
+too. Two consequences for the data path, so nothing can slip between the links:
+
+* **the transport sends the same in-memory bytes the gate parsed.** Gating and then
+  re-reading the file is a different artifact with the same name, and every property the
+  gate established is about the bytes it held;
+* **the run log's candidate hash and readback hash must be equal before an arm is issued.**
+  `run_log.record_candidate` already refuses to mark an entry `scored` without that
+  equality; this makes it a precondition of arming as well, not only of scoring.
+
 ## 4. Proving the isolation — from the routed design, not from constraints
 
 Three checks, each producing a machine-readable record. All are host-side and none needs a
