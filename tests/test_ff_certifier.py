@@ -199,6 +199,11 @@ class CertifierTests(unittest.TestCase):
             entry = bundle.entries[specimen["specimen_id"]]
             self.assertEqual(specimen["attestation"], entry["attestation"])
             self.assertEqual(specimen["bitstream_sha256"], entry["bitstream"]["sha256"])
+            # The pinned manifest is the path authority (ruled 2026-08-10): a second copy
+            # of the path in the certificate is a field that can drift from the one that
+            # decides. The certifier has already required the measurement's full bitstream
+            # reference to equal this entry, so nothing is lost by not repeating it.
+            self.assertNotIn("bitstream", specimen)
 
     def test_a_reference_the_certificate_cannot_represent_is_refused_not_trimmed(self) -> None:
         """The difference between copying and rebuilding, made observable.

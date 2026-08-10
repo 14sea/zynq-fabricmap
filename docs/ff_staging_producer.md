@@ -60,25 +60,38 @@ complete scope its exit code follows it; over a half-built tree the pairs it can
 compare are out of scope rather than failures — that selects which pairs are judged, it
 never changes the rule.
 
-### ⚠ Open blocker: the manifest is written inside the staging root, and 1.6 forbids that
+### ⚠ Layout: RULED nested, and this tool does not implement it yet
 
-`stage()` writes `staging_manifest.json` **into** the staging root, beside the specimen
-directories. `host/verify_certificate.load_feature_staging` requires that root to contain
-*exactly* the committed specimen directories and **no files at all**, so the layout this
-tool produces cannot be certified. Found while building the 1.6 certifier, by moving the
-manifest to where this tool puts it and running the real verifier:
+`stage()` still writes `staging_manifest.json` **into** the staging root, beside the
+specimen directories, and `host/verify_certificate.load_feature_staging` requires that root
+to contain *exactly* the committed specimen directories and **no files at all**. Found
+while building the 1.6 certifier, by moving the manifest to where this tool puts it and
+running the real verifier:
 
 ```
 CERTIFICATE VERIFY: FAIL — 1 finding(s)
   - staging root contents differ from committed specimen set (missing=0 extra=0 root_files=1)
 ```
 
-Nobody had staged for real, so nothing had ever exercised the two rules together. The
-consumer's own fixture puts the manifest one level *above* the root, which is the shape
-that verifies. Not fixed here: where the manifest lives changes published paths, so it is
-a ruling rather than an edit. The obvious candidate is to nest — root
-`staging/<run_id>/specimens/` with the manifest at `staging/<run_id>/staging_manifest.json`
-— keeping one directory per run. **Real staging is blocked on this as well as on §2c.**
+Nobody had staged for real, so nothing had ever exercised the two rules together.
+
+**Ruled (2026-08-10, user) — the published shape is one level of nesting:**
+
+```
+staging/<run_id>/
+├── staging_manifest.json
+└── specimens/
+    └── <specimen_id>/
+        ├── spec.bit
+        └── attestation.json
+```
+
+Every reference inside the manifest points at `specimens/…` **verbatim**. The consumer's
+staging root is then `specimens/`, holding exactly the 184 specimen directories and
+nothing else, and the manifest is its sibling — so **the verifier does not have to be
+relaxed**, which is the property that makes this the right shape rather than merely a
+working one. **Not implemented here: it is producer work in the next batch, and real
+staging is blocked on it as well as on §2c.**
 
 Two guarantees make "all or nothing" true rather than intended:
 
@@ -218,15 +231,30 @@ commitment's, every `bitstream`/`attestation` reference required to equal its ma
 entry field for field (the verifier compares those dicts for equality), and every
 specimen's site/tile/split/build seed recomputed from the committed plan.
 
+A certificate carries **no bitstream path**. The pinned staging manifest is the path
+authority and each specimen carries only `bitstream_sha256`; the certifier has already
+required the measurement's full bitstream reference to equal the manifest entry, so a
+second copy of the path in the certificate would be a redundant field that can drift from
+the one that matters. Ratified 2026-08-10.
+
 Finally, **the candidate is verified by the real consumer before it is put in place**:
 `host/verify_certificate.py --require-production` runs against a `.candidate` file, and
 only a certificate it accepts is renamed into position. A rejected one leaves nothing —
 not a draft, not a `.rejected`. That check is what found the two contract breaks recorded
-here: the staging-root layout above, and `design_source_sha256`, which certificate 1.6
-still requires on every specimen while a 2.0 attestation has no `inputs.design_sha256` to
-copy. The measurement now takes it from the recipe's single `.v` source and refuses a
-recipe that names zero or two — a producer-side reading of a field the consumer may want
-to retire for 2.0, and worth their ruling.
+here: the staging-root layout above, and `design_source_sha256`.
+
+**`design_source_sha256`, ruled (2026-08-10, user): kept, and defined.** Certificate 1.6
+requires it on every specimen while a `specimen_attestation` 2.0 has no
+`inputs.design_sha256` — 2.0 replaced the single design input with a recipe `sources` map.
+For 2.0 / `ff_formal` the field is now defined as **the SHA-256 of the single `.v` source
+in `source_build.recipe.sources`**, and the producer's "exactly one, or refuse" rule is
+accepted. The consumer half is **not done and must land before staging**: the verifier has
+to **independently recompute** that value and compare it, not merely check the field's
+format, with three fixtures that must all FAIL —
+
+1. a certificate whose `design_source_sha256` differs from the single `.v`'s hash;
+2. a recipe with **no** `.v`;
+3. a recipe with **two**.
 
 ## 2c. The 365.7 MiB question, ruled: LFS for `.bit`, ordinary Git for everything else
 
@@ -257,6 +285,18 @@ land, deliberately as its own change rather than folded into the measurement:
 5. if remote LFS is unavailable, **stop**. The fallbacks are both forbidden: untracked
    staging (a measurement no verifier can repeat) and ordinary giant blobs (unrecoverable
    history). The next move in that case is the consumer's — change the artifact model.
+
+### What has to land before a staging may be published, as of 2026-08-10
+
+Three items, none of them started, and staging is blocked until all three are done:
+
+* **consumer** — independent recomputation of `design_source_sha256` plus the three
+  failing fixtures (§2b-ii);
+* **producer** — the nested staging layout (§1);
+* **both** — the Git LFS policy, the pointer-oid gate and a fresh-clone materialisation
+  acceptance (§2c).
+
+Measurement is not authorised either, and none of this authorises it.
 
 ## 3. What this does not prove
 
