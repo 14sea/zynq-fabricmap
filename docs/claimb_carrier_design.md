@@ -273,6 +273,56 @@ And the left region cannot hold the buffer as LUTRAM instead:
     logic (measured)      432 LUTs
     required             1264 LUTs   -> short by 464
 
+### RULED 2026-08-10: the two-pass contract
+
+The one-envelope buffer is taken. Neither of the alternatives is: changing the PS
+interface widens the trusted boundary, and re-choosing the sites would invalidate the
+local-map evidence the whole round rests on.
+
+**The guarantee changes, and the new one must be stated exactly.** It is no longer "the
+entire candidate was validated before any write". It is:
+
+> **Each envelope, before it is written, is word-for-word identical to the same envelope
+> validated in pass 1.**
+
+The contract:
+
+1. **Pass 1 validates all three envelopes and touches ICAPE2 not at all.** Any error
+   refuses the whole candidate.
+2. Pass 1 stores, per envelope, a **strong digest, the length, and the position in the
+   order**.
+3. **Pass 2 buffers each envelope in full (536 words) before writing it**, re-runs the
+   control-trace/FAR/FDRI rules on it, and requires the digest to equal pass 1's for THAT
+   envelope. Only then is it written.
+4. **Digest strength.** SHA-256 is the authority, and it is held **host-side**: the PL has
+   800 LUTs available on the left of the flush column and 432 are already logic, so a
+   hardware SHA-256 does not fit. The PL computes its own independent **CRC-32 per
+   envelope** in pass 1 and re-checks it in pass 2 — enough to catch transmission error,
+   which is what it is for. **The CRC is not the authority**: the authority is the
+   host's SHA-256 plus the unchanged word-by-word control and FAR rules, both of which
+   still run in both passes.
+5. `configuration_valid` is cleared **when the first write command of pass 2 is accepted**,
+   and the scorer stays frozen until pass 2, the full 15-frame readback and the hash
+   comparison have all completed.
+6. **Fail-closed on everything**: an interrupted pass 2, an out-of-order envelope, a digest
+   mismatch, a readback mismatch. What was already written is **not a candidate and may
+   never be scored**; the only permitted next actions are restoring the pinned base or
+   reloading the whole carrier.
+7. **One transaction across both passes.** A disconnect, reset, timeout or transport
+   reopen invalidates pass 1's authorisation — the session/epoch rules already in
+   `gate_board_identity` extend to cover the pair.
+8. The transport **re-sends the same in-memory bytes the host gate accepted**. Pass 2 does
+   not re-open the file; §3b's chain would otherwise be broken between its own links.
+9. **The routing exception does not expand.** Flush cells stay 0, and only the twelve
+   mechanically derived data nets may cross. AXI, guard, ICAP control, clock/reset,
+   `arm`/`done` and `configuration_valid` remain zero-tolerance.
+
+**What this admits, stated plainly:** a partially written candidate can exist that can
+never be scored. Given the guard/control path isolation and the target/flush frame rules,
+the worst outcome is restoring the base or reloading the carrier — it cannot contaminate a
+scientific result, because a partial write can never reach `configuration_valid` and
+therefore can never reach the scorer.
+
 ### The option that does fit, and what it costs
 
 A **one-envelope buffer** (536 words) is 288 LUTs, so 288 + 432 = 720 of 800 fits on the
