@@ -88,6 +88,27 @@ envelope 0's frames.
 a transient-safety proof.** It guarantees the *content* is unchanged; it says nothing about
 what a reconfiguration write does to a column while it is being reloaded.
 
+### The one sentence to use, because the shorter version is wrong
+
+> **A candidate changes content bits only; every other bit of every frame it writes is the
+> pinned base's, verbatim.**
+
+That is a statement about what we *write*. It is **not** the same as "the target frames
+contain only CLB content", which is false and was already retracted once: `0x00400C1A` and
+`0x00400C1B` sit inside `INT_L_X6Y25`'s 28-frame structural span, and the two cross-column
+flush frames are minor 0, which carries INT routing configuration.
+
+The distinction is the whole justification for three things that therefore do **not** get
+simplified away, however low the hardware risk otherwise looks:
+
+* the **board-side FAR/FDRI guard** — the intended write set is provably content-only, so
+  the path that could reach a routing frame is a MIS-ADDRESSED write, i.e. a software
+  defect. The guard is what stands between that defect and the fabric;
+* the **quiesce interlock** — because a write reloads a column that the evolvable data path
+  shares;
+* the **readback compare** — because "what we meant to write" and "what the device now
+  holds" are different questions.
+
 The two cross-column minor-0 flush frames remain the strongest hazard, and their route
 ownership must be **empty**: a net through `INT_R_X3` or `INT_R_X7` has its PIP
 configuration inside a frame this run rewrites on every candidate.
