@@ -347,6 +347,42 @@ class EpochTests(unittest.TestCase):
         self.assertEqual(entry["epoch_ended"], 0)
 
 
+class ControlPlaneTests(unittest.TestCase):
+    """Verify over U-Boot, write from Linux: the boundary an epoch alone does not cover."""
+
+    def verified(self) -> gbi.BoardSession:
+        session = gbi.BoardSession(FakeTransport(regs=good_regs()))
+        session.verify_identity()
+        return session
+
+    def test_identity_records_the_control_plane_it_interrogated(self):
+        self.assertEqual(self.verified().identity["control_plane"], "uboot")
+
+    def test_a_uboot_identity_authorises_a_uboot_write(self):
+        self.assertTrue(self.verified().authorise_write("uboot"))
+
+    def test_a_uboot_identity_does_not_authorise_a_linux_write(self):
+        session = self.verified()
+        with self.assertRaises(gbi.IdentityError) as ctx:
+            session.authorise_write("linux")
+        self.assertIn("booting Linux ends the U-Boot authorisation", str(ctx.exception))
+
+    def test_an_unknown_control_plane_is_refused(self):
+        session = self.verified()
+        with self.assertRaises(gbi.IdentityError) as ctx:
+            session.authorise_write("jtag")
+        self.assertIn("unknown control plane", str(ctx.exception))
+
+    def test_booting_is_a_prompt_change_and_also_ends_the_epoch(self):
+        """Two independent refusals: the epoch and the control plane."""
+        session = self.verified()
+        session.observe_prompt("Zynq>")
+        session.observe_prompt("# ")  # a Linux shell
+        self.assertEqual(session.epoch, 1)
+        with self.assertRaises(gbi.IdentityError):
+            session.authorise_write("uboot")
+
+
 class NoOverrideTests(unittest.TestCase):
     def test_no_argument_can_relax_a_requirement(self):
         source = (REPO_ROOT / "scripts/gate_board_identity.py").read_text()

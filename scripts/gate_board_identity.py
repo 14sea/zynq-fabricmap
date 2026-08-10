@@ -76,6 +76,14 @@ REQUIRED_IDCODE = 0x13722093 & IDCODE_MASK
 REQUIRED_FCLK0_MHZ = 50.0
 FCLK0_TOLERANCE_MHZ = 0.5
 
+# What this gate can actually interrogate. `printenv` and `md` are U-Boot commands, so a
+# verification performed here is a statement about a U-BOOT control plane and nothing
+# else. Booting Linux replaces the control plane; the identity does not travel across that
+# boundary, and a Linux-side executor (/dev/mem, HWICAP) must establish its own — which
+# this module does not implement, so it refuses rather than pretending.
+CONTROL_PLANE = "uboot"
+KNOWN_CONTROL_PLANES = frozenset({"uboot", "linux"})
+
 PS_CLK_MHZ = 33.333333
 
 ENV_LINE_RE = re.compile(rb"^([A-Za-z_][A-Za-z0-9_]*)=(.*?)\s*$", re.MULTILINE)
@@ -306,6 +314,7 @@ class BoardSession:
             },
             "elapsed_s": round(time.time() - started, 3),
             "epoch": self.epoch,
+            "control_plane": CONTROL_PLANE,
             "findings": findings,
         }
 
@@ -333,8 +342,21 @@ class BoardSession:
     def identity(self) -> dict | None:
         return self._identity
 
-    def authorise_write(self) -> dict:
-        """The only door to a device write. It opens for this session and epoch alone."""
+    def authorise_write(self, control_plane: str = CONTROL_PLANE) -> dict:
+        """The only door to a device write: this session, this epoch, this control plane.
+
+        `control_plane` is what the *executor* will use. Verifying over U-Boot and then
+        writing from Linux is the boundary this argument exists to refuse: `printenv` and
+        `md` say nothing about a running kernel, the board may have rebooted into a
+        different image, and /dev/mem is a different mechanism with a different guard. A
+        Linux-side executor needs a Linux-side verification, which this module does not
+        implement.
+        """
+        if control_plane not in KNOWN_CONTROL_PLANES:
+            raise IdentityError(
+                f"unknown control plane {control_plane!r}; expected one of "
+                f"{sorted(KNOWN_CONTROL_PLANES)}"
+            )
         if self._identity is None:
             raise IdentityError(
                 "no verified identity on this session — verify_identity() must succeed on "
@@ -345,6 +367,13 @@ class BoardSession:
             raise IdentityError(
                 f"identity was verified in epoch {self._identity.get('epoch')} but the "
                 f"session is now in epoch {self.epoch} — re-verify before writing"
+            )
+        if self._identity.get("control_plane") != control_plane:
+            raise IdentityError(
+                f"identity was established over the "
+                f"{self._identity.get('control_plane')!r} control plane but the write "
+                f"would run over {control_plane!r} — booting Linux ends the U-Boot "
+                "authorisation, and a Linux-side executor needs its own verification"
             )
         return self._identity
 

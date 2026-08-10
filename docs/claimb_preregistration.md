@@ -277,6 +277,30 @@ and flush frame ownership isolation from the DCP or from readback. A pblock is a
 instruction to the tools; what the tools actually did is a separate question, and only the
 second one is evidence.
 
+### The control-plane boundary — an operational consequence, stated before it bites
+
+The identity gate interrogates the board with `printenv` and `md`. Those are **U-Boot**
+commands, so a verification is a statement about a U-Boot control plane and nothing else.
+
+**Booting Linux after verifying identity invalidates the authorisation.** Two independent
+mechanisms now say so: booting changes the prompt, which is a `prompt_mode_change`
+disruption and ends the epoch; and `authorise_write()` takes the executor's control plane
+and refuses a `linux` write against a `uboot` identity even if the epoch somehow matched.
+
+That leaves a fork the calibration design must answer explicitly:
+
+- **If round 1 keeps a U-Boot-only control plane**, there is no gap. Identity, candidate
+  write and readback all happen over the same U-Boot session in one epoch.
+- **If calibration uses a Linux-side executor** (`/dev/mem`, HWICAP through a running
+  kernel), then a **Linux-side identity mechanism must exist and be built first**. The
+  U-Boot identity may not be carried across the boot boundary — the kernel could be a
+  different image, `/dev/mem` is a different mechanism with a different guard, and nothing
+  `printenv` said constrains what is running now. This module does not implement a
+  Linux-side verification, so it refuses rather than pretending to cover it.
+
+Round 1's default is U-Boot-only. Choosing otherwise is a design change that must land
+with its own identity gate before any write.
+
 ### The budget still cannot be frozen here
 
 The transfer size is not the evaluation rate. Before the arms run, an **engineering

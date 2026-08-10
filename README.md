@@ -4,12 +4,46 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
-**Status (2026-08-05): host-side certification is active.** The approach is ratified
-(see below), `data/` is frozen and self-verifying, and two bit classes are certified:
-`clb_lut_init` and `clb_mux`. `clb_ff_config` has a committed certificate-1.5
-prediction plan (`gate_runs/run_2026_08_05_ff/predictions.json`, sha256
-`5440ef27…`) but no specimen bitstream has been built for that run. Nothing has been
-board-verified from this repo.
+**Status (2026-08-10): three bit classes certified; Claim B is preregistered and its
+host-side gates are built. Nothing in this repo has ever been on a board.**
+
+- `data/` is frozen and self-verifying; the approach is ratified (see below).
+- **`clb_lut_init`** and **`clb_mux`** are certified host-side (address prediction).
+- **`clb_ff_config` is certified**: the 184-specimen staging was published and accepted,
+  then measured and certified — **154 of 154 holdout address predictions correct, FP=0,
+  FN=0**, coverage 176/176, semantic identity 154/154 reported independently. Certificate
+  1.6.0 at `gate_runs/run_2026_08_05_ff/certificate.json`.
+  **Those 154 predictions are now spent**: a new holdout claim needs a fresh preregistered
+  commitment.
+- **Claim B round 1 is preregistered as a DRAFT** (`docs/claimb_preregistration.md`) —
+  map-guided vs random-safe mutation over the certified `clb_lut_init` universe. The
+  budget is deliberately **not frozen**: it must come from a measured calibration.
+
+**Scope, stated plainly.** Everything certified so far is **address prediction** — where a
+feature's bits live in the bitstream. None of it is a silicon-semantics result, and no
+device write has been authorised.
+
+## Claim B round 1 — where it stands
+
+| piece | state |
+|---|---|
+| preregistration | **DRAFT** — `docs/claimb_preregistration.md`; §6 budget unfrozen |
+| `local_map` 1.0.0 | built from the `clb_lut_init` certificate — 292 addresses, 12 frames, 6 LUTs |
+| `phenotype_manifest` | emitter written; **no carrier bitstream exists yet**, so no instance is committed |
+| ICAP write path | 3 envelopes × 536 words = 6,432 bytes; flush frames derived from the device frame sequence |
+| candidate gate | judges the **serialized** sequence, under two frame semantics |
+| board identity gate | boardid/role/IDCODE/50 MHz, session- and epoch-scoped, no override |
+| run log | `claimb_run_log` 1.0.0 |
+| **device writes** | **not authorised** |
+
+Three facts measured while building this, each of which constrains the experiment:
+
+- the certified universe is **292 addresses, not the class's 2048** — the rest are named by
+  the frozen DB but were never attested by a specimen pair;
+- **no LUT is fully writable** (49/49/49/51/50/44 of 64), so a fitness may not assume a free
+  64-bit INIT;
+- **every certified bit has `expected_value = 1`** — there is no negated token in the set, so
+  polarity handling is unexercised by round-1 data (see `docs/claimb_handoff.md`).
 
 ## Relationship to the other repos
 
