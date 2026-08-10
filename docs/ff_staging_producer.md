@@ -3,8 +3,9 @@
 `scripts/gate_stage_ff_formal.py` turns what the builder wrote — `readback.tsv` +
 `stamp.json` under `<build-root>/<site>/<variant>/` — into `specimen_attestation` 2.0.0
 records, and stages the committed set in the layout certificate 1.6 consumes
-(`<staging-root>/<specimen_id>/{spec.bit,attestation.json}` plus a `specimen_staging`
-1.0.0 manifest).
+(`<run-root>/specimens/<specimen_id>/{spec.bit,attestation.json}` beside a
+`specimen_staging` 1.0.0 manifest — see "Layout" below for why the nesting is
+load-bearing).
 
 It is the answer to the last mismatch in the handoff: the builder's native layout is
 `<site>/<variant>/`, and the measurement needs `<specimen_id>/` — which from 1.6 it no
@@ -17,7 +18,7 @@ the build changes; in particular **no Vivado run is required**, because
 
 ```
 scripts/gate_stage_ff_formal.py --build build/gate_ff_formal --instance SLICE_X2Y25 --check
-scripts/gate_stage_ff_formal.py --build build/gate_ff_formal --stage build/ff_staging
+scripts/gate_stage_ff_formal.py --build build/gate_ff_formal --stage staging/<run_id>
 ```
 
 `--check` converts and validates specimen by specimen and **writes nothing**. It is how a
@@ -60,22 +61,7 @@ complete scope its exit code follows it; over a half-built tree the pairs it can
 compare are out of scope rather than failures — that selects which pairs are judged, it
 never changes the rule.
 
-### ⚠ Layout: RULED nested, and this tool does not implement it yet
-
-`stage()` still writes `staging_manifest.json` **into** the staging root, beside the
-specimen directories, and `host/verify_certificate.load_feature_staging` requires that root
-to contain *exactly* the committed specimen directories and **no files at all**. Found
-while building the 1.6 certifier, by moving the manifest to where this tool puts it and
-running the real verifier:
-
-```
-CERTIFICATE VERIFY: FAIL — 1 finding(s)
-  - staging root contents differ from committed specimen set (missing=0 extra=0 root_files=1)
-```
-
-Nobody had staged for real, so nothing had ever exercised the two rules together.
-
-**Ruled (2026-08-10, user) — the published shape is one level of nesting:**
+### Layout: nested, and why the extra level exists
 
 ```
 staging/<run_id>/
@@ -86,12 +72,27 @@ staging/<run_id>/
         └── attestation.json
 ```
 
-Every reference inside the manifest points at `specimens/…` **verbatim**. The consumer's
-staging root is then `specimens/`, holding exactly the 184 specimen directories and
-nothing else, and the manifest is its sibling — so **the verifier does not have to be
-relaxed**, which is the property that makes this the right shape rather than merely a
-working one. **Not implemented here: it is producer work in the next batch, and real
-staging is blocked on it as well as on §2c.**
+`--stage` takes the **run root**. The consumer derives *its* staging root from the artifact
+paths, so its root is `specimens/` — holding exactly the committed specimen directories and
+no files — and the manifest is that root's sibling. Every reference inside the manifest
+spells `specimens/<id>/…` verbatim and points at the final tree, never at the `.partial`.
+
+This tool used to write the manifest **into** the root, and
+`host/verify_certificate.load_feature_staging` requires the root it derives to contain only
+those directories, so every staging it produced was uncertifiable. Nobody had staged for
+real, so the two rules had never met; the 1.6 certifier's pre-emission verification is what
+made them meet, answering:
+
+```
+CERTIFICATE VERIFY: FAIL — 1 finding(s)
+  - staging root contents differ from committed specimen set (missing=0 extra=0 root_files=1)
+```
+
+Ruled nested 2026-08-10 rather than relaxing the verifier, which would have widened a
+consumer rule to fit a producer habit. `tests/test_ff_stager.py` keeps both shapes as one
+case: the staged tree is handed to `load_feature_staging` itself and must load with zero
+errors, and the same artifacts with the manifest moved back inside the root must still
+answer `root_files=1`.
 
 Two guarantees make "all or nothing" true rather than intended:
 
@@ -288,11 +289,12 @@ land, deliberately as its own change rather than folded into the measurement:
 
 ### What has to land before a staging may be published, as of 2026-08-10
 
-Three items, none of them started, and staging is blocked until all three are done:
+Three items, **one still open**, and staging is blocked until all three are done and
+cross-reviewed:
 
-* **consumer** — independent recomputation of `design_source_sha256` plus the three
-  failing fixtures (§2b-ii);
-* **producer** — the nested staging layout (§1);
+* ~~**consumer** — independent recomputation of `design_source_sha256` plus the three
+  failing fixtures (§2b-ii)~~ **done** (`acd7e05`);
+* ~~**producer** — the nested staging layout (§1)~~ **done**;
 * **both** — the Git LFS policy, the pointer-oid gate and a fresh-clone materialisation
   acceptance (§2c).
 

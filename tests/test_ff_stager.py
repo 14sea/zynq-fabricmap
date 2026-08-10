@@ -16,6 +16,7 @@ case; it is named so that a skip is visible rather than mistaken for a pass.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -30,6 +31,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.path.insert(0, str(REPO_ROOT))
 
 import gate_build_ff_formal as builder  # noqa: E402
+from host.verify_certificate import load_feature_staging  # noqa: E402
 import gate_stage_ff_formal as stager  # noqa: E402
 
 SITE = "SLICE_X2Y25"
@@ -412,10 +414,17 @@ class StagingTests(unittest.TestCase):
     def test_a_complete_set_stages_exactly_two_files_per_specimen(self) -> None:
         stager.stage(self.tree.plan, self.tree.nodes, self.out, verbose=False)
         expected = {item["specimen_id"] for item in self.tree.plan["specimens"]}
-        directories = {item.name for item in self.out.iterdir() if item.is_dir()}
-        self.assertEqual(directories, expected)
+
+        # the run root holds the manifest and the specimens directory, and nothing else
+        self.assertEqual({item.name for item in self.out.iterdir()},
+                         {"staging_manifest.json", "specimens"})
+        specimens = self.out / "specimens"
+        # the consumer's staging root: exactly the committed directories, zero files
+        self.assertEqual({item.name for item in specimens.iterdir() if item.is_dir()},
+                         expected)
+        self.assertEqual([item.name for item in specimens.iterdir() if item.is_file()], [])
         for specimen_id in expected:
-            self.assertEqual({item.name for item in (self.out / specimen_id).iterdir()},
+            self.assertEqual({item.name for item in (specimens / specimen_id).iterdir()},
                              {"spec.bit", "attestation.json"})
         manifest = json.loads((self.out / "staging_manifest.json").read_text())
         self.assertTrue(manifest["complete"])
@@ -425,6 +434,48 @@ class StagingTests(unittest.TestCase):
                 self.assertFalse(Path(pinned["path"]).is_absolute())
                 self.assertEqual(
                     builder.sha256_file(REPO_ROOT / pinned["path"]), pinned["sha256"])
+                # verbatim `specimens/<id>/…`, and pointing at the final tree rather
+                # than the `.partial` it was written into
+                relative = Path(pinned["path"]).relative_to(
+                    self.out.resolve().relative_to(REPO_ROOT))
+                self.assertEqual(relative.parts[0], "specimens")
+                self.assertEqual(relative.parts[1], entry["specimen_id"])
+
+    def test_the_staged_layout_is_the_one_certificate_16_accepts(self) -> None:
+        """The regression for the layout break, judged by the consumer's own loader.
+
+        `load_feature_staging` derives its staging root from the artifact paths and
+        requires that root to hold exactly the committed specimen directories and no
+        files. The flat shape this tool used to produce put the manifest inside that
+        root and answered `root_files=1`; the nested shape passes. Both are exercised
+        here so the fix cannot silently regress into the shape that reads like output
+        and certifies as nothing.
+        """
+        stager.stage(self.tree.plan, self.tree.nodes, self.out, verbose=False)
+        committed = {item["specimen_id"]: item for item in self.tree.plan["specimens"]}
+
+        def loaded(manifest_path: Path):
+            payload = manifest_path.read_bytes()
+            certificate = {
+                "staging_manifest": {
+                    "path": str(manifest_path.resolve().relative_to(REPO_ROOT)),
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                    "schema_version": "1.0.0"},
+                "prediction_commitment": json.loads(payload)["prediction_commitment"],
+            }
+            return load_feature_staging(certificate, REPO_ROOT, committed)
+
+        errors, entries, attestations = loaded(self.out / "staging_manifest.json")
+        self.assertEqual(errors, [])
+        self.assertEqual(set(entries), set(committed))
+        self.assertEqual(set(attestations), set(committed))
+
+        # the superseded shape: the same artifacts, the manifest inside the root
+        flat = self.out / "specimens" / "staging_manifest.json"
+        flat.write_bytes((self.out / "staging_manifest.json").read_bytes())
+        self.addCleanup(flat.unlink)
+        errors = loaded(flat)[0]
+        self.assertTrue(any("root_files=1" in item for item in errors), errors)
 
     def test_an_incomplete_set_refuses_and_writes_nothing(self) -> None:
         shutil.rmtree(self.tree.build.resolve() / SITE / "zini_AFF")
@@ -439,8 +490,9 @@ class StagingTests(unittest.TestCase):
         rogue.mkdir(parents=True)
         (rogue / "stamp.json").write_text("{}", encoding="utf-8")
         stager.stage(self.tree.plan, self.tree.nodes, self.out, verbose=False)
-        self.assertEqual({item.name for item in self.out.iterdir() if item.is_dir()},
-                         {item["specimen_id"] for item in self.tree.plan["specimens"]})
+        self.assertEqual(
+            {item.name for item in (self.out / "specimens").iterdir() if item.is_dir()},
+            {item["specimen_id"] for item in self.tree.plan["specimens"]})
 
     def test_a_stamp_that_did_not_complete_refuses_the_whole_staging(self) -> None:
         node = next(item for item in self.tree.nodes if item["variant"] == "base")

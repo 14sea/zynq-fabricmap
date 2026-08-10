@@ -9,7 +9,8 @@ Two modes, and the difference between them is the whole point:
   ``--instance`` asserts that whole instance: 22 of its 23 converting is a failed check,
   not a 22/22 success. Without it the mode is diagnostic and a partial tree is fine — but
   an empty one never is.
-* ``--stage OUT`` converts every committed specimen and writes the staged set. It is
+* ``--stage RUN_ROOT`` converts every committed specimen and writes the staged set as
+  ``<run-root>/staging_manifest.json`` beside ``<run-root>/specimens/<specimen_id>/``. It is
   **all or nothing**: with anything missing it refuses and leaves no output behind,
   because certificate 1.6 requires set equality with the commitment and a "successfully
   built subset" is exactly what that rule exists to reject.
@@ -501,8 +502,26 @@ def is_ignored(relative: Path) -> bool:
     return checked.returncode == 0
 
 
+SPECIMENS_DIR = "specimens"
+
+
 def stage(plan: dict, nodes: list[dict], out: Path, *, verbose: bool = True) -> Path:
-    """All or nothing: convert every committed specimen, then write, or write nothing."""
+    """All or nothing: convert every committed specimen, then write, or write nothing.
+
+    `out` is the **run root**, and the published shape is one level of nesting:
+
+        staging/<run_id>/staging_manifest.json
+        staging/<run_id>/specimens/<specimen_id>/{spec.bit,attestation.json}
+
+    The consumer derives its staging root from the artifact paths, so its root is
+    `specimens/` — which then holds exactly the committed specimen directories and no
+    files, while the manifest sits beside it. That is the whole reason for the extra
+    level: `load_feature_staging` requires the root it derives to contain *only* those
+    directories, and this tool used to write the manifest into it, which made every
+    staging it produced uncertifiable (`root_files=1`). Nobody had staged for real, so
+    the two rules had never met. Ruled 2026-08-10; the alternative — relaxing the
+    verifier — would have widened a consumer rule to fit a producer habit.
+    """
     resolved_out = check_staging_root(out)
     reference = commitment_reference(plan)
     by_id = {item["specimen_id"]: item for item in plan["specimens"]}
@@ -552,10 +571,12 @@ def stage(plan: dict, nodes: list[dict], out: Path, *, verbose: bool = True) -> 
     # root that failed halfway is worse than none: it looks like output.
     try:
         partial.mkdir(parents=True)
+        specimens_root = partial / SPECIMENS_DIR
+        specimens_root.mkdir()
         manifest_entries = []
         for specimen_id in sorted(records):
             node = staged[specimen_id]
-            directory = partial / specimen_id
+            directory = specimens_root / specimen_id
             directory.mkdir()
             bit = directory / "spec.bit"
             bit.write_bytes((node["outdir"] / "spec.bit").read_bytes())
@@ -571,7 +592,10 @@ def stage(plan: dict, nodes: list[dict], out: Path, *, verbose: bool = True) -> 
                     f"  stamped {pinned}\n  staged  {staged_hash}")
             attestation_bytes = encode(records[specimen_id])
             (directory / "attestation.json").write_bytes(attestation_bytes)
-            final = resolved_out / specimen_id
+            # The path a reference carries is where the artifact will live after the
+            # rename, spelled `specimens/<id>/…` verbatim — the manifest is the path
+            # authority for the certificate, so it must not describe the `.partial`.
+            final = resolved_out / SPECIMENS_DIR / specimen_id
             manifest_entries.append({
                 "specimen_id": specimen_id,
                 "bitstream": {"path": str((final / "spec.bit").relative_to(REPO)),
@@ -615,7 +639,8 @@ def stage(plan: dict, nodes: list[dict], out: Path, *, verbose: bool = True) -> 
                 f"  original     : {failure}") from failure
         raise
     if verbose:
-        print(f"staged {len(manifest_entries)} specimens -> {resolved_out.relative_to(REPO)}")
+        print(f"staged {len(manifest_entries)} specimens -> "
+              f"{(resolved_out / SPECIMENS_DIR).relative_to(REPO)}/")
         print(f"  manifest: {(resolved_out / 'staging_manifest.json').relative_to(REPO)}")
     return resolved_out
 
