@@ -31,14 +31,18 @@ module carrier_top #(
     wire        m_arvalid, m_arready, m_rvalid, m_rready;
     wire [1:0]  m_bresp, m_rresp;
     wire [3:0]  m_wstrb;
-    wire        fclk0, frst0_n;
+    // FCLKCLK and FCLKRESETN are PS7 OUTPUTS and are 4 bits wide. Driving a
+    // concatenation from them is an illegal output expression (Synth 8-315); take the
+    // full bus and index it.
+    wire [3:0]  fclkclk;
+    wire [3:0]  fclkresetn;
 
-    assign clk   = fclk0;
-    assign rst_n = frst0_n;
+    assign clk   = fclkclk[0];
+    assign rst_n = fclkresetn[0];
 
     PS7 ps7 (
-        .FCLKCLK        ({3'b000, fclk0}),
-        .FCLKRESETN     ({3'b000, frst0_n}),
+        .FCLKCLK        (fclkclk),
+        .FCLKRESETN     (fclkresetn),
         .MAXIGP0ACLK    (clk),
         .MAXIGP0ARESETN (),
         .MAXIGP0AWADDR  (m_awaddr),

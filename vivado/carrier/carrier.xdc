@@ -23,7 +23,9 @@ set_property LOC SLICE_X8Y25 [get_cells evolvable_5]
 
 # LOCK_PINS is contract, not tuning: the certified addresses are the INIT bits under this
 # exact mapping. A permuted mapping puts the same truth table on different bits.
-# unrolled: XDC does not accept `foreach`
+# unrolled. XDC is Tcl and generally supports `foreach`; what failed is that construct in
+# THIS constraint context ("Command 'foreach' is not supported in the xdc constraint file"
+# for a file read as constraints). Not a blanket rule about the language.
 set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} [get_cells evolvable_0]
 set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} [get_cells evolvable_1]
 set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} [get_cells evolvable_2]
@@ -39,8 +41,10 @@ set_property LOCK_PINS {I0:A1 I1:A2 I2:A3 I3:A4 I4:A5 I5:A6} [get_cells evolvabl
 # floorplan looked geometrically impossible when it had simply not been asked. It is
 # created in build_carrier.tcl after opt_design instead.
 
-# Flush and target column segments are enforced by the pblock above plus the routed-design
-# checks in isolation_checks.tcl. A PROHIBIT list is not used here: XDC accepts no `if`,
-# and a bare set_property over an empty site list is an error rather than a no-op — the
-# routed-design check is the evidence anyway (design §4), so the constraint file does not
-# pretend to be one.
+# Flush and target column segments are enforced by the pblock created in build_carrier.tcl
+# plus the routed-design checks in isolation_checks.tcl. No PROHIBIT list here: constraints
+# are steering and the post-route checker is the authority (design §4).
+
+# The clock. Without this the build reports "No user defined clocks" and every timing
+# number in it is decorative — a report with no verdict power is not evidence of anything.
+create_clock -period 20.000 -name fclk0 [get_pins ps7/FCLKCLK[0]]

@@ -50,11 +50,22 @@ if {[llength $logic_cells] < 100} {
     error "pblock would capture only [llength $logic_cells] cells; the filter is wrong"
 }
 add_cells_to_pblock pb_logic $logic_cells
-resize_pblock pb_logic -add {SLICE_X0Y0:SLICE_X1Y99}
-resize_pblock pb_logic -add {SLICE_X6Y0:SLICE_X7Y99}
+
+# ONE CONTIGUOUS REGION, clear of all four column segments (SLICE X2..X5 and X8..X9).
+# Three disjoint islands routed, but asking for CONTAIN_ROUTING on them produced 3
+# unroutable pins and 196 reachable-but-unrouted pins: disjoint islands are not a usable
+# routing topology, whatever they are as a placement constraint.
 resize_pblock pb_logic -add {SLICE_X10Y0:SLICE_X43Y99}
-resize_pblock pb_logic -add {RAMB36_X0Y0:RAMB36_X2Y19}
-puts "pblock pb_logic: [llength [get_cells -of_objects [get_pblocks pb_logic]]] cells assigned"
+resize_pblock pb_logic -add {RAMB36_X1Y0:RAMB36_X2Y19}
+
+# THE PROPERTY THAT ACTUALLY MAKES IT A BOUNDARY. Vivado pblocks default to IS_SOFT=1,
+# which the placer may cross; the range is a preference until this is false. Every
+# earlier "the pblock is barely applied" reading came from here, not from
+# add_cells_to_pblock: all 865 primitives did carry PBLOCK=pb_logic, and the CELL_COUNT of
+# 36 that suggested otherwise is not a leaf-primitive count at all (PRIMITIVE_COUNT is).
+set_property IS_SOFT false [get_pblocks pb_logic]
+
+puts "pblock pb_logic: PRIMITIVE_COUNT=[get_property PRIMITIVE_COUNT [get_pblocks pb_logic]] IS_SOFT=[get_property IS_SOFT [get_pblocks pb_logic]]"
 
 place_design
 route_design

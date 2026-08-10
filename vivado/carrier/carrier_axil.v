@@ -84,6 +84,10 @@ module carrier_axil #(
     // fact.
     (* ram_style = "block" *) reg [31:0] buffer [0:BUF_WORDS-1];
 
+    // Declared before its first use in the read channel below.
+    reg [31:0] axi_buf_rdata;
+    always @(posedge clk) axi_buf_rdata <= buffer[s_araddr[13:2]];
+
     // ------------------------------------------------------------------ write channel
     wire        wr_fire = s_awvalid && s_wvalid && !s_bvalid;
     assign      s_awready = wr_fire;
@@ -187,7 +191,8 @@ module carrier_axil #(
     end
 
     // The memory itself lives in its own purely synchronous block with NO reset, and its
-    // reads are purely combinational. Both matter: an array written inside an
+    // reads are SYNCHRONOUS (this note said "purely combinational" while the buffer was
+    // LUTRAM; it is BRAM now). Both matter: an array written inside an
     // asynchronous-reset process is not inferrable as RAM at all, and the first attempt —
     // which only added `ram_style = "distributed"` while leaving the write in the
     // reset block — produced byte-identical over-utilisation (FDRE 51,456 = 1608 x 32).
@@ -195,8 +200,7 @@ module carrier_axil #(
     wire buf_we = wr_fire && !wr_is_reg && (wr_word < BUF_WORDS);
     always @(posedge clk) if (buf_we) buffer[wr_word] <= s_wdata;
 
-    reg [31:0] axi_buf_rdata;
-    always @(posedge clk) axi_buf_rdata <= buffer[s_araddr[13:2]];
+
 
     // ------------------------------------- buffer read port for the validator and guard
     //

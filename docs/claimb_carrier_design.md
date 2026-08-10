@@ -324,7 +324,20 @@ Ruled 2026-08-10: **where** the scorer ends up may be decided by engineering res
 the candidate regions and the rule that picks among them are frozen **before the first
 build**, so a region is never chosen after seeing behavioural results.
 
-Frozen in `specs/carrier_placement_spec.json` alongside the RTL, before any build:
+**ERRATUM (2026-08-10).** This section said the region choice was frozen in
+`specs/carrier_placement_spec.json` before the first build. **That file did not exist**, and
+several builds have now run without it. It is frozen below instead, and legitimately so:
+no board data and no fitness number exists yet, so nothing can have influenced the choice.
+
+**Frozen selection rule:** take the FIRST region, in the order listed, that passes the §4
+isolation checks and meets timing. Fitness plays no part — there is none yet, and there
+will never be a licence to build in several regions and keep the one that scored best.
+
+Region order: (1) one contiguous block clear of all four column segments,
+`SLICE_X10Y0:SLICE_X43Y99`; (2) the same widened leftwards to `SLICE_X6`; (3) a
+multi-region layout, only if a contiguous one cannot route.
+
+Frozen alongside the RTL, before any further build:
 
 - a **named preferred region** and a **named ordered fallback list**;
 - a **deterministic selection rule**: take the first region in the order that satisfies

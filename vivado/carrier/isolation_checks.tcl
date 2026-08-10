@@ -73,8 +73,35 @@ proc nets_routed_through {tiles} {
     return [lsort -unique $hits]
 }
 
+# MEMBERSHIP ORACLE. `llength [get_cells -of_objects $pblock]` is NOT the leaf-primitive
+# count — it read 36 while all 865 primitives carried PBLOCK=pb_logic — so it must not be
+# used to decide whether the constraint applies. Ask the cells themselves, and ask the
+# pblock whether it is even a boundary.
+proc pblock_problems {} {
+    set problems {}
+    set pb [get_pblocks -quiet pb_logic]
+    if {![llength $pb]} { return [list "pb_logic does not exist"] }
+    if {[get_property IS_SOFT $pb] != 0} {
+        lappend problems "pb_logic is SOFT: the placer may cross it, so the range is a preference"
+    }
+    set expected [get_cells -quiet -hierarchical -filter {IS_PRIMITIVE && NAME !~ "evolvable_*"}]
+    set outside {}
+    foreach c $expected {
+        if {[get_property PBLOCK $c] ne "pb_logic"} { lappend outside [get_property NAME $c] }
+    }
+    if {[llength $outside]} {
+        lappend problems "[llength $outside] primitive(s) are not in pb_logic, e.g. [lrange $outside 0 4]"
+    }
+    set pc [get_property PRIMITIVE_COUNT $pb]
+    if {$pc != [llength $expected]} {
+        lappend problems "pb_logic PRIMITIVE_COUNT $pc but [llength $expected] primitives were expected"
+    }
+    return $problems
+}
+
 proc carrier_isolation_checks {outdir} {
     set problems {}
+    foreach p [pblock_problems] { lappend problems $p }
 
     set target_tiles [concat [tiles_of CLBLL_L_X2Y*] [tiles_of INT_L_X2Y*] \
                              [tiles_of CLBLM_L_X6Y*] [tiles_of INT_L_X6Y*]]
