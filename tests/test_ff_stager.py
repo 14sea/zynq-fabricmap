@@ -1311,11 +1311,19 @@ class PublishPathTests(unittest.TestCase):
         if not (REPO_ROOT / ".git").exists():
             self.skipTest("no .git: is_ignored() cannot answer without history")
         self.assertTrue(stager.is_ignored(Path("build/ff_staging")))
-        self.assertFalse(stager.is_ignored(Path("staging/run_2026_08_05_ff")))
+        self.assertFalse(stager.is_ignored(Path("staging/run_example_never_staged")))
 
     def test_the_intended_publish_location_is_accepted(self) -> None:
-        resolved = stager.check_staging_root(REPO_ROOT / "staging/run_2026_08_05_ff")
-        self.assertEqual(resolved, (REPO_ROOT / "staging/run_2026_08_05_ff").resolve())
+        """A `staging/<run_id>` root is the accepted shape.
+
+        Named for a run that will never exist, not for the real one: this asserted
+        `staging/run_2026_08_05_ff` and started erroring the moment that run was actually
+        staged, since `check_staging_root` refuses a root that is already there. The
+        property under test is the shape of the path, not which runs are unpublished.
+        """
+        example = "staging/run_example_never_staged"
+        resolved = stager.check_staging_root(REPO_ROOT / example)
+        self.assertEqual(resolved, (REPO_ROOT / example).resolve())
         self.assertFalse(resolved.exists(), "the check must not create anything")
 
 

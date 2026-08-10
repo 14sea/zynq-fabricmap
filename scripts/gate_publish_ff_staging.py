@@ -406,10 +406,14 @@ def main() -> int:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run-root", required=True,
                     help="the staged run root, repository-relative, e.g. staging/<run_id>")
+    ap.add_argument("--repo", type=Path, default=REPO,
+                    help="the repository whose index to judge (default: this one). Only "
+                         "the git questions move; the frozen authority still comes from "
+                         "this checkout, which is what makes the answer meaningful")
     args = ap.parse_args()
 
     run_root = args.run_root.rstrip("/")
-    problems = publication_problems(run_root)
+    problems = publication_problems(run_root, args.repo)
     if problems:
         print(f"REFUSING TO PUBLISH: {len(problems)} problem(s) with the index.")
         for problem in problems[:20]:
@@ -419,7 +423,7 @@ def main() -> int:
         print("\nDo not commit. `git restore --staged` the run root, fix, and re-add.")
         return 1
 
-    staged = index_entries(run_root)
+    staged = index_entries(run_root, args.repo)
     print(f"PUBLISHABLE: {len(staged)} path(s) staged under {run_root}")
     print("  every bitstream is an LFS pointer whose oid is the manifest's pin")
     print("  the manifest and every attestation are ordinary Git blobs")

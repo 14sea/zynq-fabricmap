@@ -598,11 +598,41 @@ class PublishGateTests(unittest.TestCase):
         root = self.staged(add=BYPASS + ["add", RUN_ROOT])
         checked = subprocess.run(
             [sys.executable, str(REPO_ROOT / "scripts/gate_publish_ff_staging.py"),
-             "--run-root", RUN_ROOT],
-            cwd=root, capture_output=True, text=True, check=False)
+             "--run-root", RUN_ROOT, "--repo", str(root)],
+            capture_output=True, text=True, check=False)
         self.assertEqual(checked.returncode, 1, checked.stdout)
         self.assertIn("REFUSING TO PUBLISH", checked.stdout)
+        # the fixture's own reason, not "nothing is staged" from some other repository:
+        # without --repo this judged the checkout the script lives in and passed for it
+        self.assertIn("is not a pointer", checked.stdout)
         self.assertIn("Do not commit", checked.stdout)
+
+    def test_the_tool_reports_a_pass_through_main(self) -> None:
+        """The refusal path had a case and the pass path did not, so a crash lived on a
+        line that only runs when everything is right — and it was found by running the
+        real thing on the real 184, which is exactly the moment it must not crash.
+
+        Through `main()` in-process rather than the CLI, because a passing run needs the
+        fixture's own authority substituted and there is deliberately no flag for that:
+        a command-line switch that replaces the frozen commitment would be the hole this
+        gate exists to close.
+        """
+        import contextlib
+        import io
+
+        root = self.staged()
+        output = io.StringIO()
+        with unittest.mock.patch.object(
+                publish, "CANONICAL_COMMITMENT", publish.REPO / COMMITMENT), \
+                unittest.mock.patch.object(publish, "COMMITTED_SHA256", self.frozen), \
+                unittest.mock.patch.object(
+                    sys, "argv", ["gate_publish_ff_staging.py", "--run-root", RUN_ROOT,
+                                  "--repo", str(root)]), \
+                contextlib.redirect_stdout(output):
+            code = publish.main()
+        self.assertEqual(code, 0, output.getvalue())
+        self.assertIn("PUBLISHABLE", output.getvalue())
+        self.assertIn(f"{1 + 2 * len(SPECIMENS)} path(s) staged", output.getvalue())
 
     def test_the_documented_command_line_is_executable(self) -> None:
         """Mode 100644 makes every command line in the docstring exit 126."""
