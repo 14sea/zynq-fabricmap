@@ -1,0 +1,191 @@
+{
+  "description": "Consumer known-answer fixture: one negated and one positive LUT INIT assignment. It is a relationship fixture, not a production certificate.",
+  "certificate_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "manifest_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "certificate": {
+    "schema": "fabric_bit_class_certificate",
+    "schema_version": "1.2.0",
+    "certificate_id": "synthetic_negated_polarity",
+    "status": "passed",
+    "profile": "production",
+    "target": {
+      "family": "zynq7",
+      "device": "xc7z010",
+      "part": "xc7z010clg400-1"
+    },
+    "bit_class": {
+      "id": "clb_lut_init",
+      "tier": "content",
+      "coverage": {
+        "class_entry_count": 2,
+        "attested_count": 2
+      }
+    },
+    "frozen_inputs": {
+      "manifest_schema_version": "1.1.0",
+      "freeze_stamp": "synthetic-freeze",
+      "spec": {
+        "path": "data/subset_spec.json",
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+      },
+      "files": []
+    },
+    "feature_results": [
+      {
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[00]",
+        "split": "mine",
+        "rule_file": "synthetic/segbits_clbll_l.db",
+        "predicted_assignments": [
+          {
+            "token": "!32_15",
+            "segbit": {"frame_offset": 32, "bit_offset": 15, "negated": true},
+            "address": {"far": "0x00400A20", "word": 51, "bit": 15},
+            "expected_value": 0
+          }
+        ],
+        "observed_assignments": [
+          {
+            "address": {"far": "0x00400A20", "word": 51, "bit": 15},
+            "observed_value": 0
+          }
+        ],
+        "exclusion_rules": [
+          {
+            "reason": "frame_ecc",
+            "rule": "word == 50 and 0 <= bit <= 12",
+            "why": "synthetic frame ECC collateral"
+          }
+        ],
+        "verdict": "matched"
+      },
+      {
+        "feature": "CLBLL_L.SLICEL_X0.BLUT.INIT[01]",
+        "split": "holdout",
+        "rule_file": "synthetic/segbits_clbll_l.db",
+        "predicted_assignments": [
+          {
+            "token": "32_16",
+            "segbit": {"frame_offset": 32, "bit_offset": 16, "negated": false},
+            "address": {"far": "0x00400A20", "word": 51, "bit": 16},
+            "expected_value": 1
+          }
+        ],
+        "observed_assignments": [
+          {
+            "address": {"far": "0x00400A20", "word": 51, "bit": 16},
+            "observed_value": 1
+          }
+        ],
+        "exclusion_rules": [
+          {
+            "reason": "frame_ecc",
+            "rule": "word == 50 and 0 <= bit <= 12",
+            "why": "synthetic frame ECC collateral"
+          }
+        ],
+        "verdict": "matched"
+      }
+    ]
+  },
+  "frozen_manifest": {
+    "schema": "frozen_db_subset",
+    "schema_version": "1.1.0",
+    "freeze_stamp": "synthetic-freeze",
+    "spec": {
+      "path": "data/subset_spec.json",
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    "target": {
+      "family": "zynq7",
+      "device": "xc7z010",
+      "part": "xc7z010clg400-1"
+    },
+    "bit_classes": [
+      {"id": "clb_lut_init", "tier": "content", "entries": 2}
+    ]
+  },
+  "local_map": {
+    "schema": "local_map",
+    "schema_version": "1.0.0",
+    "map_id": "synthetic_negated",
+    "provenance": {
+      "kind": "certificate_inherited",
+      "certificate": {
+        "path": "synthetic/certificate.json",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "schema_version": "1.2.0",
+        "certificate_id": "synthetic_negated_polarity",
+        "status": "passed",
+        "profile": "production",
+        "bit_class_id": "clb_lut_init"
+      },
+      "frozen_data": {
+        "path": "synthetic/MANIFEST.json",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "freeze_stamp": "synthetic-freeze"
+      }
+    },
+    "target": {
+      "family": "zynq7",
+      "device": "xc7z010",
+      "part": "xc7z010clg400-1"
+    },
+    "bit_class": {
+      "id": "clb_lut_init",
+      "tier": "content",
+      "class_entry_count": 2,
+      "attested_count": 2
+    },
+    "universe": {
+      "address_count": 2,
+      "far_count": 1,
+      "words": [51],
+      "addresses": [
+        {
+          "key": "0x00400A20/51/15",
+          "far": "0x00400A20",
+          "word": 51,
+          "bit": 15,
+          "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[00]",
+          "expected_value": 0,
+          "split": "mine",
+          "rule_file": "synthetic/segbits_clbll_l.db"
+        },
+        {
+          "key": "0x00400A20/51/16",
+          "far": "0x00400A20",
+          "word": 51,
+          "bit": 16,
+          "feature": "CLBLL_L.SLICEL_X0.BLUT.INIT[01]",
+          "expected_value": 1,
+          "split": "holdout",
+          "rule_file": "synthetic/segbits_clbll_l.db"
+        }
+      ]
+    },
+    "collateral": {
+      "frame_ecc": {
+        "rule": "word == 50 and 0 <= bit <= 12",
+        "word": 50,
+        "bit_low": 0,
+        "bit_high": 12,
+        "why": "synthetic frame ECC collateral",
+        "scope": "touched_frames_only"
+      }
+    },
+    "index": {
+      "by_far": {
+        "0x00400A20": ["0x00400A20/51/15", "0x00400A20/51/16"]
+      },
+      "by_lut": {
+        "CLBLL_L.SLICEL_X0.ALUT": [
+          {"init_index": 0, "address_key": "0x00400A20/51/15"}
+        ],
+        "CLBLL_L.SLICEL_X0.BLUT": [
+          {"init_index": 1, "address_key": "0x00400A20/51/16"}
+        ]
+      }
+    },
+    "tool_versions": {"builder": "synthetic-fixture/1.0.0"}
+  }
+}

@@ -106,8 +106,11 @@ recommendation; it is what this repo does:
 - **prjxray is demoted to an index**, and completion becomes lazy: targeted
   mini-fuzz only where a certificate actually fails.
 
-This is the evidence foundation from which a `local_map` instance will be built for
-Claim B. The actual `local_map` consumer artifact has not been implemented yet.
+This evidence now feeds the certificate-inherited `local_map` 1.0.0 for Claim B. The
+consumer-owned authority schema is `schemas/local_map.schema.json`; the independent
+`host/verify_local_map.py` re-derives the complete universe, polarity, indexes and ECC
+collateral from the production certificate and frozen manifest. It does not trust the
+producer's map builder.
 
 ### First drop, concretely
 

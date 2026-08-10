@@ -46,7 +46,7 @@ separation has to be re-established on the other side, deliberately:
 | **certificate schema** — versioned, per the `zynq-autoehw/docs/schema.md` policy | author → Claude | **shipped through 1.6** (multi-cell attestation + exact staging) |
 | **known-answer fixtures** — what the gate must reproduce | author → Claude | **shipped and active** (address, feature, group, lifecycle, multi-cell and staging fixtures) |
 | **verifiers** — run over emitted certificates + manifest | author → Claude | **shipped and active** (`host/verify_certificate.py`, `host/verify_data.py`) |
-| `local_map` instantiation consuming certified classes | author → Claude | **not started** |
+| `local_map` instantiation consuming certified classes | author → Claude | **active** (`local_map` 1.0.0 authority schema + independent verifier) |
 
 The schema is written by the **consumer**, not the producer: the party that will read
 certificates decides what a certificate must contain. To keep that from deadlocking
