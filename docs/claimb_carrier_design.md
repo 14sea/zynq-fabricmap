@@ -207,6 +207,19 @@ too. Two consequences for the data path, so nothing can slip between the links:
   `run_log.record_candidate` already refuses to mark an entry `scored` without that
   equality; this makes it a precondition of arming as well, not only of scoring.
 
+### The arm condition, in full
+
+Confirmed 2026-08-10 against `run_log`'s hash domains, which do not collide:
+`sequence_sha256` is the complete ordered three-envelope byte stream, while
+`candidate_sha256` and `readback_sha256` are both the FAR-ordered canonical frame set — so
+comparing the latter two is meaningful, and the former pins what was actually transmitted.
+
+> **arm ⟺ `gate_verdict.writable` ∧ `configuration_valid` ∧
+> `candidate_sha256 == readback_sha256`**
+
+One conjunct per link of §3b: the host gate's verdict, the fabric's own confirmation, and
+the host's independent check that what came back is what went out.
+
 ## 4. Proving the isolation — from the routed design, not from constraints
 
 Three checks, each producing a machine-readable record. All are host-side and none needs a
