@@ -764,13 +764,40 @@
       },
       "why_58": "60 would have reported exhaustion for the binding LUT with ~72% probability \u2014 the experiment would have died by construction rather than by discovery. 58 keeps 90.6% of the vectors attainable, needs about 35 draws for that LUT, and leaves exhaustion a real stop condition"
     },
-    "unreachable_test": "a target is UNREACHABLE for this round if attainable_ceiling < 58 for any of the six LUTs"
+    "scope": "per_lut",
+    "unreachable_test": "a drawn target is UNREACHABLE FOR THE LUT IT WAS DRAWN FOR when attainable_ceiling(that LUT, target) < 58. The predicate is per LUT and never a conjunction over the six: another LUT's mask does not judge a target that will never be installed there",
+    "scope_erratum": "review v4 (against commit 16804b8) found this field previously read 'for any of the six LUTs', which contradicted the per-LUT draw rule two fields below. Executed literally the conjunction accepts about 0.0005 of draws, so 256 draws exhaust with probability ~0.88 and NONE of k=0..255 passes under the frozen seed \u2014 reinstating, through the predicate's scope, exactly the dead-experiment failure the ceiling threshold had just removed. Both sides reproduced both readings independently before the wording was corrected",
+    "implemented_by": "scripts/build_reachability_spec.py:attainable_ceiling"
   },
   "target_family": {
     "family": "balanced 6-input Boolean functions",
     "definition": "truth tables over 6 inputs with exactly 32 ones",
-    "draw_rule": "draw index k = 0,1,2,\u2026 ; target_k is the balanced function obtained by taking the LCG stream seeded with (VECTOR_SEED XOR (k+1)) and applying the same Fisher-Yates rule to a 64-entry vector of 32 ones and 32 zeros. Draws are consumed in strict k order; none may be skipped for being inconvenient",
-    "per_lut": "one target is drawn per LUT, in the LUT order listed in `phenotype.luts`, advancing k across LUTs so no two LUTs share a target",
+    "draw_rule": "draw index k = 0,1,2,\u2026 ; target_k is built by taking a 64-entry vector whose indices 0..31 hold 1 and 32..63 hold 0, then applying the same Fisher-Yates rule \u2014 swapping the VALUES at positions i and j, i descending \u2014 with the LCG seeded by (vectors.seed XOR (k+1)). Draws are consumed in strict k order; none may be skipped for being inconvenient",
+    "bit_vector_convention": {
+      "initial_vector": "indices 0..31 = 1, indices 32..63 = 0",
+      "shuffle": "Fisher-Yates swapping the values at positions i and j, i descending",
+      "seed_expression": "vectors.seed XOR (k + 1)",
+      "truth_table_indexing": "entry v is the output for the input assignment Ij = (v >> j) & 1, which is the mapping the pinned LOCK_PINS I0:A1 \u2026 I5:A6 fixes",
+      "init_integer": "sum(entry[v] << v)",
+      "known_answer": {
+        "seed_expression": "vectors.seed = 0x0001, k = 0",
+        "init": "64'h197787B4D6152EC4",
+        "first_eight_entries": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          1,
+          1
+        ],
+        "ones": 32
+      },
+      "implemented_by": "scripts/build_reachability_spec.py:target_vector"
+    },
+    "per_lut": "one target is drawn per LUT, in the LUT order listed in `phenotype.luts`, advancing k across accepted AND rejected draws so no two LUTs share a target. Each draw is offered to the LUT currently being assigned and is judged by that LUT's mask alone",
+    "selection_implemented_by": "scripts/build_reachability_spec.py:select_targets \u2014 the report producer and any independent verifier call this function rather than reimplementing the prose",
     "replacement_rule": "if a drawn target is UNREACHABLE by the test above, it is discarded and the next k is drawn. Discards are recorded with their ceiling",
     "redraw_cap": 256,
     "exhaustion_rule": "if 256 consecutive draws are unreachable for one LUT, the measurement STOPS and reports exhaustion. It does not widen the family, lower the ceiling threshold, or change the seed. Exhaustion is a result about the space and is reported as one"

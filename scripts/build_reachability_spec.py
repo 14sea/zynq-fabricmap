@@ -109,6 +109,126 @@ def lcg_permutation(seed: int, n: int) -> list[int]:
     return order
 
 
+# ---------------------------------------------------------------- the executable rules
+#
+# These are the rules themselves, not a description of them. The report producer and any
+# independent verifier call THESE functions; review v4 showed why prose is not enough —
+# the same words admitted a per-LUT and a six-LUT-conjunction reading, and the second one
+# silently reinstated the exhaustion failure the ceiling threshold had just removed.
+
+
+def target_vector(seed: int, k: int) -> list[int]:
+    """Draw k's target truth table as 64 entries indexed by INPUT VALUE.
+
+    Convention, pinned so an independent consumer builds the identical vector:
+
+    * the initial vector is indices 0..31 = 1 and indices 32..63 = 0;
+    * Fisher-Yates swaps the VALUES at positions i and j, i descending, using the same LCG
+      as the vector order, seeded with ``vectors.seed XOR (k + 1)``;
+    * entry ``v`` is the output for the input assignment ``Ij = (v >> j) & 1``, which is
+      the mapping the pinned LOCK_PINS ``I0:A1 … I5:A6`` fixes;
+    * the INIT integer is ``sum(entry[v] << v)``.
+    """
+    state = (seed ^ (k + 1)) & 0xFFFFFFFFFFFFFFFF
+    entries = [1] * 32 + [0] * 32
+    for i in range(63, 0, -1):
+        state = (state * 6364136223846793005 + 1442695040888963407) & 0xFFFFFFFFFFFFFFFF
+        j = (state >> 33) % (i + 1)
+        entries[i], entries[j] = entries[j], entries[i]
+    return entries
+
+
+def target_init(entries: list[int]) -> int:
+    return sum(bit << v for v, bit in enumerate(entries))
+
+
+def blocked_positions(entries: list[int], fixed_indices: list[int], base_init: int) -> list[int]:
+    """Fixed positions where the target disagrees with the base — the unreachable ones."""
+    return [p for p in fixed_indices if entries[p] != ((base_init >> p) & 1)]
+
+
+def attainable_ceiling(entries: list[int], fixed_indices: list[int], base_init: int) -> int:
+    return 64 - len(blocked_positions(entries, fixed_indices, base_init))
+
+
+def select_target_for_lut(lut: dict, seed: int, start_k: int,
+                          ceiling_min: int = CEILING_MIN,
+                          cap: int = REDRAW_CAP) -> dict:
+    """Assign one target to ONE LUT, judged by THAT LUT's mask alone.
+
+    The scope is the correction of review v4: another LUT's mask does not judge a target
+    that will never be installed there. `k` advances across both accepted and rejected
+    draws, so no two LUTs can share a target.
+    """
+    fixed = lut["fixed_indices"]
+    base = int(lut["base_init"].split("h")[1], 16)
+    discarded = []
+    k = start_k
+    while len(discarded) < cap:
+        entries = target_vector(seed, k)
+        ceiling = attainable_ceiling(entries, fixed, base)
+        if ceiling >= ceiling_min:
+            return {
+                "site": lut["site"],
+                "bel": lut["bel"],
+                "draw_index": k,
+                "attainable_ceiling": ceiling,
+                "blocked_positions": blocked_positions(entries, fixed, base),
+                "target_init": f"64'h{target_init(entries):016X}",
+                "discarded_draws": discarded,
+                "exhausted": False,
+                "next_k": k + 1,
+            }
+        discarded.append({"draw_index": k, "attainable_ceiling": ceiling})
+        k += 1
+    return {
+        "site": lut["site"],
+        "bel": lut["bel"],
+        "draw_index": None,
+        "attainable_ceiling": None,
+        "blocked_positions": None,
+        "target_init": None,
+        "discarded_draws": discarded,
+        "exhausted": True,
+        "next_k": k,
+    }
+
+
+def select_targets(luts: list[dict], seed: int,
+                   ceiling_min: int = CEILING_MIN,
+                   cap: int = REDRAW_CAP) -> dict:
+    """Assign a target to each LUT in order, stopping on the first exhaustion."""
+    assignments, k = [], 0
+    for lut in luts:
+        result = select_target_for_lut(lut, seed, k, ceiling_min, cap)
+        assignments.append(result)
+        k = result["next_k"]
+        if result["exhausted"]:
+            break
+    return {
+        "assignments": assignments,
+        "exhausted": any(a["exhausted"] for a in assignments),
+        "complete": len(assignments) == len(luts)
+        and not any(a["exhausted"] for a in assignments),
+    }
+
+
+def known_answer_literal() -> dict:
+    """A small literal an independent consumer must reproduce byte for byte.
+
+    Determinism tests that call the same helper twice prove only that the helper is a
+    function. This is the cross-implementation check: a synthetic seed, the full 64-entry
+    vector's INIT, and its first eight entries written out.
+    """
+    entries = target_vector(0x0001, 0)
+    return {
+        "seed_expression": "vectors.seed = 0x0001, k = 0",
+        "init": f"64'h{target_init(entries):016X}",
+        "first_eight_entries": entries[:8],
+        "ones": sum(entries),
+    }
+
+
 def build_spec(map_path: Path) -> dict:
     local_map = json.loads(map_path.read_text())
     if local_map.get("schema") != "local_map":
@@ -237,24 +357,57 @@ def build_spec(map_path: Path) -> dict:
                     "condition"
                 ),
             },
+            "scope": "per_lut",
             "unreachable_test": (
-                f"a target is UNREACHABLE for this round if attainable_ceiling < "
-                f"{CEILING_MIN} for any of the six LUTs"
+                f"a drawn target is UNREACHABLE FOR THE LUT IT WAS DRAWN FOR when "
+                f"attainable_ceiling(that LUT, target) < {CEILING_MIN}. The predicate is "
+                "per LUT and never a conjunction over the six: another LUT's mask does "
+                "not judge a target that will never be installed there"
             ),
+            "scope_erratum": (
+                "review v4 (against commit 16804b8) found this field previously read "
+                "'for any of the six LUTs', which contradicted the per-LUT draw rule two "
+                "fields below. Executed literally the conjunction accepts about 0.0005 of "
+                "draws, so 256 draws exhaust with probability ~0.88 and NONE of k=0..255 "
+                "passes under the frozen seed — reinstating, through the predicate's "
+                "scope, exactly the dead-experiment failure the ceiling threshold had just "
+                "removed. Both sides reproduced both readings independently before the "
+                "wording was corrected"
+            ),
+            "implemented_by": "scripts/build_reachability_spec.py:attainable_ceiling",
         },
         "target_family": {
             "family": "balanced 6-input Boolean functions",
             "definition": "truth tables over 6 inputs with exactly 32 ones",
             "draw_rule": (
-                "draw index k = 0,1,2,… ; target_k is the balanced function obtained by "
-                "taking the LCG stream seeded with (VECTOR_SEED XOR (k+1)) and applying "
-                "the same Fisher-Yates rule to a 64-entry vector of 32 ones and 32 zeros. "
-                "Draws are consumed in strict k order; none may be skipped for being "
-                "inconvenient"
+                "draw index k = 0,1,2,… ; target_k is built by taking a 64-entry vector "
+                "whose indices 0..31 hold 1 and 32..63 hold 0, then applying the same "
+                "Fisher-Yates rule — swapping the VALUES at positions i and j, i "
+                "descending — with the LCG seeded by (vectors.seed XOR (k+1)). Draws are "
+                "consumed in strict k order; none may be skipped for being inconvenient"
             ),
+            "bit_vector_convention": {
+                "initial_vector": "indices 0..31 = 1, indices 32..63 = 0",
+                "shuffle": "Fisher-Yates swapping the values at positions i and j, i descending",
+                "seed_expression": "vectors.seed XOR (k + 1)",
+                "truth_table_indexing": (
+                    "entry v is the output for the input assignment Ij = (v >> j) & 1, "
+                    "which is the mapping the pinned LOCK_PINS I0:A1 … I5:A6 fixes"
+                ),
+                "init_integer": "sum(entry[v] << v)",
+                "known_answer": known_answer_literal(),
+                "implemented_by": "scripts/build_reachability_spec.py:target_vector",
+            },
             "per_lut": (
                 "one target is drawn per LUT, in the LUT order listed in `phenotype.luts`, "
-                "advancing k across LUTs so no two LUTs share a target"
+                "advancing k across accepted AND rejected draws so no two LUTs share a "
+                "target. Each draw is offered to the LUT currently being assigned and is "
+                "judged by that LUT's mask alone"
+            ),
+            "selection_implemented_by": (
+                "scripts/build_reachability_spec.py:select_targets — the report producer "
+                "and any independent verifier call this function rather than "
+                "reimplementing the prose"
             ),
             "replacement_rule": (
                 "if a drawn target is UNREACHABLE by the test above, it is discarded and "
