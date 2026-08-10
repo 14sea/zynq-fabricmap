@@ -188,32 +188,73 @@ Any of these is reported as-is. Relaxing a stop condition *after* it fires, usin
 accounting it was placed in front of, is moving the goalposts — the ruling this line
 already made once, on 2026-08-06, when T2 failed.
 
-## 6. ■ OPEN DECISION — the evaluation loop (blocks the freeze)
+## 6. The evaluation loop — RULED 2026-08-10: partial-frame ICAP
 
-Everything above is determined by the ruling. This is not, and it sets the budget, so the
-document cannot be frozen without it. My recommendation, with the arithmetic:
+Whole-bitstream reload is **not** an evaluation path. The 7z010 bitstream is ~2.08 MB;
+over the 115200-baud console that is ~180 s per candidate, so the budget would be too
+small to distinguish the arms — the exact failure that made the first zynq-autoehw A/B
+undecidable.
 
-**Reloading a whole bitstream per candidate is not viable.** The 7z010 bitstream is
-~2.08 MB; over the 115200-baud console that is ~180 s per candidate, so a few hundred
-evaluations is already an overnight run. Any design that reloads per candidate makes the
-budget too small to distinguish the arms — the exact failure that made the first
-zynq-autoehw A/B undecidable.
+### The transfer arithmetic (corrected by the user; my first estimate was wrong)
 
-**Recommended: partial frame writes.** A candidate touches at most 12 frames; a frame is
-101 words (404 B), so a full candidate application is ~5 KB rather than 2 MB. The
-mechanics are proven in the sibling lines (`zynq-xpart`: ICAP raw-FDRI with devcfg
-`PCAP_PR=0`, one FAR-set per sync‥DESYNC envelope; `zynq-agentctl`: live LUT edits with no
-reset) and would be **copied in and pinned**, never referenced across trees.
+The 12 target FARs are **three groups of four consecutive frames** — `0x00400A20‥A23`,
+`0x00400C1A‥C1D`, `0x00400C20‥C23` (confirmed against the built map). The proven 7-series
+write shape needs **one real adjacent frame per group as a flush**, so the ideal shape is:
 
-The score is produced by a PL scorer that applies a fixed input-vector sequence to the
-evolvable LUTs and publishes a match count to a register the PS reads — the mailbox
-pattern this hardware line has used successfully throughout.
+| | words | bytes |
+|---|---|---|
+| per envelope: 4 target + 1 flush frames | 5 × 101 = 505 | |
+| per envelope: command overhead | ≈ 31 | |
+| per envelope total | ≈ 536 | 2,144 |
+| **3 envelopes** | **≈ 1,608** | **≈ 6,432** |
 
-**What I need ratified before freezing:** whether round 1 applies candidates by (a)
-partial frame writes as above, (b) whole-bitstream reload with a correspondingly tiny
-budget, or (c) something else. This also decides whether ICAP machinery has to be brought
-into this repo, which is a real chunk of work with its own wedge risk (a failed load
-leaves DEVCFG stuck; recovery is a physical power cycle).
+If it degrades to one envelope per FAR: ≈ **11.2 KB**. Both are far below 2.08 MB, but
+**the budget may not be frozen against "12 × 101 words"** — that figure ignores the flush
+frames and the per-envelope overhead, and it is the number a naive estimate produces.
+
+### Implementation contract (all of it is a gate, not a style note)
+
+1. **Every candidate rewrites all 12 target frames**, not only the frames it changed. A
+   candidate then depends on the pinned base alone and never on residue from the previous
+   candidate, and the two arms pay an identical transfer cost — otherwise transfer volume
+   becomes a second difference between them.
+2. **The three flush frames are non-writable authority.** Each must equal its pinned base
+   frame **verbatim**. Falling inside the FDRI range does not make a frame writable.
+3. **Frame content is produced from complete raw base frames**, never reconstructed from
+   the 292-bit sparse map. Bits the map does not know keep their base values exactly.
+4. **Frame ECC after an INIT change may not be assumed.** The ECC generation path must be
+   cross-validated independently against **multiple Vivado known-answer frames**, and
+   until it passes, nothing goes to a board.
+5. **The candidate gate parses the final serialized ICAP sequence**, not the operator's
+   intent: every command word, the IDCODE, each FAR, each FDRI length, the payload, the
+   flush frames, and the absence of `GRESTORE`/`GTS` or any extra write.
+6. **The board-side guard is a fixed range that no environment variable or CLI flag can
+   widen.** The sibling `icaphw.c`'s `ICAPHW_FAR_LO`/`HI`/`MAX_FDRI` overrides must **not**
+   be carried across as they are — an overridable guard is not a guard.
+7. **`PCAP_PR` is restored with try/finally semantics**: on failure too, the code attempts
+   to restore it to 1 and reports ICAP health/status rather than leaving the device in a
+   half-configured state.
+8. **Read back the 12 target frames after every candidate write** and recompute the actual
+   frame-diff hash. Fitness is scored **only** if the readback equals the candidate.
+9. **The phenotype manifest pins** the base bitstream, the 12 base frames, the 3 flush
+   frames, and all of their hashes.
+
+### The budget still cannot be frozen here
+
+The transfer size is not the evaluation rate. Before the arms run, an **engineering
+calibration** measures the real thing, and it deliberately touches **no** part of the new
+behavioural holdout:
+
+1. load golden;
+2. apply one pre-fixed LUT known-answer candidate;
+3. read back and verify;
+4. restore base;
+5. repeat enough times to measure end-to-end write + readback + score latency **and the
+   failure rate**.
+
+The measured rate derives the evaluation budget, the seed schedule is then written into
+§4, and only then is this document frozen. Calibration is itself a device write and waits
+for the single whole-of-run board ruling.
 
 ## 7. Machine gates that must exist before any device write
 
