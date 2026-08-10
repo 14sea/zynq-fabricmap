@@ -1,0 +1,77 @@
+### 0. starting point
+main
+cfe38a39e198039edf9b845a13c25175384eb804
+### 1. throwaway branch
+probe/lfs-2026-08-10
+payload bytes: 2240
+### 2. payload identity
+a7f48b896fea9fb220170b898625ab6c58eea9d444b8b05073206d70de7b281d  staging/probe/specimens/PROBE_base/spec.bit
+2240 bytes
+### 3. commit through the LFS filter
+37b13933623bad0784fb846f9bcd9fc1f6a99352
+### 4. what HEAD holds for the .bit
+version https://git-lfs.github.com/spec/v1
+oid sha256:a7f48b896fea9fb220170b898625ab6c58eea9d444b8b05073206d70de7b281d
+size 2240
+--- blob id + size ---
+0f7f498cd7fac4928c2e13e3f40c862a5db85533
+129
+### 5. our own gate's verdict on it
+problems: []
+### 6. push the throwaway branch (LFS upload happens here)
+Error creating progress logger: GIT_LFS_PROGRESS must be an absolute path
+Uploading LFS objects: 100% (1/1), 2.2 KB | 0 B/s, done.
+remote: 
+remote: Create a pull request for 'probe/lfs-2026-08-10' on GitHub by visiting:        
+remote:      https://github.com/14sea/zynq-fabricmap/pull/new/probe/lfs-2026-08-10        
+remote: 
+To github.com:14sea/zynq-fabricmap.git
+ * [new branch]      probe/lfs-2026-08-10 -> probe/lfs-2026-08-10
+--- exit: 0 ---
+### 7. remote refs (main must be untouched)
+cfe38a39e198039edf9b845a13c25175384eb804	refs/heads/main
+37b13933623bad0784fb846f9bcd9fc1f6a99352	refs/heads/probe/lfs-2026-08-10
+### 8. fresh clone from the REMOTE, smudge skipped (pointer-only state)
+clone HEAD: 37b13933623bad0784fb846f9bcd9fc1f6a99352
+--- working file BEFORE materialisation ---
+129 bytes
+212d4f9db9a5a1345480b57fac833446bc8d45400a6ba4e7d16de82572a9aec8  staging/probe/specimens/PROBE_base/spec.bit
+version https://git-lfs.github.com/spec/v1
+oid sha256:a7f48b896fea9fb220170b898625ab6c58eea9d444b8b05073206d70de7b281d
+size 2240
+--- what our gate says about this tree ---
+pointer gate: []
+### 9. the ruling's wording, checked empirically on this pointer-only tree
+--- git ls-tree: path in HEAD? ---
+staging/probe/specimens/PROBE_base/spec.bit
+--- git diff HEAD (the check that does NOT prove materialisation) ---
+(empty above = diff is CLEAN despite no bitstream on disk)
+--- working-byte hash vs the pin (the check that DOES) ---
+pinned : a7f48b896fea9fb220170b898625ab6c58eea9d444b8b05073206d70de7b281d
+actual : 212d4f9db9a5a1345480b57fac833446bc8d45400a6ba4e7d16de82572a9aec8
+verdict: REFUSED — working bytes are a pointer, not the artifact
+### 10. materialise
+--- working file AFTER materialisation ---
+2240 bytes
+a7f48b896fea9fb220170b898625ab6c58eea9d444b8b05073206d70de7b281d  staging/probe/specimens/PROBE_base/spec.bit
+--- both checks now ---
+working bytes == pin : True
+pointer gate         : []
+publication          : []
+### 11. delete the remote branch
+To github.com:14sea/zynq-fabricmap.git
+ - [deleted]         probe/lfs-2026-08-10
+### 12. back to main, delete the local branch and the temp clone
+main
+Deleted branch probe/lfs-2026-08-10 (was 37b1393).
+### 13. final state
+remote refs:
+cfe38a39e198039edf9b845a13c25175384eb804	refs/heads/main
+local branches:
+* main
+worktree: 0 dirty
+staging/ present? 
+ls: cannot access 'staging': No such file or directory
+.gitattributes present? 
+ls: cannot access '.gitattributes': No such file or directory
+HEAD: cfe38a39e198039edf9b845a13c25175384eb804

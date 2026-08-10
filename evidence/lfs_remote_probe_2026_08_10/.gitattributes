@@ -1,0 +1,9 @@
+# `transcript.txt` is the probe's own output, captured with `tee` and unedited. Six lines
+# carry trailing whitespace that git, git-lfs and the LFS server put there — the blank
+# `remote:` lines around GitHub's pull-request hint, and the progress line's padding.
+# Stripping them would make this a transcription rather than a record, and the README
+# claims it is unedited, so the claim has to stay true.
+#
+# Scoped to that one file, not to the directory: README.md beside it is prose written for
+# this repository and stays under the ordinary checks.
+transcript.txt -whitespace

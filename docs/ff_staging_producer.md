@@ -312,9 +312,18 @@ cross-reviewed:
   failing fixtures (§2b-ii)~~ **done** (`acd7e05`);
 * ~~**producer** — the nested staging layout (§1)~~ **done**;
 * **both** — the Git LFS policy: ~~the pointer-oid gate~~ **done** (measurement side,
-  above; exercised against real local LFS repositories, no remote), still open are the
-  repository's own `.gitattributes` and a **fresh-clone materialisation acceptance**,
-  which needs the one-off remote probe.
+  above; exercised against real local LFS repositories), ~~and remote availability~~
+  **answered 2026-08-10** — a one-off throwaway branch pushed a 2.2 KB object, the remote
+  accepted it, and a fresh clone materialised it back to the exact bytes
+  (`evidence/lfs_remote_probe_2026_08_10/`), so the ruling's "stop and hand back" branch
+  is not taken. Still open: this repository's own `.gitattributes`, and the **fresh-clone
+  materialisation acceptance for the real set** — 184 artifacts, 365.7 MiB, re-hashed with
+  the verifier run against them.
+
+  The probe also produced the empirical form of the §2b correction: in a pointer-only
+  clone the path is in HEAD, `git diff HEAD` is **clean**, and the pointer gate passes,
+  while the working file is 129 bytes of pointer text. Only the working-bytes hash against
+  the manifest pin refuses that tree.
 
 Measurement is not authorised either, and none of this authorises it.
 
