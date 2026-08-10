@@ -62,6 +62,14 @@ module carrier_txn #(
     output reg  [1:0]  expect_env,     // which envelope the transaction will accept next
     output reg         pass1_complete,
     output reg         configuration_valid,
+    // Latched when pass 2 faults AFTER at least one envelope has been written: the fabric
+    // then holds part of a candidate and part of the base, and that is not a state any
+    // score may be taken from. `begin_txn` does NOT clear it — a new transaction is not
+    // evidence about the old one — and it resets to 1, because a reset cannot prove the
+    // fabric was restored. Only a COMPLETE successful transaction clears it, which is
+    // exactly what a pinned-base restore or a full replacement candidate is; a carrier
+    // reload clears it by reconfiguring the fabric this register lives in.
+    output reg         recovery_required,
 
     // the resident envelope buffer
     output wire [11:0] buf_addr,
@@ -113,6 +121,7 @@ module carrier_txn #(
     reg        last_issued;
     reg [31:0] watchdog;
     reg        mismatch;
+    reg        wrote_any;   // has pass 2 written an envelope in this transaction?
     reg [31:0] pass1_crc [0:ENVELOPES-1];
     reg [1:0]  cur_env;
 
@@ -144,6 +153,8 @@ module carrier_txn #(
             fault_code          <= F_NONE;
             configuration_valid <= 1'b0;
             pass1_complete      <= 1'b0;
+            recovery_required   <= 1'b1;   // fail-closed: a reset proves nothing
+            wrote_any           <= 1'b0;
             expect_env          <= 2'd0;
             cur_env             <= 2'd0;
             pos                 <= 10'd0;
@@ -175,7 +186,9 @@ module carrier_txn #(
                         fault               <= 1'b0;
                         fault_code          <= F_NONE;
                         mismatch            <= 1'b0;
+                        wrote_any           <= 1'b0;
                         expect_env          <= 2'd0;
+                        // recovery_required is deliberately NOT cleared here.
                     end else if (validate_env) begin
                         if (env_index != expect_env || pass1_complete) begin
                             fault_code <= (pass1_complete) ? F_PHASE : F_ORDER;
@@ -338,6 +351,7 @@ module carrier_txn #(
                 end
 
                 S_ENVDONE: begin
+                    wrote_any <= 1'b1;
                     if (mismatch) begin
                         fault_code <= F_READBACK;
                         state      <= S_FAULT;
@@ -353,8 +367,11 @@ module carrier_txn #(
                 S_DONE: begin
                     // The ONLY assignment of 1 in this module, reached only when all three
                     // envelopes have been written and read back with no mismatch and with
-                    // every CRC equal to pass 1's.
+                    // every CRC equal to pass 1's. A complete transaction rewrites every
+                    // target and flush frame, so it is also the one thing that can clear
+                    // `recovery_required`.
                     configuration_valid <= 1'b1;
+                    recovery_required   <= 1'b0;
                     busy                <= 1'b0;
                     state               <= S_IDLE;
                 end
@@ -362,6 +379,7 @@ module carrier_txn #(
                 S_FAULT: begin
                     configuration_valid <= 1'b0;
                     pass1_complete      <= 1'b0;   // the transaction is over
+                    if (wrote_any) recovery_required <= 1'b1;
                     fault               <= 1'b1;
                     busy                <= 1'b0;
                     state               <= S_IDLE;

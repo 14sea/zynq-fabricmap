@@ -28,7 +28,7 @@ module tb_carrier_txn;
     reg         begin_txn = 1'b0, validate_env = 1'b0, write_env = 1'b0;
     reg  [1:0]  env_index = 2'd0;
 
-    wire        busy, fault, pass1_complete, configuration_valid;
+    wire        busy, fault, pass1_complete, configuration_valid, recovery_required;
     wire [3:0]  fault_code;
     wire [1:0]  expect_env;
     wire [11:0] txn_addr, buf_waddr;
@@ -79,6 +79,7 @@ module tb_carrier_txn;
         .busy(busy), .fault(fault), .fault_code(fault_code),
         .expect_env(expect_env), .pass1_complete(pass1_complete),
         .configuration_valid(configuration_valid),
+        .recovery_required(recovery_required),
         .buf_addr(txn_addr), .buf_data(buf_data),
         .buf_we(buf_we), .buf_waddr(buf_waddr), .buf_wdata(buf_wdata),
         .val_start(val_start), .val_busy(val_busy), .val_ok(val_ok), .val_fault(val_fault),
@@ -263,6 +264,53 @@ module tb_carrier_txn;
         repeat (5) @(negedge clk);
         check("reset clears confirmation", configuration_valid, 0);
         check("reset clears pass1_complete", pass1_complete, 0);
+
+        // ---- 7. recovery_required: a partial write cannot be whitewashed
+        // Reset defaults it high, a complete transaction clears it, a fault AFTER a write
+        // sets it, and neither begin_txn nor a soft reset may clear it again.
+        @(negedge clk); rst_n = 1'b0; @(negedge clk); rst_n = 1'b1;
+        repeat (3) @(negedge clk);
+        check("recovery required out of reset", recovery_required, 1);
+
+        start_txn();
+        full_pass1(32'd0);
+        build(FAR0, 32'd0); pulse_write(2'd0);
+        build(FAR1, 32'd0); pulse_write(2'd1);
+        build(FAR2, 32'd0); pulse_write(2'd2);
+        check("a complete transaction clears it", recovery_required, 0);
+        check("and confirms", configuration_valid, 1);
+
+        // now fault AFTER writing one envelope
+        start_txn();
+        full_pass1(32'd0);
+        build(FAR0, 32'd0); pulse_write(2'd0);
+        check("still clear after one good envelope", recovery_required, 0);
+        build(FAR1, 32'd7);                       // wrong bytes for envelope 1
+        pulse_write(2'd1);
+        check("fault after a write sets it", recovery_required, 1);
+        check("and it is a CRC fault", fault_code, 4'd3);
+
+        // begin_txn must NOT clear it
+        start_txn();
+        check("begin_txn does not clear it", recovery_required, 1);
+
+        // nor does a soft reset
+        @(negedge clk); rst_n = 1'b0; @(negedge clk); rst_n = 1'b1;
+        repeat (3) @(negedge clk);
+        check("a soft reset does not clear it", recovery_required, 1);
+
+        // only a complete transaction does
+        start_txn();
+        full_pass1(32'd0);
+        build(FAR0, 32'd0); pulse_write(2'd0);
+        build(FAR1, 32'd0); pulse_write(2'd1);
+        build(FAR2, 32'd0); pulse_write(2'd2);
+        check("a completed restore clears it", recovery_required, 0);
+
+        // and a fault BEFORE any write does not set it
+        start_txn();
+        build(FAR1, 32'd0); pulse_validate(2'd1);   // out of order in pass 1
+        check("fault before any write leaves it clear", recovery_required, 0);
 
         if (errors == 0) $display("TXN TB: OK");
         else             $display("TXN TB: %0d FAILURE(S)", errors);

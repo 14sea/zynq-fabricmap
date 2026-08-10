@@ -128,6 +128,17 @@ proc carrier_isolation_checks {outdir} {
     foreach p [positive_control $target_tiles] { lappend problems $p }
 
     # ---- 2. net ownership, judged on routed resources
+    #
+    # The target is NOT "the residual set is exactly the twelve". It is:
+    #
+    #   (a) the residual set is a SUBSET of the mechanically derived allowlist, and
+    #   (b) every net in it had to cross, judged from where its endpoints are PLACED.
+    #
+    # (b) matters because a data net whose endpoints are both on one side of a flush
+    # column has no business detouring through it, and a rule that only checked membership
+    # would wave that through. Nothing here is a hard-coded count: how many nets must cross
+    # follows from the placement, and writing "12" or "10" into the checker would make the
+    # expected answer the rule.
     set flush_nets [nets_routed_through $flush_tiles]
     if {[llength $flush_nets]} {
         lappend problems "flush columns carry [llength $flush_nets] net(s): $flush_nets"
@@ -146,11 +157,40 @@ proc carrier_isolation_checks {outdir} {
         }
     }
 
+    # (b) a crossing net must have endpoints on BOTH sides of the column it crosses.
+    # `must_cross` is derived per net from the placed cells' SLICE X coordinates against
+    # the flush column's own X range; a net that did not have to cross and did is a detour
+    # and is refused with the rest.
+    foreach n $flush_nets {
+        if {[lsearch -exact $allow $n] < 0} {
+            lappend problems "net crosses a flush column and is not on the allowlist: $n"
+            continue
+        }
+        set net [get_nets -quiet $n]
+        set xs {}
+        foreach c [get_cells -quiet -of_objects $net] {
+            set loc [get_property LOC $c]
+            if {[regexp {SLICE_X(\d+)Y} $loc -> x]} { lappend xs $x }
+        }
+        if {![llength $xs]} { continue }
+        set lo [lindex [lsort -integer $xs] 0]
+        set hi [lindex [lsort -integer $xs] end]
+        # the flush CLB column occupies SLICE_X4..X5; a net entirely left of it or
+        # entirely right of it had no reason to be in it
+        if {($hi < 4) || ($lo > 5)} {
+            lappend problems \
+                "allowlisted net $n detours through a flush column: its endpoints are all\
+                 on one side (SLICE_X $lo..$hi)"
+        }
+    }
+
     set fh [open $outdir/isolation.txt w]
     puts $fh "allowed evolvable data nets:"
     foreach n $allow { puts $fh "  $n" }
     puts $fh "target cells: [llength $target_cells]  flush cells: [llength $flush_cells]"
     puts $fh "flush nets:   [llength $flush_nets]"
+    puts $fh "flush crossers (must all be allowlisted, and must all have had to cross):"
+    foreach n $flush_nets { puts $fh "  $n" }
     if {[llength $problems]} {
         puts $fh "PROBLEMS:"
         foreach p $problems { puts $fh "  $p" }
