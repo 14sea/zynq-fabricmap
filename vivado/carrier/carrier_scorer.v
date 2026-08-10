@@ -15,20 +15,28 @@
 // firewall is the whole reason the holdout means anything, so the base and the count are
 // both derived from the mode rather than only the count.
 //
-// THE INTERLOCK, and an honest statement of what it does and does not guarantee
-// ------------------------------------------------------------------------------
-// `armed` is a ONE-SHOT. It is set only by an explicit arm pulse, cleared by reset, and
-// self-clears the moment an evaluation completes. The resting state is FROZEN: a reset, a
-// lost control connection, or simply nobody arming it leaves the accumulator held and
-// `busy` low. An evaluation cannot span a reconfiguration write unless someone re-armed
-// after it, and the arm is where the host asserts "readback confirmed".
+// THE INTERLOCK — two conditions, and the second one is not the host's word
+// -------------------------------------------------------------------------
+// An evaluation starts only on `configuration_valid && arm`.
 //
-// What it does NOT do, stated rather than glossed: the PL cannot observe PCAP activity,
-// so this is not a hardware detector of "reconfiguration in progress" — there is no
-// PL-visible busy signal for a PCAP-driven frame write. The guarantee is the weaker but
-// checkable one: the scorer cannot run unless explicitly armed after every evaluation,
-// and every failure of the arming path leaves it frozen rather than sampling. Claiming
-// detection here would be claiming a signal that does not exist.
+// `armed` is a ONE-SHOT: set only by an explicit arm, cleared by reset, and self-clearing
+// at `done`. That alone proves "no arm, no score" — but on its own it still leaves the
+// promise resting on the host issuing things in the right order.
+//
+// `configuration_valid` is the other half and it is NOT a software bit. It is driven by
+// the board-side guard, which clears it before any FAR/FDRI write begins, holds it clear
+// through a failed or timed-out write and through reset, and sets it ONLY after its own
+// fixed-range readback compare succeeds. So the state the scorer gates on is
+// *readback-confirmed*, observable, and maintained by the thing performing the write.
+//
+// This is the reason the guard lives in the PL and drives ICAPE2 rather than being PS
+// firmware over PCAP: the PL cannot observe PCAP activity, so a PS-side guard could only
+// offer a register bit the host sets — which is the assumption being removed. No fictional
+// "reconfiguration busy" signal is invented anywhere; the observable fact is the guard's
+// own comparison result.
+//
+// Both conditions fail closed. Reset clears both; an unarmed loop, a lost connection, a
+// mismatching readback or a write that never completed all leave the accumulator held.
 
 `default_nettype none
 
@@ -40,6 +48,7 @@ module carrier_scorer #(
     input  wire                  clk,
     input  wire                  rst_n,
 
+    input  wire                  configuration_valid, // from the guard's readback compare
     input  wire                  arm,           // one-shot: start one evaluation
     input  wire                  mode_holdout,  // latched at arm
 
@@ -84,7 +93,7 @@ module carrier_scorer #(
             count      <= TRAIN_COUNT[6:0];
             vector     <= 6'd0;
             score_flat <= {LUTS*8{1'b0}};
-        end else if (arm && !busy) begin
+        end else if (arm && configuration_valid && !busy) begin
             armed      <= 1'b1;
             busy       <= 1'b1;
             done       <= 1'b0;
@@ -93,7 +102,14 @@ module carrier_scorer #(
             count      <= mode_holdout ? HOLDOUT_COUNT[6:0] : TRAIN_COUNT[6:0];
             vector     <= order[mode_holdout ? TRAIN_COUNT : 0];
             score_flat <= {LUTS*8{1'b0}};
-        end else if (busy && armed) begin
+        end else if (busy && !configuration_valid) begin
+            // The guard withdrew confirmation mid-evaluation: a write started, or a
+            // readback stopped matching. Freeze without completing, and do NOT raise
+            // `done` — a partial score must never look like a result.
+            busy  <= 1'b0;
+            armed <= 1'b0;
+            done  <= 1'b0;
+        end else if (busy && armed && configuration_valid) begin
             // At this edge `vector` holds the vector under test and `lut_q` its
             // combinational output, so the comparison is of the pair presented during the
             // cycle just ending.

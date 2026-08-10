@@ -13,6 +13,7 @@ module tb_carrier_scorer;
     reg               clk = 1'b0;
     reg               rst_n = 1'b0;
     reg               arm = 1'b0;
+    reg               configuration_valid = 1'b1;
     reg               mode_holdout = 1'b0;
     wire [5:0]        vector;
     reg  [LUTS-1:0]   lut_q;
@@ -30,7 +31,8 @@ module tb_carrier_scorer;
     always #5 clk = ~clk;
 
     carrier_scorer #(.LUTS(LUTS), .VECTORS(64), .TRAIN_COUNT(TRAIN)) dut (
-        .clk(clk), .rst_n(rst_n), .arm(arm), .mode_holdout(mode_holdout),
+        .clk(clk), .rst_n(rst_n), .configuration_valid(configuration_valid),
+        .arm(arm), .mode_holdout(mode_holdout),
         .vector(vector), .lut_q(lut_q),
         .busy(busy), .done(done), .armed_o(armed), .score_flat(score_flat)
     );
@@ -54,6 +56,7 @@ module tb_carrier_scorer;
     task run(input holdout);
         begin
             @(negedge clk);
+            cycles = 0;
             mode_holdout = holdout;
             arm = 1'b1;
             @(negedge clk);
@@ -65,6 +68,13 @@ module tb_carrier_scorer;
 
     integer k;
     reg [LUTS*8-1:0] prev_score;
+    integer cycles;            // cycles from arm to done, so the walk LENGTH is checked
+    reg     busy_seen;         // sticky: catches a transient a periodic sample would miss
+
+    always @(posedge clk) if (busy) busy_seen <= 1'b1;
+
+    // count every cycle the scorer is busy, for the length assertion
+    always @(posedge clk) if (busy) cycles <= cycles + 1;
     initial begin
         $readmemh("carrier_vector_order.hex", order);
         $readmemh("carrier_targets.hex", target);
@@ -76,8 +86,13 @@ module tb_carrier_scorer;
         for (i = 0; i < LUTS; i = i + 1) phenotype[i] = target[i];
         run(1'b0);
         for (i = 0; i < LUTS; i = i + 1) check("perfect train", score_of(i), TRAIN);
+        check("train walks exactly TRAIN vectors", cycles, TRAIN);
         run(1'b1);
         for (i = 0; i < LUTS; i = i + 1) check("perfect holdout", score_of(i), 64 - TRAIN);
+        // THE LENGTH is asserted, not only the score: a holdout walk that runs for 64
+        // cycles is scoring a different set even when the total happens to match, because
+        // an over-long walk reads past the slice and simply fails to accumulate there.
+        check("holdout walks exactly the holdout slice", cycles, 64 - TRAIN);
 
         // 2. an inverted phenotype scores zero
         for (i = 0; i < LUTS; i = i + 1) phenotype[i] = ~target[i];
@@ -121,6 +136,41 @@ module tb_carrier_scorer;
         check("frozen after reset", busy, 0);
         check("disarmed after reset", armed, 0);
         for (i = 0; i < LUTS; i = i + 1) check("zeroed after reset", score_of(i), 0);
+
+        // 7. THE SECOND CONDITION: an arm without readback confirmation does nothing.
+        //    Without this the interlock only proves "no arm, no score", which still leaves
+        //    the promise resting on the host calling things in the right order.
+        configuration_valid = 1'b0;
+        for (i = 0; i < LUTS; i = i + 1) phenotype[i] = target[i];
+        busy_seen = 1'b0;
+        @(negedge clk); arm = 1'b1; @(negedge clk); arm = 1'b0;
+        repeat (200) @(negedge clk);
+        // sticky, because an unconfirmed arm that starts and is frozen a cycle later is
+        // still an arm that should never have been accepted — a periodic sample sees
+        // nothing.
+        check("never even started without configuration_valid", busy_seen, 0);
+        check("no score without configuration_valid", busy, 0);
+        check("not armed without configuration_valid", armed, 0);
+        check("done stays low", done, 0);
+        for (i = 0; i < LUTS; i = i + 1)
+            check("score stays zero", score_of(i), 0);
+
+        // 8. and confirmation WITHDRAWN mid-evaluation freezes without completing:
+        //    a partial score must never present itself as a result.
+        configuration_valid = 1'b1;
+        @(negedge clk); arm = 1'b1; @(negedge clk); arm = 1'b0;
+        repeat (5) @(negedge clk);
+        check("running once confirmed", busy, 1);
+        configuration_valid = 1'b0;
+        @(negedge clk);
+        check("frozen when confirmation withdrawn", busy, 0);
+        check("disarmed when confirmation withdrawn", armed, 0);
+        check("no done for a partial evaluation", done, 0);
+
+        // and it recovers cleanly on the next confirmed arm
+        configuration_valid = 1'b1;
+        run(1'b0);
+        for (i = 0; i < LUTS; i = i + 1) check("recovered train", score_of(i), TRAIN);
 
         if (errors == 0) $display("SCORER TB: OK");
         else             $display("SCORER TB: %0d FAILURE(S)", errors);
