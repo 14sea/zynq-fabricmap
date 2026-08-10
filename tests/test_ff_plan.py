@@ -562,12 +562,20 @@ class SemanticIsolationTests(unittest.TestCase):
         self.assertFalse(semantic_verdict(True, None, "CLKINV"))
 
 
-class CertifierSemanticIsolationTests(unittest.TestCase):
-    """The same isolation, end to end through `gate_certify_ff.py`.
+class SupersededMeasurementShapeTests(unittest.TestCase):
+    """The 1.4 measurement shape, kept only to prove it is now REFUSED.
 
-    Built from the real draft plan rather than a hand-written stub, so the projection
-    comparison the certifier performs is exercised against genuine preregistered
-    records. No Vivado: the certifier reads JSON.
+    These cases used to certify: they built a 1.4 record from the real draft plan and
+    asserted the certifier's semantic isolation end to end. Certificate 1.6 makes that
+    record inadmissible — it was produced by a tool that built its own artifact paths
+    under a gitignored tree and copied attestations, so its references cannot be the ones
+    a certificate pins, and nothing inside such a record reveals that.
+
+    The fixture is therefore preserved as a **refusal**, deliberately not bumped to 1.6:
+    a version bump here would make the old shape pass and delete the evidence that the
+    gate exists. The behaviour these cases used to cover — semantic isolation, projection
+    comparison, coverage — is re-established on a real 1.6 bundle in
+    `tests/test_ff_certifier.py`, against the consumer's own verifier.
     """
 
     @classmethod
@@ -679,41 +687,19 @@ class CertifierSemanticIsolationTests(unittest.TestCase):
             check=False,
         )
 
-    def test_semantic_only_failure_certifies_as_address_passed(self) -> None:
-        with scratch() as directory:
-            run = self.build_run(Path(directory), semantic_ok=False, address_problems=[])
-            checked = self.certify(run)
-            self.assertEqual(checked.returncode, 0, checked.stdout)
-            certificate = json.loads((run / "certificate.json").read_text())
-            self.assertEqual(certificate["status"], "passed")
-            self.assertEqual(certificate["semantic_status"], "failed")
-            self.assertEqual(certificate["failure_reasons"], [])
-            self.assertEqual(certificate["bit_class"]["accounting"],
-                             {"tp_count": 2, "fp_count": 0, "fn_count": 0})
-            self.assertEqual(
-                certificate["bit_class"]["semantic_accounting"]["member_identity"],
-                {"pass_count": 1, "fail_count": 1})
-
-    def test_an_address_problem_still_fails_the_certificate(self) -> None:
-        with scratch() as directory:
-            run = self.build_run(Path(directory), semantic_ok=True,
-                                 address_problems=["specimen: no attestation"])
-            checked = self.certify(run)
-            self.assertEqual(checked.returncode, 0, checked.stdout)
-            certificate = json.loads((run / "certificate.json").read_text())
-            self.assertEqual(certificate["status"], "failed")
-            self.assertEqual(certificate["semantic_status"], "passed")
-            self.assertTrue(certificate["failure_reasons"])
-
-    def test_a_clean_run_certifies_both_ways(self) -> None:
-        with scratch() as directory:
-            run = self.build_run(Path(directory), semantic_ok=True, address_problems=[])
-            checked = self.certify(run)
-            self.assertEqual(checked.returncode, 0, checked.stdout)
-            certificate = json.loads((run / "certificate.json").read_text())
-            self.assertEqual(certificate["status"], "passed")
-            self.assertEqual(certificate["semantic_status"], "passed")
-            self.assertEqual(certificate["bit_class"]["coverage"]["class_entry_count"], 176)
+    def test_the_14_measurement_shape_is_refused_by_the_16_certifier(self) -> None:
+        for semantic_ok, problems in ((True, []), (False, []),
+                                      (True, ["specimen: no attestation"])):
+            with self.subTest(semantic_ok=semantic_ok, problems=len(problems)):
+                with scratch() as directory:
+                    run = self.build_run(Path(directory), semantic_ok=semantic_ok,
+                                         address_problems=problems)
+                    checked = self.certify(run)
+                    self.assertNotEqual(checked.returncode, 0, checked.stdout)
+                    self.assertIn("measurement is schema_version '1.4.0'", checked.stdout)
+                    self.assertIn("refused even when internally consistent", checked.stdout)
+                    self.assertFalse((run / "certificate.json").exists(),
+                                     "a refused measurement produced a certificate")
 
 
 if __name__ == "__main__":

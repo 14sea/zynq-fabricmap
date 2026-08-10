@@ -433,7 +433,28 @@ def attestation_problems(specimen_id: str, attestation: dict, entry: dict,
         # than a null field the certificate would carry into the verifier.
         if not recipe.get(field):
             problems.append(f"{prefix}: build recipe has no {field}")
+    if design_source(recipe) is None:
+        problems.append(f"{prefix}: build recipe does not name exactly one design source "
+                        "(.v) among its recipe sources")
     return problems
+
+
+def design_source(recipe: dict) -> str | None:
+    """The specimen design's hash, for the certificate's `design_source_sha256`.
+
+    Certificate 1.6 still requires that field on every specimen, but a
+    `specimen_attestation` **2.0** has no `inputs.design_sha256` to copy — 2.0 replaced
+    the single design input with a recipe whose `sources` map pins every file that can
+    change what a build means. The design among them is the specimen Verilog, and the
+    formal recipe carries exactly one `.v`.
+
+    "Exactly one" is the rule rather than "the first": picking one of several would make
+    the field's meaning depend on sort order, and a recipe that grew a second `.v` is a
+    change to what a specimen *is*, which should stop the run and be looked at.
+    """
+    verilog = [value for name, value in sorted(recipe.get("sources", {}).items())
+               if name.endswith(".v")]
+    return verilog[0] if len(verilog) == 1 else None
 
 
 def load_staging(manifest_path: Path, commitment_path: Path, commitment_sha256: str,
@@ -688,6 +709,9 @@ def main() -> int:
             "build_seed": specimen["build_seed"],
             "part": recipe["part"],
             "vivado_version": recipe["vivado_version"],
+            # required by the certificate schema; see `design_source()` for why a 2.0
+            # attestation has no single field to copy it from
+            "design_source_sha256": design_source(recipe),
             # Both references verbatim from the manifest entry. Certificate 1.6 requires
             # the attestation reference to equal the staging entry exactly, so adding a
             # convenience field here — or re-hashing a copy — breaks the record one layer

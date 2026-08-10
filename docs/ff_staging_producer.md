@@ -60,6 +60,26 @@ complete scope its exit code follows it; over a half-built tree the pairs it can
 compare are out of scope rather than failures — that selects which pairs are judged, it
 never changes the rule.
 
+### ⚠ Open blocker: the manifest is written inside the staging root, and 1.6 forbids that
+
+`stage()` writes `staging_manifest.json` **into** the staging root, beside the specimen
+directories. `host/verify_certificate.load_feature_staging` requires that root to contain
+*exactly* the committed specimen directories and **no files at all**, so the layout this
+tool produces cannot be certified. Found while building the 1.6 certifier, by moving the
+manifest to where this tool puts it and running the real verifier:
+
+```
+CERTIFICATE VERIFY: FAIL — 1 finding(s)
+  - staging root contents differ from committed specimen set (missing=0 extra=0 root_files=1)
+```
+
+Nobody had staged for real, so nothing had ever exercised the two rules together. The
+consumer's own fixture puts the manifest one level *above* the root, which is the shape
+that verifies. Not fixed here: where the manifest lives changes published paths, so it is
+a ruling rather than an edit. The obvious candidate is to nest — root
+`staging/<run_id>/specimens/` with the manifest at `staging/<run_id>/staging_manifest.json`
+— keeping one directory per run. **Real staging is blocked on this as well as on §2c.**
+
 Two guarantees make "all or nothing" true rather than intended:
 
 * the write phase builds `<root>.partial` and only ever ends in the rename or in
@@ -175,6 +195,39 @@ Before one frame is parsed, `load_staging()` establishes, independently:
 Any of those refuses the **whole run before anything is written**: a measurement over the
 specimens that happened to verify would carry the accounting of a complete one.
 
+## 2b-ii. And what certifies it: `gate_certify_ff.py` 1.6
+
+```
+scripts/gate_certify_ff.py --run gate_runs/<run> --out gate_runs/<run>/certificate.json
+```
+
+**Only a `gate_measurement` 1.6.0 is accepted** — an equality, not a floor. A 1.4 or 1.5
+record is refused however consistent it is, because consistency is all it can ever
+demonstrate: it was produced by a tool that built its own artifact paths under a gitignored
+tree and copied attestations into the run directory, and no field inside such a record
+shows that. The version is the only honest discriminator.
+
+The `staging_manifest` object is **copied from the measurement**, deep-copied and never
+rebuilt from its parts, while the certifier independently re-resolves it, re-reads it in
+one read, recomputes its sha256 and re-validates it against the schema. Copying rather
+than reconstructing is load-bearing: a rebuilt reference would silently drop anything the
+certificate cannot express, and dropping evidence is a producer deciding what evidence
+means. Everything else is cross-checked rather than believed — the commitment recomputed
+from `predictions.json`, the specimen set required to equal *both* the manifest's and the
+commitment's, every `bitstream`/`attestation` reference required to equal its manifest
+entry field for field (the verifier compares those dicts for equality), and every
+specimen's site/tile/split/build seed recomputed from the committed plan.
+
+Finally, **the candidate is verified by the real consumer before it is put in place**:
+`host/verify_certificate.py --require-production` runs against a `.candidate` file, and
+only a certificate it accepts is renamed into position. A rejected one leaves nothing —
+not a draft, not a `.rejected`. That check is what found the two contract breaks recorded
+here: the staging-root layout above, and `design_source_sha256`, which certificate 1.6
+still requires on every specimen while a 2.0 attestation has no `inputs.design_sha256` to
+copy. The measurement now takes it from the recipe's single `.v` source and refuses a
+recipe that names zero or two — a producer-side reading of a field the consumer may want
+to retire for 2.0, and worth their ruling.
+
 ## 2c. The 365.7 MiB question, ruled: LFS for `.bit`, ordinary Git for everything else
 
 Requiring publication has a price, and it is not small: the committed set is **365.7 MiB**
@@ -270,6 +323,16 @@ further mutation is kept out of that count and left alive on purpose — keeping
 attestation that failed its own identity checks. It is equivalent while any problem
 refuses the whole run, and is commented as such in the source rather than removed: it
 becomes reachable the moment one of those refusals is softened into a report.
+
+The certifier's own cases are `tests/test_ff_certifier.py`: **21**, every bundle built by
+the **consumer's** `Feature16Bundle` and every happy path confirmed by running
+`host/verify_certificate.py --require-production` on what the certifier emitted. The old
+1.4 certifier fixture in `tests/test_ff_plan.py` survives only as a refusal — bumping its
+version so the old shape passed would have deleted the evidence that the gate exists — and
+the semantic isolation it used to cover is re-established on a real 1.6 bundle with a
+genuine attested mismatch, where `status` stays `passed` while `semantic_status` fails.
+**21 adversarial mutations of the certifier, all caught**, including a floor instead of an
+equality, a rebuilt staging reference, and a candidate written without verification.
 
 Two operational consequences worth stating plainly rather than discovering later. The
 staging must be **committed before it can be measured** — that is what "published" means

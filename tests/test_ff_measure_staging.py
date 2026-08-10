@@ -39,6 +39,7 @@ import gate_measure_ff as measure  # noqa: E402
 PYTHON = sys.executable
 TOOL = REPO_ROOT / "scripts/gate_measure_ff.py"
 PART = "xc7z010clg400-1"
+DESIGN = "a" * 64
 
 SPECIMENS = (
     ("FIXTURE_X0Y0_base", "SLICE_X0Y0", "base", 11),
@@ -137,7 +138,9 @@ class Bundle:
                     "recipe": {"commitment": self.commitment_sha256,
                                "build_seed": seed,
                                "part": PART,
-                               "vivado_version": "2025.2"},
+                               "vivado_version": "2025.2",
+                               "sources": {"vivado/specimen/specimen_ff_formal.v": DESIGN,
+                                           "scripts/gate_build_ff_formal.py": "b" * 64}},
                 },
                 "resolved": {"clock_mode": "CLKINV" if variant == "clkinv" else "NOCLKINV"},
                 "outputs": {"spec.bit": bit_hash},
@@ -448,6 +451,22 @@ class StagingContractTests(unittest.TestCase):
                 target[keys[-1]] = value
                 bundle.rewrite_attestation(0, attestation)
                 self.assertIn(expected, bundle.refusal(self))
+
+    def test_a_recipe_without_exactly_one_design_source_is_refused(self) -> None:
+        """`design_source_sha256` is required on every certificate specimen and a 2.0
+        attestation has no field to copy it from, so it comes from the recipe's single
+        `.v`. Zero or two of them is a change to what a specimen is, not a default."""
+        for label, sources in (
+                ("none", {"scripts/gate_build_ff_formal.py": "b" * 64}),
+                ("two", {"vivado/specimen/specimen_ff_formal.v": DESIGN,
+                         "vivado/specimen/specimen_ff.v": "c" * 64})):
+            with self.subTest(designs=label):
+                bundle = self.bundle()
+                attestation = bundle.attestation_of(0)
+                attestation["source_build"]["recipe"]["sources"] = sources
+                bundle.rewrite_attestation(0, attestation)
+                self.assertIn("does not name exactly one design source",
+                              bundle.refusal(self))
 
     def test_a_schema_version_that_disagrees_with_the_manifest_is_refused(self) -> None:
         bundle = self.bundle()
@@ -770,6 +789,7 @@ class MeasurementRecordTests(unittest.TestCase):
             self.assertEqual(record["bitstream_sha256"], entry["bitstream"]["sha256"])
             self.assertEqual(record["part"], PART)
             self.assertEqual(record["vivado_version"], "2025.2")
+            self.assertEqual(record["design_source_sha256"], DESIGN)
         self.assertEqual([record["build_seed"] for record in measurement["specimens"]],
                          [item[3] for item in SPECIMENS])
 
