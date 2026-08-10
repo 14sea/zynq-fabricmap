@@ -70,6 +70,16 @@ def published(relatives: list[str]) -> list[str]:
     return []
 
 
+def pointers_ok(pinned: list, ordinary: list) -> list[str]:
+    """The LFS pointer gate, stubbed as satisfied.
+
+    Same reason as `published`: these fixtures are scratch files under a gitignored tree
+    with no attribute rule and no HEAD blobs, so the real gate refuses all of them. It is
+    exercised for real against purpose-built LFS repositories in `PointerGateTests`.
+    """
+    return []
+
+
 def git(repository: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["git", "-c", "user.email=t@example.invalid", "-c", "user.name=test",
@@ -183,14 +193,16 @@ class Bundle:
         self.entries[index]["attestation"]["sha256"] = digest(content)
         self.write_manifest()
 
-    def load(self, tracked_check=published):
+    def load(self, tracked_check=published, pointer_check=pointers_ok):
         return measure.load_staging(self.manifest_path, self.commitment_path,
                                     self.commitment_sha256, self.doc, self.run.name,
-                                    tracked_check=tracked_check)
+                                    tracked_check=tracked_check,
+                                    pointer_check=pointer_check)
 
-    def refusal(self, test: unittest.TestCase, tracked_check=published) -> str:
+    def refusal(self, test: unittest.TestCase, tracked_check=published,
+                pointer_check=pointers_ok) -> str:
         with test.assertRaises(SystemExit) as caught:
-            self.load(tracked_check=tracked_check)
+            self.load(tracked_check=tracked_check, pointer_check=pointer_check)
         return str(caught.exception)
 
 
@@ -512,6 +524,29 @@ class StagingContractTests(unittest.TestCase):
             self, tracked_check=lambda paths: ["3 reference(s) are not in HEAD"])
         self.assertIn("not in HEAD", message)
 
+    def test_every_reference_kind_reaches_the_pointer_gate(self) -> None:
+        """The gate can only judge what it is handed, and it used to be handed only the
+        staging entries — so the manifest and the commitment were never looked at, and an
+        attribute rule naming just the manifest would have passed everything."""
+        bundle = self.bundle()
+        seen: list[tuple[list, list]] = []
+        bundle.load(pointer_check=lambda pinned, ordinary: seen.append((pinned, ordinary))
+                    or [])
+        pinned, ordinary = seen[0]
+
+        self.assertEqual({item[1] for item in pinned},
+                         {entry["bitstream"]["path"] for entry in bundle.entries})
+        self.assertEqual({item[2] for item in pinned},
+                         {entry["bitstream"]["sha256"] for entry in bundle.entries})
+        self.assertEqual(
+            {item[1] for item in ordinary},
+            {repo_relative(bundle.manifest_path), repo_relative(bundle.commitment_path)}
+            | {entry["attestation"]["path"] for entry in bundle.entries})
+        # nothing the measurement reads is in neither list
+        self.assertEqual(set(), ({entry["bitstream"]["path"] for entry in bundle.entries}
+                                 | {entry["attestation"]["path"] for entry in bundle.entries})
+                         - {item[1] for item in pinned} - {item[1] for item in ordinary})
+
     def test_the_commitment_itself_is_checked_for_publication(self) -> None:
         """Not only the 184×2 artifacts: a measurement pinning a commitment that is not
         in HEAD is unrepeatable for exactly the same reason."""
@@ -523,6 +558,179 @@ class StagingContractTests(unittest.TestCase):
         for entry in bundle.entries:
             self.assertIn(entry["bitstream"]["path"], seen[0])
             self.assertIn(entry["attestation"]["path"], seen[0])
+
+
+class PointerGateTests(unittest.TestCase):
+    """What HEAD says a staged bitstream is, against real Git LFS repositories.
+
+    Real ones, built here and never pushed: `git lfs track` + `git add` runs the clean
+    filter locally, so a genuine pointer blob and a genuine object store exist without a
+    remote. Faking the pointer text would test the parser and nothing else — the point of
+    the gate is what `git cat-file` returns for a path someone actually committed.
+    """
+
+    def repository(self, *, lfs: bool = True, attributes: str | None = None):
+        """A real repository whose staged tree went through the real filter.
+
+        Returns `(root, pinned, ordinary)` in the shape the gate takes: what must be an
+        LFS pointer, and what must not.
+        """
+        if subprocess.run(["git", "lfs", "version"], capture_output=True,
+                          check=False).returncode != 0:
+            self.skipTest("git-lfs is not installed: the pointer gate cannot be answered")
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        root = Path(directory.name)
+        git(root, "init", "-q", "-b", "main")
+        if lfs or attributes is not None:
+            (root / ".gitattributes").write_text(
+                attributes if attributes is not None
+                else "staging/**/*.bit filter=lfs diff=lfs merge=lfs -text\n")
+            git(root, "add", ".gitattributes")
+
+        run = root / "staging" / "run"
+        stage = run / "specimens" / "FIXTURE_base"
+        stage.mkdir(parents=True)
+        payload = b"synthetic bitstream bytes\n" * 8
+        (stage / "spec.bit").write_bytes(payload)
+        (stage / "attestation.json").write_text('{"schema": "specimen_attestation"}\n')
+        (run / "staging_manifest.json").write_text('{"schema": "specimen_staging"}\n')
+        commitment = root / "gate_runs" / "run" / "predictions.json"
+        commitment.parent.mkdir(parents=True)
+        commitment.write_text('{"schema": "gate_predictions"}\n')
+        git(root, "add", "staging", "gate_runs")
+        git(root, "commit", "-q", "-m", "stage")
+
+        pinned = [("staged FIXTURE_base bitstream",
+                   "staging/run/specimens/FIXTURE_base/spec.bit", digest(payload))]
+        ordinary = [("staging manifest", "staging/run/staging_manifest.json"),
+                    ("prediction commitment", "gate_runs/run/predictions.json"),
+                    ("staged FIXTURE_base attestation",
+                     "staging/run/specimens/FIXTURE_base/attestation.json")]
+        return root, pinned, ordinary
+
+    def asked(self, root: Path, pinned, ordinary) -> list[str]:
+        with unittest.mock.patch.object(measure, "REPO", root):
+            return measure.lfs_pointer_problems(pinned, ordinary)
+
+    def relfs(self, root: Path, attributes: str, *paths: str) -> None:
+        """Re-commit some paths under a different attribute rule, so the filter that runs
+        on them is the one the rule names."""
+        (root / ".gitattributes").write_text(attributes)
+        for relative in paths:
+            (root / relative).write_text((root / relative).read_text() + " ")
+        git(root, "add", ".gitattributes", *paths)
+        git(root, "commit", "-q", "-m", "re-scope the attribute rule")
+
+    def test_a_committed_lfs_bitstream_passes(self) -> None:
+        root, pinned, ordinary = self.repository()
+        blob = subprocess.run(
+            ["git", "cat-file", "blob", f"HEAD:{pinned[0][1]}"],
+            cwd=root, capture_output=True, text=True, check=True).stdout
+        # a real pointer, produced by the real filter, naming the real content
+        self.assertIn("git-lfs.github.com/spec/v1", blob)
+        self.assertIn(pinned[0][2], blob)
+        self.assertEqual(blob.splitlines()[0].split()[0], "version")
+        self.assertEqual(self.asked(root, pinned, ordinary), [])
+
+    def test_an_ordinary_git_blob_is_refused(self) -> None:
+        """The failure the gate exists for: 366 MiB of binary in ordinary history."""
+        root, pinned, ordinary = self.repository(lfs=False)
+        problems = self.asked(root, pinned, ordinary)
+        self.assertTrue(any("ordinary Git blob" in item for item in problems), problems)
+        self.assertTrue(any(".gitattributes is not in HEAD" in item for item in problems),
+                        problems)
+
+    def test_a_pointer_naming_another_object_is_refused(self) -> None:
+        root, pinned, ordinary = self.repository()
+        label, relative, _ = pinned[0]
+        problems = self.asked(root, [(label, relative, "b" * 64)], ordinary)
+        self.assertTrue(any("the manifest pins" in item for item in problems), problems)
+
+    def test_a_malformed_pointer_is_refused_and_named_as_such(self) -> None:
+        root, pinned, ordinary = self.repository()
+        relative = pinned[0][1]
+        version = f"version {measure.LFS_POINTER_VERSION}"
+        for label, pointer in (
+                ("no oid", f"{version}\nsize 200\n"),
+                ("not sha256", f"{version}\noid md5:deadbeef\nsize 200\n"),
+                ("short digest", f"{version}\noid sha256:abcd\nsize 200\n"),
+                ("no size", f"{version}\noid sha256:{'a' * 64}\n"),
+                ("valueless line", f"{version}\nnonsense\n"),
+                # a truncated pointer: without the length rule this reached
+                # `fields["oid"]` and raised, and a gate that crashes has judged nothing
+                ("version only", f"{version}\n"),
+                ("out of order", f"{version}\nsize 200\noid sha256:{'a' * 64}\n"),
+                ("an unknown extra field",
+                 f"{version}\noid sha256:{'a' * 64}\nsize 200\nbanana value\n")):
+            with self.subTest(pointer=label):
+                # written with the filter disabled, so the damaged text is what lands in
+                # HEAD — which is exactly how a hand-edited pointer would arrive
+                blob = subprocess.run(
+                    ["git", "-c", "filter.lfs.clean=cat", "-c", "filter.lfs.required=false",
+                     "hash-object", "-w", "--stdin"],
+                    cwd=root, input=pointer, capture_output=True, text=True,
+                    check=True).stdout.strip()
+                git(root, "update-index", "--add", "--cacheinfo", f"100644,{blob},{relative}")
+                git(root, "-c", "filter.lfs.required=false", "commit", "-q", "-m", label)
+                problems = self.asked(root, pinned, ordinary)
+                self.assertTrue(any("malformed LFS pointer" in item for item in problems),
+                                (label, problems))
+
+    def test_a_path_no_filter_governs_is_refused(self) -> None:
+        """A pointer can be correct while the rule that keeps it one has been narrowed;
+        the next commit of that file would then be an ordinary blob."""
+        root, pinned, ordinary = self.repository()
+        (root / ".gitattributes").write_text("staging/**/*.other filter=lfs -text\n")
+        git(root, "add", ".gitattributes")
+        git(root, "commit", "-q", "-m", "narrow the rule")
+        problems = self.asked(root, pinned, ordinary)
+        self.assertTrue(any("no LFS filter governs this path" in item for item in problems),
+                        problems)
+
+    def test_an_ordinary_reference_stored_as_a_pointer_is_refused(self) -> None:
+        """Each of the three JSON kinds on its own, because a gate that only sees the
+        staging entries cannot see two of them at all — an attribute rule naming just the
+        manifest passed every other check while the manifest left the repository.
+        """
+        for label, relative in (
+                ("manifest", "staging/run/staging_manifest.json"),
+                ("commitment", "gate_runs/run/predictions.json"),
+                ("attestation", "staging/run/specimens/FIXTURE_base/attestation.json")):
+            with self.subTest(reference=label):
+                root, pinned, ordinary = self.repository()
+                self.relfs(root,
+                           "staging/**/*.bit filter=lfs -text\n"
+                           f"{relative} filter=lfs -text\n",
+                           relative)
+                blob = subprocess.run(["git", "cat-file", "blob", f"HEAD:{relative}"],
+                                      cwd=root, capture_output=True, text=True,
+                                      check=True).stdout
+                self.assertIn("git-lfs.github.com/spec/v1", blob,
+                              "the fixture did not actually store a pointer")
+                problems = self.asked(root, pinned, ordinary)
+                self.assertTrue(
+                    any("ordinary Git file by ruling" in item for item in problems),
+                    (label, problems))
+
+    def test_an_ordinary_reference_missing_from_head_is_refused(self) -> None:
+        root, pinned, ordinary = self.repository()
+        ordinary.append(("staging manifest", "staging/run/never_committed.json"))
+        problems = self.asked(root, pinned, ordinary)
+        self.assertTrue(any("is not in HEAD" in item for item in problems), problems)
+
+    def test_without_git_authority_the_pointer_gate_refuses(self) -> None:
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        problems = self.asked(Path(directory.name), [], [])
+        self.assertTrue(any("no git authority" in item for item in problems), problems)
+
+    def test_the_gate_reads_head_and_not_the_working_file(self) -> None:
+        """A pointer-only checkout has bytes on disk that are not the bitstream, and a
+        materialised one has the bitstream whatever HEAD holds. Neither is the witness."""
+        root, pinned, ordinary = self.repository()
+        (root / pinned[0][1]).write_bytes(b"whatever the worktree happens to hold\n")
+        self.assertEqual(self.asked(root, pinned, ordinary), [])
 
 
 class PublishedEvidenceTests(unittest.TestCase):
@@ -749,7 +957,8 @@ class MeasurementRecordTests(unittest.TestCase):
                                            parse_frames or default_parse_frames), \
                 unittest.mock.patch.object(measure, "read_tile_bits", read_tile_bits), \
                 unittest.mock.patch.object(measure, "FRAME_CACHE_SIZE", size), \
-                unittest.mock.patch.object(measure, "uncommitted_references", published):
+                unittest.mock.patch.object(measure, "uncommitted_references", published), \
+                unittest.mock.patch.object(measure, "lfs_pointer_problems", pointers_ok):
             # The publication check is the one thing that cannot hold here: this staging
             # lives in a scratch directory under the gitignored `build/`, so it is stubbed
             # and exercised for real in PublishedEvidenceTests.
@@ -819,7 +1028,8 @@ class MeasurementRecordTests(unittest.TestCase):
         with unittest.mock.patch.object(sys, "argv", argv), \
                 unittest.mock.patch.object(measure, "load_staging",
                                            tamper_after_verification), \
-                unittest.mock.patch.object(measure, "uncommitted_references", published):
+                unittest.mock.patch.object(measure, "uncommitted_references", published), \
+                unittest.mock.patch.object(measure, "lfs_pointer_problems", pointers_ok):
             with self.assertRaises(SystemExit) as caught:
                 measure.main()
         self.assertIn("changed after staging verification", str(caught.exception))

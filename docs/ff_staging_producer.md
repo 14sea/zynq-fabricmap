@@ -172,6 +172,22 @@ Before one frame is parsed, `load_staging()` establishes, independently:
   rather than held — 184 of them — so `frames_of()` re-reads it and re-checks the pinned
   hash immediately before parsing, and hands the parser **those bytes** (`parse_frames(…,
   data=…)`) instead of a path it would read a third time;
+* every staged **bitstream is what HEAD says it is**, read with `git cat-file` from the
+  HEAD blob and never from the working file — a pointer-only checkout has bytes on disk
+  that are not the bitstream, and a materialised one has the bitstream whatever HEAD
+  holds, so neither is a witness for what a clone resolves. The blob must be a well-formed
+  LFS pointer whose **oid equals the manifest's pinned sha256** (the oid *is* the content
+  hash, so that equality is what ties the published object to the measured bytes), the
+  path must be governed by the LFS filter, and `.gitattributes` — the file that decides
+  that — must itself be in HEAD. An ordinary blob and a damaged pointer are reported as
+  different things on purpose: one means the filter never ran, the other means the pointer
+  was edited, and a pointer is required to be exactly `version`/`oid`/`size` in that
+  order — nothing here produces extension fields, so one that appeared was written by
+  something other than the filter this gate confirms ran. The other references are
+  checked the other way round, and that set is **the manifest, the prediction commitment
+  and every attestation**: a pointer standing in for any of them means a mis-scoped rule
+  has moved reviewable evidence out of the repository. Which kind a reference is comes
+  from the caller, not from a file extension the gate guesses at;
 * every reference — the manifest, the commitment and all 184×2 artifacts — **published**:
   present in HEAD and identical to what is on disk. Tracked is not the property: a staging
   only `git add`ed, or committed and then edited, is tracked and is not what a verifier's
@@ -295,8 +311,10 @@ cross-reviewed:
 * ~~**consumer** — independent recomputation of `design_source_sha256` plus the three
   failing fixtures (§2b-ii)~~ **done** (`acd7e05`);
 * ~~**producer** — the nested staging layout (§1)~~ **done**;
-* **both** — the Git LFS policy, the pointer-oid gate and a fresh-clone materialisation
-  acceptance (§2c).
+* **both** — the Git LFS policy: ~~the pointer-oid gate~~ **done** (measurement side,
+  above; exercised against real local LFS repositories, no remote), still open are the
+  repository's own `.gitattributes` and a **fresh-clone materialisation acceptance**,
+  which needs the one-off remote probe.
 
 Measurement is not authorised either, and none of this authorises it.
 

@@ -386,6 +386,144 @@ def uncommitted_references(relatives: list[str]) -> list[str]:
     return problems
 
 
+LFS_POINTER_VERSION = "https://git-lfs.github.com/spec/v1"
+LFS_POINTER_LIMIT = 4096
+
+
+POINTER_FIELDS = ("version", "oid", "size")
+
+
+def parse_lfs_pointer(payload: bytes) -> tuple[str | None, str]:
+    """`(oid, why-not)` for a Git LFS pointer blob, parsed strictly.
+
+    Strictly, because the two failures this has to tell apart look alike from a distance:
+    a path that never went through the filter (an ordinary blob — for a bitstream, several
+    hundred KB of binary) and a path whose pointer is damaged. Both refuse, but a run that
+    cannot say which is a run nobody can act on.
+
+    "Strict" means exactly `version`, `oid`, `size`, in that order and nothing else. The
+    LFS spec allows sorted `ext-…` extension fields, and nothing in this pipeline produces
+    them: a pointer that grew one was written by something other than the filter this gate
+    exists to confirm ran, which is a reason to stop rather than a case to tolerate. An
+    earlier version collected the lines into a dict and only looked at the three it knew,
+    so a pointer carrying arbitrary extra fields parsed clean while calling itself
+    well-formed.
+    """
+    ordinary = "HEAD holds an ordinary Git blob, not an LFS pointer"
+    if len(payload) > LFS_POINTER_LIMIT:
+        return None, ordinary
+    try:
+        text = payload.decode("utf-8")
+    except UnicodeDecodeError:
+        return None, ordinary
+    lines = text.splitlines()
+    # The version line comes first or this is not a pointer at all. Deciding that from
+    # the *whole* parse instead conflated the two answers: an ordinary short text blob
+    # tripped a later rule and was reported as a damaged pointer, which sends a reader
+    # looking for corruption when the real story is that the filter never ran.
+    if not lines or lines[0] != f"version {LFS_POINTER_VERSION}":
+        return None, ordinary
+    fields = {}
+    for index, line in enumerate(lines):
+        name, separator, value = line.partition(" ")
+        if not separator:
+            return None, f"malformed LFS pointer: {line!r} has no value"
+        if index >= len(POINTER_FIELDS) or name != POINTER_FIELDS[index]:
+            return None, (f"malformed LFS pointer: expected exactly "
+                          f"{'/'.join(POINTER_FIELDS)}, found {name!r} at line "
+                          f"{index + 1}")
+        fields[name] = value
+    if len(fields) != len(POINTER_FIELDS):
+        return None, (f"malformed LFS pointer: {len(fields)} field(s), expected "
+                      f"{'/'.join(POINTER_FIELDS)}")
+    oid = fields["oid"]
+    if not oid.startswith("sha256:"):
+        return None, f"malformed LFS pointer: oid {oid!r} is not sha256"
+    digest = oid.removeprefix("sha256:")
+    if not re.fullmatch(r"[0-9a-f]{64}", digest):
+        return None, f"malformed LFS pointer: oid {digest!r} is not a sha256 hex digest"
+    if not fields.get("size", "").isdigit():
+        return None, f"malformed LFS pointer: size {fields.get('size')!r} is not a count"
+    return digest, ""
+
+
+def lfs_pointer_problems(pinned: list[tuple[str, str, str]],
+                         ordinary: list[tuple[str, str]]) -> list[str]:
+    """What HEAD says each reference *is* — read from HEAD, never from the worktree.
+
+    Two lists, `(label, path, sha256)` for what must be an LFS pointer and
+    `(label, path)` for what must not, because which kind a reference is is the caller's
+    knowledge: this gate must not re-derive it from a file extension or a path shape, or
+    it would hold its own opinion about a layout the manifest already states.
+
+    The working file is the wrong witness twice over. A pointer-only checkout has bytes on
+    disk that are not the bitstream, and a materialised one has bytes that are the
+    bitstream whatever HEAD holds; neither tells you what a verifier's clone will resolve.
+    So each pinned artifact's HEAD blob is read with `git cat-file` and must be a
+    well-formed pointer whose **oid is exactly the manifest's pinned sha256** — the oid
+    *is* the content hash, so that equality is what ties the published object to the
+    measured bytes. The path must also be governed by the LFS filter, and `.gitattributes`
+    — the file that decides that — must itself be in HEAD.
+
+    The ordinary references are checked the other way, and that set is **the manifest, the
+    prediction commitment and every attestation**: all three are ordinary Git files by
+    ruling, and a pointer standing in for one would mean a mis-scoped attribute rule
+    quietly moved reviewable evidence out of the repository. An earlier version of this
+    gate received only the staging entries, so it could not see the manifest or the
+    commitment at all — an attribute rule naming just `staging/*/staging_manifest.json`
+    would have passed every check while the manifest itself left the repository.
+
+    Raw reference strings are what get read and reported; the resolved path is used only
+    for identity and safety, upstream of here.
+    """
+    problems: list[str] = []
+    if subprocess.run(["git", "rev-parse", "--verify", "HEAD"], cwd=REPO,
+                      capture_output=True, check=False).returncode != 0:
+        return ["no git authority in this tree: HEAD holds no blobs to read, so what a "
+                "clone would resolve cannot be established"]
+    if subprocess.run(["git", "cat-file", "-e", "HEAD:.gitattributes"], cwd=REPO,
+                      capture_output=True, check=False).returncode != 0:
+        problems.append(
+            ".gitattributes is not in HEAD, so nothing publishes the rule that keeps "
+            "staged bitstreams in Git LFS — a staging committed without it would push "
+            "the bitstreams into ordinary history, which no later commit undoes")
+
+    def head_blob(relative: str) -> bytes | None:
+        found = subprocess.run(["git", "cat-file", "blob", f"HEAD:{relative}"], cwd=REPO,
+                               capture_output=True, check=False)
+        return found.stdout if found.returncode == 0 else None
+
+    for label, relative, sha256 in pinned:
+        blob = head_blob(relative)
+        if blob is None:
+            problems.append(f"{label} {relative} is not in HEAD")
+            continue
+        oid, why = parse_lfs_pointer(blob)
+        if oid is None:
+            problems.append(f"{label} {relative}: {why}")
+        elif oid != sha256:
+            problems.append(
+                f"{label} {relative}: the LFS pointer in HEAD names object {oid[:12]}…, "
+                f"the manifest pins {sha256[:12]}…")
+        attribute = subprocess.run(["git", "check-attr", "filter", "--", relative],
+                                   cwd=REPO, capture_output=True, text=True, check=False)
+        if not attribute.stdout.rstrip().endswith(": filter: lfs"):
+            problems.append(f"{label} {relative}: no LFS filter governs this path "
+                            f"({attribute.stdout.strip() or 'unset'})")
+
+    for label, relative in ordinary:
+        blob = head_blob(relative)
+        if blob is None:
+            problems.append(f"{label} {relative} is not in HEAD")
+            continue
+        if parse_lfs_pointer(blob)[0] is not None:
+            problems.append(
+                f"{label} {relative}: HEAD holds an LFS pointer, but this is an ordinary "
+                "Git file by ruling — the attribute rule is mis-scoped and reviewable "
+                "evidence has left the repository")
+    return problems
+
+
 def attestation_problems(specimen_id: str, attestation: dict, entry: dict,
                          plan_specimen: dict, commitment_sha256: str) -> list[str]:
     """Identity and integrity of one staged attestation — deliberately not more.
@@ -458,7 +596,8 @@ def design_source(recipe: dict) -> str | None:
 
 
 def load_staging(manifest_path: Path, commitment_path: Path, commitment_sha256: str,
-                 doc: dict, run_id: str, *, tracked_check=None) -> tuple[dict, dict, dict]:
+                 doc: dict, run_id: str, *, tracked_check=None,
+                 pointer_check=None) -> tuple[dict, dict, dict]:
     """`(manifest_reference, entries_by_id, attestations_by_id)`, or refuse the whole run.
 
     Every check here runs before the caller opens one bitstream, and every failure is a
@@ -472,6 +611,7 @@ def load_staging(manifest_path: Path, commitment_path: Path, commitment_sha256: 
     an artifact lives.
     """
     tracked_check = tracked_check or uncommitted_references
+    pointer_check = pointer_check or lfs_pointer_problems
     problems: list[str] = []
 
     if not manifest_path.is_file():
@@ -615,7 +755,25 @@ def load_staging(manifest_path: Path, commitment_path: Path, commitment_sha256: 
     # Last, because it is the most expensive and the least informative when something
     # simpler is already wrong — but not optional: a measurement whose evidence is not
     # published is one no verifier can repeat.
-    problems.extend(tracked_check(to_check))
+    to_check.append(".gitattributes")
+    published = tracked_check(to_check)
+    problems.extend(published)
+    if not published:
+        # Only once publication holds: with a path missing from HEAD every pointer read
+        # fails too, and 184 derived complaints would bury the one that explains them.
+        #
+        # Both lists are assembled here, because this is where a reference's kind is
+        # known. Everything the measurement will read is in one of them — the two JSON
+        # documents that frame the run, every attestation, every bitstream — and a
+        # reference in neither is a reference nobody judged.
+        problems.extend(pointer_check(
+            [(f"staged {specimen_id} bitstream", entry["bitstream"]["path"],
+              entry["bitstream"]["sha256"])
+             for specimen_id, entry in sorted(entries.items())],
+            [("staging manifest", manifest_relative),
+             ("prediction commitment", reference["path"])]
+            + [(f"staged {specimen_id} attestation", entry["attestation"]["path"])
+               for specimen_id, entry in sorted(entries.items())]))
 
     if problems:
         raise SystemExit(
