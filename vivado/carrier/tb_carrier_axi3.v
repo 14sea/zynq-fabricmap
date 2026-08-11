@@ -151,7 +151,8 @@ module tb_carrier_axi3;
 
             beat = 0;
             while (beat <= len) begin
-                wid = use_wid; wdata = first + beat; wstrb = 4'hF;
+                wid = (beat == wid_flip_at) ? (use_wid ^ {ID_W{1'b1}}) : use_wid;
+                wdata = first + beat; wstrb = 4'hF;
                 wlast = (beat == wlast_at); wvalid = 1;
                 #1;
                 n = 0;
@@ -182,6 +183,10 @@ module tb_carrier_axi3;
         end
     endtask
 
+    // The beat whose WID is deliberately wrong; -1 means none. A module-level knob rather
+    // than another task argument, so the fifteen existing call sites stay readable.
+    integer        wid_flip_at = -1;
+    reg [31:0]     mem_before;
     reg [ID_W-1:0] last_bid;  reg [1:0] last_bresp;
     reg [ID_W-1:0] last_rid;  reg [1:0] last_rresp;
     reg [31:0]     rbeat [0:15];
@@ -289,9 +294,31 @@ module tb_carrier_axi3;
         axi_write(12'h007, 32'h0000_0500, 4'd1, SZ4, INCR, 32'h6666_0000, -1, 12'h007);
         check(last_bresp === SLVERR, "a missing WLAST must answer SLVERR, not hang");
 
-        // 7. a WID that does not match the AWID
-        axi_write(12'h008, 32'h0000_0600, 4'd0, SZ4, INCR, 32'h7777_0000, 0, 12'h009);
+        // 7. a WID that does not match the AWID. Answering SLVERR is not enough: the beat
+        //    must never reach the register file. A refusal that arrives after the write has
+        //    landed is a response that contradicts the fabric.
+        w0 = lite_writes;
+        mem_before = mem[384];
+        axi_write(12'h101, 32'h0000_0600, 4'd0, SZ4, INCR, 32'h7777_0000, 0, 12'h102);
         check(last_bresp === SLVERR, "a mismatched WID must answer SLVERR");
+        check(lite_writes - w0 === 0, "a mismatched WID must not reach the lite slave");
+        check(mem[384] === mem_before, "a mismatched WID must not change memory");
+        axi_write(12'h103, 32'h0000_0600, 4'd0, SZ4, INCR, 32'h7777_1111, 0, 12'h103);
+        check(last_bresp === OKAY && mem[384] === 32'h7777_1111,
+              "a well-formed write after a WID refusal still works");
+
+        // 7b. a mismatch PART WAY THROUGH a burst: the beats before it stand, and the
+        //     refusal latches so no later beat is written however well-formed its WID is.
+        w0 = lite_writes;
+        wid_flip_at = 1;
+        axi_write(12'h104, 32'h0000_0900, 4'd3, SZ4, INCR, 32'hAAAA_0000, 3, 12'h104);
+        wid_flip_at = -1;
+        check(last_bresp === SLVERR, "a mid-burst WID mismatch answers SLVERR");
+        check(lite_writes - w0 === 1, "only the beats before the mismatch reach the slave");
+        check(mem[576] === 32'hAAAA_0000, "the beat before the mismatch stands");
+        for (i = 1; i < 4; i = i + 1)
+            check(mem[576 + i] === 32'hDEADBEEF,
+                  "no beat from the mismatch onward is written");
 
         // 8. unsupported size — completed, refused, and the slave never sees it
         w0 = lite_writes; r0 = lite_reads;

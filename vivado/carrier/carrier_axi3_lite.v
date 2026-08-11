@@ -135,11 +135,25 @@ module carrier_axi3_lite #(
     assign s_awready = (state == S_IDLE) && s_awvalid;
     assign s_arready = (state == S_IDLE) && !s_awvalid && s_arvalid;
 
-    // A write beat is consumed either by the lite side taking it, or — when the
-    // transaction is unsupported — by this module alone. Both count as one beat.
-    wire wr_fire_lite = (state == S_WR_BEAT) && !bad && s_wvalid && m_awready && m_wready;
-    wire wr_fire_drop = (state == S_WR_BEAT) && bad && s_wvalid;
-    assign s_wready  = (state == S_WR_BEAT) && (bad || (m_awready && m_wready));
+    // A WID that does not match the AW belongs to another transaction. AXI3 permits write
+    // data interleaving between IDs and this module does not implement it, so the beat must
+    // not be written anywhere — and that has to be decided COMBINATIONALLY, on the beat
+    // itself. Setting a flag in the clocked block and answering SLVERR afterwards still
+    // lets the mismatching beat through to the register file first, which is precisely
+    // "writing it somewhere plausible": the response says refused while the fabric says
+    // written. The comparator is the one already needed for `err`, reused here.
+    wire wid_bad  = (s_wid != awid_q);
+    // Once a beat is refused the whole transaction is refused: `bad` latches, so the
+    // remaining beats drain without reaching the lite side however well-formed they are.
+    // It is cleared only by the next AW/AR acceptance in S_IDLE.
+    wire drop_beat = bad || wid_bad;
+
+    // A write beat is consumed either by the lite side taking it, or — when the beat is
+    // refused — by this module alone. Both count as one beat.
+    wire wr_fire_lite = (state == S_WR_BEAT) && !drop_beat && s_wvalid
+                        && m_awready && m_wready;
+    wire wr_fire_drop = (state == S_WR_BEAT) && drop_beat && s_wvalid;
+    assign s_wready  = (state == S_WR_BEAT) && (drop_beat || (m_awready && m_wready));
 
     assign s_bid   = awid_q;
     assign s_bresp = err ? RESP_SLVERR : RESP_OKAY;
@@ -160,10 +174,10 @@ module carrier_axi3_lite #(
     assign m_rready  = (state == S_RD_BEAT) && !bad && s_rready;
 
     assign m_awaddr  = {word_addr, 2'b00};
-    assign m_awvalid = (state == S_WR_BEAT) && !bad && s_wvalid;
+    assign m_awvalid = (state == S_WR_BEAT) && !drop_beat && s_wvalid;
     assign m_wdata   = s_wdata;
     assign m_wstrb   = s_wstrb;
-    assign m_wvalid  = (state == S_WR_BEAT) && !bad && s_wvalid;
+    assign m_wvalid  = (state == S_WR_BEAT) && !drop_beat && s_wvalid;
     assign m_bready  = (state == S_WR_WAIT);
 
     // ------------------------------------------------------------------- the FSM
@@ -228,11 +242,13 @@ module carrier_axi3_lite #(
                 // ---- write -----------------------------------------------------
                 S_WR_BEAT: begin
                     if (wr_fire_lite || wr_fire_drop) begin
-                        // A WID that does not match the AW is a protocol fault. AXI3
-                        // allows write data interleaving between IDs and this module does
-                        // not implement it, so the honest answer is SLVERR rather than
-                        // writing the beat somewhere plausible.
-                        if (s_wid != awid_q) err <= 1'b1;
+                        // The beat was already withheld from the lite side by
+                        // `drop_beat`; this latches the refusal so the rest of the
+                        // transaction drains rather than resuming on the next good WID.
+                        if (wid_bad) begin
+                            err <= 1'b1;
+                            bad <= 1'b1;
+                        end
                         // WLAST in the wrong place is also a fault, and BOTH directions of
                         // it end the transaction here. Waiting for a beat the master has
                         // already declared finished, or waiting for more beats after its

@@ -66,7 +66,20 @@ add_cells_to_pblock pb_logic $logic_cells
 # The right-hand region was tried at 124 crossers and the left-hand one with a BRAM buffer
 # at 190; both were broken by CONTROL-class nets, which is what the one-envelope contract
 # exists to remove. Recorded so neither is re-tried as an idea.
+# RULED 2026-08-11 (user), erratum 002: TWO ranges, and this is the final floorplan —
+# no further search for another one on LUT count or WNS.
+#   SLICE_X0Y0:SLICE_X1Y99  left of the first written column, where PS7 also is
+#   SLICE_X6Y0:SLICE_X7Y99  CLBLM_R_X5, baseaddr 0x00400B80 — NOT one of the 15 written FARs
+# The second pair became necessary when the AXI3 shim erratum 002 requires landed: 837 LUTs
+# post-opt against 800 sites, and `place_design` failed outright. It became ADMISSIBLE when
+# erratum 001 retired the authority the old one-region floorplan served: crossing nets are
+# an evidence record, cell ownership is the verdict, and bit invariance against the routed
+# base is the rule. Measured with both ranges: place+route OK, WNS +7.305 ns, cell isolation
+# target=6 flush=0, route inventory flush 415 / target 560 / foreign 554 — a larger
+# blast-radius record, not a violated rule, because those routes are part of the base and
+# every candidate rewrites them identically.
 resize_pblock pb_logic -add {SLICE_X0Y0:SLICE_X1Y99}
+resize_pblock pb_logic -add {SLICE_X6Y0:SLICE_X7Y99}
 
 # THE PROPERTY THAT ACTUALLY MAKES IT A BOUNDARY. Vivado pblocks default to IS_SOFT=1,
 # which the placer may cross; the range is a preference until this is false. Every
