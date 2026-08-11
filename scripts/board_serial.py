@@ -38,10 +38,32 @@ def read_until(ser, pat, timeout):
     return buf
 
 
+# U-Boot echoes every character it reads, and it echoes with a blocking `putc`. Hand it a
+# long line in one burst and its TX FIFO fills, `putc` waits for space, and while it waits
+# it is not draining the RX FIFO — so the board loses input characters. Observed on 17A6
+# staging a payload with ~350-character lines: the echo stopped mid-token and the prompt
+# came back as `ynq> `, missing its first character.
+#
+# Pacing the write is the fix, not shortening the line: the line length is set by what the
+# engine's watchdog allows in one command, and a paced write costs 2 ms per 32 characters.
+WRITE_CHUNK = 32
+WRITE_GAP_S = 0.002
+
+
+def write_paced(ser, data):
+    """Write in chunks the board can echo without overrunning its own receive FIFO."""
+    if len(data) <= WRITE_CHUNK:
+        ser.write(data)
+        return
+    for start in range(0, len(data), WRITE_CHUNK):
+        ser.write(data[start:start + WRITE_CHUNK])
+        time.sleep(WRITE_GAP_S)
+
+
 def ub_cmd(ser, line, timeout=1.5):
     """Send one U-Boot command line and return everything up to the prompt."""
     ser.reset_input_buffer()
-    ser.write(line.encode("ascii") + b"\r")
+    write_paced(ser, line.encode("ascii") + b"\r")
     return read_until(ser, PROMPT_RE, timeout)
 
 
