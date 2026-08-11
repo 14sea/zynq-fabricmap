@@ -179,3 +179,68 @@ not to widen the region without a ruling. Three options, with what each costs:
    depends on it. Not advisable to touch for 40 LUTs.
 3. **weaken the shim** — refuse bursts instead of converting them. It would fit, and it
    contradicts the acceptance line.
+
+## The shim did not change the symptom — 2026-08-11, second attempt
+
+The rebuilt carrier was loaded and the calibration stopped at **exactly the same place**:
+
+```
+STOP: no prompt within 8.0s of `md.l 0x43c02004 0x1`
+```
+
+`evidence/calibration_noop_2026_08_11_erratum002/record.json`: FCLK0 verified 50.00 MHz,
+`fpga loadb` reported the NEW bitstream (`SW_CRC=cf3db964`, `time = 19:26:04`, against the
+old `c8a91664` / `14:38:57`), the identity gate accepted `17A6 role=verify` over the same
+console seconds before, and then the first read stalled the CPU. `Ctrl-C` returned nothing
+again.
+
+**That identity of symptom is evidence, and it points away from the protocol.** The shim
+completes every transaction the bench can construct — single beat, 16-beat burst, both
+directions, backpressure, FIXED, early and late WLAST, mismatched WID, unsupported size and
+burst — and 17 of 17 mutations of it are caught, including "RLAST never", which is the
+erratum-002 defect itself. A design that answers every one of those in simulation and then
+hangs identically to the design that had no RLAST at all is not failing at the protocol
+layer. **The leading hypothesis is now that the slave never runs at all**: no `FCLK0` at the
+PL, or `FCLKRESETN[0]` held asserted, so `carrier_axil`'s `s_rvalid` can never rise and the
+master waits forever exactly as it did before.
+
+`carrier_top` takes `clk` from `fclkclk[0]` and `rst_n` from `fclkresetn[0]`, and `MAXIGP0ACLK`
+from the same `clk`. If FCLK0 is not toggling, every one of those is dead together and no
+amount of correct AXI3 logic can answer a read.
+
+Two things already checked and NOT the cause:
+
+* the level shifters and the PL reset — U-Boot's `zynq_slcr_devcfg_enable()` writes
+  `LVL_SHFTR_EN = 0xF` and `FPGA_RST_CTRL = 0` for any full bitstream, which is exactly what
+  the vendor's `ps7_post_config` does. The `INFO:post config was not run` line U-Boot prints
+  after `fpga loadb` refers to that same pair, so it is informational here, not a gap.
+* the constraint: `carrier.xdc` does `create_clock -period 20.000 -name fclk0
+  [get_pins ps7/FCLKCLK[0]]`, and the build reports WNS +6.716 ns against it.
+
+### The diagnostic the next power-on must run, before touching any AXI address
+
+A read of the carrier's window is what wedges the CPU, so every one of these is a **PS**
+register and none of them can hang:
+
+| address | register | what would explain the hang |
+|---|---|---|
+| `0xF8000170` | `FPGA0_CLK_CTRL` | divisors — already known good (`0x00400800`) |
+| `0xF8000178` | `FPGA0_THR_CNT` | **bit 0 is the FCLK0 gate** Linux's `clkc` driver uses (`fclk_ctrl_reg + 8`, `CLK_GATE_SET_TO_DISABLE`): 1 means FCLK0 is OFF |
+| `0xF8000240` | `FPGA_RST_CTRL` | non-zero means `FCLKRESETN[0]` is held and the whole design is in reset |
+| `0xF8000900` | `LVL_SHFTR_EN` | not `0xF` means the PS-PL boundary is not open |
+| `0xF8007000` | devcfg `CTRL` | `PCAP_PR`, and whether the PL is under PCAP or ICAP |
+| `0xF800700C` | devcfg `INT_STS` | bit 2 `PCFG_DONE` — did configuration actually complete |
+| `0xF8007014` | devcfg `STATUS` | corroborates the above |
+
+Read them **before** `fpga loadb` and again after, so the delta is visible.
+
+The right instrument for the AXI side is JTAG, not the console: with the 4203's FT4232 pod
+attached, `mem_ap` reads the PL window through the DAP and returns a WAIT timeout instead of
+stalling the CPU —
+
+```
+openocd -f <4203 cfg> -c "target create zynq.ahb mem_ap -dap zynq.dap -ap-num 0" \
+        -c init -c "zynq.ahb mdw 0x43c02004 1" -c shutdown
+```
+
+That turns "one hypothesis per power cycle" into an experiment that can be repeated.
