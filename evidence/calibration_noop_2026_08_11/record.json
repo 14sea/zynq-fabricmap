@@ -1,0 +1,61 @@
+{
+  "tool": "board_calibrate_noop.py/1.0.0",
+  "what": "erratum 001 step 1 \u2014 the complete no-op transaction",
+  "run_dir": "gate_runs/claimb_round1_carrier_2026_08_11",
+  "started_at": 1786469176.086252,
+  "authority": {
+    "manifest_sha256": "d158a1a8657b3b10349614673159f187ba92902d4e697ec7be4e9d52101f766a",
+    "run_id": "claimb_round1_carrier_2026_08_11"
+  },
+  "payload": {
+    "bytes": 6432,
+    "sha256": "07fbca9e93f0066a7873607b9a79ad89521e37a8853ef92ec88256dac4fdb9c6"
+  },
+  "setup": {
+    "carrier_sha256": "25681f363916587ecfdd96ef6dd76c86bb73267ef44f38d1270f85f9ec3f7b37",
+    "steps": [
+      {
+        "step": "FCLK0 = 50 MHz",
+        "argv": [
+          "/home/test/zynq_fabricmap/scripts/board_set_fclk50.py",
+          "--port",
+          "/dev/ebaz-uart"
+        ],
+        "returncode": 0,
+        "elapsed_s": 0.6,
+        "stdout_tail": "before FPGA0_CLK_CTRL=0x00400800 -> 1600.0/8/4 = 50.00 MHz\nafter  FPGA0_CLK_CTRL=0x00400800 -> 1600.0/8/4 = 50.00 MHz\nPASS: FCLK0 pinned to 50.0 MHz\n",
+        "stderr_tail": ""
+      },
+      {
+        "step": "fpga loadb of the published carrier",
+        "argv": [
+          "/home/test/zynq_fabricmap/scripts/board_uboot_fpga_load.py",
+          "--port",
+          "/dev/ebaz-uart",
+          "--bit",
+          "/home/test/zynq_fabricmap/gate_runs/claimb_round1_carrier_2026_08_11/carrier.bit",
+          "--op",
+          "loadb"
+        ],
+        "returncode": 0,
+        "elapsed_s": 197.5,
+        "stdout_tail": "[*] /home/test/zynq_fabricmap/gate_runs/claimb_round1_carrier_2026_08_11/carrier.bit: 2083863 bytes -> 0x04000000, then `fpga loadb`\n[*] ymodem transfer via sb ...\n[xfer] ## Total Size      = 0x001fcc17 = 2083863 Bytes\n## Start Addr      = 0x04000000\nZynq>\n[*] fpga loadb 0 0x04000000 0x001fcc17\n[fpga] fpga loadb 0 0x04000000 0x001fcc17\n  design filename = \"carrier_top;UserID=0XFFFFFFFF;Version=2025.2;SW_CRC=c8a91664\"\n  part number = \"7z010clg400\"\n  date = \"2026/08/11\"\n  time = \"14:38:57\"\n  bytes in bitstream = 2083740\nzynq_align_dma_buffer: Align buffer at 400007b to 4000040(swap 1)\nINFO:post config was not run, please run manually if needed\nZynq>\n",
+        "stderr_tail": ""
+      }
+    ]
+  },
+  "identity": {
+    "boardid": "17A6",
+    "role": "verify",
+    "pss_idcode": "0x13722093",
+    "fclk0_mhz": 50.0,
+    "fclk0_pll_mhz": 1600.0,
+    "fclk0_divisors": [
+      8,
+      4
+    ]
+  },
+  "interrupt_reply": "",
+  "verdict": "STOP",
+  "stop_reason": "AxiRefusal: no prompt within 8.0s of `md.l 0x43c02004 0x1\u2026` \u2014 the engine has not answered. Send Ctrl-C to break a spinning wait loop; if that does not return a prompt the CPU is stalled on the AXI bus and the board needs a power cycle"
+}
