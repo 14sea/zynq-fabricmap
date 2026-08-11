@@ -100,8 +100,9 @@ def phase_setup(port: str, carrier_bit: Path, expected_sha: str) -> dict:
         ([sys.executable, str(REPO_ROOT / "scripts/board_set_fclk50.py"), "--port", port],
          "FCLK0 = 50 MHz"),
         ([sys.executable, str(REPO_ROOT / "scripts/board_uboot_fpga_load.py"),
-          "--port", port, "--bit", str(carrier_bit), "--op", "loadb"],
-         "fpga loadb of the published carrier"),
+          "--port", port, "--bit", str(carrier_bit), "--op", "loadb",
+          "--require-unconfigured"],
+         "fpga loadb of the published carrier, onto an empty PL"),
     ):
         started = time.time()
         done = subprocess.run(argv, capture_output=True, text=True)

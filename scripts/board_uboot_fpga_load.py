@@ -55,6 +55,8 @@ def main():
     ap.add_argument("--op", default="loadb", choices=["loadb", "loadbp", "load", "loadp"])
     ap.add_argument("--read", help="hex AXI addr to md after load, e.g. 0x41200000")
     ap.add_argument("--log", default="/tmp/sb-fpga.log")
+    ap.add_argument("--require-unconfigured", action="store_true",
+                    help="refuse unless the PL is empty before the load (PCFG_DONE clear)")
     args = ap.parse_args()
 
     size = os.path.getsize(args.bit)
@@ -93,6 +95,19 @@ def main():
         cleared_first = after is not None and not after & PCFG_DONE
         print(f"[devcfg] INT_STS 0x{before:08x} -> 0x{after:08x} before the load "
               f"({'cleared' if cleared_first else 'NOT cleared'})")
+        # Loading onto a PL that is ALREADY configured has, on 17A6, produced a design that
+        # reports a clean PCFG_DONE edge and then does not answer on AXI at all — while the
+        # same file loaded onto an empty PL answers immediately. The mechanism is not
+        # identified. Where the caller has said it needs the known-good path, take the
+        # refusal rather than the ambiguity: a power cycle is cheap, a stalled CPU is a
+        # power cycle plus a lost run.
+        if args.require_unconfigured and before & PCFG_DONE:
+            s.close()
+            sys.exit(
+                f"THE PL IS ALREADY CONFIGURED (devcfg INT_STS=0x{before:08x}, PCFG_DONE "
+                "set before this load). On this board a reload onto a configured PL has "
+                "produced a PL that reports a clean PCFG_DONE edge and then answers "
+                "nothing on AXI. Power-cycle and run again from an empty PL.")
 
     # 5. program the PL
     line = f"fpga {args.op} 0 0x{addr:08x} 0x{size:08x}\r"
