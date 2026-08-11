@@ -85,4 +85,34 @@ source $here/isolation_checks.tcl
 carrier_isolation_checks $outdir
 
 write_bitstream -force $outdir/carrier.bit
+
+# ------------------------------------------------------------------ provenance
+# Erratum 001 requires the 15 base frames to come from THE FINAL ROUTED CARRIER
+# BITSTREAM, not an earlier probe or a DCP — and requires that to be machine-checked
+# rather than asserted. Only this script knows, at this point, that the bitstream it
+# just wrote is the routed design whose cell isolation passed, so it is this script
+# that records it. scripts/gate_carrier_base.py refuses a phenotype_manifest whose
+# base does not match this record.
+set bit_sha [lindex [exec sha256sum $outdir/carrier.bit] 0]
+set dcp_sha [lindex [exec sha256sum $outdir/post_route.dcp] 0]
+set iso_sha [lindex [exec sha256sum $outdir/isolation.txt] 0]
+set wns [get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup]]
+set fh [open $outdir/carrier_build.json w]
+puts $fh "{"
+puts $fh "  \"schema\": \"carrier_build\","
+puts $fh "  \"schema_version\": \"1.0.0\","
+puts $fh "  \"part\": \"$part\","
+puts $fh "  \"top\": \"carrier_top\","
+puts $fh "  \"vivado\": \"[version -short]\","
+puts $fh "  \"routed\": true,"
+puts $fh "  \"cell_isolation\": \"passed\","
+puts $fh "  \"wns_ns\": $wns,"
+puts $fh "  \"bitstream\": \"carrier.bit\","
+puts $fh "  \"bitstream_sha256\": \"$bit_sha\","
+puts $fh "  \"post_route_dcp_sha256\": \"$dcp_sha\","
+puts $fh "  \"isolation_evidence_sha256\": \"$iso_sha\""
+puts $fh "}"
+close $fh
+
 puts "CARRIER BUILD OK -> $outdir/carrier.bit"
+puts "  provenance -> $outdir/carrier_build.json (bitstream $bit_sha)"
