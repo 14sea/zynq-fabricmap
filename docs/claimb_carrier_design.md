@@ -277,7 +277,59 @@ And the left region cannot hold the buffer as LUTRAM instead:
     logic (measured)      432 LUTs
     required             1264 LUTs   -> short by 464
 
-### RULED 2026-08-10: the two-pass contract
+### RULED 2026-08-11: frame-staged, after the envelope-staged form would not fit
+
+The envelope-staged design was integrated and measured, and the left-of-flush region cannot
+hold it: 200 slices against a placer demand of 220 more, with the 536-word LUTRAM buffer
+alone taking 99 of the ~100 SLICEM slices. Right-hand placement routes but sends the AXI
+bus across a flush column, which is control class and not admissible.
+
+**The staging unit drops from a 536-word envelope to a 101-word frame.** The guarantee
+becomes:
+
+> **Each frame, before it is written, is byte-identical to the same
+> `(envelope, frame)` validated in pass 1.**
+
+Nothing else about the chain changes. In particular the PL does **not** reconstruct an
+"equivalent" stream: every word it sends is a word the host sent.
+
+1. **Pass 1 still scans all three complete, original 536-word envelopes** with ICAPE2
+   untouched, validating the whole control trace, the FAR, the length and the order, and
+   storing **fifteen per-frame CRCs**. It needs no buffer at all — validation is a
+   streaming comparison of each arriving word against the constant pinned at its position.
+2. **Pass 2 replays the same gate-accepted serialized bytes in the original order.**
+3. The **23-word preamble is validated word by word and forwarded verbatim**, not generated.
+4. **Each 101-word frame is buffered in full**; its CRC must equal pass 1's for that
+   `(envelope, frame)`; only then are those 101 **original** words fed into the FDRI burst
+   that is already in progress.
+5. **ICAP is paused between frames with `CSIB = 1`** while the next frame is loaded and
+   checked. `RDWRB` stays in write for the whole FDRI and is never toggled while
+   `CSIB = 0`, which would abort.
+6. After the fifth frame the **trailer is validated word by word and forwarded verbatim**.
+7. **Readback happens after the complete envelope is written**, never by switching to read
+   mid-FDRI. One 101-word frame is buffered at a time; the host reads each and accumulates
+   the full 15-frame SHA-256 itself.
+8. A failure in any later frame, in the trailer, in a CRC, a timeout or a readback still
+   sets `recovery_required`, and what was written may never be scored.
+
+The chain is unchanged:
+
+> **host-gated bytes == bytes ICAP actually received == streamed readback bytes**
+
+The only difference is that time may pass between frames.
+
+**The pause has a documentary basis and is still not proven.** UG470 defines non-contiguous
+configuration loading with `CSI_B` deasserted, data on unselected cycles being ignored;
+ICAPE2's `CSIB` is the same active-low enable; and the AXI HWICAP notes describe the ICAP
+interface as SelectMAP-like. That makes the mechanism reasonable to build on — it does not
+make it measured. **It must be pinned by the engineering calibration on hardware; RTL
+simulation cannot establish it**, because the bench's ICAP is a model of the assumption.
+
+Expected resource effect: the buffer falls from 536x32 to 101x32 (~288 to ~64 LUTs of
+LUTRAM), and the CRC can consume a byte per cycle instead of a word — AXI transfer time
+covers the extra cycles — which should remove most of its current 162 LUTs.
+
+### Superseded 2026-08-10: the envelope-staged two-pass contract
 
 The one-envelope buffer is taken. Neither of the alternatives is: changing the PS
 interface widens the trusted boundary, and re-choosing the sites would invalidate the
