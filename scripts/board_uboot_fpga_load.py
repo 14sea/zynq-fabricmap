@@ -111,6 +111,16 @@ def main():
             f"FPGA CONFIGURATION DID NOT HAPPEN: devcfg INT_STS=0x{int_sts:08x}, PCFG_DONE "
             "is clear. `fpga loadb` printed the header and returned a prompt anyway. Every "
             "AXI access to the PL will now stall the CPU.")
+    # A marker that survives nothing. `setenv` without `saveenv` lives in RAM, so if the
+    # board restarts for ANY reason the variable is gone — which is the only cheap way to
+    # ask "is this the same boot that configured the PL?" without touching the PL. Asking
+    # the PL is not an option: if it has been cleared, the question stalls the CPU.
+    marker = f"{time.time_ns():016x}"
+    s.reset_input_buffer()
+    s.write(f"setenv plmark {marker}\r".encode())
+    read_until(s, PROMPT_RE, 5)
+    print(f"[plmark] {marker}")
+
     if not cleared_first:
         print("[devcfg] NOTE: PCFG_DONE was already set before this load and could not be "
               "cleared, so the 1 above is a level and not an edge — it does not prove that "

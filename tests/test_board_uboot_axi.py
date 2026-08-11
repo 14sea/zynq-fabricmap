@@ -454,6 +454,38 @@ class TheSessionIsTheDoor(unittest.TestCase):
         self.assertEqual(len(record["readback_frames"]), axi.TOTAL_FRAMES)
 
 
+class TheBootMarker(unittest.TestCase):
+    """A restart clears the PL, and asking the PL about it is the one question that stalls
+    the CPU when the answer is no. `17A6` was seen restarting between two good reads."""
+
+    def board(self, plmark=None):
+        board = FakeBoard()
+        if plmark is not None:
+            board.uboot_env["plmark"] = plmark
+        return board
+
+    def test_the_same_boot_passes(self) -> None:
+        axi.same_boot(self.board("00000000deadbeef"), "00000000deadbeef")
+
+    def test_a_missing_marker_is_a_restart(self) -> None:
+        with self.assertRaises(axi.AxiRefusal) as caught:
+            axi.same_boot(self.board(), "00000000deadbeef")
+        self.assertIn("restarted", str(caught.exception))
+        self.assertIn("would stall the CPU", str(caught.exception))
+
+    def test_a_different_marker_is_a_different_boot(self) -> None:
+        with self.assertRaises(axi.AxiRefusal) as caught:
+            axi.same_boot(self.board("0000000012345678"), "00000000deadbeef")
+        self.assertIn("different boot", str(caught.exception))
+
+    def test_it_asks_before_it_would_have_to_stall(self) -> None:
+        """The whole value is that this costs one env read and never touches the window."""
+        board = self.board()
+        with self.assertRaises(axi.AxiRefusal):
+            axi.same_boot(board, "00000000deadbeef")
+        self.assertEqual(board.lines, ["printenv plmark"])
+
+
 class ThePcapHandover(unittest.TestCase):
     """`PCAP_PR` is 1 on this board, so the fabric ICAPE2 is disconnected: without the
     handover every FDRI word would be accepted by the configuration engine and reach

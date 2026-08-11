@@ -366,6 +366,34 @@ def command(transport, line: str, timeout: float) -> bytes:
         f"cycle. Received: {tail!r}")
 
 
+def same_boot(transport, marker: str) -> None:
+    """Refuse unless the board is still on the boot that configured the PL.
+
+    `plmark` is set by the loader with `setenv` and never `saveenv`, so it lives in RAM and
+    a restart of any kind takes it with it. This has to be asked BEFORE anything touches the
+    carrier, because the question "is the PL still configured" cannot be put to the PL: if
+    the answer is no, asking stalls the CPU and costs a power cycle.
+
+    Board `17A6` was observed restarting between two successful reads — the reply to the
+    second carried `U-Boot SPL … Trying to boot from MMC1`, a full cold boot nobody asked
+    for. A restart clears the PL, so every later AXI access stalls, and from the console
+    that is indistinguishable from a design that does not work. It is distinguishable from
+    here, in one command, for free.
+    """
+    reply = command(transport, "printenv plmark", timeout=5.0)
+    found = re.search(rb"plmark=([0-9a-f]+)", reply)
+    if not found:
+        raise AxiRefusal(
+            "`plmark` is not set: the board has restarted since the carrier was loaded (the "
+            "variable lives in RAM and was never saved), so the PL is no longer configured. "
+            "Reload the carrier — do NOT read the window, which would stall the CPU.")
+    actual = found.group(1).decode("ascii")
+    if actual != marker:
+        raise AxiRefusal(
+            f"`plmark` is {actual}, the load set {marker}: this is a different boot, so the "
+            "PL is not the one that was configured. Reload the carrier.")
+
+
 def ps_peek(transport):
     """A reader for PS registers, for `board_carrier_guard.PcapPr`."""
     def peek(addr: int) -> int:

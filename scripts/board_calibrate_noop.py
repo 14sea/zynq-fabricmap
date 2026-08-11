@@ -40,6 +40,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import time
@@ -114,7 +115,16 @@ def phase_setup(port: str, carrier_bit: Path, expected_sha: str) -> dict:
         })
         if done.returncode != 0:
             raise CalibrationStop(f"{what} failed: {done.stderr.strip() or done.stdout[-300:]}")
-    return {"carrier_sha256": actual, "steps": steps}
+    marker = None
+    for step in steps:
+        found = re.search(r"\[plmark\] ([0-9a-f]+)", step["stdout_tail"])
+        if found:
+            marker = found.group(1)
+    if marker is None:
+        raise CalibrationStop(
+            "the loader did not report a `plmark`, so a restart between the load and the "
+            "write could not be detected — and a restart clears the PL")
+    return {"carrier_sha256": actual, "plmark": marker, "steps": steps}
 
 
 def check_the_no_op(candidate: dict[int, list[int]], manifest: dict,
@@ -193,6 +203,9 @@ def main() -> int:
             session = ident.BoardSession(transport)
             identity = session.verify_identity("content")
             record["identity"] = identity["parsed"]
+            # BEFORE anything touches the carrier. A restart since the load clears the PL,
+            # and asking the PL about it stalls the CPU.
+            axi.same_boot(transport, record["setup"]["plmark"])
             result = ex.run_candidate_on_board(payload, authority, session)
         except axi.AxiRefusal:
             # A spinning wait loop still owns the console; a stalled AXI access does not

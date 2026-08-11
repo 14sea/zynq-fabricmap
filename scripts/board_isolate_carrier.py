@@ -39,6 +39,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import time
@@ -162,8 +163,22 @@ def clear_pcfg_done(probe: Probe, when: str) -> dict:
     return {"before": f"0x{before:08x}", "after": f"0x{after:08x}"}
 
 
-def read_carrier(probe: Probe, when: str) -> dict:
-    """The measurement everything else exists to interpret."""
+def read_carrier(probe: Probe, when: str, marker: str | None = None) -> dict:
+    """The measurement everything else exists to interpret.
+
+    The boot marker is checked FIRST every time: a restart clears the PL, and asking the PL
+    whether it is still configured is the one question that stalls the CPU when the answer
+    is no. `17A6` was observed restarting between two successful reads.
+    """
+    if marker is not None:
+        entry = probe.cmd("printenv plmark")
+        if not entry["prompt_returned"]:
+            raise Stalled(f"printenv plmark did not answer: {entry['raw']!r}")
+        if f"plmark={marker}" not in entry["raw"]:
+            raise Stalled(
+                f"THE BOARD RESTARTED before '{when}': plmark is no longer {marker} "
+                f"({entry['raw'].strip()!r}). The PL is cleared; reading the carrier now "
+                "would stall the CPU. This is a board restart, not a carrier fault.")
     status, entry = probe.read_word(axi.STATUS, f"carrier STATUS ({when})")
     fault, _ = probe.read_word(axi.FAULT, f"carrier FAULT ({when})")
     decoded = axi.decode_status(status)
@@ -197,6 +212,7 @@ def main() -> int:
     args = ap.parse_args()
 
     carrier = args.run_dir / "carrier.bit"
+    marker: str | None = None
     bundle = json.loads((args.run_dir / "carrier_run.json").read_text("utf-8"))
     digest = hashlib.sha256(carrier.read_bytes()).hexdigest()
     pinned = bundle["artifacts"]["carrier.bit"]["sha256"]
@@ -231,6 +247,9 @@ def main() -> int:
             [sys.executable, str(REPO_ROOT / "scripts/board_uboot_fpga_load.py"),
              "--port", args.port, "--bit", str(carrier), "--op", "loadb"],
             "step 3: fpga loadb of the published carrier"))
+        found = re.search(r"\[plmark\] ([0-9a-f]+)", record["steps"][-1]["stdout_tail"])
+        marker = found.group(1) if found else None
+        record["plmark"] = marker
         probe = Probe(args.port)
         done_after, _ = probe.read_word(DEVCFG_INT_STS, "INT_STS after load")
         print(f"    step 3: INT_STS=0x{done_after:08x} "
@@ -246,17 +265,17 @@ def main() -> int:
         #    the console being closed and reopened, and a tool being run — and a step that
         #    bundles three changes cannot name a cause.
         record["steps"].append({"step": "read carrier (step 4a, right after load)",
-                                "carrier": read_carrier(probe, "4a right after load")})
+                                "carrier": read_carrier(probe, "4a right after load", marker)})
 
         time.sleep(6)
         record["steps"].append({"step": "read carrier (step 4b, +6s, same console)",
-                                "carrier": read_carrier(probe, "4b after 6s")})
+                                "carrier": read_carrier(probe, "4b after 6s", marker)})
 
         probe.close()
         probe = Probe(args.port)
         record["steps"].append({"step": "read carrier (step 4c, after closing and "
                                         "reopening the console, no tool run)",
-                                "carrier": read_carrier(probe, "4c after reopen")})
+                                "carrier": read_carrier(probe, "4c after reopen", marker)})
 
         # 5/6. the clock check, explicitly read-only, then read again.
         probe.close()
@@ -266,7 +285,7 @@ def main() -> int:
             "step 5: board_set_fclk50.py --verify-only"))
         probe = Probe(args.port)
         record["steps"].append({"step": "read carrier (step 6, after fclk50)",
-                                "carrier": read_carrier(probe, "after fclk50")})
+                                "carrier": read_carrier(probe, "after fclk50", marker)})
 
         # 7. the identity gate, then read again.
         probe.close()
@@ -276,7 +295,7 @@ def main() -> int:
             "step 7: gate_board_identity.py"))
         probe = Probe(args.port)
         record["steps"].append({"step": "read carrier (step 7, after identity)",
-                                "carrier": read_carrier(probe, "after identity")})
+                                "carrier": read_carrier(probe, "after identity", marker)})
 
         # 8. a second load onto the now-configured PL, bracketed the same way.
         record["steps"].append({"step": "clear PCFG_DONE (step 8)",
