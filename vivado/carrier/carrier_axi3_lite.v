@@ -103,22 +103,23 @@ module carrier_axi3_lite #(
 
     localparam [2:0] S_IDLE    = 3'd0,
                      S_RD_REQ  = 3'd1,   // present the lite read address
-                     S_RD_WAIT = 3'd2,   // take the lite read datum
-                     S_RD_BEAT = 3'd3,   // hand one R beat to the master
+                     S_RD_BEAT = 3'd3,   // pass one R beat through to the master
                      S_WR_BEAT = 3'd4,   // take one W beat, present the lite write
                      S_WR_WAIT = 3'd5,   // take the lite write response
                      S_WR_RESP = 3'd6;   // hand one B response to the master
 
     reg  [2:0]        state;
-    reg  [ID_W-1:0]   id;
+    // SEPARATE ID registers, not one shared one. A single `id` needs a 2:1 mux in front
+    // of twelve flip-flops — twelve LUTs — while two registers each load from their own
+    // channel and drive their own output, which is twelve LUTs of nothing. Flip-flops are
+    // what this region has spare; LUTs are what it does not.
+    reg  [ID_W-1:0]   awid_q, arid_q;
     reg  [ADDR_W-1:2] word_addr;
     reg  [3:0]        beats;             // beats REMAINING after the current one
     reg               fixed;             // FIXED burst: the address does not advance
     reg               bad;               // unsupported: complete it, answer SLVERR
     reg               err;               // any beat answered SLVERR, or a protocol fault
     reg               wr_done;           // the beat just taken ended the transaction
-    reg  [31:0]       rdata_q;
-    reg  [1:0]        rresp_q;
 
     // A transaction this module will not perform against the register file. It is still
     // completed, beat for beat, with SLVERR — an unsupported transaction that stalled
@@ -140,20 +141,23 @@ module carrier_axi3_lite #(
     wire wr_fire_drop = (state == S_WR_BEAT) && bad && s_wvalid;
     assign s_wready  = (state == S_WR_BEAT) && (bad || (m_awready && m_wready));
 
-    assign s_bid   = id;
+    assign s_bid   = awid_q;
     assign s_bresp = err ? RESP_SLVERR : RESP_OKAY;
     assign s_bvalid = (state == S_WR_RESP);
 
-    assign s_rid    = id;
-    assign s_rdata  = rdata_q;
-    assign s_rresp  = rresp_q;
+    // R is a PASS-THROUGH. `carrier_axil` already holds RDATA and RRESP until RREADY, so
+    // a copy here is 32 flip-flops and a state to fill them, for a value that is already
+    // being held one module away. Only RLAST and RID are this module's to produce.
+    assign s_rid    = arid_q;
+    assign s_rdata  = m_rdata;
+    assign s_rresp  = bad ? RESP_SLVERR : m_rresp;
     assign s_rlast  = is_last;
-    assign s_rvalid = (state == S_RD_BEAT);
+    assign s_rvalid = (state == S_RD_BEAT) && (bad || m_rvalid);
 
     // ------------------------------------------------------------- lite side out
     assign m_araddr  = {word_addr, 2'b00};
     assign m_arvalid = (state == S_RD_REQ) && !bad;
-    assign m_rready  = (state == S_RD_WAIT);
+    assign m_rready  = (state == S_RD_BEAT) && !bad && s_rready;
 
     assign m_awaddr  = {word_addr, 2'b00};
     assign m_awvalid = (state == S_WR_BEAT) && !bad && s_wvalid;
@@ -166,15 +170,14 @@ module carrier_axi3_lite #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             state     <= S_IDLE;
-            id        <= {ID_W{1'b0}};
+            awid_q    <= {ID_W{1'b0}};
+            arid_q    <= {ID_W{1'b0}};
             word_addr <= {(ADDR_W-2){1'b0}};
             beats     <= 4'd0;
             fixed     <= 1'b0;
             bad       <= 1'b0;
             err       <= 1'b0;
             wr_done   <= 1'b0;
-            rdata_q   <= 32'd0;
-            rresp_q   <= RESP_OKAY;
         end else begin
             case (state)
                 S_IDLE: begin
@@ -184,14 +187,14 @@ module carrier_axi3_lite #(
                     // ordering between the channels, and each transaction completes, so
                     // neither side can starve the other.
                     if (s_awvalid) begin
-                        id        <= s_awid;
+                        awid_q    <= s_awid;
                         word_addr <= s_awaddr[ADDR_W-1:2];
                         beats     <= s_awlen;
                         fixed     <= (s_awburst == BURST_FIXED);
                         bad       <= unsupported(s_awsize, s_awburst);
                         state     <= S_WR_BEAT;
                     end else if (s_arvalid) begin
-                        id        <= s_arid;
+                        arid_q    <= s_arid;
                         word_addr <= s_araddr[ADDR_W-1:2];
                         beats     <= s_arlen;
                         fixed     <= (s_arburst == BURST_FIXED);
@@ -201,31 +204,17 @@ module carrier_axi3_lite #(
                 end
 
                 // ---- read ------------------------------------------------------
-                // RDATA is deliberately NOT forced to zero on a refused read. AXI says
-                // read data is not valid when RRESP reports an error, so zeroing it buys
-                // nothing — and it costs a 32-bit mux in front of `rdata_q`, which is 32
-                // LUTs in a region that has ~68 spare. Without it the register is a plain
-                // enabled load and the LUTs disappear entirely. The refusal is carried by
-                // RRESP, which is where a master reads it.
+                // A refused read skips the lite side entirely and goes straight to the
+                // beat. RDATA is whatever the lite side last drove — AXI says read data is
+                // not valid when RRESP reports an error, so forcing it to zero would only
+                // buy a 32-bit mux. The refusal travels on RRESP, which is where a master
+                // reads it.
                 S_RD_REQ: begin
-                    if (bad) begin
-                        rresp_q <= RESP_SLVERR;
-                        state   <= S_RD_BEAT;
-                    end else if (m_arready) begin
-                        state <= S_RD_WAIT;
-                    end
-                end
-
-                S_RD_WAIT: begin
-                    if (m_rvalid) begin
-                        rdata_q <= m_rdata;
-                        rresp_q <= m_rresp;
-                        state   <= S_RD_BEAT;
-                    end
+                    if (bad || m_arready) state <= S_RD_BEAT;
                 end
 
                 S_RD_BEAT: begin
-                    if (s_rready) begin
+                    if (s_rvalid && s_rready) begin
                         if (is_last) begin
                             state <= S_IDLE;
                         end else begin
@@ -243,7 +232,7 @@ module carrier_axi3_lite #(
                         // allows write data interleaving between IDs and this module does
                         // not implement it, so the honest answer is SLVERR rather than
                         // writing the beat somewhere plausible.
-                        if (s_wid != id) err <= 1'b1;
+                        if (s_wid != awid_q) err <= 1'b1;
                         // WLAST in the wrong place is also a fault, and BOTH directions of
                         // it end the transaction here. Waiting for a beat the master has
                         // already declared finished, or waiting for more beats after its
