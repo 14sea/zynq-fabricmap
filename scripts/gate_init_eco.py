@@ -21,6 +21,13 @@ covered exactly as well as one we can name.
 **The predicted set is read from the map, never from the observed diff.** A check that
 derived its expectation from what it saw would accept anything.
 
+**Every input comes from the published run bundle**, and every one of them is verified
+against the digest the bundle pins before anything is judged — the map, the base bitstream,
+the ECO bitstream, the post-route DCP and the ECO record. Version 1 took `--map` and
+`--map-lut-key` on the command line, so the operator chose which LUT the differential was
+judged against and the verdict recorded none of the digests it had relied on. An operator
+who picks the inputs picks the verdict.
+
 Exit codes: 0 accepted, 2 refused, 3 usage/IO.
 """
 
@@ -35,9 +42,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import bitstream_frames as bf  # noqa: E402
+import carrier_run as cr  # noqa: E402
 import frame_ecc as fe  # noqa: E402
 
-TOOL_VERSION = "gate_init_eco.py/1.0.0"
+TOOL_VERSION = "gate_init_eco.py/2.0.0"
 
 def parse_address_key(key: str) -> tuple[int, int, int]:
     """`0x00400A20/51/15` -> (far, word, bit). Refuses anything else."""
@@ -80,6 +88,32 @@ def predicted_bits(local_map: dict, lut_key: str, init_before: int, init_after: 
             f"{lut_key}: the differential cannot be judged against the map"
         )
     return out
+
+
+def eco_record_problems(eco_rec: dict, digests: dict) -> list[dict]:
+    """What the ECO record must say about itself, before any frame is parsed.
+
+    A pure function, not inline in `main()`: these are two of the sharper refusals and a
+    check that can only be reached through the CLI is a check the suite cannot mutate.
+    """
+    problems: list[dict] = []
+    # Checked here too, not only in the bundle builder: a chain that trusts the builder to
+    # have compared them has one link asserted rather than verified.
+    if eco_rec.get("bitstream_sha256") != digests.get("carrier_eco.bit"):
+        problems.append({
+            "kind": "eco",
+            "message": "carrier_eco.json declares a bitstream digest that is not the "
+                       "carrier_eco.bit in this run",
+            "declared": eco_rec.get("bitstream_sha256"),
+            "actual": digests.get("carrier_eco.bit"),
+        })
+    if eco_rec.get("reimplemented") is not False:
+        problems.append({
+            "kind": "eco",
+            "message": "the ECO record does not assert reimplemented=false: a differential "
+                       "taken across a re-implementation proves nothing",
+        })
+    return problems
 
 
 def frame_words(path: Path) -> dict[int, list[int]]:
@@ -179,43 +213,65 @@ def findings(base_path: Path, eco_path: Path, local_map: dict, eco_rec: dict
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--build-dir", type=Path, required=True)
-    ap.add_argument("--map", type=Path, required=True)
-    ap.add_argument("--map-lut-key", required=True,
-                    help="the by_lut key of the ECO'd cell, e.g. CLBLL_L.SLICEL_X0.ALUT")
+    ap.add_argument("--run-dir", type=Path, required=True,
+                    help="a published carrier run; every input comes from its bundle")
     ap.add_argument("--json", type=Path)
     args = ap.parse_args()
 
-    try:
-        eco_rec = json.loads((args.build_dir / "carrier_eco.json").read_text(encoding="utf-8"))
-        local_map = json.loads(args.map.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        print(f"cannot read inputs: {exc}", file=sys.stderr)
+    if not args.run_dir.is_dir():
+        print(f"no such run directory: {args.run_dir}", file=sys.stderr)
         return 3
 
-    eco_rec["map_lut_key"] = args.map_lut_key
-    if eco_rec.get("reimplemented") is not False:
-        print("REFUSED: the ECO record does not assert reimplemented=false", file=sys.stderr)
+    # AUTHORITY PREFLIGHT, and there is no --repo to point it elsewhere. Everything below
+    # only proves the files agree with the bundle; this is what proves the bundle is the one
+    # HEAD published. A whole run copied outside any repository agrees with itself perfectly.
+    authority = cr.head_authority_problems(args.run_dir)
+    if authority:
+        for a in authority:
+            print(f"REFUSED [{a['kind']}] {a['message']}", file=sys.stderr)
+            for k, v in a.items():
+                if k not in ("kind", "message"):
+                    print(f"           {k}: {v}", file=sys.stderr)
         return 2
 
-    try:
-        problems, summary = findings(
-            args.build_dir / "carrier.bit",
-            args.build_dir / eco_rec["bitstream"],
-            local_map,
-            eco_rec,
-        )
-    except (ValueError, KeyError) as exc:
-        print(f"REFUSED: {exc}", file=sys.stderr)
-        return 2
+    bundle, problems = cr.load(args.run_dir)
+    digests = cr.input_digests(bundle) if bundle else {}
+    summary: dict = {}
+
+    if bundle is not None and not problems:
+        try:
+            eco_rec = json.loads((args.run_dir / "carrier_eco.json").read_text(encoding="utf-8"))
+            local_map = json.loads((args.run_dir / "local_map.json").read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"cannot read bundled inputs: {exc}", file=sys.stderr)
+            return 3
+
+        # the LUT key is the bundle's DERIVED one, never a command-line choice
+        eco_rec["map_lut_key"] = (bundle.get("eco") or {}).get("map_lut_key")
+        record_problems = eco_record_problems(eco_rec, digests)
+        problems.extend(record_problems)
+        if not record_problems:
+            try:
+                more, summary = findings(
+                    args.run_dir / "carrier.bit",
+                    args.run_dir / eco_rec["bitstream"],
+                    local_map,
+                    eco_rec,
+                )
+                problems.extend(more)
+            except (ValueError, KeyError) as exc:
+                problems.append({"kind": "eco", "message": str(exc)})
+    else:
+        eco_rec = {}
 
     verdict = {
         "tool": TOOL_VERSION,
-        "build_dir": str(args.build_dir),
+        "run_dir": str(args.run_dir),
         "cell": eco_rec.get("cell"),
         "loc": eco_rec.get("loc"),
         "bel": eco_rec.get("bel"),
         "accepted": not problems,
+        "input_digests": digests,
         "summary": summary,
         "findings": problems,
     }

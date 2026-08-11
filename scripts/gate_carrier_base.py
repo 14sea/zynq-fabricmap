@@ -31,25 +31,32 @@ Exit codes: 0 accepted, 2 refused, 3 usage/IO.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 from pathlib import Path
 
-TOOL_VERSION = "gate_carrier_base.py/1.0.0"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT / "scripts"))
+
+import carrier_run as cr  # noqa: E402
+
+TOOL_VERSION = "gate_carrier_base.py/2.0.0"
+
+sha256_of = cr.sha256_of
 
 
-def sha256_of(path: Path) -> str:
-    h = hashlib.sha256()
-    with path.open("rb") as fh:
-        for chunk in iter(lambda: fh.read(1 << 20), b""):
-            h.update(chunk)
-    return h.hexdigest()
+def findings(run_dir: Path) -> tuple[list[dict], dict]:
+    """Every check, always all of them: a first-failure return hides the rest.
 
-
-def findings(build_dir: Path, manifest_path: Path) -> list[dict]:
-    """Every check, always all of them: a first-failure return hides the rest."""
-    out: list[dict] = []
+    The inputs are the run bundle's, never the caller's. Version 1 took `--build-dir` and
+    `--manifest` and judged whatever it was handed; an operator who picks the inputs picks
+    the verdict.
+    """
+    bundle, out = cr.load(run_dir)
+    if bundle is None:
+        return out, {}
+    build_dir = run_dir
+    manifest_path = run_dir / "phenotype_manifest.json"
 
     def bad(kind: str, message: str, **detail):
         out.append({"kind": kind, "message": message, **detail})
@@ -58,17 +65,17 @@ def findings(build_dir: Path, manifest_path: Path) -> list[dict]:
     if not prov_path.is_file():
         bad(
             "provenance",
-            "no carrier_build.json in the build directory: the bitstream was not written "
+            "no carrier_build.json in the run: the bitstream was not written "
             "by a run of build_carrier.tcl that recorded what it was",
             path=str(prov_path),
         )
-        return out
+        return out, {}
 
     try:
         prov = json.loads(prov_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         bad("provenance", f"carrier_build.json is unreadable: {exc}", path=str(prov_path))
-        return out
+        return out, {}
 
     if prov.get("schema") != "carrier_build":
         bad("provenance", f"not a carrier_build record: schema={prov.get('schema')!r}")
@@ -109,7 +116,7 @@ def findings(build_dir: Path, manifest_path: Path) -> list[dict]:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         bad("manifest", f"the manifest is unreadable: {exc}", path=str(manifest_path))
-        return out
+        return out, cr.input_digests(bundle)
 
     if manifest.get("schema") != "phenotype_manifest":
         bad("manifest", f"not a phenotype_manifest: schema={manifest.get('schema')!r}")
@@ -123,26 +130,38 @@ def findings(build_dir: Path, manifest_path: Path) -> list[dict]:
             build_bitstream_sha256=prov.get("bitstream_sha256"),
         )
 
-    return out
+    return out, cr.input_digests(bundle)
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--build-dir", type=Path, required=True)
-    ap.add_argument("--manifest", type=Path, required=True)
+    ap.add_argument("--run-dir", type=Path, required=True,
+                    help="a published carrier run; every input comes from its bundle")
     ap.add_argument("--json", type=Path, help="write the verdict here")
     args = ap.parse_args()
 
-    if not args.build_dir.is_dir():
-        print(f"no such build directory: {args.build_dir}", file=sys.stderr)
+    if not args.run_dir.is_dir():
+        print(f"no such run directory: {args.run_dir}", file=sys.stderr)
         return 3
 
-    problems = findings(args.build_dir, args.manifest)
+    # AUTHORITY PREFLIGHT, and there is no --repo to point it elsewhere. Everything below
+    # only proves the files agree with the bundle; this is what proves the bundle is the one
+    # HEAD published. A whole run copied outside any repository agrees with itself perfectly.
+    authority = cr.head_authority_problems(args.run_dir)
+    if authority:
+        for a in authority:
+            print(f"REFUSED [{a['kind']}] {a['message']}", file=sys.stderr)
+            for k, v in a.items():
+                if k not in ("kind", "message"):
+                    print(f"           {k}: {v}", file=sys.stderr)
+        return 2
+
+    problems, digests = findings(args.run_dir)
     verdict = {
         "tool": TOOL_VERSION,
-        "build_dir": str(args.build_dir),
-        "manifest": str(args.manifest),
+        "run_dir": str(args.run_dir),
         "accepted": not problems,
+        "input_digests": digests,
         "findings": problems,
     }
     if args.json:
@@ -159,8 +178,8 @@ def main() -> int:
 
     print(
         f"ACCEPTED: the manifest's base is the final routed carrier bitstream "
-        f"({(json.loads((args.build_dir / 'carrier_build.json').read_text()))['bitstream_sha256'][:12]}…), "
-        "routed, cell isolation passed, artifacts unchanged"
+        f"({digests.get('carrier.bit', '')[:12]}…), routed, cell isolation passed, "
+        f"all {len(digests)} bundled artifacts match their pinned digests"
     )
     return 0
 

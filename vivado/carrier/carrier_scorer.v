@@ -17,7 +17,7 @@
 //
 // THE INTERLOCK — two conditions, and the second one is not the host's word
 // -------------------------------------------------------------------------
-// An evaluation starts only on `configuration_valid && arm`.
+// An evaluation starts only on `configuration_valid && !recovery_required && arm`.
 //
 // `armed` is a ONE-SHOT: set only by an explicit arm, cleared by reset, and self-clearing
 // at `done`. That alone proves "no arm, no score" — but on its own it still leaves the
@@ -49,6 +49,13 @@ module carrier_scorer #(
     input  wire                  rst_n,
 
     input  wire                  configuration_valid, // from the guard's readback compare
+    // Design §4 item 6: after a partial write, what was already written is NOT a candidate
+    // and MAY NEVER BE SCORED. `configuration_valid` alone does not carry that: a fault
+    // followed by a complete, fully verified transaction raises it again, so `arm` was
+    // still able to score afterwards. `recovery_required` is the flag that stays raised,
+    // and the scorer must be the thing that refuses — a rule enforced only in a host script
+    // is a rule the hardware does not have.
+    input  wire                  recovery_required,
     input  wire                  arm,           // one-shot: start one evaluation
     input  wire                  mode_holdout,  // latched at arm
 
@@ -93,7 +100,19 @@ module carrier_scorer #(
             count      <= TRAIN_COUNT[6:0];
             vector     <= 6'd0;
             score_flat <= {LUTS*8{1'b0}};
-        end else if (arm && configuration_valid && !busy) begin
+        end else if (!configuration_valid || recovery_required) begin
+            // Confirmation withdrawn, or recovery became required. Freeze, disarm, and
+            // WITHDRAW ANY PREVIOUS RESULT.
+            //
+            // Clearing `done` unconditionally, not only while busy, is the point: `done` is
+            // a level the host reads out of STATUS, so a `done` left standing from the
+            // previous candidate reads as a result for the current one — and after a fault
+            // the current one may never be scored at all. A stale completion flag beside a
+            // stale `score_flat` is exactly the shape of a wrong answer that looks right.
+            busy  <= 1'b0;
+            armed <= 1'b0;
+            done  <= 1'b0;
+        end else if (arm && !busy) begin
             armed      <= 1'b1;
             busy       <= 1'b1;
             done       <= 1'b0;
@@ -102,14 +121,7 @@ module carrier_scorer #(
             count      <= mode_holdout ? HOLDOUT_COUNT[6:0] : TRAIN_COUNT[6:0];
             vector     <= order[mode_holdout ? TRAIN_COUNT : 0];
             score_flat <= {LUTS*8{1'b0}};
-        end else if (busy && !configuration_valid) begin
-            // The guard withdrew confirmation mid-evaluation: a write started, or a
-            // readback stopped matching. Freeze without completing, and do NOT raise
-            // `done` — a partial score must never look like a result.
-            busy  <= 1'b0;
-            armed <= 1'b0;
-            done  <= 1'b0;
-        end else if (busy && armed && configuration_valid) begin
+        end else if (busy && armed) begin
             // At this edge `vector` holds the vector under test and `lut_q` its
             // combinational output, so the comparison is of the pair presented during the
             // cycle just ending.

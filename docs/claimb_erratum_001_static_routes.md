@@ -99,6 +99,27 @@ gate below is *bit* equality and why the board sequence now opens with a no-op.
    does not pass or fail on them. The safety judgement is (4)–(6): the configuration bits
    did not change.
 
+## How the authority is actually held — added 2026-08-11 after review
+
+A rule nobody can re-check is a comment, and "the final routed carrier base" only means
+something if a reviewer elsewhere can obtain those exact bytes:
+
+* the run **bundle** `carrier_run.json` pins every artifact by sha256 and carries the ECO's
+  `by_lut` key **derived from the tilegrid**, not typed in;
+* `gate_carrier_base.py` and `gate_init_eco.py` take a run directory and **nothing else** —
+  no map, no LUT key, no bitstream, no build directory. An operator who picks the inputs
+  picks the verdict. Both record every input digest in their verdicts;
+* the three exact artifacts — `carrier.bit`, `carrier_eco.bit`, `post_route.dcp`, under
+  5 MiB together — are **published via Git LFS in the run root**. Keeping the sha256 and
+  discarding the bytes it names leaves an authority nobody outside one workstation can
+  exercise, and a rebuild does not reproduce the file: `write_bitstream` stamps a
+  timestamp, measured as `dd8bf0b8…` then `e677d097…` for identical RTL;
+* `gate_publish_carrier_run.py` decides what enters history **from the git index**, because
+  the LFS filter can be defeated at `git add` and binary in ordinary history is the one
+  mistake a later commit does not undo;
+* all three gates have tracked negative tests (`tests/test_carrier_run_gates.py`), and a
+  fresh clone plus `git lfs pull` re-runs both verdicts to the same answer.
+
 ## Board calibration order — tightened by the same ruling
 
 The one assumption that cannot be settled off the board is whether the self-hosted ICAP

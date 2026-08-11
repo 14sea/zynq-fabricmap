@@ -14,6 +14,8 @@ module tb_carrier_scorer;
     reg               rst_n = 1'b0;
     reg               arm = 1'b0;
     reg               configuration_valid = 1'b1;
+    reg               recovery_required   = 1'b0;
+    reg               done_before;
     reg               mode_holdout = 1'b0;
     wire [5:0]        vector;
     reg  [LUTS-1:0]   lut_q;
@@ -32,6 +34,7 @@ module tb_carrier_scorer;
 
     carrier_scorer #(.LUTS(LUTS), .VECTORS(64), .TRAIN_COUNT(TRAIN)) dut (
         .clk(clk), .rst_n(rst_n), .configuration_valid(configuration_valid),
+        .recovery_required(recovery_required),
         .arm(arm), .mode_holdout(mode_holdout),
         .vector(vector), .lut_q(lut_q),
         .busy(busy), .done(done), .armed_o(armed), .score_flat(score_flat)
@@ -171,6 +174,35 @@ module tb_carrier_scorer;
         configuration_valid = 1'b1;
         run(1'b0);
         for (i = 0; i < LUTS; i = i + 1) check("recovered train", score_of(i), TRAIN);
+
+        // ---- recovery_required freezes the scorer, at arm and mid-evaluation.
+        // Design §4 item 6: after a partial write what was already written may NEVER be
+        // scored. configuration_valid does not carry that — a fault followed by a
+        // complete, fully verified transaction raises it again — so the scorer has to
+        // refuse on its own.
+        configuration_valid = 1'b1; recovery_required = 1'b1;
+        busy_seen = 0;
+        // `done` is a level that survives the previous evaluation, so "did not rise" is
+        // the property, not "is 0" — checking the latter would have been asserting the
+        // history of the bench rather than the behaviour under test.
+        done_before = done;
+        @(negedge clk); arm = 1'b1; @(negedge clk); arm = 1'b0;
+        repeat (200) begin @(negedge clk); if (busy) busy_seen = 1; end
+        check("recovery_required: never started", busy_seen, 0);
+        check("recovery_required: not armed", armed, 0);
+        check("recovery_required withdraws a stale done", done, 0);
+
+        // and it freezes an evaluation already in flight
+        recovery_required = 1'b0;
+        @(negedge clk); arm = 1'b1; @(negedge clk); arm = 1'b0;
+        repeat (8) @(negedge clk);
+        check("running before recovery is raised", busy, 1);
+        @(negedge clk); recovery_required = 1'b1;
+        repeat (4) @(negedge clk);
+        check("recovery mid-evaluation freezes it", busy, 0);
+        check("and disarms", armed, 0);
+        check("and never raises done", done, 0);
+        recovery_required = 1'b0;
 
         if (errors == 0) $display("SCORER TB: OK");
         else             $display("SCORER TB: %0d FAILURE(S)", errors);

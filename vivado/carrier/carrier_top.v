@@ -146,6 +146,7 @@ module carrier_top #(
     carrier_scorer #(.LUTS(LUTS)) scorer (
         .clk(clk), .rst_n(rst_n),
         .configuration_valid(configuration_valid),
+        .recovery_required(recovery_required),
         .arm(ctrl_arm), .mode_holdout(ctrl_mode_holdout),
         .vector(vector), .lut_q(lut_q),
         .busy(scorer_busy), .done(scorer_done), .armed_o(scorer_armed),
