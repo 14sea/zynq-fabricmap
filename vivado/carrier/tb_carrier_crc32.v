@@ -9,11 +9,19 @@
 
 `timescale 1ns/1ps
 module tb_crc;
-    reg clk=0, rst_n=0, clear=0, valid=0; reg [31:0] data=0; wire [31:0] crc;
+    reg clk=0, rst_n=0, clear=0, valid=0; reg [31:0] data=0; wire [31:0] crc; wire ready;
     integer errors=0, i;
     always #5 clk=~clk;
-    carrier_crc32 dut(.clk(clk),.rst_n(rst_n),.clear(clear),.valid(valid),.data(data),.crc(crc));
-    task feed(input [31:0] w); begin @(negedge clk); data=w; valid=1; @(negedge clk); valid=0; end endtask
+    carrier_crc32 dut(.clk(clk),.rst_n(rst_n),.clear(clear),.valid(valid),.data(data),
+                      .ready(ready),.crc(crc));
+    // byte-serial: hold the word until `ready`
+    task feed(input [31:0] w);
+        begin
+            @(negedge clk); data=w; valid=1;
+            while (!ready) @(negedge clk);
+            @(negedge clk); valid=0;
+        end
+    endtask
     task chk(input [255:0] what, input [31:0] got, input [31:0] want);
         begin if (got!==want) begin $display("FAIL %0s: got %08x want %08x", what, got, want); errors=errors+1; end end
     endtask
