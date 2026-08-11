@@ -46,13 +46,21 @@ class WiringTests(unittest.TestCase):
                 far = int(far_hex, 16)
                 self.targets[far] = list(frames[far])
 
+        # The authority object is constructed directly here. `load()` additionally proves
+        # the run is HEAD's, which a working tree under edit is not — that path has its own
+        # cases below, in a fixture repository.
+        import hashlib
+        raw = (RUN / "phenotype_manifest.json").read_bytes()
+        self.authority = ex.PublishedCarrierAuthority(
+            self.manifest, RUN, hashlib.sha256(raw).hexdigest())
+
     def payload(self) -> ex.SealedPayload:
         return ex.SealedPayload(ex.build_sequence_bytes(self.manifest, self.targets))
 
     def test_the_no_op_candidate_reaches_the_wire(self) -> None:
         sent: list[bytes] = []
         payload = self.payload()
-        record = ex.run_candidate(payload, self.manifest, sent.append)
+        record = ex.run_candidate(payload, self.authority, sent.append)
         self.assertEqual(len(sent), 1)
         self.assertEqual(sent[0], payload.unseal())
         self.assertEqual(record["sent_sha256"], payload.sha256)
@@ -65,7 +73,7 @@ class WiringTests(unittest.TestCase):
         sent: list[bytes] = []
         payload = self.payload()
         judged = hashlib.sha256(payload.unseal()).hexdigest()
-        ex.run_candidate(payload, self.manifest, sent.append)
+        ex.run_candidate(payload, self.authority, sent.append)
         self.assertEqual(hashlib.sha256(sent[0]).hexdigest(), judged)
 
     def test_the_transport_opens_no_file_between_the_gate_and_the_wire(self) -> None:
@@ -85,7 +93,7 @@ class WiringTests(unittest.TestCase):
 
         builtins.open, Path.read_bytes = watched_open, watched_read
         try:
-            ex.run_candidate(payload, self.manifest, lambda _b: None)
+            ex.run_candidate(payload, self.authority, lambda _b: None)
         finally:
             builtins.open, Path.read_bytes = real_open, real_read
         self.assertEqual(opened, [], f"the transport read {opened}")
@@ -108,16 +116,18 @@ class WiringTests(unittest.TestCase):
         sent: list[bytes] = []
         with self.assertRaises(Exception):
             ex.run_candidate(ex.SealedPayload(struct.pack(f">{len(words)}I", *words)),
-                             self.manifest, sent.append)
+                             self.authority, sent.append)
         self.assertEqual(sent, [], "bytes reached the wire after a refusal")
 
     def test_a_manifest_disagreeing_with_the_fixed_bounds_never_reaches_the_wire(self) -> None:
         import copy
         doc = copy.deepcopy(self.manifest)
         doc["write_envelope"]["total_bytes"] = guard.TOTAL_BYTES + 4
+        import hashlib
+        authority = ex.PublishedCarrierAuthority(doc, RUN, hashlib.sha256(b"x").hexdigest())
         sent: list[bytes] = []
         with self.assertRaises(Exception):
-            ex.run_candidate(self.payload(), doc, sent.append)
+            ex.run_candidate(self.payload(), authority, sent.append)
         self.assertEqual(sent, [])
 
     def test_the_guard_runs_before_the_wire_not_after(self) -> None:
@@ -132,11 +142,96 @@ class WiringTests(unittest.TestCase):
 
         guard.guard_sequence = watched
         try:
-            ex.run_candidate(self.payload(), self.manifest,
+            ex.run_candidate(self.payload(), self.authority,
                              lambda _b: order.append("wire"))
         finally:
             guard.guard_sequence = real_guard
         self.assertEqual(order, ["guard", "wire"])
+
+
+class ManifestAuthorityTests(WiringTests):
+    """The manifest IS the whitelist and the pinned base, so who supplies it decides what a
+    permitted bit is."""
+
+    def test_a_bare_manifest_dict_is_refused(self) -> None:
+        """The reviewer's reproduction used exactly this: pass a copy of the manifest and
+        the caller owns the authority."""
+        sent: list[bytes] = []
+        with self.assertRaises(ex.TransportRefusal) as caught:
+            ex.run_candidate(self.payload(), self.manifest, sent.append)  # type: ignore[arg-type]
+        self.assertIn("PublishedCarrierAuthority", str(caught.exception))
+        self.assertEqual(sent, [], "bytes reached the wire under a caller-supplied manifest")
+
+    def test_a_widened_whitelist_with_a_correct_ecc_puts_nothing_on_the_wire(self) -> None:
+        """Reproduced end to end: add a non-LUT address to the whitelist, flip that bit,
+        recompute the ECC correctly. The fixed FAR/FDRI guard agrees — it is not looking at
+        content — so the ONLY thing that can refuse this is the manifest not being the
+        caller's to supply."""
+        import copy
+        import frame_ecc as fe
+        doc = copy.deepcopy(self.manifest)
+        far_hex = doc["write_envelope"]["envelopes"][0]["target_fars"][0]
+        far = int(far_hex, 16)
+        widened = {"far": far_hex, "word": 0, "bit": 0}
+        doc.setdefault("ownership", {})
+        for key in ("addresses", "writable", "whitelist"):
+            if isinstance(doc.get(key), list):
+                doc[key].append(widened)
+        frames = dict(self.targets)
+        edited = list(frames[far])
+        edited[0] ^= 1                       # a bit no LUT owns
+        frames[far] = fe.update_ecc(edited)  # and a CORRECT ECC
+
+        sent: list[bytes] = []
+        payload = ex.SealedPayload(ex.build_sequence_bytes(doc, frames))
+        with self.assertRaises(ex.TransportRefusal):
+            ex.run_candidate(payload, doc, sent.append)      # type: ignore[arg-type]
+        self.assertEqual(sent, [])
+
+        # and with a REAL authority, the host gate refuses the same candidate outright
+        sent.clear()
+        with self.assertRaises(Exception):
+            ex.run_candidate(payload, self.authority, sent.append)
+        self.assertEqual(sent, [])
+
+    def test_load_refuses_a_run_that_is_not_heads(self) -> None:
+        """A copy outside any repository agrees with itself perfectly."""
+        import shutil
+        import tempfile
+        loose = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, loose)
+        shutil.copytree(RUN, loose / "run")
+        with self.assertRaises(ex.TransportRefusal) as caught:
+            ex.PublishedCarrierAuthority.load(loose / "run")
+        self.assertIn("published authority", str(caught.exception))
+
+
+class SessionBindingTests(unittest.TestCase):
+    """An arbitrary callable carries no session, no epoch and no control plane."""
+
+    class FakeSession:
+        def __init__(self, authorised=True):
+            self.authorised, self.calls = authorised, []
+
+        def authorise_write(self, control_plane):
+            self.calls.append(("authorise", control_plane))
+            if not self.authorised:
+                raise RuntimeError("no verified identity on this session")
+
+        def write_sequence(self, payload_bytes):
+            self.calls.append(("write", len(payload_bytes)))
+
+    def test_it_authorises_on_the_same_session_before_writing(self) -> None:
+        session = self.FakeSession()
+        ex.board_uboot_transmit(session)(b"\x00" * 16)
+        self.assertEqual([c[0] for c in session.calls], ["authorise", "write"])
+        self.assertEqual(session.calls[0][1], "uboot")
+
+    def test_an_unauthorised_session_writes_nothing(self) -> None:
+        session = self.FakeSession(authorised=False)
+        with self.assertRaises(RuntimeError):
+            ex.board_uboot_transmit(session)(b"\x00" * 16)
+        self.assertEqual([c[0] for c in session.calls], ["authorise"])
 
 
 if __name__ == "__main__":
