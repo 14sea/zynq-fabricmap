@@ -375,6 +375,44 @@ by catching a case where a buffer clear and a word transfer landed in the same c
 consumer counted the word, the CRC dropped it, and the frame came out at 400 bytes instead
 of appearing as a CRC that merely looked wrong.
 
+#### The console transport, and the watchdog budget it has to fit — 2026-08-11
+
+The host interface above says what the registers are; it does not say how fast the host has
+to be, and that turned out to be the binding constraint. `carrier_stream`'s watchdog is a
+21-bit counter whose top bit is the expiry, so a phase has **2²⁰ FCLK0 cycles = 20.97 ms**
+end to end. It is loaded at the start of a pass and at entry to readback, and **not per
+frame** — so the whole five-frame readback of an envelope, host acknowledgements included,
+shares one budget.
+
+Both benches acknowledge in the cycle after `rb_frame_ready`
+(`always @(posedge clk) rb_ack <= rb_frame_ready && !rb_ack`), so simulation never saw a
+host that takes milliseconds. Measured on board `17A6` (U-Boot 2026.04-rc5, 115200): a
+command with no output is a ~5 ms round trip, `cp.l` of 536 words is ~7 ms, and `md.l` of
+101 words is ~152 ms because of the printing. The obvious host loop — poll, `md` the frame,
+write the ack — is therefore about 14 ms per frame and cannot fit; and it would fail as a
+*readback difference*, which erratum 001 defines as falsifying the carrier. **It must not be
+attempted.**
+
+What fits, and is what `scripts/board_uboot_axi.py` does: one console line per envelope
+carrying the pass and all five frame copies and acknowledgements. U-Boot reads a line to
+completion before executing it, so the console cost is paid before the watchdog starts;
+frames are copied to DRAM with `cp.l` (no printing) and read out afterwards, when nothing is
+being timed. Between frames the interlock is an inline hush poll loop on
+`rb_frame_ready | fault`, ~180 µs per iteration. It is inline and not an environment script
+because `setenv` strips one level of quoting and the `&` `setexpr` needs comes back out bare,
+which hush reads as "run in background"; every storable spelling was tried on the board and
+`run` answers `syntax error`.
+
+Two properties make this safe to try rather than merely plausible. `cp` is `memmove()`,
+which for a forward non-overlapping copy is ARM's assembly `memcpy` — LDM/STM blocks, and
+this slave has no burst support (`AWLEN` is not wired), so a burst would deadlock the W
+channel. Against that: U-Boot maps everything outside DRAM as `DCACHE_OFF`, which on
+non-LPAE ARMv7 is Strongly-ordered, where accesses may not be merged; and zynq-autoehw
+already did this copy on this hardware and read the values back. And it is *checked* for
+free, because **pass 1 never asserts CSIB** — `icap_csib` goes low only under `P_PASS2` —
+so the first three envelopes exercise the entire transport with no ICAP activity at all. A
+dropped or duplicated word faults the pass before anything has reached the fabric.
+
 ### Superseded 2026-08-10: the envelope-staged two-pass contract
 
 The one-envelope buffer is taken. Neither of the alternatives is: changing the PS

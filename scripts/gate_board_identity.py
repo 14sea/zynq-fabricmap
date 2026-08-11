@@ -56,6 +56,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import board_serial as bs  # noqa: E402
 import board_set_fclk50 as fclk  # noqa: E402
+import board_uboot_axi as axi  # noqa: E402
 
 TOOL_VERSION = "gate_board_identity.py/1.0.0"
 
@@ -121,6 +122,16 @@ class SerialTransport:
 
     def command(self, line: str, timeout: float = 1.5) -> bytes:
         return bs.ub_cmd(self._serial, line, timeout)
+
+    def interrupt(self, timeout: float = 2.0) -> bytes:
+        """Ctrl-C, for a hush loop that is still spinning.
+
+        Not a reset and not a recovery: it breaks a `while` in the U-Boot shell and nothing
+        else. A CPU stalled on an AXI access does not answer it, which is how the two are
+        told apart.
+        """
+        self._serial.write(b"\x03")
+        return bs.read_until(self._serial, bs.PROMPT_RE, timeout)
 
     def descriptor(self) -> dict:
         return {
@@ -205,6 +216,7 @@ class BoardSession:
         self.epoch = 0
         self.disruptions: list[dict] = []
         self._prompt_mode: str | None = None
+        self.last_transaction: dict | None = None
 
     # -- epoch ------------------------------------------------------------------
 
@@ -376,6 +388,35 @@ class BoardSession:
                 "authorisation, and a Linux-side executor needs its own verification"
             )
         return self._identity
+
+    # -- the one device write ---------------------------------------------------
+
+    def write_sequence(self, payload_bytes: bytes) -> dict:
+        """THE device write. Every fabric write in this repository goes through here.
+
+        It holds `board_uboot_axi.WRITE_CAPABILITY`, which `execute_transaction` demands,
+        so the transport cannot be driven by importing it: a module that could write to the
+        fabric without a verified session would be a second entrypoint whatever its caller
+        intended. `tests/test_single_write_entrypoint.py` turns "there is no second one"
+        into something that is checked rather than asserted.
+
+        `authorise_write()` is re-asked here even though `board_uboot_transmit` already
+        asked. That is not redundancy for its own sake: the two calls close different holes.
+        The transmit callable's check is about the caller having a session at all; this one
+        is about *this* method never running outside a live authorisation, however it was
+        reached. Both are cheap; the epoch is in memory.
+
+        The transaction record is kept on the session — the transmit callable that
+        `board_carrier_exec` binds returns None by contract, and the readback frames have to
+        reach the caller that owns this session, in this epoch, without a second channel.
+        """
+        identity = self.authorise_write(CONTROL_PLANE)
+        record = axi.execute_transaction(
+            axi.WRITE_CAPABILITY, self.transport, payload_bytes)
+        record["epoch"] = self.epoch
+        record["boardid"] = identity["parsed"]["boardid"]
+        self.last_transaction = record
+        return record
 
 
 def main() -> int:
