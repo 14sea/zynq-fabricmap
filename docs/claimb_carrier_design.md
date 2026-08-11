@@ -214,8 +214,14 @@ Confirmed 2026-08-10 against `run_log`'s hash domains, which do not collide:
 `candidate_sha256` and `readback_sha256` are both the FAR-ordered canonical frame set — so
 comparing the latter two is meaningful, and the former pins what was actually transmitted.
 
-> **arm ⟺ `gate_verdict.writable` ∧ `configuration_valid` ∧
+> **arm ⟺ `gate_verdict.writable` ∧ `configuration_valid` ∧ `¬recovery_required` ∧
 > `candidate_sha256 == readback_sha256`**
+
+`¬recovery_required` was missing here until 2026-08-11 while §4 item 6 already said what
+was written before a fault may never be scored. The two are one rule and the formula was
+the incomplete statement of it: `configuration_valid` is legitimately raised again by a
+later complete, fully verified transaction, so it cannot carry "no fault has happened since
+the carrier was loaded". `carrier_scorer` enforces the conjunct in hardware.
 
 One conjunct per link of §3b: the host gate's verdict, the fabric's own confirmation, and
 the host's independent check that what came back is what went out.

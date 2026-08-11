@@ -22,9 +22,12 @@ proc pick {what pattern want} {
 
 create_project -in_memory -part $part
 set_property verilog_define {} [current_fileset]
-add_files -norecurse [list \
-    $here/carrier_top.v $here/carrier_axil.v $here/carrier_stream.v \
-    $here/carrier_crc32.v $here/carrier_scorer.v]
+# One list, used both to add the sources and to hash them into the provenance record: a
+# second hand-kept list would drift from what Vivado actually reads, which is the only list
+# that matters.
+set srcs [list $here/carrier_top.v $here/carrier_axil.v $here/carrier_stream.v \
+               $here/carrier_crc32.v $here/carrier_scorer.v]
+add_files -norecurse $srcs
 set_property include_dirs [list $here/generated] [current_fileset]
 add_files -fileset constrs_1 -norecurse $here/carrier.xdc
 
@@ -93,6 +96,36 @@ write_bitstream -force $outdir/carrier.bit
 # just wrote is the routed design whose cell isolation passed, so it is this script
 # that records it. scripts/gate_carrier_base.py refuses a phenotype_manifest whose
 # base does not match this record.
+# THE SOURCES, hashed, and the commit they came from. Output hashes alone cannot show that
+# a bitstream was built from the RTL now in history: carrier_stream.v, carrier_scorer.v and
+# carrier_top.v were all edited AFTER a published build, the integration bench verified the
+# new sources, and the exact bitstream a board would load was still the pre-fix one. Nothing
+# in the record could have caught that.
+#
+# Every file Vivado actually reads is listed here — the sources added above, the XDC, the
+# generated inputs, and the two scripts that run the build and the checks — so
+# `scripts/gate_carrier_base.py` can require each to equal its HEAD blob and refuse a
+# bitstream whose sources have since moved.
+set source_files {}
+foreach f [concat $srcs [list $here/carrier.xdc $here/build_carrier.tcl \
+                              $here/isolation_checks.tcl] \
+                   [lsort [glob -nocomplain $here/generated/*]]] {
+    lappend source_files $f
+}
+set source_json {}
+foreach f $source_files {
+    set rel [string range $f [expr {[string length [file dirname [file dirname $here]]] + 1}] end]
+    lappend source_json "    \"$rel\": \"[lindex [exec sha256sum $f] 0]\""
+}
+set source_commit "unknown"
+if {![catch {exec git -C [file dirname [file dirname $here]] rev-parse HEAD} out]} {
+    set source_commit [string trim $out]
+}
+set source_dirty "unknown"
+if {![catch {exec git -C [file dirname [file dirname $here]] diff HEAD --name-only} out]} {
+    set source_dirty [expr {[string trim $out] eq "" ? "clean" : "DIRTY"}]
+}
+
 set bit_sha [lindex [exec sha256sum $outdir/carrier.bit] 0]
 set dcp_sha [lindex [exec sha256sum $outdir/post_route.dcp] 0]
 set iso_sha [lindex [exec sha256sum $outdir/isolation.txt] 0]
@@ -110,7 +143,12 @@ puts $fh "  \"wns_ns\": $wns,"
 puts $fh "  \"bitstream\": \"carrier.bit\","
 puts $fh "  \"bitstream_sha256\": \"$bit_sha\","
 puts $fh "  \"post_route_dcp_sha256\": \"$dcp_sha\","
-puts $fh "  \"isolation_evidence_sha256\": \"$iso_sha\""
+puts $fh "  \"isolation_evidence_sha256\": \"$iso_sha\","
+puts $fh "  \"source_commit\": \"$source_commit\","
+puts $fh "  \"source_tree\": \"$source_dirty\","
+puts $fh "  \"sources\": {"
+puts $fh [join $source_json ",\n"]
+puts $fh "  }"
 puts $fh "}"
 close $fh
 

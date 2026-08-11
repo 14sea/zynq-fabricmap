@@ -121,8 +121,12 @@ def head_authority_problems(run_dir: Path) -> list[dict]:
       * ordinary artifacts must be byte-identical to their HEAD blobs;
       * an LFS artifact's HEAD blob must be a pointer whose **oid is the bundle's pin** —
         the digest of the bytes, so the pointer names the artifact the bundle vouches for;
-      * no tracked file may carry an unstaged modification, including the gates themselves:
-        a verdict produced by an edited working copy says nothing about what is published.
+      * no tracked file may differ from HEAD **in the working tree or in the index**,
+        including the gates themselves. `git diff` alone was not enough: it compares the
+        working tree against the INDEX, so editing a gate and then `git add`-ing it left
+        `git diff` empty and the verdict was accepted. `git diff HEAD` is the question that
+        was meant — is anything different from what is published — and staging is not a way
+        to answer it.
     """
     problems: list[dict] = []
 
@@ -151,11 +155,14 @@ def head_authority_problems(run_dir: Path) -> list[dict]:
     if doc is None:
         return problems          # load() already reported it
 
-    dirty = _git("diff", "--name-only").stdout.decode().split()
+    # `git diff HEAD`, NOT `git diff`: the latter compares the working tree against the
+    # index, so `git add` of an edited gate emptied it and the verdict was accepted.
+    dirty = _git("diff", "HEAD", "--name-only").stdout.decode().split()
     if dirty:
         bad("authority",
-            f"{len(dirty)} tracked file(s) carry unstaged modifications, so this verdict "
-            "would describe an edited working copy rather than what is published",
+            f"{len(dirty)} tracked file(s) differ from HEAD in the working tree or the "
+            "index, so this verdict would describe an edited copy rather than what is "
+            "published",
             examples=dirty[:5])
 
     names = list((doc.get("artifacts") or {})) + ["carrier_run.json"]

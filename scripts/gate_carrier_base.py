@@ -17,7 +17,13 @@ So this refuses unless all of the following hold:
 * the bitstream file on disk still hashes to what the record says;
 * the manifest's `base_bitstream.sha256` equals that same hash;
 * the post-route DCP and the isolation evidence still hash to what the record says, so the
-  artifacts the record vouches for have not been swapped underneath it.
+  artifacts the record vouches for have not been swapped underneath it;
+* **every source the build read still equals its HEAD blob.** Output hashes alone cannot
+  show that a bitstream was built from the RTL now in history: `carrier_stream.v`,
+  `carrier_scorer.v` and `carrier_top.v` were all edited after a published build, a bench
+  verified the new sources, and the exact bitstream a board would have loaded was still the
+  pre-fix one. Nothing in the record could have caught it. Now a source that has moved
+  since the build refuses the run until it is rebuilt.
 
 **Two builds of identical RTL do NOT produce identical files.** `write_bitstream` stamps a
 timestamp into the header, so the frames match while the file hash does not — measured, not
@@ -31,7 +37,9 @@ Exit codes: 0 accepted, 2 refused, 3 usage/IO.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -40,7 +48,7 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import carrier_run as cr  # noqa: E402
 
-TOOL_VERSION = "gate_carrier_base.py/2.0.0"
+TOOL_VERSION = "gate_carrier_base.py/3.0.0"
 
 sha256_of = cr.sha256_of
 
@@ -120,6 +128,32 @@ def findings(run_dir: Path) -> tuple[list[dict], dict]:
 
     if manifest.get("schema") != "phenotype_manifest":
         bad("manifest", f"not a phenotype_manifest: schema={manifest.get('schema')!r}")
+
+    # ---- the sources the build actually read, against HEAD
+    sources = prov.get("sources")
+    if not isinstance(sources, dict) or not sources:
+        bad("sources",
+            "the build record pins no source hashes, so nothing connects this bitstream to "
+            "the RTL in history — rebuild with a provenance-emitting build")
+    else:
+        if prov.get("source_tree") != "clean":
+            bad("sources",
+                f"the build ran against a tree that was not clean: "
+                f"source_tree={prov.get('source_tree')!r}")
+        for rel, recorded in sorted(sources.items()):
+            shown = subprocess.run(
+                ["git", "cat-file", "blob", f"HEAD:{rel}"],
+                cwd=REPO_ROOT, capture_output=True, check=False)
+            if shown.returncode != 0:
+                bad("sources", f"{rel} was read by the build but is not tracked in HEAD",
+                    path=rel)
+                continue
+            actual = hashlib.sha256(shown.stdout).hexdigest()
+            if actual != recorded:
+                bad("sources",
+                    f"{rel} has changed since the bitstream was built: the published "
+                    "carrier is not what this source tree produces",
+                    path=rel, built_from=recorded, head=actual)
 
     base_sha = (manifest.get("base_bitstream") or {}).get("sha256")
     if base_sha != prov.get("bitstream_sha256"):

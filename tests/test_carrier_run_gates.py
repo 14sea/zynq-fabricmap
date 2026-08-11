@@ -59,6 +59,12 @@ def digest(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def head_blob_sha(rel: str) -> str:
+    blob = subprocess.run(["git", "cat-file", "blob", f"HEAD:{rel}"],
+                          cwd=REPO_ROOT, capture_output=True, check=True).stdout
+    return hashlib.sha256(blob).hexdigest()
+
+
 def kinds_of(names) -> dict:
     return {n: {"lfs": n.endswith((".bit", ".dcp"))} for n in names}
 
@@ -83,6 +89,12 @@ class BundleFixture(unittest.TestCase):
             "bitstream_sha256": digest(payloads["carrier.bit"]),
             "post_route_dcp_sha256": digest(payloads["post_route.dcp"]),
             "isolation_evidence_sha256": digest(payloads["isolation.txt"]),
+            "source_commit": "0" * 40,
+            "source_tree": "clean",
+            # a real tracked path at its real HEAD hash, so the good case passes for the
+            # right reason rather than because the check was skipped
+            "sources": {"vivado/carrier/carrier_crc32.v": head_blob_sha(
+                "vivado/carrier/carrier_crc32.v")},
         }, indent=2) + "\n").encode()
         payloads["carrier_eco.json"] = (json.dumps({
             "schema": "carrier_eco", "cell": "evolvable_0", "loc": "SLICE_X2Y25",
@@ -202,6 +214,46 @@ class CarrierBaseGateTests(BundleFixture):
             {"sha256": digest(payload), "bytes": len(payload)}))
         problems, _ = base_gate.findings(root)
         self.assertTrue(any(p["kind"] == "isolation" for p in problems), problems)
+
+    def test_a_record_without_source_hashes_is_refused(self) -> None:
+        """Output hashes alone cannot connect a bitstream to the RTL in history."""
+        root = self.run_dir()
+        record = json.loads((root / "carrier_build.json").read_text())
+        record.pop("sources", None)
+        payload = (json.dumps(record, indent=2) + "\n").encode()
+        (root / "carrier_build.json").write_bytes(payload)
+        self.rewrite_bundle(root, lambda b: b["artifacts"]["carrier_build.json"].update(
+            {"sha256": digest(payload), "bytes": len(payload)}))
+        problems, _ = base_gate.findings(root)
+        self.assertTrue(any(p["kind"] == "sources" for p in problems), problems)
+
+    def test_a_source_that_moved_since_the_build_is_refused(self) -> None:
+        """The exact defect: RTL edited after a published build, benches verifying the new
+        sources, and the bitstream a board would load still the pre-fix one."""
+        root = self.run_dir()
+        record = json.loads((root / "carrier_build.json").read_text())
+        # a real tracked path, pinned to a hash it does not have
+        record["source_tree"] = "clean"
+        record["sources"] = {"vivado/carrier/carrier_stream.v": "0" * 64}
+        payload = (json.dumps(record, indent=2) + "\n").encode()
+        (root / "carrier_build.json").write_bytes(payload)
+        self.rewrite_bundle(root, lambda b: b["artifacts"]["carrier_build.json"].update(
+            {"sha256": digest(payload), "bytes": len(payload)}))
+        problems, _ = base_gate.findings(root)
+        self.assertTrue(any(p["kind"] == "sources" and "has changed since" in p["message"]
+                            for p in problems), problems)
+
+    def test_a_build_from_a_dirty_tree_is_refused(self) -> None:
+        root = self.run_dir()
+        record = json.loads((root / "carrier_build.json").read_text())
+        record["source_tree"] = "DIRTY"
+        record["sources"] = {"vivado/carrier/carrier_stream.v": "0" * 64}
+        payload = (json.dumps(record, indent=2) + "\n").encode()
+        (root / "carrier_build.json").write_bytes(payload)
+        self.rewrite_bundle(root, lambda b: b["artifacts"]["carrier_build.json"].update(
+            {"sha256": digest(payload), "bytes": len(payload)}))
+        problems, _ = base_gate.findings(root)
+        self.assertTrue(any("not clean" in p["message"] for p in problems), problems)
 
     def test_a_bundle_the_loader_rejects_stops_the_gate(self) -> None:
         root = self.run_dir()
@@ -385,13 +437,25 @@ class HeadAuthorityTests(unittest.TestCase):
         (root / run_root / "phenotype_manifest.json").write_text('{"schema": "edited"}\n')
         self.assertTrue(self.ask(root, run_root))
 
+    def test_a_staged_change_to_a_tracked_file_is_refused(self) -> None:
+        """Staging is not a way to answer "is anything different from what is published".
+        `git diff` compares the working tree against the INDEX, so editing a gate and then
+        `git add`-ing it left it empty and the verdict was accepted."""
+        root, run_root = self.repo_with_run()
+        (root / ".gitattributes").write_text(RULE + "# edited\n")
+        git(root, "add", ".gitattributes")
+        self.assertEqual(git(root, "diff", "--name-only").stdout.strip(), "",
+                         "the fixture must reproduce the empty `git diff`")
+        problems = self.ask(root, run_root)
+        self.assertTrue(any("differ from HEAD" in p["message"] for p in problems), problems)
+
     def test_an_unstaged_change_to_any_tracked_file_is_refused(self) -> None:
         """Including the gates: a verdict from an edited working copy describes nothing
         anyone can review."""
         root, run_root = self.repo_with_run()
         (root / ".gitattributes").write_text(RULE + "# edited\n")
         problems = self.ask(root, run_root)
-        self.assertTrue(any("unstaged" in p["message"] for p in problems), problems)
+        self.assertTrue(any("differ from HEAD" in p["message"] for p in problems), problems)
 
     def test_neither_cli_offers_a_repo_override(self) -> None:
         """Asked of the parser, not of the source text: an earlier version grepped for the
