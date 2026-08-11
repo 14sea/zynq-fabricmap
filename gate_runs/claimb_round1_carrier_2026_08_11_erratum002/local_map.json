@@ -1,0 +1,4478 @@
+{
+  "schema": "local_map",
+  "schema_version": "1.0.0",
+  "map_id": "clb_lut_init_v1",
+  "provenance": {
+    "kind": "certificate_inherited",
+    "certificate": {
+      "path": "gate_runs/run_2026_08_02_a/certificate.json",
+      "sha256": "33ca02a3231c25b075edfe5d30416da97406f5e1e85733ac76837a1b55f5b95e",
+      "schema_version": "1.2.0",
+      "certificate_id": "run_2026_08_02_a_clb_lut_init",
+      "status": "passed",
+      "profile": "production",
+      "bit_class_id": "clb_lut_init"
+    },
+    "frozen_data": {
+      "path": "data/MANIFEST.json",
+      "sha256": "b20d8e2fbdc57c82b9514f9d6067139ed90ed0b59a8a25b01753565ab837ae7a",
+      "freeze_stamp": "2026-08-02T01:29:26Z"
+    }
+  },
+  "target": {
+    "family": "zynq7",
+    "device": "xc7z010",
+    "part": "xc7z010clg400-1"
+  },
+  "bit_class": {
+    "id": "clb_lut_init",
+    "tier": "content",
+    "class_entry_count": 2048,
+    "attested_count": 292
+  },
+  "universe": {
+    "address_count": 292,
+    "far_count": 12,
+    "words": [
+      51,
+      52
+    ],
+    "addresses": [
+      {
+        "key": "0x00400A20/51/0",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 0,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[54]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/1",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 1,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[52]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/2",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 2,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[50]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/3",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 3,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[48]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/4",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 4,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[38]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/7",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 7,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[32]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/8",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 8,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[22]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/9",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 9,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[20]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/10",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 10,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[18]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/11",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 11,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[16]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/12",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 12,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[06]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/13",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 13,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[04]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/14",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 14,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[02]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/51/15",
+        "far": "0x00400A20",
+        "word": 51,
+        "bit": 15,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[00]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/52/16",
+        "far": "0x00400A20",
+        "word": 52,
+        "bit": 16,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[54]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/52/18",
+        "far": "0x00400A20",
+        "word": 52,
+        "bit": 18,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[50]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/52/19",
+        "far": "0x00400A20",
+        "word": 52,
+        "bit": 19,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[48]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/52/20",
+        "far": "0x00400A20",
+        "word": 52,
+        "bit": 20,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[38]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/52/21",
+        "far": "0x00400A20",
+        "word": 52,
+        "bit": 21,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[36]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/52/22",
+        "far": "0x00400A20",
+        "word": 52,
+        "bit": 22,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[34]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/52/23",
+        "far": "0x00400A20",
+        "word": 52,
+        "bit": 23,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[32]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/52/26",
+        "far": "0x00400A20",
+        "word": 52,
+        "bit": 26,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[18]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/52/27",
+        "far": "0x00400A20",
+        "word": 52,
+        "bit": 27,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[16]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/52/28",
+        "far": "0x00400A20",
+        "word": 52,
+        "bit": 28,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[06]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/52/29",
+        "far": "0x00400A20",
+        "word": 52,
+        "bit": 29,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[04]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A20/52/30",
+        "far": "0x00400A20",
+        "word": 52,
+        "bit": 30,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[02]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/51/1",
+        "far": "0x00400A21",
+        "word": 51,
+        "bit": 1,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[53]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/51/2",
+        "far": "0x00400A21",
+        "word": 51,
+        "bit": 2,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[51]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/51/4",
+        "far": "0x00400A21",
+        "word": 51,
+        "bit": 4,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[39]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/51/5",
+        "far": "0x00400A21",
+        "word": 51,
+        "bit": 5,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[37]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/51/6",
+        "far": "0x00400A21",
+        "word": 51,
+        "bit": 6,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[35]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/51/9",
+        "far": "0x00400A21",
+        "word": 51,
+        "bit": 9,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[21]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/51/10",
+        "far": "0x00400A21",
+        "word": 51,
+        "bit": 10,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[19]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/51/11",
+        "far": "0x00400A21",
+        "word": 51,
+        "bit": 11,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[17]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/51/12",
+        "far": "0x00400A21",
+        "word": 51,
+        "bit": 12,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[07]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/51/14",
+        "far": "0x00400A21",
+        "word": 51,
+        "bit": 14,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[03]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/51/15",
+        "far": "0x00400A21",
+        "word": 51,
+        "bit": 15,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[01]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/16",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 16,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[55]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/17",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 17,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[53]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/18",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 18,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[51]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/20",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 20,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[39]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/21",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 21,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[37]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/23",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 23,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[33]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/24",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 24,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[23]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/25",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 25,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[21]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/26",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 26,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[19]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/27",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 27,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[17]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/28",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 28,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[07]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/29",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 29,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[05]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A21/52/31",
+        "far": "0x00400A21",
+        "word": 52,
+        "bit": 31,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[01]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/51/0",
+        "far": "0x00400A22",
+        "word": 51,
+        "bit": 0,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[63]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/51/2",
+        "far": "0x00400A22",
+        "word": 51,
+        "bit": 2,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[59]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/51/3",
+        "far": "0x00400A22",
+        "word": 51,
+        "bit": 3,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[57]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/51/6",
+        "far": "0x00400A22",
+        "word": 51,
+        "bit": 6,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[43]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/51/7",
+        "far": "0x00400A22",
+        "word": 51,
+        "bit": 7,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[41]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/51/9",
+        "far": "0x00400A22",
+        "word": 51,
+        "bit": 9,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[29]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/51/10",
+        "far": "0x00400A22",
+        "word": 51,
+        "bit": 10,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[27]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/51/12",
+        "far": "0x00400A22",
+        "word": 51,
+        "bit": 12,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[15]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/51/13",
+        "far": "0x00400A22",
+        "word": 51,
+        "bit": 13,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[13]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/51/14",
+        "far": "0x00400A22",
+        "word": 51,
+        "bit": 14,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[11]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/51/15",
+        "far": "0x00400A22",
+        "word": 51,
+        "bit": 15,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[09]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/16",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 16,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[63]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/17",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 17,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[61]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/20",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 20,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[47]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/21",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 21,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[45]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/22",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 22,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[43]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/23",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 23,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[41]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/25",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 25,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[29]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/26",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 26,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[27]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/27",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 27,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[25]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/28",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 28,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[15]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/29",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 29,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[13]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/30",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 30,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[11]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A22/52/31",
+        "far": "0x00400A22",
+        "word": 52,
+        "bit": 31,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[09]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/0",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 0,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[62]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/1",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 1,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[60]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/4",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 4,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[46]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/5",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 5,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[44]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/6",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 6,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[42]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/7",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 7,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[40]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/8",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 8,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[30]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/10",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 10,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[26]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/11",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 11,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[24]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/12",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 12,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[14]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/13",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 13,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[12]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/14",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 14,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[10]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/51/15",
+        "far": "0x00400A23",
+        "word": 51,
+        "bit": 15,
+        "feature": "CLBLL_L.SLICEL_X0.ALUT.INIT[08]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/52/16",
+        "far": "0x00400A23",
+        "word": 52,
+        "bit": 16,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[62]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/52/18",
+        "far": "0x00400A23",
+        "word": 52,
+        "bit": 18,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[58]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/52/20",
+        "far": "0x00400A23",
+        "word": 52,
+        "bit": 20,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[46]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/52/22",
+        "far": "0x00400A23",
+        "word": 52,
+        "bit": 22,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[42]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/52/23",
+        "far": "0x00400A23",
+        "word": 52,
+        "bit": 23,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[40]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/52/24",
+        "far": "0x00400A23",
+        "word": 52,
+        "bit": 24,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[30]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/52/25",
+        "far": "0x00400A23",
+        "word": 52,
+        "bit": 25,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[28]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/52/28",
+        "far": "0x00400A23",
+        "word": 52,
+        "bit": 28,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[14]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/52/29",
+        "far": "0x00400A23",
+        "word": 52,
+        "bit": 29,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[12]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/52/30",
+        "far": "0x00400A23",
+        "word": 52,
+        "bit": 30,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[10]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400A23/52/31",
+        "far": "0x00400A23",
+        "word": 52,
+        "bit": 31,
+        "feature": "CLBLL_L.SLICEL_X0.DLUT.INIT[08]",
+        "expected_value": 1,
+        "split": "mine",
+        "rule_file": "prjxray/zynq7/segbits_clbll_l.db"
+      },
+      {
+        "key": "0x00400C1A/51/0",
+        "far": "0x00400C1A",
+        "word": 51,
+        "bit": 0,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[54]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/51/1",
+        "far": "0x00400C1A",
+        "word": 51,
+        "bit": 1,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[52]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/51/3",
+        "far": "0x00400C1A",
+        "word": 51,
+        "bit": 3,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[48]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/51/5",
+        "far": "0x00400C1A",
+        "word": 51,
+        "bit": 5,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[36]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/51/6",
+        "far": "0x00400C1A",
+        "word": 51,
+        "bit": 6,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[34]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/51/7",
+        "far": "0x00400C1A",
+        "word": 51,
+        "bit": 7,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[32]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/51/11",
+        "far": "0x00400C1A",
+        "word": 51,
+        "bit": 11,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[16]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/51/12",
+        "far": "0x00400C1A",
+        "word": 51,
+        "bit": 12,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[06]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/51/13",
+        "far": "0x00400C1A",
+        "word": 51,
+        "bit": 13,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[04]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/51/15",
+        "far": "0x00400C1A",
+        "word": 51,
+        "bit": 15,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[00]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/16",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 16,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[54]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/17",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 17,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[52]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/18",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 18,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[50]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/19",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 19,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[48]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/20",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 20,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[38]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/21",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 21,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[36]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/22",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 22,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[34]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/23",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 23,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[32]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/24",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 24,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[22]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/25",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 25,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[20]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/26",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 26,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[18]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/28",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 28,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[06]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/29",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 29,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[04]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/30",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 30,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[02]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1A/52/31",
+        "far": "0x00400C1A",
+        "word": 52,
+        "bit": 31,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[00]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/51/0",
+        "far": "0x00400C1B",
+        "word": 51,
+        "bit": 0,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[55]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/51/1",
+        "far": "0x00400C1B",
+        "word": 51,
+        "bit": 1,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[53]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/51/2",
+        "far": "0x00400C1B",
+        "word": 51,
+        "bit": 2,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[51]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/51/4",
+        "far": "0x00400C1B",
+        "word": 51,
+        "bit": 4,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[39]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/51/5",
+        "far": "0x00400C1B",
+        "word": 51,
+        "bit": 5,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[37]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/51/7",
+        "far": "0x00400C1B",
+        "word": 51,
+        "bit": 7,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[33]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/51/8",
+        "far": "0x00400C1B",
+        "word": 51,
+        "bit": 8,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[23]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/51/9",
+        "far": "0x00400C1B",
+        "word": 51,
+        "bit": 9,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[21]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/51/10",
+        "far": "0x00400C1B",
+        "word": 51,
+        "bit": 10,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[19]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/51/13",
+        "far": "0x00400C1B",
+        "word": 51,
+        "bit": 13,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[05]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/51/14",
+        "far": "0x00400C1B",
+        "word": 51,
+        "bit": 14,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[03]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/52/16",
+        "far": "0x00400C1B",
+        "word": 52,
+        "bit": 16,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[55]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/52/17",
+        "far": "0x00400C1B",
+        "word": 52,
+        "bit": 17,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[53]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/52/18",
+        "far": "0x00400C1B",
+        "word": 52,
+        "bit": 18,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[51]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/52/19",
+        "far": "0x00400C1B",
+        "word": 52,
+        "bit": 19,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[49]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/52/20",
+        "far": "0x00400C1B",
+        "word": 52,
+        "bit": 20,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[39]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/52/22",
+        "far": "0x00400C1B",
+        "word": 52,
+        "bit": 22,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[35]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/52/24",
+        "far": "0x00400C1B",
+        "word": 52,
+        "bit": 24,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[23]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/52/25",
+        "far": "0x00400C1B",
+        "word": 52,
+        "bit": 25,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[21]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/52/26",
+        "far": "0x00400C1B",
+        "word": 52,
+        "bit": 26,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[19]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/52/28",
+        "far": "0x00400C1B",
+        "word": 52,
+        "bit": 28,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[07]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/52/29",
+        "far": "0x00400C1B",
+        "word": 52,
+        "bit": 29,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[05]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1B/52/30",
+        "far": "0x00400C1B",
+        "word": 52,
+        "bit": 30,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[03]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/0",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 0,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[63]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/1",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 1,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[61]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/2",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 2,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[59]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/3",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 3,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[57]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/4",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 4,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[47]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/6",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 6,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[43]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/7",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 7,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[41]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/8",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 8,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[31]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/9",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 9,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[29]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/10",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 10,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[27]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/11",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 11,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[25]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/12",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 12,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[15]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/13",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 13,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[13]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/14",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 14,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[11]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/51/15",
+        "far": "0x00400C1C",
+        "word": 51,
+        "bit": 15,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[09]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/52/16",
+        "far": "0x00400C1C",
+        "word": 52,
+        "bit": 16,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[63]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/52/17",
+        "far": "0x00400C1C",
+        "word": 52,
+        "bit": 17,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[61]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/52/19",
+        "far": "0x00400C1C",
+        "word": 52,
+        "bit": 19,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[57]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/52/20",
+        "far": "0x00400C1C",
+        "word": 52,
+        "bit": 20,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[47]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/52/22",
+        "far": "0x00400C1C",
+        "word": 52,
+        "bit": 22,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[43]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/52/23",
+        "far": "0x00400C1C",
+        "word": 52,
+        "bit": 23,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[41]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/52/25",
+        "far": "0x00400C1C",
+        "word": 52,
+        "bit": 25,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[29]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/52/26",
+        "far": "0x00400C1C",
+        "word": 52,
+        "bit": 26,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[27]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/52/28",
+        "far": "0x00400C1C",
+        "word": 52,
+        "bit": 28,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[15]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/52/29",
+        "far": "0x00400C1C",
+        "word": 52,
+        "bit": 29,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[13]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/52/30",
+        "far": "0x00400C1C",
+        "word": 52,
+        "bit": 30,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[11]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1C/52/31",
+        "far": "0x00400C1C",
+        "word": 52,
+        "bit": 31,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[09]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/0",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 0,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[62]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/1",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 1,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[60]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/2",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 2,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[58]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/3",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 3,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[56]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/5",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 5,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[44]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/6",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 6,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[42]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/7",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 7,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[40]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/8",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 8,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[30]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/11",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 11,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[24]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/12",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 12,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[14]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/13",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 13,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[12]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/14",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 14,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[10]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/51/15",
+        "far": "0x00400C1D",
+        "word": 51,
+        "bit": 15,
+        "feature": "CLBLM_L.SLICEL_X1.ALUT.INIT[08]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/52/16",
+        "far": "0x00400C1D",
+        "word": 52,
+        "bit": 16,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[62]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/52/17",
+        "far": "0x00400C1D",
+        "word": 52,
+        "bit": 17,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[60]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/52/19",
+        "far": "0x00400C1D",
+        "word": 52,
+        "bit": 19,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[56]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/52/20",
+        "far": "0x00400C1D",
+        "word": 52,
+        "bit": 20,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[46]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/52/21",
+        "far": "0x00400C1D",
+        "word": 52,
+        "bit": 21,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[44]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/52/23",
+        "far": "0x00400C1D",
+        "word": 52,
+        "bit": 23,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[40]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/52/24",
+        "far": "0x00400C1D",
+        "word": 52,
+        "bit": 24,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[30]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/52/25",
+        "far": "0x00400C1D",
+        "word": 52,
+        "bit": 25,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[28]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/52/26",
+        "far": "0x00400C1D",
+        "word": 52,
+        "bit": 26,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[26]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/52/27",
+        "far": "0x00400C1D",
+        "word": 52,
+        "bit": 27,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[24]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/52/28",
+        "far": "0x00400C1D",
+        "word": 52,
+        "bit": 28,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[14]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C1D/52/29",
+        "far": "0x00400C1D",
+        "word": 52,
+        "bit": 29,
+        "feature": "CLBLM_L.SLICEL_X1.DLUT.INIT[12]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/51/0",
+        "far": "0x00400C20",
+        "word": 51,
+        "bit": 0,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[62]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/51/2",
+        "far": "0x00400C20",
+        "word": 51,
+        "bit": 2,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[58]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/51/3",
+        "far": "0x00400C20",
+        "word": 51,
+        "bit": 3,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[56]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/51/4",
+        "far": "0x00400C20",
+        "word": 51,
+        "bit": 4,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[46]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/51/6",
+        "far": "0x00400C20",
+        "word": 51,
+        "bit": 6,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[42]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/51/7",
+        "far": "0x00400C20",
+        "word": 51,
+        "bit": 7,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[40]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/51/8",
+        "far": "0x00400C20",
+        "word": 51,
+        "bit": 8,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[30]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/51/10",
+        "far": "0x00400C20",
+        "word": 51,
+        "bit": 10,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[26]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/51/12",
+        "far": "0x00400C20",
+        "word": 51,
+        "bit": 12,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[14]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/51/13",
+        "far": "0x00400C20",
+        "word": 51,
+        "bit": 13,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[12]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/51/15",
+        "far": "0x00400C20",
+        "word": 51,
+        "bit": 15,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[08]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/52/18",
+        "far": "0x00400C20",
+        "word": 52,
+        "bit": 18,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[58]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/52/19",
+        "far": "0x00400C20",
+        "word": 52,
+        "bit": 19,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[56]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/52/20",
+        "far": "0x00400C20",
+        "word": 52,
+        "bit": 20,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[46]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/52/22",
+        "far": "0x00400C20",
+        "word": 52,
+        "bit": 22,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[42]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/52/23",
+        "far": "0x00400C20",
+        "word": 52,
+        "bit": 23,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[40]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/52/24",
+        "far": "0x00400C20",
+        "word": 52,
+        "bit": 24,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[30]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/52/25",
+        "far": "0x00400C20",
+        "word": 52,
+        "bit": 25,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[28]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/52/27",
+        "far": "0x00400C20",
+        "word": 52,
+        "bit": 27,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[24]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/52/29",
+        "far": "0x00400C20",
+        "word": 52,
+        "bit": 29,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[12]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C20/52/31",
+        "far": "0x00400C20",
+        "word": 52,
+        "bit": 31,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[08]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/0",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 0,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[63]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/1",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 1,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[61]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/2",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 2,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[59]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/3",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 3,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[57]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/5",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 5,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[45]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/6",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 6,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[43]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/7",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 7,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[41]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/8",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 8,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[31]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/9",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 9,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[29]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/10",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 10,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[27]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/11",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 11,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[25]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/12",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 12,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[15]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/51/15",
+        "far": "0x00400C21",
+        "word": 51,
+        "bit": 15,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[09]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/16",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 16,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[63]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/18",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 18,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[59]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/19",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 19,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[57]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/22",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 22,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[43]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/23",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 23,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[41]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/24",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 24,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[31]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/25",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 25,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[29]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/26",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 26,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[27]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/27",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 27,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[25]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/28",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 28,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[15]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/29",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 29,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[13]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/30",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 30,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[11]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C21/52/31",
+        "far": "0x00400C21",
+        "word": 52,
+        "bit": 31,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[09]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/1",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 1,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[52]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/2",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 2,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[50]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/3",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 3,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[48]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/4",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 4,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[38]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/5",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 5,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[36]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/6",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 6,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[34]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/7",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 7,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[32]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/8",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 8,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[22]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/9",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 9,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[20]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/10",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 10,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[18]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/11",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 11,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[16]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/13",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 13,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[04]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/51/14",
+        "far": "0x00400C22",
+        "word": 51,
+        "bit": 14,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[02]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/52/16",
+        "far": "0x00400C22",
+        "word": 52,
+        "bit": 16,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[54]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/52/17",
+        "far": "0x00400C22",
+        "word": 52,
+        "bit": 17,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[52]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/52/19",
+        "far": "0x00400C22",
+        "word": 52,
+        "bit": 19,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[48]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/52/20",
+        "far": "0x00400C22",
+        "word": 52,
+        "bit": 20,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[38]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/52/21",
+        "far": "0x00400C22",
+        "word": 52,
+        "bit": 21,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[36]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/52/23",
+        "far": "0x00400C22",
+        "word": 52,
+        "bit": 23,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[32]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/52/25",
+        "far": "0x00400C22",
+        "word": 52,
+        "bit": 25,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[20]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/52/26",
+        "far": "0x00400C22",
+        "word": 52,
+        "bit": 26,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[18]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/52/28",
+        "far": "0x00400C22",
+        "word": 52,
+        "bit": 28,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[06]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/52/29",
+        "far": "0x00400C22",
+        "word": 52,
+        "bit": 29,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[04]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/52/30",
+        "far": "0x00400C22",
+        "word": 52,
+        "bit": 30,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[02]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C22/52/31",
+        "far": "0x00400C22",
+        "word": 52,
+        "bit": 31,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[00]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/2",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 2,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[51]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/3",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 3,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[49]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/4",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 4,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[39]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/5",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 5,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[37]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/6",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 6,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[35]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/8",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 8,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[23]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/9",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 9,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[21]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/10",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 10,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[19]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/11",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 11,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[17]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/12",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 12,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[07]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/13",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 13,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[05]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/14",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 14,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[03]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/51/15",
+        "far": "0x00400C23",
+        "word": 51,
+        "bit": 15,
+        "feature": "CLBLM_L.SLICEM_X0.ALUT.INIT[01]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/52/17",
+        "far": "0x00400C23",
+        "word": 52,
+        "bit": 17,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[53]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/52/18",
+        "far": "0x00400C23",
+        "word": 52,
+        "bit": 18,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[51]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/52/20",
+        "far": "0x00400C23",
+        "word": 52,
+        "bit": 20,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[39]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/52/21",
+        "far": "0x00400C23",
+        "word": 52,
+        "bit": 21,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[37]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/52/23",
+        "far": "0x00400C23",
+        "word": 52,
+        "bit": 23,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[33]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/52/24",
+        "far": "0x00400C23",
+        "word": 52,
+        "bit": 24,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[23]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/52/25",
+        "far": "0x00400C23",
+        "word": 52,
+        "bit": 25,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[21]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/52/28",
+        "far": "0x00400C23",
+        "word": 52,
+        "bit": 28,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[07]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      },
+      {
+        "key": "0x00400C23/52/31",
+        "far": "0x00400C23",
+        "word": 52,
+        "bit": 31,
+        "feature": "CLBLM_L.SLICEM_X0.DLUT.INIT[01]",
+        "expected_value": 1,
+        "split": "holdout",
+        "rule_file": "prjxray/zynq7/segbits_clblm_l.db"
+      }
+    ]
+  },
+  "collateral": {
+    "frame_ecc": {
+      "rule": "word == 50 and 0 <= bit <= 12",
+      "word": 50,
+      "bit_low": 0,
+      "bit_high": 12,
+      "why": "the frame ECC field is recomputed whenever any other bit in the same frame changes",
+      "scope": "touched_frames_only"
+    }
+  },
+  "index": {
+    "by_far": {
+      "0x00400A20": [
+        "0x00400A20/51/0",
+        "0x00400A20/51/1",
+        "0x00400A20/51/10",
+        "0x00400A20/51/11",
+        "0x00400A20/51/12",
+        "0x00400A20/51/13",
+        "0x00400A20/51/14",
+        "0x00400A20/51/15",
+        "0x00400A20/51/2",
+        "0x00400A20/51/3",
+        "0x00400A20/51/4",
+        "0x00400A20/51/7",
+        "0x00400A20/51/8",
+        "0x00400A20/51/9",
+        "0x00400A20/52/16",
+        "0x00400A20/52/18",
+        "0x00400A20/52/19",
+        "0x00400A20/52/20",
+        "0x00400A20/52/21",
+        "0x00400A20/52/22",
+        "0x00400A20/52/23",
+        "0x00400A20/52/26",
+        "0x00400A20/52/27",
+        "0x00400A20/52/28",
+        "0x00400A20/52/29",
+        "0x00400A20/52/30"
+      ],
+      "0x00400A21": [
+        "0x00400A21/51/1",
+        "0x00400A21/51/10",
+        "0x00400A21/51/11",
+        "0x00400A21/51/12",
+        "0x00400A21/51/14",
+        "0x00400A21/51/15",
+        "0x00400A21/51/2",
+        "0x00400A21/51/4",
+        "0x00400A21/51/5",
+        "0x00400A21/51/6",
+        "0x00400A21/51/9",
+        "0x00400A21/52/16",
+        "0x00400A21/52/17",
+        "0x00400A21/52/18",
+        "0x00400A21/52/20",
+        "0x00400A21/52/21",
+        "0x00400A21/52/23",
+        "0x00400A21/52/24",
+        "0x00400A21/52/25",
+        "0x00400A21/52/26",
+        "0x00400A21/52/27",
+        "0x00400A21/52/28",
+        "0x00400A21/52/29",
+        "0x00400A21/52/31"
+      ],
+      "0x00400A22": [
+        "0x00400A22/51/0",
+        "0x00400A22/51/10",
+        "0x00400A22/51/12",
+        "0x00400A22/51/13",
+        "0x00400A22/51/14",
+        "0x00400A22/51/15",
+        "0x00400A22/51/2",
+        "0x00400A22/51/3",
+        "0x00400A22/51/6",
+        "0x00400A22/51/7",
+        "0x00400A22/51/9",
+        "0x00400A22/52/16",
+        "0x00400A22/52/17",
+        "0x00400A22/52/20",
+        "0x00400A22/52/21",
+        "0x00400A22/52/22",
+        "0x00400A22/52/23",
+        "0x00400A22/52/25",
+        "0x00400A22/52/26",
+        "0x00400A22/52/27",
+        "0x00400A22/52/28",
+        "0x00400A22/52/29",
+        "0x00400A22/52/30",
+        "0x00400A22/52/31"
+      ],
+      "0x00400A23": [
+        "0x00400A23/51/0",
+        "0x00400A23/51/1",
+        "0x00400A23/51/10",
+        "0x00400A23/51/11",
+        "0x00400A23/51/12",
+        "0x00400A23/51/13",
+        "0x00400A23/51/14",
+        "0x00400A23/51/15",
+        "0x00400A23/51/4",
+        "0x00400A23/51/5",
+        "0x00400A23/51/6",
+        "0x00400A23/51/7",
+        "0x00400A23/51/8",
+        "0x00400A23/52/16",
+        "0x00400A23/52/18",
+        "0x00400A23/52/20",
+        "0x00400A23/52/22",
+        "0x00400A23/52/23",
+        "0x00400A23/52/24",
+        "0x00400A23/52/25",
+        "0x00400A23/52/28",
+        "0x00400A23/52/29",
+        "0x00400A23/52/30",
+        "0x00400A23/52/31"
+      ],
+      "0x00400C1A": [
+        "0x00400C1A/51/0",
+        "0x00400C1A/51/1",
+        "0x00400C1A/51/11",
+        "0x00400C1A/51/12",
+        "0x00400C1A/51/13",
+        "0x00400C1A/51/15",
+        "0x00400C1A/51/3",
+        "0x00400C1A/51/5",
+        "0x00400C1A/51/6",
+        "0x00400C1A/51/7",
+        "0x00400C1A/52/16",
+        "0x00400C1A/52/17",
+        "0x00400C1A/52/18",
+        "0x00400C1A/52/19",
+        "0x00400C1A/52/20",
+        "0x00400C1A/52/21",
+        "0x00400C1A/52/22",
+        "0x00400C1A/52/23",
+        "0x00400C1A/52/24",
+        "0x00400C1A/52/25",
+        "0x00400C1A/52/26",
+        "0x00400C1A/52/28",
+        "0x00400C1A/52/29",
+        "0x00400C1A/52/30",
+        "0x00400C1A/52/31"
+      ],
+      "0x00400C1B": [
+        "0x00400C1B/51/0",
+        "0x00400C1B/51/1",
+        "0x00400C1B/51/10",
+        "0x00400C1B/51/13",
+        "0x00400C1B/51/14",
+        "0x00400C1B/51/2",
+        "0x00400C1B/51/4",
+        "0x00400C1B/51/5",
+        "0x00400C1B/51/7",
+        "0x00400C1B/51/8",
+        "0x00400C1B/51/9",
+        "0x00400C1B/52/16",
+        "0x00400C1B/52/17",
+        "0x00400C1B/52/18",
+        "0x00400C1B/52/19",
+        "0x00400C1B/52/20",
+        "0x00400C1B/52/22",
+        "0x00400C1B/52/24",
+        "0x00400C1B/52/25",
+        "0x00400C1B/52/26",
+        "0x00400C1B/52/28",
+        "0x00400C1B/52/29",
+        "0x00400C1B/52/30"
+      ],
+      "0x00400C1C": [
+        "0x00400C1C/51/0",
+        "0x00400C1C/51/1",
+        "0x00400C1C/51/10",
+        "0x00400C1C/51/11",
+        "0x00400C1C/51/12",
+        "0x00400C1C/51/13",
+        "0x00400C1C/51/14",
+        "0x00400C1C/51/15",
+        "0x00400C1C/51/2",
+        "0x00400C1C/51/3",
+        "0x00400C1C/51/4",
+        "0x00400C1C/51/6",
+        "0x00400C1C/51/7",
+        "0x00400C1C/51/8",
+        "0x00400C1C/51/9",
+        "0x00400C1C/52/16",
+        "0x00400C1C/52/17",
+        "0x00400C1C/52/19",
+        "0x00400C1C/52/20",
+        "0x00400C1C/52/22",
+        "0x00400C1C/52/23",
+        "0x00400C1C/52/25",
+        "0x00400C1C/52/26",
+        "0x00400C1C/52/28",
+        "0x00400C1C/52/29",
+        "0x00400C1C/52/30",
+        "0x00400C1C/52/31"
+      ],
+      "0x00400C1D": [
+        "0x00400C1D/51/0",
+        "0x00400C1D/51/1",
+        "0x00400C1D/51/11",
+        "0x00400C1D/51/12",
+        "0x00400C1D/51/13",
+        "0x00400C1D/51/14",
+        "0x00400C1D/51/15",
+        "0x00400C1D/51/2",
+        "0x00400C1D/51/3",
+        "0x00400C1D/51/5",
+        "0x00400C1D/51/6",
+        "0x00400C1D/51/7",
+        "0x00400C1D/51/8",
+        "0x00400C1D/52/16",
+        "0x00400C1D/52/17",
+        "0x00400C1D/52/19",
+        "0x00400C1D/52/20",
+        "0x00400C1D/52/21",
+        "0x00400C1D/52/23",
+        "0x00400C1D/52/24",
+        "0x00400C1D/52/25",
+        "0x00400C1D/52/26",
+        "0x00400C1D/52/27",
+        "0x00400C1D/52/28",
+        "0x00400C1D/52/29"
+      ],
+      "0x00400C20": [
+        "0x00400C20/51/0",
+        "0x00400C20/51/10",
+        "0x00400C20/51/12",
+        "0x00400C20/51/13",
+        "0x00400C20/51/15",
+        "0x00400C20/51/2",
+        "0x00400C20/51/3",
+        "0x00400C20/51/4",
+        "0x00400C20/51/6",
+        "0x00400C20/51/7",
+        "0x00400C20/51/8",
+        "0x00400C20/52/18",
+        "0x00400C20/52/19",
+        "0x00400C20/52/20",
+        "0x00400C20/52/22",
+        "0x00400C20/52/23",
+        "0x00400C20/52/24",
+        "0x00400C20/52/25",
+        "0x00400C20/52/27",
+        "0x00400C20/52/29",
+        "0x00400C20/52/31"
+      ],
+      "0x00400C21": [
+        "0x00400C21/51/0",
+        "0x00400C21/51/1",
+        "0x00400C21/51/10",
+        "0x00400C21/51/11",
+        "0x00400C21/51/12",
+        "0x00400C21/51/15",
+        "0x00400C21/51/2",
+        "0x00400C21/51/3",
+        "0x00400C21/51/5",
+        "0x00400C21/51/6",
+        "0x00400C21/51/7",
+        "0x00400C21/51/8",
+        "0x00400C21/51/9",
+        "0x00400C21/52/16",
+        "0x00400C21/52/18",
+        "0x00400C21/52/19",
+        "0x00400C21/52/22",
+        "0x00400C21/52/23",
+        "0x00400C21/52/24",
+        "0x00400C21/52/25",
+        "0x00400C21/52/26",
+        "0x00400C21/52/27",
+        "0x00400C21/52/28",
+        "0x00400C21/52/29",
+        "0x00400C21/52/30",
+        "0x00400C21/52/31"
+      ],
+      "0x00400C22": [
+        "0x00400C22/51/1",
+        "0x00400C22/51/10",
+        "0x00400C22/51/11",
+        "0x00400C22/51/13",
+        "0x00400C22/51/14",
+        "0x00400C22/51/2",
+        "0x00400C22/51/3",
+        "0x00400C22/51/4",
+        "0x00400C22/51/5",
+        "0x00400C22/51/6",
+        "0x00400C22/51/7",
+        "0x00400C22/51/8",
+        "0x00400C22/51/9",
+        "0x00400C22/52/16",
+        "0x00400C22/52/17",
+        "0x00400C22/52/19",
+        "0x00400C22/52/20",
+        "0x00400C22/52/21",
+        "0x00400C22/52/23",
+        "0x00400C22/52/25",
+        "0x00400C22/52/26",
+        "0x00400C22/52/28",
+        "0x00400C22/52/29",
+        "0x00400C22/52/30",
+        "0x00400C22/52/31"
+      ],
+      "0x00400C23": [
+        "0x00400C23/51/10",
+        "0x00400C23/51/11",
+        "0x00400C23/51/12",
+        "0x00400C23/51/13",
+        "0x00400C23/51/14",
+        "0x00400C23/51/15",
+        "0x00400C23/51/2",
+        "0x00400C23/51/3",
+        "0x00400C23/51/4",
+        "0x00400C23/51/5",
+        "0x00400C23/51/6",
+        "0x00400C23/51/8",
+        "0x00400C23/51/9",
+        "0x00400C23/52/17",
+        "0x00400C23/52/18",
+        "0x00400C23/52/20",
+        "0x00400C23/52/21",
+        "0x00400C23/52/23",
+        "0x00400C23/52/24",
+        "0x00400C23/52/25",
+        "0x00400C23/52/28",
+        "0x00400C23/52/31"
+      ]
+    },
+    "by_lut": {
+      "CLBLL_L.SLICEL_X0.ALUT": [
+        {
+          "init_index": 0,
+          "address_key": "0x00400A20/51/15"
+        },
+        {
+          "init_index": 1,
+          "address_key": "0x00400A21/51/15"
+        },
+        {
+          "init_index": 2,
+          "address_key": "0x00400A20/51/14"
+        },
+        {
+          "init_index": 3,
+          "address_key": "0x00400A21/51/14"
+        },
+        {
+          "init_index": 4,
+          "address_key": "0x00400A20/51/13"
+        },
+        {
+          "init_index": 6,
+          "address_key": "0x00400A20/51/12"
+        },
+        {
+          "init_index": 7,
+          "address_key": "0x00400A21/51/12"
+        },
+        {
+          "init_index": 8,
+          "address_key": "0x00400A23/51/15"
+        },
+        {
+          "init_index": 9,
+          "address_key": "0x00400A22/51/15"
+        },
+        {
+          "init_index": 10,
+          "address_key": "0x00400A23/51/14"
+        },
+        {
+          "init_index": 11,
+          "address_key": "0x00400A22/51/14"
+        },
+        {
+          "init_index": 12,
+          "address_key": "0x00400A23/51/13"
+        },
+        {
+          "init_index": 13,
+          "address_key": "0x00400A22/51/13"
+        },
+        {
+          "init_index": 14,
+          "address_key": "0x00400A23/51/12"
+        },
+        {
+          "init_index": 15,
+          "address_key": "0x00400A22/51/12"
+        },
+        {
+          "init_index": 16,
+          "address_key": "0x00400A20/51/11"
+        },
+        {
+          "init_index": 17,
+          "address_key": "0x00400A21/51/11"
+        },
+        {
+          "init_index": 18,
+          "address_key": "0x00400A20/51/10"
+        },
+        {
+          "init_index": 19,
+          "address_key": "0x00400A21/51/10"
+        },
+        {
+          "init_index": 20,
+          "address_key": "0x00400A20/51/9"
+        },
+        {
+          "init_index": 21,
+          "address_key": "0x00400A21/51/9"
+        },
+        {
+          "init_index": 22,
+          "address_key": "0x00400A20/51/8"
+        },
+        {
+          "init_index": 24,
+          "address_key": "0x00400A23/51/11"
+        },
+        {
+          "init_index": 26,
+          "address_key": "0x00400A23/51/10"
+        },
+        {
+          "init_index": 27,
+          "address_key": "0x00400A22/51/10"
+        },
+        {
+          "init_index": 29,
+          "address_key": "0x00400A22/51/9"
+        },
+        {
+          "init_index": 30,
+          "address_key": "0x00400A23/51/8"
+        },
+        {
+          "init_index": 32,
+          "address_key": "0x00400A20/51/7"
+        },
+        {
+          "init_index": 35,
+          "address_key": "0x00400A21/51/6"
+        },
+        {
+          "init_index": 37,
+          "address_key": "0x00400A21/51/5"
+        },
+        {
+          "init_index": 38,
+          "address_key": "0x00400A20/51/4"
+        },
+        {
+          "init_index": 39,
+          "address_key": "0x00400A21/51/4"
+        },
+        {
+          "init_index": 40,
+          "address_key": "0x00400A23/51/7"
+        },
+        {
+          "init_index": 41,
+          "address_key": "0x00400A22/51/7"
+        },
+        {
+          "init_index": 42,
+          "address_key": "0x00400A23/51/6"
+        },
+        {
+          "init_index": 43,
+          "address_key": "0x00400A22/51/6"
+        },
+        {
+          "init_index": 44,
+          "address_key": "0x00400A23/51/5"
+        },
+        {
+          "init_index": 46,
+          "address_key": "0x00400A23/51/4"
+        },
+        {
+          "init_index": 48,
+          "address_key": "0x00400A20/51/3"
+        },
+        {
+          "init_index": 50,
+          "address_key": "0x00400A20/51/2"
+        },
+        {
+          "init_index": 51,
+          "address_key": "0x00400A21/51/2"
+        },
+        {
+          "init_index": 52,
+          "address_key": "0x00400A20/51/1"
+        },
+        {
+          "init_index": 53,
+          "address_key": "0x00400A21/51/1"
+        },
+        {
+          "init_index": 54,
+          "address_key": "0x00400A20/51/0"
+        },
+        {
+          "init_index": 57,
+          "address_key": "0x00400A22/51/3"
+        },
+        {
+          "init_index": 59,
+          "address_key": "0x00400A22/51/2"
+        },
+        {
+          "init_index": 60,
+          "address_key": "0x00400A23/51/1"
+        },
+        {
+          "init_index": 62,
+          "address_key": "0x00400A23/51/0"
+        },
+        {
+          "init_index": 63,
+          "address_key": "0x00400A22/51/0"
+        }
+      ],
+      "CLBLL_L.SLICEL_X0.DLUT": [
+        {
+          "init_index": 1,
+          "address_key": "0x00400A21/52/31"
+        },
+        {
+          "init_index": 2,
+          "address_key": "0x00400A20/52/30"
+        },
+        {
+          "init_index": 4,
+          "address_key": "0x00400A20/52/29"
+        },
+        {
+          "init_index": 5,
+          "address_key": "0x00400A21/52/29"
+        },
+        {
+          "init_index": 6,
+          "address_key": "0x00400A20/52/28"
+        },
+        {
+          "init_index": 7,
+          "address_key": "0x00400A21/52/28"
+        },
+        {
+          "init_index": 8,
+          "address_key": "0x00400A23/52/31"
+        },
+        {
+          "init_index": 9,
+          "address_key": "0x00400A22/52/31"
+        },
+        {
+          "init_index": 10,
+          "address_key": "0x00400A23/52/30"
+        },
+        {
+          "init_index": 11,
+          "address_key": "0x00400A22/52/30"
+        },
+        {
+          "init_index": 12,
+          "address_key": "0x00400A23/52/29"
+        },
+        {
+          "init_index": 13,
+          "address_key": "0x00400A22/52/29"
+        },
+        {
+          "init_index": 14,
+          "address_key": "0x00400A23/52/28"
+        },
+        {
+          "init_index": 15,
+          "address_key": "0x00400A22/52/28"
+        },
+        {
+          "init_index": 16,
+          "address_key": "0x00400A20/52/27"
+        },
+        {
+          "init_index": 17,
+          "address_key": "0x00400A21/52/27"
+        },
+        {
+          "init_index": 18,
+          "address_key": "0x00400A20/52/26"
+        },
+        {
+          "init_index": 19,
+          "address_key": "0x00400A21/52/26"
+        },
+        {
+          "init_index": 21,
+          "address_key": "0x00400A21/52/25"
+        },
+        {
+          "init_index": 23,
+          "address_key": "0x00400A21/52/24"
+        },
+        {
+          "init_index": 25,
+          "address_key": "0x00400A22/52/27"
+        },
+        {
+          "init_index": 27,
+          "address_key": "0x00400A22/52/26"
+        },
+        {
+          "init_index": 28,
+          "address_key": "0x00400A23/52/25"
+        },
+        {
+          "init_index": 29,
+          "address_key": "0x00400A22/52/25"
+        },
+        {
+          "init_index": 30,
+          "address_key": "0x00400A23/52/24"
+        },
+        {
+          "init_index": 32,
+          "address_key": "0x00400A20/52/23"
+        },
+        {
+          "init_index": 33,
+          "address_key": "0x00400A21/52/23"
+        },
+        {
+          "init_index": 34,
+          "address_key": "0x00400A20/52/22"
+        },
+        {
+          "init_index": 36,
+          "address_key": "0x00400A20/52/21"
+        },
+        {
+          "init_index": 37,
+          "address_key": "0x00400A21/52/21"
+        },
+        {
+          "init_index": 38,
+          "address_key": "0x00400A20/52/20"
+        },
+        {
+          "init_index": 39,
+          "address_key": "0x00400A21/52/20"
+        },
+        {
+          "init_index": 40,
+          "address_key": "0x00400A23/52/23"
+        },
+        {
+          "init_index": 41,
+          "address_key": "0x00400A22/52/23"
+        },
+        {
+          "init_index": 42,
+          "address_key": "0x00400A23/52/22"
+        },
+        {
+          "init_index": 43,
+          "address_key": "0x00400A22/52/22"
+        },
+        {
+          "init_index": 45,
+          "address_key": "0x00400A22/52/21"
+        },
+        {
+          "init_index": 46,
+          "address_key": "0x00400A23/52/20"
+        },
+        {
+          "init_index": 47,
+          "address_key": "0x00400A22/52/20"
+        },
+        {
+          "init_index": 48,
+          "address_key": "0x00400A20/52/19"
+        },
+        {
+          "init_index": 50,
+          "address_key": "0x00400A20/52/18"
+        },
+        {
+          "init_index": 51,
+          "address_key": "0x00400A21/52/18"
+        },
+        {
+          "init_index": 53,
+          "address_key": "0x00400A21/52/17"
+        },
+        {
+          "init_index": 54,
+          "address_key": "0x00400A20/52/16"
+        },
+        {
+          "init_index": 55,
+          "address_key": "0x00400A21/52/16"
+        },
+        {
+          "init_index": 58,
+          "address_key": "0x00400A23/52/18"
+        },
+        {
+          "init_index": 61,
+          "address_key": "0x00400A22/52/17"
+        },
+        {
+          "init_index": 62,
+          "address_key": "0x00400A23/52/16"
+        },
+        {
+          "init_index": 63,
+          "address_key": "0x00400A22/52/16"
+        }
+      ],
+      "CLBLM_L.SLICEL_X1.ALUT": [
+        {
+          "init_index": 0,
+          "address_key": "0x00400C1A/51/15"
+        },
+        {
+          "init_index": 3,
+          "address_key": "0x00400C1B/51/14"
+        },
+        {
+          "init_index": 4,
+          "address_key": "0x00400C1A/51/13"
+        },
+        {
+          "init_index": 5,
+          "address_key": "0x00400C1B/51/13"
+        },
+        {
+          "init_index": 6,
+          "address_key": "0x00400C1A/51/12"
+        },
+        {
+          "init_index": 8,
+          "address_key": "0x00400C1D/51/15"
+        },
+        {
+          "init_index": 9,
+          "address_key": "0x00400C1C/51/15"
+        },
+        {
+          "init_index": 10,
+          "address_key": "0x00400C1D/51/14"
+        },
+        {
+          "init_index": 11,
+          "address_key": "0x00400C1C/51/14"
+        },
+        {
+          "init_index": 12,
+          "address_key": "0x00400C1D/51/13"
+        },
+        {
+          "init_index": 13,
+          "address_key": "0x00400C1C/51/13"
+        },
+        {
+          "init_index": 14,
+          "address_key": "0x00400C1D/51/12"
+        },
+        {
+          "init_index": 15,
+          "address_key": "0x00400C1C/51/12"
+        },
+        {
+          "init_index": 16,
+          "address_key": "0x00400C1A/51/11"
+        },
+        {
+          "init_index": 19,
+          "address_key": "0x00400C1B/51/10"
+        },
+        {
+          "init_index": 21,
+          "address_key": "0x00400C1B/51/9"
+        },
+        {
+          "init_index": 23,
+          "address_key": "0x00400C1B/51/8"
+        },
+        {
+          "init_index": 24,
+          "address_key": "0x00400C1D/51/11"
+        },
+        {
+          "init_index": 25,
+          "address_key": "0x00400C1C/51/11"
+        },
+        {
+          "init_index": 27,
+          "address_key": "0x00400C1C/51/10"
+        },
+        {
+          "init_index": 29,
+          "address_key": "0x00400C1C/51/9"
+        },
+        {
+          "init_index": 30,
+          "address_key": "0x00400C1D/51/8"
+        },
+        {
+          "init_index": 31,
+          "address_key": "0x00400C1C/51/8"
+        },
+        {
+          "init_index": 32,
+          "address_key": "0x00400C1A/51/7"
+        },
+        {
+          "init_index": 33,
+          "address_key": "0x00400C1B/51/7"
+        },
+        {
+          "init_index": 34,
+          "address_key": "0x00400C1A/51/6"
+        },
+        {
+          "init_index": 36,
+          "address_key": "0x00400C1A/51/5"
+        },
+        {
+          "init_index": 37,
+          "address_key": "0x00400C1B/51/5"
+        },
+        {
+          "init_index": 39,
+          "address_key": "0x00400C1B/51/4"
+        },
+        {
+          "init_index": 40,
+          "address_key": "0x00400C1D/51/7"
+        },
+        {
+          "init_index": 41,
+          "address_key": "0x00400C1C/51/7"
+        },
+        {
+          "init_index": 42,
+          "address_key": "0x00400C1D/51/6"
+        },
+        {
+          "init_index": 43,
+          "address_key": "0x00400C1C/51/6"
+        },
+        {
+          "init_index": 44,
+          "address_key": "0x00400C1D/51/5"
+        },
+        {
+          "init_index": 47,
+          "address_key": "0x00400C1C/51/4"
+        },
+        {
+          "init_index": 48,
+          "address_key": "0x00400C1A/51/3"
+        },
+        {
+          "init_index": 51,
+          "address_key": "0x00400C1B/51/2"
+        },
+        {
+          "init_index": 52,
+          "address_key": "0x00400C1A/51/1"
+        },
+        {
+          "init_index": 53,
+          "address_key": "0x00400C1B/51/1"
+        },
+        {
+          "init_index": 54,
+          "address_key": "0x00400C1A/51/0"
+        },
+        {
+          "init_index": 55,
+          "address_key": "0x00400C1B/51/0"
+        },
+        {
+          "init_index": 56,
+          "address_key": "0x00400C1D/51/3"
+        },
+        {
+          "init_index": 57,
+          "address_key": "0x00400C1C/51/3"
+        },
+        {
+          "init_index": 58,
+          "address_key": "0x00400C1D/51/2"
+        },
+        {
+          "init_index": 59,
+          "address_key": "0x00400C1C/51/2"
+        },
+        {
+          "init_index": 60,
+          "address_key": "0x00400C1D/51/1"
+        },
+        {
+          "init_index": 61,
+          "address_key": "0x00400C1C/51/1"
+        },
+        {
+          "init_index": 62,
+          "address_key": "0x00400C1D/51/0"
+        },
+        {
+          "init_index": 63,
+          "address_key": "0x00400C1C/51/0"
+        }
+      ],
+      "CLBLM_L.SLICEL_X1.DLUT": [
+        {
+          "init_index": 0,
+          "address_key": "0x00400C1A/52/31"
+        },
+        {
+          "init_index": 2,
+          "address_key": "0x00400C1A/52/30"
+        },
+        {
+          "init_index": 3,
+          "address_key": "0x00400C1B/52/30"
+        },
+        {
+          "init_index": 4,
+          "address_key": "0x00400C1A/52/29"
+        },
+        {
+          "init_index": 5,
+          "address_key": "0x00400C1B/52/29"
+        },
+        {
+          "init_index": 6,
+          "address_key": "0x00400C1A/52/28"
+        },
+        {
+          "init_index": 7,
+          "address_key": "0x00400C1B/52/28"
+        },
+        {
+          "init_index": 9,
+          "address_key": "0x00400C1C/52/31"
+        },
+        {
+          "init_index": 11,
+          "address_key": "0x00400C1C/52/30"
+        },
+        {
+          "init_index": 12,
+          "address_key": "0x00400C1D/52/29"
+        },
+        {
+          "init_index": 13,
+          "address_key": "0x00400C1C/52/29"
+        },
+        {
+          "init_index": 14,
+          "address_key": "0x00400C1D/52/28"
+        },
+        {
+          "init_index": 15,
+          "address_key": "0x00400C1C/52/28"
+        },
+        {
+          "init_index": 18,
+          "address_key": "0x00400C1A/52/26"
+        },
+        {
+          "init_index": 19,
+          "address_key": "0x00400C1B/52/26"
+        },
+        {
+          "init_index": 20,
+          "address_key": "0x00400C1A/52/25"
+        },
+        {
+          "init_index": 21,
+          "address_key": "0x00400C1B/52/25"
+        },
+        {
+          "init_index": 22,
+          "address_key": "0x00400C1A/52/24"
+        },
+        {
+          "init_index": 23,
+          "address_key": "0x00400C1B/52/24"
+        },
+        {
+          "init_index": 24,
+          "address_key": "0x00400C1D/52/27"
+        },
+        {
+          "init_index": 26,
+          "address_key": "0x00400C1D/52/26"
+        },
+        {
+          "init_index": 27,
+          "address_key": "0x00400C1C/52/26"
+        },
+        {
+          "init_index": 28,
+          "address_key": "0x00400C1D/52/25"
+        },
+        {
+          "init_index": 29,
+          "address_key": "0x00400C1C/52/25"
+        },
+        {
+          "init_index": 30,
+          "address_key": "0x00400C1D/52/24"
+        },
+        {
+          "init_index": 32,
+          "address_key": "0x00400C1A/52/23"
+        },
+        {
+          "init_index": 34,
+          "address_key": "0x00400C1A/52/22"
+        },
+        {
+          "init_index": 35,
+          "address_key": "0x00400C1B/52/22"
+        },
+        {
+          "init_index": 36,
+          "address_key": "0x00400C1A/52/21"
+        },
+        {
+          "init_index": 38,
+          "address_key": "0x00400C1A/52/20"
+        },
+        {
+          "init_index": 39,
+          "address_key": "0x00400C1B/52/20"
+        },
+        {
+          "init_index": 40,
+          "address_key": "0x00400C1D/52/23"
+        },
+        {
+          "init_index": 41,
+          "address_key": "0x00400C1C/52/23"
+        },
+        {
+          "init_index": 43,
+          "address_key": "0x00400C1C/52/22"
+        },
+        {
+          "init_index": 44,
+          "address_key": "0x00400C1D/52/21"
+        },
+        {
+          "init_index": 46,
+          "address_key": "0x00400C1D/52/20"
+        },
+        {
+          "init_index": 47,
+          "address_key": "0x00400C1C/52/20"
+        },
+        {
+          "init_index": 48,
+          "address_key": "0x00400C1A/52/19"
+        },
+        {
+          "init_index": 49,
+          "address_key": "0x00400C1B/52/19"
+        },
+        {
+          "init_index": 50,
+          "address_key": "0x00400C1A/52/18"
+        },
+        {
+          "init_index": 51,
+          "address_key": "0x00400C1B/52/18"
+        },
+        {
+          "init_index": 52,
+          "address_key": "0x00400C1A/52/17"
+        },
+        {
+          "init_index": 53,
+          "address_key": "0x00400C1B/52/17"
+        },
+        {
+          "init_index": 54,
+          "address_key": "0x00400C1A/52/16"
+        },
+        {
+          "init_index": 55,
+          "address_key": "0x00400C1B/52/16"
+        },
+        {
+          "init_index": 56,
+          "address_key": "0x00400C1D/52/19"
+        },
+        {
+          "init_index": 57,
+          "address_key": "0x00400C1C/52/19"
+        },
+        {
+          "init_index": 60,
+          "address_key": "0x00400C1D/52/17"
+        },
+        {
+          "init_index": 61,
+          "address_key": "0x00400C1C/52/17"
+        },
+        {
+          "init_index": 62,
+          "address_key": "0x00400C1D/52/16"
+        },
+        {
+          "init_index": 63,
+          "address_key": "0x00400C1C/52/16"
+        }
+      ],
+      "CLBLM_L.SLICEM_X0.ALUT": [
+        {
+          "init_index": 1,
+          "address_key": "0x00400C23/51/15"
+        },
+        {
+          "init_index": 2,
+          "address_key": "0x00400C22/51/14"
+        },
+        {
+          "init_index": 3,
+          "address_key": "0x00400C23/51/14"
+        },
+        {
+          "init_index": 4,
+          "address_key": "0x00400C22/51/13"
+        },
+        {
+          "init_index": 5,
+          "address_key": "0x00400C23/51/13"
+        },
+        {
+          "init_index": 7,
+          "address_key": "0x00400C23/51/12"
+        },
+        {
+          "init_index": 8,
+          "address_key": "0x00400C20/51/15"
+        },
+        {
+          "init_index": 9,
+          "address_key": "0x00400C21/51/15"
+        },
+        {
+          "init_index": 12,
+          "address_key": "0x00400C20/51/13"
+        },
+        {
+          "init_index": 14,
+          "address_key": "0x00400C20/51/12"
+        },
+        {
+          "init_index": 15,
+          "address_key": "0x00400C21/51/12"
+        },
+        {
+          "init_index": 16,
+          "address_key": "0x00400C22/51/11"
+        },
+        {
+          "init_index": 17,
+          "address_key": "0x00400C23/51/11"
+        },
+        {
+          "init_index": 18,
+          "address_key": "0x00400C22/51/10"
+        },
+        {
+          "init_index": 19,
+          "address_key": "0x00400C23/51/10"
+        },
+        {
+          "init_index": 20,
+          "address_key": "0x00400C22/51/9"
+        },
+        {
+          "init_index": 21,
+          "address_key": "0x00400C23/51/9"
+        },
+        {
+          "init_index": 22,
+          "address_key": "0x00400C22/51/8"
+        },
+        {
+          "init_index": 23,
+          "address_key": "0x00400C23/51/8"
+        },
+        {
+          "init_index": 25,
+          "address_key": "0x00400C21/51/11"
+        },
+        {
+          "init_index": 26,
+          "address_key": "0x00400C20/51/10"
+        },
+        {
+          "init_index": 27,
+          "address_key": "0x00400C21/51/10"
+        },
+        {
+          "init_index": 29,
+          "address_key": "0x00400C21/51/9"
+        },
+        {
+          "init_index": 30,
+          "address_key": "0x00400C20/51/8"
+        },
+        {
+          "init_index": 31,
+          "address_key": "0x00400C21/51/8"
+        },
+        {
+          "init_index": 32,
+          "address_key": "0x00400C22/51/7"
+        },
+        {
+          "init_index": 34,
+          "address_key": "0x00400C22/51/6"
+        },
+        {
+          "init_index": 35,
+          "address_key": "0x00400C23/51/6"
+        },
+        {
+          "init_index": 36,
+          "address_key": "0x00400C22/51/5"
+        },
+        {
+          "init_index": 37,
+          "address_key": "0x00400C23/51/5"
+        },
+        {
+          "init_index": 38,
+          "address_key": "0x00400C22/51/4"
+        },
+        {
+          "init_index": 39,
+          "address_key": "0x00400C23/51/4"
+        },
+        {
+          "init_index": 40,
+          "address_key": "0x00400C20/51/7"
+        },
+        {
+          "init_index": 41,
+          "address_key": "0x00400C21/51/7"
+        },
+        {
+          "init_index": 42,
+          "address_key": "0x00400C20/51/6"
+        },
+        {
+          "init_index": 43,
+          "address_key": "0x00400C21/51/6"
+        },
+        {
+          "init_index": 45,
+          "address_key": "0x00400C21/51/5"
+        },
+        {
+          "init_index": 46,
+          "address_key": "0x00400C20/51/4"
+        },
+        {
+          "init_index": 48,
+          "address_key": "0x00400C22/51/3"
+        },
+        {
+          "init_index": 49,
+          "address_key": "0x00400C23/51/3"
+        },
+        {
+          "init_index": 50,
+          "address_key": "0x00400C22/51/2"
+        },
+        {
+          "init_index": 51,
+          "address_key": "0x00400C23/51/2"
+        },
+        {
+          "init_index": 52,
+          "address_key": "0x00400C22/51/1"
+        },
+        {
+          "init_index": 56,
+          "address_key": "0x00400C20/51/3"
+        },
+        {
+          "init_index": 57,
+          "address_key": "0x00400C21/51/3"
+        },
+        {
+          "init_index": 58,
+          "address_key": "0x00400C20/51/2"
+        },
+        {
+          "init_index": 59,
+          "address_key": "0x00400C21/51/2"
+        },
+        {
+          "init_index": 61,
+          "address_key": "0x00400C21/51/1"
+        },
+        {
+          "init_index": 62,
+          "address_key": "0x00400C20/51/0"
+        },
+        {
+          "init_index": 63,
+          "address_key": "0x00400C21/51/0"
+        }
+      ],
+      "CLBLM_L.SLICEM_X0.DLUT": [
+        {
+          "init_index": 0,
+          "address_key": "0x00400C22/52/31"
+        },
+        {
+          "init_index": 1,
+          "address_key": "0x00400C23/52/31"
+        },
+        {
+          "init_index": 2,
+          "address_key": "0x00400C22/52/30"
+        },
+        {
+          "init_index": 4,
+          "address_key": "0x00400C22/52/29"
+        },
+        {
+          "init_index": 6,
+          "address_key": "0x00400C22/52/28"
+        },
+        {
+          "init_index": 7,
+          "address_key": "0x00400C23/52/28"
+        },
+        {
+          "init_index": 8,
+          "address_key": "0x00400C20/52/31"
+        },
+        {
+          "init_index": 9,
+          "address_key": "0x00400C21/52/31"
+        },
+        {
+          "init_index": 11,
+          "address_key": "0x00400C21/52/30"
+        },
+        {
+          "init_index": 12,
+          "address_key": "0x00400C20/52/29"
+        },
+        {
+          "init_index": 13,
+          "address_key": "0x00400C21/52/29"
+        },
+        {
+          "init_index": 15,
+          "address_key": "0x00400C21/52/28"
+        },
+        {
+          "init_index": 18,
+          "address_key": "0x00400C22/52/26"
+        },
+        {
+          "init_index": 20,
+          "address_key": "0x00400C22/52/25"
+        },
+        {
+          "init_index": 21,
+          "address_key": "0x00400C23/52/25"
+        },
+        {
+          "init_index": 23,
+          "address_key": "0x00400C23/52/24"
+        },
+        {
+          "init_index": 24,
+          "address_key": "0x00400C20/52/27"
+        },
+        {
+          "init_index": 25,
+          "address_key": "0x00400C21/52/27"
+        },
+        {
+          "init_index": 27,
+          "address_key": "0x00400C21/52/26"
+        },
+        {
+          "init_index": 28,
+          "address_key": "0x00400C20/52/25"
+        },
+        {
+          "init_index": 29,
+          "address_key": "0x00400C21/52/25"
+        },
+        {
+          "init_index": 30,
+          "address_key": "0x00400C20/52/24"
+        },
+        {
+          "init_index": 31,
+          "address_key": "0x00400C21/52/24"
+        },
+        {
+          "init_index": 32,
+          "address_key": "0x00400C22/52/23"
+        },
+        {
+          "init_index": 33,
+          "address_key": "0x00400C23/52/23"
+        },
+        {
+          "init_index": 36,
+          "address_key": "0x00400C22/52/21"
+        },
+        {
+          "init_index": 37,
+          "address_key": "0x00400C23/52/21"
+        },
+        {
+          "init_index": 38,
+          "address_key": "0x00400C22/52/20"
+        },
+        {
+          "init_index": 39,
+          "address_key": "0x00400C23/52/20"
+        },
+        {
+          "init_index": 40,
+          "address_key": "0x00400C20/52/23"
+        },
+        {
+          "init_index": 41,
+          "address_key": "0x00400C21/52/23"
+        },
+        {
+          "init_index": 42,
+          "address_key": "0x00400C20/52/22"
+        },
+        {
+          "init_index": 43,
+          "address_key": "0x00400C21/52/22"
+        },
+        {
+          "init_index": 46,
+          "address_key": "0x00400C20/52/20"
+        },
+        {
+          "init_index": 48,
+          "address_key": "0x00400C22/52/19"
+        },
+        {
+          "init_index": 51,
+          "address_key": "0x00400C23/52/18"
+        },
+        {
+          "init_index": 52,
+          "address_key": "0x00400C22/52/17"
+        },
+        {
+          "init_index": 53,
+          "address_key": "0x00400C23/52/17"
+        },
+        {
+          "init_index": 54,
+          "address_key": "0x00400C22/52/16"
+        },
+        {
+          "init_index": 56,
+          "address_key": "0x00400C20/52/19"
+        },
+        {
+          "init_index": 57,
+          "address_key": "0x00400C21/52/19"
+        },
+        {
+          "init_index": 58,
+          "address_key": "0x00400C20/52/18"
+        },
+        {
+          "init_index": 59,
+          "address_key": "0x00400C21/52/18"
+        },
+        {
+          "init_index": 63,
+          "address_key": "0x00400C21/52/16"
+        }
+      ]
+    }
+  },
+  "tool_versions": {
+    "builder": "build_local_map.py/1.0.0"
+  }
+}

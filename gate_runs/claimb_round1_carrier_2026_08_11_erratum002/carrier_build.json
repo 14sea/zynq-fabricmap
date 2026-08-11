@@ -1,0 +1,31 @@
+{
+  "schema": "carrier_build",
+  "schema_version": "1.0.0",
+  "part": "xc7z010clg400-1",
+  "top": "carrier_top",
+  "vivado": "2025.2",
+  "routed": true,
+  "cell_isolation": "passed",
+  "wns_ns": 6.716,
+  "bitstream": "carrier.bit",
+  "bitstream_sha256": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "post_route_dcp_sha256": "b7a5f5b77d317d70b6b8effeb0507272f47d59437247010df8bc476c23573f99",
+  "isolation_evidence_sha256": "4ab7e32afc05a8773c10630d178c1789c9cf27951420d0996f90d1531b3b3e48",
+  "source_commit": "9bd902ebc3bf164741e24639fbd340ae6d4f33dd",
+  "source_tree": "clean",
+  "sources": {
+    "vivado/carrier/carrier_top.v": "11e3482b189c7dbb28f080211cfc800f67c6e2b126e70ec1ba710dcbf242d375",
+    "vivado/carrier/carrier_axi3_lite.v": "4a6c3bb8a13693ed3d6a1d5382aff83aa3b74ebedeae99df262343ce32448fdf",
+    "vivado/carrier/carrier_axil.v": "866a0356492fc5d658615884504474712e21b8dd75e5c593e0e74b6891bb0390",
+    "vivado/carrier/carrier_stream.v": "11d8c9102190517af5683071d5586c3920e96907f18d4ebdf33c072801df02f4",
+    "vivado/carrier/carrier_crc32.v": "a7c7d95297fa10c384c3f9ba1dfc421c851310210e07b717c50ceaf7f475872c",
+    "vivado/carrier/carrier_scorer.v": "d3fdb3fb026e0f1c7676af54579d6ddb89901c22a36d98695329df127a6ce146",
+    "vivado/carrier/carrier.xdc": "3cdb8446701bfe0a027899a8b9269f496830d1b376f15bbfc322abf1e4fad4ec",
+    "vivado/carrier/build_carrier.tcl": "ac00e81eae37bcd7ccf3856709e16d965dc17eb863c509772ad028516c0e2aed",
+    "vivado/carrier/isolation_checks.tcl": "9cc79f567e5effeb0ca5ef2a1d6e510a38d6e93f83003c7cdf339d4aa2d8000f",
+    "vivado/carrier/generated/carrier_base_init.vh": "e5c51727b40b42159dfefad0cc75a2f8b719fb004ec67ecadc4d7dc85d78fa0e",
+    "vivado/carrier/generated/carrier_constants.json": "48f79b876a0bfdb449f407692301b29987ef1218fa1adb1fd9a181068765d118",
+    "vivado/carrier/generated/carrier_targets.hex": "1e093c6690b8f57fc53535ed716afd2a82f7ed884526fbee1a0d8eaa9dc5c649",
+    "vivado/carrier/generated/carrier_vector_order.hex": "ea308a8da8aee9bba523ac7f5615bb72eb460d5997ef7503a43c7d73daf02473"
+  }
+}
