@@ -106,23 +106,35 @@ write_bitstream -force $outdir/carrier.bit
 # generated inputs, and the two scripts that run the build and the checks — so
 # `scripts/gate_carrier_base.py` can require each to equal its HEAD blob and refuse a
 # bitstream whose sources have since moved.
+# The generated inputs are taken from what GIT TRACKS, not from a glob. Vivado writes its
+# own droppings into the working directory — which is `generated/` — so a glob swept up
+# vivado.log, vivado.jou and clockInfo.txt and the gate refused the run for naming files
+# that are not sources. Asking git also keeps the provenance and the gate's rule ("every
+# source equals its HEAD blob") consistent by construction rather than by an extension
+# guess that would need updating whenever an input type is added.
+set repo [file dirname [file dirname $here]]
+set generated {}
+if {![catch {exec git -C $repo ls-files vivado/carrier/generated} out]} {
+    foreach rel [split [string trim $out] "\n"] {
+        if {$rel ne ""} { lappend generated [file join $repo $rel] }
+    }
+}
 set source_files {}
 foreach f [concat $srcs [list $here/carrier.xdc $here/build_carrier.tcl \
-                              $here/isolation_checks.tcl] \
-                   [lsort [glob -nocomplain $here/generated/*]]] {
+                              $here/isolation_checks.tcl] [lsort $generated]] {
     lappend source_files $f
 }
 set source_json {}
 foreach f $source_files {
-    set rel [string range $f [expr {[string length [file dirname [file dirname $here]]] + 1}] end]
+    set rel [string range $f [expr {[string length $repo] + 1}] end]
     lappend source_json "    \"$rel\": \"[lindex [exec sha256sum $f] 0]\""
 }
 set source_commit "unknown"
-if {![catch {exec git -C [file dirname [file dirname $here]] rev-parse HEAD} out]} {
+if {![catch {exec git -C $repo rev-parse HEAD} out]} {
     set source_commit [string trim $out]
 }
 set source_dirty "unknown"
-if {![catch {exec git -C [file dirname [file dirname $here]] diff HEAD --name-only} out]} {
+if {![catch {exec git -C $repo diff HEAD --name-only} out]} {
     set source_dirty [expr {[string trim $out] eq "" ? "clean" : "DIRTY"}]
 }
 
