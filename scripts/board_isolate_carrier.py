@@ -241,9 +241,22 @@ def main() -> int:
         if not done_after & PCFG_DONE:
             raise Stalled("PCFG_DONE did not go 0 -> 1: this load did not configure the PL")
 
-        # 4. the first reading that matters.
-        record["steps"].append({"step": "read carrier (step 4, after load)",
-                                "carrier": read_carrier(probe, "after load")})
+        # 4. the first reading that matters, and then the two things that happen around
+        #    every later one, separated. Step 5 used to bundle three changes — time passing,
+        #    the console being closed and reopened, and a tool being run — and a step that
+        #    bundles three changes cannot name a cause.
+        record["steps"].append({"step": "read carrier (step 4a, right after load)",
+                                "carrier": read_carrier(probe, "4a right after load")})
+
+        time.sleep(6)
+        record["steps"].append({"step": "read carrier (step 4b, +6s, same console)",
+                                "carrier": read_carrier(probe, "4b after 6s")})
+
+        probe.close()
+        probe = Probe(args.port)
+        record["steps"].append({"step": "read carrier (step 4c, after closing and "
+                                        "reopening the console, no tool run)",
+                                "carrier": read_carrier(probe, "4c after reopen")})
 
         # 5/6. the clock check, explicitly read-only, then read again.
         probe.close()

@@ -1,0 +1,120 @@
+{
+  "tool": "board_isolate_carrier.py/1.0.0",
+  "what": "isolate the step that stops the carrier answering",
+  "started_at": 1786477262.0810719,
+  "run_dir": "claimb_round1_carrier_2026_08_11_erratum002",
+  "carrier_sha256": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "carrier_sha256_pinned": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "steps": [
+    {
+      "step": "clear PCFG_DONE (step 2)",
+      "int_sts": {
+        "before": "0xa802000b",
+        "after": "0xa802000b"
+      }
+    },
+    {
+      "what": "step 3: fpga loadb of the published carrier",
+      "argv": [
+        "/home/test/zynq_fabricmap/scripts/board_uboot_fpga_load.py",
+        "--port",
+        "/dev/ebaz-uart",
+        "--bit",
+        "/home/test/zynq_fabricmap/gate_runs/claimb_round1_carrier_2026_08_11_erratum002/carrier.bit",
+        "--op",
+        "loadb"
+      ],
+      "returncode": 0,
+      "elapsed_s": 198.9,
+      "stdout_tail": "[*] /home/test/zynq_fabricmap/gate_runs/claimb_round1_carrier_2026_08_11_erratum002/carrier.bit: 2083863 bytes -> 0x04000000, then `fpga loadb`\n[*] ymodem transfer via sb ...\n[xfer] ## Total Size      = 0x001fcc17 = 2083863 Bytes\n## Start Addr      = 0x04000000\nZynq>\n[devcfg] INT_STS 0xa802000b -> 0xa802000b before the load (cleared)\n[*] fpga loadb 0 0x04000000 0x001fcc17\n[fpga] fpga loadb 0 0x04000000 0x001fcc17\n  design filename = \"carrier_top;UserID=0XFFFFFFFF;Version=2025.2;SW_CRC=cf3db964\"\n  part number = \"7z010clg400\"\n  date = \"2026/08/11\"\n  time = \"19:26:04\"\n  bytes in bitstream = 2083740\nzynq_align_dma_buffer: Align buffer at 400007b to 4000040(swap 1)\nINFO:post config was not run, please run manually if needed\nZynq>\n[devcfg] INT_STS=0x50021004 PCFG_DONE=1 (after the load)\n",
+      "stderr_tail": ""
+    },
+    {
+      "step": "PCFG_DONE after load (step 3)",
+      "int_sts": "0x50021004",
+      "pcfg_done": true
+    },
+    {
+      "step": "read carrier (step 4, after load)",
+      "carrier": {
+        "status": "0x00000080",
+        "fault": "0x00000000",
+        "decoded": {
+          "busy": 0,
+          "fault": 0,
+          "configuration_valid": 0,
+          "scorer_busy": 0,
+          "scorer_done": 0,
+          "scorer_armed": 0,
+          "pass1_complete": 0,
+          "recovery_required": 1,
+          "expect_env": 0,
+          "rb_frame_ready": 0,
+          "env_committed": 0,
+          "rb_frames_ok": 0,
+          "reserved": 0
+        },
+        "elapsed_s": 0.011
+      }
+    },
+    {
+      "what": "step 5: board_set_fclk50.py --verify-only",
+      "argv": [
+        "/home/test/zynq_fabricmap/scripts/board_set_fclk50.py",
+        "--port",
+        "/dev/ebaz-uart",
+        "--verify-only"
+      ],
+      "returncode": 0,
+      "elapsed_s": 3.0,
+      "stdout_tail": "before FPGA0_CLK_CTRL=0x00400800 -> 1600.0/8/4 = 50.00 MHz\nafter  FPGA0_CLK_CTRL=0x00400800 -> 1600.0/8/4 = 50.00 MHz\nPASS: FCLK0 pinned to 50.0 MHz\n",
+      "stderr_tail": ""
+    }
+  ],
+  "ps_before": {
+    "0xf8000170": {
+      "name": "FPGA0_CLK_CTRL",
+      "value": "0x00400800"
+    },
+    "0xf8000178": {
+      "name": "FPGA0_THR_CNT (bit0 = FCLK0 gate, 1 = off)",
+      "value": "0x00000000"
+    },
+    "0xf8000240": {
+      "name": "FPGA_RST_CTRL (non-zero = FCLKRESETN held)",
+      "value": "0x00000000"
+    },
+    "0xf8000900": {
+      "name": "LVL_SHFTR_EN (0xF = PS-PL boundary open)",
+      "value": "0x0000000f"
+    },
+    "0xf8007000": {
+      "name": "devcfg CTRL (bit27 PCAP_PR, bit30 PCFG_PROG_B)",
+      "value": "0x4e00e07f"
+    },
+    "0xf800700c": {
+      "name": "devcfg INT_STS (bit2 PCFG_DONE, W1C)",
+      "value": "0xa802000b"
+    },
+    "0xf8007014": {
+      "name": "devcfg STATUS",
+      "value": "0x40000a30"
+    },
+    "0xf8000530": {
+      "name": "PSS_IDCODE",
+      "value": "0x13722093"
+    }
+  },
+  "verdict": "STOP",
+  "stop_reason": "carrier STATUS (after fclk50): no prompt and no exception \u2014 the fabric did not answer at all. Received: 'md.l 0x43c02004 0x1\\r\\n'",
+  "console_log": [
+    {
+      "command": "md.l 0x43c02004 0x1",
+      "elapsed_s": 8.0,
+      "prompt_returned": false,
+      "exception": false,
+      "raw": "md.l 0x43c02004 0x1\r\n",
+      "what": "carrier STATUS (after fclk50)"
+    }
+  ]
+}
