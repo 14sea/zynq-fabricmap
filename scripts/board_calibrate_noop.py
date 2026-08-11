@@ -56,7 +56,7 @@ import run_log  # noqa: E402
 
 TOOL_VERSION = "board_calibrate_noop.py/1.0.0"
 
-DEFAULT_RUN = REPO_ROOT / "gate_runs/claimb_round1_carrier_2026_08_11"
+DEFAULT_RUN = REPO_ROOT / "gate_runs/claimb_round1_carrier_2026_08_11_erratum002"
 
 
 class CalibrationStop(Exception):

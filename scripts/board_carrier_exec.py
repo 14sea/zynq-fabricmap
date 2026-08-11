@@ -58,8 +58,12 @@ TOOL_VERSION = "board_carrier_exec.py/2.0.0"
 # it has": an authority that vouches for itself is not an authority, and the object was
 # forgeable through its own constructor. Changing this line is a source edit that appears
 # in a diff — which is the only way the whitelist and the pinned base should ever move.
+# Moved 2026-08-11 for architecture erratum 002. The carrier this used to name cannot be
+# reached from the PS at all — `MAXIGP0RLAST` tied low, the first read stalls the A9 — so
+# the manifest that described it must not be usable as an authority. Superseding it is a
+# source edit in a diff, which is the whole point of pinning it here.
 PRODUCTION_MANIFEST_SHA256 = (
-    "d158a1a8657b3b10349614673159f187ba92902d4e697ec7be4e9d52101f766a"
+    "82990522a381119131821dd803b6c937c9317f57191c02f8ad41a0b300a8b618"
 )
 
 
