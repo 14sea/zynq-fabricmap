@@ -111,3 +111,71 @@ argument about a copy routine.
 * do not treat the wedge as a board fault. `docs/board_roles.md`: a wedge is a power cycle,
   not a retirement. `17A6` answered its identity gate correctly on the same console
   seconds earlier.
+
+## The fit question — measured 2026-08-11, and it needs an architecture ruling
+
+The shim is built, benched and minimised, and **it does not fit the frozen 800-site
+region**. The numbers, all measured:
+
+| | LUTs |
+|---|---|
+| carrier without the shim, post-synthesis | 780 |
+| carrier without the shim, post-route (the published build) | 732 |
+| the shim alone, out-of-context | **64** (49 FFs) |
+| carrier with the shim, post-synthesis | 843 |
+| carrier with the shim, **post-`opt_design`** | **837** |
+| `pb_logic` = `SLICE_X0Y0:SLICE_X1Y99` | **800 sites** |
+
+`place_design` fails outright — first on four `scorer` instances, then, after the shim
+lost 32 LUTs of RDATA mux, on `stream/watchdog` and `stream/icap_din`. It is not close:
+37 LUTs over before placement begins.
+
+**The shim cannot absorb that.** Its 64 LUTs are the ID echo, the address incrementer, the
+beat counter and the FSM — every one of them named in the acceptance line. Two rounds of
+reduction (a shared `id` split into two registers; the read data path turned into a
+pass-through) bought 6 LUTs, because Vivado had already done the rest. Getting to ~25 would
+mean giving up burst conversion or ID echo, which is the same defect erratum 002 is about,
+re-entered by the front door.
+
+### The measurement that answers it
+
+A scratch feasibility probe — **not a build, nothing published, the pblock in
+`build_carrier.tcl` is unchanged** — placed and routed the same netlist with the nearest
+*free* slice column pair added:
+
+```
+pb_logic = SLICE_X0Y0:SLICE_X1Y99  +  SLICE_X6Y0:SLICE_X7Y99
+  -> place + route OK
+  -> WNS +7.305 ns   (the published build is +5.598)
+  -> CELL ISOLATION OK: target=6  flush=0
+  -> post-route 794 LUTs
+  -> route inventory: flush 415, target 560, foreign 554
+     (the published build records flush 159, target 374, foreign 368)
+```
+
+`SLICE_X6`/`X7` sit in majors 22–23, between the flush column (major 21) and the second
+target column (major 24), and are in **no written frame** — which is not an argument but a
+machine-checked result: the isolation check's two verdict criteria, target cells 6 and
+flush cells 0, both hold.
+
+### Why this is a ruling and not a decision to take quietly
+
+The region is `SLICE_X0Y0:SLICE_X1Y99` because the ORIGINAL authority was minimising nets
+that cross the written columns — the right-hand floorplan was rejected at 124 crossers and
+a left-hand one with a BRAM buffer at 190. **Erratum 001 retired that authority**: crossing
+nets are an evidence record, cell ownership is the verdict, and bit invariance against the
+routed base is what makes a candidate legal. Under erratum 001 the two-column region is
+therefore tighter than anything now requires — the crossing count rising from 368 to 554
+foreign nets is a bigger number in a record, not a violated rule, because those routes are
+part of the base and every candidate rewrites them identically.
+
+That said, it is a floorplan change to a frozen artifact, and the standing instruction is
+not to widen the region without a ruling. Three options, with what each costs:
+
+1. **add `SLICE_X6Y0:SLICE_X7Y99`** — measured above: fits, timing improves, verdicts hold.
+   Cheapest and the most direct consequence of erratum 001.
+2. **shrink `carrier_stream`** (609 of the 843 LUTs, 497 of them logic). It is the verified
+   engine, its CRC commitment and byte-count assertion are load-bearing, and the science
+   depends on it. Not advisable to touch for 40 LUTs.
+3. **weaken the shim** — refuse bursts instead of converting them. It would fit, and it
+   contradicts the acceptance line.
