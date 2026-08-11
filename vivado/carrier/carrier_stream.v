@@ -39,7 +39,9 @@ module carrier_stream #(
     parameter integer PREAMBLE      = 23,
     parameter integer FAR_POS       = 20,
     parameter [31:0]  IDCODE        = 32'h13722093,
-    parameter integer TIMEOUT       = 1 << 20
+    // The watchdog's TOP BIT is the expiry, so there is no comparator: `watchdog > TIMEOUT`
+    // on a 32-bit counter cost ~40 LUTs of the 800 the whole design may use.
+    parameter integer TIMEOUT_BITS  = 21
 ) (
     input  wire        clk,
     input  wire        rst_n,
@@ -66,11 +68,10 @@ module carrier_stream #(
     output reg         recovery_required,
     output reg  [2:0]  env_committed,
 
-    // readback staging, read by the host over AXI
-    output reg         rb_we,
-    output reg  [6:0]  rb_waddr,
-    output reg  [31:0] rb_wdata,
-    output reg         rb_frame_ready,   // a whole frame is in the readback buffer
+    // the staging memory, read by the host over AXI between frames
+    input  wire [6:0]  host_raddr,
+    output wire [31:0] host_rdata,
+    output reg         rb_frame_ready,   // a whole frame is in the staging memory
     input  wire        rb_ack,           // the host has taken it
     output reg  [3:0]  rb_frames_ok,     // frames verified so far in this transaction
 
@@ -101,29 +102,40 @@ module carrier_stream #(
                       W_CRC1   = 32'h30000001, W_ZERO  = 32'h00000000;
 
     // The pinned control skeleton by position. FAR_POS is judged by the allowlist instead.
-    function automatic [32:0] expected_at(input [9:0] p);
-        begin
-            expected_at = {1'b0, 32'd0};
-            if (p < 8)                    expected_at = {1'b1, W_DUMMY};
-            else if (p == 8)              expected_at = {1'b1, W_SYNC};
-            else if (p == 9)              expected_at = {1'b1, W_NOOP};
-            else if (p == 10)             expected_at = {1'b1, W_CMD1};
-            else if (p == 11)             expected_at = {1'b1, W_RCRC};
-            else if (p == 12 || p == 13)  expected_at = {1'b1, W_NOOP};
-            else if (p == 14)             expected_at = {1'b1, W_ID1};
-            else if (p == 15)             expected_at = {1'b1, IDCODE};
-            else if (p == 16)             expected_at = {1'b1, W_CMD1};
-            else if (p == 17)             expected_at = {1'b1, W_WCFG};
-            else if (p == 18)             expected_at = {1'b1, W_NOOP};
-            else if (p == 19)             expected_at = {1'b1, W_FAR1};
-            else if (p == 21)             expected_at = {1'b1, W_FDRI0};
-            else if (p == 22)             expected_at = {1'b1, W_TYPE2};
-            else if (p == 528)            expected_at = {1'b1, W_CRC1};
-            else if (p == 529)            expected_at = {1'b1, W_ZERO};
-            else if (p == 530)            expected_at = {1'b1, W_CMD1};
-            else if (p == 531)            expected_at = {1'b1, W_DESYNC};
-            else if (p >= 532)            expected_at = {1'b1, W_NOOP};
-        end
+    // The control-word expectations, as a 31-entry ROM indexed by a 5-bit position, NOT as
+    // a priority chain of 10-bit comparisons: as a chain each of the 33 output bits was a
+    // function of the whole position and the block cost roughly 165 LUTs.
+    //
+    //   index 0..22  -> envelope positions 0..22   (the preamble)
+    //   index 23..30 -> envelope positions 528..535 (the trailer)
+    //
+    // Position 20 is the FAR and carries NO control expectation — it is checked against
+    // `permitted_far(env)` instead — so its entry has the valid bit clear.
+    function automatic [32:0] expected_at_idx(input [4:0] k);
+        case (k)
+            5'd0, 5'd1, 5'd2, 5'd3,
+            5'd4, 5'd5, 5'd6, 5'd7: expected_at_idx = {1'b1, W_DUMMY};
+            5'd8:                   expected_at_idx = {1'b1, W_SYNC};
+            5'd9:                   expected_at_idx = {1'b1, W_NOOP};
+            5'd10:                  expected_at_idx = {1'b1, W_CMD1};
+            5'd11:                  expected_at_idx = {1'b1, W_RCRC};
+            5'd12, 5'd13:           expected_at_idx = {1'b1, W_NOOP};
+            5'd14:                  expected_at_idx = {1'b1, W_ID1};
+            5'd15:                  expected_at_idx = {1'b1, IDCODE};
+            5'd16:                  expected_at_idx = {1'b1, W_CMD1};
+            5'd17:                  expected_at_idx = {1'b1, W_WCFG};
+            5'd18:                  expected_at_idx = {1'b1, W_NOOP};
+            5'd19:                  expected_at_idx = {1'b1, W_FAR1};
+            5'd21:                  expected_at_idx = {1'b1, W_FDRI0};
+            5'd22:                  expected_at_idx = {1'b1, W_TYPE2};
+            5'd23:                  expected_at_idx = {1'b1, W_CRC1};
+            5'd24:                  expected_at_idx = {1'b1, W_ZERO};
+            5'd25:                  expected_at_idx = {1'b1, W_CMD1};
+            5'd26:                  expected_at_idx = {1'b1, W_DESYNC};
+            5'd27, 5'd28, 5'd29,
+            5'd30:                  expected_at_idx = {1'b1, W_NOOP};
+            default:                expected_at_idx = {1'b0, 32'd0};   // incl. 20, the FAR
+        endcase
     endfunction
 
     function automatic [31:0] permitted_far(input [1:0] e);
@@ -135,12 +147,12 @@ module carrier_stream #(
         endcase
     endfunction
 
-    localparam [2:0] P_IDLE = 3'd0, P_PASS1 = 3'd1, P_PASS2 = 3'd2, P_RDBACK = 3'd3,
-                     P_FAULT = 3'd4, P_EMIT = 3'd5;
+    localparam [3:0] P_IDLE = 4'd0, P_PASS1 = 4'd1, P_PASS2 = 4'd2, P_RDBACK = 4'd3,
+                     P_FAULT = 4'd4, P_EMIT = 4'd5, P_COMMIT = 4'd6;
 
     localparam integer TOTAL_FRAMES = ENVELOPES * FRAMES_PER_ENV;   // 15
 
-    reg [2:0]  phase;
+    reg [3:0]  phase;
     reg [2:0]  rb_frame;
     reg [6:0]  emit_word;
     reg [1:0]  env;
@@ -148,9 +160,16 @@ module carrier_stream #(
     reg [2:0]  frame_idx;
     reg [6:0]  frame_word;
     reg        awaiting_crc;   // last word of a frame accepted; feeder still draining
-    reg [31:0] watchdog;
+    reg [TIMEOUT_BITS-1:0] watchdog;
+    wire       expired = watchdog[TIMEOUT_BITS-1];
 
-    // staging: one frame of original words.
+    // staging: ONE frame-sized memory, used by pass 2 for the candidate frame and by the
+    // readback for the words the device returns. They are never live at the same time —
+    // readback begins only after the whole envelope has been written, so no emit follows it
+    // within an envelope — and sharing removes a second 101-word array (88 LUTs of SLICEM
+    // in a region with 800 LUTs total). It also makes an assurance structural rather than
+    // incidental: the words the host reads back ARE the words the CRC saw, because they are
+    // the same array written by the same transfer.
     //
     // DISTRIBUTED RAM, written from its OWN purely synchronous block. Left inside the
     // asynchronous-reset FSM it inferred 3,232 flip-flops AND a 101-entry 32-bit read
@@ -162,7 +181,28 @@ module carrier_stream #(
     (* ram_style = "distributed" *) reg [31:0] stage [0:FRAME_WORDS-1];
 
     reg [31:0] crc_scratch [0:FRAMES_PER_ENV-1];
-    reg [31:0] crc_committed [0:ENVELOPES*FRAMES_PER_ENV-1];
+
+    // The fifteen committed CRCs are a DISTRIBUTED RAM with ONE write port, and the commit
+    // is sequenced over five cycles in P_COMMIT. As fifteen registers copied in a single
+    // step they cost ~900 LUTs — each of the fifteen needed a 5:1 mux of the scratch set,
+    // and the two read sites (the pass-2 compare and the readback compare) each built a
+    // 15:1 mux of their own. That is more than the entire left-of-flush region has.
+    //
+    // Atomicity is NOT weakened by sequencing: `env_committed[env]` is what every use of
+    // the set is gated on, and it is set only after all five writes have happened. A
+    // half-written RAM with the bit clear is not weaker authority, it is none.
+    (* ram_style = "distributed" *) reg [31:0] crc_committed [0:ENVELOPES*FRAMES_PER_ENV-1];
+    reg  [3:0]  cc_waddr;
+    reg  [31:0] cc_wdata;
+    reg         cc_we;
+    reg  [2:0]  commit_i;
+    always @(posedge clk) if (cc_we) crc_committed[cc_waddr] <= cc_wdata;
+
+    // ONE read port: the two compare sites are in different phases and never overlap.
+    wire [3:0]  cc_raddr = (phase == P_RDBACK)
+                           ? (env*FRAMES_PER_ENV + rb_frame)
+                           : (env*FRAMES_PER_ENV + frame_idx);
+    wire [31:0] cc_rdata = crc_committed[cc_raddr];
 
     wire        crc_ready, crc_taken, crc_idle;
     wire [15:0] crc_byte_count;
@@ -210,32 +250,46 @@ module carrier_stream #(
     // The staging write is exactly the pass-2 transfer, spelled out here because the RAM
     // must not share the FSM's reset.
     wire stage_we = (phase == P_PASS2) && !awaiting_crc && word_valid && in_frame
-                    && !control_bad && !far_bad && crc_ready && !(watchdog > TIMEOUT);
-    always @(posedge clk) if (stage_we) stage[frame_word] <= word_data;
+                    && !control_bad && !far_bad && crc_ready && !expired;
+    // one write port, two sources, mutually exclusive by phase
+    wire        stage_rb_we = (phase == P_RDBACK) && !rb_frame_ready && !awaiting_crc
+                              && crc_ready && !expired;
+    wire        stage_any_we = stage_we || stage_rb_we;
+    wire [31:0] stage_wdata  = stage_rb_we ? icap_dout : word_data;
+    always @(posedge clk) if (stage_any_we) stage[frame_word] <= stage_wdata;
 
-    wire [32:0] want = expected_at(pos);
+    // one read port: the emit path while a frame is being handed to ICAP, the host at any
+    // other time. The host reads only between `rb_frame_ready` and its ack, so they never
+    // want the array in the same cycle.
+    wire [6:0]  stage_raddr = (phase == P_EMIT) ? emit_word : host_raddr;
+    wire [31:0] stage_rdata = stage[stage_raddr];
+    assign      host_rdata  = stage_rdata;
+
+    wire        pos_is_ctrl = (pos < PREAMBLE) || (pos >= ENV_WORDS - 8);
+    wire [4:0]  ctrl_idx    = (pos < PREAMBLE) ? pos[4:0] : (5'd23 + pos[2:0]);
+    wire [32:0] want        = pos_is_ctrl ? expected_at_idx(ctrl_idx) : {1'b0, 32'd0};
     wire        control_bad = want[32] && (word_data != want[31:0]);
     wire        far_bad     = (pos == FAR_POS) && (word_data != permitted_far(env));
 
-    integer i;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             phase <= P_IDLE; busy <= 1'b0; fault <= 1'b0; fault_code <= F_NONE;
             awaiting_crc <= 1'b0;
+            cc_we <= 1'b0; cc_waddr <= 4'd0; cc_wdata <= 32'd0; commit_i <= 3'd0;
             expect_env <= 2'd0; pass1_complete <= 1'b0;
             configuration_valid <= 1'b0;
             recovery_required <= 1'b1;      // fail-closed: a reset proves nothing
             env_committed <= 3'b000;
             env <= 2'd0; pos <= 10'd0; frame_idx <= 3'd0; frame_word <= 7'd0;
-            watchdog <= 32'd0;
+            watchdog <= {TIMEOUT_BITS{1'b0}};
             crc_clear <= 1'b0;
-            rb_we <= 1'b0; rb_frame_ready <= 1'b0; rb_frames_ok <= 4'd0;
+            rb_frame_ready <= 1'b0; rb_frames_ok <= 4'd0;
             rb_frame <= 3'd0;
             icap_csib <= 1'b1; icap_rdwrb <= 1'b0; icap_din <= 32'd0;
         end else begin
             crc_clear <= 1'b0;
-            rb_we     <= 1'b0;
+            cc_we     <= 1'b0;
             icap_csib <= 1'b1;              // paused unless a word is being handed over
 
             case (phase)
@@ -282,7 +336,7 @@ module carrier_stream #(
                             pos        <= 10'd0;
                             frame_idx  <= 3'd0;
                             frame_word <= 7'd0;
-                            watchdog   <= 32'd0;
+                            watchdog   <= {TIMEOUT_BITS{1'b0}};
                             crc_clear  <= 1'b1;
                             busy       <= 1'b1;
                             phase      <= start_pass1 ? P_PASS1 : P_PASS2;
@@ -291,8 +345,8 @@ module carrier_stream #(
                 end
 
                 P_PASS1, P_PASS2: begin
-                    watchdog <= watchdog + 32'd1;
-                    if (watchdog > TIMEOUT) begin
+                    if (!expired) watchdog <= watchdog + 1'b1;
+                    if (expired) begin
                         fault_code <= F_TIMEOUT;
                         phase      <= P_FAULT;
                     end else if (awaiting_crc) begin
@@ -312,8 +366,7 @@ module carrier_stream #(
                                 phase      <= P_FAULT;
                             end else if (phase == P_PASS1) begin
                                 crc_scratch[frame_idx] <= crc_value;
-                            end else if (crc_value !=
-                                         crc_committed[env*FRAMES_PER_ENV + frame_idx]) begin
+                            end else if (crc_value != cc_rdata) begin
                                 fault_code <= F_CRC;
                                 phase      <= P_FAULT;
                             end else begin
@@ -346,24 +399,16 @@ module carrier_stream #(
                             end
                             if (pos == ENV_WORDS - 1) begin
                                 if (phase == P_PASS1) begin
-                                    // ONE commit, at the end of a wholly good envelope
-                                    for (i = 0; i < FRAMES_PER_ENV; i = i + 1)
-                                        crc_committed[env*FRAMES_PER_ENV + i] <= crc_scratch[i];
-                                    env_committed[env] <= 1'b1;
-                                    if (env == ENVELOPES - 1) begin
-                                        pass1_complete <= 1'b1;
-                                        expect_env     <= 2'd0;
-                                    end else begin
-                                        expect_env <= env + 2'd1;
-                                    end
-                                    busy  <= 1'b0;
-                                    phase <= P_IDLE;
+                                    // ONE commit, at the end of a wholly good envelope,
+                                    // sequenced through the RAM's single write port.
+                                    commit_i <= 3'd0;
+                                    phase    <= P_COMMIT;
                                 end else begin
                                     phase      <= P_RDBACK;
                                     pos        <= 10'd0;
                                     rb_frame   <= 3'd0;
                                     frame_word <= 7'd0;
-                                    watchdog   <= 32'd0;
+                                    watchdog   <= {TIMEOUT_BITS{1'b0}};
                                     crc_clear  <= 1'b1;
                                 end
                             end else begin
@@ -373,18 +418,45 @@ module carrier_stream #(
                     end
                 end
 
+                // ---- commit: copy the envelope's five scratch CRCs into the committed
+                // set, one per cycle, and only then raise the authority bit.
+                P_COMMIT: begin
+                    if (!expired) watchdog <= watchdog + 1'b1;
+                    if (expired) begin
+                        fault_code <= F_TIMEOUT;
+                        phase      <= P_FAULT;
+                    end else begin
+                        cc_we    <= 1'b1;
+                        cc_waddr <= env*FRAMES_PER_ENV + commit_i;
+                        cc_wdata <= crc_scratch[commit_i];
+                        if (commit_i == FRAMES_PER_ENV - 1) begin
+                            env_committed[env] <= 1'b1;
+                            if (env == ENVELOPES - 1) begin
+                                pass1_complete <= 1'b1;
+                                expect_env     <= 2'd0;
+                            end else begin
+                                expect_env <= env + 2'd1;
+                            end
+                            busy  <= 1'b0;
+                            phase <= P_IDLE;
+                        end else begin
+                            commit_i <= commit_i + 3'd1;
+                        end
+                    end
+                end
+
                 // ---- emit: hand one verified frame to the FDRI burst already in
                 // progress. RDWRB stays in write throughout and is never toggled while
                 // CSIB is low, which would abort the load.
                 P_EMIT: begin
-                    watchdog <= watchdog + 32'd1;
-                    if (watchdog > TIMEOUT) begin
+                    if (!expired) watchdog <= watchdog + 1'b1;
+                    if (expired) begin
                         fault_code <= F_TIMEOUT;
                         phase      <= P_FAULT;
                     end else begin
                         icap_csib  <= 1'b0;
                         icap_rdwrb <= 1'b0;
-                        icap_din   <= stage[emit_word];
+                        icap_din   <= stage_rdata;
                         if (emit_word == FRAME_WORDS - 1) begin
                             emit_word <= 7'd0;
                             phase     <= P_PASS2;
@@ -406,8 +478,8 @@ module carrier_stream #(
                 // the assumption, so simulation cannot establish that a real ICAPE2 will
                 // return these words this way.
                 P_RDBACK: begin
-                    watchdog <= watchdog + 32'd1;
-                    if (watchdog > TIMEOUT) begin
+                    if (!expired) watchdog <= watchdog + 1'b1;
+                    if (expired) begin
                         fault_code <= F_TIMEOUT;
                         phase      <= P_FAULT;
                     end else if (rb_frame_ready) begin
@@ -441,14 +513,12 @@ module carrier_stream #(
                         // CSIB high pauses the readback while the feeder drains the last
                         // word — the same pause the write path uses between frames.
                         icap_csib <= 1'b1;
-                        rb_we     <= 1'b0;
                         if (crc_taken) begin
                             awaiting_crc <= 1'b0;
                             if (crc_byte_count != BYTES_PER_FRAME) begin
                                 fault_code <= F_BYTECOUNT;
                                 phase      <= P_FAULT;
-                            end else if (crc_value ==
-                                crc_committed[env*FRAMES_PER_ENV + rb_frame]) begin
+                            end else if (crc_value == cc_rdata) begin
                                 rb_frames_ok   <= rb_frames_ok + 4'd1;
                                 rb_frame_ready <= 1'b1;
                             end else begin
@@ -462,9 +532,6 @@ module carrier_stream #(
                         // word can never reach `rb_*` without having been CRC'd.
                         icap_csib  <= 1'b0;
                         icap_rdwrb <= 1'b1;
-                        rb_we      <= crc_ready;
-                        rb_waddr   <= frame_word;
-                        rb_wdata   <= icap_dout;
                         if (crc_ready) begin
                             if (frame_word == FRAME_WORDS - 1) awaiting_crc <= 1'b1;
                             else frame_word <= frame_word + 7'd1;

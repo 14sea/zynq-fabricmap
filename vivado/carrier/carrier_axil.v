@@ -63,10 +63,9 @@ module carrier_axil #(
     input  wire        word_ready,
     input  wire        stream_open,     // the engine is in a phase that consumes words
 
-    // the engine's readback staging, written here and read by the host
-    input  wire        rb_we,
-    input  wire [6:0]  rb_waddr,
-    input  wire [31:0] rb_wdata,
+    // the engine's staging memory, read through here by the host
+    output wire [6:0]  rb_raddr,
+    input  wire [31:0] rb_rdata,
 
     // control pulses
     output reg         ctrl_begin_txn,
@@ -166,22 +165,23 @@ module carrier_axil #(
 
     // ------------------------------------------------------------------- read channel
     //
-    // The readback array is written ONLY by the engine and read only here, so it keeps one
-    // write port and one read port and stays 101 words — 32 x ceil(101/64) = 64 LUTs of
-    // SLICEM, against the 288 the old candidate buffer took.
-    (* ram_style = "distributed" *) reg [31:0] rb_buf [0:FRAME_WORDS-1];
-    always @(posedge clk) if (rb_we) rb_buf[rb_waddr] <= rb_wdata;
+    // There is NO array here. The readback words live in the engine's staging memory — the
+    // same array, written by the same transfer that fed the CRC — and this module only
+    // presents an address to it. A second 101-word copy cost 88 LUTs of SLICEM in a region
+    // that has 800 LUTs for the whole design.
+    assign rb_raddr = s_araddr[8:2];
 
-    wire [6:0]  rd_rb_word = s_araddr[8:2];
-    wire        rd_is_rb   = (s_araddr >= RB_BASE) && (s_araddr < REG_BASE) &&
-                             (rd_rb_word < FRAME_WORDS);
-    reg  [31:0] rb_rdata;
-    always @(posedge clk) rb_rdata <= rb_buf[rd_rb_word];
+    wire rd_is_rb = (s_araddr >= RB_BASE) && (s_araddr < REG_BASE) &&
+                    (rb_raddr < FRAME_WORDS);
 
-    // The readback datum arrives one cycle after the address, which is exactly the cycle R
-    // is driven, so it is muxed onto the read data here instead of into the register.
+    // The engine's read is asynchronous, so `rb_rdata` is the word at the address presented
+    // this cycle; R is driven the cycle after AR is accepted, and the address is still on
+    // `s_araddr` only while AR is valid. It is therefore registered here.
+    reg [31:0] rb_hold;
+    always @(posedge clk) rb_hold <= rb_rdata;
+
     reg [31:0] rdata_reg;
-    assign s_rdata = rd_was_rb ? rb_rdata : rdata_reg;
+    assign s_rdata = rd_was_rb ? rb_hold : rdata_reg;
 
     // SYNCHRONOUS read: the address is presented in the cycle AR is accepted and the datum
     // is available the next, which is the cycle R is driven.

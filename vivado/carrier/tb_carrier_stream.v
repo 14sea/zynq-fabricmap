@@ -24,9 +24,9 @@ module tb_carrier_stream;
     wire [3:0]  fault_code;
     wire [1:0]  expect_env;
     wire [2:0]  env_committed;
-    wire        rb_we, rb_frame_ready;
-    wire [6:0]  rb_waddr;
-    wire [31:0] rb_wdata;
+    wire        rb_frame_ready;
+    reg  [6:0]  host_raddr = 7'd0;
+    wire [31:0] host_rdata;
     wire        icap_csib, icap_rdwrb;
     wire [31:0] icap_din;
     reg  [31:0] icap_dout = 32'd0;
@@ -49,7 +49,7 @@ module tb_carrier_stream;
         .busy(busy), .fault(fault), .fault_code(fault_code), .expect_env(expect_env),
         .pass1_complete(pass1_complete), .configuration_valid(configuration_valid),
         .recovery_required(recovery_required), .env_committed(env_committed),
-        .rb_we(rb_we), .rb_waddr(rb_waddr), .rb_wdata(rb_wdata),
+        .host_raddr(host_raddr), .host_rdata(host_rdata),
         .rb_frame_ready(rb_frame_ready), .rb_ack(rb_ack), .rb_frames_ok(rb_frames_ok),
         .icap_csib(icap_csib), .icap_rdwrb(icap_rdwrb), .icap_din(icap_din),
         .icap_dout(icap_dout)

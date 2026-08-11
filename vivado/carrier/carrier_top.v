@@ -80,9 +80,9 @@ module carrier_top #(
     wire [3:0]  txn_fault_code, rb_frames_ok;
     wire [1:0]  expect_env;
     wire [2:0]  env_committed;
-    wire        word_valid, word_ready, rb_we;
-    wire [31:0] word_data, rb_wdata;
-    wire [6:0]  rb_waddr;
+    wire        word_valid, word_ready;
+    wire [31:0] word_data, rb_rdata;
+    wire [6:0]  rb_raddr;
     wire        scorer_busy, scorer_done, scorer_armed;
     wire [LUTS*8-1:0] score_flat;
 
@@ -95,7 +95,7 @@ module carrier_top #(
         .s_rdata(m_rdata), .s_rresp(m_rresp), .s_rvalid(m_rvalid), .s_rready(m_rready),
         .word_valid(word_valid), .word_data(word_data), .word_ready(word_ready),
         .stream_open(stream_open),
-        .rb_we(rb_we), .rb_waddr(rb_waddr), .rb_wdata(rb_wdata),
+        .rb_raddr(rb_raddr), .rb_rdata(rb_rdata),
         .ctrl_begin_txn(ctrl_begin_txn),
         .ctrl_pass1(ctrl_pass1), .ctrl_pass2(ctrl_pass2),
         .ctrl_env_index(ctrl_env_index),
@@ -125,7 +125,7 @@ module carrier_top #(
         .expect_env(expect_env), .pass1_complete(pass1_complete),
         .configuration_valid(configuration_valid),
         .recovery_required(recovery_required), .env_committed(env_committed),
-        .rb_we(rb_we), .rb_waddr(rb_waddr), .rb_wdata(rb_wdata),
+        .host_raddr(rb_raddr), .host_rdata(rb_rdata),
         .rb_frame_ready(rb_frame_ready), .rb_ack(ctrl_rb_ack),
         .rb_frames_ok(rb_frames_ok),
         .icap_csib(icap_csib), .icap_rdwrb(icap_rdwrb),

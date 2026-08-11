@@ -31,9 +31,10 @@ module tb_carrier_axil;
     wire        word_valid;
     wire [31:0] word_data;
     reg         word_ready = 1, stream_open = 0;
-    reg         rb_we = 0;
-    reg  [6:0]  rb_waddr = 0;
-    reg  [31:0] rb_wdata = 0;
+    // stands in for the engine's staging memory: an ASYNCHRONOUS read at rb_raddr
+    wire [6:0]  rb_raddr;
+    reg  [31:0] stage_model [0:FRAME_WORDS-1];
+    wire [31:0] rb_rdata = stage_model[rb_raddr];
 
     wire        ctrl_begin_txn, ctrl_pass1, ctrl_pass2, ctrl_arm, ctrl_mode_holdout,
                 ctrl_rb_ack;
@@ -64,7 +65,7 @@ module tb_carrier_axil;
         .s_rdata(rdata), .s_rresp(rresp), .s_rvalid(rvalid), .s_rready(rready),
         .word_valid(word_valid), .word_data(word_data), .word_ready(word_ready),
         .stream_open(stream_open),
-        .rb_we(rb_we), .rb_waddr(rb_waddr), .rb_wdata(rb_wdata),
+        .rb_raddr(rb_raddr), .rb_rdata(rb_rdata),
         .ctrl_begin_txn(ctrl_begin_txn), .ctrl_pass1(ctrl_pass1), .ctrl_pass2(ctrl_pass2),
         .ctrl_env_index(ctrl_env_index), .ctrl_arm(ctrl_arm),
         .ctrl_mode_holdout(ctrl_mode_holdout), .ctrl_rb_ack(ctrl_rb_ack),
@@ -189,10 +190,7 @@ module tb_carrier_axil;
         check("mode_holdout is a level", ctrl_mode_holdout, 1);
 
         // ---- 7. the readback window: readable, not writable
-        for (i = 0; i < FRAME_WORDS; i = i + 1) begin
-            @(negedge clk); rb_we = 1; rb_waddr = i[6:0]; rb_wdata = 32'hAB000000 | i;
-        end
-        @(negedge clk); rb_we = 0;
+        for (i = 0; i < FRAME_WORDS; i = i + 1) stage_model[i] = 32'hAB000000 | i;
         axi_read(16'h1000);
         check("readback word 0", rd_data, 32'hAB000000);
         axi_read(16'h1000 + 100*4);

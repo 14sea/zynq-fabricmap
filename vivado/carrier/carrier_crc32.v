@@ -78,6 +78,12 @@ module carrier_crc32 (
     wire [7:0] byte_of_index = (bidx == 2'd1) ? wreg[15:8]  :
                                (bidx == 2'd2) ? wreg[23:16] : wreg[31:24];
 
+    // ONE instance of the eight-stage unrolled step, with the byte selected before it. Two
+    // calls in two branches of the same process synthesise as two copies, which is 122 LUTs
+    // in a region that has 800 for the whole design.
+    wire [7:0]  in_byte    = accept ? data[7:0] : byte_of_index;
+    wire [31:0] next_state = crc_byte(state, in_byte);
+
     // `clear` wins over `accept` inside the state update, so a word offered in the same
     // cycle as a clear would be counted by the consumer and dropped by the CRC. Withdrawing
     // `ready` for that cycle makes the two mutually exclusive at the interface instead of
@@ -99,12 +105,12 @@ module carrier_crc32 (
                 state <= 32'hFFFFFFFF; bidx <= 2'd0; active <= 1'b0; byte_count <= 16'd0;
             end else if (accept) begin
                 wreg       <= data;
-                state      <= crc_byte(state, data[7:0]);
+                state      <= next_state;
                 byte_count <= byte_count + 16'd1;
                 bidx       <= 2'd1;
                 active     <= 1'b1;
             end else if (active) begin
-                state      <= crc_byte(state, byte_of_index);
+                state      <= next_state;
                 byte_count <= byte_count + 16'd1;
                 if (bidx == 2'd3) begin
                     active <= 1'b0;
