@@ -329,6 +329,46 @@ Expected resource effect: the buffer falls from 536x32 to 101x32 (~288 to ~64 LU
 LUTRAM), and the CRC can consume a byte per cycle instead of a word — AXI transfer time
 covers the extra cycles — which should remove most of its current 162 LUTs.
 
+#### The host interface that follows from it, and the one rule inside the PL
+
+Because pass 1 needs no buffer and pass 2 stages only one frame, **the candidate buffer is
+gone**: the AXI write channel *is* the word stream. One write to the stream window is one
+word, `word_ready` is the backpressure, and there is no separate "loaded words" count that
+could disagree with the engine's own position counter.
+
+```
+0x0000            STREAM   W  one word of the envelope, in order
+0x1000 .. 0x118F  RDBACK   R  the 101 words of the frame the engine has verified
+0x2000  CTRL      W  b1 begin_txn  b2 start_pass1  b3 start_pass2
+                     b5:4 env_index  b6 arm  b7 mode_holdout  b8 rb_ack
+0x2004  STATUS    R  b0 busy  b1 fault  b2 configuration_valid  b3 scorer_busy
+                     b4 scorer_done  b5 scorer_armed  b6 pass1_complete
+                     b7 recovery_required  b9:8 expect_env  b10 rb_frame_ready
+                     b13:11 env_committed  b17:14 rb_frames_ok
+0x2008  FAULT     R  b3:0 fault code
+0x2010  SCORE0..  R  six per-LUT match counts
+```
+
+A stream write while no pass is open returns **SLVERR rather than stalling**. An AXI-Lite
+write that never completes wedges the PS, and on this board that costs a power cycle; "the
+host wrote a word outside a pass" is a host bug that should be visible. Inside a pass the
+stall is bounded: four cycles for the CRC, at most one frame while a verified frame is
+emitted.
+
+**One feeder, one advance condition.** Pass 1, pass 2 and readback share a single
+word→byte CRC feeder; only the data source changes with the phase. The single advance
+condition is `word_valid && crc_ready`, and every index — the frame word, the staging
+write, the readback buffer write, the envelope position — moves on that event and on
+nothing else. This is not a style preference: while the three phases each advanced their
+own counters off a level-shaped `ready`, they drifted against the one byte stream, and the
+readback CRC came out as though almost nothing had been consumed.
+
+The feeder carries its own **assertion: a 101-word frame must produce exactly 404 byte
+handshakes**, and any other count faults the transaction. It earned its place immediately
+by catching a case where a buffer clear and a word transfer landed in the same cycle: the
+consumer counted the word, the CRC dropped it, and the frame came out at 400 bytes instead
+of appearing as a CRC that merely looked wrong.
+
 ### Superseded 2026-08-10: the envelope-staged two-pass contract
 
 The one-envelope buffer is taken. Neither of the alternatives is: changing the PS

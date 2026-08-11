@@ -54,6 +54,7 @@ module carrier_stream #(
     input  wire        word_valid,
     input  wire [31:0] word_data,
     output wire        word_ready,
+    output wire        stream_open,     // a pass is open: a stream write may stall, not err
 
     // status
     output reg         busy,
@@ -192,6 +193,11 @@ module carrier_stream #(
     // control word is not CRC'd and retires at once.
     assign word_ready = (phase == P_PASS1 || phase == P_PASS2) && !awaiting_crc &&
                         (in_frame ? crc_ready : 1'b1);
+
+    // A stream write is stalled while a pass is open and errored when none is: an AXI-Lite
+    // write that never completes wedges the PS, so "no pass is open" must be an answer, not
+    // a hang. P_EMIT counts as open — the stall there is at most one frame.
+    assign stream_open = (phase == P_PASS1) || (phase == P_PASS2) || (phase == P_EMIT);
 
     wire [32:0] want = expected_at(pos);
     wire        control_bad = want[32] && (word_data != want[31:0]);

@@ -23,8 +23,8 @@ proc pick {what pattern want} {
 create_project -in_memory -part $part
 set_property verilog_define {} [current_fileset]
 add_files -norecurse [list \
-    $here/carrier_top.v $here/carrier_axil.v $here/carrier_envelope.v \
-    $here/carrier_txn.v $here/carrier_crc32.v $here/carrier_scorer.v]
+    $here/carrier_top.v $here/carrier_axil.v $here/carrier_stream.v \
+    $here/carrier_crc32.v $here/carrier_scorer.v]
 set_property include_dirs [list $here/generated] [current_fileset]
 add_files -fileset constrs_1 -norecurse $here/carrier.xdc
 
