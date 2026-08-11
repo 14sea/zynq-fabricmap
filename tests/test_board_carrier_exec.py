@@ -13,6 +13,7 @@ transmits first.
 from __future__ import annotations
 
 import builtins
+import hashlib
 import json
 import struct
 import sys
@@ -268,6 +269,16 @@ class SessionBindingTests(unittest.TestCase):
 
         def write_sequence(self, payload_bytes):
             self.calls.append(("write", len(payload_bytes)))
+            digest = hashlib.sha256(self.records_bytes or payload_bytes).hexdigest()
+            self.last_transaction = {
+                "payload_sha256": digest,
+                "readback_frames": {},
+                "epoch": 0,
+            }
+            return self.last_transaction
+
+        records_bytes = None
+        last_transaction = None
 
     def test_it_authorises_on_the_same_session_before_writing(self) -> None:
         session = self.FakeSession()
@@ -280,6 +291,54 @@ class SessionBindingTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             ex.board_uboot_transmit(session)(b"\x00" * 16)
         self.assertEqual([c[0] for c in session.calls], ["authorise"])
+
+
+class ProductionEntrypointTests(unittest.TestCase):
+    """`run_candidate_on_board` — the one path with no transmit to choose.
+
+    What is checked here is the part that only exists in production: the readback has to
+    come back from the SESSION, and it has to be *this* candidate's. The structural half —
+    that no second caller and no injectable parameter exists — is
+    `tests/test_single_write_entrypoint.py`, which reads the source instead of running it.
+    """
+
+    def setUp(self) -> None:
+        path = RUN / "carrier.bit"
+        if not path.is_file():
+            self.skipTest("the published carrier run is not in this tree")
+        try:
+            self.authority = ex.PublishedCarrierAuthority.load(RUN)
+        except ex.TransportRefusal as refusal:
+            self.skipTest(f"no published authority in this tree: {refusal}")
+        manifest = self.authority.manifest_copy()
+        frames = bf.parse_frames(path)["frames"]
+        targets = {}
+        for entry in manifest["write_envelope"]["envelopes"]:
+            for far_hex in entry["target_fars"]:
+                targets[int(far_hex, 16)] = list(frames[int(far_hex, 16)])
+        self.payload = ex.SealedPayload(ex.build_sequence_bytes(manifest, targets))
+
+    def test_the_readback_comes_back_through_the_session(self) -> None:
+        session = SessionBindingTests.FakeSession()
+        result = ex.run_candidate_on_board(self.payload, self.authority, session)
+        self.assertEqual([c[0] for c in session.calls], ["authorise", "write"])
+        self.assertEqual(result["transaction"]["payload_sha256"], self.payload.sha256)
+
+    def test_a_session_with_no_transaction_is_refused(self) -> None:
+        session = SessionBindingTests.FakeSession()
+        session.write_sequence = lambda payload_bytes: None
+        with self.assertRaises(ex.TransportRefusal) as caught:
+            ex.run_candidate_on_board(self.payload, self.authority, session)
+        self.assertIn("recorded no transaction", str(caught.exception))
+
+    def test_a_stale_transaction_from_an_earlier_candidate_is_refused(self) -> None:
+        """The failure this closes: the write raised nothing, the session still holds the
+        PREVIOUS candidate's record, and its readback would be scored as this one's."""
+        session = SessionBindingTests.FakeSession()
+        session.records_bytes = b"a different candidate entirely"
+        with self.assertRaises(ex.TransportRefusal) as caught:
+            ex.run_candidate_on_board(self.payload, self.authority, session)
+        self.assertIn("different bytes than the sealed payload", str(caught.exception))
 
 
 if __name__ == "__main__":

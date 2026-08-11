@@ -264,3 +264,35 @@ def board_uboot_transmit(session, control_plane: str = "uboot"):
         session.write_sequence(payload_bytes)
 
     return transmit
+
+
+def run_candidate_on_board(payload: SealedPayload,
+                           authority: PublishedCarrierAuthority,
+                           session) -> dict:
+    """THE production entrypoint. There is no `transmit` parameter to be chosen.
+
+    `run_candidate` keeps taking an injected callable because the wiring has to be testable
+    without a board — but a production path that *accepted* one would let an operator point
+    a fully gated payload at anything at all, and the gate, the guard and the authority
+    would all still pass. So the only signature production offers takes a `BoardSession`,
+    and builds the transmit itself from `board_uboot_transmit`.
+
+    That this is the only such path is checked, not claimed: `tests/test_single_write_
+    entrypoint.py` reads the source and refuses a second caller of `run_candidate`, a second
+    user of `board_uboot_transmit`, a second caller of `write_sequence`, and any parameter
+    here that could carry a callable.
+    """
+    result = run_candidate(payload, authority, board_uboot_transmit(session))
+    transaction = getattr(session, "last_transaction", None)
+    if transaction is None:
+        raise TransportRefusal(
+            "the session recorded no transaction: the readback frames are what the arm "
+            "condition is computed from, and their absence is not something to work around"
+        )
+    if transaction.get("payload_sha256") != payload.sha256:
+        raise TransportRefusal(
+            "the session's transaction is for different bytes than the sealed payload "
+            f"({transaction.get('payload_sha256')} vs {payload.sha256}) — a stale record "
+            "from an earlier candidate would otherwise be read as this one's readback")
+    result["transaction"] = transaction
+    return result
