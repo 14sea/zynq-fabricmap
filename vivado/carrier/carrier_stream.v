@@ -150,8 +150,16 @@ module carrier_stream #(
     reg        awaiting_crc;   // last word of a frame accepted; feeder still draining
     reg [31:0] watchdog;
 
-    // staging: one frame of original words, plus the readback of one frame
-    reg [31:0] stage [0:FRAME_WORDS-1];
+    // staging: one frame of original words.
+    //
+    // DISTRIBUTED RAM, written from its OWN purely synchronous block. Left inside the
+    // asynchronous-reset FSM it inferred 3,232 flip-flops AND a 101-entry 32-bit read
+    // multiplexer for the emit path — 4,272 FDRE and 2,415 LUTs against the 1,600 and 800
+    // the left-of-flush region actually has, so the placer refused before it started. It
+    // is the same trap the candidate buffer fell into: an array written inside an
+    // asynchronous-reset process is not inferrable as RAM at all, and the `ram_style`
+    // attribute is then ignored rather than disobeyed.
+    (* ram_style = "distributed" *) reg [31:0] stage [0:FRAME_WORDS-1];
 
     reg [31:0] crc_scratch [0:FRAMES_PER_ENV-1];
     reg [31:0] crc_committed [0:ENVELOPES*FRAMES_PER_ENV-1];
@@ -198,6 +206,12 @@ module carrier_stream #(
     // write that never completes wedges the PS, so "no pass is open" must be an answer, not
     // a hang. P_EMIT counts as open — the stall there is at most one frame.
     assign stream_open = (phase == P_PASS1) || (phase == P_PASS2) || (phase == P_EMIT);
+
+    // The staging write is exactly the pass-2 transfer, spelled out here because the RAM
+    // must not share the FSM's reset.
+    wire stage_we = (phase == P_PASS2) && !awaiting_crc && word_valid && in_frame
+                    && !control_bad && !far_bad && crc_ready && !(watchdog > TIMEOUT);
+    always @(posedge clk) if (stage_we) stage[frame_word] <= word_data;
 
     wire [32:0] want = expected_at(pos);
     wire        control_bad = want[32] && (word_data != want[31:0]);
@@ -319,7 +333,6 @@ module carrier_stream #(
                             phase      <= P_FAULT;
                         end else if (in_frame) begin
                             if (crc_ready) begin      // the transfer: word_valid && crc_ready
-                                if (phase == P_PASS2) stage[frame_word] <= word_data;
                                 pos <= pos + 10'd1;
                                 if (frame_word == FRAME_WORDS - 1) awaiting_crc <= 1'b1;
                                 else frame_word <= frame_word + 7'd1;

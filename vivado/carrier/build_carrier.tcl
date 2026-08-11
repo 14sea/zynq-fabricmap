@@ -55,9 +55,10 @@ add_cells_to_pblock pb_logic $logic_cells
 # Three disjoint islands routed, but asking for CONTAIN_ROUTING on them produced 3
 # unroutable pins and 196 reachable-but-unrouted pins: disjoint islands are not a usable
 # routing topology, whatever they are as a placement constraint.
-# LEFT of the first flush column, where PS7 also is. With the one-envelope buffer as
-# LUTRAM (288 LUTs) there is no BRAM in the design at all, so nothing pulls the logic to
-# the right-hand side of tile column X3.
+# LEFT of the first flush column, where PS7 also is. There is no BRAM in the design at all
+# — with the frame-staged engine the candidate buffer is gone entirely (the AXI write
+# channel is the word stream) and what remains is a 101-word readback window in LUTRAM —
+# so nothing pulls the logic to the right-hand side of tile column X3.
 #
 # The right-hand region was tried at 124 crossers and the left-hand one with a BRAM buffer
 # at 190; both were broken by CONTROL-class nets, which is what the one-envelope contract
