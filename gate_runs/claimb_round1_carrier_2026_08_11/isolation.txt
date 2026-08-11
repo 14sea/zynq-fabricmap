@@ -8,13 +8,13 @@ VERDICTS (cell ownership only)
 
 EVIDENCE
   evolvable data nets:        12
-  nets over flush segments:   153
-  nets over target segments:  401
-  of those, non-evolvable:    395
+  nets over flush segments:   159
+  nets over target segments:  374
+  of those, non-evolvable:    368
   routed nodes sha256:        53ce2b6403a9011fe4375f094a941b1288159c1592e8b9b244fb59a62be8249c (164520 nodes)
   routed pips  sha256:        0b301d1a15138803eec1f19f1095fe9defa9a251e6e247a2e98f37ce20d19a03 (1555480 pips)
-  flush net inventory sha256: c0f1127775e497a4acd2cdd6f3bfb72779025d954d9a51300dcb1423aad34007
-  target net inventory sha256:d188f2845f2ee5eb29e3a111ea2d16a89d1be9dc9af5358dc76b8446843649e0
+  flush net inventory sha256: f07de5fab13a1ad0cb5310d6ec127a63be127af4df1a32db1d72aa5ce25fae40
+  target net inventory sha256:77060fcc2e14b333016f8fd4023873651a487ec84ca79a963e837dc692284123
 
 evolvable data nets:
   lut_q[0]
@@ -31,14 +31,17 @@ evolvable data nets:
   vector[5]
 flush segment net inventory:
   axil/ctrl_mode_holdout
+  axil/ctrl_pass2
   axil/rb_hold[10]
   axil/rb_hold[11]
-  axil/rb_hold[16]
+  axil/rb_hold[18]
   axil/rb_hold[19]
+  axil/rb_hold[1]
+  axil/rb_hold[20]
   axil/rb_hold[23]
-  axil/rb_hold[28]
-  axil/rdata_reg_reg[6]_i_2_n_0
-  axil/s_rdata[27]
+  axil/rb_hold[9]
+  axil/rdata_reg[17]_i_2_n_0
+  axil/s_bresp[1]_i_2_n_0
   icap_dout[0]
   icap_dout[10]
   icap_dout[11]
@@ -75,70 +78,76 @@ flush segment net inventory:
   lut_q[3]
   lut_q[4]
   lut_q[5]
+  m_wdata[0]
+  m_wdata[13]
+  m_wdata[15]
   m_wdata[18]
-  m_wdata[23]
-  m_wdata[24]
-  m_wdata[25]
-  m_wdata[26]
-  m_wdata[5]
-  m_wdata[9]
-  scorer/score_flat[23]
-  scorer/score_flat[25]
-  scorer/score_flat[36]
-  scorer/score_flat[39]
-  scorer/score_flat[39]_i_1_n_0
-  scorer/score_flat[6]
+  m_wdata[20]
+  m_wdata[22]
+  m_wdata[28]
+  m_wdata[29]
+  m_wdata[2]
+  m_wdata[30]
+  scorer/armed06_out
+  scorer/p_0_in[24]
+  scorer/p_0_in[32]
+  scorer/score_flat[27]
+  scorer/score_flat[35]
+  scorer/score_flat[38]
+  scorer/score_flat[41]
+  scorer/score_flat[45]
   scorer/vector[0]
   scorer/vector[1]
   scorer/vector[2]
   scorer/vector[3]
   scorer/vector[4]
   scorer/vector[5]
-  stream/busy_i_2_n_0
+  scorer/vector[5]_i_3_n_0
+  stream/awaiting_crc_reg_n_0
   stream/cc_waddr[1]
-  stream/cc_wdata[10]_i_2_n_0
-  stream/cc_wdata[1]
-  stream/cc_wdata[20]
-  stream/cc_wdata[29]
-  stream/cc_wdata[29]_i_2_n_0
-  stream/configuration_valid_i_2_n_0
-  stream/crc_committed_reg_0_15_0_5/DOC0
-  stream/crc_i/bidx_reg_n_0_[0]
-  stream/crc_i/bidx_reg_n_0_[1]
-  stream/crc_i/byte_count[11]
+  stream/cc_wdata[14]
+  stream/cc_wdata[22]
+  stream/cc_wdata[26]
+  stream/cc_wdata[31]_i_2_n_0
+  stream/cc_wdata[6]
+  stream/cc_wdata[8]
+  stream/commit_i[2]_i_4_n_0
+  stream/configuration_valid
+  stream/crc_clear_reg_n_0
+  stream/crc_committed_reg_0_15_0_5_i_3_n_0
+  stream/crc_committed_reg_0_15_0_5_i_4_n_0
+  stream/crc_committed_reg_0_15_12_17/DOA0
+  stream/crc_committed_reg_0_15_12_17/DOC0
+  stream/crc_i/byte_count[15]_i_1_n_0
   stream/crc_i/byte_of_index[1]
-  stream/crc_i/byte_of_index[2]
-  stream/crc_i/byte_of_index[5]
-  stream/crc_i/c0[3]
-  stream/crc_i/crc[15]
-  stream/crc_i/crc[28]
-  stream/crc_i/state[1]
-  stream/crc_i/state[21]
-  stream/crc_i/state[26]
-  stream/crc_i/state[4]_i_1_n_0
+  stream/crc_i/byte_of_index[6]
+  stream/crc_i/c0[1]
+  stream/crc_i/crc[0]
+  stream/crc_i/crc[13]
+  stream/crc_i/crc[17]
+  stream/crc_i/crc[19]
+  stream/crc_i/state[16]_i_2_n_0
+  stream/crc_i/state[17]
+  stream/crc_i/state[25]
+  stream/crc_i/state[31]_i_2_n_0
+  stream/crc_i/state[3]
+  stream/crc_i/state[6]
   stream/crc_i/state[8]
-  stream/crc_i/wreg_reg_n_0_[27]
-  stream/crc_scratch[2][31]_i_1_n_0
-  stream/crc_scratch[3][31]_i_1_n_0
+  stream/crc_i/taken
+  stream/crc_i/taken_i_2_n_0
   stream/crc_scratch_reg[0][14]
-  stream/crc_scratch_reg[0][15]
-  stream/crc_scratch_reg[0][22]
-  stream/crc_scratch_reg[1][10]
-  stream/crc_scratch_reg[1][3]
-  stream/crc_scratch_reg[1][5]
-  stream/crc_scratch_reg[4][1]
-  stream/crc_scratch_reg[4][27]
-  stream/crc_source[3]
-  stream/crc_source[5]
-  stream/crc_source[6]
-  stream/crc_source[8]
-  stream/e[0]
-  stream/emit_word__0[1]
-  stream/emit_word__0[5]
-  stream/fault_code[3]_i_10_n_0
-  stream/fault_code[3]_i_5_n_0
-  stream/frame_word[6]_i_7_n_0
-  stream/frame_word[6]_i_9_n_0
+  stream/crc_scratch_reg[0][6]
+  stream/crc_scratch_reg[1][22]
+  stream/crc_source[1]
+  stream/crc_source[7]
+  stream/emit_word__0[2]
+  stream/emit_word__0[3]
+  stream/fault_code[2]
+  stream/fault_code[3]
+  stream/fault_code[3]_i_79_n_0
+  stream/fault_code[3]_i_81_n_0
+  stream/fault_code[3]_i_8_n_0
+  stream/frame_word[6]
   stream/icap_csib
   stream/icap_din[0]
   stream/icap_din[10]
@@ -173,51 +182,47 @@ flush segment net inventory:
   stream/icap_din[8]
   stream/icap_din[9]
   stream/icap_rdwrb
-  stream/p_0_in1_in[17]
-  stream/phase[1]
-  stream/phase[2]_i_8_n_0
-  stream/rb_frame__0[0]
-  stream/stage_reg_0_63_15_17/DOC
-  stream/stage_reg_0_63_18_20/DOB
-  stream/stage_reg_0_63_27_29/DOC
-  stream/stage_reg_64_127_21_23/DOA
-  stream/stage_reg_64_127_21_23/DOB
+  stream/p_0_in1_in[13]
+  stream/p_0_in1_in[1]
+  stream/p_0_in1_in[26]
+  stream/pos_reg_n_0_[0]
+  stream/rb_frames_ok[2]
+  stream/rb_frames_ok[3]_i_1_n_0
   stream/word_ready_INST_0_i_1_n_0
 target segment net inventory (foreign nets marked *):
   * axil/ctrl_arm
-  * axil/ctrl_begin_txn_i_3_n_0
+  * axil/ctrl_begin_txn
   * axil/ctrl_mode_holdout
-  * axil/ctrl_pass1
   * axil/ctrl_pass2
   * axil/rb_hold[10]
   * axil/rb_hold[11]
-  * axil/rb_hold[12]
+  * axil/rb_hold[13]
   * axil/rb_hold[16]
-  * axil/rb_hold[17]
+  * axil/rb_hold[18]
   * axil/rb_hold[19]
+  * axil/rb_hold[1]
+  * axil/rb_hold[20]
   * axil/rb_hold[21]
+  * axil/rb_hold[22]
   * axil/rb_hold[23]
-  * axil/rb_hold[24]
+  * axil/rb_hold[25]
   * axil/rb_hold[26]
   * axil/rb_hold[28]
   * axil/rb_hold[29]
-  * axil/rb_hold[8]
+  * axil/rb_hold[9]
   * axil/rd_was_rb_reg_n_0
-  * axil/rdata_reg[0]_i_3_n_0
+  * axil/rdata_reg[0]
+  * axil/rdata_reg[17]_i_2_n_0
   * axil/rdata_reg[1]_i_3_n_0
-  * axil/rdata_reg[31]_i_2_n_0
-  * axil/rdata_reg[7]_i_2_n_0
   * axil/rdata_reg_reg[0]_i_2_n_0
-  * axil/rdata_reg_reg[6]_i_2_n_0
-  * axil/rdata_reg_reg_n_0_[0]
-  * axil/rdata_reg_reg_n_0_[18]
-  * axil/rdata_reg_reg_n_0_[6]
-  * axil/s_bvalid
-  * axil/s_rdata[27]
-  * axil/s_rresp[1]_i_3_n_0
+  * axil/rdata_reg_reg[4]_i_2_n_0
+  * axil/rdata_reg_reg[7]_i_3_n_0
+  * axil/rdata_reg_reg_n_0_[16]
+  * axil/s_bresp[1]_i_2_n_0
+  * axil/s_bresp[1]_i_4_n_0
+  * axil/s_rdata[22]
+  * axil/s_rresp[1]_i_5_n_0
   * axil/s_rresp[1]_i_6_n_0
-  * axil/word_valid
-  * fclkresetn[0]
   * icap_dout[0]
   * icap_dout[10]
   * icap_dout[11]
@@ -258,236 +263,226 @@ target segment net inventory (foreign nets marked *):
     lut_q[5]
   * m_araddr[13]
   * m_araddr[15]
-  * m_araddr[2]
   * m_araddr[3]
   * m_araddr[4]
-  * m_awaddr[14]
+  * m_araddr[6]
+  * m_araddr[7]
+  * m_araddr[8]
+  * m_awaddr[4]
   * m_wdata[0]
   * m_wdata[10]
-  * m_wdata[11]
+  * m_wdata[12]
   * m_wdata[13]
+  * m_wdata[15]
   * m_wdata[16]
   * m_wdata[17]
   * m_wdata[18]
+  * m_wdata[19]
   * m_wdata[1]
-  * m_wdata[21]
+  * m_wdata[20]
   * m_wdata[22]
   * m_wdata[23]
-  * m_wdata[24]
-  * m_wdata[25]
-  * m_wdata[26]
   * m_wdata[27]
   * m_wdata[28]
+  * m_wdata[29]
   * m_wdata[2]
   * m_wdata[30]
   * m_wdata[31]
   * m_wdata[3]
   * m_wdata[4]
   * m_wdata[5]
-  * m_wdata[6]
+  * m_wdata[7]
   * m_wdata[8]
   * m_wdata[9]
-  * scorer/armed05_out
-  * scorer/count[4]
-  * scorer/score_flat[0]
-  * scorer/score_flat[12]
-  * scorer/score_flat[13]
-  * scorer/score_flat[14]
-  * scorer/score_flat[22]
-  * scorer/score_flat[23]
-  * scorer/score_flat[25]
+  * scorer/armed06_out
+  * scorer/armed_o
+  * scorer/done
+  * scorer/p_0_in[16]
+  * scorer/p_0_in[24]
+  * scorer/p_0_in[32]
+  * scorer/p_0_in[40]
+  * scorer/p_0_in[8]
+  * scorer/score_flat10_in
+  * scorer/score_flat[1]
+  * scorer/score_flat[21]
+  * scorer/score_flat[26]
   * scorer/score_flat[27]
   * scorer/score_flat[29]
-  * scorer/score_flat[31]
-  * scorer/score_flat[32]
-  * scorer/score_flat[33]
+  * scorer/score_flat[2]
+  * scorer/score_flat[35]
   * scorer/score_flat[36]
-  * scorer/score_flat[39]
-  * scorer/score_flat[39]_i_1_n_0
-  * scorer/score_flat[39]_i_4_n_0
+  * scorer/score_flat[38]
+  * scorer/score_flat[40]
   * scorer/score_flat[41]
-  * scorer/score_flat[45]_i_2_n_0
-  * scorer/score_flat[47]_i_1_n_0
-  * scorer/score_flat[5]
-  * scorer/score_flat[6]
-  * scorer/score_flat[7]_i_1_n_0
-  * scorer/sel[3]
-  * scorer/step_reg[6]
+  * scorer/score_flat[45]
+  * scorer/step_reg[2]
   * scorer/vector[0]
   * scorer/vector[1]
   * scorer/vector[2]
   * scorer/vector[3]
   * scorer/vector[4]
   * scorer/vector[5]
-  * stream/awaiting_crc_i_6_n_0
+  * scorer/vector[5]_i_3_n_0
+  * stream/awaiting_crc_reg_n_0
   * stream/busy_i_2_n_0
+  * stream/busy_i_3_n_0
+  * stream/busy_i_5_n_0
   * stream/busy_i_6_n_0
   * stream/cc_waddr[0]
   * stream/cc_waddr[1]
-  * stream/cc_waddr[3]
+  * stream/cc_waddr[2]
   * stream/cc_wdata[0]
-  * stream/cc_wdata[10]_i_2_n_0
   * stream/cc_wdata[13]
-  * stream/cc_wdata[18]_i_2_n_0
+  * stream/cc_wdata[14]
+  * stream/cc_wdata[15]
+  * stream/cc_wdata[16]
+  * stream/cc_wdata[18]
   * stream/cc_wdata[1]
   * stream/cc_wdata[1]_i_2_n_0
-  * stream/cc_wdata[20]
-  * stream/cc_wdata[27]
+  * stream/cc_wdata[22]
+  * stream/cc_wdata[23]_i_2_n_0
+  * stream/cc_wdata[26]
   * stream/cc_wdata[28]
-  * stream/cc_wdata[29]
-  * stream/cc_wdata[29]_i_2_n_0
-  * stream/cc_wdata[31]
+  * stream/cc_wdata[31]_i_2_n_0
   * stream/cc_wdata[3]
-  * stream/cc_wdata[4]_i_2_n_0
   * stream/cc_wdata[6]
   * stream/cc_wdata[6]_i_2_n_0
-  * stream/cc_wdata[7]
+  * stream/cc_wdata[8]
+  * stream/cc_wdata[8]_i_2_n_0
   * stream/cc_wdata[9]
   * stream/cc_we
-  * stream/commit_i__0[0]
+  * stream/commit_i[2]_i_3_n_0
+  * stream/commit_i[2]_i_4_n_0
   * stream/commit_i__0[1]
-  * stream/commit_i__0[2]
-  * stream/configuration_valid_i_2_n_0
-  * stream/crc_committed_reg_0_15_0_5/DOB1
-  * stream/crc_committed_reg_0_15_0_5/DOC0
+  * stream/configuration_valid
+  * stream/crc_clear_reg_n_0
+  * stream/crc_committed_reg_0_15_0_5/DOB0
+  * stream/crc_committed_reg_0_15_0_5_i_1_n_0
   * stream/crc_committed_reg_0_15_0_5_i_2_n_0
   * stream/crc_committed_reg_0_15_0_5_i_3_n_0
-  * stream/crc_committed_reg_0_15_0_5_i_5_n_0
+  * stream/crc_committed_reg_0_15_0_5_i_4_n_0
+  * stream/crc_committed_reg_0_15_12_17/DOA0
   * stream/crc_committed_reg_0_15_12_17/DOB0
-  * stream/crc_committed_reg_0_15_12_17/DOC1
-  * stream/crc_committed_reg_0_15_24_29/DOA1
+  * stream/crc_committed_reg_0_15_12_17/DOC0
+  * stream/crc_committed_reg_0_15_24_29/DOB0
+  * stream/crc_committed_reg_0_15_6_11/DOA1
   * stream/crc_i/active_reg_n_0
   * stream/crc_i/bidx_reg_n_0_[0]
-  * stream/crc_i/bidx_reg_n_0_[1]
-  * stream/crc_i/byte_count[11]
+  * stream/crc_i/byte_count[10]
   * stream/crc_i/byte_count[15]_i_1_n_0
   * stream/crc_i/byte_of_index[1]
-  * stream/crc_i/byte_of_index[2]
   * stream/crc_i/byte_of_index[5]
-  * stream/crc_i/c0[0]
+  * stream/crc_i/byte_of_index[6]
+  * stream/crc_i/c0[1]
+  * stream/crc_i/c0[2]
   * stream/crc_i/c0[3]
   * stream/crc_i/crc[0]
-  * stream/crc_i/crc[10]
   * stream/crc_i/crc[11]
-  * stream/crc_i/crc[14]
-  * stream/crc_i/crc[15]
+  * stream/crc_i/crc[12]
+  * stream/crc_i/crc[13]
   * stream/crc_i/crc[17]
-  * stream/crc_i/crc[18]
-  * stream/crc_i/crc[1]
+  * stream/crc_i/crc[19]
   * stream/crc_i/crc[20]
-  * stream/crc_i/crc[21]
   * stream/crc_i/crc[23]
-  * stream/crc_i/crc[24]
-  * stream/crc_i/crc[26]
   * stream/crc_i/crc[27]
-  * stream/crc_i/crc[28]
-  * stream/crc_i/crc[29]
-  * stream/crc_i/crc[2]
-  * stream/crc_i/crc[30]
-  * stream/crc_i/crc[4]
+  * stream/crc_i/crc[31]
   * stream/crc_i/crc[5]
   * stream/crc_i/crc[6]
-  * stream/crc_i/crc[8]
+  * stream/crc_i/crc[9]
+  * stream/crc_i/ready
   * stream/crc_i/state[0]
   * stream/crc_i/state[10]
-  * stream/crc_i/state[11]
-  * stream/crc_i/state[12]_i_1_n_0
-  * stream/crc_i/state[13]
+  * stream/crc_i/state[12]
+  * stream/crc_i/state[15]
   * stream/crc_i/state[16]
+  * stream/crc_i/state[16]_i_2_n_0
   * stream/crc_i/state[17]
   * stream/crc_i/state[18]
-  * stream/crc_i/state[19]
+  * stream/crc_i/state[19]_i_2_n_0
   * stream/crc_i/state[1]
   * stream/crc_i/state[20]
   * stream/crc_i/state[21]
-  * stream/crc_i/state[22]
-  * stream/crc_i/state[23]
-  * stream/crc_i/state[26]
+  * stream/crc_i/state[25]
+  * stream/crc_i/state[27]
+  * stream/crc_i/state[28]
   * stream/crc_i/state[2]
   * stream/crc_i/state[30]
-  * stream/crc_i/state[31]
-  * stream/crc_i/state[4]
-  * stream/crc_i/state[4]_i_1_n_0
+  * stream/crc_i/state[30]_i_2_n_0
+  * stream/crc_i/state[31]_i_2_n_0
+  * stream/crc_i/state[3]
   * stream/crc_i/state[6]
   * stream/crc_i/state[7]
   * stream/crc_i/state[8]
   * stream/crc_i/state[9]
+  * stream/crc_i/taken
   * stream/crc_i/taken_i_2_n_0
   * stream/crc_i/wreg[0]
-  * stream/crc_i/wreg_reg_n_0_[20]
-  * stream/crc_i/wreg_reg_n_0_[22]
-  * stream/crc_i/wreg_reg_n_0_[27]
+  * stream/crc_i/wreg_reg_n_0_[13]
+  * stream/crc_scratch[0][31]_i_1_n_0
   * stream/crc_scratch[1][31]_i_1_n_0
   * stream/crc_scratch[2][31]_i_1_n_0
-  * stream/crc_scratch[3][31]_i_1_n_0
   * stream/crc_scratch[4][31]_i_1_n_0
+  * stream/crc_scratch[4][31]_i_2_n_0
   * stream/crc_scratch_reg[0][14]
   * stream/crc_scratch_reg[0][15]
-  * stream/crc_scratch_reg[0][22]
-  * stream/crc_scratch_reg[0][30]
+  * stream/crc_scratch_reg[0][24]
+  * stream/crc_scratch_reg[0][3]
+  * stream/crc_scratch_reg[0][6]
   * stream/crc_scratch_reg[1][10]
-  * stream/crc_scratch_reg[1][13]
   * stream/crc_scratch_reg[1][14]
-  * stream/crc_scratch_reg[1][25]
+  * stream/crc_scratch_reg[1][22]
   * stream/crc_scratch_reg[1][2]
-  * stream/crc_scratch_reg[1][3]
+  * stream/crc_scratch_reg[1][31]
   * stream/crc_scratch_reg[1][5]
-  * stream/crc_scratch_reg[1][9]
-  * stream/crc_scratch_reg[2][16]
-  * stream/crc_scratch_reg[2][18]
-  * stream/crc_scratch_reg[2][27]
-  * stream/crc_scratch_reg[2][28]
-  * stream/crc_scratch_reg[3][0]
+  * stream/crc_scratch_reg[2][11]
+  * stream/crc_scratch_reg[2][21]
+  * stream/crc_scratch_reg[2][4]
+  * stream/crc_scratch_reg[2][7]
+  * stream/crc_scratch_reg[3][12]
   * stream/crc_scratch_reg[3][29]
   * stream/crc_scratch_reg[3][2]
-  * stream/crc_scratch_reg[3][4]
-  * stream/crc_scratch_reg[3][5]
-  * stream/crc_scratch_reg[4][11]
-  * stream/crc_scratch_reg[4][17]
-  * stream/crc_scratch_reg[4][19]
-  * stream/crc_scratch_reg[4][1]
-  * stream/crc_scratch_reg[4][20]
-  * stream/crc_scratch_reg[4][27]
-  * stream/crc_source[0]
+  * stream/crc_scratch_reg[4][12]
+  * stream/crc_scratch_reg[4][15]
   * stream/crc_source[1]
-  * stream/crc_source[3]
-  * stream/crc_source[4]
-  * stream/crc_source[5]
-  * stream/crc_source[6]
-  * stream/crc_source[8]
-  * stream/data0[5]
+  * stream/crc_source[7]
   * stream/e[0]
   * stream/e[1]
-  * stream/emit_word[5]_i_2_n_0
+  * stream/emit_word[6]_i_4_n_0
+  * stream/emit_word[6]_i_7_n_0
   * stream/emit_word__0[0]
   * stream/emit_word__0[1]
   * stream/emit_word__0[2]
+  * stream/emit_word__0[3]
   * stream/emit_word__0[5]
   * stream/env_committed[0]
-  * stream/expect_env[1]_i_2_n_0
+  * stream/env_committed[1]
+  * stream/env_committed[1]_i_4_n_0
   * stream/expired
-  * stream/fault_code[0]_i_16_n_0
-  * stream/fault_code[0]_i_29_n_0
-  * stream/fault_code[0]_i_40_n_0
-  * stream/fault_code[0]_i_42_n_0
-  * stream/fault_code[0]_i_4_n_0
-  * stream/fault_code[0]_i_9_n_0
-  * stream/fault_code[1]_i_1_n_0
-  * stream/fault_code[2]_i_4_n_0
-  * stream/fault_code[3]_i_10_n_0
-  * stream/fault_code[3]_i_16_n_0
-  * stream/fault_code[3]_i_5_n_0
-  * stream/frame_idx__0[0]
-  * stream/frame_idx__0[1]
+  * stream/fault_code[0]_i_2_n_0
+  * stream/fault_code[0]_i_3_n_0
+  * stream/fault_code[1]
+  * stream/fault_code[2]
+  * stream/fault_code[3]
+  * stream/fault_code[3]_i_31_n_0
+  * stream/fault_code[3]_i_56_n_0
+  * stream/fault_code[3]_i_62_n_0
+  * stream/fault_code[3]_i_79_n_0
+  * stream/fault_code[3]_i_80_n_0
+  * stream/fault_code[3]_i_81_n_0
+  * stream/fault_code[3]_i_85_n_0
+  * stream/fault_code[3]_i_8_n_0
+  * stream/frame_idx[2]_i_2_n_0
+  * stream/frame_word[0]
   * stream/frame_word[1]
   * stream/frame_word[2]
   * stream/frame_word[3]
   * stream/frame_word[4]
+  * stream/frame_word[5]
   * stream/frame_word[6]
-  * stream/frame_word[6]_i_1_n_0
-  * stream/frame_word[6]_i_7_n_0
-  * stream/frame_word[6]_i_9_n_0
+  * stream/frame_word[6]_i_3_n_0
   * stream/icap_csib
+  * stream/icap_csib_i_3_n_0
+  * stream/icap_csib_i_4_n_0
   * stream/icap_din[0]
   * stream/icap_din[10]
   * stream/icap_din[11]
@@ -522,37 +517,29 @@ target segment net inventory (foreign nets marked *):
   * stream/icap_din[8]
   * stream/icap_din[9]
   * stream/icap_rdwrb
-  * stream/icap_rdwrb_i_2_n_0
-  * stream/p_0_in1_in[12]
-  * stream/p_0_in1_in[16]
-  * stream/p_0_in1_in[17]
-  * stream/p_0_in1_in[18]
+  * stream/p_0_in1_in[13]
+  * stream/p_0_in1_in[14]
   * stream/p_0_in1_in[1]
   * stream/p_0_in1_in[20]
-  * stream/p_0_in1_in[25]
   * stream/p_0_in1_in[26]
-  * stream/p_0_in1_in[29]
   * stream/p_0_in1_in[2]
   * stream/p_0_in1_in[30]
-  * stream/p_0_in1_in[4]
-  * stream/p_0_in1_in[5]
-  * stream/p_0_in1_in[6]
-  * stream/pass1_complete
+  * stream/p_0_in1_in[31]
+  * stream/p_0_in1_in[8]
+  * stream/phase[0]
   * stream/phase[1]
   * stream/phase[2]
-  * stream/phase[2]_i_6_n_0
-  * stream/phase[2]_i_8_n_0
+  * stream/phase[2]_i_13_n_0
   * stream/pos[9]_i_1_n_0
-  * stream/pos[9]_i_4_n_0
-  * stream/pos[9]_i_5_n_0
   * stream/pos_reg_n_0_[0]
-  * stream/pos_reg_n_0_[2]
-  * stream/pos_reg_n_0_[4]
-  * stream/rb_frame__0[0]
+  * stream/pos_reg_n_0_[3]
   * stream/rb_frame__0[1]
   * stream/rb_frame_ready
-  * stream/rb_frames_ok[0]
-  * stream/stage_any_we
+  * stream/rb_frames_ok[1]
+  * stream/rb_frames_ok[2]
+  * stream/rb_frames_ok[3]
+  * stream/rb_frames_ok[3]_i_1_n_0
+  * stream/recovery_required
   * stream/stage_raddr[0]
   * stream/stage_raddr[1]
   * stream/stage_raddr[2]
@@ -560,29 +547,21 @@ target segment net inventory (foreign nets marked *):
   * stream/stage_raddr[4]
   * stream/stage_raddr[5]
   * stream/stage_reg_0_63_0_2_i_11_n_0
-  * stream/stage_reg_0_63_0_2_i_4_n_0
-  * stream/stage_reg_0_63_12_14/DOA
-  * stream/stage_reg_0_63_15_17/DOB
-  * stream/stage_reg_0_63_15_17/DOC
-  * stream/stage_reg_0_63_18_20/DOB
-  * stream/stage_reg_0_63_27_29/DOC
-  * stream/stage_reg_64_127_12_14_i_1_n_0
-  * stream/stage_reg_64_127_15_17/DOA
-  * stream/stage_reg_64_127_15_17/DOB
-  * stream/stage_reg_64_127_15_17/DOC
-  * stream/stage_reg_64_127_21_23/DOA
-  * stream/stage_reg_64_127_21_23/DOB
-  * stream/stage_reg_64_127_24_26/DOA
-  * stream/stage_reg_64_127_30_31/DOA
-  * stream/stage_reg_64_127_3_5/DOA
-  * stream/stage_reg_64_127_6_8_i_1_n_0
-  * stream/stage_reg_64_127_9_11/DOA
-  * stream/stage_wdata[0]
+  * stream/stage_reg_0_63_0_2_i_12_n_0
+  * stream/stage_reg_0_63_0_2_i_13_n_0
+  * stream/stage_reg_0_63_15_17/DOA
+  * stream/stage_reg_0_63_15_17_i_4_n_0
+  * stream/stage_reg_0_63_24_26/DOB
+  * stream/stage_reg_64_127_0_2/DOB
+  * stream/stage_reg_64_127_18_20/DOA
+  * stream/stage_reg_64_127_24_26/DOB
+  * stream/stage_reg_64_127_9_11/DOB
+  * stream/stage_wdata[15]
+  * stream/stage_wdata[17]
   * stream/stage_wdata[23]
-  * stream/stage_wdata[30]
-  * stream/stage_wdata[6]
-  * stream/stage_wdata[9]
-  * stream/watchdog0[20]
-  * stream/watchdog[20]_i_1_n_0
+  * stream/stage_wdata[29]
+  * stream/stage_wdata[3]
+  * stream/stage_wdata[8]
+  * stream/watchdog__0[10]
   * stream/word_ready_INST_0_i_1_n_0
 NO PROBLEMS
