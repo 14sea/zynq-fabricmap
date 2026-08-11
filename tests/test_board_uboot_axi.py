@@ -70,7 +70,8 @@ class FakeBoard:
     CMD_RE = re.compile(r"^(mw|cp|md)(?:\.l)? (\S+) (\S+)(?: (\S+))?$")
 
     def __init__(self, *, corrupt_stage=None, fault_at=None, armed_at_end=False,
-                 status_override=None, swallow_prompt=False, stuck_busy=None):
+                 status_override=None, swallow_prompt=False, stuck_busy=None,
+                 abort_on=None):
         self.mem: dict[int, int] = {}
         self.lines: list[str] = []
         self.corrupt_stage = corrupt_stage        # word index to mangle while staging
@@ -79,6 +80,7 @@ class FakeBoard:
         self.armed_at_end = armed_at_end
         self.status_override = status_override
         self.swallow_prompt = swallow_prompt
+        self.abort_on = abort_on          # substring of a command that faults the CPU
         self.staged_writes = 0
         self.uboot_env = {"boardid": "17A6", "role": "verify"}
         self.regs = slcr_regs()
@@ -104,6 +106,12 @@ class FakeBoard:
 
     def command(self, line: str, timeout: float = 1.5) -> bytes:
         self.lines.append(line)
+        if self.abort_on and self.abort_on in line:
+            # What U-Boot really prints when an AXI error response reaches the CPU: a
+            # register dump, and never a prompt again.
+            return (line + "\r\ndata abort\r\npc : [<1ffa1ab4>]   lr : [<1ffa1a30>]\r\n"
+                    "Resetting CPU ...\r\n### ERROR ### Please RESET the board ###\r\n"
+                    ).encode()
         if line.startswith("printenv "):
             name = line.split()[1]
             if name not in self.uboot_env:
@@ -372,7 +380,18 @@ class TheRefusals(unittest.TestCase):
         self.refuses(FakeBoard(armed_at_end=True), contains="scorer is armed")
 
     def test_a_console_that_does_not_return_a_prompt(self) -> None:
-        self.refuses(FakeBoard(swallow_prompt=True), contains="no prompt within")
+        message = self.refuses(FakeBoard(swallow_prompt=True),
+                               contains="did not answer at all")
+        self.assertIn("Received:", message, "the received bytes are the evidence")
+
+    def test_a_cpu_exception_is_not_reported_as_silence(self) -> None:
+        """A data abort and a stalled CPU both end with no prompt, and they mean opposite
+        things: the abort is the fabric answering with an error, the stall is the fabric
+        not answering. Two calibration stops could not be told apart because this was one
+        message."""
+        message = self.refuses(FakeBoard(abort_on="md.l"), contains="fabric ANSWERED")
+        self.assertIn("data abort", message)
+        self.assertNotIn("did not answer at all", message)
 
     def test_a_command_line_longer_than_the_console_buffer(self) -> None:
         with self.assertRaises(axi.AxiRefusal) as caught:

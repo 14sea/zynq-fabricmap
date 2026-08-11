@@ -153,6 +153,14 @@ WAIT = (f"setenv zr 0; while itest $zr -eq 0; do "
 MD_LINE_RE = re.compile(
     rb"^([0-9a-fA-F]{8}):((?:[ \t]+[0-9a-fA-F]{8}){1,4})[ \t]", re.MULTILINE)
 
+# A U-Boot data abort prints a register dump and never returns a prompt. So does a stalled
+# CPU — and they mean OPPOSITE things: an abort is the fabric ANSWERING with an error
+# response, a stall is the fabric not answering at all. Both were reported as "no prompt"
+# once, and the two calibration stops of 2026-08-11 could not be told apart afterwards
+# because the received bytes were thrown away. They are kept now, and named.
+ABORT_RE = re.compile(rb"data abort|prefetch abort|undefined instruction|"
+                      rb"### ERROR ### Please RESET")
+
 # How many `mw.l` writes share one console line while the payload is staged into DRAM.
 # Staging is not on any watchdog — it happens before `begin_txn` — so this is only a
 # throughput choice: 12 keeps the line near 350 characters.
@@ -342,12 +350,20 @@ def command(transport, line: str, timeout: float) -> bytes:
             f"the command line is {len(line)} characters; U-Boot's CBSIZE is 2048 on this "
             "build and a truncated line would execute its first half")
     reply = transport.command(line, timeout)
-    if not PROMPT_RE.search(reply):
+    if PROMPT_RE.search(reply):
+        return reply
+    tail = reply[-400:]
+    if ABORT_RE.search(reply):
         raise AxiRefusal(
-            f"no prompt within {timeout}s of `{line[:60]}…` — the engine has not answered. "
-            "Send Ctrl-C to break a spinning wait loop; if that does not return a prompt the "
-            "CPU is stalled on the AXI bus and the board needs a power cycle")
-    return reply
+            f"`{line[:60]}…` took a CPU exception. **The fabric ANSWERED** — an abort is an "
+            "AXI error response reaching the CPU, not a bus that failed to reply — so this "
+            "is a slave saying no, not a slave that is absent or unclocked. U-Boot does not "
+            f"return from it; the board needs a power cycle. Received: {tail!r}")
+    raise AxiRefusal(
+        f"no prompt within {timeout}s of `{line[:60]}…` and no exception either — the fabric "
+        "did not answer at all. Send Ctrl-C to break a spinning wait loop; if that does not "
+        "return a prompt the CPU is stalled on the AXI bus and the board needs a power "
+        f"cycle. Received: {tail!r}")
 
 
 def _refuse_on_fault(transport, status: dict, where: str) -> None:
