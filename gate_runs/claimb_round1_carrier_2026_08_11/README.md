@@ -55,16 +55,37 @@ requires `.gitattributes` unchanged in the index — a publication commit does n
 own policy — every LFS pointer's oid to equal the bundle's pin, and every ordinary blob's
 bytes to hash to it.
 
+## What this carrier was built from
+
+```
+source_commit  a9b0703fda66b785596941cc00481f325587c472
+source_tree    clean
+sources        12 files pinned by sha256 — 5 RTL, the XDC, build_carrier.tcl,
+               isolation_checks.tcl, and the 4 generated inputs
+```
+
+`gate_carrier_base.py` requires every one of those to equal its HEAD blob. An earlier
+publication was built before the scorer's recovery interlock landed: the RTL was edited
+afterwards, the benches verified the new sources, and the exact bitstream a board would
+have loaded was the pre-fix one. Output hashes alone could not have said so, which is why
+the sources are pinned and checked.
+
+```
+carrier.bit      25681f363916587ecfdd96ef6dd76c86bb73267ef44f38d1270f85f9ec3f7b37
+carrier_eco.bit  bf57d25360b2fc2d08606ccb90efcda8d8de175a2b5b37d72e9a21d52e2cf2ef
+post_route.dcp   513ae01321b7dba41954dc812f4b888f00de49747af90d98ec70bc9a01d1f871
+```
+
 ## Measurements
 
 ```
-LUTs      680 logic + 112 LUTRAM = 792   of 800 sites in pb_logic
-FFs       531                            of 1600
+LUTs      668 logic + 112 LUTRAM = 780   of 800 sites in pb_logic
+FFs       532                            of 1600
 control sets 52
-WNS       +7.048 ns at 50 MHz
+WNS       +5.598 ns at 50 MHz
 cells     target columns 6, flush columns 0            (VERDICT: pass)
-routes    flush segments 153 nets, target segments 401,
-          of which 395 are not evolvable data nets     (EVIDENCE: erratum 001)
+routes    flush segments 159 nets, target segments 374,
+          of which 368 are not evolvable data nets     (EVIDENCE: erratum 001)
 INIT ECO  2 of 5144 frames differ, exactly the 2 the map predicts;
           3 predicted bits moved; no stray bits; ECC a correct recomputation
 ```
