@@ -1,36 +1,59 @@
 # Claim B round 1 — carrier build, 2026-08-11
 
-Acceptance ladder step 4 (`docs/claimb_carrier_design.md` §7): the `phenotype_manifest`
-emitted from the built carrier, with the records that make it checkable.
+Acceptance ladder step 4 (`docs/claimb_carrier_design.md` §7), built under
+[architecture erratum 001](../../docs/claimb_erratum_001_static_routes.md).
 
-Built under [architecture erratum 001](../../docs/claimb_erratum_001_static_routes.md).
+**This directory is the authority for the carrier.** Under erratum 001 the safety rule is
+bit invariance against **one exact bitstream**, and `write_bitstream` stamps a timestamp
+into the header — so a rebuild produces identical frames in a *different file*, measured
+here as `dd8bf0b8…` then `e677d097…`. Keeping the sha256 and discarding the bytes it names
+would leave an authority nobody outside one workstation could exercise, so the exact
+artifacts are published with the records, via Git LFS.
 
-| file | what it is |
-| --- | --- |
-| `phenotype_manifest.json` | the write envelope, derived from the **final routed carrier bitstream**: 12 target + 3 flush frames, 1608 words = 6432 bytes |
-| `carrier_build.json` | provenance written by `build_carrier.tcl` at `write_bitstream` — the only point in the flow that knows the file is the routed design whose cell isolation passed |
-| `carrier_base_gate.json` | `gate_carrier_base.py`'s verdict binding the manifest's base to that bitstream |
-| `isolation.txt` | cell-ownership **verdict** (target 6, flush 0) plus the route **evidence** record — inventories and hashes, exempting nothing by name |
-| `carrier_eco.json` | the post-route INIT ECO: `evolvable_0` at `SLICE_X2Y25/A6LUT`, `0x0…0` → `0x0000000900000001`, `reimplemented=false` |
-| `init_eco_verdict.json` | §4 check 3: 2 of 5144 frames differ, exactly the 2 the map predicts; 3 predicted bits moved; no stray bits; every ECC a correct recomputation |
-
-## The bitstream itself is NOT in this directory
-
-`carrier.bit` is 2,083,863 bytes and stays in `build/carrier_left/`, which is gitignored.
-Committing bitstreams is the open Git LFS question ruled for `staging/**/*.bit` on
-2026-08-09 and it is not settled for `gate_runs/`, so nothing here decides it. What is
-committed is the **sha256 that pins it**:
+## Reproducing the verdicts from a fresh clone
 
 ```
-carrier.bit      e677d09753d6f248775815d61b272071b3cad9c749336e7a8d864893d881eb23
-post_route.dcp   4d3dba7c6a003ed42c4a78b82d95763ea576442610b817e073a394aecf17ac1e
+git clone <remote> && cd zynq-fabricmap
+git lfs pull
+python3 scripts/gate_carrier_base.py --run-dir gate_runs/claimb_round1_carrier_2026_08_11
+python3 scripts/gate_init_eco.py     --run-dir gate_runs/claimb_round1_carrier_2026_08_11
 ```
 
-**A rebuild does not reproduce that hash.** `write_bitstream` stamps a timestamp into the
-header, so two builds of identical RTL give identical frames and different files —
-measured here as `dd8bf0b8…` then `e677d097…`. Re-running the build therefore invalidates
-this manifest by design, and `gate_carrier_base.py` will say so rather than let a stale
-base through.
+Both take a run directory and **nothing else**: every path, every expected digest and the
+ECO's `by_lut` key come from `carrier_run.json`. Neither accepts a map, a LUT key or a
+bitstream on the command line, because an operator who chooses the inputs chooses the
+verdict. Without `git lfs pull` the artifacts are ~130-byte pointers and both gates say so
+by name rather than failing with a confusing digest mismatch.
+
+| file | what it is | in Git as |
+| --- | --- | --- |
+| `carrier_run.json` | the bundle: every artifact pinned by sha256, plus the ECO's LUT key **derived** from the tilegrid rather than typed in | ordinary |
+| `carrier.bit` | the final routed carrier — the base every candidate is judged against | **LFS** |
+| `carrier_eco.bit` | the post-route INIT ECO variant | **LFS** |
+| `post_route.dcp` | the routed checkpoint the ECO was taken from | **LFS** |
+| `local_map.json` | the canonical map, 292 addresses over 12 frames, 6 LUTs | ordinary |
+| `phenotype_manifest.json` | the write envelope: 12 target + 3 flush frames, 1608 words = 6432 bytes | ordinary |
+| `carrier_build.json` | provenance written by `build_carrier.tcl` at `write_bitstream` | ordinary |
+| `carrier_eco.json` | the ECO: `evolvable_0` at `SLICE_X2Y25/A6LUT`, `0x0…0` → `0x0000000900000001`, `reimplemented=false` | ordinary |
+| `isolation.txt` | cell-ownership **verdict** (target 6, flush 0) and the route **evidence** — inventories and hashes, exempting nothing by name | ordinary |
+
+Verdict files are **not** in this directory. They are outputs of the gates that read this
+bundle, and a bundle that pinned its own verdicts would be pinning the answer.
+
+## Publishing another run
+
+```
+git add gate_runs/<run_id>
+python3 scripts/gate_publish_carrier_run.py --run-root gate_runs/<run_id>   # must pass
+git commit -m "gate_runs: …"
+```
+
+The gate reads the **index**, not the working tree: the LFS filter can be defeated at
+`git add` (`-c filter.lfs.process=`) or by editing `.gitattributes` first, and committing
+binary into ordinary history is the one mistake here a later commit does not undo. It
+requires `.gitattributes` unchanged in the index — a publication commit does not stage its
+own policy — every LFS pointer's oid to equal the bundle's pin, and every ordinary blob's
+bytes to hash to it.
 
 ## Measurements
 
@@ -42,4 +65,6 @@ WNS       +7.048 ns at 50 MHz
 cells     target columns 6, flush columns 0            (VERDICT: pass)
 routes    flush segments 153 nets, target segments 401,
           of which 395 are not evolvable data nets     (EVIDENCE: erratum 001)
+INIT ECO  2 of 5144 frames differ, exactly the 2 the map predicts;
+          3 predicted bits moved; no stray bits; ECC a correct recomputation
 ```
