@@ -420,6 +420,23 @@ The contract:
    mismatch, a readback mismatch. What was already written is **not a candidate and may
    never be scored**; the only permitted next actions are restoring the pinned base or
    reloading the whole carrier.
+
+   **How the RTL enforces it, corrected 2026-08-11.** `carrier_stream` used to clear
+   `recovery_required` on *any* fully verified transaction, which is the opposite rule, and
+   the bench pinned that behaviour as correct — the document said "only base restore or
+   reload" while the hardware accepted an arbitrary complete candidate. The contract stands
+   as written and the RTL now matches it: `fault_since_reset` is a latch set by the fault
+   state and cleared **only by reset**, and `recovery_required` may be cleared only by a
+   fully verified transaction with that latch clear. `begin_txn` deliberately does not clear
+   it — a host-issued pulse must not launder a fault.
+
+   The reason is [erratum 001](claimb_erratum_001_static_routes.md): the carrier's own
+   static routing now lives inside the frames a candidate rewrites, so a partial write may
+   have damaged the very logic that would go on to report that the next write verified. **A
+   machine may not certify its own repair.** On this board a reset means the carrier was
+   reloaded, so "reload the carrier" is exactly the path back — the stream bench performs
+   the reload and re-checks the clean-clear case after it, rather than assuming a clean
+   history.
 7. **One transaction across both passes.** A disconnect, reset, timeout or transport
    reopen invalidates pass 1's authorisation — the session/epoch rules already in
    `gate_board_identity` extend to cover the pair.

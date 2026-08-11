@@ -235,7 +235,19 @@ module tb_carrier_stream;
         check("and envelope 0's commit dies with the transaction", env_committed, 0);
 
         // ---- 5. a full transaction, and configuration_valid is unreachable before the
-        //         fifteenth frame has been verified locally
+        //         fifteenth frame has been verified locally.
+        //
+        // RESET FIRST, and that is the point rather than bench hygiene: tests 1-4 provoked
+        // faults, `fault_since_reset` is sticky, and under design §4 item 6 the only way
+        // back to a state where a clean run may clear `recovery_required` is reloading the
+        // carrier — which on this board IS this reset. A bench that skipped it would be
+        // asserting the rule the RTL was just corrected away from.
+        @(negedge clk); rst_n = 1'b0;
+        repeat (3) @(negedge clk); rst_n = 1'b1;
+        @(negedge clk);
+        check("the reload leaves recovery required", recovery_required, 1);
+        check("and the fault latch clear", dut.fault_since_reset, 0);
+
         start_txn();
         build(FAR0, 32'd0); run_pass1(2'd0);
         build(FAR1, 32'd0); run_pass1(2'd1);
@@ -253,7 +265,7 @@ module tb_carrier_stream;
         build(FAR2, 32'd0); run_pass2(2'd2);
         check("confirmed only after fifteen", configuration_valid, 1);
         check("fifteen frames verified", rb_frames_ok, 15);
-        check("recovery cleared by a complete transaction", recovery_required, 0);
+        check("recovery cleared by a complete transaction with no fault", recovery_required, 0);
 
         // ---- 6. a readback mismatch anywhere refuses, including the flush frame
         start_txn();
@@ -267,6 +279,23 @@ module tb_carrier_stream;
         check("readback fault", fault_code, 4'd8);
         check("not confirmed", configuration_valid, 0);
         check("and recovery is required after a partial write", recovery_required, 1);
+
+        // ---- 7. after a fault, a LATER COMPLETE transaction must NOT clear recovery.
+        // Design §4 item 6 allows only a pinned-base restore or a carrier reload, and this
+        // engine cannot tell a restore from any other candidate — nor certify its own
+        // repair, since erratum 001 puts its own routing inside the rewritten frames. The
+        // clearing rule and the document have to be the same contract.
+        start_txn();
+        build(FAR0, 32'd0); run_pass1(2'd0);
+        build(FAR1, 32'd0); run_pass1(2'd1);
+        build(FAR2, 32'd0); run_pass1(2'd2);
+        build(FAR0, 32'd0); run_pass2(2'd0);
+        build(FAR1, 32'd0); run_pass2(2'd1);
+        build(FAR2, 32'd0); run_pass2(2'd2);
+        check("a clean transaction after a fault still confirms", configuration_valid, 1);
+        check("fifteen frames verified again", rb_frames_ok, 15);
+        check("but recovery is NOT cleared after a fault", recovery_required, 1);
+        check("and begin_txn did not launder the fault latch", dut.fault_since_reset, 1);
 
         if (errors == 0) $display("STREAM TB: OK");
         else             $display("STREAM TB: %0d FAILURE(S)", errors);

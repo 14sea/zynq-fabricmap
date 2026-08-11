@@ -160,6 +160,20 @@ module carrier_stream #(
     reg [2:0]  frame_idx;
     reg [6:0]  frame_word;
     reg        awaiting_crc;   // last word of a frame accepted; feeder still draining
+
+    // STICKY TO RESET. Design §4 item 6: after a partial write the only permitted next
+    // actions are restoring the pinned base or reloading the whole carrier — so a later
+    // candidate, however complete, must NOT be able to clear `recovery_required`. The RTL
+    // used to clear it on any fully verified transaction, which is the opposite rule, and
+    // the bench pinned that as correct.
+    //
+    // The reason is erratum 001. The carrier's own static routing now lives inside the
+    // frames a candidate rewrites, so a partial write may have damaged the very logic that
+    // would go on to report "the next write verified". A machine cannot certify its own
+    // repair. `begin_txn` deliberately does not clear this: a host-issued pulse must not be
+    // able to launder a fault. Only a reset — which on this board means the carrier was
+    // reloaded — clears it.
+    reg        fault_since_reset;
     reg [TIMEOUT_BITS-1:0] watchdog;
     wire       expired = watchdog[TIMEOUT_BITS-1];
 
@@ -275,7 +289,7 @@ module carrier_stream #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             phase <= P_IDLE; busy <= 1'b0; fault <= 1'b0; fault_code <= F_NONE;
-            awaiting_crc <= 1'b0;
+            awaiting_crc <= 1'b0; fault_since_reset <= 1'b0;
             cc_we <= 1'b0; cc_waddr <= 4'd0; cc_wdata <= 32'd0; commit_i <= 3'd0;
             expect_env <= 2'd0; pass1_complete <= 1'b0;
             configuration_valid <= 1'b0;
@@ -493,7 +507,11 @@ module carrier_stream #(
                                 if (env == ENVELOPES - 1) begin
                                     if (rb_frames_ok == TOTAL_FRAMES[3:0]) begin
                                         configuration_valid <= 1'b1;
-                                        recovery_required   <= 1'b0;
+                                        // ...but a fault earlier in this power-on means
+                                        // the fabric is not known to equal the pinned base,
+                                        // and this engine is not entitled to say it is.
+                                        if (!fault_since_reset)
+                                            recovery_required <= 1'b0;
                                     end else begin
                                         fault_code <= F_READBACK;
                                         phase      <= P_FAULT;
@@ -541,6 +559,7 @@ module carrier_stream #(
 
                 P_FAULT: begin
                     awaiting_crc        <= 1'b0;
+                    fault_since_reset   <= 1'b1;   // sticky: only a reset clears it
                     configuration_valid <= 1'b0;
                     pass1_complete      <= 1'b0;
                     env_committed       <= 3'b000;   // scratch and commits both die
