@@ -19,7 +19,7 @@ closes that: it is loaded from the canonical carrier run, re-uses
 all have to agree, and `run_candidate` accepts nothing else.
 
     authority = PublishedCarrierAuthority.load(RUN_DIR)        # reads files, before the run
-    payload   = SealedPayload(build_sequence_bytes(authority.manifest, frames))
+    payload   = SealedPayload(build_sequence_bytes(authority.manifest_copy(), frames))
     run_candidate(payload, authority, transmit)                # gate -> guard -> wire
 
 The authority is loaded BEFORE the gate-to-wire section, which stays a zero-file-read
@@ -52,7 +52,15 @@ import carrier_run as cr  # noqa: E402
 import gate_candidate as hostgate  # noqa: E402
 import icap_sequence as iseq  # noqa: E402
 
-TOOL_VERSION = "board_carrier_exec.py/1.0.0"
+TOOL_VERSION = "board_carrier_exec.py/2.0.0"
+
+# The published manifest, pinned HERE, in reviewed source. Not "the digest the object says
+# it has": an authority that vouches for itself is not an authority, and the object was
+# forgeable through its own constructor. Changing this line is a source edit that appears
+# in a diff — which is the only way the whitelist and the pinned base should ever move.
+PRODUCTION_MANIFEST_SHA256 = (
+    "d158a1a8657b3b10349614673159f187ba92902d4e697ec7be4e9d52101f766a"
+)
 
 
 class TransportRefusal(Exception):
@@ -60,20 +68,35 @@ class TransportRefusal(Exception):
 
 
 class PublishedCarrierAuthority:
-    """The manifest, and the proof that it is the one HEAD published.
+    """The published manifest, held as RAW BYTES, re-verified at every use.
 
-    Loaded once, from a canonical carrier run, before anything is judged. `run_candidate`
-    takes this and never a bare dict, because the manifest IS the whitelist and the pinned
-    base: a caller who can supply it can widen what counts as a permitted bit, and the
-    fixed FAR/FDRI guard would have no complaint — that was reproduced, ECC and all.
+    The manifest is the 292-address whitelist and the pinned base frames, so whoever
+    supplies it decides what a permitted bit is. Two ways that leaked, both reproduced:
+
+    * the constructor was public, so a forged manifest could be wrapped in a real-looking
+      authority and `run_candidate` type-checked it happily;
+    * `.manifest` returned the INTERNAL dict, so a caller could widen
+      `ownership.whitelist_by_far[far]` in place after a legitimate, HEAD-verified load —
+      and the object's self-reported digest still described the old contents.
+
+    So: no mutable state is exposed, nothing is parsed once and kept, and the digest that
+    matters is `PRODUCTION_MANIFEST_SHA256` in this file rather than one the object carries.
+    Every use re-hashes the raw bytes against it and parses a **fresh** judge. Even if the
+    capability check below were defeated, forged bytes cannot survive the digest.
     """
 
-    __slots__ = ("_manifest", "_run_dir", "_manifest_sha256")
+    __slots__ = ("_raw", "_run_dir")
 
-    def __init__(self, manifest: dict, run_dir: Path, manifest_sha256: str) -> None:
-        self._manifest = manifest
+    _CAPABILITY = object()          # held only by load()
+
+    def __init__(self, capability, raw: bytes, run_dir: Path) -> None:
+        if capability is not PublishedCarrierAuthority._CAPABILITY:
+            raise TransportRefusal(
+                "PublishedCarrierAuthority is constructed only by load(): a directly "
+                "constructed one is a manifest the caller chose"
+            )
+        self._raw = bytes(raw)
         self._run_dir = run_dir
-        self._manifest_sha256 = manifest_sha256
 
     @classmethod
     def load(cls, run_dir: Path) -> "PublishedCarrierAuthority":
@@ -90,23 +113,36 @@ class PublishedCarrierAuthority:
                 "the carrier run bundle does not verify: "
                 + "; ".join(p["message"] for p in load_problems)
             )
-        path = run_dir / "phenotype_manifest.json"
-        raw = path.read_bytes()
-        pinned = (bundle.get("artifacts") or {}).get("phenotype_manifest.json", {}).get("sha256")
+        raw = (run_dir / "phenotype_manifest.json").read_bytes()
+        pinned = (bundle.get("artifacts") or {}).get(
+            "phenotype_manifest.json", {}).get("sha256")
         actual = hashlib.sha256(raw).hexdigest()
         if actual != pinned:
             raise TransportRefusal(
-                f"the manifest does not match the digest the bundle pins ({actual} vs {pinned})"
-            )
-        return cls(json.loads(raw.decode("utf-8")), run_dir, actual)
+                f"the manifest does not match the digest the bundle pins "
+                f"({actual} vs {pinned})")
+        authority = cls(cls._CAPABILITY, raw, run_dir)
+        authority.verified_raw()          # and the compiled-in digest, before returning
+        return authority
 
-    @property
-    def manifest(self) -> dict:
-        return self._manifest
+    def verified_raw(self) -> bytes:
+        """The bytes, re-hashed against the digest pinned in reviewed source."""
+        actual = hashlib.sha256(self._raw).hexdigest()
+        if actual != PRODUCTION_MANIFEST_SHA256:
+            raise TransportRefusal(
+                f"the manifest is not the reviewed production manifest: {actual} is not "
+                f"{PRODUCTION_MANIFEST_SHA256}"
+            )
+        return self._raw
+
+    def manifest_copy(self) -> dict:
+        """A FRESH parse, every call. Nothing a caller mutates can survive to the next use,
+        and there is no shared object to mutate in the first place."""
+        return json.loads(self.verified_raw().decode("utf-8"))
 
     @property
     def manifest_sha256(self) -> str:
-        return self._manifest_sha256
+        return hashlib.sha256(self._raw).hexdigest()
 
     @property
     def run_dir(self) -> Path:
@@ -181,7 +217,10 @@ def run_candidate(payload: SealedPayload, authority: PublishedCarrierAuthority,
             "supplies the manifest supplies the whitelist and the pinned base, and the "
             "fixed FAR/FDRI guard would not notice"
         )
-    manifest = authority.manifest
+    # A FRESH judge, parsed here from re-verified bytes. Holding a dict handed in at
+    # construction is what let a caller widen `ownership.whitelist_by_far` in place after
+    # the authority had been legitimately verified.
+    manifest = authority.manifest_copy()
     sealed_at_entry = payload.sha256
 
     verdict = hostgate.gate_candidate(manifest, envelopes_of(payload))

@@ -46,13 +46,12 @@ class WiringTests(unittest.TestCase):
                 far = int(far_hex, 16)
                 self.targets[far] = list(frames[far])
 
-        # The authority object is constructed directly here. `load()` additionally proves
-        # the run is HEAD's, which a working tree under edit is not — that path has its own
-        # cases below, in a fixture repository.
-        import hashlib
-        raw = (RUN / "phenotype_manifest.json").read_bytes()
-        self.authority = ex.PublishedCarrierAuthority(
-            self.manifest, RUN, hashlib.sha256(raw).hexdigest())
+        # Obtained the only way it can be: through load(), which proves the run is HEAD's.
+        # There is no test-only constructor, because that would be the bypass.
+        try:
+            self.authority = ex.PublishedCarrierAuthority.load(RUN)
+        except ex.TransportRefusal as refusal:
+            self.skipTest(f"no published authority in this tree: {refusal}")
 
     def payload(self) -> ex.SealedPayload:
         return ex.SealedPayload(ex.build_sequence_bytes(self.manifest, self.targets))
@@ -123,11 +122,9 @@ class WiringTests(unittest.TestCase):
         import copy
         doc = copy.deepcopy(self.manifest)
         doc["write_envelope"]["total_bytes"] = guard.TOTAL_BYTES + 4
-        import hashlib
-        authority = ex.PublishedCarrierAuthority(doc, RUN, hashlib.sha256(b"x").hexdigest())
         sent: list[bytes] = []
         with self.assertRaises(Exception):
-            ex.run_candidate(self.payload(), authority, sent.append)
+            ex.run_candidate(self.payload(), doc, sent.append)   # type: ignore[arg-type]
         self.assertEqual(sent, [])
 
     def test_the_guard_runs_before_the_wire_not_after(self) -> None:
@@ -162,37 +159,88 @@ class ManifestAuthorityTests(WiringTests):
         self.assertIn("PublishedCarrierAuthority", str(caught.exception))
         self.assertEqual(sent, [], "bytes reached the wire under a caller-supplied manifest")
 
-    def test_a_widened_whitelist_with_a_correct_ecc_puts_nothing_on_the_wire(self) -> None:
-        """Reproduced end to end: add a non-LUT address to the whitelist, flip that bit,
-        recompute the ECC correctly. The fixed FAR/FDRI guard agrees — it is not looking at
-        content — so the ONLY thing that can refuse this is the manifest not being the
-        caller's to supply."""
+    def widened(self) -> tuple[dict, dict]:
+        """A manifest whose LOAD-BEARING whitelist is widened by one non-LUT address, and
+        frames carrying that bit flipped with a CORRECTLY recomputed ECC.
+
+        `ownership.whitelist_by_far[far]` is the field that decides what may differ. An
+        earlier version of this test widened top-level keys that the production manifest
+        does not have, so it asserted a refusal that would have happened anyway.
+        """
         import copy
+
         import frame_ecc as fe
         doc = copy.deepcopy(self.manifest)
         far_hex = doc["write_envelope"]["envelopes"][0]["target_fars"][0]
         far = int(far_hex, 16)
-        widened = {"far": far_hex, "word": 0, "bit": 0}
-        doc.setdefault("ownership", {})
-        for key in ("addresses", "writable", "whitelist"):
-            if isinstance(doc.get(key), list):
-                doc[key].append(widened)
+        by_far = doc["ownership"]["whitelist_by_far"]
+        key = far_hex if far_hex in by_far else far_hex.lower()
+        self.assertIn(key, by_far, "the load-bearing whitelist field moved")
+        before = len(by_far[key])
+        by_far[key] = list(by_far[key]) + [{"word": 0, "bit": 0}]
+        self.assertEqual(len(by_far[key]), before + 1)
+
         frames = dict(self.targets)
         edited = list(frames[far])
-        edited[0] ^= 1                       # a bit no LUT owns
-        frames[far] = fe.update_ecc(edited)  # and a CORRECT ECC
+        edited[0] ^= 1                        # a bit no LUT owns
+        frames[far] = fe.update_ecc(edited)   # and a CORRECT ECC
+        return doc, frames
 
-        sent: list[bytes] = []
+    def test_a_widened_whitelist_with_a_correct_ecc_puts_nothing_on_the_wire(self) -> None:
+        """The fixed FAR/FDRI guard agrees — it does not look at content — so the only
+        thing that can refuse this is the manifest not being the caller's to supply."""
+        doc, frames = self.widened()
         payload = ex.SealedPayload(ex.build_sequence_bytes(doc, frames))
+        sent: list[bytes] = []
         with self.assertRaises(ex.TransportRefusal):
-            ex.run_candidate(payload, doc, sent.append)      # type: ignore[arg-type]
+            ex.run_candidate(payload, doc, sent.append)        # type: ignore[arg-type]
         self.assertEqual(sent, [])
-
-        # and with a REAL authority, the host gate refuses the same candidate outright
         sent.clear()
         with self.assertRaises(Exception):
             ex.run_candidate(payload, self.authority, sent.append)
         self.assertEqual(sent, [])
+
+    def test_the_authority_cannot_be_constructed_directly(self) -> None:
+        with self.assertRaises(ex.TransportRefusal) as caught:
+            ex.PublishedCarrierAuthority(object(), b"{}", RUN)
+        self.assertIn("constructed only by load", str(caught.exception))
+
+    def test_forged_bytes_do_not_survive_the_compiled_in_digest(self) -> None:
+        """Even with the capability, which is the layer above this one."""
+        forged = ex.PublishedCarrierAuthority(
+            ex.PublishedCarrierAuthority._CAPABILITY, b'{"schema": "forged"}', RUN)
+        with self.assertRaises(ex.TransportRefusal) as caught:
+            forged.manifest_copy()
+        self.assertIn("reviewed production manifest", str(caught.exception))
+
+    def test_mutating_a_returned_manifest_cannot_reach_the_next_use(self) -> None:
+        """The second bypass: `.manifest` used to return the internal dict, so a caller
+        could widen the whitelist in place AFTER a legitimate HEAD-verified load."""
+        first = self.authority.manifest_copy()
+        far_hex = first["write_envelope"]["envelopes"][0]["target_fars"][0]
+        by_far = first["ownership"]["whitelist_by_far"]
+        key = far_hex if far_hex in by_far else far_hex.lower()
+        by_far[key] = list(by_far[key]) + [{"word": 0, "bit": 0}]
+        second = self.authority.manifest_copy()
+        self.assertIsNot(first, second)
+        self.assertEqual(len(second["ownership"]["whitelist_by_far"][key]),
+                         len(by_far[key]) - 1)
+
+        _, frames = self.widened()
+        payload = ex.SealedPayload(
+            ex.build_sequence_bytes(self.authority.manifest_copy(), frames))
+        sent: list[bytes] = []
+        with self.assertRaises(Exception):
+            ex.run_candidate(payload, self.authority, sent.append)
+        self.assertEqual(sent, [], "an in-place widening reached the wire")
+
+    def test_mutating_a_pinned_base_frame_cannot_reach_the_next_use(self) -> None:
+        """The pinned base is as load-bearing as the whitelist: everything outside the 292
+        addresses is judged against it."""
+        first = self.authority.manifest_copy()
+        first["frames"][0]["words"][0] = "0xDEADBEEF"
+        second = self.authority.manifest_copy()
+        self.assertNotEqual(second["frames"][0]["words"][0], "0xDEADBEEF")
 
     def test_load_refuses_a_run_that_is_not_heads(self) -> None:
         """A copy outside any repository agrees with itself perfectly."""
