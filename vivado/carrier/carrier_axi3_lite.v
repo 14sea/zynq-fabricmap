@@ -201,9 +201,14 @@ module carrier_axi3_lite #(
                 end
 
                 // ---- read ------------------------------------------------------
+                // RDATA is deliberately NOT forced to zero on a refused read. AXI says
+                // read data is not valid when RRESP reports an error, so zeroing it buys
+                // nothing — and it costs a 32-bit mux in front of `rdata_q`, which is 32
+                // LUTs in a region that has ~68 spare. Without it the register is a plain
+                // enabled load and the LUTs disappear entirely. The refusal is carried by
+                // RRESP, which is where a master reads it.
                 S_RD_REQ: begin
                     if (bad) begin
-                        rdata_q <= 32'd0;
                         rresp_q <= RESP_SLVERR;
                         state   <= S_RD_BEAT;
                     end else if (m_arready) begin
