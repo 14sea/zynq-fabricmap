@@ -84,6 +84,8 @@ class FakeBoard:
         self.staged_writes = 0
         self.uboot_env = {"boardid": "17A6", "role": "verify"}
         self.regs = slcr_regs()
+        self.regs[guard.PCAP_PR_ADDR] = 0x4E00E07F      # PCAP_PR set, as the board reads
+        self.pcap_writes: list[int] = []
 
         self.busy = False
         self.fault = False
@@ -165,6 +167,10 @@ class FakeBoard:
         return self.mem.get(addr, 0)
 
     def _write(self, addr: int, value: int) -> None:
+        if addr == guard.PCAP_PR_ADDR:
+            self.pcap_writes.append(value)
+            self.regs[addr] = value
+            return
         if addr == axi.CTRL:
             self._ctrl(value)
             return
@@ -446,6 +452,40 @@ class TheSessionIsTheDoor(unittest.TestCase):
         self.assertEqual(record["payload_sha256"],
                          __import__("hashlib").sha256(payload).hexdigest())
         self.assertEqual(len(record["readback_frames"]), axi.TOTAL_FRAMES)
+
+
+class ThePcapHandover(unittest.TestCase):
+    """`PCAP_PR` is 1 on this board, so the fabric ICAPE2 is disconnected: without the
+    handover every FDRI word would be accepted by the configuration engine and reach
+    nothing. The transaction was doing exactly that."""
+
+    def test_the_icap_is_handed_over_and_given_back(self) -> None:
+        board = FakeBoard()
+        run(board)
+        self.assertEqual(len(board.pcap_writes), 2, "one handover, one restore")
+        self.assertEqual(board.pcap_writes[0] & guard.PCAP_PR_BIT, 0,
+                         "PCAP_PR must be CLEARED for the transaction")
+        self.assertEqual(board.pcap_writes[1], 0x4E00E07F,
+                         "and the previous value restored exactly")
+        self.assertEqual(board.regs[guard.PCAP_PR_ADDR], 0x4E00E07F)
+
+    def test_it_is_given_back_after_a_fault_too(self) -> None:
+        """A devcfg left selecting the PL leaves the next PCAP user with a device that
+        will not respond, and the recovery for that is a power cycle."""
+        board = FakeBoard(fault_at="pass2")
+        with self.assertRaises(axi.AxiRefusal):
+            run(board)
+        self.assertEqual(board.regs[guard.PCAP_PR_ADDR], 0x4E00E07F)
+        self.assertEqual(len(board.pcap_writes), 2)
+
+    def test_the_handover_happens_before_begin_txn(self) -> None:
+        board = FakeBoard()
+        run(board)
+        pcap_at = next(i for i, line in enumerate(board.lines)
+                       if f"mw 0x{guard.PCAP_PR_ADDR:08x}" in line)
+        begin_at = next(i for i, line in enumerate(board.lines)
+                        if f"0x{axi.CTRL_BEGIN_TXN:x} 1" in line and "mw.l" in line)
+        self.assertLess(pcap_at, begin_at)
 
 
 class TheMdParser(unittest.TestCase):

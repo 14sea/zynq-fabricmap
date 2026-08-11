@@ -366,6 +366,22 @@ def command(transport, line: str, timeout: float) -> bytes:
         f"cycle. Received: {tail!r}")
 
 
+def ps_peek(transport):
+    """A reader for PS registers, for `board_carrier_guard.PcapPr`."""
+    def peek(addr: int) -> int:
+        return read_words(transport, addr, 1)[0]
+    return peek
+
+
+def ps_poke(transport):
+    """A writer for PS registers. NOT a fabric write: `PCAP_PR` lives in devcfg, in the PS,
+    and handing the ICAP to the PL is a precondition of a transaction rather than part of
+    one."""
+    def poke(addr: int, value: int) -> None:
+        command(transport, f"mw 0x{addr:08x} 0x{value:08x} 1", timeout=5.0)
+    return poke
+
+
 def _refuse_on_fault(transport, status: dict, where: str) -> None:
     if not status["fault"]:
         return
@@ -430,7 +446,22 @@ def execute_transaction(capability, transport, payload: bytes) -> dict:
             "stream something the host gate never saw")
     record["staged_s"] = round(time.time() - t0, 3)
 
-    # -- 2. begin. `recovery_required` is deliberately NOT cleared by this.
+    # -- 2. hand the ICAP to the PL, then begin.
+    #
+    # Without this the whole transaction is theatre: devcfg reads `0x4E00E07F` on this
+    # board, so `PCAP_PR` is 1, PCAP owns the configuration engine and the fabric's ICAPE2
+    # is disconnected — every FDRI word would be accepted by the engine and reach nothing.
+    # `PcapPr` restores the previous value on the failure path too, because a devcfg left
+    # selecting the PL leaves the next PCAP user staring at a device that will not respond,
+    # and the recovery for that on this board is a power cycle.
+    pcap = guard.PcapPr(ps_poke(transport), ps_peek(transport),
+                        report=lambda message: record.setdefault("pcap_pr", []).append(message))
+    with pcap:
+        _transaction_body(transport, record, note, started)
+    return record
+
+
+def _transaction_body(transport, record: dict, note, started: float) -> None:
     command(transport, f"mw.l 0x{CTRL:08x} 0x{CTRL_BEGIN_TXN:x} 1", timeout=5.0)
     status = read_status(transport)
     _refuse_on_fault(transport, status, "begin_txn")
@@ -498,4 +529,3 @@ def execute_transaction(capability, transport, payload: bytes) -> dict:
     record["status_after"] = final
     record["readback_frames"] = frames
     record["elapsed_s"] = round(time.time() - started, 3)
-    return record

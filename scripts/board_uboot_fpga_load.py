@@ -23,16 +23,27 @@ import serial  # noqa: E402
 READY_RE = re.compile(rb"Ready for binary|CC")
 MD_RE = re.compile(rb"^[0-9a-fA-F]{8}:\s+([0-9a-fA-F]{8})", re.MULTILINE)
 
-# devcfg INT_STS. Bit 2 is PCFG_DONE — the only thing that actually says the PL took the
-# bitstream. `fpga loadb` prints the bitstream header, the byte count and a prompt whether
-# or not configuration happened, and this script used to exit 0 on that alone.
+# devcfg INT_STS. Bit 2 is PCFG_DONE. `fpga loadb` prints the bitstream header, the byte
+# count and a prompt whether or not configuration happened, and this script used to exit 0
+# on that alone — which cost three board sessions.
 #
-# It cost three board sessions. A reload onto an already-configured PL printed a
-# byte-for-byte identical success, PCFG_DONE came back ZERO, and every later AXI read went
-# to an empty fabric and stalled the CPU — which looks exactly like a broken design. The
-# load is not "did the command return", it is "is the PL configured", and those differ.
+# **PCFG_DONE is STICKY and write-1-to-clear, so reading it as a level proves nothing.** A
+# 1 after the load may be left over from the previous one; that is not a hypothetical, it
+# is what happened — the level check passed on `0x50021004` and the fabric still did not
+# answer. So the bit is CLEARED first, confirmed to read 0, and only then required to be 1.
+# An edge is evidence that THIS load configured the PL; a level is evidence that some load
+# once did.
 DEVCFG_INT_STS = 0xF8007000 + 0x0C
 PCFG_DONE = 1 << 2
+
+
+def read_int_sts(s):
+    """devcfg INT_STS, or None if the console did not answer."""
+    s.reset_input_buffer()
+    s.write(f"md 0x{DEVCFG_INT_STS:08x} 1\r".encode())
+    reply = read_until(s, PROMPT_RE, 5)
+    match = MD_RE.search(reply)
+    return int(match.group(1), 16) if match else None
 
 
 def main():
@@ -71,32 +82,41 @@ def main():
     tail = read_until(s, PROMPT_RE, 20)
     print("[xfer]", tail[-160:].decode(errors="replace").strip())
 
-    # 4. program the PL
+    # 4. clear the sticky PCFG_DONE so the check after the load is an EDGE
+    cleared_first = False
+    before = read_int_sts(s)
+    if before is not None:
+        s.reset_input_buffer()
+        s.write(f"mw 0x{DEVCFG_INT_STS:08x} 0x{PCFG_DONE:08x} 1\r".encode())
+        read_until(s, PROMPT_RE, 5)
+        after = read_int_sts(s)
+        cleared_first = after is not None and not after & PCFG_DONE
+        print(f"[devcfg] INT_STS 0x{before:08x} -> 0x{after:08x} before the load "
+              f"({'cleared' if cleared_first else 'NOT cleared'})")
+
+    # 5. program the PL
     line = f"fpga {args.op} 0 0x{addr:08x} 0x{size:08x}\r"
     print(f"[*] {line.strip()}", flush=True)
     s.reset_input_buffer()
     s.write(line.encode())
     print("[fpga]", read_until(s, PROMPT_RE, 30).decode(errors="replace").strip())
 
-    # 5. the load is not believed until the PL says it took it
-    s.reset_input_buffer()
-    s.write(f"md 0x{DEVCFG_INT_STS:08x} 1\r".encode())
-    reply = read_until(s, PROMPT_RE, 5)
-    match = MD_RE.search(reply)
-    if not match:
-        s.close()
-        sys.exit(f"cannot read devcfg INT_STS to confirm the load: {reply[-160:]!r}")
-    int_sts = int(match.group(1), 16)
-    print(f"[devcfg] INT_STS=0x{int_sts:08x} PCFG_DONE={'1' if int_sts & PCFG_DONE else '0'}")
+    # 6. the load is not believed until the PL says THIS load configured it
+    int_sts = read_int_sts(s)
+    print(f"[devcfg] INT_STS=0x{int_sts:08x} PCFG_DONE="
+          f"{'1' if int_sts & PCFG_DONE else '0'} (after the load)")
     if not int_sts & PCFG_DONE:
         s.close()
         sys.exit(
             f"FPGA CONFIGURATION DID NOT HAPPEN: devcfg INT_STS=0x{int_sts:08x}, PCFG_DONE "
             "is clear. `fpga loadb` printed the header and returned a prompt anyway. Every "
-            "AXI access to the PL will now stall the CPU. Power-cycle before retrying: a "
-            "reload onto an already-configured PL is how this was reproduced.")
+            "AXI access to the PL will now stall the CPU.")
+    if not cleared_first:
+        print("[devcfg] NOTE: PCFG_DONE was already set before this load and could not be "
+              "cleared, so the 1 above is a level and not an edge — it does not prove that "
+              "THIS load configured the PL.")
 
-    # 6. read a PL register twice -> a live mailbox shows different values
+    # 7. read a PL register twice -> a live mailbox shows different values
     if args.read:
         for i in range(2):
             s.reset_input_buffer()
