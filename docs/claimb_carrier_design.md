@@ -526,7 +526,9 @@ restore it and reports ICAP health rather than leaving the device half-configure
    pass before anything else looks at the result; check 2 records route evidence
    ([erratum 001](claimb_erratum_001_static_routes.md));
 4. `phenotype_manifest` emitted from the built carrier and committed — the first instance
-   this repo will hold;
+   this repo will hold. **DONE 2026-08-11**:
+   `gate_runs/claimb_round1_carrier_2026_08_11/`, with the build provenance, the base
+   binding verdict, the isolation record and the passing INIT ECO differential;
 5. host-only dry run: candidates generated, sequences built, gated, logged, **no device**;
 6. board-side guard firmware, with its own host-side tests;
 7. only then the engineering calibration — which is a device write and needs the single
