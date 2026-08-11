@@ -18,25 +18,44 @@
 // value 0xFFFFFFFF, final XOR 0xFFFFFFFF — so a host can reproduce it with any ordinary
 // implementation rather than one written to match this file.
 //
-// BYTE-SERIAL. A word is consumed over four cycles, one byte at a time, and `ready` is low
-// until they are done. The word-parallel version unrolled 32 XOR stages and cost 162 LUTs
-// in a region that has 800 in total; the transfer is AXI-paced and cannot notice three
-// extra cycles per word, so the area is worth more than the throughput.
+// BYTE-SERIAL, with an ORDINARY AXI-STREAM HANDSHAKE. The transfer happens in the one
+// cycle where `valid && ready`; the word is LATCHED there and the remaining three bytes are
+// clocked out of the latch, so the producer is free to change `data` immediately — which it
+// does, because `ready` is what its own counters advance on. `taken` pulses four cycles
+// later and means only "the CRC has settled", never "consume another word": using it as the
+// advance event double-consumed every word (byte_count came out at exactly 2x).
+// The word-parallel version unrolled 32 XOR stages and cost 162 LUTs in a region that has
+// 800 in total; the transfer is AXI-paced and cannot notice three extra cycles per word.
+//
+// WHY THE HANDSHAKE IS SHAPED THIS WAY. The first version exposed `ready` as a level and
+// let each consumer advance its own counters from it. Three phases then kept three sets of
+// counters against one byte stream, and they drifted: the readback CRC came out as though
+// almost no bytes had been consumed. There is now ONE advance event, and `byte_count`
+// makes a drift observable rather than merely wrong — a 101-word frame must produce
+// exactly 404 byte handshakes.
+//
+// `crc` is only meaningful while `idle`. Reading it in the same cycle as the last `taken`
+// reads a state that has not been updated yet, which is the same off-by-one in a
+// different costume.
 
 `default_nettype none
 
 module carrier_crc32 (
     input  wire        clk,
     input  wire        rst_n,
-    input  wire        clear,       // start a new frame
-    input  wire        valid,       // present `data`; held until `ready`
+    input  wire        clear,       // start a new frame; also clears byte_count
+    input  wire        valid,       // a whole word is offered
     input  wire [31:0] data,
-    output wire        ready,       // this word has been consumed
+    output wire        ready,       // valid && ready == the transfer; data is latched here
+    output reg         taken,       // one pulse per word, four cycles later: CRC settled
+    output wire        idle,        // `crc` is settled
+    output reg  [15:0] byte_count,  // bytes consumed since `clear`
     output wire [31:0] crc
 );
     reg [31:0] state;
-    reg [1:0]  byte_index;
-    reg        running;
+    reg [31:0] wreg;      // the accepted word; `data` may change the very next cycle
+    reg [1:0]  bidx;
+    reg        active;
 
     // one byte, LSB first (reflected input)
     function automatic [31:0] crc_byte(input [31:0] acc, input [7:0] byte_in);
@@ -54,33 +73,48 @@ module carrier_crc32 (
 
     // A 32-bit word is consumed LITTLE-ENDIAN — bytes [7:0], [15:8], [23:16], [31:24] —
     // matching how the host serialises the stream. Stated because "we both compute CRC-32"
-    // is not a specification, and the known answers in the bench are Python's zlib over
-    // exactly this order.
-    wire [7:0] this_byte = (byte_index == 2'd0) ? data[7:0]   :
-                           (byte_index == 2'd1) ? data[15:8]  :
-                           (byte_index == 2'd2) ? data[23:16] : data[31:24];
+    // is not a specification, and the bench's known answers are Python's zlib over exactly
+    // this order.
+    wire [7:0] byte_of_index = (bidx == 2'd1) ? wreg[15:8]  :
+                               (bidx == 2'd2) ? wreg[23:16] : wreg[31:24];
 
-    assign ready = running && (byte_index == 2'd3);
+    // `clear` wins over `accept` inside the state update, so a word offered in the same
+    // cycle as a clear would be counted by the consumer and dropped by the CRC. Withdrawing
+    // `ready` for that cycle makes the two mutually exclusive at the interface instead of
+    // relying on every caller to keep them apart. (The 404-byte assertion is what found it:
+    // the frame came out at 400.)
+    wire accept = valid && !active && !clear;
+
+    assign ready = !active && !clear;
+    assign idle  = !active;
+    assign crc   = state ^ 32'hFFFFFFFF;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            state      <= 32'hFFFFFFFF;
-            byte_index <= 2'd0;
-            running    <= 1'b0;
-        end else if (clear) begin
-            state      <= 32'hFFFFFFFF;
-            byte_index <= 2'd0;
-            running    <= 1'b0;
-        end else if (valid) begin
-            state      <= crc_byte(state, this_byte);
-            byte_index <= byte_index + 2'd1;
-            running    <= 1'b1;
+            state <= 32'hFFFFFFFF; bidx <= 2'd0; active <= 1'b0; wreg <= 32'd0;
+            taken <= 1'b0; byte_count <= 16'd0;
         end else begin
-            running    <= 1'b0;
+            taken <= 1'b0;
+            if (clear) begin
+                state <= 32'hFFFFFFFF; bidx <= 2'd0; active <= 1'b0; byte_count <= 16'd0;
+            end else if (accept) begin
+                wreg       <= data;
+                state      <= crc_byte(state, data[7:0]);
+                byte_count <= byte_count + 16'd1;
+                bidx       <= 2'd1;
+                active     <= 1'b1;
+            end else if (active) begin
+                state      <= crc_byte(state, byte_of_index);
+                byte_count <= byte_count + 16'd1;
+                if (bidx == 2'd3) begin
+                    active <= 1'b0;
+                    taken  <= 1'b1;      // "settled" — NOT an invitation to send more
+                end else begin
+                    bidx <= bidx + 2'd1;
+                end
+            end
         end
     end
-
-    assign crc = state ^ 32'hFFFFFFFF;
 endmodule
 
 `default_nettype wire

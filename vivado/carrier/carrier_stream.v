@@ -70,6 +70,8 @@ module carrier_stream #(
     output reg  [6:0]  rb_waddr,
     output reg  [31:0] rb_wdata,
     output reg         rb_frame_ready,   // a whole frame is in the readback buffer
+    input  wire        rb_ack,           // the host has taken it
+    output reg  [3:0]  rb_frames_ok,     // frames verified so far in this transaction
 
     // ICAPE2
     output reg         icap_csib,
@@ -86,7 +88,8 @@ module carrier_stream #(
                      F_TIMEOUT  = 4'd6,
                      F_PHASE    = 4'd7,
                      F_READBACK = 4'd8,
-                     F_UNCOMMITTED = 4'd9;
+                     F_UNCOMMITTED = 4'd9,
+                     F_BYTECOUNT = 4'd10;
 
     localparam [31:0] W_DUMMY  = 32'hFFFFFFFF, W_SYNC  = 32'hAA995566,
                       W_NOOP   = 32'h20000000, W_CMD1  = 32'h30008001,
@@ -132,13 +135,18 @@ module carrier_stream #(
     endfunction
 
     localparam [2:0] P_IDLE = 3'd0, P_PASS1 = 3'd1, P_PASS2 = 3'd2, P_RDBACK = 3'd3,
-                     P_FAULT = 3'd4;
+                     P_FAULT = 3'd4, P_EMIT = 3'd5;
+
+    localparam integer TOTAL_FRAMES = ENVELOPES * FRAMES_PER_ENV;   // 15
 
     reg [2:0]  phase;
+    reg [2:0]  rb_frame;
+    reg [6:0]  emit_word;
     reg [1:0]  env;
     reg [9:0]  pos;
     reg [2:0]  frame_idx;
     reg [6:0]  frame_word;
+    reg        awaiting_crc;   // last word of a frame accepted; feeder still draining
     reg [31:0] watchdog;
 
     // staging: one frame of original words, plus the readback of one frame
@@ -147,20 +155,42 @@ module carrier_stream #(
     reg [31:0] crc_scratch [0:FRAMES_PER_ENV-1];
     reg [31:0] crc_committed [0:ENVELOPES*FRAMES_PER_ENV-1];
 
-    wire        crc_ready;
+    wire        crc_ready, crc_taken, crc_idle;
+    wire [15:0] crc_byte_count;
     wire [31:0] crc_value;
-    reg         crc_clear, crc_feed;
+    reg         crc_clear;
+
+    // In pass 1/2 the CRC covers the words the HOST sent; during readback it covers the
+    // words the DEVICE returned, and comparing the second against the first is the local
+    // interlock. One engine, two sources, selected by phase.
+    wire [31:0] crc_source = (phase == P_RDBACK) ? icap_dout : word_data;
+
+    // ONE feeder for all three phases; only the source changes. Three phases keeping
+    // three sets of counters against one byte stream is exactly how the readback CRC came
+    // out as though almost nothing had been consumed.
+    wire crc_feed = !awaiting_crc &&
+                    (((phase == P_PASS1 || phase == P_PASS2) && word_valid && in_frame)
+                     || (phase == P_RDBACK && !rb_frame_ready));
 
     carrier_crc32 crc_i (
         .clk(clk), .rst_n(rst_n), .clear(crc_clear), .valid(crc_feed),
-        .data(word_data), .ready(crc_ready), .crc(crc_value)
+        .data(crc_source), .ready(crc_ready), .taken(crc_taken), .idle(crc_idle),
+        .byte_count(crc_byte_count), .crc(crc_value)
     );
+
+    // A 101-word frame is exactly 404 byte handshakes. Checking the count turns any
+    // drift between the feeder and a consumer's index into an observable violation
+    // instead of a wrong CRC that looks like a readback failure.
+    localparam [15:0] BYTES_PER_FRAME = FRAME_WORDS * 4;
 
     // A word is consumed when the CRC has taken all four of its bytes. Control words are
     // not CRC'd — the CRC covers the frames, which is what pass 2 re-checks — so they
     // retire immediately.
     wire in_frame  = (pos >= PREAMBLE) && (pos < PREAMBLE + FRAMES_PER_ENV*FRAME_WORDS);
-    assign word_ready = (phase == P_PASS1 || phase == P_PASS2) &&
+    // A frame word retires on the feeder's ONE advance condition — word_valid && crc_ready
+    // — and every index in every phase advances on that same event and nothing else. A
+    // control word is not CRC'd and retires at once.
+    assign word_ready = (phase == P_PASS1 || phase == P_PASS2) && !awaiting_crc &&
                         (in_frame ? crc_ready : 1'b1);
 
     wire [32:0] want = expected_at(pos);
@@ -172,18 +202,19 @@ module carrier_stream #(
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             phase <= P_IDLE; busy <= 1'b0; fault <= 1'b0; fault_code <= F_NONE;
+            awaiting_crc <= 1'b0;
             expect_env <= 2'd0; pass1_complete <= 1'b0;
             configuration_valid <= 1'b0;
             recovery_required <= 1'b1;      // fail-closed: a reset proves nothing
             env_committed <= 3'b000;
             env <= 2'd0; pos <= 10'd0; frame_idx <= 3'd0; frame_word <= 7'd0;
             watchdog <= 32'd0;
-            crc_clear <= 1'b0; crc_feed <= 1'b0;
-            rb_we <= 1'b0; rb_frame_ready <= 1'b0;
+            crc_clear <= 1'b0;
+            rb_we <= 1'b0; rb_frame_ready <= 1'b0; rb_frames_ok <= 4'd0;
+            rb_frame <= 3'd0;
             icap_csib <= 1'b1; icap_rdwrb <= 1'b0; icap_din <= 32'd0;
         end else begin
             crc_clear <= 1'b0;
-            crc_feed  <= 1'b0;
             rb_we     <= 1'b0;
             icap_csib <= 1'b1;              // paused unless a word is being handed over
 
@@ -196,6 +227,7 @@ module carrier_stream #(
                         fault               <= 1'b0;
                         fault_code          <= F_NONE;
                         expect_env          <= 2'd0;
+                        rb_frames_ok        <= 4'd0;
                         // An uncommitted CRC is not weaker authority, it is none.
                         env_committed       <= 3'b000;
                         // recovery_required is deliberately NOT cleared here.
@@ -217,7 +249,15 @@ module carrier_stream #(
                             fault_code <= F_UNCOMMITTED;
                             phase      <= P_FAULT;
                         end else begin
-                            if (start_pass2) configuration_valid <= 1'b0;
+                            // Pass 2 is the only phase that writes the fabric, so from
+                            // its first word the configuration is partial again: drop the
+                            // confirmation AND re-arm recovery. Without the re-arm a
+                            // transaction that faulted after a previous one had succeeded
+                            // reported "no recovery needed" over a half-written fabric.
+                            if (start_pass2) begin
+                                configuration_valid <= 1'b0;
+                                recovery_required   <= 1'b1;
+                            end
                             env        <= env_index;
                             pos        <= 10'd0;
                             frame_idx  <= 3'd0;
@@ -235,6 +275,35 @@ module carrier_stream #(
                     if (watchdog > TIMEOUT) begin
                         fault_code <= F_TIMEOUT;
                         phase      <= P_FAULT;
+                    end else if (awaiting_crc) begin
+                        // The frame's 101st word was accepted; the feeder is still clocking
+                        // out its last bytes. Nothing advances and no word is accepted until
+                        // the CRC has settled, so `crc_value` is never read one word early.
+                        if (crc_taken) begin
+                            awaiting_crc <= 1'b0;
+                            frame_word   <= 7'd0;
+                            frame_idx    <= frame_idx + 3'd1;
+                            crc_clear    <= 1'b1;
+                            // A 101-word frame is 404 byte handshakes, no more and no less.
+                            // Any drift between the feeder and an index shows up here as a
+                            // fault instead of as a CRC that merely looks wrong.
+                            if (crc_byte_count != BYTES_PER_FRAME) begin
+                                fault_code <= F_BYTECOUNT;
+                                phase      <= P_FAULT;
+                            end else if (phase == P_PASS1) begin
+                                crc_scratch[frame_idx] <= crc_value;
+                            end else if (crc_value !=
+                                         crc_committed[env*FRAMES_PER_ENV + frame_idx]) begin
+                                fault_code <= F_CRC;
+                                phase      <= P_FAULT;
+                            end else begin
+                                // CRC matched: only NOW do the frame's 101 ORIGINAL words
+                                // go into the FDRI burst. ICAP has been paused with CSIB
+                                // high while they were loaded and checked.
+                                emit_word <= 7'd0;
+                                phase     <= P_EMIT;
+                            end
+                        end
                     end else if (word_valid) begin
                         if (control_bad) begin
                             fault_code <= (pos == 22) ? F_LENGTH : F_CONTROL;
@@ -243,25 +312,11 @@ module carrier_stream #(
                             fault_code <= F_FAR;
                             phase      <= P_FAULT;
                         end else if (in_frame) begin
-                            crc_feed <= 1'b1;
-                            if (phase == P_PASS2) stage[frame_word] <= word_data;
-                            if (crc_ready) begin
-                                // this word is retired
-                                if (frame_word == FRAME_WORDS - 1) begin
-                                    if (phase == P_PASS1) begin
-                                        crc_scratch[frame_idx] <= crc_value;
-                                    end else if (crc_value !=
-                                                 crc_committed[env*FRAMES_PER_ENV + frame_idx]) begin
-                                        fault_code <= F_CRC;
-                                        phase      <= P_FAULT;
-                                    end
-                                    frame_word <= 7'd0;
-                                    frame_idx  <= frame_idx + 3'd1;
-                                    crc_clear  <= 1'b1;
-                                end else begin
-                                    frame_word <= frame_word + 7'd1;
-                                end
+                            if (crc_ready) begin      // the transfer: word_valid && crc_ready
+                                if (phase == P_PASS2) stage[frame_word] <= word_data;
                                 pos <= pos + 10'd1;
+                                if (frame_word == FRAME_WORDS - 1) awaiting_crc <= 1'b1;
+                                else frame_word <= frame_word + 7'd1;
                             end
                         end else begin
                             // preamble or trailer: validated, forwarded verbatim
@@ -285,8 +340,12 @@ module carrier_stream #(
                                     busy  <= 1'b0;
                                     phase <= P_IDLE;
                                 end else begin
-                                    phase <= P_RDBACK;
-                                    pos   <= 10'd0;
+                                    phase      <= P_RDBACK;
+                                    pos        <= 10'd0;
+                                    rb_frame   <= 3'd0;
+                                    frame_word <= 7'd0;
+                                    watchdog   <= 32'd0;
+                                    crc_clear  <= 1'b1;
                                 end
                             end else begin
                                 pos <= pos + 10'd1;
@@ -295,23 +354,111 @@ module carrier_stream #(
                     end
                 end
 
-                P_RDBACK: begin
-                    // placeholder for the readback phase; the envelope's frames are read
-                    // back one at a time into rb_* for the host to hash.
-                    if (env == ENVELOPES - 1) begin
-                        configuration_valid <= 1'b1;
-                        recovery_required   <= 1'b0;
+                // ---- emit: hand one verified frame to the FDRI burst already in
+                // progress. RDWRB stays in write throughout and is never toggled while
+                // CSIB is low, which would abort the load.
+                P_EMIT: begin
+                    watchdog <= watchdog + 32'd1;
+                    if (watchdog > TIMEOUT) begin
+                        fault_code <= F_TIMEOUT;
+                        phase      <= P_FAULT;
                     end else begin
-                        expect_env <= env + 2'd1;
+                        icap_csib  <= 1'b0;
+                        icap_rdwrb <= 1'b0;
+                        icap_din   <= stage[emit_word];
+                        if (emit_word == FRAME_WORDS - 1) begin
+                            emit_word <= 7'd0;
+                            phase     <= P_PASS2;
+                        end else begin
+                            emit_word <= emit_word + 7'd1;
+                        end
                     end
-                    busy  <= 1'b0;
-                    phase <= P_IDLE;
+                end
+
+                // ---- readback: the envelope's five frames, one at a time
+                //
+                // The local compare is CRC per frame against the SAME committed CRC pass 1
+                // produced, so no copy of the candidate has to be kept. It is a hardware
+                // interlock and nothing more: the host reads every frame out of `rb_*` and
+                // computes the SHA-256 that actually authorises the payload.
+                //
+                // NOTE, and the calibration must settle it: the ICAP readback command
+                // sequence is modelled abstractly here. The bench's device is a model of
+                // the assumption, so simulation cannot establish that a real ICAPE2 will
+                // return these words this way.
+                P_RDBACK: begin
+                    watchdog <= watchdog + 32'd1;
+                    if (watchdog > TIMEOUT) begin
+                        fault_code <= F_TIMEOUT;
+                        phase      <= P_FAULT;
+                    end else if (rb_frame_ready) begin
+                        if (rb_ack) begin
+                            rb_frame_ready <= 1'b0;
+                            if (rb_frame == FRAMES_PER_ENV - 1) begin
+                                // envelope done. configuration_valid is reachable ONLY
+                                // from here, and only with every one of the fifteen frames
+                                // verified — the counter, not the envelope index, is what
+                                // makes it structurally unreachable early.
+                                if (env == ENVELOPES - 1) begin
+                                    if (rb_frames_ok == TOTAL_FRAMES[3:0]) begin
+                                        configuration_valid <= 1'b1;
+                                        recovery_required   <= 1'b0;
+                                    end else begin
+                                        fault_code <= F_READBACK;
+                                        phase      <= P_FAULT;
+                                    end
+                                end else begin
+                                    expect_env <= env + 2'd1;
+                                end
+                                busy  <= 1'b0;
+                                phase <= (phase == P_FAULT) ? P_FAULT : P_IDLE;
+                            end else begin
+                                rb_frame   <= rb_frame + 3'd1;
+                                frame_word <= 7'd0;
+                                crc_clear  <= 1'b1;
+                            end
+                        end
+                    end else if (awaiting_crc) begin
+                        // CSIB high pauses the readback while the feeder drains the last
+                        // word — the same pause the write path uses between frames.
+                        icap_csib <= 1'b1;
+                        rb_we     <= 1'b0;
+                        if (crc_taken) begin
+                            awaiting_crc <= 1'b0;
+                            if (crc_byte_count != BYTES_PER_FRAME) begin
+                                fault_code <= F_BYTECOUNT;
+                                phase      <= P_FAULT;
+                            end else if (crc_value ==
+                                crc_committed[env*FRAMES_PER_ENV + rb_frame]) begin
+                                rb_frames_ok   <= rb_frames_ok + 4'd1;
+                                rb_frame_ready <= 1'b1;
+                            end else begin
+                                fault_code <= F_READBACK;
+                                phase      <= P_FAULT;
+                            end
+                        end
+                    end else begin
+                        // stream one frame back, paced by the SAME advance condition: the
+                        // buffer write and the CRC see the identical word, so a readback
+                        // word can never reach `rb_*` without having been CRC'd.
+                        icap_csib  <= 1'b0;
+                        icap_rdwrb <= 1'b1;
+                        rb_we      <= crc_ready;
+                        rb_waddr   <= frame_word;
+                        rb_wdata   <= icap_dout;
+                        if (crc_ready) begin
+                            if (frame_word == FRAME_WORDS - 1) awaiting_crc <= 1'b1;
+                            else frame_word <= frame_word + 7'd1;
+                        end
+                    end
                 end
 
                 P_FAULT: begin
+                    awaiting_crc        <= 1'b0;
                     configuration_valid <= 1'b0;
                     pass1_complete      <= 1'b0;
                     env_committed       <= 3'b000;   // scratch and commits both die
+                    rb_frames_ok        <= 4'd0;
                     fault               <= 1'b1;
                     busy                <= 1'b0;
                     phase               <= P_IDLE;

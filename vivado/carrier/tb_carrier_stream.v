@@ -30,6 +30,11 @@ module tb_carrier_stream;
     wire        icap_csib, icap_rdwrb;
     wire [31:0] icap_din;
     reg  [31:0] icap_dout = 32'd0;
+    reg         rb_ack = 1'b0;
+    wire [3:0]  rb_frames_ok;
+    // device model: what the fabric returns, per (envelope, frame, word)
+    reg [31:0] device [0:2][0:4][0:FRAME_WORDS-1];
+    integer corrupt_env = -1, corrupt_frame = -1, corrupt_word = -1;
 
     integer errors = 0, i;
     reg [31:0] env_words [0:ENV_WORDS-1];
@@ -45,10 +50,47 @@ module tb_carrier_stream;
         .pass1_complete(pass1_complete), .configuration_valid(configuration_valid),
         .recovery_required(recovery_required), .env_committed(env_committed),
         .rb_we(rb_we), .rb_waddr(rb_waddr), .rb_wdata(rb_wdata),
-        .rb_frame_ready(rb_frame_ready),
+        .rb_frame_ready(rb_frame_ready), .rb_ack(rb_ack), .rb_frames_ok(rb_frames_ok),
         .icap_csib(icap_csib), .icap_rdwrb(icap_rdwrb), .icap_din(icap_din),
         .icap_dout(icap_dout)
     );
+
+    // the device returns what pass 2 wrote, unless a corruption is injected
+    always @* begin
+        icap_dout = device[dut.env][dut.rb_frame][dut.frame_word];
+        if (corrupt_env == dut.env && corrupt_frame == dut.rb_frame &&
+            corrupt_word == dut.frame_word)
+            icap_dout = ~device[dut.env][dut.rb_frame][dut.frame_word];
+    end
+
+    // capture what pass 2 hands to ICAP during the EMIT phase, so the readback has
+    // something faithful to return. Frames reach ICAP only from there — the point of the
+    // staging is that nothing is handed over until its CRC has matched.
+    //
+    // The capture keeps its OWN pointer. `icap_din` is a registered output, so by the time
+    // a word is on the wire `emit_word` has already advanced, and indexing the device by
+    // it stores every word one place late — which reads back as a CRC mismatch and looks
+    // exactly like a real readback failure.
+    //
+    // For the same reason the window is P_EMIT delayed by one cycle, not P_EMIT itself:
+    // the 101st word reaches the wire in the first cycle AFTER the engine has left P_EMIT
+    // (that is also when a real ICAPE2 latches it, CSIB still low). Gating on the phase
+    // directly stored only 100 words and left word 100 as x — which the CRC then reported
+    // as a readback mismatch, i.e. a bench defect wearing a device failure's clothes.
+    integer cap_ptr = 0;
+    reg     emit_d = 1'b0;
+    always @(posedge clk) emit_d <= (dut.phase == 3'd5);
+    always @(posedge clk) begin
+        if (emit_d && !icap_csib && !icap_rdwrb) begin
+            device[dut.env][dut.frame_idx - 3'd1][cap_ptr] <= icap_din;
+            cap_ptr <= (cap_ptr == FRAME_WORDS-1) ? 0 : cap_ptr + 1;
+        end else if (!emit_d) begin
+            cap_ptr <= 0;
+        end
+    end
+
+    // the host taking each readback frame
+    always @(posedge clk) rb_ack <= rb_frame_ready && !rb_ack;
 
     task check(input [255:0] what, input integer got, input integer want);
         begin
@@ -106,6 +148,15 @@ module tb_carrier_stream;
         begin
             @(negedge clk); env_index = e; start_pass1 = 1'b1;
             @(negedge clk); start_pass1 = 1'b0;
+            stream(0, ENV_WORDS);
+            wait (!busy); @(negedge clk);
+        end
+    endtask
+
+    task run_pass2(input [1:0] e);
+        begin
+            @(negedge clk); env_index = e; start_pass2 = 1'b1;
+            @(negedge clk); start_pass2 = 1'b0;
             stream(0, ENV_WORDS);
             wait (!busy); @(negedge clk);
         end
@@ -182,6 +233,40 @@ module tb_carrier_stream;
         check("a length fault refuses", fault, 1);
         check("length fault", fault_code, 4'd4);
         check("and envelope 0's commit dies with the transaction", env_committed, 0);
+
+        // ---- 5. a full transaction, and configuration_valid is unreachable before the
+        //         fifteenth frame has been verified locally
+        start_txn();
+        build(FAR0, 32'd0); run_pass1(2'd0);
+        build(FAR1, 32'd0); run_pass1(2'd1);
+        build(FAR2, 32'd0); run_pass1(2'd2);
+        check("all three committed", env_committed, 3'b111);
+        check("pass 1 complete", pass1_complete, 1);
+        check("still not confirmed", configuration_valid, 0);
+
+        build(FAR0, 32'd0); run_pass2(2'd0);
+        check("not confirmed after one envelope", configuration_valid, 0);
+        check("five frames verified", rb_frames_ok, 5);
+        build(FAR1, 32'd0); run_pass2(2'd1);
+        check("not confirmed after two", configuration_valid, 0);
+        check("ten frames verified", rb_frames_ok, 10);
+        build(FAR2, 32'd0); run_pass2(2'd2);
+        check("confirmed only after fifteen", configuration_valid, 1);
+        check("fifteen frames verified", rb_frames_ok, 15);
+        check("recovery cleared by a complete transaction", recovery_required, 0);
+
+        // ---- 6. a readback mismatch anywhere refuses, including the flush frame
+        start_txn();
+        build(FAR0, 32'd0); run_pass1(2'd0);
+        build(FAR1, 32'd0); run_pass1(2'd1);
+        build(FAR2, 32'd0); run_pass1(2'd2);
+        corrupt_env = 0; corrupt_frame = 4; corrupt_word = 17;   // the FLUSH frame
+        build(FAR0, 32'd0); run_pass2(2'd0);
+        corrupt_env = -1; corrupt_frame = -1; corrupt_word = -1;
+        check("a flush-frame readback mismatch refuses", fault, 1);
+        check("readback fault", fault_code, 4'd8);
+        check("not confirmed", configuration_valid, 0);
+        check("and recovery is required after a partial write", recovery_required, 1);
 
         if (errors == 0) $display("STREAM TB: OK");
         else             $display("STREAM TB: %0d FAILURE(S)", errors);
