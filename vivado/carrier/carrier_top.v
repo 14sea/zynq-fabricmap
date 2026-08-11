@@ -18,12 +18,14 @@
 
 `default_nettype none
 
+// NO PORTS. The carrier has no board IO: the PS reaches it through PS7/GP0 and the ICAP is
+// internal. A tied-off `led[3:0]` existed and stopped write_bitstream on unconstrained-IO
+// DRC — the right answer is not to waive the DRC or to invent pin constraints for a signal
+// nothing drives, but to not have the port.
 module carrier_top #(
     parameter integer LUTS        = 6,
     parameter integer FRAME_WORDS = 101   // the readback window; the engine stages one frame
-) (
-    output wire [3:0] led    // tied off; the design has no board IO of its own
-);
+) ();
     localparam integer ENV_WORDS = 536;
 
     `include "carrier_base_init.vh"
@@ -171,7 +173,6 @@ module carrier_top #(
         .O(lut_q[5]), .I0(vector[0]), .I1(vector[1]), .I2(vector[2]),
         .I3(vector[3]), .I4(vector[4]), .I5(vector[5]));
 
-    assign led = 4'b0000;
 endmodule
 
 `default_nettype wire

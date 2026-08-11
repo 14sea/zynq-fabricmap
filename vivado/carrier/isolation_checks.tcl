@@ -1,13 +1,24 @@
-# Carrier design §4: prove frame ownership from the ROUTED design, not from constraints.
+# Carrier design §4, as amended by ARCHITECTURE ERRATUM 001 (docs/claimb_erratum_001_static_routes.md).
 #
-#   1. cell ownership  — exactly the six evolvable LUTs in the target columns, nothing at
-#                        all in the flush columns
-#   2. net ownership   — empty over the flush columns; over the target columns only the
-#                        enumerated evolvable data nets
-#   3. INIT differential — a POST-ROUTE ECO on the same routed DCP, never a re-route
+#   1. cell ownership     — exactly the six evolvable LUTs in the target columns, nothing at
+#                           all in the flush columns.                        STILL A VERDICT.
+#   2. route inventory    — the routed nodes, PIPs and nets of the touched regions, listed
+#                           and hashed.                                      EVIDENCE ONLY.
+#   3. INIT differential  — a POST-ROUTE ECO on the same routed DCP, never a re-route.
 #
-# A pblock constrains placement; routing is free to cross a region no cell occupies, which
-# is why check 2 exists and why it is asked of the routed design.
+# WHY 2 IS NO LONGER A VERDICT. It was: "nothing of ours may be routed through a frame we
+# write." Measured on this device that is unachievable — the carrier logic is at
+# SLICE_X0..X1, the ICAPE2 site is on the right of the die, and the target and flush columns
+# stand full-height between them, so every ICAP net must cross both (113 nets over the flush
+# segments and 235 non-evolvable nets over the target segments, in the written rows alone).
+# The right-hand floorplan fails the same way with the AXI bus instead. 7-series PR
+# explicitly contemplates static routes inside a reconfigured region (UG909), so zero
+# crossings was a stronger condition we adopted, not one silicon requires.
+#
+# The authority is now BIT INVARIANCE, in scripts/gate_candidate.py: every non-evolutionary
+# bit of every written frame must equal the final carrier base. A net's name is not a safety
+# argument; its configuration bits being unchanged is. So this file records what is routed
+# there — it must never again decide it, and it must never exempt a net by name.
 
 proc tiles_of {pattern} { return [get_tiles -quiet $pattern] }
 
@@ -92,11 +103,26 @@ proc pblock_problems {} {
     if {[llength $outside]} {
         lappend problems "[llength $outside] primitive(s) are not in pb_logic, e.g. [lrange $outside 0 4]"
     }
-    set pc [get_property PRIMITIVE_COUNT $pb]
-    if {$pc != [llength $expected]} {
-        lappend problems "pb_logic PRIMITIVE_COUNT $pc but [llength $expected] primitives were expected"
-    }
+    # PRIMITIVE_COUNT is NOT the oracle and must not be a refusal. It read 1460 against
+    # 1592 cells while every one of those cells carried PBLOCK=pb_logic — it does not count
+    # the same set (PS7/ICAPE2-class primitives among them). The membership loop above is
+    # the authority, exactly as this file already argues for CELL_COUNT. Reported so the
+    # number is on the record and nobody chases it a second time.
+    puts "pb_logic: PRIMITIVE_COUNT=[get_property PRIMITIVE_COUNT $pb]\
+ cells-with-PBLOCK=[expr {[llength $expected] - [llength $outside]}] of [llength $expected]"
     return $problems
+}
+
+# sha256 over the SORTED, newline-joined names, so the digest is a property of the routed
+# design and not of Tcl's enumeration order.
+proc sha_of_list {outdir tag items} {
+    set path [file join $outdir ".sha_$tag.tmp"]
+    set fh [open $path w]
+    foreach i $items { puts $fh $i }
+    close $fh
+    set h [lindex [exec sha256sum $path] 0]
+    file delete -force $path
+    return $h
 }
 
 proc carrier_isolation_checks {outdir} {
@@ -127,22 +153,17 @@ proc carrier_isolation_checks {outdir} {
     # ---- 1b. positive control, before any verdict is trusted
     foreach p [positive_control $target_tiles] { lappend problems $p }
 
-    # ---- 2. net ownership, judged on routed resources
+    # ---- 2. route inventory — EVIDENCE, NOT A VERDICT (erratum 001)
     #
-    # The target is NOT "the residual set is exactly the twelve". It is:
-    #
-    #   (a) the residual set is a SUBSET of the mechanically derived allowlist, and
-    #   (b) every net in it had to cross, judged from where its endpoints are PLACED.
-    #
-    # (b) matters because a data net whose endpoints are both on one side of a flush
-    # column has no business detouring through it, and a rule that only checked membership
-    # would wave that through. Nothing here is a hard-coded count: how many nets must cross
-    # follows from the placement, and writing "12" or "10" into the checker would make the
-    # expected answer the rule.
-    set flush_nets [nets_routed_through $flush_tiles]
-    if {[llength $flush_nets]} {
-        lappend problems "flush columns carry [llength $flush_nets] net(s): $flush_nets"
-    }
+    # Enumerated and hashed so the record exists and any later change to it is visible.
+    # Nothing here appends to `problems`: a net being present is not a finding, and a net
+    # being absent is not a clearance. The question that decides safety is asked in
+    # scripts/gate_candidate.py, over configuration bits.
+    set flush_nets  [nets_routed_through $flush_tiles]
+    set target_nets [nets_routed_through $target_tiles]
+
+    # the evolvable data nets, recorded so the inventory can be read against them — NOT so
+    # that membership excuses anything
     set allow {}
     foreach c $expected {
         foreach p [get_pins -quiet -of_objects [get_cells -quiet $c]] {
@@ -151,46 +172,52 @@ proc carrier_isolation_checks {outdir} {
         }
     }
     set allow [lsort -unique $allow]
-    foreach n [nets_routed_through $target_tiles] {
-        if {[lsearch -exact $allow $n] < 0} {
-            lappend problems "net routed through a target column is not an evolvable data net: $n"
-        }
+
+    set target_foreign {}
+    foreach n $target_nets {
+        if {[lsearch -exact $allow $n] < 0} { lappend target_foreign $n }
     }
 
-    # (b) a crossing net must have endpoints on BOTH sides of the column it crosses.
-    # `must_cross` is derived per net from the placed cells' SLICE X coordinates against
-    # the flush column's own X range; a net that did not have to cross and did is a detour
-    # and is refused with the rest.
-    foreach n $flush_nets {
-        if {[lsearch -exact $allow $n] < 0} {
-            lappend problems "net crosses a flush column and is not on the allowlist: $n"
-            continue
-        }
-        set net [get_nets -quiet $n]
-        set xs {}
-        foreach c [get_cells -quiet -of_objects $net] {
-            set loc [get_property LOC $c]
-            if {[regexp {SLICE_X(\d+)Y} $loc -> x]} { lappend xs $x }
-        }
-        if {![llength $xs]} { continue }
-        set lo [lindex [lsort -integer $xs] 0]
-        set hi [lindex [lsort -integer $xs] end]
-        # the flush CLB column occupies SLICE_X4..X5; a net entirely left of it or
-        # entirely right of it had no reason to be in it
-        if {($hi < 4) || ($lo > 5)} {
-            lappend problems \
-                "allowlisted net $n detours through a flush column: its endpoints are all\
-                 on one side (SLICE_X $lo..$hi)"
-        }
+    # ---- the evidence file. Hashes are over the SORTED, newline-joined resource names, so
+    # the digest is a property of the routed design and not of Tcl's enumeration order.
+    set node_names {}
+    foreach t [concat $target_tiles $flush_tiles] {
+        foreach nd [get_nodes -quiet -of_objects $t] { lappend node_names [get_property NAME $nd] }
     }
+    set node_names [lsort -unique $node_names]
+    set pip_names {}
+    foreach t [concat $target_tiles $flush_tiles] {
+        foreach pp [get_pips -quiet -of_objects $t] { lappend pip_names [get_property NAME $pp] }
+    }
+    set pip_names [lsort -unique $pip_names]
 
     set fh [open $outdir/isolation.txt w]
-    puts $fh "allowed evolvable data nets:"
+    puts $fh "ARCHITECTURE ERRATUM 001 is in force: the route inventory below is EVIDENCE."
+    puts $fh "It is not a verdict and it exempts nothing by name. The safety judgement is"
+    puts $fh "bit invariance against the final carrier base, in scripts/gate_candidate.py."
+    puts $fh ""
+    puts $fh "VERDICTS (cell ownership only)"
+    puts $fh "  target cells: [llength $target_cells] (must be exactly 6)"
+    puts $fh "  flush cells:  [llength $flush_cells] (must be 0)"
+    puts $fh ""
+    puts $fh "EVIDENCE"
+    puts $fh "  evolvable data nets:        [llength $allow]"
+    puts $fh "  nets over flush segments:   [llength $flush_nets]"
+    puts $fh "  nets over target segments:  [llength $target_nets]"
+    puts $fh "  of those, non-evolvable:    [llength $target_foreign]"
+    puts $fh "  routed nodes sha256:        [sha_of_list $outdir nodes $node_names] ([llength $node_names] nodes)"
+    puts $fh "  routed pips  sha256:        [sha_of_list $outdir pips $pip_names] ([llength $pip_names] pips)"
+    puts $fh "  flush net inventory sha256: [sha_of_list $outdir flushnets $flush_nets]"
+    puts $fh "  target net inventory sha256:[sha_of_list $outdir targetnets $target_nets]"
+    puts $fh ""
+    puts $fh "evolvable data nets:"
     foreach n $allow { puts $fh "  $n" }
-    puts $fh "target cells: [llength $target_cells]  flush cells: [llength $flush_cells]"
-    puts $fh "flush nets:   [llength $flush_nets]"
-    puts $fh "flush crossers (must all be allowlisted, and must all have had to cross):"
+    puts $fh "flush segment net inventory:"
     foreach n $flush_nets { puts $fh "  $n" }
+    puts $fh "target segment net inventory (foreign nets marked *):"
+    foreach n $target_nets {
+        if {[lsearch -exact $allow $n] < 0} { puts $fh "  * $n" } else { puts $fh "    $n" }
+    }
     if {[llength $problems]} {
         puts $fh "PROBLEMS:"
         foreach p $problems { puts $fh "  $p" }
@@ -203,5 +230,7 @@ proc carrier_isolation_checks {outdir} {
         foreach p $problems { puts "ISOLATION PROBLEM: $p" }
         error "isolation checks failed: [llength $problems] problem(s)"
     }
-    puts "ISOLATION CHECKS OK ([llength $allow] evolvable data nets)"
+    puts "CELL ISOLATION OK: target=[llength $target_cells] flush=[llength $flush_cells];\
+ route inventory recorded (flush [llength $flush_nets], target [llength $target_nets],\
+ foreign [llength $target_foreign]) -> $outdir/isolation.txt"
 }

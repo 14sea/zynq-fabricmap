@@ -451,8 +451,14 @@ It is a change to an approved property, so it is not made unilaterally.
 
 ## 4. Proving the isolation — from the routed design, not from constraints
 
-Three checks, each producing a machine-readable record. All are host-side and none needs a
-board.
+> **AMENDED 2026-08-11 by [architecture erratum 001](claimb_erratum_001_static_routes.md).**
+> Check 2 below is now an **evidence recorder, not a verdict**: measured on this device the
+> carrier's own ICAP nets must cross both the target and the flush columns, and no legal
+> floorplan avoids it. The authority moved to **bit invariance** — every non-evolutionary
+> bit of every written frame must equal the final routed carrier base — and to the base
+> being taken from that final bitstream and nothing earlier. Checks 1 and 3 are unchanged
+> and are still refusals. The text below stands as written, as the record of what was
+> originally ruled and why.
 
 1. **Cell ownership.** For every tile in the four column segments,
    `get_cells -of_objects [get_tiles ...]` must return exactly the six evolvable LUTs (in
@@ -516,14 +522,21 @@ restore it and reports ICAP health rather than leaving the device half-configure
 
 1. this design document, reviewed;
 2. RTL + constraints written; **no build yet**;
-3. Vivado build (**needs authorisation**), then checks 1–3 of §4 as a gate that must pass
-   before anything else looks at the result;
+3. Vivado build (**needs authorisation**), then checks 1 and 3 of §4 as a gate that must
+   pass before anything else looks at the result; check 2 records route evidence
+   ([erratum 001](claimb_erratum_001_static_routes.md));
 4. `phenotype_manifest` emitted from the built carrier and committed — the first instance
    this repo will hold;
 5. host-only dry run: candidates generated, sequences built, gated, logged, **no device**;
 6. board-side guard firmware, with its own host-side tests;
 7. only then the engineering calibration — which is a device write and needs the single
-   whole-of-run ruling.
+   whole-of-run ruling. Its order is fixed by
+   [erratum 001](claimb_erratum_001_static_routes.md): a complete **no-op transaction
+   first** (all 15 frames equal to the base), requiring guard alive, zero faults, readback
+   hash equal to the base and the scorer NOT armed; only then the pre-selected known-answer
+   mutation, then readback, score, restore base, post-baseline. A no-op that wedges, faults
+   or reads back differently at all is a **stop** — not a retry, and not a rule loosened to
+   explain it.
 
 ## 8. Reachability — ruled: it may precede the carrier build, under a frozen spec
 
