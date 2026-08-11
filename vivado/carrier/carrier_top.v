@@ -34,7 +34,25 @@ module carrier_top #(
     wire rst_n;
 
     // ------------------------------------------------------------------------ PS7
-    wire [31:0] m_awaddr, m_wdata, m_araddr, m_rdata;
+    //
+    // M_AXI_GP0 is an AXI3 master and every one of these ports is load-bearing. Erratum
+    // 002: this instantiation used to carry only the AXI4-Lite subset, which left
+    // `MAXIGP0RLAST` — an INPUT to PS7 — tied low, so the master's first read never
+    // terminated and the A9 stalled until the board was power-cycled. `carrier_axi3_lite`
+    // now sits between PS7 and the register file and converts, beat by beat.
+    wire [31:0] ps_awaddr, ps_wdata, ps_araddr, ps_rdata;
+    wire        ps_awvalid, ps_awready, ps_wvalid, ps_wready, ps_bvalid, ps_bready;
+    wire        ps_arvalid, ps_arready, ps_rvalid, ps_rready;
+    wire [1:0]  ps_bresp, ps_rresp;
+    wire [3:0]  ps_wstrb;
+    wire [11:0] ps_awid, ps_wid, ps_bid, ps_arid, ps_rid;
+    wire [3:0]  ps_awlen, ps_arlen;
+    wire [1:0]  ps_awsize, ps_arsize, ps_awburst, ps_arburst;
+    wire        ps_wlast, ps_rlast;
+
+    // the AXI4-Lite side, between the shim and the register file
+    wire [15:0] m_awaddr, m_araddr;
+    wire [31:0] m_wdata, m_rdata;
     wire        m_awvalid, m_awready, m_wvalid, m_wready, m_bvalid, m_bready;
     wire        m_arvalid, m_arready, m_rvalid, m_rready;
     wire [1:0]  m_bresp, m_rresp;
@@ -53,23 +71,62 @@ module carrier_top #(
         .FCLKRESETN     (fclkresetn),
         .MAXIGP0ACLK    (clk),
         .MAXIGP0ARESETN (),
-        .MAXIGP0AWADDR  (m_awaddr),
-        .MAXIGP0AWVALID (m_awvalid),
-        .MAXIGP0AWREADY (m_awready),
-        .MAXIGP0WDATA   (m_wdata),
-        .MAXIGP0WSTRB   (m_wstrb),
-        .MAXIGP0WVALID  (m_wvalid),
-        .MAXIGP0WREADY  (m_wready),
-        .MAXIGP0BRESP   (m_bresp),
-        .MAXIGP0BVALID  (m_bvalid),
-        .MAXIGP0BREADY  (m_bready),
-        .MAXIGP0ARADDR  (m_araddr),
-        .MAXIGP0ARVALID (m_arvalid),
-        .MAXIGP0ARREADY (m_arready),
-        .MAXIGP0RDATA   (m_rdata),
-        .MAXIGP0RRESP   (m_rresp),
-        .MAXIGP0RVALID  (m_rvalid),
-        .MAXIGP0RREADY  (m_rready)
+        .MAXIGP0AWID    (ps_awid),
+        .MAXIGP0AWADDR  (ps_awaddr),
+        .MAXIGP0AWLEN   (ps_awlen),
+        .MAXIGP0AWSIZE  (ps_awsize),
+        .MAXIGP0AWBURST (ps_awburst),
+        .MAXIGP0AWVALID (ps_awvalid),
+        .MAXIGP0AWREADY (ps_awready),
+        .MAXIGP0WID     (ps_wid),
+        .MAXIGP0WDATA   (ps_wdata),
+        .MAXIGP0WSTRB   (ps_wstrb),
+        .MAXIGP0WLAST   (ps_wlast),
+        .MAXIGP0WVALID  (ps_wvalid),
+        .MAXIGP0WREADY  (ps_wready),
+        .MAXIGP0BID     (ps_bid),
+        .MAXIGP0BRESP   (ps_bresp),
+        .MAXIGP0BVALID  (ps_bvalid),
+        .MAXIGP0BREADY  (ps_bready),
+        .MAXIGP0ARID    (ps_arid),
+        .MAXIGP0ARADDR  (ps_araddr),
+        .MAXIGP0ARLEN   (ps_arlen),
+        .MAXIGP0ARSIZE  (ps_arsize),
+        .MAXIGP0ARBURST (ps_arburst),
+        .MAXIGP0ARVALID (ps_arvalid),
+        .MAXIGP0ARREADY (ps_arready),
+        .MAXIGP0RID     (ps_rid),
+        .MAXIGP0RDATA   (ps_rdata),
+        .MAXIGP0RRESP   (ps_rresp),
+        .MAXIGP0RLAST   (ps_rlast),
+        .MAXIGP0RVALID  (ps_rvalid),
+        .MAXIGP0RREADY  (ps_rready)
+    );
+
+    // ------------------------------------------------------------- AXI3 -> AXI4-Lite
+    //
+    // `MAXIGP0AWSIZE`/`ARSIZE` are [1:0] on PS7 because the GP master never moves more
+    // than four bytes. The shim takes the standard 3-bit field so it can be benched
+    // against sizes PS7 cannot produce, and the zero-extension is written here, at the
+    // boundary where the narrowing is a fact about the PS rather than about the shim.
+    carrier_axi3_lite #(.ID_W(12), .ADDR_W(16)) axi3 (
+        .clk(clk), .rst_n(rst_n),
+        .s_awid(ps_awid), .s_awaddr(ps_awaddr), .s_awlen(ps_awlen),
+        .s_awsize({1'b0, ps_awsize}), .s_awburst(ps_awburst),
+        .s_awvalid(ps_awvalid), .s_awready(ps_awready),
+        .s_wid(ps_wid), .s_wdata(ps_wdata), .s_wstrb(ps_wstrb), .s_wlast(ps_wlast),
+        .s_wvalid(ps_wvalid), .s_wready(ps_wready),
+        .s_bid(ps_bid), .s_bresp(ps_bresp), .s_bvalid(ps_bvalid), .s_bready(ps_bready),
+        .s_arid(ps_arid), .s_araddr(ps_araddr), .s_arlen(ps_arlen),
+        .s_arsize({1'b0, ps_arsize}), .s_arburst(ps_arburst),
+        .s_arvalid(ps_arvalid), .s_arready(ps_arready),
+        .s_rid(ps_rid), .s_rdata(ps_rdata), .s_rresp(ps_rresp), .s_rlast(ps_rlast),
+        .s_rvalid(ps_rvalid), .s_rready(ps_rready),
+        .m_awaddr(m_awaddr), .m_awvalid(m_awvalid), .m_awready(m_awready),
+        .m_wdata(m_wdata), .m_wstrb(m_wstrb), .m_wvalid(m_wvalid), .m_wready(m_wready),
+        .m_bresp(m_bresp), .m_bvalid(m_bvalid), .m_bready(m_bready),
+        .m_araddr(m_araddr), .m_arvalid(m_arvalid), .m_arready(m_arready),
+        .m_rdata(m_rdata), .m_rresp(m_rresp), .m_rvalid(m_rvalid), .m_rready(m_rready)
     );
 
     // ------------------------------------------------------------------ AXI-Lite slave
@@ -90,10 +147,10 @@ module carrier_top #(
 
     carrier_axil #(.FRAME_WORDS(FRAME_WORDS), .LUTS(LUTS)) axil (
         .clk(clk), .rst_n(rst_n),
-        .s_awaddr(m_awaddr[15:0]), .s_awvalid(m_awvalid), .s_awready(m_awready),
+        .s_awaddr(m_awaddr), .s_awvalid(m_awvalid), .s_awready(m_awready),
         .s_wdata(m_wdata), .s_wstrb(m_wstrb), .s_wvalid(m_wvalid), .s_wready(m_wready),
         .s_bresp(m_bresp), .s_bvalid(m_bvalid), .s_bready(m_bready),
-        .s_araddr(m_araddr[15:0]), .s_arvalid(m_arvalid), .s_arready(m_arready),
+        .s_araddr(m_araddr), .s_arvalid(m_arvalid), .s_arready(m_arready),
         .s_rdata(m_rdata), .s_rresp(m_rresp), .s_rvalid(m_rvalid), .s_rready(m_rready),
         .word_valid(word_valid), .word_data(word_data), .word_ready(word_ready),
         .stream_open(stream_open),

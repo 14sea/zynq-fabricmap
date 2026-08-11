@@ -25,8 +25,8 @@ set_property verilog_define {} [current_fileset]
 # One list, used both to add the sources and to hash them into the provenance record: a
 # second hand-kept list would drift from what Vivado actually reads, which is the only list
 # that matters.
-set srcs [list $here/carrier_top.v $here/carrier_axil.v $here/carrier_stream.v \
-               $here/carrier_crc32.v $here/carrier_scorer.v]
+set srcs [list $here/carrier_top.v $here/carrier_axi3_lite.v $here/carrier_axil.v \
+               $here/carrier_stream.v $here/carrier_crc32.v $here/carrier_scorer.v]
 add_files -norecurse $srcs
 set_property include_dirs [list $here/generated] [current_fileset]
 add_files -fileset constrs_1 -norecurse $here/carrier.xdc
