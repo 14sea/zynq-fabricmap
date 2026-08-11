@@ -17,3 +17,22 @@
 #     every bitstream blob is an LFS pointer whose oid is the manifest's pin. The stager
 #     alone cannot promise that — `git add` happens after it has finished.
 staging/**/*.bit filter=lfs diff=lfs merge=lfs -text
+
+# Carrier run artifacts live in Git LFS for the same reason and under the same discipline.
+#
+# A carrier run's authority is BIT INVARIANCE against one exact bitstream (architecture
+# erratum 001), and `write_bitstream` stamps a timestamp into the header — so rebuilding
+# does NOT reproduce the file the records name. Keeping the sha256 and discarding the bytes
+# it names leaves an authority nobody outside this workstation can exercise. The three
+# exact artifacts are together under 5 MiB.
+#
+# Deliberately narrow, again: only `.bit` and `.dcp` under `gate_runs/` match. Every
+# manifest, provenance record, isolation evidence file and verdict stays an ordinary Git
+# file, because those are what a reviewer reads and diffs.
+#
+# `scripts/gate_publish_carrier_run.py` is the gate that decides what enters history: run
+# it between `git add` and `git commit`, and it refuses unless this file is present
+# unchanged in the index, every artifact resolves to an LFS POINTER under that copy of it,
+# and every pointer's oid equals the sha256 the run bundle pins.
+gate_runs/**/*.bit filter=lfs diff=lfs merge=lfs -text
+gate_runs/**/*.dcp filter=lfs diff=lfs merge=lfs -text
