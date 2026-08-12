@@ -1,0 +1,118 @@
+{
+  "tool": "board_isolate_carrier.py/1.0.0",
+  "what": "isolate the step that stops the carrier answering",
+  "mode": "additive",
+  "jtag_probe_after_load": false,
+  "started_at": 1786552347.5212312,
+  "run_dir": "claimb_round1_carrier_2026_08_11_erratum002",
+  "carrier_sha256": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "carrier_sha256_pinned": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "steps": [
+    {
+      "step": "1. wait 6 s on the same console (control \u2014 changes nothing)",
+      "carrier": {
+        "status": "0x00000080",
+        "fault": "0x00000000",
+        "decoded": {
+          "busy": 0,
+          "fault": 0,
+          "configuration_valid": 0,
+          "scorer_busy": 0,
+          "scorer_done": 0,
+          "scorer_armed": 0,
+          "pass1_complete": 0,
+          "recovery_required": 1,
+          "expect_env": 0,
+          "rb_frame_ready": 0,
+          "env_committed": 0,
+          "rb_frames_ok": 0,
+          "reserved": 0
+        },
+        "elapsed_s": 0.011
+      }
+    }
+  ],
+  "plmark": "18cb18cfd6d4c577",
+  "baseline": {
+    "status": "0x00000080",
+    "fault": "0x00000000",
+    "decoded": {
+      "busy": 0,
+      "fault": 0,
+      "configuration_valid": 0,
+      "scorer_busy": 0,
+      "scorer_done": 0,
+      "scorer_armed": 0,
+      "pass1_complete": 0,
+      "recovery_required": 1,
+      "expect_env": 0,
+      "rb_frame_ready": 0,
+      "env_committed": 0,
+      "rb_frames_ok": 0,
+      "reserved": 0
+    },
+    "elapsed_s": 0.011
+  },
+  "verdict": "STOP",
+  "stop_reason": "THE BOARD RESTARTED before 'after step 2': plmark is no longer 18cb18cfd6d4c577 ('U-Boot SPL 2026.04-rc5-dirty (Aug 01 2026 - 15:00:50 +0100)\\r\\nSilicon version:\\t3\\r\\nTrying to boot from MMC1\\r\\n\\r\\n\\r\\nU-Boot 2026.04-rc5-dirty (Aug 01 2026 - 15:00:50 +0100)\\r\\n\\r\\nCPU:   Zynq 7z010\\r\\nSilicon: v3.1\\r\\nModel: Ebang EBAZ4203\\r\\nDRAM:  ECC disabled 512 MiB\\r\\nCore:  20 devices, 14 uclasses, devicetree: separate\\r\\nFlash: 0 Bytes\\r\\nNAND:  0 MiB\\r\\nMMC:   mmc@e0100000: 0\\r\\nLoading Environment from FAT... OK\\r\\nIn:    serial@e0001000\\r\\nOut:   serial@e0001000\\r\\nErr:   serial@e0001000\\r\\nNet:   Could not get PHY for eth0: addr 0\\r\\nNo ethernet found.\\r\\n\\r\\nZynq> prin'). The PL is cleared; reading the carrier now would stall the CPU. This is a board restart, not a carrier fault.",
+  "broken_by": "1. wait 6 s on the same console (control \u2014 changes nothing)",
+  "console_log": [
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.008,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb18cfd6d4c577\r\nZynq> "
+    },
+    {
+      "command": "md.l 0x43c02004 0x1",
+      "elapsed_s": 0.011,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02004 0x1\r\n43c02004: 00000080                             ....\r\nZynq> ",
+      "what": "carrier STATUS (baseline, before any step is added)",
+      "value": "0x00000080"
+    },
+    {
+      "command": "md.l 0x43c02008 0x1",
+      "elapsed_s": 0.011,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02008 0x1\r\n43c02008: 00000000                             ....\r\nZynq> ",
+      "what": "carrier FAULT (baseline, before any step is added)",
+      "value": "0x00000000"
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.009,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb18cfd6d4c577\r\nZynq> "
+    },
+    {
+      "command": "md.l 0x43c02004 0x1",
+      "elapsed_s": 0.011,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02004 0x1\r\n43c02004: 00000080                             ....\r\nZynq> ",
+      "what": "carrier STATUS (after step 1)",
+      "value": "0x00000080"
+    },
+    {
+      "command": "md.l 0x43c02008 0x1",
+      "elapsed_s": 0.012,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02008 0x1\r\n43c02008: 00000000                             ....\r\nZynq> ",
+      "what": "carrier FAULT (after step 1)",
+      "value": "0x00000000"
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 2.021,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "\r\nU-Boot SPL 2026.04-rc5-dirty (Aug 01 2026 - 15:00:50 +0100)\r\nSilicon version:\t3\r\nTrying to boot from MMC1\r\n\r\n\r\nU-Boot 2026.04-rc5-dirty (Aug 01 2026 - 15:00:50 +0100)\r\n\r\nCPU:   Zynq 7z010\r\nSilicon: v3.1\r\nModel: Ebang EBAZ4203\r\nDRAM:  ECC disabled 512 MiB\r\nCore:  20 devices, 14 uclasses, devicetree: separate\r\nFlash: 0 Bytes\r\nNAND:  0 MiB\r\nMMC:   mmc@e0100000: 0\r\nLoading Environment from FAT... OK\r\nIn:    serial@e0001000\r\nOut:   serial@e0001000\r\nErr:   serial@e0001000\r\nNet:   Could not get PHY for eth0: addr 0\r\nNo ethernet found.\r\n\r\nZynq> prin"
+    }
+  ]
+}
