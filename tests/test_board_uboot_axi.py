@@ -29,7 +29,13 @@ import icap_sequence as iseq  # noqa: E402
 import board_set_fclk50 as fclk  # noqa: E402
 import gate_board_identity as ident  # noqa: E402
 
-IDCODE = 0x13722093
+# Two identities, and they are NOT the same number. The PSS/JTAG IDCODE is what the SLCR
+# reports; the CONFIGURATION-STREAM IDCODE is what a bitstream's IDCODE register write
+# carries, with UG470's revision field in bits 31:28 masked off. This file used the JTAG
+# value to build an envelope, so it agreed with an RTL parameter that had the same confusion,
+# and every real envelope was rejected at word 15 until a full-chain bench caught it.
+JTAG_IDCODE = 0x13722093
+CONFIG_IDCODE = 0x03722093
 PREAMBLE = 23
 
 
@@ -38,7 +44,7 @@ def slcr_regs() -> dict:
     io_pll = next(ctrl for ctrl in range(0, 0x100000, 0x1000)
                   if abs(fclk.pll_mhz(ctrl, ident.PS_CLK_MHZ) - 1600.0) < 0.5)
     return {
-        ident.SLCR_PSS_IDCODE: IDCODE,
+        ident.SLCR_PSS_IDCODE: JTAG_IDCODE,
         fclk.IO_PLL_CTRL: io_pll,
         fclk.ARM_PLL_CTRL: io_pll,
         fclk.DDR_PLL_CTRL: io_pll,
@@ -55,7 +61,7 @@ def a_payload(seed: int = 1) -> bytes:
             base = seed * 1_000_000 + env * 1000 + frame * 100
             frames.append([(base + word) & 0xFFFFFFFF for word in range(axi.FRAME_WORDS)])
         envelopes.append(
-            iseq.build_envelope(guard.ENVELOPE_FAR[env], frames, IDCODE))
+            iseq.build_envelope(guard.ENVELOPE_FAR[env], frames, CONFIG_IDCODE))
     return b"".join(struct.pack(f">{len(e)}I", *e) for e in envelopes)
 
 

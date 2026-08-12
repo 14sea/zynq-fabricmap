@@ -62,6 +62,10 @@ module carrier_axil #(
     output wire [31:0] word_data,
     input  wire        word_ready,
     input  wire        stream_open,     // the engine is in a phase that consumes words
+    // Pulsed for exactly one cycle per stream write that arrives with no pass open. The AXI
+    // side of such a write COMPLETES with OKAY so the host's `cp.l` can drain; the word is
+    // not delivered to the engine, and this tells the engine to latch a refusal instead.
+    output reg         stream_refused,
 
     // the engine's staging memory, read through here by the host
     output wire [6:0]  rb_raddr,
@@ -119,6 +123,7 @@ module carrier_axil #(
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
+            stream_refused    <= 1'b0;
             s_bvalid          <= 1'b0;
             s_bresp           <= 2'b00;
             ctrl_begin_txn    <= 1'b0;
@@ -129,6 +134,7 @@ module carrier_axil #(
             ctrl_mode_holdout <= 1'b0;
             ctrl_rb_ack       <= 1'b0;
         end else begin
+            stream_refused <= 1'b0;   // one-cycle pulse, like the ctrl strobes
             ctrl_begin_txn <= 1'b0;   // one-cycle pulses
             ctrl_pass1     <= 1'b0;
             ctrl_pass2     <= 1'b0;
@@ -152,8 +158,18 @@ module carrier_axil #(
                         default: s_bresp <= 2'b10;   // SLVERR: nothing else is writable
                     endcase
                 end else if (wr_is_strm) begin
-                    // taken by the engine this cycle, or refused because no pass is open
-                    if (!stream_open) s_bresp <= 2'b10;
+                    // Taken by the engine this cycle, or refused because no pass is open.
+                    //
+                    // A refusal used to answer SLVERR. Under this board's U-Boot an AXI error
+                    // response reaches the A9 as a data abort, `panic()` runs and -- with
+                    // CONFIG_PANIC_HANG unset -- resets the CPU. So the one channel the guard
+                    // had for saying no destroyed the host and the evidence with it: a whole
+                    // no-op calibration came back as a boot banner. The refusal is now
+                    // reported in STATUS/FAULT instead, and the bus is allowed to finish.
+                    //
+                    // "AXI OKAY" therefore means the transfer completed, NOT that the
+                    // candidate was accepted. The host must read FAULT after `cp.l` returns.
+                    if (!stream_open) stream_refused <= 1'b1;
                 end else begin
                     s_bresp <= 2'b10;   // the readback window is read-only
                 end

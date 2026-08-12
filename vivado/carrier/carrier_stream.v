@@ -38,7 +38,14 @@ module carrier_stream #(
     parameter integer FRAMES_PER_ENV = 5,
     parameter integer PREAMBLE      = 23,
     parameter integer FAR_POS       = 20,
-    parameter [31:0]  IDCODE        = 32'h13722093,
+    // The CONFIGURATION-STREAM IDCODE, which is NOT the PSS/JTAG identity. UG470 makes
+    // IDCODE[31:28] a revision field, so a bitstream's IDCODE register write carries the
+    // revision masked off: this device streams 0x03722093 while its JTAG identity reads
+    // 0x13722093. The two were confused here, and the engine rejected every real envelope at
+    // word 15 with F_CONTROL -- which on the board became SLVERR, a data abort and a reboot.
+    // Renamed so the two identities cannot be mistaken for each other again. It is compared
+    // EXACTLY: no masking, and the JTAG value is not also accepted.
+    parameter [31:0]  CONFIG_IDCODE = 32'h03722093,
     // The watchdog's TOP BIT is the expiry, so there is no comparator: `watchdog > TIMEOUT`
     // on a 32-bit counter cost ~40 LUTs of the 800 the whole design may use.
     parameter integer TIMEOUT_BITS  = 21
@@ -53,6 +60,10 @@ module carrier_stream #(
     input  wire [1:0]  env_index,
 
     // the word stream from AXI: one word per `word_valid`, held until `word_ready`
+    // One cycle per stream write that arrived with no pass open. `carrier_axil` completes
+    // those on the bus with OKAY so the host can drain a `cp.l`; the refusal is reported
+    // here instead, because an AXI error response reboots this board's U-Boot.
+    input  wire        protocol_fault,
     input  wire        word_valid,
     input  wire [31:0] word_data,
     output wire        word_ready,
@@ -91,7 +102,8 @@ module carrier_stream #(
                      F_PHASE    = 4'd7,
                      F_READBACK = 4'd8,
                      F_UNCOMMITTED = 4'd9,
-                     F_BYTECOUNT = 4'd10;
+                     F_BYTECOUNT = 4'd10,
+                     F_PROTOCOL  = 4'd11;   // a stream write with no pass open
 
     localparam [31:0] W_DUMMY  = 32'hFFFFFFFF, W_SYNC  = 32'hAA995566,
                       W_NOOP   = 32'h20000000, W_CMD1  = 32'h30008001,
@@ -121,7 +133,7 @@ module carrier_stream #(
             5'd11:                  expected_at_idx = {1'b1, W_RCRC};
             5'd12, 5'd13:           expected_at_idx = {1'b1, W_NOOP};
             5'd14:                  expected_at_idx = {1'b1, W_ID1};
-            5'd15:                  expected_at_idx = {1'b1, IDCODE};
+            5'd15:                  expected_at_idx = {1'b1, CONFIG_IDCODE};
             5'd16:                  expected_at_idx = {1'b1, W_CMD1};
             5'd17:                  expected_at_idx = {1'b1, W_WCFG};
             5'd18:                  expected_at_idx = {1'b1, W_NOOP};
@@ -571,6 +583,17 @@ module carrier_stream #(
 
                 default: phase <= P_FAULT;
             endcase
+
+            // A refused stream write, reported rather than answered with a bus error.
+            //
+            // Placed after the phase machine so it cannot be lost to a same-cycle
+            // assignment, and guarded by `!fault` so the FIRST fault always survives: when
+            // word 15 has already raised F_CONTROL, the rest of the host's `cp.l` drains
+            // through here and must not rewrite that verdict.
+            if (protocol_fault && !fault) begin
+                fault_code <= F_PROTOCOL;
+                phase      <= P_FAULT;
+            end
         end
     end
 endmodule

@@ -42,6 +42,9 @@ module tb_carrier_integration;
 
     integer errors = 0, i;
     reg [31:0] env_words [0:ENV_WORDS-1];
+    // The host's real envelope, so the control skeleton is never re-typed from the RTL.
+    reg [31:0] real_env [0:ENV_WORDS-1];
+    initial $readmemh("tb_envelope0.hex", real_env);
 
     always #5 clk = ~clk;
 
@@ -113,7 +116,9 @@ module tb_carrier_integration;
             env_words[8]  = 32'hAA995566; env_words[9]  = 32'h20000000;
             env_words[10] = 32'h30008001; env_words[11] = 32'h00000007;
             env_words[12] = 32'h20000000; env_words[13] = 32'h20000000;
-            env_words[14] = 32'h30018001; env_words[15] = 32'h13722093;
+            // From the host's real envelope, not re-typed from the RTL: 0x13722093 is
+            // the JTAG identity and is NOT what a configuration stream carries.
+            env_words[14] = 32'h30018001; env_words[15] = real_env[15];
             env_words[16] = 32'h30008001; env_words[17] = 32'h00000001;
             env_words[18] = 32'h20000000; env_words[19] = 32'h30002001;
             env_words[20] = far;          env_words[21] = 32'h30004000;

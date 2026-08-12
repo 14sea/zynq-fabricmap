@@ -109,6 +109,7 @@ module chain_dut #(
     wire [3:0]  txn_fault_code, rb_frames_ok;
     wire [1:0]  expect_env;
     wire [2:0]  env_committed;
+    wire        stream_refused;
     wire        word_valid, word_ready;
     wire [31:0] word_data, rb_rdata;
     wire [6:0]  rb_raddr;
@@ -121,7 +122,7 @@ module chain_dut #(
         .s_araddr(m_araddr), .s_arvalid(m_arvalid), .s_arready(m_arready),
         .s_rdata(m_rdata), .s_rresp(m_rresp), .s_rvalid(m_rvalid), .s_rready(m_rready),
         .word_valid(word_valid), .word_data(word_data), .word_ready(word_ready),
-        .stream_open(stream_open),
+        .stream_open(stream_open), .stream_refused(stream_refused),
         .rb_raddr(rb_raddr), .rb_rdata(rb_rdata),
         .ctrl_begin_txn(ctrl_begin_txn),
         .ctrl_pass1(ctrl_pass1), .ctrl_pass2(ctrl_pass2),
@@ -147,6 +148,7 @@ module chain_dut #(
         .begin_txn(ctrl_begin_txn),
         .start_pass1(ctrl_pass1), .start_pass2(ctrl_pass2),
         .env_index(ctrl_env_index),
+        .protocol_fault(stream_refused),
         .word_valid(word_valid), .word_data(word_data), .word_ready(word_ready),
         .stream_open(stream_open),
         .busy(txn_busy), .fault(txn_fault), .fault_code(txn_fault_code),
@@ -349,7 +351,7 @@ module tb_carrier_chain;
     task automatic scenario_bursts(input integer beats_per_burst, input [511:0] name);
         reg [31:0] status_before;
         reg [1:0]  resp;
-        integer    i, j;
+        integer    i, j, this_burst;
         begin
             $display("\n--- %0s", name);
             reset_dut;
@@ -358,22 +360,41 @@ module tb_carrier_chain;
             $display("    STATUS after begin_txn = 0x%08x", status_before);
             i = 0;
             while (i < ENV_WORDS) begin
-                aw_beat({16'd0, A_STREAM}, beats_per_burst[3:0] - 4'd1);
-                for (j = 0; j < beats_per_burst; j = j + 1)
-                    w_beat(envelope[i + j], (j == beats_per_burst - 1), 0);
+                // The tail burst is SHORT. 536 is 33 bursts of 16 plus 8, and driving a full
+                // 16 there wrote eight words past the envelope -- which the engine correctly
+                // refused, and which would have been read as a DUT fault.
+                this_burst = (ENV_WORDS - i < beats_per_burst) ? (ENV_WORDS - i)
+                                                               : beats_per_burst;
+                aw_beat({16'd0, A_STREAM}, this_burst[3:0] - 4'd1);
+                for (j = 0; j < this_burst; j = j + 1)
+                    w_beat(envelope[i + j], (j == this_burst - 1), 0);
                 b_beat(0, resp);
                 // AXI3 gives ONE BRESP per burst, not per beat, so this attributes the
                 // burst's response to its first beat and says so rather than pretending to
                 // a resolution the protocol does not offer.
                 note_beat(i, resp);
-                i = i + beats_per_burst;
+                i = i + this_burst;
             end
             report(name);
         end
     endtask
 
+    task automatic settle;
+        integer guard;
+        begin
+            // The last beat is not the last cycle: the engine still has P_EMIT and P_COMMIT
+            // to run. Reporting immediately caught it mid-commit and called that the result.
+            guard = 0;
+            while (dut.stream.phase != 4'd0 && guard < 5000) begin
+                @(posedge clk); guard = guard + 1;
+            end
+            repeat (20) @(posedge clk);
+        end
+    endtask
+
     task automatic report(input [511:0] name);
         begin
+            settle;
             if (first_bad_beat < 0)
                 $display("    NO DEVIATION: every beat answered OKAY, phase=%0d fault=%b pos=%0d env_committed=%0d",
                          dut.stream.phase, dut.stream.fault, dut.stream.pos,
@@ -391,6 +412,104 @@ module tb_carrier_chain;
         end
     endtask
 
+
+    // The JTAG identity, which is what the RTL used to expect at word 15. Kept as a negative
+    // control: the engine MUST still refuse it, or the validator has been weakened rather
+    // than corrected.
+    localparam [31:0] JTAG_IDCODE = 32'h13722093;
+
+    task automatic scenario_wrong_idcode(input [511:0] name);
+        reg [31:0] status_before;
+        reg [1:0]  resp;
+        integer    i;
+        begin
+            $display("\n--- %0s", name);
+            reset_dut;
+            first_bad_beat = -1; scenario_faults = 0;
+            begin_and_arm_pass1(status_before);
+            for (i = 0; i < ENV_WORDS; i = i + 1) begin
+                aw_beat({16'd0, A_STREAM}, 4'd0);
+                w_beat((i == 15) ? JTAG_IDCODE : envelope[i], 1'b1, 0);
+                b_beat(0, resp);
+                note_beat(i, resp);
+            end
+            settle;
+            if (dut.stream.fault && dut.stream.fault_code == 4'd2)
+                $display("    PASS: the JTAG idcode is still refused, F_CONTROL at pos %0d",
+                         dut.stream.pos);
+            else begin
+                $display("    FAIL: expected F_CONTROL, got fault=%b code=%0d",
+                         dut.stream.fault, dut.stream.fault_code);
+                errors = errors + 1;
+            end
+            if (dut.stream.env_committed != 3'd0) begin
+                $display("    FAIL: a refused envelope was committed");
+                errors = errors + 1;
+            end
+        end
+    endtask
+
+    // The refusal semantics this build introduces: a stream write with no pass open must
+    // COMPLETE on the bus -- so a host `cp.l` can drain instead of taking a data abort -- and
+    // be reported in FAULT instead.
+    task automatic scenario_write_with_no_pass_open(input [511:0] name);
+        reg [1:0] resp;
+        integer   i;
+        begin
+            $display("\n--- %0s", name);
+            reset_dut;
+            first_bad_beat = -1; scenario_faults = 0;
+            for (i = 0; i < 8; i = i + 1) begin
+                aw_beat({16'd0, A_STREAM}, 4'd0);
+                w_beat(envelope[i], 1'b1, 0);
+                b_beat(0, resp);
+                if (resp !== RESP_OKAY) begin
+                    $display("    FAIL: beat %0d answered BRESP=%b; a guard refusal must not be a bus error on this board", i, resp);
+                    errors = errors + 1;
+                end
+            end
+            settle;
+            if (dut.stream.fault && dut.stream.fault_code == 4'd11)
+                $display("    PASS: bus completed OKAY and the engine latched F_PROTOCOL");
+            else begin
+                $display("    FAIL: expected F_PROTOCOL latched, got fault=%b code=%0d",
+                         dut.stream.fault, dut.stream.fault_code);
+                errors = errors + 1;
+            end
+        end
+    endtask
+
+    // The first fault must survive the drain. When word 15 has already raised F_CONTROL, the
+    // rest of the host's cp.l arrives with the pass closed and must NOT rewrite the verdict.
+    task automatic scenario_first_fault_wins(input [511:0] name);
+        reg [31:0] status_before;
+        reg [1:0]  resp;
+        integer    i;
+        begin
+            $display("\n--- %0s", name);
+            reset_dut;
+            first_bad_beat = -1; scenario_faults = 0;
+            begin_and_arm_pass1(status_before);
+            for (i = 0; i < ENV_WORDS; i = i + 1) begin
+                aw_beat({16'd0, A_STREAM}, 4'd0);
+                w_beat((i == 15) ? JTAG_IDCODE : envelope[i], 1'b1, 0);
+                b_beat(0, resp);
+                if (resp !== RESP_OKAY) begin
+                    $display("    FAIL: the drain took a bus error at beat %0d", i);
+                    errors = errors + 1;
+                end
+            end
+            settle;
+            if (dut.stream.fault_code == 4'd2)
+                $display("    PASS: F_CONTROL survived %0d drained writes", ENV_WORDS - 16);
+            else begin
+                $display("    FAIL: the first fault was overwritten, code=%0d",
+                         dut.stream.fault_code);
+                errors = errors + 1;
+            end
+        end
+    endtask
+
     initial begin
         $readmemh("tb_envelope0.hex", envelope);
         beats_sent = 0; errors = 0;
@@ -399,6 +518,9 @@ module tb_carrier_chain;
         scenario_single_beats(2, 0, "B: single beats, W stalled 2 cycles");
         scenario_single_beats(0, 3, "C: single beats, B accepted late (backpressure)");
         scenario_bursts(16, "D: 16-beat INCR bursts");
+        scenario_wrong_idcode("E: negative control -- the JTAG idcode at word 15");
+        scenario_write_with_no_pass_open("F: a stream write with no pass open");
+        scenario_first_fault_wins("G: the first fault survives the drain");
 
         $display("\n=== chain replay complete: %0d beats driven, %0d control errors",
                  beats_sent, errors);

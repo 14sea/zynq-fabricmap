@@ -103,22 +103,23 @@ module tb_carrier_stream;
 
     localparam [31:0] FAR0 = 32'h00400A20, FAR1 = 32'h00400C1A, FAR2 = 32'h00400C20;
 
+    // The control skeleton is taken from the HOST's real envelope, never re-typed from the
+    // RTL's own constants. This bench used to assert `env_words[15] = 32'h13722093` -- a copy
+    // of the parameter it was testing -- so it agreed with the RTL while every real envelope
+    // was rejected at that word. An oracle built from the DUT cannot test the DUT.
+    //
+    // `tb_envelope0.hex` is envelope 0 of the sealed no-op payload (sha256 07fbca9e...), the
+    // bytes the host actually emits, derived from the published bitstream via the manifest.
+    reg [31:0] real_env [0:ENV_WORDS-1];
+    initial $readmemh("tb_envelope0.hex", real_env);
+
     task build(input [31:0] far, input [31:0] salt);
         begin
-            for (i = 0; i < 8; i = i + 1) env_words[i] = 32'hFFFFFFFF;
-            env_words[8]  = 32'hAA995566; env_words[9]  = 32'h20000000;
-            env_words[10] = 32'h30008001; env_words[11] = 32'h00000007;
-            env_words[12] = 32'h20000000; env_words[13] = 32'h20000000;
-            env_words[14] = 32'h30018001; env_words[15] = 32'h13722093;
-            env_words[16] = 32'h30008001; env_words[17] = 32'h00000001;
-            env_words[18] = 32'h20000000; env_words[19] = 32'h30002001;
-            env_words[20] = far;          env_words[21] = 32'h30004000;
-            env_words[22] = 32'h400001F9;
+            for (i = 0; i < PREAMBLE; i = i + 1) env_words[i] = real_env[i];
+            env_words[20] = far;                       // the FAR is this bench's variable
             for (i = 0; i < 505; i = i + 1)
                 env_words[PREAMBLE+i] = 32'hC0DE0000 + salt + i;
-            env_words[528] = 32'h30000001; env_words[529] = 32'h00000000;
-            env_words[530] = 32'h30008001; env_words[531] = 32'h0000000D;
-            for (i = 0; i < 4; i = i + 1) env_words[532+i] = 32'h20000000;
+            for (i = 528; i < ENV_WORDS; i = i + 1) env_words[i] = real_env[i];
         end
     endtask
 

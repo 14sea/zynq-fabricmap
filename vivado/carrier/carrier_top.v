@@ -139,6 +139,7 @@ module carrier_top #(
     wire [3:0]  txn_fault_code, rb_frames_ok;
     wire [1:0]  expect_env;
     wire [2:0]  env_committed;
+    wire        stream_refused;
     wire        word_valid, word_ready;
     wire [31:0] word_data, rb_rdata;
     wire [6:0]  rb_raddr;
@@ -153,7 +154,7 @@ module carrier_top #(
         .s_araddr(m_araddr), .s_arvalid(m_arvalid), .s_arready(m_arready),
         .s_rdata(m_rdata), .s_rresp(m_rresp), .s_rvalid(m_rvalid), .s_rready(m_rready),
         .word_valid(word_valid), .word_data(word_data), .word_ready(word_ready),
-        .stream_open(stream_open),
+        .stream_open(stream_open), .stream_refused(stream_refused),
         .rb_raddr(rb_raddr), .rb_rdata(rb_rdata),
         .ctrl_begin_txn(ctrl_begin_txn),
         .ctrl_pass1(ctrl_pass1), .ctrl_pass2(ctrl_pass2),
@@ -178,6 +179,7 @@ module carrier_top #(
         .begin_txn(ctrl_begin_txn),
         .start_pass1(ctrl_pass1), .start_pass2(ctrl_pass2),
         .env_index(ctrl_env_index),
+        .protocol_fault(stream_refused),
         .word_valid(word_valid), .word_data(word_data), .word_ready(word_ready),
         .stream_open(stream_open),
         .busy(txn_busy), .fault(txn_fault), .fault_code(txn_fault_code),

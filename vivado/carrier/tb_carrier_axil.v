@@ -5,8 +5,9 @@
 //   - no address writes `configuration_valid` (or the other verdict bits). It is an input;
 //     the bench proves the OUTWARD claim by writing every writable address with all ones
 //     and every other address too, and checking the status bits still mirror the inputs.
-//   - a stream write outside a pass is an ERROR, not a hang. An AXI-Lite write that never
-//     completes wedges the PS, which on this board means a power cycle.
+//   - a stream write outside a pass COMPLETES with OKAY and is reported as a fault, not
+//     as a bus error: an error response reboots this board's U-Boot, and a write that
+//     never completes wedges the PS. Neither may happen.
 //   - a stream write inside a pass is one word, once, and it does not complete until the
 //     engine takes it.
 //   - the readback window is readable and NOT writable.
@@ -31,6 +32,8 @@ module tb_carrier_axil;
     wire        word_valid;
     wire [31:0] word_data;
     reg         word_ready = 1, stream_open = 0;
+    wire        stream_refused;
+    integer     refused_seen = 0;
     // stands in for the engine's staging memory: an ASYNCHRONOUS read at rb_raddr
     wire [6:0]  rb_raddr;
     reg  [31:0] stage_model [0:FRAME_WORDS-1];
@@ -64,7 +67,7 @@ module tb_carrier_axil;
         .s_araddr(araddr), .s_arvalid(arvalid), .s_arready(arready),
         .s_rdata(rdata), .s_rresp(rresp), .s_rvalid(rvalid), .s_rready(rready),
         .word_valid(word_valid), .word_data(word_data), .word_ready(word_ready),
-        .stream_open(stream_open),
+        .stream_open(stream_open), .stream_refused(stream_refused),
         .rb_raddr(rb_raddr), .rb_rdata(rb_rdata),
         .ctrl_begin_txn(ctrl_begin_txn), .ctrl_pass1(ctrl_pass1), .ctrl_pass2(ctrl_pass2),
         .ctrl_env_index(ctrl_env_index), .ctrl_arm(ctrl_arm),
@@ -115,14 +118,22 @@ module tb_carrier_axil;
     endtask
 
     integer i;
+    always @(posedge clk) if (stream_refused) refused_seen = refused_seen + 1;
     initial begin
         repeat (3) @(negedge clk); rst_n = 1;
 
-        // ---- 1. a stream write with no pass open is an error, and consumes no word
+        // ---- 1. a stream write with no pass open COMPLETES, consumes no word, and pulses
+        //         the refusal. It used to answer SLVERR; on this board an AXI error response
+        //         becomes a data abort and panic() reboots the CPU, so the one channel the
+        //         guard had for saying no destroyed the host and its evidence with it. The
+        //         refusal is reported through STATUS/FAULT now, and OKAY means only that the
+        //         bus finished -- never that the candidate was accepted.
         stream_open = 0;
+        refused_seen = 0;
         axi_write(16'h0000, 32'hDEADBEEF);
-        check("stream write outside a pass: SLVERR", wr_resp, 2'b10);
+        check("stream write outside a pass: OKAY so cp.l can drain", wr_resp, 2'b00);
         check("no word consumed outside a pass", word_count, 0);
+        check("the refusal is pulsed to the engine", refused_seen, 1);
 
         // ---- 2. inside a pass it is one word, once
         stream_open = 1;
