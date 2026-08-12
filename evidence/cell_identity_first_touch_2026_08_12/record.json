@@ -1,0 +1,149 @@
+{
+  "tool": "board_isolate_carrier.py/1.0.0",
+  "what": "isolate the step that stops the carrier answering",
+  "mode": "identity-first-touch",
+  "fclk50_before_load": false,
+  "jtag_probe_after_load": false,
+  "started_at": 1786561127.415123,
+  "run_dir": "claimb_round1_carrier_2026_08_11_erratum002",
+  "carrier_sha256": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "carrier_sha256_pinned": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "steps": [],
+  "setup": {
+    "carrier_sha256": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+    "plmark": "18cb24101123874b",
+    "steps": [
+      {
+        "step": "FCLK0 = 50 MHz",
+        "argv": [
+          "/home/test/zynq_fabricmap/scripts/board_set_fclk50.py",
+          "--port",
+          "/dev/ebaz-uart"
+        ],
+        "returncode": 0,
+        "elapsed_s": 0.6,
+        "stdout_tail": "before FPGA0_CLK_CTRL=0x00400800 -> 1600.0/8/4 = 50.00 MHz\nafter  FPGA0_CLK_CTRL=0x00400800 -> 1600.0/8/4 = 50.00 MHz\nPASS: FCLK0 pinned to 50.0 MHz\n",
+        "stderr_tail": ""
+      },
+      {
+        "step": "fpga loadb of the published carrier, onto an empty PL",
+        "argv": [
+          "/home/test/zynq_fabricmap/scripts/board_uboot_fpga_load.py",
+          "--port",
+          "/dev/ebaz-uart",
+          "--bit",
+          "/home/test/zynq_fabricmap/gate_runs/claimb_round1_carrier_2026_08_11_erratum002/carrier.bit",
+          "--op",
+          "loadb",
+          "--require-unconfigured"
+        ],
+        "returncode": 0,
+        "elapsed_s": 200.8,
+        "stdout_tail": "q_fabricmap/gate_runs/claimb_round1_carrier_2026_08_11_erratum002/carrier.bit: 2083863 bytes -> 0x04000000, then `fpga loadb`\n[*] ymodem transfer via sb ...\n[xfer] ## Total Size      = 0x001fcc17 = 2083863 Bytes\n## Start Addr      = 0x04000000\nZynq>\n[devcfg] INT_STS 0xa802000b -> 0xa802000b before the load (cleared)\n[*] fpga loadb 0 0x04000000 0x001fcc17\n[fpga] fpga loadb 0 0x04000000 0x001fcc17\n  design filename = \"carrier_top;UserID=0XFFFFFFFF;Version=2025.2;SW_CRC=cf3db964\"\n  part number = \"7z010clg400\"\n  date = \"2026/08/11\"\n  time = \"19:26:04\"\n  bytes in bitstream = 2083740\nzynq_align_dma_buffer: Align buffer at 400007b to 4000040(swap 1)\nINFO:post config was not run, please run manually if needed\nZynq>\n[devcfg] INT_STS=0x50021004 PCFG_DONE=1 (after the load)\n[plmark] 18cb24101123874b\n",
+        "stderr_tail": ""
+      }
+    ]
+  },
+  "identity": {
+    "boardid": "17A6",
+    "role": "verify",
+    "pss_idcode": "0x13722093",
+    "fclk0_mhz": 50.0,
+    "fclk0_pll_mhz": 1600.0,
+    "fclk0_divisors": [
+      8,
+      4
+    ]
+  },
+  "first_status": {
+    "status": "0x00000080",
+    "decoded": {
+      "busy": 0,
+      "fault": 0,
+      "configuration_valid": 0,
+      "scorer_busy": 0,
+      "scorer_done": 0,
+      "scorer_armed": 0,
+      "pass1_complete": 0,
+      "recovery_required": 1,
+      "expect_env": 0,
+      "rb_frame_ready": 0,
+      "env_committed": 0,
+      "rb_frames_ok": 0,
+      "reserved": 0
+    }
+  },
+  "first_fault": {
+    "fault": "0x00000000",
+    "fault_name": "none"
+  },
+  "verdict": "identity x first-touch also keeps the carrier answering",
+  "timings_s": {
+    "load_done_to_transport_open": 0.1131,
+    "transport_open_to_identity_done": 0.707,
+    "identity_done_to_status": 0.2024,
+    "load_done_to_status": 1.0225
+  },
+  "transport_log": [
+    {
+      "command": "printenv boardid",
+      "elapsed_s": 0.101,
+      "raw": "printenv boardid\r\nboardid=17A6\r\nZynq> ",
+      "prompt_returned": true
+    },
+    {
+      "command": "printenv role",
+      "elapsed_s": 0.101,
+      "raw": "printenv role\r\nrole=verify\r\nZynq> ",
+      "prompt_returned": true
+    },
+    {
+      "command": "md 0xf8000530 1",
+      "elapsed_s": 0.101,
+      "raw": "md 0xf8000530 1\r\nf8000530: 13722093                             . r.\r\nZynq> ",
+      "prompt_returned": true
+    },
+    {
+      "command": "md 0xf8000108 1",
+      "elapsed_s": 0.101,
+      "raw": "md 0xf8000108 1\r\nf8000108: 00030008                             ....\r\nZynq> ",
+      "prompt_returned": true
+    },
+    {
+      "command": "md 0xf8000100 1",
+      "elapsed_s": 0.101,
+      "raw": "md 0xf8000100 1\r\nf8000100: 00028008                             ....\r\nZynq> ",
+      "prompt_returned": true
+    },
+    {
+      "command": "md 0xf8000104 1",
+      "elapsed_s": 0.101,
+      "raw": "md 0xf8000104 1\r\nf8000104: 00020008                             ....\r\nZynq> ",
+      "prompt_returned": true
+    },
+    {
+      "command": "md 0xf8000170 1",
+      "elapsed_s": 0.101,
+      "raw": "md 0xf8000170 1\r\nf8000170: 00400800                             ..@.\r\nZynq> ",
+      "prompt_returned": true
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.1,
+      "raw": "printenv plmark\r\nplmark=18cb24101123874b\r\nZynq> ",
+      "prompt_returned": true
+    },
+    {
+      "command": "md.l 0x43c02004 0x1",
+      "elapsed_s": 0.1,
+      "raw": "md.l 0x43c02004 0x1\r\n43c02004: 00000080                             ....\r\nZynq> ",
+      "prompt_returned": true
+    },
+    {
+      "command": "md.l 0x43c02008 0x1",
+      "elapsed_s": 0.1,
+      "raw": "md.l 0x43c02008 0x1\r\n43c02008: 00000000                             ....\r\nZynq> ",
+      "prompt_returned": true
+    }
+  ]
+}

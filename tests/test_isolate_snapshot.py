@@ -357,3 +357,58 @@ class TheFirstTouchCell(unittest.TestCase):
         forbidden = {"write_sequence", "execute_transaction", "run_candidate",
                      "run_candidate_on_board", "board_uboot_transmit", "ps_poke"}
         self.assertEqual(self.called_names() & forbidden, set())
+
+
+class TheIdentityFirstTouchCell(unittest.TestCase):
+    """The calibration's pre-read prefix, exactly — no more of it and no less."""
+
+    SOURCE = (REPO_ROOT / "scripts" / "board_isolate_carrier.py").read_text(encoding="utf-8")
+
+    def body(self) -> str:
+        return self.SOURCE.split("def run_identity_first_touch", 1)[1].split("\ndef ", 1)[0]
+
+    def called_names(self) -> set:
+        import ast
+
+        tree = ast.parse(self.SOURCE)
+        func = next(node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
+                    and node.name == "run_identity_first_touch")
+        names = set()
+        for node in ast.walk(func):
+            if isinstance(node, ast.Call):
+                if isinstance(node.func, ast.Attribute):
+                    names.add(node.func.attr)
+                elif isinstance(node.func, ast.Name):
+                    names.add(node.func.id)
+        return names
+
+    def test_it_runs_the_calibrations_prefix(self):
+        self.assertLessEqual({"phase_setup", "SerialTransport", "BoardSession",
+                              "verify_identity", "same_boot", "read_status"},
+                             self.called_names())
+
+    def test_it_stops_short_of_the_authority_gate_and_the_write(self):
+        forbidden = {"authorise_write", "run_candidate", "run_candidate_on_board",
+                     "write_sequence", "execute_transaction", "gate_candidate",
+                     "board_uboot_transmit", "ps_poke"}
+        self.assertEqual(self.called_names() & forbidden, set())
+
+    def test_nothing_reads_the_carrier_before_the_identity_gate(self):
+        """A prior read would pre-warm away the one combination still untested."""
+        body = self.body()
+        self.assertLess(body.index("verify_identity"), body.index("axi.read_status("))
+        self.assertNotIn("Probe(", body)
+        self.assertNotIn("snapshot()", body)
+
+    def test_fault_is_read_only_after_status_is_right(self):
+        body = self.body()
+        self.assertLess(body.index("axi.read_status("), body.index("axi.read_fault("))
+        self.assertLess(body.index("!= 0x00000080"), body.index("axi.read_fault("))
+
+    def test_all_four_spans_the_reviewer_asked_for_are_recorded(self):
+        for span in ("load_done_to_transport_open", "transport_open_to_identity_done",
+                     "identity_done_to_status", "load_done_to_status"):
+            self.assertIn(span, self.body())
+
+    def test_a_lost_marker_is_reported_as_a_restart(self):
+        self.assertIn('"RESTART"', self.body())

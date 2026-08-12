@@ -740,6 +740,108 @@ def run_first_touch(args, record: dict, carrier: Path) -> int:
     return 0 if record["verdict"].startswith("the production transport") else 1
 
 
+def run_identity_first_touch(args, record: dict, carrier: Path) -> int:
+    """The calibration's pre-read prefix, exactly, and then the one read it never reaches.
+
+    Everything in that prefix has now been cleared individually, and the transport has been
+    cleared as a first PL master. The one combination left untested is identity WITHOUT a
+    prior carrier read — every earlier success let a `Probe` read the fabric before the
+    identity gate ran, and the calibration does not.
+
+    So this is `phase_setup`, `SerialTransport`, `BoardSession`, `verify_identity`,
+    `same_boot`, then STATUS — and FAULT only if STATUS is what it must be. No authority is
+    built, no host gate runs, `authorise_write()` is not called, and nothing goes near the
+    ICAP. Reading the carrier earlier would pre-warm away the very thing being asked about.
+    """
+    import board_calibrate_noop as cal              # noqa: PLC0415 - board-only dependency
+    import gate_board_identity as ident             # noqa: PLC0415
+
+    def flush() -> None:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+    transport_log: list[dict] = []
+    transport = None
+    bundle = json.loads((args.run_dir / "carrier_run.json").read_text("utf-8"))
+    marks: dict = {}
+
+    try:
+        record["setup"] = cal.phase_setup(
+            args.port, carrier, bundle["artifacts"]["carrier.bit"]["sha256"])
+        marks["load_done"] = time.monotonic()
+        marker = record["setup"]["plmark"]
+        print(f"    plmark {marker}", flush=True)
+        flush()
+
+        transport = RecordingTransport(ident.SerialTransport(args.port), transport_log)
+        session = ident.BoardSession(transport)
+        marks["transport_open"] = time.monotonic()
+
+        identity = session.verify_identity("content")
+        marks["identity_done"] = time.monotonic()
+        record["identity"] = identity["parsed"]
+        print(f"    identity: {identity['parsed'].get('boardid')} "
+              f"{identity['parsed'].get('role')}", flush=True)
+        flush()
+
+        axi.same_boot(transport, marker)
+
+        # The read the calibration has never once completed.
+        status = axi.read_status(transport)
+        marks["status_done"] = time.monotonic()
+        record["first_status"] = {
+            "status": f"0x{status['raw']:08x}",
+            "decoded": {k: (int(v) if isinstance(v, bool) else v)
+                        for k, v in status.items() if k != "raw"},
+        }
+        print(f"    FIRST STATUS: 0x{status['raw']:08x}", flush=True)
+        if status["raw"] != 0x00000080:
+            raise Stalled(
+                f"the first STATUS is 0x{status['raw']:08x}, not the reset state 0x00000080")
+
+        # Only now, and only because STATUS was right.
+        code, name = axi.read_fault(transport)
+        record["first_fault"] = {"fault": f"0x{code:08x}", "fault_name": name}
+        print(f"    FAULT: 0x{code:08x} ({name})", flush=True)
+        if code != 0:
+            raise Stalled(f"FAULT reads 0x{code:08x} ({name}), not 0x00000000")
+
+        record["verdict"] = "identity x first-touch also keeps the carrier answering"
+        print("\nTHE CALIBRATION'S EXACT PRE-READ PREFIX SUCCEEDS.")
+    except axi.AxiRefusal as refusal:
+        restarted = "plmark" in str(refusal)
+        record["verdict"] = "RESTART" if restarted else "STOP"
+        record["stop_reason"] = f"{type(refusal).__name__}: {refusal}"
+        print(f"\n{'RESTART (not a stall)' if restarted else 'STOP'}: {refusal}",
+              file=sys.stderr)
+    except Exception as stop:                                       # noqa: BLE001
+        record["verdict"] = "STOP"
+        record["stop_reason"] = f"{type(stop).__name__}: {stop}"
+        print(f"\nSTOP: {stop}", file=sys.stderr)
+    finally:
+        try:
+            if transport is not None:
+                transport.close()
+        except Exception:                                           # noqa: BLE001
+            pass
+        def span(a: str, b: str):
+            if a in marks and b in marks:
+                return round(marks[b] - marks[a], 4)
+            return None
+        record["timings_s"] = {
+            "load_done_to_transport_open": span("load_done", "transport_open"),
+            "transport_open_to_identity_done": span("transport_open", "identity_done"),
+            "identity_done_to_status": span("identity_done", "status_done"),
+            "load_done_to_status": span("load_done", "status_done"),
+        }
+        record["transport_log"] = transport_log
+        flush()
+        for name, value in record["timings_s"].items():
+            print(f"    {name:34s} {value}")
+        print(f"  record: {args.out}")
+    return 0 if record["verdict"].startswith("identity") else 1
+
+
 def jtag_mem_ap_probe(addr: int) -> dict:
     """Read one PL word through the DAP instead of the CPU. Only ever run deliberately."""
     argv = [
@@ -897,7 +999,7 @@ def main() -> int:
                                      "required by --mode additive, which does not load")
     ap.add_argument("--mode",
                     choices=("ladder", "snapshot", "additive", "session-ladder",
-                             "first-touch"),
+                             "first-touch", "identity-first-touch"),
                     default="ladder",
                     help="ladder: the full step-at-a-time sequence. snapshot: load, "
                          "photograph the live PS state on one line, then the single read "
@@ -942,6 +1044,9 @@ def main() -> int:
 
     if args.mode == "snapshot":
         return run_snapshot(args, record, carrier)
+
+    if args.mode == "identity-first-touch":
+        return run_identity_first_touch(args, record, carrier)
 
     if args.mode == "first-touch":
         return run_first_touch(args, record, carrier)
