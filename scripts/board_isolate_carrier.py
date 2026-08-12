@@ -493,6 +493,161 @@ def run_additive(args, record: dict) -> int:
     return 0 if record["verdict"] != "STOP" else 1
 
 
+class RecordingTransport:
+    """Forwards to a production transport and keeps every raw reply.
+
+    A wrapper rather than an edit: the point of this ladder is to exercise the PRODUCTION
+    `SerialTransport` and `BoardSession` unchanged, so nothing here may alter them — and in
+    particular nothing here may create a second device-write entrypoint. Only `command` is
+    intercepted; everything else is delegated untouched.
+    """
+
+    def __init__(self, inner, log: list[dict]):
+        self.inner = inner
+        self.log = log
+
+    def command(self, line: str, timeout: float = 1.5) -> bytes:
+        started = time.time()
+        reply = self.inner.command(line, timeout)
+        self.log.append({
+            "command": line,
+            "elapsed_s": round(time.time() - started, 3),
+            "raw": reply.decode("ascii", "replace"),
+            "prompt_returned": bool(bs.PROMPT_RE.search(reply)),
+        })
+        return reply
+
+    def __getattr__(self, name):
+        return getattr(self.inner, name)
+
+
+def run_session_ladder(args, record: dict, carrier: Path) -> int:
+    """Load once, then walk from the Probe path to the production session, one step at a time.
+
+    The calibration has never once reached its first STATUS read, and every other path does.
+    Between them sit three things, and this separates them without a power cycle between
+    each: the production `SerialTransport` (its own open, sync and timeout), the identity
+    gate's command sequence on that same session, and an in-memory authorisation.
+
+    Nothing is reloaded, no calibration runs, `write_sequence()` is never called and no ICAP
+    address is touched. Every step re-asks `plmark` first, because a restart would otherwise
+    be recorded as the step's own doing.
+    """
+    import gate_board_identity as ident            # noqa: PLC0415 - board-only dependency
+
+    def flush() -> None:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+    console_log: list[dict] = []
+    transport_log: list[dict] = []
+    probe = None
+    transport = None
+
+    def carrier_reading(where: str) -> dict:
+        """STATUS and FAULT through the PRODUCTION readers, and the standing requirement."""
+        status = axi.read_status(transport)
+        code, name = axi.read_fault(transport)
+        reading = {"where": where, "status": f"0x{status['raw']:08x}",
+                   "fault": f"0x{code:08x}", "fault_name": name,
+                   "decoded": {k: (int(v) if isinstance(v, bool) else v)
+                               for k, v in status.items() if k != "raw"}}
+        print(f"    {where}: STATUS={reading['status']} FAULT={reading['fault']}", flush=True)
+        if status["raw"] != 0x00000080 or code != 0:
+            raise Stalled(
+                f"{where}: STATUS={reading['status']} FAULT={reading['fault']}, and this "
+                "ladder requires 0x00000080 / 0x00000000 at every step")
+        return reading
+
+    try:
+        record["steps"].append(run_tool(
+            [sys.executable, str(REPO_ROOT / "scripts/board_uboot_fpga_load.py"),
+             "--port", args.port, "--bit", str(carrier), "--op", "loadb"],
+            "fpga loadb of the published carrier (no --require-unconfigured, no fclk50)"))
+        if record["steps"][-1]["returncode"] != 0:
+            raise Stalled("the load failed; nothing after it would mean anything")
+        found = re.search(r"\[plmark\] ([0-9a-f]+)", record["steps"][-1]["stdout_tail"])
+        marker = found.group(1) if found else None
+        if not marker:
+            raise Stalled("the loader reported no plmark, so a restart could not be detected")
+        record["plmark"] = marker
+        flush()
+
+        # 1. The Probe baseline. If this load did not produce a usable carrier, the rest of
+        #    the ladder would be measuring the load, not the session.
+        probe = Probe(args.port)
+        entry = probe.cmd("printenv plmark")
+        if f"plmark={marker}" not in entry["raw"]:
+            raise Stalled(f"the board restarted before the baseline: {entry['raw'].strip()!r}")
+        values, snap = probe.snapshot()
+        record["baseline"] = {
+            "snapshot": {f"{addr:#010x}": {"name": name, "value": f"0x{values[addr]:08x}"}
+                         for addr, name in SNAPSHOT},
+            "judged": judge_snapshot(values),
+            "carrier": read_carrier(probe, "Probe baseline", marker),
+        }
+        if record["baseline"]["carrier"]["status"] != "0x00000080":
+            raise Stalled("this load did not establish a usable baseline; stopping here "
+                          "rather than attributing it to a session step")
+        console_log.extend(probe.log)
+        probe.log.clear()
+        probe.close()
+        probe = None
+        flush()
+
+        # 2. The production transport, and nothing else yet.
+        transport = RecordingTransport(ident.SerialTransport(args.port), transport_log)
+        axi.same_boot(transport, marker)
+        record["steps"].append({
+            "step": "1. production SerialTransport opened, NO identity",
+            "carrier": carrier_reading("after SerialTransport open")})
+        flush()
+
+        # 3. The identity gate, on the same session.
+        session = ident.BoardSession(transport)
+        identity = session.verify_identity("content")
+        axi.same_boot(transport, marker)
+        record["steps"].append({
+            "step": "2. verify_identity on the same session",
+            "identity": identity["parsed"],
+            "carrier": carrier_reading("after verify_identity")})
+        flush()
+
+        # 4. In-memory authorisation only. write_sequence() is NOT called and must not be.
+        authorisation = session.authorise_write()
+        axi.same_boot(transport, marker)
+        record["steps"].append({
+            "step": "3. authorise_write() — in memory only, no write_sequence, no ICAP",
+            "authorised": {k: v for k, v in authorisation.items() if k != "transport"},
+            "carrier": carrier_reading("after authorise_write")})
+
+        record["verdict"] = "every session step kept the carrier answering"
+        print("\nEVERY SESSION STEP KEPT THE CARRIER ANSWERING.")
+    except Exception as stop:                                       # noqa: BLE001
+        # Every refusal in this ladder is a stop, whatever raised it: a marker change, a
+        # stall, a reading that is not 0x80/0, or an identity failure. Naming the type in
+        # the record is what tells them apart afterwards.
+        record["verdict"] = "STOP"
+        record["stop_reason"] = f"{type(stop).__name__}: {stop}"
+        record["broken_after"] = (record["steps"][-1].get("step")
+                                  if record["steps"] else "the load or the Probe baseline")
+        print(f"\nSTOP: {stop}", file=sys.stderr)
+    finally:
+        if probe is not None:
+            console_log.extend(probe.log)
+        for handle in (probe, transport):
+            try:
+                if handle is not None:
+                    handle.close()
+            except Exception:                                       # noqa: BLE001
+                pass
+        record["console_log"] = console_log
+        record["transport_log"] = transport_log
+        flush()
+        print(f"  record: {args.out}")
+    return 0 if record["verdict"] != "STOP" else 1
+
+
 def jtag_mem_ap_probe(addr: int) -> dict:
     """Read one PL word through the DAP instead of the CPU. Only ever run deliberately."""
     argv = [
@@ -648,7 +803,9 @@ def main() -> int:
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--plmark", help="the boot nonce the snapshot run's load printed; "
                                      "required by --mode additive, which does not load")
-    ap.add_argument("--mode", choices=("ladder", "snapshot", "additive"), default="ladder",
+    ap.add_argument("--mode",
+                    choices=("ladder", "snapshot", "additive", "session-ladder"),
+                    default="ladder",
                     help="ladder: the full step-at-a-time sequence. snapshot: load, "
                          "photograph the live PS state on one line, then the single read "
                          "that can stall — and nothing else. additive: do not load; start "
@@ -692,6 +849,9 @@ def main() -> int:
 
     if args.mode == "snapshot":
         return run_snapshot(args, record, carrier)
+
+    if args.mode == "session-ladder":
+        return run_session_ladder(args, record, carrier)
 
     if args.mode == "additive":
         if not args.plmark:

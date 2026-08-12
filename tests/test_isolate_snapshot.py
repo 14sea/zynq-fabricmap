@@ -233,3 +233,67 @@ class TheFclk50Cell(unittest.TestCase):
     def test_the_cell_is_off_unless_asked_for(self):
         """Every earlier snapshot run must stay comparable to this one."""
         self.assertIn('"--fclk50-before-load", action="store_true"', self.SOURCE)
+
+
+class TheSessionLadder(unittest.TestCase):
+    """It must exercise production unchanged, and must not become a second write path."""
+
+    SOURCE = (REPO_ROOT / "scripts" / "board_isolate_carrier.py").read_text(encoding="utf-8")
+
+    def body(self) -> str:
+        return self.SOURCE.split("def run_session_ladder", 1)[1].split("\ndef ", 1)[0]
+
+    def called_names(self) -> set:
+        """Names actually CALLED, from the parse tree.
+
+        A substring search over the source hits the docstring promising these are never
+        called -- which is exactly how this test failed the first time it was written, and
+        the third time that trap has been sprung in this file's history.
+        """
+        import ast
+
+        tree = ast.parse(self.SOURCE)
+        func = next(node for node in ast.walk(tree)
+                    if isinstance(node, ast.FunctionDef) and node.name == "run_session_ladder")
+        names = set()
+        for node in ast.walk(func):
+            if isinstance(node, ast.Call):
+                if isinstance(node.func, ast.Attribute):
+                    names.add(node.func.attr)
+                elif isinstance(node.func, ast.Name):
+                    names.add(node.func.id)
+        return names
+
+    def test_it_never_calls_write_sequence_or_a_transaction(self):
+        forbidden = {"write_sequence", "execute_transaction", "run_candidate",
+                     "run_candidate_on_board", "board_uboot_transmit"}
+        self.assertEqual(self.called_names() & forbidden, set())
+
+    def test_it_does_call_the_three_things_it_is_meant_to(self):
+        """Otherwise the test above passes by the ladder doing nothing at all."""
+        self.assertLessEqual({"SerialTransport", "BoardSession", "verify_identity",
+                              "authorise_write", "same_boot"}, self.called_names())
+
+    def test_it_uses_the_production_transport_and_session_classes(self):
+        body = self.body()
+        self.assertIn("ident.SerialTransport(args.port)", body)
+        self.assertIn("ident.BoardSession(transport)", body)
+
+    def test_the_recorder_only_intercepts_command(self):
+        """Anything else it overrode would stop this being the production path."""
+        wrapper = self.SOURCE.split("class RecordingTransport", 1)[1].split("\ndef ", 1)[0]
+        overridden = [line.split("def ", 1)[1].split("(", 1)[0]
+                      for line in wrapper.splitlines() if line.strip().startswith("def ")]
+        self.assertEqual(set(overridden), {"__init__", "command", "__getattr__"})
+
+    def test_every_step_re_asks_the_marker_before_reading(self):
+        """A restart would otherwise be recorded as the step's own doing."""
+        body = self.body()
+        self.assertEqual(body.count("same_boot(transport, marker)"), 3)
+
+    def test_it_requires_the_reset_state_at_every_step(self):
+        self.assertIn("0x00000080", self.body())
+
+    def test_it_does_not_reload_between_steps(self):
+        """One load, then the whole ladder — otherwise it measures the load again."""
+        self.assertEqual(self.body().count("board_uboot_fpga_load.py"), 1)
