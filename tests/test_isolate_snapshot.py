@@ -297,3 +297,63 @@ class TheSessionLadder(unittest.TestCase):
     def test_it_does_not_reload_between_steps(self):
         """One load, then the whole ladder — otherwise it measures the load again."""
         self.assertEqual(self.body().count("board_uboot_fpga_load.py"), 1)
+
+
+class TheFirstTouchCell(unittest.TestCase):
+    """It must be the calibration's prefix exactly, minus identity — nothing added."""
+
+    SOURCE = (REPO_ROOT / "scripts" / "board_isolate_carrier.py").read_text(encoding="utf-8")
+
+    def body(self) -> str:
+        return self.SOURCE.split("def run_first_touch", 1)[1].split("\ndef ", 1)[0]
+
+    def called_names(self) -> set:
+        import ast
+
+        tree = ast.parse(self.SOURCE)
+        func = next(node for node in ast.walk(tree)
+                    if isinstance(node, ast.FunctionDef) and node.name == "run_first_touch")
+        names = set()
+        for node in ast.walk(func):
+            if isinstance(node, ast.Call):
+                if isinstance(node.func, ast.Attribute):
+                    names.add(node.func.attr)
+                elif isinstance(node.func, ast.Name):
+                    names.add(node.func.id)
+        return names
+
+    def test_it_reuses_the_production_phase_setup_rather_than_reimplementing_it(self):
+        """Re-listing fclk50 and the loader here would let the two drift apart silently."""
+        self.assertIn("phase_setup", self.called_names())
+        self.assertNotIn("board_set_fclk50.py", self.body())
+        self.assertNotIn("board_uboot_fpga_load.py", self.body())
+
+    def test_nothing_reads_the_carrier_before_the_first_touch(self):
+        """A baseline read would change the question instead of sharpening it."""
+        called = self.called_names()
+        self.assertNotIn("snapshot", called)
+        self.assertNotIn("read_carrier", called)
+        self.assertNotIn("Probe", called)
+
+    def test_it_does_not_run_the_identity_gate(self):
+        called = self.called_names()
+        self.assertNotIn("verify_identity", called)
+        self.assertNotIn("BoardSession", called)
+
+    def test_there_is_exactly_one_status_read(self):
+        self.assertEqual(self.body().count("axi.read_status("), 1)
+        self.assertEqual(self.body().count("axi.read_fault("), 1)
+
+    def test_a_lost_marker_is_a_restart_and_not_a_stall(self):
+        """Different events; only one of them is about the transport."""
+        body = self.body()
+        self.assertIn('"RESTART"', body)
+        self.assertLess(body.index("same_boot"), body.index("axi.read_status("))
+
+    def test_the_open_to_status_timing_is_recorded(self):
+        self.assertIn("seconds_from_transport_open_to_status", self.body())
+
+    def test_it_never_reaches_a_write_or_the_icap(self):
+        forbidden = {"write_sequence", "execute_transaction", "run_candidate",
+                     "run_candidate_on_board", "board_uboot_transmit", "ps_poke"}
+        self.assertEqual(self.called_names() & forbidden, set())

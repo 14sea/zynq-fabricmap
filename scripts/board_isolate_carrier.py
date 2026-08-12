@@ -648,6 +648,98 @@ def run_session_ladder(args, record: dict, carrier: Path) -> int:
     return 0 if record["verdict"] != "STOP" else 1
 
 
+def run_first_touch(args, record: dict, carrier: Path) -> int:
+    """Can the production transport be the FIRST thing that ever touches this PL?
+
+    Every successful run so far let a `Probe` read the carrier before anything else did, and
+    the calibration does not: its transport's read is the first PL access after the load.
+    That is the difference this cell exists to test, so it deliberately accepts an ambiguity
+    the earlier cells were built to avoid — with no baseline read, a stall cannot be split
+    between "this load was bad" and "the transport cannot be first". A baseline would change
+    the question rather than sharpen it.
+
+    So: the production `phase_setup` verbatim (fclk50, then the loader WITH
+    `--require-unconfigured`), then `SerialTransport`, then `same_boot`, then ONE reading of
+    STATUS and FAULT. No identity gate, no PS snapshot — neither is part of the calibration's
+    prefix — no second read, and nothing near the ICAP.
+
+    A missing or changed `plmark` is recorded as a RESTART, not a stall. They are different
+    events and only one of them is about the transport.
+    """
+    import board_calibrate_noop as cal              # noqa: PLC0415 - board-only dependency
+    import gate_board_identity as ident             # noqa: PLC0415
+
+    def flush() -> None:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+    transport_log: list[dict] = []
+    transport = None
+    bundle = json.loads((args.run_dir / "carrier_run.json").read_text("utf-8"))
+
+    try:
+        record["setup"] = cal.phase_setup(
+            args.port, carrier, bundle["artifacts"]["carrier.bit"]["sha256"])
+        marker = record["setup"]["plmark"]
+        print(f"    plmark {marker}", flush=True)
+        flush()
+
+        opened_at = time.monotonic()
+        transport = RecordingTransport(ident.SerialTransport(args.port), transport_log)
+        record["transport_open_s"] = round(time.monotonic() - opened_at, 4)
+
+        try:
+            axi.same_boot(transport, marker)
+        except axi.AxiRefusal as restarted:
+            record["verdict"] = "RESTART"
+            record["restart_reason"] = str(restarted)
+            print(f"\nRESTART (not a stall): {restarted}", file=sys.stderr)
+            return 1
+
+        # The one reading this cell exists for. Nothing before it has touched the PL.
+        began = time.monotonic()
+        status = axi.read_status(transport)
+        code, name = axi.read_fault(transport)
+        record["first_touch"] = {
+            "status": f"0x{status['raw']:08x}",
+            "fault": f"0x{code:08x}",
+            "fault_name": name,
+            "seconds_from_transport_open_to_status": round(began - opened_at, 4),
+            "seconds_reading": round(time.monotonic() - began, 4),
+            "decoded": {k: (int(v) if isinstance(v, bool) else v)
+                        for k, v in status.items() if k != "raw"},
+        }
+        print(f"    FIRST TOUCH: STATUS={record['first_touch']['status']} "
+              f"FAULT={record['first_touch']['fault']}", flush=True)
+        if status["raw"] == 0x00000080 and code == 0:
+            record["verdict"] = "the production transport CAN be the first PL master"
+            print("\nFIRST TOUCH SUCCEEDED — transport-first-touch is ruled out.")
+        else:
+            record["verdict"] = "STOP"
+            record["stop_reason"] = (
+                f"the first touch read STATUS={record['first_touch']['status']} "
+                f"FAULT={record['first_touch']['fault']}, not 0x00000080 / 0x00000000")
+            print(f"\nSTOP: {record['stop_reason']}", file=sys.stderr)
+    except Exception as stop:                                       # noqa: BLE001
+        record["verdict"] = "STOP"
+        record["stop_reason"] = f"{type(stop).__name__}: {stop}"
+        record["reading"] = (
+            "first-touch cell FAILED. A single run cannot split the load from the transport; "
+            "repeat it unchanged on the next fresh boot before treating the pre-first-access "
+            "path as load-bearing.")
+        print(f"\nSTOP: {stop}", file=sys.stderr)
+    finally:
+        try:
+            if transport is not None:
+                transport.close()
+        except Exception:                                           # noqa: BLE001
+            pass
+        record["transport_log"] = transport_log
+        flush()
+        print(f"  record: {args.out}")
+    return 0 if record["verdict"].startswith("the production transport") else 1
+
+
 def jtag_mem_ap_probe(addr: int) -> dict:
     """Read one PL word through the DAP instead of the CPU. Only ever run deliberately."""
     argv = [
@@ -804,7 +896,8 @@ def main() -> int:
     ap.add_argument("--plmark", help="the boot nonce the snapshot run's load printed; "
                                      "required by --mode additive, which does not load")
     ap.add_argument("--mode",
-                    choices=("ladder", "snapshot", "additive", "session-ladder"),
+                    choices=("ladder", "snapshot", "additive", "session-ladder",
+                             "first-touch"),
                     default="ladder",
                     help="ladder: the full step-at-a-time sequence. snapshot: load, "
                          "photograph the live PS state on one line, then the single read "
@@ -849,6 +942,9 @@ def main() -> int:
 
     if args.mode == "snapshot":
         return run_snapshot(args, record, carrier)
+
+    if args.mode == "first-touch":
+        return run_first_touch(args, record, carrier)
 
     if args.mode == "session-ladder":
         return run_session_ladder(args, record, carrier)
