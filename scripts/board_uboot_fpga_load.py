@@ -16,7 +16,7 @@ import sys
 import time
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
-from board_serial import BAUD, PORT, PROMPT_RE, read_until  # noqa: E402
+from board_serial import BAUD, PORT, PROMPT_RE, SYNC_COMMAND, read_until  # noqa: E402
 
 import serial  # noqa: E402
 
@@ -63,9 +63,12 @@ def main():
     addr = int(args.addr, 16)
     print(f"[*] {args.bit}: {size} bytes -> 0x{addr:08x}, then `fpga {args.op}`", flush=True)
 
-    # 1. tell U-Boot to receive ymodem (bare CR first: both boards can hold junk)
+    # 1. tell U-Boot to receive ymodem. The sync is a NAMED command, never a bare CR:
+    #    an empty line makes U-Boot repeat the last one, and after an `md` of the carrier
+    #    that repeat lands one word past it, on an unmapped address the carrier refuses --
+    #    which resets the board. See board_serial.SYNC_COMMAND.
     s = serial.Serial(args.port, args.baud, timeout=0.3)
-    s.write(b"\r")
+    s.write(f"{SYNC_COMMAND}\r".encode())
     time.sleep(0.3)
     s.reset_input_buffer()
     s.write(f"loady 0x{addr:08x}\r".encode())

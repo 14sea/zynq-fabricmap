@@ -233,35 +233,42 @@ class Stalled(Exception):
 class Probe:
     """One open console, every exchange recorded."""
 
-    def __init__(self, port: str, *, send_cr: bool = True, purge: bool = True):
-        """Open the console the way production does. Both flags exist only to be varied.
+    def __init__(self, port: str, *, purge: bool = True):
+        """Open the console. **Nothing is transmitted here, and nothing may be.**
 
-        The settle used to be a bare `reset_input_buffer()`, which DISCARDS whatever arrived
-        in the first 0.4 s — and what arrives there is precisely a boot banner, if the board
-        restarted at the reopen. An instrument that throws away the evidence for the thing it
-        is investigating is the failure this project keeps meeting, so the bytes are now KEPT
-        in `discarded_on_open`.
+        This used to write a bare `\\r` to settle the console, and that CR caused three
+        "spontaneous restarts". The chain is closed in source, every link checked:
 
-        **Keeping them is not a substitute for the flush.** `reset_input_buffer()` is
-        `tcflush(TCIFLUSH)` — a PURGE issued to the tty layer and the USB-serial driver —
-        while a read merely moves bytes. The buffer ends up empty either way, but the driver
-        operation is not the same one, and the purge is itself a candidate trigger for the
-        restarts. So the read is done FIRST and the purge still happens by default: the
-        historical path is preserved and the evidence is preserved with it. `purge=False`
-        exists so the two can be told apart.
+        1. U-Boot declares `md` repeatable — `U_BOOT_CMD(md, 3, 1, do_mem_md)`,
+           `cmd/mem.c:1318` — so an empty line RE-RUNS the last command.
+        2. `do_mem_md` resumes from `addr = dp_last_addr` (`cmd/mem.c:79`), and the previous
+           call left `dp_last_addr = addr + bytes` (`:110`, `:113`). After
+           an `md.l` of the FAULT register that is **FAULT + 4** — not a re-read of
+           FAULT, the NEXT word. (Named as an offset: the window's absolute address
+           belongs to `board_uboot_axi` alone, which is a rule with a test behind it.)
+        3. The carrier decodes `+0x0004` and `+0x0008` and a score window from `+0x0010`;
+           `0x200c` is none of them, so it answers **SLVERR** — `carrier_axil.v:217`,
+           correct and deliberate strictness.
+        4. The A9 takes a data abort: `do_data_abort` → `bad_mode()` →
+           `panic("Resetting CPU ...")` (`arch/arm/lib/interrupts.c:198`, `:55`).
+        5. `CONFIG_PANIC_HANG` is not set in this build (`.config:1145`), so `panic_finish()`
+           calls `do_reset()` — `lib/panic.c:28`. The board reboots.
+        6. The settle then PURGED the "data abort" text, leaving only the SPL banner that
+           arrived later. That is why it looked like an unexplained spontaneous restart.
 
-        Residual caveat, unmeasured: a purge with an already-drained buffer may not be
-        identical to a purge with bytes in it.
+        So the restarts were never spontaneous and never a supply fault: **the instrument
+        rebooted the board and then deleted the message saying so.** If a sync is ever needed
+        here, it must be a named, explicit, harmless COMPLETE command — never a bare CR,
+        whose meaning depends on whatever was typed last.
 
-        `send_cr` is NOT inert. U-Boot treats a bare CR as "repeat the last command", so the
-        CR re-executes whatever was last sent — which on a production path is usually an AXI
-        read of the carrier. Measured 2026-08-12: after a reopen with CR, the console
-        returned the previous `printenv plmark`'s output unbidden.
+        The settle bytes are KEPT in `discarded_on_open` rather than flushed away — step 6
+        above is what that costs when they are not. The purge still happens after the read,
+        because `reset_input_buffer()` is `tcflush(TCIFLUSH)`, an operation on the tty layer
+        and the USB-serial driver, and a read is not a substitute for it; the buffer ends up
+        empty either way but the driver call is not the same one.
         """
         self.port = port
         self.serial = serial.Serial(port, 115200, timeout=0)
-        if send_cr:
-            self.serial.write(b"\r")
         time.sleep(0.4)
         self.discarded_on_open = self.serial.read(self.serial.in_waiting)
         if purge:
@@ -269,6 +276,11 @@ class Probe:
         self.log: list[dict] = []
 
     def cmd(self, line: str, timeout: float = 8.0) -> dict:
+        # Read before flushing. Anything already waiting here is unsolicited — a boot
+        # banner, or a "data abort" register dump from the PREVIOUS command — and flushing
+        # it blind was the second window through which this instrument destroyed the
+        # evidence for what it was investigating.
+        pending = self.serial.read(self.serial.in_waiting)
         self.serial.reset_input_buffer()
         started = time.time()
         # Paced, not a single write: U-Boot echoes with a BLOCKING putc, and while it blocks
@@ -290,6 +302,8 @@ class Probe:
             "prompt_returned": bool(bs.PROMPT_RE.search(buf)),
             "exception": bool(axi.ABORT_RE.search(buf)),
             "raw": buf.decode("ascii", "replace"),
+            "pending_before": pending.decode("ascii", "replace"),
+            "pending_was_an_abort": bool(axi.ABORT_RE.search(pending)),
         }
         self.log.append(entry)
         return entry

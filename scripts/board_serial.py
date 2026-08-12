@@ -67,13 +67,23 @@ def ub_cmd(ser, line, timeout=1.5):
     return read_until(ser, PROMPT_RE, timeout)
 
 
+# Never an empty line. U-Boot treats a bare CR as "repeat the last command", and `md` is
+# declared repeatable and resumes from an ALREADY-ADVANCED address, so an empty line after
+# an `md` of the carrier reads one word past it. That word is unmapped, the carrier answers
+# SLVERR by design, the A9 takes a data abort and U-Boot's abort path resets the board.
+# Three "spontaneous restarts" of 2026-08-12 were exactly this. A sync must therefore be a
+# NAMED, complete, harmless command whose meaning does not depend on what came before.
+SYNC_COMMAND = "echo"          # CONFIG_CMD_ECHO=y on this build; prints a newline, no state
+
+
 def sync_prompt(ser, timeout=2.0):
-    """Send a bare CR to flush junk and land on a known prompt.
+    """Land on a known prompt with a named no-op, flushing any partial line on the way.
 
     Both boards need this: the 4205 leaves a residual ``d`` from the autoboot
-    hammer, and the 4203 takes a burst of garbage into its RX at power-on.
+    hammer, and the 4203 takes a burst of garbage into its RX at power-on. Junk ahead of the
+    command simply makes it an unknown one, which still returns a prompt.
     """
-    return ub_cmd(ser, "", timeout)
+    return ub_cmd(ser, SYNC_COMMAND, timeout)
 
 
 def md1(ser, addr, timeout=1.5):
