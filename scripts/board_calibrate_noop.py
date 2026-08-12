@@ -88,6 +88,67 @@ def noop_candidate(manifest: dict, carrier_bit: Path) -> dict[int, list[int]]:
     return candidate
 
 
+
+class InstrumentedTransport:
+    """Records WHEN the calibration did each thing, and adds nothing to the wire.
+
+    Seven runs of this script have stopped at the same read, but they are not seven repeats:
+    one used the pre-shim carrier, which is erratum 002 itself, and of the six on the exact
+    pinned carrier only the last ran on the current source. **One clean comparable stall**,
+    then, and five historical and partly comparable events. Every account of the gap between
+    the load and that read has been reconstructed from outside — from file mtimes, from
+    timing the host gate in another process — and one of those was simply wrong: the
+    host-only gating was supposed to be some thirty seconds and it measures two.
+
+    So the calibration records its own timeline. **Strictly its own**: this wrapper forwards
+    one command in and one command out, and issues nothing of its own. An earlier version
+    also read the PS registers before the first carrier command, which would have put extra
+    traffic on the wire ahead of the very read under investigation — and the path that
+    succeeds also reads PS first, so a pass would not have separated the reading from the
+    recording. Timing is free; traffic is not.
+    """
+
+    def __init__(self, inner, record: dict):
+        self.inner = inner
+        self.commands: list[dict] = []
+        self.started = time.monotonic()
+        self.markers: list[dict] = []
+        record["instrumentation"] = {
+            "adds_no_commands": "this wrapper forwards 1:1 and issues nothing of its own",
+            "commands": self.commands,
+            "markers": self.markers,
+        }
+
+    def mark(self, name: str) -> None:
+        """A host-side instant, so a host-only interval can be read off the timeline."""
+        self.markers.append({"marker": name,
+                             "at_s": round(time.monotonic() - self.started, 4)})
+
+    def command(self, line: str, timeout: float = 1.5) -> bytes:
+        started = time.monotonic()
+        entry: dict = {
+            "command": line,
+            "start_s": round(started - self.started, 4),
+            "timeout_s": timeout,
+        }
+        self.commands.append(entry)
+        try:
+            reply = self.inner.command(line, timeout)
+        except BaseException as raised:              # noqa: BLE001 - recorded, then re-raised
+            entry["end_s"] = round(time.monotonic() - self.started, 4)
+            entry["elapsed_s"] = round(entry["end_s"] - entry["start_s"], 4)
+            entry["exception"] = type(raised).__name__
+            raise
+        entry["end_s"] = round(time.monotonic() - self.started, 4)
+        entry["elapsed_s"] = round(entry["end_s"] - entry["start_s"], 4)
+        entry["raw"] = reply.decode("ascii", "replace")[-400:]
+        entry["prompt_returned"] = bool(axi.PROMPT_RE.search(reply))
+        return reply
+
+    def __getattr__(self, name):
+        return getattr(self.inner, name)
+
+
 def phase_setup(port: str, carrier_bit: Path, expected_sha: str) -> dict:
     """Pin FCLK0, then load the published carrier. Both need the tty to themselves."""
     actual = hashlib.sha256(carrier_bit.read_bytes()).hexdigest()
@@ -199,7 +260,7 @@ def main() -> int:
             bundle["artifacts"]["carrier.bit"]["sha256"])
 
         # -- the session that verifies the board is the session that writes to it.
-        transport = ident.SerialTransport(args.port)
+        transport = InstrumentedTransport(ident.SerialTransport(args.port), record)
         try:
             session = ident.BoardSession(transport)
             identity = session.verify_identity("content")
@@ -207,6 +268,9 @@ def main() -> int:
             # BEFORE anything touches the carrier. A restart since the load clears the PL,
             # and asking the PL about it stalls the CPU.
             axi.same_boot(transport, record["setup"]["plmark"])
+            # The host-only gate runs between here and the first carrier command,
+            # so this marker and that command's start_s bracket it exactly.
+            transport.mark("before run_candidate_on_board")
             result = ex.run_candidate_on_board(payload, authority, session)
         except axi.AxiRefusal:
             # A spinning wait loop still owns the console; a stalled AXI access does not
