@@ -526,6 +526,29 @@ def run_snapshot(args, record: dict, carrier: Path) -> int:
     # clear is recorded.
     console_log: list[dict] = []
 
+    # The ONE addition this cell is allowed. `board_set_fclk50.py` runs before the load in
+    # the calibration and in nothing that has ever succeeded, and that correlation has stood
+    # since the first stop. It was dismissed once on the argument that the script writes
+    # nothing when the clock is already 50 MHz — an argument, never a measurement, and never
+    # one made in this position. So it is measured here, and whether an `mw` actually went
+    # out is recorded rather than assumed.
+    if args.fclk50_before_load:
+        step = run_tool(
+            [sys.executable, str(REPO_ROOT / "scripts/board_set_fclk50.py"),
+             "--port", args.port],
+            "board_set_fclk50.py BEFORE the load (production invocation, not --verify-only)")
+        wrote = "writing FPGA0_CLK_CTRL" in step["stdout_tail"]
+        step["issued_an_mw"] = wrote
+        step["how_that_is_known"] = (
+            "the write branch is the only thing that prints `writing FPGA0_CLK_CTRL=`; its "
+            "absence is direct evidence the branch was not taken, and before/after values "
+            "are in the output for a second reading")
+        record["steps"].append(step)
+        print(f"    fclk50 issued an mw: {wrote}", flush=True)
+        if step["returncode"] != 0:
+            raise Stalled("board_set_fclk50.py failed; the cell would not be interpretable")
+        flush()
+
     probe = Probe(args.port)
     try:
         # Bracket the load: clear the sticky event bit and confirm it reads 0, so that a 1
@@ -631,6 +654,10 @@ def main() -> int:
                          "that can stall — and nothing else. additive: do not load; start "
                          "from a carrier that already answers and add the omitted steps "
                          "back one at a time (needs --plmark).")
+    ap.add_argument("--fclk50-before-load", action="store_true",
+                    help="snapshot mode only: run board_set_fclk50.py before the load. This "
+                         "is the ONE thing the calibration does that no successful run does, "
+                         "and it is the only difference this cell is allowed to add.")
     ap.add_argument("--jtag-probe-after-load", action="store_true",
                     help="insert a JTAG mem_ap read between the load and the snapshot. This "
                          "is the ONLY intended difference between the first snapshot run "
@@ -647,6 +674,7 @@ def main() -> int:
         "tool": TOOL_VERSION,
         "what": "isolate the step that stops the carrier answering",
         "mode": args.mode,
+        "fclk50_before_load": args.fclk50_before_load,
         "jtag_probe_after_load": args.jtag_probe_after_load,
         "started_at": time.time(),
         "run_dir": args.run_dir.name,

@@ -198,3 +198,38 @@ class AdditiveOrder(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TheFclk50Cell(unittest.TestCase):
+    """One cell, one added thing. The value of the comparison is that nothing else moved."""
+
+    SOURCE = (REPO_ROOT / "scripts" / "board_isolate_carrier.py").read_text(encoding="utf-8")
+
+    def test_fclk50_runs_before_the_load_not_after(self):
+        """`board_set_fclk50` BEFORE the load is the calibration's ordering, and the point."""
+        body = self.SOURCE.split("def run_snapshot", 1)[1]
+        self.assertLess(body.index("board_set_fclk50.py"),
+                        body.index("board_uboot_fpga_load.py"))
+
+    def test_it_is_the_production_invocation_not_verify_only(self):
+        """--verify-only is a different thing to measure; the calibration does not pass it."""
+        # Split on a TOP-LEVEL def: run_snapshot has a nested `def flush()`, and splitting
+        # on any "def " truncated the body before the code under test.
+        body = self.SOURCE.split("def run_snapshot", 1)[1].split("\ndef ", 1)[0]
+        fclk_call = body[body.index("board_set_fclk50.py"):][:400]
+        self.assertNotIn("--verify-only", fclk_call)
+
+    def test_the_snapshot_loader_never_passes_require_unconfigured(self):
+        """The successful snapshot did not pass it, so this cell must not either."""
+        # Split on a TOP-LEVEL def: run_snapshot has a nested `def flush()`, and splitting
+        # on any "def " truncated the body before the code under test.
+        body = self.SOURCE.split("def run_snapshot", 1)[1].split("\ndef ", 1)[0]
+        self.assertNotIn("--require-unconfigured", body)
+
+    def test_whether_an_mw_went_out_is_recorded_not_assumed(self):
+        self.assertIn("issued_an_mw", self.SOURCE)
+        self.assertIn("writing FPGA0_CLK_CTRL", self.SOURCE)
+
+    def test_the_cell_is_off_unless_asked_for(self):
+        """Every earlier snapshot run must stay comparable to this one."""
+        self.assertIn('"--fclk50-before-load", action="store_true"', self.SOURCE)

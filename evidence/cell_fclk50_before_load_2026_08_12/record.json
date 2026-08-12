@@ -1,0 +1,203 @@
+{
+  "tool": "board_isolate_carrier.py/1.0.0",
+  "what": "isolate the step that stops the carrier answering",
+  "mode": "snapshot",
+  "fclk50_before_load": true,
+  "jtag_probe_after_load": false,
+  "started_at": 1786555993.2014415,
+  "run_dir": "claimb_round1_carrier_2026_08_11_erratum002",
+  "carrier_sha256": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "carrier_sha256_pinned": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "steps": [
+    {
+      "what": "board_set_fclk50.py BEFORE the load (production invocation, not --verify-only)",
+      "argv": [
+        "/home/test/zynq_fabricmap/scripts/board_set_fclk50.py",
+        "--port",
+        "/dev/ebaz-uart"
+      ],
+      "returncode": 0,
+      "elapsed_s": 0.7,
+      "stdout_tail": "before FPGA0_CLK_CTRL=0x00400800 -> 1600.0/8/4 = 50.00 MHz\nafter  FPGA0_CLK_CTRL=0x00400800 -> 1600.0/8/4 = 50.00 MHz\nPASS: FCLK0 pinned to 50.0 MHz\n",
+      "stderr_tail": "",
+      "issued_an_mw": false,
+      "how_that_is_known": "the write branch is the only thing that prints `writing FPGA0_CLK_CTRL=`; its absence is direct evidence the branch was not taken, and before/after values are in the output for a second reading"
+    },
+    {
+      "step": "clear PCFG_DONE before the load",
+      "int_sts": {
+        "before": "0xa802000b",
+        "after": "0xa802000b"
+      }
+    },
+    {
+      "what": "fpga loadb of the published carrier",
+      "argv": [
+        "/home/test/zynq_fabricmap/scripts/board_uboot_fpga_load.py",
+        "--port",
+        "/dev/ebaz-uart",
+        "--bit",
+        "/home/test/zynq_fabricmap/gate_runs/claimb_round1_carrier_2026_08_11_erratum002/carrier.bit",
+        "--op",
+        "loadb"
+      ],
+      "returncode": 0,
+      "elapsed_s": 200.9,
+      "stdout_tail": "[*] /home/test/zynq_fabricmap/gate_runs/claimb_round1_carrier_2026_08_11_erratum002/carrier.bit: 2083863 bytes -> 0x04000000, then `fpga loadb`\n[*] ymodem transfer via sb ...\n[xfer] ## Total Size      = 0x001fcc17 = 2083863 Bytes\n## Start Addr      = 0x04000000\nZynq>\n[devcfg] INT_STS 0xa802000b -> 0xa802000b before the load (cleared)\n[*] fpga loadb 0 0x04000000 0x001fcc17\n[fpga] fpga loadb 0 0x04000000 0x001fcc17\n  design filename = \"carrier_top;UserID=0XFFFFFFFF;Version=2025.2;SW_CRC=cf3db964\"\n  part number = \"7z010clg400\"\n  date = \"2026/08/11\"\n  time = \"19:26:04\"\n  bytes in bitstream = 2083740\nzynq_align_dma_buffer: Align buffer at 400007b to 4000040(swap 1)\nINFO:post config was not run, please run manually if needed\nZynq>\n[devcfg] INT_STS=0x50021004 PCFG_DONE=1 (after the load)\n[plmark] 18cb1f64c879c357\n",
+      "stderr_tail": ""
+    },
+    {
+      "step": "read carrier STATUS (the one read that can stall)",
+      "carrier": {
+        "status": "0x00000080",
+        "fault": "0x00000000",
+        "decoded": {
+          "busy": 0,
+          "fault": 0,
+          "configuration_valid": 0,
+          "scorer_busy": 0,
+          "scorer_done": 0,
+          "scorer_armed": 0,
+          "pass1_complete": 0,
+          "recovery_required": 1,
+          "expect_env": 0,
+          "rb_frame_ready": 0,
+          "env_committed": 0,
+          "rb_frames_ok": 0,
+          "reserved": 0
+        },
+        "elapsed_s": 0.011
+      }
+    }
+  ],
+  "plmark": "18cb1f64c879c357",
+  "same_boot": {
+    "expected": "18cb1f64c879c357",
+    "prompt_returned": true,
+    "matched": true
+  },
+  "snapshot": {
+    "command": "md.l 0xf8000170 0x1; md.l 0xf8000178 0x1; md.l 0xf8000240 0x1; md.l 0xf8000900 0x1; md.l 0xf8007000 0x1; md.l 0xf8007014 0x1; md.l 0xf800700c 0x1",
+    "elapsed_s": 0.05,
+    "registers": {
+      "0xf8000170": {
+        "name": "FPGA0_CLK_CTRL",
+        "value": "0x00400800"
+      },
+      "0xf8000178": {
+        "name": "FPGA0_THR_CNT",
+        "value": "0x00000000"
+      },
+      "0xf8000240": {
+        "name": "FPGA_RST_CTRL",
+        "value": "0x00000000"
+      },
+      "0xf8000900": {
+        "name": "LVL_SHFTR_EN",
+        "value": "0x0000000f"
+      },
+      "0xf8007000": {
+        "name": "devcfg CTRL",
+        "value": "0x4e00e07f"
+      },
+      "0xf8007014": {
+        "name": "devcfg STATUS",
+        "value": "0x40000f30"
+      },
+      "0xf800700c": {
+        "name": "devcfg INT_STS",
+        "value": "0x50021004"
+      }
+    },
+    "judged": {
+      "pcfg_init": true,
+      "status": "0x40000f30",
+      "status_config_bits": "0x500 of 0x500",
+      "looks_configured": true,
+      "matches_configured_ref": true,
+      "matches_unconfigured_ref": false,
+      "fclk0_gated_off": false,
+      "fpga_reset_held": false,
+      "level_shifters_open": true,
+      "pcap_pr": true,
+      "pcfg_done_event": true,
+      "fpga0_clk_ctrl": "0x00400800",
+      "problems": []
+    }
+  },
+  "verdict": "the carrier ANSWERED after a direct load + snapshot",
+  "console_log": [
+    {
+      "command": "md.l 0xf800700c 0x1",
+      "elapsed_s": 0.011,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0xf800700c 0x1\r\nf800700c: a802000b                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "INT_STS before clear",
+      "value": "0xa802000b"
+    },
+    {
+      "command": "mw 0xf800700c 0x00000004 1",
+      "elapsed_s": 0.007,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "mw 0xf800700c 0x00000004 1\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false
+    },
+    {
+      "command": "md.l 0xf800700c 0x1",
+      "elapsed_s": 0.011,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0xf800700c 0x1\r\nf800700c: a802000b                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "INT_STS after clear",
+      "value": "0xa802000b"
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.009,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1f64c879c357\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false
+    },
+    {
+      "command": "md.l 0xf8000170 0x1; md.l 0xf8000178 0x1; md.l 0xf8000240 0x1; md.l 0xf8000900 0x1; md.l 0xf8007000 0x1; md.l 0xf8007014 0x1; md.l 0xf800700c 0x1",
+      "elapsed_s": 0.05,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0xf8000170 0x1; md.l 0xf8000178 0x1; md.l 0xf8000240 0x1; md.l 0xf8000900 0x1; md.l 0xf8007000 0x1; md.l 0xf8007014 0x1; md.l 0xf800700c 0x1\r\nf8000170: 00400800                             ..@.\r\nf8000178: 00000000                             ....\r\nf8000240: 00000000                             ....\r\nf8000900: 0000000f                             ....\r\nf8007000: 4e00e07f                             ...N\r\nf8007014: 40000f30                             0..@\r\nf800700c: 50021004                             ...P\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "one-line PS snapshot"
+    },
+    {
+      "command": "md.l 0x43c02004 0x1",
+      "elapsed_s": 0.011,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02004 0x1\r\n43c02004: 00000080                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "carrier STATUS (after the snapshot)",
+      "value": "0x00000080"
+    },
+    {
+      "command": "md.l 0x43c02008 0x1",
+      "elapsed_s": 0.012,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02008 0x1\r\n43c02008: 00000000                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "carrier FAULT (after the snapshot)",
+      "value": "0x00000000"
+    }
+  ]
+}
