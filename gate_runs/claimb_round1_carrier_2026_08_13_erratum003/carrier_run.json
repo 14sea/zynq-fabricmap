@@ -1,0 +1,60 @@
+{
+  "schema": "carrier_run",
+  "schema_version": "1.0.0",
+  "run_id": "claimb_round1_carrier_2026_08_13_erratum003",
+  "part": "xc7z010clg400-1",
+  "artifacts": {
+    "carrier.bit": {
+      "sha256": "15e4a8cf999c58b353808bc17e575358efcfaec46394c7fcdb08e1b8c2604679",
+      "bytes": 2083863,
+      "lfs": true
+    },
+    "carrier_eco.bit": {
+      "sha256": "5ff80911dc705eba40d9a865e34d6dfc2d4f9a9d3f543cadc2ef7e5911dd0757",
+      "bytes": 2083863,
+      "lfs": true
+    },
+    "post_route.dcp": {
+      "sha256": "1f010dbbf324d1ee2f86ffc6d331dc941804f9d73676a03df94278e6431bddea",
+      "bytes": 934753,
+      "lfs": true
+    },
+    "local_map.json": {
+      "sha256": "56f2b9e81e180eee2540286e4fde797e0d4820a49d10624c10844c38e99d87cb",
+      "bytes": 120521,
+      "lfs": false
+    },
+    "phenotype_manifest.json": {
+      "sha256": "44312a51355c630c8afb1db18e34aead09220f657d13f55390e72bbb85f7ac23",
+      "bytes": 74334,
+      "lfs": false
+    },
+    "carrier_build.json": {
+      "sha256": "294f4e6df4932796ddcae23fc911ac398ec7983abd47b5aa353e3f478f3e6a0a",
+      "bytes": 2074,
+      "lfs": false
+    },
+    "carrier_eco.json": {
+      "sha256": "aa4505b31ba98842d673072202fe55d66af19111f59762cc9bf786fd49842b61",
+      "bytes": 364,
+      "lfs": false
+    },
+    "isolation.txt": {
+      "sha256": "c7d4333bc69754d06913ed5eac2b5b4ea82f440cce345e3813683808e06784b0",
+      "bytes": 25812,
+      "lfs": false
+    }
+  },
+  "eco": {
+    "cell": "evolvable_0",
+    "loc": "SLICE_X2Y25",
+    "bel": "SLICEL.A6LUT",
+    "map_lut_key": "CLBLL_L.SLICEL_X0.ALUT",
+    "map_lut_key_derivation": "tilegrid: site -> tile, tile type, site index by X",
+    "init_before": "64'h0000000000000000",
+    "init_after": "64'h0000000900000001"
+  },
+  "tool_versions": {
+    "builder": "build_carrier_run.py/1.0.0"
+  }
+}
