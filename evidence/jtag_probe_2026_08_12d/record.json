@@ -1,0 +1,32 @@
+{
+  "tool": "openocd 0.12.0 zynq.ahb mem_ap (hand-run)",
+  "what": "one JTAG mem_ap read of the carrier STATUS window, taken while the A9 was already stalled by the calibration of evidence/calibration_noop_2026_08_12d",
+  "when": "2026-08-12",
+  "board": "17A6 (EBAZ4203)",
+  "address": "0x43c02004",
+  "argv": [
+    "openocd",
+    "-f",
+    "/home/test/test_devices/scripts/ebaz4203.cfg",
+    "-c",
+    "adapter speed 500",
+    "-c",
+    "target create zynq.ahb mem_ap -dap zynq.dap -ap-num 0",
+    "-c",
+    "init",
+    "-c",
+    "zynq.ahb mdw 0x43c02004 1",
+    "-c",
+    "shutdown"
+  ],
+  "returncode": 1,
+  "taps_enumerated": [
+    "zynq_pl.bs 0x13722093",
+    "zynq.cpu 0x4ba00477"
+  ],
+  "result": "Timeout during WAIT recovery / Failed to read memory at 0x43c02004",
+  "what_it_does_NOT_show": "The A9 was ALREADY stalled with an outstanding transaction on the same GP0 port when this probe ran, so the timeout does not establish that the carrier slave itself is the silent source: an existing A9 transaction can hold the shared GP0 downstream. This record exists to preserve the measurement, not that inference.",
+  "side_effect": "A FAILED mem_ap probe leaves the AHB-AP with an outstanding transaction; later arp_examine raises JTAG-DP STICKY ERROR until a power cycle. This spent that budget.",
+  "stdout": "Open On-Chip Debugger 0.12.0\nLicensed under GNU GPL v2\nFor bug reports, read\n\thttp://openocd.org/doc/doxygen/bugs.html\nInfo : auto-selecting first available session transport \"jtag\". To override use 'transport select <transport>'.\nnone separate\n\nadapter speed: 500 kHz\n\nInfo : clock speed 500 kHz\nInfo : JTAG tap: zynq_pl.bs tap/device found: 0x13722093 (mfg: 0x049 (Xilinx), part: 0x3722, ver: 0x1)\nInfo : JTAG tap: zynq.cpu tap/device found: 0x4ba00477 (mfg: 0x23b (ARM Ltd), part: 0xba00, ver: 0x4)\nInfo : zynq.cpu0: hardware has 6 breakpoints, 4 watchpoints\nInfo : zynq.cpu1: hardware has 6 breakpoints, 4 watchpoints\nInfo : starting gdb server for zynq.cpu0 on 3333\nInfo : Listening on port 3333 for gdb connections\nInfo : gdb port disabled\nError: Timeout during WAIT recovery\nError: Failed to read memory at 0x43c02004\n\n",
+  "stdout_sha256": "2a495afac68df1ef849cb0aeb3ad1a2903dea14e24651d44b15e5b91545b4116"
+}

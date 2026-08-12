@@ -32,6 +32,25 @@ record.
 
 This writes nothing to the fabric. It reads the carrier's status window and clears one
 write-1-to-clear interrupt bit in the PS; there is no ICAP activity and no candidate.
+
+Two modes
+---------
+
+``--mode ladder`` is the original: every step, one at a time, reading the carrier after each.
+
+``--mode snapshot`` is shorter and answers a narrower question. A run with the ladder's
+steps present stalled on the first carrier read even though every guard passed, so the
+remaining question is what the PS looked like *at that instant* — and nothing was asking.
+Snapshot mode does exactly: clear PCFG_DONE, load, confirm the same boot, photograph the
+live PS state in ONE command line, write that to disk, and only then take the single read
+that can stall.
+
+Two things about "is the PL configured *now*", both of which had to be got wrong first:
+`INT_STS.PCFG_DONE` is a sticky W1C EVENT bit and answers only about the past; and
+`STATUS.PCFG_INIT`, though live, is the INIT_B pin — measured 1 on this board when
+UNCONFIGURED (`0x40000A30`) *and* when configured (`0x40000F30`), so it discriminates
+nothing. What this snapshot leans on instead is the empirical difference between those two
+measured values, recorded as such.
 """
 
 from __future__ import annotations
@@ -80,6 +99,132 @@ PS_SURVEY = [
     (0xF8000530, "PSS_IDCODE"),
 ]
 
+# --- the snapshot: live PS state, read on ONE command line, immediately before the one
+# --- read that can stall. Order is the reviewer's, and it is deliberate.
+#
+# **`INT_STS.PCFG_DONE` cannot answer the question this snapshot exists to ask.** It is a
+# sticky write-1-to-clear EVENT bit: it says "a load completed at some point since the last
+# clear", which is a fact about the past, not about now.
+#
+# **And neither can `PCFG_INIT`** — which is the correction this file was nearly written
+# without. `DEVCFG STATUS` bit 4 is live, but it is the INIT_B pin: U-Boot's own PROG_B
+# sequence (`zynqpl.c`, "wait for INIT to clear" then "wait for INIT to set") uses it to mean
+# *the PL has finished its internal clear and is ready to be configured*. It is 1 whether or
+# not a bitstream is loaded, and this board's own measurements say so: fresh power-on and
+# UNCONFIGURED reads `0x40000A30`, and CONFIGURED reads `0x40000F30` — bit 4 set in both.
+# So PCFG_INIT = 0 is meaningful (the PL is mid-clear, or a configuration CRC failed) while
+# PCFG_INIT = 1 discriminates NOTHING.
+#
+# What did move between those two measured states is bits 8 and 10. This file has no
+# authority for their names — U-Boot's header defines only the four bits it uses — so they
+# are recorded as an EMPIRICAL discriminator against the two reference values, and reported
+# as such. An unnamed bit that demonstrably tracks the state is worth more than a named bit
+# that does not, provided the record says which one it is.
+#
+# Every address below is in the PS. None of them can stall the CPU, unlike anything in the
+# PL window — which is why the whole snapshot is taken before the carrier is touched at all.
+PCFG_INIT = 1 << 4
+FCLK0_GATE_OFF = 1 << 0
+
+# Both measured on board 17A6, both recorded in evidence/isolate_2026_08_12*/record.json.
+STATUS_UNCONFIGURED_REF = 0x40000A30
+STATUS_CONFIGURED_REF = 0x40000F30
+STATUS_CONFIG_BITS = STATUS_UNCONFIGURED_REF ^ STATUS_CONFIGURED_REF   # 0x500 — bits 8, 10
+
+SNAPSHOT = [
+    (0xF8000170, "FPGA0_CLK_CTRL"),
+    (0xF8000178, "FPGA0_THR_CNT"),
+    (0xF8000240, "FPGA_RST_CTRL"),
+    (0xF8000900, "LVL_SHFTR_EN"),
+    (DEVCFG_CTRL, "devcfg CTRL"),
+    (DEVCFG_STATUS, "devcfg STATUS"),      # live PCFG_INIT — the point of the exercise
+    (DEVCFG_INT_STS, "devcfg INT_STS"),    # historical event record only
+]
+
+
+def parse_survey(reply: bytes, addrs: list[int]) -> dict[int, int]:
+    """Pull one word per address out of a reply holding several `md.l` dumps.
+
+    `axi.parse_md` deliberately refuses a buffer whose address column does not run
+    consecutively from one base, which is exactly right for a single `md.l` and exactly
+    wrong here: this buffer holds seven unrelated single-word dumps. So the lines are
+    indexed by their own address column and every requested address must appear exactly
+    once. A duplicate is refused rather than resolved, because the obvious resolutions
+    (first wins, last wins) would silently paper over an echo or a wrapped line.
+    """
+    seen: dict[int, list[int]] = {}
+    for match in axi.MD_LINE_RE.finditer(reply):
+        words = [int(token, 16) for token in match.group(2).split()]
+        seen.setdefault(int(match.group(1), 16), []).extend(words)
+    missing = [a for a in addrs if a not in seen]
+    if missing:
+        raise Stalled(
+            "the snapshot line did not come back complete — no value for "
+            + ", ".join(f"{a:#010x}" for a in missing)
+            + f". Received: {reply[-300:]!r}")
+    duplicated = [a for a in addrs if len(seen[a]) != 1]
+    if duplicated:
+        raise Stalled(
+            "the snapshot line returned more than one value for "
+            + ", ".join(f"{a:#010x}" for a in duplicated)
+            + f". Received: {reply[-300:]!r}")
+    return {a: seen[a][0] for a in addrs}
+
+
+def judge_snapshot(values: dict[int, int]) -> dict:
+    """Say what the live PS state means, and name anything that is not as it must be.
+
+    The judgement is separated from the reading so it can be tested without a board, and so
+    a future run's numbers can be re-judged without re-running the board.
+    """
+    clk_ctrl = values[0xF8000170]
+    thr_cnt = values[0xF8000178]
+    rst_ctrl = values[0xF8000240]
+    lvl = values[0xF8000900]
+    ctrl = values[DEVCFG_CTRL]
+    status = values[DEVCFG_STATUS]
+    int_sts = values[DEVCFG_INT_STS]
+
+    judged = {
+        # Live, but NOT a configured/unconfigured discriminator — see the note above.
+        "pcfg_init": bool(status & PCFG_INIT),
+        # The empirical one. Neither reading is proof; both are better than PCFG_INIT.
+        "status": f"0x{status:08x}",
+        "status_config_bits": f"0x{status & STATUS_CONFIG_BITS:03x} of 0x{STATUS_CONFIG_BITS:03x}",
+        "looks_configured": (status & STATUS_CONFIG_BITS) == STATUS_CONFIG_BITS,
+        "matches_configured_ref": status == STATUS_CONFIGURED_REF,
+        "matches_unconfigured_ref": status == STATUS_UNCONFIGURED_REF,
+        "fclk0_gated_off": bool(thr_cnt & FCLK0_GATE_OFF),
+        "fpga_reset_held": rst_ctrl != 0,
+        "level_shifters_open": lvl == 0xF,
+        "pcap_pr": bool(ctrl & PCAP_PR),
+        "pcfg_done_event": bool(int_sts & PCFG_DONE),
+        "fpga0_clk_ctrl": f"0x{clk_ctrl:08x}",
+    }
+    problems = []
+    if not judged["pcfg_init"]:
+        problems.append(
+            "PCFG_INIT (STATUS bit 4) is 0 — the PL is mid-clear or a configuration CRC "
+            "failed. (A 1 here would have proved nothing either way.)")
+    if judged["matches_unconfigured_ref"]:
+        problems.append(
+            f"devcfg STATUS is 0x{status:08x}, this board's measured UNCONFIGURED value — "
+            "the load did not stick, whatever the sticky PCFG_DONE event bit says")
+    elif not judged["looks_configured"]:
+        problems.append(
+            f"devcfg STATUS is 0x{status:08x}: of the bits that moved between this board's "
+            f"measured unconfigured (0x{STATUS_UNCONFIGURED_REF:08x}) and configured "
+            f"(0x{STATUS_CONFIGURED_REF:08x}) values, only "
+            f"0x{status & STATUS_CONFIG_BITS:03x} is set")
+    if judged["fclk0_gated_off"]:
+        problems.append("FPGA0_THR_CNT bit0 is 1 — FCLK0 is gated OFF, so the slave has no clock")
+    if judged["fpga_reset_held"]:
+        problems.append(f"FPGA_RST_CTRL is 0x{rst_ctrl:08x} — FCLKRESETN is held asserted")
+    if not judged["level_shifters_open"]:
+        problems.append(f"LVL_SHFTR_EN is 0x{lvl:08x}, not 0xF — the PS-PL boundary is not open")
+    judged["problems"] = problems
+    return judged
+
 
 class Stalled(Exception):
     """The console did not come back. Nothing after this means anything."""
@@ -99,7 +244,10 @@ class Probe:
     def cmd(self, line: str, timeout: float = 8.0) -> dict:
         self.serial.reset_input_buffer()
         started = time.time()
-        self.serial.write(line.encode("ascii") + b"\r")
+        # Paced, not a single write: U-Boot echoes with a BLOCKING putc, and while it blocks
+        # on a full TX FIFO it stops draining RX and loses input. The snapshot line is the
+        # longest thing this script sends.
+        bs.write_paced(self.serial, line.encode("ascii") + b"\r")
         buf = b""
         while time.time() - started < timeout:
             waiting = self.serial.in_waiting
@@ -135,6 +283,25 @@ class Probe:
             raise Stalled(f"{what or hex(addr)}: unparseable reply — {refusal}") from None
         entry["value"] = f"0x{value:08x}"
         return value, entry
+
+    def snapshot(self) -> tuple[dict[int, int], dict]:
+        """Every live PS register, in one command line, in one go.
+
+        One line rather than seven commands because U-Boot reads a line to completion before
+        executing any of it: the console cost is paid up front and the seven reads then
+        happen back to back, so they describe one instant rather than seven spread over a
+        second of console traffic.
+        """
+        line = "; ".join(f"md.l 0x{addr:08x} 0x1" for addr, _ in SNAPSHOT)
+        entry = self.cmd(line)
+        entry["what"] = "one-line PS snapshot"
+        if not entry["prompt_returned"]:
+            raise Stalled(
+                "the PS snapshot line did not come back — and no PS register can stall, so "
+                f"this is a console or board fault, not the fabric. Received: {entry['raw']!r}")
+        values = parse_survey(entry["raw"].encode("ascii", "replace"),
+                              [addr for addr, _ in SNAPSHOT])
+        return values, entry
 
     def close(self) -> None:
         self.serial.close()
@@ -204,11 +371,229 @@ def run_tool(argv: list[str], what: str) -> dict:
             "stdout_tail": done.stdout[-1200:], "stderr_tail": done.stderr[-400:]}
 
 
+# The steps the snapshot run leaves OUT, in the order they are added back. Each is a thing
+# the failing calibration did between the load and its first read; the snapshot run did none
+# of them and the carrier answered. So the first of these that stops the carrier answering
+# is the cause, and the order is chosen so that a breakage names a mechanism rather than a
+# tool: a bare console close/reopen comes FIRST, because both tool steps contain one, and if
+# the reopen alone is fatal then the tools are bystanders.
+#
+# "wait" is a control, not a step: if six seconds of nothing breaks it, no step is to blame.
+ADDITIVE_STEPS = [
+    ("wait 6 s on the same console (control — changes nothing)", None),
+    ("close and reopen the console, no tool run", None),
+    ("board_set_fclk50.py --verify-only (read-only, plus a reopen)",
+     ["scripts/board_set_fclk50.py", "--verify-only"]),
+    ("gate_board_identity.py (the calibration's gate, plus a reopen)",
+     ["scripts/gate_board_identity.py"]),
+]
+
+
+def run_additive(args, record: dict) -> int:
+    """Add the omitted steps back one at a time, starting from a carrier that ANSWERS.
+
+    This does not load. It is meant to run immediately after a successful snapshot run,
+    against the state that run left behind, because that state is the whole experiment: a
+    reload costs three and a half minutes and, on this board, is itself a suspect.
+
+    Every step is followed by the same two reads, and the boot marker is checked before each
+    of them — a spontaneous restart clears the PL, and would otherwise be recorded as the
+    step's own doing.
+    """
+    def flush() -> None:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+    marker = args.plmark
+    console_log: list[dict] = []
+    probe = Probe(args.port)
+    try:
+        # The control: it must answer BEFORE anything is added, or the run means nothing.
+        record["baseline"] = read_carrier(probe, "baseline, before any step is added", marker)
+        record["verdict"] = "STOP"    # until a step proves otherwise
+        flush()
+
+        for index, (what, argv) in enumerate(ADDITIVE_STEPS, start=1):
+            step: dict = {"step": f"{index}. {what}"}
+            if index == 1:
+                time.sleep(6)
+            else:
+                console_log.extend(probe.log)
+                probe.log.clear()
+                probe.close()
+                if argv:
+                    step["tool"] = run_tool(
+                        [sys.executable, str(REPO_ROOT / argv[0]), "--port", args.port,
+                         *argv[1:]], f"step {index}: {what}")
+                probe = Probe(args.port)
+            print(f"\n=== after step {index}: {what}")
+            step["carrier"] = read_carrier(probe, f"after step {index}", marker)
+            record["steps"].append(step)
+            flush()
+
+        record["verdict"] = "every added step kept the carrier answering"
+        print("\nEVERY ADDED STEP KEPT THE CARRIER ANSWERING.")
+    except Stalled as stop:
+        record["verdict"] = "STOP"
+        record["stop_reason"] = str(stop)
+        record["broken_by"] = (record["steps"][-1]["step"] if record["steps"]
+                               else "the baseline read — the carrier was already silent")
+        print(f"\nSTOP: {stop}", file=sys.stderr)
+        print(f"  the last step that PASSED was: {record['broken_by']}", file=sys.stderr)
+    finally:
+        try:
+            console_log.extend(probe.log)
+            probe.close()
+        except Exception:                      # noqa: BLE001 - the port may be gone
+            pass
+        record["console_log"] = console_log
+        flush()
+        print(f"  record: {args.out}")
+    return 0 if record["verdict"] != "STOP" else 1
+
+
+def jtag_mem_ap_probe(addr: int) -> dict:
+    """Read one PL word through the DAP instead of the CPU. Only ever run deliberately."""
+    argv = [
+        "openocd", "-f", "/home/test/test_devices/scripts/ebaz4203.cfg",
+        "-c", "adapter speed 500",
+        "-c", "target create zynq.ahb mem_ap -dap zynq.dap -ap-num 0",
+        "-c", "init", "-c", f"zynq.ahb mdw 0x{addr:08x} 1", "-c", "shutdown",
+    ]
+    return run_tool(argv, f"JTAG mem_ap probe of 0x{addr:08x}")
+
+
+def run_snapshot(args, record: dict, carrier: Path) -> int:
+    """Load the carrier, photograph the live PS state, then take the one read that can stall.
+
+    The whole point is the ORDER. Every register in the snapshot is in the PS and none of
+    them can stall, so the picture is complete and already on disk before anything touches
+    the PL window. If the carrier read then stalls, the record still says what the clock,
+    the reset, the level shifters and PCFG_INIT were an instant earlier.
+
+    Nothing else happens in between. No identity gate, no clock verify, no console reopen,
+    no second load, and (unless it is asked for explicitly) no JTAG — because the previous
+    run failed with all of those present and a run that changes several things at once
+    cannot name which one matters.
+    """
+    def flush() -> None:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+
+    # The console log accumulates across the reopen the loader forces: reassigning `probe`
+    # would otherwise drop everything said before the load, which is where the PCFG_DONE
+    # clear is recorded.
+    console_log: list[dict] = []
+
+    probe = Probe(args.port)
+    try:
+        # Bracket the load: clear the sticky event bit and confirm it reads 0, so that a 1
+        # afterwards is this load's edge and not a leftover from the last one.
+        record["steps"].append({"step": "clear PCFG_DONE before the load",
+                                "int_sts": clear_pcfg_done(probe, "before load")})
+        console_log.extend(probe.log)
+        probe.log.clear()      # so the `finally` cannot re-append what is already recorded
+        probe.close()
+
+        record["steps"].append(run_tool(
+            [sys.executable, str(REPO_ROOT / "scripts/board_uboot_fpga_load.py"),
+             "--port", args.port, "--bit", str(carrier), "--op", "loadb"],
+            "fpga loadb of the published carrier"))
+        if record["steps"][-1]["returncode"] != 0:
+            raise Stalled("the load failed; nothing after it would mean anything")
+        found = re.search(r"\[plmark\] ([0-9a-f]+)", record["steps"][-1]["stdout_tail"])
+        marker = found.group(1) if found else None
+        record["plmark"] = marker
+        flush()
+
+        if args.jtag_probe_after_load:
+            record["steps"].append(jtag_mem_ap_probe(axi.STATUS))
+            flush()
+
+        # From here to the end is ONE console session, with nothing between the snapshot and
+        # the read it exists to interpret.
+        probe = Probe(args.port)
+
+        if marker:
+            entry = probe.cmd("printenv plmark")
+            record["same_boot"] = {
+                "expected": marker,
+                "prompt_returned": entry["prompt_returned"],
+                "matched": f"plmark={marker}" in entry["raw"],
+            }
+            if not record["same_boot"]["matched"]:
+                raise Stalled(
+                    f"the board restarted since the load — plmark is no longer {marker} "
+                    f"({entry['raw'].strip()!r}). The PL is cleared; this is a restart, not "
+                    "a carrier fault.")
+
+        values, entry = probe.snapshot()
+        judged = judge_snapshot(values)
+        record["snapshot"] = {
+            "command": entry["command"],
+            "elapsed_s": entry["elapsed_s"],
+            "registers": {f"{addr:#010x}": {"name": name, "value": f"0x{values[addr]:08x}"}
+                          for addr, name in SNAPSHOT},
+            "judged": judged,
+        }
+        print("\n--- live PS state, one line, immediately before the carrier read")
+        for addr, name in SNAPSHOT:
+            print(f"    {addr:#010x} {name:16s} 0x{values[addr]:08x}")
+        print(f"    looks_configured={int(judged['looks_configured'])} "
+              f"(STATUS bits {judged['status_config_bits']}, empirical)  "
+              f"PCFG_INIT={int(judged['pcfg_init'])} (live, but discriminates nothing)  "
+              f"PCFG_DONE_event={int(judged['pcfg_done_event'])} (sticky, historical)")
+        print(f"    FCLK0_gated_off={int(judged['fclk0_gated_off'])}  "
+              f"reset_held={int(judged['fpga_reset_held'])}  "
+              f"lvl_shftr_open={int(judged['level_shifters_open'])}  "
+              f"PCAP_PR={int(judged['pcap_pr'])}")
+        for problem in judged["problems"]:
+            print(f"    ANOMALY: {problem}")
+        flush()          # requirement: the snapshot survives a stall on the next line
+
+        if not judged["pcfg_done_event"]:
+            raise Stalled(
+                "PCFG_DONE was cleared before the load and is still 0, so this load produced "
+                "no completion event at all — the carrier read is not worth taking")
+
+        record["steps"].append({"step": "read carrier STATUS (the one read that can stall)",
+                                "carrier": read_carrier(probe, "after the snapshot")})
+        record["verdict"] = "the carrier ANSWERED after a direct load + snapshot"
+        print("\nTHE CARRIER ANSWERED. Next: add identity, FCLK verify and a console reopen "
+              "back one at a time, and the first one that breaks it is the cause.")
+    except Stalled as stop:
+        record["verdict"] = "STOP"
+        record["stop_reason"] = str(stop)
+        print(f"\nSTOP: {stop}", file=sys.stderr)
+    finally:
+        try:
+            console_log.extend(probe.log)
+            probe.close()
+        except Exception:                      # noqa: BLE001 - the port may be gone
+            pass
+        record["console_log"] = console_log
+        flush()
+        print(f"  record: {args.out}")
+    return 0 if record["verdict"] != "STOP" else 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--run-dir", type=Path, default=DEFAULT_RUN)
     ap.add_argument("--port", default=bs.PORT)
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--plmark", help="the boot nonce the snapshot run's load printed; "
+                                     "required by --mode additive, which does not load")
+    ap.add_argument("--mode", choices=("ladder", "snapshot", "additive"), default="ladder",
+                    help="ladder: the full step-at-a-time sequence. snapshot: load, "
+                         "photograph the live PS state on one line, then the single read "
+                         "that can stall — and nothing else. additive: do not load; start "
+                         "from a carrier that already answers and add the omitted steps "
+                         "back one at a time (needs --plmark).")
+    ap.add_argument("--jtag-probe-after-load", action="store_true",
+                    help="insert a JTAG mem_ap read between the load and the snapshot. This "
+                         "is the ONLY intended difference between the first snapshot run "
+                         "and its repeat; leave it off for the first.")
     args = ap.parse_args()
 
     carrier = args.run_dir / "carrier.bit"
@@ -220,6 +605,8 @@ def main() -> int:
     record: dict = {
         "tool": TOOL_VERSION,
         "what": "isolate the step that stops the carrier answering",
+        "mode": args.mode,
+        "jtag_probe_after_load": args.jtag_probe_after_load,
         "started_at": time.time(),
         "run_dir": args.run_dir.name,
         "carrier_sha256": digest,
@@ -233,6 +620,18 @@ def main() -> int:
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
         return 1
+
+    if args.mode == "snapshot":
+        return run_snapshot(args, record, carrier)
+
+    if args.mode == "additive":
+        if not args.plmark:
+            print("--mode additive needs --plmark: it does not load, so it cannot learn the "
+                  "boot nonce itself, and without it a restart would be recorded as a step's "
+                  "own doing.", file=sys.stderr)
+            return 2
+        record["plmark"] = args.plmark
+        return run_additive(args, record)
 
     probe = Probe(args.port)
     try:
