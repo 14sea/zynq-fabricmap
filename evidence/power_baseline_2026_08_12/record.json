@@ -1,0 +1,58 @@
+{
+  "tool": "board_listen_passive.py/1.0.0",
+  "what": "passive supply baseline: receive only, zero transmit",
+  "port": "/dev/ebaz-uart",
+  "planned_minutes": 30.0,
+  "transmit": "none \u2014 this tool has no write path at all",
+  "board_touched": "no: no bytes sent, no power change, no JTAG, no reset line driven",
+  "caveat_dtr_rts": "opening the port asserts DTR/RTS. On this board both were tested with the port open and neither does anything, but the reopen times are recorded so any correlation stays visible.",
+  "events": [
+    {
+      "kind": "listening",
+      "wall": "2026-08-12T15:57:26.122+01:00",
+      "mono": 2707.327,
+      "resolves_to": "/dev/ttyUSB4"
+    },
+    {
+      "kind": "finished",
+      "wall": "2026-08-12T16:27:26.302+01:00",
+      "mono": 4507.507,
+      "planned_minutes": 30.0
+    }
+  ],
+  "chunks": [],
+  "started": {
+    "wall": "2026-08-12T15:57:26.119+01:00",
+    "mono": 2707.323
+  },
+  "listener_at_start": {
+    "what": "at the start",
+    "wall": "2026-08-12T15:57:26.122+01:00",
+    "mono": 2707.327,
+    "port": "/dev/ebaz-uart",
+    "resolves_to": "/dev/ttyUSB4",
+    "port_exists": true,
+    "device_node_exists": true,
+    "is_open": true,
+    "baudrate": 115200
+  },
+  "listener_at_end": {
+    "what": "at the end",
+    "wall": "2026-08-12T16:27:26.302+01:00",
+    "mono": 4507.507,
+    "port": "/dev/ebaz-uart",
+    "resolves_to": "/dev/ttyUSB4",
+    "port_exists": true,
+    "device_node_exists": true,
+    "is_open": true,
+    "baudrate": 115200
+  },
+  "bytes_received": 0,
+  "raw_b64": "",
+  "restarts": [],
+  "restart_count": 0,
+  "uboot_banner_count": 0,
+  "elapsed_s": 1800.2,
+  "disconnect_count": 0,
+  "restart_intervals_s": []
+}
