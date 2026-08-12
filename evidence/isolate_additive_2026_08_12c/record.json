@@ -1,0 +1,308 @@
+{
+  "tool": "board_isolate_carrier.py/1.0.0",
+  "what": "isolate the step that stops the carrier answering",
+  "mode": "additive",
+  "jtag_probe_after_load": false,
+  "started_at": 1786554796.9001915,
+  "run_dir": "claimb_round1_carrier_2026_08_11_erratum002",
+  "carrier_sha256": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "carrier_sha256_pinned": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "steps": [
+    {
+      "step": "1. wait 6 s on the same console (control \u2014 changes nothing)",
+      "carrier": {
+        "status": "0x00000080",
+        "fault": "0x00000000",
+        "decoded": {
+          "busy": 0,
+          "fault": 0,
+          "configuration_valid": 0,
+          "scorer_busy": 0,
+          "scorer_done": 0,
+          "scorer_armed": 0,
+          "pass1_complete": 0,
+          "recovery_required": 1,
+          "expect_env": 0,
+          "rb_frame_ready": 0,
+          "env_committed": 0,
+          "rb_frames_ok": 0,
+          "reserved": 0
+        },
+        "elapsed_s": 0.011
+      }
+    },
+    {
+      "step": "2. close and reopen the console, no tool run",
+      "carrier": {
+        "status": "0x00000080",
+        "fault": "0x00000000",
+        "decoded": {
+          "busy": 0,
+          "fault": 0,
+          "configuration_valid": 0,
+          "scorer_busy": 0,
+          "scorer_done": 0,
+          "scorer_armed": 0,
+          "pass1_complete": 0,
+          "recovery_required": 1,
+          "expect_env": 0,
+          "rb_frame_ready": 0,
+          "env_committed": 0,
+          "rb_frames_ok": 0,
+          "reserved": 0
+        },
+        "elapsed_s": 0.011
+      }
+    },
+    {
+      "step": "3. board_set_fclk50.py --verify-only (read-only, plus a reopen)",
+      "tool": {
+        "what": "step 3: board_set_fclk50.py --verify-only (read-only, plus a reopen)",
+        "argv": [
+          "/home/test/zynq_fabricmap/scripts/board_set_fclk50.py",
+          "--port",
+          "/dev/ebaz-uart",
+          "--verify-only"
+        ],
+        "returncode": 0,
+        "elapsed_s": 0.7,
+        "stdout_tail": "before FPGA0_CLK_CTRL=0x00400800 -> 1600.0/8/4 = 50.00 MHz\nafter  FPGA0_CLK_CTRL=0x00400800 -> 1600.0/8/4 = 50.00 MHz\nPASS: FCLK0 pinned to 50.0 MHz\n",
+        "stderr_tail": ""
+      },
+      "carrier": {
+        "status": "0x00000080",
+        "fault": "0x00000000",
+        "decoded": {
+          "busy": 0,
+          "fault": 0,
+          "configuration_valid": 0,
+          "scorer_busy": 0,
+          "scorer_done": 0,
+          "scorer_armed": 0,
+          "pass1_complete": 0,
+          "recovery_required": 1,
+          "expect_env": 0,
+          "rb_frame_ready": 0,
+          "env_committed": 0,
+          "rb_frames_ok": 0,
+          "reserved": 0
+        },
+        "elapsed_s": 0.01
+      }
+    },
+    {
+      "step": "4. gate_board_identity.py (the calibration's gate, plus a reopen)",
+      "tool": {
+        "what": "step 4: gate_board_identity.py (the calibration's gate, plus a reopen)",
+        "argv": [
+          "/home/test/zynq_fabricmap/scripts/gate_board_identity.py",
+          "--port",
+          "/dev/ebaz-uart"
+        ],
+        "returncode": 0,
+        "elapsed_s": 0.9,
+        "stdout_tail": "BOARD ACCEPTED  boardid=17A6 role=verify idcode=0x13722093 fclk0=50.0 MHz\n  session: /dev/ttyUSB4 (188:4)\n  this gate is the host half; the board-side FAR/FDRI guard refuses independently\n",
+        "stderr_tail": ""
+      },
+      "carrier": {
+        "status": "0x00000080",
+        "fault": "0x00000000",
+        "decoded": {
+          "busy": 0,
+          "fault": 0,
+          "configuration_valid": 0,
+          "scorer_busy": 0,
+          "scorer_done": 0,
+          "scorer_armed": 0,
+          "pass1_complete": 0,
+          "recovery_required": 1,
+          "expect_env": 0,
+          "rb_frame_ready": 0,
+          "env_committed": 0,
+          "rb_frames_ok": 0,
+          "reserved": 0
+        },
+        "elapsed_s": 0.012
+      }
+    }
+  ],
+  "plmark": "18cb1c99e110be38",
+  "baseline": {
+    "status": "0x00000080",
+    "fault": "0x00000000",
+    "decoded": {
+      "busy": 0,
+      "fault": 0,
+      "configuration_valid": 0,
+      "scorer_busy": 0,
+      "scorer_done": 0,
+      "scorer_armed": 0,
+      "pass1_complete": 0,
+      "recovery_required": 1,
+      "expect_env": 0,
+      "rb_frame_ready": 0,
+      "env_committed": 0,
+      "rb_frames_ok": 0,
+      "reserved": 0
+    },
+    "elapsed_s": 0.012
+  },
+  "verdict": "every added step kept the carrier answering",
+  "console_log": [
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.009,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false
+    },
+    {
+      "command": "md.l 0x43c02004 0x1",
+      "elapsed_s": 0.012,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02004 0x1\r\n43c02004: 00000080                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "carrier STATUS (baseline, before any step is added)",
+      "value": "0x00000080"
+    },
+    {
+      "command": "md.l 0x43c02008 0x1",
+      "elapsed_s": 0.012,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02008 0x1\r\n43c02008: 00000000                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "carrier FAULT (baseline, before any step is added)",
+      "value": "0x00000000"
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.009,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false
+    },
+    {
+      "command": "md.l 0x43c02004 0x1",
+      "elapsed_s": 0.011,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02004 0x1\r\n43c02004: 00000080                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "carrier STATUS (after step 1)",
+      "value": "0x00000080"
+    },
+    {
+      "command": "md.l 0x43c02008 0x1",
+      "elapsed_s": 0.011,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02008 0x1\r\n43c02008: 00000000                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "carrier FAULT (after step 1)",
+      "value": "0x00000000"
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false
+    },
+    {
+      "command": "md.l 0x43c02004 0x1",
+      "elapsed_s": 0.011,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02004 0x1\r\n43c02004: 00000080                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "carrier STATUS (after step 2)",
+      "value": "0x00000080"
+    },
+    {
+      "command": "md.l 0x43c02008 0x1",
+      "elapsed_s": 0.011,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02008 0x1\r\n43c02008: 00000000                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "carrier FAULT (after step 2)",
+      "value": "0x00000000"
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.008,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false
+    },
+    {
+      "command": "md.l 0x43c02004 0x1",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02004 0x1\r\n43c02004: 00000080                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "carrier STATUS (after step 3)",
+      "value": "0x00000080"
+    },
+    {
+      "command": "md.l 0x43c02008 0x1",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02008 0x1\r\n43c02008: 00000000                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "carrier FAULT (after step 3)",
+      "value": "0x00000000"
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.009,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false
+    },
+    {
+      "command": "md.l 0x43c02004 0x1",
+      "elapsed_s": 0.012,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02004 0x1\r\n43c02004: 00000080                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "carrier STATUS (after step 4)",
+      "value": "0x00000080"
+    },
+    {
+      "command": "md.l 0x43c02008 0x1",
+      "elapsed_s": 0.012,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02008 0x1\r\n43c02008: 00000000                             ....\r\nZynq> ",
+      "pending_before": "",
+      "pending_was_an_abort": false,
+      "what": "carrier FAULT (after step 4)",
+      "value": "0x00000000"
+    }
+  ]
+}
