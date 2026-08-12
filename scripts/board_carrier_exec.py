@@ -63,7 +63,7 @@ TOOL_VERSION = "board_carrier_exec.py/2.0.0"
 # the manifest that described it must not be usable as an authority. Superseding it is a
 # source edit in a diff, which is the whole point of pinning it here.
 PRODUCTION_MANIFEST_SHA256 = (
-    "82990522a381119131821dd803b6c937c9317f57191c02f8ad41a0b300a8b618"
+    "44312a51355c630c8afb1db18e34aead09220f657d13f55390e72bbb85f7ac23"
 )
 
 
