@@ -23,6 +23,15 @@ BAUD = int(os.environ.get("AUTOEHW_BAUD", "115200"))
 # 4205 vendor U-Boot | 4203 mainline U-Boot
 PROMPT_RE = re.compile(rb"(?:zynq-uboot|Zynq)>")
 
+# A reply can contain a prompt and still be a disaster: if the board reset mid-command it
+# reboots and offers a FRESH prompt, which is byte-identical to the one this command should
+# have produced. That fooled the instrument twice — once as a "spontaneous restart", once as
+# a pass-1 envelope that "returned a prompt" while the board was rebooting inside it. So a
+# boot banner is searched for BEFORE any prompt is believed.
+BOOT_BANNER_RE = re.compile(
+    rb"U-Boot SPL|\r?\nU-Boot \d|Trying to boot from|Model: Ebang|"
+    rb"Loading Environment from FAT|No ethernet found")
+
 MD_RE = re.compile(rb"^[0-9a-fA-F]{8}:\s+([0-9a-fA-F]{8})", re.MULTILINE)
 
 

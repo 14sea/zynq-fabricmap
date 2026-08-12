@@ -388,7 +388,10 @@ class TheRefusals(unittest.TestCase):
     def test_a_console_that_does_not_return_a_prompt(self) -> None:
         message = self.refuses(FakeBoard(swallow_prompt=True),
                                contains="did not answer at all")
-        self.assertIn("Received:", message, "the received bytes are the evidence")
+        # "(complete)" because a 400-character tail once lost a `data abort` message
+        # from the one record that needed it.
+        self.assertIn("Received (complete):", message,
+                      "the received bytes, all of them, are the evidence")
 
     def test_a_cpu_exception_is_not_reported_as_silence(self) -> None:
         """A data abort and a stalled CPU both end with no prompt, and they mean opposite

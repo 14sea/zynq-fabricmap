@@ -296,10 +296,14 @@ class Probe:
                     break
             else:
                 time.sleep(0.001)
+        rebooted = bool(bs.BOOT_BANNER_RE.search(buf))
         entry = {
             "command": line,
             "elapsed_s": round(time.time() - started, 3),
-            "prompt_returned": bool(bs.PROMPT_RE.search(buf)),
+            # A rebooted board offers a prompt indistinguishable from a good one, so the
+            # banner decides first and `prompt_returned` is only meaningful without it.
+            "rebooted": rebooted,
+            "prompt_returned": bool(bs.PROMPT_RE.search(buf)) and not rebooted,
             "exception": bool(axi.ABORT_RE.search(buf)),
             "raw": buf.decode("ascii", "replace"),
             "pending_before": pending.decode("ascii", "replace"),

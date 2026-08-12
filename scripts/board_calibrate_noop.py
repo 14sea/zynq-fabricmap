@@ -50,7 +50,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import bitstream_frames as bf  # noqa: E402
+import base64  # noqa: E402
 import board_carrier_exec as ex  # noqa: E402
+import board_serial as bs  # noqa: E402
 import board_uboot_axi as axi  # noqa: E402
 import gate_board_identity as ident  # noqa: E402
 import run_log  # noqa: E402
@@ -141,8 +143,16 @@ class InstrumentedTransport:
             raise
         entry["end_s"] = round(time.monotonic() - self.started, 4)
         entry["elapsed_s"] = round(entry["end_s"] - entry["start_s"], 4)
-        entry["raw"] = reply.decode("ascii", "replace")[-400:]
-        entry["prompt_returned"] = bool(axi.PROMPT_RE.search(reply))
+        rebooted = bool(bs.BOOT_BANNER_RE.search(reply))
+        entry["rebooted"] = rebooted
+        entry["prompt_returned"] = bool(axi.PROMPT_RE.search(reply)) and not rebooted
+        # The whole reply, whenever anything is odd. Truncating to a 400-character tail is
+        # how a `data abort` message went missing from the one record that needed it.
+        entry["raw"] = reply.decode("ascii", "replace")
+        if entry["prompt_returned"] and not rebooted:
+            entry["raw"] = entry["raw"][-400:]
+        else:
+            entry["raw_b64"] = base64.b64encode(reply).decode()
         return reply
 
     def __getattr__(self, name):

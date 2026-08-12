@@ -83,7 +83,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 
 import board_carrier_guard as guard  # noqa: E402
-from board_serial import PROMPT_RE  # noqa: E402
+from board_serial import BOOT_BANNER_RE, PROMPT_RE  # noqa: E402
 
 TOOL_VERSION = "board_uboot_axi.py/1.0.0"
 
@@ -350,20 +350,31 @@ def command(transport, line: str, timeout: float) -> bytes:
             f"the command line is {len(line)} characters; U-Boot's CBSIZE is 2048 on this "
             "build and a truncated line would execute its first half")
     reply = transport.command(line, timeout)
-    if PROMPT_RE.search(reply):
-        return reply
-    tail = reply[-400:]
+    # ORDER MATTERS, and it is the order two investigations got wrong. A rebooted board hands
+    # back a prompt that is indistinguishable from a good one, so the banner is checked
+    # first; an abort also prints a prompt-free dump that must not be mistaken for silence.
+    if BOOT_BANNER_RE.search(reply):
+        raise AxiRefusal(
+            f"the board REBOOTED during `{line[:60]}…` — the reply carries a U-Boot banner, "
+            "so any prompt in it belongs to a different boot and the PL has been cleared. "
+            "This is not a stall and not a refusal by the design: something in this command "
+            f"reset the CPU. Full reply: {reply!r}")
+    # The COMPLETE reply from here on. A 400-character tail is how the `data abort` message
+    # went missing from the one record that needed it.
     if ABORT_RE.search(reply):
         raise AxiRefusal(
             f"`{line[:60]}…` took a CPU exception. **The fabric ANSWERED** — an abort is an "
             "AXI error response reaching the CPU, not a bus that failed to reply — so this "
             "is a slave saying no, not a slave that is absent or unclocked. U-Boot does not "
-            f"return from it; the board needs a power cycle. Received: {tail!r}")
+            f"return from it; the board needs a power cycle. Received (complete): {reply!r}")
+    # Only a reply that is neither a reboot nor an abort may be believed.
+    if PROMPT_RE.search(reply):
+        return reply
     raise AxiRefusal(
         f"no prompt within {timeout}s of `{line[:60]}…` and no exception either — the fabric "
         "did not answer at all. Send Ctrl-C to break a spinning wait loop; if that does not "
         "return a prompt the CPU is stalled on the AXI bus and the board needs a power "
-        f"cycle. Received: {tail!r}")
+        f"cycle. Received (complete): {reply!r}")
 
 
 def same_boot(transport, marker: str) -> None:
