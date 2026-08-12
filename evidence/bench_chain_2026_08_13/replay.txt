@@ -1,0 +1,32 @@
+
+--- A: single beats, no gap
+    STATUS after begin_txn = 0x00000080
+    engine FAULT first seen at stream word 15: code=2 pos=15
+    FIRST DEVIATION at stream word 16: BRESP=10 phase=0 fault=1 code=2 pos=15 stream_open=0
+    DEVIATION SUMMARY: first bad beat 16, BRESP=10, phase=0, fault=1 code=2, pos=15
+    READING 2: 16 beats were accepted first -- look for the engine's first fault (validator, CRC, timeout, byte count).
+
+--- B: single beats, W stalled 2 cycles
+    STATUS after begin_txn = 0x00000080
+    engine FAULT first seen at stream word 15: code=2 pos=15
+    FIRST DEVIATION at stream word 16: BRESP=10 phase=0 fault=1 code=2 pos=15 stream_open=0
+    DEVIATION SUMMARY: first bad beat 16, BRESP=10, phase=0, fault=1 code=2, pos=15
+    READING 2: 16 beats were accepted first -- look for the engine's first fault (validator, CRC, timeout, byte count).
+
+--- C: single beats, B accepted late (backpressure)
+    STATUS after begin_txn = 0x00000080
+    engine FAULT first seen at stream word 15: code=2 pos=15
+    FIRST DEVIATION at stream word 16: BRESP=10 phase=0 fault=1 code=2 pos=15 stream_open=0
+    DEVIATION SUMMARY: first bad beat 16, BRESP=10, phase=0, fault=1 code=2, pos=15
+    READING 2: 16 beats were accepted first -- look for the engine's first fault (validator, CRC, timeout, byte count).
+
+--- D: 16-beat INCR bursts
+    STATUS after begin_txn = 0x00000080
+    engine FAULT first seen at stream word 0: code=2 pos=15
+    FIRST DEVIATION at stream word 16: BRESP=10 phase=0 fault=1 code=2 pos=15 stream_open=0
+    DEVIATION SUMMARY: first bad beat 16, BRESP=10, phase=0, fault=1 code=2, pos=15
+    READING 2: 16 beats were accepted first -- look for the engine's first fault (validator, CRC, timeout, byte count).
+
+=== chain replay complete: 1608 beats driven, 0 control errors
+READING 3 applies only if every scenario said NO DEVIATION: the simulation did not reproduce the board's refusal, and the next step is to compare the AXI transaction shape U-Boot's cp.l actually emits.
+tb_carrier_chain.v:407: $finish called at 174736000 (1ps)

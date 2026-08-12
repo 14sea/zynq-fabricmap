@@ -1,0 +1,41 @@
+{
+  "tool": "tb_carrier_chain.v (iverilog)",
+  "what": "replay the exact begin -> STATUS -> pass1 -> real 536-word envelope through the real chain",
+  "chain": "carrier_axi3_lite -> carrier_axil -> carrier_stream (+carrier_crc32); ICAPE2 omitted, pass 1 never asserts CSIB",
+  "dut_modified": "no \u2014 the RTL is replayed exactly as published",
+  "master": "written independently from the AXI3 spec; borrows no handshake assumption from the shim",
+  "envelope": {
+    "source": "envelope 0 of the sealed no-op payload",
+    "payload_sha256": "07fbca9e93f0066a7873607b9a79ad89521e37a8853ef92ec88256dac4fdb9c6",
+    "words": 536,
+    "hex_sha256": "dc03a565d9ef52fb69dd599b86c1f0e7ca82795cdfa750daae7cd4d811aa3866"
+  },
+  "scenarios": [
+    "single beats no gap",
+    "single beats W stalled 2",
+    "single beats B late (backpressure)",
+    "16-beat INCR bursts"
+  ],
+  "result": "REPRODUCED in all four, identically",
+  "reading": 2,
+  "first_deviation": {
+    "accepted_beats": 16,
+    "first_slverr_beat": 16,
+    "bresp": "0b10 SLVERR",
+    "phase_at_deviation": "0 (P_IDLE)",
+    "stream_open": 0,
+    "fault": 1,
+    "fault_code": 2,
+    "fault_code_name": "F_CONTROL",
+    "pos": 15
+  },
+  "root_disagreement": {
+    "envelope_word_15": "0x03722093",
+    "rtl_expects": "IDCODE parameter = 0x13722093 (carrier_stream.v:41, ROM index 15)",
+    "host_source": "manifest base_bitstream.idcode = 0x03722093, read from the carrier bitstream",
+    "differs_in": "bit 28",
+    "why_no_test_caught_it": "tb_carrier_stream.v:112 hardcodes env_words[15] = 32h13722093, so the bench built its envelope to match the RTL rather than to match what the host emits; the host gate judges frame content, not the control skeleton"
+  },
+  "note_on_bursts": "AXI3 returns ONE BRESP per burst, so scenario D attributes the response to the burst first beat and claims no per-beat resolution",
+  "not_done": "no DUT change, no Vivado, no artifact re-publication, no board time"
+}
