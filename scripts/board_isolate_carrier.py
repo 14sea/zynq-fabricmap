@@ -233,12 +233,39 @@ class Stalled(Exception):
 class Probe:
     """One open console, every exchange recorded."""
 
-    def __init__(self, port: str):
+    def __init__(self, port: str, *, send_cr: bool = True, purge: bool = True):
+        """Open the console the way production does. Both flags exist only to be varied.
+
+        The settle used to be a bare `reset_input_buffer()`, which DISCARDS whatever arrived
+        in the first 0.4 s — and what arrives there is precisely a boot banner, if the board
+        restarted at the reopen. An instrument that throws away the evidence for the thing it
+        is investigating is the failure this project keeps meeting, so the bytes are now KEPT
+        in `discarded_on_open`.
+
+        **Keeping them is not a substitute for the flush.** `reset_input_buffer()` is
+        `tcflush(TCIFLUSH)` — a PURGE issued to the tty layer and the USB-serial driver —
+        while a read merely moves bytes. The buffer ends up empty either way, but the driver
+        operation is not the same one, and the purge is itself a candidate trigger for the
+        restarts. So the read is done FIRST and the purge still happens by default: the
+        historical path is preserved and the evidence is preserved with it. `purge=False`
+        exists so the two can be told apart.
+
+        Residual caveat, unmeasured: a purge with an already-drained buffer may not be
+        identical to a purge with bytes in it.
+
+        `send_cr` is NOT inert. U-Boot treats a bare CR as "repeat the last command", so the
+        CR re-executes whatever was last sent — which on a production path is usually an AXI
+        read of the carrier. Measured 2026-08-12: after a reopen with CR, the console
+        returned the previous `printenv plmark`'s output unbidden.
+        """
         self.port = port
         self.serial = serial.Serial(port, 115200, timeout=0)
-        self.serial.write(b"\r")
+        if send_cr:
+            self.serial.write(b"\r")
         time.sleep(0.4)
-        self.serial.reset_input_buffer()
+        self.discarded_on_open = self.serial.read(self.serial.in_waiting)
+        if purge:
+            self.serial.reset_input_buffer()
         self.log: list[dict] = []
 
     def cmd(self, line: str, timeout: float = 8.0) -> dict:

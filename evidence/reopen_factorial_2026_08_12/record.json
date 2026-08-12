@@ -1,0 +1,677 @@
+{
+  "tool": "board_probe_reopen_factorial.py/1.0.0",
+  "what": "which half of a console reopen is associated with the restart",
+  "conditions": [
+    {
+      "name": "A",
+      "gap_s": 30.0,
+      "sends_cr": false
+    },
+    {
+      "name": "B",
+      "gap_s": 0.0,
+      "sends_cr": false
+    },
+    {
+      "name": "C",
+      "gap_s": 30.0,
+      "sends_cr": true
+    },
+    {
+      "name": "D",
+      "gap_s": 0.0,
+      "sends_cr": true
+    }
+  ],
+  "order": "A, B, C, D \u2014 D is production and goes last because a restart ends the run",
+  "interpretation": {
+    "A": "the Probe path differs from the A/B Console in a way not listed in this experiment",
+    "B": "a short close->open gap alone is sufficient",
+    "C": "the CR / Probe-open path alone is sufficient",
+    "D": "supports an interaction between the short gap and the CR, and only that"
+  },
+  "not_done": "no carrier AXI after the baseline, no calibration, no JTAG, no reload",
+  "carrier_sha256": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "carrier_sha256_pinned": "7c6bba90c63833552859d7d5374375ef5da4da1bae4ca68d31872e64e6a96bc6",
+  "trials_per_condition": 5,
+  "started": {
+    "wall": "2026-08-12T17:42:03.095+01:00",
+    "mono": 8984.3
+  },
+  "trials": [
+    {
+      "condition": "A",
+      "attempt": 1,
+      "gap_planned_s": 30.0,
+      "sends_cr": false,
+      "started": {
+        "wall": "2026-08-12T17:45:25.170+01:00",
+        "mono": 9186.375
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 30.417,
+      "collected_b64": "",
+      "bytes_collected": 0,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:45:57.633+01:00",
+        "mono": 9218.837
+      }
+    },
+    {
+      "condition": "A",
+      "attempt": 2,
+      "gap_planned_s": 30.0,
+      "sends_cr": false,
+      "started": {
+        "wall": "2026-08-12T17:45:57.633+01:00",
+        "mono": 9218.838
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 30.413,
+      "collected_b64": "",
+      "bytes_collected": 0,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:46:30.091+01:00",
+        "mono": 9251.296
+      }
+    },
+    {
+      "condition": "A",
+      "attempt": 3,
+      "gap_planned_s": 30.0,
+      "sends_cr": false,
+      "started": {
+        "wall": "2026-08-12T17:46:30.092+01:00",
+        "mono": 9251.297
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 30.413,
+      "collected_b64": "",
+      "bytes_collected": 0,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:47:02.544+01:00",
+        "mono": 9283.749
+      }
+    },
+    {
+      "condition": "A",
+      "attempt": 4,
+      "gap_planned_s": 30.0,
+      "sends_cr": false,
+      "started": {
+        "wall": "2026-08-12T17:47:02.545+01:00",
+        "mono": 9283.75
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 30.414,
+      "collected_b64": "",
+      "bytes_collected": 0,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:47:35.005+01:00",
+        "mono": 9316.209
+      }
+    },
+    {
+      "condition": "A",
+      "attempt": 5,
+      "gap_planned_s": 30.0,
+      "sends_cr": false,
+      "started": {
+        "wall": "2026-08-12T17:47:35.006+01:00",
+        "mono": 9316.211
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 30.417,
+      "collected_b64": "",
+      "bytes_collected": 0,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:48:07.459+01:00",
+        "mono": 9348.664
+      }
+    },
+    {
+      "condition": "B",
+      "attempt": 1,
+      "gap_planned_s": 0.0,
+      "sends_cr": false,
+      "started": {
+        "wall": "2026-08-12T17:48:07.461+01:00",
+        "mono": 9348.665
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 0.408,
+      "collected_b64": "",
+      "bytes_collected": 0,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:48:09.908+01:00",
+        "mono": 9351.112
+      }
+    },
+    {
+      "condition": "B",
+      "attempt": 2,
+      "gap_planned_s": 0.0,
+      "sends_cr": false,
+      "started": {
+        "wall": "2026-08-12T17:48:09.909+01:00",
+        "mono": 9351.113
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 0.407,
+      "collected_b64": "",
+      "bytes_collected": 0,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:48:12.354+01:00",
+        "mono": 9353.558
+      }
+    },
+    {
+      "condition": "B",
+      "attempt": 3,
+      "gap_planned_s": 0.0,
+      "sends_cr": false,
+      "started": {
+        "wall": "2026-08-12T17:48:12.354+01:00",
+        "mono": 9353.559
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 0.404,
+      "collected_b64": "",
+      "bytes_collected": 0,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:48:14.795+01:00",
+        "mono": 9355.999
+      }
+    },
+    {
+      "condition": "B",
+      "attempt": 4,
+      "gap_planned_s": 0.0,
+      "sends_cr": false,
+      "started": {
+        "wall": "2026-08-12T17:48:14.796+01:00",
+        "mono": 9356.001
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 0.408,
+      "collected_b64": "",
+      "bytes_collected": 0,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:48:17.241+01:00",
+        "mono": 9358.446
+      }
+    },
+    {
+      "condition": "B",
+      "attempt": 5,
+      "gap_planned_s": 0.0,
+      "sends_cr": false,
+      "started": {
+        "wall": "2026-08-12T17:48:17.242+01:00",
+        "mono": 9358.447
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 0.408,
+      "collected_b64": "",
+      "bytes_collected": 0,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:48:19.688+01:00",
+        "mono": 9360.893
+      }
+    },
+    {
+      "condition": "C",
+      "attempt": 1,
+      "gap_planned_s": 30.0,
+      "sends_cr": true,
+      "started": {
+        "wall": "2026-08-12T17:48:19.690+01:00",
+        "mono": 9360.895
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 30.415,
+      "collected_b64": "DQpwbG1hcms9MThjYjFjOTllMTEwYmUzOA0KWnlucT4g",
+      "bytes_collected": 33,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:48:52.142+01:00",
+        "mono": 9393.347
+      }
+    },
+    {
+      "condition": "C",
+      "attempt": 2,
+      "gap_planned_s": 30.0,
+      "sends_cr": true,
+      "started": {
+        "wall": "2026-08-12T17:48:52.144+01:00",
+        "mono": 9393.348
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 30.413,
+      "collected_b64": "DQpwbG1hcms9MThjYjFjOTllMTEwYmUzOA0KWnlucT4g",
+      "bytes_collected": 33,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:49:24.591+01:00",
+        "mono": 9425.795
+      }
+    },
+    {
+      "condition": "C",
+      "attempt": 3,
+      "gap_planned_s": 30.0,
+      "sends_cr": true,
+      "started": {
+        "wall": "2026-08-12T17:49:24.592+01:00",
+        "mono": 9425.797
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 30.413,
+      "collected_b64": "DQpwbG1hcms9MThjYjFjOTllMTEwYmUzOA0KWnlucT4g",
+      "bytes_collected": 33,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:49:57.039+01:00",
+        "mono": 9458.244
+      }
+    },
+    {
+      "condition": "C",
+      "attempt": 4,
+      "gap_planned_s": 30.0,
+      "sends_cr": true,
+      "started": {
+        "wall": "2026-08-12T17:49:57.041+01:00",
+        "mono": 9458.246
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 30.413,
+      "collected_b64": "DQpwbG1hcms9MThjYjFjOTllMTEwYmUzOA0KWnlucT4g",
+      "bytes_collected": 33,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:50:29.488+01:00",
+        "mono": 9490.693
+      }
+    },
+    {
+      "condition": "C",
+      "attempt": 5,
+      "gap_planned_s": 30.0,
+      "sends_cr": true,
+      "started": {
+        "wall": "2026-08-12T17:50:29.490+01:00",
+        "mono": 9490.694
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 30.414,
+      "collected_b64": "DQpwbG1hcms9MThjYjFjOTllMTEwYmUzOA0KWnlucT4g",
+      "bytes_collected": 33,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:51:01.939+01:00",
+        "mono": 9523.143
+      }
+    },
+    {
+      "condition": "D",
+      "attempt": 1,
+      "gap_planned_s": 0.0,
+      "sends_cr": true,
+      "started": {
+        "wall": "2026-08-12T17:51:01.940+01:00",
+        "mono": 9523.145
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 0.407,
+      "collected_b64": "DQpwbG1hcms9MThjYjFjOTllMTEwYmUzOA0KWnlucT4g",
+      "bytes_collected": 33,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:51:04.383+01:00",
+        "mono": 9525.588
+      }
+    },
+    {
+      "condition": "D",
+      "attempt": 2,
+      "gap_planned_s": 0.0,
+      "sends_cr": true,
+      "started": {
+        "wall": "2026-08-12T17:51:04.385+01:00",
+        "mono": 9525.589
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 0.408,
+      "collected_b64": "DQpwbG1hcms9MThjYjFjOTllMTEwYmUzOA0KWnlucT4g",
+      "bytes_collected": 33,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:51:06.830+01:00",
+        "mono": 9528.034
+      }
+    },
+    {
+      "condition": "D",
+      "attempt": 3,
+      "gap_planned_s": 0.0,
+      "sends_cr": true,
+      "started": {
+        "wall": "2026-08-12T17:51:06.831+01:00",
+        "mono": 9528.036
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 0.408,
+      "collected_b64": "DQpwbG1hcms9MThjYjFjOTllMTEwYmUzOA0KWnlucT4g",
+      "bytes_collected": 33,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:51:09.276+01:00",
+        "mono": 9530.48
+      }
+    },
+    {
+      "condition": "D",
+      "attempt": 4,
+      "gap_planned_s": 0.0,
+      "sends_cr": true,
+      "started": {
+        "wall": "2026-08-12T17:51:09.277+01:00",
+        "mono": 9530.482
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 0.409,
+      "collected_b64": "DQpwbG1hcms9MThjYjFjOTllMTEwYmUzOA0KWnlucT4g",
+      "bytes_collected": 33,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:51:11.724+01:00",
+        "mono": 9532.929
+      }
+    },
+    {
+      "condition": "D",
+      "attempt": 5,
+      "gap_planned_s": 0.0,
+      "sends_cr": true,
+      "started": {
+        "wall": "2026-08-12T17:51:11.726+01:00",
+        "mono": 9532.931
+      },
+      "holders_after_close": [],
+      "gap_actual_s": 0.407,
+      "collected_b64": "DQpwbG1hcms9MThjYjFjOTllMTEwYmUzOA0KWnlucT4g",
+      "bytes_collected": 33,
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> ",
+      "udev_events": [],
+      "ended": {
+        "wall": "2026-08-12T17:51:14.173+01:00",
+        "mono": 9535.378
+      }
+    }
+  ],
+  "load": {
+    "what": "fpga loadb of the published carrier",
+    "argv": [
+      "/home/test/zynq_fabricmap/scripts/board_uboot_fpga_load.py",
+      "--port",
+      "/dev/ebaz-uart",
+      "--bit",
+      "/home/test/zynq_fabricmap/gate_runs/claimb_round1_carrier_2026_08_11_erratum002/carrier.bit",
+      "--op",
+      "loadb"
+    ],
+    "returncode": 0,
+    "elapsed_s": 201.1,
+    "stdout_tail": "[*] /home/test/zynq_fabricmap/gate_runs/claimb_round1_carrier_2026_08_11_erratum002/carrier.bit: 2083863 bytes -> 0x04000000, then `fpga loadb`\n[*] ymodem transfer via sb ...\n[xfer] ## Total Size      = 0x001fcc17 = 2083863 Bytes\n## Start Addr      = 0x04000000\nZynq>\n[devcfg] INT_STS 0xa802000a -> 0xa802000a before the load (cleared)\n[*] fpga loadb 0 0x04000000 0x001fcc17\n[fpga] fpga loadb 0 0x04000000 0x001fcc17\n  design filename = \"carrier_top;UserID=0XFFFFFFFF;Version=2025.2;SW_CRC=cf3db964\"\n  part number = \"7z010clg400\"\n  date = \"2026/08/11\"\n  time = \"19:26:04\"\n  bytes in bitstream = 2083740\nzynq_align_dma_buffer: Align buffer at 400007b to 4000040(swap 1)\nINFO:post config was not run, please run manually if needed\nZynq>\n[devcfg] INT_STS=0x50021004 PCFG_DONE=1 (after the load)\n[plmark] 18cb1c99e110be38\n",
+    "stderr_tail": ""
+  },
+  "plmark": "18cb1c99e110be38",
+  "baseline_status": "0x00000080",
+  "stopped_at": null,
+  "verdict": "no event in any condition",
+  "console_log": [
+    {
+      "command": "md.l 0x43c02004 0x1",
+      "elapsed_s": 0.013,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "md.l 0x43c02004 0x1\r\n43c02004: 00000080                             ....\r\nZynq> ",
+      "what": "carrier STATUS (the one baseline read)",
+      "value": "0x00000080"
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.011,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.009,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.008,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.008,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.009,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.009,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.01,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.009,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.009,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.009,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "elapsed_s": 0.009,
+      "prompt_returned": true,
+      "exception": false,
+      "raw": "printenv plmark\r\nplmark=18cb1c99e110be38\r\nZynq> "
+    }
+  ],
+  "udev_events_total": [],
+  "ended": {
+    "wall": "2026-08-12T17:51:14.185+01:00",
+    "mono": 9535.39
+  },
+  "by_condition": {
+    "A": {
+      "trials": 5,
+      "events": 0
+    },
+    "B": {
+      "trials": 5,
+      "events": 0
+    },
+    "C": {
+      "trials": 5,
+      "events": 0
+    },
+    "D": {
+      "trials": 5,
+      "events": 0
+    }
+  }
+}
