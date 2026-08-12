@@ -1,0 +1,717 @@
+{
+  "tool": "board_probe_tty_lifecycle.py/1.0.0",
+  "what": "is a restart associated with the serial port's lifecycle?",
+  "design": "interleaved pairs; A holds the port open for the interval, B closes the LAST fd for the same interval and reopens; one volatile marker per pair; after a reopen, bytes are collected before the marker is asked for",
+  "not_done": "no carrier AXI read, no calibration, no JTAG, no reload, no power change",
+  "port": "/dev/ebaz-uart",
+  "pairs_planned": 10,
+  "interval_s": 30.0,
+  "started": {
+    "wall": "2026-08-12T17:15:27.434+01:00",
+    "mono": 7388.639
+  },
+  "trials": [
+    {
+      "pair": 1,
+      "kind": "A: hold the port open",
+      "marker": "63fca02046783350",
+      "started": {
+        "wall": "2026-08-12T17:15:27.462+01:00",
+        "mono": 7388.666
+      },
+      "holders_during": [
+        46218
+      ],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=63fca02046783350\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:15:57.474+01:00",
+        "mono": 7418.679
+      }
+    },
+    {
+      "pair": 1,
+      "kind": "B: close the last fd, wait, reopen",
+      "marker": "63fca02046783350",
+      "started": {
+        "wall": "2026-08-12T17:15:57.474+01:00",
+        "mono": 7418.679
+      },
+      "holders_after_close": [],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=63fca02046783350\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:16:29.506+01:00",
+        "mono": 7450.711
+      }
+    },
+    {
+      "pair": 2,
+      "kind": "B: close the last fd, wait, reopen",
+      "marker": "4ee7926dc39aef5f",
+      "started": {
+        "wall": "2026-08-12T17:16:29.528+01:00",
+        "mono": 7450.733
+      },
+      "holders_after_close": [],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=4ee7926dc39aef5f\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:17:01.577+01:00",
+        "mono": 7482.782
+      }
+    },
+    {
+      "pair": 2,
+      "kind": "A: hold the port open",
+      "marker": "4ee7926dc39aef5f",
+      "started": {
+        "wall": "2026-08-12T17:17:01.578+01:00",
+        "mono": 7482.783
+      },
+      "holders_during": [
+        46218
+      ],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=4ee7926dc39aef5f\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:17:31.596+01:00",
+        "mono": 7512.8
+      }
+    },
+    {
+      "pair": 3,
+      "kind": "A: hold the port open",
+      "marker": "43c8f119ddb4a78a",
+      "started": {
+        "wall": "2026-08-12T17:17:31.618+01:00",
+        "mono": 7512.822
+      },
+      "holders_during": [
+        46218
+      ],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=43c8f119ddb4a78a\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:18:01.636+01:00",
+        "mono": 7542.84
+      }
+    },
+    {
+      "pair": 3,
+      "kind": "B: close the last fd, wait, reopen",
+      "marker": "43c8f119ddb4a78a",
+      "started": {
+        "wall": "2026-08-12T17:18:01.637+01:00",
+        "mono": 7542.842
+      },
+      "holders_after_close": [],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=43c8f119ddb4a78a\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:18:33.693+01:00",
+        "mono": 7574.898
+      }
+    },
+    {
+      "pair": 4,
+      "kind": "B: close the last fd, wait, reopen",
+      "marker": "7069cc794b7907c7",
+      "started": {
+        "wall": "2026-08-12T17:18:33.716+01:00",
+        "mono": 7574.92
+      },
+      "holders_after_close": [],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=7069cc794b7907c7\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:19:05.774+01:00",
+        "mono": 7606.979
+      }
+    },
+    {
+      "pair": 4,
+      "kind": "A: hold the port open",
+      "marker": "7069cc794b7907c7",
+      "started": {
+        "wall": "2026-08-12T17:19:05.776+01:00",
+        "mono": 7606.98
+      },
+      "holders_during": [
+        46218
+      ],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=7069cc794b7907c7\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:19:35.797+01:00",
+        "mono": 7637.002
+      }
+    },
+    {
+      "pair": 5,
+      "kind": "A: hold the port open",
+      "marker": "214c6c88a5b07131",
+      "started": {
+        "wall": "2026-08-12T17:19:35.820+01:00",
+        "mono": 7637.025
+      },
+      "holders_during": [
+        46218
+      ],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=214c6c88a5b07131\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:20:05.842+01:00",
+        "mono": 7667.047
+      }
+    },
+    {
+      "pair": 5,
+      "kind": "B: close the last fd, wait, reopen",
+      "marker": "214c6c88a5b07131",
+      "started": {
+        "wall": "2026-08-12T17:20:05.847+01:00",
+        "mono": 7667.052
+      },
+      "holders_after_close": [],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=214c6c88a5b07131\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:20:37.903+01:00",
+        "mono": 7699.107
+      }
+    },
+    {
+      "pair": 6,
+      "kind": "B: close the last fd, wait, reopen",
+      "marker": "963c5104d7236d8e",
+      "started": {
+        "wall": "2026-08-12T17:20:37.931+01:00",
+        "mono": 7699.136
+      },
+      "holders_after_close": [],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=963c5104d7236d8e\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:21:09.987+01:00",
+        "mono": 7731.192
+      }
+    },
+    {
+      "pair": 6,
+      "kind": "A: hold the port open",
+      "marker": "963c5104d7236d8e",
+      "started": {
+        "wall": "2026-08-12T17:21:09.988+01:00",
+        "mono": 7731.193
+      },
+      "holders_during": [
+        46218
+      ],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=963c5104d7236d8e\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:21:40.010+01:00",
+        "mono": 7761.215
+      }
+    },
+    {
+      "pair": 7,
+      "kind": "A: hold the port open",
+      "marker": "67929d220e00ac73",
+      "started": {
+        "wall": "2026-08-12T17:21:40.034+01:00",
+        "mono": 7761.239
+      },
+      "holders_during": [
+        46218
+      ],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=67929d220e00ac73\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:22:10.055+01:00",
+        "mono": 7791.26
+      }
+    },
+    {
+      "pair": 7,
+      "kind": "B: close the last fd, wait, reopen",
+      "marker": "67929d220e00ac73",
+      "started": {
+        "wall": "2026-08-12T17:22:10.060+01:00",
+        "mono": 7791.265
+      },
+      "holders_after_close": [],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=67929d220e00ac73\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:22:42.115+01:00",
+        "mono": 7823.32
+      }
+    },
+    {
+      "pair": 8,
+      "kind": "B: close the last fd, wait, reopen",
+      "marker": "b49ab055f0fd7091",
+      "started": {
+        "wall": "2026-08-12T17:22:42.138+01:00",
+        "mono": 7823.343
+      },
+      "holders_after_close": [],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=b49ab055f0fd7091\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:23:14.185+01:00",
+        "mono": 7855.39
+      }
+    },
+    {
+      "pair": 8,
+      "kind": "A: hold the port open",
+      "marker": "b49ab055f0fd7091",
+      "started": {
+        "wall": "2026-08-12T17:23:14.187+01:00",
+        "mono": 7855.392
+      },
+      "holders_during": [
+        46218
+      ],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=b49ab055f0fd7091\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:23:44.209+01:00",
+        "mono": 7885.413
+      }
+    },
+    {
+      "pair": 9,
+      "kind": "A: hold the port open",
+      "marker": "388bb84f36f960f0",
+      "started": {
+        "wall": "2026-08-12T17:23:44.232+01:00",
+        "mono": 7885.437
+      },
+      "holders_during": [
+        46218
+      ],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=388bb84f36f960f0\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:24:14.253+01:00",
+        "mono": 7915.457
+      }
+    },
+    {
+      "pair": 9,
+      "kind": "B: close the last fd, wait, reopen",
+      "marker": "388bb84f36f960f0",
+      "started": {
+        "wall": "2026-08-12T17:24:14.256+01:00",
+        "mono": 7915.461
+      },
+      "holders_after_close": [],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=388bb84f36f960f0\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:24:46.312+01:00",
+        "mono": 7947.517
+      }
+    },
+    {
+      "pair": 10,
+      "kind": "B: close the last fd, wait, reopen",
+      "marker": "7c3abea23a62a028",
+      "started": {
+        "wall": "2026-08-12T17:24:46.335+01:00",
+        "mono": 7947.54
+      },
+      "holders_after_close": [],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=7c3abea23a62a028\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:25:18.386+01:00",
+        "mono": 7979.591
+      }
+    },
+    {
+      "pair": 10,
+      "kind": "A: hold the port open",
+      "marker": "7c3abea23a62a028",
+      "started": {
+        "wall": "2026-08-12T17:25:18.388+01:00",
+        "mono": 7979.593
+      },
+      "holders_during": [
+        46218
+      ],
+      "bytes_collected": 0,
+      "collected_b64": "",
+      "spl_banner": false,
+      "marker_survives": true,
+      "marker_reply": "printenv ttyprobe\r\nttyprobe=7c3abea23a62a028\r\nZynq> ",
+      "ended": {
+        "wall": "2026-08-12T17:25:48.406+01:00",
+        "mono": 8009.61
+      }
+    }
+  ],
+  "device_node": "/dev/ttyUSB4",
+  "holders_at_start": [
+    "46218"
+  ],
+  "stopped_early": null,
+  "verdict": "no restart in any trial",
+  "console_log": [
+    {
+      "wall": "2026-08-12T17:15:27.451+01:00",
+      "mono": 7388.656,
+      "command": "setenv ttyprobe 63fca02046783350",
+      "raw_b64": "c2V0ZW52IHR0eXByb2JlIDYzZmNhMDIwNDY3ODMzNTANClp5bnE+IA==",
+      "raw": "setenv ttyprobe 63fca02046783350\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:15:27.461+01:00",
+      "mono": 7388.666,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTYzZmNhMDIwNDY3ODMzNTANClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=63fca02046783350\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:15:57.474+01:00",
+      "mono": 7418.679,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTYzZmNhMDIwNDY3ODMzNTANClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=63fca02046783350\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:16:29.506+01:00",
+      "mono": 7450.711,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTYzZmNhMDIwNDY3ODMzNTANClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=63fca02046783350\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:16:29.517+01:00",
+      "mono": 7450.722,
+      "command": "setenv ttyprobe 4ee7926dc39aef5f",
+      "raw_b64": "c2V0ZW52IHR0eXByb2JlIDRlZTc5MjZkYzM5YWVmNWYNClp5bnE+IA==",
+      "raw": "setenv ttyprobe 4ee7926dc39aef5f\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:16:29.528+01:00",
+      "mono": 7450.733,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTRlZTc5MjZkYzM5YWVmNWYNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=4ee7926dc39aef5f\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:17:01.577+01:00",
+      "mono": 7482.782,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTRlZTc5MjZkYzM5YWVmNWYNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=4ee7926dc39aef5f\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:17:31.595+01:00",
+      "mono": 7512.8,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTRlZTc5MjZkYzM5YWVmNWYNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=4ee7926dc39aef5f\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:17:31.607+01:00",
+      "mono": 7512.811,
+      "command": "setenv ttyprobe 43c8f119ddb4a78a",
+      "raw_b64": "c2V0ZW52IHR0eXByb2JlIDQzYzhmMTE5ZGRiNGE3OGENClp5bnE+IA==",
+      "raw": "setenv ttyprobe 43c8f119ddb4a78a\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:17:31.618+01:00",
+      "mono": 7512.822,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTQzYzhmMTE5ZGRiNGE3OGENClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=43c8f119ddb4a78a\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:18:01.636+01:00",
+      "mono": 7542.84,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTQzYzhmMTE5ZGRiNGE3OGENClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=43c8f119ddb4a78a\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:18:33.693+01:00",
+      "mono": 7574.898,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTQzYzhmMTE5ZGRiNGE3OGENClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=43c8f119ddb4a78a\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:18:33.705+01:00",
+      "mono": 7574.909,
+      "command": "setenv ttyprobe 7069cc794b7907c7",
+      "raw_b64": "c2V0ZW52IHR0eXByb2JlIDcwNjljYzc5NGI3OTA3YzcNClp5bnE+IA==",
+      "raw": "setenv ttyprobe 7069cc794b7907c7\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:18:33.715+01:00",
+      "mono": 7574.92,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTcwNjljYzc5NGI3OTA3YzcNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=7069cc794b7907c7\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:19:05.774+01:00",
+      "mono": 7606.979,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTcwNjljYzc5NGI3OTA3YzcNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=7069cc794b7907c7\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:19:35.797+01:00",
+      "mono": 7637.002,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTcwNjljYzc5NGI3OTA3YzcNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=7069cc794b7907c7\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:19:35.809+01:00",
+      "mono": 7637.014,
+      "command": "setenv ttyprobe 214c6c88a5b07131",
+      "raw_b64": "c2V0ZW52IHR0eXByb2JlIDIxNGM2Yzg4YTViMDcxMzENClp5bnE+IA==",
+      "raw": "setenv ttyprobe 214c6c88a5b07131\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:19:35.820+01:00",
+      "mono": 7637.025,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTIxNGM2Yzg4YTViMDcxMzENClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=214c6c88a5b07131\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:20:05.842+01:00",
+      "mono": 7667.047,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTIxNGM2Yzg4YTViMDcxMzENClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=214c6c88a5b07131\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:20:37.902+01:00",
+      "mono": 7699.107,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTIxNGM2Yzg4YTViMDcxMzENClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=214c6c88a5b07131\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:20:37.920+01:00",
+      "mono": 7699.125,
+      "command": "setenv ttyprobe 963c5104d7236d8e",
+      "raw_b64": "c2V0ZW52IHR0eXByb2JlIDk2M2M1MTA0ZDcyMzZkOGUNClp5bnE+IA==",
+      "raw": "setenv ttyprobe 963c5104d7236d8e\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:20:37.931+01:00",
+      "mono": 7699.136,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTk2M2M1MTA0ZDcyMzZkOGUNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=963c5104d7236d8e\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:21:09.987+01:00",
+      "mono": 7731.192,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTk2M2M1MTA0ZDcyMzZkOGUNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=963c5104d7236d8e\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:21:40.010+01:00",
+      "mono": 7761.215,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTk2M2M1MTA0ZDcyMzZkOGUNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=963c5104d7236d8e\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:21:40.022+01:00",
+      "mono": 7761.227,
+      "command": "setenv ttyprobe 67929d220e00ac73",
+      "raw_b64": "c2V0ZW52IHR0eXByb2JlIDY3OTI5ZDIyMGUwMGFjNzMNClp5bnE+IA==",
+      "raw": "setenv ttyprobe 67929d220e00ac73\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:21:40.034+01:00",
+      "mono": 7761.239,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTY3OTI5ZDIyMGUwMGFjNzMNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=67929d220e00ac73\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:22:10.055+01:00",
+      "mono": 7791.26,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTY3OTI5ZDIyMGUwMGFjNzMNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=67929d220e00ac73\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:22:42.115+01:00",
+      "mono": 7823.32,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTY3OTI5ZDIyMGUwMGFjNzMNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=67929d220e00ac73\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:22:42.127+01:00",
+      "mono": 7823.332,
+      "command": "setenv ttyprobe b49ab055f0fd7091",
+      "raw_b64": "c2V0ZW52IHR0eXByb2JlIGI0OWFiMDU1ZjBmZDcwOTENClp5bnE+IA==",
+      "raw": "setenv ttyprobe b49ab055f0fd7091\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:22:42.138+01:00",
+      "mono": 7823.343,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPWI0OWFiMDU1ZjBmZDcwOTENClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=b49ab055f0fd7091\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:23:14.185+01:00",
+      "mono": 7855.39,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPWI0OWFiMDU1ZjBmZDcwOTENClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=b49ab055f0fd7091\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:23:44.208+01:00",
+      "mono": 7885.413,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPWI0OWFiMDU1ZjBmZDcwOTENClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=b49ab055f0fd7091\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:23:44.220+01:00",
+      "mono": 7885.425,
+      "command": "setenv ttyprobe 388bb84f36f960f0",
+      "raw_b64": "c2V0ZW52IHR0eXByb2JlIDM4OGJiODRmMzZmOTYwZjANClp5bnE+IA==",
+      "raw": "setenv ttyprobe 388bb84f36f960f0\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:23:44.232+01:00",
+      "mono": 7885.437,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTM4OGJiODRmMzZmOTYwZjANClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=388bb84f36f960f0\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:24:14.252+01:00",
+      "mono": 7915.457,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTM4OGJiODRmMzZmOTYwZjANClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=388bb84f36f960f0\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:24:46.312+01:00",
+      "mono": 7947.517,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTM4OGJiODRmMzZmOTYwZjANClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=388bb84f36f960f0\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:24:46.324+01:00",
+      "mono": 7947.529,
+      "command": "setenv ttyprobe 7c3abea23a62a028",
+      "raw_b64": "c2V0ZW52IHR0eXByb2JlIDdjM2FiZWEyM2E2MmEwMjgNClp5bnE+IA==",
+      "raw": "setenv ttyprobe 7c3abea23a62a028\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:24:46.335+01:00",
+      "mono": 7947.539,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTdjM2FiZWEyM2E2MmEwMjgNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=7c3abea23a62a028\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:25:18.386+01:00",
+      "mono": 7979.591,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTdjM2FiZWEyM2E2MmEwMjgNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=7c3abea23a62a028\r\nZynq> "
+    },
+    {
+      "wall": "2026-08-12T17:25:48.405+01:00",
+      "mono": 8009.61,
+      "command": "printenv ttyprobe",
+      "raw_b64": "cHJpbnRlbnYgdHR5cHJvYmUNCnR0eXByb2JlPTdjM2FiZWEyM2E2MmEwMjgNClp5bnE+IA==",
+      "raw": "printenv ttyprobe\r\nttyprobe=7c3abea23a62a028\r\nZynq> "
+    }
+  ],
+  "ended": {
+    "wall": "2026-08-12T17:25:48.417+01:00",
+    "mono": 8009.622
+  },
+  "events_by_kind": {
+    "A: hold the port open": {
+      "trials": 10,
+      "events": 0
+    },
+    "B: close the last fd, wait, reopen": {
+      "trials": 10,
+      "events": 0
+    }
+  }
+}

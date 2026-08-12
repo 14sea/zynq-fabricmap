@@ -1,0 +1,15 @@
+{
+  "tool": "integrity check after both 30-min passive windows",
+  "what": "confirm by CONTENT that the zero-banner readings mean the same boot survived",
+  "command": "printenv plmark; md.l 0xF8007014 0x1",
+  "sent_at": {
+    "wall": "2026-08-12T17:12:29.827+01:00",
+    "resolves_to": "/dev/ttyUSB4"
+  },
+  "expected_plmark": "18cb18cfd6d4c577",
+  "carrier_axi_read": "none \u2014 this touches no PL address",
+  "raw_reply_b64": "cHJpbnRlbnYgcGxtYXJrOyBtZC5sIDB4RjgwMDcwMTQgMHgxDQpwbG1hcms9MThjYjE4Y2ZkNmQ0YzU3Nw0KZjgwMDcwMTQ6IDQwMDAwZjMwICAgICAgICAgICAgICAgICAgICAgICAgICAgICAwLi5ADQpaeW5xPiA=",
+  "raw_reply_text": "printenv plmark; md.l 0xF8007014 0x1\r\nplmark=18cb18cfd6d4c577\r\nf8007014: 40000f30                             0..@\r\nZynq> ",
+  "prompt_returned": true,
+  "elapsed_s": 0.026
+}
