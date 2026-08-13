@@ -72,8 +72,16 @@ TOOL_VERSION = "board_carrier_exec.py/2.0.0"
 # back-pressure for a byte-serial CRC; on silicon that ABORTED the configuration and the
 # engine read 101 abort status words instead of a frame. It reads nothing back either, so
 # the same rule applies to it.
+#
+# And once more for erratum 006. The erratum-005 carrier read REAL configuration data on
+# silicon — the first one that did — but from the wrong address: it loaded FAR before the
+# RCFG that gives FAR its meaning, and UG470 executes the command CMD is holding at the
+# moment FAR is loaded. The staged window was a bit-exact slice of the device stream 604
+# words from the frame it asked for. A carrier that reads the wrong frame must not stay
+# usable as an authority: a readback that is confidently wrong is worse than one that
+# obviously fails. See docs/claimb_erratum_006_command_order.md.
 PRODUCTION_MANIFEST_SHA256 = (
-    "400a1e9c4cacb51b499fac0ccaadd09a7193f374dd8e574c3ef54d72a3cda69d"
+    "e45f466d082ccd6f227e6f9be4ce75a4e98c4caa708808c09a77ed32331c10ef"
 )
 
 

@@ -11,7 +11,7 @@ Two kinds of case here, deliberately:
   bitstream, so their cases build small files and real Git repositories with real Git LFS.
   They run anywhere, including a cold `git archive` tree.
 * **the real run** — the ECO differential has to parse actual frames, so those cases read
-  `gate_runs/claimb_round1_carrier_2026_08_13_erratum005/`. In a tree where LFS content has not been
+  `gate_runs/claimb_round1_carrier_2026_08_13_erratum006/`. In a tree where LFS content has not been
   pulled the artifacts are ~130-byte pointers, and the cases skip with that named reason
   rather than pretending to pass.
 
@@ -38,7 +38,7 @@ import gate_carrier_base as base_gate  # noqa: E402
 import gate_init_eco as eco_gate  # noqa: E402
 import gate_publish_carrier_run as publish  # noqa: E402
 
-REAL_RUN = REPO_ROOT / "gate_runs/claimb_round1_carrier_2026_08_13_erratum005"
+REAL_RUN = REPO_ROOT / "gate_runs/claimb_round1_carrier_2026_08_13_erratum006"
 RULE = ("gate_runs/**/*.bit filter=lfs diff=lfs merge=lfs -text\n"
         "gate_runs/**/*.dcp filter=lfs diff=lfs merge=lfs -text\n")
 RUN_ROOT = "gate_runs/run_fixture"
