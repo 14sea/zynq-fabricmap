@@ -157,3 +157,50 @@ value here is `0xFFFFFF5B` on the pins. Whether the neighbourhood is meaningful 
 coincidence is not decided by anything in this evidence.
 
 Stopped here. No second transaction.
+
+---
+
+# Addendum 2: the raw reply was NOT preserved the first time, and the repeat that fixes it
+
+## The gap, stated plainly
+
+The first addendum said the raw `md.l` replies were in `stage_dump.json`. **They were not.**
+`board_calibrate_noop.py`'s `InstrumentedTransport` truncates a normal reply to its last 400
+characters, keeping the whole thing only when something is odd (no prompt, or a reboot
+banner). For a 26-line `md.l` dump that left **7 lines**, from `43c01140` onward, and
+`raw_chars` in the file is exactly 400.
+
+What this does and does not put in doubt:
+
+* **The 101 words and the digest stand.** `parse_md` ran on the complete reply in memory,
+  before the transcript entry was truncated; the truncation is in the archive, not in the
+  parse. The values were never derived from the 400 characters.
+* **The claim "the raw reply is preserved" was false**, and it was made in a commit message
+  and in addendum 1. That is the part being corrected.
+
+The truncation itself is a reasonable choice where it lives — it keeps a 171-command
+transcript readable and keeps everything whenever anything is odd. It is wrong only for a
+tool whose entire output is one long reply.
+
+## The repeat, with the reply kept whole
+
+`scripts/probe_stage_dump.py` now records exact bytes, base64, text and a per-reply sha256,
+with no truncation anywhere, and takes `--expect-sha256` so a repeat has to reproduce the
+earlier read rather than merely resemble it. Second run, same board state, four commands,
+all reads:
+
+| | |
+|---|---|
+| `plmark` | `18cb503072f557a3` — **same boot** |
+| STATUS | `fault=1`, `rb_latency_valid=1`, `rb_latency_words=1`, `recovery_required=1`, `rb_frames_ok=0`, `configuration_valid=0` |
+| FAULT | `8` (readback) |
+| `md.l 0x43c01000 0x65` reply | **1706 bytes, 27 lines, 26 data lines**, sha256 `da1f20a327b6…` |
+| first data line | `43c01000: ffffffda ffffffda ffffffda ffffffda` |
+| **last data line** | **`43c01190: ffffffda`** — one word, which is the 101st |
+| dump sha256 (big-endian) | `c402e1b0f929757eed4e5feb28d722476050dc7c1c1f7dd048998aa9a02b3f22` — **identical to the first read** |
+
+The last line carrying exactly one word at `0x43C01190` is also the corrected window
+endpoint, observed rather than argued.
+
+`stage_dump.json` is left exactly as it was. The complete transcript is
+`stage_dump_2.json`. No reload, no transaction, no PCAP_PR, no ack, no arm.
