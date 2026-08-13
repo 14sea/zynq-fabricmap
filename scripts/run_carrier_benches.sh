@@ -65,8 +65,9 @@ echo "readback against the model:"
 if [ "$quick" = 1 ]; then
     configs=("0 32")
 else
-    # latency, flush. The design must not care about either.
-    configs=("0 32" "1 32" "3 32" "7 32" "0 40" "5 48" "12 64")
+    # latency, flush. The design must not care about either. The ruling pins latency 0 and
+    # 12 exactly, so both are run at flush 32 where the device owes no residual flush.
+    configs=("0 32" "1 32" "3 32" "7 32" "12 32" "0 40" "5 48" "12 64")
 fi
 
 for cfg in "${configs[@]}"; do

@@ -121,8 +121,10 @@ ST_SCORER_ARMED = 1 << 5
 ST_PASS1_COMPLETE = 1 << 6
 ST_RECOVERY_REQUIRED = 1 << 7
 ST_RB_FRAME_READY = 1 << 10
-# bits 9:8 expect_env, 13:11 env_committed, 17:14 rb_frames_ok, 31:18 reserved and zero
-ST_RESERVED = 0xFFFC0000
+# bits 9:8 expect_env, 13:11 env_committed, 17:14 rb_frames_ok,
+# 25:18 rb_latency_words, 26 rb_latency_valid, 31:27 reserved and zero
+ST_RB_LATENCY_VALID = 1 << 26
+ST_RESERVED = 0xF8000000
 
 FAULT_NAMES = {
     0: "none", 1: "order", 2: "control", 3: "far", 4: "length", 5: "crc",
@@ -204,6 +206,11 @@ def decode_status(word: int) -> dict:
         "rb_frame_ready": bool(word & ST_RB_FRAME_READY),
         "env_committed": (word >> 11) & 0x7,
         "rb_frames_ok": (word >> 14) & 0xF,
+        # TELEMETRY. The engine's own measurement of the ICAP read pipeline, in words, and
+        # whether THIS envelope's probe made it. Recorded and never acted on: nothing in
+        # this file branches on either, because the engine does not either.
+        "rb_latency_words": (word >> 18) & 0xFF,
+        "rb_latency_valid": bool(word & ST_RB_LATENCY_VALID),
         "reserved": word & ST_RESERVED,
     }
 
@@ -316,7 +323,7 @@ def read_words(transport, addr: int, count: int, per_command: int = 128) -> list
 def read_status(transport) -> dict:
     """STATUS, with the liveness check the reserved field gives for free.
 
-    `carrier_axil` drives bits 31:18 to zero, so a non-zero reserved field means the reply
+    `carrier_axil` drives bits 31:27 to zero, so a non-zero reserved field means the reply
     did not come from the carrier — a stale buffer, a floating bus, or the wrong design in
     the PL. All-zero is refused for the same reason: `recovery_required` is set out of
     reset, so a live carrier can never read 0.
@@ -324,7 +331,7 @@ def read_status(transport) -> dict:
     word = read_words(transport, STATUS, 1)[0]
     if word & ST_RESERVED:
         raise AxiRefusal(
-            f"STATUS reads {word:#010x}; bits 31:18 are hard zeros in carrier_axil, so this "
+            f"STATUS reads {word:#010x}; bits 31:27 are hard zeros in carrier_axil, so this "
             "is not the carrier answering")
     if word == 0:
         raise AxiRefusal(
@@ -544,6 +551,15 @@ def _transaction_body(transport, record: dict, note, started: float) -> None:
                 f"after envelope {env} the engine reports {status['rb_frames_ok']} verified "
                 f"frames, expected {expected_ok}")
         note(f"pass2_env{env}", status, time.time() - t0)
+        # The readback telemetry, per envelope, alongside the per-stage status it also
+        # appears in. Kept as its own list because this is the field a post-mortem goes
+        # looking for first, and because "the engine measured nothing" (valid False) is a
+        # finding, not a missing key.
+        record.setdefault("readback_latency", []).append({
+            "envelope": env,
+            "valid": status["rb_latency_valid"],
+            "words": status["rb_latency_words"],
+        })
 
         for frame in range(FRAMES_PER_ENVELOPE):
             words = read_words(transport, capture_addr(env, frame), FRAME_WORDS)

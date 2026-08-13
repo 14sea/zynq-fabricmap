@@ -4,9 +4,13 @@
 // WHAT THIS IS AND IS NOT
 // -----------------------
 // It is NOT the authority that pass 2's envelope is pass 1's envelope. SHA-256 is, and it
-// is held host-side: the left-of-flush region has 800 LUTs, the logic already uses 432,
-// and a hardware SHA-256 does not fit in what is left. That is an arithmetic constraint,
-// so the fallback the ruling allows is taken and named rather than quietly substituted.
+// is held host-side: a hardware SHA-256 does not fit in what the floorplan leaves. That is
+// an arithmetic constraint, so the fallback the ruling allows is taken and named rather
+// than quietly substituted. (The pblock is TWO segments — SLICE_X0Y0:X1Y99 plus
+// SLICE_X6Y0:X7Y99, about 1,600 LUTs — and the erratum-003 build placed 816 of them. The
+// "800 LUTs" this comment used to quote was the LEFT segment alone, from the single-region
+// floorplan that preceded the split; the conclusion is unchanged, a SHA-256 core is far
+// larger than the ~780 LUTs still free.)
 //
 // What it IS: an independent check, computed in the fabric from the words that actually
 // arrived, that pass 2 received the same 536 words pass 1 did. It catches transmission
@@ -80,7 +84,7 @@ module carrier_crc32 (
 
     // ONE instance of the eight-stage unrolled step, with the byte selected before it. Two
     // calls in two branches of the same process synthesise as two copies, which is 122 LUTs
-    // in a region that has 800 for the whole design.
+    // against a floorplan of about 1,600, of which the erratum-003 build used 816.
     wire [7:0]  in_byte    = accept ? data[7:0] : byte_of_index;
     wire [31:0] next_state = crc_byte(state, in_byte);
 

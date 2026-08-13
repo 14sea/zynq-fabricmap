@@ -38,6 +38,19 @@ module tb_carrier_readback #(
     localparam integer ENVELOPES    = 3;
     localparam integer TOTAL_FRAMES = ENVELOPES * FRAMES_PER_ENV;
 
+    // What the probe SHOULD measure on this device.
+    //
+    // The sequence sends 32 flush clocks after each read command. A device that wants more
+    // than that has not finished flushing when the turnaround happens, and the remainder is
+    // served as idle words — so the probe legitimately measures the device's own read
+    // latency PLUS whatever flush it still owed. That is the design working, not drifting.
+    //
+    // The bench computes this from ITS OWN stimulus, and the exact-value cases the ruling
+    // asks for (latency 0 and 12) are run with MODEL_FLUSH = 32, where the excess is zero
+    // and the expected number is simply RB_LATENCY.
+    localparam integer FLUSH_EXCESS = (MODEL_FLUSH > 32) ? (MODEL_FLUSH - 32) : 0;
+    localparam integer EXPECT_LAT   = RB_LATENCY + FLUSH_EXCESS;
+
     reg         clk = 1'b0, rst_n = 1'b0;
     reg         begin_txn = 1'b0, start_pass1 = 1'b0, start_pass2 = 1'b0;
     reg  [1:0]  env_index = 2'd0;
@@ -49,6 +62,8 @@ module tb_carrier_readback #(
     wire [1:0]  expect_env;
     wire [2:0]  env_committed;
     wire        rb_frame_ready;
+    wire [7:0]  rb_latency;
+    wire        rb_latency_valid;
     reg  [6:0]  host_raddr = 7'd0;
     wire [31:0] host_rdata;
     reg         rb_ack = 1'b0;
@@ -95,6 +110,7 @@ module tb_carrier_readback #(
         .recovery_required(recovery_required), .env_committed(env_committed),
         .host_raddr(host_raddr), .host_rdata(host_rdata),
         .rb_frame_ready(rb_frame_ready), .rb_ack(rb_ack), .rb_frames_ok(rb_frames_ok),
+        .rb_latency(rb_latency), .rb_latency_valid(rb_latency_valid),
         .icap_csib(icap_csib), .icap_rdwrb(icap_rdwrb),
         .icap_din(icap_din), .icap_dout(icap_dout)
     );
@@ -277,8 +293,13 @@ module tb_carrier_readback #(
 
         run_pass2(0);
         check_i("envelope 0 verifies five frames", rb_frames_ok, 5);
+        // TELEMETRY: the probe measured this device's pipeline, and says so.
+        check_i("the latency is reported valid", rb_latency_valid, 1);
+        check_i("and it is the device's own", rb_latency, EXPECT_LAT);
         run_pass2(1);
         check_i("envelope 1 makes it ten", rb_frames_ok, 10);
+        check_i("envelope 1 measured it too", rb_latency_valid, 1);
+        check_i("with the same answer", rb_latency, EXPECT_LAT);
         run_pass2(2);
         check_i("fifteen frames verified", rb_frames_ok, 15);
         check_i("no fault", fault, 0);
@@ -317,6 +338,30 @@ module tb_carrier_readback #(
         check_i("and it is a readback fault", fault_code, 8);
         check_i("confirmation is withheld", configuration_valid, 0);
         check_i("recovery is required", recovery_required, 1);
+        // The probe SUCCEEDED and the frames then disagreed. That is exactly when a host
+        // wants the measurement, so the fault must not take it away.
+        check_i("a readback fault keeps the latency", rb_latency_valid, 1);
+        check_i("and its value", rb_latency, EXPECT_LAT);
+
+        // -------------------------------------------- 6. the probe fails, and says nothing
+        // The device stops speaking the DUT's word order between one envelope and the next.
+        // Envelope 0 measured a good device a moment ago; envelope 1 must report NOTHING
+        // rather than the number still sitting in the register.
+        @(negedge clk); rst_n = 1'b0;
+        repeat (3) @(negedge clk); rst_n = 1'b1;
+        @(negedge clk);
+        check_i("reset clears the validity", rb_latency_valid, 0);
+        rx_frames = 0;
+        start_txn();
+        run_pass1(0); run_pass1(1); run_pass1(2);
+        run_pass2(0);
+        check_i("envelope 0 measured the device", rb_latency_valid, 1);
+        check_i("envelope 0 latency", rb_latency, EXPECT_LAT);
+        dev.set_wire_order(1'b0);              // the device stops answering in that order
+        run_pass2(1);
+        check_i("the probe fails", fault_code, 12);
+        check_i("and the validity is CLEARED, not inherited", rb_latency_valid, 0);
+        dev.set_wire_order(1'b1);
 
         $display("READBACK TB (latency %0d, flush %0d): %0d written, %0d read, %0d idle",
                  RB_LATENCY, MODEL_FLUSH, m_written, m_read, m_idle);

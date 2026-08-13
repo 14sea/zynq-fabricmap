@@ -137,6 +137,8 @@ module carrier_top #(
     wire        txn_busy, txn_fault, configuration_valid, pass1_complete,
                 recovery_required, rb_frame_ready, stream_open;
     wire [3:0]  txn_fault_code, rb_frames_ok;
+    wire [7:0]  rb_latency;
+    wire        rb_latency_valid;
     wire [1:0]  expect_env;
     wire [2:0]  env_committed;
     wire        stream_refused;
@@ -165,6 +167,7 @@ module carrier_top #(
         .pass1_complete(pass1_complete), .recovery_required(recovery_required),
         .expect_env(expect_env), .env_committed(env_committed),
         .rb_frame_ready(rb_frame_ready), .rb_frames_ok(rb_frames_ok),
+        .rb_latency(rb_latency), .rb_latency_valid(rb_latency_valid),
         .configuration_valid(configuration_valid),
         .scorer_busy(scorer_busy), .scorer_done(scorer_done), .scorer_armed(scorer_armed),
         .score_flat(score_flat)
@@ -189,6 +192,7 @@ module carrier_top #(
         .host_raddr(rb_raddr), .host_rdata(rb_rdata),
         .rb_frame_ready(rb_frame_ready), .rb_ack(ctrl_rb_ack),
         .rb_frames_ok(rb_frames_ok),
+        .rb_latency(rb_latency), .rb_latency_valid(rb_latency_valid),
         .icap_csib(icap_csib), .icap_rdwrb(icap_rdwrb),
         .icap_din(icap_din), .icap_dout(icap_dout)
     );

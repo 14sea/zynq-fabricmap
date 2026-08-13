@@ -4,8 +4,10 @@
 // THERE IS NO CANDIDATE BUFFER ANY MORE. The frame-staged engine consumes the envelope as
 // it arrives and stages exactly one frame, so the AXI write channel IS the word stream:
 // one write to the STREAM window is one word, and `word_ready` is the backpressure. The
-// 536-word buffer it replaces cost 288 LUTs of SLICEM in a region that has 800 LUTs total
-// and must also hold two of the evolvable LUTs.
+// 536-word buffer it replaces cost 288 LUTs of SLICEM in a region that must also hold two
+// of the evolvable LUTs. (The region is SLICE_X0Y0:X1Y99 plus SLICE_X6Y0:X7Y99 — about
+// 1,600 LUTs, not the single 800-LUT block an earlier note assumed; the erratum-003 build
+// used 816. The budget argument for removing the buffer stands either way.)
 //
 // Three windows off one GP0 slave:
 //   0x0000            STREAM   W: one word of the envelope, in order
@@ -19,7 +21,9 @@
 //                        bit3 scorer_busy, bit4 scorer_done, bit5 scorer_armed,
 //                        bit6 pass1_complete, bit7 recovery_required,
 //                        bits9:8 expect_env, bit10 rb_frame_ready,
-//                        bits13:11 env_committed, bits17:14 rb_frames_ok
+//                        bits13:11 env_committed, bits17:14 rb_frames_ok,
+//                        bits25:18 rb_latency_words, bit26 rb_latency_valid,
+//                        bits31:27 RESERVED and read zero
 //   0x2008  FAULT     R: bits3:0 fault code
 //   0x2010  SCORE0..  R: six per-LUT match counts, one per register
 //
@@ -90,6 +94,9 @@ module carrier_axil #(
     input  wire [2:0]  env_committed,
     input  wire        rb_frame_ready,
     input  wire [3:0]  rb_frames_ok,
+    // telemetry only: reported, never acted on (carrier_stream.v)
+    input  wire [7:0]  rb_latency,
+    input  wire        rb_latency_valid,
     input  wire        configuration_valid,
     input  wire        scorer_busy,
     input  wire        scorer_done,
@@ -104,10 +111,13 @@ module carrier_axil #(
     // A STREAM write completes when the engine takes the word, so an AXI write is the
     // handshake and no separate "loaded_words" bookkeeping exists to disagree with the
     // engine's own position counter. A stream write while the engine is NOT consuming
-    // returns SLVERR rather than stalling: an AXI-Lite write that never completes wedges
-    // the PS, and "the host wrote a word outside a pass" is a host bug that should be
-    // visible, not a hang. Inside a pass the stall is bounded — four cycles for the CRC,
-    // at most one frame while a verified frame is emitted.
+    // completes with **OKAY** and raises `stream_refused`, which the engine latches as a
+    // sticky fault; it does not stall and it does not answer SLVERR. (This comment said
+    // SLVERR until 2026-08-13 — it described the behaviour erratum 003 removed, because an
+    // AXI error response on this board reaches the A9 as a data abort and resets it. The
+    // code below has been right since erratum 003; only this paragraph was stale.)
+    // Inside a pass the stall is bounded — four cycles for the CRC, at most one frame while
+    // a verified frame is emitted.
     wire        wr_addr_ok  = s_awvalid && s_wvalid && !s_bvalid;
     wire        wr_is_reg   = (s_awaddr >= REG_BASE);
     wire        wr_is_strm  = (s_awaddr <  RB_BASE);
@@ -183,8 +193,7 @@ module carrier_axil #(
     //
     // There is NO array here. The readback words live in the engine's staging memory — the
     // same array, written by the same transfer that fed the CRC — and this module only
-    // presents an address to it. A second 101-word copy cost 88 LUTs of SLICEM in a region
-    // that has 800 LUTs for the whole design.
+    // presents an address to it. A second 101-word copy cost 88 LUTs of SLICEM.
     assign rb_raddr = s_araddr[8:2];
 
     wire rd_is_rb = (s_araddr >= RB_BASE) && (s_araddr < REG_BASE) &&
@@ -216,8 +225,12 @@ module carrier_axil #(
             rd_was_rb <= rd_is_rb;
             if (s_araddr >= REG_BASE) begin
                 case (s_araddr)
+                    // 5 + 1 + 8 + 4 + 3 + 1 + 2 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 = 32.
+                    // The top five bits stay reserved and read zero, and the host still
+                    // refuses a STATUS word that has any of them set.
                     REG_BASE + 16'h0004:
-                        rdata_reg <= {14'd0, rb_frames_ok, env_committed, rb_frame_ready,
+                        rdata_reg <= {5'd0, rb_latency_valid, rb_latency,
+                                    rb_frames_ok, env_committed, rb_frame_ready,
                                     expect_env, recovery_required, pass1_complete,
                                     scorer_armed, scorer_done, scorer_busy,
                                     configuration_valid, txn_fault, txn_busy};

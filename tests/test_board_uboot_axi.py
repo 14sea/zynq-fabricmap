@@ -102,6 +102,9 @@ class FakeBoard:
         self.expect_env = 0
         self.env_committed = 0
         self.rb_frames_ok = 0
+        # telemetry: what the engine's readback probe measured. `None` means the probe
+        # never completed, which is what the engine reports as valid=0.
+        self.rb_latency = 3
         self.mode = None
         self.env = 0
         self.pending: list[list[int]] = []
@@ -207,6 +210,9 @@ class FakeBoard:
         word |= (self.expect_env & 0x3) << 8
         word |= (self.env_committed & 0x7) << 11
         word |= (self.rb_frames_ok & 0xF) << 14
+        if self.rb_latency is not None:
+            word |= (self.rb_latency & 0xFF) << 18
+            word |= axi.ST_RB_LATENCY_VALID
         return word
 
     # -- the engine -------------------------------------------------------------
@@ -292,6 +298,37 @@ class TheHappyPath(unittest.TestCase):
         self.assertEqual(record["payload_sha256"][:8],
                          __import__("hashlib").sha256(payload).hexdigest()[:8])
 
+    def test_every_pass_two_stage_records_the_readback_telemetry(self) -> None:
+        board = FakeBoard()
+        board.rb_latency = 7
+        record = run(board)
+
+        self.assertEqual(
+            record["readback_latency"],
+            [{"envelope": env, "valid": True, "words": 7} for env in range(axi.ENVELOPES)])
+        # ...and it is in the per-stage status too, so a post-mortem finds it either way
+        pass2 = [s for s in record["stages"] if s["stage"].startswith("pass2_env")]
+        self.assertEqual(len(pass2), axi.ENVELOPES)
+        for stage in pass2:
+            self.assertTrue(stage["status"]["rb_latency_valid"])
+            self.assertEqual(stage["status"]["rb_latency_words"], 7)
+
+    def test_an_engine_that_measured_nothing_is_recorded_as_such(self) -> None:
+        """valid=0 is a finding, not a missing key.
+
+        A host that dropped the entry when the probe failed would leave the one case the
+        telemetry exists for -- the read path never came up -- looking like an ordinary run
+        with no measurement taken.
+        """
+        board = FakeBoard()
+        board.rb_latency = None
+        record = run(board)
+
+        self.assertEqual(len(record["readback_latency"]), axi.ENVELOPES)
+        for entry in record["readback_latency"]:
+            self.assertFalse(entry["valid"])
+            self.assertEqual(entry["words"], 0)
+
     def test_pass_one_runs_before_any_pass_two(self) -> None:
         """Pass 1 asserts no CSIB, so all three must clear before the fabric is touched."""
         board = FakeBoard()
@@ -366,7 +403,34 @@ class TheRefusals(unittest.TestCase):
         self.refuses(FakeBoard(), a_payload()[:-4], contains="fixed envelope")
 
     def test_a_status_word_with_reserved_bits_set(self) -> None:
-        self.refuses(FakeBoard(status_override=0x00040080), contains="not the carrier")
+        # bit 27 — the LOWEST bit that is still reserved after the readback telemetry took
+        # 25:18 and 26. This test used to set bit 18 and would now be asserting that a
+        # legitimate field is impossible.
+        self.refuses(FakeBoard(status_override=0x08000080), contains="not the carrier")
+
+    def test_the_top_reserved_bit_is_also_refused(self) -> None:
+        self.refuses(FakeBoard(status_override=0x80000080), contains="not the carrier")
+
+    def test_the_telemetry_field_is_not_treated_as_reserved(self) -> None:
+        """A full-width latency with the valid bit set is an ORDINARY status word.
+
+        The refusal above is only meaningful if the bits below it are readable, and a
+        reserved mask that was left one bit too wide would reject every real readback.
+        """
+        word = 0x07FC0000 | axi.ST_RECOVERY_REQUIRED
+        decoded = axi.decode_status(word)
+        self.assertEqual(decoded["reserved"], 0)
+        self.assertEqual(decoded["rb_latency_words"], 0xFF)
+        self.assertTrue(decoded["rb_latency_valid"])
+
+    def test_the_telemetry_decodes_at_its_pinned_places(self) -> None:
+        decoded = axi.decode_status((12 << 18) | axi.ST_RB_LATENCY_VALID)
+        self.assertEqual(decoded["rb_latency_words"], 12)
+        self.assertTrue(decoded["rb_latency_valid"])
+        # ...and it does not bleed into the field below it
+        self.assertEqual(decoded["rb_frames_ok"], 0)
+        # a word with the measurement but no validity says nothing
+        self.assertFalse(axi.decode_status(12 << 18)["rb_latency_valid"])
 
     def test_a_status_word_of_zero(self) -> None:
         self.refuses(FakeBoard(status_override=0), contains="cannot read zero")

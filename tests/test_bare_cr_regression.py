@@ -168,9 +168,26 @@ class TheRepeatLandsOnAnAddressTheCarrierRefuses(unittest.TestCase):
                                 "an unmapped read no longer answers SLVERR with zero data")
 
     def test_refusing_is_deliberate_not_an_oversight(self):
-        """If this ever becomes a stall instead, the failure mode changes completely."""
-        self.assertIn("returns SLVERR rather than stalling",
-                      CARRIER_AXIL.read_text(encoding="utf-8"))
+        """If this ever becomes a stall instead, the failure mode changes completely.
+
+        This used to assert the literal comment "returns SLVERR rather than stalling",
+        which was a stale description of the behaviour erratum 003 REMOVED — a stream
+        write outside a pass has completed with OKAY and a sticky fault ever since, because
+        an AXI error response on this board reaches the A9 as a data abort. Pinning prose
+        that contradicted the code meant the test would have failed the day the prose was
+        corrected, which is what happened on 2026-08-13.
+
+        So it now pins the STRUCTURE: exactly one condition may withhold the write
+        response, and it is a stream word the engine has not taken yet. Anything else —
+        an unmapped register, the read-only readback window, a stream write with no pass
+        open — must complete the bus transaction.
+        """
+        rtl = CARRIER_AXIL.read_text(encoding="utf-8")
+        self.assertIn("wire        strm_stall  = wr_is_strm && stream_open && !word_ready;",
+                      rtl)
+        self.assertIn("wire        wr_fire     = wr_addr_ok && !strm_stall;", rtl)
+        # and the prose agrees with it rather than with the design it replaced
+        self.assertIn("it does not stall and it does not answer SLVERR", rtl)
 
 
 class TheSupersededExperimentStaysSuperseded(unittest.TestCase):

@@ -47,6 +47,8 @@ module tb_carrier_axil;
                 rb_frame_ready = 0, configuration_valid = 0,
                 scorer_busy = 0, scorer_done = 0, scorer_armed = 0;
     reg  [3:0]  txn_fault_code = 0, rb_frames_ok = 0;
+    reg  [7:0]  rb_latency = 0;
+    reg         rb_latency_valid = 0;
     reg  [1:0]  expect_env = 0;
     reg  [2:0]  env_committed = 0;
     reg  [LUTS*8-1:0] score_flat = 0;
@@ -76,6 +78,7 @@ module tb_carrier_axil;
         .pass1_complete(pass1_complete), .recovery_required(recovery_required),
         .expect_env(expect_env), .env_committed(env_committed),
         .rb_frame_ready(rb_frame_ready), .rb_frames_ok(rb_frames_ok),
+        .rb_latency(rb_latency), .rb_latency_valid(rb_latency_valid),
         .configuration_valid(configuration_valid),
         .scorer_busy(scorer_busy), .scorer_done(scorer_done), .scorer_armed(scorer_armed),
         .score_flat(score_flat)
@@ -175,6 +178,28 @@ module tb_carrier_axil;
         check("configuration_valid mirrors its input", rd_data[2], 1);
         check("env_committed mirrors its input", rd_data[13:11], 3'b101);
         check("rb_frames_ok mirrors its input", rd_data[17:14], 4'd9);
+
+        // ---- 4b. the readback-latency telemetry: placement, and the reserved top.
+        //
+        // The value is checked at an ALL-ONES pattern as well as a plain one: a field read
+        // through the wrong bit range still looks right for small numbers, and 0xFF is what
+        // catches a range that is one bit short or one bit over.
+        rb_latency = 8'd12; rb_latency_valid = 1'b1;
+        axi_read(16'h2004);
+        check("rb_latency sits at 25:18", rd_data[25:18], 8'd12);
+        check("rb_latency_valid sits at 26", rd_data[26], 1);
+        check("the top five bits stay zero", rd_data[31:27], 0);
+        rb_latency = 8'hFF; rb_latency_valid = 1'b0;
+        axi_read(16'h2004);
+        check("a full-width latency fits", rd_data[25:18], 8'hFF);
+        check("and does not spill upwards", rd_data[31:26], 0);
+        check("nor downwards into rb_frames_ok", rd_data[17:14], 4'd9);
+        // no address writes it either
+        for (i = 0; i < 16; i = i + 1) axi_write(16'h2000 + i*4, 32'hFFFFFFFF);
+        axi_read(16'h2004);
+        check("rb_latency_valid unwritable", rd_data[26], 0);
+        check("reserved bits stay zero after writes", rd_data[31:27], 0);
+        rb_latency = 8'd0;
 
         // ---- 5. only CTRL is writable among the registers
         axi_write(16'h2004, 32'h1);

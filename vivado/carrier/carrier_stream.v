@@ -86,6 +86,21 @@ module carrier_stream #(
     input  wire        rb_ack,           // the host has taken it
     output reg  [3:0]  rb_frames_ok,     // frames verified so far in this transaction
 
+    // ---- TELEMETRY, and nothing but telemetry.
+    //
+    // The read pipeline's depth, measured against a known answer at the start of every
+    // envelope's readback, and a validity bit that says whether this envelope measured it.
+    // The board has never been able to report HOW FAR the pipeline is, which is why erratum
+    // 004's failure was mute; these two say it out loud.
+    //
+    // They are a SEPARATE latch from `rb_lat`, which is what the sequencer actually skips
+    // on. Sharing one register would put a reporting field inside a control path, and the
+    // ruling is explicit: telemetry takes no part in acceptance, in a fault, or in
+    // `configuration_valid`. Grep for `rb_latency` — it appears in this file only where it
+    // is assigned, and in the register file where it is read.
+    output reg  [7:0]  rb_latency,       // words of latency the probe measured
+    output reg         rb_latency_valid, // ...and whether THIS envelope measured it
+
     // ICAPE2
     output reg         icap_csib,
     output reg         icap_rdwrb,
@@ -266,14 +281,14 @@ module carrier_stream #(
     // readback for the words the device returns. They are never live at the same time —
     // readback begins only after the whole envelope has been written, so no emit follows it
     // within an envelope — and sharing removes a second 101-word array (88 LUTs of SLICEM
-    // in a region with 800 LUTs total). It also makes an assurance structural rather than
+    // in a floorplan of about 1,600). It also makes an assurance structural rather than
     // incidental: the words the host reads back ARE the words the CRC saw, because they are
     // the same array written by the same transfer.
     //
     // DISTRIBUTED RAM, written from its OWN purely synchronous block. Left inside the
     // asynchronous-reset FSM it inferred 3,232 flip-flops AND a 101-entry 32-bit read
-    // multiplexer for the emit path — 4,272 FDRE and 2,415 LUTs against the 1,600 and 800
-    // the left-of-flush region actually has, so the placer refused before it started. It
+    // multiplexer for the emit path — 4,272 FDRE and 2,415 LUTs against the ~1,600 LUTs the
+    // whole pblock has, so the placer refused before it started. It
     // is the same trap the candidate buffer fell into: an array written inside an
     // asynchronous-reset process is not inferrable as RAM at all, and the `ram_style`
     // attribute is then ignored rather than disobeyed.
@@ -409,6 +424,7 @@ module carrier_stream #(
             rb_frame <= 3'd0;
             rb_st <= RB_PCMD; rb_next <= RB_PCMD; rb_dir <= 1'b0; rb_k <= 6'd0;
             rb_lat <= 8'd0; rb_lat_cnt <= 8'd0; rb_skip <= 9'd0; rb_out <= 1'b0;
+            rb_latency <= 8'd0; rb_latency_valid <= 1'b0;
             icap_rd_valid <= 1'b0;
             icap_csib <= 1'b1; icap_rdwrb <= 1'b0; icap_din <= 32'd0;
         end else begin
@@ -630,6 +646,11 @@ module carrier_stream #(
                         case (rb_st)
                             // ---- sync, then ask the device to name itself
                             RB_PCMD: begin
+                                // Cleared before the probe that will set it, every envelope.
+                                // A stale `valid` from the previous envelope would let a host
+                                // read one envelope's measurement as another's, which is the
+                                // exact shape of the mistakes this carrier keeps making.
+                                if (rb_k == 6'd0) rb_latency_valid <= 1'b0;
                                 icap_csib  <= 1'b0;
                                 icap_rdwrb <= 1'b0;
                                 case (rb_k)
@@ -680,11 +701,20 @@ module carrier_stream #(
                                 if (icap_rd_valid) begin
                                     if (icap_word[27:0] == DEVICE_ID_LOW) begin
                                         rb_lat  <= rb_lat_cnt;
+                                        // the same number, latched separately for reporting
+                                        rb_latency       <= rb_lat_cnt;
+                                        rb_latency_valid <= 1'b1;
                                         rb_k    <= 6'd0;
                                         rb_dir  <= 1'b0;
                                         rb_next <= RB_SETUP;
                                         rb_st   <= RB_TRN;
                                     end else if (rb_lat_cnt == PROBE_LAST) begin
+                                        // The probe failed, so there is no measurement to
+                                        // report. Cleared HERE rather than in P_FAULT,
+                                        // because a fault AFTER a good probe must keep the
+                                        // measurement readable — that is the case a host
+                                        // most needs it in.
+                                        rb_latency_valid <= 1'b0;
                                         fault_code <= F_RBSYNC;
                                         phase      <= P_FAULT;
                                     end else begin
@@ -842,6 +872,9 @@ module carrier_stream #(
                 end
 
                 P_FAULT: begin
+                    // `rb_latency` and `rb_latency_valid` are deliberately NOT cleared here:
+                    // after F_READBACK the measurement is the most useful thing the engine
+                    // has to say. F_RBSYNC clears the validity at its own site instead.
                     awaiting_crc        <= 1'b0;
                     fault_since_reset   <= 1'b1;   // sticky: only a reset clears it
                     configuration_valid <= 1'b0;

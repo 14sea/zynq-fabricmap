@@ -116,14 +116,19 @@ mutate dummy_off_by_one "a dummy discard one frame too long" \
     "rb_skip <= {1'b0, rb_lat} + SKIP_FRAME;" \
     "rb_skip <= {1'b0, rb_lat} + 9'd202;"
 
-# EXPECTED SURVIVOR. The device wants 32 clocks; the mutant sends 2. The other 30 are
-# then consumed by the probe read, the probe measures a latency 30 words longer, and the
-# frame read skips exactly that much more. The flush is not load-bearing BECAUSE the
-# latency is measured — which is the property this design was built for.
-mutate short_flush "a 2-clock flush, absorbed by the measured latency" \
+# The device wants 32 clocks; the mutant sends 2. The readback still VERIFIES ALL FIFTEEN
+# FRAMES — the other 30 clocks are consumed by the probe read, the probe measures a latency
+# 30 words longer, and the frame read skips exactly that much more. Until 2026-08-13 this
+# was an expected survivor for that reason.
+#
+# It is now killed, and by the telemetry alone: the engine reports the latency it measured,
+# the bench knows what this device should have produced, and 33 is not 3. That is precisely
+# what a telemetry field is for — the run still works, and the instrument still notices that
+# the machine is not doing what it was built to do.
+mutate short_flush "a 2-clock flush, which only the telemetry notices" \
     "localparam integer FLUSH_NOOPS = 32;" \
     "localparam integer FLUSH_NOOPS = 2;" \
-    survive
+    kill
 
 # ...and the boundary: the same mutation against a device that wants 64 clocks pushes the
 # probe past its 64-word cap, and the engine refuses with F_RBSYNC instead of reading

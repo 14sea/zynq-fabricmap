@@ -125,12 +125,26 @@ module icape2_model #(
         end
     endfunction
 
+    // The ordering is held in a register, not read straight from the parameter, so a bench
+    // can change it MID-RUN. That is what makes "the second envelope must not inherit the
+    // first envelope's measurement" testable: envelope 0 measures a good device, the device
+    // then stops speaking the DUT's order, and envelope 1 must report nothing rather than
+    // the number that is still sitting in the register.
+    reg wire_order;
+    initial wire_order = (BIT_ORDER != 0);
+
+    task set_wire_order(input value);
+        begin
+            wire_order = value;
+        end
+    endtask
+
     function automatic [31:0] from_wire(input [31:0] d);
-        from_wire = (BIT_ORDER != 0) ? br8(d) : d;
+        from_wire = wire_order ? br8(d) : d;
     endfunction
 
     function automatic [31:0] to_wire(input [31:0] d);
-        to_wire = (BIT_ORDER != 0) ? br8(d) : d;
+        to_wire = wire_order ? br8(d) : d;
     endfunction
 
     // ------------------------------------------------------------------- FAR successor

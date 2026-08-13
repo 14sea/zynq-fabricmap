@@ -283,6 +283,17 @@ And the left region cannot hold the buffer as LUTRAM instead:
     logic (measured)      432 LUTs
     required             1264 LUTs   -> short by 464
 
+**Corrected 2026-08-13.** The arithmetic above is the LEFT SEGMENT ALONE, and it was the
+whole floorplan when it was written. The hard pblock is now two segments —
+`SLICE_X0Y0:SLICE_X1Y99` **plus** `SLICE_X6Y0:SLICE_X7Y99` (`build_carrier.tcl`) — so the
+budget is about **1,600 LUTs**, not 800, and the erratum-003 build placed **816 Slice LUTs**
+(706 as logic), 582 FFs, 57 control sets. Every "the region has 800 LUTs" elsewhere in this
+repository is that older single-region figure; where it was used as a live budget it has
+been corrected, and where it is part of a historical measurement (erratum 002's "792 of
+800") it stands as the record of what was true then. The conclusions it supported do not
+move: the envelope buffer was short by 464 LUTs in a segment that has not grown, and both
+segments together still cannot hold a SHA-256 core.
+
 ### RULED 2026-08-11: frame-staged, after the envelope-staged form would not fit
 
 The envelope-staged design was integrated and measured, and the left-of-flush region cannot
@@ -436,8 +447,9 @@ The contract:
    envelope. Only then is it written.
 4. **Digest strength, and what each digest can actually authorise.** The PL computes its
    own **CRC-32 per envelope** in pass 1 and re-checks it in pass 2. A hardware SHA-256
-   does not fit — the left-of-flush region has 800 LUTs and the logic already uses 432 —
-   so the fallback the ruling allows is taken and named.
+   does not fit — see the corrected floorplan budget above: about 1,600 LUTs across two
+   segments, 816 of them already placed — so the fallback the ruling allows is taken and
+   named.
 
    The word-by-word control and FAR rules run in both passes, but be exact about what that
    buys: **they guarantee only that a CRC collision cannot silently change the control
