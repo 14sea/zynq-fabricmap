@@ -1,0 +1,30 @@
+{
+  "what": "erratum 005 step 1: the device model learns that an FDRO read must be absorbed contiguously, and the published erratum-004 RTL dies under it",
+  "date": "2026-08-13",
+  "board_time": "none — this is the offline half",
+  "the_rule_added": {
+    "where": "vivado/carrier/icape2_model.v",
+    "rule": "a CSIB gap during an ACTIVE FDRO read aborts the configuration; the device then drives the abort status word until a fresh sync",
+    "active_means": "after the first data word has been SERVED and before the requested count is exhausted — not from the FDRO header, because the write-to-read turnaround must raise CSIB and a window opening at the header would make the legal turnaround an abort",
+    "asymmetry": "a gap during an FDRI WRITE is still a legal pause. The frame-staged write depends on it, the ruling scopes this to FDRO, and nothing measured says otherwise about the write path",
+    "abort_status": "0xFFFFFF5B, driven RAW — an abort status word is not configuration data and is not bit-swapped"
+  },
+  "why_that_value": {
+    "measured": "board 17A6, 2026-08-13: after the erratum-004 readback faulted, all 101 words of the staging window read 0xFFFFFFDA",
+    "arithmetic": "the engine stores br8(icap_dout), and br8(0x5B) == 0xDA exactly, so the pins carried 0xFFFFFF5B",
+    "shape": "UG470 abort status: upper 24 bits all 1; low byte CFGERR_B=0, DALIGN=1, RIP=0, IN_ABORT_B=1",
+    "closes": "why the dump matched no offset of the expected 606-word stream and no frame of the bitstream: it was never frame data"
+  },
+  "model_bench": "tb_icape2_model: OK. Two new cases pin the rule in both directions — a contiguous 606-word burst does not abort and returns real data; one clock of CSIB High after the first word aborts, the device then drives 0xFFFFFF5B raw (0xFFFFFFDA after the engine's un-swap, which is what the board stored), keeps driving it, and a fresh sync clears it",
+  "erratum004_rtl_under_the_new_model": {
+    "log": "erratum004_rtl_dies.txt",
+    "failures": 1527,
+    "device_error": "8 (E_FDRO_GAP)",
+    "words_read": 609,
+    "of_which_idle": 603,
+    "frames_committed": 4,
+    "reading": "the published RTL pulls CSIB Low one clock per word and High for three while its byte-serial CRC drains. The simulation now fails for the same reason the silicon did, which is the point: before this the bench agreed with it"
+  },
+  "also_corrected": "the readback window's last word is 0x43C01190, not 0x43C0118F (100 words). Fixed in carrier_axil.v's header table and board_uboot_axi.py's docstring; the RTL decode was always right (rb_raddr < FRAME_WORDS admits word 100)",
+  "not_done": "the erratum-005 RTL. Two architectures satisfy the ruling with materially different blast radius and the choice is with the user"
+}

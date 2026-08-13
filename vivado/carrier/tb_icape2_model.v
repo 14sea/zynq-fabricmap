@@ -125,6 +125,20 @@ module tb_icape2_model;
         end
     endtask
 
+    task rd_raw(output [31:0] w);      // the pin value, with no un-swap applied
+        begin
+            @(negedge clk); csib = 1'b0; rdwrb = 1'b1;
+            @(posedge clk); #1; w = ow;
+        end
+    endtask
+
+    task gap_clk;                      // one clock with CSIB High, mid-burst
+        begin
+            @(negedge clk); csib = 1'b1;
+            @(posedge clk); #1;
+        end
+    endtask
+
     task idle_clk;
         begin
             @(negedge clk); csib = 1'b1;
@@ -345,6 +359,42 @@ module tb_icape2_model;
         for (k = 0; k < 8; k = k + 1) rd(cap[k]);
         check_w("early turnaround reads idle", cap[0], IDLE);
         check_w("still idle four words in", cap[3], IDLE);
+
+        // ============ 11. ERRATUM 005: an FDRO read must be absorbed CONTIGUOUSLY
+        //
+        // The erratum-004 engine pulled CSIB Low one clock per word and High for three
+        // while its byte-serial CRC drained. This is the rule that makes that a defect
+        // instead of a pause, and the value it produces is the one the board returned.
+        m.clear_obs();
+        turn(1'b0);
+        wr(W_CMD1); wr(W_DESYNC);
+        seq_readback(FAR_T0, 6*FRAME_WORDS, 1'b1, FLUSH_NOOPS);
+        turn(1'b1);
+        for (k = 0; k < 6*FRAME_WORDS; k = k + 1) rd(cap[k]);
+        check_i("a contiguous burst does not abort", m_err, 0);
+        check_w("and it is real data", cap[FRAME_WORDS], 32'hC0DE0000);
+
+        // the same transaction, with ONE clock of CSIB High after the first word
+        m.clear_obs();
+        turn(1'b0);
+        wr(W_CMD1); wr(W_DESYNC);
+        seq_readback(FAR_T0, 6*FRAME_WORDS, 1'b1, FLUSH_NOOPS);
+        turn(1'b1);
+        rd(got);
+        check_w("the first word is still data", got, 32'hC0DE0000 + 4*FRAME_WORDS);
+        gap_clk();                                   // <-- the defect, one clock of it
+        check_i("one CSIB clock mid-burst aborts", m_err, 8);
+        rd_raw(got);
+        check_w("and the device drives the abort word", got, 32'hFFFFFF5B);
+        rd(got);
+        check_w("which un-swaps to what the board stored", got, 32'hFFFFFFDA);
+        rd_raw(got);
+        check_w("and it keeps driving it", got, 32'hFFFFFF5B);
+
+        // a fresh sync clears it: the engine is not bricked, it is desynced
+        turn(1'b0);
+        seq_sync();
+        check_i("a sync clears the abort", m_synced, 1);
 
         if (errors == 0) $display("ICAPE2 MODEL TB: OK");
         else             $display("ICAPE2 MODEL TB: %0d FAILURE(S)", errors);

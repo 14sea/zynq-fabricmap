@@ -9,7 +9,9 @@ The window (`carrier_axil.v`; only address bits [15:0] are decoded, so the slave
 across the whole GP0 range and `0x43C00000` is simply where we address it):
 
     0x0000 .. 0x0FFF  STREAM   W  one word of the envelope, in order
-    0x1000 .. 0x118F  RDBACK   R  the 101 words of the frame the engine verified
+    0x1000 .. 0x1193  RDBACK   R  the 101 words of the frame the engine verified
+                                  (first word 0x1000, LAST WORD 0x1190 — 0x118F is 100
+                                   words and stops one short; corrected 2026-08-13)
     0x2000            CTRL     W  b1 begin_txn b2 pass1 b3 pass2 b5:4 env b6 arm
                                   b7 mode_holdout b8 rb_ack
     0x2004            STATUS   R

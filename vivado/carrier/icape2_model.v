@@ -62,7 +62,17 @@ module icape2_model #(
     // what that costs this envelope shape: nothing, because the only frame that can be left
     // over is the flush frame and its address already holds its content.
     parameter integer DESYNC_FLUSHES_BUFFER = 1,
-    parameter [31:0]  IDLE_WORD      = 32'hFFFFFFFF
+    parameter [31:0]  IDLE_WORD      = 32'hFFFFFFFF,
+    // The ABORT status word the device drives once a configuration has been aborted.
+    // MEASURED on board 17A6, 2026-08-13: after the erratum-004 readback faulted, the
+    // staging window held 101 identical words and the value on the ICAPE2 O pins was
+    // 0xFFFFFF5B. Its shape is UG470's abort status: the upper 24 bits all 1, and in the
+    // low byte CFGERR_B=0, DALIGN=1, RIP=0, IN_ABORT_B=1 with the fixed low bits.
+    //
+    // It is driven RAW. An abort status word is not part of the configuration data stream
+    // and is NOT bit-swapped, which is why the engine's unconditional un-swap turned it
+    // into 0xFFFFFFDA in the staging window — br8(0x5B) == 0xDA, exactly.
+    parameter [31:0]  ABORT_STATUS   = 32'hFFFFFF5B
 ) (
     input  wire        clk,
     input  wire        csib,
@@ -93,7 +103,8 @@ module icape2_model #(
                      E_NO_WCFG    = 4'd4,   // FDRI data with no WCFG since sync
                      E_UNKNOWN_FAR= 4'd5,   // a read addressed a frame never written
                      E_STRAY_TYPE2= 4'd6,   // a Type-2 packet with no Type-1 to own it
-                     E_UNSYNCED   = 4'd7;   // a read command arrived while desynced
+                     E_UNSYNCED   = 4'd7,   // a read command arrived while desynced
+                     E_FDRO_GAP   = 4'd8;   // CSIB rose during an ACTIVE FDRO read
 
     localparam [31:0] SYNC = 32'hAA995566;
 
@@ -273,9 +284,42 @@ module icape2_model #(
 
     reg        csib_q, rdwrb_q;
 
+    // ---- ERRATUM 005: an FDRO read must be absorbed CONTIGUOUSLY.
+    //
+    // The erratum-004 engine pulled CSIB Low for one clock per word and High for three
+    // while its byte-serial CRC drained, and this model let it: pausing was modelled as
+    // free in both directions, because that is what the WRITE path needs between frames and
+    // the read path was never thought about separately. On silicon the read came back as
+    // 101 identical abort status words.
+    //
+    // UG470's way to run the interface non-contiguously is to stop CCLK, not to toggle
+    // CSIB; and AMD's own AXI HWICAP does not stop the ICAP stream when its read FIFO
+    // fills, which is exactly why that core can overflow. So a gap in an ACTIVE FDRO read
+    // is not a pause here, it is an abort — and from then on the device drives the abort
+    // status word, raw, until it is re-synced.
+    //
+    // Deliberately asymmetric: a gap during an FDRI WRITE is still modelled as a legal
+    // pause. That is what the frame-staged write depends on, the ruling scopes this to
+    // FDRO, and nothing measured says otherwise about the write path.
+    reg        aborted;
+    // "Active" starts when the first data word is SERVED, not when the FDRO header is
+    // parsed. The turnaround from write to read must raise CSIB — that is the rule two
+    // paragraphs up — so a window that opened at the header would make the legal
+    // turnaround an abort and the model would refuse every correct sequence.
+    reg        fdro_started;
+    wire       fdro_streaming = fdro_started && rd_cnt != 27'd0;
+
     task set_err(input [3:0] code);
         begin
             if (err == E_NONE) err = code;
+        end
+    endtask
+
+    task abort_config;
+        begin
+            set_err(E_FDRO_GAP);
+            aborted <= 1'b1;
+            desync;
         end
     endtask
 
@@ -284,7 +328,7 @@ module icape2_model #(
             synced <= 1'b0; wcfg <= 1'b0; rcfg <= 1'b0;
             pay_cnt <= 11'd0; fdri_cnt <= 27'd0;
             fdri_pending <= 1'b0; fdro_pending <= 1'b0;
-            rd_active <= 1'b0; rd_cnt <= 27'd0;
+            rd_active <= 1'b0; rd_cnt <= 27'd0; fdro_started <= 1'b0;
             cur_w <= 7'd0; id_bad <= 1'b0;
             if (DESYNC_FLUSHES_BUFFER != 0) fbuf_commit_ok <= 1'b0;
         end
@@ -301,6 +345,7 @@ module icape2_model #(
             rd_far    <= far;
             rd_wait   <= MIN_FLUSH;
             rd_lead   <= READ_LATENCY;
+            fdro_started <= 1'b0;
         end
     endtask
 
@@ -327,7 +372,7 @@ module icape2_model #(
         rd_far = 32'd0; rd_word = 7'd0; rd_frame = 12'd0; rd_wait = 16'd0; rd_lead = 16'd0;
         buf_far = 32'd0; fbuf_valid = 1'b0; fbuf_commit_ok = 1'b0;
         cur_far = 32'd0; cur_w = 7'd0;
-        csib_q = 1'b1; rdwrb_q = 1'b1;
+        csib_q = 1'b1; rdwrb_q = 1'b1; aborted = 1'b0; fdro_started = 1'b0;
         for (s_i = 0; s_i < SLOTS; s_i = s_i + 1) begin
             mem_used[s_i] = 1'b0;
             mem_far[s_i]  = 32'hFFFFFFFF;
@@ -351,6 +396,10 @@ module icape2_model #(
         csib_q  <= csib;
         rdwrb_q <= rdwrb;
 
+        // A gap in an active FDRO read. Checked BEFORE the `!csib` body, because the whole
+        // point is what happens on the clocks where CSIB is High.
+        if (csib && fdro_streaming && !aborted) abort_config;
+
         if (!csib) begin
             // A direction change is only legal with CSIB High. Doing it here aborts the
             // configuration — UG470 — and that is a hard stop, not a warning.
@@ -369,10 +418,11 @@ module icape2_model #(
 
                     if (!synced) begin
                         if (word == SYNC) begin
-                            synced <= 1'b1;
-                            wcfg   <= 1'b0;
-                            rcfg   <= 1'b0;
-                            id_bad <= 1'b0;
+                            synced  <= 1'b1;
+                            wcfg    <= 1'b0;
+                            rcfg    <= 1'b0;
+                            id_bad  <= 1'b0;
+                            aborted <= 1'b0;   // a fresh sync clears an abort
                         end
                     end else if (pay_cnt != 11'd0) begin
                         case (pay_reg)
@@ -474,7 +524,12 @@ module icape2_model #(
                     // code, because on the board it is the difference between "the read
                     // path never came up" and "it came up and disagreed".
                     if (!synced && !rd_active) set_err(E_UNSYNCED);
-                    if (!rd_active || rd_wait != 16'd0 || rd_lead != 16'd0 ||
+                    if (aborted) begin
+                        // RAW: an abort status word is not configuration data and is not
+                        // bit-swapped. This is the value the board actually returned.
+                        o      <= ABORT_STATUS;
+                        n_idle <= n_idle + 16'd1;
+                    end else if (!rd_active || rd_wait != 16'd0 || rd_lead != 16'd0 ||
                         rd_cnt == 27'd0) begin
                         o      <= to_wire(IDLE_WORD);
                         n_idle <= n_idle + 16'd1;
@@ -504,7 +559,8 @@ module icape2_model #(
                         end else begin
                             rd_word <= rd_word + 7'd1;
                         end
-                        rd_cnt <= rd_cnt - 27'd1;
+                        rd_cnt       <= rd_cnt - 27'd1;
+                        fdro_started <= 1'b1;
                     end
                 end
             end

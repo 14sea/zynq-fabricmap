@@ -1,0 +1,16 @@
+FAIL envelope 0 verifies five frames: got 0 want 5
+FAIL envelope 1 makes it ten: got 0 want 10
+FAIL fifteen frames verified: got 0 want 15
+FAIL no fault: got 1 want 0
+FAIL configuration confirmed: got 0 want 1
+FAIL the device never errored: got 8 want 0
+FAIL twelve frames reached the fabric: got 4 want 12
+FAIL the host read fifteen frames: got 0 want 15
+FAIL envelope 0 still verifies: got 0 want 5
+FAIL and it is a readback fault: got 1 want 8
+FAIL the probe fails: got 1 want 12
+FAIL lidity is CLEARED, not inherited: got 1 want 0
+READBACK TB (latency 0, flush 32): 1836 written, 609 read, 603 idle
+READBACK TB: measured latency 0, first fault 8, device err 8
+READBACK TB: 1527 FAILURE(S)
+tb_carrier_readback.v:374: $finish called at 296930000 (1ps)

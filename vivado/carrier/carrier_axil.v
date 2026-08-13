@@ -11,7 +11,10 @@
 //
 // Three windows off one GP0 slave:
 //   0x0000            STREAM   W: one word of the envelope, in order
-//   0x1000 .. 0x118F  RDBACK   R: the 101 words of the frame the engine has verified
+//   0x1000 .. 0x1193  RDBACK   R: the 101 words of the frame the engine has verified
+//                                  (first word 0x1000, LAST WORD 0x1190; 0x118F would be
+//                                   100 words and stop one short — the decode below is
+//                                   right, this line was not, corrected 2026-08-13)
 //   0x2000 ..         registers
 //
 //   0x2000  CTRL      W: bit1 begin_txn    bit2 start_pass1   bit3 start_pass2
