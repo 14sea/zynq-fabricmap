@@ -233,6 +233,43 @@ def check_the_no_op(candidate: dict[int, list[int]], manifest: dict,
     }
 
 
+def check_the_end_state(transaction: dict) -> list[dict]:
+    """The final status and the per-envelope readback telemetry, as stop conditions.
+
+    Split out of `main` so it can be exercised without a board. A check that only ever runs
+    against hardware is a check nobody has seen fail.
+    """
+    final = transaction["status_after"]
+    for flag, must_be in (("fault", False), ("configuration_valid", True),
+                          ("recovery_required", False), ("scorer_armed", False),
+                          ("scorer_busy", False), ("scorer_done", False)):
+        if final[flag] is not must_be:
+            raise CalibrationStop(
+                f"STOP — the final status has {flag}={final[flag]}, required {must_be}")
+
+    # -- the readback telemetry, per envelope (erratum 004).
+    #
+    # An envelope whose probe never established the read path reports
+    # `rb_latency_valid=0`, and whatever it then "verified" was verified against whatever
+    # the engine happened to read instead. A run that passed every other check with an
+    # invalid latency would be a run whose readback nobody can account for, so this is a
+    # stop and not a note. It judges only what the engine REPORTS: the measured value is
+    # telemetry and no threshold is applied to it.
+    latency = transaction.get("readback_latency")
+    if not latency or len(latency) != axi.ENVELOPES:
+        raise CalibrationStop(
+            f"STOP — the transaction recorded {len(latency or [])} readback-latency "
+            f"entries; one per envelope means {axi.ENVELOPES}")
+    invalid = [entry for entry in latency if not entry["valid"]]
+    if invalid:
+        raise CalibrationStop(
+            "STOP — the readback probe never named the device on envelope(s) "
+            f"{[entry['envelope'] for entry in invalid]}: rb_latency_valid=0, so the read "
+            "path was not established for them and no frame they report can be accounted "
+            "for")
+    return latency
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     # Nothing here can relax a requirement: which run, which cable, where to file the
@@ -295,13 +332,7 @@ def main() -> int:
             key: value for key, value in transaction.items() if key != "readback_frames"}
         record["check"] = check_the_no_op(candidate, manifest, transaction["readback_frames"])
 
-        final = transaction["status_after"]
-        for flag, must_be in (("fault", False), ("configuration_valid", True),
-                              ("recovery_required", False), ("scorer_armed", False),
-                              ("scorer_busy", False), ("scorer_done", False)):
-            if final[flag] is not must_be:
-                raise CalibrationStop(
-                    f"STOP — the final status has {flag}={final[flag]}, required {must_be}")
+        record["readback_latency"] = check_the_end_state(transaction)
 
         record["verdict"] = "NO-OP CALIBRATION PASSED"
     except (CalibrationStop, ex.TransportRefusal, axi.AxiRefusal,
@@ -322,6 +353,8 @@ def main() -> int:
     print(f"  candidate {check['candidate_sha256'][:16]}… == readback "
           f"{check['readback_sha256'][:16]}…")
     print(f"  configuration_valid=1 recovery_required=0 fault=0 scorer_armed=0")
+    print("  readback latency, per envelope: " + ", ".join(
+        f"env{entry['envelope']}={entry['words']}w" for entry in record["readback_latency"]))
     print(f"  evidence: {args.out}")
     print("  NEXT is erratum 001 step 3, the pre-selected known-answer mutation — "
           "which this tool does not do.")

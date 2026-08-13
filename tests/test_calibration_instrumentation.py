@@ -98,6 +98,70 @@ class TheHostGateIsBracketed(unittest.TestCase):
         self.assertIn("monotonic", code)
 
 
+def a_good_transaction() -> dict:
+    """What a passing no-op looks like at the point the end-state check sees it."""
+    return {
+        "status_after": {
+            "fault": False, "configuration_valid": True, "recovery_required": False,
+            "scorer_armed": False, "scorer_busy": False, "scorer_done": False,
+        },
+        "readback_latency": [
+            {"envelope": 0, "valid": True, "words": 3},
+            {"envelope": 1, "valid": True, "words": 3},
+            {"envelope": 2, "valid": True, "words": 3},
+        ],
+    }
+
+
+class TheEndStateIsAStopCondition(unittest.TestCase):
+    """Erratum 004 put a measurement in STATUS; this is what makes it load-bearing.
+
+    The value is telemetry and no threshold is applied to it. Its VALIDITY is not
+    telemetry: an envelope that never established the read path verified its frames
+    against whatever the engine read instead, and a run that reported success anyway
+    would be a run whose readback nobody can account for.
+    """
+
+    def test_a_good_transaction_passes_and_returns_the_measurements(self):
+        latency = cal.check_the_end_state(a_good_transaction())
+        self.assertEqual([entry["words"] for entry in latency], [3, 3, 3])
+
+    def test_a_zero_latency_is_not_treated_as_missing(self):
+        transaction = a_good_transaction()
+        for entry in transaction["readback_latency"]:
+            entry["words"] = 0
+        self.assertEqual(len(cal.check_the_end_state(transaction)), 3)
+
+    def test_one_envelope_with_an_invalid_latency_stops_the_run(self):
+        transaction = a_good_transaction()
+        transaction["readback_latency"][1]["valid"] = False
+        with self.assertRaises(cal.CalibrationStop) as stop:
+            cal.check_the_end_state(transaction)
+        self.assertIn("[1]", str(stop.exception))
+        self.assertIn("rb_latency_valid=0", str(stop.exception))
+
+    def test_a_missing_telemetry_field_stops_the_run(self):
+        transaction = a_good_transaction()
+        del transaction["readback_latency"]
+        with self.assertRaises(cal.CalibrationStop):
+            cal.check_the_end_state(transaction)
+
+    def test_fewer_entries_than_envelopes_stops_the_run(self):
+        transaction = a_good_transaction()
+        transaction["readback_latency"] = transaction["readback_latency"][:2]
+        with self.assertRaises(cal.CalibrationStop):
+            cal.check_the_end_state(transaction)
+
+    def test_the_status_flags_are_still_checked(self):
+        for flag, bad in (("fault", True), ("configuration_valid", False),
+                          ("recovery_required", True), ("scorer_armed", True),
+                          ("scorer_busy", True), ("scorer_done", True)):
+            transaction = a_good_transaction()
+            transaction["status_after"][flag] = bad
+            with self.assertRaises(cal.CalibrationStop, msg=flag):
+                cal.check_the_end_state(transaction)
+
+
 class TheTransportIsWrappedEarlyEnough(unittest.TestCase):
     def test_the_session_is_built_on_the_wrapper(self):
         self.assertLess(SOURCE.index("InstrumentedTransport(ident.SerialTransport"),
