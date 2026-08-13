@@ -78,7 +78,7 @@ except ImportError:  # pragma: no cover - board-host dependency
 
 TOOL_VERSION = "board_isolate_carrier.py/1.0.0"
 
-DEFAULT_RUN = REPO_ROOT / "gate_runs/claimb_round1_carrier_2026_08_13_erratum003"
+DEFAULT_RUN = REPO_ROOT / "gate_runs/claimb_round1_carrier_2026_08_13_erratum004"
 
 # devcfg, and the PS clock/reset registers that would explain a dead slave. All PS — none of
 # them can stall, unlike anything in the PL window.

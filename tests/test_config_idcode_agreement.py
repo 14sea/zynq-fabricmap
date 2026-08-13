@@ -31,7 +31,7 @@ import bitstream_frames as bf  # noqa: E402
 import board_calibrate_noop as cal  # noqa: E402
 import board_carrier_exec as ex  # noqa: E402
 
-RUN_DIR = REPO_ROOT / "gate_runs/claimb_round1_carrier_2026_08_13_erratum003"
+RUN_DIR = REPO_ROOT / "gate_runs/claimb_round1_carrier_2026_08_13_erratum004"
 CARRIER_STREAM_V = REPO_ROOT / "vivado/carrier/carrier_stream.v"
 IDCODE_WORD = 15
 

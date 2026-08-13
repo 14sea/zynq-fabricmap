@@ -62,8 +62,13 @@ TOOL_VERSION = "board_carrier_exec.py/2.0.0"
 # reached from the PS at all — `MAXIGP0RLAST` tied low, the first read stalls the A9 — so
 # the manifest that described it must not be usable as an authority. Superseding it is a
 # source edit in a diff, which is the whole point of pinning it here.
+#
+# Moved again 2026-08-13 for erratum 004. The erratum-003 carrier implements NO ICAP
+# readback protocol and hands SelectMAP-order words to a port that reads them bit-reversed
+# per byte, so its pass 2 wrote nothing and read nothing back. A manifest naming that
+# carrier must not stay usable as an authority once a corrected one exists.
 PRODUCTION_MANIFEST_SHA256 = (
-    "44312a51355c630c8afb1db18e34aead09220f657d13f55390e72bbb85f7ac23"
+    "38009ca9a54b28464afbd1422c5560a98982140827deb06913a1cb2c67ef4668"
 )
 
 
