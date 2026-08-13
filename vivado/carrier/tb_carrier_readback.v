@@ -99,6 +99,26 @@ module tb_carrier_readback #(
 
     always #5 clk = ~clk;
 
+    // ---- ERRATUM 005: the PIN TRACE, judged independently of the device model.
+    //
+    // A read burst is a run of clocks with CSIB Low and RDWRB High. Ending one by raising
+    // CSIB and then turning the direction round is legal — that is how a burst finishes.
+    // RESUMING one after a pause is the defect: CSIB rises while RDWRB stays High and Low
+    // clocks follow without the direction ever having changed. That is counted here, off
+    // the pins, without asking `icape2_model` anything.
+    reg     in_read = 1'b0, paused = 1'b0;
+    integer read_gaps = 0;
+    always @(posedge clk) begin
+        if (!icap_rdwrb) begin
+            in_read <= 1'b0; paused <= 1'b0;        // a turnaround ends the burst
+        end else if (!icap_csib) begin
+            if (paused && in_read) read_gaps = read_gaps + 1;
+            in_read <= 1'b1; paused <= 1'b0;
+        end else if (in_read) begin
+            paused <= 1'b1;
+        end
+    end
+
     carrier_stream dut (
         .clk(clk), .rst_n(rst_n),
         .begin_txn(begin_txn), .start_pass1(start_pass1), .start_pass2(start_pass2),
@@ -307,6 +327,8 @@ module tb_carrier_readback #(
 
         // ---- what the DEVICE saw. These are the checks no echo model can make.
         check_i("the device never errored", m_err, 0);
+        // and the same fact taken off the wires rather than from the model
+        check_i("no read burst was ever resumed after a pause", read_gaps, 0);
         check_i("twelve frames reached the fabric", m_committed, 12);
         check_i("the host read fifteen frames", rx_frames, 15);
 

@@ -101,12 +101,12 @@ mutate no_rcfg "the RCFG command" \
     "6'd3:    icap_din <= br8(W_NOOP);"
 
 mutate wrong_far "the readback FAR" \
-    "6'd1:    icap_din <= br8(permitted_far(env));" \
-    "6'd1:    icap_din <= br8(permitted_far(env) + 32'd1);"
+    "6'd1:    icap_din <= br8(frame_far(env, rb_frame));" \
+    "6'd1:    icap_din <= br8(frame_far(env, rb_frame) + 32'd1);"
 
 mutate short_fdro "the FDRO length" \
-    "localparam integer RB_WORDS = (FRAMES_PER_ENV + 1) * FRAME_WORDS;   // 606" \
-    "localparam integer RB_WORDS = FRAMES_PER_ENV * FRAME_WORDS;"
+    "localparam integer RB_WORDS = 2 * FRAME_WORDS;                      // 202" \
+    "localparam integer RB_WORDS = FRAME_WORDS;"
 
 mutate no_dummy_discard "the dummy frame discard" \
     "rb_skip <= {1'b0, rb_lat} + SKIP_FRAME;" \
@@ -149,8 +149,17 @@ mutate no_bitswap "the ICAPE2 word ordering" \
     "                br8[b]      = d[b];"
 
 mutate lat_hardcoded "the measured latency (pinned to 0 instead)" \
-    "rb_lat  <= rb_lat_cnt;" \
-    "rb_lat  <= 8'd0;"
+    "rb_lat           <= rb_lat_cnt;" \
+    "rb_lat           <= 8'd0;"
+
+# THE ERRATUM-005 DEFECT ITSELF, put back: pause the burst one clock in two. The old engine
+# did this to let its byte-serial CRC drain, the old model called it a pause, and the board
+# called it an abort. If this ever survives again, the model has stopped modelling it.
+mutate csib_gap_in_burst "a CSIB gap in the middle of the FDRO burst" \
+    "                            RB_DATA: begin
+                                icap_csib <= 1'b0;" \
+    "                            RB_DATA: begin
+                                icap_csib <= icap_rd_valid;"
 
 echo
 echo "$killed as expected, $survivors unexpected"

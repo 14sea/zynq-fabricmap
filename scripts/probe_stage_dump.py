@@ -5,9 +5,12 @@ It does NOT reload, does NOT begin a transaction, does NOT hand over PCAP_PR, do
 acknowledge a frame and does NOT arm anything. Every command it issues is an `md` or a
 `printenv`.
 
-The window is 101 words: first word 0x43C01000, LAST word 0x43C01190, byte range
-0x43C01000..0x43C01193. `read_words(..., 101)` issues `md.l 0x43c01000 0x65` — 0x65, not
-0x64, which would stop one word short.
+The window is `board_uboot_axi.RDBACK`, `FRAME_WORDS` words long. Its address is NOT
+written down here: `tests/test_single_write_entrypoint.py` requires the carrier's AXI window
+to be named in the transport and nowhere else, so that a second writer would have to say
+where it is writing. Every address below is derived from that module, which also means this
+tool cannot drift from it. The count is `FRAME_WORDS` = 101 words — one more than the 100
+that an off-by-one in the window's own documentation implied.
 
 WHY THIS KEEPS ITS OWN TRANSCRIPT
 ---------------------------------
@@ -79,12 +82,14 @@ def main() -> int:
         "what": "the 101 words carrier_stream captured for envelope 0 frame 0",
         "authorised": "read-only; no reload, no transaction, no PCAP_PR, no ack, no arm",
         "reply_capture": "COMPLETE — bytes, base64 and text, untruncated",
+        # derived from the transport, never re-typed
         "window": {
-            "first_word_addr": "0x43c01000",
-            "last_word_addr": "0x43c01190",
-            "byte_range": "0x43c01000..0x43c01193",
-            "words": 101,
-            "md_count": "0x65",
+            "first_word_addr": f"{axi.RDBACK:#010x}",
+            "last_word_addr": f"{axi.RDBACK + (axi.FRAME_WORDS - 1) * 4:#010x}",
+            "byte_range": f"{axi.RDBACK:#010x}.."
+                          f"{axi.RDBACK + axi.FRAME_WORDS * 4 - 1:#010x}",
+            "words": axi.FRAME_WORDS,
+            "md_count": f"{axi.FRAME_WORDS:#x}",
         },
         "started_at": time.time(),
         "commands": commands,
@@ -112,8 +117,8 @@ def main() -> int:
             return 1
 
         # 3. the dump itself, through the existing constants and parser
-        words = axi.read_words(transport, axi.RDBACK, 101)
-        blob = struct.pack(">101I", *words)
+        words = axi.read_words(transport, axi.RDBACK, axi.FRAME_WORDS)
+        blob = struct.pack(f">{len(words)}I", *words)
         digest = hashlib.sha256(blob).hexdigest()
         record["dump"] = {
             "words": [f"0x{word:08x}" for word in words],
@@ -121,8 +126,9 @@ def main() -> int:
             "base64_be": base64.b64encode(blob).decode("ascii"),
             "sha256_be": digest,
         }
-        if len(words) != 101:
-            record["verdict"] = f"STOP — {len(words)} words came back, not 101"
+        if len(words) != axi.FRAME_WORDS:
+            record["verdict"] = (f"STOP — {len(words)} words came back, not "
+                                 f"{axi.FRAME_WORDS}")
             return 1
         if args.expect_sha256 and digest != args.expect_sha256:
             record["verdict"] = "STOP — the window no longer reads the same"
