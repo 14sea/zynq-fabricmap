@@ -320,6 +320,26 @@ module icape2_model #(
     reg        fdro_started;
     wire       fdro_streaming = fdro_started && rd_cnt != 27'd0;
 
+    // ERRATUM 006: a command written to CMD does not take effect when it is written. UG470
+    // has it execute when FAR is loaded, which is why the documented sequences put the
+    // command FIRST and the address SECOND:
+    //
+    //     write:     CMD=WCFG -> FAR -> FDRI
+    //     readback:  CMD=RCFG -> NOOP -> FAR -> FDRO
+    //
+    // Modelling it as "set on the CMD payload" made the ORDER unobservable: a stream that
+    // wrote FAR and only then RCFG established a read anyway, so the model called a
+    // sequence legal that UG470 does not describe. That is exactly the shape of defect a
+    // model exists to catch, and it did not catch it — every bench passed while the RTL's
+    // readback path had FAR before RCFG.
+    //
+    // CMD holds ONE command, so a second write before the FAR load replaces the first.
+    // DESYNC and RCRC stay immediate: DESYNC ends the transaction and no FAR follows it,
+    // and RCRC is accepted-but-unmodelled here. Scoping the rule to WCFG/RCFG keeps the
+    // change to what the two documented sequences actually pin.
+    reg        pend_wcfg;
+    reg        pend_rcfg;
+
     task set_err(input [3:0] code);
         begin
             if (err == E_NONE) err = code;
@@ -337,6 +357,7 @@ module icape2_model #(
     task desync;
         begin
             synced <= 1'b0; wcfg <= 1'b0; rcfg <= 1'b0;
+            pend_wcfg <= 1'b0; pend_rcfg <= 1'b0;
             pay_cnt <= 11'd0; fdri_cnt <= 27'd0;
             fdri_pending <= 1'b0; fdro_pending <= 1'b0;
             rd_active <= 1'b0; rd_cnt <= 27'd0; fdro_started <= 1'b0;
@@ -375,7 +396,7 @@ module icape2_model #(
 
     initial begin
         o = IDLE_WORD; synced = 1'b0; err = E_NONE; far = 32'd0;
-        wcfg = 1'b0; rcfg = 1'b0;
+        wcfg = 1'b0; rcfg = 1'b0; pend_wcfg = 1'b0; pend_rcfg = 1'b0;
         n_written = 16'd0; n_read = 16'd0; n_idle = 16'd0; n_frames_committed = 16'd0;
         pay_reg = 14'd0; pay_cnt = 11'd0; fdri_cnt = 27'd0;
         fdri_pending = 1'b0; fdro_pending = 1'b0; id_bad = 1'b0;
@@ -432,16 +453,31 @@ module icape2_model #(
                             synced  <= 1'b1;
                             wcfg    <= 1'b0;
                             rcfg    <= 1'b0;
+                            pend_wcfg <= 1'b0;
+                            pend_rcfg <= 1'b0;
                             id_bad  <= 1'b0;
                             aborted <= 1'b0;   // a fresh sync clears an abort
                         end
                     end else if (pay_cnt != 11'd0) begin
                         case (pay_reg)
-                            REG_FAR: far <= word;
+                            // ERRATUM 006: loading FAR is what executes the command that
+                            // CMD is holding. A FAR load with nothing pending is legal and
+                            // simply establishes no transaction — which is precisely the
+                            // case the old model could not tell apart from a good one.
+                            REG_FAR: begin
+                                far <= word;
+                                if (pend_wcfg) wcfg <= 1'b1;
+                                if (pend_rcfg) rcfg <= 1'b1;
+                                pend_wcfg <= 1'b0;
+                                pend_rcfg <= 1'b0;
+                            end
                             REG_CMD: begin
                                 case (word)
-                                    CMD_WCFG:   wcfg <= 1'b1;
-                                    CMD_RCFG:   rcfg <= 1'b1;
+                                    // CMD holds one command until a FAR load executes it
+                                    CMD_WCFG:   begin pend_wcfg <= 1'b1;
+                                                      pend_rcfg <= 1'b0; end
+                                    CMD_RCFG:   begin pend_rcfg <= 1'b1;
+                                                      pend_wcfg <= 1'b0; end
                                     CMD_RCRC:   ;                 // accepted, not modelled
                                     CMD_DESYNC: desync;
                                     default:    ;

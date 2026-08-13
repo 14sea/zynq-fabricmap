@@ -97,12 +97,29 @@ PY
 echo "mutants of the readback sequence:"
 
 mutate no_rcfg "the RCFG command" \
-    "6'd3:    icap_din <= br8(W_RCFG);" \
-    "6'd3:    icap_din <= br8(W_NOOP);"
+    "6'd1:    icap_din <= br8(W_RCFG);" \
+    "6'd1:    icap_din <= br8(W_NOOP);"
 
 mutate wrong_far "the readback FAR" \
-    "6'd1:    icap_din <= br8(frame_far(env, rb_frame));" \
-    "6'd1:    icap_din <= br8(frame_far(env, rb_frame) + 32'd1);"
+    "6'd4:    icap_din <= br8(frame_far(env, rb_frame));" \
+    "6'd4:    icap_din <= br8(frame_far(env, rb_frame) + 32'd1);"
+
+# ERRATUM 006. The seven setup words, reordered back to the way they were before the
+# erratum: FAR loaded before the RCFG that is supposed to give it meaning. Same words, same
+# count, same everything else — so nothing but the ORDER can kill this mutant. Before the
+# model executed CMD commands at FAR load, this mutation was undetectable, which is the
+# whole reason the defect shipped.
+mutate far_before_rcfg "the readback command order (erratum 006)" \
+    "                                    6'd0:    icap_din <= br8(W_CMD1);
+                                    6'd1:    icap_din <= br8(W_RCFG);
+                                    6'd2:    icap_din <= br8(W_NOOP);
+                                    6'd3:    icap_din <= br8(W_FAR1);
+                                    6'd4:    icap_din <= br8(frame_far(env, rb_frame));" \
+    "                                    6'd0:    icap_din <= br8(W_FAR1);
+                                    6'd1:    icap_din <= br8(frame_far(env, rb_frame));
+                                    6'd2:    icap_din <= br8(W_CMD1);
+                                    6'd3:    icap_din <= br8(W_RCFG);
+                                    6'd4:    icap_din <= br8(W_NOOP);"
 
 mutate short_fdro "the FDRO length" \
     "localparam integer RB_WORDS = 2 * FRAME_WORDS;                      // 202" \

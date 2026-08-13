@@ -203,9 +203,26 @@ module tb_icape2_model;
     task seq_readback(input [31:0] far, input integer nwords,
                       input with_rcfg, input integer flush);
         begin
+            // ERRATUM 006: UG470's readback order is RCFG -> NOOP -> FAR -> FDRO. This
+            // helper used to emit FAR before RCFG -- the same defect the carrier's RTL had
+            // -- and the old model accepted it, so the bench could not have caught it.
+            wr(DUMMY); wr(SYNC); wr(NOOP); wr(NOOP);
+            if (with_rcfg) begin wr(W_CMD1); wr(W_RCFG); end
+            wr(NOOP);
+            wr(W_FAR1); wr(far);
+            wr(W_FDRO0);
+            wr(32'h48000000 | nwords);
+            noops(flush);
+        end
+    endtask
+
+    // The defective order, kept as a fixture so the rule that rejects it stays tested.
+    task seq_readback_far_before_rcfg(input [31:0] far, input integer nwords,
+                                      input integer flush);
+        begin
             wr(DUMMY); wr(SYNC); wr(NOOP); wr(NOOP);
             wr(W_FAR1); wr(far);
-            if (with_rcfg) begin wr(W_CMD1); wr(W_RCFG); end
+            wr(W_CMD1); wr(W_RCFG);
             wr(NOOP);
             wr(W_FDRO0);
             wr(32'h48000000 | nwords);
@@ -395,6 +412,46 @@ module tb_icape2_model;
         turn(1'b0);
         seq_sync();
         check_i("a sync clears the abort", m_synced, 1);
+
+        // ============ 12. ERRATUM 006: a CMD command executes when FAR is LOADED
+        //
+        // UG470 orders readback RCFG -> NOOP -> FAR -> FDRO, and orders configuration
+        // CMD=WCFG -> FAR -> FDRI, because loading FAR is what runs the command CMD holds.
+        // The carrier's readback path emitted FAR before RCFG and every bench passed: the
+        // model set `rcfg` on the CMD payload, so the ORDER was unobservable. These checks
+        // make it observable. Without them the RTL fix has nothing holding it in place.
+        //
+        // Same words, same count, same flush — only the order differs.
+        m.clear_obs();
+        turn(1'b0);
+        wr(W_CMD1); wr(W_DESYNC);
+        seq_readback_far_before_rcfg(FAR_T0, 6*FRAME_WORDS, FLUSH_NOOPS);
+        turn(1'b1);
+        rd(got);
+        check_w("FAR before RCFG serves no data", got, IDLE);
+        check_i("and is reported as a missing RCFG", m_err, 2);
+
+        // the documented order, unchanged in every other respect, still works
+        m.clear_obs();
+        turn(1'b0);
+        wr(W_CMD1); wr(W_DESYNC);
+        seq_readback(FAR_T0, 6*FRAME_WORDS, 1'b1, FLUSH_NOOPS);
+        turn(1'b1);
+        // drained in full: leaving a burst active would make the turnaround below an
+        // E_FDRO_GAP and the next check would blame the write path for it
+        for (k = 0; k < 6*FRAME_WORDS; k = k + 1) rd(cap[k]);
+        check_w("RCFG before FAR serves data", cap[0], 32'hC0DE0000 + 4*FRAME_WORDS);
+        check_i("with no error", m_err, 0);
+
+        // The write path already used the documented order, and must keep working: this is
+        // the check that a FAR-gated command did not break configuration.
+        m.clear_obs();
+        turn(1'b0);
+        wr(W_CMD1); wr(W_DESYNC);
+        seq_write_envelope(FAR_T0, 32'hBEEF0000);
+        check_i("the write path is undisturbed", m_err, 0);
+        check_w("and its first frame still lands",
+                m.peek_frame_word(FAR_T0, 0), 32'hBEEF0000);
 
         if (errors == 0) $display("ICAPE2 MODEL TB: OK");
         else             $display("ICAPE2 MODEL TB: %0d FAILURE(S)", errors);

@@ -757,18 +757,30 @@ module carrier_stream #(
                                 end
                             end
 
-                            // ---- FAR, RCFG, FDRO for THIS FRAME. `frame_far` addresses the
-                            // frame being read, not the envelope's head: one FAR set, one
-                            // frame, one transaction.
+                            // ---- RCFG, NOOP, FAR, FDRO for THIS FRAME. `frame_far`
+                            // addresses the frame being read, not the envelope's head: one
+                            // FAR set, one frame, one transaction.
+                            //
+                            // ERRATUM 006: the command comes FIRST and the address SECOND.
+                            // UG470 executes the command CMD is holding at the moment FAR
+                            // is loaded, so the previous order — FAR, then RCFG — loaded
+                            // the address with no read established and left RCFG holding a
+                            // command that nothing ever ran. Same seven words, same length,
+                            // only the order differs. The 2026-08-13 board dump is what
+                            // sent us looking: the staging window held a bit-exact 101-word
+                            // slice of the device stream from 0x00400A81/0x00400A82 — the
+                            // address FAR had auto-incremented to after pass 2 — and not
+                            // the requested 0x00400A20. See
+                            // evidence/calibration_noop_2026_08_13_erratum005/reading.md.
                             RB_SETUP: begin
                                 icap_csib  <= 1'b0;
                                 icap_rdwrb <= 1'b0;
                                 case (rb_k)
-                                    6'd0:    icap_din <= br8(W_FAR1);
-                                    6'd1:    icap_din <= br8(frame_far(env, rb_frame));
-                                    6'd2:    icap_din <= br8(W_CMD1);
-                                    6'd3:    icap_din <= br8(W_RCFG);
-                                    6'd4:    icap_din <= br8(W_NOOP);
+                                    6'd0:    icap_din <= br8(W_CMD1);
+                                    6'd1:    icap_din <= br8(W_RCFG);
+                                    6'd2:    icap_din <= br8(W_NOOP);
+                                    6'd3:    icap_din <= br8(W_FAR1);
+                                    6'd4:    icap_din <= br8(frame_far(env, rb_frame));
                                     6'd5:    icap_din <= br8(W_FDRO0);
                                     6'd6:    icap_din <= br8(W_RDLEN);
                                     default: icap_din <= br8(W_NOOP);
