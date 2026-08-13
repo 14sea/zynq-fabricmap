@@ -292,11 +292,22 @@ module icape2_model #(
     // the read path was never thought about separately. On silicon the read came back as
     // 101 identical abort status words.
     //
-    // UG470's way to run the interface non-contiguously is to stop CCLK, not to toggle
-    // CSIB; and AMD's own AXI HWICAP does not stop the ICAP stream when its read FIFO
-    // fills, which is exactly why that core can overflow. So a gap in an ACTIVE FDRO read
-    // is not a pause here, it is an abort — and from then on the device drives the abort
-    // status word, raw, until it is re-synced.
+    // THIS RULE IS AN ADVERSARIAL CONTRACT, NOT A REPRODUCTION OF SILICON.
+    //
+    // What is actually supported: UG470 documents non-contiguous configuration as available
+    // EITHER by de-asserting CSI_B OR by stopping CCLK — a gap is a documented pause, not a
+    // documented break. AMD defines the abort condition as RDWRB changing while CSIB is
+    // asserted (PG134, Abort Status Register); nothing says a plain FDRO gap must abort.
+    // What IS documented is that AMD's own AXI HWICAP does not stop the ICAP stream when its
+    // read FIFO fills, which is why that core can overflow: a reader must be able to absorb
+    // the stream.
+    //
+    // So the model refuses a gap for the same reason it refuses a missing RCFG — because the
+    // DESIGN must not depend on a device tolerating one — and not because the device is known
+    // to punish it. On the board the erratum-004 engine gapped the read and the staging
+    // window came back holding 101 abort status words; that is a correlation this rule makes
+    // impossible to ignore, not a causation it establishes.
+    // See docs/claimb_erratum_005_correction_2026_08_13.md.
     //
     // Deliberately asymmetric: a gap during an FDRI WRITE is still modelled as a legal
     // pause. That is what the frame-staged write depends on, the ruling scopes this to

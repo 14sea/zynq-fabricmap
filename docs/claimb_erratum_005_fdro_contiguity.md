@@ -4,6 +4,18 @@
 ruled the same day, and rebuilt offline. The erratum-004 carrier stays published; what it
 fixed it fixed, and what it did not is stated here.
 
+> **SUPERSEDED IN PART, 2026-08-13** — see
+> [`claimb_erratum_005_correction_2026_08_13.md`](claimb_erratum_005_correction_2026_08_13.md).
+> Two statements below are overclaims: that UG470's way to run the interface non-contiguously
+> is to stop CCLK *rather than* toggle CSIB (UG470 documents both), and that a CSIB gap in an
+> FDRO read therefore aborts (AMD defines the abort as RDWRB changing while CSIB is asserted;
+> a plain gap is not shown to abort). The correct reading is that `0xFFFFFF5B` is *consistent
+> with* an abort status, that the gapped read is *highly correlated* with the failure but not
+> uniquely proven as its cause, that erratum 005 is a *conservative* fix removing that
+> uncertainty, and that the model's `E_FDRO_GAP` is an adversarial contract rather than a
+> reproduction of silicon behaviour. §4's attribution of the per-frame architecture is also
+> corrected there. The engineering, the artifacts and their digests are unaffected.
+
 **Scope:** the readback's *pacing* only. Nothing about the target, the seed, the ceiling, the
 cap, the masks, the fitness, the train/holdout split, the A/B rules, the floorplan or the map
 moves. The write path is untouched.
