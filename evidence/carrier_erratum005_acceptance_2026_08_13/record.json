@@ -1,0 +1,61 @@
+{
+  "what": "acceptance of the erratum-005 carrier: Vivado rebuild, publication chain, three gates, cold and hot clone",
+  "date": "2026-08-13",
+  "run": "gate_runs/claimb_round1_carrier_2026_08_13_erratum005",
+  "board_time": "none",
+  "build": {
+    "source_commit": "9da33c8", "source_tree": "clean", "sources_pinned": 13,
+    "part": "xc7z010clg400-1", "vivado": "2025.2",
+    "wns_ns": 5.864, "whs_ns": 0.036, "wpws_ns": 8.75, "tns_ns": 0.0,
+    "failing_endpoints": 0, "total_endpoints": 2189,
+    "slice_luts": 994, "lut_as_logic": 884, "lut_as_memory": 110,
+    "slice_registers": 624, "control_sets": 63,
+    "slices_occupied": 303, "pblock_slices": 400,
+    "pblock": "SLICE_X0Y0:SLICE_X1Y99 + SLICE_X6Y0:SLICE_X7Y99, IS_SOFT false, PRIMITIVE_COUNT 1836, all 1968 cells carry PBLOCK",
+    "cell_isolation": "target 6 (exactly 6), flush 0",
+    "route_inventory": {"flush": 509, "target": 676, "foreign": 670}
+  },
+  "cost_against_erratum004": {
+    "slice_luts": "993 -> 994 (+1)",
+    "slice_registers": "625 -> 624 (-1)",
+    "control_sets": "63 -> 63 (0)",
+    "slices": "305 -> 303 (-2)",
+    "wns_ns": "+5.753 -> +5.864 (+0.111)",
+    "reading": "the 15-entry FAR ROM costs almost exactly what the deleted per-word request handshake freed. Removing the CSIB back-pressure is not a resource trade"
+  },
+  "artifacts": {
+    "carrier.bit": "d93c59ad3b00ffba2ec46befdec6c7009de842ed523c2486d04101b06078792d",
+    "carrier_eco.bit": "233fa60286aa7ebf5efe6616feb8d784c9a79b0c50de8026279321a6717ad015",
+    "post_route.dcp": "77e04fca53a099523fcdccf490c6340fddf9cef8b5caa585c096ba3bb3ac3002",
+    "phenotype_manifest.json": "400a1e9c4cacb51b499fac0ccaadd09a7193f374dd8e574c3ef54d72a3cda69d",
+    "carrier_build.json": "f7fa27cd78db4fb40b19f0e5c44f6eb1d8f1df88b12541ed90654696de7f207a",
+    "carrier_eco.json": "2361b0239456dfe2eea3262aca81988d913da2c39ad055c2ab280d645929070e",
+    "isolation.txt": "c7ca519eab103e4eccbf2c283f54f310d9ac8cf185259307ccbce322fe1eea1b",
+    "local_map.json": "56f2b9e81e180eee2540286e4fde797e0d4820a49d10624c10844c38e99d87cb",
+    "carrier_run.json": "7c95aedee5a2c31d05eac85ae69f64492bd5264879974c4e6a1c10d13e2321e7"
+  },
+  "gates": {
+    "gate_publish_carrier_run": "PUBLISHABLE",
+    "gate_carrier_base": "ACCEPTED",
+    "gate_init_eco": "ACCEPTED — 2 of 5144 frames differ, exactly the 2 the map predicts"
+  },
+  "trees": {
+    "working_tree": {"tests": 984, "skipped": 0, "benches": "14 runs OK", "mutants": "11 as expected"},
+    "fresh_clone_hot": {
+      "carrier_bit_sha256": "d93c59ad3b00ffba2ec46befdec6c7009de842ed523c2486d04101b06078792d",
+      "gate_carrier_base": "ACCEPTED", "gate_init_eco": "ACCEPTED",
+      "tests": 956, "skipped": 18,
+      "skip_reason": "every skip is a specimen bitstream under build/, which is gitignored",
+      "benches": "14 runs OK"
+    },
+    "fresh_clone_cold": {
+      "how": "GIT_LFS_SKIP_SMUDGE=1 — carrier.bit is a 132-byte pointer",
+      "gate_carrier_base": "REFUSED, exit 2",
+      "after_git_lfs_pull": {
+        "carrier_bit_sha256": "d93c59ad3b00ffba2ec46befdec6c7009de842ed523c2486d04101b06078792d",
+        "gate_carrier_base": "ACCEPTED", "gate_init_eco": "ACCEPTED"
+      }
+    }
+  },
+  "not_done": ["no board time", "not pushed"]
+}
