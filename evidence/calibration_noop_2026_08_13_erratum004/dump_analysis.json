@@ -1,0 +1,80 @@
+{
+  "dump_sha256_be": "c402e1b0f929757eed4e5feb28d722476050dc7c1c1f7dd048998aa9a02b3f22",
+  "expected_sequence": {
+    "shape": "flush-buffer dummy + target0..3 + flush-memory",
+    "fars": [
+      "0x00400a80",
+      "0x00400a20",
+      "0x00400a21",
+      "0x00400a22",
+      "0x00400a23",
+      "0x00400a80"
+    ],
+    "words": 606
+  },
+  "exact_window_matches": [],
+  "delta_from_expected_offset_101": [],
+  "bitstream": {
+    "frames_searched": 5144,
+    "exact_frame_matches": []
+  },
+  "no_exact_match": {
+    "best_offset": 0,
+    "best_offset_matching_words": 0,
+    "matching_words_at_offset_101": 0,
+    "match_count_histogram": {
+      "0": 506
+    },
+    "first_mismatches_at_best_offset": [
+      {
+        "index": 0,
+        "expected": "0x00000000",
+        "got": "0xffffffda"
+      },
+      {
+        "index": 1,
+        "expected": "0x00000000",
+        "got": "0xffffffda"
+      },
+      {
+        "index": 2,
+        "expected": "0x00000000",
+        "got": "0xffffffda"
+      },
+      {
+        "index": 3,
+        "expected": "0x00000000",
+        "got": "0xffffffda"
+      },
+      {
+        "index": 4,
+        "expected": "0x00000000",
+        "got": "0xffffffda"
+      },
+      {
+        "index": 5,
+        "expected": "0x00000000",
+        "got": "0xffffffda"
+      },
+      {
+        "index": 6,
+        "expected": "0x00000000",
+        "got": "0xffffffda"
+      },
+      {
+        "index": 7,
+        "expected": "0x00000000",
+        "got": "0xffffffda"
+      }
+    ]
+  },
+  "dump_shape": {
+    "distinct_values": 1,
+    "values": [
+      "0xffffffda"
+    ],
+    "all_identical": true,
+    "stored_value": "0xffffffda",
+    "value_on_the_ICAPE2_O_pins": "0xffffff5b"
+  }
+}

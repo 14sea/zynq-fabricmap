@@ -73,12 +73,12 @@ Three candidates remain, and **the evidence in hand does not separate them**:
 
 Nothing here is a retry, a reload or a loosened rule.
 
-## The one cheap thing that would separate them, NOT DONE
+## The one cheap thing that would separate them — SINCE DONE, see the addendum
 
-The engine's staging window (`0x43C01000`…`0x43C0118F`) still holds the 101 words it
-captured for frame 0, and the board is alive at its prompt with the carrier still loaded.
-Reading those 101 words is a **read-only** act that needs no reload and no second
-transaction, and it answers the question directly:
+The engine's staging window still holds the 101 words it captured for frame 0, and the board
+is alive at its prompt with the carrier still loaded. Reading those 101 words is a
+**read-only** act that needs no reload and no second transaction, and it answers the question
+directly:
 
 * if the captured words are the expected frame **shifted by n words**, it is the latency
   equivalence, and `n` is the correction;
@@ -88,7 +88,15 @@ transaction, and it answers the question directly:
   all and the FDRO transaction is returning something else entirely.
 
 It is not done here because the ruling said stop, and stopping means stopping. It is offered
-as the next act, for a ruling.
+as the next act, for a ruling. *(It was ruled and done; the addendum below is the result.)*
+
+**Window endpoint, corrected.** This section originally gave the window as
+`0x43C01000`…`0x43C0118F`. That is 100 words and stops one word short. The window is first
+word `0x43C01000`, **last word `0x43C01190`**, byte range `0x43C01000`…`0x43C01193` — 101
+words, `md.l … 0x65` and not `0x64`. The RTL's own decode is right (`rb_raddr < FRAME_WORDS`
+admits word 100); the same off-by-one is in `carrier_axil.v`'s header table and
+`board_uboot_axi.py`'s docstring, where it is a comment defect, reported and not yet fixed.
+`record.json` is the tool's raw output and is not edited.
 
 ## Board state left behind
 
@@ -96,3 +104,56 @@ Alive at `Zynq>`, carrier `9f95ebd7…` still configured, PCAP_PR restored to `0
 `fault_since_reset` and `recovery_required` are latched again, so any further transaction
 needs a reload or a power cycle first. Nothing was written to the fabric that a power cycle
 does not clear: the load is volatile (`fpga loadb`), no `saveenv`, no flash write.
+
+
+---
+
+# Addendum: the staging dump, 2026-08-13
+
+One authorised read-only act. `plmark` verified as the same boot; STATUS re-read as
+`fault=1`, `rb_latency_valid=1`, `rb_latency_words=1`, `recovery_required=1` and FAULT as 8
+before anything was read. No reload, no transaction, no PCAP_PR handover, no ack, no arm.
+Raw `md.l` replies, base64 and the parsed words are in `stage_dump.json`; the search is in
+`dump_analysis.json`.
+
+**The 101 words are all one value: `0xFFFFFFDA`.**
+
+That is what the engine STORED, and the engine stores `br8(icap_dout)` — so the ICAPE2 `O`
+pins carried **`0xFFFFFF5B`**, 101 times.
+
+## The searches the ruling asked for
+
+Expected sequence for envelope 0, 606 words:
+`flush-buffer dummy (0x00400a80) + targets 0x00400a20…a23 + flush-memory (0x00400a80)`.
+
+| search | result |
+|---|---|
+| exact match in any of the 506 contiguous 101-word windows | **none** |
+| delta from the expected offset 101 | not applicable — no match to take a delta from |
+| exact match against all **5,144** frames of `carrier.bit` | **none** |
+| best offset by word-match count | offset 0, with **0 matching words** |
+| matching words at offset 101 | **0** |
+| histogram of match counts over all 506 offsets | `{0: 506}` — every offset matches zero words |
+
+First mismatches at the best offset: index 0…7 expected `0x00000000`, got `0xFFFFFFDA`.
+
+## What that rules out, and what it does not
+
+**It is not an alignment problem.** A capture shifted by *n* words, or by a whole frame,
+would match at some offset and would show a high word-match count there. Every one of the
+506 offsets matches **zero** words. There is no offset at which this is the right data read
+at the wrong place, and the words are not any frame of this bitstream.
+
+The device returned a **constant**, 101 times, to an engine that had already established a
+read transaction on the same interface moments earlier — `rb_latency_valid=1` says the
+Type-1 IDCODE read was answered with the device's own IDCODE and the pipeline measured at
+1 word.
+
+**No cause is attributed here.** One observation from the record, offered as a lead and not
+as a finding: `zynq-xpart`'s `docs/icap_investigation.md` records its HWICAP readback
+returning garbage `0xffffffd9` before two bugs were fixed — readback needing `PCAP_PR=0`,
+and a read FIFO overrun — and its hand-rolled ICAPE2 controller returning `0xFFFFFF__`. The
+value here is `0xFFFFFF5B` on the pins. Whether the neighbourhood is meaningful or a
+coincidence is not decided by anything in this evidence.
+
+Stopped here. No second transaction.
