@@ -11,10 +11,18 @@ Acceptance ladder step 4 (`docs/claimb_carrier_design.md` §7), built under erra
 **This directory is the authority for the carrier, and it SUPERSEDES
 `gate_runs/claimb_round1_carrier_2026_08_13_erratum004`.** That build got further than any
 before it — its probe established a real ICAP read on silicon, which is what made this
-diagnosable — but its readback used `CSIB` as back-pressure for a byte-serial CRC, and the
-device answered by **aborting the configuration**: the staging window came back holding 101
-identical words, `0xFFFFFFDA`, which is `br8` of the abort status word `0xFFFFFF5B`. It reads
+diagnosable — but its readback used `CSIB` as back-pressure for a byte-serial CRC, and what
+came back was not frame data: the staging window held 101 identical words, `0xFFFFFFDA`,
+which is `br8` of `0xFFFFFF5B` — a value **consistent with** an abort status word. It reads
 nothing back either. No device write may use it.
+
+> **Correction, 2026-08-13** (`docs/claimb_erratum_005_correction_2026_08_13.md`): the gapped
+> read is **highly correlated** with that failure and is **not uniquely proven** to have
+> caused it. UG470 documents non-contiguous configuration by de-asserting `CSI_B` *or* by
+> stopping `CCLK`, and AMD's defined abort condition is `RDWRB` changing while `CSIB` is
+> asserted — a plain FDRO gap is not shown to abort. Erratum 005 is a **conservative fix**
+> that removes the uncertainty for +1 LUT; it is a hypothesis under test, not a repair whose
+> success is known. The per-frame architecture is **accepted at the 2026-08-13 review**.
 
 ## What changed, and what did not
 
@@ -87,8 +95,10 @@ the abort status word, un-swapped by an engine that assumes everything on those 
 configuration data.
 
 `icape2_model` now refuses what it used to permit: a `CSIB` gap during an **active** FDRO read
-aborts, and the device drives `0xFFFFFF5B` raw until a fresh sync. Under that model the
-published erratum-004 RTL scores **1,527 failures**. The bench also counts, off the pins and
+aborts, and the device drives `0xFFFFFF5B` raw until a fresh sync. That rule is an
+**adversarial contract** — the design must not depend on a device tolerating a gap — and not
+a reproduction of silicon behaviour. Under it the published erratum-004 RTL scores **1,527
+failures**, which demonstrates that the design violated the contract. The bench also counts, off the pins and
 without asking the model, any read burst resumed after a pause — required to be zero — and
 `scripts/mutate_carrier_readback.sh` carries the erratum-005 defect itself as an eleventh
 mutant.
