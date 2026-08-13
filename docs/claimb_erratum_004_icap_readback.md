@@ -90,3 +90,32 @@ reload or a power cycle first. No action is needed now.
 * That anything in errata 001–003 is invalidated. Pass 1, the transport, the validator, the
   CRC, the commit path and the refusal semantics are all now hardware-proven.
 * That the fix is known. The sequence above is UG470's requirement, not a tested design.
+
+---
+
+## 7. UPDATE, same day: the offline round happened
+
+Appended, not rewritten — §§1–6 stand as the diagnosis they were.
+
+`docs/claimb_icape2_readback_sequence.md` derives the sequence and
+`evidence/bench_readback_2026_08_13/` records the round. Three things changed:
+
+1. **§4's list was built**, and the sequencer now measures the read pipeline against a known
+   answer (a Type-1 IDCODE read) rather than pinning a constant no simulation can establish.
+   A new fault code `F_RBSYNC` separates "the read path never came up" from "it came up and
+   disagreed" — the ambiguity that cost this erratum a board round.
+2. **§2's diagnosis was right and too narrow.** Against a device model that does not echo the
+   DUT, the published RTL read 802 words of which 802 were idle, aborted the configuration on
+   the direction flip, and **committed zero frames to the fabric**: `ICAPE2`'s `I`/`O` bus is
+   bit-reversed within each byte and the carrier was feeding it SelectMAP-order words, so the
+   *write* had never synced either. The erratum-003 calibration is therefore not evidence
+   that anything was written to the fabric — which, for a project whose worst outcome is a
+   partial write, is the benign reading of an already-benign result.
+3. **§3's "why no test caught it" is closed.** `tb_carrier_stream` and
+   `tb_carrier_integration` no longer contain a device that hands back the DUT's staging
+   buffer; both now instantiate `icape2_model`, and a provenance test changes one word of the
+   fabric between the write and the readback — which a DUT reading its own buffer cannot
+   fail.
+
+Still true: no Vivado, no bitstream, no board time. §4's closing sentence — a new carrier,
+the full publication chain and a fresh no-op ruling — has not been done.

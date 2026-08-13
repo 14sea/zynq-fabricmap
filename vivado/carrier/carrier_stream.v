@@ -103,7 +103,13 @@ module carrier_stream #(
                      F_READBACK = 4'd8,
                      F_UNCOMMITTED = 4'd9,
                      F_BYTECOUNT = 4'd10,
-                     F_PROTOCOL  = 4'd11;   // a stream write with no pass open
+                     F_PROTOCOL  = 4'd11,   // a stream write with no pass open
+                     // The readback's sync probe never got the device to name itself. This
+                     // is deliberately NOT F_READBACK: "the read path never came up" and
+                     // "it came up and the content disagreed" are different findings, and
+                     // erratum 004 cost a board round precisely because one code covered
+                     // both. Word ordering, a lost sync and a dead ICAP land here.
+                     F_RBSYNC    = 4'd12;
 
     localparam [31:0] W_DUMMY  = 32'hFFFFFFFF, W_SYNC  = 32'hAA995566,
                       W_NOOP   = 32'h20000000, W_CMD1  = 32'h30008001,
@@ -112,6 +118,51 @@ module carrier_stream #(
                       W_FAR1   = 32'h30002001, W_FDRI0 = 32'h30004000,
                       W_TYPE2  = 32'h40000000 | (FRAMES_PER_ENV * FRAME_WORDS),
                       W_CRC1   = 32'h30000001, W_ZERO  = 32'h00000000;
+
+    // ---- the READ side of the configuration protocol (erratum 004).
+    // `W_RDID`  Type-1 read of IDCODE (reg 12), 1 word — the known answer the probe hunts.
+    // `W_RCFG`  CMD = RCFG, which is what establishes a read transaction at all.
+    // `W_FDRO0` Type-1 read of FDRO (reg 3), 0 words, followed by the Type-2 that carries
+    //           the real length: one dummy frame plus this envelope's five.
+    localparam [31:0] W_RDID   = 32'h28018001, W_RCFG  = 32'h00000004,
+                      W_FDRO0  = 32'h28006000;
+    localparam integer RB_WORDS = (FRAMES_PER_ENV + 1) * FRAME_WORDS;   // 606
+    localparam [31:0] W_RDLEN  = 32'h48000000 | RB_WORDS;
+
+    // The device IDCODE with the revision nibble masked off. UG470 makes IDCODE[31:28] a
+    // revision field: this die answers a register read with 0x13722093 while a bitstream
+    // WRITES 0x03722093 (erratum 003, and CONFIG_IDCODE above). Matching on [27:0] accepts
+    // either and keeps the two identities from being confused for a second time.
+    localparam [27:0] DEVICE_ID_LOW = 28'h3722093;
+
+    // 32 NOOPs of pipeline flush after a read command — UG470's figure — and a probe that
+    // gives up after 64 words. 32 clocks is 0.64 us of a 20.97 ms watchdog phase.
+    localparam integer FLUSH_NOOPS = 32;
+    // widths pinned once; part-selecting an integer parameter inline is a portability trap
+    localparam [8:0]  SKIP_FRAME   = FRAME_WORDS;
+    localparam [5:0]  FLUSH_LAST   = FLUSH_NOOPS - 1;
+    localparam [7:0]  PROBE_LAST   = 8'd63;
+
+    // ---- ICAPE2 WIRE ORDER (erratum 004 §2).
+    //
+    // ICAPE2's I/O bus is bit-reversed within each byte relative to SelectMAP order — the
+    // order every bitstream, this repo's manifest, the committed CRCs and the host's
+    // SHA-256 are all written in. The carrier used to hand `word_data` straight to `I`, so
+    // the sync word arrived as 0xAA995566 where the primitive wanted 0x5599AA66 and the
+    // configuration engine never synced at all. The swap is a permutation of 32 wires: it
+    // costs no logic, and it belongs HERE, at the pins, so that everything above it keeps
+    // speaking SelectMAP order.
+    function automatic [31:0] br8(input [31:0] d);
+        integer b;
+        begin
+            for (b = 0; b < 8; b = b + 1) begin
+                br8[b]      = d[7  - b];
+                br8[8  + b] = d[15 - b];
+                br8[16 + b] = d[23 - b];
+                br8[24 + b] = d[31 - b];
+            end
+        end
+    endfunction
 
     // The pinned control skeleton by position. FAR_POS is judged by the allowlist instead.
     // The control-word expectations, as a 31-entry ROM indexed by a 5-bit position, NOT as
@@ -164,7 +215,29 @@ module carrier_stream #(
 
     localparam integer TOTAL_FRAMES = ENVELOPES * FRAMES_PER_ENV;   // 15
 
+    // ---- the readback sequencer's own states. `phase` keeps its encoding: the host and
+    // the transport decode STATUS, not this, and P_RDBACK is still one phase to them.
+    localparam [3:0] RB_PCMD   = 4'd0,   // dummy, sync, NOOPs, Type-1 read IDCODE
+                     RB_PFLUSH = 4'd1,   // 32 NOOPs of pipeline flush
+                     RB_TRN    = 4'd2,   // CSIB High, then RDWRB moves — never the reverse
+                     RB_PROBE  = 4'd3,   // read until the device names itself: the latency
+                     RB_SETUP  = 4'd4,   // FAR, RCFG, FDRO, Type-2 length
+                     RB_SFLUSH = 4'd5,   // 32 NOOPs again
+                     RB_SKIP   = 4'd6,   // the measured latency, then the dummy FRAME
+                     RB_DATA   = 4'd7,   // the five frames
+                     RB_DESYNC = 4'd8,   // leave the engine desynced for the next envelope
+                     RB_FIN    = 4'd9;
+
     reg [3:0]  phase;
+    reg [3:0]  rb_st;
+    reg [3:0]  rb_next;      // where RB_TRN returns to
+    reg        rb_dir;       // the direction RB_TRN is turning towards
+    reg [5:0]  rb_k;         // position within a command sequence / the flush count
+    reg [7:0]  rb_lat;       // MEASURED: idle words before the device answered
+    reg [7:0]  rb_lat_cnt;
+    reg [8:0]  rb_skip;      // words still to discard: the latency, then a whole frame
+    reg        rb_out;       // a word has been asked for and has not arrived yet
+    reg        icap_rd_valid;
     reg [2:0]  rb_frame;
     reg [6:0]  emit_word;
     reg [1:0]  env;
@@ -235,17 +308,27 @@ module carrier_stream #(
     wire [31:0] crc_value;
     reg         crc_clear;
 
+    // The device speaks in ICAPE2 wire order; everything above this line speaks SelectMAP
+    // order. One unswap, at the pin, for the CRC, the staging RAM and the host alike.
+    wire [31:0] icap_word = br8(icap_dout);
+
     // In pass 1/2 the CRC covers the words the HOST sent; during readback it covers the
     // words the DEVICE returned, and comparing the second against the first is the local
     // interlock. One engine, two sources, selected by phase.
-    wire [31:0] crc_source = (phase == P_RDBACK) ? icap_dout : word_data;
+    wire [31:0] crc_source = (phase == P_RDBACK) ? icap_word : word_data;
 
     // ONE feeder for all three phases; only the source changes. Three phases keeping
     // three sets of counters against one byte stream is exactly how the readback CRC came
     // out as though almost nothing had been consumed.
+    //
+    // The readback term is `icap_rd_valid`, not "the phase is open": a read word EXISTS for
+    // exactly one cycle, in the cycle after CSIB was Low. The old term fed the CRC whenever
+    // the phase was running, which against a real device would have CRC'd whatever `O`
+    // happened to be holding — invisible against a bench that re-presented the same word
+    // until the DUT moved on.
     wire crc_feed = !awaiting_crc &&
                     (((phase == P_PASS1 || phase == P_PASS2) && word_valid && in_frame)
-                     || (phase == P_RDBACK && !rb_frame_ready));
+                     || (phase == P_RDBACK && rb_st == RB_DATA && icap_rd_valid));
 
     carrier_crc32 crc_i (
         .clk(clk), .rst_n(rst_n), .clear(crc_clear), .valid(crc_feed),
@@ -278,10 +361,22 @@ module carrier_stream #(
     wire stage_we = (phase == P_PASS2) && !awaiting_crc && word_valid && in_frame
                     && !control_bad && !far_bad && crc_ready && !expired;
     // one write port, two sources, mutually exclusive by phase
-    wire        stage_rb_we = (phase == P_RDBACK) && !rb_frame_ready && !awaiting_crc
-                              && crc_ready && !expired;
+    wire        stage_rb_we = (phase == P_RDBACK) && (rb_st == RB_DATA) && icap_rd_valid
+                              && !rb_frame_ready && !awaiting_crc && crc_ready && !expired;
     wire        stage_any_we = stage_we || stage_rb_we;
-    wire [31:0] stage_wdata  = stage_rb_we ? icap_dout : word_data;
+    wire [31:0] stage_wdata  = stage_rb_we ? icap_word : word_data;
+
+    // ---- the read handshake, one word in flight at a time.
+    //
+    // `icap_rd_valid` is the cycle in which a word the device served is present on `O`;
+    // CSIB was Low the cycle before. A request is made only when the consumer can take the
+    // word when it lands — for the frames that means the byte-serial CRC is ready, which it
+    // is one cycle in four. Holding CSIB Low continuously and merely declining to advance,
+    // as this engine used to, discards three words in four against a real device.
+    wire rb_consumer_ready = (rb_st == RB_PROBE) || (rb_st == RB_SKIP)
+                             || ((rb_st == RB_DATA) && crc_ready && !rb_frame_ready
+                                 && !awaiting_crc);
+    wire rb_req = rb_consumer_ready && !rb_out && !icap_rd_valid && !expired;
     always @(posedge clk) if (stage_any_we) stage[frame_word] <= stage_wdata;
 
     // one read port: the emit path while a frame is being handed to ICAP, the host at any
@@ -312,11 +407,17 @@ module carrier_stream #(
             crc_clear <= 1'b0;
             rb_frame_ready <= 1'b0; rb_frames_ok <= 4'd0;
             rb_frame <= 3'd0;
+            rb_st <= RB_PCMD; rb_next <= RB_PCMD; rb_dir <= 1'b0; rb_k <= 6'd0;
+            rb_lat <= 8'd0; rb_lat_cnt <= 8'd0; rb_skip <= 9'd0; rb_out <= 1'b0;
+            icap_rd_valid <= 1'b0;
             icap_csib <= 1'b1; icap_rdwrb <= 1'b0; icap_din <= 32'd0;
         end else begin
             crc_clear <= 1'b0;
             cc_we     <= 1'b0;
             icap_csib <= 1'b1;              // paused unless a word is being handed over
+            // A word the device served is present for exactly ONE cycle: the one after
+            // CSIB was Low in read mode. Everything on the read path is paced by this.
+            icap_rd_valid <= !icap_csib && icap_rdwrb;
 
             case (phase)
                 P_IDLE: begin
@@ -421,7 +522,7 @@ module carrier_stream #(
                             if (phase == P_PASS2) begin
                                 icap_csib  <= 1'b0;
                                 icap_rdwrb <= 1'b0;
-                                icap_din   <= word_data;
+                                icap_din   <= br8(word_data);
                             end
                             if (pos == ENV_WORDS - 1) begin
                                 if (phase == P_PASS1) begin
@@ -436,6 +537,9 @@ module carrier_stream #(
                                     frame_word <= 7'd0;
                                     watchdog   <= {TIMEOUT_BITS{1'b0}};
                                     crc_clear  <= 1'b1;
+                                    rb_st      <= RB_PCMD;
+                                    rb_k       <= 6'd0;
+                                    rb_out     <= 1'b0;
                                 end
                             end else begin
                                 pos <= pos + 10'd1;
@@ -482,7 +586,7 @@ module carrier_stream #(
                     end else begin
                         icap_csib  <= 1'b0;
                         icap_rdwrb <= 1'b0;
-                        icap_din   <= stage_rdata;
+                        icap_din   <= br8(stage_rdata);
                         if (emit_word == FRAME_WORDS - 1) begin
                             emit_word <= 7'd0;
                             phase     <= P_PASS2;
@@ -492,80 +596,248 @@ module carrier_stream #(
                     end
                 end
 
-                // ---- readback: the envelope's five frames, one at a time
+                // ---- readback: a real FDRO transaction, then the envelope's five frames
                 //
-                // The local compare is CRC per frame against the SAME committed CRC pass 1
-                // produced, so no copy of the candidate has to be kept. It is a hardware
-                // interlock and nothing more: the host reads every frame out of `rb_*` and
-                // computes the SHA-256 that actually authorises the payload.
+                // Erratum 004. What used to be here set RDWRB High and treated whatever
+                // `O` held as frame data: no sync, no RCFG, no FAR, no FDRO, no discard of
+                // the dummy frame. It could not have worked, and the bench agreed with it
+                // because the bench's device handed back the DUT's own staging buffer.
                 //
-                // NOTE, and the calibration must settle it: the ICAP readback command
-                // sequence is modelled abstractly here. The bench's device is a model of
-                // the assumption, so simulation cannot establish that a real ICAPE2 will
-                // return these words this way.
+                // The sequence is derived in docs/claimb_icape2_readback_sequence.md and
+                // its shape is: sync and READ THE IDCODE BACK to measure the read pipeline
+                // in words; turn around; write FAR, RCFG and the FDRO headers; turn around;
+                // discard the measured latency and then one whole dummy frame; take five
+                // frames; desync.
+                //
+                // The latency is MEASURED rather than pinned because no simulation can
+                // establish it — a model that supplied it would be handing the RTL its own
+                // assumption back, which is the defect this whole round exists to end. The
+                // known answer comes from the device itself.
+                //
+                // The local compare is still CRC per frame against the SAME committed CRC
+                // pass 1 produced: a hardware interlock and nothing more. The host reads
+                // every frame out of `rb_*` and computes the SHA-256 that authorises it.
                 P_RDBACK: begin
                     if (!expired) watchdog <= watchdog + 1'b1;
                     if (expired) begin
                         fault_code <= F_TIMEOUT;
                         phase      <= P_FAULT;
-                    end else if (rb_frame_ready) begin
-                        if (rb_ack) begin
-                            rb_frame_ready <= 1'b0;
-                            if (rb_frame == FRAMES_PER_ENV - 1) begin
-                                // envelope done. configuration_valid is reachable ONLY
-                                // from here, and only with every one of the fifteen frames
-                                // verified — the counter, not the envelope index, is what
-                                // makes it structurally unreachable early.
-                                if (env == ENVELOPES - 1) begin
-                                    if (rb_frames_ok == TOTAL_FRAMES[3:0]) begin
-                                        configuration_valid <= 1'b1;
-                                        // ...but a fault earlier in this power-on means
-                                        // the fabric is not known to equal the pinned base,
-                                        // and this engine is not entitled to say it is.
-                                        if (!fault_since_reset)
-                                            recovery_required <= 1'b0;
-                                    end else begin
-                                        fault_code <= F_READBACK;
+                    end else begin
+                        // one word may be in flight; it lands the cycle after CSIB was Low
+                        if (rb_req)       rb_out <= 1'b1;
+                        if (icap_rd_valid) rb_out <= 1'b0;
+
+                        case (rb_st)
+                            // ---- sync, then ask the device to name itself
+                            RB_PCMD: begin
+                                icap_csib  <= 1'b0;
+                                icap_rdwrb <= 1'b0;
+                                case (rb_k)
+                                    6'd0:    icap_din <= br8(W_DUMMY);
+                                    6'd1:    icap_din <= br8(W_SYNC);
+                                    6'd4:    icap_din <= br8(W_RDID);
+                                    default: icap_din <= br8(W_NOOP);
+                                endcase
+                                if (rb_k == 6'd4) begin
+                                    rb_k  <= 6'd0;
+                                    rb_st <= RB_PFLUSH;
+                                end else rb_k <= rb_k + 6'd1;
+                            end
+
+                            RB_PFLUSH: begin
+                                icap_csib  <= 1'b0;
+                                icap_rdwrb <= 1'b0;
+                                icap_din   <= br8(W_NOOP);
+                                if (rb_k == FLUSH_LAST) begin
+                                    rb_k    <= 6'd0;
+                                    rb_dir  <= 1'b1;
+                                    rb_next <= RB_PROBE;
+                                    rb_st   <= RB_TRN;
+                                end else rb_k <= rb_k + 6'd1;
+                            end
+
+                            // ---- THE turnaround, and the only place RDWRB ever moves:
+                            // CSIB High first, for two clocks, and the direction changes
+                            // while it is High. Moving RDWRB with CSIB Low aborts the
+                            // configuration (UG470) — which is exactly what the old code
+                            // did on its way into the readback.
+                            RB_TRN: begin
+                                icap_csib <= 1'b1;
+                                if (rb_k == 6'd1) begin
+                                    icap_rdwrb <= rb_dir;
+                                    rb_k       <= 6'd0;
+                                    rb_lat_cnt <= 8'd0;
+                                    rb_out     <= 1'b0;
+                                    rb_st      <= rb_next;
+                                end else rb_k <= rb_k + 6'd1;
+                            end
+
+                            // ---- read until the known answer arrives; the count of words
+                            // before it IS the pipeline latency, in the same units the
+                            // frame read will use.
+                            RB_PROBE: begin
+                                icap_csib <= !rb_req;
+                                if (icap_rd_valid) begin
+                                    if (icap_word[27:0] == DEVICE_ID_LOW) begin
+                                        rb_lat  <= rb_lat_cnt;
+                                        rb_k    <= 6'd0;
+                                        rb_dir  <= 1'b0;
+                                        rb_next <= RB_SETUP;
+                                        rb_st   <= RB_TRN;
+                                    end else if (rb_lat_cnt == PROBE_LAST) begin
+                                        fault_code <= F_RBSYNC;
                                         phase      <= P_FAULT;
+                                    end else begin
+                                        rb_lat_cnt <= rb_lat_cnt + 8'd1;
+                                    end
+                                end
+                            end
+
+                            // ---- FAR, RCFG, FDRO: the transaction UG470 requires and the
+                            // old code never established. The FAR is this envelope's FIRST
+                            // TARGET FAR — the same one its own preamble wrote — and the
+                            // hardware auto-increments from there, as the write did.
+                            RB_SETUP: begin
+                                icap_csib  <= 1'b0;
+                                icap_rdwrb <= 1'b0;
+                                case (rb_k)
+                                    6'd0:    icap_din <= br8(W_FAR1);
+                                    6'd1:    icap_din <= br8(permitted_far(env));
+                                    6'd2:    icap_din <= br8(W_CMD1);
+                                    6'd3:    icap_din <= br8(W_RCFG);
+                                    6'd4:    icap_din <= br8(W_NOOP);
+                                    6'd5:    icap_din <= br8(W_FDRO0);
+                                    6'd6:    icap_din <= br8(W_RDLEN);
+                                    default: icap_din <= br8(W_NOOP);
+                                endcase
+                                if (rb_k == 6'd6) begin
+                                    rb_k  <= 6'd0;
+                                    rb_st <= RB_SFLUSH;
+                                end else rb_k <= rb_k + 6'd1;
+                            end
+
+                            RB_SFLUSH: begin
+                                icap_csib  <= 1'b0;
+                                icap_rdwrb <= 1'b0;
+                                icap_din   <= br8(W_NOOP);
+                                if (rb_k == FLUSH_LAST) begin
+                                    rb_k    <= 6'd0;
+                                    rb_dir  <= 1'b1;
+                                    rb_next <= RB_SKIP;
+                                    rb_skip <= {1'b0, rb_lat} + SKIP_FRAME;
+                                    rb_st   <= RB_TRN;
+                                end else rb_k <= rb_k + 6'd1;
+                            end
+
+                            // ---- the measured latency, then ONE WHOLE FRAME. The pad is
+                            // the frame buffer's content — this envelope's flush frame — so
+                            // failing to discard it compares the flush frame against frame
+                            // 0's CRC rather than merely shifting by a word.
+                            RB_SKIP: begin
+                                icap_csib <= !rb_req;
+                                if (icap_rd_valid) begin
+                                    if (rb_skip == 9'd1) begin
+                                        frame_word <= 7'd0;
+                                        crc_clear  <= 1'b1;
+                                        rb_st      <= RB_DATA;
+                                    end else rb_skip <= rb_skip - 9'd1;
+                                end
+                            end
+
+                            // ---- the five frames
+                            RB_DATA: begin
+                                if (rb_frame_ready) begin
+                                    if (rb_ack) begin
+                                        rb_frame_ready <= 1'b0;
+                                        if (rb_frame == FRAMES_PER_ENV - 1) begin
+                                            rb_k    <= 6'd0;
+                                            rb_dir  <= 1'b0;
+                                            rb_next <= RB_DESYNC;
+                                            rb_st   <= RB_TRN;
+                                        end else begin
+                                            rb_frame   <= rb_frame + 3'd1;
+                                            frame_word <= 7'd0;
+                                            crc_clear  <= 1'b1;
+                                        end
+                                    end
+                                end else if (awaiting_crc) begin
+                                    // CSIB stays High while the feeder drains the last
+                                    // word — the same pause the write path uses.
+                                    if (crc_taken) begin
+                                        awaiting_crc <= 1'b0;
+                                        if (crc_byte_count != BYTES_PER_FRAME) begin
+                                            fault_code <= F_BYTECOUNT;
+                                            phase      <= P_FAULT;
+                                        end else if (crc_value == cc_rdata) begin
+                                            rb_frames_ok   <= rb_frames_ok + 4'd1;
+                                            rb_frame_ready <= 1'b1;
+                                        end else begin
+                                            fault_code <= F_READBACK;
+                                            phase      <= P_FAULT;
+                                        end
                                     end
                                 end else begin
-                                    expect_env <= env + 2'd1;
+                                    icap_csib <= !rb_req;
+                                    if (icap_rd_valid) begin
+                                        if (frame_word == FRAME_WORDS - 1)
+                                            awaiting_crc <= 1'b1;
+                                        else frame_word <= frame_word + 7'd1;
+                                    end
                                 end
+                            end
+
+                            // ---- leave the engine desynced. The next envelope opens with
+                            // its own sync word, and a sync word arriving at an already
+                            // synced engine is just a word.
+                            RB_DESYNC: begin
+                                icap_csib  <= 1'b0;
+                                icap_rdwrb <= 1'b0;
+                                case (rb_k)
+                                    6'd0:    icap_din <= br8(W_CMD1);
+                                    6'd1:    icap_din <= br8(W_DESYNC);
+                                    default: icap_din <= br8(W_NOOP);
+                                endcase
+                                if (rb_k == 6'd5) begin
+                                    rb_k  <= 6'd0;
+                                    rb_st <= RB_FIN;
+                                end else rb_k <= rb_k + 6'd1;
+                            end
+
+                            // ---- envelope done. configuration_valid is reachable ONLY
+                            // from here, and only with every one of the fifteen frames
+                            // verified — the counter, not the envelope index, is what makes
+                            // it structurally unreachable early.
+                            //
+                            // The refusal branch used to be followed by an unconditional
+                            // `phase <= P_IDLE`, which overwrote it: a wrong frame count
+                            // would have left `fault_code` set and `fault` clear. Written
+                            // as one if/else it cannot.
+                            RB_FIN: begin
                                 busy  <= 1'b0;
-                                phase <= (phase == P_FAULT) ? P_FAULT : P_IDLE;
-                            end else begin
-                                rb_frame   <= rb_frame + 3'd1;
-                                frame_word <= 7'd0;
-                                crc_clear  <= 1'b1;
+                                rb_st <= RB_PCMD;
+                                if (env == ENVELOPES - 1 &&
+                                    rb_frames_ok != TOTAL_FRAMES[3:0]) begin
+                                    fault_code <= F_READBACK;
+                                    phase      <= P_FAULT;
+                                end else begin
+                                    if (env == ENVELOPES - 1) begin
+                                        configuration_valid <= 1'b1;
+                                        // ...but a fault earlier in this power-on means the
+                                        // fabric is not known to equal the pinned base, and
+                                        // this engine is not entitled to say it is.
+                                        if (!fault_since_reset) recovery_required <= 1'b0;
+                                    end else begin
+                                        expect_env <= env + 2'd1;
+                                    end
+                                    phase <= P_IDLE;
+                                end
                             end
-                        end
-                    end else if (awaiting_crc) begin
-                        // CSIB high pauses the readback while the feeder drains the last
-                        // word — the same pause the write path uses between frames.
-                        icap_csib <= 1'b1;
-                        if (crc_taken) begin
-                            awaiting_crc <= 1'b0;
-                            if (crc_byte_count != BYTES_PER_FRAME) begin
-                                fault_code <= F_BYTECOUNT;
-                                phase      <= P_FAULT;
-                            end else if (crc_value == cc_rdata) begin
-                                rb_frames_ok   <= rb_frames_ok + 4'd1;
-                                rb_frame_ready <= 1'b1;
-                            end else begin
-                                fault_code <= F_READBACK;
+
+                            default: begin
+                                fault_code <= F_PHASE;
                                 phase      <= P_FAULT;
                             end
-                        end
-                    end else begin
-                        // stream one frame back, paced by the SAME advance condition: the
-                        // buffer write and the CRC see the identical word, so a readback
-                        // word can never reach `rb_*` without having been CRC'd.
-                        icap_csib  <= 1'b0;
-                        icap_rdwrb <= 1'b1;
-                        if (crc_ready) begin
-                            if (frame_word == FRAME_WORDS - 1) awaiting_crc <= 1'b1;
-                            else frame_word <= frame_word + 7'd1;
-                        end
+                        endcase
                     end
                 end
 

@@ -1,0 +1,18 @@
+device model:
+  model: OK
+readback against the model:
+  readback_l0_f32: OK
+  readback_l1_f32: OK
+  readback_l3_f32: OK
+  readback_l7_f32: OK
+  readback_l0_f40: OK
+  readback_l5_f48: OK
+  readback_l12_f64: OK
+the older benches (unchanged scope):
+  stream: OK
+  integration: OK
+  crc: OK
+  axi3: OK
+  axil: OK
+
+all 13 bench runs OK

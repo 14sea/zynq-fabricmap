@@ -1,0 +1,108 @@
+{
+  "tool": "iverilog 12.0 — scripts/run_carrier_benches.sh, scripts/mutate_carrier_readback.sh",
+  "what": "erratum 004's offline round: derive the ICAPE2 readback sequence, build an independent device model, fail the published RTL against it, then build a real sequencer",
+  "date": "2026-08-13",
+  "board_time": "none — no Vivado, no bitstream, no board",
+  "derivation": {
+    "document": "docs/claimb_icape2_readback_sequence.md",
+    "written_before": "the model, the bench and the RTL, so the code could be judged against it",
+    "sources": [
+      "UG470 (packet formats, readback transaction, CSIB/RDWRB rules, the dummy frame)",
+      "zynq-xpart scripts/hwicap-uart.py readback()/readreg(), MEASURED on an XC7Z010",
+      "zynq-xpart rtl/xbus_icap.v + sw/icap_firmware/main.c: all FOUR word orderings tried on an EBAZ4205 against a directly instantiated ICAPE2, and only per-byte bit reversal rewrote the fabric (\"mbox reports winning swap mode 1\") — MEASURED, exhaustive",
+      "zynq-xpart docs/icap_investigation.md (readback needs PCAP_PR=0; ~101-word pad)"
+    ],
+    "explicitly_rejected": "UG470's SelectMAP bus-width detect and its SHUTDOWN/GTS readback-capture flow: this carrier contains the engine doing the reading and must keep running"
+  },
+  "independent_model": {
+    "file": "vivado/carrier/icape2_model.v",
+    "rule": "never reads any signal, array or parameter of the DUT; it sees CLK/CSIB/RDWRB/I/O only",
+    "own_bench": "vivado/carrier/tb_icape2_model.v — a literal known-answer trace plus the seven defects, driven word by word by the bench with carrier_stream NOT instantiated",
+    "models": [
+      "byte-bit-reversed wire order: a SelectMAP-order stream never syncs",
+      "Type-1/Type-2 packet parsing with its own CMD/FAR/IDCODE/STAT registers",
+      "configuration memory keyed by FAR, with FAR successors computed from the address format",
+      "the one-frame write buffer: five frames in, four land",
+      "a readback that serves the frame buffer first and configuration memory after",
+      "abort on RDWRB moving while CSIB is Low"
+    ],
+    "cross_check": "the successor rule reproduces the manifest's flush FARs unaided, including A23 -> A80 and C23 -> C80, which are not FAR+1"
+  },
+  "published_rtl_against_the_model": {
+    "log": "before_the_fix.txt",
+    "verdict": "REFUTED, and more broadly than erratum 004 stated",
+    "failures": 1525,
+    "words_read": 802,
+    "of_which_idle": 802,
+    "frames_committed_to_the_fabric": 0,
+    "device_error": "E_ABORT (RDWRB moved while CSIB was Low, on the way into the readback)",
+    "reading": "not one word of frame data was ever read, and not one frame ever reached the fabric — the write never synced either"
+  },
+  "defects_found_beyond_erratum_004": [
+    {
+      "what": "ICAPE2 word ordering, on the WRITE path as well as the read path",
+      "detail": "carrier_top wires icap_din straight to ICAPE2.I while carrier_stream forwards SelectMAP-order envelope words; the primitive's I/O is bit-reversed within each byte, so the sync word never matched and pass 2's writes were almost certainly never accepted",
+      "consequence": "the erratum-003 calibration is not evidence that anything was written to the fabric",
+      "fix": "br8() at the ICAP pins only; the CRC, the staging RAM, the host and the manifest keep SelectMAP order"
+    },
+    {
+      "what": "CSIB held Low continuously through the readback",
+      "detail": "carrier_crc32 accepts one word every four cycles; a real device delivers one word per Low-CSIB clock, so three words in four were being discarded",
+      "why_invisible": "the old bench's device was indexed by the DUT's own frame_word, so a paused consumer was served the same word again",
+      "fix": "one word in flight, requested only when the consumer can take it"
+    },
+    {
+      "what": "an unconditional phase assignment overwrote the F_READBACK refusal at the end of an envelope",
+      "detail": "the frame-count refusal set fault_code and phase, and the line after it set phase unconditionally to P_IDLE — leaving fault_code set and fault clear",
+      "fix": "written as one if/else"
+    },
+    {
+      "what": "host FAULT_NAMES had no entry for F_PROTOCOL (11)",
+      "fix": "added, with F_RBSYNC (12)"
+    }
+  ],
+  "sequencer_as_built": {
+    "file": "vivado/carrier/carrier_stream.v",
+    "shape": "sync + Type-1 read IDCODE -> 32 NOOP flush -> turnaround -> read until the device names itself (the latency, MEASURED) -> turnaround -> FAR, RCFG, FDRO(0), Type-2 606 -> 32 NOOP flush -> turnaround -> discard the measured latency and one whole frame -> five frames -> turnaround -> DESYNC",
+    "far": "each envelope's FIRST TARGET FAR, the same one its own preamble wrote",
+    "length": "606 = (5+1) x 101",
+    "new_fault_code": "F_RBSYNC = 12, raised when the probe never sees the IDCODE — distinct from F_READBACK so 'the read path never came up' and 'it came up and disagreed' are different findings on the board",
+    "latency_is_measured_not_pinned": "the one number simulation cannot establish is taken from the device at run time, against a known answer"
+  },
+  "results": {
+    "bench_log": "benches.txt",
+    "bench_runs": 13,
+    "bench_failures": 0,
+    "sweep": "the readback bench passes at read latencies 0,1,3,5,7,12 and device flush requirements 32,40,48,64 — the design is not allowed to know either number",
+    "sweep_is_verified_by_content": "each run prints the parameters it was elaborated with and the runner refuses the result unless they match what it asked for; a quoting slip had previously made -P silently fail and run the default seven times",
+    "provenance_test": "one word of the model's configuration memory is changed between the write and the readback, with the DUT's staging copy still holding the written value: the readback must FAIL, which a DUT reading its own buffer cannot do",
+    "host_bytes": "the fifteen frames the host reads out of the staging window are compared word by word against the fifteen it sent — the SHA-256's raw material, checked as bytes rather than trusted because a CRC agreed",
+    "mutants_log": "mutants.txt",
+    "mutants": "10 run, 10 behaved as expected (9 killed, 1 expected survivor)",
+    "expected_survivor": "shortening the pipeline flush from 32 clocks to 2 is ABSORBED, because the probe then measures a correspondingly longer latency. The flush stops being load-bearing precisely because the latency is measured; the same mutation against a device wanting 64 clocks pushes the probe past its 64-word cap and is refused with F_RBSYNC",
+    "how_each_mutant_dies": {
+      "no_rcfg": "F_READBACK, device reports E_NO_RCFG — nothing was ever established",
+      "wrong_far": "F_READBACK — the frames at that address are not this envelope's",
+      "short_fdro": "F_READBACK — the stream runs out and idle words are CRC'd",
+      "no_dummy_discard": "F_READBACK — the flush frame is compared against frame 0's CRC",
+      "dummy_off_by_one": "F_READBACK — one frame late runs off the end of what was asked for",
+      "short_flush_past_cap": "F_RBSYNC — the probe gives up before the device answers",
+      "csib_low_turn": "F_RBSYNC, device reports E_ABORT — the configuration was aborted",
+      "no_bitswap": "F_RBSYNC — a SelectMAP-order stream never syncs",
+      "lat_hardcoded": "F_READBACK — the capture starts three words early"
+    }
+  },
+  "benches_repaired": {
+    "tb_carrier_stream.v": "its echo device — the one erratum 004 names — replaced by icape2_model; its subject (when five frame CRCs may be used as authority) is unchanged",
+    "tb_carrier_integration.v": "same echo device, same replacement",
+    "tb_carrier_chain.v": "left alone: a board-replay diagnostic with no pass/fail verdict and no readback",
+    "tb_carrier_scorer.v": "left alone: fails 30 identically before and after, pre-existing and out of scope"
+  },
+  "not_done": [
+    "no Vivado run, so no utilisation figure for the added states — the region has 800 LUTs and the design used 432 before this",
+    "no bitstream, no publication chain, no board time, no push",
+    "the AXI status register is unchanged, so the measured latency is not visible to the host yet — see the sequence document's open decision",
+    "gate_carrier_base now REFUSES the published erratum-003 run — 'vivado/carrier/carrier_stream.v has changed since the bitstream was built'. That refusal is correct and is the ledger entry saying a rebuild is owed; the 973-test suite is green because it exercises the gate's logic against fixtures, not the production run"
+  ],
+  "carried_assumptions": "docs/claimb_icape2_readback_sequence.md section 9 — chiefly that the probe's latency equals the frame read's, and that a DESYNC makes the frame still in the buffer ineligible to commit"
+}

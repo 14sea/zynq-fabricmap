@@ -127,6 +127,11 @@ ST_RESERVED = 0xFFFC0000
 FAULT_NAMES = {
     0: "none", 1: "order", 2: "control", 3: "far", 4: "length", 5: "crc",
     6: "timeout", 7: "phase", 8: "readback", 9: "uncommitted", 10: "bytecount",
+    11: "protocol",
+    # F_RBSYNC: the readback's probe never got the device to name itself, so the read path
+    # never came up at all. Deliberately distinct from "readback" — erratum 004 cost a board
+    # round because one code covered both "no data" and "wrong data".
+    12: "rbsync",
 }
 
 FRAME_WORDS = guard.FRAME_WORDS                       # 101

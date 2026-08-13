@@ -1,0 +1,13 @@
+mutants of the readback sequence:
+  no_rcfg: killed — measured latency 3, first fault 8, device err 2
+  wrong_far: killed — measured latency 3, first fault 8, device err 0
+  short_fdro: killed — measured latency 3, first fault 8, device err 0
+  no_dummy_discard: killed — measured latency 3, first fault 8, device err 0
+  dummy_off_by_one: killed — measured latency 3, first fault 8, device err 0
+  short_flush: survived, as expected — a 2-clock flush, absorbed by the measured latency
+  short_flush_past_cap: killed — measured latency 0, first fault 12, device err 0
+  csib_low_turn: killed — measured latency 0, first fault 12, device err 1
+  no_bitswap: killed — measured latency 0, first fault 12, device err 0
+  lat_hardcoded: killed — measured latency 0, first fault 8, device err 0
+
+10 as expected, 0 unexpected

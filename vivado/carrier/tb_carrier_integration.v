@@ -32,13 +32,10 @@ module tb_carrier_integration;
     reg  [6:0]  host_raddr = 7'd0;
     wire [31:0] host_rdata;
     wire        icap_csib, icap_rdwrb;
-    wire [31:0] icap_din;
-    reg  [31:0] icap_dout = 32'd0;
+    wire [31:0] icap_din, icap_dout;
     reg         rb_ack = 1'b0;
     wire [3:0]  rb_frames_ok;
-    // device model: what the fabric returns, per (envelope, frame, word)
-    reg [31:0] device [0:2][0:4][0:FRAME_WORDS-1];
-    integer corrupt_env = -1, corrupt_frame = -1, corrupt_word = -1;
+    wire [3:0]  m_err;
 
     integer errors = 0, i;
     reg [31:0] env_words [0:ENV_WORDS-1];
@@ -62,39 +59,25 @@ module tb_carrier_integration;
         .icap_dout(icap_dout)
     );
 
-    // the device returns what pass 2 wrote, unless a corruption is injected
-    always @* begin
-        icap_dout = device[dut.env][dut.rb_frame][dut.frame_word];
-        if (corrupt_env == dut.env && corrupt_frame == dut.rb_frame &&
-            corrupt_word == dut.frame_word)
-            icap_dout = ~device[dut.env][dut.rb_frame][dut.frame_word];
-    end
+    // ERRATUM 004: the device is no longer a mirror of the DUT's staging buffer. See
+    // icape2_model.v — it parses the ICAP wire and answers out of configuration memory.
+    icape2_model #(.FRAME_WORDS(FRAME_WORDS))
+      dev (.clk(clk), .csib(icap_csib), .rdwrb(icap_rdwrb), .i(icap_din), .o(icap_dout),
+           .synced(), .err(m_err), .far(), .wcfg(), .rcfg(),
+           .n_written(), .n_read(), .n_idle(), .n_frames_committed(), .buf_far());
 
-    // capture what pass 2 hands to ICAP during the EMIT phase, so the readback has
-    // something faithful to return. Frames reach ICAP only from there — the point of the
-    // staging is that nothing is handed over until its CRC has matched.
-    //
-    // The capture keeps its OWN pointer. `icap_din` is a registered output, so by the time
-    // a word is on the wire `emit_word` has already advanced, and indexing the device by
-    // it stores every word one place late — which reads back as a CRC mismatch and looks
-    // exactly like a real readback failure.
-    //
-    // For the same reason the window is P_EMIT delayed by one cycle, not P_EMIT itself:
-    // the 101st word reaches the wire in the first cycle AFTER the engine has left P_EMIT
-    // (that is also when a real ICAPE2 latches it, CSIB still low). Gating on the phase
-    // directly stored only 100 words and left word 100 as x — which the CRC then reported
-    // as a readback mismatch, i.e. a bench defect wearing a device failure's clothes.
-    integer cap_ptr = 0;
-    reg     emit_d = 1'b0;
-    always @(posedge clk) emit_d <= (dut.phase == 3'd5);
-    always @(posedge clk) begin
-        if (emit_d && !icap_csib && !icap_rdwrb) begin
-            device[dut.env][dut.frame_idx - 3'd1][cap_ptr] <= icap_din;
-            cap_ptr <= (cap_ptr == FRAME_WORDS-1) ? 0 : cap_ptr + 1;
-        end else if (!emit_d) begin
-            cap_ptr <= 0;
+    // the fabric as it stands before a candidate; the flush FARs already hold what the
+    // envelopes' fifth frames carry, which is the manifest's invariant
+    task preload_fabric;
+        begin
+            dev.preload_frame(32'h00400A20, 32'hBA5E0000);
+            dev.preload_frame(32'h00400C1A, 32'hBA5E1000);
+            dev.preload_frame(32'h00400C20, 32'hBA5E2000);
+            dev.preload_frame(32'h00400A80, 32'hC0DE0000 + 4*FRAME_WORDS);
+            dev.preload_frame(32'h00400C1E, 32'hC0DE0000 + 4*FRAME_WORDS);
+            dev.preload_frame(32'h00400C80, 32'hC0DE0000 + 4*FRAME_WORDS);
         end
-    end
+    endtask
 
     // the host taking each readback frame
     always @(posedge clk) rb_ack <= rb_frame_ready && !rb_ack;
@@ -162,12 +145,22 @@ module tb_carrier_integration;
         end
     endtask
 
-    task run_pass2(input [1:0] e);
+    // `poke_widx < 0` leaves the fabric alone; otherwise one word of configuration memory
+    // is changed between the write and the readback — the only window in which the staging
+    // copy and the fabric can disagree.
+    task run_pass2_poke(input [1:0] e, input [31:0] poke_far, input integer poke_widx);
         begin
             @(negedge clk); env_index = e; start_pass2 = 1'b1;
             @(negedge clk); start_pass2 = 1'b0;
             stream(0, ENV_WORDS);
+            if (poke_widx >= 0) dev.poke_frame_word(poke_far, poke_widx, 32'hDEADBEEF);
             wait (!busy); @(negedge clk);
+        end
+    endtask
+
+    task run_pass2(input [1:0] e);
+        begin
+            run_pass2_poke(e, 32'd0, -1);
         end
     endtask
 
@@ -221,6 +214,7 @@ module tb_carrier_integration;
     integer busy_seen;
     initial begin
         repeat (3) @(negedge clk); rst_n = 1'b1;
+        preload_fabric();
 
         // ---- 1. a clean run from reset scores: the refusal below must not be vacuous
         full_transaction();
@@ -237,12 +231,14 @@ module tb_carrier_integration;
         build(FAR0, 32'd0); run_pass1(2'd0);
         build(FAR1, 32'd0); run_pass1(2'd1);
         build(FAR2, 32'd0); run_pass1(2'd2);
-        corrupt_env = 0; corrupt_frame = 2; corrupt_word = 7;
-        build(FAR0, 32'd0); run_pass2(2'd0);
-        corrupt_env = -1; corrupt_frame = -1; corrupt_word = -1;
+        // one word of the fabric disagrees with what was written: a real readback refuses
+        build(FAR0, 32'd0); run_pass2_poke(2'd0, 32'h00400A22, 7);
         check("the partial write faulted", fault, 1);
         check("and recovery is required", recovery_required, 1);
 
+        // repair it: a target frame is rewritten by every pass 2, but only after the fault
+        // has already been recorded — and `recovery_required` is sticky, which is the point
+        dev.preload_frame(32'h00400A22, 32'hBA5E0000);
         full_transaction();
         check("the later transaction really did verify all fifteen", rb_frames_ok, 15);
         check("and it legitimately re-confirms", configuration_valid, 1);
@@ -256,6 +252,7 @@ module tb_carrier_integration;
         check("busy stays 0", scorer_busy, 0);
         check("done stays 0", scorer_done, 0);
 
+        check("the device never errored", m_err, 0);
         if (errors == 0) $display("INTEGRATION TB: OK");
         else             $display("INTEGRATION TB: %0d FAILURE(S)", errors);
         $finish;
