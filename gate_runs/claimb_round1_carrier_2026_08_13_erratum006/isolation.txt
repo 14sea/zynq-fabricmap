@@ -1,0 +1,1255 @@
+ARCHITECTURE ERRATUM 001 is in force: the route inventory below is EVIDENCE.
+It is not a verdict and it exempts nothing by name. The safety judgement is
+bit invariance against the final carrier base, in scripts/gate_candidate.py.
+
+VERDICTS (cell ownership only)
+  target cells: 6 (must be exactly 6)
+  flush cells:  0 (must be 0)
+
+EVIDENCE
+  evolvable data nets:        12
+  nets over flush segments:   539
+  nets over target segments:  682
+  of those, non-evolvable:    676
+  routed nodes sha256:        53ce2b6403a9011fe4375f094a941b1288159c1592e8b9b244fb59a62be8249c (164520 nodes)
+  routed pips  sha256:        0b301d1a15138803eec1f19f1095fe9defa9a251e6e247a2e98f37ce20d19a03 (1555480 pips)
+  flush net inventory sha256: b26406103fc98025c8930d599e615ad9b3e68666cc5782b60426d4768c8541c7
+  target net inventory sha256:2d77f76c9a113b4be93e63d9fca6009102dae8163c583a565d02ca4187fe278f
+
+evolvable data nets:
+  lut_q[0]
+  lut_q[1]
+  lut_q[2]
+  lut_q[3]
+  lut_q[4]
+  lut_q[5]
+  vector[0]
+  vector[1]
+  vector[2]
+  vector[3]
+  vector[4]
+  vector[5]
+flush segment net inventory:
+  axi3/FSM_sequential_state[1]_i_2_n_0
+  axi3/awid_q[0]
+  axi3/awid_q[11]_i_2_n_0
+  axi3/bad_i_3_n_0
+  axi3/bad_reg_n_0
+  axi3/err_i_3_n_0
+  axi3/err_i_8_n_0
+  axi3/fixed
+  axi3/fixed_i_2_n_0
+  axi3/fixed_i_3_n_0
+  axi3/fixed_reg_n_0
+  axi3/in24[4]
+  axi3/m_awaddr[12]
+  axi3/m_awaddr[13]
+  axi3/m_awaddr[14]
+  axi3/m_awaddr[15]
+  axi3/m_awaddr[2]
+  axi3/m_awaddr[3]
+  axi3/m_awaddr[4]
+  axi3/m_awaddr[5]
+  axi3/m_awaddr[6]
+  axi3/m_awaddr[7]
+  axi3/m_awaddr[8]
+  axi3/m_rready
+  axi3/s_arready
+  axi3/s_awready
+  axi3/s_bid[10]
+  axi3/s_bid[11]
+  axi3/s_bid[4]
+  axi3/s_bid[7]
+  axi3/s_bid[8]
+  axi3/s_bid[9]
+  axi3/s_rvalid
+  axi3/state[0]
+  axi3/state[1]
+  axi3/state[2]
+  axi3/wid_bad
+  axi3/word_addr[0]
+  axi3/word_addr[15]_i_3_n_0
+  axi3/word_addr[15]_i_4_n_0
+  axil/ctrl_arm
+  axil/ctrl_env_index[0]
+  axil/ctrl_env_index[1]
+  axil/ctrl_mode_holdout
+  axil/ctrl_mode_holdout3_out
+  axil/ctrl_pass2
+  axil/ctrl_rb_ack
+  axil/p_0_in[27]
+  axil/rb_hold[12]
+  axil/rb_hold[15]
+  axil/rb_hold[17]
+  axil/rb_hold[22]
+  axil/rb_hold[23]
+  axil/rb_hold[9]
+  axil/rd_was_rb_reg_n_0
+  axil/rdata_reg[0]
+  axil/rdata_reg[31]_i_4_n_0
+  axil/rdata_reg[7]_i_4_n_0
+  axil/rdata_reg_reg[6]_i_2_n_0
+  axil/rdata_reg_reg[7]_i_3_n_0
+  axil/rdata_reg_reg_n_0_[10]
+  axil/rdata_reg_reg_n_0_[12]
+  axil/rdata_reg_reg_n_0_[16]
+  axil/rdata_reg_reg_n_0_[17]
+  axil/rdata_reg_reg_n_0_[18]
+  axil/rdata_reg_reg_n_0_[19]
+  axil/rdata_reg_reg_n_0_[20]
+  axil/rdata_reg_reg_n_0_[21]
+  axil/rdata_reg_reg_n_0_[24]
+  axil/rdata_reg_reg_n_0_[25]
+  axil/rdata_reg_reg_n_0_[26]
+  axil/rdata_reg_reg_n_0_[28]
+  axil/rdata_reg_reg_n_0_[29]
+  axil/rdata_reg_reg_n_0_[31]
+  axil/rdata_reg_reg_n_0_[8]
+  axil/s_arready
+  axil/s_bresp[1]_i_2_n_0
+  axil/s_bresp[1]_i_3_n_0
+  axil/s_bresp[1]_i_4_n_0
+  axil/s_bvalid
+  axil/s_rdata[16]
+  axil/s_rdata[17]
+  axil/s_rdata[18]
+  axil/s_rdata[19]
+  axil/s_rdata[20]
+  axil/s_rdata[21]
+  axil/s_rdata[24]
+  axil/s_rdata[25]
+  axil/s_rdata[26]
+  axil/s_rdata[27]
+  axil/s_rdata[28]
+  axil/s_rdata[29]
+  axil/s_rdata[30]
+  axil/s_rdata[31]
+  axil/s_rresp[1]_i_6_n_0
+  axil/s_wready
+  axil/s_wready_INST_0_i_1_n_0
+  axil/s_wready_INST_0_i_2_n_0
+  axil/word_valid
+  fclkresetn[0]
+  icap_dout[0]
+  icap_dout[10]
+  icap_dout[11]
+  icap_dout[12]
+  icap_dout[13]
+  icap_dout[14]
+  icap_dout[15]
+  icap_dout[16]
+  icap_dout[17]
+  icap_dout[18]
+  icap_dout[19]
+  icap_dout[1]
+  icap_dout[20]
+  icap_dout[21]
+  icap_dout[22]
+  icap_dout[23]
+  icap_dout[24]
+  icap_dout[25]
+  icap_dout[26]
+  icap_dout[27]
+  icap_dout[28]
+  icap_dout[29]
+  icap_dout[2]
+  icap_dout[30]
+  icap_dout[31]
+  icap_dout[3]
+  icap_dout[4]
+  icap_dout[5]
+  icap_dout[6]
+  icap_dout[7]
+  icap_dout[8]
+  icap_dout[9]
+  ps_arvalid
+  ps_awaddr[12]
+  ps_awid[10]
+  ps_awid[11]
+  ps_awid[4]
+  ps_awid[7]
+  ps_awid[8]
+  ps_awid[9]
+  ps_awvalid
+  ps_bready
+  ps_rready
+  ps_wdata[0]
+  ps_wdata[10]
+  ps_wdata[11]
+  ps_wdata[12]
+  ps_wdata[13]
+  ps_wdata[14]
+  ps_wdata[15]
+  ps_wdata[16]
+  ps_wdata[17]
+  ps_wdata[18]
+  ps_wdata[19]
+  ps_wdata[1]
+  ps_wdata[20]
+  ps_wdata[21]
+  ps_wdata[22]
+  ps_wdata[23]
+  ps_wdata[24]
+  ps_wdata[25]
+  ps_wdata[26]
+  ps_wdata[27]
+  ps_wdata[28]
+  ps_wdata[29]
+  ps_wdata[2]
+  ps_wdata[30]
+  ps_wdata[31]
+  ps_wdata[3]
+  ps_wdata[4]
+  ps_wdata[5]
+  ps_wdata[6]
+  ps_wdata[7]
+  ps_wdata[8]
+  ps_wdata[9]
+  ps_wlast
+  ps_wvalid
+  scorer/armed06_out
+  scorer/armed_o
+  scorer/p_0_in[0]
+  scorer/p_0_in[24]
+  scorer/p_0_in[32]
+  scorer/p_0_in[40]
+  scorer/p_0_in[8]
+  scorer/score_flat10_in
+  scorer/score_flat[10]
+  scorer/score_flat[15]_i_4_n_0
+  scorer/score_flat[16]
+  scorer/score_flat[17]
+  scorer/score_flat[18]
+  scorer/score_flat[19]
+  scorer/score_flat[20]
+  scorer/score_flat[21]
+  scorer/score_flat[31]_i_4_n_0
+  scorer/score_flat[32]
+  scorer/score_flat[33]
+  scorer/score_flat[34]
+  scorer/score_flat[35]
+  scorer/score_flat[36]
+  scorer/score_flat[39]_i_4_n_0
+  scorer/score_flat[47]_i_4_n_0
+  scorer/score_flat[7]_i_4_n_0
+  scorer/score_flat[8]
+  scorer/score_flat[9]
+  scorer/vector[0]
+  scorer/vector[1]
+  scorer/vector[2]
+  scorer/vector[3]
+  scorer/vector[4]
+  scorer/vector[5]
+  scorer/vector[5]_i_3_n_0
+  stream/awaiting_crc_i_3_n_0
+  stream/awaiting_crc_reg_n_0
+  stream/busy_i_2_n_0
+  stream/busy_i_7_n_0
+  stream/cc_waddr[0]
+  stream/cc_waddr[1]
+  stream/cc_waddr[2]
+  stream/cc_waddr[3]_i_1_n_0
+  stream/cc_wdata[0]
+  stream/cc_wdata[12]_i_2_n_0
+  stream/cc_wdata[13]
+  stream/cc_wdata[13]_i_2_n_0
+  stream/cc_wdata[14]
+  stream/cc_wdata[15]
+  stream/cc_wdata[16]
+  stream/cc_wdata[16]_i_2_n_0
+  stream/cc_wdata[17]_i_2_n_0
+  stream/cc_wdata[18]_i_2_n_0
+  stream/cc_wdata[19]_i_2_n_0
+  stream/cc_wdata[1]
+  stream/cc_wdata[1]_i_2_n_0
+  stream/cc_wdata[20]
+  stream/cc_wdata[20]_i_2_n_0
+  stream/cc_wdata[21]
+  stream/cc_wdata[22]_i_2_n_0
+  stream/cc_wdata[23]
+  stream/cc_wdata[25]_i_2_n_0
+  stream/cc_wdata[26]
+  stream/cc_wdata[28]
+  stream/cc_wdata[28]_i_2_n_0
+  stream/cc_wdata[2]
+  stream/cc_wdata[2]_i_2_n_0
+  stream/cc_wdata[30]_i_2_n_0
+  stream/cc_wdata[3]
+  stream/cc_wdata[5]
+  stream/cc_wdata[6]
+  stream/cc_wdata[7]
+  stream/cc_wdata[8]_i_2_n_0
+  stream/cc_wdata[9]_i_2_n_0
+  stream/cc_we
+  stream/cc_we_i_1_n_0
+  stream/commit_i[2]_i_2_n_0
+  stream/commit_i__0[0]
+  stream/commit_i__0[1]
+  stream/commit_i__0[2]
+  stream/configuration_valid
+  stream/crc_clear_reg_n_0
+  stream/crc_committed_reg_0_15_0_5_i_1_n_0
+  stream/crc_committed_reg_0_15_0_5_i_2_n_0
+  stream/crc_committed_reg_0_15_12_17/DOA1
+  stream/crc_committed_reg_0_15_12_17/DOB1
+  stream/crc_committed_reg_0_15_18_23/DOA1
+  stream/crc_committed_reg_0_15_18_23/DOB0
+  stream/crc_committed_reg_0_15_6_11/DOB0
+  stream/crc_committed_reg_0_15_6_11/DOC1
+  stream/crc_i/accept
+  stream/crc_i/active_reg_n_0
+  stream/crc_i/bidx_reg_n_0_[0]
+  stream/crc_i/bidx_reg_n_0_[1]
+  stream/crc_i/byte_count[15]_i_1_n_0
+  stream/crc_i/byte_of_index[0]
+  stream/crc_i/byte_of_index[2]
+  stream/crc_i/byte_of_index[3]
+  stream/crc_i/byte_of_index[7]
+  stream/crc_i/c0[0]
+  stream/crc_i/c0[1]
+  stream/crc_i/c0[2]
+  stream/crc_i/c0[3]
+  stream/crc_i/c0[4]
+  stream/crc_i/crc[13]
+  stream/crc_i/crc[17]
+  stream/crc_i/crc[19]
+  stream/crc_i/crc[1]
+  stream/crc_i/crc[20]
+  stream/crc_i/crc[21]
+  stream/crc_i/crc[23]
+  stream/crc_i/crc[26]
+  stream/crc_i/crc[27]
+  stream/crc_i/crc[28]
+  stream/crc_i/crc[29]
+  stream/crc_i/crc[2]
+  stream/crc_i/crc[31]
+  stream/crc_i/crc[6]
+  stream/crc_i/crc[8]
+  stream/crc_i/ready
+  stream/crc_i/state[11]
+  stream/crc_i/state[12]
+  stream/crc_i/state[13]
+  stream/crc_i/state[14]
+  stream/crc_i/state[15]
+  stream/crc_i/state[16]
+  stream/crc_i/state[16]_i_2_n_0
+  stream/crc_i/state[17]
+  stream/crc_i/state[18]
+  stream/crc_i/state[19]
+  stream/crc_i/state[1]
+  stream/crc_i/state[20]
+  stream/crc_i/state[21]
+  stream/crc_i/state[22]
+  stream/crc_i/state[22]_i_2_n_0
+  stream/crc_i/state[23]
+  stream/crc_i/state[24]
+  stream/crc_i/state[25]
+  stream/crc_i/state[26]
+  stream/crc_i/state[27]
+  stream/crc_i/state[28]
+  stream/crc_i/state[29]
+  stream/crc_i/state[30]
+  stream/crc_i/state[30]_i_2_n_0
+  stream/crc_i/state[31]
+  stream/crc_i/state[3]
+  stream/crc_i/state[4]
+  stream/crc_i/state[5]
+  stream/crc_i/state[6]
+  stream/crc_i/state[6]_i_1_n_0
+  stream/crc_i/state[7]
+  stream/crc_i/state[8]
+  stream/crc_i/state[9]
+  stream/crc_i/taken
+  stream/crc_i/taken_i_2_n_0
+  stream/crc_i/wreg[0]
+  stream/crc_i/wreg_reg_n_0_[10]
+  stream/crc_i/wreg_reg_n_0_[19]
+  stream/crc_i/wreg_reg_n_0_[22]
+  stream/crc_i/wreg_reg_n_0_[28]
+  stream/crc_i/wreg_reg_n_0_[31]
+  stream/crc_i/wreg_reg_n_0_[8]
+  stream/crc_i/wreg_reg_n_0_[9]
+  stream/crc_scratch[0][31]_i_1_n_0
+  stream/crc_scratch[1][31]_i_1_n_0
+  stream/crc_scratch[2][31]_i_1_n_0
+  stream/crc_scratch[3][31]_i_1_n_0
+  stream/crc_scratch[4][31]_i_1_n_0
+  stream/crc_scratch_reg[4][12]
+  stream/crc_scratch_reg[4][16]
+  stream/crc_scratch_reg[4][18]
+  stream/crc_scratch_reg[4][22]
+  stream/crc_scratch_reg[4][9]
+  stream/crc_source[6]
+  stream/e[0]
+  stream/e[1]
+  stream/emit_word[0]_i_1_n_0
+  stream/emit_word[5]_i_2_n_0
+  stream/emit_word[6]_i_1_n_0
+  stream/emit_word[6]_i_5_n_0
+  stream/emit_word[6]_i_7_n_0
+  stream/emit_word__0[0]
+  stream/emit_word__0[1]
+  stream/emit_word__0[2]
+  stream/emit_word__0[3]
+  stream/emit_word__0[4]
+  stream/emit_word__0[5]
+  stream/emit_word__0[6]
+  stream/env_committed[0]_i_2_n_0
+  stream/expired
+  stream/f[2]
+  stream/fault_code[0]_i_3_n_0
+  stream/fault_code[1]_i_2_n_0
+  stream/fault_code[2]_i_3_n_0
+  stream/fault_code[2]_i_40_n_0
+  stream/fault_code[3]_i_11_n_0
+  stream/fault_code[3]_i_12_n_0
+  stream/fault_code[3]_i_17_n_0
+  stream/fault_code[3]_i_19_n_0
+  stream/fault_code[3]_i_31_n_0
+  stream/fault_code[3]_i_5_n_0
+  stream/frame_word[0]
+  stream/frame_word[1]
+  stream/frame_word[2]
+  stream/frame_word[3]
+  stream/frame_word[4]
+  stream/frame_word[5]
+  stream/frame_word[6]
+  stream/frame_word[6]_i_12_n_0
+  stream/frame_word[6]_i_7_n_0
+  stream/host_rdata[0]
+  stream/host_rdata[10]
+  stream/host_rdata[11]
+  stream/host_rdata[13]
+  stream/host_rdata[14]
+  stream/host_rdata[17]
+  stream/host_rdata[1]
+  stream/host_rdata[24]
+  stream/host_rdata[2]
+  stream/host_rdata[30]
+  stream/host_rdata[31]
+  stream/host_rdata[31]_INST_0_i_2_n_0
+  stream/host_rdata[31]_INST_0_i_3_n_0
+  stream/host_rdata[3]
+  stream/host_rdata[4]
+  stream/host_rdata[5]
+  stream/host_rdata[6]
+  stream/host_rdata[7]
+  stream/host_rdata[8]
+  stream/icap_csib
+  stream/icap_din0_in[10]
+  stream/icap_din0_in[12]
+  stream/icap_din0_in[17]
+  stream/icap_din0_in[19]
+  stream/icap_din0_in[21]
+  stream/icap_din0_in[2]
+  stream/icap_din0_in[31]
+  stream/icap_din0_in[6]
+  stream/icap_din[0]
+  stream/icap_din[10]
+  stream/icap_din[10]_i_3_n_0
+  stream/icap_din[11]
+  stream/icap_din[12]
+  stream/icap_din[13]
+  stream/icap_din[14]
+  stream/icap_din[15]
+  stream/icap_din[16]
+  stream/icap_din[17]
+  stream/icap_din[18]
+  stream/icap_din[19]
+  stream/icap_din[1]
+  stream/icap_din[20]
+  stream/icap_din[21]
+  stream/icap_din[22]
+  stream/icap_din[23]
+  stream/icap_din[23]_i_2_n_0
+  stream/icap_din[24]
+  stream/icap_din[25]
+  stream/icap_din[26]
+  stream/icap_din[26]_i_2_n_0
+  stream/icap_din[27]
+  stream/icap_din[28]
+  stream/icap_din[28]_i_2_n_0
+  stream/icap_din[29]
+  stream/icap_din[2]
+  stream/icap_din[30]
+  stream/icap_din[31]
+  stream/icap_din[31]_i_11_n_0
+  stream/icap_din[31]_i_1_n_0
+  stream/icap_din[31]_i_3_n_0
+  stream/icap_din[31]_i_4_n_0
+  stream/icap_din[31]_i_7_n_0
+  stream/icap_din[3]
+  stream/icap_din[4]
+  stream/icap_din[4]_i_2_n_0
+  stream/icap_din[5]
+  stream/icap_din[6]
+  stream/icap_din[7]
+  stream/icap_din[7]_i_2_n_0
+  stream/icap_din[7]_i_4_n_0
+  stream/icap_din[8]
+  stream/icap_din[9]
+  stream/icap_rd_valid
+  stream/icap_rdwrb
+  stream/p_0_out[1]
+  stream/pass1_complete
+  stream/phase[0]
+  stream/phase[1]
+  stream/phase[2]
+  stream/phase[2]_i_12_n_0
+  stream/phase[2]_i_7_n_0
+  stream/pos[3]_i_2_n_0
+  stream/pos[9]_i_1_n_0
+  stream/pos[9]_i_3_n_0
+  stream/pos[9]_i_4_n_0
+  stream/rb_frame_ready
+  stream/rb_frame_ready_reg_i_2_n_1
+  stream/rb_k[5]_i_1_n_0
+  stream/rb_lat[7]_i_2_n_0
+  stream/rb_lat[7]_i_3_n_0
+  stream/rb_lat_cnt[7]_i_1_n_0
+  stream/rb_lat_cnt[7]_i_5_n_0
+  stream/rb_lat_cnt[7]_i_7_n_0
+  stream/rb_latency_valid_i_3_n_0
+  stream/rb_latency_valid_i_9_n_0
+  stream/rb_skip[8]_i_3_n_0
+  stream/rb_skip[8]_i_4_n_0
+  stream/rb_st[0]
+  stream/rb_st[3]_i_5_n_0
+  stream/rb_st_reg_n_0_[0]
+  stream/rb_st_reg_n_0_[1]
+  stream/rb_st_reg_n_0_[2]
+  stream/rb_st_reg_n_0_[3]
+  stream/recovery_required
+  stream/stage_raddr[0]
+  stream/stage_raddr[1]
+  stream/stage_raddr[2]
+  stream/stage_raddr[3]
+  stream/stage_raddr[4]
+  stream/stage_raddr[5]
+  stream/stage_raddr[6]
+  stream/stage_reg_0_63_0_2/DOA
+  stream/stage_reg_0_63_0_2/DOC
+  stream/stage_reg_0_63_0_2_i_11_n_0
+  stream/stage_reg_0_63_12_14/DOA
+  stream/stage_reg_0_63_12_14/DOB
+  stream/stage_reg_0_63_12_14/DOC
+  stream/stage_reg_0_63_15_17/DOA
+  stream/stage_reg_0_63_15_17/DOB
+  stream/stage_reg_0_63_15_17/DOC
+  stream/stage_reg_0_63_21_23/DOB
+  stream/stage_reg_0_63_24_26_i_4_n_0
+  stream/stage_reg_0_63_27_29/DOB
+  stream/stage_reg_0_63_30_31/DOA
+  stream/stage_reg_0_63_6_8/DOC
+  stream/stage_reg_0_63_9_11/DOA
+  stream/stage_reg_0_63_9_11/DOC
+  stream/stage_reg_0_63_9_11_i_4_n_0
+  stream/stage_reg_64_127_0_2/DOC
+  stream/stage_reg_64_127_0_2_i_1_n_0
+  stream/stage_reg_64_127_12_14/DOA
+  stream/stage_reg_64_127_12_14/DOB
+  stream/stage_reg_64_127_12_14/DOC
+  stream/stage_reg_64_127_15_17/DOA
+  stream/stage_reg_64_127_15_17/DOB
+  stream/stage_reg_64_127_15_17/DOC
+  stream/stage_reg_64_127_21_23/DOB
+  stream/stage_reg_64_127_27_29_i_1_n_0
+  stream/stage_reg_64_127_30_31/DOA
+  stream/stage_reg_64_127_30_31_i_1_n_0
+  stream/stage_reg_64_127_3_5_i_1_n_0
+  stream/stage_reg_64_127_6_8/DOC
+  stream/stage_reg_64_127_9_11/DOA
+  stream/stage_reg_64_127_9_11/DOC
+  stream/stage_wdata[10]
+  stream/stage_wdata[11]
+  stream/stage_wdata[18]
+  stream/stage_wdata[24]
+  stream/stage_wdata[29]
+  stream/stage_wdata[31]
+  stream/stage_wdata[8]
+  stream/stream_open
+  stream/word_ready_INST_0_i_1_n_0
+target segment net inventory (foreign nets marked *):
+  * axi3/FSM_sequential_state[1]_i_2_n_0
+  * axi3/arid_q[11]_i_1_n_0
+  * axi3/awid_q[0]
+  * axi3/awid_q[11]_i_2_n_0
+  * axi3/bad_i_3_n_0
+  * axi3/bad_i_4_n_0
+  * axi3/bad_reg_n_0
+  * axi3/beats[1]_i_1_n_0
+  * axi3/err_i_3_n_0
+  * axi3/err_i_8_n_0
+  * axi3/fixed
+  * axi3/fixed_i_2_n_0
+  * axi3/fixed_i_3_n_0
+  * axi3/in24[13]
+  * axi3/in24[2]
+  * axi3/in24[4]
+  * axi3/in24[6]
+  * axi3/m_awaddr[10]
+  * axi3/m_awaddr[11]
+  * axi3/m_awaddr[12]
+  * axi3/m_awaddr[13]
+  * axi3/m_awaddr[14]
+  * axi3/m_awaddr[15]
+  * axi3/m_awaddr[2]
+  * axi3/m_awaddr[3]
+  * axi3/m_awaddr[4]
+  * axi3/m_awaddr[5]
+  * axi3/m_awaddr[6]
+  * axi3/m_awaddr[7]
+  * axi3/m_awaddr[8]
+  * axi3/m_awaddr[9]
+  * axi3/m_rready
+  * axi3/s_arready
+  * axi3/s_awready
+  * axi3/s_bid[10]
+  * axi3/s_bid[11]
+  * axi3/s_bid[4]
+  * axi3/s_bid[5]
+  * axi3/s_bid[7]
+  * axi3/s_bid[8]
+  * axi3/s_bid[9]
+  * axi3/s_rvalid
+  * axi3/state[0]
+  * axi3/state[1]
+  * axi3/state[2]
+  * axi3/wid_bad
+  * axi3/word_addr[0]
+  * axi3/word_addr[15]_i_3_n_0
+  * axi3/word_addr[15]_i_4_n_0
+  * axi3/wr_done_i_2_n_0
+  * axil/ctrl_arm
+  * axil/ctrl_env_index[0]
+  * axil/ctrl_env_index[1]
+  * axil/ctrl_mode_holdout
+  * axil/ctrl_mode_holdout3_out
+  * axil/ctrl_pass1
+  * axil/ctrl_pass2
+  * axil/ctrl_rb_ack
+  * axil/p_0_in[27]
+  * axil/rb_hold[0]
+  * axil/rb_hold[12]
+  * axil/rb_hold[15]
+  * axil/rb_hold[17]
+  * axil/rb_hold[22]
+  * axil/rb_hold[23]
+  * axil/rb_hold[28]
+  * axil/rb_hold[9]
+  * axil/rd_was_rb_reg_n_0
+  * axil/rdata_reg[0]
+  * axil/rdata_reg[31]_i_4_n_0
+  * axil/rdata_reg[7]_i_4_n_0
+  * axil/rdata_reg_reg[0]_i_2_n_0
+  * axil/rdata_reg_reg[6]_i_2_n_0
+  * axil/rdata_reg_reg[7]_i_3_n_0
+  * axil/rdata_reg_reg_n_0_[10]
+  * axil/rdata_reg_reg_n_0_[12]
+  * axil/rdata_reg_reg_n_0_[15]
+  * axil/rdata_reg_reg_n_0_[16]
+  * axil/rdata_reg_reg_n_0_[17]
+  * axil/rdata_reg_reg_n_0_[18]
+  * axil/rdata_reg_reg_n_0_[19]
+  * axil/rdata_reg_reg_n_0_[20]
+  * axil/rdata_reg_reg_n_0_[21]
+  * axil/rdata_reg_reg_n_0_[24]
+  * axil/rdata_reg_reg_n_0_[25]
+  * axil/rdata_reg_reg_n_0_[26]
+  * axil/rdata_reg_reg_n_0_[27]
+  * axil/rdata_reg_reg_n_0_[28]
+  * axil/rdata_reg_reg_n_0_[29]
+  * axil/rdata_reg_reg_n_0_[8]
+  * axil/s_arready
+  * axil/s_bresp[1]_i_2_n_0
+  * axil/s_bresp[1]_i_3_n_0
+  * axil/s_bresp[1]_i_4_n_0
+  * axil/s_bvalid
+  * axil/s_rdata[16]
+  * axil/s_rdata[17]
+  * axil/s_rdata[18]
+  * axil/s_rdata[19]
+  * axil/s_rdata[20]
+  * axil/s_rdata[21]
+  * axil/s_rdata[24]
+  * axil/s_rdata[25]
+  * axil/s_rdata[26]
+  * axil/s_rdata[27]
+  * axil/s_rdata[28]
+  * axil/s_rdata[29]
+  * axil/s_rdata[30]
+  * axil/s_rdata[31]
+  * axil/s_rresp[1]_i_6_n_0
+  * axil/s_wready
+  * axil/s_wready_INST_0_i_1_n_0
+  * axil/s_wready_INST_0_i_2_n_0
+  * axil/word_valid
+  * fclkresetn[0]
+  * icap_dout[0]
+  * icap_dout[10]
+  * icap_dout[11]
+  * icap_dout[12]
+  * icap_dout[13]
+  * icap_dout[14]
+  * icap_dout[15]
+  * icap_dout[16]
+  * icap_dout[17]
+  * icap_dout[18]
+  * icap_dout[19]
+  * icap_dout[1]
+  * icap_dout[20]
+  * icap_dout[21]
+  * icap_dout[22]
+  * icap_dout[23]
+  * icap_dout[24]
+  * icap_dout[25]
+  * icap_dout[26]
+  * icap_dout[27]
+  * icap_dout[28]
+  * icap_dout[29]
+  * icap_dout[2]
+  * icap_dout[30]
+  * icap_dout[31]
+  * icap_dout[3]
+  * icap_dout[4]
+  * icap_dout[5]
+  * icap_dout[6]
+  * icap_dout[7]
+  * icap_dout[8]
+  * icap_dout[9]
+    lut_q[0]
+    lut_q[1]
+    lut_q[2]
+    lut_q[3]
+    lut_q[4]
+    lut_q[5]
+  * ps_araddr[15]
+  * ps_arid[10]
+  * ps_arid[1]
+  * ps_arlen[0]
+  * ps_arlen[2]
+  * ps_arvalid
+  * ps_awaddr[11]
+  * ps_awaddr[12]
+  * ps_awaddr[3]
+  * ps_awaddr[4]
+  * ps_awaddr[6]
+  * ps_awid[10]
+  * ps_awid[11]
+  * ps_awid[4]
+  * ps_awid[7]
+  * ps_awid[8]
+  * ps_awid[9]
+  * ps_awlen[3]
+  * ps_awvalid
+  * ps_bready
+  * ps_rready
+  * ps_wdata[0]
+  * ps_wdata[10]
+  * ps_wdata[11]
+  * ps_wdata[12]
+  * ps_wdata[13]
+  * ps_wdata[14]
+  * ps_wdata[15]
+  * ps_wdata[16]
+  * ps_wdata[17]
+  * ps_wdata[18]
+  * ps_wdata[19]
+  * ps_wdata[1]
+  * ps_wdata[20]
+  * ps_wdata[21]
+  * ps_wdata[22]
+  * ps_wdata[23]
+  * ps_wdata[24]
+  * ps_wdata[25]
+  * ps_wdata[26]
+  * ps_wdata[27]
+  * ps_wdata[28]
+  * ps_wdata[29]
+  * ps_wdata[2]
+  * ps_wdata[30]
+  * ps_wdata[31]
+  * ps_wdata[3]
+  * ps_wdata[4]
+  * ps_wdata[5]
+  * ps_wdata[6]
+  * ps_wdata[7]
+  * ps_wdata[8]
+  * ps_wdata[9]
+  * ps_wlast
+  * ps_wvalid
+  * scorer/armed06_out
+  * scorer/armed_o
+  * scorer/p_0_in[0]
+  * scorer/p_0_in[24]
+  * scorer/p_0_in[32]
+  * scorer/p_0_in[40]
+  * scorer/p_0_in[8]
+  * scorer/score_flat10_in
+  * scorer/score_flat[10]
+  * scorer/score_flat[15]
+  * scorer/score_flat[15]_i_4_n_0
+  * scorer/score_flat[16]
+  * scorer/score_flat[17]
+  * scorer/score_flat[18]
+  * scorer/score_flat[19]
+  * scorer/score_flat[1]
+  * scorer/score_flat[20]
+  * scorer/score_flat[21]
+  * scorer/score_flat[26]
+  * scorer/score_flat[31]_i_4_n_0
+  * scorer/score_flat[32]
+  * scorer/score_flat[33]
+  * scorer/score_flat[34]
+  * scorer/score_flat[35]
+  * scorer/score_flat[36]
+  * scorer/score_flat[39]_i_4_n_0
+  * scorer/score_flat[47]_i_4_n_0
+  * scorer/score_flat[7]_i_4_n_0
+  * scorer/score_flat[8]
+  * scorer/score_flat[9]
+  * scorer/step_reg[5]
+  * scorer/step_reg[6]
+  * scorer/vector[0]
+  * scorer/vector[1]
+  * scorer/vector[2]
+  * scorer/vector[3]
+  * scorer/vector[4]
+  * scorer/vector[5]
+  * scorer/vector[5]_i_3_n_0
+  * stream/awaiting_crc_i_3_n_0
+  * stream/awaiting_crc_reg_n_0
+  * stream/busy_i_2_n_0
+  * stream/busy_i_7_n_0
+  * stream/cc_waddr[0]
+  * stream/cc_waddr[1]
+  * stream/cc_waddr[2]
+  * stream/cc_waddr[3]
+  * stream/cc_waddr[3]_i_1_n_0
+  * stream/cc_wdata[0]
+  * stream/cc_wdata[12]_i_2_n_0
+  * stream/cc_wdata[13]
+  * stream/cc_wdata[13]_i_2_n_0
+  * stream/cc_wdata[14]
+  * stream/cc_wdata[15]
+  * stream/cc_wdata[16]
+  * stream/cc_wdata[16]_i_2_n_0
+  * stream/cc_wdata[17]_i_2_n_0
+  * stream/cc_wdata[18]_i_2_n_0
+  * stream/cc_wdata[19]_i_2_n_0
+  * stream/cc_wdata[1]_i_2_n_0
+  * stream/cc_wdata[20]_i_2_n_0
+  * stream/cc_wdata[21]
+  * stream/cc_wdata[22]_i_2_n_0
+  * stream/cc_wdata[25]_i_2_n_0
+  * stream/cc_wdata[26]
+  * stream/cc_wdata[28]
+  * stream/cc_wdata[2]
+  * stream/cc_wdata[2]_i_2_n_0
+  * stream/cc_wdata[31]
+  * stream/cc_wdata[3]
+  * stream/cc_wdata[5]
+  * stream/cc_wdata[6]
+  * stream/cc_wdata[7]
+  * stream/cc_wdata[8]_i_2_n_0
+  * stream/cc_wdata[9]
+  * stream/cc_wdata[9]_i_2_n_0
+  * stream/cc_we
+  * stream/commit_i[2]_i_2_n_0
+  * stream/commit_i__0[0]
+  * stream/commit_i__0[1]
+  * stream/commit_i__0[2]
+  * stream/configuration_valid
+  * stream/control_bad0
+  * stream/crc_clear_reg_n_0
+  * stream/crc_committed_reg_0_15_0_5/DOC1
+  * stream/crc_committed_reg_0_15_0_5_i_1_n_0
+  * stream/crc_committed_reg_0_15_0_5_i_2_n_0
+  * stream/crc_committed_reg_0_15_0_5_i_3_n_0
+  * stream/crc_committed_reg_0_15_0_5_i_4_n_0
+  * stream/crc_committed_reg_0_15_12_17/DOA1
+  * stream/crc_committed_reg_0_15_12_17/DOB0
+  * stream/crc_committed_reg_0_15_12_17/DOB1
+  * stream/crc_committed_reg_0_15_18_23/DOA1
+  * stream/crc_committed_reg_0_15_18_23/DOB0
+  * stream/crc_committed_reg_0_15_24_29/DOA1
+  * stream/crc_committed_reg_0_15_24_29/DOB1
+  * stream/crc_committed_reg_0_15_6_11/DOA1
+  * stream/crc_committed_reg_0_15_6_11/DOB0
+  * stream/crc_committed_reg_0_15_6_11/DOC1
+  * stream/crc_i/accept
+  * stream/crc_i/active_reg_n_0
+  * stream/crc_i/bidx_reg_n_0_[0]
+  * stream/crc_i/bidx_reg_n_0_[1]
+  * stream/crc_i/byte_count[0]
+  * stream/crc_i/byte_count[15]_i_1_n_0
+  * stream/crc_i/byte_of_index[0]
+  * stream/crc_i/byte_of_index[3]
+  * stream/crc_i/byte_of_index[5]
+  * stream/crc_i/byte_of_index[7]
+  * stream/crc_i/c0[0]
+  * stream/crc_i/c0[1]
+  * stream/crc_i/c0[2]
+  * stream/crc_i/c0[3]
+  * stream/crc_i/c0[4]
+  * stream/crc_i/crc[13]
+  * stream/crc_i/crc[14]
+  * stream/crc_i/crc[15]
+  * stream/crc_i/crc[17]
+  * stream/crc_i/crc[19]
+  * stream/crc_i/crc[1]
+  * stream/crc_i/crc[20]
+  * stream/crc_i/crc[21]
+  * stream/crc_i/crc[23]
+  * stream/crc_i/crc[24]
+  * stream/crc_i/crc[25]
+  * stream/crc_i/crc[26]
+  * stream/crc_i/crc[27]
+  * stream/crc_i/crc[28]
+  * stream/crc_i/crc[29]
+  * stream/crc_i/crc[2]
+  * stream/crc_i/crc[31]
+  * stream/crc_i/crc[6]
+  * stream/crc_i/crc[8]
+  * stream/crc_i/ready
+  * stream/crc_i/state[10]
+  * stream/crc_i/state[11]
+  * stream/crc_i/state[12]
+  * stream/crc_i/state[13]
+  * stream/crc_i/state[14]
+  * stream/crc_i/state[15]
+  * stream/crc_i/state[16]
+  * stream/crc_i/state[16]_i_2_n_0
+  * stream/crc_i/state[17]
+  * stream/crc_i/state[18]
+  * stream/crc_i/state[19]
+  * stream/crc_i/state[1]
+  * stream/crc_i/state[20]
+  * stream/crc_i/state[21]
+  * stream/crc_i/state[22]
+  * stream/crc_i/state[22]_i_2_n_0
+  * stream/crc_i/state[23]
+  * stream/crc_i/state[24]
+  * stream/crc_i/state[25]
+  * stream/crc_i/state[26]
+  * stream/crc_i/state[27]
+  * stream/crc_i/state[28]
+  * stream/crc_i/state[29]
+  * stream/crc_i/state[2]
+  * stream/crc_i/state[30]
+  * stream/crc_i/state[30]_i_2_n_0
+  * stream/crc_i/state[31]
+  * stream/crc_i/state[3]
+  * stream/crc_i/state[4]
+  * stream/crc_i/state[5]
+  * stream/crc_i/state[6]
+  * stream/crc_i/state[6]_i_1_n_0
+  * stream/crc_i/state[7]
+  * stream/crc_i/state[8]
+  * stream/crc_i/state[9]
+  * stream/crc_i/taken
+  * stream/crc_i/taken_i_2_n_0
+  * stream/crc_i/wreg[0]
+  * stream/crc_i/wreg_reg_n_0_[10]
+  * stream/crc_i/wreg_reg_n_0_[13]
+  * stream/crc_i/wreg_reg_n_0_[15]
+  * stream/crc_i/wreg_reg_n_0_[18]
+  * stream/crc_i/wreg_reg_n_0_[19]
+  * stream/crc_i/wreg_reg_n_0_[22]
+  * stream/crc_i/wreg_reg_n_0_[26]
+  * stream/crc_i/wreg_reg_n_0_[29]
+  * stream/crc_i/wreg_reg_n_0_[31]
+  * stream/crc_i/wreg_reg_n_0_[8]
+  * stream/crc_i/wreg_reg_n_0_[9]
+  * stream/crc_scratch[0][31]_i_1_n_0
+  * stream/crc_scratch[1][31]_i_1_n_0
+  * stream/crc_scratch[2][31]_i_1_n_0
+  * stream/crc_scratch[3][31]_i_1_n_0
+  * stream/crc_scratch[4][31]_i_1_n_0
+  * stream/crc_scratch_reg[0][15]
+  * stream/crc_scratch_reg[0][17]
+  * stream/crc_scratch_reg[0][18]
+  * stream/crc_scratch_reg[1][10]
+  * stream/crc_scratch_reg[1][23]
+  * stream/crc_scratch_reg[1][4]
+  * stream/crc_scratch_reg[1][5]
+  * stream/crc_scratch_reg[2][11]
+  * stream/crc_scratch_reg[2][18]
+  * stream/crc_scratch_reg[2][22]
+  * stream/crc_scratch_reg[2][27]
+  * stream/crc_scratch_reg[2][2]
+  * stream/crc_scratch_reg[2][31]
+  * stream/crc_scratch_reg[3][10]
+  * stream/crc_scratch_reg[3][18]
+  * stream/crc_scratch_reg[3][19]
+  * stream/crc_scratch_reg[3][26]
+  * stream/crc_scratch_reg[3][5]
+  * stream/crc_scratch_reg[4][12]
+  * stream/crc_scratch_reg[4][14]
+  * stream/crc_scratch_reg[4][16]
+  * stream/crc_scratch_reg[4][18]
+  * stream/crc_scratch_reg[4][22]
+  * stream/crc_scratch_reg[4][2]
+  * stream/crc_scratch_reg[4][9]
+  * stream/crc_source[1]
+  * stream/crc_source[3]
+  * stream/crc_source[6]
+  * stream/crc_source[7]
+  * stream/e[0]
+  * stream/e[1]
+  * stream/emit_word[0]_i_1_n_0
+  * stream/emit_word[5]_i_2_n_0
+  * stream/emit_word[6]_i_1_n_0
+  * stream/emit_word[6]_i_5_n_0
+  * stream/emit_word[6]_i_7_n_0
+  * stream/emit_word__0[0]
+  * stream/emit_word__0[1]
+  * stream/emit_word__0[2]
+  * stream/emit_word__0[3]
+  * stream/emit_word__0[4]
+  * stream/emit_word__0[5]
+  * stream/emit_word__0[6]
+  * stream/env_committed[0]
+  * stream/env_committed[0]_i_2_n_0
+  * stream/expired
+  * stream/f[1]
+  * stream/f[2]
+  * stream/fault
+  * stream/fault_code[0]
+  * stream/fault_code[0]_i_3_n_0
+  * stream/fault_code[0]_i_4_n_0
+  * stream/fault_code[1]
+  * stream/fault_code[1]_i_2_n_0
+  * stream/fault_code[2]_i_18_n_0
+  * stream/fault_code[2]_i_3_n_0
+  * stream/fault_code[2]_i_40_n_0
+  * stream/fault_code[2]_i_5_n_0
+  * stream/fault_code[3]_i_10_n_0
+  * stream/fault_code[3]_i_11_n_0
+  * stream/fault_code[3]_i_12_n_0
+  * stream/fault_code[3]_i_17_n_0
+  * stream/fault_code[3]_i_19_n_0
+  * stream/fault_code[3]_i_31_n_0
+  * stream/fault_code[3]_i_3_n_0
+  * stream/fault_code[3]_i_5_n_0
+  * stream/frame_word[0]
+  * stream/frame_word[1]
+  * stream/frame_word[2]
+  * stream/frame_word[3]
+  * stream/frame_word[4]
+  * stream/frame_word[5]
+  * stream/frame_word[6]
+  * stream/frame_word[6]_i_10_n_0
+  * stream/frame_word[6]_i_12_n_0
+  * stream/frame_word[6]_i_5_n_0
+  * stream/frame_word[6]_i_7_n_0
+  * stream/host_rdata[0]
+  * stream/host_rdata[10]
+  * stream/host_rdata[11]
+  * stream/host_rdata[13]
+  * stream/host_rdata[14]
+  * stream/host_rdata[15]
+  * stream/host_rdata[16]
+  * stream/host_rdata[17]
+  * stream/host_rdata[1]
+  * stream/host_rdata[21]
+  * stream/host_rdata[24]
+  * stream/host_rdata[25]
+  * stream/host_rdata[28]
+  * stream/host_rdata[2]
+  * stream/host_rdata[30]
+  * stream/host_rdata[31]
+  * stream/host_rdata[31]_INST_0_i_2_n_0
+  * stream/host_rdata[31]_INST_0_i_3_n_0
+  * stream/host_rdata[3]
+  * stream/host_rdata[4]
+  * stream/host_rdata[5]
+  * stream/host_rdata[6]
+  * stream/host_rdata[7]
+  * stream/host_rdata[8]
+  * stream/icap_csib
+  * stream/icap_csib_i_5_n_0
+  * stream/icap_din0_in[10]
+  * stream/icap_din0_in[17]
+  * stream/icap_din0_in[19]
+  * stream/icap_din0_in[22]
+  * stream/icap_din0_in[2]
+  * stream/icap_din0_in[31]
+  * stream/icap_din0_in[6]
+  * stream/icap_din0_in[9]
+  * stream/icap_din[0]
+  * stream/icap_din[10]
+  * stream/icap_din[11]
+  * stream/icap_din[12]
+  * stream/icap_din[13]
+  * stream/icap_din[13]_i_2_n_0
+  * stream/icap_din[14]
+  * stream/icap_din[15]
+  * stream/icap_din[16]
+  * stream/icap_din[17]
+  * stream/icap_din[18]
+  * stream/icap_din[19]
+  * stream/icap_din[1]
+  * stream/icap_din[20]
+  * stream/icap_din[21]
+  * stream/icap_din[22]
+  * stream/icap_din[23]
+  * stream/icap_din[23]_i_2_n_0
+  * stream/icap_din[24]
+  * stream/icap_din[25]
+  * stream/icap_din[26]
+  * stream/icap_din[26]_i_2_n_0
+  * stream/icap_din[27]
+  * stream/icap_din[27]_i_2_n_0
+  * stream/icap_din[28]
+  * stream/icap_din[28]_i_2_n_0
+  * stream/icap_din[28]_i_5_n_0
+  * stream/icap_din[29]
+  * stream/icap_din[2]
+  * stream/icap_din[30]
+  * stream/icap_din[30]_i_3_n_0
+  * stream/icap_din[31]
+  * stream/icap_din[31]_i_10_n_0
+  * stream/icap_din[31]_i_1_n_0
+  * stream/icap_din[31]_i_3_n_0
+  * stream/icap_din[31]_i_4_n_0
+  * stream/icap_din[31]_i_7_n_0
+  * stream/icap_din[3]
+  * stream/icap_din[4]
+  * stream/icap_din[4]_i_2_n_0
+  * stream/icap_din[5]
+  * stream/icap_din[5]_i_2_n_0
+  * stream/icap_din[6]
+  * stream/icap_din[7]
+  * stream/icap_din[7]_i_2_n_0
+  * stream/icap_din[7]_i_4_n_0
+  * stream/icap_din[8]
+  * stream/icap_din[9]
+  * stream/icap_rd_valid
+  * stream/icap_rdwrb
+  * stream/p_0_out[1]
+  * stream/pass1_complete
+  * stream/phase[0]
+  * stream/phase[1]
+  * stream/phase[2]
+  * stream/phase[2]_i_12_n_0
+  * stream/phase[2]_i_7_n_0
+  * stream/pos[3]_i_2_n_0
+  * stream/pos[9]_i_1_n_0
+  * stream/pos[9]_i_3_n_0
+  * stream/pos[9]_i_4_n_0
+  * stream/pos_reg_n_0_[0]
+  * stream/rb_frame[2]_i_4_n_0
+  * stream/rb_frame_ready
+  * stream/rb_frame_ready_reg_i_2_n_1
+  * stream/rb_k[1]_i_4_n_0
+  * stream/rb_k[5]_i_1_n_0
+  * stream/rb_k_reg_n_0_[0]
+  * stream/rb_k_reg_n_0_[1]
+  * stream/rb_k_reg_n_0_[3]
+  * stream/rb_k_reg_n_0_[4]
+  * stream/rb_k_reg_n_0_[5]
+  * stream/rb_lat[7]_i_2_n_0
+  * stream/rb_lat[7]_i_3_n_0
+  * stream/rb_lat_cnt[7]_i_1_n_0
+  * stream/rb_lat_cnt[7]_i_5_n_0
+  * stream/rb_lat_cnt[7]_i_6_n_0
+  * stream/rb_lat_cnt[7]_i_7_n_0
+  * stream/rb_lat_cnt_reg_n_0_[4]
+  * stream/rb_lat_cnt_reg_n_0_[5]
+  * stream/rb_latency[0]
+  * stream/rb_latency[2]
+  * stream/rb_latency[4]
+  * stream/rb_latency[5]
+  * stream/rb_latency[6]
+  * stream/rb_latency_valid_i_3_n_0
+  * stream/rb_latency_valid_i_5_n_0
+  * stream/rb_latency_valid_i_9_n_0
+  * stream/rb_next[1]_i_1_n_0
+  * stream/rb_next[3]_i_1_n_0
+  * stream/rb_next_reg_n_0_[2]
+  * stream/rb_skip[5]_i_2_n_0
+  * stream/rb_skip[7]_i_2_n_0
+  * stream/rb_skip[8]_i_3_n_0
+  * stream/rb_skip[8]_i_4_n_0
+  * stream/rb_st[0]
+  * stream/rb_st[0]_i_2_n_0
+  * stream/rb_st_reg_n_0_[0]
+  * stream/rb_st_reg_n_0_[1]
+  * stream/rb_st_reg_n_0_[2]
+  * stream/rb_st_reg_n_0_[3]
+  * stream/recovery_required
+  * stream/stage_raddr[0]
+  * stream/stage_raddr[1]
+  * stream/stage_raddr[2]
+  * stream/stage_raddr[3]
+  * stream/stage_raddr[4]
+  * stream/stage_raddr[5]
+  * stream/stage_raddr[6]
+  * stream/stage_reg_0_63_0_2/DOA
+  * stream/stage_reg_0_63_0_2/DOB
+  * stream/stage_reg_0_63_0_2/DOC
+  * stream/stage_reg_0_63_0_2_i_11_n_0
+  * stream/stage_reg_0_63_12_14/DOA
+  * stream/stage_reg_0_63_12_14/DOB
+  * stream/stage_reg_0_63_12_14/DOC
+  * stream/stage_reg_0_63_12_14_i_4_n_0
+  * stream/stage_reg_0_63_15_17/DOA
+  * stream/stage_reg_0_63_15_17/DOB
+  * stream/stage_reg_0_63_15_17/DOC
+  * stream/stage_reg_0_63_21_23/DOB
+  * stream/stage_reg_0_63_24_26/DOA
+  * stream/stage_reg_0_63_24_26/DOB
+  * stream/stage_reg_0_63_24_26/DOC
+  * stream/stage_reg_0_63_24_26_i_4_n_0
+  * stream/stage_reg_0_63_27_29/DOB
+  * stream/stage_reg_0_63_30_31/DOA
+  * stream/stage_reg_0_63_30_31/DOB
+  * stream/stage_reg_0_63_6_8/DOC
+  * stream/stage_reg_0_63_9_11/DOA
+  * stream/stage_reg_0_63_9_11/DOB
+  * stream/stage_reg_0_63_9_11/DOC
+  * stream/stage_reg_0_63_9_11_i_4_n_0
+  * stream/stage_reg_64_127_0_2/DOA
+  * stream/stage_reg_64_127_0_2/DOC
+  * stream/stage_reg_64_127_0_2_i_1_n_0
+  * stream/stage_reg_64_127_12_14/DOA
+  * stream/stage_reg_64_127_12_14/DOB
+  * stream/stage_reg_64_127_12_14/DOC
+  * stream/stage_reg_64_127_15_17/DOA
+  * stream/stage_reg_64_127_15_17/DOB
+  * stream/stage_reg_64_127_15_17/DOC
+  * stream/stage_reg_64_127_21_23/DOB
+  * stream/stage_reg_64_127_21_23/DOC
+  * stream/stage_reg_64_127_24_26/DOC
+  * stream/stage_reg_64_127_27_29/DOB
+  * stream/stage_reg_64_127_27_29_i_1_n_0
+  * stream/stage_reg_64_127_30_31/DOA
+  * stream/stage_reg_64_127_30_31_i_1_n_0
+  * stream/stage_reg_64_127_3_5/DOB
+  * stream/stage_reg_64_127_3_5/DOC
+  * stream/stage_reg_64_127_3_5_i_1_n_0
+  * stream/stage_reg_64_127_6_8/DOB
+  * stream/stage_reg_64_127_6_8/DOC
+  * stream/stage_reg_64_127_9_11/DOA
+  * stream/stage_reg_64_127_9_11/DOC
+  * stream/stage_reg_64_127_9_11_i_1_n_0
+  * stream/stage_wdata[0]
+  * stream/stage_wdata[10]
+  * stream/stage_wdata[11]
+  * stream/stage_wdata[17]
+  * stream/stage_wdata[18]
+  * stream/stage_wdata[19]
+  * stream/stage_wdata[22]
+  * stream/stage_wdata[24]
+  * stream/stage_wdata[26]
+  * stream/stage_wdata[29]
+  * stream/stage_wdata[30]
+  * stream/stage_wdata[31]
+  * stream/stage_wdata[8]
+  * stream/stream_open
+  * stream/watchdog0[10]
+  * stream/watchdog_reg_n_0_[11]
+  * stream/watchdog_reg_n_0_[7]
+  * stream/word_ready_INST_0_i_1_n_0
+NO PROBLEMS
