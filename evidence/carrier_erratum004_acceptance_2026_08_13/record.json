@@ -1,0 +1,92 @@
+{
+  "what": "acceptance of the erratum-004 carrier: Vivado rebuild, the publication chain, three gates, and a fresh clone in both a cold and a hot LFS tree",
+  "date": "2026-08-13",
+  "run": "gate_runs/claimb_round1_carrier_2026_08_13_erratum004",
+  "board_time": "none",
+  "build": {
+    "source_commit": "8ef9fd9",
+    "source_tree": "clean",
+    "sources_pinned": 13,
+    "part": "xc7z010clg400-1",
+    "vivado": "2025.2",
+    "wns_ns": 5.753,
+    "whs_ns": 0.094,
+    "wpws_ns": 8.75,
+    "tns_ns": 0.0,
+    "failing_endpoints": 0,
+    "total_endpoints": 2190,
+    "slice_luts": 993,
+    "lut_as_logic": 883,
+    "lut_as_memory": 110,
+    "slice_registers": 625,
+    "control_sets": 63,
+    "slices_occupied": 305,
+    "pblock_slices": 400,
+    "pblock": "SLICE_X0Y0:SLICE_X1Y99 + SLICE_X6Y0:SLICE_X7Y99, IS_SOFT false, PRIMITIVE_COUNT 1849, all 1981 cells carry PBLOCK",
+    "cell_isolation": "target 6 (exactly 6), flush 0",
+    "route_inventory": {"flush": 506, "target": 633, "foreign": 627}
+  },
+  "cost_of_the_readback_sequencer": {
+    "against": "gate_runs/claimb_round1_carrier_2026_08_13_erratum003",
+    "slice_luts": "816 -> 993 (+177)",
+    "slice_registers": "582 -> 625 (+43)",
+    "control_sets": "57 -> 63 (+6)",
+    "wns_ns": "+7.371 -> +5.753 (-1.618)",
+    "route_inventory": "flush 428/target 559 -> flush 506/target 633",
+    "reading": "comfortable. The floorplan is two segments of about 1,600 LUTs and 400 slices; 305 slices are occupied. Timing is met with 5.75 ns of slack at 50 MHz FCLK0"
+  },
+  "artifacts": {
+    "carrier.bit": "9f95ebd787c3625e99675d95100cc6cd0615544ec51a2646d94bbabed43937ab",
+    "carrier_eco.bit": "34348ac40b711b4429e3e894f7dc3673918379ec2b2ae4b6b0a0016a8e930151",
+    "post_route.dcp": "98808cc638913007e9540fd1ccd7315bc7cc211b36e60d52d62bfb2481ddd959",
+    "phenotype_manifest.json": "38009ca9a54b28464afbd1422c5560a98982140827deb06913a1cb2c67ef4668",
+    "carrier_build.json": "d881efe90750a1875204fac5f5675296fb222e0d6c4ad5e8fbdcf91f0dd8ca0b",
+    "carrier_eco.json": "4f92c0d14c59c3650d2a84aa721de4fcbedffe8fc48494e2a8f1f4703dd8d889",
+    "isolation.txt": "aa5c513b2f96446fc3fc7eb3c49d5b3eccaf2a68ea7e8f9adf996bc2a95ab3d2",
+    "local_map.json": "56f2b9e81e180eee2540286e4fde797e0d4820a49d10624c10844c38e99d87cb",
+    "carrier_run.json": "04473c0df70ed5a91e69d28ccd055ed0f1898550e43ae74f1f0fe208dd438a49"
+  },
+  "local_map_note": "byte-identical to the erratum-003 run's: the map is a property of the device, not of the carrier",
+  "publication_order": [
+    "copy build outputs + maps/clb_lut_init_v1.local_map.json into the run root",
+    "build_phenotype_manifest.py --phenotype-id claimb_round1_carrier_v1",
+    "build_carrier_run.py",
+    "write README.md",
+    "commit the AUTHORITY half alone (4b47af2): PRODUCTION_MANIFEST_SHA256 and the six files bound to the run id",
+    "git add the run root",
+    "gate_publish_carrier_run.py -> PUBLISHABLE",
+    "commit the artifacts alone (165811e)",
+    "gate_carrier_base.py and gate_init_eco.py, which require the run in HEAD"
+  ],
+  "gates": {
+    "gate_publish_carrier_run": "PUBLISHABLE — every pinned artifact staged, every LFS pointer's oid equal to the bundle's pin, every ordinary blob hashing to it, staged change set exactly the run root",
+    "gate_carrier_base": "ACCEPTED — the manifest's base is the final routed carrier bitstream, routed, cell isolation passed, all 8 bundled artifacts match their pinned digests",
+    "gate_init_eco": "ACCEPTED — 2 of 5144 frames differ, exactly the 2 the map predicts; 3 predicted bits moved, no stray bits, every ECC a correct recomputation"
+  },
+  "trees": {
+    "working_tree": {"tests": 978, "skipped": 0, "verdict": "OK", "benches": "14 runs OK", "mutants": "10 as expected"},
+    "fresh_clone_hot": {
+      "how": "git clone <repo> — the LFS smudge filter materialises the artifacts during checkout",
+      "carrier_bit_bytes": 2083863,
+      "gate_carrier_base": "ACCEPTED",
+      "gate_init_eco": "ACCEPTED",
+      "tests": 950, "skipped": 18,
+      "skip_reason": "every skip is a specimen bitstream under build/, which is gitignored — none of them is a carrier test"
+    },
+    "fresh_clone_cold": {
+      "how": "GIT_LFS_SKIP_SMUDGE=1 git clone <repo> — the three binaries stay 132-byte pointers",
+      "gate_carrier_base": "REFUSED, exit 2: 'carrier.bit does not match the build record', actual 3b9d263c… (the pointer's own bytes), and the same for post_route.dcp",
+      "reading": "an unmaterialised tree cannot exercise the authority and says so loudly instead of passing. This is the check that a run published as LFS is still verifiable rather than merely present",
+      "after_git_lfs_pull": {
+        "gate_carrier_base": "ACCEPTED",
+        "gate_init_eco": "ACCEPTED",
+        "tests": 950, "skipped": 18,
+        "benches": "14 runs OK"
+      }
+    }
+  },
+  "not_done": [
+    "no board time — the board still has fault_since_reset and recovery_required latched from the erratum-003 calibration, so a reload or power cycle is the first act of any session",
+    "not pushed"
+  ]
+}
