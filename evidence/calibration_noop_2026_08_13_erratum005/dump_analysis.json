@@ -1,0 +1,83 @@
+{
+  "tool": "analyse_stage_offset.py/1.0.0",
+  "what": "where the staged 101 words sit in the device configuration stream",
+  "attributes_a_cause": false,
+  "inputs": {
+    "dump": "evidence/calibration_noop_2026_08_13_erratum005/stage_dump.json",
+    "dump_sha256_be": "5ab966910ea4fdeca896231d6cf8f9b57a031175eb5f0c9fa447bb141a7a2e02",
+    "carrier_bit": "gate_runs/claimb_round1_carrier_2026_08_13_erratum005/carrier.bit",
+    "carrier_sha256": "d93c59ad3b00ffba2ec46befdec6c7009de842ed523c2486d04101b06078792d",
+    "idcode": "0x03722093"
+  },
+  "dump_content": {
+    "words": 101,
+    "distinct_values": 21,
+    "zero_words": 71,
+    "nonzero_words": 30,
+    "most_common": [
+      [
+        "0x00000000",
+        71
+      ],
+      [
+        "0x00400000",
+        7
+      ],
+      [
+        "0x00000004",
+        2
+      ],
+      [
+        "0x40000040",
+        2
+      ]
+    ],
+    "base64_be": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAmAAAAAAAAAAAACAAAAAAAAAAAAABAAAAAAAQAAAAAAAAABAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAEAAAEAADAAAAAAAAAAAAAAAQAAAQAAAAABAAAAAAAAAAABAAAAAAEQAAAAAAAAAAEAAAEAAAEBAAICAAABAAACAAAAAQAAAAABAAAAAAAAAAAAAAAQAAEAAAAAABEAMAECAAEAEAARAAAAAAAAAAIAAAAAAAAAAAABAAACAAAAADAAAAAAAQIA="
+  },
+  "all_zero_floor": {
+    "words_equal": 71,
+    "meaning": "any all-zero reference window scores this; counts at or below it carry no information"
+  },
+  "stream": {
+    "addressed_frames": 5144,
+    "pad_frames": 8,
+    "total_words": 520352
+  },
+  "requested": {
+    "env": 0,
+    "frame": 0,
+    "far": "0x00400a20",
+    "frame_index": 2654,
+    "offset": 268054,
+    "nonzero_words_in_reference": 0,
+    "words_equal_to_dump": 71,
+    "exact": false
+  },
+  "frame_aligned_exact_matches": [],
+  "exact_windows": [
+    {
+      "offset": 268658,
+      "frame_index": 2659,
+      "word_in_frame": 99,
+      "far": "0x00400a81"
+    }
+  ],
+  "unique_window": {
+    "start": {
+      "offset": 268658,
+      "frame_index": 2659,
+      "word_in_frame": 99,
+      "far": "0x00400a81"
+    },
+    "end": {
+      "offset": 268758,
+      "frame_index": 2660,
+      "word_in_frame": 98,
+      "far": "0x00400a82"
+    },
+    "delta_words_from_requested": 604,
+    "delta_as_frames_and_words": "+5 frames +99 words",
+    "delta_as_frames_minus_words": "+6 frames -2 words",
+    "identity": "604 = 5 * 101 + 99"
+  }
+}
