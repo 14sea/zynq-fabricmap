@@ -27,7 +27,7 @@ import bitstream_frames as bf  # noqa: E402
 import board_carrier_exec as ex  # noqa: E402
 import board_carrier_guard as guard  # noqa: E402
 
-RUN = REPO_ROOT / "gate_runs/claimb_round1_carrier_2026_08_13_erratum004"
+RUN = REPO_ROOT / "gate_runs/claimb_round1_carrier_2026_08_13_erratum005"
 
 
 class WiringTests(unittest.TestCase):

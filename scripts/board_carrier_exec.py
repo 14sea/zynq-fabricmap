@@ -67,8 +67,13 @@ TOOL_VERSION = "board_carrier_exec.py/2.0.0"
 # readback protocol and hands SelectMAP-order words to a port that reads them bit-reversed
 # per byte, so its pass 2 wrote nothing and read nothing back. A manifest naming that
 # carrier must not stay usable as an authority once a corrected one exists.
+#
+# And again, the same day, for erratum 005. The erratum-004 carrier's readback used CSIB as
+# back-pressure for a byte-serial CRC; on silicon that ABORTED the configuration and the
+# engine read 101 abort status words instead of a frame. It reads nothing back either, so
+# the same rule applies to it.
 PRODUCTION_MANIFEST_SHA256 = (
-    "38009ca9a54b28464afbd1422c5560a98982140827deb06913a1cb2c67ef4668"
+    "400a1e9c4cacb51b499fac0ccaadd09a7193f374dd8e574c3ef54d72a3cda69d"
 )
 
 
