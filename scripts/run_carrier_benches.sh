@@ -94,6 +94,8 @@ run_bench stream tb_carrier_stream "$CARRIER/tb_carrier_stream.v" \
 run_bench integration tb_carrier_integration "$CARRIER/tb_carrier_integration.v" \
     "$CARRIER/carrier_stream.v" "$CARRIER/carrier_crc32.v" "$CARRIER/carrier_scorer.v" \
     "$CARRIER/icape2_model.v"
+run_bench known_answer tb_claimb_known_answer "$CARRIER/tb_claimb_known_answer.v" \
+    "$CARRIER/carrier_scorer.v"
 run_bench crc tb_crc "$CARRIER/tb_carrier_crc32.v" "$CARRIER/carrier_crc32.v"
 run_bench axi3 tb_carrier_axi3 "$CARRIER/tb_carrier_axi3.v" "$CARRIER/carrier_axi3_lite.v"
 run_bench axil tb_carrier_axil "$CARRIER/tb_carrier_axil.v" "$CARRIER/carrier_axil.v"
