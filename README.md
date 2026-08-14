@@ -4,8 +4,9 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
-**Status (2026-08-10): three bit classes certified; Claim B is preregistered and its
-host-side gates are built. Nothing in this repo has ever been on a board.**
+**Status (2026-08-14): three bit classes are address-certified; Claim B round 1's
+reachability result is complete; the erratum-006 carrier is published and accepted by
+the host-side gates, but has not yet had its silicon no-op ruling.**
 
 - `data/` is frozen and self-verifying; the approach is ratified (see below).
 - **`clb_lut_init`** and **`clb_mux`** are certified host-side (address prediction).
@@ -15,13 +16,21 @@ host-side gates are built. Nothing in this repo has ever been on a board.**
   1.6.0 at `gate_runs/run_2026_08_05_ff/certificate.json`.
   **Those 154 predictions are now spent**: a new holdout claim needs a fresh preregistered
   commitment.
-- **Claim B round 1 is preregistered as a DRAFT** (`docs/claimb_preregistration.md`) —
-  map-guided vs random-safe mutation over the certified `clb_lut_init` universe. The
-  budget is deliberately **not frozen**: it must come from a measured calibration.
+- **Claim B round 1 remains a DRAFT** (`docs/claimb_preregistration.md`) — map-guided vs
+  random-safe mutation over the certified `clb_lut_init` universe. Its production
+  reachability report is complete at 6/6 LUTs, but the evaluation loop and budget are not
+  frozen: they still depend on a successful measured calibration.
+- **Board engineering has happened.** Carrier builds through erratum 005 were loaded on
+  the verification board and engineering no-op transactions exercised the ICAP path. The
+  latest attempt stopped fail-closed at `F_READBACK`; its dump contained real
+  configuration data, but from the wrong location. Erratum 006 corrects the command order
+  offline and has not yet been tried on silicon.
 
-**Scope, stated plainly.** Everything certified so far is **address prediction** — where a
-feature's bits live in the bitstream. None of it is a silicon-semantics result, and no
-device write has been authorised.
+**Scope, stated plainly.** The bit-class certificates are **address prediction** — where a
+feature's bits live in the bitstream. The board records are engineering validation of the
+carrier, transport, guard and ICAP path; they are not a silicon-semantics certificate or a
+Claim B evolutionary result. No known-answer mutation, scorer arm or A/B evolution run has
+occurred.
 
 ## Claim B round 1 — where it stands
 
@@ -29,13 +38,63 @@ device write has been authorised.
 |---|---|
 | preregistration | **DRAFT** — `docs/claimb_preregistration.md`; §6 budget unfrozen |
 | `local_map` 1.0.0 | built from the `clb_lut_init` certificate — 292 addresses, 12 frames, 6 LUTs |
-| reachability | spec frozen before target selection; consumer report schema/verifier and known-bad fixtures built; **production report not run** |
-| `phenotype_manifest` | emitter written; **no carrier bitstream exists yet**, so no instance is committed |
-| ICAP write path | 3 envelopes × 536 words = 6,432 bytes; flush frames derived from the device frame sequence |
+| reachability | **complete** — production report selected 6/6 LUTs, discarded 20 draws, attainable ceiling 353, not exhausted; report committed under `gate_runs/claimb_round1_reachability_2026_08_10/` |
+| carrier authority | erratum-006 `carrier.bit`, `post_route.dcp`, `phenotype_manifest` and bundle committed under `gate_runs/claimb_round1_carrier_2026_08_13_erratum006/`; publication, base and ECO gates accepted |
+| ICAP write/readback path | 3 envelopes × 536 words = 6,432 bytes; **envelope 0's pass 1** is hardware-proven through erratum 005, while its pass-2 readback still faults; **envelopes 1–2 have never been reached on silicon** — every board run to date stopped inside envelope 0. Erratum 006 is offline-only pending a fresh no-op |
 | candidate gate | judges the **serialized** sequence, under two frame semantics |
 | board identity gate | boardid/role/IDCODE/50 MHz, session- and epoch-scoped, no override |
 | run log | `claimb_run_log` 1.0.0 |
-| **device writes** | **not authorised** |
+| engineering device work | carrier loads and guarded no-op ICAP attempts were authorised and executed through erratum 005; every failed attempt stopped without mutation or scoring |
+| **Claim B result** | **none yet** — preregistration remains draft; no known-answer mutation, scorer arm or paired A/B run has occurred |
+
+### Carrier errata, in one place
+
+The records are additive: an erratum does not rewrite the failure evidence that exposed it.
+
+1. [Erratum 001](docs/claimb_erratum_001_static_routes.md) moved carrier safety from a
+   zero-route-crossing rule that the device geometry cannot satisfy to final-bitstream
+   invariance, while retaining cell isolation and making a no-op the first board test.
+2. [Erratum 002](docs/claimb_erratum_002_ps7_axi3.md) added the missing AXI3-to-AXI4-Lite
+   protocol bridge after an un-terminated GP0 read wedged the CPU.
+3. [Erratum 003](docs/claimb_erratum_003_config_idcode_and_refusal.md) separated the
+   configuration IDCODE from the JTAG IDCODE and made guard refusals return `OKAY` while
+   latching a fault, rather than rebooting U-Boot through an AXI data abort.
+4. [Erratum 004](docs/claimb_erratum_004_icap_readback.md) replaced the stage-buffer echo
+   model with an independent ICAPE2 model and implemented the actual bit-swapped ICAP
+   readback transaction and telemetry.
+5. [Erratum 005](docs/claimb_erratum_005_fdro_contiguity.md), read together with its
+   [correction](docs/claimb_erratum_005_correction_2026_08_13.md), conservatively made each
+   frame a contiguous FDRO transaction. Its board run still stopped at `F_READBACK`, but
+   returned bit-exact configuration data from a location `+604` words from the request.
+6. [Erratum 006](docs/claimb_erratum_006_command_order.md) corrects the readback order to
+   `RCFG -> NOOP -> FAR -> FDRO`. Its model, benches, mutations, Vivado build and publication
+   gates pass; **it has not yet been tested on the board**.
+
+## Cloning and Git LFS
+
+The repository tracks staged specimen bitstreams and exact carrier `.bit`/`.dcp` authority
+artifacts with Git LFS. A metadata-only review does not need to download those objects:
+
+```bash
+GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/14sea/zynq-fabricmap.git
+cd zynq-fabricmap
+```
+
+To exercise the current production carrier gates, pull just the erratum-006 authority:
+
+```bash
+git lfs pull --include='gate_runs/claimb_round1_carrier_2026_08_13_erratum006/*'
+python3 scripts/gate_carrier_base.py \
+  --run-dir gate_runs/claimb_round1_carrier_2026_08_13_erratum006
+python3 scripts/gate_init_eco.py \
+  --run-dir gate_runs/claimb_round1_carrier_2026_08_13_erratum006
+```
+
+Use plain `git lfs pull` only when every staged specimen and historical carrier artifact is
+needed. A pointer-only checkout is useful for source review, but it cannot verify production
+artifacts: the production gates deliberately refuse LFS pointers in place of the pinned
+bytes. GitHub's current LFS allowance and billing behavior are documented in
+[Git Large File Storage billing](https://docs.github.com/en/billing/concepts/product-billing/git-lfs).
 
 Three facts measured while building this, each of which constrains the experiment:
 
@@ -218,3 +277,12 @@ Board plumbing is copied in from zynq-autoehw and is deliberately board-agnostic
   **positionally** from a monitor trace, never from a first-seen set.
 
 Copies, not shared code: the source repos are never modified from here.
+
+## License
+
+Original project content is licensed under the Apache License, Version 2.0; see
+[`LICENSE`](LICENSE) and [`NOTICE`](NOTICE). The vendored Project X-Ray database subset in
+`data/prjxray/` remains under its accompanying CC0-1.0 terms and is not relicensed by the
+top-level Apache license. Vivado-generated bitstreams and checkpoints are retained as exact
+reproducibility artifacts; Vivado itself and the AMD documentation cited by this repository
+are not redistributed here.

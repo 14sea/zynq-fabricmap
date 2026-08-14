@@ -1,0 +1,23 @@
+zynq-fabricmap — device-local fabric cartography on Zynq-7000
+Copyright 2026 14sea
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE),
+except for the separately licensed material identified below.
+
+Vendored third-party data:
+
+- data/prjxray/ contains a frozen subset of the Project X-Ray / prjxray-db
+  Series-7 bitstream database at upstream commit 0a0adde. It is distributed
+  under CC0 1.0 Universal. Its upstream README and full license text are
+  preserved as data/prjxray/README.md and data/prjxray/LICENSE.
+
+Generated artifacts and referenced tools:
+
+- Tracked .bit and .dcp files are exact reproducibility artifacts generated
+  with AMD/Xilinx Vivado. Vivado itself is proprietary software and is not
+  redistributed in this repository.
+- AMD/Xilinx user guides and product guides, including UG470, UG909 and PG134,
+  are cited or linked as references only and are not redistributed here.
+
+The top-level Apache-2.0 license does not replace the license accompanying
+vendored third-party material.
