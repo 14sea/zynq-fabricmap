@@ -101,6 +101,7 @@ RDBACK = AXI_BASE + 0x1000
 CTRL = AXI_BASE + 0x2000
 STATUS = AXI_BASE + 0x2004
 FAULT = AXI_BASE + 0x2008
+SCORE0 = AXI_BASE + 0x2010
 
 # DRAM scratch. The board has 512 MiB and U-Boot relocates itself to the top of it.
 PAYLOAD_ADDR = 0x10000000       # 6,432 bytes
@@ -187,6 +188,7 @@ class _Capability:
 
 
 WRITE_CAPABILITY = _Capability()
+SCORE_CAPABILITY = _Capability()
 
 
 # ------------------------------------------------------------------------------ decoding
@@ -347,6 +349,64 @@ def read_fault(transport) -> tuple[int, str]:
     return code, FAULT_NAMES.get(code, f"unknown({code})")
 
 
+def _frames_hash(frames: dict[int, list[int]]) -> str:
+    """The run-log frame digest, repeated here at the device boundary.
+
+    Importing a producer artifact's claimed digest would make the arm compare a value with
+    itself.  The bytes actually returned by this session are serialized here instead.
+    """
+    pieces = []
+    for far in sorted(frames):
+        pieces.append(int(far).to_bytes(4, "big"))
+        pieces.append(struct.pack(f">{len(frames[far])}I", *frames[far]))
+    return hashlib.sha256(b"".join(pieces)).hexdigest()
+
+
+def arm_scorer(capability, transport, transaction: dict,
+               expected_readback_sha256: str, *, holdout: bool) -> dict:
+    """The only carrier arm operation: readback bytes, interlocks, arm, result.
+
+    The order is load-bearing.  First hash the bytes the host actually received; only if
+    they equal the reviewed round artifact do we ask the carrier whether its independent
+    interlocks also agree.  There is no force/skip argument and no caller-supplied AXI
+    address.  ``SCORE_CAPABILITY`` is held by ``BoardSession.score_last_transaction``.
+    """
+    if capability is not SCORE_CAPABILITY:
+        raise AxiRefusal("arm_scorer is reachable only through BoardSession")
+    frames = transaction.get("readback_frames")
+    if not isinstance(frames, dict) or len(frames) != TOTAL_FRAMES:
+        raise AxiRefusal("scoring requires this transaction's complete 15-frame readback")
+
+    # MUTATION ANCHOR arm_readback: removing this refusal must be killed by the harness.
+    actual = _frames_hash(frames)
+    if actual != expected_readback_sha256:
+        raise AxiRefusal(
+            f"readback SHA {actual} is not the pinned expected SHA "
+            f"{expected_readback_sha256}; the scorer remains unarmed")
+
+    status = read_status(transport)
+    _refuse_on_fault(transport, status, "the scorer arm precondition")
+    # MUTATION ANCHOR arm_config: configuration confirmation is not implied by the hash.
+    if not status["configuration_valid"]:
+        raise AxiRefusal("configuration_valid is clear; the scorer remains unarmed")
+    # MUTATION ANCHOR arm_recovery: a later good transaction cannot wash out a prior fault.
+    if status["recovery_required"]:
+        raise AxiRefusal("recovery_required is set; the scorer remains unarmed")
+    if status["busy"] or status["scorer_busy"] or status["scorer_armed"]:
+        raise AxiRefusal("the carrier is already busy or armed; refusing a second arm")
+
+    control = CTRL_ARM | (CTRL_MODE_HOLDOUT if holdout else 0)
+    command(transport, f"mw.l 0x{CTRL:08x} 0x{control:x} 1", timeout=5.0)
+    final = read_status(transport)
+    _refuse_on_fault(transport, final, "scoring")
+    if (not final["configuration_valid"] or final["recovery_required"] or
+            final["scorer_busy"] or final["scorer_armed"] or not final["scorer_done"]):
+        raise AxiRefusal(f"the scorer did not finish cleanly: {final}")
+    scores = [word & 0xFF for word in read_words(transport, SCORE0, 6)]
+    return {"mode": "holdout" if holdout else "train", "scores": scores,
+            "readback_sha256": actual, "status_after": final}
+
+
 # ------------------------------------------------------------------------ the transaction
 
 
@@ -481,11 +541,14 @@ def execute_transaction(capability, transport, payload: bytes) -> dict:
     status = read_status(transport)
     if status["busy"]:
         raise AxiRefusal("the engine is busy before the transaction started")
-    if not status["recovery_required"]:
+    reset_state = status["recovery_required"] and not status["configuration_valid"]
+    clean_predecessor = (not status["recovery_required"] and
+                         status["configuration_valid"] and
+                         status["rb_frames_ok"] == TOTAL_FRAMES)
+    if not (reset_state or clean_predecessor):
         raise AxiRefusal(
-            "recovery_required is clear before any transaction: it is sticky to reset, so a "
-            "carrier that has just been loaded must have it set — this PL state is not the "
-            "one the run assumes")
+            "the transaction starts from neither a reset carrier nor a clean 15-frame "
+            "predecessor; a fault/recovery state may not be continued")
     record["status_before"] = status
 
     # -- 1. stage the payload, then prove DRAM holds exactly the sealed bytes.

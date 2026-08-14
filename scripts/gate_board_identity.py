@@ -418,6 +418,21 @@ class BoardSession:
         self.last_transaction = record
         return record
 
+    def score_last_transaction(self, expected_readback_sha256: str, *, holdout: bool) -> dict:
+        """Arm only the readback belonging to this session and this epoch.
+
+        The expected digest comes from the separately published known-answer authority;
+        this method supplies no way to choose a transport, an address, or a stale record.
+        """
+        self.authorise_write(CONTROL_PLANE)
+        if self.last_transaction is None:
+            raise IdentityError("there is no transaction in this session to score")
+        if self.last_transaction.get("epoch") != self.epoch:
+            raise IdentityError("the last transaction belongs to an expired session epoch")
+        return axi.arm_scorer(
+            axi.SCORE_CAPABILITY, self.transport, self.last_transaction,
+            expected_readback_sha256, holdout=holdout)
+
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])

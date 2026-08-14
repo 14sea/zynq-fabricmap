@@ -108,6 +108,11 @@ class FakeBoard:
         self.mode = None
         self.env = 0
         self.pending: list[list[int]] = []
+        self.scorer_busy = False
+        self.scorer_done = False
+        self.scorer_armed = False
+        self.score_queue: list[list[int]] = []
+        self.score_words = [0] * 6
 
     # -- the console ------------------------------------------------------------
 
@@ -170,6 +175,8 @@ class FakeBoard:
             return self.status_word()
         if addr == axi.FAULT:
             return self.fault_code
+        if axi.SCORE0 <= addr < axi.SCORE0 + 24:
+            return self.score_words[(addr - axi.SCORE0) // 4]
         if axi.RDBACK <= addr < axi.RDBACK + axi.FRAME_WORDS * 4:
             frame = self.pending[0] if self.pending else [0] * axi.FRAME_WORDS
             return frame[(addr - axi.RDBACK) // 4]
@@ -207,6 +214,9 @@ class FakeBoard:
         word |= axi.ST_RECOVERY_REQUIRED if self.recovery else 0
         word |= axi.ST_RB_FRAME_READY if self.pending else 0
         word |= axi.ST_SCORER_ARMED if self.armed_at_end and self.config_valid else 0
+        word |= axi.ST_SCORER_ARMED if self.scorer_armed else 0
+        word |= axi.ST_SCORER_BUSY if self.scorer_busy else 0
+        word |= axi.ST_SCORER_DONE if self.scorer_done else 0
         word |= (self.expect_env & 0x3) << 8
         word |= (self.env_committed & 0x7) << 11
         word |= (self.rb_frames_ok & 0xF) << 14
@@ -226,6 +236,7 @@ class FakeBoard:
             self.fault_code = 0
             self.config_valid = False
             self.expect_env = 0
+            self.scorer_done = False
         if value & (axi.CTRL_PASS1 | axi.CTRL_PASS2):
             self.env = (value >> axi.CTRL_ENV_SHIFT) & 0x3
             self.mode = "pass1" if value & axi.CTRL_PASS1 else "pass2"
@@ -239,6 +250,12 @@ class FakeBoard:
                     self.expect_env = 0
                 else:
                     self.expect_env = self.env + 1
+        if value & axi.CTRL_ARM:
+            self.scorer_armed = False
+            self.scorer_busy = False
+            self.scorer_done = True
+            if self.score_queue:
+                self.score_words = list(self.score_queue.pop(0))
 
     def _stream(self, words: list[int]) -> None:
         if len(words) != axi.ENVELOPE_WORDS:
@@ -435,12 +452,21 @@ class TheRefusals(unittest.TestCase):
     def test_a_status_word_of_zero(self) -> None:
         self.refuses(FakeBoard(status_override=0), contains="cannot read zero")
 
-    def test_recovery_already_clear_before_the_transaction(self) -> None:
-        """A carrier that has already run a transaction — not the state a run assumes."""
+    def test_a_clean_predecessor_can_start_the_next_transaction(self) -> None:
+        """The registered chain needs no-op -> candidate -> restore in one session."""
         board = FakeBoard()
         board.recovery = False
         board.config_valid = True
-        self.refuses(board, contains="sticky to reset")
+        board.rb_frames_ok = axi.TOTAL_FRAMES
+        record = run(board)
+        self.assertTrue(record["status_after"]["configuration_valid"])
+
+    def test_a_clear_recovery_latch_without_a_complete_predecessor_is_refused(self) -> None:
+        board = FakeBoard()
+        board.recovery = False
+        board.config_valid = True
+        board.rb_frames_ok = axi.TOTAL_FRAMES - 1
+        self.refuses(board, contains="clean 15-frame predecessor")
 
     def test_dram_that_does_not_hold_the_sealed_bytes(self) -> None:
         self.refuses(FakeBoard(corrupt_stage=17), contains="not the bytes that were sealed")

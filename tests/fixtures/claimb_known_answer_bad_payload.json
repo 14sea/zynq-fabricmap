@@ -1,0 +1,6 @@
+{
+  "description": "A payload digest self-attestation that is not the recomputed stream",
+  "path": ["candidate", "payload", "sha256"],
+  "value": "0000000000000000000000000000000000000000000000000000000000000000",
+  "expected_problem": "$.candidate.payload.sha256"
+}

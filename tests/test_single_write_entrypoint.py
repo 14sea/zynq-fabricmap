@@ -120,22 +120,28 @@ class WindowIsNamedOnce(unittest.TestCase):
             "__main__", (REPO_ROOT / "scripts" / TRANSPORT).read_text(encoding="utf-8"))
 
 
-class NothingArmsTheScorer(unittest.TestCase):
-    """Erratum 001 step 2 requires the scorer NOT armed during the no-op.
+class ThereIsOneScorerArm(unittest.TestCase):
+    """The no-op still never arms; the known-answer chain has exactly one reviewed door."""
 
-    That is a promise until something checks it. `CTRL_ARM` and `CTRL_MODE_HOLDOUT` are
-    defined so the register map is complete and readable; no code path writes either, so
-    "the calibration does not arm the scorer" is a property of the repository rather than of
-    how carefully the operator drove it.
-    """
-
-    def test_the_arm_bits_are_defined_and_never_used(self) -> None:
+    def test_the_arm_bits_are_used_only_by_the_transport_arm_function(self) -> None:
         for constant in ("CTRL_ARM", "CTRL_MODE_HOLDOUT"):
             used = [site for site in sites(any_reference(constant))]
             self.assertEqual(
-                used, [(TRANSPORT, "<module>")],
-                f"{constant} is used at {used}; only its definition may name it until "
-                "arming is a deliberate, separately reviewed step")
+                used, [(TRANSPORT, "<module>"), (TRANSPORT, "arm_scorer")],
+                f"{constant} has an unreviewed use at {used}")
+
+    def test_the_score_capability_is_held_once(self) -> None:
+        found = [site for site in sites(any_reference("SCORE_CAPABILITY"))
+                 if site[0] != TRANSPORT]
+        self.assertEqual(found, [(SESSION, "BoardSession.score_last_transaction")])
+
+    def test_the_arm_function_is_called_at_one_site(self) -> None:
+        self.assertEqual(sites(attribute_call("arm_scorer")),
+                         [(SESSION, "BoardSession.score_last_transaction")])
+
+    def test_the_session_score_path_is_called_from_one_production_site(self) -> None:
+        self.assertEqual(sites(attribute_call("score_last_transaction")),
+                         [("board_claimb_known_answer.py", "_score")])
 
 
 class TheCapabilityIsHeldOnce(unittest.TestCase):

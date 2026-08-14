@@ -18,8 +18,9 @@ retry and not a rule loosened to explain it.
 
 What this deliberately does NOT do
 ----------------------------------
-* **it never arms the scorer.** `CTRL_ARM` is not written by any code path in this
-  repository, and a test asserts that rather than the docstring.
+* **this tool never arms the scorer.** The separately reviewed known-answer chain owns the
+  repository's single arm path; the no-op CLI neither imports nor calls it, and the source
+  inventory test distinguishes those two production surfaces.
 * **it does not write a `run_log`.** A run log is the record of an ARM of round 1, with a
   budget §6 cannot freeze until a measured calibration exists. Filing the calibration as a
   run of the experiment would be exactly that circularity, in a file format. The evidence
