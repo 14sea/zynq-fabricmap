@@ -143,6 +143,10 @@ class ThereIsOneScorerArm(unittest.TestCase):
         self.assertEqual(sites(attribute_call("score_last_transaction")),
                          [("board_claimb_known_answer.py", "_score")])
 
+    def test_the_reviewed_round_has_one_production_caller(self) -> None:
+        self.assertEqual(sites(plain_call("run_known_answer_round")),
+                         [("board_claimb_known_answer.py", "main")])
+
 
 class TheCapabilityIsHeldOnce(unittest.TestCase):
     def test_write_capability_is_referenced_at_one_site(self) -> None:
