@@ -5,8 +5,9 @@ of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
 **Status (2026-08-14): three bit classes are address-certified; Claim B round 1's
-reachability result is complete; the erratum-006 carrier is published and accepted by
-the host-side gates, but has not yet had its silicon no-op ruling.**
+reachability result is complete; the erratum-006 carrier is published, accepted by the
+host-side gates, and its no-op calibration now passes on silicon — the first complete
+write-and-readback transaction this line has achieved on a board.**
 
 - `data/` is frozen and self-verifying; the approach is ratified (see below).
 - **`clb_lut_init`** and **`clb_mux`** are certified host-side (address prediction).
@@ -21,10 +22,15 @@ the host-side gates, but has not yet had its silicon no-op ruling.**
   reachability report is complete at 6/6 LUTs, but the evaluation loop and budget are not
   frozen: they still depend on a successful measured calibration.
 - **Board engineering has happened.** Carrier builds through erratum 005 were loaded on
-  the verification board and engineering no-op transactions exercised the ICAP path. The
-  latest attempt stopped fail-closed at `F_READBACK`; its dump contained real
-  configuration data, but from the wrong location. Erratum 006 corrects the command order
-  offline and has not yet been tried on silicon.
+  the verification board and engineering no-op transactions exercised the ICAP path. Every
+  run through erratum 005 stopped fail-closed at `F_READBACK` inside envelope 0; the
+  erratum-005 dump contained real configuration data, but from the wrong location.
+  **Erratum 006's no-op then passed** (`evidence/calibration_noop_2026_08_14_erratum006/`):
+  all three envelopes committed, 15/15 frames read back equal to the pinned base, `fault=0`,
+  `rb_latency_valid=1`. ⚠ **This does not by itself prove the readback now addresses the
+  requested frame**: all 15 pinned frames are all-zero, so a read of some other all-zero
+  frame is byte-indistinguishable from a correct one. The discriminator is the
+  known-answer mutation, which has not been run.
 
 **Scope, stated plainly.** The bit-class certificates are **address prediction** — where a
 feature's bits live in the bitstream. The board records are engineering validation of the
@@ -40,7 +46,7 @@ occurred.
 | `local_map` 1.0.0 | built from the `clb_lut_init` certificate — 292 addresses, 12 frames, 6 LUTs |
 | reachability | **complete** — production report selected 6/6 LUTs, discarded 20 draws, attainable ceiling 353, not exhausted; report committed under `gate_runs/claimb_round1_reachability_2026_08_10/` |
 | carrier authority | erratum-006 `carrier.bit`, `post_route.dcp`, `phenotype_manifest` and bundle committed under `gate_runs/claimb_round1_carrier_2026_08_13_erratum006/`; publication, base and ECO gates accepted |
-| ICAP write/readback path | 3 envelopes × 536 words = 6,432 bytes; **envelope 0's pass 1** is hardware-proven through erratum 005, while its pass-2 readback still faults; **envelopes 1–2 have never been reached on silicon** — every board run to date stopped inside envelope 0. Erratum 006 is offline-only pending a fresh no-op |
+| ICAP write/readback path | 3 envelopes × 536 words = 6,432 bytes; **hardware-proven end to end on erratum 006** — all three envelopes commit in pass 1 and read back in pass 2, 15/15 frames equal to the pinned base, latency 1 word and valid on every envelope, `fault=0`, `recovery_required=0`, scorer never armed. Runs through erratum 005 never left envelope 0 |
 | candidate gate | judges the **serialized** sequence, under two frame semantics |
 | board identity gate | boardid/role/IDCODE/50 MHz, session- and epoch-scoped, no override |
 | run log | `claimb_run_log` 1.0.0 |
@@ -68,7 +74,10 @@ The records are additive: an erratum does not rewrite the failure evidence that 
    returned bit-exact configuration data from a location `+604` words from the request.
 6. [Erratum 006](docs/claimb_erratum_006_command_order.md) corrects the readback order to
    `RCFG -> NOOP -> FAR -> FDRO`. Its model, benches, mutations, Vivado build and publication
-   gates pass; **it has not yet been tested on the board**.
+   gates pass, and on 2026-08-14 its no-op calibration **passed on silicon** where every
+   earlier build faulted — the first board run to complete pass 2 at all. What that
+   establishes is that the sequence is now legal to the device; the all-zero frame set
+   means it does not yet establish the address.
 
 ## Cloning and Git LFS
 
