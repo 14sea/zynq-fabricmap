@@ -1,0 +1,16 @@
+{
+  "what": "does the readback reproduce the loaded bitstream in this post-fault state",
+  "method": "whole-frame equality between each capture and the base carrier.bit frame at the same FAR",
+  "frames": 5144,
+  "matches_all_zero_zero_floor": 771,
+  "matches_non_zero_discriminating": 0,
+  "base_nonzero_readback_allzero": 81,
+  "base_zero_readback_nonzero": 3945,
+  "both_nonzero_but_differing": 347,
+  "word_positions_that_ever_differ": 101,
+  "differing_frames_per_word_position": {
+    "min": 3878,
+    "max": 4299
+  },
+  "reading": "Not one known non-zero frame was reproduced. Whole-frame equality against the bitstream fails for every frame whose content is known, so a search that looks for four non-zero frames by whole-frame equality cannot distinguish present from absent here."
+}
