@@ -1,0 +1,46 @@
+{
+  "schema": "config_status_bits",
+  "schema_version": "1.0.0",
+  "what": "the raw bit differences between the CONFIG_STATUS values observed so far",
+  "values": {
+    "0x46107ffc": {
+      "state": "rung 1, first child of a fresh load",
+      "controls": "16/16 exact"
+    },
+    "0x46101f8c": {
+      "state": "rung 1, children 2-16 of the same session",
+      "controls": "16/16 exact"
+    },
+    "0x46106ffd": {
+      "state": "rung 2 after one clean no-op (x16) and Phase 2 after a faulted round (x5144)",
+      "controls": "0/16 exact; Phase 2 had no exact frame at all"
+    }
+  },
+  "differences": {
+    "valid_first_read_vs_invalid": {
+      "xor": "0x00001001",
+      "bits": [
+        0,
+        12
+      ],
+      "detail": [
+        "bit 0: 0 -> 1",
+        "bit 12: 1 -> 0"
+      ],
+      "note": "the only two bits separating a state that read 16/16 from one that read 0/16"
+    },
+    "valid_first_read_vs_valid_later_reads": {
+      "xor": "0x00006070",
+      "bits": [
+        4,
+        5,
+        6,
+        13,
+        14
+      ],
+      "note": "tracks position in the session, not validity: both states read 16/16"
+    }
+  },
+  "annotation_not_evidence": "under the documented 7-series STAT layout bit 0 is CRC_ERROR and bit 12 is GTS_CFG_B. No file in this repository pins that layout; confirm against UG470 before anything rests on it.",
+  "already_ruled_out": "the probe issues CMD RCRC before every read and the readback stayed broken, so resetting the CRC register from JTAG after the fact does not clear this state"
+}
