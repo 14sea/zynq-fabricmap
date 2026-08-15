@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Mutation gate for the load-bearing rules of the signature search.
 
-Nine mutants, each removing one thing the search is not allowed to do without:
+Twelve mutants, each removing one thing the search is not allowed to do without:
 
   * a child reads one FAR, because a process is trustworthy for exactly one read;
   * the intended frame is decided before any sweep, because it answers the question alone in
@@ -16,6 +16,9 @@ Nine mutants, each removing one thing the search is not allowed to do without:
     an interrupted run leaves an index that is silent about every frame nobody looked at;
   * a child that raises still lands a failed entry and its log, because the failure mode with
     the least evidence must not be the one that produces none.
+  * a resume invalidates the previous invocation's closure before another capture can land;
+  * a mismatching end marker reaches disk before the run refuses it;
+  * bytes emitted before a timeout survive in the failed child's evidence.
 
 Each probe asks a module a question about behaviour and runs it to find out. Nothing here
 searches for the mutation itself.
@@ -23,6 +26,7 @@ searches for the mutation itself.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import importlib.util
 import json
@@ -92,6 +96,31 @@ MUTANTS = {
     "timeout_leaves_no_failure_evidence": [(
         '    try:\n        result = runner(far, staging)\n    except Exception as raised:',
         '    if True:\n        result = runner(far, staging)\n    if False:\n        raised = None')],
+    # MUTATION ANCHOR closure_epoch: a resume may not inherit an older matching end marker.
+    "resume_reuses_previous_closure": [(
+        '    index.pop("plmark_at_end", None)\n'
+        '    _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\\n")',
+        '    pass  # mutant: keep the previous invocation\'s closure')],
+    # MUTATION ANCHOR mismatch_lands: an observed reboot must reach disk before the refusal.
+    "mismatched_end_is_not_persisted": [(
+        '    _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\\n")\n'
+        '    if index["plmark_at_end"] != plmark:\n'
+        '        raise SearchStop(\n'
+        '            f"plmark changed from {plmark} to {index[\'plmark_at_end\']}: the board restarted "\n'
+        '            "during the search and every capture after that is from a different PL")',
+        '    if index["plmark_at_end"] != plmark:\n'
+        '        raise SearchStop(\n'
+        '            f"plmark changed from {plmark} to {index[\'plmark_at_end\']}: the board restarted "\n'
+        '            "during the search and every capture after that is from a different PL")\n'
+        '    _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\\n")')],
+    # MUTATION ANCHOR timeout_streams: partial OpenOCD output is failure evidence.
+    "timeout_drops_partial_output": [(
+        '        partial_stdout = getattr(raised, "stdout", None)\n'
+        '        if partial_stdout is None:\n'
+        '            partial_stdout = getattr(raised, "output", None)\n'
+        '        partial_stderr = getattr(raised, "stderr", None)',
+        '        partial_stdout = None  # mutant: discard what OpenOCD emitted before timeout\n'
+        '        partial_stderr = None')],
     # MUTATION ANCHOR capture_digest: an index is a claim, the capture file is the evidence.
     "validate_trusts_capture_file": [(
         '        if _digest_of(path) != entry.get("capture_sha256"):\n'
@@ -271,6 +300,76 @@ def probe_runner_exception_evidence(module) -> tuple[bool, str]:
     return False, "the failure landed with its evidence"
 
 
+def probe_resume_closure(module) -> tuple[bool, str]:
+    """A resumed invocation is open before its closing read, even if that read raises."""
+    with tempfile.TemporaryDirectory() as name:
+        tmp = Path(name)
+        module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                   runner=runner_for(module, {}, []),
+                   plmark_reader=lambda port: PLMARK, max_reads=0)
+        try:
+            module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                       runner=runner_for(module, {}, []),
+                       plmark_reader=lambda port: (_ for _ in ()).throw(
+                           RuntimeError("the UART disappeared")))
+        except Exception:
+            pass
+        index = json.loads((tmp / "index.json").read_text("utf-8"))
+        try:
+            module.require_closed(index)
+        except module.SearchStop:
+            return False, "the rebooted resume is unclosed on disk"
+    return True, "the rebooted resume inherited the previous invocation's closure"
+
+
+def probe_mismatch_lands(module) -> tuple[bool, str]:
+    """The mismatching end marker itself is evidence and must reach disk before refusal."""
+    with tempfile.TemporaryDirectory() as name:
+        tmp = Path(name)
+        module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                   runner=runner_for(module, {}, []),
+                   plmark_reader=lambda port: PLMARK, max_reads=0)
+        try:
+            module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                       runner=runner_for(module, {}, []),
+                       plmark_reader=lambda port: "rebooted")
+        except module.SearchStop:
+            pass
+        index = json.loads((tmp / "index.json").read_text("utf-8"))
+        if index.get("plmark_at_end") != "rebooted":
+            return True, "the mismatch refusal discarded the observed end marker"
+    return False, "the mismatching end marker is on disk"
+
+
+def probe_timeout_streams(module) -> tuple[bool, str]:
+    """Bytes emitted before a timeout must survive in the failed child's evidence."""
+    stdout, stderr = b"partial-stdout\x00\xff", b"partial-stderr\r\n"
+
+    def raising(far: int, out_path: Path) -> dict:
+        import subprocess
+        raise subprocess.TimeoutExpired(["openocd"], 600, output=stdout, stderr=stderr)
+
+    with tempfile.TemporaryDirectory() as name:
+        tmp = Path(name)
+        try:
+            module.run(tmp, PLMARK, SIGNATURES, BASE, [A20], DIGEST, runner=raising,
+                       plmark_reader=lambda port: PLMARK)
+        except module.SearchStop:
+            pass
+        index = json.loads((tmp / "index.json").read_text("utf-8"))
+        entry = index["entries"][f"{A20:#010x}"]
+        log = json.loads((tmp / entry["child_log"]).read_text("utf-8"))
+        streams = log.get("exception_streams", {})
+        try:
+            got_out = base64.b64decode(streams["stdout"]["base64"])
+            got_err = base64.b64decode(streams["stderr"]["base64"])
+        except (KeyError, TypeError, ValueError):
+            return True, "the timeout log has no lossless partial streams"
+        if (got_out, got_err) != (stdout, stderr):
+            return True, "the timeout log discarded or changed the partial streams"
+    return False, "the timeout's partial streams landed byte-for-byte"
+
+
 PROBES = {
     "two_fars_per_child": probe_argv,
     "two_fars_no_guard": probe_argv,
@@ -281,6 +380,9 @@ PROBES = {
     "missing_not_attempted_means_complete": probe_recomputed_coverage,
     "ignore_child_log_digest": probe_child_log_digest,
     "timeout_leaves_no_failure_evidence": probe_runner_exception_evidence,
+    "resume_reuses_previous_closure": probe_resume_closure,
+    "mismatched_end_is_not_persisted": probe_mismatch_lands,
+    "timeout_drops_partial_output": probe_timeout_streams,
 }
 
 

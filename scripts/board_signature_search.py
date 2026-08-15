@@ -34,6 +34,7 @@ device's 4,716 all-zero frames would hand out for free, and never an all-zero si
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -54,7 +55,7 @@ import frame_ecc  # noqa: E402
 import gate_claimb_known_answer as kagate  # noqa: E402
 import probe_jtag_config_read as probe  # noqa: E402
 
-TOOL_VERSION = "board_signature_search.py/2.0.0"
+TOOL_VERSION = "board_signature_search.py/2.1.0"
 CHILD = REPO / "scripts/probe_jtag_config_read.py"
 CHILD_CFG = REPO / "scripts/jtag_config_only.cfg"
 CHILD_SPEED = 2000
@@ -233,6 +234,27 @@ def _digest_of(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _stream_evidence(value) -> dict:
+    """A subprocess exception's partial stream, preserved byte-for-byte.
+
+    `TimeoutExpired.output` and `.stderr` may be bytes even when the original run requested
+    text mode.  A replacement-decoded string is useful to a reader, but it is not evidence;
+    the base64 and digest are the lossless record.
+    """
+    if value is None:
+        raw = b""
+    elif isinstance(value, bytes):
+        raw = value
+    else:
+        raw = str(value).encode("utf-8")
+    return {
+        "bytes": len(raw),
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "base64": base64.b64encode(raw).decode("ascii"),
+        "text": raw.decode("utf-8", errors="replace"),
+    }
+
+
 def frame_of(far: int, capture: dict) -> list[int]:
     """The 101 words a capture holds for this FAR, or a refusal saying why it does not."""
     if capture.get("verdict") != "READ":
@@ -364,8 +386,16 @@ def capture_one(far: int, out_dir: Path, index: dict, runner) -> list[int]:
         # A timeout, a killed child, an OSError. Before this, such a run left no stdout, no
         # index entry and no partial capture at all — the failure mode with the least
         # evidence was the one that produced none.
+        partial_stdout = getattr(raised, "stdout", None)
+        if partial_stdout is None:
+            partial_stdout = getattr(raised, "output", None)
+        partial_stderr = getattr(raised, "stderr", None)
+        streams = {"stdout": _stream_evidence(partial_stdout),
+                   "stderr": _stream_evidence(partial_stderr)}
         fail(f"{key}: the child raised {type(raised).__name__}: {raised}",
-             {"returncode": None, "argv": frozen_argv, "stdout": "", "stderr": "",
+             {"returncode": None, "argv": frozen_argv,
+              "stdout": streams["stdout"]["text"], "stderr": streams["stderr"]["text"],
+              "exception_streams": streams,
               "exception": f"{type(raised).__name__}: {raised}"})
     elapsed = round(time.time() - started, 3)
     result.setdefault("argv", frozen_argv)
@@ -488,6 +518,12 @@ def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
     """The intended frame first and decided first; the sweep only if it asks for one."""
     index, captures = open_index(out_dir, digest, plmark, fars)
 
+    # A closure belongs to one invocation, not to the directory forever.  Invalidate an old
+    # one on disk before this invocation can add a capture; otherwise a reboot during a
+    # resume leaves the new captures wearing the previous invocation's matching end marker.
+    index.pop("plmark_at_end", None)
+    _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\n")
+
     if INTENDED_FAR not in captures:
         captures[INTENDED_FAR] = capture_one(INTENDED_FAR, out_dir, index, runner)
     decision = decide_intended(captures[INTENDED_FAR], signatures, base)
@@ -511,11 +547,14 @@ def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
     index["not_attempted"] = ([] if not decision["sweep_needed"]
                               else verdict.get("frames_not_searched", []))
     index["plmark_at_end"] = plmark_reader(port) if plmark_reader else plmark
+    # Persist the observed end marker before deciding whether it matches.  A mismatching
+    # marker is evidence that this invocation did not close; it must not disappear behind a
+    # SearchStop and reveal an older, matching closure on disk.
+    _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\n")
     if index["plmark_at_end"] != plmark:
         raise SearchStop(
             f"plmark changed from {plmark} to {index['plmark_at_end']}: the board restarted "
             "during the search and every capture after that is from a different PL")
-    _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\n")
     validate_index(out_dir, index, digest, plmark, fars)
     verdict["intended_far"] = f"{INTENDED_FAR:#010x}"
     verdict["signature_fars"] = [f"{far:#010x}" for far in signatures]

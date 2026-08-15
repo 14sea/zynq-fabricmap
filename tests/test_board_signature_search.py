@@ -9,6 +9,7 @@ against hardware is a check nobody has seen fail.
 from __future__ import annotations
 
 import ast
+import base64
 import hashlib
 import json
 import subprocess
@@ -318,6 +319,39 @@ class TheJudgeOnlyPath(unittest.TestCase):
         with self.assertRaises(search.SearchStop):
             search.require_closed({"plmark_at_start": PLMARK, "plmark_at_end": "ffff"})
 
+    def test_a_resume_cannot_reuse_the_previous_invocation_s_closure(self) -> None:
+        """New captures may not inherit a matching end marker from an older partial run."""
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go(tmp, {}, max_reads=0)  # A20 only, and this invocation closes normally.
+            before = json.loads((tmp / "index.json").read_text("utf-8"))
+            self.assertEqual(before["plmark_at_end"], PLMARK)
+
+            with self.assertRaises(search.SearchStop):
+                go(tmp, {}, plmark_reader=lambda port: "rebooted")
+
+            after = json.loads((tmp / "index.json").read_text("utf-8"))
+            self.assertEqual(len(after["entries"]), len(FARS),
+                             "the resume must reach the closing check for this regression")
+            self.assertEqual(after["plmark_at_end"], "rebooted",
+                             "the mismatching observation must be evidence on disk")
+            with self.assertRaises(search.SearchStop):
+                search.require_closed(after)
+
+    def test_a_resume_is_unclosed_even_if_the_end_marker_read_raises(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go(tmp, {}, max_reads=0)
+
+            with self.assertRaises(RuntimeError):
+                go(tmp, {}, plmark_reader=lambda port: (_ for _ in ()).throw(
+                    RuntimeError("the UART disappeared")))
+
+            after = json.loads((tmp / "index.json").read_text("utf-8"))
+            self.assertNotIn("plmark_at_end", after)
+            with self.assertRaises(search.SearchStop):
+                search.require_closed(after)
+
 
 class TheChildLogIsEvidence(unittest.TestCase):
     def one_capture(self, tmp: Path) -> dict:
@@ -382,6 +416,26 @@ class TheFailureAlwaysLeavesEvidence(unittest.TestCase):
             self.assertIn("TimeoutExpired", log["exception"])
             self.assertEqual(log["argv"],
                              search.child_argv(A20, tmp / f"far_{A20:08x}.json.part"))
+
+    def test_a_timeout_preserves_its_partial_streams_byte_for_byte(self) -> None:
+        stdout, stderr = b"partial-stdout\x00\xff", b"partial-stderr\r\n"
+
+        def timeout(far: int, out_path: Path) -> dict:
+            raise subprocess.TimeoutExpired(["openocd"], 600, output=stdout, stderr=stderr)
+
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            with self.assertRaises(search.SearchStop):
+                search.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST, runner=timeout,
+                           plmark_reader=lambda port: PLMARK)
+            index = json.loads((tmp / "index.json").read_text("utf-8"))
+            entry = index["entries"][f"{A20:#010x}"]
+            log = json.loads((tmp / entry["child_log"]).read_text("utf-8"))
+            streams = log["exception_streams"]
+            self.assertEqual(base64.b64decode(streams["stdout"]["base64"]), stdout)
+            self.assertEqual(base64.b64decode(streams["stderr"]["base64"]), stderr)
+            self.assertEqual(streams["stdout"]["sha256"], hashlib.sha256(stdout).hexdigest())
+            self.assertEqual(streams["stderr"]["sha256"], hashlib.sha256(stderr).hexdigest())
 
     def test_an_unreadable_capture_lands_a_failed_entry_and_the_partial(self) -> None:
         with tempfile.TemporaryDirectory() as name:
