@@ -65,11 +65,11 @@ import frame_ecc  # noqa: E402
 import gate_claimb_known_answer as kagate  # noqa: E402
 import probe_jtag_config_read as probe  # noqa: E402
 
-TOOL_VERSION = "board_signature_search.py/2.4.0"
+TOOL_VERSION = "board_signature_search.py/2.5.0"
 CHILD = REPO / "scripts/probe_jtag_config_read.py"
 CHILD_CFG = REPO / "scripts/jtag_config_only.cfg"
 CHILD_SPEED = 2000
-CHILD_TOOL_VERSION = "probe_jtag_config_read.py/2.1.0"
+CHILD_TOOL_VERSION = "probe_jtag_config_read.py/2.2.0"
 
 CANONICAL_RUN = REPO / kagate.RUN_REL
 CANONICAL_REPORT = REPO / kagate.REPORT_REL

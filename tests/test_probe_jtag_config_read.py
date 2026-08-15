@@ -41,7 +41,7 @@ class TheAllowedSet(unittest.TestCase):
 
 
 class TheEnvelopes(unittest.TestCase):
-    """One FAR-set per `sync … DESYNC`. Sharing one produced the 2026-08-15 miss."""
+    """One FAR-set per `sync … DESYNC`, retained as a conservative contract."""
 
     def setUp(self) -> None:
         self.tcl, self.steps = probe.build_tcl([FAR, FAR + 1])
@@ -85,22 +85,40 @@ class TheEnvelopes(unittest.TestCase):
     def test_jshutdown_is_issued_once_for_the_whole_session(self) -> None:
         self.assertEqual(self.tcl.count(f"irscan {probe.TAP} 0x{probe.IR['JSHUTDOWN']:02x}"), 1)
 
-    def test_r1_places_rcrc_after_jshutdown_and_before_the_first_fdro(self) -> None:
+    def test_r2_places_the_fixed_recovery_prefix_before_the_first_fdro(self) -> None:
         self.assertEqual(probe.recovery_order_violations(self.tcl), [])
         lines = self.tcl.splitlines()
         shutdown = lines.index(f"irscan {probe.TAP} 0x{probe.IR['JSHUTDOWN']:02x}")
+        dwell = lines.index(f"runtest {probe.SHUTDOWN_RTI_CYCLES}")
         rcrc_words = [probe.DUMMY, probe.SYNC, probe.NOOP,
                       probe.t1(True, probe.CMD_REG, 1), probe.CMD_RCRC,
                       probe.NOOP, probe.NOOP]
+        pre_read_words = [probe.DUMMY, probe.SYNC, probe.NOOP, *probe.DESYNC_TAIL]
         fdro_words = [probe.DUMMY, probe.SYNC, probe.NOOP,
                       probe.t1(True, probe.CMD_REG, 1), probe.CMD_RCFG, probe.NOOP,
                       probe.t1(True, probe.FAR_REG, 1), FAR,
                       probe.t1(False, probe.FDRO_REG, 0),
                       probe.t2_read(probe.READ_WORDS)] + [probe.NOOP] * 32
         rcrc = lines.index(f"drscan {probe.TAP} {probe.field_list(rcrc_words)}")
+        pre_read_desync = lines.index(
+            f"drscan {probe.TAP} {probe.field_list(pre_read_words)}")
         first_fdro = lines.index(f"drscan {probe.TAP} {probe.field_list(fdro_words)}")
-        self.assertLess(shutdown, rcrc)
-        self.assertLess(rcrc, first_fdro)
+        self.assertEqual(probe.SHUTDOWN_RTI_CYCLES, 1024)
+        self.assertEqual([shutdown, dwell, rcrc, pre_read_desync, first_fdro],
+                         sorted([shutdown, dwell, rcrc, pre_read_desync, first_fdro]))
+
+    def test_r2_refuses_a_shortened_shutdown_dwell(self) -> None:
+        shortened = self.tcl.replace(
+            f"runtest {probe.SHUTDOWN_RTI_CYCLES}", "runtest 12", 1)
+        problems = probe.recovery_order_violations(shortened)
+        self.assertTrue(any("expected 1024" in problem for problem in problems), problems)
+
+    def test_r2_refuses_a_missing_pre_read_desync(self) -> None:
+        words = [probe.DUMMY, probe.SYNC, probe.NOOP, *probe.DESYNC_TAIL]
+        missing = self.tcl.replace(
+            f"drscan {probe.TAP} {probe.field_list(words)}", "", 1)
+        problems = probe.recovery_order_violations(missing)
+        self.assertTrue(any("pre-read" in problem for problem in problems), problems)
 
     def test_a_hole_in_an_envelope_is_named(self) -> None:
         holed = self.tcl.replace(
@@ -132,8 +150,8 @@ class TheRefusals(unittest.TestCase):
 
 
 class ThePacketEncoding(unittest.TestCase):
-    def test_the_tool_identity_names_the_r1_sequence(self) -> None:
-        self.assertEqual(probe.TOOL_VERSION, "probe_jtag_config_read.py/2.1.0")
+    def test_the_tool_identity_names_the_r2_sequence(self) -> None:
+        self.assertEqual(probe.TOOL_VERSION, "probe_jtag_config_read.py/2.2.0")
 
     def test_the_headers_are_the_documented_values(self) -> None:
         self.assertEqual(probe.t1(True, probe.CMD_REG, 1), 0x30008001)

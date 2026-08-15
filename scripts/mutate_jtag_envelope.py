@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Mutation gate for the reviewed JTAG envelope and recovery ordering.
+"""Mutation gate for the reviewed JTAG envelope and recovery sequence.
 
-Two mutants remove a DESYNC; the third restores the pre-R1 RCRC order. A mutant is killed
-only when a checker names the resulting behaviour or `build_tcl()` refuses to emit it —
-never by a string search for the mutation itself, which would only prove the patch applied.
+Two baseline mutants remove a DESYNC. Three recovery mutants restore the pre-R1 RCRC order,
+shorten R2's dwell, or remove R2's pre-read envelope. A mutant is killed only when a checker
+names the resulting behaviour or `build_tcl()` refuses to emit it — never by a string search
+for the mutation itself, which would only prove the patch applied.
 """
 
 from __future__ import annotations
@@ -28,20 +29,30 @@ MUTANTS = {
     "drop_stat_desync": (
         '    close_envelope("STAT")',
         '    pass  # mutant: the STAT envelope is never closed'),
-    # MUTATION ANCHOR r1_order: moving RCRC back before JSHUTDOWN restores the failed rung.
+    # MUTATION ANCHOR r1_order: moving RCRC back before JSHUTDOWN restores the old order.
     "rcrc_before_jshutdown": (
-        '    # -- the one JSHUTDOWN of the session, then R1\'s reordered RCRC envelope.\n'
+        '    # -- R2: one JSHUTDOWN, a fixed dwell, R1\'s RCRC, then a closed pre-read envelope.\n'
         '    lines += [f"irscan {TAP} 0x{IR[\'JSHUTDOWN\']:02x}",\n'
-        '              "runtest 12",\n'
+        '              f"runtest {SHUTDOWN_RTI_CYCLES}",\n'
         '              "echo \\"@@ shutdown done\\""]\n'
         '    cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")\n'
-        '    close_envelope("RCRC")',
+        '    close_envelope("RCRC")\n'
+        '    cfg_in([DUMMY, SYNC, NOOP, *DESYNC_TAIL], "pre-read DESYNC")',
         '    # mutant: restore the pre-R1 sequence.\n'
         '    cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")\n'
         '    close_envelope("RCRC")\n'
         '    lines += [f"irscan {TAP} 0x{IR[\'JSHUTDOWN\']:02x}",\n'
-        '              "runtest 12",\n'
-        '              "echo \\"@@ shutdown done\\""]'),
+        '              f"runtest {SHUTDOWN_RTI_CYCLES}",\n'
+        '              "echo \\"@@ shutdown done\\""]\n'
+        '    cfg_in([DUMMY, SYNC, NOOP, *DESYNC_TAIL], "pre-read DESYNC")'),
+    # MUTATION ANCHOR r2_dwell: retain R1's old 12-TCK settling interval.
+    "short_shutdown_dwell": (
+        '              f"runtest {SHUTDOWN_RTI_CYCLES}",',
+        '              "runtest 12",  # mutant: R2 dwell was not applied'),
+    # MUTATION ANCHOR r2_desync: omit the additional closed pre-read envelope.
+    "drop_pre_read_desync": (
+        '    cfg_in([DUMMY, SYNC, NOOP, *DESYNC_TAIL], "pre-read DESYNC")',
+        '    pass  # mutant: R2 pre-read envelope is absent'),
 }
 
 

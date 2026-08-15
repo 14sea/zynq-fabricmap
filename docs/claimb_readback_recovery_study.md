@@ -1,7 +1,8 @@
 # Offline study: why a clean no-op spoils the JTAG readback, and what to try
 
-Written after rung 2. No board action is authorised by this document, and none was taken to
-write it. The board holds nothing irreplaceable and may be powered off.
+Originally written after control-gradient rung 2; updated through recovery rung R1 and the
+offline R2 implementation. No board action is authorised by this document, and none was
+taken to write it. The board holds nothing irreplaceable and may be powered off.
 
 ## What is established, narrowly
 
@@ -9,8 +10,9 @@ A successful ICAP no-op — 15/15 frames, digests matching, `fault=0` — is **s
 turn a 16/16 bit-exact JTAG control read into 0/16. A fault is not necessary. It is **not**
 established that every ICAP transaction does this, only that this one did.
 
-`0x46106ffd` stays a fail-fast indicator, not a verdict. The verdict remains bit-exact
-positive controls, and post-transaction JTAG location search stays suspended. Phase 2's
+No `CONFIG_STATUS` value is a validity proxy. R1 produced values previously associated with
+valid reads while all sixteen controls were wrong. The verdict remains bit-exact positive
+controls, and post-transaction JTAG location search stays suspended. Phase 2's
 `NOT_FOUND_COMPLETE` stays void.
 
 ## Review 1 — the carrier's ICAP teardown
@@ -60,6 +62,9 @@ Raw, from the evidence:
 | rung 1, children #2–16 | `0x46101f8c` | 16/16 exact |
 | rung 2 (after one clean no-op) | `0x46106ffd` | 0/16 |
 | Phase 2 (after a faulted round) | `0x46106ffd` ×5,144 | none matched |
+| R1, child #1 | `0x46106ffd` | 0/16 overall |
+| R1, child #2 | `0x46107ffc` | 0/16 overall |
+| R1, children #3–16 | `0x46101f8c` | 0/16 overall |
 
 Bit differences, which are the part that is evidence:
 
@@ -70,9 +75,10 @@ Bit differences, which are the part that is evidence:
 
 Annotation, and only that: under the documented 7-series `STAT` layout bit 0 is `CRC_ERROR`
 and bit 12 is `GTS_CFG_B`. **No file in this repository pins that layout**, so it is a reading
-aid to be confirmed against UG470 before anything rests on it. If it is right, the invalid
-state is one where the configuration engine reports a CRC error and the global tristate
-control has moved — and the probe's existing `RCRC` did not clear it.
+aid to be confirmed against UG470 before anything rests on it. R1 shows why no decision may
+rest on these names or values: moving RCRC changed later status words to the values previously
+seen during exact reads, while the controls remained 0/16. The status transition is evidence
+that the reordered command affected engine state, not that it restored readback.
 
 ## The recovery ladder
 
@@ -88,7 +94,7 @@ structural test and the mutant that kills its removal — in that order, offline
 |---|---|---|---|
 | R0 | run `--control-only` twice on the same spoiled state, no other change | none | establishes whether the spoiling is stable or drifts; a free baseline, and it costs one power cycle to reach |
 | R1 | move the `RCRC` envelope to **after** `JSHUTDOWN` rather than before | none — reordering existing ones | the engine may only accept the reset once the design is shut down |
-| R2 | lengthen the RTI dwell after `JSHUTDOWN`, and add a DESYNC before the first read envelope | none — timing and an existing instruction | shutdown may need more than 12 TCK to settle after a transaction |
+| R2 | fix the post-`JSHUTDOWN` dwell at **1024 TCK**, and add one self-contained SYNC…DESYNC envelope before the first read envelope | none — timing and an existing command | tests the fixed combination “1024 TCK + extra DESYNC”; it does not establish a general settling bound |
 | R3 | omit `JSHUTDOWN` entirely and read the controls directly | none — removing one | `JSHUTDOWN` after a transaction may itself be what leaves the engine unreadable |
 | R4 | `JSTART` after the reads, or a `JSTART`/`JSHUTDOWN` pair around them | **new instruction** — allowlist, test, mutant first | restores the design's run state; may also restore the engine's |
 
@@ -101,10 +107,21 @@ R0 subsequently reproduced `INSTRUMENT_INVALID` twice on the same boot (0/16 bot
 `CONFIG_STATUS=0x46106ffd` for all 32 children).  The incorrect frame contents themselves
 were not repeatable, so later rungs are judged only by the bit-exact control verdict.
 
-R1 is implemented offline in `probe_jtag_config_read.py/2.1.0`: its single RCRC envelope is
-after JSHUTDOWN and before the first FDRO.  The parent acquisition tool is correspondingly
-`board_signature_search.py/2.4.0`, so old and R1 captures cannot share an index.  This is an
-implementation record, not a board result; R1 remains unverified until separately authorised.
+R1 (`probe_jtag_config_read.py/2.1.0`, parent `board_signature_search.py/2.4.0`) was then run
+on a freshly rebuilt spoiled state. All sixteen emitted Tcl files had
+`JSHUTDOWN < RCRC < FDRO`, but the result was `INSTRUMENT_INVALID`, 0/16. R1 therefore failed.
+Its first child reported `0x46106ffd`; later children reported `0x46107ffc` and
+`0x46101f8c`, the same values previously seen alongside valid reads. That is direct evidence
+that `CONFIG_STATUS` is not a validity proxy in either direction. The changed status does
+show that the relocated RCRC reached and affected configuration-engine state; it does not
+show that readback recovered.
+
+R2 is implemented offline in `probe_jtag_config_read.py/2.2.0`: after the one JSHUTDOWN it
+waits exactly 1024 TCK, runs the R1 RCRC envelope, then runs one additional self-contained
+SYNC…DESYNC envelope before the first FDRO. The parent is
+`board_signature_search.py/2.5.0`, so baseline, R1 and R2 captures cannot share an index.
+Both additions are checked against emitted Tcl and have dedicated killable mutants. This is
+an implementation record only; R2 remains unverified until separately audited and authorised.
 
 ## If no JTAG state recovers
 
