@@ -1,9 +1,9 @@
-"""The one-process-per-frame signature search: its bookkeeping and its verdict.
+"""The one-process-per-frame signature search: its authority, its order, its bookkeeping.
 
-Every case here is synthetic. The driver takes an injectable runner precisely so that a
-child failure, a resumed run and a board that restarts mid-search can each be exercised
-without a board — a check that only ever runs against hardware is a check nobody has seen
-fail.
+Every case is synthetic. `run()` takes the signatures, the base and the runner as arguments
+precisely so that a child failure, a tampered capture, a resumed run and a board that
+restarts mid-search can each be exercised without a board — a check that only ever runs
+against hardware is a check nobody has seen fail.
 """
 
 from __future__ import annotations
@@ -25,7 +25,6 @@ A20, A21, A22, A23 = 0x00400A20, 0x00400A21, 0x00400A22, 0x00400A23
 FARS = [A20, A21, A22, A23, 0x00400A24]
 DIGEST = "d" * 64
 PLMARK = "18cc00f0fa537908"
-
 ZERO = [0] * 101
 
 
@@ -36,46 +35,76 @@ def frame(seed: int) -> list[int]:
     return words
 
 
-def capture_for(far: int, words: list[int]) -> dict:
+SIGNATURES = {A20: frame(0x40), A21: frame(0x41), A22: frame(0x42), A23: frame(0x43)}
+BASE = {far: list(ZERO) for far in FARS}
+
+
+def capture_for(far: int, words: list[int], tool: str = search.CHILD_TOOL_VERSION) -> dict:
     body = b"".join(word.to_bytes(4, "big") for word in words)
     return {
-        "tool": "probe_jtag_config_read.py/2.0.0",
+        "tool": tool,
         "verdict": "READ",
-        "idcode": "0x13722093",
+        "idcode": search.IDCODE,
         "config_status": "0x46107ffc",
         "frames": {f"{far:#010x}": {
             "frame": [f"{word:08x}" for word in words],
             "pad_frame": [f"{word:08x}" for word in ZERO],
             "frame_sha256": hashlib.sha256(body).hexdigest(),
-            "nonzero_words_in_frame": sum(1 for word in words if word),
         }},
     }
 
 
-def runner_for(content: dict[int, list[int]], fail_on: int | None = None):
-    """A child that writes what the fabric is pretending to hold, or fails."""
-    def runner(far: int, out_path: Path) -> int:
+def runner_for(content: dict[int, list[int]], fail_on: int | None = None,
+               asked: list[int] | None = None, tool: str | None = None):
+    def runner(far: int, out_path: Path) -> dict:
+        if asked is not None:
+            asked.append(far)
         if far == fail_on:
-            return 1
-        out_path.write_text(json.dumps(capture_for(far, content.get(far, ZERO))),
+            return {"returncode": 1, "argv": ["--far", f"{far:#010x}"],
+                    "stdout": "", "stderr": "openocd exploded"}
+        out_path.write_text(json.dumps(capture_for(far, content.get(far, ZERO),
+                                                   tool or search.CHILD_TOOL_VERSION)),
                             encoding="utf-8")
-        return 0
+        return {"returncode": 0, "argv": ["--far", f"{far:#010x}"], "stdout": "", "stderr": ""}
     return runner
 
 
-class TheChildContract(unittest.TestCase):
-    def test_a_child_is_given_exactly_one_far(self) -> None:
-        argv = search.child_argv(A20, Path("/tmp/x.json"), None, None)
-        self.assertEqual(argv.count("--far"), 1)
-        self.assertIn(f"{A20:#010x}", argv)
+def go(tmp: Path, content: dict, **kwargs):
+    return search.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                      runner=runner_for(content, kwargs.pop("fail_on", None),
+                                        kwargs.pop("asked", None), kwargs.pop("tool", None)),
+                      plmark_reader=kwargs.pop("plmark_reader", lambda port: PLMARK),
+                      **kwargs)
 
-    def test_two_fars_in_one_child_are_refused(self) -> None:
-        argv = search.child_argv(A20, Path("/tmp/x.json"), None, None) + ["--far", "0x00400a21"]
-        with self.assertRaises(search.SearchStop):
-            search.check_child_argv(argv)
 
-    def test_the_child_is_the_reviewed_probe(self) -> None:
-        """No JTAG path of its own. Judged on code, not on prose that names the forbidden."""
+class TheAuthority(unittest.TestCase):
+    def test_the_cli_cannot_be_pointed_at_another_run_or_report(self) -> None:
+        source = Path(search.__file__).read_text("utf-8")
+        for escape in ('"--run-dir"', '"--report"', '"--artifact"', '"--repo"'):
+            self.assertNotIn(escape, source, "the authority must not be an argument")
+
+    def test_the_canonical_paths_are_the_gate_s_own(self) -> None:
+        import gate_claimb_known_answer as kagate
+        self.assertEqual(search.CANONICAL_RUN, REPO / kagate.RUN_REL)
+        self.assertEqual(search.CANONICAL_REPORT, REPO / kagate.REPORT_REL)
+
+    def test_the_selection_is_checked_against_the_named_site_and_bel(self) -> None:
+        self.assertEqual((search.EXPECTED_SITE, search.EXPECTED_BEL),
+                         ("SLICE_X2Y25", "A6LUT"))
+        source = Path(search.__file__).read_text("utf-8")
+        self.assertIn("report entry", source)
+        self.assertIn("EXPECTED_SITE", source)
+
+    def test_the_instrument_is_part_of_the_digest(self) -> None:
+        fars = [A20, A21]
+        digest = search.instrument_digest(fars)
+        self.assertEqual(len(digest), 64)
+        self.assertNotEqual(digest, search.instrument_digest([A20]))
+        source = ast.unparse(ast.parse(Path(search.__file__).read_text("utf-8")))
+        for pinned in ("CHILD_TOOL_VERSION", "CHILD_CFG", "CHILD_SPEED", "TOOL_VERSION"):
+            self.assertIn(pinned, source)
+
+    def test_the_child_is_the_reviewed_probe_and_no_jtag_path_of_its_own(self) -> None:
         self.assertEqual(search.CHILD, REPO / "scripts/probe_jtag_config_read.py")
         tree = ast.parse(Path(search.__file__).read_text("utf-8"))
         for node in ast.walk(tree):
@@ -86,141 +115,171 @@ class TheChildContract(unittest.TestCase):
                                      and isinstance(child.value.value, str))]
         code = ast.unparse(tree)
         for forbidden in ("irscan", "drscan", "JPROGRAM", "JSTART", "0x0b", "0x0c"):
-            self.assertNotIn(forbidden, code,
-                             "this module must not build a JTAG path of its own")
+            self.assertNotIn(forbidden, code)
+
+    def test_a_child_is_given_exactly_one_far(self) -> None:
+        argv = search.child_argv(A20, Path("/tmp/x.json"))
+        self.assertEqual(argv.count("--far"), 1)
+        with self.assertRaises(search.SearchStop):
+            search.check_child_argv(argv + ["--far", "0x00400a21"])
+
+
+class TheOrder(unittest.TestCase):
+    def test_the_intended_far_is_the_first_child(self) -> None:
+        asked: list[int] = []
+        with tempfile.TemporaryDirectory() as name:
+            go(Path(name), {}, asked=asked)
+        self.assertEqual(asked[0], A20)
+
+    def test_the_candidate_at_the_intended_far_reads_nothing_else(self) -> None:
+        asked: list[int] = []
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go(Path(name), {A20: SIGNATURES[A20]}, asked=asked)
+        self.assertEqual(verdict["verdict"], "WRITE_LANDED_AT_THE_INTENDED_FAR")
+        self.assertEqual(asked, [A20], "no sweep may run once the first frame has answered")
+
+    def test_a_third_state_at_the_intended_far_reads_nothing_else(self) -> None:
+        asked: list[int] = []
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go(Path(name), {A20: frame(0xDEAD)}, asked=asked)
+        self.assertEqual(verdict["verdict"], "INTENDED_FAR_IS_NEITHER")
+        self.assertEqual(asked, [A20])
+
+    def test_only_the_base_starts_a_sweep(self) -> None:
+        asked: list[int] = []
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go(Path(name), {}, asked=asked)
+        self.assertEqual(verdict["verdict"], "NOT_FOUND_COMPLETE")
+        self.assertEqual(asked, FARS)
 
 
 class TheBookkeeping(unittest.TestCase):
-    def search_in(self, tmp: Path, content: dict, **kwargs):
-        return search.run_search(FARS, tmp, PLMARK, DIGEST,
-                                 runner=runner_for(content, kwargs.pop("fail_on", None)),
-                                 plmark_reader=kwargs.pop("plmark_reader",
-                                                          lambda port: PLMARK),
-                                 **kwargs)
-
-    def test_every_far_is_captured_once_and_recorded(self) -> None:
+    def test_a_failed_child_stops_the_search_and_keeps_its_output(self) -> None:
         with tempfile.TemporaryDirectory() as name:
             tmp = Path(name)
-            index = self.search_in(tmp, {A20: frame(0x40)})
-            self.assertEqual(sorted(index["entries"]), sorted(f"{far:#010x}" for far in FARS))
-            self.assertTrue(all(entry["status"] == "ok"
-                                for entry in index["entries"].values()))
-            self.assertEqual(index["not_attempted"], [])
-            self.assertEqual(json.loads((tmp / "index.json").read_text())["entries"].keys(),
-                             index["entries"].keys())
-
-    def test_a_failed_child_stops_the_run_and_is_recorded(self) -> None:
-        with tempfile.TemporaryDirectory() as name:
-            tmp = Path(name)
+            asked: list[int] = []
             with self.assertRaises(search.SearchStop):
-                self.search_in(tmp, {}, fail_on=A22)
+                go(tmp, {}, fail_on=A22, asked=asked)
             index = json.loads((tmp / "index.json").read_text("utf-8"))
-            self.assertEqual(index["entries"][f"{A22:#010x}"]["status"], "failed")
-            self.assertNotIn(f"{A23:#010x}", index["entries"],
-                             "the run must stop, not carry on past a failure")
+            entry = index["entries"][f"{A22:#010x}"]
+            self.assertEqual(entry["status"], "failed")
+            log = json.loads((tmp / entry["child_log"]).read_text("utf-8"))
+            self.assertEqual(log["stderr"], "openocd exploded")
+            self.assertEqual(search._digest_of(tmp / entry["child_log"]),
+                             entry["child_log_sha256"])
+            self.assertEqual(asked, [A20, A21, A22], "the search must stop where it failed")
 
     def test_a_budget_leaves_the_rest_not_attempted_never_searched(self) -> None:
         with tempfile.TemporaryDirectory() as name:
             tmp = Path(name)
-            index = self.search_in(tmp, {}, max_reads=2)
-            self.assertEqual(len(index["entries"]), 2)
-            self.assertEqual(index["not_attempted"],
-                             [f"{far:#010x}" for far in FARS[2:]])
+            verdict = go(tmp, {}, max_reads=2)
+            self.assertEqual(verdict["verdict"], "NOT_FOUND_INCOMPLETE")
+            self.assertEqual(verdict["frames_not_searched"],
+                             [f"{far:#010x}" for far in FARS[3:]])
 
-    def test_a_resumed_run_keeps_the_verified_captures(self) -> None:
+    def test_a_resume_re_reads_and_re_hashes_every_capture(self) -> None:
         with tempfile.TemporaryDirectory() as name:
             tmp = Path(name)
-            self.search_in(tmp, {}, max_reads=2)
-            seen: list[int] = []
+            go(tmp, {}, max_reads=1)
+            asked: list[int] = []
+            go(tmp, {}, asked=asked)
+            self.assertEqual(asked, FARS[2:], "verified captures must not be re-read")
 
-            def counting(far: int, out_path: Path) -> int:
-                seen.append(far)
-                return runner_for({})(far, out_path)
-
-            index = search.run_search(FARS, tmp, PLMARK, DIGEST, runner=counting,
-                                      plmark_reader=lambda port: PLMARK)
-            self.assertEqual(seen, FARS[2:], "already-verified FARs must not be re-read")
-            self.assertEqual(len(index["entries"]), len(FARS))
-
-    def test_a_resume_against_different_inputs_is_refused(self) -> None:
+    def test_a_resume_refuses_a_tampered_capture(self) -> None:
         with tempfile.TemporaryDirectory() as name:
             tmp = Path(name)
-            self.search_in(tmp, {}, max_reads=1)
+            go(tmp, {}, max_reads=1)
+            victim = tmp / f"far_{A21:08x}.json"
+            victim.write_text(json.dumps(capture_for(A21, frame(0x99))), encoding="utf-8")
+            with self.assertRaises(search.SearchStop) as stopped:
+                go(tmp, {})
+            self.assertIn("changed since it was written", str(stopped.exception))
+
+    def test_a_resume_refuses_a_truncated_capture(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go(tmp, {}, max_reads=1)
+            (tmp / f"far_{A21:08x}.json").write_text("{}", encoding="utf-8")
             with self.assertRaises(search.SearchStop):
-                search.run_search(FARS, tmp, PLMARK, "0" * 64, runner=runner_for({}),
-                                  plmark_reader=lambda port: PLMARK)
+                go(tmp, {})
+
+    def test_a_resume_refuses_a_drifted_instrument(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go(tmp, {}, max_reads=1)
+            with self.assertRaises(search.SearchStop):
+                search.run(tmp, PLMARK, SIGNATURES, BASE, FARS, "0" * 64,
+                           runner=runner_for({}), plmark_reader=lambda port: PLMARK)
+
+    def test_a_resume_refuses_a_different_boot(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go(tmp, {}, max_reads=1)
+            with self.assertRaises(search.SearchStop):
+                search.run(tmp, "ffffffffffffffff", SIGNATURES, BASE, FARS, DIGEST,
+                           runner=runner_for({}), plmark_reader=lambda port: "ffffffffffffffff")
 
     def test_a_restart_during_the_search_is_refused(self) -> None:
         with tempfile.TemporaryDirectory() as name:
-            tmp = Path(name)
             with self.assertRaises(search.SearchStop):
-                self.search_in(tmp, {}, plmark_reader=lambda port: "ffffffffffffffff")
+                go(Path(name), {}, plmark_reader=lambda port: "ffffffffffffffff")
 
     def test_a_capture_for_the_wrong_far_is_refused(self) -> None:
-        def liar(far: int, out_path: Path) -> int:
+        def liar(far: int, out_path: Path) -> dict:
             out_path.write_text(json.dumps(capture_for(A21, ZERO)), encoding="utf-8")
-            return 0
+            return {"returncode": 0, "argv": [], "stdout": "", "stderr": ""}
 
+        with tempfile.TemporaryDirectory() as name:
+            with self.assertRaises(search.SearchStop):
+                search.run(Path(name), PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                           runner=liar, plmark_reader=lambda port: PLMARK)
+
+    def test_a_capture_from_another_tool_version_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            with self.assertRaises(search.SearchStop):
+                go(Path(name), {}, tool="probe_jtag_config_read.py/1.0.0")
+
+    def test_validate_index_refuses_an_index_holding_a_failure(self) -> None:
         with tempfile.TemporaryDirectory() as name:
             tmp = Path(name)
             with self.assertRaises(search.SearchStop):
-                search.run_search([A20], tmp, PLMARK, DIGEST, runner=liar,
-                                  plmark_reader=lambda port: PLMARK)
+                go(tmp, {}, fail_on=A21)
+            index = json.loads((tmp / "index.json").read_text("utf-8"))
+            with self.assertRaises(search.SearchStop) as stopped:
+                search.validate_index(tmp, index, DIGEST, PLMARK)
+            self.assertIn("not coverage", str(stopped.exception))
 
 
 class TheVerdict(unittest.TestCase):
-    def setUp(self) -> None:
-        self.signatures = {A20: frame(0x40), A21: frame(0x41),
-                           A22: frame(0x42), A23: frame(0x43)}
-        self.base = {far: list(ZERO) for far in FARS}
-        self.base[A20] = list(ZERO)
-
-    def decide(self, captures, index=None):
-        return search.judge(index or {"not_attempted": []}, captures, self.base,
-                            self.signatures)
-
-    def test_the_candidate_at_the_intended_far_ends_it(self) -> None:
-        verdict = self.decide({A20: self.signatures[A20]})
-        self.assertEqual(verdict["verdict"], "WRITE_LANDED_AT_THE_INTENDED_FAR")
+    def sweep(self, captures, not_attempted=()):
+        return search.judge_sweep({}, captures, list(not_attempted), SIGNATURES)
 
     def test_a_shifted_candidate_is_located(self) -> None:
-        captures = {A20: list(ZERO), A21: self.signatures[A20], A22: list(ZERO)}
-        verdict = self.decide(captures)
+        verdict = self.sweep({A20: list(ZERO), A21: SIGNATURES[A20]})
         self.assertEqual(verdict["verdict"], "WRITE_LANDED_ELSEWHERE")
         self.assertEqual(verdict["signature_hits"][f"{A20:#010x}"], [f"{A21:#010x}"])
 
     def test_all_base_with_complete_coverage_says_nowhere(self) -> None:
-        verdict = self.decide({far: list(ZERO) for far in FARS})
-        self.assertEqual(verdict["verdict"], "NOT_FOUND_COMPLETE")
+        self.assertEqual(self.sweep({far: list(ZERO) for far in FARS})["verdict"],
+                         "NOT_FOUND_COMPLETE")
 
     def test_all_base_with_holes_refuses_to_say_nowhere(self) -> None:
-        verdict = self.decide({A20: list(ZERO)},
-                              index={"not_attempted": [f"{A21:#010x}"]})
+        verdict = self.sweep({A20: list(ZERO)}, [f"{A21:#010x}"])
         self.assertEqual(verdict["verdict"], "NOT_FOUND_INCOMPLETE")
         self.assertIn("not there", verdict["reading"])
 
     def test_a_duplicated_signature_names_nothing(self) -> None:
-        captures = {A20: list(ZERO), A21: self.signatures[A20], A22: self.signatures[A20]}
-        verdict = self.decide(captures)
+        verdict = self.sweep({A21: SIGNATURES[A20], A22: SIGNATURES[A20]})
         self.assertEqual(verdict["verdict"], "SIGNATURE_AMBIGUOUS")
 
-    def test_an_intended_frame_that_is_neither_stops(self) -> None:
-        verdict = self.decide({A20: frame(0xDEAD)})
-        self.assertEqual(verdict["verdict"], "INTENDED_FAR_IS_NEITHER")
-
-    def test_a_missing_intended_far_decides_nothing(self) -> None:
-        self.assertEqual(self.decide({A21: list(ZERO)})["verdict"], "INCOMPLETE")
-
     def test_a_match_is_the_whole_frame_not_a_few_bits(self) -> None:
-        nearly = list(self.signatures[A20])
+        nearly = list(SIGNATURES[A20])
         nearly[50] ^= 1
-        verdict = self.decide({A20: list(ZERO), A21: nearly})
-        self.assertEqual(verdict["verdict"], "NOT_FOUND_COMPLETE")
+        self.assertEqual(self.sweep({A21: nearly})["verdict"], "NOT_FOUND_COMPLETE")
 
     def test_an_all_zero_signature_is_refused_at_the_source(self) -> None:
-        """The zero floor may never be a search key; the refusal lives in the derivation."""
         source = Path(search.__file__).read_text("utf-8")
-        self.assertIn("is all zero and cannot be searched for", source)
+        self.assertIn("is all zero and names nothing", source)
 
 
 if __name__ == "__main__":

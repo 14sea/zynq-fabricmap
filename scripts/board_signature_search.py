@@ -5,25 +5,30 @@ WHY IT IS SHAPED LIKE THIS
 --------------------------
 A JTAG readback is trustworthy exactly once per OpenOCD process: measured on 2026-08-15,
 where the same frame came back bit-exact as a process's first read and all-zero as its
-second, in both orders, and became exact again in a fresh process against the same load.
-So the unit of work here is a child process that reads **one** FAR, and the only thing this
-module adds is bookkeeping around it. It never builds a JTAG packet: `probe_jtag_config_read`
-owns that path, including the refusals, and this module would rather spawn it than
-reimplement it.
+second, in both orders, and became exact again in a fresh process against the same load. So
+the unit of work is a child process that reads **one** FAR. This module never builds a JTAG
+packet: `probe_jtag_config_read` owns that path, with its refusals and its IR allowlist.
 
-WHAT IT MAY LOOK AT
--------------------
-Only FARs that appear in the frozen device frame sequence of the run's own `carrier.bit`.
-There is no argument that widens that set, and none that names a FAR the sequence does not
-contain. Nothing here reloads the PL, touches the carrier's AXI window, or can reach WCFG,
-FDRI, JPROGRAM or JSTART — those live behind the child's `check_sequence()` and its IR
-allowlist, and are asserted by that tool's tests.
+THE INTENDED FRAME IS READ FIRST, AND DECIDED FIRST
+---------------------------------------------------
+`0x00400A20` answers the question on its own in two of the three cases — it holds the
+candidate, or it holds something that is neither the candidate nor the base — and in both the
+search is over. Only "it holds the base" needs a sweep. Reading 5,144 frames to reach a
+verdict the first frame already gave would be 5,144 chances to lose the state that produced
+it.
+
+THE AUTHORITY IS NOT AN ARGUMENT
+--------------------------------
+There is no `--run-dir` and no `--report`. The carrier run must be the one HEAD published
+(`carrier_run.head_authority_problems`), and the expected frames come from the reviewed
+known-answer artifact, which `KnownAnswerAuthority.load()` binds to its pinned digest, to the
+HEAD blob, and to a clean tree. A self-consistent set of files in a directory is not an
+authority; an operator who can point the authority elsewhere has none.
 
 WHAT COUNTS AS FINDING SOMETHING
 --------------------------------
 A whole 101-word frame equal to a whole expected frame. Not a few INIT bits, which the
-device's 4,716 all-zero frames would hand out for free, and never an all-zero signature:
-`candidate_signatures()` refuses to search for one.
+device's 4,716 all-zero frames would hand out for free, and never an all-zero signature.
 """
 
 from __future__ import annotations
@@ -44,49 +49,52 @@ sys.path.insert(0, str(REPO / "scripts"))
 
 import bitstream_frames as bf  # noqa: E402
 import board_serial as bs  # noqa: E402
+import carrier_run  # noqa: E402
 import frame_ecc  # noqa: E402
+import gate_claimb_known_answer as kagate  # noqa: E402
 import probe_jtag_config_read as probe  # noqa: E402
 
+TOOL_VERSION = "board_signature_search.py/2.0.0"
 CHILD = REPO / "scripts/probe_jtag_config_read.py"
+CHILD_CFG = REPO / "scripts/jtag_config_only.cfg"
+CHILD_SPEED = 2000
+CHILD_TOOL_VERSION = "probe_jtag_config_read.py/2.0.0"
+
+CANONICAL_RUN = REPO / kagate.RUN_REL
+CANONICAL_REPORT = REPO / kagate.REPORT_REL
 INTENDED_FAR = 0x00400A20
+EXPECTED_SITE, EXPECTED_BEL = "SLICE_X2Y25", "A6LUT"
+IDCODE = "0x13722093"
 LUT_FEATURE = re.compile(r"CLBLL_L\.SLICEL_X0\.ALUT\.INIT\[(\d+)\]$")
 
 
 class SearchStop(Exception):
-    """Anything that makes the next read meaningless, or the record incomplete."""
+    """Anything that makes the next read meaningless, or the record less than complete."""
 
 
-# --------------------------------------------------------------------- what may be read
-def frozen_far_sequence(run_dir: Path) -> list[int]:
-    """Every FAR of the run's own bitstream, in address order. The only admissible set."""
-    frames = bf.parse_frames(run_dir / "carrier.bit")["frames"]
-    return sorted(frames)
+# ------------------------------------------------------------------------- the authority
+def _derive_signatures() -> dict[int, list[int]]:
+    """The candidate frames, re-derived from the frozen inputs as a second opinion."""
+    manifest = json.loads((CANONICAL_RUN / "phenotype_manifest.json").read_text("utf-8"))
+    local_map = json.loads((CANONICAL_RUN / "local_map.json").read_text("utf-8"))
+    report = json.loads(CANONICAL_REPORT.read_text("utf-8"))
 
-
-def base_frames(run_dir: Path) -> dict[int, list[int]]:
-    return {far: list(words)
-            for far, words in bf.parse_frames(run_dir / "carrier.bit")["frames"].items()}
-
-
-def candidate_signatures(run_dir: Path, report: Path) -> dict[int, list[int]]:
-    """The frames the known-answer candidate writes, re-derived from the frozen inputs.
-
-    Refuses an all-zero signature: searching for one would report every zero frame on the
-    device as a hit, which is the floor this whole line keeps falling through.
-    """
-    manifest = json.loads((run_dir / "phenotype_manifest.json").read_text("utf-8"))
-    local_map = json.loads((run_dir / "local_map.json").read_text("utf-8"))
-    truth = json.loads(report.read_text("utf-8"))["per_lut"][0]["target_truth_table"]
+    entry = report["per_lut"][0]
+    if entry["site"] != EXPECTED_SITE or entry["bel"] != EXPECTED_BEL:
+        raise SearchStop(
+            f"the report's first entry is {entry['site']}/{entry['bel']}, not "
+            f"{EXPECTED_SITE}/{EXPECTED_BEL}: the selection is not the reviewed one")
 
     positions = {}
-    for entry in local_map["universe"]["addresses"]:
-        found = LUT_FEATURE.match(entry["feature"])
+    for address in local_map["universe"]["addresses"]:
+        found = LUT_FEATURE.match(address["feature"])
         if found:
-            positions[int(found.group(1))] = (int(entry["far"], 16), entry["word"], entry["bit"])
+            positions[int(found.group(1))] = (int(address["far"], 16),
+                                              address["word"], address["bit"])
     mask = 0
     for position in positions:
         mask |= 1 << position
-    init = int(truth.split("'h")[1], 16) & mask
+    init = int(entry["target_truth_table"].split("'h")[1], 16) & mask
 
     pinned = {int(record["far"], 16): [int(word, 16) for word in record["words"]]
               for record in manifest["frames"]}
@@ -97,21 +105,77 @@ def candidate_signatures(run_dir: Path, report: Path) -> dict[int, list[int]]:
             far, word, bit = positions[position]
             frames[far][word] |= 1 << bit
             touched.add(far)
-    signatures = {}
-    for far in sorted(touched):
-        words = frame_ecc.update_ecc(frames[far])
+    return {far: frame_ecc.update_ecc(frames[far]) for far in sorted(touched)}
+
+
+def canonical_authority() -> tuple[dict[int, list[int]], dict]:
+    """The published run, the reviewed artifact, and the frames they agree on.
+
+    Three independent things have to line up before a single frame is read: the run is the
+    one HEAD published, the artifact is the reviewed one bound to its pin and to a clean
+    tree, and the frames it names are the frames a fresh derivation from the frozen inputs
+    produces. Any of them alone can be forged by arranging a directory; together they cannot.
+    """
+    problems = carrier_run.head_authority_problems(CANONICAL_RUN)
+    if problems:
+        raise SearchStop(f"the carrier run is not the one HEAD published: {problems[:2]}")
+
+    known = kagate.KnownAnswerAuthority.load()
+    document = known.document
+
+    selection = document["selection"]
+    if selection["site"] != EXPECTED_SITE or selection["bel"] != EXPECTED_BEL:
+        raise SearchStop(
+            f"the artifact selects {selection['site']}/{selection['bel']}, not "
+            f"{EXPECTED_SITE}/{EXPECTED_BEL}")
+    report = json.loads(CANONICAL_REPORT.read_text("utf-8"))
+    chosen = report["per_lut"][selection["report_index"]]
+    if chosen["site"] != EXPECTED_SITE or chosen["bel"] != EXPECTED_BEL:
+        raise SearchStop(
+            f"report entry {selection['report_index']} is {chosen['site']}/{chosen['bel']}: "
+            "the artifact's index does not name the reviewed LUT")
+
+    published = {int(frame["far"], 16): [int(word, 16) for word in frame["words"]]
+                 for frame in document["candidate"]["touched_frames"]}
+    derived = _derive_signatures()
+    if published != derived:
+        raise SearchStop(
+            "the published signature frames and a fresh derivation disagree; one of them is "
+            "wrong and neither may be searched for")
+    for far, words in published.items():
         if not any(words):
-            raise SearchStop(f"the signature for {far:#010x} is all zero and cannot be searched for")
-        signatures[far] = words
-    return signatures
+            raise SearchStop(f"the signature for {far:#010x} is all zero and names nothing")
+    if INTENDED_FAR not in published:
+        raise SearchStop(f"the candidate does not touch {INTENDED_FAR:#010x}")
+    return published, document
 
 
-def inputs_digest(run_dir: Path, report: Path, fars: list[int]) -> str:
-    """What a resumed run must still be looking at. A drift here invalidates the captures."""
-    parts = [hashlib.sha256((run_dir / name).read_bytes()).hexdigest()
-             for name in ("carrier.bit", "phenotype_manifest.json", "local_map.json")]
-    parts.append(hashlib.sha256(report.read_bytes()).hexdigest())
-    parts.append(hashlib.sha256(",".join(f"{far:08x}" for far in fars).encode()).hexdigest())
+def frozen_far_sequence() -> list[int]:
+    """Every FAR of the published bitstream, in address order. The only admissible set."""
+    return sorted(bf.parse_frames(CANONICAL_RUN / "carrier.bit")["frames"])
+
+
+def base_frames() -> dict[int, list[int]]:
+    return {far: list(words)
+            for far, words in bf.parse_frames(CANONICAL_RUN / "carrier.bit")["frames"].items()}
+
+
+def instrument_digest(fars: list[int]) -> str:
+    """Everything a later capture must still have been taken with.
+
+    The inputs alone are not enough: two different readback tools, or a different JTAG
+    config, or a different adapter speed produce captures that must never be mixed into one
+    search. A resume that cannot see the instrument change would splice them silently.
+    """
+    parts = [TOOL_VERSION, CHILD_TOOL_VERSION, str(CHILD_SPEED)]
+    for path in (Path(__file__), CHILD, CHILD_CFG,
+                 CANONICAL_RUN / "carrier.bit",
+                 CANONICAL_RUN / "phenotype_manifest.json",
+                 CANONICAL_RUN / "local_map.json",
+                 CANONICAL_REPORT, kagate.ARTIFACT):
+        parts.append(f"{path.name}:{hashlib.sha256(path.read_bytes()).hexdigest()}")
+    parts.append("fars:" + hashlib.sha256(
+        ",".join(f"{far:08x}" for far in fars).encode()).hexdigest())
     return hashlib.sha256("|".join(parts).encode()).hexdigest()
 
 
@@ -122,7 +186,7 @@ def read_plmark(port: str) -> str:
         sync = bs.ub_cmd(ser, bs.SYNC_COMMAND, 3.0)
         reply = bs.ub_cmd(ser, "printenv plmark", 3.0)
     if bs.BOOT_BANNER_RE.search(sync + reply):
-        raise SearchStop("a boot banner came back: the board restarted, the PL is not the one loaded")
+        raise SearchStop("a boot banner came back: the PL is not the one that was loaded")
     found = re.search(rb"plmark=([0-9a-f]+)", reply)
     if not found:
         raise SearchStop(f"plmark is not set: {reply[-120:]!r}")
@@ -136,20 +200,18 @@ def check_child_argv(argv: list[str]) -> None:
             f"a child must be given exactly one --far, got {argv.count('--far')}: {argv}")
 
 
-def child_argv(far: int, out_path: Path, cfg: str | None, speed: int | None) -> list[str]:
-    argv = [sys.executable, str(CHILD), "--far", f"{far:#010x}", "--out", str(out_path)]
-    if cfg:
-        argv += ["--cfg", cfg]
-    if speed:
-        argv += ["--speed", str(speed)]
+def child_argv(far: int, out_path: Path) -> list[str]:
+    argv = [sys.executable, str(CHILD), "--far", f"{far:#010x}", "--out", str(out_path),
+            "--cfg", str(CHILD_CFG), "--speed", str(CHILD_SPEED)]
     check_child_argv(argv)
     return argv
 
 
-def subprocess_runner(far: int, out_path: Path, cfg: str | None = None,
-                      speed: int | None = None, timeout: float = 600) -> int:
-    argv = child_argv(far, out_path, cfg, speed)
-    return subprocess.run(argv, capture_output=True, text=True, timeout=timeout).returncode
+def subprocess_runner(far: int, out_path: Path, timeout: float = 600) -> dict:
+    argv = child_argv(far, out_path)
+    done = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
+    return {"returncode": done.returncode, "argv": argv[1:],
+            "stdout": done.stdout, "stderr": done.stderr}
 
 
 # ------------------------------------------------------------------------ the bookkeeping
@@ -165,217 +227,265 @@ def _atomic_write(path: Path, text: str) -> None:
     os.replace(handle.name, path)
 
 
-def validate_capture(far: int, capture: dict) -> list[int]:
-    """A capture is usable only if it is this FAR, read once, whole."""
+def _digest_of(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def frame_of(far: int, capture: dict) -> list[int]:
+    """The 101 words a capture holds for this FAR, or a refusal saying why it does not."""
     if capture.get("verdict") != "READ":
         raise SearchStop(f"{far:#010x}: the child did not read ({capture.get('stop_reason')})")
-    if capture.get("idcode") != "0x13722093":
+    if capture.get("tool") != CHILD_TOOL_VERSION:
+        raise SearchStop(f"{far:#010x}: taken with {capture.get('tool')}, not {CHILD_TOOL_VERSION}")
+    if capture.get("idcode") != IDCODE:
         raise SearchStop(f"{far:#010x}: IDCODE {capture.get('idcode')}")
     frames = capture.get("frames", {})
     if list(frames) != [f"{far:#010x}"]:
         raise SearchStop(f"{far:#010x}: the capture holds {list(frames)}")
     words = [int(word, 16) for word in frames[f"{far:#010x}"]["frame"]]
     if len(words) != probe.FRAME_WORDS:
-        raise SearchStop(f"{far:#010x}: {len(words)} words")
+        raise SearchStop(f"{far:#010x}: {len(words)} words, expected {probe.FRAME_WORDS}")
+    body = b"".join(word.to_bytes(4, "big") for word in words)
+    if hashlib.sha256(body).hexdigest() != frames[f"{far:#010x}"]["frame_sha256"]:
+        raise SearchStop(f"{far:#010x}: the capture's own frame digest does not match its words")
     return words
 
 
-def run_search(fars: list[int], out_dir: Path, plmark: str, digest: str,
-               runner=subprocess_runner, port: str = "/dev/ebaz-uart",
-               max_reads: int | None = None, plmark_reader=read_plmark) -> dict:
-    """One child per FAR, atomic per capture, resumable, and never a silent skip."""
-    index_path = out_dir / "index.json"
-    index: dict = {"tool": "board_signature_search.py/1.0.0", "inputs_digest": digest,
-                   "plmark_at_start": plmark, "entries": {}}
-    if index_path.exists():
-        previous = json.loads(index_path.read_text("utf-8"))
-        if previous.get("inputs_digest") != digest:
-            raise SearchStop("the resumed run's inputs differ from the captures on disk")
-        if previous.get("plmark_at_start") != plmark:
-            raise SearchStop("the resumed run is a different boot from the captures on disk")
-        index = previous
-        index.setdefault("entries", {})
+def validate_index(out_dir: Path, index: dict, digest: str, plmark: str) -> dict[int, list[int]]:
+    """The one gate every path goes through: live, resumed and judge-only alike.
 
-    reads = 0
-    for far in fars:
-        key = f"{far:#010x}"
-        entry = index["entries"].get(key)
-        if entry and entry.get("status") == "ok":
+    Re-reads and re-hashes every capture rather than believing the index about it. An index
+    is a claim; the captures are the evidence, and an evidence file that has been edited,
+    truncated or swapped since it was written must not reach a verdict through a status
+    field that still says "ok".
+    """
+    if index.get("tool") != TOOL_VERSION:
+        raise SearchStop(f"the index was written by {index.get('tool')}, not {TOOL_VERSION}")
+    if index.get("instrument_digest") != digest:
+        raise SearchStop("the captures were taken with a different instrument or inputs")
+    if index.get("plmark_at_start") != plmark:
+        raise SearchStop("the captures are from a different boot")
+    failed = sorted(key for key, entry in index.get("entries", {}).items()
+                    if entry.get("status") != "ok")
+    if failed:
+        raise SearchStop(f"the search holds failed captures and is not coverage: {failed}")
+
+    captures: dict[int, list[int]] = {}
+    for key, entry in index.get("entries", {}).items():
+        # Only entries that claim success are validated here; the refusal above is what
+        # stands between a failure and a verdict, and it is not optional on any path.
+        if entry.get("status") != "ok":
             continue
-        if max_reads is not None and reads >= max_reads:
-            break
-        capture_path = out_dir / f"far_{far:08x}.json"
-        staging = out_dir / f"far_{far:08x}.json.part"
-        child_started = time.time()
-        code = runner(far, staging)
-        child_elapsed = round(time.time() - child_started, 3)
-        reads += 1
-        try:
-            if code != 0 or not staging.exists():
-                raise SearchStop(f"{key}: the child exited {code}")
-            capture = json.loads(staging.read_text("utf-8"))
-            words = validate_capture(far, capture)
-        except SearchStop as stop:
-            index["entries"][key] = {"status": "failed", "child_returncode": code,
-                                     "elapsed_s": child_elapsed, "reason": str(stop)}
-            _atomic_write(index_path, json.dumps(index, indent=2) + "\n")
-            # A failed FAR is recorded and then stops the run. It is never skipped: a hole in
-            # the coverage would let a later "not found" mean "not looked at".
-            raise
-        os.replace(staging, capture_path)
-        index["entries"][key] = {
-            "status": "ok",
-            "child_returncode": code,
-            # Measured per child, because the cost of a full sweep is 5,144 of these and the
-            # only honest estimate is one taken from the board.
-            "elapsed_s": child_elapsed,
-            "capture": capture_path.name,
-            "frame_sha256": capture["frames"][key]["frame_sha256"],
-            "idcode": capture.get("idcode"),
-            "config_status": capture.get("config_status"),
-            "nonzero_words": sum(1 for word in words if word),
-        }
-        _atomic_write(index_path, json.dumps(index, indent=2) + "\n")
+        far = int(key, 16)
+        path = out_dir / entry["capture"]
+        if not path.exists():
+            raise SearchStop(f"{key}: the capture file is gone")
+        if _digest_of(path) != entry.get("capture_sha256"):
+            raise SearchStop(f"{key}: the capture file has changed since it was written")
+        words = frame_of(far, json.loads(path.read_text("utf-8")))
+        body = b"".join(word.to_bytes(4, "big") for word in words)
+        if hashlib.sha256(body).hexdigest() != entry.get("frame_sha256"):
+            raise SearchStop(f"{key}: the frame does not match the digest the index recorded")
+        captures[far] = words
+    return captures
 
+
+def capture_one(far: int, out_dir: Path, index: dict, runner) -> list[int]:
+    """One child, one FAR, and every byte of it kept — including when it fails."""
+    key = f"{far:#010x}"
+    capture_path = out_dir / f"far_{far:08x}.json"
+    staging = out_dir / f"far_{far:08x}.json.part"
+    index_path = out_dir / "index.json"
+
+    started = time.time()
+    result = runner(far, staging)
+    elapsed = round(time.time() - started, 3)
+    child_path = out_dir / f"far_{far:08x}.child.json"
+    _atomic_write(child_path, json.dumps(result, indent=2) + "\n")
+
+    try:
+        if result.get("returncode") != 0:
+            raise SearchStop(f"{key}: the child exited {result.get('returncode')}")
+        if not staging.exists():
+            raise SearchStop(f"{key}: the child wrote no capture")
+        words = frame_of(far, json.loads(staging.read_text("utf-8")))
+    except SearchStop as stop:
+        entry = {"status": "failed", "child_returncode": result.get("returncode"),
+                 "elapsed_s": elapsed, "child_log": child_path.name,
+                 "child_log_sha256": _digest_of(child_path), "reason": str(stop)}
+        if staging.exists():
+            partial = out_dir / f"far_{far:08x}.partial.json"
+            os.replace(staging, partial)
+            entry["partial"] = partial.name
+            entry["partial_sha256"] = _digest_of(partial)
+        index["entries"][key] = entry
+        _atomic_write(index_path, json.dumps(index, indent=2) + "\n")
+        # Recorded, then stopped. A hole in the coverage would let a later "not found" mean
+        # "not looked at", so the search never continues past one.
+        raise
+
+    os.replace(staging, capture_path)
+    body = b"".join(word.to_bytes(4, "big") for word in words)
+    index["entries"][key] = {
+        "status": "ok",
+        "child_returncode": result.get("returncode"),
+        "elapsed_s": elapsed,
+        "capture": capture_path.name,
+        "capture_sha256": _digest_of(capture_path),
+        "frame_sha256": hashlib.sha256(body).hexdigest(),
+        "child_log": child_path.name,
+        "child_log_sha256": _digest_of(child_path),
+        "nonzero_words": sum(1 for word in words if word),
+    }
+    _atomic_write(index_path, json.dumps(index, indent=2) + "\n")
+    return words
+
+
+def open_index(out_dir: Path, digest: str, plmark: str) -> tuple[dict, dict[int, list[int]]]:
+    """A fresh index, or a resumed one that has re-earned every capture it claims."""
+    index_path = out_dir / "index.json"
+    if not index_path.exists():
+        return ({"tool": TOOL_VERSION, "instrument_digest": digest,
+                 "plmark_at_start": plmark, "entries": {}}, {})
+    index = json.loads(index_path.read_text("utf-8"))
+    captures = validate_index(out_dir, index, digest, plmark)
+    index.setdefault("entries", {})
+    return index, captures
+
+
+# ----------------------------------------------------------------------------- the verdict
+def decide_intended(words: list[int], signatures: dict[int, list[int]],
+                    base: dict[int, list[int]]) -> dict:
+    """What the first frame says on its own, before anything else is read."""
+    if words == signatures.get(INTENDED_FAR):
+        return {"verdict": "WRITE_LANDED_AT_THE_INTENDED_FAR", "sweep_needed": False,
+                "reading": "The intended frame holds the candidate exactly, so the write "
+                           "reached the frame it asked for and the disagreement is on the "
+                           "read side."}
+    if words != base.get(INTENDED_FAR):
+        return {"verdict": "INTENDED_FAR_IS_NEITHER", "sweep_needed": False,
+                "reading": "The intended frame is neither the candidate nor the base. That "
+                           "is a third thing, outside the ruled decision order; stop and "
+                           "look at it."}
+    return {"verdict": "INTENDED_FAR_HOLDS_THE_BASE", "sweep_needed": True,
+            "reading": "The intended frame holds the base, so where the write went is now "
+                       "an open question and the sweep is the way to ask it."}
+
+
+def judge_sweep(index: dict, captures: dict[int, list[int]], not_attempted: list[str],
+                signatures: dict[int, list[int]]) -> dict:
+    """Where, if anywhere, a whole candidate frame appears in what was read."""
+    found = {f"{signature_far:#010x}": [f"{far:#010x}" for far, words in sorted(captures.items())
+                                        if words == signature]
+             for signature_far, signature in signatures.items()}
+    verdict = {"signature_hits": found, "frames_searched": len(captures),
+               "frames_not_searched": not_attempted}
+    duplicated = {far: hits for far, hits in found.items() if len(hits) > 1}
+    if duplicated:
+        verdict["verdict"] = "SIGNATURE_AMBIGUOUS"
+        verdict["reading"] = (
+            f"A signature matched more than one frame ({duplicated}); it names no location "
+            "and cannot be evidence of where the write went.")
+    elif any(found.values()):
+        verdict["verdict"] = "WRITE_LANDED_ELSEWHERE"
+        verdict["reading"] = (
+            f"A candidate frame was found whole at another address: {found}. The write "
+            "reached the fabric at the wrong FAR.")
+    elif not_attempted:
+        verdict["verdict"] = "NOT_FOUND_INCOMPLETE"
+        verdict["reading"] = (
+            f"No signature in the {len(captures)} frames read, but {len(not_attempted)} were "
+            "never read. 'Not found' here does not mean 'not there'.")
+    else:
+        verdict["verdict"] = "NOT_FOUND_COMPLETE"
+        verdict["reading"] = (
+            f"No candidate frame appears anywhere in the {len(captures)} frames of the "
+            "device sequence. The write did not reach the fabric as a whole frame anywhere.")
+    return verdict
+
+
+# -------------------------------------------------------------------------------- the run
+def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
+        base: dict[int, list[int]], fars: list[int], digest: str, runner=subprocess_runner,
+        port: str = "/dev/ebaz-uart", max_reads: int | None = None,
+        plmark_reader=read_plmark) -> dict:
+    """The intended frame first and decided first; the sweep only if it asks for one."""
+    index, captures = open_index(out_dir, digest, plmark)
+
+    if INTENDED_FAR not in captures:
+        captures[INTENDED_FAR] = capture_one(INTENDED_FAR, out_dir, index, runner)
+    decision = decide_intended(captures[INTENDED_FAR], signatures, base)
+    verdict = dict(decision)
+
+    if decision["sweep_needed"]:
+        reads = 0
+        for far in fars:
+            if far in captures:
+                continue
+            if max_reads is not None and reads >= max_reads:
+                break
+            captures[far] = capture_one(far, out_dir, index, runner)
+            reads += 1
+        not_attempted = [f"{far:#010x}" for far in fars
+                         if f"{far:#010x}" not in index["entries"]]
+        verdict = judge_sweep(index, captures, not_attempted, signatures)
+
+    index["not_attempted"] = ([] if not decision["sweep_needed"]
+                              else verdict.get("frames_not_searched", []))
     index["plmark_at_end"] = plmark_reader(port) if plmark_reader else plmark
     if index["plmark_at_end"] != plmark:
         raise SearchStop(
             f"plmark changed from {plmark} to {index['plmark_at_end']}: the board restarted "
             "during the search and every capture after that is from a different PL")
-    index["attempted"] = len(index["entries"])
-    index["not_attempted"] = [f"{far:#010x}" for far in fars
-                              if f"{far:#010x}" not in index["entries"]]
-    _atomic_write(index_path, json.dumps(index, indent=2) + "\n")
-    # Second line of defence, and the one a "just skip it and carry on" change trips over: a
-    # recorded failure is not coverage, whatever the loop above decided to do about it.
-    failed = sorted(key for key, entry in index["entries"].items()
-                    if entry.get("status") != "ok")
-    if failed:
-        raise SearchStop(
-            f"the search holds failed captures and cannot be read as coverage: {failed}")
-    return index
-
-
-# ----------------------------------------------------------------------------- the verdict
-def judge(index: dict, captures: dict[int, list[int]], base: dict[int, list[int]],
-          signatures: dict[int, list[int]]) -> dict:
-    """The ruled order: is A20 the candidate, is it the base, and only then, search.
-
-    Takes the base frames rather than a run directory, so the decision can be exercised
-    against synthetic captures without a bitstream — every branch below has a test.
-    """
-    verdict: dict = {"intended_far": f"{INTENDED_FAR:#010x}",
-                     "signature_fars": [f"{far:#010x}" for far in signatures]}
-
-    intended = captures.get(INTENDED_FAR)
-    if intended is None:
-        verdict["verdict"] = "INCOMPLETE"
-        verdict["reading"] = "the intended FAR was never captured; nothing can be decided"
-        return verdict
-
-    verdict["intended_equals_candidate"] = intended == signatures.get(INTENDED_FAR)
-    verdict["intended_equals_base"] = intended == base.get(INTENDED_FAR)
-
-    if verdict["intended_equals_candidate"]:
-        verdict["verdict"] = "WRITE_LANDED_AT_THE_INTENDED_FAR"
-        verdict["reading"] = (
-            "The intended frame holds the candidate exactly, so the carrier's write reached "
-            "the frame it asked for and the disagreement is on the read side.")
-        return verdict
-    if not verdict["intended_equals_base"]:
-        verdict["verdict"] = "INTENDED_FAR_IS_NEITHER"
-        verdict["reading"] = (
-            "The intended frame is neither the candidate nor the base. That is a third thing "
-            "and it is not covered by the ruled decision order; stop and look at it.")
-        return verdict
-
-    found: dict[str, list[str]] = {}
-    for signature_far, words in signatures.items():
-        hits = [f"{far:#010x}" for far, captured in sorted(captures.items())
-                if captured == words]
-        found[f"{signature_far:#010x}"] = hits
-    verdict["signature_hits"] = found
-    searched = len(captures)
-    verdict["frames_searched"] = searched
-    verdict["frames_not_searched"] = index.get("not_attempted", [])
-
-    any_hit = any(found.values())
-    duplicated = {far: hits for far, hits in found.items() if len(hits) > 1}
-    if duplicated:
-        verdict["verdict"] = "SIGNATURE_AMBIGUOUS"
-        verdict["reading"] = (
-            f"A signature matched more than one frame ({duplicated}); it does not name a "
-            "location and cannot be used as evidence of where the write went.")
-    elif any_hit:
-        verdict["verdict"] = "WRITE_LANDED_ELSEWHERE"
-        verdict["reading"] = (
-            "The intended frame holds the base, and a candidate frame was found whole at "
-            f"another address: {found}. The write reached the fabric at the wrong FAR.")
-    elif verdict["frames_not_searched"]:
-        verdict["verdict"] = "NOT_FOUND_INCOMPLETE"
-        verdict["reading"] = (
-            f"The intended frame holds the base and no signature was found in the "
-            f"{searched} frames read, but "
-            f"{len(verdict['frames_not_searched'])} frames were never read. "
-            "'Not found' here does not mean 'not there'.")
-    else:
-        verdict["verdict"] = "NOT_FOUND_COMPLETE"
-        verdict["reading"] = (
-            f"The intended frame holds the base and no candidate frame appears anywhere in "
-            f"the {searched} frames of the device sequence. The write did not reach the "
-            "fabric as a whole frame anywhere.")
+    _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\n")
+    validate_index(out_dir, index, digest, plmark)
+    verdict["intended_far"] = f"{INTENDED_FAR:#010x}"
+    verdict["signature_fars"] = [f"{far:#010x}" for far in signatures]
     return verdict
-
-
-def load_captures(out_dir: Path, index: dict) -> dict[int, list[int]]:
-    captures: dict[int, list[int]] = {}
-    for key, entry in index.get("entries", {}).items():
-        if entry.get("status") != "ok":
-            continue
-        far = int(key, 16)
-        capture = json.loads((out_dir / entry["capture"]).read_text("utf-8"))
-        captures[far] = [int(word, 16) for word in capture["frames"][key]["frame"]]
-    return captures
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--run-dir", type=Path,
-                    default=REPO / "gate_runs/claimb_round1_carrier_2026_08_13_erratum006")
-    ap.add_argument("--report", type=Path,
-                    default=REPO / "gate_runs/claimb_round1_reachability_2026_08_10"
-                                   "/reachability_report.json")
+    # Logistics only. There is no --run-dir and no --report: see canonical_authority().
     ap.add_argument("--out-dir", type=Path, required=True)
     ap.add_argument("--plmark", required=True,
                     help="the marker the load set; checked before and after the search")
     ap.add_argument("--port", default="/dev/ebaz-uart")
     ap.add_argument("--max-reads", type=int, default=None,
-                    help="stop after this many child reads; the rest are recorded as not "
-                         "attempted, never as searched")
+                    help="stop the sweep after this many child reads; the rest are recorded "
+                         "as not attempted, never as searched")
     ap.add_argument("--judge-only", action="store_true",
                     help="decide from the captures already on disk, touching no hardware")
     args = ap.parse_args()
 
     started = time.time()
     try:
-        fars = frozen_far_sequence(args.run_dir)
-        signatures = candidate_signatures(args.run_dir, args.report)
-        digest = inputs_digest(args.run_dir, args.report, fars)
+        signatures, document = canonical_authority()
+        fars = frozen_far_sequence()
+        digest = instrument_digest(fars)
+        base = base_frames()
 
         if args.judge_only:
             index = json.loads((args.out_dir / "index.json").read_text("utf-8"))
-            if index.get("inputs_digest") != digest:
-                raise SearchStop("the captures on disk were taken against different inputs")
+            captures = validate_index(args.out_dir, index, digest, args.plmark)
+            if INTENDED_FAR not in captures:
+                raise SearchStop("the intended FAR was never captured; nothing is decided")
+            decision = decide_intended(captures[INTENDED_FAR], signatures, base)
+            verdict = dict(decision)
+            if decision["sweep_needed"]:
+                verdict = judge_sweep(index, captures, index.get("not_attempted", []),
+                                      signatures)
+            verdict["intended_far"] = f"{INTENDED_FAR:#010x}"
+            verdict["signature_fars"] = [f"{far:#010x}" for far in signatures]
         else:
             actual = read_plmark(args.port)
             if actual != args.plmark:
                 raise SearchStop(f"plmark is {actual}, expected {args.plmark}")
-            index = run_search(fars, args.out_dir, args.plmark, digest, port=args.port,
-                               max_reads=args.max_reads)
+            verdict = run(args.out_dir, args.plmark, signatures, base, fars, digest,
+                          port=args.port, max_reads=args.max_reads)
 
-        verdict = judge(index, load_captures(args.out_dir, index),
-                        base_frames(args.run_dir), signatures)
-        verdict["inputs_digest"] = digest
+        verdict["instrument_digest"] = digest
+        verdict["known_answer_artifact_sha256"] = kagate.PRODUCTION_ARTIFACT_SHA256
         verdict["elapsed_s"] = round(time.time() - started, 1)
         _atomic_write(args.out_dir / "verdict.json", json.dumps(verdict, indent=2) + "\n")
         print(f"{verdict['verdict']}: {verdict['reading']}")
