@@ -24,7 +24,9 @@ sys.path.insert(0, str(REPO / "scripts"))
 import board_signature_search as search  # noqa: E402
 
 A20, A21, A22, A23 = 0x00400A20, 0x00400A21, 0x00400A22, 0x00400A23
-FARS = [A20, A21, A22, A23, 0x00400A24]
+A24 = 0x00400A24
+CONTROL_FARS = [0x00400B00 + offset for offset in range(search.POSITIVE_CONTROL_COUNT)]
+FARS = [A20, A21, A22, A23, A24, *CONTROL_FARS]
 DIGEST = "d" * 64
 PLMARK = "18cc00f0fa537908"
 ZERO = [0] * 101
@@ -39,6 +41,8 @@ def frame(seed: int) -> list[int]:
 
 SIGNATURES = {A20: frame(0x40), A21: frame(0x41), A22: frame(0x42), A23: frame(0x43)}
 BASE = {far: list(ZERO) for far in FARS}
+CONTROLS = {far: frame(0x100 + offset) for offset, far in enumerate(CONTROL_FARS)}
+BASE.update(CONTROLS)
 
 
 def capture_for(far: int, words: list[int], tool: str = search.CHILD_TOOL_VERSION) -> dict:
@@ -79,8 +83,11 @@ def runner_for(content: dict[int, list[int]], fail_on: int | None = None,
 
 
 def go(tmp: Path, content: dict, **kwargs):
-    return search.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
-                      runner=runner_for(content, kwargs.pop("fail_on", None),
+    wire_content = dict(content)
+    if kwargs.pop("control_ok", True):
+        wire_content.setdefault(CONTROL_FARS[0], CONTROLS[CONTROL_FARS[0]])
+    return search.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST, CONTROLS,
+                      runner=runner_for(wire_content, kwargs.pop("fail_on", None),
                                         kwargs.pop("asked", None), kwargs.pop("tool", None),
                                         kwargs.pop("raise_on", None),
                                         kwargs.pop("garbage_on", None)),
@@ -134,6 +141,14 @@ class TheAuthority(unittest.TestCase):
         with self.assertRaises(search.SearchStop):
             search.check_child_argv(argv + ["--far", "0x00400a21"])
 
+    def test_the_positive_controls_are_authority_derived_and_pinned(self) -> None:
+        base = search.base_frames()
+        controls = search.canonical_positive_controls(base)
+        self.assertEqual(tuple(controls), search.EXPECTED_POSITIVE_CONTROL_FARS)
+        self.assertEqual(len(controls), search.POSITIVE_CONTROL_COUNT)
+        self.assertTrue(all(any(words) for words in controls.values()))
+        self.assertNotIn(search.INTENDED_FAR, controls)
+
 
 class TheOrder(unittest.TestCase):
     def test_the_intended_far_is_the_first_child(self) -> None:
@@ -149,19 +164,59 @@ class TheOrder(unittest.TestCase):
         self.assertEqual(verdict["verdict"], "WRITE_LANDED_AT_THE_INTENDED_FAR")
         self.assertEqual(asked, [A20], "no sweep may run once the first frame has answered")
 
-    def test_a_third_state_at_the_intended_far_reads_nothing_else(self) -> None:
+    def test_a_third_state_first_earns_one_control_then_reads_nothing_else(self) -> None:
         asked: list[int] = []
         with tempfile.TemporaryDirectory() as name:
             verdict = go(Path(name), {A20: frame(0xDEAD)}, asked=asked)
         self.assertEqual(verdict["verdict"], "INTENDED_FAR_IS_NEITHER")
-        self.assertEqual(asked, [A20])
+        self.assertEqual(asked, [A20, CONTROL_FARS[0]],
+                         "the third-state verdict must first earn a positive control")
 
     def test_only_the_base_starts_a_sweep(self) -> None:
         asked: list[int] = []
         with tempfile.TemporaryDirectory() as name:
             verdict = go(Path(name), {}, asked=asked)
         self.assertEqual(verdict["verdict"], "NOT_FOUND_COMPLETE")
-        self.assertEqual(asked, FARS)
+        self.assertEqual(asked[0:2], [A20, CONTROL_FARS[0]])
+        self.assertEqual(set(asked), set(FARS))
+
+
+class ThePositiveControl(unittest.TestCase):
+    def test_all_controls_mismatching_stops_before_the_sweep(self) -> None:
+        asked: list[int] = []
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go(Path(name), {}, asked=asked, control_ok=False)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_INVALID")
+        self.assertEqual(asked, [A20, *CONTROL_FARS])
+        self.assertNotIn(A21, asked, "an invalid instrument must not start the sweep")
+
+    def test_nonzero_but_wrong_controls_do_not_count(self) -> None:
+        wrong = {far: frame(0xD000 + offset)
+                 for offset, far in enumerate(CONTROL_FARS)}
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go(Path(name), wrong, control_ok=False)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_INVALID")
+        self.assertTrue(all(item["observed_nonzero_words"] > 0
+                            for item in verdict["positive_controls"]))
+        self.assertFalse(verdict["positive_control_matches"])
+
+    def test_an_unread_control_set_is_unvalidated_not_invalid(self) -> None:
+        asked: list[int] = []
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go(Path(name), {}, asked=asked, control_ok=False, max_reads=2)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_UNVALIDATED")
+        self.assertEqual(asked, [A20, *CONTROL_FARS[:2]])
+        self.assertEqual(len(verdict["positive_controls_not_read"]), 14)
+
+    def test_neither_cannot_bypass_a_failed_control(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go(Path(name), {A20: frame(0xDEAD)}, control_ok=False)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_INVALID")
+
+    def test_judge_sweep_itself_cannot_emit_not_found_without_a_control(self) -> None:
+        captures = {far: list(ZERO) for far in FARS}
+        verdict = search.judge_sweep({}, captures, [], SIGNATURES, CONTROLS)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_INVALID")
 
 
 class TheBookkeeping(unittest.TestCase):
@@ -178,15 +233,17 @@ class TheBookkeeping(unittest.TestCase):
             self.assertEqual(log["stderr"], "openocd exploded")
             self.assertEqual(search._digest_of(tmp / entry["child_log"]),
                              entry["child_log_sha256"])
-            self.assertEqual(asked, [A20, A21, A22], "the search must stop where it failed")
+            self.assertEqual(asked, [A20, CONTROL_FARS[0], A21, A22],
+                             "the search must stop where it failed")
 
     def test_a_budget_leaves_the_rest_not_attempted_never_searched(self) -> None:
         with tempfile.TemporaryDirectory() as name:
             tmp = Path(name)
             verdict = go(tmp, {}, max_reads=2)
             self.assertEqual(verdict["verdict"], "NOT_FOUND_INCOMPLETE")
-            self.assertEqual(verdict["frames_not_searched"],
-                             [f"{far:#010x}" for far in FARS[3:]])
+            self.assertEqual(verdict["frames_not_searched"], [
+                f"{far:#010x}" for far in FARS
+                if far not in (A20, A21, CONTROL_FARS[0])])
 
     def test_a_resume_re_reads_and_re_hashes_every_capture(self) -> None:
         with tempfile.TemporaryDirectory() as name:
@@ -194,14 +251,17 @@ class TheBookkeeping(unittest.TestCase):
             go(tmp, {}, max_reads=1)
             asked: list[int] = []
             go(tmp, {}, asked=asked)
-            self.assertEqual(asked, FARS[2:], "verified captures must not be re-read")
+            self.assertEqual(asked, [far for far in FARS
+                                     if far not in (A20, CONTROL_FARS[0])],
+                             "verified captures must not be re-read")
 
     def test_a_resume_refuses_a_tampered_capture(self) -> None:
         with tempfile.TemporaryDirectory() as name:
             tmp = Path(name)
             go(tmp, {}, max_reads=1)
-            victim = tmp / f"far_{A21:08x}.json"
-            victim.write_text(json.dumps(capture_for(A21, frame(0x99))), encoding="utf-8")
+            victim = tmp / f"far_{CONTROL_FARS[0]:08x}.json"
+            victim.write_text(json.dumps(capture_for(CONTROL_FARS[0], frame(0x99))),
+                              encoding="utf-8")
             with self.assertRaises(search.SearchStop) as stopped:
                 go(tmp, {})
             self.assertIn("changed since it was written", str(stopped.exception))
@@ -210,7 +270,7 @@ class TheBookkeeping(unittest.TestCase):
         with tempfile.TemporaryDirectory() as name:
             tmp = Path(name)
             go(tmp, {}, max_reads=1)
-            (tmp / f"far_{A21:08x}.json").write_text("{}", encoding="utf-8")
+            (tmp / f"far_{CONTROL_FARS[0]:08x}.json").write_text("{}", encoding="utf-8")
             with self.assertRaises(search.SearchStop):
                 go(tmp, {})
 
@@ -220,7 +280,8 @@ class TheBookkeeping(unittest.TestCase):
             go(tmp, {}, max_reads=1)
             with self.assertRaises(search.SearchStop):
                 search.run(tmp, PLMARK, SIGNATURES, BASE, FARS, "0" * 64,
-                           runner=runner_for({}), plmark_reader=lambda port: PLMARK)
+                           CONTROLS, runner=runner_for({}),
+                           plmark_reader=lambda port: PLMARK)
 
     def test_a_resume_refuses_a_different_boot(self) -> None:
         with tempfile.TemporaryDirectory() as name:
@@ -228,7 +289,8 @@ class TheBookkeeping(unittest.TestCase):
             go(tmp, {}, max_reads=1)
             with self.assertRaises(search.SearchStop):
                 search.run(tmp, "ffffffffffffffff", SIGNATURES, BASE, FARS, DIGEST,
-                           runner=runner_for({}), plmark_reader=lambda port: "ffffffffffffffff")
+                           CONTROLS, runner=runner_for({}),
+                           plmark_reader=lambda port: "ffffffffffffffff")
 
     def test_a_restart_during_the_search_is_refused(self) -> None:
         with tempfile.TemporaryDirectory() as name:
@@ -243,7 +305,7 @@ class TheBookkeeping(unittest.TestCase):
         with tempfile.TemporaryDirectory() as name:
             with self.assertRaises(search.SearchStop):
                 search.run(Path(name), PLMARK, SIGNATURES, BASE, FARS, DIGEST,
-                           runner=liar, plmark_reader=lambda port: PLMARK)
+                           CONTROLS, runner=liar, plmark_reader=lambda port: PLMARK)
 
     def test_a_capture_from_another_tool_version_is_refused(self) -> None:
         with tempfile.TemporaryDirectory() as name:
@@ -257,7 +319,7 @@ class TheBookkeeping(unittest.TestCase):
                 go(tmp, {}, fail_on=A21)
             index = json.loads((tmp / "index.json").read_text("utf-8"))
             with self.assertRaises(search.SearchStop) as stopped:
-                search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
+                search.validate_index(tmp, index, DIGEST, PLMARK, FARS, CONTROLS)
             self.assertIn("not coverage", str(stopped.exception))
 
 
@@ -283,7 +345,8 @@ class TheCoverageIsRecomputed(unittest.TestCase):
             index = self.interrupted(tmp)
             self.assertEqual(list(index["entries"]), [f"{A20:#010x}"])
             self.assertNotIn("not_attempted", index)
-            captures, missing = search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
+            captures, missing = search.validate_index(
+                tmp, index, DIGEST, PLMARK, FARS, CONTROLS)
             self.assertEqual(list(captures), [A20])
             self.assertEqual(missing, [f"{far:#010x}" for far in FARS[1:]],
                              "the frames nobody read must be recomputed from the frozen set")
@@ -293,16 +356,17 @@ class TheCoverageIsRecomputed(unittest.TestCase):
             tmp = Path(name)
             index = self.interrupted(tmp)
             index["not_attempted"] = []          # the claim an interrupted run leaves behind
-            _, missing = search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
-            verdict = search.judge_sweep(index, {A20: list(ZERO)}, missing, SIGNATURES)
-            self.assertEqual(verdict["verdict"], "NOT_FOUND_INCOMPLETE")
+            _, missing = search.validate_index(tmp, index, DIGEST, PLMARK, FARS, CONTROLS)
+            verdict = search.judge_sweep(
+                index, {A20: list(ZERO)}, missing, SIGNATURES, CONTROLS)
+            self.assertEqual(verdict["verdict"], "INSTRUMENT_UNVALIDATED")
 
     def test_an_entry_outside_the_frozen_sequence_is_refused(self) -> None:
         with tempfile.TemporaryDirectory() as name:
             tmp = Path(name)
             index = self.interrupted(tmp)
             with self.assertRaises(search.SearchStop) as stopped:
-                search.validate_index(tmp, index, DIGEST, PLMARK, [A21, A22])
+                search.validate_index(tmp, index, DIGEST, PLMARK, [A21, A22], CONTROLS)
             self.assertIn("frozen device frame sequence", str(stopped.exception))
 
 
@@ -364,7 +428,7 @@ class TheChildLogIsEvidence(unittest.TestCase):
             index = self.one_capture(tmp)
             (tmp / index["entries"][f"{A20:#010x}"]["child_log"]).unlink()
             with self.assertRaises(search.SearchStop) as stopped:
-                search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
+                search.validate_index(tmp, index, DIGEST, PLMARK, FARS, CONTROLS)
             self.assertIn("child log is gone", str(stopped.exception))
 
     def test_an_edited_child_log_is_refused(self) -> None:
@@ -376,7 +440,7 @@ class TheChildLogIsEvidence(unittest.TestCase):
             log["stdout"] = "tampered"
             path.write_text(json.dumps(log), encoding="utf-8")
             with self.assertRaises(search.SearchStop):
-                search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
+                search.validate_index(tmp, index, DIGEST, PLMARK, FARS, CONTROLS)
 
     def test_a_child_log_from_another_invocation_is_refused(self) -> None:
         with tempfile.TemporaryDirectory() as name:
@@ -389,7 +453,7 @@ class TheChildLogIsEvidence(unittest.TestCase):
             path.write_text(json.dumps(log), encoding="utf-8")
             entry["child_log_sha256"] = search._digest_of(path)
             with self.assertRaises(search.SearchStop) as stopped:
-                search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
+                search.validate_index(tmp, index, DIGEST, PLMARK, FARS, CONTROLS)
             self.assertIn("different invocation", str(stopped.exception))
 
     def test_a_path_that_escapes_the_run_directory_is_refused(self) -> None:
@@ -398,7 +462,7 @@ class TheChildLogIsEvidence(unittest.TestCase):
             index = self.one_capture(tmp)
             index["entries"][f"{A20:#010x}"]["capture"] = "../escape.json"
             with self.assertRaises(search.SearchStop) as stopped:
-                search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
+                search.validate_index(tmp, index, DIGEST, PLMARK, FARS, CONTROLS)
             self.assertIn("run directory", str(stopped.exception))
 
 
@@ -426,7 +490,8 @@ class TheFailureAlwaysLeavesEvidence(unittest.TestCase):
         with tempfile.TemporaryDirectory() as name:
             tmp = Path(name)
             with self.assertRaises(search.SearchStop):
-                search.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST, runner=timeout,
+                search.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST, CONTROLS,
+                           runner=timeout,
                            plmark_reader=lambda port: PLMARK)
             index = json.loads((tmp / "index.json").read_text("utf-8"))
             entry = index["entries"][f"{A20:#010x}"]
@@ -453,7 +518,10 @@ class TheFailureAlwaysLeavesEvidence(unittest.TestCase):
 
 class TheVerdict(unittest.TestCase):
     def sweep(self, captures, not_attempted=()):
-        return search.judge_sweep({}, captures, list(not_attempted), SIGNATURES)
+        complete = dict(captures)
+        complete[CONTROL_FARS[0]] = CONTROLS[CONTROL_FARS[0]]
+        return search.judge_sweep(
+            {}, complete, list(not_attempted), SIGNATURES, CONTROLS)
 
     def test_a_shifted_candidate_is_located(self) -> None:
         verdict = self.sweep({A20: list(ZERO), A21: SIGNATURES[A20]})

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Mutation gate for the load-bearing rules of the signature search.
 
-Twelve mutants, each removing one thing the search is not allowed to do without:
+Fifteen mutants, each removing one thing the search is not allowed to do without:
 
   * a child reads one FAR, because a process is trustworthy for exactly one read;
   * the intended frame is decided before any sweep, because it answers the question alone in
@@ -19,6 +19,10 @@ Twelve mutants, each removing one thing the search is not allowed to do without:
   * a resume invalidates the previous invocation's closure before another capture can land;
   * a mismatching end marker reaches disk before the run refuses it;
   * bytes emitted before a timeout survive in the failed child's evidence.
+  * a positive control is a whole known non-zero base frame at the same FAR, not merely
+    non-zero data;
+  * the intended frame's third state cannot bypass the control;
+  * `judge_sweep()` itself cannot emit a location verdict without the control.
 
 Each probe asks a module a question about behaviour and runs it to find out. Nothing here
 searches for the mutation itself.
@@ -39,7 +43,8 @@ sys.path.insert(0, str(REPO / "scripts"))
 SOURCE = REPO / "scripts/board_signature_search.py"
 
 A20, A21, A22 = 0x00400A20, 0x00400A21, 0x00400A22
-FARS = [A20, A21, A22]
+CONTROL_FARS = [0x00400B00 + offset for offset in range(16)]
+FARS = [A20, A21, A22, *CONTROL_FARS]
 PLMARK = "18cc00f0fa537908"
 DIGEST = "d" * 64
 ZERO = [0] * 101
@@ -54,6 +59,8 @@ def signature(seed: int) -> list[int]:
 
 SIGNATURES = {A20: signature(0x40), A21: signature(0x41)}
 BASE = {far: list(ZERO) for far in FARS}
+CONTROLS = {far: signature(0x100 + offset) for offset, far in enumerate(CONTROL_FARS)}
+BASE.update(CONTROLS)
 
 MUTANTS = {
     # MUTATION ANCHOR one_far: the child must never be handed a second frame to read.
@@ -68,8 +75,8 @@ MUTANTS = {
         ("    check_child_argv(argv)\n    return argv", "    return argv")],
     # MUTATION ANCHOR a20_first: the first frame's verdict gates the sweep.
     "defer_the_intended_decision": [(
-        '    if decision["sweep_needed"]:\n        reads = 0',
-        '    if True:  # mutant: sweep regardless of what the first frame said\n        reads = 0')],
+        '    if decision["verdict"] != "WRITE_LANDED_AT_THE_INTENDED_FAR":',
+        '    if True:  # mutant: keep reading after the intended frame answered')],
     # MUTATION ANCHOR fail_stops: a recorded failure must never become a skipped frame.
     "skip_failed_child": [(
         '            captures[far] = capture_one(far, out_dir, index, runner)\n'
@@ -85,7 +92,7 @@ MUTANTS = {
         '    if failed:\n        pass  # mutant: a failure is treated as coverage')],
     # MUTATION ANCHOR recomputed_coverage: the index may not be asked what it missed.
     "missing_not_attempted_means_complete": [(
-        '        _, missing = validate_index(out_dir, index, digest, plmark, fars)',
+        '        _, missing = validate_index(out_dir, index, digest, plmark, fars, controls)',
         '        missing = index.get("not_attempted", [])  # mutant: believe the index')],
     # MUTATION ANCHOR child_log_digest: the child's own record must be unaltered.
     "ignore_child_log_digest": [(
@@ -121,6 +128,19 @@ MUTANTS = {
         '        partial_stderr = getattr(raised, "stderr", None)',
         '        partial_stdout = None  # mutant: discard what OpenOCD emitted before timeout\n'
         '        partial_stderr = None')],
+    # MUTATION ANCHOR control_exact: non-zero garbage is not a positive control.
+    "any_nonzero_control_passes": [(
+        "        exact = words == expected",
+        "        exact = any(words)  # mutant: any non-zero garbage validates the instrument")],
+    # MUTATION ANCHOR neither_control: a third state is still a location statement.
+    "neither_bypasses_control": [(
+        '    if decision["verdict"] != "WRITE_LANDED_AT_THE_INTENDED_FAR":',
+        '    if decision["verdict"] not in ("WRITE_LANDED_AT_THE_INTENDED_FAR",\n'
+        '                                   "INTENDED_FAR_IS_NEITHER"):')],
+    # MUTATION ANCHOR sweep_control: callers cannot bypass the live-run ordering.
+    "not_found_bypasses_control": [(
+        '    if control["verdict"] != "INSTRUMENT_VALID":\n        return control',
+        '    if False:  # mutant: sweep verdicts need no valid instrument\n        return control')],
     # MUTATION ANCHOR capture_digest: an index is a claim, the capture file is the evidence.
     "validate_trusts_capture_file": [(
         '        if _digest_of(path) != entry.get("capture_sha256"):\n'
@@ -156,7 +176,8 @@ def runner_for(module, content: dict, asked: list[int], fail_on: int | None = No
         argv = module.child_argv(far, out_path)
         if far == fail_on:
             return {"returncode": 1, "argv": argv, "stdout": "", "stderr": "boom"}
-        out_path.write_text(json.dumps(capture_for(module, far, content.get(far, ZERO))),
+        out_path.write_text(json.dumps(capture_for(
+            module, far, content.get(far, CONTROLS.get(far, ZERO)))),
                             encoding="utf-8")
         return {"returncode": 0, "argv": argv, "stdout": "", "stderr": ""}
     return runner
@@ -179,6 +200,7 @@ def probe_intended_first(module) -> tuple[bool, str]:
     asked: list[int] = []
     with tempfile.TemporaryDirectory() as name:
         module.run(Path(name), PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                   CONTROLS,
                    runner=runner_for(module, {A20: SIGNATURES[A20]}, asked),
                    plmark_reader=lambda port: PLMARK)
     if asked != [A20]:
@@ -193,11 +215,12 @@ def probe_failure_stops(module) -> tuple[bool, str]:
     with tempfile.TemporaryDirectory() as name:
         try:
             module.run(Path(name), PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                       CONTROLS,
                        runner=runner_for(module, {}, asked, fail_on=A21),
                        plmark_reader=lambda port: PLMARK)
         except module.SearchStop:
             pass
-    if asked != [A20, A21]:
+    if asked != [A20, CONTROL_FARS[0], A21]:
         return True, (f"it kept reading after a failed child: "
                       f"{[f'{far:#010x}' for far in asked]}")
     return False, "the failure stopped the search at the frame that failed"
@@ -206,8 +229,9 @@ def probe_failure_stops(module) -> tuple[bool, str]:
 def _one_capture(module, tmp: Path) -> dict:
     """A minimal index with one good capture, written the way the module writes them."""
     asked: list[int] = []
-    module.run(tmp, PLMARK, SIGNATURES, BASE, [A20], DIGEST,
-               runner=runner_for(module, {}, asked), plmark_reader=lambda port: PLMARK)
+    module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST, CONTROLS,
+               runner=runner_for(module, {A20: SIGNATURES[A20]}, asked),
+               plmark_reader=lambda port: PLMARK)
     return json.loads((tmp / "index.json").read_text("utf-8"))
 
 
@@ -218,7 +242,7 @@ def probe_failed_is_not_coverage(module) -> tuple[bool, str]:
         index = _one_capture(module, tmp)
         index["entries"][f"{A21:#010x}"] = {"status": "failed", "reason": "boom"}
         try:
-            module.validate_index(tmp, index, DIGEST, PLMARK, [A20, A21])
+            module.validate_index(tmp, index, DIGEST, PLMARK, FARS, CONTROLS)
         except module.SearchStop:
             return False, "a failed entry is refused"
     return True, "an index holding a failure passed validation and would reach a verdict"
@@ -231,10 +255,10 @@ def probe_capture_file_is_evidence(module) -> tuple[bool, str]:
         index = _one_capture(module, tmp)
         path = tmp / index["entries"][f"{A20:#010x}"]["capture"]
         # Same frame, different bytes: only the file digest can notice this one.
-        path.write_text(json.dumps(capture_for(module, A20, ZERO,
+        path.write_text(json.dumps(capture_for(module, A20, SIGNATURES[A20],
                                                config_status="0xdeadbeef")), encoding="utf-8")
         try:
-            module.validate_index(tmp, index, DIGEST, PLMARK, [A20])
+            module.validate_index(tmp, index, DIGEST, PLMARK, FARS, CONTROLS)
         except module.SearchStop:
             return False, "an edited capture file is refused"
     return True, "an edited capture file was accepted on the index's word"
@@ -245,14 +269,16 @@ def probe_recomputed_coverage(module) -> tuple[bool, str]:
     with tempfile.TemporaryDirectory() as name:
         tmp = Path(name)
         asked: list[int] = []
-        module.run(tmp, PLMARK, SIGNATURES, BASE, [A20], DIGEST,
-                   runner=runner_for(module, {}, asked), plmark_reader=lambda port: PLMARK)
+        module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST, CONTROLS,
+                   runner=runner_for(module, {}, asked), plmark_reader=lambda port: PLMARK,
+                   max_reads=0)
         index = json.loads((tmp / "index.json").read_text("utf-8"))
         index.pop("not_attempted", None)
         (tmp / "index.json").write_text(json.dumps(index), encoding="utf-8")
         verdict = module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                             CONTROLS,
                              runner=runner_for(module, {}, asked),
-                             plmark_reader=lambda port: PLMARK, max_reads=0)
+                             plmark_reader=lambda port: PLMARK, max_reads=1)
     if verdict["verdict"] == "NOT_FOUND_COMPLETE":
         return True, ("it called a search complete with "
                       f"{len(FARS) - 1} of {len(FARS)} frames never read")
@@ -270,7 +296,7 @@ def probe_child_log_digest(module) -> tuple[bool, str]:
         log["stdout"] = "tampered"
         path.write_text(json.dumps(log), encoding="utf-8")
         try:
-            module.validate_index(tmp, index, DIGEST, PLMARK, [A20])
+            module.validate_index(tmp, index, DIGEST, PLMARK, FARS, CONTROLS)
         except module.SearchStop:
             return False, "an edited child log is refused"
     return True, "an edited child log was accepted on the index's word"
@@ -284,7 +310,8 @@ def probe_runner_exception_evidence(module) -> tuple[bool, str]:
     with tempfile.TemporaryDirectory() as name:
         tmp = Path(name)
         try:
-            module.run(tmp, PLMARK, SIGNATURES, BASE, [A20], DIGEST, runner=raising,
+            module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST, CONTROLS,
+                       runner=raising,
                        plmark_reader=lambda port: PLMARK)
         except Exception:
             pass
@@ -305,10 +332,12 @@ def probe_resume_closure(module) -> tuple[bool, str]:
     with tempfile.TemporaryDirectory() as name:
         tmp = Path(name)
         module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                   CONTROLS,
                    runner=runner_for(module, {}, []),
                    plmark_reader=lambda port: PLMARK, max_reads=0)
         try:
             module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                       CONTROLS,
                        runner=runner_for(module, {}, []),
                        plmark_reader=lambda port: (_ for _ in ()).throw(
                            RuntimeError("the UART disappeared")))
@@ -327,10 +356,12 @@ def probe_mismatch_lands(module) -> tuple[bool, str]:
     with tempfile.TemporaryDirectory() as name:
         tmp = Path(name)
         module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                   CONTROLS,
                    runner=runner_for(module, {}, []),
                    plmark_reader=lambda port: PLMARK, max_reads=0)
         try:
             module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
+                       CONTROLS,
                        runner=runner_for(module, {}, []),
                        plmark_reader=lambda port: "rebooted")
         except module.SearchStop:
@@ -352,7 +383,8 @@ def probe_timeout_streams(module) -> tuple[bool, str]:
     with tempfile.TemporaryDirectory() as name:
         tmp = Path(name)
         try:
-            module.run(tmp, PLMARK, SIGNATURES, BASE, [A20], DIGEST, runner=raising,
+            module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST, CONTROLS,
+                       runner=raising,
                        plmark_reader=lambda port: PLMARK)
         except module.SearchStop:
             pass
@@ -370,6 +402,44 @@ def probe_timeout_streams(module) -> tuple[bool, str]:
     return False, "the timeout's partial streams landed byte-for-byte"
 
 
+def probe_control_requires_exact(module) -> tuple[bool, str]:
+    """Sixteen non-zero wrong frames must invalidate, not validate, the instrument."""
+    wrong = {far: signature(0xD000 + offset)
+             for offset, far in enumerate(CONTROL_FARS)}
+    asked: list[int] = []
+    with tempfile.TemporaryDirectory() as name:
+        verdict = module.run(
+            Path(name), PLMARK, SIGNATURES, BASE, FARS, DIGEST, CONTROLS,
+            runner=runner_for(module, wrong, asked), plmark_reader=lambda port: PLMARK)
+    if verdict["verdict"] != "INSTRUMENT_INVALID" or A21 in asked:
+        return True, (f"non-zero wrong controls produced {verdict['verdict']} and reads "
+                      f"{[f'{far:#010x}' for far in asked]}")
+    return False, "only a whole same-FAR base-frame match validates the instrument"
+
+
+def probe_neither_requires_control(module) -> tuple[bool, str]:
+    """The intended FAR's third state may not be reported by an invalid instrument."""
+    wrong = {A20: signature(0xDEAD)}
+    wrong.update({far: signature(0xD000 + offset)
+                  for offset, far in enumerate(CONTROL_FARS)})
+    with tempfile.TemporaryDirectory() as name:
+        verdict = module.run(
+            Path(name), PLMARK, SIGNATURES, BASE, FARS, DIGEST, CONTROLS,
+            runner=runner_for(module, wrong, []), plmark_reader=lambda port: PLMARK)
+    if verdict["verdict"] == "INTENDED_FAR_IS_NEITHER":
+        return True, "a third-state location verdict bypassed the failed controls"
+    return False, f"the failed controls took precedence: {verdict['verdict']}"
+
+
+def probe_sweep_requires_control(module) -> tuple[bool, str]:
+    """Direct callers of the judge cannot manufacture a location verdict."""
+    captures = {far: list(ZERO) for far in FARS}
+    verdict = module.judge_sweep({}, captures, [], SIGNATURES, CONTROLS)
+    if verdict["verdict"] != "INSTRUMENT_INVALID":
+        return True, f"the judge emitted {verdict['verdict']} without a positive control"
+    return False, "the judge failed closed on its own"
+
+
 PROBES = {
     "two_fars_per_child": probe_argv,
     "two_fars_no_guard": probe_argv,
@@ -383,6 +453,9 @@ PROBES = {
     "resume_reuses_previous_closure": probe_resume_closure,
     "mismatched_end_is_not_persisted": probe_mismatch_lands,
     "timeout_drops_partial_output": probe_timeout_streams,
+    "any_nonzero_control_passes": probe_control_requires_exact,
+    "neither_bypasses_control": probe_neither_requires_control,
+    "not_found_bypasses_control": probe_sweep_requires_control,
 }
 
 

@@ -9,13 +9,14 @@ second, in both orders, and became exact again in a fresh process against the sa
 the unit of work is a child process that reads **one** FAR. This module never builds a JTAG
 packet: `probe_jtag_config_read` owns that path, with its refusals and its IR allowlist.
 
-THE INTENDED FRAME IS READ FIRST, AND DECIDED FIRST
----------------------------------------------------
-`0x00400A20` answers the question on its own in two of the three cases — it holds the
-candidate, or it holds something that is neither the candidate nor the base — and in both the
-search is over. Only "it holds the base" needs a sweep. Reading 5,144 frames to reach a
-verdict the first frame already gave would be 5,144 chances to lose the state that produced
-it.
+THE INTENDED FRAME IS READ FIRST; THE INSTRUMENT IS PROVED BEFORE LOCATION
+---------------------------------------------------------------------------
+`0x00400A20` may end the search immediately only when all 101 words equal the non-zero
+candidate. Every other location statement first needs a post-fault positive control: one of
+sixteen preselected unique, non-zero base frames must come back bit-exact at the same FAR.
+Non-zero data or a valid-looking ECC word is not enough. If all controls fail, the only
+permitted verdict is `INSTRUMENT_INVALID`; if a read budget leaves controls unmeasured, it is
+`INSTRUMENT_UNVALIDATED`. Neither may fall through to a location verdict.
 
 THE AUTHORITY IS NOT AN ARGUMENT
 --------------------------------
@@ -35,6 +36,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import collections
 import hashlib
 import json
 import os
@@ -55,7 +57,7 @@ import frame_ecc  # noqa: E402
 import gate_claimb_known_answer as kagate  # noqa: E402
 import probe_jtag_config_read as probe  # noqa: E402
 
-TOOL_VERSION = "board_signature_search.py/2.1.0"
+TOOL_VERSION = "board_signature_search.py/2.2.0"
 CHILD = REPO / "scripts/probe_jtag_config_read.py"
 CHILD_CFG = REPO / "scripts/jtag_config_only.cfg"
 CHILD_SPEED = 2000
@@ -67,6 +69,19 @@ INTENDED_FAR = 0x00400A20
 EXPECTED_SITE, EXPECTED_BEL = "SLICE_X2Y25", "A6LUT"
 IDCODE = "0x13722093"
 LUT_FEATURE = re.compile(r"CLBLL_L\.SLICEL_X0\.ALUT\.INIT\[(\d+)\]$")
+
+# Sixteen controls are deliberate.  A transaction presents fifteen frame writes.  If each
+# can at worst spoil one distinct control, at least one of sixteen remains available to
+# prove that post-fault readback still returns the configuration loaded at that FAR.  A
+# broader failure merely makes the instrument fail closed.  The list is independently
+# derived below, but pinned here so a carrier change cannot silently choose easier controls.
+POSITIVE_CONTROL_COUNT = 16
+EXPECTED_POSITIVE_CONTROL_FARS = (
+    0x00000900, 0x00000986, 0x000009A2, 0x00000A8E,
+    0x00000B8A, 0x00000C04, 0x00000D04, 0x00400915,
+    0x00400996, 0x00400A10, 0x00400B05, 0x00400B91,
+    0x00400C0A, 0x00400C8E, 0x00401101, 0x0040139B,
+)
 
 
 class SearchStop(Exception):
@@ -159,6 +174,37 @@ def frozen_far_sequence() -> list[int]:
 def base_frames() -> dict[int, list[int]]:
     return {far: list(words)
             for far, words in bf.parse_frames(CANONICAL_RUN / "carrier.bit")["frames"].items()}
+
+
+def canonical_positive_controls(base: dict[int, list[int]]) -> dict[int, list[int]]:
+    """Sixteen distributed, unique, non-zero base frames outside the transaction.
+
+    A merely non-zero or ECC-consistent read is not a positive control: the invalid Phase 2
+    capture contained 4,292 non-zero frames and 82 of those were ECC-consistent.  A control
+    passes only when all 101 words equal the known non-zero base frame at the same FAR.
+
+    Candidate and guard frames are excluded using the frozen manifest.  Among the remaining
+    base frames, only content unique in the device is eligible, so a misaddressed read cannot
+    pass by landing on a duplicate.  Sixteen evenly spaced ranks cover the eligible sequence;
+    their resulting FARs are pinned above and must be reviewed when authority changes.
+    """
+    manifest = json.loads((CANONICAL_RUN / "phenotype_manifest.json").read_text("utf-8"))
+    excluded = {int(record["far"], 16) for record in manifest["frames"]}
+    counts = collections.Counter(tuple(words) for words in base.values())
+    eligible = [far for far in sorted(base)
+                if any(base[far]) and counts[tuple(base[far])] == 1 and far not in excluded]
+    if len(eligible) < POSITIVE_CONTROL_COUNT:
+        raise SearchStop(
+            f"only {len(eligible)} unique non-zero base frames remain outside the transaction; "
+            f"{POSITIVE_CONTROL_COUNT} positive controls are required")
+    ranks = [round(i * (len(eligible) - 1) / (POSITIVE_CONTROL_COUNT - 1))
+             for i in range(POSITIVE_CONTROL_COUNT)]
+    selected = tuple(eligible[rank] for rank in ranks)
+    if selected != EXPECTED_POSITIVE_CONTROL_FARS:
+        raise SearchStop(
+            "the authority-derived positive-control FARs changed; review and re-pin them "
+            f"instead of silently accepting {tuple(f'{far:#010x}' for far in selected)}")
+    return {far: list(base[far]) for far in selected}
 
 
 def instrument_digest(fars: list[int]) -> str:
@@ -301,7 +347,8 @@ def _check_child_log(out_dir: Path, far: int, entry: dict, key: str) -> None:
 
 
 def validate_index(out_dir: Path, index: dict, digest: str, plmark: str,
-                   fars: list[int]) -> tuple[dict[int, list[int]], list[str]]:
+                   fars: list[int], controls: dict[int, list[int]]) -> tuple[dict[int, list[int]],
+                                                                            list[str]]:
     """The one gate every path goes through: live, resumed and judge-only alike.
 
     Re-reads and re-hashes every capture rather than believing the index about it. An index
@@ -321,6 +368,11 @@ def validate_index(out_dir: Path, index: dict, digest: str, plmark: str,
         raise SearchStop("the captures were taken with a different instrument or inputs")
     if index.get("plmark_at_start") != plmark:
         raise SearchStop("the captures are from a different boot")
+    expected_controls = [f"{far:#010x}" for far in controls]
+    if index.get("positive_control_fars") != expected_controls:
+        raise SearchStop(
+            "the index was opened with a different positive-control set; it cannot prove "
+            "this instrument")
     failed = sorted(key for key, entry in index.get("entries", {}).items()
                     if entry.get("status") != "ok")
     if failed:
@@ -446,15 +498,17 @@ def require_closed(index: dict) -> None:
             "resume it, do not judge it")
 
 
-def open_index(out_dir: Path, digest: str, plmark: str,
-               fars: list[int]) -> tuple[dict, dict[int, list[int]]]:
+def open_index(out_dir: Path, digest: str, plmark: str, fars: list[int],
+               controls: dict[int, list[int]]) -> tuple[dict, dict[int, list[int]]]:
     """A fresh index, or a resumed one that has re-earned every capture it claims."""
     index_path = out_dir / "index.json"
     if not index_path.exists():
         return ({"tool": TOOL_VERSION, "instrument_digest": digest,
-                 "plmark_at_start": plmark, "entries": {}}, {})
+                 "plmark_at_start": plmark,
+                 "positive_control_fars": [f"{far:#010x}" for far in controls],
+                 "entries": {}}, {})
     index = json.loads(index_path.read_text("utf-8"))
-    captures, _ = validate_index(out_dir, index, digest, plmark, fars)
+    captures, _ = validate_index(out_dir, index, digest, plmark, fars, controls)
     index.setdefault("entries", {})
     return index, captures
 
@@ -478,14 +532,78 @@ def decide_intended(words: list[int], signatures: dict[int, list[int]],
                        "an open question and the sweep is the way to ask it."}
 
 
+def judge_positive_controls(captures: dict[int, list[int]],
+                            controls: dict[int, list[int]]) -> dict:
+    """Prove the post-fault instrument before allowing a location verdict.
+
+    One exact known-nonzero frame is sufficient.  Sixteen are offered because the candidate
+    transaction contains fifteen frame writes; if a bad write spoils more, refusal remains
+    the safe result.  Non-zero, ECC-consistent, masked, partial and relocated matches do not
+    count.  They are observations, not this positive control.
+    """
+    if len(controls) != POSITIVE_CONTROL_COUNT:
+        raise SearchStop(
+            f"the positive-control set has {len(controls)} frames, expected "
+            f"{POSITIVE_CONTROL_COUNT}")
+    if INTENDED_FAR in controls:
+        raise SearchStop("the intended FAR cannot double as an independent positive control")
+    if any(not any(words) for words in controls.values()):
+        raise SearchStop("an all-zero frame cannot be a positive control")
+    if len({tuple(words) for words in controls.values()}) != len(controls):
+        raise SearchStop("positive controls must have unique whole-frame contents")
+
+    observations = []
+    matched = []
+    missing = []
+    for far, expected in controls.items():
+        words = captures.get(far)
+        if words is None:
+            missing.append(f"{far:#010x}")
+            continue
+        exact = words == expected
+        if exact:
+            matched.append(f"{far:#010x}")
+        observations.append({
+            "far": f"{far:#010x}",
+            "exact_same_far_base_match": exact,
+            "expected_nonzero_words": sum(1 for word in expected if word),
+            "observed_nonzero_words": sum(1 for word in words if word),
+            "expected_sha256": hashlib.sha256(
+                b"".join(word.to_bytes(4, "big") for word in expected)).hexdigest(),
+            "observed_sha256": hashlib.sha256(
+                b"".join(word.to_bytes(4, "big") for word in words)).hexdigest(),
+        })
+
+    common = {"positive_controls": observations,
+              "positive_control_matches": matched,
+              "positive_controls_not_read": missing}
+    if matched:
+        return {**common, "verdict": "INSTRUMENT_VALID",
+                "reading": "At least one preselected unique non-zero base frame came back "
+                           "bit-exact at the same FAR in this post-fault state."}
+    if missing:
+        return {**common, "verdict": "INSTRUMENT_UNVALIDATED",
+                "reading": f"No positive control has matched, and {len(missing)} of the "
+                           "preselected controls were not read. No location verdict is allowed."}
+    return {**common, "verdict": "INSTRUMENT_INVALID",
+            "reading": "All preselected controls were read and none reproduced its known "
+                       "non-zero base frame at the same FAR. The captures cannot support a "
+                       "location verdict."}
+
+
 def judge_sweep(index: dict, captures: dict[int, list[int]], not_attempted: list[str],
-                signatures: dict[int, list[int]]) -> dict:
+                signatures: dict[int, list[int]], controls: dict[int, list[int]]) -> dict:
     """Where, if anywhere, a whole candidate frame appears in what was read."""
+    control = judge_positive_controls(captures, controls)
+    if control["verdict"] != "INSTRUMENT_VALID":
+        return control
     found = {f"{signature_far:#010x}": [f"{far:#010x}" for far, words in sorted(captures.items())
                                         if words == signature]
              for signature_far, signature in signatures.items()}
     verdict = {"signature_hits": found, "frames_searched": len(captures),
-               "frames_not_searched": not_attempted}
+               "frames_not_searched": not_attempted,
+               "positive_controls": control["positive_controls"],
+               "positive_control_matches": control["positive_control_matches"]}
     duplicated = {far: hits for far, hits in found.items() if len(hits) > 1}
     if duplicated:
         verdict["verdict"] = "SIGNATURE_AMBIGUOUS"
@@ -512,11 +630,18 @@ def judge_sweep(index: dict, captures: dict[int, list[int]], not_attempted: list
 
 # -------------------------------------------------------------------------------- the run
 def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
-        base: dict[int, list[int]], fars: list[int], digest: str, runner=subprocess_runner,
+        base: dict[int, list[int]], fars: list[int], digest: str,
+        controls: dict[int, list[int]], runner=subprocess_runner,
         port: str = "/dev/ebaz-uart", max_reads: int | None = None,
         plmark_reader=read_plmark) -> dict:
-    """The intended frame first and decided first; the sweep only if it asks for one."""
-    index, captures = open_index(out_dir, digest, plmark, fars)
+    """Intended frame, fail-closed controls, then (only if justified) the sweep."""
+    if set(controls) - set(fars):
+        raise SearchStop("a positive-control FAR is outside the frozen device sequence")
+    if set(controls) & set(signatures):
+        raise SearchStop("candidate signature FARs cannot double as independent controls")
+    if any(base.get(far) != words for far, words in controls.items()):
+        raise SearchStop("positive controls must be the base frames at those same FARs")
+    index, captures = open_index(out_dir, digest, plmark, fars, controls)
 
     # A closure belongs to one invocation, not to the directory forever.  Invalidate an old
     # one on disk before this invocation can add a capture; otherwise a reboot during a
@@ -529,8 +654,33 @@ def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
     decision = decide_intended(captures[INTENDED_FAR], signatures, base)
     verdict = dict(decision)
 
-    if decision["sweep_needed"]:
-        reads = 0
+    # An exact candidate at A20 is its own bit-exact answer and must not risk another read.
+    # Every other location statement requires an independent positive control first.
+    reads = 0
+    control = None
+    if decision["verdict"] != "WRITE_LANDED_AT_THE_INTENDED_FAR":
+        for far in controls:
+            if far in captures:
+                control = judge_positive_controls(captures, controls)
+                if control["verdict"] == "INSTRUMENT_VALID":
+                    break
+                continue
+            if max_reads is not None and reads >= max_reads:
+                break
+            captures[far] = capture_one(far, out_dir, index, runner)
+            reads += 1
+            control = judge_positive_controls(captures, controls)
+            if control["verdict"] == "INSTRUMENT_VALID":
+                break
+        control = judge_positive_controls(captures, controls)
+        if control["verdict"] != "INSTRUMENT_VALID":
+            verdict = control
+        elif decision["verdict"] == "INTENDED_FAR_IS_NEITHER":
+            verdict.update({"positive_controls": control["positive_controls"],
+                            "positive_control_matches": control["positive_control_matches"]})
+
+    if decision["sweep_needed"] and control is not None \
+            and control["verdict"] == "INSTRUMENT_VALID":
         for far in fars:
             if far in captures:
                 continue
@@ -541,11 +691,11 @@ def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
         # Recomputed from the frozen set against what actually validated, never taken from
         # the index: an interrupted run leaves a self-consistent index that is silent about
         # every frame nobody looked at.
-        _, missing = validate_index(out_dir, index, digest, plmark, fars)
-        verdict = judge_sweep(index, captures, missing, signatures)
+        _, missing = validate_index(out_dir, index, digest, plmark, fars, controls)
+        verdict = judge_sweep(index, captures, missing, signatures, controls)
 
-    index["not_attempted"] = ([] if not decision["sweep_needed"]
-                              else verdict.get("frames_not_searched", []))
+    index["not_attempted"] = verdict.get("frames_not_searched", [
+        f"{far:#010x}" for far in fars if far not in captures])
     index["plmark_at_end"] = plmark_reader(port) if plmark_reader else plmark
     # Persist the observed end marker before deciding whether it matches.  A mismatching
     # marker is evidence that this invocation did not close; it must not disappear behind a
@@ -555,7 +705,7 @@ def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
         raise SearchStop(
             f"plmark changed from {plmark} to {index['plmark_at_end']}: the board restarted "
             "during the search and every capture after that is from a different PL")
-    validate_index(out_dir, index, digest, plmark, fars)
+    validate_index(out_dir, index, digest, plmark, fars, controls)
     verdict["intended_far"] = f"{INTENDED_FAR:#010x}"
     verdict["signature_fars"] = [f"{far:#010x}" for far in signatures]
     return verdict
@@ -569,8 +719,8 @@ def main() -> int:
                     help="the marker the load set; checked before and after the search")
     ap.add_argument("--port", default="/dev/ebaz-uart")
     ap.add_argument("--max-reads", type=int, default=None,
-                    help="stop the sweep after this many child reads; the rest are recorded "
-                         "as not attempted, never as searched")
+                    help="after the intended FAR, stop after this many child reads across "
+                         "controls and sweep; the rest are never treated as searched")
     ap.add_argument("--judge-only", action="store_true",
                     help="decide from the captures already on disk, touching no hardware")
     args = ap.parse_args()
@@ -581,24 +731,34 @@ def main() -> int:
         fars = frozen_far_sequence()
         digest = instrument_digest(fars)
         base = base_frames()
+        controls = canonical_positive_controls(base)
 
         if args.judge_only:
             index = json.loads((args.out_dir / "index.json").read_text("utf-8"))
-            captures, missing = validate_index(args.out_dir, index, digest, args.plmark, fars)
+            captures, missing = validate_index(
+                args.out_dir, index, digest, args.plmark, fars, controls)
             require_closed(index)
             if INTENDED_FAR not in captures:
                 raise SearchStop("the intended FAR was never captured; nothing is decided")
             decision = decide_intended(captures[INTENDED_FAR], signatures, base)
             verdict = dict(decision)
-            if decision["sweep_needed"]:
-                verdict = judge_sweep(index, captures, missing, signatures)
+            if decision["verdict"] != "WRITE_LANDED_AT_THE_INTENDED_FAR":
+                control = judge_positive_controls(captures, controls)
+                if control["verdict"] != "INSTRUMENT_VALID":
+                    verdict = control
+                elif decision["verdict"] == "INTENDED_FAR_IS_NEITHER":
+                    verdict.update({"positive_controls": control["positive_controls"],
+                                    "positive_control_matches":
+                                        control["positive_control_matches"]})
+                elif decision["sweep_needed"]:
+                    verdict = judge_sweep(index, captures, missing, signatures, controls)
             verdict["intended_far"] = f"{INTENDED_FAR:#010x}"
             verdict["signature_fars"] = [f"{far:#010x}" for far in signatures]
         else:
             actual = read_plmark(args.port)
             if actual != args.plmark:
                 raise SearchStop(f"plmark is {actual}, expected {args.plmark}")
-            verdict = run(args.out_dir, args.plmark, signatures, base, fars, digest,
+            verdict = run(args.out_dir, args.plmark, signatures, base, fars, digest, controls,
                           port=args.port, max_reads=args.max_reads)
 
         verdict["instrument_digest"] = digest
