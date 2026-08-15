@@ -119,11 +119,18 @@ def build_tcl(far_list: list[int]) -> tuple[str, list[dict]]:
     """The whole session as one OpenOCD script, so config state survives between steps.
 
     **Every envelope is closed where it was opened.** A `sync … DESYNC` envelope holds one
-    FAR-set and one read; sharing one across two FARs is what made the second read of
-    2026-08-15 return an unrelated all-zero frame. `envelope_violations()` below is the
-    machine-checkable form of that rule, and it is what the mutation harness kills a mutant
-    with. JSHUTDOWN is issued once per session, between envelopes, because it is a TAP
-    instruction and not part of any packet stream.
+    FAR-set and one read, and never spans two.
+
+    That is a conservative contract, and it is deliberately not a diagnosis. It was adopted
+    after the 2026-08-15 session in which a second read returned an all-zero frame, on the
+    hypothesis that the shared envelope caused it. **The experiment refuted that**: with one
+    envelope per FAR, on a different boot, all 202 words of each read came back identical to
+    the shared-envelope run. The contract stays because a closed envelope is the documented
+    shape and costs nothing, not because it explains anything.
+
+    `envelope_violations()` below is the machine-checkable form of the rule, and it is what
+    the mutation harness kills a mutant with. JSHUTDOWN is issued once per session, between
+    envelopes, because it is a TAP instruction and not part of any packet stream.
     """
     steps: list[dict] = []
     lines = ["init", "echo \"@@ init done\""]
@@ -230,7 +237,9 @@ def main() -> int:
     far_list = [int(f, 16) for f in (args.far or ["0x00400A20", "0x00400A21"])]
 
     record: dict = {
-        "tool": "probe_jtag_config_read.py/1.0.0",
+        # 2.0.0 is the per-FAR envelope shape. 1.0.0 shared one envelope across the reads,
+        # and two different sequences must never wear the same tool identity in evidence.
+        "tool": "probe_jtag_config_read.py/2.0.0",
         "what": "independent JTAG readback of configuration frames",
         "tap": TAP,
         "ir_codes": {name: f"0x{code:02x}" for name, code in IR.items()},

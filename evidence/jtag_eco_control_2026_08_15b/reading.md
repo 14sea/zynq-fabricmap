@@ -56,3 +56,14 @@ INIT[35] is the next thing to doubt — offline, against the raw bitstream, not 
 
 Phase 1's success condition — both frames 101/101, all three bits hit — is **not met**, so
 Phase 2 stays unauthorised.
+
+## A label discrepancy in this record, stated where a reader meets it
+
+`record.json` here says `probe_jtag_config_read.py/1.0.0`. The sequence it ran is the
+per-FAR envelope shape described above; the version string had simply not been bumped when
+the behaviour changed, so this run and the shared-envelope run of
+`../jtag_eco_control_2026_08_15/` both claim 1.0.0 while shifting different words. The
+record is not re-taken — the words it holds are what the board returned — and the tool is
+now **2.0.0** for the per-FAR shape, so later evidence distinguishes the two by identity as
+well as by directory. The sequence each run actually shifted is in its own `record.json`
+under `sequence`, and in `record.tcl`.
