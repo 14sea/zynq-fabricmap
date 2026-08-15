@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Mutation gate for the load-bearing rules of the signature search.
 
-Fifteen mutants, each removing one thing the search is not allowed to do without:
+Nineteen mutants, each removing one thing the search is not allowed to do without:
 
   * a child reads one FAR, because a process is trustworthy for exactly one read;
   * the intended frame is decided before any sweep, because it answers the question alone in
@@ -23,6 +23,9 @@ Fifteen mutants, each removing one thing the search is not allowed to do without
     non-zero data;
   * the intended frame's third state cannot bypass the control;
   * `judge_sweep()` itself cannot emit a location verdict without the control.
+  * control-only reads exactly the pinned controls and has no location vocabulary;
+  * acquisition mode is part of the index contract, in both directions;
+  * every successful capture carries CONFIG_STATUS into the index summary.
 
 Each probe asks a module a question about behaviour and runs it to find out. Nothing here
 searches for the mutation itself.
@@ -47,6 +50,7 @@ CONTROL_FARS = [0x00400B00 + offset for offset in range(16)]
 FARS = [A20, A21, A22, *CONTROL_FARS]
 PLMARK = "18cc00f0fa537908"
 DIGEST = "d" * 64
+CONTROL_DIGEST = "c" * 64
 ZERO = [0] * 101
 
 
@@ -92,7 +96,8 @@ MUTANTS = {
         '    if failed:\n        pass  # mutant: a failure is treated as coverage')],
     # MUTATION ANCHOR recomputed_coverage: the index may not be asked what it missed.
     "missing_not_attempted_means_complete": [(
-        '        _, missing = validate_index(out_dir, index, digest, plmark, fars, controls)',
+        '        _, missing = validate_index(\n'
+        '            out_dir, index, digest, plmark, fars, controls, MODE_SIGNATURE_SEARCH)',
         '        missing = index.get("not_attempted", [])  # mutant: believe the index')],
     # MUTATION ANCHOR child_log_digest: the child's own record must be unaltered.
     "ignore_child_log_digest": [(
@@ -114,11 +119,11 @@ MUTANTS = {
         '    if index["plmark_at_end"] != plmark:\n'
         '        raise SearchStop(\n'
         '            f"plmark changed from {plmark} to {index[\'plmark_at_end\']}: the board restarted "\n'
-        '            "during the search and every capture after that is from a different PL")',
+        '            "during the acquisition and every later capture is from a different PL")',
         '    if index["plmark_at_end"] != plmark:\n'
         '        raise SearchStop(\n'
         '            f"plmark changed from {plmark} to {index[\'plmark_at_end\']}: the board restarted "\n'
-        '            "during the search and every capture after that is from a different PL")\n'
+        '            "during the acquisition and every later capture is from a different PL")\n'
         '    _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\\n")')],
     # MUTATION ANCHOR timeout_streams: partial OpenOCD output is failure evidence.
     "timeout_drops_partial_output": [(
@@ -141,6 +146,28 @@ MUTANTS = {
     "not_found_bypasses_control": [(
         '    if control["verdict"] != "INSTRUMENT_VALID":\n        return control',
         '    if False:  # mutant: sweep verdicts need no valid instrument\n        return control')],
+    # MUTATION ANCHOR control_read_set: this mode has exactly sixteen possible children.
+    "control_only_widens_read_set": [(
+        '    for far in controls:\n        if far in captures:',
+        '    for far in [*controls, INTENDED_FAR]:\n        if far in captures:')],
+    # MUTATION ANCHOR control_vocabulary: no location result exists in this mode.
+    "control_only_emits_location": [(
+        '    verdict = judge_positive_controls(captures, controls)\n'
+        '    require_control_only_verdict(verdict)\n'
+        '    index["not_attempted"] = [f"{far:#010x}" for far in controls if far not in captures]',
+        '    verdict = {"verdict": "NOT_FOUND_COMPLETE", "reading": "mutant"}\n'
+        '    index["not_attempted"] = [f"{far:#010x}" for far in controls if far not in captures]')],
+    # MUTATION ANCHOR mode_binding: matching files from the other mode are still inadmissible.
+    "control_index_is_a_search_index": [(
+        '    if index.get("mode") != mode:\n'
+        '        raise SearchStop(\n'
+        '            f"the index mode is {index.get(\'mode\')!r}, not {mode!r}; control-only and "\n'
+        '            "location-search evidence are not interchangeable")',
+        '    pass  # mutant: the two acquisition modes share an index')],
+    # MUTATION ANCHOR status_summary: the classifier candidate belongs in the index.
+    "drop_config_status_summary": [(
+        '        "config_status": config_status,',
+        '        # mutant: CONFIG_STATUS is discarded from the summary')],
     # MUTATION ANCHOR capture_digest: an index is a claim, the capture file is the evidence.
     "validate_trusts_capture_file": [(
         '        if _digest_of(path) != entry.get("capture_sha256"):\n'
@@ -254,9 +281,13 @@ def probe_capture_file_is_evidence(module) -> tuple[bool, str]:
         tmp = Path(name)
         index = _one_capture(module, tmp)
         path = tmp / index["entries"][f"{A20:#010x}"]["capture"]
-        # Same frame, different bytes: only the file digest can notice this one.
-        path.write_text(json.dumps(capture_for(module, A20, SIGNATURES[A20],
-                                               config_status="0xdeadbeef")), encoding="utf-8")
+        # Preserve every indexed semantic field.  A changed CONFIG_STATUS would now be
+        # caught by its own summary check, which would accidentally mask a missing file
+        # digest.  This unindexed addition changes only the evidence bytes, so only the
+        # capture digest can notice it.
+        capture = capture_for(module, A20, SIGNATURES[A20])
+        capture["unindexed_tamper"] = True
+        path.write_text(json.dumps(capture), encoding="utf-8")
         try:
             module.validate_index(tmp, index, DIGEST, PLMARK, FARS, CONTROLS)
         except module.SearchStop:
@@ -440,6 +471,68 @@ def probe_sweep_requires_control(module) -> tuple[bool, str]:
     return False, "the judge failed closed on its own"
 
 
+def probe_control_only_read_set(module) -> tuple[bool, str]:
+    """The diagnostic mode may spawn exactly the sixteen reviewed controls."""
+    asked: list[int] = []
+    with tempfile.TemporaryDirectory() as name:
+        try:
+            module.run_control_only(
+                Path(name), PLMARK, BASE, CONTROL_DIGEST, CONTROLS,
+                runner=runner_for(module, {}, asked), plmark_reader=lambda port: PLMARK)
+        except module.SearchStop:
+            pass
+    if asked != CONTROL_FARS:
+        return True, f"control-only asked for {[f'{far:#010x}' for far in asked]}"
+    return False, "control-only read exactly the sixteen controls"
+
+
+def probe_control_only_vocabulary(module) -> tuple[bool, str]:
+    """Even a valid control acquisition cannot return a location verdict."""
+    with tempfile.TemporaryDirectory() as name:
+        verdict = module.run_control_only(
+            Path(name), PLMARK, BASE, CONTROL_DIGEST, CONTROLS,
+            runner=runner_for(module, {}, []), plmark_reader=lambda port: PLMARK)
+    allowed = {"INSTRUMENT_VALID", "INSTRUMENT_INVALID", "INSTRUMENT_UNVALIDATED"}
+    if verdict.get("verdict") not in allowed:
+        return True, f"control-only emitted {verdict.get('verdict')}"
+    return False, f"the verdict stayed in the instrument vocabulary: {verdict['verdict']}"
+
+
+def probe_mode_binding(module) -> tuple[bool, str]:
+    """A control index with every other field acceptable is still not a search index."""
+    with tempfile.TemporaryDirectory() as name:
+        tmp = Path(name)
+        module.run_control_only(
+            tmp, PLMARK, BASE, DIGEST, CONTROLS,
+            runner=runner_for(module, {}, []), plmark_reader=lambda port: PLMARK)
+        index = json.loads((tmp / "index.json").read_text("utf-8"))
+        try:
+            module.validate_index(
+                tmp, index, DIGEST, PLMARK, FARS, CONTROLS,
+                module.MODE_SIGNATURE_SEARCH)
+        except module.SearchStop:
+            return False, "the control index was refused as search evidence"
+    return True, "a control-only index was accepted as a location-search index"
+
+
+def probe_status_summary(module) -> tuple[bool, str]:
+    """Every successful child contributes its CONFIG_STATUS to the index."""
+    with tempfile.TemporaryDirectory() as name:
+        tmp = Path(name)
+        try:
+            module.run_control_only(
+                tmp, PLMARK, BASE, CONTROL_DIGEST, CONTROLS,
+                runner=runner_for(module, {}, []), plmark_reader=lambda port: PLMARK)
+        except module.SearchStop:
+            pass
+        index = json.loads((tmp / "index.json").read_text("utf-8"))
+    statuses = [entry.get("config_status") for entry in index["entries"].values()
+                if entry.get("status") == "ok"]
+    if len(statuses) != len(CONTROLS) or any(status != "0x46107ffc" for status in statuses):
+        return True, f"the index summaries contain {statuses.count('0x46107ffc')}/16 statuses"
+    return False, "all sixteen CONFIG_STATUS observations reached the index"
+
+
 PROBES = {
     "two_fars_per_child": probe_argv,
     "two_fars_no_guard": probe_argv,
@@ -456,6 +549,10 @@ PROBES = {
     "any_nonzero_control_passes": probe_control_requires_exact,
     "neither_bypasses_control": probe_neither_requires_control,
     "not_found_bypasses_control": probe_sweep_requires_control,
+    "control_only_widens_read_set": probe_control_only_read_set,
+    "control_only_emits_location": probe_control_only_vocabulary,
+    "control_index_is_a_search_index": probe_mode_binding,
+    "drop_config_status_summary": probe_status_summary,
 }
 
 

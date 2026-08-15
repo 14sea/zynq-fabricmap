@@ -28,6 +28,7 @@ A24 = 0x00400A24
 CONTROL_FARS = [0x00400B00 + offset for offset in range(search.POSITIVE_CONTROL_COUNT)]
 FARS = [A20, A21, A22, A23, A24, *CONTROL_FARS]
 DIGEST = "d" * 64
+CONTROL_DIGEST = "c" * 64
 PLMARK = "18cc00f0fa537908"
 ZERO = [0] * 101
 
@@ -45,13 +46,14 @@ CONTROLS = {far: frame(0x100 + offset) for offset, far in enumerate(CONTROL_FARS
 BASE.update(CONTROLS)
 
 
-def capture_for(far: int, words: list[int], tool: str = search.CHILD_TOOL_VERSION) -> dict:
+def capture_for(far: int, words: list[int], tool: str = search.CHILD_TOOL_VERSION,
+                config_status: str = "0x46107ffc") -> dict:
     body = b"".join(word.to_bytes(4, "big") for word in words)
     return {
         "tool": tool,
         "verdict": "READ",
         "idcode": search.IDCODE,
-        "config_status": "0x46107ffc",
+        "config_status": config_status,
         "frames": {f"{far:#010x}": {
             "frame": [f"{word:08x}" for word in words],
             "pad_frame": [f"{word:08x}" for word in ZERO],
@@ -62,7 +64,8 @@ def capture_for(far: int, words: list[int], tool: str = search.CHILD_TOOL_VERSIO
 
 def runner_for(content: dict[int, list[int]], fail_on: int | None = None,
                asked: list[int] | None = None, tool: str | None = None,
-               raise_on: int | None = None, garbage_on: int | None = None):
+               raise_on: int | None = None, garbage_on: int | None = None,
+               config_status: str = "0x46107ffc"):
     """A child that writes what the fabric is pretending to hold, or fails like a real one."""
     def runner(far: int, out_path: Path) -> dict:
         if asked is not None:
@@ -75,8 +78,8 @@ def runner_for(content: dict[int, list[int]], fail_on: int | None = None,
         if far == garbage_on:
             out_path.write_text("{not json", encoding="utf-8")
             return {"returncode": 0, "argv": argv, "stdout": "", "stderr": ""}
-        out_path.write_text(json.dumps(capture_for(far, content.get(far, ZERO),
-                                                   tool or search.CHILD_TOOL_VERSION)),
+        out_path.write_text(json.dumps(capture_for(
+            far, content.get(far, ZERO), tool or search.CHILD_TOOL_VERSION, config_status)),
                             encoding="utf-8")
         return {"returncode": 0, "argv": argv, "stdout": "", "stderr": ""}
     return runner
@@ -90,9 +93,20 @@ def go(tmp: Path, content: dict, **kwargs):
                       runner=runner_for(wire_content, kwargs.pop("fail_on", None),
                                         kwargs.pop("asked", None), kwargs.pop("tool", None),
                                         kwargs.pop("raise_on", None),
-                                        kwargs.pop("garbage_on", None)),
+                                        kwargs.pop("garbage_on", None),
+                                        kwargs.pop("config_status", "0x46107ffc")),
                       plmark_reader=kwargs.pop("plmark_reader", lambda port: PLMARK),
                       **kwargs)
+
+
+def go_control(tmp: Path, content: dict, **kwargs):
+    return search.run_control_only(
+        tmp, PLMARK, BASE, CONTROL_DIGEST, CONTROLS,
+        runner=runner_for(content, kwargs.pop("fail_on", None),
+                          kwargs.pop("asked", None), kwargs.pop("tool", None),
+                          kwargs.pop("raise_on", None), kwargs.pop("garbage_on", None),
+                          kwargs.pop("config_status", "0x46107ffc")),
+        plmark_reader=kwargs.pop("plmark_reader", lambda port: PLMARK), **kwargs)
 
 
 class TheAuthority(unittest.TestCase):
@@ -217,6 +231,116 @@ class ThePositiveControl(unittest.TestCase):
         captures = {far: list(ZERO) for far in FARS}
         verdict = search.judge_sweep({}, captures, [], SIGNATURES, CONTROLS)
         self.assertEqual(verdict["verdict"], "INSTRUMENT_INVALID")
+
+
+class TheControlOnlyMode(unittest.TestCase):
+    LOCATION_VERDICTS = {
+        "WRITE_LANDED_AT_THE_INTENDED_FAR", "WRITE_LANDED_ELSEWHERE",
+        "INTENDED_FAR_IS_NEITHER", "NOT_FOUND_COMPLETE", "NOT_FOUND_INCOMPLETE",
+        "SIGNATURE_AMBIGUOUS",
+    }
+
+    def test_it_reads_exactly_all_sixteen_controls_even_after_one_matches(self) -> None:
+        asked: list[int] = []
+        content = {CONTROL_FARS[0]: CONTROLS[CONTROL_FARS[0]]}
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go_control(Path(name), content, asked=asked)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_VALID")
+        self.assertEqual(asked, CONTROL_FARS)
+        self.assertNotIn(A20, asked)
+
+    def test_wrong_but_nonzero_controls_are_invalid_and_have_no_location_fields(self) -> None:
+        content = {far: frame(0xD000 + offset)
+                   for offset, far in enumerate(CONTROL_FARS)}
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go_control(Path(name), content)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_INVALID")
+        self.assertFalse(set(verdict) & {
+            "signature_hits", "intended_far", "signature_fars",
+            "frames_searched", "frames_not_searched",
+        })
+        self.assertNotIn(verdict["verdict"], self.LOCATION_VERDICTS)
+
+    def test_an_incomplete_control_acquisition_is_unvalidated(self) -> None:
+        wrong = {far: frame(0xD000 + offset)
+                 for offset, far in enumerate(CONTROL_FARS)}
+        captures = {far: wrong[far] for far in CONTROL_FARS[:5]}
+        verdict = search.judge_positive_controls(captures, CONTROLS)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_UNVALIDATED")
+        self.assertEqual(len(verdict["positive_controls_not_read"]), 11)
+
+    def test_no_controls_read_is_unvalidated_not_valid_empty(self) -> None:
+        verdict = search.judge_positive_controls({}, CONTROLS)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_UNVALIDATED")
+        self.assertEqual(len(verdict["positive_controls_not_read"]), 16)
+
+    def test_the_production_cli_cannot_cap_control_reads(self) -> None:
+        with self.assertRaises(search.SearchStop) as stopped:
+            search.validate_mode_options(control_only=True, max_reads=15)
+        self.assertIn("exactly the sixteen", str(stopped.exception))
+        search.validate_mode_options(control_only=True, max_reads=None)
+        search.validate_mode_options(control_only=False, max_reads=15)
+
+    def test_config_status_is_summarised_for_every_capture(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go_control(tmp, {}, config_status="0x46106FFD")
+            index = json.loads((tmp / "index.json").read_text("utf-8"))
+        self.assertEqual(index["mode"], search.MODE_CONTROL_ONLY)
+        self.assertEqual(len(index["entries"]), 16)
+        self.assertEqual({entry["config_status"] for entry in index["entries"].values()},
+                         {"0x46106ffd"})
+
+    def test_index_status_must_still_equal_the_capture(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go_control(tmp, {})
+            index = json.loads((tmp / "index.json").read_text("utf-8"))
+            index["entries"][f"{CONTROL_FARS[0]:#010x}"]["config_status"] = "0xdeadbeef"
+            with self.assertRaises(search.SearchStop) as stopped:
+                search.validate_index(
+                    tmp, index, CONTROL_DIGEST, PLMARK, CONTROL_FARS, CONTROLS,
+                    search.MODE_CONTROL_ONLY)
+        self.assertIn("CONFIG_STATUS", str(stopped.exception))
+
+    def test_control_index_cannot_resume_as_a_signature_search(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go_control(tmp, {})
+            with self.assertRaises(search.SearchStop) as stopped:
+                search.run(tmp, PLMARK, SIGNATURES, BASE, FARS, CONTROL_DIGEST, CONTROLS,
+                           runner=runner_for({}), plmark_reader=lambda port: PLMARK)
+        self.assertIn("index mode", str(stopped.exception))
+
+    def test_search_index_cannot_resume_as_control_only(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go(tmp, {A20: SIGNATURES[A20]})
+            with self.assertRaises(search.SearchStop) as stopped:
+                search.run_control_only(
+                    tmp, PLMARK, BASE, DIGEST, CONTROLS, runner=runner_for({}),
+                    plmark_reader=lambda port: PLMARK)
+        self.assertIn("index mode", str(stopped.exception))
+
+    def test_control_index_cannot_be_judged_as_a_signature_search(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go_control(tmp, {})
+            with self.assertRaises(search.SearchStop):
+                search.judge_signature_search_index(
+                    tmp, PLMARK, CONTROL_DIGEST, SIGNATURES, BASE, FARS, CONTROLS)
+
+    def test_search_index_cannot_be_judged_as_control_only(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go(tmp, {A20: SIGNATURES[A20]})
+            with self.assertRaises(search.SearchStop):
+                search.judge_control_only_index(tmp, PLMARK, DIGEST, CONTROLS)
+
+    def test_mode_is_part_of_the_instrument_digest(self) -> None:
+        self.assertNotEqual(
+            search.instrument_digest(CONTROL_FARS, search.MODE_CONTROL_ONLY),
+            search.instrument_digest(CONTROL_FARS, search.MODE_SIGNATURE_SEARCH))
 
 
 class TheBookkeeping(unittest.TestCase):

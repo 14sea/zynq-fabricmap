@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Search the device's frames for the known-answer signature, one process per frame.
+"""Read reviewed configuration frames, one OpenOCD process per frame.
 
 WHY IT IS SHAPED LIKE THIS
 --------------------------
@@ -17,6 +17,14 @@ sixteen preselected unique, non-zero base frames must come back bit-exact at the
 Non-zero data or a valid-looking ECC word is not enough. If all controls fail, the only
 permitted verdict is `INSTRUMENT_INVALID`; if a read budget leaves controls unmeasured, it is
 `INSTRUMENT_UNVALIDATED`. Neither may fall through to a location verdict.
+
+CONTROL-ONLY MEANS EXACTLY THE SIXTEEN CONTROLS
+-----------------------------------------------
+`--control-only` is the short hardware-gradient diagnostic: it reads every pinned positive
+control and no intended or sweep FAR.  Its evidence is mode-bound, so it cannot be resumed
+or judged as a location search, and its verdict vocabulary is limited to the three
+`INSTRUMENT_*` states.  It records each child's CONFIG_STATUS as an observation, never as a
+classifier.
 
 THE AUTHORITY IS NOT AN ARGUMENT
 --------------------------------
@@ -57,7 +65,7 @@ import frame_ecc  # noqa: E402
 import gate_claimb_known_answer as kagate  # noqa: E402
 import probe_jtag_config_read as probe  # noqa: E402
 
-TOOL_VERSION = "board_signature_search.py/2.2.0"
+TOOL_VERSION = "board_signature_search.py/2.3.0"
 CHILD = REPO / "scripts/probe_jtag_config_read.py"
 CHILD_CFG = REPO / "scripts/jtag_config_only.cfg"
 CHILD_SPEED = 2000
@@ -69,6 +77,8 @@ INTENDED_FAR = 0x00400A20
 EXPECTED_SITE, EXPECTED_BEL = "SLICE_X2Y25", "A6LUT"
 IDCODE = "0x13722093"
 LUT_FEATURE = re.compile(r"CLBLL_L\.SLICEL_X0\.ALUT\.INIT\[(\d+)\]$")
+MODE_SIGNATURE_SEARCH = "signature-search"
+MODE_CONTROL_ONLY = "control-only"
 
 # Sixteen controls are deliberate.  A transaction presents fifteen frame writes.  If each
 # can at worst spoil one distinct control, at least one of sixteen remains available to
@@ -207,14 +217,16 @@ def canonical_positive_controls(base: dict[int, list[int]]) -> dict[int, list[in
     return {far: list(base[far]) for far in selected}
 
 
-def instrument_digest(fars: list[int]) -> str:
+def instrument_digest(fars: list[int], mode: str = MODE_SIGNATURE_SEARCH) -> str:
     """Everything a later capture must still have been taken with.
 
     The inputs alone are not enough: two different readback tools, or a different JTAG
     config, or a different adapter speed produce captures that must never be mixed into one
     search. A resume that cannot see the instrument change would splice them silently.
     """
-    parts = [TOOL_VERSION, CHILD_TOOL_VERSION, str(CHILD_SPEED)]
+    if mode not in (MODE_SIGNATURE_SEARCH, MODE_CONTROL_ONLY):
+        raise SearchStop(f"unknown acquisition mode {mode!r}")
+    parts = [TOOL_VERSION, CHILD_TOOL_VERSION, str(CHILD_SPEED), f"mode:{mode}"]
     for path in (Path(__file__), CHILD, CHILD_CFG,
                  CANONICAL_RUN / "carrier.bit",
                  CANONICAL_RUN / "phenotype_manifest.json",
@@ -321,6 +333,14 @@ def frame_of(far: int, capture: dict) -> list[int]:
     return words
 
 
+def config_status_of(far: int, capture: dict) -> str:
+    """The configuration status the child observed, normalised for the index summary."""
+    value = capture.get("config_status")
+    if not isinstance(value, str) or not re.fullmatch(r"0x[0-9a-fA-F]{8}", value):
+        raise SearchStop(f"{far:#010x}: missing or malformed CONFIG_STATUS {value!r}")
+    return value.lower()
+
+
 def _inside(out_dir: Path, name: str, key: str) -> Path:
     """A recorded file name may only ever be a file in the output directory."""
     if not name or "/" in name or "\\" in name or name in (".", ".."):
@@ -347,8 +367,8 @@ def _check_child_log(out_dir: Path, far: int, entry: dict, key: str) -> None:
 
 
 def validate_index(out_dir: Path, index: dict, digest: str, plmark: str,
-                   fars: list[int], controls: dict[int, list[int]]) -> tuple[dict[int, list[int]],
-                                                                            list[str]]:
+                   fars: list[int], controls: dict[int, list[int]],
+                   mode: str = MODE_SIGNATURE_SEARCH) -> tuple[dict[int, list[int]], list[str]]:
     """The one gate every path goes through: live, resumed and judge-only alike.
 
     Re-reads and re-hashes every capture rather than believing the index about it. An index
@@ -364,6 +384,10 @@ def validate_index(out_dir: Path, index: dict, digest: str, plmark: str,
     """
     if index.get("tool") != TOOL_VERSION:
         raise SearchStop(f"the index was written by {index.get('tool')}, not {TOOL_VERSION}")
+    if index.get("mode") != mode:
+        raise SearchStop(
+            f"the index mode is {index.get('mode')!r}, not {mode!r}; control-only and "
+            "location-search evidence are not interchangeable")
     if index.get("instrument_digest") != digest:
         raise SearchStop("the captures were taken with a different instrument or inputs")
     if index.get("plmark_at_start") != plmark:
@@ -394,7 +418,12 @@ def validate_index(out_dir: Path, index: dict, digest: str, plmark: str,
         if _digest_of(path) != entry.get("capture_sha256"):
             raise SearchStop(f"{key}: the capture file has changed since it was written")
         _check_child_log(out_dir, far, entry, key)
-        words = frame_of(far, json.loads(path.read_text("utf-8")))
+        capture = json.loads(path.read_text("utf-8"))
+        words = frame_of(far, capture)
+        config_status = config_status_of(far, capture)
+        if entry.get("config_status") != config_status:
+            raise SearchStop(
+                f"{key}: CONFIG_STATUS in the index does not match the capture")
         body = b"".join(word.to_bytes(4, "big") for word in words)
         if hashlib.sha256(body).hexdigest() != entry.get("frame_sha256"):
             raise SearchStop(f"{key}: the frame does not match the digest the index recorded")
@@ -457,7 +486,9 @@ def capture_one(far: int, out_dir: Path, index: dict, runner) -> list[int]:
             raise SearchStop(f"{key}: the child exited {result.get('returncode')}")
         if not staging.exists():
             raise SearchStop(f"{key}: the child wrote no capture")
-        words = frame_of(far, json.loads(staging.read_text("utf-8")))
+        capture = json.loads(staging.read_text("utf-8"))
+        words = frame_of(far, capture)
+        config_status = config_status_of(far, capture)
     except SearchStop as stop:
         fail(str(stop), result)
     except Exception as raised:
@@ -480,6 +511,7 @@ def capture_one(far: int, out_dir: Path, index: dict, runner) -> list[int]:
         "child_log": child_path.name,
         "child_log_sha256": _digest_of(child_path),
         "nonzero_words": sum(1 for word in words if word),
+        "config_status": config_status,
     }
     _atomic_write(index_path, json.dumps(index, indent=2) + "\n")
     return words
@@ -499,18 +531,54 @@ def require_closed(index: dict) -> None:
 
 
 def open_index(out_dir: Path, digest: str, plmark: str, fars: list[int],
-               controls: dict[int, list[int]]) -> tuple[dict, dict[int, list[int]]]:
+               controls: dict[int, list[int]],
+               mode: str = MODE_SIGNATURE_SEARCH) -> tuple[dict, dict[int, list[int]]]:
     """A fresh index, or a resumed one that has re-earned every capture it claims."""
     index_path = out_dir / "index.json"
     if not index_path.exists():
-        return ({"tool": TOOL_VERSION, "instrument_digest": digest,
+        return ({"tool": TOOL_VERSION, "mode": mode, "instrument_digest": digest,
                  "plmark_at_start": plmark,
                  "positive_control_fars": [f"{far:#010x}" for far in controls],
                  "entries": {}}, {})
     index = json.loads(index_path.read_text("utf-8"))
-    captures, _ = validate_index(out_dir, index, digest, plmark, fars, controls)
+    captures, _ = validate_index(out_dir, index, digest, plmark, fars, controls, mode)
     index.setdefault("entries", {})
     return index, captures
+
+
+def begin_invocation(out_dir: Path, index: dict) -> None:
+    """Invalidate any older closure before this invocation can land a new capture."""
+    index.pop("plmark_at_end", None)
+    _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\n")
+
+
+def close_invocation(out_dir: Path, index: dict, plmark: str, port: str,
+                     plmark_reader, digest: str, fars: list[int],
+                     controls: dict[int, list[int]], mode: str) -> None:
+    """Land this invocation's end marker, reject a restart, and revalidate everything."""
+    index["plmark_at_end"] = plmark_reader(port) if plmark_reader else plmark
+    # The observation reaches disk before the comparison.  A reboot is evidence, and an old
+    # matching closure must never reappear when the new invocation refuses.
+    _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\n")
+    if index["plmark_at_end"] != plmark:
+        raise SearchStop(
+            f"plmark changed from {plmark} to {index['plmark_at_end']}: the board restarted "
+            "during the acquisition and every later capture is from a different PL")
+    validate_index(out_dir, index, digest, plmark, fars, controls, mode)
+
+
+def validate_control_inputs(base: dict[int, list[int]], fars: list[int],
+                            controls: dict[int, list[int]],
+                            signatures: dict[int, list[int]] | None = None) -> None:
+    """The reviewed controls are same-FAR base frames inside the admitted sequence."""
+    if set(controls) - set(fars):
+        raise SearchStop("a positive-control FAR is outside the admitted frame sequence")
+    if signatures is not None and set(controls) & set(signatures):
+        raise SearchStop("candidate signature FARs cannot double as independent controls")
+    if any(base.get(far) != words for far, words in controls.items()):
+        raise SearchStop("positive controls must be the base frames at those same FARs")
+    # This also enforces count, non-zero content, uniqueness and exclusion of intended FAR.
+    judge_positive_controls({}, controls)
 
 
 # ----------------------------------------------------------------------------- the verdict
@@ -591,6 +659,19 @@ def judge_positive_controls(captures: dict[int, list[int]],
                        "location verdict."}
 
 
+def require_control_only_verdict(verdict: dict) -> None:
+    """A control acquisition has no vocabulary for location, even through a future edit."""
+    allowed = {"INSTRUMENT_VALID", "INSTRUMENT_INVALID", "INSTRUMENT_UNVALIDATED"}
+    if verdict.get("verdict") not in allowed:
+        raise SearchStop(
+            f"control-only produced forbidden verdict {verdict.get('verdict')!r}")
+    forbidden_keys = {"signature_hits", "intended_far", "signature_fars",
+                      "frames_searched", "frames_not_searched"}
+    present = sorted(forbidden_keys & set(verdict))
+    if present:
+        raise SearchStop(f"control-only produced location fields: {present}")
+
+
 def judge_sweep(index: dict, captures: dict[int, list[int]], not_attempted: list[str],
                 signatures: dict[int, list[int]], controls: dict[int, list[int]]) -> dict:
     """Where, if anywhere, a whole candidate frame appears in what was read."""
@@ -635,19 +716,14 @@ def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
         port: str = "/dev/ebaz-uart", max_reads: int | None = None,
         plmark_reader=read_plmark) -> dict:
     """Intended frame, fail-closed controls, then (only if justified) the sweep."""
-    if set(controls) - set(fars):
-        raise SearchStop("a positive-control FAR is outside the frozen device sequence")
-    if set(controls) & set(signatures):
-        raise SearchStop("candidate signature FARs cannot double as independent controls")
-    if any(base.get(far) != words for far, words in controls.items()):
-        raise SearchStop("positive controls must be the base frames at those same FARs")
-    index, captures = open_index(out_dir, digest, plmark, fars, controls)
+    validate_control_inputs(base, fars, controls, signatures)
+    index, captures = open_index(
+        out_dir, digest, plmark, fars, controls, MODE_SIGNATURE_SEARCH)
 
     # A closure belongs to one invocation, not to the directory forever.  Invalidate an old
     # one on disk before this invocation can add a capture; otherwise a reboot during a
     # resume leaves the new captures wearing the previous invocation's matching end marker.
-    index.pop("plmark_at_end", None)
-    _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\n")
+    begin_invocation(out_dir, index)
 
     if INTENDED_FAR not in captures:
         captures[INTENDED_FAR] = capture_one(INTENDED_FAR, out_dir, index, runner)
@@ -691,24 +767,88 @@ def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
         # Recomputed from the frozen set against what actually validated, never taken from
         # the index: an interrupted run leaves a self-consistent index that is silent about
         # every frame nobody looked at.
-        _, missing = validate_index(out_dir, index, digest, plmark, fars, controls)
+        _, missing = validate_index(
+            out_dir, index, digest, plmark, fars, controls, MODE_SIGNATURE_SEARCH)
         verdict = judge_sweep(index, captures, missing, signatures, controls)
 
     index["not_attempted"] = verdict.get("frames_not_searched", [
         f"{far:#010x}" for far in fars if far not in captures])
-    index["plmark_at_end"] = plmark_reader(port) if plmark_reader else plmark
-    # Persist the observed end marker before deciding whether it matches.  A mismatching
-    # marker is evidence that this invocation did not close; it must not disappear behind a
-    # SearchStop and reveal an older, matching closure on disk.
-    _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\n")
-    if index["plmark_at_end"] != plmark:
-        raise SearchStop(
-            f"plmark changed from {plmark} to {index['plmark_at_end']}: the board restarted "
-            "during the search and every capture after that is from a different PL")
-    validate_index(out_dir, index, digest, plmark, fars, controls)
+    close_invocation(out_dir, index, plmark, port, plmark_reader, digest, fars, controls,
+                     MODE_SIGNATURE_SEARCH)
     verdict["intended_far"] = f"{INTENDED_FAR:#010x}"
     verdict["signature_fars"] = [f"{far:#010x}" for far in signatures]
     return verdict
+
+
+def run_control_only(out_dir: Path, plmark: str, base: dict[int, list[int]], digest: str,
+                     controls: dict[int, list[int]], runner=subprocess_runner,
+                     port: str = "/dev/ebaz-uart", plmark_reader=read_plmark) -> dict:
+    """Read exactly the pinned controls; never inspect or state a candidate location."""
+    control_fars = list(controls)
+    validate_control_inputs(base, control_fars, controls)
+    index, captures = open_index(
+        out_dir, digest, plmark, control_fars, controls, MODE_CONTROL_ONLY)
+    begin_invocation(out_dir, index)
+
+    for far in controls:
+        if far in captures:
+            continue
+        captures[far] = capture_one(far, out_dir, index, runner)
+
+    verdict = judge_positive_controls(captures, controls)
+    require_control_only_verdict(verdict)
+    index["not_attempted"] = [f"{far:#010x}" for far in controls if far not in captures]
+    close_invocation(out_dir, index, plmark, port, plmark_reader, digest, control_fars,
+                     controls, MODE_CONTROL_ONLY)
+    return verdict
+
+
+def judge_control_only_index(out_dir: Path, plmark: str, digest: str,
+                             controls: dict[int, list[int]]) -> dict:
+    """Offline verdict for a closed control-only acquisition, with no location path."""
+    index = json.loads((out_dir / "index.json").read_text("utf-8"))
+    control_fars = list(controls)
+    captures, _ = validate_index(
+        out_dir, index, digest, plmark, control_fars, controls, MODE_CONTROL_ONLY)
+    require_closed(index)
+    verdict = judge_positive_controls(captures, controls)
+    require_control_only_verdict(verdict)
+    return verdict
+
+
+def judge_signature_search_index(out_dir: Path, plmark: str, digest: str,
+                                 signatures: dict[int, list[int]],
+                                 base: dict[int, list[int]], fars: list[int],
+                                 controls: dict[int, list[int]]) -> dict:
+    """Offline verdict for a closed location-search acquisition."""
+    index = json.loads((out_dir / "index.json").read_text("utf-8"))
+    captures, missing = validate_index(
+        out_dir, index, digest, plmark, fars, controls, MODE_SIGNATURE_SEARCH)
+    require_closed(index)
+    if INTENDED_FAR not in captures:
+        raise SearchStop("the intended FAR was never captured; nothing is decided")
+    decision = decide_intended(captures[INTENDED_FAR], signatures, base)
+    verdict = dict(decision)
+    if decision["verdict"] != "WRITE_LANDED_AT_THE_INTENDED_FAR":
+        control = judge_positive_controls(captures, controls)
+        if control["verdict"] != "INSTRUMENT_VALID":
+            verdict = control
+        elif decision["verdict"] == "INTENDED_FAR_IS_NEITHER":
+            verdict.update({"positive_controls": control["positive_controls"],
+                            "positive_control_matches": control["positive_control_matches"]})
+        elif decision["sweep_needed"]:
+            verdict = judge_sweep(index, captures, missing, signatures, controls)
+    verdict["intended_far"] = f"{INTENDED_FAR:#010x}"
+    verdict["signature_fars"] = [f"{far:#010x}" for far in signatures]
+    return verdict
+
+
+def validate_mode_options(control_only: bool, max_reads: int | None) -> None:
+    """The diagnostic's production surface cannot request a partial control set."""
+    if control_only and max_reads is not None:
+        raise SearchStop(
+            "--max-reads is not available with --control-only: that mode must read exactly "
+            "the sixteen pinned controls")
 
 
 def main() -> int:
@@ -718,48 +858,45 @@ def main() -> int:
     ap.add_argument("--plmark", required=True,
                     help="the marker the load set; checked before and after the search")
     ap.add_argument("--port", default="/dev/ebaz-uart")
+    ap.add_argument("--control-only", action="store_true",
+                    help="read exactly the sixteen pinned controls and emit no location "
+                         "verdict")
     ap.add_argument("--max-reads", type=int, default=None,
-                    help="after the intended FAR, stop after this many child reads across "
-                         "controls and sweep; the rest are never treated as searched")
+                    help="cap child reads for an intentionally incomplete acquisition; "
+                         "unread controls remain unvalidated, never successful")
     ap.add_argument("--judge-only", action="store_true",
                     help="decide from the captures already on disk, touching no hardware")
     args = ap.parse_args()
 
     started = time.time()
     try:
+        validate_mode_options(args.control_only, args.max_reads)
         signatures, document = canonical_authority()
         fars = frozen_far_sequence()
-        digest = instrument_digest(fars)
         base = base_frames()
         controls = canonical_positive_controls(base)
+        mode = MODE_CONTROL_ONLY if args.control_only else MODE_SIGNATURE_SEARCH
+        admitted_fars = list(controls) if args.control_only else fars
+        digest = instrument_digest(admitted_fars, mode)
 
         if args.judge_only:
-            index = json.loads((args.out_dir / "index.json").read_text("utf-8"))
-            captures, missing = validate_index(
-                args.out_dir, index, digest, args.plmark, fars, controls)
-            require_closed(index)
-            if INTENDED_FAR not in captures:
-                raise SearchStop("the intended FAR was never captured; nothing is decided")
-            decision = decide_intended(captures[INTENDED_FAR], signatures, base)
-            verdict = dict(decision)
-            if decision["verdict"] != "WRITE_LANDED_AT_THE_INTENDED_FAR":
-                control = judge_positive_controls(captures, controls)
-                if control["verdict"] != "INSTRUMENT_VALID":
-                    verdict = control
-                elif decision["verdict"] == "INTENDED_FAR_IS_NEITHER":
-                    verdict.update({"positive_controls": control["positive_controls"],
-                                    "positive_control_matches":
-                                        control["positive_control_matches"]})
-                elif decision["sweep_needed"]:
-                    verdict = judge_sweep(index, captures, missing, signatures, controls)
-            verdict["intended_far"] = f"{INTENDED_FAR:#010x}"
-            verdict["signature_fars"] = [f"{far:#010x}" for far in signatures]
+            if args.control_only:
+                verdict = judge_control_only_index(
+                    args.out_dir, args.plmark, digest, controls)
+            else:
+                verdict = judge_signature_search_index(
+                    args.out_dir, args.plmark, digest, signatures, base, fars, controls)
         else:
             actual = read_plmark(args.port)
             if actual != args.plmark:
                 raise SearchStop(f"plmark is {actual}, expected {args.plmark}")
-            verdict = run(args.out_dir, args.plmark, signatures, base, fars, digest, controls,
-                          port=args.port, max_reads=args.max_reads)
+            if args.control_only:
+                verdict = run_control_only(
+                    args.out_dir, args.plmark, base, digest, controls, port=args.port)
+            else:
+                verdict = run(
+                    args.out_dir, args.plmark, signatures, base, fars, digest, controls,
+                    port=args.port, max_reads=args.max_reads)
 
         verdict["instrument_digest"] = digest
         verdict["known_answer_artifact_sha256"] = kagate.PRODUCTION_ARTIFACT_SHA256
