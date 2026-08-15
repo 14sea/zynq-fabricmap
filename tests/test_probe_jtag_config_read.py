@@ -40,6 +40,58 @@ class TheAllowedSet(unittest.TestCase):
             probe.check_sequence([int(word, 16) for word in step["words"]])
 
 
+class TheEnvelopes(unittest.TestCase):
+    """One FAR-set per `sync … DESYNC`. Sharing one produced the 2026-08-15 miss."""
+
+    def setUp(self) -> None:
+        self.tcl, self.steps = probe.build_tcl([FAR, FAR + 1])
+
+    def events(self) -> list[str]:
+        found = []
+        for line in self.tcl.splitlines():
+            if line.strip() == f"irscan {probe.TAP} 0x{probe.IR['CFG_OUT']:02x}":
+                found.append("CFG_OUT")
+                continue
+            words = probe._payload_words(line)
+            if not words:
+                continue
+            if probe.SYNC in words:
+                found.append("SYNC")
+            if any(words[i] == probe.t1(True, probe.CMD_REG, 1)
+                   and words[i + 1] == probe.CMD_DESYNC for i in range(len(words) - 1)):
+                found.append("DESYNC")
+        return found
+
+    def test_the_reviewed_script_leaves_no_envelope_open(self) -> None:
+        self.assertEqual(probe.envelope_violations(self.tcl), [])
+
+    def test_each_far_gets_its_own_desync(self) -> None:
+        closes = [step for step in self.steps if step["step"].startswith("DESYNC after FDRO")]
+        self.assertEqual([step["step"] for step in closes],
+                         [f"DESYNC after FDRO {FAR:#010x}",
+                          f"DESYNC after FDRO {FAR + 1:#010x}"])
+
+    def test_a_desync_separates_a_read_from_the_next_sync(self) -> None:
+        events = self.events()
+        for index, event in enumerate(events):
+            if event != "CFG_OUT":
+                continue
+            rest = events[index + 1:]
+            self.assertIn("DESYNC", rest, "a CFG_OUT with no DESYNC after it")
+            if "SYNC" in rest:
+                self.assertLess(rest.index("DESYNC"), rest.index("SYNC"),
+                                "a new SYNC opens before the previous envelope is closed")
+
+    def test_jshutdown_is_issued_once_for_the_whole_session(self) -> None:
+        self.assertEqual(self.tcl.count(f"irscan {probe.TAP} 0x{probe.IR['JSHUTDOWN']:02x}"), 1)
+
+    def test_a_hole_in_an_envelope_is_named(self) -> None:
+        holed = self.tcl.replace(
+            f"drscan {probe.TAP} {probe.field_list(list(probe.DESYNC_TAIL))}", "", 1)
+        self.assertTrue(probe.envelope_violations(holed),
+                        "removing a DESYNC must be detected, not tolerated")
+
+
 class TheRefusals(unittest.TestCase):
     def test_an_fdri_write_is_refused(self) -> None:
         with self.assertRaises(probe.ProbeStop):

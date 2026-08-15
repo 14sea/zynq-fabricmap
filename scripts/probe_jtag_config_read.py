@@ -112,8 +112,19 @@ def decode_capture(text: str, count: int) -> list[int]:
     return [rev32((value >> (32 * index)) & 0xFFFFFFFF) for index in range(count)]
 
 
+DESYNC_TAIL = [t1(True, CMD_REG, 1), CMD_DESYNC, NOOP, NOOP]
+
+
 def build_tcl(far_list: list[int]) -> tuple[str, list[dict]]:
-    """The whole session as one OpenOCD script, so config state survives between steps."""
+    """The whole session as one OpenOCD script, so config state survives between steps.
+
+    **Every envelope is closed where it was opened.** A `sync … DESYNC` envelope holds one
+    FAR-set and one read; sharing one across two FARs is what made the second read of
+    2026-08-15 return an unrelated all-zero frame. `envelope_violations()` below is the
+    machine-checkable form of that rule, and it is what the mutation harness kills a mutant
+    with. JSHUTDOWN is issued once per session, between envelopes, because it is a TAP
+    instruction and not part of any packet stream.
+    """
     steps: list[dict] = []
     lines = ["init", "echo \"@@ init done\""]
 
@@ -121,47 +132,91 @@ def build_tcl(far_list: list[int]) -> tuple[str, list[dict]]:
               f"set id [drscan {TAP} 32 0]",
               "echo \"@@ IDCODE $id\""]
 
-    stat_in = [DUMMY, SYNC, NOOP, t1(False, STAT_REG, 1), NOOP, NOOP]
-    check_sequence(stat_in)
-    steps.append({"step": "read STAT", "words": [f"{w:08x}" for w in stat_in]})
-    lines += [f"irscan {TAP} 0x{IR['CFG_IN']:02x}",
-              f"drscan {TAP} {field_list(stat_in)}",
-              f"irscan {TAP} 0x{IR['CFG_OUT']:02x}",
+    def cfg_in(words: list[int], label: str) -> None:
+        check_sequence(words)
+        steps.append({"step": label, "words": [f"{w:08x}" for w in words]})
+        lines.append(f"irscan {TAP} 0x{IR['CFG_IN']:02x}")
+        lines.append(f"drscan {TAP} {field_list(words)}")
+
+    def close_envelope(label: str) -> None:
+        cfg_in(list(DESYNC_TAIL), f"DESYNC after {label}")
+
+    # -- the STAT envelope, opened and closed like every other one.
+    cfg_in([DUMMY, SYNC, NOOP, t1(False, STAT_REG, 1), NOOP, NOOP], "read STAT")
+    lines += [f"irscan {TAP} 0x{IR['CFG_OUT']:02x}",
               f"set stat [drscan {TAP} 32 0]",
               "echo \"@@ STAT $stat\""]
+    close_envelope("STAT")
 
-    shutdown_in = [DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP]
-    check_sequence(shutdown_in)
-    steps.append({"step": "RCRC then JSHUTDOWN",
-                  "words": [f"{w:08x}" for w in shutdown_in]})
-    lines += [f"irscan {TAP} 0x{IR['CFG_IN']:02x}",
-              f"drscan {TAP} {field_list(shutdown_in)}",
-              f"irscan {TAP} 0x{IR['JSHUTDOWN']:02x}",
+    # -- RCRC, then the one JSHUTDOWN of the session.
+    cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")
+    close_envelope("RCRC")
+    lines += [f"irscan {TAP} 0x{IR['JSHUTDOWN']:02x}",
               "runtest 12",
               "echo \"@@ shutdown done\""]
 
+    # -- one complete transaction per FAR: SYNC → RCFG → FAR → FDRO → CFG_OUT → DESYNC.
     for far in far_list:
-        read_in = ([DUMMY, SYNC, NOOP,
-                    t1(True, CMD_REG, 1), CMD_RCFG, NOOP,
-                    t1(True, FAR_REG, 1), far,
-                    t1(False, FDRO_REG, 0), t2_read(READ_WORDS)]
-                   + [NOOP] * 32)
-        check_sequence(read_in)
-        steps.append({"step": f"FDRO {far:#010x}", "words": [f"{w:08x}" for w in read_in]})
-        lines += [f"irscan {TAP} 0x{IR['CFG_IN']:02x}",
-                  f"drscan {TAP} {field_list(read_in)}",
-                  f"irscan {TAP} 0x{IR['CFG_OUT']:02x}",
+        cfg_in([DUMMY, SYNC, NOOP,
+                t1(True, CMD_REG, 1), CMD_RCFG, NOOP,
+                t1(True, FAR_REG, 1), far,
+                t1(False, FDRO_REG, 0), t2_read(READ_WORDS)] + [NOOP] * 32,
+               f"FDRO {far:#010x}")
+        lines += [f"irscan {TAP} 0x{IR['CFG_OUT']:02x}",
                   f"set data [drscan {TAP} {capture_fields(READ_WORDS)}]",
                   f"echo \"@@ FRAME {far:#010x} $data\""]
+        close_envelope(f"FDRO {far:#010x}")
 
-    desync = [t1(True, CMD_REG, 1), CMD_DESYNC, NOOP, NOOP]
-    check_sequence(desync)
-    steps.append({"step": "DESYNC", "words": [f"{w:08x}" for w in desync]})
-    lines += [f"irscan {TAP} 0x{IR['CFG_IN']:02x}",
-              f"drscan {TAP} {field_list(desync)}",
-              "echo \"@@ desync done\"",
-              "shutdown"]
-    return "\n".join(lines) + "\n", steps
+    lines += ["echo \"@@ desync done\"", "shutdown"]
+    tcl = "\n".join(lines) + "\n"
+    violations = envelope_violations(tcl)
+    if violations:
+        raise ProbeStop("the generated script leaves an envelope open: " + "; ".join(violations))
+    return tcl, steps
+
+
+def _payload_words(line: str) -> list[int] | None:
+    """The config words a `drscan` line carries, or None if it is a capture-only scan."""
+    match = re.match(rf"drscan {re.escape(TAP)} (\d+) 0x([0-9a-fA-F]+)$", line.strip())
+    if not match:
+        return None
+    bits, value = int(match.group(1)), int(match.group(2), 16)
+    if value == 0 or bits % 32:
+        return None
+    return [rev32((value >> (32 * i)) & 0xFFFFFFFF) for i in range(bits // 32)]
+
+
+def envelope_violations(tcl: str) -> list[str]:
+    """Every `sync` must be closed by a `DESYNC` before the next one, and before the end.
+
+    Written against the emitted script rather than the builder's intentions, so a change
+    that quietly drops a DESYNC is caught by reading what would actually be shifted.
+    """
+    problems: list[str] = []
+    open_at: int | None = None
+    for number, line in enumerate(tcl.splitlines(), 1):
+        if line.strip() == f"irscan {TAP} 0x{IR['CFG_OUT']:02x}":
+            if open_at is None:
+                problems.append(f"line {number}: a CFG_OUT read outside any envelope")
+            continue
+        words = _payload_words(line)
+        if not words:
+            continue
+        if SYNC in words:
+            if open_at is not None:
+                problems.append(
+                    f"line {number}: a SYNC while the envelope opened at line {open_at} "
+                    "is still open")
+            open_at = number
+        desync = any(words[i] == t1(True, CMD_REG, 1) and i + 1 < len(words)
+                     and words[i + 1] == CMD_DESYNC for i in range(len(words)))
+        if desync:
+            if open_at is None:
+                problems.append(f"line {number}: a DESYNC with no envelope open")
+            open_at = None
+    if open_at is not None:
+        problems.append(f"the envelope opened at line {open_at} is never closed")
+    return problems
 
 
 def main() -> int:

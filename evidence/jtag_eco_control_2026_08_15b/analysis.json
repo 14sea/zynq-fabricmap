@@ -1,0 +1,91 @@
+{
+  "tool": "analyse_jtag_control.py/1.0.0",
+  "what": "does the JTAG readback reproduce the bitstream that was loaded",
+  "inputs": {
+    "capture": {
+      "path": "evidence/jtag_eco_control_2026_08_15b/record.json",
+      "sha256": "0d0fab7e863db994bdd9f95cb2439f45968dae19b8dc02e6ead833e6ab0aba45"
+    },
+    "carrier_eco_bit": {
+      "path": "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/carrier_eco.bit",
+      "sha256": "78eff0cbc6c4d8034f18a5a7f928bcc33e3f57e07e67f117debf27728543d9ae"
+    },
+    "carrier_bit": {
+      "path": "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/carrier.bit",
+      "sha256": "8c3369e8e4755da5aceeb7844690d5e132b2e65647004c0a46c0e868e34f0b8a"
+    },
+    "mask_db": {
+      "path": "/home/test/zynq_fabricmap/data/prjxray/zynq7/mask_clbll_l.db",
+      "sha256": "dae6bd639ae3cf0ddb9bbdf78e7d5f79bb9971573fa84d0a8c071bac79555120",
+      "entries": 2250
+    }
+  },
+  "alignment": {
+    "declared": "the first 101 words are the pad frame, the second 101 are the requested frame",
+    "note": "declared before the comparison; the full capture is in the record so a different alignment can be examined offline without re-reading"
+  },
+  "idcode": "0x13722093",
+  "config_status": "0x46107ffc",
+  "expected_bits": [
+    {
+      "name": "INIT[0]",
+      "far": "0x00400a20",
+      "word": 51,
+      "bit": 15,
+      "in_carrier_eco": 1,
+      "in_carrier_base": 0,
+      "in_readback": 1,
+      "discriminating": true,
+      "verdict": "HIT"
+    },
+    {
+      "name": "INIT[32]",
+      "far": "0x00400a20",
+      "word": 51,
+      "bit": 7,
+      "in_carrier_eco": 1,
+      "in_carrier_base": 0,
+      "in_readback": 1,
+      "discriminating": true,
+      "verdict": "HIT"
+    },
+    {
+      "name": "INIT[35]",
+      "far": "0x00400a21",
+      "word": 51,
+      "bit": 6,
+      "in_carrier_eco": 1,
+      "in_carrier_base": 0,
+      "in_readback": 0,
+      "discriminating": true,
+      "verdict": "MISS"
+    }
+  ],
+  "frames": {
+    "0x00400a20": {
+      "equals_loaded_bitstream_frame": true,
+      "differing_words": [],
+      "differing_words_touching_masked_bits": [],
+      "readback_sha256": "02fc3959f7738626bc6d2c15d24ed73dd1c884bb57c05982bf3ff4dd4d6a1b16",
+      "nonzero_words": 2,
+      "ecc_consistent": true,
+      "pad_frame_all_zero": true,
+      "equals_base_frame": false
+    },
+    "0x00400a21": {
+      "equals_loaded_bitstream_frame": false,
+      "differing_words": [
+        50,
+        51
+      ],
+      "differing_words_touching_masked_bits": [],
+      "readback_sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+      "nonzero_words": 0,
+      "ecc_consistent": true,
+      "pad_frame_all_zero": true,
+      "equals_base_frame": true
+    }
+  },
+  "verdict": "CONTROL PARTIAL",
+  "reading": "2 of 3 expected bits hit and 1 of 2 frames matched exactly. The method demonstrably works where it worked \u2014 an exact match on a frame carrying a discriminating signature is not a coincidence \u2014 but it is not yet reliable for every read, and no conclusion about unknown content may rest on the reads that failed."
+}
