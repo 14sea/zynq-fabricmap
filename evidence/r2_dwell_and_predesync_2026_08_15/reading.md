@@ -32,7 +32,13 @@ Not merely "also a failure" — the same fingerprint, in both things that R1 cha
 | `CONFIG_STATUS` | `0x46106ffd` ×1, `0x46107ffc` ×1, `0x46101f8c` ×14 | identical |
 | control frames | 16/16 all-zero | 16/16 all-zero |
 
-So the timing was not the obstacle. Whatever the reordered `RCRC` does — and it does
+> **Correction, 2026-08-15.** This paragraph first said "the timing was not the obstacle".
+> That generalises past the experiment. What was tested is one dwell length and one extra
+> envelope, so what is supported is exactly: **a 1024 TCK dwell and a self-contained pre-read
+> DESYNC have no effect.** Other timings — a longer dwell still, a wait between the RCRC and
+> the first FDRO, a slower TCK — are untested and this run says nothing about them.
+
+So that dwell and that envelope were not the obstacle. Whatever the reordered `RCRC` does — and it does
 something, since the status moves — a 1024 TCK dwell and an extra envelope add nothing to it.
 
 ## The all-zero observation, now repeated
