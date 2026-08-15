@@ -36,6 +36,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 
+TOOL_VERSION = "probe_jtag_config_read.py/2.1.0"
 TAP = "zynq_pl.bs"
 IR = {"IDCODE": 0x09, "CFG_IN": 0x05, "CFG_OUT": 0x04, "JSHUTDOWN": 0x0D}
 FORBIDDEN_IR = {"JPROGRAM": 0x0B, "JSTART": 0x0C}
@@ -130,7 +131,8 @@ def build_tcl(far_list: list[int]) -> tuple[str, list[dict]]:
 
     `envelope_violations()` below is the machine-checkable form of the rule, and it is what
     the mutation harness kills a mutant with. JSHUTDOWN is issued once per session, between
-    envelopes, because it is a TAP instruction and not part of any packet stream.
+    envelopes, because it is a TAP instruction and not part of any packet stream.  R1 adds a
+    second machine-checkable rule: RCRC follows JSHUTDOWN and precedes the first FDRO.
     """
     steps: list[dict] = []
     lines = ["init", "echo \"@@ init done\""]
@@ -155,12 +157,12 @@ def build_tcl(far_list: list[int]) -> tuple[str, list[dict]]:
               "echo \"@@ STAT $stat\""]
     close_envelope("STAT")
 
-    # -- RCRC, then the one JSHUTDOWN of the session.
-    cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")
-    close_envelope("RCRC")
+    # -- the one JSHUTDOWN of the session, then R1's reordered RCRC envelope.
     lines += [f"irscan {TAP} 0x{IR['JSHUTDOWN']:02x}",
               "runtest 12",
               "echo \"@@ shutdown done\""]
+    cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")
+    close_envelope("RCRC")
 
     # -- one complete transaction per FAR: SYNC → RCFG → FAR → FDRO → CFG_OUT → DESYNC.
     for far in far_list:
@@ -179,6 +181,9 @@ def build_tcl(far_list: list[int]) -> tuple[str, list[dict]]:
     violations = envelope_violations(tcl)
     if violations:
         raise ProbeStop("the generated script leaves an envelope open: " + "; ".join(violations))
+    violations = recovery_order_violations(tcl)
+    if violations:
+        raise ProbeStop("the generated recovery order is not R1: " + "; ".join(violations))
     return tcl, steps
 
 
@@ -226,6 +231,38 @@ def envelope_violations(tcl: str) -> list[str]:
     return problems
 
 
+def recovery_order_violations(tcl: str) -> list[str]:
+    """R1 is exactly JSHUTDOWN -> RCRC -> first FDRO, each appearing where expected."""
+    shutdown_lines: list[int] = []
+    rcrc_lines: list[int] = []
+    fdro_lines: list[int] = []
+    for number, line in enumerate(tcl.splitlines(), 1):
+        if line.strip() == f"irscan {TAP} 0x{IR['JSHUTDOWN']:02x}":
+            shutdown_lines.append(number)
+        words = _payload_words(line)
+        if not words:
+            continue
+        for index in range(len(words) - 1):
+            if words[index] == t1(True, CMD_REG, 1) and words[index + 1] == CMD_RCRC:
+                rcrc_lines.append(number)
+            if words[index] == t1(False, FDRO_REG, 0):
+                fdro_lines.append(number)
+
+    problems: list[str] = []
+    if len(shutdown_lines) != 1:
+        problems.append(f"expected one JSHUTDOWN, found {len(shutdown_lines)}")
+    if len(rcrc_lines) != 1:
+        problems.append(f"expected one RCRC envelope, found {len(rcrc_lines)}")
+    if not fdro_lines:
+        problems.append("no FDRO read follows the recovery prefix")
+    if len(shutdown_lines) == 1 and len(rcrc_lines) == 1:
+        if rcrc_lines[0] < shutdown_lines[0]:
+            problems.append("RCRC is still before JSHUTDOWN")
+        if fdro_lines and rcrc_lines[0] > fdro_lines[0]:
+            problems.append("the first FDRO starts before RCRC")
+    return problems
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--cfg", default=str(REPO / "scripts/jtag_config_only.cfg"))
@@ -237,9 +274,9 @@ def main() -> int:
     far_list = [int(f, 16) for f in (args.far or ["0x00400A20", "0x00400A21"])]
 
     record: dict = {
-        # 2.0.0 is the per-FAR envelope shape. 1.0.0 shared one envelope across the reads,
-        # and two different sequences must never wear the same tool identity in evidence.
-        "tool": "probe_jtag_config_read.py/2.0.0",
+        # 2.1.0 is recovery rung R1: RCRC follows JSHUTDOWN. 2.0.0 put RCRC first;
+        # two different recovery sequences must never wear the same identity in evidence.
+        "tool": TOOL_VERSION,
         "what": "independent JTAG readback of configuration frames",
         "tap": TAP,
         "ir_codes": {name: f"0x{code:02x}" for name, code in IR.items()},

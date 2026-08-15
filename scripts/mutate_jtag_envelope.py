@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Mutation gate for the one rule the 2026-08-15 miss taught: close every envelope.
+"""Mutation gate for the reviewed JTAG envelope and recovery ordering.
 
-Each mutant removes a DESYNC the reviewed script emits. A mutant is killed only when
-`envelope_violations()` names the resulting hole, or `build_tcl()` refuses to emit it —
+Two mutants remove a DESYNC; the third restores the pre-R1 RCRC order. A mutant is killed
+only when a checker names the resulting behaviour or `build_tcl()` refuses to emit it —
 never by a string search for the mutation itself, which would only prove the patch applied.
 """
 
@@ -28,6 +28,20 @@ MUTANTS = {
     "drop_stat_desync": (
         '    close_envelope("STAT")',
         '    pass  # mutant: the STAT envelope is never closed'),
+    # MUTATION ANCHOR r1_order: moving RCRC back before JSHUTDOWN restores the failed rung.
+    "rcrc_before_jshutdown": (
+        '    # -- the one JSHUTDOWN of the session, then R1\'s reordered RCRC envelope.\n'
+        '    lines += [f"irscan {TAP} 0x{IR[\'JSHUTDOWN\']:02x}",\n'
+        '              "runtest 12",\n'
+        '              "echo \\"@@ shutdown done\\""]\n'
+        '    cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")\n'
+        '    close_envelope("RCRC")',
+        '    # mutant: restore the pre-R1 sequence.\n'
+        '    cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")\n'
+        '    close_envelope("RCRC")\n'
+        '    lines += [f"irscan {TAP} 0x{IR[\'JSHUTDOWN\']:02x}",\n'
+        '              "runtest 12",\n'
+        '              "echo \\"@@ shutdown done\\""]'),
 }
 
 
@@ -60,7 +74,8 @@ def main() -> int:
             print(f"{name}: KILLED — build_tcl refused to emit it ({refused})")
             killed += 1
             continue
-        problems = module.envelope_violations(mutant_tcl)
+        problems = [*module.envelope_violations(mutant_tcl),
+                    *module.recovery_order_violations(mutant_tcl)]
         if problems:
             print(f"{name}: KILLED — {problems[0]}")
             killed += 1

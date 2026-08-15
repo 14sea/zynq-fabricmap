@@ -29,9 +29,10 @@ the most convenient explanation:
 So the carrier does not leave the ICAP selected, mid-packet, or mid-direction-change. Whatever
 is spoiled is the configuration engine's state, not the port.
 
-## Review 2 — the JTAG probe's start sequence, and the thing it already does
+## Review 2 — the 2.0.0 JTAG probe's start sequence, and the thing it already did
 
-`probe_jtag_config_read.py` opens every session with:
+`probe_jtag_config_read.py/2.0.0`, which produced rungs 1, 2 and R0, opened every session
+with:
 
 ```
 IDCODE
@@ -41,10 +42,10 @@ JSHUTDOWN, RTI 12
 per FAR: CFG_IN [sync, RCFG, FAR, FDRO, type-2 count, 32×NOOP] → CFG_OUT → CFG_IN [DESYNC]
 ```
 
-**The probe already issues `RCRC` before every read, and it did not restore the readback.**
-That matters for the ladder below: the obvious remedy is already in the sequence and is
-insufficient. Whatever the state is, resetting the CRC register from JTAG after the fact does
-not clear it.
+**The 2.0.0 probe issued `RCRC` before every read, and it did not restore the readback.**
+That established the pre-R1 baseline: the obvious command was already present, but in the
+pre-shutdown position it was insufficient. It did not establish whether the same command
+would be accepted after shutdown; that is precisely the narrower R1 question.
 
 Note also that the STAT read happens *before* the RCRC, so the recorded `CONFIG_STATUS` is the
 state as found, not as left.
@@ -93,6 +94,17 @@ structural test and the mutant that kills its removal — in that order, offline
 
 R0 through R3 need no new instruction and are therefore cheap and safe to rule on. R4 is the
 first that touches the allowlist and should not be reached for until R0–R3 have failed.
+
+### Implementation status
+
+R0 subsequently reproduced `INSTRUMENT_INVALID` twice on the same boot (0/16 both times,
+`CONFIG_STATUS=0x46106ffd` for all 32 children).  The incorrect frame contents themselves
+were not repeatable, so later rungs are judged only by the bit-exact control verdict.
+
+R1 is implemented offline in `probe_jtag_config_read.py/2.1.0`: its single RCRC envelope is
+after JSHUTDOWN and before the first FDRO.  The parent acquisition tool is correspondingly
+`board_signature_search.py/2.4.0`, so old and R1 captures cannot share an index.  This is an
+implementation record, not a board result; R1 remains unverified until separately authorised.
 
 ## If no JTAG state recovers
 

@@ -138,6 +138,7 @@ class TheAuthority(unittest.TestCase):
 
     def test_the_child_is_the_reviewed_probe_and_no_jtag_path_of_its_own(self) -> None:
         self.assertEqual(search.CHILD, REPO / "scripts/probe_jtag_config_read.py")
+        self.assertEqual(search.CHILD_TOOL_VERSION, search.probe.TOOL_VERSION)
         tree = ast.parse(Path(search.__file__).read_text("utf-8"))
         for node in ast.walk(tree):
             if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef)):
