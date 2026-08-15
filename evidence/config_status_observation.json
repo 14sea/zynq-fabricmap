@@ -1,0 +1,41 @@
+{
+  "schema": "config_status_observation",
+  "schema_version": "1.0.0",
+  "what": "the devcfg CONFIG_STATUS reported by every JTAG readback taken so far",
+  "deliberately_not_interpreted": "recorded as a classifier candidate; no mechanism is claimed",
+  "exact_reads": [
+    {
+      "run": "jtag_eco_control_2026_08_15",
+      "frames_exact": "A20",
+      "config_status": "0x46107ffc"
+    },
+    {
+      "run": "jtag_eco_control_2026_08_15b",
+      "frames_exact": "A20",
+      "config_status": "0x46107ffc"
+    },
+    {
+      "run": "jtag_eco_control_2026_08_15c_reversed",
+      "frames_exact": "A21",
+      "config_status": "0x46107ffc"
+    },
+    {
+      "run": "jtag_eco_control_2026_08_15d_newprocess",
+      "frames_exact": "A20",
+      "config_status": "0x46101f8c"
+    }
+  ],
+  "invalid_reads": [
+    {
+      "run": "phase2_2026_08_15/sweep",
+      "captures": 5144,
+      "config_status": {
+        "0x46106ffd": 5144
+      },
+      "note": "uniform across every one of the 5,144 captures"
+    }
+  ],
+  "observation": "every readback that reproduced a known frame reported 0x46107ffc or 0x46101f8c; every readback in the state where none did reported 0x46106ffd",
+  "not_claimed": "that the status causes, predicts or explains the difference. Three exact runs and one invalid run is not a test of that, and two of the three exact runs share a device state as well as a status.",
+  "follow_up": "the control-only mode should record CONFIG_STATUS per capture in its index \u2014 the v2.1.0 index dropped it and it had to be read back out of the captures"
+}
