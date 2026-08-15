@@ -7,10 +7,11 @@ readback is the thing under suspicion, and it cannot be its own witness.
 
 THE ALLOWED SET, and it is enforced in code, not in a comment
 ------------------------------------------------------------
-IR: IDCODE, CFG_IN, CFG_OUT, JSHUTDOWN.  Configuration: RCRC, RCFG, FAR, FDRO, DESYNC.
-**JPROGRAM, JSTART, WCFG, MFWR and any FDRI write are refused before a single bit is
-shifted.** `check_sequence()` walks the generated words and raises rather than emit them,
-because "the script does not do that" is worth exactly as much as the check that proves it.
+IR: IDCODE, CFG_IN, CFG_OUT. Configuration: RCRC, RCFG, FAR, FDRO, DESYNC.
+**JSHUTDOWN, JPROGRAM, JSTART, WCFG, MFWR and any FDRI write are refused before a single
+bit is shifted.** `check_sequence()` walks the generated words and the emitted-Tcl checker
+refuses forbidden IR, because "the script does not do that" is worth exactly as much as the
+check that proves it.
 
 WHY A KNOWN ANSWER
 ------------------
@@ -36,11 +37,10 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 
-TOOL_VERSION = "probe_jtag_config_read.py/2.2.0"
+TOOL_VERSION = "probe_jtag_config_read.py/2.3.0"
 TAP = "zynq_pl.bs"
-IR = {"IDCODE": 0x09, "CFG_IN": 0x05, "CFG_OUT": 0x04, "JSHUTDOWN": 0x0D}
-FORBIDDEN_IR = {"JPROGRAM": 0x0B, "JSTART": 0x0C}
-SHUTDOWN_RTI_CYCLES = 1024          # R2's fixed dose, not a general settling bound
+IR = {"IDCODE": 0x09, "CFG_IN": 0x05, "CFG_OUT": 0x04}
+FORBIDDEN_IR = {"JSHUTDOWN": 0x0D, "JPROGRAM": 0x0B, "JSTART": 0x0C}
 
 FRAME_WORDS = 101
 PAD_FRAMES = 1                      # 7-series readback returns one pad frame first
@@ -131,11 +131,10 @@ def build_tcl(far_list: list[int]) -> tuple[str, list[dict]]:
     shape and costs nothing, not because it explains anything.
 
     `envelope_violations()` below is the machine-checkable form of the rule, and it is what
-    the mutation harness kills a mutant with. JSHUTDOWN is issued once per session, between
-    envelopes, because it is a TAP instruction and not part of any packet stream. R2 keeps
-    R1's post-shutdown RCRC, fixes the shutdown dwell at 1024 TCK, and inserts one additional
-    self-contained SYNC...DESYNC envelope before the first FDRO. These are a fixed test dose,
-    not a claim that 1024 TCK is a generally sufficient settling time.
+    the mutation harness kills a mutant with. R3 removes JSHUTDOWN and its dedicated dwell
+    while retaining R2's RCRC and additional self-contained SYNC...DESYNC envelope before
+    the first FDRO. The R3 control and the post-no-op R3 acquisition deliberately call this
+    same function with the same FARs; board pre-state is not an input to the instrument.
     """
     steps: list[dict] = []
     lines = ["init", "echo \"@@ init done\""]
@@ -160,10 +159,7 @@ def build_tcl(far_list: list[int]) -> tuple[str, list[dict]]:
               "echo \"@@ STAT $stat\""]
     close_envelope("STAT")
 
-    # -- R2: one JSHUTDOWN, a fixed dwell, R1's RCRC, then a closed pre-read envelope.
-    lines += [f"irscan {TAP} 0x{IR['JSHUTDOWN']:02x}",
-              f"runtest {SHUTDOWN_RTI_CYCLES}",
-              "echo \"@@ shutdown done\""]
+    # -- R3: no JSHUTDOWN and no shutdown dwell; retain RCRC and the pre-read envelope.
     cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")
     close_envelope("RCRC")
     cfg_in([DUMMY, SYNC, NOOP, *DESYNC_TAIL], "pre-read DESYNC")
@@ -187,7 +183,7 @@ def build_tcl(far_list: list[int]) -> tuple[str, list[dict]]:
         raise ProbeStop("the generated script leaves an envelope open: " + "; ".join(violations))
     violations = recovery_order_violations(tcl)
     if violations:
-        raise ProbeStop("the generated recovery sequence is not R2: " + "; ".join(violations))
+        raise ProbeStop("the generated recovery sequence is not R3: " + "; ".join(violations))
     return tcl, steps
 
 
@@ -236,23 +232,24 @@ def envelope_violations(tcl: str) -> list[str]:
 
 
 def recovery_order_violations(tcl: str) -> list[str]:
-    """R2 is JSHUTDOWN -> 1024 TCK -> RCRC -> closed DESYNC -> first FDRO.
+    """R3 is no JSHUTDOWN/dwell, then RCRC -> closed DESYNC -> first FDRO.
 
-    This inspects the emitted Tcl, not the builder's control flow. Both R2 changes therefore
-    remain observable to the mutation gate: shortening the dwell or dropping the additional
-    self-contained envelope must make the generated sequence invalid.
+    This inspects the emitted Tcl, not the builder's control flow. Quietly restoring
+    JSHUTDOWN, retaining its dwell, dropping either envelope, or moving the pre-read envelope
+    behind the first FDRO must make the generated sequence invalid.
     """
     shutdown_lines: list[int] = []
-    dwell_lines: list[tuple[int, int]] = []
+    dwell_lines: list[int] = []
     rcrc_lines: list[int] = []
     pre_read_desync_lines: list[int] = []
     fdro_lines: list[int] = []
     for number, line in enumerate(tcl.splitlines(), 1):
-        if line.strip() == f"irscan {TAP} 0x{IR['JSHUTDOWN']:02x}":
+        issued_ir = re.fullmatch(
+            rf"irscan\s+{re.escape(TAP)}\s+(0x[0-9a-fA-F]+|\d+)", line.strip())
+        if issued_ir and int(issued_ir.group(1), 0) == FORBIDDEN_IR["JSHUTDOWN"]:
             shutdown_lines.append(number)
-        dwell = re.fullmatch(r"runtest\s+(\d+)", line.strip())
-        if dwell:
-            dwell_lines.append((number, int(dwell.group(1))))
+        if re.fullmatch(r"runtest\s+\d+", line.strip()):
+            dwell_lines.append(number)
         words = _payload_words(line)
         if not words:
             continue
@@ -268,13 +265,10 @@ def recovery_order_violations(tcl: str) -> list[str]:
                 fdro_lines.append(number)
 
     problems: list[str] = []
-    if len(shutdown_lines) != 1:
-        problems.append(f"expected one JSHUTDOWN, found {len(shutdown_lines)}")
-    if len(dwell_lines) != 1:
-        problems.append(f"expected one shutdown RTI dwell, found {len(dwell_lines)}")
-    elif dwell_lines[0][1] != SHUTDOWN_RTI_CYCLES:
-        problems.append(
-            f"shutdown RTI dwell is {dwell_lines[0][1]} TCK, expected {SHUTDOWN_RTI_CYCLES}")
+    if shutdown_lines:
+        problems.append(f"R3 forbids JSHUTDOWN, found {len(shutdown_lines)}")
+    if dwell_lines:
+        problems.append(f"R3 forbids the shutdown RTI dwell, found {len(dwell_lines)} runtest")
     if len(rcrc_lines) != 1:
         problems.append(f"expected one RCRC envelope, found {len(rcrc_lines)}")
     if len(pre_read_desync_lines) != 1:
@@ -283,14 +277,11 @@ def recovery_order_violations(tcl: str) -> list[str]:
             f"found {len(pre_read_desync_lines)}")
     if not fdro_lines:
         problems.append("no FDRO read follows the recovery prefix")
-    if (len(shutdown_lines) == len(dwell_lines) == len(rcrc_lines)
-            == len(pre_read_desync_lines) == 1 and fdro_lines):
-        order = [shutdown_lines[0], dwell_lines[0][0], rcrc_lines[0],
-                 pre_read_desync_lines[0], fdro_lines[0]]
+    if len(rcrc_lines) == len(pre_read_desync_lines) == 1 and fdro_lines:
+        order = [rcrc_lines[0], pre_read_desync_lines[0], fdro_lines[0]]
         if order != sorted(order) or len(set(order)) != len(order):
             problems.append(
-                "recovery prefix is not JSHUTDOWN -> dwell -> RCRC -> "
-                "pre-read DESYNC -> first FDRO")
+                "recovery prefix is not RCRC -> pre-read DESYNC -> first FDRO")
     return problems
 
 
@@ -305,8 +296,8 @@ def main() -> int:
     far_list = [int(f, 16) for f in (args.far or ["0x00400A20", "0x00400A21"])]
 
     record: dict = {
-        # 2.2.0 is recovery rung R2: 1024 TCK plus a closed pre-read DESYNC. 2.1.0 is
-        # R1 and 2.0.0 is the baseline; different sequences cannot share an evidence ID.
+        # 2.3.0 is recovery rung R3: no JSHUTDOWN or dwell. 2.2.0 is R2, 2.1.0 is R1,
+        # and 2.0.0 is the baseline; different sequences cannot share an evidence ID.
         "tool": TOOL_VERSION,
         "what": "independent JTAG readback of configuration frames",
         "tap": TAP,

@@ -1,7 +1,7 @@
 # Offline study: why a clean no-op spoils the JTAG readback, and what to try
 
-Originally written after control-gradient rung 2; updated through recovery rung R1 and the
-offline R2 implementation. No board action is authorised by this document, and none was
+Originally written after control-gradient rung 2; updated through the R2 board result and the
+offline R3 implementation. No board action is authorised by this document, and none was
 taken to write it. The board holds nothing irreplaceable and may be powered off.
 
 ## What is established, narrowly
@@ -65,6 +65,9 @@ Raw, from the evidence:
 | R1, child #1 | `0x46106ffd` | 0/16 overall |
 | R1, child #2 | `0x46107ffc` | 0/16 overall |
 | R1, children #3–16 | `0x46101f8c` | 0/16 overall |
+| R2, child #1 | `0x46106ffd` | 0/16 overall |
+| R2, child #2 | `0x46107ffc` | 0/16 overall |
+| R2, children #3–16 | `0x46101f8c` | 0/16 overall |
 
 Bit differences, which are the part that is evidence:
 
@@ -116,12 +119,22 @@ that `CONFIG_STATUS` is not a validity proxy in either direction. The changed st
 show that the relocated RCRC reached and affected configuration-engine state; it does not
 show that readback recovered.
 
-R2 is implemented offline in `probe_jtag_config_read.py/2.2.0`: after the one JSHUTDOWN it
-waits exactly 1024 TCK, runs the R1 RCRC envelope, then runs one additional self-contained
-SYNC…DESYNC envelope before the first FDRO. The parent is
-`board_signature_search.py/2.5.0`, so baseline, R1 and R2 captures cannot share an index.
-Both additions are checked against emitted Tcl and have dedicated killable mutants. This is
-an implementation record only; R2 remains unverified until separately audited and authorised.
+R2 (`probe_jtag_config_read.py/2.2.0`, parent `board_signature_search.py/2.5.0`) then waited
+1024 TCK after JSHUTDOWN and inserted a self-contained SYNC…DESYNC before the first FDRO.
+All sixteen emitted scripts contained that exact sequence, but the result remained
+`INSTRUMENT_INVALID`, 0/16. Its per-child status values and sixteen all-zero control frames
+were byte-identical to R1. The narrow result is that **this fixed combination** — 1024 TCK
+plus the additional envelope — had no observed effect. It says nothing about a longer delay,
+a delay between RCRC and FDRO, or a slower TCK.
+
+R3 is implemented offline in `probe_jtag_config_read.py/2.3.0`: it removes JSHUTDOWN and its
+dedicated dwell, retains `RCRC -> self-contained pre-read SYNC…DESYNC -> FDRO`, and moves
+JSHUTDOWN into the forbidden IR set. The parent is `board_signature_search.py/2.6.0`.
+Emitted-Tcl checks reject any restored JSHUTDOWN or dwell and require both retained envelopes
+before the first FDRO; dedicated mutants make those rules observable. R3 ships as the two
+acquisitions defined in `claimb_r3_request.md`: fresh-load R3-control first, then—only if it
+is 16/16—an independently rebooted post-no-op R3. Both use byte-identical Tcl and instrument
+digests. This is an implementation record only; neither acquisition is authorised here.
 
 ## If no JTAG state recovers
 

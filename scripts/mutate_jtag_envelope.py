@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Mutation gate for the reviewed JTAG envelope and recovery sequence.
+"""Mutation gate for the reviewed JTAG envelope and R3 recovery sequence.
 
-Two baseline mutants remove a DESYNC. Three recovery mutants restore the pre-R1 RCRC order,
-shorten R2's dwell, or remove R2's pre-read envelope. A mutant is killed only when a checker
-names the resulting behaviour or `build_tcl()` refuses to emit it — never by a string search
-for the mutation itself, which would only prove the patch applied.
+Two baseline mutants remove a DESYNC. Four R3 mutants drop RCRC, drop the pre-read envelope,
+or quietly restore JSHUTDOWN or its dedicated dwell. A mutant is killed only when a checker
+names the resulting emitted behaviour or `build_tcl()` refuses to emit it — never by a string
+search for the mutation itself, which would only prove the patch applied.
 """
 
 from __future__ import annotations
@@ -29,30 +29,25 @@ MUTANTS = {
     "drop_stat_desync": (
         '    close_envelope("STAT")',
         '    pass  # mutant: the STAT envelope is never closed'),
-    # MUTATION ANCHOR r1_order: moving RCRC back before JSHUTDOWN restores the old order.
-    "rcrc_before_jshutdown": (
-        '    # -- R2: one JSHUTDOWN, a fixed dwell, R1\'s RCRC, then a closed pre-read envelope.\n'
-        '    lines += [f"irscan {TAP} 0x{IR[\'JSHUTDOWN\']:02x}",\n'
-        '              f"runtest {SHUTDOWN_RTI_CYCLES}",\n'
-        '              "echo \\"@@ shutdown done\\""]\n'
+    # MUTATION ANCHOR r3_rcrc: the retained RCRC envelope is part of the fixed instrument.
+    "drop_rcrc": (
         '    cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")\n'
-        '    close_envelope("RCRC")\n'
-        '    cfg_in([DUMMY, SYNC, NOOP, *DESYNC_TAIL], "pre-read DESYNC")',
-        '    # mutant: restore the pre-R1 sequence.\n'
-        '    cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")\n'
-        '    close_envelope("RCRC")\n'
-        '    lines += [f"irscan {TAP} 0x{IR[\'JSHUTDOWN\']:02x}",\n'
-        '              f"runtest {SHUTDOWN_RTI_CYCLES}",\n'
-        '              "echo \\"@@ shutdown done\\""]\n'
-        '    cfg_in([DUMMY, SYNC, NOOP, *DESYNC_TAIL], "pre-read DESYNC")'),
-    # MUTATION ANCHOR r2_dwell: retain R1's old 12-TCK settling interval.
-    "short_shutdown_dwell": (
-        '              f"runtest {SHUTDOWN_RTI_CYCLES}",',
-        '              "runtest 12",  # mutant: R2 dwell was not applied'),
-    # MUTATION ANCHOR r2_desync: omit the additional closed pre-read envelope.
+        '    close_envelope("RCRC")',
+        '    pass  # mutant: RCRC and its close are both absent'),
+    # MUTATION ANCHOR r3_desync: omit the retained closed pre-read envelope.
     "drop_pre_read_desync": (
         '    cfg_in([DUMMY, SYNC, NOOP, *DESYNC_TAIL], "pre-read DESYNC")',
-        '    pass  # mutant: R2 pre-read envelope is absent'),
+        '    pass  # mutant: R3 pre-read envelope is absent'),
+    # MUTATION ANCHOR r3_shutdown: quietly restore the instruction R3 removes.
+    "restore_jshutdown": (
+        '    # -- R3: no JSHUTDOWN and no shutdown dwell; retain RCRC and the pre-read envelope.',
+        '    # mutant: restore JSHUTDOWN before the R3 prefix.\n'
+        '    lines.append(f"irscan {TAP} 0x{FORBIDDEN_IR[\'JSHUTDOWN\']:02x}")'),
+    # MUTATION ANCHOR r3_dwell: quietly retain the removed dedicated dwell.
+    "restore_shutdown_dwell": (
+        '    # -- R3: no JSHUTDOWN and no shutdown dwell; retain RCRC and the pre-read envelope.',
+        '    # mutant: restore the old dedicated dwell.\n'
+        '    lines.append("runtest 1024")'),
 }
 
 
@@ -69,8 +64,11 @@ def main() -> int:
     original = SOURCE.read_text(encoding="utf-8")
     baseline = load_mutant(original, "baseline")
     tcl, _ = baseline.build_tcl(FARS)
-    if baseline.envelope_violations(tcl):
-        print("the unmutated script already violates the rule; the gate is meaningless")
+    baseline_problems = [*baseline.envelope_violations(tcl),
+                         *baseline.recovery_order_violations(tcl)]
+    if baseline_problems:
+        print("the unmutated script already violates the rule; the gate is meaningless: "
+              + baseline_problems[0])
         return 1
 
     killed = 0
@@ -91,7 +89,7 @@ def main() -> int:
             print(f"{name}: KILLED — {problems[0]}")
             killed += 1
         else:
-            print(f"{name}: SURVIVED — the rule does not catch a dropped DESYNC")
+            print(f"{name}: SURVIVED — the reviewed recovery rule did not catch it")
 
     print(f"{killed}/{len(MUTANTS)} envelope mutants killed")
     return 0 if killed == len(MUTANTS) else 1

@@ -6,6 +6,7 @@ generates. These tests read those words rather than the docstring.
 
 from __future__ import annotations
 
+import inspect
 import re
 import sys
 import unittest
@@ -20,13 +21,13 @@ FAR = 0x00400A20
 
 
 class TheAllowedSet(unittest.TestCase):
-    def test_only_the_four_reviewed_ir_codes_are_ever_shifted(self) -> None:
+    def test_only_the_three_reviewed_ir_codes_are_ever_shifted(self) -> None:
         tcl, _ = probe.build_tcl([FAR, FAR + 1])
         issued = sorted({int(code, 16)
                          for code in re.findall(r"irscan \S+ (0x[0-9a-fA-F]+)", tcl)})
         self.assertEqual(issued, sorted(probe.IR.values()))
 
-    def test_jprogram_and_jstart_are_not_reachable(self) -> None:
+    def test_forbidden_ir_is_not_reachable(self) -> None:
         tcl, _ = probe.build_tcl([FAR])
         for name, code in probe.FORBIDDEN_IR.items():
             with self.subTest(instruction=name):
@@ -82,14 +83,14 @@ class TheEnvelopes(unittest.TestCase):
                 self.assertLess(rest.index("DESYNC"), rest.index("SYNC"),
                                 "a new SYNC opens before the previous envelope is closed")
 
-    def test_jshutdown_is_issued_once_for_the_whole_session(self) -> None:
-        self.assertEqual(self.tcl.count(f"irscan {probe.TAP} 0x{probe.IR['JSHUTDOWN']:02x}"), 1)
+    def test_r3_has_no_jshutdown_and_no_runtest(self) -> None:
+        self.assertNotIn("JSHUTDOWN", probe.IR)
+        self.assertEqual(probe.FORBIDDEN_IR["JSHUTDOWN"], 0x0D)
+        self.assertNotRegex(self.tcl, r"(?m)^runtest\s+")
 
-    def test_r2_places_the_fixed_recovery_prefix_before_the_first_fdro(self) -> None:
+    def test_r3_places_rcrc_and_pre_read_desync_before_the_first_fdro(self) -> None:
         self.assertEqual(probe.recovery_order_violations(self.tcl), [])
         lines = self.tcl.splitlines()
-        shutdown = lines.index(f"irscan {probe.TAP} 0x{probe.IR['JSHUTDOWN']:02x}")
-        dwell = lines.index(f"runtest {probe.SHUTDOWN_RTI_CYCLES}")
         rcrc_words = [probe.DUMMY, probe.SYNC, probe.NOOP,
                       probe.t1(True, probe.CMD_REG, 1), probe.CMD_RCRC,
                       probe.NOOP, probe.NOOP]
@@ -103,22 +104,50 @@ class TheEnvelopes(unittest.TestCase):
         pre_read_desync = lines.index(
             f"drscan {probe.TAP} {probe.field_list(pre_read_words)}")
         first_fdro = lines.index(f"drscan {probe.TAP} {probe.field_list(fdro_words)}")
-        self.assertEqual(probe.SHUTDOWN_RTI_CYCLES, 1024)
-        self.assertEqual([shutdown, dwell, rcrc, pre_read_desync, first_fdro],
-                         sorted([shutdown, dwell, rcrc, pre_read_desync, first_fdro]))
+        self.assertEqual([rcrc, pre_read_desync, first_fdro],
+                         sorted([rcrc, pre_read_desync, first_fdro]))
 
-    def test_r2_refuses_a_shortened_shutdown_dwell(self) -> None:
-        shortened = self.tcl.replace(
-            f"runtest {probe.SHUTDOWN_RTI_CYCLES}", "runtest 12", 1)
-        problems = probe.recovery_order_violations(shortened)
-        self.assertTrue(any("expected 1024" in problem for problem in problems), problems)
+    def test_r3_refuses_a_restored_jshutdown(self) -> None:
+        restored = self.tcl.replace(
+            "init\n", f"init\nirscan {probe.TAP} 0x{probe.FORBIDDEN_IR['JSHUTDOWN']:02x}\n", 1)
+        problems = probe.recovery_order_violations(restored)
+        self.assertTrue(any("forbids JSHUTDOWN" in problem for problem in problems), problems)
 
-    def test_r2_refuses_a_missing_pre_read_desync(self) -> None:
+    def test_r3_refuses_a_restored_shutdown_dwell(self) -> None:
+        restored = self.tcl.replace("init\n", "init\nruntest 1024\n", 1)
+        problems = probe.recovery_order_violations(restored)
+        self.assertTrue(any("forbids the shutdown RTI dwell" in problem
+                            for problem in problems), problems)
+
+    def test_r3_refuses_a_missing_rcrc(self) -> None:
+        words = [probe.DUMMY, probe.SYNC, probe.NOOP,
+                 probe.t1(True, probe.CMD_REG, 1), probe.CMD_RCRC,
+                 probe.NOOP, probe.NOOP]
+        missing = self.tcl.replace(
+            f"drscan {probe.TAP} {probe.field_list(words)}", "", 1)
+        problems = probe.recovery_order_violations(missing)
+        self.assertTrue(any("RCRC" in problem for problem in problems), problems)
+
+    def test_r3_refuses_a_missing_pre_read_desync(self) -> None:
         words = [probe.DUMMY, probe.SYNC, probe.NOOP, *probe.DESYNC_TAIL]
         missing = self.tcl.replace(
             f"drscan {probe.TAP} {probe.field_list(words)}", "", 1)
         problems = probe.recovery_order_violations(missing)
         self.assertTrue(any("pre-read" in problem for problem in problems), problems)
+
+    def test_r3_refuses_the_pre_read_envelope_after_the_first_fdro(self) -> None:
+        words = [probe.DUMMY, probe.SYNC, probe.NOOP, *probe.DESYNC_TAIL]
+        line = f"drscan {probe.TAP} {probe.field_list(words)}"
+        moved = self.tcl.replace(line + "\n", "", 1).replace(
+            "echo \"@@ desync done\"", line + "\necho \"@@ desync done\"", 1)
+        problems = probe.recovery_order_violations(moved)
+        self.assertTrue(any("recovery prefix" in problem for problem in problems), problems)
+
+    def test_r3_control_and_r3_use_byte_identical_child_tcl(self) -> None:
+        self.assertEqual(tuple(inspect.signature(probe.build_tcl).parameters), ("far_list",))
+        control_tcl, _ = probe.build_tcl([FAR])
+        post_noop_tcl, _ = probe.build_tcl([FAR])
+        self.assertEqual(control_tcl.encode(), post_noop_tcl.encode())
 
     def test_a_hole_in_an_envelope_is_named(self) -> None:
         holed = self.tcl.replace(
@@ -150,8 +179,8 @@ class TheRefusals(unittest.TestCase):
 
 
 class ThePacketEncoding(unittest.TestCase):
-    def test_the_tool_identity_names_the_r2_sequence(self) -> None:
-        self.assertEqual(probe.TOOL_VERSION, "probe_jtag_config_read.py/2.2.0")
+    def test_the_tool_identity_names_the_r3_sequence(self) -> None:
+        self.assertEqual(probe.TOOL_VERSION, "probe_jtag_config_read.py/2.3.0")
 
     def test_the_headers_are_the_documented_values(self) -> None:
         self.assertEqual(probe.t1(True, probe.CMD_REG, 1), 0x30008001)
