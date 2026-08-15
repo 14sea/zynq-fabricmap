@@ -21,10 +21,18 @@ run C (A21 → A20)   #1 0x00400A21  frame f39553be…  2 non-zero words
 ```
 
 **Whichever frame is read first comes back exactly. Whichever is read second comes back
-all zero.** The pad frame of the second read is zero too, so the second read does not return
-the wrong frame — it returns nothing, 202 words of it. This is positional, and it settles
-the question the previous round could not: A21 is not a special address, and the second read
-of a session is not trustworthy.
+all zero**, pad frame included. This is positional, and it settles the question the previous
+round could not: A21 is not a special address, and the second read of a session is not
+trustworthy.
+
+> **Correction, 2026-08-15 (a boundary this file first overstated).** An earlier wording here
+> said the second read "returns nothing". All 202 words being zero establishes only that
+> **the expected frame was not obtained**. It does not distinguish that from a command that
+> did not take effect followed by a read of some all-zero frame — 4,716 of the device's 5,144
+> frames are all-zero, so an all-zero window names no address and licenses no claim about
+> what the interface did. The positional conclusion is unaffected: it rests on the *first*
+> read being exact in both orders, which is a discriminating observation, not on any reading
+> of the zeros.
 
 ## Two things this establishes beyond the defect
 
