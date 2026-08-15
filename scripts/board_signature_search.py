@@ -65,7 +65,7 @@ import frame_ecc  # noqa: E402
 import gate_claimb_known_answer as kagate  # noqa: E402
 import probe_jtag_config_read as probe  # noqa: E402
 
-TOOL_VERSION = "board_signature_search.py/2.7.0"
+TOOL_VERSION = "board_signature_search.py/2.7.1"
 CHILD = REPO / "scripts/probe_jtag_config_read.py"
 CHILD_CFG = REPO / "scripts/jtag_config_only.cfg"
 CHILD_SPEED = 2000
@@ -648,7 +648,7 @@ def judge_positive_controls(captures: dict[int, list[int]],
     if matched:
         return {**common, "verdict": "INSTRUMENT_VALID",
                 "reading": "At least one preselected unique non-zero base frame came back "
-                           "bit-exact at the same FAR in this post-fault state."}
+                           "bit-exact at the same FAR in this acquisition."}
     if missing:
         return {**common, "verdict": "INSTRUMENT_UNVALIDATED",
                 "reading": f"No positive control has matched, and {len(missing)} of the "

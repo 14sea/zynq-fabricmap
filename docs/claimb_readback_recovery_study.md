@@ -150,6 +150,19 @@ allowlisted; `JPROGRAM`, IPROG, WCFG and FDRI writes remain unreachable. The R4-
 acquisitions use byte-identical Tcl and instrument digests. This is an implementation record
 only: neither board acquisition is authorised here.
 
+The subsequent board pair and its independent replication both returned 16/16 controls on
+fresh-load control acquisitions and again after one clean ICAP no-op. All four acquisitions
+used the same parent/child versions, control FARs, byte-identical child Tcl and instrument
+digest. R4 is therefore an independently reproduced recovery method for the state left by
+that clean no-op. It remains untested after the known-answer `F_READBACK` fault and does not
+explain why the startup cycle restores readback.
+
+After those pairs closed, parent 2.7.1 removed an inaccurate state-specific phrase from the
+human-readable `INSTRUMENT_VALID` message. The verdict had said “in this post-fault state”
+even for fresh-load controls. It now says “in this acquisition”. This wording-only source
+change deliberately creates a new instrument digest; future paired acquisitions must validate
+that identity rather than borrowing the four completed 2.7.0 observations.
+
 ## If no JTAG state recovers
 
 Then post-transaction JTAG readback is not the instrument for this line, and the diagnosis

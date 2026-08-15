@@ -168,7 +168,7 @@ class TheAuthority(unittest.TestCase):
             first_index = json.loads((Path(first) / "index.json").read_text("utf-8"))
             second_index = json.loads((Path(second) / "index.json").read_text("utf-8"))
         self.assertEqual(first_index["instrument_digest"], second_index["instrument_digest"])
-        self.assertEqual(search.TOOL_VERSION, "board_signature_search.py/2.7.0")
+        self.assertEqual(search.TOOL_VERSION, "board_signature_search.py/2.7.1")
 
     def test_a_child_is_given_exactly_one_far(self) -> None:
         argv = search.child_argv(A20, Path("/tmp/x.json"))
@@ -269,6 +269,8 @@ class TheControlOnlyMode(unittest.TestCase):
         self.assertEqual(verdict["verdict"], "INSTRUMENT_VALID")
         self.assertEqual(asked, CONTROL_FARS)
         self.assertNotIn(A20, asked)
+        self.assertIn("in this acquisition", verdict["reading"])
+        self.assertNotIn("post-fault", verdict["reading"])
 
     def test_wrong_but_nonzero_controls_are_invalid_and_have_no_location_fields(self) -> None:
         content = {far: frame(0xD000 + offset)
