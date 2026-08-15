@@ -1,7 +1,7 @@
 # Offline study: why a clean no-op spoils the JTAG readback, and what to try
 
-Originally written after control-gradient rung 2; updated through the R2 board result and the
-offline R3 implementation. No board action is authorised by this document, and none was
+Originally written after control-gradient rung 2; updated through the R3-control result and
+the offline R4 implementation. No board action is authorised by this document, and none was
 taken to write it. The board holds nothing irreplaceable and may be powered off.
 
 ## What is established, narrowly
@@ -99,7 +99,7 @@ structural test and the mutant that kills its removal — in that order, offline
 | R1 | move the `RCRC` envelope to **after** `JSHUTDOWN` rather than before | none — reordering existing ones | the engine may only accept the reset once the design is shut down |
 | R2 | fix the post-`JSHUTDOWN` dwell at **1024 TCK**, and add one self-contained SYNC…DESYNC envelope before the first read envelope | none — timing and an existing command | tests the fixed combination “1024 TCK + extra DESYNC”; it does not establish a general settling bound |
 | R3 | omit `JSHUTDOWN` entirely and read the controls directly | none — removing one | `JSHUTDOWN` after a transaction may itself be what leaves the engine unreadable |
-| R4 | `JSTART` after the reads, or a `JSTART`/`JSHUTDOWN` pair around them | **new instruction** — allowlist, test, mutant first | restores the design's run state; may also restore the engine's |
+| R4 | complete `JSHUTDOWN → JSTART`, then use UG470 Table 6-6's documented shutdown-readback prefix | **new instruction** — allowlist, test, mutant first | exercises the startup state machine before returning to the only prefix that has produced exact reads |
 
 R0 through R3 need no new instruction and are therefore cheap and safe to rule on. R4 is the
 first that touches the allowlist and should not be reached for until R0–R3 have failed.
@@ -127,14 +127,28 @@ were byte-identical to R1. The narrow result is that **this fixed combination** 
 plus the additional envelope — had no observed effect. It says nothing about a longer delay,
 a delay between RCRC and FDRO, or a slower TCK.
 
-R3 is implemented offline in `probe_jtag_config_read.py/2.3.0`: it removes JSHUTDOWN and its
-dedicated dwell, retains `RCRC -> self-contained pre-read SYNC…DESYNC -> FDRO`, and moves
-JSHUTDOWN into the forbidden IR set. The parent is `board_signature_search.py/2.6.0`.
-Emitted-Tcl checks reject any restored JSHUTDOWN or dwell and require both retained envelopes
-before the first FDRO; dedicated mutants make those rules observable. R3 ships as the two
-acquisitions defined in `claimb_r3_request.md`: fresh-load R3-control first, then—only if it
-is 16/16—an independently rebooted post-no-op R3. Both use byte-identical Tcl and instrument
-digests. This is an implementation record only; neither acquisition is authorised here.
+R3 was implemented as `probe_jtag_config_read.py/2.3.0`, but R3-control stopped the pair:
+on a fresh load with no transaction, the no-`JSHUTDOWN` instrument returned 0/16 all-zero
+controls where rung 1's shutdown instrument had returned 16/16 exact. R3 therefore could not
+measure the spoiled state and the post-no-op acquisition was formally withdrawn. Narrowly,
+`JSHUTDOWN` is necessary for this fixed readback path on this device; that observation is not
+a general rule for JTAG readback.
+
+R4 is implemented offline as `probe_jtag_config_read.py/2.4.0`, with parent
+`board_signature_search.py/2.7.0`, following `claimb_r4_protocol.md`. It emits this exact
+prefix before every child's first FDRO:
+
+```
+JSHUTDOWN → RTI 12 → JSTART → RTI 2000 → RCRC envelope → JSHUTDOWN → RTI 12
+```
+
+The two 12-TCK dwells cite UG470 v1.17 Chapter 6 Table 6-6 and the 2000-TCK dwell cites
+Chapter 10 Table 10-4. The emitted-Tcl checker rejects missing or late `JSTART`, missing
+leading shutdown, any change in any dwell, R2's extra pre-read envelope, and `RCRC` after the
+final `JSHUTDOWN`—the ordering error made by the superseded first R4 draft. `JSTART` is now
+allowlisted; `JPROGRAM`, IPROG, WCFG and FDRI writes remain unreachable. The R4-control and R4
+acquisitions use byte-identical Tcl and instrument digests. This is an implementation record
+only: neither board acquisition is authorised here.
 
 ## If no JTAG state recovers
 

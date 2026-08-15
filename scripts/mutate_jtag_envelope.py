@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Mutation gate for the reviewed JTAG envelope and R3 recovery sequence.
+"""Mutation gate for the reviewed JTAG envelope and R4 recovery sequence.
 
-Two baseline mutants remove a DESYNC. Four R3 mutants drop RCRC, drop the pre-read envelope,
-or quietly restore JSHUTDOWN or its dedicated dwell. A mutant is killed only when a checker
-names the resulting emitted behaviour or `build_tcl()` refuses to emit it — never by a string
-search for the mutation itself, which would only prove the patch applied.
+Two baseline mutants remove a DESYNC. R4 mutants damage instructions, ordering and each of
+the three documented dwells. A mutant is killed only when a checker names the resulting
+emitted behaviour or `build_tcl()` refuses to emit it — never by a string search for the
+mutation itself, which would only prove the patch applied.
 """
 
 from __future__ import annotations
@@ -20,34 +20,62 @@ SOURCE = REPO / "scripts/probe_jtag_config_read.py"
 
 FARS = [0x00400A20, 0x00400A21]
 
-MUTANTS = {
+MUTANTS: dict[str, list[tuple[str, str]]] = {
     # MUTATION ANCHOR read_desync: the per-FAR close is what the miss was missing.
-    "drop_read_desync": (
+    "drop_read_desync": [(
         '        close_envelope(f"FDRO {far:#010x}")',
-        '        pass  # mutant: the read envelope is never closed'),
+        '        pass  # mutant: the read envelope is never closed')],
     # MUTATION ANCHOR stat_desync: the first CFG_OUT must also be inside a closed envelope.
-    "drop_stat_desync": (
+    "drop_stat_desync": [(
         '    close_envelope("STAT")',
-        '    pass  # mutant: the STAT envelope is never closed'),
-    # MUTATION ANCHOR r3_rcrc: the retained RCRC envelope is part of the fixed instrument.
-    "drop_rcrc": (
+        '    pass  # mutant: the STAT envelope is never closed')],
+    # MUTATION ANCHOR r4_rcrc: Table 6-6's RCRC envelope is part of the fixed instrument.
+    "drop_rcrc": [(
         '    cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")\n'
         '    close_envelope("RCRC")',
-        '    pass  # mutant: RCRC and its close are both absent'),
-    # MUTATION ANCHOR r3_desync: omit the retained closed pre-read envelope.
-    "drop_pre_read_desync": (
-        '    cfg_in([DUMMY, SYNC, NOOP, *DESYNC_TAIL], "pre-read DESYNC")',
-        '    pass  # mutant: R3 pre-read envelope is absent'),
-    # MUTATION ANCHOR r3_shutdown: quietly restore the instruction R3 removes.
-    "restore_jshutdown": (
-        '    # -- R3: no JSHUTDOWN and no shutdown dwell; retain RCRC and the pre-read envelope.',
-        '    # mutant: restore JSHUTDOWN before the R3 prefix.\n'
-        '    lines.append(f"irscan {TAP} 0x{FORBIDDEN_IR[\'JSHUTDOWN\']:02x}")'),
-    # MUTATION ANCHOR r3_dwell: quietly retain the removed dedicated dwell.
-    "restore_shutdown_dwell": (
-        '    # -- R3: no JSHUTDOWN and no shutdown dwell; retain RCRC and the pre-read envelope.',
-        '    # mutant: restore the old dedicated dwell.\n'
-        '    lines.append("runtest 1024")'),
+        '    pass  # mutant: RCRC and its close are both absent')],
+    # MUTATION ANCHOR r4_start: omit the newly allowlisted instruction.
+    "drop_jstart": [(
+        '    lines += [f"irscan {TAP} 0x{IR[\'JSTART\']:02x}",\n'
+        '              f"runtest {R4_DWELLS[\'startup\'][\'cycles\']}"]',
+        '    pass  # mutant: JSTART and its dwell are absent')],
+    # MUTATION ANCHOR r4_leading_shutdown: omit the first half of the transition.
+    "drop_leading_jshutdown": [(
+        '    lines += [f"irscan {TAP} 0x{IR[\'JSHUTDOWN\']:02x}",\n'
+        '              f"runtest {R4_DWELLS[\'startup_cycle_shutdown\'][\'cycles\']}"]',
+        '    pass  # mutant: the leading JSHUTDOWN and dwell are absent')],
+    # MUTATION ANCHOR r4_start_order: a startup after the measurement cannot affect it.
+    "jstart_after_first_fdro": [
+        ('    lines += [f"irscan {TAP} 0x{IR[\'JSTART\']:02x}",\n'
+         '              f"runtest {R4_DWELLS[\'startup\'][\'cycles\']}"]',
+         '    pass  # mutant: original JSTART position removed'),
+        ('        close_envelope(f"FDRO {far:#010x}")',
+         '        close_envelope(f"FDRO {far:#010x}")\n'
+         '        lines += [f"irscan {TAP} 0x{IR[\'JSTART\']:02x}",\n'
+         '                  f"runtest {R4_DWELLS[\'startup\'][\'cycles\']}"]'),
+    ],
+    # MUTATION ANCHORS r4_dwells: exact means neither shorter nor longer is reviewed.
+    "wrong_leading_shutdown_dwell": [(
+        'f"runtest {R4_DWELLS[\'startup_cycle_shutdown\'][\'cycles\']}"',
+        '"runtest 11"')],
+    "wrong_startup_dwell": [(
+        'f"runtest {R4_DWELLS[\'startup\'][\'cycles\']}"',
+        '"runtest 1999"')],
+    "wrong_readback_shutdown_dwell": [(
+        'f"runtest {R4_DWELLS[\'readback_shutdown\'][\'cycles\']}"',
+        '"runtest 13"')],
+    # MUTATION ANCHOR r4_table_6_6: reproduce the superseded draft's reversed ordering.
+    "rcrc_after_final_jshutdown": [
+        ('    cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")\n'
+         '    close_envelope("RCRC")',
+         '    pass  # mutant: RCRC moved below'),
+        ('    lines += [f"irscan {TAP} 0x{IR[\'JSHUTDOWN\']:02x}",\n'
+         '              f"runtest {R4_DWELLS[\'readback_shutdown\'][\'cycles\']}"]',
+         '    lines += [f"irscan {TAP} 0x{IR[\'JSHUTDOWN\']:02x}",\n'
+         '              f"runtest {R4_DWELLS[\'readback_shutdown\'][\'cycles\']}"]\n'
+         '    cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")\n'
+         '    close_envelope("RCRC")'),
+    ],
 }
 
 
@@ -72,11 +100,14 @@ def main() -> int:
         return 1
 
     killed = 0
-    for name, (before, after) in MUTANTS.items():
-        if before not in original:
-            print(f"{name}: ANCHOR MISSING — repoint it, do not loosen the gate")
-            return 1
-        module = load_mutant(original.replace(before, after), name)
+    for name, replacements in MUTANTS.items():
+        mutated = original
+        for before, after in replacements:
+            if before not in mutated:
+                print(f"{name}: ANCHOR MISSING — repoint it, do not loosen the gate")
+                return 1
+            mutated = mutated.replace(before, after, 1)
+        module = load_mutant(mutated, name)
         try:
             mutant_tcl, _ = module.build_tcl(FARS)
         except Exception as refused:

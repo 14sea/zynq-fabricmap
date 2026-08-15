@@ -7,11 +7,11 @@ readback is the thing under suspicion, and it cannot be its own witness.
 
 THE ALLOWED SET, and it is enforced in code, not in a comment
 ------------------------------------------------------------
-IR: IDCODE, CFG_IN, CFG_OUT. Configuration: RCRC, RCFG, FAR, FDRO, DESYNC.
-**JSHUTDOWN, JPROGRAM, JSTART, WCFG, MFWR and any FDRI write are refused before a single
-bit is shifted.** `check_sequence()` walks the generated words and the emitted-Tcl checker
-refuses forbidden IR, because "the script does not do that" is worth exactly as much as the
-check that proves it.
+IR: IDCODE, CFG_IN, CFG_OUT, JSHUTDOWN and JSTART. Configuration: RCRC, RCFG, FAR, FDRO,
+DESYNC. **JPROGRAM, WCFG, MFWR, IPROG and any FDRI write are refused before a single bit is
+shifted.** `check_sequence()` walks the generated words and the emitted-Tcl checker verifies
+the reviewed startup/shutdown prefix, because "the script does not do that" is worth exactly
+as much as the check that proves it.
 
 WHY A KNOWN ANSWER
 ------------------
@@ -37,10 +37,44 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
 
-TOOL_VERSION = "probe_jtag_config_read.py/2.3.0"
+TOOL_VERSION = "probe_jtag_config_read.py/2.4.0"
 TAP = "zynq_pl.bs"
-IR = {"IDCODE": 0x09, "CFG_IN": 0x05, "CFG_OUT": 0x04}
-FORBIDDEN_IR = {"JSHUTDOWN": 0x0D, "JPROGRAM": 0x0B, "JSTART": 0x0C}
+IR = {
+    "IDCODE": 0x09,
+    "CFG_IN": 0x05,
+    "CFG_OUT": 0x04,
+    "JSHUTDOWN": 0x0D,
+    "JSTART": 0x0C,
+}
+FORBIDDEN_IR = {"JPROGRAM": 0x0B}
+
+# These records are evidence about the values emitted by R4, not retroactive provenance for
+# historical probes. The original 12-TCK dwell happened to agree with UG470 but was written
+# from general knowledge; R2's 1024-TCK experimental dwell remains chosen, not derived, and
+# is deliberately absent here.
+R4_DWELLS = {
+    "startup_cycle_shutdown": {
+        "cycles": 12,
+        "document_id": "UG470",
+        "version": "v1.17",
+        "chapter": "6",
+        "table": "6-6",
+    },
+    "startup": {
+        "cycles": 2000,
+        "document_id": "UG470",
+        "version": "v1.17",
+        "chapter": "10",
+        "table": "10-4",
+    },
+    "readback_shutdown": {
+        "cycles": 12,
+        "document_id": "UG470",
+        "version": "v1.17",
+        "chapter": "6",
+        "table": "6-6",
+    },
+}
 
 FRAME_WORDS = 101
 PAD_FRAMES = 1                      # 7-series readback returns one pad frame first
@@ -131,10 +165,10 @@ def build_tcl(far_list: list[int]) -> tuple[str, list[dict]]:
     shape and costs nothing, not because it explains anything.
 
     `envelope_violations()` below is the machine-checkable form of the rule, and it is what
-    the mutation harness kills a mutant with. R3 removes JSHUTDOWN and its dedicated dwell
-    while retaining R2's RCRC and additional self-contained SYNC...DESYNC envelope before
-    the first FDRO. The R3 control and the post-no-op R3 acquisition deliberately call this
-    same function with the same FARs; board pre-state is not an input to the instrument.
+    the mutation harness kills a mutant with. R4 first performs the reviewed shutdown/startup
+    transition, then emits UG470 Table 6-6's RCRC-before-JSHUTDOWN readback prefix. The R4
+    control and post-no-op acquisition deliberately call this same function with the same
+    FARs; board pre-state is not an input to the instrument.
     """
     steps: list[dict] = []
     lines = ["init", "echo \"@@ init done\""]
@@ -159,10 +193,16 @@ def build_tcl(far_list: list[int]) -> tuple[str, list[dict]]:
               "echo \"@@ STAT $stat\""]
     close_envelope("STAT")
 
-    # -- R3: no JSHUTDOWN and no shutdown dwell; retain RCRC and the pre-read envelope.
+    # -- R4: complete a shutdown/startup transition, then use the documented shutdown
+    # readback prefix. RCRC is before the final JSHUTDOWN (UG470 v1.17, Table 6-6).
+    lines += [f"irscan {TAP} 0x{IR['JSHUTDOWN']:02x}",
+              f"runtest {R4_DWELLS['startup_cycle_shutdown']['cycles']}"]
+    lines += [f"irscan {TAP} 0x{IR['JSTART']:02x}",
+              f"runtest {R4_DWELLS['startup']['cycles']}"]
     cfg_in([DUMMY, SYNC, NOOP, t1(True, CMD_REG, 1), CMD_RCRC, NOOP, NOOP], "RCRC")
     close_envelope("RCRC")
-    cfg_in([DUMMY, SYNC, NOOP, *DESYNC_TAIL], "pre-read DESYNC")
+    lines += [f"irscan {TAP} 0x{IR['JSHUTDOWN']:02x}",
+              f"runtest {R4_DWELLS['readback_shutdown']['cycles']}"]
 
     # -- one complete transaction per FAR: SYNC → RCFG → FAR → FDRO → CFG_OUT → DESYNC.
     for far in far_list:
@@ -183,7 +223,7 @@ def build_tcl(far_list: list[int]) -> tuple[str, list[dict]]:
         raise ProbeStop("the generated script leaves an envelope open: " + "; ".join(violations))
     violations = recovery_order_violations(tcl)
     if violations:
-        raise ProbeStop("the generated recovery sequence is not R3: " + "; ".join(violations))
+        raise ProbeStop("the generated recovery sequence is not R4: " + "; ".join(violations))
     return tcl, steps
 
 
@@ -232,24 +272,30 @@ def envelope_violations(tcl: str) -> list[str]:
 
 
 def recovery_order_violations(tcl: str) -> list[str]:
-    """R3 is no JSHUTDOWN/dwell, then RCRC -> closed DESYNC -> first FDRO.
+    """Require the exact R4 startup/shutdown prefix in the emitted Tcl.
 
-    This inspects the emitted Tcl, not the builder's control flow. Quietly restoring
-    JSHUTDOWN, retaining its dwell, dropping either envelope, or moving the pre-read envelope
-    behind the first FDRO must make the generated sequence invalid.
+    The comparison is against semantic events recovered from the script, not builder control
+    flow. It pins the three dwell values as well as ordering, so longer and shorter waits are
+    both changes to the reviewed instrument rather than silently accepted variants.
     """
-    shutdown_lines: list[int] = []
-    dwell_lines: list[int] = []
-    rcrc_lines: list[int] = []
+    events: list[tuple[str, int, int | None]] = []
+    forbidden: list[tuple[int, str]] = []
     pre_read_desync_lines: list[int] = []
-    fdro_lines: list[int] = []
     for number, line in enumerate(tcl.splitlines(), 1):
         issued_ir = re.fullmatch(
             rf"irscan\s+{re.escape(TAP)}\s+(0x[0-9a-fA-F]+|\d+)", line.strip())
-        if issued_ir and int(issued_ir.group(1), 0) == FORBIDDEN_IR["JSHUTDOWN"]:
-            shutdown_lines.append(number)
-        if re.fullmatch(r"runtest\s+\d+", line.strip()):
-            dwell_lines.append(number)
+        if issued_ir:
+            code = int(issued_ir.group(1), 0)
+            if code == IR["JSHUTDOWN"]:
+                events.append(("JSHUTDOWN", number, None))
+            elif code == IR["JSTART"]:
+                events.append(("JSTART", number, None))
+            for name, forbidden_code in FORBIDDEN_IR.items():
+                if code == forbidden_code:
+                    forbidden.append((number, name))
+        dwell = re.fullmatch(r"runtest\s+(\d+)", line.strip())
+        if dwell:
+            events.append(("DWELL", number, int(dwell.group(1))))
         words = _payload_words(line)
         if not words:
             continue
@@ -260,28 +306,35 @@ def recovery_order_violations(tcl: str) -> list[str]:
             pre_read_desync_lines.append(number)
         for index in range(len(words) - 1):
             if words[index] == t1(True, CMD_REG, 1) and words[index + 1] == CMD_RCRC:
-                rcrc_lines.append(number)
+                events.append(("RCRC", number, None))
             if words[index] == t1(False, FDRO_REG, 0):
-                fdro_lines.append(number)
+                events.append(("FDRO", number, None))
 
     problems: list[str] = []
-    if shutdown_lines:
-        problems.append(f"R3 forbids JSHUTDOWN, found {len(shutdown_lines)}")
-    if dwell_lines:
-        problems.append(f"R3 forbids the shutdown RTI dwell, found {len(dwell_lines)} runtest")
-    if len(rcrc_lines) != 1:
-        problems.append(f"expected one RCRC envelope, found {len(rcrc_lines)}")
-    if len(pre_read_desync_lines) != 1:
+    if forbidden:
+        problems.extend(f"line {line}: forbidden IR {name}" for line, name in forbidden)
+    if pre_read_desync_lines:
         problems.append(
-            "expected one self-contained pre-read SYNC...DESYNC envelope, "
+            "R4 carries no self-contained pre-read SYNC...DESYNC envelope; "
             f"found {len(pre_read_desync_lines)}")
-    if not fdro_lines:
+
+    first_fdro = next((index for index, event in enumerate(events) if event[0] == "FDRO"), None)
+    if first_fdro is None:
         problems.append("no FDRO read follows the recovery prefix")
-    if len(rcrc_lines) == len(pre_read_desync_lines) == 1 and fdro_lines:
-        order = [rcrc_lines[0], pre_read_desync_lines[0], fdro_lines[0]]
-        if order != sorted(order) or len(set(order)) != len(order):
-            problems.append(
-                "recovery prefix is not RCRC -> pre-read DESYNC -> first FDRO")
+        return problems
+    observed = [(name, value) for name, _, value in events[:first_fdro + 1]]
+    expected = [
+        ("JSHUTDOWN", None),
+        ("DWELL", R4_DWELLS["startup_cycle_shutdown"]["cycles"]),
+        ("JSTART", None),
+        ("DWELL", R4_DWELLS["startup"]["cycles"]),
+        ("RCRC", None),
+        ("JSHUTDOWN", None),
+        ("DWELL", R4_DWELLS["readback_shutdown"]["cycles"]),
+        ("FDRO", None),
+    ]
+    if observed != expected:
+        problems.append(f"R4 prefix is {observed!r}, expected {expected!r}")
     return problems
 
 
@@ -296,13 +349,14 @@ def main() -> int:
     far_list = [int(f, 16) for f in (args.far or ["0x00400A20", "0x00400A21"])]
 
     record: dict = {
-        # 2.3.0 is recovery rung R3: no JSHUTDOWN or dwell. 2.2.0 is R2, 2.1.0 is R1,
-        # and 2.0.0 is the baseline; different sequences cannot share an evidence ID.
+        # 2.4.0 is recovery rung R4. Older rungs use different sequences and cannot share an
+        # evidence identity with this one.
         "tool": TOOL_VERSION,
         "what": "independent JTAG readback of configuration frames",
         "tap": TAP,
         "ir_codes": {name: f"0x{code:02x}" for name, code in IR.items()},
         "forbidden_ir": {name: f"0x{code:02x}" for name, code in FORBIDDEN_IR.items()},
+        "r4_dwell_provenance": R4_DWELLS,
         "far_list": [f"{far:#010x}" for far in far_list],
         "read_words": READ_WORDS,
         "pad_frames": PAD_FRAMES,

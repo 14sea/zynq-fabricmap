@@ -150,14 +150,15 @@ class TheAuthority(unittest.TestCase):
         for forbidden in ("irscan", "drscan", "JPROGRAM", "JSTART", "0x0b", "0x0c"):
             self.assertNotIn(forbidden, code)
 
-    def test_r3_rejects_every_older_probe_capture(self) -> None:
+    def test_r4_rejects_every_older_probe_capture(self) -> None:
         for old in ("probe_jtag_config_read.py/2.0.0",
                     "probe_jtag_config_read.py/2.1.0",
-                    "probe_jtag_config_read.py/2.2.0"):
+                    "probe_jtag_config_read.py/2.2.0",
+                    "probe_jtag_config_read.py/2.3.0"):
             with self.subTest(tool=old), self.assertRaises(search.SearchStop):
                 search.frame_of(A20, capture_for(A20, ZERO, tool=old))
 
-    def test_r3_control_and_r3_have_one_instrument(self) -> None:
+    def test_r4_control_and_r4_have_one_instrument(self) -> None:
         first_tcl, _ = search.probe.build_tcl([CONTROL_FARS[0]])
         second_tcl, _ = search.probe.build_tcl([CONTROL_FARS[0]])
         self.assertEqual(first_tcl.encode(), second_tcl.encode())
@@ -167,7 +168,7 @@ class TheAuthority(unittest.TestCase):
             first_index = json.loads((Path(first) / "index.json").read_text("utf-8"))
             second_index = json.loads((Path(second) / "index.json").read_text("utf-8"))
         self.assertEqual(first_index["instrument_digest"], second_index["instrument_digest"])
-        self.assertEqual(search.TOOL_VERSION, "board_signature_search.py/2.6.0")
+        self.assertEqual(search.TOOL_VERSION, "board_signature_search.py/2.7.0")
 
     def test_a_child_is_given_exactly_one_far(self) -> None:
         argv = search.child_argv(A20, Path("/tmp/x.json"))
