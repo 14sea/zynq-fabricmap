@@ -11,6 +11,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -55,24 +56,33 @@ def capture_for(far: int, words: list[int], tool: str = search.CHILD_TOOL_VERSIO
 
 
 def runner_for(content: dict[int, list[int]], fail_on: int | None = None,
-               asked: list[int] | None = None, tool: str | None = None):
+               asked: list[int] | None = None, tool: str | None = None,
+               raise_on: int | None = None, garbage_on: int | None = None):
+    """A child that writes what the fabric is pretending to hold, or fails like a real one."""
     def runner(far: int, out_path: Path) -> dict:
         if asked is not None:
             asked.append(far)
+        argv = search.child_argv(far, out_path)
+        if far == raise_on:
+            raise subprocess.TimeoutExpired(argv, 600)
         if far == fail_on:
-            return {"returncode": 1, "argv": ["--far", f"{far:#010x}"],
-                    "stdout": "", "stderr": "openocd exploded"}
+            return {"returncode": 1, "argv": argv, "stdout": "", "stderr": "openocd exploded"}
+        if far == garbage_on:
+            out_path.write_text("{not json", encoding="utf-8")
+            return {"returncode": 0, "argv": argv, "stdout": "", "stderr": ""}
         out_path.write_text(json.dumps(capture_for(far, content.get(far, ZERO),
                                                    tool or search.CHILD_TOOL_VERSION)),
                             encoding="utf-8")
-        return {"returncode": 0, "argv": ["--far", f"{far:#010x}"], "stdout": "", "stderr": ""}
+        return {"returncode": 0, "argv": argv, "stdout": "", "stderr": ""}
     return runner
 
 
 def go(tmp: Path, content: dict, **kwargs):
     return search.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
                       runner=runner_for(content, kwargs.pop("fail_on", None),
-                                        kwargs.pop("asked", None), kwargs.pop("tool", None)),
+                                        kwargs.pop("asked", None), kwargs.pop("tool", None),
+                                        kwargs.pop("raise_on", None),
+                                        kwargs.pop("garbage_on", None)),
                       plmark_reader=kwargs.pop("plmark_reader", lambda port: PLMARK),
                       **kwargs)
 
@@ -246,8 +256,145 @@ class TheBookkeeping(unittest.TestCase):
                 go(tmp, {}, fail_on=A21)
             index = json.loads((tmp / "index.json").read_text("utf-8"))
             with self.assertRaises(search.SearchStop) as stopped:
-                search.validate_index(tmp, index, DIGEST, PLMARK)
+                search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
             self.assertIn("not coverage", str(stopped.exception))
+
+
+class TheCoverageIsRecomputed(unittest.TestCase):
+    """An interrupted run leaves a self-consistent index that is silent about the rest."""
+
+    def interrupted(self, tmp: Path) -> dict:
+        """A20 captured and atomically landed, then the process died before closing."""
+        try:
+            go(tmp, {}, max_reads=0, plmark_reader=lambda port: (_ for _ in ()).throw(
+                RuntimeError("killed before the closing write")))
+        except RuntimeError:
+            pass
+        index = json.loads((tmp / "index.json").read_text("utf-8"))
+        index.pop("not_attempted", None)
+        index.pop("plmark_at_end", None)
+        (tmp / "index.json").write_text(json.dumps(index), encoding="utf-8")
+        return index
+
+    def test_missing_frames_are_recomputed_not_read_from_the_index(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            index = self.interrupted(tmp)
+            self.assertEqual(list(index["entries"]), [f"{A20:#010x}"])
+            self.assertNotIn("not_attempted", index)
+            captures, missing = search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
+            self.assertEqual(list(captures), [A20])
+            self.assertEqual(missing, [f"{far:#010x}" for far in FARS[1:]],
+                             "the frames nobody read must be recomputed from the frozen set")
+
+    def test_a_lying_index_cannot_make_one_frame_a_complete_search(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            index = self.interrupted(tmp)
+            index["not_attempted"] = []          # the claim an interrupted run leaves behind
+            _, missing = search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
+            verdict = search.judge_sweep(index, {A20: list(ZERO)}, missing, SIGNATURES)
+            self.assertEqual(verdict["verdict"], "NOT_FOUND_INCOMPLETE")
+
+    def test_an_entry_outside_the_frozen_sequence_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            index = self.interrupted(tmp)
+            with self.assertRaises(search.SearchStop) as stopped:
+                search.validate_index(tmp, index, DIGEST, PLMARK, [A21, A22])
+            self.assertIn("frozen device frame sequence", str(stopped.exception))
+
+
+class TheJudgeOnlyPath(unittest.TestCase):
+    def test_an_index_its_run_never_closed_may_not_be_judged(self) -> None:
+        with self.assertRaises(search.SearchStop) as stopped:
+            search.require_closed({"plmark_at_start": PLMARK})
+        self.assertIn("resume it, do not judge it", str(stopped.exception))
+
+    def test_a_closed_index_may_be_judged(self) -> None:
+        search.require_closed({"plmark_at_start": PLMARK, "plmark_at_end": PLMARK})
+
+    def test_an_index_closed_by_a_different_boot_may_not_be_judged(self) -> None:
+        with self.assertRaises(search.SearchStop):
+            search.require_closed({"plmark_at_start": PLMARK, "plmark_at_end": "ffff"})
+
+
+class TheChildLogIsEvidence(unittest.TestCase):
+    def one_capture(self, tmp: Path) -> dict:
+        go(tmp, {A20: SIGNATURES[A20]})
+        return json.loads((tmp / "index.json").read_text("utf-8"))
+
+    def test_a_deleted_child_log_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            index = self.one_capture(tmp)
+            (tmp / index["entries"][f"{A20:#010x}"]["child_log"]).unlink()
+            with self.assertRaises(search.SearchStop) as stopped:
+                search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
+            self.assertIn("child log is gone", str(stopped.exception))
+
+    def test_an_edited_child_log_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            index = self.one_capture(tmp)
+            path = tmp / index["entries"][f"{A20:#010x}"]["child_log"]
+            log = json.loads(path.read_text("utf-8"))
+            log["stdout"] = "tampered"
+            path.write_text(json.dumps(log), encoding="utf-8")
+            with self.assertRaises(search.SearchStop):
+                search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
+
+    def test_a_child_log_from_another_invocation_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            index = self.one_capture(tmp)
+            entry = index["entries"][f"{A20:#010x}"]
+            path = tmp / entry["child_log"]
+            log = json.loads(path.read_text("utf-8"))
+            log["argv"] = log["argv"][:-2]
+            path.write_text(json.dumps(log), encoding="utf-8")
+            entry["child_log_sha256"] = search._digest_of(path)
+            with self.assertRaises(search.SearchStop) as stopped:
+                search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
+            self.assertIn("different invocation", str(stopped.exception))
+
+    def test_a_path_that_escapes_the_run_directory_is_refused(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            index = self.one_capture(tmp)
+            index["entries"][f"{A20:#010x}"]["capture"] = "../escape.json"
+            with self.assertRaises(search.SearchStop) as stopped:
+                search.validate_index(tmp, index, DIGEST, PLMARK, FARS)
+            self.assertIn("run directory", str(stopped.exception))
+
+
+class TheFailureAlwaysLeavesEvidence(unittest.TestCase):
+    def test_a_child_that_raises_still_lands_a_failed_entry_and_a_log(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            with self.assertRaises(search.SearchStop) as stopped:
+                go(tmp, {}, raise_on=A20)
+            self.assertIn("TimeoutExpired", str(stopped.exception))
+            index = json.loads((tmp / "index.json").read_text("utf-8"))
+            entry = index["entries"][f"{A20:#010x}"]
+            self.assertEqual(entry["status"], "failed")
+            log = json.loads((tmp / entry["child_log"]).read_text("utf-8"))
+            self.assertIn("TimeoutExpired", log["exception"])
+            self.assertEqual(log["argv"],
+                             search.child_argv(A20, tmp / f"far_{A20:08x}.json.part"))
+
+    def test_an_unreadable_capture_lands_a_failed_entry_and_the_partial(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            with self.assertRaises(search.SearchStop) as stopped:
+                go(tmp, {}, garbage_on=A20)
+            self.assertIn("could not be read", str(stopped.exception))
+            index = json.loads((tmp / "index.json").read_text("utf-8"))
+            entry = index["entries"][f"{A20:#010x}"]
+            self.assertEqual(entry["status"], "failed")
+            partial = tmp / entry["partial"]
+            self.assertEqual(partial.read_text("utf-8"), "{not json")
+            self.assertEqual(search._digest_of(partial), entry["partial_sha256"])
 
 
 class TheVerdict(unittest.TestCase):

@@ -210,7 +210,9 @@ def child_argv(far: int, out_path: Path) -> list[str]:
 def subprocess_runner(far: int, out_path: Path, timeout: float = 600) -> dict:
     argv = child_argv(far, out_path)
     done = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
-    return {"returncode": done.returncode, "argv": argv[1:],
+    # The whole argv, not a summary: it is later compared against the argv this module would
+    # build for that FAR, which is how a capture proves it came from the reviewed child.
+    return {"returncode": done.returncode, "argv": argv,
             "stdout": done.stdout, "stderr": done.stderr}
 
 
@@ -251,13 +253,45 @@ def frame_of(far: int, capture: dict) -> list[int]:
     return words
 
 
-def validate_index(out_dir: Path, index: dict, digest: str, plmark: str) -> dict[int, list[int]]:
+def _inside(out_dir: Path, name: str, key: str) -> Path:
+    """A recorded file name may only ever be a file in the output directory."""
+    if not name or "/" in name or "\\" in name or name in (".", ".."):
+        raise SearchStop(f"{key}: {name!r} is not a plain file name in the run directory")
+    path = (out_dir / name).resolve()
+    if path.parent != out_dir.resolve():
+        raise SearchStop(f"{key}: {name!r} resolves outside the run directory")
+    return path
+
+
+def _check_child_log(out_dir: Path, far: int, entry: dict, key: str) -> None:
+    """The child's own record has to be there, unaltered, and be the reviewed invocation."""
+    path = _inside(out_dir, entry.get("child_log", ""), key)
+    if not path.exists():
+        raise SearchStop(f"{key}: the child log is gone")
+    if _digest_of(path) != entry.get("child_log_sha256"):
+        raise SearchStop(f"{key}: the child log has changed since it was written")
+    log = json.loads(path.read_text("utf-8"))
+    if log.get("returncode") != 0:
+        raise SearchStop(f"{key}: the child exited {log.get('returncode')}")
+    expected = child_argv(far, out_dir / f"far_{far:08x}.json.part")
+    if log.get("argv") != expected:
+        raise SearchStop(f"{key}: the capture was taken by a different invocation: {log.get('argv')}")
+
+
+def validate_index(out_dir: Path, index: dict, digest: str, plmark: str,
+                   fars: list[int]) -> tuple[dict[int, list[int]], list[str]]:
     """The one gate every path goes through: live, resumed and judge-only alike.
 
     Re-reads and re-hashes every capture rather than believing the index about it. An index
     is a claim; the captures are the evidence, and an evidence file that has been edited,
     truncated or swapped since it was written must not reach a verdict through a status
     field that still says "ok".
+
+    It also **recomputes what is missing** from the frozen FAR set against the captures that
+    survived validation, and returns that. The index's own `not_attempted` is never read: a
+    run interrupted after a capture landed but before the closing write leaves an index that
+    is entirely self-consistent and silent about the 5,143 frames nobody looked at, and
+    trusting it turns one read into a complete search.
     """
     if index.get("tool") != TOOL_VERSION:
         raise SearchStop(f"the index was written by {index.get('tool')}, not {TOOL_VERSION}")
@@ -270,6 +304,7 @@ def validate_index(out_dir: Path, index: dict, digest: str, plmark: str) -> dict
     if failed:
         raise SearchStop(f"the search holds failed captures and is not coverage: {failed}")
 
+    admissible = set(fars)
     captures: dict[int, list[int]] = {}
     for key, entry in index.get("entries", {}).items():
         # Only entries that claim success are validated here; the refusal above is what
@@ -277,17 +312,22 @@ def validate_index(out_dir: Path, index: dict, digest: str, plmark: str) -> dict
         if entry.get("status") != "ok":
             continue
         far = int(key, 16)
-        path = out_dir / entry["capture"]
+        if far not in admissible:
+            raise SearchStop(f"{key} is not in the frozen device frame sequence")
+        path = _inside(out_dir, entry.get("capture", ""), key)
         if not path.exists():
             raise SearchStop(f"{key}: the capture file is gone")
         if _digest_of(path) != entry.get("capture_sha256"):
             raise SearchStop(f"{key}: the capture file has changed since it was written")
+        _check_child_log(out_dir, far, entry, key)
         words = frame_of(far, json.loads(path.read_text("utf-8")))
         body = b"".join(word.to_bytes(4, "big") for word in words)
         if hashlib.sha256(body).hexdigest() != entry.get("frame_sha256"):
             raise SearchStop(f"{key}: the frame does not match the digest the index recorded")
         captures[far] = words
-    return captures
+
+    missing = [f"{far:#010x}" for far in fars if far not in captures]
+    return captures, missing
 
 
 def capture_one(far: int, out_dir: Path, index: dict, runner) -> list[int]:
@@ -297,22 +337,16 @@ def capture_one(far: int, out_dir: Path, index: dict, runner) -> list[int]:
     staging = out_dir / f"far_{far:08x}.json.part"
     index_path = out_dir / "index.json"
 
-    started = time.time()
-    result = runner(far, staging)
-    elapsed = round(time.time() - started, 3)
     child_path = out_dir / f"far_{far:08x}.child.json"
-    _atomic_write(child_path, json.dumps(result, indent=2) + "\n")
+    frozen_argv = child_argv(far, staging)
+    started = time.time()
 
-    try:
-        if result.get("returncode") != 0:
-            raise SearchStop(f"{key}: the child exited {result.get('returncode')}")
-        if not staging.exists():
-            raise SearchStop(f"{key}: the child wrote no capture")
-        words = frame_of(far, json.loads(staging.read_text("utf-8")))
-    except SearchStop as stop:
+    def fail(reason: str, result: dict) -> None:
+        """Whatever went wrong, the evidence lands before the exception leaves."""
+        _atomic_write(child_path, json.dumps(result, indent=2) + "\n")
         entry = {"status": "failed", "child_returncode": result.get("returncode"),
-                 "elapsed_s": elapsed, "child_log": child_path.name,
-                 "child_log_sha256": _digest_of(child_path), "reason": str(stop)}
+                 "elapsed_s": round(time.time() - started, 3), "child_log": child_path.name,
+                 "child_log_sha256": _digest_of(child_path), "reason": reason}
         if staging.exists():
             partial = out_dir / f"far_{far:08x}.partial.json"
             os.replace(staging, partial)
@@ -322,7 +356,35 @@ def capture_one(far: int, out_dir: Path, index: dict, runner) -> list[int]:
         _atomic_write(index_path, json.dumps(index, indent=2) + "\n")
         # Recorded, then stopped. A hole in the coverage would let a later "not found" mean
         # "not looked at", so the search never continues past one.
-        raise
+        raise SearchStop(reason)
+
+    try:
+        result = runner(far, staging)
+    except Exception as raised:
+        # A timeout, a killed child, an OSError. Before this, such a run left no stdout, no
+        # index entry and no partial capture at all — the failure mode with the least
+        # evidence was the one that produced none.
+        fail(f"{key}: the child raised {type(raised).__name__}: {raised}",
+             {"returncode": None, "argv": frozen_argv, "stdout": "", "stderr": "",
+              "exception": f"{type(raised).__name__}: {raised}"})
+    elapsed = round(time.time() - started, 3)
+    result.setdefault("argv", frozen_argv)
+
+    try:
+        if result.get("returncode") != 0:
+            raise SearchStop(f"{key}: the child exited {result.get('returncode')}")
+        if not staging.exists():
+            raise SearchStop(f"{key}: the child wrote no capture")
+        words = frame_of(far, json.loads(staging.read_text("utf-8")))
+    except SearchStop as stop:
+        fail(str(stop), result)
+    except Exception as raised:
+        # Malformed JSON, a missing key, a bad integer: the capture is unusable and the
+        # reason is worth keeping in the same shape as every other failure.
+        fail(f"{key}: the capture could not be read: {type(raised).__name__}: {raised}",
+             result)
+    else:
+        _atomic_write(child_path, json.dumps(result, indent=2) + "\n")
 
     os.replace(staging, capture_path)
     body = b"".join(word.to_bytes(4, "big") for word in words)
@@ -341,14 +403,28 @@ def capture_one(far: int, out_dir: Path, index: dict, runner) -> list[int]:
     return words
 
 
-def open_index(out_dir: Path, digest: str, plmark: str) -> tuple[dict, dict[int, list[int]]]:
+def require_closed(index: dict) -> None:
+    """An index its own run never closed may be resumed, but it may not be judged.
+
+    The closing write is where a run says the board was still the same board at the end. An
+    index without it is the shape an interrupted run leaves — self-consistent, and silent
+    about everything that never happened.
+    """
+    if index.get("plmark_at_end") != index.get("plmark_at_start"):
+        raise SearchStop(
+            "this index was never closed by its own run (no matching plmark_at_end); "
+            "resume it, do not judge it")
+
+
+def open_index(out_dir: Path, digest: str, plmark: str,
+               fars: list[int]) -> tuple[dict, dict[int, list[int]]]:
     """A fresh index, or a resumed one that has re-earned every capture it claims."""
     index_path = out_dir / "index.json"
     if not index_path.exists():
         return ({"tool": TOOL_VERSION, "instrument_digest": digest,
                  "plmark_at_start": plmark, "entries": {}}, {})
     index = json.loads(index_path.read_text("utf-8"))
-    captures = validate_index(out_dir, index, digest, plmark)
+    captures, _ = validate_index(out_dir, index, digest, plmark, fars)
     index.setdefault("entries", {})
     return index, captures
 
@@ -410,7 +486,7 @@ def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
         port: str = "/dev/ebaz-uart", max_reads: int | None = None,
         plmark_reader=read_plmark) -> dict:
     """The intended frame first and decided first; the sweep only if it asks for one."""
-    index, captures = open_index(out_dir, digest, plmark)
+    index, captures = open_index(out_dir, digest, plmark, fars)
 
     if INTENDED_FAR not in captures:
         captures[INTENDED_FAR] = capture_one(INTENDED_FAR, out_dir, index, runner)
@@ -426,9 +502,11 @@ def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
                 break
             captures[far] = capture_one(far, out_dir, index, runner)
             reads += 1
-        not_attempted = [f"{far:#010x}" for far in fars
-                         if f"{far:#010x}" not in index["entries"]]
-        verdict = judge_sweep(index, captures, not_attempted, signatures)
+        # Recomputed from the frozen set against what actually validated, never taken from
+        # the index: an interrupted run leaves a self-consistent index that is silent about
+        # every frame nobody looked at.
+        _, missing = validate_index(out_dir, index, digest, plmark, fars)
+        verdict = judge_sweep(index, captures, missing, signatures)
 
     index["not_attempted"] = ([] if not decision["sweep_needed"]
                               else verdict.get("frames_not_searched", []))
@@ -438,7 +516,7 @@ def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
             f"plmark changed from {plmark} to {index['plmark_at_end']}: the board restarted "
             "during the search and every capture after that is from a different PL")
     _atomic_write(out_dir / "index.json", json.dumps(index, indent=2) + "\n")
-    validate_index(out_dir, index, digest, plmark)
+    validate_index(out_dir, index, digest, plmark, fars)
     verdict["intended_far"] = f"{INTENDED_FAR:#010x}"
     verdict["signature_fars"] = [f"{far:#010x}" for far in signatures]
     return verdict
@@ -467,14 +545,14 @@ def main() -> int:
 
         if args.judge_only:
             index = json.loads((args.out_dir / "index.json").read_text("utf-8"))
-            captures = validate_index(args.out_dir, index, digest, args.plmark)
+            captures, missing = validate_index(args.out_dir, index, digest, args.plmark, fars)
+            require_closed(index)
             if INTENDED_FAR not in captures:
                 raise SearchStop("the intended FAR was never captured; nothing is decided")
             decision = decide_intended(captures[INTENDED_FAR], signatures, base)
             verdict = dict(decision)
             if decision["sweep_needed"]:
-                verdict = judge_sweep(index, captures, index.get("not_attempted", []),
-                                      signatures)
+                verdict = judge_sweep(index, captures, missing, signatures)
             verdict["intended_far"] = f"{INTENDED_FAR:#010x}"
             verdict["signature_fars"] = [f"{far:#010x}" for far in signatures]
         else:
