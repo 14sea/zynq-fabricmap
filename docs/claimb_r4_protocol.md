@@ -1,7 +1,8 @@
 # R4 protocol derivation: a startup/shutdown cycle before the first read
 
-Offline derivation only. No implementation, no allowlist entry, no board run is authorised by
-this document, and R4 must not be built until the open item in §4 is closed.
+Offline derivation only. No implementation, no allowlist entry and no board run is authorised
+by this document. The sequence below is fixed by UG470 v1.17 and is what an implementation must
+emit; nothing here licenses writing it.
 
 ## 1. R3 is cancelled, and what R3-control actually showed
 
@@ -23,58 +24,62 @@ that content is not compared between runs.
 **R4 must place the startup action before the first `FDRO` of every child, or it is not
 testing anything the verdict can see.**
 
-## 3. The two candidate shapes
+## 3. The sequence, from UG470 v1.17
 
-Both keep `JSHUTDOWN`, because §1 says the read does not work without it.
+The user obtained the document, and it settles both the dwells and an error in the first draft
+of this derivation.
 
-**A — bare start, then shutdown**
+* **Chapter 6, Table 6-6, "Shutdown Readback Command Sequence"** — `RCRC` is sent **before**
+  `JSHUTDOWN`, then **12 TCK in Run-Test/Idle**, and only then `RCFG`/`FAR`/`FDRO`.
+* **Chapter 10, Table 10-4, "Single Device Configuration Sequence"** — after `JSTART`, hold
+  **at least 2000 TCK in Run-Test/Idle** to advance the startup sequence.
+
+  AMD UG470, *7 Series FPGAs Configuration User Guide*, v1.17:
+  <https://docs.amd.com/v/u/en-US/ug470_7Series_Config>
+
+### The correction this forces on §3 of the first draft
+
+The first draft's shape B put the second `RCRC` **after** the final `JSHUTDOWN`. That is the
+reverse of Table 6-6 and must not be implemented. Shape A is likewise superseded.
+
+It also reframes R1 and R2 in a way worth recording: the 2.0.0 probe placed `RCRC` before
+`JSHUTDOWN`, which is what Table 6-6 specifies, and R1 and R2 moved it *after* — that is, both
+rungs tested a **deviation** from the documented sequence, and both failed. Nothing about that
+was known when they were run, and it does not change their verdicts, but it does mean the
+documented prefix is the one to keep rather than the one to keep experimenting on.
+
+### R4, fixed
 
 ```
-IDCODE → STAT envelope → JSTART → dwell → JSHUTDOWN → dwell
-       → RCRC envelope → pre-read envelope → FDRO
+IDCODE → STAT envelope
+JSHUTDOWN → RTI 12          # UG470 v1.17 ch.6 Table 6-6
+JSTART    → RTI 2000        # UG470 v1.17 ch.10 Table 10-4, "at least 2000"
+RCRC envelope               # UG470 v1.17 ch.6 Table 6-6, before the shutdown
+JSHUTDOWN → RTI 12          # UG470 v1.17 ch.6 Table 6-6
+per FAR: RCFG → FAR → FDRO → CFG_OUT → DESYNC
 ```
 
-**B — shutdown, start, shutdown: a complete cycle**
+A complete shutdown/startup transition first, then the documented shutdown-readback prefix
+exactly as Table 6-6 gives it — the same prefix that read 16/16 on a fresh load in rung 1.
 
-```
-IDCODE → STAT envelope → JSHUTDOWN → dwell → JSTART → dwell → JSHUTDOWN → dwell
-       → RCRC envelope → pre-read envelope → FDRO
-```
+**R2's extra pre-read DESYNC is not carried forward.** It is not part of the UG470 sequence,
+and R2 measured it to add nothing.
 
-B is the better-motivated of the two. In the state R4 exists for, the design is *running* when
-the probe arrives — the no-op left it running and nothing has shut it down. A bare `JSTART`
-issued to an already-started device may be a no-operation, in which case shape A tests
-nothing; B drives the startup state machine through a full transition regardless of where it
-began. A is cheaper to emit and worth keeping only as a fallback if B is refused for a reason
-this derivation has not anticipated.
+## 4. Dwell provenance, now that there is a document
 
-**Neither shape is a recovery hypothesis with a mechanism behind it.** The honest statement is
-that R1 and R2 showed the reordered `RCRC` reaches the configuration engine without restoring
-the readback, and the startup state machine is the next state variable this probe can touch at
-all. That is why R4 is next — not because there is a theory that it will work.
+Every dwell constant carries a provenance record, and a test asserts that each one has one:
 
-## 4. The open item: the dwell figures are not pinned, and cannot be pinned from here
+| dwell | value | provenance |
+|---|---|---|
+| after `JSHUTDOWN` | 12 TCK | `document_id: UG470, version: v1.17, chapter: 6, table: 6-6` |
+| after `JSTART` | 2000 TCK | `document_id: UG470, version: v1.17, chapter: 10, table: 10-4` |
+| R2's dwell | 1024 TCK | **`chosen, not derived`** — historical, not carried into R4 |
 
-The ruling asks for the required RTI clocks to be pinned to UG470. **They cannot be, from this
-machine.** UG470 is not in this repository and not on this box; `ref/` is gitignored for
-copyrighted references and does not exist here.
-
-Worse, and worth saying plainly: **the existing `runtest 12` has no citation either.** It
-entered the probe in `850f709`, written from general knowledge rather than derived from a
-document, and every rung since has inherited it. No file in this repository pins it. The R2
-dwell of 1024 was likewise a chosen number, not a derived one.
-
-So before R4 is implemented, one of these has to happen:
-
-* **obtain UG470 and cite it** — the table or figure number, in the source, next to each
-  `runtest`, for `JSTART` and for `JSHUTDOWN` alike; or
-* **declare the dwells explicitly unpinned** — a named constant carrying a `provenance` field
-  that says "chosen, not derived", with the same treatment applied retroactively to the
-  existing 12, so that no reader mistakes a habit for a specification.
-
-The second is acceptable and is the smaller lie; what is not acceptable is a comment claiming
-UG470 backing that nobody has checked. A test should assert that every dwell constant carries
-a provenance string.
+One distinction has to be kept straight. The original `runtest 12` entered the probe in
+`850f709` written from general knowledge, and its value **turns out to agree** with Table 6-6.
+That is a post-hoc confirmation of the number, **not** a citation of where it came from, and
+the provenance record must say so rather than implying the constant was derived from the table
+at the time. R2's 1024 remains chosen and derived from nothing.
 
 ## 5. The acquisition pair, unchanged in shape
 
@@ -97,14 +102,18 @@ exactly the distinction R3-control had to make and did.
 
 * the allowlist entry for `JSTART` (`0x0c`), moving it from `FORBIDDEN_IR` to `IR`, with
   `JPROGRAM` and `IPROG` staying forbidden and `WCFG`/`FDRI` untouched;
-* a structural test on the **emitted** Tcl: `JSTART` appears exactly as many times as the
-  shape requires, before the first `FDRO`, with `JSHUTDOWN` in its ruled position;
+* a structural test on the **emitted** Tcl that pins the whole prefix in order and by value:
+  `JSHUTDOWN` → `runtest 12` → `JSTART` → `runtest 2000` → the `RCRC` envelope → `JSHUTDOWN`
+  → `runtest 12` → the first `FDRO`. The dwells are checked **exactly**: 12, 2000, 12, and
+  neither a longer nor a shorter one passes;
 * version isolation: probe 2.4.0 and parent 2.7.0, refusing 2.0.0 through 2.3.0 captures;
-* mutants killed from the emitted script, not by string search — **a missing `JSTART`**, and
-  **`JSTART` after the first `FDRO`**, and if shape B is chosen, **a missing leading
-  `JSHUTDOWN`**;
-* the dwell provenance decision of §4, applied to the new constants and retroactively to the
-  old one.
+* mutants killed from the emitted script rather than by a string search, covering at least:
+  **a missing `JSTART`**; **`JSTART` after the first `FDRO`**; **a missing leading
+  `JSHUTDOWN`**; **a wrong dwell** on any of the three; and **`RCRC` moved after the final
+  `JSHUTDOWN`**, which is the mistake this derivation itself made and which Table 6-6 forbids;
+* the provenance records of §4 on every dwell constant, with a test asserting each carries one,
+  and the historical 1024 marked `chosen, not derived` rather than quietly inheriting a
+  citation it never had.
 
 ## 7. Standing rules, unchanged
 
