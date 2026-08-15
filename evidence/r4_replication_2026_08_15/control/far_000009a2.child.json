@@ -1,0 +1,17 @@
+{
+  "returncode": 0,
+  "argv": [
+    "/usr/bin/python3",
+    "/home/test/zynq_fabricmap/scripts/probe_jtag_config_read.py",
+    "--far",
+    "0x000009a2",
+    "--out",
+    "evidence/r4_replication_2026_08_15/control/far_000009a2.json.part",
+    "--cfg",
+    "/home/test/zynq_fabricmap/scripts/jtag_config_only.cfg",
+    "--speed",
+    "2000"
+  ],
+  "stdout": "READ: IDCODE 0x13722093, CONFIG_STATUS 0x46101f8c\n  0x000009a2: frame sha 9f390a7ddf5e8581\u2026, 71 non-zero words\n  evidence: evidence/r4_replication_2026_08_15/control/far_000009a2.json.part\n",
+  "stderr": ""
+}
