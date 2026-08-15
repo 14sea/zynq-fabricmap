@@ -1,0 +1,20 @@
+{
+  "what": "does a prjxray mask account for the post-fault readback disagreement",
+  "scope_caveat": "masks exist upstream only for CLB tiles; INT, BRAM and IOB frames have none, so a mask cannot speak for most of the device",
+  "mask_files": [
+    "CLBLL_L",
+    "CLBLL_R",
+    "CLBLM_L",
+    "CLBLM_R"
+  ],
+  "tiles_carrying_a_mask": 2200,
+  "fars_with_any_masked_bit": 1584,
+  "frames_with_no_mask_at_all": 3560,
+  "differing_bits_before_mask": 10367215,
+  "differing_bits_after_mask": 7143064,
+  "frames_equal_before_mask": 771,
+  "frames_equal_after_mask": 882,
+  "frames_equal_after_mask_and_non_zero_in_base": 0,
+  "positive_control_fars": [],
+  "reading": "Masking removes bits but produces no non-zero positive control: not one frame whose base content is non-zero becomes equal to its readback once the dynamic bits prjxray names are excluded. The disagreement is not the dynamic bits."
+}

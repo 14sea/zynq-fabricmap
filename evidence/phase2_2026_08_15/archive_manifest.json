@@ -1,0 +1,40 @@
+{
+  "schema": "phase2_raw_archive",
+  "schema_version": "1.0.0",
+  "what": "the 15,432 raw sweep files, held outside the repository",
+  "why": "124 MB of loose captures in a public repository is permanent weight; the index, the verdict and the four signature FARs are committed, and this names the rest",
+  "archive": {
+    "name": "phase2_sweep_2026_08_15.tar.zst",
+    "sha256": "670f7986cc64bc393c4b3895027bd3c23c7d8ce6b5938fe20a104f7369334586",
+    "bytes": 1329172,
+    "files": 15432,
+    "format": "tar (posix, sorted, mtime 1970-01-01Z, uid/gid 0) + zstd -19",
+    "deterministic": "rebuilt byte-identically from the same inputs"
+  },
+  "contents": {
+    "captures": 5144,
+    "child_logs": 5144,
+    "tcl_scripts": 5144
+  },
+  "copies": [
+    "/home/test/fabricmap_archives/phase2_sweep_2026_08_15.tar.zst",
+    "/home/test/fabricmap_archives_2/phase2_sweep_2026_08_15.tar.zst"
+  ],
+  "copies_caveat": "both copies are on the same filesystem (/dev/sdc); that is two files, not two independent stores, and an off-box copy is still owed",
+  "binds_to": {
+    "commit": "b0ce06d",
+    "plmark": "18cc061a7180f194",
+    "index_sha256": "b67ebbf1bb7ca5d219f4e071d20a878fbe7d7f3f964f3a0c4d5ed77de155fe1b",
+    "instrument_digest": "0caf4a368e2c071c1bf9c816f9fb024bf1f12e655e26c8f832deb9b64100b21d"
+  },
+  "verified": {
+    "extracted_files": 15432,
+    "validate_index_accepted": 5144,
+    "missing": 0,
+    "tcl_digests_checked": 5144,
+    "tcl_digests_mismatched": 0,
+    "method": "extracted under the same relative layout the child argv records, then validate_index() re-run in full and every capture-recorded tcl_sha256 compared against the extracted script"
+  },
+  "restore": "tar --use-compress-program='zstd -d' -xf <archive> -C evidence/phase2_2026_08_15/sweep",
+  "loose_files": "still present at evidence/phase2_2026_08_15/sweep/ and NOT deleted; they are untracked and must be moved out of the repository, not hidden with .gitignore"
+}

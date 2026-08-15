@@ -1,0 +1,54 @@
+{
+  "what": "is the readback the base data under a transform or a shift",
+  "reported_separately_from_the_mask": true,
+  "streams": {
+    "readback_words": 519544,
+    "base_words": 519544
+  },
+  "distinctive_targets_probed": 24,
+  "transforms": {
+    "identity": {
+      "frames_found": 0,
+      "of": 24,
+      "offsets": []
+    },
+    "word_bit_reverse": {
+      "frames_found": 0,
+      "of": 24,
+      "offsets": []
+    },
+    "byte_swap": {
+      "frames_found": 0,
+      "of": 24,
+      "offsets": []
+    },
+    "byte_bit_reverse": {
+      "frames_found": 0,
+      "of": 24,
+      "offsets": []
+    },
+    "byte_swap_then_bit_reverse": {
+      "frames_found": 0,
+      "of": 24,
+      "offsets": []
+    }
+  },
+  "words_equal_in_place": 119388,
+  "words_equal_in_place_and_non_zero": 2,
+  "reading": "No distinctive base frame appears anywhere in the readback stream under any of the transforms tried, at any offset. The readback is not the configuration data misordered or displaced; whatever it is, it is not this bitstream rearranged.",
+  "frame_ecc": {
+    "base_file_consistent": "5144 of 5144 (100%)",
+    "readback_consistent_total": "934 of 5144 (18.2%)",
+    "readback_all_zero": {
+      "frames": 852,
+      "ecc_consistent": 852,
+      "note": "an all-zero frame is trivially consistent"
+    },
+    "readback_non_zero": {
+      "frames": 4292,
+      "ecc_consistent": 82,
+      "percent": 1.9
+    },
+    "reading": "Configuration frames carry a computed ECC. The bitstream satisfies it everywhere; the readback satisfies it in 1.9% of its non-zero frames. Whatever the readback returns in this state, most of it is not frame-shaped."
+  }
+}
