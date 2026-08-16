@@ -65,7 +65,7 @@ import frame_ecc  # noqa: E402
 import gate_claimb_known_answer as kagate  # noqa: E402
 import probe_jtag_config_read as probe  # noqa: E402
 
-TOOL_VERSION = "board_signature_search.py/2.7.1"
+TOOL_VERSION = "board_signature_search.py/2.7.2"
 CHILD = REPO / "scripts/probe_jtag_config_read.py"
 CHILD_CFG = REPO / "scripts/jtag_config_only.cfg"
 CHILD_SPEED = 2000
@@ -901,6 +901,17 @@ def main() -> int:
         verdict["instrument_digest"] = digest
         verdict["known_answer_artifact_sha256"] = kagate.PRODUCTION_ARTIFACT_SHA256
         verdict["elapsed_s"] = round(time.time() - started, 1)
+        if args.judge_only:
+            # 2.7.2. Judging used to write verdict.json like an acquisition does, which meant
+            # re-judging a PUBLISHED acquisition silently replaced its `elapsed_s` — the
+            # acquisition's own timing — with however long the judging took. That happened to
+            # the step ③ evidence (1.9 -> 0.4) and was caught only because the authority gate
+            # then refused the next acquisition for a dirty tree. A judgement is a reading of
+            # evidence, so it goes to stdout and the evidence is not touched.
+            print(json.dumps(verdict, indent=2))
+            print(f"{verdict['verdict']}: {verdict['reading']}")
+            print("  judged read-only; no file in the acquisition directory was written")
+            return 0
         _atomic_write(args.out_dir / "verdict.json", json.dumps(verdict, indent=2) + "\n")
         print(f"{verdict['verdict']}: {verdict['reading']}")
         print(f"  verdict: {args.out_dir / 'verdict.json'}")

@@ -67,6 +67,16 @@ CONTROLS = {far: signature(0x100 + offset) for offset, far in enumerate(CONTROL_
 BASE.update(CONTROLS)
 
 MUTANTS = {
+    # MUTATION ANCHOR judge_read_only: judging is a reading of evidence, never a write to it.
+    "judge_only_writes_the_acquisition": [(
+        '            print(json.dumps(verdict, indent=2))\n'
+        '            print(f"{verdict[\'verdict\']}: {verdict[\'reading\']}")\n'
+        '            print("  judged read-only; no file in the acquisition directory was written")\n'
+        '            return 0',
+        '            _atomic_write(args.out_dir / "verdict.json",\n'
+        '                          json.dumps(verdict, indent=2) + "\\n")\n'
+        '            print(f"{verdict[\'verdict\']}: {verdict[\'reading\']}")\n'
+        '            return 0')],
     # MUTATION ANCHOR one_far: the child must never be handed a second frame to read.
     "two_fars_per_child": [(
         '    argv = [sys.executable, str(CHILD), "--far", f"{far:#010x}", "--out", str(out_path),',
@@ -533,7 +543,62 @@ def probe_status_summary(module) -> tuple[bool, str]:
     return False, "all sixteen CONFIG_STATUS observations reached the index"
 
 
+
+def _digests(directory: Path) -> dict:
+    return {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+            for path in sorted(directory.iterdir()) if path.is_file()}
+
+
+def probe_judge_only_writes(module) -> tuple[bool, str]:
+    """Does judging an acquisition change any byte of it?
+
+    This is what was damaged in the real evidence: `--judge-only` wrote `verdict.json` like an
+    acquisition does, replacing a PUBLISHED acquisition's own `elapsed_s` with however long
+    the judging took. The acquisition here is synthetic and built by the module under test, so
+    the child argv recorded in each capture matches this directory — judging a *copy* of a
+    real acquisition always stops on that argv check, which would mean the write branch was
+    never reached and the gate would pass without testing anything.
+
+    The repo-relative inputs are pinned to the synthetic ones for the same reason: the run has
+    to reach its verdict for the write to be reachable at all. The identity mechanism they
+    stand in for has its own mutants.
+    """
+    import contextlib
+    import io
+    from unittest import mock
+
+    with tempfile.TemporaryDirectory() as name:
+        tmp = Path(name)
+        asked: list[int] = []
+        module.run_control_only(
+            tmp, PLMARK, BASE, CONTROL_DIGEST, CONTROLS,
+            runner=runner_for(module, {}, asked), plmark_reader=lambda port: PLMARK)
+
+        before = _digests(tmp)
+        argv = ["board_signature_search.py", "--control-only", "--judge-only",
+                "--out-dir", str(tmp), "--plmark", PLMARK]
+        with (mock.patch.object(module, "canonical_authority", lambda: ({}, {})),
+              mock.patch.object(module, "frozen_far_sequence", lambda: FARS),
+              mock.patch.object(module, "base_frames", lambda: BASE),
+              mock.patch.object(module, "canonical_positive_controls", lambda base: CONTROLS),
+              mock.patch.object(module, "instrument_digest",
+                                lambda fars, mode=None: CONTROL_DIGEST),
+              mock.patch.object(sys, "argv", argv),
+              contextlib.redirect_stdout(io.StringIO()) as captured):
+            code = module.main()
+        if code != 0:
+            return False, ("the judge did not reach its verdict, so the write branch was "
+                           f"never exercised: {captured.getvalue()[-200:]!r}")
+        after = _digests(tmp)
+        changed = sorted(set(before) ^ set(after)) + sorted(
+            entry for entry in before.keys() & after.keys() if before[entry] != after[entry])
+        if changed:
+            return True, f"judging wrote {changed} into the acquisition"
+        return False, "judging left every byte of the acquisition alone"
+
+
 PROBES = {
+    "judge_only_writes_the_acquisition": probe_judge_only_writes,
     "two_fars_per_child": probe_argv,
     "two_fars_no_guard": probe_argv,
     "defer_the_intended_decision": probe_intended_first,

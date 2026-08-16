@@ -10,13 +10,16 @@ from __future__ import annotations
 
 import ast
 import base64
+import contextlib
 import hashlib
+import io
 import json
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "scripts"))
@@ -168,7 +171,31 @@ class TheAuthority(unittest.TestCase):
             first_index = json.loads((Path(first) / "index.json").read_text("utf-8"))
             second_index = json.loads((Path(second) / "index.json").read_text("utf-8"))
         self.assertEqual(first_index["instrument_digest"], second_index["instrument_digest"])
-        self.assertEqual(search.TOOL_VERSION, "board_signature_search.py/2.7.1")
+        self.assertEqual(search.TOOL_VERSION, "board_signature_search.py/2.7.2")
+
+    def test_the_published_r4_evidence_belongs_to_the_instrument_that_took_it(self) -> None:
+        """The digest hashes this file's own bytes, so 2.7.2 is a different instrument.
+
+        The four R4 acquisitions -- step (1), step (3), and the replication's control and R4 --
+        were taken under 2.7.1 and share digest 8d28dcf3..., which the current tool no longer
+        computes. That is the identity mechanism working, not a defect: `--judge-only` on that
+        evidence must be run from the commit that took it. The wrong repair, if anyone is ever
+        tempted, would be to loosen `validate_index` so the digests need not match.
+        """
+        taken_under = "board_signature_search.py/2.7.1"
+        digest = "8d28dcf3cae515b28cd60eff1e2ed84032516fb52c1c721dd155fe9ec332516b"
+        acquisitions = [
+            REPO / "evidence/postfault_r4_step1_control_2026_08_16",
+            REPO / "evidence/postfault_r4_step3_r4_on_fault_2026_08_16",
+            REPO / "evidence/postfault_r4_replication_2026_08_16/control",
+            REPO / "evidence/postfault_r4_replication_2026_08_16/r4",
+        ]
+        self.assertNotEqual(search.TOOL_VERSION, taken_under)
+        for directory in acquisitions:
+            with self.subTest(acquisition=directory.name):
+                index = json.loads((directory / "index.json").read_text("utf-8"))
+                self.assertEqual(index["tool"], taken_under)
+                self.assertEqual(index["instrument_digest"], digest)
 
     def test_a_child_is_given_exactly_one_far(self) -> None:
         argv = search.child_argv(A20, Path("/tmp/x.json"))
@@ -332,7 +359,7 @@ class TheControlOnlyMode(unittest.TestCase):
             go_control(tmp, {})
             with self.assertRaises(search.SearchStop) as stopped:
                 search.run(tmp, PLMARK, SIGNATURES, BASE, FARS, CONTROL_DIGEST, CONTROLS,
-                           runner=runner_for({}), plmark_reader=lambda port: PLMARK)
+                           runner=runner_for(dict(CONTROLS)), plmark_reader=lambda port: PLMARK)
         self.assertIn("index mode", str(stopped.exception))
 
     def test_search_index_cannot_resume_as_control_only(self) -> None:
@@ -696,6 +723,79 @@ class TheVerdict(unittest.TestCase):
     def test_an_all_zero_signature_is_refused_at_the_source(self) -> None:
         source = Path(search.__file__).read_text("utf-8")
         self.assertIn("is all zero and names nothing", source)
+
+
+class JudgingWritesNothing(unittest.TestCase):
+    """2.7.2. Judging used to write `verdict.json` exactly as an acquisition does.
+
+    Re-judging a PUBLISHED acquisition therefore replaced its own `elapsed_s` -- the time the
+    acquisition took -- with however long the judging took. It happened to the step (3)
+    evidence, 1.9 -> 0.4, and was noticed only because the authority gate then refused the
+    next acquisition for a dirty tree. A judgement is a reading of evidence; it goes to
+    stdout, and the evidence is left alone.
+
+    Proven by full before/after digests of every file in the directory, over a run that
+    reaches its verdict -- a stop would write nothing for the wrong reason.
+    """
+
+    @staticmethod
+    def digests(directory: Path) -> dict[str, str]:
+        return {path.name: hashlib.sha256(path.read_bytes()).hexdigest()
+                for path in sorted(directory.iterdir()) if path.is_file()}
+
+    def judge(self, tmp: Path) -> tuple[int, str]:
+        argv = ["board_signature_search.py", "--control-only", "--judge-only",
+                "--out-dir", str(tmp), "--plmark", PLMARK]
+        with (mock.patch.object(search, "canonical_authority", lambda: ({}, {})),
+              mock.patch.object(search, "frozen_far_sequence", lambda: FARS),
+              mock.patch.object(search, "base_frames", lambda: BASE),
+              mock.patch.object(search, "canonical_positive_controls", lambda base: CONTROLS),
+              mock.patch.object(search, "instrument_digest",
+                                lambda fars, mode=None: CONTROL_DIGEST),
+              mock.patch.object(sys, "argv", argv),
+              contextlib.redirect_stdout(io.StringIO()) as captured):
+            return search.main(), captured.getvalue()
+
+    def acquire(self, tmp: Path) -> None:
+        search.run_control_only(
+            tmp, PLMARK, BASE, CONTROL_DIGEST, CONTROLS,
+            runner=runner_for(dict(CONTROLS)), plmark_reader=lambda port: PLMARK)
+
+    def test_judging_changes_not_one_byte_of_the_acquisition(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            self.acquire(tmp)
+            before = self.digests(tmp)
+            code, printed = self.judge(tmp)
+            self.assertEqual(code, 0, printed)
+            self.assertIn("INSTRUMENT_VALID", printed)
+            self.assertEqual(self.digests(tmp), before)
+
+    def test_judging_creates_no_verdict_file_at_all(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            self.acquire(tmp)
+            self.assertFalse((tmp / "verdict.json").exists())
+            code, _ = self.judge(tmp)
+            self.assertEqual(code, 0)
+            self.assertFalse((tmp / "verdict.json").exists())
+
+    def test_an_existing_verdict_from_the_acquisition_survives_judging(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            self.acquire(tmp)
+            published = json.dumps({"verdict": "INSTRUMENT_VALID", "elapsed_s": 1.9}) + "\n"
+            (tmp / "verdict.json").write_text(published, encoding="utf-8")
+            code, _ = self.judge(tmp)
+            self.assertEqual(code, 0)
+            self.assertEqual((tmp / "verdict.json").read_text(encoding="utf-8"), published)
+
+    def test_an_acquisition_still_writes_its_verdict(self) -> None:
+        """The fix must not have disarmed the path that is supposed to write."""
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            self.acquire(tmp)
+            self.assertTrue((tmp / "index.json").exists())
 
 
 if __name__ == "__main__":
