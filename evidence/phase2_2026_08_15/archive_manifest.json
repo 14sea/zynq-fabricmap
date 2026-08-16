@@ -17,10 +17,11 @@
     "tcl_scripts": 5144
   },
   "copies": [
+    "https://github.com/14sea/zynq-fabricmap/releases/download/phase2-raw-2026-08-15/phase2_sweep_2026_08_15.tar.zst",
     "/home/test/fabricmap_archives/phase2_sweep_2026_08_15.tar.zst",
     "/home/test/fabricmap_archives_2/phase2_sweep_2026_08_15.tar.zst"
   ],
-  "copies_caveat": "both copies are on the same filesystem (/dev/sdc); that is two files, not two independent stores, and an off-box copy is still owed",
+  "copies_caveat": "the two local copies are on the same filesystem (/dev/sdc): two files, not two independent stores. The off-box copy that was owed is the release asset listed first, and it is the one that makes this archive survive the loss of this machine.",
   "binds_to": {
     "commit": "b0ce06d",
     "plmark": "18cc061a7180f194",
@@ -36,5 +37,43 @@
     "method": "extracted under the same relative layout the child argv records, then validate_index() re-run in full and every capture-recorded tcl_sha256 compared against the extracted script"
   },
   "restore": "tar --use-compress-program='zstd -d' -xf <archive> -C evidence/phase2_2026_08_15/sweep",
-  "loose_files": "still present at evidence/phase2_2026_08_15/sweep/ and NOT deleted; they are untracked and must be moved out of the repository, not hidden with .gitignore"
+  "loose_files": {
+    "moved_on": "2026-08-16",
+    "destination": "/home/test/fabricmap_archives/phase2_sweep_loose_2026_08_15/",
+    "count_at_destination": 15424,
+    "kept_in_repository": {
+      "count": 58,
+      "index_and_verdict": [
+        "index.json",
+        "verdict.json"
+      ],
+      "intended_far_and_neighbours": "far_00400a20..a23, each as .json and .child.json (8 files)",
+      "positive_controls": "all sixteen, each as capture + child log + Tcl (48 files), so the frames that license a location verdict can be checked without unpacking the archive",
+      "why_the_tcl_too": "a capture and its log can only attest the Tcl digest they record. Without the script itself a reader still has to extract the archive to see the sequence that was actually shifted"
+    },
+    "checked_before_moving": "every one of the 15,424 files was compared byte for byte against the same-named file extracted from the archive; none was absent and none differed",
+    "controls_copied_back_on": "2026-08-16",
+    "controls_checked": "each of the 48 was verified three ways before it was copied and once again afterwards: the loose copy against the archive, the capture and log against the digests index.json records, and each Tcl against the tcl_sha256 its own capture records",
+    "controls_caveat": "this sweep predates the positive-control mechanism -- its index was written by board_signature_search.py/2.1.0 and names no controls. These sixteen FARs were read as part of the 5,144 and are adjudicated as controls only in hindsight, which is exactly how the verdict came to be void: none of them reproduced its known non-zero base frame",
+    "not_gitignored": "they are moved, not hidden: no ignore rule mentions this directory, so a future `git status` in a fresh clone says what is and is not here"
+  },
+  "offbox_copy": {
+    "kind": "github release asset",
+    "release": "phase2-raw-2026-08-15",
+    "release_page": "https://github.com/14sea/zynq-fabricmap/releases/tag/phase2-raw-2026-08-15",
+    "asset_url": "https://github.com/14sea/zynq-fabricmap/releases/download/phase2-raw-2026-08-15/phase2_sweep_2026_08_15.tar.zst",
+    "asset": "phase2_sweep_2026_08_15.tar.zst",
+    "sha256": "670f7986cc64bc393c4b3895027bd3c23c7d8ce6b5938fe20a104f7369334586",
+    "bytes": 1329172,
+    "verified_on": "2026-08-16",
+    "round_trip": {
+      "downloaded_from": "https://github.com/14sea/zynq-fabricmap/releases/download/phase2-raw-2026-08-15/phase2_sweep_2026_08_15.tar.zst",
+      "downloaded_sha256": "670f7986cc64bc393c4b3895027bd3c23c7d8ce6b5938fe20a104f7369334586",
+      "matches_local_archive": true,
+      "compared": "byte for byte against /home/test/fabricmap_archives/phase2_sweep_2026_08_15.tar.zst",
+      "independently_repeated": "the same asset was downloaded again by the reviewer; three copies agree on 670f7986cc64bc393c4b3895027bd3c23c7d8ce6b5938fe20a104f7369334586"
+    },
+    "verified_how": "re-hashed the local archive, extracted it to 15,432 files and re-hashed all 10,288 captures and child logs against the committed sweep/index.json with no mismatch, uploaded, then downloaded the asset back and compared it byte for byte",
+    "note": "the upload was not trusted from its exit status; the asset was fetched again and compared, because an archive nobody has read back is a copy nobody has checked"
+  }
 }
