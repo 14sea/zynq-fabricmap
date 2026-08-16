@@ -38,8 +38,17 @@ there is no bookkeeping or pairing anomaly to disqualify the run.
 
 ## What this does and does not establish
 
-**R4 read a post-fault state that carries the specified `F_READBACK` fault, and read it
-bit-exactly, sixteen times out of sixteen.** Every earlier R4 success followed a *clean* no-op;
+**Starting from the specified `F_READBACK` fault state, running the recovery sequence restored
+all sixteen known non-zero control frames to bit-exact readability.**
+
+> **Wording correction, added after review and deliberately not a rewrite of the finding.**
+> This paragraph first said R4 "read a post-fault state ... and read it bit-exactly", which
+> implies the fault state was observed *unaltered*. It was not, and cannot be: R4's `JSTART`
+> and `JSHUTDOWN` change the configuration engine's state by design. What was measured is the
+> readability of the sixteen controls **after** the recovery ran, starting from the fault
+> state. The 16/16 count and everything else below are unchanged.
+
+Every earlier R4 success followed a *clean* no-op;
 this is the first time the recovery has been applied to a state carrying a fault, which is the
 state the location question actually needs.
 
