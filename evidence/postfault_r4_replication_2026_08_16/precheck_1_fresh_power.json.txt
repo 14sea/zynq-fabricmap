@@ -1,0 +1,24 @@
+$ echo
+echo
+
+Zynq> 
+$ md.l 0xf8007000 0x1
+md.l 0xf8007000 0x1
+f8007000: 4e00e07f                             ...N
+Zynq> 
+$ md.l 0xf800700c 0x1
+md.l 0xf800700c 0x1
+f800700c: a802000b                             ....
+Zynq> 
+$ md.l 0xf8007014 0x1
+md.l 0xf8007014 0x1
+f8007014: 40000a30                             0..@
+Zynq> 
+$ md.l 0xf8000170 0x1
+md.l 0xf8000170 0x1
+f8000170: 00400800                             ..@.
+Zynq> 
+$ printenv plmark
+printenv plmark
+## Error: "plmark" not defined
+Zynq> 

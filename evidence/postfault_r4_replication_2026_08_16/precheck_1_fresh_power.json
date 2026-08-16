@@ -1,0 +1,51 @@
+{
+  "tool": "precheck_fresh_power.py/1.0.0",
+  "port": "/dev/ebaz-uart",
+  "checks": [
+    {
+      "check": "link",
+      "passed": true
+    },
+    {
+      "check": "devcfg CTRL",
+      "address": "0xf8007000",
+      "expected": "0x4e00e07f",
+      "observed": "0x4e00e07f",
+      "passed": true,
+      "raw": "md.l 0xf8007000 0x1\r\nf8007000: 4e00e07f                             ...N\r\nZynq> "
+    },
+    {
+      "check": "devcfg INT_STS",
+      "address": "0xf800700c",
+      "expected": "0xa802000b",
+      "observed": "0xa802000b",
+      "passed": true,
+      "raw": "md.l 0xf800700c 0x1\r\nf800700c: a802000b                             ....\r\nZynq> ",
+      "pcfg_done": 0
+    },
+    {
+      "check": "devcfg STATUS",
+      "address": "0xf8007014",
+      "expected": "0x40000a30",
+      "observed": "0x40000a30",
+      "passed": true,
+      "raw": "md.l 0xf8007014 0x1\r\nf8007014: 40000a30                             0..@\r\nZynq> "
+    },
+    {
+      "check": "SLCR FPGA0_CLK_CTRL",
+      "address": "0xf8000170",
+      "expected": "0x00400800",
+      "observed": "0x00400800",
+      "passed": true,
+      "raw": "md.l 0xf8000170 0x1\r\nf8000170: 00400800                             ..@.\r\nZynq> "
+    },
+    {
+      "check": "plmark undefined",
+      "expected": "not defined",
+      "passed": true,
+      "raw": "printenv plmark\r\n## Error: \"plmark\" not defined\r\nZynq> "
+    }
+  ],
+  "problems": [],
+  "passed": true
+}
