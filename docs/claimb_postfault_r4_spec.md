@@ -15,12 +15,18 @@ five separate occasions, so a spoiled instance can be rebuilt, but an instance t
 disturbed cannot be un-disturbed. The care below is about not wasting one, not about a state
 that can never be had again.
 
-## No new code
+## Fixed entrypoints
 
-Both tools already exist and are audited: `board_claimb_known_answer.py` for step ② and
-`board_signature_search.py --control-only` for steps ① and ③. **If any step turns out to need
-orchestration that does not exist, stop and hand it back** — implementation, tests, mutants,
-audit and push come first, and this specification does not authorise writing them.
+The first version of this specification named `board_claimb_known_answer.py` for step ②.
+Review found that an unexpected candidate pass would make that full-round driver continue
+into evaluation, violating this procedure's no-arm boundary. The procedure stopped before
+step ②, and `claimb_postfault_capture_request.md` recorded the required correction.
+
+Step ② now uses `board_claimb_postfault_capture.py/1.0.0`, whose fixed round is exactly
+`no_op → known_answer` and has no third step on either the fault or pass path. Steps ① and ③
+continue to use `board_signature_search.py --control-only`. If any later step turns out to
+need orchestration that does not exist, the same rule applies: stop and hand it back —
+implementation, tests, mutants, audit and push come first.
 
 ## Step ① — the fresh-load control, under the new identity
 
@@ -55,7 +61,7 @@ the new identity rather than an inconvenience of it.
 Not optional. Step ① has itself read the device sixteen times, and R0 established that a
 probed state is not the state that was probed.
 
-## Step ② — build the fault, and accept only the specified one
+## Step ② — build the fault with the fixed capture driver, and accept only the specified one
 
 The driver executes these stages, and the record must show all of them:
 

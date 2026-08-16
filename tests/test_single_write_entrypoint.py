@@ -36,6 +36,7 @@ SOURCE_DIRS = (REPO_ROOT / "scripts", REPO_ROOT / "host")
 TRANSPORT = "board_uboot_axi.py"
 SESSION = "gate_board_identity.py"
 EXEC = "board_carrier_exec.py"
+POSTFAULT_CAPTURE = "board_claimb_postfault_capture.py"
 
 
 def source_files() -> list[Path]:
@@ -146,6 +147,14 @@ class ThereIsOneScorerArm(unittest.TestCase):
     def test_the_reviewed_round_has_one_production_caller(self) -> None:
         self.assertEqual(sites(plain_call("run_known_answer_round")),
                          [("board_claimb_known_answer.py", "main")])
+
+    def test_the_postfault_capture_module_cannot_name_the_evaluation_path(self) -> None:
+        source = (REPO_ROOT / "scripts" / POSTFAULT_CAPTURE).read_text(encoding="utf-8")
+        forbidden = ("_score", "score_last_transaction", "arm_scorer",
+                     "CTRL_ARM", "CTRL_MODE_HOLDOUT", "run_known_answer_round")
+        self.assertEqual([name for name in forbidden if name in source], [])
+        self.assertEqual(sites(plain_call("run_postfault_capture")),
+                         [(POSTFAULT_CAPTURE, "main")])
 
 
 class TheCapabilityIsHeldOnce(unittest.TestCase):

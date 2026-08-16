@@ -52,7 +52,8 @@ def _is_attr(node: ast.AST, owner: str, attr: str) -> bool:
             and _is_name(node.value, owner))
 
 
-def verify_sources(driver_source: str, setup_source: str) -> list[str]:
+def verify_sources(driver_source: str, setup_source: str,
+                   *, round_name: str = "run_known_answer_round") -> list[str]:
     """Return every structural problem; empty is the only accepted verdict."""
     problems: list[str] = []
     try:
@@ -78,7 +79,7 @@ def verify_sources(driver_source: str, setup_source: str) -> list[str]:
         "ident.BoardSession",
         "session.verify_identity",
         "axi.same_boot",
-        "run_known_answer_round",
+        round_name,
     )
     for name in required_once:
         count = len(named(name))
@@ -130,16 +131,16 @@ def verify_sources(driver_source: str, setup_source: str) -> list[str]:
 
     # The boot marker must be judged before the first call that can touch the carrier.
     same_boot = named("axi.same_boot")
-    round_call = named("run_known_answer_round")
+    round_call = named(round_name)
     if same_boot and round_call and same_boot[0][0] >= round_call[0][0]:
-        problems.append("axi.same_boot must precede run_known_answer_round")
+        problems.append(f"axi.same_boot must precede {round_name}")
     if round_call:
         args = round_call[0][2].args
         if len(args) != 3 or not all(
                 _is_name(node, expected)
                 for node, expected in zip(args, ("authority", "known", "session"))):
             problems.append(
-                "run_known_answer_round must receive authority, known, and session directly")
+                f"{round_name} must receive authority, known, and session directly")
 
     parser_options: list[str] = []
     for _, name, call in calls:
