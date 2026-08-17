@@ -4,10 +4,13 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
-**Status (2026-08-14): three bit classes are address-certified; Claim B round 1's
-reachability result is complete; the erratum-006 carrier is published, accepted by the
-host-side gates, and its no-op calibration now passes on silicon — the first complete
-write-and-readback transaction this line has achieved on a board.**
+**Status (2026-08-17): three bit classes are address-certified and the host-side foundation
+is solid, but Claim B still has zero data points. The one known-answer mutation that §9 of
+the preregistration puts before any paired run has now been attempted repeatedly, and it
+stops in the same place every time — pass 2 of envelope 0, `fault_code 8` (readback). The
+work of the last several days has produced *instrument*, not Claim B data: a reproduced
+recovery for post-fault JTAG readback, and a location sweep that is specified but not yet
+runnable. See [Where the line actually is](#where-the-line-actually-is).**
 
 - `data/` is frozen and self-verifying; the approach is ratified (see below).
 - **`clb_lut_init`** and **`clb_mux`** are certified host-side (address prediction).
@@ -19,8 +22,9 @@ write-and-readback transaction this line has achieved on a board.**
   commitment.
 - **Claim B round 1 remains a DRAFT** (`docs/claimb_preregistration.md`) — map-guided vs
   random-safe mutation over the certified `clb_lut_init` universe. Its production
-  reachability report is complete at 6/6 LUTs, but the evaluation loop and budget are not
-  frozen: they still depend on a successful measured calibration.
+  reachability report is complete at 6/6 LUTs, but §6's evaluation loop and budget are not
+  frozen and §10's freeze has not happened: they still depend on a successful measured
+  calibration. **Anything produced against a draft is a pilot, by the document's own rule.**
 - **Board engineering has happened.** Carrier builds through erratum 005 were loaded on
   the verification board and engineering no-op transactions exercised the ICAP path. Every
   run through erratum 005 stopped fail-closed at `F_READBACK` inside envelope 0; the
@@ -29,29 +33,104 @@ write-and-readback transaction this line has achieved on a board.**
   all three envelopes committed, 15/15 frames read back equal to the pinned base, `fault=0`,
   `rb_latency_valid=1`. ⚠ **This does not by itself prove the readback now addresses the
   requested frame**: all 15 pinned frames are all-zero, so a read of some other all-zero
-  frame is byte-indistinguishable from a correct one. The discriminator is the
-  known-answer mutation, which has not been run.
+  frame is byte-indistinguishable from a correct one. The discriminator is the known-answer
+  mutation — see below.
+- **The known-answer mutation has been run, and it stops.** §9 step 6 — apply *one*
+  precomputed LUT-INIT mutation — has been attempted on silicon and has never got past the
+  same point. Four committed records, across separate builds, boots and power cycles, all
+  read the same:
+
+  > `known_answer stopped: the engine faulted during pass 2 of envelope 0: fault_code 8 (readback)`
+
+  (`evidence/known_answer_2026_08_14_erratum006/`, `evidence/phase2_2026_08_15/known_answer_record.json`,
+  `evidence/postfault_r4_step2_capture_2026_08_16/`, `evidence/postfault_r4_replication_2026_08_16/fault_capture/`.)
+  Two things about that stop matter and are easy to misread. **The stop is raised by the
+  fabric engine's own FAULT register, not by a content comparison** — the host-side
+  readback-SHA-mismatch stop in `scripts/board_claimb_known_answer.py` has never once fired,
+  so what is observed is "the engine says the readback went wrong", not "the bytes came back
+  different". And **the restore payload, which travels the identical write path with only
+  its content differing, completes both passes every time** — so this is content-dependent,
+  not a dead readback path.
+- **The scorer has never been armed**, and in the latest capture that is a reading off the
+  wire rather than an inference: `CTRL_ARM` and `CTRL_MODE_HOLDOUT` are clear in all twelve
+  `CTRL` writes of `evidence/postfault_r4_step2_capture_2026_08_16/`.
 
 **Scope, stated plainly.** The bit-class certificates are **address prediction** — where a
 feature's bits live in the bitstream. The board records are engineering validation of the
 carrier, transport, guard and ICAP path; they are not a silicon-semantics certificate or a
-Claim B evolutionary result. No known-answer mutation, scorer arm or A/B evolution run has
-occurred.
+Claim B evolutionary result. **No known-answer mutation has ever completed, no scorer arm
+and no paired A/B evolution run has occurred, and Claim B's result count is zero.**
+
+## Where the line actually is
+
+Measured against the preregistration's own yardstick — §9's fixed seven-step first-contact
+order — steps 1–5 pass, step 6 fails every time it runs, and step 7 has never started and
+could not (the document is still a draft). Diagnosing step 6 has put the line four levels
+below its goal:
+
+```
+L0  Claim B A/B run                      the goal — never started
+L1  §9 step 6, known-answer mutation     BLOCKED: we do not know whether the write landed
+L2  locate the write (Phase 2 sweep)     VOID: the post-fault readback reproduced nothing
+L3  fix post-fault JTAG readback (R4)    SOLVED, and independently reproduced
+L4  the sweep tool's control semantics   <- current work, host-side, no board
+```
+
+**L2 is void, and its own artifact does not say so.** `evidence/phase2_2026_08_15/sweep/verdict.json`
+searched all 5,144 frames and records `NOT_FOUND_COMPLETE`. That verdict may not be relied
+on: in that same post-fault state the instrument reproduced **0 of 16** frames whose
+contents were already known, so whole-frame equality was answering nothing there. The
+committed controls (`evidence/phase2_2026_08_15/sweep/`, 16 captures with their child logs
+and Tcl) are what makes this checkable without unpacking the archive. Whether that
+`verdict.json`'s wording should be amended in place is an open question, deliberately left
+to the repository owner.
+
+**L3 is the one solid new result.** The startup-cycle recovery
+`JSHUTDOWN -> 12 TCK -> JSTART -> 2000 TCK -> RCRC -> JSHUTDOWN -> 12 TCK`, derived from
+UG470 v1.17 Table 6-6 and Table 10-4 (`docs/claimb_r4_protocol.md`), restores JTAG readback
+of all sixteen known non-zero control frames from the specified `F_READBACK` fault state —
+16/16 twice, on two separately built faults, across two power cycles, under one instrument
+digest with byte-identical child Tcl (`evidence/postfault_r4_replication_2026_08_16/`).
+⚠ Two limits stand: the control is **historical, not paired** (no non-R4 prefix was ever run
+on either fault state), and it says **nothing about where the write landed**.
+
+**L4 is what is being worked on now, off the board.** `docs/claimb_location_sweep_spec.md`
+specifies the location sweep that would answer L1, and it also records two defects in
+`scripts/board_signature_search.py` that must be fixed before that sweep can mean anything:
+an intended hit currently skips the control block entirely and emits a location verdict with
+zero controls read, and `judge_positive_controls()` returns `INSTRUMENT_VALID` on a single
+matching frame without ever looking at the unread ones. The target semantics are all sixteen
+controls read and 16/16 exact before **any** location verdict. ⚠ Fixing that file changes
+`instrument_digest`, which hashes the script's own bytes — so the sweep will run under a new
+instrument identity and needs its own fresh-load control. The four R4 acquisitions were taken
+under `2.7.1` / digest `8d28dcf3…` and cannot serve as it.
+
+**Agreed order from here** (ruled 2026-08-16): this README,
+then the 16/16 control semantics with their mutants offline, then the location sweep, and a
+sparse-diagnosis panel **only** if that sweep returns `NOT_FOUND_COMPLETE` with valid
+controls. Sparse diagnosis is a branch after the sweep, not a shortcut past it: a passing
+sparse candidate would prove write and readback consistent with *each other* and could not
+exclude both landing consistently in the wrong place, which is the thing only a location
+sweep answers. No board action is authorised at the time of writing; nothing perishable is
+on the board.
 
 ## Claim B round 1 — where it stands
 
 | piece | state |
 |---|---|
-| preregistration | **DRAFT** — `docs/claimb_preregistration.md`; §6 budget unfrozen |
+| preregistration | **DRAFT** — `docs/claimb_preregistration.md`; §6 budget unfrozen, §10 freeze never performed |
 | `local_map` 1.0.0 | built from the `clb_lut_init` certificate — 292 addresses, 12 frames, 6 LUTs |
 | reachability | **complete** — production report selected 6/6 LUTs, discarded 20 draws, attainable ceiling 353, not exhausted; report committed under `gate_runs/claimb_round1_reachability_2026_08_10/` |
 | carrier authority | erratum-006 `carrier.bit`, `post_route.dcp`, `phenotype_manifest` and bundle committed under `gate_runs/claimb_round1_carrier_2026_08_13_erratum006/`; publication, base and ECO gates accepted |
-| ICAP write/readback path | 3 envelopes × 536 words = 6,432 bytes; **hardware-proven end to end on erratum 006** — all three envelopes commit in pass 1 and read back in pass 2, 15/15 frames equal to the pinned base, latency 1 word and valid on every envelope, `fault=0`, `recovery_required=0`, scorer never armed. Runs through erratum 005 never left envelope 0 |
+| ICAP write/readback path | 3 envelopes × 536 words = 6,432 bytes; the **no-op** is hardware-proven end to end on erratum 006 — all three envelopes commit in pass 1 and read back in pass 2, 15/15 frames equal to the pinned base, latency 1 word and valid on every envelope, `fault=0`, `recovery_required=0`, scorer never armed. Runs through erratum 005 never left envelope 0. All 15 pinned frames are all-zero, so this establishes that the sequence is legal to the device, **not** that it addresses the requested frame |
+| known-answer mutation (§9 step 6) | **stops, every time** — pass 2 of envelope 0, `fault_code 8` (readback), raised by the engine's FAULT register; 4 committed records. The restore payload, same path and different content, completes both passes every time |
+| post-fault JTAG readback | **recoverable**: the R4 startup-cycle prefix restores 16/16 known non-zero control frames from the specified fault state, reproduced on a second fault and a second power cycle. Historical control, not paired; says nothing about write location |
+| location sweep | **specified, not runnable, not authorised** — `docs/claimb_location_sweep_spec.md`; two control-semantics defects in `board_signature_search.py` must be fixed first, which will also change the instrument identity |
 | candidate gate | judges the **serialized** sequence, under two frame semantics |
 | board identity gate | boardid/role/IDCODE/50 MHz, session- and epoch-scoped, no override |
 | run log | `claimb_run_log` 1.0.0 |
-| engineering device work | carrier loads and guarded no-op ICAP attempts were authorised and executed through erratum 005; every failed attempt stopped without mutation or scoring |
-| **Claim B result** | **none yet** — preregistration remains draft; no known-answer mutation, scorer arm or paired A/B run has occurred |
+| engineering device work | carrier loads and guarded ICAP attempts were authorised and executed through erratum 006; every failed attempt stopped without mutation or scoring |
+| **Claim B result** | **none yet, zero data points** — preregistration remains draft and unfrozen; no known-answer mutation has completed, and no scorer arm or paired A/B run has occurred |
 
 ### Carrier errata, in one place
 
@@ -77,7 +156,12 @@ The records are additive: an erratum does not rewrite the failure evidence that 
    gates pass, and on 2026-08-14 its no-op calibration **passed on silicon** where every
    earlier build faulted — the first board run to complete pass 2 at all. What that
    establishes is that the sequence is now legal to the device; the all-zero frame set
-   means it does not yet establish the address.
+   means it does not yet establish the address. The discriminator — one known-answer
+   mutation — was then run on the same carrier and **still stops at pass 2 of envelope 0**,
+   which is the open problem described in
+   [Where the line actually is](#where-the-line-actually-is). No erratum 007 has been
+   written: the cause is not yet identified, and guessing one into a carrier build would be
+   the wrong move.
 
 ## Cloning and Git LFS
 
