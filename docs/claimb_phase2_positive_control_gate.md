@@ -88,3 +88,28 @@ This change does not touch the board, restore the lost Phase 2 state, or prove t
 control remains static after a real post-fault transaction. A future hardware run may
 therefore fail closed. That result would validate the gate's refusal, not the underlying
 JTAG readback method.
+
+## Addendum 2026-08-17 — the threshold this document set is superseded by 16/16
+
+Kept as written above, because it is the design the four R4 acquisitions were taken under and
+because the reasoning is what got reviewed. Two of its rules no longer describe the tool:
+
+* **"one exact control permits ... the location sweep to be interpreted"** and the immediate
+  `WRITE_LANDED_AT_THE_INTENDED_FAR` return are both gone. From
+  `board_signature_search.py/2.8.0`, **all sixteen controls are read in every case and all
+  sixteen must match before any location verdict is emitted, the intended hit included.**
+  See `claimb_location_sweep_spec.md` for the ruling and the four mutants that hold it.
+* The "sixteen is intentional" paragraph justified sixteen as *redundancy* — fifteen writes can
+  spoil at most fifteen controls, so one survivor suffices. Under 16/16 the same sixteen frames
+  are justified differently: they are the set R4 is demonstrated on, twice, at 16/16, so the
+  threshold is the recovery's measured behaviour rather than an argument about how a fault might
+  distribute. Anything less now fails the acquisition closed.
+
+What did not change: the eligibility derivation, the pinned FAR list, the re-derivation before
+use, `judge_sweep()`'s independent repetition of the gate, and the treatment of unread controls
+as `INSTRUMENT_UNVALIDATED` rather than as failures.
+
+One consequence is worth stating where the threshold is documented: if the write landed *on* a
+control frame, that control cannot reproduce its base, so the acquisition fails closed and
+locates nothing. The per-control observations still record expected and observed digests, so
+the state is visible in the record; it is not adjudicated by the tool.

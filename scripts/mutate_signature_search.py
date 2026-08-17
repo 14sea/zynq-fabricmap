@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Mutation gate for the load-bearing rules of the signature search.
 
-Nineteen mutants, each removing one thing the search is not allowed to do without:
+Twenty-five mutants, each removing one thing the search is not allowed to do without:
 
   * a child reads one FAR, because a process is trustworthy for exactly one read;
   * the intended frame is decided before any sweep, because it answers the question alone in
@@ -23,6 +23,12 @@ Nineteen mutants, each removing one thing the search is not allowed to do withou
     non-zero data;
   * the intended frame's third state cannot bypass the control;
   * `judge_sweep()` itself cannot emit a location verdict without the control.
+  * (2.8.0) an intended hit reads the sixteen controls, and cannot report a location when they
+    fail — the two halves of the defect that let the tool's strongest verdict be its least
+    evidenced one;
+  * (2.8.0) one matching control does not validate the instrument, and a control nobody read
+    is not a match;
+  * (2.8.0) the sweep does not start until all sixteen have passed.
   * control-only reads exactly the pinned controls and has no location vocabulary;
   * acquisition mode is part of the index contract, in both directions;
   * every successful capture carries CONFIG_STATUS into the index summary.
@@ -89,26 +95,74 @@ MUTANTS = {
         ("    check_child_argv(argv)\n    return argv", "    return argv")],
     # MUTATION ANCHOR a20_first: the first frame's verdict gates the sweep.
     "defer_the_intended_decision": [(
-        '    if decision["verdict"] != "WRITE_LANDED_AT_THE_INTENDED_FAR":',
-        '    if True:  # mutant: keep reading after the intended frame answered')],
+        '        if decision["sweep_needed"]:',
+        '        if True:  # mutant: sweep even when the first frame already answered')],
+    # MUTATION ANCHOR hit_reads_controls: 2.8.0 — the exemption that produced an unevidenced
+    # location verdict was the intended hit skipping the control reads outright.
+    "intended_hit_reads_no_control": [(
+        '    reads = 0\n    for far in controls:',
+        '    reads = 0\n'
+        '    for far in ([] if decision["verdict"] == "WRITE_LANDED_AT_THE_INTENDED_FAR"\n'
+        '                else controls):  # mutant: a hit needs no instrument')],
+    # MUTATION ANCHOR hit_needs_valid_controls: reading them and then ignoring them is the
+    # same defect wearing a different hat.
+    "intended_hit_ignores_failed_controls": [(
+        '    if control["verdict"] != "INSTRUMENT_VALID":\n'
+        '        # No location verdict, and the sweep does not start.',
+        '    if control["verdict"] != "INSTRUMENT_VALID" \\\n'
+        '            and decision["verdict"] != "WRITE_LANDED_AT_THE_INTENDED_FAR":\n'
+        '        # mutant: a bit-exact hit excuses a failed instrument\n'
+        '        # No location verdict, and the sweep does not start.')],
+    # MUTATION ANCHOR all_sixteen: sixteen matches, not one, license a location verdict.
+    "one_matching_control_is_enough": [(
+        '    if len(matched) == len(controls):',
+        '    if matched:  # mutant: one exact frame validates the instrument')],
+    # MUTATION ANCHOR unread_is_not_a_match: a control nobody read cannot be counted as one.
+    "unread_controls_simply_do_not_count": [(
+        '    if missing:\n'
+        '        return {**common, "verdict": "INSTRUMENT_UNVALIDATED",\n'
+        '                "reading": f"{len(matched)} of {len(controls)} preselected controls came back "\n'
+        '                           f"bit-exact and {len(missing)} were not read at all. All "\n'
+        '                           f"{len(controls)} must be read and match. No location verdict is "\n'
+        '                           "allowed."}\n'
+        '    if len(matched) == len(controls):',
+        '    if len(matched) == len(controls) - len(missing):'
+        '  # mutant: judge only what was read')],
+    # MUTATION ANCHOR sweep_after_controls: 5,144 reads are not spent proving nothing.
+    "sweep_starts_before_the_controls_pass": [(
+        '        verdict = control\n'
+        '    else:\n'
+        '        verdict.update({"positive_controls": control["positive_controls"],',
+        '        verdict = control\n'
+        '    if True:  # mutant: the sweep runs whatever the controls said\n'
+        '        verdict.update({"positive_controls": control["positive_controls"],')],
     # MUTATION ANCHOR fail_stops: a recorded failure must never become a skipped frame.
-    "skip_failed_child": [(
-        '            captures[far] = capture_one(far, out_dir, index, runner)\n'
-        '            reads += 1',
-        '            try:\n'
-        '                captures[far] = capture_one(far, out_dir, index, runner)\n'
-        '            except SearchStop:\n'
-        '                pass  # mutant: skip the failed FAR and carry on\n'
-        '            reads += 1')],
+    # Two edits since 2.8.0: the control reads and the sweep reads are separate loops at
+    # different depths, and a failure must stop the acquisition in either of them.
+    "skip_failed_child": [
+        ('        captures[far] = capture_one(far, out_dir, index, runner)\n'
+         '        reads += 1',
+         '        try:\n'
+         '            captures[far] = capture_one(far, out_dir, index, runner)\n'
+         '        except SearchStop:\n'
+         '            pass  # mutant: skip the failed control and carry on\n'
+         '        reads += 1'),
+        ('                captures[far] = capture_one(far, out_dir, index, runner)\n'
+         '                reads += 1',
+         '                try:\n'
+         '                    captures[far] = capture_one(far, out_dir, index, runner)\n'
+         '                except SearchStop:\n'
+         '                    pass  # mutant: skip the failed FAR and carry on\n'
+         '                reads += 1')],
     # MUTATION ANCHOR failed_is_not_coverage: judge-only has no other check.
     "validate_ignores_failed": [(
         '    if failed:\n        raise SearchStop(f"the search holds failed captures and is not coverage: {failed}")',
         '    if failed:\n        pass  # mutant: a failure is treated as coverage')],
     # MUTATION ANCHOR recomputed_coverage: the index may not be asked what it missed.
     "missing_not_attempted_means_complete": [(
-        '        _, missing = validate_index(\n'
-        '            out_dir, index, digest, plmark, fars, controls, MODE_SIGNATURE_SEARCH)',
-        '        missing = index.get("not_attempted", [])  # mutant: believe the index')],
+        '            _, missing = validate_index(\n'
+        '                out_dir, index, digest, plmark, fars, controls, MODE_SIGNATURE_SEARCH)',
+        '            missing = index.get("not_attempted", [])  # mutant: believe the index')],
     # MUTATION ANCHOR child_log_digest: the child's own record must be unaltered.
     "ignore_child_log_digest": [(
         '    if _digest_of(path) != entry.get("child_log_sha256"):\n'
@@ -149,9 +203,12 @@ MUTANTS = {
         "        exact = any(words)  # mutant: any non-zero garbage validates the instrument")],
     # MUTATION ANCHOR neither_control: a third state is still a location statement.
     "neither_bypasses_control": [(
-        '    if decision["verdict"] != "WRITE_LANDED_AT_THE_INTENDED_FAR":',
-        '    if decision["verdict"] not in ("WRITE_LANDED_AT_THE_INTENDED_FAR",\n'
-        '                                   "INTENDED_FAR_IS_NEITHER"):')],
+        '    if control["verdict"] != "INSTRUMENT_VALID":\n'
+        '        # No location verdict, and the sweep does not start.',
+        '    if control["verdict"] != "INSTRUMENT_VALID" \\\n'
+        '            and decision["verdict"] != "INTENDED_FAR_IS_NEITHER":\n'
+        '        # mutant: a third state is exempt from the control\n'
+        '        # No location verdict, and the sweep does not start.')],
     # MUTATION ANCHOR sweep_control: callers cannot bypass the live-run ordering.
     "not_found_bypasses_control": [(
         '    if control["verdict"] != "INSTRUMENT_VALID":\n        return control',
@@ -233,17 +290,17 @@ def probe_argv(module) -> tuple[bool, str]:
 
 
 def probe_intended_first(module) -> tuple[bool, str]:
-    """When the first frame holds the candidate, nothing else may be read."""
+    """When the first frame holds the candidate, only its controls may follow — no sweep."""
     asked: list[int] = []
     with tempfile.TemporaryDirectory() as name:
         module.run(Path(name), PLMARK, SIGNATURES, BASE, FARS, DIGEST,
                    CONTROLS,
                    runner=runner_for(module, {A20: SIGNATURES[A20]}, asked),
                    plmark_reader=lambda port: PLMARK)
-    if asked != [A20]:
-        return True, (f"it read {len(asked)} frames after the first had already answered: "
+    if asked != [A20, *CONTROL_FARS]:
+        return True, (f"it read {len(asked)} frames where 17 answer the question: "
                       f"{[f'{far:#010x}' for far in asked]}")
-    return False, "the first frame decided it"
+    return False, "the first frame decided it, once its instrument was proved"
 
 
 def probe_failure_stops(module) -> tuple[bool, str]:
@@ -257,7 +314,7 @@ def probe_failure_stops(module) -> tuple[bool, str]:
                        plmark_reader=lambda port: PLMARK)
         except module.SearchStop:
             pass
-    if asked != [A20, CONTROL_FARS[0], A21]:
+    if asked != [A20, *CONTROL_FARS, A21]:
         return True, (f"it kept reading after a failed child: "
                       f"{[f'{far:#010x}' for far in asked]}")
     return False, "the failure stopped the search at the frame that failed"
@@ -316,13 +373,16 @@ def probe_recomputed_coverage(module) -> tuple[bool, str]:
         index = json.loads((tmp / "index.json").read_text("utf-8"))
         index.pop("not_attempted", None)
         (tmp / "index.json").write_text(json.dumps(index), encoding="utf-8")
+        # 17 = the sixteen controls plus one sweep frame. The budget has to carry the resume
+        # past the control block, or the run stops at INSTRUMENT_UNVALIDATED and the coverage
+        # arithmetic this mutant attacks is never reached at all.
         verdict = module.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST,
                              CONTROLS,
                              runner=runner_for(module, {}, asked),
-                             plmark_reader=lambda port: PLMARK, max_reads=1)
+                             plmark_reader=lambda port: PLMARK, max_reads=17)
     if verdict["verdict"] == "NOT_FOUND_COMPLETE":
-        return True, ("it called a search complete with "
-                      f"{len(FARS) - 1} of {len(FARS)} frames never read")
+        return True, ("it called a search complete while the index it believed was silent "
+                      f"about {len(FARS) - 18} of {len(FARS)} frames")
     return False, f"it recomputed the coverage: {verdict['verdict']}"
 
 
@@ -481,6 +541,70 @@ def probe_sweep_requires_control(module) -> tuple[bool, str]:
     return False, "the judge failed closed on its own"
 
 
+def _wrong_controls() -> dict:
+    """Sixteen non-zero frames that are not the controls: a spoiled readback."""
+    return {far: signature(0xD000 + offset) for offset, far in enumerate(CONTROL_FARS)}
+
+
+def probe_intended_hit_reads_controls(module) -> tuple[bool, str]:
+    """A candidate at A20 must still spend the sixteen control reads."""
+    asked: list[int] = []
+    with tempfile.TemporaryDirectory() as name:
+        module.run(Path(name), PLMARK, SIGNATURES, BASE, FARS, DIGEST, CONTROLS,
+                   runner=runner_for(module, {A20: SIGNATURES[A20]}, asked),
+                   plmark_reader=lambda port: PLMARK)
+    read_controls = [far for far in asked if far in CONTROL_FARS]
+    if len(read_controls) != len(CONTROL_FARS):
+        return True, (f"an intended hit read {len(read_controls)} of {len(CONTROL_FARS)} "
+                      "controls")
+    return False, "the hit read every control before claiming a location"
+
+
+def probe_intended_hit_needs_valid_controls(module) -> tuple[bool, str]:
+    """A candidate at A20 with a spoiled instrument is not a location."""
+    content = {A20: SIGNATURES[A20], **_wrong_controls()}
+    with tempfile.TemporaryDirectory() as name:
+        verdict = module.run(
+            Path(name), PLMARK, SIGNATURES, BASE, FARS, DIGEST, CONTROLS,
+            runner=runner_for(module, content, []), plmark_reader=lambda port: PLMARK)
+    if verdict["verdict"] == "WRITE_LANDED_AT_THE_INTENDED_FAR":
+        return True, "a bit-exact hit was reported as a location over sixteen failed controls"
+    return False, f"the failed instrument took precedence: {verdict['verdict']}"
+
+
+def probe_one_control_is_not_enough(module) -> tuple[bool, str]:
+    """Fifteen wrong and one right is a failed instrument, not a validated one."""
+    content = _wrong_controls()
+    content[CONTROL_FARS[0]] = CONTROLS[CONTROL_FARS[0]]
+    verdict = module.judge_positive_controls(content, CONTROLS)
+    if verdict["verdict"] == "INSTRUMENT_VALID":
+        return True, "one matching control out of sixteen validated the instrument"
+    return False, f"one match did not carry it: {verdict['verdict']}"
+
+
+def probe_unread_control_is_not_a_match(module) -> tuple[bool, str]:
+    """Fifteen read and matching plus one never read is unvalidated, never valid."""
+    read = {far: CONTROLS[far] for far in CONTROL_FARS[:15]}
+    verdict = module.judge_positive_controls(read, CONTROLS)
+    if verdict["verdict"] == "INSTRUMENT_VALID":
+        return True, "fifteen matches and one unread control validated the instrument"
+    return False, f"the unread control kept it out of a location verdict: {verdict['verdict']}"
+
+
+def probe_sweep_waits_for_the_controls(module) -> tuple[bool, str]:
+    """A spoiled instrument must not spend 5,144 reads discovering it decides nothing."""
+    asked: list[int] = []
+    with tempfile.TemporaryDirectory() as name:
+        module.run(Path(name), PLMARK, SIGNATURES, BASE, FARS, DIGEST, CONTROLS,
+                   runner=runner_for(module, _wrong_controls(), asked),
+                   plmark_reader=lambda port: PLMARK)
+    swept = [far for far in asked if far not in CONTROL_FARS and far != A20]
+    if swept:
+        return True, (f"the sweep read {[f'{far:#010x}' for far in swept]} with the controls "
+                      "already failed")
+    return False, "nothing beyond A20 and the controls was read"
+
+
 def probe_control_only_read_set(module) -> tuple[bool, str]:
     """The diagnostic mode may spawn exactly the sixteen reviewed controls."""
     asked: list[int] = []
@@ -613,6 +737,11 @@ PROBES = {
     "timeout_drops_partial_output": probe_timeout_streams,
     "any_nonzero_control_passes": probe_control_requires_exact,
     "neither_bypasses_control": probe_neither_requires_control,
+    "intended_hit_reads_no_control": probe_intended_hit_reads_controls,
+    "intended_hit_ignores_failed_controls": probe_intended_hit_needs_valid_controls,
+    "one_matching_control_is_enough": probe_one_control_is_not_enough,
+    "unread_controls_simply_do_not_count": probe_unread_control_is_not_a_match,
+    "sweep_starts_before_the_controls_pass": probe_sweep_waits_for_the_controls,
     "not_found_bypasses_control": probe_sweep_requires_control,
     "control_only_widens_read_set": probe_control_only_read_set,
     "control_only_emits_location": probe_control_only_vocabulary,

@@ -89,9 +89,17 @@ def runner_for(content: dict[int, list[int]], fail_on: int | None = None,
 
 
 def go(tmp: Path, content: dict, **kwargs):
+    """`control_ok` puts a healthy instrument on the wire: all sixteen controls, not one.
+
+    Since 2.8.0 a single matching control validates nothing, so the default fixture has to be
+    16/16 for any test about ordering, coverage or a location verdict to reach its subject at
+    all. `control_ok=False` leaves the controls reading as the ZERO frame, which is what a
+    spoiled readback looks like.
+    """
     wire_content = dict(content)
     if kwargs.pop("control_ok", True):
-        wire_content.setdefault(CONTROL_FARS[0], CONTROLS[CONTROL_FARS[0]])
+        for far in CONTROL_FARS:
+            wire_content.setdefault(far, CONTROLS[far])
     return search.run(tmp, PLMARK, SIGNATURES, BASE, FARS, DIGEST, CONTROLS,
                       runner=runner_for(wire_content, kwargs.pop("fail_on", None),
                                         kwargs.pop("asked", None), kwargs.pop("tool", None),
@@ -171,7 +179,33 @@ class TheAuthority(unittest.TestCase):
             first_index = json.loads((Path(first) / "index.json").read_text("utf-8"))
             second_index = json.loads((Path(second) / "index.json").read_text("utf-8"))
         self.assertEqual(first_index["instrument_digest"], second_index["instrument_digest"])
-        self.assertEqual(search.TOOL_VERSION, "board_signature_search.py/2.7.2")
+        self.assertEqual(search.TOOL_VERSION, "board_signature_search.py/2.8.0")
+
+    def test_the_two_mode_digests_are_pinned_to_this_implementation(self) -> None:
+        """2.8.0's identity, recomputed here rather than quoted from the specification.
+
+        `instrument_digest()` hashes this script's own bytes, so the 16/16 semantics made a new
+        instrument: the values the sweep specification recorded (control-only `452afe50...`,
+        signature-search `7701f39d...`) were 2.7.2's and are gone. Pinning both here means the
+        next edit to the tool fails this test, which is the intended cost — an acquisition and
+        its control must be taken under one identity, and the pair is only checkable if the
+        identity is written down. Re-pin deliberately, never by pasting whatever it now prints.
+
+        A pointer-only checkout has no carrier bitstream to hash, so there is nothing to pin.
+        """
+        try:
+            base = search.base_frames()
+            controls = search.canonical_positive_controls(base)
+            fars = search.frozen_far_sequence()
+        except Exception as absent:                                        # noqa: BLE001
+            raise unittest.SkipTest(f"the published carrier bitstream is not here: {absent}")
+        self.assertEqual(len(fars), 5144)
+        self.assertEqual(
+            search.instrument_digest(list(controls), search.MODE_CONTROL_ONLY),
+            "49c8dbcebbcb7c7557a8f5e56ee4b32d770037f9e70a98544e8142d3f3336fa6")
+        self.assertEqual(
+            search.instrument_digest(fars, search.MODE_SIGNATURE_SEARCH),
+            "a20e56aae879812d9ed2960ec55ac8b1b3f57710411cf40da0cc32b1855aa95d")
 
     def test_the_published_r4_evidence_belongs_to_the_instrument_that_took_it(self) -> None:
         """The digest hashes this file's own bytes, so 2.7.2 is a different instrument.
@@ -219,27 +253,32 @@ class TheOrder(unittest.TestCase):
             go(Path(name), {}, asked=asked)
         self.assertEqual(asked[0], A20)
 
-    def test_the_candidate_at_the_intended_far_reads_nothing_else(self) -> None:
+    def test_the_candidate_at_the_intended_far_earns_all_sixteen_then_stops(self) -> None:
+        """2.8.0. A hit at A20 used to be the one verdict that read no control at all."""
         asked: list[int] = []
         with tempfile.TemporaryDirectory() as name:
             verdict = go(Path(name), {A20: SIGNATURES[A20]}, asked=asked)
         self.assertEqual(verdict["verdict"], "WRITE_LANDED_AT_THE_INTENDED_FAR")
-        self.assertEqual(asked, [A20], "no sweep may run once the first frame has answered")
+        self.assertEqual(asked, [A20, *CONTROL_FARS],
+                         "an intended hit is a location claim and pays for its instrument")
+        self.assertEqual(len(verdict["positive_control_matches"]), 16,
+                         "and the verdict carries the sixteen matches that licensed it")
 
-    def test_a_third_state_first_earns_one_control_then_reads_nothing_else(self) -> None:
+    def test_a_third_state_first_earns_all_sixteen_then_reads_nothing_else(self) -> None:
         asked: list[int] = []
         with tempfile.TemporaryDirectory() as name:
             verdict = go(Path(name), {A20: frame(0xDEAD)}, asked=asked)
         self.assertEqual(verdict["verdict"], "INTENDED_FAR_IS_NEITHER")
-        self.assertEqual(asked, [A20, CONTROL_FARS[0]],
-                         "the third-state verdict must first earn a positive control")
+        self.assertEqual(asked, [A20, *CONTROL_FARS],
+                         "the third-state verdict must first earn the whole control set")
 
     def test_only_the_base_starts_a_sweep(self) -> None:
         asked: list[int] = []
         with tempfile.TemporaryDirectory() as name:
             verdict = go(Path(name), {}, asked=asked)
         self.assertEqual(verdict["verdict"], "NOT_FOUND_COMPLETE")
-        self.assertEqual(asked[0:2], [A20, CONTROL_FARS[0]])
+        self.assertEqual(asked[0:17], [A20, *CONTROL_FARS],
+                         "the sweep begins only after A20 and all sixteen controls")
         self.assertEqual(set(asked), set(FARS))
 
 
@@ -280,6 +319,37 @@ class ThePositiveControl(unittest.TestCase):
         verdict = search.judge_sweep({}, captures, [], SIGNATURES, CONTROLS)
         self.assertEqual(verdict["verdict"], "INSTRUMENT_INVALID")
 
+    def test_an_intended_hit_cannot_outrun_a_failed_control(self) -> None:
+        """The 2.7.2 defect, as a test: the most consequential verdict had no instrument."""
+        asked: list[int] = []
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go(Path(name), {A20: SIGNATURES[A20]}, asked=asked, control_ok=False)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_INVALID")
+        self.assertNotIn("signature_hits", verdict)
+        self.assertEqual(asked, [A20, *CONTROL_FARS],
+                         "the controls are read, and nothing beyond them is")
+
+    def test_fifteen_matching_and_one_mismatch_is_invalid(self) -> None:
+        content = dict(CONTROLS)
+        content[CONTROL_FARS[7]] = frame(0xD15C)
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go(Path(name), content, control_ok=False)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_INVALID")
+        self.assertEqual(len(verdict["positive_control_matches"]), 15,
+                         "fifteen of sixteen is a failed instrument, not a nearly-valid one")
+        self.assertFalse(verdict["positive_controls_not_read"])
+
+    def test_fifteen_matching_and_one_unread_is_unvalidated(self) -> None:
+        asked: list[int] = []
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go(Path(name), {}, asked=asked, max_reads=15)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_UNVALIDATED")
+        self.assertEqual(len(verdict["positive_control_matches"]), 15)
+        self.assertEqual(verdict["positive_controls_not_read"],
+                         [f"{CONTROL_FARS[15]:#010x}"])
+        self.assertEqual(asked, [A20, *CONTROL_FARS[:15]],
+                         "an unread control is not a pass, and the sweep does not start")
+
 
 class TheControlOnlyMode(unittest.TestCase):
     LOCATION_VERDICTS = {
@@ -288,14 +358,24 @@ class TheControlOnlyMode(unittest.TestCase):
         "SIGNATURE_AMBIGUOUS",
     }
 
-    def test_it_reads_exactly_all_sixteen_controls_even_after_one_matches(self) -> None:
+    def test_it_reads_all_sixteen_and_one_match_no_longer_validates(self) -> None:
+        """2.8.0. The read set was already all sixteen; the threshold was not."""
         asked: list[int] = []
         content = {CONTROL_FARS[0]: CONTROLS[CONTROL_FARS[0]]}
         with tempfile.TemporaryDirectory() as name:
             verdict = go_control(Path(name), content, asked=asked)
-        self.assertEqual(verdict["verdict"], "INSTRUMENT_VALID")
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_INVALID")
+        self.assertEqual(verdict["positive_control_matches"], [f"{CONTROL_FARS[0]:#010x}"])
         self.assertEqual(asked, CONTROL_FARS)
         self.assertNotIn(A20, asked)
+
+    def test_sixteen_of_sixteen_is_what_validates(self) -> None:
+        asked: list[int] = []
+        with tempfile.TemporaryDirectory() as name:
+            verdict = go_control(Path(name), dict(CONTROLS), asked=asked)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_VALID")
+        self.assertEqual(len(verdict["positive_control_matches"]), 16)
+        self.assertEqual(asked, CONTROL_FARS)
         self.assertIn("in this acquisition", verdict["reading"])
         self.assertNotIn("post-fault", verdict["reading"])
 
@@ -407,17 +487,19 @@ class TheBookkeeping(unittest.TestCase):
             self.assertEqual(log["stderr"], "openocd exploded")
             self.assertEqual(search._digest_of(tmp / entry["child_log"]),
                              entry["child_log_sha256"])
-            self.assertEqual(asked, [A20, CONTROL_FARS[0], A21, A22],
+            self.assertEqual(asked, [A20, *CONTROL_FARS, A21, A22],
                              "the search must stop where it failed")
 
     def test_a_budget_leaves_the_rest_not_attempted_never_searched(self) -> None:
+        # 17 = the sixteen controls plus one sweep frame. A smaller budget no longer reaches
+        # the sweep at all: unread controls are INSTRUMENT_UNVALIDATED, which is its own test.
         with tempfile.TemporaryDirectory() as name:
             tmp = Path(name)
-            verdict = go(tmp, {}, max_reads=2)
+            verdict = go(tmp, {}, max_reads=17)
             self.assertEqual(verdict["verdict"], "NOT_FOUND_INCOMPLETE")
             self.assertEqual(verdict["frames_not_searched"], [
                 f"{far:#010x}" for far in FARS
-                if far not in (A20, A21, CONTROL_FARS[0])])
+                if far not in (A20, A21, *CONTROL_FARS)])
 
     def test_a_resume_re_reads_and_re_hashes_every_capture(self) -> None:
         with tempfile.TemporaryDirectory() as name:
@@ -425,9 +507,9 @@ class TheBookkeeping(unittest.TestCase):
             go(tmp, {}, max_reads=1)
             asked: list[int] = []
             go(tmp, {}, asked=asked)
-            self.assertEqual(asked, [far for far in FARS
-                                     if far not in (A20, CONTROL_FARS[0])],
-                             "verified captures must not be re-read")
+            self.assertEqual(asked, [*CONTROL_FARS[1:], A21, A22, A23, A24],
+                             "verified captures must not be re-read, and the controls that "
+                             "the budget cut short are finished before the sweep starts")
 
     def test_a_resume_refuses_a_tampered_capture(self) -> None:
         with tempfile.TemporaryDirectory() as name:
@@ -576,6 +658,24 @@ class TheJudgeOnlyPath(unittest.TestCase):
             with self.assertRaises(search.SearchStop):
                 search.require_closed(after)
 
+    def test_judging_an_intended_hit_still_needs_the_sixteen_controls(self) -> None:
+        """Offline judging is the path that re-reads published evidence; same rule there."""
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go(tmp, {A20: SIGNATURES[A20]}, control_ok=False)
+            verdict = search.judge_signature_search_index(
+                tmp, PLMARK, DIGEST, SIGNATURES, BASE, FARS, CONTROLS)
+        self.assertEqual(verdict["verdict"], "INSTRUMENT_INVALID")
+
+    def test_judging_an_intended_hit_with_all_sixteen_reports_the_location(self) -> None:
+        with tempfile.TemporaryDirectory() as name:
+            tmp = Path(name)
+            go(tmp, {A20: SIGNATURES[A20]})
+            verdict = search.judge_signature_search_index(
+                tmp, PLMARK, DIGEST, SIGNATURES, BASE, FARS, CONTROLS)
+        self.assertEqual(verdict["verdict"], "WRITE_LANDED_AT_THE_INTENDED_FAR")
+        self.assertEqual(len(verdict["positive_control_matches"]), 16)
+
     def test_a_resume_is_unclosed_even_if_the_end_marker_read_raises(self) -> None:
         with tempfile.TemporaryDirectory() as name:
             tmp = Path(name)
@@ -692,8 +792,9 @@ class TheFailureAlwaysLeavesEvidence(unittest.TestCase):
 
 class TheVerdict(unittest.TestCase):
     def sweep(self, captures, not_attempted=()):
+        """The subject here is the location logic, so the instrument is handed to it intact."""
         complete = dict(captures)
-        complete[CONTROL_FARS[0]] = CONTROLS[CONTROL_FARS[0]]
+        complete.update(CONTROLS)
         return search.judge_sweep(
             {}, complete, list(not_attempted), SIGNATURES, CONTROLS)
 

@@ -9,8 +9,8 @@ is solid, but Claim B still has zero data points. The one known-answer mutation 
 the preregistration puts before any paired run has now been attempted repeatedly, and it
 stops in the same place every time — pass 2 of envelope 0, `fault_code 8` (readback). The
 work of the last several days has produced *instrument*, not Claim B data: a reproduced
-recovery for post-fault JTAG readback, and a location sweep that is specified but not yet
-runnable. See [Where the line actually is](#where-the-line-actually-is).**
+recovery for post-fault JTAG readback, and a location sweep that is now specified and
+implemented but not authorised. See [Where the line actually is](#where-the-line-actually-is).**
 
 - `data/` is frozen and self-verifying; the approach is ratified (see below).
 - **`clb_lut_init`** and **`clb_mux`** are certified host-side (address prediction).
@@ -94,21 +94,25 @@ digest with byte-identical child Tcl (`evidence/postfault_r4_replication_2026_08
 ⚠ Two limits stand: the control is **historical, not paired** (no non-R4 prefix was ever run
 on either fault state), and it says **nothing about where the write landed**.
 
-**L4 is what is being worked on now, off the board.** `docs/claimb_location_sweep_spec.md`
-specifies the location sweep that would answer L1, and it also records two defects in
-`scripts/board_signature_search.py` that must be fixed before that sweep can mean anything:
-an intended hit currently skips the control block entirely and emits a location verdict with
-zero controls read, and `judge_positive_controls()` returns `INSTRUMENT_VALID` on a single
-matching frame without ever looking at the unread ones. The target semantics are all sixteen
-controls read and 16/16 exact before **any** location verdict. ⚠ Fixing that file changes
-`instrument_digest`, which hashes the script's own bytes — so the sweep will run under a new
-instrument identity and needs its own fresh-load control. The four R4 acquisitions were taken
-under `2.7.1` / digest `8d28dcf3…` and cannot serve as it.
+**L4 is done, off the board (2026-08-17).** `docs/claimb_location_sweep_spec.md` specifies the
+location sweep that would answer L1, and it recorded two defects in
+`scripts/board_signature_search.py` that would have made that sweep meaningless: an intended hit
+skipped the control block entirely and emitted a location verdict with **zero** controls read,
+and `judge_positive_controls()` returned `INSTRUMENT_VALID` on a single matching frame without
+ever looking at the unread ones — one right and fifteen never read passed. Both are closed in
+`2.8.0`: all sixteen controls are read in every case, 16/16 exact is required before **any**
+location verdict including the intended hit, the sweep does not start until they pass, and the
+offline `--judge-only` path enforces the same rule so it cannot re-license what an acquisition
+refused. Four new behavioural mutants hold it (25/25 in the harness). ⚠ As predicted, this
+changed `instrument_digest`, which hashes the script's own bytes: the sweep will run under a new
+identity — control-only `49c8dbce…`, signature-search `a20e56aa…`, both pinned in the tests —
+so **it needs its own fresh-load control**. The four R4 acquisitions are `2.7.1` / `8d28dcf3…`
+and cannot serve as it.
 
-**Agreed order from here** (ruled 2026-08-16): this README,
-then the 16/16 control semantics with their mutants offline, then the location sweep, and a
-sparse-diagnosis panel **only** if that sweep returns `NOT_FOUND_COMPLETE` with valid
-controls. Sparse diagnosis is a branch after the sweep, not a shortcut past it: a passing
+**Agreed order from here** (ruled 2026-08-16): ~~this README~~, ~~the 16/16 control semantics
+with their mutants offline~~, then the location sweep — which needs its own authorisation, and
+an audit of the 2.8.0 change first — and a sparse-diagnosis panel **only** if that sweep returns
+`NOT_FOUND_COMPLETE` with valid controls. Sparse diagnosis is a branch after the sweep, not a shortcut past it: a passing
 sparse candidate would prove write and readback consistent with *each other* and could not
 exclude both landing consistently in the wrong place, which is the thing only a location
 sweep answers. No board action is authorised at the time of writing; nothing perishable is
@@ -125,7 +129,7 @@ on the board.
 | ICAP write/readback path | 3 envelopes × 536 words = 6,432 bytes; the **no-op** is hardware-proven end to end on erratum 006 — all three envelopes commit in pass 1 and read back in pass 2, 15/15 frames equal to the pinned base, latency 1 word and valid on every envelope, `fault=0`, `recovery_required=0`, scorer never armed. Runs through erratum 005 never left envelope 0. All 15 pinned frames are all-zero, so this establishes that the sequence is legal to the device, **not** that it addresses the requested frame |
 | known-answer mutation (§9 step 6) | **stops, every time** — pass 2 of envelope 0, `fault_code 8` (readback), raised by the engine's FAULT register; 4 committed records. The restore payload, same path and different content, completes both passes every time |
 | post-fault JTAG readback | **recoverable**: the R4 startup-cycle prefix restores 16/16 known non-zero control frames from the specified fault state, reproduced on a second fault and a second power cycle. Historical control, not paired; says nothing about write location |
-| location sweep | **specified, not runnable, not authorised** — `docs/claimb_location_sweep_spec.md`; two control-semantics defects in `board_signature_search.py` must be fixed first, which will also change the instrument identity |
+| location sweep | **specified and implemented, not authorised** — `docs/claimb_location_sweep_spec.md`; the two control-semantics defects are closed in `board_signature_search.py/2.8.0` (16/16 controls before any location verdict), which makes a new instrument identity, so the procedure needs its own fresh-load control |
 | candidate gate | judges the **serialized** sequence, under two frame semantics |
 | board identity gate | boardid/role/IDCODE/50 MHz, session- and epoch-scoped, no override |
 | run log | `claimb_run_log` 1.0.0 |

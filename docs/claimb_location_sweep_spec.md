@@ -1,18 +1,26 @@
 # Location sweep: where did the ICAP write land?
 
 Specification only. **No board action is authorised by this document**, and none of the five
-steps is authorised by the authorisation of any other. It also **cannot be executed by the
-tools as they stand** — see the next section, which is the first thing to read.
+steps is authorised by the authorisation of any other.
+
+**Amended 2026-08-17: the target semantics below are implemented.** The two conflicts recorded
+in the next section are closed in `board_signature_search.py/2.8.0` — all sixteen controls are
+read in every case and 16/16 is required before any location verdict, the intended hit included
+— with four new behavioural mutants and the offline judging path changed to match, so
+`--judge-only` cannot re-license what the acquisition refused. The prerequisites and the five
+steps are unchanged, and **still unauthorised**. The recomputed identity is pinned below.
 
 This is the measurement Phase 2 attempted and could not make. What has changed since is not
 the question but the instrument: R4 restores a post-fault readback, reproduced across two
 independently built faults, so a "not found" taken after a fault can now be made to mean
 something — provided the controls prove it in the same acquisition that reports it.
 
-## The two conflicts with the current tools, read out of the source
+## The two conflicts with the tools as they were, read out of the source
 
-The first draft of this specification described a procedure the code does not implement. Both
-gaps were found in review and confirmed here against `scripts/board_signature_search.py`.
+The first draft of this specification described a procedure the code did not implement. Both
+gaps were found in review and confirmed here against `scripts/board_signature_search.py`; both
+are **closed as of 2.8.0**, and the description is kept because it is what the four R4
+acquisitions and the whole Phase 2 record were taken under.
 
 **1. A full sweep is the exception, not the rule.** `run()` reads the intended FAR first and
 then branches on what it holds:
@@ -38,7 +46,7 @@ the step ③ reading already noted that the verdict file's own wording was the w
 one". The point here is that the tool would have accepted 1, and a location verdict is a much
 stronger claim than an instrument check.
 
-## Target semantics — to be implemented, tested and audited before any board action
+## Target semantics — implemented in 2.8.0 on 2026-08-17
 
 * **`A20` is always read first**, unchanged.
 * **All sixteen controls are read, and 16/16 exact is required, before *any* location verdict
@@ -50,23 +58,47 @@ stronger claim than an instrument check.
 * Controls not 16/16, in any of those cases → no location verdict, and the sweep does not
   start.
 
-**Version, digest and mutants.** Implementing this changes the file, and
-`instrument_digest()` hashes the file's own bytes, so **both mode digests change**. The values
-this document quoted in its first draft — control-only `452afe50…2a9a`, signature-search
-`7701f39d…f0d0` — are **2.7.2's, and will not be this procedure's identity**. They are
-recorded only to make the point that the two modes differ; the real identity is recomputed at
-implementation time and pinned then.
+**Version, digest and mutants.** Implementing this changed the file, and `instrument_digest()`
+hashes the file's own bytes, so both mode digests changed as predicted. The values this
+document quoted in its first draft — control-only `452afe50…2a9a`, signature-search
+`7701f39d…f0d0` — were **2.7.2's** and are not this procedure's identity. **This procedure's
+identity, recomputed at implementation time on 2026-08-17 and pinned in
+`tests/test_board_signature_search.py`:**
 
-New mutants must kill at least:
+```
+board_signature_search.py/2.8.0    child probe_jtag_config_read.py/2.4.0
 
-* an intended hit that reaches a location verdict without the controls;
-* a verdict accepting one matching control instead of sixteen;
-* a verdict accepting fifteen read controls and one unread;
-* a sweep that starts before the controls have all passed.
+control-only      49c8dbcebbcb7c7557a8f5e56ee4b32d770037f9e70a98544e8142d3f3336fa6
+signature-search  a20e56aae879812d9ed2960ec55ac8b1b3f57710411cf40da0cc32b1855aa95d
+                  (5,144 admitted FARs)
+```
 
-Each killed **behaviourally**, by driving the module and reading the verdict — a string search
-would prove nothing about control flow. Implementation, tests, mutants, audit and push come
-first, and this document does not authorise writing them.
+Both are new, so **step ① is the fresh-load control for this identity and nothing earlier can
+substitute for it** — least of all the four R4 acquisitions, which are `2.7.1` / `8d28dcf3…`.
+The two modes remain two instruments: a 16-frame control-only acquisition can never be the
+control for a full sweep. Any further edit to the tool makes a third identity; the pin is a
+test, so it fails rather than drifts.
+
+New mutants, all four implemented and killed behaviourally in
+`scripts/mutate_signature_search.py` (25/25):
+
+* an intended hit that reaches a location verdict without the controls — split into two, because
+  the defect had two halves: `intended_hit_reads_no_control` (never reads them) and
+  `intended_hit_ignores_failed_controls` (reads them, reports the hit anyway);
+* a verdict accepting one matching control instead of sixteen — `one_matching_control_is_enough`;
+* a verdict accepting fifteen read controls and one unread —
+  `unread_controls_simply_do_not_count`;
+* a sweep that starts before the controls have all passed —
+  `sweep_starts_before_the_controls_pass`, killed by the FARs it reads, not by its verdict.
+
+Each is killed **behaviourally**, by driving the module and reading the verdict or the read set —
+a string search would prove nothing about control flow. Two pre-existing mutants
+(`defer_the_intended_decision`, `neither_bypasses_control`) and two anchors had to be re-pointed
+at the new shape rather than loosened, and `missing_not_attempted_means_complete` needed a larger
+read budget to reach the coverage arithmetic at all now that the control block precedes it.
+
+An audit by the other author is still owed on this implementation, and this document still
+authorises no board action.
 
 ## Prerequisites — settled before any board action, because they cannot be settled after
 

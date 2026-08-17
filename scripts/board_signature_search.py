@@ -9,14 +9,22 @@ second, in both orders, and became exact again in a fresh process against the sa
 the unit of work is a child process that reads **one** FAR. This module never builds a JTAG
 packet: `probe_jtag_config_read` owns that path, with its refusals and its IR allowlist.
 
-THE INTENDED FRAME IS READ FIRST; THE INSTRUMENT IS PROVED BEFORE LOCATION
----------------------------------------------------------------------------
-`0x00400A20` may end the search immediately only when all 101 words equal the non-zero
-candidate. Every other location statement first needs a post-fault positive control: one of
-sixteen preselected unique, non-zero base frames must come back bit-exact at the same FAR.
-Non-zero data or a valid-looking ECC word is not enough. If all controls fail, the only
-permitted verdict is `INSTRUMENT_INVALID`; if a read budget leaves controls unmeasured, it is
-`INSTRUMENT_UNVALIDATED`. Neither may fall through to a location verdict.
+THE INTENDED FRAME IS READ FIRST; THE INSTRUMENT IS PROVED BEFORE ANY LOCATION
+------------------------------------------------------------------------------
+`0x00400A20` is always the first child, and what it holds decides how much else is read. But
+**no location verdict is emitted before all sixteen positive controls have been read and all
+sixteen have come back bit-exact at their own FARs** — including a candidate found at the
+intended FAR, which until 2.7.2 skipped the control block entirely and so was the most
+consequential verdict here with the least evidence behind it. Non-zero data or a valid-looking
+ECC word is not a control. If a read budget leaves controls unmeasured the verdict is
+`INSTRUMENT_UNVALIDATED`; if every control was read and any one of them did not reproduce its
+known frame it is `INSTRUMENT_INVALID`. Neither may fall through to a location verdict, and
+neither starts the sweep.
+
+Requiring 16/16 fails closed in one case worth naming: if the write landed *on* a control
+frame, that control cannot reproduce its base and the acquisition answers nothing rather than
+locating the write. The per-control observations record expected and observed digests either
+way, so such a state is visible in the record — but it is not adjudicated here.
 
 CONTROL-ONLY MEANS EXACTLY THE SIXTEEN CONTROLS
 -----------------------------------------------
@@ -65,7 +73,7 @@ import frame_ecc  # noqa: E402
 import gate_claimb_known_answer as kagate  # noqa: E402
 import probe_jtag_config_read as probe  # noqa: E402
 
-TOOL_VERSION = "board_signature_search.py/2.7.2"
+TOOL_VERSION = "board_signature_search.py/2.8.0"
 CHILD = REPO / "scripts/probe_jtag_config_read.py"
 CHILD_CFG = REPO / "scripts/jtag_config_only.cfg"
 CHILD_SPEED = 2000
@@ -80,11 +88,12 @@ LUT_FEATURE = re.compile(r"CLBLL_L\.SLICEL_X0\.ALUT\.INIT\[(\d+)\]$")
 MODE_SIGNATURE_SEARCH = "signature-search"
 MODE_CONTROL_ONLY = "control-only"
 
-# Sixteen controls are deliberate.  A transaction presents fifteen frame writes.  If each
-# can at worst spoil one distinct control, at least one of sixteen remains available to
-# prove that post-fault readback still returns the configuration loaded at that FAR.  A
-# broader failure merely makes the instrument fail closed.  The list is independently
-# derived below, but pinned here so a carrier change cannot silently choose easier controls.
+# Sixteen controls are deliberate, and since 2.8.0 all sixteen must pass.  They are the
+# sixteen frames the four R4 acquisitions read 16/16, so the requirement is the demonstrated
+# behaviour of the recovery, not a hope about it: R4 is proven on exactly this set, twice,
+# and a location verdict is a far stronger claim than an instrument check.  Anything less
+# than 16/16 fails the acquisition closed.  The list is independently derived below, but
+# pinned here so a carrier change cannot silently choose easier controls.
 POSITIVE_CONTROL_COUNT = 16
 EXPECTED_POSITIVE_CONTROL_FARS = (
     0x00000900, 0x00000986, 0x000009A2, 0x00000A8E,
@@ -604,10 +613,16 @@ def judge_positive_controls(captures: dict[int, list[int]],
                             controls: dict[int, list[int]]) -> dict:
     """Prove the post-fault instrument before allowing a location verdict.
 
-    One exact known-nonzero frame is sufficient.  Sixteen are offered because the candidate
-    transaction contains fifteen frame writes; if a bad write spoils more, refusal remains
-    the safe result.  Non-zero, ECC-consistent, masked, partial and relocated matches do not
-    count.  They are observations, not this positive control.
+    **All sixteen must be read and all sixteen must match** (2.8.0).  Until 2.7.2 one exact
+    frame was declared sufficient and the accepting branch never looked at `missing`, so one
+    hit plus fifteen mismatches passed, and so did one hit plus fifteen frames nobody read.
+    That threshold was set for a hardware-gradient diagnostic, where the question is whether
+    the readback path returns anything at all; it is far too weak to license a statement about
+    *where* a write landed.  R4 is demonstrated at 16/16 on exactly this set, twice, so 16/16
+    is what the instrument is known to do when it is working.
+
+    Non-zero, ECC-consistent, masked, partial and relocated matches do not count.  They are
+    observations, not this positive control.
     """
     if len(controls) != POSITIVE_CONTROL_COUNT:
         raise SearchStop(
@@ -645,18 +660,24 @@ def judge_positive_controls(captures: dict[int, list[int]],
     common = {"positive_controls": observations,
               "positive_control_matches": matched,
               "positive_controls_not_read": missing}
-    if matched:
-        return {**common, "verdict": "INSTRUMENT_VALID",
-                "reading": "At least one preselected unique non-zero base frame came back "
-                           "bit-exact at the same FAR in this acquisition."}
+    # An unread control is judged before a mismatching one on purpose: it is the weaker claim
+    # about the acquisition and the honest one.  "Some controls failed" would be asserted
+    # partly about frames nobody looked at.
     if missing:
         return {**common, "verdict": "INSTRUMENT_UNVALIDATED",
-                "reading": f"No positive control has matched, and {len(missing)} of the "
-                           "preselected controls were not read. No location verdict is allowed."}
+                "reading": f"{len(matched)} of {len(controls)} preselected controls came back "
+                           f"bit-exact and {len(missing)} were not read at all. All "
+                           f"{len(controls)} must be read and match. No location verdict is "
+                           "allowed."}
+    if len(matched) == len(controls):
+        return {**common, "verdict": "INSTRUMENT_VALID",
+                "reading": f"All {len(controls)} preselected unique non-zero base frames came "
+                           "back bit-exact at their own FARs in this acquisition."}
     return {**common, "verdict": "INSTRUMENT_INVALID",
-            "reading": "All preselected controls were read and none reproduced its known "
-                       "non-zero base frame at the same FAR. The captures cannot support a "
-                       "location verdict."}
+            "reading": f"All {len(controls)} preselected controls were read and "
+                       f"{len(controls) - len(matched)} did not reproduce the known non-zero "
+                       "base frame at the same FAR. The captures cannot support a location "
+                       "verdict."}
 
 
 def require_control_only_verdict(verdict: dict) -> None:
@@ -730,46 +751,44 @@ def run(out_dir: Path, plmark: str, signatures: dict[int, list[int]],
     decision = decide_intended(captures[INTENDED_FAR], signatures, base)
     verdict = dict(decision)
 
-    # An exact candidate at A20 is its own bit-exact answer and must not risk another read.
-    # Every other location statement requires an independent positive control first.
+    # 2.8.0: the controls are read in every case, and they are read in full.  Until 2.7.2 a
+    # candidate at A20 skipped this block outright — its bit-exactness was treated as its own
+    # proof — and the other two cases stopped at the first matching control.  A hit at the
+    # intended FAR is a location claim like any other and now pays the same sixteen reads;
+    # what it costs is sixteen frames of exposure, what it buys is a verdict with an
+    # instrument behind it.
     reads = 0
-    control = None
-    if decision["verdict"] != "WRITE_LANDED_AT_THE_INTENDED_FAR":
-        for far in controls:
-            if far in captures:
-                control = judge_positive_controls(captures, controls)
-                if control["verdict"] == "INSTRUMENT_VALID":
-                    break
-                continue
-            if max_reads is not None and reads >= max_reads:
-                break
-            captures[far] = capture_one(far, out_dir, index, runner)
-            reads += 1
-            control = judge_positive_controls(captures, controls)
-            if control["verdict"] == "INSTRUMENT_VALID":
-                break
-        control = judge_positive_controls(captures, controls)
-        if control["verdict"] != "INSTRUMENT_VALID":
-            verdict = control
-        elif decision["verdict"] == "INTENDED_FAR_IS_NEITHER":
-            verdict.update({"positive_controls": control["positive_controls"],
-                            "positive_control_matches": control["positive_control_matches"]})
+    for far in controls:
+        if far in captures:
+            continue
+        if max_reads is not None and reads >= max_reads:
+            break
+        captures[far] = capture_one(far, out_dir, index, runner)
+        reads += 1
 
-    if decision["sweep_needed"] and control is not None \
-            and control["verdict"] == "INSTRUMENT_VALID":
-        for far in fars:
-            if far in captures:
-                continue
-            if max_reads is not None and reads >= max_reads:
-                break
-            captures[far] = capture_one(far, out_dir, index, runner)
-            reads += 1
-        # Recomputed from the frozen set against what actually validated, never taken from
-        # the index: an interrupted run leaves a self-consistent index that is silent about
-        # every frame nobody looked at.
-        _, missing = validate_index(
-            out_dir, index, digest, plmark, fars, controls, MODE_SIGNATURE_SEARCH)
-        verdict = judge_sweep(index, captures, missing, signatures, controls)
+    control = judge_positive_controls(captures, controls)
+    if control["verdict"] != "INSTRUMENT_VALID":
+        # No location verdict, and the sweep does not start.  This is the whole point of the
+        # ordering: an acquisition that cannot prove its instrument answers nothing, and it
+        # must not spend 5,144 more reads finding that out.
+        verdict = control
+    else:
+        verdict.update({"positive_controls": control["positive_controls"],
+                        "positive_control_matches": control["positive_control_matches"]})
+        if decision["sweep_needed"]:
+            for far in fars:
+                if far in captures:
+                    continue
+                if max_reads is not None and reads >= max_reads:
+                    break
+                captures[far] = capture_one(far, out_dir, index, runner)
+                reads += 1
+            # Recomputed from the frozen set against what actually validated, never taken from
+            # the index: an interrupted run leaves a self-consistent index that is silent about
+            # every frame nobody looked at.
+            _, missing = validate_index(
+                out_dir, index, digest, plmark, fars, controls, MODE_SIGNATURE_SEARCH)
+            verdict = judge_sweep(index, captures, missing, signatures, controls)
 
     index["not_attempted"] = verdict.get("frames_not_searched", [
         f"{far:#010x}" for far in fars if far not in captures])
@@ -829,14 +848,16 @@ def judge_signature_search_index(out_dir: Path, plmark: str, digest: str,
         raise SearchStop("the intended FAR was never captured; nothing is decided")
     decision = decide_intended(captures[INTENDED_FAR], signatures, base)
     verdict = dict(decision)
-    if decision["verdict"] != "WRITE_LANDED_AT_THE_INTENDED_FAR":
-        control = judge_positive_controls(captures, controls)
-        if control["verdict"] != "INSTRUMENT_VALID":
-            verdict = control
-        elif decision["verdict"] == "INTENDED_FAR_IS_NEITHER":
-            verdict.update({"positive_controls": control["positive_controls"],
-                            "positive_control_matches": control["positive_control_matches"]})
-        elif decision["sweep_needed"]:
+    # The same rule as the live run, deliberately duplicated rather than shared: judging is
+    # the path that re-reads published evidence, and an intended hit that skipped the controls
+    # here would re-license offline exactly the verdict 2.8.0 stopped licensing on the board.
+    control = judge_positive_controls(captures, controls)
+    if control["verdict"] != "INSTRUMENT_VALID":
+        verdict = control
+    else:
+        verdict.update({"positive_controls": control["positive_controls"],
+                        "positive_control_matches": control["positive_control_matches"]})
+        if decision["sweep_needed"]:
             verdict = judge_sweep(index, captures, missing, signatures, controls)
     verdict["intended_far"] = f"{INTENDED_FAR:#010x}"
     verdict["signature_fars"] = [f"{far:#010x}" for far in signatures]
