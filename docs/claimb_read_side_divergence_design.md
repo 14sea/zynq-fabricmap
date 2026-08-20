@@ -408,10 +408,12 @@ exact against the device stream, and still not the frame that was asked for. The
 captures are non-zero as well. The second case is precisely why the criterion has to be
 *same-FAR* whole-frame exact. For each engine `readback_frames` or staging
 capture, bind it to the version-appropriate expected frame and ask whether a non-blank expected
-frame came back whole and exact at the same FAR. *Reading*: if none exists, F2 generalises across
-the committed erratum-006 evidence — **this frame-data path has never been demonstrated to
-deliver non-blank configuration data correctly** — and that scoped sentence belongs in the
-README status. If one exists, it is the most important artifact in the repository and this
+frame came back whole and exact at the same FAR. The population must be **frozen and closed**,
+with discovery required to reproduce it exactly in both directions, and every landing flag
+**derived from its own instance's step-4 evidence** rather than written down. *Reading*: if none
+exists, F2 generalises across the frozen committed inventory — **within it, this frame-data path
+has never been demonstrated to deliver non-blank configuration data correctly** — and that
+scoped sentence, scoped to the inventory and not to "ever", belongs in the README status. If one exists, it is the most important artifact in the repository and this
 design is rewritten around it.
 
 **W3 — state, per hypothesis, which clause of the device-model contract it violates.**

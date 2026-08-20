@@ -70,9 +70,13 @@ not have produced an all-zero staging window; and H-LAT as stated, because every
 of at most 50 words is excluded post-write. H-ADDR survives only in a local form inside the
 searched bands; an arbitrary distant misaddress is unconstrained.
 
-**W2 makes F2 general.** In six engine transactions on the erratum-006 carrier, ninety frames
-came back, every one blank, every one expected to be blank. This frame-data path has never been
-demonstrated to deliver non-blank configuration data correctly.
+**W2 makes F2 general across the frozen inventory.** Over a closed, digest-pinned population —
+six engine records, five staging copies, three authority artifacts, with discovery required to
+reproduce the frozen list exactly in both directions — ninety frames came back on the
+erratum-006 carrier, every one blank, every one expected to be blank. Within that inventory
+this frame-data path has never been demonstrated to deliver non-blank configuration data
+correctly. The verdict is deliberately `NO_NONBLANK_READBACK_IN_THE_FROZEN_COMMITTED_INVENTORY`
+and not "ever": "ever" would quantify over runs nobody recorded.
 
 **One fork is probeable with the existing carrier and the rest are not.** A single no-op
 transaction into the already-faulted carrier, same boot and no reload, identifies strict

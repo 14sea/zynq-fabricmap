@@ -1,8 +1,99 @@
 {
- "tool": "audit_readback_evidence.py/1.0.0",
+ "tool": "audit_readback_evidence.py/2.0.0",
  "what": "W2 of docs/claimb_read_side_divergence_design.md",
  "criterion": "the expected frame is non-blank AND the returned words equal it exactly AND it is the frame whose FAR was requested",
- "excluded_by_scope": "JTAG captures (probe_jtag_config_read.py, every sweep's far_*.json): the independent path, not the engine's",
+ "excluded_by_scope": "JTAG captures (probe_jtag_config_read.py, every sweep's far_*.json) are not the engine's read path. They appear only inside the landing derivation, which is their job",
+ "inventory": {
+  "closed": true,
+  "engine_records_frozen": [
+   "evidence/known_answer_2026_08_14_erratum006/record.json",
+   "evidence/location_reproduction_2026_08_20/fault/record.json",
+   "evidence/location_sweep_2026_08_20/fault/record.json",
+   "evidence/phase2_2026_08_15/known_answer_record.json",
+   "evidence/postfault_r4_replication_2026_08_16/fault_capture/record.json",
+   "evidence/postfault_r4_step2_capture_2026_08_16/record.json"
+  ],
+  "engine_records_discovered": [
+   "evidence/known_answer_2026_08_14_erratum006/record.json",
+   "evidence/location_reproduction_2026_08_20/fault/record.json",
+   "evidence/location_sweep_2026_08_20/fault/record.json",
+   "evidence/phase2_2026_08_15/known_answer_record.json",
+   "evidence/postfault_r4_replication_2026_08_16/fault_capture/record.json",
+   "evidence/postfault_r4_step2_capture_2026_08_16/record.json"
+  ],
+  "discovery_equals_freeze": true,
+  "staging_copies_frozen": [
+   "evidence/calibration_noop_2026_08_13_erratum004/stage_dump.json",
+   "evidence/calibration_noop_2026_08_13_erratum005/stage_dump.json",
+   "evidence/known_answer_2026_08_14_erratum006/ddr_slot0.json",
+   "evidence/location_sweep_2026_08_20/fault/ddr_slot0_shutdown_read.json",
+   "evidence/location_reproduction_2026_08_20/fault/ddr_slot0_shutdown_read.json"
+  ],
+  "authority_frozen": [
+   "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/phenotype_manifest.json",
+   "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/local_map.json",
+   "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/carrier.bit"
+  ],
+  "pinned_files": 31
+ },
+ "landing_derivations": {
+  "run1": {
+   "run": "run1",
+   "run_dir": "evidence/location_sweep_2026_08_20",
+   "plmarks": {
+    "fault_record": "18cd7785cbf1b1fd",
+    "staging_capture": "18cd7785cbf1b1fd",
+    "index_at_start": "18cd7785cbf1b1fd",
+    "index_at_end": "18cd7785cbf1b1fd"
+   },
+   "controls_exact": 16,
+   "controls_declared": 16,
+   "words_matching_candidate": "101/101",
+   "provenance": {
+    "capture": "evidence/location_sweep_2026_08_20/step4_sweep/far_00400a20.json",
+    "capture_sha256": "404fa8c7a0ebbe5b7d15e1ad2f44ed0176bff8f20a22545c896911d7cf9dd580",
+    "frame_sha256": "15cb05e68adbff6c962053bb5220c33d278c09a793ce12bc4017f37269a5bbe7"
+   },
+   "checks": {
+    "one_plmark_across_fault_staging_and_acquisition": true,
+    "instrument_digest_is_the_frozen_one": true,
+    "verdict_is_the_landed_one": true,
+    "verdict_names_the_intended_far": true,
+    "sixteen_controls_declared": true,
+    "sixteen_controls_exact": true,
+    "capture_equals_candidate_word_for_word": true
+   },
+   "landing_verified": true
+  },
+  "run2": {
+   "run": "run2",
+   "run_dir": "evidence/location_reproduction_2026_08_20",
+   "plmarks": {
+    "fault_record": "18cd7cb81a291de5",
+    "staging_capture": "18cd7cb81a291de5",
+    "index_at_start": "18cd7cb81a291de5",
+    "index_at_end": "18cd7cb81a291de5"
+   },
+   "controls_exact": 16,
+   "controls_declared": 16,
+   "words_matching_candidate": "101/101",
+   "provenance": {
+    "capture": "evidence/location_reproduction_2026_08_20/step4_sweep/far_00400a20.json",
+    "capture_sha256": "342a704e365e943b5e8bd4e75d2cc1373e4bf22451fa1407b5baa90ac00e3cf4",
+    "frame_sha256": "15cb05e68adbff6c962053bb5220c33d278c09a793ce12bc4017f37269a5bbe7"
+   },
+   "checks": {
+    "one_plmark_across_fault_staging_and_acquisition": true,
+    "instrument_digest_is_the_frozen_one": true,
+    "verdict_is_the_landed_one": true,
+    "verdict_names_the_intended_far": true,
+    "sixteen_controls_declared": true,
+    "sixteen_controls_exact": true,
+    "capture_equals_candidate_word_for_word": true
+   },
+   "landing_verified": true
+  }
+ },
  "engine_transactions": [
   {
    "source": "evidence/known_answer_2026_08_14_erratum006/record.json",
@@ -718,7 +809,9 @@
    "sha256_of_frame": "c402e1b0f929757eed4e5feb28d722476050dc7c1c1f7dd048998aa9a02b3f22",
    "requested_far": "0x00400A20",
    "expected_at_requested_far": "no authority for this carrier",
+   "landing_source": null,
    "landing_verified_in_this_instance": false,
+   "landing_derivation": null,
    "equals_base_at_requested_far": false,
    "equals_candidate_at_requested_far": false,
    "verdict": "NONBLANK_NO_AUTHORITY"
@@ -733,7 +826,9 @@
    "sha256_of_frame": "5ab966910ea4fdeca896231d6cf8f9b57a031175eb5f0c9fa447bb141a7a2e02",
    "requested_far": "0x00400A20",
    "expected_at_requested_far": "no authority for this carrier",
+   "landing_source": null,
    "landing_verified_in_this_instance": false,
+   "landing_derivation": null,
    "equals_base_at_requested_far": false,
    "equals_candidate_at_requested_far": false,
    "verdict": "NONBLANK_NO_AUTHORITY"
@@ -748,7 +843,9 @@
    "sha256_of_frame": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
    "requested_far": "0x00400A20",
    "expected_at_requested_far": "candidate (a post-fault capture)",
+   "landing_source": null,
    "landing_verified_in_this_instance": false,
+   "landing_derivation": null,
    "equals_base_at_requested_far": true,
    "equals_candidate_at_requested_far": false,
    "verdict": "NONBLANK_EXPECTED_GOT_BLANK"
@@ -763,7 +860,36 @@
    "sha256_of_frame": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
    "requested_far": "0x00400A20",
    "expected_at_requested_far": "candidate (a post-fault capture)",
+   "landing_source": "run1",
    "landing_verified_in_this_instance": true,
+   "landing_derivation": {
+    "run": "run1",
+    "run_dir": "evidence/location_sweep_2026_08_20",
+    "plmarks": {
+     "fault_record": "18cd7785cbf1b1fd",
+     "staging_capture": "18cd7785cbf1b1fd",
+     "index_at_start": "18cd7785cbf1b1fd",
+     "index_at_end": "18cd7785cbf1b1fd"
+    },
+    "controls_exact": 16,
+    "controls_declared": 16,
+    "words_matching_candidate": "101/101",
+    "provenance": {
+     "capture": "evidence/location_sweep_2026_08_20/step4_sweep/far_00400a20.json",
+     "capture_sha256": "404fa8c7a0ebbe5b7d15e1ad2f44ed0176bff8f20a22545c896911d7cf9dd580",
+     "frame_sha256": "15cb05e68adbff6c962053bb5220c33d278c09a793ce12bc4017f37269a5bbe7"
+    },
+    "checks": {
+     "one_plmark_across_fault_staging_and_acquisition": true,
+     "instrument_digest_is_the_frozen_one": true,
+     "verdict_is_the_landed_one": true,
+     "verdict_names_the_intended_far": true,
+     "sixteen_controls_declared": true,
+     "sixteen_controls_exact": true,
+     "capture_equals_candidate_word_for_word": true
+    },
+    "landing_verified": true
+   },
    "equals_base_at_requested_far": true,
    "equals_candidate_at_requested_far": false,
    "verdict": "NONBLANK_EXPECTED_GOT_BLANK"
@@ -778,7 +904,36 @@
    "sha256_of_frame": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
    "requested_far": "0x00400A20",
    "expected_at_requested_far": "candidate (a post-fault capture)",
+   "landing_source": "run2",
    "landing_verified_in_this_instance": true,
+   "landing_derivation": {
+    "run": "run2",
+    "run_dir": "evidence/location_reproduction_2026_08_20",
+    "plmarks": {
+     "fault_record": "18cd7cb81a291de5",
+     "staging_capture": "18cd7cb81a291de5",
+     "index_at_start": "18cd7cb81a291de5",
+     "index_at_end": "18cd7cb81a291de5"
+    },
+    "controls_exact": 16,
+    "controls_declared": 16,
+    "words_matching_candidate": "101/101",
+    "provenance": {
+     "capture": "evidence/location_reproduction_2026_08_20/step4_sweep/far_00400a20.json",
+     "capture_sha256": "342a704e365e943b5e8bd4e75d2cc1373e4bf22451fa1407b5baa90ac00e3cf4",
+     "frame_sha256": "15cb05e68adbff6c962053bb5220c33d278c09a793ce12bc4017f37269a5bbe7"
+    },
+    "checks": {
+     "one_plmark_across_fault_staging_and_acquisition": true,
+     "instrument_digest_is_the_frozen_one": true,
+     "verdict_is_the_landed_one": true,
+     "verdict_names_the_intended_far": true,
+     "sixteen_controls_declared": true,
+     "sixteen_controls_exact": true,
+     "capture_equals_candidate_word_for_word": true
+    },
+    "landing_verified": true
+   },
    "equals_base_at_requested_far": true,
    "equals_candidate_at_requested_far": false,
    "verdict": "NONBLANK_EXPECTED_GOT_BLANK"
@@ -788,11 +943,12 @@
   "engine_transactions": 6,
   "engine_frames": 90,
   "engine_nonblank_frames": 0,
+  "engine_frames_expected_blank": 90,
   "staging_copies": 5,
   "staging_nonblank_erratum006": 0,
-  "engine_frames_expected_blank": 90
+  "landings_verified": 2
  },
  "hits": [],
- "verdict": "NO_NONBLANK_READBACK_HAS_EVER_BEEN_RETURNED",
- "reading": "Every frame the carrier's read path has ever handed back on the erratum-006 carrier is blank, and every blank one was expected to be blank. The only non-blank engine-side content in the repository is from two superseded carriers: the erratum-004 abort word, and the erratum-005 dump that was bit-exact against the device stream at an address other than the one requested. So F2 is general across the committed erratum-006 evidence: this frame-data path has never been demonstrated to deliver non-blank configuration data correctly."
+ "verdict": "NO_NONBLANK_READBACK_IN_THE_FROZEN_COMMITTED_INVENTORY",
+ "reading": "Over the frozen inventory \u2014 six engine records, five staging copies and three authority artifacts at the pinned tree \u2014 every frame the carrier's read path handed back on the erratum-006 carrier is blank, and every blank one was expected to be blank. The only non-blank engine-side content is from two superseded carriers: the erratum-004 abort word, and the erratum-005 dump that was bit-exact against the device stream at an address other than the one requested. So F2 is general ACROSS THIS INVENTORY: within it, this frame-data path has never been demonstrated to deliver non-blank configuration data correctly. It is not a claim about runs that were never recorded."
 }

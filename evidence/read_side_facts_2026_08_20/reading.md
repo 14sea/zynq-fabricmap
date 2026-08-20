@@ -1,16 +1,29 @@
 # W1 and W2 of the read-side divergence design, read honestly
 
-Host-side only. No board contact, no network. Two offline tools, both read-only, both hashing
-every input into their output:
+Host-side only. No board contact, no network. Two offline tools over one frozen inventory:
 
 ```sh
 python3 scripts/analyse_read_side_facts.py  --out evidence/read_side_facts_2026_08_20/facts.json
 python3 scripts/audit_readback_evidence.py  --out evidence/read_side_facts_2026_08_20/readback_audit.json
 ```
 
-Their console output is committed beside them. `analyse_read_side_facts.py` refuses outright if
-any of the ten pinned inputs has drifted from the digest `docs/claimb_read_side_divergence_design.md`
-§2 froze, so what follows is a re-derivation rather than a new measurement wearing the old name.
+Their console output is committed beside them. `scripts/read_side_evidence.py` holds the
+inventory — **31 pinned files**, a closed list of **six** engine records, **five** staging
+copies and **three** authority artifacts — and enforces it three ways, all fail-closed:
+
+1. every pinned artifact must exist and hash to its pinned value;
+2. discovery still runs, and its result must equal the frozen engine-record list **exactly, in
+   both directions** — an extra record and a missing record are both refusals;
+3. every repository module the tools actually loaded must itself be pinned. The three files of
+   this deliverable cannot pin themselves and are the declared exemption; any other unpinned
+   module is named and refused.
+
+`tests/test_read_side_audit.py` is 22 tests, all of them negative: a drifted digest, a missing
+input, an unpinned import, a population one record too large and one too small, a seventh
+record appearing on disk, a broken plmark chain, a missing positive control, a capture that
+disagrees with its own digest, **a forged capture whose digests were all re-stated so only the
+words give it away**, a FAULT word that is not 8, two runs that disagree, and four ways for the
+driver to have changed. The positive numbers below are worth what those refusals are worth.
 
 ## W1 — all six facts reproduce at the pinned tree
 
@@ -18,9 +31,9 @@ any of the ten pinned inputs has drifted from the digest `docs/claimb_read_side_
 |---|---|
 | **F1** | 15 envelope frames, **1 distinct content**, all zero, sha256 `0441772f6655…6d7b8de9`. Each frame's manifest digest was also recomputed from its own words |
 | **F2** | the `no_op` step calls `_write("restore", …)` at `board_claimb_known_answer.py:104` — read out of the driver's AST, not its prose — and `restore.actual_init` is `0x0000000000000000`. O5 read 15 frames back, **0 of them non-blank**, `rb_frames_ok = 15`, `configuration_valid = 1` |
-| **F3** | the candidate touches `A20`–`A23`, each at **words (50, 51)** only; `A20`'s frame sha256 is `15cb05e6…69a5bbe7` |
+| **F3** | the candidate touches `A20`–`A23`, each at **words (50, 51)** only; `A20`'s frame sha256 is `15cb05e6…69a5bbe7`. **Not derivation alone**: both 2026-08-20 JTAG captures are opened, their index-recorded `capture_sha256` re-checked, the 202-word split verified (`frame` is the SECOND block), and their 101 words compared to the re-derived candidate — **101/101 in both runs**, and F3 refuses to report if either disagrees |
 | **F4** | both staging copies: 101 words, **0 non-zero**, same sha256, **distinct plmarks**, equal to the base at the intended FAR, unequal to the candidate |
-| **F5** | the status word is **read out of each record's own command replies** (`md.l` of `board_uboot_axi.STATUS`), not restated: `0x04040082` in both runs, FAULT register `0x00000008` in both. Decoded: `fault = 1`, `rb_frames_ok = 0`, `rb_latency_words = 1`, `rb_latency_valid = 1` — the same latency the passing no-op measured |
+| **F5** | the status word **and the fault's name** are read out of each record's own command replies (`md.l` of `board_uboot_axi.STATUS` and `.FAULT`), not restated: `0x04040082` and `0x00000008` in both runs. The code is masked the way `read_fault` masks it on the wire (`& 0xF`), the two runs are **required to agree**, and a code other than 8 is a refusal — so "readback" is derived, not asserted. Decoded: `fault = 1`, `rb_frames_ok = 0`, `rb_latency_words = 1`, `rb_latency_valid = 1` — the same latency the passing no-op measured |
 | **F6** | see below |
 
 **F6 gained a check it did not have.** The displacement bands are a property of the stream
@@ -54,15 +67,20 @@ every sweep's `far_*.json`) are excluded by definition: they are the independent
 question is about, not evidence from it.
 
 ```
-VERDICT  NO_NONBLANK_READBACK_HAS_EVER_BEEN_RETURNED
+VERDICT  NO_NONBLANK_READBACK_IN_THE_FROZEN_COMMITTED_INVENTORY
 
+discovery == freeze: True
 6 engine transactions on the erratum-006 carrier   90 frames   0 non-blank
                                                    90 of 90 = BLANK_EXPECTED_BLANK_DEGENERATE
 5 staging copies
-  erratum-004 carrier   101/101 non-zero   the abort status word
-  erratum-005 carrier    30/101 non-zero   bit-exact device data at the WRONG address
-  erratum-006 carrier ×3   0/101 non-zero  NONBLANK_EXPECTED_GOT_BLANK
+  erratum-004 carrier   101/101 non-zero   the abort status word        landing n/a
+  erratum-005 carrier    30/101 non-zero   bit-exact data, WRONG address landing n/a
+  erratum-006 carrier ×3   0/101 non-zero  NONBLANK_EXPECTED_GOT_BLANK   landing 2 of 3 derived
 ```
+
+**The verdict is scoped on purpose.** "EVER" would quantify over runs nobody recorded. What is
+established is a property of the **frozen committed inventory at the pinned tree**, and a test
+pins that wording so it cannot drift back.
 
 The six transactions are `known_answer_2026_08_14_erratum006`, `location_sweep_2026_08_20`,
 `location_reproduction_2026_08_20`, `phase2_2026_08_15` (VOID instrument, listed for
@@ -74,10 +92,23 @@ ninety independent confirmations.
 **One classification was corrected while writing this.** The three erratum-006 staging copies
 were first labelled "blank, and blank was expected". That is wrong: all three were taken *after*
 the candidate round faulted, so a correct readback of the requested FAR at that moment would
-have returned the **candidate**. Their verdict is `NONBLANK_EXPECTED_GOT_BLANK`. The record
-carries `landing_verified_in_this_instance` per capture — true only for the two 2026-08-20 runs,
-which have a location acquisition; for the 2026-08-14 capture the expectation is a reproduced
-prior, not a measurement in that instance.
+have returned the **candidate**. Their verdict is `NONBLANK_EXPECTED_GOT_BLANK`.
+
+**And `landing_verified_in_this_instance` is now derived, not declared.** For each instance the
+tool reads that instance's own step-4 evidence and requires all seven of:
+
+* one plmark across the fault record, the staging copy and the acquisition's start **and** end;
+* the acquisition's `instrument_digest` equal to the frozen `a20e56aa…`;
+* `verdict == WRITE_LANDED_AT_THE_INTENDED_FAR`, naming `0x00400a20`;
+* sixteen controls declared **and** sixteen exact, with expected == observed digests;
+* the A20 capture hashing to the `capture_sha256` its own index records;
+* the 202-word capture splitting into `pad_frame` then `frame`, with the recomputed frame
+  digest equal to both the capture's and the index's;
+* the 101 words equal to the re-derived candidate.
+
+Result: **run1 and run2 verified, 101/101 words, 16/16 controls**; the 2026-08-14 capture has no
+acquisition to derive from, so its flag is **false** — an absence of evidence recorded as one,
+not an assumption.
 
 ## What this establishes, and what it does not
 

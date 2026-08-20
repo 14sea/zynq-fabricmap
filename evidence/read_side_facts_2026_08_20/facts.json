@@ -1,17 +1,47 @@
 {
- "tool": "analyse_read_side_facts.py/1.0.0",
+ "tool": "analyse_read_side_facts.py/2.0.0",
  "what": "W1 of docs/claimb_read_side_divergence_design.md: F1-F6, re-derived",
  "inputs": {
-  "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/phenotype_manifest.json": "e45f466d082ccd6f227e6f9be4ce75a4e98c4caa708808c09a77ed32331c10ef",
-  "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/local_map.json": "56f2b9e81e180eee2540286e4fde797e0d4820a49d10624c10844c38e99d87cb",
-  "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/carrier.bit": "8c3369e8e4755da5aceeb7844690d5e132b2e65647004c0a46c0e868e34f0b8a",
-  "gate_runs/claimb_round1_reachability_2026_08_10/reachability_report.json": "f06bf9074bd0a017663ce9895760f817484590ab8a11afe27e438a75983b4930",
-  "gate_runs/claimb_round1_known_answer_2026_08_14/known_answer.json": "b115e6be3c44b1500aaf0281bd7f480afa61654a12b1083a778fb9d9cb2f5ef1",
+  "data/prjxray/zynq7/xc7z010/tilegrid.json": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee",
+  "data/prjxray/zynq7/xc7z010clg400-1/part.yaml": "43a136f26603c51bd97e9489d223bbc80f278fcc234225ed9fde404402f22683",
+  "evidence/calibration_noop_2026_08_13_erratum004/stage_dump.json": "8cfb37e8a4346fcbb25bbcb6f037998471d5abb09895c6c76d9de487aae836e0",
+  "evidence/calibration_noop_2026_08_13_erratum005/stage_dump.json": "1f0fc925621fbea5c8089b8189282e4f1a90e21eed34af8c80a77d57dab6ce70",
+  "evidence/known_answer_2026_08_14_erratum006/ddr_slot0.json": "53a261ab43f65f357efeeb98019601804372a528e592c02083255eb998bdefb5",
   "evidence/known_answer_2026_08_14_erratum006/record.json": "e944b85d572cb3a3cec7efe2326a4bd0f1d1b5c5df5c5ecf18ea4b9b73fe63c9",
-  "evidence/location_sweep_2026_08_20/fault/record.json": "db87cd770d3174d128174edb005ab4c9f8462a1671501774d2824101efe2190a",
+  "evidence/location_reproduction_2026_08_20/fault/ddr_slot0_shutdown_read.json": "3221fa684a452fd7e71f70873c0085a6ea2ea8c2138525c91a7458df9e58e4e0",
   "evidence/location_reproduction_2026_08_20/fault/record.json": "86bdf7f0f45997c8ff94cb56e25e2182e3564e18f5e8504bc4fe00419a2b8e1b",
+  "evidence/location_reproduction_2026_08_20/step4_sweep/far_00400a20.json": "342a704e365e943b5e8bd4e75d2cc1373e4bf22451fa1407b5baa90ac00e3cf4",
+  "evidence/location_reproduction_2026_08_20/step4_sweep/index.json": "5605cf1a89b1780e456380af260362f0eb40665e4adc10ee5d84453bfa3c45cf",
+  "evidence/location_reproduction_2026_08_20/step4_sweep/verdict.json": "f921356305cc575399e0de5ee16abe39344c2d9c8684ad51e1a4f674c239eab9",
   "evidence/location_sweep_2026_08_20/fault/ddr_slot0_shutdown_read.json": "413725bc551b1a2215405ac4b55a76a1fea73e0e8133df043ca0fac36caabc34",
-  "evidence/location_reproduction_2026_08_20/fault/ddr_slot0_shutdown_read.json": "3221fa684a452fd7e71f70873c0085a6ea2ea8c2138525c91a7458df9e58e4e0"
+  "evidence/location_sweep_2026_08_20/fault/record.json": "db87cd770d3174d128174edb005ab4c9f8462a1671501774d2824101efe2190a",
+  "evidence/location_sweep_2026_08_20/step4_sweep/far_00400a20.json": "404fa8c7a0ebbe5b7d15e1ad2f44ed0176bff8f20a22545c896911d7cf9dd580",
+  "evidence/location_sweep_2026_08_20/step4_sweep/index.json": "4747cc11f22893d383c9095c2709f505b7fa8378fa06f8ccff394a5a5ba3a6f2",
+  "evidence/location_sweep_2026_08_20/step4_sweep/verdict.json": "f921356305cc575399e0de5ee16abe39344c2d9c8684ad51e1a4f674c239eab9",
+  "evidence/phase2_2026_08_15/known_answer_record.json": "2b7f72e4110ed8a07586e5f308dc4982e07aefba11518f52b710d258f7cab23c",
+  "evidence/postfault_r4_replication_2026_08_16/fault_capture/record.json": "50385fb850545b1e03d135654914518e81ced0cafc4406e26bd0724dd7155efa",
+  "evidence/postfault_r4_step2_capture_2026_08_16/record.json": "82036ac02c0278303539e97c115350ad030145fa39ce1be115da5619c02b74d1",
+  "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/carrier.bit": "8c3369e8e4755da5aceeb7844690d5e132b2e65647004c0a46c0e868e34f0b8a",
+  "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/local_map.json": "56f2b9e81e180eee2540286e4fde797e0d4820a49d10624c10844c38e99d87cb",
+  "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/phenotype_manifest.json": "e45f466d082ccd6f227e6f9be4ce75a4e98c4caa708808c09a77ed32331c10ef",
+  "gate_runs/claimb_round1_known_answer_2026_08_14/known_answer.json": "b115e6be3c44b1500aaf0281bd7f480afa61654a12b1083a778fb9d9cb2f5ef1",
+  "gate_runs/claimb_round1_reachability_2026_08_10/reachability_report.json": "f06bf9074bd0a017663ce9895760f817484590ab8a11afe27e438a75983b4930",
+  "scripts/analyse_ddr_capture.py": "473888add4cef7b9a05fe87124be5bb9910cb02e2bf429e5cf42279c222ffd85",
+  "scripts/bitstream_frames.py": "a55246e68e082cbb7d15833e6da134388059ffdb0497c29634a9b740eb9091b3",
+  "scripts/board_carrier_guard.py": "52d64feef30df8843593e84a9756f4e47cf49457606243e580189171d5440654",
+  "scripts/board_claimb_known_answer.py": "ff3b88aabd6c7ec2f9b22da7cdb3855b72cf5a5a07a0534d3e032a023df9c357",
+  "scripts/board_serial.py": "ce38c9bc69c67d90cc92b16d5f782fc1eafcc8ed6a16d2d2333214624bbbb111",
+  "scripts/board_uboot_axi.py": "574f5d01c14ccfeb41d3298f8dbcd435e004285ec9d228db840e41d58f4e7da2",
+  "scripts/frame_ecc.py": "e595c8e0467fd46de90d6f526792cedf09a4eafa1599b2c2c04a3bbcbb78a646"
+ },
+ "pinning": {
+  "pinned_files": 31,
+  "self_exempt": [
+   "scripts/read_side_evidence.py",
+   "scripts/analyse_read_side_facts.py",
+   "scripts/audit_readback_evidence.py"
+  ],
+  "why": "the three files of this deliverable cannot pin themselves; the commit anchors them, and every OTHER loaded repository module must be pinned"
  },
  "derived": {
   "mutable_mask": "0xDA7D5FE96D7FFFDF",
@@ -149,7 +179,7 @@
   "degenerate_as_content_control": true
  },
  "F3": {
-  "what": "the candidate against the blank base, per frame",
+  "what": "the candidate against the blank base, and against both JTAG observations",
   "touched_frames": [
    {
     "far": "0x00400A20",
@@ -206,12 +236,39 @@
     51
    ]
   ],
-  "intended_far_sha256": "15cb05e68adbff6c962053bb5220c33d278c09a793ce12bc4017f37269a5bbe7"
+  "intended_far_sha256": "15cb05e68adbff6c962053bb5220c33d278c09a793ce12bc4017f37269a5bbe7",
+  "observed_at_the_intended_far": {
+   "run1": {
+    "capture": "evidence/location_sweep_2026_08_20/step4_sweep/far_00400a20.json",
+    "capture_sha256": "404fa8c7a0ebbe5b7d15e1ad2f44ed0176bff8f20a22545c896911d7cf9dd580",
+    "frame_sha256": "15cb05e68adbff6c962053bb5220c33d278c09a793ce12bc4017f37269a5bbe7",
+    "words_matching_candidate": "101/101",
+    "equals_candidate": true,
+    "nonzero_words": [
+     50,
+     51
+    ]
+   },
+   "run2": {
+    "capture": "evidence/location_reproduction_2026_08_20/step4_sweep/far_00400a20.json",
+    "capture_sha256": "342a704e365e943b5e8bd4e75d2cc1373e4bf22451fa1407b5baa90ac00e3cf4",
+    "frame_sha256": "15cb05e68adbff6c962053bb5220c33d278c09a793ce12bc4017f37269a5bbe7",
+    "words_matching_candidate": "101/101",
+    "equals_candidate": true,
+    "nonzero_words": [
+     50,
+     51
+    ]
+   }
+  },
+  "both_captures_agree": true,
+  "capture_digest_equals_derived": true
  },
  "F4": {
   "what": "the two staging copies of the failing frame",
   "captures": {
    "run1": {
+    "source": "evidence/location_sweep_2026_08_20/fault/ddr_slot0_shutdown_read.json",
     "plmark": "18cd7785cbf1b1fd",
     "words": 101,
     "nonzero_words": 0,
@@ -220,6 +277,7 @@
     "equals_candidate_at_intended_far": false
    },
    "run2": {
+    "source": "evidence/location_reproduction_2026_08_20/fault/ddr_slot0_shutdown_read.json",
     "plmark": "18cd7cb81a291de5",
     "words": 101,
     "nonzero_words": 0,
@@ -234,6 +292,9 @@
  "F5": {
   "what": "the specified fault as the records show it, beside the passing run's latency",
   "same_status_word_in_both_runs": true,
+  "same_fault_code_in_both_runs": true,
+  "fault_code": 8,
+  "fault_code_name": "readback",
   "fault_status_decoded": {
    "raw": 67371138,
    "busy": false,
@@ -252,10 +313,9 @@
    "rb_latency_valid": true,
    "reserved": 0
   },
-  "fault_code_name": "readback",
   "codes_that_did_not_fire": {
-   "12": "rbsync",
-   "10": "bytecount"
+   "10": "bytecount",
+   "12": "rbsync"
   },
   "o5_readback_latency": [
    {
@@ -301,6 +361,8 @@
      "reserved": 0
     },
     "last_fault_word": "0x00000008",
+    "fault_code": 8,
+    "fault_code_name": "readback",
     "no_op_transaction_elapsed_s": 27.126,
     "wall_s": 250.5,
     "setup_steps": [
@@ -341,6 +403,8 @@
      "reserved": 0
     },
     "last_fault_word": "0x00000008",
+    "fault_code": 8,
+    "fault_code_name": "readback",
     "no_op_transaction_elapsed_s": 25.886,
     "wall_s": 250.4,
     "setup_steps": [
@@ -361,6 +425,7 @@
  "F6": {
   "what": "displacements whose 101-word window is all zero, within the search radius",
   "search_radius_words": 2000,
+  "the_search_is_local": "outside \u00b12000 words nothing was searched, so a distant misaddress is unconstrained by this fact",
   "orderings_agree": true,
   "by_ordering": {
    "device_configuration_order": {
