@@ -44,6 +44,21 @@ could not claim.
 **The pre-registered stop did not fire**: the candidate signature had to be absent before any
 transaction, or the whole procedure would have been over. It is absent.
 
+### The verdict string says more than this step can support
+
+`verdict.json`'s `reading` field is the tool's fixed wording for `NOT_FOUND_COMPLETE`: *"No
+candidate frame appears anywhere in the 5144 frames of the device sequence. The write did not
+reach the fabric as a whole frame anywhere."* Only the **first** sentence is claimed here.
+**Step ① performs no write at all** — no ICAP transaction of any kind runs in this boot — so
+the second sentence is not false so much as inapplicable: there is no write for it to be about.
+What this acquisition establishes is exactly *"the candidate signature is absent before any
+transaction"*, which is what a negative control is for.
+
+`verdict.json`, the acquisition's stdout and the production tool are **left exactly as
+generated**. Correcting an automatic string in a record would change the artefact the ①/④
+pairing is built on, and the tool's own bytes are part of `instrument_digest`. The correction
+belongs here, additively — the same rule that governs Phase 2's `verdict.json`.
+
 ## The one thing not to over-read
 
 `0x00400A20`'s frame **in the base carrier is all zero**, so "A20 holds the base" is here a
@@ -94,6 +109,15 @@ kept in repo   62 files -- index, verdict, the four candidate FARs and the sixte
 ```
 
 Details and the manifest's own digests: `archive_manifest.json` beside this file.
+
+## A recorded exception: `git diff --check` is not clean on this commit
+
+It reports **28 trailing-whitespace warnings**, every one of them inside the two board console
+records (`carrier_load.log` and the precheck's `.txt` sidecar) — U-Boot's `Zynq> ` prompts and
+the CR bytes of its own output. **They are kept.** These files exist to be the bytes the board
+actually sent; stripping them to make a linter green, or hiding them behind a `.gitattributes`
+rule, would edit evidence to satisfy a tool. The warning is expected on any commit that carries
+raw console capture, and is recorded here rather than silenced.
 
 ## State
 
