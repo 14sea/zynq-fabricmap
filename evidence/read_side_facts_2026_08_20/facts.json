@@ -1,0 +1,443 @@
+{
+ "tool": "analyse_read_side_facts.py/1.0.0",
+ "what": "W1 of docs/claimb_read_side_divergence_design.md: F1-F6, re-derived",
+ "inputs": {
+  "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/phenotype_manifest.json": "e45f466d082ccd6f227e6f9be4ce75a4e98c4caa708808c09a77ed32331c10ef",
+  "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/local_map.json": "56f2b9e81e180eee2540286e4fde797e0d4820a49d10624c10844c38e99d87cb",
+  "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/carrier.bit": "8c3369e8e4755da5aceeb7844690d5e132b2e65647004c0a46c0e868e34f0b8a",
+  "gate_runs/claimb_round1_reachability_2026_08_10/reachability_report.json": "f06bf9074bd0a017663ce9895760f817484590ab8a11afe27e438a75983b4930",
+  "gate_runs/claimb_round1_known_answer_2026_08_14/known_answer.json": "b115e6be3c44b1500aaf0281bd7f480afa61654a12b1083a778fb9d9cb2f5ef1",
+  "evidence/known_answer_2026_08_14_erratum006/record.json": "e944b85d572cb3a3cec7efe2326a4bd0f1d1b5c5df5c5ecf18ea4b9b73fe63c9",
+  "evidence/location_sweep_2026_08_20/fault/record.json": "db87cd770d3174d128174edb005ab4c9f8462a1671501774d2824101efe2190a",
+  "evidence/location_reproduction_2026_08_20/fault/record.json": "86bdf7f0f45997c8ff94cb56e25e2182e3564e18f5e8504bc4fe00419a2b8e1b",
+  "evidence/location_sweep_2026_08_20/fault/ddr_slot0_shutdown_read.json": "413725bc551b1a2215405ac4b55a76a1fea73e0e8133df043ca0fac36caabc34",
+  "evidence/location_reproduction_2026_08_20/fault/ddr_slot0_shutdown_read.json": "3221fa684a452fd7e71f70873c0085a6ea2ea8c2138525c91a7458df9e58e4e0"
+ },
+ "derived": {
+  "mutable_mask": "0xDA7D5FE96D7FFFDF",
+  "candidate_init": "0x50785CE844305DC4"
+ },
+ "F1": {
+  "what": "the fifteen frames of the write envelope, as the frozen manifest holds them",
+  "frames": [
+   {
+    "far": "0x00400a20",
+    "role": "target",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400a21",
+    "role": "target",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400a22",
+    "role": "target",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400a23",
+    "role": "target",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400c1a",
+    "role": "target",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400c1b",
+    "role": "target",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400c1c",
+    "role": "target",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400c1d",
+    "role": "target",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400c20",
+    "role": "target",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400c21",
+    "role": "target",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400c22",
+    "role": "target",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400c23",
+    "role": "target",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400a80",
+    "role": "flush",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400c1e",
+    "role": "flush",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   },
+   {
+    "far": "0x00400c80",
+    "role": "flush",
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+   }
+  ],
+  "distinct_contents": 1,
+  "all_identical": true,
+  "all_zero": true,
+  "content_sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9"
+ },
+ "F2": {
+  "what": "the no-op writes the restore payload, and O5 read fifteen blank frames back",
+  "no_op_step": {
+   "line": 104,
+   "writes": "restore"
+  },
+  "restore_actual_init": "0x0000000000000000",
+  "o5_step": "no_op",
+  "o5_state": "passed",
+  "o5_frames_read": 15,
+  "o5_nonblank_frames": {},
+  "o5_rb_frames_ok": 15,
+  "o5_configuration_valid": true,
+  "o5_readback_latency": [
+   {
+    "envelope": 0,
+    "valid": true,
+    "words": 1
+   },
+   {
+    "envelope": 1,
+    "valid": true,
+    "words": 1
+   },
+   {
+    "envelope": 2,
+    "valid": true,
+    "words": 1
+   }
+  ],
+  "degenerate_as_content_control": true
+ },
+ "F3": {
+  "what": "the candidate against the blank base, per frame",
+  "touched_frames": [
+   {
+    "far": "0x00400A20",
+    "words": [
+     50,
+     51
+    ],
+    "values": [
+     "0x0000100e",
+     "0x00005213"
+    ],
+    "sha256": "15cb05e68adbff6c962053bb5220c33d278c09a793ce12bc4017f37269a5bbe7"
+   },
+   {
+    "far": "0x00400A21",
+    "words": [
+     50,
+     51
+    ],
+    "values": [
+     "0x000009c1",
+     "0x00001276"
+    ],
+    "sha256": "f767e49377a31217b47ce7029147ba107227e607b6e95d84c8874e639acb5d64"
+   },
+   {
+    "far": "0x00400A22",
+    "words": [
+     50,
+     51
+    ],
+    "values": [
+     "0x00001008",
+     "0x00004040"
+    ],
+    "sha256": "45a59ceab5c64acfc40d0895d4736285287bc0fbea317e9ed0370d1c4ac72e09"
+   },
+   {
+    "far": "0x00400A23",
+    "words": [
+     50,
+     51
+    ],
+    "values": [
+     "0x000009c4",
+     "0x0000f573"
+    ],
+    "sha256": "34383404ced0cae34e1a52f7c60c71211c0341108513042209a97bbb68e06703"
+   }
+  ],
+  "words_per_touched_frame": [
+   [
+    50,
+    51
+   ]
+  ],
+  "intended_far_sha256": "15cb05e68adbff6c962053bb5220c33d278c09a793ce12bc4017f37269a5bbe7"
+ },
+ "F4": {
+  "what": "the two staging copies of the failing frame",
+  "captures": {
+   "run1": {
+    "plmark": "18cd7785cbf1b1fd",
+    "words": 101,
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+    "equals_base_at_intended_far": true,
+    "equals_candidate_at_intended_far": false
+   },
+   "run2": {
+    "plmark": "18cd7cb81a291de5",
+    "words": 101,
+    "nonzero_words": 0,
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+    "equals_base_at_intended_far": true,
+    "equals_candidate_at_intended_far": false
+   }
+  },
+  "identical_across_runs": true,
+  "distinct_plmarks": true
+ },
+ "F5": {
+  "what": "the specified fault as the records show it, beside the passing run's latency",
+  "same_status_word_in_both_runs": true,
+  "fault_status_decoded": {
+   "raw": 67371138,
+   "busy": false,
+   "fault": true,
+   "configuration_valid": false,
+   "scorer_busy": false,
+   "scorer_done": false,
+   "scorer_armed": false,
+   "pass1_complete": false,
+   "recovery_required": true,
+   "expect_env": 0,
+   "rb_frame_ready": false,
+   "env_committed": 0,
+   "rb_frames_ok": 0,
+   "rb_latency_words": 1,
+   "rb_latency_valid": true,
+   "reserved": 0
+  },
+  "fault_code_name": "readback",
+  "codes_that_did_not_fire": {
+   "12": "rbsync",
+   "10": "bytecount"
+  },
+  "o5_readback_latency": [
+   {
+    "envelope": 0,
+    "valid": true,
+    "words": 1
+   },
+   {
+    "envelope": 1,
+    "valid": true,
+    "words": 1
+   },
+   {
+    "envelope": 2,
+    "valid": true,
+    "words": 1
+   }
+  ],
+  "latency_matches_passing_run": true,
+  "runs": {
+   "run1": {
+    "step": "known_answer",
+    "state": "stopped",
+    "stop_reason": "AxiRefusal: the engine faulted during pass 2 of envelope 0: fault_code 8 (readback)",
+    "commands": 353,
+    "last_status_word": "0x04040082",
+    "last_status_decoded": {
+     "raw": 67371138,
+     "busy": false,
+     "fault": true,
+     "configuration_valid": false,
+     "scorer_busy": false,
+     "scorer_done": false,
+     "scorer_armed": false,
+     "pass1_complete": false,
+     "recovery_required": true,
+     "expect_env": 0,
+     "rb_frame_ready": false,
+     "env_committed": 0,
+     "rb_frames_ok": 0,
+     "rb_latency_words": 1,
+     "rb_latency_valid": true,
+     "reserved": 0
+    },
+    "last_fault_word": "0x00000008",
+    "no_op_transaction_elapsed_s": 27.126,
+    "wall_s": 250.5,
+    "setup_steps": [
+     {
+      "step": "FCLK0 = 50 MHz",
+      "elapsed_s": 0.6,
+      "returncode": 0
+     },
+     {
+      "step": "fpga loadb of the published carrier, onto an empty PL",
+      "elapsed_s": 199.3,
+      "returncode": 0
+     }
+    ]
+   },
+   "run2": {
+    "step": "known_answer",
+    "state": "stopped",
+    "stop_reason": "AxiRefusal: the engine faulted during pass 2 of envelope 0: fault_code 8 (readback)",
+    "commands": 353,
+    "last_status_word": "0x04040082",
+    "last_status_decoded": {
+     "raw": 67371138,
+     "busy": false,
+     "fault": true,
+     "configuration_valid": false,
+     "scorer_busy": false,
+     "scorer_done": false,
+     "scorer_armed": false,
+     "pass1_complete": false,
+     "recovery_required": true,
+     "expect_env": 0,
+     "rb_frame_ready": false,
+     "env_committed": 0,
+     "rb_frames_ok": 0,
+     "rb_latency_words": 1,
+     "rb_latency_valid": true,
+     "reserved": 0
+    },
+    "last_fault_word": "0x00000008",
+    "no_op_transaction_elapsed_s": 25.886,
+    "wall_s": 250.4,
+    "setup_steps": [
+     {
+      "step": "FCLK0 = 50 MHz",
+      "elapsed_s": 0.6,
+      "returncode": 0
+     },
+     {
+      "step": "fpga loadb of the published carrier, onto an empty PL",
+      "elapsed_s": 199.3,
+      "returncode": 0
+     }
+    ]
+   }
+  }
+ },
+ "F6": {
+  "what": "displacements whose 101-word window is all zero, within the search radius",
+  "search_radius_words": 2000,
+  "orderings_agree": true,
+  "by_ordering": {
+   "device_configuration_order": {
+    "intended_far_word_offset": 267852,
+    "pre_write_bands": [
+     [
+      -1159,
+      -1061
+     ],
+     [
+      -654,
+      -253
+     ],
+     [
+      -150,
+      555
+     ]
+    ],
+    "post_write_bands": [
+     [
+      -1159,
+      -1061
+     ],
+     [
+      -654,
+      -253
+     ],
+     [
+      -150,
+      -51
+     ],
+     [
+      355,
+      555
+     ]
+    ],
+    "all_zero_windows_in_full_pre_write_stream": 474494,
+    "all_zero_windows_in_full_post_write_stream": 474089
+   },
+   "ascending_far_order": {
+    "intended_far_word_offset": 267852,
+    "pre_write_bands": [
+     [
+      -1159,
+      -1061
+     ],
+     [
+      -654,
+      -253
+     ],
+     [
+      -150,
+      555
+     ]
+    ],
+    "post_write_bands": [
+     [
+      -1159,
+      -1061
+     ],
+     [
+      -654,
+      -253
+     ],
+     [
+      -150,
+      -51
+     ],
+     [
+      355,
+      555
+     ]
+    ],
+    "all_zero_windows_in_full_pre_write_stream": 474494,
+    "all_zero_windows_in_full_post_write_stream": 474089
+   }
+  },
+  "small_displacements_excluded_post_write": true
+ }
+}

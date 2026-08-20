@@ -1,0 +1,12 @@
+analyse_read_side_facts.py/1.0.0: 10 pinned inputs verified
+F1  15 envelope frames, 1 distinct content, all_zero=True, sha=0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9
+F2  no_op writes 'restore' (line 104), restore init 0x0000000000000000, O5 non-blank frames {}, degenerate=True
+F3  touched ['0x00400A20', '0x00400A21', '0x00400A22', '0x00400A23'], words [(50, 51)]
+F4  identical_across_runs=True, distinct_plmarks=True, nonzero=[0, 0]
+F5  status read from the records: ['0x04040082', '0x04040082'] -> readback, latency 1, matches_passing_run=True, fault reg ['0x00000008', '0x00000008']
+    wall [250.5, 250.4] s, of which loadb [199.3, 199.3] s; no-op transaction [27.126, 25.886] s
+F6  orderings_agree=True, small_displacements_excluded=True
+    device_configuration_order: pre [[-1159, -1061], [-654, -253], [-150, 555]] post [[-1159, -1061], [-654, -253], [-150, -51], [355, 555]]
+    ascending_far_order: pre [[-1159, -1061], [-654, -253], [-150, 555]] post [[-1159, -1061], [-654, -253], [-150, -51], [355, 555]]
+    all-zero windows in the full pre-write stream: 474494
+wrote evidence/read_side_facts_2026_08_20/facts.json
