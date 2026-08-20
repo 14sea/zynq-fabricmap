@@ -1,0 +1,2 @@
+UNDISCRIMINATING: The window is all zero and matches 474494 word offsets of the device stream, so it names no address. Bit-swap and word-alignment variants cannot separate anything either: an all-zero window is invariant under both. This cannot distinguish a pass-2 write that never landed from a read that reached a different, also-zero frame.
+  analysis: evidence/read_side_divergence_2026_08_20/analysis_ddr_slot0.json

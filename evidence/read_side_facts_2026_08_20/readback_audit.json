@@ -1,5 +1,5 @@
 {
- "tool": "audit_readback_evidence.py/2.0.2",
+ "tool": "audit_readback_evidence.py/2.1.0",
  "what": "W2 of docs/claimb_read_side_divergence_design.md",
  "criterion": "the expected frame is non-blank AND the returned words equal it exactly AND it is the frame whose FAR was requested",
  "excluded_by_scope": "JTAG captures (probe_jtag_config_read.py, every sweep's far_*.json) are not the engine's read path. They appear only inside the landing derivation, which is their job",
@@ -11,7 +11,8 @@
    "evidence/location_sweep_2026_08_20/fault/record.json",
    "evidence/phase2_2026_08_15/known_answer_record.json",
    "evidence/postfault_r4_replication_2026_08_16/fault_capture/record.json",
-   "evidence/postfault_r4_step2_capture_2026_08_16/record.json"
+   "evidence/postfault_r4_step2_capture_2026_08_16/record.json",
+   "evidence/read_side_divergence_2026_08_20/fault/record.json"
   ],
   "engine_records_discovered": [
    "evidence/known_answer_2026_08_14_erratum006/record.json",
@@ -19,22 +20,35 @@
    "evidence/location_sweep_2026_08_20/fault/record.json",
    "evidence/phase2_2026_08_15/known_answer_record.json",
    "evidence/postfault_r4_replication_2026_08_16/fault_capture/record.json",
-   "evidence/postfault_r4_step2_capture_2026_08_16/record.json"
+   "evidence/postfault_r4_step2_capture_2026_08_16/record.json",
+   "evidence/read_side_divergence_2026_08_20/fault/record.json"
   ],
   "discovery_equals_freeze": true,
   "staging_copies_frozen": [
    "evidence/calibration_noop_2026_08_13_erratum004/stage_dump.json",
+   "evidence/calibration_noop_2026_08_13_erratum004/stage_dump_2.json",
    "evidence/calibration_noop_2026_08_13_erratum005/stage_dump.json",
    "evidence/known_answer_2026_08_14_erratum006/ddr_slot0.json",
    "evidence/location_sweep_2026_08_20/fault/ddr_slot0_shutdown_read.json",
-   "evidence/location_reproduction_2026_08_20/fault/ddr_slot0_shutdown_read.json"
+   "evidence/location_reproduction_2026_08_20/fault/ddr_slot0_shutdown_read.json",
+   "evidence/read_side_divergence_2026_08_20/ddr_slot0.json"
   ],
+  "staging_copies_discovered": [
+   "evidence/calibration_noop_2026_08_13_erratum004/stage_dump.json",
+   "evidence/calibration_noop_2026_08_13_erratum004/stage_dump_2.json",
+   "evidence/calibration_noop_2026_08_13_erratum005/stage_dump.json",
+   "evidence/known_answer_2026_08_14_erratum006/ddr_slot0.json",
+   "evidence/location_reproduction_2026_08_20/fault/ddr_slot0_shutdown_read.json",
+   "evidence/location_sweep_2026_08_20/fault/ddr_slot0_shutdown_read.json",
+   "evidence/read_side_divergence_2026_08_20/ddr_slot0.json"
+  ],
+  "staging_discovery_equals_freeze": true,
   "authority_frozen": [
    "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/phenotype_manifest.json",
    "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/local_map.json",
    "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/carrier.bit"
   ],
-  "pinned_files": 63
+  "pinned_files": 66
  },
  "landing_derivations": {
   "run1": {
@@ -1120,6 +1134,123 @@
     }
    ],
    "nonblank_frames": 0
+  },
+  {
+   "source": "evidence/read_side_divergence_2026_08_20/fault/record.json",
+   "sha256": "ff1eed0d2cca43b43c07b2f05488328b8293b6dba73fed5e27c0ba8cfc4cccc7",
+   "step": "no_op",
+   "state": "passed",
+   "authority_run_dir": "claimb_round1_carrier_2026_08_13_erratum006",
+   "payload": "restore (blank)",
+   "frames": 15,
+   "frame_detail": [
+    {
+     "far": "0x00400A20",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400A21",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400A22",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400A23",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400A80",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400C1A",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400C1B",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400C1C",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400C1D",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400C1E",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400C20",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400C21",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400C22",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400C23",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    },
+    {
+     "far": "0x00400C80",
+     "words": 101,
+     "nonzero_words": 0,
+     "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+     "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
+    }
+   ],
+   "nonblank_frames": 0
   }
  ],
  "staging_copies": [
@@ -1132,7 +1263,26 @@
    "nonzero_words": 101,
    "sha256_of_frame": "c402e1b0f929757eed4e5feb28d722476050dc7c1c1f7dd048998aa9a02b3f22",
    "requested_far": "0x00400A20",
-   "expected_at_requested_far": "no authority for this carrier",
+   "expected_at_requested_far": "no comparable authority for this superseded carrier",
+   "expectation": "none",
+   "landing_source": null,
+   "landing_verified_in_this_instance": false,
+   "landing_derivation": null,
+   "equals_base_at_requested_far": false,
+   "equals_candidate_at_requested_far": false,
+   "verdict": "NONBLANK_NO_AUTHORITY"
+  },
+  {
+   "source": "evidence/calibration_noop_2026_08_13_erratum004/stage_dump_2.json",
+   "sha256": "a76d549bd57edf6f1f8aa4e14d83d82f9b600ac827765279db5625f7b8788443",
+   "era": "erratum-004 carrier",
+   "state_built_by": "calibration_noop_2026_08_13_erratum004",
+   "words": 101,
+   "nonzero_words": 101,
+   "sha256_of_frame": "c402e1b0f929757eed4e5feb28d722476050dc7c1c1f7dd048998aa9a02b3f22",
+   "requested_far": "0x00400A20",
+   "expected_at_requested_far": "no comparable authority for this superseded carrier",
+   "expectation": "none",
    "landing_source": null,
    "landing_verified_in_this_instance": false,
    "landing_derivation": null,
@@ -1149,7 +1299,8 @@
    "nonzero_words": 30,
    "sha256_of_frame": "5ab966910ea4fdeca896231d6cf8f9b57a031175eb5f0c9fa447bb141a7a2e02",
    "requested_far": "0x00400A20",
-   "expected_at_requested_far": "no authority for this carrier",
+   "expected_at_requested_far": "no comparable authority for this superseded carrier",
+   "expectation": "none",
    "landing_source": null,
    "landing_verified_in_this_instance": false,
    "landing_derivation": null,
@@ -1166,7 +1317,8 @@
    "nonzero_words": 0,
    "sha256_of_frame": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
    "requested_far": "0x00400A20",
-   "expected_at_requested_far": "candidate (a post-fault capture)",
+   "expected_at_requested_far": "candidate \u2014 taken after the candidate round faulted",
+   "expectation": "candidate",
    "landing_source": null,
    "landing_verified_in_this_instance": false,
    "landing_derivation": null,
@@ -1183,7 +1335,8 @@
    "nonzero_words": 0,
    "sha256_of_frame": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
    "requested_far": "0x00400A20",
-   "expected_at_requested_far": "candidate (a post-fault capture)",
+   "expected_at_requested_far": "candidate \u2014 taken after the candidate round faulted",
+   "expectation": "candidate",
    "landing_source": "run1",
    "landing_verified_in_this_instance": true,
    "landing_derivation": {
@@ -1389,7 +1542,8 @@
    "nonzero_words": 0,
    "sha256_of_frame": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
    "requested_far": "0x00400A20",
-   "expected_at_requested_far": "candidate (a post-fault capture)",
+   "expected_at_requested_far": "candidate \u2014 taken after the candidate round faulted",
+   "expectation": "candidate",
    "landing_source": "run2",
    "landing_verified_in_this_instance": true,
    "landing_derivation": {
@@ -1585,18 +1739,36 @@
    "equals_base_at_requested_far": true,
    "equals_candidate_at_requested_far": false,
    "verdict": "NONBLANK_EXPECTED_GOT_BLANK"
+  },
+  {
+   "source": "evidence/read_side_divergence_2026_08_20/ddr_slot0.json",
+   "sha256": "8f64f8adf4a66752f227003e89b694627aba7091c26428837cddc8dc821555d6",
+   "era": "erratum-006 carrier",
+   "state_built_by": "read_side_divergence_2026_08_20 (after the no-op verified 15/15)",
+   "words": 101,
+   "nonzero_words": 0,
+   "sha256_of_frame": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+   "requested_far": "0x00400A20",
+   "expected_at_requested_far": "base \u2014 taken after a blank payload was written and verified",
+   "expectation": "base",
+   "landing_source": null,
+   "landing_verified_in_this_instance": false,
+   "landing_derivation": null,
+   "equals_base_at_requested_far": true,
+   "equals_candidate_at_requested_far": false,
+   "verdict": "BLANK_EXPECTED_BLANK_DEGENERATE"
   }
  ],
  "totals": {
-  "engine_transactions": 6,
-  "engine_frames": 90,
+  "engine_transactions": 7,
+  "engine_frames": 105,
   "engine_nonblank_frames": 0,
-  "engine_frames_expected_blank": 90,
-  "staging_copies": 5,
+  "engine_frames_expected_blank": 105,
+  "staging_copies": 7,
   "staging_nonblank_erratum006": 0,
   "landings_verified": 2
  },
  "hits": [],
  "verdict": "NO_NONBLANK_READBACK_IN_THE_FROZEN_COMMITTED_INVENTORY",
- "reading": "Over the frozen inventory \u2014 six engine records, five staging copies and three authority artifacts at the pinned tree \u2014 every frame the carrier's read path handed back on the erratum-006 carrier is blank, and every blank one was expected to be blank. The only non-blank engine-side content is from two superseded carriers: the erratum-004 abort word, and the erratum-005 dump that was bit-exact against the device stream at an address other than the one requested. So F2 is general ACROSS THIS INVENTORY: within it, this frame-data path has never been demonstrated to deliver non-blank configuration data correctly. It is not a claim about runs that were never recorded."
+ "reading": "Over the frozen inventory at the pinned tree \u2014 seven engine records, seven staging copies and three authority artifacts \u2014 every frame the carrier's read path handed back on the erratum-006 carrier is blank, and every one of those ENGINE frames was expected to be blank, because every one of them is a no-op step writing the blank restore payload. The staging copies are NOT all of one kind: three were taken after the candidate round faulted and owed the candidate (they returned blank), one was taken after a no-op verified fifteen blank frames and owed the base (it returned blank, correctly), and three are from superseded carriers with no comparable authority. The only non-blank engine-side content is from those superseded carriers: the erratum-004 abort word, twice, and the erratum-005 dump that was bit-exact against the device stream at an address other than the one requested. So F2 is general ACROSS THIS INVENTORY: within it, this frame-data path has never been demonstrated to deliver non-blank configuration data correctly. It is not a claim about runs that were never recorded."
 }

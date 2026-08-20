@@ -1,0 +1,86 @@
+{
+  "tool": "precheck_fresh_power.py/1.0.1",
+  "checks": [
+    {
+      "check": "devcfg CTRL",
+      "address": "0xf8007000",
+      "expected": "0x4e00e07f",
+      "observed": "0x4e00e07f",
+      "passed": true
+    },
+    {
+      "check": "devcfg INT_STS",
+      "address": "0xf800700c",
+      "expected": "0xa802000b",
+      "observed": "0xa802000b",
+      "passed": true,
+      "pcfg_done": 0
+    },
+    {
+      "check": "devcfg STATUS",
+      "address": "0xf8007014",
+      "expected": "0x40000a30",
+      "observed": "0x40000a30",
+      "passed": true
+    },
+    {
+      "check": "SLCR FPGA0_CLK_CTRL",
+      "address": "0xf8000170",
+      "expected": "0x00400800",
+      "observed": "0x00400800",
+      "passed": true
+    },
+    {
+      "check": "plmark undefined",
+      "expected": "not defined",
+      "passed": true
+    }
+  ],
+  "replies": [
+    {
+      "command": "echo",
+      "byte_count": 14,
+      "sha256": "a21da71745c48d6734aa6d75efdbcdb5099b4a99daa14f91dcec8db92e943144",
+      "base64": "ZWNobw0KDQpaeW5xPiA=",
+      "text": "echo\r\n\r\nZynq> "
+    },
+    {
+      "command": "md.l 0xf8007000 0x1",
+      "byte_count": 80,
+      "sha256": "c60cbd53216f95fbe5a36da477796bd7b4a54d369214f88a1ea10aa14a7289f4",
+      "base64": "bWQubCAweGY4MDA3MDAwIDB4MQ0KZjgwMDcwMDA6IDRlMDBlMDdmICAgICAgICAgICAgICAgICAgICAgICAgICAgICAuLi5ODQpaeW5xPiA=",
+      "text": "md.l 0xf8007000 0x1\r\nf8007000: 4e00e07f                             ...N\r\nZynq> "
+    },
+    {
+      "command": "md.l 0xf800700c 0x1",
+      "byte_count": 80,
+      "sha256": "a99aa77a2f00c0c7ebf71637ff2dd8026f1e2e242942c579c3c2a0384960fbfb",
+      "base64": "bWQubCAweGY4MDA3MDBjIDB4MQ0KZjgwMDcwMGM6IGE4MDIwMDBiICAgICAgICAgICAgICAgICAgICAgICAgICAgICAuLi4uDQpaeW5xPiA=",
+      "text": "md.l 0xf800700c 0x1\r\nf800700c: a802000b                             ....\r\nZynq> "
+    },
+    {
+      "command": "md.l 0xf8007014 0x1",
+      "byte_count": 80,
+      "sha256": "e58918f611f0c083b87f0408d4d82b980dbba2c5c8685400e337412cca43e22c",
+      "base64": "bWQubCAweGY4MDA3MDE0IDB4MQ0KZjgwMDcwMTQ6IDQwMDAwYTMwICAgICAgICAgICAgICAgICAgICAgICAgICAgICAwLi5ADQpaeW5xPiA=",
+      "text": "md.l 0xf8007014 0x1\r\nf8007014: 40000a30                             0..@\r\nZynq> "
+    },
+    {
+      "command": "md.l 0xf8000170 0x1",
+      "byte_count": 80,
+      "sha256": "50c91ddad8ccb23c838198f0459d49791c2d0d92e5b2722d134f0c8e66b6942a",
+      "base64": "bWQubCAweGY4MDAwMTcwIDB4MQ0KZjgwMDAxNzA6IDAwNDAwODAwICAgICAgICAgICAgICAgICAgICAgICAgICAgICAuLkAuDQpaeW5xPiA=",
+      "text": "md.l 0xf8000170 0x1\r\nf8000170: 00400800                             ..@.\r\nZynq> "
+    },
+    {
+      "command": "printenv plmark",
+      "byte_count": 55,
+      "sha256": "914cb504fef81fc5e9050859fa9b7d3c34d8e537f6a396e0394fbd6ee14ab7d7",
+      "base64": "cHJpbnRlbnYgcGxtYXJrDQojIyBFcnJvcjogInBsbWFyayIgbm90IGRlZmluZWQNClp5bnE+IA==",
+      "text": "printenv plmark\r\n## Error: \"plmark\" not defined\r\nZynq> "
+    }
+  ],
+  "problems": [],
+  "passed": true,
+  "port": "/dev/ebaz-uart"
+}

@@ -64,30 +64,38 @@ implemented in this pass.
 candidate word for word, the same frame sha256 across runs. It remains a replication, not an
 independent method: same host, cable, tool bytes, carrier and board.
 
-**The read-side question has four live hypotheses** — H-STALE, H-PAD, H-ADDR, H-IDLE. Two died
-on committed evidence, not on the board: H-REF, because a correct read of the candidate could
-not have produced an all-zero staging window; and H-LAT as stated, because every displacement
-of at most 50 words is excluded post-write. H-ADDR survives only in a local form inside the
-searched bands; an arbitrary distant misaddress is unconstrained.
+**The read-side question still has four live hypotheses** — H-STALE, H-PAD, H-ADDR, H-IDLE.
+The no-reload experiment later reached B1: after the specified fault, a diagnostic no-op passed
+15/15 in the same boot without a reload. That is only the pre-registered conditional negative
+for strict H-STALE because this instance's starting content was deliberately not observed;
+H-PAD, H-ADDR and H-IDLE remain inseparable. Two earlier hypotheses died on committed evidence,
+not on the board: H-REF, because a correct read of the candidate could not have produced an
+all-zero staging window; and H-LAT as stated, because every displacement of at most 50 words is
+excluded post-write. H-ADDR survives only in a local form inside the searched bands; an
+arbitrary distant misaddress is unconstrained.
 
 **W2 makes F2 general across the frozen inventory.** Over a closed, digest-pinned population —
-six engine records, five staging copies, three authority artifacts, with discovery required to
-reproduce the frozen list exactly in both directions — ninety frames came back on the
-erratum-006 carrier, every one blank, every one expected to be blank. Within that inventory
-this frame-data path has never been demonstrated to deliver non-blank configuration data
-correctly. The verdict is deliberately `NO_NONBLANK_READBACK_IN_THE_FROZEN_COMMITTED_INVENTORY`
-and not "ever": "ever" would quantify over runs nobody recorded.
+seven engine records, seven staging copies and three authority artifacts, with discovery of
+both engine records and staging copies required to reproduce their frozen lists exactly in both
+directions — 105 engine frames came back on the erratum-006 carrier, every one blank and every
+one expected to be blank. The staging copies are not one class: three candidate-fault copies
+owed non-blank candidate data and returned blank, one post-no-op copy owed blank base data and
+returned it, and three copies come from superseded carriers without comparable authority.
+Within that inventory this frame-data path has never been demonstrated to deliver non-blank
+configuration data correctly. The verdict is deliberately
+`NO_NONBLANK_READBACK_IN_THE_FROZEN_COMMITTED_INVENTORY` and not "ever": "ever" would quantify
+over runs nobody recorded.
 
-**One fork is probeable with the existing carrier and the rest are not.** A single no-op
-transaction into the already-faulted carrier, same boot and no reload, identifies strict
-H-STALE positively — its staged frame would be the candidate, which would also be the first
-non-blank frame this path has ever returned. Its negative branch is **conditional**: the run
-deliberately performs no R4/JTAG read between the fault and the second transaction, so it never
-observes that *that* instance held the candidate beforehand. Separating H-PAD from H-ADDR from
-H-IDLE needs internal read-path instrumentation or a carrier with distinctive non-blank targets;
+**That probe was built and run once.** The reviewed non-scoring entrypoint reused
+`board_claimb_known_answer._write("restore", …)` and performed one no-reload transaction in the
+specified post-fault state. It reached B1: 15/15 frames verified, then the host stopped on the
+sticky `recovery_required`. The negative remains **conditional** because the run deliberately
+performed no R4/JTAG read between the fault and the second transaction, so it never observed
+that *that* instance held the candidate beforehand. Separating H-PAD from H-ADDR from H-IDLE
+still needs internal read-path instrumentation or a carrier with distinctive non-blank targets;
 PCAP/devcfg answers independent-method and systematic-error risk and does **not** separate that
-internal fork. It requires one new non-scoring, no-reload entrypoint, which does not exist, must
-reuse `board_claimb_known_answer._write("restore", …)`, and is not authorised.
+internal fork. The committed execution record and its bounded reading are in
+`evidence/read_side_divergence_2026_08_20/`.
 
 **Claim B still has zero data points.** The preregistration is still DRAFT, §6's budget is
 unfrozen and §10's freeze has never been performed. Nothing in this line of work is a Claim B

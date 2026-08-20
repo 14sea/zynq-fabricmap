@@ -58,28 +58,56 @@ ENGINE_RECORDS = (
     "evidence/phase2_2026_08_15/known_answer_record.json",
     "evidence/postfault_r4_replication_2026_08_16/fault_capture/record.json",
     "evidence/postfault_r4_step2_capture_2026_08_16/record.json",
+    "evidence/read_side_divergence_2026_08_20/fault/record.json",
 )
 
-# Every staging copy, with the era whose authority applies and the state it was taken from.
-# `landing_source` is the run whose step-4 acquisition can DERIVE whether the candidate was in
-# place — None where no such acquisition exists in that instance, which is a fact about the
-# instance and not a reason to assume the answer.
+# Every staging copy, with what a CORRECT readback owed at the requested FAR **in that
+# instance**. 1.0.1 asserted that all of them were post-candidate-fault; that generalisation
+# became false with the 2026-08-20 read-side run, whose copy was taken after a no-op verified
+# fifteen blank frames, so a correct read owed BLANK there. The expectation is per entry:
+#
+#   "candidate"  the copy was taken after the candidate round faulted
+#   "base"       the copy was taken after a blank (restore) payload was written and verified
+#   "none"       a superseded carrier, for which this repository holds no comparable authority
+#
+# `landing_source` names the run whose step-4 acquisition can DERIVE whether the candidate was
+# in place. It is None where no such acquisition exists in that instance — a fact about the
+# instance, not permission to assume the answer.
 STAGING = {
     "evidence/calibration_noop_2026_08_13_erratum004/stage_dump.json":
         {"era": "erratum-004 carrier", "pointer": "dump/words",
-         "built_by": "calibration_noop_2026_08_13_erratum004", "landing_source": None},
+         "built_by": "calibration_noop_2026_08_13_erratum004",
+         "expected": "none", "landing_source": None},
+    # The same window read a second time with the reply kept whole; byte-identical to the
+    # first. It is a staging copy, and it was MISSING from the 1.0.1 inventory — which is
+    # exactly what the two-way closure guard now makes impossible to repeat.
+    "evidence/calibration_noop_2026_08_13_erratum004/stage_dump_2.json":
+        {"era": "erratum-004 carrier", "pointer": "dump/words",
+         "built_by": "calibration_noop_2026_08_13_erratum004",
+         "expected": "none", "landing_source": None},
     "evidence/calibration_noop_2026_08_13_erratum005/stage_dump.json":
         {"era": "erratum-005 carrier", "pointer": "dump/words",
-         "built_by": "calibration_noop_2026_08_13_erratum005", "landing_source": None},
+         "built_by": "calibration_noop_2026_08_13_erratum005",
+         "expected": "none", "landing_source": None},
     "evidence/known_answer_2026_08_14_erratum006/ddr_slot0.json":
         {"era": "erratum-006 carrier", "pointer": "words",
-         "built_by": "known_answer_2026_08_14_erratum006", "landing_source": None},
+         "built_by": "known_answer_2026_08_14_erratum006",
+         "expected": "candidate", "landing_source": None},
     "evidence/location_sweep_2026_08_20/fault/ddr_slot0_shutdown_read.json":
         {"era": "erratum-006 carrier", "pointer": "words",
-         "built_by": "location_sweep_2026_08_20", "landing_source": "run1"},
+         "built_by": "location_sweep_2026_08_20",
+         "expected": "candidate", "landing_source": "run1"},
     "evidence/location_reproduction_2026_08_20/fault/ddr_slot0_shutdown_read.json":
         {"era": "erratum-006 carrier", "pointer": "words",
-         "built_by": "location_reproduction_2026_08_20", "landing_source": "run2"},
+         "built_by": "location_reproduction_2026_08_20",
+         "expected": "candidate", "landing_source": "run2"},
+    # NOT a candidate-fault staging copy. Taken after the diagnostic no-op verified fifteen
+    # blank frames, so a correct read owed the BASE at the requested FAR. Classifying it with
+    # the other three would read as a fourth failing readback, which it is not.
+    "evidence/read_side_divergence_2026_08_20/ddr_slot0.json":
+        {"era": "erratum-006 carrier", "pointer": "words",
+         "built_by": "read_side_divergence_2026_08_20 (after the no-op verified 15/15)",
+         "expected": "base", "landing_source": None},
 }
 
 AUTHORITY = (
@@ -293,6 +321,33 @@ def frame_from_capture(root: Path, run_dir: str, far: int) -> tuple[list[int], d
     return words, {"capture": relative, "capture_sha256": actual, "frame_sha256": digest}
 
 
+def discover_staging_copies(root: Path) -> list[str]:
+    """Every committed document holding a 101-word staging window.
+
+    Deliberately shape-based rather than name-based: `stage_dump.json`, `stage_dump_2.json`
+    and `ddr_slot0*.json` are three naming conventions for the same artifact, and a fourth
+    would otherwise slip past — as `stage_dump_2.json` did. JTAG captures do not match; they
+    carry their words under `frames[far]`, not at the top level or under `dump`.
+    """
+    out = []
+    for path in sorted((root / "evidence").rglob("*.json")):
+        try:
+            document = json.loads(path.read_text("utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            continue
+        if not isinstance(document, dict):
+            continue
+        for pointer in ("words", "dump/words"):
+            try:
+                node = at(document, pointer)
+            except (KeyError, TypeError):
+                continue
+            if isinstance(node, list) and len(node) == FRAME_WORDS:
+                out.append(str(path.relative_to(root)))
+                break
+    return out
+
+
 def candidate_frame_from_capture(root: Path, run_dir: str) -> tuple[list[int], dict]:
     """The intended FAR's frame — the one the whole location question is about."""
     return frame_from_capture(root, run_dir, INTENDED_FAR)
@@ -474,4 +529,16 @@ PINNED.update({
         "eb02697ba247626cd6bd8b964e6cb6cb4e71f24d9156d631da976f76dc33b50a",
     "evidence/location_reproduction_2026_08_20/step4_sweep/far_0040139b.json":
         "2dc08f5275f2c66bcce391cc93f14925a1c7052ec23fd7ab237648dcf44ff7d5",
+})
+
+# Added when the 2026-08-20 read-side run extended both populations: the seventh engine
+# record, its staging copy, and the erratum-004 second dump the 1.0.1 inventory had
+# omitted. Every one of them is now inside the two-way closure guard.
+PINNED.update({
+    "evidence/calibration_noop_2026_08_13_erratum004/stage_dump_2.json":
+        "a76d549bd57edf6f1f8aa4e14d83d82f9b600ac827765279db5625f7b8788443",
+    "evidence/read_side_divergence_2026_08_20/fault/record.json":
+        "ff1eed0d2cca43b43c07b2f05488328b8293b6dba73fed5e27c0ba8cfc4cccc7",
+    "evidence/read_side_divergence_2026_08_20/ddr_slot0.json":
+        "8f64f8adf4a66752f227003e89b694627aba7091c26428837cddc8dc821555d6",
 })

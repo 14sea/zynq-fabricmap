@@ -1,4 +1,4 @@
-audit_readback_evidence.py/2.0.2: 63 pinned files, discovery == freeze: True
+audit_readback_evidence.py/2.1.0: 66 pinned files, discovery == freeze: True
   landing run1: verified=True (101/101 words, 16/16 controls, 16/16 re-derived, one plmark=True)
   landing run2: verified=True (101/101 words, 16/16 controls, 16/16 re-derived, one plmark=True)
   engine  evidence/known_answer_2026_08_14_erratum006/record.json
@@ -13,7 +13,11 @@ audit_readback_evidence.py/2.0.2: 63 pinned files, discovery == freeze: True
           authority=claimb_round1_carrier_2026_08_13_erratum006 step=no_op frames=15 non-blank=0
   engine  evidence/postfault_r4_step2_capture_2026_08_16/record.json
           authority=claimb_round1_carrier_2026_08_13_erratum006 step=no_op frames=15 non-blank=0
+  engine  evidence/read_side_divergence_2026_08_20/fault/record.json
+          authority=claimb_round1_carrier_2026_08_13_erratum006 step=no_op frames=15 non-blank=0
   staging evidence/calibration_noop_2026_08_13_erratum004/stage_dump.json
+          erratum-004 carrier  nonzero=101/101 landing=False NONBLANK_NO_AUTHORITY
+  staging evidence/calibration_noop_2026_08_13_erratum004/stage_dump_2.json
           erratum-004 carrier  nonzero=101/101 landing=False NONBLANK_NO_AUTHORITY
   staging evidence/calibration_noop_2026_08_13_erratum005/stage_dump.json
           erratum-005 carrier  nonzero= 30/101 landing=False NONBLANK_NO_AUTHORITY
@@ -23,6 +27,8 @@ audit_readback_evidence.py/2.0.2: 63 pinned files, discovery == freeze: True
           erratum-006 carrier  nonzero=  0/101 landing=True NONBLANK_EXPECTED_GOT_BLANK
   staging evidence/location_reproduction_2026_08_20/fault/ddr_slot0_shutdown_read.json
           erratum-006 carrier  nonzero=  0/101 landing=True NONBLANK_EXPECTED_GOT_BLANK
-  totals: {'engine_transactions': 6, 'engine_frames': 90, 'engine_nonblank_frames': 0, 'engine_frames_expected_blank': 90, 'staging_copies': 5, 'staging_nonblank_erratum006': 0, 'landings_verified': 2}
+  staging evidence/read_side_divergence_2026_08_20/ddr_slot0.json
+          erratum-006 carrier  nonzero=  0/101 landing=False BLANK_EXPECTED_BLANK_DEGENERATE
+  totals: {'engine_transactions': 7, 'engine_frames': 105, 'engine_nonblank_frames': 0, 'engine_frames_expected_blank': 105, 'staging_copies': 7, 'staging_nonblank_erratum006': 0, 'landings_verified': 2}
   VERDICT NO_NONBLANK_READBACK_IN_THE_FROZEN_COMMITTED_INVENTORY
 wrote evidence/read_side_facts_2026_08_20/readback_audit.json

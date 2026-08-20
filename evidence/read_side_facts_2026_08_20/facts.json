@@ -5,6 +5,7 @@
   "data/prjxray/zynq7/xc7z010/tilegrid.json": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee",
   "data/prjxray/zynq7/xc7z010clg400-1/part.yaml": "43a136f26603c51bd97e9489d223bbc80f278fcc234225ed9fde404402f22683",
   "evidence/calibration_noop_2026_08_13_erratum004/stage_dump.json": "8cfb37e8a4346fcbb25bbcb6f037998471d5abb09895c6c76d9de487aae836e0",
+  "evidence/calibration_noop_2026_08_13_erratum004/stage_dump_2.json": "a76d549bd57edf6f1f8aa4e14d83d82f9b600ac827765279db5625f7b8788443",
   "evidence/calibration_noop_2026_08_13_erratum005/stage_dump.json": "1f0fc925621fbea5c8089b8189282e4f1a90e21eed34af8c80a77d57dab6ce70",
   "evidence/known_answer_2026_08_14_erratum006/ddr_slot0.json": "53a261ab43f65f357efeeb98019601804372a528e592c02083255eb998bdefb5",
   "evidence/known_answer_2026_08_14_erratum006/record.json": "e944b85d572cb3a3cec7efe2326a4bd0f1d1b5c5df5c5ecf18ea4b9b73fe63c9",
@@ -53,6 +54,8 @@
   "evidence/phase2_2026_08_15/known_answer_record.json": "2b7f72e4110ed8a07586e5f308dc4982e07aefba11518f52b710d258f7cab23c",
   "evidence/postfault_r4_replication_2026_08_16/fault_capture/record.json": "50385fb850545b1e03d135654914518e81ced0cafc4406e26bd0724dd7155efa",
   "evidence/postfault_r4_step2_capture_2026_08_16/record.json": "82036ac02c0278303539e97c115350ad030145fa39ce1be115da5619c02b74d1",
+  "evidence/read_side_divergence_2026_08_20/ddr_slot0.json": "8f64f8adf4a66752f227003e89b694627aba7091c26428837cddc8dc821555d6",
+  "evidence/read_side_divergence_2026_08_20/fault/record.json": "ff1eed0d2cca43b43c07b2f05488328b8293b6dba73fed5e27c0ba8cfc4cccc7",
   "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/carrier.bit": "8c3369e8e4755da5aceeb7844690d5e132b2e65647004c0a46c0e868e34f0b8a",
   "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/local_map.json": "56f2b9e81e180eee2540286e4fde797e0d4820a49d10624c10844c38e99d87cb",
   "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/phenotype_manifest.json": "e45f466d082ccd6f227e6f9be4ce75a4e98c4caa708808c09a77ed32331c10ef",
@@ -67,7 +70,7 @@
   "scripts/frame_ecc.py": "e595c8e0467fd46de90d6f526792cedf09a4eafa1599b2c2c04a3bbcbb78a646"
  },
  "pinning": {
-  "pinned_files": 63,
+  "pinned_files": 66,
   "self_exempt": [
    "scripts/read_side_evidence.py",
    "scripts/analyse_read_side_facts.py",

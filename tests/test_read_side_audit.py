@@ -113,6 +113,43 @@ class PopulationTests(unittest.TestCase):
             rse.check_population(short, rse.ENGINE_RECORDS, "engine record")
         self.assertIn(rse.ENGINE_RECORDS[-1], str(stop.exception))
 
+    def test_the_staging_discovery_equals_the_freeze_in_the_real_tree(self) -> None:
+        discovered = rse.discover_staging_copies(REPO_ROOT)
+        self.assertEqual(sorted(discovered), sorted(rse.STAGING))
+
+    def test_one_staging_copy_too_many_refuses(self) -> None:
+        extra = list(rse.STAGING) + ["evidence/somewhere/ddr_slot0.json"]
+        with self.assertRaises(rse.DerivationStop) as stop:
+            rse.check_population(extra, tuple(rse.STAGING), "staging copy")
+        self.assertIn("somewhere/ddr_slot0.json", str(stop.exception))
+
+    def test_one_staging_copy_too_few_refuses(self) -> None:
+        short = list(rse.STAGING)[:-1]
+        with self.assertRaises(rse.DerivationStop) as stop:
+            rse.check_population(short, tuple(rse.STAGING), "staging copy")
+        self.assertIn(list(rse.STAGING)[-1], str(stop.exception))
+
+    def test_an_unlisted_staging_copy_on_disk_would_be_caught(self) -> None:
+        """The scan is shape-based, so a new naming convention cannot slip past either.
+
+        `stage_dump_2.json` DID slip past the 1.0.1 inventory, which is why this exists.
+        """
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            root = build_root(Path(tmp))
+            stray = root / "evidence/pretend_run/some_other_name.json"
+            stray.parent.mkdir(parents=True, exist_ok=True)
+            stray.write_text(json.dumps({"words": ["0x00000000"] * rse.FRAME_WORDS}))
+            discovered = rse.discover_staging_copies(root)
+            self.assertIn("evidence/pretend_run/some_other_name.json", discovered)
+            with self.assertRaises(rse.DerivationStop):
+                rse.check_population(discovered, tuple(rse.STAGING), "staging copy")
+
+    def test_a_jtag_capture_is_not_mistaken_for_a_staging_copy(self) -> None:
+        """JTAG captures carry their words under frames[far]; they are the other path."""
+        discovered = rse.discover_staging_copies(REPO_ROOT)
+        self.assertEqual([p for p in discovered if "far_" in p], [])
+
     def test_a_new_engine_record_would_be_caught(self) -> None:
         """The scan is real: a seventh record on disk breaks the closed population."""
         import tempfile
@@ -126,6 +163,32 @@ class PopulationTests(unittest.TestCase):
             discovered = rse.discover_engine_records(root)
             with self.assertRaises(rse.DerivationStop):
                 rse.check_population(discovered, rse.ENGINE_RECORDS, "engine record")
+
+
+class StagingExpectationTests(unittest.TestCase):
+    """What a correct readback owed is per instance, and blank-expecting-blank must not be
+    filed with the three that owed the candidate."""
+
+    def test_every_staging_entry_declares_what_was_owed(self) -> None:
+        for relative, meta in rse.STAGING.items():
+            self.assertIn(meta["expected"], ("candidate", "base", "none"), relative)
+
+    def test_the_read_side_copy_owed_the_base_not_the_candidate(self) -> None:
+        meta = rse.STAGING["evidence/read_side_divergence_2026_08_20/ddr_slot0.json"]
+        self.assertEqual(meta["expected"], "base")
+        self.assertIsNone(meta["landing_source"], "it is not a landing observation")
+
+    def test_the_three_candidate_fault_copies_still_owe_the_candidate(self) -> None:
+        owed = [r for r, m in rse.STAGING.items() if m["expected"] == "candidate"]
+        self.assertEqual(sorted(owed), sorted([
+            "evidence/known_answer_2026_08_14_erratum006/ddr_slot0.json",
+            "evidence/location_reproduction_2026_08_20/fault/ddr_slot0_shutdown_read.json",
+            "evidence/location_sweep_2026_08_20/fault/ddr_slot0_shutdown_read.json"]))
+
+    def test_the_audit_no_longer_generalises_about_all_staging(self) -> None:
+        source = (REPO_ROOT / "scripts/audit_readback_evidence.py").read_text("utf-8")
+        self.assertNotIn("Every staging copy below was taken AFTER", source)
+        self.assertNotIn("every blank one was expected to be blank", source)
 
 
 class LandingTests(unittest.TestCase):

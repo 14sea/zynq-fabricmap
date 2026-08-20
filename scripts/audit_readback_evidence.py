@@ -10,10 +10,10 @@ criterion is deliberately narrow, and all three parts must hold at once:
     the expected frame is non-blank  AND  the returned words equal it exactly
     AND  it is the frame whose FAR was requested.
 
-**The population is closed, not discovered.** `read_side_evidence.py` freezes six engine
-records, five staging copies and three authority artifacts by digest. Discovery still runs —
-it is what would notice a seventh record — but its result must equal the frozen list exactly,
-in both directions, or this tool refuses. A verdict with "ever" in it is only as good as the
+**The population is closed, not discovered.** `read_side_evidence.py` freezes seven engine
+records, seven staging copies and three authority artifacts by digest. Discovery still runs
+for both engine records and staging copies, and each result must equal its frozen list exactly
+in both directions or this tool refuses. A verdict with "ever" in it is only as good as the
 inventory it quantifies over, and that inventory is the committed evidence at the pinned tree,
 which is what the verdict now says.
 
@@ -23,6 +23,13 @@ plmark chain, the frozen instrument digest, the verdict, its sixteen controls �
 reopened and compared against the frozen `carrier.bit`, because `expected == observed` in a
 verdict is only the acquisition tool agreeing with itself — and the capture's 101 words against
 the re-derived candidate.
+
+**And no staging copy is assumed to be a candidate-fault copy.** Until 2026-08-20 every one of
+them was, and 2.0.2 said so in general terms. The read-side run broke that: its copy was taken
+after a diagnostic no-op verified fifteen BLANK frames, so a correct read owed the BASE there,
+and filing it with the candidate-fault copies would read as a fourth failing readback. What a
+correct readback owed is now per-entry data in `read_side_evidence.STAGING`, and the classifier
+is given that instead of a rule about all of them.
 
 Scope. This audits the ENGINE's frame-data path only. JTAG captures
 (`probe_jtag_config_read.py`, every sweep's `far_*.json`) are excluded by definition — they are
@@ -43,7 +50,7 @@ sys.path.insert(0, str(REPO / "scripts"))
 import analyse_ddr_capture as add  # noqa: E402
 import read_side_evidence as rse  # noqa: E402
 
-TOOL_VERSION = "audit_readback_evidence.py/2.0.2"
+TOOL_VERSION = "audit_readback_evidence.py/2.1.0"
 
 
 def classify(words: list[int], expected: list[int] | None) -> str:
@@ -67,6 +74,8 @@ def audit(root: Path = REPO) -> dict:
     inputs = rse.checked_inputs(root)
     discovered = rse.discover_engine_records(root)
     rse.check_population(discovered, rse.ENGINE_RECORDS, "engine record")
+    discovered_staging = rse.discover_staging_copies(root)
+    rse.check_population(discovered_staging, tuple(rse.STAGING), "staging copy")
 
     manifest = rse.load(root, f"{rse.RUN_DIR}/phenotype_manifest.json")
     local_map = rse.load(root, f"{rse.RUN_DIR}/local_map.json")
@@ -113,21 +122,22 @@ def audit(root: Path = REPO) -> dict:
     for relative, meta in rse.STAGING.items():
         document = rse.load(root, relative)
         words = rse.as_words(rse.at(document, meta["pointer"]))
-        era_has_authority = meta["era"] == "erratum-006 carrier"
         landing = landings.get(meta["landing_source"])
-        # Every staging copy below was taken AFTER the candidate round faulted, so a correct
-        # readback of the requested FAR would have returned the CANDIDATE. Whether the
-        # candidate was actually there is DERIVED, per instance, and is None where that
-        # instance has no acquisition to derive it from.
-        expected = candidate.get(rse.INTENDED_FAR) if era_has_authority else None
+        owed = meta["expected"]
+        expected = {"candidate": candidate.get(rse.INTENDED_FAR),
+                    "base": base.get(rse.INTENDED_FAR),
+                    "none": None}[owed]
         staging.append({
             "source": relative, "sha256": inputs[relative], "era": meta["era"],
             "state_built_by": meta["built_by"], "words": len(words),
             "nonzero_words": sum(1 for w in words if w),
             "sha256_of_frame": rse.frame_sha(words),
             "requested_far": f"0x{rse.INTENDED_FAR:08X}",
-            "expected_at_requested_far": ("candidate (a post-fault capture)" if era_has_authority
-                                          else "no authority for this carrier"),
+            "expected_at_requested_far": {
+                "candidate": "candidate — taken after the candidate round faulted",
+                "base": "base — taken after a blank payload was written and verified",
+                "none": "no comparable authority for this superseded carrier"}[owed],
+            "expectation": owed,
             "landing_source": meta["landing_source"],
             "landing_verified_in_this_instance": bool(landing and landing["landing_verified"]),
             "landing_derivation": landing,
@@ -154,6 +164,9 @@ def audit(root: Path = REPO) -> dict:
             "engine_records_discovered": discovered,
             "discovery_equals_freeze": sorted(discovered) == sorted(rse.ENGINE_RECORDS),
             "staging_copies_frozen": list(rse.STAGING),
+            "staging_copies_discovered": discovered_staging,
+            "staging_discovery_equals_freeze":
+                sorted(discovered_staging) == sorted(rse.STAGING),
             "authority_frozen": list(rse.AUTHORITY),
             "pinned_files": len(rse.PINNED),
         },
@@ -178,15 +191,21 @@ def audit(root: Path = REPO) -> dict:
         "verdict": ("NONBLANK_READBACK_FOUND" if hits
                     else "NO_NONBLANK_READBACK_IN_THE_FROZEN_COMMITTED_INVENTORY"),
         "reading": (
-            "Over the frozen inventory — six engine records, five staging copies and three "
-            "authority artifacts at the pinned tree — every frame the carrier's read path "
-            "handed back on the erratum-006 carrier is blank, and every blank one was "
-            "expected to be blank. The only non-blank engine-side content is from two "
-            "superseded carriers: the erratum-004 abort word, and the erratum-005 dump that "
-            "was bit-exact against the device stream at an address other than the one "
-            "requested. So F2 is general ACROSS THIS INVENTORY: within it, this frame-data "
-            "path has never been demonstrated to deliver non-blank configuration data "
-            "correctly. It is not a claim about runs that were never recorded."
+            "Over the frozen inventory at the pinned tree — seven engine records, seven "
+            "staging copies and three authority artifacts — every frame the carrier's read "
+            "path handed back on the erratum-006 carrier is blank, and every one of those "
+            "ENGINE frames was expected to be blank, because every one of them is a no-op "
+            "step writing the blank restore payload. The staging copies are NOT all of one "
+            "kind: three were taken after the candidate round faulted and owed the candidate "
+            "(they returned blank), one was taken after a no-op verified fifteen blank "
+            "frames and owed the base (it returned blank, correctly), and three are from "
+            "superseded carriers with no comparable authority. The only non-blank "
+            "engine-side content is from those superseded carriers: the erratum-004 abort "
+            "word, twice, and the erratum-005 dump that was bit-exact against the device "
+            "stream at an address other than the one requested. So F2 is general ACROSS "
+            "THIS INVENTORY: within it, this frame-data path has never been demonstrated to "
+            "deliver non-blank configuration data correctly. It is not a claim about runs "
+            "that were never recorded."
             if not hits else
             "At least one non-blank frame came back whole and exact at the FAR requested. "
             "F2 is NOT general and the design has to be rewritten around this record."),

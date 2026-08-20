@@ -8,20 +8,23 @@ python3 scripts/audit_readback_evidence.py  --out evidence/read_side_facts_2026_
 ```
 
 Their console output is committed beside them. `scripts/read_side_evidence.py` holds the
-inventory — **63 pinned files**, a closed list of **six** engine records, **five** staging
+inventory — **66 pinned files**, a closed list of **seven** engine records, **seven** staging
 copies, **three** authority artifacts and the **thirty-two** positive-control captures the
 landing derivation reopens — and enforces it three ways, all fail-closed:
 
 1. every pinned artifact must exist and hash to its pinned value;
-2. discovery still runs, and its result must equal the frozen engine-record list **exactly, in
-   both directions** — an extra record and a missing record are both refusals;
+2. discovery still runs — for engine records **and for staging copies** — and each result must
+   equal its frozen list **exactly, in both directions**; an extra and a missing one are both
+   refusals. The staging scan is shape-based rather than name-based, because `stage_dump.json`,
+   `stage_dump_2.json` and `ddr_slot0*.json` are three naming conventions for one artifact;
 3. every repository module the tools actually loaded must itself be pinned. The three files of
    this deliverable cannot pin themselves and are the declared exemption; any other unpinned
    module is named and refused.
 
-`tests/test_read_side_audit.py` is 26 tests, negative-first with positive real-tree baselines.
+`tests/test_read_side_audit.py` is 35 tests, negative-first with positive real-tree baselines.
 Its adversarial cases cover a drifted digest, a missing input, an unpinned import, a population
-one record too large and one too small, a seventh record appearing on disk, a broken or wholly
+each population one too large and one too small, an unlisted record or staging copy
+appearing on disk under any name, a broken or wholly
 absent plmark chain, a missing positive control, one exact control repeated sixteen times, **a
 control whose expected and observed digests agree with each other but not with `carrier.bit`**,
 **a forged control capture with every digest re-stated including the verdict's**, a capture that
@@ -73,30 +76,47 @@ question is about, not evidence from it.
 ```
 VERDICT  NO_NONBLANK_READBACK_IN_THE_FROZEN_COMMITTED_INVENTORY
 
-discovery == freeze: True
-6 engine transactions on the erratum-006 carrier   90 frames   0 non-blank
-                                                   90 of 90 = BLANK_EXPECTED_BLANK_DEGENERATE
-5 staging copies
-  erratum-004 carrier   101/101 non-zero   the abort status word        landing n/a
-  erratum-005 carrier    30/101 non-zero   bit-exact data, WRONG address landing n/a
-  erratum-006 carrier ×3   0/101 non-zero  NONBLANK_EXPECTED_GOT_BLANK   landing 2 of 3 derived
+discovery == freeze: True   (engine records AND staging copies)
+7 engine transactions on the erratum-006 carrier  105 frames   0 non-blank
+                                                  105 of 105 = BLANK_EXPECTED_BLANK_DEGENERATE
+7 staging copies, and they are NOT all of one kind:
+  erratum-004 carrier ×2  101/101 non-zero  the abort status word, read twice   owed: none
+  erratum-005 carrier      30/101 non-zero  bit-exact data, WRONG address       owed: none
+  erratum-006 carrier ×3     0/101 non-zero NONBLANK_EXPECTED_GOT_BLANK         owed: candidate
+  erratum-006 carrier ×1     0/101 non-zero BLANK_EXPECTED_BLANK_DEGENERATE     owed: base
+landings verified: 2  — the new copy is not a third landing observation
 ```
+
+**Two of those numbers moved for reasons worth stating.** The seventh engine record and the
+seventh staging copy are the 2026-08-20 read-side run
+(`evidence/read_side_divergence_2026_08_20/`). Its staging copy was taken after a diagnostic
+no-op verified fifteen **blank** frames, so a correct read owed the **base** there — it is
+`BLANK_EXPECTED_BLANK_DEGENERATE` and must not be filed with the three candidate-fault copies,
+which would read as a fourth failing readback. And **`stage_dump_2.json` was missing from the
+1.0.1 inventory altogether** — a second read of the erratum-004 window, byte-identical to the
+first. The two-way staging guard is what found it, and is why the scan is by shape.
 
 **The verdict is scoped on purpose.** "EVER" would quantify over runs nobody recorded. What is
 established is a property of the **frozen committed inventory at the pinned tree**, and a test
 pins that wording so it cannot drift back.
 
-The six transactions are `known_answer_2026_08_14_erratum006`, `location_sweep_2026_08_20`,
+The seven transactions are `known_answer_2026_08_14_erratum006`, `location_sweep_2026_08_20`,
 `location_reproduction_2026_08_20`, `phase2_2026_08_15` (VOID instrument, listed for
-completeness and supporting nothing), `postfault_r4_step2_capture_2026_08_16` and
-`postfault_r4_replication_2026_08_16`. Every one of them is a `no_op` step, and the no-op writes
-the blank restore payload — which is why all ninety frames are the degenerate case rather than
-ninety independent confirmations.
+completeness and supporting nothing), `postfault_r4_step2_capture_2026_08_16`,
+`postfault_r4_replication_2026_08_16` and `read_side_divergence_2026_08_20`. Every one of them
+is a `no_op` step, and the no-op writes the blank restore payload — which is why all 105 frames
+are the degenerate case rather than 105 independent confirmations.
 
-**One classification was corrected while writing this.** The three erratum-006 staging copies
-were first labelled "blank, and blank was expected". That is wrong: all three were taken *after*
-the candidate round faulted, so a correct readback of the requested FAR at that moment would
-have returned the **candidate**. Their verdict is `NONBLANK_EXPECTED_GOT_BLANK`.
+**One classification was corrected while writing this.** The three erratum-006 candidate-fault
+staging copies were first labelled "blank, and blank was expected". That is wrong: all three
+were taken *after* the candidate round faulted, so a correct readback of the requested FAR at
+that moment would have returned the **candidate**. Their verdict is
+`NONBLANK_EXPECTED_GOT_BLANK`.
+
+**And the rule behind that correction was itself too general.** 2.0.2 said every staging copy
+was a candidate-fault copy. The 2026-08-20 read-side run broke it. What a correct readback owed
+is now **per-entry data** in `read_side_evidence.STAGING` — `candidate`, `base`, or `none` for a
+superseded carrier — and the classifier is handed that rather than a rule about all of them.
 
 **And `landing_verified_in_this_instance` is now derived, not declared.** For each instance the
 tool reads that instance's own step-4 evidence and requires all seven of:
@@ -122,9 +142,9 @@ not an assumption.
 ## What this establishes, and what it does not
 
 * **F2 generalises across the committed erratum-006 evidence.** This frame-data path has never
-  been demonstrated to deliver non-blank configuration data correctly — not once, in six
-  transactions and ninety frames.
-* It does **not** say the path is broken in a particular way. Ninety blank frames that were
+  been demonstrated to deliver non-blank configuration data correctly — not once, in seven
+  transactions and 105 frames.
+* It does **not** say the path is broken in a particular way. The 105 blank frames that were
   expected to be blank are consistent with a correct readback and with every hypothesis in §5
   of the design. That is the point: they discriminate nothing.
 * It does **not** touch the location result, which stands at two observations, nor Claim B,

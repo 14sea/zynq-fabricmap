@@ -1,0 +1,88 @@
+{
+ "schema": "read_side_divergence_evidence/1",
+ "what": "every file this run produced, hashed. The manifest does not hash itself.",
+ "run": "docs/claimb_read_side_divergence_design.md 7.4 steps 1-4, 2026-08-20",
+ "raw_files_unmodified_since_the_tools_wrote_them": [
+  "precheck.json",
+  "precheck.json.txt",
+  "precheck.stdout.log",
+  "fault/record.json",
+  "fault_capture.log",
+  "noreload_noop/record.json",
+  "noreload_noop.log",
+  "ddr_slot0.json",
+  "ddr_slot0.log"
+ ],
+ "head_at_run_time": "a9b5f1c41491503a8f8526c786619791c12929a7",
+ "head_scripts_tree": "169ac116c8d7514c3daa6dc8354e755653bc0088",
+ "tools": [
+  "precheck_fresh_power.py/1.0.1",
+  "board_claimb_postfault_capture.py/1.0.0",
+  "board_claimb_noreload_noop.py/1.0.1",
+  "probe_ddr_capture.py/1.1.0",
+  "analyse_ddr_capture.py/1.0.0"
+ ],
+ "plmark": "18cd905081d10912",
+ "files": [
+  {
+   "path": "analysis_ddr_slot0.json",
+   "bytes": 2362,
+   "sha256": "19be9f4c92e35d3dfab4bbbc046277d7cdc41b994a2f6b9578bdcded9b4abbc4"
+  },
+  {
+   "path": "analysis_ddr_slot0.log",
+   "bytes": 422,
+   "sha256": "a240d17e7ae55d341b0874e03a6d1d52fbc1d7cfac898e8f037d57d81c3b019e"
+  },
+  {
+   "path": "ddr_slot0.json",
+   "bytes": 6859,
+   "sha256": "8f64f8adf4a66752f227003e89b694627aba7091c26428837cddc8dc821555d6"
+  },
+  {
+   "path": "ddr_slot0.log",
+   "bytes": 149,
+   "sha256": "3c46411766847bd37c720cd42f0b0959dabdfebec884769ad7c115a263cf3edc"
+  },
+  {
+   "path": "fault/record.json",
+   "bytes": 341903,
+   "sha256": "ff1eed0d2cca43b43c07b2f05488328b8293b6dba73fed5e27c0ba8cfc4cccc7"
+  },
+  {
+   "path": "fault_capture.log",
+   "bytes": 171,
+   "sha256": "0818e8b152e6f3dbf5d97659cf3df1f4e9b5e1c569489ddf4f27cbc38e1c9da9"
+  },
+  {
+   "path": "noreload_noop/record.json",
+   "bytes": 161233,
+   "sha256": "2009b1bc38cf55c58380fcd478b8aeaa5e95afe2bf4465830cd70a5f3ee37899"
+  },
+  {
+   "path": "noreload_noop.log",
+   "bytes": 237,
+   "sha256": "4642a9a0a61c97b78b8e35d581b56751bbe7db2fb6b151fee45dec578b0e2ba5"
+  },
+  {
+   "path": "precheck.json",
+   "bytes": 3032,
+   "sha256": "00445d186cdb51dd48a869e42575bf2e2fc6451bc2c9e21af5e88bab7c9ebead"
+  },
+  {
+   "path": "precheck.json.txt",
+   "bytes": 594,
+   "sha256": "121e5d7414a53547269f862d1edc984f44c3a981bf144c86e97253f0c22beb9e"
+  },
+  {
+   "path": "precheck.stdout.log",
+   "bytes": 374,
+   "sha256": "98022d7c8fcee1591d2753453fc794249fbae8745b66ea4a5400c6b705992052"
+  },
+  {
+   "path": "reading.md",
+   "bytes": 7121,
+   "sha256": "22595a9db34514a24d8b5b2337065f30a9244e0de43b13012aadab70fffa45e3"
+  }
+ ]
+}

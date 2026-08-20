@@ -359,6 +359,13 @@ post-restore baseline still remain downstream work.
 > experiment of §7.4 remains a separate ruling, and §7.2's limits are unchanged by its
 > existence.
 
+> **Executed later on 2026-08-20 under that separate ruling.** The final reviewed entrypoint was
+> `board_claimb_noreload_noop.py/1.0.1` (24 tests, 14/14 mutants). The run reached the
+> pre-registered B1 branch: the diagnostic no-op passed 15/15 after the specified fault, which
+> is the table's conditional negative for strict H-STALE and not an unconditional refutation.
+> Evidence and the bounded reading are in `evidence/read_side_divergence_2026_08_20/`. This
+> additive execution note does not turn the design document itself into an authorisation.
+
 ### 7.4 Shape of the run, if it is ever authorised
 
 Not a request. Recorded so the reading table below has something concrete to attach to.
