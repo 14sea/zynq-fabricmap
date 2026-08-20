@@ -83,8 +83,10 @@ L2  locate the write                     ANSWERED ONCE, not closed: WRITE_LANDED
                                          INTENDED_FAR, 16/16 controls (2026-08-20). Needs
                                          independent reproduction under the same identity.
                                          Phase 2's earlier attempt stays VOID
-L3  fix post-fault JTAG readback (R4)    SOLVED, reproduced, and now shown not to degrade
-                                         across a whole device — 5,144 frames, 0 missing
+L3  fix post-fault JTAG readback (R4)    SOLVED and reproduced on 16 controls. Separately,
+                                         the R4 instrument scaled on a fresh load to 5,144
+                                         frames with 0 missing; post-fault step ④ stopped
+                                         legally after 17 reads
 L4  the sweep tool's control semantics   DONE (2.8.0)
 ```
 
@@ -92,7 +94,8 @@ L4  the sweep tool's control semantics   DONE (2.8.0)
 freshly powered board and swept all 5,144 frames with 16/16 controls: the candidate signature
 was **absent** before any transaction, as a negative control requires. Step ③ built the
 specified fault — `STATUS 0x04040082`, `FAULT 0x8`, pass 2 of envelope 0, matching the two
-accepted 2026-08-16 records command for command. Step ④, in that same boot, read `0x00400A20`
+accepted 2026-08-16 records in recorded fault shape and decoded transaction trace. Step ④,
+in that same boot, read `0x00400A20`
 and found the candidate: the frame differs from the base at exactly words 50 and 51
 (`0x0000100e`, `0x00005213`) and both were reproduced, all 101 words equal. A forensic read of
 the fault's own staging copy in PS DDR (`fault/ddr_slot0_shutdown_read.json`) came back **all
@@ -123,8 +126,8 @@ digest with byte-identical child Tcl (`evidence/postfault_r4_replication_2026_08
 ⚠ Two limits stand: the control is **historical, not paired** (no non-R4 prefix was ever run
 on either fault state), and it says **nothing about where the write landed**.
 
-**L4 is done, off the board (2026-08-17).** `docs/claimb_location_sweep_spec.md` specifies the
-location sweep that would answer L1, and it recorded two defects in
+**L4 is done, off the board (2026-08-17).** `docs/claimb_location_sweep_spec.md` specified the
+location sweep that later answered the write-location half of L1 once, and it recorded two defects in
 `scripts/board_signature_search.py` that would have made that sweep meaningless: an intended hit
 skipped the control block entirely and emitted a location verdict with **zero** controls read,
 and `judge_positive_controls()` returned `INSTRUMENT_VALID` on a single matching frame without
@@ -132,11 +135,12 @@ ever looking at the unread ones — one right and fifteen never read passed. Bot
 `2.8.0`: all sixteen controls are read in every case, 16/16 exact is required before **any**
 location verdict including the intended hit, the sweep does not start until they pass, and the
 offline `--judge-only` path enforces the same rule so it cannot re-license what an acquisition
-refused. Four new behavioural mutants hold it (25/25 in the harness). ⚠ As predicted, this
-changed `instrument_digest`, which hashes the script's own bytes: the sweep will run under a new
-identity — control-only `49c8dbce…`, signature-search `a20e56aa…`, both pinned in the tests —
-so **it needs its own fresh-load control**. The four R4 acquisitions are `2.7.1` / `8d28dcf3…`
-and cannot serve as it.
+refused. Four new behavioural mutants hold it (25/25 in the harness). As predicted, this
+changed `instrument_digest`, which hashes the script's own bytes. The 2026-08-20 procedure
+therefore established its own fresh-load control under the new signature-search identity
+`a20e56aa…`; the four older R4 acquisitions (`2.7.1` / `8d28dcf3…`) were not borrowed as its
+control. The separate control-only identity remains `49c8dbce…`, with both identities pinned
+in the tests.
 
 **Agreed order from here** (ruled 2026-08-16, and now largely spent): ~~this README~~, ~~the
 16/16 control semantics with their mutants offline~~, ~~the location sweep~~ — all three are
@@ -148,7 +152,7 @@ read-side mechanism — two experiments, not one. Sparse diagnosis is a branch a
 sparse candidate would prove write and readback consistent with *each other* and could not
 exclude both landing consistently in the wrong place, which is the thing only a location
 sweep answers. No board action is authorised at the time of writing; nothing perishable is
-on the board.
+still needed from the powered post-fault state, so it may be powered down.
 
 ## Claim B round 1 — where it stands
 
@@ -159,9 +163,9 @@ on the board.
 | reachability | **complete** — production report selected 6/6 LUTs, discarded 20 draws, attainable ceiling 353, not exhausted; report committed under `gate_runs/claimb_round1_reachability_2026_08_10/` |
 | carrier authority | erratum-006 `carrier.bit`, `post_route.dcp`, `phenotype_manifest` and bundle committed under `gate_runs/claimb_round1_carrier_2026_08_13_erratum006/`; publication, base and ECO gates accepted |
 | ICAP write/readback path | 3 envelopes × 536 words = 6,432 bytes; the **no-op** is hardware-proven end to end on erratum 006 — all three envelopes commit in pass 1 and read back in pass 2, 15/15 frames equal to the pinned base, latency 1 word and valid on every envelope, `fault=0`, `recovery_required=0`, scorer never armed. Runs through erratum 005 never left envelope 0. All 15 pinned frames are all-zero, so this establishes that the sequence is legal to the device, **not** that it addresses the requested frame |
-| known-answer mutation (§9 step 6) | **still stops** — pass 2 of envelope 0, `fault_code 8` (readback), raised by the engine's FAULT register; 5 committed records now. The restore payload, same path and different content, completes both passes every time. **New as of 2026-08-20: the write is no longer in question.** In the post-fault state the intended frame holds the candidate bit-for-bit (16/16 controls, `evidence/location_sweep_2026_08_20/step4_sweep/`), and the fault's own DDR staging copy of that frame is all zero — so this is a read-side disagreement for that transaction. Step 6 nevertheless does not pass: `restore` and the baseline re-run are downstream of the interlock and never execute |
+| known-answer mutation (§9 step 6) | **still stops** — pass 2 of envelope 0, `fault_code 8` (readback), raised by the engine's FAULT register; 5 committed records now. The restore payload, same path and different content, completes both passes every time. **New as of 2026-08-20: this transaction's write is no longer in question.** In its post-fault state the intended frame holds the candidate bit-for-bit (16/16 controls, `evidence/location_sweep_2026_08_20/step4_sweep/`), and the fault's own DDR staging copy of that frame is all zero — so this is a read-side disagreement for that transaction. Step 6 nevertheless does not pass: `restore` and the baseline re-run are downstream of the interlock and never execute |
 | post-fault JTAG readback | **recoverable**: the R4 startup-cycle prefix restores 16/16 known non-zero control frames from the specified fault state, reproduced on a second fault and a second power cycle. Historical control, not paired; says nothing about write location |
-| location sweep | **specified and implemented, not authorised** — `docs/claimb_location_sweep_spec.md`; the two control-semantics defects are closed in `board_signature_search.py/2.8.0` (16/16 controls before any location verdict), which makes a new instrument identity, so the procedure needs its own fresh-load control |
+| location sweep | **executed once under its own authorisation** — fresh-load step ① read 5,144/5,144 frames with 16/16 controls and found no pre-existing candidate signature; post-fault step ④ read A20 plus all 16 controls, found `WRITE_LANDED_AT_THE_INTENDED_FAR`, and stopped legally after 17 reads. This is one direct location observation, pending independent reproduction under the same frozen identity |
 | candidate gate | judges the **serialized** sequence, under two frame semantics |
 | board identity gate | boardid/role/IDCODE/50 MHz, session- and epoch-scoped, no override |
 | run log | `claimb_run_log` 1.0.0 |
