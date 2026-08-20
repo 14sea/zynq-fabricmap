@@ -1,0 +1,55 @@
+{
+  "tool": "analyse_ddr_capture.py/1.0.0",
+  "what": "what the captured window can and cannot say about its origin",
+  "inputs": {
+    "capture": {
+      "path": "evidence/location_reproduction_2026_08_20/fault/ddr_slot0_shutdown_read.json",
+      "sha256": "3221fa684a452fd7e71f70873c0085a6ea2ea8c2138525c91a7458df9e58e4e0"
+    },
+    "phenotype_manifest": {
+      "path": "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/phenotype_manifest.json",
+      "sha256": "e45f466d082ccd6f227e6f9be4ce75a4e98c4caa708808c09a77ed32331c10ef"
+    },
+    "local_map": {
+      "path": "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/local_map.json",
+      "sha256": "56f2b9e81e180eee2540286e4fde797e0d4820a49d10624c10844c38e99d87cb"
+    },
+    "carrier_bit": {
+      "path": "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/carrier.bit",
+      "sha256": "8c3369e8e4755da5aceeb7844690d5e132b2e65647004c0a46c0e868e34f0b8a"
+    },
+    "reachability_report": {
+      "path": "gate_runs/claimb_round1_reachability_2026_08_10/reachability_report.json",
+      "sha256": "f06bf9074bd0a017663ce9895760f817484590ab8a11afe27e438a75983b4930"
+    }
+  },
+  "requested_far": "0x00400A20",
+  "derived": {
+    "mutable_mask": "0xDA7D5FE96D7FFFDF",
+    "actual_init": "0x50785CE844305DC4",
+    "expected_frame_sha256": "15cb05e68adbff6c962053bb5220c33d278c09a793ce12bc4017f37269a5bbe7",
+    "expected_differs_from_base_in_words": [
+      50,
+      51
+    ]
+  },
+  "captured": {
+    "sha256": "0441772f66559a1c71f4559dc4405438fc9b8383ce1229139257a7fe6d7b8de9",
+    "words": 101,
+    "nonzero_words": 0,
+    "all_zero": true
+  },
+  "comparisons": {
+    "equals_expected_candidate_frame": false,
+    "equals_base_frame_at_requested_far": true
+  },
+  "device_stream": {
+    "source": "the base carrier bitstream; a post-write image cannot be obtained without an independent readback path",
+    "frames": 5144,
+    "words": 519544,
+    "all_zero_frames": 4716,
+    "word_offsets_matching_the_captured_window": 474494
+  },
+  "verdict": "UNDISCRIMINATING",
+  "reading": "The window is all zero and matches 474494 word offsets of the device stream, so it names no address. Bit-swap and word-alignment variants cannot separate anything either: an all-zero window is invariant under both. This cannot distinguish a pass-2 write that never landed from a read that reached a different, also-zero frame."
+}
