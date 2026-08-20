@@ -11,6 +11,10 @@ made step ③ fail on contact.
 
 ## 0. Authorisation state (user ruling, 2026-08-20)
 
+> **SUPERSEDED BY EVENTS, 2026-08-20.** Steps ②–⑤ were authorised later the same day as one
+> conditional chain and were run: `evidence/location_sweep_2026_08_20/reading_steps_2_to_5.md`.
+> The ruling below is kept as the state this document was written under.
+
 **Step ① is authorised. Steps ②–⑤ are not, and are still the request half of this document.**
 The ruling, in its own terms:
 

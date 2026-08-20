@@ -3,12 +3,20 @@
 Specification only. **No board action is authorised by this document**, and none of the five
 steps is authorised by the authorisation of any other.
 
+> **EXECUTED 2026-08-20.** All five steps were separately authorised and run once, in order:
+> `evidence/location_sweep_2026_08_20/`. Step ① read 5,144/5,144 frames with 16/16 controls and
+> found no pre-existing candidate signature; step ④ read `A20` plus the sixteen controls and
+> returned **`WRITE_LANDED_AT_THE_INTENDED_FAR`**, stopping legally after 17 reads. The
+> sentences below that say "still unauthorised" describe the document at the time of writing
+> and are kept as written; they are not the current state.
+
 **Amended 2026-08-17: the target semantics below are implemented.** The two conflicts recorded
 in the next section are closed in `board_signature_search.py/2.8.0` — all sixteen controls are
 read in every case and 16/16 is required before any location verdict, the intended hit included
 — with four new behavioural mutants and the offline judging path changed to match, so
 `--judge-only` cannot re-license what the acquisition refused. The prerequisites and the five
-steps are unchanged, and **still unauthorised**. The recomputed identity is pinned below.
+steps are unchanged, and **still unauthorised** *(as of that amendment — see the execution
+note above)*. The recomputed identity is pinned below.
 
 This is the measurement Phase 2 attempted and could not make. What has changed since is not
 the question but the instrument: R4 restores a post-fault readback, reproduced across two
