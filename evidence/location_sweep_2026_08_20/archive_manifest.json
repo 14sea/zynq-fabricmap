@@ -1,0 +1,67 @@
+{
+  "schema": "phase2_raw_archive",
+  "schema_version": "2.0.0",
+  "schema_note": "the schema name is kept from Phase 2 on purpose: same field names, so the two archives are read by the same eyes and the same scripts. 2.0.0 generalises it beyond Phase 2 and adds the upload/download byte comparison to `verified`, per the 2026-08-20 ruling.",
+  "what": "the 15,432 raw captures of the location sweep's step 1 negative control, held outside the repository",
+  "why": "121 MB of loose captures in a public repository is permanent weight; the index, the verdict, the reading, the four candidate FARs and all sixteen positive controls are committed, and this names the rest",
+  "archive": {
+    "name": "location_sweep_step1_2026_08_20.tar.zst",
+    "sha256": "5f5c57117c23549c121e95ae515baccbf4bf4402ea97b8b82cb377e7dae3f1ab",
+    "bytes": 1168618,
+    "files": 15432,
+    "format": "tar (posix, sorted, mtime 1970-01-01Z, uid/gid 0) + zstd -19",
+    "deterministic": "rebuilt byte-identically from the same inputs, digest compared"
+  },
+  "contents": {
+    "captures": 5144,
+    "child_logs": 5144,
+    "tcl_scripts": 5144
+  },
+  "copies": [
+    "https://github.com/14sea/zynq-fabricmap/releases/download/location-sweep-step1-2026-08-20/location_sweep_step1_2026_08_20.tar.zst",
+    "/home/test/fabricmap_archives/location_sweep_step1_2026_08_20.tar.zst"
+  ],
+  "copies_caveat": "only one local copy was made this time, deliberately: Phase 2's two local copies were on one filesystem and were therefore two files rather than two stores. The off-box copy that makes this archive survive the loss of this machine is the release asset listed first.",
+  "binds_to": {
+    "commit": "010d496",
+    "plmark": "18cd75d67713f2f0",
+    "index_sha256": "e7f03f63573c37daf7412bb7b4c20751ae576cf1e3b837f209b3c8f8a45d89c7",
+    "instrument_digest": "a20e56aae879812d9ed2960ec55ac8b1b3f57710411cf40da0cc32b1855aa95d"
+  },
+  "verified": {
+    "extracted_files": 15432,
+    "validate_index_accepted": 5144,
+    "missing": 0,
+    "differing": 0,
+    "tcl_digests_checked": 5144,
+    "tcl_digests_mismatched": 0,
+    "upload_download_bytes_identical": true,
+    "downloaded_sha256": "5f5c57117c23549c121e95ae515baccbf4bf4402ea97b8b82cb377e7dae3f1ab",
+    "method": "rebuilt and digest-compared for determinism; extracted and every member sha256-compared against the file in the tree; re-extracted under the same relative layout the child argv records, so validate_index() could be re-run in full; every capture-recorded tcl_sha256 compared against the extracted script; then the release asset downloaded back over the network and `cmp`-compared byte for byte against the local archive. Only after all five did the loose files move.",
+    "order": "archive -> verify by extraction -> validate_index -> upload/download byte comparison -> move"
+  },
+  "restore": "tar --use-compress-program='zstd -d' -xf <archive> -C evidence/location_sweep_2026_08_20/step1_negative",
+  "loose_files": {
+    "moved_on": "2026-08-20",
+    "destination": "/home/test/fabricmap_archives/location_sweep_step1_loose_2026_08_20/",
+    "count_at_destination": 15372,
+    "kept_in_repository": {
+      "count": 62,
+      "index_and_verdict": ["index.json", "verdict.json"],
+      "intended_far_and_neighbours": "far_00400a20..a23, each as capture + child log + Tcl (12 files) -- unlike Phase 2's, these four have their Tcl too",
+      "positive_controls": "all sixteen, each as capture + child log + Tcl (48 files), so the frames that license the verdict can be checked without unpacking the archive",
+      "why_the_tcl_too": "a capture and its log can only attest the Tcl digest they record. Without the script itself a reader still has to extract the archive to see the sequence that was actually shifted"
+    },
+    "checked_before_moving": "all 15,432 members were sha256-compared against the extracted archive before anything moved; 0 missing, 0 differing"
+  },
+  "offbox_copy": {
+    "kind": "github release asset",
+    "release": "location-sweep-step1-2026-08-20",
+    "release_page": "https://github.com/14sea/zynq-fabricmap/releases/tag/location-sweep-step1-2026-08-20",
+    "asset_url": "https://github.com/14sea/zynq-fabricmap/releases/download/location-sweep-step1-2026-08-20/location_sweep_step1_2026_08_20.tar.zst",
+    "asset": "location_sweep_step1_2026_08_20.tar.zst",
+    "sha256": "5f5c57117c23549c121e95ae515baccbf4bf4402ea97b8b82cb377e7dae3f1ab",
+    "bytes": 1168618,
+    "note": "release assets do not consume Git LFS bandwidth; the repository already carries 417 MB of LFS against a 1 GB/month allowance"
+  }
+}

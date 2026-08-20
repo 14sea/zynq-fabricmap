@@ -20,5 +20,10 @@ build/
 hd_visual/
 # write_bitstream drops this in whatever directory Vivado was launched from
 clockInfo.txt
+# Evidence is not build noise. `*.log` above is for Vivado, and it was silently swallowing
+# the step 1 load evidence the location sweep's run book requires to be kept (fclk50.log,
+# carrier_load.log, the acquisition's stdout). Anything under evidence/ is a record.
+!evidence/**/*.log
+
 # board capture scratch
 *.raw

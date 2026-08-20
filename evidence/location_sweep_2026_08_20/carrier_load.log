@@ -1,0 +1,18 @@
+[*] gate_runs/claimb_round1_carrier_2026_08_13_erratum006/carrier.bit: 2083863 bytes -> 0x04000000, then `fpga loadb`
+[*] ymodem transfer via sb ...
+[xfer] ## Total Size      = 0x001fcc17 = 2083863 Bytes
+## Start Addr      = 0x04000000
+Zynq>
+[devcfg] INT_STS 0xa802000b -> 0xa802000b before the load (cleared)
+[*] fpga loadb 0 0x04000000 0x001fcc17
+[fpga] fpga loadb 0 0x04000000 0x001fcc17
+  design filename = "carrier_top;UserID=0XFFFFFFFF;Version=2025.2;SW_CRC=9392bf97"
+  part number = "7z010clg400"
+  date = "2026/08/13"
+  time = "16:01:42"
+  bytes in bitstream = 2083740
+zynq_align_dma_buffer: Align buffer at 400007b to 4000040(swap 1)
+INFO:post config was not run, please run manually if needed
+Zynq>
+[devcfg] INT_STS=0x50021004 PCFG_DONE=1 (after the load)
+[plmark] 18cd75d67713f2f0
