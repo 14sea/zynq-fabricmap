@@ -12,9 +12,9 @@ the frame it asks for. What the engine's own readback hands to the interlock is 
 This document is about that something else.
 
 It fixes, before any further experiment, what the hypotheses are, which of them the evidence
-already kills, what the minimum experiment that separates the survivors would be, and what each
-of its outcomes would mean. It does not propose a mechanism as if one were established, and it
-does not ask for board time yet.
+already kills, what the minimum experiment that probes the first surviving fork would be, the
+limit on its negative branch, and what each outcome would mean. It does not propose a mechanism
+as if one were established, and it does not ask for board time yet.
 
 ---
 
@@ -145,10 +145,17 @@ readback has ever been asked to verify on silicon is the all-zero content of F1,
 it fifteen times (O5: `rb_frames_ok = 15`, `configuration_valid = 1`, every one of the fifteen
 `readback_frames` all zero).
 
-**The engine has never once read back a non-blank frame correctly, because it has never been
-asked to.** A read path that returned 101 zero words unconditionally would have produced O5
-exactly. This is the single most important constraint in this document and it is why the no-op's
-"pass" cannot be used as evidence that the read path works.
+**On the pinned erratum-006 carrier, the engine has never once read back a non-blank frame
+correctly, because it has never been asked to.** After a successful IDCODE probe, an FDRO data
+stage that returned 101 zero words unconditionally would have produced O5 exactly. This is the
+single most important constraint in this document and it is why the no-op's "pass" cannot be
+used as evidence that the frame-data path can deliver the addressed frame's arbitrary or
+non-blank content.
+
+O5 is not valueless: it proves that the IDCODE probe completed, the engine consumed the expected
+101 words fifteen times, zero-content CRC comparison succeeded, and the state machine reached a
+clean finish. What is degenerate is its use as a **content/address positive control**; zeros
+cannot show that the requested frame, rather than any other blank source, was delivered.
 
 ### F3 — the candidate differs from blank in exactly two words per frame
 
@@ -180,7 +187,7 @@ short read.
 
 Treating the served stream as contiguous configuration memory in device order, let δ be the
 displacement in words between the window the engine staged and the intended first word of
-`0x00400A20`. Searching ±2000 words for a 101-word all-zero window:
+`0x00400A20`. A **local** search of ±2000 words for a 101-word all-zero window gives:
 
 ```
 pre-write image    δ ∈ [-1159,-1061] ∪ [-654,-253] ∪ [-150,+555]
@@ -193,13 +200,22 @@ post-write image   δ ∈ [-1159,-1061] ∪ [-654,-253] ∪ [-150,-51] ∪ [+355
 Two consequences, and they point in opposite directions:
 
 * **Every δ with |δ| ≤ 50 is excluded post-write.** An alignment error of a few words cannot
-  produce F4: the candidate's non-zero words at 50/51 would still be inside the window. A
-  latency-class error surviving F4 has to be **≥ 51 words**, in the direction of discarding too
-  few — i.e. the FDRO pipeline would have to be at least 51 words deeper than the register read
-  the probe measures. `δ = −101` — exactly one frame, the pad — is in the surviving band.
+  produce F4: the candidate's non-zero words at 50/51 would still be inside the window. A local
+  latency/alignment error surviving F4 has magnitude **at least 51 words**. The negative bands
+  correspond to discarding too few words and the positive band to discarding too many;
+  `δ = −101` — exactly one frame early, the pad-sized case — is in a surviving band.
 * **δ = 0 is blank in the pre-write image.** So "the read is one transaction late" fits F4
   perfectly, and F6 cannot distinguish it from a displaced read that landed on a blank frame.
   This is the fork §7 exists to open.
+
+A *latency* mis-measurement cannot reach the positive band. `rb_skip = rb_lat + 101` with
+`rb_lat = 1` and a probe cap of 63 (`PROBE_LAST`), so over-discarding is bounded by about 62
+words; `+355 … +555` therefore requires a framing or addressing mechanism, not a mis-measured
+latency. The negative bands are the only ones a latency error can occupy.
+
+F6 says nothing about an arbitrary misaddress more than 2000 words away. The full-device base
+stream contains 474,494 matching all-zero windows, so H-ADDR outside this local neighbourhood
+remains unconstrained.
 
 ## 5. The hypotheses, kept apart
 
@@ -207,18 +223,25 @@ Stated so that each is separable from the others, with what would have to be tru
 what it predicts. **H-REF** and **H-LAT** are listed because they were live before F4 and F6;
 they are dead now and saying so is part of the record.
 
+These are strict, single-cause forms, not a claim that the set is exhaustive or mutually
+exclusive. A combined defect (for example, stale data plus a wrong address) may satisfy more
+than one row. A refutation below kills only the row as stated: H-REF means *correct data with a
+wrong reference*, and H-LAT means the *small* probe-to-FDRO shift it names.
+
 | tag | hypothesis | what it says |
 |---|---|---|
 | **H-STALE** | *as-of-before read* | The FDRO read is correctly addressed but observes configuration memory as it stood **before this transaction's FDRI burst** — the write is buffered, deferred, or not visible on the read port until the transaction ends. JTAG, reading later and through a different port, sees the committed result. |
 | **H-PAD** | *pad-frame alignment* | The engine stages the **dummy/pad frame** rather than the addressed one. `RB_WORDS = 202` is pad + frame; a one-frame error in the discard (δ = −101) stages the pad. The pad is blank here, whatever it physically is. |
-| **H-ADDR** | *wrong, also-blank address* | The read is served real configuration memory from an address that is not `frame_far(env, frame)` — a FAR that did not take, an auto-increment residue, a mis-executed RCFG — and that address happens to be blank. F6 bounds it to the surviving δ bands. |
+| **H-ADDR** | *wrong, also-blank address* | The read is served real configuration memory from an address that is not `frame_far(env, frame)` — a FAR that did not take, an auto-increment residue, a mis-executed RCFG — and that address happens to be blank. F6 bounds only the local (±2000-word) form to the surviving δ bands; an arbitrary distant misaddress remains open. |
 | **H-IDLE** | *no configuration data at all* | The FDRO transaction never serves the frame; the engine clocks its timed window against an idle interface and stages whatever the pins hold, here zeros. Property 2 of §3 is what makes this invisible to the engine. |
 | **H-REF** | *the reference, not the data* | The readback is correct and the committed CRC it is compared against is wrong. |
 | **H-LAT** | *probe-to-FDRO latency* | `rb_lat` measured on a Type-1 read mis-states the FDRO latency by a few words, shifting the capture. |
 
 Three framings are deliberately **not** on the list, with reasons:
 
-* *"the write did not land"* — refuted by O1 and O2, which is what those runs were for.
+* *"the write did not land in O1/O2"* — refuted for those two instances, which is what those
+  runs were for. It is not silently promoted to a same-instance observation in a future run;
+  §7.1 records that limitation.
 * *"the bytes came back different"* as a host-side finding — the host's `KnownAnswerStop` has
   never fired; every stop is the engine's FAULT register. The distinction matters because the
   host has never independently compared a candidate readback byte for byte.
@@ -233,37 +256,51 @@ Three framings are deliberately **not** on the list, with reasons:
 |---|---|---|---|---|---|
 | **H-STALE** | consistent — blank written over blank, so a pre-write view is the same view | consistent — pre-write `A20` is blank | consistent | consistent (δ = 0 blank pre-write) | **ALIVE** |
 | **H-PAD** | consistent — the pad is blank too | consistent | consistent | consistent (δ = −101 in a surviving band) | **ALIVE** |
-| **H-ADDR** | consistent **only** for wrong addresses that are blank in every one of O5's fifteen reads; a residue read starting at `A81` would have served `A82` (19 non-zero words) and O5 would have failed | consistent | consistent | consistent within the surviving bands only | **ALIVE, narrowed** |
+| **H-ADDR** | consistent **only** for wrong addresses that are blank in every one of O5's fifteen reads; a residue read starting at `A81` would have served `A82` (19 non-zero words) and O5 would have failed | consistent | consistent | local errors are restricted to the surviving bands; errors outside ±2000 words were not searched | **ALIVE; local form narrowed, nonlocal form unconstrained** |
 | **H-IDLE** | consistent | consistent | consistent | not applicable — no stream is being displaced | **ALIVE, weakened**: the one time this silicon has been observed with a read transaction that was not delivering frame data, it drove the abort status word `0xFFFFFF5B` 101 times — not zeros. *[hypothesis generation only: superseded carrier, and on it the write had not synced either; erratum 005 §1]* |
 | **H-REF** | consistent | **refuted** — a correct read of the candidate would have staged words 50/51 non-zero; the staged window has zero non-zero words | — | — | **DEAD** |
 | **H-LAT** | consistent | — | — | **refuted for \|δ\| ≤ 50**; survives only as an error of ≥ 51 words, of which exactly 101 is H-PAD | **DEAD as stated** |
 
 So: **four survive, and the first fork is H-STALE against {H-PAD, H-ADDR, H-IDLE}** — "the read
 looks at the right place at the wrong time" against "the read does not deliver the addressed
-frame at all". Every experiment below is judged on whether it moves that fork.
+frame at all". The experiment below can positively identify the strict H-STALE prediction; its
+negative branch is conditional on the new fault instance having landed the candidate, a fact
+that cannot be observed beforehand without perturbing the state (§7.1).
 
-## 7. The minimum experiment that separates them
+## 7. The minimum experiment that probes the first fork
 
 ### 7.1 The idea
 
 `begin_txn` clears `fault` and `fault_code` from `P_IDLE` (§3 property 4) and **nothing in the
-fault path touches configuration memory**. So after the candidate round faults, the fabric holds
-the candidate at `A20`–`A23` — O1 and O2 prove it does — and a *second* transaction can be run
-into the same loaded carrier, in the same boot, with no reload and no power cycle.
+fault path touches configuration memory**. The host path is reachable too:
+`execute_transaction()` admits `recovery_required && !configuration_valid` as its
+`reset_state`; the specified post-fault status has exactly those bits. It will begin a second
+transaction and refuse only at the final sticky-recovery check if that transaction otherwise
+passes.
+
+In O1 and O2, after the candidate round faulted, the later R4 location acquisition found the
+candidate at `A20`–`A23`. That establishes the starting content for those **two instances**, not
+for every future record with the same fault shape. The proposed instance deliberately performs
+no R4/JTAG location read between the fault and the second transaction, because R4 changes the
+configuration-engine state the experiment is trying to study. Therefore its pre-second-write
+candidate content is a reproduced prior, not a direct same-instance observation. This makes the
+experiment asymmetric: seeing the candidate in step ③ is self-authenticating; a passing no-op
+cannot by itself prove the candidate had been present immediately before it.
 
 Run the **no-op step again**, into that state. It writes blank over the candidate and reads
 `A20` back, expecting blank.
 
-* Under **H-STALE**, the read observes the memory as it stood before *this* burst — which is now
-  the **candidate**, non-blank. Expected blank. The step **faults**, `F_READBACK`, pass 2 of
-  envelope 0 — on a step that has passed every time it has ever run.
-* Under **H-PAD / H-ADDR / H-IDLE**, the read returns blank as it always has, all fifteen frames
-  verify, `configuration_valid` goes high — and the host then stops anyway, because
-  `recovery_required` is still latched from the first fault (`board_uboot_axi.py:638`). A
-  fail-closed stop with `rb_frames_ok = 15` and `fault = 0`.
+* Under the strict **H-STALE** hypothesis, the read observes the memory as it stood before
+  *this* burst — which is now the **candidate**, non-blank. Expected blank. The step **faults**,
+  `F_READBACK`, pass 2 of envelope 0 — on a step that has passed every time it has ever run.
+* Under the currently observed blank-returning forms of **H-PAD / H-ADDR / H-IDLE**, the read
+  returns blank as it always has, all fifteen frames verify, `configuration_valid` goes high —
+  and the host then stops anyway, because `recovery_required` is still latched from the first
+  fault (`board_uboot_axi.py:638`). A fail-closed stop with `rb_frames_ok = 15` and `fault = 0`.
 
-Both outcomes are stops. They are **not the same stop**, they are distinguishable from
-`record.json` without interpretation, and they answer the fork. That is the whole experiment.
+Both outcomes are stops. They are **not the same stop** and are distinguishable from
+`record.json` without interpretation. The candidate-staging branch answers the fork positively;
+the passing branch is a conditional negative with the starting-state limitation above.
 
 The reversal is worth stating because it is what makes this sharp: the *no-op* — the step that
 has never failed — is predicted to **fail** under H-STALE, and the candidate step is not reached
@@ -272,15 +309,26 @@ in either branch.
 ### 7.2 What it cannot do
 
 It does not separate H-PAD from H-ADDR from H-IDLE. Nothing available under the frozen carrier
-does: F1 says every frame the engine can address is blank before the write and F3 says the
-only non-blank content it can ever create is two words per frame, F6 says the blank run around each
-envelope is 7 frames (`A1F`–`A81`, 707 words) and 12 frames (`C1A`–`C81`, 1212 words), and the
-payload authority is frozen, so no legal write can put distinctive content where a displaced or
-idle read would reveal itself. **Separating those three requires either a carrier whose target
-frames sit in non-blank, mutually distinct content — an RTL and build change — or an independent
-readback path. Both are out of scope here, and the second is the separate PCAP/devcfg design.**
-That is a limit of the instrument, and it should be stated in the next handoff rather than
-discovered by a reviewer.
+and its current telemetry does: F1 says every frame the engine is authorised to rewrite is blank
+in the base; F3 says the only non-blank content the frozen candidate creates is two words per
+frame; and F6 says the blank run around each envelope is 7 frames (`A1F`–`A81`, 707 words) and
+12 frames (`C1A`–`C81`, 1212 words). Once the no-op envelope has been written, the current
+telemetry has no distinctive word with which to identify a pad, a wrong blank address, or idle
+pins.
+
+Separating those three needs a **new design**, but the options must not be conflated:
+
+* carrier instrumentation that preserves the discarded/probe words or otherwise observes the
+  ICAP output is the direct way to distinguish what this internal path received;
+* a reviewed carrier/configuration build with non-blank, mutually distinct target and neighbour
+  frames can turn displacement into a data signature (it need not presuppose a particular RTL
+  fix);
+* PCAP/devcfg is an independent truth path and addresses systematic JTAG/instrument error, but
+  by itself it does **not** identify whether the carrier internally staged a pad, a wrong FAR or
+  idle pins.
+
+All three are out of scope here. This is a limit of the current instrument, and it should be
+stated in the next handoff rather than discovered by a reviewer.
 
 ### 7.3 What it needs that does not exist yet
 
@@ -291,19 +339,27 @@ a reload **reconfigures the device and destroys the state the experiment is abou
 `board_carrier_exec.py` is a library with no CLI.
 
 So the experiment needs exactly one new non-scoring entrypoint: *given an already-loaded,
-already-faulted carrier and a `plmark`, stage one sealed payload from the frozen authority, run
-one transaction, record everything, never arm the scorer, never reload.* Building it is **not
-part of this pass** — it is new production code, and it needs its own tests, mutants, audit and
-authorisation. It is named here so the next ruling is about a known quantity. This is the same
-missing piece §9 step 6 has needed all along.
+already-faulted carrier and a `plmark`, run the published restore payload once, record
+everything, never arm the scorer, never reload.* It must reuse
+`board_claimb_known_answer._write("restore", ...)`, which is the existing single production
+write path; it must not call `run_candidate_on_board`, `write_sequence` or
+`execute_transaction` from a second site. Its setup is same-session identity verification plus
+`axi.same_boot`, not `cal.phase_setup`.
+
+Building it is **not part of this pass** — it is new production code, and it needs its own
+structural tests, success/fault behavioural tests, mutants, audit and authorisation. It is a
+narrowly related missing entrypoint, not by itself enough to make §9 step 6 pass: restore and a
+post-restore baseline still remain downstream work.
 
 ### 7.4 Shape of the run, if it is ever authorised
 
 Not a request. Recorded so the reading table below has something concrete to attach to.
 
 ```
-① the specified fault, exactly as in claimb_location_reproduction_spec.md §5 steps ①–③
-② SAME BOOT, NO RELOAD: one no-op transaction through the new entrypoint
+① physical power cycle → frozen fresh-power precheck →
+   board_claimb_postfault_capture.py builds exactly the specified fault
+   (no location search, R4, DDR read, reload or other action after the fault)
+② SAME BOOT, NO RELOAD: one restore/no-op transaction through the new entrypoint
 ③ SAME BOOT: probe_ddr_capture.py --slot 0, read-only, whatever ② did
 ④ host-side only: the reading below
 ```
@@ -319,40 +375,52 @@ Fixed here, before the experiment can be run, and before any of it can be seen.
 
 | # | observation in ② | verdict, decided in advance |
 |---|---|---|
-| **A1** | `F_READBACK`, pass 2 of envelope 0, `rb_frames_ok = 0`, and ③ stages the **candidate** frame (sha `15cb05e6…`) | **H-STALE supported, H-PAD/H-ADDR/H-IDLE refuted.** The read is correctly addressed and observes memory before the burst. The read path can deliver real frame content. Stop; the mechanism question becomes "why is the write not visible to the read port", which is a new design |
-| **A2** | `F_READBACK`, pass 2 of envelope 0, and ③ stages an **all-zero** frame | **Uninterpretable as it stands, and a result.** A fault whose staged content is blank is what the *candidate* round already produces; the no-op reproducing it means the fault is not about the written content at all. Record, stop, make no causal claim |
-| **A3** | `F_READBACK`, and ③ stages something that is **neither** blank nor the candidate | valid third state and the most informative one: run the offset search over the post-write image. Record the frame and its matching offsets; do not interpret further in this experiment |
-| **B1** | fifteen frames verify, `configuration_valid = 1`, `fault = 0`, host stops on `recovery_required` | **H-STALE refuted; H-PAD/H-ADDR/H-IDLE all survive.** The fork is answered in the other direction, and the next step needs a non-blank target or an independent read path — neither of which this instrument has. Stop |
+| **A1** | `F_READBACK`, pass 2 of envelope 0, `rb_frames_ok = 0`, and ③ stages the **candidate** frame (sha `15cb05e6…`) | **Strict H-STALE supported; the currently observed blank-only forms of H-PAD/H-ADDR/H-IDLE refuted.** Pre-burst candidate data reached the staged window, and the read path can deliver real frame content. This does not by itself prove correct addressing or a single mechanism: an unobserved duplicate/misaddress or stateful pad is not excluded. Stop; the narrowed mechanism question needs a new design |
+| **A2** | `F_READBACK`, pass 2 of envelope 0, and ③ stages an **all-zero** frame | **MODEL/EVIDENCE CONTRADICTION.** For a restore frame, the committed authority and the staged words are the same all-zero content; the shared RAM's CRC should match. Reopen H-REF and the assumptions that slot 0 is the exact RAM image the CRC saw. Record and stop; do not call this a content-independent fault |
+| **A3** | `F_READBACK`, and ③ stages something that is **neither** blank nor the candidate | valid third state and potentially the most informative one: search offsets against both the pre-second-write image (candidate at A20–A23) and the post-second-write/base image. Record the frame and all matching offsets; do not interpret further in this experiment |
+| **B1** | fifteen frames verify, `configuration_valid = 1`, `fault = 0`, host stops on `recovery_required` | **Conditional negative for strict H-STALE.** If this third fault instance held the candidate before ②, strict H-STALE is refuted and the current blank-returning forms of H-PAD/H-ADDR/H-IDLE survive. That starting content is not observed in this instance, so the unconditional finding is only that the diagnostic no-op passed after the specified fault. Stop; do not silently borrow O1/O2 as a same-run measurement |
 | **B2** | any other fault code — `F_RBSYNC`, `F_BYTECOUNT`, `F_TIMEOUT`, `F_ORDER`, `F_PHASE` | not this experiment's question. The engine did something it has not done before; record it, stop, and do not read it as evidence about the fork |
 | **C1** | step ① does not produce the specified fault (`STATUS 0x04040082`, `FAULT 0x8`, pass 2 envelope 0) — **including an unexpected pass** | stop **before** ②. The state the experiment is about was not created |
 | **C2** | any reboot, `plmark` mismatch, refused transaction, missing capture, or bookkeeping anomaly | not interpretable; stop where it happened, keep everything |
 
-**Fixed with the table**: the run happens once. A failed separation is a result, not a reason to
-rebuild the state. `recovery_required` will be set for the whole of ② by construction, so any
-reading that depends on it being clear is invalid by definition. And a pass in ② is a
+**Fixed with the table**: the run happens once. A non-decisive outcome is a result, not a reason
+to rebuild the state. `recovery_required` will be set for the whole of ② by construction, so
+any reading that depends on it being clear is invalid by definition. And a pass in ② is a
 **fail-closed host stop**, never a green light — nothing downstream of it is authorised by it.
 
 ## 9. Offline work, which needs no board and no authorisation
 
 Ordered. Each has its reading fixed here.
 
-**W1 — re-derive F1–F6 from the pinned artifacts and commit the derivations.** The four
-`python3 -` derivations in §4, their output, and the commands. *Reading*: if any of the six does
-not reproduce at the pinned tree, this document is wrong and the hypothesis table has to be
-rebuilt before anything else happens.
+**W1 — re-derive F1–F6 from the pinned artifacts and commit the derivations.** Turn the
+derivations described in §4 (only F1 currently includes an inline executable snippet) into
+tracked, reproducible host-side analysis with its commands, input hashes and output. *Reading*:
+if any of the six does not reproduce at the pinned tree, this document is wrong and the
+hypothesis table has to be rebuilt before anything else happens.
 
-**W2 — audit every committed record for a readback of non-blank content.** Every
-`evidence/*/record.json` with a `readback_frames` or a staging capture, checked for a single
-frame with a non-zero word. *Reading*: if none exists, then §4 F2 is general and not a property
-of one run — **the read path has never been demonstrated to deliver configuration data at all**,
-and that sentence belongs in the README's status block, not only here. If one does exist, it is
-the most important artifact in the repository and this design is rewritten around it.
+**W2 — audit every committed erratum-006 carrier record for an exact non-blank readback.** A
+non-zero word alone is not success, and two committed counterexamples show why: the
+**erratum-004** carrier's staging held the abort word `0xFFFFFFDA` 101 times
+(`evidence/calibration_noop_2026_08_13_erratum004/`, diagnosed in erratum 005), and the
+**erratum-005** carrier's staging held **bit-exact configuration data at the wrong FAR**
+(`evidence/calibration_noop_2026_08_13_erratum005/`, diagnosed in erratum 006) — whole-frame
+exact against the device stream, and still not the frame that was asked for. The void Phase 2
+captures are non-zero as well. The second case is precisely why the criterion has to be
+*same-FAR* whole-frame exact. For each engine `readback_frames` or staging
+capture, bind it to the version-appropriate expected frame and ask whether a non-blank expected
+frame came back whole and exact at the same FAR. *Reading*: if none exists, F2 generalises across
+the committed erratum-006 evidence — **this frame-data path has never been demonstrated to
+deliver non-blank configuration data correctly** — and that scoped sentence belongs in the
+README status. If one exists, it is the most important artifact in the repository and this
+design is rewritten around it.
 
 **W3 — state, per hypothesis, which clause of the device-model contract it violates.**
 `claimb_icape2_readback_sequence.md` §7 is a seven-clause contract and `icape2_model.v` implements
 it; the benches pass at read latencies 0/1/3/5/7/12 against devices demanding 32/40/48/64 flush
-clocks, and `mutate_carrier_readback.sh` carries twelve mutants of the read sequence, each with the outcome it must produce. So **every surviving hypothesis is a
-divergence between the model and the silicon, not a defect the benches could have caught.**
+clocks, and `mutate_carrier_readback.sh` carries twelve mutants of the read sequence, each with
+the outcome it must produce. Every surviving hypothesis therefore points to a clause where the
+current device-model contract and silicon observations diverge. Passing benches show that the
+RTL implements that model; they cannot establish that the model clause is true of silicon.
 Which clause: H-STALE contradicts clause 5 (serve from configuration memory) plus clause 4's
 write-buffer model; H-PAD contradicts the pad's identity and length; H-ADDR contradicts clause 3
 (FAR successor arithmetic) or the erratum-006 execute-on-FAR-load rule; H-IDLE contradicts
@@ -364,13 +432,16 @@ know.** §3 property 2 in full: `icap_rd_valid` is a delayed copy of the engine'
 control; the discarded words are never recorded; the pre-IDCODE idle word's *value* — the one
 word that would separate "idle drives zeros" from "idle drives the abort pattern" and therefore
 H-IDLE from the rest — is measured as a count and thrown away. *Reading*: this is an
-instrumentation gap, it is cheap to close in RTL, and it is recorded here as the leading
-candidate for whatever the next carrier does. **It is not implemented in this pass.**
+instrumentation gap. Its cost and safety have not been designed yet; it is recorded here as a
+candidate for a future carrier, not as an already-cheap fix. **It is not implemented in this
+pass.**
 
 **W5 — write the handoff.** This document, W1–W4's outputs, and one paragraph that states
 plainly: the location question is closed at two observations under one instrument, the read-side
-question has four live hypotheses, one fork is separable with the existing carrier and the rest
-are not, and Claim B still has zero data points.
+question has four live hypotheses, the strict H-STALE positive branch is identifiable with the
+existing carrier while its negative branch is conditional on an unobserved starting state, the
+other three hypotheses are not separated by current telemetry, and Claim B still has zero data
+points.
 
 ## 10. Budget
 
@@ -378,23 +449,26 @@ are not, and Claim B still has zero data points.
 |---|---|
 | W1–W5 | host-side only, no board, no new production code |
 | the §7 experiment, if ever authorised | one new entrypoint (+ tests, mutants, audit) — a separate ruling |
-| board time for ①–④ | one power cycle, one carrier load ≈ 3 min, two transactions ≈ 2 s of engine time, one read-only `md.l` |
+| board time for ①–④ | one power cycle, then the two-transaction fault builder at a measured ≈250 s wall — which **already contains** the carrier load (`setup.steps`: FCLK0 0.6 s + `fpga loadb` 199.3 s), so the load is not additional; then one diagnostic no-op (historical successful no-op transactions took ≈26–27 s) and one read-only `md.l` |
 | what it consumes | one fault state, which is rebuildable |
-| what it risks | two ICAP writes of payloads already reviewed under the frozen authority, into a carrier already in a fault state, with the scorer unarmed on the wire |
+| what it risks | three transactions using payloads already reviewed under the frozen authority; only the final restore/no-op is started from the fault state, and the scorer remains unreachable from the new entrypoint |
 
 ## 11. Decisions requested
 
 1. **Accept or amend the hypothesis set (§5) and the two refutations (§6).** H-REF and H-LAT are
    killed on the committed evidence, not on the board; if either refutation is wrong, the fork
    in §6 is wrong too.
-2. **Rule on §4 F2** — that the no-op's fifteen-frame pass is a degenerate control and cannot
-   support "the readback works". This is a correction to how earlier results have been read, and
-   under the standing ruling it goes in an additive file beside them, never as a rewrite.
+2. **Rule on §4 F2** — that the no-op's fifteen-frame pass is a degenerate content/address
+   control and cannot support "the readback delivers the addressed frame's arbitrary content";
+   its narrower protocol-liveness and zero-content results remain valid. This is a correction to
+   how earlier results have been read, and under the standing ruling it goes in an additive file
+   beside them, never as a rewrite.
 3. **Authorise W1–W5** (host-side, no board contact).
 4. **Rule on §7.3** — whether the non-scoring, no-reload entrypoint is built next, as its own
-   reviewed deliverable, or whether the read-side question waits for the PCAP/devcfg design or
-   for a carrier with non-blank targets. §7.2 is the argument that the last two are the only
-   ways past the fork.
+   reviewed deliverable. If not, the alternatives are separate designs: internal read-path
+   instrumentation or a carrier/configuration with distinctive non-blank targets addresses the
+   H-PAD/H-ADDR/H-IDLE fork; PCAP/devcfg addresses independent-method/systematic-error risk but
+   does not by itself separate that internal fork.
 
 Nothing in this document authorises board contact. When something does, it will carry its own
 stop conditions and its own host-only freeze preflight.
