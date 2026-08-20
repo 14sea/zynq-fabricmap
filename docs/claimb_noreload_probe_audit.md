@@ -259,7 +259,7 @@ adversarial re-probe of the three gaps     interrupts 0; old evidence bytes unch
 gate_claimb_board_driver.py                ACCEPTED   (unchanged neighbour)
 gate_claimb_postfault_capture.py           ACCEPTED   (unchanged neighbour)
 mutate_claimb_postfault_capture.py         3/3 killed (unchanged neighbour)
-full suite                                 1192 tests, OK, 0 skips (1187 with the
+full suite                                 1192 tests, OK, 0 skips on the clean tree
 py_compile, git diff --check               clean
 board                                      untouched, powered down
 ```
