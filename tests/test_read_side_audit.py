@@ -5,10 +5,11 @@ are the pinned inputs" and "this is the whole population". A tool that reports e
 hand-written constant, or from a scan that silently absorbs whatever it finds, produces the
 right number today and a wrong one the first time the tree moves.
 
-So every check below is negative. Each one breaks exactly one link — a drifted digest, a
-missing input, an unpinned import, a population with one record too many or too few, a forged
+The suite is negative-first: each adversarial check breaks exactly one link — a drifted digest,
+a missing input, an unpinned import, a population with one record too many or too few, a forged
 landing flag, a fault that is not code 8, a driver whose no-op writes something else — and
-requires a refusal. The positive results live in
+requires a refusal. A small set of positive baselines proves that the real frozen tree reaches
+the gates those adversarial cases exercise. The derived positive results live in
 `evidence/read_side_facts_2026_08_20/`; these are the reasons to believe them.
 """
 
@@ -139,13 +140,17 @@ class LandingTests(unittest.TestCase):
         import analyse_ddr_capture as add
         candidate, _, _ = add.derive_candidate(manifest, local_map, report)
         self.candidate = candidate[rse.INTENDED_FAR]
+        self.device = rse.device_frames(REPO_ROOT)
 
     def test_the_real_instances_verify(self) -> None:
         for run in rse.LOCATION_RUNS:
-            landing = rse.verify_landing(REPO_ROOT, run, self.candidate)
+            landing = rse.verify_landing(REPO_ROOT, run, self.candidate, self.device)
             self.assertTrue(landing["landing_verified"], run)
             self.assertEqual(landing["words_matching_candidate"], "101/101")
             self.assertEqual(landing["controls_exact"], rse.POSITIVE_CONTROLS)
+            self.assertEqual(
+                landing["controls_vs_bitstream"]["exact_against_the_bitstream"],
+                rse.POSITIVE_CONTROLS)
 
     def test_a_broken_plmark_chain_fails_the_landing(self) -> None:
         import tempfile
@@ -155,8 +160,37 @@ class LandingTests(unittest.TestCase):
             index = rse.load(root, relative)
             index["plmark_at_start"] = "0000000000000000"
             rewrite(root, relative, index)
-            landing = rse.verify_landing(root, "run2", self.candidate)
+            landing = rse.verify_landing(root, "run2", self.candidate, self.device)
             self.assertFalse(landing["landing_verified"])
+            self.assertFalse(
+                landing["checks"]["one_plmark_across_fault_staging_and_acquisition"])
+
+    def test_four_missing_plmarks_do_not_form_a_valid_chain(self) -> None:
+        """Four equal nulls are absence of evidence, not evidence of one boot."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            root = build_root(Path(tmp))
+            run_dir = rse.LOCATION_RUNS["run1"]
+
+            fault_relative = f"{run_dir}/fault/record.json"
+            fault = rse.load(root, fault_relative)
+            fault["same_boot"]["expected_plmark"] = None
+            rewrite(root, fault_relative, fault)
+
+            staging_relative = f"{run_dir}/fault/ddr_slot0_shutdown_read.json"
+            staging = rse.load(root, staging_relative)
+            staging["plmark"] = None
+            rewrite(root, staging_relative, staging)
+
+            index_relative = f"{run_dir}/step4_sweep/index.json"
+            index = rse.load(root, index_relative)
+            index["plmark_at_start"] = None
+            index["plmark_at_end"] = None
+            rewrite(root, index_relative, index)
+
+            landing = rse.verify_landing(root, "run1", self.candidate, self.device)
+            self.assertFalse(landing["landing_verified"])
+            self.assertFalse(landing["checks"]["four_plmarks_present_and_well_formed"])
             self.assertFalse(
                 landing["checks"]["one_plmark_across_fault_staging_and_acquisition"])
 
@@ -168,9 +202,88 @@ class LandingTests(unittest.TestCase):
             verdict = rse.load(root, relative)
             verdict["positive_controls"] = verdict["positive_controls"][:-1]
             rewrite(root, relative, verdict)
-            landing = rse.verify_landing(root, "run1", self.candidate)
+            landing = rse.verify_landing(root, "run1", self.candidate, self.device)
             self.assertFalse(landing["landing_verified"])
             self.assertFalse(landing["checks"]["sixteen_controls_exact"])
+
+    def test_one_exact_control_repeated_sixteen_times_fails_the_landing(self) -> None:
+        """A count of exact rows cannot substitute for the frozen sixteen-FAR sequence."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            root = build_root(Path(tmp))
+            relative = f"{rse.LOCATION_RUNS['run1']}/step4_sweep/verdict.json"
+            verdict = rse.load(root, relative)
+            verdict["positive_controls"] = [verdict["positive_controls"][0]] * \
+                rse.POSITIVE_CONTROLS
+            rewrite(root, relative, verdict)
+
+            landing = rse.verify_landing(root, "run1", self.candidate, self.device)
+            self.assertFalse(landing["landing_verified"])
+            self.assertTrue(landing["checks"]["sixteen_controls_exact"])
+            self.assertFalse(
+                landing["checks"]["verdict_control_fars_match_declared_sequence"])
+
+    def test_a_control_whose_digests_agree_but_not_with_the_bitstream_fails(self) -> None:
+        """`expected == observed` is the acquisition tool agreeing with itself, not a control."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            root = build_root(Path(tmp))
+            relative = f"{rse.LOCATION_RUNS['run1']}/step4_sweep/verdict.json"
+            verdict = rse.load(root, relative)
+            forged = "0" * 64
+            verdict["positive_controls"][0]["expected_sha256"] = forged
+            verdict["positive_controls"][0]["observed_sha256"] = forged
+            rewrite(root, relative, verdict)
+
+            landing = rse.verify_landing(root, "run1", self.candidate, self.device)
+            self.assertFalse(landing["landing_verified"])
+            self.assertTrue(landing["checks"]["sixteen_controls_exact"])
+            self.assertFalse(
+                landing["checks"]["controls_re_derived_from_the_carrier_bitstream"])
+            self.assertEqual(
+                landing["controls_vs_bitstream"]["exact_against_the_bitstream"], 15)
+
+    def test_a_forged_control_capture_is_caught_by_the_bitstream(self) -> None:
+        """Every digest re-stated, verdict included — only carrier.bit can still tell."""
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            root = build_root(Path(tmp))
+            run_dir = rse.LOCATION_RUNS["run1"]
+            far_key = rse.load(root, f"{run_dir}/step4_sweep/index.json")[
+                "positive_control_fars"][0]
+            far = int(far_key, 16)
+            relative = f"{run_dir}/step4_sweep/far_{far:08x}.json"
+
+            capture = rse.load(root, relative)
+            node = capture["frames"][far_key]
+            node["frame"][7] = "0000dead"
+            node["all_words"][rse.FRAME_WORDS + 7] = "0000dead"
+            forged = rse.frame_sha(rse.as_words(node["frame"]))
+            node["frame_sha256"] = forged
+            rewrite(root, relative, capture)
+
+            index = rse.load(root, f"{run_dir}/step4_sweep/index.json")
+            entry = index["entries"][far_key]
+            entry["capture_sha256"] = rse.sha256_of(root / relative)
+            entry["frame_sha256"] = forged
+            rewrite(root, f"{run_dir}/step4_sweep/index.json", index)
+
+            verdict_relative = f"{run_dir}/step4_sweep/verdict.json"
+            verdict = rse.load(root, verdict_relative)
+            for control in verdict["positive_controls"]:
+                if str(control["far"]).lower() == far_key:
+                    control["expected_sha256"] = forged
+                    control["observed_sha256"] = forged
+            rewrite(root, verdict_relative, verdict)
+
+            landing = rse.verify_landing(root, "run1", self.candidate, self.device)
+            self.assertFalse(landing["landing_verified"])
+            self.assertTrue(landing["checks"]["sixteen_controls_exact"])
+            self.assertFalse(
+                landing["checks"]["controls_re_derived_from_the_carrier_bitstream"])
+            bad = [d for d in landing["controls_vs_bitstream"]["detail"]
+                   if not d["equals_the_bitstream"]]
+            self.assertEqual([d["far"] for d in bad], [far_key])
 
     def test_a_capture_that_disagrees_with_its_own_digest_refuses(self) -> None:
         import tempfile
@@ -188,7 +301,7 @@ class LandingTests(unittest.TestCase):
                 rse.sha256_of(root / relative)
             rewrite(root, f"{run_dir}/step4_sweep/index.json", index)
             with self.assertRaises(rse.DerivationStop) as stop:
-                rse.verify_landing(root, "run2", self.candidate)
+                rse.verify_landing(root, "run2", self.candidate, self.device)
             self.assertIn("hashes to", str(stop.exception))
 
     def test_a_forged_capture_with_consistent_digests_still_fails_the_landing(self) -> None:
@@ -210,7 +323,7 @@ class LandingTests(unittest.TestCase):
             entry["capture_sha256"] = rse.sha256_of(root / relative)
             entry["frame_sha256"] = forged
             rewrite(root, f"{run_dir}/step4_sweep/index.json", index)
-            landing = rse.verify_landing(root, "run2", self.candidate)
+            landing = rse.verify_landing(root, "run2", self.candidate, self.device)
             self.assertFalse(landing["landing_verified"])
             self.assertFalse(landing["checks"]["capture_equals_candidate_word_for_word"])
             self.assertEqual(landing["words_matching_candidate"], "100/101")

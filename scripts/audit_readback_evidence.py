@@ -18,9 +18,11 @@ inventory it quantifies over, and that inventory is the committed evidence at th
 which is what the verdict now says.
 
 **No landing flag is written by hand.** Whether an instance had the candidate at the intended
-FAR before its staging copy was taken is derived from that same instance's step-4 evidence:
-the plmark chain, the frozen instrument digest, the verdict, its sixteen controls, and the
-capture's 101 words against the re-derived candidate.
+FAR before its staging copy was taken is derived from that same instance's step-4 evidence: the
+plmark chain, the frozen instrument digest, the verdict, its sixteen controls — each of which is
+reopened and compared against the frozen `carrier.bit`, because `expected == observed` in a
+verdict is only the acquisition tool agreeing with itself — and the capture's 101 words against
+the re-derived candidate.
 
 Scope. This audits the ENGINE's frame-data path only. JTAG captures
 (`probe_jtag_config_read.py`, every sweep's `far_*.json`) are excluded by definition — they are
@@ -41,7 +43,7 @@ sys.path.insert(0, str(REPO / "scripts"))
 import analyse_ddr_capture as add  # noqa: E402
 import read_side_evidence as rse  # noqa: E402
 
-TOOL_VERSION = "audit_readback_evidence.py/2.0.0"
+TOOL_VERSION = "audit_readback_evidence.py/2.0.2"
 
 
 def classify(words: list[int], expected: list[int] | None) -> str:
@@ -72,7 +74,8 @@ def audit(root: Path = REPO) -> dict:
     base = {int(r["far"], 16): [int(w, 16) for w in r["words"]] for r in manifest["frames"]}
     candidate, _, _ = add.derive_candidate(manifest, local_map, report)
 
-    landings = {run: rse.verify_landing(root, run, candidate[rse.INTENDED_FAR])
+    device = rse.device_frames(root)
+    landings = {run: rse.verify_landing(root, run, candidate[rse.INTENDED_FAR], device)
                 for run in rse.LOCATION_RUNS}
 
     audited = []
@@ -206,6 +209,8 @@ def main() -> int:
         print(f"  landing {run}: verified={landing['landing_verified']} "
               f"({landing['words_matching_candidate']} words, "
               f"{landing['controls_exact']}/{landing['controls_declared']} controls, "
+              f"{landing['controls_vs_bitstream']['exact_against_the_bitstream']}"
+              f"/{landing['controls_vs_bitstream']['declared']} re-derived, "
               f"one plmark={landing['checks']['one_plmark_across_fault_staging_and_acquisition']})")
     for entry in record["engine_transactions"]:
         print(f"  engine  {entry['source']}")

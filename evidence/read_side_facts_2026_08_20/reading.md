@@ -8,8 +8,9 @@ python3 scripts/audit_readback_evidence.py  --out evidence/read_side_facts_2026_
 ```
 
 Their console output is committed beside them. `scripts/read_side_evidence.py` holds the
-inventory — **31 pinned files**, a closed list of **six** engine records, **five** staging
-copies and **three** authority artifacts — and enforces it three ways, all fail-closed:
+inventory — **63 pinned files**, a closed list of **six** engine records, **five** staging
+copies, **three** authority artifacts and the **thirty-two** positive-control captures the
+landing derivation reopens — and enforces it three ways, all fail-closed:
 
 1. every pinned artifact must exist and hash to its pinned value;
 2. discovery still runs, and its result must equal the frozen engine-record list **exactly, in
@@ -18,12 +19,15 @@ copies and **three** authority artifacts — and enforces it three ways, all fai
    this deliverable cannot pin themselves and are the declared exemption; any other unpinned
    module is named and refused.
 
-`tests/test_read_side_audit.py` is 22 tests, all of them negative: a drifted digest, a missing
-input, an unpinned import, a population one record too large and one too small, a seventh
-record appearing on disk, a broken plmark chain, a missing positive control, a capture that
-disagrees with its own digest, **a forged capture whose digests were all re-stated so only the
-words give it away**, a FAULT word that is not 8, two runs that disagree, and four ways for the
-driver to have changed. The positive numbers below are worth what those refusals are worth.
+`tests/test_read_side_audit.py` is 26 tests, negative-first with positive real-tree baselines.
+Its adversarial cases cover a drifted digest, a missing input, an unpinned import, a population
+one record too large and one too small, a seventh record appearing on disk, a broken or wholly
+absent plmark chain, a missing positive control, one exact control repeated sixteen times, **a
+control whose expected and observed digests agree with each other but not with `carrier.bit`**,
+**a forged control capture with every digest re-stated including the verdict's**, a capture that
+disagrees with its own digest, **a forged A20 capture whose digests were all re-stated so only
+the words give it away**, a FAULT word that is not 8, two runs that disagree, and four ways for
+the driver to have changed. The positive numbers below are worth what those refusals are worth.
 
 ## W1 — all six facts reproduce at the pinned tree
 
@@ -97,10 +101,15 @@ have returned the **candidate**. Their verdict is `NONBLANK_EXPECTED_GOT_BLANK`.
 **And `landing_verified_in_this_instance` is now derived, not declared.** For each instance the
 tool reads that instance's own step-4 evidence and requires all seven of:
 
-* one plmark across the fault record, the staging copy and the acquisition's start **and** end;
+* four present, well-formed plmarks, with one value across the fault record, the staging copy
+  and the acquisition's start **and** end;
 * the acquisition's `instrument_digest` equal to the frozen `a20e56aa…`;
 * `verdict == WRITE_LANDED_AT_THE_INTENDED_FAR`, naming `0x00400a20`;
-* sixteen controls declared **and** sixteen exact, with expected == observed digests;
+* sixteen unique control FARs whose verdict order equals the index's frozen order, all sixteen
+  exact with expected == observed digests — **and all sixteen re-derived**: each control
+  capture is reopened, its digest chain rechecked, and its 101 words compared against the frozen
+  `carrier.bit` at that FAR, because `expected == observed` is only the acquisition tool
+  agreeing with itself;
 * the A20 capture hashing to the `capture_sha256` its own index records;
 * the 202-word capture splitting into `pad_frame` then `frame`, with the recomputed frame
   digest equal to both the capture's and the index's;

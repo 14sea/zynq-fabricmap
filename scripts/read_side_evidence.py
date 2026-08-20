@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -253,15 +254,15 @@ def discover_engine_records(root: Path) -> list[str]:
     return out
 
 
-def candidate_frame_from_capture(root: Path, run_dir: str) -> tuple[list[int], dict]:
-    """The 101 words the step-4 JTAG capture read at the intended FAR, with its provenance.
+def frame_from_capture(root: Path, run_dir: str, far: int) -> tuple[list[int], dict]:
+    """The 101 words one step-4 JTAG capture read at one FAR, with its provenance.
 
     A capture is 202 words: `pad_frame` then `frame`. The frame is the SECOND block, and
-    reading the first one is a mistake this project has already made once, so the length and
-    the recomputed digest are both checked here rather than trusted.
+    reading the first one is a mistake this project has already made once, so the split, the
+    length and the recomputed digest are all checked here rather than trusted.
     """
-    far_key = f"0x{INTENDED_FAR:08x}"
-    name = f"far_{INTENDED_FAR:08x}.json"
+    far_key = f"0x{far:08x}"
+    name = f"far_{far:08x}.json"
     relative = f"{run_dir}/step4_sweep/{name}"
     capture = load(root, relative)
     index = load(root, f"{run_dir}/step4_sweep/index.json")
@@ -292,7 +293,58 @@ def candidate_frame_from_capture(root: Path, run_dir: str) -> tuple[list[int], d
     return words, {"capture": relative, "capture_sha256": actual, "frame_sha256": digest}
 
 
-def verify_landing(root: Path, run: str, candidate: list[int]) -> dict:
+def candidate_frame_from_capture(root: Path, run_dir: str) -> tuple[list[int], dict]:
+    """The intended FAR's frame — the one the whole location question is about."""
+    return frame_from_capture(root, run_dir, INTENDED_FAR)
+
+
+def device_frames(root: Path) -> dict:
+    """The carrier bitstream's frames, keyed by FAR. Cheap: ~0.06 s for all 5,144."""
+    import bitstream_frames as bf
+    return bf.parse_frames(root / RUN_DIR / "carrier.bit")["frames"]
+
+
+def check_controls(root: Path, run_dir: str, controls: list[dict],
+                   declared: list[str], device: dict) -> dict:
+    """Re-derive every positive control from the carrier bitstream, not from the sweep's word.
+
+    `expected_sha256 == observed_sha256` in a verdict is the acquisition tool agreeing with
+    itself. What makes a control a control is that the frame it read is the frame the frozen
+    bitstream holds at that FAR — so each capture is reopened, its digest chain rechecked, and
+    its 101 words compared against `carrier.bit`.
+    """
+    detail, exact_against_bitstream, unreadable = [], 0, []
+    stated = {str(c.get("far", "")).lower(): c for c in controls}
+    for far_key in declared:
+        far = int(far_key, 16)
+        try:
+            words, provenance = frame_from_capture(root, run_dir, far)
+        except (DerivationStop, FileNotFoundError, KeyError) as why:
+            unreadable.append({"far": far_key, "why": str(why)})
+            continue
+        base = device.get(far)
+        base_sha = frame_sha(base) if base is not None else None
+        control = stated.get(far_key, {})
+        agrees = (base is not None and words == base
+                  and control.get("expected_sha256") == base_sha
+                  and control.get("observed_sha256") == base_sha)
+        exact_against_bitstream += 1 if agrees else 0
+        detail.append({"far": far_key, "capture": provenance["capture"],
+                       "frame_sha256": provenance["frame_sha256"],
+                       "bitstream_sha256": base_sha,
+                       "equals_the_bitstream": agrees})
+    return {
+        "declared": len(declared),
+        "exact_against_the_bitstream": exact_against_bitstream,
+        "unreadable": unreadable,
+        "all_sixteen_re_derived":
+            not unreadable and exact_against_bitstream == POSITIVE_CONTROLS == len(declared),
+        "detail": detail,
+    }
+
+
+def verify_landing(root: Path, run: str, candidate: list[int],
+                   device: dict | None = None) -> dict:
     """Derive — never declare — whether this instance had the candidate at the intended FAR.
 
     Every part is read out of that instance's own evidence: the plmark chain that binds the
@@ -312,26 +364,114 @@ def verify_landing(root: Path, run: str, candidate: list[int]) -> dict:
         "index_at_end": index["plmark_at_end"],
     }
     controls = verdict.get("positive_controls", [])
+    declared_control_fars = [str(far).lower() for far in index["positive_control_fars"]]
+    observed_control_fars = [str(control.get("far", "")).lower() for control in controls]
     exact = [c for c in controls if c.get("exact_same_far_base_match")
              and c.get("expected_sha256") == c.get("observed_sha256")]
     words, provenance = candidate_frame_from_capture(root, run_dir)
     matching = sum(1 for a, b in zip(words, candidate) if a == b)
+    controls_vs_bitstream = check_controls(
+        root, run_dir, controls, declared_control_fars,
+        device if device is not None else device_frames(root))
+    plmarks_are_well_formed = all(
+        isinstance(mark, str) and re.fullmatch(r"[0-9a-f]{16}", mark)
+        for mark in marks.values())
 
     checks = {
-        "one_plmark_across_fault_staging_and_acquisition": len(set(marks.values())) == 1,
+        "four_plmarks_present_and_well_formed": plmarks_are_well_formed,
+        "one_plmark_across_fault_staging_and_acquisition":
+            plmarks_are_well_formed and len(set(marks.values())) == 1,
         "instrument_digest_is_the_frozen_one":
             index["instrument_digest"] == INSTRUMENT_DIGEST,
         "verdict_is_the_landed_one": verdict.get("verdict") == LANDED,
         "verdict_names_the_intended_far":
             str(verdict.get("intended_far", "")).lower() == f"0x{INTENDED_FAR:08x}",
-        "sixteen_controls_declared": len(index["positive_control_fars"]) == POSITIVE_CONTROLS,
+        "sixteen_controls_declared": len(declared_control_fars) == POSITIVE_CONTROLS,
+        "declared_control_fars_are_unique":
+            len(set(declared_control_fars)) == POSITIVE_CONTROLS,
+        "verdict_control_fars_match_declared_sequence":
+            observed_control_fars == declared_control_fars,
         "sixteen_controls_exact": len(exact) == POSITIVE_CONTROLS == len(controls),
+        "controls_re_derived_from_the_carrier_bitstream":
+            controls_vs_bitstream["all_sixteen_re_derived"],
         "capture_equals_candidate_word_for_word": words == candidate,
     }
     return {
         "run": run, "run_dir": run_dir, "plmarks": marks,
-        "controls_exact": len(exact), "controls_declared": len(controls),
+        "controls_exact": len(exact), "controls_declared": len(declared_control_fars),
+        "control_fars": {"declared": declared_control_fars, "observed": observed_control_fars},
+        "controls_vs_bitstream": controls_vs_bitstream,
         "words_matching_candidate": f"{matching}/{FRAME_WORDS}",
         "provenance": provenance, "checks": checks,
         "landing_verified": all(checks.values()),
     }
+
+# The sixteen positive-control captures of each acquisition. They are pinned because the
+# landing derivation re-reads them: 'sixteen controls exact' is otherwise the sweep tool's
+# own self-report, and the oracle may not be derived from the thing it judges.
+PINNED.update({
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00000900.json":
+        "23a11be167132bc336043a57f4134126c5329e6605287532d73ffa84c08a33d1",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00000986.json":
+        "b3c30b3e2ded42e1c7835089a893947fc773fde66dbe9d4996db77e1df5df796",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_000009a2.json":
+        "b49be7d368e4de947836cdbf7f5147f12b37f73c3dfd715bd1a9fad3d6df5d62",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00000a8e.json":
+        "b206f9bf177c35c2773705e3e0fd7981146e6b98dfae3f876118214c97ef3634",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00000b8a.json":
+        "60429201033052784867021424c899ceb81f1284308b5939d63d4b01cc3db84b",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00000c04.json":
+        "b12b3dde0c3dd0acbd8337c8aba8551f182594b0bc72293c7825d8a978f91655",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00000d04.json":
+        "9ebade8e19b73a3185add31c1966fddee766cb7482e48104ab33a1d3890d55e5",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00400915.json":
+        "c33b05e9bcdf18fe11f35efc0bae356b64962d5d4b642eb828577f2f05570523",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00400996.json":
+        "e7e633e1a91f2726895a7e54257e5a04af33d61df2af98614c31629a15721664",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00400a10.json":
+        "4a7617cc628032004b3c8d4f85f038d22409179997ea0b6ec43705da7634b8a8",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00400b05.json":
+        "1b704516a85ff5f2414be048601f08193ecb917f00b904967780da53b5c230c5",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00400b91.json":
+        "18429f144c864d03eb87b1b712882c569d9f69e09910a4ece154356b429150d3",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00400c0a.json":
+        "ddd0a3694d4f9001801c36d07846a7047b335d96258ed18a8f464aa4befd1296",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00400c8e.json":
+        "62cca5e83d533b8a4fac8613de9544bbfd19e75444f5f8233c676e2ff17ddf26",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00401101.json":
+        "d415ac1c0d0b0541c82be0499cca0ad235260b5592d34edb425f155af6ac5ce5",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_0040139b.json":
+        "8773f452ed40e8522f7381c5cf564808c59f767b13f2e14400a92e6574b958fd",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00000900.json":
+        "bb4b3ab51933c963b89f03ed81d735f70b2221450ec862012e1ae2c46a515f5e",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00000986.json":
+        "e62bc0821cca857a47e8d37c227358fc48bf1b09cdbab0c6d57cfc4b38309913",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_000009a2.json":
+        "c9165b81f63502ce230ca50f69aabb5047abb55b8c443ba55f9ccef80736afa6",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00000a8e.json":
+        "65022b85d3e6bf17f7ed9d388bce857db8ecfe1549a03ba8192054ec06464b3c",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00000b8a.json":
+        "41fa8255eb3a348810df77c9704011d6610d34f81d8acd38f46912d3cb135f53",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00000c04.json":
+        "b63405eb9f52065c6172baf6f5df44663b5bc26a76849a0ad09e814b203f1b85",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00000d04.json":
+        "12accca75ab5520e2249ca353f7d8c669728b8ec5cb139b8beb30265a65fe743",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00400915.json":
+        "1827df54a9e67f479cf216e02bed7f1b511f1bc92c22044e3901ac31a4a795ec",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00400996.json":
+        "6b02921be291706718dee4e595f8b289c3d0468470b66fccf78bc3491f08d883",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00400a10.json":
+        "ce007c199e0b32cccc2b63a3534d3063d1420ddcb9b3e17c5b616c7ea3a4e826",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00400b05.json":
+        "0769458a68c275e3bfe4d06d47d126505559d0790b8103af553b01fca8c3802e",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00400b91.json":
+        "ba0811b733cdbf59ccff4845136956b7a3cc132b29a788e4082def525d5c1709",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00400c0a.json":
+        "f6485d66b6ec9203c10fb63fc80d7debaf936471bf526d5ead53e8717c07c64a",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00400c8e.json":
+        "f1bf40c67b64d7a45a12c645703ddc9b3703bc7b2fce0f899e5cb3127fab2767",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_00401101.json":
+        "eb02697ba247626cd6bd8b964e6cb6cb4e71f24d9156d631da976f76dc33b50a",
+    "evidence/location_reproduction_2026_08_20/step4_sweep/far_0040139b.json":
+        "2dc08f5275f2c66bcce391cc93f14925a1c7052ec23fd7ab237648dcf44ff7d5",
+})
