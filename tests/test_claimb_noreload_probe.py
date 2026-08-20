@@ -42,6 +42,7 @@ FAULT_12 = "the engine faulted during pass 2 of envelope 0: fault_code 12 (rbsyn
 STICKY = ("configuration_valid is set but recovery_required is still set: a fault happened "
           "since the carrier was loaded, and what was written before it may never be scored")
 CLEAN_SECOND_TRANSACTION_STATUS = 0x0407FAC4      # cv=1 fault=0 rr=1 rb_frames_ok=15
+NORMAL_RETURN_STATUS = 0x0407FA44                 # the same, but recovery_required CLEAR
 FAULTED_STATUS = 0x04040082                       # the specified fault, for comparison
 
 
@@ -254,6 +255,59 @@ class TheB1ConditionalNegative(unittest.TestCase):
             self.assertIn("did not observe its own starting content", text)
             for forbidden in ("REFUTED", "refutes", "DISPROVED", "PROVEN"):
                 self.assertNotIn(forbidden, text)
+
+
+class ANormalReturnIsNotB1(unittest.TestCase):
+    """The transport only returns when the final `recovery_required` is CLEAR — which means
+    `fault_since_reset` was clear, which means this never ran against a faulted carrier. B1 is
+    defined by that flag being SET, so a normal return may not borrow its verdict."""
+
+    def test_a_normal_return_stops_without_a_conditional_negative(self) -> None:
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            harness = Harness(Path(tmp), write=lambda which: {"which": which})
+            harness.replies[f"md.l 0x{axi.STATUS:08x} 0x1"] = status_reply(
+                NORMAL_RETURN_STATUS)
+            code, record = harness.run()
+        self.assertEqual(code, 1, "a normal return is still a fail-closed stop")
+        self.assertEqual(record["verdict"], "STOP")
+        self.assertEqual(record["reading"]["shape"], "UNEXPECTED_NORMAL_RETURN")
+        self.assertIsNone(record["reading"]["verdict"])
+        self.assertFalse(record["reading"]["sticky_recovery_refusal"])
+        self.assertFalse(record["reading"]["final_status"]["recovery_required"])
+        # The WHOLE record, not just the reading: 1.0.1's round minted the verdict one level
+        # down, where a check on the reading alone would not have seen it.
+        self.assertNotIn("CONDITIONAL NEGATIVE", json.dumps(record))
+        self.assertIn("not the pre-registered B1", record["stop_reason"])
+        self.assertIn("NOT THIS FUNCTION'S TO MAKE", record["round"]["verdict"])
+
+    def test_only_the_classifier_can_issue_the_conditional_negative(self) -> None:
+        """No branch of `main` may mint PASS_VERDICT for itself."""
+        import ast
+        source = (REPO_ROOT / "scripts/board_claimb_noreload_noop.py").read_text("utf-8")
+        tree = ast.parse(source)
+        main = next(node for node in tree.body
+                    if isinstance(node, ast.FunctionDef) and node.name == "main")
+
+        def minted_in(scope):
+            return [node for node in ast.walk(scope)
+                    if isinstance(node, ast.Name) and node.id == "PASS_VERDICT"]
+        classifier = next(node for node in tree.body
+                          if isinstance(node, ast.FunctionDef)
+                          and node.name == "classify_stop")
+        inside = {id(node) for node in ast.walk(classifier)}
+        stray = []
+        for scope in tree.body:
+            if isinstance(scope, ast.Assign):
+                continue                     # the definition itself
+            for node in ast.walk(scope):
+                if (isinstance(node, ast.Name) and node.id == "PASS_VERDICT"
+                        and id(node) not in inside):
+                    stray.append(getattr(scope, "name", "<module>"))
+                    break
+        self.assertEqual(stray, [], "only classify_stop may name the B1 verdict")
+        self.assertEqual(minted_in(main), [], "main must take the verdict from classify_stop")
+        self.assertEqual(gate.verify_source(source), [])
 
 
 class TheB2OtherFault(unittest.TestCase):

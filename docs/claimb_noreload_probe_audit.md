@@ -1,9 +1,11 @@
 # Audit — the no-reload diagnostic no-op
 
-> **1.0.1, after an adversarial review of 1.0.0 found three hard gaps.** All three are closed
-> below and each has its own tests and mutants; §§0.1–0.3 state what was wrong, because a fix
-> whose defect is not recorded is a fix nobody can check. 1.0.0 was pushed but never run, so
-> nothing downstream depends on it.
+> **1.0.1, after two rounds of adversarial review.** The first found three hard gaps in 1.0.0
+> (§§0.1–0.3); the second found that the fix for §0.1 had been applied to the exception path
+> and not to the other two places the same verdict could be minted (§0.4). All are closed, each
+> with its own tests and mutants, and the defects are recorded because a fix whose defect is not
+> written down is a fix nobody can check. 1.0.0 was pushed but never run, so nothing downstream
+> depends on it; 1.0.1 has not been published yet.
 
 ## 0. What 1.0.0 got wrong
 
@@ -200,6 +202,7 @@ attempts where the baseline shows one.
 |---|---|---|
 | **A1 / A2 / A3** | `fault_code 8 (readback)`, one stopped step, exactly one payload written, the round claiming no verdict | `test_the_specified_fault_stops_with_its_shape_preserved`, `test_the_fault_branch_never_writes_again` |
 | **B1** | the sticky-recovery refusal, recognised from the message **and** a status reconstructed from telemetry as 15/15 + `configuration_valid` + no fault + `recovery_required`; exit 1, `STOP`, the conditional-negative wording | `test_a_clean_second_transaction_is_recognised_from_the_refusal`, `test_the_four_fields_are_reconstructed_from_the_telemetry`, `test_the_reconstruction_reads_the_run_s_own_recorded_reply`, `test_a_sticky_refusal_without_the_status_is_not_promoted`, `test_the_pass_verdict_is_conditional_and_never_a_refutation` |
+| **not B1** | a normal return: `UNEXPECTED_NORMAL_RETURN`, `verdict: None`, and the phrase "CONDITIONAL NEGATIVE" absent from the **whole** record | `test_a_normal_return_stops_without_a_conditional_negative`, `test_only_the_classifier_can_issue_the_conditional_negative` |
 | **B2** | the other fault code recorded **as itself**, not folded into the A-family | `test_another_fault_code_is_recorded_as_itself` |
 | **C1** | *not this tool's verdict* — whether step ① produced the specified fault is judged at step ①. What this tool guarantees is that every STATUS word it saw survives verbatim in the telemetry, so the pre-state and the final state are both reconstructable | the reconstruction tests above |
 | **C2** | every interlock refusal costs zero transactions; a malformed marker or a taken/unwritable destination costs zero board contact | `TheC2Interlocks` ×3, `TheEvidenceDestinationIsClaimedFirst` ×4 |
@@ -219,14 +222,18 @@ write_the_candidate   KILLED — payloads written: ['candidate']
 skip_same_boot        KILLED — main must call axi.same_boot exactly once, found 0
 reload                KILLED — the driver names the reload path: ['phase_setup']
 relaxation_flag       KILLED — CLI options are ['--force', '--out', '--plmark', '--port']
-interrupt_after_fault KILLED — the driver names ['.interrupt(']
-overwrite_evidence    KILLED — main must call reserve_evidence exactly once, found 0
-reserve_after_the_tty KILLED — reserve_evidence must precede opening the transport
-11/11
+interrupt_after_fault   KILLED — the driver names ['.interrupt(']
+overwrite_evidence      KILLED — main must call reserve_evidence exactly once, found 0
+reserve_after_the_tty   KILLED — reserve_evidence must precede opening the transport
+bypass_classifier       KILLED — main must call classify_stop exactly once, found 0
+normal_return_is_b1     KILLED — PASS_VERDICT referenced outside classify_stop, in ['main']
+round_mints_the_verdict KILLED — PASS_VERDICT referenced outside classify_stop, in
+                                 ['run_noreload_noop']
+14/14
 ```
 
 Five are killed **behaviourally** — the round is executed against a stubbed write path and the
-gate reports what it actually did — and six structurally. The harness verifies the unmutated
+gate reports what it actually did — and nine structurally. The harness verifies the unmutated
 round first, on both the pass and the fault path, so a "kill" cannot be an artifact of a broken
 stub, and `reserve_after_the_tty` is parsed with `ast` before it is judged so that it cannot be
 "killed" for being a syntax error instead of for being wrong.
@@ -249,17 +256,22 @@ stub, and `reserve_after_the_tty` is parsed with `ast` before it is judged so th
 ## Verification performed
 
 ```
-tests/test_claimb_noreload_probe.py        22/22 OK
+tests/test_claimb_noreload_probe.py        24/24 OK
 gate_claimb_noreload_probe.py              CLAIM-B NO-RELOAD PROBE ACCEPTED
-mutate_claimb_noreload_probe.py            11/11 killed
-adversarial re-probe of the three gaps     interrupts 0; old evidence bytes unchanged with
+mutate_claimb_noreload_probe.py            14/14 killed
+adversarial re-probe, round 1              interrupts 0; old evidence bytes unchanged with
                                            0 transports opened and 0 writes; B1 recognised as
                                            CLEAN_SECOND_TRANSACTION with 15/15, cv=1, fault=0,
                                            recovery_required=1
+adversarial re-probe, round 2              a normal return with STATUS 0x0407FA44 gives
+                                           UNEXPECTED_NORMAL_RETURN, verdict None, and no
+                                           "CONDITIONAL" anywhere in the record; the gate
+                                           refuses a source that defines classify_stop and
+                                           then bypasses it
 gate_claimb_board_driver.py                ACCEPTED   (unchanged neighbour)
 gate_claimb_postfault_capture.py           ACCEPTED   (unchanged neighbour)
 mutate_claimb_postfault_capture.py         3/3 killed (unchanged neighbour)
-full suite                                 1192 tests, OK, 0 skips on the clean tree
+full suite                                 1194 tests, OK, 0 skips on the clean tree
 py_compile, git diff --check               clean
 board                                      untouched, powered down
 ```

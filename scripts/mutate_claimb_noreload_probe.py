@@ -22,6 +22,12 @@ Three more, from the adversarial review of 1.0.0, which found each of them live:
   interrupt_after_fault  an unlogged Ctrl-C on the way out of a refusal
   overwrite_evidence     dropping the destination reservation, so an existing record is lost
   reserve_after_the_tty   reserving only once the board has already been touched
+
+And two more, from the review of 1.0.1, which found both live:
+
+  bypass_classifier      defining classify_stop and then hardcoding the verdict anyway
+  normal_return_is_b1    calling a normal return B1, when B1 requires the STICKY flag SET
+  round_mints_the_verdict the ROUND naming B1 itself, which is the same defect one level down
 """
 
 from __future__ import annotations
@@ -127,18 +133,21 @@ def main() -> int:
     if driver.count(write_line) != 1:
         print("HARNESS ERROR: the single write line is not unique")
         return 1
-    pass_line = '    entry["state"] = "passed"\n    record["verdict"] = PASS_VERDICT\n'
-    if driver.count(pass_line) != 1:
-        print("HARNESS ERROR: the pass arm is not unique")
+    round_verdict_line = (
+        '    record["verdict"] = "THE SINGLE WRITE RETURNED; '
+        'THE READING IS NOT THIS FUNCTION\'S TO MAKE"\n')
+    pass_line = '    entry["state"] = "passed"\n'
+    if driver.count(round_verdict_line) != 1 or driver.count(pass_line) != 1:
+        print("HARNESS ERROR: the round's pass arm is not unique")
         return 1
 
     # -- 1. a second transaction after the no-op
     mutants.append(("second_transaction", lambda: behavioural(
         "second_transaction",
-        driver.replace(pass_line, pass_line.replace(
-            '    record["verdict"] = PASS_VERDICT',
+        driver.replace(
+            round_verdict_line,
             '    known_driver._write("candidate", authority, known, session)\n'
-            '    record["verdict"] = PASS_VERDICT')),
+            + round_verdict_line),
         fault=False,
         expect=lambda p, e, s, r: (
             p != ["restore"], f"payloads written: {p}"))))
@@ -146,22 +155,22 @@ def main() -> int:
     # -- 2. an evaluation after the no-op
     mutants.append(("scoring", lambda: behavioural(
         "scoring",
-        driver.replace(pass_line, pass_line.replace(
-            '    record["verdict"] = PASS_VERDICT',
+        driver.replace(
+            round_verdict_line,
             '    known_driver._score("restore", "train", known, session)\n'
-            '    record["verdict"] = PASS_VERDICT')),
+            + round_verdict_line),
         fault=False,
         expect=lambda p, e, s, r: (e > 0, f"evaluation calls: {e}"))))
 
     # -- 3. a pass that continues instead of stopping
     mutants.append(("continue_after_pass", lambda: behavioural(
         "continue_after_pass",
-        driver.replace(pass_line, pass_line.replace(
-            '    record["verdict"] = PASS_VERDICT',
+        driver.replace(
+            round_verdict_line,
             '    entry2 = {"step": "second_no_op", "state": "started"}\n'
             '    record["steps"].append(entry2)\n'
             '    entry2["result"] = known_driver._write("restore", authority, known, session)\n'
-            '    record["verdict"] = PASS_VERDICT')),
+            + round_verdict_line),
         fault=False,
         expect=lambda p, e, s, r: (
             s != ["diagnostic_no_op"], f"steps taken: {s}"))))
@@ -272,6 +281,42 @@ def main() -> int:
                         lambda: structural("reserve_after_the_tty", moved)))
     else:
         print("reserve_after_the_tty: HARNESS ERROR anchors are not unique")
+
+    # -- 12. the classifier defined but not used. The name being present is NOT the check.
+    classify_call = '        record["reading"] = classify_stop(record, cause)\n'
+    if driver.count(classify_call) != 1:
+        print("bypass_classifier: HARNESS ERROR anchor is not unique")
+    else:
+        mutants.append(("bypass_classifier", lambda: structural(
+            "bypass_classifier",
+            driver.replace(
+                classify_call,
+                '        record["reading"] = {\n'
+                '            "shape": "CLEAN_SECOND_TRANSACTION",\n'
+                '            "verdict": PASS_VERDICT,\n'
+                '            "sticky_recovery_refusal": True,\n'
+                '            "final_status": None,\n'
+                '            "reconstructed_from": "n/a",\n'
+                '        }\n'))))
+
+    # -- 13. a normal return called B1. It cannot be: the transport only returns when the
+    #        final recovery_required is CLEAR, and B1 is defined by that flag being SET.
+    normal_return = '            "shape": "UNEXPECTED_NORMAL_RETURN",\n'
+    if driver.count(normal_return) != 1:
+        print("normal_return_is_b1: HARNESS ERROR anchor is not unique")
+    else:
+        mutated = driver.replace(normal_return,
+                                 '            "shape": "CLEAN_SECOND_TRANSACTION",\n')
+        mutated = mutated.replace('            "verdict": None,\n',
+                                  '            "verdict": PASS_VERDICT,\n')
+        mutants.append(("normal_return_is_b1",
+                        lambda: structural("normal_return_is_b1", mutated)))
+
+    # -- 14. the round naming the reading itself. It cannot know: the sticky flag and the four
+    #        status fields live in main's telemetry, not in the round.
+    mutants.append(("round_mints_the_verdict", lambda: structural(
+        "round_mints_the_verdict",
+        driver.replace(round_verdict_line, '    record["verdict"] = PASS_VERDICT\n'))))
 
     for _, run in mutants:
         killed += 1 if run() else 0

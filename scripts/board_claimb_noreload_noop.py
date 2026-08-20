@@ -82,6 +82,10 @@ EXPECTED_ON_A_CLEAN_SECOND_TRANSACTION = {
 # the loader's own output must not be allowed to reach a same-boot comparison.
 PLMARK = re.compile(r"[0-9a-f]{16}")
 
+# The B1 reading, and the ONLY place it is spelled out. `classify_stop` is the only function
+# permitted to reference it, and the structural gate enforces that: a branch that could mint
+# this for itself would be able to call something B1 without checking the sticky recovery flag
+# or the four status fields that define it.
 PASS_VERDICT = (
     "THE DIAGNOSTIC NO-OP PASSED; CONDITIONAL NEGATIVE FOR STRICT H-STALE — this run did not "
     "observe its own starting content, so this is not a refutation")
@@ -219,7 +223,11 @@ def run_noreload_noop(authority: ex.PublishedCarrierAuthority,
         raise ProbeStop(
             f"diagnostic_no_op stopped: {raised}", record=record, cause=cause) from raised
     entry["state"] = "passed"
-    record["verdict"] = PASS_VERDICT
+    # Deliberately NOT a reading. This function knows only that the write returned; whether
+    # that is the pre-registered B1 depends on the sticky recovery flag and the final status,
+    # which only `classify_stop` looks at. A round that named the verdict here would be the
+    # same defect the classifier exists to prevent, one level down.
+    record["verdict"] = "THE SINGLE WRITE RETURNED; THE READING IS NOT THIS FUNCTION'S TO MAKE"
     return record
 
 
@@ -282,17 +290,27 @@ def main() -> int:
         transport.mark("before run_noreload_noop")
         record["round"] = run_noreload_noop(authority, known, session)
 
-        # Reachable only if the transport ever stops refusing on the sticky recovery flag.
-        # It is still a fail-closed stop: nothing follows this transaction.
+        # A NORMAL RETURN IS NOT B1. The transport only returns when the final status has
+        # `recovery_required` clear — which means `fault_since_reset` was clear, which means
+        # this did not run against a faulted carrier at all. The pre-registered B1 requires
+        # the sticky flag SET. So this branch is its own finding: the premise of the
+        # experiment was not met, and no conditional-negative verdict is issued for it.
         record["reading"] = {
-            "shape": "CLEAN_SECOND_TRANSACTION",
+            "shape": "UNEXPECTED_NORMAL_RETURN",
             "final_status": reconstruct_status(record),
             "sticky_recovery_refusal": False,
-            "verdict": PASS_VERDICT,
+            "verdict": None,
             "reconstructed_from": "the round returned normally; the status is telemetry",
+            "why_not_b1": ("B1 is a clean transaction refused on a STICKY recovery flag. A "
+                           "normal return means recovery_required was clear at the final "
+                           "read, so this carrier had not faulted and the state this probe "
+                           "is only meaningful in was not the state it ran against."),
         }
         record["verdict"] = "STOP"
-        record["stop_reason"] = PASS_VERDICT
+        record["stop_reason"] = (
+            "the transaction returned normally, so recovery_required was clear and this did "
+            "not run against a faulted carrier; that is not the pre-registered B1 and no "
+            "reading is issued for it")
         print(f"STOP: {record['stop_reason']}", file=sys.stderr)
         failed = True
     except Exception as stop:

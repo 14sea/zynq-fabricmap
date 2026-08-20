@@ -104,6 +104,7 @@ def verify_source(driver_source: str) -> list[str]:
         "session.verify_identity",
         "axi.same_boot",
         ROUND_NAME,
+        "classify_stop",
     )
     for name in required_once:
         count = len(named(name))
@@ -218,10 +219,44 @@ def verify_source(driver_source: str) -> list[str]:
                      if isinstance(node, ast.Constant) and isinstance(node.value, str)}
     if "candidate" in payload_names:
         problems.append(f"{ROUND_NAME} names the candidate payload")
-    if "classify_stop" not in driver_source:
+    # Not "the name appears somewhere" — the definition alone satisfies that, and a driver
+    # that defines a classifier and then hardcodes a verdict is exactly the defect. It must be
+    # CALLED, from main, once, on this run's own record and this run's own cause.
+    classifier = named("classify_stop")
+    if classifier:
+        args = classifier[0][2].args
+        if len(args) != 2 or not _is_name(args[0], "record") or not _is_name(args[1], "cause"):
+            problems.append(
+                "classify_stop must be given this run's own record and the cause it stopped "
+                "on, so the reading cannot be a constant")
+    if round_call and classifier and classifier[0][0] <= round_call[0][0]:
+        problems.append("classify_stop must follow the round it is classifying")
+
+    # Nothing may mint the conditional-negative verdict for itself. Only `classify_stop`,
+    # which checks the sticky refusal AND the four status fields, may name it — anywhere else
+    # in the module is a path that could call something B1 without testing what B1 means.
+    # Checked module-wide, not just in main: the round minting it would be the same defect one
+    # level down, and that is exactly what a review of 1.0.1 found.
+    try:
+        classifier_body = _function(tree, "classify_stop")
+    except ValueError as exc:
+        problems.append(f"classify_stop must be defined exactly once: {exc}")
+        classifier_body = None
+    inside = {id(node) for node in ast.walk(classifier_body)} if classifier_body else set()
+    stray = []
+    for scope in tree.body:
+        if isinstance(scope, ast.Assign) and any(
+                _is_name(target, "PASS_VERDICT") for target in scope.targets):
+            continue                      # the definition itself
+        for node in ast.walk(scope):
+            if _is_name(node, "PASS_VERDICT") and id(node) not in inside:
+                stray.append(getattr(scope, "name", "<module>"))
+                break
+    if stray:
         problems.append(
-            "the driver must classify its stop: a clean second transaction refuses on the "
-            "sticky recovery flag, and that shape has to be recognised rather than lost")
+            f"PASS_VERDICT is referenced outside classify_stop, in {sorted(set(stray))}; the "
+            "B1 reading may only be issued by the function that checks the sticky refusal and "
+            "the four status fields")
 
     loops = [node for node in ast.walk(round_function)
              if isinstance(node, (ast.For, ast.While, ast.AsyncFor))]
