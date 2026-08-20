@@ -185,6 +185,27 @@ What that pad physically is, is worth naming because it makes the discard testab
 flush frame. A sequencer that failed to discard it would therefore compare the *flush* frame
 against frame 0's CRC, which is a mismatch, not an accident that might pass. **[DERIVED]**
 
+> **LIMITS OF THE PRIOR ART CITED ABOVE — added 2026-08-20, additive.** The `[MEASURED]`
+> citations in §4c stand for what they claim: `hwicap-uart.py readback()` did use this
+> FAR → RCFG → NOOP → Type-1 FDRO(0) → Type-2 shape, and the ~101-word readback pad is that prior
+> art's own observation. What §4c did not carry, and what a reader must have alongside it:
+>
+> * a **whole frame cannot be captured in one transaction** on that path — pad (~101) + frame
+>   (101) = 202 words against a read FIFO of ~128, and the controller does **not** back-pressure
+>   ICAP, so words past the FIFO are silently lost;
+> * chunked draining reaches further, but the **FDRO chunk boundary drifts run-to-run** — about
+>   **18 words** between two back-to-back reads — so that prior art's own conclusion is that a
+>   clean automated before/after whole-frame compare **is not reliable**, and its recommended
+>   reliable check is the **register** read, not a frame read;
+> * the non-blank frame content it reports (a recovered LUT-INIT word) is **a sentence of prose
+>   with no pinned capture behind it**, on the **same device type but another board instance** and
+>   a **different carrier implementation**. It is a precedent, not an artifact, and it establishes
+>   **no same-FAR whole-frame exact capture**.
+>
+> None of this withdraws the sequence-shape or pad precedent, and none of it may be read as
+> answering W2 or as locating the fault outside the silicon or the configuration engine. See
+> `docs/claimb_jtag_gate_review.md` §8.
+
 ### 4d. Turnaround, then the data phase
 
 `CSIB` High → `RDWRB`=1 → `CSIB` Low, then, with `CSIB` gated on the consumer's readiness
