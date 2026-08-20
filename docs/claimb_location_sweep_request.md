@@ -35,11 +35,15 @@ One execution of the five steps of `claimb_location_sweep_spec.md`, in order, ea
 | ④ | one acquisition in that same boot | requested |
 | ⑤ | none — offline comparison of ④ against ① | requested; named so it is not skipped |
 
-Steps ① and ④ are **read-only JTAG**. Step ③ is the one that writes: the specified
-`known_answer` transaction through ICAP, and nothing after it — its driver's round is at most
-two steps and cannot reach `_score`. Everything runs through board tools that already exist;
-**no new code is asked for here**. **No mutation, no restore, no arm, no scoring, no retry, no
-resume**, and nothing beyond step ④ regardless of what step ④ returns.
+The **acquisition portions** of steps ① and ④ use read-only JTAG. Their surrounding board
+actions are not all reads: step ① first writes FCLK0 and loads the carrier into PL through
+PCAP; after a fresh power cycle, step ③'s `phase_setup` performs those same two setup writes
+before its two ICAP transactions. Step ③ then runs the published restore payload as the
+required `no_op`, followed by the specified `known_answer`, and nothing after it — its driver's
+round is at most two steps and cannot reach `_score`. Everything runs through board tools that
+already exist; **no new code is asked for here**. **No mutation, no post-fault restore or
+recovery transaction, no arm, no scoring, no retry, no resume**, and nothing beyond step ④
+regardless of what step ④ returns.
 
 ## 2. Why now — the four things that had to be true first
 
@@ -91,10 +95,14 @@ voids the pairing; if one becomes necessary, the procedure restarts at ①.
 
 ## 4. Run book
 
-Commands are given so the authorisation is over something concrete. `<D>` is the run date;
-the evidence root is `evidence/location_sweep_<D>/`. `CARRIER` is
-`gate_runs/claimb_round1_carrier_2026_08_13_erratum006/carrier.bit`, sha256
-`8c3369e8e4755da5aceeb7844690d5e132b2e65647004c0a46c0e868e34f0b8a`.
+Commands are given so the authorisation is over something concrete. `<D>` is replaced with the
+run date before the first command; the evidence root is `evidence/location_sweep_<D>/`. The
+shell variables used below are assigned explicitly in the same shell that runs the procedure:
+
+```sh
+CARRIER=gate_runs/claimb_round1_carrier_2026_08_13_erratum006/carrier.bit
+EXPECTED_CARRIER_SHA256=8c3369e8e4755da5aceeb7844690d5e132b2e65647004c0a46c0e868e34f0b8a
+```
 
 **The two steps that load the carrier do it differently on purpose**, and this is the one part
 of the run book that has to be read rather than skimmed:
@@ -118,19 +126,21 @@ break the ①/④ pairing, since step ③'s `phase_setup` always applies it.
    [physical power cycle]
    python3 scripts/precheck_fresh_power.py --out evidence/location_sweep_<D>/precheck_1.json
 
-   sha256sum $CARRIER | tee evidence/location_sweep_<D>/carrier_sha256.txt
-       # the full 64 hex digits are compared against 8c3369e8…0b8a, and the named file is the
-       # auditable record of it. A mismatch STOPS: nothing else in this procedure is valid
-       # against a different carrier.
+   printf '%s  %s\n' "$EXPECTED_CARRIER_SHA256" "$CARRIER" |
+       sha256sum --check - > evidence/location_sweep_<D>/carrier_sha256.txt 2>&1
+       # This is a mechanical gate, not a visual comparison: sha256sum --check is the final
+       # process in the pipeline and returns non-zero on mismatch. Its complete result is kept
+       # in the named file. A mismatch STOPS; nothing else in this procedure is valid against
+       # a different carrier.
 
    python3 scripts/board_set_fclk50.py --port /dev/ebaz-uart \
        > evidence/location_sweep_<D>/fclk50.log 2>&1                    # FCLK0 125 -> 50 MHz
-   python3 scripts/board_uboot_fpga_load.py --require-unconfigured --op loadb --bit $CARRIER \
+   python3 scripts/board_uboot_fpga_load.py --require-unconfigured --op loadb --bit "$CARRIER" \
        > evidence/location_sweep_<D>/carrier_load.log 2>&1
        # A non-zero exit from either STOPS. Both logs are kept whatever happens; the loader's
        # prints [plmark] <marker> (setenv without saveenv, so the marker dies with the boot).
 
-   python3 scripts/board_signature_search.py --out-dir evidence/location_sweep_<D>/step1_control \
+   python3 scripts/board_signature_search.py --out-dir evidence/location_sweep_<D>/step1_negative \
            --plmark <marker from carrier_load.log>
    expect: 16/16 controls, A20 = base, 5,144 read, candidate signature ABSENT
 
@@ -138,7 +148,7 @@ break the ①/④ pairing, since step ③'s `phase_setup` always applies it.
 
 ③ build the specified fault                                       [not yet authorised]
    python3 scripts/precheck_fresh_power.py --out evidence/location_sweep_<D>/precheck_2.json
-   sha256sum $CARRIER          # optional, read-only: phase_setup compares it mechanically
+   sha256sum "$CARRIER"        # optional, read-only: phase_setup compares it mechanically
    python3 scripts/board_claimb_postfault_capture.py \
            --out evidence/location_sweep_<D>/fault/record.json
        # NO hand load here. phase_setup inside the driver does SHA + fclk50 + loadb and
@@ -220,9 +230,10 @@ carries 417 MB of LFS over 202 objects against a 1 GB/month allowance.
   and locates nothing. The per-control observations record expected and observed digests, so
   the state is visible in the record, but the tool does not adjudicate it. This is a disclosed
   capability boundary, not a defect.
-* **R4 is demonstrated on sixteen frames, twice — never on 5,144.** Step ④ is the first
-  scale test of the recovery, and "controls 16/16 but the sweep degrades further in" is a real
-  possible outcome; the spec's first reading row exists for it.
+* **R4 is demonstrated on sixteen frames, twice — never on 5,144.** Step ① is its first
+  full-device scale test. If ① passes, step ④ is still the first such scale test in the
+  specified post-fault state, and "controls 16/16 but the sweep degrades further in" remains a
+  real possible outcome; the spec's first reading row exists for it.
 * **A hit is not yet a location.** Any single-FAR result needs independent reproduction, which
   is a separate design and a separate authorisation.
 * **The third state** (`A20` holding neither base nor candidate) is recorded, not interpreted.
