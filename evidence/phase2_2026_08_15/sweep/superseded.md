@@ -18,11 +18,21 @@ each capture against the frame the canonical `carrier.bit` holds at the same FAR
 
 ```
 exact whole-frame matches, controls:   0 / 16
-  on capture words[0:101]              0 / 16
-  on capture words[101:202]            0 / 16     (the read is 202 words, pad_frames = 1;
-                                                   neither alignment matches)
+  on capture words[101:202]            0 / 16     <- the real frame: the probe records
+                                                   `pad_frame` = words[0:101] and
+                                                   `frame` = words[101:202]
+  on capture words[0:101]               0 / 16     (the pad frame, checked only for
+                                                   completeness; it is not a candidate
+                                                   alignment. Added 2026-08-20.)
 expected non-zero words per control:   48, 66, 71, 46, 84, 14, 2, 82, 57, 3, 13, 55, 30, 14, 2, 3
-observed non-zero words, words[0:101]: 0 in every one of the sixteen
+observed non-zero words in the REAL frame (words[101:202]), as a distribution:
+                                       0 words x 3 controls
+                                      10 words x 4 controls
+                                     101 words x 9 controls
+                                       -- so the readback is NOT simply returning zeros here;
+                                          it returns content, and none of it is the content
+                                          the bitstream holds at that FAR. Still 0/16 exact.
+observed non-zero words, words[0:101]: 0 in every one of the sixteen (the pad frame)
 ```
 
 That is consistent with, and sharper than, the aggregate already recorded in

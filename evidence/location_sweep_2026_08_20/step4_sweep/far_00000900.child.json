@@ -1,0 +1,17 @@
+{
+  "returncode": 0,
+  "argv": [
+    "/usr/bin/python3",
+    "/home/test/zynq_fabricmap/scripts/probe_jtag_config_read.py",
+    "--far",
+    "0x00000900",
+    "--out",
+    "evidence/location_sweep_2026_08_20/step4_sweep/far_00000900.json.part",
+    "--cfg",
+    "/home/test/zynq_fabricmap/scripts/jtag_config_only.cfg",
+    "--speed",
+    "2000"
+  ],
+  "stdout": "READ: IDCODE 0x13722093, CONFIG_STATUS 0x46101f8c\n  0x00000900: frame sha 75a458e597d58fc3\u2026, 48 non-zero words\n  evidence: evidence/location_sweep_2026_08_20/step4_sweep/far_00000900.json.part\n",
+  "stderr": ""
+}
