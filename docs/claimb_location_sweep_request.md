@@ -12,7 +12,7 @@ made step ③ fail on contact.
 ## 0. Authorisation state (user ruling, 2026-08-20)
 
 **Step ① is authorised. Steps ②–⑤ are not, and are still the request half of this document.**
-The ruling attached three conditions and two grants:
+The ruling, in its own terms:
 
 * ① only, deliberately: it is R4's first run at 5,144 frames, and its result *and its archival*
   are to be read before ②–⑤ are ruled on;
@@ -124,6 +124,9 @@ break the ①/④ pairing, since step ③'s `phase_setup` always applies it.
 ```
 ① fresh load, negative control                                   [AUTHORISED]
    [physical power cycle]
+   mkdir -p evidence/location_sweep_<D>
+       # precheck_fresh_power.py would create it anyway (out.parent.mkdir), so this only
+       # removes the ordering dependency the redirections below would otherwise inherit.
    python3 scripts/precheck_fresh_power.py --out evidence/location_sweep_<D>/precheck_1.json
 
    printf '%s  %s\n' "$EXPECTED_CARRIER_SHA256" "$CARRIER" |
@@ -137,8 +140,9 @@ break the ①/④ pairing, since step ③'s `phase_setup` always applies it.
        > evidence/location_sweep_<D>/fclk50.log 2>&1                    # FCLK0 125 -> 50 MHz
    python3 scripts/board_uboot_fpga_load.py --require-unconfigured --op loadb --bit "$CARRIER" \
        > evidence/location_sweep_<D>/carrier_load.log 2>&1
-       # A non-zero exit from either STOPS. Both logs are kept whatever happens; the loader's
-       # prints [plmark] <marker> (setenv without saveenv, so the marker dies with the boot).
+       # A non-zero exit from either STOPS. Both logs are kept whatever happens. The loader
+       # prints [plmark] <marker> (setenv without saveenv, so the marker dies with the boot):
+       #   grep -o '\[plmark\] [0-9a-f]*' evidence/location_sweep_<D>/carrier_load.log
 
    python3 scripts/board_signature_search.py --out-dir evidence/location_sweep_<D>/step1_negative \
            --plmark <marker from carrier_load.log>
@@ -247,8 +251,9 @@ carries 417 MB of LFS over 202 objects against a 1 GB/month allowance.
 **"Any fault stops" would contradict step ③, whose whole purpose is to build one.** The rule
 is therefore stated per step:
 
-* **Steps ① and ④ — any fault stops.** They are read-only acquisitions; a fault there is not
-  part of the design.
+* **Steps ① and ④ — any fault stops.** Their acquisitions are read-only, and step ①'s two
+  setup writes (FCLK0, then the PCAP load) are ordinary preparation; a fault anywhere in either
+  step is not part of the design.
 * **Step ③ — the specified `F_READBACK` stop is the required outcome**, and the precondition
   for going on to ④: `[no_op: passed, known_answer: stopped]`, pass 2 of envelope 0,
   `STATUS 0x04040082` / `FAULT 0x8`. **Any other fault, and equally an unexpected pass, stops
