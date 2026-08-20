@@ -16,6 +16,12 @@ The six the ruling named, plus two the design's own history argued for:
   retry_after_fault   a fault that is swallowed and retried
   write_the_candidate the single write renamed to the candidate payload
   relaxation_flag     a --force option on the CLI
+
+Three more, from the adversarial review of 1.0.0, which found each of them live:
+
+  interrupt_after_fault  an unlogged Ctrl-C on the way out of a refusal
+  overwrite_evidence     dropping the destination reservation, so an existing record is lost
+  reserve_after_the_tty   reserving only once the board has already been touched
 """
 
 from __future__ import annotations
@@ -221,6 +227,51 @@ def main() -> int:
             "relaxation_flag",
             driver.replace(plmark_option,
                            plmark_option + '    parser.add_argument("--force")\n'))))
+
+    # -- 9. an unlogged console action after a refusal
+    interrupt_anchor = (
+        '        record["reading"] = classify_stop(record, cause)\n')
+    if driver.count(interrupt_anchor) != 1:
+        print("interrupt_after_fault: HARNESS ERROR anchor is not unique")
+    else:
+        mutants.append(("interrupt_after_fault", lambda: structural(
+            "interrupt_after_fault",
+            driver.replace(
+                interrupt_anchor,
+                '        if transport is not None:\n'
+                '            transport.interrupt()\n'
+                + interrupt_anchor))))
+
+    # -- 10. the destination reservation removed, so an existing record is overwritten
+    reserve_anchor = '        partial = reserve_evidence(args.out)\n'
+    if driver.count(reserve_anchor) != 1:
+        print("overwrite_evidence: HARNESS ERROR anchor is not unique")
+    else:
+        mutants.append(("overwrite_evidence", lambda: structural(
+            "overwrite_evidence",
+            driver.replace(reserve_anchor,
+                           '        partial = args.out.with_name(args.out.name + ".part")\n'))))
+
+    # -- 11. the reservation moved after the board has been touched. The mutant must stay
+    #        SYNTACTICALLY VALID, or the gate would "kill" it for the wrong reason: the whole
+    #        pre-flight try/except goes, and the call reappears after the transport exists.
+    preflight = (
+        "    try:\n"
+        "        partial = reserve_evidence(args.out)\n"
+        "    except EvidenceReservationStop as stop:\n"
+        '        print(f"STOP: {stop}", file=sys.stderr)\n'
+        "        return 1\n")
+    transport_line_2 = (
+        '        transport = cal.InstrumentedTransport(ident.SerialTransport(args.port), record)\n')
+    if driver.count(preflight) == 1 and driver.count(transport_line_2) == 1:
+        moved = driver.replace(preflight, "")
+        moved = moved.replace(transport_line_2, transport_line_2 + reserve_anchor)
+        import ast as _ast
+        _ast.parse(moved)          # the mutant must be real source, not a syntax error
+        mutants.append(("reserve_after_the_tty",
+                        lambda: structural("reserve_after_the_tty", moved)))
+    else:
+        print("reserve_after_the_tty: HARNESS ERROR anchors are not unique")
 
     for _, run in mutants:
         killed += 1 if run() else 0

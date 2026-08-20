@@ -8,8 +8,12 @@ of them are the inverse of that gate's. What is being enforced:
 * the CLI is exactly `--out`, `--plmark`, `--port`, all literal, with no relaxation word in any
   of them;
 * no setup, no loader, no reload path is reachable from this module at all;
-* the marker's format, the identity check and same-boot are all decided BEFORE the transport is
-  constructed or the round runs, so a refusal costs zero transactions;
+* the evidence destination is reserved and the marker's format is judged BEFORE the transport
+  is constructed, so those two refusals cost zero board contact; identity and same-boot need an
+  open transport by construction, and both still precede the round, so every refusal on this
+  path costs zero transactions;
+* the entrypoint issues no console action of its own after a refusal — no interrupt, no
+  acknowledgement — because those do not appear in the command telemetry;
 * the round writes `restore` exactly once through the existing single production write path,
   and names no other payload;
 * nothing in the module can reach the scorer, ARM, HOLDOUT, the candidate payload, or a second
@@ -32,6 +36,7 @@ ROUND_NAME = "run_noreload_noop"
 # other rounds, and the second write door.
 FORBIDDEN_REFERENCES = (
     "phase_setup", "loadb", "board_uboot_fpga_load", "require_unconfigured",
+    ".interrupt(",
     "_score", "score_last_transaction", "arm_scorer", "CTRL_ARM", "CTRL_MODE_HOLDOUT",
     "run_known_answer_round", "run_postfault_capture",
     "run_candidate_on_board", "write_sequence", "execute_transaction",
@@ -91,6 +96,7 @@ def verify_source(driver_source: str) -> list[str]:
     required_once = (
         "ex.PublishedCarrierAuthority.load",
         "kagate.KnownAnswerAuthority.load",
+        "reserve_evidence",
         "require_plmark",
         "ident.SerialTransport",
         "cal.InstrumentedTransport",
@@ -135,12 +141,24 @@ def verify_source(driver_source: str) -> list[str]:
     # Ordering is the whole gate: a refusal must be able to cost zero board contact, and the
     # marker must be judged before the tty is even opened.
     marker = named("require_plmark")
+    reservation = named("reserve_evidence")
     serial = named("ident.SerialTransport")
     identity = named("session.verify_identity")
     same_boot = named("axi.same_boot")
     round_call = named(ROUND_NAME)
     if marker and serial and marker[0][0] >= serial[0][0]:
         problems.append("require_plmark must precede opening the transport")
+    if reservation and serial and reservation[0][0] >= serial[0][0]:
+        problems.append(
+            "reserve_evidence must precede opening the transport, so a destination that is "
+            "taken or unwritable costs no board contact")
+    if reservation and marker and reservation[0][0] >= marker[0][0]:
+        problems.append(
+            "reserve_evidence must precede require_plmark: a marker refusal still writes an "
+            "evidence record, and it may only do so into a destination this run claimed")
+    if reservation and not (len(reservation[0][2].args) == 1
+                            and _is_attr(reservation[0][2].args[0], "args", "out")):
+        problems.append("reserve_evidence must claim args.out itself")
     if marker and not (len(marker[0][2].args) == 1
                        and _is_attr(marker[0][2].args[0], "args", "plmark")):
         problems.append("require_plmark must judge args.plmark itself")
@@ -200,6 +218,11 @@ def verify_source(driver_source: str) -> list[str]:
                      if isinstance(node, ast.Constant) and isinstance(node.value, str)}
     if "candidate" in payload_names:
         problems.append(f"{ROUND_NAME} names the candidate payload")
+    if "classify_stop" not in driver_source:
+        problems.append(
+            "the driver must classify its stop: a clean second transaction refuses on the "
+            "sticky recovery flag, and that shape has to be recognised rather than lost")
+
     loops = [node for node in ast.walk(round_function)
              if isinstance(node, (ast.For, ast.While, ast.AsyncFor))]
     if loops:
