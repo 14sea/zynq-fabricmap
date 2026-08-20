@@ -117,9 +117,14 @@ of the run book that has to be read rather than skimmed:
   `PCFG_DONE = 1`, and `--require-unconfigured` then refuses — **step ③ would fail on
   contact**. Its only pre-step is the read-only precheck.
 
-FCLK0 is not decoration: this board's FSBL leaves it at 125 MHz and the carrier is signed off
-at 50, so `board_set_fclk50.py` runs before **every** `loadb`. Step ① omitting it would also
-break the ①/④ pairing, since step ③'s `phase_setup` always applies it.
+FCLK0 is not decoration, but the reason is not the one an EBAZ4205 habit suggests. **This
+line runs on the EBAZ4203 `17A6`** (`gate_board_identity.py` pins `boardid 17A6`, `role verify`,
+`FCLK0 50.0 MHz`), whose SPL `ps7_init` already leaves FCLK0 at 50 MHz — IO PLL 1600 MHz, /8
+/4, which is exactly the `FPGA0_CLK_CTRL = 0x00400800` the precheck requires. It is the 4205
+that reverts to 125 MHz on every reset. `board_set_fclk50.py` runs anyway, before **every**
+`loadb`, because it *decodes the PLLs and verifies the real frequency* rather than comparing a
+board-specific constant — and because step ③'s `phase_setup` always runs it, so step ① omitting
+it would break the ①/④ pairing.
 
 ```
 ① fresh load, negative control                                   [AUTHORISED]
