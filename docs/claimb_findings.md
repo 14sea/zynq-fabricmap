@@ -124,10 +124,11 @@ verdict  NO_NONBLANK_READBACK_IN_THE_FROZEN_COMMITTED_INVENTORY
 Two precisions that must travel with those numbers:
 
 1. **All 105 engine frames were *expected* to be blank**, because every one of them is a no-op
-   step writing the blank restore payload. On the erratum-006 carrier the engine read path has
-   **never been asked** for non-blank content. It is the **staging copies** that owed the
-   candidate: three were taken after the candidate round faulted, owed the candidate, and
-   returned blank.
+   step writing the blank restore payload. In those seven completed transactions the
+   erratum-006 engine read path was **never asked** for non-blank content. The candidate
+   transactions did ask for non-blank content, but stopped at `F_READBACK`; their **staging
+   copies** owed the candidate. Three were taken after the candidate round faulted and returned
+   blank.
 2. **The inventory does contain non-blank content, from superseded carriers**, which is why the
    criterion has to be *same-FAR whole-frame exact*: the erratum-004 abort word `0xFFFFFFDA`
    ×101, and the erratum-005 dump that was **bit-exact against the device stream at an address

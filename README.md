@@ -4,6 +4,18 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
+> **▶ PAUSED, 2026-08-20 — Claim B's board programme is stopped under a stop-loss committed to
+> in the prior session ruling.** A host-side review found no way to build a write-verification
+> gate on the JTAG path without changing the measurement architecture, so the work is published
+> as a negative result rather than continued. **The findings are
+> [`docs/claimb_findings.md`](docs/claimb_findings.md)**; the review that triggered the stop-loss
+> is [`docs/claimb_jtag_gate_review.md`](docs/claimb_jtag_gate_review.md). In one line: the
+> candidate write lands at the intended FAR, the carrier's internal readback interlock faults on
+> it, and the interlock's successes cover only degenerate all-zero content. **Claim B still has
+> zero data points, and no board contact is authorised.** The status paragraph below is kept as
+> written; its single-observation caveat was closed on 2026-08-20 by a second fault instance
+> measured by the same JTAG method — replication, not an independent method.
+
 **Status (2026-08-20): three bit classes are address-certified and Claim B still has zero data
 points — but the question that blocked §9 step 6 for weeks is answered. The location sweep ran
 on silicon, and in the post-fault state the intended frame `0x00400A20` **held the candidate
