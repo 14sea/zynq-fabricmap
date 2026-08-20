@@ -143,6 +143,11 @@ break the ①/④ pairing, since step ③'s `phase_setup` always applies it.
        # A non-zero exit from either STOPS. Both logs are kept whatever happens. The loader
        # prints [plmark] <marker> (setenv without saveenv, so the marker dies with the boot):
        #   grep -o '\[plmark\] [0-9a-f]*' evidence/location_sweep_<D>/carrier_load.log
+       # The marker is checked TWICE, and both checks are worth knowing about:
+       #   main() reads the board's plmark and refuses on mismatch BEFORE run() is called,
+       #     so a transcription error stops the acquisition ahead of the first child read;
+       #   close_invocation() reads it again after the last one, which catches a reboot or a
+       #     marker change DURING the acquisition -- a different failure, not the same one.
 
    python3 scripts/board_signature_search.py --out-dir evidence/location_sweep_<D>/step1_negative \
            --plmark <marker from carrier_load.log>
