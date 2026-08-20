@@ -4,13 +4,15 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
-**Status (2026-08-17): three bit classes are address-certified and the host-side foundation
-is solid, but Claim B still has zero data points. The one known-answer mutation that §9 of
-the preregistration puts before any paired run has now been attempted repeatedly, and it
-stops in the same place every time — pass 2 of envelope 0, `fault_code 8` (readback). The
-work of the last several days has produced *instrument*, not Claim B data: a reproduced
-recovery for post-fault JTAG readback, and a location sweep that is now specified and
-implemented but not authorised. See [Where the line actually is](#where-the-line-actually-is).**
+**Status (2026-08-20): three bit classes are address-certified and Claim B still has zero data
+points — but the question that blocked §9 step 6 for weeks is answered. The location sweep ran
+on silicon, and in the post-fault state the intended frame `0x00400A20` **held the candidate
+bit-for-bit**, with sixteen of sixteen positive controls exact in the same acquisition
+(`evidence/location_sweep_2026_08_20/`). So for that transaction the write reached the frame it
+asked for, and its `F_READBACK` stop is a **read-side disagreement**, not a lost write. ⚠ That
+is **one direct observation** and is not yet closed by independent reproduction, and **§9 step 6
+still does not pass**: the carrier's own readback interlock still faults, so `restore` and the
+baseline re-run never execute. See [Where the line actually is](#where-the-line-actually-is).**
 
 - `data/` is frozen and self-verifying; the approach is ratified (see below).
 - **`clb_lut_init`** and **`clb_mux`** are certified host-side (address prediction).
@@ -70,20 +72,47 @@ below its goal:
 
 ```
 L0  Claim B A/B run                      the goal — never started
-L1  §9 step 6, known-answer mutation     BLOCKED: we do not know whether the write landed
-L2  locate the write (Phase 2 sweep)     VOID: the post-fault readback reproduced nothing
-L3  fix post-fault JTAG readback (R4)    SOLVED, and independently reproduced
-L4  the sweep tool's control semantics   <- current work, host-side, no board
+L1  §9 step 6, known-answer mutation     STILL FAILS — but no longer for an unknown reason:
+                                         the write is proven to land, the engine's readback
+                                         interlock still faults, so restore and the baseline
+                                         re-run never happen
+L1' why does the engine's readback         <- the live question, no mechanism yet
+    disagree while JTAG reproduces
+    the frame exactly?
+L2  locate the write                     ANSWERED ONCE, not closed: WRITE_LANDED_AT_THE_
+                                         INTENDED_FAR, 16/16 controls (2026-08-20). Needs
+                                         independent reproduction under the same identity.
+                                         Phase 2's earlier attempt stays VOID
+L3  fix post-fault JTAG readback (R4)    SOLVED, reproduced, and now shown not to degrade
+                                         across a whole device — 5,144 frames, 0 missing
+L4  the sweep tool's control semantics   DONE (2.8.0)
 ```
 
-**L2 is void, and its own artifact does not say so.** `evidence/phase2_2026_08_15/sweep/verdict.json`
+**What the 2026-08-20 run did and did not settle.** Step ① loaded the canonical carrier on a
+freshly powered board and swept all 5,144 frames with 16/16 controls: the candidate signature
+was **absent** before any transaction, as a negative control requires. Step ③ built the
+specified fault — `STATUS 0x04040082`, `FAULT 0x8`, pass 2 of envelope 0, matching the two
+accepted 2026-08-16 records command for command. Step ④, in that same boot, read `0x00400A20`
+and found the candidate: the frame differs from the base at exactly words 50 and 51
+(`0x0000100e`, `0x00005213`) and both were reproduced, all 101 words equal. A forensic read of
+the fault's own staging copy in PS DDR (`fault/ddr_slot0_shutdown_read.json`) came back **all
+zero** — undiscriminating on its own, but read against step ④ it says the readback path handed
+over a zero frame while the addressed frame held the candidate. `RB_SKIP`, readback latency and
+FDRO framing are the untested suspects. **Nothing here is a Claim B data point**, and the
+location claim is one observation until it is independently reproduced.
+
+**Phase 2's earlier location attempt (the original L2) is void, and its own artifact does not
+say so — additively marked as of 2026-08-20 in
+`evidence/phase2_2026_08_15/sweep/superseded.md`, which recomputes its controls at 0/16 and
+leaves `verdict.json` byte-for-byte as the tool wrote it.** `evidence/phase2_2026_08_15/sweep/verdict.json`
 searched all 5,144 frames and records `NOT_FOUND_COMPLETE`. That verdict may not be relied
 on: in that same post-fault state the instrument reproduced **0 of 16** frames whose
 contents were already known, so whole-frame equality was answering nothing there. The
 committed controls (`evidence/phase2_2026_08_15/sweep/`, 16 captures with their child logs
 and Tcl) are what makes this checkable without unpacking the archive. Whether that
 `verdict.json`'s wording should be amended in place is an open question, deliberately left
-to the repository owner.
+to the repository owner, and **ruled 2026-08-20: the verdict file is never rewritten; the
+correction lives beside it.**
 
 **L3 is the one solid new result.** The startup-cycle recovery
 `JSHUTDOWN -> 12 TCK -> JSTART -> 2000 TCK -> RCRC -> JSHUTDOWN -> 12 TCK`, derived from
@@ -109,10 +138,13 @@ identity — control-only `49c8dbce…`, signature-search `a20e56aa…`, both pi
 so **it needs its own fresh-load control**. The four R4 acquisitions are `2.7.1` / `8d28dcf3…`
 and cannot serve as it.
 
-**Agreed order from here** (ruled 2026-08-16): ~~this README~~, ~~the 16/16 control semantics
-with their mutants offline~~, then the location sweep — which needs its own authorisation, and
-an audit of the 2.8.0 change first — and a sparse-diagnosis panel **only** if that sweep returns
-`NOT_FOUND_COMPLETE` with valid controls. Sparse diagnosis is a branch after the sweep, not a shortcut past it: a passing
+**Agreed order from here** (ruled 2026-08-16, and now largely spent): ~~this README~~, ~~the
+16/16 control semantics with their mutants offline~~, ~~the location sweep~~ — all three are
+done, the sweep having run on 2026-08-20 under its own authorisation after an audit of 2.8.0.
+The sparse-diagnosis panel was conditional on the sweep returning `NOT_FOUND_COMPLETE` with
+valid controls; **it did not**, so that branch is not taken. What is next instead: an
+independent reproduction of the A20 hit under the same frozen identity, and only then the
+read-side mechanism — two experiments, not one. Sparse diagnosis is a branch after the sweep, not a shortcut past it: a passing
 sparse candidate would prove write and readback consistent with *each other* and could not
 exclude both landing consistently in the wrong place, which is the thing only a location
 sweep answers. No board action is authorised at the time of writing; nothing perishable is
@@ -127,7 +159,7 @@ on the board.
 | reachability | **complete** — production report selected 6/6 LUTs, discarded 20 draws, attainable ceiling 353, not exhausted; report committed under `gate_runs/claimb_round1_reachability_2026_08_10/` |
 | carrier authority | erratum-006 `carrier.bit`, `post_route.dcp`, `phenotype_manifest` and bundle committed under `gate_runs/claimb_round1_carrier_2026_08_13_erratum006/`; publication, base and ECO gates accepted |
 | ICAP write/readback path | 3 envelopes × 536 words = 6,432 bytes; the **no-op** is hardware-proven end to end on erratum 006 — all three envelopes commit in pass 1 and read back in pass 2, 15/15 frames equal to the pinned base, latency 1 word and valid on every envelope, `fault=0`, `recovery_required=0`, scorer never armed. Runs through erratum 005 never left envelope 0. All 15 pinned frames are all-zero, so this establishes that the sequence is legal to the device, **not** that it addresses the requested frame |
-| known-answer mutation (§9 step 6) | **stops, every time** — pass 2 of envelope 0, `fault_code 8` (readback), raised by the engine's FAULT register; 4 committed records. The restore payload, same path and different content, completes both passes every time |
+| known-answer mutation (§9 step 6) | **still stops** — pass 2 of envelope 0, `fault_code 8` (readback), raised by the engine's FAULT register; 5 committed records now. The restore payload, same path and different content, completes both passes every time. **New as of 2026-08-20: the write is no longer in question.** In the post-fault state the intended frame holds the candidate bit-for-bit (16/16 controls, `evidence/location_sweep_2026_08_20/step4_sweep/`), and the fault's own DDR staging copy of that frame is all zero — so this is a read-side disagreement for that transaction. Step 6 nevertheless does not pass: `restore` and the baseline re-run are downstream of the interlock and never execute |
 | post-fault JTAG readback | **recoverable**: the R4 startup-cycle prefix restores 16/16 known non-zero control frames from the specified fault state, reproduced on a second fault and a second power cycle. Historical control, not paired; says nothing about write location |
 | location sweep | **specified and implemented, not authorised** — `docs/claimb_location_sweep_spec.md`; the two control-semantics defects are closed in `board_signature_search.py/2.8.0` (16/16 controls before any location verdict), which makes a new instrument identity, so the procedure needs its own fresh-load control |
 | candidate gate | judges the **serialized** sequence, under two frame semantics |
