@@ -351,6 +351,14 @@ structural tests, success/fault behavioural tests, mutants, audit and authorisat
 narrowly related missing entrypoint, not by itself enough to make §9 step 6 pass: restore and a
 post-restore baseline still remain downstream work.
 
+> **Built 2026-08-20, offline, under a separate ruling.**
+> `scripts/board_claimb_noreload_noop.py`, with `gate_claimb_noreload_probe.py`,
+> `mutate_claimb_noreload_probe.py` (8/8) and `tests/test_claimb_noreload_probe.py` (14/14).
+> The audit against the ruling's contract is `docs/claimb_noreload_probe_audit.md`.
+> **It has never touched a board, and this document still authorises nothing.** The board
+> experiment of §7.4 remains a separate ruling, and §7.2's limits are unchanged by its
+> existence.
+
 ### 7.4 Shape of the run, if it is ever authorised
 
 Not a request. Recorded so the reading table below has something concrete to attach to.
