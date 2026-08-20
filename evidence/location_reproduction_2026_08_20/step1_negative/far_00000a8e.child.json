@@ -1,0 +1,17 @@
+{
+  "returncode": 0,
+  "argv": [
+    "/usr/bin/python3",
+    "/home/test/zynq_fabricmap/scripts/probe_jtag_config_read.py",
+    "--far",
+    "0x00000a8e",
+    "--out",
+    "evidence/location_reproduction_2026_08_20/step1_negative/far_00000a8e.json.part",
+    "--cfg",
+    "/home/test/zynq_fabricmap/scripts/jtag_config_only.cfg",
+    "--speed",
+    "2000"
+  ],
+  "stdout": "READ: IDCODE 0x13722093, CONFIG_STATUS 0x46101f8c\n  0x00000a8e: frame sha e11e4a4c1f90fb25\u2026, 46 non-zero words\n  evidence: evidence/location_reproduction_2026_08_20/step1_negative/far_00000a8e.json.part\n",
+  "stderr": ""
+}

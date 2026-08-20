@@ -1,0 +1,38 @@
+{
+  "schema": "phase2_raw_archive",
+  "schema_version": "2.0.0",
+  "what": "step ④'s raw captures -- there are none held outside the repository",
+  "why": "the acquisition stopped legitimately after 17 FARs (A20 held the candidate, so no sweep was needed). All 51 capture/child/Tcl files plus index and verdict are in the keep-list and are committed, so there is no raw remainder to archive. This manifest exists so the absence is recorded rather than inferred.",
+  "archive": null,
+  "contents": { "captures": 17, "child_logs": 17, "tcl_scripts": 17 },
+  "copies": [],
+  "copies_caveat": "no archive was produced; every byte this acquisition produced is committed in the evidence commit that adds this manifest, not in the source commit named below",
+  "binds_to": {
+    "source_commit": "bda72a976ec4908ca37722bc4a6a176349348062",
+    "source_commit_note": "the repository HEAD the run executed at; it predates this evidence",
+    "plmark": "18cd7cb81a291de5",
+    "index_sha256": "5605cf1a89b1780e456380af260362f0eb40665e4adc10ee5d84453bfa3c45cf",
+    "instrument_digest": "a20e56aae879812d9ed2960ec55ac8b1b3f57710411cf40da0cc32b1855aa95d"
+  },
+  "verified": {
+    "validate_index_accepted": 17,
+    "missing": 0,
+    "not_attempted": 5127,
+    "tcl_digests_checked": 17,
+    "tcl_digests_mismatched": 0,
+    "method": "no archive step ran. The 17 captures were validated by the tool's own close-of-invocation validate_index, and re-checked here against carrier.bit's frames and the frozen authority: A20 == the candidate frame exactly, all sixteen controls == their base frames exactly, every comparison on the capture's `frame` field (words[101:202]).",
+    "order": "not applicable -- nothing left the repository"
+  },
+  "restore": "not applicable",
+  "loose_files": {
+    "moved_on": null, "destination": null, "count_at_destination": 0,
+    "kept_in_repository": {
+      "count": 53,
+      "index_and_verdict": ["index.json", "verdict.json"],
+      "intended_far_and_neighbours": "far_00400a20 only, as capture + child log + Tcl. A21-A23 were never read; no file was manufactured to fill the keep-list",
+      "positive_controls": "all sixteen, each as capture + child log + Tcl (48 files)"
+    },
+    "checked_before_moving": "not applicable -- nothing moved"
+  },
+  "offbox_copy": null
+}

@@ -1,0 +1,44 @@
+# Freeze preflight — host only, no board contact
+# 2026-08-20T10:11:23Z
+
+$ git rev-parse HEAD
+bda72a976ec4908ca37722bc4a6a176349348062
+[rc=0]
+
+$ git status --porcelain -- scripts
+[rc=0]
+
+$ git rev-parse HEAD:scripts
+c0bb137139b937fc94302d6940cada3a9bc58b2c
+[rc=0]
+
+$ git rev-parse HEAD:gate_runs/claimb_round1_carrier_2026_08_13_erratum006
+98d7721ec8095ea08944f2c50c515d3a003ee879
+[rc=0]
+
+$ git rev-parse 0cc5aa4:evidence/location_sweep_2026_08_20/step4_sweep
+c721277fd506f7211271d300ddee9772962adbac
+[rc=0]
+
+$ python3 -c 
+import sys,hashlib;sys.path.insert(0,'scripts')
+import board_signature_search as s
+f=s.frozen_far_sequence()
+print('far_count', len(f))
+print('far_list_sha256', hashlib.sha256(','.join('%08x'%x for x in f).encode()).hexdigest())
+print('instrument_digest', s.instrument_digest(f, s.MODE_SIGNATURE_SEARCH))
+far_count 5144
+far_list_sha256 2eaa5c2dd25f707ab8d19faaeb566e50cc6233eededb2b5f7a9819d53206e592
+instrument_digest a20e56aae879812d9ed2960ec55ac8b1b3f57710411cf40da0cc32b1855aa95d
+[rc=0]
+
+
+# verdict
+scripts worktree clean : PASS
+HEAD:scripts           : PASS  c0bb137139b937fc94302d6940cada3a9bc58b2c
+canonical-run tree     : PASS  98d7721ec8095ea08944f2c50c515d3a003ee879
+0cc5aa4:step4_sweep    : PASS  c721277fd506f7211271d300ddee9772962adbac
+far_list_sha256        : PASS  2eaa5c2dd25f707ab8d19faaeb566e50cc6233eededb2b5f7a9819d53206e592
+instrument_digest      : PASS  a20e56aae879812d9ed2960ec55ac8b1b3f57710411cf40da0cc32b1855aa95d
+far_count              : PASS  5144
+FREEZE PREFLIGHT: PASS — board contact permitted by the authorisation
