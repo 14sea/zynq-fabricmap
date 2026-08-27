@@ -135,7 +135,7 @@ an earlier draft claimed and which is more than this instrument delivers:
 
 | what came back | what the probe can say |
 |---|---|
-| **blank** | **Partly.** The sentinel (§6c) separates "the DMA never wrote" from "zeros were delivered"; but zeros delivered cannot be told apart from a misaddress to any of the **4,716 blank FARs** (§4c), so `BLANK` is a class, not a diagnosis |
+| **blank** | **Partly.** The sentinel (§6c) separates "the destination is unchanged from the prefill" from "zeros overwrote it"; but zeros delivered cannot be told apart from a misaddress to any of the **4,716 blank FARs** (§4c), so `BLANK` is a class, not a diagnosis |
 | **misaddressed by ±1 or ±2** | **Identified by name** — and here that is warranted, because all five hashes are unique **across the whole 5,144-frame table**, not merely against each other (asserted by test). Minimum Hamming distance to the four nearest neighbours is **822 bits** |
 | **misaddressed to some other frame of the same base** | **Narrowed to a candidate FAR set** via the frame table (§4c) — one FAR when its hash is unique, otherwise the whole set. Not "identified by name" in general |
 | **not frame-aligned, truncated, or corrupted** | **NOT separated from each other.** All land in `NO_MATCH`. The raw 202 words are kept so the question stays open rather than being answered by the verdict |
@@ -363,8 +363,8 @@ margin, and recorded as *derived, not measured* until a measurement exists.
 ### 6c. Every read is pre-filled with a sentinel
 
 The destination buffer is filled with a non-zero sentinel and the fill is verified **before**
-each readback. Without it, *"the DMA never wrote DDR"* and *"the DMA replaced the destination
-with zeros"* produce the same bytes — and one of those is a stop condition about the instrument
+each readback. Without it, *"the destination is unchanged from the prefill"* and *"the DMA
+replaced the destination with zeros"* produce the same bytes — and one of those is a stop condition about the instrument
 while the other is a finding about the die. A run that cannot tell them apart has re-created
 the failure this probe exists to avoid.
 
@@ -382,15 +382,26 @@ the ruling this line already made once, on 2026-08-06, when T2 failed.
 
    | condition on all 202 words | verdict | continue? |
    |---|---|---|
-   | every word still equals the pinned sentinel | `SENTINEL_INTACT` — the DMA never wrote | **STOP** |
-   | **some** sentinel words survive and some do not | `PARTIAL_WRITE` — an instrument failure, **not** a content verdict | **STOP** |
+   | every word still equals the pinned sentinel | `BUFFER_UNCHANGED_FROM_PREFILL` — instrument unvalidated | **STOP** |
+   | **some** sentinel words survive and some do not | `SENTINEL_REMAINS` — possible partial transfer or value collision; instrument unvalidated | **STOP** |
    | no sentinel word survives | — | go to step 2 |
 
-   An earlier draft evaluated "sentinel intact" on `words[101:202]` alone and read it as
-   "the DMA never wrote". That is false whenever the DMA writes the pad half and leaves the
-   frame half untouched: the bytes would say *never wrote* while the instrument had in fact
-   written half a buffer. A partial write is a fact about the transfer and it may not be
-   laundered into a statement about what the die returned.
+   **These two verdicts name an OBSERVATION, not a mechanism, and the names were narrowed
+   for that reason.** A buffer identical to the prefill establishes only that the
+   destination is unchanged from the prefill — **it does not prove the DMA never wrote**,
+   because the DMA could have written values that happen to equal the sentinel. Likewise a
+   partial survival does not prove a partial transfer: the real returned words could collide
+   with the sentinel at exactly those positions. Both remain **STOP**, and both are recorded
+   as *instrument unvalidated* rather than as a diagnosis.
+
+   The stronger reading would need S0 to prove the sentinel **positionally disjoint from
+   every value the path can return**, and the unknown pad (§6a) makes that hard: you cannot
+   exclude a collision with content you have never seen. Until such a proof exists, the
+   narrow reading is the only one this specification supports.
+
+   An earlier draft also evaluated "sentinel intact" on `words[101:202]` alone and read it
+   as "the DMA never wrote" — false whenever the DMA writes the pad half and leaves the
+   frame half untouched, which is why step 1 runs on the whole buffer.
 
    **Step 2 — the frame verdict table, the ONLY way a stage's content is adjudicated.** It
    is evaluated on `words[101:202]` and on nothing else (§4d), against the pinned constants
@@ -471,7 +482,7 @@ identity gate; `CTRL` **as read** before any probe-stage devcfg or DMA write (th
 of §5a is itself a write and precedes this); the pinned expectations copied verbatim
 from §4; the raw 202 words; the two half-frame sha256s; the elapsed time with its
 `measured` / `derived` tag; and the verdict from §7's fixed vocabulary
-(`SENTINEL_INTACT`; `PARTIAL_WRITE`; `PASS`; `BLANK`, with §7.3a's limit attached;
+(`BUFFER_UNCHANGED_FROM_PREFILL`; `SENTINEL_REMAINS`; `PASS`; `BLANK`, with §7.3a's limit attached;
 `MISADDRESS` with the one FAR it matched; `MISADDRESS_AMBIGUOUS` with the **full** candidate
 FAR set; `NO_MATCH`; `OVERFLOW`; `TIMEOUT`) — and, for every stage, both half-frame hashes
 with which half each verdict came from (§4d). Plus the raw UART log,
@@ -497,3 +508,7 @@ damage** — that lesson already cost a board swap and a torn-down harness.
   `0x4e00e07f` is in this repo's evidence tree, and §5e makes it an expectation to be
   re-read live rather than a constant to be trusted.
 - Which blank FAR a `BLANK` verdict came from (§7.3a) — not recoverable from the bytes.
+- Whether a sentinel that survives means the DMA did not write, or merely collided (§7.3).
+  Closing it needs a positional disjointness proof against every value the path can return,
+  which the unknown pad (§6a) obstructs. **Until then the two sentinel verdicts stay
+  observational and both stop the run.**

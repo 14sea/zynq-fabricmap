@@ -175,9 +175,21 @@ class SpecContracts(unittest.TestCase):
         block = self._section("## 7. Stop conditions", "## 8. Stages")
         rows = self._rows(block, "| condition on all 202 words |")
         verdicts = [self._verdict(v) for _, v in rows]
-        self.assertEqual(verdicts, ["SENTINEL_INTACT", "PARTIAL_WRITE", ""],
-                         "the sentinel check must run on all 202 words, and a partial "
-                         "survival must be an instrument failure, not a content verdict")
+        self.assertEqual(
+            verdicts, ["BUFFER_UNCHANGED_FROM_PREFILL", "SENTINEL_REMAINS", ""],
+            "the sentinel check must run on all 202 words, and its verdicts must name "
+            "what was OBSERVED — a surviving sentinel does not prove the DMA never wrote, "
+            "it could have written a colliding value")
+
+    def test_the_sentinel_verdicts_do_not_assert_a_mechanism(self):
+        block = self._section("## 7. Stop conditions", "## 8. Stages")
+        for banned in ("`SENTINEL_INTACT`", "`PARTIAL_WRITE`"):
+            self.assertNotIn(banned, block,
+                             f"{banned} claimed a mechanism the observation cannot "
+                             "support; it was narrowed")
+        self.assertIn("instrument unvalidated", block)
+        self.assertIn("positionally disjoint", block,
+                      "the spec must keep saying what a stronger reading would require")
 
     @staticmethod
     def _verdict(cell: str) -> str:
