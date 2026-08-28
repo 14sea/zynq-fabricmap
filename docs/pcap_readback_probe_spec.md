@@ -15,6 +15,37 @@
 That is the whole probe. It is a capability question about a path, not a Claim B
 experiment, and §9 bounds what a pass would license.
 
+## 0a. OWNERSHIP MOVED — 2026-08-28 (additive note; the text below is unchanged)
+
+**This specification is no longer maintained here.** Ownership of the PS/PCAP line passed
+to its own repository, [`zynq-psmap`](https://github.com/14sea/zynq-psmap), at commit
+[`36790af1188ea72a91051109767032b53fba4bc1`](https://github.com/14sea/zynq-psmap/commit/36790af1188ea72a91051109767032b53fba4bc1),
+which imported this file byte-for-byte from
+`5ad36a1ca26b42022121f1889172dbe4380b4539` — the commit this note is being added on top
+of — and re-derived every pinned value there (5,144 frames, digest `5039aab0...6ad21`,
+target FAR `0x00000b99`, 17/17 imported tests). The maintained continuation of this
+specification is
+[`docs/pcap_probe_spec.md`](https://github.com/14sea/zynq-psmap/blob/36790af1188ea72a91051109767032b53fba4bc1/docs/pcap_probe_spec.md)
+there; its migration note resolves every reference below that only ever resolved in this
+repository.
+
+**Everything from §0 onward is preserved as an archival snapshot.** Nothing in it was
+edited by this note, and it should be read as what the specification said at
+`5ad36a1`, not as current. Continuations, corrections and any authorisation belong to
+`zynq-psmap`.
+
+The split is not tidying. This repository's Claim B preregistration pins the control
+plane to U-Boot, and `scripts/gate_board_identity.py:357` refuses a `linux` control
+plane; the PS line will need Linux. Keeping both authority models over one script tree
+is how a fail-closed gate gets driven around by accident. Accordingly `zynq-psmap`
+deliberately did **not** import `gate_board_identity.py`, `board_uboot_axi.py`,
+`precheck_fresh_power.py` or `board_uboot_fpga_load.py`, and redesigns that boundary
+rather than deleting its refusal.
+
+**Nothing about this repository's own state changed.** The Claim B readback leg remains
+paused, its scoped negative result in `docs/claimb_findings.md` stands unaltered, and no
+board action is authorised here.
+
 ## 1. Why this is not "more instrumentation on the paused leg"
 
 `docs/claimb_findings.md` §7 names exactly two things that would reopen Claim B, and the
