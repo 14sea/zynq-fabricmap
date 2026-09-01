@@ -4,6 +4,8 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
+> **▶ 2026-09-01 update: RESUMPTION-ELIGIBLE, still PAUSED.** The stop-loss's "new mechanism" condition is met within scope by the PS/PCAP + P3 evidence (`docs/claimb_resumption_memo.md` §0); execution stays PAUSED until a calibration/soak preregistration and the two-operator image pass review.
+>
 > **▶ PAUSED, 2026-08-20 — Claim B's board programme is stopped under a stop-loss committed to
 > in the prior session ruling.** A host-side review found no way to build a write-verification
 > gate on the JTAG path without changing the measurement architecture, so the work is published

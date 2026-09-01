@@ -1,4 +1,4 @@
-# Claim B — resumption memo (DRAFT, for the owner's ruling)
+# Claim B — resumption memo (ruled 2026-09-01: RESUMPTION-ELIGIBLE, still PAUSED)
 
 > **DRAFT — 2026-09-01. This memo is not a resumption authorisation, not a preregistration,
 > and not a change to any governing document. It authorises no board contact.** It exists so
@@ -9,6 +9,34 @@
 > edited. The decision is the owner's (`zynq-psoracle/docs/p3_architecture.md` §9: "the
 > decision to resume it — under its own preregistration, with the P3 instrument as its
 > `carrier` — is fabricmap's owner ruling, recorded there").
+
+## 0. Owner ruling — 2026-09-01 (additive; the draft below is unchanged)
+
+> Claim B's "there must be a new mechanism" resumption condition has been satisfied by the
+> PS/PCAP + P3 evidence within its explicit scope; the readback leg is therefore
+> **RESUMPTION-ELIGIBLE**. Its execution status nevertheless **remains PAUSED** until a
+> calibration/soak preregistration has passed and the two-operator image has completed P3
+> compatibility review.
+
+What the ruling means, in the owner's terms:
+
+- the original ICAPE2 readback path is **not** resumed, and its failure is **not** claimed to
+  be explained;
+- the new path is an **architecture replacement**, not a retry of the old probe;
+- Claim B still has **zero valid data points**;
+- the first Claim B ruling must **not** be spent on calibration or integration debugging;
+- blank FARs, the long run, cross-chip and the two-operator integration remain **explicit
+  gaps** (§4);
+- until the above is complete, PAUSED may **not** be changed to active/running.
+
+Next host-only work, per the ruling: an independent calibration/soak preregistration that
+pins the P3 stack, the two-operator image, the audit policy, the time/candidate budget and
+the stop-loss; after that whole package is reviewed, a separate decision on whether Claim B
+formally leaves PAUSED. That preregistration belongs to the instrument's repository
+(`zynq-psoracle`, whose `l5_design.md` already assigns long-run sampling to "the long-run
+prereg"); this repository records the decision and its pointer.
+
+---
 
 Author: Claude. Evidence repositories pinned: `zynq-psmap` `191ab05`, `zynq-psoracle`
 `dbf471c`; this repository at `71666b0` (the commit P3 imported and pinned as `71666b02…`).
