@@ -87,13 +87,18 @@ port is opened** — the order is fixed in `b1_runner.execute` and tested as an 
 (`tests/test_b1_runner.py::Order`): archive → claim → port → session; an archive failure
 consumes nothing and opens nothing — the runner copies, into the evidence directory, the
 exact bytes of the manifest it read (`manifest_at_run.json` — it must hash to the sha256
-every binding names) and both ruling files verbatim (`ruling_whole_of_run.json`,
-`ruling_provisioning.json`), each parsed and required to equal what the preflight parsed.
+every binding names) and both rulings as **inert envelopes** (`ruling_whole_of_run.json`,
+`ruling_provisioning.json`: `{"schema": "archived_ruling_bytes", "sha256": …,
+"content_base64": …}` — the original bytes and their hash, with no top-level `ruling` /
+`boardid` / `granted_by` / `date`, so the instrument's `check_ruling`, the signer's
+provisioning parser and this runner's preflight all refuse them: an archive is never a
+second, unconsumed authorisation), each decoded and required to equal what the preflight
+parsed; every write atomic, a failure removing what was written.
 The session function refuses to start without them. During the session the summary keeps
 the sha256 of the provisioning ruling's bytes as the signer was handed them (taken before
 and after the call; a change is a stop).
 After the session and its adjudication the B1Q runner writes **`qualification.json`**
-beside them (schema `b1_carrier_qualification` 2.0.0):
+beside them (schema `b1_carrier_qualification` 2.1.0):
 
 ```json
 {"schema": "b1_carrier_qualification", "schema_version": "2.0.0", "session": "B1Q",
@@ -101,8 +106,8 @@ beside them (schema `b1_carrier_qualification` 2.0.0):
  "files": {"run_log.json": "<sha256>", "audits.json": "…", "timeline.json": "…", "adjudication.json": "…", "summary.json": "…",
            "manifest_at_run.json": "…", "ruling_whole_of_run.json": "…", "ruling_provisioning.json": "…"},
  "outcome": "PASS",
- "rulings": {"whole_of_run": {"file": "ruling_whole_of_run.json", "sha256": "…", "content": {…the ruling verbatim…}},
-             "provisioning": {"file": "ruling_provisioning.json", "sha256": "…", "content": {…}}},
+ "rulings": {"whole_of_run": {"file": "ruling_whole_of_run.json", "envelope_sha256": "…", "bytes_sha256": "…", "content": {…the ruling as decoded…}},
+             "provisioning": {"file": "ruling_provisioning.json", "envelope_sha256": "…", "bytes_sha256": "…", "content": {…}}},
  "inputs": {"plan_sha256": "dead8853…", "prediction_sha256": "d2c9293a…", "pins_sha256": "…"},
  "binding": {"session": "B1Q", "carrier_sha256": "d85daef4…", "carrier_variant": "0x42310001", "image_sha256": "54b00663…",
              "prereg_sha256": "<frozen>", "b1_manifest_sha256": "<sha256 of manifest_at_run.json>",
@@ -130,7 +135,8 @@ with it — requires all of:
    naming session `B1Q` and the same manifest sha256;
 4. the run log's `l6.inputs` — plan, prediction and pin-table hashes — equal to
    `manifest_at_run`'s qualification pins (a B1Q log carrying the mapping hashes is refused);
-5. both rulings, from their verbatim copies (hash and content equal to the record's):
+5. both rulings, decoded from their envelopes (envelope hash, bytes hash and content equal
+   to the record's):
    the right texts, session `B1Q`, the plan's seed (whole-of-run), the frozen prereg, the
    image, the manifest sha256 of `manifest_at_run`, the board;
 6. the stored adjudication a B1Q PASS, and the pinned evidence **re-adjudicated now** by

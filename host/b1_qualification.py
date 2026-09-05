@@ -34,9 +34,11 @@ Any of these failing is a QualificationRefusal, and the carrier is not qualified
 """
 from __future__ import annotations
 
+import base64
 import copy
 import hashlib
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -45,7 +47,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "host"))
 
 SCHEMA = "b1_carrier_qualification"
-SCHEMA_VERSION = "2.0.0"
+SCHEMA_VERSION = "2.1.0"
+# A ruling is archived as an INERT envelope, never as a parseable copy: a verbatim copy is
+# a second, unconsumed authorisation to every ruling parser (the instrument's check_ruling,
+# this runner's preflight, the signer's provisioning path — owner's review 2026-09-05).
+# The envelope carries the original bytes base64-encoded and their sha256; it has no
+# top-level `ruling` / `boardid` / `granted_by` / `date`, so every parser refuses it.
+ARCHIVE_SCHEMA = "archived_ruling_bytes"
+ARCHIVE_VERSION = "1.0.0"
 SESSION = "B1Q"
 RULING_TEXT = "whole-of-run B1 carrier qualification"
 PROVISION_RULING_TEXT = "provisioning P3-K"
@@ -75,24 +84,78 @@ def _rel(path: Path) -> str:
         return str(p)
 
 
+def archive_envelope(raw: bytes) -> dict:
+    return {"schema": ARCHIVE_SCHEMA, "schema_version": ARCHIVE_VERSION, "sha256": hashlib.sha256(raw).hexdigest(),
+            "content_base64": base64.b64encode(raw).decode("ascii"),
+            "note": "an archived copy of a ruling's bytes; NOT a ruling — no parser accepts it, and it authorises nothing"}
+
+
+def read_archived_ruling(path: Path) -> tuple[bytes, dict]:
+    """The original bytes and the parsed ruling from an envelope; a refusal if the file is
+    not an envelope, or its bytes do not hash to its own sha256, or they do not parse."""
+    try:
+        env = json.loads(Path(path).read_text())
+    except (OSError, ValueError) as exc:
+        raise QualificationRefusal(f"no readable ruling archive at {path}: {exc}") from exc
+    if not isinstance(env, dict) or env.get("schema") != ARCHIVE_SCHEMA or env.get("schema_version") != ARCHIVE_VERSION:
+        raise QualificationRefusal(f"{Path(path).name} is not an {ARCHIVE_SCHEMA} envelope")
+    try:
+        raw = base64.b64decode(env.get("content_base64") or "", validate=True)
+    except (ValueError, TypeError) as exc:
+        raise QualificationRefusal(f"{Path(path).name}: the archived bytes do not decode: {exc}") from None
+    if hashlib.sha256(raw).hexdigest() != env.get("sha256"):
+        raise QualificationRefusal(f"{Path(path).name}: the archived bytes do not hash to the envelope's sha256")
+    try:
+        content = json.loads(raw.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise QualificationRefusal(f"{Path(path).name}: the archived bytes are not a JSON ruling: {exc}") from None
+    if not isinstance(content, dict):
+        raise QualificationRefusal(f"{Path(path).name}: the archived bytes are not a ruling object")
+    return raw, content
+
+
+def _write_atomic(path: Path, text: str) -> None:
+    tmp = path.with_name(path.name + ".tmp")
+    tmp.write_text(text)
+    os.replace(tmp, path)
+
+
 def write_session_artifacts(out_dir: Path, manifest_path: Path, ruling_path: Path, provision_ruling_path: Path,
                             manifest_sha256: str, expected_rulings: tuple[dict, dict] | None = None) -> dict:
-    """Copy the manifest bytes and both ruling files into the evidence directory, verbatim,
-    BEFORE the port is opened (b1_runner.execute). The manifest copy must hash to the
-    sha256 the preflight bound the session to; each ruling copy must parse to exactly what
-    the preflight parsed (`expected_rulings` = (whole-of-run, provisioning)) — a file that
-    changed between preflight and archive is a refusal, with nothing consumed and no port."""
+    """Archive the manifest bytes (verbatim) and both rulings (as INERT envelopes, never as
+    parseable copies) into the evidence directory, BEFORE the port is opened
+    (b1_runner.execute). The manifest copy must hash to the sha256 the preflight bound the
+    session to; each ruling's bytes must parse to exactly what the preflight parsed
+    (`expected_rulings` = (whole-of-run, provisioning)) — a file that changed between
+    preflight and archive is a refusal, with nothing consumed and no port. Every write is
+    atomic and a failure removes what was written, so no partial artifact — and never any
+    executable ruling — is left behind."""
     out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True)
-    dst = out_dir / MANIFEST_AT_RUN
-    shutil.copyfile(manifest_path, dst)
-    if sha256_of(dst) != manifest_sha256:
-        raise QualificationRefusal("the manifest bytes copied into the evidence do not hash to the preflight's manifest sha256")
-    for src, name, want in ((ruling_path, RULING_FILES["whole_of_run"], expected_rulings[0] if expected_rulings else None),
-                            (provision_ruling_path, RULING_FILES["provisioning"], expected_rulings[1] if expected_rulings else None)):
-        shutil.copyfile(src, out_dir / name)
-        got = json.loads((out_dir / name).read_text())
-        if want is not None and got != want:
-            raise QualificationRefusal(f"the archived {name} is not the ruling the preflight parsed")
+    written: list[Path] = []
+    try:
+        dst = out_dir / MANIFEST_AT_RUN
+        shutil.copyfile(manifest_path, dst.with_name(dst.name + ".tmp")); os.replace(dst.with_name(dst.name + ".tmp"), dst)
+        written.append(dst)
+        if sha256_of(dst) != manifest_sha256:
+            raise QualificationRefusal("the manifest bytes copied into the evidence do not hash to the preflight's manifest sha256")
+        for src, name, want in ((ruling_path, RULING_FILES["whole_of_run"], expected_rulings[0] if expected_rulings else None),
+                                (provision_ruling_path, RULING_FILES["provisioning"], expected_rulings[1] if expected_rulings else None)):
+            raw = Path(src).read_bytes()
+            try:
+                got = json.loads(raw.decode("utf-8"))
+            except (ValueError, UnicodeDecodeError) as exc:
+                raise QualificationRefusal(f"the ruling at {src} is not JSON: {exc}") from None
+            if want is not None and got != want:
+                raise QualificationRefusal(f"the ruling at {src} is not the ruling the preflight parsed")
+            _write_atomic(out_dir / name, json.dumps(archive_envelope(raw), indent=1) + "\n")
+            written.append(out_dir / name)
+            read_archived_ruling(out_dir / name)          # the envelope round-trips before we go on
+    except BaseException:
+        for p in written:
+            p.unlink(missing_ok=True)
+        for p in out_dir.glob("*.tmp"):
+            p.unlink(missing_ok=True)
+        raise
     return {name: sha256_of(out_dir / name) for name in (MANIFEST_AT_RUN, *RULING_FILES.values())}
 
 
@@ -121,7 +184,11 @@ def make_record(evidence_dir: Path, manifest: dict, manifest_sha256: str, plan: 
     rulings = {}
     for key, name in RULING_FILES.items():
         p = ev / name
-        rulings[key] = {"file": name, "sha256": files[name], "content": json.loads(p.read_text()) if p.is_file() else None}
+        if p.is_file():
+            raw, content = read_archived_ruling(p)
+            rulings[key] = {"file": name, "envelope_sha256": files[name], "bytes_sha256": hashlib.sha256(raw).hexdigest(), "content": content}
+        else:
+            rulings[key] = {"file": name, "envelope_sha256": None, "bytes_sha256": None, "content": None}
     qp = manifest.get("qualification_plan") or {}
     return {"schema": SCHEMA, "schema_version": SCHEMA_VERSION, "session": plan["session"],
             "evidence_dir": _rel(ev), "files": files, "outcome": result.get("outcome"),
@@ -218,11 +285,11 @@ def verify(manifest: dict, root: Path = REPO_ROOT, require_git: bool = False, in
         raise QualificationRefusal("the run log's notary_log / session_summary token is not the app_identity token")
     if summary.get("token") != token or summary.get("outcome") != "PASS" or (summary.get("l6") or {}).get("session") != SESSION:
         raise QualificationRefusal("summary.json does not name this token, session B1Q and outcome PASS")
-    wr_copy = json.loads((ev / RULING_FILES["whole_of_run"]).read_text())
-    if summary.get("ruling") != wr_copy:
+    archived = {key: read_archived_ruling(ev / name) for key, name in RULING_FILES.items()}      # (bytes, content)
+    if summary.get("ruling") != archived["whole_of_run"][1]:
         raise QualificationRefusal("summary.ruling is not the archived whole-of-run ruling: the session ran under another ruling")
-    if summary.get("provisioning_ruling_sha256") != sha256_of(ev / RULING_FILES["provisioning"]):
-        raise QualificationRefusal("the provisioning ruling the signer was handed (summary.provisioning_ruling_sha256) is not the archived copy")
+    if summary.get("provisioning_ruling_sha256") != hashlib.sha256(archived["provisioning"][0]).hexdigest():
+        raise QualificationRefusal("the provisioning ruling the signer was handed (summary.provisioning_ruling_sha256) is not the archived bytes")
     lb = (log.get("l6") or {}).get("binding") or {}
     if lb.get("b1_manifest_sha256") != b["b1_manifest_sha256"] or lb.get("session") != SESSION:
         raise QualificationRefusal("the run log's binding is not the record's (manifest sha256 / session)")
@@ -238,11 +305,11 @@ def verify(manifest: dict, root: Path = REPO_ROOT, require_git: bool = False, in
     for key, text, need_seed in (("whole_of_run", RULING_TEXT, True), ("provisioning", PROVISION_RULING_TEXT, False)):
         rec_r = (q.get("rulings") or {}).get(key) or {}
         p = ev / RULING_FILES[key]
-        if rec_r.get("sha256") != sha256_of(p):
-            raise QualificationRefusal(f"the recorded {key} ruling hash is not the copied file's")
-        content = json.loads(p.read_text())
+        raw, content = archived[key]
+        if rec_r.get("envelope_sha256") != sha256_of(p) or rec_r.get("bytes_sha256") != hashlib.sha256(raw).hexdigest():
+            raise QualificationRefusal(f"the recorded {key} ruling hashes are not the archived envelope's / bytes'")
         if rec_r.get("content") != content:
-            raise QualificationRefusal(f"the recorded {key} ruling content differs from the copied file")
+            raise QualificationRefusal(f"the recorded {key} ruling content differs from the archived bytes")
         _bind_ruling(content, text, b, need_seed)
         if content.get("boardid") != m_at_run["board"]["boardid"]:
             raise QualificationRefusal(f"the {key} ruling names board {content.get('boardid')!r}, the manifest {m_at_run['board']['boardid']!r}")

@@ -146,7 +146,8 @@ class Chain(unittest.TestCase):
         refuses(lambda m: m["carrier"]["qualification"]["binding"].__setitem__("token", "f" * 32), "token")
         # the record's ruling copy must equal the verbatim file
         refuses(lambda m: m["carrier"]["qualification"]["rulings"]["whole_of_run"]["content"].__setitem__("master_seed", 5), "ruling content differs")
-        refuses(lambda m: m["carrier"]["qualification"]["rulings"]["provisioning"].__setitem__("sha256", "0" * 64), "ruling hash")
+        refuses(lambda m: m["carrier"]["qualification"]["rulings"]["provisioning"].__setitem__("bytes_sha256", "0" * 64), "ruling hashes")
+        refuses(lambda m: m["carrier"]["qualification"]["rulings"]["provisioning"].__setitem__("envelope_sha256", "0" * 64), "ruling hashes")
         # the record's inputs must be manifest_at_run's pins
         refuses(lambda m: m["carrier"]["qualification"]["inputs"].__setitem__("pins_sha256", "0" * 64), "inputs")
         # the current manifest may differ from manifest_at_run only in the qualification state
@@ -172,8 +173,13 @@ class Chain(unittest.TestCase):
 
     def test_a_tampered_ruling_or_manifest_copy_or_summary_breaks_the_chain(self):
         good = self.qualified_manifest()
+        def reseal(env, mut):
+            import base64
+            r = json.loads(base64.b64decode(env["content_base64"])); mut(r)
+            raw = json.dumps(r).encode()
+            env["content_base64"] = base64.b64encode(raw).decode(); env["sha256"] = hashlib.sha256(raw).hexdigest()
         for name, mut, words, after in (
-                ("ruling_whole_of_run.json", lambda d: d.__setitem__("master_seed", 5), "does not hash", "summary.ruling"),
+                ("ruling_whole_of_run.json", lambda d: reseal(d, lambda r: r.__setitem__("master_seed", 5)), "does not hash", "summary.ruling"),
                 ("manifest_at_run.json", lambda d: d["image"].__setitem__("board_ready", False), "does not hash", "b1_manifest_sha256"),
                 ("summary.json", lambda d: d.__setitem__("token", "f" * 32), "does not hash", "summary.json")):
             d = self.tmp / f"tamper_{name}"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(self.out, d)
@@ -207,6 +213,63 @@ class Chain(unittest.TestCase):
             with self.assertRaises(bq.QualificationRefusal) as cm:
                 bq.verify(m)
             self.assertIn(words, str(cm.exception))
+
+    def test_the_archived_rulings_are_inert_envelopes_that_no_parser_accepts(self):
+        """A verbatim copy would be a second, unconsumed authorisation (owner's review
+        2026-09-05): the archive must be refused by every ruling parser — the instrument's
+        check_ruling / _parse_ruling (the signer's provisioning path uses the latter) and
+        this runner's preflight parse — while verify() reads it fine."""
+        import b1_runner as rn
+        inst.bind(inst.DEFAULT_ROOT, require_git=False)
+        import board_session as bsn
+        import pcap_probe_runner as pr
+        for key, name in bq.RULING_FILES.items():
+            p = self.out / name
+            env = json.loads(p.read_text())
+            self.assertEqual(env["schema"], bq.ARCHIVE_SCHEMA)
+            for field in ("ruling", "boardid", "granted_by", "date", "session"):
+                self.assertNotIn(field, env)
+            self.assertFalse(p.with_name(p.name + ".consumed").exists())      # no marker — the envelope needs none
+            text = qadj.RULING_TEXT if key == "whole_of_run" else bq.PROVISION_RULING_TEXT
+            with self.assertRaises(bsn.SessionRefusal):
+                pr.check_ruling(p, text)
+            with self.assertRaises(bsn.SessionRefusal):
+                pr._parse_ruling(p, text)
+            # this runner's preflight parse (the first thing it does with a ruling path)
+            import types
+            a = types.SimpleNamespace(ruling=p, provision_ruling=p, manifest=self.tmp / "q_manifest.json")
+            with self.assertRaises(rn.Refusal) as cm:
+                rn.preflight(a, rn.QUALIFICATION if key == "whole_of_run" else rn.MAPPING)
+            self.assertIn("lacks", str(cm.exception))
+            raw, content = bq.read_archived_ruling(p)
+            self.assertEqual(content["ruling"], text)
+
+    def test_a_failed_archive_leaves_no_executable_ruling_behind(self):
+        from unittest import mock
+        tmp = self.tmp / "partial"; tmp.mkdir(exist_ok=True)
+        text = manifest_text(self.m); sha = hashlib.sha256(text.encode()).hexdigest()
+        mp = tmp / "m.json"; mp.write_text(text)
+        wr, pk = rulings_for(self.m, sha)
+        rp, pp = tmp / "r.json", tmp / "p.json"
+        rp.write_text(json.dumps(wr)); pp.write_text(json.dumps(pk))
+        out = tmp / "out"
+        real = bq._write_atomic
+        calls = []
+        def failing(path, text):
+            calls.append(path.name)
+            if len(calls) == 2:
+                raise OSError("disk full (forced)")
+            real(path, text)
+        with mock.patch.object(bq, "_write_atomic", failing):
+            with self.assertRaises(OSError):
+                bq.write_session_artifacts(out, mp, rp, pp, sha, expected_rulings=(wr, pk))
+        left = sorted(p.name for p in out.iterdir())
+        self.assertEqual(left, [])                                     # nothing partial, nothing executable
+        # and in any state of the directory, no file parses as a ruling
+        bq.write_session_artifacts(out, mp, rp, pp, sha, expected_rulings=(wr, pk))
+        for p in out.iterdir():
+            doc = json.loads(p.read_text())
+            self.assertFalse(isinstance(doc, dict) and "ruling" in doc and "boardid" in doc, p.name)
 
     def test_archiving_refuses_a_ruling_that_differs_from_the_parsed_one(self):
         tmp = self.tmp / "archive"; tmp.mkdir(exist_ok=True)

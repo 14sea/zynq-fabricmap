@@ -1,4 +1,4 @@
-# B1 — the pre-board package, v2.2.1, delivered after the final short re-review (2026-09-05)
+# B1 — the pre-board package, v2.2.2, delivered after the final short re-review (2026-09-05)
 
 > **HOST-ONLY. DRAFT / NO BOARD RULING.** Delivered at "B1 ready for the board" under the
 > owner's ruling of 2026-09-05 (`docs/autonomous_cartography_roadmap.md`; the
@@ -57,6 +57,17 @@ artifacts; `verify()` requires `summary.ruling` to equal the archived whole-of-r
 and `summary.provisioning_ruling_sha256` (the digest of the bytes the signer was handed,
 taken before and after the call) to equal the archived provisioning copy's. Firmware,
 image, carrier, plans and predictions unchanged.
+
+**v2.2.1 → v2.2.2 (the owner's review of v2.2.1, 2026-09-05):** the five fixes stand; one
+one-shot-ruling blocker remained — the archive copied each ruling verbatim, and a verbatim
+copy with no `.consumed` marker beside it is a fresh, valid ruling to every parser (the
+instrument's `check_ruling`, the signer's provisioning path, this runner's preflight): an
+owner's authorisation duplicated into another usable one. v2.2.2 archives rulings as
+**inert envelopes** (`archived_ruling_bytes`: the bytes base64 + their sha256, no ruling
+fields), decoded and hash-checked by `verify()` and re-bound as before; tests assert that
+every parser refuses the envelopes, that a failed archive leaves nothing behind, and that
+no file in the evidence directory ever parses as a ruling. Firmware, image, carrier, plans
+and predictions unchanged.
 
 ## 1. Hashes and data flow
 
