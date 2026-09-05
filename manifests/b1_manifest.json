@@ -1,0 +1,171 @@
+{
+ "schema": "b1_manifest",
+ "schema_version": "0.1.0",
+ "status": "DRAFT — host-only, not frozen, NO BOARD RULING (owner 2026-09-05: B1 authorised to the pre-board package; the next board contact needs its own explicit ruling)",
+ "prereg": {
+  "path": "docs/b1_preregistration.md",
+  "version": "v0.1-draft",
+  "sha256": null,
+  "frozen": null,
+  "note": "null = DRAFT: host/b1_runner.py refuses to run until the owner's freeze writes the hash here"
+ },
+ "instrument": {
+  "psoracle_repo": "github.com/14sea/zynq-psoracle",
+  "psoracle_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "psoracle_role": "archived, read-only: the host stack (reader, console, notary relay, collector, validators, rate report) and the carrier are used as committed; verified against manifests/claimb_round1prime_instrument_pins.json before any import",
+  "l6_manifest_sha256": "b3991d82d889597e2754d5c3e20cc35f61966ad78055bccfffac93716db22a1a",
+  "l6_prereg_sha256": "95d177a148e901b0f1ef10716d3468574b01b6864159128dda09bf57713781eb",
+  "carrier": {
+   "bitstream": "builds/p3/p3.bit",
+   "bitstream_sha256": "956379fa8d23f8a6f1e0c80fe18b8c4aee68e76cc650499911a4bdb7807e610a",
+   "manifest": "builds/p3/carrier_manifest.json",
+   "manifest_sha256": "2a7abc2b4054fee1ed02edc38dcae23a5a64b2174ef571401b32b309a4123dfa"
+  },
+  "calibration": {
+   "C1": {
+    "session": "C1 #6",
+    "rate_report_sha256": "08222f85799fa3d18012cdd26a5cc047527995b682bfd5679a668014ea03251c",
+    "evidence": "evidence/l6_17A6_2026-09-03-01-C1/rate_report.json"
+   },
+   "C2": {
+    "session": "C2 #2",
+    "rate_report_sha256": "959790d0e17401936ddd9636f79b9f79e9d45f4fc106de1482f2c8aa969db191",
+    "evidence": "evidence/l6_17A6_2026-09-03-02-C2/rate_report.json"
+   }
+  },
+  "psmap_commit": "191ab0585332e75ac6f15179dc80eeec2d29f9f9",
+  "p3_image_sha256_not_used": "5deee74c44785ebe88168ccffaa5f399f26a7c5a567fccb3d430cf4eb14cdc7c",
+  "successor_note": "the B1 image is a versioned SUCCESSOR of the instrument's two-operator image: the same wire protocol (rel-v4), the same transactions, the same BSP, the instrument's own p3_derive/p3_rectx/p3_pull byte for byte (firmware/b1/IMPORT.json); the search replaced by the cartographer; loop_record 1.2.0 (+carto), app_identity 1.4.0 (+carto_version, universe_sha256, probe_budget). The instrument's L6 calibrations do NOT transfer to it: a new image needs its own compatibility review and, if a budget is ever derived from a rate, its own calibration (roadmap §6)"
+ },
+ "image": {
+  "path": "firmware/b1/bsp/out/b1_app.bin",
+  "sha256": "7bc86a3f2b9548a4a9cb8eb794ed7ee3ea864a814dabe848149e6c228903178d",
+  "elf_sha256": "280ee0c42727d1527c535697a07e9dce6a014fd0ebc8709852a2bb580d522c97",
+  "bytes": 114708,
+  "load_address": "0x02000000",
+  "entry": "go 0x2000000",
+  "board_ready": false,
+  "build_evidence": {
+   "path": "evidence/b1/build_evidence.json",
+   "sha256": "3e66d0842a564f2eeb4379b974ec72819090cc7a959cff89dd152e3d3175acff",
+   "reproduced_byte_identical": true
+  },
+  "note": "the binary is not committed (bsp/out is gitignored, as the instrument's is); it is rebuilt byte-identically by firmware/b1/bsp/build.sh and hash-checked by the runner. board_ready is false until the owner's compatibility review and freeze"
+ },
+ "universe": {
+  "addresses": 292,
+  "sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458",
+  "class": "clb_lut_init",
+  "safety_class": "content",
+  "local_map_sha256": "56f2b9e81e180eee2540286e4fde797e0d4820a49d10624c10844c38e99d87cb",
+  "phenotype_manifest_sha256": "e45f466d082ccd6f227e6f9be4ce75a4e98c4caa708808c09a77ed32331c10ef",
+  "carrier_constants_sha256": "48f79b876a0bfdb449f407692301b29987ef1218fa1adb1fd9a181068765d118",
+  "note": "the cartographer receives the 292 addresses (P3_WHITELIST, genome-bit order) and the safety class; local_map.json is the ground truth HELD BACK from the executable (leakage guards: tests/test_b1_leakage.py)"
+ },
+ "cartographer": {
+  "version": "carto-v1",
+  "code_bits": 9,
+  "pairs": 32,
+  "budget": 333,
+  "evidence_max": 4,
+  "wire_changed_cap": 8,
+  "source": "firmware/b1/b1_carto.c (pure unit; host twin firmware/b1/b1_twin.c; Python reference host/b1_carto.py)"
+ },
+ "seeds": {
+  "master_seed": 1123460948,
+  "rule": "the first 4 bytes, big-endian, of sha256(b'b1-cartography|' + psoracle_commit) — advanced by 4 bytes while the value is in `excluded`",
+  "excluded": {
+   "L5_sessions": [
+    1
+   ],
+   "L6_C1_C2": [
+    1278624577
+   ],
+   "L6_S": [
+    1278628687
+   ],
+   "twin_corpus_master_seeds": [
+    1,
+    521288629,
+    3735928559,
+    4294967295
+   ],
+   "host_model_seeds_2026_09_05": [
+    324805736,
+    195948557,
+    2119807262
+   ],
+   "claimb_round1prime": [
+    1281816666
+   ],
+   "b1_model_seeds": [
+    1234,
+    4321,
+    77,
+    99,
+    1,
+    2,
+    5,
+    3,
+    11
+   ],
+   "rule": "the B1 master seed is none of these"
+  }
+ },
+ "audit": {
+  "policy": "all-self-reporting",
+  "note": "every record's readout is served and host-verified: in B1 every readout is the data"
+ },
+ "protocol": {
+  "wire": "rel-v4",
+  "heartbeat_s": 10,
+  "controls": "seq-1 forced REC-retry and SIGNREQ-retry controls armed (flags bit4, bit5)"
+ },
+ "plan": {
+  "path": "evidence/b1/plan.json",
+  "sha256": "59fbd8040b4238bb22924980e6357fad19056cbb8c38cd2bc705044ee301b9cc",
+  "budget": 333,
+  "records": 335,
+  "audited_records": 335,
+  "crc_budget": 37,
+  "session_timeout_s": 1048
+ },
+ "prediction": {
+  "path": "evidence/b1/prediction.json",
+  "sha256": "d993a528dd994b40f73726981235620cd4b99c4d9c90b0c40df29f120402b317",
+  "map_sha256": "38337072747c6260aae99771204b759bf25fe7bf44b813b11244262adde184dc",
+  "probe_sequence_sha256": "f351475ca7e5e7743a4168c35eb283cc194634bbec9b6f3a5428243cc989bd5f"
+ },
+ "holdout_luts": [
+  4,
+  5
+ ],
+ "board": {
+  "boardid": "17A6",
+  "role": "verify",
+  "part": "xc7z010clg400-1",
+  "control_plane": "U-Boot -> standalone (P3)",
+  "idcode": "0x13722093"
+ },
+ "rulings_required": [
+  "whole-of-run B1 cartography",
+  "provisioning P3-K"
+ ],
+ "rulings_binding": {
+  "whole-of-run B1 cartography": [
+   "session",
+   "master_seed",
+   "prereg_sha256",
+   "image_sha256",
+   "b1_manifest_sha256"
+  ],
+  "provisioning P3-K": [
+   "session",
+   "prereg_sha256",
+   "image_sha256",
+   "b1_manifest_sha256"
+  ],
+  "note": "image_sha256 is the B1 image's; prereg_sha256 is B1's frozen preregistration; b1_manifest_sha256 is THIS file as committed at the freeze"
+ },
+ "history": []
+}

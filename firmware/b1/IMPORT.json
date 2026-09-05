@@ -1,0 +1,65 @@
+{
+ "schema": "b1_firmware_import",
+ "schema_version": "1.0.0",
+ "source_repo": "github.com/14sea/zynq-psoracle",
+ "source_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+ "note": "byte-for-byte copies of the instrument's firmware at the archived head; the B1 image is a versioned SUCCESSOR built from these plus b1_*.c \u2014 the instrument's own files are never edited. Files that B1 modifies are copied under a b1_ name and the copy is what changes; the verbatim originals stay here for the diff.",
+ "files": {
+  "firmware/p3_derive.c": {
+   "sha256": "21b4d7a9b4379a6d2d5ff9a76e111d1ae1641305a4647e18f70767c7af50d730",
+   "copied_to": "firmware/b1/p3_derive.c"
+  },
+  "firmware/p3_derive.h": {
+   "sha256": "38ee462f8b242bac2adc140ed3ca45dd86ce232415a65f00dc1b92d24100f091",
+   "copied_to": "firmware/b1/p3_derive.h"
+  },
+  "firmware/p3_wire.c": {
+   "sha256": "249f84aaa14ab972f6ba0fc50f25b000eee8b2cba19c5a134af5537e37adfdcd",
+   "copied_to": "firmware/b1/p3_wire.c"
+  },
+  "firmware/p3_wire.h": {
+   "sha256": "e2869cbaffff06b6529e10a499f53975042f2e8b38267113caa51053ea7234e9",
+   "copied_to": "firmware/b1/p3_wire.h"
+  },
+  "firmware/p3_rectx.c": {
+   "sha256": "6dfff8693e5312b600c95bf4be22aebb8dc14882614f2668fc081950e52315ba",
+   "copied_to": "firmware/b1/p3_rectx.c"
+  },
+  "firmware/p3_rectx.h": {
+   "sha256": "7064c86dff177fe3305f4d8a1a2381249641dae363f6cfbea7a2e89b437b580b",
+   "copied_to": "firmware/b1/p3_rectx.h"
+  },
+  "firmware/p3_pull.c": {
+   "sha256": "d58d688f12d75a4dfa7836dda947c2a92707097b42d681ea1d9bc274cccf1963",
+   "copied_to": "firmware/b1/p3_pull.c"
+  },
+  "firmware/p3_pull.h": {
+   "sha256": "b3ce0da7ea33c7659d039ff870891f85c845051f5aaeb991cc77ce7c45eaa289",
+   "copied_to": "firmware/b1/p3_pull.h"
+  },
+  "firmware/p3_app.c": {
+   "sha256": "65b22e7c6612ae4070dd254d8fdb967e1a74f3229b62e9ba5d0c809475b735fd",
+   "copied_to": "firmware/b1/p3_app.c"
+  },
+  "firmware/bsp/lscript.ld": {
+   "sha256": "96942701c80022fc4a83672166ebe6a7573094aef541ed93f9d4e1deda5dd8d8",
+   "copied_to": "firmware/b1/bsp/lscript.ld"
+  },
+  "firmware/bsp/src/console.c": {
+   "sha256": "fb9ebd5e22de514d13e85a6b4ef246796da0b2b75b9a0d9c2b87913ca4858b83",
+   "copied_to": "firmware/b1/bsp/src/console.c"
+  },
+  "firmware/bsp/include/bspconfig.h": {
+   "sha256": "06307d4353e828e6be911e20a5e508fbf8139bf7fb50cf443e832fb82bd91617",
+   "copied_to": "firmware/b1/bsp/include/bspconfig.h"
+  },
+  "firmware/bsp/include/xmem_config.h": {
+   "sha256": "5c0e0747268b8c7b46258559987659fca77f147f828873aff2e31e38274ba1bc",
+   "copied_to": "firmware/b1/bsp/include/xmem_config.h"
+  },
+  "firmware/bsp/include/xparameters.h": {
+   "sha256": "04e7da5c306dcb8596da3d20a51472cd33b167d5d197b90de9558bec150ec522",
+   "copied_to": "firmware/b1/bsp/include/xparameters.h"
+  }
+ }
+}

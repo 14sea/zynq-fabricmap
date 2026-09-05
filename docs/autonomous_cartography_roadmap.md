@@ -53,7 +53,7 @@ contradicted its auditor role.)*
 | stage | question | on the board | status |
 |---|---|---|---|
 | **B0 instrument** | can the board write, read back, sign, score and run for hours safely? | P3 / L6 (`zynq-psoracle`, archived at `689dde1`) | **done** |
-| **B1 autonomous mapping** | can the board recover a replayable bit → function / structure map from its own probes? | mapping only; no Claim B A/B | next |
+| **B1 autonomous mapping** | can the board recover a replayable bit → function / structure map from its own probes? | mapping only; no Claim B A/B | **pre-board package delivered 2026-09-05** (`docs/b1_package.md`, `docs/b1_architecture.md`, `docs/b1_preregistration.md` DRAFT); awaiting the whole-package review, compatibility review, freeze and ruling |
 | **B2 map utility** | does a frozen self-built map make the *same* selection engine beat random-safe? | the formal map-guided A/B | after B1 and the carrier-v2 gate |
 | **B3 closed loop** | can evolution specimens update the map online, and does the update improve later search? | evolution-as-fuzzing | after B1 and B2 |
 | **B4 expansion** | from LUT content bits to FF, then routing | content classes on any verify board; routing only on the sacrificial board (§5) | last |

@@ -30,3 +30,8 @@ clockInfo.txt
 
 # Claim B round 1′: ruling files are written by the owner per session and consumed once; never committed (the instrument keeps the same rule)
 rulings/
+
+# B1 image build products: rebuilt byte-identically by firmware/b1/bsp/build.sh and pinned by hash in
+# manifests/b1_manifest.json + evidence/b1/build_evidence.json (the instrument keeps the same rule)
+firmware/b1/bsp/out/
+firmware/b1/build/
