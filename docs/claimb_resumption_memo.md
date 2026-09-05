@@ -36,6 +36,14 @@ formally leaves PAUSED. That preregistration belongs to the instrument's reposit
 (`zynq-psoracle`, whose `l5_design.md` already assigns long-run sampling to "the long-run
 prereg"); this repository records the decision and its pointer.
 
+## 0a. 2026-09-05 — both conditions of §0 met; the ruling is requested (additive)
+
+The calibration/soak preregistration (`zynq-psoracle/docs/l6_soak_prereg.md` v0.7,
+`95d177a1…`) passed — Q1 by C1 #6 / C2 #2, Q2 by S #3 — and the two-operator image
+`5deee74c…` completed P3 compatibility review, both owner-adjudicated in `zynq-psoracle`,
+now archived (adjudication `32d1460`, archive head `689dde1`). The package and the request for the separate resumption ruling
+are `docs/claimb_l6_package.md`. Nothing in §0 changes until that ruling is given.
+
 ---
 
 Author: Claude. Evidence repositories pinned: `zynq-psmap` `191ab05`, `zynq-psoracle`

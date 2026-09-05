@@ -4,6 +4,8 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
+> **▶ 2026-09-05 update: the L6 package is delivered and the resumption ruling is requested — still PAUSED.** Both conditions of the 2026-09-01 ruling were met in `zynq-psoracle` on 2026-09-04 (prereg v0.7 `95d177a1…` passed: Q1 by the pinned calibrations C1 #6 / C2 #2, Q2 by the S #3 soak, 12 570 records in 6763.9 s meeting the registered 2-hour criterion, owner PASS scoped; the two-operator image `5deee74c…` passed P3 compatibility review and ran the four rel-v4 sessions C1 #6, C2 #2, S #2 and S #3); that repository is archived (adjudication `32d1460`, archive head `689dde1` after a doc-only narrative correction). The package and the request are [`docs/claimb_l6_package.md`](docs/claimb_l6_package.md). Until the owner rules there: PAUSED, zero data points, no board contact.
+>
 > **▶ 2026-09-01 update: RESUMPTION-ELIGIBLE, still PAUSED.** The stop-loss's "new mechanism" condition is met within scope by the PS/PCAP + P3 evidence (`docs/claimb_resumption_memo.md` §0); execution stays PAUSED until a calibration/soak preregistration and the two-operator image pass review.
 >
 > **▶ PAUSED, 2026-08-20 — Claim B's board programme is stopped under a stop-loss committed to
