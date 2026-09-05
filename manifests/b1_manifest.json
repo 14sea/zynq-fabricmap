@@ -40,17 +40,17 @@
  "image": {
   "path": "firmware/b1/bsp/out/b1_app.bin",
   "sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
-  "elf_sha256": "4d5c8b03c8b18cf4823479c86373808bccbd18ded1875fb981c9e1c95a74dc43",
+  "elf_sha256": "9d23ddf9190d4cde0e11a02a2adf469acd6d65d8b4963e26afee50c0371233f7",
   "bytes": 114708,
   "load_address": "0x02000000",
   "entry": "go 0x2000000",
   "board_ready": false,
   "build_evidence": {
    "path": "evidence/b1/build_evidence.json",
-   "sha256": "ada31fa53cebf240d8745f768de4810de90608ac41c0c67ec92b9e0624591c0e",
+   "sha256": "59a8c9f8d5d77e1e7f392e69c27972a4fed6e49dcbafdf5fc759c42685b87d80",
    "reproduced_byte_identical": true,
    "worktree_dirty_at_build": false,
-   "head_at_build": "117c8e138a84e5385e88aedea5757462f96c5ab9"
+   "head_at_build": "ca80e73992decf26493f07e5b8ddaecba93c91db"
   },
   "note": "the binary is not committed (bsp/out is gitignored, as the instrument's is); it is rebuilt byte-identically by firmware/b1/bsp/build.sh from the pinned sources and toolchain, and the runner refuses any image whose sha256 is not this one. board_ready is set by a ruling, never by this tool."
  },
