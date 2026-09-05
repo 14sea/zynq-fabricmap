@@ -57,7 +57,14 @@ def run(session, out_dir: Path, ruling: dict, cfg: dict, identity_check, adjudic
         fclk = ob.fclk0_mhz(*[session.read_word(a) for a in (ob.IO_PLL_CTRL, ob.ARM_PLL_CTRL, ob.DDR_PLL_CTRL, ob.FPGA0_CLK_CTRL)])
         summary["fclk0"] = fclk
         summary["setup_load"] = session.load_carrier(bsn.SETUP_LOAD_CAPABILITY, cfg["bitstream"], manifest["bitstream_sha256"], out_dir / "ymodem.log")
+        # the digest of the provisioning ruling's BYTES the signer is handed, taken before and
+        # after the call: the qualification chain requires it to equal the archived copy's
+        import hashlib as _h
+        pk_path = Path(cfg["provision_ruling"])
+        summary["provisioning_ruling_sha256"] = _h.sha256(pk_path.read_bytes()).hexdigest()
         summary["provisioning"] = cfg["signer"].provision(execute=cfg["provision_execute"], ruling=cfg["provision_ruling"])
+        if _h.sha256(pk_path.read_bytes()).hexdigest() != summary["provisioning_ruling_sha256"]:
+            raise l3.Stop("PROVISION_RULING_CHANGED", "the provisioning ruling file changed while the signer used it")
         plane = l3.Plane(session)
         status = plane.read(po.STATUS)
         if not status >> po.ST["key_loaded"] & 1:

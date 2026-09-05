@@ -68,11 +68,12 @@ def qualify(tmp: Path, m: dict, name: str = "q", text: str | None = None, **kw) 
     wr, pr = rulings_for(m, sha)
     rp, pp = tmp / f"{name}_ruling.json", tmp / f"{name}_p3k.json"
     rp.write_text(json.dumps(wr, indent=1) + "\n"); pp.write_text(json.dumps(pr, indent=1) + "\n")
-    bq.write_session_artifacts(out, mp, rp, pp, sha)
+    bq.write_session_artifacts(out, mp, rp, pp, sha, expected_rulings=(wr, pr))
     r = ms.run_modelled(m, QPLAN, out, binding_extra={"b1_manifest_sha256": sha}, **kw)
     res = qadj.adjudicate(out, m, QPLAN, QPRED, sha, require_git=False)
     (out / "adjudication.json").write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")
-    (out / "summary.json").write_text(json.dumps({"outcome": res["outcome"], "token": r["token"], "l6": {"session": "B1Q"}}) + "\n")
+    (out / "summary.json").write_text(json.dumps({"outcome": res["outcome"], "token": r["token"], "l6": {"session": "B1Q"},
+                                                  "ruling": wr, "provisioning_ruling_sha256": hashlib.sha256(pp.read_bytes()).hexdigest()}) + "\n")
     rec = bq.make_record(out, m, sha, QPLAN, res)
     (out / "qualification.json").write_text(json.dumps(rec, indent=1, sort_keys=True) + "\n")
     return rec, out, res, sha
@@ -172,7 +173,7 @@ class Chain(unittest.TestCase):
     def test_a_tampered_ruling_or_manifest_copy_or_summary_breaks_the_chain(self):
         good = self.qualified_manifest()
         for name, mut, words, after in (
-                ("ruling_whole_of_run.json", lambda d: d.__setitem__("master_seed", 5), "does not hash", "bound to master_seed"),
+                ("ruling_whole_of_run.json", lambda d: d.__setitem__("master_seed", 5), "does not hash", "summary.ruling"),
                 ("manifest_at_run.json", lambda d: d["image"].__setitem__("board_ready", False), "does not hash", "b1_manifest_sha256"),
                 ("summary.json", lambda d: d.__setitem__("token", "f" * 32), "does not hash", "summary.json")):
             d = self.tmp / f"tamper_{name}"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(self.out, d)
@@ -191,6 +192,34 @@ class Chain(unittest.TestCase):
             with self.assertRaises(bq.QualificationRefusal) as cm:
                 bq.verify(m)
             self.assertIn(after, str(cm.exception))          # the CONTENT / byte binding, not the file hash
+
+    def test_summary_must_name_the_archived_ruling_and_the_provisioning_digest(self):
+        good = self.qualified_manifest()
+        for mut, words in ((lambda d: d.pop("ruling"), "summary.ruling"),
+                           (lambda d: d["ruling"].__setitem__("master_seed", 5), "summary.ruling"),
+                           (lambda d: d.__setitem__("provisioning_ruling_sha256", "0" * 64), "provisioning ruling"),
+                           (lambda d: d.pop("provisioning_ruling_sha256"), "provisioning ruling")):
+            d = self.tmp / "summary_case"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(self.out, d)
+            m = copy.deepcopy(good); m["carrier"]["qualification"]["evidence_dir"] = str(d)
+            doc = json.loads((d / "summary.json").read_text()); mut(doc); text = json.dumps(doc) + "\n"
+            (d / "summary.json").write_text(text)
+            m["carrier"]["qualification"]["files"]["summary.json"] = hashlib.sha256(text.encode()).hexdigest()
+            with self.assertRaises(bq.QualificationRefusal) as cm:
+                bq.verify(m)
+            self.assertIn(words, str(cm.exception))
+
+    def test_archiving_refuses_a_ruling_that_differs_from_the_parsed_one(self):
+        tmp = self.tmp / "archive"; tmp.mkdir(exist_ok=True)
+        text = manifest_text(self.m); sha = hashlib.sha256(text.encode()).hexdigest()
+        mp = tmp / "m.json"; mp.write_text(text)
+        wr, pr = rulings_for(self.m, sha)
+        rp, pp = tmp / "r.json", tmp / "p.json"
+        rp.write_text(json.dumps(wr)); pp.write_text(json.dumps(pr))
+        bq.write_session_artifacts(tmp / "ok", mp, rp, pp, sha, expected_rulings=(wr, pr))
+        with self.assertRaises(bq.QualificationRefusal):
+            bq.write_session_artifacts(tmp / "bad", mp, rp, pp, sha, expected_rulings=({**wr, "master_seed": 5}, pr))
+        with self.assertRaises(bq.QualificationRefusal):
+            bq.write_session_artifacts(tmp / "bad2", mp, rp, pp, "0" * 64, expected_rulings=(wr, pr))
 
     def test_a_session_run_before_the_freeze_never_qualifies(self):
         m = copy.deepcopy(self.m); m["image"]["board_ready"] = False

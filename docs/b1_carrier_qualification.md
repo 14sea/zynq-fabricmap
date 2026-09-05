@@ -82,9 +82,16 @@ consume a ruling and violate the contract this round is about.
 
 ## 4. The evidence chain: how `qualified` is derived (`host/b1_qualification.py`)
 
-Before the port is opened the runner copies, into the evidence directory, the exact bytes
-of the manifest it read (`manifest_at_run.json` — it must hash to the sha256 every binding
-names) and both ruling files verbatim (`ruling_whole_of_run.json`, `ruling_provisioning.json`).
+After the preflight and **before the whole-of-run ruling is claimed and before the serial
+port is opened** — the order is fixed in `b1_runner.execute` and tested as an order
+(`tests/test_b1_runner.py::Order`): archive → claim → port → session; an archive failure
+consumes nothing and opens nothing — the runner copies, into the evidence directory, the
+exact bytes of the manifest it read (`manifest_at_run.json` — it must hash to the sha256
+every binding names) and both ruling files verbatim (`ruling_whole_of_run.json`,
+`ruling_provisioning.json`), each parsed and required to equal what the preflight parsed.
+The session function refuses to start without them. During the session the summary keeps
+the sha256 of the provisioning ruling's bytes as the signer was handed them (taken before
+and after the call; a change is a stop).
 After the session and its adjudication the B1Q runner writes **`qualification.json`**
 beside them (schema `b1_carrier_qualification` 2.0.0):
 
@@ -117,7 +124,9 @@ with it — requires all of:
    prereg hash and instrument commit as the current manifest, and `board_ready` true (a
    session run before the freeze never qualifies);
 3. the run log's token (app_identity, notary_log, session_summary) equal to the record's;
-   `summary.json` naming that token, session `B1Q` and outcome PASS; the run log's binding
+   `summary.json` naming that token, session `B1Q` and outcome PASS, **its `ruling` equal to
+   the archived whole-of-run ruling, and its `provisioning_ruling_sha256` equal to the
+   archived provisioning copy's** (the signer used those bytes); the run log's binding
    naming session `B1Q` and the same manifest sha256;
 4. the run log's `l6.inputs` — plan, prediction and pin-table hashes — equal to
    `manifest_at_run`'s qualification pins (a B1Q log carrying the mapping hashes is refused);

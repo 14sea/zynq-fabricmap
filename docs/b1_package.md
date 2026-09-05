@@ -1,4 +1,4 @@
-# B1 — the pre-board package, v2.2, delivered for the final short re-review (2026-09-05)
+# B1 — the pre-board package, v2.2.1, delivered after the final short re-review (2026-09-05)
 
 > **HOST-ONLY. DRAFT / NO BOARD RULING.** Delivered at "B1 ready for the board" under the
 > owner's ruling of 2026-09-05 (`docs/autonomous_cartography_roadmap.md`; the
@@ -45,7 +45,18 @@ fixes stand; four host-side blockers in the evidence chain and the manifest life
 | 3 — the qualification chain was open: the token came from the caller, the rulings' binding was not kept, the bound manifest's bytes were not kept, the provisioning ruling was not evidence | the runner copies `manifest_at_run.json` (bytes = the bound sha256) and both rulings verbatim into the evidence before the port; the record (2.0.0) takes its token from the run log, keeps both rulings' hash and content and the input pins; `verify()` re-binds tokens (app_identity / notary / summary / summary.json), both rulings, the inputs, re-adjudicates against `manifest_at_run`, and allows the current manifest to differ from it only in the qualification state (`docs/b1_carrier_qualification.md` §4) |
 | 4 — the mapping adjudicator accepted `qualified: false` with standing evidence | `qualification_stands()` requires the derived flag to agree with the evidence (as the runner does); tested from `adjudicate()` |
 
-Non-blocking: the test report's `package` label is `B1 v2.1`; the report below is regenerated.
+**v2.2 → v2.2.1 (the owner's final short review, 2026-09-05):** the four v2.1 blockers are
+closed; one execution-order / evidence-identity blocker remained: the session artifacts
+were archived by the session function, i.e. after the ruling was claimed and the serial
+port opened, against what the documents said. v2.2.1: `b1_runner.execute` archives and
+verifies the three artifacts (each ruling copy equal to what the preflight parsed) in a
+guarded try **before** the claim and **before** the port — a failure consumes nothing and
+opens nothing — and the order is asserted by a test (`tests/test_b1_runner.py::Order`:
+archive → claim → open → session); the session function refuses to start without the
+artifacts; `verify()` requires `summary.ruling` to equal the archived whole-of-run ruling
+and `summary.provisioning_ruling_sha256` (the digest of the bytes the signer was handed,
+taken before and after the call) to equal the archived provisioning copy's. Firmware,
+image, carrier, plans and predictions unchanged.
 
 ## 1. Hashes and data flow
 
@@ -215,7 +226,8 @@ Report: `evidence/b1/tests/test_report_2026-09-05T131844Z.json` (schema `b1_test
 
 ## 10. What is asked, and what is not
 
-Asked: the final short re-review; if it passes — push, the compatibility review (§7), the freeze (prereg hash + `board_ready`), the qualification pair and session
+Asked (the owner's words after the final short review): once green — push, then the
+compatibility review (§7), the freeze (prereg hash + `board_ready`), the qualification pair and session
 (a), the record pinned and committed, then the mapping pair and one session (b) on `17A6`. Not asked, and not done: any board contact,
 any change to `zynq-psoracle`, any probe of unattested bits, any routing, any provisioning
 of `08EB`, any B2/B3 ruling (their interfaces are fixed by the roadmap; their packages are

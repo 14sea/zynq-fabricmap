@@ -234,7 +234,7 @@ def preflight(a, profile: dict = MAPPING) -> dict:
                     "binding": {"image_sha256": image_sha, "prereg_sha256": pinned_prereg, "protocol": plan["protocol"],
                                 "session": session, "schedule_mode": "carto-v1", "master_seed": plan["master_seed"],
                                 "b1_manifest_sha256": manifest_sha, "psoracle_commit": verified["psoracle_commit"]}}
-    return {"profile": profile, "ruling": ruling, "manifest": manifest, "manifest_sha256": manifest_sha, "l6_manifest": l6m,
+    return {"profile": profile, "ruling": ruling, "provision_ruling_parsed": pk, "manifest": manifest, "manifest_sha256": manifest_sha, "l6_manifest": l6m,
             "manifest_path": a.manifest, "ruling_path": a.ruling, "provision_ruling_path": a.provision_ruling,
             "carrier": carrier, "bitstream": car_bit, "image": a.image, "image_sha256": image_sha,
             "plan": session_plan, "round_plan": plan, "prediction": prediction,
@@ -279,9 +279,11 @@ def run_session(session, out_dir: Path, ruling: dict, cfg: dict) -> dict:
     import b1_session  # noqa: E402
     profile = cfg.get("profile", MAPPING)
     judge = profile["adjudicate"]
-    # the session's own evidence of what it was bound to: the manifest bytes at preflight
-    # and both ruling files, copied verbatim (hashes checked by the qualification chain)
-    bq.write_session_artifacts(out_dir, cfg["manifest_path"], cfg["ruling_path"], cfg["provision_ruling_path"], cfg["manifest_sha256"])
+    # the session artifacts (manifest bytes, both rulings) were archived by execute() BEFORE
+    # the port was opened; a session function reached without them is a programming error
+    for name in (bq.MANIFEST_AT_RUN, *bq.RULING_FILES.values()):
+        if not (Path(out_dir) / name).is_file():
+            raise RuntimeError(f"session artifacts not archived before the session: {name} missing")
     summary = b1_session.run(session, out_dir, ruling, cfg, identity_check_for(cfg["round_plan"], cfg["manifest"]),
                              lambda d: judge(d, cfg["manifest"], cfg["round_plan"], cfg["prediction"], cfg["manifest_sha256"],
                                              instrument_root=cfg["instrument_root"], require_git=True),
@@ -314,11 +316,28 @@ def main(argv=None, profile: dict = MAPPING) -> int:
     except Exception as exc:  # noqa: BLE001
         print(f"REFUSED: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
+    rc, outcome = execute(a, cfg)
+    print(outcome, file=sys.stderr if outcome != "PASS" else sys.stdout)
+    return rc
+
+
+def execute(a, cfg: dict) -> tuple[int, str]:
+    """The order after a passed preflight, FIXED (owner's review 2026-09-05): (1) the evidence
+    directory; (2) the session artifacts — the manifest bytes and both rulings — archived
+    and verified against what the preflight parsed, in a guarded try: a failure here is a
+    REFUSED with no ruling consumed and no port opened; (3) the whole-of-run ruling claimed;
+    (4) the serial port opened (the first board contact); (5) the session. Tested as an
+    order (tests/test_b1_runner.py::Order)."""
     import board_session as bsn  # noqa: E402
     import l3_runner as l3  # noqa: E402
     import pcap_probe_runner as pr  # noqa: E402
+    try:
+        a.out.mkdir(parents=True)
+        bq.write_session_artifacts(a.out, cfg["manifest_path"], cfg["ruling_path"], cfg["provision_ruling_path"], cfg["manifest_sha256"],
+                                   expected_rulings=(cfg["ruling"], cfg["provision_ruling_parsed"]))
+    except (bq.QualificationRefusal, OSError, ValueError) as exc:
+        return 2, f"REFUSED: session artifacts not archived: {exc}"
     consumed = pr.claim_ruling(a.ruling)
-    a.out.mkdir(parents=True)
     l3._install_sigterm()
     outcome = "CRASHED before a summary was written"
     try:
@@ -333,8 +352,7 @@ def main(argv=None, profile: dict = MAPPING) -> int:
         pr.record_outcome(consumed, outcome)
         if a.provision_ruling:
             l3._record_pk(a.provision_ruling, outcome)
-    print(outcome, file=sys.stderr if outcome != "PASS" else sys.stdout)
-    return 0 if outcome == "PASS" else 1
+    return (0 if outcome == "PASS" else 1), outcome
 
 
 if __name__ == "__main__":

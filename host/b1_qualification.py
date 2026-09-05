@@ -76,17 +76,23 @@ def _rel(path: Path) -> str:
 
 
 def write_session_artifacts(out_dir: Path, manifest_path: Path, ruling_path: Path, provision_ruling_path: Path,
-                            manifest_sha256: str) -> dict:
+                            manifest_sha256: str, expected_rulings: tuple[dict, dict] | None = None) -> dict:
     """Copy the manifest bytes and both ruling files into the evidence directory, verbatim,
-    before the session (the runner calls this after preflight, before the port). The
-    manifest copy must hash to the sha256 the preflight bound the session to."""
+    BEFORE the port is opened (b1_runner.execute). The manifest copy must hash to the
+    sha256 the preflight bound the session to; each ruling copy must parse to exactly what
+    the preflight parsed (`expected_rulings` = (whole-of-run, provisioning)) — a file that
+    changed between preflight and archive is a refusal, with nothing consumed and no port."""
     out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True)
     dst = out_dir / MANIFEST_AT_RUN
     shutil.copyfile(manifest_path, dst)
     if sha256_of(dst) != manifest_sha256:
         raise QualificationRefusal("the manifest bytes copied into the evidence do not hash to the preflight's manifest sha256")
-    shutil.copyfile(ruling_path, out_dir / RULING_FILES["whole_of_run"])
-    shutil.copyfile(provision_ruling_path, out_dir / RULING_FILES["provisioning"])
+    for src, name, want in ((ruling_path, RULING_FILES["whole_of_run"], expected_rulings[0] if expected_rulings else None),
+                            (provision_ruling_path, RULING_FILES["provisioning"], expected_rulings[1] if expected_rulings else None)):
+        shutil.copyfile(src, out_dir / name)
+        got = json.loads((out_dir / name).read_text())
+        if want is not None and got != want:
+            raise QualificationRefusal(f"the archived {name} is not the ruling the preflight parsed")
     return {name: sha256_of(out_dir / name) for name in (MANIFEST_AT_RUN, *RULING_FILES.values())}
 
 
@@ -212,6 +218,11 @@ def verify(manifest: dict, root: Path = REPO_ROOT, require_git: bool = False, in
         raise QualificationRefusal("the run log's notary_log / session_summary token is not the app_identity token")
     if summary.get("token") != token or summary.get("outcome") != "PASS" or (summary.get("l6") or {}).get("session") != SESSION:
         raise QualificationRefusal("summary.json does not name this token, session B1Q and outcome PASS")
+    wr_copy = json.loads((ev / RULING_FILES["whole_of_run"]).read_text())
+    if summary.get("ruling") != wr_copy:
+        raise QualificationRefusal("summary.ruling is not the archived whole-of-run ruling: the session ran under another ruling")
+    if summary.get("provisioning_ruling_sha256") != sha256_of(ev / RULING_FILES["provisioning"]):
+        raise QualificationRefusal("the provisioning ruling the signer was handed (summary.provisioning_ruling_sha256) is not the archived copy")
     lb = (log.get("l6") or {}).get("binding") or {}
     if lb.get("b1_manifest_sha256") != b["b1_manifest_sha256"] or lb.get("session") != SESSION:
         raise QualificationRefusal("the run log's binding is not the record's (manifest sha256 / session)")

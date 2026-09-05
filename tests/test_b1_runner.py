@@ -240,5 +240,58 @@ class RefusalOrder(unittest.TestCase):
             self.assertEqual(len(out), 1); self.assertIn(k, out[0])
 
 
+@unittest.skipUnless(HAVE, "the archived instrument checkout is not present")
+class Order(unittest.TestCase):
+    """The order after preflight is FIXED: archive the session artifacts → claim the ruling →
+    open the serial port → the session. An archive failure consumes nothing and opens
+    nothing (owner's review 2026-09-05)."""
+
+    def run_execute(self, archive_ok: bool):
+        from unittest import mock
+        inst.bind(inst.DEFAULT_ROOT, require_git=False)
+        import board_session as bsn
+        import l3_runner as l3
+        import pcap_probe_runner as pr
+        import b1_qualification as bq
+        calls: list[str] = []
+        d = Path(tempfile.mkdtemp())
+        a = types.SimpleNamespace(out=d / "out", ruling=d / "r.json", provision_ruling=d / "p.json", port="/dev/null")
+        a.ruling.write_text("{}"); a.provision_ruling.write_text("{}")
+        cfg = {"manifest_path": d / "m.json", "ruling_path": a.ruling, "provision_ruling_path": a.provision_ruling,
+               "manifest_sha256": "x", "ruling": {}, "provision_ruling_parsed": {}}
+        def archive(*args, **kw):
+            calls.append("archive")
+            if not archive_ok:
+                raise bq.QualificationRefusal("forced")
+        class Transport:
+            def __init__(self, port): calls.append("open")
+            def close(self): calls.append("close")
+        with mock.patch.object(bq, "write_session_artifacts", archive), \
+             mock.patch.object(pr, "claim_ruling", lambda p: calls.append("claim") or d / "consumed"), \
+             mock.patch.object(pr, "record_outcome", lambda c, o: calls.append("record")), \
+             mock.patch.object(l3, "_install_sigterm", lambda: None), \
+             mock.patch.object(l3, "_record_pk", lambda p, o: None), \
+             mock.patch.object(bsn, "SerialTransport", Transport), \
+             mock.patch.object(bsn, "BoardSession", lambda t: t), \
+             mock.patch.object(rn, "run_session", lambda s, o, r, c: calls.append("session") or {"outcome": "PASS"}):
+            rc, outcome = rn.execute(a, cfg)
+        return calls, rc, outcome
+
+    def test_archive_precedes_claim_precedes_port_precedes_session(self):
+        calls, rc, outcome = self.run_execute(True)
+        self.assertEqual(calls, ["archive", "claim", "open", "session", "close", "record"])
+        self.assertEqual((rc, outcome), (0, "PASS"))
+
+    def test_an_archive_failure_consumes_nothing_and_opens_nothing(self):
+        calls, rc, outcome = self.run_execute(False)
+        self.assertEqual(calls, ["archive"])
+        self.assertEqual(rc, 2); self.assertIn("not archived", outcome)
+
+    def test_the_session_function_refuses_without_the_archived_artifacts(self):
+        d = Path(tempfile.mkdtemp())
+        with self.assertRaises(RuntimeError):
+            rn.run_session(None, d, {}, {"profile": rn.MAPPING})
+
+
 if __name__ == "__main__":
     unittest.main()
