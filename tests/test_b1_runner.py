@@ -43,12 +43,13 @@ class Fixture:
         p.write_text(json.dumps({"boardid": "17A6", "granted_by": "test", "date": "2026-09-05-T", **fields}))
         return p
 
-    def freeze(self, board_ready: bool = True) -> None:
+    def freeze(self, board_ready: bool = True, qualified: bool = True) -> None:
         doc = self.d / "prereg.md"
         doc.write_text("# fixture preregistration\n")
         self.manifest["prereg"]["path"] = os.path.relpath(doc, R)
         self.manifest["prereg"]["sha256"] = sha(doc)
         self.manifest["image"]["board_ready"] = board_ready
+        self.manifest["carrier"]["qualified"] = qualified
 
     def manifest_path(self) -> Path:
         p = self.d / "manifest.json"
@@ -90,6 +91,31 @@ class RefusalOrder(unittest.TestCase):
         f = Fixture(); f.freeze()
         f.manifest["plan"]["sha256"] = "c" * 64
         self.refuses(f.args(), "plan pin")
+
+    def test_frozen_but_the_pin_table_is_wrong_or_missing(self):
+        f = Fixture(); f.freeze()
+        f.manifest["pins"]["sha256"] = "9" * 64
+        self.refuses(f.args(), "pins")
+        f = Fixture(); f.freeze()
+        f.manifest["pins"]["sha256"] = None
+        self.refuses(f.args(), "pins")
+
+    @unittest.skipUnless(HAVE and IMAGE.is_file(), "instrument or built image absent")
+    def test_frozen_and_board_ready_but_the_carrier_is_not_qualified(self):
+        f = Fixture(); f.freeze(qualified=False)
+        self.refuses(f.args(), "qualified")
+
+    @unittest.skipUnless(HAVE and IMAGE.is_file(), "instrument or built image absent")
+    def test_frozen_but_a_carrier_pin_is_wrong(self):
+        for key, words in (("carrier_manifest", "carrier manifest"), ("build_record", "build record"), ("bitstream", "bitstream")):
+            f = Fixture(); f.freeze()
+            if key == "bitstream":
+                f.manifest["carrier"]["bitstream_sha256"] = "a" * 64
+            else:
+                f.manifest["carrier"][key]["sha256"] = "a" * 64
+            self.refuses(f.args(), words)
+        f = Fixture(); f.freeze(); f.manifest["carrier"]["variant"] = "0x00000000"
+        self.refuses(f.args(), "variant")
 
     @unittest.skipUnless(HAVE, "the archived instrument checkout is not present")
     def test_frozen_but_the_image_is_not_the_pinned_bytes(self):
@@ -140,14 +166,18 @@ class RefusalOrder(unittest.TestCase):
 
     def test_identity_check_names_every_mismatch(self):
         plan = {"budget": 333, "master_seed": 7, "protocol": "rel-v4"}
-        m = {"cartographer": {"version": "carto-v1"}, "universe": {"sha256": "u" * 64}}
+        m = {"cartographer": {"version": "carto-v1"}, "universe": {"sha256": "u" * 64}, "carrier": {"bitstream_sha256": "c" * 64}}
         check = rn.identity_check_for(plan, m)
         good = {"carto_version": "carto-v1", "universe_sha256": "u" * 64, "probe_budget": 333, "master_seed": 7,
-                "protocol": "rel-v4", "rec_retry_control": True, "sign_retry_control": True, "findings": []}
+                "protocol": "rel-v4", "rec_retry_control": True, "sign_retry_control": True, "findings": [],
+                "carrier_variant": "0x42310001", "carrier_sha256": "c" * 64}
         self.assertEqual(check(good), [])
         bad = dict(good); bad["probe_budget"] = 1; bad["findings"] = ["x"]
-        out = check(bad)
-        self.assertEqual(len(out), 2)
+        self.assertEqual(len(check(bad)), 2)
+        for k, v in (("carrier_variant", "0x42310000"), ("carrier_sha256", "d" * 64)):
+            bad = dict(good); bad[k] = v
+            out = check(bad)
+            self.assertEqual(len(out), 1); self.assertIn(k, out[0])
 
 
 if __name__ == "__main__":

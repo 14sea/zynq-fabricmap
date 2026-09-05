@@ -1,0 +1,125 @@
+{
+  "schema": "carrier_manifest",
+  "schema_version": "1.0.0",
+  "bitstream_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+  "bitstream_bytes": 2083858,
+  "frame_table_sha256": "19df58fa41aee1abe1c7bed453bab9038aad5c319c496330faf04e0ec27f5634",
+  "frame_count": 5144,
+  "part": "xc7z010clg400-1",
+  "top": "b1_top",
+  "vivado": "2025.2",
+  "wns_ns": 7.993,
+  "cell_isolation": "passed",
+  "board_roles": {
+    "17A6": "verify"
+  },
+  "axi": {
+    "base": 1136656384,
+    "stable_state": [
+      8196,
+      8200,
+      8208,
+      8212,
+      8216,
+      8220,
+      8224,
+      8228
+    ],
+    "heartbeat": {
+      "offset": 8232,
+      "width_bits": 32,
+      "advances_per_s_min": null,
+      "advances_per_s_max": null,
+      "note": "bounds are pinned from the L2 no-read baseline before the L2 ruling"
+    },
+    "nonce": {
+      "lo": 8236,
+      "hi": 8240,
+      "steps_after_every_arm_attempt": true,
+      "generator": "xorshift64 (validators/nonce.py)"
+    },
+    "arm_payload": {
+      "first": 8448,
+      "words": 20,
+      "tag_first": 8528,
+      "tag_words": 4,
+      "strobe": {
+        "offset": 8192,
+        "bit": 6
+      },
+      "write_only": true
+    },
+    "hw_candidate_commit": {
+      "first": 8704,
+      "words": 8
+    },
+    "functional_readout": {
+      "first": 8768,
+      "words": 12
+    },
+    "status_reserved_mask": 4160749568,
+    "status_alive_bit": 8,
+    "fault_codes": {
+      "13": "F_ARM_AUTH",
+      "15": "F_ARM_TABLE"
+    },
+    "undecoded": "SLVERR on read and write"
+  },
+  "target_columns": [
+    "CLBLL_L_X2",
+    "CLBLM_L_X6"
+  ],
+  "target_fars": [
+    "0x00400a20",
+    "0x00400a21",
+    "0x00400a22",
+    "0x00400a23",
+    "0x00400c1a",
+    "0x00400c1b",
+    "0x00400c1c",
+    "0x00400c1d",
+    "0x00400c20",
+    "0x00400c21",
+    "0x00400c22",
+    "0x00400c23"
+  ],
+  "target_frames_nonzero_words": {
+    "0x00400a20": 0,
+    "0x00400a21": 0,
+    "0x00400a22": 0,
+    "0x00400a23": 0,
+    "0x00400c1a": 0,
+    "0x00400c1b": 0,
+    "0x00400c1c": 0,
+    "0x00400c1d": 0,
+    "0x00400c20": 0,
+    "0x00400c21": 0,
+    "0x00400c22": 0,
+    "0x00400c23": 0
+  },
+  "positive_control": {
+    "far": "0x00401420",
+    "frame_sha256": "ab411ab5fe6efc5aa7778008c4026d015479d46bfb8a6a0a2f441f336ba855bb",
+    "min_hamming_to_neighbours": 1244,
+    "hamming": [
+      1248,
+      1356,
+      1244,
+      1280
+    ],
+    "globally_unique": true
+  },
+  "blank_far_group_size": 4215,
+  "no_icap": true,
+  "nonce_seed": "0x9E3779B97F4A7C15",
+  "mac": {
+    "algorithm": "siphash-2-4-128",
+    "key": "runtime-provisioned into a write-once, write-only register (0x2160-0x216C + CTRL bit 8) over the DAP mem-AP by the gate-signer principal; not in this bitstream",
+    "key_loaded_status_bit": 11,
+    "fault_nokey": 12,
+    "key_id_note": "key_id = sha256(K) is recorded per session in arm_record.signer.key_id (docs/decisions.md D4 option A)"
+  },
+  "lut_truth_table": {
+    "bit_order": "INIT[i] = bit i; sweep vector[0] = I0 (LOCK_PINS I0:A1..I5:A6)"
+  }
+}

@@ -26,7 +26,6 @@ N = 292
 LUTS = 6
 CODE_BITS = 9
 PAIRS_MAX = 32
-EVIDENCE_MAX = 4
 VERSION = "carto-v1"
 GENOME_WORDS = 10
 GOLDEN = 0x9E3779B97F4A7C15
@@ -91,17 +90,15 @@ def popcount_tables(t: list[int]) -> int:
 
 
 class Entry:
-    __slots__ = ("lut", "init", "confidence", "state", "evidence")
+    __slots__ = ("lut", "init", "confidence", "state", "observed", "code_mask", "confirm_seq")
 
     def __init__(self):
-        self.lut, self.init, self.confidence, self.state, self.evidence = -1, -1, 0, ST_UNKNOWN, []
-
-    def add_evidence(self, seq: int) -> None:
-        if len(self.evidence) < EVIDENCE_MAX:
-            self.evidence.append(seq)
+        self.lut, self.init, self.confidence, self.state = -1, -1, 0, ST_UNKNOWN
+        self.observed, self.code_mask, self.confirm_seq = 0, 0, 0
 
     def render(self, i: int) -> str:
-        return f'[{i},{self.lut},{self.init},{self.confidence},"{STATE_NAME[self.state]}",[{",".join(str(s) for s in self.evidence)}]]'
+        return (f'[{i},{self.lut},{self.init},{self.confidence},"{STATE_NAME[self.state]}",'
+                f'{self.code_mask},{self.confirm_seq},{self.observed}]')
 
 
 class Carto:
@@ -125,6 +122,11 @@ class Carto:
         self.anomalies = 0
         self.changed: list[int] = []
         self.map_sha256 = ""
+        self.content_sha256 = ""
+        self.token, self.universe, self.image_lo32 = "0" * 32, "0" * 64, 0
+
+    def bind(self, token: str, universe: str, image_lo32: int) -> None:
+        self.token, self.universe, self.image_lo32 = token[:32], universe[:64], image_lo32 & MASK32
 
     # ---- phase A decode -------------------------------------------------------------
     def _decode(self) -> None:
@@ -148,9 +150,7 @@ class Carto:
                     self._changed_add(i)
                     continue
                 e.lut, e.init, e.confidence, e.state = lut, v, 1, ST_DECODED
-                for p in range(CODE_BITS):
-                    if (code >> p) & 1:
-                        e.add_evidence(self.code_seq[p])
+                e.observed, e.code_mask = 1, code
                 self._changed_add(i)
         for p in range(CODE_BITS):
             if self.lit_count[p] != self.set_count[p]:
@@ -240,7 +240,7 @@ class Carto:
         if self.phase == PH_CONFIRM and self.pending >= 0:
             e = self.e[self.pending]
             n = popcount_tables(tables)
-            e.add_evidence(seq)
+            e.confirm_seq = seq
             if e.state == ST_UNKNOWN:
                 if n == 0:
                     e.state, e.confidence = ST_NO_EFFECT, 2
@@ -249,7 +249,7 @@ class Carto:
                         for v in range(64):
                             if (tables[k] >> v) & 1:
                                 e.lut, e.init = k, v
-                    e.state, e.confidence = ST_CONFIRMED, 1
+                    e.state, e.confidence, e.observed = ST_CONFIRMED, 1, 1
                     self.anomalies += 1
                 else:
                     e.state, e.confidence = ST_CONTRADICTION, 0
@@ -287,27 +287,45 @@ class Carto:
             self.pending_pair = -1
 
     # ---- rendering -------------------------------------------------------------------
-    def render(self) -> str:
+    def render_content(self) -> str:
         entries = ",".join(self.e[i].render(i) for i in range(N))
         pairs = ",".join(f'[{p["a"]},{p["b"]},{p["kind"]},{p["result"]},{p["seq"]}]' for p in self.pairs)
-        text = f'{{"anomalies":{self.anomalies},"entries":[{entries}],"pairs":[{pairs}],"seed":{self.seed},"version":"{VERSION}"}}'
+        codes = ",".join(str(x) for x in self.code_seq)
+        text = (f'{{"anomalies":{self.anomalies},"budget":{self.budget},"code_seqs":[{codes}],"entries":[{entries}],'
+                f'"pairs":[{pairs}],"seed":{self.seed},"version":"{VERSION}"}}')
+        self.content_sha256 = hashlib.sha256(text.encode()).hexdigest()
+        return text
+
+    def render(self) -> str:
+        content = self.render_content()
+        text = (f'{{"binding":{{"image_lo32":"{self.image_lo32:08x}","token":"{self.token}","universe":"{self.universe}"}},'
+                f'"content":{content}}}')
         self.map_sha256 = hashlib.sha256(text.encode()).hexdigest()
         return text
 
     def record_json(self, kind: int, seq: int, changed: list[int]) -> str:
         self.render()
         ch = ",".join(self.e[i].render(i) for i in changed)
-        return (f'{{"anomalies":{self.anomalies},"changed":[{ch}],"map_sha256":"{self.map_sha256}",'
-                f'"phase":"{PHASE_NAME[kind]}","probes_issued":{self.probes_issued},"version":"{VERSION}"}}')
+        return (f'{{"anomalies":{self.anomalies},"changed":[{ch}],"content_sha256":"{self.content_sha256}",'
+                f'"map_sha256":"{self.map_sha256}","phase":"{PHASE_NAME[kind]}","probes_issued":{self.probes_issued},"version":"{VERSION}"}}')
 
     def map_dict(self) -> dict:
+        """The whole map as a dict: {"binding": …, "content": …}."""
         return json.loads(self.render())
 
+    def content_dict(self) -> dict:
+        return json.loads(self.render_content())
 
-def run(seed: int, budget: int, fabric, unscored=None, first_seq: int = 2) -> dict:
-    """Drive the reference over `fabric(genome) -> six tables` (unscored: a callable
-    (seq) -> bool marking probes the board did not score). Returns the transcript."""
+
+DEFAULT_BINDING = ("0" * 32, "0" * 64, 0)
+
+
+def run(seed: int, budget: int, fabric, unscored=None, first_seq: int = 2, binding=DEFAULT_BINDING) -> dict:
+    """Drive the pure cartographer over `fabric(genome) -> six tables` (unscored: a callable
+    (seq) -> bool marking probes the board did not score). Returns the transcript. The
+    board's session (opening and closing baselines included) is `session_run`."""
     c = Carto(seed, budget)
+    c.bind(*binding)
     seq = first_seq - 1
     probes, records = [], []
     while True:
@@ -326,4 +344,47 @@ def run(seed: int, budget: int, fabric, unscored=None, first_seq: int = 2) -> di
         records.append({"seq": seq, "carto": c.record_json(kind, seq, c.changed[:8]),
                         "changed_full": [c.e[i].render(i) for i in c.changed]})
     text = c.render()
-    return {"probes": probes, "records": records, "map": text, "map_sha256": c.map_sha256, "carto": c}
+    return {"probes": probes, "records": records, "map": text, "map_sha256": c.map_sha256,
+            "content_sha256": c.content_sha256, "carto": c}
+
+
+def session_run(seed: int, budget: int, fabric, token: str, universe: str, image_lo32: int, unscored=None) -> dict:
+    """The board's whole sequence, as b1_orch drives it: seq 1 the opening baseline (blank
+    genome, the cartographer already initialised and bound — its block commits to that
+    state), then the probes, then the closing baseline (blank). Every candidate yields a
+    record {seq, genome, is_baseline, kind, tables, carto}; a baseline learns nothing."""
+    c = Carto(seed, budget)
+    c.bind(token, universe, image_lo32)
+    records = []
+    seq = 0
+
+    def emit(genome: int, is_baseline: bool, kind: int, tables: list[int]) -> None:
+        records.append({"seq": seq, "genome": genome_to_hex(genome), "is_baseline": is_baseline, "kind": kind,
+                        "tables": list(tables), "carto": c.record_json(PH_DONE if is_baseline else kind, seq, [] if is_baseline else c.changed[:8]),
+                        "changed_full": [] if is_baseline else [c.e[i].render(i) for i in c.changed]})
+    seq += 1
+    emit(0, True, PH_DONE, fabric(0))
+    stopped = False
+    while True:
+        nxt = c.next()
+        if nxt is None:
+            break
+        genome, kind = nxt
+        seq += 1
+        if unscored and unscored(seq):
+            # as the board: a candidate that was not SCORED ends the epoch — no re-issue and
+            # no closing baseline; the map is what was learned before it
+            c.unobserved()
+            seq -= 1
+            stopped = True
+            break
+        tables = fabric(genome)
+        c.observe(seq, tables)
+        emit(genome, False, kind, tables)
+    if not stopped:
+        seq += 1
+        emit(0, True, PH_DONE, fabric(0))
+    text = c.render()
+    return {"records": records, "probes": [r for r in records if not r["is_baseline"]], "map": text,
+            "map_sha256": c.map_sha256, "content_sha256": c.content_sha256, "carto": c, "last_seq": seq,
+            "stopped": stopped}

@@ -53,7 +53,7 @@ for s in $C_SRCS $SYS_SRCS; do o="$OUT/$(echo "$s" | tr / _).o"; "$CC" $BSP_CFLA
 for s in $WDT_SRCS; do o="$OUT/wd_$s.o"; "$CC" $BSP_CFLAGS -c "$WD/$s" -o "$o"; OBJS+=("$o"); done
 
 "$CC" $BSP_CFLAGS -c "$BSP/src/console.c" -o "$OUT/console.o"; OBJS+=("$OUT/console.o")
-for s in b1_app.c p3_derive.c b1_carto.c b1_wire.c p3_rectx.c p3_pull.c; do
+for s in b1_app.c p3_derive.c b1_carto.c b1_orch.c b1_wire.c p3_rectx.c p3_pull.c; do
   "$CC" $APP_CFLAGS -c "$FW/$s" -o "$OUT/$s.o"; OBJS+=("$OUT/$s.o")
 done
 

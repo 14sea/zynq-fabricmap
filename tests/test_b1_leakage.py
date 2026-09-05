@@ -77,16 +77,21 @@ class Imports(unittest.TestCase):
         import hashlib
         for rel, row in imp["files"].items():
             self.assertEqual(row["sha256"], pins["files"][rel], rel)
-            local = R / row["copied_to"]
-            if local.is_file() and not local.name.startswith("b1_"):
+            if row.get("copied_to"):
+                local = R / row["copied_to"]
+                self.assertTrue(local.is_file(), f"{local} missing")
                 self.assertEqual(hashlib.sha256(local.read_bytes()).hexdigest(), row["sha256"], f"{local} was edited")
+            else:
+                derived = R / row["derived_to"]
+                self.assertTrue(derived.is_file(), f"{derived} missing")
+                self.assertNotEqual(hashlib.sha256(derived.read_bytes()).hexdigest(), row["sha256"], f"{derived} is not derived (identical to the base)")
 
 
 class Behaviour(unittest.TestCase):
     def test_reference_follows_a_permuted_fixture_not_the_truth(self):
         truth = bm.truth_mapping()
         fab = bm.fixture("permuted", seed=5)
-        r = bm.simulate(11, 400, fab)
+        r = bm.simulate_carto(11, 400, fab)
         m = r["carto"]
         vs_fixture = sum(1 for i, e in enumerate(m.e) if (e.lut, e.init) == fab.mapping[i])
         vs_truth = sum(1 for i, e in enumerate(m.e) if (e.lut, e.init) == truth["mapping"][i])
@@ -96,7 +101,7 @@ class Behaviour(unittest.TestCase):
     def test_address_only_baseline_scores_nowhere_near_the_reference(self):
         truth = bm.truth_mapping()
         base = bv.score(bm.address_only_baseline(truth), truth)
-        ref = bv.score(bm.simulate(3, 400, bm.fixture("truth"))["carto"].map_dict(), truth)
+        ref = bv.score(bm.simulate_carto(3, 400, bm.fixture("truth"))["carto"].content_dict(), truth)
         self.assertLess(base["precision"], 0.2)
         self.assertEqual(ref["precision"], 1.0)
         self.assertEqual(ref["recall"], 1.0)

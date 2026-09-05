@@ -6,7 +6,7 @@
                  [--manifest …] [--instrument-root …] [--port …] [--key …] [--signer-user …]
 
 One session, "B1": the B1 image (the instrument's successor: cartographer instead of search)
-on the instrument's P3 carrier, the identity page carrying the plan's seed and budget, the
+on the B1 carrier (docs/b1_carrier_contract.md; qualified under its own ruling first), the identity page carrying the plan's seed and budget, the
 ALL-SELF-REPORTING audit policy, the watchdog and both seq-1 controls armed, the runner's
 deadline from the plan. The console loop, the notary relay, the collector, the reader and
 the timeline are the instrument's, bound read-only; the session function is the round 1′
@@ -40,8 +40,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "host"))
 import b1_adjudicate as adj  # noqa: E402
+import b1_pins as pins_mod  # noqa: E402
 import claimb_r1p_instrument as inst  # noqa: E402
-import claimb_r1p_runner as r1p  # noqa: E402
 
 TOOL_VERSION = "b1_runner.py/0.1.0"
 RULING_TEXT = "whole-of-run B1 cartography"
@@ -109,7 +109,7 @@ def preflight(a) -> dict:
     plan_path = REPO_ROOT / manifest["plan"]["path"]
     pred_path = REPO_ROOT / manifest["prediction"]["path"]
     try:
-        adj.check_pins(manifest, plan_path, pred_path)
+        adj.check_pins(manifest, plan_path, pred_path)      # plan, prediction AND the pin table of every adjudication-critical file
     except adj.Refusal as exc:
         raise Refusal(str(exc)) from None
     plan = json.loads(plan_path.read_text())
@@ -148,12 +148,21 @@ def preflight(a) -> dict:
     wd = l6m["pinned_at_build"]
     if not wd["watchdog_enabled"] or wd["watchdog_load_value"] != WATCHDOG_LOAD or wd["watchdog_prescaler"] != WATCHDOG_PRESCALER:
         raise Refusal("D-s1: the watchdog pins are not the instrument's")
-    car = manifest["instrument"]["carrier"]
-    car_manifest, car_bit = root / car["manifest"], root / car["bitstream"]
-    if not car_manifest.is_file() or _sha(car_manifest) != car["manifest_sha256"]:
-        raise Refusal("the carrier manifest does not hash to the pin")
+    car = manifest["carrier"]                              # the B1 carrier (builds/b1), not the instrument's
+    car_manifest, car_bit = REPO_ROOT / car["carrier_manifest"]["path"], REPO_ROOT / car["bitstream"]
+    if not car_manifest.is_file() or _sha(car_manifest) != car["carrier_manifest"]["sha256"]:
+        raise Refusal("the B1 carrier manifest does not hash to the pin")
+    build_rec = REPO_ROOT / car["build_record"]["path"]
+    if not build_rec.is_file() or _sha(build_rec) != car["build_record"]["sha256"]:
+        raise Refusal("the B1 carrier build record does not hash to the pin")
+    if json.loads(build_rec.read_text()).get("bitstream_sha256") != car["bitstream_sha256"]:
+        raise Refusal("the B1 carrier build record names another bitstream than the pin")
     if not car_bit.is_file() or _sha(car_bit) != car["bitstream_sha256"]:
-        raise Refusal("the carrier bitstream does not hash to the pin")
+        raise Refusal("the B1 carrier bitstream does not hash to the pin")
+    if car.get("variant") != adj.B1_VARIANT:
+        raise Refusal("the manifest's carrier variant is not the B1 gate contract word")
+    if not car.get("qualified"):
+        raise Refusal("the B1 carrier is not marked qualified (docs/b1_carrier_qualification.md §3 comes first)")
     hdr = (REPO_ROOT / "firmware/b1/p3_data.h").read_text()
     if f'B1_UNIVERSE_SHA256 "{manifest["universe"]["sha256"]}"' not in hdr:
         raise Refusal("the header's universe digest is not the manifest's")
@@ -194,9 +203,9 @@ def preflight(a) -> dict:
     return {"ruling": ruling, "manifest": manifest, "manifest_sha256": manifest_sha, "l6_manifest": l6m,
             "carrier": carrier, "bitstream": car_bit, "image": a.image, "image_sha256": image_sha,
             "plan": session_plan, "round_plan": plan, "prediction": prediction,
-            "signer": l3.SubprocessSigner(a.key, signer_user=a.signer_user),
+            "signer": l3.SubprocessSigner(a.key, script=REPO_ROOT / "host/b1_sign_arm.py", signer_user=a.signer_user),
             "provision_execute": True, "provision_ruling": a.provision_ruling,
-            "token": secrets.token_hex(16), "seed_nonce": int(l6m["instrument"]["carrier"]["nonce_seed"], 16),
+            "token": secrets.token_hex(16), "seed_nonce": int(manifest["carrier"]["nonce_seed"], 16),
             "heartbeat_s": l6m["protocol"]["heartbeat_s"], "instrument": verified, "instrument_root": root}
 
 
@@ -206,7 +215,8 @@ def identity_check_for(plan: dict, manifest: dict):
         out = []
         for k, v in (("carto_version", manifest["cartographer"]["version"]), ("universe_sha256", manifest["universe"]["sha256"]),
                      ("probe_budget", plan["budget"]), ("master_seed", plan["master_seed"]), ("protocol", plan["protocol"]),
-                     ("rec_retry_control", True), ("sign_retry_control", True)):
+                     ("rec_retry_control", True), ("sign_retry_control", True),
+                     ("carrier_variant", adj.B1_VARIANT), ("carrier_sha256", manifest["carrier"]["bitstream_sha256"])):
             if ident.get(k) != v:
                 out.append(f"IDENT {k}: {ident.get(k)!r} != {v!r}")
         if ident.get("findings"):
@@ -220,7 +230,7 @@ def run_session(session, out_dir: Path, ruling: dict, cfg: dict) -> dict:
     preamble, console loop and evidence files are the instrument's."""
     import b1_session  # noqa: E402
     return b1_session.run(session, out_dir, ruling, cfg, identity_check_for(cfg["round_plan"], cfg["manifest"]),
-                          lambda d: adj.adjudicate(d, cfg["manifest"], cfg["round_plan"], cfg["prediction"],
+                          lambda d: adj.adjudicate(d, cfg["manifest"], cfg["round_plan"], cfg["prediction"], cfg["manifest_sha256"],
                                                    instrument_root=cfg["instrument_root"], require_git=True),
                           TOOL_VERSION)
 

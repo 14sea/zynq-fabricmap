@@ -62,12 +62,6 @@ static void genome_set(uint32_t g[B1_GENOME_WORDS], uint32_t bit) { g[bit >> 5] 
 
 static int lit_position(const uint64_t t[B1_LUTS], int lut, int v) { return (int)((t[lut] >> v) & 1ull); }
 
-static void entry_evidence(b1_entry *e, uint32_t seq)
-{
-    if (e->evidence_n < B1_EVIDENCE_MAX)
-        e->evidence[e->evidence_n++] = (uint16_t)seq;
-}
-
 /* the set of changed entries of the last observation */
 static uint16_t g_changed[B1_N + 4];
 static int g_changed_n;
@@ -109,6 +103,16 @@ void b1_carto_init(b1_carto *c, uint32_t seed, uint32_t budget)
     g_changed_n = 0;
 }
 
+void b1_carto_bind(b1_carto *c, const char *token, const char *universe, uint32_t image_lo32)
+{
+    size_t n;
+    memset(c->token, 0, sizeof(c->token));
+    memset(c->universe, 0, sizeof(c->universe));
+    n = strlen(token); if (n > 32) n = 32; memcpy(c->token, token, n);
+    n = strlen(universe); if (n > 64) n = 64; memcpy(c->universe, universe, n);
+    c->image_lo32 = image_lo32;
+}
+
 /* ------------------------------------------------------------------ phase A decode */
 static void decode_codes(b1_carto *c)
 {
@@ -142,9 +146,8 @@ static void decode_codes(b1_carto *c)
             c->e[i].init = (int8_t)v;
             c->e[i].confidence = 1;
             c->e[i].state = B1_ST_DECODED;
-            for (p = 0; p < B1_CODE_BITS; p++)
-                if ((code >> p) & 1u)
-                    entry_evidence(&c->e[i], c->code_seq[p]);
+            c->e[i].observed = 1;              /* lit under its code: the transition 0 -> 1 was seen */
+            c->e[i].code_mask = (uint16_t)code;
             changed_add((uint16_t)i);
         }
     }
@@ -289,7 +292,7 @@ void b1_carto_observe(b1_carto *c, uint32_t seq, const uint64_t tables[B1_LUTS])
     if (c->phase == B1_PH_CONFIRM && c->pending >= 0) {
         b1_entry *e = &c->e[c->pending];
         uint32_t n = popcount_tables(tables);
-        entry_evidence(e, seq);
+        e->confirm_seq = (uint16_t)seq;
         if (e->state == B1_ST_UNKNOWN) {
             if (n == 0u) {
                 e->state = B1_ST_NO_EFFECT;
@@ -301,6 +304,7 @@ void b1_carto_observe(b1_carto *c, uint32_t seq, const uint64_t tables[B1_LUTS])
                         if (lit_position(tables, k, v)) { e->lut = (int8_t)k; e->init = (int8_t)v; }
                 e->state = B1_ST_CONFIRMED;
                 e->confidence = 1;          /* one observation only */
+                e->observed = 1;
                 c->anomalies++;
             } else {
                 e->state = B1_ST_CONTRADICTION;
@@ -391,40 +395,69 @@ static const char *state_name(int st)
     }
 }
 
-/* one entry: [i, lut, init, confidence, "state", [evidence...]] */
+/* one entry: [i, lut, init, confidence, "state", code_mask, confirm_seq, observed] — the
+ * code probes' record seqs are the content's code_seqs[]; confirm_seq 0 = no single probe */
 static void w_entry(b1_w *w, const b1_carto *c, int i)
 {
     const b1_entry *e = &c->e[i];
-    int k;
     w_put(w, "["); w_uint(w, i); w_put(w, ","); w_uint(w, e->lut); w_put(w, ","); w_uint(w, e->init);
-    w_put(w, ","); w_uint(w, e->confidence); w_put(w, ",\""); w_put(w, state_name(e->state)); w_put(w, "\",[");
-    for (k = 0; k < e->evidence_n; k++) {
-        if (k) w_put(w, ",");
-        w_uint(w, e->evidence[k]);
-    }
-    w_put(w, "]]");
+    w_put(w, ","); w_uint(w, e->confidence); w_put(w, ",\""); w_put(w, state_name(e->state)); w_put(w, "\",");
+    w_uint(w, e->code_mask); w_put(w, ","); w_uint(w, e->confirm_seq); w_put(w, ","); w_uint(w, e->observed);
+    w_put(w, "]");
+}
+
+static char g_content[20480];   /* the content object, rendered first so it can be hashed alone */
+
+static void w_hex32(b1_w *w, uint32_t v)
+{
+    static const char hx[] = "0123456789abcdef";
+    char buf[9];
+    int i;
+    for (i = 7; i >= 0; i--) { buf[i] = hx[v & 15u]; v >>= 4; }
+    buf[8] = 0;
+    w_put(w, buf);
 }
 
 size_t b1_carto_render(b1_carto *c, char *out, size_t max)
 {
-    b1_w w;
+    b1_w w, cw;
     int i;
-    w.out = out; w.max = max; w.n = 0; w.overflow = 0;
-    out[0] = 0;
-    /* canonical: {"anomalies":A,"entries":[...],"pairs":[[a,b,kind,result,seq],...],"seed":S,"version":"carto-v1"} */
-    w_put(&w, "{\"anomalies\":"); w_uint(&w, (long)c->anomalies); w_put(&w, ",\"entries\":[");
+    /* content (canonical, the predictable part):
+     * {"anomalies":A,"budget":B,"code_seqs":[9 seqs],"entries":[...],"pairs":[[a,b,kind,result,seq],...],"seed":S,"version":"carto-v1"} */
+    cw.out = g_content; cw.max = sizeof(g_content); cw.n = 0; cw.overflow = 0;
+    g_content[0] = 0;
+    w_put(&cw, "{\"anomalies\":"); w_uint(&cw, (long)c->anomalies);
+    w_put(&cw, ",\"budget\":"); w_uint(&cw, (long)c->budget);
+    w_put(&cw, ",\"code_seqs\":[");
+    for (i = 0; i < B1_CODE_BITS; i++) { if (i) w_put(&cw, ","); w_uint(&cw, c->code_seq[i]); }
+    w_put(&cw, "],\"entries\":[");
     for (i = 0; i < B1_N; i++) {
-        if (i) w_put(&w, ",");
-        w_entry(&w, c, i);
+        if (i) w_put(&cw, ",");
+        w_entry(&cw, c, i);
     }
-    w_put(&w, "],\"pairs\":[");
+    w_put(&cw, "],\"pairs\":[");
     for (i = 0; i < c->pairs_n; i++) {
         const b1_pair *p = &c->pairs[i];
-        if (i) w_put(&w, ",");
-        w_put(&w, "["); w_uint(&w, p->a); w_put(&w, ","); w_uint(&w, p->b); w_put(&w, ","); w_uint(&w, p->kind);
-        w_put(&w, ","); w_uint(&w, p->result); w_put(&w, ","); w_uint(&w, p->seq); w_put(&w, "]");
+        if (i) w_put(&cw, ",");
+        w_put(&cw, "["); w_uint(&cw, p->a); w_put(&cw, ","); w_uint(&cw, p->b); w_put(&cw, ","); w_uint(&cw, p->kind);
+        w_put(&cw, ","); w_uint(&cw, p->result); w_put(&cw, ","); w_uint(&cw, p->seq); w_put(&cw, "]");
     }
-    w_put(&w, "],\"seed\":"); w_uint(&w, (long)c->seed); w_put(&w, ",\"version\":\"" B1_CARTO_VERSION "\"}");
+    w_put(&cw, "],\"seed\":"); w_uint(&cw, (long)c->seed); w_put(&cw, ",\"version\":\"" B1_CARTO_VERSION "\"}");
+    if (cw.overflow)
+        return 0;
+    {
+        p3_sha256 h;
+        p3_sha256_init(&h);
+        p3_sha256_update(&h, (const uint8_t *)g_content, cw.n);
+        p3_sha256_final(&h, c->content_sha256);
+        p3_hex(c->content_sha256, 32, c->content_sha256_hex);
+    }
+    /* the whole map: {"binding":{"image_lo32":"xxxxxxxx","token":"...","universe":"..."},"content":{...}} */
+    w.out = out; w.max = max; w.n = 0; w.overflow = 0;
+    out[0] = 0;
+    w_put(&w, "{\"binding\":{\"image_lo32\":\""); w_hex32(&w, c->image_lo32);
+    w_put(&w, "\",\"token\":\""); w_put(&w, c->token); w_put(&w, "\",\"universe\":\""); w_put(&w, c->universe);
+    w_put(&w, "\"},\"content\":"); w_put(&w, g_content); w_put(&w, "}");
     if (w.overflow)
         return 0;
     {
@@ -445,13 +478,14 @@ size_t b1_carto_record_json(const b1_carto *c, int kind, uint32_t seq, const uin
     (void)seq;
     w.out = out; w.max = max; w.n = 0; w.overflow = 0;
     out[0] = 0;
-    /* sorted keys: anomalies < changed < map_sha256 < phase < probes_issued < version */
+    /* sorted keys: anomalies < changed < content_sha256 < map_sha256 < phase < probes_issued < version */
     w_put(&w, "{\"anomalies\":"); w_uint(&w, (long)c->anomalies); w_put(&w, ",\"changed\":[");
     for (i = 0; i < changed_n; i++) {
         if (i) w_put(&w, ",");
         w_entry(&w, c, changed[i]);
     }
-    w_put(&w, "],\"map_sha256\":\""); w_put(&w, c->map_sha256_hex); w_put(&w, "\",\"phase\":");
+    w_put(&w, "],\"content_sha256\":\""); w_put(&w, c->content_sha256_hex);
+    w_put(&w, "\",\"map_sha256\":\""); w_put(&w, c->map_sha256_hex); w_put(&w, "\",\"phase\":");
     w_put(&w, kind == B1_PH_CODE ? "\"code\"" : kind == B1_PH_CONFIRM ? "\"confirm\"" : kind == B1_PH_PAIR ? "\"pair\"" : "\"baseline\"");
     w_put(&w, ",\"probes_issued\":"); w_uint(&w, (long)c->probes_issued);
     w_put(&w, ",\"version\":\"" B1_CARTO_VERSION "\"}");

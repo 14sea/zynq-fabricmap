@@ -110,11 +110,31 @@ def fixture(kind: str, seed: int = 0, truth: dict | None = None) -> Fabric:
     raise ValueError(kind)
 
 
-def simulate(seed: int, budget: int, fab: Fabric, unscored=None) -> dict:
-    """One session of the reference cartographer over a fabric; the transcript plus the
-    fabric's call count (= probes scored)."""
+def universe_sha256() -> str:
+    """The universe digest compiled into the image (firmware/b1/p3_data.h B1_UNIVERSE_SHA256)."""
+    text = (REPO_ROOT / "firmware/b1/p3_data.h").read_text()
+    return text.split('B1_UNIVERSE_SHA256 "')[1][:64]
+
+
+DEFAULT_TOKEN = "00" * 16
+
+
+def simulate_carto(seed: int, budget: int, fab: Fabric, unscored=None) -> dict:
+    """The pure cartographer over a fabric (no baselines; default zero binding) — what the
+    twin's `carto` mode is compared against."""
     r = bc.run(seed, budget, fab, unscored=unscored)
     r["probes_scored"] = fab.calls
+    return r
+
+
+def simulate(seed: int, budget: int, fab: Fabric, unscored=None, token: str = DEFAULT_TOKEN,
+             universe: str | None = None, image_lo32: int = 0) -> dict:
+    """One whole session of the reference (opening baseline, probes, closing baseline) over
+    a fabric, bound to a session — what the twin's `session` mode and the board are
+    compared against. The fabric's call count includes the two baselines."""
+    r = bc.session_run(seed, budget, fab, token, universe or universe_sha256(), image_lo32, unscored=unscored)
+    r["probes_scored"] = fab.calls - 2
+    r["carto_records"] = [x for x in r["records"] if not x["is_baseline"]]
     return r
 
 
@@ -135,5 +155,6 @@ def address_only_baseline(truth: dict) -> dict:
         env = fars.index(far) // 4          # 0..2
         lut = env * 2 + (1 if w == 52 else 0)
         rank = sorted(by_far[far]).index(i)
-        entries.append([i, lut, rank % 64, 1, "decoded", []])
-    return {"anomalies": 0, "entries": entries, "pairs": [], "seed": 0, "version": "address-only-baseline"}
+        entries.append([i, lut, rank % 64, 1, "decoded", 0, 0, 1])
+    return {"anomalies": 0, "budget": 0, "code_seqs": [0] * bc.CODE_BITS, "entries": entries, "pairs": [], "seed": 0,
+            "version": "address-only-baseline"}

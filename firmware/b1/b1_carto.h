@@ -51,7 +51,6 @@
 #define B1_CODE_BITS 9                 /* 2^9 = 512 > N + 1 */
 #define B1_GENOME_WORDS 10
 #define B1_PAIRS_MAX 32                /* phase C pairs, half same-LUT, half cross-LUT */
-#define B1_EVIDENCE_MAX 4              /* probe seqs kept per entry */
 
 typedef struct { uint64_t x; } b1_rng;
 
@@ -61,8 +60,9 @@ typedef struct {
     int8_t init;                       /* 0..63, or -1 */
     uint8_t confidence;                /* 0 contradiction, 1 code-decoded, 2 confirmed by a single */
     uint8_t state;                     /* B1_ST_* */
-    uint8_t evidence_n;
-    uint16_t evidence[B1_EVIDENCE_MAX];/* record seqs */
+    uint8_t observed;                  /* 1 = the transition base 0 -> set 1 was seen lit at (lut, init) */
+    uint16_t code_mask;                /* which code probes (bit p) lit the decoded position; the record seqs are code_seq[] */
+    uint16_t confirm_seq;              /* the single-address probe's record seq, 0 = none */
 } b1_entry;
 
 enum { B1_ST_UNKNOWN = 0, B1_ST_DECODED = 1, B1_ST_CONFIRMED = 2, B1_ST_NO_EFFECT = 3, B1_ST_CONTRADICTION = 4 };
@@ -100,7 +100,13 @@ typedef struct {
     int16_t pending_pair;
     /* anomalies */
     uint32_t anomalies;
-    uint8_t map_sha256[32];
+    /* binding (b1_carto_bind): the map names the session it was built in */
+    char token[33];
+    char universe[65];
+    uint32_t image_lo32;
+    uint8_t content_sha256[32];        /* over the "content" object: the predictable part */
+    char content_sha256_hex[65];
+    uint8_t map_sha256[32];            /* over the whole rendering (binding + content) */
     char map_sha256_hex[65];
 } b1_carto;
 
@@ -110,6 +116,8 @@ uint32_t b1_rng_next32(b1_rng *r);
 uint32_t b1_rng_uniform(b1_rng *r, uint32_t n);
 
 void b1_carto_init(b1_carto *c, uint32_t seed, uint32_t budget);
+/* the session the map is built in: token (32 hex), universe digest (64 hex), image sha low 32 bits */
+void b1_carto_bind(b1_carto *c, const char *token, const char *universe, uint32_t image_lo32);
 /* propose the next probe as a genome (0 = none: done, or budget exhausted); *kind_out is the phase */
 int b1_carto_next(b1_carto *c, uint32_t genome[B1_GENOME_WORDS], int *kind_out);
 /* the application assigned `seq` to the last proposal and observed these tables */

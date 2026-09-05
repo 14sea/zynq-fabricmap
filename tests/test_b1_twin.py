@@ -74,7 +74,7 @@ class Twin(unittest.TestCase):
 
     def compare(self, seed: int, budget: int, fab_c, fab_py, unscored=None):
         c = drive_twin(seed, budget, fab_c, unscored)
-        py = bm.simulate(seed, budget, fab_py, unscored)
+        py = bm.simulate_carto(seed, budget, fab_py, unscored)
         # the probe sequence, the records and the map are byte-identical
         self.assertEqual([(p["kind"], p["seq"], p["genome"]) for p in c["probes"]],
                          [(p["kind"], p["seq"], p["genome"]) for p in py["probes"]])
@@ -113,15 +113,15 @@ class Twin(unittest.TestCase):
         self.assertEqual(py["carto"].anomalies, 0)
 
     def test_two_seeds_differ_only_in_the_rng_drawn_orders(self):
-        a = bm.simulate(1, 400, bm.fixture("truth"))
-        b = bm.simulate(2, 400, bm.fixture("truth"))
+        a = bm.simulate_carto(1, 400, bm.fixture("truth"))
+        b = bm.simulate_carto(2, 400, bm.fixture("truth"))
         self.assertEqual([p["genome"] for p in a["probes"][:9]], [p["genome"] for p in b["probes"][:9]])
         self.assertNotEqual([p["genome"] for p in a["probes"][9:]], [p["genome"] for p in b["probes"][9:]])
         self.assertNotEqual(a["map_sha256"], b["map_sha256"])       # the seed and evidence seqs are in the map
 
     def test_same_seed_replays_bit_for_bit(self):
-        a = bm.simulate(5, 400, bm.fixture("truth"))
-        b = bm.simulate(5, 400, bm.fixture("truth"))
+        a = bm.simulate_carto(5, 400, bm.fixture("truth"))
+        b = bm.simulate_carto(5, 400, bm.fixture("truth"))
         self.assertEqual(a["map"], b["map"])
         self.assertEqual([p["genome"] for p in a["probes"]], [p["genome"] for p in b["probes"]])
 

@@ -1,52 +1,74 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/14sea/zynq-fabricmap/schemas/self_map_v2.schema.json",
-  "title": "self_map 2.0.0 — a device-built map with functional relations, interaction edges, confidence and provenance",
-  "description": "Stage B1 (docs/autonomous_cartography_roadmap.md): the map the board builds from its own probes, expanded from the compact canonical rendering the board hashes (host/b1_verify.expand). Unlike local_map 1.0.0 (a certificate re-indexing), every entry carries the evidence it rests on and a confidence the verifier calibrates. Consumers must treat `relation: null` and states other than decoded/confirmed as 'no claim'.",
+  "title": "self_map 2.0.0 — the BOARD-AUTHORED map: relations, confidence, observed transitions, evidence, binding",
+  "description": "Stage B1 (docs/autonomous_cartography_roadmap.md; docs/b1_carrier_contract.md). Expanded by host/b1_verify.expand from the compact rendering the board hashes (`{binding, content}`), it contains ONLY what the board derived from its own probes: no LUT key, no polarity claim, no ground truth. The verifier's judgement of it lives in a separate document (self_map_verifier_report). A relation is a claim only when state is decoded or confirmed; every claim must carry an observed transition.",
   "type": "object",
-  "required": ["schema", "schema_version", "cartographer", "seed", "anomalies", "universe", "entries", "interaction_edges"],
+  "required": ["schema", "schema_version", "cartographer", "binding", "seed", "budget", "anomalies", "code_probe_seqs", "universe", "entries", "interaction_edges"],
   "additionalProperties": false,
   "properties": {
     "schema": {"const": "self_map"},
     "schema_version": {"const": "2.0.0"},
-    "cartographer": {"type": "string", "description": "the on-board algorithm version, e.g. carto-v1"},
-    "seed": {"type": "integer", "minimum": 0, "maximum": 4294967295, "description": "the identity-page seed the board's own choices derive from"},
-    "anomalies": {"type": "integer", "minimum": 0, "description": "observations that contradicted the additive single-position model (a lit count not matching a set count, an out-of-range code, a double claim, a pair not equal to the union)"},
+    "cartographer": {"type": "string"},
+    "binding": {
+      "type": "object", "required": ["token", "universe_sha256", "image_sha256_lo32"], "additionalProperties": false,
+      "description": "the session the map was built in: the identity page's token, the universe digest compiled into the image, the low 32 bits of the image sha256 the host loaded (identity page word 7)",
+      "properties": {
+        "token": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+        "universe_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "image_sha256_lo32": {"type": "string", "pattern": "^[0-9a-f]{8}$"}
+      }
+    },
+    "seed": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+    "budget": {"type": "integer", "minimum": 1},
+    "anomalies": {"type": "integer", "minimum": 0},
+    "code_probe_seqs": {"type": "array", "minItems": 9, "maxItems": 9, "items": {"type": "integer", "minimum": 0}},
     "universe": {
       "type": "object", "required": ["addresses", "class", "safety_class"], "additionalProperties": false,
       "properties": {
         "addresses": {"type": "integer", "minimum": 1},
-        "class": {"type": "string", "description": "the bit class the universe was drawn from, e.g. clb_lut_init"},
-        "safety_class": {"enum": ["content", "routing"], "description": "the ONLY thing the cartographer is told about the addresses besides their existence"}
+        "class": {"type": "string"},
+        "safety_class": {"enum": ["content", "routing"]}
       }
     },
     "entries": {
       "type": "array", "minItems": 1,
       "items": {
-        "type": "object", "required": ["address", "genome_bit", "relation", "confidence", "state", "evidence"], "additionalProperties": false,
+        "type": "object", "required": ["genome_bit", "address", "relation", "confidence", "state", "observed_transition", "evidence"], "additionalProperties": false,
         "properties": {
-          "address": {"type": "string", "pattern": "^0x[0-9a-f]{8}/[0-9]+/[0-9]+$", "description": "FAR/word/bit"},
           "genome_bit": {"type": "integer", "minimum": 0},
+          "address": {"type": "string", "pattern": "^0x[0-9a-f]{8}/[0-9]+/[0-9]+$"},
           "relation": {
             "oneOf": [
               {"type": "null"},
-              {"type": "object", "required": ["kind", "lut_index", "init_index", "polarity"], "additionalProperties": false,
+              {"type": "object", "required": ["kind", "lut_index", "init_index"], "additionalProperties": false,
                "properties": {
                  "kind": {"const": "lut_init"},
-                 "lut_index": {"type": "integer", "minimum": 0},
-                 "lut_key": {"type": ["string", "null"], "description": "filled by the VERIFIER from the truth for reporting; never by the board"},
-                 "init_index": {"type": "integer", "minimum": 0, "maximum": 63},
-                 "polarity": {"enum": ["direct", "inverted"]}
+                 "lut_index": {"type": "integer", "minimum": 0, "maximum": 5},
+                 "init_index": {"type": "integer", "minimum": 0, "maximum": 63}
                }}
             ]
           },
-          "confidence": {"type": "integer", "minimum": 0, "maximum": 2, "description": "0 contradiction, 1 decoded from the code probes only, 2 confirmed by a single-address probe (or a no-effect confirmed by one)"},
+          "confidence": {"type": "integer", "minimum": 0, "maximum": 2, "description": "0 contradiction, 1 decoded from the code probes only (provisional), 2 confirmed by a single-address probe (or a no-effect confirmed by one)"},
           "state": {"enum": ["unknown", "decoded", "confirmed", "no_effect", "contradiction"]},
+          "observed_transition": {
+            "oneOf": [
+              {"type": "null"},
+              {"type": "object", "required": ["base", "set"], "additionalProperties": false,
+               "properties": {"base": {"const": 0}, "set": {"const": 1}},
+               "description": "what the board actually saw at the claimed position: 0 in the base, 1 with the address set. No polarity word is derived from it; that is the verifier's inference, if any."}
+            ]
+          },
           "evidence": {
-            "type": "object", "required": ["record_seqs"], "additionalProperties": false,
-            "properties": {"record_seqs": {"type": "array", "items": {"type": "integer", "minimum": 1}, "description": "the loop_record seqs whose readouts this entry rests on (capped at 4 on the board)"}}
+            "type": "object", "required": ["code_probe_seqs", "confirm_seq"], "additionalProperties": false,
+            "properties": {
+              "code_probe_seqs": {"type": "array", "items": {"type": "integer", "minimum": 1}, "description": "the record seqs of the code probes under which the claimed position lit (complete, from the code mask)"},
+              "confirm_seq": {"type": ["integer", "null"], "minimum": 1, "description": "the single-address probe's record seq, kept separately from the code probes so it is never displaced"}
+            }
           }
-        }
+        },
+        "if": {"properties": {"state": {"enum": ["decoded", "confirmed"]}}},
+        "then": {"properties": {"relation": {"type": "object"}, "observed_transition": {"type": "object"}}}
       }
     },
     "interaction_edges": {
@@ -56,7 +78,7 @@
         "properties": {
           "a": {"type": "integer", "minimum": 0}, "b": {"type": "integer", "minimum": 0},
           "kind": {"enum": ["same_lut", "cross_lut"]},
-          "result": {"enum": ["pending", "none", "deviation"], "description": "none = the joint readout was the union of the singles (additive); deviation = it was not"},
+          "result": {"enum": ["pending", "none", "deviation"]},
           "record_seq": {"type": "integer", "minimum": 0}
         }
       }

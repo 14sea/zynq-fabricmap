@@ -32,7 +32,7 @@
  * and driven over a pipe by tests/test_firmware_wire_contract.py::RecWireContract. */
 #include "p3_rectx.h"
 #include "p3_pull.h"
-#include "b1_carto.h"
+#include "b1_orch.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -103,6 +103,8 @@ extern int console_rx_flush(void); /* BSP glue: discard stale RX bytes before a 
 #define P3_ST_KEY_LOADED 11u
 #define P3_ST_RESERVED 0xF8000000u
 #define P3_ARM_STROBE (1u << 6)
+#define P3_VARIANT 0x2034u          /* B1 carrier: the gate-contract word (read-only) */
+#define B1_VARIANT_WORD 0x42310001u /* "B1", contract v1: SEMANTIC_GATE = 0 */
 /* The bound on the post-strobe STATUS poll. The gate is done in < 200 cycles at 50 MHz
  * (host/l3_runner.py, board-observed at L3); one Strongly-Ordered AXI read from the A9
  * takes on the order of 100 ns, so this bound is ~0.1-0.3 s of polling — four to five
@@ -233,7 +235,7 @@ static void p3_stop(p3_end_kind kind, const char *reason)
 static int axi_readable(uint32_t off)
 {
     if (off == P3_STATUS || off == P3_FAULT || off == P3_HEARTBEAT || off == P3_NONCE_LO ||
-        off == P3_NONCE_HI)
+        off == P3_NONCE_HI || off == P3_VARIANT)   /* B1: VARIANT (0x2034) is decoded read-only by rtl/b1/b1_axil.v */
         return 1;
     /* CTRL (0x2000) is deliberately ABSENT: rtl/p3_axil.v decodes it write-only, so a read
      * is SLVERR and on this board a data abort. Session 2 died on exactly that after this
@@ -507,21 +509,14 @@ static int devcfg_dma(const p3_dma *t, uint32_t src_override)
 /* B1: the on-board cartographer replaces the two-operator search (b1_carto.c); the
  * identity page's seed and budget are its inputs; flags bits 2-3 (L6's schedule mode) are
  * ignored. The record's `arm` field is never emitted; the `carto` block carries the phase. */
-static b1_carto C;
-static int g_carto_kind = B1_PH_DONE;      /* the phase of the probe in flight; DONE on a baseline */
+static b1_orch O;                          /* the session orchestrator: cartographer + the sequence */
 static char g_carto_json[2048];
 static char g_map_render[20480];
 static uint64_t g_tables_u64[B1_LUTS];
-static const char *carto_block(int is_baseline)
+static uint32_t g_carrier_variant;         /* VARIANT as read at identity */
+static const char *carto_block(void)
 {
-    uint16_t changed[B1_N + 4];
-    int n = is_baseline ? 0 : b1_carto_changed(&C, changed, (int)(sizeof(changed) / sizeof(changed[0])));
-    if (n > 8)
-        n = 8;                                /* the record carries a sample; the hash carries the map */
-    if (b1_carto_render(&C, g_map_render, sizeof(g_map_render)) == 0u)
-        return NULL;
-    if (b1_carto_record_json(&C, is_baseline ? B1_PH_DONE : g_carto_kind, S.seq, changed, n,
-                             g_carto_json, sizeof(g_carto_json)) == 0u)
+    if (b1_orch_record_block(&O, S.seq, g_map_render, sizeof(g_map_render), g_carto_json, sizeof(g_carto_json)) == 0u)
         return NULL;
     return g_carto_json;
 }
@@ -545,7 +540,7 @@ static int establish_identity(void)
      * requires app_identity and this application never sent one. */
     {
         p3_wire_identity_in in;
-        const char *findings[6];
+        const char *findings[8];
         uint64_t nonce = pl_nonce();
         int nf = 0;
         uint32_t idcode = Xil_In32(SLCR_PSS_IDCODE);
@@ -557,6 +552,9 @@ static int establish_identity(void)
             findings[nf++] = "STATUS is not the P3 carrier answering";
         if (!((st >> P3_ST_KEY_LOADED) & 1u))
             findings[nf++] = "key_loaded is 0: not the provisioned carrier instance";
+        g_carrier_variant = axi_read(P3_VARIANT);
+        if (g_carrier_variant != B1_VARIANT_WORD)
+            findings[nf++] = "VARIANT is not the B1 gate contract: this is not the B1 carrier";
         if (((st >> P3_ST_FAULT) & 1u) || ((st >> P3_ST_RECOVERY) & 1u))
             findings[nf++] = "fault/recovery before start";
         /* the nonce echo: a reconfiguration since the host's last look would have reset it */
@@ -584,6 +582,7 @@ static int establish_identity(void)
         in.carto_version = B1_CARTO_VERSION;
         in.universe_sha256 = B1_UNIVERSE_SHA256;
         in.probe_budget = S.page.budget;
+        in.carrier_variant = g_carrier_variant;
         /* app_identity 1.2.0 (rec-v3): the wire protocol this image speaks, and the control;
          * 1.3.0 (rel-v4): the SIGNREQ control echoed as well */
         in.protocol = "rel-v4";
@@ -1386,9 +1385,8 @@ static int run_candidate(const uint32_t genome[P3_GENOME_WORDS], int is_baseline
         rec.hb_after = axi_read(P3_HEARTBEAT);
         /* B1: the cartographer learns from the PL's own readout of this probe, then the
          * record carries its updated commitment (map hash) and a sample of what changed */
-        if (!is_baseline)
-            b1_carto_observe(&C, S.seq, g_tables_u64);
-        rec.carto = carto_block(is_baseline);
+        b1_orch_observe(&O, S.seq, g_tables_u64);   /* a baseline learns nothing; a probe does */
+        rec.carto = carto_block();
         if (emit_record(&rec, "SCORED") != 0) {
             S.scored++; /* it was scored; it is its record that the host never confirmed */
             p3_stop(P3_STOPPED, S.rec_stop_why); /* unacknowledged: no next candidate */
@@ -1550,30 +1548,25 @@ int main(void)
         S.wdt_started = 1; /* the kick is live from here, and only from here */
     }
 
-    memset(blank, 0, sizeof(blank)); /* the blank genome IS the pinned base */
+    memset(blank, 0, sizeof(blank)); /* the blank genome IS the pinned base (b1_orch proposes it) */
+    (void)blank;
 
-    if (run_candidate(blank, 1, NULL) == 0) { /* opening baseline = the session's positive control */
-        /* B1: the cartographer proposes every probe itself from the identity page's seed
-         * and budget, consuming each probe's readout before the next; the stop condition
-         * is checked BEFORE a candidate is proposed, so a normal end always reaches the
-         * closing brackets (§4.0) */
-        b1_carto_init(&C, S.page.seed, S.page.budget);
-        {
-            int kind;
-            while (S.kind == P3_RUNNING && b1_carto_next(&C, genome, &kind)) {
-                g_carto_kind = kind;
-                if (run_candidate(genome, 0, NULL) != 0) {
-                    b1_carto_unobserved(&C);
-                    break;
-                }
+    /* B1: ONE sequence for the board and the host twin — the orchestrator initialises the
+     * cartographer BEFORE the opening baseline (its record commits to that state), then
+     * proposes every probe from the identity page's seed and budget, then the closing
+     * baseline; the stop condition is checked BEFORE a candidate is proposed. */
+    b1_orch_init(&O, S.page.seed, S.page.budget, S.page.token, B1_UNIVERSE_SHA256, S.page.app_image_sha_lo32);
+    {
+        int is_baseline, kind;
+        while (S.kind == P3_RUNNING && b1_orch_next(&O, genome, &is_baseline, &kind)) {
+            if (run_candidate(genome, is_baseline, NULL) != 0) {
+                b1_orch_unobserved(&O);
+                break;
             }
         }
-        g_carto_kind = B1_PH_DONE;
-        if (S.kind == P3_RUNNING) {
-            if (run_candidate(blank, 1, NULL) == 0) { /* closing baseline = restore + score */
-                S.closing_restore = 1;
-                closing_unsigned_control();
-            }
+        if (S.kind == P3_RUNNING && O.step == B1_STEP_DONE) {
+            S.closing_restore = 1;                 /* the closing baseline restored the base and scored */
+            closing_unsigned_control();
             if (S.kind == P3_RUNNING)
                 p3_stop(P3_COMPLETED, "budget");
         }

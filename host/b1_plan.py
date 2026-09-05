@@ -116,22 +116,32 @@ def build_plan(manifest: dict, root: Path | None = None, require_git: bool = Tru
     budget = ls.crc_budget(expected["total"])
     dl = deadline(manifest, root, n)
     flags = ls.flags_for(ls.MODE_ABBA, watchdog=True, rec_control=True, sign_control=True)   # mode bits 0 = ignored by B1
-    # the prediction: the reference over the truth fabric
+    # the prediction: the reference SESSION over the truth fabric. The binding (token, image)
+    # is per session, so the prediction pins the CONTENT: the probe sequence, every record's
+    # content-level block and the content hash; the map hash is checked per session.
     truth = bm.truth_mapping()
     fab = bm.fixture("truth", truth=truth)
-    sim = bm.simulate(ms, n, fab)
-    score = bv.score(sim["carto"].map_dict(), truth, records=sim["records"])
-    prediction = {"schema": "b1_prediction", "schema_version": "1.0.0", "tool": TOOL_VERSION,
-                  "master_seed": ms, "budget": n, "cartographer": bc.VERSION,
+    image_lo32 = int(manifest["image"]["sha256"][-8:], 16)
+    sim = bm.simulate(ms, n, fab, token=bm.DEFAULT_TOKEN, universe=manifest["universe"]["sha256"], image_lo32=image_lo32)
+    whole = json.loads(sim["map"])
+    score = bv.score(whole["content"], truth)
+    snaps = bv.snapshots(sim["records"], truth)
+    def content_block(c: str) -> dict:
+        d = json.loads(c)
+        return {k: d[k] for k in ("anomalies", "changed", "content_sha256", "phase", "probes_issued", "version")}
+    prediction = {"schema": "b1_prediction", "schema_version": "2.0.0", "tool": TOOL_VERSION,
+                  "master_seed": ms, "budget": n, "cartographer": bc.VERSION, "universe_sha256": manifest["universe"]["sha256"],
                   "probes": [{"seq": p["seq"], "kind": p["kind"], "genome": p["genome"]} for p in sim["probes"]],
                   "probe_sequence_sha256": hashlib.sha256("\n".join(p["genome"] for p in sim["probes"]).encode()).hexdigest(),
-                  "record_carto": [{"seq": r["seq"], "carto": r["carto"]} for r in sim["records"]],
-                  "map": sim["map"], "map_sha256": sim["map_sha256"],
-                  "expected_score": {k: score[k] for k in ("precision", "recall", "claimed", "correct", "states", "anomalies",
-                                                           "calibration", "holdout", "train", "interaction", "sample_efficiency")},
+                  "record_content": [{"seq": r["seq"], "content": content_block(r["carto"])} for r in sim["records"]],
+                  "content": whole["content"], "content_sha256": sim["content_sha256"],
+                  "expected_score": {**{k: score[k] for k in ("precision", "recall", "claimed", "correct", "unobserved_claims", "states",
+                                                             "anomalies", "calibration", "stratum_A", "stratum_B", "interaction")},
+                                     "snapshots": snaps},
                   "note": "the truth fabric is the certificate's mapping; on a correct instrument the board's records "
-                          "reproduce these probes, blocks and map bytes exactly. This is a prediction the run is compared "
-                          "against, never an input to the board."}
+                          "reproduce these probes and content-level blocks exactly and the map's content hashes to "
+                          "content_sha256 (the map hash also covers the session's token and image, checked per session). "
+                          "This is a prediction the run is compared against, never an input to the board."}
     ptext = json.dumps(prediction, indent=1, sort_keys=True) + "\n"
     plan = {"schema": "b1_plan", "schema_version": "1.0.0", "tool": TOOL_VERSION, "instrument": verified, "pins": pins,
             "session": SESSION, "master_seed": ms, "seed_derivation": seed,
@@ -145,7 +155,7 @@ def build_plan(manifest: dict, root: Path | None = None, require_git: bool = Tru
             "watchdog": True, "rec_retry_control": True, "sign_retry_control": True,
             "holdout_luts": list(bm.HOLDOUT_LUTS),
             "prediction_sha256": hashlib.sha256(ptext.encode()).hexdigest(),
-            "predicted_map_sha256": sim["map_sha256"], "predicted_probe_sequence_sha256": prediction["probe_sequence_sha256"]}
+            "predicted_content_sha256": sim["content_sha256"], "predicted_probe_sequence_sha256": prediction["probe_sequence_sha256"]}
     return plan, prediction
 
 
@@ -174,14 +184,14 @@ def main(argv=None) -> int:
         manifest["plan"] = {"path": "evidence/b1/plan.json", "sha256": tsha, "budget": plan["budget"], "records": plan["records"],
                             "audited_records": plan["audited_records"], "crc_budget": plan["crc_budget"],
                             "session_timeout_s": plan["session_timeout_s"]}
-        manifest["prediction"] = {"path": "evidence/b1/prediction.json", "sha256": psha, "map_sha256": plan["predicted_map_sha256"],
+        manifest["prediction"] = {"path": "evidence/b1/prediction.json", "sha256": psha, "content_sha256": plan["predicted_content_sha256"],
                                   "probe_sequence_sha256": plan["predicted_probe_sequence_sha256"]}
         a.manifest.write_text(json.dumps(manifest, indent=1, ensure_ascii=False) + "\n")
     es = prediction["expected_score"]
     print(f"plan sha256 {tsha}; prediction sha256 {psha}\n  seed {plan['master_seed']} budget {plan['budget']} records {plan['records']} "
           f"audits {plan['audited_records']} frames {plan['expected_frames']['total']} budget {plan['crc_budget']} timeout {plan['session_timeout_s']} s "
-          f"(expected span {plan['deadline']['expected_span_s']:.0f} s)\n  predicted map {plan['predicted_map_sha256'][:16]} precision {es['precision']} "
-          f"recall {es['recall']} probes_to_full_recall {es['sample_efficiency']['probes_to_full_recall_conf1']}")
+          f"(expected span {plan['deadline']['expected_span_s']:.0f} s)\n  predicted content {plan['predicted_content_sha256'][:16]} precision {es['precision']} "
+          f"recall {es['recall']} probes_to_full_recall {es['snapshots']['probes_to_full_recall_conf1']}")
     return 0
 
 

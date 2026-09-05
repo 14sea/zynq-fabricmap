@@ -3,7 +3,7 @@
  "schema_version": "1.0.0",
  "source_repo": "github.com/14sea/zynq-psoracle",
  "source_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
- "note": "byte-for-byte copies of the instrument's firmware at the archived head; the B1 image is a versioned SUCCESSOR built from these plus b1_*.c \u2014 the instrument's own files are never edited. Files that B1 modifies are copied under a b1_ name and the copy is what changes; the verbatim originals stay here for the diff.",
+ "note": "byte-for-byte copies of the instrument's firmware at the archived head, plus three DERIVED files (b1_app.c, b1_wire.c, b1_wire.h) whose base hashes are recorded; the instrument's own files are never edited. tests/test_b1_leakage.py verifies every copied file hashes to its base and every derived file exists and differs from it.",
  "files": {
   "firmware/p3_derive.c": {
    "sha256": "21b4d7a9b4379a6d2d5ff9a76e111d1ae1641305a4647e18f70767c7af50d730",
@@ -15,11 +15,15 @@
   },
   "firmware/p3_wire.c": {
    "sha256": "249f84aaa14ab972f6ba0fc50f25b000eee8b2cba19c5a134af5537e37adfdcd",
-   "copied_to": "firmware/b1/p3_wire.c"
+   "copied_to": null,
+   "derived_to": "firmware/b1/b1_wire.c",
+   "note": "DERIVED: the B1 file is a patched copy (the search replaced by the cartographer / the carto and identity fields); it must exist and must DIFFER from the base"
   },
   "firmware/p3_wire.h": {
    "sha256": "e2869cbaffff06b6529e10a499f53975042f2e8b38267113caa51053ea7234e9",
-   "copied_to": "firmware/b1/p3_wire.h"
+   "copied_to": null,
+   "derived_to": "firmware/b1/b1_wire.h",
+   "note": "DERIVED: the B1 file is a patched copy (the search replaced by the cartographer / the carto and identity fields); it must exist and must DIFFER from the base"
   },
   "firmware/p3_rectx.c": {
    "sha256": "6dfff8693e5312b600c95bf4be22aebb8dc14882614f2668fc081950e52315ba",
@@ -39,7 +43,9 @@
   },
   "firmware/p3_app.c": {
    "sha256": "65b22e7c6612ae4070dd254d8fdb967e1a74f3229b62e9ba5d0c809475b735fd",
-   "copied_to": "firmware/b1/p3_app.c"
+   "copied_to": null,
+   "derived_to": "firmware/b1/b1_app.c",
+   "note": "DERIVED: the B1 file is a patched copy (the search replaced by the cartographer / the carto and identity fields); it must exist and must DIFFER from the base"
   },
   "firmware/bsp/lscript.ld": {
    "sha256": "96942701c80022fc4a83672166ebe6a7573094aef541ed93f9d4e1deda5dd8d8",

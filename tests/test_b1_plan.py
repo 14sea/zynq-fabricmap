@@ -55,7 +55,8 @@ class CommittedPlan(unittest.TestCase):
         self.assertEqual(hashlib.sha256(PRED_PATH.read_bytes()).hexdigest(), MANIFEST["prediction"]["sha256"])
         self.assertEqual(self.plan["prediction_sha256"], MANIFEST["prediction"]["sha256"])
         self.assertEqual(self.plan["master_seed"], MANIFEST["seeds"]["master_seed"])
-        self.assertEqual(self.pred["map_sha256"], MANIFEST["prediction"]["map_sha256"])
+        self.assertEqual(self.pred["content_sha256"], MANIFEST["prediction"]["content_sha256"])
+        self.assertEqual(self.plan["predicted_content_sha256"], MANIFEST["prediction"]["content_sha256"])
 
     def test_budget_audit_and_deadline(self):
         p = self.plan
@@ -75,19 +76,22 @@ class CommittedPlan(unittest.TestCase):
 
     def test_prediction_is_the_reference_over_the_truth(self):
         sim = bm.simulate(self.plan["master_seed"], self.plan["budget"], bm.fixture("truth"))
-        self.assertEqual(sim["map_sha256"], self.pred["map_sha256"])
+        self.assertEqual(sim["content_sha256"], self.pred["content_sha256"])
+        self.assertEqual(self.plan["predicted_content_sha256"], self.pred["content_sha256"])
         self.assertEqual([p["genome"] for p in sim["probes"]], [p["genome"] for p in self.pred["probes"]])
         es = self.pred["expected_score"]
         self.assertEqual((es["precision"], es["recall"], es["anomalies"]), (1.0, 1.0, 0))
-        self.assertEqual(es["sample_efficiency"]["probes_to_full_recall_conf1"], bc.CODE_BITS)
-        self.assertEqual(es["holdout"]["recall"], 1.0)
+        self.assertEqual(es["snapshots"]["probes_to_full_recall_conf1"], bc.CODE_BITS)
+        self.assertEqual(es["stratum_B"]["recall"], 1.0)
+        self.assertEqual(es["unobserved_claims"], 0)
 
     def test_plan_regenerates_identically(self):
         plan, pred = bp.build_plan(MANIFEST, require_git=False)
-        for k in ("master_seed", "budget", "audit_seqs", "crc_budget", "session_timeout_s", "flags", "predicted_map_sha256",
+        for k in ("master_seed", "budget", "audit_seqs", "crc_budget", "session_timeout_s", "flags", "predicted_content_sha256",
                   "predicted_probe_sequence_sha256"):
             self.assertEqual(plan[k], self.plan[k], k)
-        self.assertEqual(pred["map"], self.pred["map"])
+        self.assertEqual(pred["content"], self.pred["content"])
+        self.assertEqual(pred["record_content"], self.pred["record_content"])
 
     def test_compatibility_drift_is_a_refusal(self):
         m = copy.deepcopy(MANIFEST)

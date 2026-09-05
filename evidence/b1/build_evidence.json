@@ -1,9 +1,9 @@
 {
  "schema": "b1_build_evidence",
  "schema_version": "1.0.0",
- "at": "2026-09-05T095905Z",
+ "at": "2026-09-05T113716Z",
  "git": {
-  "head": "6f6c3a80dcc97878e0233da4fd9d3314e8c8cdf9",
+  "head": "fbcdf978a80459bca1a3554aad55614119a076b3",
   "worktree_dirty": true
  },
  "toolchain": {
@@ -13,11 +13,11 @@
   "instrument_role": "read-only use of the archived instrument's toolchain directory"
  },
  "sources": {
-  "b1_app.c": "c90ae847ed434b81ff572aaa0b98b9af862d4f60a387bc1f281489c25074d67d",
-  "b1_carto.c": "f2e5562c67e7ab767feac081bb8bc3efc84257a31141deb30c0df2c71edffb94",
-  "b1_carto.h": "4058ad69309ca5b0bd58df3f5d7b7234e63978cda600b3049ab7739798d3f435",
-  "b1_wire.c": "984aaa1b451eaff2eb01dcfe469503119e860a4038b0721e74315df91397f50c",
-  "b1_wire.h": "8e792583ede1b03c8ee6babb180050d61174431b9e1f766ad237c44ae32506c6",
+  "b1_app.c": "48a7fd518cff9c012b71eadc53545c52cabd98075380bea3d025c56f616e9926",
+  "b1_carto.c": "16c6c61e8b205464af1a927f6d619aeca9537bdc65c8b74d76ac7697af51bffb",
+  "b1_carto.h": "8930e1223b94def04a7a3c4387f2517a27b8fe20e83b8c56c4b260a5c069bc78",
+  "b1_wire.c": "97320b8d0649b328632eaaacfc151f29d0f58074082f59f2d91c091f43a0ed4b",
+  "b1_wire.h": "64b7b54971eeb5efc90a77a8db297a8b808b6549e6ac8de6fe943489e093eefb",
   "p3_data.h": "0936d7ef564ca5c296c34d2766c1461a62a2d144842d50e43d98cbf7c87c829a",
   "p3_derive.c": "21b4d7a9b4379a6d2d5ff9a76e111d1ae1641305a4647e18f70767c7af50d730",
   "p3_derive.h": "38ee462f8b242bac2adc140ed3ca45dd86ce232415a65f00dc1b92d24100f091",
@@ -25,7 +25,7 @@
   "p3_rectx.h": "7064c86dff177fe3305f4d8a1a2381249641dae363f6cfbea7a2e89b437b580b",
   "p3_pull.c": "d58d688f12d75a4dfa7836dda947c2a92707097b42d681ea1d9bc274cccf1963",
   "p3_pull.h": "b3ce0da7ea33c7659d039ff870891f85c845051f5aaeb991cc77ce7c45eaa289",
-  "bsp/build.sh": "92565ce9b0f6e307534ff7a6fefeb072198e04e69954f84e9c4f30806db69b90",
+  "bsp/build.sh": "6d06bca4897192a04b9755c71f27190f022c12970a346efb3064b3735facfc50",
   "bsp/lscript.ld": "96942701c80022fc4a83672166ebe6a7573094aef541ed93f9d4e1deda5dd8d8",
   "bsp/src/console.c": "fb9ebd5e22de514d13e85a6b4ef246796da0b2b75b9a0d9c2b87913ca4858b83",
   "bsp/include/bspconfig.h": "06307d4353e828e6be911e20a5e508fbf8139bf7fb50cf443e832fb82bd91617",
@@ -49,16 +49,16 @@
  },
  "image": {
   "path": "firmware/b1/bsp/out/b1_app.bin",
-  "sha256": "7bc86a3f2b9548a4a9cb8eb794ed7ee3ea864a814dabe848149e6c228903178d",
+  "sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
   "bytes": 114708,
-  "elf_sha256": "280ee0c42727d1527c535697a07e9dce6a014fd0ebc8709852a2bb580d522c97",
+  "elf_sha256": "4d5c8b03c8b18cf4823479c86373808bccbd18ded1875fb981c9e1c95a74dc43",
   "load_address": "0x02000000",
   "entry": "go 0x2000000"
  },
  "reproducibility": {
   "builds": [
-   "7bc86a3f2b9548a4a9cb8eb794ed7ee3ea864a814dabe848149e6c228903178d",
-   "7bc86a3f2b9548a4a9cb8eb794ed7ee3ea864a814dabe848149e6c228903178d"
+   "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
+   "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8"
   ],
   "reproduced_byte_identical": true
  }

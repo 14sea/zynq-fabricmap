@@ -96,7 +96,8 @@ size_t p3_wire_identity(const p3_wire_identity_in *in, char *out, size_t max)
     w_init(&w, out, max);
     w_fmt(&w, "{\"app_epoch\":%lu,\"carrier_sha256\":", (unsigned long)in->app_epoch);
     w_str(&w, in->carrier_sha256);
-    /* 1.4.0 (B1): carto_version sorts between carrier_sha256 and control_plane */
+    /* 1.4.0 (B1): carrier_variant and carto_version sort between carrier_sha256 and control_plane */
+    w_fmt(&w, ",\"carrier_variant\":\"0x%08lx\"", (unsigned long)in->carrier_variant);
     w_fmt(&w, ",\"carto_version\":");
     w_str(&w, in->carto_version ? in->carto_version : "");
     w_fmt(&w, ",\"control_plane\":\"standalone\",\"fclk0_hz_decoded\":%lu,\"findings\":[",

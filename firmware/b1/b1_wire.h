@@ -71,6 +71,7 @@ typedef struct {
     const char *carto_version;
     const char *universe_sha256;      /* 64 hex, B1_UNIVERSE_SHA256 */
     uint32_t probe_budget;
+    uint32_t carrier_variant;         /* the VARIANT register as read (B1: 0x42310001) */
 } p3_wire_identity_in;
 
 size_t p3_wire_identity(const p3_wire_identity_in *in, char *out, size_t max);

@@ -35,3 +35,11 @@ rulings/
 # manifests/b1_manifest.json + evidence/b1/build_evidence.json (the instrument keeps the same rule)
 firmware/b1/bsp/out/
 firmware/b1/build/
+
+# B1 carrier build: the bitstream, build record, carrier manifest, isolation and reports are committed
+# (the instrument keeps the same rule for builds/p3); the checkpoints and the raw Vivado stdout are not
+builds/b1/*.dcp
+builds/b1/build.stdout
+
+# iverilog products of sim/b1/run.sh
+sim/b1/out/

@@ -1,6 +1,6 @@
 {
  "schema": "b1_manifest",
- "schema_version": "0.1.0",
+ "schema_version": "0.2.0",
  "status": "DRAFT — host-only, not frozen, NO BOARD RULING (owner 2026-09-05: B1 authorised to the pre-board package; the next board contact needs its own explicit ruling)",
  "prereg": {
   "path": "docs/b1_preregistration.md",
@@ -39,18 +39,20 @@
  },
  "image": {
   "path": "firmware/b1/bsp/out/b1_app.bin",
-  "sha256": "7bc86a3f2b9548a4a9cb8eb794ed7ee3ea864a814dabe848149e6c228903178d",
-  "elf_sha256": "280ee0c42727d1527c535697a07e9dce6a014fd0ebc8709852a2bb580d522c97",
+  "sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
+  "elf_sha256": "4d5c8b03c8b18cf4823479c86373808bccbd18ded1875fb981c9e1c95a74dc43",
   "bytes": 114708,
   "load_address": "0x02000000",
   "entry": "go 0x2000000",
   "board_ready": false,
   "build_evidence": {
    "path": "evidence/b1/build_evidence.json",
-   "sha256": "3e66d0842a564f2eeb4379b974ec72819090cc7a959cff89dd152e3d3175acff",
-   "reproduced_byte_identical": true
+   "sha256": "8b4dd824a58bfc39af633ff4116c432ef7f90fc91a69a3ec6f19046ee0001618",
+   "reproduced_byte_identical": true,
+   "worktree_dirty_at_build": true,
+   "head_at_build": "fbcdf978a80459bca1a3554aad55614119a076b3"
   },
-  "note": "the binary is not committed (bsp/out is gitignored, as the instrument's is); it is rebuilt byte-identically by firmware/b1/bsp/build.sh and hash-checked by the runner. board_ready is false until the owner's compatibility review and freeze"
+  "note": "the binary is not committed (bsp/out is gitignored, as the instrument's is); it is rebuilt byte-identically by firmware/b1/bsp/build.sh from the pinned sources and toolchain, and the runner refuses any image whose sha256 is not this one. board_ready is set by a ruling, never by this tool."
  },
  "universe": {
   "addresses": 292,
@@ -123,7 +125,7 @@
  },
  "plan": {
   "path": "evidence/b1/plan.json",
-  "sha256": "59fbd8040b4238bb22924980e6357fad19056cbb8c38cd2bc705044ee301b9cc",
+  "sha256": "4bc2e9b91f1d822d52017f6742caca50a64a5858c0f9c36a1c8be0b74e75cfa6",
   "budget": 333,
   "records": 335,
   "audited_records": 335,
@@ -132,8 +134,8 @@
  },
  "prediction": {
   "path": "evidence/b1/prediction.json",
-  "sha256": "d993a528dd994b40f73726981235620cd4b99c4d9c90b0c40df29f120402b317",
-  "map_sha256": "38337072747c6260aae99771204b759bf25fe7bf44b813b11244262adde184dc",
+  "sha256": "fc1d41ce6652dc95ff3ac1804be383cf55b3cd70fce4ac74b6621f64bc507419",
+  "content_sha256": "7e1e7702ad3dc69d1ee4c809bf3cc829d7dc93696092d1e65c5ac1c4019ecbfa",
   "probe_sequence_sha256": "f351475ca7e5e7743a4168c35eb283cc194634bbec9b6f3a5428243cc989bd5f"
  },
  "holdout_luts": [
@@ -148,6 +150,7 @@
   "idcode": "0x13722093"
  },
  "rulings_required": [
+  "whole-of-run B1 carrier qualification",
   "whole-of-run B1 cartography",
   "provisioning P3-K"
  ],
@@ -167,5 +170,53 @@
   ],
   "note": "image_sha256 is the B1 image's; prereg_sha256 is B1's frozen preregistration; b1_manifest_sha256 is THIS file as committed at the freeze"
  },
- "history": []
+ "history": [
+  {
+   "at": "2026-09-05",
+   "image_sha256": "7bc86a3f2b9548a4a9cb8eb794ed7ee3ea864a814dabe848149e6c228903178d",
+   "state": "WITHDRAWN / DEFECTIVE / NO-RUN",
+   "reason": "owner review 2026-09-05 (first B1 package, 4c49b25): circular blind-mapping gate (readout compared with host-attested tables), opening baseline recorded before the cartographer was initialised, adjudicator not fail-closed, map v2 semantics, missing pins — WITHDRAWN / DEFECTIVE / NO-RUN; never loaded on any board"
+  }
+ ],
+ "carrier": {
+  "bitstream": "builds/b1/b1.bit",
+  "bitstream_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+  "bitstream_bytes": 2083858,
+  "build_record": {
+   "path": "builds/b1/b1_build.json",
+   "sha256": "5da31443d9e612ab086621709f78b401a615cf5121d114ac345aff6d744abe1c"
+  },
+  "carrier_manifest": {
+   "path": "builds/b1/carrier_manifest.json",
+   "sha256": "2e9de7c7d9da2328e5d66332a36ea6bdd8470902f9c5f18bf94a50a530e4b93d"
+  },
+  "isolation": {
+   "path": "builds/b1/isolation.txt",
+   "sha256": "ada2594ea21b8430a97603e859ce9aebc0090eaebac5a990be954de6e6ec367c",
+   "result": "passed"
+  },
+  "nonce_seed": "0x9e3779b97f4a7c15",
+  "variant": "0x42310001",
+  "gate": "b1_arm_gate SEMANTIC_GATE=0 (docs/b1_carrier_contract.md); VARIANT 0x2034 = 0x42310001",
+  "wns_ns": 7.993,
+  "icape2_cells": 0,
+  "part": "xc7z010clg400-1",
+  "vivado": "2025.2",
+  "frame_table_sha256": "19df58fa41aee1abe1c7bed453bab9038aad5c319c496330faf04e0ec27f5634",
+  "contract": "docs/b1_carrier_contract.md",
+  "qualification": "docs/b1_carrier_qualification.md",
+  "qualified": false,
+  "note": "the B1 carrier (SEMANTIC_GATE=0: the PL verifies the signature and checks the sweep completed, and NEVER compares the readout with the signed table slots, which are the zero words). Built host-only; qualified is set true by nothing but the owner's `whole-of-run B1 carrier qualification` ruling after the qualification session on 17A6 — the runner refuses a B1 session on an unqualified carrier."
+ },
+ "signer": {
+  "path": "host/b1_sign_arm.py",
+  "sha256": "bc3421070a0c315a9e8c0e1540524f1370d2a5d3db9981d6519b928e87945fee",
+  "contract": "b1-nonsemantic-v1",
+  "note": "signs commit ‖ twelve zero table words ‖ nonce; the semantic oracle is disarmed in-process; the runner refuses a sign_reply with any non-zero table (rule iii-B1, host/b1_records.py)"
+ },
+ "pins": {
+  "path": "manifests/b1_instrument_pins.json",
+  "sha256": "f4b465115d1d7c90b6bbe98f57efeb2936ab5eeaabebb0514b16f6c0e558d1a4",
+  "note": "every adjudication-critical fabricmap file (host/b1_pins.py PINNED_GLOBS); verified by the runner before the port is opened and by the adjudicator before any verdict"
+ }
 }

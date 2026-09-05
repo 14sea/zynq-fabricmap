@@ -14,6 +14,7 @@
  *            PROBE — the same block the board puts into the loop record.
  */
 #include "b1_carto.h"
+#include "b1_orch.h"
 #include "b1_wire.h"
 #include "p3_derive.h"
 
@@ -76,6 +77,7 @@ static int mode_carto(void)
     if (!fgets(line, sizeof(line), stdin) || sscanf(line, "%lu %lu", &seed, &budget) != 2)
         return 2;
     b1_carto_init(&c, (uint32_t)seed, (uint32_t)budget);
+    b1_carto_bind(&c, "00000000000000000000000000000000", "0000000000000000000000000000000000000000000000000000000000000000", 0u);
     while (b1_carto_next(&c, genome, &kind)) {
         seq++;
         genome_hex(genome, ghex);
@@ -147,11 +149,13 @@ static int mode_wire(void)
     in.carto_version = B1_CARTO_VERSION;
     in.universe_sha256 = "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458";
     in.probe_budget = 333u;
+    in.carrier_variant = 0x42310001u;
     if (p3_wire_identity(&in, out, sizeof(out)) == 0u)
         return 7;
     printf("IDENT %s\n", out);
 
     b1_carto_init(&c, 1123460948u, 333u);
+    b1_carto_bind(&c, "a13f38b53355fd4c1cac3145244727f8", "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458", 0x12345678u);
     if (b1_carto_render(&c, render, sizeof(render)) == 0u)
         return 8;
     if (b1_carto_record_json(&c, B1_PH_CODE, 2, changed, 2, carto_json, sizeof(carto_json)) == 0u)
@@ -187,6 +191,56 @@ static int mode_wire(void)
     return 0;
 }
 
+/* session: the orchestrator exactly as b1_app.c main drives it — opening baseline, probes,
+ * closing baseline — printing "CAND <is_baseline> <kind> <seq> <genome hex>" per candidate,
+ * reading the fabric's readout (six 16-hex tables) or "UNSCORED", and "REC <seq> <carto>" per
+ * scored record; then "MAP <sha256> <rendered json>". The twin's output is what the board's
+ * records must equal (tests/test_b1_session.py). */
+static int mode_session(void)
+{
+    static b1_orch o;
+    char line[1024];
+    char ghex[B1_GENOME_WORDS * 8 + 1];
+    uint32_t genome[B1_GENOME_WORDS];
+    unsigned long seed, budget, image_lo32;
+    char token[64], universe[128];
+    uint32_t seq = 0;
+    int is_baseline, kind;
+
+    /* "seed budget token universe image_lo32(hex)" */
+    if (!fgets(line, sizeof(line), stdin) || sscanf(line, "%lu %lu %63s %127s %lx", &seed, &budget, token, universe, &image_lo32) != 5)
+        return 2;
+    b1_orch_init(&o, (uint32_t)seed, (uint32_t)budget, token, universe, (uint32_t)image_lo32);
+    while (b1_orch_next(&o, genome, &is_baseline, &kind)) {
+        seq++;
+        genome_hex(genome, ghex);
+        printf("CAND %d %d %lu %s\n", is_baseline, kind, (unsigned long)seq, ghex);
+        fflush(stdout);
+        if (!fgets(line, sizeof(line), stdin))
+            return 3;
+        if (strncmp(line, "UNSCORED", 8) == 0) {
+            /* as b1_app.c main: a candidate that was not SCORED ends the epoch — no re-issue,
+             * no closing baseline; the map is whatever was learned before it */
+            b1_orch_unobserved(&o);
+            break;
+        }
+        {
+            uint64_t t[B1_LUTS];
+            if (parse_tables(line, t) != 0)
+                return 4;
+            b1_orch_observe(&o, seq, t);
+            if (b1_orch_record_block(&o, seq, g_render, sizeof(g_render), g_rec, sizeof(g_rec)) == 0u)
+                return 6;
+            printf("REC %lu %s\n", (unsigned long)seq, g_rec);
+            fflush(stdout);
+        }
+    }
+    if (b1_carto_render(&o.carto, g_render, sizeof(g_render)) == 0u)
+        return 5;
+    printf("MAP %s %s\n", o.carto.map_sha256_hex, g_render);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 2) {
@@ -199,6 +253,8 @@ int main(int argc, char **argv)
         return mode_carto();
     if (strcmp(argv[1], "wire") == 0)
         return mode_wire();
+    if (strcmp(argv[1], "session") == 0)
+        return mode_session();
     fprintf(stderr, "unknown mode %s\n", argv[1]);
     return 2;
 }
