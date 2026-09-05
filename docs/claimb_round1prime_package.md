@@ -176,9 +176,11 @@ Whole suite: **see the report cited below** — a dirty tree skips 27 carrier-au
 and hides 5, so only a report with `worktree_dirty: false`, `skipped: 0`, the instrument at
 `689dde1` and clean is the proof (`host/claimb_r1p_test_report.py`, `clean_tree_proof: true`).
 
-Report: `evidence/claimb_round1prime/tests/` — the latest `test_report_*.json` in the
-commit that includes it (the file names the HEAD it ran on; §9 of this package is updated
-with the figures when it lands).
+Report: `evidence/claimb_round1prime/tests/test_report_2026-09-05T090046Z.json` — ran **1295**, skipped **0**, failures 0,
+errors 0, `OK`; `head_at_run` `23f0f3e64ace` (the package commit),
+`worktree_dirty` False; instrument `689dde1dad37` = pinned, dirty False;
+**`clean_tree_proof: True`**. The report also carries the sha256 of the manifest, the pin table,
+the plan, the prediction and the preregistration as they were when the suite ran.
 
 ## 9. Status line
 
@@ -189,4 +191,4 @@ with the figures when it lands).
 | instrument | `zynq-psoracle` `689dde1`, archived, read-only, 128 files pinned |
 | board contact | **none**; forbidden until the owner's next explicit ruling |
 | what the owner is asked | (1) to decide §0 — run round 1′ as the measured negative + oracle-scale known answer, or redirect Claim B to a carrier with a non-additive fitness; (2) if run: review the package, freeze the preregistration (§10 there), issue the ruling pair (§5), authorise one session |
-| test report | *(filled when the clean-tree report lands)* |
+| test report | `test_report_2026-09-05T090046Z.json`: 1295 ran / 0 skipped / OK on a clean tree at `23f0f3e64ace`, clean_tree_proof true |
