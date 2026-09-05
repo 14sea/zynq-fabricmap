@@ -4,9 +4,12 @@
 
 A B1Q session leaves, beside the instrument's evidence files (run_log, audits, timeline,
 adjudication, summary), the session's OWN evidence of what it was bound to, written by the
-runner before `go` (`write_session_artifacts`): `manifest_at_run.json` — the exact bytes of
-the manifest the preflight read — and `ruling_whole_of_run.json` / `ruling_provisioning.json`
-— the two ruling files verbatim. The qualification RECORD (`qualification.json`) then names
+runner before the ruling is claimed and the port is opened (`write_session_artifacts`):
+`manifest_at_run.json` — the exact bytes of the manifest the preflight read — and
+`ruling_whole_of_run.json` / `ruling_provisioning.json` — the two rulings as INERT
+ENVELOPES (`archived_ruling_bytes`: the original bytes base64 + their sha256, an exact
+five-key schema, no ruling field; every ruling parser refuses them, so an archive is never
+a second authorisation). The qualification RECORD (`qualification.json`) then names
 every one of those files by sha256, the outcome, the session token (taken from the run log,
 never from a caller), the full content of both rulings, the plan / prediction / pin-table
 hashes the session ran against, and the binding (carrier sha256 and variant, image sha256,

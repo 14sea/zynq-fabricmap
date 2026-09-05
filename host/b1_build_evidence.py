@@ -78,9 +78,10 @@ def bsp_inputs() -> dict:
     assembly units build.sh compiles and the toolchain's runtime objects and libraries):
       * translation_units — every .c / .S build.sh compiles (BSP, syscalls, watchdog, the
         console glue, the application), the source file itself by hash;
-      * headers — every embeddedsw header any of those units includes (gcc -M over each unit
-        with the flags build.sh uses; the toolchain's own headers are covered by the pinned
-        compiler);
+      * headers — EVERY header any of those units includes (gcc -M over each unit with the
+        flags build.sh uses): the embeddedsw ones, this repository's, AND the toolchain's own
+        (newlib's stdint.h / stdio.h / string.h …, gcc's stddef.h …) — the compiler
+        executable's hash does not cover the headers beside it (owner's review 2026-09-05);
       * toolchain_objects — crti/crtbegin/crtend/crtn and libgcc/libc/libm as the link
         resolves them (-print-file-name), by hash."""
     cc = TC / "bin/arm-none-eabi-gcc"
@@ -109,15 +110,26 @@ def bsp_inputs() -> dict:
             raise RuntimeError(f"{src}: {p.stderr[-1000:]}")
         for tok in p.stdout.replace("\\\n", " ").split()[1:]:
             path = Path(tok)
-            if path.is_file() and path != src and (str(path).startswith(str(SA)) or str(path).startswith(str(WD)) or str(path).startswith(str(FW))):
-                headers[str(path)] = sha(path)
+            if path.is_file() and path.resolve() != src.resolve():
+                headers[str(path)] = sha(path)          # every dependency gcc names, wherever it lives
     objs: dict[str, str] = {}
     for name in ("crti.o", "crtbegin.o", "crtend.o", "crtn.o", "libgcc.a", "libc.a", "libm.a"):
         p = subprocess.run([str(cc), *arch, f"-print-file-name={name}"], capture_output=True, text=True)
         path = Path(p.stdout.strip())
         objs[name] = {"path": str(path), "sha256": sha(path) if path.is_file() else None}
     return {"translation_units": dict(sorted(tus.items())), "headers": dict(sorted(headers.items())),
-            "toolchain_objects": objs, "build_script_lists": srcs}
+            "toolchain_objects": objs, "build_script_lists": srcs,
+            "header_roots": {"embeddedsw_standalone": str(SA), "embeddedsw_watchdog": str(WD), "firmware": str(FW), "toolchain": str(TC)}}
+
+
+def dependency_set(unit: Path, flags: list[str]) -> set[str]:
+    """Every file gcc -M names for one unit (the completeness test compares this with the
+    evidence's header set)."""
+    cc = TC / "bin/arm-none-eabi-gcc"
+    p = subprocess.run([str(cc), *flags, "-M", str(unit)], capture_output=True, text=True)
+    if p.returncode != 0:
+        raise RuntimeError(p.stderr[-1000:])
+    return {str(Path(t)) for t in p.stdout.replace("\\\n", " ").split()[1:] if Path(t).is_file() and Path(t).resolve() != unit.resolve()}
 
 
 def build_evidence(do_build: bool) -> dict:
@@ -126,7 +138,7 @@ def build_evidence(do_build: bool) -> dict:
         hashes = [build_once(), build_once()]
     image = OUT / "b1_app.bin"
     elf = OUT / "b1_app.elf"
-    ev = {"schema": "b1_build_evidence", "schema_version": "1.1.0",
+    ev = {"schema": "b1_build_evidence", "schema_version": "1.2.0",
           "at": time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime()),
           "git": {"head": git("rev-parse", "HEAD"), "worktree_dirty": bool(git("status", "--porcelain"))},
           "toolchain": {"path": str(TC), "gcc_sha256": sha(TC / "bin/arm-none-eabi-gcc") if (TC / "bin/arm-none-eabi-gcc").is_file() else None,

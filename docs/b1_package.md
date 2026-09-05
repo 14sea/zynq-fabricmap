@@ -1,4 +1,4 @@
-# B1 — the pre-board package, v2.2.5, pushed; two evidence gaps closed before the freeze (2026-09-05)
+# B1 — the pre-board package: v2.2.4 pushed; v2.2.6 local, under review before the freeze (2026-09-05)
 
 > **HOST-ONLY. DRAFT / NO BOARD RULING.** Delivered at "B1 ready for the board" under the
 > owner's ruling of 2026-09-05 (`docs/autonomous_cartography_roadmap.md`; the
@@ -96,6 +96,16 @@ translation unit, every header any unit includes, and crti/crtbegin/crtend/crtn 
 libgcc/libc/libm as the link resolves them, all by hash. Also the README / package
 headers that still read "awaiting push". Firmware, image (`54b00663…`, rebuilt
 byte-identically), carrier, plans and predictions unchanged.
+
+**v2.2.5 → v2.2.6 (the owner's review of v2.2.5, 2026-09-05; local, not pushed):** the
+prereg gap is closed; the build-evidence gap was not — the header set kept only the
+embeddedsw / repository dependencies and dropped the toolchain's own (newlib's
+`stdint.h`, `stdio.h`, `string.h` …, 23 files for `b1_app.c` alone), on the wrong premise
+that the compiler executable's hash covers the headers beside it. `b1_build_evidence.py`
+1.2.0 records every dependency `gcc -M` names for every unit, wherever it lives, and a
+completeness test recomputes the dependency set of every unit and requires it to be a
+subset of the evidence's header set with matching hashes. The qualification module's
+docstring no longer calls the ruling archives verbatim files. Image unchanged.
 
 ## 1. Hashes and data flow
 

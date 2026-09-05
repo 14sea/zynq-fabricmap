@@ -47,10 +47,10 @@
   "board_ready": false,
   "build_evidence": {
    "path": "evidence/b1/build_evidence.json",
-   "sha256": "b7efb0e436ca5dc9784d8f4ac8d86b9941a1084a9c2c8adb42c9f9cdf2cf167d",
+   "sha256": "8ae2db2a310d95caf7d5d65c076aa7f3556079021353abd51c59d6190b8e189f",
    "reproduced_byte_identical": true,
-   "worktree_dirty_at_build": false,
-   "head_at_build": "c02404e4636ed2265c2ae3902cb5db0ce0df338c"
+   "worktree_dirty_at_build": true,
+   "head_at_build": "1e120cdf3b5be75c07a636732e33f0ce5f00c51f"
   },
   "note": "the binary is not committed (bsp/out is gitignored, as the instrument's is); it is rebuilt byte-identically by firmware/b1/bsp/build.sh from the pinned sources and toolchain, and the runner refuses any image whose sha256 is not this one. board_ready is set by the owner at the freeze, never by this tool; a refresh keeps it only while the image, ELF and build evidence are the ones it was granted for."
  },
@@ -229,7 +229,7 @@
  },
  "pins": {
   "path": "manifests/b1_instrument_pins.json",
-  "sha256": "51648234293e57f3d8c8e80667bde27afebb561731e72478dc25b57a69fdf8c5",
+  "sha256": "b92f6443da3852ed4219fd6ea5a9fbbe450494da174403d1b89605b8841c8b4c",
   "note": "every adjudication-critical fabricmap file (host/b1_pins.py PINNED_GLOBS); verified by the runner before the port is opened and by the adjudicator before any verdict"
  },
  "reporting_strata": {
