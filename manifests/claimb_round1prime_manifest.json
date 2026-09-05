@@ -1,0 +1,155 @@
+{
+ "schema": "claimb_round1prime_manifest",
+ "schema_version": "0.1.0",
+ "status": "DRAFT — host-only, not frozen, no board ruling (owner ruling 2026-09-05: RESUMED — PREREGISTRATION PENDING (HOST-ONLY))",
+ "prereg": {
+  "path": "docs/claimb_round1prime_preregistration.md",
+  "version": "v0.1-draft",
+  "sha256": null,
+  "frozen": null,
+  "note": "null = DRAFT: host/claimb_r1p_runner.py refuses to run until the owner's freeze writes the hash here"
+ },
+ "instrument": {
+  "psoracle_repo": "github.com/14sea/zynq-psoracle",
+  "psoracle_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "psoracle_role": "archived, read-only (owner 2026-09-05): used as committed, verified against manifests/claimb_round1prime_instrument_pins.json before any import",
+  "l6_manifest_sha256": "b3991d82d889597e2754d5c3e20cc35f61966ad78055bccfffac93716db22a1a",
+  "l6_prereg_sha256": "95d177a148e901b0f1ef10716d3468574b01b6864159128dda09bf57713781eb",
+  "image_sha256": "5deee74c44785ebe88168ccffaa5f399f26a7c5a567fccb3d430cf4eb14cdc7c",
+  "image_note": "the rel-v4 two-operator image, unchanged; mutation_bits = 4 is its contract — any change stops the line for a new ruling",
+  "carrier": {
+   "bitstream": "builds/p3/p3.bit",
+   "bitstream_sha256": "956379fa8d23f8a6f1e0c80fe18b8c4aee68e76cc650499911a4bdb7807e610a",
+   "manifest": "builds/p3/carrier_manifest.json",
+   "manifest_sha256": "2a7abc2b4054fee1ed02edc38dcae23a5a64b2174ef571401b32b309a4123dfa"
+  },
+  "operator_data_sha256": "0c9c82a812be754dbba83c02b24b4321a95af46464a201a6f3c51374f2c80d79",
+  "calibration": {
+   "C1": {
+    "session": "C1 #6",
+    "rate_report_sha256": "08222f85799fa3d18012cdd26a5cc047527995b682bfd5679a668014ea03251c",
+    "evidence": "evidence/l6_17A6_2026-09-03-01-C1/rate_report.json"
+   },
+   "C2": {
+    "session": "C2 #2",
+    "rate_report_sha256": "959790d0e17401936ddd9636f79b9f79e9d45f4fc106de1482f2c8aa969db191",
+    "evidence": "evidence/l6_17A6_2026-09-03-02-C2/rate_report.json"
+   }
+  },
+  "soak": {
+   "session": "S #3",
+   "ruling": "2026-09-04-01",
+   "evidence": "evidence/l6_17A6_2026-09-04-01-S",
+   "span_s": 6763.9,
+   "rate_report_sha256": "8af02b917ca457ccccdbd016976e9c88bfe468f1c5256b469f7f1e5f58542d5b",
+   "role": "the evidenced window (owner 2026-09-05) and the post-hoc pace validation of N — NEVER an input to N and NEVER Claim B data"
+  },
+  "psmap_commit": "191ab0585332e75ac6f15179dc80eeec2d29f9f9"
+ },
+ "fabricmap_artifacts": {
+  "imported_by_p3_at": "71666b02d526a6f2c641f1e0aebc15dac0417d4f",
+  "this_repository_at_authoring": "bbce41f5159073d8f1d2ce0ea67ac8ae1fba300f",
+  "local_map": {
+   "path": "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/local_map.json",
+   "sha256": "56f2b9e81e180eee2540286e4fde797e0d4820a49d10624c10844c38e99d87cb"
+  },
+  "phenotype_manifest": {
+   "path": "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/phenotype_manifest.json",
+   "sha256": "e45f466d082ccd6f227e6f9be4ce75a4e98c4caa708808c09a77ed32331c10ef"
+  },
+  "carrier_constants": {
+   "path": "vivado/carrier/generated/carrier_constants.json",
+   "sha256": "48f79b876a0bfdb449f407692301b29987ef1218fa1adb1fd9a181068765d118"
+  },
+  "reachability_spec": {
+   "path": "specs/reachability_spec_v1.json",
+   "sha256": "11f826620e61f3f100562db9d064bd7ba4bb8e869ead2f324f54f07b868bcfba"
+  },
+  "genome_addresses_sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458",
+  "note": "prereg falsifier 3: these files in THIS repository must hash to the copies P3 imported (checked by host/claimb_r1p_plan.py and the tests); a drift is a refusal"
+ },
+ "board": {
+  "boardid": "17A6",
+  "role": "verify",
+  "part": "xc7z010clg400-1",
+  "control_plane": "U-Boot -> standalone (P3)",
+  "idcode": "0x13722093"
+ },
+ "window": {
+  "span_s": 6763.9,
+  "source": "S #3 measured wall span, first SIGNREQ -> last REC (owner 2026-09-05: the budget must fall entirely inside it)",
+  "rule": "N = floor(0.9 x min(rate_A, rate_B) x span_s / 3600) under policy_matched_wall (D-n1's rates from the two pinned calibrations; the SLOWER arm, because the window is a ceiling, not a floor); the runner's deadline is span_s after go; a session still open at the deadline is STOPPED by the runner and is a HOLD, never a PASS"
+ },
+ "seeds": {
+  "master_seed": 1281816666,
+  "rule": "the first 4 bytes, big-endian, of sha256(b'claimb-round1prime|' + psoracle_commit) — advanced by 4 bytes while the value is in `excluded`; pair seeds by l6_schedule.PAIR_SEED_RULE",
+  "excluded": {
+   "L5_sessions": [
+    1
+   ],
+   "L6_C1_C2": [
+    1278624577
+   ],
+   "L6_S": [
+    1278628687
+   ],
+   "twin_corpus_master_seeds": [
+    1,
+    521288629,
+    3735928559,
+    4294967295
+   ],
+   "host_model_seeds_2026_09_05": [
+    324805736,
+    195948557,
+    2119807262
+   ],
+   "rule": "the Claim B master seed is none of these AND no Claim B pair seed equals any pair seed of any L6 session's schedule (C1/C2: 32 pairs each; S: 6284 pairs); checked by host/claimb_r1p_plan.py"
+  }
+ },
+ "audit": {
+  "policy": "sampled",
+  "every": 16,
+  "note": "exactly the policy S #3 was soaked under (every 16th seq + first/last candidate + both baselines); every non-SCORED self-report auto-audited by the image"
+ },
+ "protocol": {
+  "wire": "rel-v4",
+  "heartbeat_s": 10,
+  "controls": "seq-1 forced REC-retry and SIGNREQ-retry controls armed (flags bit4, bit5), as in every rel-v4 session"
+ },
+ "plan": {
+  "path": "evidence/claimb_round1prime/plan.json",
+  "sha256": "454abf1f283aef74ee4788c7ee985ac093cb8e1c343589a580d0a76852d9bb80",
+  "n": 11752,
+  "pairs": 5876,
+  "audited_records": 738,
+  "crc_budget": 873,
+  "session_timeout_s": 6763.9,
+  "predicted_wall_s": 6323.613234922675
+ },
+ "model_prediction": {
+  "path": "evidence/claimb_round1prime/model_prediction.json",
+  "sha256": "33c259a5c5d55abbdd6c80d9e22f1ac81267c5c1f01924205c92a646a84b9503"
+ },
+ "rulings_required": [
+  "whole-of-run Claim B round 1′",
+  "provisioning P3-K"
+ ],
+ "rulings_binding": {
+  "whole-of-run Claim B round 1′": [
+   "session",
+   "master_seed",
+   "prereg_sha256",
+   "image_sha256",
+   "claimb_manifest_sha256"
+  ],
+  "provisioning P3-K": [
+   "session",
+   "prereg_sha256",
+   "image_sha256",
+   "claimb_manifest_sha256"
+  ],
+  "note": "prereg_sha256 here is THIS round's frozen preregistration; the P3-K ruling is the instrument's provisioning ruling issued for this session, bound to this manifest (host/sign_arm.py checks only its text)"
+ },
+ "history": []
+}
