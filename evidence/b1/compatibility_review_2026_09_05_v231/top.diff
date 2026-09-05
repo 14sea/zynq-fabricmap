@@ -1,0 +1,29 @@
+diff --git a/home/test/zynq_psoracle/rtl/p3_top.v b/home/test/zynq_fabricmap/rtl/b1/b1_top.v
+index 5f5cf75..b8a849b 100644
+--- a/home/test/zynq_psoracle/rtl/p3_top.v
++++ b/home/test/zynq_fabricmap/rtl/b1/b1_top.v
+@@ -1,10 +1,13 @@
++// B1 carrier — top level: the P3 carrier with the b1 gate (SEMANTIC_GATE = 0) and the VARIANT register.
+ // P3 carrier — top level. PS7 (GP0) -> AXI3->AXI4-Lite shim (imported, unchanged)
+ // -> p3_core (register file, ARM gate, heartbeat, scorer) -> six evolvable LUT6.
+ // No ICAPE2. No board IO. NONCE_SEED is a build-time constant; the MAC key is provisioned at runtime (D4 option A).
+ `default_nettype none
+-module p3_top #(
++module b1_top #(
+     parameter [63:0]  NONCE_SEED = 64'h9E3779B97F4A7C15,
+-    parameter integer LUTS       = 6
++    parameter integer LUTS       = 6,
++    parameter integer SEMANTIC_GATE = 0,
++    parameter [31:0]  VARIANT_WORD = 32'h42310001
+ ) ();
+     `include "carrier_base_init.vh"
+     wire clk, rst_n;
+@@ -50,7 +53,7 @@ module p3_top #(
+         .m_rdata(m_rdata), .m_rresp(m_rresp), .m_rvalid(m_rvalid), .m_rready(m_rready));
+ 
+     wire [5:0] vector; wire [LUTS-1:0] lut_q;
+-    p3_core #(.NONCE_SEED(NONCE_SEED), .LUTS(LUTS)) core (
++    b1_core #(.NONCE_SEED(NONCE_SEED), .LUTS(LUTS), .SEMANTIC_GATE(SEMANTIC_GATE), .VARIANT_WORD(VARIANT_WORD)) core (
+         .clk(clk), .rst_n(rst_n),
+         .s_awaddr(m_awaddr), .s_awvalid(m_awvalid), .s_awready(m_awready),
+         .s_wdata(m_wdata), .s_wstrb(m_wstrb), .s_wvalid(m_wvalid), .s_wready(m_wready),

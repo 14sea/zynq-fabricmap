@@ -1,0 +1,126 @@
+{
+  "reviewed_head": "3955b17c063cf52ec175dbbf2c5fb692f7ca2f73",
+  "origin_main": "3955b17c063cf52ec175dbbf2c5fb692f7ca2f73",
+  "manifest_sha256": "4aa69c32a5dd4b76798c0b6da38ee8b084844a628651f458d8a5f1d8964906d9",
+  "image": {
+    "path": "firmware/b1/bsp/out/b1_app.bin",
+    "sha256": "300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb",
+    "elf_sha256": "8de78efc76b26bc49c22fbd25b3cc957d1499c3a5fd42e8268a40da3586e0022",
+    "bytes": 114708,
+    "load_address": "0x02000000",
+    "entry": "go 0x2000000",
+    "board_ready": false,
+    "build_evidence": {
+      "path": "evidence/b1/build_evidence.json",
+      "sha256": "aa5af8337d71c8453b596cd7b5f792f72bc3d35f560d0e1aebbbacbd2d77d96a",
+      "reproduced_byte_identical": true,
+      "worktree_dirty_at_build": false,
+      "head_at_build": "99cc273e45b15f18de19a8e7a93483d32cab3426"
+    },
+    "note": "the binary is not committed (bsp/out is gitignored, as the instrument's is); it is rebuilt byte-identically by firmware/b1/bsp/build.sh from the pinned sources and toolchain, and the runner refuses any image whose sha256 is not this one. board_ready is set by the owner at the freeze, never by this tool; a refresh keeps it only while the image, ELF and build evidence are the ones it was granted for."
+  },
+  "carrier_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+  "fabricmap_pins": {
+    "files_verified": 102
+  },
+  "instrument": {
+    "root": "/home/test/zynq_psoracle",
+    "psoracle_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+    "files_verified": 128,
+    "git_checked": true
+  },
+  "worktree_before_artifacts": "",
+  "clean_suite_report": {
+    "artifacts_sha256": {
+      "builds/b1/b1_build.json": "5da31443d9e612ab086621709f78b401a615cf5121d114ac345aff6d744abe1c",
+      "builds/b1/carrier_manifest.json": "2e9de7c7d9da2328e5d66332a36ea6bdd8470902f9c5f18bf94a50a530e4b93d",
+      "builds/b1/isolation.txt": "ada2594ea21b8430a97603e859ce9aebc0090eaebac5a990be954de6e6ec367c",
+      "docs/b1_architecture.md": "c223a60a1c63d7e5144434072d27f790dc1f9edca718f3b5fe4e8a839e31702f",
+      "docs/b1_carrier_contract.md": "53fc704a8587d26c318578dfff5fd633b18dabff04920ad4c7e5f9be16f4da60",
+      "docs/b1_carrier_qualification.md": "a4d2d24319d9c6450f02705f84431538d031cf0bc8088789e7940f2ab61ebf89",
+      "docs/b1_preregistration.md": "f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2",
+      "evidence/b1/build_evidence.json": "aa5af8337d71c8453b596cd7b5f792f72bc3d35f560d0e1aebbbacbd2d77d96a",
+      "evidence/b1/plan.json": "470e18f8fe3443be1ee9f9f27ffc28f73113b2231cdbff5b62348bfb58fda8e9",
+      "evidence/b1/prediction.json": "7d197a498a5ca894fbc1287b37d19cd7d288c2f26d6dbcd21fefa8679e8fd35a",
+      "evidence/b1q/plan.json": "dead8853b8906a19b04b0e7072ef67efc3e5c176c53b8492602888671fb4e73e",
+      "evidence/b1q/prediction.json": "d2c9293a4573b60e497a23cdd87f6355e29df696ef16e52aec05e00ac8aaf062",
+      "firmware/b1/IMPORT.json": "8f25a20b552b95a8c4e1984c6f8e26c1b2831511feb601d30ef87c4f83ee47fa",
+      "firmware/b1/p3_data.h": "0936d7ef564ca5c296c34d2766c1461a62a2d144842d50e43d98cbf7c87c829a",
+      "manifests/b1_instrument_pins.json": "143c09d734bcbbdd3727f8680dd20fd1f3d1de189789cfc631c032a52964682e",
+      "manifests/b1_manifest.json": "4aa69c32a5dd4b76798c0b6da38ee8b084844a628651f458d8a5f1d8964906d9",
+      "manifests/claimb_round1prime_instrument_pins.json": "ec34fd3bcb3ac3e0b54d0cd4ba383d29920089a07e59e8b08d4da1043a6a6121",
+      "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
+    },
+    "at": "2026-09-05T191204Z",
+    "clean_tree_proof": true,
+    "errors": 0,
+    "exit_status": 0,
+    "failures": 0,
+    "head_at_run": "9d7a720e38926982b39dfbb6187fcaa158e0efe1",
+    "host": "H3C",
+    "instrument": {
+      "dirty": false,
+      "head": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+      "pinned_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+      "root": "/home/test/zynq_psoracle"
+    },
+    "note": "head_at_run is the HEAD when the suite ran; the commit that includes this report is necessarily later. A clean-tree proof needs worktree_dirty false AND skipped 0 AND exit_status 0.",
+    "package": "B1 v2.3.1",
+    "ran": 1425,
+    "result_line": "OK",
+    "schema": "b1_test_report",
+    "schema_version": "1.0.0",
+    "skipped": 0,
+    "user": "test",
+    "worktree_dirty": false
+  },
+  "freeze": {
+    "path": "docs/b1_preregistration.md",
+    "version": "v0.3-draft",
+    "sha256": null,
+    "frozen": null,
+    "note": "null = DRAFT: host/b1_runner.py refuses to run until the owner's freeze writes the hash here"
+  },
+  "qualification": {
+    "bitstream": "builds/b1/b1.bit",
+    "bitstream_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+    "bitstream_bytes": 2083858,
+    "build_record": {
+      "path": "builds/b1/b1_build.json",
+      "sha256": "5da31443d9e612ab086621709f78b401a615cf5121d114ac345aff6d744abe1c"
+    },
+    "carrier_manifest": {
+      "path": "builds/b1/carrier_manifest.json",
+      "sha256": "2e9de7c7d9da2328e5d66332a36ea6bdd8470902f9c5f18bf94a50a530e4b93d"
+    },
+    "isolation": {
+      "path": "builds/b1/isolation.txt",
+      "sha256": "ada2594ea21b8430a97603e859ce9aebc0090eaebac5a990be954de6e6ec367c",
+      "result": "passed"
+    },
+    "nonce_seed": "0x9e3779b97f4a7c15",
+    "variant": "0x42310001",
+    "gate": "b1_arm_gate SEMANTIC_GATE=0 (docs/b1_carrier_contract.md); VARIANT 0x2034 = 0x42310001",
+    "wns_ns": 7.993,
+    "icape2_cells": 0,
+    "part": "xc7z010clg400-1",
+    "vivado": "2025.2",
+    "frame_table_sha256": "19df58fa41aee1abe1c7bed453bab9038aad5c319c496330faf04e0ec27f5634",
+    "contract": "docs/b1_carrier_contract.md",
+    "qualification_doc": "docs/b1_carrier_qualification.md",
+    "qualification": null,
+    "qualified": false,
+    "note": "the B1 carrier (SEMANTIC_GATE=0: the PL verifies the signature and checks the sweep completed, and NEVER compares the readout with the signed table slots, which are the zero words). Built host-only. `qualification` is the B1Q session's record (host/b1_qualification.py), pinned by the owner after the `whole-of-run B1 carrier qualification` session on 17A6; `qualified` is DERIVED from it on every refresh (files hash, binding, PASS, re-adjudication) \u2014 the mapping runner and adjudicator re-verify the same chain and refuse on any break."
+  },
+  "review_at_utc": "2026-09-05T19:24:24Z",
+  "outcome": "PASS",
+  "scope": "package section 7 static compatibility and off-board verification; no freeze or board ruling",
+  "test_modules": 10,
+  "tests_ran": 55,
+  "skipped": 0,
+  "test_command": "PYTHONPATH=tests python3 -m unittest test_b1_wire test_b1_carrier test_b1_build_evidence test_b1_leakage test_b1_twin test_b1_session test_b1_e2e test_b1_signer test_b1_records test_b1_hostapp",
+  "hardware_executed": false,
+  "vivado_rerun": false,
+  "full_suite_rerun": false,
+  "hostapp_limit": "Prior SCORED candidates are primed via orchestrator observation and application note_scored; no actual PL staging/ARM/scoring execution for those candidates."
+}

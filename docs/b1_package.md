@@ -97,6 +97,16 @@ libgcc/libc/libm as the link resolves them, all by hash. Also the README / packa
 headers that still read "awaiting push". Firmware, image (`54b00663…`, rebuilt
 byte-identically), carrier, plans and predictions unchanged.
 
+**Compatibility review of the v2.3.1 image `300b12b1…` (owner, 2026-09-05): PASS** —
+`docs/b1_compatibility_review_2026_09_05_v231.md`, evidence
+`evidence/b1/compatibility_review_2026_09_05_v231/`: every §7 item checked (wire, settle,
+audit, MMIO, DMA, watchdog, memory, RTL diff), 55 tests incl. the RTL benches, the ARM
+`run_candidate` frame 9 960 B, the REC stress case 2 306 / 4 096 B, image / ELF / carrier /
+build inputs / pins matching. Recorded limits: the SCORED candidates before a refused one
+are primed by the harness (no PL path executed); no on-board verification, no stack
+high-water measurement, no Vivado re-run. Next station: the owner's freeze (§8 of the
+preregistration), then the B1Q ruling pair.
+
 **v2.3 → v2.3.1 (the owner's recheck of v2.3, 2026-09-05; P2):** `run_candidate` set
 `S.closing_baseline` at ANY scored baseline, so after a scored opening baseline a refused
 probe's TERM claimed `closing.baseline: done` for a closing baseline that never happened —

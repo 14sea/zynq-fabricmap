@@ -4,6 +4,8 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
+> **▶ 2026-09-05, compatibility review PASS on image `300b12b1…` (v2.3.1, pushed at `3955b17`) — [`docs/b1_compatibility_review_2026_09_05_v231.md`](docs/b1_compatibility_review_2026_09_05_v231.md). Next: the owner's freeze (prereg sha256 into the manifest, `board_ready`), then the B1Q ruling pair. Still nothing frozen, no ruling, no board contact.**
+>
 > **▶ 2026-09-05, v2.3.1 (local): the owner's recheck of v2.3 found the TERM's closing-baseline mark set by any scored baseline (hidden by the harness's incomplete priming); fixed in firmware (`note_scored`, the mark only at the closing baseline), the harness primes through the application's own bookkeeping, tests assert the mark both ways. New image `300b12b1…`; `31663e2d…` withdrawn. Compatibility review still to be redone on the new image. Nothing frozen, no ruling, no board contact.**
 >
 > **▶ 2026-09-05, compatibility review HOLD → v2.3 (local): the application's SIGNREF branch continued the session after a gate refusal (the instrument's behaviour), against B1's "unscored ends the epoch" — fixed in firmware, and now exercised on the REAL `b1_app.c` off-board by the host application harness (`tb/b1/hostapp`: stub BSP, fake memory map, scripted host; four refusal scenarios, all end the epoch). New image; `54b00663…` withdrawn; the compatibility review is to be redone on the new image — [`docs/b1_package.md`](docs/b1_package.md) §0, [`docs/b1_compatibility_review_2026_09_05.md`](docs/b1_compatibility_review_2026_09_05.md). Nothing frozen, no ruling, no board contact.**

@@ -1,0 +1,22 @@
+[
+  "/home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1/bin/arm-none-eabi-gcc",
+  "-mcpu=cortex-a9",
+  "-mfpu=vfpv3",
+  "-mfloat-abi=hard",
+  "-std=c99",
+  "-O2",
+  "-g",
+  "-Wall",
+  "-Wextra",
+  "-ffreestanding",
+  "-ffunction-sections",
+  "-fdata-sections",
+  "-fstack-usage",
+  "-I/home/test/zynq_fabricmap/firmware/b1/bsp/include",
+  "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common",
+  "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/common",
+  "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/common/gcc",
+  "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/cortexa9",
+  "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/cortexa9/gcc",
+  "-I/home/test/Xilinx/2025.2/data/embeddedsw/XilinxProcessorIPLib/drivers/scuwdt_v2_6/src"
+]

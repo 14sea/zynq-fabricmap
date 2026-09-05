@@ -1,0 +1,25 @@
+diff --git a/home/test/zynq_psoracle/firmware/p3_wire.h b/home/test/zynq_fabricmap/firmware/b1/b1_wire.h
+index 81f1a94..5e96723 100644
+--- a/home/test/zynq_psoracle/firmware/p3_wire.h
++++ b/home/test/zynq_fabricmap/firmware/b1/b1_wire.h
+@@ -66,6 +66,12 @@ typedef struct {
+     /* app_identity 1.3.0 (rel-v4, prereg v0.6 draft §2.6d): the page's flags.bit5 — the
+      * forced SIGNREQ-retry control — as the application decoded it */
+     int sign_retry_control;
++    /* app_identity 1.4.0 (B1): the cartographer's version, the universe digest it was
++     * compiled with, and the probe budget the identity page handed it */
++    const char *carto_version;
++    const char *universe_sha256;      /* 64 hex, B1_UNIVERSE_SHA256 */
++    uint32_t probe_budget;
++    uint32_t carrier_variant;         /* the VARIANT register as read (B1: 0x42310001) */
+ } p3_wire_identity_in;
+ 
+ size_t p3_wire_identity(const p3_wire_identity_in *in, char *out, size_t max);
+@@ -90,6 +96,7 @@ typedef struct {
+     const char *genome;   /* 80 hex */
+     const char *outcome;  /* one of LOOP_OUTCOMES */
+     int audited;          /* -> "verified": "audited" | "replayed-only" */
++    const char *carto;    /* loop_record 1.2.0 (B1): the cartographer's pre-rendered JSON block, or NULL */
+     const char *arm;      /* loop_record 1.1.0: random_safe | map_guided on a candidate;
+                            * NULL on the two baseline brackets, which then carry no arm */
+ 
