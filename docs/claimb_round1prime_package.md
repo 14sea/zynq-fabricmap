@@ -186,9 +186,9 @@ the plan, the prediction and the preregistration as they were when the suite ran
 
 | | |
 |---|---|
-| preregistration | DRAFT v0.1, not frozen (`prereg.sha256` null) |
+| preregistration | DRAFT v0.1, never frozen — **round 1′ WITHDRAWN BEFORE FREEZE / NO-RUN (owner 2026-09-05, on two audits of §0)**; not a Claim B negative; kept as the instrument's known-answer fixture and the template for stage B2 of `docs/autonomous_cartography_roadmap.md` |
 | plan / prediction | generated and pinned (`plan.json` `454abf1f…`, `model_prediction.json` `33c259a5…`) |
 | instrument | `zynq-psoracle` `689dde1`, archived, read-only, 128 files pinned |
-| board contact | **none**; forbidden until the owner's next explicit ruling |
+| board contact | **none**; this round will not run (withdrawn); the next board work is stage B1 of the roadmap, under its own package and ruling |
 | what the owner is asked | (1) to decide §0 — run round 1′ as the measured negative + oracle-scale known answer, or redirect Claim B to a carrier with a non-additive fitness; (2) if run: review the package, freeze the preregistration (§10 there), issue the ruling pair (§5), authorise one session |
 | test report | `test_report_2026-09-05T090046Z.json`: 1295 ran / 0 skipped / OK on a clean tree at `23f0f3e64ace`, clean_tree_proof true |

@@ -1,5 +1,8 @@
 # M2 Prework — Fuzzing × Evolution, prjxray zynq7 Audit, local_map Bootstrap
 
+> **▶ 2026-09-05 — superseded, additively (this text is historical and unchanged):** §5's placement of routing-class autonomous fuzzing on "K7 sacrificial boards" no longer holds. `docs/board_roles.md` (2026-08-02) ruled Zynq-first, and the whole instrument line (psmap / P3) is a PS-looks-at-PL architecture that does not exist on a K7; the sacrificial board is an EBAZ4203 (`08EB`, once provisioned). The current plan is `docs/autonomous_cartography_roadmap.md`.
+
+
 > Copied verbatim from `zynq-autoehw/docs/m2_prework_fuzz_and_map.md` (origin/main `c495b62`)
 > as the kickoff record for this repo. The original stays in place there; do not
 > edit history on either side — record new decisions below or in new documents.
