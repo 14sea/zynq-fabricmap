@@ -134,7 +134,7 @@ New for B1: `test_b1_twin` (8), `test_b1_leakage` (7), `test_b1_wire` (3), `test
 **see the report cited below**; a dirty tree skips 27 carrier-authority tests and hides 5,
 so only `clean_tree_proof: true` counts.
 
-Report: *(filled by the report commit)*
+Report: `evidence/b1/tests/test_report_2026-09-05T101536Z.json` — ran **1338**, skipped **0**, `OK`; `head_at_run` `4c49b259671b` (the package commit), `worktree_dirty` False; instrument `689dde1dad37` = pinned, dirty False; **`clean_tree_proof: True`**.
 
 ## 10. What is asked, and what is not
 
