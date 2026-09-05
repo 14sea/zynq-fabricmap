@@ -1,4 +1,4 @@
-# B1 — the pre-board package, v2.1, delivered for the short re-review (2026-09-05)
+# B1 — the pre-board package, v2.2, delivered for the final short re-review (2026-09-05)
 
 > **HOST-ONLY. DRAFT / NO BOARD RULING.** Delivered at "B1 ready for the board" under the
 > owner's ruling of 2026-09-05 (`docs/autonomous_cartography_roadmap.md`; the
@@ -35,11 +35,23 @@ circular measurement and the init order, but not yet to freeze. Four blockers, c
 | 3 — `qualified` was a bare boolean; no B1Q runner, adjudicator, seed, or evidence pin; ruling count wrong | `host/b1q_runner.py` (the QUALIFICATION profile of the runner), `host/b1q_adjudicate.py`, the qualification plan/prediction (`evidence/b1q/`, seed 176 359 248 excluded from B1's set), the record format and `verify()` in `host/b1_qualification.py` — files hash, binding, PASS, **re-adjudication** — from which `carrier.qualified` is derived; two ruling pairs, four rulings; no host-attested reply control on the board (the nine code probes' `tables_match` = 0 with `configuration_valid_hw` = 1 are the evidence) — `docs/b1_carrier_qualification.md` |
 | 4 — drift: manifest version / `evidence_max` / `holdout_luts`, the firmware header, the report schema and its round-1′ dependency, the legacy `validate_run_log`, unpinned normative docs, no semantic map validation | manifest sections derived from the tree (`b1_manifest.py`: prereg version from the document, cartographer from the constants, `reporting_strata`); firmware header rewritten for B1; `b1_test_report.py` standalone (schema `b1_test_report`); `validate_run_log` is a refusal; the contract, qualification and architecture documents are in the runtime pin table; `b1_verify.semantic_findings` (292 addresses once each, legal state combinations, code-probe seqs, 32 legal edges, none pending) |
 
+**v2.1 → v2.2 (the owner's short review of v2.1, 2026-09-05):** the design and the four
+fixes stand; four host-side blockers in the evidence chain and the manifest lifecycle:
+
+| blocker (v2.1) | v2.2 |
+|---|---|
+| 1 — the manifest lifecycle dead-locked: the committed `carrier.qualification` was a legacy string, and `refresh()` reset `board_ready` to false, so "freeze → B1Q → pin → mapping" would refuse at `board_ready` | `refresh()` migrates any non-record value to null and keeps the owner's `board_ready` while the image, ELF and build-evidence pins have not drifted (any drift resets it); `Lifecycle` test: freeze → refresh (idempotent) → B1Q → `--qualification` → `qualified` derived, `board_ready` kept → the mapping preflight passes every pin |
+| 2 — a B1Q run log carried the mapping plan/prediction hashes as its inputs | `l6.inputs` per profile (plan, prediction **and the pin table**); both adjudicators refuse a log whose inputs are not the session's pinned ones; the qualification record and `verify()` cross-check them against `manifest_at_run` |
+| 3 — the qualification chain was open: the token came from the caller, the rulings' binding was not kept, the bound manifest's bytes were not kept, the provisioning ruling was not evidence | the runner copies `manifest_at_run.json` (bytes = the bound sha256) and both rulings verbatim into the evidence before the port; the record (2.0.0) takes its token from the run log, keeps both rulings' hash and content and the input pins; `verify()` re-binds tokens (app_identity / notary / summary / summary.json), both rulings, the inputs, re-adjudicates against `manifest_at_run`, and allows the current manifest to differ from it only in the qualification state (`docs/b1_carrier_qualification.md` §4) |
+| 4 — the mapping adjudicator accepted `qualified: false` with standing evidence | `qualification_stands()` requires the derived flag to agree with the evidence (as the runner does); tested from `adjudicate()` |
+
+Non-blocking: the test report's `package` label is `B1 v2.1`; the report below is regenerated.
+
 ## 1. Hashes and data flow
 
 | artifact | sha256 / value | role |
 |---|---|---|
-| `manifests/b1_manifest.json` | (committed; `prereg.sha256` null, `board_ready` false, `carrier.qualification` null → `qualified` false, derived) | the stage's pins |
+| `manifests/b1_manifest.json` | (committed; `prereg.sha256` null, `board_ready` false, `carrier.qualification` **null** → `qualified` false, derived) | the stage's pins |
 | B1 carrier `builds/b1/b1.bit` | `d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f`, 2 083 858 B | committed (as the instrument commits its carrier); build record `5da31443…`, carrier manifest `2e9de7c7…`, isolation `ada2594e…`; WNS +7.993 ns, ICAPE2 0, isolation passed |
 | B1 image `firmware/b1/bsp/out/b1_app.bin` | `54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8`, 114 708 B | rebuilt byte-identically by `firmware/b1/bsp/build.sh`; not committed; hash-checked by the runner |
 | `evidence/b1/build_evidence.json` | pinned in the manifest | two clean builds equal; the sources, the embeddedsw inputs, the compiler, all by hash; `worktree_dirty` and `head` recorded |
@@ -196,15 +208,14 @@ record, and re-verifies the plan, prediction and pin table itself.
 
 ## 9. Tests and the clean-tree proof
 
-B1 tests: `test_b1_adjudicate` (23), `test_b1_carrier` (7), `test_b1_e2e` (5), `test_b1_leakage` (7), `test_b1_pins` (3), `test_b1_plan` (10), `test_b1_qualification` (8), `test_b1_records` (5), `test_b1_runner` (16), `test_b1_session` (5), `test_b1_signer` (4), `test_b1_twin` (8), `test_b1_wire` (3). Whole suite on the clean tree — **see the report cited below**; a
+B1 tests: `test_b1_adjudicate` (24), `test_b1_carrier` (7), `test_b1_e2e` (5), `test_b1_leakage` (7), `test_b1_pins` (3), `test_b1_plan` (10), `test_b1_qualification` (12), `test_b1_records` (5), `test_b1_runner` (16), `test_b1_session` (5), `test_b1_signer` (4), `test_b1_twin` (8), `test_b1_wire` (3). Whole suite on the clean tree — **see the report cited below**; a
 dirty tree skips 27 carrier-authority tests, so only `clean_tree_proof: true` counts.
 
-Report: `evidence/b1/tests/test_report_2026-09-05T124403Z.json` (schema `b1_test_report`) — ran **1399**, skipped **0**, `OK`; `head_at_run` `c29e166336ec` (the clean-tree build-evidence commit), `worktree_dirty` False; instrument `689dde1dad37` = pinned, dirty False; **`clean_tree_proof: True`**. Earlier reports (`…T101536Z`, 1338 tests at `4c49b259`; `…T115752Z`, 1378 at `25f8c690`) are kept as the records of the withdrawn and the v2 packages.
+Report: <<<REPORT>>>
 
 ## 10. What is asked, and what is not
 
-Asked: the short re-review (the owner's step 7); if it passes — push, the compatibility
-review (§7), the freeze (prereg hash + `board_ready`), the qualification pair and session
+Asked: the final short re-review; if it passes — push, the compatibility review (§7), the freeze (prereg hash + `board_ready`), the qualification pair and session
 (a), the record pinned and committed, then the mapping pair and one session (b) on `17A6`. Not asked, and not done: any board contact,
 any change to `zynq-psoracle`, any probe of unattested bits, any routing, any provisioning
 of `08EB`, any B2/B3 ruling (their interfaces are fixed by the roadmap; their packages are

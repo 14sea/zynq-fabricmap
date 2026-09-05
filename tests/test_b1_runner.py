@@ -53,9 +53,11 @@ class Fixture:
         self.manifest["prereg"]["sha256"] = sha(doc)
         self.manifest["image"]["board_ready"] = board_ready
         if qualified:
-            # a REAL qualification record: the modelled B1Q session over this very manifest,
-            # adjudicated, pinned (the runner re-adjudicates it)
-            rec, _, _, _ = qualify(self.d, self.manifest, "b1q")
+            # a REAL qualification record: the modelled B1Q session over this very manifest
+            # (bound to the bytes manifest_path() writes), adjudicated, pinned — the runner
+            # re-adjudicates it and checks the transition to the manifest it reads
+            self.manifest["carrier"]["qualification"] = None; self.manifest["carrier"]["qualified"] = False
+            rec, _, _, _ = qualify(self.d, self.manifest, "b1q", text=json.dumps(self.manifest))
             self.manifest["carrier"]["qualification"] = rec
             self.manifest["carrier"]["qualified"] = True
         else:

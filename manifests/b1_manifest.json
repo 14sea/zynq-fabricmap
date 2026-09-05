@@ -52,7 +52,7 @@
    "worktree_dirty_at_build": false,
    "head_at_build": "ca80e73992decf26493f07e5b8ddaecba93c91db"
   },
-  "note": "the binary is not committed (bsp/out is gitignored, as the instrument's is); it is rebuilt byte-identically by firmware/b1/bsp/build.sh from the pinned sources and toolchain, and the runner refuses any image whose sha256 is not this one. board_ready is set by a ruling, never by this tool."
+  "note": "the binary is not committed (bsp/out is gitignored, as the instrument's is); it is rebuilt byte-identically by firmware/b1/bsp/build.sh from the pinned sources and toolchain, and the runner refuses any image whose sha256 is not this one. board_ready is set by the owner at the freeze, never by this tool; a refresh keeps it only while the image, ELF and build evidence are the ones it was granted for."
  },
  "universe": {
   "addresses": 292,
@@ -217,7 +217,7 @@
   "frame_table_sha256": "19df58fa41aee1abe1c7bed453bab9038aad5c319c496330faf04e0ec27f5634",
   "contract": "docs/b1_carrier_contract.md",
   "qualification_doc": "docs/b1_carrier_qualification.md",
-  "qualification": "docs/b1_carrier_qualification.md",
+  "qualification": null,
   "qualified": false,
   "note": "the B1 carrier (SEMANTIC_GATE=0: the PL verifies the signature and checks the sweep completed, and NEVER compares the readout with the signed table slots, which are the zero words). Built host-only. `qualification` is the B1Q session's record (host/b1_qualification.py), pinned by the owner after the `whole-of-run B1 carrier qualification` session on 17A6; `qualified` is DERIVED from it on every refresh (files hash, binding, PASS, re-adjudication) — the mapping runner and adjudicator re-verify the same chain and refuse on any break."
  },
@@ -229,7 +229,7 @@
  },
  "pins": {
   "path": "manifests/b1_instrument_pins.json",
-  "sha256": "80eb29072448487bf399da272f8481394d5e45e2818eff05d5aa635cf04697c9",
+  "sha256": "5907297da96fa8f85700f79440c419001aecf7144ce070e0ce64ac2ef6148761",
   "note": "every adjudication-critical fabricmap file (host/b1_pins.py PINNED_GLOBS); verified by the runner before the port is opened and by the adjudicator before any verdict"
  },
  "reporting_strata": {

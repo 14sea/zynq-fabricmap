@@ -45,16 +45,36 @@ def frozen() -> dict:
     return m
 
 
-def qualify(tmp: Path, m: dict, name: str = "q", **kw) -> tuple[dict, Path, dict, str]:
-    """Run the modelled B1Q session against manifest `m` (unqualified), adjudicate, write the
-    files the runner writes, build the record. Returns (record, evidence dir, result, msha)."""
-    sha = msha(m)
-    out = tmp / name
+def manifest_text(m: dict) -> str:
+    return json.dumps(m, indent=1, ensure_ascii=False) + "\n"
+
+
+def rulings_for(m: dict, sha: str) -> tuple[dict, dict]:
+    common = {"boardid": m["board"]["boardid"], "granted_by": "test", "date": "2026-09-05-T", "session": "B1Q",
+              "prereg_sha256": m["prereg"]["sha256"], "image_sha256": m["image"]["sha256"], "b1_manifest_sha256": sha}
+    return ({"ruling": qadj.RULING_TEXT, "master_seed": m["qualification_plan"]["master_seed"], **common},
+            {"ruling": bq.PROVISION_RULING_TEXT, **common})
+
+
+def qualify(tmp: Path, m: dict, name: str = "q", text: str | None = None, **kw) -> tuple[dict, Path, dict, str]:
+    """Run the modelled B1Q session against manifest `m` (unqualified; `text` = the exact
+    manifest bytes the session is bound to, default the canonical rendering), adjudicate,
+    write every file the runner writes (manifest_at_run, both rulings, adjudication,
+    summary), build the record. Returns (record, evidence dir, result, manifest sha256)."""
+    text = text if text is not None else manifest_text(m)
+    sha = hashlib.sha256(text.encode()).hexdigest()
+    out = tmp / name; out.mkdir(parents=True, exist_ok=True)
+    mp = tmp / f"{name}_manifest.json"; mp.write_text(text)
+    wr, pr = rulings_for(m, sha)
+    rp, pp = tmp / f"{name}_ruling.json", tmp / f"{name}_p3k.json"
+    rp.write_text(json.dumps(wr, indent=1) + "\n"); pp.write_text(json.dumps(pr, indent=1) + "\n")
+    bq.write_session_artifacts(out, mp, rp, pp, sha)
     r = ms.run_modelled(m, QPLAN, out, binding_extra={"b1_manifest_sha256": sha}, **kw)
     res = qadj.adjudicate(out, m, QPLAN, QPRED, sha, require_git=False)
     (out / "adjudication.json").write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")
-    (out / "summary.json").write_text(json.dumps({"outcome": res["outcome"], "token": r["token"]}) + "\n")
-    rec = bq.make_record(out, m, sha, QPLAN, RULING, res, r["token"])
+    (out / "summary.json").write_text(json.dumps({"outcome": res["outcome"], "token": r["token"], "l6": {"session": "B1Q"}}) + "\n")
+    rec = bq.make_record(out, m, sha, QPLAN, res)
+    (out / "qualification.json").write_text(json.dumps(rec, indent=1, sort_keys=True) + "\n")
     return rec, out, res, sha
 
 
@@ -74,6 +94,7 @@ class Chain(unittest.TestCase):
         m = copy.deepcopy(self.m); m["carrier"]["qualification"] = copy.deepcopy(self.rec); m["carrier"]["qualified"] = True
         return m
 
+
     def test_the_modelled_qualification_session_passes_with_the_silicon_observations(self):
         self.assertEqual(self.res["outcome"], "PASS", self.res["findings"])
         g = self.res["gate_observations"]
@@ -84,6 +105,13 @@ class Chain(unittest.TestCase):
         self.assertEqual(self.res["p3"]["run_log_validation"], {"scored": 11, "audited": 11, "chain_length": 12})
         self.assertEqual(self.res["provisional"]["recall"], 1.0)
         self.assertEqual(self.rec["outcome"], "PASS"); self.assertEqual(self.rec["binding"]["session"], "B1Q")
+        log = json.loads((self.out / "run_log.json").read_text())
+        self.assertEqual(self.rec["binding"]["token"], log["app_identity"]["token"])
+        self.assertEqual(log["l6"]["inputs"], {"plan_sha256": self.m["qualification_plan"]["sha256"],
+                                               "prediction_sha256": self.m["qualification_plan"]["prediction_sha256"],
+                                               "pins_sha256": self.m["pins"]["sha256"]})
+        self.assertEqual(self.rec["rulings"]["whole_of_run"]["content"]["session"], "B1Q")
+        self.assertEqual(hashlib.sha256((self.out / "manifest_at_run.json").read_bytes()).hexdigest(), self.sha_q)
         self.assertEqual(self.rec["binding"]["master_seed"], QPLAN["master_seed"])
         self.assertNotEqual(QPLAN["master_seed"], PLAN["master_seed"])
         self.assertIn(QPLAN["master_seed"], MANIFEST["seeds"]["excluded"]["b1_qualification"])
@@ -113,6 +141,16 @@ class Chain(unittest.TestCase):
         refuses(lambda m: m["qualification_plan"].__setitem__("master_seed", 5), "seed/budget")
         refuses(lambda m: m["carrier"]["qualification"]["files"].__setitem__("run_log.json", "0" * 64), "does not hash")
         refuses(lambda m: m["carrier"]["qualification"].__setitem__("evidence_dir", "/nonexistent"), "absent")
+        # the closure the v2.1 review found open: a record token other than the run log's
+        refuses(lambda m: m["carrier"]["qualification"]["binding"].__setitem__("token", "f" * 32), "token")
+        # the record's ruling copy must equal the verbatim file
+        refuses(lambda m: m["carrier"]["qualification"]["rulings"]["whole_of_run"]["content"].__setitem__("master_seed", 5), "ruling content differs")
+        refuses(lambda m: m["carrier"]["qualification"]["rulings"]["provisioning"].__setitem__("sha256", "0" * 64), "ruling hash")
+        # the record's inputs must be manifest_at_run's pins
+        refuses(lambda m: m["carrier"]["qualification"]["inputs"].__setitem__("pins_sha256", "0" * 64), "inputs")
+        # the current manifest may differ from manifest_at_run only in the qualification state
+        refuses(lambda m: m["universe"].__setitem__("note", "edited after the qualification"), "another manifest")
+        refuses(lambda m: m["pins"].__setitem__("sha256", "0" * 64), "another manifest")
 
     def test_a_tampered_evidence_file_breaks_the_chain(self):
         good = self.qualified_manifest()
@@ -130,6 +168,47 @@ class Chain(unittest.TestCase):
         with self.assertRaises(bq.QualificationRefusal) as cm:
             bq.verify(good)
         self.assertIn("re-adjudicates", str(cm.exception))
+
+    def test_a_tampered_ruling_or_manifest_copy_or_summary_breaks_the_chain(self):
+        good = self.qualified_manifest()
+        for name, mut, words, after in (
+                ("ruling_whole_of_run.json", lambda d: d.__setitem__("master_seed", 5), "does not hash", "bound to master_seed"),
+                ("manifest_at_run.json", lambda d: d["image"].__setitem__("board_ready", False), "does not hash", "b1_manifest_sha256"),
+                ("summary.json", lambda d: d.__setitem__("token", "f" * 32), "does not hash", "summary.json")):
+            d = self.tmp / f"tamper_{name}"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(self.out, d)
+            m = copy.deepcopy(good); m["carrier"]["qualification"]["evidence_dir"] = str(d)
+            bq.verify(m)
+            doc = json.loads((d / name).read_text()); mut(doc); text = json.dumps(doc, indent=1) + "\n"
+            (d / name).write_text(text)
+            with self.assertRaises(bq.QualificationRefusal) as cm:
+                bq.verify(m)
+            self.assertIn(words, str(cm.exception))
+            # re-pinned, the CONTENT check catches it
+            m["carrier"]["qualification"]["files"][name] = hashlib.sha256(text.encode()).hexdigest()
+            if name == "ruling_whole_of_run.json":
+                m["carrier"]["qualification"]["rulings"]["whole_of_run"]["sha256"] = m["carrier"]["qualification"]["files"][name]
+                m["carrier"]["qualification"]["rulings"]["whole_of_run"]["content"] = doc
+            with self.assertRaises(bq.QualificationRefusal) as cm:
+                bq.verify(m)
+            self.assertIn(after, str(cm.exception))          # the CONTENT / byte binding, not the file hash
+
+    def test_a_session_run_before_the_freeze_never_qualifies(self):
+        m = copy.deepcopy(self.m); m["image"]["board_ready"] = False
+        rec, out, res, sha = qualify(self.tmp, m, "prefreeze")
+        self.assertEqual(res["outcome"], "PASS")                   # the session itself is fine
+        m["carrier"]["qualification"] = rec
+        with self.assertRaises(bq.QualificationRefusal) as cm:
+            bq.verify(m)
+        self.assertIn("board_ready", str(cm.exception))
+
+    def test_a_b1q_log_carrying_the_mapping_inputs_is_refused(self):
+        d = self.tmp / "wrong_inputs"; shutil.copytree(self.out, d)
+        log = json.loads((d / "run_log.json").read_text())
+        log["l6"]["inputs"] = {"plan_sha256": self.m["plan"]["sha256"], "prediction_sha256": self.m["prediction"]["sha256"],
+                               "pins_sha256": self.m["pins"]["sha256"]}
+        (d / "run_log.json").write_text(json.dumps(log))
+        res = qadj.adjudicate(d, self.m, QPLAN, QPRED, self.sha_q, require_git=False)
+        self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("inputs plan_sha256", res["outcome"])
 
     def test_the_gate_observations_are_required_record_by_record(self):
         log = json.loads((self.out / "run_log.json").read_text())
@@ -163,6 +242,10 @@ class Chain(unittest.TestCase):
         bad = copy.deepcopy(m); bad["carrier"]["qualification"]["outcome"] = "HOLD: x"
         res = adj.adjudicate(out, bad, PLAN, PRED, msha(bad), require_git=False)
         self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("qualification", res["outcome"])
+        # the derived flag must agree with the evidence (the v2.1 review: qualified False, outcome PASS)
+        flag = copy.deepcopy(m); flag["carrier"]["qualified"] = False
+        res = adj.adjudicate(out, flag, PLAN, PRED, msha(flag), require_git=False)
+        self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("disagrees", res["outcome"])
 
     def test_a_qualification_that_holds_is_recorded_as_such_and_never_qualifies(self):
         d = self.tmp / "hold"; shutil.copytree(self.out, d)
@@ -174,10 +257,74 @@ class Chain(unittest.TestCase):
         self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"])
         self.assertTrue(any("tables_match = 1" in f for f in res["findings"]))
         (d / "adjudication.json").write_text(json.dumps(res)); (d / "summary.json").write_text("{}")
-        rec = bq.make_record(d, self.m, self.sha_q, QPLAN, RULING, res, "00" * 16)
+        rec = bq.make_record(d, self.m, self.sha_q, QPLAN, res)
         self.assertTrue(rec["outcome"].startswith("HOLD"))
         m = copy.deepcopy(self.m); m["carrier"]["qualification"] = rec
         self.assertFalse(bq.qualified(m))
+
+
+@unittest.skipUnless(HAVE, "the archived instrument checkout is not present")
+class Lifecycle(unittest.TestCase):
+    """freeze → refresh (board_ready survives; the legacy value migrates) → B1Q → pin the
+    record through b1_manifest.refresh(--qualification) → qualified derived, board_ready kept
+    → the mapping preflight passes every pin (owner's review 2026-09-05, blocker 1)."""
+
+    def test_freeze_b1q_pin_mapping_preflight(self):
+        import os, types
+        import b1_manifest as bmf
+        import b1_runner as rn
+        tmp = Path(tempfile.mkdtemp())
+        m = json.loads((R / "manifests/b1_manifest.json").read_text())
+        # the committed manifest is a DRAFT; whatever it carries under carrier.qualification is
+        # either a real record or nothing after a refresh
+        doc = tmp / "prereg.md"; doc.write_text("# fixture preregistration\n")
+        m["prereg"]["path"] = os.path.relpath(doc, R); m["prereg"]["sha256"] = hashlib.sha256(doc.read_bytes()).hexdigest()
+        m["image"]["board_ready"] = True                                # the owner's freeze
+        m["carrier"]["qualification"] = "docs/b1_carrier_qualification.md"   # the v2 legacy value
+        m = bmf.refresh(m)
+        self.assertTrue(m["image"]["board_ready"]); self.assertIsNone(m["carrier"]["qualification"]); self.assertFalse(m["carrier"]["qualified"])
+        m2 = bmf.refresh(copy.deepcopy(m))
+        self.assertEqual(m2, m)                                        # a refresh is idempotent on an unchanged tree
+        # the B1Q session, bound to THIS manifest's bytes
+        text = manifest_text(m)
+        rec, out, res, sha = qualify(tmp, m, "b1q", text=text)
+        self.assertEqual(res["outcome"], "PASS", res["findings"])
+        # the owner pins it: verified, then derived
+        m3 = bmf.refresh(copy.deepcopy(m), qualification_dir=out)
+        self.assertTrue(m3["carrier"]["qualified"]); self.assertTrue(m3["image"]["board_ready"])
+        self.assertEqual(m3["carrier"]["qualification"]["binding"]["b1_manifest_sha256"], sha)
+        self.assertEqual(bq._strip_transition(m3), bq._strip_transition(m))
+        # a drift of the image would reset board_ready and break the chain
+        drifted = copy.deepcopy(m3); drifted["image"]["sha256"] = "a" * 64
+        drifted = bmf.refresh(drifted)
+        self.assertFalse(drifted["image"]["board_ready"])              # the pinned build evidence names another image
+        # the mapping preflight: every pin holds; it stops at the boundary record
+        mp = tmp / "manifest.json"; mp.write_text(manifest_text(m3)); msha3 = hashlib.sha256(mp.read_bytes()).hexdigest()
+        def ruling(name, **f):
+            p = tmp / f"{name}.json"; p.write_text(json.dumps({"boardid": "17A6", "granted_by": "test", "date": "2026-09-05-T", **f})); return p
+        common = dict(session="B1", prereg_sha256=m3["prereg"]["sha256"], image_sha256=m3["image"]["sha256"], b1_manifest_sha256=msha3)
+        a = types.SimpleNamespace(ruling=ruling("b1", ruling=rn.RULING_TEXT, master_seed=m3["seeds"]["master_seed"], **common),
+                                  provision_ruling=ruling("k", ruling=rn.PROVISION_RULING_TEXT, **common),
+                                  boundary=inst.DEFAULT_ROOT / "evidence/boundary/principal_boundary_2026-09-04-01.json",
+                                  out=tmp / "out", manifest=mp, instrument_root=inst.DEFAULT_ROOT,
+                                  image=R / "firmware/b1/bsp/out/b1_app.bin", key=Path("/var/lib/p3signer/keys/K.bin"),
+                                  signer_user="p3signer", port="/dev/null")
+        if not a.image.is_file() or not a.boundary.is_file():
+            self.skipTest("built image or boundary record absent")
+        with self.assertRaises(Exception) as cm:
+            rn.preflight(a, rn.MAPPING)
+        msg = str(cm.exception).lower()
+        self.assertNotIsInstance(cm.exception, AssertionError)
+        self.assertTrue("boundary" in msg or "old" in msg or "runner_user" in msg, msg)
+        # and with the record removed after the freeze, the same preflight refuses at the qualification
+        m4 = copy.deepcopy(m3); m4["carrier"]["qualification"] = None; m4["carrier"]["qualified"] = False
+        mp.write_text(manifest_text(m4)); msha4 = hashlib.sha256(mp.read_bytes()).hexdigest()
+        common["b1_manifest_sha256"] = msha4
+        a.ruling = ruling("b1b", ruling=rn.RULING_TEXT, master_seed=m4["seeds"]["master_seed"], **common)
+        a.provision_ruling = ruling("kb", ruling=rn.PROVISION_RULING_TEXT, **common)
+        with self.assertRaises(rn.Refusal) as cm:
+            rn.preflight(a, rn.MAPPING)
+        self.assertIn("not qualified", str(cm.exception))
 
 
 if __name__ == "__main__":

@@ -273,7 +273,7 @@ class B1Session:
             if self.board.done and self.collector.epoch_end is not None and not self.cs.lingering(self.now):
                 break
 
-    def write_evidence(self, out_dir: Path, binding: dict) -> None:
+    def write_evidence(self, out_dir: Path, binding: dict, inputs: dict) -> None:
         lt = self.M["lt"]
         out_dir.mkdir(parents=True, exist_ok=True)
         seqs = [r["seq"] for r in self.collector.loop_records]
@@ -283,7 +283,7 @@ class B1Session:
                "notary_log": self.relay.notary_log(),
                "timing": {"clocks": lt.CLOCKS, "t_go_mono": self.t_go, "records": {str(s): timing[s] for s in seqs}},
                "l6": {**{k: self.plan[k] for k in ("session", "master_seed", "budget", "audit_seqs", "crc_budget", "session_timeout_s", "flags", "protocol")},
-                      "n": self.plan["budget"], "binding": binding}}
+                      "n": self.plan["budget"], "binding": binding, "inputs": inputs}}
         if self.collector.closing_negative is not None:
             log["closing_negative"] = self.collector.closing_negative
         (out_dir / "run_log.json").write_text(json.dumps(log, indent=1))
@@ -311,7 +311,8 @@ def run_modelled(manifest: dict, plan: dict, out_dir: Path, fixture: str = "trut
     binding = {"image_sha256": manifest["image"]["sha256"], "prereg_sha256": manifest["prereg"]["sha256"], "protocol": "rel-v4",
                "session": plan.get("session", "B1"), "schedule_mode": "carto-v1", "master_seed": plan["master_seed"],
                "psoracle_commit": manifest["instrument"]["psoracle_commit"], **(binding_extra or {})}
-    s.write_evidence(out_dir, binding)
+    import b1_adjudicate as adj
+    s.write_evidence(out_dir, binding, adj.expected_inputs(manifest, plan.get("session", "B1")))
     return {"epoch_end": s.collector.epoch_end, "records": len(s.collector.loop_records), "virtual_s": s.now - 1000.0,
             "wall_s": time.monotonic() - t0, "token": token, "faults": len(s.faults)}
 

@@ -61,19 +61,32 @@ def sha(p: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
+def board_ready_survives(prior: dict, image: dict, build_evidence_sha: str) -> bool:
+    """The owner's `board_ready` (set at the freeze) survives a refresh iff nothing it was
+    granted for has drifted: the same image bytes, the same ELF, the same build evidence.
+    Any drift resets it to false — a new image needs a new compatibility review."""
+    return bool(prior.get("board_ready")) and prior.get("sha256") == image["sha256"] \
+        and prior.get("elf_sha256") == image["elf_sha256"] \
+        and (prior.get("build_evidence") or {}).get("sha256") == build_evidence_sha
+
+
 def refresh(manifest: dict, withdraw: tuple[str, str] | None = None, qualification_dir: Path | None = None) -> dict:
     manifest["prereg"]["version"] = prereg_version(manifest)
     ev_path = REPO_ROOT / "evidence/b1/build_evidence.json"
     ev = json.loads(ev_path.read_text())
     im = ev["image"]
+    prior_image = manifest.get("image") or {}
+    ev_sha = sha(ev_path)
     manifest["image"] = {"path": im["path"], "sha256": im["sha256"], "elf_sha256": im["elf_sha256"], "bytes": im["bytes"],
-                         "load_address": im["load_address"], "entry": im["entry"], "board_ready": False,
-                         "build_evidence": {"path": "evidence/b1/build_evidence.json", "sha256": sha(ev_path),
+                         "load_address": im["load_address"], "entry": im["entry"],
+                         "board_ready": board_ready_survives(prior_image, im, ev_sha),
+                         "build_evidence": {"path": "evidence/b1/build_evidence.json", "sha256": ev_sha,
                                             "reproduced_byte_identical": ev["reproducibility"]["reproduced_byte_identical"],
                                             "worktree_dirty_at_build": ev["git"]["worktree_dirty"], "head_at_build": ev["git"]["head"]},
                          "note": "the binary is not committed (bsp/out is gitignored, as the instrument's is); it is rebuilt byte-identically "
                                  "by firmware/b1/bsp/build.sh from the pinned sources and toolchain, and the runner refuses any image whose "
-                                 "sha256 is not this one. board_ready is set by a ruling, never by this tool."}
+                                 "sha256 is not this one. board_ready is set by the owner at the freeze, never by this tool; a refresh "
+                                 "keeps it only while the image, ELF and build evidence are the ones it was granted for."}
     bd = REPO_ROOT / "builds/b1"
     build = json.loads((bd / "b1_build.json").read_text())
     car = json.loads((bd / "carrier_manifest.json").read_text())
@@ -82,6 +95,8 @@ def refresh(manifest: dict, withdraw: tuple[str, str] | None = None, qualificati
     if (bd / "b1.bit").is_file() and sha(bd / "b1.bit") != build["bitstream_sha256"]:
         raise SystemExit("builds/b1/b1.bit does not hash to b1_build.json")
     prior_q = (manifest.get("carrier") or {}).get("qualification")
+    if not (isinstance(prior_q, dict) and prior_q.get("schema") == bq.SCHEMA):
+        prior_q = None                       # a legacy value (the v2 doc pointer) or garbage is never a qualification
     manifest["carrier"] = {"bitstream": "builds/b1/b1.bit", "bitstream_sha256": build["bitstream_sha256"], "bitstream_bytes": car["bitstream_bytes"],
                            "build_record": {"path": "builds/b1/b1_build.json", "sha256": sha(bd / "b1_build.json")},
                            "carrier_manifest": {"path": "builds/b1/carrier_manifest.json", "sha256": sha(bd / "carrier_manifest.json")},

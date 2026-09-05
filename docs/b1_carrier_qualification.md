@@ -1,4 +1,4 @@
-# B1 carrier qualification — what is host-verified, what needs the board, and how the result is bound (v0.2, host-only, 2026-09-05)
+# B1 carrier qualification — what is host-verified, what needs the board, and how the result is bound (v0.3, host-only, 2026-09-05)
 
 > **Standing: host-only. No ruling; no board contact.** The B1 carrier (`builds/b1/b1.bit`
 > `d85daef4…`) is a new bitstream and inherits none of the instrument's board-level
@@ -82,30 +82,59 @@ consume a ruling and violate the contract this round is about.
 
 ## 4. The evidence chain: how `qualified` is derived (`host/b1_qualification.py`)
 
-After the session the B1Q runner writes **`qualification.json`** beside the evidence:
+Before the port is opened the runner copies, into the evidence directory, the exact bytes
+of the manifest it read (`manifest_at_run.json` — it must hash to the sha256 every binding
+names) and both ruling files verbatim (`ruling_whole_of_run.json`, `ruling_provisioning.json`).
+After the session and its adjudication the B1Q runner writes **`qualification.json`**
+beside them (schema `b1_carrier_qualification` 2.0.0):
 
 ```json
-{"schema": "b1_carrier_qualification", "schema_version": "1.0.0", "session": "B1Q",
+{"schema": "b1_carrier_qualification", "schema_version": "2.0.0", "session": "B1Q",
  "evidence_dir": "evidence/b1q/b1q_17A6_<date>",
- "files": {"run_log.json": "<sha256>", "audits.json": "…", "timeline.json": "…", "adjudication.json": "…", "summary.json": "…"},
+ "files": {"run_log.json": "<sha256>", "audits.json": "…", "timeline.json": "…", "adjudication.json": "…", "summary.json": "…",
+           "manifest_at_run.json": "…", "ruling_whole_of_run.json": "…", "ruling_provisioning.json": "…"},
  "outcome": "PASS",
- "ruling": {"ruling": "whole-of-run B1 carrier qualification", "boardid": "17A6", "granted_by": "…", "date": "…"},
+ "rulings": {"whole_of_run": {"file": "ruling_whole_of_run.json", "sha256": "…", "content": {…the ruling verbatim…}},
+             "provisioning": {"file": "ruling_provisioning.json", "sha256": "…", "content": {…}}},
+ "inputs": {"plan_sha256": "dead8853…", "prediction_sha256": "d2c9293a…", "pins_sha256": "…"},
  "binding": {"session": "B1Q", "carrier_sha256": "d85daef4…", "carrier_variant": "0x42310001", "image_sha256": "54b00663…",
-             "prereg_sha256": "<frozen>", "b1_manifest_sha256": "<the manifest the session was bound to>",
-             "master_seed": 176359248, "budget": 9, "psoracle_commit": "689dde1…", "token": "<session token>"}}
+             "prereg_sha256": "<frozen>", "b1_manifest_sha256": "<sha256 of manifest_at_run.json>",
+             "master_seed": 176359248, "budget": 9, "psoracle_commit": "689dde1…",
+             "token": "<the run log's app_identity token — read from the evidence, never supplied>"}}
 ```
 
 The owner pins a PASS record with `host/b1_manifest.py --qualification <evidence dir>`,
 which **verifies it first** and writes it as `carrier.qualification`; every later refresh
-re-derives `carrier.qualified` from it. **`verify(manifest)`** — called by the mapping runner
-before the port and by the mapping adjudicator before any verdict — requires all of: the
-record present with `outcome: PASS`; every evidence file still hashing to the record; the
-binding equal to THIS manifest's carrier hash and variant, image hash, frozen prereg hash,
-instrument commit, qualification seed and budget; the stored adjudication a B1Q PASS; and
-the pinned evidence **re-adjudicated now** by `b1q_adjudicate` to PASS with no finding. Any
-break is a refusal, and the flag alone — set by hand, or left true after the evidence
-changed — is refused explicitly (`tests/test_b1_qualification.py`, `test_b1_runner.py`).
-A HOLD session leaves a record too (of a failed qualification); it never qualifies.
+re-derives `carrier.qualified` from it (and migrates any value that is not a record to
+null). **`verify(manifest)`** — called by the mapping runner before the port and by the
+mapping adjudicator before any verdict, both of which also require the stored flag to agree
+with it — requires all of:
+
+1. the record present with `outcome: PASS`; every one of the eight evidence files still
+   hashing to it;
+2. `manifest_at_run.json` hashing to the record's and the run log's `b1_manifest_sha256`;
+   the manifest it contains binding the same carrier hash and variant, image hash, frozen
+   prereg hash and instrument commit as the current manifest, and `board_ready` true (a
+   session run before the freeze never qualifies);
+3. the run log's token (app_identity, notary_log, session_summary) equal to the record's;
+   `summary.json` naming that token, session `B1Q` and outcome PASS; the run log's binding
+   naming session `B1Q` and the same manifest sha256;
+4. the run log's `l6.inputs` — plan, prediction and pin-table hashes — equal to
+   `manifest_at_run`'s qualification pins (a B1Q log carrying the mapping hashes is refused);
+5. both rulings, from their verbatim copies (hash and content equal to the record's):
+   the right texts, session `B1Q`, the plan's seed (whole-of-run), the frozen prereg, the
+   image, the manifest sha256 of `manifest_at_run`, the board;
+6. the stored adjudication a B1Q PASS, and the pinned evidence **re-adjudicated now** by
+   `b1q_adjudicate` against `manifest_at_run` to PASS with no finding;
+7. the CURRENT manifest differing from `manifest_at_run` in nothing but
+   `carrier.qualification` and `carrier.qualified` — the only transition a qualification
+   licenses. A pin, a plan, the image, the prereg or a note changed since means the carrier
+   was qualified for another manifest.
+
+Any break is a refusal (`tests/test_b1_qualification.py`, `test_b1_runner.py`); a HOLD
+session leaves a record too (of a failed qualification) and never qualifies. The whole
+lifecycle — freeze → refresh keeps `board_ready` → B1Q → pin → `qualified` derived → the
+mapping preflight passes every pin — is one test (`Lifecycle`).
 
 ## 5. What this does not qualify
 

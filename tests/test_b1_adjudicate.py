@@ -69,7 +69,8 @@ def synthetic_log(manifest: dict, plan: dict, fabric, n: int | None = None, kind
                                               "last_seq": recs[-1]["seq"]}, "written_by": "app"},
             "l6": {"binding": {"image_sha256": manifest["image"]["sha256"], "prereg_sha256": manifest["prereg"]["sha256"],
                                "protocol": "rel-v4", "session": plan["session"], "schedule_mode": "carto-v1", "master_seed": plan["master_seed"],
-                               "b1_manifest_sha256": MSHA, "psoracle_commit": manifest["instrument"]["psoracle_commit"]}}}
+                               "b1_manifest_sha256": MSHA, "psoracle_commit": manifest["instrument"]["psoracle_commit"]},
+                   "inputs": adj.expected_inputs(manifest, plan["session"])}}
 
 
 def write_dir(log: dict) -> Path:
@@ -218,8 +219,8 @@ class Stage(unittest.TestCase):
         d = Path(tempfile.mkdtemp()); pp = d / "prediction.json"
         text = json.dumps(pred, indent=1, sort_keys=True) + "\n"; pp.write_text(text)
         m = frozen_manifest(); m["prediction"]["sha256"] = hashlib.sha256(text.encode()).hexdigest()
-        res = adj.adjudicate(write_dir(self.truth()), m, PLAN, pred, MSHA, require_git=False, p3_layer=stub_layer(),
-                             prediction_path=pp, qualification_check=NOQ)
+        res = adj.adjudicate(write_dir(synthetic_log(m, PLAN, bm.fixture("truth"))), m, PLAN, pred, MSHA, require_git=False,
+                             p3_layer=stub_layer(), prediction_path=pp, qualification_check=NOQ)
         self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"])
         self.assertTrue(any("prediction.expected_score.snapshots.probes_to_full_confirmation" in f for f in res["findings"]))
 
@@ -309,6 +310,17 @@ class Binding(unittest.TestCase):
             res = adj.adjudicate(write_dir(log), m, PLAN, PRED, MSHA, require_git=False, p3_layer=stub_layer(), qualification_check=NOQ)
             self.assertTrue(res["outcome"].startswith("REFUSED"), (key, res["outcome"]))
             self.assertIn(key, res["outcome"])
+
+    def test_the_logged_inputs_must_be_the_pinned_plan_prediction_and_pin_table(self):
+        m = frozen_manifest()
+        for k in ("plan_sha256", "prediction_sha256", "pins_sha256"):
+            log = synthetic_log(m, PLAN, bm.fixture("truth"))
+            log["l6"]["inputs"][k] = "0" * 64
+            res = adj.adjudicate(write_dir(log), m, PLAN, PRED, MSHA, require_git=False, p3_layer=stub_layer(), qualification_check=NOQ)
+            self.assertTrue(res["outcome"].startswith("REFUSED"), (k, res["outcome"])); self.assertIn(k, res["outcome"])
+        log = synthetic_log(m, PLAN, bm.fixture("truth")); del log["l6"]["inputs"]
+        res = adj.adjudicate(write_dir(log), m, PLAN, PRED, MSHA, require_git=False, p3_layer=stub_layer(), qualification_check=NOQ)
+        self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("inputs", res["outcome"])
 
     def test_a_manifest_sha_other_than_the_logs_refuses(self):
         m = frozen_manifest()

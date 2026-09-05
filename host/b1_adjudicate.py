@@ -103,6 +103,15 @@ def check_pins(manifest: dict, plan_path: Path, prediction_path: Path, pins_path
 
 
 # ------------------------------------------------------------------ binding
+def expected_inputs(manifest: dict, session: str = SESSION) -> dict:
+    if session == SESSION:
+        plan_sha, pred_sha = manifest["plan"]["sha256"], manifest["prediction"]["sha256"]
+    else:
+        qp = manifest.get("qualification_plan") or {}
+        plan_sha, pred_sha = qp.get("sha256"), qp.get("prediction_sha256")
+    return {"plan_sha256": plan_sha, "prediction_sha256": pred_sha, "pins_sha256": (manifest.get("pins") or {}).get("sha256")}
+
+
 def check_binding(log: dict, manifest: dict, plan: dict, manifest_sha256: str, session: str = SESSION,
                   qualification_check=None) -> dict:
     """`qualification_check` (mapping sessions): a callable(manifest) raising on a carrier
@@ -110,6 +119,12 @@ def check_binding(log: dict, manifest: dict, plan: dict, manifest_sha256: str, s
     b = (log.get("l6") or {}).get("binding")
     if not isinstance(b, dict):
         raise Refusal("the run log carries no binding (l6.binding): not a B1 log")
+    inputs = (log.get("l6") or {}).get("inputs")
+    if not isinstance(inputs, dict):
+        raise Refusal("the run log names no inputs (l6.inputs): not a B1 log")
+    for k, v in expected_inputs(manifest, session).items():
+        if not v or inputs.get(k) != v:
+            raise Refusal(f"inputs {k}: the log says {str(inputs.get(k))[:16]!r}, this session's pinned {str(v)[:16]!r}")
     want = {"session": session, "master_seed": plan["master_seed"], "image_sha256": manifest["image"]["sha256"],
             "protocol": manifest["protocol"]["wire"], "prereg_sha256": manifest["prereg"]["sha256"],
             "b1_manifest_sha256": manifest_sha256, "psoracle_commit": manifest["instrument"]["psoracle_commit"]}
@@ -137,6 +152,10 @@ def qualification_stands(manifest: dict) -> None:
         bq.verify(manifest)
     except bq.QualificationRefusal as exc:
         raise Refusal(f"carrier qualification: {exc}") from None
+    if manifest["carrier"].get("qualified") is not True:
+        # the stored flag is DERIVED (b1_manifest.py); a manifest whose flag disagrees with
+        # its own evidence was edited by hand or not refreshed — the runner refuses it too
+        raise Refusal("carrier qualification: the manifest's carrier.qualified flag disagrees with its standing evidence (refresh the manifest)")
 
 
 # ------------------------------------------------------------------ the map's validation

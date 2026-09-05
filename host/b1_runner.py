@@ -227,8 +227,7 @@ def preflight(a, profile: dict = MAPPING) -> dict:
                     "schedule": [], "audit_policy": plan["audit_policy"], "audit_seqs": set(plan["audit_seqs"]),
                     "expected_frames": plan["expected_frames"], "crc_budget": plan["crc_budget"], "crc_formula": plan["crc_formula"],
                     "session_timeout_s": float(plan["session_timeout_s"]),
-                    "inputs": {"plan_sha256": manifest["plan"]["sha256"], "prediction_sha256": manifest["prediction"]["sha256"],
-                               "settle_polls_median_calibration": [16.0]},
+                    "inputs": {**expected_inputs(manifest, profile), "settle_polls_median_calibration": [16.0]},
                     "rules_version": "b1/v0.2 over L6 v0.7 rules", "bad_frame_policy": "ledger",
                     "bad_frame_budget": plan["bad_frame_budget"], "hb_rule": "v07", "protocol": plan["protocol"],
                     "rec_retry_control": True, "flags": flags,
@@ -236,12 +235,25 @@ def preflight(a, profile: dict = MAPPING) -> dict:
                                 "session": session, "schedule_mode": "carto-v1", "master_seed": plan["master_seed"],
                                 "b1_manifest_sha256": manifest_sha, "psoracle_commit": verified["psoracle_commit"]}}
     return {"profile": profile, "ruling": ruling, "manifest": manifest, "manifest_sha256": manifest_sha, "l6_manifest": l6m,
+            "manifest_path": a.manifest, "ruling_path": a.ruling, "provision_ruling_path": a.provision_ruling,
             "carrier": carrier, "bitstream": car_bit, "image": a.image, "image_sha256": image_sha,
             "plan": session_plan, "round_plan": plan, "prediction": prediction,
             "signer": l3.SubprocessSigner(a.key, script=REPO_ROOT / "host/b1_sign_arm.py", signer_user=a.signer_user),
             "provision_execute": True, "provision_ruling": a.provision_ruling,
             "token": secrets.token_hex(16), "seed_nonce": int(manifest["carrier"]["nonce_seed"], 16),
             "heartbeat_s": l6m["protocol"]["heartbeat_s"], "instrument": verified, "instrument_root": root}
+
+
+def expected_inputs(manifest: dict, profile: dict = MAPPING) -> dict:
+    """What the session's run log must name as its inputs (l6.inputs): the plan, the
+    prediction and the pin table the session was run against — per PROFILE (the v2.1 runner
+    wrote the mapping hashes into a B1Q log; owner's review 2026-09-05)."""
+    if profile["plan_section"] == "plan":
+        plan_sha, pred_sha = manifest["plan"]["sha256"], manifest["prediction"]["sha256"]
+    else:
+        qp = manifest["qualification_plan"]
+        plan_sha, pred_sha = qp["sha256"], qp["prediction_sha256"]
+    return {"plan_sha256": plan_sha, "prediction_sha256": pred_sha, "pins_sha256": manifest["pins"]["sha256"]}
 
 
 def identity_check_for(plan: dict, manifest: dict):
@@ -267,13 +279,16 @@ def run_session(session, out_dir: Path, ruling: dict, cfg: dict) -> dict:
     import b1_session  # noqa: E402
     profile = cfg.get("profile", MAPPING)
     judge = profile["adjudicate"]
+    # the session's own evidence of what it was bound to: the manifest bytes at preflight
+    # and both ruling files, copied verbatim (hashes checked by the qualification chain)
+    bq.write_session_artifacts(out_dir, cfg["manifest_path"], cfg["ruling_path"], cfg["provision_ruling_path"], cfg["manifest_sha256"])
     summary = b1_session.run(session, out_dir, ruling, cfg, identity_check_for(cfg["round_plan"], cfg["manifest"]),
                              lambda d: judge(d, cfg["manifest"], cfg["round_plan"], cfg["prediction"], cfg["manifest_sha256"],
                                              instrument_root=cfg["instrument_root"], require_git=True),
                              profile["tool"])
     if profile is QUALIFICATION and (out_dir / "adjudication.json").is_file():
-        rec = bq.make_record(out_dir, cfg["manifest"], cfg["manifest_sha256"], cfg["round_plan"], ruling,
-                             json.loads((out_dir / "adjudication.json").read_text()), cfg["token"])
+        rec = bq.make_record(out_dir, cfg["manifest"], cfg["manifest_sha256"], cfg["round_plan"],
+                             json.loads((out_dir / "adjudication.json").read_text()))
         (out_dir / "qualification.json").write_text(json.dumps(rec, indent=1, sort_keys=True) + "\n")
     return summary
 
