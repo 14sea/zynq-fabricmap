@@ -273,8 +273,8 @@ class Chain(unittest.TestCase):
                 bq.read_archived_ruling(d / name)
         # any other extra key, a missing key, a wrong type
         p = self.out / bq.RULING_FILES["whole_of_run"]; base = json.loads(p.read_text())
-        for mut in (lambda e: e.__setitem__("extra", 1), lambda e: e.pop("sha256"), lambda e: e.__setitem__("note", 5),
-                    lambda e: e.__setitem__("content_base64", 7)):
+        for mut in (lambda e: e.__setitem__("extra", 1), lambda e: e.pop("sha256"), lambda e: e.pop("note"),
+                    lambda e: e.__setitem__("note", 5), lambda e: e.__setitem__("content_base64", 7)):
             e = copy.deepcopy(base); mut(e)
             q = self.tmp / "env_case.json"; q.write_text(json.dumps(e))
             with self.assertRaises(bq.QualificationRefusal):

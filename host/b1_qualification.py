@@ -104,9 +104,9 @@ def read_archived_ruling(path: Path) -> tuple[bytes, dict]:
         raise QualificationRefusal(f"no readable ruling archive at {path}: {exc}") from exc
     if not isinstance(env, dict) or env.get("schema") != ARCHIVE_SCHEMA or env.get("schema_version") != ARCHIVE_VERSION:
         raise QualificationRefusal(f"{Path(path).name} is not an {ARCHIVE_SCHEMA} envelope")
-    extra = sorted(set(env) - ARCHIVE_KEYS)
-    if extra or set(env) < {"schema", "schema_version", "sha256", "content_base64"}:
-        raise QualificationRefusal(f"{Path(path).name}: an envelope carries exactly {sorted(ARCHIVE_KEYS)}; found extra {extra} "
+    if set(env) != ARCHIVE_KEYS:
+        extra, missing = sorted(set(env) - ARCHIVE_KEYS), sorted(ARCHIVE_KEYS - set(env))
+        raise QualificationRefusal(f"{Path(path).name}: an envelope carries exactly {sorted(ARCHIVE_KEYS)}; extra {extra}, missing {missing} "
                                    f"(a ruling field on an envelope would make it a ruling again)")
     if any(k in env for k in RULING_FIELDS):
         raise QualificationRefusal(f"{Path(path).name}: an envelope must carry no ruling field")
