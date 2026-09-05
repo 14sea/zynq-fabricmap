@@ -38,10 +38,15 @@ map-guided evolution (selection on the board)
 every evaluation is a specimen  ──────────→  the next map version
 ```
 
-**The host may be notary, auditor, rel-v4 transaction endpoint and collector — and
-nothing else.** It may not choose probes, choose candidates, compute fitness, or decide a
-map update. That line is what "autonomous" means in every stage below; a stage that
-moves any of those to the host is a different, weaker claim and must say so.
+**The autonomy boundary.** The board is the sole executing authority for probe choice,
+candidate choice, fitness, selection and map update. The host is notary, auditor, rel-v4
+transaction endpoint and collector: it may **independently recompute** any of those after
+the data is submitted, as an audit — and the result of that recomputation may **never**
+feed back into the board's decisions in that session or into a map update. That line is
+what "autonomous" means in every stage below; a stage that moves an executing decision
+to the host is a different, weaker claim and must say so. *(Corrected 2026-09-05 on the
+owner's review: the first wording forbade the host to compute fitness at all, which
+contradicted its auditor role.)*
 
 ## 2. Stages
 
@@ -53,10 +58,19 @@ moves any of those to the host is a different, weaker claim and must say so.
 | **B3 closed loop** | can evolution specimens update the map online, and does the update improve later search? | evolution-as-fuzzing | after B1 and B2 |
 | **B4 expansion** | from LUT content bits to FF, then routing | content classes on any verify board; routing only on the sacrificial board (§5) | last |
 
-### B1 — blind cartography on the known 292 bits first
+### B1 — closed-book cartography on the known 292 bits first
 
 Do not touch unattested bits yet. The existing `clb_lut_init` certificate (292 addresses,
-6 LUTs, polarity, INIT index) is the **hidden ground truth**:
+6 LUTs, polarity, INIT index) is the **ground truth held back from the executable**. This
+is not a human-blind test and may not be called one: the certificate exists and its
+developer has read it. What B1 can claim is **closed-book, runtime-blind reconstruction by
+the executable / the algorithm**, and that claim is protected by guards, not by trust — a
+dependency scan and a binary/source guard (no LUT table, INIT index, polarity or group
+may be compiled into or reachable from the cartographer), synthetic fixtures with a
+permuted mapping (a cartographer that still outputs the real structure is hard-coded; one
+that follows the fixture's behaviour is measuring), an address-only baseline (what
+address structure alone predicts), and scoring only after the map is frozen and hashed.
+Genuinely unknown discovery is reserved for the later, unattested content bits:
 
 - the cartographer receives only addresses and a coarse safety class — never LUT names,
   INIT indices, polarity or groups;
@@ -65,7 +79,8 @@ Do not touch unattested bits yet. The existing `clb_lut_init` certificate (292 a
 - the verifier scores the answer against the certificate only at the end;
 - **primary metrics:** precision, recall, polarity errors, sample efficiency, confidence
   calibration, cold-boot replay of the same map bytes, map-hash consistency;
-- a genuine holdout: by bit or by whole LUT, unread while the cartographer is developed.
+- a holdout: by whole LUT, not consulted while the cartographer is developed — an
+  engineering holdout against tuning, not a claim that the ground truth was unseen.
 
 Only after B1 passes is a separate ruling sought for probing the remaining unattested
 content-bit entries (1 756 named by the frozen DB, never specimen-attested).
@@ -104,9 +119,10 @@ build" and "online updating pays" are distinguishable.
 
 ## 3. Sequencing on the boards (owner, 2026-09-05)
 
-**Everything without physical risk is done on `17A6` first; the sacrificial board is
+**Everything without routing-class risk is done on `17A6` first; the sacrificial board is
 entered only for routing, and only after the LUT (content-bit) stages are complete and
-their gates hold.** Concretely: B1 (blind cartography on the 292), the B2 discriminability
+their gates hold.** No image, configuration or power operation is zero-risk; what is
+guaranteed on `17A6` is that the work stays inside the certified content-bit boundary. Concretely: B1 (blind cartography on the 292), the B2 discriminability
 gate and B2/B3 on content bits run on the verify board under the P3 discipline; B4's
 routing part is the only work that touches the sacrificial board.
 
@@ -139,59 +155,58 @@ Two hard lines, machine-checked where a tool exists (`docs/board_roles.md` inter
    A/B: the main Claim B stays inside one certified-safe universe for both arms; the
    routing-hazard comparison is a different experiment with a different question.
 
-## 5. The sacrificial board — what damage is, and how to spend as few boards as possible
+## 5. The sacrificial board — what is known about damage, and how to spend as few boards as possible
 
-**Q1 — does a routing write burn the board, and is it one board per mistake?** No, and
-no. What an illegal routing composition does is put two drivers on one wire
-(`docs/mux_groups.md`: more than one selected input of a mux group, or two PIPs into one
-node). The physical effect is a DC path between two CMOS output stages — a few mA per
-contended net, localised heat, and an elevated VCCINT current. That is a **wedge-class**
-event (a dark or hung fabric, a brownout that drops the CH340), not damage, as long as it
-is short and bounded; `docs/board_roles.md` §"Wedge is not damage" already rules that
-retirement needs a *failed acceptance regression*, never an incident on its own. Damage
-is cumulative and probabilistic: sustained contention on many nets for minutes to hours
-can degrade drivers (electromigration, thermal), and the failure mode to fear is a
-**silent partial degradation** — one LUT or PIP that no longer behaves — not a dead
-chip. The PS is a separate hard block; PL contention reaches it only through the shared
-rails (a regulator trip is recoverable by power cycle). So a sacrificial board is
-**reusable across many incidents**; it is spent only when its regression fails, and that
-is detected, not assumed.
+*(Rewritten 2026-09-05 on the owner's review: the first version stated currents, times and
+"expected zero boards" as facts. None of those is evidenced for this hardware; the
+vendor's documents — AMD UG480 for the XADC, UG585 for the PS, DEVCFG and `PCFG_PROG_B` —
+describe the mechanisms and do not endorse any damage current or safe exposure time for
+this project. What follows is stated as conservatively as the evidence allows.)*
 
-**Q2 — how to minimise consumption.** In order of leverage:
+**Q1 — does a routing write destroy the board, and is it one board per mistake?** What is
+established: an illegal routing composition can put more than one driver on one wire
+(`docs/mux_groups.md`); the observable consequence is a **wedge-class** event (a dark or
+hung fabric, a brownout, a regulator trip), and `docs/board_roles.md` §"Wedge is not damage"
+rules that **a wedge by itself does not prove damage — damage is decided afterwards by the
+acceptance regression, and only a failed regression retires a board.** So a sacrificial
+board is reusable across incidents *as long as it keeps passing its regression*; it is not
+one board per mistake. What is **not** established, and must not be written as if it were:
+how much current a contended net draws on this die, how long an exposure is harmless,
+whether degradation is gradual or abrupt, or whether the PS's rails are isolated enough
+from a PL fault. The failure mode to plan for is a **silent partial degradation** that only
+a regression covering the probed region would catch.
 
-1. **Decide contention on the host, before the write.** Contention is a graph property:
-   a wire with more than one enabled driver. Given the frozen DB's wire/PIP model it is
-   decidable for a candidate *composition* — the same "one driver per node, listed
-   codeword per group" rule step 3 of the escalation ladder already states — so the
-   cartographer's routing probes are drawn from **compositions that are contention-free
-   by the graph**, never from random routing bits. The residual risk is a DB error (an
-   unknown or mis-grouped bit), which is exactly what the certificate ladder exists to
-   catch, one bit-class at a time.
-2. **Specimen-derived compositions only.** Probe with patterns Vivado itself would
-   produce (the EP4CE6 mine → holdout → emit method), so every written composition has
-   been seen legal on a tool-built design before it is written blind.
-3. **Bound the exposure in time.** Write → readback → score → restore inside one
-   transaction, milliseconds of exposure; the PS de-configures the PL (`PROG_B`) on a
-   watchdog or on a current threshold, so a contention never persists.
-4. **Current-limited 5 V with a trip, and current telemetry** (an INA219-class monitor on
-   the supply, XADC die temperature read by the PS) — a contention becomes a *measured*
-   event in the ledger with its fingerprint, and the limit trips before heat accumulates.
-5. **Confine the probes to an isolated region** — a pblock whose frames carry no PS/AXI,
-   scorer, HWICAP or control nets, proven from the routed design (the carrier-design
-   isolation rule), so a contended net can never be one the instrument depends on.
-6. **Readback-only first, then certified writes, then unconstrained** — the ladder as
-   ruled; each rung exhausted before the next, and a **known-answer regression after
-   every session** (the acceptance script plus a fabric self-test of the target region)
-   so degradation is caught while the board is still one incident old.
-7. **Blacklist, don't retry.** A composition that wedged goes into the `blacklist`
-   schema with its fingerprint (`reason: contention_suspected`) and is never written
-   again on any board.
-8. **Power-cycle between sessions** and never leave an illegal configuration loaded; the
-   cheapest board is the one whose incidents were all short.
+**Q2 — how to reduce consumption.** Each measure below *reduces* risk; none proves the
+absence of damage:
 
-With 1–5 in place, the expected consumption is **zero boards for the content-bit stages
-and a small, detectable degradation risk for the routing stage** — a sacrificial board
-that is spent is a finding (its fingerprint goes into the ledger), not a routine cost.
+1. **A host-side contention checker over the frozen DB model** — one driver per node,
+   listed codeword per mux group (the escalation ladder's step 3). It proves *no known
+   conflict under the frozen model*; it cannot prove the silicon is contention-free,
+   because the model may be wrong or incomplete — which is exactly what the certificate
+   ladder exists to find, one bit-class at a time.
+2. **Specimen-derived compositions only** (patterns Vivado itself produced) before any
+   blind composition.
+3. **Bounded exposure**: write → readback → score → restore in one transaction, with the
+   PS de-configuring the PL (`PCFG_PROG_B`) on a watchdog or a current threshold. This
+   shortens exposure; it does not prove a short exposure is harmless.
+4. **A current-limited 5 V supply with a trip, current telemetry on the supply, XADC
+   temperature and rail readings by the PS.** The trip threshold, the sampling rate, the
+   total reaction time from event to de-configuration, the external supply cut-off, and
+   the fallback when `PCFG_PROG_B` itself does not take effect **must all be measured on
+   the bench before the first routing write**, and the measurements go into the B4
+   package. Until then these are design intentions, not protections.
+5. **Region isolation** proven from the routed design — probes confined to a pblock whose
+   frames carry no PS/AXI, scorer, HWICAP or control nets.
+6. **The ladder as ruled** (readback-only → certified writes → unconstrained), each rung
+   exhausted before the next, with the **acceptance regression plus a fabric self-test of
+   the probed region after every session**, so a degradation is caught one incident old.
+7. **Blacklist, never retry** a composition that wedged (`blacklist` schema, its
+   fingerprint).
+8. **Power-cycle between sessions**; never leave an illegal configuration loaded.
+
+With 1–5 in place the routing stage's board consumption is *expected* to be low; that
+expectation is a hypothesis the B4 package must state and the sessions must test. The
+content-bit stages (B1–B3) involve no routing-class risk at all.
 
 ## 6. Disposition of existing assets, and what this supersedes
 

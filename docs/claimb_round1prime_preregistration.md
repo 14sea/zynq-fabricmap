@@ -44,7 +44,7 @@ the 292 addresses. Consequences, all computed and pinned:
 - every candidate's gain lies in [−4, +4] for either arm; the best of any block of a few
   hundred candidates is +4 for **both** arms — round 1's primary ("best fitness at a fixed
   budget") **ties by construction**;
-- same-LUT locality — the one thing the map knows — cannot change an additive score; the
+- same-LUT locality — the one thing the map knows — carries no interaction advantage on an additive score; the
   arms' distributions differ only in how they weight LUTs (random-safe by mapped-bit
   count, map-guided uniformly): E[gain] = 0.287671 (random-safe) vs 0.289427 (map-guided)
   per candidate, exactly, an artefact of the base's agreement pattern, not navigation;
@@ -61,8 +61,9 @@ non-blank known answers through the PS oracle and the signed interlock in one un
 session, which is the strongest oracle-scale test this line has (S #3's were predicted only
 after the fact); **(c)** whether the instrument holds this round's budget inside the
 evidenced window. What it cannot establish: anything about the map's *navigational* value —
-on an additive fitness no operator has any, so a null here is not evidence against the map
-on a non-additive one. **That is a finding about the carrier, not about the map, and it is
+under this additive scorer the same-LUT structure has no interaction advantage and this
+round's primary saturates, so a null here is not evidence against the map, or against
+other operators or selection schemes, on a non-additive fitness. **That is a finding about the carrier, not about the map, and it is
 stated here so the owner decides with it in view** (package §0).
 
 ## 1. The claim, and what is not claimed

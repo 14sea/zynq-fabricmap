@@ -26,10 +26,12 @@ output for vector *v* is INIT[*v*]; the base is all-zero. The fitness is therefo
   records of S #3** with 0 mismatches (§2), so every score of round 1′ is predicted in
   advance and pinned by hash.
 
-The consequence is not about the map; it is about the carrier: **on this carrier no
-operator can have navigational value, so Claim B (operator form) is predicted null, and
-Claim B's evolutionary form (a search with selection) would be predicted null too** — a
-hill-climber on an additive fitness gains nothing from locality. The map could matter only
+The consequence is about this scorer, and it is narrower than "no operator can matter":
+**under this additive scorer the same-LUT structure has no interaction advantage, and the
+fixed round 1′ seed, budget and primary are predicted to saturate into a tie.** Operators
+and selection schemes still differ (LUT weighting, sampling law, selection dynamics); what
+is shown is that the *interaction* the map could exploit does not exist here — *(wording
+narrowed 2026-09-05 on the owner's review; the original sentence over-generalised)*. The map could matter only
 on a **non-additive** fitness (e.g. LUT outputs chained, or a target defined over
 combinations), which is a carrier change, outside this ruling and outside this line's
 present authority.
@@ -190,5 +192,5 @@ the plan, the prediction and the preregistration as they were when the suite ran
 | plan / prediction | generated and pinned (`plan.json` `454abf1f…`, `model_prediction.json` `33c259a5…`) |
 | instrument | `zynq-psoracle` `689dde1`, archived, read-only, 128 files pinned |
 | board contact | **none**; this round will not run (withdrawn); the next board work is stage B1 of the roadmap, under its own package and ruling |
-| what the owner is asked | (1) to decide §0 — run round 1′ as the measured negative + oracle-scale known answer, or redirect Claim B to a carrier with a non-additive fitness; (2) if run: review the package, freeze the preregistration (§10 there), issue the ruling pair (§5), authorise one session |
+| disposition (ruled 2026-09-05) | **WITHDRAWN BEFORE FREEZE / NO-RUN.** Not a Claim B negative. Kept as the instrument's known-answer fixture and as the template for stage B2 of `docs/autonomous_cartography_roadmap.md`; nothing here is asked of the owner any more |
 | test report | `test_report_2026-09-05T090046Z.json`: 1295 ran / 0 skipped / OK on a clean tree at `23f0f3e64ace`, clean_tree_proof true |

@@ -56,7 +56,7 @@ below remain as written.
 
 ## 0c. 2026-09-05, later — round 1′ WITHDRAWN BEFORE FREEZE / NO-RUN; the line re-shaped (additive)
 
-The round 1′ package (`docs/claimb_round1prime_package.md`) found the pinned carrier's fitness additive over the 292 bits, so the map-guided A/B there is decided by arithmetic. On two audits the owner withdrew round 1′ before any freeze — it is not a Claim B negative — and re-shaped the programme into four stages (autonomous mapping, map correctness, map utility, closed loop); Claim B is now the map-utility stage B2 of `docs/autonomous_cartography_roadmap.md`. The readback leg's status stays as §0b ruled: host-only, no board contact, no ruling issued.
+The round 1′ package (`docs/claimb_round1prime_package.md`) found the pinned carrier's fitness additive over the 292 bits, so the map-guided A/B there is decided by arithmetic. On two audits the owner withdrew round 1′ before any freeze — it is not a Claim B negative — and re-shaped the programme into four stages — B1 autonomous mapping (with its correctness metrics), B2 map utility, B3 closed loop, B4 expansion; Claim B is now the map-utility stage B2 of `docs/autonomous_cartography_roadmap.md`. The readback leg's status stays as §0b ruled: host-only, no board contact, no ruling issued.
 
 ---
 
