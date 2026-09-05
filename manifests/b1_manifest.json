@@ -39,18 +39,18 @@
  },
  "image": {
   "path": "firmware/b1/bsp/out/b1_app.bin",
-  "sha256": "31663e2de64542d13ae6c8c59f03ff672476e975f4d13c7ce1ee7791e5cbe4c3",
-  "elf_sha256": "84fd5ad3a1975ee042b079393456f1d16e45a21fe30d7b38d99bedefdf3cdab1",
+  "sha256": "300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb",
+  "elf_sha256": "8de78efc76b26bc49c22fbd25b3cc957d1499c3a5fd42e8268a40da3586e0022",
   "bytes": 114708,
   "load_address": "0x02000000",
   "entry": "go 0x2000000",
   "board_ready": false,
   "build_evidence": {
    "path": "evidence/b1/build_evidence.json",
-   "sha256": "99646e18794a4880f6f2690fff3dcb54a3689bb8f155e526b38fdf85b8384e62",
+   "sha256": "0b60db894296c67949da9938b55872432b6c4e7f3dcb9bdebdbd3babf378cab7",
    "reproduced_byte_identical": true,
-   "worktree_dirty_at_build": false,
-   "head_at_build": "01b2fc1256297f57c23aaf3dc8d13fb7769120f7"
+   "worktree_dirty_at_build": true,
+   "head_at_build": "2d532cec28f7fbc0886e3b19ea77213e50cab6de"
   },
   "note": "the binary is not committed (bsp/out is gitignored, as the instrument's is); it is rebuilt byte-identically by firmware/b1/bsp/build.sh from the pinned sources and toolchain, and the runner refuses any image whose sha256 is not this one. board_ready is set by the owner at the freeze, never by this tool; a refresh keeps it only while the image, ELF and build evidence are the ones it was granted for."
  },
@@ -194,6 +194,12 @@
    "image_sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
    "state": "WITHDRAWN / DEFECTIVE / NO-RUN",
    "reason": "compatibility review 2026-09-05 (HOLD): the SIGNREF branch continued the session after a gate refusal, against B1's unscored-ends-the-epoch contract; superseded by the v2.3 image; never loaded on any board"
+  },
+  {
+   "at": "2026-09-05",
+   "image_sha256": "31663e2de64542d13ae6c8c59f03ff672476e975f4d13c7ce1ee7791e5cbe4c3",
+   "state": "WITHDRAWN / DEFECTIVE / NO-RUN",
+   "reason": "owner's recheck of v2.3 (2026-09-05): S.closing_baseline was set by ANY scored baseline, so a refused probe's TERM claimed a closing baseline that never happened; superseded by the v2.3.1 image; never loaded on any board"
   }
  ],
  "carrier": {
@@ -235,7 +241,7 @@
  },
  "pins": {
   "path": "manifests/b1_instrument_pins.json",
-  "sha256": "3c33c82d0106de02840decafd9f906817df1658c988d4d30540e260e49377b4b",
+  "sha256": "143c09d734bcbbdd3727f8680dd20fd1f3d1de189789cfc631c032a52964682e",
   "note": "every adjudication-critical fabricmap file (host/b1_pins.py PINNED_GLOBS); verified by the runner before the port is opened and by the adjudicator before any verdict"
  },
  "reporting_strata": {

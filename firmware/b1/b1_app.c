@@ -1159,6 +1159,23 @@ static int emit_record(p3_wire_record_in *rec, const char *outcome)
     return 0;
 }
 
+/* The session state a SCORED candidate leaves behind — in ONE place, so that the host
+ * application harness (tb/b1/hostapp) primes exactly what the application does. The
+ * closing-baseline mark is set ONLY by the closing baseline: the orchestrator proposes it
+ * with its step at B1_STEP_DONE, the opening one with the step at B1_STEP_PROBES (the
+ * owner's recheck of v2.3, 2026-09-05: the first version marked it at the opening baseline,
+ * and the harness's priming omitted the side effect, so a refused probe's TERM claimed a
+ * closing baseline that never happened). */
+static void note_scored(int is_baseline, const char *commit, const char tables[6][17])
+{
+    S.scored++;
+    memcpy(S.last_commit, commit, 65);
+    memcpy(S.last_tables, tables, 6 * 17);
+    S.have_last_reply = 1;
+    if (is_baseline && O.step == B1_STEP_DONE)
+        S.closing_baseline = 1;
+}
+
 /* returns 0 to continue the session, -1 when the epoch has ended */
 static int run_candidate(const uint32_t genome[P3_GENOME_WORDS], int is_baseline,
                          const char *arm_name)
@@ -1409,12 +1426,7 @@ static int run_candidate(const uint32_t genome[P3_GENOME_WORDS], int is_baseline
             return -1;
         }
     }
-    S.scored++;
-    memcpy(S.last_commit, commit, sizeof(commit));
-    memcpy(S.last_tables, tables, sizeof(tables));
-    S.have_last_reply = 1;
-    if (is_baseline)
-        S.closing_baseline = 1;
+    note_scored(is_baseline, commit, (const char(*)[17])tables);
     return 0;
 }
 

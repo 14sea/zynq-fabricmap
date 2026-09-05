@@ -35,7 +35,7 @@ reconstruction by the executable, guarded as `docs/b1_architecture.md` §5 says)
 | instrument | `zynq-psoracle` `689dde1dad374536c625bbe2b05986ee89eb4c94` (archived, read-only; 128 files by hash); its carrier and signer are **not** used |
 | B1 carrier | `builds/b1/b1.bit` `d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f`; build record, carrier manifest and isolation report by hash; `VARIANT` `0x42310001`; nonce seed `0x9e3779b97f4a7c15`; **qualified only through the evidence chain** of `docs/b1_carrier_qualification.md` §4 (never a flag) |
 | B1 signer | `host/b1_sign_arm.py` (contract `b1-nonsemantic-v1`, pinned by hash in the manifest) |
-| B1 image | `firmware/b1/bsp/out/b1_app.bin` `31663e2de64542d13ae6c8c59f03ff672476e975f4d13c7ce1ee7791e5cbe4c3`, 114 708 bytes, ELF and inputs in `evidence/b1/build_evidence.json`, two clean builds byte-identical |
+| B1 image | `firmware/b1/bsp/out/b1_app.bin` `300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb`, 114 708 bytes, ELF and inputs in `evidence/b1/build_evidence.json`, two clean builds byte-identical |
 | universe | 292 addresses, digest `895baf85…` (in the image and the IDENT) |
 | ground truth (held back from the executable) | `local_map.json` `56f2b9e8…`; phenotype manifest `e45f466d…`; carrier constants `48f79b87…` — this repository's and the instrument's imported copies must hash equal (falsifier 3) |
 | cartographer | `carto-v1`: 9 code bits, 292 confirmations, 32 pairs; per-entry evidence = code mask, confirm seq, observed; wire sample cap 8 |

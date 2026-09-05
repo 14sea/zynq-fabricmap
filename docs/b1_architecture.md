@@ -116,7 +116,7 @@ record and identity writers with the additive fields), `b1_orch.c/h`, `b1_carto.
 operator block. Same wire protocol (rel-v4), same transactions and bounds, same watchdog,
 same closing steps. Built by `firmware/b1/bsp/build.sh` with the instrument's toolchain
 (read-only) and the 2025.2 embeddedsw BSP; two clean builds are byte-identical —
-`evidence/b1/build_evidence.json` (image **`31663e2d…`**, 114 708 bytes; the embeddedsw
+`evidence/b1/build_evidence.json` (image **`300b12b1…`**, 114 708 bytes; the embeddedsw
 inputs by hash; the compiler by hash). The binary is not committed (as the instrument's is
 not) and is hash-checked by the runner.
 

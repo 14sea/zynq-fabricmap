@@ -159,18 +159,35 @@ void outbyte(char c)
  * proposal was the CLOSING baseline: it is then handed back (the orchestrator's step is
  * rewound to CLOSING, the proposal count with it) so that the real session loop proposes
  * it — the scenario's refused candidate. */
-static int prime_observed(uint32_t seq)
+static int prime_observed(uint32_t seq, int keep_closing)
 {
     uint32_t genome[P3_GENOME_WORDS]; int is_baseline, kind;
     static const uint64_t zeros[B1_LUTS];
+    static const char zero_tables[6][17] = {"0000000000000000", "0000000000000000", "0000000000000000",
+                                            "0000000000000000", "0000000000000000", "0000000000000000"};
+    static const char fake_commit[65] = "0000000000000000000000000000000000000000000000000000000000000000";
     if (!b1_orch_next(&O, genome, &is_baseline, &kind)) { fprintf(stderr, "prime: nothing to propose at seq %u\n", (unsigned)seq); exit(3); }
-    if (is_baseline && O.step == B1_STEP_DONE) {
+    if (is_baseline && O.step == B1_STEP_DONE && !keep_closing) {
         O.step = B1_STEP_CLOSING; O.candidates--;
         return 0;
     }
+    /* exactly the application's own bookkeeping for a SCORED candidate (b1_app.c
+     * note_scored), never a hand-written subset of it — plus the orchestrator's observation
+     * and the seq, which run_candidate sets before the sign exchange */
+    S.seq = seq;
     b1_orch_observe(&O, seq, zeros);
-    S.seq = seq; S.scored++;
+    note_scored(is_baseline, fake_commit, zero_tables);
     return 1;
+}
+
+static void print_result(const char *scenario)
+{
+    printf("RESULT {\"scenario\":\"%s\",\"kind\":\"%s\",\"reason\":\"%s\",\"seq\":%u,\"orch_step\":%d,\"signreq\":%u,\"rec\":%u,\"term\":%u,\"hb\":%u,\"other\":%u,"
+           "\"last_rec_outcome\":\"%s\",\"ctrl_writes\":%u,\"payload_writes\":%u,\"dma\":%u,\"closing_restore\":%d,\"closing_baseline\":%d,\"closing_unsigned\":%d,"
+           "\"scored\":%u,\"refused\":%u,\"rec_attempts\":%u,\"have_last_reply\":%d}\n",
+           scenario, END_NAME[S.kind], S.reason ? S.reason : "", (unsigned)S.seq, O.step, n_signreq, n_rec, n_term, n_hb, n_other,
+           last_rec_outcome, ctrl_writes, payload_writes, dma_count, S.closing_restore, S.closing_baseline, S.closing_unsigned,
+           (unsigned)S.scored, (unsigned)S.refused, (unsigned)S.rec_attempts, S.have_last_reply);
 }
 
 int main(int argc, char **argv)
@@ -186,27 +203,31 @@ int main(int argc, char **argv)
     if (!strcmp(scenario, "opening")) {
         script.signref_at_seq = 1;
     } else if (!strcmp(scenario, "probe")) {
-        (void)prime_observed(1);                  /* the opening baseline, scored */
+        (void)prime_observed(1, 0);               /* the opening baseline, scored */
         script.signref_at_seq = 2;
     } else if (!strcmp(scenario, "closing")) {
         /* the opening baseline and every probe the orchestrator proposes, observed as all
          * zero (no decode, no confirmation, no pairs: the orchestrator reaches the closing
          * baseline after fewer than 333 probes — the harness primes until it does) */
-        (void)prime_observed(1);
-        while (prime_observed(S.seq + 1u)) { }
+        (void)prime_observed(1, 0);
+        while (prime_observed(S.seq + 1u, 0)) { }
         script.signref_at_seq = (int)S.seq + 1;
     } else if (!strcmp(scenario, "ack_fail")) {
         script.signref_at_seq = 1; script.ack_rec = 0;
+    } else if (!strcmp(scenario, "state_after_opening")) {
+        /* the application's state after a SCORED opening baseline, no session run */
+        (void)prime_observed(1, 0);
+        print_result(scenario); return 0;
+    } else if (!strcmp(scenario, "state_after_closing")) {
+        /* … after every candidate INCLUDING the closing baseline scored */
+        (void)prime_observed(1, 1);
+        while (O.step != B1_STEP_DONE) (void)prime_observed(S.seq + 1u, 1);
+        print_result(scenario); return 0;
     } else {
         fprintf(stderr, "unknown scenario %s\n", scenario); return 2;
     }
     b1_session_run();
     b1_session_finish();
-    printf("RESULT {\"scenario\":\"%s\",\"kind\":\"%s\",\"reason\":\"%s\",\"seq\":%u,\"orch_step\":%d,\"signreq\":%u,\"rec\":%u,\"term\":%u,\"hb\":%u,\"other\":%u,"
-           "\"last_rec_outcome\":\"%s\",\"ctrl_writes\":%u,\"payload_writes\":%u,\"dma\":%u,\"closing_restore\":%d,\"closing_baseline\":%d,\"closing_unsigned\":%d,"
-           "\"scored\":%u,\"refused\":%u,\"rec_attempts\":%u}\n",
-           scenario, END_NAME[S.kind], S.reason ? S.reason : "", (unsigned)S.seq, O.step, n_signreq, n_rec, n_term, n_hb, n_other,
-           last_rec_outcome, ctrl_writes, payload_writes, dma_count, S.closing_restore, S.closing_baseline, S.closing_unsigned,
-           (unsigned)S.scored, (unsigned)S.refused, (unsigned)S.rec_attempts);
+    print_result(scenario);
     return 0;
 }

@@ -109,6 +109,21 @@ class HostApp(unittest.TestCase):
         self.assertEqual(rec["seq"], r["seq"])
         self.validate(frames)
 
+    def test_the_closing_baseline_mark_is_set_by_the_closing_baseline_only(self):
+        """The owner's recheck of v2.3: the first version set S.closing_baseline at ANY scored
+        baseline, so a refused probe's TERM claimed a closing baseline that never happened;
+        the harness's priming had omitted that side effect. The priming now calls the
+        application's own note_scored, and the mark is asserted both ways."""
+        r, _ = self.run_scenario("state_after_opening")
+        self.assertEqual((r["scored"], r["closing_baseline"], r["have_last_reply"], r["orch_step"]), (1, 0, 1, 1))
+        r, _ = self.run_scenario("state_after_closing")
+        self.assertEqual((r["closing_baseline"], r["orch_step"]), (1, 3)); self.assertGreater(r["scored"], 2)
+        # and through the real loop: a refusal after the opening baseline leaves it not_reached
+        for name in ("probe", "closing"):
+            r, frames = self.run_scenario(name)
+            self.assertEqual(r["closing_baseline"], 0, name)
+            self.assertEqual(frames[-1]["payload"]["closing"]["baseline"], "not_reached", name)
+
     def test_an_unacknowledged_refusal_record_stops_after_three_attempts(self):
         r, frames = self.run_scenario("ack_fail")
         self.assert_epoch_ended(r, frames, 1, rec_transmissions=3)
@@ -130,6 +145,13 @@ class SourceAudit(unittest.TestCase):
             seen.append(m.group(1))
         self.assertEqual(sorted(seen), ["REFUSED_BY_GATE", "REFUSED_BY_PL", "STOP_ARM", "STOP_AUDIT", "STOP_AXI", "STOP_LINK2", "STOP_LINK3",
                                         "STOP_SETTLE", "STOP_SIGN"])
+
+    def test_the_scored_bookkeeping_lives_in_note_scored_and_marks_the_closing_baseline_only_at_done(self):
+        src = (R / "firmware/b1/b1_app.c").read_text()
+        self.assertIn("if (is_baseline && O.step == B1_STEP_DONE)\n        S.closing_baseline = 1;", src)
+        self.assertEqual(src.count("S.closing_baseline = 1"), 1)
+        self.assertEqual(src.count("S.scored++"), 2)                 # note_scored, and the unacknowledged-SCORED stop path
+        self.assertIn("note_scored(is_baseline, commit, (const char(*)[17])tables);", src)
 
     def test_main_runs_the_three_named_session_steps(self):
         src = (R / "firmware/b1/b1_app.c").read_text()
