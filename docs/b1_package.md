@@ -171,7 +171,7 @@ same way (not frozen; unqualified carrier) before reading a record.
 B1 tests: `test_b1_adjudicate` (17), `test_b1_carrier` (7), `test_b1_e2e` (5), `test_b1_leakage` (7), `test_b1_pins` (3), `test_b1_plan` (7), `test_b1_records` (4), `test_b1_runner` (13), `test_b1_session` (5), `test_b1_signer` (4), `test_b1_twin` (8), `test_b1_wire` (3). Whole suite on the clean tree — **see the report cited below**; a
 dirty tree skips 27 carrier-authority tests, so only `clean_tree_proof: true` counts.
 
-Report: <<<REPORT>>>
+Report: `evidence/b1/tests/test_report_2026-09-05T115752Z.json` — ran **1378**, skipped **0**, `OK`; `head_at_run` `25f8c6904f57` (the clean-tree build-evidence commit), `worktree_dirty` False; instrument `689dde1dad37` = pinned, dirty False; **`clean_tree_proof: True`**. The first package's report (`test_report_2026-09-05T101536Z.json`, 1338 tests at `4c49b259`) is kept as the record of the withdrawn package.
 
 ## 10. What is asked, and what is not
 
