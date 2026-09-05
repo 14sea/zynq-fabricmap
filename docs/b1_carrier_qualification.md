@@ -112,7 +112,7 @@ beside them (schema `b1_carrier_qualification` 2.1.0):
  "rulings": {"whole_of_run": {"file": "ruling_whole_of_run.json", "envelope_sha256": "…", "bytes_sha256": "…", "content": {…the ruling as decoded…}},
              "provisioning": {"file": "ruling_provisioning.json", "envelope_sha256": "…", "bytes_sha256": "…", "content": {…}}},
  "inputs": {"plan_sha256": "dead8853…", "prediction_sha256": "d2c9293a…", "pins_sha256": "…"},
- "binding": {"session": "B1Q", "carrier_sha256": "d85daef4…", "carrier_variant": "0x42310001", "image_sha256": "54b00663…",
+ "binding": {"session": "B1Q", "carrier_sha256": "d85daef4…", "carrier_variant": "0x42310001", "image_sha256": "31663e2d…",
              "prereg_sha256": "<frozen>", "b1_manifest_sha256": "<sha256 of manifest_at_run.json>",
              "master_seed": 176359248, "budget": 9, "psoracle_commit": "689dde1…",
              "token": "<the run log's app_identity token — read from the evidence, never supplied>"}}

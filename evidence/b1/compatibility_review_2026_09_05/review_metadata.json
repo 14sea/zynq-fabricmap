@@ -1,0 +1,16 @@
+{
+  "reviewed_head": "a548bfb2afe145c37a66df0d4f1cec3fc4629819",
+  "manifest_sha256": "b85746114fa3dab1b09f8046cb034545a6de0b0fab928200c6c4a66e4612a895",
+  "image": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
+  "elf": "9d23ddf9190d4cde0e11a02a2adf469acd6d65d8b4963e26afee50c0371233f7",
+  "carrier": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+  "instrument": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "test_modules": 9,
+  "tests_ran": 47,
+  "skipped": 0,
+  "outcome": "HOLD",
+  "finding": "SIGNREF returns 0 and keeps P3_RUNNING; next candidate issued contrary to unscored-stop contract",
+  "reproduction_scope": "extracted actual SIGNREF branch; stubbed successful emit_record; linked actual b1_orch.c and b1_carto.c; no hardware execution",
+  "freeze_unchanged": true,
+  "qualification_unchanged": true
+}

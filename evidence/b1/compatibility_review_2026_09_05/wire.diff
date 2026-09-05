@@ -1,0 +1,67 @@
+diff --git a/home/test/zynq_psoracle/firmware/p3_wire.c b/firmware/b1/b1_wire.c
+index 3c4d9cb..c22c4df 100644
+--- a/home/test/zynq_psoracle/firmware/p3_wire.c
++++ b/firmware/b1/b1_wire.c
+@@ -1,7 +1,7 @@
+ /* p3_wire — see p3_wire.h. Pure serialisation: no MMIO, no board dependency, so the host
+  * contract test compiles this exact source and validates the bytes it produces. */
+ 
+-#include "p3_wire.h"
++#include "b1_wire.h"
+ #include "p3_derive.h"
+ 
+ #include <stdarg.h>
+@@ -96,6 +96,10 @@ size_t p3_wire_identity(const p3_wire_identity_in *in, char *out, size_t max)
+     w_init(&w, out, max);
+     w_fmt(&w, "{\"app_epoch\":%lu,\"carrier_sha256\":", (unsigned long)in->app_epoch);
+     w_str(&w, in->carrier_sha256);
++    /* 1.4.0 (B1): carrier_variant and carto_version sort between carrier_sha256 and control_plane */
++    w_fmt(&w, ",\"carrier_variant\":\"0x%08lx\"", (unsigned long)in->carrier_variant);
++    w_fmt(&w, ",\"carto_version\":");
++    w_str(&w, in->carto_version ? in->carto_version : "");
+     w_fmt(&w, ",\"control_plane\":\"standalone\",\"fclk0_hz_decoded\":%lu,\"findings\":[",
+           (unsigned long)in->fclk0_hz_decoded);
+     for (i = 0; i < in->findings_n; i++) {
+@@ -108,17 +112,21 @@ size_t p3_wire_identity(const p3_wire_identity_in *in, char *out, size_t max)
+     w_fmt(&w, "],\"master_seed\":%lu,\"nonce_at_start\":\"%016llx\",\"operator_data_sha256\":",
+           (unsigned long)in->master_seed, (unsigned long long)in->nonce_at_start);
+     w_str(&w, in->operator_data_sha256);
++    /* 1.4.0 (B1): probe_budget sorts between operator_data_sha256 and protocol */
++    w_fmt(&w, ",\"probe_budget\":%lu", (unsigned long)in->probe_budget);
+     w_fmt(&w, ",\"protocol\":");
+     w_str(&w, in->protocol ? in->protocol : "");
+     w_fmt(&w, ",\"pss_idcode\":\"0x%08lx\",\"rec_retry_control\":%s,\"schedule_mode\":",
+           (unsigned long)in->pss_idcode, in->rec_retry_control ? "true" : "false");
+     w_str(&w, in->schedule_mode);
+     /* 1.3.0: sign_retry_control sorts between schema_version and status_at_start */
+-    w_fmt(&w, ",\"schema\":\"app_identity\",\"schema_version\":\"1.3.0\",\"sign_retry_control\":%s,"
++    w_fmt(&w, ",\"schema\":\"app_identity\",\"schema_version\":\"1.4.0\",\"sign_retry_control\":%s,"
+               "\"status_at_start\":\"0x%08lx\",\"token\":",
+           in->sign_retry_control ? "true" : "false", (unsigned long)in->status_at_start);
+     w_str(&w, in->token);
+-    w_fmt(&w, ",\"uboot_epoch\":%lu}", (unsigned long)in->uboot_epoch);
++    w_fmt(&w, ",\"uboot_epoch\":%lu,\"universe_sha256\":", (unsigned long)in->uboot_epoch);
++    w_str(&w, in->universe_sha256 ? in->universe_sha256 : "");
++    w_fmt(&w, "}");
+     return w_done(&w);
+ }
+ 
+@@ -238,6 +246,9 @@ size_t p3_wire_loop_record(const p3_wire_record_in *in, char *out, size_t max)
+         w_str(&w, in->arm);
+         w_fmt(&w, ",");
+     }
++    if (in->carto != NULL) { /* 1.2.0 (B1): "carto" sorts between "arm" and "evidence"; pre-rendered JSON */
++        w_fmt(&w, "\"carto\":%s,", in->carto);
++    }
+     w_fmt(&w, "\"evidence\":{");
+     if (in->have_sign_refusal) {
+         w_fmt(&w, "\"sign_refusal\":{\"finding_kinds\":[");
+@@ -294,7 +305,7 @@ size_t p3_wire_loop_record(const p3_wire_record_in *in, char *out, size_t max)
+     w_str(&w, in->genome);
+     w_fmt(&w, ",\"outcome\":");
+     w_str(&w, in->outcome);
+-    w_fmt(&w, ",\"schema\":\"loop_record\",\"schema_version\":\"1.1.0\",\"seq\":%lu,"
++    w_fmt(&w, ",\"schema\":\"loop_record\",\"schema_version\":\"1.2.0\",\"seq\":%lu,"
+              "\"verified\":\"%s\"}",
+           (unsigned long)in->seq, in->audited ? "audited" : "replayed-only");
+     {

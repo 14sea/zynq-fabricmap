@@ -1,0 +1,32 @@
+diff --git a/home/test/zynq_psoracle/rtl/p3_axil.v b/rtl/b1/b1_axil.v
+index 105d990..b85717c 100644
+--- a/home/test/zynq_psoracle/rtl/p3_axil.v
++++ b/rtl/b1/b1_axil.v
+@@ -10,6 +10,7 @@
+ //   (STATUS, FAULT, SCORE0..5 = the eight) ─┘ their offsets
+ //   0x2028  HEARTBEAT R  (free-running counter, +1 per clk)
+ //   0x202C  NONCE_LO  R   0x2030 NONCE_HI R
++//   0x2034  VARIANT   R   (B1: the constant VARIANT_WORD — the gate contract this carrier implements)
+ //   0x2100..0x214C  ARM payload staging, 20 words W (commit[8] then tables[12])
+ //   0x2150..0x215C  ARM tag, 4 words W
+ //   0x2160..0x216C  KEY, 4 words W-ONLY, WRITE-ONCE: accepted only while key_loaded == 0;
+@@ -25,8 +26,9 @@
+ // host's evidence of what it staged is its own copy, and the PL's evidence of what it
+ // verified is HW_COMMIT.
+ `default_nettype none
+-module p3_axil #(
+-    parameter integer LUTS = 6
++module b1_axil #(
++    parameter integer LUTS = 6,
++    parameter [31:0]  VARIANT_WORD = 32'h42310001   // "B1", contract v1 (SEMANTIC_GATE = 0)
+ ) (
+     input  wire        clk,
+     input  wire        rst_n,
+@@ -119,6 +121,7 @@ module p3_axil #(
+             else if (ra == 16'h2028) s_rdata <= heartbeat;
+             else if (ra == 16'h202C) s_rdata <= nonce[31:0];
+             else if (ra == 16'h2030) s_rdata <= nonce[63:32];
++            else if (ra == 16'h2034) s_rdata <= VARIANT_WORD;
+             else if (ra >= 16'h2200 && ra < 16'h2220 && ra[1:0] == 2'b00) begin
+                 j = (ra - 16'h2200) >> 2;
+                 s_rdata <= hw_commit[(7 - j)*32 +: 32];

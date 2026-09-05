@@ -1233,11 +1233,15 @@ static int run_candidate(const uint32_t genome[P3_GENOME_WORDS], int is_baseline
     }
     S.audit_requested = 0;
     if (!strcmp(type, "SIGNREF")) {
-        /* a gate refusal is DATA, not a channel failure (§3c): the session continues.
-         * NOT audited, and deliberately so: nothing was staged, so no raw words exist, and
-         * this record makes no oracle self-report to check. Its evidence is the notary's
-         * OWN refusal, which the host already holds and rule (vii) cross-checks — a
-         * stronger corroboration than an audit, not a weaker one. */
+        /* a gate refusal is DATA, not a channel failure (§3c). NOT audited, and
+         * deliberately so: nothing was staged, so no raw words exist, and this record makes
+         * no oracle self-report to check. Its evidence is the notary's OWN refusal, which
+         * the host already holds and rule (vii) cross-checks.
+         * B1 (docs/b1_architecture.md §3; compatibility review 2026-09-05, HOLD): the
+         * instrument continued its session after a refusal; the B1 contract is that ANY
+         * candidate that is not SCORED ENDS THE EPOCH — no next probe, no closing baseline,
+         * no closing ARM; the restore-only cleanup and the TERM follow. The record is
+         * emitted first (the terminal evidence), then the stop. */
         static const char *const refused_kind[] = {"gate_refusal"};
         S.refused++;
         rec.have_sign_refusal = 1;
@@ -1247,7 +1251,8 @@ static int run_candidate(const uint32_t genome[P3_GENOME_WORDS], int is_baseline
             p3_stop(P3_STOPPED, S.rec_stop_why); /* unacknowledged: no next candidate */
             return -1;
         }
-        return 0;
+        p3_stop(P3_STOPPED, "REFUSED_BY_GATE: an unscored candidate ends the B1 epoch");
+        return -1;
     }
     if (strcmp(type, "SIGNOK") != 0) {
         p3_stop(P3_PROTOCOL, "PROTOCOL: unexpected reply type");
@@ -1333,6 +1338,7 @@ static int run_candidate(const uint32_t genome[P3_GENOME_WORDS], int is_baseline
          * auto-audited and recorded (§3a; validators.records.self_report_class). */
         (void)audit_pull(1); /* §3a item 2: the words persist; the mark follows the pull */
         (void)emit_record(&rec, "STOP_AXI");
+        p3_stop(P3_STOPPED, "STOP_AXI: the pre-ARM check found a fault"); /* the first cause (arm_attempt's) is kept; this guarantees the stop */
         return -1;
     }
     rec.have_arm = 1;
@@ -1508,6 +1514,55 @@ static void emit_summary(void)
     }
 }
 
+/* ───────────────────────────────── the B1 session, as three named steps ─────────────────
+ * ONE sequence for the board and the host twin; ALSO the unit the host application harness
+ * (tb/b1/hostapp) drives with the real code of this file against a scripted host:
+ *   init   — the orchestrator initialises and binds the cartographer BEFORE the opening
+ *            baseline (its record commits to that state);
+ *   run    — every candidate the orchestrator proposes (opening baseline, the probes from
+ *            the identity page's seed and budget, the closing baseline) through
+ *            run_candidate; the stop condition is checked BEFORE a candidate is proposed,
+ *            and ANY candidate that is not SCORED ends the epoch (run_candidate returns
+ *            non-zero: the orchestrator is told, nothing more is proposed); the closing
+ *            unsigned control and COMPLETED only when the budget completed;
+ *   finish — the restore-only cleanup of a stopped epoch, then the TERM. */
+static void b1_session_init(void)
+{
+    b1_orch_init(&O, S.page.seed, S.page.budget, S.page.token, B1_UNIVERSE_SHA256, S.page.app_image_sha_lo32);
+}
+
+static void b1_session_run(void)
+{
+    uint32_t genome[P3_GENOME_WORDS];
+    int is_baseline, kind;
+    while (S.kind == P3_RUNNING && b1_orch_next(&O, genome, &is_baseline, &kind)) {
+        if (run_candidate(genome, is_baseline, NULL) != 0) {
+            b1_orch_unobserved(&O);
+            break;
+        }
+    }
+    if (S.kind == P3_RUNNING && O.step == B1_STEP_DONE) {
+        S.closing_restore = 1;                 /* the closing baseline restored the base and scored */
+        closing_unsigned_control();
+        if (S.kind == P3_RUNNING)
+            p3_stop(P3_COMPLETED, "budget");
+    }
+}
+
+static void b1_session_finish(void)
+{
+    uint32_t blank[P3_GENOME_WORDS];
+    if (S.kind == P3_STOPPED && !S.closing_restore) {
+        /* the mandatory finally: restore the base — a WRITE, never an ARM after a sticky
+         * fault (§4.0). A failure here changes nothing that is already true of the epoch. */
+        memset(blank, 0, sizeof(blank));
+        p3_derive_frames(blank, S.frames);
+        if (stage_streams() == 0 && write_envelopes() == 0)
+            S.closing_restore = 1;
+    }
+    emit_summary();
+}
+
 int main(void)
 {
     uint32_t genome[P3_GENOME_WORDS];
@@ -1560,35 +1615,10 @@ int main(void)
 
     memset(blank, 0, sizeof(blank)); /* the blank genome IS the pinned base (b1_orch proposes it) */
     (void)blank;
+    (void)genome;
 
-    /* B1: ONE sequence for the board and the host twin — the orchestrator initialises the
-     * cartographer BEFORE the opening baseline (its record commits to that state), then
-     * proposes every probe from the identity page's seed and budget, then the closing
-     * baseline; the stop condition is checked BEFORE a candidate is proposed. */
-    b1_orch_init(&O, S.page.seed, S.page.budget, S.page.token, B1_UNIVERSE_SHA256, S.page.app_image_sha_lo32);
-    {
-        int is_baseline, kind;
-        while (S.kind == P3_RUNNING && b1_orch_next(&O, genome, &is_baseline, &kind)) {
-            if (run_candidate(genome, is_baseline, NULL) != 0) {
-                b1_orch_unobserved(&O);
-                break;
-            }
-        }
-        if (S.kind == P3_RUNNING && O.step == B1_STEP_DONE) {
-            S.closing_restore = 1;                 /* the closing baseline restored the base and scored */
-            closing_unsigned_control();
-            if (S.kind == P3_RUNNING)
-                p3_stop(P3_COMPLETED, "budget");
-        }
-    }
-
-    if (S.kind == P3_STOPPED && !S.closing_restore) {
-        /* the mandatory finally: restore the base — a WRITE, never an ARM after a sticky
-         * fault (§4.0). A failure here changes nothing that is already true of the epoch. */
-        p3_derive_frames(blank, S.frames);
-        if (stage_streams() == 0 && write_envelopes() == 0)
-            S.closing_restore = 1;
-    }
-    emit_summary();
+    b1_session_init();
+    b1_session_run();
+    b1_session_finish();
     return 0;
 }

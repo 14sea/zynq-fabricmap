@@ -27,6 +27,7 @@ PINNED_GLOBS = (
     "firmware/b1/*.c", "firmware/b1/*.h", "firmware/b1/Makefile", "firmware/b1/IMPORT.json",
     "firmware/b1/bsp/build.sh", "firmware/b1/bsp/lscript.ld", "firmware/b1/bsp/src/*.c", "firmware/b1/bsp/include/*.h",
     "rtl/b1/*.v", "vivado/b1/*.tcl", "tb/b1/*.py", "tb/b1/*.v", "sim/b1/run.sh",
+    "tb/b1/hostapp/*.c", "tb/b1/hostapp/*.sh", "tb/b1/hostapp/hostbsp/*.h",
     "vivado/carrier/carrier_axi3_lite.v", "vivado/carrier/carrier_scorer.v", "vivado/carrier/carrier.xdc",
     "vivado/carrier/isolation_checks.tcl", "vivado/carrier/generated/*",
     "schemas/self_map_v2.schema.json", "tests/test_b1_*.py",

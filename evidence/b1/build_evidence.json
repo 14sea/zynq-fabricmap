@@ -1,10 +1,10 @@
 {
  "schema": "b1_build_evidence",
  "schema_version": "1.2.0",
- "at": "2026-09-05T172715Z",
+ "at": "2026-09-05T185136Z",
  "git": {
-  "head": "9308e80dc6d315e039cab869ae5bc95b35e6cf9d",
-  "worktree_dirty": false
+  "head": "a548bfb2afe145c37a66df0d4f1cec3fc4629819",
+  "worktree_dirty": true
  },
  "toolchain": {
   "path": "/home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1",
@@ -13,7 +13,7 @@
   "instrument_role": "read-only use of the archived instrument's toolchain directory"
  },
  "sources": {
-  "b1_app.c": "10081b2d6cb73e38a183ad68d773c753e8c884167f21519732659fd749e4a540",
+  "b1_app.c": "9ae5481be885fb38288d98eafe156729070ede36677b3be0e4b6dc854b0c9b4b",
   "b1_carto.c": "16c6c61e8b205464af1a927f6d619aeca9537bdc65c8b74d76ac7697af51bffb",
   "b1_carto.h": "8930e1223b94def04a7a3c4387f2517a27b8fe20e83b8c56c4b260a5c069bc78",
   "b1_orch.c": "82b02a27ee7d14e9233589e2e9521438dd6d12ecd596a1261ae70ea025086fc1",
@@ -75,7 +75,7 @@
    "/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common/xil_printf.c": "8f1d0f35f20a6baeeb21a021af1cb3d77001432b781f257f57ba1e6d6621d439",
    "/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common/xil_sutil.c": "9fe6c449b4aa6075f9bcffcd81a4250514a6dbe3f8f605d2017f56bff683b6c0",
    "/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common/xil_util.c": "26ab5d3f19adc10d49378b8f0b3a4de39e9a0888bf746ee7cf304955aaf9ad4f",
-   "/home/test/zynq_fabricmap/firmware/b1/b1_app.c": "10081b2d6cb73e38a183ad68d773c753e8c884167f21519732659fd749e4a540",
+   "/home/test/zynq_fabricmap/firmware/b1/b1_app.c": "9ae5481be885fb38288d98eafe156729070ede36677b3be0e4b6dc854b0c9b4b",
    "/home/test/zynq_fabricmap/firmware/b1/b1_carto.c": "16c6c61e8b205464af1a927f6d619aeca9537bdc65c8b74d76ac7697af51bffb",
    "/home/test/zynq_fabricmap/firmware/b1/b1_orch.c": "82b02a27ee7d14e9233589e2e9521438dd6d12ecd596a1261ae70ea025086fc1",
    "/home/test/zynq_fabricmap/firmware/b1/b1_wire.c": "97320b8d0649b328632eaaacfc151f29d0f58074082f59f2d91c091f43a0ed4b",
@@ -260,16 +260,16 @@
  },
  "image": {
   "path": "firmware/b1/bsp/out/b1_app.bin",
-  "sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
+  "sha256": "31663e2de64542d13ae6c8c59f03ff672476e975f4d13c7ce1ee7791e5cbe4c3",
   "bytes": 114708,
-  "elf_sha256": "9d23ddf9190d4cde0e11a02a2adf469acd6d65d8b4963e26afee50c0371233f7",
+  "elf_sha256": "84fd5ad3a1975ee042b079393456f1d16e45a21fe30d7b38d99bedefdf3cdab1",
   "load_address": "0x02000000",
   "entry": "go 0x2000000"
  },
  "reproducibility": {
   "builds": [
-   "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
-   "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8"
+   "31663e2de64542d13ae6c8c59f03ff672476e975f4d13c7ce1ee7791e5cbe4c3",
+   "31663e2de64542d13ae6c8c59f03ff672476e975f4d13c7ce1ee7791e5cbe4c3"
   ],
   "reproduced_byte_identical": true
  }

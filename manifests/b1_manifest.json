@@ -39,18 +39,18 @@
  },
  "image": {
   "path": "firmware/b1/bsp/out/b1_app.bin",
-  "sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
-  "elf_sha256": "9d23ddf9190d4cde0e11a02a2adf469acd6d65d8b4963e26afee50c0371233f7",
+  "sha256": "31663e2de64542d13ae6c8c59f03ff672476e975f4d13c7ce1ee7791e5cbe4c3",
+  "elf_sha256": "84fd5ad3a1975ee042b079393456f1d16e45a21fe30d7b38d99bedefdf3cdab1",
   "bytes": 114708,
   "load_address": "0x02000000",
   "entry": "go 0x2000000",
   "board_ready": false,
   "build_evidence": {
    "path": "evidence/b1/build_evidence.json",
-   "sha256": "7d9149d4218579de699b8dedac3f0a56057ecf01ffef522916cc8ffff0bead6a",
+   "sha256": "51a817f7591d73bd168c7ef55fb7cfebe3c86a7dff5fca3d6e37cd1b7bbf16fe",
    "reproduced_byte_identical": true,
-   "worktree_dirty_at_build": false,
-   "head_at_build": "9308e80dc6d315e039cab869ae5bc95b35e6cf9d"
+   "worktree_dirty_at_build": true,
+   "head_at_build": "a548bfb2afe145c37a66df0d4f1cec3fc4629819"
   },
   "note": "the binary is not committed (bsp/out is gitignored, as the instrument's is); it is rebuilt byte-identically by firmware/b1/bsp/build.sh from the pinned sources and toolchain, and the runner refuses any image whose sha256 is not this one. board_ready is set by the owner at the freeze, never by this tool; a refresh keeps it only while the image, ELF and build evidence are the ones it was granted for."
  },
@@ -188,6 +188,12 @@
    "image_sha256": "7bc86a3f2b9548a4a9cb8eb794ed7ee3ea864a814dabe848149e6c228903178d",
    "state": "WITHDRAWN / DEFECTIVE / NO-RUN",
    "reason": "owner review 2026-09-05 (first B1 package, 4c49b25): circular blind-mapping gate (readout compared with host-attested tables), opening baseline recorded before the cartographer was initialised, adjudicator not fail-closed, map v2 semantics, missing pins — WITHDRAWN / DEFECTIVE / NO-RUN; never loaded on any board"
+  },
+  {
+   "at": "2026-09-05",
+   "image_sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
+   "state": "WITHDRAWN / DEFECTIVE / NO-RUN",
+   "reason": "compatibility review 2026-09-05 (HOLD): the SIGNREF branch continued the session after a gate refusal, against B1's unscored-ends-the-epoch contract; superseded by the v2.3 image; never loaded on any board"
   }
  ],
  "carrier": {
@@ -229,7 +235,7 @@
  },
  "pins": {
   "path": "manifests/b1_instrument_pins.json",
-  "sha256": "b92f6443da3852ed4219fd6ea5a9fbbe450494da174403d1b89605b8841c8b4c",
+  "sha256": "3c33c82d0106de02840decafd9f906817df1658c988d4d30540e260e49377b4b",
   "note": "every adjudication-critical fabricmap file (host/b1_pins.py PINNED_GLOBS); verified by the runner before the port is opened and by the adjudicator before any verdict"
  },
  "reporting_strata": {

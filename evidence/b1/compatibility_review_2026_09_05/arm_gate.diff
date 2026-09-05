@@ -1,0 +1,45 @@
+diff --git a/home/test/zynq_psoracle/rtl/p3_arm_gate.v b/rtl/b1/b1_arm_gate.v
+index 8e0f063..2315de6 100644
+--- a/home/test/zynq_psoracle/rtl/p3_arm_gate.v
++++ b/rtl/b1/b1_arm_gate.v
+@@ -1,3 +1,13 @@
++// The B1 ARM gate — the instrument's p3_arm_gate with ONE parameter, SEMANTIC_GATE.
++//
++// SEMANTIC_GATE = 1 reproduces the instrument's gate exactly (readout must equal the signed
++// expected tables, else F_ARM_TABLE). SEMANTIC_GATE = 0 is the B1 noninterference contract
++// (docs/b1_carrier_contract.md): the signature still binds commit ‖ tables-slot ‖ nonce and
++// the sweep still runs, but the readout is NOT compared with anything the host supplied —
++// the host must not attest semantics before the measurement, so `tables_match` becomes an
++// observation only and configuration_valid_hw = tag_ok ∧ sweep_done ∧ ¬recovery ∧ fault==0.
++// The instrument's original header follows.
++//
+ // The ARM gate — the trusted enforcement point of docs/p3_architecture.md §3.
+ //
+ //   staging (24 words, write-only)  ──┐
+@@ -15,9 +25,10 @@
+ // The key is NOT a constant: it arrives from the write-once key register (p3_axil) that the
+ // signer principal provisions after configuration; an ARM before that is F_ARM_NOKEY.
+ `default_nettype none
+-module p3_arm_gate #(
++module b1_arm_gate #(
+     parameter [63:0]  NONCE_SEED = 64'h9E3779B97F4A7C15,
+-    parameter integer LUTS       = 6
++    parameter integer LUTS       = 6,
++    parameter integer SEMANTIC_GATE = 0   // 0 = B1 contract (no semantic compare); 1 = the instrument's gate
+ ) (
+     input  wire         clk,
+     input  wire         rst_n,
+@@ -128,8 +139,11 @@ module p3_arm_gate #(
+                 end
+             end
+             3'd3: begin
+-                if (functional_readout == expected_tables) begin
+-                    tables_match <= 1'b1; valid_latch <= 1'b1;
++                // tables_match is always computed (an observation the host may read); under
++                // the B1 contract it does NOT gate: the readout is handed over raw
++                tables_match <= (functional_readout == expected_tables);
++                if (SEMANTIC_GATE == 0 || functional_readout == expected_tables) begin
++                    valid_latch <= 1'b1;
+                     scorer_arm <= 1'b1;                 // the ONLY source of scorer.arm
+                     state <= 3'd4;
+                 end else begin

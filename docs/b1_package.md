@@ -1,4 +1,4 @@
-# B1 — the pre-board package: v2.2.4 pushed; v2.2.6 local, under review before the freeze (2026-09-05)
+# B1 — the pre-board package: v2.2.6 pushed; v2.3 local — the compatibility review's HOLD closed, a NEW image (2026-09-05)
 
 > **HOST-ONLY. DRAFT / NO BOARD RULING.** Delivered at "B1 ready for the board" under the
 > owner's ruling of 2026-09-05 (`docs/autonomous_cartography_roadmap.md`; the
@@ -97,7 +97,25 @@ libgcc/libc/libm as the link resolves them, all by hash. Also the README / packa
 headers that still read "awaiting push". Firmware, image (`54b00663…`, rebuilt
 byte-identically), carrier, plans and predictions unchanged.
 
-**v2.2.5 → v2.2.6 (the owner's review of v2.2.5, 2026-09-05; local, not pushed):** the
+**v2.2.6 → v2.3 (the owner's compatibility review, 2026-09-05: HOLD —
+`docs/b1_compatibility_review_2026_09_05.md`):** every §7 item passed except the unscored
+stop condition: `run_candidate`'s SIGNREF branch recorded `REFUSED_BY_GATE` and returned 0,
+so `main` proposed the next candidate — the instrument's "a gate refusal is data, the
+session continues", against B1's "any candidate that is not SCORED ends the epoch"; the
+twin's UNSCORED model breaks out of its own loop and could never see it. v2.3 (firmware):
+the branch stops the epoch after the record (restore-only cleanup, STOPPED TERM); the
+STOP_AXI branch's stop is explicit; the session is three named steps
+(`b1_session_init/run/finish`). Coverage of the ACTUAL application branches: the host
+application harness `tb/b1/hostapp` compiles `b1_app.c` itself against stub BSP headers, a
+fake memory map and a scripted host and runs the real session loop — the opening baseline,
+a probe after a scored baseline and the closing baseline each refused, and a refusal
+record never acknowledged: every one ends the epoch with one SIGNREQ, no CTRL write, the
+restore-only cleanup and a STOPPED TERM whose REC / TERM payloads validate under the
+instrument's schemas; a source audit requires the stop after every non-SCORED emission
+(`tests/test_b1_hostapp.py`). The image is NEW (§1); `54b00663…` is recorded WITHDRAWN /
+DEFECTIVE / NO-RUN; the compatibility review must be redone on the new image, then freeze.
+
+**v2.2.5 → v2.2.6 (the owner's review of v2.2.5, 2026-09-05):** the
 prereg gap is closed; the build-evidence gap was not — the header set kept only the
 embeddedsw / repository dependencies and dropped the toolchain's own (newlib's
 `stdint.h`, `stdio.h`, `string.h` …, 23 files for `b1_app.c` alone), on the wrong premise
@@ -113,7 +131,7 @@ docstring no longer calls the ruling archives verbatim files. Image unchanged.
 |---|---|---|
 | `manifests/b1_manifest.json` | (committed; `prereg.sha256` null, `board_ready` false, `carrier.qualification` **null** → `qualified` false, derived) | the stage's pins |
 | B1 carrier `builds/b1/b1.bit` | `d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f`, 2 083 858 B | committed (as the instrument commits its carrier); build record `5da31443…`, carrier manifest `2e9de7c7…`, isolation `ada2594e…`; WNS +7.993 ns, ICAPE2 0, isolation passed |
-| B1 image `firmware/b1/bsp/out/b1_app.bin` | `54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8`, 114 708 B | rebuilt byte-identically by `firmware/b1/bsp/build.sh`; not committed; hash-checked by the runner |
+| B1 image `firmware/b1/bsp/out/b1_app.bin` | `31663e2de64542d13ae6c8c59f03ff672476e975f4d13c7ce1ee7791e5cbe4c3`, 114 708 B | rebuilt byte-identically by `firmware/b1/bsp/build.sh`; not committed; hash-checked by the runner |
 | `evidence/b1/build_evidence.json` | pinned in the manifest | two clean builds equal; the sources, the embeddedsw inputs, the compiler, all by hash; `worktree_dirty` and `head` recorded |
 | B1 signer `host/b1_sign_arm.py` | pinned in the manifest | zero tables; `probe` / `sign_genome` / `provision` only — no host-attested `sign` |
 | `firmware/b1/p3_data.h` | generated (`host/gen_b1_data.py`), no operator tables | the cartographer's only knowledge of the fabric: 292 addresses + base frames |
@@ -155,7 +173,7 @@ autonomy replay → the verifier → `self_map_v2` + the verifier report.
 
 ```bash
 python3 host/gen_b1_data.py --check          # the header is fresh from its generator
-IMAGE=b1_app bash firmware/b1/bsp/build.sh   # → firmware/b1/bsp/out/b1_app.bin, sha256 54b00663…
+IMAGE=b1_app bash firmware/b1/bsp/build.sh   # → firmware/b1/bsp/out/b1_app.bin, sha256 31663e2d…
 python3 host/b1_build_evidence.py --build    # two clean builds, evidence/b1/build_evidence.json
 bash sim/b1/run.sh                           # iverilog: tb_p3_siphash (verbatim) + tb_b1_core
 vivado -mode batch -source vivado/b1/build_b1.tcl   # → builds/b1/b1.bit (d85daef4…), b1_build.json, isolation.txt
@@ -190,14 +208,14 @@ the manifest **after** the qualification record is pinned and committed. Both un
 {"ruling": "whole-of-run B1 carrier qualification", "boardid": "17A6", "granted_by": "14sea",
  "date": "<YYYY-MM-DD-NN>", "session": "B1Q", "master_seed": 176359248,
  "prereg_sha256": "<sha256 of docs/b1_preregistration.md as frozen>",
- "image_sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
+ "image_sha256": "31663e2de64542d13ae6c8c59f03ff672476e975f4d13c7ce1ee7791e5cbe4c3",
  "b1_manifest_sha256": "<manifest sha256 at freeze>"}
 ```
 ```json
 {"ruling": "provisioning P3-K", "boardid": "17A6", "granted_by": "14sea",
  "date": "<YYYY-MM-DD-NN>", "session": "B1Q",
  "prereg_sha256": "<sha256 of docs/b1_preregistration.md as frozen>",
- "image_sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
+ "image_sha256": "31663e2de64542d13ae6c8c59f03ff672476e975f4d13c7ce1ee7791e5cbe4c3",
  "b1_manifest_sha256": "<manifest sha256 at freeze>"}
 ```
 
@@ -206,14 +224,14 @@ the manifest **after** the qualification record is pinned and committed. Both un
 {"ruling": "whole-of-run B1 cartography", "boardid": "17A6", "granted_by": "14sea",
  "date": "<YYYY-MM-DD-NN>", "session": "B1", "master_seed": 1123460948,
  "prereg_sha256": "<sha256 of docs/b1_preregistration.md as frozen>",
- "image_sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
+ "image_sha256": "31663e2de64542d13ae6c8c59f03ff672476e975f4d13c7ce1ee7791e5cbe4c3",
  "b1_manifest_sha256": "<manifest sha256 after the qualification record is pinned>"}
 ```
 ```json
 {"ruling": "provisioning P3-K", "boardid": "17A6", "granted_by": "14sea",
  "date": "<YYYY-MM-DD-NN>", "session": "B1",
  "prereg_sha256": "<sha256 of docs/b1_preregistration.md as frozen>",
- "image_sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
+ "image_sha256": "31663e2de64542d13ae6c8c59f03ff672476e975f4d13c7ce1ee7791e5cbe4c3",
  "b1_manifest_sha256": "<manifest sha256 after the qualification record is pinned>"}
 ```
 

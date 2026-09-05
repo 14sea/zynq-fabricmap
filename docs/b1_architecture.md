@@ -1,4 +1,4 @@
-# B1 — autonomous cartography on the known 292 bits: architecture (v0.3, host-only, 2026-09-05)
+# B1 — autonomous cartography on the known 292 bits: architecture (v0.4, host-only, 2026-09-05)
 
 > **Standing: host-only. Nothing here is frozen or ruled; no board contact is authorised.**
 > Stage B1 of `docs/autonomous_cartography_roadmap.md`, built under the owner's ruling of
@@ -80,7 +80,16 @@ the session order the first image got wrong: the cartographer is **initialised a
 before the opening baseline**, so the opening record's block commits to the bound empty map
 (not to a zero struct); then the probes; an unscored candidate (any non-SCORED outcome)
 **ends the epoch** — it is never re-issued and no closing baseline follows; the closing
-baseline is issued only when the budget completes.
+baseline is issued only when the budget completes. The application enforces this in
+`run_candidate` itself: every non-SCORED record emission is followed by the stop —
+including `REFUSED_BY_GATE`, which the instrument's application treated as "data, the
+session continues" and the first two B1 images inherited (the owner's compatibility review
+of 2026-09-05 found it; HOLD). The session is three named steps in `b1_app.c`
+(`b1_session_init` / `run` / `finish`) that the **host application harness**
+(`tb/b1/hostapp`: the real `b1_app.c` compiled against stub BSP headers, a fake memory map
+and a scripted host) drives off-board: the opening baseline, a probe and the closing
+baseline each refused, and a refusal record never acknowledged — every one ends the epoch
+with no ARM and a STOPPED TERM (`tests/test_b1_hostapp.py`).
 
 **Every record carries a `carto` block** (loop_record 1.2.0): the phase, the probes issued,
 the anomaly count, a sample (≤ 8) of the entries this observation changed, and the
@@ -107,7 +116,7 @@ record and identity writers with the additive fields), `b1_orch.c/h`, `b1_carto.
 operator block. Same wire protocol (rel-v4), same transactions and bounds, same watchdog,
 same closing steps. Built by `firmware/b1/bsp/build.sh` with the instrument's toolchain
 (read-only) and the 2025.2 embeddedsw BSP; two clean builds are byte-identical —
-`evidence/b1/build_evidence.json` (image **`54b00663…`**, 114 708 bytes; the embeddedsw
+`evidence/b1/build_evidence.json` (image **`31663e2d…`**, 114 708 bytes; the embeddedsw
 inputs by hash; the compiler by hash). The binary is not committed (as the instrument's is
 not) and is hash-checked by the runner.
 
@@ -132,6 +141,7 @@ before any board session (package §7), and the runner refuses an image not mark
 | verbatim imports | same test | every unmodified instrument file hashes to the archive's pin |
 | permuted fixture | `host/b1_model.py`; twin + leakage tests | over a fabric with a seeded permutation of the truth, the cartographer outputs the permutation (292/292), not the truth (< 10/292): it measures |
 | address-only baseline | `b1_model.address_only_baseline`; leakage test | what address structure alone predicts scores precision < 0.2 against the reference's 1.0 |
+| the real application off-board | `tb/b1/hostapp`; `tests/test_b1_hostapp.py` | `b1_app.c` itself, compiled for the host, with a scripted host: a refusal at the opening baseline / a probe / the closing baseline, and an unacknowledged refusal record, each end the epoch (one SIGNREQ, no CTRL write, restore-only cleanup, STOPPED TERM; REC and TERM validate under the instrument's schemas); a source audit requires the stop after every non-SCORED record emission |
 | C = Python | `tests/test_b1_twin.py`, `test_b1_session.py` | probes, record blocks, content and map bytes identical over truth / permuted / dropout / interaction fixtures, every budget phase, unscored probes; the session order (init → bind → opening → probes → closing; unscored ends the epoch) identical in C and Python |
 | wire contract | `tests/test_b1_wire.py` | the image's own identity (1.4.0) and record (1.2.0 + carto) bytes pass the instrument's validator |
 | autonomy replay | `host/b1_adjudicate.py` | after a session the reference, bound as the board was, fed the records' readouts, reproduces every probe the board chose and every record's content and map hash — the board followed the algorithm on its own observations and nothing else |
