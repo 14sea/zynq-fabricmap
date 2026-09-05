@@ -1,4 +1,4 @@
-# B1 — the pre-board package, v2.2.2, delivered after the final short re-review (2026-09-05)
+# B1 — the pre-board package, v2.2.3, delivered after the final short re-review (2026-09-05)
 
 > **HOST-ONLY. DRAFT / NO BOARD RULING.** Delivered at "B1 ready for the board" under the
 > owner's ruling of 2026-09-05 (`docs/autonomous_cartography_roadmap.md`; the
@@ -67,6 +67,16 @@ owner's authorisation duplicated into another usable one. v2.2.2 archives ruling
 fields), decoded and hash-checked by `verify()` and re-bound as before; tests assert that
 every parser refuses the envelopes, that a failed archive leaves nothing behind, and that
 no file in the evidence directory ever parses as a ruling. Firmware, image, carrier, plans
+and predictions unchanged.
+
+**v2.2.2 → v2.2.3 (the owner's review of v2.2.2, 2026-09-05):** the envelope's top-level
+schema was not locked: with the decoded ruling fields re-added at the envelope's top level
+(bytes, bytes hash and content unchanged) and the evidence / record hashes updated, a
+parser accepted the file as a ruling and `verify()` still passed. v2.2.3: the envelope's
+key set is exact (`additionalProperties: false` — `schema`, `schema_version`, `sha256`,
+`content_base64`, `note`), any ruling field on an envelope is refused explicitly, types are
+checked; the owner's counter-example is a test through `verify()`, for both rulings. The
+qualification document's example now says record 2.1.0. Firmware, image, carrier, plans
 and predictions unchanged.
 
 ## 1. Hashes and data flow

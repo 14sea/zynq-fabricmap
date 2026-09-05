@@ -92,8 +92,11 @@ every binding names) and both rulings as **inert envelopes** (`ruling_whole_of_r
 "content_base64": …}` — the original bytes and their hash, with no top-level `ruling` /
 `boardid` / `granted_by` / `date`, so the instrument's `check_ruling`, the signer's
 provisioning parser and this runner's preflight all refuse them: an archive is never a
-second, unconsumed authorisation), each decoded and required to equal what the preflight
-parsed; every write atomic, a failure removing what was written.
+second, unconsumed authorisation; the envelope's key set is EXACT — `schema`,
+`schema_version`, `sha256`, `content_base64`, `note` and nothing else — so an envelope
+re-armed with ruling fields at its top level is refused by `verify()` even when every hash
+in the evidence and the record was updated to match), each decoded and required to equal
+what the preflight parsed; every write atomic, a failure removing what was written.
 The session function refuses to start without them. During the session the summary keeps
 the sha256 of the provisioning ruling's bytes as the signer was handed them (taken before
 and after the call; a change is a stop).
@@ -101,7 +104,7 @@ After the session and its adjudication the B1Q runner writes **`qualification.js
 beside them (schema `b1_carrier_qualification` 2.1.0):
 
 ```json
-{"schema": "b1_carrier_qualification", "schema_version": "2.0.0", "session": "B1Q",
+{"schema": "b1_carrier_qualification", "schema_version": "2.1.0", "session": "B1Q",
  "evidence_dir": "evidence/b1q/b1q_17A6_<date>",
  "files": {"run_log.json": "<sha256>", "audits.json": "…", "timeline.json": "…", "adjudication.json": "…", "summary.json": "…",
            "manifest_at_run.json": "…", "ruling_whole_of_run.json": "…", "ruling_provisioning.json": "…"},

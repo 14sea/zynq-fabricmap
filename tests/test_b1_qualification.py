@@ -244,6 +244,43 @@ class Chain(unittest.TestCase):
             raw, content = bq.read_archived_ruling(p)
             self.assertEqual(content["ruling"], text)
 
+    def test_an_envelope_re_armed_with_ruling_fields_is_refused_even_when_every_hash_is_updated(self):
+        """The owner's counter-example: the decoded ruling fields re-added at the envelope's
+        top level (the bytes, their hash and the content unchanged), the evidence and record
+        hashes updated to match — a parser then accepts the file as a ruling, so verify()
+        must refuse it. Also any other extra key, a missing key, a wrong type."""
+        good = self.qualified_manifest()
+        import base64
+        for key, name in bq.RULING_FILES.items():
+            d = self.tmp / f"rearmed_{key}"; shutil.rmtree(d, ignore_errors=True); shutil.copytree(self.out, d)
+            m = copy.deepcopy(good); m["carrier"]["qualification"]["evidence_dir"] = str(d)
+            bq.verify(m)
+            env = json.loads((d / name).read_text())
+            decoded = json.loads(base64.b64decode(env["content_base64"]))
+            env.update({k: decoded[k] for k in ("ruling", "boardid", "granted_by", "date", "session")})
+            text = json.dumps(env, indent=1) + "\n"; (d / name).write_text(text)
+            sha = hashlib.sha256(text.encode()).hexdigest()
+            m["carrier"]["qualification"]["files"][name] = sha
+            m["carrier"]["qualification"]["rulings"][key]["envelope_sha256"] = sha
+            # the re-armed file IS a ruling to the instrument's parser — which is why verify must refuse it
+            inst.bind(inst.DEFAULT_ROOT, require_git=False)
+            import pcap_probe_runner as pr
+            self.assertEqual(pr._parse_ruling(d / name, decoded["ruling"])["ruling"], decoded["ruling"])
+            with self.assertRaises(bq.QualificationRefusal) as cm:
+                bq.verify(m)
+            self.assertIn("envelope", str(cm.exception))
+            with self.assertRaises(bq.QualificationRefusal):
+                bq.read_archived_ruling(d / name)
+        # any other extra key, a missing key, a wrong type
+        p = self.out / bq.RULING_FILES["whole_of_run"]; base = json.loads(p.read_text())
+        for mut in (lambda e: e.__setitem__("extra", 1), lambda e: e.pop("sha256"), lambda e: e.__setitem__("note", 5),
+                    lambda e: e.__setitem__("content_base64", 7)):
+            e = copy.deepcopy(base); mut(e)
+            q = self.tmp / "env_case.json"; q.write_text(json.dumps(e))
+            with self.assertRaises(bq.QualificationRefusal):
+                bq.read_archived_ruling(q)
+        bq.read_archived_ruling(p)
+
     def test_a_failed_archive_leaves_no_executable_ruling_behind(self):
         from unittest import mock
         tmp = self.tmp / "partial"; tmp.mkdir(exist_ok=True)

@@ -55,6 +55,11 @@ SCHEMA_VERSION = "2.1.0"
 # top-level `ruling` / `boardid` / `granted_by` / `date`, so every parser refuses it.
 ARCHIVE_SCHEMA = "archived_ruling_bytes"
 ARCHIVE_VERSION = "1.0.0"
+# the envelope's EXACT key set (additionalProperties: false): an envelope carrying anything
+# else — a ruling field re-added at the top level in particular — is refused even when every
+# hash in the evidence and the record was updated to match (owner's review 2026-09-05)
+ARCHIVE_KEYS = frozenset({"schema", "schema_version", "sha256", "content_base64", "note"})
+RULING_FIELDS = ("ruling", "boardid", "granted_by", "date", "session", "master_seed", "prereg_sha256", "image_sha256", "b1_manifest_sha256")
 SESSION = "B1Q"
 RULING_TEXT = "whole-of-run B1 carrier qualification"
 PROVISION_RULING_TEXT = "provisioning P3-K"
@@ -99,6 +104,14 @@ def read_archived_ruling(path: Path) -> tuple[bytes, dict]:
         raise QualificationRefusal(f"no readable ruling archive at {path}: {exc}") from exc
     if not isinstance(env, dict) or env.get("schema") != ARCHIVE_SCHEMA or env.get("schema_version") != ARCHIVE_VERSION:
         raise QualificationRefusal(f"{Path(path).name} is not an {ARCHIVE_SCHEMA} envelope")
+    extra = sorted(set(env) - ARCHIVE_KEYS)
+    if extra or set(env) < {"schema", "schema_version", "sha256", "content_base64"}:
+        raise QualificationRefusal(f"{Path(path).name}: an envelope carries exactly {sorted(ARCHIVE_KEYS)}; found extra {extra} "
+                                   f"(a ruling field on an envelope would make it a ruling again)")
+    if any(k in env for k in RULING_FIELDS):
+        raise QualificationRefusal(f"{Path(path).name}: an envelope must carry no ruling field")
+    if not isinstance(env.get("sha256"), str) or not isinstance(env.get("content_base64"), str) or not isinstance(env.get("note", ""), str):
+        raise QualificationRefusal(f"{Path(path).name}: envelope fields of the wrong type")
     try:
         raw = base64.b64decode(env.get("content_base64") or "", validate=True)
     except (ValueError, TypeError) as exc:

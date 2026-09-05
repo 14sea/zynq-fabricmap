@@ -4,6 +4,8 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
+> **▶ 2026-09-05, v2.2.3: the ruling envelope's key set is exact — an envelope re-armed with ruling fields is refused by `verify()` even with every hash updated (the owner's counter-example is a test). Green on the clean tree; awaiting the owner's go for push.**
+>
 > **▶ 2026-09-05, v2.2.2: archived rulings are inert envelopes (bytes + sha256, no ruling fields) that every parser refuses — an archive is never a second authorisation; a failed archive leaves nothing behind. Green on the clean tree; awaiting the owner's go for push.**
 >
 > **▶ 2026-09-05, final: v2.2.1 — the session artifacts (manifest bytes, both rulings) are archived and verified BEFORE the ruling is claimed and the port is opened, the order is a test, and the qualification chain also binds `summary.ruling` and the provisioning ruling's digest — [`docs/b1_package.md`](docs/b1_package.md) §0. Green on the clean tree; awaiting the owner's go for push / compatibility review / freeze. Still no ruling, no board contact.**
