@@ -36,9 +36,23 @@ MSHA = "c" * 64
 NOQ = None          # Stage tests: the qualification chain is tested in test_b1_qualification
 
 
+PREREG_DIR = Path(tempfile.mkdtemp())
+
+
+def freeze_doc(m: dict, text: str = "# fixture preregistration\n") -> Path:
+    """A temporary preregistration document, frozen into `m` by path and sha256 — the
+    adjudicator checks the DOCUMENT's bytes, not only the digest."""
+    import os
+    doc = PREREG_DIR / f"prereg_{hashlib.sha256(text.encode()).hexdigest()[:8]}.md"
+    doc.write_text(text)
+    m["prereg"]["path"] = os.path.relpath(doc, R)
+    m["prereg"]["sha256"] = hashlib.sha256(doc.read_bytes()).hexdigest()
+    return doc
+
+
 def frozen_manifest() -> dict:
     m = copy.deepcopy(MANIFEST)
-    m["prereg"]["sha256"] = FAKE_FROZEN
+    freeze_doc(m)
     m["image"]["board_ready"] = True
     return m
 
@@ -321,6 +335,19 @@ class Binding(unittest.TestCase):
         log = synthetic_log(m, PLAN, bm.fixture("truth")); del log["l6"]["inputs"]
         res = adj.adjudicate(write_dir(log), m, PLAN, PRED, MSHA, require_git=False, p3_layer=stub_layer(), qualification_check=NOQ)
         self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("inputs", res["outcome"])
+
+    def test_a_preregistration_document_edited_after_the_freeze_refuses(self):
+        m = frozen_manifest()
+        log = synthetic_log(m, PLAN, bm.fixture("truth"))
+        res = adj.adjudicate(write_dir(log), m, PLAN, PRED, MSHA, require_git=False, p3_layer=stub_layer(), qualification_check=NOQ)
+        self.assertEqual(res["outcome"], "PASS", res["outcome"])
+        (R / m["prereg"]["path"]).write_text("# fixture preregistration, edited after the freeze\n")
+        res = adj.adjudicate(write_dir(log), m, PLAN, PRED, MSHA, require_git=False, p3_layer=stub_layer(), qualification_check=NOQ)
+        self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("changed after the freeze", res["outcome"])
+        (R / m["prereg"]["path"]).unlink()
+        res = adj.adjudicate(write_dir(log), m, PLAN, PRED, MSHA, require_git=False, p3_layer=stub_layer(), qualification_check=NOQ)
+        self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("absent", res["outcome"])
+        freeze_doc(m)                                            # the fixture document is restored for the other tests
 
     def test_a_manifest_sha_other_than_the_logs_refuses(self):
         m = frozen_manifest()

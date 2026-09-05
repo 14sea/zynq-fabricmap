@@ -33,8 +33,11 @@ PRED = json.loads((R / "evidence/b1/prediction.json").read_text())
 
 
 def frozen(tmp: Path) -> tuple[dict, str]:
+    import os
     m = copy.deepcopy(MANIFEST)
-    m["prereg"]["sha256"] = "b" * 64; m["prereg"]["frozen"] = True
+    doc = tmp / "prereg.md"; doc.write_text("# fixture preregistration\n")
+    m["prereg"]["path"] = os.path.relpath(doc, R)
+    m["prereg"]["sha256"] = hashlib.sha256(doc.read_bytes()).hexdigest(); m["prereg"]["frozen"] = True
     m["image"]["board_ready"] = True
     rec, _, _, _ = qualify(tmp, m, "b1q")                       # the real chain, modelled
     m["carrier"]["qualification"] = rec; m["carrier"]["qualified"] = True

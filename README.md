@@ -4,6 +4,8 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
+> **▶ 2026-09-05, PUSHED: the B1 v2.2.4 package is on `origin/main` with the owner's approval; v2.2.5 closes two evidence gaps found in the owner's post-push check (the offline adjudicators now check the preregistration document's bytes, not only its digest; the build evidence now records every translation unit `build.sh` compiles, every header, and the toolchain's runtime objects and libraries) — [`docs/b1_package.md`](docs/b1_package.md) §0. The sequence the owner fixed: compatibility review → freeze → B1Q ruling pair; no board contact before that. Nothing frozen, no ruling, `board_ready` false, not qualified; `zynq-psoracle` unchanged.**
+>
 > **▶ 2026-09-05, v2.2.3: the ruling envelope's key set is exact — an envelope re-armed with ruling fields is refused by `verify()` even with every hash updated (the owner's counter-example is a test). Green on the clean tree; awaiting the owner's go for push.**
 >
 > **▶ 2026-09-05, v2.2.2: archived rulings are inert envelopes (bytes + sha256, no ruling fields) that every parser refuses — an archive is never a second authorisation; a failed archive leaves nothing behind. Green on the clean tree; awaiting the owner's go for push.**

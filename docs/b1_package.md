@@ -1,11 +1,12 @@
-# B1 — the pre-board package, v2.2.4, pushed after the owner's approval (2026-09-05)
+# B1 — the pre-board package, v2.2.5, pushed; two evidence gaps closed before the freeze (2026-09-05)
 
 > **HOST-ONLY. DRAFT / NO BOARD RULING.** Delivered at "B1 ready for the board" under the
 > owner's ruling of 2026-09-05 (`docs/autonomous_cartography_roadmap.md`; the
 > authorisation of the same day) and STOPPED here. Nothing is frozen; the image is not
 > `board_ready`; the carrier is not `qualified`; no ruling exists; no board contact, power
 > cycle, image load or serial port has been touched. The instrument (`zynq-psoracle`
-> `689dde1`) is unchanged, bit for bit. Local commits only; nothing pushed until this review.
+> `689dde1`) is unchanged, bit for bit. Pushed to `origin/main` with the owner's approval of
+> 2026-09-05 (v2.2.4); every later change is committed locally and pushed only when approved.
 
 ## 0. History: the first package and why it failed
 
@@ -81,6 +82,20 @@ and predictions unchanged. **v2.2.4** (the owner's last read): `note` is mandato
 envelope, as the documents say; with that the owner approved the push of every local
 commit, with the sequence after it fixed: compatibility review → freeze → B1Q ruling pair;
 no board contact before that.
+
+**v2.2.4 → v2.2.5 (the owner's post-push check, 2026-09-05):** two evidence gaps, closed
+before the freeze. (1) The offline adjudications compared only the preregistration's
+digest in the manifest and the log, never the document's bytes: a document edited after
+the freeze still passed B1, B1Q and the qualification verifier (the runner did check it).
+Now `check_prereg_document` runs inside both adjudicators' binding and in `verify()`; the
+owner's reproduction is a test in each. (2) The build evidence listed the application
+units and the headers they include, not the BSP / syscall / watchdog C and assembly units
+`build.sh` compiles, `b1_orch.c/h`, nor the toolchain's runtime objects and libraries.
+`b1_build_evidence.py` 1.1.0 reads the unit lists from `build.sh` itself and records every
+translation unit, every header any unit includes, and crti/crtbegin/crtend/crtn +
+libgcc/libc/libm as the link resolves them, all by hash. Also the README / package
+headers that still read "awaiting push". Firmware, image (`54b00663…`, rebuilt
+byte-identically), carrier, plans and predictions unchanged.
 
 ## 1. Hashes and data flow
 

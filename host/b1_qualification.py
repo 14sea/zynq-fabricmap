@@ -259,6 +259,11 @@ def verify(manifest: dict, root: Path = REPO_ROOT, require_git: bool = False, in
             "psoracle_commit": manifest["instrument"]["psoracle_commit"]}
     if not want["prereg_sha256"]:
         raise QualificationRefusal("the preregistration is not frozen: a qualification cannot bind to a null prereg")
+    import b1_adjudicate as adj  # noqa: E402
+    try:
+        adj.check_prereg_document(manifest, root)      # the document's bytes, not only its digest
+    except adj.Refusal as exc:
+        raise QualificationRefusal(str(exc)) from None
     for k, v in want.items():
         if b.get(k) != v:
             raise QualificationRefusal(f"the qualification was bound to {k} = {str(b.get(k))[:20]!r}, this manifest has {str(v)[:20]!r}")

@@ -130,6 +130,7 @@ def check_binding(log: dict, manifest: dict, plan: dict, manifest_sha256: str, s
             "b1_manifest_sha256": manifest_sha256, "psoracle_commit": manifest["instrument"]["psoracle_commit"]}
     if not want["prereg_sha256"]:
         raise Refusal("B1's preregistration is not frozen (manifest prereg.sha256 is null): nothing can be adjudicated")
+    check_prereg_document(manifest)
     if qualification_check is not None:
         qualification_check(manifest)
     for k, v in want.items():
@@ -142,6 +143,19 @@ def check_binding(log: dict, manifest: dict, plan: dict, manifest_sha256: str, s
         if ident.get(k) != v:
             raise Refusal(f"IDENT {k}: the board says {ident.get(k)!r}, this stage needs {v!r}")
     return b
+
+
+def check_prereg_document(manifest: dict, root: Path = REPO_ROOT) -> None:
+    """The preregistration DOCUMENT itself — not only its digest in the manifest and the log
+    — must still hash to the frozen pin (owner's review 2026-09-05: a document edited after
+    the freeze must fail the offline adjudication too, as it fails the runner)."""
+    doc = Path(manifest["prereg"]["path"])
+    doc = doc if doc.is_absolute() else root / doc
+    if not doc.is_file():
+        raise Refusal(f"the preregistration document {manifest['prereg']['path']!r} is absent")
+    if sha256_of(doc) != manifest["prereg"]["sha256"]:
+        raise Refusal(f"the preregistration document {manifest['prereg']['path']!r} does not hash to the frozen pin: "
+                      "it was changed after the freeze")
 
 
 def qualification_stands(manifest: dict) -> None:

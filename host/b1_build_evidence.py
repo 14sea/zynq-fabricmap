@@ -33,7 +33,7 @@ INSTRUMENT = Path(os.environ.get("PSORACLE_ROOT", "/home/test/zynq_psoracle"))
 TC = INSTRUMENT / "toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1"
 SA = Path("/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src")
 WD = Path("/home/test/Xilinx/2025.2/data/embeddedsw/XilinxProcessorIPLib/drivers/scuwdt_v2_6/src")
-APP_SOURCES = ("b1_app.c", "b1_carto.c", "b1_carto.h", "b1_wire.c", "b1_wire.h", "p3_data.h",
+APP_SOURCES = ("b1_app.c", "b1_carto.c", "b1_carto.h", "b1_orch.c", "b1_orch.h", "b1_wire.c", "b1_wire.h", "p3_data.h",
                "p3_derive.c", "p3_derive.h", "p3_rectx.c", "p3_rectx.h", "p3_pull.c", "p3_pull.h",
                "bsp/build.sh", "bsp/lscript.ld", "bsp/src/console.c",
                "bsp/include/bspconfig.h", "bsp/include/xmem_config.h", "bsp/include/xparameters.h")
@@ -57,22 +57,67 @@ def build_once() -> str:
     return sha(OUT / "b1_app.bin")
 
 
+def build_script_sources() -> dict[str, list[str]]:
+    """The BSP translation units build.sh compiles, read from build.sh itself (one source of
+    truth): ASM_SRCS / C_SRCS / SYS_SRCS relative to the standalone BSP, WDT_SRCS relative to
+    the watchdog driver."""
+    import re
+    text = BUILD.read_text()
+    out = {}
+    for name in ("ASM_SRCS", "C_SRCS", "SYS_SRCS", "WDT_SRCS"):
+        m = re.search(name + r'="([^"]*)"', text, re.S)
+        if not m:
+            raise RuntimeError(f"build.sh: {name} not found")
+        out[name] = m.group(1).replace("\\\n", " ").split()
+    return out
+
+
 def bsp_inputs() -> dict:
-    """Every embeddedsw file the application translation units read, from gcc -M."""
+    """EVERY file the build reads, by hash (owner's review 2026-09-05: the earlier list was
+    the headers the application units include; it omitted the BSP and watchdog C and
+    assembly units build.sh compiles and the toolchain's runtime objects and libraries):
+      * translation_units — every .c / .S build.sh compiles (BSP, syscalls, watchdog, the
+        console glue, the application), the source file itself by hash;
+      * headers — every embeddedsw header any of those units includes (gcc -M over each unit
+        with the flags build.sh uses; the toolchain's own headers are covered by the pinned
+        compiler);
+      * toolchain_objects — crti/crtbegin/crtend/crtn and libgcc/libc/libm as the link
+        resolves them (-print-file-name), by hash."""
     cc = TC / "bin/arm-none-eabi-gcc"
+    arch = ["-mcpu=cortex-a9", "-mfpu=vfpv3", "-mfloat-abi=hard"]
     inc = [f"-I{FW / 'bsp/include'}", f"-I{SA}/common", f"-I{SA}/arm/common", f"-I{SA}/arm/common/gcc",
            f"-I{SA}/arm/cortexa9", f"-I{SA}/arm/cortexa9/gcc", f"-I{WD}"]
-    files: dict[str, str] = {}
-    for src in ("b1_app.c", "b1_wire.c", "b1_carto.c", "p3_derive.c", "p3_rectx.c", "p3_pull.c"):
-        p = subprocess.run([str(cc), "-mcpu=cortex-a9", "-mfpu=vfpv3", "-mfloat-abi=hard", "-std=c99", "-M", *inc, str(FW / src)],
-                           capture_output=True, text=True)
+    srcs = build_script_sources()
+    units: list[tuple[Path, list[str]]] = []
+    bsp_flags = [*arch, "-std=gnu11", "-DUSE_AMP=0", *inc]
+    app_flags = [*arch, "-std=c99", "-ffreestanding", *inc]
+    for s in srcs["ASM_SRCS"] + srcs["C_SRCS"] + srcs["SYS_SRCS"]:
+        units.append((SA / s, bsp_flags))
+    for s in srcs["WDT_SRCS"]:
+        units.append((WD / s, bsp_flags))
+    units.append((FW / "bsp/src/console.c", bsp_flags))
+    for s in ("b1_app.c", "p3_derive.c", "b1_carto.c", "b1_orch.c", "b1_wire.c", "p3_rectx.c", "p3_pull.c"):
+        units.append((FW / s, app_flags))
+    tus: dict[str, str] = {}
+    headers: dict[str, str] = {}
+    for src, flags in units:
+        if not src.is_file():
+            raise RuntimeError(f"build input missing: {src}")
+        tus[str(src)] = sha(src)
+        p = subprocess.run([str(cc), *flags, "-M", str(src)], capture_output=True, text=True)
         if p.returncode != 0:
-            raise RuntimeError(p.stderr[-1000:])
+            raise RuntimeError(f"{src}: {p.stderr[-1000:]}")
         for tok in p.stdout.replace("\\\n", " ").split()[1:]:
             path = Path(tok)
-            if path.is_file() and (str(path).startswith(str(SA)) or str(path).startswith(str(WD))):
-                files[str(path)] = sha(path)
-    return dict(sorted(files.items()))
+            if path.is_file() and path != src and (str(path).startswith(str(SA)) or str(path).startswith(str(WD)) or str(path).startswith(str(FW))):
+                headers[str(path)] = sha(path)
+    objs: dict[str, str] = {}
+    for name in ("crti.o", "crtbegin.o", "crtend.o", "crtn.o", "libgcc.a", "libc.a", "libm.a"):
+        p = subprocess.run([str(cc), *arch, f"-print-file-name={name}"], capture_output=True, text=True)
+        path = Path(p.stdout.strip())
+        objs[name] = {"path": str(path), "sha256": sha(path) if path.is_file() else None}
+    return {"translation_units": dict(sorted(tus.items())), "headers": dict(sorted(headers.items())),
+            "toolchain_objects": objs, "build_script_lists": srcs}
 
 
 def build_evidence(do_build: bool) -> dict:
@@ -81,7 +126,7 @@ def build_evidence(do_build: bool) -> dict:
         hashes = [build_once(), build_once()]
     image = OUT / "b1_app.bin"
     elf = OUT / "b1_app.elf"
-    ev = {"schema": "b1_build_evidence", "schema_version": "1.0.0",
+    ev = {"schema": "b1_build_evidence", "schema_version": "1.1.0",
           "at": time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime()),
           "git": {"head": git("rev-parse", "HEAD"), "worktree_dirty": bool(git("status", "--porcelain"))},
           "toolchain": {"path": str(TC), "gcc_sha256": sha(TC / "bin/arm-none-eabi-gcc") if (TC / "bin/arm-none-eabi-gcc").is_file() else None,

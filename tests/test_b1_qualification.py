@@ -38,9 +38,21 @@ def msha(m: dict) -> str:
     return hashlib.sha256(json.dumps(m, indent=1, ensure_ascii=False).encode()).hexdigest()
 
 
+PREREG_DIR = Path(tempfile.mkdtemp())
+
+
+def freeze_doc(m: dict, text: str = "# fixture preregistration\n") -> Path:
+    import os
+    doc = PREREG_DIR / f"prereg_{hashlib.sha256(text.encode()).hexdigest()[:8]}.md"
+    doc.write_text(text)
+    m["prereg"]["path"] = os.path.relpath(doc, R)
+    m["prereg"]["sha256"] = hashlib.sha256(doc.read_bytes()).hexdigest(); m["prereg"]["frozen"] = True
+    return doc
+
+
 def frozen() -> dict:
     m = copy.deepcopy(MANIFEST)
-    m["prereg"]["sha256"] = "b" * 64; m["prereg"]["frozen"] = True
+    freeze_doc(m)
     m["image"]["board_ready"] = True
     return m
 
@@ -137,7 +149,7 @@ class Chain(unittest.TestCase):
         refuses(lambda m: m["carrier"]["qualification"].__setitem__("outcome", "HOLD: x"), "not PASS")
         refuses(lambda m: m["carrier"].__setitem__("bitstream_sha256", "a" * 64), "carrier_sha256")
         refuses(lambda m: m["image"].__setitem__("sha256", "a" * 64), "image_sha256")
-        refuses(lambda m: m["prereg"].__setitem__("sha256", "c" * 64), "prereg_sha256")
+        refuses(lambda m: m["prereg"].__setitem__("sha256", "c" * 64), "frozen pin")
         refuses(lambda m: m["instrument"].__setitem__("psoracle_commit", "0" * 40), "psoracle_commit")
         refuses(lambda m: m["qualification_plan"].__setitem__("master_seed", 5), "seed/budget")
         refuses(lambda m: m["carrier"]["qualification"]["files"].__setitem__("run_log.json", "0" * 64), "does not hash")
@@ -320,6 +332,22 @@ class Chain(unittest.TestCase):
             bq.write_session_artifacts(tmp / "bad", mp, rp, pp, sha, expected_rulings=({**wr, "master_seed": 5}, pr))
         with self.assertRaises(bq.QualificationRefusal):
             bq.write_session_artifacts(tmp / "bad2", mp, rp, pp, "0" * 64, expected_rulings=(wr, pr))
+
+    def test_a_preregistration_document_edited_after_the_qualification_breaks_the_chain(self):
+        """The owner's pure-model reproduction: after the freeze only the document changes;
+        the B1Q adjudicator, the verifier and (through it) the mapping adjudicator refuse."""
+        good = self.qualified_manifest()
+        doc = R / good["prereg"]["path"]; original = doc.read_bytes()
+        try:
+            doc.write_text("# fixture preregistration, edited after the freeze\n")
+            res = qadj.adjudicate(self.out, good, QPLAN, QPRED, self.sha_q, require_git=False)
+            self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("changed after the freeze", res["outcome"])
+            with self.assertRaises(bq.QualificationRefusal) as cm:
+                bq.verify(good)
+            self.assertIn("changed after the freeze", str(cm.exception))
+        finally:
+            doc.write_bytes(original)
+        bq.verify(good)
 
     def test_a_session_run_before_the_freeze_never_qualifies(self):
         m = copy.deepcopy(self.m); m["image"]["board_ready"] = False
