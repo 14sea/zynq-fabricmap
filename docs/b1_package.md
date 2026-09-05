@@ -268,10 +268,10 @@ record, and re-verifies the plan, prediction and pin table itself.
 
 ## 9. Tests and the clean-tree proof
 
-B1 tests: `test_b1_adjudicate` (25), `test_b1_carrier` (7), `test_b1_e2e` (5), `test_b1_leakage` (7), `test_b1_pins` (3), `test_b1_plan` (10), `test_b1_qualification` (18), `test_b1_records` (5), `test_b1_runner` (19), `test_b1_session` (5), `test_b1_signer` (4), `test_b1_twin` (8), `test_b1_wire` (3). Whole suite on the clean tree — **see the report cited below**; a
+B1 tests: `test_b1_adjudicate` (25), `test_b1_build_evidence` (3), `test_b1_carrier` (7), `test_b1_e2e` (5), `test_b1_leakage` (7), `test_b1_pins` (3), `test_b1_plan` (10), `test_b1_qualification` (18), `test_b1_records` (5), `test_b1_runner` (19), `test_b1_session` (5), `test_b1_signer` (4), `test_b1_twin` (8), `test_b1_wire` (3). Whole suite on the clean tree — **see the report cited below**; a
 dirty tree skips 27 carrier-authority tests, so only `clean_tree_proof: true` counts.
 
-Report: `evidence/b1/tests/test_report_2026-09-05T150847Z.json` (schema `b1_test_report`, package `B1 v2.2.5`) — ran **1414**, skipped **0**, `OK`; `head_at_run` `0b8f167b8bf2`, `worktree_dirty` False; instrument `689dde1dad37` = pinned, dirty False; **`clean_tree_proof: True`**. Earlier reports (`…T101536Z` 1338 at `4c49b259`; `…T115752Z` 1378 at `25f8c690`; `…T124403Z` 1399 at `c29e1662`; `…T131844Z` 1404 at `0138940b`; `…T134130Z` 1409 at `1d44ae5a`; `…T140217Z` 1411 at `6d693cb2`; `…T141415Z` 1412 at `7813f45c`; `…T142401Z` 1412 at `47b67190`) are kept as the records of the earlier packages.
+Report: `evidence/b1/tests/test_report_2026-09-05T173041Z.json` (schema `b1_test_report`, package `B1 v2.2.6`) — ran **1417**, skipped **0**, `OK`; `head_at_run` `5d711fb5eaa4`, `worktree_dirty` False; instrument `689dde1dad37` = pinned, dirty False; **`clean_tree_proof: True`**. Earlier reports (`…T101536Z` 1338 at `4c49b259`; `…T115752Z` 1378 at `25f8c690`; `…T124403Z` 1399 at `c29e1662`; `…T131844Z` 1404 at `0138940b`; `…T134130Z` 1409 at `1d44ae5a`; `…T140217Z` 1411 at `6d693cb2`; `…T141415Z` 1412 at `7813f45c`; `…T142401Z` 1412 at `47b67190`; `…T150847Z` 1414 at `0b8f1671`) are kept as the records of the earlier packages.
 
 ## 10. What is asked, and what is not
 
