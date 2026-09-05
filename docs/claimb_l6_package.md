@@ -12,9 +12,39 @@
 > Claim B has zero data points, the ICAPE2 path is neither resumed nor explained, and
 > nothing here may be read as active.
 
-## 0. Owner ruling — (blank until given)
+## 0. Owner ruling — 2026-09-05 (additive; the text below is unchanged)
 
-*(Additive, to be filled by the owner. The text below is unchanged by the ruling.)*
+> **Claim B: RESUMED — PREREGISTRATION PENDING (HOST-ONLY).**
+>
+> - Both preconditions of the L6 package are satisfied; Claim B may leave PAUSED.
+> - Authorised, inside `zynq-fabricmap` and without stopping for batch-by-batch review in
+>   between: the round 1′ preregistration, the runner / validators / guards, the host-only
+>   model and replay tests, the evidence index, and the candidate execution package.
+> - Host-only draft commits may be pushed, but until the final review nothing may be
+>   marked owner-approved FROZEN and no board ruling may be issued.
+> - The work MUST stop before the next board contact and deliver the whole package for
+>   review; until the next explicit ruling: no board contact, no power cycle, no image
+>   load, no Claim B execution.
+> - `zynq-psoracle` stays archived and read-only. Modifying it, extending the soak, changing
+>   the image, or changing `mutation_bits = 4` requires stopping in advance and a new ruling.
+> - Claim B's candidate budget must fall entirely inside the evidenced 6763.9 s window;
+>   otherwise the soak must be extended first.
+> - S #3's 12 568 candidates are still not Claim B data: not for arm comparison, not for
+>   the primary metric, not for a holdout.
+> - Round 1′ keeps every existing non-claim: `17A6` only, the PS/PCAP standalone path only;
+>   ICAPE2 is not explained; no extrapolation to a second die, Linux, the blank-FAR
+>   diagnostic route, or autonomous discovery.
+> - Every L6 seed must be excluded from the Claim B schedule.
+> - The board package must contain: the frozen candidate and its hashes, the complete budget
+>   derivation, the whole-of-run ruling pair draft, the stop-loss, the fresh-power-cycle /
+>   boundary requirements, the test reports, and the clean-tree proof.
+
+Recorded by the author from the owner's ruling of 2026-09-05 (given in Chinese; this is a
+faithful rendering, and the owner's message is the authority). The short re-review that
+preceded it found the corrected package PASS with no new blocker, and approved the push of
+`zynq-psoracle` `689dde1` and this repository's `1bba03d`. The work now proceeds host-only
+under `docs/claimb_round1prime_*` and stops at "ready for the board" for the whole-package
+review.
 
 ---
 

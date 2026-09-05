@@ -44,6 +44,16 @@ The calibration/soak preregistration (`zynq-psoracle/docs/l6_soak_prereg.md` v0.
 now archived (adjudication `32d1460`, archive head `689dde1`). The package and the request for the separate resumption ruling
 are `docs/claimb_l6_package.md`. Nothing in §0 changes until that ruling is given.
 
+
+## 0b. 2026-09-05 — ruled: RESUMED — PREREGISTRATION PENDING (HOST-ONLY) (additive)
+
+The owner ruled on `docs/claimb_l6_package.md` (its §0 carries the text): Claim B leaves
+PAUSED into a preregistration-pending, host-only state. Round 1′'s preregistration, runner,
+validators, guards, model/replay tests, evidence index and candidate execution package are
+authorised in one run of work; nothing is FROZEN or board-ruled before the whole-package
+review, and the next board contact needs its own explicit ruling. §0 above and the draft
+below remain as written.
+
 ---
 
 Author: Claude. Evidence repositories pinned: `zynq-psmap` `191ab05`, `zynq-psoracle`
