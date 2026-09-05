@@ -199,7 +199,7 @@ record, and re-verifies the plan, prediction and pin table itself.
 B1 tests: `test_b1_adjudicate` (23), `test_b1_carrier` (7), `test_b1_e2e` (5), `test_b1_leakage` (7), `test_b1_pins` (3), `test_b1_plan` (10), `test_b1_qualification` (8), `test_b1_records` (5), `test_b1_runner` (16), `test_b1_session` (5), `test_b1_signer` (4), `test_b1_twin` (8), `test_b1_wire` (3). Whole suite on the clean tree — **see the report cited below**; a
 dirty tree skips 27 carrier-authority tests, so only `clean_tree_proof: true` counts.
 
-Report: <<<REPORT>>>
+Report: `evidence/b1/tests/test_report_2026-09-05T124403Z.json` (schema `b1_test_report`) — ran **1399**, skipped **0**, `OK`; `head_at_run` `c29e166336ec` (the clean-tree build-evidence commit), `worktree_dirty` False; instrument `689dde1dad37` = pinned, dirty False; **`clean_tree_proof: True`**. Earlier reports (`…T101536Z`, 1338 tests at `4c49b259`; `…T115752Z`, 1378 at `25f8c690`) are kept as the records of the withdrawn and the v2 packages.
 
 ## 10. What is asked, and what is not
 
