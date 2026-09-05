@@ -1,10 +1,10 @@
 {
  "schema": "b1_manifest",
- "schema_version": "0.2.0",
+ "schema_version": "0.3.0",
  "status": "DRAFT — host-only, not frozen, NO BOARD RULING (owner 2026-09-05: B1 authorised to the pre-board package; the next board contact needs its own explicit ruling)",
  "prereg": {
   "path": "docs/b1_preregistration.md",
-  "version": "v0.1-draft",
+  "version": "v0.3-draft",
   "sha256": null,
   "frozen": null,
   "note": "null = DRAFT: host/b1_runner.py refuses to run until the owner's freeze writes the hash here"
@@ -69,9 +69,9 @@
   "code_bits": 9,
   "pairs": 32,
   "budget": 333,
-  "evidence_max": 4,
   "wire_changed_cap": 8,
-  "source": "firmware/b1/b1_carto.c (pure unit; host twin firmware/b1/b1_twin.c; Python reference host/b1_carto.py)"
+  "evidence": "per entry: code_mask (which of the code probes lit it), confirm_seq, observed",
+  "source": "firmware/b1/b1_carto.c + b1_orch.c (pure units; host twin firmware/b1/b1_twin.c; Python reference host/b1_carto.py)"
  },
  "seeds": {
   "master_seed": 1123460948,
@@ -111,7 +111,10 @@
     3,
     11
    ],
-   "rule": "the B1 master seed is none of these"
+   "rule": "the B1 master seed is none of these",
+   "b1_qualification": [
+    176359248
+   ]
   }
  },
  "audit": {
@@ -125,7 +128,7 @@
  },
  "plan": {
   "path": "evidence/b1/plan.json",
-  "sha256": "4bc2e9b91f1d822d52017f6742caca50a64a5858c0f9c36a1c8be0b74e75cfa6",
+  "sha256": "470e18f8fe3443be1ee9f9f27ffc28f73113b2231cdbff5b62348bfb58fda8e9",
   "budget": 333,
   "records": 335,
   "audited_records": 335,
@@ -134,14 +137,10 @@
  },
  "prediction": {
   "path": "evidence/b1/prediction.json",
-  "sha256": "fc1d41ce6652dc95ff3ac1804be383cf55b3cd70fce4ac74b6621f64bc507419",
+  "sha256": "7d197a498a5ca894fbc1287b37d19cd7d288c2f26d6dbcd21fefa8679e8fd35a",
   "content_sha256": "7e1e7702ad3dc69d1ee4c809bf3cc829d7dc93696092d1e65c5ac1c4019ecbfa",
   "probe_sequence_sha256": "f351475ca7e5e7743a4168c35eb283cc194634bbec9b6f3a5428243cc989bd5f"
  },
- "holdout_luts": [
-  4,
-  5
- ],
  "board": {
   "boardid": "17A6",
   "role": "verify",
@@ -149,26 +148,39 @@
   "control_plane": "U-Boot -> standalone (P3)",
   "idcode": "0x13722093"
  },
- "rulings_required": [
-  "whole-of-run B1 carrier qualification",
-  "whole-of-run B1 cartography",
-  "provisioning P3-K"
- ],
+ "rulings_required": {
+  "qualification_pair": [
+   "whole-of-run B1 carrier qualification",
+   "provisioning P3-K"
+  ],
+  "mapping_pair": [
+   "whole-of-run B1 cartography",
+   "provisioning P3-K"
+  ],
+  "note": "two sessions, two pairs, FOUR rulings: each session needs its own provisioning ruling (bound to its session name; a ruling is consumed once)"
+ },
  "rulings_binding": {
+  "whole-of-run B1 carrier qualification": [
+   "session=B1Q",
+   "master_seed (the qualification plan's)",
+   "prereg_sha256",
+   "image_sha256",
+   "b1_manifest_sha256"
+  ],
   "whole-of-run B1 cartography": [
-   "session",
-   "master_seed",
+   "session=B1",
+   "master_seed (the plan's)",
    "prereg_sha256",
    "image_sha256",
    "b1_manifest_sha256"
   ],
   "provisioning P3-K": [
-   "session",
+   "session (B1Q or B1 — one ruling per session)",
    "prereg_sha256",
    "image_sha256",
    "b1_manifest_sha256"
   ],
-  "note": "image_sha256 is the B1 image's; prereg_sha256 is B1's frozen preregistration; b1_manifest_sha256 is THIS file as committed at the freeze"
+  "note": "image_sha256 is the B1 image's; prereg_sha256 is B1's frozen preregistration; b1_manifest_sha256 is THIS file as committed when the ruling is written (the mapping pair binds to the manifest AFTER the qualification record is pinned)"
  },
  "history": [
   {
@@ -204,9 +216,10 @@
   "vivado": "2025.2",
   "frame_table_sha256": "19df58fa41aee1abe1c7bed453bab9038aad5c319c496330faf04e0ec27f5634",
   "contract": "docs/b1_carrier_contract.md",
+  "qualification_doc": "docs/b1_carrier_qualification.md",
   "qualification": "docs/b1_carrier_qualification.md",
   "qualified": false,
-  "note": "the B1 carrier (SEMANTIC_GATE=0: the PL verifies the signature and checks the sweep completed, and NEVER compares the readout with the signed table slots, which are the zero words). Built host-only; qualified is set true by nothing but the owner's `whole-of-run B1 carrier qualification` ruling after the qualification session on 17A6 — the runner refuses a B1 session on an unqualified carrier."
+  "note": "the B1 carrier (SEMANTIC_GATE=0: the PL verifies the signature and checks the sweep completed, and NEVER compares the readout with the signed table slots, which are the zero words). Built host-only. `qualification` is the B1Q session's record (host/b1_qualification.py), pinned by the owner after the `whole-of-run B1 carrier qualification` session on 17A6; `qualified` is DERIVED from it on every refresh (files hash, binding, PASS, re-adjudication) — the mapping runner and adjudicator re-verify the same chain and refuse on any break."
  },
  "signer": {
   "path": "host/b1_sign_arm.py",
@@ -216,7 +229,34 @@
  },
  "pins": {
   "path": "manifests/b1_instrument_pins.json",
-  "sha256": "f4b465115d1d7c90b6bbe98f57efeb2936ab5eeaabebb0514b16f6c0e558d1a4",
+  "sha256": "80eb29072448487bf399da272f8481394d5e45e2818eff05d5aa635cf04697c9",
   "note": "every adjudication-critical fabricmap file (host/b1_pins.py PINNED_GLOBS); verified by the runner before the port is opened and by the adjudicator before any verdict"
+ },
+ "reporting_strata": {
+  "A": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "B": [
+   4,
+   5
+  ],
+  "note": "stratum B = CLBLM_L.SLICEM_X0.ALUT/DLUT (LUT indices 4, 5; not consulted while the cartographer was developed), stratum A = the other four; both probed by the same algorithm, scored separately; neither is a blind holdout"
+ },
+ "qualification_plan": {
+  "session": "B1Q",
+  "path": "evidence/b1q/plan.json",
+  "sha256": "dead8853b8906a19b04b0e7072ef67efc3e5c176c53b8492602888671fb4e73e",
+  "prediction_path": "evidence/b1q/prediction.json",
+  "prediction_sha256": "d2c9293a4573b60e497a23cdd87f6355e29df696ef16e52aec05e00ac8aaf062",
+  "master_seed": 176359248,
+  "budget": 9,
+  "records": 11,
+  "audited_records": 11,
+  "crc_budget": 2,
+  "session_timeout_s": 615,
+  "note": "the carrier qualification session (docs/b1_carrier_qualification.md §3): its seed is drawn under label b1-qualification| and excluded from B1's; its records are never B1 data"
  }
 }

@@ -45,6 +45,42 @@ class SeedRule(unittest.TestCase):
 
 
 @unittest.skipUnless(HAVE and PLAN_PATH.is_file(), "the plan artifact or the instrument is absent")
+class QualificationPlan(unittest.TestCase):
+    def setUp(self):
+        self.q = json.loads((R / "evidence/b1q/plan.json").read_text())
+        self.qp = json.loads((R / "evidence/b1q/prediction.json").read_text())
+        self.plan = json.loads(PLAN_PATH.read_text())
+
+    def test_pins_seed_and_shape(self):
+        qm = MANIFEST["qualification_plan"]
+        self.assertEqual(hashlib.sha256((R / "evidence/b1q/plan.json").read_bytes()).hexdigest(), qm["sha256"])
+        self.assertEqual(hashlib.sha256((R / "evidence/b1q/prediction.json").read_bytes()).hexdigest(), qm["prediction_sha256"])
+        self.assertEqual((self.q["session"], self.q["budget"], self.q["records"], self.q["audited_records"]), ("B1Q", 9, 11, 11))
+        self.assertEqual(self.q["master_seed"], qm["master_seed"])
+        self.assertNotEqual(self.q["master_seed"], self.plan["master_seed"])
+        self.assertIn(self.plan["master_seed"], self.q["seed_exclusion"]["excluded_master_seeds"])
+        self.assertNotIn(self.q["master_seed"], self.plan["seed_exclusion"]["excluded_master_seeds"] + [self.plan["master_seed"]])
+        self.assertEqual(MANIFEST["seeds"]["excluded"]["b1_qualification"], [self.q["master_seed"]])
+        self.assertEqual(self.q["seed_derivation"]["label"], "b1-qualification|")
+        self.assertEqual(len(self.qp["probes"]), 9)
+        self.assertEqual(self.qp["baseline_scores"], [18, 22, 20, 20, 20, 18])
+        self.assertEqual(self.qp["gate_observations"]["code_probe"]["tables_match"], 0)
+        self.assertEqual(self.qp["expected_score"]["snapshots"]["provisional"]["recall"], 1.0)
+
+    def test_the_qualification_seed_does_not_feed_b1s_derivation(self):
+        """B1's seed rule advances over the pinned exclusions; the qualification seed is
+        derived AFTER it and must not be one of them (no circularity)."""
+        self.assertNotIn(self.q["master_seed"], bp.excluded_seeds(MANIFEST))
+        self.assertEqual(bp.master_seed_by_rule(MANIFEST)["master_seed"], self.plan["master_seed"])
+
+    def test_regenerates_identically(self):
+        plan, pred = bp.build_qualification_plan(MANIFEST, require_git=False)
+        for k in ("master_seed", "budget", "audit_seqs", "crc_budget", "session_timeout_s", "flags", "predicted_content_sha256",
+                  "predicted_probe_sequence_sha256"):
+            self.assertEqual(plan[k], self.q[k], k)
+        self.assertEqual(pred["content"], self.qp["content"])
+
+
 class CommittedPlan(unittest.TestCase):
     def setUp(self):
         self.plan = json.loads(PLAN_PATH.read_text())
@@ -84,6 +120,10 @@ class CommittedPlan(unittest.TestCase):
         self.assertEqual(es["snapshots"]["probes_to_full_recall_conf1"], bc.CODE_BITS)
         self.assertEqual(es["stratum_B"]["recall"], 1.0)
         self.assertEqual(es["unobserved_claims"], 0)
+        self.assertEqual(es["snapshots"]["provisional"]["calibration"]["1"], {"claimed": 292, "correct": 292, "accuracy": 1.0})
+        self.assertEqual(es["calibration"]["1"]["claimed"], 0)
+        self.assertEqual(self.plan["reporting_strata"], {"A": [0, 1, 2, 3], "B": [4, 5]})
+        self.assertNotIn("holdout_luts", self.plan); self.assertNotIn("holdout_luts", MANIFEST)
 
     def test_plan_regenerates_identically(self):
         plan, pred = bp.build_plan(MANIFEST, require_git=False)

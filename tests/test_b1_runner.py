@@ -20,8 +20,11 @@ from pathlib import Path
 
 R = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(R / "host"))
+sys.path.insert(0, str(R / "tests"))
 import b1_runner as rn  # noqa: E402
+import b1q_adjudicate as qadj  # noqa: E402
 import claimb_r1p_instrument as inst  # noqa: E402
+from test_b1_qualification import qualify, frozen as frozen_q, HAVE as HAVE_Q  # noqa: E402
 
 MANIFEST = json.loads(rn.MANIFEST.read_text())
 HAVE = inst.DEFAULT_ROOT.is_dir() and (inst.DEFAULT_ROOT / ".git").exists()
@@ -49,19 +52,28 @@ class Fixture:
         self.manifest["prereg"]["path"] = os.path.relpath(doc, R)
         self.manifest["prereg"]["sha256"] = sha(doc)
         self.manifest["image"]["board_ready"] = board_ready
-        self.manifest["carrier"]["qualified"] = qualified
+        if qualified:
+            # a REAL qualification record: the modelled B1Q session over this very manifest,
+            # adjudicated, pinned (the runner re-adjudicates it)
+            rec, _, _, _ = qualify(self.d, self.manifest, "b1q")
+            self.manifest["carrier"]["qualification"] = rec
+            self.manifest["carrier"]["qualified"] = True
+        else:
+            self.manifest["carrier"]["qualification"] = None
+            self.manifest["carrier"]["qualified"] = False
 
     def manifest_path(self) -> Path:
         p = self.d / "manifest.json"
         p.write_text(json.dumps(self.manifest))
         return p
 
-    def args(self, **over) -> types.SimpleNamespace:
+    def args(self, profile: dict = rn.MAPPING, **over) -> types.SimpleNamespace:
         mp = self.manifest_path()
-        base = dict(ruling=self.ruling("b1", ruling=rn.RULING_TEXT, session="B1", prereg_sha256=self.manifest["prereg"]["sha256"],
-                                       image_sha256=self.manifest["image"]["sha256"], b1_manifest_sha256=sha(mp),
-                                       master_seed=self.manifest["seeds"]["master_seed"]),
-                    provision_ruling=self.ruling("k", ruling=rn.PROVISION_RULING_TEXT, session="B1",
+        session = profile["session"]
+        seed = self.manifest["seeds"]["master_seed"] if profile is rn.MAPPING else self.manifest["qualification_plan"]["master_seed"]
+        base = dict(ruling=self.ruling("b1", ruling=profile["ruling_text"], session=session, prereg_sha256=self.manifest["prereg"]["sha256"],
+                                       image_sha256=self.manifest["image"]["sha256"], b1_manifest_sha256=sha(mp), master_seed=seed),
+                    provision_ruling=self.ruling("k", ruling=rn.PROVISION_RULING_TEXT, session=session,
                                                  prereg_sha256=self.manifest["prereg"]["sha256"],
                                                  image_sha256=self.manifest["image"]["sha256"], b1_manifest_sha256=sha(mp)),
                     boundary=BOUNDARY, out=self.d / "out", manifest=mp, instrument_root=inst.DEFAULT_ROOT,
@@ -71,9 +83,9 @@ class Fixture:
 
 
 class RefusalOrder(unittest.TestCase):
-    def refuses(self, args, *words: str) -> str:
+    def refuses(self, args, *words: str, profile: dict = rn.MAPPING) -> str:
         with self.assertRaises(rn.Refusal) as cm:
-            rn.preflight(args)
+            rn.preflight(args, profile)
         msg = str(cm.exception)
         for w in words:
             self.assertIn(w, msg)
@@ -103,7 +115,44 @@ class RefusalOrder(unittest.TestCase):
     @unittest.skipUnless(HAVE and IMAGE.is_file(), "instrument or built image absent")
     def test_frozen_and_board_ready_but_the_carrier_is_not_qualified(self):
         f = Fixture(); f.freeze(qualified=False)
-        self.refuses(f.args(), "qualified")
+        self.refuses(f.args(), "not qualified", "no carrier.qualification")
+        f.manifest["carrier"]["qualified"] = True                   # the bare flag changes nothing
+        self.refuses(f.args(), "not qualified")
+
+    @unittest.skipUnless(HAVE and IMAGE.is_file(), "instrument or built image absent")
+    def test_a_qualification_bound_to_another_carrier_or_with_tampered_evidence_refuses(self):
+        f = Fixture(); f.freeze()
+        f.manifest["carrier"]["qualification"]["binding"]["carrier_sha256"] = "a" * 64
+        self.refuses(f.args(), "not qualified", "carrier_sha256")
+        f = Fixture(); f.freeze()
+        f.manifest["carrier"]["qualification"]["files"]["audits.json"] = "0" * 64
+        self.refuses(f.args(), "not qualified", "does not hash")
+        f = Fixture(); f.freeze()
+        f.manifest["carrier"]["qualified"] = False                  # evidence stands, flag disagrees
+        self.refuses(f.args(), "disagrees")
+
+    @unittest.skipUnless(HAVE and IMAGE.is_file(), "instrument or built image absent")
+    def test_the_qualification_profile_needs_no_qualification_but_its_own_plan_and_rulings(self):
+        f = Fixture(); f.freeze(qualified=False)
+        a = f.args(profile=rn.QUALIFICATION)
+        with self.assertRaises(Exception) as cm:                    # reaches the boundary check, past every pin and ruling
+            rn.preflight(a, rn.QUALIFICATION)
+        msg = str(cm.exception).lower()
+        self.assertNotIsInstance(cm.exception, AssertionError)
+        self.assertTrue("boundary" in msg or "old" in msg or "runner_user" in msg, msg)
+        self.assertNotIn("qualif", msg)
+        # the mapping ruling texts do not open the qualification profile, and vice versa
+        f2 = Fixture(); f2.freeze(qualified=False)
+        self.refuses(f2.args(profile=rn.MAPPING), "ruling text", profile=rn.QUALIFICATION)
+        # a B1Q provisioning ruling bound to session B1 is refused (one provisioning ruling per session)
+        f3 = Fixture(); f3.freeze(qualified=False)
+        a = f3.args(profile=rn.QUALIFICATION)
+        a.provision_ruling = f3.ruling("k2", ruling=rn.PROVISION_RULING_TEXT, session="B1", prereg_sha256=f3.manifest["prereg"]["sha256"],
+                                       image_sha256=f3.manifest["image"]["sha256"], b1_manifest_sha256=sha(a.manifest))
+        self.refuses(a, "session", profile=rn.QUALIFICATION)
+        # a missing qualification plan pin
+        f4 = Fixture(); f4.freeze(qualified=False); f4.manifest["qualification_plan"]["sha256"] = "0" * 64
+        self.refuses(f4.args(profile=rn.QUALIFICATION), "qualification plan", profile=rn.QUALIFICATION)
 
     @unittest.skipUnless(HAVE and IMAGE.is_file(), "instrument or built image absent")
     def test_frozen_but_a_carrier_pin_is_wrong(self):
@@ -163,6 +212,15 @@ class RefusalOrder(unittest.TestCase):
             bad = dict(good); bad[k] = "zz" if k != "master_seed" else 6
             with self.assertRaises(rn.Refusal):
                 rn.bind_ruling(bad, "t", "p", "i", "m", 5)
+        with self.assertRaises(rn.Refusal):
+            rn.bind_ruling(dict(good), "t", "p", "i", "m", 5, session="B1Q")
+
+    def test_the_profiles_are_distinct_and_the_b1q_runner_is_the_qualification_profile(self):
+        self.assertEqual(rn.QUALIFICATION["session"], "B1Q"); self.assertEqual(rn.QUALIFICATION["ruling_text"], qadj.RULING_TEXT)
+        self.assertIs(rn.QUALIFICATION["adjudicate"], qadj.adjudicate); self.assertFalse(rn.QUALIFICATION["require_qualification"])
+        self.assertTrue(rn.MAPPING["require_qualification"])
+        src = (R / "host/b1q_runner.py").read_text()
+        self.assertIn("rn.main(profile=rn.QUALIFICATION)", src)
 
     def test_identity_check_names_every_mismatch(self):
         plan = {"budget": 333, "master_seed": 7, "protocol": "rel-v4"}

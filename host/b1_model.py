@@ -36,7 +36,12 @@ import b1_carto as bc  # noqa: E402
 LOCAL_MAP = REPO_ROOT / "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/local_map.json"
 PHENOTYPE = REPO_ROOT / "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/phenotype_manifest.json"
 # LUT index order = sorted map keys, the instrument's convention (l6_operators.operator_data)
-HOLDOUT_LUTS = (4, 5)          # CLBLM_L.SLICEM_X0.ALUT / DLUT: the engineering holdout (roadmap §2 B1)
+# The preregistered REPORTING STRATA (docs/b1_preregistration.md §2): stratum B = LUT indices 4, 5
+# (CLBLM_L.SLICEM_X0.ALUT / DLUT — the LUTs not consulted while the cartographer was developed),
+# stratum A = the other four. Both are probed by the same algorithm and scored separately; neither
+# is a "holdout" in the blind sense (owner's review 2026-09-05, blocker 4).
+STRATUM_B_LUTS = (4, 5)
+STRATA = {"A": (0, 1, 2, 3), "B": STRATUM_B_LUTS}
 
 
 def addresses(local_map: dict | None = None) -> list[tuple[int, int, int]]:

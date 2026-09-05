@@ -24,6 +24,8 @@ class Table(unittest.TestCase):
         for must in ("host/b1_adjudicate.py", "host/b1_records.py", "host/b1_sign_arm.py", "host/b1_carto.py", "host/b1_verify.py",
                      "host/b1_runner.py", "host/b1_pins.py", "firmware/b1/b1_app.c", "firmware/b1/b1_carto.c", "firmware/b1/b1_orch.c",
                      "rtl/b1/b1_arm_gate.v", "rtl/b1/b1_axil.v", "schemas/self_map_v2.schema.json",
+                     "host/b1q_adjudicate.py", "host/b1_qualification.py", "host/b1q_runner.py", "host/b1_manifest.py",
+                     "docs/b1_carrier_contract.md", "docs/b1_carrier_qualification.md", "docs/b1_architecture.md",
                      "manifests/claimb_round1prime_instrument_pins.json", "tests/test_b1_adjudicate.py"):
             self.assertIn(must, names, must)
         self.assertEqual(t["file_count"], len(t["files"]))

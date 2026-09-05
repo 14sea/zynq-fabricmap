@@ -36,7 +36,7 @@ import b1_carto as bc  # noqa: E402
 import b1_model as bm  # noqa: E402
 
 CLAIMING = ("decoded", "confirmed")
-STRATUM_B = tuple(bm.HOLDOUT_LUTS)        # the preregistered reporting stratum B (LUT indices 4, 5)
+STRATUM_B = tuple(bm.STRATUM_B_LUTS)      # the preregistered reporting stratum B (LUT indices 4, 5)
 
 
 def _entries(content: dict) -> list[dict]:
@@ -153,8 +153,18 @@ def snapshots(records: list[dict], truth: dict | None = None) -> dict:
     if provisional is not None:
         n_claim = sum(1 for v in provisional.values() if v[3] in CLAIMING)
         n_ok = sum(1 for i, v in provisional.items() if v[3] in CLAIMING and v[:2] == m.get(i))
+        by_conf = {c: [0, 0] for c in (0, 1, 2)}
+        for i, v in provisional.items():
+            if v[3] in CLAIMING:
+                by_conf[v[2]][0] += 1
+                if v[:2] == m.get(i):
+                    by_conf[v[2]][1] += 1
         prov_score = {"claimed": n_claim, "correct": n_ok, "precision": n_ok / n_claim if n_claim else None,
-                      "recall": n_ok / len(m) if m else None}
+                      "recall": n_ok / len(m) if m else None,
+                      # the calibration OF THIS SNAPSHOT: after the code probes every claim is at
+                      # confidence 1 (the preregistration's "probe-9 snapshot: confidence-1 accuracy")
+                      "calibration": {str(c): {"claimed": v[0], "correct": v[1], "accuracy": (v[1] / v[0]) if v[0] else None}
+                                      for c, v in by_conf.items()}}
     return {"probes_issued": probes, "phases": phases, "provisional": prov_score,
             "probes_to_full_recall_conf1": full_recall_at, "probes_to_full_confirmation": full_confirm_at}
 
@@ -180,6 +190,99 @@ def report(whole: dict, records: list[dict] | None = None, truth: dict | None = 
     if records is not None:
         out["snapshots"] = snapshots(records, truth)
     return out
+
+
+# ------------------------------------------------------------------ semantic validation of the map
+# JSON-schema says what shape the document has; these say what a B1 map may CLAIM (owner's
+# review 2026-09-05, blocker 4): the state ↔ relation / confidence / observed / evidence
+# combinations the cartographer can produce (host/b1_carto.py, firmware/b1/b1_carto.c), the
+# universe (exactly the 292 pinned addresses, each once), the code probes and the edges.
+LEGAL = {
+    # state: (relation?, confidences, observed, confirm_seq?, code_mask?)
+    "unknown":       (False, (0,),   False, False, False),
+    "decoded":       (True,  (1,),   True,  False, True),
+    "confirmed":     (True,  (1, 2), True,  True,  None),
+    "no_effect":     (False, (2,),   False, True,  False),
+    "contradiction": (False, (0,),   None,  None,  None),
+}
+
+
+def semantic_findings(doc: dict, addresses: list[tuple[int, int, int]] | None = None,
+                      budget: int | None = None) -> list[str]:
+    """Findings against the expanded self_map 2.0.0 that the schema cannot express."""
+    f: list[str] = []
+    addrs = addresses or bm.addresses()
+    entries = doc.get("entries") or []
+    if len(entries) != bc.N:
+        f.append(f"self_map_v2 semantics: {len(entries)} entries, the universe has {bc.N}")
+    seen = set()
+    for e in entries:
+        i = e.get("genome_bit")
+        if not isinstance(i, int) or not 0 <= i < bc.N or i in seen:
+            f.append(f"self_map_v2 semantics: genome_bit {i!r} is out of range or repeated"); break
+        seen.add(i)
+        far, w, b = addrs[i]
+        if e.get("address") != f"{far:#010x}/{w}/{b}":
+            f.append(f"self_map_v2 semantics: entry {i}'s address {e.get('address')!r} is not the pinned universe's"); break
+        st = e.get("state")
+        if st not in LEGAL:
+            f.append(f"self_map_v2 semantics: entry {i} state {st!r} is not a cartographer state"); break
+        rel, confs, obs, cseq, cmask = LEGAL[st]
+        ev = e.get("evidence") or {}
+        problems = []
+        if (e.get("relation") is not None) != rel:
+            problems.append("relation")
+        if e.get("confidence") not in confs:
+            problems.append("confidence")
+        if obs is not None and (e.get("observed_transition") is not None) != obs:
+            problems.append("observed_transition")
+        if cseq is not None and (ev.get("confirm_seq") is not None) != cseq:
+            problems.append("confirm_seq")
+        if cmask is not None and bool(ev.get("code_probe_seqs")) != cmask:
+            problems.append("code_probe_seqs")
+        if st == "confirmed":
+            # confidence 2 = decoded by the code probes then confirmed by its single; confidence 1 =
+            # a single that lit one position on an UNdecoded address (an anomaly): no code evidence
+            if (e.get("confidence") == 2) != bool(ev.get("code_probe_seqs")):
+                problems.append("confirmed confidence vs code evidence")
+        if rel and e.get("relation") is not None:
+            r = e["relation"]
+            if r.get("kind") != "lut_init" or not (0 <= r.get("lut_index", -1) < bc.LUTS) or not (0 <= r.get("init_index", -1) < 64):
+                problems.append("relation range")
+        if problems:
+            f.append(f"self_map_v2 semantics: entry {i} ({st}) has an illegal combination: {', '.join(problems)}"); break
+    if len(seen) == bc.N and len(entries) == bc.N and seen != set(range(bc.N)):
+        f.append("self_map_v2 semantics: the entries do not cover genome bits 0..291 exactly once")
+    codes = doc.get("code_probe_seqs") or []
+    if len(codes) != bc.CODE_BITS or any(not isinstance(x, int) for x in codes) or len(set(codes)) != len(codes) \
+            or codes != sorted(codes) or (codes and codes[0] < 2):
+        f.append(f"self_map_v2 semantics: code_probe_seqs {codes} are not {bc.CODE_BITS} distinct increasing record seqs")
+    for e in entries:
+        cps = (e.get("evidence") or {}).get("code_probe_seqs") or []
+        if any(c not in codes for c in cps):
+            f.append(f"self_map_v2 semantics: entry {e.get('genome_bit')} cites a code probe seq not in code_probe_seqs"); break
+    edges = doc.get("interaction_edges") or []
+    if len(edges) != bc.PAIRS_MAX:
+        f.append(f"self_map_v2 semantics: {len(edges)} interaction edges, the cartographer tests {bc.PAIRS_MAX}")
+    pairs_seen = set()
+    for k, ed in enumerate(edges):
+        a, b = ed.get("a"), ed.get("b")
+        if not (isinstance(a, int) and isinstance(b, int) and 0 <= a < bc.N and 0 <= b < bc.N) or a == b:
+            f.append(f"self_map_v2 semantics: edge {k} indices {a!r},{b!r} are illegal"); break
+        key = (min(a, b), max(a, b))
+        if key in pairs_seen:
+            f.append(f"self_map_v2 semantics: edge {k} repeats pair {key}"); break
+        pairs_seen.add(key)
+        if ed.get("result") == "pending":
+            f.append(f"self_map_v2 semantics: edge {k} is still pending"); break
+        if ed.get("result") not in ("none", "deviation") or ed.get("kind") not in ("same_lut", "cross_lut"):
+            f.append(f"self_map_v2 semantics: edge {k} has an unknown kind/result"); break
+        rs = ed.get("record_seq")
+        if not isinstance(rs, int) or rs < 2 or (budget is not None and rs > budget + 1):
+            f.append(f"self_map_v2 semantics: edge {k} record_seq {rs!r} is not a probe seq"); break
+    if budget is not None and doc.get("budget") != budget:
+        f.append(f"self_map_v2 semantics: budget {doc.get('budget')!r} != the plan's {budget}")
+    return f
 
 
 def main(argv=None) -> int:

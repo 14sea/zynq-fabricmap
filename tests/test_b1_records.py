@@ -72,5 +72,15 @@ class RuleThreeB1(unittest.TestCase):
             self.b1.validate(r)                 # the nonce chain rule
 
 
+class LegacyPath(unittest.TestCase):
+    def test_the_instruments_l5_validate_run_log_is_not_a_b1_path(self):
+        import claimb_r1p_instrument as inst
+        inst.bind(inst.DEFAULT_ROOT, require_git=False)
+        import b1_records as b1
+        with self.assertRaises(b1.RecordError) as cm:
+            b1.validate_run_log({"schema": "run_log", "records": []})
+        self.assertIn("rule iii", str(cm.exception))
+
+
 if __name__ == "__main__":
     unittest.main()

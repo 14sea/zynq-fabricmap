@@ -1,4 +1,4 @@
-# B1 — autonomous cartography on the known 292 bits: architecture (v0.2, host-only, 2026-09-05)
+# B1 — autonomous cartography on the known 292 bits: architecture (v0.3, host-only, 2026-09-05)
 
 > **Standing: host-only. Nothing here is frozen or ruled; no board contact is authorised.**
 > Stage B1 of `docs/autonomous_cartography_roadmap.md`, built under the owner's ruling of
@@ -112,9 +112,11 @@ inputs by hash; the compiler by hash). The binary is not committed (as the instr
 not) and is hash-checked by the runner.
 
 **What does not transfer from the instrument:** its carrier's board-level guarantees (the
-B1 carrier needs its own **qualification session** under its own ruling —
-`docs/b1_carrier_qualification.md` — before any mapping session; the runner and the
-adjudicator refuse an unqualified carrier); its L6 calibrations (a new image has its own
+B1 carrier needs its own **qualification session** `B1Q` under its own ruling pair —
+`docs/b1_carrier_qualification.md`; `host/b1q_runner.py`, `host/b1q_adjudicate.py` — before
+any mapping session; its PASS is an evidence chain (`host/b1_qualification.py`: files by
+hash, binding, re-adjudication) from which `carrier.qualified` is derived, and the mapping
+runner and adjudicator re-verify that chain, never the flag); its L6 calibrations (a new image has its own
 period); its `board_ready` mark. B1 needs the owner's compatibility review of this image
 before any board session (package §7), and the runner refuses an image not marked
 `board_ready` in `manifests/b1_manifest.json`.
@@ -133,25 +135,28 @@ before any board session (package §7), and the runner refuses an image not mark
 | C = Python | `tests/test_b1_twin.py`, `test_b1_session.py` | probes, record blocks, content and map bytes identical over truth / permuted / dropout / interaction fixtures, every budget phase, unscored probes; the session order (init → bind → opening → probes → closing; unscored ends the epoch) identical in C and Python |
 | wire contract | `tests/test_b1_wire.py` | the image's own identity (1.4.0) and record (1.2.0 + carto) bytes pass the instrument's validator |
 | autonomy replay | `host/b1_adjudicate.py` | after a session the reference, bound as the board was, fed the records' readouts, reproduces every probe the board chose and every record's content and map hash — the board followed the algorithm on its own observations and nothing else |
-| fail-closed adjudication | `tests/test_b1_adjudicate.py` | one named check per preregistration condition, each with a negative test; the binding refuses a wrong session / seed / image / prereg / manifest hash / instrument commit / carrier variant / carrier hash / unqualified carrier; a lying block field, a foreign probe, the init-order defect, a short run, a late span, a dropout fabric, an instrument finding are each named |
+| fail-closed adjudication | `tests/test_b1_adjudicate.py` | one named check per preregistration condition, EXACT (`EXPECTED`), each with a negative test driven through `adjudicate()`; the plan, prediction and pin table re-verified inside `adjudicate()`; the binding refuses a wrong session / seed / image / prereg / manifest hash / instrument commit / carrier variant / carrier hash / a carrier without a standing qualification chain; a lying block field, a foreign probe, the init-order defect, a short run, a late span, a dropout fabric, an instrument finding, a forced schema finding, a missing validator are each named |
+| qualification chain | `host/b1_qualification.py`; `tests/test_b1_qualification.py` | the carrier is qualified only by a B1Q record whose evidence files hash, whose binding is this manifest's carrier / image / prereg / seed, whose outcome is PASS and which re-adjudicates to PASS now; every break refuses |
 | end-to-end modelled session | `host/b1_modelled_session.py`; `tests/test_b1_e2e.py` | the whole 335-record session through the instrument's real host stack (reader, console, notary relay with the B1 signer, collector, audit pulls of the candidates' real staging words) written as the runner writes it and adjudicated by the real validators: truth → PASS (335/335 audited, chain 336); permuted → HOLD; tampered served words → KILL falsified; a readout the block contradicts → named; a faulty channel still COMPLETED |
 | pins | `host/b1_pins.py`; `manifests/b1_instrument_pins.json`; `tests/test_b1_pins.py` | every adjudication-critical fabricmap file by hash, verified by the runner before the port and by the adjudicator before any verdict; the table is not self-referential |
-| map schema | `schemas/self_map_v2.schema.json`; `b1_adjudicate.schema_findings` | the expanded board-authored map validates under a real JSON-schema validator (draft 2020-12); a missing validator is a finding, never a pass |
+| map schema + semantics | `schemas/self_map_v2.schema.json`; `b1_adjudicate.schema_findings`; `b1_verify.semantic_findings` | the expanded board-authored map validates under a real JSON-schema validator (draft 2020-12); a missing validator is a finding, never a pass; the semantic rules require exactly the 292 pinned addresses once each, legal state / confidence / observation / evidence combinations, 9 distinct increasing code-probe seqs, 32 legal non-pending edges |
 
 ## 6. Adjudication (`host/b1_adjudicate.py`) and the map v2
 
-Binding (session B1, the plan's seed, the B1 image, the frozen prereg, **the manifest's
-own hash, the instrument commit**, the IDENT's fields including the carrier hash and the
-VARIANT word, the carrier marked qualified) → the instrument's validators through the B1
+Pins re-verified inside the adjudicator (plan, prediction, the pin table) → binding
+(session B1, the plan's seed, the B1 image, the frozen prereg, **the manifest's own hash,
+the instrument commit**, the IDENT's fields including the carrier hash and the VARIANT
+word, the carrier's qualification chain re-adjudicated) → the instrument's validators through the B1
 successor (`b1_records`: run-log validation with the audit gate, rule iii-B1, the
 ALL-SELF-REPORTING policy, structural / baseline / REC / rel-v4 closure and controls, the
 rate report, heartbeat and CRC / bad-frame budgets, the deadline; a `Falsified` of either
 family is a KILL, any other rejection a HOLD) → COMPLETED at budget + 2 → the autonomy
 replay (§5; **the probe sequence is a finding**, per record) → the verifier
-(`host/b1_verify.py`) against the truth held back from the executable: precision, recall,
-unobserved claims, calibration by confidence, **confidence snapshots** (the provisional map
-after phase A, the confirmed map at the end, probes to full recall at confidence ≥ 1 and to
-full confirmation), the two **reporting strata** — stratum B = `CLBLM_L.SLICEM_X0.ALUT/DLUT`
+(`host/b1_verify.py`) against the truth held back from the executable, every gate an EXACT
+equality with the preregistered constants: precision, recall, claimed, unobserved claims,
+**confidence snapshots** (the probe-9 map: confidence-1 accuracy 292/292; the final map:
+confidence-2 accuracy 292/292 and no confidence-1 cohort; probes to full recall at
+confidence ≥ 1 = 9 and to full confirmation = 301), the two **reporting strata** — stratum B = `CLBLM_L.SLICEM_X0.ALUT/DLUT`
 (94 addresses, the LUTs not consulted while the cartographer was developed) and stratum A =
 the other four (198) — interaction edges, anomalies → the per-record comparison with the
 preregistered prediction (content and blocks). Two documents come out: the **board-authored

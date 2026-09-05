@@ -368,10 +368,6 @@
  },
  "flags": 50,
  "flags_hex": "0x32",
- "holdout_luts": [
-  4,
-  5
- ],
  "instrument": {
   "files_verified": 128,
   "git_checked": true,
@@ -391,15 +387,47 @@
  },
  "predicted_content_sha256": "7e1e7702ad3dc69d1ee4c809bf3cc829d7dc93696092d1e65c5ac1c4019ecbfa",
  "predicted_probe_sequence_sha256": "f351475ca7e5e7743a4168c35eb283cc194634bbec9b6f3a5428243cc989bd5f",
- "prediction_sha256": "fc1d41ce6652dc95ff3ac1804be383cf55b3cd70fce4ac74b6621f64bc507419",
+ "prediction_sha256": "7d197a498a5ca894fbc1287b37d19cd7d288c2f26d6dbcd21fefa8679e8fd35a",
  "protocol": "rel-v4",
  "rec_retry_control": true,
  "records": 335,
+ "reporting_strata": {
+  "A": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "B": [
+   4,
+   5
+  ]
+ },
  "schema": "b1_plan",
  "schema_version": "1.0.0",
  "seed_derivation": {
   "commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
   "digest": "42f6a754dea9e8f902fe60ac69803b762da7719ebaeeb7e98b3d2336c7b4b0b0",
+  "excluded": [
+   1,
+   2,
+   3,
+   5,
+   11,
+   77,
+   99,
+   1234,
+   4321,
+   195948557,
+   324805736,
+   521288629,
+   1278624577,
+   1278628687,
+   1281816666,
+   2119807262,
+   3735928559,
+   4294967295
+  ],
   "label": "b1-cartography|",
   "master_seed": 1123460948,
   "offset": 0,
@@ -436,6 +464,6 @@
  "session": "B1",
  "session_timeout_s": 1048,
  "sign_retry_control": true,
- "tool": "b1_plan.py/0.1.0",
+ "tool": "b1_plan.py/0.2.0",
  "watchdog": true
 }

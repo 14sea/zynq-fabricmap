@@ -1,4 +1,4 @@
-# B1 — the pre-board package, v2, delivered for the whole-package review (2026-09-05)
+# B1 — the pre-board package, v2.1, delivered for the short re-review (2026-09-05)
 
 > **HOST-ONLY. DRAFT / NO BOARD RULING.** Delivered at "B1 ready for the board" under the
 > owner's ruling of 2026-09-05 (`docs/autonomous_cartography_roadmap.md`; the
@@ -25,11 +25,21 @@ The image is recorded as **WITHDRAWN / DEFECTIVE / NO-RUN** (`manifests/b1_manif
 Plus, ordered by the owner: a real **end-to-end modelled 335-record session** through the
 instrument's host stack and validators (§2).
 
+**v2 → v2.1 (the owner's review of v2, 2026-09-05):** v2 was judged to have solved the
+circular measurement and the init order, but not yet to freeze. Four blockers, closed here:
+
+| blocker (v2) | v2.1 |
+|---|---|
+| 1 — schema findings were computed and then dropped by the entry point (`findings = …` overwrote them); the runner called `adjudicate()` and so bypassed the CLI's pin check | one local findings list written once; the plan, prediction and pin table are re-verified **inside** `adjudicate()` (a drift after preflight is REFUSED); every negative test now drives `adjudicate()` itself (`tests/test_b1_adjudicate.py`) |
+| 2 — the gates were not the preregistration's exact numbers (full confirmation "not null" instead of 301; calibration not computed per snapshot; pending not required) | `EXPECTED` constants; exact equality on every §4 row; the probe-9 snapshot's confidence-1 accuracy 292/292 and the final snapshot's confidence-2 accuracy 292/292 with no confidence-1 cohort; pending = 0; the prediction file must carry the same constants; one entry-point negative per gate |
+| 3 — `qualified` was a bare boolean; no B1Q runner, adjudicator, seed, or evidence pin; ruling count wrong | `host/b1q_runner.py` (the QUALIFICATION profile of the runner), `host/b1q_adjudicate.py`, the qualification plan/prediction (`evidence/b1q/`, seed 176 359 248 excluded from B1's set), the record format and `verify()` in `host/b1_qualification.py` — files hash, binding, PASS, **re-adjudication** — from which `carrier.qualified` is derived; two ruling pairs, four rulings; no host-attested reply control on the board (the nine code probes' `tables_match` = 0 with `configuration_valid_hw` = 1 are the evidence) — `docs/b1_carrier_qualification.md` |
+| 4 — drift: manifest version / `evidence_max` / `holdout_luts`, the firmware header, the report schema and its round-1′ dependency, the legacy `validate_run_log`, unpinned normative docs, no semantic map validation | manifest sections derived from the tree (`b1_manifest.py`: prereg version from the document, cartographer from the constants, `reporting_strata`); firmware header rewritten for B1; `b1_test_report.py` standalone (schema `b1_test_report`); `validate_run_log` is a refusal; the contract, qualification and architecture documents are in the runtime pin table; `b1_verify.semantic_findings` (292 addresses once each, legal state combinations, code-probe seqs, 32 legal edges, none pending) |
+
 ## 1. Hashes and data flow
 
 | artifact | sha256 / value | role |
 |---|---|---|
-| `manifests/b1_manifest.json` | (committed; `prereg.sha256` null, `board_ready` false, `carrier.qualified` false) | the stage's pins |
+| `manifests/b1_manifest.json` | (committed; `prereg.sha256` null, `board_ready` false, `carrier.qualification` null → `qualified` false, derived) | the stage's pins |
 | B1 carrier `builds/b1/b1.bit` | `d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f`, 2 083 858 B | committed (as the instrument commits its carrier); build record `5da31443…`, carrier manifest `2e9de7c7…`, isolation `ada2594e…`; WNS +7.993 ns, ICAPE2 0, isolation passed |
 | B1 image `firmware/b1/bsp/out/b1_app.bin` | `54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8`, 114 708 B | rebuilt byte-identically by `firmware/b1/bsp/build.sh`; not committed; hash-checked by the runner |
 | `evidence/b1/build_evidence.json` | pinned in the manifest | two clean builds equal; the sources, the embeddedsw inputs, the compiler, all by hash; `worktree_dirty` and `head` recorded |
@@ -37,9 +47,10 @@ instrument's host stack and validators (§2).
 | `firmware/b1/p3_data.h` | generated (`host/gen_b1_data.py`), no operator tables | the cartographer's only knowledge of the fabric: 292 addresses + base frames |
 | `firmware/b1/IMPORT.json` | 14 instrument files at `689dde1` by hash; 3 derived | the verbatim imports; `b1_app.c`, `b1_wire.c/h` derived from `p3_app.c`, `p3_wire.c/h` |
 | `manifests/claimb_round1prime_instrument_pins.json` | 128 files | the read-only instrument binding, reused |
-| `manifests/b1_instrument_pins.json` | 85 files | every adjudication-critical fabricmap file |
-| `evidence/b1/plan.json` | `4bc2e9b91f1d822d52017f6742caca50a64a5858c0f9c36a1c8be0b74e75cfa6` | seed 1 123 460 948, budget 333, 335 records, every seq audited, 9 048 frames, budget 37, deadline 1 048 s |
-| `evidence/b1/prediction.json` | `fc1d41ce6652dc95ff3ac1804be383cf55b3cd70fce4ac74b6621f64bc507419` | the 333 probes (`f351475c…`), every record's content-level block, the map content (`7e1e7702…`), the expected score |
+| `manifests/b1_instrument_pins.json` | 92 files | every adjudication-critical fabricmap file, the contract / qualification / architecture documents included; re-verified inside the adjudicator |
+| `evidence/b1/plan.json` | `470e18f8fe3443be1ee9f9f27ffc28f73113b2231cdbff5b62348bfb58fda8e9` | seed 1 123 460 948, budget 333, 335 records, every seq audited, 9 048 frames, budget 37, deadline 1 048 s, strata A/B |
+| `evidence/b1/prediction.json` | `7d197a498a5ca894fbc1287b37d19cd7d288c2f26d6dbcd21fefa8679e8fd35a` | the 333 probes (`f351475c…`), every record's content-level block, the map content (`7e1e7702…`), the expected score with both snapshots' calibration |
+| `evidence/b1q/plan.json` / `prediction.json` | `dead8853…` / `d2c9293a…` | the qualification session: seed 176 359 248, budget 9, 11 records, 300 frames, budget 2, deadline 615 s; the nine probes, the provisional content (`ce2c89f9…`), the base counters, the STATUS observations |
 | universe digest | `895baf85…` | in the header, the image and the IDENT |
 | ground truth `local_map.json` | `56f2b9e8…` | held back from the executable; the verifier's only input beyond the records |
 | `schemas/self_map_v2.schema.json` | (committed) | the board-authored map the adjudicator expands and validates |
@@ -64,7 +75,9 @@ autonomy replay → the verifier → `self_map_v2` + the verifier report.
 | the image runs the same algorithm and the same session order as the reference | C twin = Python over four fixtures, six budgets, unscored probes; session mode: init → bind → opening → probes → closing, unscored ends the epoch; the RNG = the instrument's `l6_operators.Rng` | `tests/test_b1_twin.py`, `tests/test_b1_session.py` |
 | the board's bytes pass the host | the image's identity (1.4.0) and record (1.2.0 + carto) bytes accepted by the instrument's validator; sorted keys; payload headroom | `tests/test_b1_wire.py` |
 | **the whole session passes the real validators** | `host/b1_modelled_session.py`: the 335-record session through the instrument's reader / console / notary relay (B1 signer in-process, throw-away key) / collector / audit pulls of each candidate's **real** 2 814 staging + readback words, written as the runner writes it, adjudicated by `b1_adjudicate` with the instrument's validators — truth: **PASS**, 335 scored / 335 audited / chain 336, precision 1.0, recall 1.0, content = prediction; permuted: HOLD (verifier + prediction); a tampered served word: **KILL falsified**; a readout the board's block contradicts: named; a faulty channel (rel-v4 recovery): still COMPLETED | `tests/test_b1_e2e.py` |
-| fail-closed everywhere | runner refusals in order (§8); adjudicator refusals (binding, pins, unqualified carrier); pin table drift | `tests/test_b1_runner.py`, `test_b1_adjudicate.py`, `test_b1_pins.py` |
+| **the carrier is qualified only through evidence** | the modelled B1Q session (11 records) through the real stack → `b1q_adjudicate` PASS with every silicon observation (baselines: zero readout, base counters, `tables_match` 1; code probes: non-zero readout, `tables_match` 0, `configuration_valid_hw` 1, fault 0) → the record → `verify()` re-adjudicates → the mapping adjudicator and runner accept the carrier; a bare flag, a missing record, a tampered evidence file (caught by the hash, and — re-pinned — by the re-adjudication), a binding to another carrier / image / prereg / seed, a HOLD record, a code probe with `tables_match` = 1 or `cfg_valid` = 0, a baseline with a non-zero readout or other counters: each refused | `tests/test_b1_qualification.py` |
+| every gate fires from the entry point | each exact metric of the preregistration §4 altered by one unit on its way out of the verifier → `adjudicate()` returns HOLD naming it; a forced schema finding, a missing JSON-schema validator, a broken schema or semantics → HOLD; a plan / prediction / pin table that drifted after preflight → REFUSED | `tests/test_b1_adjudicate.py` |
+| fail-closed everywhere | runner refusals in order (§8); adjudicator refusals (binding, pins, qualification chain); pin table drift | `tests/test_b1_runner.py`, `test_b1_adjudicate.py`, `test_b1_pins.py` |
 
 ## 3. Rebuildable image and carrier
 
@@ -76,6 +89,7 @@ bash sim/b1/run.sh                           # iverilog: tb_p3_siphash (verbatim
 vivado -mode batch -source vivado/b1/build_b1.tcl   # → builds/b1/b1.bit (d85daef4…), b1_build.json, isolation.txt
 python3 host/b1_manifest.py                  # refresh the manifest's derived sections from the tree
 python3 host/b1_plan.py --write-manifest     # plan + prediction, pinned into the manifest
+python3 host/b1_plan.py --qualification --write-manifest   # the B1Q plan + prediction (evidence/b1q/)
 python3 host/b1_pins.py --generate && python3 host/b1_manifest.py   # the pin table, last
 ```
 
@@ -92,39 +106,44 @@ end, a failed replay, a map ≠ prediction, an anomaly, or a span past the deadl
 reported with the map still scored; a validator falsification is a KILL; the instrument's
 two-strikes / three-without-COMPLETED rules in force.
 
-## 5. Rulings — DRAFT texts (not issued)
+## 5. Rulings — DRAFT texts (not issued): two sessions, two pairs, FOUR rulings
 
-Three rulings, two sessions. The manifest sha256 below is the one **after** the owner writes
-the frozen prereg hash and `board_ready` (and, for the mapping pair, `qualified`) into it
-and commits; unknown today.
+A provisioning ruling is consumed once and is bound to its session name, so each session
+needs its own. The manifest sha256 in the qualification pair is the one **after** the owner
+writes the frozen prereg hash and `board_ready` and commits; the one in the mapping pair is
+the manifest **after** the qualification record is pinned and committed. Both unknown today.
 
+**Qualification pair (session `B1Q`)**
 ```json
 {"ruling": "whole-of-run B1 carrier qualification", "boardid": "17A6", "granted_by": "14sea",
- "date": "<YYYY-MM-DD-NN>", "session": "B1Q", "budget": 9,
+ "date": "<YYYY-MM-DD-NN>", "session": "B1Q", "master_seed": 176359248,
  "prereg_sha256": "<sha256 of docs/b1_preregistration.md as frozen>",
  "image_sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
- "carrier_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
  "b1_manifest_sha256": "<manifest sha256 at freeze>"}
 ```
+```json
+{"ruling": "provisioning P3-K", "boardid": "17A6", "granted_by": "14sea",
+ "date": "<YYYY-MM-DD-NN>", "session": "B1Q",
+ "prereg_sha256": "<sha256 of docs/b1_preregistration.md as frozen>",
+ "image_sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
+ "b1_manifest_sha256": "<manifest sha256 at freeze>"}
+```
+
+**Mapping pair (session `B1`)**
 ```json
 {"ruling": "whole-of-run B1 cartography", "boardid": "17A6", "granted_by": "14sea",
  "date": "<YYYY-MM-DD-NN>", "session": "B1", "master_seed": 1123460948,
  "prereg_sha256": "<sha256 of docs/b1_preregistration.md as frozen>",
  "image_sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
- "b1_manifest_sha256": "<manifest sha256 after qualified = true>"}
+ "b1_manifest_sha256": "<manifest sha256 after the qualification record is pinned>"}
 ```
 ```json
 {"ruling": "provisioning P3-K", "boardid": "17A6", "granted_by": "14sea",
  "date": "<YYYY-MM-DD-NN>", "session": "B1",
  "prereg_sha256": "<sha256 of docs/b1_preregistration.md as frozen>",
  "image_sha256": "54b006636fe07d1b52784e636452cfbd1191407a100699a7666c57b96ba4d6c8",
- "b1_manifest_sha256": "<manifest sha256 at freeze>"}
+ "b1_manifest_sha256": "<manifest sha256 after the qualification record is pinned>"}
 ```
-
-The qualification session's runner (`--budget 9`, the qualification ruling) is a
-follow-up deliverable once the owner decides whether the host-attested reply control
-(`docs/b1_carrier_qualification.md` §3 item 6) belongs in it; today's `b1_runner.py` runs
-the mapping session only and refuses an unqualified carrier.
 
 ## 6. What a board session needs (when ruled)
 
@@ -134,8 +153,13 @@ A fresh power cycle; the D4 boundary produced as the runner < 6 h before `go`
 `host/b1_sign_arm.py` (a provisioning step recorded here, never done by a runner) — then:
 
 ```bash
-cd /home/test/zynq_fabricmap && python3 host/b1_runner.py \
-  --ruling rulings/b1_<date>.json --provision-ruling rulings/p3_k_<date>.json \
+cd /home/test/zynq_fabricmap
+# session (a): the carrier qualification, then pin its PASS record and commit
+python3 host/b1q_runner.py --ruling rulings/b1q_<date>.json --provision-ruling rulings/p3_k_b1q_<date>.json \
+  --boundary <boundary json> --out evidence/b1q/b1q_17A6_<date> --image firmware/b1/bsp/out/b1_app.bin
+python3 host/b1_manifest.py --qualification evidence/b1q/b1q_17A6_<date>     # verifies, pins, derives qualified
+# session (b): the mapping session, under the pair bound to THAT committed manifest
+python3 host/b1_runner.py --ruling rulings/b1_<date>.json --provision-ruling rulings/p3_k_b1_<date>.json \
   --boundary <boundary json> --out evidence/b1/b1_17A6_<date> --image firmware/b1/bsp/out/b1_app.bin
 ```
 
@@ -162,22 +186,26 @@ frozen (manifest prereg.sha256 is null): host-only until the owner freezes it** 
 ruling texts, before any instrument import, port or ruling consumption. With a fixture
 "frozen" manifest the later refusals are reached one by one (`tests/test_b1_runner.py`):
 plan pin, pin table, image bytes, `board_ready`, build evidence, carrier manifest / build
-record / bitstream pin, VARIANT, **unqualified carrier**, ruling bound to another seed or
-manifest, a stale boundary. `host/b1_adjudicate.py` on the committed manifest refuses the
-same way (not frozen; unqualified carrier) before reading a record.
+record / bitstream pin, VARIANT, **the qualification chain** (no record; a bare flag; a
+tampered evidence file; a binding to another carrier; a flag disagreeing with the
+evidence), ruling bound to another seed or manifest or session, a stale boundary. The
+QUALIFICATION profile needs no qualification but its own plan pin and its own rulings
+(session `B1Q`; the mapping texts do not open it). `host/b1_adjudicate.py` on the committed
+manifest refuses the same way (not frozen; no qualification record) before reading a
+record, and re-verifies the plan, prediction and pin table itself.
 
 ## 9. Tests and the clean-tree proof
 
-B1 tests: `test_b1_adjudicate` (17), `test_b1_carrier` (7), `test_b1_e2e` (5), `test_b1_leakage` (7), `test_b1_pins` (3), `test_b1_plan` (7), `test_b1_records` (4), `test_b1_runner` (13), `test_b1_session` (5), `test_b1_signer` (4), `test_b1_twin` (8), `test_b1_wire` (3). Whole suite on the clean tree — **see the report cited below**; a
+B1 tests: `test_b1_adjudicate` (23), `test_b1_carrier` (7), `test_b1_e2e` (5), `test_b1_leakage` (7), `test_b1_pins` (3), `test_b1_plan` (10), `test_b1_qualification` (8), `test_b1_records` (5), `test_b1_runner` (16), `test_b1_session` (5), `test_b1_signer` (4), `test_b1_twin` (8), `test_b1_wire` (3). Whole suite on the clean tree — **see the report cited below**; a
 dirty tree skips 27 carrier-authority tests, so only `clean_tree_proof: true` counts.
 
-Report: `evidence/b1/tests/test_report_2026-09-05T115752Z.json` — ran **1378**, skipped **0**, `OK`; `head_at_run` `25f8c6904f57` (the clean-tree build-evidence commit), `worktree_dirty` False; instrument `689dde1dad37` = pinned, dirty False; **`clean_tree_proof: True`**. The first package's report (`test_report_2026-09-05T101536Z.json`, 1338 tests at `4c49b259`) is kept as the record of the withdrawn package.
+Report: <<<REPORT>>>
 
 ## 10. What is asked, and what is not
 
-Asked: the whole-package review; if it passes — the compatibility review (§7), the freeze
-(prereg hash + `board_ready`), the carrier qualification ruling pair and session, then the
-mapping ruling pair and one session on `17A6`. Not asked, and not done: any board contact,
+Asked: the short re-review (the owner's step 7); if it passes — push, the compatibility
+review (§7), the freeze (prereg hash + `board_ready`), the qualification pair and session
+(a), the record pinned and committed, then the mapping pair and one session (b) on `17A6`. Not asked, and not done: any board contact,
 any change to `zynq-psoracle`, any probe of unattested bits, any routing, any provisioning
 of `08EB`, any B2/B3 ruling (their interfaces are fixed by the roadmap; their packages are
 separate).

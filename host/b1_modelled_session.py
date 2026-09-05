@@ -38,8 +38,17 @@ import b1_carto as bc  # noqa: E402
 import b1_model as bm  # noqa: E402
 import claimb_r1p_instrument as inst  # noqa: E402
 
-TOOL_VERSION = "b1_modelled_session.py/0.1.0"
+TOOL_VERSION = "b1_modelled_session.py/0.2.0"
 ZERO = ["0" * 16] * 6
+# STATUS after a settled, validated ARM (rtl/b1/b1_axil.v): bit2 cfg_valid, bit4 scorer_done,
+# bit6 tag_ok, bit8 alive, bit9 sweep_done, bit11 key_loaded — and bit10 tables_match, which
+# under the contract is 1 only when the readout is all zero (the signed table words are zero)
+STATUS_BASE = (1 << 2) | (1 << 4) | (1 << 6) | (1 << 8) | (1 << 9) | (1 << 11)
+STATUS_TABLES_MATCH = 1 << 10
+
+
+def status_after(tables: list[int]) -> int:
+    return STATUS_BASE | (STATUS_TABLES_MATCH if not any(tables) else 0)
 
 
 def bind_instrument(require_git: bool = False):
@@ -110,6 +119,7 @@ def make_board_class(M):
         def __init__(self, cands: Candidates, token: str, plan: dict, manifest: dict, nonce_seed: int):
             super().__init__(token, plan["budget"], set(plan["audit_seqs"]), controls=True)
             self.cands, self.nc = cands, M["nc"]
+            self.session_name = plan.get("session", "B1")
             ident = {"schema": "app_identity", "schema_version": "1.4.0", "control_plane": "standalone", "token": token,
                      "protocol": "rel-v4", "master_seed": plan["master_seed"], "schedule_mode": "carto-v1",
                      "operator_data_sha256": manifest["universe"]["sha256"], "carto_version": "carto-v1",
@@ -146,6 +156,7 @@ def make_board_class(M):
             c = self.cands.by_seq[seq]
             nb, na = self.nonces[seq]
             tag = self.cands.sign({"genome": c["genome"], "nonce": f"{nb:016x}"})["tag"]
+            st = status_after(c["tables"])
             return {"schema": "loop_record", "schema_version": "1.2.0", "seq": seq, "outcome": "SCORED",
                     "verified": "audited" if audited else "replayed-only", "genome": c["genome"], "carto": c["carto"],
                     "evidence": {
@@ -155,10 +166,10 @@ def make_board_class(M):
                                               "staged_sha256": c["commit"], "staged_stream_sha256": c["sequence_sha256"],
                                               "readback_sha256": c["commit"], "audit_available": True,
                                               "write": {"envelopes": [{"index": i, "int_sts": "0x50033004"} for i in range(3)]}},
-                        "arm": {"nonce_before": f"{nb:016x}", "nonce_after": f"{na:016x}", "status_after": "0x00000f54", "fault_after": 0,
+                        "arm": {"nonce_before": f"{nb:016x}", "nonce_after": f"{na:016x}", "status_after": f"{st:#010x}", "fault_after": 0,
                                 "key_loaded_observed": True, "ctrl_readback": "unavailable: CTRL is write-only", "writes_issued": 25,
                                 "settle": {"polls": 16, "polls_max": 1000000, "settled": True, "status_first": "0x00000901",
-                                           "status_last": "0x00000f54"}},
+                                           "status_last": f"{st:#010x}"}},
                         "score": {"hw_candidate_commit": c["commit"], "functional_readout": [f"{t:016x}" for t in c["tables"]],
                                   "scores": c["scores"], "heartbeat": {"before": 100 * seq, "after": 100 * seq + 50}}}}
 
@@ -289,7 +300,7 @@ def run_modelled(manifest: dict, plan: dict, out_dir: Path, fixture: str = "trut
                  token: str | None = None, p_fault: float = 0.0, p_h2b: float = 0.0, seed: int = 1,
                  binding_extra: dict | None = None, require_git: bool = False) -> dict:
     M = bind_instrument(require_git)
-    token = token or hashlib.sha256(f"b1-modelled-{seed}".encode()).hexdigest()[:32]
+    token = token or hashlib.sha256(f"b1-modelled-{plan.get('session', 'B1')}-{seed}".encode()).hexdigest()[:32]
     d = Path(tempfile.mkdtemp()); key = d / "K.bin"; key.write_bytes(bytes(range(16))); os.chmod(key, 0o400)
     cands = Candidates(M, plan, manifest, bm.fixture(fixture, fixture_seed), token, key)
     import b1_runner
@@ -298,7 +309,7 @@ def run_modelled(manifest: dict, plan: dict, out_dir: Path, fixture: str = "trut
     t0 = time.monotonic()
     s.run()
     binding = {"image_sha256": manifest["image"]["sha256"], "prereg_sha256": manifest["prereg"]["sha256"], "protocol": "rel-v4",
-               "session": "B1", "schedule_mode": "carto-v1", "master_seed": plan["master_seed"],
+               "session": plan.get("session", "B1"), "schedule_mode": "carto-v1", "master_seed": plan["master_seed"],
                "psoracle_commit": manifest["instrument"]["psoracle_commit"], **(binding_extra or {})}
     s.write_evidence(out_dir, binding)
     return {"epoch_end": s.collector.epoch_end, "records": len(s.collector.loop_records), "virtual_s": s.now - 1000.0,

@@ -3205,6 +3205,23 @@
    "probes_to_full_confirmation": 301,
    "probes_to_full_recall_conf1": 9,
    "provisional": {
+    "calibration": {
+     "0": {
+      "accuracy": null,
+      "claimed": 0,
+      "correct": 0
+     },
+     "1": {
+      "accuracy": 1.0,
+      "claimed": 292,
+      "correct": 292
+     },
+     "2": {
+      "accuracy": null,
+      "claimed": 0,
+      "correct": 0
+     }
+    },
     "claimed": 292,
     "correct": 292,
     "precision": 1.0,
@@ -12564,6 +12581,6 @@
  ],
  "schema": "b1_prediction",
  "schema_version": "2.0.0",
- "tool": "b1_plan.py/0.1.0",
+ "tool": "b1_plan.py/0.2.0",
  "universe_sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
 }

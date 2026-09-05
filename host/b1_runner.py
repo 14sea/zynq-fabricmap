@@ -5,6 +5,13 @@
                  --boundary <principal_boundary json> --out <evidence dir> --image <b1_app.bin>
                  [--manifest …] [--instrument-root …] [--port …] [--key …] [--signer-user …]
 
+Two PROFILES share this preflight and session function: MAPPING (this script; session "B1",
+ruling `whole-of-run B1 cartography`, the manifest's plan/prediction, the carrier's
+qualification evidence re-verified) and QUALIFICATION (host/b1q_runner.py; session "B1Q",
+ruling `whole-of-run B1 carrier qualification`, the manifest's qualification plan, budget 9,
+no qualification required of the carrier — it is what the session produces). Each session
+needs its OWN `provisioning P3-K` ruling bound to its session name (a ruling is consumed once).
+
 One session, "B1": the B1 image (the instrument's successor: cartographer instead of search)
 on the B1 carrier (docs/b1_carrier_contract.md; qualified under its own ruling first), the identity page carrying the plan's seed and budget, the
 ALL-SELF-REPORTING audit policy, the watchdog and both seq-1 controls armed, the runner's
@@ -19,10 +26,11 @@ manifest's pins; the instrument at its pinned commit, clean, every pinned file h
 the image file hashing to the manifest's pin and marked board_ready; the build evidence
 hashing to its pin with a byte-identical rebuild; the data header fresh from its generator
 and free of the operator tables; the carrier manifest and bitstream hashing to their pins;
-the universe digest; BOTH rulings bound to this session, the frozen prereg, the B1 image
-and the sha256 of THIS manifest file (and the B1 ruling to the plan's master seed); the
-principal boundary < 6 h and bound to this invocation; `sb`; the evidence directory not
-existing. Each is a named refusal.
+the universe digest; the carrier's qualification evidence re-verified and RE-ADJUDICATED
+(mapping profile; host/b1_qualification.py — a flag is nothing); BOTH rulings bound to this
+session, the frozen prereg, the B1 image and the sha256 of THIS manifest file (and the
+whole-of-run ruling to the plan's master seed); the principal boundary < 6 h and bound to
+this invocation; `sb`; the evidence directory not existing. Each is a named refusal.
 """
 from __future__ import annotations
 
@@ -41,14 +49,22 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "host"))
 import b1_adjudicate as adj  # noqa: E402
 import b1_pins as pins_mod  # noqa: E402
+import b1_qualification as bq  # noqa: E402
+import b1q_adjudicate as qadj  # noqa: E402
 import claimb_r1p_instrument as inst  # noqa: E402
 
-TOOL_VERSION = "b1_runner.py/0.1.0"
+TOOL_VERSION = "b1_runner.py/0.2.0"
 RULING_TEXT = "whole-of-run B1 cartography"
 PROVISION_RULING_TEXT = "provisioning P3-K"
 SESSION = "B1"
 MANIFEST = REPO_ROOT / "manifests/b1_manifest.json"
 WATCHDOG_LOAD, WATCHDOG_PRESCALER = 1250000035, 7
+
+# the two profiles (module docstring)
+MAPPING = {"session": SESSION, "ruling_text": RULING_TEXT, "plan_section": "plan", "require_qualification": True,
+           "adjudicate": adj.adjudicate, "tool": TOOL_VERSION}
+QUALIFICATION = {"session": qadj.SESSION, "ruling_text": qadj.RULING_TEXT, "plan_section": "qualification_plan",
+                 "require_qualification": False, "adjudicate": qadj.adjudicate, "tool": "b1q_runner.py/0.1.0"}
 
 
 class Refusal(Exception):
@@ -59,8 +75,9 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def bind_ruling(ruling: dict, text: str, prereg_sha: str, image_sha: str, manifest_sha: str, master_seed: int | None) -> None:
-    want = {"session": SESSION, "prereg_sha256": prereg_sha, "image_sha256": image_sha, "b1_manifest_sha256": manifest_sha}
+def bind_ruling(ruling: dict, text: str, prereg_sha: str, image_sha: str, manifest_sha: str, master_seed: int | None,
+                session: str = SESSION) -> None:
+    want = {"session": session, "prereg_sha256": prereg_sha, "image_sha256": image_sha, "b1_manifest_sha256": manifest_sha}
     if master_seed is not None:
         want["master_seed"] = master_seed
     for k, v in want.items():
@@ -76,9 +93,10 @@ def bind_ruling(ruling: dict, text: str, prereg_sha: str, image_sha: str, manife
             raise Refusal(f"ruling {text!r} is bound to {k} = {got!r}, this session needs {v!r}")
 
 
-def preflight(a) -> dict:
+def preflight(a, profile: dict = MAPPING) -> dict:
     manifest = json.loads(a.manifest.read_text())
     manifest_sha = _sha(a.manifest)
+    session, ruling_text = profile["session"], profile["ruling_text"]
 
     def parse(path: Path, text: str) -> dict:
         consumed = path.with_name(path.name + ".consumed")
@@ -96,7 +114,7 @@ def preflight(a) -> dict:
         if r["boardid"] != manifest["board"]["boardid"]:
             raise Refusal(f"ruling names board {r['boardid']!r}, this stage is {manifest['board']['boardid']!r}")
         return r
-    ruling = parse(a.ruling, RULING_TEXT)
+    ruling = parse(a.ruling, ruling_text)
     if a.provision_ruling is None:
         raise Refusal("--provision-ruling is mandatory: no `provisioning P3-K` ruling, no board contact")
     pk = parse(a.provision_ruling, PROVISION_RULING_TEXT)
@@ -106,14 +124,26 @@ def preflight(a) -> dict:
     prereg_path = REPO_ROOT / manifest["prereg"]["path"]
     if not prereg_path.is_file() or _sha(prereg_path) != pinned_prereg:
         raise Refusal(f"{manifest['prereg']['path']} does not hash to the frozen preregistration")
-    plan_path = REPO_ROOT / manifest["plan"]["path"]
-    pred_path = REPO_ROOT / manifest["prediction"]["path"]
+    if profile["plan_section"] == "plan":
+        plan_path = REPO_ROOT / manifest["plan"]["path"]
+        pred_path = REPO_ROOT / manifest["prediction"]["path"]
+        pinned_seed = manifest["seeds"]["master_seed"]
+    else:
+        qp = manifest.get("qualification_plan")
+        if not qp:
+            raise Refusal("the manifest pins no qualification plan")
+        plan_path, pred_path, pinned_seed = REPO_ROOT / qp["path"], REPO_ROOT / qp["prediction_path"], qp["master_seed"]
     try:
-        adj.check_pins(manifest, plan_path, pred_path)      # plan, prediction AND the pin table of every adjudication-critical file
+        if profile["plan_section"] == "plan":
+            adj.check_pins(manifest, plan_path, pred_path)  # plan, prediction AND the pin table of every adjudication-critical file
+        else:
+            qadj.check_q_pins(manifest, plan_path, pred_path, None, None, None)
     except adj.Refusal as exc:
         raise Refusal(str(exc)) from None
     plan = json.loads(plan_path.read_text())
     prediction = json.loads(pred_path.read_text())
+    if plan.get("session") != session:
+        raise Refusal(f"the pinned plan is for session {plan.get('session')!r}, this runner is {session!r}")
     try:
         verified = inst.bind(a.instrument_root, manifest=manifest)
     except inst.InstrumentRefusal as exc:
@@ -161,15 +191,20 @@ def preflight(a) -> dict:
         raise Refusal("the B1 carrier bitstream does not hash to the pin")
     if car.get("variant") != adj.B1_VARIANT:
         raise Refusal("the manifest's carrier variant is not the B1 gate contract word")
-    if not car.get("qualified"):
-        raise Refusal("the B1 carrier is not marked qualified (docs/b1_carrier_qualification.md §3 comes first)")
+    if profile["require_qualification"]:
+        try:                                         # the evidence chain, re-adjudicated — never the flag
+            bq.verify(manifest, require_git=True, instrument_root=root)
+        except bq.QualificationRefusal as exc:
+            raise Refusal(f"the B1 carrier is not qualified: {exc} (docs/b1_carrier_qualification.md §3 comes first)") from None
+        if not car.get("qualified"):
+            raise Refusal("the manifest's carrier.qualified flag disagrees with its qualification evidence (refresh the manifest)")
     hdr = (REPO_ROOT / "firmware/b1/p3_data.h").read_text()
     if f'B1_UNIVERSE_SHA256 "{manifest["universe"]["sha256"]}"' not in hdr:
         raise Refusal("the header's universe digest is not the manifest's")
-    if plan["master_seed"] != manifest["seeds"]["master_seed"]:
+    if plan["master_seed"] != pinned_seed:
         raise Refusal("the plan's master seed is not the manifest's")
-    bind_ruling(ruling, RULING_TEXT, pinned_prereg, pinned_image, manifest_sha, plan["master_seed"])
-    bind_ruling(pk, PROVISION_RULING_TEXT, pinned_prereg, pinned_image, manifest_sha, None)
+    bind_ruling(ruling, ruling_text, pinned_prereg, pinned_image, manifest_sha, plan["master_seed"], session)
+    bind_ruling(pk, PROVISION_RULING_TEXT, pinned_prereg, pinned_image, manifest_sha, None, session)
     if shutil.which("sb") is None:
         raise Refusal("`sb` is not installed")
     carrier = json.loads(car_manifest.read_text()); records.validate(carrier)
@@ -188,19 +223,19 @@ def preflight(a) -> dict:
     flags = ls.flags_for(ls.MODE_ABBA, watchdog=True, rec_control=True, sign_control=True)
     if flags != plan["flags"]:
         raise Refusal("the plan's flags word is not the one this runner would write")
-    session_plan = {"session": SESSION, "mode": "carto-v1", "master_seed": plan["master_seed"], "n": plan["budget"],
+    session_plan = {"session": session, "mode": "carto-v1", "master_seed": plan["master_seed"], "n": plan["budget"],
                     "schedule": [], "audit_policy": plan["audit_policy"], "audit_seqs": set(plan["audit_seqs"]),
                     "expected_frames": plan["expected_frames"], "crc_budget": plan["crc_budget"], "crc_formula": plan["crc_formula"],
                     "session_timeout_s": float(plan["session_timeout_s"]),
                     "inputs": {"plan_sha256": manifest["plan"]["sha256"], "prediction_sha256": manifest["prediction"]["sha256"],
                                "settle_polls_median_calibration": [16.0]},
-                    "rules_version": "b1/v0.1 over L6 v0.7 rules", "bad_frame_policy": "ledger",
+                    "rules_version": "b1/v0.2 over L6 v0.7 rules", "bad_frame_policy": "ledger",
                     "bad_frame_budget": plan["bad_frame_budget"], "hb_rule": "v07", "protocol": plan["protocol"],
                     "rec_retry_control": True, "flags": flags,
                     "binding": {"image_sha256": image_sha, "prereg_sha256": pinned_prereg, "protocol": plan["protocol"],
-                                "session": SESSION, "schedule_mode": "carto-v1", "master_seed": plan["master_seed"],
+                                "session": session, "schedule_mode": "carto-v1", "master_seed": plan["master_seed"],
                                 "b1_manifest_sha256": manifest_sha, "psoracle_commit": verified["psoracle_commit"]}}
-    return {"ruling": ruling, "manifest": manifest, "manifest_sha256": manifest_sha, "l6_manifest": l6m,
+    return {"profile": profile, "ruling": ruling, "manifest": manifest, "manifest_sha256": manifest_sha, "l6_manifest": l6m,
             "carrier": carrier, "bitstream": car_bit, "image": a.image, "image_sha256": image_sha,
             "plan": session_plan, "round_plan": plan, "prediction": prediction,
             "signer": l3.SubprocessSigner(a.key, script=REPO_ROOT / "host/b1_sign_arm.py", signer_user=a.signer_user),
@@ -226,16 +261,24 @@ def identity_check_for(plan: dict, manifest: dict):
 
 
 def run_session(session, out_dir: Path, ruling: dict, cfg: dict) -> dict:
-    """The round 1′ session function with B1's identity check and adjudication: the
-    preamble, console loop and evidence files are the instrument's."""
+    """The round 1′ session function with B1's identity check and the profile's adjudicator:
+    the preamble, console loop and evidence files are the instrument's. A qualification
+    session additionally leaves its qualification RECORD beside the evidence (PASS or not)."""
     import b1_session  # noqa: E402
-    return b1_session.run(session, out_dir, ruling, cfg, identity_check_for(cfg["round_plan"], cfg["manifest"]),
-                          lambda d: adj.adjudicate(d, cfg["manifest"], cfg["round_plan"], cfg["prediction"], cfg["manifest_sha256"],
-                                                   instrument_root=cfg["instrument_root"], require_git=True),
-                          TOOL_VERSION)
+    profile = cfg.get("profile", MAPPING)
+    judge = profile["adjudicate"]
+    summary = b1_session.run(session, out_dir, ruling, cfg, identity_check_for(cfg["round_plan"], cfg["manifest"]),
+                             lambda d: judge(d, cfg["manifest"], cfg["round_plan"], cfg["prediction"], cfg["manifest_sha256"],
+                                             instrument_root=cfg["instrument_root"], require_git=True),
+                             profile["tool"])
+    if profile is QUALIFICATION and (out_dir / "adjudication.json").is_file():
+        rec = bq.make_record(out_dir, cfg["manifest"], cfg["manifest_sha256"], cfg["round_plan"], ruling,
+                             json.loads((out_dir / "adjudication.json").read_text()), cfg["token"])
+        (out_dir / "qualification.json").write_text(json.dumps(rec, indent=1, sort_keys=True) + "\n")
+    return summary
 
 
-def main(argv=None) -> int:
+def main(argv=None, profile: dict = MAPPING) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--ruling", type=Path, required=True)
     ap.add_argument("--provision-ruling", type=Path, default=None)
@@ -249,7 +292,7 @@ def main(argv=None) -> int:
     ap.add_argument("--port", default="/dev/ebaz-uart")
     a = ap.parse_args(argv)
     try:
-        cfg = preflight(a)
+        cfg = preflight(a, profile)
     except (Refusal, ValueError, OSError, KeyError) as exc:
         print(f"REFUSED: {exc}", file=sys.stderr)
         return 2

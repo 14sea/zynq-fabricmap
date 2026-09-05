@@ -20,9 +20,11 @@ from pathlib import Path
 
 R = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(R / "host"))
+sys.path.insert(0, str(R / "tests"))
 import b1_adjudicate as adj  # noqa: E402
 import b1_modelled_session as ms  # noqa: E402
 import claimb_r1p_instrument as inst  # noqa: E402
+from test_b1_qualification import qualify  # noqa: E402
 
 HAVE = inst.DEFAULT_ROOT.is_dir()
 MANIFEST = json.loads((R / "manifests/b1_manifest.json").read_text())
@@ -30,10 +32,12 @@ PLAN = json.loads((R / "evidence/b1/plan.json").read_text())
 PRED = json.loads((R / "evidence/b1/prediction.json").read_text())
 
 
-def frozen() -> tuple[dict, str]:
+def frozen(tmp: Path) -> tuple[dict, str]:
     m = copy.deepcopy(MANIFEST)
     m["prereg"]["sha256"] = "b" * 64; m["prereg"]["frozen"] = True
-    m["image"]["board_ready"] = True; m["carrier"]["qualified"] = True
+    m["image"]["board_ready"] = True
+    rec, _, _, _ = qualify(tmp, m, "b1q")                       # the real chain, modelled
+    m["carrier"]["qualification"] = rec; m["carrier"]["qualified"] = True
     return m, hashlib.sha256(json.dumps(m, indent=1, ensure_ascii=False).encode()).hexdigest()
 
 
@@ -42,7 +46,7 @@ class Modelled(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.tmp = Path(tempfile.mkdtemp())
-        cls.m, cls.msha = frozen()
+        cls.m, cls.msha = frozen(cls.tmp)
 
     @classmethod
     def tearDownClass(cls):

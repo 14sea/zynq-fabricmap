@@ -1,10 +1,12 @@
-# B1 carrier qualification — what is host-verified, what needs the board, and in what order (v0.1, 2026-09-05)
+# B1 carrier qualification — what is host-verified, what needs the board, and how the result is bound (v0.2, host-only, 2026-09-05)
 
 > **Standing: host-only. No ruling; no board contact.** The B1 carrier (`builds/b1/b1.bit`
 > `d85daef4…`) is a new bitstream and inherits none of the instrument's board-level
 > guarantees (L2 non-perturbation, L3–L5 on the P3 carrier, the L6 soak). This document
-> lists what is already verified on the host and what the **qualification session** — its
-> own ruling pair, before the mapping session — must establish.
+> lists what is already verified on the host, what the **qualification session** (`B1Q`) —
+> its own ruling pair, before the mapping session — must establish on silicon, and how its
+> result becomes an **evidence chain** rather than a flag (owner's review 2026-09-05,
+> blocker 3). This file is pinned by the runtime (`manifests/b1_instrument_pins.json`).
 
 ## 1. What changed and what did not
 
@@ -26,42 +28,89 @@
 | MMIO allowlist vs the RTL decode | app reads ⊆ RTL reads (VARIANT included), app writes ⊆ RTL writes, RTL − app = the key window only | `tests/test_b1_carrier.py::MmioAllowlist` |
 | the host validator refuses an attested reply | `host/b1_records.py` rule (iii-B1) | `tests/test_b1_records.py` |
 | the signer never computes semantics | the oracle's entry points are disarmed in-process in `host/b1_sign_arm.py` (a call is a refusal); the answer carries zero tables only; no host-attested `sign` op exists | `tests/test_b1_signer.py` |
+| the qualification session, modelled end to end | the B1Q plan through the instrument's real host stack and validators: PASS with every silicon observation of §3 present; every break of §4 refused | `tests/test_b1_qualification.py` |
 
 Not host-verifiable, by nature: that the silicon behaves as the routed netlist says (the
 qualification session), and that the PS→PL path is undisturbed by the new register (the
 same session's read-only checks).
 
-## 3. The qualification session (board; its own ruling pair; before any mapping)
+## 3. The qualification session `B1Q` (board; its own ruling pair; before any mapping)
 
-Ruling text: `whole-of-run B1 carrier qualification` + `provisioning P3-K`. One session on
-`17A6`, U-Boot → the **B1 image** with budget 0? — no: with a tiny budget (the identity
-page's budget = 9, the code probes only) so that every step of the loop is exercised once
-on the new carrier without spending the mapping seed:
+**Plan** (`evidence/b1q/plan.json`, pinned in the manifest as `qualification_plan`; built
+by `host/b1_plan.py --qualification`): the B1 image with **budget 9** on the B1 carrier —
+opening baseline, the nine code probes, closing baseline, closing unsigned control =
+**11 records, every one audited**; master seed **176 359 248** = the first 4 bytes of
+sha256(`b1-qualification|` ‖ the archive commit) advanced past every excluded seed **and
+B1's own** (and recorded under `seeds.excluded.b1_qualification`, so the two sessions never
+share a seed); 300 expected frames, CRC / bad-frame budget 2; deadline 615 s (expected span
+≈ 12 s); flags `0x32`. Its prediction (`evidence/b1q/prediction.json`) pins the nine probe
+genomes, every record's content-level block, the provisional content after the nine
+probes, the scorer's base counters for a blank candidate `[18, 22, 20, 20, 20, 18]`, and
+the STATUS observations of §3.1.
 
-1. load `b1.bit` (sha-gated), identity, `VARIANT` reads `0x42310001` over the PS path;
-2. key provisioning (P3-K), `key_loaded`;
-3. the opening baseline: zero-table payload ARMs, readout all-zero, counters equal the
-   pinned base `[18, 22, 20, 20, 20, 18]` (the scorer is unchanged);
-4. nine code probes: each SCORED, each readout host-audited against the link-3 readback
-   (the audit gate, unchanged) — the readouts are what the contract says they are, the
-   PL's raw observation;
-5. the closing baseline equal to the opening; the closing unsigned control refused
-   (`F_ARM_AUTH`, fault 13) — the authorisation half of the gate is the instrument's;
-6. a **host-attested reply control**: the runner, once, signs with the INSTRUMENT's signer
-   (non-zero tables) for one extra candidate at the end — the PL ARMs (the fabric is
-   indifferent), the host validator refuses the record (`(iii-B1)`), the session ends
-   HOLD-by-design on that record — proving the contract is enforced at the host, on
-   silicon. *(Whether this control belongs in the qualification or in a separate
-   negative-control session is the owner's call; it is listed so it is not forgotten.)*
+**Rulings**: `whole-of-run B1 carrier qualification` (bound to session `B1Q`, the
+qualification plan's seed, the frozen prereg, the B1 image, the manifest sha256) **and its
+own** `provisioning P3-K` bound to session `B1Q`. A provisioning ruling is consumed once,
+so the mapping session needs another one bound to `B1`: **two sessions, two pairs, four
+rulings** (package §5).
 
-PASS = the instrument's session conditions (validation with the audit gate, closure,
-controls, heartbeat, budgets) + items 1–5; then the owner marks the carrier qualified in
-`manifests/b1_manifest.json` and the mapping session's ruling pair may be issued.
-Until then `carrier.qualified` is false and both `host/b1_runner.py` and
-`host/b1_adjudicate.py` refuse a mapping session on this carrier.
+**Runner**: `host/b1q_runner.py` = the mapping runner's preflight and session function
+under the QUALIFICATION profile (session `B1Q`, the qualification plan, no qualification
+required of the carrier); the same preamble (precheck → identity → dcache off → clock
+preflight → **B1 carrier** load, sha-gated → key provisioning → identity page with the
+qualification seed and budget 9 → image load, sha-gated → `go`), the same console loop,
+the same evidence files. Afterwards `host/b1q_adjudicate.py` runs over the files as written
+and the qualification **record** is left beside them (§4).
 
-## 4. What this does not qualify
+### 3.1 What the adjudicator requires, record by record (`host/b1q_adjudicate.py`)
+
+| record | required |
+|---|---|
+| IDENT | app_identity 1.4.0: `carrier_variant` = `0x42310001` read over the PS path, the carrier hash, carto-v1, the universe digest, budget 9 (binding — a mismatch is a refusal before any record is read) |
+| every record | outcome SCORED; audited (the served words recompute the record's hashes — the instrument's audit gate); `fault_after` = 0 and STATUS bit 1 (fault) = 0; STATUS bit 2 (`configuration_valid_hw`) = 1; the signed table words zero (rule iii-B1); the nonce chain by the model |
+| seq 1 and seq 11 (baselines) | readout all zero; counters = `[18, 22, 20, 20, 20, 18]`; STATUS bit 10 (`tables_match`) = **1** — a zero readout equals the zero table words: the observation, not a gate |
+| seq 2..10 (code probes) | readout **not** all zero (the fabric answered); STATUS bit 10 (`tables_match`) = **0** — the PL ARMed and scored a candidate whose readout differs from the signed table words. **This is the noninterference contract observed on silicon.** |
+| the session | COMPLETED at seq 11; the closing unsigned ARM refused `F_ARM_AUTH` (fault 13) — the authorisation half of the gate is the instrument's; rel-v4 closure and both seq-1 controls; heartbeat / CRC / bad-frame budgets; span within the deadline |
+| replay / prediction | the nine probes are the reference's proposals and every block matches (the orchestrator ran on silicon); the content equals the pinned prediction (the readouts are what the certificate says); the provisional map complete (292 decoded) |
+
+**No host-attested reply control on the board** (owner 2026-09-05): the nine code probes
+are the direct hardware evidence — signed tables all zero, raw readout non-zero,
+`tables_match` = 0, and yet `configuration_valid_hw` = 1 and SCORED. The host's refusal of
+a non-zero table is a host contract, proven by `tests/test_b1_records.py`; sending
+semantic tables with the instrument's signer would only manufacture an expected HOLD,
+consume a ruling and violate the contract this round is about.
+
+## 4. The evidence chain: how `qualified` is derived (`host/b1_qualification.py`)
+
+After the session the B1Q runner writes **`qualification.json`** beside the evidence:
+
+```json
+{"schema": "b1_carrier_qualification", "schema_version": "1.0.0", "session": "B1Q",
+ "evidence_dir": "evidence/b1q/b1q_17A6_<date>",
+ "files": {"run_log.json": "<sha256>", "audits.json": "…", "timeline.json": "…", "adjudication.json": "…", "summary.json": "…"},
+ "outcome": "PASS",
+ "ruling": {"ruling": "whole-of-run B1 carrier qualification", "boardid": "17A6", "granted_by": "…", "date": "…"},
+ "binding": {"session": "B1Q", "carrier_sha256": "d85daef4…", "carrier_variant": "0x42310001", "image_sha256": "54b00663…",
+             "prereg_sha256": "<frozen>", "b1_manifest_sha256": "<the manifest the session was bound to>",
+             "master_seed": 176359248, "budget": 9, "psoracle_commit": "689dde1…", "token": "<session token>"}}
+```
+
+The owner pins a PASS record with `host/b1_manifest.py --qualification <evidence dir>`,
+which **verifies it first** and writes it as `carrier.qualification`; every later refresh
+re-derives `carrier.qualified` from it. **`verify(manifest)`** — called by the mapping runner
+before the port and by the mapping adjudicator before any verdict — requires all of: the
+record present with `outcome: PASS`; every evidence file still hashing to the record; the
+binding equal to THIS manifest's carrier hash and variant, image hash, frozen prereg hash,
+instrument commit, qualification seed and budget; the stored adjudication a B1Q PASS; and
+the pinned evidence **re-adjudicated now** by `b1q_adjudicate` to PASS with no finding. Any
+break is a refusal, and the flag alone — set by hand, or left true after the evidence
+changed — is refused explicitly (`tests/test_b1_qualification.py`, `test_b1_runner.py`).
+A HOLD session leaves a record too (of a failed qualification); it never qualifies.
+
+## 5. What this does not qualify
 
 Long runs (the mapping session is ≈ 6 min; the L6 soak's 2 h guarantee is the P3
 carrier's, not this one's — a B1 soak would be a separate decision if a long session were
-ever planned); any other die; any change to the pblock or the constraints (none was made).
+ever planned); any other die; any change to the pblock or the constraints (none was made);
+any other image than the pinned one (the binding names it — a new image needs a new
+qualification).

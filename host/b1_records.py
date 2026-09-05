@@ -182,47 +182,14 @@ def _check_negative_control(r):
 
 
 def validate_run_log(log: dict) -> dict:
-    """Returns the chain per score; raises RecordError naming the rule that failed."""
-    validate(log)
-    by_sha = {}
-    for rec in log["records"]:
-        validate(rec)
-        by_sha[canonical_sha256(rec)] = rec
-    verdicts = {}
-    for score in (r for r in log["records"] if r["schema"] == "score_record"):
-        arm = by_sha.get(score["arm_record_sha256"])
-        if arm is None:
-            raise RecordError("(chain) score_record references no arm_record in this log")
-        oracle = by_sha.get(arm["oracle_record_sha256"])
-        gate = by_sha.get(arm["gate_verdict_sha256"])
-        if oracle is None or gate is None:
-            raise RecordError("(chain) arm_record references records not in this log")
-        # (i) one epoch across gate verdict, oracle, arm
-        epochs = {gate.get("epoch"), oracle["session"].get("epoch"), arm["epoch"]}
-        if len(epochs) != 1:
-            raise RecordError(f"(i) epoch mismatch across gate/oracle/arm: {sorted(map(str, epochs))}")
-        # (ii) hardware-exposed commit == arm commit == gate's candidate hash
-        if not (score["hw_candidate_commit"] == arm["candidate_commit"] == gate["candidate_sha256"]):
-            raise RecordError("(ii) hw_candidate_commit, arm candidate_commit and gate candidate_sha256 differ")
-        # (iii) functional readout == expected tables
-        if [int(x, 16) for x in score["functional_readout"]] != [int(x, 16) for x in arm["expected_tables"]]:
-            raise RecordError("(iii) functional_readout != expected_tables")
-        # (iv) both oracle hashes match the candidate
-        if oracle["staged_sha256"] != gate["candidate_sha256"] or oracle["readback_sha256"] != gate["candidate_sha256"]:
-            raise RecordError("(iv) oracle staged/readback hash does not match the candidate")
-        # (v) the hardware latch was true
-        if score["configuration_valid_hw"] is not True:
-            raise RecordError("(v) configuration_valid_hw is not true")
-        if arm["key_loaded_observed"] is not True:
-            raise RecordError("(v) a score with key_loaded_observed false: the PL could not have verified a tag")
-        verdicts[canonical_sha256(score)] = {"gate": gate["candidate_sha256"], "epoch": arm["epoch"]}
-    # (vi) every on-board negative control in the log was refused by the PL with the expected fault
-    for neg in (r for r in log["records"] if r["schema"] == "negative_control"):
-        if neg["arm_record_sha256"] not in by_sha:
-            raise RecordError("(vi) negative_control references no arm_record in this log")
-        if not neg["refused_as_expected"]:
-            raise RecordError(f"(vi) negative control {neg['kind']!r} was not refused with fault {EXPECTED_FAULT[neg['kind']]}")
-    return verdicts
+    """NOT A B1 PATH. The instrument's L5 run_log validator (rules (i)–(vi), including rule
+    (iii) `functional_readout == expected_tables`) is deliberately not carried into the B1
+    successor: under the noninterference contract there are no host-attested tables to
+    compare with, and a caller reaching for it would be re-introducing the attestation the
+    contract removes. The only B1 validation path is `validate_standalone_run_log` (rules
+    (vii)–(ix) with rule iii-B1). Calling this is a refusal (owner's review 2026-09-05)."""
+    raise RecordError("validate_run_log is the instrument's L5 path (rule iii: readout == host tables); B1 has no such path — "
+                      "use validate_standalone_run_log (docs/b1_carrier_contract.md)")
 
 
 # ------------------------------------------------------- standalone plane (D1) — records

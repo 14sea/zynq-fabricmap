@@ -1,0 +1,148 @@
+{
+ "audit_policy": "all-self-reporting",
+ "audit_seqs": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11
+ ],
+ "audited_records": 11,
+ "bad_frame_budget": 2,
+ "budget": 9,
+ "crc_budget": 2,
+ "crc_formula": "ceil(4 \u00d7 expected_total / 1000) (D-s4)",
+ "deadline": {
+  "expected_span_s": 11.758581719671781,
+  "formula": "1.25 \u00d7 (N+2) \u00d7 3600/min(planning rate) + 600 (l6_schedule.session_timeout_s)",
+  "rate_C1_planning": 3381.372371494145,
+  "rate_C2_planning": 3367.753096765939,
+  "session_timeout_s": 615
+ },
+ "expected_frames": {
+  "audited_records": 11,
+  "by_type": {
+   "AUDIT": 88,
+   "AUDIT_READY": 11,
+   "CLOSE": 1,
+   "HB": 176,
+   "IDENT": 1,
+   "REC": 11,
+   "SIGNREQ": 11,
+   "TERM": 1
+  },
+  "n": 9,
+  "protocol": "rel-v4",
+  "records": 11,
+  "total": 300
+ },
+ "flags": 50,
+ "flags_hex": "0x32",
+ "instrument": {
+  "files_verified": 128,
+  "git_checked": true,
+  "psoracle_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "root": "/home/test/zynq_psoracle"
+ },
+ "master_seed": 176359248,
+ "phases": {
+  "code": 9,
+  "confirm": 0,
+  "pair": 0
+ },
+ "pins": {
+  "carrier_constants_sha256": "48f79b876a0bfdb449f407692301b29987ef1218fa1adb1fd9a181068765d118",
+  "local_map_sha256": "56f2b9e81e180eee2540286e4fde797e0d4820a49d10624c10844c38e99d87cb",
+  "phenotype_manifest_sha256": "e45f466d082ccd6f227e6f9be4ce75a4e98c4caa708808c09a77ed32331c10ef"
+ },
+ "predicted_content_sha256": "ce2c89f96f063d90373b0be7bc67039fef714f796966ce43c3ca55594614240b",
+ "predicted_probe_sequence_sha256": "0d93f1612d8a7c691e7634629c3229adc582b46be9b17b741e5545c588234375",
+ "prediction_sha256": "d2c9293a4573b60e497a23cdd87f6355e29df696ef16e52aec05e00ac8aaf062",
+ "protocol": "rel-v4",
+ "rec_retry_control": true,
+ "records": 11,
+ "reporting_strata": {
+  "A": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "B": [
+   4,
+   5
+  ]
+ },
+ "schema": "b1q_plan",
+ "schema_version": "1.0.0",
+ "seed_derivation": {
+  "commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "digest": "0a830750e48fdcb79f1860c86c504a3dd78c7f53a25648fe7e426dfe5c80739b",
+  "excluded": [
+   1,
+   2,
+   3,
+   5,
+   11,
+   77,
+   99,
+   1234,
+   4321,
+   195948557,
+   324805736,
+   521288629,
+   1123460948,
+   1278624577,
+   1278628687,
+   1281816666,
+   2119807262,
+   3735928559,
+   4294967295
+  ],
+  "label": "b1-qualification|",
+  "master_seed": 176359248,
+  "offset": 0,
+  "trace": [
+   {
+    "excluded": false,
+    "offset": 0,
+    "value": 176359248
+   }
+  ]
+ },
+ "seed_exclusion": {
+  "b1_master_seed": 1123460948,
+  "excluded_master_seeds": [
+   1,
+   2,
+   3,
+   5,
+   11,
+   77,
+   99,
+   1234,
+   4321,
+   195948557,
+   324805736,
+   521288629,
+   1123460948,
+   1278624577,
+   1278628687,
+   1281816666,
+   2119807262,
+   3735928559,
+   4294967295
+  ]
+ },
+ "session": "B1Q",
+ "session_timeout_s": 615,
+ "sign_retry_control": true,
+ "tool": "b1_plan.py/0.2.0",
+ "watchdog": true
+}

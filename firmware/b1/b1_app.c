@@ -1,25 +1,35 @@
-/* p3_app — the standalone application: the board half of D1 (`docs/d1_standalone_spec.md`).
+/* b1_app — the B1 standalone application: the board half of the autonomous-cartography
+ * session (docs/b1_architecture.md), a versioned SUCCESSOR of the instrument's p3_app.c
+ * (zynq-psoracle 689dde1; firmware/b1/IMPORT.json names it as `derived_to` this file).
  *
  * ─── STANDING OF THIS FILE ────────────────────────────────────────────────────────────
- * COMPILED, NOT BOARD-RUN (rel-v4 candidate, prereg v0.6 draft). As of the L5 build (docs/l5_findings.md) this file is
- * cross-compiled for cortex-a9 into firmware/bsp/out/p3_app.elf with the pinned xPack
- * arm-none-eabi-gcc 14.2.1 against a hand-assembled standalone BSP: it links clean with no
- * undefined symbols and compiles -Wall -Wextra clean. It has NEVER been run on the board.
- * What IS proven host-side is `p3_derive.c` — every hash, the derive function, the stream
- * builder and parser, the pinned readback command stream, base64url, the nonce model and
- * the identity page — against the Python reference over the whole pinned corpus (N = 256)
- * and its fixtures. This file is deliberately thin for that reason: HAL plus state machine,
- * checked by source audit (`tests/test_firmware_audit.py`), not by execution.
+ * COMPILED, NOT BOARD-RUN (B1 v2 package, 2026-09-05; DRAFT / NO BOARD RULING). Cross-compiled
+ * for cortex-a9 into firmware/b1/bsp/out/b1_app.bin with the pinned xPack arm-none-eabi-gcc
+ * 14.2.1 against the instrument's standalone BSP; two clean builds are byte-identical
+ * (evidence/b1/build_evidence.json). It has NEVER been run on a board; the first board
+ * contact is the carrier qualification session under its own ruling
+ * (docs/b1_carrier_qualification.md §3), then the mapping session under its own.
+ * What IS proven host-side: p3_derive.c (verbatim: every hash, the stream builder and
+ * parser, the readback stream, base64url, the nonce model, the identity page) against the
+ * instrument's Python reference; b1_carto.c + b1_orch.c (C == Python twin over the fixtures
+ * and the session order, tests/test_b1_twin.py, test_b1_session.py); the wire bytes this file
+ * emits through b1_wire.c against the instrument's validator (tests/test_b1_wire.py). This
+ * file is deliberately thin for that reason: HAL plus state machine, checked by source audit
+ * and by the MMIO allowlist against the B1 RTL decode (tests/test_b1_carrier.py).
  * ──────────────────────────────────────────────────────────────────────────────────────
  *
- * It mirrors `host/l5_refloop.py` step for step; where the two disagree the Python is the
- * specification. The session:
+ * The diff to p3_app.c is the search → orchestrator/cartographer replacement, the `carto`
+ * block in every record, and the VARIANT read into the IDENT; where this file and the Python
+ * reference (host/b1_carto.session_run) disagree, the Python is the specification. The
+ * session:
  *
- *   identity (§3b) → opening baseline → [ propose → notary → stage → link 2 → DMA →
- *   link 3 → ARM → score ]* → closing baseline (= restore) → closing unsigned ARM (§4.0)
+ *   identity → cartographer init + bind → opening baseline → [ propose → notary (ZERO
+ *   tables) → stage → link 2 → DMA → link 3 → ARM → raw readout → observe ]* → closing
+ *   baseline (= restore) → closing unsigned ARM
  *
- * ending in exactly one of COMPLETED / STOPPED / PROTOCOL (§3c). CRASHED is the watchdog's
- * and by definition leaves nothing behind but what the collector already received.
+ * ending in exactly one of COMPLETED / STOPPED / PROTOCOL. CRASHED is the watchdog's and by
+ * definition leaves nothing behind but what the collector already received. An unscored
+ * candidate ends the epoch: nothing is re-issued and no closing baseline follows.
  */
 
 #include "p3_data.h"

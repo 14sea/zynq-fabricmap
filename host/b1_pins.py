@@ -23,7 +23,7 @@ PINS = REPO_ROOT / "manifests/b1_instrument_pins.json"
 MANIFEST = REPO_ROOT / "manifests/b1_manifest.json"
 
 PINNED_GLOBS = (
-    "host/b1_*.py", "host/gen_b1_data.py", "host/claimb_r1p_instrument.py",
+    "host/b1_*.py", "host/b1q_*.py", "host/gen_b1_data.py", "host/claimb_r1p_instrument.py",
     "firmware/b1/*.c", "firmware/b1/*.h", "firmware/b1/Makefile", "firmware/b1/IMPORT.json",
     "firmware/b1/bsp/build.sh", "firmware/b1/bsp/lscript.ld", "firmware/b1/bsp/src/*.c", "firmware/b1/bsp/include/*.h",
     "rtl/b1/*.v", "vivado/b1/*.tcl", "tb/b1/*.py", "tb/b1/*.v", "sim/b1/run.sh",
@@ -33,6 +33,10 @@ PINNED_GLOBS = (
     "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/local_map.json",
     "gate_runs/claimb_round1_carrier_2026_08_13_erratum006/phenotype_manifest.json",
     "manifests/claimb_round1prime_instrument_pins.json",
+    # the normative documents the runtime is bound to (owner's review 2026-09-05, blocker 4):
+    # the contract, the qualification criteria, the architecture. (The preregistration is
+    # pinned separately by its frozen hash.)
+    "docs/b1_carrier_contract.md", "docs/b1_carrier_qualification.md", "docs/b1_architecture.md",
 )
 EXCLUDE_SUFFIXES = (".pyc",)
 
