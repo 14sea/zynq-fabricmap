@@ -47,10 +47,10 @@
   "board_ready": false,
   "build_evidence": {
    "path": "evidence/b1/build_evidence.json",
-   "sha256": "a962d5bf0fd5cf5ab0f05b6eae506e51ba2ca4f90c0377f16968466055c712c8",
+   "sha256": "b7efb0e436ca5dc9784d8f4ac8d86b9941a1084a9c2c8adb42c9f9cdf2cf167d",
    "reproduced_byte_identical": true,
-   "worktree_dirty_at_build": true,
-   "head_at_build": "2e24cea5db04de650a0b48d046db8a4318d5a964"
+   "worktree_dirty_at_build": false,
+   "head_at_build": "c02404e4636ed2265c2ae3902cb5db0ce0df338c"
   },
   "note": "the binary is not committed (bsp/out is gitignored, as the instrument's is); it is rebuilt byte-identically by firmware/b1/bsp/build.sh from the pinned sources and toolchain, and the runner refuses any image whose sha256 is not this one. board_ready is set by the owner at the freeze, never by this tool; a refresh keeps it only while the image, ELF and build evidence are the ones it was granted for."
  },
