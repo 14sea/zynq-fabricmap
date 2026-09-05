@@ -1,4 +1,4 @@
-# B1 — the pre-board package, v2.2.3, delivered after the final short re-review (2026-09-05)
+# B1 — the pre-board package, v2.2.4, pushed after the owner's approval (2026-09-05)
 
 > **HOST-ONLY. DRAFT / NO BOARD RULING.** Delivered at "B1 ready for the board" under the
 > owner's ruling of 2026-09-05 (`docs/autonomous_cartography_roadmap.md`; the
@@ -77,7 +77,10 @@ key set is exact (`additionalProperties: false` — `schema`, `schema_version`, 
 `content_base64`, `note`), any ruling field on an envelope is refused explicitly, types are
 checked; the owner's counter-example is a test through `verify()`, for both rulings. The
 qualification document's example now says record 2.1.0. Firmware, image, carrier, plans
-and predictions unchanged.
+and predictions unchanged. **v2.2.4** (the owner's last read): `note` is mandatory in the
+envelope, as the documents say; with that the owner approved the push of every local
+commit, with the sequence after it fixed: compatibility review → freeze → B1Q ruling pair;
+no board contact before that.
 
 ## 1. Hashes and data flow
 
@@ -243,7 +246,7 @@ record, and re-verifies the plan, prediction and pin table itself.
 B1 tests: `test_b1_adjudicate` (24), `test_b1_carrier` (7), `test_b1_e2e` (5), `test_b1_leakage` (7), `test_b1_pins` (3), `test_b1_plan` (10), `test_b1_qualification` (17), `test_b1_records` (5), `test_b1_runner` (19), `test_b1_session` (5), `test_b1_signer` (4), `test_b1_twin` (8), `test_b1_wire` (3). Whole suite on the clean tree — **see the report cited below**; a
 dirty tree skips 27 carrier-authority tests, so only `clean_tree_proof: true` counts.
 
-Report: `evidence/b1/tests/test_report_2026-09-05T141415Z.json` (schema `b1_test_report`, package `B1 v2.2.3`) — ran **1412**, skipped **0**, `OK`; `head_at_run` `7813f4518cab`, `worktree_dirty` False; instrument `689dde1dad37` = pinned, dirty False; **`clean_tree_proof: True`**. Earlier reports (`…T101536Z` 1338 at `4c49b259`; `…T115752Z` 1378 at `25f8c690`; `…T124403Z` 1399 at `c29e1662`; `…T131844Z` 1404 at `0138940b`; `…T134130Z` 1409 at `1d44ae5a`; `…T140217Z` 1411 at `6d693cb2`) are kept as the records of the earlier packages.
+Report: `evidence/b1/tests/test_report_2026-09-05T142401Z.json` (schema `b1_test_report`, package `B1 v2.2.4`) — ran **1412**, skipped **0**, `OK`; `head_at_run` `47b6719ea014`, `worktree_dirty` False; instrument `689dde1dad37` = pinned, dirty False; **`clean_tree_proof: True`**. Earlier reports (`…T101536Z` 1338 at `4c49b259`; `…T115752Z` 1378 at `25f8c690`; `…T124403Z` 1399 at `c29e1662`; `…T131844Z` 1404 at `0138940b`; `…T134130Z` 1409 at `1d44ae5a`; `…T140217Z` 1411 at `6d693cb2`; `…T141415Z` 1412 at `7813f45c`) are kept as the records of the earlier packages.
 
 ## 10. What is asked, and what is not
 
