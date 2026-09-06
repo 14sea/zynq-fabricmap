@@ -1,0 +1,39 @@
+{
+  "schema": "principal_boundary",
+  "schema_version": "1.0.0",
+  "runner_user": "test",
+  "signer_user": "p3signer",
+  "pod_group": "p3jtag",
+  "key_store": "/var/lib/p3signer/keys",
+  "checks": [
+    {
+      "check": "R1_runner_is_not_signer",
+      "passed": true,
+      "detail": "user test, groups ['adm', 'cdrom', 'dialout', 'dip', 'docker', 'ollama', 'plugdev', 'sudo', 'test', 'users']"
+    },
+    {
+      "check": "R2_runner_cannot_read_key",
+      "passed": true,
+      "detail": "open: Permission denied"
+    },
+    {
+      "check": "R3_runner_cannot_open_pod",
+      "passed": true,
+      "detail": "/dev/bus/usb/001/002: Permission denied"
+    },
+    {
+      "check": "R4_signer_reachable_and_holds_key",
+      "passed": true,
+      "detail": "rc=0  key_id=b4c022a27ff8"
+    },
+    {
+      "check": "R5_signer_in_pod_group",
+      "passed": true,
+      "detail": "members ['p3signer'], signer gid 988"
+    }
+  ],
+  "all_passed": true,
+  "key_id": "b4c022a27ff87ac2f98a39e5eaa1e23456251d3b95d16189f3130cb69905c307",
+  "at": 1788679906.7903173,
+  "host": "H3C"
+}

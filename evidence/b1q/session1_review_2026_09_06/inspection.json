@@ -1,0 +1,119 @@
+{
+  "valid_received_frames": {
+    "IDENT": 1,
+    "SIGNREQ": 11,
+    "HB": 176,
+    "AUDIT_READY": 11,
+    "AUDIT": 88,
+    "REC": 11,
+    "CLOSE": 1
+  },
+  "rejected_raw_lines": [
+    {
+      "line": 4,
+      "type": "SIGNREQ",
+      "error": "CrcError"
+    },
+    {
+      "line": 31,
+      "type": "REC",
+      "error": "CrcError"
+    },
+    {
+      "line": 304,
+      "type": "TERM",
+      "error": "CrcError"
+    }
+  ],
+  "record_seq_outcomes": [
+    [
+      1,
+      "SCORED"
+    ],
+    [
+      2,
+      "SCORED"
+    ],
+    [
+      3,
+      "SCORED"
+    ],
+    [
+      4,
+      "SCORED"
+    ],
+    [
+      5,
+      "SCORED"
+    ],
+    [
+      6,
+      "SCORED"
+    ],
+    [
+      7,
+      "SCORED"
+    ],
+    [
+      8,
+      "SCORED"
+    ],
+    [
+      9,
+      "SCORED"
+    ],
+    [
+      10,
+      "SCORED"
+    ],
+    [
+      11,
+      "SCORED"
+    ]
+  ],
+  "audit_verification": [
+    11,
+    "host audit gate marks (validators.audit.verify)"
+  ],
+  "closing_negative": [
+    {
+      "fault": 13,
+      "kind": "unsigned",
+      "nonce_after": "2ead854756d71f03",
+      "nonce_before": "08f474ffb8e8ab15",
+      "status": "0x00000982"
+    }
+  ],
+  "timeline_counts": {
+    "rx:IDENT": 1,
+    "tx:IDENTACK": 1,
+    "rx:CRC_DROP": 3,
+    "tx:SIGNGET": 1,
+    "rx:SIGNREQ": 11,
+    "tx:SIGNOK": 11,
+    "rx:HB": 176,
+    "rx:AUDIT_READY": 11,
+    "tx:AUDITGET": 88,
+    "rx:AUDIT": 88,
+    "tx:AUDITDONE": 11,
+    "tx:RECGET": 1,
+    "rx:REC": 11,
+    "tx:RECACK": 11,
+    "rx:CLOSE": 1
+  },
+  "ident_to_last_fragment_s": 13.5864883739996,
+  "manifest_at_run_sha256": "2c031b4472d3b6a3b5393e5fdf4a367a124f1345d24460cde47277a379e36815",
+  "source_sha256": {
+    "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+    "B1_1_identity_page.json": "fcde4aa89c3373f9cbb85e43b4faf56977d96c9887915cabf76aed69e07abdeb",
+    "console.log": "208149e8ab211f929e7cafc74b776cb7c12951f8a2ec1ed52112cba2eae19d42",
+    "console.ts.log": "43f7d0dc2fd14c93623c3fe0679f824c8fc9922407e3b8b275d0d06a21045831",
+    "manifest_at_run.json": "2c031b4472d3b6a3b5393e5fdf4a367a124f1345d24460cde47277a379e36815",
+    "ruling_provisioning.json": "f6aad58b5f73d6006bb2c2a63267791259a4f26a199abc4ad1a4e611e71b30ac",
+    "ruling_whole_of_run.json": "ae980da0747fe41f4e22aac9a1be81e58c9ba6ec2b5084c0102a92b8c12fafff",
+    "summary.json": "5292a6bd343c5f27b71c5a7a9e9b7b0ebd8a6bfd0d61593a57e8cdf486dda870",
+    "timeline.json": "d40da53376665e99c204b02b0ede95c4f9211e8bbfbda8ac48b1ba97cffcbb33",
+    "ymodem.log": "0dd24de406bb2332e61c03ba02b9097e5d91ebdd3e42a92cb2f67fa29542b88a",
+    "ymodem_app.log": "2d76c8d02692f0d37762c30f85fc0c113eb946ddd8f6184eb6dbbe3a56abfeb8"
+  }
+}

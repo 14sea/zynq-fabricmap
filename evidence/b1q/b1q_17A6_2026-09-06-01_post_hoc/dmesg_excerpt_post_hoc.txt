@@ -1,0 +1,27 @@
+# POST-HOC kernel log excerpt (dmesg, read on the host at 2026-09-06T07:53:53Z, AFTER B1Q session 2026-09-06-01)
+# Provenance: 'dmesg | grep -n "usb 1-2\|ch341\|ttyUSB4\|ftdi"' on the runner host; the CH340 (usb 1-2) was /dev/ebaz-uart -> ttyUSB4 during the session.
+# The session's IDENT..TERM window is ~[90701, 90716] s of kernel uptime (console.ts.log mono clock is a different clock; correlate by the ttyUSB4 attach at 90120 = the device restart before the session).
+# This file is NOT part of the runner's evidence; it is a diagnostic reconstruction, labelled post hoc (owner's review §5).
+506:[90118.692816] usbcore: registered new interface driver ftdi_sio
+508:[90118.692840] ftdi_sio 1-1:1.0: FTDI USB Serial Device converter detected
+511:[90118.694327] ftdi_sio 1-1:1.1: FTDI USB Serial Device converter detected
+514:[90118.695849] ftdi_sio 1-1:1.2: FTDI USB Serial Device converter detected
+517:[90118.697298] ftdi_sio 1-1:1.3: FTDI USB Serial Device converter detected
+524:[90120.323691] usb 1-2: new full-speed USB device number 3 using vhci_hcd
+526:[90120.443704] usb 1-2: SetAddress Request (3) to port 1
+527:[90120.482696] usbcore: registered new interface driver ch341
+528:[90120.482753] usbserial: USB Serial support registered for ch341-uart
+529:[90120.482779] ch341 1-2:1.0: ch341-uart converter detected
+530:[90120.491729] usb 1-2: ch341-uart converter now attached to ttyUSB4
+534:[90576.414349] usb 1-2: seqnum max
+535:[90588.631482] ftdi_sio ttyUSB0: FTDI USB Serial Device converter now disconnected from ttyUSB0
+536:[90588.631497] ftdi_sio 1-1:1.0: device disconnected
+549:[90893.591356] usb 1-2: USB disconnect, device number 3
+553:[90893.591816] ch341-uart ttyUSB4: ch341-uart converter now disconnected from ttyUSB4
+554:[90893.591868] ch341 1-2:1.0: device disconnected
+556:[90893.722714] ftdi_sio ttyUSB1: FTDI USB Serial Device converter now disconnected from ttyUSB1
+557:[90893.722766] ftdi_sio 1-1:1.1: device disconnected
+558:[90893.723164] ftdi_sio ttyUSB2: FTDI USB Serial Device converter now disconnected from ttyUSB2
+559:[90893.723201] ftdi_sio 1-1:1.2: device disconnected
+560:[90893.723801] ftdi_sio ttyUSB3: FTDI USB Serial Device converter now disconnected from ttyUSB3
+561:[90893.723843] ftdi_sio 1-1:1.3: device disconnected
