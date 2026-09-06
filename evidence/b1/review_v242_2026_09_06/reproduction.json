@@ -1,0 +1,56 @@
+{
+  "baseline": "PASS",
+  "omit_console_hash": {
+    "console_exists": false,
+    "check_exports": "REFUSED: exports.json files are not exactly ['console.log', 'console.ts.log', 'timeline.json', 'run_log.json', 'audits.json']: ['audits.json', 'console.ts.log', 'run_log.json', 'timeline.json']",
+    "adjudication_outcome": "REFUSED: exports.json files are not exactly ['console.log', 'console.ts.log', 'timeline.json', 'run_log.json', 'audits.json']: ['audits.json', 'console.ts.log', 'run_log.json', 'timeline.json']",
+    "files_entries": [
+      "audits.json",
+      "console.ts.log",
+      "run_log.json",
+      "timeline.json"
+    ]
+  },
+  "empty_files": {
+    "console_exists": false,
+    "check_exports": "REFUSED: exports.json files are not exactly ['console.log', 'console.ts.log', 'timeline.json', 'run_log.json', 'audits.json']: []",
+    "adjudication_outcome": "REFUSED: exports.json files are not exactly ['console.log', 'console.ts.log', 'timeline.json', 'run_log.json', 'audits.json']: []",
+    "files_entries": []
+  },
+  "missing_files": {
+    "console_exists": false,
+    "check_exports": "REFUSED: exports.json files are not exactly ['console.log', 'console.ts.log', 'timeline.json', 'run_log.json', 'audits.json']: NoneType",
+    "adjudication_outcome": "REFUSED: exports.json files are not exactly ['console.log', 'console.ts.log', 'timeline.json', 'run_log.json', 'audits.json']: NoneType",
+    "files_entries": []
+  },
+  "seal_write": {
+    "escaped_exception": null,
+    "summary_outcome": "CRASHED host-side: RuntimeError: primary console-loop host error",
+    "host_error": "RuntimeError: primary console-loop host error",
+    "seal_error": "OSError: injected exports manifest write failure",
+    "summary_exists": true,
+    "exports_exists": false,
+    "run_log_exists": true,
+    "audits_exists": true,
+    "saved_epoch_end": {
+      "kind": "PROTOCOL",
+      "last_seq": 11,
+      "reason": "PROTOCOL_CRC_BUDGET: 5 > 4"
+    }
+  },
+  "seal_replace": {
+    "escaped_exception": null,
+    "summary_outcome": "CRASHED host-side: RuntimeError: primary console-loop host error",
+    "host_error": "RuntimeError: primary console-loop host error",
+    "seal_error": "OSError: injected exports manifest replace failure",
+    "summary_exists": true,
+    "exports_exists": false,
+    "run_log_exists": true,
+    "audits_exists": true,
+    "saved_epoch_end": {
+      "kind": "PROTOCOL",
+      "last_seq": 11,
+      "reason": "PROTOCOL_CRC_BUDGET: 5 > 4"
+    }
+  }
+}

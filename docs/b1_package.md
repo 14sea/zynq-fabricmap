@@ -1,13 +1,15 @@
-# B1 — the package: FROZEN; B1Q session 1 LOST (host/transport), the correction batch v2.4 local (2026-09-06)
+# B1 — the package: FROZEN; B1Q session 1 LOST; v2.4.2 reviewed, attempt-2 pair issued (2026-09-06)
 
-> **FROZEN / qualification HOLD / NO OPEN RULING.** The preregistration was frozen on
+> **FROZEN / qualification HOLD / ATTEMPT-2 B1Q PAIR ISSUED; EXECUTION AWAITS INSTRUCTION.** The preregistration was frozen on
 > 2026-09-06 after the compatibility review of image `300b12b1…` passed; the image is
 > `board_ready`. The owner issued the first B1Q ruling pair (2026-09-06-01) and the
 > session ran on `17A6` — the FIRST board contact of this line — and was LOST to a host /
 > transport failure (§0); both rulings are consumed, the carrier is not `qualified`. The
 > instrument (`zynq-psoracle` `689dde1`) is unchanged, bit for bit. The authorised host
-> correction batch (v2.4) is committed locally pending review; a new ruling pair is needed
-> for attempt 2.
+> correction batch (v2.4.2) passed host review at `459320d` and is approved for push.
+> The attempt-2 B1Q pair (`2026-09-06-02`) binds manifest `e38f86a8…`; neither ruling
+> is consumed. See `docs/b1_v242_review_2026_09_06.md`. Execution still awaits a separate
+> explicit instruction, a fresh power cycle and a fresh boundary/preflight.
 
 ## 0. History: the first package and why it failed
 
@@ -293,12 +295,15 @@ end, a failed replay, a map ≠ prediction, an anomaly, or a span past the deadl
 reported with the map still scored; a validator falsification is a KILL; the instrument's
 two-strikes / three-without-COMPLETED rules in force.
 
-## 5. Rulings — DRAFT texts (not issued): two sessions, two pairs, FOUR rulings
+## 5. Rulings — templates and current issuance status
 
 A provisioning ruling is consumed once and is bound to its session name, so each session
-needs its own. The manifest sha256 in the qualification pair is the one **after** the owner
-writes the frozen prereg hash and `board_ready` and commits; the one in the mapping pair is
-the manifest **after** the qualification record is pinned and committed. Both unknown today.
+needs its own. Attempt 1 (`2026-09-06-01`) is LOST and its pair remains consumed. The
+attempt-2 qualification pair (`2026-09-06-02`) is issued and unconsumed, bound to committed
+manifest `e38f86a8a7679853eb943f0e968efd880a09faef849606c015ad0ec7616b9709`.
+The mapping pair has not been issued; it must bind the manifest **after** a standing
+qualification record is pinned and committed. The JSON below is template text, not an
+additional usable ruling. Issuance details: `docs/b1_v242_review_2026_09_06.md`.
 
 **Qualification pair (session `B1Q`)**
 ```json
@@ -373,8 +378,8 @@ the reviewed image is `board_ready`. With fixture rulings that pass the initial 
 checks, `host/b1_runner.py` in the MAPPING profile passes the preceding pins and refuses
 because the carrier is **not qualified: no carrier.qualification record**. The committed
 manifest also makes `host/b1_adjudicate.py` refuse at the missing qualification record.
-These checks run before any port access or ruling consumption. No real B1Q ruling pair
-has been issued.
+These checks run before any port access or ruling consumption. The first B1Q pair is
+consumed; the attempt-2 B1Q pair is issued and unconsumed (§5).
 
 The DRAFT refusal remains covered by fixtures with `prereg.sha256` null; it is no longer
 the committed manifest's state. Other fixture tests reach each refusal in order
