@@ -1,0 +1,22 @@
+{
+ "at": "2026-09-06T152152Z",
+ "committed_manifest_sha256": "38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e",
+ "head": "c35d40c77f886741a0e49a50c6cdecae65c42112",
+ "modelled_b1q_evidence": "/tmp/b1_qualified_state_1wpbuqkm/b1q",
+ "modelled_b1q_token": "82c20cd07766d61f38f0a7d30b56c683",
+ "pinned_manifest_sha256": "ce8a5fa3dd9582b139af7039f6749eb674c1b358556f415ef14ab2ef862f74c0",
+ "qualified_state": {
+  "errors": 0,
+  "exit_status": 0,
+  "failures": 0,
+  "note": "the carrier-authority tests skip on the dirty tree (the temporary manifest); they do not read the manifest",
+  "ran": 1451,
+  "result_line": "OK (skipped=27)",
+  "skipped": 27
+ },
+ "qualified_state_log_tail": "/locked/record.json.part: [Errno 13] Permission denied: '/tmp/tmpx2179xcq/locked/record.json.part'. The destination has to be writable before the board is touched, not after.\n.....STOP: known_answer stopped\n  evidence: /tmp/claimb-postfault-driver-test-f4nwmuhc/record.json\n..STOP: known_answer passed; the requested post-fault state was not created\n  evidence: /tmp/claimb-postfault-driver-test-ettmij03/record.json\n.................................................................s..............................................................................................................................................................................................................................................................................................................................................................................................................................................................STOP: CaptureStop: md line address 0x10100040 is not the expected 0x10100010; the dump is not contiguous\n  evidence: /tmp/tmpzdqnpr_c/capture.json\n.STOP: CaptureStop: parsed 97 words, expected 101\n  evidence: /tmp/tmpp4j5lj2t/capture.json\n.STOP: CaptureStop: a boot banner came back with `echo`: the board restarted\n  evidence: /tmp/tmpfsedfxoq/capture.json\nSTOP: CaptureStop: a boot banner came back with `printenv plmark`: the board restarted\n  evidence: /tmp/tmp3xedjucx/capture.json\nSTOP: CaptureStop: a boot banner came back with `md.l 0x10100000 0x65`: the board restarted\n  evidence: /tmp/tmposzte07d/capture.json\n.STOP: CaptureStop: plmark is ffffffffffffffff, the failing run set 18cba2892df42cbd: this is a different boot and the DRAM archive is not that run's\n  evidence: /tmp/tmpa6jd2pjx/capture.json\n.STOP: CaptureStop: no prompt after `printenv plmark`: b'\\r\\nsomething partial and unterminated'\n  evidence: /tmp/tmps0mjhfx3/capture.json\n.usage: probe_ddr_capture.py [-h] [--port PORT] --plmark PLMARK [--slot SLOT]\n                            --out OUT\nprobe_ddr_capture.py: error: --slot must be in 0..14; -1 is not a frame of this run\nusage: probe_ddr_capture.py [-h] [--port PORT] --plmark PLMARK [--slot SLOT]\n                            --out OUT\nprobe_ddr_capture.py: error: --slot must be in 0..14; 15 is not a frame of this run\nusage: probe_ddr_capture.py [-h] [--port PORT] --plmark PLMARK [--slot SLOT]\n                            --out OUT\nprobe_ddr_capture.py: error: --slot must be in 0..14; 20 is not a frame of this run\n.....................................................................................................................................................................................................................................................................................................................................................................................................................\n----------------------------------------------------------------------\nRan 1451 tests in 214.941s\n\nOK (skipped=27)\n",
+ "record_manifest_at_run_sha256": "38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e",
+ "schema": "b1_qualified_state_report",
+ "schema_version": "1.0.0",
+ "tree_restored": true
+}
