@@ -1,0 +1,40 @@
+{
+  "raw_write_failure": {
+    "outcome": "PASS",
+    "exports": {
+      "console.log": "INCOMPLETE: OSError: injected console.log write failure",
+      "console.ts.log": "ok",
+      "timeline.json": "ok",
+      "session_summary": "ok",
+      "run_log.json": "ok",
+      "audits.json": "ok"
+    },
+    "console_exists": false,
+    "adjudication_outcome": "PASS"
+  },
+  "ledger_failure": {
+    "collected_chunks": 88,
+    "audits_exists": false,
+    "exports": {
+      "console.log": "ok",
+      "console.ts.log": "ok",
+      "timeline.json": "ok",
+      "session_summary": "ok",
+      "run_log.json": "ok",
+      "audits.json": "INCOMPLETE: RuntimeError: injected ledger serialization failure"
+    }
+  },
+  "timing_failure": {
+    "collected_records": 11,
+    "notary_entries": 11,
+    "run_log_exists": false,
+    "exports": {
+      "console.log": "ok",
+      "console.ts.log": "ok",
+      "timeline.json": "ok",
+      "session_summary": "ok",
+      "run_log.json": "INCOMPLETE: RuntimeError: injected timing failure",
+      "audits.json": "ok"
+    }
+  }
+}

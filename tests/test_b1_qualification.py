@@ -57,6 +57,15 @@ def frozen() -> dict:
     return m
 
 
+def reseal_exports(d: Path) -> None:
+    """After a test edits an evidence file, re-seal exports.json so that the check under
+    test is the VALIDATOR'S (a post-hoc edit is otherwise refused by the export hashes,
+    which is the point of exports.json — tests/test_b1_adjudicate.py::Exports)."""
+    import b1_session
+    doc = json.loads((d / "exports.json").read_text())
+    b1_session.write_exports_manifest(d, doc["statuses"])
+
+
 def manifest_text(m: dict) -> str:
     return json.dumps(m, indent=1, ensure_ascii=False) + "\n"
 
@@ -177,8 +186,10 @@ class Chain(unittest.TestCase):
         with self.assertRaises(bq.QualificationRefusal) as cm:
             bq.verify(good)
         self.assertIn("does not hash", str(cm.exception))
-        # re-pin the tampered file: the RE-ADJUDICATION catches it
+        # re-pin the tampered file (and re-seal exports.json, re-pinning it too): the RE-ADJUDICATION catches it
+        reseal_exports(d)
         good["carrier"]["qualification"]["files"]["run_log.json"] = hashlib.sha256(text.encode()).hexdigest()
+        good["carrier"]["qualification"]["files"]["exports.json"] = hashlib.sha256((d / "exports.json").read_bytes()).hexdigest()
         with self.assertRaises(bq.QualificationRefusal) as cm:
             bq.verify(good)
         self.assertIn("re-adjudicates", str(cm.exception))
@@ -363,7 +374,7 @@ class Chain(unittest.TestCase):
         log = json.loads((d / "run_log.json").read_text())
         log["l6"]["inputs"] = {"plan_sha256": self.m["plan"]["sha256"], "prediction_sha256": self.m["prediction"]["sha256"],
                                "pins_sha256": self.m["pins"]["sha256"]}
-        (d / "run_log.json").write_text(json.dumps(log))
+        (d / "run_log.json").write_text(json.dumps(log)); reseal_exports(d)
         res = qadj.adjudicate(d, self.m, QPLAN, QPRED, self.sha_q, require_git=False)
         self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("inputs plan_sha256", res["outcome"])
 
@@ -409,7 +420,7 @@ class Chain(unittest.TestCase):
         log = json.loads((d / "run_log.json").read_text())
         log["loop_records"][2]["evidence"]["arm"]["status_after"] = "0x00000f54"
         log["loop_records"][2]["evidence"]["arm"]["settle"]["status_last"] = "0x00000f54"   # a consistent record, wrong observation
-        (d / "run_log.json").write_text(json.dumps(log))
+        (d / "run_log.json").write_text(json.dumps(log)); reseal_exports(d)
         res = qadj.adjudicate(d, self.m, QPLAN, QPRED, self.sha_q, require_git=False)
         self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"])
         self.assertTrue(any("tables_match = 1" in f for f in res["findings"]))

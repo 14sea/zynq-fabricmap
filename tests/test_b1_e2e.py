@@ -24,7 +24,7 @@ sys.path.insert(0, str(R / "tests"))
 import b1_adjudicate as adj  # noqa: E402
 import b1_modelled_session as ms  # noqa: E402
 import claimb_r1p_instrument as inst  # noqa: E402
-from test_b1_qualification import qualify  # noqa: E402
+from test_b1_qualification import qualify, reseal_exports  # noqa: E402
 
 HAVE = inst.DEFAULT_ROOT.is_dir()
 MANIFEST = json.loads((R / "manifests/b1_manifest.json").read_text())
@@ -96,7 +96,7 @@ class Modelled(unittest.TestCase):
         import base64
         raw = bytearray(base64.urlsafe_b64decode(c["entries"])); raw[8] ^= 0x01     # sparse-v1: (offset u16, value u32) entries; byte 8 is entry 1's value
         c["entries"] = base64.urlsafe_b64encode(bytes(raw)).decode()
-        (out / "audits.json").write_text(json.dumps(a))
+        (out / "audits.json").write_text(json.dumps(a)); reseal_exports(out)
         res = self.adjudicate(out)
         self.assertTrue(res["outcome"].startswith("KILL falsified"), res["outcome"])
         self.assertIn("served raw words", res["outcome"])
@@ -106,7 +106,7 @@ class Modelled(unittest.TestCase):
         log = json.loads((out / "run_log.json").read_text())
         rec = next(r for r in log["loop_records"] if r["seq"] == 30)
         t = rec["evidence"]["score"]["functional_readout"]; t[0] = f"{int(t[0], 16) ^ 1:016x}"
-        (out / "run_log.json").write_text(json.dumps(log))
+        (out / "run_log.json").write_text(json.dumps(log)); reseal_exports(out)
         res = self.adjudicate(out)
         self.assertNotEqual(res["outcome"], "PASS")
         self.assertTrue(any("autonomy replay" in f or "carto" in f for f in res["findings"]), res["findings"])

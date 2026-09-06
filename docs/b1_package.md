@@ -126,6 +126,26 @@ exhaustion at the third, adjudicator error, early setup failure, mapping budgets
 frozen bytes unchanged. The manifest's hash changes (plan, pins): the next attempt needs a
 NEW B1Q ruling pair bound to the reviewed manifest.
 
+**v2.4 → v2.4.1 (the owner's review of v2.4, 2026-09-06: HOLD — `docs/b1_v24_review_2026_09_06.md`):**
+two export defects and a test gap. (1) `finalize` required only three JSON files, so an
+injected failure of the raw-console write still produced a PASS through the real B1Q
+adjudicator; now EVERY required export (raw console, its timestamps, the timeline, the
+summary construction, run_log, audits) must be "ok", `export_evidence` writes an
+`exports.json` (statuses + sha256 of every file) as the last export, `finalize` refuses to
+consult the adjudicator otherwise, and BOTH adjudicators require `exports.json` complete
+with every named file hashing to it (`check_exports`) — a verdict over a subset of the
+evidence is no verdict; the qualification chain binds `exports.json`, `console.log` and
+`console.ts.log` too. (2) A helper failing inside run_log / audits (timing, the notary
+rendering, a ledger renderer, the summary construction) dropped the collected records /
+chunks; now the base data is written independently of every enrichment, a failed
+enrichment is marked INCOMPLETE in place, the file's status is PARTIAL and the outcome a
+HOLD. (3) The post-go exception test now drives the REAL `b1_session.run` against a fake
+board: the preamble succeeds, the console exists, a host exception is raised in the loop —
+the finally exports everything, the collector's summary names the actual end, the host
+error is secondary, no success outcome. Owner's counter-examples (a failed console.log
+write; each helper failure) are tests. Firmware, image, carrier, plans, predictions and
+the frozen preregistration unchanged.
+
 **FREEZE (owner, 2026-09-06), executed on the owner's instruction to perform the freeze:**
 `docs/b1_preregistration.md` pinned by its bytes (`prereg.sha256` =
 `f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2`, `frozen: true`),

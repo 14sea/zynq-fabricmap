@@ -87,11 +87,17 @@ def synthetic_log(manifest: dict, plan: dict, fabric, n: int | None = None, kind
                    "inputs": adj.expected_inputs(manifest, plan["session"])}}
 
 
-def write_dir(log: dict) -> Path:
+def write_dir(log: dict, exports_ok: bool = True) -> Path:
+    import b1_session
     d = Path(tempfile.mkdtemp())
     (d / "run_log.json").write_text(json.dumps(log))
     (d / "audits.json").write_text("{}")
     (d / "timeline.json").write_text(json.dumps({"frames": [], "crc_dropped": 0, "bad_frames": 0}))
+    (d / "console.log").write_bytes(b"P3L5 synthetic\n"); (d / "console.ts.log").write_bytes(b"")
+    statuses = {k: "ok" for k in b1_session.REQUIRED_EXPORTS}
+    if not exports_ok:
+        statuses["console.log"] = "INCOMPLETE: OSError: synthetic"
+    b1_session.write_exports_manifest(d, statuses)
     return d
 
 
@@ -363,6 +369,37 @@ class Binding(unittest.TestCase):
         res = adj.adjudicate(write_dir(log), m, PLAN, PRED, "f" * 64, require_git=False, p3_layer=stub_layer(), qualification_check=NOQ)
         self.assertTrue(res["outcome"].startswith("REFUSED"))
         self.assertIn("b1_manifest_sha256", res["outcome"])
+
+
+class Exports(unittest.TestCase):
+    """The evidence set is checked INSIDE adjudicate(): an incomplete export table, a
+    missing table, a status key missing, or a file that does not hash to the table is a
+    refusal — never a verdict over a subset of the evidence (owner's review of v2.4)."""
+
+    def setUp(self):
+        self.m = frozen_manifest(); self.log = synthetic_log(self.m, PLAN, bm.fixture("truth"))
+
+    def adj(self, d):
+        return adj.adjudicate(d, self.m, PLAN, PRED, MSHA, require_git=False, p3_layer=stub_layer(), qualification_check=NOQ)
+
+    def test_a_complete_export_table_passes_and_an_incomplete_one_refuses(self):
+        self.assertEqual(self.adj(write_dir(self.log))["outcome"], "PASS")
+        res = self.adj(write_dir(self.log, exports_ok=False))
+        self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("console.log=INCOMPLETE", res["outcome"])
+
+    def test_a_missing_table_a_missing_status_key_and_a_drifted_file_refuse(self):
+        d = write_dir(self.log); (d / "exports.json").unlink()
+        res = self.adj(d); self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("no exports.json", res["outcome"])
+        d = write_dir(self.log); doc = json.loads((d / "exports.json").read_text()); del doc["statuses"]["console.ts.log"]
+        (d / "exports.json").write_text(json.dumps(doc))
+        res = self.adj(d); self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("console.ts.log=MISSING", res["outcome"])
+        d = write_dir(self.log); doc = json.loads((d / "exports.json").read_text()); doc["complete"] = False
+        (d / "exports.json").write_text(json.dumps(doc))
+        res = self.adj(d); self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("complete is not true", res["outcome"])
+        d = write_dir(self.log); (d / "console.log").write_bytes(b"edited after the export\n")
+        res = self.adj(d); self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("console.log", res["outcome"]); self.assertIn("does not hash", res["outcome"])
+        d = write_dir(self.log); (d / "audits.json").unlink()
+        res = self.adj(d); self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("audits.json", res["outcome"])
 
 
 class Pins(unittest.TestCase):

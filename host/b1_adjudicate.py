@@ -102,6 +102,32 @@ def check_pins(manifest: dict, plan_path: Path, prediction_path: Path, pins_path
         raise Refusal(f"instrument pins: {exc}") from None
 
 
+# ------------------------------------------------------------------ the evidence set
+def check_exports(evidence: Path) -> dict:
+    """The evidence directory's exports.json (host/b1_session.write_exports_manifest): every
+    required export "ok" and every named file present with its recorded sha256. A session
+    whose raw console, timestamps, timeline, summary, records or audits are missing or
+    partial is not adjudicable — a verdict over a subset of the evidence is no verdict
+    (owner's review of v2.4, 2026-09-06)."""
+    p = Path(evidence) / "exports.json"
+    if not p.is_file():
+        raise Refusal("the evidence carries no exports.json: the session's exports were not recorded")
+    try:
+        doc = json.loads(p.read_text())
+    except ValueError as exc:
+        raise Refusal(f"exports.json is not JSON: {exc}") from None
+    required = ("console.log", "console.ts.log", "timeline.json", "session_summary", "run_log.json", "audits.json")
+    statuses = doc.get("statuses") or {}
+    bad = [f"{k}={statuses.get(k, 'MISSING')}" for k in required if statuses.get(k) != "ok"]
+    if bad or doc.get("complete") is not True:
+        raise Refusal("evidence exports incomplete: " + ("; ".join(bad) or "complete is not true"))
+    for name, f in (doc.get("files") or {}).items():
+        fp = Path(evidence) / name
+        if not fp.is_file() or f.get("sha256") != sha256_of(fp):
+            raise Refusal(f"evidence file {name} is missing or does not hash to exports.json")
+    return doc
+
+
 # ------------------------------------------------------------------ binding
 def expected_inputs(manifest: dict, session: str = SESSION) -> dict:
     if session == SESSION:
@@ -394,6 +420,7 @@ def adjudicate(evidence: Path, manifest: dict, plan: dict, prediction: dict, man
     try:
         check_pins(manifest, plan_path or REPO_ROOT / manifest["plan"]["path"],
                    prediction_path or REPO_ROOT / manifest["prediction"]["path"], pins_path, plan, prediction)
+        out["exports"] = check_exports(evidence)["statuses"]
         log = json.loads((evidence / "run_log.json").read_text())
         out["binding"] = check_binding(log, manifest, plan, manifest_sha256, SESSION, qualification_check)
         p3 = _p3_layer(evidence, log, manifest, plan, instrument_root, require_git) if p3_layer is None \

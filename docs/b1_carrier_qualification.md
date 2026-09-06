@@ -112,6 +112,7 @@ beside them (schema `b1_carrier_qualification` 2.1.0):
 {"schema": "b1_carrier_qualification", "schema_version": "2.1.0", "session": "B1Q",
  "evidence_dir": "evidence/b1q/b1q_17A6_<date>",
  "files": {"run_log.json": "<sha256>", "audits.json": "…", "timeline.json": "…", "adjudication.json": "…", "summary.json": "…",
+           "exports.json": "…", "console.log": "…", "console.ts.log": "…",
            "manifest_at_run.json": "…", "ruling_whole_of_run.json": "…", "ruling_provisioning.json": "…"},
  "outcome": "PASS",
  "rulings": {"whole_of_run": {"file": "ruling_whole_of_run.json", "envelope_sha256": "…", "bytes_sha256": "…", "content": {…the ruling as decoded…}},
@@ -130,8 +131,9 @@ null). **`verify(manifest)`** — called by the mapping runner before the port a
 mapping adjudicator before any verdict, both of which also require the stored flag to agree
 with it — requires all of:
 
-1. the record present with `outcome: PASS`; every one of the eight evidence files still
-   hashing to it;
+1. the record present with `outcome: PASS`; every one of the eleven evidence files still
+   hashing to it; `exports.json` saying the session's exports were complete (every required
+   export "ok"; the adjudicator re-checks it against the files);
 2. `manifest_at_run.json` hashing to the record's and the run log's `b1_manifest_sha256`;
    the manifest it contains binding the same carrier hash and variant, image hash, frozen
    prereg hash and instrument commit as the current manifest, and `board_ready` true (a

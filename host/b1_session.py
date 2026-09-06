@@ -64,9 +64,47 @@ def collector_summary(collector, audit: dict, crc_dropped: int, drop_budget: int
             "audit": audit, "crc_dropped": crc_dropped, "drop_budget": drop_budget, "written_by": "collector"}
 
 
+REQUIRED_EXPORTS = ("console.log", "console.ts.log", "timeline.json", "session_summary", "run_log.json", "audits.json")
+EXPORTS_MANIFEST = "exports.json"
+
+
+def _sha(path: Path) -> str:
+    import hashlib
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write_exports_manifest(out_dir: Path, exports: dict) -> dict:
+    """exports.json — the per-export status table and the sha256 / size of every file that
+    was written, the LAST export; `complete` is true only when every required export is
+    "ok". The adjudicators require it (b1_adjudicate.check_exports) and the qualification
+    chain binds it: a session whose exports are not complete cannot be adjudicated PASS
+    from a subset of its files (owner's review of v2.4, 2026-09-06)."""
+    out_dir = Path(out_dir)
+    files = {}
+    for name in ("console.log", "console.ts.log", "timeline.json", "run_log.json", "audits.json"):
+        p = out_dir / name
+        files[name] = {"status": exports.get(name, "INCOMPLETE: not attempted"),
+                       "sha256": _sha(p) if p.is_file() else None, "bytes": p.stat().st_size if p.is_file() else None}
+    doc = {"schema": "b1_session_exports", "schema_version": "1.0.0", "required": list(REQUIRED_EXPORTS),
+           "statuses": {k: exports.get(k, "INCOMPLETE: not attempted") for k in REQUIRED_EXPORTS},
+           "files": files, "complete": all(exports.get(k) == "ok" for k in REQUIRED_EXPORTS)}
+    tmp = out_dir / (EXPORTS_MANIFEST + ".part")
+    tmp.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n"); tmp.replace(out_dir / EXPORTS_MANIFEST)
+    return doc
+
+
+def exports_complete(exports: dict) -> tuple[bool, list[str]]:
+    missing = [k for k in REQUIRED_EXPORTS if exports.get(k) != "ok"]
+    return (not missing), [f"{k}={exports.get(k, 'INCOMPLETE: not attempted')}" for k in missing]
+
+
 def export_evidence(out_dir: Path, summary: dict, plan: dict, collector, console, relay, timeline, reader, t_go) -> dict:
-    """Every independent export, each in its own try; the result table goes into
-    summary["exports"] and is returned. Nothing here raises."""
+    """Every independent export, each in its own try, and WITHIN run_log.json / audits.json
+    the base data (the records; the chunks) written independently of every enrichment
+    (timing, the notary log, each transaction ledger): an enrichment that fails is marked
+    INCOMPLETE in place and the file's status is PARTIAL — the collected data is never
+    lost to a helper (owner's review of v2.4, 2026-09-06). The result table goes into
+    summary["exports"] and exports.json. Nothing here raises."""
     import l6_checks as lc  # noqa: E402
     import l6_timing as lt  # noqa: E402
     import p3_gate as g  # noqa: E402
@@ -79,6 +117,15 @@ def export_evidence(out_dir: Path, summary: dict, plan: dict, collector, console
             fn(); exports[name] = "ok"
         except Exception as exc:  # noqa: BLE001 — recorded, never fatal to the other exports
             exports[name] = f"{INCOMPLETE}: {type(exc).__name__}: {exc}"
+
+    def component(doc, key, fn, partial: list):
+        """One enrichment of a document: its value, or an INCOMPLETE marker in its place."""
+        try:
+            doc[key] = fn()
+        except Exception as exc:  # noqa: BLE001
+            doc[key] = {INCOMPLETE: f"{type(exc).__name__}: {exc}"}
+            partial.append(f"{key} {INCOMPLETE}: {type(exc).__name__}: {exc}")
+
     if reader is not None:
         attempt("console.log", lambda: (out_dir / "console.log").write_bytes(bytes(reader.raw)))
     else:
@@ -86,8 +133,11 @@ def export_evidence(out_dir: Path, summary: dict, plan: dict, collector, console
     if timeline is not None:
         attempt("console.ts.log", lambda: (out_dir / "console.ts.log").write_bytes(timeline.console_ts_log()))
         attempt("timeline.json", lambda: pr.write_record(out_dir, "timeline", timeline.to_json()))
+    else:
+        exports["console.ts.log"] = exports["timeline.json"] = f"{INCOMPLETE}: no timeline"
     if collector is None:
-        exports["run_log.json"] = exports["audits.json"] = f"{INCOMPLETE}: no collector"
+        exports["session_summary"] = exports["run_log.json"] = exports["audits.json"] = f"{INCOMPLETE}: no collector"
+        write_exports_manifest(out_dir, exports)
         return exports
     summary["epoch_end"] = collector.epoch_end
     summary["audits"] = len(collector.audits)
@@ -105,14 +155,13 @@ def export_evidence(out_dir: Path, summary: dict, plan: dict, collector, console
                                                       console.crc_dropped if console is not None else 0, plan["crc_budget"])
         summary["session_summary_written_by"] = "collector"
     attempt("session_summary", build_summary)
+    summary["epoch_end"] = collector.epoch_end          # a missing end became CRASHED in the summary construction
 
     def write_run_log():
-        seqs = [r["seq"] for r in collector.loop_records]
-        timing = lt.record_timing(timeline.frames, seqs) if timeline is not None else {}
+        partial: list[str] = []
+        # the BASE: what the collector holds, no helper in the way
         log = {"control_plane": "standalone", "app_identity": collector.app_identity,
                "loop_records": collector.loop_records, "session_summary": collector.session_summary,
-               "notary_log": relay.notary_log() if relay is not None else None,
-               "timing": {"clocks": lt.CLOCKS, "t_go_mono": t_go, "records": {str(s): timing.get(s) for s in seqs}},
                "l6": {**plan, "audit_seqs": sorted(plan["audit_seqs"])}}
         if collector.closing_negative is not None:
             if collector.session_summary is not None and collector.session_summary.get("written_by") == "app":
@@ -124,32 +173,70 @@ def export_evidence(out_dir: Path, summary: dict, plan: dict, collector, console
                 log["observed_close_frame"] = {"frame": collector.closing_negative,
                                                "note": "received as a valid CLOSE frame; not a closing claim: the epoch has no valid app summary"}
         if collector.session_summary is None:
-            log["INCOMPLETE"] = "session_summary could not be built: " + str(exports.get("session_summary"))
+            partial.append(f"session_summary {INCOMPLETE}: {exports.get('session_summary')}")
+        # the ENRICHMENTS, each on its own
+        component(log, "notary_log", lambda: relay.notary_log() if relay is not None else {INCOMPLETE: "no relay"}, partial)
+        seqs = [r["seq"] for r in collector.loop_records]
+        def timing():
+            if timeline is None:
+                raise RuntimeError("no timeline")
+            t = lt.record_timing(timeline.frames, seqs)
+            return {"clocks": lt.CLOCKS, "t_go_mono": t_go, "records": {str(sq): t.get(sq) for sq in seqs}}
+        component(log, "timing", timing, partial)
+        if partial:
+            log[INCOMPLETE] = partial
         pr.write_record(out_dir, "run_log", log)
+        if partial:
+            raise PartialExport("; ".join(partial))
     attempt("run_log.json", write_run_log)
 
     def write_audits():
-        doc = {"chunks": collector.audits}
+        partial: list[str] = []
+        doc = {"chunks": collector.audits}                       # the BASE
         if console is not None:
-            doc["pulls"] = console.pull_ledgers
-            doc["recs"] = console.rec_ledgers_json()
-            doc.update(console.rel_ledgers_json())
+            component(doc, "pulls", lambda: list(console.pull_ledgers), partial)
+            component(doc, "recs", lambda: console.rec_ledgers_json(), partial)
+            def rel():
+                d = console.rel_ledgers_json()
+                if not isinstance(d, dict):
+                    raise TypeError("rel_ledgers_json did not return a dict")
+                return d
+            component(doc, "rel", rel, partial)
+            if isinstance(doc.get("rel"), dict) and INCOMPLETE not in doc["rel"]:
+                doc.update(doc.pop("rel"))                       # the instrument's layout: signs/terms/… at the top
         else:
-            doc["INCOMPLETE"] = "no console: no transaction ledgers"
+            partial.append(f"ledgers {INCOMPLETE}: no console")
+        if partial:
+            doc[INCOMPLETE] = partial
         pr.write_record(out_dir, "audits", doc)
+        if partial:
+            raise PartialExport("; ".join(partial))
     attempt("audits.json", write_audits)
+    write_exports_manifest(out_dir, exports)
     return exports
 
 
+class PartialExport(Exception):
+    """The file was written with its base data, but an enrichment is missing (the message
+    names it): the export's status is PARTIAL, never ok."""
+
+
 def finalize(out_dir: Path, summary: dict, plan: dict, collector, console, relay, timeline, reader, t_go, adjudicate) -> dict:
-    """Export first, adjudicate second (in its own try), record third. The adjudication's
-    outcome becomes the session's; an adjudicator error is the outcome too, with the
+    """Export first, adjudicate second (in its own try), record third. EVERY required export
+    must be "ok" — the raw console, its timestamps, the timeline, the summary construction,
+    run_log and audits complete with all their components — or the outcome is a named HOLD
+    and the adjudicator is not consulted (a diagnostic result over a subset of the evidence
+    must not become the session's PASS). An adjudicator error is the outcome too, with the
     primary end kept in summary["epoch_end"]."""
     import pcap_probe_runner as pr  # noqa: E402
     exports = export_evidence(out_dir, summary, plan, collector, console, relay, timeline, reader, t_go)
-    complete = all(v == "ok" for k, v in exports.items() if k in ("run_log.json", "audits.json", "timeline.json"))
+    for k, v in list(exports.items()):
+        if v.startswith(f"{INCOMPLETE}: PartialExport"):
+            exports[k] = "PARTIAL: " + v.split(": ", 2)[2]
+    write_exports_manifest(out_dir, exports)
+    complete, missing = exports_complete(exports)
     if not complete:
-        summary["outcome"] = f"HOLD host-side: evidence export incomplete: " + "; ".join(f"{k}={v}" for k, v in exports.items() if v != "ok")
+        summary["outcome"] = "HOLD host-side: evidence export incomplete: " + "; ".join(missing)
         return summary
     try:
         res = adjudicate(out_dir)
@@ -273,7 +360,11 @@ def run(session, out_dir: Path, ruling: dict, cfg: dict, identity_check, adjudic
         if not finalized and console is not None:
             # the console existed (the board was running) and the normal finalization was not
             # reached: export everything collected, with the primary cause kept above
-            export_evidence(out_dir, summary, plan, collector, console, relay, timeline, reader, t_go)
+            ex = export_evidence(out_dir, summary, plan, collector, console, relay, timeline, reader, t_go)
+            for k, v in list(ex.items()):
+                if v.startswith(f"{INCOMPLETE}: PartialExport"):
+                    ex[k] = "PARTIAL: " + v.split(": ", 2)[2]
+            write_exports_manifest(out_dir, ex)
         elif not finalized and reader is not None:
             export_evidence(out_dir, summary, plan, None, None, None, timeline, reader, t_go)
         summary["uart_log"] = session.log

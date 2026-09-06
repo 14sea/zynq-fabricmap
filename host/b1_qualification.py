@@ -68,8 +68,8 @@ RULING_TEXT = "whole-of-run B1 carrier qualification"
 PROVISION_RULING_TEXT = "provisioning P3-K"
 MANIFEST_AT_RUN = "manifest_at_run.json"
 RULING_FILES = {"whole_of_run": "ruling_whole_of_run.json", "provisioning": "ruling_provisioning.json"}
-EVIDENCE_FILES = ("run_log.json", "audits.json", "timeline.json", "adjudication.json", "summary.json",
-                  MANIFEST_AT_RUN, RULING_FILES["whole_of_run"], RULING_FILES["provisioning"])
+EVIDENCE_FILES = ("run_log.json", "audits.json", "timeline.json", "adjudication.json", "summary.json", "exports.json",
+                  "console.log", "console.ts.log", MANIFEST_AT_RUN, RULING_FILES["whole_of_run"], RULING_FILES["provisioning"])
 BINDING_KEYS = ("session", "carrier_sha256", "carrier_variant", "image_sha256", "prereg_sha256", "b1_manifest_sha256",
                 "master_seed", "budget", "psoracle_commit", "token")
 # the ONLY keys a qualification may change between manifest_at_run and the current manifest
@@ -283,6 +283,10 @@ def verify(manifest: dict, root: Path = REPO_ROOT, require_git: bool = False, in
         p = ev / name
         if not want_sha or not p.is_file() or sha256_of(p) != want_sha:
             raise QualificationRefusal(f"qualification evidence {name} is missing or does not hash to the record")
+    # the exports were complete (the adjudicator re-checks exports.json against the files)
+    ex = json.loads((ev / "exports.json").read_text())
+    if ex.get("complete") is not True:
+        raise QualificationRefusal("the session's exports were not complete (exports.json): no qualification from a subset of the evidence")
     # the manifest the session was bound to, by its bytes
     m_at_run_path = ev / MANIFEST_AT_RUN
     if sha256_of(m_at_run_path) != b["b1_manifest_sha256"]:

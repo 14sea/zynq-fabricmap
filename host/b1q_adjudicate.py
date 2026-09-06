@@ -124,6 +124,7 @@ def adjudicate(evidence: Path, manifest: dict, plan: dict, prediction: dict, man
                      pins_path, plan, prediction)
         if plan.get("session") != SESSION or plan.get("budget") != bc.CODE_BITS:
             raise Refusal(f"the plan is not the qualification plan (session {plan.get('session')!r}, budget {plan.get('budget')!r})")
+        out["exports"] = adj.check_exports(evidence)["statuses"]
         log = json.loads((evidence / "run_log.json").read_text())
         out["binding"] = adj.check_binding(log, manifest, plan, manifest_sha256, SESSION, None)
         p3 = adj._p3_layer(evidence, log, manifest, plan, instrument_root, require_git) if p3_layer is None \
