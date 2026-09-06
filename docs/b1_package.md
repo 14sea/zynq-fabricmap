@@ -1,12 +1,12 @@
 # B1 — the package: v2.3.1 pushed, compatibility PASS, preregistration FROZEN (2026-09-06); next the B1Q ruling pair
 
-> **HOST-ONLY. DRAFT / NO BOARD RULING.** Delivered at "B1 ready for the board" under the
-> owner's ruling of 2026-09-05 (`docs/autonomous_cartography_roadmap.md`; the
-> authorisation of the same day) and STOPPED here. Nothing is frozen; the image is not
-> `board_ready`; the carrier is not `qualified`; no ruling exists; no board contact, power
-> cycle, image load or serial port has been touched. The instrument (`zynq-psoracle`
-> `689dde1`) is unchanged, bit for bit. Pushed to `origin/main` with the owner's approval of
-> 2026-09-05 (v2.2.4); every later change is committed locally and pushed only when approved.
+> **FROZEN / NO BOARD RULING.** The preregistration was frozen on 2026-09-06 after the
+> compatibility review of image `300b12b1…` passed; the image is `board_ready`.
+> The carrier is not `qualified`, and no B1Q ruling pair exists. Work is stopped before
+> board contact: no power cycle, image load or serial access has occurred. The instrument
+> (`zynq-psoracle` `689dde1`) is unchanged, bit for bit. The v2.3.1 image and its review
+> are pushed; the freeze and its clean-tree report are committed locally pending push
+> approval. Next: the owner's B1Q ruling pair (§5).
 
 ## 0. History: the first package and why it failed
 
@@ -97,7 +97,7 @@ libgcc/libc/libm as the link resolves them, all by hash. Also the README / packa
 headers that still read "awaiting push". Firmware, image (`54b00663…`, rebuilt
 byte-identically), carrier, plans and predictions unchanged.
 
-**FREEZE (owner, 2026-09-06), executed on the owner's instruction "執行 freeze":**
+**FREEZE (owner, 2026-09-06), executed on the owner's instruction to perform the freeze:**
 `docs/b1_preregistration.md` pinned by its bytes (`prereg.sha256` =
 `f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2`, `frozen: true`),
 `image.board_ready: true` for `300b12b1…`, the manifest refreshed (the derived sections
@@ -112,8 +112,9 @@ audit, MMIO, DMA, watchdog, memory, RTL diff), 55 tests incl. the RTL benches, t
 `run_candidate` frame 9 960 B, the REC stress case 2 306 / 4 096 B, image / ELF / carrier /
 build inputs / pins matching. Recorded limits: the SCORED candidates before a refused one
 are primed by the harness (no PL path executed); no on-board verification, no stack
-high-water measurement, no Vivado re-run. Next station: the owner's freeze (§8 of the
-preregistration), then the B1Q ruling pair.
+high-water measurement, no Vivado re-run. At that review, the next station was the owner's
+freeze (§8 of the preregistration), completed on 2026-09-06 as recorded above; the B1Q
+ruling pair remains pending.
 
 **v2.3 → v2.3.1 (the owner's recheck of v2.3, 2026-09-05; P2):** `run_candidate` set
 `S.closing_baseline` at ANY scored baseline, so after a scored opening baseline a refused
@@ -301,18 +302,23 @@ the bounds (unchanged), and the B1-specific points: the cartographer's memory (s
 
 ## 8. Fail-closed today
 
-`host/b1_runner.py` on the committed manifest: **REFUSED: B1's preregistration is not
-frozen (manifest prereg.sha256 is null): host-only until the owner freezes it** — after the
-ruling texts, before any instrument import, port or ruling consumption. With a fixture
-"frozen" manifest the later refusals are reached one by one (`tests/test_b1_runner.py`):
-plan pin, pin table, image bytes, `board_ready`, build evidence, carrier manifest / build
-record / bitstream pin, VARIANT, **the qualification chain** (no record; a bare flag; a
-tampered evidence file; a binding to another carrier; a flag disagreeing with the
-evidence), ruling bound to another seed or manifest or session, a stale boundary. The
-QUALIFICATION profile needs no qualification but its own plan pin and its own rulings
-(session `B1Q`; the mapping texts do not open it). `host/b1_adjudicate.py` on the committed
-manifest refuses the same way (not frozen; no qualification record) before reading a
-record, and re-verifies the plan, prediction and pin table itself.
+The committed manifest is **FROZEN**, its preregistration hashes to the frozen pin, and
+the reviewed image is `board_ready`. With fixture rulings that pass the initial ruling
+checks, `host/b1_runner.py` in the MAPPING profile passes the preceding pins and refuses
+because the carrier is **not qualified: no carrier.qualification record**. The committed
+manifest also makes `host/b1_adjudicate.py` refuse at the missing qualification record.
+These checks run before any port access or ruling consumption. No real B1Q ruling pair
+has been issued.
+
+The DRAFT refusal remains covered by fixtures with `prereg.sha256` null; it is no longer
+the committed manifest's state. Other fixture tests reach each refusal in order
+(`tests/test_b1_runner.py`): plan pin, pin table, image bytes, `board_ready`, build evidence,
+carrier manifest / build record / bitstream pin, VARIANT, the qualification chain (no
+record; a bare flag; tampered evidence; a binding to another carrier; a flag disagreeing
+with the evidence), rulings bound to another seed, manifest or session, and a stale
+boundary. The QUALIFICATION profile requires no prior qualification, but does require
+its own plan pin and ruling pair (session `B1Q`; mapping rulings do not open it). The
+adjudicator re-verifies the plan, prediction and pin table itself.
 
 ## 9. Tests and the clean-tree proof
 
