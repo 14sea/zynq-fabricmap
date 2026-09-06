@@ -95,7 +95,7 @@ class Finalization(unittest.TestCase):
         PROTOCOL with the original reason."""
         out, r = self.session("protocol_no_term", crc_budget=2, scripted=[{"type": "TERM", "seq": 12, "kind": "crc"}])
         self.assertEqual(r["epoch_end"]["kind"], "PROTOCOL"); self.assertIn("PROTOCOL_CRC_BUDGET: 3 > 2", r["epoch_end"]["reason"])
-        self.assertEqual(r["exports"], {k: "ok" for k in ("console.log", "console.ts.log", "timeline.json", "session_summary", "run_log.json", "audits.json")})
+        self.assertEqual(r["exports"], {k: "ok" for k in ("console.log", "console.ts.log", "timeline.json", "session_summary", "run_log.json", "audits.json", "exports.json")})
         self.assertEqual(r["session_summary_written_by"], "collector")
         log = json.loads((out / "run_log.json").read_text())
         self.assertEqual(len(log["loop_records"]), 11); self.assertEqual(log["session_summary"]["epoch_end"]["kind"], "PROTOCOL")
@@ -242,7 +242,7 @@ class Finalization(unittest.TestCase):
             epoch_end = {"kind": "COMPLETED", "last_seq": 11, "reason": "budget"}; audits = []; loop_records = []; closing_negative = None
             session_summary = {"written_by": "app"}; app_identity = {}
         def boom(d): raise RuntimeError("adjudicator exploded")
-        with mock.patch.object(b1_session, "export_evidence", lambda *a, **k: {k: "ok" for k in b1_session.REQUIRED_EXPORTS}):
+        with mock.patch.object(b1_session, "export_evidence", lambda *a, **k: {**{k: "ok" for k in b1_session.REQUIRED_EXPORTS}, "exports.json": "ok"}):
             s = b1_session.finalize(out, summary, plan, FakeCollector(), None, None, None, None, 0.0, boom)
         self.assertTrue(s["outcome"].startswith("HOLD host-side: adjudicator error")); self.assertIn("exploded", s["host_error"]["error"])
         self.assertEqual(json.loads((out / "adjudication.json").read_text())["INCOMPLETE"], "the adjudicator raised; the evidence files stand")
@@ -269,6 +269,138 @@ class Finalization(unittest.TestCase):
         self.assertEqual(ex["console.log"], "ok"); self.assertTrue(ex["console.ts.log"].startswith("INCOMPLETE: OSError"))
         self.assertEqual(ex["timeline.json"], "ok"); self.assertTrue(ex["run_log.json"].startswith("INCOMPLETE: no collector"))
         self.assertTrue((out / "console.log").is_file() and (out / "timeline.json").is_file())
+
+
+@unittest.skipUnless(HAVE, "the archived instrument checkout is not present")
+class Seal(Finalization):
+    """The export manifest's construction and persistence failures (owner's review of
+    v2.4.1): isolated, recorded as the seal error, never followed by an adjudication or a
+    successful outcome; the summary always lands."""
+    test_a_protocol_end_without_term_exports_everything_with_the_collectors_summary = None                 # inherited helper class: its tests run once, there
+    test_completed_objects_finalize_to_pass_through_the_real_adjudicator = None                 # inherited helper class: its tests run once, there
+    test_a_failed_raw_console_export_is_a_hold_and_the_adjudicator_refuses = None                 # inherited helper class: its tests run once, there
+    test_a_missing_export_status_key_is_incomplete = None                 # inherited helper class: its tests run once, there
+    test_each_enrichment_failure_keeps_the_base_data_and_is_a_partial_hold = None                 # inherited helper class: its tests run once, there
+    test_finalize_records_an_adjudicator_error_with_the_evidence_on_disk = None                 # inherited helper class: its tests run once, there
+    test_an_incomplete_export_is_a_hold_and_named = None                 # inherited helper class: its tests run once, there
+    test_export_evidence_survives_a_failing_export_and_names_it = None                 # inherited helper class: its tests run once, there
+
+    def test_the_real_b1q_adjudicator_refuses_a_manifest_that_omits_a_raw_file(self):
+        import b1q_adjudicate as qadj
+        from test_b1_qualification import QPRED
+        s, plan = self.completed_objects("omit")
+        out, summary = self.finalize_with("omit_console", s, plan)
+        self.assertEqual(summary["outcome"], "PASS")
+        doc = json.loads((out / "exports.json").read_text()); (out / "console.log").unlink(); doc["files"].pop("console.log")
+        (out / "exports.json").write_text(json.dumps(doc))
+        res = qadj.adjudicate(out, self.m, self.plan, QPRED, self.sha, require_git=False)
+        self.assertTrue(res["outcome"].startswith("REFUSED"), res["outcome"]); self.assertIn("files are not exactly", res["outcome"])
+        doc["files"] = {}; (out / "exports.json").write_text(json.dumps(doc))
+        self.assertTrue(qadj.adjudicate(out, self.m, self.plan, QPRED, self.sha, require_git=False)["outcome"].startswith("REFUSED"))
+        doc.pop("files"); (out / "exports.json").write_text(json.dumps(doc))
+        self.assertTrue(qadj.adjudicate(out, self.m, self.plan, QPRED, self.sha, require_git=False)["outcome"].startswith("REFUSED"))
+
+    def _seal_faults(self):
+        import b1_session, os
+        real_replace = os.replace
+        def rename_fails(src, dst):
+            if str(dst).endswith("exports.json"):
+                raise OSError("injected rename failure")
+            return real_replace(src, dst)
+        real_write_text = Path.write_text
+        def tmp_write_fails(self_, *a, **k):
+            if self_.name == "exports.json.part":
+                raise OSError("injected temporary-write failure")
+            return real_write_text(self_, *a, **k)
+        real_sha = b1_session._sha
+        def hash_fails(p):
+            if p.name == "console.log":
+                raise OSError("injected read/hash failure")
+            return real_sha(p)
+        return (("rename", lambda: mock.patch.object(os, "replace", rename_fails), "injected rename failure"),
+                ("tmp-write", lambda: mock.patch.object(Path, "write_text", tmp_write_fails), "injected temporary-write failure"),
+                ("hash", lambda: mock.patch.object(b1_session, "_sha", hash_fails), "incomplete set"))
+
+    def test_a_seal_failure_in_the_normal_finalizer_is_a_hold_with_no_adjudication(self):
+        import b1_session
+        s, plan = self.completed_objects("seal_norm")
+        for name, patcher, words in self._seal_faults():
+            out = self.tmp / f"seal_{name}"; out.mkdir(exist_ok=True)
+            summary = {"outcome": None}
+            with patcher():
+                b1_session.finalize(out, summary, plan, s.collector, s.cs, s.relay, s.timeline, s.reader, s.t_go, lambda d: {"outcome": "PASS"})
+            self.assertTrue(summary["outcome"].startswith("HOLD host-side: the export manifest was not sealed"), (name, summary["outcome"]))
+            self.assertIn(words, summary["outcome"], name)
+            self.assertFalse((out / "adjudication.json").exists(), name)
+            self.assertTrue((out / "run_log.json").is_file() and (out / "audits.json").is_file(), name)
+            if name != "hash":
+                self.assertIn("seal_error", summary); self.assertIn(words, summary["seal_error"]["error"])
+            else:
+                doc = json.loads((out / "exports.json").read_text())
+                self.assertFalse(doc["complete"]); self.assertIn("injected read/hash failure", doc["files"]["console.log"]["error"])
+
+    def test_a_seal_failure_on_the_exceptional_run_path_keeps_the_causes_and_persists_the_summary(self):
+        """The REAL run(): a host exception in the console loop AND the seal failing in the
+        finally — run_log / audits on disk, the primary end and the host error and the seal
+        error all in a persisted summary, no success outcome."""
+        import os
+        inst.bind(inst.DEFAULT_ROOT, require_git=False)
+        real_replace = os.replace
+        def rename_fails(src, dst):
+            if str(dst).endswith("exports.json"):
+                raise OSError("injected rename failure")
+            return real_replace(src, dst)
+        tmp = Path(tempfile.mkdtemp()); ef = EarlyFailure(); session, plan, cfg, page = ef._fake_board(tmp)
+        def end_then_boom(collector, console, now, deadline):
+            collector.epoch_end = {"kind": "PROTOCOL", "last_seq": 11, "reason": "PROTOCOL_CRC_BUDGET: 3 > 2"}
+            raise RuntimeError("summary builder crashed (simulated)")
+        with mock.patch.object(os, "replace", rename_fails):
+            out, s = ef._run_with(tmp, session, cfg, page, end_then_boom)
+        self.assertTrue((out / "run_log.json").is_file() and (out / "audits.json").is_file())
+        self.assertFalse((out / "exports.json").exists()); self.assertTrue((out / "summary.json").is_file())
+        persisted = json.loads((out / "summary.json").read_text())
+        self.assertEqual(persisted["epoch_end"]["reason"], "PROTOCOL_CRC_BUDGET: 3 > 2")
+        self.assertIn("summary builder crashed", persisted["host_error"]["error"]); self.assertIn("injected rename failure", persisted["seal_error"]["error"])
+        self.assertTrue(persisted["outcome"].startswith("CRASHED host-side")); self.assertEqual(persisted["exports"]["exports.json"][:10], "INCOMPLETE")
+
+    def test_a_seal_failure_on_the_reader_only_path_before_the_console(self):
+        """The reader exists (`go` was sent), the console's construction raises: the raw
+        bytes and the timeline are exported, the seal fails, everything is in the summary."""
+        import os, l6_console as lcs
+        inst.bind(inst.DEFAULT_ROOT, require_git=False)
+        real_replace = os.replace
+        def rename_fails(src, dst):
+            if str(dst).endswith("exports.json"):
+                raise OSError("injected rename failure")
+            return real_replace(src, dst)
+        tmp = Path(tempfile.mkdtemp()); ef = EarlyFailure(); session, plan, cfg, page = ef._fake_board(tmp)
+        def no_console(*a, **k):
+            raise RuntimeError("console construction failed (simulated)")
+        with mock.patch.object(os, "replace", rename_fails), mock.patch.object(lcs, "ConsoleSession", no_console):
+            out, s = ef._run_with(tmp, session, cfg, page, lambda *a: False)
+        self.assertTrue((out / "console.log").is_file() and (out / "timeline.json").is_file())
+        self.assertFalse((out / "run_log.json").exists())                                    # no collector data to export
+        self.assertIn("injected rename failure", s["seal_error"]["error"]); self.assertIn("console construction failed", s["host_error"]["error"])
+        self.assertTrue(s["exports"]["run_log.json"].startswith("INCOMPLETE: no collector"))
+        self.assertTrue((out / "summary.json").is_file()); self.assertTrue(s["outcome"].startswith("CRASHED host-side"))
+
+    def test_the_summary_write_falls_back_and_still_lands(self):
+        import b1_session, pcap_probe_runner as pr
+        out = self.tmp / "summary_fallback"; out.mkdir(exist_ok=True)
+        summary = {"outcome": "HOLD host-side: x", "epoch_end": {"kind": "PROTOCOL"}}
+        with mock.patch.object(pr, "write_record", side_effect=OSError("atomic write failed")):
+            how = b1_session.persist_summary(out, summary)
+        self.assertEqual(how, "summary.json (plain write)"); self.assertTrue((out / "summary.json").is_file())
+        self.assertIn("atomic", summary["summary_write_errors"][0])
+        real = Path.write_text
+        def plain_fails(self_, *a, **k):
+            if self_.name == "summary.json":
+                raise OSError("plain write failed")
+            return real(self_, *a, **k)
+        out2 = self.tmp / "summary_minimal"; out2.mkdir(exist_ok=True)
+        with mock.patch.object(pr, "write_record", side_effect=OSError("atomic write failed")), mock.patch.object(Path, "write_text", plain_fails):
+            how = b1_session.persist_summary(out2, dict(summary))
+        self.assertEqual(how, "summary_minimal.json"); self.assertEqual(json.loads((out2 / "summary_minimal.json").read_text())["epoch_end"], {"kind": "PROTOCOL"})
 
 
 @unittest.skipUnless(HAVE, "the archived instrument checkout is not present")

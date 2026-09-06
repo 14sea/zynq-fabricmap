@@ -1,0 +1,50 @@
+{
+  "baseline": "PASS",
+  "omit_console_hash": {
+    "console_exists": false,
+    "check_exports": "accepted",
+    "adjudication_outcome": "PASS",
+    "files_entries": [
+      "audits.json",
+      "console.ts.log",
+      "run_log.json",
+      "timeline.json"
+    ]
+  },
+  "empty_files": {
+    "console_exists": false,
+    "check_exports": "accepted",
+    "adjudication_outcome": "PASS",
+    "files_entries": []
+  },
+  "missing_files": {
+    "console_exists": false,
+    "check_exports": "accepted",
+    "adjudication_outcome": "PASS",
+    "files_entries": []
+  },
+  "seal_write": {
+    "escaped_exception": "OSError: injected exports manifest write failure",
+    "summary_exists": false,
+    "exports_exists": false,
+    "run_log_exists": true,
+    "audits_exists": true,
+    "saved_epoch_end": {
+      "kind": "PROTOCOL",
+      "last_seq": 11,
+      "reason": "PROTOCOL_CRC_BUDGET: 5 > 4"
+    }
+  },
+  "seal_replace": {
+    "escaped_exception": "OSError: injected exports manifest replace failure",
+    "summary_exists": false,
+    "exports_exists": false,
+    "run_log_exists": true,
+    "audits_exists": true,
+    "saved_epoch_end": {
+      "kind": "PROTOCOL",
+      "last_seq": 11,
+      "reason": "PROTOCOL_CRC_BUDGET: 5 > 4"
+    }
+  }
+}

@@ -392,7 +392,7 @@ class Exports(unittest.TestCase):
         res = self.adj(d); self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("no exports.json", res["outcome"])
         d = write_dir(self.log); doc = json.loads((d / "exports.json").read_text()); del doc["statuses"]["console.ts.log"]
         (d / "exports.json").write_text(json.dumps(doc))
-        res = self.adj(d); self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("console.ts.log=MISSING", res["outcome"])
+        res = self.adj(d); self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("statuses are not exactly", res["outcome"])
         d = write_dir(self.log); doc = json.loads((d / "exports.json").read_text()); doc["complete"] = False
         (d / "exports.json").write_text(json.dumps(doc))
         res = self.adj(d); self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("complete is not true", res["outcome"])
@@ -400,6 +400,30 @@ class Exports(unittest.TestCase):
         res = self.adj(d); self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("console.log", res["outcome"]); self.assertIn("does not hash", res["outcome"])
         d = write_dir(self.log); (d / "audits.json").unlink()
         res = self.adj(d); self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("audits.json", res["outcome"])
+
+    def test_the_manifest_structure_is_the_declared_schema_not_whatever_it_lists(self):
+        """The owner's v2.4.1 counter-example: console.log and its entry removed, everything
+        else untouched (statuses ok, complete true) — refused; an empty or absent files
+        table, a malformed entry, a status table with an extra or a missing key, a wrong
+        schema: each refused by name."""
+        def mutate(mut, *words):
+            d = write_dir(self.log); doc = json.loads((d / "exports.json").read_text()); mut(d, doc)
+            (d / "exports.json").write_text(json.dumps(doc))
+            res = self.adj(d); self.assertTrue(res["outcome"].startswith("REFUSED"), res["outcome"])
+            for w in words:
+                self.assertIn(w, res["outcome"])
+        mutate(lambda d, doc: ((d / "console.log").unlink(), doc["files"].pop("console.log")), "files are not exactly")
+        mutate(lambda d, doc: doc["files"].pop("console.log"), "files are not exactly")           # the file still there, the entry gone
+        mutate(lambda d, doc: doc.__setitem__("files", {}), "files are not exactly")
+        mutate(lambda d, doc: doc.pop("files"), "files are not exactly")
+        mutate(lambda d, doc: doc["files"]["run_log.json"].__setitem__("sha256", "zz" * 32), "run_log.json is malformed")
+        mutate(lambda d, doc: doc["files"]["run_log.json"].__setitem__("bytes", doc["files"]["run_log.json"]["bytes"] + 1), "run_log.json does not hash / size")
+        mutate(lambda d, doc: doc["files"]["timeline.json"].__setitem__("bytes", None), "timeline.json is malformed")
+        mutate(lambda d, doc: doc["files"]["audits.json"].__setitem__("status", "PARTIAL: recs"), "audits.json is malformed")
+        mutate(lambda d, doc: doc["statuses"].__setitem__("extra", "ok"), "statuses are not exactly")
+        mutate(lambda d, doc: doc["statuses"].pop("session_summary"), "statuses are not exactly")
+        mutate(lambda d, doc: doc.__setitem__("schema_version", "0.9.0"), "not a b1_session_exports")
+        mutate(lambda d, doc: doc.__setitem__("files", "nope"), "files are not exactly")
 
 
 class Pins(unittest.TestCase):

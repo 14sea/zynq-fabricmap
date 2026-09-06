@@ -35,6 +35,7 @@ from pathlib import Path
 
 
 import json
+import os
 import traceback
 
 INCOMPLETE = "INCOMPLETE"
@@ -76,21 +77,75 @@ def _sha(path: Path) -> str:
 def write_exports_manifest(out_dir: Path, exports: dict) -> dict:
     """exports.json — the per-export status table and the sha256 / size of every file that
     was written, the LAST export; `complete` is true only when every required export is
-    "ok". The adjudicators require it (b1_adjudicate.check_exports) and the qualification
-    chain binds it: a session whose exports are not complete cannot be adjudicated PASS
-    from a subset of its files (owner's review of v2.4, 2026-09-06)."""
+    "ok" AND every file's metadata could be recorded. The adjudicators require it
+    (b1_adjudicate.check_exports) and the qualification chain binds it: a session whose
+    exports are not complete cannot be adjudicated PASS from a subset of its files (owner's
+    reviews of v2.4 / v2.4.1, 2026-09-06). A file that cannot be read / hashed is recorded
+    with its error and makes the manifest incomplete; a temporary-write or rename failure
+    raises to the caller, who records it as the seal error."""
     out_dir = Path(out_dir)
     files = {}
+    meta_ok = True
     for name in ("console.log", "console.ts.log", "timeline.json", "run_log.json", "audits.json"):
         p = out_dir / name
-        files[name] = {"status": exports.get(name, "INCOMPLETE: not attempted"),
-                       "sha256": _sha(p) if p.is_file() else None, "bytes": p.stat().st_size if p.is_file() else None}
+        entry = {"status": exports.get(name, "INCOMPLETE: not attempted"), "sha256": None, "bytes": None}
+        try:
+            if p.is_file():
+                entry["sha256"] = _sha(p); entry["bytes"] = p.stat().st_size
+            else:
+                entry["error"] = "absent"
+        except Exception as exc:  # noqa: BLE001 — the read/hash failure is recorded, never hidden
+            entry["error"] = f"{type(exc).__name__}: {exc}"
+        if entry["sha256"] is None:
+            meta_ok = False
+        files[name] = entry
     doc = {"schema": "b1_session_exports", "schema_version": "1.0.0", "required": list(REQUIRED_EXPORTS),
            "statuses": {k: exports.get(k, "INCOMPLETE: not attempted") for k in REQUIRED_EXPORTS},
-           "files": files, "complete": all(exports.get(k) == "ok" for k in REQUIRED_EXPORTS)}
+           "files": files, "complete": meta_ok and all(exports.get(k) == "ok" for k in REQUIRED_EXPORTS)}
     tmp = out_dir / (EXPORTS_MANIFEST + ".part")
-    tmp.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n"); tmp.replace(out_dir / EXPORTS_MANIFEST)
+    tmp.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n")
+    os.replace(tmp, out_dir / EXPORTS_MANIFEST)
     return doc
+
+
+def seal(out_dir: Path, exports: dict, summary: dict) -> bool:
+    """Write exports.json, isolating its construction and persistence failures: the error is
+    recorded as summary["seal_error"] and exports["exports.json"], and False is returned —
+    no adjudication and no successful outcome may follow (owner's review of v2.4.1)."""
+    try:
+        doc = write_exports_manifest(out_dir, exports)
+        exports["exports.json"] = "ok" if doc["complete"] else f"{INCOMPLETE}: the manifest records an incomplete set"
+        return bool(doc["complete"])
+    except Exception as exc:  # noqa: BLE001
+        summary["seal_error"] = {"error": f"{type(exc).__name__}: {exc}", "traceback": traceback.format_exc()}
+        exports["exports.json"] = f"{INCOMPLETE}: {type(exc).__name__}: {exc}"
+        return False
+
+
+def persist_summary(out_dir: Path, summary: dict) -> str:
+    """The final session summary, attempted independently of everything else: the atomic
+    writer, then a plain write, then a minimal record of the primary cause and the errors,
+    then stderr. Returns how it landed."""
+    import sys
+    out_dir = Path(out_dir)
+    try:
+        import pcap_probe_runner as pr  # noqa: E402
+        pr.write_record(out_dir, "summary", summary)
+        return "summary.json"
+    except Exception as exc:  # noqa: BLE001
+        summary.setdefault("summary_write_errors", []).append(f"atomic: {type(exc).__name__}: {exc}")
+    try:
+        (out_dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str) + "\n")
+        return "summary.json (plain write)"
+    except Exception as exc:  # noqa: BLE001
+        summary.setdefault("summary_write_errors", []).append(f"plain: {type(exc).__name__}: {exc}")
+    minimal = {k: summary.get(k) for k in ("outcome", "epoch_end", "host_error", "host_error_finalize", "seal_error", "exports", "summary_write_errors")}
+    try:
+        (out_dir / "summary_minimal.json").write_text(json.dumps(minimal, indent=2, default=str) + "\n")
+        return "summary_minimal.json"
+    except Exception as exc:  # noqa: BLE001
+        print(f"SUMMARY NOT PERSISTED ({type(exc).__name__}: {exc}): {json.dumps(minimal, default=str)}", file=sys.stderr)
+        return "stderr"
 
 
 def exports_complete(exports: dict) -> tuple[bool, list[str]]:
@@ -137,7 +192,7 @@ def export_evidence(out_dir: Path, summary: dict, plan: dict, collector, console
         exports["console.ts.log"] = exports["timeline.json"] = f"{INCOMPLETE}: no timeline"
     if collector is None:
         exports["session_summary"] = exports["run_log.json"] = exports["audits.json"] = f"{INCOMPLETE}: no collector"
-        write_exports_manifest(out_dir, exports)
+        seal(out_dir, exports, summary)
         return exports
     summary["epoch_end"] = collector.epoch_end
     summary["audits"] = len(collector.audits)
@@ -212,7 +267,10 @@ def export_evidence(out_dir: Path, summary: dict, plan: dict, collector, console
         if partial:
             raise PartialExport("; ".join(partial))
     attempt("audits.json", write_audits)
-    write_exports_manifest(out_dir, exports)
+    for k, v in list(exports.items()):
+        if v.startswith(f"{INCOMPLETE}: PartialExport"):
+            exports[k] = "PARTIAL: " + v.split(": ", 2)[2]
+    seal(out_dir, exports, summary)
     return exports
 
 
@@ -230,13 +288,12 @@ def finalize(out_dir: Path, summary: dict, plan: dict, collector, console, relay
     primary end kept in summary["epoch_end"]."""
     import pcap_probe_runner as pr  # noqa: E402
     exports = export_evidence(out_dir, summary, plan, collector, console, relay, timeline, reader, t_go)
-    for k, v in list(exports.items()):
-        if v.startswith(f"{INCOMPLETE}: PartialExport"):
-            exports[k] = "PARTIAL: " + v.split(": ", 2)[2]
-    write_exports_manifest(out_dir, exports)
     complete, missing = exports_complete(exports)
     if not complete:
         summary["outcome"] = "HOLD host-side: evidence export incomplete: " + "; ".join(missing)
+        return summary
+    if exports.get("exports.json") != "ok":
+        summary["outcome"] = f"HOLD host-side: the export manifest was not sealed: {exports.get('exports.json')}"
         return summary
     try:
         res = adjudicate(out_dir)
@@ -357,23 +414,27 @@ def run(session, out_dir: Path, ruling: dict, cfg: dict, identity_check, adjudic
         summary["host_error"] = {"where": "session", "error": f"{type(exc).__name__}: {exc}", "traceback": traceback.format_exc()}
         summary["outcome"] = f"CRASHED host-side: {type(exc).__name__}: {exc}"
     finally:
-        if not finalized and console is not None:
-            # the console existed (the board was running) and the normal finalization was not
-            # reached: export everything collected, with the primary cause kept above
-            ex = export_evidence(out_dir, summary, plan, collector, console, relay, timeline, reader, t_go)
-            for k, v in list(ex.items()):
-                if v.startswith(f"{INCOMPLETE}: PartialExport"):
-                    ex[k] = "PARTIAL: " + v.split(": ", 2)[2]
-            write_exports_manifest(out_dir, ex)
-        elif not finalized and reader is not None:
-            export_evidence(out_dir, summary, plan, None, None, None, timeline, reader, t_go)
-        summary["uart_log"] = session.log
-        summary["disruptions"] = session.disruptions
-        summary["transport_rereads"] = session.rereads
-        summary["epoch_final"] = session.epoch
-        summary["crc_dropped"] = timeline.crc_dropped
-        summary["crc_dropped_by_type"] = dict(timeline.crc_dropped_by_type)
-        summary["bad_frames"] = timeline.bad_frames
-        summary["crc_budget"] = plan["crc_budget"]
-        pr.write_record(out_dir, "summary", summary)
+        try:
+            if not finalized and console is not None:
+                # the console existed (the board was running) and the normal finalization was
+                # not reached: export everything collected, with the primary cause kept above
+                export_evidence(out_dir, summary, plan, collector, console, relay, timeline, reader, t_go)
+            elif not finalized and reader is not None:
+                # the reader existed (`go` was sent) but no console: the raw bytes and the
+                # timeline are what there is
+                export_evidence(out_dir, summary, plan, None, None, None, timeline, reader, t_go)
+        except Exception as exc:  # noqa: BLE001 — never lets the summary go unwritten
+            summary["host_error_finalize"] = {"error": f"{type(exc).__name__}: {exc}", "traceback": traceback.format_exc()}
+        if summary.get("seal_error") or summary.get("host_error_finalize"):
+            if summary.get("outcome") in (None, "PASS") or str(summary.get("outcome", "")).startswith("PASS"):
+                summary["outcome"] = "HOLD host-side: the evidence was not sealed: " + str(summary.get("seal_error") or summary.get("host_error_finalize"))
+        for k, fn in (("uart_log", lambda: session.log), ("disruptions", lambda: session.disruptions), ("transport_rereads", lambda: session.rereads),
+                      ("epoch_final", lambda: session.epoch), ("crc_dropped", lambda: timeline.crc_dropped),
+                      ("crc_dropped_by_type", lambda: dict(timeline.crc_dropped_by_type)), ("bad_frames", lambda: timeline.bad_frames),
+                      ("crc_budget", lambda: plan["crc_budget"])):
+            try:
+                summary[k] = fn()
+            except Exception as exc:  # noqa: BLE001
+                summary[k] = f"{INCOMPLETE}: {type(exc).__name__}: {exc}"
+        summary["summary_persisted_as"] = persist_summary(out_dir, summary)
     return summary

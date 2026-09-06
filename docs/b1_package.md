@@ -146,6 +146,23 @@ error is secondary, no success outcome. Owner's counter-examples (a failed conso
 write; each helper failure) are tests. Firmware, image, carrier, plans, predictions and
 the frozen preregistration unchanged.
 
+**v2.4.1 → v2.4.2 (the owner's review of v2.4.1, 2026-09-06: HOLD — `docs/b1_v241_review_2026_09_06.md`):**
+(1) `check_exports` validated only what `exports.json` listed: with `console.log` and its
+entry removed (everything else untouched) the real B1Q adjudicator still returned PASS;
+now the manifest is checked against the DECLARED schema — the six statuses exactly, the
+five physical files exactly, each with a 64-hex sha256 and a byte count, present, hashing
+and sized as recorded, `complete` true; a missing entry, an empty or absent table, a
+malformed entry, an extra or missing status key, a wrong schema: each a named refusal, in
+both adjudicators. (2) The session's `finally` did not isolate the export manifest's
+write: an injected rename failure escaped and `summary.json` never landed; now `seal()`
+isolates the manifest's construction and persistence (read/hash, temporary-write and
+rename failures recorded as `seal_error`), the exports in the `finally` are guarded, no
+adjudication or success may follow an unsealed export, and `persist_summary()` attempts
+the final summary independently — atomic write, plain write, a minimal record of the
+primary cause and the errors, stderr. Tests: the owner's counter-examples through both
+adjudicators; the seal failing in the normal finalizer, on the exceptional real-`run()`
+path and on the reader-only path before the console; the summary's fall-backs.
+
 **FREEZE (owner, 2026-09-06), executed on the owner's instruction to perform the freeze:**
 `docs/b1_preregistration.md` pinned by its bytes (`prereg.sha256` =
 `f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2`, `frozen: true`),

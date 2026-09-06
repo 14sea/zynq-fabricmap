@@ -103,12 +103,18 @@ def check_pins(manifest: dict, plan_path: Path, prediction_path: Path, pins_path
 
 
 # ------------------------------------------------------------------ the evidence set
+EXPORT_STATUSES = ("console.log", "console.ts.log", "timeline.json", "session_summary", "run_log.json", "audits.json")
+EXPORT_FILES = ("console.log", "console.ts.log", "timeline.json", "run_log.json", "audits.json")
+
+
 def check_exports(evidence: Path) -> dict:
-    """The evidence directory's exports.json (host/b1_session.write_exports_manifest): every
-    required export "ok" and every named file present with its recorded sha256. A session
-    whose raw console, timestamps, timeline, summary, records or audits are missing or
-    partial is not adjudicable — a verdict over a subset of the evidence is no verdict
-    (owner's review of v2.4, 2026-09-06)."""
+    """The evidence directory's exports.json (host/b1_session.write_exports_manifest), checked
+    against the DECLARED schema, not against whatever the document happens to list: the six
+    statuses exactly, all "ok"; the five physical files exactly — each with a 64-hex sha256
+    and a byte count, present on disk, hashing and sized as recorded; `complete` true. A
+    missing entry, an empty or absent table, a malformed entry, a missing or drifted file is
+    a refusal: a verdict over a subset of the evidence is no verdict (owner's reviews of
+    v2.4 and v2.4.1, 2026-09-06)."""
     p = Path(evidence) / "exports.json"
     if not p.is_file():
         raise Refusal("the evidence carries no exports.json: the session's exports were not recorded")
@@ -116,15 +122,32 @@ def check_exports(evidence: Path) -> dict:
         doc = json.loads(p.read_text())
     except ValueError as exc:
         raise Refusal(f"exports.json is not JSON: {exc}") from None
-    required = ("console.log", "console.ts.log", "timeline.json", "session_summary", "run_log.json", "audits.json")
-    statuses = doc.get("statuses") or {}
-    bad = [f"{k}={statuses.get(k, 'MISSING')}" for k in required if statuses.get(k) != "ok"]
-    if bad or doc.get("complete") is not True:
-        raise Refusal("evidence exports incomplete: " + ("; ".join(bad) or "complete is not true"))
-    for name, f in (doc.get("files") or {}).items():
+    if not isinstance(doc, dict) or doc.get("schema") != "b1_session_exports" or doc.get("schema_version") != "1.0.0":
+        raise Refusal("exports.json is not a b1_session_exports 1.0.0 document")
+    statuses = doc.get("statuses")
+    if not isinstance(statuses, dict) or set(statuses) != set(EXPORT_STATUSES):
+        raise Refusal(f"exports.json statuses are not exactly {list(EXPORT_STATUSES)}: "
+                      f"{sorted(statuses) if isinstance(statuses, dict) else type(statuses).__name__}")
+    bad = [f"{k}={statuses[k]}" for k in EXPORT_STATUSES if statuses[k] != "ok"]
+    if bad:
+        raise Refusal("evidence exports incomplete: " + "; ".join(bad))
+    if doc.get("complete") is not True:
+        raise Refusal("evidence exports incomplete: complete is not true")
+    files = doc.get("files")
+    if not isinstance(files, dict) or set(files) != set(EXPORT_FILES):
+        raise Refusal(f"exports.json files are not exactly {list(EXPORT_FILES)}: "
+                      f"{sorted(files) if isinstance(files, dict) else type(files).__name__}")
+    for name in EXPORT_FILES:
+        f = files[name]
+        if not isinstance(f, dict) or f.get("status") != "ok" or not isinstance(f.get("sha256"), str) \
+                or len(f["sha256"]) != 64 or any(c not in "0123456789abcdef" for c in f["sha256"]) \
+                or isinstance(f.get("bytes"), bool) or not isinstance(f.get("bytes"), int) or f["bytes"] < 0:
+            raise Refusal(f"exports.json entry for {name} is malformed (status ok, 64-hex sha256 and a byte count are required)")
         fp = Path(evidence) / name
-        if not fp.is_file() or f.get("sha256") != sha256_of(fp):
-            raise Refusal(f"evidence file {name} is missing or does not hash to exports.json")
+        if not fp.is_file():
+            raise Refusal(f"evidence file {name} is missing")
+        if fp.stat().st_size != f["bytes"] or sha256_of(fp) != f["sha256"]:
+            raise Refusal(f"evidence file {name} does not hash / size to exports.json")
     return doc
 
 
