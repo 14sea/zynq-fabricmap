@@ -1,4 +1,4 @@
-# B1 — the pre-board package: v2.2.6 pushed; v2.3.1 local — the compatibility review's HOLD closed, a NEW image (2026-09-05)
+# B1 — the package: v2.3.1 pushed, compatibility PASS, preregistration FROZEN (2026-09-06); next the B1Q ruling pair
 
 > **HOST-ONLY. DRAFT / NO BOARD RULING.** Delivered at "B1 ready for the board" under the
 > owner's ruling of 2026-09-05 (`docs/autonomous_cartography_roadmap.md`; the
@@ -97,6 +97,14 @@ libgcc/libc/libm as the link resolves them, all by hash. Also the README / packa
 headers that still read "awaiting push". Firmware, image (`54b00663…`, rebuilt
 byte-identically), carrier, plans and predictions unchanged.
 
+**FREEZE (owner, 2026-09-06), executed on the owner's instruction "執行 freeze":**
+`docs/b1_preregistration.md` pinned by its bytes (`prereg.sha256` =
+`f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2`, `frozen: true`),
+`image.board_ready: true` for `300b12b1…`, the manifest refreshed (the derived sections
+unchanged; `carrier.qualified` false — no B1Q session yet), the manifest's status FROZEN. Any
+change to the preregistration document is now refused by the runner and both adjudicators.
+The next station is the B1Q ruling pair bound to THIS committed manifest's sha256 (§5).
+
 **Compatibility review of the v2.3.1 image `300b12b1…` (owner, 2026-09-05): PASS** —
 `docs/b1_compatibility_review_2026_09_05_v231.md`, evidence
 `evidence/b1/compatibility_review_2026_09_05_v231/`: every §7 item checked (wire, settle,
@@ -151,7 +159,7 @@ docstring no longer calls the ruling archives verbatim files. Image unchanged.
 
 | artifact | sha256 / value | role |
 |---|---|---|
-| `manifests/b1_manifest.json` | (committed; `prereg.sha256` null, `board_ready` false, `carrier.qualification` **null** → `qualified` false, derived) | the stage's pins |
+| `manifests/b1_manifest.json` | (committed; **FROZEN 2026-09-06**: `prereg.sha256` `f995245c…`, `board_ready` true; `carrier.qualification` **null** → `qualified` false, derived) | the stage's pins |
 | B1 carrier `builds/b1/b1.bit` | `d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f`, 2 083 858 B | committed (as the instrument commits its carrier); build record `5da31443…`, carrier manifest `2e9de7c7…`, isolation `ada2594e…`; WNS +7.993 ns, ICAPE2 0, isolation passed |
 | B1 image `firmware/b1/bsp/out/b1_app.bin` | `300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb`, 114 708 B | rebuilt byte-identically by `firmware/b1/bsp/build.sh`; not committed; hash-checked by the runner |
 | `evidence/b1/build_evidence.json` | pinned in the manifest | two clean builds equal; the sources, the embeddedsw inputs, the compiler, all by hash; `worktree_dirty` and `head` recorded |

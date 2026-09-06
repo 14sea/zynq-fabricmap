@@ -93,8 +93,19 @@ class RefusalOrder(unittest.TestCase):
             self.assertIn(w, msg)
         return msg
 
-    def test_the_committed_manifest_is_a_draft_and_refuses(self):
-        self.refuses(Fixture().args(), "not frozen")
+    @unittest.skipUnless(HAVE and IMAGE.is_file(), "instrument or built image absent")
+    def test_the_committed_manifest_is_frozen_and_refuses_at_the_qualification(self):
+        """Since the owner's freeze (2026-09-06) the committed manifest is FROZEN and
+        board_ready; with no B1Q session yet the runner passes every pin and refuses at the
+        carrier's qualification — never earlier, never later."""
+        m = json.loads(rn.MANIFEST.read_text())
+        self.assertTrue(m["prereg"]["frozen"]); self.assertTrue(m["image"]["board_ready"])
+        self.assertEqual(hashlib.sha256((R / m["prereg"]["path"]).read_bytes()).hexdigest(), m["prereg"]["sha256"])
+        self.refuses(Fixture().args(), "not qualified", "no carrier.qualification")
+
+    def test_a_draft_manifest_refuses_before_any_pin(self):
+        f = Fixture(); f.manifest["prereg"]["sha256"] = None; f.manifest["prereg"]["frozen"] = None
+        self.refuses(f.args(), "not frozen")
 
     def test_wrong_ruling_text_and_missing_provisioning(self):
         f = Fixture()

@@ -308,10 +308,18 @@ class Binding(unittest.TestCase):
         self.assertTrue(res["outcome"].startswith("REFUSED"))
 
     def test_draft_manifest_refuses(self):
-        res = adj.adjudicate(write_dir(synthetic_log(MANIFEST, PLAN, bm.fixture("truth"))), MANIFEST, PLAN, PRED, MSHA,
+        m = copy.deepcopy(MANIFEST); m["prereg"]["sha256"] = None; m["prereg"]["frozen"] = None
+        res = adj.adjudicate(write_dir(synthetic_log(m, PLAN, bm.fixture("truth"))), m, PLAN, PRED, MSHA,
                              require_git=False, p3_layer=stub_layer(), qualification_check=NOQ)
         self.assertTrue(res["outcome"].startswith("REFUSED"))
         self.assertIn("not frozen", res["outcome"])
+
+    def test_the_committed_manifest_is_frozen_to_the_documents_bytes_and_refuses_at_the_qualification(self):
+        self.assertTrue(MANIFEST["prereg"]["frozen"])
+        self.assertEqual(hashlib.sha256((R / MANIFEST["prereg"]["path"]).read_bytes()).hexdigest(), MANIFEST["prereg"]["sha256"])
+        res = adj.adjudicate(write_dir(synthetic_log(MANIFEST, PLAN, bm.fixture("truth"))), MANIFEST, PLAN, PRED, MSHA,
+                             require_git=False, p3_layer=stub_layer())
+        self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("no carrier.qualification", res["outcome"])
 
     def test_every_binding_and_identity_field_is_checked(self):
         m = frozen_manifest()

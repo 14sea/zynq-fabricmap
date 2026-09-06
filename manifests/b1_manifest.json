@@ -1,13 +1,13 @@
 {
  "schema": "b1_manifest",
  "schema_version": "0.3.0",
- "status": "DRAFT — host-only, not frozen, NO BOARD RULING (owner 2026-09-05: B1 authorised to the pre-board package; the next board contact needs its own explicit ruling)",
+ "status": "FROZEN (2026-09-06) — the preregistration pinned and the image board_ready by the owner; the carrier is NOT qualified (no B1Q session yet); NO BOARD RULING exists; the next station is the B1Q ruling pair (docs/b1_carrier_qualification.md §3)",
  "prereg": {
   "path": "docs/b1_preregistration.md",
   "version": "v0.3-draft",
-  "sha256": null,
-  "frozen": null,
-  "note": "null = DRAFT: host/b1_runner.py refuses to run until the owner's freeze writes the hash here"
+  "sha256": "f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2",
+  "frozen": true,
+  "note": "FROZEN by the owner on 2026-09-06 after the compatibility review PASS of image 300b12b1… (docs/b1_compatibility_review_2026_09_05_v231.md): the document's bytes hash to sha256; any change to the document is refused by the runner and both adjudicators, and is a new preregistration"
  },
  "instrument": {
   "psoracle_repo": "github.com/14sea/zynq-psoracle",
@@ -44,7 +44,7 @@
   "bytes": 114708,
   "load_address": "0x02000000",
   "entry": "go 0x2000000",
-  "board_ready": false,
+  "board_ready": true,
   "build_evidence": {
    "path": "evidence/b1/build_evidence.json",
    "sha256": "aa5af8337d71c8453b596cd7b5f792f72bc3d35f560d0e1aebbbacbd2d77d96a",
@@ -241,7 +241,7 @@
  },
  "pins": {
   "path": "manifests/b1_instrument_pins.json",
-  "sha256": "143c09d734bcbbdd3727f8680dd20fd1f3d1de189789cfc631c032a52964682e",
+  "sha256": "ded2efdef0527cf9f56bc5a593d6a8c0438f6a99216e7005ebcb05ed51038336",
   "note": "every adjudication-critical fabricmap file (host/b1_pins.py PINNED_GLOBS); verified by the runner before the port is opened and by the adjudicator before any verdict"
  },
  "reporting_strata": {
