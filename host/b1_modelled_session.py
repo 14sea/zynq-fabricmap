@@ -198,7 +198,7 @@ class B1Session:
     signer behind the relay and the runner's identity check."""
 
     def __init__(self, M, cands: Candidates, plan: dict, manifest: dict, token: str, seed: int = 1,
-                 p_fault: float = 0.0, p_h2b: float = 0.0, identity_check=None):
+                 p_fault: float = 0.0, p_h2b: float = 0.0, identity_check=None, scripted: list[dict] | None = None):
         n, lcs, lrd, lt, tsoak, soak = M["n"], M["lcs"], M["lrd"], M["lt"], M["tsoak"], M["soak"]
         self.M, self.plan, self.token = M, plan, token
         self.rng = random.Random(seed)
@@ -213,7 +213,7 @@ class B1Session:
         self.reader = lrd.L6LineReader(self.channel, clock_mono=clock, clock_wall=clock)
         self.to_board: list[tuple[float, str]] = []
         self.faults: list[dict] = []
-        self.wire = soak.FaultyWire(self.rng, p_fault, self.faults)
+        self.wire = soak.FaultyWire(self.rng, p_fault, self.faults, scripted=[dict(x) for x in (scripted or [])])
         self.wire_free_at = self.now
         self.board = make_board_class(M)(cands, token, plan, manifest, int(manifest["carrier"]["nonce_seed"], 16))
         self.h2b_dropped = 0
@@ -273,48 +273,55 @@ class B1Session:
             if self.board.done and self.collector.epoch_end is not None and not self.cs.lingering(self.now):
                 break
 
-    def write_evidence(self, out_dir: Path, binding: dict, inputs: dict) -> None:
-        lt = self.M["lt"]
+    def write_evidence(self, out_dir: Path, binding: dict, inputs: dict) -> dict:
+        """The PRODUCTION finalization's exports (b1_session.export_evidence) over this
+        session's collector / console / relay / timeline / reader — the same code path the
+        board runner takes — plus the modelled-session note. Returns the summary dict."""
+        import b1_session
         out_dir.mkdir(parents=True, exist_ok=True)
-        seqs = [r["seq"] for r in self.collector.loop_records]
-        timing = lt.record_timing(self.timeline.frames, seqs)
-        log = {"control_plane": "standalone", "app_identity": self.collector.app_identity,
-               "loop_records": self.collector.loop_records, "session_summary": self.collector.session_summary,
-               "notary_log": self.relay.notary_log(),
-               "timing": {"clocks": lt.CLOCKS, "t_go_mono": self.t_go, "records": {str(s): timing[s] for s in seqs}},
-               "l6": {**{k: self.plan[k] for k in ("session", "master_seed", "budget", "audit_seqs", "crc_budget", "session_timeout_s", "flags", "protocol")},
-                      "n": self.plan["budget"], "binding": binding, "inputs": inputs}}
-        if self.collector.closing_negative is not None:
-            log["closing_negative"] = self.collector.closing_negative
-        (out_dir / "run_log.json").write_text(json.dumps(log, indent=1))
-        (out_dir / "audits.json").write_text(json.dumps({"chunks": self.collector.audits, "pulls": self.cs.pull_ledgers,
-                                                          "recs": self.cs.rec_ledgers_json(), **self.cs.rel_ledgers_json()}, indent=1))
-        (out_dir / "timeline.json").write_text(json.dumps(self.timeline.to_json(), indent=1))
+        session_plan = {**{k: self.plan[k] for k in ("session", "master_seed", "budget", "audit_seqs", "crc_budget", "bad_frame_budget",
+                                                     "session_timeout_s", "flags", "protocol")},
+                        "n": self.plan["budget"], "binding": binding, "inputs": inputs}
+        summary = {"tool": TOOL_VERSION, "outcome": None, "token": self.token, "l6": session_plan}
+        b1_session.export_evidence(out_dir, summary, session_plan, self.collector, self.cs, self.relay, self.timeline, self.reader, self.t_go)
+        summary["crc_dropped"] = self.timeline.crc_dropped; summary["bad_frames"] = self.timeline.bad_frames
+        summary["crc_dropped_by_type"] = dict(self.timeline.crc_dropped_by_type)
+        (out_dir / "summary.json").write_text(json.dumps(summary, indent=1) + "\n")
         (out_dir / "modelled_session.json").write_text(json.dumps({
-            "tool": TOOL_VERSION, "epoch_end": self.collector.epoch_end, "records": len(seqs), "virtual_s": self.now - 1000.0,
-            "board_stats": self.board.stats, "faults": len(self.faults), "crc_dropped": self.timeline.crc_dropped,
-            "bad_frames": self.timeline.bad_frames, "h2b_dropped": self.h2b_dropped}, indent=1))
+            "tool": TOOL_VERSION, "epoch_end": self.collector.epoch_end, "records": len(self.collector.loop_records), "virtual_s": self.now - 1000.0,
+            "board_stats": self.board.stats, "faults": len(self.faults), "fault_log": self.faults, "crc_dropped": self.timeline.crc_dropped,
+            "bad_frames": self.timeline.bad_frames, "h2b_dropped": self.h2b_dropped, "exports": summary.get("exports")}, indent=1))
+        return summary
 
 
 def run_modelled(manifest: dict, plan: dict, out_dir: Path, fixture: str = "truth", fixture_seed: int = 0,
                  token: str | None = None, p_fault: float = 0.0, p_h2b: float = 0.0, seed: int = 1,
-                 binding_extra: dict | None = None, require_git: bool = False) -> dict:
+                 binding_extra: dict | None = None, require_git: bool = False, scripted: list[dict] | None = None,
+                 crc_budget: int | None = None, bad_frame_budget: int | None = None) -> dict:
+    """`scripted`: the soak's scripted faults ({"type","seq","kind"[,"offset","length"]}) applied to
+    the board→host wire; `crc_budget` / `bad_frame_budget`: override the plan's (to reproduce a
+    defective plan, never to run one)."""
+    if crc_budget is not None or bad_frame_budget is not None:
+        plan = {**plan, "crc_budget": plan["crc_budget"] if crc_budget is None else crc_budget,
+                "bad_frame_budget": plan["bad_frame_budget"] if bad_frame_budget is None else bad_frame_budget}
     M = bind_instrument(require_git)
     token = token or hashlib.sha256(f"b1-modelled-{plan.get('session', 'B1')}-{seed}".encode()).hexdigest()[:32]
     d = Path(tempfile.mkdtemp()); key = d / "K.bin"; key.write_bytes(bytes(range(16))); os.chmod(key, 0o400)
     cands = Candidates(M, plan, manifest, bm.fixture(fixture, fixture_seed), token, key)
     import b1_runner
     check = b1_runner.identity_check_for(plan, manifest)
-    s = B1Session(M, cands, plan, manifest, token, seed=seed, p_fault=p_fault, p_h2b=p_h2b, identity_check=check)
+    s = B1Session(M, cands, plan, manifest, token, seed=seed, p_fault=p_fault, p_h2b=p_h2b, identity_check=check, scripted=scripted)
     t0 = time.monotonic()
     s.run()
     binding = {"image_sha256": manifest["image"]["sha256"], "prereg_sha256": manifest["prereg"]["sha256"], "protocol": "rel-v4",
                "session": plan.get("session", "B1"), "schedule_mode": "carto-v1", "master_seed": plan["master_seed"],
                "psoracle_commit": manifest["instrument"]["psoracle_commit"], **(binding_extra or {})}
     import b1_adjudicate as adj
-    s.write_evidence(out_dir, binding, adj.expected_inputs(manifest, plan.get("session", "B1")))
+    summary = s.write_evidence(out_dir, binding, adj.expected_inputs(manifest, plan.get("session", "B1")))
     return {"epoch_end": s.collector.epoch_end, "records": len(s.collector.loop_records), "virtual_s": s.now - 1000.0,
-            "wall_s": time.monotonic() - t0, "token": token, "faults": len(s.faults)}
+            "wall_s": time.monotonic() - t0, "token": token, "faults": len(s.faults), "crc_dropped": s.timeline.crc_dropped,
+            "bad_frames": s.timeline.bad_frames, "exports": summary.get("exports"), "board_stats": s.board.stats,
+            "session_summary_written_by": summary.get("session_summary_written_by")}
 
 
 def main(argv=None) -> int:

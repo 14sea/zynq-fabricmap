@@ -15,9 +15,18 @@
  ],
  "audited_records": 11,
  "bad_frame_budget": 2,
+ "bad_frame_formula": "ceil(4 \u00d7 expected_total / 1000) (D-s4): the controls are CRC failures, not malformed frames",
  "budget": 9,
- "crc_budget": 2,
- "crc_formula": "ceil(4 \u00d7 expected_total / 1000) (D-s4)",
+ "crc_budget": 4,
+ "crc_budget_components": {
+  "controls": [
+   "seq-1 SIGNREQ retry control (flags bit5)",
+   "seq-1 REC retry control (flags bit4)"
+  ],
+  "forced_crc_controls": 2,
+  "noise_allowance": 2
+ },
+ "crc_formula": "ceil(4 \u00d7 expected_total / 1000) (D-s4 noise allowance) + 1 per enabled forced CRC control (2) \u2014 B1Q session 1 (2026-09-06)",
  "deadline": {
   "expected_span_s": 11.758581719671781,
   "formula": "1.25 \u00d7 (N+2) \u00d7 3600/min(planning rate) + 600 (l6_schedule.session_timeout_s)",

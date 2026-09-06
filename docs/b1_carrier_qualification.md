@@ -42,8 +42,13 @@ opening baseline, the nine code probes, closing baseline, closing unsigned contr
 **11 records, every one audited**; master seed **176 359 248** = the first 4 bytes of
 sha256(`b1-qualification|` ‖ the archive commit) advanced past every excluded seed **and
 B1's own** (and recorded under `seeds.excluded.b1_qualification`, so the two sessions never
-share a seed); 300 expected frames, CRC / bad-frame budget 2; deadline 615 s (expected span
-≈ 12 s); flags `0x32`. Its prediction (`evidence/b1q/prediction.json`) pins the nine probe
+share a seed); 300 expected frames; **CRC budget 4** = the D-s4 noise allowance
+ceil(4 × 300 / 1000) = 2 **plus one drop per enabled forced CRC control** (the seq-1 SIGNREQ
+and REC retry controls, flags bits 5 and 4) = 2 — B1Q session 1 (2026-09-06) was lost
+because the first version's budget of 2 was exactly consumed by the two controls, so the
+first real corruption (the TERM) ended the epoch (`docs/b1q_session1_review_2026_09_06.md`);
+**bad-frame budget 2** (the controls are CRC failures, not malformed frames); deadline
+615 s (expected span ≈ 12 s); flags `0x32`. Its prediction (`evidence/b1q/prediction.json`) pins the nine probe
 genomes, every record's content-level block, the provisional content after the nine
 probes, the scorer's base counters for a blank candidate `[18, 22, 20, 20, 20, 18]`, and
 the STATUS observations of §3.1.

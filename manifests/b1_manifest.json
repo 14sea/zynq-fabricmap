@@ -241,7 +241,7 @@
  },
  "pins": {
   "path": "manifests/b1_instrument_pins.json",
-  "sha256": "ded2efdef0527cf9f56bc5a593d6a8c0438f6a99216e7005ebcb05ed51038336",
+  "sha256": "df84eebe2979c8d459d8116f5beebe86ede523a1670fd769713cfed16a11090e",
   "note": "every adjudication-critical fabricmap file (host/b1_pins.py PINNED_GLOBS); verified by the runner before the port is opened and by the adjudicator before any verdict"
  },
  "reporting_strata": {
@@ -260,14 +260,23 @@
  "qualification_plan": {
   "session": "B1Q",
   "path": "evidence/b1q/plan.json",
-  "sha256": "dead8853b8906a19b04b0e7072ef67efc3e5c176c53b8492602888671fb4e73e",
+  "sha256": "e7239f0de4d33ec4e8476a46371cad799718bb0601d9be7a5a8f37ee0a2c449f",
   "prediction_path": "evidence/b1q/prediction.json",
   "prediction_sha256": "d2c9293a4573b60e497a23cdd87f6355e29df696ef16e52aec05e00ac8aaf062",
   "master_seed": 176359248,
   "budget": 9,
   "records": 11,
   "audited_records": 11,
-  "crc_budget": 2,
+  "crc_budget": 4,
+  "bad_frame_budget": 2,
+  "crc_budget_components": {
+   "noise_allowance": 2,
+   "forced_crc_controls": 2,
+   "controls": [
+    "seq-1 SIGNREQ retry control (flags bit5)",
+    "seq-1 REC retry control (flags bit4)"
+   ]
+  },
   "session_timeout_s": 615,
   "note": "the carrier qualification session (docs/b1_carrier_qualification.md §3): its seed is drawn under label b1-qualification| and excluded from B1's; its records are never B1 data"
  }

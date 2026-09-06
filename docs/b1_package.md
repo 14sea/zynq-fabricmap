@@ -1,12 +1,13 @@
-# B1 — the package: v2.3.1 pushed, compatibility PASS, preregistration FROZEN (2026-09-06); next the B1Q ruling pair
+# B1 — the package: FROZEN; B1Q session 1 LOST (host/transport), the correction batch v2.4 local (2026-09-06)
 
-> **FROZEN / NO BOARD RULING.** The preregistration was frozen on 2026-09-06 after the
-> compatibility review of image `300b12b1…` passed; the image is `board_ready`.
-> The carrier is not `qualified`, and no B1Q ruling pair exists. Work is stopped before
-> board contact: no power cycle, image load or serial access has occurred. The instrument
-> (`zynq-psoracle` `689dde1`) is unchanged, bit for bit. The v2.3.1 image and its review
-> are pushed; the freeze and its clean-tree report are committed locally pending push
-> approval. Next: the owner's B1Q ruling pair (§5).
+> **FROZEN / qualification HOLD / NO OPEN RULING.** The preregistration was frozen on
+> 2026-09-06 after the compatibility review of image `300b12b1…` passed; the image is
+> `board_ready`. The owner issued the first B1Q ruling pair (2026-09-06-01) and the
+> session ran on `17A6` — the FIRST board contact of this line — and was LOST to a host /
+> transport failure (§0); both rulings are consumed, the carrier is not `qualified`. The
+> instrument (`zynq-psoracle` `689dde1`) is unchanged, bit for bit. The authorised host
+> correction batch (v2.4) is committed locally pending review; a new ruling pair is needed
+> for attempt 2.
 
 ## 0. History: the first package and why it failed
 
@@ -96,6 +97,34 @@ translation unit, every header any unit includes, and crti/crtbegin/crtend/crtn 
 libgcc/libc/libm as the link resolves them, all by hash. Also the README / package
 headers that still read "awaiting push". Firmware, image (`54b00663…`, rebuilt
 byte-identically), carrier, plans and predictions unchanged.
+
+**B1Q session 1 (2026-09-06-01, `17A6`): LOST — qualification HOLD, the carrier not
+qualified (owner's ruling `docs/b1q_session1_review_2026_09_06.md`; evidence
+`evidence/b1q/b1q_17A6_2026-09-06-01/`, the boundary record, and the owner's inspection
+`evidence/b1q/session1_review_2026_09_06/`; a post-hoc kernel-log excerpt in
+`evidence/b1q/b1q_17A6_2026-09-06-01_post_hoc/`).** The board ran the whole session (1 IDENT,
+11 SCORED records, 88 audit chunks recomputing 11/11, the nine probes and gate observations
+matching the prediction, a valid CLOSE with fault 13); the TERM failed its CRC on the wire,
+which was the third CRC drop against a budget of 2 that the two seq-1 forced controls had
+already consumed, so the host ended the epoch PROTOCOL; then the copied session tail
+called the instrument's `crashed_summary()` for a PROTOCOL end and raised before
+run_log / audits were written. A corrupt TERM's decodable prefix authenticates nothing:
+the run is not COMPLETED. Both rulings stay consumed. **v2.4 (the authorised host
+correction batch; firmware, image, carrier, seeds, predictions and the frozen
+preregistration unchanged):** the B1Q CRC budget is the noise allowance plus one per
+enabled forced control (2 + 2 = 4; bad-frame budget 2; mapping B1's 37 / 37 and its plan
+and prediction bytes preserved); `b1_session` writes the collector's summary for the ACTUAL
+end (PROTOCOL / STOPPED / CRASHED, never relabelled, never COMPLETED; a valid CLOSE kept as
+an observation, not a closing claim), exports every file independently BEFORE adjudication
+and records per-file success, records an adjudicator error as the outcome with the
+evidence on disk, and exports what exists on the outer failure paths; the modelled session
+now writes through the same exports; tests: the session-1 shape reproduced (budget 2 +
+both controls + a corrupt TERM → PROTOCOL, every export ok, the collector's PROTOCOL
+summary, a B1Q HOLD), both controls + a corrupt TERM + the valid retransmission →
+COMPLETED and PASS under budget 4, CRC exhaustion at the fifth drop, malformed-frame
+exhaustion at the third, adjudicator error, early setup failure, mapping budgets and the
+frozen bytes unchanged. The manifest's hash changes (plan, pins): the next attempt needs a
+NEW B1Q ruling pair bound to the reviewed manifest.
 
 **FREEZE (owner, 2026-09-06), executed on the owner's instruction to perform the freeze:**
 `docs/b1_preregistration.md` pinned by its bytes (`prereg.sha256` =

@@ -4,6 +4,8 @@ Device-local fabric cartography on a Zynq-7000 (XC7Z010): can a board map enough
 of its own fabric to guide its own evolution — and is map-guided evolution
 measurably safer or better than raw mutation?
 
+> **▶ 2026-09-06, B1Q session 1 on `17A6`: LOST (host/transport) — the board completed all 11 records, 88 audit chunks and the CLOSE control, but the TERM's CRC failed on the wire against a budget the two forced controls had already consumed, and the copied session tail then crashed before writing run_log / audits. Owner's ruling: qualification HOLD, rulings consumed, host correction batch authorised — [`docs/b1q_session1_review_2026_09_06.md`](docs/b1q_session1_review_2026_09_06.md). v2.4 (local): B1Q CRC budget 4, collector summaries for the actual end, independent exports before adjudication, transport regressions. A new ruling pair is needed for attempt 2. No board contact since.**
+>
 > **▶ 2026-09-06, FROZEN: on the owner's instruction the B1 preregistration is pinned by its bytes (`f995245c…`) and image `300b12b1…` is `board_ready`; the carrier is not yet qualified. Next: the owner's B1Q ruling pair (`whole-of-run B1 carrier qualification` + `provisioning P3-K`, session `B1Q`) bound to the committed manifest — [`docs/b1_package.md`](docs/b1_package.md) §0, §5. No ruling exists yet; no board contact.**
 >
 > **▶ 2026-09-05, compatibility review PASS on image `300b12b1…` (v2.3.1, pushed at `3955b17`) — [`docs/b1_compatibility_review_2026_09_05_v231.md`](docs/b1_compatibility_review_2026_09_05_v231.md). Next: the owner's freeze (prereg sha256 into the manifest, `board_ready`), then the B1Q ruling pair. Still nothing frozen, no ruling, no board contact.**

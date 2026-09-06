@@ -60,7 +60,7 @@ def build(exit_status: int, log_text: str) -> dict:
     for rel in B1_ARTIFACTS:
         p = REPO_ROOT / rel
         arts[rel] = hashlib.sha256(p.read_bytes()).hexdigest() if p.is_file() else None
-    rep = {"schema": "b1_test_report", "schema_version": "1.0.0", "package": "B1 v2.3.1",
+    rep = {"schema": "b1_test_report", "schema_version": "1.0.0", "package": "B1 v2.4",
            "at": time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime()),
            "exit_status": int(exit_status), "ran": int(ran.group(1)) if ran else None,
            "result_line": result[-1] if result else None,

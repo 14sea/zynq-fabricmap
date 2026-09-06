@@ -192,7 +192,15 @@ def build_qualification_plan(manifest: dict, root: Path | None = None, require_g
     n = Q_BUDGET
     audit_seqs = ls.all_seqs(n)
     expected = ls.expected_frames(n, audit_seqs, manifest["protocol"]["wire"])
-    budget = ls.crc_budget(expected["total"])
+    noise = ls.crc_budget(expected["total"])
+    # B1Q session 1 (2026-09-06, LOST): the D-s4 noise allowance for 300 frames is 2, and the
+    # two enabled seq-1 forced CRC controls (SIGNREQ, REC) consume exactly those two by
+    # design, so the first real corruption — the TERM — ended the epoch. The CRC budget is
+    # the noise allowance PLUS one drop per enabled forced CRC control; the bad-frame budget
+    # stays the noise allowance (the controls are CRC failures, not malformed frames).
+    forced_controls = 2                      # rec_control + sign_control, both enabled below
+    budget = noise + forced_controls
+    bad_frame_budget = noise
     dl = deadline(manifest, root, n)
     flags = ls.flags_for(ls.MODE_ABBA, watchdog=True, rec_control=True, sign_control=True)
     truth = bm.truth_mapping()
@@ -229,8 +237,11 @@ def build_qualification_plan(manifest: dict, root: Path | None = None, require_g
             "seed_exclusion": {"excluded_master_seeds": sorted(excluded_seeds(manifest) | {int(b1_seed)}), "b1_master_seed": int(b1_seed)},
             "budget": n, "records": n + 2, "phases": {"code": bc.CODE_BITS, "confirm": 0, "pair": 0},
             "audit_policy": "all-self-reporting", "audit_seqs": sorted(audit_seqs), "audited_records": len(audit_seqs),
-            "expected_frames": expected, "crc_budget": budget, "bad_frame_budget": budget,
-            "crc_formula": "ceil(4 × expected_total / 1000) (D-s4)",
+            "expected_frames": expected, "crc_budget": budget, "bad_frame_budget": bad_frame_budget,
+            "crc_budget_components": {"noise_allowance": noise, "forced_crc_controls": forced_controls,
+                                      "controls": ["seq-1 SIGNREQ retry control (flags bit5)", "seq-1 REC retry control (flags bit4)"]},
+            "crc_formula": "ceil(4 × expected_total / 1000) (D-s4 noise allowance) + 1 per enabled forced CRC control (2) — B1Q session 1 (2026-09-06)",
+            "bad_frame_formula": "ceil(4 × expected_total / 1000) (D-s4): the controls are CRC failures, not malformed frames",
             "deadline": dl, "session_timeout_s": dl["session_timeout_s"],
             "flags": flags, "flags_hex": f"{flags:#x}", "protocol": manifest["protocol"]["wire"],
             "watchdog": True, "rec_retry_control": True, "sign_retry_control": True,
@@ -270,6 +281,7 @@ def main(argv=None) -> int:
                                               "prediction_path": f"{rel}/prediction.json", "prediction_sha256": psha,
                                               "master_seed": plan["master_seed"], "budget": plan["budget"], "records": plan["records"],
                                               "audited_records": plan["audited_records"], "crc_budget": plan["crc_budget"],
+                                              "bad_frame_budget": plan["bad_frame_budget"], "crc_budget_components": plan["crc_budget_components"],
                                               "session_timeout_s": plan["session_timeout_s"],
                                               "note": "the carrier qualification session (docs/b1_carrier_qualification.md §3): "
                                                       "its seed is drawn under label b1-qualification| and excluded from B1's; "
