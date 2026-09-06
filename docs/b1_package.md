@@ -165,6 +165,27 @@ primary cause and the errors, stderr. Tests: the owner's counter-examples throug
 adjudicators; the seal failing in the normal finalizer, on the exceptional real-`run()`
 path and on the reader-only path before the console; the summary's fall-backs.
 
+**B1Q attempt 2 (2026-09-06-02, `17A6`): PASS — but not the final qualification (owner's
+decision `docs/b1q_transition_decision_2026_09_06.md`).** The session completed (11/11
+SCORED and audited, crc_dropped 2 of 4, every export sealed, the app's summary, the CLOSE
+control, the gate observations as predicted); the owner's audit
+(`docs/b1q_session2_audit_2026_09_06.md`) PASS; evidence committed as the runner wrote it
+(`evidence/b1q/b1q_17A6_2026-09-06-02/`). Pinning its record exposed a lifecycle gap: two
+pinned tests asserted the committed manifest's UNqualified state and go red once the
+record is pinned, and fixing them changes the pin table — which the strict transition
+rule (the current manifest may differ from `manifest_at_run` only in the qualification
+state) rightly reads as "qualified for another manifest". The owner kept the strict rule
+(option B): attempt 2 stays a valid PASS under its manifest (not LOST, no stop-loss
+count), the new manifest needs its own qualification. **v2.4.3:** the two tests assert
+the freeze binding only ("not qualified → refused" stays on explicit fixtures);
+`host/b1_qualified_state_check.py` runs a modelled B1Q session bound to the committed
+manifest's bytes, pins its record with the production refresh into the working-tree
+manifest, runs the whole suite against that QUALIFIED manifest, restores the tree and
+writes `evidence/b1/tests/qualified_state_report_<UTC>.json` — both states (the
+committed, unqualified one by the clean-tree report; the pinned one by this check) must
+pass before any board session. Next: the owner reviews the new manifest hash, issues the
+attempt-3 pair, B1Q runs again under it, its record is pinned, then the mapping pair.
+
 **FREEZE (owner, 2026-09-06), executed on the owner's instruction to perform the freeze:**
 `docs/b1_preregistration.md` pinned by its bytes (`prereg.sha256` =
 `f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2`, `frozen: true`),

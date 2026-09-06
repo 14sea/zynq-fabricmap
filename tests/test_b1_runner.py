@@ -93,15 +93,20 @@ class RefusalOrder(unittest.TestCase):
             self.assertIn(w, msg)
         return msg
 
-    @unittest.skipUnless(HAVE and IMAGE.is_file(), "instrument or built image absent")
-    def test_the_committed_manifest_is_frozen_and_refuses_at_the_qualification(self):
+    def test_the_committed_manifest_is_frozen_to_the_documents_bytes_and_board_ready(self):
         """Since the owner's freeze (2026-09-06) the committed manifest is FROZEN and
-        board_ready; with no B1Q session yet the runner passes every pin and refuses at the
-        carrier's qualification — never earlier, never later."""
+        board_ready. Its qualification state is NOT asserted here: it changes when a B1Q
+        record is pinned, and a test that pinned it would have to change — a pinned-file
+        change that invalidates the very qualification (docs/b1q_transition_decision_2026_09_06.md).
+        "Not qualified → refused" is tested on an explicit fixture below."""
         m = json.loads(rn.MANIFEST.read_text())
         self.assertTrue(m["prereg"]["frozen"]); self.assertTrue(m["image"]["board_ready"])
         self.assertEqual(hashlib.sha256((R / m["prereg"]["path"]).read_bytes()).hexdigest(), m["prereg"]["sha256"])
-        self.refuses(Fixture().args(), "not qualified", "no carrier.qualification")
+        self.assertIn(m["carrier"]["qualified"], (True, False))
+        if m["carrier"]["qualified"]:
+            self.assertEqual(m["carrier"]["qualification"]["schema"], "b1_carrier_qualification")
+        else:
+            self.assertIsNone(m["carrier"]["qualification"])
 
     def test_a_draft_manifest_refuses_before_any_pin(self):
         f = Fixture(); f.manifest["prereg"]["sha256"] = None; f.manifest["prereg"]["frozen"] = None

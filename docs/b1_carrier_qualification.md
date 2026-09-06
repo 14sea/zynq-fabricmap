@@ -156,6 +156,15 @@ with it — requires all of:
    licenses. A pin, a plan, the image, the prereg or a note changed since means the carrier
    was qualified for another manifest.
 
+**Consequence of item 7 (owner's decision of 2026-09-06):** after a B1Q session no pinned
+file — code, test, or normative document — may change before the mapping session; any
+change makes the pin table, hence the manifest, differ from `manifest_at_run`, and the
+qualification no longer stands: the carrier is re-qualified under the new manifest with a
+new ruling pair. So every host / test change is finished, the suite verified in BOTH
+states (`host/b1_qualified_state_check.py`: the committed, unqualified manifest and a
+manifest with a modelled B1Q record pinned), and the manifest reviewed, BEFORE the B1Q
+session that is meant to count.
+
 Any break is a refusal (`tests/test_b1_qualification.py`, `test_b1_runner.py`); a HOLD
 session leaves a record too (of a failed qualification) and never qualifies. The whole
 lifecycle — freeze → refresh keeps `board_ready` → B1Q → pin → `qualified` derived → the

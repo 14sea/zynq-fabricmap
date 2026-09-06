@@ -320,12 +320,16 @@ class Binding(unittest.TestCase):
         self.assertTrue(res["outcome"].startswith("REFUSED"))
         self.assertIn("not frozen", res["outcome"])
 
-    def test_the_committed_manifest_is_frozen_to_the_documents_bytes_and_refuses_at_the_qualification(self):
-        self.assertTrue(MANIFEST["prereg"]["frozen"])
+    def test_the_committed_manifest_is_frozen_to_the_documents_bytes(self):
+        """The committed manifest's freeze binding only; its qualification state is not
+        asserted (docs/b1q_transition_decision_2026_09_06.md) — "no record → refused" is the
+        explicit-fixture test above, and a synthetic log against the committed manifest is
+        refused either way (its binding names another manifest sha256)."""
+        self.assertTrue(MANIFEST["prereg"]["frozen"]); self.assertTrue(MANIFEST["image"]["board_ready"])
         self.assertEqual(hashlib.sha256((R / MANIFEST["prereg"]["path"]).read_bytes()).hexdigest(), MANIFEST["prereg"]["sha256"])
         res = adj.adjudicate(write_dir(synthetic_log(MANIFEST, PLAN, bm.fixture("truth"))), MANIFEST, PLAN, PRED, MSHA,
                              require_git=False, p3_layer=stub_layer())
-        self.assertTrue(res["outcome"].startswith("REFUSED")); self.assertIn("no carrier.qualification", res["outcome"])
+        self.assertTrue(res["outcome"].startswith("REFUSED"), res["outcome"])
 
     def test_every_binding_and_identity_field_is_checked(self):
         m = frozen_manifest()
