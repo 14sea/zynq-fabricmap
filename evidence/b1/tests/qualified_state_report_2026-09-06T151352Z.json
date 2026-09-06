@@ -1,0 +1,22 @@
+{
+ "at": "2026-09-06T151352Z",
+ "committed_manifest_sha256": "870047442f5fc3c45f9f6152785c7ed071a837098d3f492de228a2441170b373",
+ "head": "8c078d6523b1f42e48e8fdf793546398460d5efd",
+ "modelled_b1q_evidence": "/tmp/b1_qualified_state_kq5a1zhs/b1q",
+ "modelled_b1q_token": "82c20cd07766d61f38f0a7d30b56c683",
+ "pinned_manifest_sha256": "9f2b832e489b0b68b287c99d40901653202030cfd8a19536d59ce79235413699",
+ "qualified_state": {
+  "errors": 0,
+  "exit_status": 1,
+  "failures": 1,
+  "note": "the carrier-authority tests skip on the dirty tree (the temporary manifest); they do not read the manifest",
+  "ran": 1451,
+  "result_line": "FAILED (failures=1, skipped=27)",
+  "skipped": 27
+ },
+ "qualified_state_log_tail": "........................................................................................................................................................................................................................................................STOP: CaptureStop: md line address 0x10100040 is not the expected 0x10100010; the dump is not contiguous\n  evidence: /tmp/tmp0e5g4kq7/capture.json\n.STOP: CaptureStop: parsed 97 words, expected 101\n  evidence: /tmp/tmp64x38gmn/capture.json\n.STOP: CaptureStop: a boot banner came back with `echo`: the board restarted\n  evidence: /tmp/tmpfs9lj7x9/capture.json\nSTOP: CaptureStop: a boot banner came back with `printenv plmark`: the board restarted\n  evidence: /tmp/tmpjpa9vs2o/capture.json\nSTOP: CaptureStop: a boot banner came back with `md.l 0x10100000 0x65`: the board restarted\n  evidence: /tmp/tmp67w5k8i5/capture.json\n.STOP: CaptureStop: plmark is ffffffffffffffff, the failing run set 18cba2892df42cbd: this is a different boot and the DRAM archive is not that run's\n  evidence: /tmp/tmpwn4w3qm4/capture.json\n.STOP: CaptureStop: no prompt after `printenv plmark`: b'\\r\\nsomething partial and unterminated'\n  evidence: /tmp/tmpk6qs3zhd/capture.json\n.usage: probe_ddr_capture.py [-h] [--port PORT] --plmark PLMARK [--slot SLOT]\n                            --out OUT\nprobe_ddr_capture.py: error: --slot must be in 0..14; -1 is not a frame of this run\nusage: probe_ddr_capture.py [-h] [--port PORT] --plmark PLMARK [--slot SLOT]\n                            --out OUT\nprobe_ddr_capture.py: error: --slot must be in 0..14; 15 is not a frame of this run\nusage: probe_ddr_capture.py [-h] [--port PORT] --plmark PLMARK [--slot SLOT]\n                            --out OUT\nprobe_ddr_capture.py: error: --slot must be in 0..14; 20 is not a frame of this run\n.....................................................................................................................................................................................................................................................................................................................................................................................................................\n======================================================================\nFAIL: test_the_committed_manifest_is_frozen_to_the_documents_bytes (test_b1_adjudicate.Binding.test_the_committed_manifest_is_frozen_to_the_documents_bytes)\nThe committed manifest's freeze binding only; its qualification state is not\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/test/zynq_fabricmap/tests/test_b1_adjudicate.py\", line 332, in test_the_committed_manifest_is_frozen_to_the_documents_bytes\n    self.assertTrue(res[\"outcome\"].startswith(\"REFUSED\"), res[\"outcome\"])\nAssertionError: False is not true : PASS\n\n----------------------------------------------------------------------\nRan 1451 tests in 216.531s\n\nFAILED (failures=1, skipped=27)\n",
+ "record_manifest_at_run_sha256": "870047442f5fc3c45f9f6152785c7ed071a837098d3f492de228a2441170b373",
+ "schema": "b1_qualified_state_report",
+ "schema_version": "1.0.0",
+ "tree_restored": true
+}
