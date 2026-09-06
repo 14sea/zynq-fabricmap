@@ -1,0 +1,142 @@
+{
+  "tool": "b1q_adjudicate.py/0.1.0",
+  "session": "B1Q",
+  "evidence": "evidence/b1q/b1q_17A6_2026-09-06-02",
+  "outcome": "PASS",
+  "findings": [],
+  "refusal": null,
+  "exports": {
+    "audits.json": "ok",
+    "console.log": "ok",
+    "console.ts.log": "ok",
+    "run_log.json": "ok",
+    "session_summary": "ok",
+    "timeline.json": "ok"
+  },
+  "binding": {
+    "image_sha256": "300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb",
+    "prereg_sha256": "f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2",
+    "protocol": "rel-v4",
+    "session": "B1Q",
+    "schedule_mode": "carto-v1",
+    "master_seed": 176359248,
+    "b1_manifest_sha256": "e38f86a8a7679853eb943f0e968efd880a09faef849606c015ad0ec7616b9709",
+    "psoracle_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94"
+  },
+  "p3": {
+    "rejected": null,
+    "run_log_validation": {
+      "scored": 11,
+      "audited": 11,
+      "chain_length": 12
+    },
+    "audit_policy": {
+      "policy": "all-self-reporting",
+      "audited": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "exempt_no_self_report": []
+    },
+    "rate": {
+      "candidates": 9,
+      "evals_per_hour": 2882.9379025543085,
+      "cov": 0.006837399848604977,
+      "session_span_s": 13.76687365899852
+    }
+  },
+  "replay": {
+    "probes_replayed": 9,
+    "content_sha256": "ce2c89f96f063d90373b0be7bc67039fef714f796966ce43c3ca55594614240b",
+    "findings": []
+  },
+  "provisional": {
+    "claimed": 292,
+    "correct": 292,
+    "precision": 1.0,
+    "recall": 1.0,
+    "calibration": {
+      "0": {
+        "claimed": 0,
+        "correct": 0,
+        "accuracy": null
+      },
+      "1": {
+        "claimed": 292,
+        "correct": 292,
+        "accuracy": 1.0
+      },
+      "2": {
+        "claimed": 0,
+        "correct": 0,
+        "accuracy": null
+      }
+    }
+  },
+  "gate_observations": {
+    "1": {
+      "tables_match": 1,
+      "configuration_valid_hw": 1,
+      "readout_all_zero": true
+    },
+    "2": {
+      "tables_match": 0,
+      "configuration_valid_hw": 1,
+      "readout_all_zero": false
+    },
+    "3": {
+      "tables_match": 0,
+      "configuration_valid_hw": 1,
+      "readout_all_zero": false
+    },
+    "4": {
+      "tables_match": 0,
+      "configuration_valid_hw": 1,
+      "readout_all_zero": false
+    },
+    "5": {
+      "tables_match": 0,
+      "configuration_valid_hw": 1,
+      "readout_all_zero": false
+    },
+    "6": {
+      "tables_match": 0,
+      "configuration_valid_hw": 1,
+      "readout_all_zero": false
+    },
+    "7": {
+      "tables_match": 0,
+      "configuration_valid_hw": 1,
+      "readout_all_zero": false
+    },
+    "8": {
+      "tables_match": 0,
+      "configuration_valid_hw": 1,
+      "readout_all_zero": false
+    },
+    "9": {
+      "tables_match": 0,
+      "configuration_valid_hw": 1,
+      "readout_all_zero": false
+    },
+    "10": {
+      "tables_match": 0,
+      "configuration_valid_hw": 1,
+      "readout_all_zero": false
+    },
+    "11": {
+      "tables_match": 1,
+      "configuration_valid_hw": 1,
+      "readout_all_zero": true
+    }
+  }
+}
