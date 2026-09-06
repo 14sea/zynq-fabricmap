@@ -371,10 +371,10 @@ adjudicator re-verifies the plan, prediction and pin table itself.
 
 ## 9. Tests and the clean-tree proof
 
-B1 tests: `test_b1_adjudicate` (26), `test_b1_build_evidence` (3), `test_b1_carrier` (7), `test_b1_e2e` (5), `test_b1_hostapp` (8), `test_b1_leakage` (7), `test_b1_pins` (3), `test_b1_plan` (10), `test_b1_qualification` (18), `test_b1_records` (5), `test_b1_runner` (20), `test_b1_session` (5), `test_b1_session_finalize` (9), `test_b1_signer` (4), `test_b1_transport` (6), `test_b1_twin` (8), `test_b1_wire` (3). Whole suite on the clean tree — **see the report cited below**; a
+B1 tests: `test_b1_adjudicate` (28), `test_b1_build_evidence` (3), `test_b1_carrier` (7), `test_b1_e2e` (5), `test_b1_hostapp` (8), `test_b1_leakage` (7), `test_b1_pins` (3), `test_b1_plan` (10), `test_b1_qualification` (18), `test_b1_records` (5), `test_b1_runner` (20), `test_b1_session` (5), `test_b1_session_finalize` (15), `test_b1_signer` (4), `test_b1_transport` (6), `test_b1_twin` (8), `test_b1_wire` (3). Whole suite on the clean tree — **see the report cited below**; a
 dirty tree skips 27 carrier-authority tests, so only `clean_tree_proof: true` counts.
 
-Report: `evidence/b1/tests/test_report_2026-09-06T080345Z.json` (schema `b1_test_report`, package `B1 v2.4`) — ran **1442**, skipped **0**, `OK`; `head_at_run` `1aa9ce782324` (the v2.4 commit), `worktree_dirty` False; instrument `689dde1dad37` = pinned, dirty False; **`clean_tree_proof: True`**. Earlier reports are kept as the records of the earlier packages (the freeze: `…T071310Z`, 1427 at `e1f2839`).
+Report: `evidence/b1/tests/test_report_2026-09-06T083010Z.json` (schema `b1_test_report`, package `B1 v2.4.1`) — ran **1450**, skipped **0**, `OK`; `head_at_run` `0b3f334dfd0e` (the v2.4.1 commit), `worktree_dirty` False; instrument `689dde1dad37` = pinned, dirty False; **`clean_tree_proof: True`**. Earlier reports are kept as the records of the earlier packages (v2.4: `…T080345Z`, 1442 at `1aa9ce7`; the freeze: `…T071310Z`, 1427 at `e1f2839`).
 
 ## 10. What is asked, and what is not
 
