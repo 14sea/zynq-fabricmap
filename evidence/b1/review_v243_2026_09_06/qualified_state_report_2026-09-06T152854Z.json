@@ -1,0 +1,22 @@
+{
+ "at": "2026-09-06T152854Z",
+ "committed_manifest_sha256": "38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e",
+ "head": "305335d6a8b81e08a3dcb9c4227411172a9dec7c",
+ "modelled_b1q_evidence": "/tmp/b1_qualified_state_25r8y9fw/b1q",
+ "modelled_b1q_token": "82c20cd07766d61f38f0a7d30b56c683",
+ "pinned_manifest_sha256": "24440d295c1f70074839c37924d81cbbba1ab28cb8f1345f321cdc0117eae229",
+ "qualified_state": {
+  "errors": 0,
+  "exit_status": 0,
+  "failures": 0,
+  "note": "the carrier-authority tests skip on the dirty tree (the temporary manifest); they do not read the manifest",
+  "ran": 1451,
+  "result_line": "OK (skipped=27)",
+  "skipped": 27
+ },
+ "qualified_state_log_tail": "s_are_refused) ... ok\ntest_reordered_luts_are_refused (test_verify_reachability_report.ReportSemanticMutationTests.test_reordered_luts_are_refused) ... ok\ntest_skipped_draw_is_refused (test_verify_reachability_report.ReportSemanticMutationTests.test_skipped_draw_is_refused) ... ok\ntest_unbalanced_target_is_refused_by_derivation_not_format (test_verify_reachability_report.ReportSemanticMutationTests.test_unbalanced_target_is_refused_by_derivation_not_format) ... ok\ntest_wrong_blocked_positions_are_refused (test_verify_reachability_report.ReportSemanticMutationTests.test_wrong_blocked_positions_are_refused) ... ok\ntest_wrong_ceiling_is_refused (test_verify_reachability_report.ReportSemanticMutationTests.test_wrong_ceiling_is_refused) ... ok\ntest_wrong_spec_hash_is_refused (test_verify_reachability_report.ReportSemanticMutationTests.test_wrong_spec_hash_is_refused) ... ok\ntest_wrong_totals_are_refused (test_verify_reachability_report.ReportSemanticMutationTests.test_wrong_totals_are_refused) ... ok\ntest_cli_accepts_a_spec_whose_bytes_are_in_head (test_verify_reachability_report.SpecAuthorityAndIndependenceTests.test_cli_accepts_a_spec_whose_bytes_are_in_head) ... ok\ntest_cli_refuses_a_working_spec_changed_after_commit (test_verify_reachability_report.SpecAuthorityAndIndependenceTests.test_cli_refuses_a_working_spec_changed_after_commit) ... ok\ntest_cli_refuses_without_git_authority (test_verify_reachability_report.SpecAuthorityAndIndependenceTests.test_cli_refuses_without_git_authority) ... ok\ntest_committed_production_spec_is_interpretable_without_selecting_targets (test_verify_reachability_report.SpecAuthorityAndIndependenceTests.test_committed_production_spec_is_interpretable_without_selecting_targets) ... ok\ntest_global_scope_is_refused (test_verify_reachability_report.SpecAuthorityAndIndependenceTests.test_global_scope_is_refused) ... ok\ntest_known_answer_drift_in_the_spec_is_refused (test_verify_reachability_report.SpecAuthorityAndIndependenceTests.test_known_answer_drift_in_the_spec_is_refused) ... ok\ntest_lock_pins_drift_is_refused (test_verify_reachability_report.SpecAuthorityAndIndependenceTests.test_lock_pins_drift_is_refused) ... ok\ntest_malformed_required_fields_refuses_instead_of_throwing (test_verify_reachability_report.SpecAuthorityAndIndependenceTests.test_malformed_required_fields_refuses_instead_of_throwing) ... ok\ntest_production_cli_exposes_no_alternate_repository (test_verify_reachability_report.SpecAuthorityAndIndependenceTests.test_production_cli_exposes_no_alternate_repository) ... ok\ntest_production_mode_refuses_the_conformance_spec (test_verify_reachability_report.SpecAuthorityAndIndependenceTests.test_production_mode_refuses_the_conformance_spec) ... ok\ntest_verifier_imports_no_producer_module (test_verify_reachability_report.SpecAuthorityAndIndependenceTests.test_verifier_imports_no_producer_module) ... ok\n\n----------------------------------------------------------------------\nRan 1451 tests in 224.974s\n\nOK (skipped=27)\n",
+ "record_manifest_at_run_sha256": "38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e",
+ "schema": "b1_qualified_state_report",
+ "schema_version": "1.0.0",
+ "tree_restored": true
+}
