@@ -1,94 +1,109 @@
-# B1Q transport diagnosis — off-board investigation, 2026-09-07
+# B1Q transport diagnosis — corrected off-board analysis, 2026-09-07
 
-> **Standing: off-board only.** Authorised by the owner's ruling of the attempt-3 loss
-> (`docs/b1q_session3_audit_2026_09_07.md`): analysis of the saved logs, in-memory replay
-> and diagnostic design — no port opened, no cable changed, no re-attach, no board run, no
-> CRC-budget change, no pinning of a HOLD record, no new ruling pair. Machine-readable
-> figures: `evidence/b1q/transport_diagnosis_2026_09_07/analysis.json`. Nothing here changes
-> a pinned file's meaning; it is a finding for the owner to rule on.
+> **STOP-LOSS remains in force.** The observed receive-stream corruption is established;
+> the component responsible is not. This revision supersedes the unsupported causal
+> claims and mixed denominators in ffea0a5, including its commit message. Original session
+> evidence remains unchanged. No port, cable, device attachment or board was touched.
 
-## The question
+## Recomputed observations
 
-Attempt 3 lost the epoch to `PROTOCOL_CRC_BUDGET: 5 > 4` at seq 3, while attempt 2 passed
-cleanly and the L6 soak ran two hours on the same transport. Is the fault the board, the
-instrument, or the link — and what, if anything, is the fix.
+The independent script and input hashes are in
+`evidence/b1q/diagnosis_review_2026_09_07/`. The corrected machine-readable diagnosis is
+`evidence/b1q/transport_diagnosis_2026_09_07/analysis.json` (version 1.1.0).
 
-## What the saved evidence shows
+CRC counts below exclude the two identified seq-1 forced controls in each session.
+Fragments are separate. Valid RX frames exclude timeline CRC_DROP/FRAGMENT events;
+bytes are the complete raw console.log file size, including framing and line terminators.
 
-**The losses are dropped bytes, not corrupted bytes.** Every CRC-failing line, diffed
-against its own intact retransmission, is *shorter* by one to six bytes; the payload never
-leaves the base64url alphabet and no byte is changed in place. Attempt 3: a REC (seq 3)
-short one byte at payload offset 896 — and retransmitted intact; the HB (seq 2) token short
-six characters; the AUDIT (seq 4) payload short two; and one SIGNREQ head torn so badly the
-reader quarantined it as a fragment. This is a receive-path byte drop, not electrical line
-corruption (which flips bytes) and not a large-block buffer overflow (which loses a
-contiguous run).
+| Session | Valid RX frames | Raw bytes | Non-control CRC drops | Fragments | CRC drops per 100,000 raw bytes |
+|---|---:|---:|---:|---:|---:|
+| B1Q attempt 1 | 299 | 94,237 | 1 | 0 | 1.061 |
+| B1Q attempt 2 | 300 | 94,250 | 0 | 0 | 0 |
+| B1Q attempt 3 | 103 | 35,888 | 3 | 1 | 8.359 |
+| L6 soak 2026-09-04-01-S | 233,354 | 50,642,507 | 40 | 3 | 0.079 |
 
-**Every drop follows a host transmission.** Across the three B1Q sessions all five real
-CRC drops land 0.06–0.25 s after the preceding host→board frame (IDENTACK, AUDITDONE,
-SIGNOK, AUDITGET, RECACK); across the 2-hour soak, **40 of 40** real drops fall within
-0.5 s of a host transmission. The board→host bytes are being dropped while, or just after,
-the host drives the board←host line. That is a full-duplex interaction on the link, not
-random noise and not something the board originates.
+The B1Q total is **four non-control CRC drops plus one fragment**, not five CRC drops.
+Attempt 3 did not receive the planned approximately 300 valid frames before stopping;
+3/103 is 2.913%, not 1%. These are descriptive counts under different traffic, durations
+and stopping conditions, not comparable estimates of a stationary link noise rate.
 
-**The rate is low but bursty.** Real byte-loss runs about 0.017 % per frame on the soak
-(40 drops in 233 350 frames over two hours, spread out, a median of 106 s apart). Attempt 2
-saw none. Attempt 3 saw three real drops in ~300 frames — roughly 1 %, about sixty times
-the baseline — in a fifteen-second burst.
+## Character deletion is supported; component attribution is not
 
-| session | span | rx frames | rx bytes | real drops | rate | end |
-|---|---|---|---|---|---|---|
-| B1Q 2026-09-06-01 | 13.6 s | 299 | 93.9 kB | 1 | 1.06 / 100 kB | PROTOCOL (the lost TERM; budget 2, pre-v2.4) |
-| B1Q 2026-09-06-02 | 14.0 s | 300 | 93.9 kB | 0 | 0 | COMPLETED / PASS |
-| B1Q 2026-09-06-03 | 15.2 s | 103 | 35.8 kB | 3 | 11.18 / 100 kB | PROTOCOL_CRC_BUDGET 5 > 4 |
-| L6 soak 2026-09-04-01 | 6764 s | 233 350 | — | 40 | 0.017 %/frame | COMPLETED (budget 934) |
+The previous audit's comparisons support these specific observations:
 
-## Attribution
+- Attempt-1 TERM: 13 missing payload characters against an inferred expected TERM with
+  the correct session token and matching retained CRC; no same-run retransmission exists.
+- Attempt-3 HB seq 2: six missing token characters; payload intact. Restoring the known
+  token reproduces the retained CRC.
+- Attempt-3 REC seq 3: one missing payload character against its valid retransmission.
+- Attempt-3 AUDIT seq 4, chunk 4: two missing payload characters against the prior valid
+  session's chunk with this session's frame token; an inferred expected frame.
+- Attempt-3 SIGNREQ: a separate 288-byte prefix quarantined without its terminator.
 
-The fault is in the **transport**, not the board: the loss shape (dropped RX bytes) and the
-timing (100 % correlated with host TX) both point at the receive path of the CH340
-full-speed link through WSL's `vhci_hcd`, and `CLAUDE.md` already records this path as
-unstable (brownout drop, ghost-stuck `ttyUSB`, unstable across detach/reattach). It is
-**not yet separable** into "the CH340 adapter" versus "USB/IP": the FTDI JTAG pod
-(480 Mbit high-speed) traverses the same `vhci_hcd`, so a clean A/B needs the console on a
-different physical channel, which the FTDI pins are not wired for.
+Thus "every line is 1–6 bytes shorter than its own retransmission" was incorrect.
+Remaining inside the base64url alphabet alone cannot establish the corruption mechanism.
+The comparison provenance matters; none is an independent capture at the transmitter.
 
-## Why the soak survived and B1Q did not
+Missing characters do not rule out electrical/framing errors, board UART/software,
+adapter/driver behavior or finite-buffer loss. For example, serial error handling can
+discard characters under particular input flags; this is a general counterexample to
+"electrical errors only flip bytes", not a claim that those flags caused these sessions.
+[Linux serial driver documentation](https://kernel.org/doc/html/v6.15/driver-api/serial/driver.html)
+describes that behavior. The necessary session-time error counters and transmitter-side
+trace are absent. No cited CLAUDE.md anecdote substitutes for that evidence.
 
-The soak absorbed forty drops because its budget was 934 over 233 k frames and its span was
-two hours. A B1Q session is deliberately nine probes — about 300 frames — with a CRC budget
-of 4: the D-s4 noise allowance of 2 plus the two forced seq-1 controls. That leaves a real-
-noise margin of **two**, which a fifteen-second burst exhausts. The mismatch is structural:
-a tiny-sample session has no room for the transport's occasional spikes. Attempt 2 is not
-proof the link is fine; it is proof the link is *usually* fine.
+## The TX timing window does not establish full-duplex causality
 
-## What is not the fix
+All four non-control B1Q CRC events follow the last recorded host TX by 0.062–0.246 s.
+All 40 non-control soak CRC events fall within 0.5 s of a host TX. However, the comparison
+population is almost entirely in that same window:
 
-Raising the B1Q budget — the owner's explicit exclusion — would trade the PROTOCOL-death
-ceiling for a false PASS on a genuinely noisy link. The ceiling is doing its job: it
-refused to certify a session it could not carry cleanly. The problem to solve is the
-transport, or the session's dependence on it, not the number.
+| Population | Within 0.5 s of preceding host TX | Total |
+|---|---:|---:|
+| Soak non-control CRC events | 40 | 40 |
+| Soak CRC-valid RX frames | 233,349 | 233,354 |
 
-## Options for the owner (none executed)
+Normal request/reply traffic already produces this timing. The near-universal window
+cannot identify host transmission as the cause of a loss. Host send timestamps are not
+measurements of electrical TX-line activity. Frame length, request type, polling and
+serialisation time also differ between observations. Fragment timestamps record their
+quarantine/detection, sometimes around eight seconds after the last TX, not the time the
+missing bytes were lost.
 
-- **A — the CRC budget counts only *unrecovered* transport failures.** Today a corrupt
-  frame counts toward `PROTOCOL_CRC` even when the protocol then recovers it (a REC
-  retransmitted intact on RECGET, an AUDIT chunk re-pulled intact). Counting only losses
-  that are never recovered removes the brittleness of the common single-recovered-drop
-  case. It would **not** have saved attempt 3 (its HB is fire-and-forget and unrecoverable,
-  and its AUDIT pull hit the ceiling), and it changes the instrument's protocol contract and
-  the frozen plan/prereg, so it is a measurement-integrity decision with its own review, not
-  a bug fix.
-- **B — change the physical console transport.** Move the console off the CH340 onto the
-  FTDI pod's spare high-speed UART, or off WSL usbipd onto a native-Linux host. This
-  addresses the implicated path directly, but it is hardware/environment work (rewiring, a
-  new transport compatibility review), not host-only.
-- **C — characterise the transport passively first.** A longer capture to size the loss
-  rate and confirm the full-duplex hypothesis before choosing A or B. Opening the port is
-  board contact and needs its own ruling.
+CH340/driver, USB/IP/WSL and other stages remain hypotheses. The post-hoc sysfs inventory
+places both CH340 and FTDI under vhci_hcd; replacing the adapter while retaining that
+arrangement would not independently eliminate USB/IP. One successful B1Q session proves
+that session's qualification, not that the link is usually reliable or stable.
 
-**Assessment:** the cause is a transport fault; option B addresses it, option A only softens
-the symptom (and does not recover attempt 3), option C buys certainty at the cost of board
-time. The choice is the owner's. Attempt 2 remains a valid PASS under its own manifest, and
-attempt 3 remains LOST; the stop-loss stays in force until the owner rules a fix and it is
-proven.
+## Decision and bounded next work
+
+**Select B as a controlled console-path isolation experiment, not as a proven cure.**
+Prepare the environment inventory, topology and compatibility/diagnostic plan first.
+If a native Linux host is available, prefer removing WSL/USB-IP while initially keeping
+the same CH340, wiring and serial settings. Changing both host path and adapter together
+would obscure which change affected the result. If that host is unavailable, submit a
+separate adapter-only design with verified pinout and voltage before any rewiring.
+
+Before execution, the plan must specify the changed variable, known transmitted bytes,
+expected traffic including relevant frame lengths and host-send bursts, reference/control
+conditions, received raw-byte capture, fragments, retries, timestamps and available error
+counters. Prefer proving capture and replay against a separate traffic source before
+using the Zynq. Bound the exposure and stopping criteria in advance; a quiet passive
+capture does not represent the traffic that failed. A successful diagnostic is not a
+B1Q PASS or a waiver of the qualification chain.
+
+A is not approved: changing the CRC counter's meaning changes the acceptance contract.
+The claim that A could not save attempt 3 is also unsupported: the AUDIT pull stopped
+because of the old budget rule, so that stop cannot be assumed under a different rule.
+The HB and all other requirements would need explicit modeling before any counterfactual
+verdict. Increasing the budget remains excluded; it would change the agreed acceptance
+criteria, not necessarily manufacture false underlying measurements.
+
+C is not selected as a stand-alone quiet board capture. Measurements needed to evaluate
+B belong in its controlled plan and require separate execution approval.
+
+The owner approves pushing 98c2a0c and ffea0a5 **together with a new corrective docs/analysis
+commit containing this revision and the review**. No pinned file or manifest changes are
+needed for these corrections. Stop-loss remains in force: no new ruling, port open,
+rewiring, attach/detach or board run is authorized. Attempt 1/3 remain LOST; attempt 2
+remains a historical PASS for its original manifest.

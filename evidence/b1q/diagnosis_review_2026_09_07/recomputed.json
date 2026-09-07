@@ -1,0 +1,395 @@
+{
+  "b1q_1": {
+    "timeline_sha256": "d40da53376665e99c204b02b0ede95c4f9211e8bbfbda8ac48b1ba97cffcbb33",
+    "summary_crc_dropped": 3,
+    "timeline_crc_dropped": 3,
+    "crc_events": 3,
+    "inferred_seq1_controls": 2,
+    "noncontrol_crc": 1,
+    "fragments": 0,
+    "valid_rx_frames": 299,
+    "rx_bytes": 94237,
+    "noncontrol_crc_per_100kB": 1.0611543236732919,
+    "noncontrol_crc_per_valid_rx_pct": 0.33444816053511706,
+    "noncontrol_crc_events": [
+      {
+        "type": "TERM",
+        "after_latest_host_tx_s": 0.10321092398953624,
+        "t_mono": 90715.606558045
+      }
+    ],
+    "fragment_after_latest_host_tx_s": [],
+    "window_counts": {
+      "0.06": {
+        "noncontrol_crc_within": 0,
+        "noncontrol_crc_total": 1,
+        "valid_rx_within": 35,
+        "valid_rx_total": 299
+      },
+      "0.25": {
+        "noncontrol_crc_within": 1,
+        "noncontrol_crc_total": 1,
+        "valid_rx_within": 297,
+        "valid_rx_total": 299
+      },
+      "0.5": {
+        "noncontrol_crc_within": 1,
+        "noncontrol_crc_total": 1,
+        "valid_rx_within": 298,
+        "valid_rx_total": 299
+      }
+    },
+    "valid_rx_max_after_tx_s": 0.284640137993847,
+    "input_sha256": {
+      "timeline.json": "d40da53376665e99c204b02b0ede95c4f9211e8bbfbda8ac48b1ba97cffcbb33",
+      "summary.json": "5292a6bd343c5f27b71c5a7a9e9b7b0ebd8a6bfd0d61593a57e8cdf486dda870",
+      "console.log": "208149e8ab211f929e7cafc74b776cb7c12951f8a2ec1ed52112cba2eae19d42"
+    }
+  },
+  "b1q_2": {
+    "timeline_sha256": "15efb3cc11672223e47a5ec7f77c2c16a2ac4d0017482e80ebdd4487a03f9974",
+    "summary_crc_dropped": 2,
+    "timeline_crc_dropped": 2,
+    "crc_events": 2,
+    "inferred_seq1_controls": 2,
+    "noncontrol_crc": 0,
+    "fragments": 0,
+    "valid_rx_frames": 300,
+    "rx_bytes": 94250,
+    "noncontrol_crc_per_100kB": 0.0,
+    "noncontrol_crc_per_valid_rx_pct": 0.0,
+    "noncontrol_crc_events": [],
+    "fragment_after_latest_host_tx_s": [],
+    "window_counts": {
+      "0.06": {
+        "noncontrol_crc_within": 0,
+        "noncontrol_crc_total": 0,
+        "valid_rx_within": 31,
+        "valid_rx_total": 300
+      },
+      "0.25": {
+        "noncontrol_crc_within": 0,
+        "noncontrol_crc_total": 0,
+        "valid_rx_within": 298,
+        "valid_rx_total": 300
+      },
+      "0.5": {
+        "noncontrol_crc_within": 0,
+        "noncontrol_crc_total": 0,
+        "valid_rx_within": 299,
+        "valid_rx_total": 300
+      }
+    },
+    "valid_rx_max_after_tx_s": 0.26739696800359525,
+    "input_sha256": {
+      "timeline.json": "15efb3cc11672223e47a5ec7f77c2c16a2ac4d0017482e80ebdd4487a03f9974",
+      "summary.json": "94dec24da4be1ab5b555bdf7290e554baf0c13f4da24b88df8743acd2d69e86a",
+      "console.log": "b500a3dd5d3e2c915a1663ec68eabc089cce652b47d22560b2bb4610ef879393"
+    }
+  },
+  "b1q_3": {
+    "timeline_sha256": "d8ee2ec903b289e89e34e6533e99141637037a00c204463a33f40b7903467271",
+    "summary_crc_dropped": 5,
+    "timeline_crc_dropped": 5,
+    "crc_events": 5,
+    "inferred_seq1_controls": 2,
+    "noncontrol_crc": 3,
+    "fragments": 1,
+    "valid_rx_frames": 103,
+    "rx_bytes": 35888,
+    "noncontrol_crc_per_100kB": 8.35934016941596,
+    "noncontrol_crc_per_valid_rx_pct": 2.912621359223301,
+    "noncontrol_crc_events": [
+      {
+        "type": "HB",
+        "after_latest_host_tx_s": 0.08430357198812999,
+        "t_mono": 171072.148494917
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.24602829100331292,
+        "t_mono": 171074.792493108
+      },
+      {
+        "type": "AUDIT",
+        "after_latest_host_tx_s": 0.062023142992984504,
+        "t_mono": 171076.404653253
+      }
+    ],
+    "fragment_after_latest_host_tx_s": [
+      8.059690760012018
+    ],
+    "window_counts": {
+      "0.06": {
+        "noncontrol_crc_within": 0,
+        "noncontrol_crc_total": 3,
+        "valid_rx_within": 10,
+        "valid_rx_total": 103
+      },
+      "0.25": {
+        "noncontrol_crc_within": 3,
+        "noncontrol_crc_total": 3,
+        "valid_rx_within": 101,
+        "valid_rx_total": 103
+      },
+      "0.5": {
+        "noncontrol_crc_within": 3,
+        "noncontrol_crc_total": 3,
+        "valid_rx_within": 101,
+        "valid_rx_total": 103
+      }
+    },
+    "valid_rx_max_after_tx_s": 8.080463677004445,
+    "input_sha256": {
+      "timeline.json": "d8ee2ec903b289e89e34e6533e99141637037a00c204463a33f40b7903467271",
+      "summary.json": "51b3a0772d4b699684d0934f2c5f6be886a42f943c90b5f8482867544cae05a5",
+      "console.log": "4fed2279ba960b93a3e7138d0eaa32b0d7fc7795bd5def1449fa3d5b840a8e05"
+    }
+  },
+  "soak": {
+    "timeline_sha256": "c98c7d0698db90239e93104956d26236ad39eb823166aa74edb728df519b0700",
+    "summary_crc_dropped": 42,
+    "timeline_crc_dropped": 42,
+    "crc_events": 42,
+    "inferred_seq1_controls": 2,
+    "noncontrol_crc": 40,
+    "fragments": 3,
+    "valid_rx_frames": 233354,
+    "rx_bytes": 50642507,
+    "noncontrol_crc_per_100kB": 0.07898503129001888,
+    "noncontrol_crc_per_valid_rx_pct": 0.01714133890998226,
+    "noncontrol_crc_events": [
+      {
+        "type": "AUDIT",
+        "after_latest_host_tx_s": 0.07453894200443756,
+        "t_mono": 64589.311438994
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.330978326004697,
+        "t_mono": 64626.419388836
+      },
+      {
+        "type": "HB",
+        "after_latest_host_tx_s": 0.12321115299710073,
+        "t_mono": 64861.447043042
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.3276206540031126,
+        "t_mono": 64870.30549505
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.32961910599988187,
+        "t_mono": 64924.314753176
+      },
+      {
+        "type": "HB",
+        "after_latest_host_tx_s": 0.08226872399973217,
+        "t_mono": 65203.766357601
+      },
+      {
+        "type": "HB",
+        "after_latest_host_tx_s": 0.32841847599775065,
+        "t_mono": 65523.816959553
+      },
+      {
+        "type": "SIGNREQ",
+        "after_latest_host_tx_s": 0.06089714700647164,
+        "t_mono": 65619.712452805
+      },
+      {
+        "type": "SIGNREQ",
+        "after_latest_host_tx_s": 0.08227469499979634,
+        "t_mono": 65959.816490601
+      },
+      {
+        "type": "SIGNREQ",
+        "after_latest_host_tx_s": 0.061332494995440356,
+        "t_mono": 66094.506594933
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.33087118799448945,
+        "t_mono": 66155.272198543
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.33128572699206416,
+        "t_mono": 66428.313545816
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.32914851600071415,
+        "t_mono": 66663.786592712
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.330243906006217,
+        "t_mono": 66672.740230462
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.32784225400246214,
+        "t_mono": 66746.765958017
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.32772865900187753,
+        "t_mono": 66846.54459658
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.3225817240017932,
+        "t_mono": 67096.596907371
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.34629469900391996,
+        "t_mono": 67346.951921078
+      },
+      {
+        "type": "AUDIT",
+        "after_latest_host_tx_s": 0.08490480099862907,
+        "t_mono": 67431.372411895
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.3234423770045396,
+        "t_mono": 67514.757037887
+      },
+      {
+        "type": "SIGNREQ",
+        "after_latest_host_tx_s": 0.060873584006913006,
+        "t_mono": 68014.722195997
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.22560007600986864,
+        "t_mono": 68348.901066567
+      },
+      {
+        "type": "AUDIT",
+        "after_latest_host_tx_s": 0.05508267699042335,
+        "t_mono": 69366.95383021
+      },
+      {
+        "type": "AUDIT",
+        "after_latest_host_tx_s": 0.0637456770054996,
+        "t_mono": 69601.90666268
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.32986502899439074,
+        "t_mono": 69738.045362976
+      },
+      {
+        "type": "HB",
+        "after_latest_host_tx_s": 0.10255679101101123,
+        "t_mono": 69746.677820334
+      },
+      {
+        "type": "SIGNREQ",
+        "after_latest_host_tx_s": 0.06178106300649233,
+        "t_mono": 69757.290353403
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.3498624909989303,
+        "t_mono": 69816.607455135
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.32998589899216313,
+        "t_mono": 69818.364456987
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.34868420200655237,
+        "t_mono": 69819.641076703
+      },
+      {
+        "type": "AUDIT",
+        "after_latest_host_tx_s": 0.05907356999523472,
+        "t_mono": 69829.755427589
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.32577708800090477,
+        "t_mono": 69935.830190336
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.351366686008987,
+        "t_mono": 70243.498011574
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.3507878719974542,
+        "t_mono": 70438.971151829
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.3519219890004024,
+        "t_mono": 70634.462416416
+      },
+      {
+        "type": "SIGNREQ",
+        "after_latest_host_tx_s": 0.06158231099834666,
+        "t_mono": 70652.786421941
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.34709077401203103,
+        "t_mono": 70873.915535167
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.2210879039921565,
+        "t_mono": 70894.542670432
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.3513779490021989,
+        "t_mono": 70895.296688784
+      },
+      {
+        "type": "REC",
+        "after_latest_host_tx_s": 0.35145626499434,
+        "t_mono": 71145.646472836
+      }
+    ],
+    "fragment_after_latest_host_tx_s": [
+      8.397442348999903,
+      7.970354603996384,
+      8.092053853994003
+    ],
+    "window_counts": {
+      "0.06": {
+        "noncontrol_crc_within": 2,
+        "noncontrol_crc_total": 40,
+        "valid_rx_within": 15657,
+        "valid_rx_total": 233354
+      },
+      "0.25": {
+        "noncontrol_crc_within": 16,
+        "noncontrol_crc_total": 40,
+        "valid_rx_within": 221593,
+        "valid_rx_total": 233354
+      },
+      "0.5": {
+        "noncontrol_crc_within": 40,
+        "noncontrol_crc_total": 40,
+        "valid_rx_within": 233349,
+        "valid_rx_total": 233354
+      }
+    },
+    "valid_rx_max_after_tx_s": 8.60349621999194,
+    "input_sha256": {
+      "timeline.json": "c98c7d0698db90239e93104956d26236ad39eb823166aa74edb728df519b0700",
+      "summary.json": "f58057d72b199986fdb1a9890424f2de1a0736b1aaae9bc6f7ad7547c95017ff",
+      "console.log": "8b013b235f0f403159f72c6028c56abe669f3f035642541b8e379f2d5ad9294b"
+    }
+  }
+}
