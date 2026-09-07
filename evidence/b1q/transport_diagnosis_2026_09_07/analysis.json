@@ -1,0 +1,39 @@
+{
+ "schema": "b1q_transport_diagnosis",
+ "schema_version": "1.0.0",
+ "at": "2026-09-07",
+ "standing": "off-board investigation only (owner's ruling docs/b1q_session3_audit_2026_09_07.md); no port opened, no board contact, no re-run, no budget change, no ruling",
+ "question": "why did B1Q attempt 3 (2026-09-06-03) lose the epoch to PROTOCOL_CRC_BUDGET while attempt 2 passed and the L6 soak survived 2 hours",
+ "sessions": {
+  "b1q_2026-09-06-01": {"span_s": 13.6, "rx_frames": 299, "rx_bytes": 93933, "real_drops": 1, "drops_per_100kB": 1.06, "end": "PROTOCOL (the TERM lost; budget was 2 before v2.4)"},
+  "b1q_2026-09-06-02": {"span_s": 14.0, "rx_frames": 300, "rx_bytes": 93946, "real_drops": 0, "drops_per_100kB": 0.0, "end": "COMPLETED / PASS"},
+  "b1q_2026-09-06-03": {"span_s": 15.2, "rx_frames": 103, "rx_bytes": 35778, "real_drops": 3, "drops_per_100kB": 11.18, "end": "PROTOCOL_CRC_BUDGET 5 > 4 at seq 3"},
+  "l6_soak_2026-09-04-01": {"span_s": 6764, "rx_frames": 233350, "real_drops": 40, "drops_per_frame_pct": 0.017, "end": "COMPLETED (budget 934)"}
+ },
+ "loss_shape": {
+  "kind": "bytes MISSING, not bit flips",
+  "evidence": "each CRC-failing line, diffed against its intact retransmission, is SHORTER by 1..6 bytes; the payload stays inside the base64url alphabet; no out-of-alphabet byte and no changed-in-place byte appears",
+  "per_loss": "attempt 1 TERM (not retransmitted), attempt 3: REC seq 3 -1 byte at payload offset 896 (retransmitted intact), HB seq 2 token -6 chars, AUDIT seq 4 -2 chars, plus one SIGNREQ head torn into a MERGED/TORN fragment",
+  "reading": "small scattered dropped bytes on the receive path, characteristic of a USB-serial RX drop, not electrical line corruption (which flips bytes) and not a large-block buffer overflow"
+ },
+ "timing_correlation": {
+  "finding": "every real CRC drop lands a fraction of a second AFTER a host->board transmission",
+  "b1q_all_sessions": "5/5 real drops within 0.06-0.25 s of the preceding host TX (IDENTACK/AUDITDONE/SIGNOK/AUDITGET/RECACK)",
+  "l6_soak": "40/40 real drops within 0.5 s of a host TX (100%)",
+  "reading": "a full-duplex interaction: the board->host RX bytes are dropped while / just after the host is driving the board<-host TX line, on the CH340 full-speed link through WSL vhci_hcd; not board-side, not random"
+ },
+ "attribution": {
+  "transport_implicated": true,
+  "board_implicated": false,
+  "ch340_vs_usbip": "not yet separable: the CH340 (12M full-speed) and the FTDI JTAG pod (480M high-speed) both traverse vhci_hcd; the FTDI channels are not physically wired to the board UART, so they cannot be A/B'd without rewiring",
+  "prior_evidence": "CLAUDE.md records the CH340-over-usbipd path as unstable (brownout drop, ghost-stuck ttyUSB, unstable across detach/reattach)"
+ },
+ "why_the_soak_survived_and_b1q_did_not": "the transport's real byte-loss rate is low on average (~0.017%/frame) but bursty (attempt 3 saw ~1%/frame for 15 s); the 2-hour soak absorbed 40 drops against a budget of 934 over 233k frames, while a 9-probe B1Q session has ~300 frames and a CRC budget of 4 (noise allowance 2 + the two forced seq-1 controls), i.e. a real-noise margin of 2 that a burst exhausts",
+ "not_a_fix": "raising the B1Q budget (owner's explicit exclusion): it would trade the PROTOCOL-death ceiling for a false PASS on a genuinely noisy link, and does not address the transport",
+ "options_for_the_owner": [
+  {"id": "A", "name": "budget counts only UNRECOVERED transport failures", "where": "host: l6_console budget accounting + the plan/prereg semantics", "effect": "a corrupt frame that the protocol then recovers (a REC retransmitted intact on RECGET, an AUDIT chunk re-pulled intact) no longer counts toward PROTOCOL_CRC; only a loss that is never recovered does", "attempt3_would_have": "still LOST (3 real drops, of which the HB is fire-and-forget and unrecoverable and the AUDIT pull hit the ceiling); does not save attempt 3 but removes the brittleness for the common single-recovered-drop case", "cost": "changes the instrument's protocol contract and the frozen plan/prereg; needs its own review, prereg change and manifest", "risk": "widening what a session tolerates is a measurement-integrity decision, not a bug fix"},
+  {"id": "B", "name": "change the physical console transport", "where": "hardware / instrument", "effect": "move the console off the CH340 (12M full-speed) onto the FTDI pod's spare high-speed UART, or off WSL usbipd onto a native-Linux host, to remove the implicated path", "cost": "rewiring (the FTDI channels are not wired to the board UART) or an environment move; a new compatibility review of the transport", "risk": "board-adjacent work; not host-only"},
+  {"id": "C", "name": "characterise the transport passively before deciding", "where": "board (needs a ruling: opening the port is board contact)", "effect": "measure the byte-loss rate and its TX correlation over a longer idle/quiet capture to size any budget or confirm the full-duplex hypothesis", "cost": "a board session under its own ruling", "risk": "consumes board time; still on the same transport"}
+ ],
+ "recommendation": "the finding is a transport fault (option B addresses the cause; option A only softens the symptom and does not save attempt 3); the choice among A/B/C is the owner's. No change is made by this diagnosis."
+}
