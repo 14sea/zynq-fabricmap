@@ -1,0 +1,58 @@
+{
+ "schema": "b1q_transport_plan_inventory",
+ "schema_version": "1.0.0",
+ "at": "2026-09-07",
+ "standing": "PREPARATION ONLY (owner's ruling 2026-09-07: option B as a controlled path-isolation experiment). No port opened, no cable moved, no device re-attached, no board run, no ruling. Every observation below is read-only host state or arithmetic over already-committed session evidence.",
+ "host_path": {
+  "kernel": "6.18.20.3-microsoft-standard-WSL2+",
+  "usb_transport": "USB/IP into WSL via vhci_hcd; the usbip/usbipd client tools are not present inside the WSL guest (the attach is driven from the Windows side)",
+  "vhci_status": [
+   {"port": 0, "speed": "hs", "busid": "1-1", "device": "FT4232H JTAG pod", "sockfd": "000003"},
+   {"port": 1, "speed": "hs", "busid": "1-2", "device": "CH340 console", "sockfd": "000003"}
+  ],
+  "shared_socket_note": "BOTH devices are attached over the SAME USB/IP socket (sockfd 000003). Directly relevant to the owner's point: exchanging the console adapter while keeping this arrangement does not remove USB/IP from the path.",
+  "ch340": {"busid": "1-2", "usb_speed_reported": "12M full-speed", "driver": "ch341", "tty": "ttyUSB4", "power_control": "on", "runtime_status": "active", "autosuspend_delay_ms": 2000, "bulk_in_wMaxPacketSize": "0x0020 (32 bytes)", "bInterval": 0},
+  "ftdi": {"busid": "1-1", "usb_speed_reported": "480M high-speed", "driver": "ftdi_sio", "ttys": ["ttyUSB1", "ttyUSB2", "ttyUSB3"], "note": "the JTAG pod's spare UART channels are not wired to the board UART"}
+ },
+ "console_open_settings": {
+  "source": "zynq-psoracle/scripts/board_session.py SerialTransport.__init__ (the ARCHIVED instrument, read-only)",
+  "call": "serial.Serial(resolved_port, baud, timeout=0.1)",
+  "pyserial": "3.5",
+  "effective": "115200 8N1, no xon/xoff, no rtscts, no dsrdtr, raw mode",
+  "exclusive": false,
+  "exclusive_note": "exclusive=True is NOT passed, so the console port is not opened exclusively. Nothing currently holds ttyUSB4 and no known serial-grabbing daemon is running, but no session recorded whether anything else held the port at the time. This is an UNEXCLUDED hypothesis, not a finding.",
+  "parity_flags_note": "with parity NONE pyserial leaves INPCK/ISTRIP clear, so termios-level parity discard is not the expected behaviour on this configuration. This is a reading of the code, not a measurement of the session-time termios state."
+ },
+ "error_counters": {
+  "recorded_by_the_instrument": "none",
+  "available_without_opening_the_port": "none — /proc/tty/driver/usbserial is absent and the ttyUSB4 sysfs nodes expose no framing/parity/overrun/break counters",
+  "available_with_an_open_fd": "TIOCGICOUNT (frame, parity, overrun, brk) is the only source; pyserial does not surface it and the instrument does not call it",
+  "consequence": "the three sessions carry NO serial error counters. Any experiment that is meant to attribute the loss must add this capture."
+ },
+ "instrumentation_constraint": {
+  "fact": "the console transport is the archived instrument's code (zynq-psoracle, read-only, pinned by hash)",
+  "consequence": "counter capture, exclusive open, or any transport change must be a B1-side wrapper in this repository — which is a PINNED-file change, so it must land and be reviewed BEFORE the B1Q session that is meant to count (the transition rule of docs/b1q_transition_decision_2026_09_06.md)"
+ },
+ "traffic_to_reproduce": {
+  "note": "measured from the committed console.log of the three B1Q sessions; a rig that does not reproduce this shape does not represent the traffic that failed",
+  "per_full_session": {"frames": 302, "bytes": 94180},
+  "board_to_host_frames": {
+   "HB": {"count": 176, "bytes_min": 65, "bytes_max": 66},
+   "AUDIT": {"count": 88, "bytes_min": 304, "bytes_max": 708},
+   "SIGNREQ": {"count": 12, "bytes_min": 370, "bytes_max": 375},
+   "REC": {"count": 12, "bytes_min": 2610, "bytes_max": 2915},
+   "AUDIT_READY": {"count": 11, "bytes_min": 230, "bytes_max": 235},
+   "IDENT": {"count": 1, "bytes": 1048},
+   "TERM": {"count": 1, "bytes_min": 711, "bytes_max": 724},
+   "CLOSE": {"count": 1, "bytes": 217}
+  },
+  "host_to_board_frames_attempt3": {"AUDITGET": 30, "SIGNOK": 4, "AUDITDONE": 3, "RECACK": 3, "RECGET": 2, "IDENTACK": 1, "SIGNGET": 1, "AUDITABORT": 1},
+  "timing": {"tx_to_next_rx_s": {"min": 0.041, "median": 0.062, "max": 8.06}, "rec_line_wire_time_s_at_115200": 0.227},
+  "observed_loss_sites": "the corrupted frames were REC (2.6 kB), AUDIT chunk, HB and TERM — i.e. both the longest and the shortest frame classes"
+ },
+ "open_questions_for_the_owner": [
+  "Is a native Linux host available that can take the CH340 by direct USB (no USB/IP)? The plan's preferred first experiment depends on it.",
+  "Can the CH340 module be detached from the board header and looped back TX->RX on its own, powered from host USB? If yes, the whole first stage runs with NO board involvement; if the module is powered from the board's Type-C, powering it powers the stack and needs its own ruling.",
+  "Is a second known-good USB-serial adapter available as the traffic source / cross-check?"
+ ]
+}
