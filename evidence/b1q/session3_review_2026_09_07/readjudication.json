@@ -1,0 +1,30 @@
+{
+  "tool": "b1q_adjudicate.py/0.1.0",
+  "session": "B1Q",
+  "evidence": "/home/test/zynq_fabricmap/evidence/b1q/b1q_17A6_2026-09-06-03",
+  "outcome": "HOLD instrument: run_log rejected: audit seq 4: chunk numbers must be exactly 0..7: missing [4, 5, 6, 7], out of range []",
+  "findings": [],
+  "refusal": null,
+  "exports": {
+    "audits.json": "ok",
+    "console.log": "ok",
+    "console.ts.log": "ok",
+    "run_log.json": "ok",
+    "session_summary": "ok",
+    "timeline.json": "ok"
+  },
+  "binding": {
+    "image_sha256": "300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb",
+    "prereg_sha256": "f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2",
+    "protocol": "rel-v4",
+    "session": "B1Q",
+    "schedule_mode": "carto-v1",
+    "master_seed": 176359248,
+    "b1_manifest_sha256": "38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e",
+    "psoracle_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94"
+  },
+  "p3": {
+    "rejected": "HOLD instrument: run_log rejected: audit seq 4: chunk numbers must be exactly 0..7: missing [4, 5, 6, 7], out of range []",
+    "run_log_validation": "REJECTED: audit seq 4: chunk numbers must be exactly 0..7: missing [4, 5, 6, 7], out of range []"
+  }
+}

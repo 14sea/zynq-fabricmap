@@ -1,0 +1,1178 @@
+{
+  "schema": "l6_timeline",
+  "schema_version": "1.2.0",
+  "clocks": {
+    "mono": "time.monotonic() on the host, seconds",
+    "wall": "time.time() on the host, seconds since the epoch",
+    "resolution_s": "one runner poll interval (~0.02 s): every line a poll returned shares its stamp"
+  },
+  "crc_dropped": 5,
+  "crc_dropped_by_type": {
+    "SIGNREQ": 1,
+    "REC": 2,
+    "HB": 1,
+    "AUDIT": 1
+  },
+  "bad_frames": 0,
+  "fragments": [
+    {
+      "t_mono": 171069.346175915,
+      "t_wall": 1788760596.139839,
+      "bytes": 288,
+      "reason": "resync: a frame head arrived with no line end before it",
+      "head": "P3L5 SIGNREQ 1 25315958147462dde8a43ff187094375 eyJhcHBfZXBvY2giOjAsImdlbm9tZSI6IjAwMDAwMDAwMDAw",
+      "text": "P3L5 SIGNREQ 1 25315958147462dde8a43ff187094375 eyJhcHBfZXBvY2giOjAsImdlbm9tZSI6IjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwIiwibm9uY2UiOiI5ZTM3NzliOTdmNGE3YzE1Iiwic2NoZW1hIjoic2lnbl9yZXF1ZXN0Iiwic2NoZW1hX3ZlcnNpb24iOiIxLjAu"
+    }
+  ],
+  "frames": [
+    {
+      "dir": "rx",
+      "type": "IDENT",
+      "seq": 0,
+      "t_mono": 171061.224497187,
+      "t_wall": 1788760588.01816
+    },
+    {
+      "dir": "tx",
+      "type": "IDENTACK",
+      "seq": 0,
+      "t_mono": 171061.224968678,
+      "t_wall": 1788760588.0186322
+    },
+    {
+      "dir": "rx",
+      "type": "CRC_DROP",
+      "seq": null,
+      "t_mono": 171061.286131961,
+      "t_wall": 1788760588.079795,
+      "frame_type": "SIGNREQ"
+    },
+    {
+      "dir": "tx",
+      "type": "SIGNGET",
+      "seq": 1,
+      "t_mono": 171061.286485155,
+      "t_wall": 1788760588.0801477
+    },
+    {
+      "dir": "rx",
+      "type": "FRAGMENT",
+      "seq": null,
+      "t_mono": 171069.346175915,
+      "t_wall": 1788760596.139839,
+      "bytes": 288,
+      "reason": "resync: a frame head arrived with no line end before it"
+    },
+    {
+      "dir": "rx",
+      "type": "SIGNREQ",
+      "seq": 1,
+      "t_mono": 171069.366948832,
+      "t_wall": 1788760596.160613
+    },
+    {
+      "dir": "tx",
+      "type": "SIGNOK",
+      "seq": 1,
+      "t_mono": 171070.168553258,
+      "t_wall": 1788760596.9622178
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.209205508,
+      "t_wall": 1788760597.0028684,
+      "hb_i": 0
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.209205508,
+      "t_wall": 1788760597.0028684,
+      "hb_i": 1
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.229868828,
+      "t_wall": 1788760597.0235317,
+      "hb_i": 2
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.229868828,
+      "t_wall": 1788760597.0235317,
+      "hb_i": 3
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.229868828,
+      "t_wall": 1788760597.0235317,
+      "hb_i": 4
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.250523248,
+      "t_wall": 1788760597.0441864,
+      "hb_i": 5
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.250523248,
+      "t_wall": 1788760597.0441864,
+      "hb_i": 6
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.250523248,
+      "t_wall": 1788760597.0441864,
+      "hb_i": 7
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.250523248,
+      "t_wall": 1788760597.0441864,
+      "hb_i": 8
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.271216668,
+      "t_wall": 1788760597.0648797,
+      "hb_i": 9
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.271216668,
+      "t_wall": 1788760597.0648797,
+      "hb_i": 10
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.271216668,
+      "t_wall": 1788760597.0648797,
+      "hb_i": 11
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.271216668,
+      "t_wall": 1788760597.0648797,
+      "hb_i": 12
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.292466077,
+      "t_wall": 1788760597.0861301,
+      "hb_i": 13
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.292466077,
+      "t_wall": 1788760597.0861301,
+      "hb_i": 14
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 1,
+      "t_mono": 171070.292466077,
+      "t_wall": 1788760597.0861301,
+      "hb_i": 15
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT_READY",
+      "seq": 1,
+      "t_mono": 171070.314166178,
+      "t_wall": 1788760597.107829
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 1,
+      "t_mono": 171070.314632169,
+      "t_wall": 1788760597.1082947
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 1,
+      "t_mono": 171070.375836844,
+      "t_wall": 1788760597.1694996
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 1,
+      "t_mono": 171070.376418833,
+      "t_wall": 1788760597.1700819
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 1,
+      "t_mono": 171070.458317426,
+      "t_wall": 1788760597.2519805
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 1,
+      "t_mono": 171070.458847017,
+      "t_wall": 1788760597.2525094
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 1,
+      "t_mono": 171070.54074071,
+      "t_wall": 1788760597.3344035
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 1,
+      "t_mono": 171070.541188502,
+      "t_wall": 1788760597.3348515
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 1,
+      "t_mono": 171070.582369945,
+      "t_wall": 1788760597.376033
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 1,
+      "t_mono": 171070.585079795,
+      "t_wall": 1788760597.3787425
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 1,
+      "t_mono": 171070.64625107,
+      "t_wall": 1788760597.4399137
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 1,
+      "t_mono": 171070.646677662,
+      "t_wall": 1788760597.4403405
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 1,
+      "t_mono": 171070.68753931,
+      "t_wall": 1788760597.4812021
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 1,
+      "t_mono": 171070.687964503,
+      "t_wall": 1788760597.4816272
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 1,
+      "t_mono": 171070.728813651,
+      "t_wall": 1788760597.5224764
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 1,
+      "t_mono": 171070.729230144,
+      "t_wall": 1788760597.5228927
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 1,
+      "t_mono": 171070.770851378,
+      "t_wall": 1788760597.5645144
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITDONE",
+      "seq": 1,
+      "t_mono": 171070.77130097,
+      "t_wall": 1788760597.5649638
+    },
+    {
+      "dir": "rx",
+      "type": "CRC_DROP",
+      "seq": null,
+      "t_mono": 171071.01754894,
+      "t_wall": 1788760597.8112118,
+      "frame_type": "REC"
+    },
+    {
+      "dir": "tx",
+      "type": "RECGET",
+      "seq": 1,
+      "t_mono": 171071.017913934,
+      "t_wall": 1788760597.8115768
+    },
+    {
+      "dir": "rx",
+      "type": "REC",
+      "seq": 1,
+      "t_mono": 171071.264742796,
+      "t_wall": 1788760598.0584056
+    },
+    {
+      "dir": "tx",
+      "type": "RECACK",
+      "seq": 1,
+      "t_mono": 171071.265316285,
+      "t_wall": 1788760598.058979
+    },
+    {
+      "dir": "rx",
+      "type": "SIGNREQ",
+      "seq": 2,
+      "t_mono": 171071.326743358,
+      "t_wall": 1788760598.1204078
+    },
+    {
+      "dir": "tx",
+      "type": "SIGNOK",
+      "seq": 2,
+      "t_mono": 171072.064191345,
+      "t_wall": 1788760598.8578558
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.105591743,
+      "t_wall": 1788760598.8992555,
+      "hb_i": 0
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.105591743,
+      "t_wall": 1788760598.8992555,
+      "hb_i": 1
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.127580571,
+      "t_wall": 1788760598.9212441,
+      "hb_i": 2
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.127580571,
+      "t_wall": 1788760598.9212441,
+      "hb_i": 3
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.127580571,
+      "t_wall": 1788760598.9212441,
+      "hb_i": 4
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.148494917,
+      "t_wall": 1788760598.9421577,
+      "hb_i": 5
+    },
+    {
+      "dir": "rx",
+      "type": "CRC_DROP",
+      "seq": null,
+      "t_mono": 171072.148494917,
+      "t_wall": 1788760598.9421577,
+      "frame_type": "HB"
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.148494917,
+      "t_wall": 1788760598.9421577,
+      "hb_i": 7
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.148494917,
+      "t_wall": 1788760598.9421577,
+      "hb_i": 8
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.169247965,
+      "t_wall": 1788760598.9629107,
+      "hb_i": 9
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.169247965,
+      "t_wall": 1788760598.9629107,
+      "hb_i": 10
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.169247965,
+      "t_wall": 1788760598.9629107,
+      "hb_i": 11
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.169247965,
+      "t_wall": 1788760598.9629107,
+      "hb_i": 12
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.189924715,
+      "t_wall": 1788760598.9835875,
+      "hb_i": 13
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.189924715,
+      "t_wall": 1788760598.9835875,
+      "hb_i": 14
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 2,
+      "t_mono": 171072.189924715,
+      "t_wall": 1788760598.9835875,
+      "hb_i": 15
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT_READY",
+      "seq": 2,
+      "t_mono": 171072.210916059,
+      "t_wall": 1788760599.004579
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 2,
+      "t_mono": 171072.211361852,
+      "t_wall": 1788760599.0050244
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 2,
+      "t_mono": 171072.294113553,
+      "t_wall": 1788760599.0877764
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 2,
+      "t_mono": 171072.294615845,
+      "t_wall": 1788760599.0882785
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 2,
+      "t_mono": 171072.376377463,
+      "t_wall": 1788760599.1700404
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 2,
+      "t_mono": 171072.376939253,
+      "t_wall": 1788760599.170602
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 2,
+      "t_mono": 171072.458981367,
+      "t_wall": 1788760599.2526443
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 2,
+      "t_mono": 171072.459707854,
+      "t_wall": 1788760599.253372
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 2,
+      "t_mono": 171072.52146281,
+      "t_wall": 1788760599.315126
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 2,
+      "t_mono": 171072.521985502,
+      "t_wall": 1788760599.3156483
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 2,
+      "t_mono": 171072.583285066,
+      "t_wall": 1788760599.376948
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 2,
+      "t_mono": 171072.583778957,
+      "t_wall": 1788760599.3774416
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 2,
+      "t_mono": 171072.645084021,
+      "t_wall": 1788760599.438747
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 2,
+      "t_mono": 171072.645535213,
+      "t_wall": 1788760599.439198
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 2,
+      "t_mono": 171072.706841277,
+      "t_wall": 1788760599.5005043
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 2,
+      "t_mono": 171072.707344969,
+      "t_wall": 1788760599.5010076
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 2,
+      "t_mono": 171072.768729031,
+      "t_wall": 1788760599.5623918
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITDONE",
+      "seq": 2,
+      "t_mono": 171072.769192223,
+      "t_wall": 1788760599.5628552
+    },
+    {
+      "dir": "rx",
+      "type": "REC",
+      "seq": 2,
+      "t_mono": 171073.014997163,
+      "t_wall": 1788760599.8086603
+    },
+    {
+      "dir": "tx",
+      "type": "RECACK",
+      "seq": 2,
+      "t_mono": 171073.015564452,
+      "t_wall": 1788760599.809227
+    },
+    {
+      "dir": "rx",
+      "type": "SIGNREQ",
+      "seq": 3,
+      "t_mono": 171073.078102676,
+      "t_wall": 1788760599.8717659
+    },
+    {
+      "dir": "tx",
+      "type": "SIGNOK",
+      "seq": 3,
+      "t_mono": 171073.84412399,
+      "t_wall": 1788760600.6377888
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.884797027,
+      "t_wall": 1788760600.67846,
+      "hb_i": 0
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.905301842,
+      "t_wall": 1788760600.6989648,
+      "hb_i": 1
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.905301842,
+      "t_wall": 1788760600.6989648,
+      "hb_i": 2
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.905301842,
+      "t_wall": 1788760600.6989648,
+      "hb_i": 3
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.905301842,
+      "t_wall": 1788760600.6989648,
+      "hb_i": 4
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.926299347,
+      "t_wall": 1788760600.7199626,
+      "hb_i": 5
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.926299347,
+      "t_wall": 1788760600.7199626,
+      "hb_i": 6
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.926299347,
+      "t_wall": 1788760600.7199626,
+      "hb_i": 7
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.926299347,
+      "t_wall": 1788760600.7199626,
+      "hb_i": 8
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.947229155,
+      "t_wall": 1788760600.7408934,
+      "hb_i": 9
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.947229155,
+      "t_wall": 1788760600.7408934,
+      "hb_i": 10
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.947229155,
+      "t_wall": 1788760600.7408934,
+      "hb_i": 11
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.947229155,
+      "t_wall": 1788760600.7408934,
+      "hb_i": 12
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.968147362,
+      "t_wall": 1788760600.7618105,
+      "hb_i": 13
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.968147362,
+      "t_wall": 1788760600.7618105,
+      "hb_i": 14
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 3,
+      "t_mono": 171073.968147362,
+      "t_wall": 1788760600.7618105,
+      "hb_i": 15
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT_READY",
+      "seq": 3,
+      "t_mono": 171073.988968171,
+      "t_wall": 1788760600.7826314
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 3,
+      "t_mono": 171073.989405963,
+      "t_wall": 1788760600.783069
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 3,
+      "t_mono": 171074.071110229,
+      "t_wall": 1788760600.864774
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 3,
+      "t_mono": 171074.071956213,
+      "t_wall": 1788760600.8656197
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 3,
+      "t_mono": 171074.153686479,
+      "t_wall": 1788760600.9473493
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 3,
+      "t_mono": 171074.154223969,
+      "t_wall": 1788760600.9478867
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 3,
+      "t_mono": 171074.236346128,
+      "t_wall": 1788760601.030009
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 3,
+      "t_mono": 171074.236974016,
+      "t_wall": 1788760601.0306368
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 3,
+      "t_mono": 171074.298485064,
+      "t_wall": 1788760601.092148
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 3,
+      "t_mono": 171074.298997554,
+      "t_wall": 1788760601.0926602
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 3,
+      "t_mono": 171074.360316405,
+      "t_wall": 1788760601.1539793
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 3,
+      "t_mono": 171074.360902994,
+      "t_wall": 1788760601.1545663
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 3,
+      "t_mono": 171074.422429441,
+      "t_wall": 1788760601.216092
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 3,
+      "t_mono": 171074.422874033,
+      "t_wall": 1788760601.2165365
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 3,
+      "t_mono": 171074.484148185,
+      "t_wall": 1788760601.277811
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 3,
+      "t_mono": 171074.484622276,
+      "t_wall": 1788760601.2782848
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 3,
+      "t_mono": 171074.545958727,
+      "t_wall": 1788760601.3396215
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITDONE",
+      "seq": 3,
+      "t_mono": 171074.546464817,
+      "t_wall": 1788760601.3401275
+    },
+    {
+      "dir": "rx",
+      "type": "CRC_DROP",
+      "seq": null,
+      "t_mono": 171074.792493108,
+      "t_wall": 1788760601.5861564,
+      "frame_type": "REC"
+    },
+    {
+      "dir": "tx",
+      "type": "RECGET",
+      "seq": 3,
+      "t_mono": 171074.7929139,
+      "t_wall": 1788760601.5865767
+    },
+    {
+      "dir": "rx",
+      "type": "REC",
+      "seq": 3,
+      "t_mono": 171075.039333983,
+      "t_wall": 1788760601.8329968
+    },
+    {
+      "dir": "tx",
+      "type": "RECACK",
+      "seq": 3,
+      "t_mono": 171075.039904072,
+      "t_wall": 1788760601.8335664
+    },
+    {
+      "dir": "rx",
+      "type": "SIGNREQ",
+      "seq": 4,
+      "t_mono": 171075.101227923,
+      "t_wall": 1788760601.894891
+    },
+    {
+      "dir": "tx",
+      "type": "SIGNOK",
+      "seq": 4,
+      "t_mono": 171075.888977589,
+      "t_wall": 1788760602.682642
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.929729127,
+      "t_wall": 1788760602.723392,
+      "hb_i": 0
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.950300342,
+      "t_wall": 1788760602.7439632,
+      "hb_i": 1
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.950300342,
+      "t_wall": 1788760602.7439632,
+      "hb_i": 2
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.950300342,
+      "t_wall": 1788760602.7439632,
+      "hb_i": 3
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.950300342,
+      "t_wall": 1788760602.7439632,
+      "hb_i": 4
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.971058754,
+      "t_wall": 1788760602.7647216,
+      "hb_i": 5
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.971058754,
+      "t_wall": 1788760602.7647216,
+      "hb_i": 6
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.971058754,
+      "t_wall": 1788760602.7647216,
+      "hb_i": 7
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.971058754,
+      "t_wall": 1788760602.7647216,
+      "hb_i": 8
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.991716367,
+      "t_wall": 1788760602.7853794,
+      "hb_i": 9
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.991716367,
+      "t_wall": 1788760602.7853794,
+      "hb_i": 10
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.991716367,
+      "t_wall": 1788760602.7853794,
+      "hb_i": 11
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171075.991716367,
+      "t_wall": 1788760602.7853794,
+      "hb_i": 12
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171076.01240728,
+      "t_wall": 1788760602.8060703,
+      "hb_i": 13
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171076.01240728,
+      "t_wall": 1788760602.8060703,
+      "hb_i": 14
+    },
+    {
+      "dir": "rx",
+      "type": "HB",
+      "seq": 4,
+      "t_mono": 171076.01240728,
+      "t_wall": 1788760602.8060703,
+      "hb_i": 15
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT_READY",
+      "seq": 4,
+      "t_mono": 171076.033093494,
+      "t_wall": 1788760602.8267562
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 4,
+      "t_mono": 171076.033452287,
+      "t_wall": 1788760602.8271148
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 4,
+      "t_mono": 171076.114966663,
+      "t_wall": 1788760602.9086294
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 4,
+      "t_mono": 171076.115459253,
+      "t_wall": 1788760602.909122
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 4,
+      "t_mono": 171076.197157226,
+      "t_wall": 1788760602.9908204
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 4,
+      "t_mono": 171076.197706115,
+      "t_wall": 1788760602.99137
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 4,
+      "t_mono": 171076.279655186,
+      "t_wall": 1788760603.0733182
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 4,
+      "t_mono": 171076.280202675,
+      "t_wall": 1788760603.0738657
+    },
+    {
+      "dir": "rx",
+      "type": "AUDIT",
+      "seq": 4,
+      "t_mono": 171076.342147119,
+      "t_wall": 1788760603.1358101
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 4,
+      "t_mono": 171076.34263011,
+      "t_wall": 1788760603.1362927
+    },
+    {
+      "dir": "rx",
+      "type": "CRC_DROP",
+      "seq": null,
+      "t_mono": 171076.404653253,
+      "t_wall": 1788760603.1983173,
+      "frame_type": "AUDIT"
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITGET",
+      "seq": 4,
+      "t_mono": 171076.40585743,
+      "t_wall": 1788760603.1995223
+    },
+    {
+      "dir": "tx",
+      "type": "AUDITABORT",
+      "seq": 4,
+      "t_mono": 171076.40641572,
+      "t_wall": 1788760603.20008
+    }
+  ],
+  "note": "this timeline is the ONE inbound ledger and the CRC authority for the session"
+}

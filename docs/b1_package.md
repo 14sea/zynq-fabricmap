@@ -1,14 +1,13 @@
-# B1 — the package: FROZEN; v2.4.3 reviewed; attempt-3 B1Q pair issued (2026-09-06)
+# B1 — the package: FROZEN; attempt 3 LOST; transport stop-loss in force (2026-09-07)
 
-> **FROZEN / qualification UNPINNED / ATTEMPT-3 PAIR ISSUED; EXECUTION AWAITS INSTRUCTION.**
-> Image `300b12b1…` remains board_ready. Attempt 1 is LOST; attempt 2 is a historical
-> qualification PASS for manifest `e38f86a8…`, superseded by the pinned test corrections.
-> Both earlier ruling pairs are consumed. v2.4.3 at `305335d` passed host review and is
-> approved for push; the strict qualification transition rule is unchanged.
-> The attempt-3 B1Q pair (`2026-09-06-03`) binds manifest `38363973…` and is unconsumed.
-> See `docs/b1_v243_review_2026_09_06.md` for the independent suite checks and bindings.
-> Execution requires a separate explicit instruction, fresh power cycle and boundary/preflight.
-> The instrument remains unchanged at `689dde1`; the current carrier qualification is unpinned.
+> **STOP-LOSS / qualification HOLD / NO OPEN RULING.** Attempt 3 (identifier
+> `2026-09-06-03`, executed 2026-09-07) ended PROTOCOL at seq 3: CRC drops 5 > 4.
+> Collected evidence was sealed; adjudication and qualification record are HOLD.
+> Attempts 1 and 3 are the two transport losses; attempt 2 remains a historical PASS
+> for its old manifest. All three ruling pairs are consumed. No further session is authorized.
+> See `docs/b1q_session3_audit_2026_09_07.md` for the audit and permitted offline investigation.
+> Image `300b12b1…` and committed manifest `38363973…` are unchanged; qualification
+> remains unpinned. Resume only after diagnosis, proof, review and fresh authorization.
 
 ## 0. History: the first package and why it failed
 
@@ -319,12 +318,14 @@ two-strikes / three-without-COMPLETED rules in force.
 
 A provisioning ruling is consumed once and is bound to its session name, so each session
 needs its own. Attempt 1 (`2026-09-06-01`) is LOST; attempt 2 (`2026-09-06-02`) is a
-historical PASS for its prior manifest. Both pairs remain consumed. The attempt-3
-qualification pair (`2026-09-06-03`) is issued and unconsumed, bound to committed manifest
+historical PASS for its prior manifest. Attempt 3 (`2026-09-06-03`, executed 2026-09-07)
+is LOST/HOLD. All three pairs are consumed; no new pair is issued while stop-loss is in
+force. The attempt-3 pair was bound to committed manifest
 `38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e`.
 The mapping pair has not been issued; it must bind the manifest **after** a standing
 qualification record is pinned and committed. The JSON below is template text, not an
-additional usable ruling. Issuance details: `docs/b1_v243_review_2026_09_06.md`.
+additional usable ruling. Historical issuance: `docs/b1_v243_review_2026_09_06.md`;
+current stop-loss decision: `docs/b1q_session3_audit_2026_09_07.md`.
 
 **Qualification pair (session `B1Q`)**
 ```json
@@ -399,8 +400,8 @@ the reviewed image is `board_ready`. With fixture rulings that pass the initial 
 checks, `host/b1_runner.py` in the MAPPING profile passes the preceding pins and refuses
 because the carrier is **not qualified: no carrier.qualification record**. The committed
 manifest also makes `host/b1_adjudicate.py` refuse at the missing qualification record.
-These checks run before any port access or ruling consumption. The first two B1Q pairs
-are consumed; the attempt-3 B1Q pair is issued and unconsumed (§5).
+These checks run before any port access or ruling consumption. All three B1Q pairs
+are consumed; transport stop-loss is in force and no further session is authorized (§5).
 
 The DRAFT refusal remains covered by fixtures with `prereg.sha256` null; it is no longer
 the committed manifest's state. Other fixture tests reach each refusal in order

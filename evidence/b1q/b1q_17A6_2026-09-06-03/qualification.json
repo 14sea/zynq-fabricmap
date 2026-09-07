@@ -1,0 +1,71 @@
+{
+ "binding": {
+  "b1_manifest_sha256": "38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e",
+  "budget": 9,
+  "carrier_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+  "carrier_variant": "0x42310001",
+  "image_sha256": "300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb",
+  "master_seed": 176359248,
+  "prereg_sha256": "f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2",
+  "psoracle_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "session": "B1Q",
+  "token": "25315958147462dde8a43ff187094375"
+ },
+ "evidence_dir": "evidence/b1q/b1q_17A6_2026-09-06-03",
+ "files": {
+  "adjudication.json": "18094d71cbb15737a9aa21c31fad7b3e70a30f9ab91c60f282d095fdf9cf2c29",
+  "audits.json": "e42cef9bd19f05d32834b0ef153133bd7eabe8d2b93a4d496d1d3f8ee594e7dc",
+  "console.log": "4fed2279ba960b93a3e7138d0eaa32b0d7fc7795bd5def1449fa3d5b840a8e05",
+  "console.ts.log": "4b7a96455e9116dbf6b89bb7ba497c9ccdc40ddbf2b216c285adeec098d5399c",
+  "exports.json": "8985302c15fe806a45d48ba5183481ebc28f620d46d3953848e48cc7e77308b8",
+  "manifest_at_run.json": "38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e",
+  "ruling_provisioning.json": "46d9bf7078b72c526560593e4c9480a3feb949adbcf7575fb0822e26f552e3d6",
+  "ruling_whole_of_run.json": "56ff693995a6138cfa2ef3d68180e6e606b00abb5a9b2ded519006256a67b488",
+  "run_log.json": "ab1b9b6413c3370761c0a1a1a5518779d96bf1e4ca6428f80baa30ff205ef43f",
+  "summary.json": "51b3a0772d4b699684d0934f2c5f6be886a42f943c90b5f8482867544cae05a5",
+  "timeline.json": "d8ee2ec903b289e89e34e6533e99141637037a00c204463a33f40b7903467271"
+ },
+ "inputs": {
+  "pins_sha256": "3106d4a8445e16382b801a0791fde1fd2114846daef6aaf1fd6501e8e45c4709",
+  "plan_sha256": "e7239f0de4d33ec4e8476a46371cad799718bb0601d9be7a5a8f37ee0a2c449f",
+  "prediction_sha256": "d2c9293a4573b60e497a23cdd87f6355e29df696ef16e52aec05e00ac8aaf062"
+ },
+ "note": "carrier.qualified is derived from this record by host/b1_qualification.py: the files must still hash, manifest_at_run.json must hash to b1_manifest_sha256, the tokens and rulings must agree, the evidence must re-adjudicate to PASS against manifest_at_run, and the current manifest may differ from it only in the qualification state",
+ "outcome": "HOLD instrument: run_log rejected: audit seq 4: chunk numbers must be exactly 0..7: missing [4, 5, 6, 7], out of range []",
+ "rulings": {
+  "provisioning": {
+   "bytes_sha256": "82de6b34e381c3dd501310d7548212e24a68bb5929414be38db7e739d538b493",
+   "content": {
+    "b1_manifest_sha256": "38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e",
+    "boardid": "17A6",
+    "date": "2026-09-06-03",
+    "granted_by": "14sea",
+    "image_sha256": "300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb",
+    "prereg_sha256": "f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2",
+    "ruling": "provisioning P3-K",
+    "session": "B1Q"
+   },
+   "envelope_sha256": "46d9bf7078b72c526560593e4c9480a3feb949adbcf7575fb0822e26f552e3d6",
+   "file": "ruling_provisioning.json"
+  },
+  "whole_of_run": {
+   "bytes_sha256": "78e8f923a96cb699d5a7f74c58f02ebe8944ce59b4582335d716e10c8b2d4d6f",
+   "content": {
+    "b1_manifest_sha256": "38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e",
+    "boardid": "17A6",
+    "date": "2026-09-06-03",
+    "granted_by": "14sea",
+    "image_sha256": "300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb",
+    "master_seed": 176359248,
+    "prereg_sha256": "f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2",
+    "ruling": "whole-of-run B1 carrier qualification",
+    "session": "B1Q"
+   },
+   "envelope_sha256": "56ff693995a6138cfa2ef3d68180e6e606b00abb5a9b2ded519006256a67b488",
+   "file": "ruling_whole_of_run.json"
+  }
+ },
+ "schema": "b1_carrier_qualification",
+ "schema_version": "2.1.0",
+ "session": "B1Q"
+}

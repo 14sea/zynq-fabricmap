@@ -1,0 +1,55 @@
+{
+  "provenance": "Post-hoc read-only sysfs and uname inventory; collected during audit, not at session time. No serial port or USB device node opened.",
+  "at_utc": "2026-09-07T06:02:26Z",
+  "kernel_release": "6.18.20.3-microsoft-standard-WSL2+",
+  "console_alias_target": "/dev/ebaz-uart",
+  "tty_devices": [
+    {
+      "tty": "ttyUSB1",
+      "sysfs_path": "/sys/devices/platform/vhci_hcd.0/usb1/1-1/1-1:1.1/ttyUSB1",
+      "driver": "/sys/bus/usb-serial/drivers/ftdi_sio",
+      "usb": {
+        "idVendor": "0403",
+        "idProduct": "6011",
+        "product": "51maxgear.taobao.com",
+        "manufacturer": "Xilinx"
+      },
+      "usb_sysfs_path": "/sys/devices/platform/vhci_hcd.0/usb1/1-1"
+    },
+    {
+      "tty": "ttyUSB2",
+      "sysfs_path": "/sys/devices/platform/vhci_hcd.0/usb1/1-1/1-1:1.2/ttyUSB2",
+      "driver": "/sys/bus/usb-serial/drivers/ftdi_sio",
+      "usb": {
+        "idVendor": "0403",
+        "idProduct": "6011",
+        "product": "51maxgear.taobao.com",
+        "manufacturer": "Xilinx"
+      },
+      "usb_sysfs_path": "/sys/devices/platform/vhci_hcd.0/usb1/1-1"
+    },
+    {
+      "tty": "ttyUSB3",
+      "sysfs_path": "/sys/devices/platform/vhci_hcd.0/usb1/1-1/1-1:1.3/ttyUSB3",
+      "driver": "/sys/bus/usb-serial/drivers/ftdi_sio",
+      "usb": {
+        "idVendor": "0403",
+        "idProduct": "6011",
+        "product": "51maxgear.taobao.com",
+        "manufacturer": "Xilinx"
+      },
+      "usb_sysfs_path": "/sys/devices/platform/vhci_hcd.0/usb1/1-1"
+    },
+    {
+      "tty": "ttyUSB4",
+      "sysfs_path": "/sys/devices/platform/vhci_hcd.0/usb1/1-2/1-2:1.0/ttyUSB4",
+      "driver": "/sys/bus/usb-serial/drivers/ch341-uart",
+      "usb": {
+        "idVendor": "1a86",
+        "idProduct": "7523",
+        "product": "USB Serial"
+      },
+      "usb_sysfs_path": "/sys/devices/platform/vhci_hcd.0/usb1/1-2"
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "source_sha256": {
+    "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+    "B1_1_identity_page.json": "fecf885b91cf86727735447b8307a6dad1c13478890c3f99904856cc1c455196",
+    "adjudication.json": "18094d71cbb15737a9aa21c31fad7b3e70a30f9ab91c60f282d095fdf9cf2c29",
+    "audits.json": "e42cef9bd19f05d32834b0ef153133bd7eabe8d2b93a4d496d1d3f8ee594e7dc",
+    "console.log": "4fed2279ba960b93a3e7138d0eaa32b0d7fc7795bd5def1449fa3d5b840a8e05",
+    "console.ts.log": "4b7a96455e9116dbf6b89bb7ba497c9ccdc40ddbf2b216c285adeec098d5399c",
+    "exports.json": "8985302c15fe806a45d48ba5183481ebc28f620d46d3953848e48cc7e77308b8",
+    "manifest_at_run.json": "38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e",
+    "qualification.json": "97f2ab57309ed472933690decc62763d4758bb78cc289cbd1465397dd86e9f39",
+    "ruling_provisioning.json": "46d9bf7078b72c526560593e4c9480a3feb949adbcf7575fb0822e26f552e3d6",
+    "ruling_whole_of_run.json": "56ff693995a6138cfa2ef3d68180e6e606b00abb5a9b2ded519006256a67b488",
+    "run_log.json": "ab1b9b6413c3370761c0a1a1a5518779d96bf1e4ca6428f80baa30ff205ef43f",
+    "summary.json": "51b3a0772d4b699684d0934f2c5f6be886a42f943c90b5f8482867544cae05a5",
+    "timeline.json": "d8ee2ec903b289e89e34e6533e99141637037a00c204463a33f40b7903467271",
+    "ymodem.log": "28ae43b432e3729f6d93fb13aa5f0f5243b7bf14d95215bb478c6d1b5e3f15bb",
+    "ymodem_app.log": "83039379e95be50d78564483d46bed5bc43ccecc4f9201b1abbc5f1be8edb3a2"
+  },
+  "boundary_sha256": "7cbde383b6414556a1d60f35e83e3607a71be713750902c36cbd2a64b2f05000",
+  "pins": {
+    "files_verified": 105
+  },
+  "instrument": {
+    "root": "/home/test/zynq_psoracle",
+    "psoracle_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+    "files_verified": 128,
+    "git_checked": true
+  },
+  "outcome": "HOLD instrument: run_log rejected: audit seq 4: chunk numbers must be exactly 0..7: missing [4, 5, 6, 7], out of range []",
+  "record_reproduced": true,
+  "qualification_refusal": "the recorded qualification outcome is 'HOLD instrument: run_log rejected: audit seq 4: chunk numbers must be exactly 0..7: missing [4, 5, 6, 7], out of range []', not PASS",
+  "exports_complete": true,
+  "valid_frame_counts": {
+    "IDENT": 1,
+    "SIGNREQ": 4,
+    "HB": 63,
+    "AUDIT_READY": 4,
+    "AUDIT": 28,
+    "REC": 3
+  },
+  "raw_records_and_chunks_match": true,
+  "completed_record_audits": [
+    3,
+    "host audit gate marks (validators.audit.verify)"
+  ],
+  "audit_chunks_per_seq": {
+    "1": 8,
+    "2": 8,
+    "3": 8,
+    "4": 4
+  },
+  "epoch_end": {
+    "kind": "PROTOCOL",
+    "last_seq": 3,
+    "reason": "PROTOCOL_CRC_BUDGET: 5 > 4"
+  },
+  "crc_drop_comparisons": [
+    {
+      "type": "SIGNREQ",
+      "seq": 1,
+      "payload_chars": 312,
+      "urlsafe_base64_alphabet_only": true,
+      "crc_matching_candidates": []
+    },
+    {
+      "type": "REC",
+      "seq": 1,
+      "payload_chars": 2564,
+      "urlsafe_base64_alphabet_only": true,
+      "crc_matching_candidates": []
+    },
+    {
+      "type": "HB",
+      "seq": 2,
+      "payload_chars": 12,
+      "urlsafe_base64_alphabet_only": true,
+      "crc_matching_candidates": [
+        {
+          "source": "enumerated protocol heartbeat i=6",
+          "expected_payload_chars": 12,
+          "received_payload_chars": 12,
+          "deletion_only_subsequence": true,
+          "same_payload": true
+        }
+      ]
+    },
+    {
+      "type": "REC",
+      "seq": 3,
+      "payload_chars": 2555,
+      "urlsafe_base64_alphabet_only": true,
+      "crc_matching_candidates": [
+        {
+          "source": "same-run CRC-valid frame",
+          "expected_payload_chars": 2556,
+          "received_payload_chars": 2555,
+          "deletion_only_subsequence": true,
+          "same_payload": false
+        }
+      ]
+    },
+    {
+      "type": "AUDIT",
+      "seq": 4,
+      "payload_chars": 406,
+      "urlsafe_base64_alphabet_only": true,
+      "crc_matching_candidates": [
+        {
+          "source": "attempt-2 CRC-valid audit chunk 4",
+          "expected_payload_chars": 408,
+          "received_payload_chars": 406,
+          "deletion_only_subsequence": true,
+          "same_payload": false
+        }
+      ]
+    }
+  ],
+  "fragments": [
+    {
+      "t_mono": 171069.346175915,
+      "t_wall": 1788760596.139839,
+      "bytes": 288,
+      "reason": "resync: a frame head arrived with no line end before it",
+      "head": "P3L5 SIGNREQ 1 25315958147462dde8a43ff187094375 eyJhcHBfZXBvY2giOjAsImdlbm9tZSI6IjAwMDAwMDAwMDAw",
+      "text": "P3L5 SIGNREQ 1 25315958147462dde8a43ff187094375 eyJhcHBfZXBvY2giOjAsImdlbm9tZSI6IjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwIiwibm9uY2UiOiI5ZTM3NzliOTdmNGE3YzE1Iiwic2NoZW1hIjoic2lnbl9yZXF1ZXN0Iiwic2NoZW1hX3ZlcnNpb24iOiIxLjAu"
+    }
+  ],
+  "bad_frames": 0,
+  "go_to_last_event_s": 15.293581089994404,
+  "boundary_age_at_go_s": 247.8310158252716,
+  "rulings": {
+    "whole_of_run": {
+      "sha256": "78e8f923a96cb699d5a7f74c58f02ebe8944ce59b4582335d716e10c8b2d4d6f",
+      "consumed_marker": "2026-09-07T06:52:34 claimed pid=557975\n2026-09-07T06:56:44 HOLD instrument: run_log rejected: audit seq 4: chunk numbers must be exactly 0..7: missing [4, 5, 6, 7], out of range []\n"
+    },
+    "provisioning": {
+      "sha256": "82de6b34e381c3dd501310d7548212e24a68bb5929414be38db7e739d538b493",
+      "consumed_marker": "2026-09-07T06:56:44 claimed pid=557975\n2026-09-07T06:56:44 provisioning session outcome: HOLD instrument: run_log rejected: audit seq 4: chunk numbers must be exactly 0..7: missing [4, 5, 6, 7], out of range []\n"
+    }
+  }
+}
