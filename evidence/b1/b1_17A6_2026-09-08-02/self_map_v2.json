@@ -1,0 +1,7248 @@
+{
+  "schema": "self_map",
+  "schema_version": "2.0.0",
+  "cartographer": "carto-v1",
+  "binding": {
+    "token": "6b6a8cf15ba2e45fdb9f1c5ee65862a8",
+    "universe_sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458",
+    "image_sha256_lo32": "993d5abb"
+  },
+  "seed": 1123460948,
+  "budget": 333,
+  "anomalies": 0,
+  "code_probe_seqs": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "universe": {
+    "addresses": 292,
+    "class": "clb_lut_init",
+    "safety_class": "content"
+  },
+  "entries": [
+    {
+      "genome_bit": 0,
+      "address": "0x00400a20/51/0",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 54
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2
+        ],
+        "confirm_seq": 114
+      }
+    },
+    {
+      "genome_bit": 1,
+      "address": "0x00400a20/51/1",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 52
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3
+        ],
+        "confirm_seq": 66
+      }
+    },
+    {
+      "genome_bit": 2,
+      "address": "0x00400a20/51/2",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 50
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3
+        ],
+        "confirm_seq": 257
+      }
+    },
+    {
+      "genome_bit": 3,
+      "address": "0x00400a20/51/3",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 48
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4
+        ],
+        "confirm_seq": 153
+      }
+    },
+    {
+      "genome_bit": 4,
+      "address": "0x00400a20/51/4",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 38
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4
+        ],
+        "confirm_seq": 105
+      }
+    },
+    {
+      "genome_bit": 5,
+      "address": "0x00400a20/51/7",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 32
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4
+        ],
+        "confirm_seq": 301
+      }
+    },
+    {
+      "genome_bit": 6,
+      "address": "0x00400a20/51/8",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 22
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4
+        ],
+        "confirm_seq": 275
+      }
+    },
+    {
+      "genome_bit": 7,
+      "address": "0x00400a20/51/9",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 20
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5
+        ],
+        "confirm_seq": 216
+      }
+    },
+    {
+      "genome_bit": 8,
+      "address": "0x00400a20/51/10",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 18
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5
+        ],
+        "confirm_seq": 58
+      }
+    },
+    {
+      "genome_bit": 9,
+      "address": "0x00400a20/51/11",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 16
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5
+        ],
+        "confirm_seq": 217
+      }
+    },
+    {
+      "genome_bit": 10,
+      "address": "0x00400a20/51/12",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 6
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5
+        ],
+        "confirm_seq": 71
+      }
+    },
+    {
+      "genome_bit": 11,
+      "address": "0x00400a20/51/13",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 4
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5
+        ],
+        "confirm_seq": 202
+      }
+    },
+    {
+      "genome_bit": 12,
+      "address": "0x00400a20/51/14",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 2
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5
+        ],
+        "confirm_seq": 279
+      }
+    },
+    {
+      "genome_bit": 13,
+      "address": "0x00400a20/51/15",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 0
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5
+        ],
+        "confirm_seq": 131
+      }
+    },
+    {
+      "genome_bit": 14,
+      "address": "0x00400a20/52/16",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 54
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "confirm_seq": 141
+      }
+    },
+    {
+      "genome_bit": 15,
+      "address": "0x00400a20/52/18",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 50
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          6
+        ],
+        "confirm_seq": 245
+      }
+    },
+    {
+      "genome_bit": 16,
+      "address": "0x00400a20/52/19",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 48
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          6
+        ],
+        "confirm_seq": 50
+      }
+    },
+    {
+      "genome_bit": 17,
+      "address": "0x00400a20/52/20",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 38
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          6
+        ],
+        "confirm_seq": 41
+      }
+    },
+    {
+      "genome_bit": 18,
+      "address": "0x00400a20/52/21",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 36
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          6
+        ],
+        "confirm_seq": 297
+      }
+    },
+    {
+      "genome_bit": 19,
+      "address": "0x00400a20/52/22",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 34
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          6
+        ],
+        "confirm_seq": 90
+      }
+    },
+    {
+      "genome_bit": 20,
+      "address": "0x00400a20/52/23",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 32
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          6
+        ],
+        "confirm_seq": 165
+      }
+    },
+    {
+      "genome_bit": 21,
+      "address": "0x00400a20/52/26",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 18
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          6
+        ],
+        "confirm_seq": 262
+      }
+    },
+    {
+      "genome_bit": 22,
+      "address": "0x00400a20/52/27",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 16
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          6
+        ],
+        "confirm_seq": 81
+      }
+    },
+    {
+      "genome_bit": 23,
+      "address": "0x00400a20/52/28",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 6
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          6
+        ],
+        "confirm_seq": 267
+      }
+    },
+    {
+      "genome_bit": 24,
+      "address": "0x00400a20/52/29",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 4
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          6
+        ],
+        "confirm_seq": 244
+      }
+    },
+    {
+      "genome_bit": 25,
+      "address": "0x00400a20/52/30",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 2
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          6
+        ],
+        "confirm_seq": 300
+      }
+    },
+    {
+      "genome_bit": 26,
+      "address": "0x00400a21/51/1",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 53
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          6
+        ],
+        "confirm_seq": 215
+      }
+    },
+    {
+      "genome_bit": 27,
+      "address": "0x00400a21/51/2",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 51
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          6
+        ],
+        "confirm_seq": 29
+      }
+    },
+    {
+      "genome_bit": 28,
+      "address": "0x00400a21/51/4",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 39
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          6
+        ],
+        "confirm_seq": 185
+      }
+    },
+    {
+      "genome_bit": 29,
+      "address": "0x00400a21/51/5",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 37
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          6
+        ],
+        "confirm_seq": 250
+      }
+    },
+    {
+      "genome_bit": 30,
+      "address": "0x00400a21/51/6",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 35
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "confirm_seq": 12
+      }
+    },
+    {
+      "genome_bit": 31,
+      "address": "0x00400a21/51/9",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 21
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          7
+        ],
+        "confirm_seq": 65
+      }
+    },
+    {
+      "genome_bit": 32,
+      "address": "0x00400a21/51/10",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 19
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          7
+        ],
+        "confirm_seq": 59
+      }
+    },
+    {
+      "genome_bit": 33,
+      "address": "0x00400a21/51/11",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 17
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          7
+        ],
+        "confirm_seq": 259
+      }
+    },
+    {
+      "genome_bit": 34,
+      "address": "0x00400a21/51/12",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 7
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          7
+        ],
+        "confirm_seq": 190
+      }
+    },
+    {
+      "genome_bit": 35,
+      "address": "0x00400a21/51/14",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 3
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          7
+        ],
+        "confirm_seq": 85
+      }
+    },
+    {
+      "genome_bit": 36,
+      "address": "0x00400a21/51/15",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 1
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          7
+        ],
+        "confirm_seq": 261
+      }
+    },
+    {
+      "genome_bit": 37,
+      "address": "0x00400a21/52/16",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 55
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          7
+        ],
+        "confirm_seq": 260
+      }
+    },
+    {
+      "genome_bit": 38,
+      "address": "0x00400a21/52/17",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 53
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          7
+        ],
+        "confirm_seq": 167
+      }
+    },
+    {
+      "genome_bit": 39,
+      "address": "0x00400a21/52/18",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 51
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          7
+        ],
+        "confirm_seq": 103
+      }
+    },
+    {
+      "genome_bit": 40,
+      "address": "0x00400a21/52/20",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 39
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          7
+        ],
+        "confirm_seq": 39
+      }
+    },
+    {
+      "genome_bit": 41,
+      "address": "0x00400a21/52/21",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 37
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          7
+        ],
+        "confirm_seq": 109
+      }
+    },
+    {
+      "genome_bit": 42,
+      "address": "0x00400a21/52/23",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 33
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          7
+        ],
+        "confirm_seq": 192
+      }
+    },
+    {
+      "genome_bit": 43,
+      "address": "0x00400a21/52/24",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 23
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          7
+        ],
+        "confirm_seq": 102
+      }
+    },
+    {
+      "genome_bit": 44,
+      "address": "0x00400a21/52/25",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 21
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          7
+        ],
+        "confirm_seq": 76
+      }
+    },
+    {
+      "genome_bit": 45,
+      "address": "0x00400a21/52/26",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 19
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          7
+        ],
+        "confirm_seq": 181
+      }
+    },
+    {
+      "genome_bit": 46,
+      "address": "0x00400a21/52/27",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 17
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          7
+        ],
+        "confirm_seq": 175
+      }
+    },
+    {
+      "genome_bit": 47,
+      "address": "0x00400a21/52/28",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 7
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          6,
+          7
+        ],
+        "confirm_seq": 290
+      }
+    },
+    {
+      "genome_bit": 48,
+      "address": "0x00400a21/52/29",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 5
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          6,
+          7
+        ],
+        "confirm_seq": 298
+      }
+    },
+    {
+      "genome_bit": 49,
+      "address": "0x00400a21/52/31",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 1
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          6,
+          7
+        ],
+        "confirm_seq": 156
+      }
+    },
+    {
+      "genome_bit": 50,
+      "address": "0x00400a22/51/0",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 63
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          6,
+          7
+        ],
+        "confirm_seq": 265
+      }
+    },
+    {
+      "genome_bit": 51,
+      "address": "0x00400a22/51/2",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 59
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          6,
+          7
+        ],
+        "confirm_seq": 203
+      }
+    },
+    {
+      "genome_bit": 52,
+      "address": "0x00400a22/51/3",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 57
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          6,
+          7
+        ],
+        "confirm_seq": 25
+      }
+    },
+    {
+      "genome_bit": 53,
+      "address": "0x00400a22/51/6",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 43
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          6,
+          7
+        ],
+        "confirm_seq": 194
+      }
+    },
+    {
+      "genome_bit": 54,
+      "address": "0x00400a22/51/7",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 41
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          6,
+          7
+        ],
+        "confirm_seq": 246
+      }
+    },
+    {
+      "genome_bit": 55,
+      "address": "0x00400a22/51/9",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 29
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          6,
+          7
+        ],
+        "confirm_seq": 228
+      }
+    },
+    {
+      "genome_bit": 56,
+      "address": "0x00400a22/51/10",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 27
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          6,
+          7
+        ],
+        "confirm_seq": 293
+      }
+    },
+    {
+      "genome_bit": 57,
+      "address": "0x00400a22/51/12",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 15
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          6,
+          7
+        ],
+        "confirm_seq": 154
+      }
+    },
+    {
+      "genome_bit": 58,
+      "address": "0x00400a22/51/13",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 13
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          6,
+          7
+        ],
+        "confirm_seq": 158
+      }
+    },
+    {
+      "genome_bit": 59,
+      "address": "0x00400a22/51/14",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 11
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          6,
+          7
+        ],
+        "confirm_seq": 73
+      }
+    },
+    {
+      "genome_bit": 60,
+      "address": "0x00400a22/51/15",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 9
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          6,
+          7
+        ],
+        "confirm_seq": 46
+      }
+    },
+    {
+      "genome_bit": 61,
+      "address": "0x00400a22/52/16",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 63
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "confirm_seq": 186
+      }
+    },
+    {
+      "genome_bit": 62,
+      "address": "0x00400a22/52/17",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 61
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "confirm_seq": 75
+      }
+    },
+    {
+      "genome_bit": 63,
+      "address": "0x00400a22/52/20",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 47
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          8
+        ],
+        "confirm_seq": 285
+      }
+    },
+    {
+      "genome_bit": 64,
+      "address": "0x00400a22/52/21",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 45
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          8
+        ],
+        "confirm_seq": 208
+      }
+    },
+    {
+      "genome_bit": 65,
+      "address": "0x00400a22/52/22",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 43
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          8
+        ],
+        "confirm_seq": 172
+      }
+    },
+    {
+      "genome_bit": 66,
+      "address": "0x00400a22/52/23",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 41
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          8
+        ],
+        "confirm_seq": 93
+      }
+    },
+    {
+      "genome_bit": 67,
+      "address": "0x00400a22/52/25",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 29
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          8
+        ],
+        "confirm_seq": 79
+      }
+    },
+    {
+      "genome_bit": 68,
+      "address": "0x00400a22/52/26",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 27
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          8
+        ],
+        "confirm_seq": 53
+      }
+    },
+    {
+      "genome_bit": 69,
+      "address": "0x00400a22/52/27",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 25
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          8
+        ],
+        "confirm_seq": 62
+      }
+    },
+    {
+      "genome_bit": 70,
+      "address": "0x00400a22/52/28",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 15
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          8
+        ],
+        "confirm_seq": 130
+      }
+    },
+    {
+      "genome_bit": 71,
+      "address": "0x00400a22/52/29",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 13
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          8
+        ],
+        "confirm_seq": 14
+      }
+    },
+    {
+      "genome_bit": 72,
+      "address": "0x00400a22/52/30",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 11
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          8
+        ],
+        "confirm_seq": 209
+      }
+    },
+    {
+      "genome_bit": 73,
+      "address": "0x00400a22/52/31",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 9
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          8
+        ],
+        "confirm_seq": 210
+      }
+    },
+    {
+      "genome_bit": 74,
+      "address": "0x00400a23/51/0",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 62
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          8
+        ],
+        "confirm_seq": 89
+      }
+    },
+    {
+      "genome_bit": 75,
+      "address": "0x00400a23/51/1",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 60
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          8
+        ],
+        "confirm_seq": 197
+      }
+    },
+    {
+      "genome_bit": 76,
+      "address": "0x00400a23/51/4",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 46
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          8
+        ],
+        "confirm_seq": 120
+      }
+    },
+    {
+      "genome_bit": 77,
+      "address": "0x00400a23/51/5",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 44
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          8
+        ],
+        "confirm_seq": 45
+      }
+    },
+    {
+      "genome_bit": 78,
+      "address": "0x00400a23/51/6",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 42
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          8
+        ],
+        "confirm_seq": 123
+      }
+    },
+    {
+      "genome_bit": 79,
+      "address": "0x00400a23/51/7",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 40
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          6,
+          8
+        ],
+        "confirm_seq": 213
+      }
+    },
+    {
+      "genome_bit": 80,
+      "address": "0x00400a23/51/8",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 30
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          6,
+          8
+        ],
+        "confirm_seq": 122
+      }
+    },
+    {
+      "genome_bit": 81,
+      "address": "0x00400a23/51/10",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 26
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          6,
+          8
+        ],
+        "confirm_seq": 108
+      }
+    },
+    {
+      "genome_bit": 82,
+      "address": "0x00400a23/51/11",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 24
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          6,
+          8
+        ],
+        "confirm_seq": 104
+      }
+    },
+    {
+      "genome_bit": 83,
+      "address": "0x00400a23/51/12",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 14
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          6,
+          8
+        ],
+        "confirm_seq": 42
+      }
+    },
+    {
+      "genome_bit": 84,
+      "address": "0x00400a23/51/13",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 12
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          6,
+          8
+        ],
+        "confirm_seq": 26
+      }
+    },
+    {
+      "genome_bit": 85,
+      "address": "0x00400a23/51/14",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 10
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          6,
+          8
+        ],
+        "confirm_seq": 242
+      }
+    },
+    {
+      "genome_bit": 86,
+      "address": "0x00400a23/51/15",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 0,
+        "init_index": 8
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          6,
+          8
+        ],
+        "confirm_seq": 287
+      }
+    },
+    {
+      "genome_bit": 87,
+      "address": "0x00400a23/52/16",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 62
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          6,
+          8
+        ],
+        "confirm_seq": 117
+      }
+    },
+    {
+      "genome_bit": 88,
+      "address": "0x00400a23/52/18",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 58
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          6,
+          8
+        ],
+        "confirm_seq": 277
+      }
+    },
+    {
+      "genome_bit": 89,
+      "address": "0x00400a23/52/20",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 46
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          6,
+          8
+        ],
+        "confirm_seq": 276
+      }
+    },
+    {
+      "genome_bit": 90,
+      "address": "0x00400a23/52/22",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 42
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          6,
+          8
+        ],
+        "confirm_seq": 92
+      }
+    },
+    {
+      "genome_bit": 91,
+      "address": "0x00400a23/52/23",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 40
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          6,
+          8
+        ],
+        "confirm_seq": 99
+      }
+    },
+    {
+      "genome_bit": 92,
+      "address": "0x00400a23/52/24",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 30
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          6,
+          8
+        ],
+        "confirm_seq": 170
+      }
+    },
+    {
+      "genome_bit": 93,
+      "address": "0x00400a23/52/25",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 28
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          6,
+          8
+        ],
+        "confirm_seq": 31
+      }
+    },
+    {
+      "genome_bit": 94,
+      "address": "0x00400a23/52/28",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 14
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          8
+        ],
+        "confirm_seq": 98
+      }
+    },
+    {
+      "genome_bit": 95,
+      "address": "0x00400a23/52/29",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 12
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          7,
+          8
+        ],
+        "confirm_seq": 56
+      }
+    },
+    {
+      "genome_bit": 96,
+      "address": "0x00400a23/52/30",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 10
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          7,
+          8
+        ],
+        "confirm_seq": 249
+      }
+    },
+    {
+      "genome_bit": 97,
+      "address": "0x00400a23/52/31",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 1,
+        "init_index": 8
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          7,
+          8
+        ],
+        "confirm_seq": 184
+      }
+    },
+    {
+      "genome_bit": 98,
+      "address": "0x00400c1a/51/0",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 54
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          7,
+          8
+        ],
+        "confirm_seq": 294
+      }
+    },
+    {
+      "genome_bit": 99,
+      "address": "0x00400c1a/51/1",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 52
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          7,
+          8
+        ],
+        "confirm_seq": 207
+      }
+    },
+    {
+      "genome_bit": 100,
+      "address": "0x00400c1a/51/3",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 48
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          7,
+          8
+        ],
+        "confirm_seq": 132
+      }
+    },
+    {
+      "genome_bit": 101,
+      "address": "0x00400c1a/51/5",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 36
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          7,
+          8
+        ],
+        "confirm_seq": 174
+      }
+    },
+    {
+      "genome_bit": 102,
+      "address": "0x00400c1a/51/6",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 34
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          7,
+          8
+        ],
+        "confirm_seq": 44
+      }
+    },
+    {
+      "genome_bit": 103,
+      "address": "0x00400c1a/51/7",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 32
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          7,
+          8
+        ],
+        "confirm_seq": 51
+      }
+    },
+    {
+      "genome_bit": 104,
+      "address": "0x00400c1a/51/11",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 16
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          7,
+          8
+        ],
+        "confirm_seq": 126
+      }
+    },
+    {
+      "genome_bit": 105,
+      "address": "0x00400c1a/51/12",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 6
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          7,
+          8
+        ],
+        "confirm_seq": 144
+      }
+    },
+    {
+      "genome_bit": 106,
+      "address": "0x00400c1a/51/13",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 4
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          7,
+          8
+        ],
+        "confirm_seq": 199
+      }
+    },
+    {
+      "genome_bit": 107,
+      "address": "0x00400c1a/51/15",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 0
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          7,
+          8
+        ],
+        "confirm_seq": 180
+      }
+    },
+    {
+      "genome_bit": 108,
+      "address": "0x00400c1a/52/16",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 54
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          7,
+          8
+        ],
+        "confirm_seq": 100
+      }
+    },
+    {
+      "genome_bit": 109,
+      "address": "0x00400c1a/52/17",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 52
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          7,
+          8
+        ],
+        "confirm_seq": 15
+      }
+    },
+    {
+      "genome_bit": 110,
+      "address": "0x00400c1a/52/18",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 50
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          7,
+          8
+        ],
+        "confirm_seq": 88
+      }
+    },
+    {
+      "genome_bit": 111,
+      "address": "0x00400c1a/52/19",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 48
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 221
+      }
+    },
+    {
+      "genome_bit": 112,
+      "address": "0x00400c1a/52/20",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 38
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 135
+      }
+    },
+    {
+      "genome_bit": 113,
+      "address": "0x00400c1a/52/21",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 36
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 16
+      }
+    },
+    {
+      "genome_bit": 114,
+      "address": "0x00400c1a/52/22",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 34
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 243
+      }
+    },
+    {
+      "genome_bit": 115,
+      "address": "0x00400c1a/52/23",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 32
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 222
+      }
+    },
+    {
+      "genome_bit": 116,
+      "address": "0x00400c1a/52/24",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 22
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 196
+      }
+    },
+    {
+      "genome_bit": 117,
+      "address": "0x00400c1a/52/25",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 20
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 38
+      }
+    },
+    {
+      "genome_bit": 118,
+      "address": "0x00400c1a/52/26",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 18
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 284
+      }
+    },
+    {
+      "genome_bit": 119,
+      "address": "0x00400c1a/52/28",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 6
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 97
+      }
+    },
+    {
+      "genome_bit": 120,
+      "address": "0x00400c1a/52/29",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 4
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 82
+      }
+    },
+    {
+      "genome_bit": 121,
+      "address": "0x00400c1a/52/30",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 2
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 74
+      }
+    },
+    {
+      "genome_bit": 122,
+      "address": "0x00400c1a/52/31",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 0
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 264
+      }
+    },
+    {
+      "genome_bit": 123,
+      "address": "0x00400c1b/51/0",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 55
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 253
+      }
+    },
+    {
+      "genome_bit": 124,
+      "address": "0x00400c1b/51/1",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 53
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 60
+      }
+    },
+    {
+      "genome_bit": 125,
+      "address": "0x00400c1b/51/2",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 51
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 147
+      }
+    },
+    {
+      "genome_bit": 126,
+      "address": "0x00400c1b/51/4",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 39
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "confirm_seq": 83
+      }
+    },
+    {
+      "genome_bit": 127,
+      "address": "0x00400c1b/51/5",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 37
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          9
+        ],
+        "confirm_seq": 195
+      }
+    },
+    {
+      "genome_bit": 128,
+      "address": "0x00400c1b/51/7",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 33
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          9
+        ],
+        "confirm_seq": 127
+      }
+    },
+    {
+      "genome_bit": 129,
+      "address": "0x00400c1b/51/8",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 23
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          9
+        ],
+        "confirm_seq": 291
+      }
+    },
+    {
+      "genome_bit": 130,
+      "address": "0x00400c1b/51/9",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 21
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          9
+        ],
+        "confirm_seq": 226
+      }
+    },
+    {
+      "genome_bit": 131,
+      "address": "0x00400c1b/51/10",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 19
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          9
+        ],
+        "confirm_seq": 272
+      }
+    },
+    {
+      "genome_bit": 132,
+      "address": "0x00400c1b/51/13",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 5
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          9
+        ],
+        "confirm_seq": 288
+      }
+    },
+    {
+      "genome_bit": 133,
+      "address": "0x00400c1b/51/14",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 3
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          9
+        ],
+        "confirm_seq": 157
+      }
+    },
+    {
+      "genome_bit": 134,
+      "address": "0x00400c1b/52/16",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 55
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          9
+        ],
+        "confirm_seq": 200
+      }
+    },
+    {
+      "genome_bit": 135,
+      "address": "0x00400c1b/52/17",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 53
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          9
+        ],
+        "confirm_seq": 162
+      }
+    },
+    {
+      "genome_bit": 136,
+      "address": "0x00400c1b/52/18",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 51
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          9
+        ],
+        "confirm_seq": 159
+      }
+    },
+    {
+      "genome_bit": 137,
+      "address": "0x00400c1b/52/19",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 49
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          9
+        ],
+        "confirm_seq": 219
+      }
+    },
+    {
+      "genome_bit": 138,
+      "address": "0x00400c1b/52/20",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 39
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          9
+        ],
+        "confirm_seq": 149
+      }
+    },
+    {
+      "genome_bit": 139,
+      "address": "0x00400c1b/52/22",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 35
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          9
+        ],
+        "confirm_seq": 173
+      }
+    },
+    {
+      "genome_bit": 140,
+      "address": "0x00400c1b/52/24",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 23
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          9
+        ],
+        "confirm_seq": 48
+      }
+    },
+    {
+      "genome_bit": 141,
+      "address": "0x00400c1b/52/25",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 21
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          9
+        ],
+        "confirm_seq": 280
+      }
+    },
+    {
+      "genome_bit": 142,
+      "address": "0x00400c1b/52/26",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 19
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          9
+        ],
+        "confirm_seq": 232
+      }
+    },
+    {
+      "genome_bit": 143,
+      "address": "0x00400c1b/52/28",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 7
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          6,
+          9
+        ],
+        "confirm_seq": 296
+      }
+    },
+    {
+      "genome_bit": 144,
+      "address": "0x00400c1b/52/29",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 5
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          6,
+          9
+        ],
+        "confirm_seq": 160
+      }
+    },
+    {
+      "genome_bit": 145,
+      "address": "0x00400c1b/52/30",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 3
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          6,
+          9
+        ],
+        "confirm_seq": 67
+      }
+    },
+    {
+      "genome_bit": 146,
+      "address": "0x00400c1c/51/0",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 63
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          6,
+          9
+        ],
+        "confirm_seq": 241
+      }
+    },
+    {
+      "genome_bit": 147,
+      "address": "0x00400c1c/51/1",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 61
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          6,
+          9
+        ],
+        "confirm_seq": 251
+      }
+    },
+    {
+      "genome_bit": 148,
+      "address": "0x00400c1c/51/2",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 59
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          6,
+          9
+        ],
+        "confirm_seq": 152
+      }
+    },
+    {
+      "genome_bit": 149,
+      "address": "0x00400c1c/51/3",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 57
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          6,
+          9
+        ],
+        "confirm_seq": 169
+      }
+    },
+    {
+      "genome_bit": 150,
+      "address": "0x00400c1c/51/4",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 47
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          6,
+          9
+        ],
+        "confirm_seq": 283
+      }
+    },
+    {
+      "genome_bit": 151,
+      "address": "0x00400c1c/51/6",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 43
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          6,
+          9
+        ],
+        "confirm_seq": 70
+      }
+    },
+    {
+      "genome_bit": 152,
+      "address": "0x00400c1c/51/7",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 41
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          6,
+          9
+        ],
+        "confirm_seq": 164
+      }
+    },
+    {
+      "genome_bit": 153,
+      "address": "0x00400c1c/51/8",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 31
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          6,
+          9
+        ],
+        "confirm_seq": 233
+      }
+    },
+    {
+      "genome_bit": 154,
+      "address": "0x00400c1c/51/9",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 29
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          6,
+          9
+        ],
+        "confirm_seq": 36
+      }
+    },
+    {
+      "genome_bit": 155,
+      "address": "0x00400c1c/51/10",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 27
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          6,
+          9
+        ],
+        "confirm_seq": 281
+      }
+    },
+    {
+      "genome_bit": 156,
+      "address": "0x00400c1c/51/11",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 25
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          6,
+          9
+        ],
+        "confirm_seq": 28
+      }
+    },
+    {
+      "genome_bit": 157,
+      "address": "0x00400c1c/51/12",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 15
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          6,
+          9
+        ],
+        "confirm_seq": 32
+      }
+    },
+    {
+      "genome_bit": 158,
+      "address": "0x00400c1c/51/13",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 13
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          9
+        ],
+        "confirm_seq": 289
+      }
+    },
+    {
+      "genome_bit": 159,
+      "address": "0x00400c1c/51/14",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 11
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          7,
+          9
+        ],
+        "confirm_seq": 96
+      }
+    },
+    {
+      "genome_bit": 160,
+      "address": "0x00400c1c/51/15",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 9
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          7,
+          9
+        ],
+        "confirm_seq": 240
+      }
+    },
+    {
+      "genome_bit": 161,
+      "address": "0x00400c1c/52/16",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 63
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          7,
+          9
+        ],
+        "confirm_seq": 302
+      }
+    },
+    {
+      "genome_bit": 162,
+      "address": "0x00400c1c/52/17",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 61
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          7,
+          9
+        ],
+        "confirm_seq": 254
+      }
+    },
+    {
+      "genome_bit": 163,
+      "address": "0x00400c1c/52/19",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 57
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          7,
+          9
+        ],
+        "confirm_seq": 116
+      }
+    },
+    {
+      "genome_bit": 164,
+      "address": "0x00400c1c/52/20",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 47
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          7,
+          9
+        ],
+        "confirm_seq": 198
+      }
+    },
+    {
+      "genome_bit": 165,
+      "address": "0x00400c1c/52/22",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 43
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          7,
+          9
+        ],
+        "confirm_seq": 171
+      }
+    },
+    {
+      "genome_bit": 166,
+      "address": "0x00400c1c/52/23",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 41
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          7,
+          9
+        ],
+        "confirm_seq": 248
+      }
+    },
+    {
+      "genome_bit": 167,
+      "address": "0x00400c1c/52/25",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 29
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          7,
+          9
+        ],
+        "confirm_seq": 193
+      }
+    },
+    {
+      "genome_bit": 168,
+      "address": "0x00400c1c/52/26",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 27
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          7,
+          9
+        ],
+        "confirm_seq": 191
+      }
+    },
+    {
+      "genome_bit": 169,
+      "address": "0x00400c1c/52/28",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 15
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          7,
+          9
+        ],
+        "confirm_seq": 230
+      }
+    },
+    {
+      "genome_bit": 170,
+      "address": "0x00400c1c/52/29",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 13
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          7,
+          9
+        ],
+        "confirm_seq": 138
+      }
+    },
+    {
+      "genome_bit": 171,
+      "address": "0x00400c1c/52/30",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 11
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          7,
+          9
+        ],
+        "confirm_seq": 146
+      }
+    },
+    {
+      "genome_bit": 172,
+      "address": "0x00400c1c/52/31",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 9
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          7,
+          9
+        ],
+        "confirm_seq": 52
+      }
+    },
+    {
+      "genome_bit": 173,
+      "address": "0x00400c1d/51/0",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 62
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          7,
+          9
+        ],
+        "confirm_seq": 234
+      }
+    },
+    {
+      "genome_bit": 174,
+      "address": "0x00400c1d/51/1",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 60
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          7,
+          9
+        ],
+        "confirm_seq": 133
+      }
+    },
+    {
+      "genome_bit": 175,
+      "address": "0x00400c1d/51/2",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 58
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 136
+      }
+    },
+    {
+      "genome_bit": 176,
+      "address": "0x00400c1d/51/3",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 56
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 30
+      }
+    },
+    {
+      "genome_bit": 177,
+      "address": "0x00400c1d/51/5",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 44
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 95
+      }
+    },
+    {
+      "genome_bit": 178,
+      "address": "0x00400c1d/51/6",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 42
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 238
+      }
+    },
+    {
+      "genome_bit": 179,
+      "address": "0x00400c1d/51/7",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 40
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 64
+      }
+    },
+    {
+      "genome_bit": 180,
+      "address": "0x00400c1d/51/8",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 30
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 34
+      }
+    },
+    {
+      "genome_bit": 181,
+      "address": "0x00400c1d/51/11",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 24
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 20
+      }
+    },
+    {
+      "genome_bit": 182,
+      "address": "0x00400c1d/51/12",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 14
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 182
+      }
+    },
+    {
+      "genome_bit": 183,
+      "address": "0x00400c1d/51/13",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 12
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 151
+      }
+    },
+    {
+      "genome_bit": 184,
+      "address": "0x00400c1d/51/14",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 10
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 187
+      }
+    },
+    {
+      "genome_bit": 185,
+      "address": "0x00400c1d/51/15",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 2,
+        "init_index": 8
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 140
+      }
+    },
+    {
+      "genome_bit": 186,
+      "address": "0x00400c1d/52/16",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 62
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 258
+      }
+    },
+    {
+      "genome_bit": 187,
+      "address": "0x00400c1d/52/17",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 60
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 148
+      }
+    },
+    {
+      "genome_bit": 188,
+      "address": "0x00400c1d/52/19",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 56
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 211
+      }
+    },
+    {
+      "genome_bit": 189,
+      "address": "0x00400c1d/52/20",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 46
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 220
+      }
+    },
+    {
+      "genome_bit": 190,
+      "address": "0x00400c1d/52/21",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 44
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          9
+        ],
+        "confirm_seq": 227
+      }
+    },
+    {
+      "genome_bit": 191,
+      "address": "0x00400c1d/52/23",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 40
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          8,
+          9
+        ],
+        "confirm_seq": 274
+      }
+    },
+    {
+      "genome_bit": 192,
+      "address": "0x00400c1d/52/24",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 30
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          8,
+          9
+        ],
+        "confirm_seq": 205
+      }
+    },
+    {
+      "genome_bit": 193,
+      "address": "0x00400c1d/52/25",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 28
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          8,
+          9
+        ],
+        "confirm_seq": 55
+      }
+    },
+    {
+      "genome_bit": 194,
+      "address": "0x00400c1d/52/26",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 26
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          8,
+          9
+        ],
+        "confirm_seq": 22
+      }
+    },
+    {
+      "genome_bit": 195,
+      "address": "0x00400c1d/52/27",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 24
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          8,
+          9
+        ],
+        "confirm_seq": 183
+      }
+    },
+    {
+      "genome_bit": 196,
+      "address": "0x00400c1d/52/28",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 14
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          8,
+          9
+        ],
+        "confirm_seq": 239
+      }
+    },
+    {
+      "genome_bit": 197,
+      "address": "0x00400c1d/52/29",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 3,
+        "init_index": 12
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          8,
+          9
+        ],
+        "confirm_seq": 139
+      }
+    },
+    {
+      "genome_bit": 198,
+      "address": "0x00400c20/51/0",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 62
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          8,
+          9
+        ],
+        "confirm_seq": 269
+      }
+    },
+    {
+      "genome_bit": 199,
+      "address": "0x00400c20/51/2",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 58
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          8,
+          9
+        ],
+        "confirm_seq": 282
+      }
+    },
+    {
+      "genome_bit": 200,
+      "address": "0x00400c20/51/3",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 56
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          8,
+          9
+        ],
+        "confirm_seq": 11
+      }
+    },
+    {
+      "genome_bit": 201,
+      "address": "0x00400c20/51/4",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 46
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          8,
+          9
+        ],
+        "confirm_seq": 145
+      }
+    },
+    {
+      "genome_bit": 202,
+      "address": "0x00400c20/51/6",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 42
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          8,
+          9
+        ],
+        "confirm_seq": 206
+      }
+    },
+    {
+      "genome_bit": 203,
+      "address": "0x00400c20/51/7",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 40
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          8,
+          9
+        ],
+        "confirm_seq": 223
+      }
+    },
+    {
+      "genome_bit": 204,
+      "address": "0x00400c20/51/8",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 30
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          8,
+          9
+        ],
+        "confirm_seq": 177
+      }
+    },
+    {
+      "genome_bit": 205,
+      "address": "0x00400c20/51/10",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 26
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          8,
+          9
+        ],
+        "confirm_seq": 77
+      }
+    },
+    {
+      "genome_bit": 206,
+      "address": "0x00400c20/51/12",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 14
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          8,
+          9
+        ],
+        "confirm_seq": 235
+      }
+    },
+    {
+      "genome_bit": 207,
+      "address": "0x00400c20/51/13",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 12
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 142
+      }
+    },
+    {
+      "genome_bit": 208,
+      "address": "0x00400c20/51/15",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 8
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 69
+      }
+    },
+    {
+      "genome_bit": 209,
+      "address": "0x00400c20/52/18",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 58
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 166
+      }
+    },
+    {
+      "genome_bit": 210,
+      "address": "0x00400c20/52/19",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 56
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 129
+      }
+    },
+    {
+      "genome_bit": 211,
+      "address": "0x00400c20/52/20",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 46
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 229
+      }
+    },
+    {
+      "genome_bit": 212,
+      "address": "0x00400c20/52/22",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 42
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 119
+      }
+    },
+    {
+      "genome_bit": 213,
+      "address": "0x00400c20/52/23",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 40
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 112
+      }
+    },
+    {
+      "genome_bit": 214,
+      "address": "0x00400c20/52/24",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 30
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 201
+      }
+    },
+    {
+      "genome_bit": 215,
+      "address": "0x00400c20/52/25",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 28
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 86
+      }
+    },
+    {
+      "genome_bit": 216,
+      "address": "0x00400c20/52/27",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 24
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 263
+      }
+    },
+    {
+      "genome_bit": 217,
+      "address": "0x00400c20/52/29",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 12
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 212
+      }
+    },
+    {
+      "genome_bit": 218,
+      "address": "0x00400c20/52/31",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 8
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 115
+      }
+    },
+    {
+      "genome_bit": 219,
+      "address": "0x00400c21/51/0",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 63
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 18
+      }
+    },
+    {
+      "genome_bit": 220,
+      "address": "0x00400c21/51/1",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 61
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 91
+      }
+    },
+    {
+      "genome_bit": 221,
+      "address": "0x00400c21/51/2",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 59
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 87
+      }
+    },
+    {
+      "genome_bit": 222,
+      "address": "0x00400c21/51/3",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 57
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          8,
+          9
+        ],
+        "confirm_seq": 40
+      }
+    },
+    {
+      "genome_bit": 223,
+      "address": "0x00400c21/51/5",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 45
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 247
+      }
+    },
+    {
+      "genome_bit": 224,
+      "address": "0x00400c21/51/6",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 43
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 214
+      }
+    },
+    {
+      "genome_bit": 225,
+      "address": "0x00400c21/51/7",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 41
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 163
+      }
+    },
+    {
+      "genome_bit": 226,
+      "address": "0x00400c21/51/8",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 31
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 218
+      }
+    },
+    {
+      "genome_bit": 227,
+      "address": "0x00400c21/51/9",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 29
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 19
+      }
+    },
+    {
+      "genome_bit": 228,
+      "address": "0x00400c21/51/10",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 27
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 168
+      }
+    },
+    {
+      "genome_bit": 229,
+      "address": "0x00400c21/51/11",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 25
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 24
+      }
+    },
+    {
+      "genome_bit": 230,
+      "address": "0x00400c21/51/12",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 15
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 189
+      }
+    },
+    {
+      "genome_bit": 231,
+      "address": "0x00400c21/51/15",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 9
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 252
+      }
+    },
+    {
+      "genome_bit": 232,
+      "address": "0x00400c21/52/16",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 63
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 224
+      }
+    },
+    {
+      "genome_bit": 233,
+      "address": "0x00400c21/52/18",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 59
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 23
+      }
+    },
+    {
+      "genome_bit": 234,
+      "address": "0x00400c21/52/19",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 57
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 134
+      }
+    },
+    {
+      "genome_bit": 235,
+      "address": "0x00400c21/52/22",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 43
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 295
+      }
+    },
+    {
+      "genome_bit": 236,
+      "address": "0x00400c21/52/23",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 41
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 161
+      }
+    },
+    {
+      "genome_bit": 237,
+      "address": "0x00400c21/52/24",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 31
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 299
+      }
+    },
+    {
+      "genome_bit": 238,
+      "address": "0x00400c21/52/25",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 29
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 68
+      }
+    },
+    {
+      "genome_bit": 239,
+      "address": "0x00400c21/52/26",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 27
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 101
+      }
+    },
+    {
+      "genome_bit": 240,
+      "address": "0x00400c21/52/27",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 25
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 268
+      }
+    },
+    {
+      "genome_bit": 241,
+      "address": "0x00400c21/52/28",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 15
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 137
+      }
+    },
+    {
+      "genome_bit": 242,
+      "address": "0x00400c21/52/29",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 13
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 124
+      }
+    },
+    {
+      "genome_bit": 243,
+      "address": "0x00400c21/52/30",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 11
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 80
+      }
+    },
+    {
+      "genome_bit": 244,
+      "address": "0x00400c21/52/31",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 9
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 271
+      }
+    },
+    {
+      "genome_bit": 245,
+      "address": "0x00400c22/51/1",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 52
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 270
+      }
+    },
+    {
+      "genome_bit": 246,
+      "address": "0x00400c22/51/2",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 50
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 204
+      }
+    },
+    {
+      "genome_bit": 247,
+      "address": "0x00400c22/51/3",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 48
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 57
+      }
+    },
+    {
+      "genome_bit": 248,
+      "address": "0x00400c22/51/4",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 38
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 113
+      }
+    },
+    {
+      "genome_bit": 249,
+      "address": "0x00400c22/51/5",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 36
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 111
+      }
+    },
+    {
+      "genome_bit": 250,
+      "address": "0x00400c22/51/6",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 34
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 278
+      }
+    },
+    {
+      "genome_bit": 251,
+      "address": "0x00400c22/51/7",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 32
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 292
+      }
+    },
+    {
+      "genome_bit": 252,
+      "address": "0x00400c22/51/8",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 22
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 176
+      }
+    },
+    {
+      "genome_bit": 253,
+      "address": "0x00400c22/51/9",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 20
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 256
+      }
+    },
+    {
+      "genome_bit": 254,
+      "address": "0x00400c22/51/10",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 18
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9
+        ],
+        "confirm_seq": 178
+      }
+    },
+    {
+      "genome_bit": 255,
+      "address": "0x00400c22/51/11",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 16
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          10
+        ],
+        "confirm_seq": 128
+      }
+    },
+    {
+      "genome_bit": 256,
+      "address": "0x00400c22/51/13",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 4
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          10
+        ],
+        "confirm_seq": 78
+      }
+    },
+    {
+      "genome_bit": 257,
+      "address": "0x00400c22/51/14",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 2
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          10
+        ],
+        "confirm_seq": 179
+      }
+    },
+    {
+      "genome_bit": 258,
+      "address": "0x00400c22/52/16",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 54
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          10
+        ],
+        "confirm_seq": 255
+      }
+    },
+    {
+      "genome_bit": 259,
+      "address": "0x00400c22/52/17",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 52
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          10
+        ],
+        "confirm_seq": 273
+      }
+    },
+    {
+      "genome_bit": 260,
+      "address": "0x00400c22/52/19",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 48
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          10
+        ],
+        "confirm_seq": 27
+      }
+    },
+    {
+      "genome_bit": 261,
+      "address": "0x00400c22/52/20",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 38
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          10
+        ],
+        "confirm_seq": 17
+      }
+    },
+    {
+      "genome_bit": 262,
+      "address": "0x00400c22/52/21",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 36
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          10
+        ],
+        "confirm_seq": 231
+      }
+    },
+    {
+      "genome_bit": 263,
+      "address": "0x00400c22/52/23",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 32
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          10
+        ],
+        "confirm_seq": 286
+      }
+    },
+    {
+      "genome_bit": 264,
+      "address": "0x00400c22/52/25",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 20
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          10
+        ],
+        "confirm_seq": 94
+      }
+    },
+    {
+      "genome_bit": 265,
+      "address": "0x00400c22/52/26",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 18
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          10
+        ],
+        "confirm_seq": 143
+      }
+    },
+    {
+      "genome_bit": 266,
+      "address": "0x00400c22/52/28",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 6
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          10
+        ],
+        "confirm_seq": 84
+      }
+    },
+    {
+      "genome_bit": 267,
+      "address": "0x00400c22/52/29",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 4
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          10
+        ],
+        "confirm_seq": 188
+      }
+    },
+    {
+      "genome_bit": 268,
+      "address": "0x00400c22/52/30",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 2
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          10
+        ],
+        "confirm_seq": 33
+      }
+    },
+    {
+      "genome_bit": 269,
+      "address": "0x00400c22/52/31",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 0
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          10
+        ],
+        "confirm_seq": 118
+      }
+    },
+    {
+      "genome_bit": 270,
+      "address": "0x00400c23/51/2",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 51
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          10
+        ],
+        "confirm_seq": 237
+      }
+    },
+    {
+      "genome_bit": 271,
+      "address": "0x00400c23/51/3",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 49
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          6,
+          10
+        ],
+        "confirm_seq": 63
+      }
+    },
+    {
+      "genome_bit": 272,
+      "address": "0x00400c23/51/4",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 39
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          6,
+          10
+        ],
+        "confirm_seq": 121
+      }
+    },
+    {
+      "genome_bit": 273,
+      "address": "0x00400c23/51/5",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 37
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          6,
+          10
+        ],
+        "confirm_seq": 110
+      }
+    },
+    {
+      "genome_bit": 274,
+      "address": "0x00400c23/51/6",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 35
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          6,
+          10
+        ],
+        "confirm_seq": 125
+      }
+    },
+    {
+      "genome_bit": 275,
+      "address": "0x00400c23/51/8",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 23
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          6,
+          10
+        ],
+        "confirm_seq": 106
+      }
+    },
+    {
+      "genome_bit": 276,
+      "address": "0x00400c23/51/9",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 21
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          6,
+          10
+        ],
+        "confirm_seq": 236
+      }
+    },
+    {
+      "genome_bit": 277,
+      "address": "0x00400c23/51/10",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 19
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          6,
+          10
+        ],
+        "confirm_seq": 72
+      }
+    },
+    {
+      "genome_bit": 278,
+      "address": "0x00400c23/51/11",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 17
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          6,
+          10
+        ],
+        "confirm_seq": 47
+      }
+    },
+    {
+      "genome_bit": 279,
+      "address": "0x00400c23/51/12",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 7
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          5,
+          6,
+          10
+        ],
+        "confirm_seq": 49
+      }
+    },
+    {
+      "genome_bit": 280,
+      "address": "0x00400c23/51/13",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 5
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          5,
+          6,
+          10
+        ],
+        "confirm_seq": 155
+      }
+    },
+    {
+      "genome_bit": 281,
+      "address": "0x00400c23/51/14",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 3
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          5,
+          6,
+          10
+        ],
+        "confirm_seq": 35
+      }
+    },
+    {
+      "genome_bit": 282,
+      "address": "0x00400c23/51/15",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 4,
+        "init_index": 1
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          5,
+          6,
+          10
+        ],
+        "confirm_seq": 61
+      }
+    },
+    {
+      "genome_bit": 283,
+      "address": "0x00400c23/52/17",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 53
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          5,
+          6,
+          10
+        ],
+        "confirm_seq": 37
+      }
+    },
+    {
+      "genome_bit": 284,
+      "address": "0x00400c23/52/18",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 51
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          4,
+          5,
+          6,
+          10
+        ],
+        "confirm_seq": 225
+      }
+    },
+    {
+      "genome_bit": 285,
+      "address": "0x00400c23/52/20",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 39
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          4,
+          5,
+          6,
+          10
+        ],
+        "confirm_seq": 13
+      }
+    },
+    {
+      "genome_bit": 286,
+      "address": "0x00400c23/52/21",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 37
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          10
+        ],
+        "confirm_seq": 150
+      }
+    },
+    {
+      "genome_bit": 287,
+      "address": "0x00400c23/52/23",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 33
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          7,
+          10
+        ],
+        "confirm_seq": 107
+      }
+    },
+    {
+      "genome_bit": 288,
+      "address": "0x00400c23/52/24",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 23
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          7,
+          10
+        ],
+        "confirm_seq": 21
+      }
+    },
+    {
+      "genome_bit": 289,
+      "address": "0x00400c23/52/25",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 21
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          3,
+          7,
+          10
+        ],
+        "confirm_seq": 43
+      }
+    },
+    {
+      "genome_bit": 290,
+      "address": "0x00400c23/52/28",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 7
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          2,
+          3,
+          7,
+          10
+        ],
+        "confirm_seq": 54
+      }
+    },
+    {
+      "genome_bit": 291,
+      "address": "0x00400c23/52/31",
+      "relation": {
+        "kind": "lut_init",
+        "lut_index": 5,
+        "init_index": 1
+      },
+      "confidence": 2,
+      "state": "confirmed",
+      "observed_transition": {
+        "base": 0,
+        "set": 1
+      },
+      "evidence": {
+        "code_probe_seqs": [
+          4,
+          7,
+          10
+        ],
+        "confirm_seq": 266
+      }
+    }
+  ],
+  "interaction_edges": [
+    {
+      "a": 17,
+      "b": 16,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 303
+    },
+    {
+      "a": 288,
+      "b": 146,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 304
+    },
+    {
+      "a": 284,
+      "b": 213,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 305
+    },
+    {
+      "a": 30,
+      "b": 233,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 306
+    },
+    {
+      "a": 65,
+      "b": 88,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 307
+    },
+    {
+      "a": 32,
+      "b": 243,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 308
+    },
+    {
+      "a": 137,
+      "b": 143,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 309
+    },
+    {
+      "a": 254,
+      "b": 106,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 310
+    },
+    {
+      "a": 209,
+      "b": 244,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 311
+    },
+    {
+      "a": 286,
+      "b": 221,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 312
+    },
+    {
+      "a": 280,
+      "b": 249,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 313
+    },
+    {
+      "a": 13,
+      "b": 72,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 314
+    },
+    {
+      "a": 56,
+      "b": 27,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 315
+    },
+    {
+      "a": 115,
+      "b": 219,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 316
+    },
+    {
+      "a": 70,
+      "b": 17,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 317
+    },
+    {
+      "a": 114,
+      "b": 44,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 318
+    },
+    {
+      "a": 87,
+      "b": 38,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 319
+    },
+    {
+      "a": 105,
+      "b": 2,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 320
+    },
+    {
+      "a": 284,
+      "b": 283,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 321
+    },
+    {
+      "a": 115,
+      "b": 3,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 322
+    },
+    {
+      "a": 196,
+      "b": 119,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 323
+    },
+    {
+      "a": 58,
+      "b": 179,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 324
+    },
+    {
+      "a": 175,
+      "b": 132,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 325
+    },
+    {
+      "a": 61,
+      "b": 60,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 326
+    },
+    {
+      "a": 61,
+      "b": 20,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 327
+    },
+    {
+      "a": 91,
+      "b": 154,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 328
+    },
+    {
+      "a": 162,
+      "b": 186,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 329
+    },
+    {
+      "a": 37,
+      "b": 208,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 330
+    },
+    {
+      "a": 137,
+      "b": 162,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 331
+    },
+    {
+      "a": 67,
+      "b": 59,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 332
+    },
+    {
+      "a": 289,
+      "b": 212,
+      "kind": "same_lut",
+      "result": "none",
+      "record_seq": 333
+    },
+    {
+      "a": 94,
+      "b": 148,
+      "kind": "cross_lut",
+      "result": "none",
+      "record_seq": 334
+    }
+  ]
+}
