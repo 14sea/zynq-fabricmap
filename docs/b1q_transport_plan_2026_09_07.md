@@ -1,13 +1,13 @@
 # B1Q console-path isolation — the option-B plan (preparation only, 2026-09-07)
 
-> **Standing: PREPARATION ONLY.** The owner selected option B as a *controlled
-> path-isolation experiment, not a proven cure*
-> (`docs/b1q_transport_review_2026_09_07.md`), and authorised the preparation of the plan
-> and nothing else. Stop-loss remains in force. Nothing here has been executed: no port
-> opened, no cable moved, no device detached or re-attached, no board run, no new ruling.
-> Every number below is read-only host state or arithmetic over already-committed session
-> evidence (`evidence/b1q/transport_plan_2026_09_07/inventory.json`). A successful
-> diagnostic is **not** a B1Q PASS and waives nothing in the qualification chain.
+> **Standing as of 2026-09-08: the isolation experiment remains unexecuted; attempt 4
+> completed separately and passed.** The original authorization covered preparation of
+> option B (`docs/b1q_transport_review_2026_09_07.md`). The dated updates below record
+> subsequent owner-directed moves and the reported one-session stop-loss exception for
+> attempt 4. They supersede the original statement that no board run or cable move had
+> occurred. Attempt 4 is not an execution of the controlled isolation experiment and
+> does not establish transport stability or authorize another session. See
+> `docs/b1q_session4_audit_2026_09_08.md` for its independent evidence audit.
 
 ## 0. What the inventory adds (facts, not attributions)
 
@@ -15,8 +15,9 @@ Three host-side facts that bear on the design, none of which names a cause:
 
 1. **Both USB devices are attached through the same USB/IP mechanism** (`vhci_hcd`, one
    TCP connection to usbipd *per device*). Exchanging the console adapter while keeping this
-   arrangement does not remove USB/IP from the path, so adapter-swap-first would confound
-   the result. *Corrected 2026-09-08:* the first version of this item claimed both devices
+   arrangement does not test removal of USB/IP. An adapter-only swap can compare adapters
+   on that path, provided the other variables are held fixed. *Corrected 2026-09-08:*
+   the first version of this item claimed both devices
    share **one** socket because both `vhci_hcd` rows show `sockfd 000003`; that number is the
    file-descriptor index inside each attach process, not a socket identity, and `ss` shows
    two separate established connections. The design point stands; that evidence is withdrawn
@@ -55,8 +56,9 @@ Three host-side facts that bear on the design, none of which names a cause:
 - Nothing holds `/dev/ttyUSB4` now; the CH340 reports `bcdDevice 0x0264`, full-speed, no
   serial number.
 
-None of this attributes the loss. It narrows the candidate set (device-level drop excluded,
-"one shared socket" withdrawn) and lengthens the host path list (hub sharing, `hrdevmon`).
+None of this attributes the loss. No device-level drop was found in the inspected logs;
+that is not proof that every transient would have been recorded. The "one shared socket"
+claim is withdrawn, and the host path list now includes hub sharing and `hrdevmon`.
 
 **Update 21:50 the same evening.** The owner moved the CH340 again; it now sits directly on
 PCH-xHCI root port 9 (`PCI(1400)#USBROOT(0)#USB(9)`, parent = the root hub, `usbipd` BusId
@@ -90,6 +92,14 @@ A; it does not separate module from port, does not implicate or clear USB/IP, `h
 the hub, the wiring or the board UART, and — as the transition decision already says — a
 single PASS does not establish transport stability. The isolation plan above remains the
 instrument for attribution if the owner still wants one.
+
+**Audit clarification.** The 21:55 topology snapshot names `ttyUSB0`, whereas attempt 4's
+`summary.json` records `/dev/ebaz-uart` resolving to `ttyUSB4` (`188:4`). These are distinct
+observations at different times; the intervening enumeration history is not supplied by
+the session evidence. Module B and hub port 3 remain operator-attested run conditions.
+The transcript validates board 17A6 and the session binding, not the physical adapter's
+identity. No original topology snapshot or session file has been rewritten to reconcile
+the device names.
 
 **Constraint on any instrumentation.** The transport is the archived instrument's code
 (read-only, pinned by hash). Counter capture, an exclusive open, or any other transport
@@ -157,7 +167,7 @@ before and after each run** — the counters the sessions lack.
 | 0 | this plan + inventory (**done**) | nothing; already host-only |
 | 1 | build the generator/capture tool and **prove it against a separate traffic source**, not the Zynq | a second serial device or a CH340 self-loopback; a physical jumper and, if the module is board-powered, a ruling |
 | 2 | run A1/A2, then B1/B2, one variable apart | a native Linux host; the adapter moved between hosts |
-| 3 | read the result: loss on A but not B ⇒ the WSL/USB-IP path; loss on both ⇒ the adapter, driver, wiring or host handling; loss on neither ⇒ the rig does not yet reproduce the failure and the design returns to stage 1 | — |
+| 3 | compare the observed loss and exposure under each complete host path; an A/B difference does not isolate USB/IP from the other host-stack changes, loss on both does not identify a common cause, and loss on neither leaves reproduction unresolved | — |
 | 4 | only then: the transport instrumentation lands as a reviewed pinned change, and a board session is requested under a **new** ruling pair | the owner's ruling |
 
 Stage 1 deliberately proves capture and replay **without the Zynq**. If the CH340 module is
