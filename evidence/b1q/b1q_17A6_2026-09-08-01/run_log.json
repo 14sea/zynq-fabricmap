@@ -1,0 +1,2147 @@
+{
+  "control_plane": "standalone",
+  "app_identity": {
+    "app_epoch": 0,
+    "carrier_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+    "carrier_variant": "0x42310001",
+    "carto_version": "carto-v1",
+    "control_plane": "standalone",
+    "fclk0_hz_decoded": 50000000,
+    "findings": [],
+    "master_seed": 176359248,
+    "nonce_at_start": "9e3779b97f4a7c15",
+    "operator_data_sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458",
+    "probe_budget": 9,
+    "protocol": "rel-v4",
+    "pss_idcode": "0x13722093",
+    "rec_retry_control": true,
+    "schedule_mode": "carto-v1",
+    "schema": "app_identity",
+    "schema_version": "1.4.0",
+    "sign_retry_control": true,
+    "status_at_start": "0x00000900",
+    "token": "d3d7c12332a53f94248a603392c04b9c",
+    "uboot_epoch": 0,
+    "universe_sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
+  },
+  "loop_records": [
+    {
+      "carto": {
+        "anomalies": 0,
+        "changed": [],
+        "content_sha256": "f80bbe381cac2e08ad11e4e6b008cb9858419066360047f537be4962d9e4c396",
+        "map_sha256": "ae2f83bf40e96eecd231259d23e67caf2699b8847b30a72a593ae423e1c7a8ea",
+        "phase": "baseline",
+        "probes_issued": 0,
+        "version": "carto-v1"
+      },
+      "evidence": {
+        "app_oracle_record": {
+          "audit_available": true,
+          "readback_sha256": "3e24d93665bb9f29fb43290283a0c01327acd6048b9e979d247e248ee232679b",
+          "schema": "app_oracle_record",
+          "schema_version": "1.0.0",
+          "seq": 1,
+          "staged_sha256": "3e24d93665bb9f29fb43290283a0c01327acd6048b9e979d247e248ee232679b",
+          "staged_stream_sha256": "905abc6931c537bbdf980c153c7d59ec5aa2da1d2707442c6b5049d733dfc7a3",
+          "write": {
+            "envelopes": [
+              {
+                "index": 0,
+                "int_sts": "0x50023004"
+              },
+              {
+                "index": 1,
+                "int_sts": "0x50023004"
+              },
+              {
+                "index": 2,
+                "int_sts": "0x50023004"
+              }
+            ]
+          }
+        },
+        "arm": {
+          "ctrl_readback": "unavailable: CTRL is write-only",
+          "fault_after": 0,
+          "key_loaded_observed": true,
+          "nonce_after": "dc1b77ae0bf34dad",
+          "nonce_before": "9e3779b97f4a7c15",
+          "settle": {
+            "polls": 16,
+            "polls_max": 1000000,
+            "settled": true,
+            "status_first": "0x00000901",
+            "status_last": "0x00000f54"
+          },
+          "status_after": "0x00000f54",
+          "writes_issued": 25
+        },
+        "score": {
+          "functional_readout": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "heartbeat": {
+            "after": 1384005266,
+            "before": 1384003628
+          },
+          "hw_candidate_commit": "3e24d93665bb9f29fb43290283a0c01327acd6048b9e979d247e248ee232679b",
+          "scores": [
+            18,
+            22,
+            20,
+            20,
+            20,
+            18
+          ]
+        },
+        "sign_reply": {
+          "commit": "3e24d93665bb9f29fb43290283a0c01327acd6048b9e979d247e248ee232679b",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 1,
+          "tag": "fa0b80ac5537299038fc30344eb23edd"
+        }
+      },
+      "genome": "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "outcome": "SCORED",
+      "schema": "loop_record",
+      "schema_version": "1.2.0",
+      "seq": 1,
+      "verified": "audited"
+    },
+    {
+      "carto": {
+        "anomalies": 0,
+        "changed": [],
+        "content_sha256": "3b6566de16e521de5726095b6c3384a87f1dcb3d35889129c7db109ee24d0209",
+        "map_sha256": "0ea7d8f9255d444fbb2d82498062b1c39903a6c064eec4a2e31d7ef6646ac403",
+        "phase": "code",
+        "probes_issued": 1,
+        "version": "carto-v1"
+      },
+      "evidence": {
+        "app_oracle_record": {
+          "audit_available": true,
+          "readback_sha256": "bb734fed716ece9ec92fdc1ed807e848ea49cd3ab5a4dff36763c028dce47f7d",
+          "schema": "app_oracle_record",
+          "schema_version": "1.0.0",
+          "seq": 2,
+          "staged_sha256": "bb734fed716ece9ec92fdc1ed807e848ea49cd3ab5a4dff36763c028dce47f7d",
+          "staged_stream_sha256": "732a93d0b31807641f75f2f445e5540f6dfda6900de2dc7c609212fa3033e4bb",
+          "write": {
+            "envelopes": [
+              {
+                "index": 0,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 1,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 2,
+                "int_sts": "0x50033004"
+              }
+            ]
+          }
+        },
+        "arm": {
+          "ctrl_readback": "unavailable: CTRL is write-only",
+          "fault_after": 0,
+          "key_loaded_observed": true,
+          "nonce_after": "64f0eeb9026e6076",
+          "nonce_before": "dc1b77ae0bf34dad",
+          "settle": {
+            "polls": 16,
+            "polls_max": 1000000,
+            "settled": true,
+            "status_first": "0x00000901",
+            "status_last": "0x00000b54"
+          },
+          "status_after": "0x00000b54",
+          "writes_issued": 25
+        },
+        "score": {
+          "functional_readout": [
+            "c26446c8494c33c6",
+            "246126934823cc30",
+            "9961868662216630",
+            "61cc92c44ccc6231",
+            "630c0cccc866c132",
+            "83490630639023c4"
+          ],
+          "heartbeat": {
+            "after": 1459301846,
+            "before": 1459300272
+          },
+          "hw_candidate_commit": "bb734fed716ece9ec92fdc1ed807e848ea49cd3ab5a4dff36763c028dce47f7d",
+          "scores": [
+            24,
+            20,
+            19,
+            24,
+            22,
+            19
+          ]
+        },
+        "sign_reply": {
+          "commit": "bb734fed716ece9ec92fdc1ed807e848ea49cd3ab5a4dff36763c028dce47f7d",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 2,
+          "tag": "60e58679c0c692b0e902141584a57366"
+        }
+      },
+      "genome": "55555555555555555555555555555555555555555555555555555555555555555555555500000005",
+      "outcome": "SCORED",
+      "schema": "loop_record",
+      "schema_version": "1.2.0",
+      "seq": 2,
+      "verified": "audited"
+    },
+    {
+      "carto": {
+        "anomalies": 0,
+        "changed": [],
+        "content_sha256": "394b39c2027f6eba081849f66db80609b27497e56de18ad763dec42b482e03a9",
+        "map_sha256": "4e8b023f5a0bb38bca3376f8e903b2fe39399161266631801eb60404656a84e2",
+        "phase": "code",
+        "probes_issued": 2,
+        "version": "carto-v1"
+      },
+      "evidence": {
+        "app_oracle_record": {
+          "audit_available": true,
+          "readback_sha256": "6e39fdd4c85b636069d5a38d5d4356229915ae1c3dd71a3b84fc9e4c230bc9b3",
+          "schema": "app_oracle_record",
+          "schema_version": "1.0.0",
+          "seq": 3,
+          "staged_sha256": "6e39fdd4c85b636069d5a38d5d4356229915ae1c3dd71a3b84fc9e4c230bc9b3",
+          "staged_stream_sha256": "3b60f0a9416f0bae993a89b5a71f1a151934cf80186c084e0f42282315784771",
+          "write": {
+            "envelopes": [
+              {
+                "index": 0,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 1,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 2,
+                "int_sts": "0x50033004"
+              }
+            ]
+          }
+        },
+        "arm": {
+          "ctrl_readback": "unavailable: CTRL is write-only",
+          "fault_after": 0,
+          "key_loaded_observed": true,
+          "nonce_after": "7b07ce91e5906136",
+          "nonce_before": "64f0eeb9026e6076",
+          "settle": {
+            "polls": 16,
+            "polls_max": 1000000,
+            "settled": true,
+            "status_first": "0x00000901",
+            "status_last": "0x00000b54"
+          },
+          "status_after": "0x00000b54",
+          "writes_issued": 25
+        },
+        "score": {
+          "functional_readout": [
+            "c0341e290543a5c1",
+            "a0e04e72120fc306",
+            "d2489494a1a0e158",
+            "e0965a94143cb00d",
+            "4a1c463c861ec00e",
+            "0f4001f0e024b1c1"
+          ],
+          "heartbeat": {
+            "after": 1522681211,
+            "before": 1522679601
+          },
+          "hw_candidate_commit": "6e39fdd4c85b636069d5a38d5d4356229915ae1c3dd71a3b84fc9e4c230bc9b3",
+          "scores": [
+            20,
+            24,
+            20,
+            21,
+            20,
+            20
+          ]
+        },
+        "sign_reply": {
+          "commit": "6e39fdd4c85b636069d5a38d5d4356229915ae1c3dd71a3b84fc9e4c230bc9b3",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 3,
+          "tag": "3ea5c670b2d5c1e9ecc9a770897bfb30"
+        }
+      },
+      "genome": "66666666666666666666666666666666666666666666666666666666666666666666666600000006",
+      "outcome": "SCORED",
+      "schema": "loop_record",
+      "schema_version": "1.2.0",
+      "seq": 3,
+      "verified": "audited"
+    },
+    {
+      "carto": {
+        "anomalies": 0,
+        "changed": [],
+        "content_sha256": "b18506f05e2d8bd2094fa42501e531e0d5013101098d6194439ee8af3019177c",
+        "map_sha256": "2499b3d1698af7397a1440714a62df6049b1e0e6a0c85441a395ecd1546d5f05",
+        "phase": "code",
+        "probes_issued": 3,
+        "version": "carto-v1"
+      },
+      "evidence": {
+        "app_oracle_record": {
+          "audit_available": true,
+          "readback_sha256": "a6f286dd7afab40a8030adb4878acdb8cc5e5d45556d084fa0ef7199107e0f57",
+          "schema": "app_oracle_record",
+          "schema_version": "1.0.0",
+          "seq": 4,
+          "staged_sha256": "a6f286dd7afab40a8030adb4878acdb8cc5e5d45556d084fa0ef7199107e0f57",
+          "staged_stream_sha256": "abc26b15aaccbbeb220f9c3f243864df9fb5166c34a2f39603f9ef265c7da9c0",
+          "write": {
+            "envelopes": [
+              {
+                "index": 0,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 1,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 2,
+                "int_sts": "0x50033004"
+              }
+            ]
+          }
+        },
+        "arm": {
+          "ctrl_readback": "unavailable: CTRL is write-only",
+          "fault_after": 0,
+          "key_loaded_observed": true,
+          "nonce_after": "305f050c368dcc74",
+          "nonce_before": "7b07ce91e5906136",
+          "settle": {
+            "polls": 16,
+            "polls_max": 1000000,
+            "settled": true,
+            "status_first": "0x00000901",
+            "status_last": "0x00000b54"
+          },
+          "status_after": "0x00000b54",
+          "writes_issued": 25
+        },
+        "score": {
+          "functional_readout": [
+            "1a095ee900405f1f",
+            "a0e001057aafc000",
+            "7ab981944b08e029",
+            "13d4da0901fc5a00",
+            "ea1c01016efec000",
+            "00394ff0e0000a17"
+          ],
+          "heartbeat": {
+            "after": 1584212952,
+            "before": 1584211308
+          },
+          "hw_candidate_commit": "a6f286dd7afab40a8030adb4878acdb8cc5e5d45556d084fa0ef7199107e0f57",
+          "scores": [
+            23,
+            21,
+            25,
+            26,
+            20,
+            20
+          ]
+        },
+        "sign_reply": {
+          "commit": "a6f286dd7afab40a8030adb4878acdb8cc5e5d45556d084fa0ef7199107e0f57",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 4,
+          "tag": "7cca97c18b8eb8ce207cadaf4cbaeb6d"
+        }
+      },
+      "genome": "78787878787878787878787878787878787878787878787878787878787878787878787800000008",
+      "outcome": "SCORED",
+      "schema": "loop_record",
+      "schema_version": "1.2.0",
+      "seq": 4,
+      "verified": "audited"
+    },
+    {
+      "carto": {
+        "anomalies": 0,
+        "changed": [],
+        "content_sha256": "ef01c705a6786445eb2d245dce7270bb7900aeeb3826f02c2ec4201952c8c173",
+        "map_sha256": "f0e5ecb4c39167d139813199f1a54a600b2ec898e31150b96446795c717aa2b4",
+        "phase": "code",
+        "probes_issued": 4,
+        "version": "carto-v1"
+      },
+      "evidence": {
+        "app_oracle_record": {
+          "audit_available": true,
+          "readback_sha256": "f9c4012c3bc99400794f0e80fdcc1db872adb02e6788fa8c2f4b83af7f6eb3ca",
+          "schema": "app_oracle_record",
+          "schema_version": "1.0.0",
+          "seq": 5,
+          "staged_sha256": "f9c4012c3bc99400794f0e80fdcc1db872adb02e6788fa8c2f4b83af7f6eb3ca",
+          "staged_stream_sha256": "39e14003df134ca1dc745b163a429fddcf8436d443ef42cf8079d49a514a909e",
+          "write": {
+            "envelopes": [
+              {
+                "index": 0,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 1,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 2,
+                "int_sts": "0x50033004"
+              }
+            ]
+          }
+        },
+        "arm": {
+          "ctrl_readback": "unavailable: CTRL is write-only",
+          "fault_after": 0,
+          "key_loaded_observed": true,
+          "nonce_after": "2ceb16e0a1c54aec",
+          "nonce_before": "305f050c368dcc74",
+          "settle": {
+            "polls": 16,
+            "polls_max": 1000000,
+            "settled": true,
+            "status_first": "0x00000901",
+            "status_last": "0x00000b54"
+          },
+          "status_after": "0x00000b54",
+          "writes_issued": 25
+        },
+        "score": {
+          "functional_readout": [
+            "502854a82815aa55",
+            "e44845a250aa6a54",
+            "50a80a81aa01b551",
+            "517e508828a8aa55",
+            "af094555445442aa",
+            "8a280aa1b1141155"
+          ],
+          "heartbeat": {
+            "after": 1645146736,
+            "before": 1645145142
+          },
+          "hw_candidate_commit": "f9c4012c3bc99400794f0e80fdcc1db872adb02e6788fa8c2f4b83af7f6eb3ca",
+          "scores": [
+            23,
+            20,
+            26,
+            27,
+            20,
+            22
+          ]
+        },
+        "sign_reply": {
+          "commit": "f9c4012c3bc99400794f0e80fdcc1db872adb02e6788fa8c2f4b83af7f6eb3ca",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 5,
+          "tag": "9c9b238be55d56626d81f3dc8443a398"
+        }
+      },
+      "genome": "7f807f807f807f807f807f807f807f807f807f807f807f807f807f807f807f807f807f8000000000",
+      "outcome": "SCORED",
+      "schema": "loop_record",
+      "schema_version": "1.2.0",
+      "seq": 5,
+      "verified": "audited"
+    },
+    {
+      "carto": {
+        "anomalies": 0,
+        "changed": [],
+        "content_sha256": "fd84fdddcaa2cd86791c27d49b72bc6e56265a656df6845e734a910343dbcee4",
+        "map_sha256": "ba360cf30db381588ea6346e9a9d74db3a05e96522bf008187aef0851ea5d393",
+        "phase": "code",
+        "probes_issued": 5,
+        "version": "carto-v1"
+      },
+      "evidence": {
+        "app_oracle_record": {
+          "audit_available": true,
+          "readback_sha256": "b0b7daada1b7374b4569a06b3540817e860c4f06e826cabd4c1d57acdbc233ca",
+          "schema": "app_oracle_record",
+          "schema_version": "1.0.0",
+          "seq": 6,
+          "staged_sha256": "b0b7daada1b7374b4569a06b3540817e860c4f06e826cabd4c1d57acdbc233ca",
+          "staged_stream_sha256": "c6b7095a47cdfb5e658270c190b5d5935f7507e8d3f10e407790d205d28b1fed",
+          "write": {
+            "envelopes": [
+              {
+                "index": 0,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 1,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 2,
+                "int_sts": "0x50033004"
+              }
+            ]
+          }
+        },
+        "arm": {
+          "ctrl_readback": "unavailable: CTRL is write-only",
+          "fault_after": 0,
+          "key_loaded_observed": true,
+          "nonce_after": "97101dce4e7bfb79",
+          "nonce_before": "2ceb16e0a1c54aec",
+          "settle": {
+            "polls": 16,
+            "polls_max": 1000000,
+            "settled": true,
+            "status_first": "0x00000901",
+            "status_last": "0x00000b54"
+          },
+          "status_after": "0x00000b54",
+          "writes_issued": 25
+        },
+        "score": {
+          "functional_readout": [
+            "8a280ba86d00ff00",
+            "e4054555500540f6",
+            "afa89f80eb00f500",
+            "51015055005400fd",
+            "aa1700fd00fe11aa",
+            "052845a05b00bb00"
+          ],
+          "heartbeat": {
+            "after": 1709197226,
+            "before": 1709195601
+          },
+          "hw_candidate_commit": "b0b7daada1b7374b4569a06b3540817e860c4f06e826cabd4c1d57acdbc233ca",
+          "scores": [
+            19,
+            22,
+            26,
+            26,
+            18,
+            23
+          ]
+        },
+        "sign_reply": {
+          "commit": "b0b7daada1b7374b4569a06b3540817e860c4f06e826cabd4c1d57acdbc233ca",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 6,
+          "tag": "46ad4aca1b56f84283dd1429de683c44"
+        }
+      },
+      "genome": "7fff80007fff80007fff80007fff80007fff80007fff80007fff80007fff80007fff800000000000",
+      "outcome": "SCORED",
+      "schema": "loop_record",
+      "schema_version": "1.2.0",
+      "seq": 6,
+      "verified": "audited"
+    },
+    {
+      "carto": {
+        "anomalies": 0,
+        "changed": [],
+        "content_sha256": "5ab6f2cbe1a02396fda7fff91927d34f4aa908b34809a6ddd667c86c8f886708",
+        "map_sha256": "d868ee71ba4b850b99dd1b3749a581cf4d1f77d78524d010021a5d9232ee68f4",
+        "phase": "code",
+        "probes_issued": 6,
+        "version": "carto-v1"
+      },
+      "evidence": {
+        "app_oracle_record": {
+          "audit_available": true,
+          "readback_sha256": "5ac33ea7460ad0a1180c28ddf3c3de6209d2d793023934a6310f6b5b3d8c23f4",
+          "schema": "app_oracle_record",
+          "schema_version": "1.0.0",
+          "seq": 7,
+          "staged_sha256": "5ac33ea7460ad0a1180c28ddf3c3de6209d2d793023934a6310f6b5b3d8c23f4",
+          "staged_stream_sha256": "dae68a40dee78605b687bec79cd446f96abed7dded3df2142600b9bbf6e3388d",
+          "write": {
+            "envelopes": [
+              {
+                "index": 0,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 1,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 2,
+                "int_sts": "0x50033004"
+              }
+            ]
+          }
+        },
+        "arm": {
+          "ctrl_readback": "unavailable: CTRL is write-only",
+          "fault_after": 0,
+          "key_loaded_observed": true,
+          "nonce_after": "9ad2e144d6e8f2cf",
+          "nonce_before": "97101dce4e7bfb79",
+          "settle": {
+            "polls": 16,
+            "polls_max": 1000000,
+            "settled": true,
+            "status_first": "0x00000901",
+            "status_last": "0x00000b54"
+          },
+          "status_after": "0x00000b54",
+          "writes_issued": 25
+        },
+        "score": {
+          "functional_readout": [
+            "8a000a00282aaa8a",
+            "a0a800a200aa15a2",
+            "55f9159541015f51",
+            "f355da552854aa55",
+            "00152a55aa548200",
+            "8a000a02aaa0aa82"
+          ],
+          "heartbeat": {
+            "after": 1771015471,
+            "before": 1771013819
+          },
+          "hw_candidate_commit": "5ac33ea7460ad0a1180c28ddf3c3de6209d2d793023934a6310f6b5b3d8c23f4",
+          "scores": [
+            15,
+            23,
+            19,
+            26,
+            25,
+            19
+          ]
+        },
+        "sign_reply": {
+          "commit": "5ac33ea7460ad0a1180c28ddf3c3de6209d2d793023934a6310f6b5b3d8c23f4",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 7,
+          "tag": "392f0f2f5ba0369454d37eff08db2d22"
+        }
+      },
+      "genome": "800000007fffffff800000007fffffff800000007fffffff800000007fffffff800000000000000f",
+      "outcome": "SCORED",
+      "schema": "loop_record",
+      "schema_version": "1.2.0",
+      "seq": 7,
+      "verified": "audited"
+    },
+    {
+      "carto": {
+        "anomalies": 0,
+        "changed": [],
+        "content_sha256": "3dc39651c7d8a1f038f29d49463036d3c8a7bc7b1aa92e99747034474b72bf02",
+        "map_sha256": "69f46bce3b931b70c9a7f941284907ee29570f2256866859d6c780802bc6e2fb",
+        "phase": "code",
+        "probes_issued": 7,
+        "version": "carto-v1"
+      },
+      "evidence": {
+        "app_oracle_record": {
+          "audit_available": true,
+          "readback_sha256": "5fc4d50d6747f2f07200551e53ac9893f3fce67c243391b14df4ea72baa059bd",
+          "schema": "app_oracle_record",
+          "schema_version": "1.0.0",
+          "seq": 8,
+          "staged_sha256": "5fc4d50d6747f2f07200551e53ac9893f3fce67c243391b14df4ea72baa059bd",
+          "staged_stream_sha256": "38e6b03576cb34210bc2e22f52f4f05910fc5059bff5916a18f3c510861d54e7",
+          "write": {
+            "envelopes": [
+              {
+                "index": 0,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 1,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 2,
+                "int_sts": "0x50033004"
+              }
+            ]
+          }
+        },
+        "arm": {
+          "ctrl_readback": "unavailable: CTRL is write-only",
+          "fault_after": 0,
+          "key_loaded_observed": true,
+          "nonce_after": "d9aa792e1af470ea",
+          "nonce_before": "9ad2e144d6e8f2cf",
+          "settle": {
+            "polls": 16,
+            "polls_max": 1000000,
+            "settled": true,
+            "status_first": "0x00000901",
+            "status_last": "0x00000b54"
+          },
+          "status_after": "0x00000b54",
+          "writes_issued": 25
+        },
+        "score": {
+          "functional_readout": [
+            "5000550045005500",
+            "4400ef007a00ff00",
+            "00f9009500010051",
+            "0055015555545055",
+            "ef156f55ee54d300",
+            "8f004f00fb00bb00"
+          ],
+          "heartbeat": {
+            "after": 1833664526,
+            "before": 1833662919
+          },
+          "hw_candidate_commit": "5fc4d50d6747f2f07200551e53ac9893f3fce67c243391b14df4ea72baa059bd",
+          "scores": [
+            25,
+            19,
+            22,
+            22,
+            24,
+            23
+          ]
+        },
+        "sign_reply": {
+          "commit": "5fc4d50d6747f2f07200551e53ac9893f3fce67c243391b14df4ea72baa059bd",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 8,
+          "tag": "3cb71b390f9f0e387f47f11e285523ae"
+        }
+      },
+      "genome": "0000000080000000ffffffff7fffffff0000000080000000ffffffff7fffffff0000000000000000",
+      "outcome": "SCORED",
+      "schema": "loop_record",
+      "schema_version": "1.2.0",
+      "seq": 8,
+      "verified": "audited"
+    },
+    {
+      "carto": {
+        "anomalies": 0,
+        "changed": [],
+        "content_sha256": "9d213580c5681610694576151959b89004a99d3a31a61c87515d3fe15a7e4fe9",
+        "map_sha256": "6fb5bb1b02f838628b620b09bc62247aa8276e8a13250345d647fd443714646e",
+        "phase": "code",
+        "probes_issued": 8,
+        "version": "carto-v1"
+      },
+      "evidence": {
+        "app_oracle_record": {
+          "audit_available": true,
+          "readback_sha256": "5cd625817aea12bbc585ee2499024915e941a47b279b3dd846dad0377cee6c3b",
+          "schema": "app_oracle_record",
+          "schema_version": "1.0.0",
+          "seq": 9,
+          "staged_sha256": "5cd625817aea12bbc585ee2499024915e941a47b279b3dd846dad0377cee6c3b",
+          "staged_stream_sha256": "fed8fd16cb1fdadc2a916fb0fdfd148140def12d056578c0239c136690017089",
+          "write": {
+            "envelopes": [
+              {
+                "index": 0,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 1,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 2,
+                "int_sts": "0x50033004"
+              }
+            ]
+          }
+        },
+        "arm": {
+          "ctrl_readback": "unavailable: CTRL is write-only",
+          "fault_after": 0,
+          "key_loaded_observed": true,
+          "nonce_after": "ddaa4e85b0d6e28b",
+          "nonce_before": "d9aa792e1af470ea",
+          "settle": {
+            "polls": 16,
+            "polls_max": 1000000,
+            "settled": true,
+            "status_first": "0x00000901",
+            "status_last": "0x00000b54"
+          },
+          "status_after": "0x00000b54",
+          "writes_issued": 25
+        },
+        "score": {
+          "functional_readout": [
+            "0000000000000000",
+            "0000000000000000",
+            "ff009f22eba8ff28",
+            "f3aadb887da8faa8",
+            "ef156f55ee54d300",
+            "8f004f00fb00bb00"
+          ],
+          "heartbeat": {
+            "after": 1894618305,
+            "before": 1894616689
+          },
+          "hw_candidate_commit": "5cd625817aea12bbc585ee2499024915e941a47b279b3dd846dad0377cee6c3b",
+          "scores": [
+            18,
+            22,
+            22,
+            24,
+            24,
+            23
+          ]
+        },
+        "sign_reply": {
+          "commit": "5cd625817aea12bbc585ee2499024915e941a47b279b3dd846dad0377cee6c3b",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 9,
+          "tag": "2e372c439e295e41b09dcc16391c0451"
+        }
+      },
+      "genome": "00000000000000000000000080000000ffffffffffffffffffffffff7fffffff0000000000000000",
+      "outcome": "SCORED",
+      "schema": "loop_record",
+      "schema_version": "1.2.0",
+      "seq": 9,
+      "verified": "audited"
+    },
+    {
+      "carto": {
+        "anomalies": 0,
+        "changed": [
+          [
+            13,
+            0,
+            0,
+            1,
+            "decoded",
+            14,
+            0,
+            1
+          ],
+          [
+            36,
+            0,
+            1,
+            1,
+            "decoded",
+            37,
+            0,
+            1
+          ],
+          [
+            12,
+            0,
+            2,
+            1,
+            "decoded",
+            13,
+            0,
+            1
+          ],
+          [
+            35,
+            0,
+            3,
+            1,
+            "decoded",
+            36,
+            0,
+            1
+          ],
+          [
+            11,
+            0,
+            4,
+            1,
+            "decoded",
+            12,
+            0,
+            1
+          ],
+          [
+            10,
+            0,
+            6,
+            1,
+            "decoded",
+            11,
+            0,
+            1
+          ],
+          [
+            34,
+            0,
+            7,
+            1,
+            "decoded",
+            35,
+            0,
+            1
+          ],
+          [
+            86,
+            0,
+            8,
+            1,
+            "decoded",
+            87,
+            0,
+            1
+          ]
+        ],
+        "content_sha256": "ce2c89f96f063d90373b0be7bc67039fef714f796966ce43c3ca55594614240b",
+        "map_sha256": "6421212db0e72b5f9e5e60069771f4d885d76c5f6a09ad0df46a995435ae0192",
+        "phase": "code",
+        "probes_issued": 9,
+        "version": "carto-v1"
+      },
+      "evidence": {
+        "app_oracle_record": {
+          "audit_available": true,
+          "readback_sha256": "f58f322ede8d3a773899091e926c0d0b58d2f0cdc5dee86b650ab4ba77dd11e7",
+          "schema": "app_oracle_record",
+          "schema_version": "1.0.0",
+          "seq": 10,
+          "staged_sha256": "f58f322ede8d3a773899091e926c0d0b58d2f0cdc5dee86b650ab4ba77dd11e7",
+          "staged_stream_sha256": "a450cd9ffeeccbfebc9b69e755c0cb3ef19381943df4e540808da4f39e4a6064",
+          "write": {
+            "envelopes": [
+              {
+                "index": 0,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 1,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 2,
+                "int_sts": "0x50033004"
+              }
+            ]
+          }
+        },
+        "arm": {
+          "ctrl_readback": "unavailable: CTRL is write-only",
+          "fault_after": 0,
+          "key_loaded_observed": true,
+          "nonce_after": "8f8ea9d349428d8e",
+          "nonce_before": "ddaa4e85b0d6e28b",
+          "settle": {
+            "polls": 16,
+            "polls_max": 1000000,
+            "settled": true,
+            "status_first": "0x00000901",
+            "status_last": "0x00000b54"
+          },
+          "status_after": "0x00000b54",
+          "writes_issued": 25
+        },
+        "score": {
+          "functional_readout": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "000a00a800ab00be",
+            "007900f300b400d7"
+          ],
+          "heartbeat": {
+            "after": 1955817731,
+            "before": 1955816086
+          },
+          "hw_candidate_commit": "f58f322ede8d3a773899091e926c0d0b58d2f0cdc5dee86b650ab4ba77dd11e7",
+          "scores": [
+            18,
+            22,
+            20,
+            20,
+            19,
+            18
+          ]
+        },
+        "sign_reply": {
+          "commit": "f58f322ede8d3a773899091e926c0d0b58d2f0cdc5dee86b650ab4ba77dd11e7",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 10,
+          "tag": "37929b50e316b86378a87cf84f914d04"
+        }
+      },
+      "genome": "0000000000000000000000000000000000000000000000000000000080000000ffffffff0000000f",
+      "outcome": "SCORED",
+      "schema": "loop_record",
+      "schema_version": "1.2.0",
+      "seq": 10,
+      "verified": "audited"
+    },
+    {
+      "carto": {
+        "anomalies": 0,
+        "changed": [],
+        "content_sha256": "ce2c89f96f063d90373b0be7bc67039fef714f796966ce43c3ca55594614240b",
+        "map_sha256": "6421212db0e72b5f9e5e60069771f4d885d76c5f6a09ad0df46a995435ae0192",
+        "phase": "baseline",
+        "probes_issued": 9,
+        "version": "carto-v1"
+      },
+      "evidence": {
+        "app_oracle_record": {
+          "audit_available": true,
+          "readback_sha256": "3e24d93665bb9f29fb43290283a0c01327acd6048b9e979d247e248ee232679b",
+          "schema": "app_oracle_record",
+          "schema_version": "1.0.0",
+          "seq": 11,
+          "staged_sha256": "3e24d93665bb9f29fb43290283a0c01327acd6048b9e979d247e248ee232679b",
+          "staged_stream_sha256": "905abc6931c537bbdf980c153c7d59ec5aa2da1d2707442c6b5049d733dfc7a3",
+          "write": {
+            "envelopes": [
+              {
+                "index": 0,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 1,
+                "int_sts": "0x50033004"
+              },
+              {
+                "index": 2,
+                "int_sts": "0x50033004"
+              }
+            ]
+          }
+        },
+        "arm": {
+          "ctrl_readback": "unavailable: CTRL is write-only",
+          "fault_after": 0,
+          "key_loaded_observed": true,
+          "nonce_after": "08f474ffb8e8ab15",
+          "nonce_before": "8f8ea9d349428d8e",
+          "settle": {
+            "polls": 16,
+            "polls_max": 1000000,
+            "settled": true,
+            "status_first": "0x00000901",
+            "status_last": "0x00000f54"
+          },
+          "status_after": "0x00000f54",
+          "writes_issued": 25
+        },
+        "score": {
+          "functional_readout": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "heartbeat": {
+            "after": 2014709317,
+            "before": 2014707697
+          },
+          "hw_candidate_commit": "3e24d93665bb9f29fb43290283a0c01327acd6048b9e979d247e248ee232679b",
+          "scores": [
+            18,
+            22,
+            20,
+            20,
+            20,
+            18
+          ]
+        },
+        "sign_reply": {
+          "commit": "3e24d93665bb9f29fb43290283a0c01327acd6048b9e979d247e248ee232679b",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 11,
+          "tag": "efd3c46314e77b87924edb3a0ad48afd"
+        }
+      },
+      "genome": "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "outcome": "SCORED",
+      "schema": "loop_record",
+      "schema_version": "1.2.0",
+      "seq": 11,
+      "verified": "audited"
+    }
+  ],
+  "session_summary": {
+    "audit": {
+      "audited": 11,
+      "total": 11
+    },
+    "closing": {
+      "baseline": "done",
+      "restore": "done",
+      "unsigned_control": "done"
+    },
+    "closing_control": {
+      "fault": 13,
+      "kind": "unsigned",
+      "nonce_after": "2ead854756d71f03",
+      "nonce_before": "08f474ffb8e8ab15",
+      "status": "0x00000982"
+    },
+    "counts": {
+      "refused_by_gate": 0,
+      "scored": 11
+    },
+    "crc_dropped": 0,
+    "drop_budget": 16,
+    "epoch_end": {
+      "kind": "COMPLETED",
+      "last_seq": 11,
+      "reason": "budget"
+    },
+    "schema": "session_summary",
+    "schema_version": "1.0.0",
+    "token": "d3d7c12332a53f94248a603392c04b9c",
+    "written_by": "app"
+  },
+  "l6": {
+    "session": "B1Q",
+    "mode": "carto-v1",
+    "master_seed": 176359248,
+    "n": 9,
+    "schedule": [],
+    "audit_policy": "all-self-reporting",
+    "audit_seqs": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "expected_frames": {
+      "audited_records": 11,
+      "by_type": {
+        "AUDIT": 88,
+        "AUDIT_READY": 11,
+        "CLOSE": 1,
+        "HB": 176,
+        "IDENT": 1,
+        "REC": 11,
+        "SIGNREQ": 11,
+        "TERM": 1
+      },
+      "n": 9,
+      "protocol": "rel-v4",
+      "records": 11,
+      "total": 300
+    },
+    "crc_budget": 4,
+    "crc_formula": "ceil(4 \u00d7 expected_total / 1000) (D-s4 noise allowance) + 1 per enabled forced CRC control (2) \u2014 B1Q session 1 (2026-09-06)",
+    "session_timeout_s": 615.0,
+    "inputs": {
+      "plan_sha256": "e7239f0de4d33ec4e8476a46371cad799718bb0601d9be7a5a8f37ee0a2c449f",
+      "prediction_sha256": "d2c9293a4573b60e497a23cdd87f6355e29df696ef16e52aec05e00ac8aaf062",
+      "pins_sha256": "3106d4a8445e16382b801a0791fde1fd2114846daef6aaf1fd6501e8e45c4709",
+      "settle_polls_median_calibration": [
+        16.0
+      ]
+    },
+    "rules_version": "b1/v0.2 over L6 v0.7 rules",
+    "bad_frame_policy": "ledger",
+    "bad_frame_budget": 2,
+    "hb_rule": "v07",
+    "protocol": "rel-v4",
+    "rec_retry_control": true,
+    "flags": 50,
+    "binding": {
+      "image_sha256": "300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb",
+      "prereg_sha256": "f995245cca13d5ac8cba8475c609a6e9f01d269cddc2d87e6a9b980f983652f2",
+      "protocol": "rel-v4",
+      "session": "B1Q",
+      "schedule_mode": "carto-v1",
+      "master_seed": 176359248,
+      "b1_manifest_sha256": "38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e",
+      "psoracle_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94"
+    }
+  },
+  "closing_negative": {
+    "fault": 13,
+    "kind": "unsigned",
+    "nonce_after": "2ead854756d71f03",
+    "nonce_before": "08f474ffb8e8ab15",
+    "status": "0x00000982"
+  },
+  "notary_log": {
+    "schema": "notary_log",
+    "schema_version": "1.0.0",
+    "token": "d3d7c12332a53f94248a603392c04b9c",
+    "entries": [
+      {
+        "seq": 1,
+        "at": 1788901594.8338692,
+        "request": {
+          "app_epoch": 0,
+          "genome": "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "nonce": "9e3779b97f4a7c15",
+          "schema": "sign_request",
+          "schema_version": "1.0.0",
+          "seq": 1,
+          "token": "d3d7c12332a53f94248a603392c04b9c"
+        },
+        "answer": {
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 1,
+          "commit": "3e24d93665bb9f29fb43290283a0c01327acd6048b9e979d247e248ee232679b",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "tag": "fa0b80ac5537299038fc30344eb23edd"
+        }
+      },
+      {
+        "seq": 2,
+        "at": 1788901596.239494,
+        "request": {
+          "app_epoch": 0,
+          "genome": "55555555555555555555555555555555555555555555555555555555555555555555555500000005",
+          "nonce": "dc1b77ae0bf34dad",
+          "schema": "sign_request",
+          "schema_version": "1.0.0",
+          "seq": 2,
+          "token": "d3d7c12332a53f94248a603392c04b9c"
+        },
+        "answer": {
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 2,
+          "commit": "bb734fed716ece9ec92fdc1ed807e848ea49cd3ab5a4dff36763c028dce47f7d",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "tag": "60e58679c0c692b0e902141584a57366"
+        }
+      },
+      {
+        "seq": 3,
+        "at": 1788901597.587054,
+        "request": {
+          "app_epoch": 0,
+          "genome": "66666666666666666666666666666666666666666666666666666666666666666666666600000006",
+          "nonce": "64f0eeb9026e6076",
+          "schema": "sign_request",
+          "schema_version": "1.0.0",
+          "seq": 3,
+          "token": "d3d7c12332a53f94248a603392c04b9c"
+        },
+        "answer": {
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 3,
+          "commit": "6e39fdd4c85b636069d5a38d5d4356229915ae1c3dd71a3b84fc9e4c230bc9b3",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "tag": "3ea5c670b2d5c1e9ecc9a770897bfb30"
+        }
+      },
+      {
+        "seq": 4,
+        "at": 1788901598.9197412,
+        "request": {
+          "app_epoch": 0,
+          "genome": "78787878787878787878787878787878787878787878787878787878787878787878787800000008",
+          "nonce": "7b07ce91e5906136",
+          "schema": "sign_request",
+          "schema_version": "1.0.0",
+          "seq": 4,
+          "token": "d3d7c12332a53f94248a603392c04b9c"
+        },
+        "answer": {
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 4,
+          "commit": "a6f286dd7afab40a8030adb4878acdb8cc5e5d45556d084fa0ef7199107e0f57",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "tag": "7cca97c18b8eb8ce207cadaf4cbaeb6d"
+        }
+      },
+      {
+        "seq": 5,
+        "at": 1788901600.2146277,
+        "request": {
+          "app_epoch": 0,
+          "genome": "7f807f807f807f807f807f807f807f807f807f807f807f807f807f807f807f807f807f8000000000",
+          "nonce": "305f050c368dcc74",
+          "schema": "sign_request",
+          "schema_version": "1.0.0",
+          "seq": 5,
+          "token": "d3d7c12332a53f94248a603392c04b9c"
+        },
+        "answer": {
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 5,
+          "commit": "f9c4012c3bc99400794f0e80fdcc1db872adb02e6788fa8c2f4b83af7f6eb3ca",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "tag": "9c9b238be55d56626d81f3dc8443a398"
+        }
+      },
+      {
+        "seq": 6,
+        "at": 1788901601.543135,
+        "request": {
+          "app_epoch": 0,
+          "genome": "7fff80007fff80007fff80007fff80007fff80007fff80007fff80007fff80007fff800000000000",
+          "nonce": "2ceb16e0a1c54aec",
+          "schema": "sign_request",
+          "schema_version": "1.0.0",
+          "seq": 6,
+          "token": "d3d7c12332a53f94248a603392c04b9c"
+        },
+        "answer": {
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 6,
+          "commit": "b0b7daada1b7374b4569a06b3540817e860c4f06e826cabd4c1d57acdbc233ca",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "tag": "46ad4aca1b56f84283dd1429de683c44"
+        }
+      },
+      {
+        "seq": 7,
+        "at": 1788901602.8866081,
+        "request": {
+          "app_epoch": 0,
+          "genome": "800000007fffffff800000007fffffff800000007fffffff800000007fffffff800000000000000f",
+          "nonce": "97101dce4e7bfb79",
+          "schema": "sign_request",
+          "schema_version": "1.0.0",
+          "seq": 7,
+          "token": "d3d7c12332a53f94248a603392c04b9c"
+        },
+        "answer": {
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 7,
+          "commit": "5ac33ea7460ad0a1180c28ddf3c3de6209d2d793023934a6310f6b5b3d8c23f4",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "tag": "392f0f2f5ba0369454d37eff08db2d22"
+        }
+      },
+      {
+        "seq": 8,
+        "at": 1788901602.3792472,
+        "request": {
+          "app_epoch": 0,
+          "genome": "0000000080000000ffffffff7fffffff0000000080000000ffffffff7fffffff0000000000000000",
+          "nonce": "9ad2e144d6e8f2cf",
+          "schema": "sign_request",
+          "schema_version": "1.0.0",
+          "seq": 8,
+          "token": "d3d7c12332a53f94248a603392c04b9c"
+        },
+        "answer": {
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 8,
+          "commit": "5fc4d50d6747f2f07200551e53ac9893f3fce67c243391b14df4ea72baa059bd",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "tag": "3cb71b390f9f0e387f47f11e285523ae"
+        }
+      },
+      {
+        "seq": 9,
+        "at": 1788901603.6231852,
+        "request": {
+          "app_epoch": 0,
+          "genome": "00000000000000000000000080000000ffffffffffffffffffffffff7fffffff0000000000000000",
+          "nonce": "d9aa792e1af470ea",
+          "schema": "sign_request",
+          "schema_version": "1.0.0",
+          "seq": 9,
+          "token": "d3d7c12332a53f94248a603392c04b9c"
+        },
+        "answer": {
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 9,
+          "commit": "5cd625817aea12bbc585ee2499024915e941a47b279b3dd846dad0377cee6c3b",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "tag": "2e372c439e295e41b09dcc16391c0451"
+        }
+      },
+      {
+        "seq": 10,
+        "at": 1788901604.8496566,
+        "request": {
+          "app_epoch": 0,
+          "genome": "0000000000000000000000000000000000000000000000000000000080000000ffffffff0000000f",
+          "nonce": "ddaa4e85b0d6e28b",
+          "schema": "sign_request",
+          "schema_version": "1.0.0",
+          "seq": 10,
+          "token": "d3d7c12332a53f94248a603392c04b9c"
+        },
+        "answer": {
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 10,
+          "commit": "f58f322ede8d3a773899091e926c0d0b58d2f0cdc5dee86b650ab4ba77dd11e7",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "tag": "37929b50e316b86378a87cf84f914d04"
+        }
+      },
+      {
+        "seq": 11,
+        "at": 1788901606.1817045,
+        "request": {
+          "app_epoch": 0,
+          "genome": "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "nonce": "8f8ea9d349428d8e",
+          "schema": "sign_request",
+          "schema_version": "1.0.0",
+          "seq": 11,
+          "token": "d3d7c12332a53f94248a603392c04b9c"
+        },
+        "answer": {
+          "schema": "sign_reply",
+          "schema_version": "1.0.0",
+          "seq": 11,
+          "commit": "3e24d93665bb9f29fb43290283a0c01327acd6048b9e979d247e248ee232679b",
+          "expected_tables": [
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000",
+            "0000000000000000"
+          ],
+          "tag": "efd3c46314e77b87924edb3a0ad48afd"
+        }
+      }
+    ]
+  },
+  "timing": {
+    "clocks": {
+      "mono": "time.monotonic() on the host, seconds",
+      "wall": "time.time() on the host, seconds since the epoch",
+      "resolution_s": "one runner poll interval (~0.02 s): every line a poll returned shares its stamp"
+    },
+    "t_go_mono": 2108.609435768,
+    "records": {
+      "1": {
+        "t_signreq": 2108.845332867,
+        "t_reply": 2109.117053766,
+        "t_auditreq": null,
+        "hb": [
+          2109.158019366,
+          2109.178790766,
+          2109.178790766,
+          2109.178790766,
+          2109.178790766,
+          2109.199749766,
+          2109.199749766,
+          2109.199749766,
+          2109.199749766,
+          2109.220988566,
+          2109.220988566,
+          2109.220988566,
+          2109.220988566,
+          2109.241903266,
+          2109.241903266,
+          2109.241903266
+        ],
+        "audit": [
+          2109.324690766,
+          2109.407366565,
+          2109.490112265,
+          2109.531531865,
+          2109.593751665,
+          2109.635653465,
+          2109.677479064,
+          2109.719003464
+        ],
+        "t_rec": 2110.211579563,
+        "t_ready": 2109.262731066,
+        "t_done": 2109.719586664,
+        "t_abort": null,
+        "hb_count": 16,
+        "audit_chunks": 8,
+        "wall": 1.3662466960004167,
+        "breakdown": {
+          "sign": 0.2717208990002291,
+          "stage": 0.04096560000016325,
+          "link2_dma": 0.020771399999830464,
+          "link3": 0.06311249999998836,
+          "audit": 0.45685559799994735,
+          "arm_settle_score": 0.4919928990002518
+        }
+      },
+      "2": {
+        "t_signreq": 2110.274693462,
+        "t_reply": 2110.522633461,
+        "t_auditreq": null,
+        "hb": [
+          2110.563711961,
+          2110.563711961,
+          2110.584374761,
+          2110.584374761,
+          2110.584374761,
+          2110.604915761,
+          2110.604915761,
+          2110.604915761,
+          2110.604915761,
+          2110.625385861,
+          2110.625385861,
+          2110.625385861,
+          2110.625385861,
+          2110.645870361,
+          2110.645870361,
+          2110.645870361
+        ],
+        "audit": [
+          2110.751733603,
+          2110.839733438,
+          2110.927838121,
+          2110.99331562,
+          2111.059236299,
+          2111.125988942,
+          2111.192662869,
+          2111.259243893
+        ],
+        "t_rec": 2111.519897728,
+        "t_ready": 2110.666487461,
+        "t_done": 2111.260270942,
+        "t_abort": null,
+        "hb_count": 16,
+        "audit_chunks": 8,
+        "wall": 1.2452042660002007,
+        "breakdown": {
+          "sign": 0.24793999900020935,
+          "stage": 0.04107849999991231,
+          "link2_dma": 0.020662800000081916,
+          "link3": 0.061495599999943806,
+          "audit": 0.5937834809997184,
+          "arm_settle_score": 0.2596267860003536
+        }
+      },
+      "3": {
+        "t_signreq": 2111.585513567,
+        "t_reply": 2111.871269786,
+        "t_auditreq": null,
+        "hb": [
+          2111.912601871,
+          2111.933977377,
+          2111.933977377,
+          2111.933977377,
+          2111.933977377,
+          2111.955772918,
+          2111.955772918,
+          2111.955772918,
+          2111.977691973,
+          2111.977691973,
+          2111.977691973,
+          2111.977691973,
+          2111.999704358,
+          2111.999704358,
+          2111.999704358,
+          2111.999704358
+        ],
+        "audit": [
+          2112.107270603,
+          2112.194175871,
+          2112.281483682,
+          2112.34727146,
+          2112.413335387,
+          2112.479475043,
+          2112.545860129,
+          2112.611155875
+        ],
+        "t_rec": 2112.872894996,
+        "t_ready": 2112.021644532,
+        "t_done": 2112.611992426,
+        "t_abort": null,
+        "hb_count": 16,
+        "audit_chunks": 8,
+        "wall": 1.2873814290001064,
+        "breakdown": {
+          "sign": 0.2857562190001772,
+          "stage": 0.04133208499979446,
+          "link2_dma": 0.021375505999913003,
+          "link3": 0.06572698100035268,
+          "audit": 0.5903478939999331,
+          "arm_settle_score": 0.26090256999987105
+        }
+      },
+      "4": {
+        "t_signreq": 2112.938480117,
+        "t_reply": 2113.20386804,
+        "t_auditreq": null,
+        "hb": [
+          2113.244827555,
+          2113.266567738,
+          2113.266567738,
+          2113.266567738,
+          2113.266567738,
+          2113.288602095,
+          2113.288602095,
+          2113.288602095,
+          2113.310520191,
+          2113.310520191,
+          2113.310520191,
+          2113.310520191,
+          2113.332736727,
+          2113.332736727,
+          2113.332736727,
+          2113.332736727
+        ],
+        "audit": [
+          2113.442353337,
+          2113.530342505,
+          2113.616189899,
+          2113.682222147,
+          2113.748303139,
+          2113.814519592,
+          2113.879334719,
+          2113.92441203
+        ],
+        "t_rec": 2114.183426148,
+        "t_ready": 2113.354951983,
+        "t_done": 2113.925068108,
+        "t_abort": null,
+        "hb_count": 16,
+        "audit_chunks": 8,
+        "wall": 1.2449460309999267,
+        "breakdown": {
+          "sign": 0.2653879230001621,
+          "stage": 0.04095951499994044,
+          "link2_dma": 0.021740183000019897,
+          "link3": 0.06616898899983426,
+          "audit": 0.5701161249999132,
+          "arm_settle_score": 0.25835804000007556
+        }
+      },
+      "5": {
+        "t_signreq": 2114.246711421,
+        "t_reply": 2114.499020228,
+        "t_auditreq": null,
+        "hb": [
+          2114.54228663,
+          2114.564292935,
+          2114.564292935,
+          2114.564292935,
+          2114.564292935,
+          2114.586219351,
+          2114.586219351,
+          2114.586219351,
+          2114.586219351,
+          2114.608444953,
+          2114.608444953,
+          2114.608444953,
+          2114.629837098,
+          2114.629837098,
+          2114.629837098,
+          2114.629837098
+        ],
+        "audit": [
+          2114.739467253,
+          2114.827600629,
+          2114.915358874,
+          2114.980893863,
+          2115.047024026,
+          2115.113420845,
+          2115.179620126,
+          2115.224602187
+        ],
+        "t_rec": 2115.483967224,
+        "t_ready": 2114.652302476,
+        "t_done": 2115.225151284,
+        "t_abort": null,
+        "hb_count": 16,
+        "audit_chunks": 8,
+        "wall": 1.2372558030001528,
+        "breakdown": {
+          "sign": 0.2523088070001904,
+          "stage": 0.043266401999972004,
+          "link2_dma": 0.022006305000104476,
+          "link3": 0.0655441629996858,
+          "audit": 0.5728488079998897,
+          "arm_settle_score": 0.25881594000020414
+        }
+      },
+      "6": {
+        "t_signreq": 2115.549975899,
+        "t_reply": 2115.827478394,
+        "t_auditreq": null,
+        "hb": [
+          2115.86858105,
+          2115.889092486,
+          2115.889092486,
+          2115.889092486,
+          2115.910777845,
+          2115.910777845,
+          2115.910777845,
+          2115.910777845,
+          2115.932764737,
+          2115.932764737,
+          2115.932764737,
+          2115.932764737,
+          2115.954850932,
+          2115.954850932,
+          2115.954850932,
+          2115.976950886
+        ],
+        "audit": [
+          2116.085232834,
+          2116.173062009,
+          2116.260600743,
+          2116.326784238,
+          2116.392704277,
+          2116.458803935,
+          2116.524734534,
+          2116.590133742
+        ],
+        "t_rec": 2116.850258533,
+        "t_ready": 2115.99868595,
+        "t_done": 2116.590900429,
+        "t_abort": null,
+        "hb_count": 16,
+        "audit_chunks": 8,
+        "wall": 1.3002826340002684,
+        "breakdown": {
+          "sign": 0.27750249500013524,
+          "stage": 0.04110265600002094,
+          "link2_dma": 0.020511436000106187,
+          "link3": 0.08785839999973177,
+          "audit": 0.5922144790001767,
+          "arm_settle_score": 0.2593581040000572
+        }
+      },
+      "7": {
+        "t_signreq": 2116.915519081,
+        "t_reply": 2117.16972879,
+        "t_auditreq": null,
+        "hb": [
+          2117.210851389,
+          2117.231394588,
+          2117.231394588,
+          2117.231394588,
+          2117.231394588,
+          2117.252139487,
+          2117.252139487,
+          2117.252139487,
+          2117.252139487,
+          2117.272963387,
+          2117.272963387,
+          2117.272963387,
+          2117.272963387,
+          2117.293943486,
+          2117.293943486,
+          2117.293943486
+        ],
+        "audit": [
+          2117.397146782,
+          2117.48057028,
+          2117.564222077,
+          2117.627519075,
+          2117.690508973,
+          2117.753305371,
+          2117.816341068,
+          2117.858654467
+        ],
+        "t_rec": 2118.105868259,
+        "t_ready": 2117.314740285,
+        "t_done": 2117.859143667,
+        "t_abort": null,
+        "hb_count": 16,
+        "audit_chunks": 8,
+        "wall": 1.1903491779999058,
+        "breakdown": {
+          "sign": 0.25420970899995154,
+          "stage": 0.04112259899966375,
+          "link2_dma": 0.020543199000258028,
+          "link3": 0.0625488979999318,
+          "audit": 0.5444033819999277,
+          "arm_settle_score": 0.24672459200019148
+        }
+      },
+      "8": {
+        "t_signreq": 2118.168102257,
+        "t_reply": 2118.422615248,
+        "t_auditreq": null,
+        "hb": [
+          2118.463197547,
+          2118.483889046,
+          2118.483889046,
+          2118.483889046,
+          2118.483889046,
+          2118.504879845,
+          2118.504879845,
+          2118.504879845,
+          2118.504879845,
+          2118.525796045,
+          2118.525796045,
+          2118.525796045,
+          2118.525796045,
+          2118.546476644,
+          2118.546476644,
+          2118.546476644
+        ],
+        "audit": [
+          2118.64986654,
+          2118.733601838,
+          2118.817208835,
+          2118.880290233,
+          2118.943230331,
+          2119.006367328,
+          2119.069200026,
+          2119.111267725
+        ],
+        "t_rec": 2119.357840617,
+        "t_ready": 2118.567316943,
+        "t_done": 2119.111887625,
+        "t_abort": null,
+        "hb_count": 16,
+        "audit_chunks": 8,
+        "wall": 1.1897383599998648,
+        "breakdown": {
+          "sign": 0.25451299099995595,
+          "stage": 0.040582299000107014,
+          "link2_dma": 0.020691498999894975,
+          "link3": 0.0625875979999364,
+          "audit": 0.5445706819996303,
+          "arm_settle_score": 0.24595299200018417
+        }
+      },
+      "9": {
+        "t_signreq": 2119.420302815,
+        "t_reply": 2119.666680006,
+        "t_auditreq": null,
+        "hb": [
+          2119.707254405,
+          2119.727859904,
+          2119.727859904,
+          2119.727859904,
+          2119.727859904,
+          2119.748800003,
+          2119.748800003,
+          2119.748800003,
+          2119.748800003,
+          2119.769688003,
+          2119.769688003,
+          2119.769688003,
+          2119.769688003,
+          2119.790628102,
+          2119.790628102,
+          2119.790628102
+        ],
+        "audit": [
+          2119.873637699,
+          2119.956612896,
+          2120.039214894,
+          2120.102007792,
+          2120.16412579,
+          2120.226150887,
+          2120.288466385,
+          2120.330409784
+        ],
+        "t_rec": 2120.578735199,
+        "t_ready": 2119.811601901,
+        "t_done": 2120.331030784,
+        "t_abort": null,
+        "hb_count": 16,
+        "audit_chunks": 8,
+        "wall": 1.158432384000207,
+        "breakdown": {
+          "sign": 0.2463771910001924,
+          "stage": 0.04057439899997917,
+          "link2_dma": 0.02060549899988473,
+          "link3": 0.06276819799995792,
+          "audit": 0.5194288830002733,
+          "arm_settle_score": 0.2477044150000438
+        }
+      },
+      "10": {
+        "t_signreq": 2120.643490377,
+        "t_reply": 2120.89401537,
+        "t_auditreq": null,
+        "hb": [
+          2120.93517062,
+          2120.955944387,
+          2120.955944387,
+          2120.955944387,
+          2120.955944387,
+          2120.977510496,
+          2120.977510496,
+          2120.977510496,
+          2120.998994743,
+          2120.998994743,
+          2120.998994743,
+          2120.998994743,
+          2121.019948415,
+          2121.019948415,
+          2121.019948415,
+          2121.041862146
+        ],
+        "audit": [
+          2121.127519504,
+          2121.213538251,
+          2121.300813606,
+          2121.367194767,
+          2121.432169047,
+          2121.475124196,
+          2121.540452509,
+          2121.605395053
+        ],
+        "t_rec": 2121.904261863,
+        "t_ready": 2121.063764107,
+        "t_done": 2121.60620484,
+        "t_abort": null,
+        "hb_count": 16,
+        "audit_chunks": 8,
+        "wall": 1.260771486000067,
+        "breakdown": {
+          "sign": 0.2505249929999991,
+          "stage": 0.04115524999997433,
+          "link2_dma": 0.020773766999809595,
+          "link3": 0.08591775900003995,
+          "audit": 0.5424407329996939,
+          "arm_settle_score": 0.2980570230001831
+        }
+      },
+      "11": {
+        "t_signreq": 2121.969484459,
+        "t_reply": 2122.225927745,
+        "t_auditreq": null,
+        "hb": [
+          2122.26705147,
+          2122.28846468,
+          2122.28846468,
+          2122.28846468,
+          2122.28846468,
+          2122.310261976,
+          2122.310261976,
+          2122.310261976,
+          2122.332538566,
+          2122.332538566,
+          2122.332538566,
+          2122.332538566,
+          2122.35425894,
+          2122.35425894,
+          2122.35425894,
+          2122.35425894
+        ],
+        "audit": [
+          2122.439359872,
+          2122.52580043,
+          2122.612278609,
+          2122.654589796,
+          2122.717872941,
+          2122.760351633,
+          2122.802319087,
+          2122.843878495
+        ],
+        "t_rec": 2123.114732219,
+        "t_ready": 2122.37588211,
+        "t_done": 2122.844366931,
+        "t_abort": null,
+        "hb_count": 16,
+        "audit_chunks": 8,
+        "wall": 1.1452477600000748,
+        "breakdown": {
+          "sign": 0.2564432859999215,
+          "stage": 0.04112372500003403,
+          "link2_dma": 0.021413209999991523,
+          "link3": 0.06579426000007516,
+          "audit": 0.46848482099994726,
+          "arm_settle_score": 0.2703652879999936
+        }
+      }
+    }
+  }
+}
