@@ -13,10 +13,14 @@
 
 Three host-side facts that bear on the design, none of which names a cause:
 
-1. **Both USB devices are attached over the same USB/IP socket.** `vhci_hcd` shows the
-   FT4232H (`1-1`) and the CH340 (`1-2`) sharing `sockfd 000003`. This is direct evidence
-   for the owner's point: exchanging the console adapter while keeping this arrangement
-   does not remove USB/IP from the path, so adapter-swap-first would confound the result.
+1. **Both USB devices are attached through the same USB/IP mechanism** (`vhci_hcd`, one
+   TCP connection to usbipd *per device*). Exchanging the console adapter while keeping this
+   arrangement does not remove USB/IP from the path, so adapter-swap-first would confound
+   the result. *Corrected 2026-09-08:* the first version of this item claimed both devices
+   share **one** socket because both `vhci_hcd` rows show `sockfd 000003`; that number is the
+   file-descriptor index inside each attach process, not a socket identity, and `ss` shows
+   two separate established connections. The design point stands; that evidence is withdrawn
+   (`evidence/b1q/transport_plan_2026_09_07/host_topology_2026_09_08.json`).
 2. **The sessions carry no serial error counters, and none can be read without opening the
    port.** `/proc/tty/driver/usbserial` is absent and the `ttyUSB4` sysfs nodes expose no
    framing/parity/overrun/break counts; `TIOCGICOUNT` on an open fd is the only source, and
@@ -28,6 +32,31 @@ Three host-side facts that bear on the design, none of which names a cause:
    `exclusive=True`. Nothing holds `ttyUSB4` now and no known serial-grabbing daemon is
    running, but no session recorded whether anything held it at the time. Port contention
    is therefore an **unexcluded hypothesis**, not a finding — and it is cheap to exclude.
+
+**Host topology, read 2026-09-08 (after the owner re-plugged the CH340).** Full record in
+`evidence/b1q/transport_plan_2026_09_07/host_topology_2026_09_08.json`. In brief:
+
+- The CH340 is **not** on an independent USB path. It moved from port 2 to port 3 of the
+  same external Genesys `05e3:0610` USB 2.0 hub on which the FT4232H sits at port 1
+  (`usbipd` BusIds `4-3` / `4-1` are hub-relative). Both still share that hub, its upstream
+  link to PCH-xHCI root port 4, and the controller. An independent path means a device
+  whose Windows LocationPaths has a single `#USB(n)` after `USBROOT(0)`, ideally on the
+  other controller (`PCI(0D00)`).
+- Two Windows-side components were not in the plan's path list: **`hrdevmon.sys`** (Huorong
+  Internet Security device monitor, a Boot-start USB-class upper filter bound to every USB
+  device, the hub and both adapters included), and the fact that `VBoxUSB`/`VBoxUSBMon`
+  are usbipd-win's own stub driver (VirtualBox is not installed). The `VBoxUSBMon` event-4
+  bursts in the System log occur at bind time, ~5 min before each session, never inside one.
+- **No device-level drop inside any session window.** Kernel-PnP logs show no
+  re-enumeration, surprise removal or port reset of the CH340 or FT4232H during the three
+  sessions; the post-hoc WSL dmesg for session 1 shows nothing but vhci's informational
+  `seqnum max`. The loss is byte-level on an attached device. Hub ports 1–3 do carry older
+  enumeration-failure ghosts (Jul/Aug), outside every session.
+- Nothing holds `/dev/ttyUSB4` now; the CH340 reports `bcdDevice 0x0264`, full-speed, no
+  serial number.
+
+None of this attributes the loss. It narrows the candidate set (device-level drop excluded,
+"one shared socket" withdrawn) and lengthens the host path list (hub sharing, `hrdevmon`).
 
 **Constraint on any instrumentation.** The transport is the archived instrument's code
 (read-only, pinned by hash). Counter capture, an exclusive open, or any other transport
