@@ -1,13 +1,16 @@
-# B1 — the package: FROZEN; attempt 3 LOST; transport stop-loss in force (2026-09-07)
+# B1 — the package: FROZEN; attempt 4 PASS (2026-09-08-01), record NOT yet pinned
 
-> **STOP-LOSS / qualification HOLD / NO OPEN RULING.** Attempt 3 (identifier
-> `2026-09-06-03`, executed 2026-09-07) ended PROTOCOL at seq 3: CRC drops 5 > 4.
-> Collected evidence was sealed; adjudication and qualification record are HOLD.
-> Attempts 1 and 3 are the two transport losses; attempt 2 remains a historical PASS
-> for its old manifest. All three ruling pairs are consumed. No further session is authorized.
-> See `docs/b1q_session3_audit_2026_09_07.md` for the audit and permitted offline investigation.
-> Image `300b12b1…` and committed manifest `38363973…` are unchanged; qualification
-> remains unpinned. Resume only after diagnosis, proof, review and fresh authorization.
+> **Attempt 4 (`2026-09-08-01`, executed 2026-09-08 22:02–22:07 BST, 17A6) — PASS** under a
+> fresh ruling pair issued by the owner the same evening (the owner lifted the board
+> prohibition of the 2026-09-07 stop-loss for this one session, choosing a board run over the
+> loopback rig): 300/300 frames, 11/11 audited, zero non-control CRC drops, zero fragments.
+> Evidence committed unchanged in `evidence/b1q/b1q_17A6_2026-09-08-01/`; its
+> `qualification.json` re-verifies PASS in memory against the committed manifest
+> `38363973…`. **The qualification record is not pinned yet** (`host/b1_manifest.py
+> --qualification`) — that transition, and the mapping pair after it, wait on the owner.
+> Attempts 1 and 3 remain LOST (transport); attempt 2 a historical PASS for its old manifest;
+> the transport root cause is still not attributed (`docs/b1q_transport_plan_2026_09_07.md`).
+> Image `300b12b1…` unchanged.
 
 ## 0. History: the first package and why it failed
 

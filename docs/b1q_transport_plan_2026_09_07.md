@@ -77,6 +77,20 @@ followed). Versus the three sessions the changed variables are now *module* and 
 hub sharing, the Windows stack, USB/IP, WSL and the board side are unchanged. Recorded under
 `module_swap_2026_09_08_2155`.
 
+**Attempt 4 (2026-09-08-01, executed 22:02–22:07 BST) under a new ruling pair — PASS.**
+The owner chose a board session over the loopback rig ("test from the hub first"), with
+a fresh power cycle, boundary `principal_boundary_2026-09-08-01.json`, module B on hub
+port 3, wiring untouched. Result: 300/300 frames received, 11/11 records audited, the
+only two CRC drops are the two forced controls (SIGNREQ seq 1, REC), zero non-control
+drops, zero fragments, `COMPLETED / budget` — the same profile as attempt 2.
+`qualification.json` re-verifies PASS in memory against the current manifest; the record
+is **not yet pinned** (owner's call). What this is and is not: one clean session with two
+variables changed at once (module A→B, hub port 2→3) against two lost sessions on module
+A; it does not separate module from port, does not implicate or clear USB/IP, `hrdevmon`,
+the hub, the wiring or the board UART, and — as the transition decision already says — a
+single PASS does not establish transport stability. The isolation plan above remains the
+instrument for attribution if the owner still wants one.
+
 **Constraint on any instrumentation.** The transport is the archived instrument's code
 (read-only, pinned by hash). Counter capture, an exclusive open, or any other transport
 change must be a B1-side wrapper in this repository, which is a **pinned-file change** — so
