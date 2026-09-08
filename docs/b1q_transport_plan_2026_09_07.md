@@ -68,6 +68,15 @@ same CH340 module, the same wiring, the same board UART. WSL re-bound it cleanly
 `ttyUSB4` (`/dev/ebaz-uart` follows). Recorded in the same evidence file under
 `re_plug_2026_09_08_2150`.
 
+**Update 21:55.** The owner swapped in a **second CH340 module** and returned it to the hub
+(port 3), stating the order "test from the hub first". The new module is
+descriptor-identical to the first (`bcdDevice 0x0264`, same endpoints, no serial number), so
+nothing on the host distinguishes the two; module identity in any comparison is
+owner-attested at run time. WSL bound it as `1-1` → `ttyUSB0` this time (`/dev/ebaz-uart`
+followed). Versus the three sessions the changed variables are now *module* and *hub port*;
+hub sharing, the Windows stack, USB/IP, WSL and the board side are unchanged. Recorded under
+`module_swap_2026_09_08_2155`.
+
 **Constraint on any instrumentation.** The transport is the archived instrument's code
 (read-only, pinned by hash). Counter capture, an exclusive open, or any other transport
 change must be a B1-side wrapper in this repository, which is a **pinned-file change** — so
