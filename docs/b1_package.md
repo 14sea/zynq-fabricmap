@@ -1,4 +1,4 @@
-# B1 — the package: FROZEN; attempt 4 PASS (2026-09-08-01), record NOT yet pinned
+# B1 — the package: FROZEN and QUALIFIED; mapping pair issued, execution pending
 
 > **Attempt 4 (`2026-09-08-01`, executed 2026-09-08 22:02–22:07 BST, 17A6) — PASS** under a
 > fresh ruling pair issued by the owner the same evening (the owner lifted the board
@@ -6,8 +6,13 @@
 > loopback rig): 300/300 frames, 11/11 audited, zero non-control CRC drops, zero fragments.
 > Evidence committed unchanged in `evidence/b1q/b1q_17A6_2026-09-08-01/`; its
 > `qualification.json` re-verifies PASS in memory against the committed manifest
-> `38363973…`. **The qualification record is not pinned yet** (`host/b1_manifest.py
-> --qualification`) — that transition, and the mapping pair after it, wait on the owner.
+> `38363973…`. **The qualification record is pinned** in commit `776b2db`; the current
+> manifest is `38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8`.
+> Clean-tree tests on that commit ran 1456 with zero skips, failures or errors (report
+> committed in `fb9de4d`). The B1 mapping pair `2026-09-08-02` is issued and unconsumed;
+> execution awaits a separate explicit owner instruction and fresh operational checks.
+> See `docs/b1_mapping_pair_review_2026_09_08.md`. Issuance does not itself resolve or
+> waive transport stop-loss.
 > Attempts 1 and 3 remain LOST (transport); attempt 2 a historical PASS for its old manifest;
 > the transport root cause is still not attributed (`docs/b1q_transport_plan_2026_09_07.md`).
 > Image `300b12b1…` unchanged.
@@ -322,13 +327,17 @@ two-strikes / three-without-COMPLETED rules in force.
 A provisioning ruling is consumed once and is bound to its session name, so each session
 needs its own. Attempt 1 (`2026-09-06-01`) is LOST; attempt 2 (`2026-09-06-02`) is a
 historical PASS for its prior manifest. Attempt 3 (`2026-09-06-03`, executed 2026-09-07)
-is LOST/HOLD. All three pairs are consumed; no new pair is issued while stop-loss is in
-force. The attempt-3 pair was bound to committed manifest
+is LOST/HOLD. Attempt 4 (`2026-09-08-01`) passed under the recorded one-session owner
+exception; all four B1Q pairs are consumed. The attempt-3 and attempt-4 pairs were bound to
+committed manifest
 `38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e`.
-The mapping pair has not been issued; it must bind the manifest **after** a standing
-qualification record is pinned and committed. The JSON below is template text, not an
-additional usable ruling. Historical issuance: `docs/b1_v243_review_2026_09_06.md`;
-current stop-loss decision: `docs/b1q_session3_audit_2026_09_07.md`.
+The mapping pair `2026-09-08-02` now binds the committed qualified manifest `38238271…fd4ba8`,
+session B1 and seed 1123460948. Both files are in gitignored `rulings/`, unconsumed.
+Execution is pending; issuance is not a stop-loss waiver. The JSON below remains template
+text, not an additional usable ruling. Current issuance and checks:
+`docs/b1_mapping_pair_review_2026_09_08.md`; historical issuance:
+`docs/b1_v243_review_2026_09_06.md`; transport stop-loss history:
+`docs/b1q_session3_audit_2026_09_07.md`.
 
 **Qualification pair (session `B1Q`)**
 ```json
@@ -398,13 +407,14 @@ the bounds (unchanged), and the B1-specific points: the cartographer's memory (s
 
 ## 8. Fail-closed today
 
-The committed manifest is **FROZEN**, its preregistration hashes to the frozen pin, and
-the reviewed image is `board_ready`. With fixture rulings that pass the initial ruling
-checks, `host/b1_runner.py` in the MAPPING profile passes the preceding pins and refuses
-because the carrier is **not qualified: no carrier.qualification record**. The committed
-manifest also makes `host/b1_adjudicate.py` refuse at the missing qualification record.
-These checks run before any port access or ruling consumption. All three B1Q pairs
-are consumed; transport stop-loss is in force and no further session is authorized (§5).
+The committed manifest is **FROZEN and QUALIFIED**, its preregistration hashes to the
+frozen pin, and the reviewed image is `board_ready`. The standing attempt-4 qualification
+chain re-adjudicates to PASS; absence of qualification is no longer the committed state's
+refusal reason. Missing-qualification and bare-flag refusal remain covered by fixtures.
+The mapping pair passes binding checks, but full execution preflight still requires the
+operational prerequisites. All four B1Q pairs are consumed. The new mapping pair is
+unconsumed and execution remains pending (§5); transport stop-loss is not lifted merely
+by pinning qualification or issuing the pair.
 
 The DRAFT refusal remains covered by fixtures with `prereg.sha256` null; it is no longer
 the committed manifest's state. Other fixture tests reach each refusal in order

@@ -1,0 +1,27 @@
+{
+  "reviewed_head": "fb9de4de26bfb9022fff13f16cc3befc655c55b0",
+  "manifest_sha256": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+  "qualification_verify": "PASS, re-adjudicated",
+  "report": "evidence/b1/tests/test_report_2026-09-08T212212Z.json",
+  "report_artifact_hashes_verified": 18,
+  "report_ran": 1456,
+  "report_skipped": 0,
+  "report_clean_tree_proof": true,
+  "rulings": [
+    {
+      "path": "rulings/b1_2026-09-08-02.json",
+      "sha256": "88c1baaa8d2b4d60847a3bbcc2643914d6693468e10072450f2356ff6c89190c",
+      "consumed": false,
+      "binding_check": "PASS"
+    },
+    {
+      "path": "rulings/p3_k_b1_2026-09-08-02.json",
+      "sha256": "a3186d588fc46245186138e1e0be38c653cc1a454066a6772b17b8e781d5d4aa",
+      "consumed": false,
+      "binding_check": "PASS"
+    }
+  ],
+  "full_execution_preflight_performed": false,
+  "board_contact": false,
+  "execution_status": "Await a separate explicit owner instruction, fresh power cycle and fresh boundary. Issuance does not itself resolve or waive the prior transport stop-loss."
+}
