@@ -58,6 +58,16 @@ Three host-side facts that bear on the design, none of which names a cause:
 None of this attributes the loss. It narrows the candidate set (device-level drop excluded,
 "one shared socket" withdrawn) and lengthens the host path list (hub sharing, `hrdevmon`).
 
+**Update 21:50 the same evening.** The owner moved the CH340 again; it now sits directly on
+PCH-xHCI root port 9 (`PCI(1400)#USBROOT(0)#USB(9)`, parent = the root hub, `usbipd` BusId
+`2-9`), so the shared-hub variable is removed. The FT4232H is unchanged behind the
+`05e3:0610` hub. What the console path still shares with the recorded sessions: the same
+xHCI controller (the second controller only exposes the dock's SuperSpeed hub on this
+laptop), `hrdevmon`, the `VBoxUSB` stub, usbipd/USB-IP, `vhci_hcd`, `ch341`, pyserial, the
+same CH340 module, the same wiring, the same board UART. WSL re-bound it cleanly to
+`ttyUSB4` (`/dev/ebaz-uart` follows). Recorded in the same evidence file under
+`re_plug_2026_09_08_2150`.
+
 **Constraint on any instrumentation.** The transport is the archived instrument's code
 (read-only, pinned by hash). Counter capture, an exclusive open, or any other transport
 change must be a B1-side wrapper in this repository, which is a **pinned-file change** — so
