@@ -1,0 +1,252 @@
+{
+  "head": "31d619eada9367dad35d4a6fe66f369e5a6c86f8",
+  "manifest_sha256": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+  "source_sha256": {
+    "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+    "B1_1_identity_page.json": "7228b4555cf27414cdde5133b461ef32b4742226b776bbda502ffe9fa180f8be",
+    "adjudication.json": "bf60a8f08c41ad8477521390450174106e2cd18652f4003fe372c54cdeaa53cb",
+    "audits.json": "16df036c10cf17167155fc5797fc3ee915333ef7d40b87877e4e437563feae3f",
+    "console.log": "98b70cc990859d08cd4259ef37696f25635b1f4a12b9423912a6a17974a1cb32",
+    "console.ts.log": "101c085421dda2314628a3dae630ec922d8230a41124916169f02f11e99f4e03",
+    "exports.json": "7ee1444b7747d3b053cd1a50496ce554a3f9ce084edafc60781687f1c6a7b53f",
+    "manifest_at_run.json": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+    "ruling_provisioning.json": "73e1296edbfdc68a5931f67e06cce1d280fd7d41079d0f1b902a860b66fb74cc",
+    "ruling_whole_of_run.json": "37b44ff261b35039fc1d674f996d5a3c96a6314ca0eae054971bb121a44e3d84",
+    "run_log.json": "e6f7e40688d434ef36e73cb6e4c4069d03989363f94ffe59ba558cc9ba04578f",
+    "self_map_v2.json": "b6607a9a4de4ec16b4441395703d353ba438463e3ff0be3b5984ec6f1f1bfa38",
+    "summary.json": "f598cc34de399695782b6f2e389794d91d8b5bd8dcc9b9f9be4166c0eb620b0e",
+    "timeline.json": "01c8bdf589369177de8627f5e2b4b1927acee7c4c34055b8ee36ad014a746d28",
+    "ymodem.log": "6b74d85fdce58396edfe32931da7a1c015d2d823105ebac7bed4d70cfd779fb7",
+    "ymodem_app.log": "6e558e96ed349d64d10a5f0d03aaf08ac776b111ac8878072bc744caf3a51f8c"
+  },
+  "boundary_sha256": "58d64d1f1947fdfb89695e3dfaefc7cc9ffaae868a2a6238689142c184552882",
+  "originals_match_commit": true,
+  "pins": {
+    "files_verified": 105
+  },
+  "instrument": {
+    "root": "/home/test/zynq_psoracle",
+    "psoracle_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+    "files_verified": 128,
+    "git_checked": true
+  },
+  "qualification": {
+    "evidence_dir": "/home/test/zynq_fabricmap/evidence/b1q/b1q_17A6_2026-09-08-01",
+    "outcome": "PASS",
+    "readjudicated": true,
+    "token": "d3d7c12332a53f94248a603392c04b9c",
+    "manifest_at_run_sha256": "38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e"
+  },
+  "outcome": "PASS",
+  "stored_adjudication_reproduced": true,
+  "stored_expanded_map_reproduced": true,
+  "raw_matches_exports": true,
+  "valid_frames": {
+    "IDENT": 1,
+    "SIGNREQ": 335,
+    "HB": 5360,
+    "AUDIT_READY": 335,
+    "AUDIT": 2680,
+    "REC": 335,
+    "CLOSE": 1,
+    "TERM": 1
+  },
+  "valid_frame_total": 9048,
+  "crc_failures": [
+    {
+      "line": 4,
+      "type": "SIGNREQ",
+      "seq": 1,
+      "forced_control": true,
+      "valid_retransmission_line": 5,
+      "valid_payload_sha256": "6314cab4350242e71deb04bbba35990c5b688948c967c5a05fba3d42b38ac6c8",
+      "received_byte_deficit": 0
+    },
+    {
+      "line": 31,
+      "type": "REC",
+      "seq": 1,
+      "forced_control": true,
+      "valid_retransmission_line": 32,
+      "valid_payload_sha256": "fa70299ad67cdf168d837b52475977ce29feae4b69a1452dcaf358609ed0e0a5",
+      "received_byte_deficit": 0
+    },
+    {
+      "line": 2300,
+      "type": "REC",
+      "seq": 85,
+      "forced_control": false,
+      "valid_retransmission_line": 2301,
+      "valid_payload_sha256": "dadc26a0cbcfda273ea1f192c1bcee5843f96fd1b740b2233eeeb8ec72cb00b2",
+      "received_byte_deficit": 441
+    },
+    {
+      "line": 3971,
+      "type": "AUDIT",
+      "seq": 147,
+      "forced_control": false,
+      "valid_retransmission_line": 3972,
+      "valid_payload_sha256": "073685886ed620d441e552d0e19c3261d1fa808e052602b3077c329cdd3d415a",
+      "received_byte_deficit": 42,
+      "retransmitted_chunk_index": 4
+    },
+    {
+      "line": 5948,
+      "type": "SIGNREQ",
+      "seq": 221,
+      "forced_control": false,
+      "valid_retransmission_line": 5949,
+      "valid_payload_sha256": "4f5e7e0f1ad89753f319423b0231ada09f915f7d6e1390ca61594c1dd2ebcb8c",
+      "received_byte_deficit": 222
+    },
+    {
+      "line": 6570,
+      "type": "SIGNREQ",
+      "seq": 244,
+      "forced_control": false,
+      "valid_retransmission_line": 6571,
+      "valid_payload_sha256": "be17b87ba9cb949bfccf24a9901e4749c83279c53d4b31009631272924d3eaee",
+      "received_byte_deficit": 33
+    }
+  ],
+  "noncontrol_crc_denominator": {
+    "failures": 4,
+    "valid_received": 9048,
+    "noncontrol_attempts_including_retries": 9052,
+    "fraction": 0.0004418912947414936
+  },
+  "audit_check": [
+    335,
+    "host audit gate marks (validators.audit.verify)"
+  ],
+  "nonce_transitions": 336,
+  "epoch_end": {
+    "kind": "COMPLETED",
+    "last_seq": 335,
+    "reason": "budget"
+  },
+  "closing": {
+    "fault": 13,
+    "kind": "unsigned",
+    "nonce_after": "f4231ce12176dc70",
+    "nonce_before": "f5a2fa6852249193",
+    "status": "0x00000982"
+  },
+  "go_to_term_monotonic_s": 430.2352811099995,
+  "boundary_age_at_go_s": 251.21349906921387,
+  "wall_minus_monotonic_change_s": -26.369457960128784,
+  "rate": {
+    "candidates": 333,
+    "evals_per_hour": 2806.849032902377,
+    "cov": 0.022117137877672742,
+    "session_span_s": 429.8639124819997
+  },
+  "replay": {
+    "probes_replayed": 333,
+    "map_sha256": "8e54ed81be7636724b1048432093d87c5323ab937b55bbc89285c15a27023f40",
+    "content_sha256": "7e1e7702ad3dc69d1ee4c809bf3cc829d7dc93696092d1e65c5ac1c4019ecbfa",
+    "findings": []
+  },
+  "metrics": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "claimed": 292,
+    "correct": 292,
+    "total_mapped": 292,
+    "unobserved_claims": 0,
+    "states": {
+      "confirmed": 292
+    },
+    "anomalies": 0,
+    "calibration": {
+      "0": {
+        "claimed": 0,
+        "correct": 0,
+        "accuracy": null
+      },
+      "1": {
+        "claimed": 0,
+        "correct": 0,
+        "accuracy": null
+      },
+      "2": {
+        "claimed": 292,
+        "correct": 292,
+        "accuracy": 1.0
+      }
+    },
+    "stratum_A": {
+      "luts": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "total": 198,
+      "claimed": 198,
+      "correct": 198,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    "stratum_B": {
+      "luts": [
+        4,
+        5
+      ],
+      "total": 94,
+      "claimed": 94,
+      "correct": 94,
+      "recall": 1.0,
+      "precision": 1.0
+    },
+    "interaction": {
+      "pairs_tested": 32,
+      "deviations": 0,
+      "pending": 0
+    },
+    "snapshots": {
+      "probes_issued": 333,
+      "phases": {
+        "code": 9,
+        "confirm": 292,
+        "pair": 32
+      },
+      "provisional": {
+        "claimed": 292,
+        "correct": 292,
+        "precision": 1.0,
+        "recall": 1.0,
+        "calibration": {
+          "0": {
+            "claimed": 0,
+            "correct": 0,
+            "accuracy": null
+          },
+          "1": {
+            "claimed": 292,
+            "correct": 292,
+            "accuracy": 1.0
+          },
+          "2": {
+            "claimed": 0,
+            "correct": 0,
+            "accuracy": null
+          }
+        }
+      },
+      "probes_to_full_recall_conf1": 9,
+      "probes_to_full_confirmation": 301
+    }
+  },
+  "rulings": {
+    "whole_of_run": {
+      "sha256": "88c1baaa8d2b4d60847a3bbcc2643914d6693468e10072450f2356ff6c89190c",
+      "consumed_marker": "2026-09-08T22:29:11 claimed pid=16811\n2026-09-08T22:40:07 PASS\n"
+    },
+    "provisioning": {
+      "sha256": "a3186d588fc46245186138e1e0be38c653cc1a454066a6772b17b8e781d5d4aa",
+      "consumed_marker": "2026-09-08T22:40:07 claimed pid=16811\n2026-09-08T22:40:07 provisioning session outcome: PASS\n"
+    }
+  },
+  "token": "6b6a8cf15ba2e45fdb9f1c5ee65862a8"
+}

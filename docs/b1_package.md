@@ -1,4 +1,12 @@
-# B1 — the package: FROZEN and QUALIFIED; mapping pair issued, execution pending
+# B1 — the package: mapping PASS, independently audited (2026-09-08-02)
+
+> **B1 mapping `2026-09-08-02`, board 17A6 — reviewed PASS.** All 335 records are SCORED
+> and audited; 333 probes replay; the expanded map reproduces exactly with 292 confirmed
+> entries and 32 interaction edges, no anomalies or deviations. Precision and recall are
+> both 1.0. Evidence and boundary are preserved in commit `31d619e`; independent audit:
+> `docs/b1_mapping_session_audit_2026_09_08.md`. Both mapping rulings are consumed.
+> Four non-control CRC failures recovered by retransmission; transport stability and
+> root cause remain unresolved. No additional board session is authorized by this result.
 
 > **Attempt 4 (`2026-09-08-01`, executed 2026-09-08 22:02–22:07 BST, 17A6) — PASS** under a
 > fresh ruling pair issued by the owner the same evening (the owner lifted the board
@@ -9,10 +17,9 @@
 > `38363973…`. **The qualification record is pinned** in commit `776b2db`; the current
 > manifest is `38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8`.
 > Clean-tree tests on that commit ran 1456 with zero skips, failures or errors (report
-> committed in `fb9de4d`). The B1 mapping pair `2026-09-08-02` is issued and unconsumed;
-> execution awaits a separate explicit owner instruction and fresh operational checks.
-> See `docs/b1_mapping_pair_review_2026_09_08.md`. Issuance does not itself resolve or
-> waive transport stop-loss.
+> committed in `fb9de4d`). The B1 mapping pair `2026-09-08-02` subsequently completed and
+> both rulings are consumed. Its historical issuance review is
+> `docs/b1_mapping_pair_review_2026_09_08.md`; the completed-session audit is linked above.
 > Attempts 1 and 3 remain LOST (transport); attempt 2 a historical PASS for its old manifest;
 > the transport root cause is still not attributed (`docs/b1q_transport_plan_2026_09_07.md`).
 > Image `300b12b1…` unchanged.
@@ -331,10 +338,10 @@ is LOST/HOLD. Attempt 4 (`2026-09-08-01`) passed under the recorded one-session 
 exception; all four B1Q pairs are consumed. The attempt-3 and attempt-4 pairs were bound to
 committed manifest
 `38363973c10c48244dc04f08044647b1159d1446b00dec5776d9478b9aad0a0e`.
-The mapping pair `2026-09-08-02` now binds the committed qualified manifest `38238271…fd4ba8`,
-session B1 and seed 1123460948. Both files are in gitignored `rulings/`, unconsumed.
-Execution is pending; issuance is not a stop-loss waiver. The JSON below remains template
-text, not an additional usable ruling. Current issuance and checks:
+The mapping pair `2026-09-08-02` binds the committed qualified manifest `38238271…fd4ba8`,
+session B1 and seed 1123460948. Its session passed and both files in gitignored `rulings/`
+are consumed. There is no open mapping pair or automatic retry. The JSON below remains
+template text, not an additional usable ruling. Historical issuance and checks:
 `docs/b1_mapping_pair_review_2026_09_08.md`; historical issuance:
 `docs/b1_v243_review_2026_09_06.md`; transport stop-loss history:
 `docs/b1q_session3_audit_2026_09_07.md`.
@@ -411,10 +418,10 @@ The committed manifest is **FROZEN and QUALIFIED**, its preregistration hashes t
 frozen pin, and the reviewed image is `board_ready`. The standing attempt-4 qualification
 chain re-adjudicates to PASS; absence of qualification is no longer the committed state's
 refusal reason. Missing-qualification and bare-flag refusal remain covered by fixtures.
-The mapping pair passes binding checks, but full execution preflight still requires the
-operational prerequisites. All four B1Q pairs are consumed. The new mapping pair is
-unconsumed and execution remains pending (§5); transport stop-loss is not lifted merely
-by pinning qualification or issuing the pair.
+The mapping session passed under its bound pair and the resulting evidence independently
+re-adjudicates to PASS. All four B1Q pairs and the mapping pair are consumed. Further
+execution requires a new owner decision and fresh prerequisites; neither this result nor
+the derived qualification flag establishes transport stability or grants a retry.
 
 The DRAFT refusal remains covered by fixtures with `prereg.sha256` null; it is no longer
 the committed manifest's state. Other fixture tests reach each refusal in order
