@@ -837,6 +837,8 @@ static const unsigned long B2_EXCLUDED_SEEDS[B2_EXCLUDED_SEEDS_N] = {
 };
 
 /* the engine and the landscape, as the architecture fixes them (docs/b2_architecture.md) */
+#define B2_DATA_NO_OPERATOR_TABLES 1
+#define B2_UNIVERSE_SHA256 "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
 #define B2_SEED_LABEL "b2-session"
 #define B2_AUDIT_POLICY "all-self-reporting"
 #define B2_FITNESS_ID "F1"

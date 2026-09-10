@@ -63,6 +63,11 @@ def _rows(values, per_line: int, fmt=str) -> list[str]:
     return out
 
 
+def self_map_universe() -> str:
+    """The universe digest the image is compiled with — the same object B1's header carried."""
+    return bmaps.load_self_map()["binding"]["universe_sha256"]
+
+
 def render_b2(require_git: bool = True) -> str:
     head = gb1.render_b1(require_git=require_git)
     marker = "\n/* B1 (stage B1 cartography)"
@@ -73,6 +78,7 @@ def render_b2(require_git: bool = True) -> str:
                         " * B2 image: the instrument's data header WITHOUT the two-operator map tables,\n"
                         " * plus the B1 self-map, the carrier's train/holdout split and the seed exclusion.")
 
+    universe = self_map_universe()
     self_map = bmaps.load_self_map()
     entries = {e["genome_bit"]: e for e in self_map["entries"]}
     if sorted(entries) != list(range(bs.bc.N)):
@@ -114,6 +120,8 @@ def render_b2(require_git: bool = True) -> str:
              "static const unsigned long B2_EXCLUDED_SEEDS[B2_EXCLUDED_SEEDS_N] = {"] + \
             _rows(excluded, 8, lambda v: f"0x{v:08x}ul") + ["};", "",
              "/* the engine and the landscape, as the architecture fixes them (docs/b2_architecture.md) */",
+             "#define B2_DATA_NO_OPERATOR_TABLES 1",
+             f'#define B2_UNIVERSE_SHA256 "{universe}"',
              f'#define B2_SEED_LABEL "{bp.SESSION_LABEL}"',
              f'#define B2_AUDIT_POLICY "{bp.AUDIT_POLICY}"',
              f'#define B2_FITNESS_ID "F1"',

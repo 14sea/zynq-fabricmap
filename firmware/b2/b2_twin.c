@@ -7,6 +7,10 @@
  *   seeds      < "master count"        -> "<landscape> <operator>" per pair
  *   landscape  < "seed"                -> "MASK <6x16hex>" then "TARGET <6x16hex>"
  *   fitness    < "seed <6x16hex>"      -> "F1 <train> <holdout>" for that readout
+ *   wire                               -> "IDENT <json>" and "REC <json>": the app_identity
+ *                                         1.5.0 and loop_record 1.3.0 bytes the image emits,
+ *                                         for fixed inputs, so tests/test_b2_wire.py can feed
+ *                                         them to the real host validator
  *   run        < "arm lseed oseed budget pair" then, per proposal, the twin prints
  *                 "EVAL <n> <parent_born> <kind> <bits...> | <genome hex>"
  *               and reads one line: six 16-hex tables (the MEASURED readout) or "UNSCORED";
@@ -18,6 +22,8 @@
  *               then, if a further readout line is given, "HOLDOUT <fit>".
  */
 #include "b2_search.h"
+#include "b2_wire.h"
+#include "p3_data.h"
 #include "p3_derive.h"
 
 #include <stdio.h>
@@ -184,10 +190,101 @@ static int mode_run(void)
     return 0;
 }
 
+/* the B2 image's ACTUAL serialisation of an app_identity 1.5.0 and a loop_record 1.3.0 with a
+ * search block, for fixed inputs (tests/test_b2_wire.py feeds the bytes to the host validator) */
+static int mode_wire(void)
+{
+    static char out[8192], rec[8192], block[4096];
+    static b2_search s;
+    uint64_t base[B2_LUTS] = {0, 0, 0, 0, 0, 0};
+    uint64_t observed[B2_LUTS] = {1, 0, 0, 0, 0, 0};
+    p3_wire_identity_in in;
+    p3_wire_record_in r;
+    static const char *zero_tables[6] = {"0000000000000000", "0000000000000000", "0000000000000000",
+                                         "0000000000000000", "0000000000000000", "0000000000000000"};
+    uint32_t genome[B2_GENOME_WORDS];
+    int i, kind;
+
+    memset(&in, 0, sizeof(in));
+    in.pss_idcode = 0x13722093u;
+    in.token = "a13f38b53355fd4c1cac3145244727f8";
+    in.uboot_epoch = 0;
+    in.carrier_sha256 = "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f";
+    in.nonce_at_start = 0x9e3779b97f4a7c15ull;
+    in.status_at_start = 0x900u;
+    in.fclk0_hz_decoded = 50000000u;
+    in.app_epoch = 0;
+    in.master_seed = 716169644u;
+    in.schedule_mode = B2_SEARCH_VERSION;
+    in.operator_data_sha256 = B2_MAP_SHA256;
+    in.protocol = "rel-v4";
+    in.rec_retry_control = 1;
+    in.sign_retry_control = 1;
+    in.universe_sha256 = B2_UNIVERSE_SHA256;
+    in.carrier_variant = 0x42310001u;
+    in.search_version = B2_SEARCH_VERSION;
+    in.map_sha256 = B2_MAP_SHA256;
+    in.fitness_id = B2_FITNESS_ID;
+    in.budget_per_arm = 600u;
+    in.pairs_total = 9u;
+    in.pair_first = 0u;
+    in.pair_count = 4u;
+    if (p3_wire_identity(&in, out, sizeof(out)) == 0u)
+        return 7;
+    printf("IDENT %s\n", out);
+
+    b2_search_init(&s, B2_ARM_MAP_GUIDED, 3999265929u, 2551437210u, 4u, base);
+    if (!b2_search_next(&s, genome, &kind))
+        return 8;
+    b2_search_observe(&s, observed);
+    if (b2_search_record_json(&s, 0, "B", 1, -1, block, sizeof(block)) == 0u)
+        return 9;
+    memset(&r, 0, sizeof(r));
+    r.seq = 2;
+    r.genome = "00000000000000000000000000000000000000000000000000000000000000000000000000000000";
+    r.outcome = "SCORED";
+    r.audited = 1;
+    r.arm = "map_guided";
+    r.search = block;
+    r.have_sign_reply = 1;
+    r.commit = "39fa5c49fb904701ea96159b7220ad83e017dd0cfc4897b7ca4f9b8f7ddbda5e";
+    for (i = 0; i < 6; i++)
+        r.tables[i] = zero_tables[i];
+    r.tag = "88c45cf12e6857e7af54751d700e0f71";
+    r.have_oracle = 1;
+    r.staged_sha256 = r.commit;
+    r.staged_stream_sha256 = "3ec0c49aed63997df3346caf51e92843d08df351b1dc15e215a8f1d82f2d02b9";
+    r.readback_sha256 = r.commit;
+    r.envelopes_n = 3;
+    r.audit_available = 1;
+    r.have_arm = 1;
+    r.nonce_before = 0x9e3779b97f4a7c15ull;
+    r.nonce_after = 0xdc1b77ae0bf34dadull;
+    r.status_after = 0xf54u;
+    r.key_loaded_observed = 1;
+    r.writes_issued = 25;
+    r.settle_polls = 16;
+    r.settle_polls_max = 1000000u;
+    r.settled = 1;
+    r.status_first = 0x901u;
+    r.have_score = 1;
+    r.hw_candidate_commit = r.commit;
+    for (i = 0; i < 6; i++) {
+        r.readout[i] = zero_tables[i];
+        r.scores[i] = 18u;
+    }
+    r.hb_before = 1;
+    r.hb_after = 2;
+    if (p3_wire_loop_record(&r, rec, sizeof(rec)) == 0u)
+        return 10;
+    printf("REC %s\n", rec);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 2) {
-        fprintf(stderr, "usage: b2_twin rng|seeds|landscape|fitness|run\n");
+        fprintf(stderr, "usage: b2_twin rng|seeds|landscape|fitness|run|wire\n");
         return 2;
     }
     if (strcmp(argv[1], "rng") == 0)
@@ -200,6 +297,8 @@ int main(int argc, char **argv)
         return mode_fitness();
     if (strcmp(argv[1], "run") == 0)
         return mode_run();
+    if (strcmp(argv[1], "wire") == 0)
+        return mode_wire();
     fprintf(stderr, "unknown mode %s\n", argv[1]);
     return 2;
 }
