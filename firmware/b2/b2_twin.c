@@ -7,6 +7,12 @@
  *   seeds      < "master count"        -> "<landscape> <operator>" per pair
  *   landscape  < "seed"                -> "MASK <6x16hex>" then "TARGET <6x16hex>"
  *   fitness    < "seed <6x16hex>"      -> "F1 <train> <holdout>" for that readout
+ *   session    < "master budget pairs_total pair_first pair_count token universe image_lo32"
+ *               drives the ORCHESTRATOR exactly as b2_app.c main does: per candidate it prints
+ *                 "CAND <is_baseline> <pair> <arm|-> <holdout> <seq> | <genome hex>"
+ *               and reads the measured readout (six 16-hex tables) or "UNSCORED"; after every
+ *               scored non-baseline candidate it prints "BLOCK <the search block>", and at the
+ *               end "END <records>".
  *   wire                               -> "IDENT <json>" and "REC <json>": the app_identity
  *                                         1.5.0 and loop_record 1.3.0 bytes the image emits,
  *                                         for fixed inputs, so tests/test_b2_wire.py can feed
@@ -21,6 +27,7 @@
  *                 "CHAMPION <genome hex> <fit> <column_moves>"
  *               then, if a further readout line is given, "HOLDOUT <fit>".
  */
+#include "b2_orch.h"
 #include "b2_search.h"
 #include "b2_wire.h"
 #include "p3_data.h"
@@ -281,10 +288,61 @@ static int mode_wire(void)
     return 0;
 }
 
+/* the orchestrator as b2_app.c main drives it: opening baseline, the slice's pairs (both arms'
+ * searches then both champions' holdout evaluations), closing baseline; an unscored candidate
+ * ends the epoch with no closing baseline (tests/test_b2_session.py). */
+static int mode_session(void)
+{
+    static b2_orch o;
+    static char block[4096];
+    char line[1024];
+    char ghex[B2_GENOME_WORDS * 8 + 1];
+    char token[64], universe[128];
+    uint32_t genome[B2_GENOME_WORDS];
+    uint64_t t[B2_LUTS];
+    unsigned long master, budget, total, first, count, image_lo32;
+    uint32_t seq = 0;
+    int is_baseline;
+
+    if (!fgets(line, sizeof(line), stdin) ||
+        sscanf(line, "%lu %lu %lu %lu %lu %63s %127s %lx", &master, &budget, &total, &first, &count,
+               token, universe, &image_lo32) != 8)
+        return 2;
+    if (b2_orch_init(&o, (uint32_t)master, (uint32_t)budget, (int)total, (int)first, (int)count,
+                     token, universe, (uint32_t)image_lo32) != 0)
+        return 3;
+    while (b2_orch_next(&o, genome, &is_baseline)) {
+        const char *arm;
+        seq++;
+        p3_genome_to_hex(genome, ghex);
+        arm = b2_orch_arm_name(&o);
+        printf("CAND %d %d %s %d %lu | %s\n", is_baseline, b2_orch_pair(&o), arm ? arm : "-",
+               o.pending_holdout, (unsigned long)seq, ghex);
+        fflush(stdout);
+        if (!fgets(line, sizeof(line), stdin))
+            return 4;
+        if (strncmp(line, "UNSCORED", 8) == 0) {
+            b2_orch_unobserved(&o);          /* as b2_app.c: the epoch ends, no closing baseline */
+            break;
+        }
+        if (parse_tables(line, t) != 0)
+            return 5;
+        b2_orch_observe(&o, seq, t);
+        if (!is_baseline) {
+            if (b2_orch_record_block(&o, block, sizeof(block)) == 0u)
+                return 6;
+            printf("BLOCK %s\n", block);
+        }
+        fflush(stdout);
+    }
+    printf("END %lu\n", (unsigned long)seq);
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 2) {
-        fprintf(stderr, "usage: b2_twin rng|seeds|landscape|fitness|run|wire\n");
+        fprintf(stderr, "usage: b2_twin rng|seeds|landscape|fitness|run|wire|session\n");
         return 2;
     }
     if (strcmp(argv[1], "rng") == 0)
@@ -299,6 +357,8 @@ int main(int argc, char **argv)
         return mode_run();
     if (strcmp(argv[1], "wire") == 0)
         return mode_wire();
+    if (strcmp(argv[1], "session") == 0)
+        return mode_session();
     fprintf(stderr, "unknown mode %s\n", argv[1]);
     return 2;
 }

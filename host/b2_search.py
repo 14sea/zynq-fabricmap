@@ -193,7 +193,8 @@ def run(arm: str, landscape: bl.Landscape, view: MapView | None, operator_seed: 
                 best = fit
             trace.append(best)
             if log_moves:
-                moves.append({"eval": evals, "parent": pidx, "parent_born": parent.born, "kind": kind, "bits": bits, "fit": fit})
+                moves.append({"eval": evals, "parent": pidx, "parent_born": parent.born, "kind": kind,
+                              "bits": bits, "fit": fit, "genome": genome})
                 pending.append({"eval": evals, "fit": fit, "parent_born": parent.born, "bits": bits, "kind": kind,
                                 "best": best, "column_moves": column_moves})
         pool = pop + children

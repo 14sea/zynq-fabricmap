@@ -15,9 +15,9 @@ BUILD   ?= build
 .PHONY: twin clean
 twin: $(BUILD)/b2_twin
 
-$(BUILD)/b2_twin: b2_twin.c b2_search.c b2_wire.c p3_derive.c b2_search.h b2_wire.h p3_derive.h p3_data.h
+$(BUILD)/b2_twin: b2_twin.c b2_search.c b2_orch.c b2_wire.c p3_derive.c b2_search.h b2_orch.h b2_wire.h p3_derive.h p3_data.h
 	@mkdir -p $(BUILD)
-	$(CC) $(CFLAGS) -o $@ b2_twin.c b2_search.c b2_wire.c p3_derive.c
+	$(CC) $(CFLAGS) -o $@ b2_twin.c b2_search.c b2_orch.c b2_wire.c p3_derive.c
 
 clean:
 	rm -rf $(BUILD)
