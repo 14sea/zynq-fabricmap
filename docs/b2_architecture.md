@@ -1,12 +1,34 @@
-# B2 — map utility: a carrier that can discriminate — architecture (v0.2, host-only, 2026-09-10)
+# B2 — map utility: a carrier that can discriminate — architecture (v0.3, host-only, 2026-09-10)
+
+> **Revision v0.2 → v0.3 (2026-09-10, after the owner's review `docs/b2_b3_host_review_2026_09_10.md`, HOLD).**
+> Nothing in the engine, the mixture, the fitness family or the session seeds changes. What
+> changes: **§7a** predeclares two further controls (T train-membership-only, W within-train
+> column scramble) and the comparison G9 that attributes the benefit to correct column
+> grouping — run on the SAME 200 seeds and rows as gate run 3, after this text is committed;
+> **G5** is a bound on the experiment's *total* evaluations (13 000) and no longer a
+> "fits one session" claim — the session count is decided by the B2Q-measured
+> all-self-reporting rate (the owner chose all-self-reporting for the first B2); the
+> **minimum-N search** is a full ascending scan (the geometric sweep skipped N = 89 at
+> F3 / 300); run 3's rows are re-evaluated under these rules into
+> `evidence/b2/gate/recomputed_2026_09_10/` (run 3's report untouched). Corrections of
+> record: the v0.1 → v0.2 table has **four** changed rows (the budget rule, G2, G5, G7), not
+> "three rules"; gate run 1 executed the code of `9f347e9` under the architecture text of
+> `342450b`; the map digest `c6a4b23e…` is the sha256 of the **canonical JSON object**
+> (sorted keys, no spaces), the file bytes hash to `b6607a9a…` — both are named wherever a
+> digest is pinned; "the whole phenotype" means the **digital functional observation** (the
+> six truth tables under the sweep), not timing or power; F3's trajectories can enter
+> holdout rows, so the "holdout never touches train" statement holds for F1 / F2 only
+> (§8); seed-set disjointness is **enforced by explicit exclusion**, not assumed from
+> distinct labels.
 
 > **Revision v0.1 → v0.2 (2026-09-10, after gate run 1).** Run 1 (`evidence/b2/gate/v0.1_2026-09-10/`,
-> under commit `342450b`) failed every fitness — not on discrimination (all three beat
-> random-safe; the shuffled and within-LUT-shuffled maps do not profit, they *lose*) but on
-> three rules of §7 that the run showed to be mis-specified. §7 v0.2 changes exactly these,
-> each with its reason, and the gate is re-run under the commit holding this text
-> (`evidence/b2/gate/gate_report.json`). Nothing in §1–§6 changed. The v0.1 report is kept
-> unchanged so the owner can see what the first rules produced.
+> executing the code of `9f347e9` under the architecture text of `342450b`) failed every
+> fitness — not on discrimination (all three beat random-safe; the shuffled and within-LUT-
+> shuffled maps do not profit, they *lose*) but on **four** rows of §7 that the run showed to
+> be mis-specified. §7 v0.2 changes exactly these, each with its reason, and the gate is
+> re-run under the commit holding this text (`evidence/b2/gate/gate_report.json`). Nothing
+> in §1–§6 changed. The v0.1 report is kept unchanged so the owner can see what the first
+> rules produced. (The owner's review accepted these as documented *development* revisions.)
 >
 > | rule | v0.1 | v0.2 | why |
 > |---|---|---|---|
@@ -48,8 +70,9 @@ no RTL change. The reason is what B1 already established: under `configuration_v
 the arm gate sweeps all 64 input vectors of the six evolvable LUT6s and latches the **raw
 functional readout** — six 64-bit truth tables, table *k* bit *v* = LUT *k*'s output for
 vector *v* (`docs/b1_carrier_contract.md` §2). Because the six LUTs are combinational in a
-shared 6-bit input, **that readout *is* the whole phenotype**: every behaviour the fabric can
-exhibit under this carrier is a function of those 384 bits. So any fitness over the
+shared 6-bit input, **that readout *is* the whole phenotype** — in the sense that matters here,
+the **digital functional observation** under the sweep (not timing, not power): every
+function the fabric can exhibit under this carrier is a function of those 384 bits. So any fitness over the
 phenotype is a pure function `F(readout)` and can be computed by the board application on
 the PS from the READOUT registers, interlocked exactly as B1's cartographer was (the
 readout is latched only after a signed, staged, read-back candidate — links 1–3 unchanged).
@@ -202,13 +225,35 @@ which the oracle arm's median ≥ 60 % of the ceiling" — replaced, see the rev
 | G2 not a definitional lock | var(Δ_r) > 0 for arm B at `B*`; Δ_r for arm B takes **both signs at some grid budget** (the sign is a property of the effect and the budget, not of the definition); **and** the same decision procedure applied to arm D's pairs must *not* reject H0 in ≥ 90 % of 1 000 bootstrap experiments of size N | holds |
 | G3 shuffled map does not profit | mean Δ for arm D ≤ 10 % of mean Δ for arm B, and the sign test on arm D is not significant over the full S | holds |
 | G4 oracle headroom | arm C's median at `B*` ≤ 90 % of the ceiling (the problem is not solved), and arm B's mean Δ ≥ 90 % of arm C's mean Δ (the self-map delivers the bound) | holds |
-| G5 effect, power, N | Cohen's d of `{Δ_r}` for arm B ≥ 0.8; `N = N(B*)`; `N × 2 × B*` ≤ **13 000** evaluations = one two-hour session at the instrument's evidenced sampled-audit rate (S #3, 12 570 records in 6 763.9 s ≈ 6 690 / h); whether it also fits **6 000** (all-self-reporting audit at B1's ≈ 3 380 / h, `evidence/b1/plan.json`) is reported alongside — the audit policy is the owner's choice | holds |
-| G6 no fixed-seed lock | S ≥ 200; the primary is a statistic over N ≥ 8 pairs; board seeds derived under a label disjoint from the gate's; **var(Δ_r) > 0** (round 1′'s 16/16 tie is named as the failure this excludes) | holds |
+| G5 effect, power, N | Cohen's d of `{Δ_r}` for arm B ≥ 0.8; `N = N(B*)` by a **full ascending scan** of the bootstrap power (no bracketing); `N × 2 × B*` ≤ **13 000** evaluations as a bound on the experiment's *total* evaluations (v0.3) — how many sessions they take is decided by the B2Q-measured all-self-reporting rate under the preregistration's split rule, never by the planning rates (S #3 ≈ 6 690 / h sampled-audit, B1's plan ≈ 3 368 / h, the last B1 mapping ≈ 2 807 / h observed), which are reported for planning only | holds |
+| G6 no fixed-seed lock | S ≥ 200; the primary is a statistic over N ≥ 8 pairs; board seeds derived under their own label **with every archived seed set explicitly excluded**; **var(Δ_r) > 0** (round 1′'s 16/16 tie is named as the failure this excludes) | holds |
 | G7 dose–response | mean Δ is monotone non-increasing in q over {0, ¼, ½, ¾} (arm B, Q(¼), Q(½), Q(¾)), with Q(¾) ≤ ½ · arm B; the q = 1 endpoint (arm A, Δ = 0) is reported next to Q(¾) and not required to be below it | holds |
 | G8 not LUT membership | arm E's mean Δ ≤ 25 % of arm B's — the benefit is column identity, not same-LUT locality | holds |
 
+### 7a. The control comparison G9 — predeclared (v0.3), run after this text is committed
+
+The controls D and E of §5 permute INIT indices across the train / holdout boundary: for
+control seed 0 the self-map names 183 train / 0 holdout addresses, D 112 / 71, E 111 / 72
+(the review's count). D and E losing therefore shows that a wrong map costs budget, but it
+cannot attribute the self-map's benefit to *correct column grouping* rather than to *knowing
+which addresses matter*. Two further controls, on the **same seeds and rows as run 3**:
+
+| control | map document / view | keeps | destroys |
+|---|---|---|---|
+| **T** train-membership only | one group holding the 183 train addresses (`b2_maps.train_membership_view`); a "column move" is a 1..4-subset of them | which addresses matter | column identity, column sizes |
+| **W** within-train column scramble | the self-map with the train labels permuted **among the train addresses** (`b2_maps.within_train_scrambled_map`); holdout entries untouched | membership; the multiset of train column labels, hence the column-size and move-size distributions | which addresses share a column |
+
+**G9 (predeclared).** At the recomputed `B*` (F1 / 600 unless the recomputation moves it),
+paired over the 200 landscapes: `best_B − best_T > 0` **and** `best_B − best_W > 0`, each by
+the one-sided exact sign test at α = 0.05. Neither T nor W is required to lose to
+random-safe; their Δ versus A and the fraction of B's benefit each retains are reported.
+If G9 fails, the claim is narrowed explicitly to "a correct map beats random-safe and a
+wrong map does not; whether the benefit is grouping or membership is undetermined" — it is
+not argued into a pass. F2 and F3 are run and reported for information; they do not enter
+the selection rule.
+
 *Selection rule (frozen).* The B2 fitness is the first of F2, F1, F3 for which every row
-G1–G8 holds at its own `B*`. The gate report (`evidence/b2/gate/gate_report.json`,
+G1–G8 holds at its own `B*`; G9 is a condition on the **claim**, not on the selection. The gate report (`evidence/b2/gate/gate_report.json`,
 `docs/b2_gate_report.md`) states every row for every fitness, PASS or FAIL, with the
 numbers; a fitness that fails is reported, not tuned. **If the thresholds above are changed
 after the first gate run, the change is recorded as a revision of this document with the
@@ -216,9 +261,14 @@ reason, and the gate is re-run and re-reported under the new commit** — never 
 
 ## 8. What B2 does not claim
 
-- **Holdout is not generalisation.** The phenotype is six lookup tables; the 24 holdout
-  rows are parameters the train fitness never touches, so a champion's holdout score is
-  what the base and neutral drift left there. It is evaluated on the hardware last as a
+- **Holdout is not generalisation.** The phenotype is six lookup tables; for **F1 and F2**
+  the 24 holdout rows are parameters the train fitness never touches, so a champion's
+  holdout score is what the base and neutral drift left there. **F3 is different**: its
+  trajectories can pass through holdout rows (at landscape seed 123, flipping genome bit 13
+  — LUT 0 / INIT 0, a holdout row — drops the train fitness from 320 to 256), so for F3
+  holdout rows *do* affect train fitness and the neutrality reading does not apply. Also,
+  F1 / F2 have many train-fitness optima (the holdout bits are unconstrained), although the
+  complete target readout names one unique genome. It is evaluated on the hardware last as a
   known answer (predicted by the host from the champion's genome) and as a neutrality check
   (the search did not move holdout positions it had no signal for, beyond drift). If a later
   stage wants generalisation it needs a phenotype with shared parameters (routing, B4).
@@ -248,4 +298,4 @@ reason, and the gate is re-run and re-reported under the new commit** — never 
 | `host/b2_search.py` | the (μ + λ) engine, the two operators, the paired run — the Python reference of the future image |
 | `host/b2_gate.py` | the discriminability gate: runs, statistics, criteria G1–G8, the report |
 | `tests/test_b2_*.py` | determinism, fitness known answers, operator invariants (every move non-empty, inside the universe, column moves inside one column under a correct map), controls, criteria negatives |
-| `evidence/b2/gate/` | the gate report and per-fitness summaries (the raw per-seed results by hash) |
+| `evidence/b2/gate/` | run 3 (rules v0.2, as run) and run 1 (`v0.1_2026-09-10/`); `recomputed_2026_09_10/` = run 3's rows under rules v0.3; `controls_2026_09_10/` = T / W on run 3's seeds and G9 |
