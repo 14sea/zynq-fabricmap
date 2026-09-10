@@ -1,5 +1,13 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Build-guard review (`9c1f3ca`): the previous seven counterexamples are closed.**
+> Current image `d164cd1d…` and its actual build inputs verify; all 186 B2/B3 tests pass
+> with zero skips. One P2 remains: compiler/runtime identities and required linker/build
+> script entries are not fully bound to the actual build. Four additional fixtures pass
+> both the verifier and all committed-evidence checks. See
+> [the build-guard review](b2_build_guard_review_2026_09_10.md).
+> Host work may continue; complete this guard and the five remaining §7 tools before clearance.
+
 > **Correction review (`842abb9`): startup and current image provenance verified.**
 > Image `d164cd1d…` matches its recorded source, binary and ELF hashes; the original
 > IDENT ordering defect is closed. One P2 remains in the new build-evidence regression
