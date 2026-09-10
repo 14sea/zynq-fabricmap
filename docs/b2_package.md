@@ -1,4 +1,4 @@
-# B2 — the pre-image package: what was built, what the gate showed, what is asked (v0.2, host-only, 2026-09-10)
+# B2 — the pre-image package: what was built, what the gate showed, what is asked (v0.2.2, host-only, 2026-09-10)
 
 > **v0.2.1 third review: HOLD remains.** Record/calibration reconstruction and rate
 > feasibility are resolved. Two P2 findings remain: checking the actual image binary,
@@ -84,6 +84,18 @@ passes; the silicon run is a prospective reproduction of that prediction.
 | 4 infeasible rate accepted | `session_split` raises on a non-finite / non-positive rate and returns **INFEASIBLE** when not even one pair with its baselines fits the registered expected span; `calibration_from` and `plan_findings` refuse on INFEASIBLE; the one-pair boundary (602 records / h) and 0 / −1 / NaN / ∞ are tests | `host/b2_plan.py`, `tests/test_b2_plan.py` |
 | P3 documentation | §0 above agrees with §0a (four rows, total evaluations, F1 / F2 holdout); the plan module's docstring says exclusion is enforced, not assumed | — |
 
+## 0c. The third review's two findings and their corrections (v0.2.2)
+
+| finding (review v021) | correction | where |
+|---|---|---|
+| 1 the image binary is never opened — a same-size overwrite or a deletion left `qualified: true`, `image: ok`; only the build evidence's *declaration* was compared | `verify()` resolves the image path, **requires the file to exist, hashes its bytes and compares its size** against both the manifest and the build evidence; the check reports the digest it computed (`ok (binary hashed: …)`), so a declaration can no longer masquerade as verification. Every successful fixture now carries genuine image bytes; deletion, truncation, extension, emptying and same-size replacement are tests, as is a manifest whose declared size disagrees | `host/b2_manifest.py` `_check_frozen_inputs`, `tests/test_b2_lifecycle.py::test_2d` |
+| 2 the plan / prediction comparison was a subset (session, schema version, the primary block, record counts, per-pair results and the sequence length were never reached), and the manifest's prediction reference was not tied to the plan's sidecar | `plan_findings` now **rebuilds the canonical plan and prediction** from the frozen inputs (`b2_plan.build_plan` / `build_prediction`, factored out of the CLI so the generator and the validator are the same code) and compares the **whole structures** with a recursive diff that names the differing path. `PLAN_NON_OPERATIONAL` is now used and holds exactly two keys: `generated_utc`, and `prediction_sha256` — which is not compared as a value but required to equal the sidecar's digest **and** the manifest's, so a relocated prediction is allowed only when it is the same bytes. Nothing else may differ: any added, missing or changed field is refused at pinning and at every re-verification, including after rehashing | `host/b2_plan.py` `build_plan` / `build_prediction` / `write`, `host/b2_manifest.py` `plan_findings` / `_differences` / `canonical_plan`, `tests/test_b2_lifecycle.py::test_3`, `::test_4` |
+
+The owner's reproducer runs unchanged against the correction and accepts only its three
+legitimate baselines (`evidence/b2/corrections_v021_2026_09_10/`); the second review's
+twenty cases still behave, with a real fixture binary added so their baseline exercises
+the new image check.
+
 ## 1. What was built (host-only; every file additive; nothing in B1 or the instrument changed)
 
 | file | role | tests |
@@ -95,7 +107,7 @@ passes; the silicon run is a prospective reproduction of that prediction.
 | `host/b2_gate.py` | the gate: runs, statistics (exact sign test, bootstrap power, Cohen's d), criteria G1–G8, the budget rule, the report | `tests/test_b2_gate.py` (21; one negative per criterion through `evaluate()`) |
 | `host/b2_gate_report_md.py` | renders `docs/b2_gate_report.md` from the JSON | — |
 | `host/b2_plan.py` | the session seeds by the B1 rule under `b2-session|` with every archived set excluded, the all-self-reporting plan, the frozen split rule (`session_split`), the prediction | `tests/test_b2_plan.py` (8) |
-| `host/b2_manifest.py` (v0.2) | the manifest lifecycle S0–S3 and `verify` | `tests/test_b2_lifecycle.py` (6, fresh-process) |
+| `host/b2_manifest.py` (v0.2.2) | the manifest lifecycle S0–S3 and `verify`: live-byte checks including the image binary, the reconstructed B2Q record, and the canonical plan / prediction comparison | `tests/test_b2_lifecycle.py` (11, fresh-process) |
 | `evidence/b2/gate/` | run 3 (rules v0.2, as run): `gate_report.json`, `raw_F1/F2/F3.json`; run 1 (rules v0.1) under `v0.1_2026-09-10/`; **`recomputed_2026_09_10/`** = run 3's rows under rules v0.3 + the §7a controls (`controls_report.json`, `raw_controls_*.json`) | — |
 | `evidence/b2/plan.json`, `prediction.json` | the frozen-seed plan (split UNDETERMINED until S2) and prediction — deltas unchanged by the corrections | — |
 | `docs/b2_gate_report_v0.3.md` | the recomputation and G9, rendered from the JSON | — |

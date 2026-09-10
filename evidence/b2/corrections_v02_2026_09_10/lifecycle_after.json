@@ -1,7 +1,7 @@
 {
   "S3_changed_master_seed_and_rehashed_plan": {
     "accepted": false,
-    "refusal": "S3: the plan's seed derivation (master / label / commit) is not the manifest's; prediction.json is absent beside the plan"
+    "refusal": "S3: the plan has no prediction sidecar"
   },
   "audit_policy_changed_original_evidence_all_self_reporting": {
     "accepted": false,
@@ -10,7 +10,7 @@
   "baseline_S2": {
     "accepted": true,
     "checks": {
-      "image": "ok",
+      "image": "ok (binary hashed: e3ef93590e84\u2026, 49 bytes)",
       "lineage": "ok (B1 chain re-verified)",
       "map": "ok",
       "pins": "ok",
@@ -22,7 +22,7 @@
   "baseline_S3": {
     "accepted": true,
     "checks": {
-      "image": "ok",
+      "image": "ok (binary hashed: e3ef93590e84\u2026, 49 bytes)",
       "lineage": "ok (B1 chain re-verified)",
       "map": "ok",
       "pins": "ok",
@@ -34,7 +34,7 @@
   "baseline_mirrored_tree": {
     "accepted": true,
     "checks": {
-      "image": "ok",
+      "image": "ok (binary hashed: e3ef93590e84\u2026, 49 bytes)",
       "lineage": "ok (B1 chain re-verified)",
       "map": "ok",
       "pins": "ok",
@@ -81,15 +81,15 @@
   },
   "pin_plan_accepts_wrong_audit_policy": {
     "accepted": false,
-    "refusal": "plan: the plan's audit policy is not the frozen one; prediction.json is absent beside the plan"
+    "refusal": "plan: plan audit_policy: 'sampled' != 'all-self-reporting'; prediction.json is absent beside the plan"
   },
   "pin_plan_accepts_wrong_engine": {
     "accepted": false,
-    "refusal": "plan: engine constants differ from the manifest's; prediction.json is absent beside the plan"
+    "refusal": "plan: plan engine.mu: 999 != 4; prediction.json is absent beside the plan"
   },
   "pin_plan_accepts_wrong_map": {
     "accepted": false,
-    "refusal": "plan: the plan's map is not the manifest's map (canonical digest / path); prediction.json is absent beside the plan"
+    "refusal": "plan: plan map.sha256: '0000000000000000000000000000000000000000000000000000000000000000' != 'c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296'; prediction.json is absent beside the plan"
   },
   "pin_plan_accepts_wrong_prediction_digest": {
     "accepted": false,

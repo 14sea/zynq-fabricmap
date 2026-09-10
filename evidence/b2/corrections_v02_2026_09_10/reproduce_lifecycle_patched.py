@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Offline review counterexamples for df28407; no production files are changed.
+"""Offline review counterexamples for df28407, re-run against 151124f+ (a real fixture
+binary was added: v0.2.2 opens and hashes the image). No production files are changed.
 
 The adjudicator is a fixed test double because B2Q's real adjudicator does not exist.
 It always returns the ORIGINAL evidence-derived rate and audit policy, including after
@@ -24,10 +25,13 @@ def main():
     results = {}
     with tempfile.TemporaryDirectory(prefix="b2_review_v02_") as td:
         tmp = Path(td)
+        # v0.2.2: a REAL fixture binary — the manifest now opens and hashes the image
+        binary = tmp / "b2_app.bin"
+        binary.write_bytes(b"B2 review fixture only; not executable firmware.\n")
         image_evidence = tmp / "build.json"
         image_evidence.write_text(json.dumps({"image": {
-            "path": "firmware/b2/bsp/out/b2_app.bin", "sha256": "ab" * 32,
-            "elf_sha256": "cd" * 32, "bytes": 123456}}))
+            "path": str(binary), "sha256": bm.sha256_file(binary),
+            "elf_sha256": "cd" * 32, "bytes": binary.stat().st_size}}))
         frozen = bm.freeze(bm.init(image_evidence), bm.sha256_file(R / "docs/b2_preregistration.md"))
         frozen = json.loads(bm.render(frozen))  # the on-disk API, as in the lifecycle tests
         ev = tmp / "b2q"

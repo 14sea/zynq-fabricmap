@@ -23,17 +23,20 @@ The lifecycle the owner's review of 2026-09-10 asked to be specified and exercis
               into `calibration` in the same step, from that reconstruction.
   S3 plan     the B2 plan (host/b2_plan.py) is generated FROM the calibration and pinned;
               ONE validator (`plan_findings`) — used at pinning and at every later verify —
-              derives every operational field of the plan and of its prediction from the
-              frozen experiment, the exact seed sequence, the map, the engine, the policy
-              and the verified calibration; only generation time and planning-rate notes
-              are non-operational.
+              REBUILDS the canonical plan and prediction from the frozen inputs
+              (`b2_plan.build_plan` / `build_prediction`) and compares the WHOLE structures
+              field for field; only `generated_utc` may differ, and `prediction_sha256` is
+              instead tied to the sidecar's and the manifest's digests, which must name the
+              same bytes (a relocated prediction is allowed only if it is that document).
   binding     the B2 ruling pair binds to the manifest's sha256 AFTER S3.
 
 `verify()` recomputes EVERYTHING it can from live bytes and refuses on any disagreement
 (v0.2.1, after the owner's second review, `docs/b2_b3_host_review_v02_2026_09_10.md`):
   * every required pin exists on disk and hashes to the manifest (a missing file is a
-    refusal, never filtered out); the preregistration bytes (once frozen), the map in both
-    encodings, the image build evidence file and the image it names;
+    refusal, never filtered out); the preregistration bytes (once frozen); the map in both
+    encodings; the build evidence file AND the image binary itself — opened, hashed and
+    sized against both the manifest and the build evidence (v0.2.2, the owner's third
+    review: a declaration is not evidence that the binary exists);
   * the lineage: the B1 manifest file hashes to the pin, its carrier is this carrier, and its
     qualification chain is re-verified FRESH by host/b1_qualification.verify against the B1
     evidence tree (never a stored flag);
@@ -42,7 +45,8 @@ The lifecycle the owner's review of 2026-09-10 asked to be specified and exercis
     agreeing on outcome / rate / policy with the evidence, the policy equal to the frozen
     audit policy, the calibration equal to the reconstruction, the rate finite, positive
     and FEASIBLE under the split rule;
-  * the plan: `plan_findings` on the pinned file and its prediction file.
+  * the plan: `plan_findings` on the pinned file and its prediction sidecar, and the
+    manifest's prediction reference tied to that sidecar's bytes.
 The B2 adjudicator does not exist yet (it comes with the image), so re-adjudication is a
 pluggable step (`readjudicate=`): without it a manifest cannot be qualified, and a manifest
 that claims to be is a contradiction (a refusal).
@@ -68,7 +72,7 @@ import b2_plan as bp  # noqa: E402
 import b2_search as bs  # noqa: E402
 
 SCHEMA = "b2_manifest"
-SCHEMA_VERSION = "0.2.1"
+SCHEMA_VERSION = "0.2.2"
 MANIFEST = REPO_ROOT / "manifests/b2_manifest.json"
 B1_MANIFEST = REPO_ROOT / "manifests/b1_manifest.json"
 B2_VARIANT = "0x42310001"
@@ -83,7 +87,15 @@ QUAL_BINDING_KEYS = ("session", "image_sha256", "prereg_sha256", "carrier_sha256
 TRANSITION_KEYS = (("qualification",), ("qualified",), ("calibration",), ("plan",), ("status",), ("history",))   # history: the append-only log of these transitions
 PINNED_CODE = ("host/b2_landscape.py", "host/b2_maps.py", "host/b2_search.py", "host/b2_gate.py", "host/b2_plan.py", "host/b2_manifest.py",
                "schemas/self_map_v2.schema.json", "docs/b2_architecture.md")
-PLAN_NON_OPERATIONAL = ("generated_utc", "planning_rates_NOT_calibration", "carrier", "gate", "architecture", "prediction_sha256", "deadline_formula")
+# The ONLY plan keys that may differ from the canonical rebuild. Everything else — schema,
+# schema_version, session, fitness, budget, pairs, engine, carrier, map, seed derivation,
+# gate provenance, audit policy, record accounting, arm order, session split, span limit,
+# deadline formula, planning-rate notes, the primary statistic and its alpha / tie policy,
+# the architecture pin — is OPERATIONAL and compared field for field (the owner's third
+# review, finding 2). `prediction_sha256` is not compared as a value: it is tied to the
+# sidecar's and the manifest's digests, which must all be the same bytes.
+PLAN_NON_OPERATIONAL = ("generated_utc", "prediction_sha256")
+PREDICTION_NON_OPERATIONAL = ()          # the prediction is compared in full
 
 
 class Refusal(Exception):
@@ -276,64 +288,91 @@ def qualify(manifest: dict, evidence_dir: Path, readjudicate=None, root: Path = 
 # ------------------------------------------------------------------ S3: one validator for pinning and verification
 
 
+def _differences(got, want, path: str = "") -> list[str]:
+    """Every path at which two JSON structures differ, deepest name first."""
+    if isinstance(want, dict) and isinstance(got, dict):
+        out = []
+        for k in sorted(set(want) | set(got)):
+            here = f"{path}.{k}" if path else k
+            if k not in got:
+                out.append(f"{here}: missing")
+            elif k not in want:
+                out.append(f"{here}: unexpected")
+            else:
+                out += _differences(got[k], want[k], here)
+        return out
+    if isinstance(want, list) and isinstance(got, list):
+        if len(want) != len(got):
+            return [f"{path}: {len(got)} entries, expected {len(want)}"]
+        out = []
+        for i, (g, w) in enumerate(zip(got, want)):
+            out += _differences(g, w, f"{path}[{i}]")
+        return out
+    return [] if got == want else [f"{path or '(root)'}: {got!r} != {want!r}"]
+
+
+def canonical_plan(manifest: dict, root: Path = REPO_ROOT) -> dict:
+    """The plan the frozen manifest implies: built by `b2_plan.build_plan` from the gate the
+    manifest pins and the calibration it carries."""
+    gate = _resolve(manifest["experiment"]["gate"]["path"], root)
+    if not gate.is_file() or sha256_file(gate) != manifest["experiment"]["gate"]["sha256"]:
+        raise Refusal("the gate report the manifest pins is absent or changed")
+    cal = manifest.get("calibration") or {}
+    return bp.build_plan(cal.get("rate_per_hour"), gate, root=root)
+
+
 def plan_findings(manifest: dict, plan_path: Path, root: Path = REPO_ROOT) -> list[str]:
-    """Every operational field of the plan and its prediction derived from the frozen
-    experiment, the exact seed sequence, the map, the engine, the audit policy and the
-    verified calibration. Returns the list of disagreements (empty = the plan is THE plan)."""
+    """The WHOLE operational plan and prediction, rebuilt from the frozen inputs and compared
+    structure for structure (the owner's third review, finding 2). Only the keys of
+    PLAN_NON_OPERATIONAL may differ; `prediction_sha256` is instead required to be the
+    sidecar's actual digest, which the caller also ties to the manifest's reference."""
     f: list[str] = []
     p = _resolve(str(plan_path), root)
     if not p.is_file():
         return [f"plan file {plan_path} is absent"]
-    plan = json.loads(p.read_text())
+    try:
+        plan = json.loads(p.read_text())
+    except json.JSONDecodeError as exc:
+        return [f"plan file {plan_path} is not JSON: {exc}"]
+    if not isinstance(plan, dict):
+        return ["the plan is not an object"]
+    if not manifest.get("calibration"):
+        return ["no calibration in the manifest: no plan can be derived"]
+    try:
+        want_plan = canonical_plan(manifest, root)
+    except (Refusal, ValueError) as exc:
+        return [f"the canonical plan cannot be built: {exc}"]
+    if want_plan["session_split"]["status"] != "DETERMINED":
+        f.append("the calibration is infeasible under the split rule")
+    # the manifest's own experiment must be the gate's, or the plan is right about the wrong thing
     ex = manifest["experiment"]
-    cal = manifest.get("calibration") or {}
-    if plan.get("schema") != "b2_plan":
-        f.append("not a b2_plan")
-    if plan.get("fitness") != ex["fitness"] or plan.get("budget_per_arm") != ex["budget_per_arm"] or plan.get("pairs") != ex["pairs"]:
-        f.append("fitness / budget / pairs differ from the manifest's experiment")
-    if plan.get("engine") != ex["engine"]:
-        f.append("engine constants differ from the manifest's")
-    if (plan.get("map") or {}).get("sha256") != manifest["map"]["canonical_json_sha256"] or (plan.get("map") or {}).get("path") != manifest["map"]["path"]:
-        f.append("the plan's map is not the manifest's map (canonical digest / path)")
-    if plan.get("audit_policy") != manifest["audit"]["policy"]:
-        f.append("the plan's audit policy is not the frozen one")
-    sd = plan.get("seed_derivation") or {}
-    if sd.get("master_seed") != manifest["seeds"]["master_seed"] or sd.get("label") != manifest["seeds"]["label"] or sd.get("commit") != manifest["instrument"]["psoracle_commit"]:
-        f.append("the plan's seed derivation (master / label / commit) is not the manifest's")
-    split = plan.get("session_split") or {}
-    if not cal:
-        f.append("no calibration in the manifest")
-    else:
-        want = bp.session_split(ex["pairs"], ex["budget_per_arm"], cal["rate_per_hour"])
-        keys = ("status", "rate_per_hour", "pairs_per_session_max", "sessions", "total_records")
-        if want["status"] != "DETERMINED":
-            f.append("the calibration is infeasible under the split rule")
-        elif any(split.get(k) != want.get(k) for k in keys):
-            f.append("the plan's split is not session_split(pairs, budget, calibration rate)")
-    if plan.get("session_span_max_s") != bp.SESSION_SPAN_MAX_S:
-        f.append("the plan's session span limit is not the registered one")
-    # the prediction file beside the plan: bound by hash and re-derived from the reference engine
+    if (want_plan["fitness"], want_plan["budget_per_arm"], want_plan["pairs"]) != (ex["fitness"], ex["budget_per_arm"], ex["pairs"]):
+        f.append("the manifest's experiment is not what the pinned gate selects")
+    if want_plan["engine"] != ex["engine"]:
+        f.append("the manifest's engine is not the reference engine")
+    if want_plan["map"]["sha256"] != manifest["map"]["canonical_json_sha256"]:
+        f.append("the manifest's map digest is not the map the plan is built from")
+    if want_plan["audit_policy"] != manifest["audit"]["policy"]:
+        f.append("the manifest's audit policy is not the plan's")
+    if want_plan["seed_derivation"]["master_seed"] != manifest["seeds"]["master_seed"] \
+            or [tuple(x) for x in manifest["seeds"]["pairs"]] != [tuple(x) for x in bp.session_seeds(want_plan["pairs"])[1]]:
+        f.append("the manifest's seed sequence is not the frozen rule's")
+    f += [f"plan {d}" for d in _differences({k: v for k, v in plan.items() if k not in PLAN_NON_OPERATIONAL},
+                                            {k: v for k, v in want_plan.items() if k not in PLAN_NON_OPERATIONAL})]
+    # the prediction sidecar: present, hashed by the plan, and equal to the canonical rebuild
     pred_path = p.parent / "prediction.json"
     if not pred_path.is_file():
-        f.append("prediction.json is absent beside the plan")
-        return f
+        return f + ["prediction.json is absent beside the plan"]
     if plan.get("prediction_sha256") != sha256_file(pred_path):
-        f.append("the plan's prediction digest is not the prediction file's hash")
-    pred = json.loads(pred_path.read_text())
-    if pred.get("fitness") != ex["fitness"] or pred.get("budget_per_arm") != ex["budget_per_arm"]:
-        f.append("the prediction's fitness / budget differ from the manifest's experiment")
-    want_seeds = [tuple(x) for x in manifest["seeds"]["pairs"]]
-    got_seeds = [(x.get("landscape_seed"), x.get("operator_seed")) for x in pred.get("pairs", [])]
-    if got_seeds != want_seeds:
-        f.append("the prediction's seed sequence is not the manifest's")
-        return f
-    expected = bp.predict(ex["fitness"], ex["budget_per_arm"], want_seeds, manifest["map"]["canonical_json_sha256"])
-    if expected["fitness_sequence_sha256"] != pred.get("fitness_sequence_sha256") or expected["deltas"] != pred.get("deltas"):
-        f.append("the prediction is not the reference engine's for the frozen experiment, seeds and map")
-    for a, b in zip(expected["pairs"], pred["pairs"]):
-        if a["runs"] != b.get("runs") or a["arm_order"] != b.get("arm_order") or a["target"] != b.get("target"):
-            f.append(f"pair {a['pair']}: runs / arm order / target differ from the reference")
-            break
+        f.append("the plan's prediction digest is not the sidecar's hash")
+    try:
+        pred = json.loads(pred_path.read_text())
+    except json.JSONDecodeError as exc:
+        return f + [f"the prediction sidecar is not JSON: {exc}"]
+    want_pred = bp.build_prediction(want_plan["fitness"], want_plan["budget_per_arm"],
+                                    [tuple(x) for x in manifest["seeds"]["pairs"]], manifest["map"]["canonical_json_sha256"])
+    f += [f"prediction {d}" for d in _differences({k: v for k, v in pred.items() if k not in PREDICTION_NON_OPERATIONAL},
+                                                  {k: v for k, v in want_pred.items() if k not in PREDICTION_NON_OPERATIONAL})]
     return f
 
 
@@ -350,8 +389,10 @@ def pin_plan(manifest: dict, plan_path: Path, root: Path = REPO_ROOT, readjudica
     plan = json.loads(p.read_text())
     candidate = copy.deepcopy(manifest)
     rel = str(p.relative_to(root)) if p.is_relative_to(root) else str(p)
-    candidate["plan"] = {"path": rel, "sha256": sha256_file(p), "prediction_path": str(Path(rel).parent / "prediction.json"),
-                         "prediction_sha256": sha256_file(p.parent / "prediction.json"),
+    pred = p.parent / "prediction.json"
+    pred_rel = str(pred.relative_to(root)) if pred.is_relative_to(root) else str(pred)
+    candidate["plan"] = {"path": rel, "sha256": sha256_file(p), "prediction_path": pred_rel,
+                         "prediction_sha256": sha256_file(pred),
                          "sessions": len(plan["session_split"]["sessions"]), "total_records": plan["session_split"]["total_records"]}
     candidate["status"] = "S3 PLANNED — the plan pinned from the calibration; the B2 ruling pair binds to THIS manifest's sha256"
     candidate["history"].append({"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "transition": "S3 plan", "plan_sha256": candidate["plan"]["sha256"]})
@@ -393,17 +434,28 @@ def _check_frozen_inputs(manifest: dict, root: Path, b1_root: Path) -> dict:
         if not pp.is_file() or sha256_file(pp) != manifest["prereg"]["sha256"]:
             raise Refusal("prereg: the frozen preregistration file is absent or changed")
         checks["prereg"] = "ok"
-    # the image and its build evidence
+    # the image: its build evidence, AND the binary itself — opened, hashed and sized
     im = manifest.get("image") or {}
     if im.get("sha256") is not None:
         be = im.get("build_evidence") or {}
         bep = _resolve(be.get("path", "MISSING"), root)
         if not bep.is_file() or sha256_file(bep) != be.get("sha256"):
             raise Refusal("image: the build evidence file is absent or changed")
-        ev = json.loads(bep.read_text())
-        if (ev.get("image") or {}).get("sha256") != im["sha256"] or (ev.get("image") or {}).get("path") != im.get("path"):
+        ev_image = (json.loads(bep.read_text()).get("image") or {})
+        if ev_image.get("sha256") != im["sha256"] or ev_image.get("path") != im.get("path"):
             raise Refusal("image: the build evidence does not name the pinned image")
-        checks["image"] = "ok"
+        if im.get("bytes") is not None and ev_image.get("bytes") != im["bytes"]:
+            raise Refusal("image: the build evidence's size is not the manifest's")
+        ip = _resolve(im.get("path") or "MISSING", root)
+        if not ip.is_file():
+            raise Refusal(f"image: the image binary {im.get('path')!r} is absent — the declaration is not evidence that it exists")
+        got, size = sha256_file(ip), ip.stat().st_size
+        if got != im["sha256"]:
+            raise Refusal("image: the image binary's bytes do not hash to the pinned sha256")
+        for name, want in (("the manifest", im.get("bytes")), ("the build evidence", ev_image.get("bytes"))):
+            if want is not None and size != want:
+                raise Refusal(f"image: the image binary is {size} bytes, {name} says {want}")
+        checks["image"] = f"ok (binary hashed: {got[:12]}…, {size} bytes)"
     # the lineage: the B1 manifest file by hash, the carrier, and the B1 chain re-verified FRESH
     lineage = manifest.get("carrier_lineage") or {}
     b1p = _resolve(lineage["b1_manifest"]["path"], root)
@@ -500,6 +552,12 @@ def verify(manifest: dict, evidence_dir: Path | None = None, readjudicate=None, 
         pred = _resolve(pl.get("prediction_path", "MISSING"), root)
         if not pred.is_file() or sha256_file(pred) != pl.get("prediction_sha256"):
             raise Refusal("S3: the pinned prediction file is absent or changed")
+        sidecar = p.parent / "prediction.json"
+        if not sidecar.is_file():
+            raise Refusal("S3: the plan has no prediction sidecar")
+        if sha256_file(sidecar) != pl.get("prediction_sha256"):
+            raise Refusal("S3: the manifest's prediction reference and the plan's sidecar are different bytes "
+                          "(a relocated prediction is allowed only if it is the same document)")
         findings = plan_findings(manifest, p, root)
         if findings:
             raise Refusal("S3: " + "; ".join(findings))

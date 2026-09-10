@@ -11,8 +11,12 @@ code, never on the CLI) → S3 plan (generated from the calibration) — then:
     preregistration edited, the map edited, the B1 manifest edited;
   * the record and the calibration mutated TOGETHER with the original evidence unchanged,
     a changed policy, an empty file table: refused;
-  * a plan with any operational field wrong is refused at pinning AND at re-verification
-    with its file hash updated;
+  * the image BINARY is opened, hashed and sized: deletion, truncation and same-size
+    replacement are refused with the manifest and evidence untouched (the third review,
+    finding 1) — every successful fixture carries genuine image bytes;
+  * a plan or prediction with ANY operational field wrong is refused at pinning AND at
+    re-verification with its file hash updated, and the manifest's prediction reference
+    must name the plan's sidecar bytes (the third review, finding 2);
   * an infeasible or invalid rate never yields a plan;
   * the B1 verifier is untouched.
 Every probe runs `python3 -c` in a fresh interpreter."""
@@ -56,8 +60,12 @@ class Lifecycle(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp = Path(tempfile.mkdtemp(prefix="b2life_"))
         cls.manifest = cls.tmp / "b2_manifest.json"
+        cls.binary = cls.tmp / "b2_app.bin"
+        cls.image_bytes = b"B2 lifecycle fixture; arbitrary bytes, not a firmware build.\n"
+        cls.binary.write_bytes(cls.image_bytes)
         cls.image_ev = cls.tmp / "build_evidence.json"
-        cls.image_ev.write_text(json.dumps({"image": {"path": "firmware/b2/bsp/out/b2_app.bin", "sha256": "ab" * 32, "elf_sha256": "cd" * 32, "bytes": 123456}}))
+        cls.image_ev.write_text(json.dumps({"image": {"path": str(cls.binary), "sha256": hashlib.sha256(cls.image_bytes).hexdigest(),
+                                                     "elf_sha256": "cd" * 32, "bytes": len(cls.image_bytes)}}))
         cls.prereg_sha = sha(R / "docs/b2_preregistration.md")
         p = run(f"import b2_manifest as m, json; d = m.init({str(cls.image_ev)!r}); open({str(cls.manifest)!r}, 'w').write(m.render(d))")
         assert p.returncode == 0, p.stderr
@@ -96,10 +104,12 @@ class Lifecycle(unittest.TestCase):
         self.assertEqual(d["map"]["file_sha256"][:8], "b6607a9a")
         self.assertIsNone(d["qualification"]); self.assertFalse(d["qualified"]); self.assertIsNone(d["plan"]); self.assertIsNone(d["calibration"])
         self.assertEqual((d["experiment"]["fitness"], d["experiment"]["pairs"], d["experiment"]["budget_per_arm"]), ("F1", 9, 600))
+        self.assertEqual(d["image"]["sha256"], hashlib.sha256(self.image_bytes).hexdigest())
         self.assertEqual(sorted(d["pins"]), sorted(["host/b2_landscape.py", "host/b2_maps.py", "host/b2_search.py", "host/b2_gate.py", "host/b2_plan.py",
                                                     "host/b2_manifest.py", "schemas/self_map_v2.schema.json", "docs/b2_architecture.md"]))
         v = json.loads(self._verify(stub=None).stdout)
         self.assertEqual(v["stage"], "S0"); self.assertFalse(v["qualified"]); self.assertEqual(v["checks"]["lineage"], "ok (B1 chain re-verified)")
+        self.assertIn("binary hashed", v["checks"]["image"])          # the binary was opened, not just declared
 
     def test_1_freeze(self):
         self._make_evidence(self.tmp / "b2q_early")
@@ -231,21 +241,59 @@ class Lifecycle(unittest.TestCase):
         finally:
             be.write_bytes(original)
 
+    def test_2d_the_image_binary_itself_is_checked(self):
+        """Review v021 finding 1: the manifest, the build evidence and the B2Q evidence are
+        untouched; only the binary changes."""
+        v = json.loads(self._verify(evidence_dir=self.ev).stdout)
+        self.assertTrue(v["qualified"]); self.assertIn("binary hashed", v["checks"]["image"])
+        cases = [("same_size_replacement", b"Z" * len(self.image_bytes), "do not hash"),
+                 ("truncation", self.image_bytes[:-1], "bytes"),
+                 ("extension", self.image_bytes + b"\x00", "bytes"),
+                 ("empty", b"", "bytes")]
+        for name, content, needle in cases:
+            try:
+                self.binary.write_bytes(content)
+                r = self._verify(evidence_dir=self.ev)
+                self.assertTrue(refused(r), (name, r.stdout, r.stderr))
+                self.assertIn("image:", r.stderr, name); self.assertIn(needle, r.stderr, name)
+            finally:
+                self.binary.write_bytes(self.image_bytes)
+        try:
+            self.binary.unlink()
+            r = self._verify(evidence_dir=self.ev)
+            self.assertTrue(refused(r)); self.assertIn("is absent", r.stderr)
+        finally:
+            self.binary.write_bytes(self.image_bytes)
+        # a manifest whose declared size disagrees with the binary
+        r = self._verify(extra="d['image']['bytes'] = 999999", evidence_dir=self.ev)
+        self.assertTrue(refused(r)); self.assertIn("image:", r.stderr)
+        self.assertTrue(json.loads(self._verify(evidence_dir=self.ev).stdout)["qualified"])      # restored
+
     # ------------------------------------------------------------ S3
 
-    def _plan(self, name: str, rate, mutate: str = "") -> Path:
+    def _plan(self, name: str, rate, mutate: str = "", mutate_pred: str = "") -> Path:
+        """A generated plan with its COMPLETE sidecar prediction; a mutation of either is
+        followed by rewriting the plan's prediction digest, so a missing or stale file can
+        never mask a validation gap (the third review's fixture discipline)."""
         plan_dir = self.tmp / name
         args = [sys.executable, str(HOST / "b2_plan.py"), "--out", str(plan_dir), "--gate-report", str(GATE)]
         if rate is not None:
             args += ["--rate-per-hour", str(rate)]
         p = subprocess.run(args, capture_output=True, text=True)
         self.assertEqual(p.returncode, 0, p.stderr)
-        if mutate:
-            pp = plan_dir / "plan.json"
+        pp, predp = plan_dir / "plan.json", plan_dir / "prediction.json"
+        if mutate_pred:
+            pred = json.loads(predp.read_text())
+            exec(mutate_pred, {"pred": pred, "json": json})
+            predp.write_text(json.dumps(pred))
+        if mutate or mutate_pred:
             plan = json.loads(pp.read_text())
-            exec(mutate, {"plan": plan, "json": json})
+            if mutate:
+                exec(mutate, {"plan": plan, "json": json})
+            if mutate_pred and "prediction_sha256" not in mutate:
+                plan["prediction_sha256"] = sha(predp)
             pp.write_text(json.dumps(plan))
-        return plan_dir / "plan.json"
+        return pp
 
     def _pin(self, plan_path: Path, save: bool = False) -> subprocess.CompletedProcess:
         tail = f"open({str(self.manifest)!r}, 'w').write(m.render(d2))" if save else "pass"
@@ -273,10 +321,48 @@ class Lifecycle(unittest.TestCase):
             "split_status": "plan['session_split']['status'] = 'INFEASIBLE'",
             "span_limit": "plan['session_span_max_s'] = 99999",
             "schema": "plan['schema'] = 'other'",
+            # the third review's table: fields the earlier subset comparison never reached
+            "session": "plan['session'] = 'B1'",
+            "schema_version": "plan['schema_version'] = '99.0.0'",
+            "primary_alpha": "plan['primary']['alpha'] = 1.0",
+            "primary_ties": "plan['primary']['ties'] = 'count as positive'",
+            "primary_statistic": "plan['primary']['statistic'] = 'a t-test'",
+            "primary_missing": "plan.pop('primary')",
+            "record_counts": "plan['records'].update(per_pair=1, single_session_total=1)",
+            "arm_order": "plan['arm_order'] = 'B always first'",
+            "carrier": "plan['carrier'] = 'some other carrier'",
+            "deadline_formula": "plan['deadline_formula'] = 'none'",
+            "architecture_digest": "plan['architecture']['sha256'] = '00' * 32",
+            "gate_digest": "plan['gate']['sha256'] = '00' * 32",
+            "gate_rules_version": "plan['gate']['rules_version'] = 'v0.2'",
+            "planning_rates": "plan['planning_rates_NOT_calibration']['last_B1_mapping_observed_per_hour'] = 99999",
+            "excluded_total": "plan['seed_derivation']['excluded_values_total'] = 1",
+            "map_view": "plan['map']['view']['mapped_bits_in_train'] = 1",
+            "extra_key": "plan['surprise'] = 1",
         }
         for name, mutation in wrong.items():
             p = self._pin(self._plan("plan_wrong_" + name, rate, mutation))
             self.assertTrue(refused(p), (name, p.stdout, p.stderr)); self.assertIn("plan:", p.stderr, name)
+        # the prediction sidecar, complete and otherwise valid, with one field changed
+        wrong_pred = {
+            "primary": "pred['predicted_primary'].update(sign_test_p=1.0, verdict='NOT SUPPORTED')",
+            "sequence_length": "pred['fitness_sequence_length'] = 1",
+            "sequence_hash": "pred['fitness_sequence_sha256'] = '00' * 32",
+            "pair_id": "pred['pairs'][0]['pair'] = 99",
+            "pair_delta": "pred['pairs'][0]['delta_B_minus_A'] = -999",
+            "base_fitness": "pred['pairs'][0]['base_train_fitness'] = -999",
+            "deltas": "pred['deltas'][0] = -999",
+            "runs": "pred['pairs'][0]['runs']['A']['best_train'] = -999",
+            "champion_holdout": "pred['pairs'][0]['runs']['B']['champion_holdout'] = -999",
+            "arm_order": "pred['pairs'][0]['arm_order'] = ['B', 'A']",
+            "target": "pred['pairs'][0]['target'][0] = '0' * 16",
+            "schema_version": "pred['schema_version'] = '99.0.0'",
+            "fitness": "pred['fitness'] = 'F2'",
+            "dropped_pair": "pred['pairs'] = pred['pairs'][:-1]",
+        }
+        for name, mutation in wrong_pred.items():
+            p = self._pin(self._plan("pred_wrong_" + name, rate, mutate_pred=mutation))
+            self.assertTrue(refused(p), (name, p.stdout, p.stderr)); self.assertIn("prediction", p.stderr, name)
         # a wrong prediction FILE beside a correct plan (its digest updated in the plan): re-derivation catches it
         good = self._plan("plan_bad_prediction", rate)
         pred = good.parent / "prediction.json"
@@ -284,7 +370,7 @@ class Lifecycle(unittest.TestCase):
         pred.write_text(json.dumps(doc))
         plan = json.loads(good.read_text()); plan["prediction_sha256"] = sha(pred); good.write_text(json.dumps(plan))
         p = self._pin(good)
-        self.assertTrue(refused(p)); self.assertIn("reference engine", p.stderr)
+        self.assertTrue(refused(p)); self.assertIn("prediction deltas[0]", p.stderr)
         # the good plan pins; the unqualified manifest cannot pin
         good = self._plan("plan", rate)
         p = run(f"import b2_manifest as m, json; from pathlib import Path; d = json.loads(open({str(self.manifest)!r}).read()); d['qualified'] = False; d['qualification'] = None; d['calibration'] = None; m.pin_plan(d, Path({str(good)!r}), readjudicate={STUB_PASS})")
@@ -330,6 +416,32 @@ class Lifecycle(unittest.TestCase):
             self.assertTrue(refused(r)); self.assertIn("prediction file", r.stderr)
         finally:
             pred.write_text(original_pred)
+        # the prediction changed AND both its hashes updated: the canonical rebuild still refuses
+        for name, mutation in (("primary", "pred['predicted_primary']['sign_test_p'] = 1.0"),
+                               ("pair_delta", "pred['pairs'][0]['delta_B_minus_A'] = -999"),
+                               ("sequence_length", "pred['fitness_sequence_length'] = 1")):
+            try:
+                doc = json.loads(original_pred)
+                exec(mutation, {"pred": doc})
+                pred.write_text(json.dumps(doc))
+                plan = json.loads(original)
+                plan["prediction_sha256"] = sha(pred)
+                plan_path.write_text(json.dumps(plan))
+                r = self._verify(extra=f"d['plan'].update(sha256=m.sha256_file(Path({str(plan_path)!r})), prediction_sha256=m.sha256_file(Path({str(pred)!r})))",
+                                 evidence_dir=self.ev)
+                self.assertTrue(refused(r), (name, r.stdout, r.stderr)); self.assertIn("prediction", r.stderr, name)
+            finally:
+                pred.write_text(original_pred); plan_path.write_text(original)
+        # the manifest naming a DIFFERENT prediction document than the plan's sidecar
+        other = self.tmp / "unrelated_prediction.json"
+        other.write_text("{}")
+        r = self._verify(extra=f"d['plan'].update(prediction_path={str(other)!r}, prediction_sha256=m.sha256_file(Path({str(other)!r})))", evidence_dir=self.ev)
+        self.assertTrue(refused(r)); self.assertIn("different bytes", r.stderr)
+        # a RELOCATED prediction with identical bytes is allowed and says so
+        moved = self.tmp / "relocated_prediction.json"
+        moved.write_bytes(pred.read_bytes())
+        v = json.loads(self._verify(extra=f"d['plan']['prediction_path'] = {str(moved)!r}", evidence_dir=self.ev).stdout)
+        self.assertTrue(v["qualified"]); self.assertEqual(v["stage"], "S3")
         # a second freeze / a second plan
         p = run(f"import b2_manifest as m, json; d = json.loads(open({str(self.manifest)!r}).read()); m.freeze(d, 'aa' * 32)")
         self.assertTrue(refused(p)); self.assertIn("first transition", p.stderr)

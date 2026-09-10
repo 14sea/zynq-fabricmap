@@ -20,6 +20,7 @@ goalpost after the run.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import sys
@@ -118,16 +119,22 @@ def decision(deltas: list[int]) -> dict:
             "verdict": "map-guided > random-safe SUPPORTED" if p <= ALPHA else "NOT SUPPORTED"}
 
 
+_PREDICT_CACHE: dict = {}
+
+
 def predict(fid: str, budget: int, seeds: list[tuple[int, int]], map_sha256: str | None = None) -> dict:
     """The reference engine over the fabric model for the pairs: per-pair runs, deltas, the
     fitness-sequence hash. Pure: the same inputs give the same bytes (the manifest's plan
     validator re-derives it)."""
-    truth = bm.truth_mapping()
-    masks = bl.universe_mask(truth)
-    fabric = bs.ModelFabric(truth)
     self_map = bmaps.load_self_map()
     if map_sha256 is not None and bmaps.sha256_of(self_map) != map_sha256:
         raise ValueError("the committed self-map is not the one the caller expects")
+    key = (fid, budget, tuple(tuple(x) for x in seeds), bmaps.sha256_of(self_map))
+    if key in _PREDICT_CACHE:                       # a pure function of the key; the validator calls it on every verify
+        return copy.deepcopy(_PREDICT_CACHE[key])
+    truth = bm.truth_mapping()
+    masks = bl.universe_mask(truth)
+    fabric = bs.ModelFabric(truth)
     view = bmaps.MapView(self_map, bl.train_vectors())
     pairs = []
     fitness_sequence: list[int] = []
@@ -147,8 +154,94 @@ def predict(fid: str, budget: int, seeds: list[tuple[int, int]], map_sha256: str
                       "target": [f"{t:016x}" for t in land.target], "base_train_fitness": land.train_fitness(fabric(0)),
                       "runs": runs, "delta_B_minus_A": runs["B"]["best_train"] - runs["A"]["best_train"]})
     deltas = [p["delta_B_minus_A"] for p in pairs]
-    return {"pairs": pairs, "deltas": deltas, "fitness_sequence_sha256": sha256_json(fitness_sequence), "fitness_sequence_length": len(fitness_sequence),
-            "map_sha256": bmaps.sha256_of(self_map), "view": view.describe()}
+    out = {"pairs": pairs, "deltas": deltas, "fitness_sequence_sha256": sha256_json(fitness_sequence), "fitness_sequence_length": len(fitness_sequence),
+           "map_sha256": bmaps.sha256_of(self_map), "view": view.describe()}
+    _PREDICT_CACHE[key] = copy.deepcopy(out)
+    return out
+
+
+def gate_inputs(gate_report: Path) -> dict:
+    """The frozen experiment the gate selected: fitness, budget, pairs — and the gate's own
+    provenance. Refuses a gate report whose rules are not the current ones."""
+    gate = json.loads(gate_report.read_text())
+    if gate["thresholds"].get("rules_version") != bg.THRESHOLDS["rules_version"]:
+        raise ValueError(f"the gate report's rules ({gate['thresholds'].get('rules_version')}) are not the current ones ({bg.THRESHOLDS['rules_version']})")
+    fid = gate["selected_fitness"]
+    if fid is None:
+        raise ValueError("the gate selected no fitness: no plan")
+    res = gate["results"][fid]
+    return {"fitness": fid, "budget_per_arm": res["b_star"], "pairs": res["criteria"]["G5"]["required_pairs_N"],
+            "head_at_run": gate["head_at_run"], "rules_version": gate["thresholds"]["rules_version"], "rows_from": gate.get("source")}
+
+
+def session_seeds(n_pairs: int) -> tuple[int, list[tuple[int, int]], dict, set]:
+    master = bs.master_seed(SESSION_LABEL, INSTRUMENT_COMMIT)
+    exclusion, sources = frozen_seed_exclusion()
+    return master, bs.pair_seeds(master, n_pairs, exclude=exclusion), sources, exclusion
+
+
+def build_prediction(fid: str, budget: int, seeds: list[tuple[int, int]], map_sha256: str | None = None) -> dict:
+    """The canonical prediction document — a pure function of (fitness, budget, seeds, map).
+    `b2_manifest.plan_findings` rebuilds it and compares the WHOLE structure."""
+    pr = predict(fid, budget, seeds, map_sha256)
+    return {"schema": "b2_prediction", "schema_version": "1.0.0", "fitness": fid, "budget_per_arm": budget, "pairs": pr["pairs"],
+            "deltas": pr["deltas"], "predicted_primary": decision(pr["deltas"]),
+            "fitness_sequence_sha256": pr["fitness_sequence_sha256"], "fitness_sequence_length": pr["fitness_sequence_length"],
+            "note": "every value is the reference engine over the fabric model; on a correct instrument the board reproduces them byte for byte"}
+
+
+def build_plan(rate_per_hour: float | None, gate_report: Path = None, root: Path = REPO_ROOT) -> dict:
+    """The canonical plan document — a pure function of the gate report, the frozen seed rule,
+    the map, the engine, the audit policy and the calibration rate. Everything except
+    `generated_utc` and `prediction_sha256` (PLAN_NON_OPERATIONAL) is operational and is
+    compared field for field by `b2_manifest.plan_findings`."""
+    gate_report = gate_report or GATE_REPORT
+    g = gate_inputs(gate_report)
+    fid, budget, n_pairs = g["fitness"], g["budget_per_arm"], g["pairs"]
+    master, seeds, exclusion_sources, exclusion = session_seeds(n_pairs)
+    self_map = bmaps.load_self_map()
+    view = bmaps.MapView(self_map, bl.train_vectors())
+    records = 1 + n_pairs * 2 * budget + n_pairs * 2 + 1
+    return {
+        "schema": "b2_plan", "schema_version": "1.0.0", "session": "B2",
+        "fitness": fid, "budget_per_arm": budget, "pairs": n_pairs, "engine": {"version": bs.ENGINE_VERSION, "mu": bs.MU, "lambda": bs.LAMBDA, "kmax": bs.KMAX},
+        "carrier": "the qualified B1 carrier (docs/b2_architecture.md D1)",
+        "map": {"path": str(bmaps.SELF_MAP.relative_to(root)), "sha256": bmaps.sha256_of(self_map), "view": view.describe()},
+        "seed_derivation": {"label": SESSION_LABEL, "commit": INSTRUMENT_COMMIT, "master_seed": master,
+                            "rule": "first 4 bytes of sha256(label + '|' + instrument commit); pairs from one Rng stream; the fixed excluded "
+                                    "seeds AND every archived run's seed set skipped (explicit exclusion — disjointness is enforced, not assumed)",
+                            "excluded_fixed": sorted(bs.EXCLUDED_SEEDS), "excluded_frozen_sets": exclusion_sources,
+                            "excluded_values_total": len(exclusion | set(bs.EXCLUDED_SEEDS))},
+        "gate": {"path": str(gate_report.relative_to(root)) if gate_report.is_relative_to(root) else str(gate_report), "sha256": sha256_file(gate_report),
+                 "head_at_run": g["head_at_run"], "rules_version": g["rules_version"], "rows_from": g["rows_from"],
+                 "run_report": {"path": str(GATE_RUN_REPORT.relative_to(root)), "sha256": sha256_file(GATE_RUN_REPORT)}},
+        "audit_policy": AUDIT_POLICY,
+        "records": {"per_pair": 2 * budget + 2, "single_session_total": records,
+                    "note": "one opening and one closing baseline PER SESSION; the total depends on the split (session_split)"},
+        "arm_order": "pair r runs A then B when r is even, B then A when r is odd",
+        "session_split": session_split(n_pairs, budget, rate_per_hour),
+        "session_span_max_s": SESSION_SPAN_MAX_S, "deadline_formula": DEADLINE_FORMULA,
+        "planning_rates_NOT_calibration": {"sampled_audit_S3_per_hour": bg.SAMPLED_AUDIT_RATE_PER_HOUR,
+                                           "all_self_reporting_B1plan_per_hour": bg.ALL_SELF_REPORTING_RATE_PER_HOUR,
+                                           "last_B1_mapping_observed_per_hour": 2807,
+                                           "note": "older P3/B1 rates, shown for planning only; the B2 rate is measured by B2Q and written into "
+                                                   "the manifest before the split is determined (preregistration §6, §8)"},
+        "primary": {"statistic": "one-sided exact sign test over the N pairs' delta (best-so-far train fitness at the budget, self-map minus random-safe)",
+                    "alpha": ALPHA, "ties": "excluded from n, counted"},
+        "architecture": {"path": "docs/b2_architecture.md", "sha256": sha256_file(root / "docs/b2_architecture.md")},
+    }
+
+
+def write(out: Path, plan: dict, prediction: dict) -> tuple[Path, Path]:
+    """Both documents in the canonical encoding (indent 1, sorted keys); the plan carries the
+    prediction file's sha256, so the two are written in that order."""
+    out.mkdir(parents=True, exist_ok=True)
+    pred_path, plan_path = out / "prediction.json", out / "plan.json"
+    pred_path.write_text(json.dumps(prediction, indent=1, sort_keys=True))
+    plan = dict(plan, generated_utc=plan.get("generated_utc") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                prediction_sha256=sha256_file(pred_path))
+    plan_path.write_text(json.dumps(plan, indent=1, sort_keys=True))
+    return plan_path, pred_path
 
 
 def main(argv=None) -> int:
@@ -159,66 +252,16 @@ def main(argv=None) -> int:
     ap.add_argument("--gate-report", default=None, help="override the gate report path (tests)")
     args = ap.parse_args(argv)
     gate_report = Path(args.gate_report) if args.gate_report else GATE_REPORT
-    out = REPO_ROOT / args.out
-    gate = json.loads(gate_report.read_text())
-    if gate["thresholds"].get("rules_version") != bg.THRESHOLDS["rules_version"]:
-        raise SystemExit(f"the gate report's rules ({gate['thresholds'].get('rules_version')}) are not the current ones ({bg.THRESHOLDS['rules_version']})")
-    fid = gate["selected_fitness"]
-    if fid is None:
-        raise SystemExit("the gate selected no fitness: no plan")
-    res = gate["results"][fid]
-    budget = res["b_star"]
-    n_pairs = res["criteria"]["G5"]["required_pairs_N"]
-    master = bs.master_seed(SESSION_LABEL, INSTRUMENT_COMMIT)
-    exclusion, exclusion_sources = frozen_seed_exclusion()
-    seeds = bs.pair_seeds(master, n_pairs, exclude=exclusion)
-    pr = predict(fid, budget, seeds)
-    pairs, deltas, fitness_sequence_sha256 = pr["pairs"], pr["deltas"], pr["fitness_sequence_sha256"]
-    self_map = bmaps.load_self_map()
-    view = bmaps.MapView(self_map, bl.train_vectors())
-    records = 1 + n_pairs * 2 * budget + n_pairs * 2 + 1
-    rate_sampled = bg.SAMPLED_AUDIT_RATE_PER_HOUR
-    rate_all = bg.ALL_SELF_REPORTING_RATE_PER_HOUR
-    plan = {
-        "schema": "b2_plan", "schema_version": "1.0.0", "session": "B2", "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "fitness": fid, "budget_per_arm": budget, "pairs": n_pairs, "engine": {"version": bs.ENGINE_VERSION, "mu": bs.MU, "lambda": bs.LAMBDA, "kmax": bs.KMAX},
-        "carrier": "the qualified B1 carrier (docs/b2_architecture.md D1)",
-        "map": {"path": str(bmaps.SELF_MAP.relative_to(REPO_ROOT)), "sha256": bmaps.sha256_of(self_map), "view": view.describe()},
-        "seed_derivation": {"label": SESSION_LABEL, "commit": INSTRUMENT_COMMIT, "master_seed": master,
-                            "rule": "first 4 bytes of sha256(label + '|' + instrument commit); pairs from one Rng stream; the fixed excluded "
-                                    "seeds AND every archived run's seed set skipped (explicit exclusion — disjointness is enforced, not assumed)",
-                            "excluded_fixed": sorted(bs.EXCLUDED_SEEDS), "excluded_frozen_sets": exclusion_sources,
-                            "excluded_values_total": len(exclusion | set(bs.EXCLUDED_SEEDS))},
-        "gate": {"path": str(gate_report.relative_to(REPO_ROOT)) if gate_report.is_relative_to(REPO_ROOT) else str(gate_report), "sha256": sha256_file(gate_report), "head_at_run": gate["head_at_run"],
-                 "rules_version": gate["thresholds"]["rules_version"], "rows_from": gate.get("source"),
-                 "run_report": {"path": str(GATE_RUN_REPORT.relative_to(REPO_ROOT)), "sha256": sha256_file(GATE_RUN_REPORT)}},
-        "audit_policy": AUDIT_POLICY,
-        "records": {"per_pair": 2 * budget + 2, "single_session_total": records,
-                    "note": "one opening and one closing baseline PER SESSION; the total depends on the split (session_split)"},
-        "arm_order": "pair r runs A then B when r is even, B then A when r is odd",
-        "session_split": session_split(n_pairs, budget, args.rate_per_hour),
-        "session_span_max_s": SESSION_SPAN_MAX_S, "deadline_formula": DEADLINE_FORMULA,
-        "planning_rates_NOT_calibration": {"sampled_audit_S3_per_hour": rate_sampled, "all_self_reporting_B1plan_per_hour": rate_all,
-                                           "last_B1_mapping_observed_per_hour": 2807,
-                                           "note": "older P3/B1 rates, shown for planning only; the B2 rate is measured by B2Q and written into "
-                                                   "the manifest before the split is determined (preregistration §6, §8)"},
-        "primary": {"statistic": "one-sided exact sign test over the N pairs' delta (best-so-far train fitness at the budget, self-map minus random-safe)",
-                    "alpha": ALPHA, "ties": "excluded from n, counted"},
-        "architecture": {"path": "docs/b2_architecture.md", "sha256": sha256_file(REPO_ROOT / "docs/b2_architecture.md")},
-    }
-    prediction = {
-        "schema": "b2_prediction", "schema_version": "1.0.0", "fitness": fid, "budget_per_arm": budget, "pairs": pairs,
-        "deltas": deltas, "predicted_primary": decision(deltas),
-        "fitness_sequence_sha256": fitness_sequence_sha256, "fitness_sequence_length": pr["fitness_sequence_length"],
-        "note": "every value is the reference engine over the fabric model; on a correct instrument the board reproduces them byte for byte",
-    }
-    out.mkdir(parents=True, exist_ok=True)
-    (out / "plan.json").write_text(json.dumps(plan, indent=1, sort_keys=True))
-    (out / "prediction.json").write_text(json.dumps(prediction, indent=1, sort_keys=True))
-    plan["prediction_sha256"] = sha256_file(out / "prediction.json")
-    (out / "plan.json").write_text(json.dumps(plan, indent=1, sort_keys=True))
-    print(json.dumps({"fitness": fid, "budget": budget, "pairs": n_pairs, "master_seed": master, "records": records,
-                      "deltas": deltas, "predicted_primary": prediction["predicted_primary"],
+    try:
+        plan = build_plan(args.rate_per_hour, gate_report)
+    except ValueError as exc:
+        raise SystemExit(str(exc))
+    prediction = build_prediction(plan["fitness"], plan["budget_per_arm"], [tuple(x) for x in session_seeds(plan["pairs"])[1]])
+    plan_path, _ = write(REPO_ROOT / args.out, plan, prediction)
+    plan = json.loads(plan_path.read_text())
+    print(json.dumps({"fitness": plan["fitness"], "budget": plan["budget_per_arm"], "pairs": plan["pairs"],
+                      "master_seed": plan["seed_derivation"]["master_seed"], "records": plan["records"]["single_session_total"],
+                      "deltas": prediction["deltas"], "predicted_primary": prediction["predicted_primary"],
                       "audit_policy": AUDIT_POLICY, "excluded_values": plan["seed_derivation"]["excluded_values_total"],
                       "session_split": plan["session_split"]["status"]}, indent=1))
     return 0
