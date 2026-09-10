@@ -1,0 +1,502 @@
+{
+ "architecture": {
+  "last_commit": "fcfff981cf007fd96889c88794b98d0df3988061",
+  "path": "docs/b2_architecture.md",
+  "sha256": "6f063228284d2339391b09dea3afdd8a3e719025427455e49d011489b642524e"
+ },
+ "generated_utc": "2026-09-10T07:53:24Z",
+ "head_at_run": "cf58540a9a4c03b1f73c3c79a5d559b12bdb1f15",
+ "label": "\u00a77a controls T/W on run 3's seeds; G9 at the recomputed B*",
+ "results": {
+  "F1": {
+   "G9": {
+    "alpha": 0.05,
+    "pass": true,
+    "rule": "B > T and B > W at B*, one-sided exact sign tests, alpha 0.05 (architecture v0.3 \u00a77a, predeclared before the run)"
+   },
+   "arms": {
+    "T": {
+     "cohen_d_B_minus_arm": 1.17130871520453,
+     "fraction_of_B_benefit_retained": 0.22235576923076925,
+     "mean_delta_B_minus_arm": 3.235,
+     "mean_delta_vs_A": 0.925,
+     "median": 13.0,
+     "negatives": 17,
+     "pass": true,
+     "positives": 169,
+     "sign_test_p_B_gt_arm": 5.716268818643284e-33,
+     "text": "train-membership only",
+     "ties": 14,
+     "train_membership": {
+      "actually_holdout": 0,
+      "actually_train": 183,
+      "named": 183
+     }
+    },
+    "W": {
+     "cohen_d_B_minus_arm": 1.2528362908670452,
+     "fraction_of_B_benefit_retained": 0.12740384615384615,
+     "mean_delta_B_minus_arm": 3.63,
+     "mean_delta_vs_A": 0.53,
+     "median": 12.0,
+     "negatives": 17,
+     "pass": true,
+     "positives": 172,
+     "sign_test_p_B_gt_arm": 9.477367415970141e-34,
+     "text": "within-train column scramble",
+     "ties": 11,
+     "train_membership": {
+      "actually_holdout": 0,
+      "actually_train": 183,
+      "named": 183
+     }
+    }
+   },
+   "b_star": 600,
+   "fitness": "F1",
+   "per_budget": {
+    "T": [
+     {
+      "budget": 100,
+      "mean_delta_B_minus_arm": -0.16,
+      "median": 6.0
+     },
+     {
+      "budget": 200,
+      "mean_delta_B_minus_arm": 0.175,
+      "median": 9.0
+     },
+     {
+      "budget": 300,
+      "mean_delta_B_minus_arm": 0.67,
+      "median": 11.0
+     },
+     {
+      "budget": 400,
+      "mean_delta_B_minus_arm": 1.41,
+      "median": 12.0
+     },
+     {
+      "budget": 600,
+      "mean_delta_B_minus_arm": 3.235,
+      "median": 13.0
+     },
+     {
+      "budget": 800,
+      "mean_delta_B_minus_arm": 4.87,
+      "median": 14.0
+     },
+     {
+      "budget": 1000,
+      "mean_delta_B_minus_arm": 6.235,
+      "median": 14.0
+     },
+     {
+      "budget": 1500,
+      "mean_delta_B_minus_arm": 8.615,
+      "median": 16.0
+     },
+     {
+      "budget": 2000,
+      "mean_delta_B_minus_arm": 10.55,
+      "median": 16.0
+     }
+    ],
+    "W": [
+     {
+      "budget": 100,
+      "mean_delta_B_minus_arm": -0.055,
+      "median": 6.0
+     },
+     {
+      "budget": 200,
+      "mean_delta_B_minus_arm": 0.41,
+      "median": 8.0
+     },
+     {
+      "budget": 300,
+      "mean_delta_B_minus_arm": 0.98,
+      "median": 10.0
+     },
+     {
+      "budget": 400,
+      "mean_delta_B_minus_arm": 1.725,
+      "median": 11.0
+     },
+     {
+      "budget": 600,
+      "mean_delta_B_minus_arm": 3.63,
+      "median": 12.0
+     },
+     {
+      "budget": 800,
+      "mean_delta_B_minus_arm": 5.385,
+      "median": 14.0
+     },
+     {
+      "budget": 1000,
+      "mean_delta_B_minus_arm": 6.78,
+      "median": 14.0
+     },
+     {
+      "budget": 1500,
+      "mean_delta_B_minus_arm": 9.495,
+      "median": 15.0
+     },
+     {
+      "budget": 2000,
+      "mean_delta_B_minus_arm": 11.54,
+      "median": 15.0
+     }
+    ]
+   },
+   "seeds": 200,
+   "wall_s": 12.0
+  },
+  "F2": {
+   "G9": {
+    "alpha": 0.05,
+    "pass": true,
+    "rule": "B > T and B > W at B*, one-sided exact sign tests, alpha 0.05 (architecture v0.3 \u00a77a, predeclared before the run)"
+   },
+   "arms": {
+    "T": {
+     "cohen_d_B_minus_arm": 1.5979656195671392,
+     "fraction_of_B_benefit_retained": 0.07763283487114223,
+     "mean_delta_B_minus_arm": 14.495,
+     "mean_delta_vs_A": 1.22,
+     "median": 115.0,
+     "negatives": 9,
+     "pass": true,
+     "positives": 189,
+     "sign_test_p_B_gt_arm": 2.799751123868875e-45,
+     "text": "train-membership only",
+     "ties": 2,
+     "train_membership": {
+      "actually_holdout": 0,
+      "actually_train": 183,
+      "named": 183
+     }
+    },
+    "W": {
+     "cohen_d_B_minus_arm": 1.8352378770950286,
+     "fraction_of_B_benefit_retained": -0.05981546293350302,
+     "mean_delta_B_minus_arm": 16.655,
+     "mean_delta_vs_A": -0.94,
+     "median": 113.0,
+     "negatives": 3,
+     "pass": true,
+     "positives": 193,
+     "sign_test_p_B_gt_arm": 1.249668092167185e-53,
+     "text": "within-train column scramble",
+     "ties": 4,
+     "train_membership": {
+      "actually_holdout": 0,
+      "actually_train": 183,
+      "named": 183
+     }
+    }
+   },
+   "b_star": 1500,
+   "fitness": "F2",
+   "per_budget": {
+    "T": [
+     {
+      "budget": 100,
+      "mean_delta_B_minus_arm": -1.115,
+      "median": 34.5
+     },
+     {
+      "budget": 200,
+      "mean_delta_B_minus_arm": -1.22,
+      "median": 48.0
+     },
+     {
+      "budget": 300,
+      "mean_delta_B_minus_arm": -0.51,
+      "median": 59.0
+     },
+     {
+      "budget": 400,
+      "mean_delta_B_minus_arm": 0.78,
+      "median": 69.0
+     },
+     {
+      "budget": 600,
+      "mean_delta_B_minus_arm": 4.09,
+      "median": 83.0
+     },
+     {
+      "budget": 800,
+      "mean_delta_B_minus_arm": 7.095,
+      "median": 94.0
+     },
+     {
+      "budget": 1000,
+      "mean_delta_B_minus_arm": 9.38,
+      "median": 101.0
+     },
+     {
+      "budget": 1500,
+      "mean_delta_B_minus_arm": 14.495,
+      "median": 115.0
+     },
+     {
+      "budget": 2000,
+      "mean_delta_B_minus_arm": 17.325,
+      "median": 124.0
+     }
+    ],
+    "W": [
+     {
+      "budget": 100,
+      "mean_delta_B_minus_arm": -0.5,
+      "median": 35.0
+     },
+     {
+      "budget": 200,
+      "mean_delta_B_minus_arm": -0.365,
+      "median": 48.0
+     },
+     {
+      "budget": 300,
+      "mean_delta_B_minus_arm": 0.43,
+      "median": 59.0
+     },
+     {
+      "budget": 400,
+      "mean_delta_B_minus_arm": 1.76,
+      "median": 68.0
+     },
+     {
+      "budget": 600,
+      "mean_delta_B_minus_arm": 5.04,
+      "median": 82.0
+     },
+     {
+      "budget": 800,
+      "mean_delta_B_minus_arm": 8.36,
+      "median": 92.0
+     },
+     {
+      "budget": 1000,
+      "mean_delta_B_minus_arm": 10.785,
+      "median": 100.0
+     },
+     {
+      "budget": 1500,
+      "mean_delta_B_minus_arm": 16.655,
+      "median": 113.0
+     },
+     {
+      "budget": 2000,
+      "mean_delta_B_minus_arm": 20.36,
+      "median": 121.0
+     }
+    ]
+   },
+   "seeds": 200,
+   "wall_s": 12.5
+  },
+  "F3": {
+   "G9": {
+    "alpha": 0.05,
+    "pass": true,
+    "rule": "B > T and B > W at B*, one-sided exact sign tests, alpha 0.05 (architecture v0.3 \u00a77a, predeclared before the run)"
+   },
+   "arms": {
+    "T": {
+     "cohen_d_B_minus_arm": 0.8718905839441127,
+     "fraction_of_B_benefit_retained": 0.10566546762589929,
+     "mean_delta_B_minus_arm": 9.945,
+     "mean_delta_vs_A": 1.175,
+     "median": 20.0,
+     "negatives": 28,
+     "pass": true,
+     "positives": 167,
+     "sign_test_p_B_gt_arm": 1.3488654521613356e-25,
+     "text": "train-membership only",
+     "ties": 5,
+     "train_membership": {
+      "actually_holdout": 0,
+      "actually_train": 183,
+      "named": 183
+     }
+    },
+    "W": {
+     "cohen_d_B_minus_arm": 0.8422480163272897,
+     "fraction_of_B_benefit_retained": 0.09127697841726619,
+     "mean_delta_B_minus_arm": 10.105,
+     "mean_delta_vs_A": 1.015,
+     "median": 20.5,
+     "negatives": 25,
+     "pass": true,
+     "positives": 169,
+     "sign_test_p_B_gt_arm": 9.360295559354745e-28,
+     "text": "within-train column scramble",
+     "ties": 6,
+     "train_membership": {
+      "actually_holdout": 0,
+      "actually_train": 183,
+      "named": 183
+     }
+    }
+   },
+   "b_star": 800,
+   "fitness": "F3",
+   "per_budget": {
+    "T": [
+     {
+      "budget": 100,
+      "mean_delta_B_minus_arm": -0.13,
+      "median": 7.0
+     },
+     {
+      "budget": 200,
+      "mean_delta_B_minus_arm": 0.055,
+      "median": 11.0
+     },
+     {
+      "budget": 300,
+      "mean_delta_B_minus_arm": 0.96,
+      "median": 13.0
+     },
+     {
+      "budget": 400,
+      "mean_delta_B_minus_arm": 2.425,
+      "median": 15.5
+     },
+     {
+      "budget": 600,
+      "mean_delta_B_minus_arm": 5.69,
+      "median": 18.0
+     },
+     {
+      "budget": 800,
+      "mean_delta_B_minus_arm": 9.945,
+      "median": 20.0
+     },
+     {
+      "budget": 1000,
+      "mean_delta_B_minus_arm": 13.585,
+      "median": 22.0
+     },
+     {
+      "budget": 1500,
+      "mean_delta_B_minus_arm": 21.56,
+      "median": 26.0
+     },
+     {
+      "budget": 2000,
+      "mean_delta_B_minus_arm": 30.555,
+      "median": 27.0
+     }
+    ],
+    "W": [
+     {
+      "budget": 100,
+      "mean_delta_B_minus_arm": -0.47,
+      "median": 7.0
+     },
+     {
+      "budget": 200,
+      "mean_delta_B_minus_arm": -0.03,
+      "median": 10.0
+     },
+     {
+      "budget": 300,
+      "mean_delta_B_minus_arm": 1.09,
+      "median": 13.0
+     },
+     {
+      "budget": 400,
+      "mean_delta_B_minus_arm": 2.895,
+      "median": 15.0
+     },
+     {
+      "budget": 600,
+      "mean_delta_B_minus_arm": 6.225,
+      "median": 18.0
+     },
+     {
+      "budget": 800,
+      "mean_delta_B_minus_arm": 10.105,
+      "median": 20.5
+     },
+     {
+      "budget": 1000,
+      "mean_delta_B_minus_arm": 14.19,
+      "median": 21.0
+     },
+     {
+      "budget": 1500,
+      "mean_delta_B_minus_arm": 23.495,
+      "median": 23.5
+     },
+     {
+      "budget": 2000,
+      "mean_delta_B_minus_arm": 33.33,
+      "median": 25.0
+     }
+    ]
+   },
+   "seeds": 200,
+   "wall_s": 13.0
+  }
+ },
+ "schema": "b2_gate_controls",
+ "schema_version": "1.0.0",
+ "source": {
+  "path": "evidence/b2/gate",
+  "seeds": {
+   "count": 200,
+   "derivation": "first 4 bytes of sha256('b2-gate|' + HEAD), pairs from one Rng stream, excluded seeds skipped",
+   "excluded": [
+    1,
+    2,
+    3,
+    5,
+    11,
+    77,
+    99,
+    1234,
+    4321,
+    176359248,
+    195948557,
+    324805736,
+    521288629,
+    1123460948,
+    1278624577,
+    1278628687,
+    1281816666,
+    2119807262,
+    3735928559,
+    4294967295
+   ],
+   "label": "b2-gate",
+   "master_seed": 1324512209
+  }
+ },
+ "thresholds": {
+  "G1_saturation_percentile": 95,
+  "G2_bootstrap_experiments": 1000,
+  "G2_null_nonreject_min": 0.9,
+  "G3_alpha": 0.05,
+  "G3_shuffled_fraction_max": 0.1,
+  "G4_oracle_median_fraction_max": 0.9,
+  "G4_self_vs_oracle_min": 0.9,
+  "G5_alpha": 0.05,
+  "G5_cohen_d_min": 0.8,
+  "G5_pairs_min": 8,
+  "G5_power_min": 0.9,
+  "G5_session_evals_all_self_reporting": 6000,
+  "G5_total_evals_max": 13000,
+  "G6_seeds_min": 200,
+  "G7_q75_fraction_max": 0.5,
+  "G8_lut_shuffled_fraction_max": 0.25,
+  "G9_alpha": 0.05,
+  "budget_rule": "min N(B) x 2 x B over grid budgets with G1 and finite N(B)",
+  "rules_version": "v0.3"
+ },
+ "worktree_dirty_at_start": false
+}
