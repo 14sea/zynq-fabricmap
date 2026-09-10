@@ -5,6 +5,25 @@
 
 static void genome_clear(uint32_t g[B2_GENOME_WORDS]) { memset(g, 0, sizeof(uint32_t) * B2_GENOME_WORDS); }
 
+int b2_page_slice(uint32_t flags, int *pairs_total, int *pair_first, int *pair_count)
+{
+    int total, first, count;
+    if ((flags >> 28) != 0u)                       /* reserved bits: fail closed */
+        return -1;
+    total = (int)((flags >> 16) & 0xfu) + 1;
+    first = (int)((flags >> 20) & 0xfu);
+    count = (int)((flags >> 24) & 0xfu) + 1;
+    if (total > B2_MAX_PAIRS || first + count > total)
+        return -1;
+    if (pairs_total)
+        *pairs_total = total;
+    if (pair_first)
+        *pair_first = first;
+    if (pair_count)
+        *pair_count = count;
+    return 0;
+}
+
 static int abs_pair(const b2_orch *o) { return o->pair_first + o->pair_i; }
 
 static void set_arm_order(b2_orch *o)

@@ -13,6 +13,7 @@
  *               and reads the measured readout (six 16-hex tables) or "UNSCORED"; after every
  *               scored non-baseline candidate it prints "BLOCK <the search block>", and at the
  *               end "END <records>".
+ *   slice      < "flags" lines          -> "SLICE <total> <first> <count>" or "REFUSED"
  *   wire                               -> "IDENT <json>" and "REC <json>": the app_identity
  *                                         1.5.0 and loop_record 1.3.0 bytes the image emits,
  *                                         for fixed inputs, so tests/test_b2_wire.py can feed
@@ -291,6 +292,23 @@ static int mode_wire(void)
 /* the orchestrator as b2_app.c main drives it: opening baseline, the slice's pairs (both arms'
  * searches then both champions' holdout evaluations), closing baseline; an unscored candidate
  * ends the epoch with no closing baseline (tests/test_b2_session.py). */
+static int mode_slice(void)
+{
+    char line[256];
+    while (fgets(line, sizeof(line), stdin)) {
+        unsigned long flags;
+        int total = 0, first = 0, count = 0;
+        if (sscanf(line, "%lu", &flags) != 1)
+            continue;
+        if (b2_page_slice((uint32_t)flags, &total, &first, &count) != 0)
+            printf("REFUSED\n");
+        else
+            printf("SLICE %d %d %d\n", total, first, count);
+        fflush(stdout);
+    }
+    return 0;
+}
+
 static int mode_session(void)
 {
     static b2_orch o;
@@ -342,7 +360,7 @@ static int mode_session(void)
 int main(int argc, char **argv)
 {
     if (argc < 2) {
-        fprintf(stderr, "usage: b2_twin rng|seeds|landscape|fitness|run|wire|session\n");
+        fprintf(stderr, "usage: b2_twin rng|seeds|landscape|fitness|run|wire|session|slice\n");
         return 2;
     }
     if (strcmp(argv[1], "rng") == 0)
@@ -359,6 +377,8 @@ int main(int argc, char **argv)
         return mode_wire();
     if (strcmp(argv[1], "session") == 0)
         return mode_session();
+    if (strcmp(argv[1], "slice") == 0)
+        return mode_slice();
     fprintf(stderr, "unknown mode %s\n", argv[1]);
     return 2;
 }

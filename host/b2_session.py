@@ -34,6 +34,31 @@ import b2_plan as bp  # noqa: E402
 import b2_search as bs  # noqa: E402
 
 MAX_PAIRS = 16
+FLAGS_SLICE_SHIFT = 16
+
+
+def encode_slice(instrument_flags: int, pairs_total: int, pair_first: int, pair_count: int) -> int:
+    """The identity page's `flags` word with the session's pair slice in its high half
+    (firmware/b2/b2_orch.h): bits 16..19 pairs_total-1, 20..23 pair_first, 24..27 pair_count-1,
+    28..31 reserved zero. The instrument's own flags keep the low 16 bits."""
+    if not (1 <= pairs_total <= MAX_PAIRS and 0 <= pair_first <= 15 and 1 <= pair_count <= MAX_PAIRS):
+        raise ValueError("the slice does not fit the page's field")
+    if instrument_flags >> 16:
+        raise ValueError("the instrument's flags do not fit the low half")
+    return (instrument_flags | ((pairs_total - 1) << 16) | (pair_first << 20) | ((pair_count - 1) << 24)) & 0xFFFFFFFF
+
+
+def page_slice(flags: int) -> tuple[int, int, int]:
+    """The board's decode (`b2_page_slice`); raises on a reserved bit or a slice outside the
+    experiment — a page refusal, before any candidate is proposed."""
+    if flags >> 28:
+        raise ValueError("a reserved flags bit is set")
+    total = ((flags >> 16) & 0xF) + 1
+    first = (flags >> 20) & 0xF
+    count = ((flags >> 24) & 0xF) + 1
+    if total > MAX_PAIRS or first + count > total:
+        raise ValueError("the slice does not lie inside the experiment")
+    return total, first, count
 
 
 @dataclass

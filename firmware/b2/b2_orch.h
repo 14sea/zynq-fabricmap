@@ -73,6 +73,26 @@ typedef struct {
     uint32_t seq_last;
 } b2_orch;
 
+/* The session's pair SLICE travels in the identity page's `flags` word.
+ *
+ * The page (p3_derive.h `p3_identity_page`) has 24 words and no reserved one left: words 0..22
+ * are all assigned and word 23 is the checksum. `p3_parse_identity_page` is an instrument file
+ * imported BYTE FOR BYTE (firmware/b2/IMPORT.json) and is not edited to add a field. The
+ * instrument uses only the low bits of `flags` (watchdog, the two retry controls, the L6
+ * schedule mode), so B2 takes the high half, with the layout stated here and decoded by this
+ * unit alone:
+ *
+ *   bits  0..15  the instrument's flags, untouched
+ *   bits 16..19  pairs_total - 1   (1..16)
+ *   bits 20..23  pair_first        (0..15)
+ *   bits 24..27  pair_count - 1    (1..16)
+ *   bits 28..31  reserved, MUST be zero
+ *
+ * Returns 0 and fills the three fields, or -1 when a reserved bit is set or the slice does not
+ * lie inside the experiment — a page refusal, fail-closed, before any candidate is proposed. */
+#define B2_FLAGS_SLICE_SHIFT 16
+int b2_page_slice(uint32_t flags, int *pairs_total, int *pair_first, int *pair_count);
+
 /* the page's fields; `pair_first + pair_count <= pairs_total` and `pairs_total <= B2_MAX_PAIRS` */
 int b2_orch_init(b2_orch *o, uint32_t master_seed, uint32_t budget, int pairs_total,
                  int pair_first, int pair_count, const char *token, const char *universe,

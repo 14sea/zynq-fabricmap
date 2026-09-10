@@ -171,6 +171,31 @@ class SessionOrder(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     bsess.run(MASTER, 4, total, first, count, FAB, VIEW, truth=TRUTH, masks=MASKS)
 
+    def test_the_page_slice_decode_agrees_and_fails_closed(self):
+        """The slice travels in the identity page's flags word; the board decodes it."""
+        good = [(0x32, 9, 0, 4), (0x32, 9, 4, 4), (0x32, 9, 8, 1), (0x00, 1, 0, 1), (0x32, 16, 0, 16)]
+        text = "".join(f"{bsess.encode_slice(f, t, fi, c)}\n" for f, t, fi, c in good)
+        lines = subprocess.run([str(TWIN), "slice"], input=text, capture_output=True, text=True, check=True).stdout.splitlines()
+        for (f, t_, fi, c), line in zip(good, lines):
+            self.assertEqual(line.split(), ["SLICE", str(t_), str(fi), str(c)], (f, t_, fi, c))
+            self.assertEqual(bsess.page_slice(bsess.encode_slice(f, t_, fi, c)), (t_, fi, c))
+        # a slice outside the experiment, and a reserved bit, are refused on both sides
+        bad = [bsess.encode_slice(0x32, 9, 0, 4) | (1 << 28),                      # reserved
+               (0x32 | ((9 - 1) << 16) | (8 << 20) | ((4 - 1) << 24)),             # 8 + 4 > 9
+               (0x32 | ((2 - 1) << 16) | (1 << 20) | ((3 - 1) << 24))]             # 1 + 3 > 2
+        lines = subprocess.run([str(TWIN), "slice"], input="".join(f"{v}\n" for v in bad),
+                               capture_output=True, text=True, check=True).stdout.splitlines()
+        self.assertEqual(lines, ["REFUSED"] * len(bad))
+        for v in bad:
+            with self.assertRaises(ValueError):
+                bsess.page_slice(v)
+
+    def test_the_instrument_flags_survive_the_slice(self):
+        for f in (0x00, 0x02, 0x32, 0xFFFF):
+            flags = bsess.encode_slice(f, 9, 0, 4)
+            self.assertEqual(flags & 0xFFFF, f)
+            self.assertEqual(bsess.page_slice(flags), (9, 0, 4))
+
     def test_the_whole_experiment_in_one_session_matches_the_prediction(self):
         """Nine pairs at the planned budget: the champions give the preregistered deltas."""
         got, ref = self._compare(budget=600, total=9, first=0, count=9)
