@@ -1,0 +1,16 @@
+{
+  "builds": [
+    {
+      "bin_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "elf_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "bin_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "elf_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    }
+  ],
+  "reproduced_byte_identical": false,
+  "bin_identical": true,
+  "elf_identical": false,
+  "note": "each entry is one clean build's BOTH outputs; the claim is that the two builds agree in the binary AND in the ELF"
+}

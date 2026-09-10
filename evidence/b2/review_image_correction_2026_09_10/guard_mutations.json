@@ -1,0 +1,86 @@
+{
+  "baseline": {
+    "verdict": "ACCEPTED",
+    "ran": 7,
+    "skipped": 0,
+    "failures": [],
+    "errors": []
+  },
+  "changed_app_hash_control": {
+    "verdict": "REJECTED",
+    "ran": 7,
+    "skipped": 0,
+    "failures": [
+      "test_every_recorded_source_still_hashes_to_its_record (guard.BuildEvidence.test_every_recorded_source_still_hashes_to_its_record)"
+    ],
+    "errors": []
+  },
+  "changed_image_hash_control": {
+    "verdict": "REJECTED",
+    "ran": 7,
+    "skipped": 0,
+    "failures": [
+      "test_the_image_on_disk_is_the_one_the_evidence_names (guard.BuildEvidence.test_the_image_on_disk_is_the_one_the_evidence_names)",
+      "test_two_clean_builds_agree_in_both_outputs (guard.BuildEvidence.test_two_clean_builds_agree_in_both_outputs)"
+    ],
+    "errors": []
+  },
+  "dirty_tree_control": {
+    "verdict": "REJECTED",
+    "ran": 7,
+    "skipped": 0,
+    "failures": [
+      "test_the_evidence_was_taken_from_a_clean_tree (guard.BuildEvidence.test_the_evidence_was_taken_from_a_clean_tree)"
+    ],
+    "errors": []
+  },
+  "mismatched_second_build": {
+    "verdict": "ACCEPTED",
+    "ran": 7,
+    "skipped": 0,
+    "failures": [],
+    "errors": []
+  },
+  "changed_header_hash": {
+    "verdict": "ACCEPTED",
+    "ran": 7,
+    "skipped": 0,
+    "failures": [],
+    "errors": []
+  },
+  "missing_header_entry": {
+    "verdict": "ACCEPTED",
+    "ran": 7,
+    "skipped": 0,
+    "failures": [],
+    "errors": []
+  },
+  "changed_runtime_hash": {
+    "verdict": "ACCEPTED",
+    "ran": 7,
+    "skipped": 0,
+    "failures": [],
+    "errors": []
+  },
+  "changed_compiler_hash": {
+    "verdict": "ACCEPTED",
+    "ran": 7,
+    "skipped": 0,
+    "failures": [],
+    "errors": []
+  },
+  "missing_external_unit": {
+    "verdict": "ACCEPTED",
+    "ran": 7,
+    "skipped": 0,
+    "failures": [],
+    "errors": []
+  },
+  "unrecorded_console_source_and_unit": {
+    "verdict": "ACCEPTED",
+    "ran": 7,
+    "skipped": 0,
+    "failures": [],
+    "errors": []
+  }
+}

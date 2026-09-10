@@ -1,5 +1,13 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Correction review (`842abb9`): startup and current image provenance verified.**
+> Image `d164cd1d…` matches its recorded source, binary and ELF hashes; the original
+> IDENT ordering defect is closed. One P2 remains in the new build-evidence regression
+> guard: seven isolated incomplete/contradictory evidence cases still pass. See
+> [the correction review](b2_image_correction_review_2026_09_10.md).
+> The complete B2/B3 suite passes 172 tests, zero skips (144 excludes the 28 gate tests).
+> Host work may continue; complete the guard and remaining §7 tools before clearance.
+
 > **Image integration review (`a32b1fe`): HOLD on accepting image `e06b77a6…`.**
 > Two P2 findings: IDENT reports a zero pair slice before initialization, and the built
 > image/evidence precede the tested application revision. The independent B2/B3 suite

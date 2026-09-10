@@ -1,0 +1,45 @@
+{
+  "reviewed_head": "842abb96ef986a9645e632641bfb734002fc69d5",
+  "image": {
+    "path": "firmware/b2/bsp/out/b2_app.bin",
+    "sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+    "bytes": 114708,
+    "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc",
+    "load_address": "0x02000000",
+    "entry": "go 0x2000000"
+  },
+  "source_entries": 20,
+  "translation_units": 47,
+  "headers": 86,
+  "headers_by_root": {
+    "embeddedsw_standalone": 24,
+    "embeddedsw_watchdog": 2,
+    "firmware": 10,
+    "toolchain": 50
+  },
+  "runtime_objects": 7,
+  "source_hash_findings": [],
+  "compiler_dependency_sets_covered": true,
+  "binary_contains_old_refusal": false,
+  "binary_contains_current_refusal": true,
+  "verbatim_imports": 10,
+  "b1_pins_verify": true,
+  "b1_manifest_sha256": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+  "submitted_reproducibility": {
+    "builds": [
+      {
+        "bin_sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+        "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc"
+      },
+      {
+        "bin_sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+        "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc"
+      }
+    ],
+    "reproduced_byte_identical": true,
+    "bin_identical": true,
+    "elf_identical": true,
+    "note": "each entry is one clean build's BOTH outputs; the claim is that the two builds agree in the binary AND in the ELF"
+  },
+  "review_built_arm_image": false
+}
