@@ -60,6 +60,11 @@ def build_once() -> dict[str, str]:
     return {"bin_sha256": sha(OUT / "b2_app.bin"), "elf_sha256": sha(OUT / "b2_app.elf")}
 
 
+APP_SRCS = ("b2_app.c", "p3_derive.c", "b2_search.c", "b2_orch.c", "b2_wire.c", "p3_rectx.c", "p3_pull.c")
+CONSOLE_SRC = "bsp/src/console.c"
+RUNTIME_OBJECTS = ("crti.o", "crtbegin.o", "crtend.o", "crtn.o", "libgcc.a", "libc.a", "libm.a")
+
+
 def build_script_sources() -> dict[str, list[str]]:
     """The BSP translation units build.sh compiles, read from build.sh itself (one source of
     truth): ASM_SRCS / C_SRCS / SYS_SRCS relative to the standalone BSP, WDT_SRCS relative to
@@ -72,6 +77,13 @@ def build_script_sources() -> dict[str, list[str]]:
         if not m:
             raise RuntimeError(f"build.sh: {name} not found")
         out[name] = m.group(1).replace("\\\n", " ").split()
+    # the two the script compiles outside those lists, so the recorded inventory is COMPLETE
+    # (the owner's correction review of 2026-09-10: console was omitted from the expected set)
+    line = [l for l in text.splitlines() if l.strip().startswith("for s in b2_app.c")]
+    if not line:
+        raise RuntimeError("build.sh: the application unit list not found")
+    out["APP_SRCS"] = [t for t in line[0].split(" in ", 1)[1].split(";")[0].split() if t.endswith(".c")]
+    out["CONSOLE_SRCS"] = [CONSOLE_SRC]
     return out
 
 
@@ -100,10 +112,11 @@ def bsp_inputs() -> dict:
     for s in srcs["WDT_SRCS"]:
         units.append((WD / s, bsp_flags))
     units.append((FW / "bsp/src/console.c", bsp_flags))
-    for s in ("b2_app.c", "p3_derive.c", "b2_search.c", "b2_orch.c", "b2_wire.c", "p3_rectx.c", "p3_pull.c"):
+    for s in srcs["APP_SRCS"]:
         units.append((FW / s, app_flags))
     tus: dict[str, str] = {}
     headers: dict[str, str] = {}
+    deps: dict[str, list[str]] = {}
     for src, flags in units:
         if not src.is_file():
             raise RuntimeError(f"build input missing: {src}")
@@ -111,18 +124,139 @@ def bsp_inputs() -> dict:
         p = subprocess.run([str(cc), *flags, "-M", str(src)], capture_output=True, text=True)
         if p.returncode != 0:
             raise RuntimeError(f"{src}: {p.stderr[-1000:]}")
+        here = []
         for tok in p.stdout.replace("\\\n", " ").split()[1:]:
             path = Path(tok)
             if path.is_file() and path.resolve() != src.resolve():
                 headers[str(path)] = sha(path)          # every dependency gcc names, wherever it lives
+                here.append(str(path))
+        deps[str(src)] = sorted(set(here))
     objs: dict[str, str] = {}
-    for name in ("crti.o", "crtbegin.o", "crtend.o", "crtn.o", "libgcc.a", "libc.a", "libm.a"):
+    for name in RUNTIME_OBJECTS:
         p = subprocess.run([str(cc), *arch, f"-print-file-name={name}"], capture_output=True, text=True)
         path = Path(p.stdout.strip())
         objs[name] = {"path": str(path), "sha256": sha(path) if path.is_file() else None}
     return {"translation_units": dict(sorted(tus.items())), "headers": dict(sorted(headers.items())),
+            "dependencies": dict(sorted(deps.items())),
             "toolchain_objects": objs, "build_script_lists": srcs,
             "header_roots": {"embeddedsw_standalone": str(SA), "embeddedsw_watchdog": str(WD), "firmware": str(FW), "toolchain": str(TC)}}
+
+
+def expected_units(lists: dict, roots: dict) -> set[str]:
+    """The COMPLETE set of translation units the build script compiles, derived from the
+    recorded lists and roots: the standalone BSP's assembly, C and syscall units, the
+    watchdog driver's, the console glue and the application's. The owner's correction review
+    of 2026-09-10 found the earlier expected set omitted the console."""
+    sa, wd, fw = Path(roots["embeddedsw_standalone"]), Path(roots["embeddedsw_watchdog"]), Path(roots["firmware"])
+    out = {str(sa / x) for x in lists["ASM_SRCS"] + lists["C_SRCS"] + lists["SYS_SRCS"]}
+    out |= {str(wd / x) for x in lists["WDT_SRCS"]}
+    out |= {str(fw / x) for x in lists.get("CONSOLE_SRCS", [CONSOLE_SRC])}
+    out |= {str(fw / x) for x in lists.get("APP_SRCS", APP_SRCS)}
+    return out
+
+
+def verify_findings(ev: dict, root: Path = REPO_ROOT, require_outputs: bool = True) -> list[str]:
+    """Every way the recorded provenance can fail to describe the image, as a list of named
+    findings (empty = the evidence stands). A PURE function of the evidence and the files it
+    names, so `tests/test_b2_build_evidence.py` can drive it with deliberately corrupted
+    copies — the owner's correction review of 2026-09-10 showed a guard that reads the real
+    file cannot demonstrate that it would refuse anything."""
+    f: list[str] = []
+    fw = root / "firmware/b2"
+
+    def check(path: Path, want, what: str):
+        if not path.is_file():
+            f.append(f"{what}: {path} does not exist")
+        elif want is None:
+            f.append(f"{what}: {path} has no recorded hash")
+        elif sha(path) != want:
+            f.append(f"{what}: {path} does not hash to the record")
+
+    for k in ("sources", "bsp_inputs", "image", "reproducibility", "git", "toolchain"):
+        if k not in ev:
+            return [f"the evidence has no {k!r} section"]
+    bi = ev["bsp_inputs"]
+    for k in ("translation_units", "headers", "dependencies", "toolchain_objects", "build_script_lists", "header_roots"):
+        if k not in bi:
+            return [f"bsp_inputs has no {k!r}"]
+
+    if ev["git"].get("worktree_dirty"):
+        f.append("the evidence was taken from a dirty tree")
+
+    # the sources, and the completeness of that list against what the script links
+    for rel, want in ev["sources"].items():
+        check(fw / rel, want, f"source {rel}")
+    lists = bi["build_script_lists"]
+    for rel in list(lists.get("APP_SRCS", APP_SRCS)) + list(lists.get("CONSOLE_SRCS", [CONSOLE_SRC])):
+        if rel not in ev["sources"]:
+            f.append(f"source inventory: {rel} is linked by the build script but not recorded")
+
+    # the translation units: exactly the expected set, each existing and hashing
+    recorded = set(bi["translation_units"])
+    want_units = expected_units(lists, bi["header_roots"])
+    for missing in sorted(want_units - recorded):
+        f.append(f"translation units: {missing} is compiled by the build script but not recorded")
+    for extra in sorted(recorded - want_units):
+        f.append(f"translation units: {extra} is recorded but not compiled by the build script")
+    for path, want in bi["translation_units"].items():
+        check(Path(path), want, "translation unit")
+
+    # the headers: exactly the union of the recorded dependencies, each existing and hashing
+    dep_union: set[str] = set()
+    for unit, deps in bi["dependencies"].items():
+        if unit not in bi["translation_units"]:
+            f.append(f"dependencies: {unit} is not a recorded translation unit")
+        dep_union |= set(deps)
+    for missing in sorted(dep_union - set(bi["headers"])):
+        f.append(f"headers: {missing} is a recorded dependency but has no hash")
+    for extra in sorted(set(bi["headers"]) - dep_union):
+        f.append(f"headers: {extra} is recorded but is no unit's dependency")
+    for unit in bi["translation_units"]:
+        if unit not in bi["dependencies"]:
+            f.append(f"dependencies: no dependency list for {unit}")
+    for path, want in bi["headers"].items():
+        check(Path(path), want, "header")
+
+    # the compiler and every runtime object the link resolves
+    tc = ev["toolchain"]
+    check(Path(tc["path"]) / "bin/arm-none-eabi-gcc", tc.get("gcc_sha256"), "the compiler")
+    objs = bi["toolchain_objects"]
+    for name in RUNTIME_OBJECTS:
+        if name not in objs:
+            f.append(f"toolchain objects: {name} is not recorded")
+            continue
+        check(Path(objs[name]["path"]), objs[name].get("sha256"), f"runtime object {name}")
+
+    # the two clean builds: both outputs each, equal to each other AND to the named image
+    rep = ev["reproducibility"]
+    builds = rep.get("builds") or []
+    if len(builds) != 2 or not all(isinstance(b, dict) and "bin_sha256" in b and "elf_sha256" in b for b in builds):
+        f.append("reproducibility: two builds, each with both output digests, are required")
+    else:
+        bin_ok = builds[0]["bin_sha256"] == builds[1]["bin_sha256"]
+        elf_ok = builds[0]["elf_sha256"] == builds[1]["elf_sha256"]
+        if not bin_ok:
+            f.append("reproducibility: the two builds' binaries differ")
+        if not elf_ok:
+            f.append("reproducibility: the two builds' ELFs differ")
+        if rep.get("bin_identical") is not bin_ok or rep.get("elf_identical") is not elf_ok \
+                or rep.get("reproduced_byte_identical") is not (bin_ok and elf_ok):
+            f.append("reproducibility: the recorded verdicts disagree with the recorded digests")
+        for i, b in enumerate(builds):
+            if b["bin_sha256"] != ev["image"]["sha256"]:
+                f.append(f"reproducibility: build {i}'s binary is not the named image")
+            if b["elf_sha256"] != ev["image"]["elf_sha256"]:
+                f.append(f"reproducibility: build {i}'s ELF is not the named ELF")
+
+    # the outputs themselves: a completed package requires them, and requires them to match
+    image, elf = root / ev["image"]["path"], root / ev["image"]["path"].replace(".bin", ".elf")
+    if require_outputs or image.is_file():
+        check(image, ev["image"]["sha256"], "the image")
+        if image.is_file() and image.stat().st_size != ev["image"]["bytes"]:
+            f.append("the image on disk is not the recorded size")
+    if require_outputs or elf.is_file():
+        check(elf, ev["image"].get("elf_sha256"), "the ELF")
+    return f
 
 
 def dependency_set(unit: Path, flags: list[str]) -> set[str]:
