@@ -176,6 +176,7 @@ void b2_orch_observe(b2_orch *o, uint32_t seq, const uint64_t tables[B2_LUTS])
             o->phase = B2_PH_SEARCH_0;
         } else {
             o->phase = B2_PH_DONE;
+            o->completed = 1;                           /* the closing baseline was observed */
         }
         return;
     }
@@ -208,6 +209,11 @@ int b2_orch_pair(const b2_orch *o)
     if (o->pending_is_baseline)
         return -1;
     return abs_pair(o);
+}
+
+int b2_orch_complete(const b2_orch *o)
+{
+    return o->completed;
 }
 
 size_t b2_orch_record_block(const b2_orch *o, char *out, size_t max)

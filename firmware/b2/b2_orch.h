@@ -71,6 +71,7 @@ typedef struct {
     int pending_holdout;
     uint32_t pending_eval;
     uint32_t seq_last;
+    int completed;                      /* 1 only when the CLOSING baseline was observed */
 } b2_orch;
 
 /* The session's pair SLICE travels in the identity page's `flags` word.
@@ -109,5 +110,8 @@ size_t b2_orch_record_block(const b2_orch *o, char *out, size_t max);
 const char *b2_orch_arm_name(const b2_orch *o);
 /* the absolute pair index (0..pairs_total-1) of the record just observed, or -1 */
 int b2_orch_pair(const b2_orch *o);
+/* 1 only when the session ran to its closing baseline AND that baseline was observed; an
+ * epoch ended by an unscored candidate is NOT complete, however far it got */
+int b2_orch_complete(const b2_orch *o);
 
 #endif /* B2_ORCH_H */

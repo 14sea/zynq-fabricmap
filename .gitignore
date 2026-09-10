@@ -36,6 +36,11 @@ rulings/
 firmware/b1/bsp/out/
 firmware/b1/build/
 
+# B2 image build products: rebuilt byte-identically by firmware/b2/bsp/build.sh and pinned by
+# hash in evidence/b2/build_evidence.json (the same rule B1 and the instrument keep)
+firmware/b2/bsp/out/
+firmware/b2/build/
+
 # B1 carrier build: the bitstream, build record, carrier manifest, isolation and reports are committed
 # (the instrument keeps the same rule for builds/p3); the checkpoints and the raw Vivado stdout are not
 builds/b1/*.dcp
