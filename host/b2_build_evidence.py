@@ -48,13 +48,16 @@ def git(*args: str) -> str | None:
     return p.stdout.strip() if p.returncode == 0 else None
 
 
-def build_once() -> str:
+def build_once() -> dict[str, str]:
+    """One clean build; returns BOTH output digests. The owner's integration review of
+    2026-09-10 noted that recording only the binary made the two-ELF equality claim
+    unsupported, so both are recorded and both are compared."""
     if OUT.exists():
         shutil.rmtree(OUT)
     p = subprocess.run(["bash", str(BUILD)], capture_output=True, text=True)
     if p.returncode != 0:
         raise RuntimeError(p.stdout[-2000:] + p.stderr[-2000:])
-    return sha(OUT / "b2_app.bin")
+    return {"bin_sha256": sha(OUT / "b2_app.bin"), "elf_sha256": sha(OUT / "b2_app.elf")}
 
 
 def build_script_sources() -> dict[str, list[str]]:
@@ -150,7 +153,12 @@ def build_evidence(do_build: bool) -> dict:
           "image": {"path": "firmware/b2/bsp/out/b2_app.bin", "sha256": sha(image) if image.is_file() else None,
                     "bytes": image.stat().st_size if image.is_file() else None,
                     "elf_sha256": sha(elf) if elf.is_file() else None, "load_address": "0x02000000", "entry": "go 0x2000000"},
-          "reproducibility": {"builds": hashes, "reproduced_byte_identical": (len(hashes) == 2 and hashes[0] == hashes[1]) if do_build else None}}
+          "reproducibility": {"builds": hashes,
+                              "reproduced_byte_identical": (len(hashes) == 2 and hashes[0] == hashes[1]) if do_build else None,
+                              "bin_identical": (len(hashes) == 2 and hashes[0]["bin_sha256"] == hashes[1]["bin_sha256"]) if do_build else None,
+                              "elf_identical": (len(hashes) == 2 and hashes[0]["elf_sha256"] == hashes[1]["elf_sha256"]) if do_build else None,
+                              "note": "each entry is one clean build's BOTH outputs; the claim is that the two builds "
+                                      "agree in the binary AND in the ELF"}}
     return ev
 
 

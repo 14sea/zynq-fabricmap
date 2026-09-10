@@ -158,7 +158,16 @@ class Imports(unittest.TestCase):
             self.assertEqual(sha(d), rec["derived_sha256"], f"{rec['derived_to']}: the derived file moved")
             self.assertNotEqual(sha(b), sha(d), base)
             n += 1
-        self.assertEqual(n, 2)
+        self.assertEqual(n, 3)          # the wire unit's two files and the application
+
+    def test_the_application_records_its_derivation(self):
+        """The header claims the import table names it; it must (the owner's integration
+        review of 2026-09-10)."""
+        rec = IMPORT["files"]["firmware/b1/b1_app.c"]
+        self.assertEqual(rec["kind"], "derived")
+        self.assertEqual(rec["derived_to"], "firmware/b2/b2_app.c")
+        self.assertEqual(rec["derived_sha256"], sha(FW / "b2_app.c"))
+        self.assertIn("b2_search.c", (FW / "b2_app.c").read_text() and rec["note"])
 
     def test_the_import_table_names_the_archived_instrument(self):
         self.assertEqual(IMPORT["source_commit"], "689dde1dad374536c625bbe2b05986ee89eb4c94")

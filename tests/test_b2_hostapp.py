@@ -7,6 +7,13 @@ restore-only cleanup are all the firmware's own code. The twin's session mode mo
 unscored candidate by breaking out of its own loop; this harness makes the application take
 its real SIGNREF branch.
 
+The `startup_*` scenarios go further: they build a checksummed identity page in the fake
+memory and call the application's REAL `main()`, so `establish_identity` runs and the ORDER
+in which the pair slice is decoded relative to the IDENT is executed rather than skipped.
+That order was wrong once — the slice was decoded in the session's init, so every identity
+declared (0, 0, 0) and a host enforcing the binding could not start a valid session (the
+owner's integration review of 2026-09-10, P2) — and these tests exist so it cannot recur.
+
 Checked for every scenario: the epoch ends STOPPED with the named reason, exactly one
 SIGNREQ and one TERM, the record count, that a refusal issues NO CTRL write, that the
 orchestrator is not left claiming completion, and that every frame the application emitted
@@ -137,6 +144,60 @@ class HostApp(unittest.TestCase):
                     if f["frame"] in ("REC", "TERM", "IDENT"):
                         self.br.validate(f["payload"])
                 self.assertIn("TERM", seen, scenario)
+
+    # ------------------------------------------------------------ the real main()
+
+    def _startup(self, scenario: str) -> dict:
+        result, frames = run(scenario)
+        idents = [f for f in frames if f["frame"] == "IDENT"]
+        self.assertTrue(idents, "the application must emit an identity")
+        return result
+
+    def test_a_valid_slice_is_declared_and_the_session_starts(self):
+        for scenario, slice_ in (("startup_valid", [9, 0, 4]), ("startup_later_slice", [9, 4, 4])):
+            with self.subTest(scenario=scenario):
+                r = self._startup(scenario)
+                self.assertEqual(r["ident_slice"], slice_, "the identity must declare the page's slice")
+                self.assertEqual(r["ident_slice_ok"], 1)
+                self.assertEqual(r["ident_findings_empty"], 1, "a valid page yields a clean identity")
+                self.assertEqual((r["ident"], r["identack"]), (1, 1), "one identity, acknowledged")
+                self.assertEqual(r["signreq"], 1, "the session reached its first candidate")
+                self.assertEqual(r["reason"], REFUSAL, "which the script deliberately refuses")
+
+    def test_a_strict_host_can_start_the_session(self):
+        """The host ACKs only an identity whose slice equals the page's."""
+        r = self._startup("startup_strict")
+        self.assertEqual(r["ident_slice"], [9, 4, 4])
+        self.assertEqual((r["ident"], r["identack"]), (1, 1), "accepted on the first identity")
+        self.assertEqual(r["signreq"], 1, "zero candidates would mean the binding blocked the session")
+        self.assertEqual(r["kind"], "STOPPED")
+        self.assertEqual(r["reason"], REFUSAL)
+
+    def test_an_unacknowledged_identity_stops_before_any_candidate(self):
+        r = self._startup("startup_no_ack")
+        self.assertEqual(r["ident"], 3, "three attempts")
+        self.assertEqual(r["identack"], 0)
+        self.assertIn("STOP_IDENT", r["reason"])
+        self.assertEqual((r["signreq"], r["rec"]), (0, 0))
+        self.assertEqual(r["term"], 1)
+
+    def test_an_invalid_page_is_reported_on_the_identity_and_proposes_nothing(self):
+        for scenario in ("startup_bad_slice", "startup_reserved_bit"):
+            with self.subTest(scenario=scenario):
+                r = self._startup(scenario)
+                self.assertEqual(r["ident_slice"], [0, 0, 0], "a refused slice is not invented")
+                self.assertEqual(r["ident_findings_empty"], 0, "the refusal must be a finding on the identity")
+                self.assertEqual((r["signreq"], r["rec"]), (0, 0), "nothing was proposed")
+                self.assertEqual(r["term"], 1)
+                self.assertEqual(r["kind"], "STOPPED")
+
+    def test_the_startup_identities_validate(self):
+        for scenario in ("startup_valid", "startup_strict", "startup_bad_slice", "startup_no_ack"):
+            with self.subTest(scenario=scenario):
+                _, frames = run(scenario)
+                for f in frames:
+                    if f["frame"] in ("IDENT", "REC", "TERM") and f["payload"] is not None:
+                        self.br.validate(f["payload"])
 
     def test_the_refused_record_carries_no_search_block(self):
         _, frames = run("probe")

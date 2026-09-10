@@ -525,6 +525,7 @@ static char g_search_json[2048];
 static uint64_t g_tables_u64[B2_LUTS];
 static uint32_t g_carrier_variant;         /* VARIANT as read at identity */
 static int g_pairs_total, g_pair_first, g_pair_count;   /* decoded from the page's flags */
+static int g_slice_ok;                     /* the decode's verdict, kept for the session's init */
 static const char *search_block(void)
 {
     if (b2_orch_record_block(&O, g_search_json, sizeof(g_search_json)) == 0u)
@@ -545,6 +546,15 @@ static int establish_identity(void)
     }
     S.rec_control = (S.page.flags & P3_RECTX_CONTROL_FLAG) ? 1 : 0; /* rec-v3: the forced REC-retry control */
     S.sign_control = (S.page.flags & P3_SIGNTX_CONTROL_FLAG) ? 1 : 0; /* rel-v4: the forced SIGNREQ-retry control */
+    /* B2: the session's pair slice is decoded HERE — after the common page parser succeeds
+     * and BEFORE the identity is built — because the identity DECLARES it. Decoding it in
+     * the session's init instead would emit every identity as (0, 0, 0), and a host that
+     * enforces the binding could not start a valid session (the owner's integration review
+     * of 2026-09-10, P2). A refusal is carried into the identity as a finding and kept for
+     * the session's init, which then proposes nothing. */
+    g_slice_ok = (b2_page_slice(S.page.flags, &g_pairs_total, &g_pair_first, &g_pair_count) == 0);
+    if (!g_slice_ok)
+        g_pairs_total = g_pair_first = g_pair_count = 0;
     /* Every check is evaluated and reported, then the epoch stops if any of them fired.
      * The refused identity is still evidence, so IDENT is emitted either way — and it is
      * emitted at all, which the first L5 attempt could not do: validate_standalone_run_log
@@ -566,6 +576,8 @@ static int establish_identity(void)
         g_carrier_variant = axi_read(P3_VARIANT);
         if (g_carrier_variant != B2_VARIANT_WORD)
             findings[nf++] = "VARIANT is not the gate contract: this is not the qualified B1 carrier";
+        if (!g_slice_ok)
+            findings[nf++] = "the identity page's pair slice is not inside the experiment";
         if (((st >> P3_ST_FAULT) & 1u) || ((st >> P3_ST_RECOVERY) & 1u))
             findings[nf++] = "fault/recovery before start";
         /* the nonce echo: a reconfiguration since the host's last look would have reset it */
@@ -1535,10 +1547,11 @@ static void emit_summary(void)
 /* ───────────────────────────────── the B2 session, as three named steps ─────────────────
  * ONE sequence for the board and the host twin; ALSO the unit the host application harness
  * (tb/b2/hostapp) drives with the real code of this file against a scripted host:
- *   init   — the identity page's flags are decoded into this session's pair slice and the
- *            orchestrator is initialised BEFORE the opening baseline; the pair seeds are
- *            derived on the board from the master seed with the compiled exclusion table.
- *            A slice outside the experiment is a page refusal: nothing is proposed.
+ *   init   — the orchestrator is initialised BEFORE the opening baseline from the pair slice
+ *            the identity already declared (decoded in establish_identity, so the identity
+ *            and the session cannot disagree); the pair seeds are derived on the board from
+ *            the master seed with the compiled exclusion table. A slice the identity reported
+ *            as refused is a page refusal here too: nothing is proposed.
  *   run    — every candidate the orchestrator proposes (opening baseline, both arms of each
  *            pair, both champions' holdout evaluations, closing baseline) through
  *            run_candidate; the stop condition is checked BEFORE a candidate is proposed,
@@ -1547,7 +1560,7 @@ static void emit_summary(void)
  *   finish — the restore-only cleanup of a stopped epoch, then the TERM. */
 static void b2_session_init(void)
 {
-    if (b2_page_slice(S.page.flags, &g_pairs_total, &g_pair_first, &g_pair_count) != 0) {
+    if (!g_slice_ok) {          /* decoded and refused at identity: nothing is proposed */
         p3_stop(P3_STOPPED, "STOP_PAGE: the identity page's pair slice is not inside the experiment");
         return;
     }

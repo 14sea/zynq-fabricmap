@@ -1,10 +1,10 @@
 {
  "schema": "b2_build_evidence",
  "schema_version": "1.2.0",
- "at": "2026-09-10T135458Z",
+ "at": "2026-09-10T174127Z",
  "git": {
-  "head": "61bb90854fd8b52547048613377ddf2884b87349",
-  "worktree_dirty": false
+  "head": "27a3052efb42dfec1a5c82a832580665a34c8ef4",
+  "worktree_dirty": true
  },
  "toolchain": {
   "path": "/home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1",
@@ -13,7 +13,7 @@
   "instrument_role": "read-only use of the archived instrument's toolchain directory"
  },
  "sources": {
-  "b2_app.c": "5a9c386d92c376e0d364b07beb88d095fcb5186ee57dfe9820beb861f8da3a66",
+  "b2_app.c": "130429ebe22241eaa2ea7c23634ca027862fd45476f6c293bd722b656b36ecc0",
   "b2_search.c": "5111ed107fc0a226d7b2c55babc8629eef4c2aa56b381c3a3bce74ad5b7acc89",
   "b2_search.h": "5daf4d2703c8f044d1c63f1ff43f648bf9042a4266bf1a7bf7f54737d4467cba",
   "b2_orch.c": "471b21afffdd94c5be5002d1c212dbabe5a378a46d461f74b4606512b8b22502",
@@ -75,7 +75,7 @@
    "/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common/xil_printf.c": "8f1d0f35f20a6baeeb21a021af1cb3d77001432b781f257f57ba1e6d6621d439",
    "/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common/xil_sutil.c": "9fe6c449b4aa6075f9bcffcd81a4250514a6dbe3f8f605d2017f56bff683b6c0",
    "/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common/xil_util.c": "26ab5d3f19adc10d49378b8f0b3a4de39e9a0888bf746ee7cf304955aaf9ad4f",
-   "/home/test/zynq_fabricmap/firmware/b2/b2_app.c": "5a9c386d92c376e0d364b07beb88d095fcb5186ee57dfe9820beb861f8da3a66",
+   "/home/test/zynq_fabricmap/firmware/b2/b2_app.c": "130429ebe22241eaa2ea7c23634ca027862fd45476f6c293bd722b656b36ecc0",
    "/home/test/zynq_fabricmap/firmware/b2/b2_orch.c": "471b21afffdd94c5be5002d1c212dbabe5a378a46d461f74b4606512b8b22502",
    "/home/test/zynq_fabricmap/firmware/b2/b2_search.c": "5111ed107fc0a226d7b2c55babc8629eef4c2aa56b381c3a3bce74ad5b7acc89",
    "/home/test/zynq_fabricmap/firmware/b2/b2_wire.c": "50f030483391f9f555cb2ec2ad497f0ec979879877780f8555badc57ea28aaf6",
@@ -260,17 +260,26 @@
  },
  "image": {
   "path": "firmware/b2/bsp/out/b2_app.bin",
-  "sha256": "e06b77a6a9300a8d855ea99fb77e055890bd1e91c3cbdb6e2eb31c68f54b0ae9",
+  "sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
   "bytes": 114708,
-  "elf_sha256": "153df0a45ebeaca2f135568e9df8076a5db5390b4fd4464a71f9c7f53f52b63e",
+  "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc",
   "load_address": "0x02000000",
   "entry": "go 0x2000000"
  },
  "reproducibility": {
   "builds": [
-   "e06b77a6a9300a8d855ea99fb77e055890bd1e91c3cbdb6e2eb31c68f54b0ae9",
-   "e06b77a6a9300a8d855ea99fb77e055890bd1e91c3cbdb6e2eb31c68f54b0ae9"
+   {
+    "bin_sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+    "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc"
+   },
+   {
+    "bin_sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+    "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc"
+   }
   ],
-  "reproduced_byte_identical": true
+  "reproduced_byte_identical": true,
+  "bin_identical": true,
+  "elf_identical": true,
+  "note": "each entry is one clean build's BOTH outputs; the claim is that the two builds agree in the binary AND in the ELF"
  }
 }

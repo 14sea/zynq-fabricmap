@@ -1,6 +1,14 @@
 {
  "b1_source": "firmware/b1 of this repository, itself imported from the instrument at source_commit",
  "files": {
+  "firmware/b1/b1_app.c": {
+   "copied_to": null,
+   "derived_sha256": "130429ebe22241eaa2ea7c23634ca027862fd45476f6c293bd722b656b36ecc0",
+   "derived_to": "firmware/b2/b2_app.c",
+   "kind": "derived",
+   "note": "DERIVED from B1's application: the cartographer/orchestrator replaced by the search orchestrator (b2_orch.c over b2_search.c), the `carto` record block by the `search` block, the identity's B2 fields, and the session's pair slice decoded from the identity page's flags in establish_identity \u2014 before the IDENT is built, because the IDENT declares it. It must exist and must DIFFER from the base.",
+   "sha256": "041f049cc899befbe65a6ebf809809cb68ab1f903a69df74a55eac8bab12c6fe"
+  },
   "firmware/b1/b1_wire.c": {
    "copied_to": null,
    "derived_sha256": "50f030483391f9f555cb2ec2ad497f0ec979879877780f8555badc57ea28aaf6",
@@ -72,7 +80,7 @@
    "sha256": "7064c86dff177fe3305f4d8a1a2381249641dae363f6cfbea7a2e89b437b580b"
   }
  },
- "note": "byte-for-byte copies of the instrument's firmware at the archived head (kind=verbatim: the same bytes B1 imported, checked against B1's own import table), the BSP scaffold copied byte for byte from B1 (kind=verbatim, based on firmware/b1), plus two files DERIVED from B1's wire unit with their base hashes recorded. b2_search.c/h, b2_app.c, b2_twin.c and p3_data.h are B2's own and are derived from no instrument file. tests/test_b2_leakage.py verifies every verbatim file still hashes to its base and every derived file exists and differs from it.",
+ "note": "byte-for-byte copies of the instrument's firmware at the archived head (kind=verbatim: the same bytes B1 imported, checked against B1's own import table), the BSP scaffold copied byte for byte from B1 (kind=verbatim, based on firmware/b1), plus three files DERIVED from B1 with their base hashes recorded: the wire unit and the application. b2_search.c/h, b2_orch.c/h, b2_twin.c and p3_data.h are B2's own and are derived from no instrument or B1 file. tests/test_b2_leakage.py verifies every verbatim file still hashes to its base and every derived file exists and differs from it.",
  "schema": "b2_firmware_import",
  "schema_version": "1.0.0",
  "source_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",

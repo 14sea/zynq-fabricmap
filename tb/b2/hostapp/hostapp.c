@@ -15,6 +15,14 @@
  *   hostapp <scenario>
  *   scenario ∈ opening | probe | generation | holdout | closing | ack_fail
  *            | bad_slice | reserved_bit | state_after_opening | state_after_closing
+ *            | startup_valid | startup_later_slice | startup_strict | startup_bad_slice
+ *            | startup_reserved_bit | startup_no_ack
+ *
+ * The `startup_*` scenarios build a CHECKSUMMED identity page in the fake memory and call
+ * the application's REAL main() (b2_app_main), so establish_identity — and the order in
+ * which the pair slice is decoded relative to the IDENT — is executed rather than skipped.
+ * A strict host ACKs only an identity whose slice equals the page's (the owner's
+ * integration review of 2026-09-10, P2).
  * prints one JSON line per frame the application sent (decoded) and a final RESULT line.
  */
 #include <stdio.h>
@@ -99,7 +107,16 @@ void XTime_SetTime(XTime t) { fake_ticks = t; }
 #undef main
 
 /* ---- the scripted host on the console ------------------------------------------------ */
-static struct { int signref_at_seq; int ack_rec; int ack_term; } script;
+static struct {
+    int signref_at_seq; int ack_rec; int ack_term;
+    int ack_ident;                 /* 0 = never ACK the IDENT */
+    int strict_slice;              /* ACK only if the IDENT's slice equals the page's */
+    unsigned want_total, want_first, want_count;
+} script;
+static unsigned n_ident, n_identack;
+static int ident_slice_seen[3];    /* the LAST identity's (pairs_total, pair_first, pair_count) */
+static int ident_slice_ok = 1;     /* every identity so far carried the page's slice */
+static int ident_findings_empty = 1;
 static char tx_line[16384]; static size_t tx_n;
 static char rx_q[65536]; static size_t rx_head, rx_tail;
 static unsigned n_signreq, n_rec, n_term, n_hb, n_other;
@@ -128,7 +145,27 @@ static void on_board_line(char *line)
     size_t jn = strcmp(payload, "-") ? p3_base64url_decode(payload, (uint8_t *)frame_json, sizeof(frame_json) - 1u) : 0u;
     frame_json[jn] = 0;
     printf("{\"frame\":\"%s\",\"seq\":%u,\"payload\":%s}\n", type, (unsigned)seq, jn ? frame_json : "null");
-    if (!strcmp(type, "SIGNREQ")) {
+    if (!strcmp(type, "IDENT")) {
+        long v[3] = {-1, -1, -1};
+        static const char *const key[3] = {"\"pairs_total\":", "\"pair_first\":", "\"pair_count\":"};
+        int i;
+        n_ident++;
+        for (i = 0; i < 3; i++) {
+            const char *k = strstr(frame_json, key[i]);
+            if (k) v[i] = strtol(k + strlen(key[i]), NULL, 10);
+        }
+        ident_slice_seen[0] = (int)v[0]; ident_slice_seen[1] = (int)v[1]; ident_slice_seen[2] = (int)v[2];
+        if (v[0] != (long)script.want_total || v[1] != (long)script.want_first || v[2] != (long)script.want_count)
+            ident_slice_ok = 0;
+        if (!strstr(frame_json, "\"findings\":[]"))
+            ident_findings_empty = 0;
+        if (script.ack_ident && (!script.strict_slice ||
+            (v[0] == (long)script.want_total && v[1] == (long)script.want_first && v[2] == (long)script.want_count))) {
+            n_identack++;
+            snprintf(json, sizeof(json), "{\"seq\":%u}", (unsigned)seq);
+            reply("IDENTACK", seq, json);
+        }
+    } else if (!strcmp(type, "SIGNREQ")) {
         n_signreq++;
         if ((int)seq == script.signref_at_seq) {
             snprintf(json, sizeof(json), "{\"schema\":\"sign_refusal\",\"schema_version\":\"1.0.0\",\"seq\":%u,\"finding_kinds\":[\"whitelist\"]}", (unsigned)seq);
@@ -182,16 +219,79 @@ static int prime_observed(uint32_t seq, int keep_closing)
 static void print_result(const char *scenario)
 {
     printf("RESULT {\"scenario\":\"%s\",\"kind\":\"%s\",\"reason\":\"%s\",\"seq\":%u,\"orch_phase\":%d,\"orch_complete\":%d,\"signreq\":%u,\"rec\":%u,\"term\":%u,\"hb\":%u,\"other\":%u,"
+           "\"ident\":%u,\"identack\":%u,\"ident_slice\":[%d,%d,%d],\"ident_slice_ok\":%d,\"ident_findings_empty\":%d,"
            "\"last_rec_outcome\":\"%s\",\"ctrl_writes\":%u,\"payload_writes\":%u,\"dma\":%u,\"closing_restore\":%d,\"closing_baseline\":%d,\"closing_unsigned\":%d,"
            "\"scored\":%u,\"refused\":%u,\"rec_attempts\":%u,\"have_last_reply\":%d}\n",
            scenario, END_NAME[S.kind], S.reason ? S.reason : "", (unsigned)S.seq, O.phase, b2_orch_complete(&O), n_signreq, n_rec, n_term, n_hb, n_other,
+           n_ident, n_identack, ident_slice_seen[0], ident_slice_seen[1], ident_slice_seen[2], ident_slice_ok, ident_findings_empty,
            last_rec_outcome, ctrl_writes, payload_writes, dma_count, S.closing_restore, S.closing_baseline, S.closing_unsigned,
            (unsigned)S.scored, (unsigned)S.refused, (unsigned)S.rec_attempts, S.have_last_reply);
+}
+
+/* a checksummed identity page in the fake memory, exactly as the host writes it */
+static void write_page(uint32_t seed, uint32_t budget, uint32_t flags)
+{
+    uint32_t w[P3_PAGE_WORDS];
+    uint32_t sum = 0;
+    int i;
+    memset(w, 0, sizeof(w));
+    w[0] = P3_PAGE_MAGIC;
+    w[1] = P3_PAGE_LAYOUT;
+    for (i = 0; i < 4; i++) w[2 + i] = 0xa13f38b5u + (uint32_t)i;      /* the token's 16 bytes */
+    w[6] = 0;                                                          /* uboot_epoch */
+    w[7] = 0xf54b0ae9u;                                                /* image sha lo32 */
+    for (i = 0; i < 8; i++) w[8 + i] = 0xd85daef4u + (uint32_t)i;      /* the carrier hash */
+    w[16] = (uint32_t)fake_nonce;
+    w[17] = (uint32_t)(fake_nonce >> 32);
+    w[18] = (1u << 8) | (1u << 11);                                    /* the STATUS the fake AXI returns */
+    w[19] = seed;
+    w[20] = budget;
+    w[21] = flags;
+    w[22] = 50000000u;
+    for (i = 0; i < P3_PAGE_WORDS - 1; i++) sum ^= w[i];
+    w[P3_PAGE_WORDS - 1] = sum;
+    for (i = 0; i < P3_PAGE_WORDS; i++) mem_wr(P3_PAGE_ADDR + 4u * (uint32_t)i, w[i]);
+}
+
+/* the startup scenarios: the application's REAL main(), so establish_identity runs */
+static int run_startup(const char *scenario)
+{
+    uint32_t flags = 0x32u;
+    script.ack_rec = 1; script.ack_term = 1; script.ack_ident = 1;
+    script.signref_at_seq = 1;              /* the first candidate is deliberately refused */
+    if (!strcmp(scenario, "startup_valid")) {
+        flags |= (8u << 16) | (0u << 20) | (3u << 24);          /* total 9, first 0, count 4 */
+        script.want_total = 9; script.want_first = 0; script.want_count = 4;
+    } else if (!strcmp(scenario, "startup_later_slice") || !strcmp(scenario, "startup_strict")) {
+        flags |= (8u << 16) | (4u << 20) | (3u << 24);          /* total 9, first 4, count 4 */
+        script.want_total = 9; script.want_first = 4; script.want_count = 4;
+        if (!strcmp(scenario, "startup_strict"))
+            script.strict_slice = 1;
+    } else if (!strcmp(scenario, "startup_no_ack")) {
+        flags |= (8u << 16) | (0u << 20) | (3u << 24);
+        script.want_total = 9; script.want_first = 0; script.want_count = 4;
+        script.ack_ident = 0;
+    } else if (!strcmp(scenario, "startup_bad_slice")) {
+        flags |= (1u << 16) | (2u << 20) | (2u << 24);          /* 2 + 3 > 2 */
+        script.want_total = 0; script.want_first = 0; script.want_count = 0;
+    } else if (!strcmp(scenario, "startup_reserved_bit")) {
+        flags |= (1u << 28);
+        script.want_total = 0; script.want_first = 0; script.want_count = 0;
+    } else {
+        fprintf(stderr, "unknown startup scenario %s\n", scenario);
+        return 2;
+    }
+    write_page(716169644u, 2u, flags);
+    (void)b2_app_main();
+    print_result(scenario);
+    return 0;
 }
 
 int main(int argc, char **argv)
 {
     const char *scenario = argc > 1 ? argv[1] : "opening";
+    if (!strncmp(scenario, "startup", 7))
+        return run_startup(scenario);
     memset(&S, 0, sizeof(S));
     S.kind = P3_RUNNING;
     snprintf(S.page.token, sizeof(S.page.token), "%s", "a13f38b53355fd4c1cac3145244727f8");
@@ -207,6 +307,14 @@ int main(int argc, char **argv)
         S.page.flags = 0x32u | (1u << 16) | (2u << 20) | (2u << 24);   /* 2 + 3 > 2: outside */
     else if (!strcmp(scenario, "reserved_bit"))
         S.page.flags = 0x32u | (1u << 28);                             /* a reserved flags bit */
+    /* These scenarios drive the session's three steps directly and so never run
+     * establish_identity, which is where the application decodes the slice (it must, because
+     * the IDENT declares it). Do exactly what it does — not a hand-written substitute — so
+     * the session sees the state the real startup would have left. The `startup_*` scenarios
+     * exercise establish_identity itself. */
+    g_slice_ok = (b2_page_slice(S.page.flags, &g_pairs_total, &g_pair_first, &g_pair_count) == 0);
+    if (!g_slice_ok)
+        g_pairs_total = g_pair_first = g_pair_count = 0;
     b2_session_init();
     if (!strcmp(scenario, "opening")) {
         script.signref_at_seq = 1;
