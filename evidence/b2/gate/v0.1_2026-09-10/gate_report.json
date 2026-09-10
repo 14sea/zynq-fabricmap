@@ -1,0 +1,646 @@
+{
+ "architecture": {
+  "last_commit": "342450b82084e1b75d625ffd1476ddbf36259886",
+  "path": "docs/b2_architecture.md",
+  "sha256": "72c57d112efa847bc81804fc4c115ec0cc519e503922002172b36429910b8916"
+ },
+ "engine": {
+  "kmax": 4,
+  "lambda": 8,
+  "mu": 4,
+  "version": "b2-es-v1"
+ },
+ "generated_utc": "2026-09-10T06:57:07Z",
+ "head_at_run": "9f347e986195e007966e0192b430771288ba9b3f",
+ "maps": {
+  "oracle": {
+   "relations_agree_with_self_map": [
+    292,
+    292
+   ],
+   "sha256": "57aaa412b560ea7b88d9d9015234461016ff6ccb9e9fc0d45b065695ab9bc412"
+  },
+  "self_map": {
+   "cartographer": "carto-v1",
+   "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json",
+   "sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296"
+  }
+ },
+ "results": {
+  "F1": {
+   "at_b_star_median": {
+    "A": 14.0,
+    "B": 24.0,
+    "C": 24.0,
+    "D": 13.0,
+    "E": 14.0,
+    "Q25": 20.0,
+    "Q50": 16.0,
+    "Q75": 14.0
+   },
+   "b_star": 1500,
+   "ceiling": 40,
+   "champion_holdout_median": {
+    "A": 1.0,
+    "B": 1.0,
+    "C": 1.0,
+    "D": 1.0,
+    "E": 1.0,
+    "Q25": 1.0,
+    "Q50": 1.0,
+    "Q75": 1.0
+   },
+   "column_moves_mean_to_B_max": {
+    "A": 0.0,
+    "B": 998.705,
+    "C": 998.705,
+    "D": 998.705,
+    "E": 998.705,
+    "Q25": 997.95,
+    "Q50": 998.38,
+    "Q75": 996.915
+   },
+   "criteria": {
+    "G1": {
+     "base_median": 2.0,
+     "ceiling": 40,
+     "oracle_p95": 28.0,
+     "pass": true,
+     "random_median": 14.0
+    },
+    "G2": {
+     "N_used": 8,
+     "p_delta_neg": 0.0,
+     "p_delta_pos": 1.0,
+     "pass": false,
+     "shuffled_nonreject_rate": 0.996
+    },
+    "G3": {
+     "fraction": -0.09588327253778009,
+     "mean_delta_self": 9.595,
+     "mean_delta_shuffled": -0.92,
+     "pass": true,
+     "sign_test_p_shuffled": 0.9997052337893478
+    },
+    "G4": {
+     "ceiling": 40,
+     "mean_delta_oracle": 9.595,
+     "mean_delta_self": 9.595,
+     "oracle_median": 24.0,
+     "pass": true,
+     "self_vs_oracle": 1.0
+    },
+    "G5": {
+     "cohen_d": 2.808808782906224,
+     "mean_delta": 9.595,
+     "negatives": 0,
+     "pass": false,
+     "positives": 200,
+     "power_at_N": 1.0,
+     "required_pairs_N": 8,
+     "sd_delta": 3.4160388768338397,
+     "session_evaluations": 24000,
+     "session_hours_at_evidenced_rate": 7.126419716427882,
+     "sign_test_p_full_S": 6.223015277861142e-61,
+     "ties": 0
+    },
+    "G6": {
+     "pairs_min": 8,
+     "pass": true,
+     "seeds": 200,
+     "var_delta": 11.610975
+    },
+    "G7": {
+     "mean_delta_by_q": {
+      "0": 9.595,
+      "0.25": 5.56,
+      "0.5": 1.82,
+      "0.75": -0.19,
+      "1": 0.0
+     },
+     "monotone_non_increasing": false,
+     "pass": false
+    },
+    "G8": {
+     "fraction": -0.04637832204273059,
+     "mean_delta_lut_shuffled": -0.445,
+     "mean_delta_self": 9.595,
+     "pass": true
+    },
+    "budget_rule": {
+     "b_star": 1500,
+     "fraction_of_ceiling": 0.6,
+     "oracle_median_at_b_star": 24.0,
+     "pass": true
+    }
+   },
+   "curves_median": {
+    "A": [
+     6.0,
+     8.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     14.0,
+     14.0,
+     15.0
+    ],
+    "B": [
+     6.0,
+     9.0,
+     11.0,
+     13.0,
+     16.0,
+     19.0,
+     20.0,
+     24.0,
+     26.0
+    ],
+    "C": [
+     6.0,
+     9.0,
+     11.0,
+     13.0,
+     16.0,
+     19.0,
+     20.0,
+     24.0,
+     26.0
+    ],
+    "D": [
+     6.0,
+     8.0,
+     9.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     13.0,
+     14.0
+    ],
+    "E": [
+     5.0,
+     8.0,
+     9.0,
+     10.0,
+     12.0,
+     12.0,
+     13.0,
+     14.0,
+     14.0
+    ],
+    "Q25": [
+     6.0,
+     8.0,
+     10.0,
+     12.0,
+     14.0,
+     16.0,
+     18.0,
+     20.0,
+     21.0
+    ],
+    "Q50": [
+     5.0,
+     8.0,
+     10.0,
+     11.0,
+     13.0,
+     14.0,
+     15.0,
+     16.0,
+     17.0
+    ],
+    "Q75": [
+     5.0,
+     7.0,
+     9.0,
+     10.0,
+     11.0,
+     12.0,
+     13.0,
+     14.0,
+     14.0
+    ]
+   },
+   "fitness": "F1",
+   "grid": [
+    100,
+    200,
+    300,
+    400,
+    600,
+    800,
+    1000,
+    1500,
+    2000
+   ],
+   "mean_delta_vs_A_at_b_star": {
+    "B": 9.595,
+    "C": 9.595,
+    "D": -0.92,
+    "E": -0.445,
+    "Q25": 5.56,
+    "Q50": 1.82,
+    "Q75": -0.19
+   },
+   "pass": false,
+   "seeds": 200,
+   "wall_s": 37.5
+  },
+  "F2": {
+   "at_b_star_median": {
+    "A": 91.5,
+    "B": 100.0,
+    "C": 100.0,
+    "D": 86.0,
+    "E": 86.0,
+    "Q25": 95.0,
+    "Q50": 88.0,
+    "Q75": 82.0
+   },
+   "b_star": 800,
+   "ceiling": 160,
+   "champion_holdout_median": {
+    "A": 11.0,
+    "B": 11.0,
+    "C": 11.0,
+    "D": 10.0,
+    "E": 11.0,
+    "Q25": 11.0,
+    "Q50": 10.0,
+    "Q75": 10.0
+   },
+   "column_moves_mean_to_B_max": {
+    "A": 0.0,
+    "B": 998.705,
+    "C": 998.705,
+    "D": 998.705,
+    "E": 998.705,
+    "Q25": 997.95,
+    "Q50": 998.38,
+    "Q75": 996.915
+   },
+   "criteria": {
+    "G1": {
+     "base_median": 17.0,
+     "ceiling": 160,
+     "oracle_p95": 111.05000000000001,
+     "pass": true,
+     "random_median": 91.5
+    },
+    "G2": {
+     "N_used": 19,
+     "p_delta_neg": 0.155,
+     "p_delta_pos": 0.805,
+     "pass": true,
+     "shuffled_nonreject_rate": 1.0
+    },
+    "G3": {
+     "fraction": -0.6516923076923077,
+     "mean_delta_self": 8.125,
+     "mean_delta_shuffled": -5.295,
+     "pass": true,
+     "sign_test_p_shuffled": 0.9999999999620426
+    },
+    "G4": {
+     "ceiling": 160,
+     "mean_delta_oracle": 8.125,
+     "mean_delta_self": 8.125,
+     "oracle_median": 100.0,
+     "pass": true,
+     "self_vs_oracle": 1.0
+    },
+    "G5": {
+     "cohen_d": 0.8796984434219001,
+     "mean_delta": 8.125,
+     "negatives": 31,
+     "pass": false,
+     "positives": 161,
+     "power_at_N": 0.921,
+     "required_pairs_N": 19,
+     "sd_delta": 9.236119559783376,
+     "session_evaluations": 30400,
+     "session_hours_at_evidenced_rate": 9.026798307475318,
+     "sign_test_p_full_S": 1.1181485123580125e-22,
+     "ties": 8
+    },
+    "G6": {
+     "pairs_min": 8,
+     "pass": true,
+     "seeds": 200,
+     "var_delta": 84.879375
+    },
+    "G7": {
+     "mean_delta_by_q": {
+      "0": 8.125,
+      "0.25": 2.305,
+      "0.5": -3.61,
+      "0.75": -9.78,
+      "1": 0.0
+     },
+     "monotone_non_increasing": false,
+     "pass": false
+    },
+    "G8": {
+     "fraction": -0.6793846153846154,
+     "mean_delta_lut_shuffled": -5.52,
+     "mean_delta_self": 8.125,
+     "pass": true
+    },
+    "budget_rule": {
+     "b_star": 800,
+     "fraction_of_ceiling": 0.625,
+     "oracle_median_at_b_star": 100.0,
+     "pass": true
+    }
+   },
+   "curves_median": {
+    "A": [
+     33.0,
+     45.0,
+     56.0,
+     65.0,
+     81.0,
+     91.5,
+     100.0,
+     114.0,
+     121.5
+    ],
+    "B": [
+     33.0,
+     47.0,
+     58.0,
+     69.0,
+     86.5,
+     100.0,
+     111.0,
+     130.0,
+     141.0
+    ],
+    "C": [
+     33.0,
+     47.0,
+     58.0,
+     69.0,
+     86.5,
+     100.0,
+     111.0,
+     130.0,
+     141.0
+    ],
+    "D": [
+     32.0,
+     44.0,
+     54.0,
+     62.0,
+     76.0,
+     86.0,
+     95.0,
+     109.0,
+     115.0
+    ],
+    "E": [
+     33.0,
+     45.0,
+     54.5,
+     62.0,
+     76.0,
+     86.0,
+     93.0,
+     108.0,
+     115.0
+    ],
+    "Q25": [
+     33.0,
+     46.0,
+     57.0,
+     66.0,
+     82.0,
+     95.0,
+     104.0,
+     120.0,
+     130.0
+    ],
+    "Q50": [
+     32.0,
+     43.5,
+     54.0,
+     63.0,
+     78.0,
+     88.0,
+     97.5,
+     112.0,
+     122.0
+    ],
+    "Q75": [
+     31.0,
+     42.5,
+     51.0,
+     59.0,
+     71.0,
+     82.0,
+     91.0,
+     104.5,
+     114.0
+    ]
+   },
+   "fitness": "F2",
+   "grid": [
+    100,
+    200,
+    300,
+    400,
+    600,
+    800,
+    1000,
+    1500,
+    2000
+   ],
+   "mean_delta_vs_A_at_b_star": {
+    "B": 8.125,
+    "C": 8.125,
+    "D": -5.295,
+    "E": -5.52,
+    "Q25": 2.305,
+    "Q50": -3.61,
+    "Q75": -9.78
+   },
+   "pass": false,
+   "seeds": 200,
+   "wall_s": 38.2
+  },
+  "F3": {
+   "b_star": null,
+   "ceiling": 320,
+   "criteria": {
+    "budget_rule": {
+     "note": "the oracle arm's median never reaches the fraction on the grid",
+     "pass": false
+    }
+   },
+   "curves": {
+    "A": [
+     6.0,
+     10.0,
+     12.0,
+     14.0,
+     17.0,
+     19.0,
+     20.0,
+     23.0,
+     24.0
+    ],
+    "B": [
+     7.0,
+     10.0,
+     14.0,
+     17.0,
+     23.0,
+     30.0,
+     36.0,
+     47.0,
+     58.0
+    ],
+    "C": [
+     7.0,
+     10.0,
+     14.0,
+     17.0,
+     23.0,
+     30.0,
+     36.0,
+     47.0,
+     58.0
+    ],
+    "D": [
+     7.0,
+     10.0,
+     11.0,
+     13.0,
+     16.0,
+     18.0,
+     20.0,
+     21.0,
+     23.0
+    ],
+    "E": [
+     6.5,
+     9.5,
+     12.0,
+     13.0,
+     16.0,
+     18.0,
+     19.0,
+     21.5,
+     22.0
+    ],
+    "Q25": [
+     6.0,
+     10.0,
+     13.0,
+     16.0,
+     21.0,
+     25.0,
+     28.0,
+     35.0,
+     40.0
+    ],
+    "Q50": [
+     6.0,
+     9.0,
+     12.0,
+     14.0,
+     18.0,
+     20.0,
+     22.0,
+     26.0,
+     29.5
+    ],
+    "Q75": [
+     6.0,
+     9.0,
+     11.0,
+     12.0,
+     15.0,
+     17.0,
+     19.0,
+     23.0,
+     24.0
+    ]
+   },
+   "fitness": "F3",
+   "grid": [
+    100,
+    200,
+    300,
+    400,
+    600,
+    800,
+    1000,
+    1500,
+    2000
+   ],
+   "pass": false,
+   "seeds": 200,
+   "wall_s": 55.3
+  }
+ },
+ "schema": "b2_gate_report",
+ "schema_version": "1.0.0",
+ "seeds": {
+  "count": 200,
+  "derivation": "first 4 bytes of sha256('b2-gate|' + HEAD), pairs from one Rng stream, excluded seeds skipped",
+  "excluded": [
+   1,
+   2,
+   3,
+   5,
+   11,
+   77,
+   99,
+   1234,
+   4321,
+   176359248,
+   195948557,
+   324805736,
+   521288629,
+   1123460948,
+   1278624577,
+   1278628687,
+   1281816666,
+   2119807262,
+   3735928559,
+   4294967295
+  ],
+  "label": "b2-gate",
+  "master_seed": 2131041347
+ },
+ "selected_fitness": null,
+ "selection_order": [
+  "F2",
+  "F1",
+  "F3"
+ ],
+ "thresholds": {
+  "G1_saturation_percentile": 95,
+  "G2_bootstrap_experiments": 1000,
+  "G2_null_nonreject_min": 0.9,
+  "G3_alpha": 0.05,
+  "G3_shuffled_fraction_max": 0.1,
+  "G4_oracle_median_fraction_max": 0.9,
+  "G4_self_vs_oracle_min": 0.9,
+  "G5_alpha": 0.05,
+  "G5_cohen_d_min": 0.8,
+  "G5_pairs_min": 8,
+  "G5_power_min": 0.9,
+  "G5_session_evals_max": 6000,
+  "G6_seeds_min": 200,
+  "G7_q75_fraction_max": 0.5,
+  "G8_lut_shuffled_fraction_max": 0.25,
+  "budget_rule_oracle_median_fraction": 0.6
+ },
+ "wall_s": 131.3,
+ "worktree_dirty_at_run": true
+}
