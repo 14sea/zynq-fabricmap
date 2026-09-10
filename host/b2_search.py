@@ -109,6 +109,7 @@ class RunResult:
     moves: list[dict] = field(default_factory=list)
     population_fit: list[int] = field(default_factory=list)
     column_moves: int = 0
+    population_trace: list[list[tuple[int, int]]] = field(default_factory=list)   # (fit, born) after each selection
 
 
 def run(arm: str, landscape: bl.Landscape, view: MapView | None, operator_seed: int, budget: int,
@@ -126,6 +127,7 @@ def run(arm: str, landscape: bl.Landscape, view: MapView | None, operator_seed: 
     best = base_fit
     trace: list[int] = []
     moves: list[dict] = []
+    population: list[list[tuple[int, int]]] = []
     column_moves = 0
     while evals < budget:
         children: list[Individual] = []
@@ -150,14 +152,17 @@ def run(arm: str, landscape: bl.Landscape, view: MapView | None, operator_seed: 
                 best = fit
             trace.append(best)
             if log_moves:
-                moves.append({"eval": evals, "parent": pidx, "kind": kind, "bits": bits, "fit": fit})
+                moves.append({"eval": evals, "parent": pidx, "parent_born": parent.born, "kind": kind, "bits": bits, "fit": fit})
         pool = pop + children
         pool.sort(key=lambda ind: (-ind.fit, ind.born))
         pop = pool[:MU]
+        if log_moves:
+            population.append([(ind.fit, ind.born) for ind in pop])
     champion = min(pop, key=lambda ind: (-ind.fit, ind.born))
     return RunResult(arm=arm, budget=budget, best_trace=trace, champion=champion,
                      champion_holdout=landscape.holdout_fitness(champion.tables), moves=moves,
-                     population_fit=[ind.fit for ind in pop], column_moves=column_moves)
+                     population_fit=[ind.fit for ind in pop], column_moves=column_moves,
+                     population_trace=population)
 
 
 # ------------------------------------------------------------------ seeds
