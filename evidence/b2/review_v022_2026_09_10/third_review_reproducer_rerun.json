@@ -1,0 +1,125 @@
+{
+  "baseline_S2_real_fixture_bytes": {
+    "accepted": true,
+    "checks": {
+      "image": "ok (binary hashed: e3ef93590e84\u2026, 49 bytes)",
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "baseline_S3": {
+    "accepted": true,
+    "checks": {
+      "image": "ok (binary hashed: e3ef93590e84\u2026, 49 bytes)",
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "stage": "S3"
+    },
+    "qualified": true
+  },
+  "baseline_copied_plan_and_prediction": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  },
+  "image_bytes_changed_same_size": {
+    "accepted": false,
+    "refusal": "image: the image binary's bytes do not hash to the pinned sha256"
+  },
+  "image_file_deleted": {
+    "accepted": false,
+    "refusal": "image: the image binary '/tmp/b2_review_151124f__0h3m6pd/fixture.bin' is absent \u2014 the declaration is not evidence that it exists"
+  },
+  "manifest_prediction_points_to_unrelated_bytes": {
+    "accepted": false,
+    "refusal": "S3: the manifest's prediction reference and the plan's sidecar are different bytes (a relocated prediction is allowed only if it is the same document)",
+    "same_digest_as_plan_sidecar": false
+  },
+  "negative_control_build_evidence_changed": {
+    "accepted": false,
+    "refusal": "image: the build evidence file is absent or changed"
+  },
+  "negative_control_plan_wrong_map": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: plan map.sha256: '0000000000000000000000000000000000000000000000000000000000000000' != 'c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296'",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: plan map.sha256: '0000000000000000000000000000000000000000000000000000000000000000' != 'c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296'"
+  },
+  "negative_control_prediction_changed_runs": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: prediction pairs[0].runs.A.best_train: -999 != 15",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: prediction pairs[0].runs.A.best_train: -999 != 15"
+  },
+  "plan_primary_missing": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: plan primary: missing",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: plan primary: missing"
+  },
+  "plan_wrong_primary_alpha": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: plan primary.alpha: 1.0 != 0.05",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: plan primary.alpha: 1.0 != 0.05"
+  },
+  "plan_wrong_record_counts": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: plan records.per_pair: 1 != 1202; plan records.single_session_total: 1 != 10820",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: plan records.per_pair: 1 != 1202; plan records.single_session_total: 1 != 10820"
+  },
+  "plan_wrong_schema_version": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: plan schema_version: '99.0.0' != '1.0.0'",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: plan schema_version: '99.0.0' != '1.0.0'"
+  },
+  "plan_wrong_session": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: plan session: 'B1' != 'B2'",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: plan session: 'B1' != 'B2'"
+  },
+  "plan_wrong_ties_policy": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: plan primary.ties: 'count as positive' != 'excluded from n, counted'",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: plan primary.ties: 'count as positive' != 'excluded from n, counted'"
+  },
+  "prediction_wrong_base_fitness": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: prediction pairs[0].base_train_fitness: -999 != 2",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: prediction pairs[0].base_train_fitness: -999 != 2"
+  },
+  "prediction_wrong_pair_delta": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: prediction pairs[0].delta_B_minus_A: -999 != 2",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: prediction pairs[0].delta_B_minus_A: -999 != 2"
+  },
+  "prediction_wrong_pair_id": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: prediction pairs[0].pair: 99 != 0",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: prediction pairs[0].pair: 99 != 0"
+  },
+  "prediction_wrong_primary": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: prediction predicted_primary.sign_test_p: 1.0 != 0.01953125; prediction predicted_primary.verdict: 'NOT SUPPORTED' != 'map-guided > random-safe SUPPORTED'",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: prediction predicted_primary.sign_test_p: 1.0 != 0.01953125; prediction predicted_primary.verdict: 'NOT SUPPORTED' != 'map-guided > random-safe SUPPORTED'"
+  },
+  "prediction_wrong_sequence_length": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: prediction fitness_sequence_length: 1 != 10818",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: prediction fitness_sequence_length: 1 != 10818"
+  }
+}

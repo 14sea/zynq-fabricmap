@@ -1,5 +1,13 @@
 # B2 — the pre-image package: what was built, what the gate showed, what is asked (v0.2.2, host-only, 2026-09-10)
 
+> **Fourth review PASS (`8958b2b`).** Both remaining lifecycle P2 findings are closed;
+> all 105 B2/B3 host tests pass. The host-review HOLD on advancing the batch and beginning
+> B2 image implementation/build work is lifted. See
+> [the fourth review](b2_b3_host_review_v022_2026_09_10.md) for evidence and scope.
+> The resulting image still requires the §7 compatibility review before freeze and B2Q.
+> Earlier HOLD notices below describe superseded reviews of earlier commits. No push,
+> image build, ruling or board action was performed by this review.
+
 > **v0.2.1 third review: HOLD remains.** Record/calibration reconstruction and rate
 > feasibility are resolved. Two P2 findings remain: checking the actual image binary,
 > and validating the complete plan/prediction contract, including their shared digest.
