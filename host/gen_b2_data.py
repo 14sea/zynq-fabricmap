@@ -46,9 +46,47 @@ FORBIDDEN = ("P3_LUT_KEYS", "P3_LUT_LEN", "P3_LUT_BITS", "P3_MUTATION_BITS", "P3
 
 
 def strip_comments(text: str) -> str:
-    """The header's DATA, without its prose: the forbidden-token scan must catch a table or a
-    string literal, not the sentence that says the table is absent."""
-    return re.sub(r"//[^\n]*", "", re.sub(r"/\*.*?\*/", "", text, flags=re.S))
+    """The header's or a source's DATA, without its prose: the forbidden-token scan must catch
+    a table or a string literal, not the sentence that says the table is absent.
+
+    String and character literals are PRESERVED, escapes included, and a comment marker inside
+    one does not open a comment (the owner's core review of 2026-09-10, P3: a regex stripper
+    turned `"/* certificate */"` into `""` and the token escaped the scan). A quote inside a
+    comment does not open a literal either. This is a lexical scan of C, not a parser; it is a
+    source-level guard and is NOT a substitute for the scan of the built image's bytes.
+    """
+    out: list[str] = []
+    i, n = 0, len(text)
+    while i < n:
+        c = text[i]
+        nxt = text[i + 1] if i + 1 < n else ""
+        if c == "/" and nxt == "*":                       # block comment: consumed whole
+            i += 2
+            while i + 1 < n and not (text[i] == "*" and text[i + 1] == "/"):
+                i += 1
+            i = min(n, i + 2)
+        elif c == "/" and nxt == "/":                     # line comment: up to but not the newline
+            while i < n and text[i] != "\n":
+                i += 1
+        elif c in ("\"", "'"):                             # a literal: kept verbatim, escapes and all
+            quote = c
+            out.append(c)
+            i += 1
+            while i < n:
+                if text[i] == "\\" and i + 1 < n:
+                    out.append(text[i])
+                    out.append(text[i + 1])
+                    i += 2
+                    continue
+                out.append(text[i])
+                closed = text[i] == quote
+                i += 1
+                if closed:
+                    break
+        else:
+            out.append(c)
+            i += 1
+    return "".join(out)
 
 
 def _rows(values, per_line: int, fmt=str) -> list[str]:

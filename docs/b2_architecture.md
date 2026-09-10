@@ -185,7 +185,12 @@ The board is the sole executing authority for the parent draw, the move, the fit
 selection and the champion (roadmap §1). Every record carries a `search` block (loop_record
 1.3.0, additive): generation, parent index, the move (positions), the child's train fitness
 as the board computed it, the population's fitness vector after selection, and a running
-commitment `search_sha256` over the population state. The host recomputes the fitness of
+commitment **`state_sha256`** over the search state — the arm, the seeds, the budget, the
+evaluation and generation counters, the best-so-far and the whole population by fitness,
+birth index and genome (`b2_search_state_hex`). It is a commitment to that defined
+projection, not a hash of every byte of the search structure, and it is not by itself the
+replay: the adjudicator still re-derives every observation, child and selection. The host
+recomputes the fitness of
 every record from the served readout and replays the whole search from the records
 (`b2_adjudicate.py`, B1's autonomy-replay pattern): a board that did not follow the
 algorithm on its own observations is a finding per record. The host's recomputation never

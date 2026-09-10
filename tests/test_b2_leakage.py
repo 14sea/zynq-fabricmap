@@ -11,10 +11,16 @@ the board's own product of stage B1 — is legitimately compiled in, and the gua
   * the header must be fresh from its generator, so the tables cannot drift from the map;
   * the search unit must include only its own header, the data header and the imported
     derive unit — never the landscape's Python, never a certificate reader;
-  * every verbatim import must still hash to the instrument's byte, and every derived file
-    must exist and differ from its base (`firmware/b2/IMPORT.json`);
+  * every verbatim import must still hash to its byte — the instrument's for the firmware
+    units, B1's for the BSP scaffold — and every derived file must exist and differ from its
+    base (`firmware/b2/IMPORT.json`);
   * when the built image is present, its bytes are scanned for the same forbidden tokens
     and required to contain the engine version and the map digest.
+
+The source scan is a source-level guard, NOT a substitute for that binary scan: it reads C
+lexically, and a token reachable only at run time would not appear in it. The stripper's own
+fixtures below exist because a regex version silently deleted string data (the owner's core
+review of 2026-09-10, P3).
 """
 from __future__ import annotations
 
@@ -80,6 +86,32 @@ class Header(unittest.TestCase):
         self.assertEqual(len(sources), len(bp.FROZEN_SEED_SETS))
 
 
+class Stripper(unittest.TestCase):
+    """The comment stripper keeps DATA and drops PROSE — the P3 of the owner's core review."""
+
+    def test_a_comment_marker_inside_a_string_is_data(self):
+        self.assertIn("certificate", gen.strip_comments('static const char *x = "/* certificate */";'))
+        self.assertIn("local_map", gen.strip_comments('const char *y = "local_map"; /* prose local_map */'))
+        self.assertIn("SLICE_X0", gen.strip_comments('/* " */ const char *w = "SLICE_X0";'))
+
+    def test_an_escaped_quote_does_not_end_the_literal(self):
+        self.assertIn("certificate", gen.strip_comments(r'const char *z = "a\"/* certificate */";'))
+        self.assertIn("certificate", gen.strip_comments("const char c = '\\''; const char *q = \"certificate\";"))
+
+    def test_prose_is_dropped(self):
+        for src in ("/* the certificate is absent */ int a;", "// certificate\nint b;",
+                    "/* multi\n * line certificate\n */ int c;"):
+            self.assertNotIn("certificate", gen.strip_comments(src), src)
+
+    def test_an_unterminated_comment_does_not_leak_prose(self):
+        self.assertNotIn("certificate", gen.strip_comments("int a; /* certificate"))
+
+    def test_the_stripper_is_the_one_the_generator_uses(self):
+        text = HEADER.read_text()
+        self.assertIn("certificate", text)                       # the prose says the file is absent
+        self.assertNotIn("certificate", gen.strip_comments(text))
+
+
 class Sources(unittest.TestCase):
     def test_the_search_unit_includes_nothing_else(self):
         for name in ("b2_search.c", "b2_search.h"):
@@ -113,7 +145,7 @@ class Imports(unittest.TestCase):
             self.assertTrue(target.is_file(), rec["copied_to"])
             self.assertEqual(sha(target), rec["sha256"], rec["copied_to"])
             n += 1
-        self.assertEqual(n, 6)
+        self.assertEqual(n, 10)          # six instrument firmware units + four BSP scaffold files
 
     def test_every_derived_file_exists_and_differs_from_its_base(self):
         n = 0

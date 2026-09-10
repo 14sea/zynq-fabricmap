@@ -17,6 +17,30 @@
    "note": "DERIVED from B1: the same two changes in the interface, plus the include guard.",
    "sha256": "64b7b54971eeb5efc90a77a8db297a8b808b6549e6ac8de6fe943489e093eefb"
   },
+  "firmware/b1/bsp/include/bspconfig.h": {
+   "copied_to": "firmware/b2/bsp/include/bspconfig.h",
+   "kind": "verbatim",
+   "note": "the BSP scaffold B1 hand-assembled for the Cortex-A9 standalone build (linker script and the three configuration headers), copied byte for byte; the B2 image links the same memory map and the same BSP configuration",
+   "sha256": "06307d4353e828e6be911e20a5e508fbf8139bf7fb50cf443e832fb82bd91617"
+  },
+  "firmware/b1/bsp/include/xmem_config.h": {
+   "copied_to": "firmware/b2/bsp/include/xmem_config.h",
+   "kind": "verbatim",
+   "note": "the BSP scaffold B1 hand-assembled for the Cortex-A9 standalone build (linker script and the three configuration headers), copied byte for byte; the B2 image links the same memory map and the same BSP configuration",
+   "sha256": "5c0e0747268b8c7b46258559987659fca77f147f828873aff2e31e38274ba1bc"
+  },
+  "firmware/b1/bsp/include/xparameters.h": {
+   "copied_to": "firmware/b2/bsp/include/xparameters.h",
+   "kind": "verbatim",
+   "note": "the BSP scaffold B1 hand-assembled for the Cortex-A9 standalone build (linker script and the three configuration headers), copied byte for byte; the B2 image links the same memory map and the same BSP configuration",
+   "sha256": "04e7da5c306dcb8596da3d20a51472cd33b167d5d197b90de9558bec150ec522"
+  },
+  "firmware/b1/bsp/lscript.ld": {
+   "copied_to": "firmware/b2/bsp/lscript.ld",
+   "kind": "verbatim",
+   "note": "the BSP scaffold B1 hand-assembled for the Cortex-A9 standalone build (linker script and the three configuration headers), copied byte for byte; the B2 image links the same memory map and the same BSP configuration",
+   "sha256": "96942701c80022fc4a83672166ebe6a7573094aef541ed93f9d4e1deda5dd8d8"
+  },
   "firmware/p3_derive.c": {
    "copied_to": "firmware/b2/p3_derive.c",
    "kind": "verbatim",
@@ -48,7 +72,7 @@
    "sha256": "7064c86dff177fe3305f4d8a1a2381249641dae363f6cfbea7a2e89b437b580b"
   }
  },
- "note": "byte-for-byte copies of the instrument's firmware at the archived head (kind=verbatim: the same bytes B1 imported, checked against B1's own import table), plus two files DERIVED from B1's wire unit with their base hashes recorded. b2_search.c/h, b2_app.c, b2_twin.c and p3_data.h are B2's own and are derived from no instrument file. tests/test_b2_leakage.py verifies every verbatim file still hashes to its base and every derived file exists and differs from it.",
+ "note": "byte-for-byte copies of the instrument's firmware at the archived head (kind=verbatim: the same bytes B1 imported, checked against B1's own import table), the BSP scaffold copied byte for byte from B1 (kind=verbatim, based on firmware/b1), plus two files DERIVED from B1's wire unit with their base hashes recorded. b2_search.c/h, b2_app.c, b2_twin.c and p3_data.h are B2's own and are derived from no instrument file. tests/test_b2_leakage.py verifies every verbatim file still hashes to its base and every derived file exists and differs from it.",
  "schema": "b2_firmware_import",
  "schema_version": "1.0.0",
  "source_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
