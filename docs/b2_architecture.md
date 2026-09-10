@@ -1,0 +1,226 @@
+# B2 — map utility: a carrier that can discriminate — architecture (v0.1, host-only, 2026-09-10)
+
+> **Standing: host-only design. Nothing here is frozen, ruled, built as firmware or loaded on
+> any board; no board contact is authorised.** Stage B2 of
+> `docs/autonomous_cartography_roadmap.md` §2, opened on the owner's instruction of
+> 2026-09-09 after B1 closed (`docs/b1_mapping_session_audit_2026_09_08.md`, PASS). This
+> document fixes the design and, in §7, **the discriminability-gate criteria and the fitness
+> selection rule before the gate simulation is run** — the gate report cites the commit
+> that holds this text. The B2 preregistration (`docs/b2_preregistration.md`) says what a
+> board session will be judged by; `docs/b2_package.md` is what the owner reviews.
+
+## 1. The question, and what round 1′ taught
+
+*Does a frozen, board-built map (the B1 self-map) make the **same** selection engine, on a
+fitness with **real interaction** between bits, beat the random-safe operator — and does that
+benefit come from the map's structure being correct, rather than from the shape of the
+map-guided move?*
+
+Round 1′ (`docs/claimb_round1prime_preregistration.md` §0) was withdrawn before freeze
+because the P3 carrier's scorer is additive over the 292 INIT bits: every candidate's gain
+is the sum of per-bit constants, the best of any block is +4 for either arm, and the
+preregistered primary tied 16/16 by arithmetic. The roadmap's corrections are adopted here
+verbatim: additive fitness does not make the operators identical, and a digital, replayable
+landscape is enough. What B2 must therefore give, and the gate must show *before* any board
+time, is a fitness where structured moves can pay, and a set of controls that separate
+"the map is right" from "the map-guided move has a convenient shape".
+
+## 2. The carrier: the qualified B1 carrier, unchanged — the fitness lives on the PS
+
+**Decision D1.** B2 runs on the **B1 carrier** (`builds/b1/b1.bit` `d85daef4…`, `VARIANT`
+`0x42310001`, qualified by the evidence chain `evidence/b1q/b1q_17A6_2026-09-08-01`), with
+no RTL change. The reason is what B1 already established: under `configuration_valid_hw`
+the arm gate sweeps all 64 input vectors of the six evolvable LUT6s and latches the **raw
+functional readout** — six 64-bit truth tables, table *k* bit *v* = LUT *k*'s output for
+vector *v* (`docs/b1_carrier_contract.md` §2). Because the six LUTs are combinational in a
+shared 6-bit input, **that readout *is* the whole phenotype**: every behaviour the fabric can
+exhibit under this carrier is a function of those 384 bits. So any fitness over the
+phenotype is a pure function `F(readout)` and can be computed by the board application on
+the PS from the READOUT registers, interlocked exactly as B1's cartographer was (the
+readout is latched only after a signed, staged, read-back candidate — links 1–3 unchanged).
+
+What this buys: no Vivado build, no isolation re-check, no new MMIO allowlist, no new
+carrier qualification session. What it costs, stated: the PL scorer's additive
+`score_flat` is no longer the fitness. It is still latched and still recorded on every
+record, and the host validator checks it against the additive count derived from the same
+record's readout — a free per-record known answer, kept as an instrument self-check.
+
+The **image** is new (`firmware/b2/`, after the package review): the instrument's
+`p3_derive` / `p3_rectx` / `p3_pull` / BSP / linker byte for byte (as B1's `IMPORT.json`),
+B1's `b1_app.c` lineage with the cartographer replaced by the **search** (§4), the B1
+signer and validator unchanged (zero tables signed; a reply with attested tables refused).
+A new image owes the compatibility review, its own calibration and its own seeds (roadmap
+§6); the B2 runner re-verifies the carrier's qualification chain, never the flag.
+
+## 3. The landscape: a public rule, a seed, and nothing from the map
+
+**Decision D2.** The target is a genome-space point drawn by a **public rule from a landscape
+seed**, and the fitness is a function of the readout and that target. Notation:
+`W_k[v]` = readout table *k* bit *v* (k = 0..5, v = 0..63); the **column word**
+`W(v) = (W_5[v] … W_0[v])`; `M_k[v]` = 1 iff (k, v) is one of the 292 certified writable
+positions (the **universe** — public, the same object both arms and the whitelist use; it
+is not the map).
+
+*Target rule.* `T_k[v]` = the next bit of an xorshift64 stream seeded by the landscape seed
+(the instrument's `Rng`, `l6_operators.Rng` / `validators.nonce.step`, warm-up 4), taken in
+(k, v) order, **masked to the universe**: `T_k[v] := 0` (the base value) wherever
+`M_k[v] = 0`. The optimum is therefore reachable and unique (the genome that sets exactly
+the writable positions where T is 1) — the "fitness over the reachable space" that
+`docs/claimb_carrier_design.md` §5 asks for. The mask depends on the universe only; the
+map never enters the landscape.
+
+*Train / holdout.* The carrier's frozen vector order (`vivado/carrier/generated/
+carrier_constants.json` `order`) is kept: the first 40 vectors are **train**, the last 24
+**holdout**. Fitness is computed over train columns only. Holdout is evaluated **once per
+arm, on the champion, on the hardware, last** — and what it means is stated honestly in §8:
+for a lookup-table phenotype, holdout rows are independent parameters, so holdout is a
+**neutrality / known-answer control**, not a generalisation measure.
+
+*The fitness family, in the order fixed now (§7 selection rule).* Let
+`d_v = popcount(W(v) ⊕ T(v))` over the six bits of column *v*.
+
+| id | name | definition (train columns) | range | interaction |
+|---|---|---|---|---|
+| **F2** | graded word | `Σ_v g(d_v)`, `g(0) = 4`, `g(1) = 1`, `g(≥2) = 0` | 0..160 | across the six LUTs at one INIT index (a column is a block); gradient only from d ≤ 2 |
+| **F1** | exact word | `Σ_v [d_v = 0]` | 0..40 | the same block, no partial credit (a royal-road landscape) |
+| **F3** | trajectory | the automaton `s ← W(s)`; for each train vector as start state, the length of the longest prefix (≤ 8 steps) on which the trajectory equals the target automaton's `s ← T(s)`; summed | 0..320 | across columns along trajectories and across LUTs within a word |
+
+None is additive over bits: in F1/F2 a bit's contribution depends on the other five bits of
+its column; in F3 on the whole path. The order F2 → F1 → F3 is a design preference
+recorded before any simulation (F2 has both interaction and a gradient; F1 is the pure block
+landscape; F3 the most epistatic and the most likely to be a needle). The gate runs all three
+and reports all three; the first in this order that passes every criterion of §7 is the B2
+fitness. If none passes, B2 does not go to the board.
+
+## 4. The search engine, shared by both arms
+
+**Decision D3.** A deterministic **(μ + λ) evolution strategy** with truncation selection,
+integer-only, seeded by the instrument's RNG so that a C image and its Python reference
+can be twins byte for byte (B1's discipline):
+
+- μ = 4 parents, λ = 8 children per generation; the initial population is μ copies of the
+  base (all-zero, the opening baseline's genome); every child is one board evaluation; the
+  budget *B* counts children (evaluations), not generations;
+- each child = one parent (drawn uniformly) + one **move** from the arm's operator; a child
+  equal to its parent (an empty move) is not possible by construction (§5);
+- selection: the μ best of parents ∪ children by train fitness; ties by age (the older
+  survives), then by index — deterministic;
+- the **champion** is the best-by-train individual at the budget; ties as above; it alone is
+  evaluated in holdout mode;
+- the two arms share the universe, the landscape seed, the population size, the budget,
+  the fitness and the seed derivation; **the operator is the only difference**.
+
+The arm's evaluations are paired by landscape: run *r* uses landscape seed `L_r` for both
+arms and operator seed `O_r` for both arms (the RNG streams diverge after the first
+operator draw; pairing is on the landscape).
+
+## 5. The operators — one shape, three maps, and the random-safe endpoint
+
+**Decision D4.** A move is a set of 1..4 universe positions to flip in the parent.
+
+- **random-safe** (arm A): `k ~ U{1, 2, 3, 4}`; *k* distinct universe positions drawn
+  uniformly without replacement (the instrument's `random_safe`, made parent-relative).
+- **map-guided** (arm B): with probability ½ a random-safe move; otherwise a **column
+  move**: choose uniformly a column *v* among train columns for which the map names ≥ 1
+  address; from the addresses the map places in column *v* (any LUT), flip a uniformly
+  drawn non-empty subset of size ≤ 4. The operator reads the map through one interface —
+  `relation.init_index` per entry, entries in state `decoded` / `confirmed` only — and never
+  a LUT key, the certificate, or the target. The ½ mixture keeps every universe position
+  reachable under any map, and makes random-safe the *q = 1* endpoint of the degraded-map
+  family below, so a single code path covers all arms and controls.
+
+The **map** is a `self_map` 2.0.0 document (`schemas/self_map_v2.schema.json`) and nothing
+else. The arms and controls differ only in which document they are handed:
+
+| arm / control | map document | what it tests |
+|---|---|---|
+| A random-safe | none (`q = 1`) | the baseline |
+| B self-map | B1's board-authored map `evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json` (292 confirmed, 0 anomalies) | **the claim** |
+| C oracle-map | the certificate `local_map.json` rendered into the same schema by the host | the upper bound; **fact: B1's map equals it in every relation (292/292), so B ≡ C arithmetically** — reported, not hidden |
+| D shuffled-map | B's relations permuted across the 292 entries by a seeded permutation | a wrong map with the same move shape and the same size distribution: must not profit |
+| E within-LUT shuffled | B's `init_index` permuted within each LUT (LUT membership kept, column identity destroyed) | round 1′'s question again: is it LUT membership or column identity that pays? |
+| Q(q) degraded | B with a fraction *q* ∈ {¼, ½, ¾} of entries reset to `unknown` | dose–response: benefit should fall with map quality, continuously to A at q = 1 |
+
+## 6. What the board does, and what the host may do (the autonomy boundary)
+
+The board is the sole executing authority for the parent draw, the move, the fitness, the
+selection and the champion (roadmap §1). Every record carries a `search` block (loop_record
+1.3.0, additive): generation, parent index, the move (positions), the child's train fitness
+as the board computed it, the population's fitness vector after selection, and a running
+commitment `search_sha256` over the population state. The host recomputes the fitness of
+every record from the served readout and replays the whole search from the records
+(`b2_adjudicate.py`, B1's autonomy-replay pattern): a board that did not follow the
+algorithm on its own observations is a finding per record. The host's recomputation never
+reaches the board.
+
+Because F is a pure function of the readout and the readout is a pure function of the
+genome on this carrier (B1: 292/292 additive, 32/32 pairs without deviation; P3: 12 570 /
+12 570 predicted), **every fitness of a B2 session is predictable before the run**, as in
+round 1′. That is not the defect of round 1′ — the defect was a primary that tied by
+arithmetic. What the board adds is stated plainly: the search executed autonomously on
+silicon under the interlocks, the prediction reproduced candidate by candidate, and the
+champions' holdout known answers; the *scientific* outcome is established by the gate over
+many seeds and confirmed on the board over the preregistered N.
+
+## 7. The discriminability gate — criteria fixed before the simulation runs
+
+`host/b2_gate.py` runs the engine of §4 over the fabric model of `host/b1_model.py` (the
+certificate's mapping; the same model that predicted B1's session) for every fitness of §3,
+every arm of §5, over **S = 200 landscape seeds** derived from the gate label; the board's
+seeds are later derived from a different label and are disjoint from the gate's by
+construction (G6). Budget grid `{100, 200, 300, 400, 600, 800, 1000, 1500, 2000}`.
+
+*Budget rule (frozen).* `B*` = the smallest grid budget at which the **median** best-so-far
+train fitness of arm C (oracle) reaches ≥ 60 % of the ceiling. All criteria are evaluated
+at `B*`.
+
+*Primary statistic.* Per landscape, the paired difference `Δ_r = best_B(r) − best_A(r)` of
+best-so-far train fitness at `B*`; the decision statistic is the **sign test** on
+`{Δ_r}` (one-sided, H1: map-guided > random-safe, α = 0.05; ties excluded and counted).
+
+| id | criterion | threshold |
+|---|---|---|
+| G1 non-saturation | the 95th percentile of arm C's best-so-far at `B*` is below the ceiling; arm A's median at `B*` exceeds the base fitness | both hold |
+| G2 both outcomes reachable | P(Δ_r > 0) for arm B lies strictly inside (0, 1) and P(Δ_r < 0) > 0 — the sign is not fixed by the definition; **and** the same decision procedure applied to arm D's pairs must *not* reject H0 in ≥ 90 % of 1 000 bootstrap experiments of size N | holds |
+| G3 shuffled map does not profit | mean Δ for arm D ≤ 10 % of mean Δ for arm B, and the sign test on arm D is not significant over the full S | holds |
+| G4 oracle headroom | arm C's median at `B*` ≤ 90 % of the ceiling (the problem is not solved), and arm B's mean Δ ≥ 90 % of arm C's mean Δ (the self-map delivers the bound) | holds |
+| G5 effect, power, N | Cohen's d of `{Δ_r}` for arm B ≥ 0.8; N = the smallest pair count for which the sign test has power ≥ 0.9 at α = 0.05 given the simulated P(Δ > 0); `N × 2 × B*` ≤ 6 000 evaluations (one session at the evidenced rate, `evidence/b1/plan.json` ≈ 3 380 records / hour, ≈ 1.8 h) | holds |
+| G6 no fixed-seed lock | S ≥ 200; the primary is a statistic over N ≥ 8 pairs; board seeds derived under a label disjoint from the gate's; **var(Δ_r) > 0** (round 1′'s 16/16 tie is named as the failure this excludes) | holds |
+| G7 dose–response | mean Δ is monotone non-increasing in q over {0, ¼, ½, ¾, 1} (arm B, Q(¼), Q(½), Q(¾), A), with Q(¾) ≤ ½ · arm B | holds |
+| G8 not LUT membership | arm E's mean Δ ≤ 25 % of arm B's — the benefit is column identity, not same-LUT locality | holds |
+
+*Selection rule (frozen).* The B2 fitness is the first of F2, F1, F3 for which every row
+G1–G8 holds at its own `B*`. The gate report (`evidence/b2/gate/gate_report.json`,
+`docs/b2_gate_report.md`) states every row for every fitness, PASS or FAIL, with the
+numbers; a fitness that fails is reported, not tuned. **If the thresholds above are changed
+after the first gate run, the change is recorded as a revision of this document with the
+reason, and the gate is re-run and re-reported under the new commit** — never silently.
+
+## 8. What B2 does not claim
+
+- **Holdout is not generalisation.** The phenotype is six lookup tables; the 24 holdout
+  rows are parameters the train fitness never touches, so a champion's holdout score is
+  what the base and neutral drift left there. It is evaluated on the hardware last as a
+  known answer (predicted by the host from the champion's genome) and as a neutrality check
+  (the search did not move holdout positions it had no signal for, beyond drift). If a later
+  stage wants generalisation it needs a phenotype with shared parameters (routing, B4).
+- **Nothing about physical noise.** The landscape is digital and replayable (roadmap §0).
+- **Nothing about unattested bits, routing, FF, another die, Linux or ICAPE2.**
+- **The self-map equals the oracle map.** B1 recovered 292/292; arm B and arm C are the
+  same operator on the same relations. The oracle row (G4) is kept as the definition of the
+  bound and because a future, imperfect self-map (unattested bits, B4) will need it.
+- **Not a claim that the map-guided move is the best structured operator** — only that a
+  correct map, through one fixed move shape, beats the same engine without it, and that a
+  wrong map through the same shape does not.
+
+## 9. Files (host-only; every one additive)
+
+| file | role |
+|---|---|
+| `docs/b2_architecture.md` | this document |
+| `host/b2_landscape.py` | the target rule (D2), the fitness family F1/F2/F3, train/holdout split from the carrier constants |
+| `host/b2_maps.py` | the map interface the operator sees; the oracle, shuffled, within-LUT-shuffled and degraded renderings; schema validation |
+| `host/b2_search.py` | the (μ + λ) engine, the two operators, the paired run — the Python reference of the future image |
+| `host/b2_gate.py` | the discriminability gate: runs, statistics, criteria G1–G8, the report |
+| `tests/test_b2_*.py` | determinism, fitness known answers, operator invariants (every move non-empty, inside the universe, column moves inside one column under a correct map), controls, criteria negatives |
+| `evidence/b2/gate/` | the gate report and per-fitness summaries (the raw per-seed results by hash) |
