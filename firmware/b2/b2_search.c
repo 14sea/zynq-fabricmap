@@ -1,7 +1,9 @@
 /* b2_search — the on-board search of stage B2, a pure unit. See b2_search.h. */
 #include "b2_search.h"
 #include "p3_data.h"
+#include "p3_derive.h"
 
+#include <stdio.h>
 #include <string.h>
 
 #define B2_GOLDEN 0x9E3779B97F4A7C15ull
@@ -311,6 +313,10 @@ void b2_search_observe(b2_search *s, const uint64_t tables[B2_LUTS])
     if (!s->pending)
         return;
     c = &s->child[s->nchild++];
+    memcpy(s->last_bits, s->pending_bits, sizeof(s->last_bits));
+    s->pending_nbits_last = s->pending_nbits;
+    s->last_kind = s->pending_kind;
+    s->last_parent_born = s->pending_parent_born;
     memcpy(c->genome, s->pending_genome, sizeof(c->genome));
     for (k = 0; k < B2_LUTS; k++)
         c->tables[k] = tables[k];
@@ -363,4 +369,109 @@ void b2_search_champion_observe(b2_search *s, const uint64_t tables[B2_LUTS])
     s->champion_holdout = b2_f1_holdout(tables, s->target);
     s->champion_pending = 0;
     s->champion_done = 1;
+}
+
+/* ------------------------------------------------------------------ the commitment and the record block */
+static void hex32(const uint8_t d[32], char out[65])
+{
+    static const char *H = "0123456789abcdef";
+    int i;
+    for (i = 0; i < 32; i++) {
+        out[2 * i] = H[(d[i] >> 4) & 0xf];
+        out[2 * i + 1] = H[d[i] & 0xf];
+    }
+    out[64] = '\0';
+}
+
+void b2_search_state_hex(const b2_search *s, char out[65])
+{
+    p3_sha256 c;
+    uint8_t digest[32];
+    char buf[256];
+    char ghex[B2_GENOME_WORDS * 8 + 1];
+    int i, n;
+    p3_sha256_init(&c);
+    n = snprintf(buf, sizeof(buf), "%s|%d|%lu|%lu|%lu|%lu|%lu|%ld|", B2_SEARCH_VERSION, s->arm,
+                 (unsigned long)s->landscape_seed, (unsigned long)s->operator_seed, (unsigned long)s->budget,
+                 (unsigned long)s->evals, (unsigned long)s->generation, (long)s->best);
+    p3_sha256_update(&c, (const uint8_t *)buf, (size_t)n);
+    for (i = 0; i < B2_MU; i++) {
+        p3_genome_to_hex(s->pop[i].genome, ghex);
+        n = snprintf(buf, sizeof(buf), "%ld:%lu:%s;", (long)s->pop[i].fit, (unsigned long)s->pop[i].born, ghex);
+        p3_sha256_update(&c, (const uint8_t *)buf, (size_t)n);
+    }
+    p3_sha256_final(&c, digest);
+    hex32(digest, out);
+}
+
+size_t b2_search_record_json(const b2_search *s, int pair, const char *arm, uint32_t eval_n,
+                             int32_t holdout, char *out, size_t max)
+{
+    char state[65];
+    size_t at = 0;
+    int i, n;
+    b2_search_state_hex(s, state);
+    /* sorted keys: arm < best < column_moves < eval < fitness < generation < holdout <
+     * landscape_seed < move < operator_seed < pair < parent_born < population < selected <
+     * state_sha256 < version */
+    n = snprintf(out, max, "{\"arm\":\"%s\",\"best\":%ld,\"column_moves\":%lu,\"eval\":%lu,",
+                 arm, (long)s->best, (unsigned long)s->column_moves, (unsigned long)eval_n);
+    if (n < 0 || (size_t)n >= max)
+        return 0u;
+    at = (size_t)n;
+    if (holdout >= 0)
+        n = snprintf(out + at, max - at, "\"fitness\":null,\"generation\":%lu,\"holdout\":%ld,",
+                     (unsigned long)s->generation, (long)holdout);
+    else
+        n = snprintf(out + at, max - at, "\"fitness\":%ld,\"generation\":%lu,\"holdout\":null,",
+                     (long)s->last_fit, (unsigned long)s->generation);
+    if (n < 0 || (size_t)n >= max - at)
+        return 0u;
+    at += (size_t)n;
+    n = snprintf(out + at, max - at, "\"landscape_seed\":%lu,\"move\":", (unsigned long)s->landscape_seed);
+    if (n < 0 || (size_t)n >= max - at)
+        return 0u;
+    at += (size_t)n;
+    if (holdout >= 0) {
+        n = snprintf(out + at, max - at, "null,");
+    } else {
+        n = snprintf(out + at, max - at, "{\"bits\":[");
+        if (n < 0 || (size_t)n >= max - at)
+            return 0u;
+        at += (size_t)n;
+        for (i = 0; i < s->pending_nbits_last; i++) {
+            n = snprintf(out + at, max - at, "%s%u", i ? "," : "", (unsigned)s->last_bits[i]);
+            if (n < 0 || (size_t)n >= max - at)
+                return 0u;
+            at += (size_t)n;
+        }
+        n = snprintf(out + at, max - at, "],\"kind\":\"%s\"},",
+                     s->last_kind == B2_MOVE_COLUMN ? "column" : "random");
+    }
+    if (n < 0 || (size_t)n >= max - at)
+        return 0u;
+    at += (size_t)n;
+    n = snprintf(out + at, max - at, "\"operator_seed\":%lu,\"pair\":%d,", (unsigned long)s->operator_seed, pair);
+    if (n < 0 || (size_t)n >= max - at)
+        return 0u;
+    at += (size_t)n;
+    if (holdout >= 0)
+        n = snprintf(out + at, max - at, "\"parent_born\":null,\"population\":[");
+    else
+        n = snprintf(out + at, max - at, "\"parent_born\":%lu,\"population\":[", (unsigned long)s->last_parent_born);
+    if (n < 0 || (size_t)n >= max - at)
+        return 0u;
+    at += (size_t)n;
+    for (i = 0; i < B2_MU; i++) {
+        n = snprintf(out + at, max - at, "%s{\"born\":%lu,\"fit\":%ld}", i ? "," : "",
+                     (unsigned long)s->pop[i].born, (long)s->pop[i].fit);
+        if (n < 0 || (size_t)n >= max - at)
+            return 0u;
+        at += (size_t)n;
+    }
+    n = snprintf(out + at, max - at, "],\"selected\":%s,\"state_sha256\":\"%s\",\"version\":\"%s\"}",
+                 (holdout < 0 && s->last_selected) ? "true" : "false", state, B2_SEARCH_VERSION);
+    if (n < 0 || (size_t)n >= max - at)
+        return 0u;
+    return at + (size_t)n;
 }

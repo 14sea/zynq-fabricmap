@@ -14,6 +14,7 @@ Skipped only without a host C compiler — and the skip says so.
 """
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -54,13 +55,13 @@ def tables_hex(t: list[int]) -> str:
     return " ".join(f"{x:016x}" for x in t)
 
 
-def drive(arm: int, landscape_seed: int, operator_seed: int, budget: int, unscored_at: int | None = None) -> dict:
+def drive(arm: int, landscape_seed: int, operator_seed: int, budget: int, unscored_at: int | None = None, pair: int = 0) -> dict:
     """Run the twin over the additive fabric; return everything it reported."""
     land = bl.Landscape("F1", landscape_seed, masks=MASKS, truth=TRUTH)
     p = subprocess.Popen([str(TWIN), "run"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
     assert p.stdin and p.stdout
-    out: dict = {"evals": [], "pops": [], "champion": None, "holdout": None}
-    p.stdin.write(f"{arm} {landscape_seed} {operator_seed} {budget}\n{tables_hex(FAB(0))}\n")
+    out: dict = {"evals": [], "pops": [], "champion": None, "holdout": None, "blocks": [], "champion_block": ""}
+    p.stdin.write(f"{arm} {landscape_seed} {operator_seed} {budget} {pair}\n{tables_hex(FAB(0))}\n")
     p.stdin.flush()
     while True:
         line = p.stdout.readline()
@@ -89,9 +90,15 @@ def drive(arm: int, landscape_seed: int, operator_seed: int, budget: int, unscor
             out["champion"] = {"genome": bc.genome_from_hex(parts[1]), "fit": int(parts[2]), "column_moves": int(parts[3])}
             p.stdin.write(tables_hex(FAB(out["champion"]["genome"])) + "\n")
             p.stdin.flush()
+        elif line.startswith("BLOCK"):
+            block = line[len("BLOCK "):].strip()
+            if out["holdout"] is None:
+                out["blocks"].append(block)
+            else:
+                out["champion_block"] = block
+                break
         elif line.startswith("HOLDOUT"):
             out["holdout"] = int(line.split()[1])
-            break
     p.stdin.close()
     p.stdout.close()
     p.wait()
@@ -145,11 +152,11 @@ class Twin(unittest.TestCase):
             t = FAB(g)
             self.assertEqual((int(parts[1]), int(parts[2])), (land.train_fitness(t), land.holdout_fitness(t)))
 
-    def _compare(self, arm: int, lseed: int, oseed: int, budget: int):
-        got = drive(arm, lseed, oseed, budget)
+    def _compare(self, arm: int, lseed: int, oseed: int, budget: int, pair: int = 0):
+        got = drive(arm, lseed, oseed, budget, pair=pair)
         land = got["landscape"]
         ref = bs.run(bs.ARM_RANDOM_SAFE if arm == 0 else bs.ARM_MAP_GUIDED, land, None if arm == 0 else VIEW,
-                     oseed, budget, FAB, log_moves=True)
+                     oseed, budget, FAB, log_moves=True, pair=pair)
         self.assertEqual(len(got["evals"]), len(ref.moves), "evaluation count")
         for c, r in zip(got["evals"], ref.moves):
             self.assertEqual((c["parent_born"], c["kind"], c["bits"], c["fit"]),
@@ -160,6 +167,12 @@ class Twin(unittest.TestCase):
         self.assertEqual(got["champion"]["fit"], ref.champion.fit, "champion fitness")
         self.assertEqual(got["champion"]["column_moves"], ref.column_moves, "column moves")
         self.assertEqual(got["holdout"], ref.champion_holdout, "champion holdout")
+        self.assertEqual(len(got["blocks"]), len(got["evals"]), "one record block per evaluation")
+        self.assertEqual(got["blocks"], ref.blocks, "the `search` record block, byte for byte")
+        self.assertEqual(got["champion_block"], ref.champion_block, "the champion's holdout record block")
+        for b in got["blocks"] + [got["champion_block"]]:
+            doc = json.loads(b)                                  # the image writes valid, sorted-key JSON
+            self.assertEqual(b, json.dumps(doc, sort_keys=True, separators=(",", ":")))
         return got, ref
 
     def test_random_safe_arm_over_budgets(self):
@@ -180,7 +193,7 @@ class Twin(unittest.TestCase):
         for r, (lseed, oseed) in enumerate(self.seeds):
             for arm in (0, 1):
                 with self.subTest(pair=r, arm=arm):
-                    self._compare(arm, lseed, oseed, 600)
+                    self._compare(arm, lseed, oseed, 600, pair=r)
 
     def test_the_session_deltas_are_the_prediction(self):
         """The twin's champions over the nine pairs give the preregistered deltas."""

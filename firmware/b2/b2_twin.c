@@ -7,11 +7,12 @@
  *   seeds      < "master count"        -> "<landscape> <operator>" per pair
  *   landscape  < "seed"                -> "MASK <6x16hex>" then "TARGET <6x16hex>"
  *   fitness    < "seed <6x16hex>"      -> "F1 <train> <holdout>" for that readout
- *   run        < "arm lseed oseed budget" then, per proposal, the twin prints
+ *   run        < "arm lseed oseed budget pair" then, per proposal, the twin prints
  *                 "EVAL <n> <parent_born> <kind> <bits...> | <genome hex>"
  *               and reads one line: six 16-hex tables (the MEASURED readout) or "UNSCORED";
  *               after each observation it prints
  *                 "FIT <fit> <best> <selected> | <pop fit:born ...>"
+ *                 "BLOCK <the `search` record block the image writes>"
  *               and at the end
  *                 "CHAMPION <genome hex> <fit> <column_moves>"
  *               then, if a further readout line is given, "HOLDOUT <fit>".
@@ -122,12 +123,15 @@ static int mode_run(void)
     char ghex[B2_GENOME_WORDS * 8 + 1];
     uint32_t genome[B2_GENOME_WORDS];
     uint64_t base[B2_LUTS], t[B2_LUTS];
-    unsigned long arm, lseed, oseed, budget;
+    static char block[4096];
+    unsigned long arm, lseed, oseed, budget, pair = 0;
+    const char *arm_letter;
     int kind, i;
     uint32_t n = 0;
 
-    if (!fgets(line, sizeof(line), stdin) || sscanf(line, "%lu %lu %lu %lu", &arm, &lseed, &oseed, &budget) != 4)
+    if (!fgets(line, sizeof(line), stdin) || sscanf(line, "%lu %lu %lu %lu %lu", &arm, &lseed, &oseed, &budget, &pair) < 4)
         return 2;
+    arm_letter = (arm == (unsigned long)B2_ARM_RANDOM_SAFE) ? "A" : "B";
     if (!fgets(line, sizeof(line), stdin) || parse_tables(line, base) != 0)
         return 3;                          /* the measured opening baseline */
     b2_search_init(&s, (int)arm, (uint32_t)lseed, (uint32_t)oseed, (uint32_t)budget, base);
@@ -152,6 +156,9 @@ static int mode_run(void)
         for (i = 0; i < B2_MU; i++)
             printf(" %ld:%lu", (long)s.pop[i].fit, (unsigned long)s.pop[i].born);
         printf("\n");
+        if (b2_search_record_json(&s, (int)pair, arm_letter, n, -1, block, sizeof(block)) == 0u)
+            return 8;
+        printf("BLOCK %s\n", block);
         fflush(stdout);
     }
     {
@@ -169,6 +176,10 @@ static int mode_run(void)
             return 7;
         b2_search_champion_observe(&s, t);
         printf("HOLDOUT %ld\n", (long)s.champion_holdout);
+        if (b2_search_record_json(&s, (int)pair, arm_letter, s.evals, s.champion_holdout, block, sizeof(block)) == 0u)
+            return 9;
+        printf("BLOCK %s\n", block);
+        fflush(stdout);
     }
     return 0;
 }

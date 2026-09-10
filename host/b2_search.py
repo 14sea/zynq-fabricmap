@@ -21,6 +21,8 @@ the C image can reproduce the stream exactly.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -89,6 +91,37 @@ def apply_move(genome: int, bits: list[int]) -> int:
     return genome
 
 
+# ------------------------------------------------------------------ the record block and its commitment
+
+
+def state_sha256(arm: int, landscape_seed: int, operator_seed: int, budget: int, evals: int,
+                 generation: int, best: int, pop: list["Individual"]) -> str:
+    """The board's running commitment (firmware/b2/b2_search.c `b2_search_state_hex`): the arm,
+    the seeds, the budget, the evaluations spent, the generation, the best-so-far and the whole
+    population by fitness, birth index and genome."""
+    text = f"{ENGINE_VERSION}|{arm}|{landscape_seed}|{operator_seed}|{budget}|{evals}|{generation}|{best}|"
+    for ind in pop:
+        text += f"{ind.fit}:{ind.born}:{bc.genome_to_hex(ind.genome)};"
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
+def record_block(arm: int, arm_letter: str, pair: int, landscape_seed: int, operator_seed: int, budget: int,
+                 evals: int, generation: int, best: int, column_moves: int, pop: list["Individual"],
+                 eval_n: int, fitness: int | None, parent_born: int | None, bits: list[int] | None,
+                 kind: str | None, selected: bool, holdout: int | None) -> str:
+    """The `search` block exactly as the image writes it (compact JSON, sorted keys)."""
+    doc = {"arm": arm_letter, "best": best, "column_moves": column_moves, "eval": eval_n,
+           "fitness": fitness, "generation": generation, "holdout": holdout,
+           "landscape_seed": landscape_seed,
+           "move": None if bits is None else {"bits": list(bits), "kind": kind},
+           "operator_seed": operator_seed, "pair": pair, "parent_born": parent_born,
+           "population": [{"born": ind.born, "fit": ind.fit} for ind in pop],
+           "selected": bool(selected),
+           "state_sha256": state_sha256(arm, landscape_seed, operator_seed, budget, evals, generation, best, pop),
+           "version": ENGINE_VERSION}
+    return json.dumps(doc, sort_keys=True, separators=(",", ":"))
+
+
 # ------------------------------------------------------------------ the engine
 
 @dataclass
@@ -110,14 +143,18 @@ class RunResult:
     population_fit: list[int] = field(default_factory=list)
     column_moves: int = 0
     population_trace: list[list[tuple[int, int]]] = field(default_factory=list)   # (fit, born) after each selection
+    blocks: list[str] = field(default_factory=list)                               # the `search` record block per evaluation
+    champion_block: str = ""
 
 
 def run(arm: str, landscape: bl.Landscape, view: MapView | None, operator_seed: int, budget: int,
-        fabric: ModelFabric, log_moves: bool = False) -> RunResult:
+        fabric: ModelFabric, log_moves: bool = False, pair: int = 0) -> RunResult:
     if arm not in (ARM_RANDOM_SAFE, ARM_MAP_GUIDED):
         raise ValueError(arm)
     if arm == ARM_MAP_GUIDED and view is None:
         raise ValueError("map_guided needs a MapView (an empty one is the random-safe endpoint)")
+    arm_n = 0 if arm == ARM_RANDOM_SAFE else 1
+    arm_letter = "A" if arm == ARM_RANDOM_SAFE else "B"
     rng = bc.Rng(operator_seed)
     base_tables = fabric(0)
     base_fit = landscape.train_fitness(base_tables)
@@ -125,12 +162,16 @@ def run(arm: str, landscape: bl.Landscape, view: MapView | None, operator_seed: 
     born = MU
     evals = 0
     best = base_fit
+    generation = 0
     trace: list[int] = []
     moves: list[dict] = []
     population: list[list[tuple[int, int]]] = []
+    blocks: list[str] = []
     column_moves = 0
     while evals < budget:
         children: list[Individual] = []
+        pending: list[dict] = []
+        pop_before = list(pop)
         for _ in range(LAMBDA):
             if evals == budget:
                 break
@@ -153,16 +194,31 @@ def run(arm: str, landscape: bl.Landscape, view: MapView | None, operator_seed: 
             trace.append(best)
             if log_moves:
                 moves.append({"eval": evals, "parent": pidx, "parent_born": parent.born, "kind": kind, "bits": bits, "fit": fit})
+                pending.append({"eval": evals, "fit": fit, "parent_born": parent.born, "bits": bits, "kind": kind,
+                                "best": best, "column_moves": column_moves})
         pool = pop + children
         pool.sort(key=lambda ind: (-ind.fit, ind.born))
         pop = pool[:MU]
         if log_moves:
             population.append([(ind.fit, ind.born) for ind in pop])
+            generation += 1
+            for j, m in enumerate(pending):
+                closed = (j == len(pending) - 1)          # the image selects on the last child of the generation
+                blocks.append(record_block(arm_n, arm_letter, pair, landscape.seed, operator_seed, budget,
+                                           m["eval"], generation if closed else generation - 1, m["best"],
+                                           m["column_moves"], pop if closed else pop_before, m["eval"], m["fit"],
+                                           m["parent_born"], m["bits"], m["kind"], closed, None))
     champion = min(pop, key=lambda ind: (-ind.fit, ind.born))
+    champion_holdout = landscape.holdout_fitness(champion.tables)
+    champion_block = ""
+    if log_moves:
+        champion_block = record_block(arm_n, arm_letter, pair, landscape.seed, operator_seed, budget, evals,
+                                      generation, best, column_moves, pop, evals, None, None, None, None,
+                                      False, champion_holdout)
     return RunResult(arm=arm, budget=budget, best_trace=trace, champion=champion,
-                     champion_holdout=landscape.holdout_fitness(champion.tables), moves=moves,
+                     champion_holdout=champion_holdout, moves=moves,
                      population_fit=[ind.fit for ind in pop], column_moves=column_moves,
-                     population_trace=population)
+                     population_trace=population, blocks=blocks, champion_block=champion_block)
 
 
 # ------------------------------------------------------------------ seeds

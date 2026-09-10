@@ -87,9 +87,12 @@ typedef struct {
     uint16_t pending_bits[B2_KMAX];
     int pending_nbits, pending_kind;
     uint32_t pending_genome[B2_GENOME_WORDS];
-    /* the last observation, for the record block */
+    /* the last observation, for the record block (pending_* is cleared by observe) */
     int32_t last_fit;
     int last_selected;                 /* 1 = this observation closed a generation */
+    uint16_t last_bits[B2_KMAX];
+    int pending_nbits_last, last_kind;
+    uint32_t last_parent_born;
     /* the champion's holdout evaluation */
     int champion_pending, champion_done;
     int32_t champion_holdout;
@@ -126,5 +129,21 @@ int b2_search_champion(const b2_search *s, uint32_t genome[B2_GENOME_WORDS], int
 /* the champion's holdout evaluation: propose, then observe its measured readout */
 int b2_search_champion_next(b2_search *s, uint32_t genome[B2_GENOME_WORDS]);
 void b2_search_champion_observe(b2_search *s, const uint64_t tables[B2_LUTS]);
+
+/* The running commitment: sha256 over a canonical rendering of the search state — the arm,
+ * the seeds, the budget, the evaluations spent, the generation, the best-so-far and the
+ * whole population (fitness, birth index, genome). The host recomputes it from the records
+ * (host/b2_search.state_sha256), so a board that reported a population it did not hold is a
+ * finding. Returns the 64-hex digest. */
+void b2_search_state_hex(const b2_search *s, char out[65]);
+
+/* The `search` block of a loop record, compact JSON with sorted keys, for the observation
+ * just made: the pair, the arm ("A" random-safe | "B" map-guided), the evaluation index
+ * within the arm, the parent, the move, the fitness, the best-so-far, whether the
+ * observation closed a generation, the population after it and the state commitment.
+ * `holdout` >= 0 renders the champion's holdout record instead. Returns the length, or 0
+ * if it would not fit (the caller treats 0 as a PROTOCOL-class failure). */
+size_t b2_search_record_json(const b2_search *s, int pair, const char *arm, uint32_t eval_n,
+                             int32_t holdout, char *out, size_t max);
 
 #endif
