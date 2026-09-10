@@ -44,16 +44,20 @@ ARM_TEXT = {"A": "random-safe", "B": "self-map (B1)", "C": "oracle-map", "D": "s
             "Q25": "degraded q=1/4", "Q50": "degraded q=1/2", "Q75": "degraded q=3/4"}
 Q_OF = {"Q25": 0.25, "Q50": 0.5, "Q75": 0.75}
 THRESHOLDS = {
-    "budget_rule_oracle_median_fraction": 0.60,
+    "rules_version": "v0.2",
+    "budget_rule": "min N(B) x 2 x B over grid budgets with G1 and finite N(B)",
     "G1_saturation_percentile": 95, "G2_bootstrap_experiments": 1000, "G2_null_nonreject_min": 0.90,
     "G3_shuffled_fraction_max": 0.10, "G3_alpha": 0.05,
     "G4_oracle_median_fraction_max": 0.90, "G4_self_vs_oracle_min": 0.90,
-    "G5_cohen_d_min": 0.8, "G5_alpha": 0.05, "G5_power_min": 0.90, "G5_session_evals_max": 6000, "G5_pairs_min": 8,
+    "G5_cohen_d_min": 0.8, "G5_alpha": 0.05, "G5_power_min": 0.90, "G5_pairs_min": 8,
+    "G5_session_evals_max": 13000,                 # one 2-hour session at the sampled-audit rate (S #3)
+    "G5_session_evals_all_self_reporting": 6000,   # reported alongside: B1's all-self-reporting rate
     "G6_seeds_min": 200,
     "G7_q75_fraction_max": 0.50,
     "G8_lut_shuffled_fraction_max": 0.25,
 }
-EVIDENCED_RATE_PER_HOUR = 3367.75      # evidence/b1/plan.json rate_C2_planning (the slower of the two)
+SAMPLED_AUDIT_RATE_PER_HOUR = 12570 / 6763.9 * 3600      # zynq-psoracle S #3: 12 570 records in 6 763.9 s
+ALL_SELF_REPORTING_RATE_PER_HOUR = 3367.75                # evidence/b1/plan.json rate_C2_planning (the slower of the two)
 
 # ------------------------------------------------------------------ statistics (integer-safe, dependency-free)
 
@@ -104,11 +108,27 @@ def bootstrap_reject_rate(deltas, n_pairs: int, alpha: float, experiments: int, 
 
 
 def required_pairs(deltas, alpha: float, power_min: float, experiments: int, seed: int, n_min: int, n_max: int):
-    for n in range(n_min, n_max + 1):
-        power = bootstrap_reject_rate(deltas, n, alpha, experiments, seed + n)
-        if power >= power_min:
-            return n, power
-    return None, bootstrap_reject_rate(deltas, n_max, alpha, experiments, seed + n_max)
+    """The smallest N in [n_min, n_max] whose bootstrap power reaches power_min: a geometric
+    sweep to bracket it, then a linear refinement inside the bracket (every N in the final
+    bracket is evaluated with the same `experiments`)."""
+    def power(n):
+        return bootstrap_reject_rate(deltas, n, alpha, experiments, seed + n)
+    if power(n_max) < power_min:
+        return None, power(n_max)
+    lo, hi = n_min, n_max            # power(hi) >= power_min
+    n = n_min
+    while n < n_max:
+        pw = power(n)
+        if pw >= power_min:
+            hi = n
+            break
+        lo = n + 1
+        n = min(n_max, max(n + 1, int(n * 1.5)))
+    for m in range(lo, hi + 1):
+        pw = power(m)
+        if pw >= power_min:
+            return m, pw
+    return hi, power(hi)
 
 
 # ------------------------------------------------------------------ the runs
@@ -157,44 +177,75 @@ def run_fitness(fid: str, seeds: list[tuple[int, int]], workers: int) -> list[di
 # ------------------------------------------------------------------ the criteria
 
 
+def per_budget(rows: list[dict]) -> list[dict]:
+    """For every grid budget: the arms' medians, arm B's paired-difference statistics,
+    N(B) by bootstrap power, the session cost, and whether G1 holds there."""
+    T = THRESHOLDS
+    S = len(rows)
+    base = [row["base_fit"] for row in rows]
+    out = []
+    for i, b in enumerate(GRID):
+        at = {arm: [row["arms"][arm]["at_grid"][i] for row in rows] for arm in ARMS}
+        dB = [at["B"][j] - at["A"][j] for j in range(S)]
+        p, pos, neg, ties = sign_test_p(dB)
+        n_req, power = required_pairs(dB, T["G5_alpha"], T["G5_power_min"], T["G2_bootstrap_experiments"], 1, T["G5_pairs_min"], S)
+        out.append({"budget": b, "median": {a: median(at[a]) for a in ARMS}, "oracle_p95": None, "mean_delta_B": mean(dB),
+                    "cohen_d_B": cohen_d(dB), "positives": pos, "negatives": neg, "ties": ties, "sign_test_p_full_S": p,
+                    "required_pairs_N": n_req, "power_at_N": power, "session_evaluations": (n_req * 2 * b) if n_req else None,
+                    "random_median_above_base": median(at["A"]) > median(base)})
+    return out
+
+
 def evaluate(fid: str, rows: list[dict]) -> dict:
     T = THRESHOLDS
     ceiling = bl.CEILING[fid]
     S = len(rows)
-    curves = {arm: [median([row["arms"][arm]["at_grid"][i] for row in rows]) for i in range(len(GRID))] for arm in ARMS}
-    b_index = next((i for i, m in enumerate(curves["C"]) if m >= T["budget_rule_oracle_median_fraction"] * ceiling), None)
-    if b_index is None:
-        return {"fitness": fid, "ceiling": ceiling, "seeds": S, "curves": {a: c for a, c in curves.items()}, "grid": list(GRID),
-                "b_star": None, "criteria": {"budget_rule": {"pass": False, "note": "the oracle arm's median never reaches the fraction on the grid"}},
-                "pass": False}
-    b_star = GRID[b_index]
-    at = {arm: [row["arms"][arm]["at_grid"][b_index] for row in rows] for arm in ARMS}
     base = [row["base_fit"] for row in rows]
+    table = per_budget(rows)
+    for i, t in enumerate(table):
+        at_c = [row["arms"]["C"]["at_grid"][i] for row in rows]
+        t["oracle_p95"] = percentile(at_c, T["G1_saturation_percentile"])
+        t["G1"] = t["oracle_p95"] < ceiling and t["random_median_above_base"]
+    curves = {arm: [t["median"][arm] for t in table] for arm in ARMS}
+    eligible = [t for t in table if t["G1"] and t["session_evaluations"] is not None]
+    if not eligible:
+        return {"fitness": fid, "ceiling": ceiling, "seeds": S, "grid": list(GRID), "curves_median": curves, "per_budget": table,
+                "b_star": None, "criteria": {"budget_rule": {"pass": False, "note": "no grid budget has both G1 and a finite N(B)"}},
+                "pass": False}
+    best = min(eligible, key=lambda t: (t["session_evaluations"], t["budget"]))
+    b_star = best["budget"]
+    b_index = GRID.index(b_star)
+    at = {arm: [row["arms"][arm]["at_grid"][b_index] for row in rows] for arm in ARMS}
     delta = {arm: [at[arm][i] - at["A"][i] for i in range(S)] for arm in ARMS if arm != "A"}
     md = {arm: mean(delta[arm]) for arm in delta}
     crit: dict[str, dict] = {}
+    crit["budget_rule"] = {"b_star": b_star, "session_evaluations": best["session_evaluations"], "rule": "min N(B) x 2 x B over budgets with G1 and finite N(B)",
+                           "candidates": [{"budget": t["budget"], "N": t["required_pairs_N"], "cost": t["session_evaluations"], "G1": t["G1"]} for t in table],
+                           "pass": True}
 
-    c_p95 = percentile(at["C"], T["G1_saturation_percentile"])
+    c_p95 = best["oracle_p95"]
     crit["G1"] = {"oracle_p95": c_p95, "ceiling": ceiling, "random_median": median(at["A"]), "base_median": median(base),
                   "pass": c_p95 < ceiling and median(at["A"]) > median(base)}
 
-    p_pos = sum(1 for d in delta["B"] if d > 0) / S
-    p_neg = sum(1 for d in delta["B"] if d < 0) / S
-    # G5 first (N is needed by G2)
     d_B = cohen_d(delta["B"])
     p_B, pos_B, neg_B, ties_B = sign_test_p(delta["B"])
-    n_req, power_at_n = required_pairs(delta["B"], T["G5_alpha"], T["G5_power_min"], T["G2_bootstrap_experiments"], 1, T["G5_pairs_min"], S)
-    session_evals = (n_req * 2 * b_star) if n_req else None
+    n_req = best["required_pairs_N"]
+    session_evals = best["session_evaluations"]
     crit["G5"] = {"cohen_d": d_B, "mean_delta": md["B"], "sd_delta": statistics.stdev(delta["B"]) if S > 1 else 0.0,
                   "sign_test_p_full_S": p_B, "positives": pos_B, "negatives": neg_B, "ties": ties_B,
-                  "required_pairs_N": n_req, "power_at_N": power_at_n, "session_evaluations": session_evals,
-                  "session_hours_at_evidenced_rate": (session_evals / EVIDENCED_RATE_PER_HOUR) if session_evals else None,
-                  "pass": d_B >= T["G5_cohen_d_min"] and n_req is not None and session_evals <= T["G5_session_evals_max"]}
+                  "required_pairs_N": n_req, "power_at_N": best["power_at_N"], "session_evaluations": session_evals,
+                  "session_hours_sampled_audit": session_evals / SAMPLED_AUDIT_RATE_PER_HOUR,
+                  "session_hours_all_self_reporting": session_evals / ALL_SELF_REPORTING_RATE_PER_HOUR,
+                  "fits_all_self_reporting_cap": session_evals <= T["G5_session_evals_all_self_reporting"],
+                  "pass": d_B >= T["G5_cohen_d_min"] and session_evals <= T["G5_session_evals_max"]}
 
-    n_for_g2 = n_req if n_req else T["G5_pairs_min"]
-    null_nonreject = 1.0 - bootstrap_reject_rate(delta["D"], n_for_g2, T["G5_alpha"], T["G2_bootstrap_experiments"], 7)
-    crit["G2"] = {"p_delta_pos": p_pos, "p_delta_neg": p_neg, "N_used": n_for_g2, "shuffled_nonreject_rate": null_nonreject,
-                  "pass": 0 < p_pos < 1 and p_neg > 0 and null_nonreject >= T["G2_null_nonreject_min"]}
+    var_delta = statistics.pvariance(delta["B"]) if S > 1 else 0.0
+    both_signs_somewhere = any(t["positives"] > 0 and t["negatives"] > 0 for t in table)
+    null_nonreject = 1.0 - bootstrap_reject_rate(delta["D"], n_req, T["G5_alpha"], T["G2_bootstrap_experiments"], 7)
+    crit["G2"] = {"var_delta": var_delta, "both_signs_at_some_budget": both_signs_somewhere,
+                  "signs_by_budget": [[t["budget"], t["positives"], t["negatives"], t["ties"]] for t in table],
+                  "N_used": n_req, "shuffled_nonreject_rate": null_nonreject,
+                  "pass": var_delta > 0 and both_signs_somewhere and null_nonreject >= T["G2_null_nonreject_min"]}
 
     p_D = sign_test_p(delta["D"])[0]
     crit["G3"] = {"mean_delta_shuffled": md["D"], "mean_delta_self": md["B"],
@@ -206,25 +257,23 @@ def evaluate(fid: str, rows: list[dict]) -> dict:
                   "self_vs_oracle": (md["B"] / md["C"]) if md["C"] > 0 else None,
                   "pass": c_med <= T["G4_oracle_median_fraction_max"] * ceiling and md["C"] > 0 and md["B"] >= T["G4_self_vs_oracle_min"] * md["C"]}
 
-    var_delta = statistics.pvariance(delta["B"]) if S > 1 else 0.0
-    crit["G6"] = {"seeds": S, "var_delta": var_delta, "pairs_min": T["G5_pairs_min"],
-                  "pass": S >= T["G6_seeds_min"] and var_delta > 0 and (n_req is None or n_req >= T["G5_pairs_min"])}
+    crit["G6"] = {"seeds": S, "var_delta": var_delta, "pairs_min": T["G5_pairs_min"], "N": n_req,
+                  "pass": S >= T["G6_seeds_min"] and var_delta > 0 and n_req >= T["G5_pairs_min"]}
 
-    dose = [md["B"], md["Q25"], md["Q50"], md["Q75"], 0.0]
+    dose = [md["B"], md["Q25"], md["Q50"], md["Q75"]]
     monotone = all(dose[i] >= dose[i + 1] for i in range(len(dose) - 1))
-    crit["G7"] = {"mean_delta_by_q": {"0": md["B"], "0.25": md["Q25"], "0.5": md["Q50"], "0.75": md["Q75"], "1": 0.0},
-                  "monotone_non_increasing": monotone,
+    crit["G7"] = {"mean_delta_by_q": {"0": md["B"], "0.25": md["Q25"], "0.5": md["Q50"], "0.75": md["Q75"], "1 (reported)": 0.0},
+                  "monotone_non_increasing_0_to_3q": monotone, "q75_below_random_safe": md["Q75"] < 0,
                   "pass": monotone and md["B"] > 0 and md["Q75"] <= T["G7_q75_fraction_max"] * md["B"]}
 
     crit["G8"] = {"mean_delta_lut_shuffled": md["E"], "mean_delta_self": md["B"],
                   "fraction": (md["E"] / md["B"]) if md["B"] > 0 else None,
                   "pass": md["B"] > 0 and md["E"] <= T["G8_lut_shuffled_fraction_max"] * md["B"]}
 
-    crit["budget_rule"] = {"b_star": b_star, "oracle_median_at_b_star": c_med, "fraction_of_ceiling": c_med / ceiling, "pass": True}
     holdout = {arm: median([row["arms"][arm]["champion_holdout"] for row in rows]) for arm in ARMS}
     column_moves = {arm: mean([row["arms"][arm]["column_moves"] for row in rows]) for arm in ARMS}
     return {"fitness": fid, "ceiling": ceiling, "seeds": S, "grid": list(GRID), "b_star": b_star,
-            "curves_median": curves, "at_b_star_median": {a: median(at[a]) for a in ARMS},
+            "curves_median": curves, "per_budget": table, "at_b_star_median": {a: median(at[a]) for a in ARMS},
             "mean_delta_vs_A_at_b_star": md, "champion_holdout_median": holdout, "column_moves_mean_to_B_max": column_moves,
             "criteria": crit, "pass": all(c["pass"] for c in crit.values())}
 

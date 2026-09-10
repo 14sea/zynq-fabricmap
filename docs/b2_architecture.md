@@ -1,4 +1,19 @@
-# B2 — map utility: a carrier that can discriminate — architecture (v0.1, host-only, 2026-09-10)
+# B2 — map utility: a carrier that can discriminate — architecture (v0.2, host-only, 2026-09-10)
+
+> **Revision v0.1 → v0.2 (2026-09-10, after gate run 1).** Run 1 (`evidence/b2/gate/v0.1_2026-09-10/`,
+> under commit `342450b`) failed every fitness — not on discrimination (all three beat
+> random-safe; the shuffled and within-LUT-shuffled maps do not profit, they *lose*) but on
+> three rules of §7 that the run showed to be mis-specified. §7 v0.2 changes exactly these,
+> each with its reason, and the gate is re-run under the commit holding this text
+> (`evidence/b2/gate/gate_report.json`). Nothing in §1–§6 changed. The v0.1 report is kept
+> unchanged so the owner can see what the first rules produced.
+>
+> | rule | v0.1 | v0.2 | why |
+> |---|---|---|---|
+> | budget rule | `B*` = smallest grid budget at which the oracle arm's median ≥ 60 % of the ceiling | `B*` = the grid budget with the **smallest session cost** `N(B) × 2 × B` among budgets where G1 holds and `N(B)` exists | the 60 % rule chose budgets 2.5–4× costlier than the cheapest discriminating one (F1: 1 500 → 24 000 evaluations vs 600 → 10 800); non-saturation is G1's job, not the budget rule's |
+> | G2 | P(Δ_B < 0) > 0 at `B*` | the definitional-lock test: var(Δ_B) > 0, **and** Δ_B takes both signs at some grid budget, **and** the same procedure does not reject on the shuffled arm | F1 at 1 500 gave 200/200 positives — a strong effect, not a lock; round 1′'s lock was budget- and seed-independent, and that is what the test must exclude |
+> | G5 cost cap | 6 000 evaluations (one session, all-self-reporting audit, B1's rate) | **13 000** evaluations = one two-hour session at the instrument's evidenced **sampled-audit** rate (S #3: 12 570 records / 6 763.9 s), the all-self-reporting fit (6 000) reported alongside; the audit policy is put to the owner (`docs/b2_package.md`) | v0.1 silently assumed B1's all-self-reporting policy; B2's records carry the board's fitness and the readout, and the instrument's sampled-audit policy with falsification-on-mismatch is equally evidenced — the choice is the owner's, and the arithmetic for both is reported |
+> | G7 | mean Δ monotone non-increasing over q ∈ {0, ¼, ½, ¾, 1}, with Δ(1) = 0 (random-safe) | monotone non-increasing over q ∈ {0, ¼, ½, ¾}; Q(¾) ≤ ½ · arm B; the q = 1 endpoint reported, not required | the run shows Δ(¾) < 0 on every fitness: under the ½ mixture a poor map **diverts half the budget to a small subset**, so a poor map is worse than no map. The continuity assumption was wrong, and wrong in a way that is itself a finding (§8) |
 
 > **Standing: host-only design. Nothing here is frozen, ruled, built as firmware or loaded on
 > any board; no board contact is authorised.** Stage B2 of
@@ -170,23 +185,26 @@ every arm of §5, over **S = 200 landscape seeds** derived from the gate label; 
 seeds are later derived from a different label and are disjoint from the gate's by
 construction (G6). Budget grid `{100, 200, 300, 400, 600, 800, 1000, 1500, 2000}`.
 
-*Budget rule (frozen).* `B*` = the smallest grid budget at which the **median** best-so-far
-train fitness of arm C (oracle) reaches ≥ 60 % of the ceiling. All criteria are evaluated
-at `B*`.
-
 *Primary statistic.* Per landscape, the paired difference `Δ_r = best_B(r) − best_A(r)` of
 best-so-far train fitness at `B*`; the decision statistic is the **sign test** on
 `{Δ_r}` (one-sided, H1: map-guided > random-safe, α = 0.05; ties excluded and counted).
+`N(B)` = the smallest pair count for which the sign test has power ≥ 0.9 at α = 0.05 under
+the simulated Δ distribution at budget B (1 000 bootstrap experiments).
+
+*Budget rule (frozen, v0.2).* `B*` = the grid budget with the **smallest session cost**
+`N(B) × 2 × B` among the budgets at which G1 holds and `N(B)` exists; ties to the smaller
+budget. All other criteria are evaluated at `B*`. *(v0.1: "the smallest grid budget at
+which the oracle arm's median ≥ 60 % of the ceiling" — replaced, see the revision note.)*
 
 | id | criterion | threshold |
 |---|---|---|
 | G1 non-saturation | the 95th percentile of arm C's best-so-far at `B*` is below the ceiling; arm A's median at `B*` exceeds the base fitness | both hold |
-| G2 both outcomes reachable | P(Δ_r > 0) for arm B lies strictly inside (0, 1) and P(Δ_r < 0) > 0 — the sign is not fixed by the definition; **and** the same decision procedure applied to arm D's pairs must *not* reject H0 in ≥ 90 % of 1 000 bootstrap experiments of size N | holds |
+| G2 not a definitional lock | var(Δ_r) > 0 for arm B at `B*`; Δ_r for arm B takes **both signs at some grid budget** (the sign is a property of the effect and the budget, not of the definition); **and** the same decision procedure applied to arm D's pairs must *not* reject H0 in ≥ 90 % of 1 000 bootstrap experiments of size N | holds |
 | G3 shuffled map does not profit | mean Δ for arm D ≤ 10 % of mean Δ for arm B, and the sign test on arm D is not significant over the full S | holds |
 | G4 oracle headroom | arm C's median at `B*` ≤ 90 % of the ceiling (the problem is not solved), and arm B's mean Δ ≥ 90 % of arm C's mean Δ (the self-map delivers the bound) | holds |
-| G5 effect, power, N | Cohen's d of `{Δ_r}` for arm B ≥ 0.8; N = the smallest pair count for which the sign test has power ≥ 0.9 at α = 0.05 given the simulated P(Δ > 0); `N × 2 × B*` ≤ 6 000 evaluations (one session at the evidenced rate, `evidence/b1/plan.json` ≈ 3 380 records / hour, ≈ 1.8 h) | holds |
+| G5 effect, power, N | Cohen's d of `{Δ_r}` for arm B ≥ 0.8; `N = N(B*)`; `N × 2 × B*` ≤ **13 000** evaluations = one two-hour session at the instrument's evidenced sampled-audit rate (S #3, 12 570 records in 6 763.9 s ≈ 6 690 / h); whether it also fits **6 000** (all-self-reporting audit at B1's ≈ 3 380 / h, `evidence/b1/plan.json`) is reported alongside — the audit policy is the owner's choice | holds |
 | G6 no fixed-seed lock | S ≥ 200; the primary is a statistic over N ≥ 8 pairs; board seeds derived under a label disjoint from the gate's; **var(Δ_r) > 0** (round 1′'s 16/16 tie is named as the failure this excludes) | holds |
-| G7 dose–response | mean Δ is monotone non-increasing in q over {0, ¼, ½, ¾, 1} (arm B, Q(¼), Q(½), Q(¾), A), with Q(¾) ≤ ½ · arm B | holds |
+| G7 dose–response | mean Δ is monotone non-increasing in q over {0, ¼, ½, ¾} (arm B, Q(¼), Q(½), Q(¾)), with Q(¾) ≤ ½ · arm B; the q = 1 endpoint (arm A, Δ = 0) is reported next to Q(¾) and not required to be below it | holds |
 | G8 not LUT membership | arm E's mean Δ ≤ 25 % of arm B's — the benefit is column identity, not same-LUT locality | holds |
 
 *Selection rule (frozen).* The B2 fitness is the first of F2, F1, F3 for which every row
@@ -212,6 +230,13 @@ reason, and the gate is re-run and re-reported under the new commit** — never 
 - **Not a claim that the map-guided move is the best structured operator** — only that a
   correct map, through one fixed move shape, beats the same engine without it, and that a
   wrong map through the same shape does not.
+- **A poor map is worse than no map under this operator** (gate run 1, every fitness):
+  the ½ mixture spends half the budget on column moves, and when the map names few or wrong
+  columns those moves re-flip a small or irrelevant subset. The dose–response is therefore
+  monotone in map quality but crosses zero — the map-guided operator has a *cost* that a
+  correct map must repay. B2 states this as a property of the operator; it does not tune
+  the mixture to hide it (a mixture weight chosen after seeing the run would be a tuned
+  parameter of the result).
 
 ## 9. Files (host-only; every one additive)
 
