@@ -1,0 +1,88 @@
+{
+ "architecture": {
+  "path": "docs/b2_architecture.md",
+  "sha256": "6fdc0dcd045e7bb51eb03fb7f23ea845605e756280b0ff32df33ae9bd3c2f544"
+ },
+ "arm_order": "pair r runs A then B when r is even, B then A when r is odd",
+ "budget_per_arm": 600,
+ "carrier": "the qualified B1 carrier (docs/b2_architecture.md D1)",
+ "engine": {
+  "kmax": 4,
+  "lambda": 8,
+  "mu": 4,
+  "version": "b2-es-v1"
+ },
+ "fitness": "F1",
+ "gate": {
+  "head_at_run": "7b49f4ca98acc8178802391a9da4e6216b1a468a",
+  "path": "evidence/b2/gate/gate_report.json",
+  "rules_version": "v0.2",
+  "seeds_master": 1324512209,
+  "sha256": "571196bd509e5eb09897d206a634b508655bb42f293be7eeaf7fba8d4c514c43"
+ },
+ "generated_utc": "2026-09-10T07:14:28Z",
+ "map": {
+  "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json",
+  "sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+  "view": {
+   "cartographer": "carto-v1",
+   "map_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+   "mapped_bits_in_train": 183,
+   "train_columns_named": 40
+  }
+ },
+ "pairs": 9,
+ "prediction_sha256": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+ "primary": {
+  "alpha": 0.05,
+  "statistic": "one-sided exact sign test over the N pairs' delta (best-so-far train fitness at the budget, self-map minus random-safe)",
+  "ties": "excluded from n, counted"
+ },
+ "records": {
+  "champion_holdout": 18,
+  "closing_baseline": 1,
+  "opening_baseline": 1,
+  "search": 10800,
+  "total": 10820
+ },
+ "schema": "b2_plan",
+ "schema_version": "1.0.0",
+ "seed_derivation": {
+  "commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "excluded": [
+   1,
+   2,
+   3,
+   5,
+   11,
+   77,
+   99,
+   1234,
+   4321,
+   176359248,
+   195948557,
+   324805736,
+   521288629,
+   1123460948,
+   1278624577,
+   1278628687,
+   1281816666,
+   2119807262,
+   3735928559,
+   4294967295
+  ],
+  "label": "b2-session",
+  "master_seed": 716169644,
+  "rule": "first 4 bytes of sha256(label + '|' + instrument commit); pairs from one Rng stream; excluded seeds skipped"
+ },
+ "session": "B2",
+ "session_time": {
+  "all_self_reporting_rate_per_hour": 3367.75,
+  "deadline_formula": "1.25 x records x 3600 / rate + 600 (the instrument's l6_schedule.session_timeout_s)",
+  "deadline_s_all_self_reporting": 15057.723999703067,
+  "deadline_s_sampled_audit": 7877.784208432776,
+  "expected_span_s_all_self_reporting": 11566.179199762453,
+  "expected_span_s_sampled_audit": 5822.2273667462205,
+  "sampled_audit_rate_per_hour": 6690.223096142759
+ }
+}
