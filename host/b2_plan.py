@@ -5,8 +5,10 @@
 
 Seeds: master = first 4 bytes of sha256('b2-session|' + the instrument commit) — the B1
 rule under a new label — then N (landscape, operator) pairs from one Rng stream, skipping
-the excluded seeds (B1's master and qualification seeds included). The gate's seeds come
-from a different label and a moving commit, so they are disjoint by construction.
+the fixed excluded seeds (B1's master and qualification seeds included) AND every value of
+every archived run's seed set (gate run 1, gate run 3, the B3 simulation). A different label
+gives a different stream, not a disjoint one: disjointness is ENFORCED by that explicit
+exclusion and the sets are recorded in the plan.
 
 Prediction: the reference engine over the fabric model for every pair and both arms at
 the gate-selected fitness and budget — the per-record fitness sequence (hashed), every
@@ -59,12 +61,19 @@ def frozen_seed_exclusion() -> tuple[set[int], dict]:
     return excl, where
 
 
+class RateInvalid(ValueError):
+    """A rate that is not a finite positive number cannot size anything."""
+
+
 def session_split(n_pairs: int, budget: int, rate_per_hour: float | None) -> dict:
-    """The frozen split rule (preregistration §2): a session holds as many whole pairs as
-    keep its EXPECTED span (records x 3600 / rate) within SESSION_SPAN_MAX_S, at least one;
-    pairs are assigned in order; every session has its own opening and closing baseline.
-    Without a measured rate (before B2Q) the split is UNDETERMINED and only the record
-    arithmetic per candidate split is reported."""
+    """The frozen split rule (preregistration §2): a session holds the largest whole number
+    of pairs whose EXPECTED span (records x 3600 / rate) is within SESSION_SPAN_MAX_S; pairs
+    are assigned in order; every session has its own opening and closing baseline. If not
+    even ONE pair plus its baselines fits, the rate is INFEASIBLE — a named state that
+    prevents S3 (v0.2.1: an empty feasible set is not permission to exceed the limit). A
+    rate that is not a finite positive number raises RateInvalid. Without a rate (before
+    B2Q) the split is UNDETERMINED and only the record arithmetic per candidate split is
+    reported."""
     per_pair = 2 * budget + 2                     # both arms' search + both champions' holdout evaluations
     def records(p):
         return 2 + p * per_pair
@@ -73,7 +82,16 @@ def session_split(n_pairs: int, budget: int, rate_per_hour: float | None) -> dic
                 "candidates": {f"{p} pairs/session": {"records": records(p), "sessions": -(-n_pairs // p),
                                                        "total_records": sum(records(min(p, n_pairs - i * p)) for i in range(-(-n_pairs // p)))}
                                for p in range(1, n_pairs + 1)}}
-    p_max = max(1, max((p for p in range(1, n_pairs + 1) if records(p) * 3600 / rate_per_hour <= SESSION_SPAN_MAX_S), default=1))
+    import math
+    if isinstance(rate_per_hour, bool) or not isinstance(rate_per_hour, (int, float)) or not math.isfinite(rate_per_hour) or rate_per_hour <= 0:
+        raise RateInvalid(f"rate_per_hour must be a finite positive number, got {rate_per_hour!r}")
+    feasible = [p for p in range(1, n_pairs + 1) if records(p) * 3600 / rate_per_hour <= SESSION_SPAN_MAX_S]
+    if not feasible:
+        return {"status": "INFEASIBLE", "rate_per_hour": rate_per_hour, "records_per_pair": per_pair,
+                "one_pair_expected_span_s": records(1) * 3600 / rate_per_hour, "session_span_max_s": SESSION_SPAN_MAX_S,
+                "min_feasible_rate_per_hour": records(1) * 3600 / SESSION_SPAN_MAX_S,
+                "note": "not even one pair with its baselines fits the registered expected span: no S3 plan can be made from this rate"}
+    p_max = max(feasible)
     sessions = []
     left = n_pairs
     while left > 0:
@@ -100,6 +118,39 @@ def decision(deltas: list[int]) -> dict:
             "verdict": "map-guided > random-safe SUPPORTED" if p <= ALPHA else "NOT SUPPORTED"}
 
 
+def predict(fid: str, budget: int, seeds: list[tuple[int, int]], map_sha256: str | None = None) -> dict:
+    """The reference engine over the fabric model for the pairs: per-pair runs, deltas, the
+    fitness-sequence hash. Pure: the same inputs give the same bytes (the manifest's plan
+    validator re-derives it)."""
+    truth = bm.truth_mapping()
+    masks = bl.universe_mask(truth)
+    fabric = bs.ModelFabric(truth)
+    self_map = bmaps.load_self_map()
+    if map_sha256 is not None and bmaps.sha256_of(self_map) != map_sha256:
+        raise ValueError("the committed self-map is not the one the caller expects")
+    view = bmaps.MapView(self_map, bl.train_vectors())
+    pairs = []
+    fitness_sequence: list[int] = []
+    for r, (l_seed, o_seed) in enumerate(seeds):
+        land = bl.Landscape(fid, l_seed, masks=masks, truth=truth)
+        order = ("A", "B") if r % 2 == 0 else ("B", "A")     # the arm order alternates by pair
+        runs = {}
+        for arm in order:
+            rr = bs.run(bs.ARM_RANDOM_SAFE if arm == "A" else bs.ARM_MAP_GUIDED, land, view if arm == "B" else None, o_seed, budget, fabric, log_moves=True)
+            fitness_sequence.extend(m["fit"] for m in rr.moves)
+            runs[arm] = {"best_train": rr.best_trace[-1], "champion_genome_sha256": hashlib.sha256(bc.genome_to_hex(rr.champion.genome).encode()).hexdigest(),
+                         "champion_holdout": rr.champion_holdout, "column_moves": rr.column_moves,
+                         "moves_sha256": sha256_json([[m["parent"], m["kind"], m["bits"], m["fit"]] for m in rr.moves])}
+        for arm in order:
+            fitness_sequence.append(runs[arm]["champion_holdout"])
+        pairs.append({"pair": r, "landscape_seed": l_seed, "operator_seed": o_seed, "arm_order": list(order),
+                      "target": [f"{t:016x}" for t in land.target], "base_train_fitness": land.train_fitness(fabric(0)),
+                      "runs": runs, "delta_B_minus_A": runs["B"]["best_train"] - runs["A"]["best_train"]})
+    deltas = [p["delta_B_minus_A"] for p in pairs]
+    return {"pairs": pairs, "deltas": deltas, "fitness_sequence_sha256": sha256_json(fitness_sequence), "fitness_sequence_length": len(fitness_sequence),
+            "map_sha256": bmaps.sha256_of(self_map), "view": view.describe()}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="evidence/b2")
@@ -121,29 +172,10 @@ def main(argv=None) -> int:
     master = bs.master_seed(SESSION_LABEL, INSTRUMENT_COMMIT)
     exclusion, exclusion_sources = frozen_seed_exclusion()
     seeds = bs.pair_seeds(master, n_pairs, exclude=exclusion)
-    truth = bm.truth_mapping()
-    masks = bl.universe_mask(truth)
-    fabric = bs.ModelFabric(truth)
+    pr = predict(fid, budget, seeds)
+    pairs, deltas, fitness_sequence_sha256 = pr["pairs"], pr["deltas"], pr["fitness_sequence_sha256"]
     self_map = bmaps.load_self_map()
     view = bmaps.MapView(self_map, bl.train_vectors())
-    pairs = []
-    fitness_sequence: list[int] = []
-    for r, (l_seed, o_seed) in enumerate(seeds):
-        land = bl.Landscape(fid, l_seed, masks=masks, truth=truth)
-        order = ("A", "B") if r % 2 == 0 else ("B", "A")     # the arm order alternates by pair
-        runs = {}
-        for arm in order:
-            rr = bs.run(bs.ARM_RANDOM_SAFE if arm == "A" else bs.ARM_MAP_GUIDED, land, view if arm == "B" else None, o_seed, budget, fabric, log_moves=True)
-            fitness_sequence.extend(m["fit"] for m in rr.moves)
-            runs[arm] = {"best_train": rr.best_trace[-1], "champion_genome_sha256": hashlib.sha256(bc.genome_to_hex(rr.champion.genome).encode()).hexdigest(),
-                         "champion_holdout": rr.champion_holdout, "column_moves": rr.column_moves,
-                         "moves_sha256": sha256_json([[m["parent"], m["kind"], m["bits"], m["fit"]] for m in rr.moves])}
-        for arm in order:
-            fitness_sequence.append(runs[arm]["champion_holdout"])
-        pairs.append({"pair": r, "landscape_seed": l_seed, "operator_seed": o_seed, "arm_order": list(order),
-                      "target": [f"{t:016x}" for t in land.target], "base_train_fitness": land.train_fitness(fabric(0)),
-                      "runs": runs, "delta_B_minus_A": runs["B"]["best_train"] - runs["A"]["best_train"]})
-    deltas = [p["delta_B_minus_A"] for p in pairs]
     records = 1 + n_pairs * 2 * budget + n_pairs * 2 + 1
     rate_sampled = bg.SAMPLED_AUDIT_RATE_PER_HOUR
     rate_all = bg.ALL_SELF_REPORTING_RATE_PER_HOUR
@@ -177,7 +209,7 @@ def main(argv=None) -> int:
     prediction = {
         "schema": "b2_prediction", "schema_version": "1.0.0", "fitness": fid, "budget_per_arm": budget, "pairs": pairs,
         "deltas": deltas, "predicted_primary": decision(deltas),
-        "fitness_sequence_sha256": sha256_json(fitness_sequence), "fitness_sequence_length": len(fitness_sequence),
+        "fitness_sequence_sha256": fitness_sequence_sha256, "fitness_sequence_length": pr["fitness_sequence_length"],
         "note": "every value is the reference engine over the fabric model; on a correct instrument the board reproduces them byte for byte",
     }
     out.mkdir(parents=True, exist_ok=True)

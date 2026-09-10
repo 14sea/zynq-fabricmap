@@ -15,7 +15,9 @@
 > approval of the reviewed issues.
 >
 > **v0.2 — the correction batch (same day), submitted for the owner's re-review. HOLD
-> stands until the owner lifts it.** §0a below maps each finding to its correction and
+> stands until the owner lifts it.** **v0.2.1** — the second review
+> (`docs/b2_b3_host_review_v02_2026_09_10.md`) closed five of the six findings and found four
+> P2 defects in the lifecycle's enforcement; §0b maps those to their corrections. §0a below maps each finding to its correction and
 > evidence; §1 lists the new files; §3 is what is asked now. Nothing in the engine, the
 > mixture, the fitness family or the session seeds changed; run 1 / run 3 / B3 raw files and
 > reports are untouched; corrected summaries are in separately labelled directories.
@@ -37,15 +39,20 @@ non-additive fitnesses were fixed in a frozen order; the (μ + λ) engine and th
 operators are shared code with one difference; five controls (oracle, shuffled,
 within-LUT-shuffled, three degraded maps) ride the same code path. The **discriminability
 gate** (host simulation, 200 landscape seeds, every arm, every fitness) was specified
-before it ran. Run 1 failed every fitness on three rules that the run showed were
-mis-specified (cost, a wrong "a negative must appear" test, a wrong continuity assumption);
-the rules were revised **with the reasons written down and the first report kept**, and
-run 3 on a clean tree with fresh seeds **passes F1** (B* = 600 evaluations per arm, N = 9
-pairs, 10 800 evaluations ≈ 1.6 h at the sampled-audit rate). F2 and F3 also discriminate
-but cost 2–3× more board time. The shuffled and within-LUT maps **lose** to random-safe,
-the benefit is column identity not LUT membership, the dose–response is monotone and
-crosses zero (a poor map is worse than none), holdout is neutral. The frozen session seeds
-predict **8 of 9 pairs positive (p = 0.0195)** — the minimum that passes.
+before it ran. Run 1 failed every fitness on four rows that the run showed were
+mis-specified (the budget rule, a wrong "a negative must appear" test, a cost cap tied to
+an unstated audit policy, a wrong continuity assumption); the rules were revised **with the
+reasons written down and the first report kept**, and run 3 on a clean tree with fresh
+seeds **passes F1**; re-evaluated under rules v0.3 (§0a) it still does: B* = 600
+evaluations per arm, N = 9 pairs, **10 800 evaluations in total** — how many
+all-self-reporting sessions they take is decided by the B2Q-measured rate (three at the
+last B1 mapping's rate). F2 and F3 also discriminate but cost 2× more. The shuffled and
+within-LUT maps **lose** to random-safe, and the predeclared controls of v0.3 §7a show the
+benefit is **correct column grouping** beyond train membership and beyond the size
+distributions (G9); the dose–response is monotone and crosses zero (a poor map is worse
+than none); holdout is neutral **for F1 / F2** (F3's trajectories reach holdout rows). The
+frozen session seeds predict **8 of 9 pairs positive (p = 0.0195)** — the minimum that
+passes; the silicon run is a prospective reproduction of that prediction.
 
 ## 0a. The review's findings and their corrections (v0.2)
 
@@ -59,6 +66,16 @@ predict **8 of 9 pairs positive (p = 0.0195)** — the minimum that passes.
 | a negative primary was impossible under the EXACT prediction gate | the silicon run is a **prospective reproduction of a predicted outcome**; a mismatch is HOLD / KILL; the falsifier that could not occur is removed; a design whose primary is not fixed by the prediction is named as a separate preregistration | `docs/b2_preregistration.md` §1, §3, §4, §5 |
 | documentation / provenance (review §3) | four changed rows; `9f347e9` vs `342450b`; canonical-JSON vs file-byte digests (`c6a4b23e…` / `b6607a9a…`), both pinned in the manifest; F3's train trajectories enter holdout rows (seed 123 example) — the neutrality reading restricted to F1 / F2; F1 / F2 have many train optima; Cohen's d at the selected budgets **F2 1.4437, F1 1.5364, F3 0.8506** (§2 below corrected); seed exclusion explicit (1 223 values, recorded in the plan); the sign test stated exactly (ties move the threshold); B3's accounting named an evaluation-count model; "grow without bound" withdrawn; O − F at all budgets = exploratory | `docs/b2_architecture.md` v0.3 header and §8, `docs/b3_architecture.md`, `host/b2_plan.py` |
 | the "ahead 10" statement | nine commits were ahead of `6ac2cf2` at review; corrected in the memory file | — |
+
+## 0b. The second review's lifecycle findings and their corrections (v0.2.1)
+
+| finding (review v02 §2) | correction | where |
+|---|---|---|
+| 1 frozen live inputs not enforced (missing pins filtered out; lineage a diagnostic; a stored chain flag; prereg / map / image not re-hashed) | `verify()` refuses on: any required pin missing from the manifest, absent from the tree or changed; the map changed in **either** encoding or no longer validating; the frozen preregistration's bytes changed; the build-evidence file changed or not naming the image; the B1 manifest file changed or its carrier not this carrier; and the B1 qualification chain **re-verified fresh** by `b1_qualification.verify` on every call (no stored flag). File-only mutation tests on a mirrored tree (deletion, whitespace on prereg / map / B1 manifest) with an unchanged manifest and evidence | `host/b2_manifest.py` `_check_frozen_inputs`, `tests/test_b2_lifecycle.py` |
+| 2 calibration and record not reconstructed from evidence | the record is **reconstructed from the evidence files** (exact file set, hashes, the adjudication's outcome / rate / policy, the binding from `manifest_at_run`) and compared field by field with the embedded one; the record schema and key sets are exact; the calibration must equal the one derived from the reconstruction under the split rule; the re-adjudication must agree on outcome **and** rate **and** policy; the policy must be the frozen audit policy. Record + calibration co-mutation, policy change, empty file table: each refused with unchanged evidence | same; tests |
+| 3 S3 plan derivation unvalidated | one validator `plan_findings` used at pinning and at every verify: fitness / budget / pairs / engine / map (canonical digest and path) / audit policy / seed derivation (master, label, commit) / the whole split against the calibration / the span limit / the prediction file's hash / the prediction's seed sequence / **the prediction re-derived by the reference engine** (`b2_plan.predict`) for the frozen experiment, seeds and map. `pin_plan` verifies the manifest first (never its flag) and re-verifies the result. Wrong-field tests at pinning and at re-verification with the file hash updated | same; `host/b2_plan.predict`; tests |
+| 4 infeasible rate accepted | `session_split` raises on a non-finite / non-positive rate and returns **INFEASIBLE** when not even one pair with its baselines fits the registered expected span; `calibration_from` and `plan_findings` refuse on INFEASIBLE; the one-pair boundary (602 records / h) and 0 / −1 / NaN / ∞ are tests | `host/b2_plan.py`, `tests/test_b2_plan.py` |
+| P3 documentation | §0 above agrees with §0a (four rows, total evaluations, F1 / F2 holdout); the plan module's docstring says exclusion is enforced, not assumed | — |
 
 ## 1. What was built (host-only; every file additive; nothing in B1 or the instrument changed)
 

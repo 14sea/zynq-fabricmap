@@ -61,8 +61,17 @@ class Committed(unittest.TestCase):
         self.assertTrue(all(x["expected_span_s"] <= bp.SESSION_SPAN_MAX_S for x in s["sessions"]))
         s2 = bp.session_split(9, 600, 2807.0)     # the last B1 mapping's observed rate: still 4 per session
         self.assertEqual(s2["pairs_per_session_max"], 4)
-        s3 = bp.session_split(9, 600, 500.0)      # a very slow rate: one pair per session, never zero
-        self.assertEqual(s3["pairs_per_session_max"], 1)
+        # the one-pair boundary: 1 204 records in 7 200 s needs 602 / h
+        self.assertEqual(bp.session_split(9, 600, 602.0)["pairs_per_session_max"], 1)
+        self.assertEqual(len(bp.session_split(9, 600, 602.0)["sessions"]), 9)
+        inf = bp.session_split(9, 600, 601.0)
+        self.assertEqual(inf["status"], "INFEASIBLE")
+        self.assertNotIn("sessions", inf)
+        self.assertAlmostEqual(inf["min_feasible_rate_per_hour"], 1204 * 3600 / 7200)
+        self.assertEqual(bp.session_split(9, 600, 100.0)["status"], "INFEASIBLE")      # the review's 12-hour case
+        for bad in (0, -1, float("inf"), float("nan"), True, "2500"):
+            with self.assertRaises((bp.RateInvalid, TypeError)):
+                bp.session_split(9, 600, bad)
 
     def test_seed_exclusion_is_explicit_and_covers_every_archived_set(self):
         excl, sources = bp.frozen_seed_exclusion()

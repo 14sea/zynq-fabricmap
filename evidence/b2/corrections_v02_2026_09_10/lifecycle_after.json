@@ -1,0 +1,115 @@
+{
+  "S3_changed_master_seed_and_rehashed_plan": {
+    "accepted": false,
+    "refusal": "S3: the plan's seed derivation (master / label / commit) is not the manifest's; prediction.json is absent beside the plan"
+  },
+  "audit_policy_changed_original_evidence_all_self_reporting": {
+    "accepted": false,
+    "refusal": "the manifest's qualified flag disagrees with its evidence: the record's audit_policy is not what the evidence gives"
+  },
+  "baseline_S2": {
+    "accepted": true,
+    "checks": {
+      "image": "ok",
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "baseline_S3": {
+    "accepted": true,
+    "checks": {
+      "image": "ok",
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "stage": "S3"
+    },
+    "qualified": true
+  },
+  "baseline_mirrored_tree": {
+    "accepted": true,
+    "checks": {
+      "image": "ok",
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "changed_lineage_manifest_file_only": {
+    "accepted": false,
+    "refusal": "lineage: the B1 manifest file is absent or changed"
+  },
+  "changed_map_file_only": {
+    "accepted": false,
+    "refusal": "map: the map file bytes changed"
+  },
+  "changed_prereg_file_only": {
+    "accepted": false,
+    "refusal": "prereg: the frozen preregistration file is absent or changed"
+  },
+  "empty_evidence_file_table": {
+    "accepted": false,
+    "refusal": "the manifest's qualified flag disagrees with its evidence: the record's file set is not exactly ['run_log.json', 'adjudication.json', 'manifest_at_run.json']"
+  },
+  "invalid_rate_-1": {
+    "exception": "RateInvalid",
+    "message": "rate_per_hour must be a finite positive number, got -1"
+  },
+  "invalid_rate_0": {
+    "exception": "RateInvalid",
+    "message": "rate_per_hour must be a finite positive number, got 0"
+  },
+  "invalid_rate_inf": {
+    "exception": "RateInvalid",
+    "message": "rate_per_hour must be a finite positive number, got inf"
+  },
+  "invalid_rate_nan": {
+    "exception": "RateInvalid",
+    "message": "rate_per_hour must be a finite positive number, got nan"
+  },
+  "missing_pinned_search_file": {
+    "accepted": false,
+    "refusal": "pins: pinned files absent from the tree: ['host/b2_search.py']"
+  },
+  "pin_plan_accepts_wrong_audit_policy": {
+    "accepted": false,
+    "refusal": "plan: the plan's audit policy is not the frozen one; prediction.json is absent beside the plan"
+  },
+  "pin_plan_accepts_wrong_engine": {
+    "accepted": false,
+    "refusal": "plan: engine constants differ from the manifest's; prediction.json is absent beside the plan"
+  },
+  "pin_plan_accepts_wrong_map": {
+    "accepted": false,
+    "refusal": "plan: the plan's map is not the manifest's map (canonical digest / path); prediction.json is absent beside the plan"
+  },
+  "pin_plan_accepts_wrong_prediction_digest": {
+    "accepted": false,
+    "refusal": "plan: prediction.json is absent beside the plan"
+  },
+  "rate_changed_in_record_and_calibration_original_evidence_2500": {
+    "accepted": false,
+    "claimed_rate": 100000.0,
+    "refusal": "the manifest's qualified flag disagrees with its evidence: the record's measured_rate_per_hour is not what the evidence gives"
+  },
+  "slow_positive_rate": {
+    "detail": {
+      "min_feasible_rate_per_hour": 602.0,
+      "one_pair_expected_span_s": 43344.0,
+      "rate_per_hour": 100,
+      "records_per_pair": 1202,
+      "session_span_max_s": 7200,
+      "status": "INFEASIBLE"
+    },
+    "rate_per_hour": 100,
+    "status": "INFEASIBLE"
+  }
+}
