@@ -103,9 +103,13 @@ def decision(deltas: list[int]) -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="evidence/b2")
+    ap.add_argument("--rate-per-hour", type=float, default=None,
+                    help="the B2Q-measured all-self-reporting rate from the manifest's calibration (S3); without it the split is UNDETERMINED")
+    ap.add_argument("--gate-report", default=None, help="override the gate report path (tests)")
     args = ap.parse_args(argv)
+    gate_report = Path(args.gate_report) if args.gate_report else GATE_REPORT
     out = REPO_ROOT / args.out
-    gate = json.loads(GATE_REPORT.read_text())
+    gate = json.loads(gate_report.read_text())
     if gate["thresholds"].get("rules_version") != bg.THRESHOLDS["rules_version"]:
         raise SystemExit(f"the gate report's rules ({gate['thresholds'].get('rules_version')}) are not the current ones ({bg.THRESHOLDS['rules_version']})")
     fid = gate["selected_fitness"]
@@ -153,14 +157,14 @@ def main(argv=None) -> int:
                                     "seeds AND every archived run's seed set skipped (explicit exclusion — disjointness is enforced, not assumed)",
                             "excluded_fixed": sorted(bs.EXCLUDED_SEEDS), "excluded_frozen_sets": exclusion_sources,
                             "excluded_values_total": len(exclusion | set(bs.EXCLUDED_SEEDS))},
-        "gate": {"path": str(GATE_REPORT.relative_to(REPO_ROOT)), "sha256": sha256_file(GATE_REPORT), "head_at_run": gate["head_at_run"],
+        "gate": {"path": str(gate_report.relative_to(REPO_ROOT)) if gate_report.is_relative_to(REPO_ROOT) else str(gate_report), "sha256": sha256_file(gate_report), "head_at_run": gate["head_at_run"],
                  "rules_version": gate["thresholds"]["rules_version"], "rows_from": gate.get("source"),
                  "run_report": {"path": str(GATE_RUN_REPORT.relative_to(REPO_ROOT)), "sha256": sha256_file(GATE_RUN_REPORT)}},
         "audit_policy": AUDIT_POLICY,
         "records": {"per_pair": 2 * budget + 2, "single_session_total": records,
                     "note": "one opening and one closing baseline PER SESSION; the total depends on the split (session_split)"},
         "arm_order": "pair r runs A then B when r is even, B then A when r is odd",
-        "session_split": session_split(n_pairs, budget, None),
+        "session_split": session_split(n_pairs, budget, args.rate_per_hour),
         "session_span_max_s": SESSION_SPAN_MAX_S, "deadline_formula": DEADLINE_FORMULA,
         "planning_rates_NOT_calibration": {"sampled_audit_S3_per_hour": rate_sampled, "all_self_reporting_B1plan_per_hour": rate_all,
                                            "last_B1_mapping_observed_per_hour": 2807,

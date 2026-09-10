@@ -38,17 +38,38 @@ class Committed(unittest.TestCase):
         self.assertNotIn(master, bs.EXCLUDED_SEEDS)
 
     def test_fitness_budget_pairs_are_the_gates(self):
-        gate = json.loads((R / "evidence/b2/gate/gate_report.json").read_text())
+        gate = json.loads((R / self.plan["gate"]["path"]).read_text())
         fid = gate["selected_fitness"]
         self.assertEqual(self.plan["fitness"], fid)
         self.assertEqual(self.plan["budget_per_arm"], gate["results"][fid]["b_star"])
         self.assertEqual(self.plan["pairs"], gate["results"][fid]["criteria"]["G5"]["required_pairs_N"])
-        self.assertEqual(self.plan["gate"]["sha256"], hashlib.sha256((R / "evidence/b2/gate/gate_report.json").read_bytes()).hexdigest())
+        self.assertEqual(self.plan["gate"]["sha256"], hashlib.sha256((R / self.plan["gate"]["path"]).read_bytes()).hexdigest())
+        self.assertEqual(self.plan["gate"]["rules_version"], bg.THRESHOLDS["rules_version"])
 
-    def test_record_count(self):
+    def test_record_count_and_split_arithmetic(self):
         n, b = self.plan["pairs"], self.plan["budget_per_arm"]
-        self.assertEqual(self.plan["records"]["total"], 1 + n * 2 * b + n * 2 + 1)
+        self.assertEqual(self.plan["records"]["single_session_total"], 1 + n * 2 * b + n * 2 + 1)
+        self.assertEqual(self.plan["records"]["per_pair"], 2 * b + 2)
         self.assertEqual(self.pred["fitness_sequence_length"], n * 2 * b + n * 2)
+        self.assertEqual(self.plan["audit_policy"], "all-self-reporting")
+        self.assertEqual(self.plan["session_split"]["status"][:12], "UNDETERMINED")
+        # the split rule: with a measured rate, whole pairs per session within the two-hour expected span
+        s = bp.session_split(9, 600, 2500.0)
+        self.assertEqual(s["pairs_per_session_max"], 4)
+        self.assertEqual([len(x["pairs"]) for x in s["sessions"]], [4, 4, 1])
+        self.assertEqual(s["total_records"], 3 * 2 + 9 * 1202)
+        self.assertTrue(all(x["expected_span_s"] <= bp.SESSION_SPAN_MAX_S for x in s["sessions"]))
+        s2 = bp.session_split(9, 600, 2807.0)     # the last B1 mapping's observed rate: still 4 per session
+        self.assertEqual(s2["pairs_per_session_max"], 4)
+        s3 = bp.session_split(9, 600, 500.0)      # a very slow rate: one pair per session, never zero
+        self.assertEqual(s3["pairs_per_session_max"], 1)
+
+    def test_seed_exclusion_is_explicit_and_covers_every_archived_set(self):
+        excl, sources = bp.frozen_seed_exclusion()
+        self.assertEqual(set(sources), set(bp.FROZEN_SEED_SETS))
+        self.assertEqual(self.plan["seed_derivation"]["excluded_values_total"], len(excl | set(bs.EXCLUDED_SEEDS)))
+        mine = {x for p in self.pred["pairs"] for x in (p["landscape_seed"], p["operator_seed"])}
+        self.assertFalse(mine & excl)
 
     def test_prediction_pinned_in_plan(self):
         self.assertEqual(self.plan["prediction_sha256"], hashlib.sha256(PRED.read_bytes()).hexdigest())

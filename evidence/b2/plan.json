@@ -1,11 +1,13 @@
 {
  "architecture": {
   "path": "docs/b2_architecture.md",
-  "sha256": "6fdc0dcd045e7bb51eb03fb7f23ea845605e756280b0ff32df33ae9bd3c2f544"
+  "sha256": "6f063228284d2339391b09dea3afdd8a3e719025427455e49d011489b642524e"
  },
  "arm_order": "pair r runs A then B when r is even, B then A when r is odd",
+ "audit_policy": "all-self-reporting",
  "budget_per_arm": 600,
  "carrier": "the qualified B1 carrier (docs/b2_architecture.md D1)",
+ "deadline_formula": "1.25 x records x 3600 / rate + 600 (the instrument's l6_schedule.session_timeout_s)",
  "engine": {
   "kmax": 4,
   "lambda": 8,
@@ -14,13 +16,54 @@
  },
  "fitness": "F1",
  "gate": {
-  "head_at_run": "7b49f4ca98acc8178802391a9da4e6216b1a468a",
-  "path": "evidence/b2/gate/gate_report.json",
-  "rules_version": "v0.2",
-  "seeds_master": 1324512209,
-  "sha256": "571196bd509e5eb09897d206a634b508655bb42f293be7eeaf7fba8d4c514c43"
+  "head_at_run": "fcfff981cf007fd96889c88794b98d0df3988061",
+  "path": "evidence/b2/gate/recomputed_2026_09_10/gate_report.json",
+  "rows_from": {
+   "gate_report_sha256": "571196bd509e5eb09897d206a634b508655bb42f293be7eeaf7fba8d4c514c43",
+   "path": "evidence/b2/gate",
+   "raw_sha256": {
+    "F1": "b821c24998dece562026d41c094509da98cfd5430b099ea52ec35dc44050e0bf",
+    "F2": "6194ed690afd5107a76cd081f158a174d2147c3f364e331e0c58ebba74dcab5f",
+    "F3": "8a751a23c7e3088f85f39f2da32a175648623861d525099dcfb05c93eb8111a9"
+   },
+   "rules_version_at_source": "v0.2",
+   "seeds": {
+    "count": 200,
+    "derivation": "first 4 bytes of sha256('b2-gate|' + HEAD), pairs from one Rng stream, excluded seeds skipped",
+    "excluded": [
+     1,
+     2,
+     3,
+     5,
+     11,
+     77,
+     99,
+     1234,
+     4321,
+     176359248,
+     195948557,
+     324805736,
+     521288629,
+     1123460948,
+     1278624577,
+     1278628687,
+     1281816666,
+     2119807262,
+     3735928559,
+     4294967295
+    ],
+    "label": "b2-gate",
+    "master_seed": 1324512209
+   }
+  },
+  "rules_version": "v0.3",
+  "run_report": {
+   "path": "evidence/b2/gate/gate_report.json",
+   "sha256": "571196bd509e5eb09897d206a634b508655bb42f293be7eeaf7fba8d4c514c43"
+  },
+  "sha256": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c"
  },
- "generated_utc": "2026-09-10T07:14:28Z",
+ "generated_utc": "2026-09-10T07:54:39Z",
  "map": {
   "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json",
   "sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
@@ -32,6 +75,12 @@
   }
  },
  "pairs": 9,
+ "planning_rates_NOT_calibration": {
+  "all_self_reporting_B1plan_per_hour": 3367.75,
+  "last_B1_mapping_observed_per_hour": 2807,
+  "note": "older P3/B1 rates, shown for planning only; the B2 rate is measured by B2Q and written into the manifest before the split is determined (preregistration \u00a76, \u00a78)",
+  "sampled_audit_S3_per_hour": 6690.223096142759
+ },
  "prediction_sha256": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
  "primary": {
   "alpha": 0.05,
@@ -39,17 +88,15 @@
   "ties": "excluded from n, counted"
  },
  "records": {
-  "champion_holdout": 18,
-  "closing_baseline": 1,
-  "opening_baseline": 1,
-  "search": 10800,
-  "total": 10820
+  "note": "one opening and one closing baseline PER SESSION; the total depends on the split (session_split)",
+  "per_pair": 1202,
+  "single_session_total": 10820
  },
  "schema": "b2_plan",
  "schema_version": "1.0.0",
  "seed_derivation": {
   "commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
-  "excluded": [
+  "excluded_fixed": [
    1,
    2,
    3,
@@ -71,18 +118,79 @@
    3735928559,
    4294967295
   ],
+  "excluded_frozen_sets": {
+   "evidence/b2/gate/gate_report.json": {
+    "count": 200,
+    "master_seed": 1324512209,
+    "values": 401
+   },
+   "evidence/b2/gate/v0.1_2026-09-10/gate_report.json": {
+    "count": 200,
+    "master_seed": 2131041347,
+    "values": 401
+   },
+   "evidence/b3/sim/sim_report.json": {
+    "count": 200,
+    "master_seed": 3829368064,
+    "values": 401
+   }
+  },
+  "excluded_values_total": 1223,
   "label": "b2-session",
   "master_seed": 716169644,
-  "rule": "first 4 bytes of sha256(label + '|' + instrument commit); pairs from one Rng stream; excluded seeds skipped"
+  "rule": "first 4 bytes of sha256(label + '|' + instrument commit); pairs from one Rng stream; the fixed excluded seeds AND every archived run's seed set skipped (explicit exclusion \u2014 disjointness is enforced, not assumed)"
  },
  "session": "B2",
- "session_time": {
-  "all_self_reporting_rate_per_hour": 3367.75,
-  "deadline_formula": "1.25 x records x 3600 / rate + 600 (the instrument's l6_schedule.session_timeout_s)",
-  "deadline_s_all_self_reporting": 15057.723999703067,
-  "deadline_s_sampled_audit": 7877.784208432776,
-  "expected_span_s_all_self_reporting": 11566.179199762453,
-  "expected_span_s_sampled_audit": 5822.2273667462205,
-  "sampled_audit_rate_per_hour": 6690.223096142759
+ "session_span_max_s": 7200,
+ "session_split": {
+  "candidates": {
+   "1 pairs/session": {
+    "records": 1204,
+    "sessions": 9,
+    "total_records": 10836
+   },
+   "2 pairs/session": {
+    "records": 2406,
+    "sessions": 5,
+    "total_records": 10828
+   },
+   "3 pairs/session": {
+    "records": 3608,
+    "sessions": 3,
+    "total_records": 10824
+   },
+   "4 pairs/session": {
+    "records": 4810,
+    "sessions": 3,
+    "total_records": 10824
+   },
+   "5 pairs/session": {
+    "records": 6012,
+    "sessions": 2,
+    "total_records": 10822
+   },
+   "6 pairs/session": {
+    "records": 7214,
+    "sessions": 2,
+    "total_records": 10822
+   },
+   "7 pairs/session": {
+    "records": 8416,
+    "sessions": 2,
+    "total_records": 10822
+   },
+   "8 pairs/session": {
+    "records": 9618,
+    "sessions": 2,
+    "total_records": 10822
+   },
+   "9 pairs/session": {
+    "records": 10820,
+    "sessions": 1,
+    "total_records": 10820
+   }
+  },
+  "records_per_pair": 1202,
+  "status": "UNDETERMINED until B2Q measures the all-self-reporting rate"
  }
 }
