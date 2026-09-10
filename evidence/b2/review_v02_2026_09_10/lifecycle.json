@@ -1,0 +1,190 @@
+{
+  "S3_changed_master_seed_and_rehashed_plan": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S3"
+    },
+    "qualified": true
+  },
+  "audit_policy_changed_original_evidence_all_self_reporting": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "baseline_S2": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "baseline_S3": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S3"
+    },
+    "qualified": true
+  },
+  "baseline_mirrored_tree": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "changed_lineage_manifest_file_only": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": false,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "changed_map_file_only": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "changed_prereg_file_only": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "empty_evidence_file_table": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "invalid_rate_-1": {
+    "expected_span_s": "-38952000.0",
+    "status": "DETERMINED"
+  },
+  "invalid_rate_0": {
+    "exception": "ZeroDivisionError",
+    "message": "division by zero"
+  },
+  "invalid_rate_inf": {
+    "expected_span_s": "0.0",
+    "status": "DETERMINED"
+  },
+  "invalid_rate_nan": {
+    "expected_span_s": "nan",
+    "status": "DETERMINED"
+  },
+  "missing_pinned_search_file": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "pin_plan_accepts_wrong_audit_policy": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S3"
+    },
+    "qualified": true
+  },
+  "pin_plan_accepts_wrong_engine": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S3"
+    },
+    "qualified": true
+  },
+  "pin_plan_accepts_wrong_map": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S3"
+    },
+    "qualified": true
+  },
+  "pin_plan_accepts_wrong_prediction_digest": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S3"
+    },
+    "qualified": true
+  },
+  "rate_changed_in_record_and_calibration_original_evidence_2500": {
+    "accepted": true,
+    "checks": {
+      "lineage_b1_chain_verified": true,
+      "lineage_b1_manifest_hash": true,
+      "lineage_bitstream_matches_carrier": true,
+      "pins_drifted": [],
+      "stage": "S2"
+    },
+    "claimed_rate": 100000.0,
+    "qualified": true
+  },
+  "slow_positive_rate": {
+    "expected_span_s": 43344.0,
+    "rate_per_hour": 100,
+    "registered_max_s": 7200,
+    "status": "DETERMINED"
+  }
+}

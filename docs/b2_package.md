@@ -1,5 +1,12 @@
 # B2 — the pre-image package: what was built, what the gate showed, what is asked (v0.2, host-only, 2026-09-10)
 
+> **v0.2 re-review: HOLD remains.** Five previous P2 findings are resolved at the
+> host-design stage. Four reproducible P2 findings remain in the new lifecycle:
+> live input verification, evidence-derived calibration, complete plan derivation,
+> and refusal of infeasible session durations. See
+> [the correction-batch review](b2_b3_host_review_v02_2026_09_10.md).
+> Push and image construction are not cleared.
+
 > **Review HOLD (2026-09-10).** Nominal simulation results reproduce, but the control
 > design, minimum-N search, B3 anomaly handling and B2 evidence/qualification contracts
 > require correction before image construction or push approval. Decisions on D1–D4,

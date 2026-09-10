@@ -1,0 +1,130 @@
+{
+  "b3": {
+    "F1": {
+      "all_rows_byte_identical": 200,
+      "all_rows_statistics_reproduced": true,
+      "fresh_full_grid_rows": [
+        0,
+        199
+      ]
+    },
+    "F2": {
+      "all_rows_byte_identical": 200,
+      "all_rows_statistics_reproduced": true,
+      "fresh_full_grid_rows": [
+        0,
+        199
+      ]
+    }
+  },
+  "control_criteria_committed_before_run": true,
+  "controls": {
+    "F1": {
+      "T": {
+        "mean": 3.235,
+        "negative": 17,
+        "p": 5.716268818643284e-33,
+        "positive": 169,
+        "ties": 14
+      },
+      "W": {
+        "mean": 3.63,
+        "negative": 17,
+        "p": 9.477367415970141e-34,
+        "positive": 172,
+        "ties": 11
+      },
+      "fresh_full_grid_rows": [
+        0,
+        199
+      ]
+    },
+    "F2": {
+      "T": {
+        "mean": 14.495,
+        "negative": 9,
+        "p": 2.799751123868875e-45,
+        "positive": 189,
+        "ties": 2
+      },
+      "W": {
+        "mean": 16.655,
+        "negative": 3,
+        "p": 1.249668092167185e-53,
+        "positive": 193,
+        "ties": 4
+      },
+      "fresh_full_grid_rows": [
+        0,
+        199
+      ]
+    },
+    "F3": {
+      "T": {
+        "mean": 9.945,
+        "negative": 28,
+        "p": 1.3488654521613356e-25,
+        "positive": 167,
+        "ties": 5
+      },
+      "W": {
+        "mean": 10.105,
+        "negative": 25,
+        "p": 9.360295559354745e-28,
+        "positive": 169,
+        "ties": 6
+      },
+      "fresh_full_grid_rows": [
+        0,
+        199
+      ]
+    }
+  },
+  "deltas": [
+    2,
+    5,
+    6,
+    3,
+    4,
+    6,
+    1,
+    -2,
+    5
+  ],
+  "excluded_seed_values": 1223,
+  "head": "df28407dced596e9c33f67be1c51bd898de77c13",
+  "prediction_bytes_reproduced": true,
+  "search_unchanged_before_pair_seeds_helper": true,
+  "selected_budget_power": {
+    "F1": {
+      "budget": 600,
+      "minimum_N": 9,
+      "power": 0.934
+    },
+    "F2": {
+      "budget": 1500,
+      "minimum_N": 8,
+      "power": 0.901
+    },
+    "F3": {
+      "budget": 800,
+      "minimum_N": 13,
+      "power": 0.91
+    }
+  },
+  "unchanged_since_original_submission": [
+    "host/b2_landscape.py",
+    "evidence/b2/prediction.json",
+    "evidence/b2/gate/v0.1_2026-09-10/gate_report.json",
+    "evidence/b2/gate/v0.1_2026-09-10/raw_F3.json",
+    "evidence/b2/gate/v0.1_2026-09-10/raw_F2.json",
+    "evidence/b2/gate/v0.1_2026-09-10/raw_F1.json",
+    "evidence/b3/sim/sim_report.json",
+    "evidence/b3/sim/raw_F2.json",
+    "evidence/b3/sim/raw_F1.json",
+    "evidence/b2/gate/gate_report.json",
+    "evidence/b2/gate/raw_F1.json",
+    "evidence/b2/gate/raw_F2.json",
+    "evidence/b2/gate/raw_F3.json"
+  ]
+}
