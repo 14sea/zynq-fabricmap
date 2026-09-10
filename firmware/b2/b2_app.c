@@ -1274,7 +1274,7 @@ static int run_candidate(const uint32_t genome[P3_GENOME_WORDS], int is_baseline
             p3_stop(P3_STOPPED, S.rec_stop_why); /* unacknowledged: no next candidate */
             return -1;
         }
-        p3_stop(P3_STOPPED, "REFUSED_BY_GATE: an unscored candidate ends the B1 epoch");
+        p3_stop(P3_STOPPED, "REFUSED_BY_GATE: an unscored candidate ends the epoch");
         return -1;
     }
     if (strcmp(type, "SIGNOK") != 0) {
