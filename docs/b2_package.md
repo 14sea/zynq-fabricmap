@@ -1,5 +1,13 @@
 # B2 — the pre-image package: what was built, what the gate showed, what is asked (v0.2.2, host-only, 2026-09-10)
 
+> **Image core review (`aef237d`): stages 1/2a/2b may proceed to application integration.**
+> The independent B2/B3 run is 132 tests: 130 passed, two binary scans skipped because no
+> image exists. UBSan host-twin checks reproduce all 10,800 candidate genomes and the
+> record blocks, plus ten perturbed-readout runs. See
+> [the core review](b2_image_core_review_2026_09_10.md) for a nonblocking comment-scanner
+> defect, the limits of legacy wire validation, and the remaining §7 deliverables.
+> This is not a completed-image compatibility review or board authorization.
+
 > **Fourth review PASS (`8958b2b`).** Both remaining lifecycle P2 findings are closed;
 > all 105 B2/B3 host tests pass. The host-review HOLD on advancing the batch and beginning
 > B2 image implementation/build work is lifted. See

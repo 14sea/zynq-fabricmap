@@ -1,0 +1,90 @@
+{
+  "b1_manifest_sha256": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+  "b1_pins": {
+    "files_verified": 105
+  },
+  "bsp_scaffold": {
+    "bsp/include/bspconfig.h": {
+      "in_B2_import_table": false,
+      "same_as_B1": true
+    },
+    "bsp/include/xmem_config.h": {
+      "in_B2_import_table": false,
+      "same_as_B1": true
+    },
+    "bsp/include/xparameters.h": {
+      "in_B2_import_table": false,
+      "same_as_B1": true
+    },
+    "bsp/lscript.ld": {
+      "in_B2_import_table": false,
+      "same_as_B1": true
+    }
+  },
+  "comment_stripper_counterexample": {
+    "forbidden_literal_missed": true,
+    "input": "static const char *example = \"/* certificate */\";\n",
+    "output": "static const char *example = \"\";\n"
+  },
+  "focused_suite": {
+    "passed": 130,
+    "ran": 132,
+    "result": "OK (skipped=2)",
+    "seconds": 278.743,
+    "skip_reason": "B2 image is not built; two binary scans are not run.",
+    "skipped": 2
+  },
+  "head": "aef237d831a4b22992f542ef25e99f62b9ad8f40",
+  "header_fresh": true,
+  "header_sha256": "518170dbb449e6e5eaef1cc34773f0bb2fa5256c34f3617b859c9880e1b6c295",
+  "host_twin_build": {
+    "binary": "/tmp/b2_stage_review_ubsan/b2_twin",
+    "board_image": false,
+    "flags": "-std=c99 -O1 -g -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all"
+  },
+  "imports": {
+    "firmware/b2/b2_wire.c": "base and derived hashes verified",
+    "firmware/b2/b2_wire.h": "base and derived hashes verified",
+    "firmware/b2/p3_derive.c": "matches pinned instrument commit bytes",
+    "firmware/b2/p3_derive.h": "matches pinned instrument commit bytes",
+    "firmware/b2/p3_pull.c": "matches pinned instrument commit bytes",
+    "firmware/b2/p3_pull.h": "matches pinned instrument commit bytes",
+    "firmware/b2/p3_rectx.c": "matches pinned instrument commit bytes",
+    "firmware/b2/p3_rectx.h": "matches pinned instrument commit bytes"
+  },
+  "instrument_head": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "instrument_status": "",
+  "missing_deliverables": [
+    "firmware/b2/b2_app.c",
+    "firmware/b2/bsp/build.sh",
+    "firmware/b2/bsp/out/b2_app.bin",
+    "tb/b2/hostapp",
+    "host/b2_records.py",
+    "host/b2_runner.py",
+    "host/b2_adjudicate.py",
+    "host/b2_pins.py"
+  ],
+  "origin_main_local_ref": "b951b8091810977f89aae91cf8712ec17f6315b2",
+  "prediction_bytes_freshly_reproduced": true,
+  "source_sha256": {
+    "firmware/b2/IMPORT.json": "99357ce4aef8e5d0ed6f8f53849ae10bfaaa85d7c0f8c813649e526d739ec8ec",
+    "firmware/b2/Makefile": "a60f48e438a8565290bd8a84fc94a04b2bd23e96aaba484c2e82436ecfb4f797",
+    "firmware/b2/b2_search.c": "5111ed107fc0a226d7b2c55babc8629eef4c2aa56b381c3a3bce74ad5b7acc89",
+    "firmware/b2/b2_search.h": "5daf4d2703c8f044d1c63f1ff43f648bf9042a4266bf1a7bf7f54737d4467cba",
+    "firmware/b2/b2_twin.c": "4adb3466bde10fd36bd6ebe9c7ae31ec286f2809eb140bf6a376b80da78cbfea",
+    "firmware/b2/b2_wire.c": "50f030483391f9f555cb2ec2ad497f0ec979879877780f8555badc57ea28aaf6",
+    "firmware/b2/b2_wire.h": "20f96b686a614a204e6c489d62c1908e4e4ee3779bf515d133aed6aadcc67cb1",
+    "firmware/b2/p3_data.h": "518170dbb449e6e5eaef1cc34773f0bb2fa5256c34f3617b859c9880e1b6c295",
+    "firmware/b2/p3_derive.c": "21b4d7a9b4379a6d2d5ff9a76e111d1ae1641305a4647e18f70767c7af50d730",
+    "firmware/b2/p3_derive.h": "38ee462f8b242bac2adc140ed3ca45dd86ce232415a65f00dc1b92d24100f091",
+    "firmware/b2/p3_pull.c": "d58d688f12d75a4dfa7836dda947c2a92707097b42d681ea1d9bc274cccf1963",
+    "firmware/b2/p3_pull.h": "b3ce0da7ea33c7659d039ff870891f85c845051f5aaeb991cc77ce7c45eaa289",
+    "firmware/b2/p3_rectx.c": "6dfff8693e5312b600c95bf4be22aebb8dc14882614f2668fc081950e52315ba",
+    "firmware/b2/p3_rectx.h": "7064c86dff177fe3305f4d8a1a2381249641dae363f6cfbea7a2e89b437b580b",
+    "host/b2_search.py": "1e91b9d9aed4fd2169077bf646781e400dada7a27543bed193bf8e0f17244a80",
+    "host/gen_b2_data.py": "09d504830001e44186cff732b0094431e43c554173ab37c74b8eff6154e958e0",
+    "tests/test_b2_leakage.py": "4cd369cf48dbab03a12e399545cf60e718ed451f8c7cd65c9722f942b9e56243",
+    "tests/test_b2_twin.py": "b0495cf22f95681ef9b1a12915be70b7ca414263c6ef0d10f4e60663f50cadd5",
+    "tests/test_b2_wire.py": "6c0b5fad9f491c6c06af26e5cb63c45846e44d8afed4656d951a0f1ed9bac410"
+  }
+}
