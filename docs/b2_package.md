@@ -1,4 +1,4 @@
-# B2 — the pre-image package: what was built, what the gate showed, what is asked (v0.2.2, host-only, 2026-09-10)
+# B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
 > **Image integration review (`a32b1fe`): HOLD on accepting image `e06b77a6…`.**
 > Two P2 findings: IDENT reports a zero pair slice before initialization, and the built
@@ -45,8 +45,16 @@
 > The descriptions below preserve the submitted package; they are not a superseding
 > approval of the reviewed issues.
 >
-> **v0.2 — the correction batch (same day), submitted for the owner's re-review. HOLD
-> stands until the owner lifts it.** **v0.2.1** — the second review
+> **v0.3 (2026-09-11) — the image is built.** The host-only HOLD was lifted by the owner's
+> fourth review and the batch was pushed. Two further reviews followed on the image itself:
+> the core stages passed with one P3 (fixed), and the integration review raised two P2s —
+> the IDENT was emitted before the pair slice was decoded, and the evidence predated a
+> firmware edit. Both are corrected in §0d's terms and the image was rebuilt from the tested
+> source. What remains for the §7 package: `b2_records`, `b2_adjudicate`, `b2_runner`,
+> `b2_pins`, `b2_test_report`.
+>
+> **v0.2 — the correction batch, submitted for the owner's re-review. HOLD
+> stood until the owner lifted it.** **v0.2.1** — the second review
 > (`docs/b2_b3_host_review_v02_2026_09_10.md`) closed five of the six findings and found four
 > P2 defects in the lifecycle's enforcement; §0b maps those to their corrections. §0a below maps each finding to its correction and
 > evidence; §1 lists the new files; §3 is what is asked now. Nothing in the engine, the
@@ -119,6 +127,26 @@ The owner's reproducer runs unchanged against the correction and accepts only it
 legitimate baselines (`evidence/b2/corrections_v021_2026_09_10/`); the second review's
 twenty cases still behave, with a real fixture binary added so their baseline exercises
 the new image check.
+
+## 0d. The image (`firmware/b2/`), and what each part is checked by
+
+The image exists and is reproducible. It has never been on a board; no B2 ruling exists and
+it is not `board_ready`.
+
+| part | what it is | its evidence |
+|---|---|---|
+| `b2_search.c/h` | the (μ + λ) engine, both operators, the public landscape rule (the universe mask DERIVED from the compiled map), F1 from the MEASURED readout | C = Python evaluation by evaluation over both arms, eight budgets and all nine session pairs, including every `search` record block byte for byte — and the C unit's champions give the preregistered deltas (`tests/test_b2_twin.py`) |
+| `b2_orch.c/h` | the session order: opening baseline, per pair both arms then both champions' holdout evaluations, closing baseline; the pair seeds derived on the board; the slice decode | C = Python candidate by candidate; the whole nine-pair session is 10 820 records with the preregistered deltas (`tests/test_b2_session.py`) |
+| `b2_wire.c/h` | `app_identity` 1.5.0 and `loop_record` 1.3.0 with the `search` block | the bytes the image emits, through the instrument's validator (`tests/test_b2_wire.py`) — **common-envelope compatibility only**: that validator ignores unknown extension fields, so the B2 fields and their cross-record bindings are `b2_records`' and the adjudicator's job, and those are unfinished |
+| `b2_app.c` | HAL and state machine; derived from `b1_app.c` (recorded in `IMPORT.json`) | the REAL application off-board, including its `main()` and `establish_identity` (`tests/test_b2_hostapp.py`) |
+| `p3_data.h` | the B1 self-map, the carrier's train/holdout split, the seed exclusion | fresh from its generator, map tables equal the committed map entry by entry, forbidden-token scans of the data and of the built binary (`tests/test_b2_leakage.py`) |
+| the build | cross-compiled for cortex-a9 with the instrument's pinned toolchain | two clean builds identical in the **binary and the ELF**; the evidence records the toolchain, the sources, 47 translation units and 86 headers, and `tests/test_b2_build_evidence.py` refuses if any recorded source has moved, if the evidence came from a dirty tree, or if the image on disk is not the one it names |
+
+Reading the counts honestly: the 86 headers are **26 embeddedsw, 10 from this repository and
+50 toolchain** headers, not 86 embeddedsw headers; the 20 `sources` entries include headers,
+the linker script and the build script — the C files linked from this repository are eight
+(`b2_app.c`, `b2_search.c`, `b2_orch.c`, `b2_wire.c`, `p3_derive.c`, `p3_rectx.c`,
+`p3_pull.c`, `bsp/src/console.c`), and the 47 translation units are those plus the BSP's.
 
 ## 1. What was built (host-only; every file additive; nothing in B1 or the instrument changed)
 
