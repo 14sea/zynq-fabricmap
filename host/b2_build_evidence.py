@@ -143,7 +143,6 @@ def bsp_inputs() -> dict:
 
 
 ARCH_FLAGS = ("-mcpu=cortex-a9", "-mfpu=vfpv3", "-mfloat-abi=hard")
-_RESOLVED_RUNTIME: dict | None = None
 
 
 def trusted_compiler() -> Path:
@@ -155,19 +154,22 @@ def trusted_compiler() -> Path:
 
 
 def resolved_runtime_objects() -> dict[str, dict]:
-    """Each of the seven runtime objects as the LINK resolves it: the trusted compiler's
-    `-print-file-name` under the build's Cortex-A9 / hard-float flags. Cached: the answer is a
-    property of the toolchain, not of any evidence."""
-    global _RESOLVED_RUNTIME
-    if _RESOLVED_RUNTIME is None:
-        cc = trusted_compiler()
-        out = {}
-        for name in RUNTIME_OBJECTS:
-            r = subprocess.run([str(cc), *ARCH_FLAGS, f"-print-file-name={name}"], capture_output=True, text=True)
-            path = Path(r.stdout.strip()) if r.returncode == 0 else Path(name)
-            out[name] = {"path": path, "sha256": sha(path) if path.is_file() else None}
-        _RESOLVED_RUNTIME = out
-    return _RESOLVED_RUNTIME
+    """Each of the seven runtime objects as the LINK resolves it NOW: the trusted compiler's
+    `-print-file-name` under the build's Cortex-A9 / hard-float flags, and the file's CURRENT
+    bytes.
+
+    Nothing here is cached across calls. An earlier version kept the resolution and the hash
+    in a process-global, so once a verification had succeeded the same process would accept
+    evidence whose runtime object had since been overwritten in place or deleted — the
+    stored hash answered instead of the file (the owner's build-input authority review of
+    2026-09-10). Resolution metadata may not stand in for a live check of the file."""
+    cc = trusted_compiler()
+    out = {}
+    for name in RUNTIME_OBJECTS:
+        r = subprocess.run([str(cc), *ARCH_FLAGS, f"-print-file-name={name}"], capture_output=True, text=True)
+        path = Path(r.stdout.strip()) if r.returncode == 0 else Path(name)
+        out[name] = {"path": path, "sha256": sha(path) if path.is_file() else None}
+    return out
 
 
 def _same_file(a: Path, b: Path) -> bool:

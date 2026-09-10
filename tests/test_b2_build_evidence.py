@@ -245,5 +245,106 @@ class Refuses(unittest.TestCase):
                 self._refuses(lambda ev, k=key: ev["bsp_inputs"].pop(k), key)
 
 
+@unittest.skipUnless(EVIDENCE.is_file(), "no B2 build evidence yet")
+class RuntimeFilesAreCheckedLive(unittest.TestCase):
+    """A runtime object changed or removed AFTER a successful verification must still be
+    refused by the SAME process.
+
+    An earlier version cached each resolved object's hash in a process-global, so once one
+    verification had succeeded the stored hash answered instead of the file (the owner's
+    build-input authority review of 2026-09-10). These cases run in sequence in one process
+    and never clear private state — a fresh-process test would not exercise the defect.
+
+    The toolchain double redirects only `-print-file-name` to copies of the seven real
+    objects; every other compiler call, `-M` included, forwards to the real compiler. No
+    repository, instrument or toolchain file is written.
+    """
+
+    @staticmethod
+    def _fixture(td: Path):
+        real = be.trusted_compiler()
+        resolved = be.resolved_runtime_objects()          # the real seven, resolved before the double
+        objs = td / "objs"
+        objs.mkdir()
+        for name, rec in resolved.items():
+            shutil.copyfile(rec["path"], objs / name)
+        (td / "bin").mkdir()
+        wrapper = td / "bin/arm-none-eabi-gcc"
+        wrapper.write_text(
+            "#!/bin/sh\n"
+            "for a in \"$@\"; do\n"
+            "  case \"$a\" in\n"
+            f"    -print-file-name=*) echo \"{objs}/${{a#-print-file-name=}}\"; exit 0;;\n"
+            "  esac\n"
+            "done\n"
+            f"exec \"{real}\" \"$@\"\n")
+        wrapper.chmod(0o755)
+        ev = json.loads(EVIDENCE.read_text())
+        ev["toolchain"]["path"] = str(td)
+        ev["toolchain"]["gcc_sha256"] = sha(wrapper)
+        for name in be.RUNTIME_OBJECTS:
+            ev["bsp_inputs"]["toolchain_objects"][name] = {"path": str(objs / name), "sha256": sha(objs / name)}
+        return ev, objs
+
+    def test_a_changed_or_deleted_runtime_object_is_refused_in_the_same_process(self):
+        import tempfile
+        from unittest.mock import patch
+        if not be.trusted_compiler().is_file():
+            self.skipTest("the pinned cross toolchain is not present")
+        with tempfile.TemporaryDirectory(prefix="b2_rt_") as td:
+            td = Path(td)
+            ev, objs = self._fixture(td)
+            with patch.object(be, "TC", td):
+                # 1. the fixture is valid: this is the verification that used to warm the cache
+                self.assertEqual(be.verify_findings(ev, R), [], "the fixture itself must verify")
+
+                # 2. the same bytes count, different content — the evidence is untouched
+                victim = objs / "crti.o"
+                original = victim.read_bytes()
+                changed = bytearray(original)
+                changed[0] ^= 0xFF
+                victim.write_bytes(bytes(changed))
+                self.assertEqual(len(original), victim.stat().st_size)
+                findings = be.verify_findings(ev, R)
+                self.assertTrue(any("crti.o" in x for x in findings),
+                                f"an overwritten runtime object was accepted: {findings[:3]}")
+
+                # 3. restored, then deleted — still the same process, still no cache clearing
+                victim.write_bytes(original)
+                self.assertEqual(be.verify_findings(ev, R), [], "the restored fixture must verify again")
+                victim.unlink()
+                findings = be.verify_findings(ev, R)
+                self.assertTrue(any("crti.o" in x for x in findings),
+                                f"a deleted runtime object was accepted: {findings[:3]}")
+
+    def test_canonical_aliases_of_the_resolved_objects_are_accepted(self):
+        """A symlink to the same file is the same input, and must not be a finding."""
+        import tempfile
+        from unittest.mock import patch
+        if not be.trusted_compiler().is_file():
+            self.skipTest("the pinned cross toolchain is not present")
+        with tempfile.TemporaryDirectory(prefix="b2_alias_") as td:
+            td = Path(td)
+            ev = json.loads(EVIDENCE.read_text())
+            links = td / "links"
+            links.mkdir()
+            for name, rec in be.resolved_runtime_objects().items():
+                link = links / name
+                link.symlink_to(rec["path"])
+                ev["bsp_inputs"]["toolchain_objects"][name] = {"path": str(link), "sha256": rec["sha256"]}
+            self.assertEqual(be.verify_findings(ev, R), [], "canonical aliases must be accepted")
+
+    def test_the_resolution_is_not_cached_across_calls(self):
+        """Two calls must both consult the compiler and the files, not a stored answer."""
+        if not be.trusted_compiler().is_file():
+            self.skipTest("the pinned cross toolchain is not present")
+        self.assertFalse([n for n in dir(be) if n.startswith("_RESOLVED")],
+                         "a process-global resolution cache would answer instead of the file")
+        a = be.resolved_runtime_objects()
+        b = be.resolved_runtime_objects()
+        self.assertEqual({k: v["sha256"] for k, v in a.items()}, {k: v["sha256"] for k, v in b.items()})
+        self.assertIsNot(a, b, "each call must produce a fresh result")
+
+
 if __name__ == "__main__":
     unittest.main()
