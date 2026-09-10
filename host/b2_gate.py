@@ -399,6 +399,7 @@ def main(argv=None) -> int:
         print(f"selected fitness: {rep['selected_fitness']}; {out / 'gate_report.json'}")
         return 0
     if args.command == "controls":
+        dirty_at_start = git_dirty()          # before any output is written
         src = REPO_ROOT / args.src
         stored = load_rows(src)
         rec = json.loads((out / "gate_report.json").read_text()) if (out / "gate_report.json").is_file() else None
@@ -418,7 +419,7 @@ def main(argv=None) -> int:
             res[fid]["wall_s"] = round(time.time() - t0, 1)
             print(f"[{fid}] G9={res[fid]['G9']['pass']} " + " ".join(f"{a}: B-{a} {res[fid]['arms'][a]['mean_delta_B_minus_arm']:+.2f} p={res[fid]['arms'][a]['sign_test_p_B_gt_arm']:.2e}" for a in CONTROL_ARMS), flush=True)
         rep = {"schema": "b2_gate_controls", "schema_version": "1.0.0", "label": args.label, "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-               "head_at_run": git_head(), "worktree_dirty_at_start": git_dirty(), "architecture": architecture_pin(), "thresholds": THRESHOLDS,
+               "head_at_run": git_head(), "worktree_dirty_at_start": dirty_at_start, "architecture": architecture_pin(), "thresholds": THRESHOLDS,
                "source": {"path": str(src.relative_to(REPO_ROOT)), "seeds": stored["report"]["seeds"]}, "results": res}
         (out / "controls_report.json").write_text(json.dumps(rep, indent=1, sort_keys=True))
         print(out / "controls_report.json")
