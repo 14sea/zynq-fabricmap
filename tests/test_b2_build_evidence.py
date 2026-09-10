@@ -12,6 +12,14 @@ and every case below drives it with a deep copy that has exactly one thing wrong
 counterexamples the review named are the seven `test_refuses_*` cases; the three controls it
 also ran are kept. One slower test recomputes the compiler's own dependency sets and requires
 the recorded map to be them, so the map cannot be internally consistent but untrue.
+
+The build-guard review that followed found the remaining hole: the guard SELECTED the
+compiler and each runtime object by the path the evidence itself supplied, and checked those
+bytes against that same object's declared hash — so a stand-in file, or `libm.a` wearing
+`libc.a`'s name, or a linker script dropped from the inventory, all passed. The verifier now
+resolves the trusted build description from the build configuration (the pinned toolchain,
+`-print-file-name` under the build's flags, and this module's mandatory source inventory) and
+compares the evidence to THAT; the four fixtures below are its negative coverage.
 """
 from __future__ import annotations
 
@@ -64,6 +72,29 @@ class Committed(unittest.TestCase):
         self.assertEqual(sha(IMAGE), self.ev["image"]["sha256"])
         self.assertEqual(sha(ELF), self.ev["image"]["elf_sha256"])
         self.assertEqual(IMAGE.stat().st_size, self.ev["image"]["bytes"])
+
+    def test_the_mandatory_inventory_is_the_modules_not_the_evidences(self):
+        """Every required build input — the build script and the linker script included — is
+        named by this module, so the evidence's own lists cannot decide what is mandatory."""
+        for rel in be.APP_SOURCES:
+            self.assertIn(rel, self.ev["sources"], rel)
+        self.assertIn("bsp/build.sh", be.APP_SOURCES)
+        self.assertIn("bsp/lscript.ld", be.APP_SOURCES)
+
+    def test_the_compiler_and_runtime_objects_are_the_resolved_ones(self):
+        cc = be.trusted_compiler()
+        if not cc.is_file():
+            self.skipTest("the pinned cross toolchain is not present")
+        self.assertEqual(self.ev["toolchain"]["gcc_sha256"], sha(cc))
+        self.assertEqual(Path(self.ev["toolchain"]["path"]) / "bin/arm-none-eabi-gcc", cc)
+        resolved = be.resolved_runtime_objects()
+        recorded = self.ev["bsp_inputs"]["toolchain_objects"]
+        self.assertEqual(sorted(recorded), sorted(be.RUNTIME_OBJECTS))
+        for name, want in resolved.items():
+            self.assertEqual(recorded[name]["sha256"], want["sha256"], name)
+            self.assertEqual(Path(recorded[name]["path"]).resolve(), want["path"].resolve(), name)
+        self.assertEqual(len({v["sha256"] for v in resolved.values()}), len(be.RUNTIME_OBJECTS),
+                         "each runtime object must be a distinct file, so one cannot wear another's name")
 
     def test_the_inventory_is_the_whole_build(self):
         bi = self.ev["bsp_inputs"]
@@ -147,6 +178,37 @@ class Refuses(unittest.TestCase):
             tus.pop(victim)
             ev["bsp_inputs"]["dependencies"].pop(victim, None)
         self._refuses(mutate, "console.c")
+
+    # ---- the four counterexamples of the build-guard review
+    def test_refuses_a_stand_in_compiler(self):
+        """A path the evidence supplies, with that file's own correct hash, is not the
+        compiler: the role is resolved from the build configuration."""
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix="b2_fake_tc_") as td:
+            fake = Path(td) / "bin/arm-none-eabi-gcc"
+            fake.parent.mkdir(parents=True)
+            fake.write_text("not a compiler\n")
+            def mutate(ev):
+                ev["toolchain"]["path"] = td
+                ev["toolchain"]["gcc_sha256"] = sha(fake)
+            self._refuses(mutate, "the compiler")
+
+    def test_refuses_another_library_in_libcs_role(self):
+        def mutate(ev):
+            objs = ev["bsp_inputs"]["toolchain_objects"]
+            objs["libc.a"] = dict(objs["libm.a"])          # the real libm.a, self-consistently
+        self._refuses(mutate, "runtime object libc.a")
+
+    def test_refuses_a_missing_linker_script(self):
+        self._refuses(lambda ev: ev["sources"].pop("bsp/lscript.ld"), "bsp/lscript.ld")
+
+    def test_refuses_a_missing_build_script(self):
+        self._refuses(lambda ev: ev["sources"].pop("bsp/build.sh"), "bsp/build.sh")
+
+    def test_refuses_any_mandatory_source_dropped(self):
+        for rel in be.APP_SOURCES:
+            with self.subTest(source=rel):
+                self._refuses(lambda ev, k=rel: ev["sources"].pop(k), rel)
 
     # ---- a few more the same structure makes free
     def test_refuses_a_runtime_object_that_is_not_recorded(self):

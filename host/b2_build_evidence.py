@@ -142,6 +142,42 @@ def bsp_inputs() -> dict:
             "header_roots": {"embeddedsw_standalone": str(SA), "embeddedsw_watchdog": str(WD), "firmware": str(FW), "toolchain": str(TC)}}
 
 
+ARCH_FLAGS = ("-mcpu=cortex-a9", "-mfpu=vfpv3", "-mfloat-abi=hard")
+_RESOLVED_RUNTIME: dict | None = None
+
+
+def trusted_compiler() -> Path:
+    """The compiler the BUILD uses, resolved from this module's pinned toolchain — the same
+    path `bsp/build.sh` uses. Never the path the evidence supplies: the owner's build-guard
+    review of 2026-09-10 showed that opening the evidence's own path and checking it against
+    the evidence's own hash lets any file assume the compiler's role."""
+    return TC / "bin/arm-none-eabi-gcc"
+
+
+def resolved_runtime_objects() -> dict[str, dict]:
+    """Each of the seven runtime objects as the LINK resolves it: the trusted compiler's
+    `-print-file-name` under the build's Cortex-A9 / hard-float flags. Cached: the answer is a
+    property of the toolchain, not of any evidence."""
+    global _RESOLVED_RUNTIME
+    if _RESOLVED_RUNTIME is None:
+        cc = trusted_compiler()
+        out = {}
+        for name in RUNTIME_OBJECTS:
+            r = subprocess.run([str(cc), *ARCH_FLAGS, f"-print-file-name={name}"], capture_output=True, text=True)
+            path = Path(r.stdout.strip()) if r.returncode == 0 else Path(name)
+            out[name] = {"path": path, "sha256": sha(path) if path.is_file() else None}
+        _RESOLVED_RUNTIME = out
+    return _RESOLVED_RUNTIME
+
+
+def _same_file(a: Path, b: Path) -> bool:
+    """Path equality up to canonical aliases (symlinked toolchain directories)."""
+    try:
+        return a.resolve() == b.resolve()
+    except OSError:
+        return str(a) == str(b)
+
+
 def expected_units(lists: dict, roots: dict) -> set[str]:
     """The COMPLETE set of translation units the build script compiles, derived from the
     recorded lists and roots: the standalone BSP's assembly, C and syscall units, the
@@ -183,9 +219,13 @@ def verify_findings(ev: dict, root: Path = REPO_ROOT, require_outputs: bool = Tr
     if ev["git"].get("worktree_dirty"):
         f.append("the evidence was taken from a dirty tree")
 
-    # the sources, and the completeness of that list against what the script links
+    # the sources. The MANDATORY set is this module's inventory — the build script and the
+    # linker script included — so the evidence's own lists cannot decide what is required.
     for rel, want in ev["sources"].items():
         check(fw / rel, want, f"source {rel}")
+    for rel in APP_SOURCES:
+        if rel not in ev["sources"]:
+            f.append(f"source inventory: {rel} is a required build input but is not recorded")
     lists = bi["build_script_lists"]
     for rel in list(lists.get("APP_SRCS", APP_SRCS)) + list(lists.get("CONSOLE_SRCS", [CONSOLE_SRC])):
         if rel not in ev["sources"]:
@@ -217,15 +257,33 @@ def verify_findings(ev: dict, root: Path = REPO_ROOT, require_outputs: bool = Tr
     for path, want in bi["headers"].items():
         check(Path(path), want, "header")
 
-    # the compiler and every runtime object the link resolves
+    # the compiler and the runtime objects: RESOLVED from the build configuration, then the
+    # evidence compared with what was resolved. Updating a path and its hash together must not
+    # let a different file take the role (the owner's build-guard review of 2026-09-10).
+    cc = trusted_compiler()
     tc = ev["toolchain"]
-    check(Path(tc["path"]) / "bin/arm-none-eabi-gcc", tc.get("gcc_sha256"), "the compiler")
+    if not cc.is_file():
+        f.append(f"the compiler: {cc} does not exist")
+    else:
+        if not _same_file(Path(tc.get("path", "")) / "bin/arm-none-eabi-gcc", cc):
+            f.append(f"the compiler: the evidence names {tc.get('path')!r}, the build uses {cc.parent.parent}")
+        if tc.get("gcc_sha256") != sha(cc):
+            f.append("the compiler: the recorded hash is not the build compiler's")
     objs = bi["toolchain_objects"]
+    resolved = resolved_runtime_objects()
     for name in RUNTIME_OBJECTS:
         if name not in objs:
             f.append(f"toolchain objects: {name} is not recorded")
             continue
-        check(Path(objs[name]["path"]), objs[name].get("sha256"), f"runtime object {name}")
+        want = resolved[name]
+        if want["sha256"] is None:
+            f.append(f"runtime object {name}: the link does not resolve it")
+            continue
+        got_path = Path(objs[name].get("path", ""))
+        if not _same_file(got_path, want["path"]):
+            f.append(f"runtime object {name}: the evidence names {got_path}, the link resolves {want['path']}")
+        if objs[name].get("sha256") != want["sha256"]:
+            f.append(f"runtime object {name}: the recorded hash is not the resolved file's")
 
     # the two clean builds: both outputs each, equal to each other AND to the named image
     rep = ev["reproducibility"]
