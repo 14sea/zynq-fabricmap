@@ -1,0 +1,176 @@
+{
+  "decoded_contradiction": {
+    "calls": [
+      [
+        [
+          0
+        ],
+        [
+          [
+            0,
+            0
+          ]
+        ]
+      ],
+      [
+        [
+          0
+        ],
+        [
+          [
+            0,
+            1
+          ]
+        ]
+      ]
+    ],
+    "anomalies": 0,
+    "decoded": "{0: (0, 0)}"
+  },
+  "mixed_contradiction": {
+    "calls": [
+      [
+        [
+          0
+        ],
+        [
+          [
+            0,
+            0
+          ]
+        ]
+      ],
+      [
+        [
+          0,
+          1
+        ],
+        [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            2
+          ]
+        ]
+      ]
+    ],
+    "anomalies": 0,
+    "candidates": "{0: {(0, 0)}, 1: {(0, 1), (0, 2)}}"
+  },
+  "partial_mutation_on_refusal": {
+    "calls": [
+      [
+        [
+          0,
+          2
+        ],
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            1
+          ]
+        ]
+      ],
+      [
+        [
+          1,
+          3
+        ],
+        [
+          [
+            0,
+            2
+          ],
+          [
+            0,
+            3
+          ]
+        ]
+      ],
+      [
+        [
+          0,
+          1
+        ],
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            4
+          ]
+        ]
+      ]
+    ],
+    "before": "{0: {(0, 1), (0, 0)}, 2: {(0, 1), (0, 0)}, 1: {(0, 2), (0, 3)}, 3: {(0, 2), (0, 3)}}",
+    "after": "{0: {(0, 0)}, 2: {(0, 1), (0, 0)}, 1: {(0, 2), (0, 3)}, 3: {(0, 2), (0, 3)}}",
+    "anomalies": 1
+  },
+  "required_pairs": {
+    "fitness": "F3",
+    "budget": 300,
+    "returned_N": 91,
+    "power_at_89": 0.906,
+    "reported_cost": 54600,
+    "smaller_passing_cost": 53400,
+    "current_F1_selection_not_changed_by_this_counterexample": true
+  },
+  "control_train_membership": {
+    "B": {
+      "named_train": 183,
+      "actually_train": 183,
+      "actually_holdout": 0
+    },
+    "D": {
+      "named_train": 183,
+      "actually_train": 112,
+      "actually_holdout": 71
+    },
+    "E": {
+      "named_train": 183,
+      "actually_train": 111,
+      "actually_holdout": 72
+    }
+  },
+  "F3_holdout_affects_train": {
+    "landscape_seed": 123,
+    "genome_bit": 13,
+    "position": [
+      0,
+      0
+    ],
+    "train_before": 320,
+    "train_after": 256
+  },
+  "exact_empirical_sign_test_power": {
+    "8": 0.8777030841795858,
+    "9": 0.9265191617699435,
+    "10": 0.9262293780906271,
+    "11": 0.9623627402153029,
+    "12": 0.9786582566155337
+  },
+  "fixed_prediction_primary": {
+    "deltas": [
+      2,
+      5,
+      6,
+      3,
+      4,
+      6,
+      1,
+      -2,
+      5
+    ],
+    "p": 0.01953125,
+    "identical_predicted_fitnesses_cannot_change_primary": true
+  }
+}

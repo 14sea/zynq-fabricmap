@@ -1,0 +1,100 @@
+{
+  "head": "fabbef16a22225a9b2cdd0f53f097696e2ed0e22",
+  "b2": {
+    "F1": {
+      "all_200_rows_statistics_reproduced": true,
+      "all_arms_fresh_full_grid_rows": [
+        0,
+        99,
+        199
+      ],
+      "b_star": 600,
+      "pass": true
+    },
+    "F2": {
+      "all_200_rows_statistics_reproduced": true,
+      "all_arms_fresh_full_grid_rows": [
+        0,
+        99,
+        199
+      ],
+      "b_star": 1500,
+      "pass": false
+    },
+    "F3": {
+      "all_200_rows_statistics_reproduced": true,
+      "all_arms_fresh_full_grid_rows": [
+        0,
+        99,
+        199
+      ],
+      "b_star": 800,
+      "pass": false
+    }
+  },
+  "b3": {
+    "F1": {
+      "all_200_rows_statistics_reproduced": true,
+      "all_arms_fresh_full_grid_rows": [
+        0,
+        199
+      ],
+      "online_map": {
+        "anomalies_total": 0,
+        "decoded_median_at_grid": [
+          40.0,
+          106.5,
+          167.0,
+          212.5,
+          262.0,
+          280.0,
+          288.0,
+          292.0,
+          292.0,
+          292.0
+        ],
+        "evals_to_full_map_median": 1415.5,
+        "full_map_within_budget": 200,
+        "versions_final_median": 177.0,
+        "wrong_decodes_total": 0
+      }
+    },
+    "F2": {
+      "all_200_rows_statistics_reproduced": true,
+      "all_arms_fresh_full_grid_rows": [
+        0,
+        199
+      ],
+      "online_map": {
+        "anomalies_total": 0,
+        "decoded_median_at_grid": [
+          40.0,
+          106.5,
+          167.0,
+          212.5,
+          262.0,
+          280.0,
+          288.0,
+          292.0,
+          292.0,
+          292.0
+        ],
+        "evals_to_full_map_median": 1415.5,
+        "full_map_within_budget": 200,
+        "versions_final_median": 177.0,
+        "wrong_decodes_total": 0
+      }
+    }
+  },
+  "session_seed_overlap": {
+    "gate1": [],
+    "gate3": [],
+    "b3": []
+  },
+  "plan_reproduced_except_generation_time": true,
+  "prediction_bytes_reproduced": true,
+  "map_hashes": {
+    "file_sha256": "b6607a9a4de4ec16b4441395703d353ba438463e3ff0be3b5984ec6f1f1bfa38",
+    "canonical_json_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296"
+  }
+}

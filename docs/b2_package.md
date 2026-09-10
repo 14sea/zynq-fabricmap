@@ -1,5 +1,12 @@
 # B2 — the pre-image package: what was built, what the gate showed, what is asked (v0.1, host-only, 2026-09-10)
 
+> **Review HOLD (2026-09-10).** Nominal simulation results reproduce, but the control
+> design, minimum-N search, B3 anomaly handling and B2 evidence/qualification contracts
+> require correction before image construction or push approval. Decisions on D1–D4,
+> gate revisions, audit policy and N are in `docs/b2_b3_host_review_2026_09_10.md`.
+> The descriptions below preserve the submitted package; they are not a superseding
+> approval of the reviewed issues.
+
 > **Standing: host-only. No image, no manifest, no ruling, no board.** Stage B2 of
 > `docs/autonomous_cartography_roadmap.md`, opened on the owner's instruction of 2026-09-09.
 > Roadmap §7 asks for *"a host-only architecture / preregistration package … reviewed before
