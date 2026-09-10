@@ -1,5 +1,13 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Authority-correction review (`fb37ee0`): prior role/inventory findings closed.**
+> All 193 B2/B3 tests pass with zero skips, and image `d164cd1d…` still matches its actual
+> build inputs. One new P2 remains: cached runtime hashes hide file modification or deletion
+> after an earlier successful verification in the same process. See
+> [the authority-correction review](b2_build_authority_review_2026_09_10.md) and its isolated
+> file-mutation reproducer. Correct the verifier cache and finish the remaining §7 tools;
+> this finding alone requires no firmware change or replacement image.
+
 > **Build-guard review (`9c1f3ca`): the previous seven counterexamples are closed.**
 > Current image `d164cd1d…` and its actual build inputs verify; all 186 B2/B3 tests pass
 > with zero skips. One P2 remains: compiler/runtime identities and required linker/build

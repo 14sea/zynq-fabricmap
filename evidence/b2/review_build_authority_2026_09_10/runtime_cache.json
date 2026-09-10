@@ -1,0 +1,44 @@
+{
+  "same_size_overwrite": {
+    "before": [],
+    "before_committed": {
+      "passed": true,
+      "ran": 6,
+      "skips": 0,
+      "failures": [],
+      "errors": []
+    },
+    "warm_after": [],
+    "warm_committed_after": {
+      "passed": true,
+      "ran": 6,
+      "skips": 0,
+      "failures": [],
+      "errors": []
+    },
+    "after_cache_reset": [
+      "runtime object crti.o: the recorded hash is not the resolved file's"
+    ]
+  },
+  "delete": {
+    "before": [],
+    "before_committed": {
+      "passed": true,
+      "ran": 6,
+      "skips": 0,
+      "failures": [],
+      "errors": []
+    },
+    "warm_after": [],
+    "warm_committed_after": {
+      "passed": true,
+      "ran": 6,
+      "skips": 0,
+      "failures": [],
+      "errors": []
+    },
+    "after_cache_reset": [
+      "runtime object crti.o: the link does not resolve it"
+    ]
+  }
+}
