@@ -1,4 +1,15 @@
-# B3 — the closed loop: architecture and host simulation (v0.1, host-only, 2026-09-10)
+# B3 — the closed loop: architecture and host simulation (v0.1.1, host-only, 2026-09-10)
+
+> **v0.1 → v0.1.1 (the owner's review of 2026-09-10).** The specimen cartographer now
+> validates every specimen against what is decoded and commits atomically (§3; the review's
+> counterexamples are tests); the simulation re-run on the same seeds with the corrected
+> cartographer is bit-identical (`evidence/b3/sim_v0.1.1/`, 400 rows), so §5's numbers stand
+> as **ideal-model** evidence — the anomaly guarantees are established by the tests, not by
+> zero anomalies in an additive model. Corrections of language: the accounting is an
+> **evaluation-count model** (333 probes charged to F; baselines, setup, qualification,
+> audits and compute time not counted); bounded fitnesses do not "grow without bound"; the
+> positive O − F means at every grid budget are **reproduced exploratory results**, not a
+> preregistered family of confirmed tests.
 
 > **Standing: design and host simulation only. No preregistration, no image, no ruling, no
 > board.** Stage B3 of `docs/autonomous_cartography_roadmap.md` §2 ("the closed loop,
@@ -41,8 +52,13 @@ testing turned inside out:
 - a specimen with |M| > 1 **narrows**: each address in M keeps the intersection of its
   candidate set with D (confidence 1); a singleton is a decode; a decoded position is
   removed from every other candidate set, and the closure runs over all candidates;
-- |D| ≠ |M| or an empty intersection is an **anomaly**: counted, the specimen not used
-  (the fabric would not be additive there — the thing B4 will meet on routing bits);
+- a specimen is **refused** (anomaly counted, **nothing else changes**) when it is malformed
+  (duplicate / out-of-range addresses or positions, |D| ≠ |M|), when a decoded moved
+  address's known position is not in D, when a position in D belongs to a decoded address
+  that was *not* moved, when a pending address's intersection is empty, or when the closure
+  conflicts; narrowing and closure are computed on a copy and committed only if the whole
+  specimen is consistent (`tests/test_b3_online.py`: the review's three counterexamples,
+  a closure conflict, malformed cases — each with a state snapshot equal before and after);
 - every decode bumps the **map version**; the operator consults the current version.
 
 The **specimen ledger** (`schemas/specimen_ledger.schema.json`, `specimen_ledger` 1.0.0)
@@ -69,7 +85,9 @@ label `b3-sim`; per-seed values in `raw_F1.json`, `raw_F2.json`). Two accounting
 - **search**: best-so-far at B evaluations of each arm's own search;
 - **end-to-end**: best-so-far at total budget T, the frozen arm charged its 333 mapping
   probes first (its search value at T is its own trace at T − 333; the base fitness while
-  T ≤ 333); R and O charged nothing.
+  T ≤ 333); R and O charged nothing. **This is an evaluation-count model**, not wall-time
+  accounting: B1's two baseline records, setup, qualification, audits and compute time are
+  not counted.
 
 ### 5.1 F1 (B2's selected fitness; ceiling 40) — medians over 200 seeds
 
@@ -102,10 +120,10 @@ O 77 / 104 / 139 / 152. O − R crosses zero at ≈ 800 (+0.27, ns) and is +3.94
 +1.5 (p 3e-3) at 3 000; F − R end-to-end turns positive at 1 500 (+5.17). Same online map
 growth (the cartographer does not depend on the fitness), 0 wrong, 0 anomalies.
 
-### 5.3 Reading — the three outcomes the roadmap wanted distinguishable
+### 5.3 Reading — the three outcomes the roadmap wanted distinguishable (exploratory)
 
 1. **"Correct but useless" — no.** The map is correct (B1) and useful (B2's gate; F − R
-   grows without bound on the grid).
+   increases across the whole grid, within the bounded fitness).
 2. **"Useful but too expensive to build" — at small total budgets, yes.** Charged its
    333 probes, the frozen map does not repay itself before ≈ 800 evaluations on F1
    (≈ 1 500 on F2); below that, no map at all is better than a map paid for up front.
@@ -113,10 +131,12 @@ growth (the cartographer does not depend on the fitness), 0 wrong, 0 anomalies.
    arm pays the poor-map cost first (B2 §8: a sparse map diverts half the moves), is
    behind R until ≈ 400–500 evaluations, then wins from 600 on with a growing margin
    (F1: +1.3 at 600, +11 at 2 000). (b) *Against the frozen map, end-to-end:* the online
-   arm wins at **every** budget on the grid (F1: +6.2 at 300, +0.7 at 3 000, all p < 0.01),
+   arm is ahead at **every** budget on the grid (F1: +6.2 at 300, +0.7 at 3 000, all p < 0.01
+   in this exploratory sweep — one preregistered budget would be the confirmed test),
    converging to the frozen arm as its own map completes (search accounting: −0.3 at
    3 000, ns). The online map costs no probe and is complete by a median 1 416
-   evaluations with zero errors — on this fabric the search *is* a cartographer.
+   evaluations with zero wrong decodes in the ideal model — on this fabric the search *is*
+   a cartographer.
 
 What this does not say: anything about a non-additive fabric (anomalies were 0 because
 the model is additive; the board's anomaly counter is where B4's routing bits will show),
