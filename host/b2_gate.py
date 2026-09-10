@@ -309,6 +309,7 @@ def main(argv=None) -> int:
     out = REPO_ROOT / args.out
     out.mkdir(parents=True, exist_ok=True)
     head = git_head()
+    dirty_at_start = git_dirty()          # before this run writes anything into the tree
     master = bs.master_seed(GATE_LABEL, head or "no-commit")
     seeds = bs.pair_seeds(master, args.seeds)
     fids = [f for f in args.fitness.split(",") if f]
@@ -333,7 +334,7 @@ def main(argv=None) -> int:
     report = {
         "schema": "b2_gate_report", "schema_version": "1.0.0",
         "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "head_at_run": head, "worktree_dirty_at_run": git_dirty(),
+        "head_at_run": head, "worktree_dirty_at_start": dirty_at_start,
         "architecture": architecture_pin(), "thresholds": THRESHOLDS, "engine": {"version": bs.ENGINE_VERSION, "mu": bs.MU, "lambda": bs.LAMBDA, "kmax": bs.KMAX},
         "seeds": {"label": GATE_LABEL, "master_seed": master, "derivation": f"first 4 bytes of sha256('{GATE_LABEL}|' + HEAD), pairs from one Rng stream, excluded seeds skipped",
                   "count": args.seeds, "excluded": sorted(bs.EXCLUDED_SEEDS)},
