@@ -16,6 +16,12 @@ The specimen ledger (schemas/specimen_ledger.schema.json) is written by the onli
 Two accountings are reported: search benefit at a search budget B (each arm's own
 evaluations), and end-to-end benefit at a total budget T, where the frozen arm's map cost
 (333) is charged first (its search starts at T = 333).
+
+v0.1.1 (after the owner's review of 2026-09-10): `SpecimenCarto.observe` VALIDATES every
+specimen against what is already decoded and COMMITS ATOMICALLY — a refused specimen
+changes nothing but the anomaly count (tests/test_b3_online.py reproduces the review's
+three counterexamples: a contradiction on a decoded address, a mixed specimen omitting a
+known position, a mid-update refusal that used to leave a narrowed candidate behind).
 """
 from __future__ import annotations
 
@@ -30,8 +36,9 @@ import b2_landscape as bl  # noqa: E402
 import b2_search as bs  # noqa: E402
 from b2_maps import MapView  # noqa: E402
 
-B1_MAP_COST = 333            # B1's budget: 9 code probes + 292 confirmations + 32 pairs
+B1_MAP_COST = 333            # B1's budget: 9 code probes + 292 confirmations + 32 pairs — an EVALUATION-COUNT model (docs/b3_architecture.md §5)
 LEDGER_VERSION = "specimen_ledger 1.0.0"
+CARTO_VERSION = "specimen-carto-v1.1"
 
 
 def positions_of(delta_tables: list[int]) -> list[tuple[int, int]]:
@@ -45,54 +52,89 @@ def positions_of(delta_tables: list[int]) -> list[tuple[int, int]]:
     return out
 
 
+class Inconsistent(Exception):
+    """A specimen that contradicts the state or itself; the caller counts it and changes nothing."""
+
+
 @dataclass
 class SpecimenCarto:
-    """Candidate-set intersection over specimens: address i's candidate positions start as
-    'unknown' (None); a specimen with moved bits M and toggled positions D (|D| = |M|)
-    intersects each i in M with D; a singleton is a decode (confidence 2); a decoded
-    position is removed from every other candidate set. Anomalies (|D| != |M|, an empty
-    intersection) are counted and the specimen is not used."""
-    candidates: dict[int, set | None] = field(default_factory=dict)
+    """Candidate-set intersection over specimens. Address i's candidate positions are
+    unknown until a specimen names it; a specimen with moved bits M and toggled positions D
+    (|D| = |M|) intersects each pending i in M with the positions of D not already
+    explained by decoded members of M; a singleton is a decode (confidence 2); a decoded
+    position is removed from every other candidate set and the closure runs over all
+    candidates. Every check is done on a COPY and the state is committed only when the
+    whole specimen is consistent; otherwise `anomalies` is incremented and nothing else
+    changes. What is refused: a malformed specimen (duplicate / out-of-range addresses or
+    positions, |D| ≠ |M|); a decoded moved address whose known position is not in D; a
+    position in D that belongs to a decoded address NOT in M; an empty intersection for a
+    pending address; a closure conflict."""
+    candidates: dict[int, set] = field(default_factory=dict)
     decoded: dict[int, tuple[int, int]] = field(default_factory=dict)
     taken: set = field(default_factory=set)
     anomalies: int = 0
     version: int = 0
 
-    def observe(self, moved: list[int], delta: list[tuple[int, int]]) -> list[int]:
-        """Returns the addresses decoded by this specimen (the map version bumps once if any)."""
-        if len(delta) != len(moved):
-            self.anomalies += 1
-            return []
-        dset = set(delta) - self.taken
-        newly: list[int] = []
-        # single-bit specimens decode directly; multi-bit ones narrow
+    def _check(self, moved: list[int], delta: list[tuple[int, int]]):
+        if len(set(moved)) != len(moved) or any(not (0 <= i < bc.N) for i in moved) or not moved:
+            raise Inconsistent("malformed intervention")
+        dl = [tuple(p) for p in delta]
+        dset = set(dl)
+        if len(dset) != len(dl) or any(not (0 <= k < bl.LUTS and 0 <= v < bl.VECTORS) for k, v in dset):
+            raise Inconsistent("malformed delta")
+        if len(dset) != len(moved):
+            raise Inconsistent("|delta| != |intervention|")
+        remaining = set(dset)
+        for i in moved:
+            if i in self.decoded:
+                pos = self.decoded[i]
+                if pos not in remaining:
+                    raise Inconsistent(f"decoded address {i} at {pos} did not toggle")
+                remaining.remove(pos)
+        if remaining & self.taken:
+            raise Inconsistent("a toggled position belongs to a decoded address that was not moved")
         pending = [i for i in moved if i not in self.decoded]
-        if len(pending) == 0:
-            return []
+        cand = {i: set(c) for i, c in self.candidates.items()}
         for i in pending:
-            c = self.candidates.get(i)
-            c2 = set(dset) if c is None else (c & dset)
+            c2 = set(remaining) if i not in cand else (cand[i] & remaining)
             if not c2:
-                self.anomalies += 1
-                return []
-            self.candidates[i] = c2
+                raise Inconsistent(f"empty candidate set for address {i}")
+            cand[i] = c2
+        decoded = dict(self.decoded)
+        taken = set(self.taken)
+        newly: list[int] = []
         changed = True
         while changed:                      # closure over EVERY undecoded address with a candidate set
             changed = False
-            for i in [i for i, c in self.candidates.items() if c is not None and i not in self.decoded]:
-                c = self.candidates[i] - self.taken
+            for i in [i for i in cand if i not in decoded]:
+                c = cand[i] - taken
                 if len(c) == 1:
                     pos = next(iter(c))
-                    self.decoded[i] = pos
-                    self.taken.add(pos)
+                    decoded[i] = pos
+                    taken.add(pos)
                     newly.append(i)
                     changed = True
                 elif not c:
-                    self.anomalies += 1
-                    self.candidates[i] = None
+                    raise Inconsistent(f"closure conflict at address {i}")
+        return cand, decoded, taken, newly
+
+    def observe(self, moved: list[int], delta: list[tuple[int, int]]) -> list[int]:
+        """Returns the addresses decoded by this specimen (the map version bumps once if
+        any); a refused specimen increments `anomalies` and changes nothing else."""
+        try:
+            cand, decoded, taken, newly = self._check(moved, delta)
+        except Inconsistent:
+            self.anomalies += 1
+            return []
+        self.candidates = cand
+        self.decoded = decoded
+        self.taken = taken
         if newly:
             self.version += 1
         return newly
+
+    def snapshot(self) -> tuple:
+        return ({i: frozenset(c) for i, c in self.candidates.items()}, dict(self.decoded), frozenset(self.taken), self.version)
 
     def map_view(self, train_vectors: list[int]) -> MapView:
         """The current map as the operator sees it (decoded entries only)."""

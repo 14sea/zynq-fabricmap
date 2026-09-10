@@ -127,6 +127,49 @@ def degraded_map(doc: dict, q: float, seed: int) -> dict:
     return out
 
 
+def within_train_scrambled_map(doc: dict, seed: int, train_vectors: list[int]) -> dict:
+    """The v0.3 control W: every claiming entry keeps its train / holdout MEMBERSHIP (an
+    address in a train column stays in a train column) and the multiset of train column
+    labels is preserved (so column sizes and hence move sizes are unchanged); only the
+    assignment of train labels among train addresses is permuted. Holdout entries are left
+    as they are. (The owner's review of 2026-09-10: `shuffled_map` / `lut_shuffled_map`
+    also move addresses across the train / holdout boundary, so they cannot attribute the
+    benefit to column grouping alone.)"""
+    out = copy.deepcopy(doc)
+    out["cartographer"] = f"{doc['cartographer']}+within_train_scrambled:{seed}"
+    train = set(train_vectors)
+    entries = [e for e in _claims(out) if e["relation"]["init_index"] in train]
+    labels = [e["relation"]["init_index"] for e in entries]
+    random.Random(f"within_train_scrambled:{seed}").shuffle(labels)
+    for e, v in zip(entries, labels):
+        e["relation"]["init_index"] = v
+    return out
+
+
+def train_membership_view(doc: dict, train_vectors: list[int]) -> "MapView":
+    """The v0.3 control T: the operator knows WHICH addresses sit in train columns and
+    nothing else — one group holding all of them, so a 'column move' is a 1..4-subset of the
+    train addresses (the column identity is erased, the membership kept)."""
+    base = MapView(doc, train_vectors)
+    view = MapView(None, train_vectors)
+    bits = sorted(i for col in base.columns.values() for i in col)
+    if bits:
+        view.columns = {"train_membership": bits}
+        view.column_keys = ["train_membership"]
+    view.doc = doc
+    view.sha256 = base.sha256
+    return view
+
+
+def membership_counts(view: "MapView", truth: dict, train_vectors: list[int]) -> dict:
+    """How many of the addresses a view names are ACTUALLY in train columns (the review's
+    diagnostic: B names 183 train / 0 holdout; D and E ~112 / 71)."""
+    train = set(train_vectors)
+    named = {i for col in view.columns.values() for i in col}
+    actually_train = sum(1 for i in named if truth["mapping"][i][1] in train)
+    return {"named": len(named), "actually_train": actually_train, "actually_holdout": len(named) - actually_train}
+
+
 def no_map() -> dict | None:
     return None
 

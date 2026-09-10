@@ -35,8 +35,55 @@ import b2_search as bs  # noqa: E402
 
 INSTRUMENT_COMMIT = "689dde1dad374536c625bbe2b05986ee89eb4c94"
 SESSION_LABEL = "b2-session"
-GATE_REPORT = REPO_ROOT / "evidence/b2/gate/gate_report.json"
+GATE_REPORT = REPO_ROOT / "evidence/b2/gate/recomputed_2026_09_10/gate_report.json"      # v0.3 rules over run 3's rows
+GATE_RUN_REPORT = REPO_ROOT / "evidence/b2/gate/gate_report.json"                         # run 3 as run (the rows' provenance)
 ALPHA = 0.05
+AUDIT_POLICY = "all-self-reporting"      # the owner's decision of 2026-09-10 for the first B2 image
+SESSION_SPAN_MAX_S = 7200                # the registered two-hour criterion, applied per session to the EXPECTED span
+DEADLINE_FORMULA = "1.25 x records x 3600 / rate + 600 (the instrument's l6_schedule.session_timeout_s)"
+# every frozen seed set a new draw must avoid (explicit exclusion; different labels do not guarantee disjointness)
+FROZEN_SEED_SETS = ("evidence/b2/gate/v0.1_2026-09-10/gate_report.json", "evidence/b2/gate/gate_report.json", "evidence/b3/sim/sim_report.json")
+
+
+def frozen_seed_exclusion() -> tuple[set[int], dict]:
+    """The union of every archived run's (landscape, operator) seeds, re-derived from each
+    report's master seed and count, plus the master seeds themselves."""
+    excl: set[int] = set()
+    where = {}
+    for rel in FROZEN_SEED_SETS:
+        r = json.loads((REPO_ROOT / rel).read_text())
+        seeds = bs.pair_seeds(r["seeds"]["master_seed"], r["seeds"]["count"])
+        flat = {x for p in seeds for x in p} | {r["seeds"]["master_seed"]}
+        where[rel] = {"master_seed": r["seeds"]["master_seed"], "count": r["seeds"]["count"], "values": len(flat)}
+        excl |= flat
+    return excl, where
+
+
+def session_split(n_pairs: int, budget: int, rate_per_hour: float | None) -> dict:
+    """The frozen split rule (preregistration §2): a session holds as many whole pairs as
+    keep its EXPECTED span (records x 3600 / rate) within SESSION_SPAN_MAX_S, at least one;
+    pairs are assigned in order; every session has its own opening and closing baseline.
+    Without a measured rate (before B2Q) the split is UNDETERMINED and only the record
+    arithmetic per candidate split is reported."""
+    per_pair = 2 * budget + 2                     # both arms' search + both champions' holdout evaluations
+    def records(p):
+        return 2 + p * per_pair
+    if rate_per_hour is None:
+        return {"status": "UNDETERMINED until B2Q measures the all-self-reporting rate", "records_per_pair": per_pair,
+                "candidates": {f"{p} pairs/session": {"records": records(p), "sessions": -(-n_pairs // p),
+                                                       "total_records": sum(records(min(p, n_pairs - i * p)) for i in range(-(-n_pairs // p)))}
+                               for p in range(1, n_pairs + 1)}}
+    p_max = max(1, max((p for p in range(1, n_pairs + 1) if records(p) * 3600 / rate_per_hour <= SESSION_SPAN_MAX_S), default=1))
+    sessions = []
+    left = n_pairs
+    while left > 0:
+        p = min(p_max, left)
+        sessions.append({"pairs": list(range(n_pairs - left, n_pairs - left + p)), "records": records(p),
+                         "expected_span_s": records(p) * 3600 / rate_per_hour,
+                         "deadline_s": 1.25 * records(p) * 3600 / rate_per_hour + 600})
+        left -= p
+    return {"status": "DETERMINED", "rate_per_hour": rate_per_hour, "pairs_per_session_max": p_max, "sessions": sessions,
+            "total_records": sum(s["records"] for s in sessions)}
 
 
 def sha256_file(p: Path) -> str:
@@ -59,6 +106,8 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
     out = REPO_ROOT / args.out
     gate = json.loads(GATE_REPORT.read_text())
+    if gate["thresholds"].get("rules_version") != bg.THRESHOLDS["rules_version"]:
+        raise SystemExit(f"the gate report's rules ({gate['thresholds'].get('rules_version')}) are not the current ones ({bg.THRESHOLDS['rules_version']})")
     fid = gate["selected_fitness"]
     if fid is None:
         raise SystemExit("the gate selected no fitness: no plan")
@@ -66,7 +115,8 @@ def main(argv=None) -> int:
     budget = res["b_star"]
     n_pairs = res["criteria"]["G5"]["required_pairs_N"]
     master = bs.master_seed(SESSION_LABEL, INSTRUMENT_COMMIT)
-    seeds = bs.pair_seeds(master, n_pairs)
+    exclusion, exclusion_sources = frozen_seed_exclusion()
+    seeds = bs.pair_seeds(master, n_pairs, exclude=exclusion)
     truth = bm.truth_mapping()
     masks = bl.universe_mask(truth)
     fabric = bs.ModelFabric(truth)
@@ -99,17 +149,23 @@ def main(argv=None) -> int:
         "carrier": "the qualified B1 carrier (docs/b2_architecture.md D1)",
         "map": {"path": str(bmaps.SELF_MAP.relative_to(REPO_ROOT)), "sha256": bmaps.sha256_of(self_map), "view": view.describe()},
         "seed_derivation": {"label": SESSION_LABEL, "commit": INSTRUMENT_COMMIT, "master_seed": master,
-                            "rule": "first 4 bytes of sha256(label + '|' + instrument commit); pairs from one Rng stream; excluded seeds skipped",
-                            "excluded": sorted(bs.EXCLUDED_SEEDS)},
+                            "rule": "first 4 bytes of sha256(label + '|' + instrument commit); pairs from one Rng stream; the fixed excluded "
+                                    "seeds AND every archived run's seed set skipped (explicit exclusion — disjointness is enforced, not assumed)",
+                            "excluded_fixed": sorted(bs.EXCLUDED_SEEDS), "excluded_frozen_sets": exclusion_sources,
+                            "excluded_values_total": len(exclusion | set(bs.EXCLUDED_SEEDS))},
         "gate": {"path": str(GATE_REPORT.relative_to(REPO_ROOT)), "sha256": sha256_file(GATE_REPORT), "head_at_run": gate["head_at_run"],
-                 "seeds_master": gate["seeds"]["master_seed"], "rules_version": gate["thresholds"]["rules_version"]},
-        "records": {"opening_baseline": 1, "search": n_pairs * 2 * budget, "champion_holdout": n_pairs * 2, "closing_baseline": 1, "total": records},
+                 "rules_version": gate["thresholds"]["rules_version"], "rows_from": gate.get("source"),
+                 "run_report": {"path": str(GATE_RUN_REPORT.relative_to(REPO_ROOT)), "sha256": sha256_file(GATE_RUN_REPORT)}},
+        "audit_policy": AUDIT_POLICY,
+        "records": {"per_pair": 2 * budget + 2, "single_session_total": records,
+                    "note": "one opening and one closing baseline PER SESSION; the total depends on the split (session_split)"},
         "arm_order": "pair r runs A then B when r is even, B then A when r is odd",
-        "session_time": {"sampled_audit_rate_per_hour": rate_sampled, "all_self_reporting_rate_per_hour": rate_all,
-                         "expected_span_s_sampled_audit": records * 3600 / rate_sampled, "expected_span_s_all_self_reporting": records * 3600 / rate_all,
-                         "deadline_formula": "1.25 x records x 3600 / rate + 600 (the instrument's l6_schedule.session_timeout_s)",
-                         "deadline_s_sampled_audit": 1.25 * records * 3600 / rate_sampled + 600,
-                         "deadline_s_all_self_reporting": 1.25 * records * 3600 / rate_all + 600},
+        "session_split": session_split(n_pairs, budget, None),
+        "session_span_max_s": SESSION_SPAN_MAX_S, "deadline_formula": DEADLINE_FORMULA,
+        "planning_rates_NOT_calibration": {"sampled_audit_S3_per_hour": rate_sampled, "all_self_reporting_B1plan_per_hour": rate_all,
+                                           "last_B1_mapping_observed_per_hour": 2807,
+                                           "note": "older P3/B1 rates, shown for planning only; the B2 rate is measured by B2Q and written into "
+                                                   "the manifest before the split is determined (preregistration §6, §8)"},
         "primary": {"statistic": "one-sided exact sign test over the N pairs' delta (best-so-far train fitness at the budget, self-map minus random-safe)",
                     "alpha": ALPHA, "ties": "excluded from n, counted"},
         "architecture": {"path": "docs/b2_architecture.md", "sha256": sha256_file(REPO_ROOT / "docs/b2_architecture.md")},
@@ -127,8 +183,8 @@ def main(argv=None) -> int:
     (out / "plan.json").write_text(json.dumps(plan, indent=1, sort_keys=True))
     print(json.dumps({"fitness": fid, "budget": budget, "pairs": n_pairs, "master_seed": master, "records": records,
                       "deltas": deltas, "predicted_primary": prediction["predicted_primary"],
-                      "span_h_sampled": plan["session_time"]["expected_span_s_sampled_audit"] / 3600,
-                      "span_h_all": plan["session_time"]["expected_span_s_all_self_reporting"] / 3600}, indent=1))
+                      "audit_policy": AUDIT_POLICY, "excluded_values": plan["seed_derivation"]["excluded_values_total"],
+                      "session_split": plan["session_split"]["status"]}, indent=1))
     return 0
 
 

@@ -105,15 +105,20 @@ def main(argv=None) -> int:
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 2))
     ap.add_argument("--fitness", default="F1,F2")
     ap.add_argument("--out", default="evidence/b3/sim")
+    ap.add_argument("--master-seed", type=int, default=None, help="reuse a stored run's master seed instead of deriving one from HEAD (identity re-runs)")
+    ap.add_argument("--label", default="")
     a = ap.parse_args(argv)
     out = REPO_ROOT / a.out
     out.mkdir(parents=True, exist_ok=True)
     head = git_head()
     dirty = bool(subprocess.run(["git", "-C", str(REPO_ROOT), "status", "--porcelain"], capture_output=True, text=True).stdout.strip())
-    master = bs.master_seed(LABEL, head or "no-commit")
+    master = a.master_seed if a.master_seed is not None else bs.master_seed(LABEL, head or "no-commit")
     seeds = bs.pair_seeds(master, a.seeds)
     report = {"schema": "b3_sim_report", "schema_version": "1.0.0", "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-              "head_at_run": head, "worktree_dirty_at_start": dirty, "seeds": {"label": LABEL, "master_seed": master, "count": a.seeds},
+              "label": a.label, "carto_version": b3.CARTO_VERSION,
+              "head_at_run": head, "worktree_dirty_at_start": dirty,
+              "seeds": {"label": LABEL, "master_seed": master, "count": a.seeds, "reused": a.master_seed is not None},
+              "accounting_note": "an EVALUATION-COUNT model: F is charged B1's 333 probes; baselines, setup, qualification, audits and compute time are not counted",
               "b1_map_cost": b3.B1_MAP_COST, "engine": {"version": bs.ENGINE_VERSION, "mu": bs.MU, "lambda": bs.LAMBDA, "kmax": bs.KMAX},
               "map": {"path": str(bmaps.SELF_MAP.relative_to(REPO_ROOT)), "sha256": bmaps.sha256_of(bmaps.load_self_map())}, "results": {}}
     for fid in [f for f in a.fitness.split(",") if f]:

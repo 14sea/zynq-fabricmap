@@ -173,12 +173,15 @@ def master_seed(label: str, commit: str) -> int:
     return int.from_bytes(d[:4], "big")
 
 
-def pair_seeds(master: int, count: int) -> list[tuple[int, int]]:
+def pair_seeds(master: int, count: int, exclude: frozenset | set = frozenset()) -> list[tuple[int, int]]:
     """(landscape_seed, operator_seed) per pair, drawn from one stream off the master;
-    every seed is 32-bit, none is an excluded seed, all are distinct."""
+    every seed is 32-bit, none is an excluded seed (the fixed list plus `exclude` — the
+    caller passes every frozen set the new draw must avoid: different labels give
+    different streams but do NOT guarantee disjointness, so it is enforced here and the
+    plan records which sets were excluded), all are distinct."""
     rng = bc.Rng(master)
     out: list[tuple[int, int]] = []
-    seen: set[int] = set(EXCLUDED_SEEDS)
+    seen: set[int] = set(EXCLUDED_SEEDS) | set(exclude)
     while len(out) < count:
         l_seed = rng.next32()
         o_seed = rng.next32()

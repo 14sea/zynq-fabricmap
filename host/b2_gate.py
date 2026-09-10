@@ -40,18 +40,21 @@ SEEDS_DEFAULT = 200
 GRID = (100, 200, 300, 400, 600, 800, 1000, 1500, 2000)
 B_MAX = GRID[-1]
 ARMS = ("A", "B", "C", "D", "E", "Q25", "Q50", "Q75")
+CONTROL_ARMS = ("T", "W")                      # v0.3 §7a: train-membership-only, within-train column scramble
 ARM_TEXT = {"A": "random-safe", "B": "self-map (B1)", "C": "oracle-map", "D": "shuffled-map", "E": "within-LUT shuffled",
-            "Q25": "degraded q=1/4", "Q50": "degraded q=1/2", "Q75": "degraded q=3/4"}
+            "Q25": "degraded q=1/4", "Q50": "degraded q=1/2", "Q75": "degraded q=3/4",
+            "T": "train-membership only", "W": "within-train column scramble"}
 Q_OF = {"Q25": 0.25, "Q50": 0.5, "Q75": 0.75}
 THRESHOLDS = {
-    "rules_version": "v0.2",
+    "rules_version": "v0.3",
     "budget_rule": "min N(B) x 2 x B over grid budgets with G1 and finite N(B)",
     "G1_saturation_percentile": 95, "G2_bootstrap_experiments": 1000, "G2_null_nonreject_min": 0.90,
     "G3_shuffled_fraction_max": 0.10, "G3_alpha": 0.05,
     "G4_oracle_median_fraction_max": 0.90, "G4_self_vs_oracle_min": 0.90,
     "G5_cohen_d_min": 0.8, "G5_alpha": 0.05, "G5_power_min": 0.90, "G5_pairs_min": 8,
-    "G5_session_evals_max": 13000,                 # one 2-hour session at the sampled-audit rate (S #3)
-    "G5_session_evals_all_self_reporting": 6000,   # reported alongside: B1's all-self-reporting rate
+    "G5_total_evals_max": 13000,                   # a PLANNING bound on the experiment's total evaluations (v0.3: not a session-fit claim)
+    "G5_session_evals_all_self_reporting": 6000,   # reported alongside: what one session at B1's all-self-reporting rate would hold
+    "G9_alpha": 0.05,                              # the predeclared control comparison (architecture v0.3 §7a)
     "G6_seeds_min": 200,
     "G7_q75_fraction_max": 0.50,
     "G8_lut_shuffled_fraction_max": 0.25,
@@ -108,27 +111,17 @@ def bootstrap_reject_rate(deltas, n_pairs: int, alpha: float, experiments: int, 
 
 
 def required_pairs(deltas, alpha: float, power_min: float, experiments: int, seed: int, n_min: int, n_max: int):
-    """The smallest N in [n_min, n_max] whose bootstrap power reaches power_min: a geometric
-    sweep to bracket it, then a linear refinement inside the bracket (every N in the final
-    bracket is evaluated with the same `experiments`)."""
-    def power(n):
-        return bootstrap_reject_rate(deltas, n, alpha, experiments, seed + n)
-    if power(n_max) < power_min:
-        return None, power(n_max)
-    lo, hi = n_min, n_max            # power(hi) >= power_min
-    n = n_min
-    while n < n_max:
-        pw = power(n)
-        if pw >= power_min:
-            hi = n
-            break
-        lo = n + 1
-        n = min(n_max, max(n + 1, int(n * 1.5)))
-    for m in range(lo, hi + 1):
-        pw = power(m)
-        if pw >= power_min:
-            return m, pw
-    return hi, power(hi)
+    """The smallest N in [n_min, n_max] whose bootstrap power reaches power_min — EVERY N
+    scanned in ascending order (the declared rule). Bootstrap power is not monotone in N
+    (discrete rejection regions, simulation noise), so no bracketing or n_max shortcut may
+    skip a candidate: the owner's review of 2026-09-10 found the earlier geometric sweep
+    returning N = 91 where N = 89 already had power 0.906 (F3, budget 300)."""
+    last = None
+    for n in range(n_min, n_max + 1):
+        last = bootstrap_reject_rate(deltas, n, alpha, experiments, seed + n)
+        if last >= power_min:
+            return n, last
+    return None, last
 
 
 # ------------------------------------------------------------------ the runs
@@ -233,11 +226,13 @@ def evaluate(fid: str, rows: list[dict]) -> dict:
     session_evals = best["session_evaluations"]
     crit["G5"] = {"cohen_d": d_B, "mean_delta": md["B"], "sd_delta": statistics.stdev(delta["B"]) if S > 1 else 0.0,
                   "sign_test_p_full_S": p_B, "positives": pos_B, "negatives": neg_B, "ties": ties_B,
-                  "required_pairs_N": n_req, "power_at_N": best["power_at_N"], "session_evaluations": session_evals,
-                  "session_hours_sampled_audit": session_evals / SAMPLED_AUDIT_RATE_PER_HOUR,
-                  "session_hours_all_self_reporting": session_evals / ALL_SELF_REPORTING_RATE_PER_HOUR,
-                  "fits_all_self_reporting_cap": session_evals <= T["G5_session_evals_all_self_reporting"],
-                  "pass": d_B >= T["G5_cohen_d_min"] and session_evals <= T["G5_session_evals_max"]}
+                  "required_pairs_N": n_req, "power_at_N": best["power_at_N"], "total_evaluations": session_evals,
+                  "planning_hours_at_sampled_audit_rate_S3": session_evals / SAMPLED_AUDIT_RATE_PER_HOUR,
+                  "planning_hours_at_all_self_reporting_rate_B1plan": session_evals / ALL_SELF_REPORTING_RATE_PER_HOUR,
+                  "fits_one_session_at_all_self_reporting_planning_rate": session_evals <= T["G5_session_evals_all_self_reporting"],
+                  "note": "v0.3: the bound is on TOTAL evaluations; how many sessions they take is decided by the B2Q-measured "
+                          "all-self-reporting rate (preregistration §2), never by these planning rates",
+                  "pass": d_B >= T["G5_cohen_d_min"] and session_evals <= T["G5_total_evals_max"]}
 
     var_delta = statistics.pvariance(delta["B"]) if S > 1 else 0.0
     both_signs_somewhere = any(t["positives"] > 0 and t["negatives"] > 0 for t in table)
@@ -278,6 +273,67 @@ def evaluate(fid: str, rows: list[dict]) -> dict:
             "criteria": crit, "pass": all(c["pass"] for c in crit.values())}
 
 
+# ------------------------------------------------------------------ the predeclared control comparison (v0.3 §7a)
+
+
+def _control_docs(r: int) -> dict:
+    sm = _CTX["self_map"]
+    return {"T": ("membership", sm), "W": ("doc", bmaps.within_train_scrambled_map(sm, r, _CTX["train"]))}
+
+
+def _one_seed_controls(args) -> dict:
+    r, l_seed, o_seed = args
+    land = bl.Landscape(_CTX["fid"], l_seed, masks=_CTX["masks"], truth=_CTX["truth"])
+    out = {"r": r, "landscape_seed": l_seed, "operator_seed": o_seed, "arms": {}}
+    for arm, (kind, doc) in _control_docs(r).items():
+        view = bmaps.train_membership_view(doc, _CTX["train"]) if kind == "membership" else bmaps.MapView(doc, _CTX["train"])
+        res = bs.run(bs.ARM_MAP_GUIDED, land, view, o_seed, B_MAX, _CTX["fabric"])
+        out["arms"][arm] = {"at_grid": [res.best_trace[b - 1] for b in GRID], "champion_holdout": res.champion_holdout,
+                            "column_moves": res.column_moves, "mapped_bits_in_train": view.mapped_bits(),
+                            "train_membership": bmaps.membership_counts(view, _CTX["truth"], _CTX["train"])}
+    return out
+
+
+def run_controls(fid: str, rows: list[dict], workers: int) -> list[dict]:
+    jobs = [(row["r"], row["landscape_seed"], row["operator_seed"]) for row in rows]
+    with Pool(workers, initializer=_init_worker, initargs=(fid,)) as pool:
+        out = pool.map(_one_seed_controls, jobs, chunksize=4)
+    out.sort(key=lambda x: x["r"])
+    return out
+
+
+def evaluate_controls(fid: str, rows: list[dict], control_rows: list[dict], b_star: int) -> dict:
+    """G9 (predeclared, architecture v0.3 §7a): at the recomputed B*, the self-map arm beats
+    BOTH the train-membership-only arm (T) and the within-train column scramble (W) —
+    one-sided sign tests, alpha 0.05 — so the benefit is correct column grouping beyond
+    train membership and beyond the column-size / move-size distribution. Neither control
+    is required to lose to random-safe; their Δ vs A is reported."""
+    T = THRESHOLDS
+    if [row["r"] for row in rows] != [row["r"] for row in control_rows]:
+        raise ValueError("control rows do not pair with the main rows")
+    i = GRID.index(b_star)
+    S = len(rows)
+    a = [row["arms"]["A"]["at_grid"][i] for row in rows]
+    b = [row["arms"]["B"]["at_grid"][i] for row in rows]
+    out = {"fitness": fid, "b_star": b_star, "seeds": S, "arms": {}, "per_budget": {}}
+    for arm in CONTROL_ARMS:
+        x = [row["arms"][arm]["at_grid"][i] for row in control_rows]
+        d_bx = [b[j] - x[j] for j in range(S)]
+        d_xa = [x[j] - a[j] for j in range(S)]
+        p_bx, pos, neg, ties = sign_test_p(d_bx)
+        out["arms"][arm] = {"text": ARM_TEXT[arm], "median": median(x), "mean_delta_vs_A": mean(d_xa), "mean_delta_B_minus_arm": mean(d_bx),
+                            "cohen_d_B_minus_arm": cohen_d(d_bx), "positives": pos, "negatives": neg, "ties": ties, "sign_test_p_B_gt_arm": p_bx,
+                            "fraction_of_B_benefit_retained": (mean(d_xa) / mean([b[j] - a[j] for j in range(S)])) if mean([b[j] - a[j] for j in range(S)]) else None,
+                            "train_membership": control_rows[0]["arms"][arm]["train_membership"],
+                            "pass": p_bx <= T["G9_alpha"]}
+        out["per_budget"][arm] = [{"budget": GRID[k], "median": median([row["arms"][arm]["at_grid"][k] for row in control_rows]),
+                                   "mean_delta_B_minus_arm": mean([rows[j]["arms"]["B"]["at_grid"][k] - control_rows[j]["arms"][arm]["at_grid"][k] for j in range(S)])}
+                                  for k in range(len(GRID))]
+    out["G9"] = {"pass": all(out["arms"][arm]["pass"] for arm in CONTROL_ARMS), "alpha": T["G9_alpha"],
+                 "rule": "B > T and B > W at B*, one-sided exact sign tests, alpha 0.05 (architecture v0.3 §7a, predeclared before the run)"}
+    return out
+
+
 # ------------------------------------------------------------------ the report
 
 
@@ -299,14 +355,74 @@ def architecture_pin() -> dict:
             "last_commit": p.stdout.strip() or None}
 
 
+def load_rows(src: Path) -> dict:
+    """The stored raw rows of a gate run, by fitness, with the run's report."""
+    report = json.loads((src / "gate_report.json").read_text())
+    rows = {fid: json.loads((src / f"raw_{fid}.json").read_text())["rows"] for fid in report["results"]}
+    return {"report": report, "rows": rows}
+
+
+def recompute(src: Path, out: Path, label: str) -> dict:
+    """Re-evaluate the stored raw rows of a run under the CURRENT rules and code, into a
+    separately labelled directory; the source report is not touched."""
+    stored = load_rows(src)
+    results = {fid: evaluate(fid, rows) for fid, rows in stored["rows"].items()}
+    order = [f for f in bl.FITNESS_IDS if f in results]
+    selected = next((f for f in order if results[f]["pass"]), None)
+    rep = {"schema": "b2_gate_recomputation", "schema_version": "1.0.0", "label": label,
+           "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "head_at_run": git_head(),
+           "source": {"path": str(src.relative_to(REPO_ROOT)), "gate_report_sha256": hashlib.sha256((src / "gate_report.json").read_bytes()).hexdigest(),
+                      "raw_sha256": {fid: hashlib.sha256((src / f"raw_{fid}.json").read_bytes()).hexdigest() for fid in stored["rows"]},
+                      "seeds": stored["report"]["seeds"], "rules_version_at_source": stored["report"]["thresholds"].get("rules_version")},
+           "architecture": architecture_pin(), "thresholds": THRESHOLDS, "selection_order": list(bl.FITNESS_IDS), "selected_fitness": selected,
+           "results": results}
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "gate_report.json").write_text(json.dumps(rep, indent=1, sort_keys=True))
+    return rep
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
+    ap.add_argument("command", nargs="?", default="run", choices=["run", "recompute", "controls"])
+    ap.add_argument("--from", dest="src", default="evidence/b2/gate", help="recompute/controls: the stored run to reuse (rows and seeds)")
+    ap.add_argument("--label", default="")
     ap.add_argument("--seeds", type=int, default=SEEDS_DEFAULT)
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 2))
     ap.add_argument("--out", default="evidence/b2/gate")
     ap.add_argument("--fitness", default=",".join(bl.FITNESS_IDS))
     args = ap.parse_args(argv)
     out = REPO_ROOT / args.out
+    if args.command == "recompute":
+        rep = recompute(REPO_ROOT / args.src, out, args.label)
+        for fid, x in rep["results"].items():
+            print(f"[{fid}] B*={x.get('b_star')} pass={x['pass']} { {k: v['pass'] for k, v in x['criteria'].items()} }")
+        print(f"selected fitness: {rep['selected_fitness']}; {out / 'gate_report.json'}")
+        return 0
+    if args.command == "controls":
+        src = REPO_ROOT / args.src
+        stored = load_rows(src)
+        rec = json.loads((out / "gate_report.json").read_text()) if (out / "gate_report.json").is_file() else None
+        if rec is None:
+            raise SystemExit("controls: run `recompute` into --out first (B* is taken from the recomputed report)")
+        fids = [f for f in args.fitness.split(",") if f]
+        res = {}
+        for fid in fids:
+            b_star = rec["results"][fid]["b_star"]
+            if b_star is None:
+                res[fid] = {"fitness": fid, "b_star": None, "G9": {"pass": False, "note": "no B*"}}
+                continue
+            t0 = time.time()
+            crow = run_controls(fid, stored["rows"][fid], args.workers)
+            (out / f"raw_controls_{fid}.json").write_text(json.dumps({"fitness": fid, "grid": list(GRID), "rows": crow}, separators=(",", ":")))
+            res[fid] = evaluate_controls(fid, stored["rows"][fid], crow, b_star)
+            res[fid]["wall_s"] = round(time.time() - t0, 1)
+            print(f"[{fid}] G9={res[fid]['G9']['pass']} " + " ".join(f"{a}: B-{a} {res[fid]['arms'][a]['mean_delta_B_minus_arm']:+.2f} p={res[fid]['arms'][a]['sign_test_p_B_gt_arm']:.2e}" for a in CONTROL_ARMS), flush=True)
+        rep = {"schema": "b2_gate_controls", "schema_version": "1.0.0", "label": args.label, "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+               "head_at_run": git_head(), "worktree_dirty_at_start": git_dirty(), "architecture": architecture_pin(), "thresholds": THRESHOLDS,
+               "source": {"path": str(src.relative_to(REPO_ROOT)), "seeds": stored["report"]["seeds"]}, "results": res}
+        (out / "controls_report.json").write_text(json.dumps(rep, indent=1, sort_keys=True))
+        print(out / "controls_report.json")
+        return 0
     out.mkdir(parents=True, exist_ok=True)
     head = git_head()
     dirty_at_start = git_dirty()          # before this run writes anything into the tree

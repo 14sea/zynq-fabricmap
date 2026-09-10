@@ -109,5 +109,85 @@ class Online(unittest.TestCase):
         self.assertTrue(list(cls(schema).iter_errors(bad)))
 
 
+
+class ReviewRegressions(unittest.TestCase):
+    """docs/b2_b3_host_review_2026_09_10.md §2, third finding: the three counterexamples
+    (evidence/b2/review_2026_09_10/reproduce_findings.py) and the atomicity guarantee."""
+
+    P, Q, RR, T, U = (0, 0), (0, 1), (0, 2), (0, 3), (0, 4)
+
+    def test_decoded_contradiction_is_an_anomaly_and_changes_nothing(self):
+        c = b3.SpecimenCarto()
+        c.observe([0], [self.P])
+        before = c.snapshot()
+        self.assertEqual(c.observe([0], [self.Q]), [])
+        self.assertEqual(c.anomalies, 1)
+        self.assertEqual(c.snapshot(), before)
+
+    def test_mixed_specimen_omitting_a_known_position_is_refused(self):
+        c = b3.SpecimenCarto()
+        c.observe([0], [self.P])
+        before = c.snapshot()
+        self.assertEqual(c.observe([0, 1], [self.Q, self.RR]), [])
+        self.assertEqual(c.anomalies, 1)
+        self.assertEqual(c.snapshot(), before)
+        self.assertNotIn(1, c.candidates)
+
+    def test_mixed_specimen_with_the_known_position_narrows_the_rest(self):
+        c = b3.SpecimenCarto()
+        c.observe([0], [self.P])
+        self.assertEqual(c.observe([0, 1], [self.P, self.RR]), [1])
+        self.assertEqual(c.decoded[1], self.RR)
+        self.assertEqual(c.anomalies, 0)
+
+    def test_refusal_is_atomic(self):
+        c = b3.SpecimenCarto()
+        c.observe([0, 2], [self.P, self.Q])
+        c.observe([1, 3], [self.RR, self.T])
+        before = c.snapshot()
+        self.assertEqual(c.observe([0, 1], [self.P, self.U]), [])       # 1 cannot be at U: empty intersection
+        self.assertEqual(c.anomalies, 1)
+        self.assertEqual(c.snapshot(), before)
+        self.assertEqual(c.candidates[0], {self.P, self.Q})
+
+    def test_position_of_an_unmoved_decoded_address_is_refused(self):
+        c = b3.SpecimenCarto()
+        c.observe([0], [self.P])
+        before = c.snapshot()
+        self.assertEqual(c.observe([1], [self.P]), [])
+        self.assertEqual(c.anomalies, 1)
+        self.assertEqual(c.snapshot(), before)
+
+    def test_closure_conflict_is_refused_atomically(self):
+        c = b3.SpecimenCarto()
+        c.observe([0, 1], [self.P, self.Q])         # {0,1} -> {P,Q}
+        c.observe([2, 3], [self.P, self.Q])         # {2,3} -> {P,Q}: four addresses, two positions — consistent so far
+        before = c.snapshot()
+        # decoding 0 at P would leave 1 at Q, then 2 and 3 both need Q — a closure conflict
+        self.assertEqual(c.observe([0], [self.P]), [])
+        self.assertEqual(c.anomalies, 1)
+        self.assertEqual(c.snapshot(), before)
+
+    def test_malformed_specimens_are_refused(self):
+        c = b3.SpecimenCarto()
+        for moved, delta in (([0, 0], [self.P, self.Q]), ([0], [(6, 0)]), ([0], [(0, 64)]), ([0, 1], [self.P, self.P]), ([], []), ([999], [self.P])):
+            before = c.snapshot()
+            self.assertEqual(c.observe(moved, delta), [])
+            self.assertEqual(c.snapshot(), before)
+        self.assertEqual(c.anomalies, 6)
+
+    def test_ideal_model_run_is_unchanged_by_the_correction(self):
+        # the committed B3 simulation (carto v1) row 0 for F1 must be reproduced by carto v1.1
+        raw = R / "evidence/b3/sim/raw_F1.json"
+        if not raw.exists():
+            self.skipTest("no committed B3 rows")
+        row = json.loads(raw.read_text())["rows"][0]
+        land = bl.Landscape("F1", row["landscape_seed"], masks=MASKS, truth=TRUTH)
+        res = b3.run_online(land, row["operator_seed"], 3000, FAB)
+        grid = (100, 200, 300, 400, 600, 800, 1000, 1500, 2000, 3000)
+        self.assertEqual([res.best_trace[b - 1] for b in grid], row["search"]["O"])
+        self.assertEqual([res.decoded_trace[b - 1] for b in grid], row["online"]["decoded_at_grid"])
+        self.assertEqual(res.anomalies, 0)
+
 if __name__ == "__main__":
     unittest.main()

@@ -4,6 +4,7 @@ evidence/b2/gate; here the criteria are exercised on synthetic rows so that ever
 shown to be able to FAIL."""
 from __future__ import annotations
 
+import json
 import math
 import random
 import sys
@@ -136,14 +137,14 @@ class Criteria(unittest.TestCase):
         self.assertFalse(bg.evaluate("F2", rows)["criteria"]["G5"]["pass"])
 
     def test_G5_session_budget_fails(self):
-        old = bg.THRESHOLDS["G5_session_evals_max"]
+        old = bg.THRESHOLDS["G5_total_evals_max"]
         try:
-            bg.THRESHOLDS["G5_session_evals_max"] = 100
+            bg.THRESHOLDS["G5_total_evals_max"] = 100
             res = bg.evaluate("F2", synthetic_rows())
             self.assertFalse(res["criteria"]["G5"]["pass"])
-            self.assertIn("fits_all_self_reporting_cap", res["criteria"]["G5"])
+            self.assertIn("fits_one_session_at_all_self_reporting_planning_rate", res["criteria"]["G5"])
         finally:
-            bg.THRESHOLDS["G5_session_evals_max"] = old
+            bg.THRESHOLDS["G5_total_evals_max"] = old
 
     def test_G6_too_few_seeds_fails(self):
         self.assertFalse(bg.evaluate("F2", synthetic_rows(S=50))["criteria"]["G6"]["pass"])
@@ -172,11 +173,12 @@ class Criteria(unittest.TestCase):
 
     def test_thresholds_are_the_architecture_documents(self):
         text = (R / "docs/b2_architecture.md").read_text()
-        for needle in ("smallest session cost", "95th percentile", "10 %", "90 %", "0.8", "13 000", "6 000", "S = 200", "25 %",
-                       "½ · arm B", "both signs at some grid budget", "{0, ¼, ½, ¾}", "v0.1 → v0.2"):
+        for needle in ("smallest session cost", "95th percentile", "10 %", "90 %", "0.8", "13 000", "S = 200", "25 %",
+                       "½ · arm B", "both signs at some grid budget", "{0, ¼, ½, ¾}", "v0.1 → v0.2", "v0.2 → v0.3",
+                       "full ascending scan", "total", "§7a"):
             self.assertIn(needle, text, needle)
-        self.assertEqual(bg.THRESHOLDS["rules_version"], "v0.2")
-        self.assertEqual(bg.THRESHOLDS["G5_session_evals_max"], 13000)
+        self.assertEqual(bg.THRESHOLDS["rules_version"], "v0.3")
+        self.assertEqual(bg.THRESHOLDS["G5_total_evals_max"], 13000)
         self.assertEqual(bg.THRESHOLDS["G5_session_evals_all_self_reporting"], 6000)
         self.assertAlmostEqual(bg.SAMPLED_AUDIT_RATE_PER_HOUR, 12570 / 6763.9 * 3600)
         self.assertEqual(bg.SEEDS_DEFAULT, 200)
@@ -186,3 +188,84 @@ class Criteria(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReviewRegressions(unittest.TestCase):
+    """The owner's review of 2026-09-10 (docs/b2_b3_host_review_2026_09_10.md): the
+    counterexamples, reproduced as tests against the corrected code."""
+
+    def test_required_pairs_scans_every_N(self):
+        # F3 rows of gate run 3, budget 300: the geometric sweep returned 91; N = 89 has power 0.906
+        raw = R / "evidence/b2/gate/raw_F3.json"
+        if not raw.exists():
+            self.skipTest("no committed F3 rows")
+        rows = json.loads(raw.read_text())["rows"]
+        ix = bg.GRID.index(300)
+        delta = [r["arms"]["B"]["at_grid"][ix] - r["arms"]["A"]["at_grid"][ix] for r in rows]
+        n, power = bg.required_pairs(delta, 0.05, 0.9, 1000, 1, 8, 200)
+        self.assertEqual(n, 89)
+        self.assertAlmostEqual(power, 0.906)
+        self.assertAlmostEqual(bg.bootstrap_reject_rate(delta, 89, 0.05, 1000, 90), 0.906)
+        # no N below 89 reaches the power with the same seed rule
+        for m in range(8, 89):
+            self.assertLess(bg.bootstrap_reject_rate(delta, m, 0.05, 1000, 1 + m), 0.9)
+
+    def test_required_pairs_non_monotone_power_is_not_skipped(self):
+        # a synthetic non-monotone power profile: power(n) >= 0.9 only at n = 9 and from n = 20 on
+        import unittest.mock as um
+        profile = lambda deltas, n, alpha, experiments, seed: 0.95 if (n == 9 or n >= 20) else 0.5  # noqa: E731
+        with um.patch.object(bg, "bootstrap_reject_rate", profile):
+            self.assertEqual(bg.required_pairs([1] * 10, 0.05, 0.9, 10, 1, 8, 30)[0], 9)
+            self.assertEqual(bg.required_pairs([1] * 10, 0.05, 0.9, 10, 1, 10, 30)[0], 20)
+            self.assertEqual(bg.required_pairs([1] * 10, 0.05, 0.9, 10, 1, 10, 19), (None, 0.5))
+
+    def test_G5_is_a_total_evaluation_bound(self):
+        res = bg.evaluate("F2", synthetic_rows())
+        g5 = res["criteria"]["G5"]
+        self.assertIn("total_evaluations", g5)
+        self.assertNotIn("session_evaluations", g5)
+        self.assertIn("fits_one_session_at_all_self_reporting_planning_rate", g5)
+        self.assertEqual(bg.THRESHOLDS["G5_total_evals_max"], 13000)
+        self.assertEqual(bg.THRESHOLDS["rules_version"], "v0.3")
+
+
+def control_rows_like(rows, gain_T, gain_W, spread=8, seed=1):
+    rng = random.Random(seed)
+    out = []
+    for row in rows:
+        arms = {}
+        for arm, g in (("T", gain_T), ("W", gain_W)):
+            a = row["arms"]["A"]["at_grid"]
+            arms[arm] = {"at_grid": [min(160, 100 + g + rng.randint(-spread, spread)) for _ in a], "champion_holdout": 0, "column_moves": 0,
+                         "mapped_bits_in_train": 183, "train_membership": {"named": 183, "actually_train": 183, "actually_holdout": 0}}
+        out.append({"r": row["r"], "landscape_seed": row["landscape_seed"], "operator_seed": row["operator_seed"], "arms": arms})
+    return out
+
+
+class Controls(unittest.TestCase):
+    def test_G9_passes_when_B_beats_both_controls(self):
+        rows = synthetic_rows()
+        ctrl = control_rows_like(rows, gain_T=4, gain_W=4)
+        res = bg.evaluate_controls("F2", rows, ctrl, 100)
+        self.assertTrue(res["G9"]["pass"], res)
+        self.assertEqual(set(res["arms"]), {"T", "W"})
+
+    def test_G9_fails_when_a_control_retains_the_benefit(self):
+        rows = synthetic_rows()
+        ctrl = control_rows_like(rows, gain_T=4, gain_W=12)        # W as good as B: grouping adds nothing beyond membership+sizes
+        res = bg.evaluate_controls("F2", rows, ctrl, 100)
+        self.assertFalse(res["G9"]["pass"])
+        self.assertFalse(res["arms"]["W"]["pass"])
+        self.assertTrue(res["arms"]["T"]["pass"])
+
+    def test_G9_refuses_unpaired_rows(self):
+        rows = synthetic_rows()
+        ctrl = control_rows_like(rows, 4, 4)[::-1]
+        with self.assertRaises(ValueError):
+            bg.evaluate_controls("F2", rows, ctrl, 100)
+
+    def test_G9_is_predeclared_in_the_architecture(self):
+        text = (R / "docs/b2_architecture.md").read_text()
+        self.assertIn("§7a", text)
+        self.assertIn("train-membership", text)
+        self.assertIn("within-train", text)

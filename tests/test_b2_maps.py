@@ -108,5 +108,56 @@ class View(unittest.TestCase):
             self.assertTrue(set(bits) <= known)
 
 
+
+class ReviewControls(unittest.TestCase):
+    """The owner's review of 2026-09-10: D and E move addresses across the train / holdout
+    boundary; the v0.3 controls W and T keep membership."""
+
+    def test_D_and_E_cross_the_boundary_B_does_not(self):
+        counts = {name: bmaps.membership_counts(bmaps.MapView(doc, TRAIN), TRUTH, TRAIN)
+                  for name, doc in (("B", SELF), ("D", bmaps.shuffled_map(SELF, 0)), ("E", bmaps.lut_shuffled_map(SELF, 0)))}
+        self.assertEqual(counts["B"], {"named": 183, "actually_train": 183, "actually_holdout": 0})
+        self.assertEqual(counts["D"]["named"], 183)
+        self.assertGreater(counts["D"]["actually_holdout"], 40)
+        self.assertGreater(counts["E"]["actually_holdout"], 40)
+
+    def test_W_keeps_membership_and_column_sizes_and_scrambles_grouping(self):
+        w = bmaps.within_train_scrambled_map(SELF, 0, TRAIN)
+        self.assertEqual(bmaps.schema_findings(w), [])
+        view = bmaps.MapView(w, TRAIN)
+        self.assertEqual(bmaps.membership_counts(view, TRUTH, TRAIN), {"named": 183, "actually_train": 183, "actually_holdout": 0})
+        base = bmaps.MapView(SELF, TRAIN)
+        self.assertEqual(sorted(len(b) for b in view.columns.values()), sorted(len(b) for b in base.columns.values()))
+        self.assertEqual(sorted(view.columns), sorted(base.columns))
+        agree, n = bmaps.relations_equal(SELF, w)
+        self.assertEqual(n, bc.N)
+        self.assertLess(agree, 292 - 150)            # 109 holdout entries untouched + a few fixed points
+        self.assertGreaterEqual(agree, 109)
+        # holdout entries untouched
+        for a, b in zip(SELF["entries"], w["entries"]):
+            if a["relation"]["init_index"] not in TRAIN:
+                self.assertEqual(a["relation"], b["relation"])
+        # same LUT membership (lut_index untouched)
+        for a, b in zip(SELF["entries"], w["entries"]):
+            self.assertEqual(a["relation"]["lut_index"], b["relation"]["lut_index"])
+
+    def test_T_is_one_group_of_the_train_addresses(self):
+        view = bmaps.train_membership_view(SELF, TRAIN)
+        self.assertEqual(view.column_keys, ["train_membership"])
+        self.assertEqual(len(view.columns["train_membership"]), 183)
+        self.assertEqual(bmaps.membership_counts(view, TRUTH, TRAIN), {"named": 183, "actually_train": 183, "actually_holdout": 0})
+        base = bmaps.MapView(SELF, TRAIN)
+        self.assertEqual(view.columns["train_membership"], sorted(i for col in base.columns.values() for i in col))
+
+    def test_T_moves_are_train_subsets_of_size_1_to_4(self):
+        import b2_search as bs
+        view = bmaps.train_membership_view(SELF, TRAIN)
+        rng = bc.Rng(3)
+        for _ in range(300):
+            m = bs.column_move(rng, view)
+            self.assertTrue(1 <= len(m) <= 4)
+            for i in m:
+                self.assertIn(TRUTH["mapping"][i][1], TRAIN)
+
 if __name__ == "__main__":
     unittest.main()
