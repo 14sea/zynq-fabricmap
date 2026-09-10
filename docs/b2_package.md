@@ -1,5 +1,13 @@
 # B2 — the pre-image package: what was built, what the gate showed, what is asked (v0.2.2, host-only, 2026-09-10)
 
+> **Image integration review (`a32b1fe`): HOLD on accepting image `e06b77a6…`.**
+> Two P2 findings: IDENT reports a zero pair slice before initialization, and the built
+> image/evidence precede the tested application revision. The independent B2/B3 suite
+> passes 159 tests with zero skips. See [the integration review](b2_image_integration_review_2026_09_10.md)
+> and its actual-main startup reproducer. Corrections and unfinished host tools may
+> proceed; a replacement build and the complete §7 package are required before clearance.
+> Earlier status blocks below are historical, including their statements that no image exists.
+
 > **Image core review (`aef237d`): stages 1/2a/2b may proceed to application integration.**
 > The independent B2/B3 run is 132 tests: 130 passed, two binary scans skipped because no
 > image exists. UBSan host-twin checks reproduce all 10,800 candidate genomes and the

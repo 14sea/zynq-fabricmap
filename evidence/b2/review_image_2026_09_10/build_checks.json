@@ -1,0 +1,49 @@
+{
+  "reviewed_head": "a32b1fe79921dfe06c7def083a8ddcff64be5c43",
+  "image": {
+    "path": "firmware/b2/bsp/out/b2_app.bin",
+    "sha256": "e06b77a6a9300a8d855ea99fb77e055890bd1e91c3cbdb6e2eb31c68f54b0ae9",
+    "bytes": 114708,
+    "elf_sha256": "153df0a45ebeaca2f135568e9df8076a5db5390b4fd4464a71f9c7f53f52b63e",
+    "load_address": "0x02000000",
+    "entry": "go 0x2000000"
+  },
+  "source_entries": 20,
+  "translation_units": 47,
+  "headers": 86,
+  "headers_by_root": {
+    "embeddedsw_standalone": 24,
+    "embeddedsw_watchdog": 2,
+    "firmware": 10,
+    "toolchain": 50
+  },
+  "runtime_objects": 7,
+  "source_hash_findings": [
+    {
+      "section": "translation_units",
+      "path": "/home/test/zynq_fabricmap/firmware/b2/b2_app.c",
+      "recorded": "5a9c386d92c376e0d364b07beb88d095fcb5186ee57dfe9820beb861f8da3a66",
+      "current": "cfbac577ecfb2c185aa8d61fc01f17e6f8eb1ba3bcbfb62da8726b393e9643de"
+    },
+    {
+      "section": "sources",
+      "path": "b2_app.c",
+      "recorded": "5a9c386d92c376e0d364b07beb88d095fcb5186ee57dfe9820beb861f8da3a66",
+      "current": "cfbac577ecfb2c185aa8d61fc01f17e6f8eb1ba3bcbfb62da8726b393e9643de"
+    }
+  ],
+  "compiler_dependency_sets_covered": true,
+  "binary_contains_old_refusal": true,
+  "binary_contains_current_refusal": false,
+  "verbatim_imports": 10,
+  "b1_pins_verify": true,
+  "b1_manifest_sha256": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+  "submitted_reproducibility": {
+    "builds": [
+      "e06b77a6a9300a8d855ea99fb77e055890bd1e91c3cbdb6e2eb31c68f54b0ae9",
+      "e06b77a6a9300a8d855ea99fb77e055890bd1e91c3cbdb6e2eb31c68f54b0ae9"
+    ],
+    "reproduced_byte_identical": true
+  },
+  "review_built_arm_image": false
+}

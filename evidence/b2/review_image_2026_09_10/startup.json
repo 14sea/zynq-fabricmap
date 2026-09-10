@@ -1,0 +1,471 @@
+{
+  "strict": {
+    "frames": [
+      {
+        "frame": "IDENT",
+        "seq": 0,
+        "payload": {
+          "app_epoch": 0,
+          "budget_per_arm": 600,
+          "carrier_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "carrier_variant": "0x42310001",
+          "control_plane": "standalone",
+          "fclk0_hz_decoded": 50000000,
+          "findings": [],
+          "fitness_id": "F1",
+          "map_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+          "master_seed": 716169644,
+          "nonce_at_start": "9e3779b97f4a7c15",
+          "operator_data_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+          "pair_count": 0,
+          "pair_first": 0,
+          "pairs_total": 0,
+          "protocol": "rel-v4",
+          "pss_idcode": "0x13722093",
+          "rec_retry_control": false,
+          "schedule_mode": "b2-es-v1",
+          "schema": "app_identity",
+          "schema_version": "1.5.0",
+          "search_version": "b2-es-v1",
+          "sign_retry_control": false,
+          "status_at_start": "0x00000900",
+          "token": "a13f38b53355fd4c1cac3145244727f8",
+          "uboot_epoch": 1,
+          "universe_sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
+        }
+      },
+      {
+        "frame": "IDENT",
+        "seq": 0,
+        "payload": {
+          "app_epoch": 0,
+          "budget_per_arm": 600,
+          "carrier_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "carrier_variant": "0x42310001",
+          "control_plane": "standalone",
+          "fclk0_hz_decoded": 50000000,
+          "findings": [],
+          "fitness_id": "F1",
+          "map_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+          "master_seed": 716169644,
+          "nonce_at_start": "9e3779b97f4a7c15",
+          "operator_data_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+          "pair_count": 0,
+          "pair_first": 0,
+          "pairs_total": 0,
+          "protocol": "rel-v4",
+          "pss_idcode": "0x13722093",
+          "rec_retry_control": false,
+          "schedule_mode": "b2-es-v1",
+          "schema": "app_identity",
+          "schema_version": "1.5.0",
+          "search_version": "b2-es-v1",
+          "sign_retry_control": false,
+          "status_at_start": "0x00000900",
+          "token": "a13f38b53355fd4c1cac3145244727f8",
+          "uboot_epoch": 1,
+          "universe_sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
+        }
+      },
+      {
+        "frame": "IDENT",
+        "seq": 0,
+        "payload": {
+          "app_epoch": 0,
+          "budget_per_arm": 600,
+          "carrier_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "carrier_variant": "0x42310001",
+          "control_plane": "standalone",
+          "fclk0_hz_decoded": 50000000,
+          "findings": [],
+          "fitness_id": "F1",
+          "map_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+          "master_seed": 716169644,
+          "nonce_at_start": "9e3779b97f4a7c15",
+          "operator_data_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+          "pair_count": 0,
+          "pair_first": 0,
+          "pairs_total": 0,
+          "protocol": "rel-v4",
+          "pss_idcode": "0x13722093",
+          "rec_retry_control": false,
+          "schedule_mode": "b2-es-v1",
+          "schema": "app_identity",
+          "schema_version": "1.5.0",
+          "search_version": "b2-es-v1",
+          "sign_retry_control": false,
+          "status_at_start": "0x00000900",
+          "token": "a13f38b53355fd4c1cac3145244727f8",
+          "uboot_epoch": 1,
+          "universe_sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
+        }
+      },
+      {
+        "frame": "TERM",
+        "seq": 1,
+        "payload": {
+          "audit": {
+            "audited": 0,
+            "total": 0
+          },
+          "closing": {
+            "baseline": "not_reached",
+            "restore": "not_reached",
+            "unsigned_control": "not_reached"
+          },
+          "counts": {
+            "refused_by_gate": 0,
+            "scored": 0
+          },
+          "crc_dropped": 0,
+          "drop_budget": 16,
+          "epoch_end": {
+            "kind": "STOPPED",
+            "last_seq": 0,
+            "reason": "STOP_IDENT: the identity was not acknowledged after 3 attempts"
+          },
+          "schema": "session_summary",
+          "schema_version": "1.0.0",
+          "token": "a13f38b53355fd4c1cac3145244727f8",
+          "written_by": "app"
+        }
+      }
+    ],
+    "result": {
+      "scenario": "strict",
+      "kind": "STOPPED",
+      "reason": "STOP_IDENT: the identity was not acknowledged after 3 attempts",
+      "seq": 0,
+      "orch_phase": 0,
+      "orch_complete": 0,
+      "signreq": 0,
+      "rec": 0,
+      "term": 1,
+      "hb": 0,
+      "other": 0,
+      "last_rec_outcome": "",
+      "ctrl_writes": 0,
+      "payload_writes": 0,
+      "dma": 0,
+      "closing_restore": 0,
+      "closing_baseline": 0,
+      "closing_unsigned": 0,
+      "scored": 0,
+      "refused": 0,
+      "rec_attempts": 0,
+      "have_last_reply": 0
+    },
+    "stderr": ""
+  },
+  "ack_all": {
+    "frames": [
+      {
+        "frame": "IDENT",
+        "seq": 0,
+        "payload": {
+          "app_epoch": 0,
+          "budget_per_arm": 600,
+          "carrier_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "carrier_variant": "0x42310001",
+          "control_plane": "standalone",
+          "fclk0_hz_decoded": 50000000,
+          "findings": [],
+          "fitness_id": "F1",
+          "map_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+          "master_seed": 716169644,
+          "nonce_at_start": "9e3779b97f4a7c15",
+          "operator_data_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+          "pair_count": 0,
+          "pair_first": 0,
+          "pairs_total": 0,
+          "protocol": "rel-v4",
+          "pss_idcode": "0x13722093",
+          "rec_retry_control": false,
+          "schedule_mode": "b2-es-v1",
+          "schema": "app_identity",
+          "schema_version": "1.5.0",
+          "search_version": "b2-es-v1",
+          "sign_retry_control": false,
+          "status_at_start": "0x00000900",
+          "token": "a13f38b53355fd4c1cac3145244727f8",
+          "uboot_epoch": 1,
+          "universe_sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
+        }
+      },
+      {
+        "frame": "SIGNREQ",
+        "seq": 1,
+        "payload": {
+          "app_epoch": 0,
+          "genome": "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "nonce": "9e3779b97f4a7c15",
+          "schema": "sign_request",
+          "schema_version": "1.0.0",
+          "seq": 1,
+          "token": "a13f38b53355fd4c1cac3145244727f8"
+        }
+      },
+      {
+        "frame": "REC",
+        "seq": 1,
+        "payload": {
+          "evidence": {
+            "sign_refusal": {
+              "finding_kinds": [
+                "gate_refusal"
+              ],
+              "schema": "sign_refusal",
+              "schema_version": "1.0.0",
+              "seq": 1
+            }
+          },
+          "genome": "00000000000000000000000000000000000000000000000000000000000000000000000000000000",
+          "outcome": "REFUSED_BY_GATE",
+          "schema": "loop_record",
+          "schema_version": "1.3.0",
+          "seq": 1,
+          "verified": "replayed-only"
+        }
+      },
+      {
+        "frame": "TERM",
+        "seq": 2,
+        "payload": {
+          "audit": {
+            "audited": 0,
+            "total": 1
+          },
+          "closing": {
+            "baseline": "not_reached",
+            "restore": "done",
+            "unsigned_control": "not_reached"
+          },
+          "counts": {
+            "refused_by_gate": 1,
+            "scored": 0
+          },
+          "crc_dropped": 0,
+          "drop_budget": 16,
+          "epoch_end": {
+            "kind": "STOPPED",
+            "last_seq": 1,
+            "reason": "REFUSED_BY_GATE: an unscored candidate ends the epoch"
+          },
+          "schema": "session_summary",
+          "schema_version": "1.0.0",
+          "token": "a13f38b53355fd4c1cac3145244727f8",
+          "written_by": "app"
+        }
+      }
+    ],
+    "result": {
+      "scenario": "ack_all",
+      "kind": "STOPPED",
+      "reason": "REFUSED_BY_GATE: an unscored candidate ends the epoch",
+      "seq": 1,
+      "orch_phase": 6,
+      "orch_complete": 0,
+      "signreq": 1,
+      "rec": 1,
+      "term": 1,
+      "hb": 0,
+      "other": 0,
+      "last_rec_outcome": "REFUSED_BY_GATE",
+      "ctrl_writes": 0,
+      "payload_writes": 0,
+      "dma": 3,
+      "closing_restore": 1,
+      "closing_baseline": 0,
+      "closing_unsigned": 0,
+      "scored": 0,
+      "refused": 1,
+      "rec_attempts": 1,
+      "have_last_reply": 0
+    },
+    "stderr": ""
+  },
+  "reserved": {
+    "frames": [
+      {
+        "frame": "IDENT",
+        "seq": 0,
+        "payload": {
+          "app_epoch": 0,
+          "budget_per_arm": 600,
+          "carrier_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "carrier_variant": "0x42310001",
+          "control_plane": "standalone",
+          "fclk0_hz_decoded": 50000000,
+          "findings": [],
+          "fitness_id": "F1",
+          "map_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+          "master_seed": 716169644,
+          "nonce_at_start": "9e3779b97f4a7c15",
+          "operator_data_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+          "pair_count": 0,
+          "pair_first": 0,
+          "pairs_total": 0,
+          "protocol": "rel-v4",
+          "pss_idcode": "0x13722093",
+          "rec_retry_control": false,
+          "schedule_mode": "b2-es-v1",
+          "schema": "app_identity",
+          "schema_version": "1.5.0",
+          "search_version": "b2-es-v1",
+          "sign_retry_control": false,
+          "status_at_start": "0x00000900",
+          "token": "a13f38b53355fd4c1cac3145244727f8",
+          "uboot_epoch": 1,
+          "universe_sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
+        }
+      },
+      {
+        "frame": "TERM",
+        "seq": 1,
+        "payload": {
+          "audit": {
+            "audited": 0,
+            "total": 0
+          },
+          "closing": {
+            "baseline": "not_reached",
+            "restore": "done",
+            "unsigned_control": "not_reached"
+          },
+          "counts": {
+            "refused_by_gate": 0,
+            "scored": 0
+          },
+          "crc_dropped": 0,
+          "drop_budget": 16,
+          "epoch_end": {
+            "kind": "STOPPED",
+            "last_seq": 0,
+            "reason": "STOP_PAGE: the identity page's pair slice is not inside the experiment"
+          },
+          "schema": "session_summary",
+          "schema_version": "1.0.0",
+          "token": "a13f38b53355fd4c1cac3145244727f8",
+          "written_by": "app"
+        }
+      }
+    ],
+    "result": {
+      "scenario": "reserved",
+      "kind": "STOPPED",
+      "reason": "STOP_PAGE: the identity page's pair slice is not inside the experiment",
+      "seq": 0,
+      "orch_phase": 0,
+      "orch_complete": 0,
+      "signreq": 0,
+      "rec": 0,
+      "term": 1,
+      "hb": 0,
+      "other": 0,
+      "last_rec_outcome": "",
+      "ctrl_writes": 0,
+      "payload_writes": 0,
+      "dma": 3,
+      "closing_restore": 1,
+      "closing_baseline": 0,
+      "closing_unsigned": 0,
+      "scored": 0,
+      "refused": 0,
+      "rec_attempts": 0,
+      "have_last_reply": 0
+    },
+    "stderr": ""
+  },
+  "outside": {
+    "frames": [
+      {
+        "frame": "IDENT",
+        "seq": 0,
+        "payload": {
+          "app_epoch": 0,
+          "budget_per_arm": 600,
+          "carrier_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "carrier_variant": "0x42310001",
+          "control_plane": "standalone",
+          "fclk0_hz_decoded": 50000000,
+          "findings": [],
+          "fitness_id": "F1",
+          "map_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+          "master_seed": 716169644,
+          "nonce_at_start": "9e3779b97f4a7c15",
+          "operator_data_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+          "pair_count": 0,
+          "pair_first": 0,
+          "pairs_total": 0,
+          "protocol": "rel-v4",
+          "pss_idcode": "0x13722093",
+          "rec_retry_control": false,
+          "schedule_mode": "b2-es-v1",
+          "schema": "app_identity",
+          "schema_version": "1.5.0",
+          "search_version": "b2-es-v1",
+          "sign_retry_control": false,
+          "status_at_start": "0x00000900",
+          "token": "a13f38b53355fd4c1cac3145244727f8",
+          "uboot_epoch": 1,
+          "universe_sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
+        }
+      },
+      {
+        "frame": "TERM",
+        "seq": 1,
+        "payload": {
+          "audit": {
+            "audited": 0,
+            "total": 0
+          },
+          "closing": {
+            "baseline": "not_reached",
+            "restore": "done",
+            "unsigned_control": "not_reached"
+          },
+          "counts": {
+            "refused_by_gate": 0,
+            "scored": 0
+          },
+          "crc_dropped": 0,
+          "drop_budget": 16,
+          "epoch_end": {
+            "kind": "STOPPED",
+            "last_seq": 0,
+            "reason": "STOP_PAGE: the identity page's pair slice is not inside the experiment"
+          },
+          "schema": "session_summary",
+          "schema_version": "1.0.0",
+          "token": "a13f38b53355fd4c1cac3145244727f8",
+          "written_by": "app"
+        }
+      }
+    ],
+    "result": {
+      "scenario": "outside",
+      "kind": "STOPPED",
+      "reason": "STOP_PAGE: the identity page's pair slice is not inside the experiment",
+      "seq": 0,
+      "orch_phase": 0,
+      "orch_complete": 0,
+      "signreq": 0,
+      "rec": 0,
+      "term": 1,
+      "hb": 0,
+      "other": 0,
+      "last_rec_outcome": "",
+      "ctrl_writes": 0,
+      "payload_writes": 0,
+      "dma": 3,
+      "closing_restore": 1,
+      "closing_baseline": 0,
+      "closing_unsigned": 0,
+      "scored": 0,
+      "refused": 0,
+      "rec_attempts": 0,
+      "have_last_reply": 0
+    },
+    "stderr": ""
+  }
+}
