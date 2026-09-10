@@ -1,0 +1,127 @@
+{
+  "baseline_S2_real_fixture_bytes": {
+    "accepted": true,
+    "checks": {
+      "image": "ok",
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "baseline_S3": {
+    "accepted": true,
+    "checks": {
+      "image": "ok",
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "stage": "S3"
+    },
+    "qualified": true
+  },
+  "baseline_copied_plan_and_prediction": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  },
+  "image_bytes_changed_same_size": {
+    "accepted": true,
+    "checks": {
+      "image": "ok",
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "image_file_deleted": {
+    "accepted": true,
+    "checks": {
+      "image": "ok",
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "stage": "S2"
+    },
+    "qualified": true
+  },
+  "manifest_prediction_points_to_unrelated_bytes": {
+    "accepted": true,
+    "checks": {
+      "image": "ok",
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "stage": "S3"
+    },
+    "qualified": true,
+    "same_digest_as_plan_sidecar": false
+  },
+  "negative_control_build_evidence_changed": {
+    "accepted": false,
+    "refusal": "image: the build evidence file is absent or changed"
+  },
+  "negative_control_plan_wrong_map": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: the plan's map is not the manifest's map (canonical digest / path)",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: the plan's map is not the manifest's map (canonical digest / path)"
+  },
+  "negative_control_prediction_changed_runs": {
+    "pin_accepted": false,
+    "pin_refusal": "plan: pair 0: runs / arm order / target differ from the reference",
+    "reverify_qualified": false,
+    "verify_refusal": "S3: pair 0: runs / arm order / target differ from the reference"
+  },
+  "plan_primary_missing": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  },
+  "plan_wrong_primary_alpha": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  },
+  "plan_wrong_record_counts": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  },
+  "plan_wrong_schema_version": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  },
+  "plan_wrong_session": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  },
+  "plan_wrong_ties_policy": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  },
+  "prediction_wrong_base_fitness": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  },
+  "prediction_wrong_pair_delta": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  },
+  "prediction_wrong_pair_id": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  },
+  "prediction_wrong_primary": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  },
+  "prediction_wrong_sequence_length": {
+    "pin_accepted": true,
+    "reverify_qualified": true
+  }
+}

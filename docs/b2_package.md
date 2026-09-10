@@ -1,5 +1,12 @@
 # B2 — the pre-image package: what was built, what the gate showed, what is asked (v0.2, host-only, 2026-09-10)
 
+> **v0.2.1 third review: HOLD remains.** Record/calibration reconstruction and rate
+> feasibility are resolved. Two P2 findings remain: checking the actual image binary,
+> and validating the complete plan/prediction contract, including their shared digest.
+> See [the third review](b2_b3_host_review_v021_2026_09_10.md). All 104 B2/B3 host tests
+> pass, but the additional isolated counterexamples are still accepted. Push and image
+> construction are not cleared.
+
 > **v0.2 re-review: HOLD remains.** Five previous P2 findings are resolved at the
 > host-design stage. Four reproducible P2 findings remain in the new lifecycle:
 > live input verification, evidence-derived calibration, complete plan derivation,
