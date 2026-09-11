@@ -229,6 +229,22 @@ def check_prediction(prediction: dict, plan: dict) -> None:
                       f"{plan['pairs']} pairs at budget {budget} produce")
 
 
+def check_seeds(seeds, pairs: int) -> None:
+    """The explicit pair-seed list, checked as a CONTAINER first and a value second: the outer
+    array, then every pair's container and arity, then every value's type and 32-bit domain —
+    all before anything iterates, converts or indexes it."""
+    if not isinstance(seeds, list):
+        raise Refusal(f"the pair seeds are {type(seeds).__name__}, not an array")
+    if len(seeds) != pairs:
+        raise Refusal(f"{len(seeds)} pair seeds were given for {pairs} pairs")
+    for i, pair in enumerate(seeds):
+        if not isinstance(pair, (list, tuple)) or len(pair) != 2:
+            raise Refusal(f"pair seed {i} is not a [landscape, operator] array of two values")
+        for v in pair:
+            if not _int(v) or not (0 <= v < UINT32):
+                raise Refusal(f"pair seed {i}: {v!r} is not a 32-bit value")
+
+
 def structure_findings(s: "SessionInput") -> list[str]:
     """What the replay and the readout map need of a session before either touches it: an
     array of record objects, each with an integer seq. A record this names never enters the
@@ -442,6 +458,8 @@ class Replay:
         self.fid = plan["fitness"]
         self.master = plan["seed_derivation"]["master_seed"]
         self.pairs_total = plan["pairs"]
+        # `seeds` has already been checked by `check_seeds`; this constructor converts, it
+        # does not validate (the owner's input review of 2026-09-11 found the reverse).
         self.seeds = [tuple(x) for x in seeds] if seeds is not None else \
             bsess.pair_seeds(self.master, self.pairs_total)
         self.view = view
@@ -722,16 +740,14 @@ def adjudicate(logs: list[dict], plan: dict, prediction: dict, consts: dict | No
         sessions = order_sessions(logs)
         consts = consts if consts is not None else instrument_constants()
 
+        if seeds is not None:
+            check_seeds(seeds, plan["pairs"])          # BEFORE anything converts or indexes it
         truth = bm.truth_mapping()
         masks = bl.universe_mask(truth)
         view = bmaps.MapView(bmaps.load_self_map(), bl.train_vectors())
         # The replay is built first because the measurement pass needs its per-pair landscapes;
         # the readouts that pass collects are then handed to it (it has none of its own).
         rp = Replay(plan, view, masks, truth, {}, seeds=seeds)
-        if len(rp.seeds) != plan["pairs"]:
-            raise Refusal(f"{len(rp.seeds)} pair seeds were given for {plan['pairs']} pairs")
-        if any(len(pair) != 2 or not all(_int(v) and 0 <= v < UINT32 for v in pair) for pair in rp.seeds):
-            raise Refusal("a pair seed is not a (landscape, operator) pair of 32-bit values")
 
         findings: list[str] = []
         refused_sessions: list[int] = []

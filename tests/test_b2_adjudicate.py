@@ -235,17 +235,54 @@ class GivenSeeds(unittest.TestCase):
         self.assertNotIn("primary", res)
 
     def test_a_malformed_seed_list_is_refused(self):
-        cases = [([list(x) for x in SEEDS][:-1], "pair seeds were given for"),
-                 ([[1, 2, 3]] * PAIRS, "not a (landscape, operator) pair"),
-                 ([[1, 2 ** 32]] * PAIRS, "not a (landscape, operator) pair"),
-                 ([[True, 2]] * PAIRS, "not a (landscape, operator) pair"),
-                 ([["1", 2]] * PAIRS, "not a (landscape, operator) pair")]
+        """The CONTAINER first, then each pair's container and arity, then each value — all
+        before anything converts or indexes it (the owner's P2-5 of 2026-09-11)."""
+        cases = [(7, "not an array"), ("0,1", "not an array"), ({"0": [1, 2]}, "not an array"),
+                 ([None], "pair seeds were given for"), ([1], "pair seeds were given for"),
+                 ([list(x) for x in SEEDS][:-1], "pair seeds were given for"),
+                 ([None] * PAIRS, "not a [landscape, operator] array of two values"),
+                 ([1] * PAIRS, "not a [landscape, operator] array of two values"),
+                 (["ab"] * PAIRS, "not a [landscape, operator] array of two values"),
+                 ([[1, 2, 3]] * PAIRS, "not a [landscape, operator] array of two values"),
+                 ([[1]] * PAIRS, "not a [landscape, operator] array of two values"),
+                 ([[1, 2 ** 32]] * PAIRS, "is not a 32-bit value"),
+                 ([[-1, 2]] * PAIRS, "is not a 32-bit value"),
+                 ([[True, 2]] * PAIRS, "is not a 32-bit value"),
+                 ([["1", 2]] * PAIRS, "is not a 32-bit value"),
+                 ([[1.0, 2]] * PAIRS, "is not a 32-bit value")]
         for bad, needle in cases:
             with self.subTest(seeds=str(bad)[:40]):
-                res = badj.adjudicate([copy.deepcopy(self.whole)], PLAN, PREDICTION, consts=CONSTS,
-                                      common=False, seeds=bad)
+                try:
+                    res = badj.adjudicate([copy.deepcopy(self.whole)], PLAN, PREDICTION, consts=CONSTS,
+                                          common=False, seeds=bad)
+                except Exception as exc:               # the defect this case exists for
+                    self.fail(f"{type(exc).__name__}: {exc}")
                 self.assertTrue(res["outcome"].startswith("REFUSED"), res["outcome"][:120])
                 self.assertIn(needle, res["refusal"])
+
+    def test_none_is_the_documented_way_to_ask_for_the_derivation(self):
+        res = badj.adjudicate([copy.deepcopy(self.whole)], PLAN, PREDICTION, consts=CONSTS,
+                              common=False, seeds=None)
+        self.assertEqual(res["outcome"], "PASS", res["findings"][:4])
+        self.assertEqual(res["pair_seeds"], [list(x) for x in SEEDS])
+
+    def test_a_malformed_seed_list_is_refused_through_the_cli(self):
+        with tempfile.TemporaryDirectory(prefix="b2-seeds-cli-") as tmp:
+            d = Path(tmp)
+            (d / "plan.json").write_text(json.dumps(PLAN))
+            (d / "prediction.json").write_text(json.dumps(PREDICTION))
+            (d / "log.json").write_text(json.dumps(self.whole))
+            (d / "seeds.json").write_text(json.dumps(7))
+            out = d / "result.json"
+            p = subprocess.run([sys.executable, str(R / "host/b2_adjudicate.py"), "--no-common",
+                                "--run-log", str(d / "log.json"), "--plan", str(d / "plan.json"),
+                                "--prediction", str(d / "prediction.json"), "--seeds", str(d / "seeds.json"),
+                                "--out", str(out)], text=True, capture_output=True)
+            self.assertEqual(p.returncode, 1, p.stderr[-400:])
+            self.assertEqual(p.stderr, "")
+            res = json.loads(out.read_text())
+            self.assertNotIn("internal_error", res)
+            self.assertIn("not an array", res["refusal"])
 
 
 class Refuses(unittest.TestCase):

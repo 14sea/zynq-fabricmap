@@ -1,5 +1,21 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **The runner review's five P2s and two P3s are corrected — and one half of it is not.**
+> The session verdict now COMPOSES the instrument and evidence contract with the record replay
+> (`judge_session`), so the review's four probes — its control, STOPPED, PROTOCOL and
+> replayed-only/no-audits logs — no longer reach PASS; the result carries the session identity,
+> the measured rate and the verified policy that §8's S2 reads, recomputed rather than echoed.
+> The wire protocol is read from the B1 manifest (the L6 manifest has no wire selector), so a
+> successful preflight no longer raises and the review's `preflight_actual_instrument_shape`
+> is ACCEPTED against the real pinned shape; both profiles bind their own master seed; the
+> explicit `seeds` are validated before any conversion; the frame arithmetic counts the two
+> brackets once (543 frames for 20 records, equal to the review's own figure); the planning
+> rate must be finite. **29 runner tests, B2/B3 358, zero skips.**
+> **NOT corrected here:** there is still no modelled B2/B2Q session, so the complete offline
+> S1 → B2Q → S2 → S3 path is not demonstrated, `b2_manifest.qualify` has not been shown to
+> ACCEPT a transition, and the runner has never produced a PASS. See
+> [`evidence/b2/corrections_runner_2026_09_11/`](../evidence/b2/corrections_runner_2026_09_11/).
+
 > **Runner integration review HOLD (`fb71b00`).** The redundant-delta P3 is closed;
 > the independent B2/B3 suite passes 346 tests with zero skips. The runner still needs
 > session-level acceptance around record replay, a working B2Q result/calibration chain,

@@ -1,0 +1,85 @@
+{
+  "B2_callback_baseline": {
+    "outcome": "REFUSED: no session verdict without ['profile', 'manifest', 'plan', 'instrument_root']: a record replay alone is not one",
+    "findings": [],
+    "not_checked_here": null
+  },
+  "B2_callback_STOPPED": {
+    "outcome": "REFUSED: no session verdict without ['profile', 'manifest', 'plan', 'instrument_root']: a record replay alone is not one",
+    "findings": [],
+    "not_checked_here": null
+  },
+  "B2_callback_PROTOCOL": {
+    "outcome": "REFUSED: no session verdict without ['profile', 'manifest', 'plan', 'instrument_root']: a record replay alone is not one",
+    "findings": [],
+    "not_checked_here": null
+  },
+  "B2_callback_missing_audits": {
+    "outcome": "REFUSED: no session verdict without ['profile', 'manifest', 'plan', 'instrument_root']: a record replay alone is not one",
+    "findings": [],
+    "not_checked_here": null
+  },
+  "B2Q_seeds": {
+    "master": 505806527,
+    "qualification": [
+      [
+        3890725659,
+        1378470437
+      ]
+    ],
+    "reference_default": [
+      [
+        3890725659,
+        1378470437
+      ]
+    ],
+    "equal": true
+  },
+  "B2Q_real_readjudicator": {
+    "outcome": "HOLD: the evidence carries no audits.json: the session's transport was not recorded; the evidence carries no timeline.json: the session's transport was not recorded",
+    "session": "B2Q",
+    "measured_rate_per_hour": null,
+    "audit_policy": null,
+    "pair_seeds": null
+  },
+  "B2Q_session_callback": {
+    "tool": "b2_runner.py/0.1.0",
+    "scope": "session",
+    "findings": [],
+    "kills": [],
+    "measured_rate_per_hour": null,
+    "audit_policy": null,
+    "outcome": "REFUSED: no session verdict without ['profile', 'manifest', 'plan', 'instrument_root']: a record replay alone is not one"
+  },
+  "B2Q_qualify": "the manifest's qualified flag disagrees with its evidence: the pinned B2Q evidence re-adjudicates to \"HOLD: the evidence carries no audits.json: the session's transport was not recorded; the evidence carries no timeline.json: the session's transport was not recorded\", not PASS",
+  "preflight_actual_instrument_shape": "ACCEPTED",
+  "B2Q_preflight_control": {
+    "records": 20,
+    "frame_records": 20,
+    "frames": 543,
+    "crc_budget": 3
+  },
+  "B2Q_correct_frame_count": {
+    "n": 18,
+    "records": 20,
+    "audited_records": 20,
+    "protocol": "rel-v4",
+    "by_type": {
+      "IDENT": 1,
+      "CLOSE": 1,
+      "TERM": 1,
+      "SIGNREQ": 20,
+      "HB": 320,
+      "REC": 20,
+      "AUDIT_READY": 20,
+      "AUDIT": 160
+    },
+    "total": 543
+  },
+  "B2Q_wrong_ruling_master": "ruling 'whole-of-run B2 image qualification and calibration' is bound to master_seed = 505806526, this session needs 505806527",
+  "B2Q_infinite_rate": "ruling 'whole-of-run B2 image qualification and calibration' is bound to master_seed = 505806526, this session needs 505806527",
+  "bad_seeds_7": "REFUSED: the pair seeds are int, not an array",
+  "bad_seeds_[None]": "REFUSED: 1 pair seeds were given for 3 pairs",
+  "bad_seeds_[1]": "REFUSED: 1 pair seeds were given for 3 pairs",
+  "head": "70dd0990590ae7ca8b4cba863909f70c0f0e7764"
+}
