@@ -5,9 +5,14 @@
 > `d164cd1d…` and its build inputs verify. The independent B2/B3 suite passes 232 tests,
 > zero skips, including the newly added record validator. See
 > [the runtime review](b2_runtime_live_review_2026_09_11.md).
-> **The new `b2_records` has a separate P2:** malformed extension values can raise
-> incidental exceptions or pass unchecked. See [its initial review](b2_records_initial_review_2026_09_11.md).
-> Correct and review that validator, complete the other four host tools, then submit §7.
+> **The new `b2_records` had a separate P2** — malformed extension values could raise
+> incidental exceptions or pass unchecked
+> ([its initial review](b2_records_initial_review_2026_09_11.md)). **Corrected:** every
+> identity and search-block value's JSON type is now checked before anything compares,
+> indexes, sorts, hashes or counts it, a JSON boolean is not an integer, and the owner's
+> own `reproduce_record_types.py` names all four mutations while still accepting the twin's
+> real record. The B2/B3 suite is **243 tests, zero skips**. That validator still awaits
+> the owner's review; the other four host tools remain, then §7.
 
 > **Authority-correction review (`fb37ee0`): prior role/inventory findings closed.**
 > All 193 B2/B3 tests pass with zero skips, and image `d164cd1d…` still matches its actual

@@ -127,6 +127,130 @@ class WhyThisModuleExists(unittest.TestCase):
             self.assertTrue(any(needle in x for x in findings), f"{needle}: {findings}")
 
 
+    def test_the_instrument_accepts_a_record_with_malformed_b2_values(self):
+        """The owner's initial review of 2026-09-11, on the wire REC its probe used."""
+        ctx = brec.Context(master_seed=716169644, budget=4, pairs_total=9, pair_first=0, pair_count=4,
+                           fitness="F1", map_sha256=MAP_SHA)
+        want = (0, "map_guided", False)
+        self.assertEqual(brec.record_findings(copy.deepcopy(self.raw["REC"]), ctx, want, {}), [],
+                         "the twin's own record must be accepted unmutated")
+        for k, v, needle in (("pair", "0", "pair is not an integer"),
+                             ("population", [0] * bs.MU, "population must be"),
+                             ("population", [{"born": "invalid", "fit": {}}] * bs.MU,
+                              "born and fit are not integers"),
+                             ("selected", "invalid", "selected is not a boolean")):
+            with self.subTest(field=k, value=v):
+                rec = copy.deepcopy(self.raw["REC"])
+                rec["search"][k] = v
+                self.br.validate(rec)                  # the instrument accepts every one of them
+                findings = brec.record_findings(rec, ctx, want, {})
+                self.assertTrue(any(needle in x for x in findings), findings)
+
+
+class Types(unittest.TestCase):
+    """A malformed B2 value must be NAMED, never raise, and nothing may compare, index, sort,
+    hash or count it before its type is known (the owner's initial review of 2026-09-11)."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.base = run_log()
+
+    def _first_search(self, log) -> dict:
+        return next(r for r in log["loop_records"] if "search" in r)
+
+    def _refuses(self, mutate, needle: str):
+        log = copy.deepcopy(self.base)
+        mutate(log)
+        try:
+            findings = brec.validate_run_log(log, CTX, common=False)
+        except Exception as exc:                       # the defect this class exists for
+            self.fail(f"{type(exc).__name__}: {exc}")
+        self.assertTrue(findings, "the malformed session was accepted")
+        self.assertTrue(any(needle in x for x in findings), f"{needle!r} not named in {findings[:4]}")
+
+    def test_refuses_the_reviews_four_extension_values(self):
+        for k, v, needle in (("pair", "0", "pair is not an integer"),
+                             ("population", [0] * bs.MU, "population must be"),
+                             ("population", [{"born": "invalid", "fit": {}}] * bs.MU,
+                              "born and fit are not integers"),
+                             ("selected", "invalid", "selected is not a boolean")):
+            with self.subTest(field=k, value=v):
+                self._refuses(lambda log, k=k, v=v: self._first_search(log)["search"].__setitem__(k, v), needle)
+
+    def test_refuses_every_block_value_of_the_wrong_type(self):
+        wrong = {"a string": 5, "an integer": "1", "a boolean": "yes", "an integer or null": "1"}
+        for k, _ok, what in brec.BLOCK_TYPES:
+            with self.subTest(field=k, given=wrong[what]):
+                self._refuses(lambda log, k=k, v=wrong[what]: self._first_search(log)["search"].__setitem__(k, v),
+                              f"{k} is not {what}")
+
+    def test_a_json_boolean_is_not_an_integer_field(self):
+        for k, _ok, what in brec.BLOCK_TYPES:
+            if what.startswith("an integer"):
+                with self.subTest(field=k):
+                    self._refuses(lambda log, k=k: self._first_search(log)["search"].__setitem__(k, True),
+                                  f"{k} is not {what}")
+
+    def test_refuses_a_malformed_move(self):
+        for v, needle in (({"bits": [1], "kind": 5}, "kind is not a string"),
+                          ({"bits": "01", "kind": "random"}, "bits are not a list of integers"),
+                          ({"bits": [[1]], "kind": "random"}, "bits are not a list of integers"),
+                          ({"bits": [1, "2"], "kind": "random"}, "bits are not a list of integers"),
+                          ({"bits": [True], "kind": "random"}, "bits are not a list of integers"),
+                          ({"kind": "random"}, "the move must be bits and kind"),
+                          (5, "the move must be bits and kind")):
+            with self.subTest(move=v):
+                self._refuses(lambda log, v=v: self._first_search(log)["search"].__setitem__("move", v), needle)
+
+    def test_refuses_a_malformed_population_entry(self):
+        for v, needle in (([{"born": 0, "fit": 0}] * (bs.MU - 1), "population must be"),
+                          ([{"born": 0}] * bs.MU, "population must be"),
+                          ([[0, 0]] * bs.MU, "population must be"),
+                          ([{"born": 0, "fit": True}] * bs.MU, "born and fit are not integers"),
+                          ([{"born": None, "fit": 0}] * bs.MU, "born and fit are not integers")):
+            with self.subTest(population=v):
+                self._refuses(lambda log, v=v: self._first_search(log)["search"].__setitem__("population", v), needle)
+
+    def test_refuses_every_identity_value_of_the_wrong_type(self):
+        wrong = {"a string": 5, "an integer": "1"}
+        for k, _ok, what in brec.IDENTITY_TYPES:
+            with self.subTest(field=k):
+                self._refuses(lambda log, k=k, v=wrong[what]: log["app_identity"].__setitem__(k, v),
+                              f"{k} is not {what}")
+
+    def test_an_identity_integer_is_not_a_json_boolean(self):
+        for k, _ok, what in brec.IDENTITY_TYPES:
+            if what == "an integer":
+                with self.subTest(field=k):
+                    self._refuses(lambda log, k=k: log["app_identity"].__setitem__(k, True),
+                                  f"{k} is not an integer")
+
+    def test_refuses_a_document_that_is_not_shaped_like_a_session(self):
+        self.assertEqual(brec.validate_run_log([], CTX, common=False), ["session: not a JSON object"])
+        self.assertEqual(brec.record_findings("nope", CTX, None, {}), ["record: not a JSON object"])
+        self.assertEqual(brec.identity_findings([1], CTX), ["identity: not a JSON object"])
+        self._refuses(lambda log: log.__setitem__("loop_records", "nope"), "loop_records is not an array")
+        self._refuses(lambda log: log["loop_records"].__setitem__(3, "nope"), "record 4 is not a JSON object")
+        self._refuses(lambda log: log.__setitem__("app_identity", [1]), "identity: not a JSON object")
+
+    def test_a_value_of_unknown_type_never_reaches_the_counters(self):
+        rec = copy.deepcopy(self._first_search(copy.deepcopy(self.base)))
+        rec["search"]["pair"] = "0"
+        state: dict = {}
+        findings = brec.record_findings(rec, CTX, (0, rec["arm"], False), state)
+        self.assertTrue(any("pair is not an integer" in x for x in findings), findings)
+        self.assertEqual(state, {}, "the state was advanced for a record of unknown type")
+
+    def test_refuses_a_pair_outside_the_experiments_own_pairs(self):
+        """An inconsistent context must not index past the derived seeds."""
+        ctx = brec.Context(master_seed=CTX.master_seed, budget=BUDGET, pairs_total=2, pair_first=0,
+                           pair_count=3, fitness="F1", map_sha256=MAP_SHA)
+        rec = copy.deepcopy(self._first_search(copy.deepcopy(self.base)))
+        rec["search"]["pair"] = 2
+        findings = brec.record_findings(rec, ctx, (2, rec["arm"], False), {})
+        self.assertTrue(any("outside the experiment" in x for x in findings), findings)
+
+
 class Refuses(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

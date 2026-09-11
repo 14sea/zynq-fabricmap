@@ -23,6 +23,11 @@ Three layers, each a pure function returning named findings (empty = nothing to 
                       produced for the declared slice, the record count, the seq run, and
                       that the identity's slice is the one the records actually use.
 
+Every one of them checks a value's JSON TYPE before anything compares, indexes, sorts,
+hashes or counts it (`identity_type_findings`, `block_type_findings`): a malformed document
+must come back as a named finding, never as an incidental Python exception, and a JSON
+boolean is never an integer (the owner's initial review of 2026-09-11).
+
 `validate_run_log` runs the instrument's common validation first and then all three. It is
 a validator, not the adjudicator: it never recomputes a fitness from a readout and never
 replays the search — that is `b2_adjudicate`'s work, and this module deliberately does not
@@ -53,6 +58,42 @@ ARM_WIRE = {bs.ARM_RANDOM_SAFE: "random_safe", bs.ARM_MAP_GUIDED: "map_guided"}
 ARM_LETTER = {"random_safe": "A", "map_guided": "B"}
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
 CARRIER_VARIANT = "0x42310001"
+UNIVERSE = 292
+
+
+def _int(v) -> bool:
+    """A JSON integer. `True` is not one, whatever `isinstance(True, int)` says."""
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def _str(v) -> bool:
+    return isinstance(v, str)
+
+
+def _bool(v) -> bool:
+    return isinstance(v, bool)
+
+
+def _int_or_null(v) -> bool:
+    return v is None or _int(v)
+
+
+# (field, predicate, what it must be) — the JSON type of every value this module reads.
+IDENTITY_TYPES = (("schema_version", _str, "a string"), ("search_version", _str, "a string"),
+                  ("map_sha256", _str, "a string"), ("operator_data_sha256", _str, "a string"),
+                  ("fitness_id", _str, "a string"), ("carrier_variant", _str, "a string"),
+                  ("protocol", _str, "a string"), ("control_plane", _str, "a string"),
+                  ("budget_per_arm", _int, "an integer"), ("master_seed", _int, "an integer"),
+                  ("pairs_total", _int, "an integer"), ("pair_first", _int, "an integer"),
+                  ("pair_count", _int, "an integer"))
+BLOCK_TYPES = (("version", _str, "a string"), ("arm", _str, "a string"),
+               ("state_sha256", _str, "a string"), ("pair", _int, "an integer"),
+               ("eval", _int, "an integer"), ("best", _int, "an integer"),
+               ("column_moves", _int, "an integer"), ("generation", _int, "an integer"),
+               ("landscape_seed", _int, "an integer"), ("operator_seed", _int, "an integer"),
+               ("selected", _bool, "a boolean"), ("holdout", _int_or_null, "an integer or null"),
+               ("fitness", _int_or_null, "an integer or null"),
+               ("parent_born", _int_or_null, "an integer or null"))
 
 
 @dataclass(frozen=True)
@@ -101,8 +142,17 @@ def expected_order(ctx: Context) -> list[tuple[int, str, bool] | None]:
 # ------------------------------------------------------------------ the identity
 
 
+def identity_type_findings(ident: dict) -> list[str]:
+    """The JSON type of every identity field that is PRESENT; an absent one is the presence
+    check's business, not this one's."""
+    return [f"identity: {k} is not {what}" for k, ok, what in IDENTITY_TYPES
+            if k in ident and not ok(ident[k])]
+
+
 def identity_findings(ident: dict, ctx: Context) -> list[str]:
     f: list[str] = []
+    if not isinstance(ident, dict):
+        return ["identity: not a JSON object"]
     if ident.get("schema") != "app_identity":
         return ["identity: not an app_identity"]
     if ident.get("schema_version") != IDENTITY_SCHEMA_VERSION:
@@ -113,6 +163,9 @@ def identity_findings(ident: dict, ctx: Context) -> list[str]:
     for k in IDENTITY_FORBIDDEN:
         if k in ident:
             f.append(f"identity: {k!r} is declared, but this image runs no cartographer and issues no probes")
+    types = identity_type_findings(ident)
+    if types:                     # nothing below may compare or add a value of unknown type
+        return f + types
     if ident.get("search_version") != ctx.engine:
         f.append(f"identity: search_version {ident.get('search_version')!r} is not {ctx.engine!r}")
     if ident.get("map_sha256") != ctx.map_sha256:
@@ -145,9 +198,34 @@ def identity_findings(ident: dict, ctx: Context) -> list[str]:
 # ------------------------------------------------------------------ one record
 
 
+def block_type_findings(block: dict, where: str) -> list[str]:
+    """The JSON type of every value in the search block, checked BEFORE anything compares,
+    indexes, sorts, hashes or counts it. Called only once the key set is known to be exact,
+    so every name is present."""
+    f = [f"{where}: {k} is not {what}" for k, ok, what in BLOCK_TYPES if not ok(block[k])]
+    move = block["move"]
+    if move is not None:
+        if not isinstance(move, dict) or sorted(move) != ["bits", "kind"]:
+            f.append(f"{where}: the move must be bits and kind")
+        else:
+            if not _str(move["kind"]):
+                f.append(f"{where}: the move's kind is not a string")
+            if not isinstance(move["bits"], list) or any(not _int(b) for b in move["bits"]):
+                f.append(f"{where}: the move's bits are not a list of integers")
+    pop = block["population"]
+    if not isinstance(pop, list) or len(pop) != bs.MU \
+            or any(not isinstance(p, dict) or sorted(p) != ["born", "fit"] for p in pop):
+        f.append(f"{where}: the population must be {bs.MU} entries of born and fit")
+    elif any(not _int(p["born"]) or not _int(p["fit"]) for p in pop):
+        f.append(f"{where}: a population entry's born and fit are not integers")
+    return f
+
+
 def record_findings(rec: dict, ctx: Context, want: tuple[int, str, bool] | None, state: dict) -> list[str]:
     """`want` is what the order says this candidate must be (None = a baseline bracket);
     `state` carries the per-(pair, arm) counters this function advances."""
+    if not isinstance(rec, dict):
+        return ["record: not a JSON object"]
     f: list[str] = []
     seq = rec.get("seq")
     where = f"record {seq}"
@@ -173,6 +251,9 @@ def record_findings(rec: dict, ctx: Context, want: tuple[int, str, bool] | None,
     if sorted(block) != sorted(BLOCK_KEYS):
         f.append(f"{where}: the search block's keys are not exactly {list(BLOCK_KEYS)}")
         return f
+    types = block_type_findings(block, where)
+    if types:                     # nothing below may compare, index, sort, hash or count it
+        return f + types
     if block["version"] != ctx.engine:
         f.append(f"{where}: the block's version {block['version']!r} is not {ctx.engine!r}")
     if block["arm"] != ARM_LETTER.get(want_arm):
@@ -181,19 +262,18 @@ def record_findings(rec: dict, ctx: Context, want: tuple[int, str, bool] | None,
         f.append(f"{where}: the block's pair {block['pair']!r} is not {pair}")
     if not (ctx.pair_first <= block["pair"] < ctx.pair_first + ctx.pair_count):
         f.append(f"{where}: pair {block['pair']!r} is outside this session's slice")
+    elif block["pair"] >= ctx.pairs_total:
+        f.append(f"{where}: pair {block['pair']!r} is outside the experiment's {ctx.pairs_total} pairs")
     else:
         lseed, oseed = ctx.seeds[block["pair"]]
         if block["landscape_seed"] != lseed or block["operator_seed"] != oseed:
             f.append(f"{where}: the block's seeds are not pair {block['pair']}'s derived seeds")
-    if not isinstance(block["state_sha256"], str) or not HEX64.match(block["state_sha256"]):
+    if not HEX64.match(block["state_sha256"]):
         f.append(f"{where}: state_sha256 is not 64 hex")
-    pop = block["population"]
-    if not isinstance(pop, list) or len(pop) != bs.MU or any(sorted(p) != ["born", "fit"] for p in pop):
-        f.append(f"{where}: the population must be {bs.MU} entries of born and fit")
     key = (block["pair"], block["arm"])
     st = state.setdefault(key, {"evals": 0, "best": None, "column_moves": None, "generation": None, "holdout_seen": False})
     if holdout:
-        if block["holdout"] is None or not isinstance(block["holdout"], int):
+        if block["holdout"] is None:
             f.append(f"{where}: a champion's holdout record must carry its holdout value")
         if block["move"] is not None or block["fitness"] is not None or block["parent_born"] is not None:
             f.append(f"{where}: a holdout record carries no move, fitness or parent")
@@ -208,20 +288,20 @@ def record_findings(rec: dict, ctx: Context, want: tuple[int, str, bool] | None,
         if block["holdout"] is not None:
             f.append(f"{where}: a search record carries no holdout value")
         move = block["move"]
-        if not isinstance(move, dict) or sorted(move) != ["bits", "kind"]:
-            f.append(f"{where}: the move must be bits and kind")
+        if move is None:
+            f.append(f"{where}: a search record must carry its move, bits and kind")
         else:
             if move["kind"] not in ("random", "column"):
                 f.append(f"{where}: move kind {move['kind']!r}")
-            if not isinstance(move["bits"], list) or not (1 <= len(move["bits"]) <= bs.KMAX) \
-                    or sorted(set(move["bits"])) != move["bits"] \
-                    or any(not isinstance(b, int) or not (0 <= b < 292) for b in move["bits"]):
+            bits = move["bits"]
+            if not (1 <= len(bits) <= bs.KMAX) or sorted(set(bits)) != bits \
+                    or any(not (0 <= b < UNIVERSE) for b in bits):
                 f.append(f"{where}: the move's bits are not 1..{bs.KMAX} distinct sorted universe indices")
             if move["kind"] == "column" and block["arm"] != "B":
                 f.append(f"{where}: a column move on the random-safe arm")
-        if not isinstance(block["fitness"], int):
+        if block["fitness"] is None:
             f.append(f"{where}: a search record must carry its fitness")
-        if not isinstance(block["parent_born"], int):
+        if block["parent_born"] is None:
             f.append(f"{where}: a search record must name its parent")
         st["evals"] += 1
         if block["eval"] != st["evals"]:
@@ -233,9 +313,7 @@ def record_findings(rec: dict, ctx: Context, want: tuple[int, str, bool] | None,
     for name in ("best", "column_moves", "generation"):
         prev = st[name]
         cur = block[name]
-        if not isinstance(cur, int):
-            f.append(f"{where}: {name} is not an integer")
-        elif prev is not None and cur < prev:
+        if prev is not None and cur < prev:
             f.append(f"{where}: {name} went backwards ({prev} -> {cur})")
         else:
             st[name] = cur
@@ -248,15 +326,22 @@ def record_findings(rec: dict, ctx: Context, want: tuple[int, str, bool] | None,
 
 
 def session_findings(log: dict, ctx: Context) -> list[str]:
+    if not isinstance(log, dict):
+        return ["session: not a JSON object"]
     f: list[str] = []
     ident = log.get("app_identity") or {}
     f += identity_findings(ident, ctx)
     records = log.get("loop_records") or []
+    if not isinstance(records, list):
+        return f + ["session: loop_records is not an array"]
     order = expected_order(ctx)
     if len(records) != len(order):
         f.append(f"session: {len(records)} records, the order requires {len(order)} ({ctx.records} for this slice)")
     state: dict = {}
     for i, rec in enumerate(records):
+        if not isinstance(rec, dict):
+            f.append(f"session: record {i + 1} is not a JSON object")
+            continue
         if rec.get("seq") != i + 1:
             f.append(f"session: record {i + 1} carries seq {rec.get('seq')!r}")
         f += record_findings(rec, ctx, order[i] if i < len(order) else None, state)
@@ -272,6 +357,8 @@ def session_findings(log: dict, ctx: Context) -> list[str]:
 def validate_run_log(log: dict, ctx: Context, common: bool = True) -> list[str]:
     """The instrument's common validation (optional, so a synthetic B2 fixture can be checked
     without the instrument bound) and then every B2 rule."""
+    if not isinstance(log, dict):
+        return ["session: not a JSON object"]
     f: list[str] = []
     if common:
         import b1_records as br
@@ -281,9 +368,11 @@ def validate_run_log(log: dict, ctx: Context, common: bool = True) -> list[str]:
                     br.validate(log[name])
                 except Exception as exc:                    # the instrument's own refusal
                     f.append(f"common envelope: {name}: {exc}")
-        for rec in log.get("loop_records") or []:
+        records = log.get("loop_records") or []
+        for rec in records if isinstance(records, list) else []:
             try:
                 br.validate(rec)
             except Exception as exc:
-                f.append(f"common envelope: record {rec.get('seq')}: {exc}")
+                seq = rec.get("seq") if isinstance(rec, dict) else "?"
+                f.append(f"common envelope: record {seq}: {exc}")
     return f + session_findings(log, ctx)
