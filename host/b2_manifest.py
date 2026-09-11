@@ -242,6 +242,50 @@ def read_adjudication(ev: Path) -> dict:
     return adj
 
 
+def summary_findings(evidence_dir: Path) -> list[str]:
+    """The completed session's FINAL summary, cross-checked against the evidence it closes.
+
+    It is checked HERE and not inside the adjudication callback because `b1_session.run` persists
+    `summary.json` AFTER the callback returns: requiring it inside would create a positive path
+    that cannot exist. The ruling archives already exist before the callback and are rebound
+    there; this is the post-finalisation boundary (the owner's P2-2 of 2026-09-11)."""
+    ev = Path(evidence_dir)
+    f: list[str] = []
+    try:
+        summary = json.loads((ev / "summary.json").read_text())
+    except (OSError, ValueError) as exc:
+        return [f"summary.json is not readable JSON: {exc}"]
+    if not isinstance(summary, dict):
+        return ["summary.json is not a JSON object"]
+    try:
+        adj = read_adjudication(ev)
+    except Refusal as exc:
+        return [f"summary.json cannot be cross-checked: {exc}"]
+    if summary.get("outcome") != adj["outcome"]:
+        f.append(f"summary.json's outcome {summary.get('outcome')!r} is not the adjudication's "
+                 f"{adj['outcome']!r}")
+    try:
+        log = json.loads((ev / "run_log.json").read_text())
+    except (OSError, ValueError) as exc:
+        f.append(f"summary.json cannot be bound to the run log: {exc}")
+        log = {}
+    token = ((log.get("app_identity") or {}) if isinstance(log, dict) else {}).get("token")
+    if token is not None and summary.get("token") != token:
+        f.append("summary.json's token is not the session's")
+    try:
+        raw_whole, whole = b1qual.read_archived_ruling(ev / b1qual.RULING_FILES["whole_of_run"])
+        raw_pk, _pk = b1qual.read_archived_ruling(ev / b1qual.RULING_FILES["provisioning"])
+    except b1qual.QualificationRefusal as exc:
+        return f + [f"summary.json cannot be bound to the archived rulings: {exc}"]
+    if summary.get("ruling") != whole:
+        f.append("summary.json's recorded ruling is not the archived whole-of-run ruling")
+    want_pk = hashlib.sha256(raw_pk).hexdigest()
+    if summary.get("provisioning_ruling_sha256") != want_pk:
+        f.append(f"summary.json's provisioning_ruling_sha256 is not the archived provisioning "
+                 f"ruling's bytes ({want_pk[:16]}…)")
+    return f
+
+
 def reconstruct_qualification_record(evidence_dir: Path) -> dict:
     """The B2Q record as the B2Q runner writes it beside its evidence — RECONSTRUCTED from
     the files, every time: files by hash (the exact set), the binding read from
@@ -252,6 +296,13 @@ def reconstruct_qualification_record(evidence_dir: Path) -> dict:
         if not (ev / n).is_file():
             raise Refusal(f"evidence file {n} is absent")
         files[n] = sha256_file(ev / n)
+    for name in b1qual.RULING_FILES.values():
+        # An archive that never parsed must not be ACCEPTED here: recording its hash would
+        # preserve the invalid declaration rather than catch it (the owner's P2-2 of 2026-09-11).
+        try:
+            b1qual.read_archived_ruling(ev / name)
+        except b1qual.QualificationRefusal as exc:
+            raise Refusal(f"the archived authorisation {name} is not a readable ruling archive: {exc}") from None
     m_run = json.loads((ev / MANIFEST_AT_RUN).read_text())
     adj = read_adjudication(ev)
     return {"schema": QUAL_SCHEMA, "schema_version": QUAL_SCHEMA_VERSION, "session": QUAL_SESSION, "evidence_dir": str(ev), "files": files,
@@ -514,6 +565,9 @@ def verify(manifest: dict, evidence_dir: Path | None = None, readjudicate=None, 
                     raise Refusal(f"the record's {k} is not what the evidence gives")
             if q["outcome"] != "PASS":
                 raise Refusal(f"the stored B2Q adjudication is {q['outcome']!r}, not PASS")
+            sf = summary_findings(ev)            # the post-finalisation boundary
+            if sf:
+                raise Refusal("the session's final summary does not close this evidence: " + "; ".join(sf[:3]))
             m_run = json.loads((ev / MANIFEST_AT_RUN).read_text())
             b = q["binding"]
             if b["image_sha256"] != manifest["image"]["sha256"] or b["prereg_sha256"] != manifest["prereg"]["sha256"] \

@@ -1,5 +1,23 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **The offline binding's two P2s are corrected; the positive path still is not.**
+> (1) `expected_identity` is now the ONE `app_identity` 1.5.0 contract, used online before the
+> board's identity is acknowledged and offline when the evidence is re-adjudicated — the carrier
+> digest, carrier variant and universe digest included, which the offline path had omitted
+> entirely. B2Q's reconstructed plan carries its `inputs` contract, the preflight compares it, and
+> a session plan with no inputs contract is now a FINDING: a missing expectation never disables a
+> required check. (2) Both archived authorisations are decoded through the instrument's strict
+> envelope reader and rebound — text, board, session, image, preregistration, manifest and the
+> whole-of-run master seed, with the two required to name the same board — and an archive that
+> cannot be parsed is refused at acceptance rather than having its digest preserved. The final
+> summary is cross-checked (outcome, token, the archived ruling and the provisioning ruling's byte
+> digest) at the **post-finalisation lifecycle boundary**, since `b1_session.run` writes it after
+> the callback. Archives stay inert: read, never claimed, never consumed.
+> **46 runner tests, 13 lifecycle tests, B2/B3 377, zero skips.**
+> **Still not done:** no modelled B2/B2Q session, so the complete offline S1 → B2Q → S2 → S3 →
+> fresh-process verification is not demonstrated and this runner has never produced a PASS. See
+> [`evidence/b2/corrections_binding_completion_2026_09_11/`](../evidence/b2/corrections_binding_completion_2026_09_11/).
+
 > **Binding completion review (`4d135be`): HOLD remains.** Export-seal validation,
 > eleven-file qualification byte coverage and deadline comparison are implemented.
 > Offline binding still omits carrier/universe identity and B2Q inputs; archived ruling

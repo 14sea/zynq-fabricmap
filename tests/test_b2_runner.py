@@ -25,6 +25,7 @@ from pathlib import Path
 
 R = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(R / "host"))
+sys.path.insert(0, str(R / "tests"))
 import b2_manifest as bman  # noqa: E402
 import b2_plan as bp  # noqa: E402
 import b2_runner as rn  # noqa: E402
@@ -75,10 +76,8 @@ class Fixture:
         (ev / "adjudication.json").write_text(json.dumps(
             {"outcome": "PASS", "session": "B2Q", "measured_rate_per_hour": STUB_RATE,
              "audit_policy": bp.AUDIT_POLICY}))
-        for name in bman.QUAL_EVIDENCE_FILES:       # since 1.2.0 the record pins the whole set
-            q = ev / name
-            if not q.exists():
-                q.write_text(json.dumps({"placeholder": name}) if name.endswith(".json") else f"{name}\n")
+        from test_b2_lifecycle import fill_evidence
+        fill_evidence(ev)                           # the whole 1.2.0 set, with coherent archives
         self.ev = ev
         self.manifest = self._roundtrip(bman.qualify(self.manifest, ev, readjudicate=self.stub))
 
@@ -607,6 +606,176 @@ class SessionAcceptance(unittest.TestCase):
         self.assertNotEqual(res["measured_rate_per_hour"], 9999.0,
                             "the stored adjudication was echoed instead of recomputed")
         self.assertNotEqual(res["outcome"], "PASS")
+
+
+@unittest.skipUnless(HAVE, "the built B2 image or its build evidence is absent")
+class OfflineBinding(unittest.TestCase):
+    """A zero-finding positive control, then every field independently (the owner's binding
+    completion review of 2026-09-11). `binding_findings` is a pure function of the log, the
+    session plan and the manifest, so each mutation is isolated."""
+
+    @classmethod
+    def setUpClass(cls):
+        inst.bind(inst.DEFAULT_ROOT, require_git=False)
+        cls.f = Fixture("S1")
+        cls.plan = rn.qualification_session_plan(cls.f.manifest, "ab" * 32)
+        cls.log = {"l6": {"binding": copy.deepcopy(cls.plan["binding"]),
+                          "inputs": copy.deepcopy(cls.plan["inputs"])},
+                   "app_identity": dict(rn.expected_identity(cls.f.manifest, cls.plan),
+                                        schema="app_identity", schema_version="1.5.0")}
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.f.close()
+
+    def _findings(self, mutate=None) -> list[str]:
+        log = copy.deepcopy(self.log)
+        if mutate:
+            mutate(log)
+        return rn.binding_findings(log, self.plan, self.f.manifest)
+
+    def test_the_positive_control_has_no_findings(self):
+        self.assertEqual(self._findings(), [])
+
+    def test_the_b2q_plan_carries_its_inputs_contract(self):
+        """It carried none, and a missing expectation silently disabled the check."""
+        self.assertIsInstance(self.plan.get("inputs"), dict)
+        self.assertEqual(self.plan["inputs"], rn.expected_inputs(self.f.manifest, rn.QUALIFICATION))
+        stripped = dict(self.plan)
+        stripped.pop("inputs")
+        self.assertTrue(any("carries no inputs contract" in x
+                            for x in rn.binding_findings(copy.deepcopy(self.log), stripped, self.f.manifest)))
+
+    def test_every_identity_field_is_held(self):
+        for field in sorted(rn.expected_identity(self.f.manifest, self.plan)):
+            with self.subTest(field=field):
+                findings = self._findings(lambda log, k=field: log["app_identity"].__setitem__(k, "wrong"))
+                self.assertTrue(any(f"IDENT {field}" in x for x in findings), findings[:3])
+
+    def test_the_carrier_and_universe_digests_are_held(self):
+        """The two the offline path used to omit entirely."""
+        for field in ("carrier_sha256", "universe_sha256", "carrier_variant"):
+            with self.subTest(field=field):
+                findings = self._findings(lambda log, k=field: log["app_identity"].__setitem__(k, "0" * 64))
+                self.assertTrue(any(f"IDENT {field}" in x for x in findings), findings[:3])
+
+    def test_a_missing_or_wrong_inputs_block(self):
+        self.assertTrue(any("carries no inputs block" in x
+                            for x in self._findings(lambda log: log["l6"].pop("inputs"))))
+        for k in sorted(self.plan["inputs"]):
+            with self.subTest(field=k):
+                findings = self._findings(lambda log, k=k: log["l6"]["inputs"].__setitem__(k, "0" * 64))
+                self.assertTrue(any(f"inputs: the log's {k}" in x for x in findings), findings[:3])
+
+    def test_every_binding_field_is_held(self):
+        for k in sorted(self.plan["binding"]):
+            with self.subTest(field=k):
+                findings = self._findings(lambda log, k=k: log["l6"]["binding"].__setitem__(k, "wrong"))
+                self.assertTrue(any(f"binding: the log's {k}" in x for x in findings), findings[:3])
+
+    def test_a_missing_identity_or_binding_block(self):
+        self.assertTrue(any("declared no app_identity" in x
+                            for x in self._findings(lambda log: log.pop("app_identity"))))
+        self.assertTrue(any("no binding block" in x
+                            for x in self._findings(lambda log: log["l6"].pop("binding"))))
+        self.assertTrue(any("no l6 block" in x for x in self._findings(lambda log: log.pop("l6"))))
+
+    def test_without_a_manifest_the_identity_contract_is_named_unchecked(self):
+        findings = rn.binding_findings(copy.deepcopy(self.log), self.plan, None)
+        self.assertTrue(any("identity contract was not checked" in x for x in findings), findings)
+
+
+@unittest.skipUnless(HAVE, "the built B2 image or its build evidence is absent")
+class ArchivedRulings(unittest.TestCase):
+    """The archives are DECODED and REBOUND, not merely hashed: recording the digest of an
+    archive that was never parsed preserves an invalid declaration (the owner's P2-2)."""
+
+    @classmethod
+    def setUpClass(cls):
+        inst.bind(inst.DEFAULT_ROOT, require_git=False)
+        import b1_qualification as bq
+        cls.bq = bq
+        cls.f = Fixture("S1")
+        cls.plan = rn.qualification_session_plan(cls.f.manifest, "ab" * 32)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.f.close()
+
+    def _body(self, key: str) -> dict:
+        b = self.plan["binding"]
+        body = {"ruling": rn.QUAL_RULING_TEXT if key == "whole_of_run" else rn.PROVISION_RULING_TEXT,
+                "boardid": "17A6", "granted_by": "t", "date": "2026-09-11", "session": b["session"],
+                "prereg_sha256": b["prereg_sha256"], "image_sha256": b["image_sha256"],
+                "b2_manifest_sha256": b["b2_manifest_sha256"]}
+        if key == "whole_of_run":
+            body["master_seed"] = b["master_seed"]
+        return body
+
+    def _dir(self, whole=None, prov=None) -> Path:
+        d = Path(tempfile.mkdtemp(prefix="b2rul_", dir=self.f.d))
+        for key, body in (("whole_of_run", whole if whole is not None else self._body("whole_of_run")),
+                          ("provisioning", prov if prov is not None else self._body("provisioning"))):
+            path = d / self.bq.RULING_FILES[key]
+            if isinstance(body, str):
+                path.write_text(body)
+            else:
+                path.write_text(json.dumps(self.bq.archive_envelope(json.dumps(body).encode())))
+        return d
+
+    def test_the_positive_control_has_no_findings(self):
+        self.assertEqual(rn.archived_ruling_findings(self._dir(), self.plan), [])
+
+    def test_an_archive_that_is_not_json_at_all(self):
+        for whole, prov in (("not JSON", None), (None, "not JSON")):
+            with self.subTest(whole=whole, prov=prov):
+                findings = rn.archived_ruling_findings(self._dir(whole, prov), self.plan)
+                self.assertTrue(findings, "an unparseable archive was accepted")
+
+    def test_an_archive_declaring_another_session_seed_image_board_or_text(self):
+        b = self.plan["binding"]
+        for field, value, needle in (("master_seed", b["master_seed"] ^ 1, "master_seed"),
+                                     ("image_sha256", "0" * 64, "image_sha256"),
+                                     ("b2_manifest_sha256", "0" * 64, "b2_manifest_sha256"),
+                                     ("prereg_sha256", "0" * 64, "prereg_sha256"),
+                                     ("session", "B2", "session"),
+                                     ("ruling", "whole-of-run B2 map utility", "ruling text"),
+                                     ("boardid", "", "boardid"),
+                                     ("granted_by", "", "granted_by")):
+            with self.subTest(field=field):
+                whole = self._body("whole_of_run")
+                whole[field] = value
+                findings = rn.archived_ruling_findings(self._dir(whole), self.plan)
+                self.assertTrue(any(needle in x for x in findings), (field, findings[:3]))
+
+    def test_the_two_archives_must_name_the_same_board(self):
+        whole = self._body("whole_of_run")
+        whole["boardid"] = "OTHER"
+        findings = rn.archived_ruling_findings(self._dir(whole), self.plan)
+        self.assertTrue(any("different boards" in x for x in findings), findings[:3])
+
+    def test_an_unparseable_archive_is_refused_at_acceptance_not_merely_hashed(self):
+        """The record builder used to hash an archive that had never been parsed, which preserves
+        the invalid declaration instead of catching it."""
+        import b2_manifest as m
+        d = self._dir("not JSON")
+        (d / m.MANIFEST_AT_RUN).write_text(bman.render(self.f.manifest))
+        (d / "run_log.json").write_text("{}")
+        (d / "adjudication.json").write_text(json.dumps(
+            {"outcome": "PASS", "session": "B2Q", "measured_rate_per_hour": 2807.0,
+             "audit_policy": "all-self-reporting"}))
+        for name in m.QUAL_EVIDENCE_FILES:
+            if not (d / name).exists():
+                (d / name).write_text("{}")
+        with self.assertRaises(m.Refusal) as cm:
+            m.reconstruct_qualification_record(d)
+        self.assertIn("not a readable ruling archive", str(cm.exception))
+
+    def test_a_missing_archive(self):
+        d = self._dir()
+        (d / self.bq.RULING_FILES["provisioning"]).unlink()
+        self.assertTrue(any("archived no provisioning authorisation" in x
+                            for x in rn.archived_ruling_findings(d, self.plan)))
 
 
 @unittest.skipUnless(HAVE, "the built B2 image or its build evidence is absent")

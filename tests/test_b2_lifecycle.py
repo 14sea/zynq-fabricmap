@@ -56,14 +56,32 @@ def refused(p: subprocess.CompletedProcess, needle: str = "Refusal") -> bool:
     return p.returncode != 0 and needle in p.stderr
 
 
-def _fill_evidence(ev: Path) -> None:
-    """Placeholder bytes for every file QUAL_EVIDENCE_FILES pins that the case does not write
-    itself. Since 1.2.0 the record covers the whole evidence set, so an incomplete directory is
-    refused for membership before any of these cases can be reached."""
+def fill_evidence(ev: Path, outcome: str = "PASS") -> None:
+    """Every file QUAL_EVIDENCE_FILES pins that the case does not write itself. Since 1.2.0 the
+    record covers the whole evidence set, and since the final-summary check the two ruling
+    archives and `summary.json` must also be COHERENT — parseable envelopes and a summary that
+    closes them — so those three are built rather than stubbed. Everything else is placeholder
+    bytes: this fixture exercises membership, hashing and the summary boundary, not a session."""
+    import b1_qualification as bq
+    rulings = {}
+    for key, name in bq.RULING_FILES.items():
+        text = "whole-of-run B2 image qualification and calibration" if key == "whole_of_run" \
+            else "provisioning P3-K"
+        body = {"ruling": text, "boardid": "17A6", "granted_by": "fixture", "date": "2026-09-11",
+                "session": "B2Q"}
+        raw = json.dumps(body).encode()
+        rulings[key] = (raw, body)
+        (ev / name).write_text(json.dumps(bq.archive_envelope(raw)))
+    (ev / "summary.json").write_text(json.dumps(
+        {"outcome": outcome, "ruling": rulings["whole_of_run"][1],
+         "provisioning_ruling_sha256": hashlib.sha256(rulings["provisioning"][0]).hexdigest()}))
     for name in QUAL_EVIDENCE_FILES:
         p = ev / name
         if not p.exists():
             p.write_text(json.dumps({"placeholder": name}) if name.endswith(".json") else f"{name}\n")
+
+
+_fill_evidence = fill_evidence
 
 
 @unittest.skipUnless(GATE.exists(), "no recomputed gate report")
@@ -108,10 +126,7 @@ class Lifecycle(unittest.TestCase):
         shutil.copy(self.manifest, ev / "manifest_at_run.json")
         (ev / "run_log.json").write_text(json.dumps({"session": "B2Q"}))
         (ev / "adjudication.json").write_text(json.dumps(adj))
-        for name in QUAL_EVIDENCE_FILES:
-            p = ev / name
-            if not p.exists():
-                p.write_text(json.dumps({"placeholder": name}) if name.endswith(".json") else f"{name}\n")
+        fill_evidence(ev, adj.get("outcome", "PASS"))
 
     # ------------------------------------------------------------ S0, S1
 
@@ -493,7 +508,7 @@ class Lifecycle(unittest.TestCase):
             shutil.copy(s1, ev / "manifest_at_run.json")
             (ev / "run_log.json").write_text(json.dumps({"session": "B2Q"}))
             (ev / "adjudication.json").write_text(adj_text)
-            _fill_evidence(ev)
+            fill_evidence(ev, json.loads(adj_text).get("outcome", "PASS"))
             p = run(f"import b2_manifest as m, json; from pathlib import Path; d = json.loads(open({str(s1)!r}).read()); "
                     f"m.qualify(d, Path({str(ev)!r}), readjudicate={STUB_PASS})")
             self.assertTrue(refused(p), (tag, p.stdout, p.stderr)); self.assertIn(needle, p.stderr, tag)
@@ -507,6 +522,55 @@ class Lifecycle(unittest.TestCase):
         p = run(f"import b2_manifest as m, json; from pathlib import Path; d = json.loads(open({str(s1)!r}).read()); "
                 f"d2 = m.qualify(d, Path({str(ev)!r}), readjudicate={STUB_PASS}); print(d2['calibration']['sessions'], d2['calibration']['pairs_per_session_max'])")
         self.assertEqual(p.returncode, 0, p.stderr); self.assertEqual(p.stdout.split(), ["9", "1"])
+
+    def test_5a_the_final_summary_must_close_the_evidence(self):
+        """The summary is written AFTER the adjudication callback, so it is checked at the
+        post-finalisation lifecycle boundary (the owner's P2-2 of 2026-09-11). A positive control
+        first, then each mutation independently."""
+        import b1_qualification as bq
+        import b2_manifest as m
+        ev = self.tmp / "b2q_summary"
+        ev.mkdir(exist_ok=True)
+        shutil.copy(self.ev / "manifest_at_run.json", ev / "manifest_at_run.json")
+        (ev / "run_log.json").write_text(json.dumps({"session": "B2Q", "app_identity": {"token": "t" * 32}}))
+        (ev / "adjudication.json").write_text(json.dumps(ORIGINAL_ADJ))
+        fill_evidence(ev)
+        summary = json.loads((ev / "summary.json").read_text())
+        summary["token"] = "t" * 32
+        (ev / "summary.json").write_text(json.dumps(summary))
+        self.assertEqual(m.summary_findings(ev), [], "the coherent control did not close")
+        raw_pk, _ = bq.read_archived_ruling(ev / bq.RULING_FILES["provisioning"])
+        for mutate, needle in (
+                (lambda d: d.__setitem__("outcome", "HOLD"), "outcome"),
+                (lambda d: d.__setitem__("token", "0" * 32), "token"),
+                (lambda d: d.__setitem__("provisioning_ruling_sha256", "0" * 64), "provisioning_ruling_sha256"),
+                (lambda d: d.__setitem__("ruling", {"ruling": "something else"}), "recorded ruling"),
+                (lambda d: d.pop("ruling"), "recorded ruling")):
+            with self.subTest(needle=needle):
+                doc = json.loads(json.dumps(summary))
+                mutate(doc)
+                (ev / "summary.json").write_text(json.dumps(doc))
+                findings = m.summary_findings(ev)
+                self.assertTrue(any(needle in x for x in findings), (needle, findings))
+        (ev / "summary.json").write_text("not JSON")
+        self.assertTrue(any("not readable JSON" in x for x in m.summary_findings(ev)))
+        (ev / "summary.json").write_text(json.dumps(summary))
+        (ev / bq.RULING_FILES["whole_of_run"]).write_text("not JSON")
+        self.assertTrue(any("cannot be bound to the archived rulings" in x for x in m.summary_findings(ev)))
+
+    def test_5b_a_broken_summary_refuses_the_transition_in_a_fresh_process(self):
+        ev = self.tmp / "b2q_summary_transition"
+        ev.mkdir(exist_ok=True)
+        s1 = self.ev / "manifest_at_run.json"
+        shutil.copy(s1, ev / "manifest_at_run.json")
+        (ev / "run_log.json").write_text(json.dumps({"session": "B2Q"}))
+        (ev / "adjudication.json").write_text(json.dumps(ORIGINAL_ADJ))
+        fill_evidence(ev)
+        (ev / "summary.json").write_text(json.dumps({"outcome": "HOLD"}))
+        p = run(f"import b2_manifest as m, json; from pathlib import Path; d = json.loads(open({str(s1)!r}).read()); "
+                f"m.qualify(d, Path({str(ev)!r}), readjudicate={STUB_PASS})")
+        self.assertTrue(refused(p), p.stderr[-300:])
+        self.assertIn("final summary does not close this evidence", p.stderr)
 
     def test_6_b1_verifier_untouched(self):
         p = subprocess.run(["git", "-C", str(R), "diff", "--quiet", "6ac2cf2", "--", "host/b1_qualification.py", "host/b1_manifest.py", "manifests/b1_manifest.json",

@@ -253,7 +253,8 @@ def qualification_session_plan(manifest: dict, manifest_sha256: str | None = Non
             "session_timeout_s": deadline_s(records_expected, QUAL_PLANNING_RATE_PER_HOUR),
             "deadline_formula": bp.DEADLINE_FORMULA,
             "deadline_rate": {"source": QUAL_PLANNING_RATE_RULE, "rate_per_hour": QUAL_PLANNING_RATE_PER_HOUR},
-            "binding": qualification_binding(manifest, manifest_sha256)}
+            "binding": qualification_binding(manifest, manifest_sha256),
+            "inputs": expected_inputs(manifest, QUALIFICATION)}
 
 
 def qualification_binding(manifest: dict, manifest_sha256: str | None) -> dict:
@@ -265,10 +266,12 @@ def qualification_binding(manifest: dict, manifest_sha256: str | None) -> dict:
             "psoracle_commit": manifest["instrument"]["psoracle_commit"],
             "map_canonical_json_sha256": manifest["map"]["canonical_json_sha256"],
             "fitness_id": manifest["experiment"]["fitness"], "budget_per_arm": QUAL_BUDGET,
-            "pair_first": 0, "pair_count": QUAL_PAIRS}
+            "pair_first": 0, "pair_count": QUAL_PAIRS,
+            "carrier_sha256": manifest["carrier"]["bitstream_sha256"], "carrier_variant": B2_VARIANT,
+            "universe_sha256": manifest["universe"]["sha256"]}
 
 
-def binding_findings(log: dict, session_plan: dict) -> list[str]:
+def binding_findings(log: dict, session_plan: dict, manifest: dict | None = None) -> list[str]:
     """The session's IDENTITY and its invocation, established from the EVIDENCE — not assumed
     from the plan that judged it. The instrument layer proves the log is internally consistent
     and the replay proves the algorithm was followed under the slice the log DECLARES; neither
@@ -289,8 +292,12 @@ def binding_findings(log: dict, session_plan: dict) -> list[str]:
             f.append(f"binding: this invocation declares no {k}, so the evidence cannot be held to one")
         elif got.get(k) != want[k]:
             f.append(f"binding: the log's {k} is {_short(got.get(k))}, this invocation's is {_short(want[k])}")
+    # The inputs contract is REQUIRED. A plan that carries none used to disable this check
+    # silently, which is exactly how the B2Q offline path skipped it.
     inputs_want = session_plan.get("inputs")
-    if inputs_want is not None:
+    if not isinstance(inputs_want, dict):
+        f.append("the session plan carries no inputs contract: a missing expectation is not a pass")
+    else:
         inputs_got = l6.get("inputs")
         if not isinstance(inputs_got, dict):
             f.append("the run log's l6 carries no inputs block")
@@ -299,26 +306,72 @@ def binding_findings(log: dict, session_plan: dict) -> list[str]:
                 if inputs_got.get(k) != inputs_want[k]:
                     f.append(f"inputs: the log's {k} is {_short(inputs_got.get(k))}, this "
                              f"invocation's is {_short(inputs_want[k])}")
-    ident = log.get("app_identity")
-    if not isinstance(ident, dict):
-        f.append("the run log carries no app_identity: the board declared no identity")
+    if manifest is not None:
+        # the WHOLE identity contract, the carrier and universe digests included
+        f += identity_findings(log.get("app_identity"), manifest, session_plan)
     else:
-        # The SLICE the evidence actually declares must be the one this session selected. Two
-        # slices of the same length pass a record count; only this comparison separates them.
-        for k in ("pair_first", "pair_count", "pairs_total"):
-            if ident.get(k) != session_plan.get(k):
-                f.append(f"slice: the IDENT's {k} is {ident.get(k)!r}, this session's is "
-                         f"{session_plan.get(k)!r}")
-        for k, v in (("master_seed", session_plan.get("master_seed")),
-                     ("budget_per_arm", session_plan.get("n")),
-                     ("protocol", session_plan.get("protocol"))):
-            if v is not None and ident.get(k) != v:
-                f.append(f"IDENT {k}: {ident.get(k)!r} != {v!r}")
-        if want.get("map_canonical_json_sha256") is not None \
-                and ident.get("map_sha256") != want["map_canonical_json_sha256"]:
-            f.append("IDENT map_sha256 is not the map this stage is bound to")
-        if want.get("fitness_id") is not None and ident.get("fitness_id") != want["fitness_id"]:
-            f.append(f"IDENT fitness_id {ident.get('fitness_id')!r} != {want['fitness_id']!r}")
+        f.append("no manifest to hold the IDENT to: the identity contract was not checked")
+    return f
+
+
+def archived_ruling_findings(evidence: Path, session_plan: dict) -> list[str]:
+    """The two archived authorisations, DECODED and REBOUND — not merely hashed. Recording the
+    digest of an archive that was never parsed preserves an invalid declaration instead of
+    catching it, and later detection of changes to already-pinned bytes says nothing about what
+    was accepted the first time (the owner's P2-2 of 2026-09-11).
+
+    They are read through the instrument's own strict envelope reader. An archive is INERT: it is
+    read, never claimed, never consumed, and nothing here reactivates it."""
+    import b1_qualification as bq  # noqa: E402
+    want = session_plan.get("binding") or {}
+    session = session_plan.get("session")
+    texts = {"whole_of_run": QUAL_RULING_TEXT if session == bman.QUAL_SESSION else RULING_TEXT,
+             "provisioning": PROVISION_RULING_TEXT}
+    f: list[str] = []
+    boards: dict[str, object] = {}
+    want_board = (session_plan.get("boardid") or (session_plan.get("binding") or {}).get("boardid"))
+    for key, name in bq.RULING_FILES.items():
+        path = Path(evidence) / name
+        if not path.is_file():
+            f.append(f"the evidence carries no {name}: the session archived no {key} authorisation")
+            continue
+        try:
+            _raw, ruling = bq.read_archived_ruling(path)
+        except bq.QualificationRefusal as exc:
+            f.append(f"{name}: {exc}")
+            continue
+        text = texts[key]
+        if ruling.get("ruling") != text:
+            f.append(f"{name}: the archived ruling text is {_short(ruling.get('ruling'))}, not {_short(text)}")
+        for field in ("boardid", "granted_by", "date"):
+            if not ruling.get(field):
+                f.append(f"{name}: the archived ruling lacks {field!r}")
+        boards[key] = ruling.get("boardid")
+        bind = {"session": session, "prereg_sha256": want.get("prereg_sha256"),
+                "image_sha256": want.get("image_sha256"),
+                "b2_manifest_sha256": want.get("b2_manifest_sha256")}
+        if key == "whole_of_run":                       # only this one names the experiment's seed
+            bind["master_seed"] = want.get("master_seed")
+        for k, v in bind.items():
+            got = ruling.get(k)
+            if k == "master_seed" and isinstance(got, str):
+                try:
+                    got = int(got, 0)
+                except ValueError:
+                    got = None
+            if v is None:
+                f.append(f"{name}: this invocation declares no {k}, so the archive cannot be rebound to one")
+            elif got != v:
+                f.append(f"{name}: the archived ruling is bound to {k} = {_short(got)}, this session's "
+                         f"is {_short(v)}")
+    if len(boards) == len(bq.RULING_FILES) and len(set(map(str, boards.values()))) != 1:
+        f.append(f"the two archived authorisations name different boards: "
+                 f"{ {k: _short(v) for k, v in boards.items()} }")
+    if want_board is not None:
+        for key, got in boards.items():
+            if got != want_board:
+                f.append(f"{bq.RULING_FILES[key]}: the archived ruling names board {_short(got)}, "
+                         f"this stage is {_short(want_board)}")
     return f
 
 
@@ -483,13 +536,14 @@ def judge_session(evidence_dir, manifest: dict, session_plan: dict, plan_doc: di
         out["outcome"] = f"REFUSED: run_log.json is not readable JSON: {exc}"
         return out
     seal = export_seal_findings(evidence)
-    binding = binding_findings(log, session_plan)
+    rulings = archived_ruling_findings(evidence, session_plan)
+    binding = binding_findings(log, session_plan, manifest)
     p3 = instrument_findings(evidence, log, session_plan, instrument_root)
     out["instrument"] = {k: v for k, v in p3.items() if k not in ("findings", "rejected")}
     out["measured_rate_per_hour"] = p3["rate"]
     out["audit_policy"] = p3["audit_policy"]
-    out["findings"] = seal + binding + list(p3["findings"])
-    out["binding_checked"] = not binding and not seal
+    out["findings"] = seal + rulings + binding + list(p3["findings"])
+    out["binding_checked"] = not binding and not seal and not rulings
     if p3["rejected"]:                              # the instrument's own falsification / refusal
         out["outcome"] = p3["rejected"]
         return out
@@ -772,7 +826,9 @@ def preflight(a, profile: dict = SEARCH, pins_verify=verify_pins, readjudicate=N
                     "b2_manifest_sha256": manifest_sha, "psoracle_commit": verified["psoracle_commit"],
                     "map_canonical_json_sha256": manifest["map"]["canonical_json_sha256"],
                     "fitness_id": manifest["experiment"]["fitness"], "budget_per_arm": budget,
-                    "pair_first": first, "pair_count": count, "protocol": wire},
+                    "pair_first": first, "pair_count": count, "protocol": wire,
+                    "carrier_sha256": manifest["carrier"]["bitstream_sha256"], "carrier_variant": B2_VARIANT,
+                    "universe_sha256": manifest["universe"]["sha256"]},
     }
     if profile is QUALIFICATION:
         # The producer and the offline verdict must judge the SAME session: the plan this
@@ -782,7 +838,7 @@ def preflight(a, profile: dict = SEARCH, pins_verify=verify_pins, readjudicate=N
         differ = [k for k in ("session", "n", "master_seed", "pairs_total", "pair_first", "pair_count",
                               "flags", "audit_policy", "audit_seqs", "protocol", "expected_records",
                               "expected_frames", "crc_budget", "bad_frame_budget", "session_timeout_s",
-                              "binding") if session_plan.get(k) != rebuilt.get(k)]
+                              "binding", "inputs") if session_plan.get(k) != rebuilt.get(k)]
         if differ:
             raise Refusal(f"the B2Q session plan this preflight built is not the one the offline "
                           f"verdict rebuilds: {differ}")
@@ -825,32 +881,41 @@ def expected_inputs(manifest: dict, profile: dict) -> dict:
             "b2_manifest_sha256": bman.manifest_sha256(manifest), "stage": profile["stage"]}
 
 
-def identity_check_for(cfg: dict):
-    """The B2 IDENT (app_identity 1.5.0) is verified BEFORE it is acknowledged: the engine, the
-    map digest, the fitness, the budget, the seed, the slice, the carrier and the protocol."""
-    plan, manifest = cfg["plan"], cfg["manifest"]
+def expected_identity(manifest: dict, session_plan: dict) -> dict:
+    """The complete `app_identity` 1.5.0 contract for a session — ONE definition, used by the
+    online check before the board's identity is acknowledged AND by the offline binding check
+    when the evidence is re-adjudicated later. Two definitions would drift, and the offline one
+    is the only check a standalone re-adjudication gets (the owner's P2-1 of 2026-09-11)."""
+    return {"search_version": bs.ENGINE_VERSION,
+            "map_sha256": manifest["map"]["canonical_json_sha256"],
+            "operator_data_sha256": manifest["map"]["canonical_json_sha256"],
+            "fitness_id": manifest["experiment"]["fitness"],
+            "budget_per_arm": session_plan["n"], "master_seed": session_plan["master_seed"],
+            "pairs_total": session_plan["pairs_total"], "pair_first": session_plan["pair_first"],
+            "pair_count": session_plan["pair_count"], "carrier_variant": B2_VARIANT,
+            "carrier_sha256": manifest["carrier"]["bitstream_sha256"],
+            "universe_sha256": manifest["universe"]["sha256"], "protocol": PROTOCOL_WIRE,
+            "rec_retry_control": True, "sign_retry_control": True}
 
+
+def identity_findings(ident, manifest: dict, session_plan: dict) -> list[str]:
+    if not isinstance(ident, dict):
+        return ["the session declared no app_identity object"]
+    out = [f"IDENT {k}: {_short(ident.get(k))} != {_short(v)}"
+           for k, v in sorted(expected_identity(manifest, session_plan).items()) if ident.get(k) != v]
+    for forbidden in ("carto_version", "probe_budget"):
+        if forbidden in ident:
+            out.append(f"IDENT {forbidden}: this image runs no cartographer and issues no probes")
+    if ident.get("findings"):
+        out.append(f"IDENT findings: {ident['findings']}")
+    return out
+
+
+def identity_check_for(cfg: dict):
+    """The B2 IDENT is verified BEFORE it is acknowledged, against the same contract the offline
+    verdict holds the archived evidence to."""
     def check(ident: dict) -> list[str]:
-        out = []
-        want = {"search_version": bs.ENGINE_VERSION,
-                "map_sha256": manifest["map"]["canonical_json_sha256"],
-                "operator_data_sha256": manifest["map"]["canonical_json_sha256"],
-                "fitness_id": manifest["experiment"]["fitness"],
-                "budget_per_arm": plan["n"], "master_seed": plan["master_seed"],
-                "pairs_total": plan["pairs_total"], "pair_first": plan["pair_first"],
-                "pair_count": plan["pair_count"], "carrier_variant": B2_VARIANT,
-                "carrier_sha256": manifest["carrier"]["bitstream_sha256"],
-                "universe_sha256": manifest["universe"]["sha256"], "protocol": PROTOCOL_WIRE,
-                "rec_retry_control": True, "sign_retry_control": True}
-        for k, v in want.items():
-            if ident.get(k) != v:
-                out.append(f"IDENT {k}: {ident.get(k)!r} != {v!r}")
-        for forbidden in ("carto_version", "probe_budget"):
-            if forbidden in ident:
-                out.append(f"IDENT {forbidden}: this image runs no cartographer and issues no probes")
-        if ident.get("findings"):
-            out.append(f"IDENT findings: {ident['findings']}")
-        return out
+        return identity_findings(ident, cfg["manifest"], cfg["plan"])
     return check
 
 

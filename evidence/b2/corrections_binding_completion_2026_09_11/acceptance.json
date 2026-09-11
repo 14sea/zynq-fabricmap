@@ -1,0 +1,49 @@
+{
+  "qualification_plan_has_inputs": true,
+  "binding_control": [],
+  "ident_carrier": [
+    "IDENT carrier_sha256: '0000000000000000000000000000000000000000000000000000000000000000' != 'd85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f'"
+  ],
+  "ident_universe": [
+    "IDENT universe_sha256: '0000000000000000000000000000000000000000000000000000000000000000' != '895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458'"
+  ],
+  "ident_carrier_variant": [
+    "IDENT carrier_variant: '0x0' != '0x42310001'"
+  ],
+  "missing_inputs": [
+    "the run log's l6 carries no inputs block"
+  ],
+  "wrong_inputs_manifest": [
+    "inputs: the log's b2_manifest_sha256 is '0000000000000000000000000000000000000000000000000000000000000000', this invocation's is '2295ab9412d8e6c12bdc433327a084bb8e708b92566f35c7ac539a663bdd70b2'"
+  ],
+  "ruling_control": [],
+  "whole_not_json": [
+    "ruling_whole_of_run.json: no readable ruling archive at /tmp/b2acc_c692jjyd/ruling_whole_of_run.json: Expecting value: line 1 column 1 (char 0)"
+  ],
+  "provision_not_json": [
+    "ruling_provisioning.json: no readable ruling archive at /tmp/b2acc_vf1i9aw5/ruling_provisioning.json: Expecting value: line 1 column 1 (char 0)"
+  ],
+  "whole_wrong_master_seed": [
+    "ruling_whole_of_run.json: the archived ruling is bound to master_seed = 505806526, this session's is 505806527"
+  ],
+  "whole_wrong_image_sha256": [
+    "ruling_whole_of_run.json: the archived ruling is bound to image_sha256 = '0000000000000000000000000000000000000000000000000000000000000000', this session's is 'd164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5'"
+  ],
+  "whole_wrong_session": [
+    "ruling_whole_of_run.json: the archived ruling is bound to session = 'B2', this session's is 'B2Q'"
+  ],
+  "whole_wrong_boardid": [
+    "the two archived authorisations name different boards: {'whole_of_run': \"'OTHER'\", 'provisioning': \"'17A6'\"}"
+  ],
+  "whole_wrong_ruling": [
+    "ruling_whole_of_run.json: the archived ruling text is 'whole-of-run B2 map utility', not 'whole-of-run B2 image qualification and calibration'"
+  ],
+  "summary_control": [],
+  "summary_not_json": [
+    "summary.json is not readable JSON: Expecting value: line 1 column 1 (char 0)"
+  ],
+  "summary_wrong_outcome": [
+    "summary.json's outcome 'HOLD' is not the adjudication's 'PASS'"
+  ],
+  "invalid_archive_record": "REFUSED: the archived authorisation ruling_whole_of_run.json is not a readable ruling archive: no readable ruling archive at /tmp/b2acc_sum_a5u45ndb/ruling_whole_of_run.json: Expecting value: line 1 column 1 (char 0)"
+}
