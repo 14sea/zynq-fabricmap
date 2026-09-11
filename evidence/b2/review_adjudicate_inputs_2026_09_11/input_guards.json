@@ -1,0 +1,268 @@
+{
+  "head": "da89506cb5a70277c85646e166456de79c6bdd5e",
+  "synthetic_common_envelopes": true,
+  "common": true,
+  "cases": {
+    "baseline": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      },
+      "replay": {
+        "records_replayed": 78,
+        "pairs": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "fitness_[]": {
+      "exception": "TypeError",
+      "message": "unhashable type: 'list'"
+    },
+    "fitness_{}": {
+      "exception": "TypeError",
+      "message": "unhashable type: 'dict'"
+    },
+    "fitness_['F1']": {
+      "exception": "TypeError",
+      "message": "unhashable type: 'list'"
+    },
+    "fitness_{'name': 'F1'}": {
+      "exception": "TypeError",
+      "message": "unhashable type: 'dict'"
+    },
+    "unknown_fitness_control": {
+      "outcome": "REFUSED: the plan's fitness 'F9' is not one of ['F1', 'F2', 'F3']",
+      "findings": [],
+      "kills": [],
+      "refusal": "the plan's fitness 'F9' is not one of ['F1', 'F2', 'F3']"
+    },
+    "prediction_budget_float": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      },
+      "replay": {
+        "records_replayed": 78,
+        "pairs": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "prediction_run_float": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      },
+      "replay": {
+        "records_replayed": 78,
+        "pairs": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "prediction_run_bool": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      },
+      "replay": {
+        "records_replayed": 78,
+        "pairs": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "prediction_primary_bool": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      },
+      "replay": {
+        "records_replayed": 78,
+        "pairs": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "prediction_primary_float": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      },
+      "replay": {
+        "records_replayed": 78,
+        "pairs": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "contradictory_duplicate_prediction_pair": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      },
+      "replay": {
+        "records_replayed": 78,
+        "pairs": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "out_of_range_prediction_pair": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      },
+      "replay": {
+        "records_replayed": 78,
+        "pairs": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "wrong_numeric_value_control": {
+      "outcome": "HOLD: pair 0 arm A: best_train is 2, the prediction's is 999",
+      "findings": [
+        "pair 0 arm A: best_train is 2, the prediction's is 999"
+      ],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      },
+      "replay": {
+        "records_replayed": 78,
+        "pairs": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "uint32_seed_alias": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      },
+      "replay": {
+        "records_replayed": 78,
+        "pairs": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "invalid_map_digest": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      },
+      "replay": {
+        "records_replayed": 78,
+        "pairs": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "cli_fitness_list": {
+      "returncode": 3,
+      "result_written": true,
+      "outcome": "INTERNAL ERROR: TypeError: unhashable type: 'list'",
+      "internal_error": "Traceback (most recent call last):\n  File \"/home/test/zynq_fabricmap/host/b2_adjudicate.py\", line 729, in main\n    res = adjudicate([load(p) for p in paths], load(a.plan), load(a.prediction), common=not a.no_common)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/test/zynq_fabricmap/host/b2_adjudicate.py\", line 612, in adjudicate\n    check_plan(plan)\n  File \"/home/test/zynq_fabricmap/host/b2_adjudicate.py\", line 102, in check_plan\n    if plan[\"fitness\"] not in bl.FITNESS:\n       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nTypeError: unhashable type: 'list'\n"
+    }
+  }
+}

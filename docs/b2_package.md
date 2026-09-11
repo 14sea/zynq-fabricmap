@@ -1,5 +1,15 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Adjudicator correction review (`da89506`): HOLD remains on input validation.**
+> The baseline P2 and planning-scenario P3 are closed; the original counterexamples now
+> return named results, including the mixed KILL case. The independent B2/B3 suite passes
+> 302 tests with zero skips, and the full-size model replay still matches the prediction.
+> The input-validation P2 remains incomplete: array/object fitness values still raise,
+> and mistyped or ambiguous prediction declarations can still PASS. See
+> [the input review](b2_adjudicate_input_review_2026_09_11.md) for the reproduced cases,
+> including seed/digest domain gaps. Correct these before accepting/pushing the adjudicator
+> batch. Earlier approvals are unchanged; no push or board action was performed.
+
 > **The adjudicator review's two P2s are corrected.** (1) Shapes are now established before
 > each dependent operation — `check_plan` / `check_prediction` over every plan and prediction
 > value the module consumes, `structure_findings` over the record array, and a readout map
