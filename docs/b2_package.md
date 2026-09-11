@@ -1,5 +1,15 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Board authority correction accepted (`7c4f0ca`, implementation `ecb56a6`).**
+> The board-authority P2 is closed: correct pairs pass, both-wrong pairs and malformed
+> authorities are refused, and fresh-process verification rejects even a rewritten
+> board plus a rehashed temporary lineage manifest through the real B1 chain. See
+> [the acceptance review](b2_board_authority_acceptance_2026_09_11.md).
+> **Overall runner HOLD remains** pending the complete modelled B2/B2Q positive
+> lifecycle and remaining package tools. Continue with `b2_modelled_session`; this
+> correction acceptance grants no push, freeze or board clearance. Earlier banners
+> below are historical.
+
 > **The ruling's board authority is now a frozen input.** Two rulings agreeing on the WRONG board
 > used to pass: the manifest recorded no board, `parse_ruling` compared one only when the manifest
 > declared one, neither session plan supplied one, and the archive check therefore only required

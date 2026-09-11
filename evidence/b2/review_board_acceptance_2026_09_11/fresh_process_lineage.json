@@ -1,0 +1,27 @@
+{
+  "valid": {
+    "accepted": true,
+    "stage": "S1",
+    "board": "17A6"
+  },
+  "missing": {
+    "accepted": false,
+    "refusal": "the manifest pins no board: this stage has no board authority"
+  },
+  "wrong": {
+    "accepted": false,
+    "refusal": "board: the manifest is scoped to 'FFFF', the validated lineage names '17A6'"
+  },
+  "array": {
+    "accepted": false,
+    "refusal": "the manifest's boardid ['17A6'] is not a non-empty string"
+  },
+  "blank": {
+    "accepted": false,
+    "refusal": "the manifest's boardid '   ' is not a non-empty string"
+  },
+  "rewritten_board_and_lineage": {
+    "accepted": false,
+    "refusal": "lineage: the B1 qualification chain does not verify now: the current manifest differs from manifest_at_run in more than the qualification state: the carrier was qualified for another manifest"
+  }
+}
