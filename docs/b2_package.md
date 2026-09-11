@@ -1,5 +1,14 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Runtime freshness correction PASS (`fe69f95`, verified at `aced532`).**
+> The cache P2 is closed and the build-guard review HOLD is lifted. Current image
+> `d164cd1d…` and its build inputs verify. The independent B2/B3 suite passes 232 tests,
+> zero skips, including the newly added record validator. See
+> [the runtime review](b2_runtime_live_review_2026_09_11.md).
+> **The new `b2_records` has a separate P2:** malformed extension values can raise
+> incidental exceptions or pass unchecked. See [its initial review](b2_records_initial_review_2026_09_11.md).
+> Correct and review that validator, complete the other four host tools, then submit §7.
+
 > **Authority-correction review (`fb37ee0`): prior role/inventory findings closed.**
 > All 193 B2/B3 tests pass with zero skips, and image `d164cd1d…` still matches its actual
 > build inputs. One new P2 remains: cached runtime hashes hide file modification or deletion

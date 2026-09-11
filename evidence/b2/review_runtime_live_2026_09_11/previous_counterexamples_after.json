@@ -1,0 +1,167 @@
+{
+  "previous_cases": {
+    "baseline": {
+      "findings": [],
+      "accepted": true
+    },
+    "changed_app_hash_control": {
+      "findings": [
+        "source b2_app.c: /home/test/zynq_fabricmap/firmware/b2/b2_app.c does not hash to the record"
+      ],
+      "accepted": false
+    },
+    "changed_image_hash_control": {
+      "findings": [
+        "reproducibility: build 0's binary is not the named image",
+        "reproducibility: build 1's binary is not the named image",
+        "the image: /home/test/zynq_fabricmap/firmware/b2/bsp/out/b2_app.bin does not hash to the record"
+      ],
+      "accepted": false
+    },
+    "dirty_tree_control": {
+      "findings": [
+        "the evidence was taken from a dirty tree"
+      ],
+      "accepted": false
+    },
+    "mismatched_second_build": {
+      "findings": [
+        "reproducibility: the two builds' binaries differ",
+        "reproducibility: the two builds' ELFs differ",
+        "reproducibility: the recorded verdicts disagree with the recorded digests",
+        "reproducibility: build 1's binary is not the named image",
+        "reproducibility: build 1's ELF is not the named ELF"
+      ],
+      "accepted": false
+    },
+    "changed_header_hash": {
+      "findings": [
+        "header: /home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1/arm-none-eabi/include/stdint.h does not hash to the record"
+      ],
+      "accepted": false
+    },
+    "missing_header_entry": {
+      "findings": [
+        "headers: /home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1/arm-none-eabi/include/stdint.h is a recorded dependency but has no hash"
+      ],
+      "accepted": false
+    },
+    "changed_runtime_hash": {
+      "findings": [
+        "runtime object libc.a: the recorded hash is not the resolved file's"
+      ],
+      "accepted": false
+    },
+    "changed_compiler_hash": {
+      "findings": [
+        "the compiler: the recorded hash is not the build compiler's"
+      ],
+      "accepted": false
+    },
+    "missing_external_unit": {
+      "findings": [
+        "translation units: /home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/cortexa9/xil_cache.c is compiled by the build script but not recorded",
+        "translation units: /nonexistent-b2-review/xil_cache.c is recorded but not compiled by the build script",
+        "translation unit: /nonexistent-b2-review/xil_cache.c does not exist",
+        "dependencies: /home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/cortexa9/xil_cache.c is not a recorded translation unit",
+        "dependencies: no dependency list for /nonexistent-b2-review/xil_cache.c"
+      ],
+      "accepted": false
+    },
+    "unrecorded_console_source_and_unit": {
+      "findings": [
+        "source inventory: bsp/src/console.c is a required build input but is not recorded",
+        "source inventory: bsp/src/console.c is linked by the build script but not recorded",
+        "translation units: /home/test/zynq_fabricmap/firmware/b2/bsp/src/console.c is compiled by the build script but not recorded",
+        "dependencies: /home/test/zynq_fabricmap/firmware/b2/bsp/src/console.c is not a recorded translation unit"
+      ],
+      "accepted": false
+    }
+  },
+  "authority_cases": {
+    "baseline": {
+      "findings": [],
+      "committed_checks": {
+        "passed": true,
+        "ran": 6,
+        "skipped": 0,
+        "failures": [],
+        "errors": []
+      }
+    },
+    "different_file_as_compiler": {
+      "findings": [
+        "the compiler: the evidence names '/tmp/b2-build-authority-syq1larw', the build uses /home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1",
+        "the compiler: the recorded hash is not the build compiler's"
+      ],
+      "committed_checks": {
+        "passed": false,
+        "ran": 6,
+        "skipped": 0,
+        "failures": [
+          "test_the_committed_evidence_has_no_findings (submitted_guard_tests.Committed.test_the_committed_evidence_has_no_findings)",
+          "test_the_compiler_and_runtime_objects_are_the_resolved_ones (submitted_guard_tests.Committed.test_the_compiler_and_runtime_objects_are_the_resolved_ones)"
+        ],
+        "errors": []
+      }
+    },
+    "libm_file_as_libc": {
+      "findings": [
+        "runtime object libc.a: the evidence names /home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-a+fp/hard/libm.a, the link resolves /home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1/bin/../lib/gcc/arm-none-eabi/14.2.1/../../../../arm-none-eabi/lib/thumb/v7-a+fp/hard/libc.a",
+        "runtime object libc.a: the recorded hash is not the resolved file's"
+      ],
+      "committed_checks": {
+        "passed": false,
+        "ran": 6,
+        "skipped": 0,
+        "failures": [
+          "test_the_committed_evidence_has_no_findings (submitted_guard_tests.Committed.test_the_committed_evidence_has_no_findings)",
+          "test_the_compiler_and_runtime_objects_are_the_resolved_ones (submitted_guard_tests.Committed.test_the_compiler_and_runtime_objects_are_the_resolved_ones)"
+        ],
+        "errors": []
+      }
+    },
+    "missing_linker_script_source": {
+      "findings": [
+        "source inventory: bsp/lscript.ld is a required build input but is not recorded"
+      ],
+      "committed_checks": {
+        "passed": false,
+        "ran": 6,
+        "skipped": 0,
+        "failures": [
+          "test_the_committed_evidence_has_no_findings (submitted_guard_tests.Committed.test_the_committed_evidence_has_no_findings)",
+          "test_the_mandatory_inventory_is_the_modules_not_the_evidences (submitted_guard_tests.Committed.test_the_mandatory_inventory_is_the_modules_not_the_evidences)"
+        ],
+        "errors": []
+      }
+    },
+    "missing_build_script_source": {
+      "findings": [
+        "source inventory: bsp/build.sh is a required build input but is not recorded"
+      ],
+      "committed_checks": {
+        "passed": false,
+        "ran": 6,
+        "skipped": 0,
+        "failures": [
+          "test_the_committed_evidence_has_no_findings (submitted_guard_tests.Committed.test_the_committed_evidence_has_no_findings)",
+          "test_the_mandatory_inventory_is_the_modules_not_the_evidences (submitted_guard_tests.Committed.test_the_mandatory_inventory_is_the_modules_not_the_evidences)"
+        ],
+        "errors": []
+      }
+    },
+    "self_consistent_empty_graph_control": {
+      "findings": [],
+      "committed_checks": {
+        "passed": false,
+        "ran": 6,
+        "skipped": 0,
+        "failures": [
+          "test_the_recorded_dependencies_are_the_compilers (submitted_guard_tests.Committed.test_the_recorded_dependencies_are_the_compilers)"
+        ],
+        "errors": []
+      }
+    }
+  }
+}
