@@ -1,5 +1,16 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Runner correction review (`366d96f`): HOLD remains.** The earlier wire lookup,
+> ruling master binding, seed-container validation and both P3s are closed. Session
+> acceptance is only partially corrected: offline invocation/identity binding, export
+> seal and qualification evidence coverage, and deadline enforcement remain incomplete.
+> The complete offline B2Q positive lifecycle is still required. See
+> [the correction review](b2_runner_correction_review_2026_09_11.md) for independently
+> reproduced layer probes and their explicit limits; they are not a complete B2 PASS.
+> Continue with the modelled session and real S1-to-S3 acceptance before clearing the
+> runner batch for push. No board, image build, commit or push action was performed.
+> The earlier implementation and review banners below are historical.
+
 > **The runner review's five P2s and two P3s are corrected — and one half of it is not.**
 > The session verdict now COMPOSES the instrument and evidence contract with the record replay
 > (`judge_session`), so the review's four probes — its control, STOPPED, PROTOCOL and

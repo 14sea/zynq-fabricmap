@@ -1,0 +1,208 @@
+{
+  "instrument_control": {
+    "outcome": "PASS",
+    "findings": [],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting",
+    "instrument": {
+      "rate": 2777.5642860104945,
+      "audit_policy": "all-self-reporting",
+      "run_log_validation": {
+        "scored": 11,
+        "audited": 11,
+        "chain_length": 12
+      },
+      "rate_report": {
+        "candidates": 9,
+        "evals_per_hour": 2777.5642860104945,
+        "cov": 0.03869661884674711,
+        "session_span_s": 14.269399352000164
+      }
+    }
+  },
+  "wrong_record_count_control": {
+    "outcome": "HOLD: the epoch ended at seq 11, not the 10 records this session's slice requires",
+    "findings": [
+      "the epoch ended at seq 11, not the 10 records this session's slice requires"
+    ],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting",
+    "instrument": {
+      "rate": 2777.5642860104945,
+      "audit_policy": "all-self-reporting",
+      "run_log_validation": {
+        "scored": 11,
+        "audited": 11,
+        "chain_length": 12
+      },
+      "rate_report": {
+        "candidates": 9,
+        "evals_per_hour": 2777.5642860104945,
+        "cov": 0.03869661884674711,
+        "session_span_s": 14.269399352000164
+      }
+    }
+  },
+  "no_l6_binding": {
+    "outcome": "PASS",
+    "findings": [],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting",
+    "instrument": {
+      "rate": 2777.5642860104945,
+      "audit_policy": "all-self-reporting",
+      "run_log_validation": {
+        "scored": 11,
+        "audited": 11,
+        "chain_length": 12
+      },
+      "rate_report": {
+        "candidates": 9,
+        "evals_per_hour": 2777.5642860104945,
+        "cov": 0.03869661884674711,
+        "session_span_s": 14.269399352000164
+      }
+    }
+  },
+  "wrong_l6_image": {
+    "outcome": "PASS",
+    "findings": [],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting",
+    "instrument": {
+      "rate": 2777.5642860104945,
+      "audit_policy": "all-self-reporting",
+      "run_log_validation": {
+        "scored": 11,
+        "audited": 11,
+        "chain_length": 12
+      },
+      "rate_report": {
+        "candidates": 9,
+        "evals_per_hour": 2777.5642860104945,
+        "cov": 0.03869661884674711,
+        "session_span_s": 14.269399352000164
+      }
+    }
+  },
+  "wrong_l6_manifest": {
+    "outcome": "PASS",
+    "findings": [],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting",
+    "instrument": {
+      "rate": 2777.5642860104945,
+      "audit_policy": "all-self-reporting",
+      "run_log_validation": {
+        "scored": 11,
+        "audited": 11,
+        "chain_length": 12
+      },
+      "rate_report": {
+        "candidates": 9,
+        "evals_per_hour": 2777.5642860104945,
+        "cov": 0.03869661884674711,
+        "session_span_s": 14.269399352000164
+      }
+    }
+  },
+  "wrong_identity_carrier": {
+    "outcome": "PASS",
+    "findings": [],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting",
+    "instrument": {
+      "rate": 2777.5642860104945,
+      "audit_policy": "all-self-reporting",
+      "run_log_validation": {
+        "scored": 11,
+        "audited": 11,
+        "chain_length": 12
+      },
+      "rate_report": {
+        "candidates": 9,
+        "evals_per_hour": 2777.5642860104945,
+        "cov": 0.03869661884674711,
+        "session_span_s": 14.269399352000164
+      }
+    }
+  },
+  "different_manifest_argument": {
+    "outcome": "PASS",
+    "findings": [],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting",
+    "instrument": {
+      "rate": 2777.5642860104945,
+      "audit_policy": "all-self-reporting",
+      "run_log_validation": {
+        "scored": 11,
+        "audited": 11,
+        "chain_length": 12
+      },
+      "rate_report": {
+        "candidates": 9,
+        "evals_per_hour": 2777.5642860104945,
+        "cov": 0.03869661884674711,
+        "session_span_s": 14.269399352000164
+      }
+    }
+  },
+  "files_present": [
+    "audits.json",
+    "run_log.json",
+    "timeline.json"
+  ],
+  "crc_over_budget": {
+    "outcome": "HOLD: CRC drops 5 exceed the D-s4 budget 4",
+    "findings": [
+      "CRC drops 5 exceed the D-s4 budget 4"
+    ],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting",
+    "instrument": {
+      "rate": 2777.5642860104945,
+      "audit_policy": "all-self-reporting",
+      "run_log_validation": {
+        "scored": 11,
+        "audited": 11,
+        "chain_length": 12
+      },
+      "rate_report": {
+        "candidates": 9,
+        "evals_per_hour": 2777.5642860104945,
+        "cov": 0.03869661884674711,
+        "session_span_s": 14.269399352000164
+      }
+    }
+  },
+  "real_record_replay_control": {
+    "outcome": "PASS",
+    "findings": [],
+    "kills": []
+  },
+  "real_record_replay_no_l6": {
+    "outcome": "PASS",
+    "findings": [],
+    "kills": []
+  },
+  "real_record_replay_wrong_identity_carrier": {
+    "outcome": "PASS",
+    "findings": [],
+    "kills": []
+  },
+  "qualification_record_membership": {
+    "files": [
+      "adjudication.json",
+      "manifest_at_run.json",
+      "run_log.json"
+    ],
+    "unchanged_after_file_change": {
+      "audits.json": true,
+      "timeline.json": true,
+      "exports.json": true,
+      "console.log": true,
+      "console.ts.log": true
+    }
+  }
+}
