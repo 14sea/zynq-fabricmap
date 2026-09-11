@@ -146,6 +146,16 @@ class WhyThisModuleExists(unittest.TestCase):
                 findings = brec.record_findings(rec, ctx, want, {})
                 self.assertTrue(any(needle in x for x in findings), findings)
 
+    def test_the_instrument_accepts_a_digest_with_a_trailing_newline(self):
+        """The owner's P3 of 2026-09-11, on the wire REC its probe used."""
+        ctx = brec.Context(master_seed=716169644, budget=4, pairs_total=9, pair_first=0, pair_count=4,
+                           fitness="F1", map_sha256=MAP_SHA)
+        rec = copy.deepcopy(self.raw["REC"])
+        rec["search"]["state_sha256"] += "\n"
+        self.br.validate(rec)                              # 65 characters, and still valid
+        findings = brec.record_findings(rec, ctx, (0, "map_guided", False), {})
+        self.assertTrue(any("state_sha256 is not 64 hex" in x for x in findings), findings)
+
 
 class Types(unittest.TestCase):
     """A malformed B2 value must be NAMED, never raise, and nothing may compare, index, sort,
@@ -232,6 +242,16 @@ class Types(unittest.TestCase):
         self._refuses(lambda log: log.__setitem__("loop_records", "nope"), "loop_records is not an array")
         self._refuses(lambda log: log["loop_records"].__setitem__(3, "nope"), "record 4 is not a JSON object")
         self._refuses(lambda log: log.__setitem__("app_identity", [1]), "identity: not a JSON object")
+
+    def test_refuses_a_digest_that_is_only_nearly_64_hex(self):
+        """`^...$` with match() also accepts a trailing newline (the owner's P3 of 2026-09-11)."""
+        good = self._first_search(copy.deepcopy(self.base))["search"]["state_sha256"]
+        self.assertEqual(len(good), 64)
+        for v in (good + "\n", "\n" + good, good + " ", good + "0", good[:-1], good.upper(),
+                  good[:32] + "\n" + good[33:]):
+            with self.subTest(digest=repr(v)):
+                self._refuses(lambda log, v=v: self._first_search(log)["search"].__setitem__("state_sha256", v),
+                              "state_sha256 is not 64 hex")
 
     def test_a_value_of_unknown_type_never_reaches_the_counters(self):
         rec = copy.deepcopy(self._first_search(copy.deepcopy(self.base)))

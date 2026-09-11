@@ -56,7 +56,9 @@ IDENTITY_B2_KEYS = ("search_version", "map_sha256", "fitness_id", "budget_per_ar
 IDENTITY_FORBIDDEN = ("carto_version", "probe_budget")
 ARM_WIRE = {bs.ARM_RANDOM_SAFE: "random_safe", bs.ARM_MAP_GUIDED: "map_guided"}
 ARM_LETTER = {"random_safe": "A", "map_guided": "B"}
-HEX64 = re.compile(r"^[0-9a-f]{64}$")
+# Matched with fullmatch(), never match(): Python's `$` also matches before a final
+# newline, so `^...$` accepts a 65-character digest (the owner's P3 of 2026-09-11).
+HEX64 = re.compile(r"[0-9a-f]{64}")
 CARRIER_VARIANT = "0x42310001"
 UNIVERSE = 292
 
@@ -268,7 +270,7 @@ def record_findings(rec: dict, ctx: Context, want: tuple[int, str, bool] | None,
         lseed, oseed = ctx.seeds[block["pair"]]
         if block["landscape_seed"] != lseed or block["operator_seed"] != oseed:
             f.append(f"{where}: the block's seeds are not pair {block['pair']}'s derived seeds")
-    if not HEX64.match(block["state_sha256"]):
+    if not HEX64.fullmatch(block["state_sha256"]):
         f.append(f"{where}: state_sha256 is not 64 hex")
     key = (block["pair"], block["arm"])
     st = state.setdefault(key, {"evals": 0, "best": None, "column_moves": None, "generation": None, "holdout_seen": False})
