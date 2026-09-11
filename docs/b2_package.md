@@ -3,7 +3,10 @@
 > **Record-type correction review PASS (`45791a7`).** The extension-type P2 is closed:
 > the original four cases and 330 independent negative cases are rejected; the B2/B3
 > suite passes 243 tests with zero skips. One nonblocking P3 remains: a trailing newline
-> passes the `state_sha256` format check. See [the correction review](b2_records_types_review_2026_09_11.md).
+> passes the `state_sha256` format check — **corrected in `9422ae0`**: the digest is matched
+> against the whole string with `fullmatch()`, the owner's 330-case matrix still refuses all
+> 330 and its newline probe is now a named finding, and the suite is **245 tests, zero skips**.
+> See [the correction review](b2_records_types_review_2026_09_11.md).
 > The reviewed host-work batch may advance to push and adjudicator implementation;
 > this review performs no push or board action. The four remaining host tools and the
 > complete §7 image review are still required. Earlier status blocks are historical.
