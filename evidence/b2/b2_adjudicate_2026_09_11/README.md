@@ -6,10 +6,14 @@ served** and replays the search the board reported.
 
 ## What is here
 
-- `modelled_run.py` — builds a modelled B2 run at the REAL pinned plan
-  (`evidence/b2/plan.json`: F1, budget 600, 9 pairs) in the plan's three-session shape
-  (4 + 4 + 1 pairs, 10 824 records) and gives every record the readout the fabric model
-  would have measured for its genome.
+- `modelled_run.py` — builds a modelled B2 run at the REAL pinned inputs
+  (`evidence/b2/plan.json`: F1, budget 600, 9 pairs) and gives every record the readout the
+  fabric model would have measured for its genome. It partitions those pairs 4 + 4 + 1
+  (10 824 records) as an **illustrative planning scenario**: the committed plan's
+  `session_split` is `UNDETERMINED until B2Q measures the all-self-reporting rate` and lists
+  candidate splits, so the partition used here is a demonstration shape, not a calibrated or
+  frozen plan. The fitness, budget, seeds and prediction ARE the committed inputs; only the
+  session partition is illustrative (the owner's P3 of 2026-09-11).
 - `full_run_result.json` — that run adjudicated against the pinned
   `evidence/b2/prediction.json`: **PASS**, 10 824 readouts served, 10 818 records replayed,
   per-pair deltas `[2, 5, 6, 3, 4, 6, 1, −2, 5]`, fitness sequence

@@ -36,6 +36,8 @@ def log_for(first, count):
 # Usage: python3 evidence/b2/b2_adjudicate_2026_09_11/modelled_run.py <out-dir>
 # then:  python3 host/b2_adjudicate.py --no-common --run-log <out-dir>/run_log_{0,1,2}.json
 out = Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
-for i, (first, count) in enumerate([(0, 4), (4, 4), (8, 1)]):     # the plan's 3-session shape
+# 4+4+1 is an ILLUSTRATIVE planning scenario, not the plan: evidence/b2/plan.json says the
+# split is UNDETERMINED until B2Q measures the all-self-reporting rate, and lists candidates.
+for i, (first, count) in enumerate([(0, 4), (4, 4), (8, 1)]):
     (out / f"run_log_{i}.json").write_text(json.dumps(log_for(first, count)))
 print("done", file=sys.stderr)

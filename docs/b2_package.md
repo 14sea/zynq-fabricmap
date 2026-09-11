@@ -1,5 +1,22 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **The adjudicator review's two P2s are corrected.** (1) Shapes are now established before
+> each dependent operation — `check_plan` / `check_prediction` over every plan and prediction
+> value the module consumes, `structure_findings` over the record array, and a readout map
+> keyed by the record's POSITION so a wire value is never a dictionary key; the stateful replay
+> does not run over a session the record layer refused (`replay.not_run`), while the per-record
+> measurement pass still does, so a served-readout contradiction is never hidden by a shape
+> finding; the CLI's last-resort net writes the result file and labels a module defect
+> **INTERNAL ERROR** with a traceback and exit 3, never an input refusal. (2) **Both brackets
+> must carry the blank genome**, checked where the zero-genome starting population is assumed —
+> either bracket failing stops the replay and claims no primary. The owner's own
+> `reproduce_adjudicate.py`, unchanged and with common validation enabled, now returns a named
+> result for every case that raised, and refuses both baseline mutations. **57 adjudicator
+> tests (was 41); the B2/B3 suite is 302, zero skips**; reverting only `host/b2_adjudicate.py`
+> fails 37 sub-cases across 16 methods. The P3 is corrected too: the demonstrated 4 + 4 + 1
+> partition is labelled an illustrative planning scenario — the plan's split stays UNDETERMINED
+> until B2Q. See [`evidence/b2/corrections_adjudicate_2026_09_11/`](../evidence/b2/corrections_adjudicate_2026_09_11/).
+
 > **Adjudicator review HOLD (`1b39951`).** The prior digest-format P3 is closed and
 > 286 B2/B3 tests pass with zero skips. The full-size model run reproduces the prediction.
 > Two P2 findings remain: malformed inputs can raise after record validation, and

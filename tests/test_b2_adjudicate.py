@@ -18,7 +18,10 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import shutil
+import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -304,10 +307,14 @@ class Refuses(unittest.TestCase):
             rec["search"]["holdout"] = self._landscape(rec).holdout_fitness(other)
         self._holds(mutate, "measured when it was evaluated")
 
-    def test_a_record_that_is_not_scored_stops_the_replay(self):
+    def test_a_record_that_is_not_scored_is_refused_before_any_replay(self):
         def mutate(log):
             self._search_records(log)[2]["outcome"] = "REFUSED"
-        self._holds(mutate, "not SCORED")
+        res = self._judge(mutate)
+        self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"][:160])
+        self.assertTrue(any("only a SCORED candidate" in x for x in res["findings"]), res["findings"][:3])
+        self.assertIn("not_run", res["replay"])
+        self.assertNotIn("primary", res)
 
     def test_a_baseline_that_measured_something(self):
         def mutate(log):
@@ -369,6 +376,242 @@ class Refuses(unittest.TestCase):
         res = self._judge(mutate)
         self.assertNotIn("primary", res)
         self.assertNotIn("deltas", res)
+
+
+class BlankBaselines(unittest.TestCase):
+    """Both brackets must be the blank genome — with the instrument's common validator ENABLED,
+    as the owner's review of 2026-09-11 ran it, so the case cannot be dismissed as a
+    common-envelope inconsistency. The records are the model fixture wrapped in the twin's own
+    envelopes: internally consistent, but synthetic — not signed or audited board evidence."""
+
+    @classmethod
+    def setUpClass(cls):
+        import os
+        if shutil.which(os.environ.get("CC", "cc")) is None:
+            raise unittest.SkipTest("no host C compiler: the twin cannot be built")
+        fw = R / "firmware/b2"
+        made = subprocess.run(["make", "-s", "twin"], cwd=fw, capture_output=True, text=True)
+        if made.returncode != 0:
+            raise RuntimeError(made.stdout + made.stderr)
+        out = subprocess.run([str(fw / "build/b2_twin"), "wire"], capture_output=True, text=True, check=True).stdout
+        cls.wire = {ln.split(" ", 1)[0]: json.loads(ln.split(" ", 1)[1]) for ln in out.splitlines()}
+        import claimb_r1p_instrument as inst
+        inst.bind(inst.DEFAULT_ROOT, require_git=False)
+        import b1_records as common
+        cls.common = common
+        cls.whole = cls.wrap(modelled_log(0, PAIRS))
+        cls.split = [cls.wrap(modelled_log(0, 2)), cls.wrap(modelled_log(2, 1))]
+
+    @classmethod
+    def wrap(cls, log: dict) -> dict:
+        """Give every record the twin's real rel-v4 envelope, rebound to that record."""
+        ident = copy.deepcopy(cls.wire["IDENT"])
+        ident.update(log["app_identity"])
+        log["app_identity"] = ident
+        cls.common.validate(ident)
+        for i, src in enumerate(log["loop_records"]):
+            rec = copy.deepcopy(cls.wire["REC"])
+            rec.pop("search", None)
+            rec.pop("arm", None)
+            rec.update({k: copy.deepcopy(v) for k, v in src.items() if k != "evidence"})
+            rec["evidence"]["score"] = copy.deepcopy(src["evidence"]["score"])
+            cls.rebind(rec)
+            log["loop_records"][i] = rec
+        return log
+
+    @classmethod
+    def rebind(cls, rec: dict) -> None:
+        """Every local commit field follows the record's own genome, so a changed genome stays
+        internally consistent and still passes the common validator."""
+        commit = rec["evidence"]["score"]["hw_candidate_commit"]
+        rec["evidence"]["sign_reply"].update(seq=rec["seq"], commit=commit)
+        rec["evidence"]["app_oracle_record"].update(seq=rec["seq"], staged_sha256=commit, readback_sha256=commit)
+        cls.common.validate(rec)
+
+    @classmethod
+    def set_genome(cls, rec: dict, genome: int) -> None:
+        rec["genome"] = bc.genome_to_hex(genome)
+        rec["evidence"]["score"]["hw_candidate_commit"] = hashlib.sha256(rec["genome"].encode()).hexdigest()
+        cls.rebind(rec)
+
+    def _judge(self, logs) -> dict:
+        return badj.adjudicate(logs, PLAN, PREDICTION, consts=CONSTS, common=True)
+
+    def test_the_wrapped_control_passes_common_validation_and_adjudicates(self):
+        res = self._judge([copy.deepcopy(self.whole)])
+        self.assertEqual(res["outcome"], "PASS", res["findings"][:4])
+        self.assertEqual(res["primary"], PREDICTION["predicted_primary"])
+
+    def test_the_wrapped_split_control_also_passes(self):
+        res = self._judge([copy.deepcopy(log) for log in self.split])
+        self.assertEqual(res["outcome"], "PASS", res["findings"][:4])
+        self.assertEqual(res["deltas"], PREDICTION["deltas"])
+
+    def test_an_opening_baseline_that_is_not_the_blank_genome(self):
+        log = copy.deepcopy(self.whole)
+        self.set_genome(log["loop_records"][0], 1)
+        res = self._judge([log])
+        self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"][:160])
+        self.assertTrue(any("opening baseline's genome" in x for x in res["findings"]), res["findings"][:4])
+        self.assertNotIn("primary", res)
+
+    def test_a_closing_baseline_that_is_not_the_blank_genome(self):
+        log = copy.deepcopy(self.whole)
+        self.set_genome(log["loop_records"][-1], 1)
+        res = self._judge([log])
+        self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"][:160])
+        self.assertTrue(any("closing baseline's genome" in x for x in res["findings"]), res["findings"][:4])
+        self.assertNotIn("primary", res)
+
+    def test_a_bracket_of_one_session_of_a_split_run(self):
+        for index, needle in ((0, "opening baseline's genome"), (-1, "closing baseline's genome")):
+            with self.subTest(record=index):
+                logs = [copy.deepcopy(log) for log in self.split]
+                self.set_genome(logs[1]["loop_records"][index], 1)
+                res = self._judge(logs)
+                self.assertTrue(any(needle in x for x in res["findings"]), res["findings"][:4])
+                self.assertNotIn("primary", res)
+
+
+class Malformed(unittest.TestCase):
+    """A malformed document must be NAMED — never an uncaught exception, and never a stateful
+    replay over records the validator has already refused (the owner's review of 2026-09-11).
+    Every case here reaches the module through its public entry point."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.base = modelled_log(0, PAIRS)
+
+    def _result(self, mutate):
+        logs, plan, pred = [copy.deepcopy(self.base)], copy.deepcopy(PLAN), copy.deepcopy(PREDICTION)
+        mutate(logs, plan, pred)
+        try:
+            return badj.adjudicate(logs, plan, pred, consts=CONSTS, common=False)
+        except Exception as exc:                         # the defect this class exists for
+            self.fail(f"{type(exc).__name__}: {exc}")
+
+    def _refused(self, mutate, needle):
+        res = self._result(mutate)
+        self.assertTrue(res["outcome"].startswith("REFUSED"), res["outcome"][:160])
+        self.assertIn(needle, res["refusal"])
+
+    def _held(self, mutate, needle):
+        res = self._result(mutate)
+        self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"][:160])
+        self.assertTrue(any(needle in x for x in res["findings"]), f"{needle!r} not in {res['findings'][:4]}")
+        self.assertIn("not_run", res["replay"], "a refused document was replayed anyway")
+        self.assertNotIn("primary", res)
+        return res
+
+    def test_a_session_log_that_is_not_an_object(self):
+        self._refused(lambda logs, p, q: logs.__setitem__(0, []), "not a JSON object")
+
+    def test_a_seq_that_is_not_an_integer(self):
+        for bad in ([], {}, "3", 3.5, True, None):
+            with self.subTest(seq=bad):
+                self._held(lambda logs, p, q, v=bad: logs[0]["loop_records"][2].__setitem__("seq", v),
+                           "which is not an integer")
+
+    def test_loop_records_that_are_not_an_array(self):
+        for bad in (7, {}, "records"):
+            with self.subTest(records=bad):
+                self._held(lambda logs, p, q, v=bad: logs[0].__setitem__("loop_records", v), "not an array")
+
+    def test_a_record_that_is_not_an_object(self):
+        self._held(lambda logs, p, q: logs[0]["loop_records"].__setitem__(2, "nope"), "not a JSON object")
+
+    def test_a_plan_field_of_the_wrong_type(self):
+        for key, bad, needle in (("map", None, "no sha256 string"), ("map", {}, "no sha256 string"),
+                                 ("pairs", "3", "is not a positive integer"), ("pairs", 0, "positive integer"),
+                                 ("budget_per_arm", "600", "positive integer"), ("budget_per_arm", True, "positive integer"),
+                                 ("fitness", "F9", "is not one of"),
+                                 ("seed_derivation", None, "no master_seed")):
+            with self.subTest(key=key, given=bad):
+                self._refused(lambda logs, p, q, k=key, v=bad: p.__setitem__(k, v), needle)
+
+    def test_a_master_seed_that_is_not_an_integer(self):
+        self._refused(lambda logs, p, q: p.__setitem__("seed_derivation", {"master_seed": "716169644"}),
+                      "is not an integer")
+
+    def test_a_prediction_field_of_the_wrong_type(self):
+        cases = [(lambda q: q.pop("pairs"), "no array of pairs"),
+                 (lambda q: q.__setitem__("pairs", None), "no array of pairs"),
+                 (lambda q: q.__setitem__("pairs", []), "no array of pairs"),
+                 (lambda q: q["pairs"][0].__setitem__("runs", None), "no A and B run objects"),
+                 (lambda q: q["pairs"][0]["runs"].pop("B"), "no A and B run objects"),
+                 (lambda q: q["pairs"].__setitem__(0, "nope"), "not an object naming an integer pair"),
+                 (lambda q: q.__setitem__("deltas", None), "not an array of integers"),
+                 (lambda q: q.__setitem__("deltas", ["1"]), "not an array of integers"),
+                 (lambda q: q.pop("predicted_primary"), "no predicted_primary object"),
+                 (lambda q: q.pop("fitness_sequence_sha256"), "no fitness-sequence digest"),
+                 (lambda q: q.__setitem__("fitness_sequence_length", "10818"), "no fitness-sequence digest")]
+        for i, (mutate, needle) in enumerate(cases):
+            with self.subTest(case=i, needle=needle):
+                self._refused(lambda logs, p, q, f=mutate: f(q), needle)
+
+    def test_a_contradiction_collected_before_a_malformed_record_survives_it(self):
+        """The measurement pass is per record and independent, so a shape finding later in the
+        same log must not swallow a served readout that already contradicted its self-report."""
+        def mutate(logs, p, q):
+            logs[0]["loop_records"][1]["evidence"]["score"]["scores"][0] += 1
+            logs[0]["loop_records"][2]["seq"] = []
+        res = self._result(mutate)
+        self.assertTrue(res["outcome"].startswith("KILL"), res["outcome"][:160])
+        self.assertTrue(any("additive count" in x for x in res["kills"]), res["kills"][:3])
+        self.assertTrue(any("which is not an integer" in x for x in res["findings"]), res["findings"][:4])
+        self.assertIn("not_run", res["replay"])
+        self.assertNotIn("primary", res)
+
+
+class CommandLine(unittest.TestCase):
+    """The CLI's contract: it always writes the result it was asked for."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.dir = Path(tempfile.mkdtemp(prefix="b2-adjudicate-cli-"))
+        (cls.dir / "plan.json").write_text(json.dumps(PLAN))
+        (cls.dir / "prediction.json").write_text(json.dumps(PREDICTION))
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.dir, ignore_errors=True)
+
+    def _run(self, log: dict, name: str):
+        (self.dir / f"{name}.json").write_text(json.dumps(log))
+        out = self.dir / f"{name}_result.json"
+        p = subprocess.run([sys.executable, str(R / "host/b2_adjudicate.py"), "--no-common",
+                            "--run-log", str(self.dir / f"{name}.json"), "--plan", str(self.dir / "plan.json"),
+                            "--prediction", str(self.dir / "prediction.json"), "--out", str(out)],
+                           text=True, capture_output=True)
+        return p, out
+
+    def test_a_correct_run_exits_zero_and_writes_its_result(self):
+        p, out = self._run(modelled_log(0, PAIRS), "good")
+        self.assertEqual(p.returncode, 0, p.stderr[-400:])
+        self.assertTrue(out.is_file())
+        self.assertEqual(json.loads(out.read_text())["outcome"], "PASS")
+
+    def test_a_malformed_record_still_writes_a_result(self):
+        log = modelled_log(0, PAIRS)
+        log["loop_records"][2]["seq"] = []
+        p, out = self._run(log, "bad_seq")
+        self.assertEqual(p.returncode, 1, p.stderr[-400:])
+        self.assertEqual(p.stderr, "", "the CLI exited through a traceback")
+        self.assertTrue(out.is_file(), "the result file the caller asked for was not written")
+        res = json.loads(out.read_text())
+        self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"][:120])
+        self.assertTrue(any("which is not an integer" in x for x in res["findings"]), res["findings"][:4])
+
+    def test_a_file_that_is_not_json_is_refused_not_crashed(self):
+        (self.dir / "broken.json").write_text("{nope")
+        out = self.dir / "broken_result.json"
+        p = subprocess.run([sys.executable, str(R / "host/b2_adjudicate.py"), "--no-common",
+                            "--run-log", str(self.dir / "broken.json"), "--plan", str(self.dir / "plan.json"),
+                            "--prediction", str(self.dir / "prediction.json"), "--out", str(out)],
+                           text=True, capture_output=True)
+        self.assertEqual(p.returncode, 1, p.stderr[-400:])
+        self.assertTrue(out.is_file())
+        self.assertIn("not readable JSON", json.loads(out.read_text())["refusal"])
 
 
 class Refusals(unittest.TestCase):

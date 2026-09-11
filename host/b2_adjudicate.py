@@ -65,12 +65,94 @@ TOOL_VERSION = "b2_adjudicate.py/0.1.0"
 SESSION = "B2"
 LUTS = bl.LUTS
 MAX_NAMED_PER_PASS = 20          # a finding per record, but a wall of them is a summary line
+BLANK_GENOME = bc.genome_to_hex(0)
 NOT_CHECKED_HERE = ("manifest pins", "carrier qualification", "instrument rate / deadline / CRC budgets",
                     "evidence exports", "ruling binding")
 
 
 class Refusal(Exception):
     """The inputs are not a run this module can adjudicate — not a verdict about a board."""
+
+
+def _int(v) -> bool:
+    """A JSON integer. `True` is not one."""
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def records_of(log: dict) -> list:
+    """The session's records, or an empty list when the document does not carry an array of
+    them — never an object this module would then iterate or index blindly."""
+    if not isinstance(log, dict):
+        return []
+    recs = log.get("loop_records")
+    return recs if isinstance(recs, list) else []
+
+
+def check_plan(plan: dict) -> None:
+    """The plan fields this module consumes, checked as VALUES before anything uses them: the
+    replay derives the seeds and the landscapes from them and `b2_records` binds the slice to
+    them, so a wrong type here is a refusal, not a finding about a board."""
+    if not isinstance(plan, dict):
+        raise Refusal("the plan is not a JSON object")
+    for key in ("budget_per_arm", "fitness", "pairs", "seed_derivation", "map"):
+        if key not in plan:
+            raise Refusal(f"the plan carries no {key!r}")
+    if not _int(plan["budget_per_arm"]) or plan["budget_per_arm"] <= 0:
+        raise Refusal(f"the plan's budget_per_arm {plan['budget_per_arm']!r} is not a positive integer")
+    if plan["fitness"] not in bl.FITNESS:
+        raise Refusal(f"the plan's fitness {plan['fitness']!r} is not one of {sorted(bl.FITNESS)}")
+    if not _int(plan["pairs"]) or plan["pairs"] <= 0:
+        raise Refusal(f"the plan's pairs {plan['pairs']!r} is not a positive integer")
+    if not isinstance(plan["map"], dict) or not isinstance(plan["map"].get("sha256"), str):
+        raise Refusal("the plan's map carries no sha256 string")
+    sd = plan["seed_derivation"]
+    if not isinstance(sd, dict) or "master_seed" not in sd:
+        raise Refusal("the plan's seed_derivation carries no master_seed")
+    if not _int(sd["master_seed"]):
+        raise Refusal(f"the plan's master_seed {sd['master_seed']!r} is not an integer")
+
+
+def check_prediction(prediction: dict, plan: dict) -> None:
+    """The prediction fields this module compares against, likewise checked before use."""
+    if not isinstance(prediction, dict) or prediction.get("schema") != "b2_prediction":
+        raise Refusal("the prediction is not a b2_prediction document")
+    for key, want in (("fitness", plan["fitness"]), ("budget_per_arm", plan["budget_per_arm"])):
+        if prediction.get(key) != want:
+            raise Refusal(f"the prediction's {key} ({prediction.get(key)!r}) is not the plan's ({want!r})")
+    pairs = prediction.get("pairs")
+    if not isinstance(pairs, list) or not pairs:
+        raise Refusal("the prediction carries no array of pairs")
+    for entry in pairs:
+        if not isinstance(entry, dict) or not _int(entry.get("pair")):
+            raise Refusal("a prediction pair is not an object naming an integer pair")
+        runs = entry.get("runs")
+        if not isinstance(runs, dict) or any(not isinstance(runs.get(k), dict) for k in ("A", "B")):
+            raise Refusal(f"the prediction's pair {entry.get('pair')!r} carries no A and B run objects")
+    if not isinstance(prediction.get("deltas"), list) or any(not _int(d) for d in prediction["deltas"]):
+        raise Refusal("the prediction's deltas are not an array of integers")
+    if not isinstance(prediction.get("predicted_primary"), dict):
+        raise Refusal("the prediction carries no predicted_primary object")
+    if not isinstance(prediction.get("fitness_sequence_sha256"), str) \
+            or not _int(prediction.get("fitness_sequence_length")):
+        raise Refusal("the prediction carries no fitness-sequence digest and length")
+
+
+def structure_findings(s: "SessionInput") -> list[str]:
+    """What the replay and the readout map need of a session before either touches it: an
+    array of record objects, each with an integer seq. A record this names never enters the
+    replay, and nothing here is used as a dictionary key."""
+    f: list[str] = []
+    recs = s.log.get("loop_records")
+    if recs is None:
+        return ["the log carries no loop_records"]
+    if not isinstance(recs, list):
+        return [f"loop_records is {type(recs).__name__}, not an array"]
+    for i, rec in enumerate(recs):
+        if not isinstance(rec, dict):
+            f.append(f"record {i + 1} is not a JSON object")
+        elif not _int(rec.get("seq")):
+            f.append(f"record {i + 1} carries seq {rec.get('seq')!r}, which is not an integer")
+    return f
 
 
 # ------------------------------------------------------------------ the served readout
@@ -141,6 +223,8 @@ class SessionInput:
 
 
 def session_slice(log: dict) -> tuple[int, int]:
+    if not isinstance(log, dict):
+        raise Refusal(f"a session log is {type(log).__name__}, not a JSON object")
     ident = log.get("app_identity")
     if not isinstance(ident, dict):
         raise Refusal("a session log carries no app_identity object")
@@ -178,7 +262,7 @@ class Measurement:
     kills: list[str] = field(default_factory=list)
     findings: list[str] = field(default_factory=list)
     checked: int = 0
-    readouts: dict[int, list[int]] = field(default_factory=dict)      # (session, seq) -> words
+    readouts: dict[tuple[int, int], list[int]] = field(default_factory=dict)   # (session, position) -> words
 
 
 def measurement_pass(sessions: list[SessionInput], ctx_of, consts: dict) -> Measurement:
@@ -187,17 +271,18 @@ def measurement_pass(sessions: list[SessionInput], ctx_of, consts: dict) -> Meas
     the additive scores, and a baseline's all-zero readout."""
     m = Measurement()
     for s in sessions:
-        for rec in s.log.get("loop_records") or []:
+        for position, rec in enumerate(records_of(s.log)):
             if not isinstance(rec, dict):
+                m.findings.append(f"session {s.index} record {position + 1}: not a JSON object")
                 continue
             seq = rec.get("seq")
-            where = f"session {s.index} record {seq}"
+            where = f"session {s.index} record {seq if _int(seq) else position + 1}"
             block = rec.get("search")
             tables = readout_words(rec)
             if tables is None:
                 m.findings.append(f"{where}: no six-word functional_readout was served")
                 continue
-            m.readouts[(s.index, seq)] = tables
+            m.readouts[(s.index, position)] = tables    # the POSITION: a wire value is never a key
             got_scores = served_scores(rec)
             if got_scores is None:
                 m.findings.append(f"{where}: the record serves no six per-LUT scores")
@@ -291,15 +376,20 @@ class Replay:
             self.findings.append(str(exc))
 
     def _session(self, s: SessionInput) -> None:
-        recs = [r for r in (s.log.get("loop_records") or []) if isinstance(r, dict)]
-        recs.sort(key=lambda r: r.get("seq") if isinstance(r.get("seq"), int) else 0)
+        # The records are taken in the order the session wrote them. `structure_findings` has
+        # already established that they are objects with integer seqs, and `b2_records` that
+        # the seq run is 1..n, so the position IS the order; a wire value orders nothing here.
         self.cursor = 0
-        self.recs = recs
+        self.recs = records_of(s.log)
         self.sindex = s.index
-        base = self._take("the opening baseline")
-        base_tables = self._readout(base)
+        base, base_pos = self._take("the opening baseline")
+        base_tables = self._readout(base, base_pos)
         if base.get("search") is not None:
             raise Divergence(f"session {s.index}: the opening record carries a search block")
+        if base.get("genome") != BLANK_GENOME:
+            raise Divergence(f"session {s.index}: the opening baseline's genome is {_short(base.get('genome'))}, "
+                             f"not the blank genome — the starting population every arm of this session is "
+                             f"replayed from, and what the firmware's genome_clear() writes at this bracket")
         for r in s.pairs:
             land = self.landscape(r)
             if land is None:
@@ -309,24 +399,27 @@ class Replay:
                 self.arms[(r, arm)] = self._arm(r, arm, land, base_tables)
             for arm in order:
                 self._holdout(r, arm, land)
-        closing = self._take("the closing baseline")
+        closing, _ = self._take("the closing baseline")
         if closing.get("search") is not None:
             raise Divergence(f"session {s.index}: the closing record carries a search block")
+        if closing.get("genome") != BLANK_GENOME:
+            raise Divergence(f"session {s.index}: the closing baseline's genome is {_short(closing.get('genome'))}, "
+                             f"not the blank genome, so the bracket is not the restoration it claims")
         if self.cursor != len(self.recs):
             raise Divergence(f"session {s.index}: {len(self.recs) - self.cursor} records follow the closing baseline")
 
-    def _take(self, what: str) -> dict:
+    def _take(self, what: str) -> tuple[dict, int]:
         if self.cursor >= len(self.recs):
             raise Divergence(f"session {self.sindex}: the records end before {what}")
-        rec = self.recs[self.cursor]
+        rec, position = self.recs[self.cursor], self.cursor
         self.cursor += 1
         if rec.get("outcome") != "SCORED":
             raise Divergence(f"session {self.sindex} record {rec.get('seq')}: outcome {rec.get('outcome')!r} — "
                              f"the replay stops at the first record that is not SCORED")
-        return rec
+        return rec, position
 
-    def _readout(self, rec: dict) -> list[int]:
-        tables = self.readouts.get((self.sindex, rec.get("seq")))
+    def _readout(self, rec: dict, position: int) -> list[int]:
+        tables = self.readouts.get((self.sindex, position))
         if tables is None:
             raise Divergence(f"session {self.sindex} record {rec.get('seq')}: no served readout to replay from")
         return tables
@@ -359,7 +452,7 @@ class Replay:
                 if kind == "column":
                     column_moves += 1
                 genome = bs.apply_move(parent.genome, bits)
-                rec = self._take(f"evaluation {evals + 1} of pair {pair} arm {letter}")
+                rec, position = self._take(f"evaluation {evals + 1} of pair {pair} arm {letter}")
                 where = f"session {self.sindex} record {rec.get('seq')} (pair {pair} arm {letter} eval {evals + 1})"
                 if rec.get("arm") != bsess.arm_wire_name(arm):
                     raise Divergence(f"{where}: the record's arm is {rec.get('arm')!r}")
@@ -375,7 +468,7 @@ class Replay:
                 if block.get("parent_born") != parent.born:
                     raise Divergence(f"{where}: the board names parent born {block.get('parent_born')!r}; the "
                                      f"reference drew index {pidx}, born {parent.born}")
-                tables = self._readout(rec)
+                tables = self._readout(rec, position)
                 fit = land.train_fitness(tables)
                 children.append(bs.Individual(genome, tables, fit, born))
                 born += 1
@@ -415,14 +508,14 @@ class Replay:
         a = self.arms[(pair, arm)]
         arm_n = 0 if arm == bs.ARM_RANDOM_SAFE else 1
         oseed = self.seeds[pair][1]
-        rec = self._take(f"the champion holdout of pair {pair} arm {a.letter}")
+        rec, position = self._take(f"the champion holdout of pair {pair} arm {a.letter}")
         where = f"session {self.sindex} record {rec.get('seq')} (pair {pair} arm {a.letter} holdout)"
         if rec.get("arm") != bsess.arm_wire_name(arm):
             raise Divergence(f"{where}: the record's arm is {rec.get('arm')!r}")
         if rec.get("genome") != bc.genome_to_hex(a.champion_genome):
             raise Divergence(f"{where}: the board re-measured a genome that is not the champion the "
                              f"replayed selection left (born {a.champion_born})")
-        tables = self._readout(rec)
+        tables = self._readout(rec, position)
         if land.train_fitness(tables) != a.champion_fit:
             self.findings.append(f"{where}: the champion's re-measured readout gives train F1 "
                                  f"{land.train_fitness(tables)}, not the {a.champion_fit} the same genome "
@@ -464,7 +557,7 @@ def prediction_findings(arms: dict, prediction: dict, pairs_covered: list[int]) 
     """Per pair and per arm, the five predicted values — and the run's fitness sequence when
     the sessions together cover every preregistered pair."""
     f: list[str] = []
-    by_pair = {p["pair"]: p for p in prediction["pairs"]}
+    by_pair = {p["pair"]: p for p in prediction["pairs"]}          # shapes checked by check_prediction
     for r in pairs_covered:
         want_pair = by_pair.get(r)
         if want_pair is None:
@@ -516,16 +609,8 @@ def adjudicate(logs: list[dict], plan: dict, prediction: dict, consts: dict | No
     try:
         if not logs:
             raise Refusal("no session log was given")
-        for key in ("budget_per_arm", "fitness", "pairs", "seed_derivation", "map"):
-            if key not in plan:
-                raise Refusal(f"the plan carries no {key!r}")
-        if not isinstance(plan["seed_derivation"], dict) or "master_seed" not in plan["seed_derivation"]:
-            raise Refusal("the plan's seed_derivation carries no master_seed")
-        if prediction.get("schema") != "b2_prediction":
-            raise Refusal("the prediction is not a b2_prediction document")
-        for key, want in (("fitness", plan["fitness"]), ("budget_per_arm", plan["budget_per_arm"])):
-            if prediction.get(key) != want:
-                raise Refusal(f"the prediction's {key} ({prediction.get(key)!r}) is not the plan's ({want!r})")
+        check_plan(plan)
+        check_prediction(prediction, plan)
         sessions = order_sessions(logs)
         consts = consts if consts is not None else instrument_constants()
 
@@ -537,27 +622,43 @@ def adjudicate(logs: list[dict], plan: dict, prediction: dict, consts: dict | No
         rp = Replay(plan, view, masks, truth, {})
 
         findings: list[str] = []
+        refused_sessions: list[int] = []
         for s in sessions:                                   # the record layer, session by session
-            ctx = brec.context_from(plan, s.pair_first, s.pair_count)
-            findings += [f"session {s.index}: {x}" for x in brec.validate_run_log(s.log, ctx, common=common)]
+            f = structure_findings(s)                        # first: the shapes everything below needs
+            if not f:
+                ctx = brec.context_from(plan, s.pair_first, s.pair_count)
+                f = brec.validate_run_log(s.log, ctx, common=common)
+            findings += [f"session {s.index}: {x}" for x in f]
+            if f:
+                refused_sessions.append(s.index)
 
+        # The measurement pass is per record and independent of every other record, so it runs
+        # even over a refused session: a served readout contradicting a self-report must not be
+        # hidden by a shape finding elsewhere in the same log.
         m = measurement_pass(sessions, rp.landscape, consts)
         rp.readouts = m.readouts
-        rp.run(sessions)
 
         covered = sorted(r for s in sessions for r in s.pairs)
         out["sessions"] = [{"index": s.index, "pair_first": s.pair_first, "pair_count": s.pair_count,
-                            "records": len(s.log.get("loop_records") or [])} for s in sessions]
+                            "records": len(records_of(s.log))} for s in sessions]
         out["measurement"] = {"records_checked": m.checked, "readouts_served": len(m.readouts)}
-        out["replay"] = {"records_replayed": rp.replayed, "pairs": covered}
         findings += _capped(m.findings, "measurement")
-        findings += rp.findings
+
+        # The replay is stateful and assumes the shape the record layer just checked; over a
+        # document that layer refused it would prove nothing, so it does not run at all.
+        if refused_sessions:
+            out["replay"] = {"not_run": f"the record layer refused session(s) {refused_sessions}; a stateful "
+                                        f"replay over records it named proves nothing about the board"}
+        else:
+            rp.run(sessions)
+            out["replay"] = {"records_replayed": rp.replayed, "pairs": covered}
+            findings += rp.findings
 
         complete = covered == list(range(plan["pairs"]))
         if not complete:
             findings.append(f"the sessions cover pairs {covered}, not the preregistered "
                             f"{list(range(plan['pairs']))}: no primary is computed from a partial run")
-        if not rp.findings and all((r, arm) in rp.arms for r in covered
+        if not refused_sessions and not rp.findings and all((r, arm) in rp.arms for r in covered
                                    for arm in (bs.ARM_RANDOM_SAFE, bs.ARM_MAP_GUIDED)) \
                 and all(rp.arms[(r, arm)].champion_holdout is not None for r in covered
                         for arm in (bs.ARM_RANDOM_SAFE, bs.ARM_MAP_GUIDED)):
@@ -618,14 +719,29 @@ def main(argv=None) -> int:
     if not paths:
         print("no --run-log and no --evidence", file=sys.stderr)
         return 2
-    logs = [json.loads(p.read_text()) for p in paths]
-    res = adjudicate(logs, json.loads(a.plan.read_text()), json.loads(a.prediction.read_text()),
-                     common=not a.no_common)
+    def load(path: Path):
+        try:
+            return json.loads(path.read_text())
+        except (OSError, ValueError) as exc:
+            raise Refusal(f"{path} is not readable JSON: {exc}") from None
+
+    try:
+        res = adjudicate([load(p) for p in paths], load(a.plan), load(a.prediction), common=not a.no_common)
+    except Refusal as exc:
+        res = {"tool": TOOL_VERSION, "session": SESSION, "outcome": f"REFUSED: {exc}", "refusal": str(exc),
+               "findings": [], "kills": []}
+    except Exception as exc:              # a defect in THIS module. It is NOT reported as an
+        import traceback                  # input refusal — but the result file is still written,
+        res = {"tool": TOOL_VERSION, "session": SESSION,   # because a caller that gets no document
+               "outcome": f"INTERNAL ERROR: {type(exc).__name__}: {exc}",   # learns nothing at all.
+               "internal_error": traceback.format_exc(), "findings": [], "kills": []}
     res["inputs"] = [str(p) for p in paths]
     text = json.dumps(res, indent=2, sort_keys=True)
     if a.out:
         a.out.write_text(text + "\n")
     print(text)
+    if "internal_error" in res:
+        return 3
     return 0 if res["outcome"] == "PASS" else 1
 
 
