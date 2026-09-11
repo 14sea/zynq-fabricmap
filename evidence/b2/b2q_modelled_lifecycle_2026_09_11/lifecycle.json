@@ -1,0 +1,122 @@
+{
+  "session": {
+    "epoch_end": {
+      "kind": "COMPLETED",
+      "last_seq": 20,
+      "reason": "budget"
+    },
+    "records": 20,
+    "expected_records": 20,
+    "exports": {
+      "console.log": "ok",
+      "console.ts.log": "ok",
+      "timeline.json": "ok",
+      "session_summary": "ok",
+      "run_log.json": "ok",
+      "audits.json": "ok",
+      "exports.json": "ok"
+    },
+    "virtual_s": 16.347,
+    "board_stats": {
+      "sign_attempts": 21,
+      "rec_attempts": 21,
+      "ready_sent": 20,
+      "waits_sent": 0,
+      "term_attempts": 1
+    },
+    "crc_dropped": 2,
+    "bad_frames": 0
+  },
+  "verdict": {
+    "outcome": "PASS",
+    "session": "B2Q",
+    "scope": "session",
+    "findings": [],
+    "kills": [],
+    "measured_rate_per_hour": 4490.856163729762,
+    "audit_policy": "all-self-reporting",
+    "binding_checked": true,
+    "instrument": {
+      "rate": 4490.856163729762,
+      "audit_policy": "all-self-reporting",
+      "run_log_validation": {
+        "scored": 20,
+        "audited": 20,
+        "chain_length": 21
+      },
+      "rate_report": {
+        "candidates": 18,
+        "evals_per_hour": 4490.856163729762,
+        "cov": 0.004893531219078812,
+        "session_span_s": 16.067447916664946
+      }
+    },
+    "replay": {
+      "scope": "session",
+      "measurement": {
+        "records_checked": 18,
+        "readouts_served": 20
+      },
+      "replay": {
+        "records_replayed": 18,
+        "pairs": [
+          0
+        ]
+      },
+      "pair_seeds": [
+        [
+          3890725659,
+          1378470437
+        ]
+      ]
+    }
+  },
+  "S2": {
+    "qualified": true,
+    "calibration": {
+      "audit_policy": "all-self-reporting",
+      "pairs_per_session_max": 7,
+      "rate_per_hour": 4490.856163729762,
+      "sessions": 2,
+      "source": "reconstructed from the B2Q evidence (adjudication.json) \u2014 the only source a B2 plan may be sized from"
+    },
+    "record_files": [
+      "adjudication.json",
+      "audits.json",
+      "console.log",
+      "console.ts.log",
+      "exports.json",
+      "manifest_at_run.json",
+      "ruling_provisioning.json",
+      "ruling_whole_of_run.json",
+      "run_log.json",
+      "summary.json",
+      "timeline.json"
+    ],
+    "schema_version": "1.2.0"
+  },
+  "S3": {
+    "plan_pinned": true,
+    "sessions": 2,
+    "pairs_per_session_max": 7
+  },
+  "fresh_process_verify": {
+    "returncode": 0,
+    "result": {
+      "stage": "S3",
+      "qualified": true,
+      "refusal": null,
+      "checks": {
+        "pins": "ok",
+        "map": "ok",
+        "prereg": "ok",
+        "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+        "board": "17A6",
+        "lineage": "ok (B1 chain re-verified)",
+        "stage": "S3"
+      },
+      "manifest_sha256": "c22ab87616a020a3014bb38d816bd1cf2399ab9336f58ee3567220c4d1f9c3da"
+    }
+  },
+  "note": "the MODEL stands in for a board: this is not silicon evidence, not a session and not a qualification; the rulings are inert modelled documents that authorise nothing"
+}

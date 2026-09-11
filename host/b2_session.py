@@ -108,14 +108,22 @@ def records(pairs: int, budget: int, sessions: int = 1) -> int:
 
 def run(master_seed: int, budget: int, pairs_total: int, pair_first: int, pair_count: int,
         fabric: bs.ModelFabric, view: bmaps.MapView, unscored_at: int | None = None,
-        truth: dict | None = None, masks: list[int] | None = None) -> Session:
+        truth: dict | None = None, masks: list[int] | None = None,
+        pair_seeds: list | None = None) -> Session:
     """Drive the session over the fabric model; `unscored_at` makes that record's candidate
-    not SCORED, which must end the epoch."""
+    not SCORED, which must end the epoch.
+
+    `pair_seeds` replaces the derivation for a session whose seed RULE is not B2's — B2Q draws
+    under its own label and excludes B2's own set (preregistration §6a). The caller that supplies
+    it owes that session's own rule; it is never a way to choose seeds for a B2 session."""
     if not (0 < pairs_total <= MAX_PAIRS) or pair_first < 0 or pair_count <= 0 or pair_first + pair_count > pairs_total:
         raise ValueError("the session's pair slice is not inside the experiment")
     if budget <= 0:
         raise ValueError("budget")
-    seeds = pair_seeds(master_seed, pairs_total)
+    seeds = [tuple(x) for x in pair_seeds] if pair_seeds is not None else \
+        globals()["pair_seeds"](master_seed, pairs_total)
+    if len(seeds) != pairs_total:
+        raise ValueError(f"{len(seeds)} pair seeds for {pairs_total} pairs")
     out = Session(master_seed, budget, pairs_total, pair_first, pair_count)
     seq = 0
 
