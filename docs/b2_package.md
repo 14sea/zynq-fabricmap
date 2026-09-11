@@ -1,5 +1,21 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **The complete offline B2Q lifecycle now runs, and the runner produces a PASS.**
+> `host/b2_modelled_session.py` drives a whole B2Q session through the instrument's real host
+> stack and the **production exporter**; the runner's own `judge_session` returns **PASS** (zero
+> findings, zero kills, `binding_checked`, a rate of 4490.86/h MEASURED from the session's timing
+> and a policy verified by the instrument's check); `qualify` **accepts** the transition and
+> derives the calibration under the split rule; `pin_plan` pins the plan; and a **fresh process**
+> `verify` returns stage S3, qualified, board 17A6, the B1 chain re-verified. `qualify` and
+> `verify` are handed the real `readjudicator` — **no replay double and no stored-verdict double
+> anywhere on the positive path**. The reference orchestrator now accepts explicit pair seeds, so
+> B2Q's own seed rule can drive it. Ten negatives are applied one at a time to that passing
+> evidence. **14 end-to-end tests, B2/B3 395, zero skips.**
+> The model stands in for a board: not silicon evidence, not a session, not a qualification; the
+> rulings are inert and authorise nothing. See
+> [`evidence/b2/b2q_modelled_lifecycle_2026_09_11/`](../evidence/b2/b2q_modelled_lifecycle_2026_09_11/).
+> Remaining for §7: `b2_pins`, `b2_test_report`, and a B2 (map-utility) profile demonstration.
+
 > **Board authority correction accepted (`7c4f0ca`, implementation `ecb56a6`).**
 > The board-authority P2 is closed: correct pairs pass, both-wrong pairs and malformed
 > authorities are refused, and fresh-process verification rejects even a rewritten
