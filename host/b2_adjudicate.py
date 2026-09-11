@@ -46,6 +46,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -66,6 +67,11 @@ SESSION = "B2"
 LUTS = bl.LUTS
 MAX_NAMED_PER_PASS = 20          # a finding per record, but a wall of them is a summary line
 BLANK_GENOME = bc.genome_to_hex(0)
+HEX64 = re.compile(r"[0-9a-f]{64}")
+UINT32 = 1 << 32
+RUN_COUNTS = ("best_train", "champion_holdout", "column_moves")
+RUN_DIGESTS = ("champion_genome_sha256", "moves_sha256")
+PRIMARY_COUNTS = ("positives", "negatives", "ties")
 NOT_CHECKED_HERE = ("manifest pins", "carrier qualification", "instrument rate / deadline / CRC budgets",
                     "evidence exports", "ruling binding")
 
@@ -75,8 +81,18 @@ class Refusal(Exception):
 
 
 def _int(v) -> bool:
-    """A JSON integer. `True` is not one."""
+    """A JSON integer. `True` is not one, and neither is 2.0 — Python would compare both equal
+    to the counts this module checks, so the type is established before any comparison."""
     return isinstance(v, int) and not isinstance(v, bool)
+
+
+def _real(v) -> bool:
+    """A JSON number. `True` is not one."""
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def _hex64(v) -> bool:
+    return isinstance(v, str) and HEX64.fullmatch(v) is not None
 
 
 def records_of(log: dict) -> list:
@@ -89,9 +105,11 @@ def records_of(log: dict) -> list:
 
 
 def check_plan(plan: dict) -> None:
-    """The plan fields this module consumes, checked as VALUES before anything uses them: the
-    replay derives the seeds and the landscapes from them and `b2_records` binds the slice to
-    them, so a wrong type here is a refusal, not a finding about a board."""
+    """The plan fields this module consumes, checked as VALUES — type first, then domain —
+    before anything uses them: the replay derives the seeds and the landscapes from them and
+    `b2_records` binds the slice to them, so a wrong one here is a refusal, not a finding about
+    a board. Every membership test and every lookup below is reached only after the value's
+    type is established (the owner's input review of 2026-09-11)."""
     if not isinstance(plan, dict):
         raise Refusal("the plan is not a JSON object")
     for key in ("budget_per_arm", "fitness", "pairs", "seed_derivation", "map"):
@@ -99,42 +117,110 @@ def check_plan(plan: dict) -> None:
             raise Refusal(f"the plan carries no {key!r}")
     if not _int(plan["budget_per_arm"]) or plan["budget_per_arm"] <= 0:
         raise Refusal(f"the plan's budget_per_arm {plan['budget_per_arm']!r} is not a positive integer")
+    if not isinstance(plan["fitness"], str):                    # BEFORE the membership lookup
+        raise Refusal(f"the plan's fitness {plan['fitness']!r} is not a string")
     if plan["fitness"] not in bl.FITNESS:
         raise Refusal(f"the plan's fitness {plan['fitness']!r} is not one of {sorted(bl.FITNESS)}")
-    if not _int(plan["pairs"]) or plan["pairs"] <= 0:
-        raise Refusal(f"the plan's pairs {plan['pairs']!r} is not a positive integer")
-    if not isinstance(plan["map"], dict) or not isinstance(plan["map"].get("sha256"), str):
-        raise Refusal("the plan's map carries no sha256 string")
+    if not _int(plan["pairs"]) or not (0 < plan["pairs"] <= bsess.MAX_PAIRS):
+        raise Refusal(f"the plan's pairs {plan['pairs']!r} is not 1..{bsess.MAX_PAIRS}, the identity "
+                      f"page's slice field")
+    if not isinstance(plan["map"], dict):
+        raise Refusal("the plan's map is not a JSON object")
+    if not _hex64(plan["map"].get("sha256")):
+        raise Refusal(f"the plan's map sha256 {plan['map'].get('sha256')!r} is not 64 lower-case hex")
     sd = plan["seed_derivation"]
     if not isinstance(sd, dict) or "master_seed" not in sd:
         raise Refusal("the plan's seed_derivation carries no master_seed")
     if not _int(sd["master_seed"]):
         raise Refusal(f"the plan's master_seed {sd['master_seed']!r} is not an integer")
+    if not (0 <= sd["master_seed"] < UINT32):
+        raise Refusal(f"the plan's master_seed {sd['master_seed']!r} is outside 0..2**32-1: the rule "
+                      f"draws four bytes and the instrument's Rng masks to 32 bits, so an out-of-range "
+                      f"declaration would silently replay another number's stream")
 
 
 def check_prediction(prediction: dict, plan: dict) -> None:
-    """The prediction fields this module compares against, likewise checked before use."""
+    """The prediction fields this module compares against — every one of them typed and its
+    domain checked before a comparison, because Python's numeric equality would otherwise
+    accept `True` for 1 and `2.0` for 2 in the counts this module reports as EXACT. The pair
+    identities must cover the experiment exactly once IN ORDER before any lookup is built from
+    them, so a duplicate cannot be silently overwritten and an out-of-range entry cannot sit
+    unvisited. This is not the manifest's canonical-plan verifier and does not replace it."""
     if not isinstance(prediction, dict) or prediction.get("schema") != "b2_prediction":
         raise Refusal("the prediction is not a b2_prediction document")
-    for key, want in (("fitness", plan["fitness"]), ("budget_per_arm", plan["budget_per_arm"])):
-        if prediction.get(key) != want:
-            raise Refusal(f"the prediction's {key} ({prediction.get(key)!r}) is not the plan's ({want!r})")
-    pairs = prediction.get("pairs")
-    if not isinstance(pairs, list) or not pairs:
+    if not isinstance(prediction.get("fitness"), str) or prediction["fitness"] != plan["fitness"]:
+        raise Refusal(f"the prediction's fitness ({prediction.get('fitness')!r}) is not the plan's "
+                      f"({plan['fitness']!r})")
+    if not _int(prediction.get("budget_per_arm")) or prediction["budget_per_arm"] != plan["budget_per_arm"]:
+        raise Refusal(f"the prediction's budget_per_arm ({prediction.get('budget_per_arm')!r}) is not the "
+                      f"plan's ({plan['budget_per_arm']!r})")
+    entries = prediction.get("pairs")
+    if not isinstance(entries, list) or not entries:
         raise Refusal("the prediction carries no array of pairs")
-    for entry in pairs:
+    train_ceiling = bl.CEILING[plan["fitness"]]
+    holdout_ceiling = train_ceiling // bl.TRAIN_COUNT * bl.HOLDOUT_COUNT
+    budget = plan["budget_per_arm"]
+    ids = []
+    for entry in entries:
         if not isinstance(entry, dict) or not _int(entry.get("pair")):
             raise Refusal("a prediction pair is not an object naming an integer pair")
+        ids.append(entry["pair"])
+    if ids != list(range(plan["pairs"])):        # BEFORE any lookup is built from them
+        raise Refusal(f"the prediction's pair identities are {ids if len(ids) <= 12 else str(ids[:12]) + '...'}, "
+                      f"not the experiment's 0..{plan['pairs'] - 1} exactly once in order")
+    for entry in entries:
         runs = entry.get("runs")
         if not isinstance(runs, dict) or any(not isinstance(runs.get(k), dict) for k in ("A", "B")):
-            raise Refusal(f"the prediction's pair {entry.get('pair')!r} carries no A and B run objects")
-    if not isinstance(prediction.get("deltas"), list) or any(not _int(d) for d in prediction["deltas"]):
+            raise Refusal(f"the prediction's pair {entry['pair']} carries no A and B run objects")
+        for letter in ("A", "B"):
+            run = runs[letter]
+            for k in RUN_COUNTS:
+                if not _int(run.get(k)):
+                    raise Refusal(f"the prediction's pair {entry['pair']} arm {letter}: {k} "
+                                  f"{run.get(k)!r} is not an integer")
+            for k, ceiling in (("best_train", train_ceiling), ("champion_holdout", holdout_ceiling),
+                               ("column_moves", budget)):
+                if not (0 <= run[k] <= ceiling):
+                    raise Refusal(f"the prediction's pair {entry['pair']} arm {letter}: {k} {run[k]} is "
+                                  f"outside 0..{ceiling}")
+            for k in RUN_DIGESTS:
+                if not _hex64(run.get(k)):
+                    raise Refusal(f"the prediction's pair {entry['pair']} arm {letter}: {k} "
+                                  f"{run.get(k)!r} is not 64 lower-case hex")
+    deltas = prediction.get("deltas")
+    if not isinstance(deltas, list) or any(not _int(d) for d in deltas):
         raise Refusal("the prediction's deltas are not an array of integers")
-    if not isinstance(prediction.get("predicted_primary"), dict):
+    if len(deltas) != plan["pairs"]:
+        raise Refusal(f"the prediction carries {len(deltas)} deltas for {plan['pairs']} pairs")
+    for entry, delta in zip(entries, deltas):
+        want = entry["runs"]["B"]["best_train"] - entry["runs"]["A"]["best_train"]
+        if delta != want or ("delta_B_minus_A" in entry and entry["delta_B_minus_A"] != want):
+            raise Refusal(f"the prediction's pair {entry['pair']}: the delta does not account for its own "
+                          f"B and A best_train ({want})")
+    primary = prediction.get("predicted_primary")
+    if not isinstance(primary, dict):
         raise Refusal("the prediction carries no predicted_primary object")
-    if not isinstance(prediction.get("fitness_sequence_sha256"), str) \
-            or not _int(prediction.get("fitness_sequence_length")):
-        raise Refusal("the prediction carries no fitness-sequence digest and length")
+    for k in PRIMARY_COUNTS:
+        if not _int(primary.get(k)) or primary[k] < 0:
+            raise Refusal(f"the prediction's primary {k} {primary.get(k)!r} is not a count")
+    if sum(primary[k] for k in PRIMARY_COUNTS) != plan["pairs"]:
+        raise Refusal(f"the prediction's primary counts {[primary[k] for k in PRIMARY_COUNTS]} do not "
+                      f"account for {plan['pairs']} pairs")
+    for k in ("sign_test_p", "alpha"):
+        if not _real(primary.get(k)) or not (0 <= primary[k] <= 1):
+            raise Refusal(f"the prediction's primary {k} {primary.get(k)!r} is not a probability")
+    if not isinstance(primary.get("verdict"), str):
+        raise Refusal(f"the prediction's primary verdict {primary.get('verdict')!r} is not a string")
+    if primary != bp.decision(deltas):
+        raise Refusal("the prediction's predicted_primary is not the sign test over its own deltas")
+    if not _hex64(prediction.get("fitness_sequence_sha256")):
+        raise Refusal(f"the prediction's fitness_sequence_sha256 "
+                      f"{prediction.get('fitness_sequence_sha256')!r} is not 64 lower-case hex")
+    want_len = plan["pairs"] * (2 * budget + 2)
+    if not _int(prediction.get("fitness_sequence_length")) or prediction["fitness_sequence_length"] != want_len:
+        raise Refusal(f"the prediction's fitness_sequence_length "
+                      f"{prediction.get('fitness_sequence_length')!r} is not the {want_len} values "
+                      f"{plan['pairs']} pairs at budget {budget} produce")
 
 
 def structure_findings(s: "SessionInput") -> list[str]:

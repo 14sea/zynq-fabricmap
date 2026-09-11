@@ -80,6 +80,17 @@ def modelled_log(pair_first: int, pair_count: int) -> dict:
     return {"app_identity": identity(pair_first, pair_count), "loop_records": records}
 
 
+def consistent(pred: dict) -> dict:
+    """Re-derive a prediction's own accounting after one of its values is changed, so the
+    document stays VALID and merely DISAGREES with the run — the distinction between a
+    malformed input and a prediction the board did not reproduce."""
+    for entry in pred["pairs"]:
+        entry["delta_B_minus_A"] = entry["runs"]["B"]["best_train"] - entry["runs"]["A"]["best_train"]
+    pred["deltas"] = [e["delta_B_minus_A"] for e in pred["pairs"]]
+    pred["predicted_primary"] = bp.decision(pred["deltas"])
+    return pred
+
+
 def judge(logs, plan=PLAN, prediction=PREDICTION) -> dict:
     return badj.adjudicate(logs, plan, prediction, consts=CONSTS, common=False)
 
@@ -343,9 +354,11 @@ class Refuses(unittest.TestCase):
         self.assertTrue(any("champion_holdout" in x for x in res["findings"]), res["findings"][:4])
 
     def test_a_run_that_does_not_reproduce_the_predicted_best(self):
+        """The prediction stays internally valid; only the run disagrees with it."""
         pred = copy.deepcopy(PREDICTION)
         pred["pairs"][0]["runs"]["A"]["best_train"] += 1
-        res = badj.adjudicate([copy.deepcopy(self.base)], PLAN, pred, consts=CONSTS, common=False)
+        res = badj.adjudicate([copy.deepcopy(self.base)], PLAN, consistent(pred), consts=CONSTS, common=False)
+        self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"][:160])
         self.assertTrue(any("best_train" in x for x in res["findings"]), res["findings"][:4])
 
     def test_a_run_that_does_not_reproduce_the_predicted_moves(self):
@@ -356,9 +369,9 @@ class Refuses(unittest.TestCase):
 
     def test_a_run_that_does_not_reproduce_the_predicted_primary(self):
         pred = copy.deepcopy(PREDICTION)
-        pred["deltas"] = [-9] * PAIRS
-        pred["predicted_primary"] = bp.decision(pred["deltas"])
-        res = badj.adjudicate([copy.deepcopy(self.base)], PLAN, pred, consts=CONSTS, common=False)
+        for entry in pred["pairs"]:                     # a valid prediction of the opposite sign
+            entry["runs"]["A"]["best_train"] = entry["runs"]["B"]["best_train"] + 5
+        res = badj.adjudicate([copy.deepcopy(self.base)], PLAN, consistent(pred), consts=CONSTS, common=False)
         self.assertTrue(any("deltas are not the preregistered" in x for x in res["findings"]), res["findings"][:4])
         self.assertTrue(any("is not the preregistered" in x for x in res["findings"]), res["findings"][:4])
 
@@ -521,8 +534,10 @@ class Malformed(unittest.TestCase):
         self._held(lambda logs, p, q: logs[0]["loop_records"].__setitem__(2, "nope"), "not a JSON object")
 
     def test_a_plan_field_of_the_wrong_type(self):
-        for key, bad, needle in (("map", None, "no sha256 string"), ("map", {}, "no sha256 string"),
-                                 ("pairs", "3", "is not a positive integer"), ("pairs", 0, "positive integer"),
+        for key, bad, needle in (("map", None, "is not a JSON object"), ("map", {}, "not 64 lower-case hex"),
+                                 ("map", {"sha256": "ABCD" * 16}, "not 64 lower-case hex"),
+                                 ("pairs", "3", f"is not 1..{bsess.MAX_PAIRS}"), ("pairs", 0, f"is not 1..{bsess.MAX_PAIRS}"),
+                                 ("pairs", bsess.MAX_PAIRS + 1, f"is not 1..{bsess.MAX_PAIRS}"),
                                  ("budget_per_arm", "600", "positive integer"), ("budget_per_arm", True, "positive integer"),
                                  ("fitness", "F9", "is not one of"),
                                  ("seed_derivation", None, "no master_seed")):
@@ -543,11 +558,113 @@ class Malformed(unittest.TestCase):
                  (lambda q: q.__setitem__("deltas", None), "not an array of integers"),
                  (lambda q: q.__setitem__("deltas", ["1"]), "not an array of integers"),
                  (lambda q: q.pop("predicted_primary"), "no predicted_primary object"),
-                 (lambda q: q.pop("fitness_sequence_sha256"), "no fitness-sequence digest"),
-                 (lambda q: q.__setitem__("fitness_sequence_length", "10818"), "no fitness-sequence digest")]
+                 (lambda q: q.pop("fitness_sequence_sha256"), "is not 64 lower-case hex"),
+                 (lambda q: q.__setitem__("fitness_sequence_length", "10818"), "values 3 pairs at budget"),
+                 (lambda q: q.__setitem__("fitness_sequence_length", 10818), "values 3 pairs at budget")]
         for i, (mutate, needle) in enumerate(cases):
             with self.subTest(case=i, needle=needle):
                 self._refused(lambda logs, p, q, f=mutate: f(q), needle)
+
+    def test_a_fitness_that_is_not_a_string_is_never_hashed(self):
+        """`plan["fitness"] not in bl.FITNESS` used to hash the value first (the owner's input
+        review of 2026-09-11)."""
+        for bad in ([], {}, ["F1"], {"name": "F1"}, 1, None):
+            with self.subTest(fitness=bad):
+                self._refused(lambda logs, p, q, v=bad: p.__setitem__("fitness", v), "is not a string")
+
+    def test_a_master_seed_outside_the_wire_domain(self):
+        """b1_carto.Rng masks to 32 bits, so master + 2**32 would replay the same stream under a
+        different declaration."""
+        for bad in (MASTER + 2 ** 32, -1, 2 ** 32):
+            with self.subTest(master_seed=bad):
+                def mutate(logs, p, q, v=bad):
+                    p["seed_derivation"] = {"master_seed": v}
+                    logs[0]["app_identity"]["master_seed"] = v
+                self._refused(mutate, "outside 0..2**32-1")
+
+    def test_a_map_digest_that_is_not_a_digest(self):
+        def mutate(logs, p, q):
+            p["map"] = {"sha256": "not-a-digest"}
+            logs[0]["app_identity"].update(map_sha256="not-a-digest", operator_data_sha256="not-a-digest")
+        self._refused(mutate, "not 64 lower-case hex")
+
+    def test_a_predicted_count_that_is_a_boolean_or_a_float(self):
+        """Python would compare `True` equal to 1 and `2.0` equal to 2 in values this module
+        reports as EXACT."""
+        cases = [(lambda q: q.__setitem__("budget_per_arm", float(BUDGET)), "is not the plan's"),
+                 (lambda q: q["pairs"][0]["runs"]["A"].__setitem__("best_train", 2.0), "is not an integer"),
+                 (lambda q: q["pairs"][0]["runs"]["A"].__setitem__("column_moves", False), "is not an integer"),
+                 (lambda q: q["pairs"][0]["runs"]["A"].__setitem__("champion_holdout", 1.0), "is not an integer"),
+                 (lambda q: q["predicted_primary"].__setitem__("positives", True), "is not a count"),
+                 (lambda q: q["predicted_primary"].__setitem__("ties", 2.0), "is not a count"),
+                 (lambda q: q["predicted_primary"].__setitem__("sign_test_p", "0.02"), "is not a probability"),
+                 (lambda q: q["predicted_primary"].__setitem__("alpha", True), "is not a probability"),
+                 (lambda q: q["predicted_primary"].__setitem__("verdict", 1), "is not a string")]
+        for i, (mutate, needle) in enumerate(cases):
+            with self.subTest(case=i, needle=needle):
+                self._refused(lambda logs, p, q, f=mutate: f(q), needle)
+
+    def test_a_predicted_digest_that_is_not_a_digest(self):
+        for k in badj.RUN_DIGESTS:
+            with self.subTest(field=k):
+                self._refused(lambda logs, p, q, k=k: q["pairs"][0]["runs"]["B"].__setitem__(k, "nope"),
+                              "is not 64 lower-case hex")
+
+    def test_a_predicted_value_outside_its_own_domain(self):
+        ceiling = bl.CEILING["F1"]
+        cases = [(lambda q: q["pairs"][0]["runs"]["A"].__setitem__("best_train", ceiling + 1), "outside 0.."),
+                 (lambda q: q["pairs"][0]["runs"]["A"].__setitem__("best_train", -1), "outside 0.."),
+                 (lambda q: q["pairs"][0]["runs"]["A"].__setitem__("column_moves", BUDGET + 1), "outside 0.."),
+                 (lambda q: q["pairs"][0]["runs"]["A"].__setitem__("champion_holdout", bl.HOLDOUT_COUNT + 1),
+                  "outside 0..")]
+        for i, (mutate, needle) in enumerate(cases):
+            with self.subTest(case=i):
+                self._refused(lambda logs, p, q, f=mutate: f(q), needle)
+
+    def test_a_contradictory_duplicate_prediction_pair(self):
+        """The lookup used to overwrite it silently."""
+        def mutate(logs, p, q):
+            bad = copy.deepcopy(q["pairs"][0])
+            bad["runs"]["A"]["best_train"] = 0
+            q["pairs"].insert(0, bad)
+        self._refused(mutate, "pair identities")
+
+    def test_a_prediction_pair_outside_the_experiment(self):
+        """The extra entry used to sit unvisited."""
+        def mutate(logs, p, q):
+            bad = copy.deepcopy(q["pairs"][0])
+            bad["pair"] = p["pairs"]
+            q["pairs"].append(bad)
+        self._refused(mutate, "pair identities")
+
+    def test_a_prediction_missing_one_of_the_experiments_pairs(self):
+        self._refused(lambda logs, p, q: q["pairs"].pop(), "pair identities")
+
+    def test_a_prediction_whose_pairs_are_out_of_order(self):
+        def mutate(logs, p, q):
+            q["pairs"].reverse()
+            q["deltas"].reverse()
+        self._refused(mutate, "pair identities")
+
+    def test_a_prediction_that_does_not_account_for_itself(self):
+        cases = [(lambda q: q["deltas"].__setitem__(0, q["deltas"][0] + 1), "does not account for its own"),
+                 (lambda q: q["pairs"][0].__setitem__("delta_B_minus_A", 99), "does not account for its own"),
+                 (lambda q: q.__setitem__("deltas", q["deltas"][:-1]), "deltas for 3 pairs"),
+                 (lambda q: q["predicted_primary"].__setitem__("ties", 9), "do not account for"),
+                 (lambda q: q["predicted_primary"].__setitem__("verdict", "whatever it likes"),
+                  "not the sign test over its own deltas")]
+        for i, (mutate, needle) in enumerate(cases):
+            with self.subTest(case=i, needle=needle):
+                self._refused(lambda logs, p, q, f=mutate: f(q), needle)
+
+    def test_a_valid_prediction_that_merely_disagrees_is_a_finding_not_a_refusal(self):
+        """The distinction the input guards must not erase."""
+        def mutate(logs, p, q):
+            q["pairs"][0]["runs"]["A"]["best_train"] += 1
+            consistent(q)
+        res = self._result(mutate)
+        self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"][:160])
+        self.assertTrue(any("best_train" in x for x in res["findings"]), res["findings"][:4])
 
     def test_a_contradiction_collected_before_a_malformed_record_survives_it(self):
         """The measurement pass is per record and independent, so a shape finding later in the
@@ -601,6 +718,23 @@ class CommandLine(unittest.TestCase):
         res = json.loads(out.read_text())
         self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"][:120])
         self.assertTrue(any("which is not an integer" in x for x in res["findings"]), res["findings"][:4])
+
+    def test_an_input_error_never_takes_the_internal_error_path(self):
+        """The last-resort handler exists for defects in this module, not for bad input."""
+        plan = copy.deepcopy(PLAN)
+        plan["fitness"] = []
+        (self.dir / "plan_bad.json").write_text(json.dumps(plan))
+        (self.dir / "log_ok.json").write_text(json.dumps(modelled_log(0, PAIRS)))
+        out = self.dir / "plan_bad_result.json"
+        p = subprocess.run([sys.executable, str(R / "host/b2_adjudicate.py"), "--no-common",
+                            "--run-log", str(self.dir / "log_ok.json"), "--plan", str(self.dir / "plan_bad.json"),
+                            "--prediction", str(self.dir / "prediction.json"), "--out", str(out)],
+                           text=True, capture_output=True)
+        self.assertEqual(p.returncode, 1, p.stderr[-400:])
+        self.assertTrue(out.is_file())
+        res = json.loads(out.read_text())
+        self.assertNotIn("internal_error", res)
+        self.assertIn("is not a string", res["refusal"])
 
     def test_a_file_that_is_not_json_is_refused_not_crashed(self):
         (self.dir / "broken.json").write_text("{nope")

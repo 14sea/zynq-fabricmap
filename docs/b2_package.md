@@ -1,5 +1,24 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **The adjudicator's input-validation P2 is corrected too.** (A) `check_plan` establishes that
+> `fitness` is a string **before** the membership lookup, and every consumed field now follows
+> type → domain → use; the CLI's `fitness=[]` case exits 1 with a named refusal instead of
+> INTERNAL ERROR / exit 3. (B) `check_prediction` types every value it compares — the run
+> counts and digests, the primary counts, the probabilities, the verdict — so Python's numeric
+> equality can no longer accept `true` for 1 or `2.0` for 2 in values reported as EXACT; the
+> pair identities must be `0..pairs-1` exactly once in order, established **before** any lookup
+> is built from them, so a contradictory duplicate is named and an out-of-range entry cannot
+> sit unvisited; domains and the document's own accounting (deltas, primary counts, the sign
+> test over its own deltas, the sequence length) are checked. (C) the plan's `master_seed` must
+> be in `0..2**32-1` (Rng masks to 32 bits) and its map digest 64 lower-case hex.
+> The owner's unchanged `reproduce_input_guards.py` now refuses every accepted case with a named
+> reason and the previous round's reproducer shows no regression. **70 adjudicator tests
+> (was 57); the B2/B3 suite is 315, zero skips**; reverting only `host/b2_adjudicate.py` fails
+> 42 sub-cases. One stated consequence: the review's own `best_train = 999` control is now a
+> REFUSED (999 is outside F1's ceiling of 40), and the invalid-input vs disagreeing-prediction
+> distinction is kept with an in-domain control instead.
+> See [`evidence/b2/corrections_adjudicate_inputs_2026_09_11/`](../evidence/b2/corrections_adjudicate_inputs_2026_09_11/).
+
 > **Adjudicator correction review (`da89506`): HOLD remains on input validation.**
 > The baseline P2 and planning-scenario P3 are closed; the original counterexamples now
 > return named results, including the mixed KILL case. The independent B2/B3 suite passes

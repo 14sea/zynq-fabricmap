@@ -1,0 +1,118 @@
+{
+  "head": "c94d5c771996fe9928301becb9b44dc9cedbbd70",
+  "common_validation": true,
+  "synthetic_fixture": true,
+  "cases": {
+    "baseline": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      }
+    },
+    "log_not_object": {
+      "outcome": "REFUSED: a session log is list, not a JSON object",
+      "findings": [],
+      "kills": [],
+      "refusal": "a session log is list, not a JSON object"
+    },
+    "seq_list": {
+      "outcome": "HOLD: session 0: record 3 carries seq [], which is not an integer",
+      "findings": [
+        "session 0: record 3 carries seq [], which is not an integer"
+      ],
+      "kills": []
+    },
+    "seq_dict": {
+      "outcome": "HOLD: session 0: record 3 carries seq {}, which is not an integer",
+      "findings": [
+        "session 0: record 3 carries seq {}, which is not an integer"
+      ],
+      "kills": []
+    },
+    "records_integer": {
+      "outcome": "HOLD: session 0: loop_records is int, not an array",
+      "findings": [
+        "session 0: loop_records is int, not an array"
+      ],
+      "kills": []
+    },
+    "map_null": {
+      "outcome": "REFUSED: the plan's map is not a JSON object",
+      "findings": [],
+      "kills": [],
+      "refusal": "the plan's map is not a JSON object"
+    },
+    "pairs_string": {
+      "outcome": "REFUSED: the plan's pairs '3' is not 1..16, the identity page's slice field",
+      "findings": [],
+      "kills": [],
+      "refusal": "the plan's pairs '3' is not 1..16, the identity page's slice field"
+    },
+    "prediction_pairs_missing": {
+      "outcome": "REFUSED: the prediction carries no array of pairs",
+      "findings": [],
+      "kills": [],
+      "refusal": "the prediction carries no array of pairs"
+    },
+    "prediction_pairs_null": {
+      "outcome": "REFUSED: the prediction carries no array of pairs",
+      "findings": [],
+      "kills": [],
+      "refusal": "the prediction carries no array of pairs"
+    },
+    "prediction_pair_runs_null": {
+      "outcome": "REFUSED: the prediction's pair 0 carries no A and B run objects",
+      "findings": [],
+      "kills": [],
+      "refusal": "the prediction's pair 0 carries no A and B run objects"
+    },
+    "valid_record_bad_digest": {
+      "outcome": "HOLD: session 0 record 3 (pair 0 arm A): the block's state_sha256 is '0000000000000000000000000000000000000000000000000000000000000000', the replay's is '8d6dba9bbc9053d658b5a076dbaf00024ec85c524d777970fecd933abfc8e9ef'",
+      "findings": [
+        "session 0 record 3 (pair 0 arm A): the block's state_sha256 is '0000000000000000000000000000000000000000000000000000000000000000', the replay's is '8d6dba9bbc9053d658b5a076dbaf00024ec85c524d777970fecd933abfc8e9ef'"
+      ],
+      "kills": []
+    },
+    "opening_nonzero_genome": {
+      "outcome": "HOLD: session 0: the opening baseline's genome is '00000001000000000000000000000000000000000000000000000000000000000000..., not the blank genome \u2014 the starting population every arm of this session is replayed from, and what the firmware's genome_clear() writes at this bracket",
+      "findings": [
+        "session 0: the opening baseline's genome is '00000001000000000000000000000000000000000000000000000000000000000000..., not the blank genome \u2014 the starting population every arm of this session is replayed from, and what the firmware's genome_clear() writes at this bracket"
+      ],
+      "kills": []
+    },
+    "closing_nonzero_genome": {
+      "outcome": "HOLD: session 0: the closing baseline's genome is '00000001000000000000000000000000000000000000000000000000000000000000..., not the blank genome, so the bracket is not the restoration it claims",
+      "findings": [
+        "session 0: the closing baseline's genome is '00000001000000000000000000000000000000000000000000000000000000000000..., not the blank genome, so the bracket is not the restoration it claims"
+      ],
+      "kills": []
+    },
+    "measurement_contradiction_then_bad_seq": {
+      "outcome": "KILL: session 0 record 2: the PL's additive scores [18, 22, 20, 21, 20, 18] are not the additive count [17, 22, 20, 21, 20, 18] of the readout it served",
+      "findings": [
+        "session 0: record 3 carries seq [], which is not an integer"
+      ],
+      "kills": [
+        "session 0 record 2: the PL's additive scores [18, 22, 20, 21, 20, 18] are not the additive count [17, 22, 20, 21, 20, 18] of the readout it served"
+      ]
+    },
+    "upstream_record_validator_seq_list": {
+      "findings": [
+        "common envelope: record []: sign_reply seq differs from the loop_record's",
+        "session: record 3 carries seq []"
+      ]
+    },
+    "cli_seq_list": {
+      "returncode": 1,
+      "result_written": true,
+      "stderr_tail": []
+    }
+  }
+}

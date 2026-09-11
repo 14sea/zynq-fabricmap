@@ -1,0 +1,124 @@
+{
+  "head": "c94d5c771996fe9928301becb9b44dc9cedbbd70",
+  "synthetic_common_envelopes": true,
+  "common": true,
+  "cases": {
+    "baseline": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      },
+      "replay": {
+        "records_replayed": 78,
+        "pairs": [
+          0,
+          1,
+          2
+        ]
+      }
+    },
+    "fitness_[]": {
+      "outcome": "REFUSED: the plan's fitness [] is not a string",
+      "findings": [],
+      "kills": [],
+      "refusal": "the plan's fitness [] is not a string"
+    },
+    "fitness_{}": {
+      "outcome": "REFUSED: the plan's fitness {} is not a string",
+      "findings": [],
+      "kills": [],
+      "refusal": "the plan's fitness {} is not a string"
+    },
+    "fitness_['F1']": {
+      "outcome": "REFUSED: the plan's fitness ['F1'] is not a string",
+      "findings": [],
+      "kills": [],
+      "refusal": "the plan's fitness ['F1'] is not a string"
+    },
+    "fitness_{'name': 'F1'}": {
+      "outcome": "REFUSED: the plan's fitness {'name': 'F1'} is not a string",
+      "findings": [],
+      "kills": [],
+      "refusal": "the plan's fitness {'name': 'F1'} is not a string"
+    },
+    "unknown_fitness_control": {
+      "outcome": "REFUSED: the plan's fitness 'F9' is not one of ['F1', 'F2', 'F3']",
+      "findings": [],
+      "kills": [],
+      "refusal": "the plan's fitness 'F9' is not one of ['F1', 'F2', 'F3']"
+    },
+    "prediction_budget_float": {
+      "outcome": "REFUSED: the prediction's budget_per_arm (12.0) is not the plan's (12)",
+      "findings": [],
+      "kills": [],
+      "refusal": "the prediction's budget_per_arm (12.0) is not the plan's (12)"
+    },
+    "prediction_run_float": {
+      "outcome": "REFUSED: the prediction's pair 0 arm A: best_train 2.0 is not an integer",
+      "findings": [],
+      "kills": [],
+      "refusal": "the prediction's pair 0 arm A: best_train 2.0 is not an integer"
+    },
+    "prediction_run_bool": {
+      "outcome": "REFUSED: the prediction's pair 0 arm A: column_moves False is not an integer",
+      "findings": [],
+      "kills": [],
+      "refusal": "the prediction's pair 0 arm A: column_moves False is not an integer"
+    },
+    "prediction_primary_bool": {
+      "outcome": "REFUSED: the prediction's primary positives True is not a count",
+      "findings": [],
+      "kills": [],
+      "refusal": "the prediction's primary positives True is not a count"
+    },
+    "prediction_primary_float": {
+      "outcome": "REFUSED: the prediction's primary ties 2.0 is not a count",
+      "findings": [],
+      "kills": [],
+      "refusal": "the prediction's primary ties 2.0 is not a count"
+    },
+    "contradictory_duplicate_prediction_pair": {
+      "outcome": "REFUSED: the prediction's pair identities are [0, 0, 1, 2], not the experiment's 0..2 exactly once in order",
+      "findings": [],
+      "kills": [],
+      "refusal": "the prediction's pair identities are [0, 0, 1, 2], not the experiment's 0..2 exactly once in order"
+    },
+    "out_of_range_prediction_pair": {
+      "outcome": "REFUSED: the prediction's pair identities are [0, 1, 2, 3], not the experiment's 0..2 exactly once in order",
+      "findings": [],
+      "kills": [],
+      "refusal": "the prediction's pair identities are [0, 1, 2, 3], not the experiment's 0..2 exactly once in order"
+    },
+    "wrong_numeric_value_control": {
+      "outcome": "REFUSED: the prediction's pair 0 arm A: best_train 999 is outside 0..40",
+      "findings": [],
+      "kills": [],
+      "refusal": "the prediction's pair 0 arm A: best_train 999 is outside 0..40"
+    },
+    "uint32_seed_alias": {
+      "outcome": "REFUSED: the plan's master_seed 5011136940 is outside 0..2**32-1: the rule draws four bytes and the instrument's Rng masks to 32 bits, so an out-of-range declaration would silently replay another number's stream",
+      "findings": [],
+      "kills": [],
+      "refusal": "the plan's master_seed 5011136940 is outside 0..2**32-1: the rule draws four bytes and the instrument's Rng masks to 32 bits, so an out-of-range declaration would silently replay another number's stream"
+    },
+    "invalid_map_digest": {
+      "outcome": "REFUSED: the plan's map sha256 'not-a-digest' is not 64 lower-case hex",
+      "findings": [],
+      "kills": [],
+      "refusal": "the plan's map sha256 'not-a-digest' is not 64 lower-case hex"
+    },
+    "cli_fitness_list": {
+      "returncode": 1,
+      "result_written": true,
+      "outcome": "REFUSED: the plan's fitness [] is not a string",
+      "internal_error": null
+    }
+  }
+}
