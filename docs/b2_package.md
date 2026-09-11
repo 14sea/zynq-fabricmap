@@ -1,5 +1,23 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Host tool 2 of 5 written: `host/b2_adjudicate.py`.** It consumes a run's sessions in
+> session order and, per record, recomputes the fitness **from the readout that record
+> served** (train F1, or the holdout F1 of a champion's re-measurement) and checks the PL's
+> additive scores against the same bytes — a served readout contradicting a self-report is a
+> KILL, one finding per record. It then replays the reference engine from those same readouts:
+> every parent draw, move, child genome, counter, generation, selection, champion and
+> `state_sha256`, stopping at the first divergence (a HOLD). Finally it compares each pair and
+> arm with the pinned `prediction.json` and, when the sessions cover every preregistered pair,
+> the run's fitness-sequence digest and the primary sign test. It verifies no manifest pin,
+> qualification chain, rate/deadline budget or export — those are the runner's and `b2_pins`'
+> work and are named in its own result under `not_checked_here`.
+> **41 tests**; the B2/B3 suite is **286 tests, zero skips**. Demonstrated end to end against
+> the real pinned plan and prediction — 10 824 records, PASS, deltas, fitness-sequence digest
+> and primary all equal to the preregistered values; one flipped readout word gives a KILL —
+> with the **model standing in for a board**: no board, no image build, no session.
+> See [`evidence/b2/b2_adjudicate_2026_09_11/`](../evidence/b2/b2_adjudicate_2026_09_11/).
+> Remaining: `b2_runner`, `b2_pins`, `b2_test_report`, then the complete §7 review.
+
 > **Record-type correction review PASS (`45791a7`).** The extension-type P2 is closed:
 > the original four cases and 330 independent negative cases are rejected; the B2/B3
 > suite passes 243 tests with zero skips. One nonblocking P3 remains: a trailing newline

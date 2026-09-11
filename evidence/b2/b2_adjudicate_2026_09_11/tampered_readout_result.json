@@ -1,0 +1,62 @@
+{
+  "findings": [
+    "session 1 record 2004 (pair 5 arm A): the block's fitness is 8, the replay's is 7"
+  ],
+  "inputs": [
+    "/tmp/claude-1000/-home-test-xilinx/cbf8672f-0d21-4fff-80ba-dc002ecbd435/scratchpad/fullrun/run_log_0.json",
+    "/tmp/claude-1000/-home-test-xilinx/cbf8672f-0d21-4fff-80ba-dc002ecbd435/scratchpad/tampered_1.json",
+    "/tmp/claude-1000/-home-test-xilinx/cbf8672f-0d21-4fff-80ba-dc002ecbd435/scratchpad/fullrun/run_log_2.json"
+  ],
+  "kills": [
+    "session 1 record 2004: the PL's additive scores [17, 21, 20, 22, 23, 20] are not the additive count [17, 21, 16, 22, 23, 20] of the readout it served",
+    "session 1 record 2004: fitness 8 is not 7, the train F1 of the readout the board served for it"
+  ],
+  "measurement": {
+    "readouts_served": 10824,
+    "records_checked": 10818
+  },
+  "not_checked_here": [
+    "manifest pins",
+    "carrier qualification",
+    "instrument rate / deadline / CRC budgets",
+    "evidence exports",
+    "ruling binding"
+  ],
+  "outcome": "KILL: session 1 record 2004: the PL's additive scores [17, 21, 20, 22, 23, 20] are not the additive count [17, 21, 16, 22, 23, 20] of the readout it served; session 1 record 2004: fitness 8 is not 7, the train F1 of the readout the board served for it",
+  "replay": {
+    "pairs": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "records_replayed": 6810
+  },
+  "session": "B2",
+  "sessions": [
+    {
+      "index": 0,
+      "pair_count": 4,
+      "pair_first": 0,
+      "records": 4810
+    },
+    {
+      "index": 1,
+      "pair_count": 4,
+      "pair_first": 4,
+      "records": 4810
+    },
+    {
+      "index": 2,
+      "pair_count": 1,
+      "pair_first": 8,
+      "records": 1204
+    }
+  ],
+  "tool": "b2_adjudicate.py/0.1.0"
+}
