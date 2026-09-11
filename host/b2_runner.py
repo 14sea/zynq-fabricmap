@@ -105,6 +105,14 @@ PROVISION_RULING_TEXT = "provisioning P3-K"
 QUAL_LABEL = "b2-qualification"
 QUAL_BUDGET = 8
 QUAL_PAIRS = 1
+# B2Q's deadline is a PLANNING bound — it measures the real rate — and the offline verdict must
+# reconstruct the SAME limit the producer used, so the rate is a declared constant with its rule,
+# not an argument the producer may widen (the owner's P2-3 of 2026-09-11). The rule: the slowest
+# archived planning rate in `evidence/b2/plan.json`'s planning_rates_NOT_calibration (the last
+# observed B1 mapping). Pinning it in the manifest at S0/S1 remains the owner's recommendation.
+QUAL_PLANNING_RATE_PER_HOUR = 2807.0
+QUAL_PLANNING_RATE_RULE = ("the slowest archived planning rate (the last observed B1 mapping, "
+                           "evidence/b2/plan.json planning_rates_NOT_calibration); B2Q MEASURES the real one")
 WATCHDOG_LOAD, WATCHDOG_PRESCALER = 1250000035, 7
 
 
@@ -119,6 +127,11 @@ class Refusal(Exception):
 
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _short(v) -> str:
+    text = repr(v) if isinstance(v, str) else json.dumps(v, sort_keys=True, default=str)
+    return text if len(text) <= 72 else text[:69] + "..."
 
 
 def qualification_seeds(manifest: dict) -> list[tuple[int, int]]:
@@ -221,9 +234,11 @@ def qualification_documents(manifest: dict) -> tuple[dict, dict, list]:
     return plan, prediction, seeds
 
 
-def qualification_session_plan(manifest: dict) -> dict:
+def qualification_session_plan(manifest: dict, manifest_sha256: str | None = None) -> dict:
     """B2Q's session plan, derived from the manifest and the preregistration's §6a constants, so
-    the runner and the re-adjudicator judge the SAME session. The instrument must be bound."""
+    the runner and the re-adjudicator judge the SAME session — including the SAME deadline, which
+    comes from the declared planning rate and not from whatever rate the session went on to
+    measure. The instrument must be bound."""
     import l6_schedule as ls  # noqa: E402
     records_expected = bsess.records(QUAL_PAIRS, QUAL_BUDGET)
     audit_seqs = set(range(1, records_expected + 1))
@@ -234,7 +249,90 @@ def qualification_session_plan(manifest: dict) -> dict:
             "pairs_total": QUAL_PAIRS, "pair_first": 0, "pair_count": QUAL_PAIRS, "flags": flags,
             "audit_policy": bp.AUDIT_POLICY, "audit_seqs": audit_seqs, "protocol": PROTOCOL_WIRE,
             "expected_records": records_expected, "expected_frames": frames,
-            "crc_budget": ls.crc_budget(frames["total"]), "bad_frame_budget": ls.crc_budget(frames["total"])}
+            "crc_budget": ls.crc_budget(frames["total"]), "bad_frame_budget": ls.crc_budget(frames["total"]),
+            "session_timeout_s": deadline_s(records_expected, QUAL_PLANNING_RATE_PER_HOUR),
+            "deadline_formula": bp.DEADLINE_FORMULA,
+            "deadline_rate": {"source": QUAL_PLANNING_RATE_RULE, "rate_per_hour": QUAL_PLANNING_RATE_PER_HOUR},
+            "binding": qualification_binding(manifest, manifest_sha256)}
+
+
+def qualification_binding(manifest: dict, manifest_sha256: str | None) -> dict:
+    """What a B2Q session's log must declare it was run under."""
+    return {"session": bman.QUAL_SESSION, "image_sha256": (manifest.get("image") or {}).get("sha256"),
+            "prereg_sha256": (manifest.get("prereg") or {}).get("sha256"),
+            "b2_manifest_sha256": manifest_sha256, "schedule_mode": bs.ENGINE_VERSION,
+            "master_seed": qualification_master(manifest), "protocol": PROTOCOL_WIRE,
+            "psoracle_commit": manifest["instrument"]["psoracle_commit"],
+            "map_canonical_json_sha256": manifest["map"]["canonical_json_sha256"],
+            "fitness_id": manifest["experiment"]["fitness"], "budget_per_arm": QUAL_BUDGET,
+            "pair_first": 0, "pair_count": QUAL_PAIRS}
+
+
+def binding_findings(log: dict, session_plan: dict) -> list[str]:
+    """The session's IDENTITY and its invocation, established from the EVIDENCE — not assumed
+    from the plan that judged it. The instrument layer proves the log is internally consistent
+    and the replay proves the algorithm was followed under the slice the log DECLARES; neither
+    proves that this log is the session this invocation authorised (the owner's P2-1 of
+    2026-09-11). A set of mutually consistent declarations is not proof of belonging."""
+    f: list[str] = []
+    want = session_plan.get("binding") or {}
+    if not want:
+        return ["the session plan carries no binding: nothing to hold this evidence to"]
+    l6 = log.get("l6")
+    if not isinstance(l6, dict):
+        return ["the run log carries no l6 block: the session declared no binding at all"]
+    got = l6.get("binding")
+    if not isinstance(got, dict):
+        return ["the run log's l6 carries no binding block"]
+    for k in sorted(want):
+        if want[k] is None:
+            f.append(f"binding: this invocation declares no {k}, so the evidence cannot be held to one")
+        elif got.get(k) != want[k]:
+            f.append(f"binding: the log's {k} is {_short(got.get(k))}, this invocation's is {_short(want[k])}")
+    inputs_want = session_plan.get("inputs")
+    if inputs_want is not None:
+        inputs_got = l6.get("inputs")
+        if not isinstance(inputs_got, dict):
+            f.append("the run log's l6 carries no inputs block")
+        else:
+            for k in sorted(inputs_want):
+                if inputs_got.get(k) != inputs_want[k]:
+                    f.append(f"inputs: the log's {k} is {_short(inputs_got.get(k))}, this "
+                             f"invocation's is {_short(inputs_want[k])}")
+    ident = log.get("app_identity")
+    if not isinstance(ident, dict):
+        f.append("the run log carries no app_identity: the board declared no identity")
+    else:
+        # The SLICE the evidence actually declares must be the one this session selected. Two
+        # slices of the same length pass a record count; only this comparison separates them.
+        for k in ("pair_first", "pair_count", "pairs_total"):
+            if ident.get(k) != session_plan.get(k):
+                f.append(f"slice: the IDENT's {k} is {ident.get(k)!r}, this session's is "
+                         f"{session_plan.get(k)!r}")
+        for k, v in (("master_seed", session_plan.get("master_seed")),
+                     ("budget_per_arm", session_plan.get("n")),
+                     ("protocol", session_plan.get("protocol"))):
+            if v is not None and ident.get(k) != v:
+                f.append(f"IDENT {k}: {ident.get(k)!r} != {v!r}")
+        if want.get("map_canonical_json_sha256") is not None \
+                and ident.get("map_sha256") != want["map_canonical_json_sha256"]:
+            f.append("IDENT map_sha256 is not the map this stage is bound to")
+        if want.get("fitness_id") is not None and ident.get("fitness_id") != want["fitness_id"]:
+            f.append(f"IDENT fitness_id {ident.get('fitness_id')!r} != {want['fitness_id']!r}")
+    return f
+
+
+def export_seal_findings(evidence: Path) -> list[str]:
+    """The evidence directory's own seal. The production finalizer checks it when it writes the
+    files; a STANDALONE re-adjudication months later has no such protection, and a verdict over
+    a subset of the evidence is no verdict. B1's declared schema and check are used unchanged —
+    the same code writes both sessions' exports (the owner's P2-2 of 2026-09-11)."""
+    import b1_adjudicate as b1adj  # noqa: E402
+    try:
+        b1adj.check_exports(Path(evidence))
+    except b1adj.Refusal as exc:
+        return [f"evidence seal: {exc}"]
+    return []
 
 
 def instrument_findings(evidence: Path, log: dict, session_plan: dict, instrument_root: Path) -> dict:
@@ -292,6 +390,15 @@ def instrument_findings(evidence: Path, log: dict, session_plan: dict, instrumen
                                   settle_median_calib=16.0, settle_bound_factor=pc["settle_bound_factor"],
                                   wall_fraction_min=0.0, bad_frames=int(timeline.get("bad_frames") or 0),
                                   bad_frame_budget=session_plan["bad_frame_budget"])
+            # `soak_findings` bounds heartbeat gaps, CRC and bad frames and a MINIMUM duration;
+            # the session's own MAXIMUM is this check, against the limit the invocation
+            # authorised — never against the rate the session went on to measure.
+            limit = session_plan.get("session_timeout_s")
+            if limit is None:
+                f.append("the session plan carries no deadline: the archived session is held to no limit")
+            elif rep["session_span_s"] > float(limit):
+                f.append(f"the session spanned {rep['session_span_s']:.1f} s, past the "
+                         f"{float(limit):.1f} s deadline this session was authorised for")
         except lr.RateError as exc:
             f.append(f"no rate report: {exc}")
         summary = log.get("session_summary")
@@ -311,6 +418,39 @@ def instrument_findings(evidence: Path, log: dict, session_plan: dict, instrumen
     return out
 
 
+def archived_manifest_findings(evidence: Path, manifest: dict, session_plan: dict) -> list[str]:
+    """The manifest the session archived beside its evidence must BE the manifest this verdict is
+    for, by bytes. Without it the `manifest` argument is decoration: every other check would be
+    reading declarations that agree with each other and with nothing else."""
+    p = Path(evidence) / bman.MANIFEST_AT_RUN
+    if not p.is_file():
+        return [f"the evidence carries no {bman.MANIFEST_AT_RUN}: the session archived no manifest"]
+    want_sha = (session_plan.get("binding") or {}).get("b2_manifest_sha256")
+    got_sha = _sha(p)
+    f: list[str] = []
+    if want_sha is None:
+        f.append("this invocation declares no manifest digest to hold the archived manifest to")
+    elif got_sha != want_sha:
+        f.append(f"the archived {bman.MANIFEST_AT_RUN} hashes to {got_sha[:16]}…, this invocation's "
+                 f"manifest to {want_sha[:16]}…")
+    try:
+        at_run = json.loads(p.read_text())
+    except ValueError as exc:
+        return f + [f"the archived {bman.MANIFEST_AT_RUN} is not readable JSON: {exc}"]
+    if not isinstance(at_run, dict) or at_run.get("schema") != bman.SCHEMA:
+        return f + [f"the archived {bman.MANIFEST_AT_RUN} is not a b2_manifest document"]
+    for path, label in ((("image", "sha256"), "image"), (("prereg", "sha256"), "preregistration"),
+                        (("map", "canonical_json_sha256"), "map"),
+                        (("carrier", "bitstream_sha256"), "carrier")):
+        a, b = at_run, manifest
+        for k in path:
+            a = (a or {}).get(k) if isinstance(a, dict) else None
+            b = (b or {}).get(k) if isinstance(b, dict) else None
+        if a != b:
+            f.append(f"the archived manifest's {label} is not this invocation's")
+    return f
+
+
 def judge_session(evidence_dir, manifest: dict, session_plan: dict, plan_doc: dict | None,
                   prediction_doc: dict | None, seeds: list | None, instrument_root: Path,
                   consts: dict | None = None) -> dict:
@@ -323,8 +463,16 @@ def judge_session(evidence_dir, manifest: dict, session_plan: dict, plan_doc: di
     VERIFIED audit policy. None of them is echoed from a stored adjudication."""
     evidence = Path(evidence_dir)
     session = session_plan["session"]
+    # Every exit carries the same keys: a caller reading this result must not have to guess
+    # which checks ran, and a missing key is not a way to hide one.
     out = {"tool": TOOL_VERSION, "session": session, "scope": "session", "outcome": None,
-           "findings": [], "kills": [], "measured_rate_per_hour": None, "audit_policy": None}
+           "findings": [], "kills": [], "measured_rate_per_hour": None, "audit_policy": None,
+           "instrument": {}, "binding_checked": False, "replay": {}}
+    archived = archived_manifest_findings(evidence, manifest, session_plan)
+    if archived:                       # the evidence does not belong to this invocation at all
+        out["findings"] = archived
+        out["outcome"] = "HOLD: " + "; ".join(archived[:4])
+        return out
     log_path = evidence / "run_log.json"
     if not log_path.is_file():
         out["outcome"] = "REFUSED: the evidence carries no run_log.json"
@@ -334,11 +482,14 @@ def judge_session(evidence_dir, manifest: dict, session_plan: dict, plan_doc: di
     except ValueError as exc:
         out["outcome"] = f"REFUSED: run_log.json is not readable JSON: {exc}"
         return out
+    seal = export_seal_findings(evidence)
+    binding = binding_findings(log, session_plan)
     p3 = instrument_findings(evidence, log, session_plan, instrument_root)
     out["instrument"] = {k: v for k, v in p3.items() if k not in ("findings", "rejected")}
     out["measured_rate_per_hour"] = p3["rate"]
     out["audit_policy"] = p3["audit_policy"]
-    out["findings"] = list(p3["findings"])
+    out["findings"] = seal + binding + list(p3["findings"])
+    out["binding_checked"] = not binding and not seal
     if p3["rejected"]:                              # the instrument's own falsification / refusal
         out["outcome"] = p3["rejected"]
         return out
@@ -365,15 +516,37 @@ def judge_session(evidence_dir, manifest: dict, session_plan: dict, plan_doc: di
 
 def readjudicator(manifest: dict, instrument_root=None, consts: dict | None = None):
     """The callable `b2_manifest.verify`/`qualify` take to RE-ADJUDICATE the pinned qualification
-    evidence — `(evidence_dir, manifest_at_run)`. It RECOMPUTES the outcome, the measured rate
-    and the audit policy from the evidence files; it never echoes `adjudication.json`, which is
-    what the lifecycle compares its own reconstruction against. The evidence is a B2Q session,
-    so it is judged against B2Q's own plan, prediction and seeds, never against B2's."""
-    plan, prediction, seeds = qualification_documents(manifest)
-    session_plan = qualification_session_plan(manifest)
+    evidence — `(evidence_dir, manifest_at_run)`. It RECOMPUTES the outcome, the measured rate and
+    the audit policy from the evidence files; it never echoes `adjudication.json`, which is what
+    the lifecycle compares its own reconstruction against.
 
+    It judges against the VALIDATED RUN MANIFEST the lifecycle hands it — the manifest the session
+    actually ran under — not against the manifest being transitioned, and refuses if the two are
+    not the same stage's (the owner's P2-1 of 2026-09-11). The evidence is a B2Q session, so B2Q's
+    own plan, prediction and seeds judge it, never B2's."""
     def again(evidence_dir, manifest_at_run=None) -> dict:
-        return judge_session(evidence_dir, manifest, session_plan, plan, prediction, seeds,
+        refuse = {"tool": TOOL_VERSION, "session": bman.QUAL_SESSION, "scope": "session",
+                  "findings": [], "kills": [], "measured_rate_per_hour": None, "audit_policy": None}
+        if not isinstance(manifest_at_run, dict) or manifest_at_run.get("schema") != bman.SCHEMA:
+            refuse["outcome"] = ("REFUSED: no validated run manifest was given: a re-adjudication "
+                                 "cannot judge a session against a manifest it was not run under")
+            return refuse
+        run_manifest_path = Path(evidence_dir) / bman.MANIFEST_AT_RUN
+        if not run_manifest_path.is_file():
+            refuse["outcome"] = f"REFUSED: the evidence carries no {bman.MANIFEST_AT_RUN}"
+            return refuse
+        for path, label in ((("image", "sha256"), "image"), (("prereg", "sha256"), "preregistration")):
+            a, b = manifest_at_run, manifest
+            for k in path:
+                a = (a or {}).get(k) if isinstance(a, dict) else None
+                b = (b or {}).get(k) if isinstance(b, dict) else None
+            if a != b:
+                refuse["outcome"] = (f"REFUSED: the run manifest's {label} is not the one this "
+                                     f"transition is for")
+                return refuse
+        plan, prediction, seeds = qualification_documents(manifest_at_run)
+        session_plan = qualification_session_plan(manifest_at_run, _sha(run_manifest_path))
+        return judge_session(evidence_dir, manifest_at_run, session_plan, plan, prediction, seeds,
                              instrument_root or inst.DEFAULT_ROOT, consts=consts)
     return again
 
@@ -491,12 +664,16 @@ def preflight(a, profile: dict = SEARCH, pins_verify=verify_pins, readjudicate=N
         seeds = qualification_seeds(manifest)
         if a.pair_first not in (None, 0) or a.pair_count not in (None, QUAL_PAIRS):
             raise Refusal(f"B2Q runs {QUAL_PAIRS} pair at budget {QUAL_BUDGET}: it takes no slice")
-        if a.qual_rate_per_hour is None:
-            raise Refusal("B2Q needs --qual-rate-per-hour: the calibration session's own deadline is a "
-                          "PLANNING bound (the rate it measures does not exist yet)")
-        if not isinstance(a.qual_rate_per_hour, (int, float)) or isinstance(a.qual_rate_per_hour, bool) \
-                or not math.isfinite(a.qual_rate_per_hour) or a.qual_rate_per_hour <= 0:
-            raise Refusal(f"--qual-rate-per-hour {a.qual_rate_per_hour!r} is not a finite positive rate")
+        # The planning bound is DECLARED (QUAL_PLANNING_RATE_PER_HOUR), so the offline verdict
+        # reconstructs the same deadline. The flag may only agree with it, never widen it.
+        if a.qual_rate_per_hour is not None:
+            if not isinstance(a.qual_rate_per_hour, (int, float)) or isinstance(a.qual_rate_per_hour, bool) \
+                    or not math.isfinite(a.qual_rate_per_hour) or a.qual_rate_per_hour <= 0:
+                raise Refusal(f"--qual-rate-per-hour {a.qual_rate_per_hour!r} is not a finite positive rate")
+            if float(a.qual_rate_per_hour) != QUAL_PLANNING_RATE_PER_HOUR:
+                raise Refusal(f"--qual-rate-per-hour {a.qual_rate_per_hour!r} is not the declared planning "
+                              f"bound {QUAL_PLANNING_RATE_PER_HOUR} ({QUAL_PLANNING_RATE_RULE}); the "
+                              f"offline verdict reconstructs THAT limit, so this flag may only agree")
     else:
         master = plan_doc["seed_derivation"]["master_seed"]
         budget, pairs_total = plan_doc["budget_per_arm"], plan_doc["pairs"]
@@ -568,9 +745,8 @@ def preflight(a, profile: dict = SEARCH, pins_verify=verify_pins, readjudicate=N
         rate_note = {"source": "the plan's split, from the B2Q calibration",
                      "rate_per_hour": plan_doc["session_split"].get("rate_per_hour")}
     else:
-        timeout = deadline_s(records_expected, a.qual_rate_per_hour)
-        rate_note = {"source": "a planning bound given to this invocation; B2Q MEASURES the rate",
-                     "rate_per_hour": a.qual_rate_per_hour}
+        timeout = deadline_s(records_expected, QUAL_PLANNING_RATE_PER_HOUR)
+        rate_note = {"source": QUAL_PLANNING_RATE_RULE, "rate_per_hour": QUAL_PLANNING_RATE_PER_HOUR}
     audit_seqs = set(range(1, records_expected + 1))        # all-self-reporting: every record audited
     # `expected_frames` takes the count of NON-bracket candidates and adds the two baselines
     # itself; handing it the bracketed total counted them twice (the owner's P3 of 2026-09-11).
@@ -596,8 +772,20 @@ def preflight(a, profile: dict = SEARCH, pins_verify=verify_pins, readjudicate=N
                     "b2_manifest_sha256": manifest_sha, "psoracle_commit": verified["psoracle_commit"],
                     "map_canonical_json_sha256": manifest["map"]["canonical_json_sha256"],
                     "fitness_id": manifest["experiment"]["fitness"], "budget_per_arm": budget,
-                    "pair_first": first, "pair_count": count},
+                    "pair_first": first, "pair_count": count, "protocol": wire},
     }
+    if profile is QUALIFICATION:
+        # The producer and the offline verdict must judge the SAME session: the plan this
+        # preflight built has to equal the one `qualification_session_plan` rebuilds from the
+        # manifest alone, field for field on everything a verdict reads.
+        rebuilt = qualification_session_plan(manifest, manifest_sha)
+        differ = [k for k in ("session", "n", "master_seed", "pairs_total", "pair_first", "pair_count",
+                              "flags", "audit_policy", "audit_seqs", "protocol", "expected_records",
+                              "expected_frames", "crc_budget", "bad_frame_budget", "session_timeout_s",
+                              "binding") if session_plan.get(k) != rebuilt.get(k)]
+        if differ:
+            raise Refusal(f"the B2Q session plan this preflight built is not the one the offline "
+                          f"verdict rebuilds: {differ}")
     return {"profile": profile, "ruling": ruling, "provision_ruling_parsed": pk, "manifest": manifest,
             "manifest_sha256": manifest_sha, "manifest_path": manifest_path, "ruling_path": Path(a.ruling),
             "provision_ruling_path": Path(a.provision_ruling), "pins": pins,

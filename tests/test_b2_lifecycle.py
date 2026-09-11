@@ -34,6 +34,8 @@ from pathlib import Path
 
 R = Path(__file__).resolve().parent.parent
 HOST = R / "host"
+sys.path.insert(0, str(HOST))
+from b2_manifest import QUAL_EVIDENCE_FILES  # noqa: E402
 GATE = R / "evidence/b2/gate/recomputed_2026_09_10/gate_report.json"
 STUB_PASS = "lambda ev, m_run: json.loads((ev / 'adjudication.json').read_text())"
 ORIGINAL_ADJ = {"outcome": "PASS", "session": "B2Q", "measured_rate_per_hour": 2500.0, "audit_policy": "all-self-reporting"}
@@ -52,6 +54,16 @@ def run(code: str) -> subprocess.CompletedProcess:
 
 def refused(p: subprocess.CompletedProcess, needle: str = "Refusal") -> bool:
     return p.returncode != 0 and needle in p.stderr
+
+
+def _fill_evidence(ev: Path) -> None:
+    """Placeholder bytes for every file QUAL_EVIDENCE_FILES pins that the case does not write
+    itself. Since 1.2.0 the record covers the whole evidence set, so an incomplete directory is
+    refused for membership before any of these cases can be reached."""
+    for name in QUAL_EVIDENCE_FILES:
+        p = ev / name
+        if not p.exists():
+            p.write_text(json.dumps({"placeholder": name}) if name.endswith(".json") else f"{name}\n")
 
 
 @unittest.skipUnless(GATE.exists(), "no recomputed gate report")
@@ -87,10 +99,19 @@ class Lifecycle(unittest.TestCase):
                    f"print(json.dumps(m.verify(d, {ev} {rj} {rt})))")
 
     def _make_evidence(self, ev: Path, adj=ORIGINAL_ADJ):
+        """Since QUAL_SCHEMA_VERSION 1.2.0 the record pins the WHOLE evidence set — the audits and
+        timeline a session verdict consumes, the export seal, the raw console and the two rulings
+        it was authorised by — so the fixture writes all of them (the owner's P2-2 of 2026-09-11).
+        These are placeholder bytes: this test exercises the lifecycle's membership and hashing,
+        not a valid session."""
         ev.mkdir(exist_ok=True)
         shutil.copy(self.manifest, ev / "manifest_at_run.json")
         (ev / "run_log.json").write_text(json.dumps({"session": "B2Q"}))
         (ev / "adjudication.json").write_text(json.dumps(adj))
+        for name in QUAL_EVIDENCE_FILES:
+            p = ev / name
+            if not p.exists():
+                p.write_text(json.dumps({"placeholder": name}) if name.endswith(".json") else f"{name}\n")
 
     # ------------------------------------------------------------ S0, S1
 
@@ -137,7 +158,14 @@ class Lifecycle(unittest.TestCase):
         self.assertEqual(d["calibration"]["rate_per_hour"], 2500.0)
         self.assertEqual(d["calibration"]["audit_policy"], "all-self-reporting")
         self.assertEqual((d["calibration"]["sessions"], d["calibration"]["pairs_per_session_max"]), (3, 4))
-        self.assertEqual(sorted(d["qualification"]["files"]), ["adjudication.json", "manifest_at_run.json", "run_log.json"])
+        # Named explicitly, not compared with the constant: a test that reads the constant would
+        # keep passing if the set shrank back to the three files of 1.1.0 (the owner's P2-2).
+        self.assertEqual(sorted(d["qualification"]["files"]),
+                         ["adjudication.json", "audits.json", "console.log", "console.ts.log",
+                          "exports.json", "manifest_at_run.json", "ruling_provisioning.json",
+                          "ruling_whole_of_run.json", "run_log.json", "summary.json", "timeline.json"],
+                         "since 1.2.0 the record pins the WHOLE evidence set, not three files")
+        self.assertEqual(d["qualification"]["schema_version"], "1.2.0")
         self.assertEqual(d["qualification"]["binding"]["b2_manifest_sha256"], sha(self.ev / "manifest_at_run.json"))
         v = json.loads(self._verify(evidence_dir=self.ev).stdout)
         self.assertEqual(v["stage"], "S2"); self.assertTrue(v["qualified"], v)
@@ -465,6 +493,7 @@ class Lifecycle(unittest.TestCase):
             shutil.copy(s1, ev / "manifest_at_run.json")
             (ev / "run_log.json").write_text(json.dumps({"session": "B2Q"}))
             (ev / "adjudication.json").write_text(adj_text)
+            _fill_evidence(ev)
             p = run(f"import b2_manifest as m, json; from pathlib import Path; d = json.loads(open({str(s1)!r}).read()); "
                     f"m.qualify(d, Path({str(ev)!r}), readjudicate={STUB_PASS})")
             self.assertTrue(refused(p), (tag, p.stdout, p.stderr)); self.assertIn(needle, p.stderr, tag)
@@ -472,6 +501,7 @@ class Lifecycle(unittest.TestCase):
         ev = self.tmp / "b2q_rate_602"
         ev.mkdir(exist_ok=True)
         shutil.copy(s1, ev / "manifest_at_run.json")
+        _fill_evidence(ev)
         (ev / "run_log.json").write_text(json.dumps({"session": "B2Q"}))
         (ev / "adjudication.json").write_text(json.dumps(dict(ORIGINAL_ADJ, measured_rate_per_hour=602.0)))
         p = run(f"import b2_manifest as m, json; from pathlib import Path; d = json.loads(open({str(s1)!r}).read()); "

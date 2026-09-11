@@ -75,6 +75,10 @@ class Fixture:
         (ev / "adjudication.json").write_text(json.dumps(
             {"outcome": "PASS", "session": "B2Q", "measured_rate_per_hour": STUB_RATE,
              "audit_policy": bp.AUDIT_POLICY}))
+        for name in bman.QUAL_EVIDENCE_FILES:       # since 1.2.0 the record pins the whole set
+            q = ev / name
+            if not q.exists():
+                q.write_text(json.dumps({"placeholder": name}) if name.endswith(".json") else f"{name}\n")
         self.ev = ev
         self.manifest = self._roundtrip(bman.qualify(self.manifest, ev, readjudicate=self.stub))
 
@@ -266,8 +270,9 @@ class RefusalOrder(unittest.TestCase):
             finally:
                 f.close()
 
-    def test_a_qualification_planning_rate_must_be_finite_and_positive(self):
-        """--qual-rate-per-hour=inf passed the positive-float check (the owner's P3-2)."""
+    def test_a_qualification_planning_rate_may_only_agree_with_the_declared_bound(self):
+        """`inf` passed the positive-float check (the owner's P3-2), and the flag could widen the
+        deadline the offline verdict has to reconstruct (P2-3). It may now only agree."""
         f = Fixture("S1")
         try:
             for bad, needle in ((float("inf"), "is not a finite positive rate"),
@@ -277,10 +282,22 @@ class RefusalOrder(unittest.TestCase):
                                 (-1.0, "is not a finite positive rate"),
                                 ("2807", "is not a finite positive rate"),
                                 (True, "is not a finite positive rate"),
-                                (None, "B2Q needs --qual-rate-per-hour")):
+                                (1.0, "is not the declared planning bound"),
+                                (rn.QUAL_PLANNING_RATE_PER_HOUR * 10, "is not the declared planning bound")):
                 with self.subTest(rate=bad):
                     self.refuses(f.args(profile=rn.QUALIFICATION, pair_first=None, pair_count=None,
                                         qual_rate_per_hour=bad), needle, profile=rn.QUALIFICATION)
+        finally:
+            f.close()
+
+    def test_the_qualification_deadline_comes_from_the_declared_bound(self):
+        f = Fixture("S1")
+        try:
+            plan = rn.qualification_session_plan(f.manifest, "ab" * 32)
+            self.assertAlmostEqual(plan["session_timeout_s"],
+                                   rn.deadline_s(plan["expected_records"], rn.QUAL_PLANNING_RATE_PER_HOUR))
+            self.assertEqual(plan["deadline_rate"]["rate_per_hour"], rn.QUAL_PLANNING_RATE_PER_HOUR)
+            self.assertEqual(plan["binding"]["b2_manifest_sha256"], "ab" * 32)
         finally:
             f.close()
 
@@ -418,15 +435,20 @@ class SessionAcceptance(unittest.TestCase):
         import test_b2_adjudicate as fx
         cls.fx = fx
         cls.f = Fixture("S3")
-        cls.session_plan = rn.qualification_session_plan(cls.f.manifest)
+        cls.manifest_bytes = bman.render(cls.f.manifest)
+        cls.manifest_sha = hashlib.sha256(cls.manifest_bytes.encode()).hexdigest()
+        cls.session_plan = rn.qualification_session_plan(cls.f.manifest, cls.manifest_sha)
 
     @classmethod
     def tearDownClass(cls):
         cls.f.close()
 
-    def _evidence(self, log: dict, *, audits=None, timeline=None) -> Path:
+    def _evidence(self, log: dict | None, *, audits=None, timeline=None, archive=True) -> Path:
         d = Path(tempfile.mkdtemp(prefix="b2sess_", dir=self.f.d))
-        (d / "run_log.json").write_text(json.dumps(log))
+        if log is not None:
+            (d / "run_log.json").write_text(json.dumps(log))
+        if archive:
+            (d / bman.MANIFEST_AT_RUN).write_text(self.manifest_bytes)
         if audits is not None:
             (d / "audits.json").write_text(json.dumps(audits))
         if timeline is not None:
@@ -460,24 +482,69 @@ class SessionAcceptance(unittest.TestCase):
                 res = self._judge(log, audits={}, timeline={})
                 self.assertNotEqual(res["outcome"], "PASS", res["findings"][:3])
 
-    def test_the_epoch_and_record_count_checks_are_reachable_in_isolation(self):
-        """The branches the record-only fixtures cannot reach, driven directly."""
-        import l5_runner as l5
-        good = {"kind": "COMPLETED", "reason": "done", "last_seq": self.session_plan["expected_records"]}
-        self.assertEqual(l5.outcome_for(good), "PASS")
-        for end, needle in (({"kind": "STOPPED", "reason": "x", "last_seq": 20}, "epoch outcome"),
-                            ({"kind": "PROTOCOL", "reason": "x", "last_seq": 20}, "epoch outcome"),
-                            (dict(good, last_seq=19), "the epoch ended at seq")):
-            with self.subTest(end=end):
-                findings = []
-                base = l5.outcome_for(end)
-                if base != "PASS":
-                    findings.append(f"epoch outcome {base}")
-                if end.get("last_seq") != self.session_plan["expected_records"]:
-                    findings.append(f"the epoch ended at seq {end.get('last_seq')!r}, not the "
-                                    f"{self.session_plan['expected_records']} records this session's "
-                                    f"slice requires")
-                self.assertTrue(any(needle in x for x in findings), findings)
+    def test_the_epoch_deadline_and_count_branches_through_a_real_session(self):
+        """The review asked for these branches to be reached through a VALID instrument fixture,
+        not by copying the production logic into a test. The fixture is the committed B1 session
+        `evidence/b1/b1_17A6_2026-09-08-02` — a real sealed, audited, COMPLETED session — driven
+        through the production `instrument_findings`. Only the B2 record replay is doubled (that
+        log carries no search blocks); every instrument check here is the real one."""
+        src = R / "evidence/b1/b1_17A6_2026-09-08-02"
+        if not (src / "run_log.json").is_file():
+            self.skipTest("the committed B1 session evidence is absent")
+        d = Path(tempfile.mkdtemp(prefix="b2inst_", dir=self.f.d))
+        for name in ("run_log.json", "audits.json", "timeline.json"):
+            shutil.copy(src / name, d / name)
+        log = json.loads((d / "run_log.json").read_text())
+        l6 = log["l6"]
+        base_plan = {"session": l6["session"], "audit_policy": l6["audit_policy"],
+                     "audit_seqs": set(l6["audit_seqs"]), "protocol": l6["protocol"],
+                     "crc_budget": l6["crc_budget"], "bad_frame_budget": l6["bad_frame_budget"],
+                     "flags": l6["flags"], "expected_records": len(log["loop_records"]),
+                     "session_timeout_s": l6["session_timeout_s"]}
+        good = rn.instrument_findings(d, log, base_plan, inst.DEFAULT_ROOT)
+        self.assertIsNone(good["rejected"], good.get("run_log_validation"))
+        self.assertEqual(good["findings"], [], good["findings"][:4])
+        self.assertIsNotNone(good["rate"], "the positive control measured no rate")
+        self.assertEqual(good["audit_policy"], l6["audit_policy"])
+        span = good["rate_report"]["session_span_s"]
+
+        short = rn.instrument_findings(d, log, dict(base_plan, session_timeout_s=1.0), inst.DEFAULT_ROOT)
+        self.assertTrue(any("deadline this session was authorised for" in x for x in short["findings"]),
+                        short["findings"][:4])
+        self.assertGreater(span, 1.0)
+
+        none_deadline = dict(base_plan)
+        none_deadline["session_timeout_s"] = None
+        no_limit = rn.instrument_findings(d, log, none_deadline, inst.DEFAULT_ROOT)
+        self.assertTrue(any("held to no limit" in x for x in no_limit["findings"]), no_limit["findings"][:4])
+
+        miscount = rn.instrument_findings(d, log, dict(base_plan, expected_records=base_plan["expected_records"] - 1),
+                                          inst.DEFAULT_ROOT)
+        self.assertTrue(any("the epoch ended at seq" in x for x in miscount["findings"]), miscount["findings"][:4])
+
+        stopped = copy.deepcopy(log)
+        stopped["session_summary"]["epoch_end"]["kind"] = "STOPPED"
+        (d / "run_log.json").write_text(json.dumps(stopped))
+        bad_epoch = rn.instrument_findings(d, stopped, base_plan, inst.DEFAULT_ROOT)
+        # A COMPLETED session relabelled STOPPED contradicts its own closing steps, so the
+        # instrument's validator refuses it before the epoch-outcome line is reached. Either way
+        # it is not clean — which is the property under test.
+        self.assertTrue(bad_epoch["rejected"] or bad_epoch["findings"],
+                        "a session declared STOPPED passed the instrument layer")
+
+    def test_the_export_seal_is_checked_through_a_real_sealed_session(self):
+        src = R / "evidence/b1/b1_17A6_2026-09-08-02"
+        if not (src / "exports.json").is_file():
+            self.skipTest("the committed B1 session evidence is absent")
+        d = Path(tempfile.mkdtemp(prefix="b2seal_", dir=self.f.d))
+        for name in ("run_log.json", "audits.json", "timeline.json", "exports.json",
+                     "console.log", "console.ts.log"):
+            shutil.copy(src / name, d / name)
+        self.assertEqual(rn.export_seal_findings(d), [], "the real sealed session did not verify")
+        (d / "console.log").write_text((d / "console.log").read_text() + "one more line\n")
+        self.assertTrue(any("does not hash / size" in x for x in rn.export_seal_findings(d)))
+        (d / "exports.json").unlink()
+        self.assertTrue(any("no exports.json" in x for x in rn.export_seal_findings(d)))
 
     def test_a_record_only_log_is_rejected_by_the_instrument_layer_itself(self):
         """The review's fixture is record-complete but is not a session document: the instrument's
@@ -492,11 +559,37 @@ class SessionAcceptance(unittest.TestCase):
         self.assertIsNone(res["audit_policy"])
 
     def test_no_run_log_at_all(self):
-        d = Path(tempfile.mkdtemp(prefix="b2sess_", dir=self.f.d))
+        d = self._evidence(None)
         res = rn.judge_session(d, self.f.manifest, self.session_plan, self.fx.PLAN,
                                self.fx.PREDICTION, None, inst.DEFAULT_ROOT, consts=self.fx.CONSTS)
         self.assertTrue(res["outcome"].startswith("REFUSED"), res["outcome"][:120])
         self.assertIn("no run_log.json", res["outcome"])
+
+    def test_evidence_that_does_not_belong_to_this_invocation(self):
+        """The `manifest` argument used to be decoration: every other check read declarations
+        that agreed with each other and with nothing else (the owner's P2-1 of 2026-09-11)."""
+        log = self.fx.modelled_log(0, self.fx.PAIRS)
+        res = rn.judge_session(self._evidence(log, archive=False), self.f.manifest, self.session_plan,
+                               self.fx.PLAN, self.fx.PREDICTION, None, inst.DEFAULT_ROOT,
+                               consts=self.fx.CONSTS)
+        self.assertNotEqual(res["outcome"], "PASS")
+        self.assertTrue(any("archived no manifest" in x for x in res["findings"]), res["findings"][:3])
+
+        d = self._evidence(log)                      # an archived manifest that is not this one
+        other = json.loads(self.manifest_bytes)
+        other["status"] = "a different manifest"
+        (d / bman.MANIFEST_AT_RUN).write_text(bman.render(other))
+        res = rn.judge_session(d, self.f.manifest, self.session_plan, self.fx.PLAN, self.fx.PREDICTION,
+                               None, inst.DEFAULT_ROOT, consts=self.fx.CONSTS)
+        self.assertNotEqual(res["outcome"], "PASS")
+        self.assertTrue(any("hashes to" in x for x in res["findings"]), res["findings"][:3])
+
+        d = self._evidence(log)                      # the bytes match but the stage does not
+        res = rn.judge_session(d, dict(self.f.manifest, image=dict(self.f.manifest["image"],
+                                                                   sha256="aa" * 32)),
+                               self.session_plan, self.fx.PLAN, self.fx.PREDICTION, None,
+                               inst.DEFAULT_ROOT, consts=self.fx.CONSTS)
+        self.assertTrue(any("archived manifest's image" in x for x in res["findings"]), res["findings"][:3])
 
     def test_the_result_carries_what_the_lifecycle_consumes(self):
         res = self._judge(self.fx.modelled_log(0, self.fx.PAIRS), audits={}, timeline={})

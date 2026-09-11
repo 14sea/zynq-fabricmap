@@ -65,6 +65,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "host"))
 import b1_model as bmodel  # noqa: E402
+import b1_qualification as b1qual  # noqa: E402
 import b1_qualification as b1q  # noqa: E402
 import b2_landscape as bl  # noqa: E402
 import b2_maps as bmaps  # noqa: E402
@@ -77,10 +78,15 @@ MANIFEST = REPO_ROOT / "manifests/b2_manifest.json"
 B1_MANIFEST = REPO_ROOT / "manifests/b1_manifest.json"
 B2_VARIANT = "0x42310001"
 QUAL_SCHEMA = "b2_image_qualification"
-QUAL_SCHEMA_VERSION = "1.1.0"
+QUAL_SCHEMA_VERSION = "1.2.0"          # 1.1.0 -> 1.2.0: the record pins the WHOLE evidence set
 QUAL_SESSION = "B2Q"
 MANIFEST_AT_RUN = "manifest_at_run.json"
-QUAL_EVIDENCE_FILES = ("run_log.json", "adjudication.json", MANIFEST_AT_RUN)          # the EXACT set a record must carry
+# The EXACT set a record must carry. Until 1.1.0 this was three files, so the audits and the
+# timeline a session verdict consumes — and the export seal, the raw console and the two rulings
+# the session was authorised by — could all change without changing the reconstructed record
+# (the owner's P2-2 of 2026-09-11). It is now B1's complete qualification evidence set, one
+# definition for both stages.
+QUAL_EVIDENCE_FILES = b1qual.EVIDENCE_FILES
 QUAL_RECORD_KEYS = ("schema", "schema_version", "session", "evidence_dir", "files", "outcome", "measured_rate_per_hour", "audit_policy", "binding")
 QUAL_BINDING_KEYS = ("session", "image_sha256", "prereg_sha256", "carrier_sha256", "carrier_variant", "map_canonical_json_sha256", "b2_manifest_sha256")
 # the ONLY keys the B2Q qualification licenses to change between manifest_at_run and now

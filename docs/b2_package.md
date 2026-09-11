@@ -1,5 +1,24 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **The session contract's three P2s are corrected; the positive path still is not.**
+> (1) `binding_findings` holds the log's `l6.binding`/`l6.inputs` and the IDENT to what the
+> invocation declares — the **slice** included, which a record count cannot separate when two
+> slices share a length — and `archived_manifest_findings` makes the `manifest` argument
+> load-bearing: the manifest archived beside the evidence must BE this invocation's, by bytes and
+> stage, before anything else is read. `readjudicator` judges against the validated run manifest
+> and refuses without one. (2) The export seal is verified on every standalone re-adjudication,
+> and the qualification record migrates **`b2_image_qualification` 1.1.0 → 1.2.0** to pin B1's
+> complete eleven-file evidence set, so the audits and timeline a verdict consumes — and the
+> seal, console, summary and both rulings — can no longer change without changing the record.
+> (3) The measured span is compared with the deadline the invocation authorised, and B2Q's
+> planning bound is a declared constant with its rule so the offline verdict reconstructs the
+> same limit; `--qual-rate-per-hour` may only agree with it. The epoch/deadline/count branches
+> are now driven through the committed **real B1 session** evidence rather than by copying the
+> production logic into a test. **32 runner tests, B2/B3 361, zero skips.**
+> **Still not done:** no modelled B2/B2Q session, so the complete offline S1 → B2Q → S2 → S3 →
+> fresh-process verification is not demonstrated and this runner has never produced a PASS. See
+> [`evidence/b2/corrections_session_contract_2026_09_11/`](../evidence/b2/corrections_session_contract_2026_09_11/).
+
 > **Runner correction review (`366d96f`): HOLD remains.** The earlier wire lookup,
 > ruling master binding, seed-container validation and both P3s are closed. Session
 > acceptance is only partially corrected: offline invocation/identity binding, export
