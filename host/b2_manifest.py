@@ -73,7 +73,7 @@ import b2_plan as bp  # noqa: E402
 import b2_search as bs  # noqa: E402
 
 SCHEMA = "b2_manifest"
-SCHEMA_VERSION = "0.2.2"
+SCHEMA_VERSION = "0.2.3"          # 0.2.2 -> 0.2.3: the intended BOARD is a frozen input
 MANIFEST = REPO_ROOT / "manifests/b2_manifest.json"
 B1_MANIFEST = REPO_ROOT / "manifests/b1_manifest.json"
 B2_VARIANT = "0x42310001"
@@ -160,6 +160,27 @@ def carrier_lineage(root: Path = REPO_ROOT, b1_manifest: Path = B1_MANIFEST, b1_
                     "it does not qualify this manifest — the B2 image needs its own B2Q session (S2)"}
 
 
+def board_from_lineage(b1_manifest: Path = B1_MANIFEST) -> dict:
+    """The intended board, from the B1 manifest the lineage pins. `boardid` is the authority the
+    rulings are bound to; the rest is recorded so a reviewer can see what was scoped."""
+    b = (json.loads(Path(b1_manifest).read_text()).get("board") or {})
+    if not isinstance(b.get("boardid"), str) or not b["boardid"].strip():
+        raise Refusal("the lineage's B1 manifest names no boardid: this stage has no board authority")
+    return {k: b[k] for k in ("boardid", "role", "part", "idcode") if k in b}
+
+
+def check_board(manifest: dict) -> str:
+    """The frozen board authority. A manifest without one cannot authorise anything: absence is a
+    refusal, never permission to skip the comparison."""
+    b = manifest.get("board")
+    if not isinstance(b, dict):
+        raise Refusal("the manifest pins no board: this stage has no board authority")
+    got = b.get("boardid")
+    if not isinstance(got, str) or not got.strip():
+        raise Refusal(f"the manifest's boardid {got!r} is not a non-empty string")
+    return got
+
+
 def init(image_evidence: Path | None, root: Path = REPO_ROOT, b1_manifest: Path = B1_MANIFEST, gate_report: Path | None = None) -> dict:
     gate_path = gate_report or bp.GATE_REPORT
     gate = json.loads(gate_path.read_text())
@@ -181,6 +202,10 @@ def init(image_evidence: Path | None, root: Path = REPO_ROOT, b1_manifest: Path 
          "status": "S0 INIT — derived from the tree; not frozen; no qualification; no plan; NO BOARD RULING",
          "instrument": {"psoracle_commit": bp.INSTRUMENT_COMMIT},
          "carrier_lineage": carrier_lineage(root, b1_manifest),
+         # The board this stage is scoped to, taken from the VALIDATED lineage and never from a
+         # ruling. Without it two rulings could agree on the wrong board and pass (the owner's
+         # P2 of 2026-09-11); its absence is a refusal, not permission to skip the comparison.
+         "board": board_from_lineage(b1_manifest),
          "carrier": {"bitstream_sha256": json.loads(b1_manifest.read_text())["carrier"]["bitstream_sha256"], "variant": B2_VARIANT},
          "prereg": {"path": "docs/b2_preregistration.md", "sha256": None, "frozen": False},
          "image": image,
@@ -522,6 +547,11 @@ def _check_frozen_inputs(manifest: dict, root: Path, b1_root: Path) -> dict:
     if m1["carrier"]["bitstream_sha256"] != lineage["bitstream_sha256"] or lineage["bitstream_sha256"] != manifest["carrier"]["bitstream_sha256"] \
             or m1["carrier"]["variant"] != manifest["carrier"]["variant"]:
         raise Refusal("lineage: the B1 manifest's carrier is not this manifest's carrier")
+    boardid = check_board(manifest)                      # present, well-formed — and the lineage's
+    if boardid != (m1.get("board") or {}).get("boardid"):
+        raise Refusal(f"board: the manifest is scoped to {boardid!r}, the validated lineage names "
+                      f"{(m1.get('board') or {}).get('boardid')!r}")
+    checks["board"] = boardid
     try:
         b1q.verify(m1, root=b1_root)
     except b1q.QualificationRefusal as exc:

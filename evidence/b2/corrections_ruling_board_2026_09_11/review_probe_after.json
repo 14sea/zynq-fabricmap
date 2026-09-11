@@ -1,0 +1,52 @@
+{
+  "manifest_board": {
+    "boardid": "17A6",
+    "idcode": "0x13722093",
+    "part": "xc7z010clg400-1",
+    "role": "verify"
+  },
+  "lineage_board": "17A6",
+  "both_wrong_board_preflight": "ruling names board 'FFFF', this stage is '17A6'",
+  "producer_expected_board": {
+    "plan": null,
+    "binding": "17A6"
+  },
+  "producer_control": [],
+  "producer_one_wrong": [
+    "the two archived authorisations name different boards: {'whole_of_run': \"'FFFF'\", 'provisioning': \"'17A6'\"}",
+    "ruling_whole_of_run.json: the archived ruling names board 'FFFF', this stage is '17A6'"
+  ],
+  "producer_both_wrong": [
+    "ruling_whole_of_run.json: the archived ruling names board 'FFFF', this stage is '17A6'",
+    "ruling_provisioning.json: the archived ruling names board 'FFFF', this stage is '17A6'"
+  ],
+  "producer_both_wrong_with_explicit_expectation": [
+    "ruling_whole_of_run.json: the archived ruling names board 'FFFF', this stage is '17A6'",
+    "ruling_provisioning.json: the archived ruling names board 'FFFF', this stage is '17A6'"
+  ],
+  "producer_both_wrong_same_nonstring": [
+    "ruling_whole_of_run.json: the archived ruling's boardid [\"FFFF\"] is not a non-empty string",
+    "ruling_provisioning.json: the archived ruling's boardid [\"FFFF\"] is not a non-empty string"
+  ],
+  "offline_expected_board": {
+    "plan": null,
+    "binding": "17A6"
+  },
+  "offline_control": [],
+  "offline_one_wrong": [
+    "the two archived authorisations name different boards: {'whole_of_run': \"'FFFF'\", 'provisioning': \"'17A6'\"}",
+    "ruling_whole_of_run.json: the archived ruling names board 'FFFF', this stage is '17A6'"
+  ],
+  "offline_both_wrong": [
+    "ruling_whole_of_run.json: the archived ruling names board 'FFFF', this stage is '17A6'",
+    "ruling_provisioning.json: the archived ruling names board 'FFFF', this stage is '17A6'"
+  ],
+  "offline_both_wrong_with_explicit_expectation": [
+    "ruling_whole_of_run.json: the archived ruling names board 'FFFF', this stage is '17A6'",
+    "ruling_provisioning.json: the archived ruling names board 'FFFF', this stage is '17A6'"
+  ],
+  "offline_both_wrong_same_nonstring": [
+    "ruling_whole_of_run.json: the archived ruling's boardid [\"FFFF\"] is not a non-empty string",
+    "ruling_provisioning.json: the archived ruling's boardid [\"FFFF\"] is not a non-empty string"
+  ]
+}

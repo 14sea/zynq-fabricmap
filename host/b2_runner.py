@@ -172,8 +172,14 @@ def parse_ruling(path: Path, text: str, manifest: dict) -> dict:
             raise Refusal(f"ruling {path} lacks {f!r}")
     if r["ruling"] != text:
         raise Refusal(f"ruling text {r['ruling']!r} != {text!r}")
-    want_board = (manifest.get("board") or {}).get("boardid")
-    if want_board is not None and r["boardid"] != want_board:
+    # The expected board is a FROZEN input, never derived from a ruling, and its absence is a
+    # refusal — two rulings agreeing on the wrong board used to pass (the owner's P2 of
+    # 2026-09-11).
+    try:
+        want_board = bman.check_board(manifest)
+    except bman.Refusal as exc:
+        raise Refusal(f"ruling {path}: {exc}") from None
+    if r["boardid"] != want_board:
         raise Refusal(f"ruling names board {r['boardid']!r}, this stage is {want_board!r}")
     return r
 
@@ -268,7 +274,7 @@ def qualification_binding(manifest: dict, manifest_sha256: str | None) -> dict:
             "fitness_id": manifest["experiment"]["fitness"], "budget_per_arm": QUAL_BUDGET,
             "pair_first": 0, "pair_count": QUAL_PAIRS,
             "carrier_sha256": manifest["carrier"]["bitstream_sha256"], "carrier_variant": B2_VARIANT,
-            "universe_sha256": manifest["universe"]["sha256"]}
+            "universe_sha256": manifest["universe"]["sha256"], "boardid": bman.check_board(manifest)}
 
 
 def binding_findings(log: dict, session_plan: dict, manifest: dict | None = None) -> list[str]:
@@ -329,7 +335,11 @@ def archived_ruling_findings(evidence: Path, session_plan: dict) -> list[str]:
              "provisioning": PROVISION_RULING_TEXT}
     f: list[str] = []
     boards: dict[str, object] = {}
-    want_board = (session_plan.get("boardid") or (session_plan.get("binding") or {}).get("boardid"))
+    want_board = (session_plan.get("binding") or {}).get("boardid")
+    if not isinstance(want_board, str) or not want_board.strip():
+        f.append(f"this session declares no board authority ({want_board!r}): the archived "
+                 f"authorisations cannot be rebound to one, and agreeing with each other is not enough")
+        want_board = None
     for key, name in bq.RULING_FILES.items():
         path = Path(evidence) / name
         if not path.is_file():
@@ -369,7 +379,10 @@ def archived_ruling_findings(evidence: Path, session_plan: dict) -> list[str]:
                  f"{ {k: _short(v) for k, v in boards.items()} }")
     if want_board is not None:
         for key, got in boards.items():
-            if got != want_board:
+            if not isinstance(got, str) or not got.strip():
+                f.append(f"{bq.RULING_FILES[key]}: the archived ruling's boardid {_short(got)} is not "
+                         f"a non-empty string")
+            elif got != want_board:
                 f.append(f"{bq.RULING_FILES[key]}: the archived ruling names board {_short(got)}, "
                          f"this stage is {_short(want_board)}")
     return f
@@ -621,6 +634,10 @@ def preflight(a, profile: dict = SEARCH, pins_verify=verify_pins, readjudicate=N
         raise Refusal("the manifest is not a b2_manifest document")
     manifest_sha = _sha(manifest_path)
 
+    try:
+        board = bman.check_board(manifest)        # the frozen authority, before any ruling is read
+    except bman.Refusal as exc:
+        raise Refusal(str(exc)) from None
     prereg = manifest.get("prereg") or {}
     if not prereg.get("sha256") or not prereg.get("frozen"):
         raise Refusal("B2's preregistration is not frozen (S1): host-only until the owner freezes it")
@@ -828,7 +845,7 @@ def preflight(a, profile: dict = SEARCH, pins_verify=verify_pins, readjudicate=N
                     "fitness_id": manifest["experiment"]["fitness"], "budget_per_arm": budget,
                     "pair_first": first, "pair_count": count, "protocol": wire,
                     "carrier_sha256": manifest["carrier"]["bitstream_sha256"], "carrier_variant": B2_VARIANT,
-                    "universe_sha256": manifest["universe"]["sha256"]},
+                    "universe_sha256": manifest["universe"]["sha256"], "boardid": board},
     }
     if profile is QUALIFICATION:
         # The producer and the offline verdict must judge the SAME session: the plan this

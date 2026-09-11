@@ -300,6 +300,36 @@ class RefusalOrder(unittest.TestCase):
         finally:
             f.close()
 
+    def test_a_live_ruling_must_name_the_frozen_board(self):
+        for stage, profile, first, count in (("S3", rn.SEARCH, 0, 4), ("S1", rn.QUALIFICATION, None, None)):
+            f = Fixture(stage)
+            try:
+                want = f.plan_doc["seed_derivation"]["master_seed"] if profile is rn.SEARCH \
+                    else rn.qualification_master(f.manifest)
+                bound = dict(ruling=profile["ruling_text"], session=profile["session"],
+                             prereg_sha256=f.manifest["prereg"]["sha256"],
+                             image_sha256=f.manifest["image"]["sha256"],
+                             b2_manifest_sha256=sha(f.path()), master_seed=want)
+                with self.subTest(profile=profile["session"]):
+                    wrong = f.ruling("bd", **bound)
+                    wrong.write_text(json.dumps(dict(json.loads(wrong.read_text()), boardid="FFFF")))
+                    self.refuses(f.args(profile=profile, pair_first=first, pair_count=count,
+                                        ruling=wrong), "names board", profile=profile)
+            finally:
+                f.close()
+
+    def test_a_manifest_without_a_board_authority_is_refused(self):
+        f = Fixture("S3")
+        try:
+            for bad in (None, {}, {"boardid": ""}, {"boardid": ["17A6"]}, {"boardid": 17}):
+                with self.subTest(board=bad):
+                    f.manifest["board"] = bad
+                    self.refuses(f.args(), "board")
+            f.manifest.pop("board")
+            self.refuses(f.args(), "pins no board")
+        finally:
+            f.close()
+
     def test_the_rulings_must_exist_be_this_text_and_be_bound(self):
         f = Fixture("S3")
         try:
@@ -770,6 +800,33 @@ class ArchivedRulings(unittest.TestCase):
         with self.assertRaises(m.Refusal) as cm:
             m.reconstruct_qualification_record(d)
         self.assertIn("not a readable ruling archive", str(cm.exception))
+
+    def test_the_expected_board_is_required_and_compared(self):
+        """Two archives agreeing on the WRONG board used to pass, because no expected board was
+        ever established (the owner's P2 of 2026-09-11). The authority is the frozen manifest's,
+        never a ruling's."""
+        self.assertEqual(self.plan["binding"]["boardid"], bman.check_board(self.f.manifest))
+        both_wrong = (self._body("whole_of_run"), self._body("provisioning"))
+        for body in both_wrong:
+            body["boardid"] = "FFFF"
+        findings = rn.archived_ruling_findings(self._dir(*both_wrong), self.plan)
+        self.assertEqual(len([x for x in findings if "names board" in x]), 2, findings)
+        for bad in (None, "", "   ", ["17A6"], 17, {"boardid": "17A6"}):
+            with self.subTest(boardid=bad):
+                pair = (self._body("whole_of_run"), self._body("provisioning"))
+                for body in pair:
+                    body["boardid"] = bad
+                findings = rn.archived_ruling_findings(self._dir(*pair), self.plan)
+                self.assertTrue(findings, f"a boardid of {bad!r} was accepted")
+
+    def test_a_session_that_declares_no_board_authority_is_refused(self):
+        plan = copy.deepcopy(self.plan)
+        plan["binding"].pop("boardid")
+        findings = rn.archived_ruling_findings(self._dir(), plan)
+        self.assertTrue(any("declares no board authority" in x for x in findings), findings)
+        plan["binding"]["boardid"] = ""
+        self.assertTrue(any("declares no board authority" in x
+                            for x in rn.archived_ruling_findings(self._dir(), plan)))
 
     def test_a_missing_archive(self):
         d = self._dir()
