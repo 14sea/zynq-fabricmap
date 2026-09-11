@@ -1,0 +1,57 @@
+{
+  "tool": "b2_adjudicate.py/0.1.0",
+  "session": "B2",
+  "outcome": "KILL: session 1 record 2004: the PL's additive scores [17, 21, 20, 22, 23, 20] are not the additive count [23, 21, 20, 22, 23, 20] of the readout it served; session 1 record 2004: fitness 8 is not 0, the train F1 of the readout the board served for it",
+  "findings": [
+    "session 1 record 2004 (pair 5 arm A): the block's fitness is 8, the replay's is 0"
+  ],
+  "kills": [
+    "session 1 record 2004: the PL's additive scores [17, 21, 20, 22, 23, 20] are not the additive count [23, 21, 20, 22, 23, 20] of the readout it served",
+    "session 1 record 2004: fitness 8 is not 0, the train F1 of the readout the board served for it"
+  ],
+  "not_checked_here": [
+    "manifest pins",
+    "carrier qualification",
+    "instrument rate / deadline / CRC budgets",
+    "evidence exports",
+    "ruling binding"
+  ],
+  "sessions": [
+    {
+      "index": 0,
+      "pair_first": 0,
+      "pair_count": 4,
+      "records": 4810
+    },
+    {
+      "index": 1,
+      "pair_first": 4,
+      "pair_count": 4,
+      "records": 4810
+    },
+    {
+      "index": 2,
+      "pair_first": 8,
+      "pair_count": 1,
+      "records": 1204
+    }
+  ],
+  "measurement": {
+    "records_checked": 10818,
+    "readouts_served": 10824
+  },
+  "replay": {
+    "records_replayed": 6810,
+    "pairs": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ]
+  }
+}

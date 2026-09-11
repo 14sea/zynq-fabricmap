@@ -1,5 +1,16 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Adjudicator correction review PASS (`0d294ea`).** The blocking input-validation P2
+> is closed. Both original reproducers pass correction acceptance; 135 additional invalid
+> cases are refused, and a valid, self-consistent but disagreeing prediction receives HOLD.
+> The independent B2/B3 suite passes 315 tests with zero skips; full-size model replay
+> still matches the preregistered numbers. One nonblocking P3 remains on the optional
+> redundant `delta_B_minus_A` field's integer type. See
+> [the acceptance review](b2_adjudicate_domain_review_2026_09_11.md).
+> The host batch may proceed to push and `b2_runner` implementation. The three remaining
+> tools and complete §7 review are still required; no freeze/B2Q/board clearance is granted.
+> This review performed no commit, push or board action. Earlier HOLD blocks are historical.
+
 > **The adjudicator's input-validation P2 is corrected too.** (A) `check_plan` establishes that
 > `fitness` is a string **before** the membership lookup, and every consumed field now follows
 > type → domain → use; the CLI's `fitness=[]` case exits 1 with a named refusal instead of

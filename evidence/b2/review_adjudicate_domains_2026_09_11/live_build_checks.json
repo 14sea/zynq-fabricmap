@@ -1,0 +1,24 @@
+{
+  "reviewed_head": "0d294ea087c9e106fd55629dfabccaab76e26d0a",
+  "evidence_source_head": "6cfa8564a2f6b80111f34ae2456be90e1eaf0394",
+  "image": {
+    "path": "firmware/b2/bsp/out/b2_app.bin",
+    "sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+    "bytes": 114708,
+    "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc",
+    "load_address": "0x02000000",
+    "entry": "go 0x2000000"
+  },
+  "live_bsp_inputs_equal_evidence": true,
+  "all_source_hashes_match_live_and_recorded_commit": true,
+  "source_inventory_equals_required_inputs": true,
+  "compiler_path_and_hash_match_build_configuration": true,
+  "two_bin_and_elf_digests_match_actual_files": true,
+  "translation_units": 47,
+  "headers": 86,
+  "runtime_objects": 7,
+  "b1_pins_verify": true,
+  "b1_manifest_sha256": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+  "findings": [],
+  "arm_rebuild_performed": false
+}
