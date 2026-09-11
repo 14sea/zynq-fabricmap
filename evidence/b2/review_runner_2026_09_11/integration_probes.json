@@ -1,0 +1,127 @@
+{
+  "B2_callback_baseline": {
+    "outcome": "PASS",
+    "findings": [],
+    "not_checked_here": [
+      "manifest pins",
+      "carrier qualification",
+      "instrument rate / deadline / CRC budgets",
+      "evidence exports",
+      "ruling binding"
+    ]
+  },
+  "B2_callback_STOPPED": {
+    "outcome": "PASS",
+    "findings": [],
+    "not_checked_here": [
+      "manifest pins",
+      "carrier qualification",
+      "instrument rate / deadline / CRC budgets",
+      "evidence exports",
+      "ruling binding"
+    ]
+  },
+  "B2_callback_PROTOCOL": {
+    "outcome": "PASS",
+    "findings": [],
+    "not_checked_here": [
+      "manifest pins",
+      "carrier qualification",
+      "instrument rate / deadline / CRC budgets",
+      "evidence exports",
+      "ruling binding"
+    ]
+  },
+  "B2_callback_missing_audits": {
+    "outcome": "PASS",
+    "findings": [],
+    "not_checked_here": [
+      "manifest pins",
+      "carrier qualification",
+      "instrument rate / deadline / CRC budgets",
+      "evidence exports",
+      "ruling binding"
+    ]
+  },
+  "B2Q_seeds": {
+    "master": 505806527,
+    "qualification": [
+      [
+        3890725659,
+        1378470437
+      ]
+    ],
+    "reference_default": [
+      [
+        3890725659,
+        1378470437
+      ]
+    ],
+    "equal": true
+  },
+  "B2Q_real_readjudicator": {
+    "outcome": "PASS",
+    "session": "B2",
+    "measured_rate_per_hour": null,
+    "audit_policy": null,
+    "pair_seeds": [
+      [
+        3890725659,
+        1378470437
+      ]
+    ]
+  },
+  "B2Q_session_callback": {
+    "tool": "b2_adjudicate.py/0.1.0",
+    "scope": "session",
+    "outcome": "NOT ADJUDICATED HERE: B2Q precedes the plan; its record is reconstructed at S2",
+    "findings": [],
+    "kills": []
+  },
+  "B2Q_qualify": "the manifest's qualified flag disagrees with its evidence: the re-adjudication's measured rate / audit policy disagree with the evidence's adjudication",
+  "preflight_actual_instrument_shape": {
+    "exception": "KeyError",
+    "message": "'wire'"
+  },
+  "B2Q_preflight_control": {
+    "records": 20,
+    "frame_records": 22,
+    "frames": 579,
+    "crc_budget": 3
+  },
+  "B2Q_correct_frame_count": {
+    "n": 18,
+    "records": 20,
+    "audited_records": 20,
+    "protocol": "rel-v4",
+    "by_type": {
+      "IDENT": 1,
+      "CLOSE": 1,
+      "TERM": 1,
+      "SIGNREQ": 20,
+      "HB": 320,
+      "REC": 20,
+      "AUDIT_READY": 20,
+      "AUDIT": 160
+    },
+    "total": 543
+  },
+  "B2Q_wrong_ruling_master": "ACCEPTED",
+  "B2Q_infinite_rate": {
+    "accepted": true,
+    "deadline_s": 600.0
+  },
+  "bad_seeds_7": {
+    "exception": "TypeError",
+    "message": "'int' object is not iterable"
+  },
+  "bad_seeds_[None]": {
+    "exception": "TypeError",
+    "message": "'NoneType' object is not iterable"
+  },
+  "bad_seeds_[1]": {
+    "exception": "TypeError",
+    "message": "'int' object is not iterable"
+  },
+  "head": "fb71b00939983c26d279e872628e85ac5fa566b8"
+}

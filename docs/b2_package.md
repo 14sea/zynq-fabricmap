@@ -1,5 +1,14 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Runner integration review HOLD (`fb71b00`).** The redundant-delta P3 is closed;
+> the independent B2/B3 suite passes 346 tests with zero skips. The runner still needs
+> session-level acceptance around record replay, a working B2Q result/calibration chain,
+> a successful preflight against the actual instrument schema, B2Q ruling master binding
+> and safe validation of the new explicit seed input. Two frame/rate boundary corrections
+> are also recorded. See [the runner review](b2_runner_review_2026_09_11.md) for the
+> independent offline counterexamples and their test-double limits. Keep the runner batch
+> under review before push. No board clearance, commit or push was performed here.
+
 > **Host tool 3 of 5 written: `host/b2_runner.py`** (with `b1_runner.py` as the template), plus
 > two additions to the accepted adjudicator that it needs: a **session scope** (a session of a
 > longer run is judged as a session and never claims the run's pooled primary) and an **explicit

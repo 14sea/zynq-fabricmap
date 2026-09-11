@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/test/zynq_fabricmap/evidence/b2/review_adjudicate_domains_2026_09_11/reproduce_domains.py", line 94, in <module>
+    assert not out['failed'],out['failed']
+           ^^^^^^^^^^^^^^^^^
+AssertionError: [{'case': 'redundant_delta_bool', 'outcome': "REFUSED: the prediction's pair 0: delta_B_minus_A False is not an integer", 'has_primary': False, 'expected': 'PASS', 'ok': False}, {'case': 'redundant_delta_float', 'outcome': "REFUSED: the prediction's pair 0: delta_B_minus_A 0.0 is not an integer", 'has_primary': False, 'expected': 'PASS', 'ok': False}]
