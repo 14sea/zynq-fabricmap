@@ -1,5 +1,17 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **The ruling's board authority is now a frozen input.** Two rulings agreeing on the WRONG board
+> used to pass: the manifest recorded no board, `parse_ruling` compared one only when the manifest
+> declared one, neither session plan supplied one, and the archive check therefore only required
+> the two archives to agree. The board is now taken from the validated lineage at S0 (manifest
+> schema **0.2.2 → 0.2.3**), re-verified against that lineage on every `verify`, established
+> before any ruling is read, carried in both session contracts' binding, and compared with each
+> live and archived ruling — and its **absence is a refusal**, never permission to skip. Malformed
+> boardid types and domains are refused too. **50 runner tests, B2/B3 381, zero skips.**
+> **Still not done:** no modelled B2/B2Q session, so the complete offline S1 → B2Q → S2 → S3 →
+> fresh-process verification is not demonstrated and this runner has never produced a PASS. See
+> [`evidence/b2/corrections_ruling_board_2026_09_11/`](../evidence/b2/corrections_ruling_board_2026_09_11/).
+
 > **Ruling board authority review (`39125fb`): HOLD remains.** The identity/input
 > contract and archive/summary checks are implemented. One authorization P2 remains:
 > S0 declares no board, neither session-plan constructor supplies an expected board,
