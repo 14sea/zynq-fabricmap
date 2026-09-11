@@ -1,0 +1,108 @@
+{
+  "head": "1b3995107088a48bbda2b380177f1a44d0864687",
+  "common_validation": true,
+  "synthetic_fixture": true,
+  "cases": {
+    "baseline": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      }
+    },
+    "log_not_object": {
+      "exception": "AttributeError",
+      "message": "'list' object has no attribute 'get'"
+    },
+    "seq_list": {
+      "exception": "TypeError",
+      "message": "unhashable type: 'list'"
+    },
+    "seq_dict": {
+      "exception": "TypeError",
+      "message": "unhashable type: 'dict'"
+    },
+    "records_integer": {
+      "exception": "TypeError",
+      "message": "'int' object is not iterable"
+    },
+    "map_null": {
+      "exception": "TypeError",
+      "message": "'NoneType' object is not subscriptable"
+    },
+    "pairs_string": {
+      "exception": "TypeError",
+      "message": "'<' not supported between instances of 'int' and 'str'"
+    },
+    "prediction_pairs_missing": {
+      "exception": "KeyError",
+      "message": "'pairs'"
+    },
+    "prediction_pairs_null": {
+      "exception": "TypeError",
+      "message": "'NoneType' object is not iterable"
+    },
+    "prediction_pair_runs_null": {
+      "exception": "AttributeError",
+      "message": "'NoneType' object has no attribute 'get'"
+    },
+    "valid_record_bad_digest": {
+      "outcome": "HOLD: session 0 record 3 (pair 0 arm A): the block's state_sha256 is '0000000000000000000000000000000000000000000000000000000000000000', the replay's is '8d6dba9bbc9053d658b5a076dbaf00024ec85c524d777970fecd933abfc8e9ef'",
+      "findings": [
+        "session 0 record 3 (pair 0 arm A): the block's state_sha256 is '0000000000000000000000000000000000000000000000000000000000000000', the replay's is '8d6dba9bbc9053d658b5a076dbaf00024ec85c524d777970fecd933abfc8e9ef'"
+      ],
+      "kills": []
+    },
+    "opening_nonzero_genome": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      }
+    },
+    "closing_nonzero_genome": {
+      "outcome": "PASS",
+      "findings": [],
+      "kills": [],
+      "primary": {
+        "positives": 1,
+        "negatives": 0,
+        "ties": 2,
+        "sign_test_p": 0.5,
+        "alpha": 0.05,
+        "verdict": "NOT SUPPORTED"
+      }
+    },
+    "measurement_contradiction_then_bad_seq": {
+      "exception": "TypeError",
+      "message": "unhashable type: 'list'"
+    },
+    "upstream_record_validator_seq_list": {
+      "findings": [
+        "common envelope: record []: sign_reply seq differs from the loop_record's",
+        "session: record 3 carries seq []"
+      ]
+    },
+    "cli_seq_list": {
+      "returncode": 1,
+      "result_written": false,
+      "stderr_tail": [
+        "    m.readouts[(s.index, seq)] = tables",
+        "    ~~~~~~~~~~^^^^^^^^^^^^^^^^",
+        "TypeError: unhashable type: 'list'"
+      ]
+    }
+  }
+}

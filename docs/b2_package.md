@@ -1,5 +1,14 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Adjudicator review HOLD (`1b39951`).** The prior digest-format P3 is closed and
+> 286 B2/B3 tests pass with zero skips. The full-size model run reproduces the prediction.
+> Two P2 findings remain: malformed inputs can raise after record validation, and
+> nonblank opening/closing baseline genomes still pass replay. See
+> [the adjudicator review](b2_adjudicate_review_2026_09_11.md) and its independent probes.
+> Correct these before accepting/pushing the new adjudicator commit. The demonstrated
+> 4+4+1 split is a planning scenario; the committed plan remains UNDETERMINED pending B2Q.
+> This review performs no push or board action. Earlier approvals are unchanged.
+
 > **Host tool 2 of 5 written: `host/b2_adjudicate.py`.** It consumes a run's sessions in
 > session order and, per record, recomputes the fitness **from the readout that record
 > served** (train F1, or the holdout F1 of a champion's re-measurement) and checks the PL's

@@ -1,0 +1,78 @@
+{
+  "deltas": [
+    2,
+    5,
+    6,
+    3,
+    4,
+    6,
+    1,
+    -2,
+    5
+  ],
+  "findings": [],
+  "fitness_sequence_length": 10818,
+  "fitness_sequence_sha256": "0b81b34369b73ebc24ef604014bae245cc6e0c67c176bc5988fbdbd50ee95f37",
+  "inputs": [
+    "/tmp/b2_adjudicate_full_run/run_log_0.json",
+    "/tmp/b2_adjudicate_full_run/run_log_1.json",
+    "/tmp/b2_adjudicate_full_run/run_log_2.json"
+  ],
+  "kills": [],
+  "measurement": {
+    "readouts_served": 10824,
+    "records_checked": 10818
+  },
+  "not_checked_here": [
+    "manifest pins",
+    "carrier qualification",
+    "instrument rate / deadline / CRC budgets",
+    "evidence exports",
+    "ruling binding"
+  ],
+  "outcome": "PASS",
+  "primary": {
+    "alpha": 0.05,
+    "negatives": 1,
+    "positives": 8,
+    "sign_test_p": 0.01953125,
+    "ties": 0,
+    "verdict": "map-guided > random-safe SUPPORTED"
+  },
+  "replay": {
+    "pairs": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "records_replayed": 10818
+  },
+  "session": "B2",
+  "sessions": [
+    {
+      "index": 0,
+      "pair_count": 4,
+      "pair_first": 0,
+      "records": 4810
+    },
+    {
+      "index": 1,
+      "pair_count": 4,
+      "pair_first": 4,
+      "records": 4810
+    },
+    {
+      "index": 2,
+      "pair_count": 1,
+      "pair_first": 8,
+      "records": 1204
+    }
+  ],
+  "tool": "b2_adjudicate.py/0.1.0"
+}
