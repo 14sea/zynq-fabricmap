@@ -1,5 +1,13 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Record-type correction review PASS (`45791a7`).** The extension-type P2 is closed:
+> the original four cases and 330 independent negative cases are rejected; the B2/B3
+> suite passes 243 tests with zero skips. One nonblocking P3 remains: a trailing newline
+> passes the `state_sha256` format check. See [the correction review](b2_records_types_review_2026_09_11.md).
+> The reviewed host-work batch may advance to push and adjudicator implementation;
+> this review performs no push or board action. The four remaining host tools and the
+> complete §7 image review are still required. Earlier status blocks are historical.
+
 > **Runtime freshness correction PASS (`fe69f95`, verified at `aced532`).**
 > The cache P2 is closed and the build-guard review HOLD is lifted. Current image
 > `d164cd1d…` and its build inputs verify. The independent B2/B3 suite passes 232 tests,
