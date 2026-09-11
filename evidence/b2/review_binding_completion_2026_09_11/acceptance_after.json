@@ -1,0 +1,103 @@
+{
+  "deadline_control": {
+    "outcome": "HOLD: evidence seal: the evidence carries no exports.json: the session's exports were not recorded; binding: the log's b2_manifest_sha256 is null, this invocation's is '20b18ce21625e6de6d9799ecc75a78c31b85ae49192105e022d444a98d61c156'; IDENT budget_per_arm: None != 9; the session spanned 14.3 s, past the 1.0 s deadline this session was authorised for",
+    "findings": [
+      "evidence seal: the evidence carries no exports.json: the session's exports were not recorded",
+      "binding: the log's b2_manifest_sha256 is null, this invocation's is '20b18ce21625e6de6d9799ecc75a78c31b85ae49192105e022d444a98d61c156'",
+      "IDENT budget_per_arm: None != 9",
+      "the session spanned 14.3 s, past the 1.0 s deadline this session was authorised for"
+    ],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting"
+  },
+  "no_l6_binding": {
+    "outcome": "HOLD: evidence seal: the evidence carries no exports.json: the session's exports were not recorded; the run log's l6 carries no binding block; the session spanned 14.3 s, past the 1.0 s deadline this session was authorised for",
+    "findings": [
+      "evidence seal: the evidence carries no exports.json: the session's exports were not recorded",
+      "the run log's l6 carries no binding block",
+      "the session spanned 14.3 s, past the 1.0 s deadline this session was authorised for"
+    ],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting"
+  },
+  "wrong_l6_image": {
+    "outcome": "HOLD: evidence seal: the evidence carries no exports.json: the session's exports were not recorded; binding: the log's b2_manifest_sha256 is null, this invocation's is '20b18ce21625e6de6d9799ecc75a78c31b85ae49192105e022d444a98d61c156'; binding: the log's image_sha256 is '0000000000000000000000000000000000000000000000000000000000000000', this invocation's is '300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb'; IDENT budget_per_arm: None != 9; the session spanned 14.3 s, past the 1.0 s deadline this session was authorised for",
+    "findings": [
+      "evidence seal: the evidence carries no exports.json: the session's exports were not recorded",
+      "binding: the log's b2_manifest_sha256 is null, this invocation's is '20b18ce21625e6de6d9799ecc75a78c31b85ae49192105e022d444a98d61c156'",
+      "binding: the log's image_sha256 is '0000000000000000000000000000000000000000000000000000000000000000', this invocation's is '300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb'",
+      "IDENT budget_per_arm: None != 9",
+      "the session spanned 14.3 s, past the 1.0 s deadline this session was authorised for"
+    ],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting"
+  },
+  "wrong_l6_manifest": {
+    "outcome": "HOLD: evidence seal: the evidence carries no exports.json: the session's exports were not recorded; binding: the log's b2_manifest_sha256 is '0000000000000000000000000000000000000000000000000000000000000000', this invocation's is '20b18ce21625e6de6d9799ecc75a78c31b85ae49192105e022d444a98d61c156'; IDENT budget_per_arm: None != 9; the session spanned 14.3 s, past the 1.0 s deadline this session was authorised for",
+    "findings": [
+      "evidence seal: the evidence carries no exports.json: the session's exports were not recorded",
+      "binding: the log's b2_manifest_sha256 is '0000000000000000000000000000000000000000000000000000000000000000', this invocation's is '20b18ce21625e6de6d9799ecc75a78c31b85ae49192105e022d444a98d61c156'",
+      "IDENT budget_per_arm: None != 9",
+      "the session spanned 14.3 s, past the 1.0 s deadline this session was authorised for"
+    ],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting"
+  },
+  "no_l6": {
+    "outcome": "HOLD: evidence seal: the evidence carries no exports.json: the session's exports were not recorded; the run log carries no l6 block: the session declared no binding at all; the session spanned 14.3 s, past the 1.0 s deadline this session was authorised for",
+    "findings": [
+      "evidence seal: the evidence carries no exports.json: the session's exports were not recorded",
+      "the run log carries no l6 block: the session declared no binding at all",
+      "the session spanned 14.3 s, past the 1.0 s deadline this session was authorised for"
+    ],
+    "measured_rate_per_hour": 2777.5642860104945,
+    "audit_policy": "all-self-reporting"
+  },
+  "different_manifest_argument": {
+    "outcome": "HOLD: the archived manifest's image is not this invocation's",
+    "findings": [
+      "the archived manifest's image is not this invocation's"
+    ],
+    "measured_rate_per_hour": null,
+    "audit_policy": null
+  },
+  "no_export_seal": {
+    "findings": [
+      "evidence seal: the evidence carries no exports.json: the session's exports were not recorded"
+    ]
+  },
+  "same_length_wrong_slice": {
+    "findings": [
+      "binding: the log's b2_manifest_sha256 is null, this invocation's is '20b18ce21625e6de6d9799ecc75a78c31b85ae49192105e022d444a98d61c156'",
+      "slice: the IDENT's pair_first is 4, this session's is 0",
+      "IDENT budget_per_arm: None != 9"
+    ]
+  },
+  "qualification_record_membership": {
+    "schema_version": "1.2.0",
+    "files": [
+      "adjudication.json",
+      "audits.json",
+      "console.log",
+      "console.ts.log",
+      "exports.json",
+      "manifest_at_run.json",
+      "ruling_provisioning.json",
+      "ruling_whole_of_run.json",
+      "run_log.json",
+      "summary.json",
+      "timeline.json"
+    ],
+    "incomplete_evidence_refused": "evidence file audits.json is absent",
+    "unchanged_after_file_change": {
+      "audits.json": false,
+      "timeline.json": false,
+      "exports.json": false,
+      "console.log": false,
+      "console.ts.log": false,
+      "summary.json": false,
+      "ruling_whole_of_run.json": false,
+      "ruling_provisioning.json": false
+    }
+  }
+}

@@ -1,5 +1,15 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Binding completion review (`4d135be`): HOLD remains.** Export-seal validation,
+> eleven-file qualification byte coverage and deadline comparison are implemented.
+> Offline binding still omits carrier/universe identity and B2Q inputs; archived ruling
+> and final-summary contents are hashed without semantic validation. See
+> [the binding review](b2_binding_completion_review_2026_09_11.md) for independent
+> positive/negative layer controls and their explicit limits. The complete modelled
+> B2/B2Q producer-to-lifecycle positive flow remains required before accepting/pushing
+> the runner batch. No production, image, manifest, ruling or board action was taken.
+> Earlier implementation and review banners below are historical.
+
 > **The session contract's three P2s are corrected; the positive path still is not.**
 > (1) `binding_findings` holds the log's `l6.binding`/`l6.inputs` and the IDENT to what the
 > invocation declares — the **slice** included, which a record count cannot separate when two

@@ -1,0 +1,94 @@
+{
+  "transport_control": {
+    "outcome": "PASS",
+    "findings": [],
+    "binding_checked": true
+  },
+  "ident_carrier": {
+    "outcome": "PASS",
+    "findings": [],
+    "binding_checked": true
+  },
+  "ident_universe": {
+    "outcome": "PASS",
+    "findings": [],
+    "binding_checked": true
+  },
+  "missing_inputs": {
+    "outcome": "PASS",
+    "findings": [],
+    "binding_checked": true
+  },
+  "wrong_inputs": {
+    "outcome": "PASS",
+    "findings": [],
+    "binding_checked": true
+  },
+  "wrong_binding_image_control": {
+    "outcome": "HOLD: binding: the log's image_sha256 is '0000000000000000000000000000000000000000000000000000000000000000', this invocation's is 'd164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5'",
+    "findings": [
+      "binding: the log's image_sha256 is '0000000000000000000000000000000000000000000000000000000000000000', this invocation's is 'd164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5'"
+    ],
+    "binding_checked": false
+  },
+  "wrong_slice_control": {
+    "outcome": "HOLD: slice: the IDENT's pair_first is 1, this session's is 0",
+    "findings": [
+      "slice: the IDENT's pair_first is 1, this session's is 0"
+    ],
+    "binding_checked": false
+  },
+  "whole_not_json": {
+    "outcome": "PASS",
+    "findings": [],
+    "binding_checked": true
+  },
+  "provision_not_json": {
+    "outcome": "PASS",
+    "findings": [],
+    "binding_checked": true
+  },
+  "summary_not_json": {
+    "outcome": "PASS",
+    "findings": [],
+    "binding_checked": true
+  },
+  "whole_wrong_master_seed": {
+    "outcome": "PASS",
+    "findings": [],
+    "binding_checked": true
+  },
+  "whole_wrong_image_sha256": {
+    "outcome": "PASS",
+    "findings": [],
+    "binding_checked": true
+  },
+  "whole_wrong_boardid": {
+    "outcome": "PASS",
+    "findings": [],
+    "binding_checked": true
+  },
+  "whole_wrong_session": {
+    "outcome": "PASS",
+    "findings": [],
+    "binding_checked": true
+  },
+  "qualification_plan_has_inputs": false,
+  "invalid_archive_record": {
+    "record_created": true,
+    "file_count": 11,
+    "archive_parser_refuses": true
+  },
+  "real_replay_control": {
+    "outcome": "PASS",
+    "findings": []
+  },
+  "real_replay_carrier_sha256": {
+    "outcome": "PASS",
+    "findings": []
+  },
+  "real_replay_universe_sha256": {
+    "outcome": "PASS",
+    "findings": []
+  }
+}
