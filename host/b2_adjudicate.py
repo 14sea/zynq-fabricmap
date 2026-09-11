@@ -2,7 +2,8 @@
 """B2 — adjudication of a run's sessions: the host's recomputation from the SERVED readouts
 (pure; re-runnable; nothing here touches a board).
 
-    b2_adjudicate.py --run-log <run_log.json> [--run-log …] [--plan …] [--prediction …] [--out …]
+    b2_adjudicate.py --run-log <run_log.json> [--run-log …] [--plan …] [--prediction …]
+                     [--scope run|session] [--out …]
 
 The preregistration's acceptance conditions (§4) that concern the records themselves, each a
 named finding. The sessions are consumed **in session order**, and inside a session in seq
@@ -691,13 +692,22 @@ def deltas_of(arms: dict, pairs: list[int]) -> list[int]:
 
 
 def adjudicate(logs: list[dict], plan: dict, prediction: dict, consts: dict | None = None,
-               common: bool = True) -> dict:
+               common: bool = True, scope: str = "run") -> dict:
     """`logs` are the run's session logs in any order — they are ordered here by their declared
     pair slices. `consts` defaults to the INSTRUMENT's carrier constants (the PL that produced
-    the scores); pass them only to test this module."""
-    out = {"tool": TOOL_VERSION, "session": SESSION, "outcome": None, "findings": [], "kills": [],
-           "not_checked_here": list(NOT_CHECKED_HERE)}
+    the scores); pass them only to test this module.
+
+    `scope` is "run" — the whole experiment, which must cover every preregistered pair exactly
+    once and which is the only scope that reports a primary — or "session", one or more
+    sessions of a longer run, where covering a subset is the point and NOT a finding. A session
+    scope never claims a primary, a fitness-sequence digest or the deltas, whatever it covers:
+    the pooled primary is a property of the run, and this parameter must never be able to turn
+    a partial run into the experiment's verdict. Every other check is identical."""
+    out = {"tool": TOOL_VERSION, "session": SESSION, "scope": scope, "outcome": None, "findings": [],
+           "kills": [], "not_checked_here": list(NOT_CHECKED_HERE)}
     try:
+        if scope not in ("run", "session"):
+            raise Refusal(f"scope {scope!r} is neither 'run' nor 'session'")
         if not logs:
             raise Refusal("no session log was given")
         check_plan(plan)
@@ -745,8 +755,8 @@ def adjudicate(logs: list[dict], plan: dict, prediction: dict, consts: dict | No
             out["replay"] = {"records_replayed": rp.replayed, "pairs": covered}
             findings += rp.findings
 
-        complete = covered == list(range(plan["pairs"]))
-        if not complete:
+        complete = scope == "run" and covered == list(range(plan["pairs"]))
+        if scope == "run" and not complete:
             findings.append(f"the sessions cover pairs {covered}, not the preregistered "
                             f"{list(range(plan['pairs']))}: no primary is computed from a partial run")
         if not refused_sessions and not rp.findings and all((r, arm) in rp.arms for r in covered
@@ -805,6 +815,9 @@ def main(argv=None) -> int:
     ap.add_argument("--prediction", type=Path, default=REPO_ROOT / "evidence/b2/prediction.json")
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--no-common", action="store_true", help="skip the instrument's common validator")
+    ap.add_argument("--scope", choices=("run", "session"), default="run",
+                    help="'run' (default) is the whole experiment and the only scope that reports a "
+                         "primary; 'session' adjudicates one or more sessions of a longer run")
     a = ap.parse_args(argv)
     paths = list(a.run_log) + [d / "run_log.json" for d in a.evidence]
     if not paths:
@@ -817,7 +830,8 @@ def main(argv=None) -> int:
             raise Refusal(f"{path} is not readable JSON: {exc}") from None
 
     try:
-        res = adjudicate([load(p) for p in paths], load(a.plan), load(a.prediction), common=not a.no_common)
+        res = adjudicate([load(p) for p in paths], load(a.plan), load(a.prediction),
+                         common=not a.no_common, scope=a.scope)
     except Refusal as exc:
         res = {"tool": TOOL_VERSION, "session": SESSION, "outcome": f"REFUSED: {exc}", "refusal": str(exc),
                "findings": [], "kills": []}

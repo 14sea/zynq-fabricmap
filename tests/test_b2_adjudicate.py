@@ -144,6 +144,57 @@ class Accepts(unittest.TestCase):
             self.assertIn(layer, res["not_checked_here"])
 
 
+class Scope(unittest.TestCase):
+    """`scope="session"` exists so a session of a longer run is not a HOLD for covering a
+    subset. It must never be able to turn a partial run into the experiment's verdict."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.part = modelled_log(0, 2)
+        cls.whole = modelled_log(0, PAIRS)
+
+    def test_a_session_of_a_longer_run_is_not_held_for_being_partial(self):
+        run = judge([copy.deepcopy(self.part)])
+        self.assertTrue(run["outcome"].startswith("HOLD"), run["outcome"][:120])
+        res = badj.adjudicate([copy.deepcopy(self.part)], PLAN, PREDICTION, consts=CONSTS,
+                              common=False, scope="session")
+        self.assertEqual(res["outcome"], "PASS", res["findings"][:4])
+        self.assertEqual(res["scope"], "session")
+        self.assertEqual(res["replay"]["pairs"], [0, 1])
+
+    def test_a_session_scope_never_claims_the_experiments_verdict(self):
+        for logs in ([copy.deepcopy(self.part)], [copy.deepcopy(self.whole)]):
+            with self.subTest(pairs=len(logs[0]["app_identity"]["pair_count"] * [0])):
+                res = badj.adjudicate(logs, PLAN, PREDICTION, consts=CONSTS, common=False, scope="session")
+                for key in ("primary", "deltas", "fitness_sequence_sha256", "fitness_sequence_length"):
+                    self.assertNotIn(key, res, "a session scope reported the run's own metric")
+
+    def test_a_session_scope_checks_everything_else(self):
+        log = copy.deepcopy(self.part)
+        rec = next(r for r in log["loop_records"] if isinstance(r.get("search"), dict))
+        rec["search"]["fitness"] += 1
+        res = badj.adjudicate([log], PLAN, PREDICTION, consts=CONSTS, common=False, scope="session")
+        self.assertTrue(res["outcome"].startswith("KILL"), res["outcome"][:120])
+
+    def test_a_session_scope_still_compares_its_own_pairs_with_the_prediction(self):
+        pred = copy.deepcopy(PREDICTION)
+        pred["pairs"][1]["runs"]["B"]["champion_holdout"] += 1
+        res = badj.adjudicate([copy.deepcopy(self.part)], PLAN, pred, consts=CONSTS, common=False, scope="session")
+        self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"][:120])
+        self.assertTrue(any("champion_holdout" in x for x in res["findings"]), res["findings"][:4])
+
+    def test_an_unknown_scope_is_refused(self):
+        res = badj.adjudicate([copy.deepcopy(self.whole)], PLAN, PREDICTION, consts=CONSTS,
+                              common=False, scope="whatever")
+        self.assertTrue(res["outcome"].startswith("REFUSED"), res["outcome"][:120])
+        self.assertIn("neither 'run' nor 'session'", res["refusal"])
+
+    def test_the_run_scope_is_the_default(self):
+        res = badj.adjudicate([copy.deepcopy(self.whole)], PLAN, PREDICTION, consts=CONSTS, common=False)
+        self.assertEqual(res["scope"], "run")
+        self.assertIn("primary", res)
+
+
 class Refuses(unittest.TestCase):
     """Every deviation is ONE named finding, and the served-readout contradictions are KILLs."""
 
