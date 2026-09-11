@@ -1,0 +1,33 @@
+{
+  "manifest_board": null,
+  "lineage_board": "17A6",
+  "both_wrong_board_preflight": "ACCEPTED",
+  "producer_expected_board": {
+    "plan": null,
+    "binding": null
+  },
+  "producer_control": [],
+  "producer_one_wrong": [
+    "the two archived authorisations name different boards: {'whole_of_run': \"'FFFF'\", 'provisioning': \"'17A6'\"}"
+  ],
+  "producer_both_wrong": [],
+  "producer_both_wrong_with_explicit_expectation": [
+    "ruling_whole_of_run.json: the archived ruling names board 'FFFF', this stage is '17A6'",
+    "ruling_provisioning.json: the archived ruling names board 'FFFF', this stage is '17A6'"
+  ],
+  "producer_both_wrong_same_nonstring": [],
+  "offline_expected_board": {
+    "plan": null,
+    "binding": null
+  },
+  "offline_control": [],
+  "offline_one_wrong": [
+    "the two archived authorisations name different boards: {'whole_of_run': \"'FFFF'\", 'provisioning': \"'17A6'\"}"
+  ],
+  "offline_both_wrong": [],
+  "offline_both_wrong_with_explicit_expectation": [
+    "ruling_whole_of_run.json: the archived ruling names board 'FFFF', this stage is '17A6'",
+    "ruling_provisioning.json: the archived ruling names board 'FFFF', this stage is '17A6'"
+  ],
+  "offline_both_wrong_same_nonstring": []
+}

@@ -1,5 +1,15 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Ruling board authority review (`39125fb`): HOLD remains.** The identity/input
+> contract and archive/summary checks are implemented. One authorization P2 remains:
+> S0 declares no board, neither session-plan constructor supplies an expected board,
+> and both live and archived rulings can therefore agree on the wrong board. The
+> independent same-board wrong-pair probe passes preflight and archive checking.
+> See [the board-authority review](b2_ruling_board_review_2026_09_11.md) for controls
+> and test-double limits. The complete modelled B2/B2Q positive lifecycle remains
+> required before accepting/pushing the runner batch. No board or production action
+> was taken. Earlier implementation and review banners below are historical.
+
 > **The offline binding's two P2s are corrected; the positive path still is not.**
 > (1) `expected_identity` is now the ONE `app_identity` 1.5.0 contract, used online before the
 > board's identity is acknowledged and offline when the evidence is re-adjudicated — the carrier
