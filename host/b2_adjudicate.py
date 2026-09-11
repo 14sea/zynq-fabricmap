@@ -194,6 +194,11 @@ def check_prediction(prediction: dict, plan: dict) -> None:
         raise Refusal(f"the prediction carries {len(deltas)} deltas for {plan['pairs']} pairs")
     for entry, delta in zip(entries, deltas):
         want = entry["runs"]["B"]["best_train"] - entry["runs"]["A"]["best_train"]
+        if "delta_B_minus_A" in entry and not _int(entry["delta_B_minus_A"]):
+            # Redundant beside `deltas`, but a field that is present is a field that is typed:
+            # `false` and `0.0` both compare equal to 0 (the owner's P3 of 2026-09-11).
+            raise Refusal(f"the prediction's pair {entry['pair']}: delta_B_minus_A "
+                          f"{entry['delta_B_minus_A']!r} is not an integer")
         if delta != want or ("delta_B_minus_A" in entry and entry["delta_B_minus_A"] != want):
             raise Refusal(f"the prediction's pair {entry['pair']}: the delta does not account for its own "
                           f"B and A best_train ({want})")

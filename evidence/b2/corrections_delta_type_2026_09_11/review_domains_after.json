@@ -1,0 +1,1001 @@
+{
+  "head": "43e179dbad38e2a3e3974ab19e0fe55ffc99debf",
+  "common": true,
+  "synthetic_fixture": true,
+  "baseline": "PASS",
+  "valid_prediction_family_controls": {
+    "F1": "ACCEPTED",
+    "F2": "ACCEPTED",
+    "F3": "ACCEPTED"
+  },
+  "genuine_internal_error_control": {
+    "exit": 3,
+    "outcome": "INTERNAL ERROR: RuntimeError: review injected programming defect",
+    "traceback_saved": true,
+    "misclassified_as_refusal": false
+  },
+  "cases": [
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'best_train'].bad_type.0",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: best_train None is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'best_train'].bad_type.1",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: best_train False is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'best_train'].bad_type.2",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: best_train True is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'best_train'].bad_type.3",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: best_train 1.0 is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'best_train'].bad_type.4",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: best_train '1' is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'best_train'].bad_type.5",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: best_train [] is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'best_train'].bad_type.6",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: best_train {} is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_holdout'].bad_type.0",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_holdout None is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_holdout'].bad_type.1",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_holdout False is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_holdout'].bad_type.2",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_holdout True is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_holdout'].bad_type.3",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_holdout 1.0 is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_holdout'].bad_type.4",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_holdout '1' is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_holdout'].bad_type.5",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_holdout [] is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_holdout'].bad_type.6",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_holdout {} is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'column_moves'].bad_type.0",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: column_moves None is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'column_moves'].bad_type.1",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: column_moves False is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'column_moves'].bad_type.2",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: column_moves True is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'column_moves'].bad_type.3",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: column_moves 1.0 is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'column_moves'].bad_type.4",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: column_moves '1' is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'column_moves'].bad_type.5",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: column_moves [] is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'column_moves'].bad_type.6",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: column_moves {} is not an integer",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'positives'].bad_type.0",
+      "outcome": "REFUSED: the prediction's primary positives None is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'positives'].bad_type.1",
+      "outcome": "REFUSED: the prediction's primary positives False is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'positives'].bad_type.2",
+      "outcome": "REFUSED: the prediction's primary positives True is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'positives'].bad_type.3",
+      "outcome": "REFUSED: the prediction's primary positives 1.0 is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'positives'].bad_type.4",
+      "outcome": "REFUSED: the prediction's primary positives '1' is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'positives'].bad_type.5",
+      "outcome": "REFUSED: the prediction's primary positives [] is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'positives'].bad_type.6",
+      "outcome": "REFUSED: the prediction's primary positives {} is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'negatives'].bad_type.0",
+      "outcome": "REFUSED: the prediction's primary negatives None is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'negatives'].bad_type.1",
+      "outcome": "REFUSED: the prediction's primary negatives False is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'negatives'].bad_type.2",
+      "outcome": "REFUSED: the prediction's primary negatives True is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'negatives'].bad_type.3",
+      "outcome": "REFUSED: the prediction's primary negatives 1.0 is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'negatives'].bad_type.4",
+      "outcome": "REFUSED: the prediction's primary negatives '1' is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'negatives'].bad_type.5",
+      "outcome": "REFUSED: the prediction's primary negatives [] is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'negatives'].bad_type.6",
+      "outcome": "REFUSED: the prediction's primary negatives {} is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'ties'].bad_type.0",
+      "outcome": "REFUSED: the prediction's primary ties None is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'ties'].bad_type.1",
+      "outcome": "REFUSED: the prediction's primary ties False is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'ties'].bad_type.2",
+      "outcome": "REFUSED: the prediction's primary ties True is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'ties'].bad_type.3",
+      "outcome": "REFUSED: the prediction's primary ties 1.0 is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'ties'].bad_type.4",
+      "outcome": "REFUSED: the prediction's primary ties '1' is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'ties'].bad_type.5",
+      "outcome": "REFUSED: the prediction's primary ties [] is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'predicted_primary', 'ties'].bad_type.6",
+      "outcome": "REFUSED: the prediction's primary ties {} is not a count",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'budget_per_arm'].bad_type.0",
+      "outcome": "REFUSED: the prediction's budget_per_arm (None) is not the plan's (12)",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'budget_per_arm'].bad_type.1",
+      "outcome": "REFUSED: the prediction's budget_per_arm (False) is not the plan's (12)",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'budget_per_arm'].bad_type.2",
+      "outcome": "REFUSED: the prediction's budget_per_arm (True) is not the plan's (12)",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'budget_per_arm'].bad_type.3",
+      "outcome": "REFUSED: the prediction's budget_per_arm (1.0) is not the plan's (12)",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'budget_per_arm'].bad_type.4",
+      "outcome": "REFUSED: the prediction's budget_per_arm ('1') is not the plan's (12)",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'budget_per_arm'].bad_type.5",
+      "outcome": "REFUSED: the prediction's budget_per_arm ([]) is not the plan's (12)",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'budget_per_arm'].bad_type.6",
+      "outcome": "REFUSED: the prediction's budget_per_arm ({}) is not the plan's (12)",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_length'].bad_type.0",
+      "outcome": "REFUSED: the prediction's fitness_sequence_length None is not the 78 values 3 pairs at budget 12 produce",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_length'].bad_type.1",
+      "outcome": "REFUSED: the prediction's fitness_sequence_length False is not the 78 values 3 pairs at budget 12 produce",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_length'].bad_type.2",
+      "outcome": "REFUSED: the prediction's fitness_sequence_length True is not the 78 values 3 pairs at budget 12 produce",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_length'].bad_type.3",
+      "outcome": "REFUSED: the prediction's fitness_sequence_length 1.0 is not the 78 values 3 pairs at budget 12 produce",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_length'].bad_type.4",
+      "outcome": "REFUSED: the prediction's fitness_sequence_length '1' is not the 78 values 3 pairs at budget 12 produce",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_length'].bad_type.5",
+      "outcome": "REFUSED: the prediction's fitness_sequence_length [] is not the 78 values 3 pairs at budget 12 produce",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_length'].bad_type.6",
+      "outcome": "REFUSED: the prediction's fitness_sequence_length {} is not the 78 values 3 pairs at budget 12 produce",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'pair'].bad_type.0",
+      "outcome": "REFUSED: a prediction pair is not an object naming an integer pair",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'pair'].bad_type.1",
+      "outcome": "REFUSED: a prediction pair is not an object naming an integer pair",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'pair'].bad_type.2",
+      "outcome": "REFUSED: a prediction pair is not an object naming an integer pair",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'pair'].bad_type.3",
+      "outcome": "REFUSED: a prediction pair is not an object naming an integer pair",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'pair'].bad_type.4",
+      "outcome": "REFUSED: a prediction pair is not an object naming an integer pair",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'pair'].bad_type.5",
+      "outcome": "REFUSED: a prediction pair is not an object naming an integer pair",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'pair'].bad_type.6",
+      "outcome": "REFUSED: a prediction pair is not an object naming an integer pair",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['plan', 'map', 'sha256'].bad_digest.0",
+      "outcome": "REFUSED: the plan's map sha256 None is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['plan', 'map', 'sha256'].bad_digest.1",
+      "outcome": "REFUSED: the plan's map sha256 False is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['plan', 'map', 'sha256'].bad_digest.2",
+      "outcome": "REFUSED: the plan's map sha256 {} is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['plan', 'map', 'sha256'].bad_digest.3",
+      "outcome": "REFUSED: the plan's map sha256 [] is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['plan', 'map', 'sha256'].bad_digest.4",
+      "outcome": "REFUSED: the plan's map sha256 '' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['plan', 'map', 'sha256'].bad_digest.5",
+      "outcome": "REFUSED: the plan's map sha256 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['plan', 'map', 'sha256'].bad_digest.6",
+      "outcome": "REFUSED: the plan's map sha256 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['plan', 'map', 'sha256'].bad_digest.7",
+      "outcome": "REFUSED: the plan's map sha256 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['plan', 'map', 'sha256'].bad_digest.8",
+      "outcome": "REFUSED: the plan's map sha256 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\n' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_sha256'].bad_digest.0",
+      "outcome": "REFUSED: the prediction's fitness_sequence_sha256 None is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_sha256'].bad_digest.1",
+      "outcome": "REFUSED: the prediction's fitness_sequence_sha256 False is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_sha256'].bad_digest.2",
+      "outcome": "REFUSED: the prediction's fitness_sequence_sha256 {} is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_sha256'].bad_digest.3",
+      "outcome": "REFUSED: the prediction's fitness_sequence_sha256 [] is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_sha256'].bad_digest.4",
+      "outcome": "REFUSED: the prediction's fitness_sequence_sha256 '' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_sha256'].bad_digest.5",
+      "outcome": "REFUSED: the prediction's fitness_sequence_sha256 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_sha256'].bad_digest.6",
+      "outcome": "REFUSED: the prediction's fitness_sequence_sha256 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_sha256'].bad_digest.7",
+      "outcome": "REFUSED: the prediction's fitness_sequence_sha256 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'fitness_sequence_sha256'].bad_digest.8",
+      "outcome": "REFUSED: the prediction's fitness_sequence_sha256 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\n' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_genome_sha256'].bad_digest.0",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_genome_sha256 None is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_genome_sha256'].bad_digest.1",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_genome_sha256 False is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_genome_sha256'].bad_digest.2",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_genome_sha256 {} is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_genome_sha256'].bad_digest.3",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_genome_sha256 [] is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_genome_sha256'].bad_digest.4",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_genome_sha256 '' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_genome_sha256'].bad_digest.5",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_genome_sha256 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_genome_sha256'].bad_digest.6",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_genome_sha256 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_genome_sha256'].bad_digest.7",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_genome_sha256 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'champion_genome_sha256'].bad_digest.8",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_genome_sha256 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\n' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'moves_sha256'].bad_digest.0",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: moves_sha256 None is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'moves_sha256'].bad_digest.1",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: moves_sha256 False is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'moves_sha256'].bad_digest.2",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: moves_sha256 {} is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'moves_sha256'].bad_digest.3",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: moves_sha256 [] is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'moves_sha256'].bad_digest.4",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: moves_sha256 '' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'moves_sha256'].bad_digest.5",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: moves_sha256 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'moves_sha256'].bad_digest.6",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: moves_sha256 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'moves_sha256'].bad_digest.7",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: moves_sha256 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "['prediction', 'pairs', 0, 'runs', 'A', 'moves_sha256'].bad_digest.8",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: moves_sha256 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\n' is not 64 lower-case hex",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.sign_test_p.0",
+      "outcome": "REFUSED: the prediction's primary sign_test_p False is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.sign_test_p.1",
+      "outcome": "REFUSED: the prediction's primary sign_test_p True is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.sign_test_p.2",
+      "outcome": "REFUSED: the prediction's primary sign_test_p None is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.sign_test_p.3",
+      "outcome": "REFUSED: the prediction's primary sign_test_p '0.05' is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.sign_test_p.4",
+      "outcome": "REFUSED: the prediction's primary sign_test_p [] is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.sign_test_p.5",
+      "outcome": "REFUSED: the prediction's primary sign_test_p {} is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.sign_test_p.6",
+      "outcome": "REFUSED: the prediction's primary sign_test_p -0.1 is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.sign_test_p.7",
+      "outcome": "REFUSED: the prediction's primary sign_test_p 1.1 is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.sign_test_p.8",
+      "outcome": "REFUSED: the prediction's primary sign_test_p nan is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.sign_test_p.9",
+      "outcome": "REFUSED: the prediction's primary sign_test_p inf is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.sign_test_p.10",
+      "outcome": "REFUSED: the prediction's primary sign_test_p -inf is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.alpha.0",
+      "outcome": "REFUSED: the prediction's primary alpha False is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.alpha.1",
+      "outcome": "REFUSED: the prediction's primary alpha True is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.alpha.2",
+      "outcome": "REFUSED: the prediction's primary alpha None is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.alpha.3",
+      "outcome": "REFUSED: the prediction's primary alpha '0.05' is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.alpha.4",
+      "outcome": "REFUSED: the prediction's primary alpha [] is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.alpha.5",
+      "outcome": "REFUSED: the prediction's primary alpha {} is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.alpha.6",
+      "outcome": "REFUSED: the prediction's primary alpha -0.1 is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.alpha.7",
+      "outcome": "REFUSED: the prediction's primary alpha 1.1 is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.alpha.8",
+      "outcome": "REFUSED: the prediction's primary alpha nan is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.alpha.9",
+      "outcome": "REFUSED: the prediction's primary alpha inf is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "probability.alpha.10",
+      "outcome": "REFUSED: the prediction's primary alpha -inf is not a probability",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "master_seed.-1",
+      "outcome": "REFUSED: the plan's master_seed -1 is outside 0..2**32-1: the rule draws four bytes and the instrument's Rng masks to 32 bits, so an out-of-range declaration would silently replay another number's stream",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "master_seed.4294967296",
+      "outcome": "REFUSED: the plan's master_seed 4294967296 is outside 0..2**32-1: the rule draws four bytes and the instrument's Rng masks to 32 bits, so an out-of-range declaration would silently replay another number's stream",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "pairs.0",
+      "outcome": "REFUSED: the plan's pairs 0 is not 1..16, the identity page's slice field",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "pairs.-1",
+      "outcome": "REFUSED: the plan's pairs -1 is not 1..16, the identity page's slice field",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "pairs.17",
+      "outcome": "REFUSED: the plan's pairs 17 is not 1..16, the identity page's slice field",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "pairs.True",
+      "outcome": "REFUSED: the plan's pairs True is not 1..16, the identity page's slice field",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "pairs.16.0",
+      "outcome": "REFUSED: the plan's pairs 16.0 is not 1..16, the identity page's slice field",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "run_domain.best_train.-1",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: best_train -1 is outside 0..40",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "run_domain.best_train.41",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: best_train 41 is outside 0..40",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "run_domain.champion_holdout.-1",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_holdout -1 is outside 0..24",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "run_domain.champion_holdout.25",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: champion_holdout 25 is outside 0..24",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "run_domain.column_moves.-1",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: column_moves -1 is outside 0..12",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "run_domain.column_moves.13",
+      "outcome": "REFUSED: the prediction's pair 0 arm A: column_moves 13 is outside 0..12",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    },
+    {
+      "case": "in_domain_self_consistent_mismatch",
+      "outcome": "HOLD: pair 0 arm A: best_train is 2, the prediction's is 3; the run's per-pair deltas are not the preregistered ones; the run's primary {'positives': 1, 'negatives': 0, 'ties': 2, 'sign_test_p': 0.5, 'alpha': 0.05, 'verdict': 'NOT SUPPORTED'} is not the preregistered {'positives': 1, 'negatives': 1, 'ties': 1, 'sign_test_p': 0.75, 'alpha': 0.05, 'verdict': 'NOT SUPPORTED'}",
+      "has_primary": true,
+      "expected": "HOLD",
+      "ok": true
+    },
+    {
+      "case": "redundant_delta_bool",
+      "outcome": "REFUSED: the prediction's pair 0: delta_B_minus_A False is not an integer",
+      "has_primary": false,
+      "expected": "PASS",
+      "ok": false
+    },
+    {
+      "case": "redundant_delta_float",
+      "outcome": "REFUSED: the prediction's pair 0: delta_B_minus_A 0.0 is not an integer",
+      "has_primary": false,
+      "expected": "PASS",
+      "ok": false
+    },
+    {
+      "case": "redundant_delta_wrong_value_control",
+      "outcome": "REFUSED: the prediction's pair 0: the delta does not account for its own B and A best_train (0)",
+      "has_primary": false,
+      "expected": "REFUSED",
+      "ok": true
+    }
+  ],
+  "failed": [
+    {
+      "case": "redundant_delta_bool",
+      "outcome": "REFUSED: the prediction's pair 0: delta_B_minus_A False is not an integer",
+      "has_primary": false,
+      "expected": "PASS",
+      "ok": false
+    },
+    {
+      "case": "redundant_delta_float",
+      "outcome": "REFUSED: the prediction's pair 0: delta_B_minus_A 0.0 is not an integer",
+      "has_primary": false,
+      "expected": "PASS",
+      "ok": false
+    }
+  ]
+}

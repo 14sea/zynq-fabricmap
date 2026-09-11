@@ -1,5 +1,18 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Adjudicator accepted; its last P3 is closed too.** The owner's acceptance review closed the
+> blocking input-validation P2 (135 invalid inputs refused, the valid F1/F2/F3 families accepted,
+> an in-domain disagreeing prediction still a named HOLD, an injected defect still INTERNAL
+> ERROR / exit 3) and confirmed `best_train = 999` is correctly REFUSED with the domain checks
+> retained. The batch was pushed. The remaining P3 — the optional redundant
+> `pairs[i].delta_B_minus_A` accepting `false` or `0.0` for 0 — is now typed before comparison:
+> **71 adjudicator tests, B2/B3 316, zero skips**; the owner's unchanged `reproduce_domains.py`
+> refuses both aliases, so the only two of its 138 cases that no longer match are the two that
+> recorded the defect as expected. See
+> [`evidence/b2/corrections_delta_type_2026_09_11/`](../evidence/b2/corrections_delta_type_2026_09_11/).
+> Next: `b2_runner`, `b2_pins`, `b2_test_report`, then the complete §7 review. Neither §7 nor
+> freeze/B2Q nor board work is cleared.
+
 > **Adjudicator correction review PASS (`0d294ea`).** The blocking input-validation P2
 > is closed. Both original reproducers pass correction acceptance; 135 additional invalid
 > cases are refused, and a valid, self-consistent but disagreeing prediction receives HOLD.

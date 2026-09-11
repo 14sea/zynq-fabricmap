@@ -657,6 +657,21 @@ class Malformed(unittest.TestCase):
             with self.subTest(case=i, needle=needle):
                 self._refused(lambda logs, p, q, f=mutate: f(q), needle)
 
+    def test_a_redundant_delta_field_is_still_a_typed_field(self):
+        """`false` and `0.0` both compare equal to 0 (the owner's P3 of 2026-09-11). The field
+        is redundant beside `deltas`, which is not a reason to leave it untyped."""
+        zero = next(i for i, d in enumerate(PREDICTION["deltas"]) if d == 0) \
+            if 0 in PREDICTION["deltas"] else None
+        for bad in (False, 0.0, True, "0", None):
+            with self.subTest(delta=bad):
+                def mutate(logs, p, q, v=bad):
+                    i = zero if zero is not None else 0
+                    q["pairs"][i]["runs"]["B"]["best_train"] = q["pairs"][i]["runs"]["A"]["best_train"]
+                    q["deltas"][i] = 0
+                    q["predicted_primary"] = bp.decision(q["deltas"])
+                    q["pairs"][i]["delta_B_minus_A"] = v
+                self._refused(mutate, "delta_B_minus_A")
+
     def test_a_valid_prediction_that_merely_disagrees_is_a_finding_not_a_refusal(self):
         """The distinction the input guards must not erase."""
         def mutate(logs, p, q):
