@@ -195,6 +195,59 @@ class Scope(unittest.TestCase):
         self.assertIn("primary", res)
 
 
+class GivenSeeds(unittest.TestCase):
+    """A session whose seed RULE is not B2's (B2Q draws under its own label and excludes B2's
+    own set, preregistration §6a) supplies its pairs explicitly. It must change nothing else."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.whole = modelled_log(0, PAIRS)
+
+    def test_the_derived_seeds_given_back_explicitly_change_nothing(self):
+        res = badj.adjudicate([copy.deepcopy(self.whole)], PLAN, PREDICTION, consts=CONSTS,
+                              common=False, seeds=[list(x) for x in SEEDS])
+        self.assertEqual(res["outcome"], "PASS", res["findings"][:4])
+        self.assertEqual(res["pair_seeds"], [list(x) for x in SEEDS])
+        self.assertEqual(res["fitness_sequence_sha256"], PREDICTION["fitness_sequence_sha256"])
+
+    def test_the_result_names_the_seeds_it_replayed_with(self):
+        res = badj.adjudicate([copy.deepcopy(self.whole)], PLAN, PREDICTION, consts=CONSTS, common=False)
+        self.assertEqual(res["pair_seeds"], [list(x) for x in SEEDS])
+
+    def test_other_seeds_do_not_quietly_pass(self):
+        """A different landscape seed is a different target, so the host's F1 stops matching the
+        board's self-report. The adjudicator cannot tell "the board lied" from "the caller gave
+        the wrong seeds", and fails closed on the louder of the two — a KILL, not a PASS."""
+        other = [[l ^ 1, o] for l, o in SEEDS]
+        res = badj.adjudicate([copy.deepcopy(self.whole)], PLAN, PREDICTION, consts=CONSTS,
+                              common=False, seeds=other)
+        self.assertTrue(res["outcome"].startswith("KILL"), res["outcome"][:120])
+        self.assertNotIn("primary", res)
+
+    def test_other_operator_seeds_break_the_replay(self):
+        """The operator seed does not change the landscape, so nothing is contradicted — the
+        replay simply stops reproducing what the board drew."""
+        other = [[l, o ^ 1] for l, o in SEEDS]
+        res = badj.adjudicate([copy.deepcopy(self.whole)], PLAN, PREDICTION, consts=CONSTS,
+                              common=False, seeds=other)
+        self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"][:120])
+        self.assertTrue(any("derived seeds" in x for x in res["findings"]), res["findings"][:4])
+        self.assertNotIn("primary", res)
+
+    def test_a_malformed_seed_list_is_refused(self):
+        cases = [([list(x) for x in SEEDS][:-1], "pair seeds were given for"),
+                 ([[1, 2, 3]] * PAIRS, "not a (landscape, operator) pair"),
+                 ([[1, 2 ** 32]] * PAIRS, "not a (landscape, operator) pair"),
+                 ([[True, 2]] * PAIRS, "not a (landscape, operator) pair"),
+                 ([["1", 2]] * PAIRS, "not a (landscape, operator) pair")]
+        for bad, needle in cases:
+            with self.subTest(seeds=str(bad)[:40]):
+                res = badj.adjudicate([copy.deepcopy(self.whole)], PLAN, PREDICTION, consts=CONSTS,
+                                      common=False, seeds=bad)
+                self.assertTrue(res["outcome"].startswith("REFUSED"), res["outcome"][:120])
+                self.assertIn(needle, res["refusal"])
+
+
 class Refuses(unittest.TestCase):
     """Every deviation is ONE named finding, and the served-readout contradictions are KILLs."""
 

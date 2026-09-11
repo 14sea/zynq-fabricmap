@@ -1,0 +1,373 @@
+"""host/b2_runner.py — the B2 board runner's fail-closed preflight.
+
+The runner cannot run today and these tests pin that it refuses, in the documented order and
+for the documented reason: there is no committed B2 manifest, the preregistration is not
+frozen, the image is not board_ready, `host/b2_pins.py` does not exist. With a FIXTURE manifest
+carried stage by stage — S0 from the real image's build evidence, S1 frozen to a fixture
+document, S2 qualified from a fixture B2Q evidence dir, S3 with a generated plan pinned — the
+later checks are reached one at a time.
+
+No test opens a port, consumes a ruling, writes an evidence directory or contacts a board:
+every one calls `preflight` and asserts a refusal, or asserts a pure function's answer.
+"""
+from __future__ import annotations
+
+import copy
+import hashlib
+import json
+import os
+import shutil
+import sys
+import tempfile
+import types
+import unittest
+from pathlib import Path
+
+R = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(R / "host"))
+import b2_manifest as bman  # noqa: E402
+import b2_plan as bp  # noqa: E402
+import b2_runner as rn  # noqa: E402
+import b2_search as bs  # noqa: E402
+import b2_session as bsess  # noqa: E402
+import claimb_r1p_instrument as inst  # noqa: E402
+
+IMAGE_EVIDENCE = R / "evidence/b2/build_evidence.json"
+IMAGE = R / "firmware/b2/bsp/out/b2_app.bin"
+GATE = R / "evidence/b2/gate/recomputed_2026_09_10/gate_report.json"
+HAVE = IMAGE_EVIDENCE.is_file() and IMAGE.is_file() and GATE.is_file()
+STUB_RATE = 2807.0
+
+
+def sha(p: Path) -> str:
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+class Fixture:
+    """A B2 manifest carried from S0 to the requested stage, in a temp directory."""
+
+    def __init__(self, stage: str = "S3"):
+        self.d = Path(tempfile.mkdtemp(prefix="b2run_"))
+        self.manifest = self._roundtrip(bman.init(IMAGE_EVIDENCE))
+        self.prereg = self.d / "prereg.md"
+        self.prereg.write_text("# fixture preregistration for the runner's tests\n")
+        self.manifest["prereg"]["path"] = os.path.relpath(self.prereg, R)
+        self.plan_doc = None
+        if stage in ("S1", "S2", "S3"):
+            self.manifest = self._roundtrip(bman.freeze(self.manifest, sha(self.prereg)))
+        if stage in ("S2", "S3"):
+            self._qualify()
+        if stage == "S3":
+            self._pin_plan()
+
+    @staticmethod
+    def _roundtrip(manifest: dict) -> dict:
+        """Through JSON after every stage, as the tool's own CLI does: the seed pairs are tuples
+        in memory and arrays on disk, and `manifest_at_run` is compared to the bytes."""
+        return json.loads(bman.render(manifest))
+
+    # -------------------------------------------------- the stages
+    def _qualify(self) -> None:
+        ev = self.d / "b2q"
+        ev.mkdir(exist_ok=True)
+        (ev / bman.MANIFEST_AT_RUN).write_text(bman.render(self.manifest))
+        (ev / "run_log.json").write_text(json.dumps({"session": "B2Q"}))
+        (ev / "adjudication.json").write_text(json.dumps(
+            {"outcome": "PASS", "session": "B2Q", "measured_rate_per_hour": STUB_RATE,
+             "audit_policy": bp.AUDIT_POLICY}))
+        self.ev = ev
+        self.manifest = self._roundtrip(bman.qualify(self.manifest, ev, readjudicate=self.stub))
+
+    def _pin_plan(self) -> None:
+        plan = bp.build_plan(self.manifest["calibration"]["rate_per_hour"])
+        prediction = bp.build_prediction(plan["fitness"], plan["budget_per_arm"],
+                                         [tuple(p) for p in self.manifest["seeds"]["pairs"]],
+                                         self.manifest["map"]["canonical_json_sha256"])
+        self.plan_path, _ = bp.write(self.d, plan, prediction)
+        self.manifest = self._roundtrip(bman.pin_plan(self.manifest, self.plan_path, readjudicate=self.stub))
+        self.plan_doc = json.loads(self.plan_path.read_text())
+
+    @staticmethod
+    def stub(evidence_dir, manifest_at_run=None) -> dict:
+        """The lifecycle's own test double: the evidence's recorded adjudication. The runner
+        plugs the REAL adjudicator in; these fixtures carry no modelled B2Q session."""
+        return json.loads((Path(evidence_dir) / "adjudication.json").read_text())
+
+    # -------------------------------------------------- the invocation
+    def path(self) -> Path:
+        p = self.d / "b2_manifest.json"
+        p.write_text(bman.render(self.manifest))
+        return p
+
+    def ruling(self, name: str, **fields) -> Path:
+        p = self.d / f"{name}.json"
+        p.write_text(json.dumps({"boardid": "17A6", "granted_by": "test", "date": "2026-09-11", **fields}))
+        return p
+
+    def args(self, profile: dict = rn.SEARCH, **over) -> types.SimpleNamespace:
+        mp = self.path()
+        session = profile["session"]
+        seed = (self.plan_doc or {}).get("seed_derivation", {}).get("master_seed") \
+            if profile is rn.SEARCH else None
+        bound = dict(session=session, prereg_sha256=self.manifest["prereg"]["sha256"],
+                     image_sha256=self.manifest["image"]["sha256"], b2_manifest_sha256=sha(mp))
+        whole = dict(bound, ruling=profile["ruling_text"])
+        if profile is rn.SEARCH:
+            whole["master_seed"] = seed
+        base = dict(ruling=self.ruling("whole", **whole),
+                    provision_ruling=self.ruling("pk", ruling=rn.PROVISION_RULING_TEXT, **bound),
+                    boundary=self.d / "boundary.json", out=self.d / "out", manifest=mp,
+                    instrument_root=inst.DEFAULT_ROOT, image=IMAGE, pair_first=0, pair_count=4,
+                    qual_rate_per_hour=None, key=Path("/var/lib/p3signer/keys/K.bin"),
+                    signer_user="p3signer", port="/dev/null")
+        base.update(over)
+        return types.SimpleNamespace(**base)
+
+    def close(self) -> None:
+        shutil.rmtree(self.d, ignore_errors=True)
+
+
+def stub_pins(manifest, root):
+    return {"stub": True}
+
+
+@unittest.skipUnless(HAVE, "the built B2 image or its build evidence is absent")
+class RefusalOrder(unittest.TestCase):
+    """Each check, reached in the documented order, refuses for its own named reason."""
+
+    def refuses(self, args, *words: str, profile: dict = rn.SEARCH, pins=stub_pins) -> str:
+        with self.assertRaises(rn.Refusal) as cm:
+            rn.preflight(args, profile, pins_verify=pins, readjudicate=Fixture.stub)
+        msg = str(cm.exception)
+        for w in words:
+            self.assertIn(w, msg)
+        return msg
+
+    def test_there_is_no_committed_b2_manifest_yet(self):
+        self.assertFalse(rn.MANIFEST.exists(), "a committed B2 manifest appeared; this test must change")
+        a = types.SimpleNamespace(manifest=rn.MANIFEST)
+        self.refuses(a, "no B2 manifest at", "does not exist until the image does")
+
+    def test_a_document_that_is_not_a_b2_manifest(self):
+        f = Fixture("S0")
+        try:
+            p = f.d / "not_a_manifest.json"
+            p.write_text(json.dumps({"schema": "something_else"}))
+            self.refuses(f.args(manifest=p), "not a b2_manifest")
+            p.write_text("{nope")
+            self.refuses(f.args(manifest=p), "not readable JSON")
+        finally:
+            f.close()
+
+    def test_an_unfrozen_manifest_refuses_before_any_other_pin(self):
+        f = Fixture("S0")
+        try:
+            self.refuses(f.args(), "preregistration is not frozen")
+        finally:
+            f.close()
+
+    def test_a_frozen_manifest_whose_document_changed(self):
+        f = Fixture("S1")
+        try:
+            f.prereg.write_text("# edited after the freeze\n")
+            self.refuses(f.args(), "does not hash to the frozen preregistration")
+        finally:
+            f.close()
+
+    def test_an_image_that_is_not_board_ready_or_not_the_pinned_bytes(self):
+        f = Fixture("S1")
+        try:
+            f.manifest["image"]["board_ready"] = False
+            self.refuses(f.args(), "not marked board_ready")
+            f.manifest["image"]["board_ready"] = True
+            self.refuses(f.args(image=f.prereg), "is not the pinned one")
+            self.refuses(f.args(image=f.d / "absent.bin"), "no application image at")
+        finally:
+            f.close()
+
+    def test_the_stage_each_profile_requires(self):
+        f = Fixture("S1")
+        try:
+            self.refuses(f.args(), "not qualified")                      # B2 needs S2 and S3
+        finally:
+            f.close()
+        g = Fixture("S3")
+        try:                                                             # B2Q needs the S1 manifest
+            self.refuses(g.args(profile=rn.QUALIFICATION, pair_first=None, pair_count=None),
+                         "already qualified", profile=rn.QUALIFICATION)
+        finally:
+            g.close()
+
+    def test_the_real_readjudicator_refuses_a_qualification_it_cannot_reproduce(self):
+        """The default seam is the REAL B2 adjudicator over the pinned B2Q evidence, judged
+        against B2Q's own documents and seeds. The fixture's B2Q evidence is a stub log, so it
+        must not survive that — a pluggable verifier with nothing plugged in is not a check."""
+        f = Fixture("S3")
+        try:
+            with self.assertRaises(rn.Refusal) as cm:
+                rn.preflight(f.args(), rn.SEARCH, pins_verify=stub_pins)
+            self.assertIn("re-adjudicates to", str(cm.exception))
+        finally:
+            f.close()
+
+    def test_a_qualified_manifest_without_a_plan(self):
+        f = Fixture("S2")
+        try:
+            self.refuses(f.args(), "pins no plan")
+        finally:
+            f.close()
+
+    def test_a_pinned_plan_whose_bytes_changed(self):
+        f = Fixture("S3")
+        try:
+            f.plan_path.write_text(f.plan_path.read_text() + "\n")
+            self.refuses(f.args(), "does not hash to the manifest")
+        finally:
+            f.close()
+
+    def test_the_instrument_pin_table_is_a_refusal_until_its_tool_exists(self):
+        f = Fixture("S3")
+        try:
+            self.assertFalse((R / "host/b2_pins.py").exists(), "b2_pins.py appeared; this test must change")
+            with self.assertRaises(rn.Refusal) as cm:
+                rn.preflight(f.args(), rn.SEARCH, readjudicate=Fixture.stub)   # the REAL pins hook
+            self.assertIn("b2_pins.py is not written yet", str(cm.exception))
+        finally:
+            f.close()
+
+    def test_a_slice_outside_the_experiment_or_outside_the_split(self):
+        f = Fixture("S3")
+        try:
+            total = f.plan_doc["pairs"]
+            self.refuses(f.args(pair_first=total, pair_count=1), "does not lie inside the experiment")
+            self.refuses(f.args(pair_first=0, pair_count=total + 1), "does not lie inside the experiment")
+            self.refuses(f.args(pair_first=1, pair_count=4), "is not one the plan's split gives")
+            self.refuses(f.args(pair_first=None, pair_count=None), "needs --pair-first and --pair-count")
+        finally:
+            f.close()
+
+    def test_the_rulings_must_exist_be_this_text_and_be_bound(self):
+        f = Fixture("S3")
+        try:
+            self.refuses(f.args(provision_ruling=None), "provisioning P3-K")
+            self.refuses(f.args(ruling=f.ruling("x", ruling="whole-of-run B1 cartography")), "ruling text")
+            self.refuses(f.args(ruling=f.d / "absent.json"), "no readable ruling at")
+            bad = f.ruling("b", ruling=rn.RULING_TEXT, session="B2",
+                           prereg_sha256=f.manifest["prereg"]["sha256"],
+                           image_sha256=f.manifest["image"]["sha256"],
+                           b2_manifest_sha256="0" * 64, master_seed=f.manifest["seeds"]["master_seed"])
+            self.refuses(f.args(ruling=bad), "bound to b2_manifest_sha256")
+            wrong_seed = f.ruling("c", ruling=rn.RULING_TEXT, session="B2",
+                                  prereg_sha256=f.manifest["prereg"]["sha256"],
+                                  image_sha256=f.manifest["image"]["sha256"],
+                                  b2_manifest_sha256=sha(f.path()), master_seed=1)
+            self.refuses(f.args(ruling=wrong_seed), "bound to master_seed")
+            f.ruling("whole.json.consumed")                                # a claimed ruling
+            (f.d / "whole.json.consumed").write_text("claimed at some time")
+            self.refuses(f.args(), "was consumed")
+        finally:
+            f.close()
+
+
+@unittest.skipUnless(HAVE, "the built B2 image or its build evidence is absent")
+class PureParts(unittest.TestCase):
+    """The pieces that are pure functions of the plan and the manifest."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.f = Fixture("S3")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.f.close()
+
+    def test_the_split_decides_which_slices_exist(self):
+        plan = self.f.plan_doc
+        entry = rn.slice_in_split(plan, 0, 4)
+        self.assertIsNotNone(entry)
+        self.assertEqual(entry["pairs"], [0, 1, 2, 3])
+        self.assertIsNone(rn.slice_in_split(plan, 1, 4))
+        self.assertIsNone(rn.slice_in_split(plan, 0, 9))
+        undetermined = copy.deepcopy(plan)
+        undetermined["session_split"] = {"status": "UNDETERMINED until B2Q measures the rate"}
+        self.assertIsNone(rn.slice_in_split(undetermined, 0, 4), "an undetermined split licenses no slice")
+
+    def test_the_qualification_seeds_are_disjoint_from_the_experiments(self):
+        seeds = rn.qualification_seeds(self.f.manifest)
+        self.assertEqual(len(seeds), rn.QUAL_PAIRS)
+        used = {s for pair in self.f.manifest["seeds"]["pairs"] for s in pair}
+        for pair in seeds:
+            for s in pair:
+                self.assertNotIn(s, used, "a B2Q seed collides with the experiment it calibrates")
+                self.assertNotIn(s, bs.EXCLUDED_SEEDS)
+        self.assertNotEqual(rn.qualification_master(self.f.manifest), self.f.manifest["seeds"]["master_seed"])
+
+    def test_the_qualification_documents_are_b2qs_own(self):
+        plan, prediction, seeds = rn.qualification_documents(self.f.manifest)
+        self.assertEqual(plan["session"], bman.QUAL_SESSION)
+        self.assertEqual(plan["budget_per_arm"], rn.QUAL_BUDGET)
+        self.assertEqual(plan["pairs"], rn.QUAL_PAIRS)
+        self.assertEqual(len(prediction["pairs"]), rn.QUAL_PAIRS)
+        self.assertEqual(seeds, rn.qualification_seeds(self.f.manifest))
+        import b2_adjudicate as adj
+        adj.check_plan(plan)
+        adj.check_prediction(prediction, plan)          # B2Q's own documents pass the same guards
+
+    def test_the_identity_check_names_every_field_the_page_binds(self):
+        cfg = {"manifest": self.f.manifest,
+               "plan": {"n": 600, "master_seed": self.f.manifest["seeds"]["master_seed"],
+                        "pairs_total": 9, "pair_first": 0, "pair_count": 4}}
+        check = rn.identity_check_for(cfg)
+        good = {"search_version": bs.ENGINE_VERSION,
+                "map_sha256": self.f.manifest["map"]["canonical_json_sha256"],
+                "operator_data_sha256": self.f.manifest["map"]["canonical_json_sha256"],
+                "fitness_id": self.f.manifest["experiment"]["fitness"], "budget_per_arm": 600,
+                "master_seed": self.f.manifest["seeds"]["master_seed"], "pairs_total": 9,
+                "pair_first": 0, "pair_count": 4, "carrier_variant": rn.B2_VARIANT,
+                "carrier_sha256": self.f.manifest["carrier"]["bitstream_sha256"],
+                "universe_sha256": self.f.manifest["universe"]["sha256"],
+                "rec_retry_control": True, "sign_retry_control": True}
+        self.assertEqual(check(good), [])
+        for field in sorted(good):
+            with self.subTest(field=field):
+                bad = dict(good, **{field: "wrong"})
+                self.assertTrue(any(field in x for x in check(bad)), check(bad))
+        self.assertTrue(any("cartographer" in x for x in check(dict(good, carto_version="carto-v1"))))
+        self.assertTrue(any("probes" in x for x in check(dict(good, probe_budget=333))))
+        self.assertTrue(any("findings" in x for x in check(dict(good, findings=["something"]))))
+
+    def test_the_deadline_is_the_preregistered_formula(self):
+        self.assertAlmostEqual(rn.deadline_s(4810, 2807.0), 1.25 * 4810 * 3600 / 2807.0 + 600)
+        entry = rn.slice_in_split(self.f.plan_doc, 0, 4)
+        self.assertAlmostEqual(entry["deadline_s"], rn.deadline_s(entry["records"], STUB_RATE))
+        self.assertEqual(entry["records"], bsess.records(4, self.f.plan_doc["budget_per_arm"]))
+
+    def test_a_session_is_adjudicated_as_a_session(self):
+        cfg = {"round_plan": self.f.plan_doc, "prediction": None}
+        self.assertTrue(callable(rn.adjudication_for(cfg)))
+        qcfg = {"round_plan": None, "prediction": None}
+        out = rn.adjudication_for(qcfg)(self.f.d)
+        self.assertEqual(out["scope"], "session")
+        self.assertIn("NOT ADJUDICATED HERE", out["outcome"])
+
+
+@unittest.skipUnless(HAVE, "the built B2 image or its build evidence is absent")
+class TheRulingTextsAreProposals(unittest.TestCase):
+    def test_the_runner_refuses_any_text_but_the_two_it_declares(self):
+        f = Fixture("S3")
+        try:
+            for text, needle in (("whole-of-run B2", "ruling text"),
+                                 ("", "lacks 'ruling'"),
+                                 ("whole-of-run B2 map utility ", "ruling text"),
+                                 (rn.QUAL_RULING_TEXT, "ruling text")):
+                with self.subTest(text=text):
+                    with self.assertRaises(rn.Refusal) as cm:
+                        rn.preflight(f.args(ruling=f.ruling("t", ruling=text)), rn.SEARCH,
+                                     pins_verify=stub_pins, readjudicate=Fixture.stub)
+                    self.assertIn(needle, str(cm.exception))
+        finally:
+            f.close()
+
+
+if __name__ == "__main__":
+    unittest.main()

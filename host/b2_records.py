@@ -109,9 +109,17 @@ class Context:
     fitness: str
     map_sha256: str
     engine: str = bs.ENGINE_VERSION
+    pair_seeds: tuple[tuple[int, int], ...] | None = None
 
     @property
     def seeds(self) -> list[tuple[int, int]]:
+        """The pairs' derived seeds. `pair_seeds` replaces the derivation for a session whose
+        seed RULE is not B2's — B2Q draws under its own label and excludes B2's own set
+        (preregistration §6a) — and is never a way to choose seeds for a B2 session: the
+        caller that supplies it is responsible for deriving it by the rule that session
+        preregistered."""
+        if self.pair_seeds is not None:
+            return [tuple(x) for x in self.pair_seeds]
         return bsess.pair_seeds(self.master_seed, self.pairs_total)
 
     @property
@@ -119,11 +127,14 @@ class Context:
         return bsess.records(self.pair_count, self.budget)
 
 
-def context_from(plan: dict, pair_first: int, pair_count: int) -> Context:
-    """The context of ONE session: the plan's frozen experiment and this session's slice."""
+def context_from(plan: dict, pair_first: int, pair_count: int,
+                 pair_seeds: list | None = None) -> Context:
+    """The context of ONE session: the plan's frozen experiment and this session's slice.
+    `pair_seeds` is for a session whose seed rule is not B2's (see `Context.seeds`)."""
     return Context(master_seed=plan["seed_derivation"]["master_seed"], budget=plan["budget_per_arm"],
                    pairs_total=plan["pairs"], pair_first=pair_first, pair_count=pair_count,
-                   fitness=plan["fitness"], map_sha256=plan["map"]["sha256"])
+                   fitness=plan["fitness"], map_sha256=plan["map"]["sha256"],
+                   pair_seeds=None if pair_seeds is None else tuple(tuple(x) for x in pair_seeds))
 
 
 def expected_order(ctx: Context) -> list[tuple[int, str, bool] | None]:

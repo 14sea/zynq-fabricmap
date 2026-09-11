@@ -1,5 +1,24 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Host tool 3 of 5 written: `host/b2_runner.py`** (with `b1_runner.py` as the template), plus
+> two additions to the accepted adjudicator that it needs: a **session scope** (a session of a
+> longer run is judged as a session and never claims the run's pooled primary) and an **explicit
+> pair-seed list** (B2Q draws under its own label and excludes B2's own set, preregistration
+> §6a, so its seeds are not B2's derivation). Two profiles, B2Q against the S1 manifest and B2
+> against the S3 manifest; the identity page carries the session's pair slice; the preflight is
+> fail-closed in a documented order — manifest, frozen prereg, image and build evidence, header
+> freshness, instrument, **instrument pin table**, carrier and its re-adjudicated B1
+> qualification, stage and pinned plan through the adjudicator's own input guards, the slice
+> inside the plan's split, both rulings bound to session/prereg/image/this manifest (and the
+> master seed), boundary, `sb`, evidence directory. `b2_manifest.verify`'s pluggable
+> re-adjudication is plugged in: the pinned B2Q evidence is re-judged by the real adjudicator
+> against B2Q's own documents and seeds.
+> **19 runner tests; the B2/B3 suite is 346, zero skips.** Stated remainders: `host/b2_pins.py`
+> does not exist so every preflight refuses there today; B2Q's documents are derived here rather
+> than pinned; and `b2_session.run` cannot yet drive a B2Q session under B2Q's seed rule, so the
+> B2Q re-adjudication has no modelled end-to-end fixture. **No board session was run and none is
+> authorised.** The ruling texts in the module are PROPOSALS until the owner signs them.
+
 > **Adjudicator accepted; its last P3 is closed too.** The owner's acceptance review closed the
 > blocking input-validation P2 (135 invalid inputs refused, the valid F1/F2/F3 families accepted,
 > an in-domain disagreeing prediction still a named HOLD, an injected defect still INTERNAL

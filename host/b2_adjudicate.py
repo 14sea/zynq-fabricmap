@@ -436,12 +436,14 @@ class Replay:
     """The reference engine driven BY the records: every observation is the readout the board
     served, every decision is the reference's own, and the two are compared at each step."""
 
-    def __init__(self, plan: dict, view: bmaps.MapView, masks: list[int], truth: dict, readouts: dict):
+    def __init__(self, plan: dict, view: bmaps.MapView, masks: list[int], truth: dict, readouts: dict,
+                 seeds: list | None = None):
         self.budget = plan["budget_per_arm"]
         self.fid = plan["fitness"]
         self.master = plan["seed_derivation"]["master_seed"]
         self.pairs_total = plan["pairs"]
-        self.seeds = bsess.pair_seeds(self.master, self.pairs_total)
+        self.seeds = [tuple(x) for x in seeds] if seeds is not None else \
+            bsess.pair_seeds(self.master, self.pairs_total)
         self.view = view
         self.masks = masks
         self.truth = truth
@@ -692,7 +694,7 @@ def deltas_of(arms: dict, pairs: list[int]) -> list[int]:
 
 
 def adjudicate(logs: list[dict], plan: dict, prediction: dict, consts: dict | None = None,
-               common: bool = True, scope: str = "run") -> dict:
+               common: bool = True, scope: str = "run", seeds: list | None = None) -> dict:
     """`logs` are the run's session logs in any order — they are ordered here by their declared
     pair slices. `consts` defaults to the INSTRUMENT's carrier constants (the PL that produced
     the scores); pass them only to test this module.
@@ -702,7 +704,12 @@ def adjudicate(logs: list[dict], plan: dict, prediction: dict, consts: dict | No
     sessions of a longer run, where covering a subset is the point and NOT a finding. A session
     scope never claims a primary, a fitness-sequence digest or the deltas, whatever it covers:
     the pooled primary is a property of the run, and this parameter must never be able to turn
-    a partial run into the experiment's verdict. Every other check is identical."""
+    a partial run into the experiment's verdict. Every other check is identical.
+
+    `seeds` replaces the pairs' DERIVED seeds for a session whose seed RULE is not B2's — B2Q
+    draws under its own label and excludes B2's own set (preregistration §6a). It is never a way
+    to choose seeds for a B2 session: the caller that supplies it owes that session's own rule,
+    and the seeds actually used come back in the result."""
     out = {"tool": TOOL_VERSION, "session": SESSION, "scope": scope, "outcome": None, "findings": [],
            "kills": [], "not_checked_here": list(NOT_CHECKED_HERE)}
     try:
@@ -720,14 +727,18 @@ def adjudicate(logs: list[dict], plan: dict, prediction: dict, consts: dict | No
         view = bmaps.MapView(bmaps.load_self_map(), bl.train_vectors())
         # The replay is built first because the measurement pass needs its per-pair landscapes;
         # the readouts that pass collects are then handed to it (it has none of its own).
-        rp = Replay(plan, view, masks, truth, {})
+        rp = Replay(plan, view, masks, truth, {}, seeds=seeds)
+        if len(rp.seeds) != plan["pairs"]:
+            raise Refusal(f"{len(rp.seeds)} pair seeds were given for {plan['pairs']} pairs")
+        if any(len(pair) != 2 or not all(_int(v) and 0 <= v < UINT32 for v in pair) for pair in rp.seeds):
+            raise Refusal("a pair seed is not a (landscape, operator) pair of 32-bit values")
 
         findings: list[str] = []
         refused_sessions: list[int] = []
         for s in sessions:                                   # the record layer, session by session
             f = structure_findings(s)                        # first: the shapes everything below needs
             if not f:
-                ctx = brec.context_from(plan, s.pair_first, s.pair_count)
+                ctx = brec.context_from(plan, s.pair_first, s.pair_count, pair_seeds=rp.seeds)
                 f = brec.validate_run_log(s.log, ctx, common=common)
             findings += [f"session {s.index}: {x}" for x in f]
             if f:
@@ -743,6 +754,7 @@ def adjudicate(logs: list[dict], plan: dict, prediction: dict, consts: dict | No
         out["sessions"] = [{"index": s.index, "pair_first": s.pair_first, "pair_count": s.pair_count,
                             "records": len(records_of(s.log))} for s in sessions]
         out["measurement"] = {"records_checked": m.checked, "readouts_served": len(m.readouts)}
+        out["pair_seeds"] = [list(x) for x in rp.seeds]
         findings += _capped(m.findings, "measurement")
 
         # The replay is stateful and assumes the shape the record layer just checked; over a
@@ -815,6 +827,9 @@ def main(argv=None) -> int:
     ap.add_argument("--prediction", type=Path, default=REPO_ROOT / "evidence/b2/prediction.json")
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--no-common", action="store_true", help="skip the instrument's common validator")
+    ap.add_argument("--seeds", type=Path, default=None,
+                    help="a JSON array of [landscape, operator] pairs replacing the derivation, for a "
+                         "session whose seed RULE is not B2's (B2Q); the derivation is used without it")
     ap.add_argument("--scope", choices=("run", "session"), default="run",
                     help="'run' (default) is the whole experiment and the only scope that reports a "
                          "primary; 'session' adjudicates one or more sessions of a longer run")
@@ -831,7 +846,8 @@ def main(argv=None) -> int:
 
     try:
         res = adjudicate([load(p) for p in paths], load(a.plan), load(a.prediction),
-                         common=not a.no_common, scope=a.scope)
+                         common=not a.no_common, scope=a.scope,
+                         seeds=None if a.seeds is None else load(a.seeds))
     except Refusal as exc:
         res = {"tool": TOOL_VERSION, "session": SESSION, "outcome": f"REFUSED: {exc}", "refusal": str(exc),
                "findings": [], "kills": []}
