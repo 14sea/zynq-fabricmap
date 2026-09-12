@@ -12,6 +12,19 @@
 > demonstration need not be repeated. No push, freeze or board clearance is granted.
 > Earlier status banners below are historical.
 
+> **The reporter's proof mechanism is corrected (schema `b2_test_report` 1.0.0 → 2.0.0).** It now
+> takes a SNAPSHOT of the repository root, HEAD, the worktree's cleanliness, the instrument's
+> commit and cleanliness, the pinned surface and every pinned artifact's digest **before** the
+> suite starts and again when it ends, and `head_at_run` means the start snapshot. A report is a
+> proof only when the suite was executed BY THIS TOOL, the two snapshots agree (same HEAD, both
+> clean, instrument pinned and clean in both, pins verifying in both, no artifact changed), the
+> log is a complete successful summary (exactly one `Ran N` with N > 0 and a result line that is
+> exactly `OK`) and the exit status is zero with no failures, errors or skips. `proof_refusals`
+> names every condition that did not hold. A `--no-run` report is never a proof, and every I/O
+> failure at the tool's boundary exits 3. **25 reporter tests, all driving the production verdict
+> — removing any one production condition fails two to four of them**, which the previous eleven
+> did not do. See [`evidence/b2/corrections_test_report_2026_09_12/`](../evidence/b2/corrections_test_report_2026_09_12/).
+
 > **Host tool 5 of 5 written: `host/b2_test_report.py` — the §7 host package is complete.**
 > It runs the suite from a clean tree and writes `test_report_<UTC>.json` with the counts, the
 > result line, `head_at_run`, the worktree and instrument dirty flags, and the digest of every
