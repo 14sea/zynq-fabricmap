@@ -1,0 +1,27 @@
+{
+  "sha256": {
+    "docs/b2_preregistration.md": "68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0",
+    "manifests/b2_instrument_pins.json": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf",
+    "manifests/b2_manifest.json": "86393ed781cb25c971aeb7a4ea3bf485b5aba5a353ef94968b3128050d5b2da1"
+  },
+  "verify": {
+    "checks": {
+      "board": "17A6",
+      "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+      "instrument_pins": {
+        "b1_files_verified": 105,
+        "files_verified": 71,
+        "pins_sha256": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf"
+      },
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "qualification_plan": "ok (20 records at budget 8)",
+      "stage": "S0"
+    },
+    "manifest_sha256": "86393ed781cb25c971aeb7a4ea3bf485b5aba5a353ef94968b3128050d5b2da1",
+    "qualified": false,
+    "refusal": null,
+    "stage": "S0"
+  }
+}
