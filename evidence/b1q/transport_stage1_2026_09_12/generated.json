@@ -1,0 +1,97 @@
+{
+ "by_type": {
+  "AUDIT": {
+   "count": 88,
+   "max": 709,
+   "max_abs_target_error": 3,
+   "min": 306
+  },
+  "AUDIT_READY": {
+   "count": 11,
+   "max": 236,
+   "max_abs_target_error": 3,
+   "min": 231
+  },
+  "CLOSE": {
+   "count": 1,
+   "max": 218,
+   "max_abs_target_error": 1,
+   "min": 218
+  },
+  "HB": {
+   "count": 176,
+   "max": 67,
+   "max_abs_target_error": 2,
+   "min": 66
+  },
+  "IDENT": {
+   "count": 1,
+   "max": 1048,
+   "max_abs_target_error": 0,
+   "min": 1048
+  },
+  "REC": {
+   "count": 12,
+   "max": 2916,
+   "max_abs_target_error": 3,
+   "min": 2612
+  },
+  "SIGNREQ": {
+   "count": 12,
+   "max": 376,
+   "max_abs_target_error": 3,
+   "min": 371
+  },
+  "TERM": {
+   "count": 1,
+   "max": 725,
+   "max_abs_target_error": 1,
+   "min": 725
+  }
+ },
+ "bytes": 98627,
+ "frames": 302,
+ "measured_for_comparison": {
+  "AUDIT": {
+   "count": 88,
+   "max": 708,
+   "min": 304
+  },
+  "AUDIT_READY": {
+   "count": 11,
+   "max": 235,
+   "min": 230
+  },
+  "CLOSE": {
+   "count": 1,
+   "max": 217,
+   "min": 217
+  },
+  "HB": {
+   "count": 176,
+   "max": 66,
+   "min": 65
+  },
+  "IDENT": {
+   "count": 1,
+   "max": 1048,
+   "min": 1048
+  },
+  "REC": {
+   "count": 12,
+   "max": 2915,
+   "min": 2610
+  },
+  "SIGNREQ": {
+   "count": 12,
+   "max": 375,
+   "min": 370
+  },
+  "TERM": {
+   "count": 1,
+   "max": 724,
+   "min": 724
+  }
+ },
+ "note": "base64 grows four characters at a time, so a frame is the first reachable length at or above the measured target; the error is bounded and recorded"
+}

@@ -1,0 +1,38 @@
+{
+ "control": {
+  "bytes_received": 98627,
+  "bytes_sent": 98627,
+  "clean": true,
+  "divergence": null,
+  "frames_delivered": 302,
+  "frames_sent": 302,
+  "losses": 0
+ },
+ "counters_on_a_pty": {
+  "available": false,
+  "note": "no counter is reported; absence of a count is not a count of zero",
+  "reason": "OSError: [Errno 25] Inappropriate ioctl for device"
+ },
+ "one_byte_removed": {
+  "clean": false,
+  "divergence": {
+   "bytes_to_resync": 2876,
+   "expected_bytes": 98627,
+   "first_offset": 41379,
+   "frame_index": 241,
+   "frame_kind": "REC",
+   "offset_in_frame": 11,
+   "received_bytes": 98626
+  },
+  "frames_delivered": 301,
+  "frames_sent": 302,
+  "losses": 2,
+  "missing": [
+   241
+  ]
+ },
+ "scope": "the tool is proved end to end; no link property is measured, nothing is attributed, no condition of the plan's \u00a73 was run (that is stage 2 and needs the owner's rig)",
+ "self_sha256": "0f22762d92b4edba2860805d79563c8f61f4deaeefebb5c484b8ffae77516d53",
+ "tool": "host/transport_rig.py",
+ "transport": "pty pair (raw), a separate traffic source \u2014 NOT a UART and NOT the Zynq"
+}
