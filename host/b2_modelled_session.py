@@ -2,7 +2,10 @@
 """B2 — an end-to-end MODELLED session (host-only; nothing here touches a board): a whole B2 or
 B2Q session driven through the instrument's real host stack and judged by the real verdict.
 
-    b2_modelled_session.py --out <evidence dir> [--profile B2Q|B2] [--pair-first N --pair-count N]
+    b2_modelled_session.py --out <evidence dir> [--manifest …] [--seed N]
+
+Only the B2Q profile is driven from this entry point: at budget 600 one B2 slice is thousands of
+records, which belongs in a one-off demonstration rather than a command-line default.
 
 The board is a twin composed from the instrument's own rel-v4 twins (`l6_session_soak.Board`:
 IDENT → per seq SIGNREQ ↔ SIGNOK → indexed heartbeats → the audit pull → REC ↔ RECACK → TERM,
@@ -327,8 +330,13 @@ def session_artifacts(out_dir: Path, manifest: dict, manifest_sha256: str, sessi
 
 def run_modelled(manifest: dict, manifest_sha256: str, session_plan: dict, seeds: list, out_dir: Path,
                  token: str | None = None, seed: int = 1, require_git: bool = False) -> dict:
-    """Drive the session, write the evidence with the production exporter, archive the session
-    artifacts, then JUDGE it with the runner's own verdict and close it with the final summary."""
+    """Drive the session, write the evidence with the production exporter, and archive the session
+    artifacts — up to the point a board session reaches when its console loop ends.
+
+    IT DOES NOT JUDGE. The caller owes the verdict and the finalisation, in that order, exactly as
+    the runner does: `b2_runner.judge_session(...)` and then `finalize(out_dir, verdict, result
+    ["summary"], result["rulings"])`, which writes `adjudication.json` and the final `summary.json`.
+    `run_and_finalize` does both for a caller that wants the whole thing."""
     M = bind_instrument(require_git)
     token = token or hashlib.sha256(f"b2-modelled-{session_plan['session']}-{seed}".encode()).hexdigest()[:32]
     d = Path(tempfile.mkdtemp())
@@ -350,6 +358,19 @@ def run_modelled(manifest: dict, manifest_sha256: str, session_plan: dict, seeds
             "board_stats": s.board.stats, "summary": summary, "rulings": rulings, "out": str(out_dir)}
 
 
+def run_and_finalize(manifest: dict, manifest_sha256: str, session_plan: dict, seeds: list,
+                    out_dir: Path, token: str | None = None, seed: int = 1,
+                    require_git: bool = False) -> dict:
+    """The whole thing: drive, export, archive, JUDGE with the runner's own verdict, finalise."""
+    result = run_modelled(manifest, manifest_sha256, session_plan, seeds, out_dir, token=token,
+                          seed=seed, require_git=require_git)
+    qplan, qpred, qseeds = rn.qualification_documents(manifest)
+    verdict = rn.judge_session(out_dir, manifest, session_plan, qplan, qpred, qseeds, inst.DEFAULT_ROOT)
+    finalize(out_dir, verdict, result["summary"], result["rulings"])
+    result["verdict"] = verdict
+    return result
+
+
 def finalize(out_dir: Path, verdict: dict, summary: dict, rulings: dict) -> None:
     """What the runner's finalisation leaves beside the evidence AFTER the verdict: the
     adjudication and the final summary the lifecycle cross-checks."""
@@ -368,17 +389,16 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--manifest", type=Path, default=bman.MANIFEST)
-    ap.add_argument("--profile", choices=("B2Q", "B2"), default="B2Q")
+    ap.add_argument("--seed", type=int, default=1)
     a = ap.parse_args(argv)
     manifest = json.loads(a.manifest.read_text())
     bind_instrument(False)
-    if a.profile != "B2Q":
-        raise SystemExit("only the B2Q profile is driven from this entry point today")
-    plan = rn.qualification_session_plan(manifest, hashlib.sha256(a.manifest.read_bytes()).hexdigest())
+    sha = hashlib.sha256(a.manifest.read_bytes()).hexdigest()
+    plan = rn.qualification_session_plan(manifest, sha)
     seeds = rn.qualification_seeds(manifest)
-    r = run_modelled(manifest, hashlib.sha256(a.manifest.read_bytes()).hexdigest(), plan, seeds, a.out)
+    r = run_and_finalize(manifest, sha, plan, seeds, a.out, seed=a.seed)
     print(json.dumps({k: v for k, v in r.items() if k not in ("summary", "rulings")}, indent=1))
-    return 0
+    return 0 if r["verdict"]["outcome"] == "PASS" else 1
 
 
 if __name__ == "__main__":

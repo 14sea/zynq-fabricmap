@@ -17,8 +17,10 @@ baseline follows. The champion's holdout evaluation is a real candidate — the 
 genome is written and read back again, and F1 is taken over the holdout columns of that
 fresh readout (no `mode_holdout` flag: the arm gate sweeps all 64 vectors either way).
 
-The pair seeds are NOT an input: they are derived here, as on the board, from the master
-seed with the archived-set exclusion (`b2_plan.frozen_seed_exclusion`).
+The pair seeds are DERIVED here by default, as on the board, from the master seed with the
+archived-set exclusion (`b2_plan.frozen_seed_exclusion`). `run` also takes them explicitly, for a
+session whose seed RULE is not B2's: B2Q draws under its own label and additionally excludes every
+seed B2 itself uses (preregistration §6a).
 """
 from __future__ import annotations
 

@@ -129,6 +129,24 @@ class ModelledB2Q(unittest.TestCase):
         self.assertTrue(out["qualified"])
         self.assertEqual(out["checks"]["board"], bman.check_board(self.f.manifest))
 
+    def test_the_command_line_judges_and_finalises(self):
+        """The CLI exported and stopped: no adjudication, no final summary, no verdict, exit 0
+        (the owner's P3 of 2026-09-12). It now runs the whole thing."""
+        out = Path(tempfile.mkdtemp(prefix="b2q_cli_")) / "evidence"
+        self.addCleanup(shutil.rmtree, out.parent, True)
+        env = dict(os.environ, PYTHONPATH=str(R / "host"))
+        p = subprocess.run([sys.executable, str(R / "host/b2_modelled_session.py"),
+                            "--out", str(out), "--manifest", str(self.manifest_path)],
+                           capture_output=True, text=True, env=env, cwd=R)
+        self.assertEqual(p.returncode, 0, p.stderr[-600:])
+        doc = json.loads(p.stdout)
+        self.assertEqual(doc["verdict"]["outcome"], "PASS", doc["verdict"]["findings"][:4])
+        for name in ("adjudication.json", "summary.json"):
+            self.assertTrue((out / name).is_file(), f"the CLI left no {name}")
+        final = json.loads((out / "summary.json").read_text())
+        self.assertEqual(final["outcome"], "PASS")
+        self.assertIn("provisioning_ruling_sha256", final)
+
     # ---------------------------------------------------------------- the negatives, on a PASS
     def test_a_relabelled_epoch_is_refused(self):
         d = self._copy()

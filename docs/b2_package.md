@@ -19,12 +19,16 @@
 > stack and the **production exporter**; the runner's own `judge_session` returns **PASS** (zero
 > findings, zero kills, `binding_checked`, a rate of 4490.86/h MEASURED from the session's timing
 > and a policy verified by the instrument's check); `qualify` **accepts** the transition and
-> derives the calibration under the split rule; `pin_plan` pins the plan; and a **fresh process**
-> `verify` returns stage S3, qualified, board 17A6, the B1 chain re-verified. `qualify` and
-> `verify` are handed the real `readjudicator` — **no replay double and no stored-verdict double
-> anywhere on the positive path**. The reference orchestrator now accepts explicit pair seeds, so
-> B2Q's own seed rule can drive it. Ten negatives are applied one at a time to that passing
-> evidence. **14 end-to-end tests, B2/B3 395, zero skips.**
+> derives the calibration under the split rule (2 sessions, up to 7 pairs each); `pin_plan` pins
+> the plan; and a **fresh process** `verify` returns stage S3, qualified, board 17A6, the B1 chain
+> re-verified. `qualify` and `verify` are handed the real `readjudicator` — **no replay double and
+> no stored-verdict double anywhere on the positive path**. The reference orchestrator now accepts
+> explicit pair seeds, so B2Q's own seed rule can drive it. The session records **two
+> forced-control CRC drops** (the seq-1 SIGNREQ and REC controls it arms deliberately), zero
+> non-control drops and zero bad frames. **Eleven** negatives are applied one at a time to that
+> passing evidence, alongside three positive tests. The CLI itself now judges and finalises, so a
+> command-line run leaves `adjudication.json` and the final `summary.json` and exits on the
+> verdict. **15 end-to-end tests, B2/B3 396, zero skips.**
 > The model stands in for a board: not silicon evidence, not a session, not a qualification; the
 > rulings are inert and authorise nothing. See
 > [`evidence/b2/b2q_modelled_lifecycle_2026_09_11/`](../evidence/b2/b2q_modelled_lifecycle_2026_09_11/).
