@@ -1,5 +1,16 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
 
+> **Reporter schema 2.0.0 review (`a52c229`): HOLD for one remaining P2.**
+> Execution snapshots, the no-proof `--no-run` path, the reported I/O cases and the
+> production-predicate test method are accepted. The parser still turns incomplete
+> Ran lines or contradictory FAILED/OK summaries into proofs. A P3 remains for
+> malformed nested run fields. Independent reporter suite: **26 tests, OK**.
+> The new report's artifact hashes match `12857ae`; its endpoint snapshots agree.
+> This review did not independently rerun its full 1,884-test execution.
+> See the [review and reproductions](b2_test_report_v2_review_2026_09_12.md).
+> Next: close these gaps, regenerate the report, then pin B2Q's fixed contract at
+> S0/S1 and present the full package. Earlier banners below are historical.
+
 > **Reporter review (`942a5b8`, implementation `50021e2`): HOLD for two P2 findings.**
 > Incomplete/contradictory imported logs can receive `clean_tree_proof: true`, and
 > report-time Git/pin observations do not establish the test run's original state.

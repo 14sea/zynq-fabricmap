@@ -1,0 +1,203 @@
+{
+  "archived_endpoint_equality_except_time": true,
+  "archived_proof_recomputed": [],
+  "cli": {
+    "missing_log": {
+      "rc": 3,
+      "stderr": "EXIT 3: the log could not be read: [Errno 2] No such file or directory: '/tmp/tmpdzvqy2k1/absent'\n",
+      "stdout": ""
+    },
+    "missing_parameters": {
+      "rc": 3,
+      "stderr": "EXIT 3: --no-run needs --log and --exit-status\n",
+      "stdout": ""
+    },
+    "no_run": {
+      "rc": 0,
+      "stderr": "",
+      "stdout": "OK  ran 4 skipped 0 dirty None clean_tree_proof False  (2 refusals: the suite was not executed by this tool: a reconstructed report is not a proof)\nreport: /tmp/tmpdzvqy2k1/report/test_report_2026-09-12T092951Z.json\n"
+    },
+    "output_is_file": {
+      "rc": 3,
+      "stderr": "EXIT 3: the output directory could not be created: [Errno 17] File exists: '/tmp/tmpdzvqy2k1/file'\n",
+      "stdout": ""
+    }
+  },
+  "head": "a52c22907d203c8a775d76428e4114d45a530ec5",
+  "historical_artifact_matches": {
+    "docs/b2_architecture.md": true,
+    "docs/b2_package.md": true,
+    "docs/b2_preregistration.md": true,
+    "evidence/b2/build_evidence.json": true,
+    "evidence/b2/gate/recomputed_2026_09_10/gate_report.json": true,
+    "evidence/b2/plan.json": true,
+    "evidence/b2/prediction.json": true,
+    "firmware/b2/IMPORT.json": true,
+    "firmware/b2/p3_data.h": true,
+    "manifests/b1_instrument_pins.json": true,
+    "manifests/b1_manifest.json": true,
+    "manifests/b2_instrument_pins.json": true,
+    "manifests/b2_manifest.json": true,
+    "schemas/self_map_v2.schema.json": true
+  },
+  "legacy_null_log": {
+    "exception": "AttributeError",
+    "message": "'NoneType' object has no attribute 'encode'"
+  },
+  "malformed_log": {
+    "array": {
+      "exception": "AttributeError",
+      "message": "'list' object has no attribute 'encode'"
+    },
+    "integer": {
+      "exception": "AttributeError",
+      "message": "'int' object has no attribute 'encode'"
+    },
+    "null": {
+      "exception": "AttributeError",
+      "message": "'NoneType' object has no attribute 'encode'"
+    },
+    "object": {
+      "exception": "AttributeError",
+      "message": "'dict' object has no attribute 'encode'"
+    }
+  },
+  "malformed_snapshots": {
+    "instrument": {
+      "exception": "AttributeError",
+      "message": "'list' object has no attribute 'get'"
+    },
+    "pins": {
+      "exception": "AttributeError",
+      "message": "'list' object has no attribute 'get'"
+    }
+  },
+  "old_log_controls": {
+    "bare_failed": {
+      "proof": false,
+      "refusals": [
+        "the result line 'FAILED' is not OK or a counted summary",
+        "the log's own result line says FAILED",
+        "the result line is 'FAILED', not exactly 'OK'",
+        "skipped is None, not zero",
+        "failures is None, not zero",
+        "errors is None, not zero"
+      ]
+    },
+    "missing_result": {
+      "proof": false,
+      "refusals": [
+        "the log carries no OK or FAILED result line",
+        "the result line is None, not exactly 'OK'",
+        "skipped is None, not zero",
+        "failures is None, not zero",
+        "errors is None, not zero"
+      ]
+    },
+    "truncated": {
+      "proof": false,
+      "refusals": [
+        "the log carries no complete 'Ran N tests in ...' line",
+        "the log records None tests, not a positive count"
+      ]
+    },
+    "two_runs": {
+      "proof": false,
+      "refusals": [
+        "the log carries 2 'Ran' lines: which run is this?",
+        "the log records None tests, not a positive count"
+      ]
+    },
+    "unknown_skips": {
+      "proof": false,
+      "refusals": [
+        "the result line carries an unparsed counter 'skipped=unknown'",
+        "the result line is 'OK (skipped=unknown)', not exactly 'OK'",
+        "skipped is None, not zero",
+        "failures is None, not zero",
+        "errors is None, not zero"
+      ]
+    },
+    "zero_tests": {
+      "proof": false,
+      "refusals": [
+        "the log records zero tests",
+        "the log records 0 tests, not a positive count"
+      ]
+    }
+  },
+  "positive": {
+    "proof": true,
+    "refusals": []
+  },
+  "predicate_mutations": {
+    "executed": {
+      "errors": 0,
+      "failures": 6,
+      "ran": 26
+    },
+    "head_stability": {
+      "errors": 0,
+      "failures": 1,
+      "ran": 26
+    },
+    "result_line": {
+      "errors": 0,
+      "failures": 1,
+      "ran": 26
+    },
+    "worktree_clean": {
+      "errors": 0,
+      "failures": 3,
+      "ran": 26
+    }
+  },
+  "provenance_controls": {
+    "dirty_start": {
+      "proof": false,
+      "refusals": [
+        "the worktree was True at the start of the run"
+      ]
+    },
+    "head_moved": {
+      "proof": false,
+      "refusals": [
+        "HEAD moved during the run: 12857ae2fe4b601954fbeacfd409815bb48c1b63 -> 0000000000000000000000000000000000000000"
+      ]
+    },
+    "not_executed": {
+      "proof": false,
+      "refusals": [
+        "the suite was not executed by this tool: a reconstructed report is not a proof"
+      ]
+    }
+  },
+  "remaining_log_gaps": {
+    "contradictory_results": {
+      "proof": true,
+      "refusals": []
+    },
+    "duplicate_ok": {
+      "proof": true,
+      "refusals": []
+    },
+    "nonnumeric_duration": {
+      "proof": true,
+      "refusals": []
+    },
+    "result_before_run": {
+      "proof": true,
+      "refusals": []
+    },
+    "truncated_after_in": {
+      "proof": true,
+      "refusals": []
+    }
+  },
+  "snapshot_order": [
+    "snapshot",
+    "execute",
+    "snapshot"
+  ],
+  "synthetic_inputs_not_actual_runs": true
+}
