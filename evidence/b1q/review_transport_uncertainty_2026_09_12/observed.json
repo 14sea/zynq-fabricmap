@@ -1,0 +1,1197 @@
+{
+  "cases": {
+    "intact": {
+      "capture_hex": "50334c35204944454e542030203338643235343635363464336139383862333932663034323066636266633633204141414141444c6d4d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034513d3d2035656666653932360a",
+      "persisted": {
+        "bytes_sent": 1048,
+        "captures": [
+          {
+            "bytes": 1048,
+            "capture": "capture_000.bin",
+            "events": "events_000.json",
+            "repetition": 0,
+            "sha256": "57aa2ee9283e7e0a05cbce59237e8e2effff143626d39cdb461c19231b6d023f"
+          }
+        ],
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "counters_after": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_before": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_delta": {
+          "available": false,
+          "reason": "no fd supplied"
+        },
+        "denominator": "received bytes, including every partial capture",
+        "denominator_bytes": 1048,
+        "error": null,
+        "export_complete": true,
+        "export_errors": [],
+        "exposure_reached": true,
+        "frames_accepted": 1,
+        "frames_planned": 302,
+        "frames_sent": 1,
+        "frames_uncertain": 0,
+        "host_frames_written": 0,
+        "host_writes_overlapping_source_tx": 0,
+        "incomplete": true,
+        "label": "intact",
+        "losses": 0,
+        "losses_in_analysed_repetitions": 0,
+        "losses_per_100k_bytes": 0.0,
+        "parameters": {
+          "baud": 115200,
+          "byte_time_s": 8.680555555555556e-05,
+          "pace": false,
+          "read_timeout_s": 0.05,
+          "repetitions": 200,
+          "seconds": 0.01,
+          "stop_at_losses": 3,
+          "tx_gap_s": 0.065,
+          "write_timeout_s": 5.0
+        },
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e1b7b4450811c37268b87add402764c66425acfe6d36e4c1726e80f98e97377a"
+        },
+        "repetition_results": [
+          {
+            "analysis_available": true,
+            "bytes_accepted": 1048,
+            "bytes_fragment": 0,
+            "bytes_host_echo": 0,
+            "bytes_received": 1048,
+            "bytes_sent": 1048,
+            "censored": [],
+            "censored_in_flight": 0,
+            "clean": true,
+            "cut_short": true,
+            "cutoff": {
+              "ambiguous": false,
+              "note": "frames above the frontier are censored only when nothing unidentifiable arrived after the last identified observation; otherwise they are unresolved \u2014 damage was observed there and cannot be attributed, so it is neither a loss nor in flight",
+              "observation_frontier": 0,
+              "partial_frame": null,
+              "unidentified_after_frontier": 0
+            },
+            "damaged": [],
+            "defects": [],
+            "defects_by_kind": {},
+            "divergence": null,
+            "duplicated": [],
+            "ended": "deadline reached after 1 of 302 frames",
+            "frames_accepted": 1,
+            "frames_attempted": 1,
+            "frames_delivered": 1,
+            "frames_planned": 302,
+            "frames_sent": 1,
+            "frames_uncertain": 0,
+            "host_echo_lines": 0,
+            "host_frames_written": 0,
+            "host_writes_overlapping_source_tx": 0,
+            "incomplete": true,
+            "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+            "losses": 0,
+            "missing": [],
+            "note": "frames never attempted are not counted as losses; an uncertain write is in flight, not a loss; unresolved frames are ambiguous at a cutoff and are neither",
+            "observed": [
+              0
+            ],
+            "observed_damaged": {},
+            "out_of_order": false,
+            "reads": 1,
+            "repetition": 0,
+            "resolved": false,
+            "unexpected_frames": 0,
+            "unresolved": [],
+            "unresolved_at_cutoff": 0
+          }
+        ],
+        "repetitions_run": 1,
+        "repetitions_unanalysed": [],
+        "run_id": "review",
+        "scope": "a rig run under one condition; it attributes nothing, qualifies nothing, and does not authorise a board session (plan \u00a75, \u00a76)",
+        "secondary_errors": [],
+        "stopped": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 0 frames censored in flight, 0 unresolved",
+        "terminal": {
+          "detail": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 0 frames censored in flight, 0 unresolved",
+          "meaning": "the registered time bound cut a repetition: its in-flight traffic is censored (or unresolved), so the exposure is reached but not complete",
+          "reason": "exposure_seconds_censored",
+          "repetition": 0
+        },
+        "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+        "traffic_resolved": false,
+        "tx_during_rx": false,
+        "unresolved_at_cutoff": 0
+      },
+      "returned": {
+        "bytes_sent": 1048,
+        "captures": [
+          {
+            "bytes": 1048,
+            "capture": "capture_000.bin",
+            "events": "events_000.json",
+            "repetition": 0,
+            "sha256": "57aa2ee9283e7e0a05cbce59237e8e2effff143626d39cdb461c19231b6d023f"
+          }
+        ],
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "counters_after": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_before": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_delta": {
+          "available": false,
+          "reason": "no fd supplied"
+        },
+        "denominator": "received bytes, including every partial capture",
+        "denominator_bytes": 1048,
+        "error": null,
+        "export_complete": true,
+        "export_errors": [],
+        "exported_to": "/tmp/rig_uncertainty_review_mumxz13o/intact",
+        "exposure_reached": true,
+        "frames_accepted": 1,
+        "frames_planned": 302,
+        "frames_sent": 1,
+        "frames_uncertain": 0,
+        "host_frames_written": 0,
+        "host_writes_overlapping_source_tx": 0,
+        "incomplete": true,
+        "label": "intact",
+        "losses": 0,
+        "losses_in_analysed_repetitions": 0,
+        "losses_per_100k_bytes": 0.0,
+        "parameters": {
+          "baud": 115200,
+          "byte_time_s": 8.680555555555556e-05,
+          "pace": false,
+          "read_timeout_s": 0.05,
+          "repetitions": 200,
+          "seconds": 0.01,
+          "stop_at_losses": 3,
+          "tx_gap_s": 0.065,
+          "write_timeout_s": 5.0
+        },
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e1b7b4450811c37268b87add402764c66425acfe6d36e4c1726e80f98e97377a"
+        },
+        "repetition_results": [
+          {
+            "analysis_available": true,
+            "bytes_accepted": 1048,
+            "bytes_fragment": 0,
+            "bytes_host_echo": 0,
+            "bytes_received": 1048,
+            "bytes_sent": 1048,
+            "censored": [],
+            "censored_in_flight": 0,
+            "clean": true,
+            "cut_short": true,
+            "cutoff": {
+              "ambiguous": false,
+              "note": "frames above the frontier are censored only when nothing unidentifiable arrived after the last identified observation; otherwise they are unresolved \u2014 damage was observed there and cannot be attributed, so it is neither a loss nor in flight",
+              "observation_frontier": 0,
+              "partial_frame": null,
+              "unidentified_after_frontier": 0
+            },
+            "damaged": [],
+            "defects": [],
+            "defects_by_kind": {},
+            "divergence": null,
+            "duplicated": [],
+            "ended": "deadline reached after 1 of 302 frames",
+            "frames_accepted": 1,
+            "frames_attempted": 1,
+            "frames_delivered": 1,
+            "frames_planned": 302,
+            "frames_sent": 1,
+            "frames_uncertain": 0,
+            "host_echo_lines": 0,
+            "host_frames_written": 0,
+            "host_writes_overlapping_source_tx": 0,
+            "incomplete": true,
+            "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+            "losses": 0,
+            "missing": [],
+            "note": "frames never attempted are not counted as losses; an uncertain write is in flight, not a loss; unresolved frames are ambiguous at a cutoff and are neither",
+            "observed": [
+              0
+            ],
+            "observed_damaged": {},
+            "out_of_order": false,
+            "reads": 1,
+            "repetition": 0,
+            "resolved": false,
+            "unexpected_frames": 0,
+            "unresolved": [],
+            "unresolved_at_cutoff": 0
+          }
+        ],
+        "repetitions_run": 1,
+        "repetitions_unanalysed": [],
+        "run_id": "review",
+        "scope": "a rig run under one condition; it attributes nothing, qualifies nothing, and does not authorise a board session (plan \u00a75, \u00a76)",
+        "secondary_errors": [],
+        "stopped": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 0 frames censored in flight, 0 unresolved",
+        "terminal": {
+          "detail": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 0 frames censored in flight, 0 unresolved",
+          "meaning": "the registered time bound cut a repetition: its in-flight traffic is censored (or unresolved), so the exposure is reached but not complete",
+          "reason": "exposure_seconds_censored",
+          "repetition": 0
+        },
+        "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+        "traffic_resolved": false,
+        "tx_during_rx": false,
+        "unresolved_at_cutoff": 0
+      }
+    },
+    "known_crc_damage": {
+      "capture_hex": "50334c35204944454e542030203338643235343635363464336139383862333932663034323066636266633633204141414141444c6d4d755a6b537571595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034544c6d5a457271574542724d2d6e5376354d6c6e624239576e54356c583568425a31724b43306a33436e684d755a6b537570595147737a36644b5f6b7957647348316164506d56666d45466e57736f4c5350634b654579356d524b366c6841617a507030722d544a5a3277665670302d5a562d59515764617967744939777034513d3d2035656666653932360a",
+      "persisted": {
+        "bytes_sent": 1048,
+        "captures": [
+          {
+            "bytes": 1048,
+            "capture": "capture_000.bin",
+            "events": "events_000.json",
+            "repetition": 0,
+            "sha256": "684e30af676d05c736193f3864dbef7e6c508597635ea8f158b763b9e9888e41"
+          }
+        ],
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "counters_after": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_before": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_delta": {
+          "available": false,
+          "reason": "no fd supplied"
+        },
+        "denominator": "received bytes, including every partial capture",
+        "denominator_bytes": 1048,
+        "error": null,
+        "export_complete": true,
+        "export_errors": [],
+        "exposure_reached": true,
+        "frames_accepted": 1,
+        "frames_planned": 302,
+        "frames_sent": 1,
+        "frames_uncertain": 0,
+        "host_frames_written": 0,
+        "host_writes_overlapping_source_tx": 0,
+        "incomplete": true,
+        "label": "known_crc_damage",
+        "losses": 1,
+        "losses_in_analysed_repetitions": 1,
+        "losses_per_100k_bytes": 95.41984732824427,
+        "parameters": {
+          "baud": 115200,
+          "byte_time_s": 8.680555555555556e-05,
+          "pace": false,
+          "read_timeout_s": 0.05,
+          "repetitions": 200,
+          "seconds": 0.01,
+          "stop_at_losses": 3,
+          "tx_gap_s": 0.065,
+          "write_timeout_s": 5.0
+        },
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e1b7b4450811c37268b87add402764c66425acfe6d36e4c1726e80f98e97377a"
+        },
+        "repetition_results": [
+          {
+            "analysis_available": true,
+            "bytes_accepted": 1048,
+            "bytes_fragment": 0,
+            "bytes_host_echo": 0,
+            "bytes_received": 1048,
+            "bytes_sent": 1048,
+            "censored": [],
+            "censored_in_flight": 0,
+            "clean": false,
+            "cut_short": true,
+            "cutoff": {
+              "ambiguous": false,
+              "note": "frames above the frontier are censored only when nothing unidentifiable arrived after the last identified observation; otherwise they are unresolved \u2014 damage was observed there and cannot be attributed, so it is neither a loss nor in flight",
+              "observation_frontier": 0,
+              "partial_frame": null,
+              "unidentified_after_frontier": 0
+            },
+            "damaged": [],
+            "defects": [
+              {
+                "bytes": 1048,
+                "identified_by": "near",
+                "index": 0,
+                "kind": "crc_failed",
+                "offset": 0
+              }
+            ],
+            "defects_by_kind": {
+              "crc_failed": 1
+            },
+            "divergence": {
+              "bytes_to_next_newline": 988,
+              "expected_bytes": 1048,
+              "first_offset": 60,
+              "frame_index": 0,
+              "frame_kind": "IDENT",
+              "note": "a newline is not evidence of resynchronisation; `resynchronised_at` is the next line that is byte-exactly an expected frame of this repetition, or null if none follows",
+              "offset_in_frame": 60,
+              "received_bytes": 1048,
+              "resynchronised_at": null
+            },
+            "duplicated": [],
+            "ended": "deadline reached after 1 of 302 frames",
+            "frames_accepted": 1,
+            "frames_attempted": 1,
+            "frames_delivered": 0,
+            "frames_planned": 302,
+            "frames_sent": 1,
+            "frames_uncertain": 0,
+            "host_echo_lines": 0,
+            "host_frames_written": 0,
+            "host_writes_overlapping_source_tx": 0,
+            "incomplete": true,
+            "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+            "losses": 1,
+            "missing": [
+              0
+            ],
+            "note": "frames never attempted are not counted as losses; an uncertain write is in flight, not a loss; unresolved frames are ambiguous at a cutoff and are neither",
+            "observed": [
+              0
+            ],
+            "observed_damaged": {
+              "0": "crc_failed"
+            },
+            "out_of_order": false,
+            "reads": 1,
+            "repetition": 0,
+            "resolved": false,
+            "unexpected_frames": 0,
+            "unresolved": [],
+            "unresolved_at_cutoff": 0
+          }
+        ],
+        "repetitions_run": 1,
+        "repetitions_unanalysed": [],
+        "run_id": "review",
+        "scope": "a rig run under one condition; it attributes nothing, qualifies nothing, and does not authorise a board session (plan \u00a75, \u00a76)",
+        "secondary_errors": [],
+        "stopped": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 0 frames censored in flight, 0 unresolved",
+        "terminal": {
+          "detail": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 0 frames censored in flight, 0 unresolved",
+          "meaning": "the registered time bound cut a repetition: its in-flight traffic is censored (or unresolved), so the exposure is reached but not complete",
+          "reason": "exposure_seconds_censored",
+          "repetition": 0
+        },
+        "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+        "traffic_resolved": false,
+        "tx_during_rx": false,
+        "unresolved_at_cutoff": 0
+      },
+      "returned": {
+        "bytes_sent": 1048,
+        "captures": [
+          {
+            "bytes": 1048,
+            "capture": "capture_000.bin",
+            "events": "events_000.json",
+            "repetition": 0,
+            "sha256": "684e30af676d05c736193f3864dbef7e6c508597635ea8f158b763b9e9888e41"
+          }
+        ],
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "counters_after": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_before": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_delta": {
+          "available": false,
+          "reason": "no fd supplied"
+        },
+        "denominator": "received bytes, including every partial capture",
+        "denominator_bytes": 1048,
+        "error": null,
+        "export_complete": true,
+        "export_errors": [],
+        "exported_to": "/tmp/rig_uncertainty_review_mumxz13o/known_crc_damage",
+        "exposure_reached": true,
+        "frames_accepted": 1,
+        "frames_planned": 302,
+        "frames_sent": 1,
+        "frames_uncertain": 0,
+        "host_frames_written": 0,
+        "host_writes_overlapping_source_tx": 0,
+        "incomplete": true,
+        "label": "known_crc_damage",
+        "losses": 1,
+        "losses_in_analysed_repetitions": 1,
+        "losses_per_100k_bytes": 95.41984732824427,
+        "parameters": {
+          "baud": 115200,
+          "byte_time_s": 8.680555555555556e-05,
+          "pace": false,
+          "read_timeout_s": 0.05,
+          "repetitions": 200,
+          "seconds": 0.01,
+          "stop_at_losses": 3,
+          "tx_gap_s": 0.065,
+          "write_timeout_s": 5.0
+        },
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e1b7b4450811c37268b87add402764c66425acfe6d36e4c1726e80f98e97377a"
+        },
+        "repetition_results": [
+          {
+            "analysis_available": true,
+            "bytes_accepted": 1048,
+            "bytes_fragment": 0,
+            "bytes_host_echo": 0,
+            "bytes_received": 1048,
+            "bytes_sent": 1048,
+            "censored": [],
+            "censored_in_flight": 0,
+            "clean": false,
+            "cut_short": true,
+            "cutoff": {
+              "ambiguous": false,
+              "note": "frames above the frontier are censored only when nothing unidentifiable arrived after the last identified observation; otherwise they are unresolved \u2014 damage was observed there and cannot be attributed, so it is neither a loss nor in flight",
+              "observation_frontier": 0,
+              "partial_frame": null,
+              "unidentified_after_frontier": 0
+            },
+            "damaged": [],
+            "defects": [
+              {
+                "bytes": 1048,
+                "identified_by": "near",
+                "index": 0,
+                "kind": "crc_failed",
+                "offset": 0
+              }
+            ],
+            "defects_by_kind": {
+              "crc_failed": 1
+            },
+            "divergence": {
+              "bytes_to_next_newline": 988,
+              "expected_bytes": 1048,
+              "first_offset": 60,
+              "frame_index": 0,
+              "frame_kind": "IDENT",
+              "note": "a newline is not evidence of resynchronisation; `resynchronised_at` is the next line that is byte-exactly an expected frame of this repetition, or null if none follows",
+              "offset_in_frame": 60,
+              "received_bytes": 1048,
+              "resynchronised_at": null
+            },
+            "duplicated": [],
+            "ended": "deadline reached after 1 of 302 frames",
+            "frames_accepted": 1,
+            "frames_attempted": 1,
+            "frames_delivered": 0,
+            "frames_planned": 302,
+            "frames_sent": 1,
+            "frames_uncertain": 0,
+            "host_echo_lines": 0,
+            "host_frames_written": 0,
+            "host_writes_overlapping_source_tx": 0,
+            "incomplete": true,
+            "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+            "losses": 1,
+            "missing": [
+              0
+            ],
+            "note": "frames never attempted are not counted as losses; an uncertain write is in flight, not a loss; unresolved frames are ambiguous at a cutoff and are neither",
+            "observed": [
+              0
+            ],
+            "observed_damaged": {
+              "0": "crc_failed"
+            },
+            "out_of_order": false,
+            "reads": 1,
+            "repetition": 0,
+            "resolved": false,
+            "unexpected_frames": 0,
+            "unresolved": [],
+            "unresolved_at_cutoff": 0
+          }
+        ],
+        "repetitions_run": 1,
+        "repetitions_unanalysed": [],
+        "run_id": "review",
+        "scope": "a rig run under one condition; it attributes nothing, qualifies nothing, and does not authorise a board session (plan \u00a75, \u00a76)",
+        "secondary_errors": [],
+        "stopped": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 0 frames censored in flight, 0 unresolved",
+        "terminal": {
+          "detail": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 0 frames censored in flight, 0 unresolved",
+          "meaning": "the registered time bound cut a repetition: its in-flight traffic is censored (or unresolved), so the exposure is reached but not complete",
+          "reason": "exposure_seconds_censored",
+          "repetition": 0
+        },
+        "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+        "traffic_resolved": false,
+        "tx_during_rx": false,
+        "unresolved_at_cutoff": 0
+      }
+    },
+    "silence": {
+      "capture_hex": "",
+      "persisted": {
+        "bytes_sent": 1048,
+        "captures": [
+          {
+            "bytes": 0,
+            "capture": "capture_000.bin",
+            "events": "events_000.json",
+            "repetition": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "censored_in_flight": 1,
+        "completed_exposure": false,
+        "counters_after": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_before": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_delta": {
+          "available": false,
+          "reason": "no fd supplied"
+        },
+        "denominator": "unavailable: nothing was received, so there is no denominator",
+        "denominator_bytes": 0,
+        "error": null,
+        "export_complete": true,
+        "export_errors": [],
+        "exposure_reached": true,
+        "frames_accepted": 1,
+        "frames_planned": 302,
+        "frames_sent": 1,
+        "frames_uncertain": 0,
+        "host_frames_written": 0,
+        "host_writes_overlapping_source_tx": 0,
+        "incomplete": true,
+        "label": "silence",
+        "losses": 0,
+        "losses_in_analysed_repetitions": 0,
+        "losses_per_100k_bytes": null,
+        "parameters": {
+          "baud": 115200,
+          "byte_time_s": 8.680555555555556e-05,
+          "pace": false,
+          "read_timeout_s": 0.05,
+          "repetitions": 200,
+          "seconds": 0.01,
+          "stop_at_losses": 3,
+          "tx_gap_s": 0.065,
+          "write_timeout_s": 5.0
+        },
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e1b7b4450811c37268b87add402764c66425acfe6d36e4c1726e80f98e97377a"
+        },
+        "repetition_results": [
+          {
+            "analysis_available": true,
+            "bytes_accepted": 1048,
+            "bytes_fragment": 0,
+            "bytes_host_echo": 0,
+            "bytes_received": 0,
+            "bytes_sent": 1048,
+            "censored": [
+              0
+            ],
+            "censored_in_flight": 1,
+            "clean": false,
+            "cut_short": true,
+            "cutoff": {
+              "ambiguous": false,
+              "note": "frames above the frontier are censored only when nothing unidentifiable arrived after the last identified observation; otherwise they are unresolved \u2014 damage was observed there and cannot be attributed, so it is neither a loss nor in flight",
+              "observation_frontier": -1,
+              "partial_frame": null,
+              "unidentified_after_frontier": 0
+            },
+            "damaged": [],
+            "defects": [],
+            "defects_by_kind": {},
+            "divergence": {
+              "bytes_to_next_newline": null,
+              "expected_bytes": 1048,
+              "first_offset": 0,
+              "frame_index": 0,
+              "frame_kind": "IDENT",
+              "note": "a newline is not evidence of resynchronisation; `resynchronised_at` is the next line that is byte-exactly an expected frame of this repetition, or null if none follows",
+              "offset_in_frame": 0,
+              "received_bytes": 0,
+              "resynchronised_at": null
+            },
+            "duplicated": [],
+            "ended": "deadline reached after 1 of 302 frames",
+            "frames_accepted": 1,
+            "frames_attempted": 1,
+            "frames_delivered": 0,
+            "frames_planned": 302,
+            "frames_sent": 1,
+            "frames_uncertain": 0,
+            "host_echo_lines": 0,
+            "host_frames_written": 0,
+            "host_writes_overlapping_source_tx": 0,
+            "incomplete": true,
+            "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+            "losses": 0,
+            "missing": [],
+            "note": "frames never attempted are not counted as losses; an uncertain write is in flight, not a loss; unresolved frames are ambiguous at a cutoff and are neither",
+            "observed": [],
+            "observed_damaged": {},
+            "out_of_order": false,
+            "reads": 0,
+            "repetition": 0,
+            "resolved": false,
+            "unexpected_frames": 0,
+            "unresolved": [],
+            "unresolved_at_cutoff": 0
+          }
+        ],
+        "repetitions_run": 1,
+        "repetitions_unanalysed": [],
+        "run_id": "review",
+        "scope": "a rig run under one condition; it attributes nothing, qualifies nothing, and does not authorise a board session (plan \u00a75, \u00a76)",
+        "secondary_errors": [],
+        "stopped": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 1 frames censored in flight, 0 unresolved",
+        "terminal": {
+          "detail": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 1 frames censored in flight, 0 unresolved",
+          "meaning": "the registered time bound cut a repetition: its in-flight traffic is censored (or unresolved), so the exposure is reached but not complete",
+          "reason": "exposure_seconds_censored",
+          "repetition": 0
+        },
+        "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+        "traffic_resolved": false,
+        "tx_during_rx": false,
+        "unresolved_at_cutoff": 0
+      },
+      "returned": {
+        "bytes_sent": 1048,
+        "captures": [
+          {
+            "bytes": 0,
+            "capture": "capture_000.bin",
+            "events": "events_000.json",
+            "repetition": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        ],
+        "censored_in_flight": 1,
+        "completed_exposure": false,
+        "counters_after": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_before": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_delta": {
+          "available": false,
+          "reason": "no fd supplied"
+        },
+        "denominator": "unavailable: nothing was received, so there is no denominator",
+        "denominator_bytes": 0,
+        "error": null,
+        "export_complete": true,
+        "export_errors": [],
+        "exported_to": "/tmp/rig_uncertainty_review_mumxz13o/silence",
+        "exposure_reached": true,
+        "frames_accepted": 1,
+        "frames_planned": 302,
+        "frames_sent": 1,
+        "frames_uncertain": 0,
+        "host_frames_written": 0,
+        "host_writes_overlapping_source_tx": 0,
+        "incomplete": true,
+        "label": "silence",
+        "losses": 0,
+        "losses_in_analysed_repetitions": 0,
+        "losses_per_100k_bytes": null,
+        "parameters": {
+          "baud": 115200,
+          "byte_time_s": 8.680555555555556e-05,
+          "pace": false,
+          "read_timeout_s": 0.05,
+          "repetitions": 200,
+          "seconds": 0.01,
+          "stop_at_losses": 3,
+          "tx_gap_s": 0.065,
+          "write_timeout_s": 5.0
+        },
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e1b7b4450811c37268b87add402764c66425acfe6d36e4c1726e80f98e97377a"
+        },
+        "repetition_results": [
+          {
+            "analysis_available": true,
+            "bytes_accepted": 1048,
+            "bytes_fragment": 0,
+            "bytes_host_echo": 0,
+            "bytes_received": 0,
+            "bytes_sent": 1048,
+            "censored": [
+              0
+            ],
+            "censored_in_flight": 1,
+            "clean": false,
+            "cut_short": true,
+            "cutoff": {
+              "ambiguous": false,
+              "note": "frames above the frontier are censored only when nothing unidentifiable arrived after the last identified observation; otherwise they are unresolved \u2014 damage was observed there and cannot be attributed, so it is neither a loss nor in flight",
+              "observation_frontier": -1,
+              "partial_frame": null,
+              "unidentified_after_frontier": 0
+            },
+            "damaged": [],
+            "defects": [],
+            "defects_by_kind": {},
+            "divergence": {
+              "bytes_to_next_newline": null,
+              "expected_bytes": 1048,
+              "first_offset": 0,
+              "frame_index": 0,
+              "frame_kind": "IDENT",
+              "note": "a newline is not evidence of resynchronisation; `resynchronised_at` is the next line that is byte-exactly an expected frame of this repetition, or null if none follows",
+              "offset_in_frame": 0,
+              "received_bytes": 0,
+              "resynchronised_at": null
+            },
+            "duplicated": [],
+            "ended": "deadline reached after 1 of 302 frames",
+            "frames_accepted": 1,
+            "frames_attempted": 1,
+            "frames_delivered": 0,
+            "frames_planned": 302,
+            "frames_sent": 1,
+            "frames_uncertain": 0,
+            "host_echo_lines": 0,
+            "host_frames_written": 0,
+            "host_writes_overlapping_source_tx": 0,
+            "incomplete": true,
+            "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+            "losses": 0,
+            "missing": [],
+            "note": "frames never attempted are not counted as losses; an uncertain write is in flight, not a loss; unresolved frames are ambiguous at a cutoff and are neither",
+            "observed": [],
+            "observed_damaged": {},
+            "out_of_order": false,
+            "reads": 0,
+            "repetition": 0,
+            "resolved": false,
+            "unexpected_frames": 0,
+            "unresolved": [],
+            "unresolved_at_cutoff": 0
+          }
+        ],
+        "repetitions_run": 1,
+        "repetitions_unanalysed": [],
+        "run_id": "review",
+        "scope": "a rig run under one condition; it attributes nothing, qualifies nothing, and does not authorise a board session (plan \u00a75, \u00a76)",
+        "secondary_errors": [],
+        "stopped": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 1 frames censored in flight, 0 unresolved",
+        "terminal": {
+          "detail": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 1 frames censored in flight, 0 unresolved",
+          "meaning": "the registered time bound cut a repetition: its in-flight traffic is censored (or unresolved), so the exposure is reached but not complete",
+          "reason": "exposure_seconds_censored",
+          "repetition": 0
+        },
+        "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+        "traffic_resolved": false,
+        "tx_during_rx": false,
+        "unresolved_at_cutoff": 0
+      }
+    },
+    "unidentifiable_damage": {
+      "capture_hex": "676172626c65640a",
+      "persisted": {
+        "bytes_sent": 1048,
+        "captures": [
+          {
+            "bytes": 8,
+            "capture": "capture_000.bin",
+            "events": "events_000.json",
+            "repetition": 0,
+            "sha256": "8072ab437473f48228adb5845c242cfe66671e3db11135fb4280b52ea0e84794"
+          }
+        ],
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "counters_after": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_before": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_delta": {
+          "available": false,
+          "reason": "no fd supplied"
+        },
+        "denominator": "received bytes, including every partial capture",
+        "denominator_bytes": 8,
+        "error": null,
+        "export_complete": true,
+        "export_errors": [],
+        "exposure_reached": true,
+        "frames_accepted": 1,
+        "frames_planned": 302,
+        "frames_sent": 1,
+        "frames_uncertain": 0,
+        "host_frames_written": 0,
+        "host_writes_overlapping_source_tx": 0,
+        "incomplete": true,
+        "label": "unidentifiable_damage",
+        "losses": 0,
+        "losses_in_analysed_repetitions": 0,
+        "losses_per_100k_bytes": 0.0,
+        "parameters": {
+          "baud": 115200,
+          "byte_time_s": 8.680555555555556e-05,
+          "pace": false,
+          "read_timeout_s": 0.05,
+          "repetitions": 200,
+          "seconds": 0.01,
+          "stop_at_losses": 3,
+          "tx_gap_s": 0.065,
+          "write_timeout_s": 5.0
+        },
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e1b7b4450811c37268b87add402764c66425acfe6d36e4c1726e80f98e97377a"
+        },
+        "repetition_results": [
+          {
+            "analysis_available": true,
+            "bytes_accepted": 1048,
+            "bytes_fragment": 0,
+            "bytes_host_echo": 0,
+            "bytes_received": 8,
+            "bytes_sent": 1048,
+            "censored": [],
+            "censored_in_flight": 0,
+            "clean": false,
+            "cut_short": true,
+            "cutoff": {
+              "ambiguous": true,
+              "note": "frames above the frontier are censored only when nothing unidentifiable arrived after the last identified observation; otherwise they are unresolved \u2014 damage was observed there and cannot be attributed, so it is neither a loss nor in flight",
+              "observation_frontier": -1,
+              "partial_frame": null,
+              "unidentified_after_frontier": 1
+            },
+            "damaged": [],
+            "defects": [
+              {
+                "bytes": 8,
+                "kind": "malformed",
+                "offset": 0
+              }
+            ],
+            "defects_by_kind": {
+              "malformed": 1
+            },
+            "divergence": {
+              "bytes_to_next_newline": 8,
+              "expected_bytes": 1048,
+              "first_offset": 0,
+              "frame_index": 0,
+              "frame_kind": "IDENT",
+              "note": "a newline is not evidence of resynchronisation; `resynchronised_at` is the next line that is byte-exactly an expected frame of this repetition, or null if none follows",
+              "offset_in_frame": 0,
+              "received_bytes": 8,
+              "resynchronised_at": null
+            },
+            "duplicated": [],
+            "ended": "deadline reached after 1 of 302 frames",
+            "frames_accepted": 1,
+            "frames_attempted": 1,
+            "frames_delivered": 0,
+            "frames_planned": 302,
+            "frames_sent": 1,
+            "frames_uncertain": 0,
+            "host_echo_lines": 0,
+            "host_frames_written": 0,
+            "host_writes_overlapping_source_tx": 0,
+            "incomplete": true,
+            "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+            "losses": 0,
+            "missing": [],
+            "note": "frames never attempted are not counted as losses; an uncertain write is in flight, not a loss; unresolved frames are ambiguous at a cutoff and are neither",
+            "observed": [],
+            "observed_damaged": {},
+            "out_of_order": false,
+            "reads": 1,
+            "repetition": 0,
+            "resolved": false,
+            "unexpected_frames": 0,
+            "unresolved": [
+              0
+            ],
+            "unresolved_at_cutoff": 1
+          }
+        ],
+        "repetitions_run": 1,
+        "repetitions_unanalysed": [],
+        "run_id": "review",
+        "scope": "a rig run under one condition; it attributes nothing, qualifies nothing, and does not authorise a board session (plan \u00a75, \u00a76)",
+        "secondary_errors": [],
+        "stopped": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 0 frames censored in flight, 1 unresolved",
+        "terminal": {
+          "detail": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 0 frames censored in flight, 1 unresolved",
+          "meaning": "the registered time bound cut a repetition: its in-flight traffic is censored (or unresolved), so the exposure is reached but not complete",
+          "reason": "exposure_seconds_censored",
+          "repetition": 0
+        },
+        "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+        "traffic_resolved": false,
+        "tx_during_rx": false,
+        "unresolved_at_cutoff": 1
+      },
+      "returned": {
+        "bytes_sent": 1048,
+        "captures": [
+          {
+            "bytes": 8,
+            "capture": "capture_000.bin",
+            "events": "events_000.json",
+            "repetition": 0,
+            "sha256": "8072ab437473f48228adb5845c242cfe66671e3db11135fb4280b52ea0e84794"
+          }
+        ],
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "counters_after": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_before": {
+          "available": false,
+          "note": "no counter is reported; absence of a count is not a count of zero",
+          "reason": "no fd supplied"
+        },
+        "counters_delta": {
+          "available": false,
+          "reason": "no fd supplied"
+        },
+        "denominator": "received bytes, including every partial capture",
+        "denominator_bytes": 8,
+        "error": null,
+        "export_complete": true,
+        "export_errors": [],
+        "exported_to": "/tmp/rig_uncertainty_review_mumxz13o/unidentifiable_damage",
+        "exposure_reached": true,
+        "frames_accepted": 1,
+        "frames_planned": 302,
+        "frames_sent": 1,
+        "frames_uncertain": 0,
+        "host_frames_written": 0,
+        "host_writes_overlapping_source_tx": 0,
+        "incomplete": true,
+        "label": "unidentifiable_damage",
+        "losses": 0,
+        "losses_in_analysed_repetitions": 0,
+        "losses_per_100k_bytes": 0.0,
+        "parameters": {
+          "baud": 115200,
+          "byte_time_s": 8.680555555555556e-05,
+          "pace": false,
+          "read_timeout_s": 0.05,
+          "repetitions": 200,
+          "seconds": 0.01,
+          "stop_at_losses": 3,
+          "tx_gap_s": 0.065,
+          "write_timeout_s": 5.0
+        },
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e1b7b4450811c37268b87add402764c66425acfe6d36e4c1726e80f98e97377a"
+        },
+        "repetition_results": [
+          {
+            "analysis_available": true,
+            "bytes_accepted": 1048,
+            "bytes_fragment": 0,
+            "bytes_host_echo": 0,
+            "bytes_received": 8,
+            "bytes_sent": 1048,
+            "censored": [],
+            "censored_in_flight": 0,
+            "clean": false,
+            "cut_short": true,
+            "cutoff": {
+              "ambiguous": true,
+              "note": "frames above the frontier are censored only when nothing unidentifiable arrived after the last identified observation; otherwise they are unresolved \u2014 damage was observed there and cannot be attributed, so it is neither a loss nor in flight",
+              "observation_frontier": -1,
+              "partial_frame": null,
+              "unidentified_after_frontier": 1
+            },
+            "damaged": [],
+            "defects": [
+              {
+                "bytes": 8,
+                "kind": "malformed",
+                "offset": 0
+              }
+            ],
+            "defects_by_kind": {
+              "malformed": 1
+            },
+            "divergence": {
+              "bytes_to_next_newline": 8,
+              "expected_bytes": 1048,
+              "first_offset": 0,
+              "frame_index": 0,
+              "frame_kind": "IDENT",
+              "note": "a newline is not evidence of resynchronisation; `resynchronised_at` is the next line that is byte-exactly an expected frame of this repetition, or null if none follows",
+              "offset_in_frame": 0,
+              "received_bytes": 8,
+              "resynchronised_at": null
+            },
+            "duplicated": [],
+            "ended": "deadline reached after 1 of 302 frames",
+            "frames_accepted": 1,
+            "frames_attempted": 1,
+            "frames_delivered": 0,
+            "frames_planned": 302,
+            "frames_sent": 1,
+            "frames_uncertain": 0,
+            "host_echo_lines": 0,
+            "host_frames_written": 0,
+            "host_writes_overlapping_source_tx": 0,
+            "incomplete": true,
+            "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+            "losses": 0,
+            "missing": [],
+            "note": "frames never attempted are not counted as losses; an uncertain write is in flight, not a loss; unresolved frames are ambiguous at a cutoff and are neither",
+            "observed": [],
+            "observed_damaged": {},
+            "out_of_order": false,
+            "reads": 1,
+            "repetition": 0,
+            "resolved": false,
+            "unexpected_frames": 0,
+            "unresolved": [
+              0
+            ],
+            "unresolved_at_cutoff": 1
+          }
+        ],
+        "repetitions_run": 1,
+        "repetitions_unanalysed": [],
+        "run_id": "review",
+        "scope": "a rig run under one condition; it attributes nothing, qualifies nothing, and does not authorise a board session (plan \u00a75, \u00a76)",
+        "secondary_errors": [],
+        "stopped": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 0 frames censored in flight, 1 unresolved",
+        "terminal": {
+          "detail": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames); 0 frames censored in flight, 1 unresolved",
+          "meaning": "the registered time bound cut a repetition: its in-flight traffic is censored (or unresolved), so the exposure is reached but not complete",
+          "reason": "exposure_seconds_censored",
+          "repetition": 0
+        },
+        "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+        "traffic_resolved": false,
+        "tx_during_rx": false,
+        "unresolved_at_cutoff": 1
+      }
+    }
+  },
+  "provenance": {
+    "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+    "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+    "instrument_commit": null,
+    "instrument_root": "/home/test/zynq_psoracle",
+    "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+    "tool": "host/transport_rig.py",
+    "tool_sha256": "e1b7b4450811c37268b87add402764c66425acfe6d36e4c1726e80f98e97377a"
+  }
+}
