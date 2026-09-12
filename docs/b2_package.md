@@ -1,5 +1,16 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
 
+> **Section 7 review PASS within static compatibility and offline scope (`9fa8a7a`).**
+> Image `d164cd1d…` and ELF `7de96ed2…` match live build evidence. Twenty-two key
+> functions are identical to B1; B2's allowlists pass against the B1 RTL. Independent
+> guard suite: **91 tests, zero skips, OK**; C B2Q orchestration matches all 20 pinned
+> candidate records. In-memory S0 init/verify passes without creating a live manifest.
+> The 1,895-test report binds correctly to submitted implementation `619b22b`.
+> See the [complete review](b2_section7_review_2026_09_12.md), including five documentation
+> corrections to settle before freeze. Ruling labels match their technical purposes;
+> no ruling, freeze, board_ready transition, push or board time is authorized here.
+> Earlier banners below are historical.
+
 > **The §7 package is SUBMITTED for the owner's review at `619b22b`:
 > [`docs/b2_section7_submission_2026_09_12.md`](b2_section7_submission_2026_09_12.md).** It works
 > through §7's compatibility list and its guard list item by item, names the test behind each

@@ -1,0 +1,326 @@
+{
+  "artifact_sha256": {
+    "docs/b2_preregistration.md": "efc583050124df43ddf9ba530c8d813f00171af6dc5a1c5dbd2be74116c125c0",
+    "evidence/b2/b2q_plan.json": "3d194d76e083fd4ba3ce3cf0458af65637120fcda6761be36598833dbc659216",
+    "evidence/b2/b2q_prediction.json": "2ada4d5dab7ed08f081aa55bb4b6f138688a326bb859ab5d63f58c16e67b58aa",
+    "evidence/b2/build_evidence.json": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b",
+    "firmware/b2/bsp/out/b2_app.bin": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+    "firmware/b2/bsp/out/b2_app.elf": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc",
+    "manifests/b1_manifest.json": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+    "manifests/b2_instrument_pins.json": "95256af80d7513396adee7b14235558b5860111b2d288c584ab2906d23a20759"
+  },
+  "b1_identical_functions": {
+    "arm_attempt": true,
+    "audit_pull": true,
+    "audit_word": true,
+    "axi_read": true,
+    "axi_readable": true,
+    "axi_writable": true,
+    "axi_write": true,
+    "closing_unsigned_control": true,
+    "devcfg_dma": true,
+    "devcfg_wait_done": true,
+    "emit_record": true,
+    "emit_summary": true,
+    "kick_watchdog": true,
+    "link2_witness": true,
+    "link3_witness": true,
+    "pl_nonce": true,
+    "readback_frame": true,
+    "serve_sparse_chunk": true,
+    "settle_condition": true,
+    "stage_streams": true,
+    "tx_run_line": true,
+    "write_envelopes": true
+  },
+  "b2_allowlist_against_b1_rtl": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.001s\n\nOK\n",
+  "b2q_c_twin": {
+    "all_candidate_and_block_fields_equal": true,
+    "pair_seeds": [
+      [
+        3890725659,
+        1378470437
+      ]
+    ],
+    "records": 20,
+    "silicon_evidence": false
+  },
+  "build_findings": [],
+  "head": "9fa8a7a10643bfbf0f97a03c5b756690201d2400",
+  "s0_preview": {
+    "audit": {
+      "note": "every record's readout served and host-verified (the owner's decision of 2026-09-10)",
+      "policy": "all-self-reporting"
+    },
+    "board": {
+      "boardid": "17A6",
+      "idcode": "0x13722093",
+      "part": "xc7z010clg400-1",
+      "role": "verify"
+    },
+    "calibration": null,
+    "carrier": {
+      "bitstream_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+      "variant": "0x42310001"
+    },
+    "carrier_lineage": {
+      "b1_manifest": {
+        "path": "manifests/b1_manifest.json",
+        "sha256": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8"
+      },
+      "b1_qualification_record_sha256": "7f2b76f03d509c50e8bc451e603157832d121ec0b4c71d56d0bb5d8502b517a8",
+      "bitstream": "builds/b1/b1.bit",
+      "bitstream_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+      "note": "the B1 evidence certifies the carrier's history under the B1 manifest and is re-verified FRESH by every verify(); it does not qualify this manifest \u2014 the B2 image needs its own B2Q session (S2)",
+      "variant": "0x42310001"
+    },
+    "experiment": {
+      "budget_per_arm": 600,
+      "engine": {
+        "kmax": 4,
+        "lambda": 8,
+        "mu": 4,
+        "version": "b2-es-v1"
+      },
+      "fitness": "F1",
+      "gate": {
+        "path": "evidence/b2/gate/recomputed_2026_09_10/gate_report.json",
+        "rules_version": "v0.3",
+        "sha256": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c"
+      },
+      "pairs": 9
+    },
+    "history": [],
+    "image": {
+      "board_ready": false,
+      "build_evidence": {
+        "path": "evidence/b2/build_evidence.json",
+        "sha256": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b"
+      },
+      "bytes": 114708,
+      "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc",
+      "note": "no B2 image exists yet; pinned from its build evidence when built; board_ready is the owner's mark at the freeze",
+      "path": "firmware/b2/bsp/out/b2_app.bin",
+      "sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5"
+    },
+    "instrument": {
+      "psoracle_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94"
+    },
+    "instrument_pins": {
+      "path": "manifests/b2_instrument_pins.json",
+      "sha256": "95256af80d7513396adee7b14235558b5860111b2d288c584ab2906d23a20759"
+    },
+    "map": {
+      "canonical_json_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+      "cartographer": "carto-v1",
+      "file_sha256": "b6607a9a4de4ec16b4441395703d353ba438463e3ff0be3b5984ec6f1f1bfa38",
+      "note": "two digests, two encodings: canonical JSON (sorted keys, no spaces) and the file bytes; the IDENT carries the canonical one",
+      "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json"
+    },
+    "pins": {
+      "docs/b2_architecture.md": "2393399094e2ae77389e454c2d435ea9e85dc48e5c9fafded30275de2da12172",
+      "host/b2_gate.py": "34edc5632906685e2c83bb8fc90d05d31724b4b0a8af805188241e6b93fbaa2b",
+      "host/b2_landscape.py": "c3ff39e8dd17514de698bcb03e3023bd5d8911b8ded011cbea231dc9cdcb3226",
+      "host/b2_manifest.py": "73c869af7f82c618df183b43137f9e2374ccad8cf5c084c02e8c24918ac854cd",
+      "host/b2_maps.py": "efad161147f73d7083051d1923f82b91a3e9cb7234d3942d22df1a0f4c3fd09e",
+      "host/b2_plan.py": "bb9cc4427ac7f44dac410f7f3aab130eab8e1fe94258e3693fe7c47526de4b5d",
+      "host/b2_search.py": "3acb04714a6c677708892d171f6a418e6de7627210e2ec6ad65158db51eab1cf",
+      "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
+    },
+    "plan": null,
+    "prereg": {
+      "frozen": false,
+      "path": "docs/b2_preregistration.md",
+      "sha256": null
+    },
+    "qualification": null,
+    "qualification_plan": {
+      "budget_per_arm": 8,
+      "master_seed": 505806527,
+      "pairs": [
+        [
+          3890725659,
+          1378470437
+        ]
+      ],
+      "path": "evidence/b2/b2q_plan.json",
+      "planning_bound": {
+        "deadline_formula": "1.25 x records x 3600 / rate + 600 (the instrument's l6_schedule.session_timeout_s)",
+        "rate_per_hour": 2807.0,
+        "rule": "the slowest archived planning rate (the last observed B1 mapping, this document's planning_rates_NOT_calibration); B2Q MEASURES the real one",
+        "session_timeout_s": 632.0627003918775
+      },
+      "prediction_path": "evidence/b2/b2q_prediction.json",
+      "prediction_sha256": "2ada4d5dab7ed08f081aa55bb4b6f138688a326bb859ab5d63f58c16e67b58aa",
+      "records": 20,
+      "sha256": "3d194d76e083fd4ba3ce3cf0458af65637120fcda6761be36598833dbc659216"
+    },
+    "qualified": false,
+    "rulings_binding": {
+      "B2": [
+        "session=B2",
+        "master_seed",
+        "image_sha256",
+        "prereg_sha256",
+        "b2_manifest_sha256 (the S3 manifest)"
+      ],
+      "B2Q": [
+        "session=B2Q",
+        "image_sha256",
+        "prereg_sha256",
+        "b2_manifest_sha256 (manifest_at_run: the S1 manifest)"
+      ]
+    },
+    "schema": "b2_manifest",
+    "schema_version": "0.2.5",
+    "seeds": {
+      "excluded_frozen_sets": {
+        "evidence/b2/gate/gate_report.json": {
+          "count": 200,
+          "master_seed": 1324512209,
+          "values": 401
+        },
+        "evidence/b2/gate/v0.1_2026-09-10/gate_report.json": {
+          "count": 200,
+          "master_seed": 2131041347,
+          "values": 401
+        },
+        "evidence/b3/sim/sim_report.json": {
+          "count": 200,
+          "master_seed": 3829368064,
+          "values": 401
+        }
+      },
+      "label": "b2-session",
+      "master_seed": 716169644,
+      "pairs": [
+        [
+          3999265929,
+          2551437210
+        ],
+        [
+          2071443792,
+          2503381146
+        ],
+        [
+          1882088862,
+          2502935555
+        ],
+        [
+          2267199202,
+          3505262618
+        ],
+        [
+          33405527,
+          3399505749
+        ],
+        [
+          849734627,
+          3795939218
+        ],
+        [
+          1282363125,
+          3177433520
+        ],
+        [
+          171087639,
+          3868904327
+        ],
+        [
+          1595928170,
+          2211641680
+        ]
+      ],
+      "rule": "first 4 bytes of sha256(label|instrument commit); archived seed sets explicitly excluded"
+    },
+    "status": "S0 INIT \u2014 derived from the tree; not frozen; no qualification; no plan; NO BOARD RULING",
+    "universe": {
+      "addresses": 292,
+      "sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
+    }
+  },
+  "s0_preview_sha256": "2169e84a540061eb7bddde9cf6d8c7f3e6178df41381e7ef289580ba2792081e",
+  "s0_verification": {
+    "checks": {
+      "board": "17A6",
+      "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+      "instrument_pins": {
+        "b1_files_verified": 105,
+        "files_verified": 71,
+        "pins_sha256": "95256af80d7513396adee7b14235558b5860111b2d288c584ab2906d23a20759"
+      },
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "qualification_plan": "ok (20 records at budget 8)",
+      "stage": "S0"
+    },
+    "manifest_sha256": "2169e84a540061eb7bddde9cf6d8c7f3e6178df41381e7ef289580ba2792081e",
+    "qualified": false,
+    "refusal": null,
+    "stage": "S0"
+  },
+  "snapshot_before_review_files": {
+    "artifacts_sha256": {
+      "docs/b2_architecture.md": "2393399094e2ae77389e454c2d435ea9e85dc48e5c9fafded30275de2da12172",
+      "docs/b2_package.md": "8586baed5ac5375c5f9ac6861213b463e2d97d2d6f4d00bc172be441b5e36c63",
+      "docs/b2_preregistration.md": "efc583050124df43ddf9ba530c8d813f00171af6dc5a1c5dbd2be74116c125c0",
+      "evidence/b2/build_evidence.json": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b",
+      "evidence/b2/gate/recomputed_2026_09_10/gate_report.json": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c",
+      "evidence/b2/plan.json": "cc6799080cb4c71ce2c2a64a9aaca42c09904d393351f8e2bc02957df428f3e4",
+      "evidence/b2/prediction.json": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+      "firmware/b2/IMPORT.json": "839496960abfcbede935f6615a6b7723bd6ba4cc290212029e699846392170e8",
+      "firmware/b2/p3_data.h": "518170dbb449e6e5eaef1cc34773f0bb2fa5256c34f3617b859c9880e1b6c295",
+      "manifests/b1_instrument_pins.json": "3106d4a8445e16382b801a0791fde1fd2114846daef6aaf1fd6501e8e45c4709",
+      "manifests/b1_manifest.json": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+      "manifests/b2_instrument_pins.json": "95256af80d7513396adee7b14235558b5860111b2d288c584ab2906d23a20759",
+      "manifests/b2_manifest.json": null,
+      "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
+    },
+    "at": "2026-09-12T135901Z",
+    "head": "9fa8a7a10643bfbf0f97a03c5b756690201d2400",
+    "instrument": {
+      "dirty": false,
+      "head": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+      "pinned_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+      "root": "/home/test/zynq_psoracle"
+    },
+    "pins": {
+      "b1_files_verified": 105,
+      "bound_to": "the table's own bytes (no manifest before S0)",
+      "files_verified": 71,
+      "manifest_present": false,
+      "pins_refusal": null,
+      "pins_sha256": "95256af80d7513396adee7b14235558b5860111b2d288c584ab2906d23a20759",
+      "pins_verified": true
+    },
+    "root": "/home/test/zynq_fabricmap",
+    "worktree_dirty": false
+  },
+  "submitted_report": {
+    "artifact_matches": {
+      "docs/b2_architecture.md": true,
+      "docs/b2_package.md": true,
+      "docs/b2_preregistration.md": true,
+      "evidence/b2/build_evidence.json": true,
+      "evidence/b2/gate/recomputed_2026_09_10/gate_report.json": true,
+      "evidence/b2/plan.json": true,
+      "evidence/b2/prediction.json": true,
+      "firmware/b2/IMPORT.json": true,
+      "firmware/b2/p3_data.h": true,
+      "manifests/b1_instrument_pins.json": true,
+      "manifests/b1_manifest.json": true,
+      "manifests/b2_instrument_pins.json": true,
+      "manifests/b2_manifest.json": true,
+      "schemas/self_map_v2.schema.json": true
+    },
+    "clean_tree_proof": true,
+    "endpoints_equal_except_time": true,
+    "errors": 0,
+    "failures": 0,
+    "head_at_run": "619b22b9b4cc2a8684f38141eb7504d18f86ba63",
+    "ran": 1895,
+    "recomputed_refusals": [],
+    "skipped": 0
+  }
+}
