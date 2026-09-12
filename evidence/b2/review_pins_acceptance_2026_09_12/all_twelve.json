@@ -1,0 +1,312 @@
+{
+  "baseline": {
+    "pins": {
+      "result": "ACCEPTED",
+      "value": {
+        "files_verified": 69,
+        "b1_files_verified": 105,
+        "pins_sha256": "fd3c73e6be4d6247eb921cc02c4446d6fdf67b5b7afcad0deaeba4c27d5577e5"
+      }
+    },
+    "fresh_manifest": {
+      "result": "ACCEPTED",
+      "value": {
+        "stage": "S1",
+        "qualified": false,
+        "refusal": null,
+        "checks": {
+          "pins": "ok",
+          "map": "ok",
+          "prereg": "ok",
+          "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+          "board": "17A6",
+          "instrument_pins": {
+            "files_verified": 69,
+            "b1_files_verified": 105,
+            "pins_sha256": "fd3c73e6be4d6247eb921cc02c4446d6fdf67b5b7afcad0deaeba4c27d5577e5"
+          },
+          "lineage": "ok (B1 chain re-verified)",
+          "stage": "S1"
+        },
+        "manifest_sha256": "bb812de3c08578a41d05b5aea12181fec6410cd32b9d631853d24344b7cce2b8"
+      }
+    }
+  },
+  "cases": {
+    "firmware/b2/bsp/include/bspconfig.h change": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: firmware/b2/bsp/include/bspconfig.h: hash differs"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: firmware/b2/bsp/include/bspconfig.h: hash differs"
+      }
+    },
+    "firmware/b2/bsp/include/bspconfig.h delete": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: firmware/b2/bsp/include/bspconfig.h: missing"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: firmware/b2/bsp/include/bspconfig.h: missing"
+      }
+    },
+    "firmware/b2/bsp/include/xmem_config.h change": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: firmware/b2/bsp/include/xmem_config.h: hash differs"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: firmware/b2/bsp/include/xmem_config.h: hash differs"
+      }
+    },
+    "firmware/b2/bsp/include/xmem_config.h delete": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: firmware/b2/bsp/include/xmem_config.h: missing"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: firmware/b2/bsp/include/xmem_config.h: missing"
+      }
+    },
+    "firmware/b2/bsp/include/xparameters.h change": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: firmware/b2/bsp/include/xparameters.h: hash differs"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: firmware/b2/bsp/include/xparameters.h: hash differs"
+      }
+    },
+    "firmware/b2/bsp/include/xparameters.h delete": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: firmware/b2/bsp/include/xparameters.h: missing"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: firmware/b2/bsp/include/xparameters.h: missing"
+      }
+    },
+    "firmware/b2/bsp/src/console.c change": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: firmware/b2/bsp/src/console.c: hash differs"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: firmware/b2/bsp/src/console.c: hash differs"
+      }
+    },
+    "firmware/b2/bsp/src/console.c delete": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: firmware/b2/bsp/src/console.c: missing"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: firmware/b2/bsp/src/console.c: missing"
+      }
+    },
+    "tb/b2/hostapp/build.sh change": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/build.sh: hash differs"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/build.sh: hash differs"
+      }
+    },
+    "tb/b2/hostapp/build.sh delete": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/build.sh: missing"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/build.sh: missing"
+      }
+    },
+    "tb/b2/hostapp/hostapp.c change": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostapp.c: hash differs"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostapp.c: hash differs"
+      }
+    },
+    "tb/b2/hostapp/hostapp.c delete": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostapp.c: missing"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostapp.c: missing"
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xil_io.h change": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xil_io.h: hash differs"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xil_io.h: hash differs"
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xil_io.h delete": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xil_io.h: missing"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xil_io.h: missing"
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xil_mmu.h change": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xil_mmu.h: hash differs"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xil_mmu.h: hash differs"
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xil_mmu.h delete": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xil_mmu.h: missing"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xil_mmu.h: missing"
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xil_types.h change": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xil_types.h: hash differs"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xil_types.h: hash differs"
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xil_types.h delete": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xil_types.h: missing"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xil_types.h: missing"
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xparameters.h change": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xparameters.h: hash differs"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xparameters.h: hash differs"
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xparameters.h delete": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xparameters.h: missing"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xparameters.h: missing"
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xscuwdt.h change": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xscuwdt.h: hash differs"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xscuwdt.h: hash differs"
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xscuwdt.h delete": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xscuwdt.h: missing"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xscuwdt.h: missing"
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xtime_l.h change": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xtime_l.h: hash differs"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xtime_l.h: hash differs"
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xtime_l.h delete": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xtime_l.h: missing"
+      },
+      "fresh_manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xtime_l.h: missing"
+      }
+    }
+  },
+  "restored": {
+    "pins": {
+      "result": "ACCEPTED",
+      "value": {
+        "files_verified": 69,
+        "b1_files_verified": 105,
+        "pins_sha256": "fd3c73e6be4d6247eb921cc02c4446d6fdf67b5b7afcad0deaeba4c27d5577e5"
+      }
+    },
+    "fresh_manifest": {
+      "result": "ACCEPTED",
+      "value": {
+        "stage": "S1",
+        "qualified": false,
+        "refusal": null,
+        "checks": {
+          "pins": "ok",
+          "map": "ok",
+          "prereg": "ok",
+          "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+          "board": "17A6",
+          "instrument_pins": {
+            "files_verified": 69,
+            "b1_files_verified": 105,
+            "pins_sha256": "fd3c73e6be4d6247eb921cc02c4446d6fdf67b5b7afcad0deaeba4c27d5577e5"
+          },
+          "lineage": "ok (B1 chain re-verified)",
+          "stage": "S1"
+        },
+        "manifest_sha256": "bb812de3c08578a41d05b5aea12181fec6410cd32b9d631853d24344b7cce2b8"
+      }
+    }
+  },
+  "manifest_and_table_unchanged": true,
+  "negative_cases": 24
+}

@@ -1,5 +1,16 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
 
+> **Pin-table correction accepted (`23b1dfd`, 2026-09-12): both P2 findings CLOSED.**
+> All twelve omitted inputs are now covered; an independent 24-case change/deletion
+> matrix is refused by pins and fresh-process manifest verification. Malformed pin
+> blocks are named refusals, and the CLI exits 2 without a traceback. The real pins
+> hook verifies **69 B2 / 105 B1 files**; preflight, model CLI and real re-adjudication
+> retain their successful controls. Independent focused suite: **402 tests, zero skips, OK**.
+> See the [acceptance review](b2_pins_acceptance_2026_09_12.md).
+> Continue with `b2_test_report` and final package review. The previous representative
+> B2 non-first-slice demonstration remains accepted and need not be repeated for that
+> scope. No push, freeze or board clearance is granted here. Earlier banners are historical.
+
 > **Pin-table review (`06ef938`, 2026-09-12): HOLD for two P2 findings.** The actual
 > table verifies 57 files and its real preflight hook works, but twelve local BSP/
 > hostapp inputs are omitted: changing them passes pin and fresh-process manifest

@@ -1,0 +1,124 @@
+{
+  "cases": {
+    "string": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "the manifest's instrument_pins is str, not a JSON object"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: the manifest's instrument_pins is str, not a JSON object"
+      },
+      "cli": {
+        "rc": 2,
+        "stderr": "REFUSED: the manifest's instrument_pins is str, not a JSON object\n"
+      }
+    },
+    "list": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "the manifest's instrument_pins is list, not a JSON object"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: the manifest's instrument_pins is list, not a JSON object"
+      },
+      "cli": {
+        "rc": 2,
+        "stderr": "REFUSED: the manifest's instrument_pins is list, not a JSON object\n"
+      }
+    },
+    "boolean": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "the manifest's instrument_pins is bool, not a JSON object"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: the manifest's instrument_pins is bool, not a JSON object"
+      },
+      "cli": {
+        "rc": 2,
+        "stderr": "REFUSED: the manifest's instrument_pins is bool, not a JSON object\n"
+      }
+    },
+    "number": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "the manifest's instrument_pins is int, not a JSON object"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: the manifest's instrument_pins is int, not a JSON object"
+      },
+      "cli": {
+        "rc": 2,
+        "stderr": "REFUSED: the manifest's instrument_pins is int, not a JSON object\n"
+      }
+    },
+    "empty": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "the manifest pins no b2_instrument_pins sha256"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: the manifest pins no b2_instrument_pins sha256"
+      },
+      "cli": {
+        "rc": 2,
+        "stderr": "REFUSED: the manifest pins no b2_instrument_pins sha256\n"
+      }
+    },
+    "missing": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "the manifest pins no b2_instrument_pins sha256"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: the manifest pins no b2_instrument_pins sha256"
+      },
+      "cli": {
+        "rc": 2,
+        "stderr": "REFUSED: the manifest pins no b2_instrument_pins sha256\n"
+      }
+    }
+  },
+  "real_pins_baseline": {
+    "files_verified": 69,
+    "b1_files_verified": 105,
+    "pins_sha256": "fd3c73e6be4d6247eb921cc02c4446d6fdf67b5b7afcad0deaeba4c27d5577e5"
+  },
+  "real_pins_preflight": {
+    "pins": {
+      "files_verified": 69,
+      "b1_files_verified": 105,
+      "pins_sha256": "fd3c73e6be4d6247eb921cc02c4446d6fdf67b5b7afcad0deaeba4c27d5577e5"
+    },
+    "session": "B2Q",
+    "doubles": [
+      "boundary_established",
+      "sb discovery"
+    ],
+    "out_created": false
+  },
+  "model_cli": {
+    "rc": 0,
+    "verdict": "PASS",
+    "crc_dropped": 2,
+    "adjudication": "PASS",
+    "summary": "PASS"
+  },
+  "model_cli_real_qualify": {
+    "qualified": true,
+    "calibration": {
+      "rate_per_hour": 4490.856163729762,
+      "audit_policy": "all-self-reporting",
+      "source": "reconstructed from the B2Q evidence (adjudication.json) \u2014 the only source a B2 plan may be sized from",
+      "sessions": 2,
+      "pairs_per_session_max": 7
+    }
+  },
+  "temporary_artifacts": "/tmp/b2run_v0sax89u"
+}
