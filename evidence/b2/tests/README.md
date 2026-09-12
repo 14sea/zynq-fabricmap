@@ -16,3 +16,10 @@ Written by `host/b2_test_report.py`. A report is a **clean-tree proof** only whe
   agree: the same HEAD, both worktrees clean, the instrument at its pinned commit and clean in
   both, the pinned surface verifying in both, and every pinned artifact digest unchanged across
   the run. **This is the report the package cites.**
+- `test_report_2026-09-12T095607Z.json` — schema **2.0.0**, 1 893 tests, **`FAILED (failures=1)`**,
+  `clean_tree_proof: false` with five refusals. Kept deliberately: it is the reporter refusing a
+  REAL failing run of the real suite, end to end, which no fixture demonstrates. The failure was
+  `test_evidence_manifests::test_nothing_under_evidence_is_excluded_by_gitignore`, and it was
+  right — running a review probe under `evidence/` had left a `__pycache__/*.pyc` there, which
+  `.gitignore` excludes, so part of the evidence tree would not have been committed. The stray
+  directory was removed; nothing in the tool or the package was at fault.

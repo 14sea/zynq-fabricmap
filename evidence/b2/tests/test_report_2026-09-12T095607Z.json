@@ -1,0 +1,157 @@
+{
+ "artifacts_sha256": {
+  "docs/b2_architecture.md": "2393399094e2ae77389e454c2d435ea9e85dc48e5c9fafded30275de2da12172",
+  "docs/b2_package.md": "7be7dea84468e52f2de07ef58a5dbb051ab3ae8a1b75e45ce5a236c6ffd28f7e",
+  "docs/b2_preregistration.md": "efc583050124df43ddf9ba530c8d813f00171af6dc5a1c5dbd2be74116c125c0",
+  "evidence/b2/build_evidence.json": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b",
+  "evidence/b2/gate/recomputed_2026_09_10/gate_report.json": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c",
+  "evidence/b2/plan.json": "cc6799080cb4c71ce2c2a64a9aaca42c09904d393351f8e2bc02957df428f3e4",
+  "evidence/b2/prediction.json": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+  "firmware/b2/IMPORT.json": "839496960abfcbede935f6615a6b7723bd6ba4cc290212029e699846392170e8",
+  "firmware/b2/p3_data.h": "518170dbb449e6e5eaef1cc34773f0bb2fa5256c34f3617b859c9880e1b6c295",
+  "manifests/b1_instrument_pins.json": "3106d4a8445e16382b801a0791fde1fd2114846daef6aaf1fd6501e8e45c4709",
+  "manifests/b1_manifest.json": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+  "manifests/b2_instrument_pins.json": "adb002bb4e02e03bbd01ff7fa37710f2e5ca8338493d38fdaead8f0f1cdc6b78",
+  "manifests/b2_manifest.json": null,
+  "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
+ },
+ "at": "2026-09-12T095607Z",
+ "clean_tree_proof": false,
+ "errors": 0,
+ "exit_status": 1,
+ "failures": 1,
+ "head_at_run": "8756149e9ec1dbeff62f9b9a6659cc8af6e26df7",
+ "host": "H3C",
+ "instrument": {
+  "dirty": false,
+  "head": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "pinned_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "root": "/home/test/zynq_psoracle"
+ },
+ "log": {
+  "duration_s": 778.272,
+  "errors": 0,
+  "failures": 1,
+  "findings": [
+   "the log's own result line says FAILED",
+   "the log carries a FAILED result line"
+  ],
+  "ran": 1893,
+  "result_line": "FAILED (failures=1)",
+  "skipped": 0
+ },
+ "log_sha256": "e6893d52eec9bedf15277f04380014902ddb5af24bd0ff1d61df74cc412d7419",
+ "note": "head_at_run and every other provenance field are the START snapshot, taken before the suite ran; the end snapshot is in run.end and must agree with it. The commit that includes this report is necessarily later than head_at_run.",
+ "package": "B2 v0.3",
+ "pins": {
+  "b1_files_verified": 105,
+  "bound_to": "the table's own bytes (no manifest before S0)",
+  "files_verified": 71,
+  "manifest_present": false,
+  "pins_refusal": null,
+  "pins_sha256": "adb002bb4e02e03bbd01ff7fa37710f2e5ca8338493d38fdaead8f0f1cdc6b78",
+  "pins_verified": true
+ },
+ "proof_refusals": [
+  "the log's own result line says FAILED",
+  "the log carries a FAILED result line",
+  "the result line is 'FAILED (failures=1)', not exactly 'OK'",
+  "failures is 1, not zero",
+  "the suite exited 1, not zero"
+ ],
+ "ran": 1893,
+ "result_line": "FAILED (failures=1)",
+ "run": {
+  "argv": [
+   "/usr/bin/python3",
+   "-m",
+   "unittest",
+   "discover",
+   "-s",
+   "tests"
+  ],
+  "end": {
+   "artifacts_sha256": {
+    "docs/b2_architecture.md": "2393399094e2ae77389e454c2d435ea9e85dc48e5c9fafded30275de2da12172",
+    "docs/b2_package.md": "7be7dea84468e52f2de07ef58a5dbb051ab3ae8a1b75e45ce5a236c6ffd28f7e",
+    "docs/b2_preregistration.md": "efc583050124df43ddf9ba530c8d813f00171af6dc5a1c5dbd2be74116c125c0",
+    "evidence/b2/build_evidence.json": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b",
+    "evidence/b2/gate/recomputed_2026_09_10/gate_report.json": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c",
+    "evidence/b2/plan.json": "cc6799080cb4c71ce2c2a64a9aaca42c09904d393351f8e2bc02957df428f3e4",
+    "evidence/b2/prediction.json": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+    "firmware/b2/IMPORT.json": "839496960abfcbede935f6615a6b7723bd6ba4cc290212029e699846392170e8",
+    "firmware/b2/p3_data.h": "518170dbb449e6e5eaef1cc34773f0bb2fa5256c34f3617b859c9880e1b6c295",
+    "manifests/b1_instrument_pins.json": "3106d4a8445e16382b801a0791fde1fd2114846daef6aaf1fd6501e8e45c4709",
+    "manifests/b1_manifest.json": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+    "manifests/b2_instrument_pins.json": "adb002bb4e02e03bbd01ff7fa37710f2e5ca8338493d38fdaead8f0f1cdc6b78",
+    "manifests/b2_manifest.json": null,
+    "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
+   },
+   "at": "2026-09-12T095607Z",
+   "head": "8756149e9ec1dbeff62f9b9a6659cc8af6e26df7",
+   "instrument": {
+    "dirty": false,
+    "head": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+    "pinned_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+    "root": "/home/test/zynq_psoracle"
+   },
+   "pins": {
+    "b1_files_verified": 105,
+    "bound_to": "the table's own bytes (no manifest before S0)",
+    "files_verified": 71,
+    "manifest_present": false,
+    "pins_refusal": null,
+    "pins_sha256": "adb002bb4e02e03bbd01ff7fa37710f2e5ca8338493d38fdaead8f0f1cdc6b78",
+    "pins_verified": true
+   },
+   "root": "/home/test/zynq_fabricmap",
+   "worktree_dirty": false
+  },
+  "executed": true,
+  "exit_status": 1,
+  "shape": null,
+  "start": {
+   "artifacts_sha256": {
+    "docs/b2_architecture.md": "2393399094e2ae77389e454c2d435ea9e85dc48e5c9fafded30275de2da12172",
+    "docs/b2_package.md": "7be7dea84468e52f2de07ef58a5dbb051ab3ae8a1b75e45ce5a236c6ffd28f7e",
+    "docs/b2_preregistration.md": "efc583050124df43ddf9ba530c8d813f00171af6dc5a1c5dbd2be74116c125c0",
+    "evidence/b2/build_evidence.json": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b",
+    "evidence/b2/gate/recomputed_2026_09_10/gate_report.json": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c",
+    "evidence/b2/plan.json": "cc6799080cb4c71ce2c2a64a9aaca42c09904d393351f8e2bc02957df428f3e4",
+    "evidence/b2/prediction.json": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+    "firmware/b2/IMPORT.json": "839496960abfcbede935f6615a6b7723bd6ba4cc290212029e699846392170e8",
+    "firmware/b2/p3_data.h": "518170dbb449e6e5eaef1cc34773f0bb2fa5256c34f3617b859c9880e1b6c295",
+    "manifests/b1_instrument_pins.json": "3106d4a8445e16382b801a0791fde1fd2114846daef6aaf1fd6501e8e45c4709",
+    "manifests/b1_manifest.json": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+    "manifests/b2_instrument_pins.json": "adb002bb4e02e03bbd01ff7fa37710f2e5ca8338493d38fdaead8f0f1cdc6b78",
+    "manifests/b2_manifest.json": null,
+    "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
+   },
+   "at": "2026-09-12T094307Z",
+   "head": "8756149e9ec1dbeff62f9b9a6659cc8af6e26df7",
+   "instrument": {
+    "dirty": false,
+    "head": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+    "pinned_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+    "root": "/home/test/zynq_psoracle"
+   },
+   "pins": {
+    "b1_files_verified": 105,
+    "bound_to": "the table's own bytes (no manifest before S0)",
+    "files_verified": 71,
+    "manifest_present": false,
+    "pins_refusal": null,
+    "pins_sha256": "adb002bb4e02e03bbd01ff7fa37710f2e5ca8338493d38fdaead8f0f1cdc6b78",
+    "pins_verified": true
+   },
+   "root": "/home/test/zynq_fabricmap",
+   "worktree_dirty": false
+  }
+ },
+ "schema": "b2_test_report",
+ "schema_version": "2.0.0",
+ "scope": "whole suite",
+ "skipped": 0,
+ "user": "test",
+ "worktree_dirty": false
+}
