@@ -1291,7 +1291,10 @@ class ObservationIsNotDelivery(unittest.TestCase):
         expected = self.frames[:4]
         garbage = b"~" * (len(self.frames[1].line) + 7) + b"\n"       # no header, no length, nothing
         _, cut = self.both(expected, self.stream(1) + garbage)
-        self.assertEqual(cut["losses"], 0)
+        self.assertEqual(cut["confirmed_losses"], 0)             # nothing is DEFINITELY lost …
+        self.assertIsNone(cut["losses"])                         # … and the total is not known
+        self.assertFalse(cut["losses_known"])
+        self.assertEqual(cut["losses_upper_bound"], 3)           # at most the three unresolved
         self.assertEqual(cut["censored"], [])
         self.assertEqual(cut["unresolved"], [1, 2, 3])
         self.assertTrue(cut["cutoff"]["ambiguous"])
@@ -1306,6 +1309,7 @@ class ObservationIsNotDelivery(unittest.TestCase):
         _, cut = self.both(expected, self.stream(1) + merged)
         self.assertEqual(cut["unresolved"], [1, 2, 3])
         self.assertEqual(cut["censored"], [])
+        self.assertIsNone(cut["losses"])
 
     def test_the_cutoff_report_flows_through_a_run(self):
         """Through the production Run: the transport damages the LAST frame it accepts before the
@@ -1457,7 +1461,7 @@ class TheTerminalReason(unittest.TestCase):
         self.assertIn("tool error", res["stopped"])
         self.assertIn("unknown", res["stopped"])
         self.assertNotIn("completed", res["stopped"])
-        self.assertIn("losses unknown", res["denominator"])
+        self.assertIn("loss metric unknown", res["denominator"])
         self.assertTrue((self.d / "analysis" / "capture_000.bin").stat().st_size > 0)  # the evidence
 
     def test_an_analyser_failure_after_a_driver_failure_is_secondary(self):
@@ -1481,6 +1485,165 @@ class TheTerminalReason(unittest.TestCase):
         self.assertEqual(set(rig.TERMINAL_REASONS), {
             "exposure_repetitions", "exposure_seconds", "exposure_seconds_censored",
             "stop_rule_losses", "tool_error", "analysis_unavailable"})
+
+
+class TheLossMetric(unittest.TestCase):
+    """The uncertainty review's P2: a confirmed count is a lower bound, not the total. The total
+    and its rate are numbers only when every repetition was analysed and nothing is unresolved;
+    otherwise the total is null with a named reason and the bounds are reported separately, so
+    an uninterpretable capture and an intact frame never share an unqualified zero rate."""
+
+    def setUp(self):
+        self.d = Path(tempfile.mkdtemp(prefix="rigmetric_"))
+        self.addCleanup(lambda: __import__("shutil").rmtree(self.d, ignore_errors=True))
+
+    def owner_double(self, shape: str):
+        """The review's fixture: a 0.01 s budget, a cooperative reader that spends it, one IDENT
+        accepted, and the capture returning the shape named."""
+        now, queued = [0.0], [b""]
+
+        def write(data, timeout=None):
+            if shape == "intact":
+                queued[0] += data
+            elif shape == "known_crc_damage":
+                queued[0] += flip(data, 60)
+            elif shape == "unidentifiable_damage":
+                queued[0] += b"garbled\n"
+            return len(data)                                     # "silence": accepted, nothing back
+
+        def read(t):
+            now[0] += t
+            out, queued[0] = queued[0], b""
+            return out
+        port = rig.callable_port("owner double", write, read, takes_timeout=True)
+        return port, now
+
+    def run_shape(self, shape: str, **kw):
+        port, now = self.owner_double(shape)
+        res = rig.Run(shape, repetitions=200, seconds=0.01, tx_during_rx=False, **kw).execute(
+            port, out_dir=self.d / shape, clock=lambda: now[0],
+            sleep=lambda t: now.__setitem__(0, now[0] + t))
+        return res, json.loads((self.d / shape / "run.json").read_text())
+
+    def check(self, shape, **expect):
+        returned, persisted = self.run_shape(shape)
+        for where, res in (("returned", returned), ("persisted", persisted)):
+            for k, v in expect.items():
+                got = res["loss_metric"]["status"] if k == "metric" else res[k]
+                self.assertEqual(got, v, f"{shape} {where}: {k}")
+        return returned
+
+    def test_intact_observed_bytes_are_an_exact_zero(self):
+        res = self.check("intact", frames_accepted=1, confirmed_losses=0, losses=0, losses_upper_bound=0,
+                         losses_per_100k_bytes=0.0, confirmed_losses_per_100k_bytes=0.0,
+                         losses_per_100k_bytes_upper_bound=0.0, metric="exact", unresolved_at_cutoff=0)
+        self.assertTrue(res["loss_metric"]["exact"])
+
+    def test_a_fully_identified_corrupted_frame_is_one_exact_confirmed_loss(self):
+        res = self.check("known_crc_damage", frames_accepted=1, confirmed_losses=1, losses=1,
+                         losses_upper_bound=1, metric="exact", denominator_bytes=1048)
+        self.assertAlmostEqual(res["losses_per_100k_bytes"], 100000 / 1048)
+        self.assertEqual(res["losses_per_100k_bytes"], res["confirmed_losses_per_100k_bytes"])
+
+    def test_unidentifiable_damage_at_a_cutoff_has_no_exact_rate(self):
+        """The counterexample: one accepted IDENT, `garbled\\n` back, `losses_per_100k_bytes: 0.0`."""
+        res = self.check("unidentifiable_damage", frames_accepted=1, denominator_bytes=8,
+                         unresolved_at_cutoff=1, confirmed_losses=0, losses=None, losses_upper_bound=1,
+                         losses_per_100k_bytes=None, confirmed_losses_per_100k_bytes=0.0,
+                         metric="bounded", traffic_resolved=False, completed_exposure=False)
+        self.assertFalse(res["loss_metric"]["exact"])
+        self.assertIn("unresolved", res["loss_metric"]["reason"])
+        self.assertAlmostEqual(res["losses_per_100k_bytes_upper_bound"], 100000 / 8)
+        self.assertIn("bounded", res["denominator"])
+        self.assertIsNone(res["repetition_results"][0]["losses"])
+        self.assertFalse(res["repetition_results"][0]["losses_known"])
+
+    def test_silence_has_no_rate_and_keeps_its_censored_state(self):
+        res = self.check("silence", frames_accepted=1, denominator_bytes=0, censored_in_flight=1,
+                         confirmed_losses=0, losses=0, losses_per_100k_bytes=None,
+                         confirmed_losses_per_100k_bytes=None, losses_per_100k_bytes_upper_bound=None,
+                         metric="no_denominator")
+        self.assertEqual(res["repetition_results"][0]["censored"], [0])
+
+    def mixed_double(self, damaged: int):
+        """Frames 1..damaged arrive with one payload byte flipped (identified), the next write is
+        replaced by garbage, and only then does the reader spend the budget."""
+        st = {"writes": 0, "queued": b"", "now": 0.0}
+
+        def write(data, timeout=None):
+            st["writes"] += 1
+            i = st["writes"] - 1
+            n = len(data)                                            # the write is accepted in full …
+            if 1 <= i <= damaged:
+                data = flip(data, 60)
+            elif i == damaged + 1:
+                data = b"garbled\n"                                  # … whatever the capture gets back
+            st["queued"] += data
+            return n
+
+        def read(t):
+            if st["writes"] > damaged + 1:
+                st["now"] += t
+            out, st["queued"] = st["queued"], b""
+            return out
+        return rig.callable_port("mixed", write, read, takes_timeout=True), st
+
+    def test_confirmed_losses_followed_by_unresolved_damage_keep_the_count_but_not_the_total(self):
+        port, st = self.mixed_double(damaged=2)
+        res = rig.Run("mixed", repetitions=200, seconds=0.01, tx_during_rx=False).execute(
+            port, out_dir=self.d / "mixed", clock=lambda: st["now"],
+            sleep=lambda t: st.__setitem__("now", st["now"] + t))
+        for where, r in (("returned", res), ("persisted", json.loads((self.d / "mixed/run.json").read_text()))):
+            self.assertEqual(r["frames_accepted"], 4, where)
+            self.assertEqual(r["confirmed_losses"], 2, where)             # frames 1 and 2, definitely
+            self.assertEqual(r["unresolved_at_cutoff"], 1, where)         # frame 3, cannot be told
+            self.assertIsNone(r["losses"], where)                         # so the total is not 2
+            self.assertEqual(r["losses_upper_bound"], 3, where)
+            self.assertIsNone(r["losses_per_100k_bytes"], where)
+            self.assertEqual(r["loss_metric"]["status"], "bounded", where)
+            self.assertAlmostEqual(r["confirmed_losses_per_100k_bytes"], 2 * 100000 / r["denominator_bytes"])
+            self.assertEqual(r["terminal"]["reason"], "exposure_seconds_censored", where)
+        rep = res["repetition_results"][0]
+        self.assertEqual(rep["observed_damaged"], {"1": "crc_failed", "2": "crc_failed"})
+        self.assertEqual(rep["unresolved"], [3])
+
+    def test_three_confirmed_losses_stop_the_run_whatever_is_unresolved(self):
+        """The registered threshold counts DEFINITE losses; the stop rule outranks the deadline
+        reason when both hold, and the total still stays unknown."""
+        port, st = self.mixed_double(damaged=3)
+        res = rig.Run("three then garbage", repetitions=200, seconds=0.01, tx_during_rx=False).execute(
+            port, out_dir=self.d / "stop", clock=lambda: st["now"],
+            sleep=lambda t: st.__setitem__("now", st["now"] + t))
+        self.assertEqual(res["terminal"]["reason"], "stop_rule_losses")
+        self.assertIn("3 confirmed losses", res["stopped"])
+        self.assertEqual(res["confirmed_losses"], 3)
+        self.assertIsNone(res["losses"])
+        self.assertEqual(res["losses_upper_bound"], 4)
+
+    def test_an_unanalysed_repetition_leaves_no_bound_either(self):
+        """The previous round's null-rate case, now with the bounds: no total, no upper bound,
+        the confirmed count of the analysed repetitions still stated."""
+        state = {"queued": bytearray()}
+
+        def write(data, timeout=None):
+            state["queued"] += data
+            return len(data)
+
+        def read(_t):
+            out, state["queued"] = bytes(state["queued"]), bytearray()
+            return out
+        port = rig.callable_port("loop", write, read, takes_timeout=True)
+        with unittest.mock.patch.object(rig, "analyse", side_effect=ValueError("injected")):
+            with self.assertRaises(rig.RigError) as cm:
+                rig.Run("unanalysed", repetitions=2, tx_during_rx=False).execute(
+                    port, out_dir=self.d / "unanalysed", sleep=lambda t: None)
+        res = cm.exception.result
+        self.assertEqual(res["loss_metric"]["status"], "unknown")
+        self.assertIsNone(res["losses"])
+        self.assertIsNone(res["losses_upper_bound"])
+        self.assertIsNone(res["losses_per_100k_bytes"])
+        self.assertEqual(res["confirmed_losses"], 0)
+        self.assertEqual(res["repetitions_unanalysed"], [0])
 
 
 if __name__ == "__main__":

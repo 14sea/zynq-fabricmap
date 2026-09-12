@@ -8,8 +8,8 @@
 > "stage 1 in full". It is **withdrawn**. The plan's stage 1 also requires a physical acceptance
 > — a separate serial device or a physical self-loopback — which has **not** happened and which
 > a software pseudo-terminal cannot replace. What exists is the **generator, driver and
-> analyser, with an offline acceptance**; the physical acceptance is outstanding. Three reviews that day
-> found thirteen P2 defects between them, all now corrected; the three §"What the … review
+> analyser, with an offline acceptance**; the physical acceptance is outstanding. Four reviews that day
+> found fourteen P2 defects between them, all now corrected; the four §"What the … review
 > corrected" sections record each one. The B2Q exposure argument this document originally made is
 > **withdrawn as wrong**, not merely softened.
 
@@ -28,8 +28,8 @@ sessions on module A. It separates nothing, and one PASS is not stability.
 
 ## What exists — the software half
 
-`host/transport_rig.py`, `tests/test_transport_rig.py` (**94 tests**), evidence in
-`evidence/b1q/transport_stage1_2026_09_12/` and the three `evidence/b1q/corrections_transport_*_2026_09_12/`.
+`host/transport_rig.py`, `tests/test_transport_rig.py` (**101 tests**), evidence in
+`evidence/b1q/transport_stage1_2026_09_12/` and the four `evidence/b1q/corrections_transport_*_2026_09_12/`.
 The generator, the driver and the analyser, with an **offline** acceptance over a pty pair
 through the production entry point. **Not** the plan's stage 1 in full: the physical acceptance
 on a separate serial device or a self-loopback has not happened.
@@ -70,6 +70,17 @@ over bytes it did not send, and an earlier repetition's capture replayed into a 
   at the same offsets in every complete session, so they are a session feature and not
   transport, and the rig therefore transmits none: every CRC failure a rig run sees is a
   transport event with nothing to subtract.
+
+## What the fourth review corrected (the loss metric's uncertainty, 2026-09-12)
+
+`docs/b1q_transport_uncertainty_review_2026_09_12.md` accepted the three boundary corrections
+and the `exposure_reached` / `completed_exposure` distinction, and named one more P2 in what the
+third round had added. Corrected, with the owner's probe re-run beside its original answers in
+`evidence/b1q/corrections_transport_uncertainty_2026_09_12/`:
+
+| finding | at `328e9c1` | now |
+|---|---|---|
+| **unresolved damage still became a numeric total rate** | `unresolved` frames were subtracted from `losses`, so one accepted IDENT answered by `garbled\n` at a cutoff reported `losses: 0` and **`losses_per_100k_bytes: 0.0`** — the same unqualified zero as an intact frame | **`confirmed_losses`** is the definite count and is always a number; **`losses` is the total** and is null whenever anything is unresolved or unanalysed; `losses_upper_bound` = confirmed + unresolved; the rate exists only for an exact total, with `confirmed_losses_per_100k_bytes` (a lower bound) and `losses_per_100k_bytes_upper_bound` beside it; **`loss_metric.status`** ∈ {`exact`, `bounded`, `unknown`, `no_denominator`} is the machine-readable contract. The registered three-loss stop counts **confirmed** losses and outranks the deadline reason |
 
 ## What the third review corrected (the boundaries, 2026-09-12)
 

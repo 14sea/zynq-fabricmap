@@ -1,5 +1,13 @@
 # The three boundary P2s — corrected, 2026-09-12
 
+> **One statement below is superseded** by the owner's uncertainty review of the same day
+> (`docs/b1q_transport_uncertainty_review_2026_09_12.md`, corrections in
+> `../corrections_transport_uncertainty_2026_09_12/`): "`losses` counts definitively affected
+> frames once" was true of the field this round shipped, and it let an unresolved capture report
+> an unqualified zero rate. The definite count is now `confirmed_losses`; `losses` is the TOTAL
+> and is null whenever anything is unresolved, with named bounds and a `loss_metric` status.
+> `acceptance.py` here is updated on that one assertion and says so inline; the rest stands.
+
 The owner's review: `docs/b1q_transport_boundaries_review_2026_09_12.md`, against `38c91b0`,
 with its probes in `evidence/b1q/review_transport_boundaries_2026_09_12/`. All three were
 reproduced through the public API or a production `Run` and all three are real. `acceptance.py`

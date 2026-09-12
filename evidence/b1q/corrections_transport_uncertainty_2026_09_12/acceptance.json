@@ -1,0 +1,164 @@
+{
+  "cases": {
+    "confirmed_then_unresolved": {
+      "now": {
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "confirmed_losses": 2,
+        "confirmed_losses_per_100k_bytes": 134.1381623071764,
+        "denominator_bytes": 1491,
+        "frames_accepted": 4,
+        "loss_metric": {
+          "exact": false,
+          "reason": "1 frame(s) unresolved at a cutoff: the total is between 2 confirmed and 3; no exact rate",
+          "status": "bounded"
+        },
+        "losses": null,
+        "losses_per_100k_bytes": null,
+        "losses_per_100k_bytes_upper_bound": 201.2072434607646,
+        "losses_upper_bound": 3,
+        "terminal_reason": "exposure_seconds_censored",
+        "traffic_resolved": false,
+        "unresolved_at_cutoff": 1
+      },
+      "observed_at_328e9c1": "not probed: requested as an additional regression"
+    },
+    "intact": {
+      "now": {
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "confirmed_losses": 0,
+        "confirmed_losses_per_100k_bytes": 0.0,
+        "denominator_bytes": 1048,
+        "frames_accepted": 1,
+        "loss_metric": {
+          "exact": true,
+          "reason": "every repetition analysed, nothing unresolved",
+          "status": "exact"
+        },
+        "losses": 0,
+        "losses_per_100k_bytes": 0.0,
+        "losses_per_100k_bytes_upper_bound": 0.0,
+        "losses_upper_bound": 0,
+        "terminal_reason": "exposure_seconds_censored",
+        "traffic_resolved": false,
+        "unresolved_at_cutoff": 0
+      },
+      "observed_at_328e9c1": {
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "denominator_bytes": 1048,
+        "frames_accepted": 1,
+        "losses": 0,
+        "losses_per_100k_bytes": 0.0,
+        "traffic_resolved": false,
+        "unresolved_at_cutoff": 0
+      }
+    },
+    "known_crc_damage": {
+      "now": {
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "confirmed_losses": 1,
+        "confirmed_losses_per_100k_bytes": 95.41984732824427,
+        "denominator_bytes": 1048,
+        "frames_accepted": 1,
+        "loss_metric": {
+          "exact": true,
+          "reason": "every repetition analysed, nothing unresolved",
+          "status": "exact"
+        },
+        "losses": 1,
+        "losses_per_100k_bytes": 95.41984732824427,
+        "losses_per_100k_bytes_upper_bound": 95.41984732824427,
+        "losses_upper_bound": 1,
+        "terminal_reason": "exposure_seconds_censored",
+        "traffic_resolved": false,
+        "unresolved_at_cutoff": 0
+      },
+      "observed_at_328e9c1": {
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "denominator_bytes": 1048,
+        "frames_accepted": 1,
+        "losses": 1,
+        "losses_per_100k_bytes": 95.41984732824427,
+        "traffic_resolved": false,
+        "unresolved_at_cutoff": 0
+      }
+    },
+    "silence": {
+      "now": {
+        "censored_in_flight": 1,
+        "completed_exposure": false,
+        "confirmed_losses": 0,
+        "confirmed_losses_per_100k_bytes": null,
+        "denominator_bytes": 0,
+        "frames_accepted": 1,
+        "loss_metric": {
+          "exact": false,
+          "reason": "nothing was received, so there is no rate; the censored state is preserved",
+          "status": "no_denominator"
+        },
+        "losses": 0,
+        "losses_per_100k_bytes": null,
+        "losses_per_100k_bytes_upper_bound": null,
+        "losses_upper_bound": 0,
+        "terminal_reason": "exposure_seconds_censored",
+        "traffic_resolved": false,
+        "unresolved_at_cutoff": 0
+      },
+      "observed_at_328e9c1": {
+        "censored_in_flight": 1,
+        "completed_exposure": false,
+        "denominator_bytes": 0,
+        "frames_accepted": 1,
+        "losses": 0,
+        "losses_per_100k_bytes": null,
+        "traffic_resolved": false,
+        "unresolved_at_cutoff": 0
+      }
+    },
+    "unidentifiable_damage": {
+      "now": {
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "confirmed_losses": 0,
+        "confirmed_losses_per_100k_bytes": 0.0,
+        "denominator_bytes": 8,
+        "frames_accepted": 1,
+        "loss_metric": {
+          "exact": false,
+          "reason": "1 frame(s) unresolved at a cutoff: the total is between 0 confirmed and 1; no exact rate",
+          "status": "bounded"
+        },
+        "losses": null,
+        "losses_per_100k_bytes": null,
+        "losses_per_100k_bytes_upper_bound": 12500.0,
+        "losses_upper_bound": 1,
+        "terminal_reason": "exposure_seconds_censored",
+        "traffic_resolved": false,
+        "unresolved_at_cutoff": 1
+      },
+      "observed_at_328e9c1": {
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "denominator_bytes": 8,
+        "frames_accepted": 1,
+        "losses": 0,
+        "losses_per_100k_bytes": 0.0,
+        "traffic_resolved": false,
+        "unresolved_at_cutoff": 1
+      }
+    }
+  },
+  "provenance": {
+    "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+    "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+    "instrument_commit": null,
+    "instrument_root": "/home/test/zynq_psoracle",
+    "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+    "tool": "host/transport_rig.py",
+    "tool_sha256": "e9a7fa14c226cf9b683e161fab5b7adfee23a233ed6e5466d6c163c330ebdb38"
+  }
+}

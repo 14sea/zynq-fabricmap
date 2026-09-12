@@ -540,12 +540,20 @@ def analyse(frames: list[Frame], received: bytes, expected_token: str | None = N
                            "arrived after the last identified observation; otherwise they are "
                            "unresolved — damage was observed there and cannot be attributed, so it is "
                            "neither a loss nor in flight")}
-    losses = len(by_index) - len(delivered) - len(censored) - len(unresolved)   # ONE unit, once per frame
+    # ONE unit, once per frame. `confirmed_losses` is what is DEFINITELY lost; `losses` is the total,
+    # which is only known when nothing is unresolved — otherwise it is None, and the confirmed count
+    # is its lower bound and confirmed + unresolved its upper bound (the owner's uncertainty review:
+    # subtracting unresolved frames from `losses` let an uninterpretable capture report the same
+    # unqualified zero as an intact one)
+    confirmed = len(by_index) - len(delivered) - len(censored) - len(unresolved)
+    losses = None if unresolved else confirmed
     unexpected = [d for d in defects if d["kind"] in ("foreign_epoch", "unexpected_index", "unreadable_payload")]
     divergence = _divergence(frames, received, expected, by_index, token, echoed)
     return {"frames_sent": len(frames), "frames_delivered": len(delivered),
             "host_echo_lines": len(echoed), "bytes_host_echo": sum(e["bytes"] for e in echoed),
-            "loss_unit": LOSS_UNIT, "losses": losses,
+            "loss_unit": LOSS_UNIT,
+            "confirmed_losses": confirmed, "losses": losses, "losses_known": not unresolved,
+            "losses_upper_bound": confirmed + len(unresolved),
             "missing": missing, "censored": censored, "unresolved": unresolved,
             "damaged": sorted(damaged), "duplicated": duplicated,
             # observation, separately from delivery
@@ -558,7 +566,7 @@ def analyse(frames: list[Frame], received: bytes, expected_token: str | None = N
             "bytes_fragment": len(tail),
             "divergence": divergence,
             "bytes_sent": len(expected), "bytes_received": len(received),
-            "clean": (losses == 0 and not unresolved and not defects and not duplicated
+            "clean": (confirmed == 0 and not unresolved and not defects and not duplicated
                       and not out_of_order and divergence is None)}
 
 
@@ -979,18 +987,20 @@ class Run:
                     break
                 if failure is not None:
                     break
+                if res["confirmed_losses"] >= LOSSES_PER_REPETITION_STOP:
+                    # the registered threshold, on DEFINITE losses: three confirmed losses stop the
+                    # run whatever else is unresolved, and however the repetition ended
+                    self._end("stop_rule_losses", i,
+                              f"stop rule: {res['confirmed_losses']} confirmed losses within repetition {i} "
+                              f"(>= {LOSSES_PER_REPETITION_STOP}) — the condition is reproducing the failure; "
+                              f"{i + 1} of {self.repetitions} requested repetitions were run")
+                    break
                 if rep.ended.startswith("deadline"):
                     reason = "exposure_seconds" if res.get("resolved") else "exposure_seconds_censored"
                     self._end(reason, i, f"exposure: the deadline bounded repetition {i} ({rep.ended}); "
                               + ("it resolved" if res.get("resolved") else
                                  f"{res.get('censored_in_flight', 0)} frames censored in flight, "
                                  f"{res.get('unresolved_at_cutoff', 0)} unresolved"))
-                    break
-                if res["losses"] >= LOSSES_PER_REPETITION_STOP:
-                    self._end("stop_rule_losses", i,
-                              f"stop rule: {res['losses']} losses within repetition {i} "
-                              f"(>= {LOSSES_PER_REPETITION_STOP}) — the condition is reproducing the failure; "
-                              f"{i + 1} of {self.repetitions} requested repetitions were run")
                     break
             else:
                 self._end("exposure_repetitions", None, f"exposure: {self.repetitions} repetitions completed")
@@ -1041,7 +1051,8 @@ class Run:
         except Exception as exc:                          # noqa: BLE001 — recorded, and it stops the run
             return {**counts, "unavailable": True, "what": f"analysis of repetition {i}",
                     "error": f"{type(exc).__name__}: {exc}", "analysis_available": False,
-                    "losses": None, "clean": False, "resolved": False, "incomplete": True,
+                    "losses": None, "confirmed_losses": None, "losses_upper_bound": None,
+                    "losses_known": False, "clean": False, "resolved": False, "incomplete": True,
                     "censored_in_flight": None, "unresolved_at_cutoff": None,
                     "bytes_received": len(rep.received), "bytes_sent": rep.bytes_accepted,
                     "frames_sent": len(rep.accepted),
@@ -1060,20 +1071,41 @@ class Run:
 
     def _summarise(self, after: dict, before: dict) -> dict:
         received = sum(r.get("bytes_received", 0) for r in self.results)
+        analysed = [r for r in self.results if r.get("analysis_available")]
         unanalysed = [r["repetition"] for r in self.results if not r.get("analysis_available")]
-        known_losses = sum(r["losses"] for r in self.results if r.get("analysis_available"))
-        # an unknown stays unknown: a repetition whose analysis raised contributes no number, and
-        # the aggregate is then not a number either (the owner's P2-3)
-        losses = None if unanalysed else known_losses
+        confirmed = sum(r["confirmed_losses"] for r in analysed)
+        unresolved = sum(r["unresolved_at_cutoff"] for r in analysed)
+        # An unknown stays unknown, and a bound stays a bound. The TOTAL is a number only when every
+        # repetition was analysed and nothing is unresolved; otherwise it is None with a named
+        # reason, the confirmed count is kept as the lower bound, and — when every repetition was
+        # analysed — confirmed + unresolved is the upper bound. `loss_metric` says which case this
+        # is, so a result cannot be consumed as an exact zero rate (the owner's uncertainty review).
+        if unanalysed:
+            losses, upper = None, None
+            metric = {"status": "unknown", "exact": False,
+                      "reason": f"the analysis of repetition(s) {unanalysed} raised: no total and no bound; "
+                                f"{confirmed} losses are confirmed in the analysed repetitions"}
+        elif received == 0:
+            losses, upper = confirmed, confirmed + unresolved
+            metric = {"status": "no_denominator", "exact": False,
+                      "reason": "nothing was received, so there is no rate; the censored state is preserved"}
+        elif unresolved:
+            losses, upper = None, confirmed + unresolved
+            metric = {"status": "bounded", "exact": False,
+                      "reason": f"{unresolved} frame(s) unresolved at a cutoff: the total is between "
+                                f"{confirmed} confirmed and {confirmed + unresolved}; no exact rate"}
+        else:
+            losses, upper = confirmed, confirmed
+            metric = {"status": "exact", "exact": True, "reason": "every repetition analysed, nothing unresolved"}
         resolved = bool(self.results) and all(r.get("resolved") for r in self.results)
         reason = self.terminal.get("reason")
         exposure_reached = reason in ("exposure_repetitions", "exposure_seconds", "exposure_seconds_censored")
         completed = exposure_reached and resolved and self.error is None and not unanalysed
-        rate = None if (losses is None or received == 0) else losses * 100000 / received
+        per100k = (lambda n: None if (n is None or received == 0) else n * 100000 / received)
         denominator = ("received bytes, including every partial capture" if received else
                        "unavailable: nothing was received, so there is no denominator")
-        if losses is None:
-            denominator += f"; losses unknown: the analysis of repetition(s) {unanalysed} raised"
+        if metric["status"] != "exact":
+            denominator += f"; loss metric {metric['status']}: {metric['reason']}"
         return {"label": self.label, "run_id": self.run_id, "tx_during_rx": self.tx_during_rx,
                 "topology": self.topology,
                 "provenance": self._guarded(provenance, "provenance"),
@@ -1105,10 +1137,15 @@ class Run:
                 # received is not a rate of zero and not a rate over what was sent: it is a
                 # denominator that does not exist, and the losses are reported regardless.
                 "denominator_bytes": received,
+                # the TOTAL, a number only when exact; the confirmed count is always a number
                 "losses": losses,
-                "losses_in_analysed_repetitions": known_losses,
+                "confirmed_losses": confirmed,
+                "losses_upper_bound": upper,
                 "repetitions_unanalysed": unanalysed,
-                "losses_per_100k_bytes": rate,
+                "loss_metric": metric,
+                "losses_per_100k_bytes": per100k(losses),
+                "confirmed_losses_per_100k_bytes": per100k(confirmed),      # a LOWER bound of the rate
+                "losses_per_100k_bytes_upper_bound": per100k(upper),
                 "denominator": denominator,
                 "counters_before": before, "counters_after": after,
                 "counters_delta": counter_delta(before, after),
@@ -1154,8 +1191,8 @@ class Run:
             result["export_errors"] = errors
             result["export_complete"] = False
             attempt("run.min.json", lambda: (d / "run.min.json").write_text(json.dumps(
-                {k: result.get(k) for k in ("label", "run_id", "stopped", "error", "losses",
-                                            "denominator_bytes", "repetitions_run", "incomplete")}
+                {k: result.get(k) for k in ("label", "run_id", "stopped", "error", "losses", "confirmed_losses",
+                                            "loss_metric", "denominator_bytes", "repetitions_run", "incomplete")}
                 | {"export_errors": errors, "export_complete": False}, indent=1, sort_keys=True) + "\n"))
         return d
 

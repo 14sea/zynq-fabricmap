@@ -6,11 +6,13 @@
    "capture": "capture_000.bin",
    "events": "events_000.json",
    "repetition": 0,
-   "sha256": "93f50256e3b039348ece94b263c8ca7d2a12fa6d888b0ad8417608bb081266cc"
+   "sha256": "38e1e6186b619c9460e3d66e78dafb4790f33bbc3c4984cc6560bb5b1d8df9c4"
   }
  ],
  "censored_in_flight": 0,
  "completed_exposure": true,
+ "confirmed_losses": 0,
+ "confirmed_losses_per_100k_bytes": 0.0,
  "counters_after": {
   "available": false,
   "note": "no counter is reported; absence of a count is not a count of zero",
@@ -39,9 +41,15 @@
  "host_writes_overlapping_source_tx": 0,
  "incomplete": false,
  "label": "pty tx_during_rx=True",
+ "loss_metric": {
+  "exact": true,
+  "reason": "every repetition analysed, nothing unresolved",
+  "status": "exact"
+ },
  "losses": 0,
- "losses_in_analysed_repetitions": 0,
  "losses_per_100k_bytes": 0.0,
+ "losses_per_100k_bytes_upper_bound": 0.0,
+ "losses_upper_bound": 0,
  "parameters": {
   "baud": 115200,
   "byte_time_s": 8.680555555555556e-05,
@@ -60,7 +68,7 @@
   "instrument_root": "/home/test/zynq_psoracle",
   "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
   "tool": "host/transport_rig.py",
-  "tool_sha256": "e1b7b4450811c37268b87add402764c66425acfe6d36e4c1726e80f98e97377a"
+  "tool_sha256": "e9a7fa14c226cf9b683e161fab5b7adfee23a233ed6e5466d6c163c330ebdb38"
  },
  "repetition_results": [
   {
@@ -73,6 +81,7 @@
    "censored": [],
    "censored_in_flight": 0,
    "clean": true,
+   "confirmed_losses": 0,
    "cut_short": false,
    "cutoff": null,
    "damaged": [],
@@ -93,6 +102,8 @@
    "incomplete": false,
    "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
    "losses": 0,
+   "losses_known": true,
+   "losses_upper_bound": 0,
    "missing": [],
    "note": "frames never attempted are not counted as losses; an uncertain write is in flight, not a loss; unresolved frames are ambiguous at a cutoff and are neither",
    "observed": [
@@ -411,7 +422,7 @@
  ],
  "repetitions_run": 1,
  "repetitions_unanalysed": [],
- "run_id": "f03cbecbeeb94e4ca8db52a697e82bd2",
+ "run_id": "44c344c1a27d4259a91b9e9db710351a",
  "scope": "a rig run under one condition; it attributes nothing, qualifies nothing, and does not authorise a board session (plan \u00a75, \u00a76)",
  "secondary_errors": [],
  "stopped": "exposure: 1 repetitions completed",

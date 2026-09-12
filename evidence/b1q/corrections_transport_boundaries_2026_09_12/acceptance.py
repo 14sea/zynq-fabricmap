@@ -98,11 +98,13 @@ partial = rig.analyse(five, stream2 + frames[2].line[:-10], censor_tail=True)
 garbage = rig.analyse(five, stream2 + b"~" * 300 + b"\n", censor_tail=True)
 assert (later["losses"], later["missing"], later["censored"], later["unresolved"]) == (2, [3, 4], [5, 6, 7], []), later
 assert (partial["losses"], partial["censored"], partial["unresolved"]) == (0, [2, 3, 4], []), partial
-assert (garbage["losses"], garbage["censored"], garbage["unresolved"]) == (0, [], [2, 3, 4]), garbage
+# the total is unknown here since 5f5bf7f's correction (the owner's uncertainty review): the confirmed
+# count is 0 and stays separate; `losses` is None rather than 0
+assert (garbage["confirmed_losses"], garbage["losses"], garbage["censored"], garbage["unresolved"]) == (0, None, [], [2, 3, 4]), garbage
 case("cutoff_boundaries", {"not probed at 38c91b0": "the frontier was max(delivered) in every case"},
      {"later_damaged_arrival": {k: later[k] for k in ("losses", "missing", "censored", "unresolved")},
       "genuinely_partial_line": {k: partial[k] for k in ("losses", "censored", "unresolved")} | {"cutoff": partial["cutoff"]},
-      "unidentifiable_damage": {k: garbage[k] for k in ("losses", "censored", "unresolved")} | {"cutoff": garbage["cutoff"]}})
+      "unidentifiable_damage": {k: garbage[k] for k in ("confirmed_losses", "losses", "losses_upper_bound", "censored", "unresolved")} | {"cutoff": garbage["cutoff"]}})
 
 
 # ---- P2-3 the terminal state, through the production Run -----------------

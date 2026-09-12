@@ -163,6 +163,7 @@
         },
         "unidentifiable_damage": {
           "censored": [],
+          "confirmed_losses": 0,
           "cutoff": {
             "ambiguous": true,
             "note": "frames above the frontier are censored only when nothing unidentifiable arrived after the last identified observation; otherwise they are unresolved \u2014 damage was observed there and cannot be attributed, so it is neither a loss nor in flight",
@@ -170,7 +171,8 @@
             "partial_frame": null,
             "unidentified_after_frontier": 1
           },
-          "losses": 0,
+          "losses": null,
+          "losses_upper_bound": 3,
           "unresolved": [
             2,
             3,
@@ -236,7 +238,7 @@
         "repetitions_run": 1,
         "repetitions_unanalysed": [],
         "requested_repetitions": 200,
-        "stopped": "stop rule: 3 losses within repetition 0 (>= 3) \u2014 the condition is reproducing the failure; 1 of 200 requested repetitions were run",
+        "stopped": "stop rule: 3 confirmed losses within repetition 0 (>= 3) \u2014 the condition is reproducing the failure; 1 of 200 requested repetitions were run",
         "terminal_reason": "stop_rule_losses",
         "traffic_resolved": true
       },
@@ -312,6 +314,6 @@
     "instrument_root": "/home/test/zynq_psoracle",
     "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
     "tool": "host/transport_rig.py",
-    "tool_sha256": "e1b7b4450811c37268b87add402764c66425acfe6d36e4c1726e80f98e97377a"
+    "tool_sha256": "e9a7fa14c226cf9b683e161fab5b7adfee23a233ed6e5466d6c163c330ebdb38"
   }
 }
