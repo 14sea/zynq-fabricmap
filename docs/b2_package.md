@@ -1,5 +1,19 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
 
+> **Offline positive integration reviewed on 2026-09-12 (`9035b18`).** The B2Q
+> S1 → S2 → S3 → fresh-process verification succeeds with real re-adjudication.
+> An independent B2 demonstration uses the resulting plan's final slice, pairs 7 and 8
+> at budget 600: **2,406 scored/audited records, PASS, zero findings**, and no pooled
+> primary. The production finalizer's seal → callback → summary ordering also passes.
+> Focused suite: **395 tests, zero skips, OK**. The missing positive integration
+> blocker is closed for these demonstrated paths. See the
+> [review and its explicit preflight doubles](b2_modelled_integration_review_2026_09_12.md).
+> P3 corrections remain: **two forced-control CRC drops**, eleven negative tests,
+> and the model CLI's export-only behavior versus the complete API workflow.
+> `b2_pins`, `b2_test_report`, qualification-document/planning-rule freeze and final
+> package review remain outstanding. No push or board clearance is granted here.
+> Earlier status banners below are historical.
+
 > **The complete offline B2Q lifecycle now runs, and the runner produces a PASS.**
 > `host/b2_modelled_session.py` drives a whole B2Q session through the instrument's real host
 > stack and the **production exporter**; the runner's own `judge_session` returns **PASS** (zero

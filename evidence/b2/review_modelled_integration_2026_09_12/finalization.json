@@ -1,0 +1,24 @@
+{
+  "scope": "MODEL ONLY; real production finalizer, no hardware",
+  "production_finalizer_outcome": "PASS",
+  "callback_order": [
+    {
+      "summary_exists_at_callback": false,
+      "seal_exists_at_callback": true
+    }
+  ],
+  "post_finalize_qualify": true,
+  "cli": {
+    "returncode": 0,
+    "epoch_end": {
+      "kind": "COMPLETED",
+      "last_seq": 20,
+      "reason": "budget"
+    },
+    "crc_dropped": 2,
+    "outcome_present": false,
+    "summary_exists": false,
+    "adjudication_exists": false
+  },
+  "temporary_artifacts": "/tmp/b2_finalize_review_ch70_crt"
+}
