@@ -1,5 +1,13 @@
 # The S0 transition P2 — corrected, 2026-09-12
 
+> **The hashes in "Regenerated, and the new hashes" are superseded.** The owner's stage/split
+> review then found a P2 in the same test's S3 slice; correcting it changed a pinned test again,
+> so the table is now `8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf` and the
+> manifest `86393ed781cb25c971aeb7a4ea3bf485b5aba5a353ef94968b3128050d5b2da1` — still the same
+> unfrozen S0, same state fields, same image and preregistration. See
+> `../corrections_stage_split_2026_09_12/`. Everything else here stands, and `acceptance.json`
+> has been re-run at the new hashes.
+
 The owner's review: `docs/b2_s0_transition_review_2026_09_12.md`, against `fa0271e`, with its own
 reproduction in `evidence/b2/review_s0_transition_2026_09_12/`. **The S0 manifest itself was
 accepted; the defect was in the test I added with it.**

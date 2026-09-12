@@ -230,15 +230,39 @@ def committed_readjudicator(manifest: dict):
     return rn.readjudicator(manifest, inst.DEFAULT_ROOT)
 
 
+def committed_slice(manifest: dict, root: Path = R) -> tuple:
+    """The slice to ask for, read from the manifest's OWN verified pinned plan — never a constant
+    and never inferred from a rate.
+
+    B2's session split is DERIVED from the B2Q calibration (`b2_plan.session_split`), so how many
+    pairs a session holds is a measured consequence, not an invariant of the experiment. Hard-coding
+    `(0, 4)` — the split the fixture's default 2807/h happens to give — made three other legal S3
+    manifests refuse at "the slice (0, 4) is not one the plan's split gives", before the gate the
+    test was there to reach (the owner's stage/split review of 2026-09-12).
+
+    Returns the LAST session's `(pair_first, pair_count)`, so a split with more than one session is
+    not exercised only at its first. A manifest with no plan pinned has no slice at all: preflight
+    refuses at its stage long before it reads one.
+    """
+    pinned = manifest.get("plan")
+    if not isinstance(pinned, dict):
+        return None, None
+    plan = json.loads((root / pinned["path"]).read_text())
+    pairs = plan["session_split"]["sessions"][-1]["pairs"]
+    return pairs[0], len(pairs)
+
+
 def committed_args(manifest_path: Path, profile: dict, d: Path) -> types.SimpleNamespace:
     """The runner's arguments for the COMMITTED manifest with NO ruling to consume: the pinned
-    image and the real instrument root, the two rulings deliberately absent."""
+    image, the real instrument root, a slice its own plan gives, and the two rulings deliberately
+    absent."""
     qual = profile is rn.QUALIFICATION
+    first, count = (None, None) if qual else committed_slice(json.loads(Path(manifest_path).read_text()))
     return types.SimpleNamespace(
         ruling=d / "absent_ruling.json", provision_ruling=d / "absent_provisioning.json",
         boundary=d / "boundary.json", out=d / "out", manifest=manifest_path,
         instrument_root=inst.DEFAULT_ROOT, image=IMAGE,
-        pair_first=None if qual else 0, pair_count=None if qual else 4,
+        pair_first=first, pair_count=count,
         qual_rate_per_hour=None, key=Path("/var/lib/p3signer/keys/K.bin"),
         signer_user="p3signer", port="/dev/null")
 
@@ -556,15 +580,21 @@ class StageCoverage(unittest.TestCase):
             suite = unittest.TestSuite([RefusalOrder(self.TEST)])
             return unittest.TextTestRunner(stream=io.StringIO(), verbosity=0).run(suite)
 
-    def accepts(self, stage: str, mutate=None) -> None:
+    def accepts(self, stage: str, mutate=None) -> dict:
+        """Drive the committed-manifest test against a real manifest file at `stage` and require it
+        to pass. Returns what the manifest's plan actually asked for, so a caller can show that its
+        cases differ from one another."""
         f = Fixture(stage)
         try:
             if mutate:
                 mutate(f.manifest)
-            result = self.drive(f.path())
+            path = f.path()
+            result = self.drive(path)
             self.assertEqual((len(result.failures), len(result.errors), len(result.skipped)), (0, 0, 0),
                              f"{stage}: " + "".join(t for _, t in result.failures + result.errors)[:2000])
             self.assertEqual(result.testsRun, 1)
+            sessions = [s["pairs"] for s in ((f.plan_doc or {}).get("session_split") or {}).get("sessions", [])]
+            return {"sessions": sessions, "slice": tuple(committed_slice(json.loads(path.read_text())))}
         finally:
             f.close()
 
@@ -594,7 +624,42 @@ class StageCoverage(unittest.TestCase):
             with self.subTest(stage=stage):
                 self.accepts(stage)
 
+    def test_it_passes_at_every_split_a_calibration_can_give(self):
+        """The owner's stage/split reproduction, inverted. B2's split is DERIVED from the B2Q
+        calibration, so the four rates below build four legally different S3 manifests; all four
+        used to fail at "the slice (0, 4) is not one the plan's split gives", before the gate the
+        test exists to reach. The slice now comes from each manifest's own verified pinned plan.
+
+        These are synthetic FIXTURE rates, with the B2Q evidence and the re-adjudicator stubbed —
+        test readiness, never a measured rate and never a qualification. 4490.86/h is the modelled
+        virtual-clock artefact and appears here only because the split rule accepts it; it is not
+        a calibration and nothing in this repository may use it as one.
+        """
+        seen = {}
+        for rate in (2807.0, 602.0, 4490.86, 6000.0):
+            with self.subTest(rate=rate), mock.patch.object(sys.modules[__name__], "STUB_RATE", rate):
+                seen[rate] = self.accepts("S3")
+        # four rates, four different splits — otherwise this test says nothing about splits
+        self.assertEqual(len({len(v["sessions"]) for v in seen.values()}), 4,
+                         f"the rates did not give different splits: "
+                         f"{ {r: v['sessions'] for r, v in seen.items()} }")
+        # and wherever a split has more than one session, the slice asked for is NOT its first
+        multi = [v for v in seen.values() if len(v["sessions"]) > 1]
+        self.assertTrue(multi)
+        for v in multi:
+            first = (v["sessions"][0][0], len(v["sessions"][0]))
+            self.assertNotEqual(v["slice"], first, "a multi-session split was exercised at its first session")
+            self.assertIn(list(v["slice"]), [[p[0], len(p)] for p in v["sessions"]])
+
     # ------------------------------------------------------------------ and still discriminates
+    def test_a_constant_slice_would_not_survive_another_calibration(self):
+        """The control for the correction itself: put the old constant back, and a legal 602/h S3 —
+        nine one-pair sessions — refuses at the slice, before the ruling gate it exists to reach.
+        The owner's reproduction, kept as a test so the constant cannot come back unnoticed."""
+        with mock.patch.object(sys.modules[__name__], "STUB_RATE", 602.0), \
+                mock.patch.object(sys.modules[__name__], "committed_slice", lambda m, root=R: (0, 4)):
+            self.rejects("S3", lambda m: None, "the slice (0, 4) is not one the plan's split gives")
+
     def test_an_s0_that_claims_board_ready(self):
         """`verify` does not read board_ready at S0; the stage contract does."""
         self.rejects("S0", lambda m: m["image"].update(board_ready=True), "board_ready is True")
