@@ -1,5 +1,15 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
 
+> **The §7 package is SUBMITTED for the owner's review at `619b22b`:
+> [`docs/b2_section7_submission_2026_09_12.md`](b2_section7_submission_2026_09_12.md).** It works
+> through §7's compatibility list and its guard list item by item, names the test behind each
+> guard, states which compatibility items rest on reading rather than on a check, lists the five
+> tools with what each establishes, and says plainly what is not done: no board session and none
+> authorised, no modelled demonstration of the B2 map-utility profile, the preregistration not
+> frozen and the image not `board_ready`, B1Q's transport stop-loss unresolved, and the ruling
+> texts still proposals. It asks for the review and for the ruling texts — **not** for
+> `board_ready`, the freeze, a ruling or board time.
+
 > **B2Q's experiment is frozen and pinned (manifest schema 0.2.4 → 0.2.5).** The owner's standing
 > recommendation is done: `host/b2_plan.py --qualification` writes B2Q's plan and prediction to
 > `evidence/b2/b2q_plan.json` and `b2q_prediction.json` — one pair at budget 8 under the
