@@ -1,0 +1,50 @@
+{
+ "artifacts_sha256": {
+  "docs/b2_architecture.md": "2393399094e2ae77389e454c2d435ea9e85dc48e5c9fafded30275de2da12172",
+  "docs/b2_package.md": "ecb35c2b93c4788c8ddf20e4e02029155821ac6c61d21c6344b5654eb30d1b3d",
+  "docs/b2_preregistration.md": "efc583050124df43ddf9ba530c8d813f00171af6dc5a1c5dbd2be74116c125c0",
+  "evidence/b2/build_evidence.json": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b",
+  "evidence/b2/gate/recomputed_2026_09_10/gate_report.json": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c",
+  "evidence/b2/plan.json": "cc6799080cb4c71ce2c2a64a9aaca42c09904d393351f8e2bc02957df428f3e4",
+  "evidence/b2/prediction.json": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+  "firmware/b2/IMPORT.json": "839496960abfcbede935f6615a6b7723bd6ba4cc290212029e699846392170e8",
+  "firmware/b2/p3_data.h": "518170dbb449e6e5eaef1cc34773f0bb2fa5256c34f3617b859c9880e1b6c295",
+  "manifests/b1_instrument_pins.json": "3106d4a8445e16382b801a0791fde1fd2114846daef6aaf1fd6501e8e45c4709",
+  "manifests/b1_manifest.json": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+  "manifests/b2_instrument_pins.json": "01ef85e5b39ee8e2ebf2244584e80d6fa25118a9203b19fbb10f8b3c36a597b6",
+  "manifests/b2_manifest.json": null,
+  "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
+ },
+ "at": "2026-09-12T084955Z",
+ "clean_tree_proof": true,
+ "errors": 0,
+ "exit_status": 0,
+ "failures": 0,
+ "head_at_run": "942a5b8555eab55632dc9c0dc64c502fb137a062",
+ "host": "H3C",
+ "instrument": {
+  "dirty": false,
+  "head": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "pinned_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "root": "/home/test/zynq_psoracle"
+ },
+ "note": "head_at_run is the HEAD when the suite ran; the commit that includes this report is necessarily later. A clean-tree proof needs worktree_dirty false AND skipped 0 AND exit_status 0 AND no failures or errors AND the instrument at its pinned commit and clean AND the pinned decision surface verifying.",
+ "package": "B2 v0.3",
+ "pins": {
+  "b1_files_verified": 105,
+  "bound_to": "the table's own bytes (no manifest before S0)",
+  "files_verified": 71,
+  "manifest_present": false,
+  "pins_refusal": null,
+  "pins_sha256": "01ef85e5b39ee8e2ebf2244584e80d6fa25118a9203b19fbb10f8b3c36a597b6",
+  "pins_verified": true
+ },
+ "ran": 1869,
+ "result_line": "OK (skipped=unknown)",
+ "schema": "b2_test_report",
+ "schema_version": "1.0.0",
+ "scope": "whole suite",
+ "skipped": 0,
+ "user": "test",
+ "worktree_dirty": false
+}

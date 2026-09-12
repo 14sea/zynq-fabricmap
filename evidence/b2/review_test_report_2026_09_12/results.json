@@ -1,0 +1,193 @@
+{
+  "reviewed_head": "942a5b8555eab55632dc9c0dc64c502fb137a062",
+  "initial_dirty": "",
+  "logs": {
+    "valid_unittest_summary": {
+      "cli_rc": 0,
+      "clean_tree_proof": true,
+      "ran": 4,
+      "result_line": "OK",
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "scope": "whole suite",
+      "head_at_run": "942a5b8555eab55632dc9c0dc64c502fb137a062",
+      "worktree_dirty": false
+    },
+    "missing_result": {
+      "cli_rc": 0,
+      "clean_tree_proof": true,
+      "ran": 1869,
+      "result_line": null,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "scope": "whole suite",
+      "head_at_run": "942a5b8555eab55632dc9c0dc64c502fb137a062",
+      "worktree_dirty": false
+    },
+    "bare_failed": {
+      "cli_rc": 0,
+      "clean_tree_proof": true,
+      "ran": 1869,
+      "result_line": "FAILED",
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "scope": "whole suite",
+      "head_at_run": "942a5b8555eab55632dc9c0dc64c502fb137a062",
+      "worktree_dirty": false
+    },
+    "zero_tests": {
+      "cli_rc": 0,
+      "clean_tree_proof": true,
+      "ran": 0,
+      "result_line": "OK",
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "scope": "whole suite",
+      "head_at_run": "942a5b8555eab55632dc9c0dc64c502fb137a062",
+      "worktree_dirty": false
+    },
+    "truncated_count": {
+      "cli_rc": 0,
+      "clean_tree_proof": true,
+      "ran": 1869,
+      "result_line": null,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "scope": "whole suite",
+      "head_at_run": "942a5b8555eab55632dc9c0dc64c502fb137a062",
+      "worktree_dirty": false
+    },
+    "malformed_skips": {
+      "cli_rc": 0,
+      "clean_tree_proof": true,
+      "ran": 1869,
+      "result_line": "OK (skipped=unknown)",
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "scope": "whole suite",
+      "head_at_run": "942a5b8555eab55632dc9c0dc64c502fb137a062",
+      "worktree_dirty": false
+    },
+    "unparseable": {
+      "cli_rc": 0,
+      "clean_tree_proof": false,
+      "ran": null,
+      "result_line": null,
+      "skipped": 0,
+      "failures": 0,
+      "errors": 0,
+      "scope": "whole suite",
+      "head_at_run": "942a5b8555eab55632dc9c0dc64c502fb137a062",
+      "worktree_dirty": false
+    },
+    "real_failure": {
+      "cli_rc": 1,
+      "clean_tree_proof": false,
+      "ran": 4,
+      "result_line": "FAILED (failures=1)",
+      "skipped": 0,
+      "failures": 1,
+      "errors": 0,
+      "scope": "whole suite",
+      "head_at_run": "942a5b8555eab55632dc9c0dc64c502fb137a062",
+      "worktree_dirty": false
+    }
+  },
+  "actual_empty_discovery": {
+    "returncode": 5,
+    "log": "\n----------------------------------------------------------------------\nRan 0 tests in 0.000s\n\nNO TESTS RAN\n"
+  },
+  "imported_log_has_no_provenance": {
+    "cli_rc": 0,
+    "clean_tree_proof": true,
+    "ran": 4,
+    "result_line": "OK",
+    "skipped": 0,
+    "failures": 0,
+    "errors": 0,
+    "scope": "whole suite",
+    "head_at_run": "942a5b8555eab55632dc9c0dc64c502fb137a062",
+    "worktree_dirty": false
+  },
+  "io_failures": {
+    "out_dir_is_a_file": {
+      "returncode": 1,
+      "stderr": "Traceback (most recent call last):\n  File \"/home/test/zynq_fabricmap/host/b2_test_report.py\", line 165, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/test/zynq_fabricmap/host/b2_test_report.py\", line 150, in main\n    a.out_dir.mkdir(parents=True, exist_ok=True)\n  File \"/usr/lib/python3.12/pathlib.py\", line 1313, in mkdir\n    os.mkdir(self, mode)\nFileExistsError: [Errno 17] File exists: '/tmp/b2_report_review_5wy80d2o/regular_file'\n"
+    },
+    "missing_log": {
+      "returncode": 1,
+      "stderr": "Traceback (most recent call last):\n  File \"/home/test/zynq_fabricmap/host/b2_test_report.py\", line 165, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/test/zynq_fabricmap/host/b2_test_report.py\", line 146, in main\n    rc, text = a.exit_status, a.log.read_text()\n                              ^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1029, in read_text\n    with self.open(mode='r', encoding=encoding, errors=errors) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1015, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/tmp/b2_report_review_5wy80d2o/not-present.log'\n"
+    }
+  },
+  "normal_run_order": {
+    "initial_simulated_dirty": true,
+    "git_reads_before_suite": 0,
+    "git_reads": [
+      {
+        "args": [
+          "status",
+          "--porcelain"
+        ],
+        "after_suite": true,
+        "cwd": "/home/test/zynq_fabricmap"
+      },
+      {
+        "args": [
+          "rev-parse",
+          "HEAD"
+        ],
+        "after_suite": true,
+        "cwd": "/home/test/zynq_psoracle"
+      },
+      {
+        "args": [
+          "status",
+          "--porcelain"
+        ],
+        "after_suite": true,
+        "cwd": "/home/test/zynq_psoracle"
+      },
+      {
+        "args": [
+          "rev-parse",
+          "HEAD"
+        ],
+        "after_suite": true,
+        "cwd": "/home/test/zynq_fabricmap"
+      }
+    ],
+    "cli_rc": 0,
+    "clean_tree_proof": true,
+    "head_at_run": "942a5b8555eab55632dc9c0dc64c502fb137a062"
+  },
+  "predicate_mutation": {
+    "removed_condition": "worktree_dirty is False",
+    "tests_run": 11,
+    "failures": 0,
+    "errors": 0,
+    "output": "...........\n----------------------------------------------------------------------\nRan 11 tests in 2.130s\n\nOK\n"
+  },
+  "archived_report_artifacts_at_declared_head": {
+    "docs/b2_architecture.md": true,
+    "docs/b2_package.md": true,
+    "docs/b2_preregistration.md": true,
+    "evidence/b2/build_evidence.json": true,
+    "evidence/b2/gate/recomputed_2026_09_10/gate_report.json": true,
+    "evidence/b2/plan.json": true,
+    "evidence/b2/prediction.json": true,
+    "firmware/b2/IMPORT.json": true,
+    "firmware/b2/p3_data.h": true,
+    "manifests/b1_instrument_pins.json": true,
+    "manifests/b1_manifest.json": true,
+    "manifests/b2_instrument_pins.json": true,
+    "manifests/b2_manifest.json": true,
+    "schemas/self_map_v2.schema.json": true
+  },
+  "temporary_artifacts": "/tmp/b2_report_review_5wy80d2o"
+}

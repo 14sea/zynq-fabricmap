@@ -1,5 +1,17 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
 
+> **Reporter review (`942a5b8`, implementation `50021e2`): HOLD for two P2 findings.**
+> Incomplete/contradictory imported logs can receive `clean_tree_proof: true`, and
+> report-time Git/pin observations do not establish the test run's original state.
+> The eleven reporter tests pass even after the production worktree-clean condition
+> is removed in memory. See the [review and reproductions](b2_test_report_review_2026_09_12.md).
+> Historical report artifact hashes match `50021e2`; this review does not establish
+> that its run was dirty or that its test count was false. Preserve that report.
+> Next: repair the proof path, pin B2Q's run-independent contract at S0/S1, then
+> present the complete current package. The accepted B2 representative non-first-slice
+> demonstration need not be repeated. No push, freeze or board clearance is granted.
+> Earlier status banners below are historical.
+
 > **Host tool 5 of 5 written: `host/b2_test_report.py` — the §7 host package is complete.**
 > It runs the suite from a clean tree and writes `test_report_<UTC>.json` with the counts, the
 > result line, `head_at_run`, the worktree and instrument dirty flags, and the digest of every
