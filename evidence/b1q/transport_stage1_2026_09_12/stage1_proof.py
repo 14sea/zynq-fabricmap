@@ -1,57 +1,61 @@
-"""Stage 1 of the B1Q transport plan, executed: the tool proved against a pty, not the Zynq.
+"""The offline acceptance run, through the PRODUCTION entry point, over a pty pair.
 
-Three artifacts, all offline:
-  * `profiles.json`   — the transmitted shape of all four recorded B1Q sessions, DERIVED from
-                        the committed console logs (the plan's §2 table checked against bytes)
-  * `generated.json`  — the shape of what the generator emits, against that measured shape
-  * `pty_run.json`    — a bounded run over a pty pair: a clean control, then the same run with
-                        a single byte removed, to show the tool reports the difference
+Superseded scope (the owner's review of 2026-09-12): this is the SOFTWARE half of the plan's
+stage 1. The plan also requires a physical acceptance on a separate serial device or a physical
+self-loopback, which has not happened and which a pseudo-terminal cannot replace.
 
-No board, no port, no ruling, no attribution. A pty has no UART framing, parity or overrun,
-so nothing here measures any link. Run from the repository root with `python3 -B`.
+Four artifacts, all offline:
+  * `profiles.json`  — the transmitted shape of all four recorded B1Q sessions, derived from the
+                       committed console logs (the plan's §2 table checked against bytes)
+  * `schedule.json`  — the host's actual schedule and tx→rx gaps, derived from the clean
+                       session's own timeline, which is where the rig's rule comes from
+  * `generated.json` — the shape of what the generator emits, beside that measured shape
+  * `run_tx.json` / `run_notx.json` — `Run.execute` over a raw pty for BOTH §3 TX conditions,
+                       with the raw capture and per-read events exported beside them
+
+No board, no serial device, no ruling, no attribution. Run from the repository root: python3 -B.
 """
 import json
 import os
 import pty
 import select
+import shutil
 import sys
-import time
 import tty
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "host"))
-import transport_rig as rig                                    # noqa: E402
+import transport_rig as rig                                        # noqa: E402
 
 OUT = Path(__file__).resolve().parent
 
 
-def pump(data: bytes, drop_at: int | None = None) -> bytes:
+def pty_port():
     master, slave = pty.openpty()
     tty.setraw(master)
     tty.setraw(slave)
     os.set_blocking(master, False)
     os.set_blocking(slave, False)
-    got, at, deadline = bytearray(), 0, time.monotonic() + 30.0
-    try:
-        while at < len(data) or time.monotonic() < deadline:
-            if at < len(data):
-                _, w, _ = select.select([], [master], [], 0.2)
-                if w:
-                    at += os.write(master, data[at:at + 4096])
-            r, _, _ = select.select([slave], [], [], 0.05)
-            if r:
-                chunk = os.read(slave, 65536)
-                if chunk:
-                    got += chunk
-                    continue
-            if at >= len(data) and not r:
+
+    def write(data):
+        sent = 0
+        while sent < len(data):
+            _, w, _ = select.select([], [master], [], 1.0)
+            if not w:
                 break
-    finally:
-        os.close(master)
-        os.close(slave)
-    out = bytes(got)
-    return out if drop_at is None else out[:drop_at] + out[drop_at + 1:]
+            sent += os.write(master, data[sent:sent + 2048])
+        return sent
+
+    def read(timeout):
+        r, _, _ = select.select([slave], [], [], timeout)
+        if not r:
+            return b""
+        try:
+            return os.read(slave, 65536)
+        except (BlockingIOError, OSError):
+            return b""
+    return rig.callable_port("pty", write, read, fd=slave), (master, slave)
 
 
 # 1. the measured shape of every recorded session
@@ -59,43 +63,46 @@ profiles = {p.parent.name: rig.profile_from_log(p)
             for p in sorted((ROOT / "evidence/b1q").glob("b1q_17A6_*/console.log"))}
 (OUT / "profiles.json").write_text(json.dumps(profiles, indent=1, sort_keys=True) + "\n")
 
-# 2. what the generator emits, beside it
-frames = rig.plan_frames(1)
+# 2. the host schedule the rig's rule is derived from
+schedule = rig.host_schedule_from_timeline(ROOT / rig.TIMELINE_SOURCE)
+frames = rig.plan_frames("proof", 0)
+emitted: dict = {}
+for s in rig.host_schedule(frames):
+    k = s["line"].split(b" ")[0].decode()
+    emitted[k] = emitted.get(k, 0) + 1
+schedule["the_rigs_schedule_by_that_rule"] = {"total": sum(emitted.values()), "by_type": emitted}
+(OUT / "schedule.json").write_text(json.dumps(schedule, indent=1, sort_keys=True) + "\n")
+
+# 3. what the generator emits, beside the measured shape
 by: dict = {}
 for f in frames:
     e = by.setdefault(f.kind, {"count": 0, "min": f.bytes, "max": f.bytes, "max_abs_target_error": 0})
     e["count"] += 1
     e["min"], e["max"] = min(e["min"], f.bytes), max(e["max"], f.bytes)
     e["max_abs_target_error"] = max(e["max_abs_target_error"], abs(f.bytes - f.target_bytes))
-generated = {"frames": len(frames), "bytes": len(rig.stream_bytes(frames)), "by_type": by,
-             "measured_for_comparison": {k: {"count": c, "min": lo, "max": hi}
-                                         for k, c, lo, hi in rig.SESSION_PROFILE},
-             "note": "base64 grows four characters at a time, so a frame is the first reachable "
-                     "length at or above the measured target; the error is bounded and recorded"}
-(OUT / "generated.json").write_text(json.dumps(generated, indent=1, sort_keys=True) + "\n")
+(OUT / "generated.json").write_text(json.dumps(
+    {"frames": len(frames), "bytes": len(rig.stream_bytes(frames)), "by_type": by,
+     "measured_for_comparison": {k: {"count": c, "min": lo, "max": hi} for k, c, lo, hi in rig.SESSION_PROFILE},
+     "note": "base64 grows four characters at a time, so a frame is the first reachable length at or "
+             "above the measured target; the error is bounded and recorded"}, indent=1, sort_keys=True) + "\n")
 
-# 3. a bounded run over a pty pair — control, then one byte removed
-rec = next(f for f in frames if f.kind == "REC")
-control = rig.analyse(frames, pump(rig.stream_bytes(frames)))
-damaged = rig.analyse(frames, pump(rig.stream_bytes(frames), drop_at=rec.offset + 11))
-master, slave = pty.openpty()
-counters = rig.read_icounters(slave)
-os.close(master)
-os.close(slave)
-run = {"tool": "host/transport_rig.py", "self_sha256": rig.self_sha256(),
-       "transport": "pty pair (raw), a separate traffic source — NOT a UART and NOT the Zynq",
-       "control": {k: control[k] for k in ("clean", "frames_sent", "frames_delivered", "losses",
-                                           "bytes_sent", "bytes_received", "divergence")},
-       "one_byte_removed": {k: damaged[k] for k in ("clean", "frames_sent", "frames_delivered",
-                                                    "losses", "missing", "divergence")},
-       "counters_on_a_pty": counters,
-       "scope": "the tool is proved end to end; no link property is measured, nothing is attributed, "
-                "no condition of the plan's §3 was run (that is stage 2 and needs the owner's rig)"}
-assert control["clean"] and not damaged["clean"]
-assert damaged["divergence"]["frame_index"] == rec.index and damaged["divergence"]["offset_in_frame"] == 11
-assert counters["available"] is False and counters["reason"]
-(OUT / "pty_run.json").write_text(json.dumps(run, indent=1, sort_keys=True) + "\n")
-print(json.dumps({"profiles": list(profiles), "generated_bytes": generated["bytes"],
-                  "control_clean": control["clean"], "damaged_clean": damaged["clean"],
-                  "localised_to": (damaged["divergence"]["frame_kind"], damaged["divergence"]["offset_in_frame"]),
-                  "counters": counters["available"]}, indent=1))
+# 4. the production entry point, over a pty, for both TX conditions
+for tx, name in ((True, "run_tx"), (False, "run_notx")):
+    d = OUT / name
+    shutil.rmtree(d, ignore_errors=True)
+    port, fds = pty_port()
+    try:
+        run = rig.Run(f"pty tx_during_rx={tx}", repetitions=1, seconds=120.0, tx_during_rx=tx)
+        result = run.execute(port, fd=port.fileno(), out_dir=d, sleep=lambda s: None, read_timeout=0.05)
+    finally:
+        for fd in fds:
+            os.close(fd)
+    rep = result["repetition_results"][0]
+    assert rep["ended"] == "complete" and result["losses"] == 0, rep
+    assert rep["reads"] > 10 and result["denominator"] == "received bytes"
+    assert result["counters_after"]["available"] is False and result["counters_after"]["reason"]
+    print(json.dumps({"condition": name, "tx_during_rx": tx, "frames": rep["frames_sent"],
+                      "delivered": rep["frames_delivered"], "losses": result["losses"],
+                      "reads": rep["reads"], "denominator_bytes": result["denominator_bytes"],
+                      "counters": result["counters_after"]["available"],
+                      "exported": str(d.relative_to(ROOT))}, sort_keys=True))

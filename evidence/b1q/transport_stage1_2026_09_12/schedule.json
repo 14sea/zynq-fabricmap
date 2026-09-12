@@ -1,0 +1,42 @@
+{
+ "file": "/home/test/zynq_fabricmap/evidence/b1q/b1q_17A6_2026-09-08-01/timeline.json",
+ "rx_then_tx": {
+  "AUDIT->AUDITDONE": 11,
+  "AUDIT->AUDITGET": 77,
+  "AUDIT_READY->AUDITGET": 11,
+  "CRC_DROP->RECGET": 1,
+  "CRC_DROP->SIGNGET": 1,
+  "IDENT->IDENTACK": 1,
+  "REC->RECACK": 11,
+  "SIGNREQ->SIGNOK": 11,
+  "TERM->TERMACK": 1
+ },
+ "the_rigs_schedule_by_that_rule": {
+  "by_type": {
+   "AUDITDONE": 11,
+   "AUDITGET": 88,
+   "IDENTACK": 1,
+   "RECACK": 12,
+   "SIGNOK": 12,
+   "TERMACK": 1
+  },
+  "total": 125
+ },
+ "tx_by_type": {
+  "AUDITDONE": 11,
+  "AUDITGET": 88,
+  "IDENTACK": 1,
+  "RECACK": 11,
+  "RECGET": 1,
+  "SIGNGET": 1,
+  "SIGNOK": 11,
+  "TERMACK": 1
+ },
+ "tx_to_next_rx_s": {
+  "max": 0.2980570230001831,
+  "median": 0.06495218800000657,
+  "min": 0.04057439899997917,
+  "n": 124
+ },
+ "tx_total": 125
+}

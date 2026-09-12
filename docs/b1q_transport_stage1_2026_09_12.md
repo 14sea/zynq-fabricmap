@@ -1,8 +1,17 @@
-# B1Q transport stop-loss — stage 1 delivered, and what the owner must decide (2026-09-12)
+# B1Q transport stop-loss — a partial software delivery, and what the owner must decide (2026-09-12)
 
 > **Host-only. No board, no port, no ruling, no attribution.** The stop-loss remains in force;
-> nothing here lifts it. `docs/b1q_transport_plan_2026_09_07.md` is the reviewed plan and this
-> executes the part of it that needs nothing but a host.
+> nothing here lifts it. `docs/b1q_transport_plan_2026_09_07.md` is the reviewed plan.
+>
+> **Scope corrected after the owner's review of the same day**
+> (`docs/b1q_transport_stage1_review_2026_09_12.md`): the first version of this document claimed
+> "stage 1 in full". It is **withdrawn**. The plan's stage 1 also requires a physical acceptance
+> — a separate serial device or a physical self-loopback — which has **not** happened and which
+> a software pseudo-terminal cannot replace. What exists is the **generator, driver and
+> analyser, with an offline acceptance**; the physical acceptance is outstanding. That review
+> also found five P2 defects in the first implementation, all now corrected; §"What the review
+> corrected" records each one. The B2Q exposure argument this document originally made is
+> **withdrawn as wrong**, not merely softened.
 
 ## Where the stop-loss stood before today
 
@@ -17,11 +26,13 @@
 Attempt 4 changed **two** variables at once (module A→B, hub port 2→3) against two lost
 sessions on module A. It separates nothing, and one PASS is not stability.
 
-## What was built today — stage 1
+## What exists — the software half
 
-`host/transport_rig.py`, `tests/test_transport_rig.py` (30 tests), evidence in
-`evidence/b1q/transport_stage1_2026_09_12/`. The plan's stage 1 in full: *the generator and
-capture tool, proved against a separate traffic source, not the Zynq.*
+`host/transport_rig.py`, `tests/test_transport_rig.py` (**49 tests**), evidence in
+`evidence/b1q/transport_stage1_2026_09_12/` and `evidence/b1q/corrections_transport_stage1_2026_09_12/`.
+The generator, the driver and the analyser, with an **offline** acceptance over a pty pair
+through the production entry point. **Not** the plan's stage 1 in full: the physical acceptance
+on a separate serial device or a self-loopback has not happened.
 
 It supplies the four things the three lost sessions could not:
 
@@ -36,13 +47,19 @@ It supplies the four things the three lost sessions could not:
    unavailable it is recorded as unavailable *with its reason*, never as zero.
 4. **The pre-registered exposure and stop rules** of plan §5, including the early stop at
    three losses in one repetition, and the decision rule reported as losses per received byte
-   **with its denominator stated**.
+   **with its denominator stated** — and reported as *unavailable* when nothing was received,
+   because a stream that arrived empty has no denominator.
+5. **An execution contract**: the stream written frame by frame with every write's completion
+   checked, the host's replies on their own port at the points a recorded session emits them,
+   incremental timestamped reads, a deadline checked around every operation, and a
+   finalisation that exports the raw capture, the per-read events and the partial results even
+   when the run dies — with the original error preserved.
 
 Proved the way this project proves instruments: every fault the real sessions showed is
 injected into a known stream and must be detected *and* localised — a byte dropped inside a
 2.6 kB REC, a bit flipped in a 66-byte HB, an excised frame, a 200-byte run, a duplicate, a
-swap, a truncation, silence, line noise, and a well-formed frame the rig never sent. **That
-last case found a real defect** (a foreign frame was being counted as delivered); it is fixed.
+swap, a truncation, silence, line noise, a well-formed frame the rig never sent, a valid CRC
+over bytes it did not send, and an earlier repetition's capture replayed into a later one.
 
 ### Two things the record gains
 
@@ -53,6 +70,21 @@ last case found a real defect** (a foreign frame was being counted as delivered)
   at the same offsets in every complete session, so they are a session feature and not
   transport, and the rig therefore transmits none: every CRC failure a rig run sees is a
   transport event with nothing to subtract.
+
+## What the review corrected
+
+Five P2s, all reproduced from the public API with a pristine generated stream as the control.
+`evidence/b1q/corrections_transport_stage1_2026_09_12/acceptance.json` runs the owner's own
+probes against the corrected code and prints each observation beside theirs.
+
+| finding | at `4528ef8` | now |
+|---|---|---|
+| **P2-1** the loss unit double-counted, and the denominator was the bytes SENT | one corrupted frame = 2 losses, two = 4 and tripped the three-loss stop, an inserted newline = 3, a deleted frame = 1; silence gave a finite 306.204 per 100k over 98 627 bytes that never arrived | one loss = **one expected frame not delivered byte-exact, counted once**, whatever its damage; 1, 2 and 3 affected frames give exactly 1, 2 and 3; the denominator is **received** bytes, and silence reports no rate at all while still reporting 302 losses and still stopping. The registered threshold is unchanged — only the unit it counts is now correct |
+| **P2-2** a known index was credited without its known bytes | keep the REC index, alter a pad byte, rebuild a valid CRC → **302 delivered, zero losses**; and every repetition regenerated identical bytes, so repetition 0's capture replayed as repetition 1 was **clean twice** | delivery requires a **byte-exact** match with the frame generated for **this** repetition; the altered frame is `damaged`, one loss. Each repetition carries its own epoch token, so a replayed capture is 302 losses, not a clean run. A write that reports fewer bytes than it was given — or reports nothing — is a refusal |
+| **P2-3** the driver did not implement the planned traffic or capture | one write of the whole stream, then every host command to the same writer, then **one** read; `after_frame` never used; the host schedule was `i % 8` (8 AUDITGET against the plan's 30); a 0.1 s limit spent **2.232 s** and still reported a completed repetition | 302 frame-by-frame writes with completion checked, **125 host replies on the host port** by the rule the clean session's own `timeline.json` exhibits (88 AUDITGET, 12 SIGNOK, 11 AUDITDONE, 12 RECACK, IDENTACK, TERMACK — the same 125 that session sent), interleaved with incremental timestamped reads; the 0.1 s limit now stops **inside** the repetition after 2 frames. A self-loopback's returning host traffic is classified as `host_echo` and the topology is recorded, instead of being filtered away by a test helper |
+| **P2-4** the error path lost the result | `RigError` raised, nothing returned, counters sampled once, no raw capture anywhere | counters attempted on **both** sides, raw capture and per-read events per repetition and the partial results **exported to disk**, the result attached to the exception, and the **original** error preserved — an export failure is recorded inside the result, never allowed to replace it |
+| **P2-5** the B2Q exposure argument compared different units | "20 B2Q records vs 302 B1Q frames — a much shorter exposure" | **withdrawn.** Production `qualification_session_plan` derives **543 expected frames** for B2Q (160 AUDIT, 320 HB, 20 REC …) against B1Q's 302 — *more*, not fewer — and even that is planning arithmetic, not an observed run |
+| **P3** `bytes_to_resync` only found a newline | an inserted newline reported `1` | two fields: `bytes_to_next_newline`, and `resynchronised_at`, which names the next line that is **byte-exactly an expected frame of this repetition** (or null) |
 
 ## What is still blocked, and on whom
 
@@ -75,9 +107,16 @@ owner's, not mine:
 
 * **Attribute first** — run stages 2 and 3, then decide. Highest confidence, needs the
   hardware in §7 and takes its own time.
-* **Proceed with a declared exposure** — accept that B2Q is 20 records against B1Q's 302
-  frames, i.e. a much shorter exposure, and schedule it under a named stop rule and the
-  standing instrument stop-loss, with the transport question left open and recorded.
+* **Proceed with a declared exposure** — schedule B2Q under a named stop rule and the standing
+  instrument stop-loss, with the transport question left open and recorded.
+
+**The "shorter exposure" rationale this document originally offered for the second option is
+withdrawn.** It compared 20 B2Q *records* against 302 B1Q *frames*, which are different units.
+Production `qualification_session_plan` derives **543 expected frames** for B2Q — 160 AUDIT,
+320 HB, 20 REC, 20 SIGNREQ, 20 AUDIT_READY, IDENT, CLOSE, TERM — against B1Q's 302 transmitted
+frames. On the only unit that was actually compared, B2Q is the **larger** exposure. And that
+number is planning arithmetic, not an observed run: any disposition must compare declared
+frames, bytes and duration, with the applicable controls and retries, in like units.
 
 What must **not** happen either way: if a session is to carry transport instrumentation
 (an exclusive open, or the counters above), that is a **pinned change to the runner**, and the

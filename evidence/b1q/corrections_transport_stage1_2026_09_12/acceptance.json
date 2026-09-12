@@ -1,0 +1,184 @@
+{
+  "cases": {
+    "b2q_exposure_units": {
+      "now": {
+        "b1q_transmitted_frames": 302,
+        "b2q_expected_frames": 543,
+        "note": "planning arithmetic, not an observed run; frames, bytes, duration, controls and retries must be compared in like units before any disposition",
+        "withdrawn": true
+      },
+      "observed_at_4528ef8": {
+        "claimed": "20 B2Q records vs 302 B1Q frames \u2014 'a much shorter exposure'"
+      }
+    },
+    "driver_contract": {
+      "now": {
+        "after_frame_used": true,
+        "host_command_counts": {
+          "AUDITDONE": 11,
+          "AUDITGET": 88,
+          "IDENTACK": 1,
+          "RECACK": 12,
+          "SIGNOK": 12,
+          "TERMACK": 1
+        },
+        "host_writes": 125,
+        "interleaved": [
+          "source stream",
+          "read",
+          "host command",
+          "read",
+          "source stream",
+          "read"
+        ],
+        "reads": 430,
+        "source_writes": 302,
+        "stopped": "stop rule: 302 losses within repetition 0 (>= 3) \u2014 the condition is reproducing the failure"
+      },
+      "observed_at_4528ef8": {
+        "after_frame_used": false,
+        "elapsed_vs_limit": [
+          2.2320000000000007,
+          0.1
+        ],
+        "host_command_counts": {
+          "AUDITABORT": 6,
+          "AUDITDONE": 3,
+          "AUDITGET": 8,
+          "IDENTACK": 2,
+          "RECACK": 3,
+          "RECGET": 2,
+          "SIGNGET": 5,
+          "SIGNOK": 7
+        },
+        "reads": 1,
+        "source_writes": 1,
+        "stopped": "exposure: 1 repetitions completed"
+      }
+    },
+    "error_path": {
+      "now": {
+        "capture_files_readable": true,
+        "captures": 2,
+        "completed_repetitions_on_disk": 1,
+        "counter_samples": 2,
+        "counters_after_available": false,
+        "error": "tool error in repetition 1: OSError: synthetic detach",
+        "exported_to_disk": true,
+        "original_error_preserved": "OSError",
+        "returned_result": true
+      },
+      "observed_at_4528ef8": {
+        "completed_results_in_memory": 1,
+        "counter_samples": 1,
+        "error": "tool error in repetition 1: OSError: synthetic detach",
+        "returned_result": false
+      }
+    },
+    "inserted_newline": {
+      "now": {
+        "bytes_to_next_newline": 1,
+        "losses": 1,
+        "resynchronised_at": {
+          "bytes_after_first_divergence": 2512,
+          "expected_offset": 4549,
+          "received_offset": 4550,
+          "verified_frame_index": 11
+        }
+      },
+      "observed_at_4528ef8": {
+        "bytes_to_resync": 1,
+        "losses": 3
+      }
+    },
+    "one_corrupted_frame_losses": {
+      "now": 1,
+      "observed_at_4528ef8": 2
+    },
+    "short_write": {
+      "now": "REFUSED: tool error in repetition 0: RigError: short: short write, 0 of 1048 bytes accepted",
+      "observed_at_4528ef8": {
+        "clean_result_reported": true
+      }
+    },
+    "silence_denominator": {
+      "now": {
+        "denominator": "unavailable: nothing was received, so there is no denominator",
+        "denominator_bytes": 0,
+        "losses": 302,
+        "losses_per_100k_bytes": null
+      },
+      "observed_at_4528ef8": {
+        "denominator_bytes": 98627,
+        "losses": 302,
+        "losses_per_100k_bytes": 306.2041834386121
+      }
+    },
+    "stale_repetition_replayed": {
+      "now": {
+        "both_streams_equal": false,
+        "results_clean": [
+          true,
+          false
+        ],
+        "second_losses": 302
+      },
+      "observed_at_4528ef8": {
+        "both_writes_equal": true,
+        "results_clean": [
+          true,
+          true
+        ]
+      }
+    },
+    "the_deadline_bounds_the_operations": {
+      "now": {
+        "declared_limit_s": 0.1,
+        "elapsed_s": 0.13,
+        "note": "the deadline is checked around every operation, so the run stops INSIDE the repetition; a scheduled gap already begun still completes, so the bound is the limit plus at most one gap",
+        "source_writes_before_the_stop": 2,
+        "stopped": "exposure: the deadline bounded repetition 0 (deadline reached after 2 of 302 frames)"
+      },
+      "observed_at_4528ef8": {
+        "declared_limit_s": 0.1,
+        "elapsed_s": 2.2320000000000007,
+        "stopped": "exposure: 1 repetitions completed"
+      }
+    },
+    "two_corrupted_frames": {
+      "now": {
+        "losses": 2,
+        "stopped": "exposure: 1 repetitions completed"
+      },
+      "observed_at_4528ef8": {
+        "losses": 4,
+        "stopped": "stop rule: 4 losses within repetition 0 (>= 3) \u2014 the condition is reproducing the failure"
+      }
+    },
+    "valid_crc_over_bytes_we_did_not_send": {
+      "now": {
+        "damaged": [
+          10
+        ],
+        "defects_by_kind": {
+          "altered": 1
+        },
+        "frames_delivered": 301,
+        "losses": 1
+      },
+      "observed_at_4528ef8": {
+        "frames_delivered": 302,
+        "losses": 0
+      }
+    }
+  },
+  "provenance": {
+    "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+    "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+    "instrument_commit": null,
+    "instrument_root": "/home/test/zynq_psoracle",
+    "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+    "tool": "host/transport_rig.py",
+    "tool_sha256": "dd12de66a80770b4ef0f031ce4690b0b1511cb6aecd71ebdaa6ea7278e34f7e5"
+  }
+}

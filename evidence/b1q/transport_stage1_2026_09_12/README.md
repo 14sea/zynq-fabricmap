@@ -1,4 +1,24 @@
-# B1Q transport — stage 1 executed offline, 2026-09-12
+# B1Q transport — the offline acceptance, 2026-09-12
+
+> **Superseded in scope and in three of its claims** by the owner's review of the same day
+> (`docs/b1q_transport_stage1_review_2026_09_12.md`) and the corrections in
+> `../corrections_transport_stage1_2026_09_12/`. Kept as written, with what changed named here:
+>
+> * the heading claimed **stage 1 executed**; the plan's stage 1 also requires a physical
+>   acceptance that has not happened. This is the **software half with an offline acceptance**;
+> * the loss counts, the denominator, the delivery rule and the driver described below were all
+>   defective — five P2s — and are corrected; the artifacts in this directory have been
+>   **regenerated** by the corrected tool, and `run_tx/` and `run_notx/` are new: the acceptance
+>   now runs through the production `Run.execute` for both §3 TX conditions, which the original
+>   `stage1_proof.py` never did;
+> * the "30 tests" below are now **49**.
+>
+> `pty_run.json` is the ORIGINAL run, by the defective tool, retained unchanged as the record of
+> what was claimed; `run_tx/` and `run_notx/` supersede it.
+>
+> The two independent checks against the record — the derived §2 table and the reproduction of
+> the owner's corrected four-events-plus-one-fragment count — are unchanged and still hold.
+
 
 `docs/b1q_transport_plan_2026_09_07.md` §4 **stage 1**: *build the generator/capture tool and
 prove it against a separate traffic source, not the Zynq.* This is that, and only that.

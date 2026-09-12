@@ -1,0 +1,77 @@
+{
+ "bytes_sent": 98599,
+ "captures": [
+  {
+   "bytes": 100140,
+   "capture": "capture_000.bin",
+   "events": "events_000.json",
+   "repetition": 0,
+   "sha256": "e81deb700587d7d45affaf2d03c7164fc894c8615c795748e56f8690419bf8eb"
+  }
+ ],
+ "counters_after": {
+  "available": false,
+  "note": "no counter is reported; absence of a count is not a count of zero",
+  "reason": "OSError: [Errno 25] Inappropriate ioctl for device"
+ },
+ "counters_before": {
+  "available": false,
+  "note": "no counter is reported; absence of a count is not a count of zero",
+  "reason": "OSError: [Errno 25] Inappropriate ioctl for device"
+ },
+ "counters_delta": {
+  "available": false,
+  "reason": "OSError: [Errno 25] Inappropriate ioctl for device"
+ },
+ "denominator": "received bytes",
+ "denominator_bytes": 100140,
+ "error": null,
+ "frames_sent": 302,
+ "label": "pty tx_during_rx=True",
+ "losses": 0,
+ "losses_per_100k_bytes": 0.0,
+ "parameters": {
+  "repetitions": 1,
+  "seconds": 120.0,
+  "stop_at_losses": 3
+ },
+ "provenance": {
+  "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+  "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+  "instrument_commit": null,
+  "instrument_root": "/home/test/zynq_psoracle",
+  "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+  "tool": "host/transport_rig.py",
+  "tool_sha256": "dd12de66a80770b4ef0f031ce4690b0b1511cb6aecd71ebdaa6ea7278e34f7e5"
+ },
+ "repetition_results": [
+  {
+   "bytes_host_echo": 1541,
+   "bytes_received": 100140,
+   "bytes_sent": 98599,
+   "clean": true,
+   "damaged": [],
+   "defects": [],
+   "defects_by_kind": {},
+   "divergence": null,
+   "duplicated": [],
+   "ended": "complete",
+   "frames_delivered": 302,
+   "frames_sent": 302,
+   "host_echo_lines": 125,
+   "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+   "losses": 0,
+   "missing": [],
+   "out_of_order": false,
+   "reads": 427,
+   "repetition": 0,
+   "unexpected_frames": 0
+  }
+ ],
+ "repetitions_run": 1,
+ "run_id": "1e71c1418290415eb8a3d1a51c07a159",
+ "scope": "a rig run under one condition; it attributes nothing, qualifies nothing, and does not authorise a board session (plan \u00a75, \u00a76)",
+ "stopped": "exposure: 1 repetitions completed",
+ "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+ "tx_during_rx": true
+}
