@@ -15,7 +15,7 @@ Written by `host/b2_test_report.py`. A report is a **clean-tree proof** only whe
   skips, OK**, `clean_tree_proof: true` with `proof_refusals: []`. The start and end snapshots
   agree: the same HEAD, both worktrees clean, the instrument at its pinned commit and clean in
   both, the pinned surface verifying in both, and every pinned artifact digest unchanged across
-  the run. **This is the report the package cites.**
+  the run. Superseded by the report below, which was produced under the corrected parser.
 - `test_report_2026-09-12T095607Z.json` — schema **2.0.0**, 1 893 tests, **`FAILED (failures=1)`**,
   `clean_tree_proof: false` with five refusals. Kept deliberately: it is the reporter refusing a
   REAL failing run of the real suite, end to end, which no fixture demonstrates. The failure was
@@ -23,3 +23,8 @@ Written by `host/b2_test_report.py`. A report is a **clean-tree proof** only whe
   right — running a review probe under `evidence/` had left a `__pycache__/*.pyc` there, which
   `.gitignore` excludes, so part of the evidence tree would not have been committed. The stray
   directory was removed; nothing in the tool or the package was at fault.
+- `test_report_2026-09-12T102301Z.json` — schema **2.0.0** under the corrected parser and shape
+  guards, HEAD `2ed95f4`, **1 893 tests, zero skips, OK**, `clean_tree_proof: true` with
+  `proof_refusals: []`, the complete `Ran 1893 tests in …s` summary and a single `OK` as the log's
+  last word, the start and end snapshots agreeing on HEAD, cleanliness, the instrument, the pinned
+  surface and every artifact digest. **This is the report the package cites.**
