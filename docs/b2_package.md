@@ -71,8 +71,8 @@
 > failure at the tool's boundary exits 3. **25 reporter tests, all driving the production verdict
 > — removing any one production condition fails two to four of them**, which the previous eleven
 > did not do. The §7 clean-tree proof stands at
-> `evidence/b2/tests/test_report_2026-09-12T102301Z.json` — **1 893 tests, zero skips, OK**, HEAD
-> `2ed95f4`, `proof_refusals: []`, produced under the corrected parser, with the start and end
+> `evidence/b2/tests/test_report_2026-09-12T134616Z.json` — **1 895 tests, zero skips, OK**, HEAD
+> `619b22b`, `proof_refusals: []`, taken on the pushed tree this package is submitted from, with the start and end
 > snapshots agreeing on HEAD, both worktrees clean, the instrument pinned and clean, the pinned
 > surface verifying and every artifact digest unchanged across the run. The 1.0.0 report and the
 > earlier 2.0.0 one are marked SUPERSEDED, and a genuinely FAILED run is kept beside them as the
