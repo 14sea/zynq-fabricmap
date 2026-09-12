@@ -144,10 +144,30 @@ class RefusalOrder(unittest.TestCase):
             self.assertIn(w, msg)
         return msg
 
-    def test_there_is_no_committed_b2_manifest_yet(self):
-        self.assertFalse(rn.MANIFEST.exists(), "a committed B2 manifest appeared; this test must change")
-        a = types.SimpleNamespace(manifest=rn.MANIFEST)
+    def test_an_absent_manifest_path(self):
+        """Until 2026-09-12 this asserted that no B2 manifest was committed at all. S0 committed
+        one, so the tree can no longer stand in for the absent case: the path is now explicitly a
+        path that does not exist, and the committed manifest gets its own test below."""
+        a = types.SimpleNamespace(manifest=Path(tempfile.gettempdir()) / "no_such_b2_manifest.json")
+        self.assertFalse(Path(a.manifest).exists())
         self.refuses(a, "no B2 manifest at", "does not exist until the image does")
+
+    def test_the_committed_manifest_is_not_permission(self):
+        """The manifest in the tree is S0: derived, not frozen, no board_ready, no ruling. Its
+        existence must move nothing — the runner refuses it at the freeze, the first gate after
+        the board authority."""
+        if not rn.MANIFEST.is_file():
+            self.skipTest("no B2 manifest is committed")
+        m = json.loads(rn.MANIFEST.read_text())
+        self.assertEqual(m.get("schema"), bman.SCHEMA)
+        self.assertIsNone((m.get("prereg") or {}).get("sha256"))
+        self.assertFalse((m.get("prereg") or {}).get("frozen"))
+        self.assertFalse((m.get("image") or {}).get("board_ready"))
+        self.assertFalse(m.get("qualified"))
+        self.assertIsNone(m.get("qualification"))
+        self.assertIsNone(m.get("plan"))
+        a = types.SimpleNamespace(manifest=rn.MANIFEST)
+        self.refuses(a, "preregistration is not frozen")
 
     def test_a_document_that_is_not_a_b2_manifest(self):
         f = Fixture("S0")
