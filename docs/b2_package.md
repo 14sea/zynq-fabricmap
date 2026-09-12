@@ -1,5 +1,14 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
 
+> **Stage-test review (`4f27ffa`): S0→S1 correction accepted; one S3 test P2 remains.**
+> The committed test's B2 arguments still hard-code a four-pair slice. Valid S3
+> plans at 602, 4490.86 and 6000 records/h verify but fail that test before the
+> intended missing-ruling gate. Read a legal slice from the verified pinned plan
+> and cover multiple splits before qualification. S0/S1 acceptance and all eight
+> submitted stage tests pass. See the [review](b2_stage_split_review_2026_09_12.md).
+> No production freeze, push, ruling or board operation was performed; accepted
+> image compatibility is unchanged. Earlier banners below are historical.
+
 > **S0 review (`fa0271e`): manifest verified; S1 readiness HOLD for one P2.**
 > The new committed-manifest test hard-codes S0 fields. An independently verified
 > temporary S1 manifest immediately fails its null-prereg assertion. Move exact S0
