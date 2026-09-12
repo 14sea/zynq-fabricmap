@@ -210,15 +210,14 @@ def bind_ruling(ruling: dict, text: str, session: str, prereg_sha: str, image_sh
 
 
 def verify_pins(manifest: dict, root: Path) -> dict:
-    """`host/b2_pins.py` is tool 4 of the §7 package and does not exist yet. Until it does this
-    is a REFUSAL, not a skip: a board session whose instrument pin table was never checked is
-    exactly the session this runner exists to prevent."""
+    """The instrument pin table: the whole decision surface by hash, plus B1's own table against
+    B1's manifest. A board session whose pin table was never checked is exactly the session this
+    runner exists to prevent, so every failure here is a refusal."""
+    import b2_pins  # noqa: E402
     try:
-        import b2_pins  # noqa: F401
-    except ImportError:
-        raise Refusal("host/b2_pins.py is not written yet: no board contact without the "
-                      "instrument pin table (§7 tool 4)") from None
-    return b2_pins.verify(manifest=manifest, root=root)
+        return b2_pins.verify(manifest=manifest)
+    except b2_pins.PinRefusal as exc:
+        raise Refusal(f"instrument pins: {exc}") from None
 
 
 # ------------------------------------------------------------------ preflight

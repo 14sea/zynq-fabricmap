@@ -36,6 +36,7 @@ R = Path(__file__).resolve().parent.parent
 HOST = R / "host"
 sys.path.insert(0, str(HOST))
 from b2_manifest import QUAL_EVIDENCE_FILES  # noqa: E402
+import b2_pins  # noqa: E402,F401
 GATE = R / "evidence/b2/gate/recomputed_2026_09_10/gate_report.json"
 STUB_PASS = "lambda ev, m_run: json.loads((ev / 'adjudication.json').read_text())"
 ORIGINAL_ADJ = {"outcome": "PASS", "session": "B2Q", "measured_rate_per_hour": 2500.0, "audit_policy": "all-self-reporting"}
@@ -238,10 +239,15 @@ class Lifecycle(unittest.TestCase):
 
     def test_2c_file_only_changes_are_refused_on_a_mirrored_tree(self):
         """Review v02 finding 1: the manifest and the evidence untouched; only files change."""
+        import b2_pins as bpin
         d = self._load()
         mirror = self.tmp / "mirror"
-        rels = list(d["pins"]) + [d["carrier_lineage"]["b1_manifest"]["path"], d["prereg"]["path"], d["map"]["path"]]
-        for rel in rels:
+        # The instrument pin table covers the whole decision surface, so a faithful mirror is
+        # now the pinned code PLUS every file that table lists PLUS the table itself.
+        rels = (list(d["pins"]) + [d["carrier_lineage"]["b1_manifest"]["path"], d["prereg"]["path"],
+                                   d["map"]["path"], d["instrument_pins"]["path"]]
+                + sorted(json.loads((R / d["instrument_pins"]["path"]).read_text())["files"]))
+        for rel in dict.fromkeys(rels):
             dest = mirror / rel
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(R / rel, dest)

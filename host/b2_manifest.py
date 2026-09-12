@@ -73,7 +73,7 @@ import b2_plan as bp  # noqa: E402
 import b2_search as bs  # noqa: E402
 
 SCHEMA = "b2_manifest"
-SCHEMA_VERSION = "0.2.3"          # 0.2.2 -> 0.2.3: the intended BOARD is a frozen input
+SCHEMA_VERSION = "0.2.4"          # 0.2.3 -> 0.2.4: the instrument pin TABLE is a frozen input
 MANIFEST = REPO_ROOT / "manifests/b2_manifest.json"
 B1_MANIFEST = REPO_ROOT / "manifests/b1_manifest.json"
 B2_VARIANT = "0x42310001"
@@ -160,6 +160,15 @@ def carrier_lineage(root: Path = REPO_ROOT, b1_manifest: Path = B1_MANIFEST, b1_
                     "it does not qualify this manifest — the B2 image needs its own B2Q session (S2)"}
 
 
+def instrument_pins_pin(root: Path = REPO_ROOT) -> dict:
+    """The pin of the instrument pin TABLE: its path and its sha256."""
+    rel = "manifests/b2_instrument_pins.json"
+    p = Path(root) / rel
+    if not p.is_file():
+        raise Refusal(f"{rel} is absent: generate it with `python3 host/b2_pins.py --generate`")
+    return {"path": rel, "sha256": sha256_file(p)}
+
+
 def board_from_lineage(b1_manifest: Path = B1_MANIFEST) -> dict:
     """The intended board, from the B1 manifest the lineage pins. `boardid` is the authority the
     rulings are bound to; the rest is recorded so a reviewer can see what was scoped."""
@@ -221,6 +230,10 @@ def init(image_evidence: Path | None, root: Path = REPO_ROOT, b1_manifest: Path 
          "seeds": {"label": bp.SESSION_LABEL, "master_seed": master, "pairs": seeds, "excluded_frozen_sets": sources,
                    "rule": "first 4 bytes of sha256(label|instrument commit); archived seed sets explicitly excluded"},
          "pins": {p: sha256_file(root / p) for p in PINNED_CODE},
+         # The whole decision surface, by table (host/b2_pins.py). `pins` above is the eight
+         # files this manifest's own derivations depend on; the table is everything a verdict
+         # depends on, and is re-verified on every verify().
+         "instrument_pins": instrument_pins_pin(root),
          "qualification": None, "qualified": False, "calibration": None, "plan": None,
          "rulings_binding": {"B2Q": ["session=B2Q", "image_sha256", "prereg_sha256", "b2_manifest_sha256 (manifest_at_run: the S1 manifest)"],
                              "B2": ["session=B2", "master_seed", "image_sha256", "prereg_sha256", "b2_manifest_sha256 (the S3 manifest)"]},
@@ -552,6 +565,11 @@ def _check_frozen_inputs(manifest: dict, root: Path, b1_root: Path) -> dict:
         raise Refusal(f"board: the manifest is scoped to {boardid!r}, the validated lineage names "
                       f"{(m1.get('board') or {}).get('boardid')!r}")
     checks["board"] = boardid
+    import b2_pins  # noqa: E402
+    try:                                                 # the whole decision surface, by table
+        checks["instrument_pins"] = b2_pins.verify(manifest, root=root, b1_root=b1_root)
+    except b2_pins.PinRefusal as exc:
+        raise Refusal(f"instrument pins: {exc}") from None
     try:
         b1q.verify(m1, root=b1_root)
     except b1q.QualificationRefusal as exc:

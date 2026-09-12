@@ -1,4 +1,17 @@
-# B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-11)
+# B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
+
+> **Host tool 4 of 5 written: `host/b2_pins.py`**, the non-self-referential pin table of this
+> package's whole decision surface — **56 files** by glob (the host tools, the firmware sources,
+> the BSP build and linker scripts, the map schema, the architecture, the tests, and **B1's own
+> pin table by content**) — committed as `manifests/b2_instrument_pins.json` and pinned by the
+> manifest under `instrument_pins` (schema **0.2.3 → 0.2.4**). `verify` refuses a table that does
+> not hash to the manifest's pin, a changed or missing pinned file, a short digest, a malformed
+> or unreadable table, a file matching the globs that the table does not list, and **B1's table
+> drifting underneath it** (105 files, re-verified against B1's manifest). `b2_manifest.verify`
+> calls it on every invocation, and the runner's pins hook — which has refused every preflight
+> since the runner was written, deliberately — now verifies instead.
+> **5 pin tests, B2/B3 401, zero skips.** Remaining for §7: `b2_test_report`, a B2 map-utility
+> demonstration, and the package review.
 
 > **Offline positive integration reviewed on 2026-09-12 (`9035b18`).** The B2Q
 > S1 → S2 → S3 → fresh-process verification succeeds with real re-adjudication.

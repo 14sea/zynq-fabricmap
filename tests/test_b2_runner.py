@@ -226,13 +226,19 @@ class RefusalOrder(unittest.TestCase):
         finally:
             f.close()
 
-    def test_the_instrument_pin_table_is_a_refusal_until_its_tool_exists(self):
+    def test_the_instrument_pin_table_is_verified_by_the_real_hook(self):
+        """The hook used to refuse because its tool did not exist; the tool exists now, and a
+        drifted table is still a refusal."""
+        import b2_pins
         f = Fixture("S3")
         try:
-            self.assertFalse((R / "host/b2_pins.py").exists(), "b2_pins.py appeared; this test must change")
+            self.assertEqual(rn.verify_pins(f.manifest, inst.DEFAULT_ROOT)["files_verified"],
+                             b2_pins.generate()["file_count"])
+            f.manifest["instrument_pins"] = {"path": "manifests/b2_instrument_pins.json",
+                                             "sha256": "0" * 64}
             with self.assertRaises(rn.Refusal) as cm:
                 rn.preflight(f.args(), rn.SEARCH, readjudicate=Fixture.stub)   # the REAL pins hook
-            self.assertIn("b2_pins.py is not written yet", str(cm.exception))
+            self.assertIn("instrument pins", str(cm.exception))
         finally:
             f.close()
 
