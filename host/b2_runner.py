@@ -47,23 +47,16 @@ ones the owner intends to sign, change them here — the runner refuses any othe
 two must agree before a board session is possible.
 
 WHAT IS NOT DONE HERE, stated rather than implied:
-  * `host/b2_pins.py` (§7 tool 4) does not exist, so `verify_pins` REFUSES. Every preflight
-    ends there today. That is the intended state, not an oversight.
   * B2Q's plan, prediction and pair seeds are DERIVED here (`qualification_documents`) from the
-    preregistration's §6a constants. They are not pinned in the manifest. If the owner would
-    rather S0 recorded them, they belong in `b2_plan`/`b2_manifest` and this function becomes a
-    reader — a decision worth making before the §7 package.
-  * `b2_session.run` (the reference orchestrator) derives its pair seeds by B2's rule, so it
-    cannot produce a B2Q session under B2Q's own exclusion set. The adjudicator can be given
-    seeds explicitly (`adjudicate(..., seeds=…)`) and is; the reference orchestrator cannot yet,
-    so there is no modelled B2Q session to test the B2Q re-adjudication end to end against.
-  * **The positive path is not demonstrated.** `judge_session` composes the instrument and
-    evidence contract with the record replay, but there is no modelled B2/B2Q session yet (a
-    `b2_modelled_session` in the shape of `b1_modelled_session.py`, writing `run_log.json`,
-    `audits.json` and `timeline.json` through the instrument's real host stack). So: the
-    instrument layer's later branches are exercised only in isolation, `b2_manifest.qualify`
-    has not been shown to ACCEPT a B2Q transition, and this runner has never produced a PASS.
-  * No board session has been run, and none is authorised.
+    preregistration's §6a constants. They are not pinned in the manifest. The owner's standing
+    recommendation is to record them at S0 and bind their bytes at S1, which would make this
+    function a reader — a decision to make before the §7 package is submitted.
+  * The B2 (map-utility) profile has no modelled demonstration yet. B2Q has one
+    (`host/b2_modelled_session.py`), and the whole offline S1 → B2Q → S2 → S3 → fresh-process
+    verification runs from it with this runner's own verdict returning PASS; a B2 slice at
+    budget 600 is thousands of records and belongs in a one-off demonstration.
+  * No board session has been run, and none is authorised. Every fixture and every modelled
+    session is the model standing in for a board: none of it is evidence about silicon.
 """
 from __future__ import annotations
 

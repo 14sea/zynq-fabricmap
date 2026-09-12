@@ -1,5 +1,20 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
 
+> **Host tool 5 of 5 written: `host/b2_test_report.py` — the §7 host package is complete.**
+> It runs the suite from a clean tree and writes `test_report_<UTC>.json` with the counts, the
+> result line, `head_at_run`, the worktree and instrument dirty flags, and the digest of every
+> artifact the package is pinned to. Two things it will not paper over: a report is a
+> **clean-tree PROOF** only when the worktree is clean, nothing was skipped, the suite exited
+> zero with no failures or errors, the instrument is at its pinned commit and clean **and the
+> pinned decision surface verifies** — and the **pin table is re-verified while the report is
+> built**, because a suite that passed against a drifted tree proves nothing about the package.
+> A drift is named in `pins_refusal` and forces `clean_tree_proof` false. Before S0 there is no
+> manifest, so the table is bound to its own bytes and the report says which binding it used.
+> **11 report tests** — each clean-tree condition removed one at a time — **B2/B3 413, zero
+> skips.** The runner's stale remainder text is corrected with it.
+> Remaining for §7: a B2 map-utility demonstration, the owner's standing recommendation to pin
+> B2Q's documents at S0/S1, and the package review itself.
+
 > **Pin-table correction accepted (`23b1dfd`, 2026-09-12): both P2 findings CLOSED.**
 > All twelve omitted inputs are now covered; an independent 24-case change/deletion
 > matrix is refused by pins and fresh-process manifest verification. Malformed pin
@@ -36,8 +51,7 @@
 > its own pinned harness COMPILES AND RUNS (`tb/b2/hostapp/**`) and this repository's BSP inputs
 > (`firmware/b2/bsp/src|include`), and a malformed `instrument_pins` is a named refusal rather
 > than an AttributeError — the owner's two P2s of 2026-09-12.
-> **6 pin tests, B2/B3 402, zero skips.** Remaining for §7: `b2_test_report`, a B2 map-utility
-> demonstration, and the package review.
+> **6 pin tests.** 
 
 > **Offline positive integration reviewed on 2026-09-12 (`9035b18`).** The B2Q
 > S1 → S2 → S3 → fresh-process verification succeeds with real re-adjudication.
