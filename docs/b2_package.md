@@ -1,5 +1,14 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
 
+> **Stage transition correction accepted (`01acb5f`): both test-readiness P2s CLOSED.**
+> Four valid S3 splits pass with slices read from the verified pinned plan; three
+> cases use non-first sessions. Independent StageCoverage: **10 tests, zero skips,
+> OK**; S0/S1 acceptance also passes. Current S0 and 71 B2 / 105 B1 pins verify.
+> The five reviewed commits through `01acb5f` are suitable for Claude to push.
+> See the [acceptance](b2_stage_transition_acceptance_2026_09_12.md). Production S1
+> remains a separate explicitly authorized operation; no freeze, ruling or board
+> access occurred. Image compatibility remains accepted. Earlier banners are historical.
+
 > **Stage-test review (`4f27ffa`): S0→S1 correction accepted; one S3 test P2 remains.**
 > The committed test's B2 arguments still hard-code a four-pair slice. Valid S3
 > plans at 602, 4490.86 and 6000 records/h verify but fail that test before the

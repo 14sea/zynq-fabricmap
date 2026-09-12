@@ -1,0 +1,53 @@
+{
+  "sha256": {
+    "manifests/b2_manifest.json": "86393ed781cb25c971aeb7a4ea3bf485b5aba5a353ef94968b3128050d5b2da1",
+    "manifests/b2_instrument_pins.json": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf",
+    "docs/b2_preregistration.md": "68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0",
+    "firmware/b2/bsp/out/b2_app.bin": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+    "firmware/b2/bsp/out/b2_app.elf": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc"
+  },
+  "verify": {
+    "stage": "S0",
+    "qualified": false,
+    "refusal": null,
+    "checks": {
+      "pins": "ok",
+      "map": "ok",
+      "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+      "board": "17A6",
+      "instrument_pins": {
+        "files_verified": 71,
+        "b1_files_verified": 105,
+        "pins_sha256": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf"
+      },
+      "qualification_plan": "ok (20 records at budget 8)",
+      "lineage": "ok (B1 chain re-verified)",
+      "stage": "S0"
+    },
+    "manifest_sha256": "86393ed781cb25c971aeb7a4ea3bf485b5aba5a353ef94968b3128050d5b2da1"
+  },
+  "state": {
+    "prereg": {
+      "frozen": false,
+      "path": "docs/b2_preregistration.md",
+      "sha256": null
+    },
+    "image": {
+      "board_ready": false,
+      "build_evidence": {
+        "path": "evidence/b2/build_evidence.json",
+        "sha256": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b"
+      },
+      "bytes": 114708,
+      "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc",
+      "note": "no B2 image exists yet; pinned from its build evidence when built; board_ready is the owner's mark at the freeze",
+      "path": "firmware/b2/bsp/out/b2_app.bin",
+      "sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5"
+    },
+    "qualified": false,
+    "qualification": null,
+    "calibration": null,
+    "plan": null,
+    "history": []
+  }
+}
