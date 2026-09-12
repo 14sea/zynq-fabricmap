@@ -1,0 +1,46 @@
+test_a_duplicated_frame (test_transport_rig.ItDetectsAndLocalisesEveryFault.test_a_duplicated_frame) ... ok
+test_a_frame_whose_payload_decodes_to_an_index_never_sent (test_transport_rig.ItDetectsAndLocalisesEveryFault.test_a_frame_whose_payload_decodes_to_an_index_never_sent)
+The same hole, reached the other way: a payload that decodes cleanly but carries an ... ok
+test_a_run_of_bytes_dropped_is_reported_with_its_length (test_transport_rig.ItDetectsAndLocalisesEveryFault.test_a_run_of_bytes_dropped_is_reported_with_its_length) ... ok
+test_a_truncated_stream (test_transport_rig.ItDetectsAndLocalisesEveryFault.test_a_truncated_stream) ... ok
+test_a_valid_frame_that_is_not_the_rigs (test_transport_rig.ItDetectsAndLocalisesEveryFault.test_a_valid_frame_that_is_not_the_rigs)
+A line whose CRC is perfectly good but whose payload the rig never sent. Without the ... ok
+test_a_whole_frame_removed (test_transport_rig.ItDetectsAndLocalisesEveryFault.test_a_whole_frame_removed)
+Byte-level localisation lands on the first DIFFERING byte, which for a clean excision ... ok
+test_line_noise_that_is_not_a_frame (test_transport_rig.ItDetectsAndLocalisesEveryFault.test_line_noise_that_is_not_a_frame) ... ok
+test_one_bit_flipped_in_the_shortest_frame (test_transport_rig.ItDetectsAndLocalisesEveryFault.test_one_bit_flipped_in_the_shortest_frame) ... ok
+test_one_byte_dropped_inside_the_longest_frame (test_transport_rig.ItDetectsAndLocalisesEveryFault.test_one_byte_dropped_inside_the_longest_frame) ... ok
+test_silence (test_transport_rig.ItDetectsAndLocalisesEveryFault.test_silence) ... ok
+test_two_frames_swapped (test_transport_rig.ItDetectsAndLocalisesEveryFault.test_two_frames_swapped) ... ok
+test_a_clean_pty_round_trip (test_transport_rig.OverAPtyPair.test_a_clean_pty_round_trip) ... ok
+test_a_drop_injected_after_the_pty_is_still_localised (test_transport_rig.OverAPtyPair.test_a_drop_injected_after_the_pty_is_still_localised)
+The same round trip, with one byte removed from what came back: the tool must not ... ok
+test_a_delta_of_available_counters_is_the_difference (test_transport_rig.TheCountersNoSessionHad.test_a_delta_of_available_counters_is_the_difference) ... ok
+test_a_delta_of_unavailable_counters_is_unavailable (test_transport_rig.TheCountersNoSessionHad.test_a_delta_of_unavailable_counters_is_unavailable) ... ok
+test_a_pty_has_no_uart_counters_and_says_so (test_transport_rig.TheCountersNoSessionHad.test_a_pty_has_no_uart_counters_and_says_so)
+The point of the field: unavailable is recorded as unavailable WITH its reason and ... ok
+test_a_clean_run_completes_its_exposure (test_transport_rig.TheExposureAndStopRules.test_a_clean_run_completes_its_exposure) ... ok
+test_a_tool_error_stops_the_run (test_transport_rig.TheExposureAndStopRules.test_a_tool_error_stops_the_run) ... ok
+test_the_time_bound_ends_a_run (test_transport_rig.TheExposureAndStopRules.test_the_time_bound_ends_a_run) ... ok
+test_three_losses_in_one_repetition_stop_the_run (test_transport_rig.TheExposureAndStopRules.test_three_losses_in_one_repetition_stop_the_run) ... ok
+test_host_sends_exist_and_carry_the_measured_gap (test_transport_rig.TheGeneratedStream.test_host_sends_exist_and_carry_the_measured_gap) ... ok
+test_it_is_the_measured_shape (test_transport_rig.TheGeneratedStream.test_it_is_the_measured_shape)
+One repetition is one session's worth of traffic: 302 frames, every class present, ... ok
+test_the_bytes_are_known_in_advance_and_deterministic (test_transport_rig.TheGeneratedStream.test_the_bytes_are_known_in_advance_and_deterministic) ... ok
+test_the_frames_are_real_rel_v4 (test_transport_rig.TheGeneratedStream.test_the_frames_are_real_rel_v4)
+Built by the instrument's own `l5_notary`, so the parser under test is the real one ... ok
+test_an_untouched_stream_is_clean (test_transport_rig.ThePositiveControl.test_an_untouched_stream_is_clean) ... ok
+test_it_reproduces_the_owners_corrected_non_control_count (test_transport_rig.TheProfileIsDerivedFromTheSessions.test_it_reproduces_the_owners_corrected_non_control_count)
+The transport review of 2026-09-07 corrected the diagnosis to **four** non-control CRC ... ok
+test_the_forced_controls_are_the_same_two_frames_in_every_complete_session (test_transport_rig.TheProfileIsDerivedFromTheSessions.test_the_forced_controls_are_the_same_two_frames_in_every_complete_session)
+Why the rig transmits no controls: in all three complete sessions the damaged frames ... ok
+test_the_frozen_profile_is_what_the_clean_session_transmitted (test_transport_rig.TheProfileIsDerivedFromTheSessions.test_the_frozen_profile_is_what_the_clean_session_transmitted) ... ok
+test_the_lost_sessions_show_more_than_their_controls (test_transport_rig.TheProfileIsDerivedFromTheSessions.test_the_lost_sessions_show_more_than_their_controls)
+Session 3 — the one the stop-loss is about — carries damage beyond the two controls, ... ok
+test_the_two_forced_controls_are_the_only_damaged_frames_there (test_transport_rig.TheProfileIsDerivedFromTheSessions.test_the_two_forced_controls_are_the_only_damaged_frames_there)
+The clean session's two CRC failures are the session's own forced controls, which is ... ok
+
+----------------------------------------------------------------------
+Ran 30 tests in 0.537s
+
+OK
