@@ -56,3 +56,26 @@ verdict logic this review found insufficient. Its artifact digests were independ
 against `50021e2` and its 1 869-test run is not in question, but **its `clean_tree_proof: true`
 was computed by the old logic** and is superseded by the report written under 2.0.0. Evidence is
 not rewritten; it is superseded, and `evidence/b2/tests/README.md` says so.
+
+## The review's own probe, re-run
+
+`review_probe_after.json` is `probe_report.py`'s own output on the corrected tool. **All eight of
+its log fixtures now give `clean_tree_proof: false`** — including its valid four-test summary,
+because that is a `--no-run` report and a reconstructed report is never a proof — and both of its
+I/O cases exit **3**. Its ordering probe reports `proof: false` as well.
+
+Two limits of that re-run, stated rather than glossed:
+
+* its ordering probe doubles `run_suite` entirely, which is where the start snapshot now lives, so
+  it observes `git_reads_before_suite: 0` by construction. What it establishes is that a run this
+  tool did not observe is not a proof. The dirty-start/clean-finish semantics it was written to
+  expose are covered by `TheRunState.test_a_dirty_start_and_a_clean_finish`, which drives the
+  production verdict directly.
+* it stops at its final step, which patches the OLD module's source text to demonstrate the
+  test-coverage gap; that anchor does not exist in the rewritten module. The gap itself is
+  measured above by deleting production conditions.
+
+The probe also handed `build` a `(exit_status, log)` tuple through its `run_suite` double, which
+raised `AttributeError` — the same type-before-use rule again, in this tool's own inputs. `build`
+is now total over a wrong-shaped run record: a tuple, a string, `None` or anything else yields a
+named, never-a-proof report carrying the shape it was given.

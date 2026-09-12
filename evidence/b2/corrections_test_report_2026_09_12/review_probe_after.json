@@ -1,0 +1,137 @@
+{
+ "reviewed_head": "c676f92e609c14da360aeb01c8df4cbdcfa9b829",
+ "initial_dirty": "",
+ "logs": {
+  "valid_unittest_summary": {
+   "cli_rc": 0,
+   "clean_tree_proof": false,
+   "ran": 4,
+   "result_line": "OK",
+   "skipped": 0,
+   "failures": 0,
+   "errors": 0,
+   "scope": "whole suite",
+   "head_at_run": null,
+   "worktree_dirty": null
+  },
+  "missing_result": {
+   "cli_rc": 0,
+   "clean_tree_proof": false,
+   "ran": 1869,
+   "result_line": null,
+   "skipped": null,
+   "failures": null,
+   "errors": null,
+   "scope": "whole suite",
+   "head_at_run": null,
+   "worktree_dirty": null
+  },
+  "bare_failed": {
+   "cli_rc": 0,
+   "clean_tree_proof": false,
+   "ran": 1869,
+   "result_line": "FAILED",
+   "skipped": null,
+   "failures": null,
+   "errors": null,
+   "scope": "whole suite",
+   "head_at_run": null,
+   "worktree_dirty": null
+  },
+  "zero_tests": {
+   "cli_rc": 0,
+   "clean_tree_proof": false,
+   "ran": 0,
+   "result_line": "OK",
+   "skipped": 0,
+   "failures": 0,
+   "errors": 0,
+   "scope": "whole suite",
+   "head_at_run": null,
+   "worktree_dirty": null
+  },
+  "truncated_count": {
+   "cli_rc": 0,
+   "clean_tree_proof": false,
+   "ran": null,
+   "result_line": null,
+   "skipped": null,
+   "failures": null,
+   "errors": null,
+   "scope": "whole suite",
+   "head_at_run": null,
+   "worktree_dirty": null
+  },
+  "malformed_skips": {
+   "cli_rc": 0,
+   "clean_tree_proof": false,
+   "ran": 1869,
+   "result_line": "OK (skipped=unknown)",
+   "skipped": null,
+   "failures": null,
+   "errors": null,
+   "scope": "whole suite",
+   "head_at_run": null,
+   "worktree_dirty": null
+  },
+  "unparseable": {
+   "cli_rc": 0,
+   "clean_tree_proof": false,
+   "ran": null,
+   "result_line": null,
+   "skipped": null,
+   "failures": null,
+   "errors": null,
+   "scope": "whole suite",
+   "head_at_run": null,
+   "worktree_dirty": null
+  },
+  "real_failure": {
+   "cli_rc": 1,
+   "clean_tree_proof": false,
+   "ran": 4,
+   "result_line": "FAILED (failures=1)",
+   "skipped": 0,
+   "failures": 1,
+   "errors": 0,
+   "scope": "whole suite",
+   "head_at_run": null,
+   "worktree_dirty": null
+  }
+ },
+ "actual_empty_discovery": {
+  "returncode": 5,
+  "log": "\n----------------------------------------------------------------------\nRan 0 tests in 0.000s\n\nNO TESTS RAN\n"
+ },
+ "imported_log_has_no_provenance": {
+  "cli_rc": 0,
+  "clean_tree_proof": false,
+  "ran": 4,
+  "result_line": "OK",
+  "skipped": 0,
+  "failures": 0,
+  "errors": 0,
+  "scope": "whole suite",
+  "head_at_run": null,
+  "worktree_dirty": null
+ },
+ "io_failures": {
+  "out_dir_is_a_file": {
+   "returncode": 3,
+   "stderr": "EXIT 3: the output directory could not be created: [Errno 17] File exists: '/tmp/b2_report_review_5r_bvbrz/regular_file'\n"
+  },
+  "missing_log": {
+   "returncode": 3,
+   "stderr": "EXIT 3: the log could not be read: [Errno 2] No such file or directory: '/tmp/b2_report_review_5r_bvbrz/not-present.log'\n"
+  }
+ },
+ "normal_run_order": {
+  "initial_simulated_dirty": true,
+  "git_reads_before_suite": 0,
+  "git_reads": [],
+  "cli_rc": 0,
+  "clean_tree_proof": false,
+  "head_at_run": null
+ },
+ "stopped_at": "the source-mutation step: its anchor is not in the rewritten module"
+}
