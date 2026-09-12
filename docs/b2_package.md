@@ -46,11 +46,13 @@
 > names every condition that did not hold. A `--no-run` report is never a proof, and every I/O
 > failure at the tool's boundary exits 3. **25 reporter tests, all driving the production verdict
 > — removing any one production condition fails two to four of them**, which the previous eleven
-> did not do. The §7 clean-tree proof is re-established under 2.0.0:
-> `evidence/b2/tests/test_report_2026-09-12T092150Z.json` — **1 884 tests, zero skips, OK**, HEAD
-> `12857ae`, `proof_refusals: []`, with the start and end snapshots agreeing on HEAD, both
-> worktrees clean, the instrument pinned and clean, the pinned surface verifying and every
-> artifact digest unchanged across the run. The 1.0.0 report is marked SUPERSEDED. See
+> did not do. The §7 clean-tree proof stands at
+> `evidence/b2/tests/test_report_2026-09-12T102301Z.json` — **1 893 tests, zero skips, OK**, HEAD
+> `2ed95f4`, `proof_refusals: []`, produced under the corrected parser, with the start and end
+> snapshots agreeing on HEAD, both worktrees clean, the instrument pinned and clean, the pinned
+> surface verifying and every artifact digest unchanged across the run. The 1.0.0 report and the
+> earlier 2.0.0 one are marked SUPERSEDED, and a genuinely FAILED run is kept beside them as the
+> refusal path on the real suite. See
 > [`evidence/b2/corrections_test_report_2026_09_12/`](../evidence/b2/corrections_test_report_2026_09_12/).
 
 > **Host tool 5 of 5 written: `host/b2_test_report.py` — the §7 host package is complete.**
