@@ -1,5 +1,13 @@
 # S0 — the B2 manifest, derived from the tree and committed (2026-09-12)
 
+> **The digests below are superseded.** The owner's S0 transition review found a P2 in the test
+> this record describes under "One test had to change"; correcting it changed a pinned test, so
+> the table and the manifest were regenerated. The manifest is still the same unfrozen S0 — the
+> stage, the state fields, the image and the preregistration are unchanged — but its digest is now
+> `848f56528b129939d4d6bfd8d016e455789d958af180033ed668de811a62d140` and the table's is
+> `50cb6f5a1d141d18bd011938355f6f900e25dcb40c1e8f2a2aa2e647c8793116`. See
+> `../corrections_s0_transition_2026_09_12/`. This record is kept as written.
+
 The owner authorised **S0 only**: derive the manifest, verify it, commit locally, do not push.
 **Not in this step: S1 freeze, any ruling, any board work.** The owner's instruction also fixed
 what S0 must *not* do — it does not pin the preregistration's digest.

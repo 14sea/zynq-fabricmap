@@ -14,14 +14,17 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import io
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
 import types
 import unittest
 from pathlib import Path
+from unittest import mock
 
 R = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(R / "host"))
@@ -132,6 +135,114 @@ def stub_pins(manifest, root):
     return {"stub": True}
 
 
+# ------------------------------------------------------- the lifecycle's legal stages
+
+#: The append-only log each stage must carry: the transitions actually taken, in order.
+STAGE_TRANSITIONS = {"S0": (), "S1": ("S1 freeze",), "S2": ("S1 freeze", "S2 qualify"),
+                     "S3": ("S1 freeze", "S2 qualify", "S3 plan")}
+
+#: The gate that refuses each (stage, session) combination. Where the stage itself is the gate the
+#: reason is the stage's; at the stage a profile is ELIGIBLE for, the gate is the ruling — which is
+#: the whole point: a committed, frozen, even qualified manifest is not by itself a ruling.
+STAGE_GATE = {"S0": {"B2": "preregistration is not frozen", "B2Q": "preregistration is not frozen"},
+              "S1": {"B2": "not qualified", "B2Q": "no readable ruling at"},
+              "S2": {"B2": "pins no plan", "B2Q": "already qualified"},
+              "S3": {"B2": "no readable ruling at", "B2Q": "already qualified"}}
+
+
+def stage_findings(m: dict, stage: str, root: Path = R) -> list[str]:
+    """What a manifest must look like AT the stage it is at — every stage, not one of them.
+
+    The owner's S0 transition review of 2026-09-12 (`docs/b2_s0_transition_review_2026_09_12.md`):
+    the test that read the COMMITTED manifest hard-coded S0's values, so a valid S1 freeze — one
+    production `verify` accepts — failed it. That would have made the promised post-freeze green
+    suite impossible, and its qualified / plan assertions would have collided with S2 and S3 too.
+    The exact S0 values are still asserted exactly, on an S0 FIXTURE, where they are the
+    initialisation contract; the committed manifest is held to THIS table, at whatever stage it
+    has legally reached.
+
+    Not a second copy of `b2_manifest.verify`: verify re-derives the frozen inputs from live bytes
+    and re-adjudicates the qualification. This says which fields each stage licenses to be set,
+    what `status` and `history` must then say, and that a frozen preregistration is the file on
+    disk — the consistency between a manifest's stage and its own fields.
+    """
+    if stage not in STAGE_TRANSITIONS:
+        return [f"{stage!r} is not a lifecycle stage"]
+    f: list[str] = []
+    frozen, qualified = stage != "S0", stage in ("S2", "S3")
+    prereg, image = m.get("prereg") or {}, m.get("image") or {}
+    # every stage: a b2_manifest, scoped to a board, pinning an image, its table and B2Q's experiment
+    if m.get("schema") != bman.SCHEMA:
+        f.append(f"schema {m.get('schema')!r} is not {bman.SCHEMA!r}")
+    if not str(m.get("status", "")).startswith(stage):
+        f.append(f"{stage}: status {str(m.get('status'))[:24]!r}… does not begin with {stage}")
+    for key in ("board", "carrier_lineage", "instrument_pins", "qualification_plan"):
+        if not isinstance(m.get(key), dict):
+            f.append(f"{stage}: {key} is not pinned")
+    if not image.get("sha256"):
+        f.append(f"{stage}: no image is pinned")
+    # the freeze — S1 and after. Before it, the preregistration is deliberately unpinned.
+    if frozen:
+        digest = prereg.get("sha256")
+        if not (isinstance(digest, str) and re.fullmatch(r"[0-9a-f]{64}", digest)):
+            f.append(f"{stage}: the frozen prereg digest {digest!r} is not a sha256")
+        elif (root / prereg.get("path", "")).is_file() and sha(root / prereg["path"]) != digest:
+            f.append(f"{stage}: the preregistration on disk does not hash to the frozen digest")
+        if prereg.get("frozen") is not True:
+            f.append(f"{stage}: prereg.frozen is {prereg.get('frozen')!r}, not True")
+        if image.get("board_ready") is not True:
+            f.append(f"{stage}: image.board_ready is {image.get('board_ready')!r}, not True")
+    else:
+        if prereg.get("sha256") is not None:
+            f.append(f"S0: a prereg digest {str(prereg.get('sha256'))[:12]}… before the freeze")
+        if prereg.get("frozen") is not False:
+            f.append(f"S0: prereg.frozen is {prereg.get('frozen')!r}, not False")
+        if image.get("board_ready") is not False:
+            f.append(f"S0: image.board_ready is {image.get('board_ready')!r}, not False")
+    # the qualification — S2 and after
+    for key in ("qualification", "calibration"):
+        got = m.get(key)
+        if qualified and not isinstance(got, dict):
+            f.append(f"{stage}: {key} is {got!r}, not a record")
+        if not qualified and got is not None:
+            f.append(f"{stage}: {key} is set before S2")
+    if bool(m.get("qualified")) is not qualified:
+        f.append(f"{stage}: qualified is {m.get('qualified')!r}")
+    # the plan — S3 only
+    if stage == "S3" and not isinstance(m.get("plan"), dict):
+        f.append(f"S3: plan is {m.get('plan')!r}, not a pinned plan")
+    if stage != "S3" and m.get("plan") is not None:
+        f.append(f"{stage}: a plan before S3")
+    # the transitions actually taken, in order
+    got = [h.get("transition") for h in (m.get("history") or []) if isinstance(h, dict)]
+    if tuple(got) != STAGE_TRANSITIONS[stage]:
+        f.append(f"{stage}: history records {got}, not {list(STAGE_TRANSITIONS[stage])}")
+    return f
+
+
+def committed_readjudicator(manifest: dict):
+    """The re-adjudicator the committed-manifest test judges a QUALIFIED manifest through: the
+    runner's production hook over the real instrument, never a stored verdict. `StageCoverage`
+    replaces it with the lifecycle's stub for its fixtures, because a fixture's B2Q evidence is a
+    stub log the real adjudicator must refuse — which is exactly what
+    `test_the_real_readjudicator_refuses_a_qualification_it_cannot_reproduce` establishes, and
+    that test stays."""
+    return rn.readjudicator(manifest, inst.DEFAULT_ROOT)
+
+
+def committed_args(manifest_path: Path, profile: dict, d: Path) -> types.SimpleNamespace:
+    """The runner's arguments for the COMMITTED manifest with NO ruling to consume: the pinned
+    image and the real instrument root, the two rulings deliberately absent."""
+    qual = profile is rn.QUALIFICATION
+    return types.SimpleNamespace(
+        ruling=d / "absent_ruling.json", provision_ruling=d / "absent_provisioning.json",
+        boundary=d / "boundary.json", out=d / "out", manifest=manifest_path,
+        instrument_root=inst.DEFAULT_ROOT, image=IMAGE,
+        pair_first=None if qual else 0, pair_count=None if qual else 4,
+        qual_rate_per_hour=None, key=Path("/var/lib/p3signer/keys/K.bin"),
+        signer_user="p3signer", port="/dev/null")
+
+
 @unittest.skipUnless(HAVE, "the built B2 image or its build evidence is absent")
 class RefusalOrder(unittest.TestCase):
     """Each check, reached in the documented order, refuses for its own named reason."""
@@ -152,22 +263,62 @@ class RefusalOrder(unittest.TestCase):
         self.assertFalse(Path(a.manifest).exists())
         self.refuses(a, "no B2 manifest at", "does not exist until the image does")
 
-    def test_the_committed_manifest_is_not_permission(self):
-        """The manifest in the tree is S0: derived, not frozen, no board_ready, no ruling. Its
-        existence must move nothing — the runner refuses it at the freeze, the first gate after
-        the board authority."""
+    def test_an_s0_fixture_is_exactly_the_initialisation_contract(self):
+        """The EXACT S0 values, on a manifest this test makes with the production initialiser —
+        not on whatever the tree happens to carry. That is the correction the owner's S0
+        transition review asked for: here the values cannot go stale, because S0 is what this
+        fixture IS; on the committed manifest they would expire at the owner's freeze."""
+        f = Fixture("S0")
+        try:
+            m = f.manifest
+            self.assertEqual(m["schema"], bman.SCHEMA)
+            self.assertTrue(m["status"].startswith("S0 INIT"), m["status"])
+            self.assertIsNone(m["prereg"]["sha256"])
+            self.assertIs(m["prereg"]["frozen"], False)
+            self.assertIs(m["image"]["board_ready"], False)
+            self.assertIs(m["qualified"], False)
+            self.assertIsNone(m["qualification"])
+            self.assertIsNone(m["calibration"])
+            self.assertIsNone(m["plan"])
+            self.assertEqual(m["history"], [])
+            self.assertEqual(stage_findings(m, "S0", root=R), [])
+            for profile in (rn.SEARCH, rn.QUALIFICATION):     # neither profile runs on an S0
+                self.refuses(committed_args(f.path(), profile, f.d),
+                             "preregistration is not frozen", profile=profile)
+        finally:
+            f.close()
+
+    def test_the_committed_manifest_is_a_legal_stage_and_is_not_permission(self):
+        """The manifest in the tree, at WHATEVER stage it has legally reached — S0 today, S1 after
+        the owner's freeze, S2 and S3 after B2Q. Two claims, neither of which names a stage:
+
+          * production `verify` accepts it, and its own fields are consistent with the stage
+            verify reports (`stage_findings`);
+          * its existence is not permission — with no ruling to consume, the runner refuses it.
+            WHICH gate refuses depends on the stage (`STAGE_GATE`); THAT one does, does not.
+
+        Replaces a test that hard-coded S0 and so could not survive the freeze it was meant to
+        precede (the owner's review of 2026-09-12). `StageCoverage` below drives this same test
+        against S0, S1, S2 and S3 manifests, and against illegal ones it must reject.
+        """
         if not rn.MANIFEST.is_file():
             self.skipTest("no B2 manifest is committed")
         m = json.loads(rn.MANIFEST.read_text())
         self.assertEqual(m.get("schema"), bman.SCHEMA)
-        self.assertIsNone((m.get("prereg") or {}).get("sha256"))
-        self.assertFalse((m.get("prereg") or {}).get("frozen"))
-        self.assertFalse((m.get("image") or {}).get("board_ready"))
-        self.assertFalse(m.get("qualified"))
-        self.assertIsNone(m.get("qualification"))
-        self.assertIsNone(m.get("plan"))
-        a = types.SimpleNamespace(manifest=rn.MANIFEST)
-        self.refuses(a, "preregistration is not frozen")
+        result = bman.verify(m, readjudicate=committed_readjudicator(m))
+        self.assertIsNone(result["refusal"], f"the committed manifest does not verify: {result['refusal']}")
+        stage = result["stage"]
+        self.assertIn(stage, STAGE_TRANSITIONS)
+        self.assertEqual(stage_findings(m, stage, root=R), [],
+                         f"the committed manifest verifies at {stage} but its own fields disagree")
+        self.assertIs(result["qualified"], stage in ("S2", "S3"))
+        d = Path(tempfile.mkdtemp(prefix="b2committed_"))
+        try:
+            for profile in (rn.SEARCH, rn.QUALIFICATION):
+                msg = self.refuses(committed_args(rn.MANIFEST, profile, d), profile=profile)
+                self.assertIn(STAGE_GATE[stage][profile["session"]], msg)
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
 
     def test_a_document_that_is_not_a_b2_manifest(self):
         f = Fixture("S0")
@@ -377,6 +528,97 @@ class RefusalOrder(unittest.TestCase):
             self.refuses(f.args(), "was consumed")
         finally:
             f.close()
+
+
+@unittest.skipUnless(HAVE, "the built B2 image or its build evidence is absent")
+class StageCoverage(unittest.TestCase):
+    """The owner's S0 transition review, inverted into a permanent guard.
+
+    That review redirected `rn.MANIFEST` at a temporary S1 manifest and re-ran the
+    committed-manifest test UNCHANGED, showing it could not survive a legal freeze. This does the
+    same at S0, S1, S2 and S3 and requires it to PASS — so the manifest the owner freezes, and the
+    one B2Q qualifies after it, keep the suite green — and then, so that passing means something,
+    at four ILLEGAL manifests, requiring it to fail for each one's own named reason.
+
+    It drives the real test function against a real manifest file, which is the only way this
+    regression is visible: a fixture of its own would not have caught the hard-coded stage.
+    """
+
+    TEST = "test_the_committed_manifest_is_a_legal_stage_and_is_not_permission"
+
+    def drive(self, manifest_path: Path) -> unittest.TestResult:
+        """Run the committed-manifest test against `manifest_path`. Two seams, both named: the
+        manifest the test reads, and the re-adjudicator (a fixture's B2Q evidence is a stub log
+        that the REAL adjudicator must refuse — `test_the_real_readjudicator_...` says so)."""
+        with mock.patch.object(rn, "MANIFEST", manifest_path), \
+                mock.patch.object(sys.modules[__name__], "committed_readjudicator",
+                                  lambda manifest: Fixture.stub):
+            suite = unittest.TestSuite([RefusalOrder(self.TEST)])
+            return unittest.TextTestRunner(stream=io.StringIO(), verbosity=0).run(suite)
+
+    def accepts(self, stage: str, mutate=None) -> None:
+        f = Fixture(stage)
+        try:
+            if mutate:
+                mutate(f.manifest)
+            result = self.drive(f.path())
+            self.assertEqual((len(result.failures), len(result.errors), len(result.skipped)), (0, 0, 0),
+                             f"{stage}: " + "".join(t for _, t in result.failures + result.errors)[:2000])
+            self.assertEqual(result.testsRun, 1)
+        finally:
+            f.close()
+
+    def rejects(self, stage: str, mutate, *words: str) -> None:
+        f = Fixture(stage)
+        try:
+            mutate(f.manifest)
+            result = self.drive(f.path())
+            self.assertEqual(len(result.failures) + len(result.errors), 1,
+                             f"{stage}: an illegal manifest was accepted")
+            text = "".join(t for _, t in result.failures + result.errors)
+            for w in words:
+                self.assertIn(w, text)
+        finally:
+            f.close()
+
+    # ------------------------------------------------------------------ it survives every stage
+    def test_it_passes_at_s0(self):
+        self.accepts("S0")
+
+    def test_it_passes_at_a_valid_s1(self):
+        """The transition the owner is about to make, and the one the old test could not survive."""
+        self.accepts("S1")
+
+    def test_it_passes_at_a_modelled_s2_and_s3(self):
+        for stage in ("S2", "S3"):
+            with self.subTest(stage=stage):
+                self.accepts(stage)
+
+    # ------------------------------------------------------------------ and still discriminates
+    def test_an_s0_that_claims_board_ready(self):
+        """`verify` does not read board_ready at S0; the stage contract does."""
+        self.rejects("S0", lambda m: m["image"].update(board_ready=True), "board_ready is True")
+
+    def test_an_s1_whose_history_records_no_freeze(self):
+        """The freeze happened or it did not: an emptied log is not a manifest that was never
+        frozen. `verify` does not read history at all."""
+        self.rejects("S1", lambda m: m.update(history=[]), "history records []")
+
+    def test_a_stage_wearing_another_stages_status(self):
+        self.rejects("S2", lambda m: m.update(status="S1 FROZEN — not what this manifest is"),
+                     "does not begin with S2")
+
+    def test_a_plan_dropped_but_still_logged(self):
+        """Dropping the plan makes `verify` report S2, which on its own fields would be legal —
+        the history is what says a plan was pinned and is now missing."""
+        self.rejects("S3", lambda m: m.update(plan=None), "history records", "S3 plan")
+
+    def test_a_freeze_without_a_digest_is_refused_by_verify_itself(self):
+        """Not every illegal state is this table's to catch: production `verify` reaches a frozen
+        manifest's preregistration before any stage question and refuses there, and the test
+        carries that refusal instead of swallowing it."""
+        self.rejects("S1", lambda m: m["prereg"].update(sha256=None),
+                     "b2_manifest.Refusal", "the frozen preregistration file is absent or changed")
 
 
 @unittest.skipUnless(HAVE, "the built B2 image or its build evidence is absent")

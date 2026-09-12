@@ -1,0 +1,61 @@
+{
+  "manifest_sha256": "848f56528b129939d4d6bfd8d016e455789d958af180033ed668de811a62d140",
+  "prereg_sha256": "68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0",
+  "production_manifest_unchanged": true,
+  "s0_test": {
+    "errors": 0,
+    "failures": 0,
+    "output": ".\n----------------------------------------------------------------------\nRan 1 test in 0.302s\n\nOK\n",
+    "ran": 1,
+    "skipped": 0
+  },
+  "s0_verify": {
+    "checks": {
+      "board": "17A6",
+      "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+      "instrument_pins": {
+        "b1_files_verified": 105,
+        "files_verified": 71,
+        "pins_sha256": "50cb6f5a1d141d18bd011938355f6f900e25dcb40c1e8f2a2aa2e647c8793116"
+      },
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "qualification_plan": "ok (20 records at budget 8)",
+      "stage": "S0"
+    },
+    "manifest_sha256": "848f56528b129939d4d6bfd8d016e455789d958af180033ed668de811a62d140",
+    "qualified": false,
+    "refusal": null,
+    "stage": "S0"
+  },
+  "s1_preview_test": {
+    "errors": 0,
+    "failures": 0,
+    "output": ".\n----------------------------------------------------------------------\nRan 1 test in 1.216s\n\nOK\n",
+    "ran": 1,
+    "skipped": 0
+  },
+  "s1_preview_verify": {
+    "checks": {
+      "board": "17A6",
+      "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+      "instrument_pins": {
+        "b1_files_verified": 105,
+        "files_verified": 71,
+        "pins_sha256": "50cb6f5a1d141d18bd011938355f6f900e25dcb40c1e8f2a2aa2e647c8793116"
+      },
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "qualification_plan": "ok (20 records at budget 8)",
+      "stage": "S1"
+    },
+    "manifest_sha256": "eb820e9fea065fb5b5e57952c3e7360885bdf0362833e7b11503ae260200b4f0",
+    "qualified": false,
+    "refusal": null,
+    "stage": "S1"
+  },
+  "the_hard_coded_test_is_gone": true
+}
