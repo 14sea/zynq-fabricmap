@@ -213,12 +213,21 @@ def proof_refusals(rep: dict) -> list[str]:
 
 
 def build(run: dict, focused: bool = False) -> dict:
-    log = parse_log(run.get("log", ""))
+    # Type before use: a `run` of the wrong shape is a named, never-a-proof report, not an
+    # AttributeError. (A two-tuple is the pre-2.0.0 `(exit_status, log)` pair: it carries no
+    # snapshots, so it can describe a run but never establish one.)
+    if isinstance(run, tuple) and len(run) == 2:
+        run = {"executed": False, "argv": None, "exit_status": run[0], "log": run[1],
+               "start": None, "end": None, "shape": "a pre-2.0.0 (exit_status, log) pair"}
+    elif not isinstance(run, dict):
+        run = {"executed": False, "argv": None, "exit_status": None, "log": "",
+               "start": None, "end": None, "shape": f"{type(run).__name__}, not a run record"}
+    log = parse_log(run.get("log") if isinstance(run.get("log"), str) else "")
     start = run.get("start") if isinstance(run.get("start"), dict) else {}
     rep = {"schema": SCHEMA, "schema_version": SCHEMA_VERSION, "package": "B2 v0.3",
            "at": time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime()),
            "scope": "focused (test_b[23]*)" if focused else "whole suite",
-           "run": {k: run.get(k) for k in ("executed", "argv", "exit_status", "start", "end")},
+           "run": {k: run.get(k) for k in ("executed", "argv", "exit_status", "start", "end", "shape")},
            "log": log, "log_sha256": hashlib.sha256(run.get("log", "").encode()).hexdigest(),
            "exit_status": run.get("exit_status"), "ran": log["ran"], "result_line": log["result_line"],
            "skipped": log["skipped"], "failures": log["failures"], "errors": log["errors"],

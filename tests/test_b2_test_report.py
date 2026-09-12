@@ -149,6 +149,19 @@ class TheRunState(unittest.TestCase):
     def test_a_run_with_no_snapshots_at_all(self):
         self._refused(lambda r: r.update(start=None, end=None), "no start and end snapshots")
 
+    def test_a_run_record_of_the_wrong_shape_is_named_not_raised(self):
+        """Type before use: a pre-2.0.0 (exit_status, log) pair or anything else must be a named,
+        never-a-proof report rather than an AttributeError."""
+        for bad in ((0, OK_LOG), "nope", None, 7, [0, OK_LOG]):
+            with self.subTest(run=repr(bad)[:24]):
+                try:
+                    rep = tr.build(bad)
+                except Exception as exc:                 # the defect this case exists for
+                    self.fail(f"{type(exc).__name__}: {exc}")
+                self.assertFalse(rep["clean_tree_proof"])
+                self.assertTrue(any("not executed by this tool" in x for x in rep["proof_refusals"]))
+                self.assertIsNotNone(rep["run"].get("shape") if not isinstance(bad, dict) else True)
+
 
 class TheRealTree(unittest.TestCase):
     def test_a_snapshot_of_this_tree_has_the_shape_the_verdict_reads(self):
