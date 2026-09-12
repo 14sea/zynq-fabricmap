@@ -11,3 +11,8 @@ Written by `host/b2_test_report.py`. A report is a **clean-tree proof** only whe
   `clean_tree_proof` field in it was computed by that old logic and must not be cited.
 - reports written under schema **2.0.0** carry `run.start` and `run.end` snapshots and a
   `proof_refusals` list, and are the ones this package cites.
+- `test_report_2026-09-12T092150Z.json` — schema **2.0.0**, HEAD `12857ae`, **1 884 tests, zero
+  skips, OK**, `clean_tree_proof: true` with `proof_refusals: []`. The start and end snapshots
+  agree: the same HEAD, both worktrees clean, the instrument at its pinned commit and clean in
+  both, the pinned surface verifying in both, and every pinned artifact digest unchanged across
+  the run. **This is the report the package cites.**
