@@ -123,41 +123,63 @@ def run_suite(focused: bool = False, root: Path = REPO_ROOT) -> dict:
 # ------------------------------------------------------------------ the log contract
 
 
-def parse_log(text: str) -> dict:
-    """A COMPLETE successful summary, or a named reason why it is not one. An unparsed counter is
-    an unknown, and an unknown is never a zero."""
-    ran_lines = re.findall(r"^Ran (\d+) tests? in ", text, re.M)
-    result_lines = [ln.strip() for ln in text.splitlines() if ln.startswith(("OK", "FAILED"))]
-    out: dict = {"ran": None, "result_line": result_lines[-1] if result_lines else None,
+RAN_LINE = re.compile(r"Ran (\d+) tests? in (\d+(?:\.\d+)?)s")
+RESULT_LINE = re.compile(r"(OK|FAILED)(?: \((.*)\))?")
+
+
+def parse_log(text) -> dict:
+    """A COMPLETE successful summary, or a named reason why it is not one.
+
+    unittest ends a run with exactly one `Ran N tests in X.XXXs` line and then exactly one result
+    line. This requires the WHOLE of both, exactly one of each, in that ORDER, with the result
+    line last — a prefix match, a later line silently replacing an earlier one, or a result before
+    the count are all ways a contradictory log became a proof (the owner's P2 of 2026-09-12)."""
+    if not isinstance(text, str):
+        return {"ran": None, "result_line": None, "skipped": None, "failures": None, "errors": None,
+                "findings": [f"the log is {type(text).__name__}, not text"]}
+    lines = text.splitlines()
+    ran_at = [(i, m) for i, ln in enumerate(lines) if (m := RAN_LINE.fullmatch(ln.strip()))]
+    res_at = [(i, ln.strip()) for i, ln in enumerate(lines) if ln.startswith(("OK", "FAILED"))]
+    out: dict = {"ran": None, "result_line": res_at[-1][1] if res_at else None,
                  "skipped": None, "failures": None, "errors": None, "findings": []}
-    if len(ran_lines) == 1:
-        out["ran"] = int(ran_lines[0])
-    elif not ran_lines:
-        out["findings"].append("the log carries no complete 'Ran N tests in ...' line")
+    if len(ran_at) == 1:
+        out["ran"] = int(ran_at[0][1].group(1))
+        out["duration_s"] = float(ran_at[0][1].group(2))
+    elif not ran_at:
+        out["findings"].append("the log carries no complete 'Ran N tests in X.XXXs' line")
     else:
-        out["findings"].append(f"the log carries {len(ran_lines)} 'Ran' lines: which run is this?")
-    if out["result_line"] is None:
+        out["findings"].append(f"the log carries {len(ran_at)} complete run summaries: which run is this?")
+    if not res_at:
         out["findings"].append("the log carries no OK or FAILED result line")
-    elif out["result_line"] == "OK":
+    elif len(res_at) > 1:
+        out["findings"].append(f"the log carries {len(res_at)} result lines "
+                               f"({[t for _, t in res_at][:3]}): which result is this?")
+    if ran_at and res_at:
+        if res_at[0][0] < ran_at[0][0]:
+            out["findings"].append("the result line comes before the run summary")
+        if res_at[-1][0] != max(i for i, ln in enumerate(lines) if ln.strip()):
+            out["findings"].append("the result line is not the last thing the log says")
+    if out["result_line"] == "OK":
         out.update(skipped=0, failures=0, errors=0)
-    else:
-        # Only a parenthesised list of `name=count` is understood. Anything else is unknown.
-        body = re.fullmatch(r"(OK|FAILED) \((.*)\)", out["result_line"])
+    elif out["result_line"] is not None:
+        m = RESULT_LINE.fullmatch(out["result_line"])
         counts: dict[str, int] = {}
-        if body:
-            for part in body.group(2).split(","):
-                m = re.fullmatch(r"\s*([a-z]+)\s*=\s*(\d+)\s*", part)
-                if m:
-                    counts[m.group(1)] = int(m.group(2))
+        if m and m.group(2) is not None:
+            for part in m.group(2).split(","):
+                c = re.fullmatch(r"\s*([a-z]+)\s*=\s*(\d+)\s*", part)
+                if c:
+                    counts[c.group(1)] = int(c.group(2))
                 else:
                     out["findings"].append(f"the result line carries an unparsed counter {part.strip()!r}")
-        else:
+        elif not m:
             out["findings"].append(f"the result line {out['result_line']!r} is not OK or a counted summary")
         if not out["findings"]:
             out.update(skipped=counts.get("skipped", 0), failures=counts.get("failures", 0),
                        errors=counts.get("errors", 0))
         if out["result_line"].startswith("FAILED"):
             out["findings"].append("the log's own result line says FAILED")
+    if any(t.startswith("FAILED") for _, t in res_at):
+        out["findings"].append("the log carries a FAILED result line")
     if out["ran"] == 0:
         out["findings"].append("the log records zero tests")
     return out
@@ -193,21 +215,30 @@ def proof_refusals(rep: dict) -> list[str]:
             out.append(f"the worktree was {snap.get('worktree_dirty')!r} at the {name} of the run")
         if snap.get("head") is None:
             out.append(f"no HEAD was observed at the {name} of the run")
-        i = snap.get("instrument") or {}
-        if i.get("head") != i.get("pinned_commit"):
-            out.append(f"the instrument was at {i.get('head')!r} at the {name}, not its pinned commit")
-        if i.get("dirty") is not False:
-            out.append(f"the instrument was {i.get('dirty')!r} at the {name} of the run")
-        if (snap.get("pins") or {}).get("pins_verified") is not True:
-            out.append(f"the pinned surface did not verify at the {name}: "
-                       f"{(snap.get('pins') or {}).get('pins_refusal')}")
+        # the nested blocks' SHAPES, before anything reads a field out of them
+        i = snap.get("instrument")
+        if not isinstance(i, dict):
+            out.append(f"the {name} snapshot's instrument is {type(i).__name__}, not an object")
+        else:
+            if i.get("head") != i.get("pinned_commit"):
+                out.append(f"the instrument was at {i.get('head')!r} at the {name}, not its pinned commit")
+            if i.get("dirty") is not False:
+                out.append(f"the instrument was {i.get('dirty')!r} at the {name} of the run")
+        pins = snap.get("pins")
+        if not isinstance(pins, dict):
+            out.append(f"the {name} snapshot's pins is {type(pins).__name__}, not an object")
+        elif pins.get("pins_verified") is not True:
+            out.append(f"the pinned surface did not verify at the {name}: {pins.get('pins_refusal')}")
+        if not isinstance(snap.get("artifacts_sha256"), dict):
+            out.append(f"the {name} snapshot's artifacts_sha256 is "
+                       f"{type(snap.get('artifacts_sha256')).__name__}, not an object")
     if start.get("head") != end.get("head"):
         out.append(f"HEAD moved during the run: {start.get('head')} -> {end.get('head')}")
     if start.get("root") != end.get("root"):
         out.append("the repository root changed during the run")
-    if start.get("artifacts_sha256") != end.get("artifacts_sha256"):
-        moved = sorted(k for k, v in (start.get("artifacts_sha256") or {}).items()
-                       if (end.get("artifacts_sha256") or {}).get(k) != v)
+    a0, a1 = start.get("artifacts_sha256"), end.get("artifacts_sha256")
+    if isinstance(a0, dict) and isinstance(a1, dict) and a0 != a1:
+        moved = sorted(k for k, v in a0.items() if a1.get(k) != v)
         out.append(f"pinned artifacts changed during the run: {moved[:4]}")
     return out
 
@@ -222,13 +253,17 @@ def build(run: dict, focused: bool = False) -> dict:
     elif not isinstance(run, dict):
         run = {"executed": False, "argv": None, "exit_status": None, "log": "",
                "start": None, "end": None, "shape": f"{type(run).__name__}, not a run record"}
-    log = parse_log(run.get("log") if isinstance(run.get("log"), str) else "")
+    # ONE log value, used for both parsing and hashing: they parsed different things before.
+    log_text = run.get("log")
+    log = parse_log(log_text)
+    if not isinstance(log_text, str):
+        log_text = ""
     start = run.get("start") if isinstance(run.get("start"), dict) else {}
     rep = {"schema": SCHEMA, "schema_version": SCHEMA_VERSION, "package": "B2 v0.3",
            "at": time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime()),
            "scope": "focused (test_b[23]*)" if focused else "whole suite",
            "run": {k: run.get(k) for k in ("executed", "argv", "exit_status", "start", "end", "shape")},
-           "log": log, "log_sha256": hashlib.sha256(run.get("log", "").encode()).hexdigest(),
+           "log": log, "log_sha256": hashlib.sha256(log_text.encode()).hexdigest(),
            "exit_status": run.get("exit_status"), "ran": log["ran"], "result_line": log["result_line"],
            "skipped": log["skipped"], "failures": log["failures"], "errors": log["errors"],
            "host": os.uname().nodename, "user": os.environ.get("USER") or str(os.getuid()),

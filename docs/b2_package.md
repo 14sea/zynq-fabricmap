@@ -23,6 +23,18 @@
 > demonstration need not be repeated. No push, freeze or board clearance is granted.
 > Earlier status banners below are historical.
 
+> **The reporter's parser contract and nested shape guards are corrected too.** The summary must
+> now be COMPLETE and UNAMBIGUOUS: the whole `Ran N tests in X.XXXs` line and the whole result
+> line, exactly one of each, in that order, with the result line last — so a missing or malformed
+> duration, a `FAILED` followed by an `OK`, two `OK` lines and a result before the count are each
+> refused by name. And one log value is used for both parsing and hashing while `instrument`,
+> `pins` and `artifacts_sha256` have their shapes established before any field is read, so a
+> non-string log or a list where an object belongs is a named, never-a-proof report instead of an
+> AttributeError. **35 reporter tests, B2/B3 437, zero skips**; deleting the `Ran`-line full match
+> fails 16 tests and errors 28 more, the one-result rule 3, the ordering rule 2, the any-FAILED
+> rule 2, the log-is-text guard 8 and the pins shape guard 5. See
+> [`evidence/b2/corrections_test_report_v2_2026_09_12/`](../evidence/b2/corrections_test_report_v2_2026_09_12/).
+
 > **The reporter's proof mechanism is corrected (schema `b2_test_report` 1.0.0 → 2.0.0).** It now
 > takes a SNAPSHOT of the repository root, HEAD, the worktree's cleanliness, the instrument's
 > commit and cleanliness, the pinned surface and every pinned artifact's digest **before** the

@@ -9,6 +9,7 @@ then removed from it one at a time, so deleting a production check fails a test 
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import shutil
 import subprocess
@@ -72,7 +73,7 @@ class TheLogContract(unittest.TestCase):
         self._refused("Ran 0 tests in 0.000s\n\nOK\n", "zero tests")
 
     def test_a_truncated_ran_line(self):
-        self._refused("Ran 1869\n", "no complete 'Ran N tests in ...' line")
+        self._refused("Ran 1869\n", "no complete 'Ran N tests in X.XXXs' line")
 
     def test_a_counter_this_tool_cannot_parse(self):
         self._refused("Ran 4 tests in 1.0s\n\nOK (skipped=unknown)\n", "unparsed counter")
@@ -89,7 +90,34 @@ class TheLogContract(unittest.TestCase):
         self._refused("Ran 4 tests in 1.0s\n\nOK\nRan 5 tests in 1.0s\n\nOK\n", "which run is this")
 
     def test_a_completely_unparseable_log(self):
-        self._refused("nothing that looks like a unittest run\n", "no complete 'Ran N tests in ...' line")
+        self._refused("nothing that looks like a unittest run\n", "no complete 'Ran N tests in X.XXXs' line")
+
+    def test_a_run_summary_without_its_duration(self):
+        """The parser matched only the prefix `Ran N tests in ` (the owner's P2 of 2026-09-12)."""
+        self._refused("Ran 4 tests in \n\nOK\n", "no complete 'Ran N tests in X.XXXs' line")
+        self._refused("Ran 4 tests in nonsense\n\nOK\n", "no complete 'Ran N tests in X.XXXs' line")
+        self._refused("Ran 4 tests in 1.000\n\nOK\n", "no complete 'Ran N tests in X.XXXs' line")
+
+    def test_a_failed_result_followed_by_an_ok_one(self):
+        """The last result line silently replaced the earlier ones."""
+        self._refused("Ran 4 tests in 1.000s\n\nFAILED (failures=1)\n\nOK\n", "which result is this")
+        rep = tr.build(qualifying_run("Ran 4 tests in 1.000s\n\nFAILED (failures=1)\n\nOK\n"))
+        self.assertTrue(any("carries a FAILED result line" in x for x in rep["proof_refusals"]))
+
+    def test_two_result_lines(self):
+        self._refused("Ran 4 tests in 1.000s\n\nOK\nOK\n", "which result is this")
+
+    def test_a_result_line_before_the_run_summary(self):
+        self._refused("OK\nRan 4 tests in 1.000s\n", "comes before the run summary")
+
+    def test_a_result_line_that_is_not_the_last_word(self):
+        self._refused("Ran 4 tests in 1.000s\n\nOK\nand then something else\n",
+                      "not the last thing the log says")
+
+    def test_the_positive_control_still_carries_its_duration(self):
+        rep = tr.build(qualifying_run())
+        self.assertEqual(rep["log"]["duration_s"], 400.0)
+        self.assertTrue(rep["clean_tree_proof"])
 
 
 class TheRunState(unittest.TestCase):
@@ -148,6 +176,46 @@ class TheRunState(unittest.TestCase):
 
     def test_a_run_with_no_snapshots_at_all(self):
         self._refused(lambda r: r.update(start=None, end=None), "no start and end snapshots")
+
+    def test_a_nested_snapshot_block_of_the_wrong_shape_is_named_not_raised(self):
+        """`run.start.instrument` / `.pins` / `.artifacts_sha256` reached unguarded `.get()`
+        calls (the owner's P3 of 2026-09-12)."""
+        for field in ("instrument", "pins", "artifacts_sha256"):
+            for bad in (["nope"], "nope", 7, None):
+                with self.subTest(field=field, value=repr(bad)[:12]):
+                    run = qualifying_run()
+                    run["start"][field] = bad
+                    try:
+                        rep = tr.build(run)
+                    except Exception as exc:             # the defect this case exists for
+                        self.fail(f"{type(exc).__name__}: {exc}")
+                    self.assertFalse(rep["clean_tree_proof"])
+                    self.assertTrue(any(f"start snapshot's {field}" in x for x in rep["proof_refusals"])
+                                    or any(field.split("_")[0] in x for x in rep["proof_refusals"]),
+                                    rep["proof_refusals"])
+
+    def test_a_log_that_is_not_text_is_named_not_raised(self):
+        """A non-string log was replaced by "" for parsing but the ORIGINAL was hashed."""
+        for bad in (None, [1], 7, {"a": 1}, b"bytes"):
+            with self.subTest(log=repr(bad)[:12]):
+                run = qualifying_run()
+                run["log"] = bad
+                try:
+                    rep = tr.build(run)
+                except Exception as exc:
+                    self.fail(f"{type(exc).__name__}: {exc}")
+                self.assertFalse(rep["clean_tree_proof"])
+                self.assertTrue(any("not text" in x for x in rep["proof_refusals"]), rep["proof_refusals"])
+                self.assertEqual(rep["log_sha256"], hashlib.sha256(b"").hexdigest())
+
+    def test_the_legacy_tuple_with_a_non_string_log(self):
+        for bad in ((0, None), (0, [1]), ("x", "y")):
+            with self.subTest(run=repr(bad)):
+                try:
+                    rep = tr.build(bad)
+                except Exception as exc:
+                    self.fail(f"{type(exc).__name__}: {exc}")
+                self.assertFalse(rep["clean_tree_proof"])
 
     def test_a_run_record_of_the_wrong_shape_is_named_not_raised(self):
         """Type before use: a pre-2.0.0 (exit_status, log) pair or anything else must be a named,
