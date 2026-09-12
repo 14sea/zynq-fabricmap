@@ -1,0 +1,144 @@
+{
+  "reviewed_head": "792ab1e514bf85634b091e4c61aa6e541656ad41",
+  "omitted": [],
+  "baseline": {
+    "pins": {
+      "result": "ACCEPTED",
+      "value": {
+        "files_verified": 69,
+        "b1_files_verified": 105,
+        "pins_sha256": "fd3c73e6be4d6247eb921cc02c4446d6fdf67b5b7afcad0deaeba4c27d5577e5"
+      }
+    },
+    "manifest": {
+      "result": "ACCEPTED",
+      "value": {
+        "stage": "S1",
+        "qualified": false,
+        "refusal": null,
+        "checks": {
+          "pins": "ok",
+          "map": "ok",
+          "prereg": "ok",
+          "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+          "board": "17A6",
+          "instrument_pins": {
+            "files_verified": 69,
+            "b1_files_verified": 105,
+            "pins_sha256": "fd3c73e6be4d6247eb921cc02c4446d6fdf67b5b7afcad0deaeba4c27d5577e5"
+          },
+          "lineage": "ok (B1 chain re-verified)",
+          "stage": "S1"
+        },
+        "manifest_sha256": "ccde5126aab71bafc76b71fd4502a91bf95fec5cf023e411ebe64e91bb23dc53"
+      }
+    }
+  },
+  "native_build_baseline": {
+    "returncode": 0,
+    "stderr": ""
+  },
+  "cases": {
+    "tb/b2/hostapp/hostapp.c": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostapp.c: hash differs"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostapp.c: hash differs"
+      },
+      "native_build": {
+        "returncode": 1,
+        "stderr": "/tmp/b2_pin_coverage_review_bkool2_k/mirror/tb/b2/hostapp/hostapp.c:1:2: error: #error REVIEW_PIN_COVERAGE_MUTATION\n    1 | #error REVIEW_PIN_COVERAGE_MUTATION\n      |  ^~~~~\n"
+      }
+    },
+    "tb/b2/hostapp/build.sh": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/build.sh: hash differs"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/build.sh: hash differs"
+      },
+      "native_build": {
+        "returncode": 73,
+        "stderr": ""
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xil_io.h": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tb/b2/hostapp/hostbsp/xil_io.h: hash differs"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tb/b2/hostapp/hostbsp/xil_io.h: hash differs"
+      },
+      "native_build": {
+        "returncode": 1,
+        "stderr": "In file included from /tmp/b2_pin_coverage_review_bkool2_k/mirror/firmware/b2/b2_app.c:51,\n                 from /tmp/b2_pin_coverage_review_bkool2_k/mirror/tb/b2/hostapp/hostapp.c:106:\n/tmp/b2_pin_coverage_review_bkool2_k/mirror/tb/b2/hostapp/hostbsp/xil_io.h:1:2: error: #error REVIEW_PIN_COVERAGE_MUTATION\n    1 | #error REVIEW_PIN_COVERAGE_MUTATION\n      |  ^~~~~\n"
+      }
+    },
+    "firmware/b2/bsp/src/console.c": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: firmware/b2/bsp/src/console.c: hash differs"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: firmware/b2/bsp/src/console.c: hash differs"
+      }
+    },
+    "firmware/b2/bsp/include/xparameters.h": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: firmware/b2/bsp/include/xparameters.h: hash differs"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: firmware/b2/bsp/include/xparameters.h: hash differs"
+      }
+    },
+    "host/b2_records.py": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: host/b2_records.py: hash differs"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: host/b2_records.py: hash differs"
+      }
+    },
+    "tests/test_b2_hostapp.py": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tests/test_b2_hostapp.py: hash differs"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tests/test_b2_hostapp.py: hash differs"
+      }
+    }
+  },
+  "native_startup_baseline": {
+    "returncode": 0,
+    "result": [
+      "RESULT {\"scenario\":\"startup_valid\",\"kind\":\"STOPPED\",\"reason\":\"REFUSED_BY_GATE: an unscored candidate ends the epoch\",\"seq\":1,\"orch_phase\":6,\"orch_complete\":0,\"signreq\":1,\"rec\":1,\"term\":1,\"hb\":0,\"other\":2,\"ident\":1,\"identack\":1,\"ident_slice\":[9,0,4],\"ident_slice_ok\":1,\"ident_findings_empty\":1,\"last_rec_outcome\":\"REFUSED_BY_GATE\",\"ctrl_writes\":0,\"payload_writes\":0,\"dma\":3,\"closing_restore\":1,\"closing_baseline\":0,\"closing_unsigned\":0,\"scored\":0,\"refused\":1,\"rec_attempts\":2,\"have_last_reply\":0}"
+    ]
+  },
+  "new_glob_member": {
+    "pins": {
+      "result": "REFUSED",
+      "message": "files matching the pinned globs are not in the table: ['host/b2_review_new.py']"
+    },
+    "manifest": {
+      "result": "REFUSED",
+      "message": "instrument pins: files matching the pinned globs are not in the table: ['host/b2_review_new.py']"
+    }
+  },
+  "unchanged_manifest_sha256": "ccde5126aab71bafc76b71fd4502a91bf95fec5cf023e411ebe64e91bb23dc53",
+  "unchanged_table_sha256": "fd3c73e6be4d6247eb921cc02c4446d6fdf67b5b7afcad0deaeba4c27d5577e5",
+  "temporary_artifacts": "/tmp/b2_pin_coverage_review_bkool2_k"
+}

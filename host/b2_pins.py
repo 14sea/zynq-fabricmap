@@ -32,6 +32,13 @@ PINNED_GLOBS = (
     "host/b2_*.py", "host/b3_*.py", "host/gen_b2_data.py",
     "firmware/b2/*.c", "firmware/b2/*.h", "firmware/b2/Makefile", "firmware/b2/IMPORT.json",
     "firmware/b2/bsp/build.sh", "firmware/b2/bsp/lscript.ld",
+    # This repository's BSP inputs: the image is built from them, so they decide what the image
+    # IS as surely as the application sources do.
+    "firmware/b2/bsp/src/*.c", "firmware/b2/bsp/include/*.h",
+    # The application harness the pinned test COMPILES AND EXECUTES. Hashing the test alone does
+    # not hash the C harness, its build script or its fake BSP, which are what the test actually
+    # runs (the owner's P2-1 of 2026-09-12; B1's table already covers its equivalents).
+    "tb/b2/hostapp/*.c", "tb/b2/hostapp/*.sh", "tb/b2/hostapp/hostbsp/*.h",
     "tests/test_b2_*.py", "tests/test_b3_*.py",
     "schemas/self_map_v2.schema.json",
     # B1's own table, by content: the B2 image runs on the B1 carrier under the B1 instrument
@@ -75,9 +82,21 @@ def verify(manifest: dict | None = None, root: Path = REPO_ROOT, pins_path: Path
     root = Path(root)
     pins_path = Path(pins_path) if pins_path is not None else root / "manifests/b2_instrument_pins.json"
     manifest = manifest if manifest is not None else json.loads((root / "manifests/b2_manifest.json").read_text())
-    pinned = (manifest.get("instrument_pins") or {}).get("sha256")
-    if not pinned:
+    # Type before use, then domain, then lookup — the rule the earlier tools were corrected to and
+    # this one skipped (the owner's P2-2 of 2026-09-12). A malformed input is a NAMED refusal;
+    # an implementation exception is never dressed up as one.
+    if not isinstance(manifest, dict):
+        raise PinRefusal(f"the manifest is {type(manifest).__name__}, not a JSON object")
+    block = manifest.get("instrument_pins")
+    if block is None:
         raise PinRefusal("the manifest pins no b2_instrument_pins sha256")
+    if not isinstance(block, dict):
+        raise PinRefusal(f"the manifest's instrument_pins is {type(block).__name__}, not a JSON object")
+    pinned = block.get("sha256")
+    if pinned is None:
+        raise PinRefusal("the manifest pins no b2_instrument_pins sha256")
+    if not isinstance(pinned, str) or len(pinned) != 64 or any(c not in "0123456789abcdef" for c in pinned):
+        raise PinRefusal(f"the manifest's instrument_pins sha256 {pinned!r} is not 64 lower-case hex")
     if not pins_path.is_file():
         raise PinRefusal(f"{pins_path} is absent")
     if sha256_of(pins_path) != pinned:

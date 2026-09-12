@@ -8,6 +8,7 @@ import copy
 import hashlib
 import json
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -38,6 +39,11 @@ class Table(unittest.TestCase):
                      "firmware/b2/bsp/build.sh", "firmware/b2/bsp/lscript.ld",
                      "schemas/self_map_v2.schema.json", "docs/b2_architecture.md",
                      "manifests/b1_instrument_pins.json",
+                     # what the pinned harness test actually compiles and runs, and this
+                     # repository's BSP inputs (the owner's P2-1 of 2026-09-12)
+                     "tb/b2/hostapp/hostapp.c", "tb/b2/hostapp/build.sh",
+                     "tb/b2/hostapp/hostbsp/xil_io.h", "tb/b2/hostapp/hostbsp/xparameters.h",
+                     "firmware/b2/bsp/src/console.c", "firmware/b2/bsp/include/xparameters.h",
                      "tests/test_b2_adjudicate.py", "tests/test_b2_runner.py", "tests/test_b2_e2e.py",
                      "tests/test_b2_pins.py"):
             self.assertIn(must, names, must)
@@ -58,13 +64,26 @@ class Table(unittest.TestCase):
         self.assertEqual(bp.verify(m, pins_path=pins)["files_verified"], t["file_count"])
 
         for bad, needle in (({"sha256": "0" * 64}, "does not hash"), ({"sha256": None}, "pins no"),
-                            ({}, "pins no"), (None, "pins no")):
+                            ({}, "pins no"), (None, "pins no"),
+                            # type before use: these raised AttributeError (the owner's P2-2)
+                            ("broken", "not a JSON object"), ([{}], "not a JSON object"),
+                            (True, "not a JSON object"), (7, "not a JSON object"),
+                            (0.5, "not a JSON object"), ("", "not a JSON object"),
+                            ({"sha256": 7}, "not 64 lower-case hex"),
+                            ({"sha256": "AB" * 32}, "not 64 lower-case hex"),
+                            ({"sha256": "aa" * 31}, "not 64 lower-case hex"),
+                            ({"sha256": ["x"]}, "not 64 lower-case hex")):
             with self.subTest(instrument_pins=bad):
                 m2 = copy.deepcopy(m)
                 m2["instrument_pins"] = bad
                 with self.assertRaises(bp.PinRefusal) as cm:
                     bp.verify(m2, pins_path=pins)
                 self.assertIn(needle, str(cm.exception))
+        for bad in ("nope", [1], 7):
+            with self.subTest(manifest=bad):
+                with self.assertRaises(bp.PinRefusal) as cm:
+                    bp.verify(bad, pins_path=pins)
+                self.assertIn("not a JSON object", str(cm.exception))
 
         def table_at(doc: dict, name: str) -> tuple[Path, dict]:
             p = d / name
@@ -153,6 +172,27 @@ class Table(unittest.TestCase):
         self.assertEqual(m["instrument_pins"]["sha256"], bp.sha256_of(bp.PINS),
                          "the manifest initializer and the committed table disagree")
         bp.verify(m)
+
+    @unittest.skipUnless(HAVE, "the B2 build evidence is absent")
+    def test_a_malformed_pin_block_refuses_through_the_lifecycle_and_the_cli(self):
+        """It raised AttributeError through both, and the CLI exited 1 with a traceback instead
+        of its documented REFUSED exit 2 (the owner's P2-2 of 2026-09-12)."""
+        d = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, d, True)
+        for bad in ("broken", [{}], True, 7):
+            with self.subTest(instrument_pins=bad):
+                m = _manifest()
+                m["instrument_pins"] = bad
+                with self.assertRaises(bman.Refusal) as cm:
+                    bman.verify(m)
+                self.assertIn("instrument pins", str(cm.exception))
+                mp = d / "manifest.json"
+                mp.write_text(json.dumps(m))
+                p = subprocess.run([sys.executable, str(R / "host/b2_pins.py"), "--manifest", str(mp)],
+                                   capture_output=True, text=True, cwd=R)
+                self.assertEqual(p.returncode, 2, (p.returncode, p.stdout, p.stderr[-300:]))
+                self.assertIn("REFUSED:", p.stderr)
+                self.assertNotIn("Traceback", p.stderr)
 
     @unittest.skipUnless(HAVE, "the B2 build evidence is absent")
     def test_the_manifest_verifier_refuses_a_drifted_table(self):
