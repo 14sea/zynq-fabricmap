@@ -1,0 +1,132 @@
+{
+  "cases": {
+    "string": {
+      "pins": {
+        "result": "UNEXPECTED_EXCEPTION",
+        "type": "AttributeError",
+        "message": "'str' object has no attribute 'get'"
+      },
+      "manifest": {
+        "result": "UNEXPECTED_EXCEPTION",
+        "type": "AttributeError",
+        "message": "'str' object has no attribute 'get'"
+      },
+      "cli": {
+        "rc": 1,
+        "stderr": "Traceback (most recent call last):\n  File \"/home/test/zynq_fabricmap/host/b2_pins.py\", line 148, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/test/zynq_fabricmap/host/b2_pins.py\", line 140, in main\n    print(verify(manifest, pins_path=a.out))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/test/zynq_fabricmap/host/b2_pins.py\", line 78, in verify\n    pinned = (manifest.get(\"instrument_pins\") or {}).get(\"sha256\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'get'\n"
+      }
+    },
+    "list": {
+      "pins": {
+        "result": "UNEXPECTED_EXCEPTION",
+        "type": "AttributeError",
+        "message": "'list' object has no attribute 'get'"
+      },
+      "manifest": {
+        "result": "UNEXPECTED_EXCEPTION",
+        "type": "AttributeError",
+        "message": "'list' object has no attribute 'get'"
+      },
+      "cli": {
+        "rc": 1,
+        "stderr": "Traceback (most recent call last):\n  File \"/home/test/zynq_fabricmap/host/b2_pins.py\", line 148, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/test/zynq_fabricmap/host/b2_pins.py\", line 140, in main\n    print(verify(manifest, pins_path=a.out))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/test/zynq_fabricmap/host/b2_pins.py\", line 78, in verify\n    pinned = (manifest.get(\"instrument_pins\") or {}).get(\"sha256\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'list' object has no attribute 'get'\n"
+      }
+    },
+    "boolean": {
+      "pins": {
+        "result": "UNEXPECTED_EXCEPTION",
+        "type": "AttributeError",
+        "message": "'bool' object has no attribute 'get'"
+      },
+      "manifest": {
+        "result": "UNEXPECTED_EXCEPTION",
+        "type": "AttributeError",
+        "message": "'bool' object has no attribute 'get'"
+      },
+      "cli": {
+        "rc": 1,
+        "stderr": "Traceback (most recent call last):\n  File \"/home/test/zynq_fabricmap/host/b2_pins.py\", line 148, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/test/zynq_fabricmap/host/b2_pins.py\", line 140, in main\n    print(verify(manifest, pins_path=a.out))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/test/zynq_fabricmap/host/b2_pins.py\", line 78, in verify\n    pinned = (manifest.get(\"instrument_pins\") or {}).get(\"sha256\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'bool' object has no attribute 'get'\n"
+      }
+    },
+    "number": {
+      "pins": {
+        "result": "UNEXPECTED_EXCEPTION",
+        "type": "AttributeError",
+        "message": "'int' object has no attribute 'get'"
+      },
+      "manifest": {
+        "result": "UNEXPECTED_EXCEPTION",
+        "type": "AttributeError",
+        "message": "'int' object has no attribute 'get'"
+      },
+      "cli": {
+        "rc": 1,
+        "stderr": "Traceback (most recent call last):\n  File \"/home/test/zynq_fabricmap/host/b2_pins.py\", line 148, in <module>\n    sys.exit(main())\n             ^^^^^^\n  File \"/home/test/zynq_fabricmap/host/b2_pins.py\", line 140, in main\n    print(verify(manifest, pins_path=a.out))\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/test/zynq_fabricmap/host/b2_pins.py\", line 78, in verify\n    pinned = (manifest.get(\"instrument_pins\") or {}).get(\"sha256\")\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'int' object has no attribute 'get'\n"
+      }
+    },
+    "empty": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "the manifest pins no b2_instrument_pins sha256"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: the manifest pins no b2_instrument_pins sha256"
+      },
+      "cli": {
+        "rc": 2,
+        "stderr": "REFUSED: the manifest pins no b2_instrument_pins sha256\n"
+      }
+    },
+    "missing": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "the manifest pins no b2_instrument_pins sha256"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: the manifest pins no b2_instrument_pins sha256"
+      },
+      "cli": {
+        "rc": 2,
+        "stderr": "REFUSED: the manifest pins no b2_instrument_pins sha256\n"
+      }
+    }
+  },
+  "real_pins_baseline": {
+    "files_verified": 57,
+    "b1_files_verified": 105,
+    "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+  },
+  "real_pins_preflight": {
+    "pins": {
+      "files_verified": 57,
+      "b1_files_verified": 105,
+      "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+    },
+    "session": "B2Q",
+    "doubles": [
+      "boundary_established",
+      "sb discovery"
+    ],
+    "out_created": false
+  },
+  "model_cli": {
+    "rc": 0,
+    "verdict": "PASS",
+    "crc_dropped": 2,
+    "adjudication": "PASS",
+    "summary": "PASS"
+  },
+  "model_cli_real_qualify": {
+    "qualified": true,
+    "calibration": {
+      "rate_per_hour": 4490.856163729762,
+      "audit_policy": "all-self-reporting",
+      "source": "reconstructed from the B2Q evidence (adjudication.json) \u2014 the only source a B2 plan may be sized from",
+      "sessions": 2,
+      "pairs_per_session_max": 7
+    }
+  },
+  "temporary_artifacts": "/tmp/b2run_xu8c8mqv"
+}

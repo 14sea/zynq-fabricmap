@@ -1,5 +1,17 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
 
+> **Pin-table review (`06ef938`, 2026-09-12): HOLD for two P2 findings.** The actual
+> table verifies 57 files and its real preflight hook works, but twelve local BSP/
+> hostapp inputs are omitted: changing them passes pin and fresh-process manifest
+> verification. Malformed non-object `instrument_pins` values raise `AttributeError`
+> instead of a named refusal. See the [review and reproductions](b2_pins_review_2026_09_12.md).
+> The three previous P3 corrections are accepted: the model CLI now judges/finalizes
+> and its output qualifies through real re-adjudication. The previous representative
+> B2 non-first-slice demonstration remains accepted. Focused suite: **401 tests,
+> zero skips, OK**. Correct these pin findings, then continue `b2_test_report` and
+> final package review. No push or board clearance is granted here.
+> Earlier status banners below are historical.
+
 > **Host tool 4 of 5 written: `host/b2_pins.py`**, the non-self-referential pin table of this
 > package's whole decision surface — **56 files** by glob (the host tools, the firmware sources,
 > the BSP build and linker scripts, the map schema, the architecture, the tests, and **B1's own

@@ -1,0 +1,272 @@
+{
+  "reviewed_head": "06ef938d37eabd4a717c5fe947257eaed40635f6",
+  "omitted": [
+    "firmware/b2/bsp/include/bspconfig.h",
+    "firmware/b2/bsp/include/xmem_config.h",
+    "firmware/b2/bsp/include/xparameters.h",
+    "firmware/b2/bsp/src/console.c",
+    "tb/b2/hostapp/build.sh",
+    "tb/b2/hostapp/hostapp.c",
+    "tb/b2/hostapp/hostbsp/xil_io.h",
+    "tb/b2/hostapp/hostbsp/xil_mmu.h",
+    "tb/b2/hostapp/hostbsp/xil_types.h",
+    "tb/b2/hostapp/hostbsp/xparameters.h",
+    "tb/b2/hostapp/hostbsp/xscuwdt.h",
+    "tb/b2/hostapp/hostbsp/xtime_l.h"
+  ],
+  "baseline": {
+    "pins": {
+      "result": "ACCEPTED",
+      "value": {
+        "files_verified": 57,
+        "b1_files_verified": 105,
+        "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+      }
+    },
+    "manifest": {
+      "result": "ACCEPTED",
+      "value": {
+        "stage": "S1",
+        "qualified": false,
+        "refusal": null,
+        "checks": {
+          "pins": "ok",
+          "map": "ok",
+          "prereg": "ok",
+          "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+          "board": "17A6",
+          "instrument_pins": {
+            "files_verified": 57,
+            "b1_files_verified": 105,
+            "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+          },
+          "lineage": "ok (B1 chain re-verified)",
+          "stage": "S1"
+        },
+        "manifest_sha256": "092cf848e4b37c3c2cecc5693152b3b1e0c988c13b117dfabdb4a3633ebfe0b6"
+      }
+    }
+  },
+  "native_build_baseline": {
+    "returncode": 0,
+    "stderr": ""
+  },
+  "cases": {
+    "tb/b2/hostapp/hostapp.c": {
+      "pins": {
+        "result": "ACCEPTED",
+        "value": {
+          "files_verified": 57,
+          "b1_files_verified": 105,
+          "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+        }
+      },
+      "manifest": {
+        "result": "ACCEPTED",
+        "value": {
+          "stage": "S1",
+          "qualified": false,
+          "refusal": null,
+          "checks": {
+            "pins": "ok",
+            "map": "ok",
+            "prereg": "ok",
+            "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+            "board": "17A6",
+            "instrument_pins": {
+              "files_verified": 57,
+              "b1_files_verified": 105,
+              "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+            },
+            "lineage": "ok (B1 chain re-verified)",
+            "stage": "S1"
+          },
+          "manifest_sha256": "092cf848e4b37c3c2cecc5693152b3b1e0c988c13b117dfabdb4a3633ebfe0b6"
+        }
+      },
+      "native_build": {
+        "returncode": 1,
+        "stderr": "/tmp/b2_pin_coverage_review_g95bgmbd/mirror/tb/b2/hostapp/hostapp.c:1:2: error: #error REVIEW_PIN_COVERAGE_MUTATION\n    1 | #error REVIEW_PIN_COVERAGE_MUTATION\n      |  ^~~~~\n"
+      }
+    },
+    "tb/b2/hostapp/build.sh": {
+      "pins": {
+        "result": "ACCEPTED",
+        "value": {
+          "files_verified": 57,
+          "b1_files_verified": 105,
+          "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+        }
+      },
+      "manifest": {
+        "result": "ACCEPTED",
+        "value": {
+          "stage": "S1",
+          "qualified": false,
+          "refusal": null,
+          "checks": {
+            "pins": "ok",
+            "map": "ok",
+            "prereg": "ok",
+            "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+            "board": "17A6",
+            "instrument_pins": {
+              "files_verified": 57,
+              "b1_files_verified": 105,
+              "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+            },
+            "lineage": "ok (B1 chain re-verified)",
+            "stage": "S1"
+          },
+          "manifest_sha256": "092cf848e4b37c3c2cecc5693152b3b1e0c988c13b117dfabdb4a3633ebfe0b6"
+        }
+      },
+      "native_build": {
+        "returncode": 73,
+        "stderr": ""
+      }
+    },
+    "tb/b2/hostapp/hostbsp/xil_io.h": {
+      "pins": {
+        "result": "ACCEPTED",
+        "value": {
+          "files_verified": 57,
+          "b1_files_verified": 105,
+          "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+        }
+      },
+      "manifest": {
+        "result": "ACCEPTED",
+        "value": {
+          "stage": "S1",
+          "qualified": false,
+          "refusal": null,
+          "checks": {
+            "pins": "ok",
+            "map": "ok",
+            "prereg": "ok",
+            "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+            "board": "17A6",
+            "instrument_pins": {
+              "files_verified": 57,
+              "b1_files_verified": 105,
+              "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+            },
+            "lineage": "ok (B1 chain re-verified)",
+            "stage": "S1"
+          },
+          "manifest_sha256": "092cf848e4b37c3c2cecc5693152b3b1e0c988c13b117dfabdb4a3633ebfe0b6"
+        }
+      },
+      "native_build": {
+        "returncode": 1,
+        "stderr": "In file included from /tmp/b2_pin_coverage_review_g95bgmbd/mirror/firmware/b2/b2_app.c:51,\n                 from /tmp/b2_pin_coverage_review_g95bgmbd/mirror/tb/b2/hostapp/hostapp.c:106:\n/tmp/b2_pin_coverage_review_g95bgmbd/mirror/tb/b2/hostapp/hostbsp/xil_io.h:1:2: error: #error REVIEW_PIN_COVERAGE_MUTATION\n    1 | #error REVIEW_PIN_COVERAGE_MUTATION\n      |  ^~~~~\n"
+      }
+    },
+    "firmware/b2/bsp/src/console.c": {
+      "pins": {
+        "result": "ACCEPTED",
+        "value": {
+          "files_verified": 57,
+          "b1_files_verified": 105,
+          "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+        }
+      },
+      "manifest": {
+        "result": "ACCEPTED",
+        "value": {
+          "stage": "S1",
+          "qualified": false,
+          "refusal": null,
+          "checks": {
+            "pins": "ok",
+            "map": "ok",
+            "prereg": "ok",
+            "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+            "board": "17A6",
+            "instrument_pins": {
+              "files_verified": 57,
+              "b1_files_verified": 105,
+              "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+            },
+            "lineage": "ok (B1 chain re-verified)",
+            "stage": "S1"
+          },
+          "manifest_sha256": "092cf848e4b37c3c2cecc5693152b3b1e0c988c13b117dfabdb4a3633ebfe0b6"
+        }
+      }
+    },
+    "firmware/b2/bsp/include/xparameters.h": {
+      "pins": {
+        "result": "ACCEPTED",
+        "value": {
+          "files_verified": 57,
+          "b1_files_verified": 105,
+          "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+        }
+      },
+      "manifest": {
+        "result": "ACCEPTED",
+        "value": {
+          "stage": "S1",
+          "qualified": false,
+          "refusal": null,
+          "checks": {
+            "pins": "ok",
+            "map": "ok",
+            "prereg": "ok",
+            "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+            "board": "17A6",
+            "instrument_pins": {
+              "files_verified": 57,
+              "b1_files_verified": 105,
+              "pins_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610"
+            },
+            "lineage": "ok (B1 chain re-verified)",
+            "stage": "S1"
+          },
+          "manifest_sha256": "092cf848e4b37c3c2cecc5693152b3b1e0c988c13b117dfabdb4a3633ebfe0b6"
+        }
+      }
+    },
+    "host/b2_records.py": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: host/b2_records.py: hash differs"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: host/b2_records.py: hash differs"
+      }
+    },
+    "tests/test_b2_hostapp.py": {
+      "pins": {
+        "result": "REFUSED",
+        "message": "pinned files changed: tests/test_b2_hostapp.py: hash differs"
+      },
+      "manifest": {
+        "result": "REFUSED",
+        "message": "instrument pins: pinned files changed: tests/test_b2_hostapp.py: hash differs"
+      }
+    }
+  },
+  "native_startup_baseline": {
+    "returncode": 0,
+    "result": [
+      "RESULT {\"scenario\":\"startup_valid\",\"kind\":\"STOPPED\",\"reason\":\"REFUSED_BY_GATE: an unscored candidate ends the epoch\",\"seq\":1,\"orch_phase\":6,\"orch_complete\":0,\"signreq\":1,\"rec\":1,\"term\":1,\"hb\":0,\"other\":2,\"ident\":1,\"identack\":1,\"ident_slice\":[9,0,4],\"ident_slice_ok\":1,\"ident_findings_empty\":1,\"last_rec_outcome\":\"REFUSED_BY_GATE\",\"ctrl_writes\":0,\"payload_writes\":0,\"dma\":3,\"closing_restore\":1,\"closing_baseline\":0,\"closing_unsigned\":0,\"scored\":0,\"refused\":1,\"rec_attempts\":2,\"have_last_reply\":0}"
+    ]
+  },
+  "new_glob_member": {
+    "pins": {
+      "result": "REFUSED",
+      "message": "files matching the pinned globs are not in the table: ['host/b2_review_new.py']"
+    },
+    "manifest": {
+      "result": "REFUSED",
+      "message": "instrument pins: files matching the pinned globs are not in the table: ['host/b2_review_new.py']"
+    }
+  },
+  "unchanged_manifest_sha256": "092cf848e4b37c3c2cecc5693152b3b1e0c988c13b117dfabdb4a3633ebfe0b6",
+  "unchanged_table_sha256": "c2d78cf2231b48a7ee62aa16efac47ccf32aaaa7bb52c2cec08b9b94338c5610",
+  "temporary_artifacts": "/tmp/b2_pin_coverage_review_g95bgmbd"
+}
