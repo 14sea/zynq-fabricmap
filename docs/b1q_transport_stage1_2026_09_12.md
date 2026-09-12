@@ -8,8 +8,8 @@
 > "stage 1 in full". It is **withdrawn**. The plan's stage 1 also requires a physical acceptance
 > — a separate serial device or a physical self-loopback — which has **not** happened and which
 > a software pseudo-terminal cannot replace. What exists is the **generator, driver and
-> analyser, with an offline acceptance**; the physical acceptance is outstanding. That review
-> also found five P2 defects in the first implementation, all now corrected; §"What the review
+> analyser, with an offline acceptance**; the physical acceptance is outstanding. Two reviews that day
+> found ten P2 defects between them, all now corrected; §"What the review
 > corrected" records each one. The B2Q exposure argument this document originally made is
 > **withdrawn as wrong**, not merely softened.
 
@@ -28,7 +28,7 @@ sessions on module A. It separates nothing, and one PASS is not stability.
 
 ## What exists — the software half
 
-`host/transport_rig.py`, `tests/test_transport_rig.py` (**49 tests**), evidence in
+`host/transport_rig.py`, `tests/test_transport_rig.py` (**73 tests**), evidence in
 `evidence/b1q/transport_stage1_2026_09_12/` and `evidence/b1q/corrections_transport_stage1_2026_09_12/`.
 The generator, the driver and the analyser, with an **offline** acceptance over a pty pair
 through the production entry point. **Not** the plan's stage 1 in full: the physical acceptance
@@ -71,7 +71,21 @@ over bytes it did not send, and an earlier repetition's capture replayed into a 
   transport, and the rig therefore transmits none: every CRC failure a rig run sees is a
   transport event with nothing to subtract.
 
-## What the review corrected
+## What the second review corrected (the driver, 2026-09-12)
+
+`docs/b1q_transport_driver_review_2026_09_12.md` held this batch and named five more P2s, all
+real. Corrected, with the owner's own probes re-run beside their original answers in
+`evidence/b1q/corrections_transport_driver_2026_09_12/`:
+
+| finding | at `146e60a` | now |
+|---|---|---|
+| **delivery and echo accepted unsent bytes** | removing the last newline still gave 302 delivered and 0 losses; one authorised echo appended 100 times, or 100 blank lines plus an echo, were **clean** | only complete lines are credited and the tail is a `fragment`; echoes are consumed against a ledger of **successful** host writes with multiplicity, on a topology declared to echo, and only those exact occurrences are normalised away |
+| **partial repetitions mis-accounted** | a deadline after one IDENT reported 302 sent and **301 losses**; a detach left a 1 048-byte capture with a summary of 0 sent, 0 denominator, 0 repetitions | planned / attempted / accepted / uncertain / **censored** are five numbers; frames never attempted are not losses, bytes in flight at a cut-off are censored, and every partial capture is analysed and aggregated. `completed_exposure` is explicit |
+| **the deadline did not bound operations** | a 0.01 s limit ran **0.115 s**, starting a host write after expiry; `serial_port` set no `write_timeout` | every wait and every write is capped by the remaining budget, expiry is checked before each write, and the serial port is opened with a `write_timeout` |
+| **no TX/RX overlap, and the wrong traffic shape** | **0 of 125** host writes overlapped source transmission; host traffic was `COMMAND seq` at 9–14 bytes | the source transmits continuously and a reply lands while a later frame is on the wire: **124 of 125** overlap, 0 in the no-TX control. Host frames are real rel-v4 — 14 289 bytes per repetition, SIGNOK 469 bytes matching the archived `sign_reply` |
+| **finalisation lost the summary** | failing only `events_000.json` left `run.json` unwritten; a provenance read failure raised a new error over the primary detach | every component is guarded on its own, the summary is always attempted (with a `run.min.json` fallback), secondary failures are recorded and the primary error is preserved |
+
+## What the first review corrected
 
 Five P2s, all reproduced from the public API with a pristine generated stream as the control.
 `evidence/b1q/corrections_transport_stage1_2026_09_12/acceptance.json` runs the owner's own

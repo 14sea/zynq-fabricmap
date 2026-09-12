@@ -91,6 +91,16 @@ CHUNKS_PER_RECORD = 8                                             # 88 AUDIT / 1
 HOST_REPLY = {"IDENT": "IDENTACK", "SIGNREQ": "SIGNOK", "AUDIT_READY": "AUDITGET",
               "AUDIT": "AUDITGET", "REC": "RECACK", "TERM": "TERMACK"}
 LAST_CHUNK_REPLY = "AUDITDONE"
+#: The host's replies are REL-V4 FRAMES, not bare words: the instrument builds every one with
+#: `build_line(type, seq, token, encode_payload(...))` (`l6_rec._tx`, `l6_console._rec_tx`,
+#: `l5_notary.Relay`). Their lengths follow from the payload each carries — `{"seq": n}` for the
+#: acknowledgements, and the signer's `sign_reply` for SIGNOK, whose shape is taken from the
+#: archived `run_log.json` notary entries (commit 64 hex, six 16-hex expected tables, a 32-hex
+#: tag). Built that way a SIGNOK is 469 bytes and an acknowledgement 69-72, against the 9-14
+#: bytes the first version transmitted — which could not have occupied the wire as a session
+#: does (the owner's P2-4).
+SIGN_REPLY_SCHEMA = ("sign_reply", "1.0.0")
+HOST_PAYLOAD_SOURCE = "evidence/b1q/b1q_17A6_2026-09-08-01/run_log.json"
 #: Measured on the clean session's own timeline (tx → next rx): min 0.041 s, median 0.065 s.
 TX_GAP_MEDIAN_S = 0.065
 TX_GAP_MIN_S = 0.041
@@ -104,6 +114,9 @@ LOSSES_PER_REPETITION_STOP = 3
 LENGTH_TOLERANCE = 4
 #: Wire time of one byte at 115200 8N1 (10 bits per character).
 BYTE_TIME_S = 10 / 115200
+#: A write must be bounded even when no deadline is left to bound it: an unbounded serial write
+#: cannot be stopped by any check that runs after it (the owner's P2-3).
+WRITE_TIMEOUT_S = 5.0
 
 TIOCGICOUNT = 0x545D
 ICOUNTER_FIELDS = ("cts", "dsr", "rng", "dcd", "rx", "tx", "frame", "overrun", "parity", "brk", "buf_overrun")
@@ -311,23 +324,55 @@ def stream_bytes(frames: list[Frame]) -> bytes:
     return b"".join(f.line for f in frames)
 
 
+def host_payload(kind: str, seq: int) -> dict:
+    """What each host reply carries. SIGNOK carries the signer's answer, whose shape is the
+    archived `sign_reply`; everything else carries the sequence it acknowledges."""
+    if kind != "SIGNOK":
+        return {"seq": seq}
+    seed = hashlib.sha256(f"sign_reply|{seq}".encode()).hexdigest()
+    tables = hashlib.sha512(f"tables|{seq}".encode()).hexdigest()      # 128 hex: six 16-hex words
+    return {"schema": SIGN_REPLY_SCHEMA[0], "schema_version": SIGN_REPLY_SCHEMA[1], "seq": seq,
+            "commit": seed, "expected_tables": [tables[i * 16:(i + 1) * 16] for i in range(6)],
+            "tag": seed[:32]}
+
+
+def host_frame(kind: str, seq: int, token: str) -> bytes:
+    """A real rel-v4 host frame, built by the instrument's own builder."""
+    return l5.build_line(kind, seq, token, l5.encode_payload(host_payload(kind, seq))).encode()
+
+
 def host_schedule(frames: list[Frame]) -> list[dict]:
     """The host's replies, placed after the frame that causes each — the rule
-    `host_schedule_from_timeline` derives from a real session, applied to this stream."""
+    `host_schedule_from_timeline` derives from a real session, applied to this stream, and
+    framed the way the instrument frames them."""
+    token = frames[0].line.split(b" ")[3].decode() if frames else ""
     out = []
     for i, f in enumerate(frames):
         reply = LAST_CHUNK_REPLY if (f.kind == "AUDIT" and f.last_chunk) else HOST_REPLY.get(f.kind)
         if reply:
             out.append({"after_frame": i, "frame_index": f.index, "caused_by": f.kind,
-                        "line": f"{reply} {f.seq}\n".encode(), "gap_s": TX_GAP_MEDIAN_S})
+                        "reply": reply, "line": host_frame(reply, f.seq, token),
+                        "gap_s": TX_GAP_MEDIAN_S})
     return out
+
+
+def host_traffic_shape(frames: list[Frame]) -> dict:
+    """What the host side puts on the wire for one repetition, by type and bytes — recorded so a
+    run states its TX occupancy instead of implying it from a count of labels."""
+    by: dict = {}
+    for s in host_schedule(frames):
+        e = by.setdefault(s["reply"], {"count": 0, "bytes": 0})
+        e["count"] += 1
+        e["bytes"] += len(s["line"])
+    return {"by_type": by, "frames": sum(e["count"] for e in by.values()),
+            "bytes": sum(e["bytes"] for e in by.values())}
 
 
 # ------------------------------------------------------------------ what came back
 
 
 def analyse(frames: list[Frame], received: bytes, expected_token: str | None = None,
-            echo_lines=()) -> dict:
+            echo_ledger=None, echo_allowed: bool = False, censor_tail: bool = False) -> dict:
     """Compare what arrived against what was SENT in THIS repetition.
 
     One loss unit: an expected frame not delivered byte-exact, counted once. A frame damaged in
@@ -336,28 +381,51 @@ def analyse(frames: list[Frame], received: bytes, expected_token: str | None = N
     frame did not arrive. CRC failures, altered frames, frames from another epoch, unexpected
     indexes, duplicates and reordering remain separately visible as diagnostics.
 
-    `echo_lines` are the host commands THIS rig transmitted. On a self-loopback topology they
-    come back in the capture, and they are neither transport damage nor traffic under test: they
-    are counted as `host_echo`, kept out of the defects, and the run records the topology so a
-    reader knows why they are there (the owner's P2-3).
+    Only COMPLETE lines — terminated by a newline — can be credited. An unterminated tail is a
+    `fragment`, and a frame missing only its final newline is not delivered (the owner's P2-1:
+    reconstructing `ln + b"\n"` for the last segment credited 302 frames over 98 598 of 98 599
+    bytes). An empty line is a defect, not something to skip past.
+
+    `echo_ledger` is a count, per line, of the host frames THIS rig SUCCESSFULLY wrote. On a
+    self-loopback topology (`echo_allowed`) they come back in the capture and are neither
+    transport damage nor traffic under test: each is consumed against its remaining count and
+    reported as `host_echo`. A copy beyond that count, or an echo on a topology that does not
+    echo, is `unexpected_echo` — a defect. Nothing else is ever normalised away.
+
+    `censor_tail` is for a repetition cut short by a deadline or a tool error: frames whose write
+    completed but whose bytes had nothing after them when the capture stopped were still in
+    flight, and are reported as `censored` rather than counted as losses (the owner's P2-2: do
+    not invent a definitive loss for bytes in flight at a cutoff). A frame that is missing while
+    a LATER frame arrived is a real loss and stays one.
     """
     expected = stream_bytes(frames)
     by_index = {f.index: f for f in frames}
     token = expected_token if expected_token is not None else (frames[0].line.split(b" ")[3].decode() if frames else "")
-    echo_set = frozenset(echo_lines)
+    ledger = dict(echo_ledger or {})
+    known_echo = frozenset(ledger)
     delivered: dict[int, int] = {}
     damaged: dict[int, str] = {}
     defects: list[dict] = []
     echoed: list[dict] = []
     order: list[int] = []
     offset = 0
-    for ln in received.split(b"\n"):
+    parts = received.split(b"\n")
+    tail = parts[-1]                     # everything after the last newline: never a whole line
+    for ln in parts[:-1]:
         start, offset = offset, offset + len(ln) + 1
+        line = ln + b"\n"
+        here = {"offset": start, "bytes": len(line)}
         if not ln:
+            defects.append({**here, "kind": "empty_line"})
             continue
-        here = {"offset": start, "bytes": len(ln) + 1}
-        if ln + b"\n" in echo_set:
-            echoed.append(here)
+        if line in known_echo:
+            if echo_allowed and ledger.get(line, 0) > 0:
+                ledger[line] -= 1
+                echoed.append(here)
+            else:
+                defects.append({**here, "kind": "unexpected_echo",
+                                "note": ("more copies than were written" if echo_allowed else
+                                         "this topology does not echo the host port back")})
             continue
         try:
             parsed = l5.parse_line(ln.decode("latin-1"))
@@ -387,26 +455,34 @@ def analyse(frames: list[Frame], received: bytes, expected_token: str | None = N
             continue
         delivered[idx] = delivered.get(idx, 0) + 1
         order.append(idx)
+    if tail:
+        defects.append({"offset": offset, "bytes": len(tail), "kind": "fragment",
+                        "note": "an unterminated tail: not a complete line, so nothing in it is delivered"})
     missing = sorted(set(by_index) - set(delivered) - set(damaged))
     duplicated = sorted(i for i, n in delivered.items() if n > 1)
     out_of_order = order != sorted(order)
-    losses = len(by_index) - len(delivered)               # ONE unit, counted once per frame
+    censored: list[int] = []
+    if censor_tail:
+        last = max(delivered, default=-1)
+        censored = [i for i in missing if i > last]
+        missing = [i for i in missing if i <= last]
+    losses = len(by_index) - len(delivered) - len(censored)   # ONE unit, counted once per frame
     unexpected = [d for d in defects if d["kind"] in ("foreign_epoch", "unexpected_index", "unreadable_payload")]
-    divergence = _divergence(frames, received, expected, by_index, token,
-                             bytes_echoed=sum(e["bytes"] for e in echoed))
+    divergence = _divergence(frames, received, expected, by_index, token, echoed)
     return {"frames_sent": len(frames), "frames_delivered": len(delivered),
             "host_echo_lines": len(echoed), "bytes_host_echo": sum(e["bytes"] for e in echoed),
             "loss_unit": LOSS_UNIT, "losses": losses,
-            "missing": missing, "damaged": sorted(damaged), "duplicated": duplicated,
+            "missing": missing, "censored": censored, "damaged": sorted(damaged), "duplicated": duplicated,
             "out_of_order": out_of_order, "defects": defects,
             "defects_by_kind": {k: sum(1 for d in defects if d["kind"] == k) for k in {d["kind"] for d in defects}},
             "unexpected_frames": len(unexpected),
+            "bytes_fragment": len(tail),
             "divergence": divergence,
             "bytes_sent": len(expected), "bytes_received": len(received),
             "clean": losses == 0 and not defects and not duplicated and not out_of_order and divergence is None}
 
 
-def _divergence(frames, received: bytes, expected: bytes, by_index: dict, token: str, bytes_echoed: int = 0):
+def _divergence(frames, received: bytes, expected: bytes, by_index: dict, token: str, echoed=()):
     """Where the streams first differ, and where a VERIFIED expected frame resumes.
 
     The old field said `bytes_to_resync` but only found the next newline, which an inserted
@@ -414,9 +490,9 @@ def _divergence(frames, received: bytes, expected: bytes, by_index: dict, token:
     owner's P3). Both are reported now, under names that say what each is."""
     if received == expected:
         return None
-    if bytes_echoed and _without_echo(received, expected) == expected:
-        # every expected byte is present, in order; what is extra is this rig's own host traffic
-        # returning on a self-loopback, already counted as host_echo
+    if echoed and _without_accounted_echo(received, echoed) == expected:
+        # every expected byte is present, in order, and the ONLY extra bytes are the accounted
+        # echo occurrences at their own offsets — nothing else is removed (the owner's P2-1)
         return None
     n = min(len(received), len(expected))
     first = next((i for i in range(n) if received[i] != expected[i]), n)
@@ -454,17 +530,16 @@ def _divergence(frames, received: bytes, expected: bytes, by_index: dict, token:
 # ------------------------------------------------------------------ the counters no session had
 
 
-def _without_echo(received: bytes, expected: bytes) -> bytes:
-    """The received stream with whole lines that are not the next expected bytes removed. Used
-    only to ask whether the expected stream arrived intact underneath an echo."""
-    out, at, keep = bytearray(), 0, 0
-    for ln in received.split(b"\n")[:-1]:
-        line = ln + b"\n"
-        at += len(line)
-        if expected[keep:keep + len(line)] == line:
-            out += line
-            keep += len(line)
-    return bytes(out) + received[at:]
+def _without_accounted_echo(received: bytes, echoed) -> bytes:
+    """The received stream with EXACTLY the accounted echo occurrences cut out, at their own
+    offsets. Nothing else is removed: a blank line, an extra copy or any other unsent byte stays
+    in, so it still shows as a divergence (the owner's P2-1 — the previous version dropped any
+    line that did not match, which let an echo activate a normalisation that hid bytes)."""
+    keep, out = 0, bytearray()
+    for e in sorted(echoed, key=lambda x: x["offset"]):
+        out += received[keep:e["offset"]]
+        keep = e["offset"] + e["bytes"]
+    return bytes(out) + received[keep:]
 
 
 def read_icounters(fd) -> dict:
@@ -501,11 +576,19 @@ class Port:
     and the run record says so; on a two-device rig they are not.
     """
 
-    def __init__(self, name: str, write=None, read=None, fd=None):
+    def __init__(self, name: str, write=None, read=None, fd=None, takes_timeout: bool = False):
         self.name, self._write, self._read, self._fd = name, write, read, fd
+        self._takes_timeout = takes_timeout
 
-    def write(self, data: bytes) -> int:
-        n = self._write(data)
+    def write(self, data: bytes, timeout: float | None = None) -> int:
+        """`timeout` is the REMAINING budget, part of the transport contract: a transport that
+        can bound its write must do so, because a post-operation check cannot bound a write that
+        has already blocked (the owner's P2-3)."""
+        try:
+            n = self._write(data, timeout) if self._takes_timeout else self._write(data)
+        except TypeError:                               # a writer that does not accept a budget
+            self._takes_timeout = False
+            n = self._write(data)
         if n is None:                                   # a transport that returns nothing
             raise RigError(f"{self.name}: write returned no count; a short write cannot be detected")
         if n != len(data):
@@ -513,7 +596,7 @@ class Port:
         return n
 
     def read(self, timeout: float) -> bytes:
-        return self._read(timeout) or b""
+        return self._read(max(0.0, timeout)) or b""
 
     def fileno(self):
         return self._fd
@@ -521,13 +604,29 @@ class Port:
 
 @dataclass
 class Repetition:
-    """One profile repetition: what was written, what came back, and when."""
+    """One profile repetition: what was PLANNED, what was attempted, what the transport actually
+    accepted, what came back, and when.
+
+    The four are separate because conflating them was the owner's P2-2: a run that stopped after
+    one frame still reported 302 sent and 301 losses — frames that were never transmitted are
+    not observed transport losses. Only `accepted` frames — those whose write completed — are
+    the expected set an analysis may hold the capture to.
+    """
 
     index: int
-    frames: list = field(default_factory=list)
+    frames: list = field(default_factory=list)               # planned
+    attempted: list = field(default_factory=list)            # a write was started
+    accepted: list = field(default_factory=list)             # the write completed in full
+    uncertain: list = field(default_factory=list)            # started, outcome unknown: in flight
     received: bytearray = field(default_factory=bytearray)
     events: list = field(default_factory=list)
+    host_writes: dict = field(default_factory=dict)          # line -> successful writes
+    overlap: list = field(default_factory=list)
     ended: str = ""
+
+    @property
+    def bytes_accepted(self) -> int:
+        return sum(f.bytes for f in self.accepted)
 
 
 class Driver:
@@ -540,49 +639,99 @@ class Driver:
         self.source, self.host, self.capture = source, host, capture
         self.tx_during_rx, self.read_timeout, self.pace = tx_during_rx, read_timeout, pace
         self.sleep, self.clock = sleep, clock
-        self.host_lines: list[bytes] = []
+        self.echoes = source is host is capture
         self.topology = ("one device: source, host and capture are the same port, so this rig's own "
                          "host traffic returns in the capture and is counted as host_echo"
-                         if source is host is capture else
+                         if self.echoes else
                          f"source={source.name}, host={host.name}, capture={capture.name}")
+
+    def _remaining(self, deadline: float) -> float:
+        return max(0.0, deadline - self.clock())
+
+    def _wait(self, seconds: float, deadline: float) -> float:
+        """Sleep, never past the deadline. A scheduled gap is capped by the remaining budget, so
+        a run cannot overrun by waiting (the owner's P2-3)."""
+        seconds = max(0.0, min(seconds, self._remaining(deadline)))
+        if seconds > 0:
+            self.sleep(seconds)
+        return seconds
 
     def _drain(self, rep: Repetition, deadline: float) -> None:
         while True:
-            if self.clock() >= deadline:
+            left = self._remaining(deadline)
+            if left <= 0:
                 return
-            chunk = self.capture.read(self.read_timeout)
+            chunk = self.capture.read(min(self.read_timeout, left))     # the wait is capped too
             if not chunk:
                 return
             rep.received += chunk
             rep.events.append({"t": self.clock(), "op": "read", "bytes": len(chunk)})
 
     def run(self, rep: Repetition, deadline: float) -> Repetition:
+        """One repetition, with expiry checked BEFORE every write.
+
+        The source transmits CONTINUOUSLY: frame i+1 starts when frame i's bytes have left the
+        wire, not when the host has finished replying. A reply is due the measured gap after the
+        frame that causes it, which lands while the source is transmitting a LATER frame — which
+        is what "host TX during RX" means, and what the recorded sessions did. The first version
+        wrote a frame, slept its whole wire time and only then replied, so in a paced model all
+        125 host writes happened after the source had finished: zero overlap (the owner's P2-4).
+        Every host write now records whether the source was still transmitting, so a run states
+        its achieved overlap instead of implying it from a count of labels.
+        """
         schedule = {s["after_frame"]: s for s in host_schedule(rep.frames)} if self.tx_during_rx else {}
+        source_free = self.clock()
+        pending: list = []                      # (due, send) — replies the host owes
+
+        def flush(until: float) -> None:
+            """Emit every host reply whose due time has come, before the source frees up."""
+            while pending and pending[0][0] <= until:
+                due, send = pending.pop(0)
+                self._wait(due - self.clock(), deadline)
+                if self._remaining(deadline) <= 0:
+                    return
+                overlapping = self.clock() < source_free
+                self.host.write(send["line"], self._remaining(deadline))
+                rep.host_writes[send["line"]] = rep.host_writes.get(send["line"], 0) + 1
+                rep.overlap.append({"t": self.clock(), "reply": send["reply"],
+                                    "source_busy_until": source_free, "overlapping": overlapping})
+                rep.events.append({"t": self.clock(), "op": "write_host", "caused_by": send["caused_by"],
+                                   "bytes": len(send["line"]), "overlapping_source_tx": overlapping})
+
         for i, f in enumerate(rep.frames):
-            if self.clock() >= deadline:
+            if self._remaining(deadline) <= 0:
                 rep.ended = f"deadline reached after {i} of {len(rep.frames)} frames"
                 return rep
-            self.source.write(f.line)
+            self._wait(source_free - self.clock(), deadline)      # the source is still busy
+            if self._remaining(deadline) <= 0:
+                rep.ended = f"deadline reached before frame {i}"
+                return rep
+            start = self.clock()
+            rep.attempted.append(f)
+            try:
+                self.source.write(f.line, self._remaining(deadline))
+            except Exception:
+                rep.uncertain.append(f)          # started, outcome unknown: never a definite loss
+                raise
+            rep.accepted.append(f)
             rep.events.append({"t": self.clock(), "op": "write_frame", "index": f.index,
                                "kind": f.kind, "bytes": f.bytes})
-            if self.pace:
-                self.sleep(f.bytes * BYTE_TIME_S)
-            self._drain(rep, deadline)
+            source_free = start + (f.bytes * BYTE_TIME_S if self.pace else 0.0)
             send = schedule.get(i)
             if send is not None:
-                self.host_lines.append(send["line"])
-                self.host.write(send["line"])
-                rep.events.append({"t": self.clock(), "op": "write_host", "caused_by": send["caused_by"],
-                                   "bytes": len(send["line"])})
-                self.sleep(send["gap_s"])
-                self._drain(rep, deadline)
+                pending.append((source_free + send["gap_s"], send))
+            flush(source_free)                   # replies that fall inside this frame's wire time
+            self._drain(rep, deadline)
+        while pending and self._remaining(deadline) > 0:
+            flush(pending[0][0])
+            self._drain(rep, deadline)
         quiet = 0
-        while quiet < 3 and self.clock() < deadline:     # bounded drain, never an open loop
+        while quiet < 3 and self._remaining(deadline) > 0:   # bounded drain, never an open loop
             before = len(rep.received)
             self._drain(rep, deadline)
             quiet = quiet + 1 if len(rep.received) == before else 0
         if not rep.ended:
-            rep.ended = "complete" if self.clock() < deadline else "deadline reached while draining"
+            rep.ended = "complete" if self._remaining(deadline) > 0 else "deadline reached while draining"
         return rep
 
 
@@ -603,6 +752,8 @@ class Run:
     stopped: str = ""
     error: str | None = None
     topology: str = "not started"
+    pace: bool = False
+    read_timeout: float = 0.05
 
     def execute(self, source: Port, host: Port = None, capture: Port = None, fd=None,
                 out_dir: Path | None = None, sleep=time.sleep, clock=time.monotonic,
@@ -613,9 +764,9 @@ class Run:
         host = host or source
         capture = capture or source
         driver = Driver(source, host, capture, self.tx_during_rx, read_timeout, pace, sleep, clock)
-        self.topology = driver.topology
+        self.topology, self.pace, self.read_timeout = driver.topology, pace, read_timeout
         started = clock()
-        before = read_icounters(fd)
+        before = self._guarded(lambda: read_icounters(fd), "counters_before")
         failure: Exception | None = None
         try:
             for i in range(self.repetitions):
@@ -626,13 +777,16 @@ class Run:
                 deadline = min(started + self.seconds, clock() + self.seconds)
                 try:
                     driver.run(rep, deadline)
+                except Exception as exc:                  # noqa: BLE001 — the PARTIAL capture is evidence
+                    failure = exc
+                    self.error = f"{type(exc).__name__}: {exc}"
+                    self.stopped = f"tool error in repetition {i}: {self.error}"
                 finally:
                     self.captures.append(rep)
-                res = analyse(rep.frames, bytes(rep.received), token_for(self.run_id, i),
-                              echo_lines=list(driver.host_lines))
-                driver.host_lines.clear()
-                res.update({"repetition": i, "ended": rep.ended, "reads": sum(1 for e in rep.events if e["op"] == "read")})
-                self.results.append(res)
+                    self.results.append(self._analyse(rep, i, driver))
+                res = self.results[-1]
+                if failure is not None:
+                    break
                 if rep.ended.startswith("deadline"):
                     self.stopped = f"exposure: the deadline bounded repetition {i} ({rep.ended})"
                     break
@@ -642,11 +796,11 @@ class Run:
                     break
             else:
                 self.stopped = f"exposure: {self.repetitions} repetitions completed"
-        except Exception as exc:                          # noqa: BLE001 — plan §5: any tool error stops
-            failure = exc
-            self.error = f"{type(exc).__name__}: {exc}"
-            self.stopped = f"tool error in repetition {len(self.results)}: {self.error}"
-        result = self._summarise(read_icounters(fd), before)
+        except Exception as exc:                          # noqa: BLE001 — anything else the run raised
+            failure = failure or exc
+            self.error = self.error or f"{type(exc).__name__}: {exc}"
+            self.stopped = self.stopped or f"tool error: {self.error}"
+        result = self._summarise(self._guarded(lambda: read_icounters(fd), "counters_after"), before)
         export = self._export(result, out_dir) if out_dir else None
         if export:
             result["exported_to"] = str(export)
@@ -654,23 +808,77 @@ class Run:
             raise RigError(self.stopped, result=result, export_dir=export) from failure
         return result
 
+    @staticmethod
+    def _guarded(fn, what: str):
+        """Each finalisation component on its own: a failure here is recorded, never allowed to
+        replace the run's primary error (the owner's P2-5)."""
+        try:
+            return fn()
+        except Exception as exc:                          # noqa: BLE001
+            return {"unavailable": True, "what": what, "error": f"{type(exc).__name__}: {exc}"}
+
+    def _analyse(self, rep: Repetition, i: int, driver) -> dict:
+        """Hold the capture to what the transport ACCEPTED, never to what was planned. Frames
+        never attempted are not losses; a frame whose write started but did not complete is
+        `uncertain`, not a definite loss (the owner's P2-2)."""
+        def run_it():
+            cut_short = bool(self.error) or rep.ended.startswith("deadline") or not rep.ended
+            res = analyse(rep.accepted, bytes(rep.received), token_for(self.run_id, i),
+                          echo_ledger=dict(rep.host_writes), echo_allowed=driver.echoes,
+                          censor_tail=cut_short)
+            overlapping = sum(1 for o in rep.overlap if o["overlapping"])
+            res.update({"repetition": i, "ended": rep.ended,
+                        "reads": sum(1 for e in rep.events if e["op"] == "read"),
+                        "frames_planned": len(rep.frames), "frames_attempted": len(rep.attempted),
+                        "frames_accepted": len(rep.accepted), "frames_uncertain": len(rep.uncertain),
+                        "bytes_accepted": rep.bytes_accepted,
+                        "incomplete": len(rep.accepted) < len(rep.frames),
+                        "censored_in_flight": len(res.get("censored", [])),
+                        "cut_short": cut_short,
+                        "host_frames_written": sum(rep.host_writes.values()),
+                        "host_writes_overlapping_source_tx": overlapping,
+                        "note": ("frames never attempted are not counted as losses; an uncertain "
+                                 "write is in flight, not a loss")})
+            return res
+        out = self._guarded(run_it, f"analysis of repetition {i}")
+        if out.get("unavailable"):                        # a minimal, honest stand-in
+            out.update({"repetition": i, "losses": 0, "bytes_received": len(rep.received),
+                        "bytes_sent": rep.bytes_accepted, "frames_sent": len(rep.accepted),
+                        "incomplete": True, "clean": False})
+        return out
+
     def _summarise(self, after: dict, before: dict) -> dict:
-        received = sum(r["bytes_received"] for r in self.results)
-        losses = sum(r["losses"] for r in self.results)
+        received = sum(r.get("bytes_received", 0) for r in self.results)
+        losses = sum(r.get("losses", 0) for r in self.results)
+        incomplete = any(r.get("incomplete") for r in self.results) or self.error is not None
         return {"label": self.label, "run_id": self.run_id, "tx_during_rx": self.tx_during_rx,
-                "topology": self.topology, "provenance": provenance(),
+                "topology": self.topology,
+                "provenance": self._guarded(provenance, "provenance"),
                 "parameters": {"repetitions": self.repetitions, "seconds": self.seconds,
-                               "stop_at_losses": LOSSES_PER_REPETITION_STOP},
+                               "stop_at_losses": LOSSES_PER_REPETITION_STOP,
+                               "pace": self.pace, "read_timeout_s": self.read_timeout,
+                               "baud": 115200, "byte_time_s": BYTE_TIME_S,
+                               "tx_gap_s": TX_GAP_MEDIAN_S, "write_timeout_s": WRITE_TIMEOUT_S},
                 "repetitions_run": len(self.results), "stopped": self.stopped, "error": self.error,
-                "frames_sent": sum(r["frames_sent"] for r in self.results),
-                "bytes_sent": sum(r["bytes_sent"] for r in self.results),
+                # planned, attempted, accepted — never conflated
+                "frames_planned": sum(r.get("frames_planned", 0) for r in self.results),
+                "frames_accepted": sum(r.get("frames_accepted", 0) for r in self.results),
+                "frames_uncertain": sum(r.get("frames_uncertain", 0) for r in self.results),
+                "censored_in_flight": sum(r.get("censored_in_flight", 0) for r in self.results),
+                "incomplete": incomplete,
+                "completed_exposure": (not incomplete) and self.error is None,
+                "host_frames_written": sum(r.get("host_frames_written", 0) for r in self.results),
+                "host_writes_overlapping_source_tx": sum(r.get("host_writes_overlapping_source_tx", 0)
+                                                         for r in self.results),
+                "frames_sent": sum(r.get("frames_sent", 0) for r in self.results),
+                "bytes_sent": sum(r.get("bytes_sent", 0) for r in self.results),
                 # plan §5: losses per RECEIVED byte, with the denominator stated. Nothing
                 # received is not a rate of zero and not a rate over what was sent: it is a
                 # denominator that does not exist, and the losses are reported regardless.
                 "denominator_bytes": received,
                 "losses": losses,
                 "losses_per_100k_bytes": (None if received == 0 else losses * 100000 / received),
-                "denominator": ("received bytes" if received else
+                "denominator": ("received bytes, including every partial capture" if received else
                                 "unavailable: nothing was received, so there is no denominator"),
                 "counters_before": before, "counters_after": after,
                 "counters_delta": counter_delta(before, after),
@@ -679,28 +887,53 @@ class Run:
                          "and does not authorise a board session (plan §5, §6)"}
 
     def _export(self, result: dict, out_dir: Path) -> Path:
-        """The finalisation that must land even when the run died. Raw capture and per-read
-        events per repetition, then the summary. Its own failures are recorded inside the
-        result, never allowed to replace the original error."""
+        """The finalisation that must land even when the run died — and even when part of it
+        cannot be written.
+
+        Every component is attempted INDEPENDENTLY and the summary is attempted whatever else
+        failed: one outer `try` around all of them meant that failing `events_000.json` alone
+        left `run.json` unwritten while the run still reported a completed exposure (the owner's
+        P2-5). Secondary failures are recorded in `export_errors` and the export is marked
+        incomplete; the run's primary error is never replaced.
+        """
         d = Path(out_dir)
-        try:
-            d.mkdir(parents=True, exist_ok=True)
-            for rep in self.captures:
-                (d / f"capture_{rep.index:03d}.bin").write_bytes(bytes(rep.received))
-                (d / f"events_{rep.index:03d}.json").write_text(json.dumps(rep.events, indent=1) + "\n")
-            result["captures"] = [{"repetition": r.index, "bytes": len(r.received),
-                                   "capture": f"capture_{r.index:03d}.bin", "events": f"events_{r.index:03d}.json",
-                                   "sha256": hashlib.sha256(bytes(r.received)).hexdigest()} for r in self.captures]
-            (d / "run.json").write_text(json.dumps(result, indent=1, sort_keys=True) + "\n")
-        except OSError as exc:
-            result["export_error"] = f"{type(exc).__name__}: {exc}"
+        errors: list[str] = []
+
+        def attempt(what: str, fn):
+            try:
+                return fn()
+            except Exception as exc:                      # noqa: BLE001
+                errors.append(f"{what}: {type(exc).__name__}: {exc}")
+                return None
+
+        attempt("mkdir", lambda: d.mkdir(parents=True, exist_ok=True))
+        manifest = []
+        for rep in self.captures:                         # each file on its own
+            raw, ev = f"capture_{rep.index:03d}.bin", f"events_{rep.index:03d}.json"
+            wrote_raw = attempt(raw, lambda r=rep, n=raw: (d / n).write_bytes(bytes(r.received))) is not None
+            wrote_ev = attempt(ev, lambda r=rep, n=ev: (d / n).write_text(json.dumps(r.events, indent=1) + "\n")) is not None
+            manifest.append({"repetition": rep.index, "bytes": len(rep.received),
+                             "capture": raw if wrote_raw else None, "events": ev if wrote_ev else None,
+                             "sha256": hashlib.sha256(bytes(rep.received)).hexdigest()})
+        result["captures"] = manifest
+        result["export_errors"] = errors
+        result["export_complete"] = not errors
+        wrote = attempt("run.json", lambda: (d / "run.json").write_text(
+            json.dumps(result, indent=1, sort_keys=True) + "\n"))
+        if wrote is None:                                 # a minimal summary rather than none
+            result["export_errors"] = errors
+            result["export_complete"] = False
+            attempt("run.min.json", lambda: (d / "run.min.json").write_text(json.dumps(
+                {k: result.get(k) for k in ("label", "run_id", "stopped", "error", "losses",
+                                            "denominator_bytes", "repetitions_run", "incomplete")}
+                | {"export_errors": errors, "export_complete": False}, indent=1, sort_keys=True) + "\n"))
         return d
 
 
-def callable_port(name: str, write, read, fd=None) -> Port:
+def callable_port(name: str, write, read, fd=None, takes_timeout: bool = False) -> Port:
     """A Port over two callables. `read(timeout)` must return what is available within the
     timeout, possibly b"" — a transport that blocks forever is not bounded by any deadline."""
-    return Port(name, write=write, read=read, fd=fd)
+    return Port(name, write=write, read=read, fd=fd, takes_timeout=takes_timeout)
 
 
 def serial_port(device: str, baud: int = 115200, exclusive: bool = True) -> Port:
@@ -708,8 +941,16 @@ def serial_port(device: str, baud: int = 115200, exclusive: bool = True) -> Port
     EXCLUSIVELY, which is one of the plan's unexcluded hypotheses (§0.3: nothing recorded
     whether another process held the port) and is cheap to exclude."""
     import serial                                      # noqa: PLC0415 — optional dependency
-    s = serial.Serial(device, baud, timeout=0.05, exclusive=exclusive)
-    return Port(device, write=s.write, read=lambda t: (setattr(s, "timeout", t), s.read(65536))[1], fd=s.fileno())
+    s = serial.Serial(device, baud, timeout=0.05, write_timeout=WRITE_TIMEOUT_S, exclusive=exclusive)
+
+    def write(data, timeout=None):
+        s.write_timeout = WRITE_TIMEOUT_S if timeout is None else max(0.0, min(WRITE_TIMEOUT_S, timeout))
+        return s.write(data)
+
+    def read(t):
+        s.timeout = t
+        return s.read(65536)
+    return Port(device, write=write, read=read, fd=s.fileno(), takes_timeout=True)
 
 
 def main(argv=None) -> int:

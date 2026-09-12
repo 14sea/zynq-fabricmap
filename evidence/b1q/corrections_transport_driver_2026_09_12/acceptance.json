@@ -1,0 +1,285 @@
+{
+  "cases": {
+    "an_echo_on_a_topology_that_does_not_echo": {
+      "now": {
+        "clean": false,
+        "defects_by_kind": {
+          "unexpected_echo": 1
+        },
+        "frames_delivered": 302,
+        "host_echo_lines": 0,
+        "losses": 0
+      },
+      "observed_at_146e60a": {
+        "not probed at 146e60a": "the echo list was supplied regardless of topology"
+      }
+    },
+    "blank_lines_with_an_echo": {
+      "now": {
+        "clean": false,
+        "defects_by_kind": {
+          "empty_line": 100
+        },
+        "frames_delivered": 302,
+        "host_echo_lines": 1,
+        "losses": 0
+      },
+      "observed_at_146e60a": {
+        "clean": true,
+        "host_echo_lines": 1
+      }
+    },
+    "deadline": {
+      "now": {
+        "bytes_sent": 1048,
+        "censored_in_flight": 0,
+        "completed_exposure": false,
+        "declared_limit_s": 0.01,
+        "elapsed_s": 0.01,
+        "events": 2,
+        "every_wait_within_budget": true,
+        "frames_accepted": 1,
+        "frames_planned": 302,
+        "frames_sent": 1,
+        "incomplete": true,
+        "losses": 0,
+        "stopped": "exposure: the deadline bounded repetition 0 (deadline reached after 1 of 302 frames)"
+      },
+      "observed_at_146e60a": {
+        "bytes_sent": 98599,
+        "declared_limit_s": 0.01,
+        "elapsed_s": 0.115,
+        "frames_sent": 302,
+        "losses": 301
+      }
+    },
+    "export_error_clean": {
+      "now": {
+        "completed_exposure": true,
+        "exception": null,
+        "export_complete": false,
+        "export_errors": [
+          "events_000.json: OSError: injected events write failure"
+        ],
+        "files": [
+          "capture_000.bin",
+          "run.json"
+        ],
+        "stopped": "exposure: 1 repetitions completed"
+      },
+      "observed_at_146e60a": {
+        "exception": null,
+        "export_error": "OSError: injected events write failure",
+        "files": [
+          "capture_000.bin"
+        ],
+        "stopped": "exposure: 1 repetitions completed"
+      }
+    },
+    "export_error_with_detach": {
+      "now": {
+        "completed_exposure": false,
+        "exception": "tool error in repetition 0: OSError: primary synthetic detach",
+        "export_complete": false,
+        "export_errors": [
+          "events_000.json: OSError: injected events write failure"
+        ],
+        "files": [
+          "capture_000.bin",
+          "run.json"
+        ],
+        "stopped": "tool error in repetition 0: OSError: primary synthetic detach"
+      },
+      "observed_at_146e60a": {
+        "exception": "tool error in repetition 0: OSError: primary synthetic detach",
+        "export_error": "OSError: injected events write failure",
+        "files": [
+          "capture_000.bin"
+        ],
+        "stopped": "tool error in repetition 0: OSError: primary synthetic detach"
+      }
+    },
+    "host_traffic_shape": {
+      "now": {
+        "by_type": {
+          "AUDITDONE": {
+            "bytes": 855,
+            "count": 11
+          },
+          "AUDITGET": {
+            "bytes": 6744,
+            "count": 88
+          },
+          "IDENTACK": {
+            "bytes": 71,
+            "count": 1
+          },
+          "RECACK": {
+            "bytes": 896,
+            "count": 12
+          },
+          "SIGNOK": {
+            "bytes": 5647,
+            "count": 12
+          },
+          "TERMACK": {
+            "bytes": 76,
+            "count": 1
+          }
+        },
+        "bytes": 14289,
+        "frames": 125,
+        "max": 471,
+        "min": 71,
+        "note": "real rel-v4 frames; SIGNOK carries the archived sign_reply shape"
+      },
+      "observed_at_146e60a": {
+        "max": 14,
+        "min": 9,
+        "note": "plain COMMAND seq lines, 9-14 bytes"
+      }
+    },
+    "missing_final_newline": {
+      "now": {
+        "clean": false,
+        "defects_by_kind": {
+          "fragment": 1
+        },
+        "frames_delivered": 301,
+        "host_echo_lines": 0,
+        "losses": 1
+      },
+      "observed_at_146e60a": {
+        "clean": false,
+        "frames_delivered": 302,
+        "losses": 0
+      }
+    },
+    "one_expected_echo": {
+      "now": {
+        "clean": true,
+        "defects_by_kind": {},
+        "frames_delivered": 302,
+        "host_echo_lines": 1,
+        "losses": 0
+      },
+      "observed_at_146e60a": {
+        "clean": true,
+        "host_echo_lines": 1,
+        "losses": 0
+      }
+    },
+    "paced_overlap": {
+      "now": {
+        "driver_recorded_overlap": 124,
+        "host_writes": 125,
+        "host_writes_during_source_rx": 124,
+        "no_tx_control_host_writes": 0
+      },
+      "observed_at_146e60a": {
+        "host_writes": 125,
+        "host_writes_during_source_rx": 0
+      }
+    },
+    "partial_detach": {
+      "now": {
+        "actual_accepted_bytes": 1048,
+        "error": "tool error in repetition 0: OSError: primary synthetic detach",
+        "raw_capture_bytes": 1048,
+        "summary": {
+          "bytes_sent": 1048,
+          "censored_in_flight": 0,
+          "completed_exposure": false,
+          "denominator_bytes": 1048,
+          "frames_accepted": 1,
+          "frames_planned": 302,
+          "frames_sent": 1,
+          "incomplete": true,
+          "losses": 0,
+          "repetitions_run": 1
+        }
+      },
+      "observed_at_146e60a": {
+        "actual_accepted_bytes": 1048,
+        "raw_capture_bytes": 1048,
+        "summary": {
+          "bytes_sent": 0,
+          "denominator_bytes": 0,
+          "frames_sent": 0,
+          "losses": 0,
+          "repetitions_run": 0
+        }
+      }
+    },
+    "provenance_error": {
+      "now": {
+        "directory_exists": true,
+        "error": "tool error in repetition 0: OSError: primary synthetic detach",
+        "has_result": true,
+        "primary_cause": "OSError",
+        "primary_error": "primary synthetic detach",
+        "provenance_recorded": {
+          "error": "OSError: injected provenance read failure",
+          "unavailable": true,
+          "what": "provenance"
+        },
+        "raised": "RigError"
+      },
+      "observed_at_146e60a": {
+        "directory_exists": false,
+        "error": "injected provenance read failure",
+        "has_result": false,
+        "type": "OSError"
+      }
+    },
+    "serial_constructor": {
+      "now": {
+        "args": [
+          "OFFLINE-NOT-A-DEVICE",
+          115200
+        ],
+        "kwargs": {
+          "exclusive": true,
+          "timeout": 0.05,
+          "write_timeout": 5.0
+        },
+        "write_timeout_at_write": 0.25
+      },
+      "observed_at_146e60a": {
+        "args": [
+          "OFFLINE-NOT-A-DEVICE",
+          115200
+        ],
+        "kwargs": {
+          "exclusive": true,
+          "timeout": 0.05
+        }
+      }
+    },
+    "the_same_echo_a_hundred_times": {
+      "now": {
+        "clean": false,
+        "defects_by_kind": {
+          "unexpected_echo": 99
+        },
+        "frames_delivered": 302,
+        "host_echo_lines": 1,
+        "losses": 0
+      },
+      "observed_at_146e60a": {
+        "clean": true,
+        "host_echo_lines": 100,
+        "losses": 0
+      }
+    }
+  },
+  "provenance": {
+    "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+    "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+    "instrument_commit": null,
+    "instrument_root": "/home/test/zynq_psoracle",
+    "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+    "tool": "host/transport_rig.py",
+    "tool_sha256": "6d32d15430679a7cf183553de76f835deb244279dc69bbf8f0eaaa7381a18695"
+  }
+}

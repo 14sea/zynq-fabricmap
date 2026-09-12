@@ -87,6 +87,30 @@ for f in frames:
              "above the measured target; the error is bounded and recorded"}, indent=1, sort_keys=True) + "\n")
 
 # 4. the production entry point, over a pty, for both TX conditions
+# 4a. the timing-aware overlap control — offline, a fake clock, no real waiting
+now, busy, overlaps = [0.0], [0.0], []
+src = rig.callable_port("source", lambda d, t=None: (busy.__setitem__(0, now[0] + len(d) * rig.BYTE_TIME_S), len(d))[1],
+                        lambda t: b"", takes_timeout=True)
+hst = rig.callable_port("host", lambda d, t=None: (overlaps.append(now[0] < busy[0]), len(d))[1],
+                        lambda t: b"", takes_timeout=True)
+for tx_on in (True, False):
+    now[0], busy[0] = 0.0, 0.0
+    overlaps.clear()
+    r = rig.Repetition(index=0, frames=rig.plan_frames("overlap", 0))
+    rig.Driver(src, hst, src, tx_during_rx=tx_on, pace=True,
+               sleep=lambda t: now.__setitem__(0, now[0] + t), clock=lambda: now[0]).run(r, 1e6)
+    key = "tx_during_rx" if tx_on else "no_tx_control"
+    (OUT / "overlap.json").write_text(json.dumps({
+        **(json.loads((OUT / "overlap.json").read_text()) if (OUT / "overlap.json").is_file() and tx_on is False else {}),
+        key: {"host_writes": len(overlaps), "overlapping_source_tx": sum(overlaps),
+              "paced_seconds": round(now[0], 3),
+              "source_bytes": sum(f.bytes for f in r.frames),
+              "host_traffic": rig.host_traffic_shape(r.frames)}}, indent=1, sort_keys=True) + "\n")
+    if tx_on:
+        assert len(overlaps) == 125 and sum(overlaps) > 100, (len(overlaps), sum(overlaps))
+    else:
+        assert not overlaps and not r.overlap
+
 for tx, name in ((True, "run_tx"), (False, "run_notx")):
     d = OUT / name
     shutil.rmtree(d, ignore_errors=True)
@@ -99,10 +123,15 @@ for tx, name in ((True, "run_tx"), (False, "run_notx")):
             os.close(fd)
     rep = result["repetition_results"][0]
     assert rep["ended"] == "complete" and result["losses"] == 0, rep
-    assert rep["reads"] > 10 and result["denominator"] == "received bytes"
+    assert rep["reads"] > 10 and result["denominator"].startswith("received bytes")
+    assert result["completed_exposure"] and result["export_complete"] and not result["incomplete"]
     assert result["counters_after"]["available"] is False and result["counters_after"]["reason"]
-    print(json.dumps({"condition": name, "tx_during_rx": tx, "frames": rep["frames_sent"],
+    print(json.dumps({"condition": name, "tx_during_rx": tx,
+                      "frames_planned": rep["frames_planned"], "frames_accepted": rep["frames_accepted"],
                       "delivered": rep["frames_delivered"], "losses": result["losses"],
+                      "host_frames_written": result["host_frames_written"],
+                      "host_echo_lines": rep["host_echo_lines"],
                       "reads": rep["reads"], "denominator_bytes": result["denominator_bytes"],
                       "counters": result["counters_after"]["available"],
+                      "completed_exposure": result["completed_exposure"],
                       "exported": str(d.relative_to(ROOT))}, sort_keys=True))

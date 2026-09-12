@@ -23,7 +23,9 @@ import sys
 import tempfile
 import time
 import tty
+import types
 import unittest
+import unittest.mock
 from pathlib import Path
 
 R = Path(__file__).resolve().parent.parent
@@ -142,8 +144,7 @@ class TheGeneratedStream(unittest.TestCase):
         schedule = rig.host_schedule(self.frames)
         kinds: dict = {}
         for s in schedule:
-            k = s["line"].split(b" ")[0].decode()
-            kinds[k] = kinds.get(k, 0) + 1
+            kinds[s["reply"]] = kinds.get(s["reply"], 0) + 1
         self.assertEqual(len(schedule), 125)
         self.assertEqual(kinds["AUDITGET"], 88)          # one per chunk: 11 openers + 77 follow-ons
         self.assertEqual(kinds["AUDITDONE"], 11)         # one per record's last chunk
@@ -242,7 +243,7 @@ class TheDenominator(unittest.TestCase):
         self.assertEqual(res["losses"], 1)
         self.assertLess(res["denominator_bytes"], res["bytes_sent"])
         self.assertAlmostEqual(res["losses_per_100k_bytes"], 100000 / res["denominator_bytes"], places=6)
-        self.assertEqual(res["denominator"], "received bytes")
+        self.assertIn("received bytes", res["denominator"])
 
 
 class DeliveryNeedsTheBytesNotTheIndex(unittest.TestCase):
@@ -398,18 +399,20 @@ class TheDriver(unittest.TestCase):
     """P2-3: the execution contract, exercised — ordering, overlap, incremental capture and a
     deadline that bounds the operations rather than only the gaps between repetitions."""
 
-    def trace_port(self, response=b"", clock=None, sleep=None):
+    def trace_port(self, name="trace", clock=None):
+        """A port that records what IT was asked to do — the host's frames are real rel-v4 now,
+        so a classifier that looks at the bytes cannot tell source from host: the PORT does."""
         events = []
 
-        def write(data):
-            events.append({"op": "write", "t": clock(), "bytes": len(data),
-                           "kind": "source" if data.startswith(b"P3L5 ") else "host"})
+        def write(data, timeout=None):
+            events.append({"op": "write", "t": clock(), "bytes": len(data), "port": name,
+                           "timeout": timeout})
             return len(data)
 
-        def read(_t):
-            events.append({"op": "read", "t": clock()})
+        def read(t):
+            events.append({"op": "read", "t": clock(), "timeout": t})
             return b""
-        return rig.callable_port("trace", write, read), events
+        return rig.callable_port(name, write, read, takes_timeout=True), events
 
     def test_the_stream_is_written_frame_by_frame_and_drained_between(self):
         now = [0.0]
@@ -418,24 +421,53 @@ class TheDriver(unittest.TestCase):
         rig.Driver(port, port, port, tx_during_rx=False, sleep=lambda s: None, clock=lambda: now[0]).run(rep, 1e9)
         writes = [e for e in events if e["op"] == "write"]
         self.assertEqual(len(writes), 302)                       # not one big write
-        self.assertTrue(all(e["kind"] == "source" for e in writes))
         self.assertGreaterEqual(sum(1 for e in events if e["op"] == "read"), 302)
 
     def test_host_traffic_goes_to_the_host_port_at_its_scheduled_points(self):
         now = [0.0]
-        source, s_events = self.trace_port(clock=lambda: now[0])
-        host, h_events = self.trace_port(clock=lambda: now[0])
-        capture, _ = self.trace_port(clock=lambda: now[0])
+        source, s_events = self.trace_port("source", clock=lambda: now[0])
+        host, h_events = self.trace_port("host", clock=lambda: now[0])
+        capture, _ = self.trace_port("capture", clock=lambda: now[0])
         rep = rig.Repetition(index=0, frames=rig.plan_frames("t", 0))
         rig.Driver(source, host, capture, tx_during_rx=True,
                    sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0]).run(rep, 1e9)
         self.assertEqual(len([e for e in s_events if e["op"] == "write"]), 302)
         self.assertEqual(len([e for e in h_events if e["op"] == "write"]), 125)   # the derived schedule
-        self.assertTrue(all(e["kind"] == "host" for e in h_events if e["op"] == "write"))
         # the schedule is CONSUMED: the events interleave, they do not all follow the stream
         ordered = [e["op"] for e in rep.events]
         self.assertIn("write_host", ordered)
         self.assertLess(ordered.index("write_host"), len(ordered) - 1)
+        self.assertEqual(sum(rep.host_writes.values()), 125)      # the echo ledger, by line
+
+    def test_the_host_frames_are_rel_v4_with_a_justified_length_profile(self):
+        """Not `COMMAND seq\n` at 9-14 bytes: the instrument builds every host reply with
+        build_line and a payload — `{"seq": n}` for the acknowledgements, the signer's
+        `sign_reply` for SIGNOK — so the rig's do too, and their lengths follow from that."""
+        import l5_notary as l5
+        frames = rig.plan_frames("t", 0)
+        shape = rig.host_traffic_shape(frames)
+        self.assertEqual(shape["frames"], 125)
+        self.assertGreater(shape["bytes"], 10000)                  # real wire occupancy
+        for s in rig.host_schedule(frames):
+            parsed = l5.parse_line(s["line"].decode())              # a real frame, real CRC
+            self.assertEqual(parsed["type"], s["reply"])
+            self.assertEqual(parsed["token"], rig.token_for("t", 0))
+        lengths = {s["reply"]: len(s["line"]) for s in rig.host_schedule(frames)}
+        self.assertGreater(lengths["SIGNOK"], 400)                  # the signed answer
+        for ack in ("IDENTACK", "AUDITGET", "RECACK", "AUDITDONE", "TERMACK"):
+            self.assertTrue(65 <= lengths[ack] <= 90, (ack, lengths[ack]))
+
+    def test_the_signok_length_matches_the_archived_answer(self):
+        """The SIGNOK payload shape is taken from the archived notary log, not invented: building
+        the real answer with the real builder gives the same length as the rig's."""
+        import l5_notary as l5
+        log = json.loads((R / rig.HOST_PAYLOAD_SOURCE).read_text())
+        entry = log["notary_log"]["entries"][0]
+        token = log["notary_log"]["token"]
+        archived = len(l5.build_line("SIGNOK", entry["seq"], token, l5.encode_payload(entry["answer"])))
+        ours = len(rig.host_frame("SIGNOK", entry["seq"], token))
+        self.assertEqual(sorted(entry["answer"]), sorted(rig.host_payload("SIGNOK", entry["seq"])))
+        self.assertLessEqual(abs(archived - ours), 2, (archived, ours))
 
     def test_without_tx_during_rx_the_host_port_stays_silent(self):
         now = [0.0]
@@ -461,20 +493,129 @@ class TheDriver(unittest.TestCase):
         self.assertTrue(all("t" in e for e in reads))
         self.assertLess(reads[0]["t"], reads[1]["t"])
 
-    def test_the_deadline_bounds_the_operations_not_just_the_repetitions(self):
-        """The counterexample: a 0.1 s limit spent 2.232 s writing host commands and still
-        reported a completed repetition."""
-        now = [0.0]
+    def budgeted(self, consume_read: bool, now):
+        """A transport whose reader consumes exactly the timeout it is given — the owner's probe.
+        Nothing here can overrun unless the driver asks it to."""
+        def write(data, timeout=None):
+            self.asked.append({"op": "write", "t": now[0], "timeout": timeout})
+            return len(data)
+
+        def read(t):
+            self.asked.append({"op": "read", "t": now[0], "timeout": t})
+            if consume_read:
+                now[0] += t
+            return b""
+        return rig.callable_port("budgeted", write, read, takes_timeout=True)
+
+    def test_the_deadline_bounds_the_read(self):
+        """The counterexample: a 0.01 s limit, a reader that consumes its whole timeout, and the
+        driver asked for 0.05 s and then started a host write at t=0.05 — after expiry."""
+        self.asked, now = [], [0.0]
+        port = self.budgeted(True, now)
+        res = rig.Run("bounded", repetitions=1, seconds=0.01, tx_during_rx=True).execute(
+            port, sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0])
+        self.assertLessEqual(now[0], 0.01)
+        self.assertTrue(all(e["timeout"] is None or e["timeout"] <= 0.01 for e in self.asked), self.asked)
+        self.assertIn("deadline", res["stopped"])
+        self.assertTrue(res["incomplete"])
+        self.assertFalse(res["completed_exposure"])
+
+    def test_the_deadline_bounds_the_source_write_and_the_host_write(self):
+        """Every write is given the REMAINING budget, so a transport that can bound a write does.
+        A post-operation check cannot stop a write that has already blocked."""
+        self.asked, now = [], [0.0]
+        port = self.budgeted(False, now)
+        rig.Run("bounded", repetitions=1, seconds=0.5, tx_during_rx=True).execute(
+            port, sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0])
+        writes = [e for e in self.asked if e["op"] == "write"]
+        self.assertTrue(writes)
+        for w in writes:
+            self.assertIsNotNone(w["timeout"])
+            self.assertLessEqual(w["timeout"], 0.5)
+            self.assertGreaterEqual(w["timeout"], 0.0)
+
+    def test_the_deadline_bounds_the_scheduled_gap(self):
+        """A gap is capped by what is left, so waiting cannot overrun."""
+        now, slept = [0.0], []
+        port = rig.callable_port("x", lambda d, t=None: len(d), lambda t: b"", takes_timeout=True)
 
         def sleep(s):
+            slept.append(s)
             now[0] += s
-        port = rig.callable_port("slow", lambda d: len(d), lambda t: b"")
-        run = rig.Run("bounded", repetitions=1, seconds=0.1, tx_during_rx=True)
-        res = run.execute(port, sleep=sleep, clock=lambda: now[0])
-        self.assertLessEqual(now[0], 0.1 + rig.TX_GAP_MEDIAN_S)
+        res = rig.Run("gap", repetitions=1, seconds=0.02, tx_during_rx=True).execute(
+            port, sleep=sleep, clock=lambda: now[0])
+        self.assertLessEqual(now[0], 0.02)
+        self.assertTrue(all(x <= 0.02 for x in slept), slept)
         self.assertIn("deadline", res["stopped"])
-        self.assertEqual(res["repetition_results"][0]["ended"][:8], "deadline")
-        self.assertLess(res["repetition_results"][0]["frames_delivered"], 302)
+
+    def test_the_deadline_bounds_a_paced_source(self):
+        now = [0.0]
+        port = rig.callable_port("p", lambda d, t=None: len(d), lambda t: b"", takes_timeout=True)
+        res = rig.Run("paced", repetitions=1, seconds=0.05, tx_during_rx=False).execute(
+            port, sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0], pace=True)
+        self.assertLessEqual(now[0], 0.05)
+        self.assertIn("deadline", res["stopped"])
+        self.assertLess(res["frames_accepted"], 302)
+
+    def test_a_serial_port_is_opened_exclusively_and_with_a_write_timeout(self):
+        """An unbounded serial write cannot be stopped by any later check."""
+        seen = {}
+
+        class FakeSerial:
+            def __init__(self, *a, **k):
+                seen.update({"args": a, "kwargs": k})
+                self.write_timeout = None
+                self.timeout = None
+
+            def write(self, data):
+                seen["write_timeout_at_write"] = self.write_timeout
+                return len(data)
+
+            def read(self, n):
+                return b""
+
+            def fileno(self):
+                return 7
+        with unittest.mock.patch.dict(sys.modules, {"serial": types.SimpleNamespace(Serial=FakeSerial)}):
+            port = rig.serial_port("NOT-A-DEVICE")
+            port.write(b"x", 0.25)
+        self.assertTrue(seen["kwargs"]["exclusive"])
+        self.assertEqual(seen["kwargs"]["write_timeout"], rig.WRITE_TIMEOUT_S)
+        self.assertEqual(seen["write_timeout_at_write"], 0.25)
+
+    def test_the_paced_model_puts_host_traffic_inside_the_source_transmission(self):
+        """The independent variable of A1/B1. The source transmits continuously; a reply is due
+        the measured gap after the frame that caused it, which lands while a LATER frame is on
+        the wire. The first version's replies all fell after the source had finished."""
+        now, busy, overlaps = [0.0], [0.0], []
+
+        def source_write(data, timeout=None):
+            busy[0] = now[0] + len(data) * rig.BYTE_TIME_S
+            return len(data)
+
+        def host_write(data, timeout=None):
+            overlaps.append(now[0] < busy[0])
+            return len(data)
+        source = rig.callable_port("source", source_write, lambda t: b"", takes_timeout=True)
+        host = rig.callable_port("host", host_write, lambda t: b"", takes_timeout=True)
+        rep = rig.Repetition(index=0, frames=rig.plan_frames("t", 0))
+        rig.Driver(source, host, source, tx_during_rx=True, pace=True,
+                   sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0]).run(rep, 1e9)
+        self.assertEqual(len(overlaps), 125)
+        self.assertGreater(sum(overlaps), 100)                       # the overlap is real, not zero
+        self.assertEqual(sum(1 for o in rep.overlap if o["overlapping"]), sum(overlaps))
+        self.assertAlmostEqual(now[0], sum(f.bytes for f in rep.frames) * rig.BYTE_TIME_S, delta=0.2)
+
+    def test_the_no_tx_control_writes_nothing_on_the_host_port(self):
+        now = [0.0]
+        source, _ = self.trace_port("source", clock=lambda: now[0])
+        host, h_events = self.trace_port("host", clock=lambda: now[0])
+        rep = rig.Repetition(index=0, frames=rig.plan_frames("t", 0))
+        rig.Driver(source, host, source, tx_during_rx=False, pace=True,
+                   sleep=lambda s: now.__setitem__(0, now[0] + s), clock=lambda: now[0]).run(rep, 1e9)
+        self.assertEqual([e for e in h_events if e["op"] == "write"], [])
+        self.assertEqual(rep.overlap, [])
+        self.assertEqual(rep.host_writes, {})
 
 
 class TheFinalisation(unittest.TestCase):
@@ -538,6 +679,79 @@ class TheFinalisation(unittest.TestCase):
         raw = (self.d / on_disk["captures"][0]["capture"]).read_bytes()
         self.assertEqual(rig.analyse(frames, raw, rig.token_for("x", 0))["clean"], True)
 
+    def test_each_export_component_fails_on_its_own(self):
+        """P2-5: one outer try meant that failing events_000.json left run.json unwritten. Start
+        from a successful production run, fail ONE component at a time, and assert what survives."""
+        for target in ("capture_000.bin", "events_000.json", "run.json"):
+            with self.subTest(failed=target):
+                d = Path(tempfile.mkdtemp(prefix="rigcomp_"))
+                self.addCleanup(lambda p=d: __import__("shutil").rmtree(p, ignore_errors=True))
+                port, _ = loopback()
+                real_text, real_bytes = Path.write_text, Path.write_bytes
+
+                def text(path, data, *a, _t=target, **k):
+                    if path.name == _t:
+                        raise OSError(f"injected {_t} failure")
+                    return real_text(path, data, *a, **k)
+
+                def raw(path, data, *a, _t=target, **k):
+                    if path.name == _t:
+                        raise OSError(f"injected {_t} failure")
+                    return real_bytes(path, data, *a, **k)
+                with unittest.mock.patch.object(Path, "write_text", text), \
+                        unittest.mock.patch.object(Path, "write_bytes", raw):
+                    res = rig.Run("component", repetitions=1, tx_during_rx=False).execute(
+                        port, out_dir=d, sleep=lambda s: None)
+                self.assertFalse(res["export_complete"])
+                self.assertTrue(any(target in e for e in res["export_errors"]), res["export_errors"])
+                survivors = sorted(f.name for f in d.iterdir())
+                if target == "run.json":
+                    self.assertIn("run.min.json", survivors)      # a minimal summary rather than none
+                    self.assertIn("capture_000.bin", survivors)
+                    minimal = json.loads((d / "run.min.json").read_text())
+                    self.assertFalse(minimal["export_complete"])
+                else:
+                    self.assertIn("run.json", survivors)          # the summary is ALWAYS attempted
+                    on_disk = json.loads((d / "run.json").read_text())
+                    self.assertFalse(on_disk["export_complete"])
+                    self.assertTrue(on_disk["export_errors"])
+
+    def test_a_provenance_failure_does_not_replace_the_primary_error(self):
+        """P2-5's second boundary: a read failure while provenance hashes the framing module
+        raised a NEW OSError out of the summary, discarding the detach and its captured bytes."""
+        port, _ = whole_stream(fail_after=400)
+        real = Path.read_bytes
+        framing = Path(rig.l5.__file__)
+
+        def bad(path):
+            if path == framing:
+                raise OSError("injected provenance read failure")
+            return real(path)
+        with unittest.mock.patch.object(Path, "read_bytes", bad):
+            with self.assertRaises(rig.RigError) as cm:
+                rig.Run("prov", repetitions=3, tx_during_rx=False).execute(
+                    port, out_dir=self.d, sleep=lambda s: None)
+        self.assertIsInstance(cm.exception.__cause__, OSError)
+        self.assertIn("synthetic detach", str(cm.exception.__cause__))    # the PRIMARY error
+        self.assertIsNotNone(cm.exception.result)
+        on_disk = json.loads((self.d / "run.json").read_text())
+        self.assertTrue(on_disk["provenance"]["unavailable"])
+        self.assertIn("injected provenance read failure", on_disk["provenance"]["error"])
+        self.assertTrue((self.d / "capture_000.bin").is_file())
+
+    def test_a_counter_failure_is_recorded_not_raised(self):
+        port, _ = loopback()
+        real = rig.read_icounters
+        try:
+            rig.read_icounters = lambda fd: (_ for _ in ()).throw(OSError("counter boom"))
+            res = rig.Run("counters", repetitions=1, tx_during_rx=False).execute(
+                port, fd=1, out_dir=self.d, sleep=lambda s: None)
+        finally:
+            rig.read_icounters = real
+        self.assertTrue(res["counters_after"]["unavailable"])
+        self.assertIn("counter boom", res["counters_after"]["error"])
+        self.assertTrue((self.d / "run.json").is_file())
+
     def test_an_unwritable_export_is_recorded_and_does_not_replace_the_error(self):
         port, _ = whole_stream(fail_after=400)
         blocked = self.d / "file"
@@ -547,7 +761,187 @@ class TheFinalisation(unittest.TestCase):
                 port, out_dir=blocked / "under", sleep=lambda s: None)
         self.assertIsInstance(cm.exception.__cause__, OSError)
         self.assertIn("synthetic detach", str(cm.exception.__cause__))
-        self.assertIn("export_error", cm.exception.result)
+        self.assertFalse(cm.exception.result["export_complete"])
+        self.assertTrue(cm.exception.result["export_errors"])
+
+
+class OnlyCompleteLinesAndAccountedEchoes(unittest.TestCase):
+    """P2-1: what may be credited, and what may be normalised away.
+
+    Every case the review names: a complete stream, one legitimate echo, a missing final
+    newline, extra echo copies, blank lines with and without an echo, an echo on a topology that
+    does not echo, and a failed host write followed by apparent echo bytes.
+    """
+
+    def setUp(self):
+        self.frames = rig.plan_frames("t", 0)
+        self.stream = rig.stream_bytes(self.frames)
+        self.echo = rig.host_schedule(self.frames)[0]["line"]
+
+    def test_the_complete_stream(self):
+        res = rig.analyse(self.frames, self.stream)
+        self.assertTrue(res["clean"])
+        self.assertEqual(res["bytes_fragment"], 0)
+
+    def test_one_legitimate_echo(self):
+        res = rig.analyse(self.frames, self.stream + self.echo,
+                          echo_ledger={self.echo: 1}, echo_allowed=True)
+        self.assertTrue(res["clean"], res["defects_by_kind"])
+        self.assertEqual(res["host_echo_lines"], 1)
+        self.assertEqual(res["bytes_host_echo"], len(self.echo))
+        self.assertEqual(res["losses"], 0)
+
+    def test_a_missing_final_newline_is_a_fragment_not_a_delivery(self):
+        """The counterexample: 302 delivered and zero losses over 98 598 of 98 599 bytes."""
+        res = rig.analyse(self.frames, self.stream[:-1])
+        self.assertEqual(res["frames_delivered"], 301)
+        self.assertEqual(res["losses"], 1)
+        self.assertEqual(res["defects_by_kind"], {"fragment": 1})
+        self.assertEqual(res["bytes_fragment"], len(self.frames[-1].line) - 1)
+        self.assertFalse(res["clean"])
+
+    def test_extra_echo_copies_are_defects(self):
+        """One authorised echo appended a hundred times used to be clean."""
+        res = rig.analyse(self.frames, self.stream + self.echo * 100,
+                          echo_ledger={self.echo: 1}, echo_allowed=True)
+        self.assertEqual(res["host_echo_lines"], 1)
+        self.assertEqual(res["defects_by_kind"], {"unexpected_echo": 99})
+        self.assertFalse(res["clean"])
+
+    def test_blank_lines_are_defects_with_or_without_an_echo(self):
+        for ledger, allowed, extra in (({self.echo: 1}, True, self.echo), (None, False, b"")):
+            with self.subTest(echo=bool(extra)):
+                res = rig.analyse(self.frames, self.stream + b"\n" * 100 + extra,
+                                  echo_ledger=ledger, echo_allowed=allowed)
+                self.assertEqual(res["defects_by_kind"].get("empty_line"), 100)
+                self.assertFalse(res["clean"])
+
+    def test_an_echo_on_a_topology_that_does_not_echo(self):
+        res = rig.analyse(self.frames, self.stream + self.echo,
+                          echo_ledger={self.echo: 1}, echo_allowed=False)
+        self.assertEqual(res["host_echo_lines"], 0)
+        self.assertEqual(res["defects_by_kind"], {"unexpected_echo": 1})
+        self.assertIn("does not echo", res["defects"][0]["note"])
+        self.assertFalse(res["clean"])
+
+    def test_echo_bytes_after_a_host_write_that_failed(self):
+        """A write that did not complete never enters the ledger, so bytes that look like its
+        echo are unaccounted — the ledger counts SUCCESSFUL writes only."""
+        res = rig.analyse(self.frames, self.stream + self.echo, echo_ledger={}, echo_allowed=True)
+        self.assertEqual(res["host_echo_lines"], 0)
+        self.assertFalse(res["clean"])
+        self.assertGreaterEqual(res["unexpected_frames"] + len(res["defects"]), 1)
+
+    def test_an_echo_does_not_normalise_anything_else_away(self):
+        """The old `_without_echo` dropped any line that did not match, so merely having an echo
+        activated a normalisation that hid bytes. Only the accounted occurrences are removed."""
+        foreign = rig.build_frame(10 ** 6, "HB", 1, 66, rig.token_for("t", 0))
+        res = rig.analyse(self.frames, self.stream + self.echo + foreign.line,
+                          echo_ledger={self.echo: 1}, echo_allowed=True)
+        self.assertEqual(res["host_echo_lines"], 1)
+        self.assertEqual(res["defects_by_kind"], {"unexpected_index": 1})
+        self.assertFalse(res["clean"])
+
+
+class PartialRepetitions(unittest.TestCase):
+    """P2-2: planned, attempted and accepted are three different numbers."""
+
+    def setUp(self):
+        self.d = Path(tempfile.mkdtemp(prefix="rigpart_"))
+        self.addCleanup(lambda: __import__("shutil").rmtree(self.d, ignore_errors=True))
+
+    def port_that_stops_after(self, frames: int):
+        """Accepts `frames` source writes, then the reader detaches."""
+        state = {"writes": 0, "buf": bytearray(), "reads": 0}
+
+        def write(data, timeout=None):
+            state["writes"] += 1
+            state["buf"] += data
+            return len(data)
+
+        def read(_t):
+            state["reads"] += 1
+            if state["writes"] > frames:
+                raise OSError("synthetic detach")
+            out, state["buf"] = bytes(state["buf"]), bytearray()
+            return out
+        return rig.callable_port("stopping", write, read, takes_timeout=True), state
+
+    def test_a_deadline_does_not_turn_untransmitted_frames_into_losses(self):
+        """The counterexample: one IDENT written and read, then 302 sent and 301 losses."""
+        now = [0.0]
+
+        def read(t):
+            now[0] += t
+            return b""
+        port = rig.callable_port("timed", lambda d, t=None: len(d), read, takes_timeout=True)
+        res = rig.Run("deadline", repetitions=1, seconds=0.01, tx_during_rx=False).execute(
+            port, out_dir=self.d, clock=lambda: now[0], sleep=lambda t: now.__setitem__(0, now[0] + t))
+        self.assertEqual(res["frames_planned"], 302)
+        self.assertEqual(res["frames_accepted"], 1)
+        self.assertEqual(res["frames_sent"], 1)
+        self.assertEqual(res["losses"], 0)                    # nothing was lost: it was never sent
+        self.assertTrue(res["incomplete"])
+        self.assertFalse(res["completed_exposure"])
+        self.assertIn("deadline", res["stopped"])
+
+    def test_a_detach_analyses_and_aggregates_the_partial_capture(self):
+        """The counterexample: capture_000.bin held 1048 bytes while the summary said
+        frames_sent 0, bytes_sent 0, denominator_bytes 0, losses 0."""
+        port, _ = self.port_that_stops_after(1)
+        with self.assertRaises(rig.RigError):
+            rig.Run("detach", repetitions=1, tx_during_rx=False).execute(
+                port, out_dir=self.d, sleep=lambda s: None)
+        on_disk = json.loads((self.d / "run.json").read_text())
+        raw = (self.d / "capture_000.bin").read_bytes()
+        self.assertEqual(len(raw), 1048)                       # the IDENT
+        self.assertEqual(on_disk["frames_accepted"], 2)        # the second write completed too
+        self.assertEqual(on_disk["denominator_bytes"], 1048)   # the partial capture IS the denominator
+        self.assertEqual(on_disk["losses"], 0)                 # nothing lost: the second was in flight
+        self.assertEqual(on_disk["censored_in_flight"], 1)
+        self.assertEqual(on_disk["repetitions_run"], 1)
+        self.assertTrue(on_disk["incomplete"])
+        self.assertIn("tool error", on_disk["stopped"])
+
+    def test_a_detach_after_several_complete_frames(self):
+        port, _ = self.port_that_stops_after(5)
+        with self.assertRaises(rig.RigError):
+            rig.Run("detach 5", repetitions=1, tx_during_rx=False).execute(
+                port, out_dir=self.d, sleep=lambda s: None)
+        on_disk = json.loads((self.d / "run.json").read_text())
+        planned = rig.plan_frames(on_disk["run_id"], 0)
+        self.assertEqual(on_disk["frames_accepted"], 6)
+        self.assertEqual(on_disk["losses"], 0)
+        self.assertEqual(on_disk["censored_in_flight"], 1)
+        self.assertEqual((self.d / "capture_000.bin").stat().st_size, sum(f.bytes for f in planned[:5]))
+
+    def test_a_write_that_fails_mid_repetition_is_uncertain_not_a_loss(self):
+        state = {"n": 0}
+
+        def write(data, timeout=None):
+            state["n"] += 1
+            if state["n"] == 4:
+                raise OSError("write failed in flight")
+            return len(data)
+        port = rig.callable_port("flaky", write, lambda t: b"", takes_timeout=True)
+        with self.assertRaises(rig.RigError):
+            rig.Run("uncertain", repetitions=1, tx_during_rx=False).execute(
+                port, out_dir=self.d, sleep=lambda s: None)
+        on_disk = json.loads((self.d / "run.json").read_text())
+        self.assertEqual(on_disk["frames_accepted"], 3)
+        self.assertEqual(on_disk["frames_uncertain"], 1)       # the write that died in flight
+        self.assertEqual(on_disk["losses"], 0)                 # the three that were sent arrived
+        self.assertTrue(on_disk["incomplete"])
+
+    def test_a_zero_loss_incomplete_run_is_not_a_completed_exposure(self):
+        port, _ = self.port_that_stops_after(1)
+        with self.assertRaises(rig.RigError) as cm:
+            rig.Run("incomplete", repetitions=1, tx_during_rx=False).execute(
+                port, out_dir=self.d, sleep=lambda s: None)
+        res = cm.exception.result
+        self.assertEqual(res["losses"], 0)
+        self.assertFalse(res["completed_exposure"])
+        self.assertTrue(res["incomplete"])
 
 
 class TheCountersNoSessionHad(unittest.TestCase):
