@@ -1,5 +1,14 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
 
+> **S0 review (`fa0271e`): manifest verified; S1 readiness HOLD for one P2.**
+> The new committed-manifest test hard-codes S0 fields. An independently verified
+> temporary S1 manifest immediately fails its null-prereg assertion. Move exact S0
+> assertions to a fixture and verify the real manifest consistently across legal
+> stages before freeze; then regenerate pins and S0. Image compatibility remains
+> accepted. See the [transition review](b2_s0_transition_review_2026_09_12.md).
+> No production freeze, push, ruling or board action was performed. Earlier banners
+> below are historical.
+
 > **Section 7 review PASS within static compatibility and offline scope (`9fa8a7a`).**
 > Image `d164cd1d…` and ELF `7de96ed2…` match live build evidence. Twenty-two key
 > functions are identical to B1; B2's allowlists pass against the B1 RTL. Independent

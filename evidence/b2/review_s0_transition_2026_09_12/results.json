@@ -1,0 +1,60 @@
+{
+  "manifest_sha256": "af2717476a518f3fcb31d5c76599a17585367fdc421f9607b06aaca424924540",
+  "prereg_sha256": "68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0",
+  "production_manifest_unchanged": true,
+  "s0_test": {
+    "errors": 0,
+    "failures": 0,
+    "output": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK\n",
+    "ran": 1,
+    "skipped": 0
+  },
+  "s0_verify": {
+    "checks": {
+      "board": "17A6",
+      "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+      "instrument_pins": {
+        "b1_files_verified": 105,
+        "files_verified": 71,
+        "pins_sha256": "e848325308ee31cf479b733bd6bd93cde466991b86bb424a70c9ed81e2d8a232"
+      },
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "qualification_plan": "ok (20 records at budget 8)",
+      "stage": "S0"
+    },
+    "manifest_sha256": "af2717476a518f3fcb31d5c76599a17585367fdc421f9607b06aaca424924540",
+    "qualified": false,
+    "refusal": null,
+    "stage": "S0"
+  },
+  "s1_preview_test": {
+    "errors": 0,
+    "failures": 1,
+    "output": "F\n======================================================================\nFAIL: test_the_committed_manifest_is_not_permission (test_b2_runner.RefusalOrder.test_the_committed_manifest_is_not_permission)\nThe manifest in the tree is S0: derived, not frozen, no board_ready, no ruling. Its\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/home/test/zynq_fabricmap/tests/test_b2_runner.py\", line 163, in test_the_committed_manifest_is_not_permission\n    self.assertIsNone((m.get(\"prereg\") or {}).get(\"sha256\"))\nAssertionError: '68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0' is not None\n\n----------------------------------------------------------------------\nRan 1 test in 0.001s\n\nFAILED (failures=1)\n",
+    "ran": 1,
+    "skipped": 0
+  },
+  "s1_preview_verify": {
+    "checks": {
+      "board": "17A6",
+      "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+      "instrument_pins": {
+        "b1_files_verified": 105,
+        "files_verified": 71,
+        "pins_sha256": "e848325308ee31cf479b733bd6bd93cde466991b86bb424a70c9ed81e2d8a232"
+      },
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "qualification_plan": "ok (20 records at budget 8)",
+      "stage": "S1"
+    },
+    "manifest_sha256": "fc744e4d8fd73d4de337b866612af4683854116b4376e4e1e9da71eb1269b33d",
+    "qualified": false,
+    "refusal": null,
+    "stage": "S1"
+  }
+}
