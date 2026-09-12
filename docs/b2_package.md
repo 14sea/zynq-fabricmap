@@ -11,6 +11,17 @@
 > no ruling, freeze, board_ready transition, push or board time is authorized here.
 > Earlier banners below are historical.
 
+> **§7 review PASS (static compatibility and offline verification), and its five documentation
+> corrections are applied** — including the one that matters most: the preregistration said
+> champion holdout records use `mode_holdout = 1`, and the firmware sets no holdout mode bit at
+> all; it rewrites and remeasures the champion and computes holdout F1 from that fresh 64-vector
+> readout. §2 now says so, **before** the preregistration's bytes are frozen, which is the only
+> time such a correction may be made. The other four: the imports are three derived and ten
+> verbatim of two kinds with `p3_data.h` in neither; the build provenance is 47 translation units,
+> 86 headers and seven runtime objects rather than "6 BSP inputs"; the B2 profile's demonstrated
+> API path (the accepted non-first-slice run) is now distinguished from the B2Q-only model CLI;
+> and one test report is the citation. Both ruling texts stand as labels — which is not issuance.
+
 > **The §7 package is SUBMITTED for the owner's review at `619b22b`:
 > [`docs/b2_section7_submission_2026_09_12.md`](b2_section7_submission_2026_09_12.md).** It works
 > through §7's compatibility list and its guard list item by item, names the test behind each

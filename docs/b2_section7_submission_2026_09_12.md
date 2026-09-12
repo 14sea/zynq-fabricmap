@@ -14,7 +14,7 @@ and — where an item rests on reading rather than on a check — it says that i
 | | |
 |---|---|
 | image | `firmware/b2/bsp/out/b2_app.bin`, **`d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5`**, 114 708 bytes; ELF `7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc` |
-| build evidence | `evidence/b2/build_evidence.json` — 20 sources, 6 BSP inputs, the pinned toolchain by digest, and **two clean builds agreeing bit for bit** on both the binary and the ELF |
+| build evidence | `evidence/b2/build_evidence.json` — **47 translation units, 86 headers and seven runtime objects**, with the compiler's own per-unit dependency graph, the build script's lists and the header roots; the pinned toolchain by digest; and **two clean builds agreeing bit for bit** on both the binary and the ELF. (The document's `sources` map has 20 entries — the application's own sources, headers and scripts — and `bsp_inputs` has six *categories*, not six files.) |
 | preregistration | `docs/b2_preregistration.md` (NOT frozen; `prereg.sha256` is null until S1, which is the owner's) |
 | host tools | five, §7's list, below |
 | B2Q's experiment | `evidence/b2/b2q_plan.json`, `evidence/b2/b2q_prediction.json`, pinned by the manifest at S0 |
@@ -45,9 +45,13 @@ derivation from B1 and on the owner reading the source.
 | no SLCR write | `b2_app.c:152` declares `SLCR_PSS_IDCODE` READ ONLY and only reads it | **reading** — no automated guard forbids an SLCR write |
 | the watchdog gating | `b2_app.c` (D-s1, 30 s, flag-gated) | `b2_runner` refuses a preflight whose L6 manifest does not carry the instrument's watchdog pins; the firmware side is **reading** |
 
-The image's relationship to B1 is recorded in `firmware/b2/IMPORT.json`: **10 files verbatim** from
-the instrument at `689dde1`, **3 derived** (`b2_app.c`, `b2_wire.c`, `p3_data.h`), each derived
-file required to exist and to DIFFER from its base.
+The image's relationship to B1 is recorded in `firmware/b2/IMPORT.json`. **Three files are
+DERIVED** — `b2_app.c`, `b2_wire.c`, `b2_wire.h` — each required to exist and to DIFFER from its
+base. **Ten are VERBATIM**, and they are of two kinds: six are the instrument's own derivation and
+transaction units (`p3_derive.c/.h`, `p3_pull.c/.h`, `p3_rectx.c/.h`) and four are B1's BSP
+scaffold (`bspconfig.h`, `xmem_config.h`, `xparameters.h`, `lscript.ld`) — not ten direct
+instrument imports. `p3_data.h` is in neither list: it is **generated B2 data**, produced by
+`host/gen_b2_data.py` and checked fresh from its generator by the guards below.
 
 ---
 
@@ -106,10 +110,15 @@ contacted. In particular the modelled rate (4 490.86 /h) is an artefact of a vir
 
 1. **No board session has been run and none is authorised.** Every fixture is the model standing
    in for a board.
-2. **The B2 (map-utility) profile has no modelled demonstration.** B2Q has one; a B2 slice at
-   budget 600 is thousands of records and belongs in a one-off demonstration. The runner's B2 path
-   is covered by unit and refusal tests and by an independently reviewed non-first-slice run, not
-   by an end-to-end modelled session.
+2. **The B2 (map-utility) profile has no modelled demonstration through the CLI.** What exists,
+   and what does not, stated apart:
+   * the API path IS demonstrated — an independently reviewed **non-first-slice** B2 run (pairs 7
+     and 8, 2 406 records) in which every record was SCORED and audited, the runner's callback
+     returned PASS with zero findings, and no pooled primary was claimed, as the owner's
+     modelled-integration review of 2026-09-12 accepted;
+   * `host/b2_modelled_session.py`'s **CLI drives B2Q only**, because a B2 slice at budget 600 is
+     thousands of records and belongs in a one-off demonstration rather than a suite fixture.
+   No further identical demonstration is sought.
 3. **The compatibility items marked "reading" in §2 have no automated guard.**
 4. **The preregistration is not frozen and the image is not `board_ready`** — both are the owner's.
 5. **B1Q's transport stop-loss is unresolved and its root cause unattributed** (preregistration
@@ -126,6 +135,33 @@ contacted. In particular the modelled rate (4 490.86 /h) is an artefact of a vir
    clean-tree proof, and B2Q's pinned experiment.
 2. To say whether the ruling texts above are the ones to be signed.
 3. Nothing else. `board_ready`, the freeze, the rulings and board time are not requested here.
+
+## 7a. Corrections made after the owner's §7 review of 2026-09-12
+
+The review PASSED this package within static compatibility and offline verification and asked for
+five documentation corrections before the freeze. All five are applied, and this document is one
+of the things corrected:
+
+1. **The imports were misidentified** here. §2 now says: three DERIVED (`b2_app.c`, `b2_wire.c`,
+   `b2_wire.h`), ten VERBATIM of two kinds (six instrument derivation/transaction units, four B1
+   BSP scaffold files), and `p3_data.h` in neither — it is generated B2 data.
+2. **"6 BSP inputs" counted categories.** §1 now states the provenance: 47 translation units,
+   86 headers and seven runtime objects, with the dependency graph, the build lists and the
+   header roots.
+3. **§6 and the runner's docstring denied a B2 modelled demonstration.** Both now distinguish the
+   demonstrated API path — the accepted non-first-slice run, pairs 7 and 8, 2 406 records, PASS
+   with zero findings and no pooled primary — from the B2Q-only model CLI, and no further
+   identical demonstration is sought.
+4. **The reports README labelled two reports as the current citation.** The earlier one is kept
+   and marked superseded for this submission.
+5. **The preregistration said champion holdout records use `mode_holdout = 1`.** The firmware sets
+   no holdout mode bit: it rewrites and remeasures the champion as a real candidate and computes
+   holdout F1 from that fresh 64-vector readout. `docs/b2_preregistration.md` §2 now says so.
+   This correction lands **before** the preregistration's bytes are frozen, which is the only time
+   it may: an already frozen document is not edited to make its prose match.
+
+The review also found both ruling texts suitable as technical labels, which is not issuance,
+signature or approval of any session.
 
 ## 8. Where to look
 

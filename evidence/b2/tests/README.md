@@ -28,7 +28,8 @@ Written by `host/b2_test_report.py`. A report is a **clean-tree proof** only whe
   guards, HEAD `2ed95f4`, **1 893 tests, zero skips, OK**, `clean_tree_proof: true` with
   `proof_refusals: []`, the complete `Ran 1893 tests in …s` summary and a single `OK` as the log's
   last word, the start and end snapshots agreeing on HEAD, cleanliness, the instrument, the pinned
-  surface and every artifact digest. **This is the report the package cites.**
+  surface and every artifact digest. **Superseded for the current submission** by the report
+  below, which was taken at the submitted HEAD.
 - `test_report_2026-09-12T134616Z.json` — schema **2.0.0**, HEAD `619b22b`, **1 895 tests, zero
   skips, OK**, `clean_tree_proof: true` with `proof_refusals: []`, taken on the pushed tree that
   the §7 package is submitted from. **This is the report the package cites.**

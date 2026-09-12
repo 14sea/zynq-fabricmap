@@ -47,10 +47,12 @@ ones the owner intends to sign, change them here — the runner refuses any othe
 two must agree before a board session is possible.
 
 WHAT IS NOT DONE HERE, stated rather than implied:
-  * The B2 (map-utility) profile has no modelled demonstration yet. B2Q has one
-    (`host/b2_modelled_session.py`), and the whole offline S1 → B2Q → S2 → S3 → fresh-process
-    verification runs from it with this runner's own verdict returning PASS; a B2 slice at
-    budget 600 is thousands of records and belongs in a one-off demonstration.
+  * The B2 (map-utility) profile has no modelled demonstration THROUGH THE CLI. Its API path is
+    demonstrated: an independently reviewed non-first-slice run (pairs 7 and 8, 2 406 records)
+    returned PASS from this runner's callback with zero findings and no pooled primary claimed.
+    `host/b2_modelled_session.py`'s CLI drives B2Q only — a B2 slice at budget 600 is thousands of
+    records — and the whole offline S1 → B2Q → S2 → S3 → fresh-process verification runs from it
+    with this runner's own verdict returning PASS.
   * No board session has been run, and none is authorised. Every fixture and every modelled
     session is the model standing in for a board: none of it is evidence about silicon.
 """
