@@ -73,7 +73,7 @@ import b2_plan as bp  # noqa: E402
 import b2_search as bs  # noqa: E402
 
 SCHEMA = "b2_manifest"
-SCHEMA_VERSION = "0.2.4"          # 0.2.3 -> 0.2.4: the instrument pin TABLE is a frozen input
+SCHEMA_VERSION = "0.2.5"          # 0.2.4 -> 0.2.5: B2Q's frozen experiment is a pinned input
 MANIFEST = REPO_ROOT / "manifests/b2_manifest.json"
 B1_MANIFEST = REPO_ROOT / "manifests/b1_manifest.json"
 B2_VARIANT = "0x42310001"
@@ -160,6 +160,34 @@ def carrier_lineage(root: Path = REPO_ROOT, b1_manifest: Path = B1_MANIFEST, b1_
                     "it does not qualify this manifest — the B2 image needs its own B2Q session (S2)"}
 
 
+def qualification_plan_pin(manifest_seeds: list, fid: str, map_sha256: str, commit: str,
+                           root: Path = REPO_ROOT) -> dict:
+    """B2Q's frozen experiment, pinned by path and digest AND re-derived here, so the pinned bytes
+    cannot drift from the rule that produced them. Recorded at S0 and frozen with the rest at S1,
+    which is what makes the qualification reviewable BEFORE the session that calibrates from it
+    (the owner's recommendation of 2026-09-11)."""
+    rel_plan, rel_pred = "evidence/b2/b2q_plan.json", "evidence/b2/b2q_prediction.json"
+    pp, qp = Path(root) / rel_plan, Path(root) / rel_pred
+    for rel, path in ((rel_plan, pp), (rel_pred, qp)):
+        if not path.is_file():
+            raise Refusal(f"{rel} is absent: generate it with `python3 host/b2_plan.py --qualification`")
+    plan, prediction = json.loads(pp.read_text()), json.loads(qp.read_text())
+    want_plan = bp.build_qualification_plan(fid, map_sha256, commit, manifest_seeds)
+    want_plan = {**want_plan, "prediction_sha256": canonical_sha256(prediction)}
+    want_pred = bp.build_qualification_prediction(fid, map_sha256, commit, manifest_seeds)
+    if _differences(plan, want_plan):
+        raise Refusal(f"{rel_plan} is not the canonical B2Q plan: {_differences(plan, want_plan)[:3]}")
+    if _differences(prediction, want_pred):
+        raise Refusal(f"{rel_pred} is not the canonical B2Q prediction: "
+                      f"{_differences(prediction, want_pred)[:3]}")
+    return {"path": rel_plan, "sha256": sha256_file(pp), "prediction_path": rel_pred,
+            "prediction_sha256": sha256_file(qp),
+            "master_seed": plan["seed_derivation"]["master_seed"],
+            "pairs": plan["seed_derivation"]["pairs"],
+            "budget_per_arm": plan["budget_per_arm"], "records": plan["records"]["total"],
+            "planning_bound": plan["planning_bound"]}
+
+
 def instrument_pins_pin(root: Path = REPO_ROOT) -> dict:
     """The pin of the instrument pin TABLE: its path and its sha256."""
     rel = "manifests/b2_instrument_pins.json"
@@ -234,6 +262,8 @@ def init(image_evidence: Path | None, root: Path = REPO_ROOT, b1_manifest: Path 
          # files this manifest's own derivations depend on; the table is everything a verdict
          # depends on, and is re-verified on every verify().
          "instrument_pins": instrument_pins_pin(root),
+         "qualification_plan": qualification_plan_pin(seeds, fid, bmaps.sha256_of(self_map),
+                                                      bp.INSTRUMENT_COMMIT, root),
          "qualification": None, "qualified": False, "calibration": None, "plan": None,
          "rulings_binding": {"B2Q": ["session=B2Q", "image_sha256", "prereg_sha256", "b2_manifest_sha256 (manifest_at_run: the S1 manifest)"],
                              "B2": ["session=B2", "master_seed", "image_sha256", "prereg_sha256", "b2_manifest_sha256 (the S3 manifest)"]},
@@ -570,6 +600,18 @@ def _check_frozen_inputs(manifest: dict, root: Path, b1_root: Path) -> dict:
         checks["instrument_pins"] = b2_pins.verify(manifest, root=root, b1_root=b1_root)
     except b2_pins.PinRefusal as exc:
         raise Refusal(f"instrument pins: {exc}") from None
+    # B2Q's frozen experiment: the pinned bytes, and the rule that produced them, on every call
+    qp = manifest.get("qualification_plan")
+    if not isinstance(qp, dict):
+        raise Refusal("the manifest pins no B2Q qualification plan")
+    rebuilt = qualification_plan_pin([tuple(x) for x in manifest["seeds"]["pairs"]],
+                                     manifest["experiment"]["fitness"],
+                                     manifest["map"]["canonical_json_sha256"],
+                                     manifest["instrument"]["psoracle_commit"], root)
+    diff = _differences(qp, rebuilt)
+    if diff:
+        raise Refusal(f"the pinned B2Q experiment is not the canonical one: {diff[:3]}")
+    checks["qualification_plan"] = f"ok ({qp['records']} records at budget {qp['budget_per_arm']})"
     try:
         b1q.verify(m1, root=b1_root)
     except b1q.QualificationRefusal as exc:

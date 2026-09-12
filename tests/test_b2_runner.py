@@ -287,8 +287,8 @@ class RefusalOrder(unittest.TestCase):
                                 (-1.0, "is not a finite positive rate"),
                                 ("2807", "is not a finite positive rate"),
                                 (True, "is not a finite positive rate"),
-                                (1.0, "is not the declared planning bound"),
-                                (rn.QUAL_PLANNING_RATE_PER_HOUR * 10, "is not the declared planning bound")):
+                                (1.0, "is not the manifest's pinned planning bound"),
+                                (rn.QUAL_PLANNING_RATE_PER_HOUR * 10, "is not the manifest's pinned planning bound")):
                 with self.subTest(rate=bad):
                     self.refuses(f.args(profile=rn.QUALIFICATION, pair_first=None, pair_count=None,
                                         qual_rate_per_hour=bad), needle, profile=rn.QUALIFICATION)
@@ -381,6 +381,46 @@ class PureParts(unittest.TestCase):
         undetermined = copy.deepcopy(plan)
         undetermined["session_split"] = {"status": "UNDETERMINED until B2Q measures the rate"}
         self.assertIsNone(rn.slice_in_split(undetermined, 0, 4), "an undetermined split licenses no slice")
+
+    def test_the_pinned_b2q_experiment_is_read_not_derived(self):
+        """S0 records B2Q's frozen experiment and S1 binds its bytes, so the producer and the
+        offline re-adjudication read the SAME reviewed documents (the owner's recommendation of
+        2026-09-11). A file that drifted from its pin is a refusal."""
+        pin = rn.qualification_pin(self.f.manifest)
+        plan, prediction, seeds = rn.qualification_documents(self.f.manifest)
+        self.assertEqual(plan["session"], bman.QUAL_SESSION)
+        self.assertEqual(seeds, [tuple(x) for x in pin["pairs"]])
+        self.assertEqual(plan["budget_per_arm"], pin["budget_per_arm"])
+        self.assertEqual(len(prediction["pairs"]), rn.QUAL_PAIRS)
+        for mutate, needle in (
+                (lambda m: m["qualification_plan"].__setitem__("sha256", "0" * 64), "does not hash"),
+                (lambda m: m["qualification_plan"].__setitem__("prediction_sha256", "0" * 64), "does not hash"),
+                (lambda m: m["qualification_plan"].__setitem__("path", "evidence/b2/nope.json"), "is absent"),
+                (lambda m: m["qualification_plan"].__setitem__("pairs", [[1, 2]]), "pair seeds are not"),
+                (lambda m: m["experiment"].__setitem__("fitness", "F3"), "fitness or map is not"),
+                (lambda m: m.__setitem__("qualification_plan", None), "pins no B2Q qualification plan"),
+                (lambda m: m.__setitem__("qualification_plan", {}), "is None, not str")):
+            with self.subTest(needle=needle):
+                bad = copy.deepcopy(self.f.manifest)
+                mutate(bad)
+                with self.assertRaises(rn.Refusal) as cm:
+                    rn.qualification_documents(bad)
+                self.assertIn(needle, str(cm.exception))
+
+    def test_the_pinned_planning_bound_is_the_deadline(self):
+        rate = rn.qualification_planning_rate(self.f.manifest)
+        plan = rn.qualification_session_plan(self.f.manifest, "ab" * 32)
+        self.assertEqual(plan["deadline_rate"]["rate_per_hour"], rate)
+        self.assertEqual(plan["deadline_rate"]["source"], "the manifest's pinned B2Q planning bound")
+        self.assertAlmostEqual(plan["session_timeout_s"], rn.deadline_s(plan["expected_records"], rate))
+        for bad, needle in ((0, "not a finite positive rate"), (-1, "not a finite positive rate"),
+                            ("2807", "not a finite positive rate"), (float("inf"), "not a finite positive rate")):
+            with self.subTest(rate=bad):
+                m = copy.deepcopy(self.f.manifest)
+                m["qualification_plan"]["planning_bound"]["rate_per_hour"] = bad
+                with self.assertRaises(rn.Refusal) as cm:
+                    rn.qualification_planning_rate(m)
+                self.assertIn(needle, str(cm.exception))
 
     def test_the_qualification_seeds_are_disjoint_from_the_experiments(self):
         seeds = rn.qualification_seeds(self.f.manifest)

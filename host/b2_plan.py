@@ -41,6 +41,21 @@ SESSION_LABEL = "b2-session"
 GATE_REPORT = REPO_ROOT / "evidence/b2/gate/recomputed_2026_09_10/gate_report.json"      # v0.3 rules over run 3's rows
 GATE_RUN_REPORT = REPO_ROOT / "evidence/b2/gate/gate_report.json"                         # run 3 as run (the rows' provenance)
 ALPHA = 0.05
+# --- B2Q, the image qualification and calibration session (preregistration §6a) -----------------
+# Its experiment is FROZEN here and pinned by the manifest at S0, so the qualification is
+# reviewable before the session that produces its calibration, and so the producer and the offline
+# re-adjudication read the SAME documents instead of each deriving them (the owner's standing
+# recommendation, 2026-09-11).
+QUAL_LABEL = "b2-qualification"
+QUAL_BUDGET = 8                  # §6a: one pair at budget 8 (16 search records + 2 holdout)
+QUAL_PAIRS = 1
+QUAL_PLAN = REPO_ROOT / "evidence/b2/b2q_plan.json"
+QUAL_PREDICTION = REPO_ROOT / "evidence/b2/b2q_prediction.json"
+# B2Q's deadline is a PLANNING bound — the rate it measures does not exist yet — so it is declared
+# here with its rule and pinned with the rest, never chosen per invocation.
+QUAL_PLANNING_RATE_PER_HOUR = 2807.0
+QUAL_PLANNING_RATE_RULE = ("the slowest archived planning rate (the last observed B1 mapping, this "
+                           "document's planning_rates_NOT_calibration); B2Q MEASURES the real one")
 AUDIT_POLICY = "all-self-reporting"      # the owner's decision of 2026-09-10 for the first B2 image
 SESSION_SPAN_MAX_S = 7200                # the registered two-hour criterion, applied per session to the EXPECTED span
 DEADLINE_FORMULA = "1.25 x records x 3600 / rate + 600 (the instrument's l6_schedule.session_timeout_s)"
@@ -160,6 +175,56 @@ def predict(fid: str, budget: int, seeds: list[tuple[int, int]], map_sha256: str
     return out
 
 
+def qualification_master(instrument_commit: str) -> int:
+    return bs.master_seed(QUAL_LABEL, instrument_commit)
+
+
+def qualification_seeds(instrument_commit: str, b2_pairs: list) -> list[tuple[int, int]]:
+    """B2Q's pairs: its own label's stream, excluding the frozen archived sets AND every seed the
+    B2 experiment itself uses, so the calibration session can never share a landscape with the
+    experiment it calibrates (preregistration §6a)."""
+    exclusion, _ = frozen_seed_exclusion()
+    used = {int(s) for pair in b2_pairs for s in pair}
+    return bs.pair_seeds(qualification_master(instrument_commit), QUAL_PAIRS,
+                         exclude=frozenset(exclusion) | used)
+
+
+def build_qualification_plan(fid: str, map_sha256: str, instrument_commit: str, b2_pairs: list) -> dict:
+    """B2Q's frozen experiment — a pure function of the fitness, the map, the instrument commit and
+    B2's own seeds. Written to evidence/b2/b2q_plan.json and pinned by the manifest at S0."""
+    exclusion, sources = frozen_seed_exclusion()
+    seeds = qualification_seeds(instrument_commit, b2_pairs)
+    return {"schema": "b2_plan", "schema_version": "1.0.0", "session": "B2Q", "fitness": fid,
+            "budget_per_arm": QUAL_BUDGET, "pairs": QUAL_PAIRS,
+            "map": {"path": str(bmaps.SELF_MAP.relative_to(REPO_ROOT)), "sha256": map_sha256},
+            "seed_derivation": {"label": QUAL_LABEL, "commit": instrument_commit,
+                                "master_seed": qualification_master(instrument_commit),
+                                "pairs": [list(x) for x in seeds],
+                                "excluded_frozen_sets": sources,
+                                "excluded_b2_pairs": [list(x) for x in b2_pairs],
+                                "excluded_values_total": len(exclusion) + 2 * len(b2_pairs),
+                                "rule": "first 4 bytes of sha256(label|instrument commit); the frozen "
+                                        "archived sets AND every B2 pair seed excluded"},
+            "records": {"per_pair": 2 * QUAL_BUDGET + 2, "total": bsess_records(QUAL_PAIRS, QUAL_BUDGET)},
+            "audit_policy": AUDIT_POLICY,
+            "planning_bound": {"rate_per_hour": QUAL_PLANNING_RATE_PER_HOUR,
+                               "rule": QUAL_PLANNING_RATE_RULE,
+                               "deadline_formula": DEADLINE_FORMULA,
+                               "session_timeout_s": 1.25 * bsess_records(QUAL_PAIRS, QUAL_BUDGET)
+                               * 3600 / QUAL_PLANNING_RATE_PER_HOUR + 600},
+            "note": "B2Q's frozen experiment (preregistration §6a). It MEASURES the all-self-reporting "
+                    "rate; the planning bound above only bounds its own deadline and is never a calibration"}
+
+
+def build_qualification_prediction(fid: str, map_sha256: str, instrument_commit: str, b2_pairs: list) -> dict:
+    return build_prediction(fid, QUAL_BUDGET, qualification_seeds(instrument_commit, b2_pairs), map_sha256)
+
+
+def bsess_records(pairs: int, budget: int) -> int:
+    """The record arithmetic of preregistration §2, without importing the session module."""
+    return 2 + pairs * (2 * budget + 2)
+
+
 def gate_inputs(gate_report: Path) -> dict:
     """The frozen experiment the gate selected: fitness, budget, pairs — and the gate's own
     provenance. Refuses a gate report whose rules are not the current ones."""
@@ -244,14 +309,41 @@ def write(out: Path, plan: dict, prediction: dict) -> tuple[Path, Path]:
     return plan_path, pred_path
 
 
+def write_qualification(out: Path, plan: dict, prediction: dict) -> tuple[Path, Path]:
+    out.mkdir(parents=True, exist_ok=True)
+    pp, qp = out / "b2q_plan.json", out / "b2q_prediction.json"
+    plan = {**plan, "prediction_sha256": sha256_json(prediction)}
+    pp.write_text(json.dumps(plan, indent=1, sort_keys=True) + "\n")
+    qp.write_text(json.dumps(prediction, indent=1, sort_keys=True) + "\n")
+    return pp, qp
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", default="evidence/b2")
     ap.add_argument("--rate-per-hour", type=float, default=None,
                     help="the B2Q-measured all-self-reporting rate from the manifest's calibration (S3); without it the split is UNDETERMINED")
     ap.add_argument("--gate-report", default=None, help="override the gate report path (tests)")
+    ap.add_argument("--qualification", action="store_true",
+                    help="write B2Q's frozen experiment (b2q_plan.json, b2q_prediction.json) instead")
     args = ap.parse_args(argv)
     gate_report = Path(args.gate_report) if args.gate_report else GATE_REPORT
+    if args.qualification:
+        g = gate_inputs(gate_report)
+        _master, seeds, _sources, _excl = session_seeds(g["pairs"])
+        map_sha = bmaps.sha256_of(bmaps.load_self_map())
+        qplan = build_qualification_plan(g["fitness"], map_sha, INSTRUMENT_COMMIT, seeds)
+        qpred = build_qualification_prediction(g["fitness"], map_sha, INSTRUMENT_COMMIT, seeds)
+        pp, qp = write_qualification(REPO_ROOT / args.out, qplan, qpred)
+        written = json.loads(pp.read_text())
+        print(json.dumps({"plan": str(pp.relative_to(REPO_ROOT)), "prediction": str(qp.relative_to(REPO_ROOT)),
+                          "session": written["session"], "fitness": written["fitness"],
+                          "budget_per_arm": written["budget_per_arm"], "pairs": written["pairs"],
+                          "master_seed": written["seed_derivation"]["master_seed"],
+                          "pair_seeds": written["seed_derivation"]["pairs"],
+                          "records": written["records"]["total"],
+                          "planning_bound": written["planning_bound"]}, indent=1))
+        return 0
     try:
         plan = build_plan(args.rate_per_hour, gate_report)
     except ValueError as exc:

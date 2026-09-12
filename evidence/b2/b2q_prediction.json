@@ -1,0 +1,57 @@
+{
+ "budget_per_arm": 8,
+ "deltas": [
+  -1
+ ],
+ "fitness": "F1",
+ "fitness_sequence_length": 18,
+ "fitness_sequence_sha256": "bfbd6bb7e81bea3a0944b28f66db5bd4c7a152dc6f6dce0f77b89e11599b0577",
+ "note": "every value is the reference engine over the fabric model; on a correct instrument the board reproduces them byte for byte",
+ "pairs": [
+  {
+   "arm_order": [
+    "A",
+    "B"
+   ],
+   "base_train_fitness": 1,
+   "delta_B_minus_A": -1,
+   "landscape_seed": 3890725659,
+   "operator_seed": 1378470437,
+   "pair": 0,
+   "runs": {
+    "A": {
+     "best_train": 2,
+     "champion_genome_sha256": "93b849ce875de0210a4925e1467116f398a3bc3e73120021ef46c611e8e7fbe8",
+     "champion_holdout": 2,
+     "column_moves": 0,
+     "moves_sha256": "bd74bf86109b4f0e99ab03f49e1e9b9ac8e21c40a1b8ddda6ea2c5e88bb33765"
+    },
+    "B": {
+     "best_train": 1,
+     "champion_genome_sha256": "4c7f3da0386523b102328418c28d886bb9dc9c555671884e8fcc9bcba407e819",
+     "champion_holdout": 1,
+     "column_moves": 2,
+     "moves_sha256": "25f842f3f41320cec377a270443ab9ad142ed65c77f760d0f30f7b42e9ddb019"
+    }
+   },
+   "target": [
+    "185d0d20285e6b9e",
+    "a0688ec55829fc20",
+    "cb8919b2a0097641",
+    "72129241655062ad",
+    "85010fcdc859d3b8",
+    "03014c4318b4a103"
+   ]
+  }
+ ],
+ "predicted_primary": {
+  "alpha": 0.05,
+  "negatives": 1,
+  "positives": 0,
+  "sign_test_p": 1.0,
+  "ties": 0,
+  "verdict": "NOT SUPPORTED"
+ },
+ "schema": "b2_prediction",
+ "schema_version": "1.0.0"
+}

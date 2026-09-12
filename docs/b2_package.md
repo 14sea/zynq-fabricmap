@@ -1,5 +1,18 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
 
+> **B2Q's experiment is frozen and pinned (manifest schema 0.2.4 → 0.2.5).** The owner's standing
+> recommendation is done: `host/b2_plan.py --qualification` writes B2Q's plan and prediction to
+> `evidence/b2/b2q_plan.json` and `b2q_prediction.json` — one pair at budget 8 under the
+> `b2-qualification` label, its seeds excluding the frozen archived sets **and every seed B2 itself
+> uses**, with the planning bound and its rule beside them — and S0 pins both by path and digest
+> under `qualification_plan`, **re-deriving them on every `verify`** so the pinned bytes cannot
+> drift from the rule that produced them. S1 freezes them with the rest.
+> `b2_runner` is now a READER: it takes B2Q's plan, prediction, seeds, budget, record count and
+> deadline from those pinned bytes, holds each file to its digest, and runs the adjudicator's own
+> input guards over them before any board contact — so the producer and the offline
+> re-adjudication judge the same reviewed documents, and the qualification experiment is
+> reviewable **before** the session that calibrates from it. **B2/B3 439, zero skips.**
+
 > **Reporter correction accepted (`8756149`, reviewed at `b5571f0`): P2 and P3 CLOSED.**
 > The unchanged review probe now refuses all five log counterexamples and malformed
 > run fields; its positive proof remains valid. Independent suite: **35 tests, OK**;

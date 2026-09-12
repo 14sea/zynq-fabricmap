@@ -245,7 +245,9 @@ class Lifecycle(unittest.TestCase):
         # The instrument pin table covers the whole decision surface, so a faithful mirror is
         # now the pinned code PLUS every file that table lists PLUS the table itself.
         rels = (list(d["pins"]) + [d["carrier_lineage"]["b1_manifest"]["path"], d["prereg"]["path"],
-                                   d["map"]["path"], d["instrument_pins"]["path"]]
+                                   d["map"]["path"], d["instrument_pins"]["path"],
+                                   d["qualification_plan"]["path"],
+                                   d["qualification_plan"]["prediction_path"]]
                 + sorted(json.loads((R / d["instrument_pins"]["path"]).read_text())["files"]))
         for rel in dict.fromkeys(rels):
             dest = mirror / rel

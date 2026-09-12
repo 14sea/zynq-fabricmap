@@ -1,0 +1,93 @@
+{
+ "audit_policy": "all-self-reporting",
+ "budget_per_arm": 8,
+ "fitness": "F1",
+ "map": {
+  "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json",
+  "sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296"
+ },
+ "note": "B2Q's frozen experiment (preregistration \u00a76a). It MEASURES the all-self-reporting rate; the planning bound above only bounds its own deadline and is never a calibration",
+ "pairs": 1,
+ "planning_bound": {
+  "deadline_formula": "1.25 x records x 3600 / rate + 600 (the instrument's l6_schedule.session_timeout_s)",
+  "rate_per_hour": 2807.0,
+  "rule": "the slowest archived planning rate (the last observed B1 mapping, this document's planning_rates_NOT_calibration); B2Q MEASURES the real one",
+  "session_timeout_s": 632.0627003918775
+ },
+ "prediction_sha256": "40a3483dc91cc47fb0cf87f6e21b7014955c848965784c63f8189e20f29bdd1d",
+ "records": {
+  "per_pair": 18,
+  "total": 20
+ },
+ "schema": "b2_plan",
+ "schema_version": "1.0.0",
+ "seed_derivation": {
+  "commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "excluded_b2_pairs": [
+   [
+    3999265929,
+    2551437210
+   ],
+   [
+    2071443792,
+    2503381146
+   ],
+   [
+    1882088862,
+    2502935555
+   ],
+   [
+    2267199202,
+    3505262618
+   ],
+   [
+    33405527,
+    3399505749
+   ],
+   [
+    849734627,
+    3795939218
+   ],
+   [
+    1282363125,
+    3177433520
+   ],
+   [
+    171087639,
+    3868904327
+   ],
+   [
+    1595928170,
+    2211641680
+   ]
+  ],
+  "excluded_frozen_sets": {
+   "evidence/b2/gate/gate_report.json": {
+    "count": 200,
+    "master_seed": 1324512209,
+    "values": 401
+   },
+   "evidence/b2/gate/v0.1_2026-09-10/gate_report.json": {
+    "count": 200,
+    "master_seed": 2131041347,
+    "values": 401
+   },
+   "evidence/b3/sim/sim_report.json": {
+    "count": 200,
+    "master_seed": 3829368064,
+    "values": 401
+   }
+  },
+  "excluded_values_total": 1221,
+  "label": "b2-qualification",
+  "master_seed": 505806527,
+  "pairs": [
+   [
+    3890725659,
+    1378470437
+   ]
+  ],
+  "rule": "first 4 bytes of sha256(label|instrument commit); the frozen archived sets AND every B2 pair seed excluded"
+ },
+ "session": "B2Q"
+}

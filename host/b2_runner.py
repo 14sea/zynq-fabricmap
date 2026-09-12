@@ -47,10 +47,6 @@ ones the owner intends to sign, change them here — the runner refuses any othe
 two must agree before a board session is possible.
 
 WHAT IS NOT DONE HERE, stated rather than implied:
-  * B2Q's plan, prediction and pair seeds are DERIVED here (`qualification_documents`) from the
-    preregistration's §6a constants. They are not pinned in the manifest. The owner's standing
-    recommendation is to record them at S0 and bind their bytes at S1, which would make this
-    function a reader — a decision to make before the §7 package is submitted.
   * The B2 (map-utility) profile has no modelled demonstration yet. B2Q has one
     (`host/b2_modelled_session.py`), and the whole offline S1 → B2Q → S2 → S3 → fresh-process
     verification runs from it with this runner's own verdict returning PASS; a B2 slice at
@@ -93,19 +89,16 @@ RULING_TEXT = "whole-of-run B2 map utility"
 QUAL_RULING_TEXT = "whole-of-run B2 image qualification and calibration"
 PROVISION_RULING_TEXT = "provisioning P3-K"
 
-# The qualification session's own experiment (preregistration §6a): one pair at budget 8 under
-# its own seed label, excluding the frozen sets AND every seed B2 itself will use.
-QUAL_LABEL = "b2-qualification"
-QUAL_BUDGET = 8
-QUAL_PAIRS = 1
-# B2Q's deadline is a PLANNING bound — it measures the real rate — and the offline verdict must
-# reconstruct the SAME limit the producer used, so the rate is a declared constant with its rule,
-# not an argument the producer may widen (the owner's P2-3 of 2026-09-11). The rule: the slowest
-# archived planning rate in `evidence/b2/plan.json`'s planning_rates_NOT_calibration (the last
-# observed B1 mapping). Pinning it in the manifest at S0/S1 remains the owner's recommendation.
-QUAL_PLANNING_RATE_PER_HOUR = 2807.0
-QUAL_PLANNING_RATE_RULE = ("the slowest archived planning rate (the last observed B1 mapping, "
-                           "evidence/b2/plan.json planning_rates_NOT_calibration); B2Q MEASURES the real one")
+# B2Q's experiment (preregistration §6a: one pair at budget 8 under its own seed label, excluding
+# the frozen sets AND every seed B2 itself uses) is FROZEN in `b2_plan` and PINNED by the manifest
+# at S0 (schema 0.2.5). This runner READS it from those pinned bytes and never derives it, so the
+# producer and the offline re-adjudication cannot drift apart and the qualification experiment is
+# reviewable before the session that calibrates from it (the owner's recommendation of 2026-09-11).
+QUAL_LABEL = bp.QUAL_LABEL
+QUAL_BUDGET = bp.QUAL_BUDGET
+QUAL_PAIRS = bp.QUAL_PAIRS
+QUAL_PLANNING_RATE_PER_HOUR = bp.QUAL_PLANNING_RATE_PER_HOUR
+QUAL_PLANNING_RATE_RULE = bp.QUAL_PLANNING_RATE_RULE
 WATCHDOG_LOAD, WATCHDOG_PRESCALER = 1250000035, 7
 
 
@@ -127,19 +120,34 @@ def _short(v) -> str:
     return text if len(text) <= 72 else text[:69] + "..."
 
 
-def qualification_seeds(manifest: dict) -> list[tuple[int, int]]:
-    """B2Q's pairs: its own label's stream, excluding the frozen archived sets and every seed
-    the B2 experiment itself uses, so the calibration session can never share a landscape with
-    the experiment it calibrates. (Kept here with the profile that needs it; if the owner wants
-    it pinned into the manifest it belongs in `b2_plan`.)"""
-    exclusion, _ = bp.frozen_seed_exclusion()
-    used = {s for pair in manifest["seeds"]["pairs"] for s in pair}
-    master = bs.master_seed(QUAL_LABEL, manifest["instrument"]["psoracle_commit"])
-    return bs.pair_seeds(master, QUAL_PAIRS, exclude=frozenset(exclusion) | used)
+def qualification_pin(manifest: dict) -> dict:
+    """The manifest's pinned B2Q experiment, checked as a VALUE before anything reads a field."""
+    pin = (manifest or {}).get("qualification_plan")
+    if not isinstance(pin, dict):
+        raise Refusal("the manifest pins no B2Q qualification plan (S0 records it; schema 0.2.5)")
+    for key, kind in (("path", str), ("sha256", str), ("prediction_path", str),
+                      ("prediction_sha256", str), ("master_seed", int), ("pairs", list),
+                      ("budget_per_arm", int), ("records", int), ("planning_bound", dict)):
+        v = pin.get(key)
+        if not isinstance(v, kind) or isinstance(v, bool):
+            raise Refusal(f"the pinned B2Q experiment's {key} is {v!r}, not {kind.__name__}")
+    return pin
 
 
 def qualification_master(manifest: dict) -> int:
-    return bs.master_seed(QUAL_LABEL, manifest["instrument"]["psoracle_commit"])
+    return qualification_pin(manifest)["master_seed"]
+
+
+def qualification_seeds(manifest: dict) -> list[tuple[int, int]]:
+    """B2Q's pairs, from the manifest's pinned experiment — not derived here."""
+    return [tuple(x) for x in qualification_pin(manifest)["pairs"]]
+
+
+def qualification_planning_rate(manifest: dict) -> float:
+    rate = qualification_pin(manifest)["planning_bound"].get("rate_per_hour")
+    if not isinstance(rate, (int, float)) or isinstance(rate, bool) or not math.isfinite(rate) or rate <= 0:
+        raise Refusal(f"the pinned B2Q planning bound's rate {rate!r} is not a finite positive rate")
+    return float(rate)
 
 
 SEARCH = {"session": SESSION, "ruling_text": RULING_TEXT, "stage": "S3", "tool": TOOL_VERSION}
@@ -216,41 +224,65 @@ def verify_pins(manifest: dict, root: Path) -> dict:
 # ------------------------------------------------------------------ preflight
 
 
-def qualification_documents(manifest: dict) -> tuple[dict, dict, list]:
-    """B2Q's OWN plan, prediction and pair seeds (preregistration §6a): one pair at budget 8 over
-    the same frozen map and fitness, under the qualification seed label. Derived here, not
-    pinned — the manifest pins B2's; if the owner wants B2Q's seeds pinned they belong in S0."""
-    fid = manifest["experiment"]["fitness"]
-    map_sha = manifest["map"]["canonical_json_sha256"]
-    seeds = qualification_seeds(manifest)
-    plan = {"schema": "b2_plan", "session": bman.QUAL_SESSION, "fitness": fid,
-            "budget_per_arm": QUAL_BUDGET, "pairs": QUAL_PAIRS, "map": {"sha256": map_sha},
-            "seed_derivation": {"label": QUAL_LABEL, "master_seed": qualification_master(manifest),
-                                "rule": "first 4 bytes of sha256(label|instrument commit); the frozen "
-                                        "archived sets AND every B2 pair seed excluded"}}
-    prediction = bp.build_prediction(fid, QUAL_BUDGET, seeds, map_sha)
+def qualification_documents(manifest: dict, root: Path = REPO_ROOT) -> tuple[dict, dict, list]:
+    """B2Q's plan, prediction and pair seeds, READ from the bytes the manifest pins and held to
+    those pins (preregistration §6a; the owner's recommendation of 2026-09-11). The producer and
+    the offline re-adjudication judge against the same reviewed documents, and a file that drifted
+    from its pin is a refusal rather than a quietly different experiment."""
+    pin = qualification_pin(manifest)
+    out = []
+    for key, digest_key in (("path", "sha256"), ("prediction_path", "prediction_sha256")):
+        path = Path(root) / pin[key]
+        if not path.is_file():
+            raise Refusal(f"the pinned B2Q {pin[key]} is absent")
+        if _sha(path) != pin[digest_key]:
+            raise Refusal(f"the pinned B2Q {pin[key]} does not hash to the manifest's pin")
+        try:
+            out.append(json.loads(path.read_text()))
+        except ValueError as exc:
+            raise Refusal(f"the pinned B2Q {pin[key]} is not readable JSON: {exc}") from None
+    plan, prediction = out
+    if plan.get("session") != bman.QUAL_SESSION:
+        raise Refusal(f"the pinned B2Q plan is for session {plan.get('session')!r}")
+    if plan.get("fitness") != manifest["experiment"]["fitness"] \
+            or (plan.get("map") or {}).get("sha256") != manifest["map"]["canonical_json_sha256"]:
+        raise Refusal("the pinned B2Q plan's fitness or map is not this manifest's")
+    seeds = [tuple(x) for x in ((plan.get("seed_derivation") or {}).get("pairs") or [])]
+    if seeds != [tuple(x) for x in pin["pairs"]]:
+        raise Refusal("the pinned B2Q plan's pair seeds are not the manifest's")
+    try:                                       # the adjudicator's own input guards, before the board
+        adj.check_plan(plan)
+        adj.check_prediction(prediction, plan)
+    except adj.Refusal as exc:
+        raise Refusal(f"the pinned B2Q plan/prediction: {exc}") from None
     return plan, prediction, seeds
 
 
 def qualification_session_plan(manifest: dict, manifest_sha256: str | None = None) -> dict:
-    """B2Q's session plan, derived from the manifest and the preregistration's §6a constants, so
-    the runner and the re-adjudicator judge the SAME session — including the SAME deadline, which
-    comes from the declared planning rate and not from whatever rate the session went on to
-    measure. The instrument must be bound."""
+    """B2Q's session plan, built from the manifest's PINNED experiment so the runner and the
+    re-adjudicator judge the SAME session — including the same deadline, which comes from the
+    pinned planning bound and never from the rate the session goes on to measure. The instrument
+    must be bound."""
     import l6_schedule as ls  # noqa: E402
-    records_expected = bsess.records(QUAL_PAIRS, QUAL_BUDGET)
+    pin = qualification_pin(manifest)
+    rate = qualification_planning_rate(manifest)
+    records_expected = bsess.records(QUAL_PAIRS, pin["budget_per_arm"])
+    if records_expected != pin["records"]:
+        raise Refusal(f"the pinned B2Q experiment says {pin['records']} records, the record "
+                      f"arithmetic says {records_expected}")
     audit_seqs = set(range(1, records_expected + 1))
     frames = ls.expected_frames(records_expected - 2, audit_seqs, PROTOCOL_WIRE)
     flags = bsess.encode_slice(ls.flags_for(ls.MODE_ABBA, watchdog=True, rec_control=True, sign_control=True),
                                QUAL_PAIRS, 0, QUAL_PAIRS)
-    return {"session": bman.QUAL_SESSION, "n": QUAL_BUDGET, "master_seed": qualification_master(manifest),
+    return {"session": bman.QUAL_SESSION, "n": pin["budget_per_arm"], "master_seed": pin["master_seed"],
             "pairs_total": QUAL_PAIRS, "pair_first": 0, "pair_count": QUAL_PAIRS, "flags": flags,
             "audit_policy": bp.AUDIT_POLICY, "audit_seqs": audit_seqs, "protocol": PROTOCOL_WIRE,
             "expected_records": records_expected, "expected_frames": frames,
             "crc_budget": ls.crc_budget(frames["total"]), "bad_frame_budget": ls.crc_budget(frames["total"]),
-            "session_timeout_s": deadline_s(records_expected, QUAL_PLANNING_RATE_PER_HOUR),
+            "session_timeout_s": deadline_s(records_expected, rate),
             "deadline_formula": bp.DEADLINE_FORMULA,
-            "deadline_rate": {"source": QUAL_PLANNING_RATE_RULE, "rate_per_hour": QUAL_PLANNING_RATE_PER_HOUR},
+            "deadline_rate": {"source": "the manifest's pinned B2Q planning bound",
+                              "rule": pin["planning_bound"].get("rule"), "rate_per_hour": rate},
             "binding": qualification_binding(manifest, manifest_sha256),
             "inputs": expected_inputs(manifest, QUALIFICATION)}
 
@@ -263,7 +295,8 @@ def qualification_binding(manifest: dict, manifest_sha256: str | None) -> dict:
             "master_seed": qualification_master(manifest), "protocol": PROTOCOL_WIRE,
             "psoracle_commit": manifest["instrument"]["psoracle_commit"],
             "map_canonical_json_sha256": manifest["map"]["canonical_json_sha256"],
-            "fitness_id": manifest["experiment"]["fitness"], "budget_per_arm": QUAL_BUDGET,
+            "fitness_id": manifest["experiment"]["fitness"],
+            "budget_per_arm": qualification_pin(manifest)["budget_per_arm"],
             "pair_first": 0, "pair_count": QUAL_PAIRS,
             "carrier_sha256": manifest["carrier"]["bitstream_sha256"], "carrier_variant": B2_VARIANT,
             "universe_sha256": manifest["universe"]["sha256"], "boardid": bman.check_board(manifest)}
@@ -733,10 +766,10 @@ def preflight(a, profile: dict = SEARCH, pins_verify=verify_pins, readjudicate=N
             if not isinstance(a.qual_rate_per_hour, (int, float)) or isinstance(a.qual_rate_per_hour, bool) \
                     or not math.isfinite(a.qual_rate_per_hour) or a.qual_rate_per_hour <= 0:
                 raise Refusal(f"--qual-rate-per-hour {a.qual_rate_per_hour!r} is not a finite positive rate")
-            if float(a.qual_rate_per_hour) != QUAL_PLANNING_RATE_PER_HOUR:
-                raise Refusal(f"--qual-rate-per-hour {a.qual_rate_per_hour!r} is not the declared planning "
-                              f"bound {QUAL_PLANNING_RATE_PER_HOUR} ({QUAL_PLANNING_RATE_RULE}); the "
-                              f"offline verdict reconstructs THAT limit, so this flag may only agree")
+            if float(a.qual_rate_per_hour) != qualification_planning_rate(manifest):
+                raise Refusal(f"--qual-rate-per-hour {a.qual_rate_per_hour!r} is not the manifest's pinned "
+                              f"planning bound {qualification_planning_rate(manifest)}; the offline verdict "
+                              f"reconstructs THAT limit, so this flag may only agree")
     else:
         master = plan_doc["seed_derivation"]["master_seed"]
         budget, pairs_total = plan_doc["budget_per_arm"], plan_doc["pairs"]
