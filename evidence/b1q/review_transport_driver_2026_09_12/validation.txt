@@ -1,0 +1,10 @@
+Reviewed HEAD: 146e60a
+Command: python3 -B -m unittest discover -s tests -p test_transport_rig.py
+Observed completion (summary only, not a complete captured test log):
+Ran 49 tests in 75.243s
+OK
+No skips were reported.
+
+Submitter acceptance.py: rerun unchanged, exit 0; see submitted_acceptance.json.
+Independent probe_driver.py: exit 0; see observed.json.
+Production B2 verify: S0, qualified false, refusal null; see bindings.json.
