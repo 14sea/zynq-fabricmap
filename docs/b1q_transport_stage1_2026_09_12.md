@@ -8,9 +8,9 @@
 > "stage 1 in full". It is **withdrawn**. The plan's stage 1 also requires a physical acceptance
 > — a separate serial device or a physical self-loopback — which has **not** happened and which
 > a software pseudo-terminal cannot replace. What exists is the **generator, driver and
-> analyser, with an offline acceptance**; the physical acceptance is outstanding. Two reviews that day
-> found ten P2 defects between them, all now corrected; §"What the review
-> corrected" records each one. The B2Q exposure argument this document originally made is
+> analyser, with an offline acceptance**; the physical acceptance is outstanding. Three reviews that day
+> found thirteen P2 defects between them, all now corrected; the three §"What the … review
+> corrected" sections record each one. The B2Q exposure argument this document originally made is
 > **withdrawn as wrong**, not merely softened.
 
 ## Where the stop-loss stood before today
@@ -28,8 +28,8 @@ sessions on module A. It separates nothing, and one PASS is not stability.
 
 ## What exists — the software half
 
-`host/transport_rig.py`, `tests/test_transport_rig.py` (**73 tests**), evidence in
-`evidence/b1q/transport_stage1_2026_09_12/` and `evidence/b1q/corrections_transport_stage1_2026_09_12/`.
+`host/transport_rig.py`, `tests/test_transport_rig.py` (**94 tests**), evidence in
+`evidence/b1q/transport_stage1_2026_09_12/` and the three `evidence/b1q/corrections_transport_*_2026_09_12/`.
 The generator, the driver and the analyser, with an **offline** acceptance over a pty pair
 through the production entry point. **Not** the plan's stage 1 in full: the physical acceptance
 on a separate serial device or a self-loopback has not happened.
@@ -70,6 +70,18 @@ over bytes it did not send, and an earlier repetition's capture replayed into a 
   at the same offsets in every complete session, so they are a session feature and not
   transport, and the rig therefore transmits none: every CRC failure a rig run sees is a
   transport event with nothing to subtract.
+
+## What the third review corrected (the boundaries, 2026-09-12)
+
+`docs/b1q_transport_boundaries_review_2026_09_12.md` held the batch again and named three more
+P2s at the edges of the previous fixes, all real. Corrected, with the owner's own probes re-run
+beside their original answers in `evidence/b1q/corrections_transport_boundaries_2026_09_12/`:
+
+| finding | at `38c91b0` | now |
+|---|---|---|
+| **a `TypeError` fallback retried a write that had taken effect** | a writer that accepted `abc` and then raised internally was called again: `abcabc` delivered, 3 returned, no error | the writer's contract is **declared** by the adapter and checked against its signature before any byte moves; an exception from an active write propagates, the frame is `uncertain`, the run stops with the original exception as the cause and nothing is written after it |
+| **cutoff censoring hid a fully observed CRC failure** | the same damaged 1 048-byte line was 1 loss on normal completion and **0 losses, censored** under a cutoff; the frontier was `max(delivered)` | **observation is tracked separately from delivery**: a damaged line or the tail is matched to the frame it belongs to (unique prefix, same-length near match, or intact header), a missing frame at or below the observation frontier is a loss, the tail's frame is censored as partial, and frames above the frontier are censored only when nothing unidentifiable arrived after the last identified observation — otherwise they are **`unresolved`** and reported as ambiguous |
+| **the terminal status misled** | an early-loss stop at 1 of 200 and a drain cutoff with 302 censored frames both said `completed_exposure: true`; an analyser failure was replaced by `losses: 0`, the run went on into repetition 2 and reported a 0.0 rate with `error: null` | the run states a **terminal reason** (`exposure_repetitions`, `exposure_seconds`, `exposure_seconds_censored`, `stop_rule_losses`, `tool_error`, `analysis_unavailable`); `completed_exposure` is derived from `exposure_reached` **and** `traffic_resolved`; a repetition is `incomplete` unless everything planned was accepted and resolved; an analyser failure stops the run there, its losses and the aggregate are **`null`**, not zero |
 
 ## What the second review corrected (the driver, 2026-09-12)
 

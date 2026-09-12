@@ -43,6 +43,7 @@ import array
 import base64
 import fcntl
 import hashlib
+import inspect
 import json
 import os
 import sys
@@ -112,6 +113,11 @@ EXPOSURE_SECONDS = 3600.0
 LOSSES_PER_REPETITION_STOP = 3
 #: base64 grows four characters at a time, so an exact byte length is not always reachable.
 LENGTH_TOLERANCE = 4
+#: A damaged complete line of the SAME length as exactly one not-yet-observed expected frame,
+#: differing from it in at most this many bytes, is an observation of that frame. Frames of one
+#: repetition differ from each other in far more (seq, the index in the payload, the CRC), and
+#: uniqueness is required at the time of the match, so a tie identifies nothing.
+NEAR_MATCH_BYTES = 4
 #: Wire time of one byte at 115200 8N1 (10 bits per character).
 BYTE_TIME_S = 10 / 115200
 #: A write must be bounded even when no deadline is left to bound it: an unbounded serial write
@@ -122,6 +128,21 @@ TIOCGICOUNT = 0x545D
 ICOUNTER_FIELDS = ("cts", "dsr", "rng", "dcd", "rx", "tx", "frame", "overrun", "parity", "brk", "buf_overrun")
 
 LOSS_UNIT = "one expected frame that was not delivered byte-exact, counted once"
+
+#: Why a run ended — one of these, stated explicitly, so `completed_exposure` follows from the
+#: reason and the traffic state rather than from the count of accepted writes (the owner's P2-3:
+#: an early-loss stop at 1 of 200 repetitions, and a deadline that censored all 302 frames of a
+#: repetition, both reported `completed_exposure: true`).
+TERMINAL_REASONS = {
+    "exposure_repetitions": "the registered number of repetitions ran and every one resolved",
+    "exposure_seconds": "the registered time bound was reached between repetitions; every one resolved",
+    "exposure_seconds_censored": "the registered time bound cut a repetition: its in-flight traffic "
+                                 "is censored (or unresolved), so the exposure is reached but not complete",
+    "stop_rule_losses": "the registered early-stop rule fired; the requested exposure was NOT run",
+    "tool_error": "the driver raised; the run stopped there with its partial evidence",
+    "analysis_unavailable": "the analyser raised: losses for that repetition are UNKNOWN, the run "
+                            "stopped there (plan §5, 'any tool error'), no later repetition was started",
+}
 
 
 class RigError(Exception):
@@ -393,10 +414,24 @@ def analyse(frames: list[Frame], received: bytes, expected_token: str | None = N
     echo, is `unexpected_echo` — a defect. Nothing else is ever normalised away.
 
     `censor_tail` is for a repetition cut short by a deadline or a tool error: frames whose write
-    completed but whose bytes had nothing after them when the capture stopped were still in
-    flight, and are reported as `censored` rather than counted as losses (the owner's P2-2: do
-    not invent a definitive loss for bytes in flight at a cutoff). A frame that is missing while
-    a LATER frame arrived is a real loss and stays one.
+    completed but of which NOTHING was observed when the capture stopped were still in flight,
+    and are reported as `censored` rather than counted as losses (the owner's P2-2 of the driver
+    review: do not invent a definitive loss for bytes in flight at a cutoff). Observation and
+    delivery are tracked separately (the owner's P2-2 of the boundary review: the frontier used
+    to be `max(delivered)`, so a complete, damaged line for a frame beyond it — fully observed —
+    was censored as in flight and its loss disappeared at the cutoff):
+
+      * a frame is OBSERVED when it was delivered, when a valid frame carrying its index arrived
+        altered, when a damaged complete line still identifies it by an intact header, or when
+        the unterminated tail identifies it (`_identify`, deliberately conservative);
+      * a missing frame at or below the observation frontier is a definitive loss — something
+        later than it was observed; the frame the tail belongs to is `censored` as partial;
+      * frames above the frontier are `censored` only when nothing unidentifiable arrived after
+        the last identified observation. If damaged bytes that identify no frame arrived there,
+        those frames are `unresolved` — reported as ambiguous, neither a loss nor in flight —
+        because asserting zero damage for them would hide damage that was observed.
+
+    A cutoff never turns bytes observed as damaged into unobserved in-flight traffic.
     """
     expected = stream_bytes(frames)
     by_index = {f.index: f for f in frames}
@@ -405,6 +440,10 @@ def analyse(frames: list[Frame], received: bytes, expected_token: str | None = N
     known_echo = frozenset(ledger)
     delivered: dict[int, int] = {}
     damaged: dict[int, str] = {}
+    observed: dict[int, str] = {}        # index -> how it was observed, other than delivered
+    unidentified: list[int] = []         # offsets of complete lines that identify no expected frame
+    last_identified = -1                 # offset of the last line that identified an expected frame
+    partial: int | None = None           # the frame the unterminated tail belongs to, if it says
     defects: list[dict] = []
     echoed: list[dict] = []
     order: list[int] = []
@@ -417,6 +456,7 @@ def analyse(frames: list[Frame], received: bytes, expected_token: str | None = N
         here = {"offset": start, "bytes": len(line)}
         if not ln:
             defects.append({**here, "kind": "empty_line"})
+            unidentified.append(start)
             continue
         if line in known_echo:
             if echo_allowed and ledger.get(line, 0) > 0:
@@ -429,11 +469,16 @@ def analyse(frames: list[Frame], received: bytes, expected_token: str | None = N
             continue
         try:
             parsed = l5.parse_line(ln.decode("latin-1"))
-        except l5.CrcError:
-            defects.append({**here, "kind": "crc_failed"})
-            continue
-        except (l5.FrameError, ValueError):
-            defects.append({**here, "kind": "malformed"})
+        except (l5.CrcError, l5.FrameError, ValueError) as exc:
+            kind = "crc_failed" if isinstance(exc, l5.CrcError) else "malformed"
+            idx, how = _identify(ln, token, _candidates(frames, delivered, observed), complete=True)
+            if idx is None:
+                defects.append({**here, "kind": kind})
+                unidentified.append(start)
+            else:                                          # observed, damaged, and known which
+                defects.append({**here, "kind": kind, "index": idx, "identified_by": how})
+                observed.setdefault(idx, kind)
+                last_identified = start
             continue
         if parsed["token"] != token:
             defects.append({**here, "kind": "foreign_epoch", "token": parsed["token"][:12],
@@ -443,43 +488,137 @@ def analyse(frames: list[Frame], received: bytes, expected_token: str | None = N
             idx = _index_of(parsed["payload"])
         except Exception:                                  # noqa: BLE001
             defects.append({**here, "kind": "unreadable_payload"})
+            unidentified.append(start)
             continue
         if idx not in by_index:
             defects.append({**here, "kind": "unexpected_index", "index": idx})
+            unidentified.append(start)
             continue
         if ln + b"\n" != by_index[idx].line:
             # a valid CRC over bytes we did not send: the index alone must never credit delivery
             damaged[idx] = "altered"
+            observed[idx] = "altered"
+            last_identified = start
             defects.append({**here, "kind": "altered", "index": idx,
                             "note": "valid frame, but not the bytes transmitted for this index"})
             continue
         delivered[idx] = delivered.get(idx, 0) + 1
+        last_identified = start
         order.append(idx)
+    unidentified_tail = False
     if tail:
-        defects.append({"offset": offset, "bytes": len(tail), "kind": "fragment",
+        partial, how = _identify(tail, token, _candidates(frames, delivered, observed), complete=False)
+        unidentified_tail = partial is None
+        defects.append({"offset": offset, "bytes": len(tail), "kind": "fragment", "index": partial,
+                        "identified_by": how,
                         "note": "an unterminated tail: not a complete line, so nothing in it is delivered"})
     missing = sorted(set(by_index) - set(delivered) - set(damaged))
     duplicated = sorted(i for i, n in delivered.items() if n > 1)
     out_of_order = order != sorted(order)
+    frontier = max([*delivered, *observed, *([partial] if partial is not None else [])], default=-1)
     censored: list[int] = []
+    unresolved: list[int] = []
+    cutoff = None
     if censor_tail:
-        last = max(delivered, default=-1)
-        censored = [i for i in missing if i > last]
-        missing = [i for i in missing if i <= last]
-    losses = len(by_index) - len(delivered) - len(censored)   # ONE unit, counted once per frame
+        # bytes that identify no frame arrived AFTER the last identified observation: whatever is
+        # above the frontier cannot be called in flight — some of it was observed, damaged
+        ambiguous = unidentified_tail or any(o > last_identified for o in unidentified)
+        resolved_missing: list[int] = []
+        for i in missing:
+            if partial is not None and i == partial:
+                censored.append(i)               # its bytes were arriving when the capture stopped
+            elif i > frontier:
+                (unresolved if ambiguous else censored).append(i)
+            else:
+                resolved_missing.append(i)       # something later was observed: a definitive loss
+        missing = resolved_missing
+        cutoff = {"observation_frontier": frontier, "partial_frame": partial,
+                  "unidentified_after_frontier": (sum(1 for o in unidentified if o > last_identified)
+                                                  + (1 if unidentified_tail else 0)),
+                  "ambiguous": ambiguous,
+                  "note": ("frames above the frontier are censored only when nothing unidentifiable "
+                           "arrived after the last identified observation; otherwise they are "
+                           "unresolved — damage was observed there and cannot be attributed, so it is "
+                           "neither a loss nor in flight")}
+    losses = len(by_index) - len(delivered) - len(censored) - len(unresolved)   # ONE unit, once per frame
     unexpected = [d for d in defects if d["kind"] in ("foreign_epoch", "unexpected_index", "unreadable_payload")]
     divergence = _divergence(frames, received, expected, by_index, token, echoed)
     return {"frames_sent": len(frames), "frames_delivered": len(delivered),
             "host_echo_lines": len(echoed), "bytes_host_echo": sum(e["bytes"] for e in echoed),
             "loss_unit": LOSS_UNIT, "losses": losses,
-            "missing": missing, "censored": censored, "damaged": sorted(damaged), "duplicated": duplicated,
+            "missing": missing, "censored": censored, "unresolved": unresolved,
+            "damaged": sorted(damaged), "duplicated": duplicated,
+            # observation, separately from delivery
+            "observed": sorted(set(delivered) | set(observed) | ({partial} if partial is not None else set())),
+            "observed_damaged": {str(i): observed[i] for i in sorted(observed)},
+            "cutoff": cutoff,
             "out_of_order": out_of_order, "defects": defects,
             "defects_by_kind": {k: sum(1 for d in defects if d["kind"] == k) for k in {d["kind"] for d in defects}},
             "unexpected_frames": len(unexpected),
             "bytes_fragment": len(tail),
             "divergence": divergence,
             "bytes_sent": len(expected), "bytes_received": len(received),
-            "clean": losses == 0 and not defects and not duplicated and not out_of_order and divergence is None}
+            "clean": (losses == 0 and not unresolved and not defects and not duplicated
+                      and not out_of_order and divergence is None)}
+
+
+def _candidates(frames, delivered, observed) -> list:
+    """The expected frames nothing has yet been observed of — the only ones a damaged line or
+    the tail can be an observation of."""
+    return [f for f in frames if f.index not in delivered and f.index not in observed]
+
+
+def _identify(ln: bytes, token: str, candidates: list, complete: bool) -> tuple[int | None, str | None]:
+    """Which expected frame a DAMAGED complete line, or the unterminated tail, is an observation
+    of — by correspondence with the known transmitted bytes — or None when that cannot be said
+    defensibly. Returns (index, how).
+
+    Three correspondences, each requiring a UNIQUE match among the frames not yet observed:
+
+      * `prefix` — the bytes are a byte-exact prefix of exactly one candidate (a frame cut at the
+        capture's end, or truncated); a prefix of several candidates identifies nothing;
+      * `near` — a complete line of exactly one candidate's length, differing from it in at most
+        `NEAR_MATCH_BYTES` bytes (a flip or two anywhere, the header included);
+      * `header` — magic, kind, seq and token intact and agreeing with the candidate at that seq,
+        the payload's own index agreeing when it still decodes, exactly one frame header in the
+        line (a lost newline merges two frames: that is two frames' bytes, not one frame's), and
+        a complete line not longer than the frame by more than the length tolerance.
+
+    Anything less is unidentified, and an unidentified observation after the frontier makes the
+    frames above it unresolved rather than censored.
+    """
+    pre = [f for f in candidates if f.line.startswith(ln)]
+    if len(pre) == 1:
+        return pre[0].index, "prefix"
+    if len(pre) > 1:
+        return None, None
+    if complete:
+        line = ln + b"\n"
+        near = [f for f in candidates if len(f.line) == len(line)
+                and sum(a != b for a, b in zip(f.line, line)) <= NEAR_MATCH_BYTES]
+        if len(near) == 1:
+            return near[0].index, "near"
+        if len(near) > 1:
+            return None, None
+    magic = MAGIC.encode() + b" "
+    parts = ln.split(b" ")
+    if len(parts) < 5 or parts[0] != MAGIC.encode() or ln.count(magic) != 1:
+        return None, None
+    try:
+        kind, seq, tok = parts[1].decode("ascii"), int(parts[2].decode("ascii")), parts[3].decode("ascii")
+    except (UnicodeDecodeError, ValueError):
+        return None, None
+    f = next((c for c in candidates if c.seq == seq), None)
+    if f is None or f.kind != kind or tok != token:
+        return None, None
+    try:
+        if _index_of(parts[4].decode("ascii")) != f.index:
+            return None, None
+    except Exception:                                      # noqa: BLE001 — a damaged payload; the header stands
+        pass
+    if complete and len(ln) + 1 > len(f.line) + LENGTH_TOLERANCE:
+        return None, None
+    return f.index, "header"
 
 
 def _divergence(frames, received: bytes, expected: bytes, by_index: dict, token: str, echoed=()):
@@ -579,16 +718,28 @@ class Port:
     def __init__(self, name: str, write=None, read=None, fd=None, takes_timeout: bool = False):
         self.name, self._write, self._read, self._fd = name, write, read, fd
         self._takes_timeout = takes_timeout
+        if write is not None:                           # the contract is checked BEFORE any byte moves
+            fits = _signature_accepts(write, 2 if takes_timeout else 1)
+            if fits is False:
+                raise RigError(f"{name}: the writer is declared {'to take' if takes_timeout else 'not to take'} "
+                               f"a timeout, but its signature does not accept "
+                               f"{'(data, timeout)' if takes_timeout else '(data)'}; the contract is "
+                               f"declared by the adapter, never probed by writing")
 
     def write(self, data: bytes, timeout: float | None = None) -> int:
         """`timeout` is the REMAINING budget, part of the transport contract: a transport that
         can bound its write must do so, because a post-operation check cannot bound a write that
-        has already blocked (the owner's P2-3)."""
-        try:
-            n = self._write(data, timeout) if self._takes_timeout else self._write(data)
-        except TypeError:                               # a writer that does not accept a budget
-            self._takes_timeout = False
-            n = self._write(data)
+        has already blocked (the owner's P2-3 of the driver review).
+
+        The callback's contract is DECLARED by the adapter (`takes_timeout`) and checked against
+        its signature at construction — it is never discovered by calling. An exception from an
+        active write is that write's failure: it propagates unchanged, the frame becomes
+        `uncertain` and the run stops. The previous version caught TypeError as "a writer that
+        takes no timeout" and called the writer again; a writer that had accepted `abc` and then
+        failed internally received `abcabc`, and the wrapper returned 3 with no error (the
+        owner's P2-1 of the boundary review).
+        """
+        n = self._write(data, timeout) if self._takes_timeout else self._write(data)
         if n is None:                                   # a transport that returns nothing
             raise RigError(f"{self.name}: write returned no count; a short write cannot be detected")
         if n != len(data):
@@ -600,6 +751,21 @@ class Port:
 
     def fileno(self):
         return self._fd
+
+
+def _signature_accepts(fn, nargs: int) -> bool | None:
+    """Whether `fn` can be called with `nargs` positional arguments, from its signature alone.
+    None when the signature cannot be inspected (a builtin or C-implemented callable): then the
+    adapter's declaration stands as declared — it is still never probed by calling."""
+    try:
+        sig = inspect.signature(fn)
+    except (TypeError, ValueError):
+        return None
+    try:
+        sig.bind(*([None] * nargs))
+    except TypeError:
+        return False
+    return True
 
 
 @dataclass
@@ -751,9 +917,20 @@ class Run:
     captures: list = field(default_factory=list)
     stopped: str = ""
     error: str | None = None
+    terminal: dict = field(default_factory=dict)             # {"reason": one of TERMINAL_REASONS, ...}
+    secondary_errors: list = field(default_factory=list)
     topology: str = "not started"
     pace: bool = False
     read_timeout: float = 0.05
+
+    def _end(self, reason: str, repetition: int | None, detail: str) -> None:
+        """One terminal reason per run, stated once, first wins. `completed_exposure` is derived
+        from it and from the traffic state in `_summarise`; nothing else sets it."""
+        if not self.terminal:
+            self.terminal = {"reason": reason, "meaning": TERMINAL_REASONS[reason],
+                             "repetition": repetition, "detail": detail}
+        if not self.stopped:
+            self.stopped = detail
 
     def execute(self, source: Port, host: Port = None, capture: Port = None, fd=None,
                 out_dir: Path | None = None, sleep=time.sleep, clock=time.monotonic,
@@ -771,35 +948,56 @@ class Run:
         try:
             for i in range(self.repetitions):
                 if clock() - started >= self.seconds:
-                    self.stopped = f"exposure: {self.seconds} s reached after {i} repetitions"
+                    self._end("exposure_seconds", i, f"exposure: {self.seconds} s reached after {i} repetitions")
                     break
                 rep = Repetition(index=i, frames=plan_frames(self.run_id, i))
                 deadline = min(started + self.seconds, clock() + self.seconds)
+                analysis_failure: Exception | None = None
                 try:
                     driver.run(rep, deadline)
                 except Exception as exc:                  # noqa: BLE001 — the PARTIAL capture is evidence
                     failure = exc
                     self.error = f"{type(exc).__name__}: {exc}"
-                    self.stopped = f"tool error in repetition {i}: {self.error}"
+                    self._end("tool_error", i, f"tool error in repetition {i}: {self.error}")
                 finally:
                     self.captures.append(rep)
-                    self.results.append(self._analyse(rep, i, driver))
-                res = self.results[-1]
+                    res, analysis_failure = self._analyse(rep, i, driver)
+                    self.results.append(res)
+                if analysis_failure is not None:
+                    # plan §5, "any tool error": an analysis that raised leaves this repetition's
+                    # losses UNKNOWN and the run stops HERE — no further transmission (the owner's
+                    # P2-3: it used to substitute losses 0 and carry on into repetition 2)
+                    text = f"{type(analysis_failure).__name__}: {analysis_failure}"
+                    if failure is None:
+                        failure = analysis_failure
+                        self.error = text
+                        self._end("analysis_unavailable", i,
+                                  f"tool error: the analysis of repetition {i} is unavailable ({text}); "
+                                  f"its losses are unknown and no later repetition was started")
+                    else:
+                        self.secondary_errors.append(f"analysis of repetition {i}: {text}")
+                    break
                 if failure is not None:
                     break
                 if rep.ended.startswith("deadline"):
-                    self.stopped = f"exposure: the deadline bounded repetition {i} ({rep.ended})"
+                    reason = "exposure_seconds" if res.get("resolved") else "exposure_seconds_censored"
+                    self._end(reason, i, f"exposure: the deadline bounded repetition {i} ({rep.ended}); "
+                              + ("it resolved" if res.get("resolved") else
+                                 f"{res.get('censored_in_flight', 0)} frames censored in flight, "
+                                 f"{res.get('unresolved_at_cutoff', 0)} unresolved"))
                     break
                 if res["losses"] >= LOSSES_PER_REPETITION_STOP:
-                    self.stopped = (f"stop rule: {res['losses']} losses within repetition {i} "
-                                    f"(>= {LOSSES_PER_REPETITION_STOP}) — the condition is reproducing the failure")
+                    self._end("stop_rule_losses", i,
+                              f"stop rule: {res['losses']} losses within repetition {i} "
+                              f"(>= {LOSSES_PER_REPETITION_STOP}) — the condition is reproducing the failure; "
+                              f"{i + 1} of {self.repetitions} requested repetitions were run")
                     break
             else:
-                self.stopped = f"exposure: {self.repetitions} repetitions completed"
+                self._end("exposure_repetitions", None, f"exposure: {self.repetitions} repetitions completed")
         except Exception as exc:                          # noqa: BLE001 — anything else the run raised
             failure = failure or exc
             self.error = self.error or f"{type(exc).__name__}: {exc}"
-            self.stopped = self.stopped or f"tool error: {self.error}"
+            self._end("tool_error", None, f"tool error: {self.error}")
         result = self._summarise(self._guarded(lambda: read_icounters(fd), "counters_after"), before)
         export = self._export(result, out_dir) if out_dir else None
         if export:
@@ -817,40 +1015,65 @@ class Run:
         except Exception as exc:                          # noqa: BLE001
             return {"unavailable": True, "what": what, "error": f"{type(exc).__name__}: {exc}"}
 
-    def _analyse(self, rep: Repetition, i: int, driver) -> dict:
+    def _analyse(self, rep: Repetition, i: int, driver) -> tuple[dict, Exception | None]:
         """Hold the capture to what the transport ACCEPTED, never to what was planned. Frames
         never attempted are not losses; a frame whose write started but did not complete is
-        `uncertain`, not a definite loss (the owner's P2-2)."""
-        def run_it():
-            cut_short = bool(self.error) or rep.ended.startswith("deadline") or not rep.ended
+        `uncertain`, not a definite loss (the owner's P2-2 of the driver review).
+
+        A repetition is RESOLVED when every planned frame was accepted, nothing is uncertain, it
+        was not cut short, and its analysis leaves nothing censored or unresolved; `incomplete`
+        is the negation — not merely "fewer frames accepted than planned" (the owner's P2-3).
+        Returns the result and, when the analysis itself raised, that exception: its losses are
+        then UNKNOWN (`None`), never a numeric zero, and the caller stops the run.
+        """
+        cut_short = bool(self.error) or rep.ended.startswith("deadline") or not rep.ended
+        counts = {"repetition": i, "ended": rep.ended, "cut_short": cut_short,
+                  "reads": sum(1 for e in rep.events if e["op"] == "read"),
+                  "frames_planned": len(rep.frames), "frames_attempted": len(rep.attempted),
+                  "frames_accepted": len(rep.accepted), "frames_uncertain": len(rep.uncertain),
+                  "bytes_accepted": rep.bytes_accepted,
+                  "host_frames_written": sum(rep.host_writes.values()),
+                  "host_writes_overlapping_source_tx": sum(1 for o in rep.overlap if o["overlapping"])}
+        try:
             res = analyse(rep.accepted, bytes(rep.received), token_for(self.run_id, i),
                           echo_ledger=dict(rep.host_writes), echo_allowed=driver.echoes,
                           censor_tail=cut_short)
-            overlapping = sum(1 for o in rep.overlap if o["overlapping"])
-            res.update({"repetition": i, "ended": rep.ended,
-                        "reads": sum(1 for e in rep.events if e["op"] == "read"),
-                        "frames_planned": len(rep.frames), "frames_attempted": len(rep.attempted),
-                        "frames_accepted": len(rep.accepted), "frames_uncertain": len(rep.uncertain),
-                        "bytes_accepted": rep.bytes_accepted,
-                        "incomplete": len(rep.accepted) < len(rep.frames),
-                        "censored_in_flight": len(res.get("censored", [])),
-                        "cut_short": cut_short,
-                        "host_frames_written": sum(rep.host_writes.values()),
-                        "host_writes_overlapping_source_tx": overlapping,
-                        "note": ("frames never attempted are not counted as losses; an uncertain "
-                                 "write is in flight, not a loss")})
-            return res
-        out = self._guarded(run_it, f"analysis of repetition {i}")
-        if out.get("unavailable"):                        # a minimal, honest stand-in
-            out.update({"repetition": i, "losses": 0, "bytes_received": len(rep.received),
-                        "bytes_sent": rep.bytes_accepted, "frames_sent": len(rep.accepted),
-                        "incomplete": True, "clean": False})
-        return out
+        except Exception as exc:                          # noqa: BLE001 — recorded, and it stops the run
+            return {**counts, "unavailable": True, "what": f"analysis of repetition {i}",
+                    "error": f"{type(exc).__name__}: {exc}", "analysis_available": False,
+                    "losses": None, "clean": False, "resolved": False, "incomplete": True,
+                    "censored_in_flight": None, "unresolved_at_cutoff": None,
+                    "bytes_received": len(rep.received), "bytes_sent": rep.bytes_accepted,
+                    "frames_sent": len(rep.accepted),
+                    "note": ("the analysis raised: the losses of this repetition are UNKNOWN, not "
+                             "zero; the raw capture is exported for a later analysis")}, exc
+        resolved = (len(rep.accepted) == len(rep.frames) and not rep.uncertain and not cut_short
+                    and not res["censored"] and not res["unresolved"])
+        res.update({**counts, "analysis_available": True,
+                    "resolved": resolved, "incomplete": not resolved,
+                    "censored_in_flight": len(res["censored"]),
+                    "unresolved_at_cutoff": len(res["unresolved"]),
+                    "note": ("frames never attempted are not counted as losses; an uncertain "
+                             "write is in flight, not a loss; unresolved frames are ambiguous "
+                             "at a cutoff and are neither")})
+        return res, None
 
     def _summarise(self, after: dict, before: dict) -> dict:
         received = sum(r.get("bytes_received", 0) for r in self.results)
-        losses = sum(r.get("losses", 0) for r in self.results)
-        incomplete = any(r.get("incomplete") for r in self.results) or self.error is not None
+        unanalysed = [r["repetition"] for r in self.results if not r.get("analysis_available")]
+        known_losses = sum(r["losses"] for r in self.results if r.get("analysis_available"))
+        # an unknown stays unknown: a repetition whose analysis raised contributes no number, and
+        # the aggregate is then not a number either (the owner's P2-3)
+        losses = None if unanalysed else known_losses
+        resolved = bool(self.results) and all(r.get("resolved") for r in self.results)
+        reason = self.terminal.get("reason")
+        exposure_reached = reason in ("exposure_repetitions", "exposure_seconds", "exposure_seconds_censored")
+        completed = exposure_reached and resolved and self.error is None and not unanalysed
+        rate = None if (losses is None or received == 0) else losses * 100000 / received
+        denominator = ("received bytes, including every partial capture" if received else
+                       "unavailable: nothing was received, so there is no denominator")
+        if losses is None:
+            denominator += f"; losses unknown: the analysis of repetition(s) {unanalysed} raised"
         return {"label": self.label, "run_id": self.run_id, "tx_during_rx": self.tx_during_rx,
                 "topology": self.topology,
                 "provenance": self._guarded(provenance, "provenance"),
@@ -860,13 +1083,19 @@ class Run:
                                "baud": 115200, "byte_time_s": BYTE_TIME_S,
                                "tx_gap_s": TX_GAP_MEDIAN_S, "write_timeout_s": WRITE_TIMEOUT_S},
                 "repetitions_run": len(self.results), "stopped": self.stopped, "error": self.error,
+                "secondary_errors": list(self.secondary_errors),
+                # why it ended, stated; completion is DERIVED from it and from the traffic state
+                "terminal": self.terminal or {"reason": None, "meaning": "no terminal reason recorded"},
+                "exposure_reached": exposure_reached,
+                "traffic_resolved": resolved,
                 # planned, attempted, accepted — never conflated
                 "frames_planned": sum(r.get("frames_planned", 0) for r in self.results),
                 "frames_accepted": sum(r.get("frames_accepted", 0) for r in self.results),
                 "frames_uncertain": sum(r.get("frames_uncertain", 0) for r in self.results),
-                "censored_in_flight": sum(r.get("censored_in_flight", 0) for r in self.results),
-                "incomplete": incomplete,
-                "completed_exposure": (not incomplete) and self.error is None,
+                "censored_in_flight": sum(r.get("censored_in_flight") or 0 for r in self.results),
+                "unresolved_at_cutoff": sum(r.get("unresolved_at_cutoff") or 0 for r in self.results),
+                "incomplete": not completed,
+                "completed_exposure": completed,
                 "host_frames_written": sum(r.get("host_frames_written", 0) for r in self.results),
                 "host_writes_overlapping_source_tx": sum(r.get("host_writes_overlapping_source_tx", 0)
                                                          for r in self.results),
@@ -877,9 +1106,10 @@ class Run:
                 # denominator that does not exist, and the losses are reported regardless.
                 "denominator_bytes": received,
                 "losses": losses,
-                "losses_per_100k_bytes": (None if received == 0 else losses * 100000 / received),
-                "denominator": ("received bytes, including every partial capture" if received else
-                                "unavailable: nothing was received, so there is no denominator"),
+                "losses_in_analysed_repetitions": known_losses,
+                "repetitions_unanalysed": unanalysed,
+                "losses_per_100k_bytes": rate,
+                "denominator": denominator,
                 "counters_before": before, "counters_after": after,
                 "counters_delta": counter_delta(before, after),
                 "repetition_results": self.results,

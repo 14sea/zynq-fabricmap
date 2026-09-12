@@ -1111,5 +1111,377 @@ class TheProfileIsDerivedFromTheSessions(unittest.TestCase):
         self.assertEqual({t for _, t, _ in events}, {"TERM", "HB", "REC", "AUDIT"})
 
 
+class TheWriterContract(unittest.TestCase):
+    """The boundary review's P2-1: a writer's contract is declared and checked before any byte
+    moves, never discovered by calling it — an exception from an active write is that write's
+    failure, and a retry can deliver the bytes twice while reporting success."""
+
+    def setUp(self):
+        self.d = Path(tempfile.mkdtemp(prefix="rigwc_"))
+        self.addCleanup(lambda: __import__("shutil").rmtree(self.d, ignore_errors=True))
+
+    @staticmethod
+    def side_effecting_writer():
+        """Accepts the bytes, THEN fails internally — once. The counterexample's writer."""
+        st = {"calls": [], "accepted": bytearray()}
+
+        def write(data, timeout=None):
+            st["calls"].append(timeout)
+            st["accepted"] += data
+            if len(st["calls"]) == 1:
+                raise TypeError("internal writer failure after accepting bytes")
+            return len(data)
+        return write, st
+
+    def test_a_writer_that_fails_after_accepting_bytes_is_called_exactly_once(self):
+        """At 38c91b0: two calls with timeouts [0.25, None], `abcabc` accepted, 3 returned, no error."""
+        write, st = self.side_effecting_writer()
+        port = rig.callable_port("side-effecting", write, lambda t: b"", takes_timeout=True)
+        with self.assertRaises(TypeError) as cm:
+            port.write(b"abc", 0.25)
+        self.assertEqual(str(cm.exception), "internal writer failure after accepting bytes")
+        self.assertEqual(st["calls"], [0.25])                  # one invocation, with its budget
+        self.assertEqual(bytes(st["accepted"]), b"abc")        # no hidden duplicate bytes
+
+    def test_the_same_failure_inside_a_run_stops_it_with_the_frame_uncertain(self):
+        """Through the production Run: one source write, no second source write, no host write
+        after the error, the frame uncertain, the ORIGINAL exception as the cause."""
+        write, st = self.side_effecting_writer()
+        host_writes = []
+        source = rig.callable_port("source", write, lambda t: b"", takes_timeout=True)
+        host = rig.callable_port("host", lambda d, t=None: host_writes.append(d) or len(d),
+                                 lambda t: b"", takes_timeout=True)
+        with self.assertRaises(rig.RigError) as cm:
+            rig.Run("uncertain write", repetitions=2).execute(source, host=host, capture=source,
+                                                              out_dir=self.d, sleep=lambda s: None)
+        self.assertIsInstance(cm.exception.__cause__, TypeError)
+        self.assertEqual(len(st["calls"]), 1)                   # the source was written ONCE
+        self.assertEqual(host_writes, [])                       # nothing followed the error
+        on_disk = json.loads((self.d / "run.json").read_text())
+        self.assertEqual(on_disk["error"], "TypeError: internal writer failure after accepting bytes")
+        self.assertEqual(on_disk["terminal"]["reason"], "tool_error")
+        self.assertEqual(on_disk["repetitions_run"], 1)
+        self.assertEqual(on_disk["frames_uncertain"], 1)
+        self.assertEqual(on_disk["frames_accepted"], 0)
+        self.assertEqual(on_disk["losses"], 0)                  # nothing accepted, nothing lost
+        self.assertFalse(on_disk["completed_exposure"])
+
+    def test_both_declared_contracts_are_honoured_without_probing(self):
+        """The two supported signatures as positive controls: each is called once, with exactly
+        the arguments its declaration says, and neither is ever tried the other way."""
+        one_arg, two_arg = [], []
+
+        def w1(data):
+            one_arg.append(data)
+            return len(data)
+
+        def w2(data, timeout):
+            two_arg.append((data, timeout))
+            return len(data)
+        p1 = rig.callable_port("one", w1, lambda t: b"", takes_timeout=False)
+        p2 = rig.callable_port("two", w2, lambda t: b"", takes_timeout=True)
+        self.assertEqual(p1.write(b"xy", 0.5), 2)
+        self.assertEqual(p2.write(b"xyz", 0.5), 3)
+        self.assertEqual(one_arg, [b"xy"])
+        self.assertEqual(two_arg, [(b"xyz", 0.5)])
+
+    def test_a_declaration_that_contradicts_the_signature_is_refused_before_any_write(self):
+        calls = []
+        with self.assertRaises(rig.RigError) as cm:
+            rig.callable_port("lies", lambda d: calls.append(d) or len(d), lambda t: b"", takes_timeout=True)
+        self.assertIn("declared to take a timeout", str(cm.exception))
+        self.assertEqual(calls, [])                              # refused without writing
+        with self.assertRaises(rig.RigError):                    # and the other way round
+            rig.callable_port("lies", lambda d, t: len(d), lambda t: b"", takes_timeout=False)
+
+    def test_an_uninspectable_writer_is_taken_as_declared(self):
+        """A builtin has no inspectable signature: the declaration stands, and is still not probed."""
+        buf = bytearray()
+        port = rig.callable_port("builtin", buf.extend, lambda t: b"", takes_timeout=False)
+        with self.assertRaises(rig.RigError):                    # extend returns None: refused as such
+            port.write(b"ab")
+        self.assertEqual(bytes(buf), b"ab")                      # written once, not twice
+
+
+class ObservationIsNotDelivery(unittest.TestCase):
+    """The boundary review's P2-2: at a cutoff, a frame is censored only when NOTHING of it was
+    observed. A complete damaged line, an altered frame or an identifying fragment is an
+    observation, and a cutoff never turns observed damage into in-flight traffic."""
+
+    def setUp(self):
+        self.frames = rig.plan_frames("cut", 0)
+        self.token = rig.token_for("cut", 0)
+
+    def stream(self, upto: int) -> bytes:
+        return rig.stream_bytes(self.frames[:upto])
+
+    def both(self, expected, received):
+        """The same bytes under normal completion and under a cutoff."""
+        return (rig.analyse(expected, received, self.token, censor_tail=False),
+                rig.analyse(expected, received, self.token, censor_tail=True))
+
+    def test_a_complete_crc_failure_at_the_tail_is_a_loss_under_a_cutoff_too(self):
+        """The counterexample: one accepted IDENT, the whole 1048-byte line with one byte changed.
+        At 38c91b0 normal completion said 1 loss and the cutoff said 0 loss, frame 0 censored."""
+        one = self.frames[:1]
+        bad = flip(one[0].line, 60)
+        normal, cut = self.both(one, bad)
+        for res in (normal, cut):
+            self.assertEqual(res["losses"], 1)
+            self.assertEqual(res["censored"], [])
+            self.assertEqual(res["unresolved"], [])
+            self.assertEqual(res["defects_by_kind"], {"crc_failed": 1})
+            self.assertEqual(res["observed"], [0])
+            self.assertEqual(res["observed_damaged"], {"0": "crc_failed"})
+        self.assertEqual(cut["cutoff"]["observation_frontier"], 0)
+        self.assertFalse(cut["cutoff"]["ambiguous"])
+
+    def test_complete_silence_is_censored_and_stays_distinguishable(self):
+        normal, cut = self.both(self.frames[:1], b"")
+        self.assertEqual((normal["losses"], normal["censored"]), (1, []))
+        self.assertEqual((cut["losses"], cut["censored"], cut["observed"]), (0, [0], []))
+
+    def test_a_valid_crc_alteration_at_the_tail_is_a_loss_under_a_cutoff(self):
+        one = self.frames[:1]
+        parsed = rig.l5.parse_line(one[0].line.decode())
+        altered = rig.l5.build_line(parsed["type"], parsed["seq"], parsed["token"],
+                                    parsed["payload"][:-4] + "AAAA").encode()
+        _, cut = self.both(one, altered)
+        self.assertEqual(cut["losses"], 1)
+        self.assertEqual(cut["damaged"], [0])
+        self.assertEqual(cut["censored"], [])
+
+    def test_a_later_damaged_arrival_moves_the_frontier(self):
+        """Frames 0-2 delivered, frame 3 absent, frame 4 arrives CRC-damaged, frames 5.. nothing.
+        Frame 3 is a loss (something later was observed), frame 4 is a loss (observed damaged),
+        5.. are censored. At 38c91b0 the frontier was max(delivered) = 2, hiding both."""
+        expected = self.frames[:8]
+        received = self.stream(3) + flip(self.frames[4].line, 30)     # a 65-byte HB, hit in its token
+        _, cut = self.both(expected, received)
+        self.assertEqual(cut["losses"], 2)
+        self.assertEqual(cut["missing"], [3, 4])
+        self.assertEqual(cut["censored"], [5, 6, 7])
+        self.assertEqual(cut["unresolved"], [])
+        self.assertEqual(cut["cutoff"]["observation_frontier"], 4)
+        self.assertEqual(cut["defects"][0]["identified_by"], "near")   # header damaged; same length, 1 byte off
+
+    def test_a_genuinely_partial_line_is_censored_as_partial(self):
+        """Frames 0-1 delivered, half of frame 2: frame 2 was arriving — censored, 0 losses."""
+        expected = self.frames[:5]
+        received = self.stream(2) + self.frames[2].line[:len(self.frames[2].line) // 2]
+        normal, cut = self.both(expected, received)
+        self.assertEqual((cut["losses"], cut["censored"], cut["unresolved"]), (0, [2, 3, 4], []))
+        self.assertEqual(cut["cutoff"]["partial_frame"], 2)
+        self.assertEqual(cut["defects"][0]["identified_by"], "prefix")
+        self.assertEqual(cut["defects_by_kind"], {"fragment": 1})
+        self.assertEqual(normal["losses"], 3)                    # without a cutoff they are all losses
+
+    def test_a_partial_line_of_a_later_frame_makes_the_skipped_one_a_loss(self):
+        """Frames 0-1 delivered, frame 2 absent, half of frame 3: frame 2 is a loss, 3.. censored."""
+        expected = self.frames[:5]
+        received = self.stream(2) + self.frames[3].line[:len(self.frames[3].line) // 2]
+        _, cut = self.both(expected, received)
+        self.assertEqual((cut["losses"], cut["missing"], cut["censored"]), (1, [2], [3, 4]))
+
+    def test_unidentifiable_damage_after_the_frontier_is_unresolved_not_censored(self):
+        """Frame 0 delivered, then a complete line whose header is destroyed. Something above the
+        frontier was observed damaged and cannot be told which: the frames above are reported as
+        UNRESOLVED — not losses (that would be inventing which), and not in flight (that would be
+        asserting zero damage that was observed)."""
+        expected = self.frames[:4]
+        garbage = b"~" * (len(self.frames[1].line) + 7) + b"\n"       # no header, no length, nothing
+        _, cut = self.both(expected, self.stream(1) + garbage)
+        self.assertEqual(cut["losses"], 0)
+        self.assertEqual(cut["censored"], [])
+        self.assertEqual(cut["unresolved"], [1, 2, 3])
+        self.assertTrue(cut["cutoff"]["ambiguous"])
+        self.assertEqual(cut["cutoff"]["unidentified_after_frontier"], 1)
+        self.assertFalse(cut["clean"])
+
+    def test_two_frames_merged_by_a_lost_newline_are_not_one_identified_frame(self):
+        """Frames 1 and 2 with the newline between them gone: one line with two headers. It
+        identifies neither, so frames 1.. are unresolved rather than 2.. censored behind 1."""
+        expected = self.frames[:4]
+        merged = self.frames[1].line[:-1] + self.frames[2].line
+        _, cut = self.both(expected, self.stream(1) + merged)
+        self.assertEqual(cut["unresolved"], [1, 2, 3])
+        self.assertEqual(cut["censored"], [])
+
+    def test_the_cutoff_report_flows_through_a_run(self):
+        """Through the production Run: the transport damages the LAST frame it accepts before the
+        reader detaches. The damaged line is observed; it is a loss, not censored."""
+        state = {"writes": 0, "buf": bytearray()}
+
+        def write(data, timeout=None):
+            state["writes"] += 1
+            if state["writes"] == 3:
+                data = flip(data, 20)                    # a 65-byte HB, hit inside its token
+            state["buf"] += data
+            return len(data)
+
+        def read(_t):
+            if state["writes"] >= 3 and not state["buf"]:
+                raise OSError("synthetic detach")
+            out, state["buf"] = bytes(state["buf"]), bytearray()
+            return out
+        d = Path(tempfile.mkdtemp(prefix="rigcut_"))
+        self.addCleanup(lambda: __import__("shutil").rmtree(d, ignore_errors=True))
+        with self.assertRaises(rig.RigError):
+            rig.Run("damaged then detached", repetitions=1, tx_during_rx=False).execute(
+                rig.callable_port("p", write, read, takes_timeout=True), out_dir=d, sleep=lambda s: None)
+        on_disk = json.loads((d / "run.json").read_text())
+        rep = on_disk["repetition_results"][0]
+        self.assertTrue(rep["cut_short"])
+        self.assertEqual(rep["losses"], 1)
+        self.assertEqual(rep["observed_damaged"], {"2": "crc_failed"})
+        self.assertEqual(on_disk["losses"], 1)
+        self.assertEqual(on_disk["censored_in_flight"], rep["censored_in_flight"])
+
+
+class TheTerminalReason(unittest.TestCase):
+    """The boundary review's P2-3: a run states WHY it ended, and `completed_exposure` follows
+    from that reason and the traffic state — never from the count of accepted writes. An
+    analyser failure is a tool error: losses stay unknown and nothing more is transmitted."""
+
+    def setUp(self):
+        self.d = Path(tempfile.mkdtemp(prefix="rigterm_"))
+        self.addCleanup(lambda: __import__("shutil").rmtree(self.d, ignore_errors=True))
+
+    @staticmethod
+    def memory_loopback(damage_first: int = 0):
+        state = {"queued": bytearray(), "writes": 0}
+
+        def write(data, timeout=None):
+            state["writes"] += 1
+            if state["writes"] <= damage_first:
+                data = flip(data, 50)
+            state["queued"] += data
+            return len(data)
+
+        def read(_t):
+            out, state["queued"] = bytes(state["queued"]), bytearray()
+            return out
+        return rig.callable_port("memory loopback", write, read, takes_timeout=True), state
+
+    def persisted(self, name):
+        return json.loads((self.d / name / "run.json").read_text())
+
+    def check(self, returned, name, **expect):
+        """The same fields on the returned result AND on the persisted run.json."""
+        for where, res in (("returned", returned), ("persisted", self.persisted(name))):
+            for k, v in expect.items():
+                self.assertEqual(res[k] if k != "reason" else res["terminal"]["reason"], v, f"{where}: {k}")
+
+    def test_the_two_repetition_zero_loss_control_still_completes(self):
+        port, _ = self.memory_loopback()
+        res = rig.Run("positive", repetitions=2, tx_during_rx=False).execute(
+            port, out_dir=self.d / "positive", sleep=lambda t: None)
+        self.check(res, "positive", reason="exposure_repetitions", exposure_reached=True,
+                   traffic_resolved=True, completed_exposure=True, incomplete=False,
+                   losses=0, losses_per_100k_bytes=0.0, repetitions_unanalysed=[], error=None)
+        self.assertTrue(all(r["resolved"] for r in res["repetition_results"]))
+
+    def test_an_early_loss_stop_is_not_a_completed_exposure(self):
+        """The counterexample: 200 requested, three frames damaged in the first, the stop rule
+        fires — and 38c91b0 said completed_exposure true, incomplete false."""
+        port, state = self.memory_loopback(damage_first=3)
+        res = rig.Run("three losses", repetitions=200, tx_during_rx=False).execute(
+            port, out_dir=self.d / "stopped", sleep=lambda t: None)
+        self.assertEqual(state["writes"], 302)                   # one repetition transmitted
+        self.check(res, "stopped", reason="stop_rule_losses", exposure_reached=False,
+                   traffic_resolved=True, completed_exposure=False, incomplete=True,
+                   losses=3, repetitions_run=1)
+        self.assertTrue(res["repetition_results"][0]["resolved"])   # the REPETITION did resolve
+        self.assertIn("1 of 200 requested", res["stopped"])
+
+    def test_a_deadline_during_the_drain_leaves_the_exposure_reached_but_not_complete(self):
+        """The counterexample: every source write accepted, the clock expires while draining and
+        nothing came back — 302 censored, and 38c91b0 said completed_exposure true."""
+        now = [0.0]
+
+        def write(data, timeout=None):
+            if b" TERM " in data:
+                now[0] = 1.0
+            return len(data)
+        port = rig.callable_port("accepted then cut", write, lambda t: b"", takes_timeout=True)
+        res = rig.Run("drain cutoff", repetitions=2, seconds=1.0, tx_during_rx=False).execute(
+            port, out_dir=self.d / "cutoff", sleep=lambda t: None, clock=lambda: now[0])
+        self.check(res, "cutoff", reason="exposure_seconds_censored", exposure_reached=True,
+                   traffic_resolved=False, completed_exposure=False, incomplete=True,
+                   losses=0, censored_in_flight=302, denominator_bytes=0, repetitions_run=1)
+        rep = res["repetition_results"][0]
+        self.assertEqual(rep["frames_accepted"], 302)
+        self.assertTrue(rep["cut_short"])
+        self.assertTrue(rep["incomplete"])                        # not merely "fewer accepted than planned"
+        self.assertFalse(rep["resolved"])
+        self.assertIn("302 frames censored", res["stopped"])
+
+    def test_a_time_bound_reached_between_resolved_repetitions_is_complete(self):
+        """The registered time bound is a legitimate end (plan §5: 200 repetitions or 60 minutes,
+        whichever first). Here the analysis of the first repetition consumes the budget, so the
+        bound is reached BETWEEN repetitions with everything resolved."""
+        now = [0.0]
+        real = rig.analyse
+
+        def slow_analyse(*a, **k):
+            now[0] += 100.0
+            return real(*a, **k)
+        port, state = self.memory_loopback()
+        with unittest.mock.patch.object(rig, "analyse", slow_analyse):
+            res = rig.Run("time bound", repetitions=5, seconds=50.0, tx_during_rx=False).execute(
+                port, out_dir=self.d / "bound", sleep=lambda t: None, clock=lambda: now[0])
+        self.assertEqual(state["writes"], 302)
+        self.check(res, "bound", reason="exposure_seconds", exposure_reached=True,
+                   traffic_resolved=True, completed_exposure=True, incomplete=False, repetitions_run=1)
+
+    def test_an_analyser_failure_stops_transmission_and_leaves_losses_unknown(self):
+        """The counterexample: with the analyser raising after repetition 1, 38c91b0 went on to
+        repetition 2 (604 source frames), returned normally with error null, 'completed' in the
+        stop message and a loss rate of 0.0."""
+        port, state = self.memory_loopback()
+        with unittest.mock.patch.object(rig, "analyse", side_effect=ValueError("injected analyser failure")):
+            with self.assertRaises(rig.RigError) as cm:
+                rig.Run("analysis unavailable", repetitions=2, tx_during_rx=False).execute(
+                    port, out_dir=self.d / "analysis", sleep=lambda t: None)
+        self.assertEqual(state["writes"], 302)                   # NO second repetition started
+        self.assertIsInstance(cm.exception.__cause__, ValueError)
+        res = cm.exception.result
+        self.check(res, "analysis", reason="analysis_unavailable", exposure_reached=False,
+                   traffic_resolved=False, completed_exposure=False, incomplete=True,
+                   losses=None, losses_per_100k_bytes=None, repetitions_unanalysed=[0],
+                   repetitions_run=1, error="ValueError: injected analyser failure",
+                   export_complete=True)                          # files written; not a valid measurement
+        rep = res["repetition_results"][0]
+        self.assertFalse(rep["analysis_available"])
+        self.assertIsNone(rep["losses"])
+        self.assertIn("tool error", res["stopped"])
+        self.assertIn("unknown", res["stopped"])
+        self.assertNotIn("completed", res["stopped"])
+        self.assertIn("losses unknown", res["denominator"])
+        self.assertTrue((self.d / "analysis" / "capture_000.bin").stat().st_size > 0)  # the evidence
+
+    def test_an_analyser_failure_after_a_driver_failure_is_secondary(self):
+        """Both fail in the same repetition: the driver's error is primary, the analyser's is
+        recorded as secondary, nothing is lost and nothing is substituted."""
+        def write(data, timeout=None):
+            raise OSError("primary detach")
+        port = rig.callable_port("dead", write, lambda t: b"", takes_timeout=True)
+        with unittest.mock.patch.object(rig, "analyse", side_effect=ValueError("secondary")):
+            with self.assertRaises(rig.RigError) as cm:
+                rig.Run("both", repetitions=2, tx_during_rx=False).execute(
+                    port, out_dir=self.d / "both", sleep=lambda t: None)
+        self.assertIsInstance(cm.exception.__cause__, OSError)
+        res = cm.exception.result
+        self.assertEqual(res["terminal"]["reason"], "tool_error")
+        self.assertEqual(res["error"], "OSError: primary detach")
+        self.assertEqual(res["secondary_errors"], ["analysis of repetition 0: ValueError: secondary"])
+        self.assertIsNone(res["losses"])
+
+    def test_every_terminal_reason_is_one_the_tool_names(self):
+        self.assertEqual(set(rig.TERMINAL_REASONS), {
+            "exposure_repetitions", "exposure_seconds", "exposure_seconds_censored",
+            "stop_rule_losses", "tool_error", "analysis_unavailable"})
+
+
 if __name__ == "__main__":
     unittest.main()
