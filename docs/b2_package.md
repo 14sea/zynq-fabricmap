@@ -1,5 +1,16 @@
 # B2 — the image package: what was built, what the gate showed, what is asked (v0.3, host-only, 2026-09-12)
 
+> **Reporter correction accepted (`8756149`, reviewed at `b5571f0`): P2 and P3 CLOSED.**
+> The unchanged review probe now refuses all five log counterexamples and malformed
+> run fields; its positive proof remains valid. Independent suite: **35 tests, OK**;
+> 36 additional endpoint-shape cases all refuse. Both new reports' artifact bindings
+> and verdicts verify. Cite `test_report_2026-09-12T102301Z.json` (run HEAD `2ed95f4`,
+> reported 1,893 tests, zero skips, OK); preserve the failed report unchanged.
+> See the [acceptance review](b2_test_report_acceptance_2026_09_12.md).
+> Next: pin B2Q's fixed contract at S0/S1, then complete package review. This accepts
+> the reporter correction; it does not authorize push, freeze or board execution.
+> Earlier banners below are historical.
+
 > **Reporter schema 2.0.0 review (`a52c229`): HOLD for one remaining P2.**
 > Execution snapshots, the no-proof `--no-run` path, the reported I/O cases and the
 > production-predicate test method are accepted. The parser still turns incomplete
