@@ -1,0 +1,417 @@
+{
+  "close_failure": {
+    "brief": {
+      "censored_in_flight": 0,
+      "close_attempted": [
+        "/dev/FAKE"
+      ],
+      "close_errors": [
+        "/dev/FAKE: OSError: synthetic close failure"
+      ],
+      "completed_exposure": true,
+      "confirmed_losses": 0,
+      "counters_delta": {
+        "available": false,
+        "reason": "offline fake fd"
+      },
+      "denominator_bytes": 98599,
+      "device": "/dev/FAKE",
+      "entry_export_errors": [],
+      "entry_record": "entry.json",
+      "error": null,
+      "exit": 0,
+      "exit_meaning": "the run returned",
+      "export_complete": true,
+      "exported_to": "/tmp/rig_v2_review_mls2vm4j/close_failure",
+      "frames_accepted": 302,
+      "label": "offline-review",
+      "loss_metric": "exact",
+      "losses": 0,
+      "losses_per_100k_bytes": 0.0,
+      "ports_closed": [],
+      "ports_opened": [
+        "/dev/FAKE"
+      ],
+      "repetitions_run": 1,
+      "run_export_complete": true,
+      "run_export_errors": [],
+      "run_record": "run.json",
+      "stage": "run",
+      "stopped": "exposure: 1 repetitions completed",
+      "terminal": "exposure_repetitions",
+      "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+      "unresolved_at_cutoff": 0
+    },
+    "counter_calls": 4,
+    "disk_error": null,
+    "disk_provenance": {
+      "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+      "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+      "instrument_commit": null,
+      "instrument_root": "/home/test/zynq_psoracle",
+      "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+      "tool": "host/transport_rig.py",
+      "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+    },
+    "entry_json": {
+      "censored_in_flight": 0,
+      "close_attempted": [
+        "/dev/FAKE"
+      ],
+      "close_errors": [
+        "/dev/FAKE: OSError: synthetic close failure"
+      ],
+      "completed_exposure": true,
+      "confirmed_losses": 0,
+      "counters_delta": {
+        "available": false,
+        "reason": "offline fake fd"
+      },
+      "denominator_bytes": 98599,
+      "device": "/dev/FAKE",
+      "entry_export_errors": [],
+      "entry_record": "entry.json",
+      "error": null,
+      "exit": 0,
+      "exit_meaning": "the run returned",
+      "export_complete": true,
+      "exported_to": "/tmp/rig_v2_review_mls2vm4j/close_failure",
+      "frames_accepted": 302,
+      "label": "offline-review",
+      "loss_metric": "exact",
+      "losses": 0,
+      "losses_per_100k_bytes": 0.0,
+      "ports_closed": [],
+      "ports_opened": [
+        "/dev/FAKE"
+      ],
+      "repetitions_run": 1,
+      "run_export_complete": true,
+      "run_export_errors": [],
+      "run_record": "run.json",
+      "stage": "run",
+      "stopped": "exposure: 1 repetitions completed",
+      "terminal": "exposure_repetitions",
+      "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+      "unresolved_at_cutoff": 0
+    },
+    "exit": 0,
+    "fake_elapsed": 30.7000000000003,
+    "files": [
+      "capture_000.bin",
+      "entry.json",
+      "events_000.json",
+      "invocation.json",
+      "preflight.json",
+      "preflight_rx.bin",
+      "run.json"
+    ],
+    "invocation_provenance": {
+      "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+      "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+      "instrument_commit": null,
+      "instrument_root": "/home/test/zynq_psoracle",
+      "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+      "tool": "host/transport_rig.py",
+      "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+    },
+    "invocation_terminal": null,
+    "run": {
+      "completed_exposure": true,
+      "export_complete": true,
+      "frames_accepted": 302,
+      "losses": 0
+    },
+    "run_json_exists": true,
+    "writes": 303
+  },
+  "continuous": {
+    "brief": {
+      "close_attempted": [
+        "/dev/FAKE"
+      ],
+      "close_errors": [],
+      "counters": {
+        "available": false,
+        "reason": "offline fake fd"
+      },
+      "device": "/dev/FAKE",
+      "entry_export_errors": [],
+      "entry_record": "entry.json",
+      "exit": 3,
+      "exit_meaning": "refused before any exposure \u2014 the declared identity, or the preflight (silence / not quiet)",
+      "export_complete": true,
+      "exported_to": "/tmp/rig_v2_review_mls2vm4j/continuous",
+      "label": "offline-review",
+      "ports_closed": [
+        "/dev/FAKE"
+      ],
+      "ports_opened": [
+        "/dev/FAKE"
+      ],
+      "preflight": {
+        "counters_delta": {
+          "available": false,
+          "reason": "offline fake fd"
+        },
+        "elapsed_s": 3.0,
+        "failed_phase": null,
+        "matched": false,
+        "quiet": false,
+        "received_bytes": 1037,
+        "received_file": "preflight_rx.bin",
+        "skipped": null
+      },
+      "refusal": "not_quiet",
+      "refused": "not quiet: 1037 bytes received and still arriving at the 3.0 s preflight deadline \u2014 the exposure would start with a backlog, so it does not start",
+      "stage": "preflight"
+    },
+    "counter_calls": 2,
+    "exit": 3,
+    "fake_elapsed": 3.0,
+    "files": [
+      "entry.json",
+      "invocation.json",
+      "preflight.json",
+      "preflight_rx.bin"
+    ],
+    "raw_matches_record": true,
+    "writes": 1
+  },
+  "detach": {
+    "brief": {
+      "close_attempted": [
+        "/dev/FAKE"
+      ],
+      "close_errors": [],
+      "device": "/dev/FAKE",
+      "entry_export_errors": [],
+      "entry_record": "entry.json",
+      "error": "OSError: synthetic preflight detach after receiving the nonce",
+      "exit": 2,
+      "exit_meaning": "a tool error \u2014 constructing the invocation, in the preflight, or in the run; the evidence that exists is exported",
+      "export_complete": true,
+      "exported_to": "/tmp/rig_v2_review_mls2vm4j/detach",
+      "failed_phase": "drain",
+      "label": "offline-review",
+      "ports_closed": [
+        "/dev/FAKE"
+      ],
+      "ports_opened": [
+        "/dev/FAKE"
+      ],
+      "preflight": {
+        "counters_delta": {
+          "available": false,
+          "reason": "offline fake fd"
+        },
+        "elapsed_s": 0.1,
+        "failed_phase": "drain",
+        "matched": true,
+        "quiet": false,
+        "received_bytes": 43,
+        "received_file": "preflight_rx.bin",
+        "skipped": null
+      },
+      "stage": "preflight"
+    },
+    "counter_calls": 2,
+    "exit": 2,
+    "fake_elapsed": 0.1,
+    "files": [
+      "entry.json",
+      "invocation.json",
+      "preflight.json",
+      "preflight_rx.bin"
+    ],
+    "raw_matches_record": true,
+    "writes": 1
+  },
+  "head": "c2f38ab7a6aeda506ad9e963fe40360f6cbe24e2",
+  "note": "the owner v2 probe re-run against the corrected tool; its before-fix assertions not evaluated; the two new cases read run.json only if it exists and also read entry.json and the invocation terminal; observations only",
+  "old_destination": {
+    "counter_calls": 0,
+    "exit": 5,
+    "fake_elapsed": 0.0,
+    "files": [
+      "capture_000.bin"
+    ],
+    "stdout": "{\"close_attempted\": [], \"close_errors\": [], \"device\": \"/dev/FAKE\", \"entry_export_errors\": [], \"entry_record\": null, \"entry_record_note\": \"the destination was refused; nothing is written into it\", \"exit\": 5, \"exit_meaning\": \"the evidence destination could not be claimed or written \\u2014 nothing was spent on the device\", \"export_complete\": true, \"exported_to\": \"/tmp/rig_v2_review_mls2vm4j/old\", \"label\": \"offline-review\", \"ports_closed\": [], \"ports_opened\": [], \"refusal\": \"destination\", \"refused\": \"destination is not empty (1 entries, e.g. ['capture_000.bin']): an earlier acquisition lives there and is left exactly as it is \\u2014 use a new --out\", \"stage\": \"destination\"}",
+    "writes": 0
+  },
+  "positive": {
+    "brief": {
+      "censored_in_flight": 0,
+      "close_attempted": [
+        "/dev/FAKE"
+      ],
+      "close_errors": [],
+      "completed_exposure": true,
+      "confirmed_losses": 0,
+      "counters_delta": {
+        "available": false,
+        "reason": "offline fake fd"
+      },
+      "denominator_bytes": 98599,
+      "device": "/dev/FAKE",
+      "entry_export_errors": [],
+      "entry_record": "entry.json",
+      "error": null,
+      "exit": 0,
+      "exit_meaning": "the run returned",
+      "export_complete": true,
+      "exported_to": "/tmp/rig_v2_review_mls2vm4j/positive",
+      "frames_accepted": 302,
+      "label": "offline-review",
+      "loss_metric": "exact",
+      "losses": 0,
+      "losses_per_100k_bytes": 0.0,
+      "ports_closed": [
+        "/dev/FAKE"
+      ],
+      "ports_opened": [
+        "/dev/FAKE"
+      ],
+      "repetitions_run": 1,
+      "run_export_complete": true,
+      "run_export_errors": [],
+      "run_record": "run.json",
+      "stage": "run",
+      "stopped": "exposure: 1 repetitions completed",
+      "terminal": "exposure_repetitions",
+      "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+      "unresolved_at_cutoff": 0
+    },
+    "counter_calls": 4,
+    "exit": 0,
+    "fake_elapsed": 30.7000000000003,
+    "files": [
+      "capture_000.bin",
+      "entry.json",
+      "events_000.json",
+      "invocation.json",
+      "preflight.json",
+      "preflight_rx.bin",
+      "run.json"
+    ],
+    "raw_matches_record": true,
+    "run": {
+      "completed_exposure": true,
+      "export_complete": true,
+      "frames_accepted": 302,
+      "losses": 0
+    },
+    "writes": 303
+  },
+  "provenance_failure": {
+    "brief": {
+      "close_attempted": [],
+      "close_errors": [],
+      "construction_errors": [
+        "provenance: OSError: synthetic provenance read failure"
+      ],
+      "device": "/dev/FAKE",
+      "entry_export_errors": [],
+      "entry_record": "entry.json",
+      "error": "provenance: OSError: synthetic provenance read failure",
+      "exit": 2,
+      "exit_meaning": "a tool error \u2014 constructing the invocation, in the preflight, or in the run; the evidence that exists is exported",
+      "export_complete": true,
+      "exported_to": "/tmp/rig_v2_review_mls2vm4j/provenance_failure",
+      "label": "offline-review",
+      "ports_closed": [],
+      "ports_opened": [],
+      "stage": "invocation"
+    },
+    "counter_calls": 0,
+    "disk_error": null,
+    "disk_provenance": null,
+    "entry_json": {
+      "close_attempted": [],
+      "close_errors": [],
+      "construction_errors": [
+        "provenance: OSError: synthetic provenance read failure"
+      ],
+      "device": "/dev/FAKE",
+      "entry_export_errors": [],
+      "entry_record": "entry.json",
+      "error": "provenance: OSError: synthetic provenance read failure",
+      "exit": 2,
+      "exit_meaning": "a tool error \u2014 constructing the invocation, in the preflight, or in the run; the evidence that exists is exported",
+      "export_complete": true,
+      "exported_to": "/tmp/rig_v2_review_mls2vm4j/provenance_failure",
+      "label": "offline-review",
+      "ports_closed": [],
+      "ports_opened": [],
+      "stage": "invocation"
+    },
+    "exit": 2,
+    "fake_elapsed": 0.0,
+    "files": [
+      "entry.json",
+      "invocation.json"
+    ],
+    "invocation_provenance": null,
+    "invocation_terminal": {
+      "detail": "the invocation record could not be constructed; no port was opened",
+      "reason": "tool_error",
+      "stage": "invocation"
+    },
+    "run_json_exists": false,
+    "writes": 0
+  },
+  "silence": {
+    "brief": {
+      "close_attempted": [
+        "/dev/FAKE"
+      ],
+      "close_errors": [],
+      "counters": {
+        "available": false,
+        "reason": "offline fake fd"
+      },
+      "device": "/dev/FAKE",
+      "entry_export_errors": [],
+      "entry_record": "entry.json",
+      "exit": 3,
+      "exit_meaning": "refused before any exposure \u2014 the declared identity, or the preflight (silence / not quiet)",
+      "export_complete": true,
+      "exported_to": "/tmp/rig_v2_review_mls2vm4j/silence",
+      "label": "offline-review",
+      "ports_closed": [
+        "/dev/FAKE"
+      ],
+      "ports_opened": [
+        "/dev/FAKE"
+      ],
+      "preflight": {
+        "counters_delta": {
+          "available": false,
+          "reason": "offline fake fd"
+        },
+        "elapsed_s": 1.3000000000000005,
+        "failed_phase": null,
+        "matched": false,
+        "quiet": true,
+        "received_bytes": 0,
+        "received_file": "preflight_rx.bin",
+        "skipped": null
+      },
+      "refusal": "silence",
+      "refused": "no loopback: nothing came back within 1.0 s \u2014 the TX\u2192RX jumper is not in place, or this is not the port",
+      "stage": "preflight"
+    },
+    "counter_calls": 2,
+    "exit": 3,
+    "fake_elapsed": 1.3000000000000005,
+    "files": [
+      "entry.json",
+      "invocation.json",
+      "preflight.json",
+      "preflight_rx.bin"
+    ],
+    "raw_matches_record": true,
+    "writes": 1
+  },
+  "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+}
