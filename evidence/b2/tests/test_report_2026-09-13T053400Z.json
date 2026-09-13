@@ -1,0 +1,148 @@
+{
+ "artifacts_sha256": {
+  "docs/b2_architecture.md": "2393399094e2ae77389e454c2d435ea9e85dc48e5c9fafded30275de2da12172",
+  "docs/b2_package.md": "0694931bbbfc03b3e782c83f77715244eb00cebfec629feae4e4163aa607c0da",
+  "docs/b2_preregistration.md": "68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0",
+  "evidence/b2/build_evidence.json": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b",
+  "evidence/b2/gate/recomputed_2026_09_10/gate_report.json": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c",
+  "evidence/b2/plan.json": "cc6799080cb4c71ce2c2a64a9aaca42c09904d393351f8e2bc02957df428f3e4",
+  "evidence/b2/prediction.json": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+  "firmware/b2/IMPORT.json": "839496960abfcbede935f6615a6b7723bd6ba4cc290212029e699846392170e8",
+  "firmware/b2/p3_data.h": "518170dbb449e6e5eaef1cc34773f0bb2fa5256c34f3617b859c9880e1b6c295",
+  "manifests/b1_instrument_pins.json": "3106d4a8445e16382b801a0791fde1fd2114846daef6aaf1fd6501e8e45c4709",
+  "manifests/b1_manifest.json": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+  "manifests/b2_instrument_pins.json": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf",
+  "manifests/b2_manifest.json": "8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35",
+  "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
+ },
+ "at": "2026-09-13T053400Z",
+ "clean_tree_proof": true,
+ "errors": 0,
+ "exit_status": 0,
+ "failures": 0,
+ "head_at_run": "eba9260240119b688f0bc93f07e09c66ea352f2b",
+ "host": "H3C",
+ "instrument": {
+  "dirty": false,
+  "head": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "pinned_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "root": "/home/test/zynq_psoracle"
+ },
+ "log": {
+  "duration_s": 918.212,
+  "errors": 0,
+  "failures": 0,
+  "findings": [],
+  "ran": 2008,
+  "result_line": "OK",
+  "skipped": 0
+ },
+ "log_sha256": "c0953926217da8c7ddd458de27cbe0befa5bc57e567017bf5cda321b63ee48b0",
+ "note": "head_at_run and every other provenance field are the START snapshot, taken before the suite ran; the end snapshot is in run.end and must agree with it. The commit that includes this report is necessarily later than head_at_run.",
+ "package": "B2 v0.3",
+ "pins": {
+  "b1_files_verified": 105,
+  "bound_to": "the manifest's pin",
+  "files_verified": 71,
+  "manifest_present": true,
+  "pins_refusal": null,
+  "pins_sha256": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf",
+  "pins_verified": true
+ },
+ "proof_refusals": [],
+ "ran": 2008,
+ "result_line": "OK",
+ "run": {
+  "argv": [
+   "/usr/bin/python3",
+   "-m",
+   "unittest",
+   "discover",
+   "-s",
+   "tests"
+  ],
+  "end": {
+   "artifacts_sha256": {
+    "docs/b2_architecture.md": "2393399094e2ae77389e454c2d435ea9e85dc48e5c9fafded30275de2da12172",
+    "docs/b2_package.md": "0694931bbbfc03b3e782c83f77715244eb00cebfec629feae4e4163aa607c0da",
+    "docs/b2_preregistration.md": "68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0",
+    "evidence/b2/build_evidence.json": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b",
+    "evidence/b2/gate/recomputed_2026_09_10/gate_report.json": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c",
+    "evidence/b2/plan.json": "cc6799080cb4c71ce2c2a64a9aaca42c09904d393351f8e2bc02957df428f3e4",
+    "evidence/b2/prediction.json": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+    "firmware/b2/IMPORT.json": "839496960abfcbede935f6615a6b7723bd6ba4cc290212029e699846392170e8",
+    "firmware/b2/p3_data.h": "518170dbb449e6e5eaef1cc34773f0bb2fa5256c34f3617b859c9880e1b6c295",
+    "manifests/b1_instrument_pins.json": "3106d4a8445e16382b801a0791fde1fd2114846daef6aaf1fd6501e8e45c4709",
+    "manifests/b1_manifest.json": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+    "manifests/b2_instrument_pins.json": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf",
+    "manifests/b2_manifest.json": "8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35",
+    "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
+   },
+   "at": "2026-09-13T053400Z",
+   "head": "eba9260240119b688f0bc93f07e09c66ea352f2b",
+   "instrument": {
+    "dirty": false,
+    "head": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+    "pinned_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+    "root": "/home/test/zynq_psoracle"
+   },
+   "pins": {
+    "b1_files_verified": 105,
+    "bound_to": "the manifest's pin",
+    "files_verified": 71,
+    "manifest_present": true,
+    "pins_refusal": null,
+    "pins_sha256": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf",
+    "pins_verified": true
+   },
+   "root": "/home/test/zynq_fabricmap",
+   "worktree_dirty": false
+  },
+  "executed": true,
+  "exit_status": 0,
+  "shape": null,
+  "start": {
+   "artifacts_sha256": {
+    "docs/b2_architecture.md": "2393399094e2ae77389e454c2d435ea9e85dc48e5c9fafded30275de2da12172",
+    "docs/b2_package.md": "0694931bbbfc03b3e782c83f77715244eb00cebfec629feae4e4163aa607c0da",
+    "docs/b2_preregistration.md": "68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0",
+    "evidence/b2/build_evidence.json": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b",
+    "evidence/b2/gate/recomputed_2026_09_10/gate_report.json": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c",
+    "evidence/b2/plan.json": "cc6799080cb4c71ce2c2a64a9aaca42c09904d393351f8e2bc02957df428f3e4",
+    "evidence/b2/prediction.json": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+    "firmware/b2/IMPORT.json": "839496960abfcbede935f6615a6b7723bd6ba4cc290212029e699846392170e8",
+    "firmware/b2/p3_data.h": "518170dbb449e6e5eaef1cc34773f0bb2fa5256c34f3617b859c9880e1b6c295",
+    "manifests/b1_instrument_pins.json": "3106d4a8445e16382b801a0791fde1fd2114846daef6aaf1fd6501e8e45c4709",
+    "manifests/b1_manifest.json": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+    "manifests/b2_instrument_pins.json": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf",
+    "manifests/b2_manifest.json": "8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35",
+    "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
+   },
+   "at": "2026-09-13T051839Z",
+   "head": "eba9260240119b688f0bc93f07e09c66ea352f2b",
+   "instrument": {
+    "dirty": false,
+    "head": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+    "pinned_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+    "root": "/home/test/zynq_psoracle"
+   },
+   "pins": {
+    "b1_files_verified": 105,
+    "bound_to": "the manifest's pin",
+    "files_verified": 71,
+    "manifest_present": true,
+    "pins_refusal": null,
+    "pins_sha256": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf",
+    "pins_verified": true
+   },
+   "root": "/home/test/zynq_fabricmap",
+   "worktree_dirty": false
+  }
+ },
+ "schema": "b2_test_report",
+ "schema_version": "2.0.0",
+ "scope": "whole suite",
+ "skipped": 0,
+ "user": "test",
+ "worktree_dirty": false
+}

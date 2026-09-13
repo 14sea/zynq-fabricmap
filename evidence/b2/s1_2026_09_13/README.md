@@ -15,8 +15,16 @@ entry. Qualification remains false; qualification, calibration and plan remain n
 
 `transition.json` records the actual resulting binding, not a preview hash.
 `verify_before.json` and `verify_after.json` retain the independent verification.
-The post-freeze whole-suite clean-tree report will be generated after this
-transition is committed, and recorded in a subsequent evidence commit.
+The transition is committed as `eba9260240119b688f0bc93f07e09c66ea352f2b`.
+The [post-freeze whole-suite report](../tests/test_report_2026-09-13T053400Z.json)
+records 2,008 tests, zero skips, zero failures or errors, and `OK` on that clean
+commit. It has `clean_tree_proof: true` and `proof_refusals: []`. Start and end
+snapshots agree on HEAD, cleanliness, instrument, pins and artifact digests;
+the manifest digest in both is the actual S1 digest above. The proof was
+independently recomputed, all recorded artifact digests were checked against
+current bytes, and production verify accepted S1 again after the suite.
+The report is archived in a subsequent evidence commit; its tested HEAD remains
+`eba9260`.
 
 No firmware, image, pinned input, instrument or ruling was changed. No board
 or physical serial access occurred. This state transition does not lift the

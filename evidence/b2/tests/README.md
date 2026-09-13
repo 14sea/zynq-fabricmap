@@ -32,4 +32,11 @@ Written by `host/b2_test_report.py`. A report is a **clean-tree proof** only whe
   below, which was taken at the submitted HEAD.
 - `test_report_2026-09-12T134616Z.json` — schema **2.0.0**, HEAD `619b22b`, **1 895 tests, zero
   skips, OK**, `clean_tree_proof: true` with `proof_refusals: []`, taken on the pushed tree that
-  the §7 package is submitted from. **This is the report the package cites.**
+  the §7 package is submitted from. Retained as the historical §7 submission
+  report; superseded for the current S1 state by the report below.
+- `test_report_2026-09-13T053400Z.json` — schema **2.0.0**, HEAD `eba9260`,
+  **2 008 tests, zero skips, zero failures or errors, OK**. This is the current
+  post-freeze S1 report: `clean_tree_proof: true`, `proof_refusals: []`, and
+  matching start/end provenance. Pins are bound through the committed manifest
+  (71 B2 / 105 B1 files), whose SHA-256 is
+  `8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35`.
