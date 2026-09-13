@@ -1,0 +1,834 @@
+{
+  "cases": {
+    "exposure_cutoff": {
+      "brief": {
+        "all_observed_responses_differ": true,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "OSError: [Errno 9] Bad file descriptor"
+        },
+        "detail": "the 0.12 s exposure cut read 0 before its prompt",
+        "device": "/dev/ebaz-uart",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": true,
+        "exported_to": "/tmp/ctl_jwsyg_ax",
+        "identical_responses": 0,
+        "label": "t",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/ebaz-uart"
+        ],
+        "ports_opened": [
+          "/dev/ebaz-uart"
+        ],
+        "reads_done": 1,
+        "received_bytes_excluding_reference": 0,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_seconds"
+      },
+      "commands": [
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4"
+      ],
+      "disk": {
+        "all_observed_responses_differ": true,
+        "identical_responses": 0,
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "reads": [
+          {
+            "i": 0,
+            "raw_bytes": 0
+          }
+        ],
+        "reads_done": 1,
+        "terminal": {
+          "at_read": 0,
+          "cut_short": true,
+          "detail": "the 0.12 s exposure cut read 0 before its prompt",
+          "partial_bytes": 0,
+          "reason": "exposure_seconds"
+        }
+      },
+      "entry_equals_stdout": true,
+      "exit": 0,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ]
+    },
+    "injected_command_in_body": {
+      "brief": {
+        "all_observed_responses_differ": false,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "OSError: [Errno 9] Bad file descriptor"
+        },
+        "detail": "4 repeated reads completed",
+        "device": "/dev/ebaz-uart",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": true,
+        "exported_to": "/tmp/ctl_uymbtndc",
+        "identical_responses": 4,
+        "label": "t",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/ebaz-uart"
+        ],
+        "ports_opened": [
+          "/dev/ebaz-uart"
+        ],
+        "reads_done": 4,
+        "received_bytes_excluding_reference": 311,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "commands": [
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4"
+      ],
+      "disk": {
+        "all_observed_responses_differ": false,
+        "identical_responses": 4,
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "reads": [
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 0,
+            "outcome": "identical",
+            "raw_bytes": 92
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 1,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 2,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 3,
+            "outcome": "identical",
+            "raw_bytes": 73
+          }
+        ],
+        "reads_done": 4,
+        "terminal": {
+          "detail": "4 repeated reads completed",
+          "reason": "exposure_repetitions"
+        }
+      },
+      "entry_equals_stdout": true,
+      "exit": 0,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "read_0002.bin",
+        "read_0003.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ]
+    },
+    "leading_newline": {
+      "brief": {
+        "all_observed_responses_differ": false,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "OSError: [Errno 9] Bad file descriptor"
+        },
+        "detail": "4 repeated reads completed",
+        "device": "/dev/ebaz-uart",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": true,
+        "exported_to": "/tmp/ctl_ype_01yz",
+        "identical_responses": 4,
+        "label": "t",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/ebaz-uart"
+        ],
+        "ports_opened": [
+          "/dev/ebaz-uart"
+        ],
+        "reads_done": 4,
+        "received_bytes_excluding_reference": 294,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "commands": [
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4"
+      ],
+      "disk": {
+        "all_observed_responses_differ": false,
+        "identical_responses": 4,
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "reads": [
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 0,
+            "outcome": "identical",
+            "raw_bytes": 75
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 1,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 2,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 3,
+            "outcome": "identical",
+            "raw_bytes": 73
+          }
+        ],
+        "reads_done": 4,
+        "terminal": {
+          "detail": "4 repeated reads completed",
+          "reason": "exposure_repetitions"
+        }
+      },
+      "entry_equals_stdout": true,
+      "exit": 0,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "read_0002.bin",
+        "read_0003.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ]
+    },
+    "partial_detach": {
+      "brief": {
+        "all_observed_responses_differ": true,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "OSError: [Errno 9] Bad file descriptor"
+        },
+        "detail": "OSError: synthetic detach mid-response",
+        "device": "/dev/ebaz-uart",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 2,
+        "exit_meaning": "a tool error, or the run stopped on a board/console condition; the evidence is exported",
+        "export_complete": true,
+        "exported_to": "/tmp/ctl_xizn95ht",
+        "identical_responses": 0,
+        "label": "t",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/ebaz-uart"
+        ],
+        "ports_opened": [
+          "/dev/ebaz-uart"
+        ],
+        "reads_done": 1,
+        "received_bytes_excluding_reference": 20,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "tool_error"
+      },
+      "commands": [
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4"
+      ],
+      "disk": {
+        "all_observed_responses_differ": true,
+        "identical_responses": 0,
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "reads": [
+          {
+            "error": "OSError: synthetic detach mid-response",
+            "i": 0,
+            "raw_bytes": 20
+          }
+        ],
+        "reads_done": 1,
+        "terminal": {
+          "detail": "OSError: synthetic detach mid-response",
+          "partial_bytes": 20,
+          "phase": "read 0",
+          "reason": "tool_error"
+        }
+      },
+      "entry_equals_stdout": true,
+      "exit": 2,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ]
+    },
+    "positive": {
+      "brief": {
+        "all_observed_responses_differ": false,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "OSError: [Errno 9] Bad file descriptor"
+        },
+        "detail": "4 repeated reads completed",
+        "device": "/dev/ebaz-uart",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": true,
+        "exported_to": "/tmp/ctl_r5icyy22",
+        "identical_responses": 4,
+        "label": "t",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/ebaz-uart"
+        ],
+        "ports_opened": [
+          "/dev/ebaz-uart"
+        ],
+        "reads_done": 4,
+        "received_bytes_excluding_reference": 292,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "commands": [
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4"
+      ],
+      "disk": {
+        "all_observed_responses_differ": false,
+        "identical_responses": 4,
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "reads": [
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 0,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 1,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 2,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 3,
+            "outcome": "identical",
+            "raw_bytes": 73
+          }
+        ],
+        "reads_done": 4,
+        "terminal": {
+          "detail": "4 repeated reads completed",
+          "reason": "exposure_repetitions"
+        }
+      },
+      "entry_equals_stdout": true,
+      "exit": 0,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "read_0002.bin",
+        "read_0003.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ]
+    },
+    "read_export": {
+      "brief": {
+        "all_observed_responses_differ": false,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "OSError: [Errno 9] Bad file descriptor"
+        },
+        "detail": "4 repeated reads completed",
+        "device": "/dev/ebaz-uart",
+        "entry_export_errors": [
+          "read_0000.bin: OSError: synthetic read_0000.bin write failure"
+        ],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": false,
+        "exported_to": "/tmp/ctl_xdkfcut3",
+        "identical_responses": 4,
+        "label": "t",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/ebaz-uart"
+        ],
+        "ports_opened": [
+          "/dev/ebaz-uart"
+        ],
+        "reads_done": 4,
+        "received_bytes_excluding_reference": 292,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "commands": [
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4"
+      ],
+      "disk": {
+        "all_observed_responses_differ": false,
+        "identical_responses": 4,
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "reads": [
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 0,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 1,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 2,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 3,
+            "outcome": "identical",
+            "raw_bytes": 73
+          }
+        ],
+        "reads_done": 4,
+        "terminal": {
+          "detail": "4 repeated reads completed",
+          "reason": "exposure_repetitions"
+        }
+      },
+      "entry_equals_stdout": true,
+      "exit": 0,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0001.bin",
+        "read_0002.bin",
+        "read_0003.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ]
+    },
+    "reference_export": {
+      "brief": {
+        "all_observed_responses_differ": false,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "OSError: [Errno 9] Bad file descriptor"
+        },
+        "detail": "4 repeated reads completed",
+        "device": "/dev/ebaz-uart",
+        "entry_export_errors": [
+          "reference.bin: OSError: synthetic reference.bin write failure"
+        ],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": false,
+        "exported_to": "/tmp/ctl_saw6_f18",
+        "identical_responses": 4,
+        "label": "t",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/ebaz-uart"
+        ],
+        "ports_opened": [
+          "/dev/ebaz-uart"
+        ],
+        "reads_done": 4,
+        "received_bytes_excluding_reference": 292,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "commands": [
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4"
+      ],
+      "disk": {
+        "all_observed_responses_differ": false,
+        "identical_responses": 4,
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "reads": [
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 0,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 1,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 2,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 3,
+            "outcome": "identical",
+            "raw_bytes": 73
+          }
+        ],
+        "reads_done": 4,
+        "terminal": {
+          "detail": "4 repeated reads completed",
+          "reason": "exposure_repetitions"
+        }
+      },
+      "entry_equals_stdout": true,
+      "exit": 0,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "read_0002.bin",
+        "read_0003.bin",
+        "reference.json",
+        "sync.bin"
+      ]
+    },
+    "reset_with_prompt": {
+      "brief": {
+        "all_observed_responses_differ": false,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "OSError: [Errno 9] Bad file descriptor"
+        },
+        "detail": "4 repeated reads completed",
+        "device": "/dev/ebaz-uart",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": true,
+        "exported_to": "/tmp/ctl_spuz8wcj",
+        "identical_responses": 3,
+        "label": "t",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 1,
+        "mismatches_per_100_responses": 25.0,
+        "ports_closed": [
+          "/dev/ebaz-uart"
+        ],
+        "ports_opened": [
+          "/dev/ebaz-uart"
+        ],
+        "reads_done": 4,
+        "received_bytes_excluding_reference": 261,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "commands": [
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4"
+      ],
+      "disk": {
+        "all_observed_responses_differ": false,
+        "identical_responses": 3,
+        "mismatched_responses": 1,
+        "mismatches_per_100_responses": 25.0,
+        "reads": [
+          {
+            "body_bytes": 32,
+            "body_delta_bytes": -33,
+            "body_sha256": "5be02c75c50d99de7cb4fe2b7e000330cbd2b2ce2ddda77b2194be3039067d63",
+            "changed_word_indices": null,
+            "first_diff_offset": 0,
+            "framing_ok": true,
+            "grammar_error": "line 0 does not match the md.l grammar end to end: b'U-Boot 2026.04 (synthetic reset)'",
+            "grammar_valid": false,
+            "i": 0,
+            "outcome": "mismatch",
+            "raw_bytes": 42
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 1,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 2,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 3,
+            "outcome": "identical",
+            "raw_bytes": 73
+          }
+        ],
+        "reads_done": 4,
+        "terminal": {
+          "detail": "4 repeated reads completed",
+          "reason": "exposure_repetitions"
+        }
+      },
+      "entry_equals_stdout": true,
+      "exit": 0,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "read_0002.bin",
+        "read_0003.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ]
+    },
+    "sync_export": {
+      "brief": {
+        "all_observed_responses_differ": false,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "OSError: [Errno 9] Bad file descriptor"
+        },
+        "detail": "4 repeated reads completed",
+        "device": "/dev/ebaz-uart",
+        "entry_export_errors": [
+          "sync.bin: OSError: synthetic sync.bin write failure"
+        ],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": false,
+        "exported_to": "/tmp/ctl_4zaruug3",
+        "identical_responses": 4,
+        "label": "t",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/ebaz-uart"
+        ],
+        "ports_opened": [
+          "/dev/ebaz-uart"
+        ],
+        "reads_done": 4,
+        "received_bytes_excluding_reference": 292,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "commands": [
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4",
+        "md.l 0x00100000 0x4"
+      ],
+      "disk": {
+        "all_observed_responses_differ": false,
+        "identical_responses": 4,
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "reads": [
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 0,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 1,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 2,
+            "outcome": "identical",
+            "raw_bytes": 73
+          },
+          {
+            "body_bytes": 65,
+            "framing_ok": true,
+            "i": 3,
+            "outcome": "identical",
+            "raw_bytes": 73
+          }
+        ],
+        "reads_done": 4,
+        "terminal": {
+          "detail": "4 repeated reads completed",
+          "reason": "exposure_repetitions"
+        }
+      },
+      "entry_equals_stdout": true,
+      "exit": 0,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "read_0002.bin",
+        "read_0003.bin",
+        "reference.bin",
+        "reference.json"
+      ]
+    }
+  },
+  "head": "fd8951633802989acb422e2bf78951641d0ae43c",
+  "tool_sha256": "a435bc6492d69c16bc2a46c13ba355f2a56457b297fbd8ccd994ca97bf6a5e0f"
+}
