@@ -1646,5 +1646,156 @@ class TheLossMetric(unittest.TestCase):
         self.assertEqual(res["repetitions_unanalysed"], [0])
 
 
+class TheDeviceEntryPoint(unittest.TestCase):
+    """`run --device`: the entry point stage 1's physical half will be driven through, proved
+    here against a fake serial module that loops back in memory — never a real port. What it
+    must do: identify the device, refuse silence before spending the exposure, pass the real fd
+    so the counters are attempted, export everything, and exit with the tool's state."""
+
+    def setUp(self):
+        self.d = Path(tempfile.mkdtemp(prefix="rigdev_"))
+        self.addCleanup(lambda: __import__("shutil").rmtree(self.d, ignore_errors=True))
+        self.opened = []
+
+    def fake_serial(self, loopback=True, fail_open=False, fail_after=None):
+        """A `serial.Serial` double: exclusive, with timeouts, looping written bytes back."""
+        opened = self.opened
+
+        class FakeSerial:
+            def __init__(self, device, baud, **kw):
+                if fail_open:
+                    raise OSError(f"could not open port {device}: No such file or directory")
+                opened.append({"device": device, "baud": baud, **kw})
+                self.buf, self.writes = bytearray(), 0
+                self.timeout, self.write_timeout = kw.get("timeout"), kw.get("write_timeout")
+
+            def write(self, data):
+                self.writes += 1
+                if fail_after is not None and self.writes > fail_after:
+                    raise OSError("device detached")
+                if loopback:
+                    self.buf += data
+                return len(data)
+
+            def read(self, n):
+                out, self.buf = bytes(self.buf[:n]), self.buf[n:]
+                return out
+
+            def fileno(self):
+                return 999999                              # not a real fd: the counters must say so
+        return types.SimpleNamespace(Serial=FakeSerial)
+
+    def run_cli(self, *extra, serial=None):
+        import contextlib
+        import io
+        argv = ["run", "--device", "/dev/NOT-A-DEVICE", "--label", "t", "--out", str(self.d),
+                "--repetitions", "1", *extra]
+        buf = io.StringIO()
+        with unittest.mock.patch.dict(sys.modules, {"serial": serial or self.fake_serial()}):
+            with unittest.mock.patch.object(rig.time, "sleep", lambda s: None):
+                with contextlib.redirect_stdout(buf):
+                    code = rig.main(argv)
+        return code, json.loads(buf.getvalue().strip().splitlines()[-1])
+
+    def test_a_looped_back_device_runs_one_condition_and_exports_everything(self):
+        code, brief = self.run_cli("--no-tx-during-rx")
+        self.assertEqual(code, 0, brief)
+        self.assertEqual(brief["terminal"], "exposure_repetitions")
+        self.assertEqual((brief["confirmed_losses"], brief["losses"], brief["loss_metric"]), (0, 0, "exact"))
+        self.assertTrue(brief["completed_exposure"] and brief["export_complete"])
+        for name in ("invocation.json", "preflight.json", "run.json", "capture_000.bin", "events_000.json"):
+            self.assertTrue((self.d / name).is_file(), name)
+        on_disk = json.loads((self.d / "run.json").read_text())
+        self.assertEqual(on_disk["frames_accepted"], 302)
+        self.assertEqual(on_disk["repetition_results"][0]["frames_delivered"], 302)
+        self.assertIn("one device", on_disk["topology"])                       # self-loopback, named
+        self.assertFalse(on_disk["counters_before"]["available"])              # attempted on the fd …
+        self.assertIn("reason", on_disk["counters_before"])                    # … and unavailable, with why
+        inv = json.loads((self.d / "invocation.json").read_text())
+        self.assertEqual(inv["identity"]["source"]["path"], "/dev/NOT-A-DEVICE")
+        self.assertIn("error", inv["identity"]["source"])                      # no such node: said, not guessed
+        self.assertEqual(inv["provenance"]["tool_sha256"], rig.self_sha256())
+        self.assertEqual(self.opened[0]["baud"], 115200)
+        self.assertTrue(self.opened[0]["exclusive"])
+
+    def test_the_preflight_nonce_is_drained_and_never_reaches_the_capture(self):
+        code, _ = self.run_cli("--no-tx-during-rx")
+        self.assertEqual(code, 0)
+        pre = json.loads((self.d / "preflight.json").read_text())
+        self.assertTrue(pre["matched"])
+        self.assertEqual(pre["received_bytes"], pre["nonce_bytes"])
+        self.assertNotIn(b"PREFLIGHT", (self.d / "capture_000.bin").read_bytes())
+
+    def test_silence_at_the_preflight_refuses_before_any_exposure(self):
+        code, brief = self.run_cli("--no-tx-during-rx", serial=self.fake_serial(loopback=False))
+        self.assertEqual(code, 3, brief)
+        self.assertIn("no loopback", brief["refused"])
+        self.assertTrue((self.d / "preflight.json").is_file())
+        self.assertFalse((self.d / "run.json").exists())                        # nothing was spent
+        self.assertLessEqual(self.opened[0].get("_writes", 0), 1)
+
+    def test_no_preflight_skips_the_check_and_silence_is_then_a_measured_total_loss(self):
+        """Without the preflight, a repetition that drains to silence is what the analyser has
+        always said it is: 302 confirmed losses with no denominator — not a refusal."""
+        code, brief = self.run_cli("--no-tx-during-rx", "--no-preflight",
+                                   serial=self.fake_serial(loopback=False))
+        self.assertEqual(code, 0, brief)
+        self.assertFalse((self.d / "preflight.json").exists())
+        self.assertEqual((brief["confirmed_losses"], brief["loss_metric"]), (302, "no_denominator"))
+        self.assertIsNone(brief["losses_per_100k_bytes"])
+        self.assertEqual(brief["terminal"], "stop_rule_losses")               # 302 >= 3: it stops
+
+    def test_a_device_that_will_not_open_is_exit_4_with_the_error_on_disk(self):
+        code, brief = self.run_cli("--no-tx-during-rx", serial=self.fake_serial(fail_open=True))
+        self.assertEqual(code, 4)
+        self.assertIn("could not open port", brief["error"])
+        self.assertTrue((self.d / "open_error.json").is_file())
+        self.assertTrue((self.d / "invocation.json").is_file())               # the attempt is recorded
+
+    def test_a_tool_error_mid_run_is_exit_2_and_the_evidence_still_lands(self):
+        code, brief = self.run_cli("--no-tx-during-rx", serial=self.fake_serial(fail_after=5))
+        self.assertEqual(code, 2, brief)
+        self.assertEqual(brief["terminal"], "tool_error")
+        self.assertIn("device detached", brief["error"])
+        on_disk = json.loads((self.d / "run.json").read_text())
+        self.assertEqual(on_disk["frames_accepted"], 4)                        # the preflight took write 1
+        self.assertEqual(on_disk["frames_uncertain"], 1)
+        self.assertTrue((self.d / "capture_000.bin").is_file())
+
+    def test_the_tx_condition_runs_too_and_its_echoes_are_accounted(self):
+        code, brief = self.run_cli("--tx-during-rx")
+        self.assertEqual(code, 0, brief)
+        on_disk = json.loads((self.d / "run.json").read_text())
+        self.assertEqual(on_disk["host_frames_written"], 125)
+        self.assertEqual(on_disk["repetition_results"][0]["host_echo_lines"], 125)
+        self.assertEqual((brief["confirmed_losses"], brief["loss_metric"]), (0, "exact"))
+
+    def test_a_two_device_topology_opens_both_and_names_them(self):
+        code, brief = self.run_cli("--no-tx-during-rx", "--capture-device", "/dev/OTHER", "--seconds", "0.5")
+        self.assertEqual([o["device"] for o in self.opened], ["/dev/NOT-A-DEVICE", "/dev/OTHER"])
+        self.assertIn("capture=/dev/OTHER", brief["topology"])
+        pre = json.loads((self.d / "preflight.json").read_text())
+        self.assertTrue(pre["skipped"])                                        # nothing loops back to preflight
+        self.assertEqual(code, 0, brief)                                       # the fakes are separate: silence,
+        self.assertEqual(brief["confirmed_losses"], 302)                       # measured on the capture device
+
+    def test_the_offline_subcommands_still_answer(self):
+        import contextlib
+        import io
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            self.assertEqual(rig.main(["plan"]), 0)
+        plan = json.loads(buf.getvalue())
+        self.assertEqual(plan["frames"], 302)
+
+    def test_the_exposure_defaults_are_the_registered_ones(self):
+        import argparse
+        seen = {}
+        with unittest.mock.patch.object(rig, "run_device", lambda a: seen.update(vars(a)) or 0):
+            rig.main(["run", "--device", "x", "--label", "l", "--out", str(self.d), "--tx-during-rx"])
+        self.assertEqual((seen["repetitions"], seen["seconds"]), (rig.EXPOSURE_REPETITIONS, rig.EXPOSURE_SECONDS))
+        self.assertEqual((seen["baud"], seen["read_timeout"], seen["pace"]), (115200, 0.05, False))
+
+
 if __name__ == "__main__":
     unittest.main()

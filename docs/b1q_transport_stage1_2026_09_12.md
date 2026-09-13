@@ -28,7 +28,7 @@ sessions on module A. It separates nothing, and one PASS is not stability.
 
 ## What exists — the software half
 
-`host/transport_rig.py`, `tests/test_transport_rig.py` (**101 tests**), evidence in
+`host/transport_rig.py`, `tests/test_transport_rig.py` (**111 tests**), evidence in
 `evidence/b1q/transport_stage1_2026_09_12/` and the four `evidence/b1q/corrections_transport_*_2026_09_12/`.
 The generator, the driver and the analyser, with an **offline** acceptance over a pty pair
 through the production entry point. **Not** the plan's stage 1 in full: the physical acceptance
@@ -122,6 +122,18 @@ probes against the corrected code and prints each observation beside theirs.
 | **P2-4** the error path lost the result | `RigError` raised, nothing returned, counters sampled once, no raw capture anywhere | counters attempted on **both** sides, raw capture and per-read events per repetition and the partial results **exported to disk**, the result attached to the exception, and the **original** error preserved — an export failure is recorded inside the result, never allowed to replace it |
 | **P2-5** the B2Q exposure argument compared different units | "20 B2Q records vs 302 B1Q frames — a much shorter exposure" | **withdrawn.** Production `qualification_session_plan` derives **543 expected frames** for B2Q (160 AUDIT, 320 HB, 20 REC …) against B1Q's 302 — *more*, not fewer — and even that is planning arithmetic, not an observed run |
 | **P3** `bytes_to_resync` only found a newline | an inserted newline reported `1` | two fields: `bytes_to_next_newline`, and `resynchronised_at`, which names the next line that is **byte-exactly an expected frame of this repetition** (or null) |
+
+## The physical half — entry point ready, awaiting the owner's ruling (2026-09-13)
+
+The owner accepted the software delivery on 2026-09-12 and on 2026-09-13 answered plan §7: the
+WSL + usbipd path is to be tested first (the earlier usbipd failure was a host configuration
+error; the native Linux host exists but is deferred), board power is permitted, and a ruling will
+be signed for the loopback. `host/transport_rig.py run --device …` is the entry point for that
+run — device identity from sysfs, a loopback preflight that refuses silence before spending the
+exposure, the real fd for `TIOCGICOUNT`, the registered exposure as defaults — proved offline in
+`TheDeviceEntryPoint` (10 tests) against a fake serial module. The procedure, the wiring and
+what a result can and cannot say are in
+`docs/b1q_transport_physical_stage1_procedure_2026_09_13.md`. **Not yet run on any port.**
 
 ## What is still blocked, and on whom
 

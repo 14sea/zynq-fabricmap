@@ -1220,17 +1220,167 @@ def serial_port(device: str, baud: int = 115200, exclusive: bool = True) -> Port
     return Port(device, write=write, read=read, fd=s.fileno(), takes_timeout=True)
 
 
+# ------------------------------------------------------------------ a real device (stage 1's physical half)
+
+
+PREFLIGHT_TIMEOUT_S = 1.0
+PREFLIGHT_QUIET_S = 0.3
+
+
+def device_identity(path: str) -> dict:
+    """What the device node is, from the kernel: the resolved node and, when sysfs exposes it,
+    the USB vendor:product, product string and serial. Best effort; anything unreadable is
+    recorded as unavailable with its reason, never guessed — the run record must show it was the
+    CH340 (1a86:7523) and not some other port."""
+    out: dict = {"path": path}
+    try:
+        real = os.path.realpath(path)
+        out["realpath"] = real
+        st = os.stat(real)
+        out["char_device"] = __import__("stat").S_ISCHR(st.st_mode)
+        out["rdev"] = f"{os.major(st.st_rdev)}:{os.minor(st.st_rdev)}"
+    except OSError as exc:
+        out["error"] = f"{type(exc).__name__}: {exc}"
+        return out
+    name = Path(real).name
+    usb: dict = {}
+    dev = Path("/sys/class/tty") / name / "device"
+    try:
+        node = dev.resolve()
+        for _ in range(6):                             # walk up to the USB device with idVendor
+            if (node / "idVendor").is_file():
+                for k in ("idVendor", "idProduct", "manufacturer", "product", "serial", "busnum", "devnum"):
+                    f = node / k
+                    if f.is_file():
+                        usb[k] = f.read_text().strip()
+                break
+            node = node.parent
+        out["usb"] = usb or {"unavailable": True, "reason": f"no idVendor above {dev}"}
+    except OSError as exc:
+        out["usb"] = {"unavailable": True, "reason": f"{type(exc).__name__}: {exc}"}
+    return out
+
+
+def loopback_preflight(port: Port, clock=time.monotonic) -> dict:
+    """Before spending an hour of exposure: is anything wired back at all? Writes one nonce line
+    that is NOT a rel-v4 frame, waits up to `PREFLIGHT_TIMEOUT_S` for bytes, then drains until
+    the line is quiet so nothing of it leaks into repetition 0's capture. Silence is a REFUSAL —
+    the jumper is not in place, or this is not the port — rather than an hour of censored
+    frames. Anything that does come back is recorded as it is (matched or not) and the run
+    proceeds: a garbled preflight is evidence too."""
+    nonce = f"PREFLIGHT {uuid.uuid4().hex}\n".encode()
+    fd = port.fileno()
+    before = read_icounters(fd)
+    t0 = clock()
+    port.write(nonce, PREFLIGHT_TIMEOUT_S)
+    got = bytearray()
+    while clock() - t0 < PREFLIGHT_TIMEOUT_S and nonce not in got:
+        got += port.read(0.05)
+    quiet_since = clock()
+    while clock() - quiet_since < PREFLIGHT_QUIET_S:      # drain the tail, whatever it is
+        chunk = port.read(0.05)
+        if chunk:
+            got += chunk
+            quiet_since = clock()
+    after = read_icounters(fd)
+    res = {"nonce_bytes": len(nonce), "received_bytes": len(got), "matched": nonce in got,
+           "received_hex_head": bytes(got[:64]).hex(), "elapsed_s": clock() - t0,
+           "counters_before": before, "counters_after": after, "counters_delta": counter_delta(before, after)}
+    if not got:
+        res["refused"] = ("no loopback: nothing came back within "
+                          f"{PREFLIGHT_TIMEOUT_S} s — the TX→RX jumper is not in place, or this is not the port")
+    return res
+
+
+def run_device(a) -> int:
+    """`run --device …`: one condition of plan §3 on a REAL serial device, under the registered
+    exposure and stop rules, with everything the offline acceptance exports plus what only a
+    real fd can give — the device's kernel identity and the `TIOCGICOUNT` counters. Exit 0 when
+    the run returned, 2 on a tool error (the evidence is still exported), 3 when the preflight
+    refused, 4 when the device could not be opened. It adjudicates nothing; the exit code is the
+    tool's state, not a verdict on the link."""
+    out = Path(a.out)
+    out.mkdir(parents=True, exist_ok=True)
+    invocation = {"argv": list(a.argv), "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                  "label": a.label, "device": a.device, "host_device": a.host_device,
+                  "capture_device": a.capture_device, "baud": a.baud,
+                  "tx_during_rx": a.tx_during_rx, "repetitions": a.repetitions, "seconds": a.seconds,
+                  "pace": a.pace, "read_timeout_s": a.read_timeout, "preflight": not a.no_preflight,
+                  "identity": {"source": device_identity(a.device),
+                               **({"host": device_identity(a.host_device)} if a.host_device else {}),
+                               **({"capture": device_identity(a.capture_device)} if a.capture_device else {})},
+                  "provenance": provenance()}
+    (out / "invocation.json").write_text(json.dumps(invocation, indent=1, sort_keys=True) + "\n")
+    try:
+        source = serial_port(a.device, a.baud)
+        host = serial_port(a.host_device, a.baud) if a.host_device else None
+        capture = serial_port(a.capture_device, a.baud) if a.capture_device else None
+    except Exception as exc:                              # noqa: BLE001 — a device that will not open
+        (out / "open_error.json").write_text(json.dumps(
+            {"error": f"{type(exc).__name__}: {exc}", "device": a.device}, indent=1) + "\n")
+        print(json.dumps({"label": a.label, "exit": 4, "error": f"{type(exc).__name__}: {exc}"}))
+        return 4
+    if not a.no_preflight:
+        pre = loopback_preflight(capture or source) if (capture or source) is source else \
+            {"skipped": True, "reason": "a two-device topology has no self-loopback to preflight"}
+        (out / "preflight.json").write_text(json.dumps(pre, indent=1, sort_keys=True) + "\n")
+        if pre.get("refused"):
+            print(json.dumps({"label": a.label, "exit": 3, "refused": pre["refused"],
+                              "counters": pre.get("counters_after")}))
+            return 3
+    run = Run(a.label, repetitions=a.repetitions, seconds=a.seconds, tx_during_rx=a.tx_during_rx)
+    code, result = 0, None
+    try:
+        result = run.execute(source, host=host, capture=capture, fd=source.fileno(), out_dir=out,
+                             read_timeout=a.read_timeout, pace=a.pace)
+    except RigError as exc:
+        code, result = 2, exc.result or {"stopped": str(exc), "error": str(exc)}
+    brief = {"label": a.label, "exit": code, "device": a.device, "topology": result.get("topology"),
+             "terminal": (result.get("terminal") or {}).get("reason"), "stopped": result.get("stopped"),
+             "error": result.get("error"), "repetitions_run": result.get("repetitions_run"),
+             "frames_accepted": result.get("frames_accepted"),
+             "confirmed_losses": result.get("confirmed_losses"), "losses": result.get("losses"),
+             "loss_metric": (result.get("loss_metric") or {}).get("status"),
+             "denominator_bytes": result.get("denominator_bytes"),
+             "losses_per_100k_bytes": result.get("losses_per_100k_bytes"),
+             "censored_in_flight": result.get("censored_in_flight"),
+             "unresolved_at_cutoff": result.get("unresolved_at_cutoff"),
+             "counters_delta": result.get("counters_delta"), "completed_exposure": result.get("completed_exposure"),
+             "export_complete": result.get("export_complete"), "exported_to": str(out)}
+    print(json.dumps(brief, sort_keys=True))
+    return code
+
+
 def main(argv=None) -> int:
     import argparse
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--profile-from", type=Path, default=REPO_ROOT / PROFILE_SOURCE)
-    ap.add_argument("--schedule-from", type=Path, default=REPO_ROOT / TIMELINE_SOURCE)
-    ap.add_argument("--what", choices=["profile", "schedule", "plan"], default="profile")
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("profile", help="the transmitted shape of a recorded session, from its console log")
+    p.add_argument("--profile-from", type=Path, default=REPO_ROOT / PROFILE_SOURCE)
+    p = sub.add_parser("schedule", help="the host's replies in a recorded session, from its timeline")
+    p.add_argument("--schedule-from", type=Path, default=REPO_ROOT / TIMELINE_SOURCE)
+    sub.add_parser("plan", help="what the generator emits for one repetition")
+    r = sub.add_parser("run", help="one condition of plan §3 on a real serial device (stage 1's physical half)")
+    r.add_argument("--device", required=True, help="the source port; on a self-loopback also host and capture")
+    r.add_argument("--host-device", default=None, help="a separate port for the host's replies (two-device rig)")
+    r.add_argument("--capture-device", default=None, help="a separate port the capture is read from")
+    r.add_argument("--label", required=True)
+    r.add_argument("--out", required=True, help="evidence directory; everything is exported there")
+    r.add_argument("--baud", type=int, default=115200)
+    tx = r.add_mutually_exclusive_group(required=True)
+    tx.add_argument("--tx-during-rx", dest="tx_during_rx", action="store_true")
+    tx.add_argument("--no-tx-during-rx", dest="tx_during_rx", action="store_false")
+    r.add_argument("--repetitions", type=int, default=EXPOSURE_REPETITIONS)
+    r.add_argument("--seconds", type=float, default=EXPOSURE_SECONDS)
+    r.add_argument("--pace", action="store_true", help="model the source's wire time between frames")
+    r.add_argument("--read-timeout", type=float, default=0.05)
+    r.add_argument("--no-preflight", action="store_true", help="skip the loopback nonce check")
     a = ap.parse_args(argv)
-    if a.what == "schedule":
+    a.argv = list(argv if argv is not None else sys.argv[1:])
+    if a.cmd == "schedule":
         print(json.dumps(host_schedule_from_timeline(a.schedule_from), indent=1, sort_keys=True))
         return 0
-    if a.what == "plan":
+    if a.cmd == "plan":
         frames = plan_frames("cli", 0)
         by: dict = {}
         for f in frames:
@@ -1238,11 +1388,14 @@ def main(argv=None) -> int:
             e["count"] += 1
             e["min"], e["max"] = min(e["min"], f.bytes), max(e["max"], f.bytes)
         sched: dict = {}
-        for s in host_schedule(frames):
-            sched[s["line"].split(b" ")[0].decode()] = sched.get(s["line"].split(b" ")[0].decode(), 0) + 1
+        for s_ in host_schedule(frames):
+            k = s_["line"].split(b" ")[1].decode()
+            sched[k] = sched.get(k, 0) + 1
         print(json.dumps({"frames": len(frames), "bytes": len(stream_bytes(frames)),
                           "by_type": by, "host_schedule": sched}, indent=1, sort_keys=True))
         return 0
+    if a.cmd == "run":
+        return run_device(a)
     print(json.dumps(profile_from_log(a.profile_from), indent=1, sort_keys=True))
     return 0
 
