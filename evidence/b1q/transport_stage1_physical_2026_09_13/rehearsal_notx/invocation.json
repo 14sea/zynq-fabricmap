@@ -1,0 +1,50 @@
+{
+ "argv": [
+  "run",
+  "--device",
+  "/dev/ebaz-uart",
+  "--label",
+  "rehearsal-notx",
+  "--no-tx-during-rx",
+  "--repetitions",
+  "2",
+  "--out",
+  "evidence/b1q/transport_stage1_physical_2026_09_13/rehearsal_notx"
+ ],
+ "at": "2026-09-13T06:15:02Z",
+ "baud": 115200,
+ "capture_device": null,
+ "device": "/dev/ebaz-uart",
+ "host_device": null,
+ "identity": {
+  "source": {
+   "char_device": true,
+   "path": "/dev/ebaz-uart",
+   "rdev": "188:0",
+   "realpath": "/dev/ttyUSB0",
+   "usb": {
+    "busnum": "1",
+    "devnum": "2",
+    "idProduct": "7523",
+    "idVendor": "1a86",
+    "product": "USB Serial"
+   }
+  }
+ },
+ "label": "rehearsal-notx",
+ "pace": false,
+ "preflight": true,
+ "provenance": {
+  "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+  "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+  "instrument_commit": null,
+  "instrument_root": "/home/test/zynq_psoracle",
+  "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+  "tool": "host/transport_rig.py",
+  "tool_sha256": "aaff46e90422bf242b632fa68000eb649f5077afde98d9cd624aae58d1d630ee"
+ },
+ "read_timeout_s": 0.05,
+ "repetitions": 2,
+ "seconds": 3600.0,
+ "tx_during_rx": false
+}

@@ -1,0 +1,4506 @@
+[
+ {
+  "t": 174857.530954729,
+  "op": "write_frame",
+  "index": 0,
+  "kind": "IDENT",
+  "bytes": 1048
+ },
+ {
+  "t": 174857.581277722,
+  "op": "read",
+  "bytes": 1048
+ },
+ {
+  "t": 174857.637962315,
+  "op": "write_frame",
+  "index": 1,
+  "kind": "SIGNREQ",
+  "bytes": 370
+ },
+ {
+  "t": 174857.643537314,
+  "op": "write_host",
+  "caused_by": "IDENT",
+  "bytes": 71,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174857.693804008,
+  "op": "read",
+  "bytes": 441
+ },
+ {
+  "t": 174857.744203201,
+  "op": "write_frame",
+  "index": 2,
+  "kind": "HB",
+  "bytes": 65
+ },
+ {
+  "t": 174857.764202399,
+  "op": "write_host",
+  "caused_by": "SIGNREQ",
+  "bytes": 469,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174857.814463592,
+  "op": "read",
+  "bytes": 534
+ },
+ {
+  "t": 174857.864852886,
+  "op": "write_frame",
+  "index": 3,
+  "kind": "HB",
+  "bytes": 65
+ },
+ {
+  "t": 174857.915093979,
+  "op": "read",
+  "bytes": 65
+ },
+ {
+  "t": 174857.965441371,
+  "op": "write_frame",
+  "index": 4,
+  "kind": "HB",
+  "bytes": 65
+ },
+ {
+  "t": 174858.015656363,
+  "op": "read",
+  "bytes": 65
+ },
+ {
+  "t": 174858.066077754,
+  "op": "write_frame",
+  "index": 5,
+  "kind": "HB",
+  "bytes": 65
+ },
+ {
+  "t": 174858.116270645,
+  "op": "read",
+  "bytes": 65
+ },
+ {
+  "t": 174858.166606837,
+  "op": "write_frame",
+  "index": 6,
+  "kind": "HB",
+  "bytes": 65
+ },
+ {
+  "t": 174858.216881728,
+  "op": "read",
+  "bytes": 65
+ },
+ {
+  "t": 174858.267412419,
+  "op": "write_frame",
+  "index": 7,
+  "kind": "HB",
+  "bytes": 65
+ },
+ {
+  "t": 174858.317711011,
+  "op": "read",
+  "bytes": 65
+ },
+ {
+  "t": 174858.368073802,
+  "op": "write_frame",
+  "index": 8,
+  "kind": "HB",
+  "bytes": 65
+ },
+ {
+  "t": 174858.418288994,
+  "op": "read",
+  "bytes": 65
+ },
+ {
+  "t": 174858.468683385,
+  "op": "write_frame",
+  "index": 9,
+  "kind": "HB",
+  "bytes": 65
+ },
+ {
+  "t": 174858.519050576,
+  "op": "read",
+  "bytes": 65
+ },
+ {
+  "t": 174858.770228834,
+  "op": "write_frame",
+  "index": 10,
+  "kind": "REC",
+  "bytes": 2611
+ },
+ {
+  "t": 174858.820452625,
+  "op": "read",
+  "bytes": 2611
+ },
+ {
+  "t": 174858.871041916,
+  "op": "write_frame",
+  "index": 11,
+  "kind": "AUDIT_READY",
+  "bytes": 231
+ },
+ {
+  "t": 174858.872202416,
+  "op": "write_host",
+  "caused_by": "REC",
+  "bytes": 74,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174858.922478408,
+  "op": "read",
+  "bytes": 305
+ },
+ {
+  "t": 174858.974134999,
+  "op": "write_frame",
+  "index": 12,
+  "kind": "AUDIT",
+  "bytes": 305
+ },
+ {
+  "t": 174858.979684198,
+  "op": "write_host",
+  "caused_by": "AUDIT_READY",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174859.029948289,
+  "op": "read",
+  "bytes": 381
+ },
+ {
+  "t": 174859.081443281,
+  "op": "write_frame",
+  "index": 13,
+  "kind": "AUDIT",
+  "bytes": 309
+ },
+ {
+  "t": 174859.090000379,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174859.140430471,
+  "op": "read",
+  "bytes": 385
+ },
+ {
+  "t": 174859.192323962,
+  "op": "write_frame",
+  "index": 14,
+  "kind": "AUDIT",
+  "bytes": 313
+ },
+ {
+  "t": 174859.20042586,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174859.250688152,
+  "op": "read",
+  "bytes": 389
+ },
+ {
+  "t": 174859.305253943,
+  "op": "write_frame",
+  "index": 15,
+  "kind": "AUDIT",
+  "bytes": 321
+ },
+ {
+  "t": 174859.310687242,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174859.360907533,
+  "op": "read",
+  "bytes": 397
+ },
+ {
+  "t": 174859.415612224,
+  "op": "write_frame",
+  "index": 16,
+  "kind": "AUDIT",
+  "bytes": 325
+ },
+ {
+  "t": 174859.421292223,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174859.471612514,
+  "op": "read",
+  "bytes": 401
+ },
+ {
+  "t": 174859.526421605,
+  "op": "write_frame",
+  "index": 17,
+  "kind": "AUDIT",
+  "bytes": 329
+ },
+ {
+  "t": 174859.531639204,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174859.581871796,
+  "op": "read",
+  "bytes": 405
+ },
+ {
+  "t": 174859.635951687,
+  "op": "write_frame",
+  "index": 18,
+  "kind": "AUDIT",
+  "bytes": 333
+ },
+ {
+  "t": 174859.641284386,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174859.691449777,
+  "op": "read",
+  "bytes": 409
+ },
+ {
+  "t": 174859.745224068,
+  "op": "write_frame",
+  "index": 19,
+  "kind": "AUDIT",
+  "bytes": 337
+ },
+ {
+  "t": 174859.750723367,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174859.800987859,
+  "op": "read",
+  "bytes": 413
+ },
+ {
+  "t": 174859.851373651,
+  "op": "write_frame",
+  "index": 20,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174859.851406551,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174859.901607842,
+  "op": "read",
+  "bytes": 143
+ },
+ {
+  "t": 174859.952026334,
+  "op": "write_frame",
+  "index": 21,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174860.002227125,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174860.052572217,
+  "op": "write_frame",
+  "index": 22,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174860.102732108,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174860.1530741,
+  "op": "write_frame",
+  "index": 23,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174860.203372191,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174860.253705683,
+  "op": "write_frame",
+  "index": 24,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174860.303916674,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174860.354298666,
+  "op": "write_frame",
+  "index": 25,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174860.404484158,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174860.454853049,
+  "op": "write_frame",
+  "index": 26,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174860.505060641,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174860.555586833,
+  "op": "write_frame",
+  "index": 27,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174860.605768924,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174860.662834015,
+  "op": "write_frame",
+  "index": 28,
+  "kind": "SIGNREQ",
+  "bytes": 371
+ },
+ {
+  "t": 174860.713099206,
+  "op": "read",
+  "bytes": 371
+ },
+ {
+  "t": 174860.763651798,
+  "op": "write_frame",
+  "index": 29,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174860.784205395,
+  "op": "write_host",
+  "caused_by": "SIGNREQ",
+  "bytes": 470,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174860.834504286,
+  "op": "read",
+  "bytes": 536
+ },
+ {
+  "t": 174860.884986278,
+  "op": "write_frame",
+  "index": 30,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174860.93524227,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174860.985837361,
+  "op": "write_frame",
+  "index": 31,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174861.036163553,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174861.086632844,
+  "op": "write_frame",
+  "index": 32,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174861.136891936,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174861.187422328,
+  "op": "write_frame",
+  "index": 33,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174861.237709419,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174861.288166311,
+  "op": "write_frame",
+  "index": 34,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174861.338401303,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174861.388918094,
+  "op": "write_frame",
+  "index": 35,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174861.439216686,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174861.489642778,
+  "op": "write_frame",
+  "index": 36,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174861.539997269,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174861.793619828,
+  "op": "write_frame",
+  "index": 37,
+  "kind": "REC",
+  "bytes": 2639
+ },
+ {
+  "t": 174861.84389272,
+  "op": "read",
+  "bytes": 2639
+ },
+ {
+  "t": 174861.894236211,
+  "op": "write_frame",
+  "index": 38,
+  "kind": "AUDIT_READY",
+  "bytes": 231
+ },
+ {
+  "t": 174861.894988211,
+  "op": "write_host",
+  "caused_by": "REC",
+  "bytes": 74,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174861.945216603,
+  "op": "read",
+  "bytes": 305
+ },
+ {
+  "t": 174861.999027194,
+  "op": "write_frame",
+  "index": 39,
+  "kind": "AUDIT",
+  "bytes": 341
+ },
+ {
+  "t": 174862.007332293,
+  "op": "write_host",
+  "caused_by": "AUDIT_READY",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174862.057527885,
+  "op": "read",
+  "bytes": 417
+ },
+ {
+  "t": 174862.111424076,
+  "op": "write_frame",
+  "index": 40,
+  "kind": "AUDIT",
+  "bytes": 349
+ },
+ {
+  "t": 174862.119769374,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174862.170006166,
+  "op": "read",
+  "bytes": 425
+ },
+ {
+  "t": 174862.226758357,
+  "op": "write_frame",
+  "index": 41,
+  "kind": "AUDIT",
+  "bytes": 353
+ },
+ {
+  "t": 174862.232085456,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174862.282231448,
+  "op": "read",
+  "bytes": 429
+ },
+ {
+  "t": 174862.338804039,
+  "op": "write_frame",
+  "index": 42,
+  "kind": "AUDIT",
+  "bytes": 357
+ },
+ {
+  "t": 174862.344354138,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174862.394565829,
+  "op": "read",
+  "bytes": 433
+ },
+ {
+  "t": 174862.45125812,
+  "op": "write_frame",
+  "index": 43,
+  "kind": "AUDIT",
+  "bytes": 361
+ },
+ {
+  "t": 174862.456865919,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174862.507158211,
+  "op": "read",
+  "bytes": 437
+ },
+ {
+  "t": 174862.564546002,
+  "op": "write_frame",
+  "index": 44,
+  "kind": "AUDIT",
+  "bytes": 365
+ },
+ {
+  "t": 174862.569988001,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174862.620210093,
+  "op": "read",
+  "bytes": 441
+ },
+ {
+  "t": 174862.677600084,
+  "op": "write_frame",
+  "index": 45,
+  "kind": "AUDIT",
+  "bytes": 369
+ },
+ {
+  "t": 174862.683094883,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174862.733394775,
+  "op": "read",
+  "bytes": 445
+ },
+ {
+  "t": 174862.790723065,
+  "op": "write_frame",
+  "index": 46,
+  "kind": "AUDIT",
+  "bytes": 377
+ },
+ {
+  "t": 174862.799159864,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174862.849491456,
+  "op": "read",
+  "bytes": 453
+ },
+ {
+  "t": 174862.899946548,
+  "op": "write_frame",
+  "index": 47,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174862.899992248,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174862.95024614,
+  "op": "read",
+  "bytes": 143
+ },
+ {
+  "t": 174863.000654331,
+  "op": "write_frame",
+  "index": 48,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174863.050877823,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174863.101373915,
+  "op": "write_frame",
+  "index": 49,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174863.151634607,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174863.202139199,
+  "op": "write_frame",
+  "index": 50,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174863.252380291,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174863.302945382,
+  "op": "write_frame",
+  "index": 51,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174863.353275874,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174863.403833266,
+  "op": "write_frame",
+  "index": 52,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174863.454119558,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174863.50475575,
+  "op": "write_frame",
+  "index": 53,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174863.555161942,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174863.605700734,
+  "op": "write_frame",
+  "index": 54,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174863.655915026,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174863.712492117,
+  "op": "write_frame",
+  "index": 55,
+  "kind": "SIGNREQ",
+  "bytes": 371
+ },
+ {
+  "t": 174863.762709909,
+  "op": "read",
+  "bytes": 371
+ },
+ {
+  "t": 174863.813083101,
+  "op": "write_frame",
+  "index": 56,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174863.833240298,
+  "op": "write_host",
+  "caused_by": "SIGNREQ",
+  "bytes": 470,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174863.88358969,
+  "op": "read",
+  "bytes": 536
+ },
+ {
+  "t": 174863.933929681,
+  "op": "write_frame",
+  "index": 57,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174863.984160073,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174864.034457465,
+  "op": "write_frame",
+  "index": 58,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174864.084648957,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174864.135093549,
+  "op": "write_frame",
+  "index": 59,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174864.185281441,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174864.235565733,
+  "op": "write_frame",
+  "index": 60,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174864.285723925,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174864.336186917,
+  "op": "write_frame",
+  "index": 61,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174864.386340109,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174864.436625801,
+  "op": "write_frame",
+  "index": 62,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174864.486924393,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174864.537354285,
+  "op": "write_frame",
+  "index": 63,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174864.587610678,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174864.844458737,
+  "op": "write_frame",
+  "index": 64,
+  "kind": "REC",
+  "bytes": 2667
+ },
+ {
+  "t": 174864.894805329,
+  "op": "read",
+  "bytes": 2667
+ },
+ {
+  "t": 174864.945365421,
+  "op": "write_frame",
+  "index": 65,
+  "kind": "AUDIT_READY",
+  "bytes": 231
+ },
+ {
+  "t": 174864.946392221,
+  "op": "write_host",
+  "caused_by": "REC",
+  "bytes": 74,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174864.996681713,
+  "op": "read",
+  "bytes": 305
+ },
+ {
+  "t": 174865.053455604,
+  "op": "write_frame",
+  "index": 66,
+  "kind": "AUDIT",
+  "bytes": 381
+ },
+ {
+  "t": 174865.062172203,
+  "op": "write_host",
+  "caused_by": "AUDIT_READY",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174865.112459595,
+  "op": "read",
+  "bytes": 457
+ },
+ {
+  "t": 174865.172434385,
+  "op": "write_frame",
+  "index": 67,
+  "kind": "AUDIT",
+  "bytes": 385
+ },
+ {
+  "t": 174865.177750784,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174865.228076977,
+  "op": "read",
+  "bytes": 461
+ },
+ {
+  "t": 174865.288152867,
+  "op": "write_frame",
+  "index": 68,
+  "kind": "AUDIT",
+  "bytes": 389
+ },
+ {
+  "t": 174865.293335866,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174865.343652158,
+  "op": "read",
+  "bytes": 465
+ },
+ {
+  "t": 174865.403622149,
+  "op": "write_frame",
+  "index": 69,
+  "kind": "AUDIT",
+  "bytes": 393
+ },
+ {
+  "t": 174865.408909748,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174865.45926134,
+  "op": "read",
+  "bytes": 469
+ },
+ {
+  "t": 174865.519314531,
+  "op": "write_frame",
+  "index": 70,
+  "kind": "AUDIT",
+  "bytes": 397
+ },
+ {
+  "t": 174865.52478783,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174865.575088022,
+  "op": "read",
+  "bytes": 473
+ },
+ {
+  "t": 174865.634487713,
+  "op": "write_frame",
+  "index": 71,
+  "kind": "AUDIT",
+  "bytes": 405
+ },
+ {
+  "t": 174865.642942512,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174865.693164404,
+  "op": "read",
+  "bytes": 481
+ },
+ {
+  "t": 174865.752554995,
+  "op": "write_frame",
+  "index": 72,
+  "kind": "AUDIT",
+  "bytes": 409
+ },
+ {
+  "t": 174865.760805393,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174865.811031586,
+  "op": "read",
+  "bytes": 485
+ },
+ {
+  "t": 174865.870524876,
+  "op": "write_frame",
+  "index": 73,
+  "kind": "AUDIT",
+  "bytes": 413
+ },
+ {
+  "t": 174865.878809075,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174865.929039267,
+  "op": "read",
+  "bytes": 489
+ },
+ {
+  "t": 174865.979336546,
+  "op": "write_frame",
+  "index": 74,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174865.979364946,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174866.029537216,
+  "op": "read",
+  "bytes": 143
+ },
+ {
+  "t": 174866.079930487,
+  "op": "write_frame",
+  "index": 75,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174866.130145057,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174866.180605628,
+  "op": "write_frame",
+  "index": 76,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174866.230794198,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174866.281208469,
+  "op": "write_frame",
+  "index": 77,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174866.331403039,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174866.38179551,
+  "op": "write_frame",
+  "index": 78,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174866.43196128,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174866.482277851,
+  "op": "write_frame",
+  "index": 79,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174866.532489422,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174866.582875492,
+  "op": "write_frame",
+  "index": 80,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174866.633206763,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174866.683873033,
+  "op": "write_frame",
+  "index": 81,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174866.734157004,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174866.79160697,
+  "op": "write_frame",
+  "index": 82,
+  "kind": "SIGNREQ",
+  "bytes": 371
+ },
+ {
+  "t": 174866.841976341,
+  "op": "read",
+  "bytes": 371
+ },
+ {
+  "t": 174866.892601311,
+  "op": "write_frame",
+  "index": 83,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174866.912882599,
+  "op": "write_host",
+  "caused_by": "SIGNREQ",
+  "bytes": 470,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174866.96326697,
+  "op": "read",
+  "bytes": 536
+ },
+ {
+  "t": 174867.01373764,
+  "op": "write_frame",
+  "index": 84,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174867.064000011,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174867.114492682,
+  "op": "write_frame",
+  "index": 85,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174867.164748752,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174867.215446823,
+  "op": "write_frame",
+  "index": 86,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174867.265765093,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174867.316238864,
+  "op": "write_frame",
+  "index": 87,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174867.366558334,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174867.417197905,
+  "op": "write_frame",
+  "index": 88,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174867.467564475,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174867.518209046,
+  "op": "write_frame",
+  "index": 89,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174867.568470617,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174867.618894887,
+  "op": "write_frame",
+  "index": 90,
+  "kind": "HB",
+  "bytes": 66
+ },
+ {
+  "t": 174867.669148058,
+  "op": "read",
+  "bytes": 66
+ },
+ {
+  "t": 174867.928079907,
+  "op": "write_frame",
+  "index": 91,
+  "kind": "REC",
+  "bytes": 2695
+ },
+ {
+  "t": 174867.978325478,
+  "op": "read",
+  "bytes": 2695
+ },
+ {
+  "t": 174868.028640449,
+  "op": "write_frame",
+  "index": 92,
+  "kind": "AUDIT_READY",
+  "bytes": 235
+ },
+ {
+  "t": 174868.029468548,
+  "op": "write_host",
+  "caused_by": "REC",
+  "bytes": 74,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174868.079663419,
+  "op": "read",
+  "bytes": 309
+ },
+ {
+  "t": 174868.141791483,
+  "op": "write_frame",
+  "index": 93,
+  "kind": "AUDIT",
+  "bytes": 417
+ },
+ {
+  "t": 174868.147703379,
+  "op": "write_host",
+  "caused_by": "AUDIT_READY",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174868.19804475,
+  "op": "read",
+  "bytes": 493
+ },
+ {
+  "t": 174868.260338314,
+  "op": "write_frame",
+  "index": 94,
+  "kind": "AUDIT",
+  "bytes": 421
+ },
+ {
+  "t": 174868.265644411,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174868.315792982,
+  "op": "read",
+  "bytes": 497
+ },
+ {
+  "t": 174868.377923445,
+  "op": "write_frame",
+  "index": 95,
+  "kind": "AUDIT",
+  "bytes": 425
+ },
+ {
+  "t": 174868.383425342,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174868.433649513,
+  "op": "read",
+  "bytes": 501
+ },
+ {
+  "t": 174868.496036677,
+  "op": "write_frame",
+  "index": 96,
+  "kind": "AUDIT",
+  "bytes": 429
+ },
+ {
+  "t": 174868.501466374,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174868.551739845,
+  "op": "read",
+  "bytes": 505
+ },
+ {
+  "t": 174868.614470408,
+  "op": "write_frame",
+  "index": 97,
+  "kind": "AUDIT",
+  "bytes": 437
+ },
+ {
+  "t": 174868.622773403,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174868.673164374,
+  "op": "read",
+  "bytes": 513
+ },
+ {
+  "t": 174868.735772238,
+  "op": "write_frame",
+  "index": 98,
+  "kind": "AUDIT",
+  "bytes": 441
+ },
+ {
+  "t": 174868.744120733,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174868.794420704,
+  "op": "read",
+  "bytes": 517
+ },
+ {
+  "t": 174868.857235967,
+  "op": "write_frame",
+  "index": 99,
+  "kind": "AUDIT",
+  "bytes": 445
+ },
+ {
+  "t": 174868.865262563,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174868.915562433,
+  "op": "read",
+  "bytes": 521
+ },
+ {
+  "t": 174868.980892496,
+  "op": "write_frame",
+  "index": 100,
+  "kind": "AUDIT",
+  "bytes": 450
+ },
+ {
+  "t": 174868.986628392,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174869.036904663,
+  "op": "read",
+  "bytes": 526
+ },
+ {
+  "t": 174869.087362134,
+  "op": "write_frame",
+  "index": 101,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174869.087406834,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 78,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174869.137742105,
+  "op": "read",
+  "bytes": 145
+ },
+ {
+  "t": 174869.188221475,
+  "op": "write_frame",
+  "index": 102,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174869.238498846,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174869.288987317,
+  "op": "write_frame",
+  "index": 103,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174869.339231588,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174869.389568158,
+  "op": "write_frame",
+  "index": 104,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174869.439848329,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174869.4902864,
+  "op": "write_frame",
+  "index": 105,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174869.540519371,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174869.590965342,
+  "op": "write_frame",
+  "index": 106,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174869.641184913,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174869.691563984,
+  "op": "write_frame",
+  "index": 107,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174869.741763755,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174869.792277726,
+  "op": "write_frame",
+  "index": 108,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174869.842486497,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174869.899194064,
+  "op": "write_frame",
+  "index": 109,
+  "kind": "SIGNREQ",
+  "bytes": 372
+ },
+ {
+  "t": 174869.949463235,
+  "op": "read",
+  "bytes": 372
+ },
+ {
+  "t": 174869.999768106,
+  "op": "write_frame",
+  "index": 110,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174870.019709394,
+  "op": "write_host",
+  "caused_by": "SIGNREQ",
+  "bytes": 471,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174870.069953565,
+  "op": "read",
+  "bytes": 538
+ },
+ {
+  "t": 174870.120321636,
+  "op": "write_frame",
+  "index": 111,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174870.170556507,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174870.220928178,
+  "op": "write_frame",
+  "index": 112,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174870.271133149,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174870.32148702,
+  "op": "write_frame",
+  "index": 113,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174870.371782391,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174870.422135862,
+  "op": "write_frame",
+  "index": 114,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174870.472333933,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174870.522638104,
+  "op": "write_frame",
+  "index": 115,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174870.572840475,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174870.623314246,
+  "op": "write_frame",
+  "index": 116,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174870.673676817,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174870.724222788,
+  "op": "write_frame",
+  "index": 117,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174870.774472459,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174871.036738108,
+  "op": "write_frame",
+  "index": 118,
+  "kind": "REC",
+  "bytes": 2724
+ },
+ {
+  "t": 174871.087158079,
+  "op": "read",
+  "bytes": 2724
+ },
+ {
+  "t": 174871.137607249,
+  "op": "write_frame",
+  "index": 119,
+  "kind": "AUDIT_READY",
+  "bytes": 232
+ },
+ {
+  "t": 174871.138774249,
+  "op": "write_host",
+  "caused_by": "REC",
+  "bytes": 75,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174871.18919512,
+  "op": "read",
+  "bytes": 307
+ },
+ {
+  "t": 174871.254741282,
+  "op": "write_frame",
+  "index": 120,
+  "kind": "AUDIT",
+  "bytes": 454
+ },
+ {
+  "t": 174871.260163879,
+  "op": "write_host",
+  "caused_by": "AUDIT_READY",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174871.31051365,
+  "op": "read",
+  "bytes": 531
+ },
+ {
+  "t": 174871.376079612,
+  "op": "write_frame",
+  "index": 121,
+  "kind": "AUDIT",
+  "bytes": 458
+ },
+ {
+  "t": 174871.381323809,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174871.43157978,
+  "op": "read",
+  "bytes": 535
+ },
+ {
+  "t": 174871.496872443,
+  "op": "write_frame",
+  "index": 122,
+  "kind": "AUDIT",
+  "bytes": 462
+ },
+ {
+  "t": 174871.50239644,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174871.552692711,
+  "op": "read",
+  "bytes": 539
+ },
+ {
+  "t": 174871.617889073,
+  "op": "write_frame",
+  "index": 123,
+  "kind": "AUDIT",
+  "bytes": 470
+ },
+ {
+  "t": 174871.626625768,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174871.676889839,
+  "op": "read",
+  "bytes": 547
+ },
+ {
+  "t": 174871.742033302,
+  "op": "write_frame",
+  "index": 124,
+  "kind": "AUDIT",
+  "bytes": 474
+ },
+ {
+  "t": 174871.750213497,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174871.800403569,
+  "op": "read",
+  "bytes": 551
+ },
+ {
+  "t": 174871.865387831,
+  "op": "write_frame",
+  "index": 125,
+  "kind": "AUDIT",
+  "bytes": 478
+ },
+ {
+  "t": 174871.873650926,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174871.923872198,
+  "op": "read",
+  "bytes": 555
+ },
+ {
+  "t": 174871.991494959,
+  "op": "write_frame",
+  "index": 126,
+  "kind": "AUDIT",
+  "bytes": 482
+ },
+ {
+  "t": 174871.997172056,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174872.047463627,
+  "op": "read",
+  "bytes": 559
+ },
+ {
+  "t": 174872.115206088,
+  "op": "write_frame",
+  "index": 127,
+  "kind": "AUDIT",
+  "bytes": 486
+ },
+ {
+  "t": 174872.120507085,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174872.170647356,
+  "op": "read",
+  "bytes": 563
+ },
+ {
+  "t": 174872.220974327,
+  "op": "write_frame",
+  "index": 128,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174872.221003227,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 78,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174872.271232098,
+  "op": "read",
+  "bytes": 145
+ },
+ {
+  "t": 174872.321606169,
+  "op": "write_frame",
+  "index": 129,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174872.371896941,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174872.422280312,
+  "op": "write_frame",
+  "index": 130,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174872.472481683,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174872.522877454,
+  "op": "write_frame",
+  "index": 131,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174872.573122725,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174872.623515897,
+  "op": "write_frame",
+  "index": 132,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174872.673800968,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174872.724277839,
+  "op": "write_frame",
+  "index": 133,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174872.77452901,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174872.825099181,
+  "op": "write_frame",
+  "index": 134,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174872.875386553,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174872.925790324,
+  "op": "write_frame",
+  "index": 135,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174872.976092795,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174873.032844462,
+  "op": "write_frame",
+  "index": 136,
+  "kind": "SIGNREQ",
+  "bytes": 372
+ },
+ {
+  "t": 174873.083230534,
+  "op": "read",
+  "bytes": 372
+ },
+ {
+  "t": 174873.133793905,
+  "op": "write_frame",
+  "index": 137,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174873.154435893,
+  "op": "write_host",
+  "caused_by": "SIGNREQ",
+  "bytes": 471,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174873.204788764,
+  "op": "read",
+  "bytes": 538
+ },
+ {
+  "t": 174873.255360835,
+  "op": "write_frame",
+  "index": 138,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174873.305673706,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174873.356281977,
+  "op": "write_frame",
+  "index": 139,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174873.406549249,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174873.45716462,
+  "op": "write_frame",
+  "index": 140,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174873.507447291,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174873.558077762,
+  "op": "write_frame",
+  "index": 141,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174873.608377334,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174873.658984005,
+  "op": "write_frame",
+  "index": 142,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174873.709259976,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174873.759623348,
+  "op": "write_frame",
+  "index": 143,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174873.809904519,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174873.86023859,
+  "op": "write_frame",
+  "index": 144,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174873.910458962,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174874.175137758,
+  "op": "write_frame",
+  "index": 145,
+  "kind": "REC",
+  "bytes": 2752
+ },
+ {
+  "t": 174874.225412494,
+  "op": "read",
+  "bytes": 2752
+ },
+ {
+  "t": 174874.275737929,
+  "op": "write_frame",
+  "index": 146,
+  "kind": "AUDIT_READY",
+  "bytes": 232
+ },
+ {
+  "t": 174874.276477228,
+  "op": "write_host",
+  "caused_by": "REC",
+  "bytes": 75,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174874.326699964,
+  "op": "read",
+  "bytes": 307
+ },
+ {
+  "t": 174874.394393378,
+  "op": "write_frame",
+  "index": 147,
+  "kind": "AUDIT",
+  "bytes": 490
+ },
+ {
+  "t": 174874.399890971,
+  "op": "write_host",
+  "caused_by": "AUDIT_READY",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174874.450108106,
+  "op": "read",
+  "bytes": 567
+ },
+ {
+  "t": 174874.51782502,
+  "op": "write_frame",
+  "index": 148,
+  "kind": "AUDIT",
+  "bytes": 494
+ },
+ {
+  "t": 174874.523272113,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174874.573470649,
+  "op": "read",
+  "bytes": 571
+ },
+ {
+  "t": 174874.641461862,
+  "op": "write_frame",
+  "index": 149,
+  "kind": "AUDIT",
+  "bytes": 502
+ },
+ {
+  "t": 174874.649589151,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174874.699888587,
+  "op": "read",
+  "bytes": 579
+ },
+ {
+  "t": 174874.7681963,
+  "op": "write_frame",
+  "index": 150,
+  "kind": "AUDIT",
+  "bytes": 506
+ },
+ {
+  "t": 174874.776385389,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174874.826594225,
+  "op": "read",
+  "bytes": 583
+ },
+ {
+  "t": 174874.894804938,
+  "op": "write_frame",
+  "index": 151,
+  "kind": "AUDIT",
+  "bytes": 510
+ },
+ {
+  "t": 174874.903315127,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174874.953756263,
+  "op": "read",
+  "bytes": 587
+ },
+ {
+  "t": 174875.025128371,
+  "op": "write_frame",
+  "index": 152,
+  "kind": "AUDIT",
+  "bytes": 514
+ },
+ {
+  "t": 174875.030365265,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174875.0807392,
+  "op": "read",
+  "bytes": 591
+ },
+ {
+  "t": 174875.151791409,
+  "op": "write_frame",
+  "index": 153,
+  "kind": "AUDIT",
+  "bytes": 518
+ },
+ {
+  "t": 174875.157245602,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174875.207530038,
+  "op": "read",
+  "bytes": 595
+ },
+ {
+  "t": 174875.278667347,
+  "op": "write_frame",
+  "index": 154,
+  "kind": "AUDIT",
+  "bytes": 522
+ },
+ {
+  "t": 174875.28417244,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174875.334400276,
+  "op": "read",
+  "bytes": 599
+ },
+ {
+  "t": 174875.385039911,
+  "op": "write_frame",
+  "index": 155,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174875.385181711,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 78,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174875.435458747,
+  "op": "read",
+  "bytes": 145
+ },
+ {
+  "t": 174875.485917083,
+  "op": "write_frame",
+  "index": 156,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174875.536270718,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174875.586686454,
+  "op": "write_frame",
+  "index": 157,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174875.63695029,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174875.687509925,
+  "op": "write_frame",
+  "index": 158,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174875.737749961,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174875.788114897,
+  "op": "write_frame",
+  "index": 159,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174875.838310033,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174875.888816868,
+  "op": "write_frame",
+  "index": 160,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174875.939139604,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174875.98958644,
+  "op": "write_frame",
+  "index": 161,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174876.039794076,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174876.090188211,
+  "op": "write_frame",
+  "index": 162,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174876.140422047,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174876.197060775,
+  "op": "write_frame",
+  "index": 163,
+  "kind": "SIGNREQ",
+  "bytes": 376
+ },
+ {
+  "t": 174876.247310011,
+  "op": "read",
+  "bytes": 376
+ },
+ {
+  "t": 174876.297777147,
+  "op": "write_frame",
+  "index": 164,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174876.318056521,
+  "op": "write_host",
+  "caused_by": "SIGNREQ",
+  "bytes": 471,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174876.368234557,
+  "op": "read",
+  "bytes": 538
+ },
+ {
+  "t": 174876.418522793,
+  "op": "write_frame",
+  "index": 165,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174876.468724229,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174876.519052565,
+  "op": "write_frame",
+  "index": 166,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174876.569257801,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174876.619570836,
+  "op": "write_frame",
+  "index": 167,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174876.669824272,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174876.720533708,
+  "op": "write_frame",
+  "index": 168,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174876.770855244,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174876.821344379,
+  "op": "write_frame",
+  "index": 169,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174876.871666915,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174876.922086851,
+  "op": "write_frame",
+  "index": 170,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174876.972352987,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174877.022789823,
+  "op": "write_frame",
+  "index": 171,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174877.073060359,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174877.33855862,
+  "op": "write_frame",
+  "index": 172,
+  "kind": "REC",
+  "bytes": 2776
+ },
+ {
+  "t": 174877.388967756,
+  "op": "read",
+  "bytes": 2776
+ },
+ {
+  "t": 174877.439437892,
+  "op": "write_frame",
+  "index": 173,
+  "kind": "AUDIT_READY",
+  "bytes": 236
+ },
+ {
+  "t": 174877.440375591,
+  "op": "write_host",
+  "caused_by": "REC",
+  "bytes": 75,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174877.490662327,
+  "op": "read",
+  "bytes": 311
+ },
+ {
+  "t": 174877.561687236,
+  "op": "write_frame",
+  "index": 174,
+  "kind": "AUDIT",
+  "bytes": 530
+ },
+ {
+  "t": 174877.567685129,
+  "op": "write_host",
+  "caused_by": "AUDIT_READY",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174877.617911165,
+  "op": "read",
+  "bytes": 607
+ },
+ {
+  "t": 174877.688563075,
+  "op": "write_frame",
+  "index": 175,
+  "kind": "AUDIT",
+  "bytes": 534
+ },
+ {
+  "t": 174877.696977764,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174877.7472611,
+  "op": "read",
+  "bytes": 611
+ },
+ {
+  "t": 174877.817730711,
+  "op": "write_frame",
+  "index": 176,
+  "kind": "AUDIT",
+  "bytes": 538
+ },
+ {
+  "t": 174877.8259826,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174877.876182936,
+  "op": "read",
+  "bytes": 615
+ },
+ {
+  "t": 174877.946684247,
+  "op": "write_frame",
+  "index": 177,
+  "kind": "AUDIT",
+  "bytes": 542
+ },
+ {
+  "t": 174877.955105436,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174878.005378372,
+  "op": "read",
+  "bytes": 619
+ },
+ {
+  "t": 174878.078559879,
+  "op": "write_frame",
+  "index": 178,
+  "kind": "AUDIT",
+  "bytes": 546
+ },
+ {
+  "t": 174878.083987672,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174878.134230908,
+  "op": "read",
+  "bytes": 623
+ },
+ {
+  "t": 174878.207449515,
+  "op": "write_frame",
+  "index": 179,
+  "kind": "AUDIT",
+  "bytes": 550
+ },
+ {
+  "t": 174878.213103608,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174878.263279844,
+  "op": "read",
+  "bytes": 627
+ },
+ {
+  "t": 174878.336496951,
+  "op": "write_frame",
+  "index": 180,
+  "kind": "AUDIT",
+  "bytes": 558
+ },
+ {
+  "t": 174878.341910344,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174878.39214628,
+  "op": "read",
+  "bytes": 635
+ },
+ {
+  "t": 174878.465287787,
+  "op": "write_frame",
+  "index": 181,
+  "kind": "AUDIT",
+  "bytes": 562
+ },
+ {
+  "t": 174878.47080578,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174878.520990916,
+  "op": "read",
+  "bytes": 639
+ },
+ {
+  "t": 174878.571375153,
+  "op": "write_frame",
+  "index": 182,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174878.571431052,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 78,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174878.621679489,
+  "op": "read",
+  "bytes": 145
+ },
+ {
+  "t": 174878.672171824,
+  "op": "write_frame",
+  "index": 183,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174878.722484261,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174878.773068996,
+  "op": "write_frame",
+  "index": 184,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174878.823369232,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174878.873835568,
+  "op": "write_frame",
+  "index": 185,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174878.924175004,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174878.974594041,
+  "op": "write_frame",
+  "index": 186,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174879.024857934,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174879.075285827,
+  "op": "write_frame",
+  "index": 187,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174879.125533619,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174879.175990312,
+  "op": "write_frame",
+  "index": 188,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174879.226401505,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174879.276748098,
+  "op": "write_frame",
+  "index": 189,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174879.326928291,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174879.383824483,
+  "op": "write_frame",
+  "index": 190,
+  "kind": "SIGNREQ",
+  "bytes": 376
+ },
+ {
+  "t": 174879.434157876,
+  "op": "read",
+  "bytes": 376
+ },
+ {
+  "t": 174879.484558769,
+  "op": "write_frame",
+  "index": 191,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174879.504958666,
+  "op": "write_host",
+  "caused_by": "SIGNREQ",
+  "bytes": 471,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174879.555265259,
+  "op": "read",
+  "bytes": 538
+ },
+ {
+  "t": 174879.605753252,
+  "op": "write_frame",
+  "index": 192,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174879.656072745,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174879.706753138,
+  "op": "write_frame",
+  "index": 193,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174879.756988731,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174879.807334424,
+  "op": "write_frame",
+  "index": 194,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174879.857628317,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174879.90793481,
+  "op": "write_frame",
+  "index": 195,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174879.958098103,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174880.008440796,
+  "op": "write_frame",
+  "index": 196,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174880.058632589,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174880.108926582,
+  "op": "write_frame",
+  "index": 197,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174880.159079575,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174880.209460068,
+  "op": "write_frame",
+  "index": 198,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174880.259703361,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174880.526891224,
+  "op": "write_frame",
+  "index": 199,
+  "kind": "REC",
+  "bytes": 2804
+ },
+ {
+  "t": 174880.577168417,
+  "op": "read",
+  "bytes": 2804
+ },
+ {
+  "t": 174880.62757131,
+  "op": "write_frame",
+  "index": 200,
+  "kind": "AUDIT_READY",
+  "bytes": 236
+ },
+ {
+  "t": 174880.62830921,
+  "op": "write_host",
+  "caused_by": "REC",
+  "bytes": 75,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174880.678478603,
+  "op": "read",
+  "bytes": 311
+ },
+ {
+  "t": 174880.751975293,
+  "op": "write_frame",
+  "index": 201,
+  "kind": "AUDIT",
+  "bytes": 566
+ },
+ {
+  "t": 174880.760385192,
+  "op": "write_host",
+  "caused_by": "AUDIT_READY",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174880.810697085,
+  "op": "read",
+  "bytes": 643
+ },
+ {
+  "t": 174880.884487575,
+  "op": "write_frame",
+  "index": 202,
+  "kind": "AUDIT",
+  "bytes": 570
+ },
+ {
+  "t": 174880.893144973,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174880.943338667,
+  "op": "read",
+  "bytes": 647
+ },
+ {
+  "t": 174881.017142856,
+  "op": "write_frame",
+  "index": 203,
+  "kind": "AUDIT",
+  "bytes": 574
+ },
+ {
+  "t": 174881.025434455,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174881.075712448,
+  "op": "read",
+  "bytes": 651
+ },
+ {
+  "t": 174881.152423238,
+  "op": "write_frame",
+  "index": 204,
+  "kind": "AUDIT",
+  "bytes": 578
+ },
+ {
+  "t": 174881.158200937,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174881.20851423,
+  "op": "read",
+  "bytes": 655
+ },
+ {
+  "t": 174881.28552462,
+  "op": "write_frame",
+  "index": 205,
+  "kind": "AUDIT",
+  "bytes": 586
+ },
+ {
+  "t": 174881.290493819,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174881.340819012,
+  "op": "read",
+  "bytes": 663
+ },
+ {
+  "t": 174881.417853701,
+  "op": "write_frame",
+  "index": 206,
+  "kind": "AUDIT",
+  "bytes": 590
+ },
+ {
+  "t": 174881.423252601,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174881.473574294,
+  "op": "read",
+  "bytes": 667
+ },
+ {
+  "t": 174881.549936084,
+  "op": "write_frame",
+  "index": 207,
+  "kind": "AUDIT",
+  "bytes": 594
+ },
+ {
+  "t": 174881.555801983,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174881.606171676,
+  "op": "read",
+  "bytes": 671
+ },
+ {
+  "t": 174881.683155466,
+  "op": "write_frame",
+  "index": 208,
+  "kind": "AUDIT",
+  "bytes": 598
+ },
+ {
+  "t": 174881.691189364,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174881.741529058,
+  "op": "read",
+  "bytes": 675
+ },
+ {
+  "t": 174881.791881251,
+  "op": "write_frame",
+  "index": 209,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174881.791911251,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 78,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174881.842103344,
+  "op": "read",
+  "bytes": 145
+ },
+ {
+  "t": 174881.892561837,
+  "op": "write_frame",
+  "index": 210,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174881.94274193,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174881.99305632,
+  "op": "write_frame",
+  "index": 211,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174882.043267105,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174882.093694089,
+  "op": "write_frame",
+  "index": 212,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174882.143987174,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174882.194395358,
+  "op": "write_frame",
+  "index": 213,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174882.244551142,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174882.294940627,
+  "op": "write_frame",
+  "index": 214,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174882.345113911,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174882.395474596,
+  "op": "write_frame",
+  "index": 215,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174882.445631781,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174882.496022665,
+  "op": "write_frame",
+  "index": 216,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174882.54624535,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174882.602922332,
+  "op": "write_frame",
+  "index": 217,
+  "kind": "SIGNREQ",
+  "bytes": 376
+ },
+ {
+  "t": 174882.653070917,
+  "op": "read",
+  "bytes": 376
+ },
+ {
+  "t": 174882.703385902,
+  "op": "write_frame",
+  "index": 218,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174882.723556995,
+  "op": "write_host",
+  "caused_by": "SIGNREQ",
+  "bytes": 471,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174882.77385288,
+  "op": "read",
+  "bytes": 538
+ },
+ {
+  "t": 174882.824473464,
+  "op": "write_frame",
+  "index": 219,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174882.874787549,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174882.925335834,
+  "op": "write_frame",
+  "index": 220,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174882.975702818,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174883.026326803,
+  "op": "write_frame",
+  "index": 221,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174883.076644487,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174883.127065672,
+  "op": "write_frame",
+  "index": 222,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174883.177232456,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174883.227597841,
+  "op": "write_frame",
+  "index": 223,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174883.277895225,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174883.32825931,
+  "op": "write_frame",
+  "index": 224,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174883.378503895,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174883.428943179,
+  "op": "write_frame",
+  "index": 225,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174883.479252264,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174883.750154281,
+  "op": "write_frame",
+  "index": 226,
+  "kind": "REC",
+  "bytes": 2832
+ },
+ {
+  "t": 174883.800515766,
+  "op": "read",
+  "bytes": 2832
+ },
+ {
+  "t": 174883.851005851,
+  "op": "write_frame",
+  "index": 227,
+  "kind": "AUDIT_READY",
+  "bytes": 236
+ },
+ {
+  "t": 174883.85172465,
+  "op": "write_host",
+  "caused_by": "REC",
+  "bytes": 75,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174883.901916835,
+  "op": "read",
+  "bytes": 311
+ },
+ {
+  "t": 174883.977694212,
+  "op": "write_frame",
+  "index": 228,
+  "kind": "AUDIT",
+  "bytes": 602
+ },
+ {
+  "t": 174883.98609741,
+  "op": "write_host",
+  "caused_by": "AUDIT_READY",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174884.036359394,
+  "op": "read",
+  "bytes": 679
+ },
+ {
+  "t": 174884.112265571,
+  "op": "write_frame",
+  "index": 229,
+  "kind": "AUDIT",
+  "bytes": 606
+ },
+ {
+  "t": 174884.120729969,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174884.170934853,
+  "op": "read",
+  "bytes": 683
+ },
+ {
+  "t": 174884.249571229,
+  "op": "write_frame",
+  "index": 230,
+  "kind": "AUDIT",
+  "bytes": 610
+ },
+ {
+  "t": 174884.255178428,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174884.305397112,
+  "op": "read",
+  "bytes": 687
+ },
+ {
+  "t": 174884.384367288,
+  "op": "write_frame",
+  "index": 231,
+  "kind": "AUDIT",
+  "bytes": 618
+ },
+ {
+  "t": 174884.389764487,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174884.439968871,
+  "op": "read",
+  "bytes": 695
+ },
+ {
+  "t": 174884.518831948,
+  "op": "write_frame",
+  "index": 232,
+  "kind": "AUDIT",
+  "bytes": 622
+ },
+ {
+  "t": 174884.524430746,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174884.574707131,
+  "op": "read",
+  "bytes": 699
+ },
+ {
+  "t": 174884.653593807,
+  "op": "write_frame",
+  "index": 233,
+  "kind": "AUDIT",
+  "bytes": 626
+ },
+ {
+  "t": 174884.659131205,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174884.70930039,
+  "op": "read",
+  "bytes": 703
+ },
+ {
+  "t": 174884.788630166,
+  "op": "write_frame",
+  "index": 234,
+  "kind": "AUDIT",
+  "bytes": 630
+ },
+ {
+  "t": 174884.796785463,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174884.847092848,
+  "op": "read",
+  "bytes": 707
+ },
+ {
+  "t": 174884.926232824,
+  "op": "write_frame",
+  "index": 235,
+  "kind": "AUDIT",
+  "bytes": 634
+ },
+ {
+  "t": 174884.934661122,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174884.984878207,
+  "op": "read",
+  "bytes": 711
+ },
+ {
+  "t": 174885.035306191,
+  "op": "write_frame",
+  "index": 236,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174885.035351891,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 78,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174885.085671976,
+  "op": "read",
+  "bytes": 145
+ },
+ {
+  "t": 174885.136406561,
+  "op": "write_frame",
+  "index": 237,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174885.186642246,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174885.23732133,
+  "op": "write_frame",
+  "index": 238,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174885.287660715,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174885.3382214,
+  "op": "write_frame",
+  "index": 239,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174885.388502185,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174885.438933269,
+  "op": "write_frame",
+  "index": 240,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174885.489116554,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174885.539702539,
+  "op": "write_frame",
+  "index": 241,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174885.589909824,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174885.640497009,
+  "op": "write_frame",
+  "index": 242,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174885.690770194,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174885.741358478,
+  "op": "write_frame",
+  "index": 243,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174885.791635263,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174885.848300146,
+  "op": "write_frame",
+  "index": 244,
+  "kind": "SIGNREQ",
+  "bytes": 376
+ },
+ {
+  "t": 174885.898516831,
+  "op": "read",
+  "bytes": 376
+ },
+ {
+  "t": 174885.948808816,
+  "op": "write_frame",
+  "index": 245,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174885.96890221,
+  "op": "write_host",
+  "caused_by": "SIGNREQ",
+  "bytes": 471,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174886.019110095,
+  "op": "read",
+  "bytes": 538
+ },
+ {
+  "t": 174886.06944228,
+  "op": "write_frame",
+  "index": 246,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174886.119621765,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174886.16993955,
+  "op": "write_frame",
+  "index": 247,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174886.220134535,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174886.270540219,
+  "op": "write_frame",
+  "index": 248,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174886.320700604,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174886.370994789,
+  "op": "write_frame",
+  "index": 249,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174886.421125474,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174886.471557559,
+  "op": "write_frame",
+  "index": 250,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174886.521772844,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174886.572239729,
+  "op": "write_frame",
+  "index": 251,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174886.622392514,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174886.672708699,
+  "op": "write_frame",
+  "index": 252,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174886.722898784,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174886.996138603,
+  "op": "write_frame",
+  "index": 253,
+  "kind": "REC",
+  "bytes": 2860
+ },
+ {
+  "t": 174887.046612588,
+  "op": "read",
+  "bytes": 2860
+ },
+ {
+  "t": 174887.097326872,
+  "op": "write_frame",
+  "index": 254,
+  "kind": "AUDIT_READY",
+  "bytes": 236
+ },
+ {
+  "t": 174887.098328372,
+  "op": "write_host",
+  "caused_by": "REC",
+  "bytes": 75,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174887.148592057,
+  "op": "read",
+  "bytes": 311
+ },
+ {
+  "t": 174887.227949133,
+  "op": "write_frame",
+  "index": 255,
+  "kind": "AUDIT",
+  "bytes": 638
+ },
+ {
+  "t": 174887.236090431,
+  "op": "write_host",
+  "caused_by": "AUDIT_READY",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174887.286435216,
+  "op": "read",
+  "bytes": 715
+ },
+ {
+  "t": 174887.368268591,
+  "op": "write_frame",
+  "index": 256,
+  "kind": "AUDIT",
+  "bytes": 646
+ },
+ {
+  "t": 174887.37386059,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174887.424269975,
+  "op": "read",
+  "bytes": 723
+ },
+ {
+  "t": 174887.50665365,
+  "op": "write_frame",
+  "index": 257,
+  "kind": "AUDIT",
+  "bytes": 650
+ },
+ {
+  "t": 174887.512077849,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174887.562427634,
+  "op": "read",
+  "bytes": 727
+ },
+ {
+  "t": 174887.64459411,
+  "op": "write_frame",
+  "index": 258,
+  "kind": "AUDIT",
+  "bytes": 654
+ },
+ {
+  "t": 174887.650107608,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174887.700482693,
+  "op": "read",
+  "bytes": 731
+ },
+ {
+  "t": 174887.782699169,
+  "op": "write_frame",
+  "index": 259,
+  "kind": "AUDIT",
+  "bytes": 658
+ },
+ {
+  "t": 174887.788650967,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174887.838935852,
+  "op": "read",
+  "bytes": 735
+ },
+ {
+  "t": 174887.920447728,
+  "op": "write_frame",
+  "index": 260,
+  "kind": "AUDIT",
+  "bytes": 662
+ },
+ {
+  "t": 174887.928834725,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174887.97904291,
+  "op": "read",
+  "bytes": 739
+ },
+ {
+  "t": 174888.060605486,
+  "op": "write_frame",
+  "index": 261,
+  "kind": "AUDIT",
+  "bytes": 666
+ },
+ {
+  "t": 174888.068903884,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174888.119110269,
+  "op": "read",
+  "bytes": 743
+ },
+ {
+  "t": 174888.203485244,
+  "op": "write_frame",
+  "index": 262,
+  "kind": "AUDIT",
+  "bytes": 674
+ },
+ {
+  "t": 174888.209108242,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174888.259315727,
+  "op": "read",
+  "bytes": 751
+ },
+ {
+  "t": 174888.309707712,
+  "op": "write_frame",
+  "index": 263,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174888.309753412,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 78,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174888.359965597,
+  "op": "read",
+  "bytes": 145
+ },
+ {
+  "t": 174888.410342083,
+  "op": "write_frame",
+  "index": 264,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174888.460553668,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174888.510969253,
+  "op": "write_frame",
+  "index": 265,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174888.561210038,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174888.611623723,
+  "op": "write_frame",
+  "index": 266,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174888.661829008,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174888.712250594,
+  "op": "write_frame",
+  "index": 267,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174888.762456379,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174888.813032464,
+  "op": "write_frame",
+  "index": 268,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174888.863301149,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174888.913742734,
+  "op": "write_frame",
+  "index": 269,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174888.963992719,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174889.014628404,
+  "op": "write_frame",
+  "index": 270,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174889.06493459,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174889.121905573,
+  "op": "write_frame",
+  "index": 271,
+  "kind": "SIGNREQ",
+  "bytes": 376
+ },
+ {
+  "t": 174889.172233158,
+  "op": "read",
+  "bytes": 376
+ },
+ {
+  "t": 174889.222612643,
+  "op": "write_frame",
+  "index": 272,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174889.243192537,
+  "op": "write_host",
+  "caused_by": "SIGNREQ",
+  "bytes": 471,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174889.293485622,
+  "op": "read",
+  "bytes": 538
+ },
+ {
+  "t": 174889.343883608,
+  "op": "write_frame",
+  "index": 273,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174889.394098693,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174889.444553378,
+  "op": "write_frame",
+  "index": 274,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174889.494824163,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174889.545453148,
+  "op": "write_frame",
+  "index": 275,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174889.595680434,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174889.646355219,
+  "op": "write_frame",
+  "index": 276,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174889.696582404,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174889.74700759,
+  "op": "write_frame",
+  "index": 277,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174889.797371975,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174889.84782606,
+  "op": "write_frame",
+  "index": 278,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174889.898073945,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174889.948381631,
+  "op": "write_frame",
+  "index": 279,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174889.998545917,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174890.274326764,
+  "op": "write_frame",
+  "index": 280,
+  "kind": "REC",
+  "bytes": 2888
+ },
+ {
+  "t": 174890.324549155,
+  "op": "read",
+  "bytes": 2888
+ },
+ {
+  "t": 174890.374942945,
+  "op": "write_frame",
+  "index": 281,
+  "kind": "AUDIT_READY",
+  "bytes": 236
+ },
+ {
+  "t": 174890.375586545,
+  "op": "write_host",
+  "caused_by": "REC",
+  "bytes": 75,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174890.425853935,
+  "op": "read",
+  "bytes": 311
+ },
+ {
+  "t": 174890.510200619,
+  "op": "write_frame",
+  "index": 282,
+  "kind": "AUDIT",
+  "bytes": 678
+ },
+ {
+  "t": 174890.515797018,
+  "op": "write_host",
+  "caused_by": "AUDIT_READY",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174890.566028109,
+  "op": "read",
+  "bytes": 755
+ },
+ {
+  "t": 174890.650439493,
+  "op": "write_frame",
+  "index": 283,
+  "kind": "AUDIT",
+  "bytes": 682
+ },
+ {
+  "t": 174890.655848792,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174890.706094082,
+  "op": "read",
+  "bytes": 759
+ },
+ {
+  "t": 174890.790682666,
+  "op": "write_frame",
+  "index": 284,
+  "kind": "AUDIT",
+  "bytes": 686
+ },
+ {
+  "t": 174890.796112965,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174890.846427555,
+  "op": "read",
+  "bytes": 763
+ },
+ {
+  "t": 174890.931129139,
+  "op": "write_frame",
+  "index": 285,
+  "kind": "AUDIT",
+  "bytes": 690
+ },
+ {
+  "t": 174890.936925238,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174890.987257829,
+  "op": "read",
+  "bytes": 767
+ },
+ {
+  "t": 174891.072272912,
+  "op": "write_frame",
+  "index": 286,
+  "kind": "AUDIT",
+  "bytes": 694
+ },
+ {
+  "t": 174891.080561811,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174891.130896201,
+  "op": "read",
+  "bytes": 771
+ },
+ {
+  "t": 174891.216299785,
+  "op": "write_frame",
+  "index": 287,
+  "kind": "AUDIT",
+  "bytes": 702
+ },
+ {
+  "t": 174891.224318684,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174891.274604374,
+  "op": "read",
+  "bytes": 779
+ },
+ {
+  "t": 174891.362128057,
+  "op": "write_frame",
+  "index": 288,
+  "kind": "AUDIT",
+  "bytes": 706
+ },
+ {
+  "t": 174891.367771156,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174891.418081547,
+  "op": "read",
+  "bytes": 783
+ },
+ {
+  "t": 174891.50590123,
+  "op": "write_frame",
+  "index": 289,
+  "kind": "AUDIT",
+  "bytes": 710
+ },
+ {
+  "t": 174891.511229529,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 77,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174891.56145412,
+  "op": "read",
+  "bytes": 787
+ },
+ {
+  "t": 174891.61213791,
+  "op": "write_frame",
+  "index": 290,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174891.61229191,
+  "op": "write_host",
+  "caused_by": "AUDIT",
+  "bytes": 78,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174891.662560601,
+  "op": "read",
+  "bytes": 145
+ },
+ {
+  "t": 174891.713133791,
+  "op": "write_frame",
+  "index": 291,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174891.763371482,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174891.813984472,
+  "op": "write_frame",
+  "index": 292,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174891.864236863,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174891.914615353,
+  "op": "write_frame",
+  "index": 293,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174891.964859844,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174892.015144534,
+  "op": "write_frame",
+  "index": 294,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174892.065345425,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174892.115793316,
+  "op": "write_frame",
+  "index": 295,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174892.166001506,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174892.216522297,
+  "op": "write_frame",
+  "index": 296,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174892.266743987,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174892.317142978,
+  "op": "write_frame",
+  "index": 297,
+  "kind": "HB",
+  "bytes": 67
+ },
+ {
+  "t": 174892.367404368,
+  "op": "read",
+  "bytes": 67
+ },
+ {
+  "t": 174892.423913658,
+  "op": "write_frame",
+  "index": 298,
+  "kind": "SIGNREQ",
+  "bytes": 376
+ },
+ {
+  "t": 174892.474199748,
+  "op": "read",
+  "bytes": 376
+ },
+ {
+  "t": 174892.752730097,
+  "op": "write_frame",
+  "index": 299,
+  "kind": "REC",
+  "bytes": 2916
+ },
+ {
+  "t": 174892.791569489,
+  "op": "write_host",
+  "caused_by": "SIGNREQ",
+  "bytes": 471,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174892.84189528,
+  "op": "read",
+  "bytes": 3387
+ },
+ {
+  "t": 174892.89255407,
+  "op": "write_frame",
+  "index": 300,
+  "kind": "CLOSE",
+  "bytes": 218
+ },
+ {
+  "t": 174892.89351007,
+  "op": "write_host",
+  "caused_by": "REC",
+  "bytes": 75,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174892.943926461,
+  "op": "read",
+  "bytes": 293
+ },
+ {
+  "t": 174893.031544645,
+  "op": "write_frame",
+  "index": 301,
+  "kind": "TERM",
+  "bytes": 725
+ },
+ {
+  "t": 174893.081922035,
+  "op": "read",
+  "bytes": 725
+ },
+ {
+  "t": 174893.132331026,
+  "op": "write_host",
+  "caused_by": "TERM",
+  "bytes": 76,
+  "overlapping_source_tx": false
+ },
+ {
+  "t": 174893.182574816,
+  "op": "read",
+  "bytes": 76
+ }
+]
