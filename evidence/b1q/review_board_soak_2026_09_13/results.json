@@ -1,0 +1,606 @@
+{
+  "actual_rig_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478",
+  "actual_soak_sha256": "331c8c446c61d8ec96c952703423129956dbc77af4f3baadb97d7c3970f47f60",
+  "cases": {
+    "ascii_delete": {
+      "brief": {
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "detail": "2 reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the soak returned",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_0w6_mosd/ascii_delete",
+        "label": "offline-review",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes": 217,
+        "soak_record": "soak.json",
+        "stage": "soak",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "baseline.bin",
+        "baseline.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "soak.json"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "soak.json": {
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+      },
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "baseline_export_failure": {
+      "brief": {
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "detail": "2 reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [
+          "baseline.bin: OSError: synthetic baseline.bin write failure"
+        ],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the soak returned",
+        "export_complete": false,
+        "exported_to": "/tmp/board_soak_review_0w6_mosd/baseline_export_failure",
+        "label": "offline-review",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes": 219,
+        "soak_record": "soak.json",
+        "stage": "soak",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "baseline.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "soak.json"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "soak.json": {
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+      },
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "entry_export_failure": {
+      "brief": {
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "detail": "2 reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [
+          "entry.json: OSError: synthetic entry.json write failure"
+        ],
+        "entry_record": null,
+        "exit": 0,
+        "exit_meaning": "the soak returned",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_0w6_mosd/entry_export_failure",
+        "label": "offline-review",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes": 219,
+        "soak_record": "soak.json",
+        "stage": "soak",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "baseline.bin",
+        "baseline.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "soak.json"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "soak.json": {
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+      },
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "extra_hex": {
+      "brief": {
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "detail": "2 reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the soak returned",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_0w6_mosd/extra_hex",
+        "label": "offline-review",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes": 221,
+        "soak_record": "soak.json",
+        "stage": "soak",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "baseline.bin",
+        "baseline.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "soak.json"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "soak.json": {
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+      },
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "non_ddr_address": {
+      "brief": {
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "detail": "2 reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the soak returned",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_0w6_mosd/non_ddr_address",
+        "label": "offline-review",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes": 219,
+        "soak_record": "soak.json",
+        "stage": "soak",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "baseline.bin",
+        "baseline.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "soak.json"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "soak.json": {
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+      },
+      "writes": [
+        "\r",
+        "md.l 0x40000000 0x4\r",
+        "md.l 0x40000000 0x4\r",
+        "md.l 0x40000000 0x4\r"
+      ]
+    },
+    "partial_detach": {
+      "closed": 1,
+      "counter_attempts": 1,
+      "escaped_exception": "OSError: synthetic detach after partial md output",
+      "fake_elapsed": 0.2,
+      "files": [
+        "baseline.bin",
+        "baseline.json",
+        "invocation.json"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 20,
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "positive": {
+      "brief": {
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "detail": "2 reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the soak returned",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_0w6_mosd/positive",
+        "label": "offline-review",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes": 219,
+        "soak_record": "soak.json",
+        "stage": "soak",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "baseline.bin",
+        "baseline.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "soak.json"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "soak.json": {
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+      },
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "provenance_failure": {
+      "brief": {
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "detail": "2 reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [
+          "provenance: OSError: synthetic provenance failure"
+        ],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the soak returned",
+        "export_complete": false,
+        "exported_to": "/tmp/board_soak_review_0w6_mosd/provenance_failure",
+        "label": "offline-review",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes": 219,
+        "soak_record": "soak.json",
+        "stage": "soak",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "baseline.bin",
+        "baseline.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "soak.json"
+      ],
+      "invocation.json": {
+        "provenance": null
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "soak.json": {
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+      },
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "repeated_wrong": {
+      "brief": {
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "detail": "2 reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the soak returned",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_0w6_mosd/repeated_wrong",
+        "label": "offline-review",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes": 219,
+        "soak_record": "soak.json",
+        "stage": "soak",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "baseline.bin",
+        "baseline.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "soak.json"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "soak.json": {
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+      },
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "timeout": {
+      "brief": {
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "detail": "no U-Boot prompt within 3.0 s",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 2,
+        "exit_meaning": "a tool error \u2014 in the preflight or a board-level disruption mid-soak; the evidence is exported",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_0w6_mosd/timeout",
+        "label": "offline-review",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 1,
+        "received_bytes": 73,
+        "soak_record": "soak.json",
+        "stage": "soak",
+        "terminal": "board_disruption"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 2,
+      "fake_elapsed": 3.149999999999997,
+      "files": [
+        "baseline.bin",
+        "baseline.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "soak.json"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+          "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+          "instrument_commit": null,
+          "instrument_root": "/home/test/zynq_psoracle",
+          "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+          "tool": "host/transport_rig.py",
+          "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "soak.json": {
+        "damaged_per_100k_bytes": 0.0,
+        "damaged_reads": 0,
+        "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+      },
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    }
+  },
+  "head": "1986bd42acd829b0a79fe347b8de0ad0ea7bed09"
+}
