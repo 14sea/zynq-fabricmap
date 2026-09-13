@@ -1,0 +1,319 @@
+{
+  "cases": {
+    "all_writes_then_cutoff": {
+      "now": {
+        "censored_in_flight": 302,
+        "completed_exposure": false,
+        "denominator_bytes": 0,
+        "error": null,
+        "export_complete": true,
+        "exposure_reached": true,
+        "incomplete": true,
+        "losses": 0,
+        "losses_per_100k_bytes": null,
+        "repetition_0": {
+          "cut_short": true,
+          "frames_accepted": 302,
+          "incomplete": true,
+          "resolved": false
+        },
+        "repetitions_run": 1,
+        "repetitions_unanalysed": [],
+        "stopped": "exposure: the deadline bounded repetition 0 (deadline reached while draining); 302 frames censored in flight, 0 unresolved",
+        "terminal_reason": "exposure_seconds_censored",
+        "traffic_resolved": false
+      },
+      "observed_at_38c91b0": {
+        "completed_exposure": true,
+        "denominator_bytes": 0,
+        "error": null,
+        "export_complete": true,
+        "incomplete": false,
+        "losses": 0,
+        "losses_per_100k_bytes": null,
+        "repetitions_run": 1,
+        "stopped": "exposure: the deadline bounded repetition 0 (deadline reached while draining)"
+      }
+    },
+    "analyser_failure": {
+      "now": {
+        "actual_source_writes": 302,
+        "completed_exposure": false,
+        "denominator_bytes": 98599,
+        "error": "ValueError: injected analyser failure",
+        "exception": "RigError: tool error: the analysis of repetition 0 is unavailable (ValueError: injected analyser failure); its losses are unknown and no later repetition was started (cause ValueError)",
+        "export_complete": true,
+        "exposure_reached": false,
+        "incomplete": true,
+        "losses": null,
+        "losses_per_100k_bytes": null,
+        "repetitions_run": 1,
+        "repetitions_unanalysed": [
+          0
+        ],
+        "stopped": "tool error: the analysis of repetition 0 is unavailable (ValueError: injected analyser failure); its losses are unknown and no later repetition was started",
+        "terminal_reason": "analysis_unavailable",
+        "traffic_resolved": false
+      },
+      "observed_at_38c91b0": {
+        "actual_source_writes": 604,
+        "completed_exposure": false,
+        "denominator_bytes": 197198,
+        "error": null,
+        "export_complete": true,
+        "incomplete": true,
+        "losses": 0,
+        "losses_per_100k_bytes": 0.0,
+        "repetitions_run": 2,
+        "stopped": "exposure: 2 repetitions completed"
+      }
+    },
+    "crc_with_cutoff": {
+      "now": {
+        "bytes_received": 1048,
+        "censored": [],
+        "defects_by_kind": {
+          "crc_failed": 1
+        },
+        "losses": 1,
+        "missing": [
+          0
+        ],
+        "observed": [
+          0
+        ],
+        "observed_damaged": {
+          "0": "crc_failed"
+        },
+        "unresolved": []
+      },
+      "observed_at_38c91b0": {
+        "bytes_received": 1048,
+        "censored": [
+          0
+        ],
+        "defects_by_kind": {
+          "crc_failed": 1
+        },
+        "losses": 0,
+        "missing": []
+      }
+    },
+    "crc_without_cutoff": {
+      "now": {
+        "bytes_received": 1048,
+        "censored": [],
+        "defects_by_kind": {
+          "crc_failed": 1
+        },
+        "losses": 1,
+        "missing": [
+          0
+        ],
+        "observed": [
+          0
+        ],
+        "observed_damaged": {
+          "0": "crc_failed"
+        },
+        "unresolved": []
+      },
+      "observed_at_38c91b0": {
+        "bytes_received": 1048,
+        "censored": [],
+        "defects_by_kind": {
+          "crc_failed": 1
+        },
+        "losses": 1,
+        "missing": [
+          0
+        ]
+      }
+    },
+    "cutoff_boundaries": {
+      "now": {
+        "genuinely_partial_line": {
+          "censored": [
+            2,
+            3,
+            4
+          ],
+          "cutoff": {
+            "ambiguous": false,
+            "note": "frames above the frontier are censored only when nothing unidentifiable arrived after the last identified observation; otherwise they are unresolved \u2014 damage was observed there and cannot be attributed, so it is neither a loss nor in flight",
+            "observation_frontier": 2,
+            "partial_frame": 2,
+            "unidentified_after_frontier": 0
+          },
+          "losses": 0,
+          "unresolved": []
+        },
+        "later_damaged_arrival": {
+          "censored": [
+            5,
+            6,
+            7
+          ],
+          "losses": 2,
+          "missing": [
+            3,
+            4
+          ],
+          "unresolved": []
+        },
+        "unidentifiable_damage": {
+          "censored": [],
+          "confirmed_losses": 0,
+          "cutoff": {
+            "ambiguous": true,
+            "note": "frames above the frontier are censored only when nothing unidentifiable arrived after the last identified observation; otherwise they are unresolved \u2014 damage was observed there and cannot be attributed, so it is neither a loss nor in flight",
+            "observation_frontier": 1,
+            "partial_frame": null,
+            "unidentified_after_frontier": 1
+          },
+          "losses": null,
+          "losses_upper_bound": 3,
+          "unresolved": [
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      "observed_at_38c91b0": {
+        "not probed at 38c91b0": "the frontier was max(delivered) in every case"
+      }
+    },
+    "positive_run": {
+      "now": {
+        "completed_exposure": true,
+        "denominator_bytes": 197198,
+        "error": null,
+        "export_complete": true,
+        "exposure_reached": true,
+        "incomplete": false,
+        "losses": 0,
+        "losses_per_100k_bytes": 0.0,
+        "repetitions_run": 2,
+        "repetitions_unanalysed": [],
+        "stopped": "exposure: 2 repetitions completed",
+        "terminal_reason": "exposure_repetitions",
+        "traffic_resolved": true
+      },
+      "observed_at_38c91b0": {
+        "completed_exposure": true,
+        "denominator_bytes": 197198,
+        "error": null,
+        "export_complete": true,
+        "incomplete": false,
+        "losses": 0,
+        "losses_per_100k_bytes": 0.0,
+        "repetitions_run": 2,
+        "stopped": "exposure: 2 repetitions completed"
+      }
+    },
+    "positive_stream": {
+      "now": {
+        "clean": true,
+        "frames_delivered": 302,
+        "losses": 0
+      },
+      "observed_at_38c91b0": {
+        "clean": true,
+        "frames_delivered": 302,
+        "losses": 0
+      }
+    },
+    "stop_loss_run": {
+      "now": {
+        "actual_source_writes": 302,
+        "completed_exposure": false,
+        "denominator_bytes": 98599,
+        "error": null,
+        "export_complete": true,
+        "exposure_reached": false,
+        "incomplete": true,
+        "losses": 3,
+        "losses_per_100k_bytes": 3.0426272071724867,
+        "repetitions_run": 1,
+        "repetitions_unanalysed": [],
+        "requested_repetitions": 200,
+        "stopped": "stop rule: 3 confirmed losses within repetition 0 (>= 3) \u2014 the condition is reproducing the failure; 1 of 200 requested repetitions were run",
+        "terminal_reason": "stop_rule_losses",
+        "traffic_resolved": true
+      },
+      "observed_at_38c91b0": {
+        "actual_source_writes": 302,
+        "completed_exposure": true,
+        "denominator_bytes": 98599,
+        "error": null,
+        "export_complete": true,
+        "incomplete": false,
+        "losses": 3,
+        "losses_per_100k_bytes": 3.0426272071724867,
+        "repetitions_run": 1,
+        "stopped": "stop rule: 3 losses within repetition 0 (>= 3) \u2014 the condition is reproducing the failure"
+      }
+    },
+    "truly_in_flight_control": {
+      "now": {
+        "censored": [
+          0
+        ],
+        "defects_by_kind": {},
+        "losses": 0
+      },
+      "observed_at_38c91b0": {
+        "censored": [
+          0
+        ],
+        "defects_by_kind": {},
+        "losses": 0
+      }
+    },
+    "typeerror_writer": {
+      "now": {
+        "actual_bytes_accepted": "abc",
+        "exception": "TypeError: internal writer failure after accepting bytes",
+        "timeouts_received": [
+          0.25
+        ]
+      },
+      "observed_at_38c91b0": {
+        "actual_bytes_accepted": "abcabc",
+        "exception": null,
+        "returned_count": 3,
+        "timeouts_received": [
+          0.25,
+          null
+        ]
+      }
+    },
+    "writer_contracts": {
+      "now": {
+        "contradicting_declaration": "lies: the writer is declared to take a timeout, but its signature does not accept (data, timeout); the contract is declared by the adapter, never probed by writing",
+        "one_arg_calls": [
+          "xy"
+        ],
+        "two_arg_calls": [
+          [
+            "xyz",
+            0.5
+          ]
+        ]
+      },
+      "observed_at_38c91b0": {
+        "not probed at 38c91b0": "the contract was discovered by catching TypeError"
+      }
+    }
+  },
+  "provenance": {
+    "framing_module": "/home/test/zynq_psoracle/host/l5_notary.py",
+    "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+    "instrument_commit": null,
+    "instrument_root": "/home/test/zynq_psoracle",
+    "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+    "tool": "host/transport_rig.py",
+    "tool_sha256": "e9a7fa14c226cf9b683e161fab5b7adfee23a233ed6e5466d6c163c330ebdb38"
+  }
+}
