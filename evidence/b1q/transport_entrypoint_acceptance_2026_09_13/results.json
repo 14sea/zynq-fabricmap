@@ -1,0 +1,452 @@
+{
+  "acceptance": "PASS",
+  "cases": {
+    "close_failure": {
+      "brief": {
+        "censored_in_flight": 0,
+        "close_attempted": [
+          "/dev/FAKE"
+        ],
+        "close_errors": [
+          "/dev/FAKE: OSError: synthetic close failure"
+        ],
+        "completed_exposure": true,
+        "confirmed_losses": 0,
+        "counters_delta": {
+          "available": false,
+          "reason": "offline fake fd"
+        },
+        "denominator_bytes": 98599,
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "error": null,
+        "exit": 0,
+        "exit_meaning": "the run returned",
+        "export_complete": true,
+        "exported_to": "/tmp/rig_entry_accept__a6pp0lg/close_failure",
+        "frames_accepted": 302,
+        "label": "offline-review",
+        "loss_metric": "exact",
+        "losses": 0,
+        "losses_per_100k_bytes": 0.0,
+        "ports_closed": [],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "repetitions_run": 1,
+        "run_export_complete": true,
+        "run_export_errors": [],
+        "run_record": "run.json",
+        "stage": "run",
+        "stopped": "exposure: 1 repetitions completed",
+        "terminal": "exposure_repetitions",
+        "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+        "unresolved_at_cutoff": 0
+      },
+      "counter_calls": 4,
+      "entry_equals_stdout": true,
+      "exit": 0,
+      "fake_elapsed": 30.7000000000003,
+      "files": [
+        "capture_000.bin",
+        "entry.json",
+        "events_000.json",
+        "invocation.json",
+        "preflight.json",
+        "preflight_rx.bin",
+        "run.json"
+      ],
+      "run": {
+        "completed_exposure": true,
+        "export_complete": true,
+        "frames_accepted": 302,
+        "losses": 0
+      },
+      "writes": 303
+    },
+    "continuous": {
+      "brief": {
+        "close_attempted": [
+          "/dev/FAKE"
+        ],
+        "close_errors": [],
+        "counters": {
+          "available": false,
+          "reason": "offline fake fd"
+        },
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 3,
+        "exit_meaning": "refused before any exposure \u2014 the declared identity, or the preflight (silence / not quiet)",
+        "export_complete": true,
+        "exported_to": "/tmp/rig_entry_accept__a6pp0lg/continuous",
+        "label": "offline-review",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "preflight": {
+          "counters_delta": {
+            "available": false,
+            "reason": "offline fake fd"
+          },
+          "elapsed_s": 3.0,
+          "failed_phase": null,
+          "matched": false,
+          "quiet": false,
+          "received_bytes": 1037,
+          "received_file": "preflight_rx.bin",
+          "skipped": null
+        },
+        "refusal": "not_quiet",
+        "refused": "not quiet: 1037 bytes received and still arriving at the 3.0 s preflight deadline \u2014 the exposure would start with a backlog, so it does not start",
+        "stage": "preflight"
+      },
+      "counter_calls": 2,
+      "entry_equals_stdout": true,
+      "exit": 3,
+      "fake_elapsed": 3.0,
+      "files": [
+        "entry.json",
+        "invocation.json",
+        "preflight.json",
+        "preflight_rx.bin"
+      ],
+      "writes": 1
+    },
+    "destination_refusal": {
+      "brief": {
+        "close_attempted": [],
+        "close_errors": [],
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": null,
+        "entry_record_note": "the destination was refused; nothing is written into it",
+        "exit": 5,
+        "exit_meaning": "the evidence destination could not be claimed or written \u2014 nothing was spent on the device",
+        "export_complete": true,
+        "exported_to": "/tmp/rig_entry_accept__a6pp0lg/destination_refusal",
+        "label": "offline-review",
+        "ports_closed": [],
+        "ports_opened": [],
+        "refusal": "destination",
+        "refused": "destination is not empty (1 entries, e.g. ['capture_000.bin']): an earlier acquisition lives there and is left exactly as it is \u2014 use a new --out",
+        "stage": "destination"
+      },
+      "counter_calls": 0,
+      "entry_equals_stdout": null,
+      "exit": 5,
+      "fake_elapsed": 0.0,
+      "files": [
+        "capture_000.bin"
+      ],
+      "writes": 0
+    },
+    "detach": {
+      "brief": {
+        "close_attempted": [
+          "/dev/FAKE"
+        ],
+        "close_errors": [],
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "error": "OSError: synthetic preflight detach after receiving the nonce",
+        "exit": 2,
+        "exit_meaning": "a tool error \u2014 constructing the invocation, in the preflight, or in the run; the evidence that exists is exported",
+        "export_complete": true,
+        "exported_to": "/tmp/rig_entry_accept__a6pp0lg/detach",
+        "failed_phase": "drain",
+        "label": "offline-review",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "preflight": {
+          "counters_delta": {
+            "available": false,
+            "reason": "offline fake fd"
+          },
+          "elapsed_s": 0.1,
+          "failed_phase": "drain",
+          "matched": true,
+          "quiet": false,
+          "received_bytes": 43,
+          "received_file": "preflight_rx.bin",
+          "skipped": null
+        },
+        "stage": "preflight"
+      },
+      "counter_calls": 2,
+      "entry_equals_stdout": true,
+      "exit": 2,
+      "fake_elapsed": 0.1,
+      "files": [
+        "entry.json",
+        "invocation.json",
+        "preflight.json",
+        "preflight_rx.bin"
+      ],
+      "writes": 1
+    },
+    "entry_export_failure": {
+      "brief": {
+        "censored_in_flight": 0,
+        "close_attempted": [
+          "/dev/FAKE"
+        ],
+        "close_errors": [],
+        "completed_exposure": true,
+        "confirmed_losses": 0,
+        "counters_delta": {
+          "available": false,
+          "reason": "offline fake fd"
+        },
+        "denominator_bytes": 98599,
+        "device": "/dev/FAKE",
+        "entry_export_errors": [
+          "entry.json: OSError: synthetic entry export failure"
+        ],
+        "entry_record": null,
+        "error": null,
+        "exit": 0,
+        "exit_meaning": "the run returned",
+        "export_complete": false,
+        "exported_to": "/tmp/rig_entry_accept__a6pp0lg/entry_export_failure",
+        "frames_accepted": 302,
+        "label": "offline-review",
+        "loss_metric": "exact",
+        "losses": 0,
+        "losses_per_100k_bytes": 0.0,
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "repetitions_run": 1,
+        "run_export_complete": true,
+        "run_export_errors": [],
+        "run_record": "run.json",
+        "stage": "run",
+        "stopped": "exposure: 1 repetitions completed",
+        "terminal": "exposure_repetitions",
+        "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+        "unresolved_at_cutoff": 0
+      },
+      "counter_calls": 4,
+      "entry_equals_stdout": null,
+      "exit": 0,
+      "fake_elapsed": 30.7000000000003,
+      "files": [
+        "capture_000.bin",
+        "events_000.json",
+        "invocation.json",
+        "preflight.json",
+        "preflight_rx.bin",
+        "run.json"
+      ],
+      "run": {
+        "completed_exposure": true,
+        "export_complete": true,
+        "frames_accepted": 302,
+        "losses": 0
+      },
+      "writes": 303
+    },
+    "positive": {
+      "brief": {
+        "censored_in_flight": 0,
+        "close_attempted": [
+          "/dev/FAKE"
+        ],
+        "close_errors": [],
+        "completed_exposure": true,
+        "confirmed_losses": 0,
+        "counters_delta": {
+          "available": false,
+          "reason": "offline fake fd"
+        },
+        "denominator_bytes": 98599,
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "error": null,
+        "exit": 0,
+        "exit_meaning": "the run returned",
+        "export_complete": true,
+        "exported_to": "/tmp/rig_entry_accept__a6pp0lg/positive",
+        "frames_accepted": 302,
+        "label": "offline-review",
+        "loss_metric": "exact",
+        "losses": 0,
+        "losses_per_100k_bytes": 0.0,
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "repetitions_run": 1,
+        "run_export_complete": true,
+        "run_export_errors": [],
+        "run_record": "run.json",
+        "stage": "run",
+        "stopped": "exposure: 1 repetitions completed",
+        "terminal": "exposure_repetitions",
+        "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+        "unresolved_at_cutoff": 0
+      },
+      "counter_calls": 4,
+      "entry_equals_stdout": true,
+      "exit": 0,
+      "fake_elapsed": 30.7000000000003,
+      "files": [
+        "capture_000.bin",
+        "entry.json",
+        "events_000.json",
+        "invocation.json",
+        "preflight.json",
+        "preflight_rx.bin",
+        "run.json"
+      ],
+      "run": {
+        "completed_exposure": true,
+        "export_complete": true,
+        "frames_accepted": 302,
+        "losses": 0
+      },
+      "writes": 303
+    },
+    "provenance_failure": {
+      "brief": {
+        "close_attempted": [],
+        "close_errors": [],
+        "construction_errors": [
+          "provenance: OSError: synthetic provenance failure"
+        ],
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "error": "provenance: OSError: synthetic provenance failure",
+        "exit": 2,
+        "exit_meaning": "a tool error \u2014 constructing the invocation, in the preflight, or in the run; the evidence that exists is exported",
+        "export_complete": true,
+        "exported_to": "/tmp/rig_entry_accept__a6pp0lg/provenance_failure",
+        "label": "offline-review",
+        "ports_closed": [],
+        "ports_opened": [],
+        "stage": "invocation"
+      },
+      "counter_calls": 0,
+      "entry_equals_stdout": true,
+      "exit": 2,
+      "fake_elapsed": 0.0,
+      "files": [
+        "entry.json",
+        "invocation.json"
+      ],
+      "writes": 0
+    },
+    "silence": {
+      "brief": {
+        "close_attempted": [
+          "/dev/FAKE"
+        ],
+        "close_errors": [],
+        "counters": {
+          "available": false,
+          "reason": "offline fake fd"
+        },
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 3,
+        "exit_meaning": "refused before any exposure \u2014 the declared identity, or the preflight (silence / not quiet)",
+        "export_complete": true,
+        "exported_to": "/tmp/rig_entry_accept__a6pp0lg/silence",
+        "label": "offline-review",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "preflight": {
+          "counters_delta": {
+            "available": false,
+            "reason": "offline fake fd"
+          },
+          "elapsed_s": 1.3000000000000005,
+          "failed_phase": null,
+          "matched": false,
+          "quiet": true,
+          "received_bytes": 0,
+          "received_file": "preflight_rx.bin",
+          "skipped": null
+        },
+        "refusal": "silence",
+        "refused": "no loopback: nothing came back within 1.0 s \u2014 the TX\u2192RX jumper is not in place, or this is not the port",
+        "stage": "preflight"
+      },
+      "counter_calls": 2,
+      "entry_equals_stdout": true,
+      "exit": 3,
+      "fake_elapsed": 1.3000000000000005,
+      "files": [
+        "entry.json",
+        "invocation.json",
+        "preflight.json",
+        "preflight_rx.bin"
+      ],
+      "writes": 1
+    },
+    "wrong_expected_usb": {
+      "brief": {
+        "close_attempted": [],
+        "close_errors": [],
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 3,
+        "exit_meaning": "refused before any exposure \u2014 the declared identity, or the preflight (silence / not quiet)",
+        "export_complete": true,
+        "exported_to": "/tmp/rig_entry_accept__a6pp0lg/wrong_expected_usb",
+        "identity": {
+          "char_device": true,
+          "path": "/dev/FAKE",
+          "rdev": "188:99",
+          "realpath": "/dev/FAKE",
+          "usb": {
+            "idProduct": "7523",
+            "idVendor": "1a86"
+          }
+        },
+        "label": "offline-review",
+        "ports_closed": [],
+        "ports_opened": [],
+        "refusal": "identity",
+        "refused": "expected USB 0403:6001, the node is 1a86:7523",
+        "stage": "identity"
+      },
+      "counter_calls": 0,
+      "entry_equals_stdout": true,
+      "exit": 3,
+      "fake_elapsed": 0.0,
+      "files": [
+        "entry.json",
+        "invocation.json"
+      ],
+      "writes": 0
+    }
+  },
+  "head": "3539baf9d11235f1611d68d9779a9b3a7bea17b6",
+  "scope": "offline entry-point acceptance; not a physical transport verdict",
+  "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+}
