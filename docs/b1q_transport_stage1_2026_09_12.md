@@ -127,8 +127,10 @@ probes against the corrected code and prints each observation beside theirs.
 
 The owner accepted the software delivery on 2026-09-12 and on 2026-09-13 answered plan §7: the
 WSL + usbipd path is to be tested first (the earlier usbipd failure was a host configuration
-error; the native Linux host exists but is deferred), board power is permitted, and a ruling will
-be signed for the loopback. `host/transport_rig.py run --device …` is the entry point for that
+error; the native Linux host exists but is deferred) and board power is permitted if needed —
+and corrected the wiring: the CH340 is host-USB-powered and reaches the board by GND, TX, RX only,
+so the self-loopback involves no board power and needs no ruling (plan §4). `host/transport_rig.py
+run --device …` is the entry point for that
 run — device identity from sysfs, a loopback preflight that refuses silence before spending the
 exposure, the real fd for `TIOCGICOUNT`, the registered exposure as defaults — proved offline in
 `TheDeviceEntryPoint` (10 tests) against a fake serial module. The procedure, the wiring and

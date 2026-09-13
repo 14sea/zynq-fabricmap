@@ -4,23 +4,27 @@
 > point for plan §4 stage 1's physical acceptance — a CH340 self-loopback — which the software
 > acceptance (`docs/b1q_transport_software_acceptance_2026_09_12.md`) explicitly left open. It
 > authorises nothing: the owner's answers of 2026-09-13 are that the WSL + usbipd path is the one
-> to test first (the earlier usbipd failure was a host configuration error), that board power is
-> permitted, and that a ruling will be signed for the loopback because powering the CH340 powers
-> the stack. Nothing here attributes anything, lifts the stop-loss or authorises B2Q.
+> to test first (the earlier usbipd failure was a host configuration error) and that board power
+> is permitted if needed. **Corrected the same day by the owner:** the CH340 module is powered
+> from the host's USB and reaches the board by three wires only — GND, TX, RX — so the loopback
+> involves no board power and, under plan §4, needs no ruling. (The first version of this
+> document claimed the module was fed from the board's 3.3 V, taken from a bring-up note about a
+> reset-time dropout; that inference was wrong. The dropout happened, its cause is not
+> established here.) Nothing here attributes anything, lifts the stop-loss or authorises B2Q.
 
 ## What the loopback is, physically
 
-On this board the CH340 sits on the V2.0 expansion board and is wired to the Zynq's UART1 by two
-dupont wires from the expansion header **P5** (its `TXD` and `RXD` pins) to the main board's
-**J7**. A self-loopback means:
+The USB-CH340 module is powered by the host's USB and reaches the Zynq's UART1 (main board
+**J7**) by three wires — GND, TX, RX; its 3.3 V and 5 V pins are not connected. A self-loopback
+is simply **the module's TX shorted to its own RX**:
 
-1. unplug both wires from **J7** — the Zynq is then not on the line at all, whatever it boots;
-2. connect **P5 `TXD` directly to P5 `RXD`** with one short jumper (either end of the wire you
-   just freed, or a dedicated jumper);
-3. power the stack from the Type-C on the V2.0 board as usual — **the CH340 is fed from the
-   board's 3.3 V rail** (a PS reset browns it out; see the bring-up notes), so this powers the
-   whole board even though the Zynq takes no part. That is why the plan requires a ruling here;
-4. attach the CH340 (`1a86:7523`) to WSL with `usbipd` from Windows, and confirm the node.
+1. unplug the TX and RX wires from **J7** — the Zynq is then not on the line at all; the board
+   can stay unpowered;
+2. join the two freed wire ends (TX to RX), or put a jumper across the module's TX and RX pins;
+3. attach the CH340 (`1a86:7523`) to WSL with `usbipd` from Windows, and confirm the node.
+
+No board power, no board contact: plan §4's "host-USB-powered and unplugged from the board
+header" case, which needs no ruling.
 
 Everything the tool writes on that port comes straight back on the same port. There is no
 board-side software, no console, no session: a byte that does not come back byte-exact was lost
@@ -64,9 +68,9 @@ evidence is still exported), `3` the preflight refused, `4` the device would not
 - A clean hour under both TX conditions says the WSL + usbipd + CH340 path, *by itself*, did
   not lose bytes at that exposure. It does **not** say the board's UART or the session's
   interleaving is clean, and it does not lift the stop-loss.
-- Losses here reproduce the failure **without the Zynq**: that is attribution to the host path
-  and the adapter, and stage 2's host comparison becomes the next question (the native Linux
-  host exists; the owner has deferred configuring it).
+- Losses here reproduce the failure **without the Zynq and without the board powered**: that
+  is attribution to the host path and the adapter, and stage 2's host comparison becomes the
+  next question (the native Linux host exists; the owner has deferred configuring it).
 - Whatever the result, if a board session is later to carry transport instrumentation, that is
   a pinned change to the runner and lands, is reviewed and is re-qualified **before** the
   session that counts.
