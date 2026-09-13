@@ -66,8 +66,12 @@ echo is host traffic, not traffic under test; its damage is a diagnostic).
   event against zero, with unequal exposures — and it is not extrapolated to a rate. It points
   where the next exposure should go: more TX-during-RX traffic on this same path, and the same
   two conditions on the native Linux host (plan §3 B1/B2) when that host is configured.
-- 18 contiguous bytes vanishing is the shape of a dropped or truncated USB bulk transfer or a
-  FIFO overrun, not of line noise; without `TIOCGICOUNT` on this driver it cannot be told which.
+- The two damages are **byte deletions** — one byte, then 18 contiguous bytes about 120
+  wire-bytes later, inside one read. That is the observed shape; **its cause is unresolved**.
+  A dropped or truncated USB bulk transfer, a FIFO overrun and other mechanisms are all
+  candidates, and the shape alone does not isolate one; without `TIOCGICOUNT` on this driver
+  no overrun count is available either way. (An earlier version of this line said "not of line
+  noise"; that exclusion was not established — the owner's second review, 2026-09-13.)
 - Nothing here is attribution to a component, lifts the stop-loss, or authorises B2Q. The
   disposition is the owner's.
 

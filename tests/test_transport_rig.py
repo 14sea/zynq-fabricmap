@@ -2072,6 +2072,98 @@ class TheDeviceEntryPoint(unittest.TestCase):
         self.assertNotIn("identity_check", inv)
         self.assertIn("not acceptance", inv["identity_note"])
 
+    # ---- the owner's second review (2026-09-13): a known tool error is terminal before the port;
+    # ---- the entry's state is archived, not only printed; a failed close is not a close
+
+    def test_a_provenance_failure_is_terminal_before_any_port_opens_and_is_archived(self):
+        """P2 (as received): `attempt("provenance", provenance)` turned the exception into a null
+        and the run went on to spend all 302 frames, exit 0, with the entry-level downgrade only
+        on stdout. Now the invocation record is mandatory: a tool error constructing it stops
+        BEFORE the port opens, exit 2, with the diagnostic on disk and the entry state archived."""
+        with unittest.mock.patch.object(rig, "provenance", side_effect=OSError("synthetic provenance read failure")):
+            code, brief = self.run_cli("--no-tx-during-rx")
+        self.assertEqual(code, 2, brief)
+        self.assertEqual(brief["stage"], "invocation")
+        self.assertIn("synthetic provenance read failure", brief["error"])
+        self.assertEqual(self.opened, [])                                       # no opener call …
+        self.assertEqual(self.opened_objects, [])                               # … so no nonce, no source frame
+        self.assertFalse((self.d / "preflight.json").exists())
+        self.assertFalse((self.d / "run.json").exists())
+        inv = json.loads((self.d / "invocation.json").read_text())              # the durable diagnostic
+        self.assertIsNone(inv["provenance"])
+        self.assertEqual(inv["terminal"]["reason"], "tool_error")
+        self.assertTrue(any("provenance" in e for e in inv["construction_errors"]))
+        entry = json.loads((self.d / "entry.json").read_text())                # the archived entry state
+        self.assertEqual((entry["exit"], entry["stage"]), (2, "invocation"))
+        self.assertEqual(entry, brief)                                          # stdout and the archive agree
+
+    def test_an_identity_lookup_that_raises_is_terminal_but_an_unavailable_identity_is_not(self):
+        with unittest.mock.patch.object(rig, "device_identity", side_effect=RuntimeError("sysfs exploded")):
+            code, brief = self.run_cli("--no-tx-during-rx")
+        self.assertEqual((code, brief["stage"]), (2, "invocation"), brief)
+        self.assertEqual(self.opened, [])
+        # the permitted case: no identity for this node is a VALUE in the record, and the run proceeds
+        code, brief = self.run_cli("--no-tx-during-rx", out=self.d / "unavailable")
+        self.assertEqual(code, 0, brief)
+        inv = json.loads((self.d / "unavailable" / "invocation.json").read_text())
+        self.assertIn("error", inv["identity"]["source"])
+        self.assertEqual(inv["construction_errors"], [])
+
+    def test_the_entry_state_is_archived_as_entry_json_and_agrees_with_stdout_on_every_path(self):
+        code, brief = self.run_cli("--no-tx-during-rx")
+        self.assertEqual(code, 0, brief)
+        self.assertEqual(brief["entry_record"], "entry.json")
+        self.assertEqual(json.loads((self.d / "entry.json").read_text()), brief)
+        self.assertTrue(brief["export_complete"])
+        code, brief = self.run_cli("--no-tx-during-rx", serial=self.fake_serial(loopback=False),
+                                   out=self.d / "silence")
+        self.assertEqual(code, 3, brief)
+        self.assertEqual(json.loads((self.d / "silence" / "entry.json").read_text()), brief)
+        code, brief = self.run_cli("--no-tx-during-rx", serial=self.fake_serial(fail_after=5), out=self.d / "dead")
+        self.assertEqual(code, 2, brief)
+        self.assertEqual(json.loads((self.d / "dead" / "entry.json").read_text()), brief)
+        self.assertEqual(brief["run_record"], "run.json")
+
+    def test_a_refused_destination_gets_no_entry_record_written_into_it(self):
+        (self.d / "capture_000.bin").write_bytes(b"old")
+        code, brief = self.run_cli("--no-tx-during-rx")
+        self.assertEqual(code, 5, brief)
+        self.assertIsNone(brief["entry_record"])
+        self.assertEqual(sorted(p.name for p in self.d.iterdir()), ["capture_000.bin"])
+
+    def test_a_failed_entry_record_is_said_on_stdout_and_export_complete_is_false(self):
+        code, brief = self.run_cli("--no-tx-during-rx", fault_export=("entry.json",))
+        self.assertEqual(code, 0, brief)                                        # the run's result stands …
+        self.assertIsNone(brief["entry_record"])                               # … the archive is missing, said
+        self.assertTrue(any("entry.json" in e for e in brief["entry_export_errors"]))
+        self.assertFalse(brief["export_complete"])
+        self.assertFalse((self.d / "entry.json").exists())
+        on_disk = json.loads((self.d / "run.json").read_text())                 # the run's own record is intact
+        self.assertEqual((on_disk["frames_accepted"], on_disk["losses"]), (302, 0))
+
+    def test_a_close_that_raises_is_attempted_not_closed_and_the_error_is_archived(self):
+        """P3 (as received): `ports_closed` listed every opened port even when its close raised.
+        Now attempted and succeeded closes are reported separately, the error is archived in
+        `entry.json`, and the run's observed traffic facts are untouched."""
+        module = self.fake_serial()
+        real = module.Serial
+
+        class ClosingFails(real):
+            def close(self):
+                raise OSError("synthetic close failure")
+        module.Serial = ClosingFails
+        code, brief = self.run_cli("--no-tx-during-rx", serial=module)
+        self.assertEqual(code, 0, brief)                                        # a cleanup failure is not a lost frame
+        self.assertEqual(brief["close_attempted"], ["/dev/NOT-A-DEVICE"])
+        self.assertEqual(brief["ports_closed"], [])
+        self.assertEqual(len(brief["close_errors"]), 1)
+        self.assertIn("synthetic close failure", brief["close_errors"][0])
+        entry = json.loads((self.d / "entry.json").read_text())
+        self.assertEqual(entry["close_errors"], brief["close_errors"])
+        self.assertEqual(entry["ports_closed"], [])
+        on_disk = json.loads((self.d / "run.json").read_text())
+        self.assertEqual((on_disk["frames_accepted"], on_disk["losses"], on_disk["error"]), (302, 0, None))
+
     def test_identity_matches_never_passes_an_unavailable_identity(self):
         self.assertEqual(rig.identity_matches({"path": "x", "error": "FileNotFoundError: x"}, "1a86:7523")[0], False)
         self.assertEqual(rig.identity_matches({"usb": {"unavailable": True, "reason": "no idVendor"}}, "1a86:7523")[0],

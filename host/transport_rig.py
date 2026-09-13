@@ -1424,7 +1424,7 @@ def _write_evidence(path: Path, data) -> bool:
 
 EXIT_MEANING = {
     0: "the run returned",
-    2: "a tool error — in the preflight or in the run; the evidence that exists is exported",
+    2: "a tool error — constructing the invocation, in the preflight, or in the run; the evidence that exists is exported",
     3: "refused before any exposure — the declared identity, or the preflight (silence / not quiet)",
     4: "the device would not open",
     5: "the evidence destination could not be claimed or written — nothing was spent on the device",
@@ -1450,6 +1450,13 @@ def run_device(a) -> int:
          exit 5 rather than an hour spent without a record — P2-1, P2-2;
       5. the run; and on every return path, every opened port is closed BEFORE the brief is
          printed, so a close failure is in the brief too.
+    And, from the owner's second review (2026-09-13): the invocation record is MANDATORY — a
+    tool error while constructing it (the tool's own provenance, the identity lookup raising)
+    is terminal BEFORE any port opens, exit 2, rather than a null in the record and an hour of
+    exposure spent after the failure is already known (plan §5, any tool error). The entry's
+    terminal state — exit, stage, errors, which ports were closed — is archived as `entry.json`
+    by an explicit finalisation step, so stdout is never its only record; `ports_closed` lists
+    only the closes that SUCCEEDED, `close_attempted` the ones tried.
     """
     out = Path(a.out)
     export_errors: list[str] = []
@@ -1463,21 +1470,52 @@ def run_device(a) -> int:
             return None
 
     close_errors: list[str] = []
+    closed: list[str] = []
     try:
         code, stage, more = _device_steps(a, out, ports, attempt)
     finally:                                              # every opened port, on every return path
         for name, p in reversed(ports):
             try:
                 p.close()
+                closed.append(name)
             except Exception as exc:                      # noqa: BLE001 — reported, never masking the result
                 close_errors.append(f"{name}: {type(exc).__name__}: {exc}")
-    if stage == "run":                                    # complete only when the run's AND the entry's exports landed
-        more["export_complete"] = bool(more.get("run_export_complete")) and not export_errors
+    # The entry-level finalisation. `export_complete` is the ENTRY's word: every export the
+    # entry attempted landed and, when the run ran, the run's own export was complete too. The
+    # run's observed traffic facts are never altered here — a failed close or a failed record is
+    # a cleanup / archive failure, not a lost frame.
     brief = {"label": a.label, "exit": code, "exit_meaning": EXIT_MEANING[code], "stage": stage,
-             "device": a.device, "exported_to": str(out), "ports_closed": [name for name, _ in ports],
-             "entry_export_errors": list(export_errors), "close_errors": close_errors, **more}
+             "device": a.device, "exported_to": str(out),
+             "ports_opened": [name for name, _ in ports],
+             "close_attempted": [name for name, _ in reversed(ports)],
+             "ports_closed": closed, "close_errors": close_errors,
+             "entry_export_errors": list(export_errors), **more}
+    brief["export_complete"] = (not export_errors
+                                and (stage != "run" or bool(more.get("run_export_complete"))))
+    if stage == "destination":                            # refused: nothing is written there, by design
+        brief["entry_record"] = None
+        brief["entry_record_note"] = "the destination was refused; nothing is written into it"
+    else:
+        brief["entry_record"] = "entry.json"
+        if attempt("entry.json", lambda: _write_evidence(
+                out / "entry.json", json.dumps(brief, indent=1, sort_keys=True) + "\n")) is None:
+            brief["entry_record"] = None                  # stdout then says the archive is missing, and why
+            brief["entry_export_errors"] = list(export_errors)
+            brief["export_complete"] = False
     print(json.dumps(brief, sort_keys=True))
     return code
+
+
+def _write_invocation(fd: int, invocation: dict) -> bool:
+    """The invocation record through the claim fd (which this closes)."""
+    try:
+        f = os.fdopen(fd, "w")
+    except Exception:
+        os.close(fd)
+        raise
+    with f:
+        f.write(json.dumps(invocation, indent=1, sort_keys=True) + "\n")
+    return True
 
 
 def _device_steps(a, out: Path, ports: list, attempt) -> tuple[int, str, dict]:
@@ -1486,34 +1524,46 @@ def _device_steps(a, out: Path, ports: list, attempt) -> tuple[int, str, dict]:
     fd, refused = claim_destination(out)
     if fd is None:
         return 5, "destination", {"refusal": "destination", "refused": refused}
+    # The invocation record is mandatory, and constructing it is the tool's own work: the
+    # provenance (its digest, the repository state) and the identity lookups. Any of them RAISING
+    # is a tool error known before the port exists, and plan §5 stops on any tool error — so it
+    # is terminal here, exit 2, and the port is never opened (the owner's second review, P2). An
+    # identity that is merely unavailable is not an error: `device_identity` records that as a
+    # value, and generic metadata-only use stays permitted.
+    construction_errors: list[str] = []
+
+    def build(what: str, fn):
+        try:
+            return fn()
+        except Exception as exc:                          # noqa: BLE001
+            construction_errors.append(f"{what}: {type(exc).__name__}: {exc}")
+            return None
     invocation = {"argv": list(a.argv), "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                   "label": a.label, "device": a.device, "host_device": a.host_device,
                   "capture_device": a.capture_device, "baud": a.baud,
                   "tx_during_rx": a.tx_during_rx, "repetitions": a.repetitions, "seconds": a.seconds,
                   "pace": a.pace, "read_timeout_s": a.read_timeout, "preflight": not a.no_preflight,
                   "expect_usb": a.expect_usb,
-                  "identity": {"source": attempt("identity source", lambda: device_identity(a.device)),
-                               **({"host": attempt("identity host", lambda: device_identity(a.host_device))}
+                  "identity": {"source": build("identity source", lambda: device_identity(a.device)),
+                               **({"host": build("identity host", lambda: device_identity(a.host_device))}
                                   if a.host_device else {}),
-                               **({"capture": attempt("identity capture", lambda: device_identity(a.capture_device))}
+                               **({"capture": build("identity capture", lambda: device_identity(a.capture_device))}
                                   if a.capture_device else {})},
                   "identity_note": ("the kernel's record of what was opened — metadata, not acceptance; "
                                     "the gate is `expect_usb`, when given"),
-                  "provenance": attempt("provenance", provenance)}
+                  "provenance": build("provenance", provenance),
+                  "construction_errors": construction_errors}
+    if construction_errors:
+        invocation["terminal"] = {"reason": "tool_error", "stage": "invocation",
+                                  "detail": "the invocation record could not be constructed; no port was opened"}
+        attempt("invocation.json", lambda: _write_invocation(fd, invocation))    # the diagnostic, if it can land
+        return 2, "invocation", {"error": "; ".join(construction_errors),
+                                 "construction_errors": construction_errors}
     if a.expect_usb:
         ok, why = identity_matches(invocation["identity"]["source"] or {}, a.expect_usb)
         invocation["identity_check"] = {"expected_usb": a.expect_usb, "matched": ok, "reason": why}
 
-    def write_invocation() -> bool:
-        try:
-            f = os.fdopen(fd, "w")                        # the claimed file; closes the claim fd
-        except Exception:
-            os.close(fd)
-            raise
-        with f:
-            f.write(json.dumps(invocation, indent=1, sort_keys=True) + "\n")
-        return True
-    if attempt("invocation.json", write_invocation) is None:
+    if attempt("invocation.json", lambda: _write_invocation(fd, invocation)) is None:
         return 5, "invocation", {}
     if a.expect_usb and not invocation["identity_check"]["matched"]:
         return 3, "identity", {"refusal": "identity", "refused": invocation["identity_check"]["reason"],
@@ -1564,6 +1614,7 @@ def _device_steps(a, out: Path, ports: list, attempt) -> tuple[int, str, dict]:
         code, result = 2, exc.result or {"stopped": str(exc), "error": str(exc)}
     return code, "run", {
         "topology": result.get("topology"),
+        "run_record": "run.json" if result.get("exported_to") else None,
         "terminal": (result.get("terminal") or {}).get("reason"), "stopped": result.get("stopped"),
         "error": result.get("error"), "repetitions_run": result.get("repetitions_run"),
         "frames_accepted": result.get("frames_accepted"),
@@ -1576,7 +1627,6 @@ def _device_steps(a, out: Path, ports: list, attempt) -> tuple[int, str, dict]:
         "counters_delta": result.get("counters_delta"), "completed_exposure": result.get("completed_exposure"),
         "run_export_complete": result.get("export_complete"),
         "run_export_errors": result.get("export_errors"),
-        "export_complete": None,                          # filled by the caller once the ports are closed
     }
 
 

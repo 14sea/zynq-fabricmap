@@ -65,17 +65,23 @@ What one run writes into `--out`:
 | `invocation.json` | argv, parameters, the tool's provenance (`provenance.tool_sha256` names the exact software version), and the device's **kernel identity** — resolved node, major:minor, and from sysfs the USB `idVendor:idProduct`, product string, serial. This is the kernel's record of what was opened, **metadata, not acceptance**; with `--expect-usb` the record also carries `identity_check` (expected, matched, reason), and that check is the gate. It is created with `O_EXCL` — it is the claim on the directory |
 | `preflight.json` | one nonce line written and read back before any exposure, inside one absolute deadline (`PREFLIGHT_DEADLINE_S`, 3 s) that bounds the write, the nonce wait and the quiet drain together; the `TIOCGICOUNT` counters **attempted** before and after, independently. Three named outcomes: **silence is a refusal (exit 3, `refusal: silence`)** — the jumper is not in place or this is not the port — rather than an hour of censored frames; **bytes still arriving at the deadline are a refusal (exit 3, `refusal: not_quiet`)** — the exposure must not start with a backlog; a transport exception is the preflight's **primary error (exit 2)**, recorded with the phase it struck in (`write` / `nonce` / `drain`). A garbled nonce that goes quiet is recorded and the run proceeds |
 | `preflight_rx.bin` | every byte the preflight received, as received — on success, on refusal and on error; `preflight.json` carries its length and SHA-256 |
+| `entry.json` | the entry's own terminal state, archived by an explicit finalisation step on every path except a refused destination (nothing is written there): exit and its meaning, the stage it came from, the error or refusal, `ports_opened` / `close_attempted` / `ports_closed` (only the closes that succeeded) / `close_errors`, `entry_export_errors`, and `export_complete` — the same object that goes to stdout, so stdout is never the only record. If `entry.json` itself cannot be written, stdout says so and reports `export_complete: false` |
 | `run.json` | the run record: terminal reason, `confirmed_losses` / `losses` / bounds / `loss_metric`, the received-byte denominator, per-repetition results, counters before and after and their delta, export status |
 | `capture_NNN.bin`, `events_NNN.json` | the raw bytes and the timestamped reads and writes of each repetition |
 
-Exit codes are the tool's state, not a verdict: `0` the run returned, `2` a tool error — in
-the preflight or in the run — with the evidence that exists exported, `3` refused before any
-exposure (the declared identity, or the preflight: silence / not quiet), `4` the device would
-not open, `5` the evidence destination could not be claimed or written (a nonempty `--out`, or
-an invocation / preflight record that could not be written) — nothing is spent on the device.
-The brief on stdout names the `stage` the exit came from, lists `ports_closed` — every opened
-port is closed on every return path, before the brief is printed — and any `entry_export_errors`
-/ `close_errors`, which never replace the primary result.
+Exit codes are the tool's state, not a verdict: `0` the run returned, `2` a tool error —
+constructing the invocation record (the tool's own provenance, an identity lookup raising),
+in the preflight, or in the run — with the evidence that exists exported, `3` refused before
+any exposure (the declared identity, or the preflight: silence / not quiet), `4` the device
+would not open, `5` the evidence destination could not be claimed or written (a nonempty
+`--out`, or an invocation / preflight record that could not be written) — nothing is spent on
+the device. A tool error known while the invocation is being constructed is terminal **before
+the port opens** (plan §5, any tool error): no nonce, no source frame. An identity that is
+merely unavailable is a value in the record, not an error, and generic metadata-only use stays
+permitted. The brief on stdout names the `stage` the exit came from; every opened port is
+closed on every return path before the brief is printed, `close_attempted` and `ports_closed`
+are reported separately, and `entry_export_errors` / `close_errors` never replace the primary
+result nor alter the run's observed traffic facts.
 
 ## What a result can and cannot say
 
@@ -128,6 +134,18 @@ real CLI in `tests/test_transport_rig.py::TheDeviceEntryPoint`:
 - **P3** the identity is metadata; `--expect-usb` is the gate, and the counters are "attempted",
   as written above.
 
+The owner's second review (`docs/b1q_transport_entrypoint_v2_review_2026_09_13.md`, as
+received) accepted those three and held on one more P2 and one P3, corrected next:
+
+- **P2** a provenance read failure became a null in the invocation and the run still spent
+  all 302 frames, exit 0, with the entry-level downgrade only on stdout. Now the invocation
+  record is mandatory — a tool error constructing it is terminal before the port opens, exit
+  2, with the diagnostic in `invocation.json` — and the entry's terminal state is archived as
+  `entry.json` by an explicit finalisation step on every path.
+- **P3** `ports_closed` listed every opened port even when its close raised. Now
+  `close_attempted` and `ports_closed` are separate, the error is archived, and a cleanup
+  failure never changes the run's observed traffic.
+
 ## Offline proof of the entry point
 
 `tests/test_transport_rig.py::TheDeviceEntryPoint` drives `main(["run", …])` against a fake
@@ -145,4 +163,9 @@ recorded spending nothing (exit 5); a nonempty destination refused byte-identica
 opener never called, a fresh one created, a stale-empty race losing at `O_EXCL`; `--expect-usb`
 refusing an unavailable or different identity before opening and passing the declared one;
 and every opened port closed on every path, the first closed when the second will not open.
-**No real port is opened by any test.**
+After the second review: provenance failing before acquisition (no opener call, exit 2, the
+diagnostic and `entry.json` on disk agreeing with stdout); an identity lookup that raises being
+terminal while an unavailable identity is not; `entry.json` agreeing with stdout on the clean,
+refused and dead-run paths; no entry record written into a refused destination; a faulted
+`entry.json` said on stdout with `export_complete: false`; and a close that raises reported as
+attempted, not closed, with the run's facts untouched. **No real port is opened by any test.**
