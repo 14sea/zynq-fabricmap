@@ -1,0 +1,121 @@
+{
+  "continuous_preflight": {
+    "counter_calls": 1,
+    "escaped_exception": "RuntimeError: probe watchdog: preflight still reading after 3 seconds",
+    "fake_elapsed": 3.049999999999997,
+    "files": [
+      "invocation.json"
+    ],
+    "stdout": "",
+    "writes": 1
+  },
+  "head": "d406f1c8ddae869b62647275f187e6eb41164dd9",
+  "positive": {
+    "counter_calls": 4,
+    "exit": 0,
+    "fake_elapsed": 30.7000000000003,
+    "files": [
+      "capture_000.bin",
+      "events_000.json",
+      "invocation.json",
+      "preflight.json",
+      "run.json"
+    ],
+    "run": {
+      "completed_exposure": true,
+      "export_complete": true,
+      "frames_accepted": 302,
+      "losses": 0
+    },
+    "stdout": "{\"censored_in_flight\": 0, \"completed_exposure\": true, \"confirmed_losses\": 0, \"counters_delta\": {\"available\": false, \"reason\": \"offline fake fd\"}, \"denominator_bytes\": 98599, \"device\": \"/dev/FAKE\", \"error\": null, \"exit\": 0, \"export_complete\": true, \"exported_to\": \"/tmp/rig_entry_review_s6j85h8d/positive\", \"frames_accepted\": 302, \"label\": \"offline-review\", \"loss_metric\": \"exact\", \"losses\": 0, \"losses_per_100k_bytes\": 0.0, \"repetitions_run\": 1, \"stopped\": \"exposure: 1 repetitions completed\", \"terminal\": \"exposure_repetitions\", \"topology\": \"one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo\", \"unresolved_at_cutoff\": 0}",
+    "writes": 303
+  },
+  "preflight_detach": {
+    "counter_calls": 1,
+    "escaped_exception": "OSError: synthetic preflight detach after receiving the nonce",
+    "fake_elapsed": 0.1,
+    "files": [
+      "invocation.json"
+    ],
+    "stdout": "",
+    "writes": 1
+  },
+  "reuse_directory": {
+    "counter_calls": 4,
+    "exit": 0,
+    "fake_elapsed": 30.7000000000003,
+    "files": [
+      "capture_000.bin",
+      "capture_001.bin",
+      "events_000.json",
+      "invocation.json",
+      "preflight.json",
+      "run.json"
+    ],
+    "preserved_old_files": {
+      "capture_000.bin": false,
+      "capture_001.bin": true,
+      "invocation.json": false,
+      "run.json": false
+    },
+    "run": {
+      "completed_exposure": true,
+      "export_complete": true,
+      "frames_accepted": 302,
+      "losses": 0
+    },
+    "stdout": "{\"censored_in_flight\": 0, \"completed_exposure\": true, \"confirmed_losses\": 0, \"counters_delta\": {\"available\": false, \"reason\": \"offline fake fd\"}, \"denominator_bytes\": 98599, \"device\": \"/dev/FAKE\", \"error\": null, \"exit\": 0, \"export_complete\": true, \"exported_to\": \"/tmp/rig_entry_review_s6j85h8d/old\", \"frames_accepted\": 302, \"label\": \"offline-review\", \"loss_metric\": \"exact\", \"losses\": 0, \"losses_per_100k_bytes\": 0.0, \"repetitions_run\": 1, \"stopped\": \"exposure: 1 repetitions completed\", \"terminal\": \"exposure_repetitions\", \"topology\": \"one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo\", \"unresolved_at_cutoff\": 0}",
+    "writes": 303
+  },
+  "scope": "offline CLI probes; no real device opened",
+  "silence_control": {
+    "counter_calls": 2,
+    "exit": 3,
+    "fake_elapsed": 1.3000000000000005,
+    "files": [
+      "invocation.json",
+      "preflight.json"
+    ],
+    "stdout": "{\"label\": \"offline-review\", \"exit\": 3, \"refused\": \"no loopback: nothing came back within 1.0 s \\u2014 the TX\\u2192RX jumper is not in place, or this is not the port\", \"counters\": {\"available\": false, \"reason\": \"offline fake fd\"}}",
+    "writes": 1
+  },
+  "tool_sha256": "aaff46e90422bf242b632fa68000eb649f5077afde98d9cd624aae58d1d630ee",
+  "wrong_usb_identity": {
+    "counter_calls": 4,
+    "exit": 0,
+    "fake_elapsed": 30.7000000000003,
+    "files": [
+      "capture_000.bin",
+      "events_000.json",
+      "invocation.json",
+      "preflight.json",
+      "run.json"
+    ],
+    "run": {
+      "completed_exposure": true,
+      "export_complete": true,
+      "frames_accepted": 302,
+      "losses": 0
+    },
+    "stdout": "{\"censored_in_flight\": 0, \"completed_exposure\": true, \"confirmed_losses\": 0, \"counters_delta\": {\"available\": false, \"reason\": \"offline fake fd\"}, \"denominator_bytes\": 98599, \"device\": \"/dev/FAKE\", \"error\": null, \"exit\": 0, \"export_complete\": true, \"exported_to\": \"/tmp/rig_entry_review_s6j85h8d/wrong_usb\", \"frames_accepted\": 302, \"label\": \"offline-review\", \"loss_metric\": \"exact\", \"losses\": 0, \"losses_per_100k_bytes\": 0.0, \"repetitions_run\": 1, \"stopped\": \"exposure: 1 repetitions completed\", \"terminal\": \"exposure_repetitions\", \"topology\": \"one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo\", \"unresolved_at_cutoff\": 0}",
+    "writes": 303
+  },
+  "zero_repetitions": {
+    "counter_calls": 4,
+    "exit": 0,
+    "fake_elapsed": 0.35,
+    "files": [
+      "invocation.json",
+      "preflight.json",
+      "run.json"
+    ],
+    "run": {
+      "completed_exposure": false,
+      "export_complete": true,
+      "frames_accepted": 0,
+      "losses": 0
+    },
+    "stdout": "{\"censored_in_flight\": 0, \"completed_exposure\": false, \"confirmed_losses\": 0, \"counters_delta\": {\"available\": false, \"reason\": \"offline fake fd\"}, \"denominator_bytes\": 0, \"device\": \"/dev/FAKE\", \"error\": null, \"exit\": 0, \"export_complete\": true, \"exported_to\": \"/tmp/rig_entry_review_s6j85h8d/zero\", \"frames_accepted\": 0, \"label\": \"offline-review\", \"loss_metric\": \"no_denominator\", \"losses\": 0, \"losses_per_100k_bytes\": null, \"repetitions_run\": 0, \"stopped\": \"exposure: 0 repetitions completed\", \"terminal\": \"exposure_repetitions\", \"topology\": \"one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo\", \"unresolved_at_cutoff\": 0}",
+    "writes": 1
+  }
+}
