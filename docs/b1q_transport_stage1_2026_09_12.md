@@ -135,7 +135,17 @@ run — device identity from sysfs, a loopback preflight that refuses silence be
 exposure, the real fd for `TIOCGICOUNT`, the registered exposure as defaults — proved offline in
 `TheDeviceEntryPoint` (10 tests) against a fake serial module. The procedure, the wiring and
 what a result can and cannot say are in
-`docs/b1q_transport_physical_stage1_procedure_2026_09_13.md`. **Not yet run on any port.**
+`docs/b1q_transport_physical_stage1_procedure_2026_09_13.md`.
+
+**Run on 2026-09-13** (`evidence/b1q/transport_stage1_physical_2026_09_13/`): the module's TX
+shorted to its own RX, board unpowered, WSL + usbipd. Without host TX: **0 confirmed losses in
+10.1 MB** (103 repetitions, the registered exposure, time-bounded). With host TX during RX, at
+a declared shorter exposure of 20 repetitions: **1 confirmed loss in 2.26 MB** — one byte
+deleted inside AUDIT 121 and 18 contiguous bytes deleted from the rig's own echoed AUDITGET,
+both in one read. The failure class reproduces without the Zynq. The difference between the two
+conditions is reported under those exposures and is not significant on its own. `TIOCGICOUNT`
+is unavailable on the `ch341` driver (`ENOTTY`). Stage 1's physical half is done as a tool
+acceptance; the attribution question moves to stage 2.
 
 ## What is still blocked, and on whom
 

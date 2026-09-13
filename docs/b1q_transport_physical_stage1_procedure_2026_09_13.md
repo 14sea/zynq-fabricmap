@@ -75,6 +75,13 @@ evidence is still exported), `3` the preflight refused, `4` the device would not
   a pinned change to the runner and lands, is reviewed and is re-qualified **before** the
   session that counts.
 
+## What happened when it ran (2026-09-13)
+
+See `evidence/b1q/transport_stage1_physical_2026_09_13/README.md`: rehearsals clean; the
+registered no-TX exposure clean over 10.1 MB; the TX-during-RX condition, at a declared 20
+repetitions, produced one confirmed loss — two byte deletions inside one read. The counters are
+unavailable on this adapter (`ch341` answers `ENOTTY`).
+
 ## Offline proof of the entry point
 
 `tests/test_transport_rig.py::TheDeviceEntryPoint` drives `main(["run", …])` against a fake
