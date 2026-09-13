@@ -28,3 +28,16 @@ and the actual zero-repetition result is retained without a false finding.
 
 The B1 pins, B2 pins and B2 gate suites separately passed 3, 6 and 28 tests
 (37 total), with no skips. Production B2 verify accepted the unchanged S1.
+
+## After the corrections (`6c7a276`, tool `15460127…`)
+
+`results_after_fix.json` is the same probe run unchanged against the corrected tool, with its
+before-fix assertions not evaluated (they are before/after expectations, as above); it records
+the head and tool digest it ran on. Observed: `positive` exit 0 (302 accepted, 0 losses, every
+file plus `preflight_rx.bin`); `silence_control` exit 3 `refusal: silence`, one write, both
+counter attempts; `continuous_preflight` exit 3 `refusal: not_quiet` at the 3.0 s fake
+deadline, the received bytes on disk, no exposure; `preflight_detach` exit 2, `failed_phase:
+drain`, the nonce in `preflight_rx.bin`, both counter attempts, no traceback;
+`reuse_directory` exit 5, all four old files byte-identical, the opener never called;
+`wrong_usb_identity` exit 0 without `--expect-usb` (metadata only, by design — the gate is the
+flag, exercised in the suite); `zero_repetitions` unchanged. Offline; no real port opened.

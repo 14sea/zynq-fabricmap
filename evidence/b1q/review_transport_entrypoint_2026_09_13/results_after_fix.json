@@ -1,0 +1,128 @@
+{
+  "continuous_preflight": {
+    "counter_calls": 2,
+    "exit": 3,
+    "fake_elapsed": 3.0,
+    "files": [
+      "invocation.json",
+      "preflight.json",
+      "preflight_rx.bin"
+    ],
+    "stdout": "{\"close_errors\": [\"/dev/FAKE: AttributeError: 'FakePort' object has no attribute 'close'\"], \"counters\": {\"available\": false, \"reason\": \"offline fake fd\"}, \"device\": \"/dev/FAKE\", \"entry_export_errors\": [], \"exit\": 3, \"exit_meaning\": \"refused before any exposure \\u2014 the declared identity, or the preflight (silence / not quiet)\", \"exported_to\": \"/tmp/rig_entry_review_h99d9bbt/continuous\", \"label\": \"offline-review\", \"ports_closed\": [\"/dev/FAKE\"], \"preflight\": {\"counters_delta\": {\"available\": false, \"reason\": \"offline fake fd\"}, \"elapsed_s\": 3.0, \"failed_phase\": null, \"matched\": false, \"quiet\": false, \"received_bytes\": 1037, \"received_file\": \"preflight_rx.bin\", \"skipped\": null}, \"refusal\": \"not_quiet\", \"refused\": \"not quiet: 1037 bytes received and still arriving at the 3.0 s preflight deadline \\u2014 the exposure would start with a backlog, so it does not start\", \"stage\": \"preflight\"}",
+    "writes": 1
+  },
+  "head": "6c7a2760e92c5b00599144943ca2ee589efa0312",
+  "note": "the owner probe re-run unchanged against the corrected tool, with its before-fix assertions not evaluated (its README: they are before/after expectations); observations only",
+  "positive": {
+    "counter_calls": 4,
+    "exit": 0,
+    "fake_elapsed": 30.7000000000003,
+    "files": [
+      "capture_000.bin",
+      "events_000.json",
+      "invocation.json",
+      "preflight.json",
+      "preflight_rx.bin",
+      "run.json"
+    ],
+    "run": {
+      "completed_exposure": true,
+      "export_complete": true,
+      "frames_accepted": 302,
+      "losses": 0
+    },
+    "stdout": "{\"censored_in_flight\": 0, \"close_errors\": [\"/dev/FAKE: AttributeError: 'FakePort' object has no attribute 'close'\"], \"completed_exposure\": true, \"confirmed_losses\": 0, \"counters_delta\": {\"available\": false, \"reason\": \"offline fake fd\"}, \"denominator_bytes\": 98599, \"device\": \"/dev/FAKE\", \"entry_export_errors\": [], \"error\": null, \"exit\": 0, \"exit_meaning\": \"the run returned\", \"export_complete\": true, \"exported_to\": \"/tmp/rig_entry_review_h99d9bbt/positive\", \"frames_accepted\": 302, \"label\": \"offline-review\", \"loss_metric\": \"exact\", \"losses\": 0, \"losses_per_100k_bytes\": 0.0, \"ports_closed\": [\"/dev/FAKE\"], \"repetitions_run\": 1, \"run_export_complete\": true, \"run_export_errors\": [], \"stage\": \"run\", \"stopped\": \"exposure: 1 repetitions completed\", \"terminal\": \"exposure_repetitions\", \"topology\": \"one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo\", \"unresolved_at_cutoff\": 0}",
+    "writes": 303
+  },
+  "preflight_detach": {
+    "counter_calls": 2,
+    "exit": 2,
+    "fake_elapsed": 0.1,
+    "files": [
+      "invocation.json",
+      "preflight.json",
+      "preflight_rx.bin"
+    ],
+    "stdout": "{\"close_errors\": [\"/dev/FAKE: AttributeError: 'FakePort' object has no attribute 'close'\"], \"device\": \"/dev/FAKE\", \"entry_export_errors\": [], \"error\": \"OSError: synthetic preflight detach after receiving the nonce\", \"exit\": 2, \"exit_meaning\": \"a tool error \\u2014 in the preflight or in the run; the evidence that exists is exported\", \"exported_to\": \"/tmp/rig_entry_review_h99d9bbt/detach\", \"failed_phase\": \"drain\", \"label\": \"offline-review\", \"ports_closed\": [\"/dev/FAKE\"], \"preflight\": {\"counters_delta\": {\"available\": false, \"reason\": \"offline fake fd\"}, \"elapsed_s\": 0.1, \"failed_phase\": \"drain\", \"matched\": true, \"quiet\": false, \"received_bytes\": 43, \"received_file\": \"preflight_rx.bin\", \"skipped\": null}, \"stage\": \"preflight\"}",
+    "writes": 1
+  },
+  "reuse_directory": {
+    "counter_calls": 0,
+    "exit": 5,
+    "fake_elapsed": 0.0,
+    "files": [
+      "capture_000.bin",
+      "capture_001.bin",
+      "invocation.json",
+      "run.json"
+    ],
+    "preserved_old_files": {
+      "capture_000.bin": true,
+      "capture_001.bin": true,
+      "invocation.json": true,
+      "run.json": true
+    },
+    "run": {
+      "completed_exposure": null,
+      "export_complete": null,
+      "frames_accepted": null,
+      "losses": null
+    },
+    "stdout": "{\"close_errors\": [], \"device\": \"/dev/FAKE\", \"entry_export_errors\": [], \"exit\": 5, \"exit_meaning\": \"the evidence destination could not be claimed or written \\u2014 nothing was spent on the device\", \"exported_to\": \"/tmp/rig_entry_review_h99d9bbt/old\", \"label\": \"offline-review\", \"ports_closed\": [], \"refusal\": \"destination\", \"refused\": \"destination is not empty (4 entries, e.g. ['capture_000.bin', 'capture_001.bin', 'invocation.json']): an earlier acquisition lives there and is left exactly as it is \\u2014 use a new --out\", \"stage\": \"destination\"}",
+    "writes": 0
+  },
+  "scope": "offline CLI probes; no real device opened",
+  "silence_control": {
+    "counter_calls": 2,
+    "exit": 3,
+    "fake_elapsed": 1.3000000000000005,
+    "files": [
+      "invocation.json",
+      "preflight.json",
+      "preflight_rx.bin"
+    ],
+    "stdout": "{\"close_errors\": [\"/dev/FAKE: AttributeError: 'FakePort' object has no attribute 'close'\"], \"counters\": {\"available\": false, \"reason\": \"offline fake fd\"}, \"device\": \"/dev/FAKE\", \"entry_export_errors\": [], \"exit\": 3, \"exit_meaning\": \"refused before any exposure \\u2014 the declared identity, or the preflight (silence / not quiet)\", \"exported_to\": \"/tmp/rig_entry_review_h99d9bbt/silence\", \"label\": \"offline-review\", \"ports_closed\": [\"/dev/FAKE\"], \"preflight\": {\"counters_delta\": {\"available\": false, \"reason\": \"offline fake fd\"}, \"elapsed_s\": 1.3000000000000005, \"failed_phase\": null, \"matched\": false, \"quiet\": true, \"received_bytes\": 0, \"received_file\": \"preflight_rx.bin\", \"skipped\": null}, \"refusal\": \"silence\", \"refused\": \"no loopback: nothing came back within 1.0 s \\u2014 the TX\\u2192RX jumper is not in place, or this is not the port\", \"stage\": \"preflight\"}",
+    "writes": 1
+  },
+  "tool_sha256": "15460127bbcd08ffbc1e75ec7bc20d40601cd4f900e675fd41b11cdae3353a46",
+  "wrong_usb_identity": {
+    "counter_calls": 4,
+    "exit": 0,
+    "fake_elapsed": 30.7000000000003,
+    "files": [
+      "capture_000.bin",
+      "events_000.json",
+      "invocation.json",
+      "preflight.json",
+      "preflight_rx.bin",
+      "run.json"
+    ],
+    "run": {
+      "completed_exposure": true,
+      "export_complete": true,
+      "frames_accepted": 302,
+      "losses": 0
+    },
+    "stdout": "{\"censored_in_flight\": 0, \"close_errors\": [\"/dev/FAKE: AttributeError: 'FakePort' object has no attribute 'close'\"], \"completed_exposure\": true, \"confirmed_losses\": 0, \"counters_delta\": {\"available\": false, \"reason\": \"offline fake fd\"}, \"denominator_bytes\": 98599, \"device\": \"/dev/FAKE\", \"entry_export_errors\": [], \"error\": null, \"exit\": 0, \"exit_meaning\": \"the run returned\", \"export_complete\": true, \"exported_to\": \"/tmp/rig_entry_review_h99d9bbt/wrong_usb\", \"frames_accepted\": 302, \"label\": \"offline-review\", \"loss_metric\": \"exact\", \"losses\": 0, \"losses_per_100k_bytes\": 0.0, \"ports_closed\": [\"/dev/FAKE\"], \"repetitions_run\": 1, \"run_export_complete\": true, \"run_export_errors\": [], \"stage\": \"run\", \"stopped\": \"exposure: 1 repetitions completed\", \"terminal\": \"exposure_repetitions\", \"topology\": \"one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo\", \"unresolved_at_cutoff\": 0}",
+    "writes": 303
+  },
+  "zero_repetitions": {
+    "counter_calls": 4,
+    "exit": 0,
+    "fake_elapsed": 0.35,
+    "files": [
+      "invocation.json",
+      "preflight.json",
+      "preflight_rx.bin",
+      "run.json"
+    ],
+    "run": {
+      "completed_exposure": false,
+      "export_complete": true,
+      "frames_accepted": 0,
+      "losses": 0
+    },
+    "stdout": "{\"censored_in_flight\": 0, \"close_errors\": [\"/dev/FAKE: AttributeError: 'FakePort' object has no attribute 'close'\"], \"completed_exposure\": false, \"confirmed_losses\": 0, \"counters_delta\": {\"available\": false, \"reason\": \"offline fake fd\"}, \"denominator_bytes\": 0, \"device\": \"/dev/FAKE\", \"entry_export_errors\": [], \"error\": null, \"exit\": 0, \"exit_meaning\": \"the run returned\", \"export_complete\": true, \"exported_to\": \"/tmp/rig_entry_review_h99d9bbt/zero\", \"frames_accepted\": 0, \"label\": \"offline-review\", \"loss_metric\": \"no_denominator\", \"losses\": 0, \"losses_per_100k_bytes\": null, \"ports_closed\": [\"/dev/FAKE\"], \"repetitions_run\": 0, \"run_export_complete\": true, \"run_export_errors\": [], \"stage\": \"run\", \"stopped\": \"exposure: 0 repetitions completed\", \"terminal\": \"exposure_repetitions\", \"topology\": \"one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo\", \"unresolved_at_cutoff\": 0}",
+    "writes": 1
+  }
+}
