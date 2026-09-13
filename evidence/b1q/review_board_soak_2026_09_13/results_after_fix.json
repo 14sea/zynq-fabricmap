@@ -1,0 +1,613 @@
+{
+  "actual_rig_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478",
+  "actual_soak_sha256": "a435bc6492d69c16bc2a46c13ba355f2a56457b297fbd8ccd994ca97bf6a5e0f",
+  "cases": {
+    "ascii_delete": {
+      "brief": {
+        "all_observed_responses_differ": true,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "detail": "2 repeated reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_m8sd7w58/ascii_delete",
+        "identical_responses": 0,
+        "label": "offline-review",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 2,
+        "mismatches_per_100_responses": 100.0,
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes_excluding_reference": 144,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "dependencies": {
+            "host/transport_rig.py": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+          },
+          "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+          "python": "3.12.3",
+          "tool": "host/board_transport_soak.py",
+          "tool_sha256": "a435bc6492d69c16bc2a46c13ba355f2a56457b297fbd8ccd994ca97bf6a5e0f"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "baseline_export_failure": {
+      "brief": {
+        "all_observed_responses_differ": false,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "detail": "2 repeated reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_m8sd7w58/baseline_export_failure",
+        "identical_responses": 2,
+        "label": "offline-review",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes_excluding_reference": 146,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "dependencies": {
+            "host/transport_rig.py": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+          },
+          "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+          "python": "3.12.3",
+          "tool": "host/board_transport_soak.py",
+          "tool_sha256": "a435bc6492d69c16bc2a46c13ba355f2a56457b297fbd8ccd994ca97bf6a5e0f"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "entry_export_failure": {
+      "brief": {
+        "all_observed_responses_differ": false,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "detail": "2 repeated reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [
+          "entry.json: OSError: synthetic entry.json write failure"
+        ],
+        "entry_record": null,
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": false,
+        "exported_to": "/tmp/board_soak_review_m8sd7w58/entry_export_failure",
+        "identical_responses": 2,
+        "label": "offline-review",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes_excluding_reference": 146,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "control.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "dependencies": {
+            "host/transport_rig.py": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+          },
+          "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+          "python": "3.12.3",
+          "tool": "host/board_transport_soak.py",
+          "tool_sha256": "a435bc6492d69c16bc2a46c13ba355f2a56457b297fbd8ccd994ca97bf6a5e0f"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "extra_hex": {
+      "brief": {
+        "all_observed_responses_differ": true,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "detail": "2 repeated reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_m8sd7w58/extra_hex",
+        "identical_responses": 0,
+        "label": "offline-review",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 2,
+        "mismatches_per_100_responses": 100.0,
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes_excluding_reference": 148,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "dependencies": {
+            "host/transport_rig.py": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+          },
+          "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+          "python": "3.12.3",
+          "tool": "host/board_transport_soak.py",
+          "tool_sha256": "a435bc6492d69c16bc2a46c13ba355f2a56457b297fbd8ccd994ca97bf6a5e0f"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "non_ddr_address": {
+      "brief": {
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 3,
+        "exit_meaning": "refused before the control \u2014 the declared identity, the window/exposure bounds, no prompt at sync, or no valid reference response",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_m8sd7w58/non_ddr_address",
+        "label": "offline-review",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "ports_closed": [],
+        "ports_opened": [],
+        "refusal": "window",
+        "refused": "the read 0x40000000..0x4000000f leaves the reviewed probe window [0x00100000, 0x001fffff] (firmware/b2/bsp/include/xparameters.h: XPAR_PS7_DDR_0_S_AXI_BASEADDR/HIGHADDR)",
+        "stage": "window"
+      },
+      "closed": 0,
+      "counter_attempts": 0,
+      "exit": 3,
+      "fake_elapsed": 0.0,
+      "files": [
+        "entry.json",
+        "invocation.json"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "dependencies": {
+            "host/transport_rig.py": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+          },
+          "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+          "python": "3.12.3",
+          "tool": "host/board_transport_soak.py",
+          "tool_sha256": "a435bc6492d69c16bc2a46c13ba355f2a56457b297fbd8ccd994ca97bf6a5e0f"
+        }
+      },
+      "opens": 0,
+      "partial_bytes_observed": 0,
+      "writes": []
+    },
+    "partial_detach": {
+      "brief": {
+        "all_observed_responses_differ": true,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "detail": "OSError: synthetic detach after partial md output",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 2,
+        "exit_meaning": "a tool error, or the run stopped on a board/console condition; the evidence is exported",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_m8sd7w58/partial_detach",
+        "identical_responses": 0,
+        "label": "offline-review",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 1,
+        "received_bytes_excluding_reference": 20,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "tool_error"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 2,
+      "fake_elapsed": 0.2,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "dependencies": {
+            "host/transport_rig.py": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+          },
+          "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+          "python": "3.12.3",
+          "tool": "host/board_transport_soak.py",
+          "tool_sha256": "a435bc6492d69c16bc2a46c13ba355f2a56457b297fbd8ccd994ca97bf6a5e0f"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 20,
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "positive": {
+      "brief": {
+        "all_observed_responses_differ": false,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "detail": "2 repeated reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_m8sd7w58/positive",
+        "identical_responses": 2,
+        "label": "offline-review",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes_excluding_reference": 146,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "dependencies": {
+            "host/transport_rig.py": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+          },
+          "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+          "python": "3.12.3",
+          "tool": "host/board_transport_soak.py",
+          "tool_sha256": "a435bc6492d69c16bc2a46c13ba355f2a56457b297fbd8ccd994ca97bf6a5e0f"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "provenance_failure": {
+      "brief": {
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "construction_errors": [
+          "provenance: OSError: synthetic provenance failure"
+        ],
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "error": "provenance: OSError: synthetic provenance failure",
+        "exit": 2,
+        "exit_meaning": "a tool error, or the run stopped on a board/console condition; the evidence is exported",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_m8sd7w58/provenance_failure",
+        "label": "offline-review",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "ports_closed": [],
+        "ports_opened": [],
+        "stage": "invocation"
+      },
+      "closed": 0,
+      "counter_attempts": 0,
+      "exit": 2,
+      "fake_elapsed": 0.0,
+      "files": [
+        "entry.json",
+        "invocation.json"
+      ],
+      "invocation.json": {
+        "provenance": null
+      },
+      "opens": 0,
+      "partial_bytes_observed": 0,
+      "writes": []
+    },
+    "repeated_wrong": {
+      "brief": {
+        "all_observed_responses_differ": false,
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "counters_delta": {
+          "available": false,
+          "reason": "fake fd"
+        },
+        "detail": "2 repeated reads completed",
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 0,
+        "exit_meaning": "the control returned",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_m8sd7w58/repeated_wrong",
+        "identical_responses": 2,
+        "label": "offline-review",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "mismatched_responses": 0,
+        "mismatches_per_100_responses": 0.0,
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "reads_done": 2,
+        "received_bytes_excluding_reference": 146,
+        "records_exported": true,
+        "stage": "control",
+        "terminal": "exposure_repetitions"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 0,
+      "fake_elapsed": 0.2,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "read_0000.bin",
+        "read_0001.bin",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "dependencies": {
+            "host/transport_rig.py": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+          },
+          "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+          "python": "3.12.3",
+          "tool": "host/board_transport_soak.py",
+          "tool_sha256": "a435bc6492d69c16bc2a46c13ba355f2a56457b297fbd8ccd994ca97bf6a5e0f"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "writes": [
+        "\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r",
+        "md.l 0x00100000 0x4\r"
+      ]
+    },
+    "timeout": {
+      "brief": {
+        "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
+        "close_errors": [],
+        "device": "/dev/FAKE",
+        "entry_export_errors": [],
+        "entry_record": "entry.json",
+        "exit": 3,
+        "exit_meaning": "refused before the control \u2014 the declared identity, the window/exposure bounds, no prompt at sync, or no valid reference response",
+        "export_complete": true,
+        "exported_to": "/tmp/board_soak_review_m8sd7w58/timeout",
+        "label": "offline-review",
+        "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+        "ports_closed": [
+          "/dev/FAKE"
+        ],
+        "ports_opened": [
+          "/dev/FAKE"
+        ],
+        "refusal": "reference",
+        "refused": "no valid reference response: no prompt",
+        "stage": "reference"
+      },
+      "closed": 1,
+      "counter_attempts": 2,
+      "exit": 3,
+      "fake_elapsed": 0.01,
+      "files": [
+        "control.json",
+        "entry.json",
+        "invocation.json",
+        "reference.bin",
+        "reference.json",
+        "sync.bin"
+      ],
+      "invocation.json": {
+        "provenance": {
+          "dependencies": {
+            "host/transport_rig.py": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+          },
+          "measurement_unit": "one md.l response whose framed body was not byte-identical to the reference response, counted once however many bytes differ; the cause is unknown",
+          "python": "3.12.3",
+          "tool": "host/board_transport_soak.py",
+          "tool_sha256": "a435bc6492d69c16bc2a46c13ba355f2a56457b297fbd8ccd994ca97bf6a5e0f"
+        }
+      },
+      "opens": 1,
+      "partial_bytes_observed": 0,
+      "writes": [
+        "\r"
+      ]
+    }
+  },
+  "head": "2c2cd0f8f2ccc8329831cc8b779138df9cc171ea",
+  "note": "the owner v4 probe re-run unchanged against the corrected tool, with its pre-fix assertions NOT evaluated (its README: they record observed pre-fix behaviour, not post-fix acceptance); observations only"
+}
