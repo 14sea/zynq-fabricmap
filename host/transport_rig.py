@@ -723,9 +723,9 @@ class Port:
     and the run record says so; on a two-device rig they are not.
     """
 
-    def __init__(self, name: str, write=None, read=None, fd=None, takes_timeout: bool = False):
+    def __init__(self, name: str, write=None, read=None, fd=None, takes_timeout: bool = False, close=None):
         self.name, self._write, self._read, self._fd = name, write, read, fd
-        self._takes_timeout = takes_timeout
+        self._takes_timeout, self._close = takes_timeout, close
         if write is not None:                           # the contract is checked BEFORE any byte moves
             fits = _signature_accepts(write, 2 if takes_timeout else 1)
             if fits is False:
@@ -759,6 +759,14 @@ class Port:
 
     def fileno(self):
         return self._fd
+
+    def close(self) -> None:
+        """Release the device. Declared by the adapter (`close=`); a port without one is a no-op.
+        The device entry point calls this on EVERY return path (the owner's P2-2 of the
+        entry-point review), so a refused preflight or a dead run never leaves an exclusive open
+        behind."""
+        if self._close is not None:
+            self._close()
 
 
 def _signature_accepts(fn, nargs: int) -> bool | None:
@@ -1217,21 +1225,25 @@ def serial_port(device: str, baud: int = 115200, exclusive: bool = True) -> Port
     def read(t):
         s.timeout = t
         return s.read(65536)
-    return Port(device, write=write, read=read, fd=s.fileno(), takes_timeout=True)
+    return Port(device, write=write, read=read, fd=s.fileno(), takes_timeout=True, close=s.close)
 
 
 # ------------------------------------------------------------------ a real device (stage 1's physical half)
 
 
-PREFLIGHT_TIMEOUT_S = 1.0
-PREFLIGHT_QUIET_S = 0.3
+PREFLIGHT_TIMEOUT_S = 1.0      # how long the nonce may take to come back
+PREFLIGHT_QUIET_S = 0.3        # how long the line must then be silent before exposure may start
+PREFLIGHT_DEADLINE_S = 3.0     # the ABSOLUTE bound on the whole preflight: write, nonce and drain
+PREFLIGHT_READ_S = 0.05
 
 
 def device_identity(path: str) -> dict:
     """What the device node is, from the kernel: the resolved node and, when sysfs exposes it,
-    the USB vendor:product, product string and serial. Best effort; anything unreadable is
-    recorded as unavailable with its reason, never guessed — the run record must show it was the
-    CH340 (1a86:7523) and not some other port."""
+    the USB vendor:product, product string and serial. Best-effort METADATA, recorded so the run
+    record shows what was opened; anything unreadable is recorded as unavailable with its reason,
+    never guessed. It is not a gate by itself — the gate is `--expect-usb` (the owner's P3 of
+    the entry-point review), which compares this record against the declared device BEFORE the
+    port is opened."""
     out: dict = {"path": path}
     try:
         real = os.path.realpath(path)
@@ -1261,73 +1273,288 @@ def device_identity(path: str) -> dict:
     return out
 
 
-def loopback_preflight(port: Port, clock=time.monotonic) -> dict:
-    """Before spending an hour of exposure: is anything wired back at all? Writes one nonce line
-    that is NOT a rel-v4 frame, waits up to `PREFLIGHT_TIMEOUT_S` for bytes, then drains until
-    the line is quiet so nothing of it leaks into repetition 0's capture. Silence is a REFUSAL —
-    the jumper is not in place, or this is not the port — rather than an hour of censored
-    frames. Anything that does come back is recorded as it is (matched or not) and the run
-    proceeds: a garbled preflight is evidence too."""
+def identity_matches(identity: dict, expected: str) -> tuple[bool, str]:
+    """Does the recorded identity show the declared USB `vendor:product`? An UNAVAILABLE identity
+    does not match — it cannot confirm anything — and the reason says so; it is never taken as a
+    pass. Returns (matched, reason)."""
+    usb = identity.get("usb") or {}
+    if identity.get("error") or usb.get("unavailable") or not usb.get("idVendor"):
+        why = identity.get("error") or usb.get("reason") or "no USB identity recorded"
+        return False, f"identity unavailable, so {expected} cannot be confirmed: {why}"
+    seen = f"{usb.get('idVendor', '')}:{usb.get('idProduct', '')}".lower()
+    if seen != expected.strip().lower():
+        return False, f"expected USB {expected}, the node is {seen}"
+    return True, f"USB {seen} as expected"
+
+
+def _attempt_counters(fd) -> dict:
+    """One counter attempt, on its own: `read_icounters` reports an unavailable result itself,
+    and anything else that raises is recorded the same way rather than replacing the preflight's
+    primary error."""
+    try:
+        return read_icounters(fd)
+    except Exception as exc:                              # noqa: BLE001
+        return {"available": False, "reason": f"{type(exc).__name__}: {exc}",
+                "note": "no counter is reported; absence of a count is not a count of zero"}
+
+
+def loopback_preflight(port: Port, clock=time.monotonic, deadline_s: float | None = None) -> dict:
+    """Before spending an hour of exposure: is anything wired back at all, and is the line quiet?
+
+    Writes one nonce line that is NOT a rel-v4 frame, waits up to `PREFLIGHT_TIMEOUT_S` for it,
+    then drains until the line has been silent for `PREFLIGHT_QUIET_S` so nothing of it leaks
+    into repetition 0's capture. The WHOLE of that — write, nonce and drain — is bounded by one
+    absolute deadline (`PREFLIGHT_DEADLINE_S`), and every operation is capped by the remaining
+    budget: a line that keeps producing bytes used to keep the drain alive indefinitely, growing
+    the buffer, before `Run` had started its own clock (the owner's P2-1).
+
+    Three outcomes are named, and nothing is inferred from an exception:
+      * `refusal: "silence"` — nothing came back: the jumper is not in place, or this is not the
+        port; refused rather than an hour of censored frames;
+      * `refusal: "not_quiet"` — bytes were still arriving at the deadline: the exposure must
+        not start with an unbounded backlog; what arrived is kept;
+      * `error` — the write, a read or the port itself raised: the primary error is kept with the
+        phase it struck in, and everything observed up to it is kept too.
+    Anything that does come back (matched or not) is recorded byte-for-byte in `received_raw`
+    (exported as `preflight_rx.bin`) and, absent a refusal or error, the run proceeds: a garbled
+    preflight is evidence too. The counters are ATTEMPTED before and after, independently, on
+    success and on failure; availability and its reason are recorded, never assumed (P3).
+    """
+    deadline_s = PREFLIGHT_DEADLINE_S if deadline_s is None else deadline_s
     nonce = f"PREFLIGHT {uuid.uuid4().hex}\n".encode()
-    fd = port.fileno()
-    before = read_icounters(fd)
+    res: dict = {"nonce": nonce.decode(), "nonce_bytes": len(nonce),
+                 "deadline_s": deadline_s, "nonce_timeout_s": PREFLIGHT_TIMEOUT_S, "quiet_s": PREFLIGHT_QUIET_S,
+                 "phase": "counters_before", "failed_phase": None, "error": None,
+                 "quiet": False, "refusal": None, "refused": None}
+    try:
+        fd = port.fileno()
+    except Exception as exc:                              # noqa: BLE001 — recorded, and the counters say why
+        fd, res["fileno_error"] = None, f"{type(exc).__name__}: {exc}"
+    res["counters_before"] = _attempt_counters(fd)
     t0 = clock()
-    port.write(nonce, PREFLIGHT_TIMEOUT_S)
     got = bytearray()
-    while clock() - t0 < PREFLIGHT_TIMEOUT_S and nonce not in got:
-        got += port.read(0.05)
-    quiet_since = clock()
-    while clock() - quiet_since < PREFLIGHT_QUIET_S:      # drain the tail, whatever it is
-        chunk = port.read(0.05)
-        if chunk:
-            got += chunk
-            quiet_since = clock()
-    after = read_icounters(fd)
-    res = {"nonce_bytes": len(nonce), "received_bytes": len(got), "matched": nonce in got,
-           "received_hex_head": bytes(got[:64]).hex(), "elapsed_s": clock() - t0,
-           "counters_before": before, "counters_after": after, "counters_delta": counter_delta(before, after)}
-    if not got:
-        res["refused"] = ("no loopback: nothing came back within "
-                          f"{PREFLIGHT_TIMEOUT_S} s — the TX→RX jumper is not in place, or this is not the port")
+    quiet_since = t0
+
+    def remaining() -> float:
+        return deadline_s - (clock() - t0)
+
+    try:
+        res["phase"] = "write"
+        port.write(nonce, max(0.0, min(PREFLIGHT_TIMEOUT_S, remaining())))
+        res["phase"] = "nonce"
+        while remaining() > 0 and clock() - t0 < PREFLIGHT_TIMEOUT_S and nonce not in got:
+            got += port.read(min(PREFLIGHT_READ_S, remaining()))
+        res["phase"] = "drain"
+        quiet_since = clock()
+        while remaining() > 0 and clock() - quiet_since < PREFLIGHT_QUIET_S:
+            chunk = port.read(min(PREFLIGHT_READ_S, remaining()))
+            if chunk:
+                got += chunk
+                quiet_since = clock()
+        res["quiet"] = clock() - quiet_since >= PREFLIGHT_QUIET_S
+        res["phase"] = "done"
+    except Exception as exc:                              # noqa: BLE001 — the PRIMARY error, kept as is
+        res["error"] = f"{type(exc).__name__}: {exc}"
+        res["failed_phase"] = res["phase"]
+    finally:                                              # what was observed survives whatever happened
+        res["counters_after"] = _attempt_counters(fd)
+        res["counters_delta"] = counter_delta(res["counters_before"], res["counters_after"])
+        res["elapsed_s"] = clock() - t0
+        res["received_bytes"] = len(got)
+        res["matched"] = nonce in got
+        res["received_hex_head"] = bytes(got[:64]).hex()
+        res["received_sha256"] = hashlib.sha256(bytes(got)).hexdigest()
+        res["received_raw"] = bytes(got)
+    if res["error"] is None:
+        if not got:
+            res["refusal"] = "silence"
+            res["refused"] = ("no loopback: nothing came back within "
+                              f"{PREFLIGHT_TIMEOUT_S} s — the TX→RX jumper is not in place, or this is not the port")
+        elif not res["quiet"]:
+            res["refusal"] = "not_quiet"
+            res["refused"] = (f"not quiet: {len(got)} bytes received and still arriving at the {deadline_s} s "
+                              f"preflight deadline — the exposure would start with a backlog, so it does not start")
     return res
+
+
+def claim_destination(out: Path) -> tuple[int | None, str | None]:
+    """Claim `out` as a FRESH evidence destination, before any port opens or any byte is written.
+
+    A fresh directory is created; an existing directory is accepted only when it is empty. A
+    nonempty one is refused with none of its bytes changed — a mistyped rerun used to overwrite
+    `invocation.json`, the captures and the summary in place and leave the earlier run's extra
+    captures beside them, a mixture of two acquisitions reported as `export_complete` (the owner's
+    P2-3). Nothing is deleted to make room; a retry needs a new `--out`.
+
+    The claim itself is atomic: the invocation record is created with `O_EXCL`, so two runs
+    racing for the same empty directory cannot both proceed — the loser is refused here.
+    Returns `(fd, None)` on success — the caller writes the invocation through that fd — or
+    `(None, reason)`."""
+    try:
+        out.mkdir(parents=True, exist_ok=False)
+    except FileExistsError:
+        if not out.is_dir():
+            return None, f"destination exists and is not a directory: {out}"
+        try:
+            entries = sorted(p.name for p in out.iterdir())
+        except OSError as exc:
+            return None, f"destination could not be listed: {type(exc).__name__}: {exc}"
+        if entries:
+            return None, (f"destination is not empty ({len(entries)} entries, e.g. {entries[:3]}): an earlier "
+                          f"acquisition lives there and is left exactly as it is — use a new --out")
+    except OSError as exc:
+        return None, f"destination could not be created: {type(exc).__name__}: {exc}"
+    try:
+        return os.open(out / "invocation.json", os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644), None
+    except FileExistsError:
+        return None, f"destination was claimed by another run between the check and the claim: {out}"
+    except OSError as exc:
+        return None, f"destination could not be claimed: {type(exc).__name__}: {exc}"
+
+
+def _write_evidence(path: Path, data) -> bool:
+    """One evidence file. A seam: the tests fault it by name to prove each export is attempted
+    on its own and that a failed export never replaces the primary error."""
+    if isinstance(data, (bytes, bytearray)):
+        path.write_bytes(bytes(data))
+    else:
+        path.write_text(data)
+    return True
+
+
+EXIT_MEANING = {
+    0: "the run returned",
+    2: "a tool error — in the preflight or in the run; the evidence that exists is exported",
+    3: "refused before any exposure — the declared identity, or the preflight (silence / not quiet)",
+    4: "the device would not open",
+    5: "the evidence destination could not be claimed or written — nothing was spent on the device",
+}
 
 
 def run_device(a) -> int:
     """`run --device …`: one condition of plan §3 on a REAL serial device, under the registered
     exposure and stop rules, with everything the offline acceptance exports plus what only a
-    real fd can give — the device's kernel identity and the `TIOCGICOUNT` counters. Exit 0 when
-    the run returned, 2 on a tool error (the evidence is still exported), 3 when the preflight
-    refused, 4 when the device could not be opened. It adjudicates nothing; the exit code is the
-    tool's state, not a verdict on the link."""
+    real fd can give — the device's kernel identity and the `TIOCGICOUNT` counters, ATTEMPTED on
+    it. Exit codes are the tool's state (`EXIT_MEANING`), not a verdict on the link; the tool
+    adjudicates nothing.
+
+    Order, and what each step guarantees (the owner's entry-point review, 2026-09-13):
+      1. the destination is claimed, fresh and atomically, before anything else — P2-3;
+      2. the invocation is recorded; with `--expect-usb`, the recorded identity is compared to
+         the declared device BEFORE the port is opened, and a mismatch (or an unavailable
+         identity) is a refusal — P3;
+      3. the ports are opened; a failure closes whatever did open;
+      4. the preflight runs inside its own guarded boundary: its record, its raw bytes and its
+         counter attempts are exported independently on success and failure, a transport error
+         there is exit 2 with the evidence on disk, and an export failure before the exposure is
+         exit 5 rather than an hour spent without a record — P2-1, P2-2;
+      5. the run; and on every return path, every opened port is closed BEFORE the brief is
+         printed, so a close failure is in the brief too.
+    """
     out = Path(a.out)
-    out.mkdir(parents=True, exist_ok=True)
+    export_errors: list[str] = []
+    ports: list[tuple[str, Port]] = []                    # (device path, port), in the order opened
+
+    def attempt(what: str, fn):
+        try:
+            return fn()
+        except Exception as exc:                          # noqa: BLE001
+            export_errors.append(f"{what}: {type(exc).__name__}: {exc}")
+            return None
+
+    close_errors: list[str] = []
+    try:
+        code, stage, more = _device_steps(a, out, ports, attempt)
+    finally:                                              # every opened port, on every return path
+        for name, p in reversed(ports):
+            try:
+                p.close()
+            except Exception as exc:                      # noqa: BLE001 — reported, never masking the result
+                close_errors.append(f"{name}: {type(exc).__name__}: {exc}")
+    if stage == "run":                                    # complete only when the run's AND the entry's exports landed
+        more["export_complete"] = bool(more.get("run_export_complete")) and not export_errors
+    brief = {"label": a.label, "exit": code, "exit_meaning": EXIT_MEANING[code], "stage": stage,
+             "device": a.device, "exported_to": str(out), "ports_closed": [name for name, _ in ports],
+             "entry_export_errors": list(export_errors), "close_errors": close_errors, **more}
+    print(json.dumps(brief, sort_keys=True))
+    return code
+
+
+def _device_steps(a, out: Path, ports: list, attempt) -> tuple[int, str, dict]:
+    """The steps of `run_device`, returning (exit, stage, brief fields). `ports` is filled with
+    (device path, port) as devices open so the caller can close exactly what opened."""
+    fd, refused = claim_destination(out)
+    if fd is None:
+        return 5, "destination", {"refusal": "destination", "refused": refused}
     invocation = {"argv": list(a.argv), "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                   "label": a.label, "device": a.device, "host_device": a.host_device,
                   "capture_device": a.capture_device, "baud": a.baud,
                   "tx_during_rx": a.tx_during_rx, "repetitions": a.repetitions, "seconds": a.seconds,
                   "pace": a.pace, "read_timeout_s": a.read_timeout, "preflight": not a.no_preflight,
-                  "identity": {"source": device_identity(a.device),
-                               **({"host": device_identity(a.host_device)} if a.host_device else {}),
-                               **({"capture": device_identity(a.capture_device)} if a.capture_device else {})},
-                  "provenance": provenance()}
-    (out / "invocation.json").write_text(json.dumps(invocation, indent=1, sort_keys=True) + "\n")
+                  "expect_usb": a.expect_usb,
+                  "identity": {"source": attempt("identity source", lambda: device_identity(a.device)),
+                               **({"host": attempt("identity host", lambda: device_identity(a.host_device))}
+                                  if a.host_device else {}),
+                               **({"capture": attempt("identity capture", lambda: device_identity(a.capture_device))}
+                                  if a.capture_device else {})},
+                  "identity_note": ("the kernel's record of what was opened — metadata, not acceptance; "
+                                    "the gate is `expect_usb`, when given"),
+                  "provenance": attempt("provenance", provenance)}
+    if a.expect_usb:
+        ok, why = identity_matches(invocation["identity"]["source"] or {}, a.expect_usb)
+        invocation["identity_check"] = {"expected_usb": a.expect_usb, "matched": ok, "reason": why}
+
+    def write_invocation() -> bool:
+        try:
+            f = os.fdopen(fd, "w")                        # the claimed file; closes the claim fd
+        except Exception:
+            os.close(fd)
+            raise
+        with f:
+            f.write(json.dumps(invocation, indent=1, sort_keys=True) + "\n")
+        return True
+    if attempt("invocation.json", write_invocation) is None:
+        return 5, "invocation", {}
+    if a.expect_usb and not invocation["identity_check"]["matched"]:
+        return 3, "identity", {"refusal": "identity", "refused": invocation["identity_check"]["reason"],
+                               "identity": invocation["identity"]["source"]}
     try:
         source = serial_port(a.device, a.baud)
-        host = serial_port(a.host_device, a.baud) if a.host_device else None
-        capture = serial_port(a.capture_device, a.baud) if a.capture_device else None
+        ports.append((a.device, source))
+        host = capture = None
+        if a.host_device:
+            host = serial_port(a.host_device, a.baud)
+            ports.append((a.host_device, host))
+        if a.capture_device:
+            capture = serial_port(a.capture_device, a.baud)
+            ports.append((a.capture_device, capture))
     except Exception as exc:                              # noqa: BLE001 — a device that will not open
-        (out / "open_error.json").write_text(json.dumps(
-            {"error": f"{type(exc).__name__}: {exc}", "device": a.device}, indent=1) + "\n")
-        print(json.dumps({"label": a.label, "exit": 4, "error": f"{type(exc).__name__}: {exc}"}))
-        return 4
+        error = f"{type(exc).__name__}: {exc}"
+        attempt("open_error.json", lambda: _write_evidence(
+            out / "open_error.json", json.dumps({"error": error, "device": a.device,
+                                                 "opened": [name for name, _ in ports]}, indent=1) + "\n"))
+        return 4, "open", {"error": error}
     if not a.no_preflight:
-        pre = loopback_preflight(capture or source) if (capture or source) is source else \
-            {"skipped": True, "reason": "a two-device topology has no self-loopback to preflight"}
-        (out / "preflight.json").write_text(json.dumps(pre, indent=1, sort_keys=True) + "\n")
+        if capture is None:
+            pre = loopback_preflight(source)
+        else:
+            pre = {"skipped": True, "reason": "a two-device topology has no self-loopback to preflight",
+                   "error": None, "refusal": None, "refused": None, "received_raw": b""}
+        raw = pre.pop("received_raw", b"")
+        wrote_raw = attempt("preflight_rx.bin", lambda: _write_evidence(out / "preflight_rx.bin", raw))
+        pre["received_file"] = "preflight_rx.bin" if wrote_raw else None
+        wrote = attempt("preflight.json", lambda: _write_evidence(
+            out / "preflight.json", json.dumps(pre, indent=1, sort_keys=True) + "\n"))
+        summary = {"preflight": {k: pre.get(k) for k in ("matched", "received_bytes", "quiet", "elapsed_s",
+                                                          "failed_phase", "counters_delta", "skipped",
+                                                          "received_file")}}
+        if pre.get("error"):                              # the transport raised: the primary error, exit 2
+            return 2, "preflight", {"error": pre["error"], "failed_phase": pre.get("failed_phase"), **summary}
         if pre.get("refused"):
-            print(json.dumps({"label": a.label, "exit": 3, "refused": pre["refused"],
-                              "counters": pre.get("counters_after")}))
-            return 3
+            return 3, "preflight", {"refusal": pre["refusal"], "refused": pre["refused"],
+                                    "counters": pre.get("counters_after"), **summary}
+        if wrote is None or wrote_raw is None:            # no record of the preflight: nothing is spent
+            return 5, "preflight_export", summary
     run = Run(a.label, repetitions=a.repetitions, seconds=a.seconds, tx_during_rx=a.tx_during_rx)
     code, result = 0, None
     try:
@@ -1335,20 +1562,22 @@ def run_device(a) -> int:
                              read_timeout=a.read_timeout, pace=a.pace)
     except RigError as exc:
         code, result = 2, exc.result or {"stopped": str(exc), "error": str(exc)}
-    brief = {"label": a.label, "exit": code, "device": a.device, "topology": result.get("topology"),
-             "terminal": (result.get("terminal") or {}).get("reason"), "stopped": result.get("stopped"),
-             "error": result.get("error"), "repetitions_run": result.get("repetitions_run"),
-             "frames_accepted": result.get("frames_accepted"),
-             "confirmed_losses": result.get("confirmed_losses"), "losses": result.get("losses"),
-             "loss_metric": (result.get("loss_metric") or {}).get("status"),
-             "denominator_bytes": result.get("denominator_bytes"),
-             "losses_per_100k_bytes": result.get("losses_per_100k_bytes"),
-             "censored_in_flight": result.get("censored_in_flight"),
-             "unresolved_at_cutoff": result.get("unresolved_at_cutoff"),
-             "counters_delta": result.get("counters_delta"), "completed_exposure": result.get("completed_exposure"),
-             "export_complete": result.get("export_complete"), "exported_to": str(out)}
-    print(json.dumps(brief, sort_keys=True))
-    return code
+    return code, "run", {
+        "topology": result.get("topology"),
+        "terminal": (result.get("terminal") or {}).get("reason"), "stopped": result.get("stopped"),
+        "error": result.get("error"), "repetitions_run": result.get("repetitions_run"),
+        "frames_accepted": result.get("frames_accepted"),
+        "confirmed_losses": result.get("confirmed_losses"), "losses": result.get("losses"),
+        "loss_metric": (result.get("loss_metric") or {}).get("status"),
+        "denominator_bytes": result.get("denominator_bytes"),
+        "losses_per_100k_bytes": result.get("losses_per_100k_bytes"),
+        "censored_in_flight": result.get("censored_in_flight"),
+        "unresolved_at_cutoff": result.get("unresolved_at_cutoff"),
+        "counters_delta": result.get("counters_delta"), "completed_exposure": result.get("completed_exposure"),
+        "run_export_complete": result.get("export_complete"),
+        "run_export_errors": result.get("export_errors"),
+        "export_complete": None,                          # filled by the caller once the ports are closed
+    }
 
 
 def main(argv=None) -> int:
@@ -1365,7 +1594,11 @@ def main(argv=None) -> int:
     r.add_argument("--host-device", default=None, help="a separate port for the host's replies (two-device rig)")
     r.add_argument("--capture-device", default=None, help="a separate port the capture is read from")
     r.add_argument("--label", required=True)
-    r.add_argument("--out", required=True, help="evidence directory; everything is exported there")
+    r.add_argument("--out", required=True,
+                   help="evidence directory, claimed FRESH (new, or existing and empty); a nonempty one is refused")
+    r.add_argument("--expect-usb", default=None, metavar="VID:PID",
+                   help="refuse, before opening, unless the source node's USB identity is this (e.g. 1a86:7523); "
+                        "without it the identity is recorded as metadata only")
     r.add_argument("--baud", type=int, default=115200)
     tx = r.add_mutually_exclusive_group(required=True)
     tx.add_argument("--tx-during-rx", dest="tx_during_rx", action="store_true")

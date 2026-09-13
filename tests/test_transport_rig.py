@@ -576,12 +576,17 @@ class TheDriver(unittest.TestCase):
 
             def fileno(self):
                 return 7
+
+            def close(self):
+                seen["closed"] = True
         with unittest.mock.patch.dict(sys.modules, {"serial": types.SimpleNamespace(Serial=FakeSerial)}):
             port = rig.serial_port("NOT-A-DEVICE")
             port.write(b"x", 0.25)
+            port.close()
         self.assertTrue(seen["kwargs"]["exclusive"])
         self.assertEqual(seen["kwargs"]["write_timeout"], rig.WRITE_TIMEOUT_S)
         self.assertEqual(seen["write_timeout_at_write"], 0.25)
+        self.assertTrue(seen["closed"])                                        # the adapter's close is wired through
 
     def test_the_paced_model_puts_host_traffic_inside_the_source_transmission(self):
         """The independent variable of A1/B1. The source transmits continuously; a reply is due
@@ -1655,22 +1660,31 @@ class TheDeviceEntryPoint(unittest.TestCase):
     def setUp(self):
         self.d = Path(tempfile.mkdtemp(prefix="rigdev_"))
         self.addCleanup(lambda: __import__("shutil").rmtree(self.d, ignore_errors=True))
-        self.opened = []
+        self.opened, self.closed, self.opened_objects = [], [], []
 
-    def fake_serial(self, loopback=True, fail_open=False, fail_after=None):
-        """A `serial.Serial` double: exclusive, with timeouts, looping written bytes back."""
-        opened = self.opened
+    def fake_serial(self, loopback=True, fail_open=False, fail_after=None, fail_open_after=None,
+                    mode="loop"):
+        """A `serial.Serial` double: exclusive, with timeouts, looping written bytes back, and
+        recording every close. `mode` faults the PREFLIGHT specifically: "continuous" answers every
+        read with unrelated bytes forever (a line that never goes quiet); "detach_after_nonce"
+        returns the whole nonce on the first read and raises on the next; "write_fail" raises on
+        the first write. Reads advance a virtual clock (`self.now`) by the timeout they were given,
+        so the preflight's deadline can be proved without waiting for it."""
+        opened, closed = self.opened, self.closed
 
         class FakeSerial:
             def __init__(self, device, baud, **kw):
-                if fail_open:
+                if fail_open or (fail_open_after is not None and len(opened) >= fail_open_after):
                     raise OSError(f"could not open port {device}: No such file or directory")
                 opened.append({"device": device, "baud": baud, **kw})
-                self.buf, self.writes = bytearray(), 0
+                self.device, self.buf, self.writes, self.reads = device, bytearray(), 0, 0
                 self.timeout, self.write_timeout = kw.get("timeout"), kw.get("write_timeout")
+                self.now, self.closed_count = 0.0, 0
 
             def write(self, data):
                 self.writes += 1
+                if mode == "write_fail":
+                    raise OSError("write: device gone")
                 if fail_after is not None and self.writes > fail_after:
                     raise OSError("device detached")
                 if loopback:
@@ -1678,21 +1692,56 @@ class TheDeviceEntryPoint(unittest.TestCase):
                 return len(data)
 
             def read(self, n):
+                self.reads += 1
+                self.now += self.timeout or 0.0
+                if mode == "continuous":
+                    return b"background noise from something else on the line\n"
+                if mode == "detach_after_nonce" and self.reads > 1:
+                    raise OSError("read: device detached after the nonce")
                 out, self.buf = bytes(self.buf[:n]), self.buf[n:]
                 return out
 
             def fileno(self):
                 return 999999                              # not a real fd: the counters must say so
+
+            def close(self):
+                self.closed_count += 1
+                closed.append(self.device)
         return types.SimpleNamespace(Serial=FakeSerial)
 
-    def run_cli(self, *extra, serial=None):
+    def run_cli(self, *extra, serial=None, out=None, virtual_clock=False, fault_export=()):
+        """Drive `main(["run", …])` end to end. `virtual_clock` hands the preflight the fake
+        port's own clock (advanced by each read's timeout) so its deadline is proved without real
+        waiting; `fault_export` names evidence files whose write must raise."""
         import contextlib
         import io
-        argv = ["run", "--device", "/dev/NOT-A-DEVICE", "--label", "t", "--out", str(self.d),
+        argv = ["run", "--device", "/dev/NOT-A-DEVICE", "--label", "t", "--out", str(out or self.d),
                 "--repetitions", "1", *extra]
         buf = io.StringIO()
-        with unittest.mock.patch.dict(sys.modules, {"serial": serial or self.fake_serial()}):
-            with unittest.mock.patch.object(rig.time, "sleep", lambda s: None):
+        original_preflight, original_write = rig.loopback_preflight, rig._write_evidence
+
+        def preflight(port, **kw):
+            s = self.opened_objects[-1] if self.opened_objects else None
+            return original_preflight(port, clock=(lambda: s.now) if (virtual_clock and s) else time.monotonic, **kw)
+
+        def write_evidence(path, data):
+            if path.name in fault_export:
+                raise OSError(f"disk says no: {path.name}")
+            return original_write(path, data)
+
+        module = serial or self.fake_serial()
+        real_serial = module.Serial
+        objects = self.opened_objects = []
+
+        def remember(*args, **kw):
+            o = real_serial(*args, **kw)
+            objects.append(o)
+            return o
+        module.Serial = remember
+        with unittest.mock.patch.dict(sys.modules, {"serial": module}):
+            with unittest.mock.patch.object(rig.time, "sleep", lambda s: None), \
+                    unittest.mock.patch.object(rig, "loopback_preflight", preflight), \
+                    unittest.mock.patch.object(rig, "_write_evidence", write_evidence):
                 with contextlib.redirect_stdout(buf):
                     code = rig.main(argv)
         return code, json.loads(buf.getvalue().strip().splitlines()[-1])
@@ -1717,6 +1766,12 @@ class TheDeviceEntryPoint(unittest.TestCase):
         self.assertEqual(inv["provenance"]["tool_sha256"], rig.self_sha256())
         self.assertEqual(self.opened[0]["baud"], 115200)
         self.assertTrue(self.opened[0]["exclusive"])
+        self.assertEqual(self.closed, ["/dev/NOT-A-DEVICE"])                    # released on the way out
+        self.assertEqual(brief["ports_closed"], ["/dev/NOT-A-DEVICE"])
+        pre = json.loads((self.d / "preflight.json").read_text())
+        self.assertEqual(pre["received_file"], "preflight_rx.bin")
+        self.assertEqual(pre["received_sha256"], rig.hashlib.sha256((self.d / "preflight_rx.bin").read_bytes()).hexdigest())
+        self.assertEqual((self.d / "preflight_rx.bin").read_bytes().decode(), pre["nonce"])   # the nonce, as sent
 
     def test_the_preflight_nonce_is_drained_and_never_reaches_the_capture(self):
         code, _ = self.run_cli("--no-tx-during-rx")
@@ -1729,10 +1784,13 @@ class TheDeviceEntryPoint(unittest.TestCase):
     def test_silence_at_the_preflight_refuses_before_any_exposure(self):
         code, brief = self.run_cli("--no-tx-during-rx", serial=self.fake_serial(loopback=False))
         self.assertEqual(code, 3, brief)
+        self.assertEqual(brief["refusal"], "silence")
         self.assertIn("no loopback", brief["refused"])
         self.assertTrue((self.d / "preflight.json").is_file())
+        self.assertEqual((self.d / "preflight_rx.bin").read_bytes(), b"")         # nothing came: recorded as nothing
         self.assertFalse((self.d / "run.json").exists())                        # nothing was spent
-        self.assertLessEqual(self.opened[0].get("_writes", 0), 1)
+        self.assertEqual(self.opened_objects[0].writes, 1)
+        self.assertEqual(self.closed, ["/dev/NOT-A-DEVICE"])
 
     def test_no_preflight_skips_the_check_and_silence_is_then_a_measured_total_loss(self):
         """Without the preflight, a repetition that drains to silence is what the analyser has
@@ -1751,6 +1809,15 @@ class TheDeviceEntryPoint(unittest.TestCase):
         self.assertIn("could not open port", brief["error"])
         self.assertTrue((self.d / "open_error.json").is_file())
         self.assertTrue((self.d / "invocation.json").is_file())               # the attempt is recorded
+        self.assertEqual(self.closed, [])                                       # nothing opened, nothing to close
+
+    def test_a_second_device_that_will_not_open_closes_the_first(self):
+        code, brief = self.run_cli("--no-tx-during-rx", "--capture-device", "/dev/OTHER",
+                                   serial=self.fake_serial(fail_open_after=1))
+        self.assertEqual(code, 4, brief)
+        self.assertEqual([o["device"] for o in self.opened], ["/dev/NOT-A-DEVICE"])
+        self.assertEqual(self.closed, ["/dev/NOT-A-DEVICE"])                    # the one that did open is released
+        self.assertEqual(json.loads((self.d / "open_error.json").read_text())["opened"], ["/dev/NOT-A-DEVICE"])
 
     def test_a_tool_error_mid_run_is_exit_2_and_the_evidence_still_lands(self):
         code, brief = self.run_cli("--no-tx-during-rx", serial=self.fake_serial(fail_after=5))
@@ -1761,6 +1828,7 @@ class TheDeviceEntryPoint(unittest.TestCase):
         self.assertEqual(on_disk["frames_accepted"], 4)                        # the preflight took write 1
         self.assertEqual(on_disk["frames_uncertain"], 1)
         self.assertTrue((self.d / "capture_000.bin").is_file())
+        self.assertEqual(self.closed, ["/dev/NOT-A-DEVICE"])                    # closed after the dead run too
 
     def test_the_tx_condition_runs_too_and_its_echoes_are_accounted(self):
         code, brief = self.run_cli("--tx-during-rx")
@@ -1778,6 +1846,7 @@ class TheDeviceEntryPoint(unittest.TestCase):
         self.assertTrue(pre["skipped"])                                        # nothing loops back to preflight
         self.assertEqual(code, 0, brief)                                       # the fakes are separate: silence,
         self.assertEqual(brief["confirmed_losses"], 302)                       # measured on the capture device
+        self.assertEqual(sorted(self.closed), ["/dev/NOT-A-DEVICE", "/dev/OTHER"])   # both released
 
     def test_the_offline_subcommands_still_answer(self):
         import contextlib
@@ -1795,6 +1864,221 @@ class TheDeviceEntryPoint(unittest.TestCase):
             rig.main(["run", "--device", "x", "--label", "l", "--out", str(self.d), "--tx-during-rx"])
         self.assertEqual((seen["repetitions"], seen["seconds"]), (rig.EXPOSURE_REPETITIONS, rig.EXPOSURE_SECONDS))
         self.assertEqual((seen["baud"], seen["read_timeout"], seen["pace"]), (115200, 0.05, False))
+        self.assertIsNone(seen["expect_usb"])                                  # metadata only, unless declared
+
+    # ---- the owner's entry-point review of 2026-09-13: P2-1, the preflight has an absolute deadline
+
+    def test_a_line_that_never_goes_quiet_is_refused_at_the_preflight_deadline_with_its_bytes_kept(self):
+        """P2-1 (as received): every nonempty read reset `quiet_since`, so a line that kept
+        producing bytes kept the drain alive indefinitely — before `Run` had started its clock —
+        and the buffer grew with every read. Now the whole preflight is bounded by one absolute
+        deadline; expiry during the drain is a NAMED refusal, the bytes are kept, and nothing is
+        spent on the exposure."""
+        code, brief = self.run_cli("--no-tx-during-rx", serial=self.fake_serial(mode="continuous"),
+                                   virtual_clock=True)
+        self.assertEqual(code, 3, brief)
+        self.assertEqual((brief["stage"], brief["refusal"]), ("preflight", "not_quiet"))
+        self.assertIn("still arriving", brief["refused"])
+        port = self.opened_objects[0]
+        self.assertLessEqual(port.now, rig.PREFLIGHT_DEADLINE_S + 1e-9)          # bounded: the fake clock stopped there
+        self.assertGreater(port.now, rig.PREFLIGHT_TIMEOUT_S)                   # …and it did go past the nonce wait
+        pre = json.loads((self.d / "preflight.json").read_text())
+        self.assertFalse(pre["quiet"])
+        self.assertFalse(pre["matched"])
+        self.assertEqual(pre["received_bytes"], len((self.d / "preflight_rx.bin").read_bytes()))
+        self.assertGreater(pre["received_bytes"], 0)                            # what arrived is preserved …
+        self.assertIn(b"background noise", (self.d / "preflight_rx.bin").read_bytes())
+        self.assertEqual(pre["elapsed_s"], port.now)
+        self.assertFalse((self.d / "run.json").exists())                        # … and no exposure began
+        self.assertEqual(self.closed, ["/dev/NOT-A-DEVICE"])
+
+    def test_the_preflight_deadline_caps_every_read_and_a_late_nonce_still_passes(self):
+        """The reads are capped by the remaining budget, and a nonce that arrives late but within
+        its own wait, followed by quiet, is a pass — the clean control of the deadline."""
+        seen = []
+
+        class Late:
+            def __init__(self):
+                self.now, self.pending = 0.0, b""
+
+            def write(self, data, timeout=None):
+                self.pending = data
+                return len(data)
+
+            def read(self, t):
+                seen.append(t)
+                self.now += t
+                if self.now >= 0.8 and self.pending:                          # the nonce shows up late
+                    out, self.pending = self.pending, b""
+                    return out
+                return b""
+        port = Late()
+        res = rig.loopback_preflight(rig.callable_port("late", port.write, port.read, takes_timeout=True),
+                                     clock=lambda: port.now)
+        self.assertTrue(res["matched"] and res["quiet"])
+        self.assertIsNone(res["refusal"])
+        self.assertIsNone(res["error"])
+        self.assertLessEqual(max(seen), rig.PREFLIGHT_READ_S)
+        self.assertLessEqual(port.now, rig.PREFLIGHT_DEADLINE_S)
+        # and with a deadline shorter than the quiet window, expiry during the drain is the refusal
+        port = Late()
+        res = rig.loopback_preflight(rig.callable_port("late", port.write, port.read, takes_timeout=True),
+                                     clock=lambda: port.now, deadline_s=0.9)
+        self.assertEqual(res["refusal"], "not_quiet")
+        self.assertTrue(res["matched"])                                        # the nonce did come …
+        self.assertFalse(res["quiet"])                                         # … but quiet was not proved
+        self.assertLessEqual(port.now, 0.9 + 1e-9)
+        self.assertEqual(res["received_raw"], res["nonce"].encode())
+
+    # ---- P2-2, the preflight has its own guarded boundary
+
+    def test_a_detach_after_the_nonce_is_exit_2_with_the_nonce_the_error_and_both_counter_attempts_on_disk(self):
+        """P2-2 (as received): the preflight ran outside any guard, so a read that raised after the
+        nonce had arrived escaped as a traceback — only `invocation.json` existed, one counter was
+        sampled, the received nonce and the diagnosis were lost. Now the transport error is the
+        primary error, exit 2, with everything observed up to it on disk."""
+        code, brief = self.run_cli("--no-tx-during-rx", serial=self.fake_serial(mode="detach_after_nonce"))
+        self.assertEqual(code, 2, brief)
+        self.assertEqual(brief["stage"], "preflight")
+        self.assertIn("detached after the nonce", brief["error"])
+        self.assertEqual(brief["failed_phase"], "drain")                        # read 1 brought the nonce; read 2 died
+        pre = json.loads((self.d / "preflight.json").read_text())
+        self.assertEqual(pre["error"], brief["error"])
+        self.assertTrue(pre["matched"])
+        self.assertEqual(pre["received_bytes"], pre["nonce_bytes"])
+        self.assertEqual((self.d / "preflight_rx.bin").read_bytes().decode(), pre["nonce"])   # the nonce, kept
+        for k in ("counters_before", "counters_after"):                        # both ATTEMPTED, independently
+            self.assertFalse(pre[k]["available"])
+            self.assertIn("reason", pre[k])
+        self.assertIn("elapsed_s", pre)
+        self.assertFalse((self.d / "run.json").exists())
+        self.assertEqual(self.closed, ["/dev/NOT-A-DEVICE"])
+
+    def test_a_write_fault_at_the_preflight_is_exit_2_in_the_write_phase(self):
+        code, brief = self.run_cli("--no-tx-during-rx", serial=self.fake_serial(mode="write_fail"))
+        self.assertEqual(code, 2, brief)
+        self.assertEqual((brief["stage"], brief["failed_phase"]), ("preflight", "write"))
+        pre = json.loads((self.d / "preflight.json").read_text())
+        self.assertEqual(pre["received_bytes"], 0)
+        self.assertIsNone(pre["refusal"])                                       # an error is not "silence"
+        self.assertIn("device gone", pre["error"])
+        self.assertFalse((self.d / "run.json").exists())
+        self.assertEqual(self.closed, ["/dev/NOT-A-DEVICE"])
+
+    def test_a_preflight_export_failure_never_replaces_the_transport_error_and_the_other_files_still_land(self):
+        code, brief = self.run_cli("--no-tx-during-rx", serial=self.fake_serial(mode="detach_after_nonce"),
+                                   fault_export=("preflight.json",))
+        self.assertEqual(code, 2, brief)                                        # the PRIMARY error decides
+        self.assertIn("detached after the nonce", brief["error"])
+        self.assertEqual(len(brief["entry_export_errors"]), 1)
+        self.assertIn("preflight.json", brief["entry_export_errors"][0])
+        self.assertFalse((self.d / "preflight.json").exists())
+        self.assertTrue((self.d / "preflight_rx.bin").is_file())                # attempted on its own
+        self.assertEqual(self.closed, ["/dev/NOT-A-DEVICE"])
+
+    def test_a_preflight_that_passed_but_could_not_be_recorded_is_exit_5_and_spends_nothing(self):
+        code, brief = self.run_cli("--no-tx-during-rx", fault_export=("preflight.json",))
+        self.assertEqual(code, 5, brief)
+        self.assertEqual(brief["stage"], "preflight_export")
+        self.assertFalse((self.d / "run.json").exists())                        # no exposure without its record
+        self.assertEqual(self.opened_objects[0].writes, 1)                      # only the nonce was written
+        self.assertEqual(self.closed, ["/dev/NOT-A-DEVICE"])
+
+    # ---- P2-3, the destination is claimed fresh before any port opens
+
+    def test_a_nonempty_destination_is_refused_before_any_port_opens_and_left_byte_identical(self):
+        """P2-3 (as received): an existing `--out` was accepted and its invocation overwritten
+        before the port opened; the exporter then replaced the captures and the summary and left
+        the earlier run's extra captures beside them — a mixture of two acquisitions, exit 0,
+        `export_complete: true`. Now a nonempty destination is refused with nothing changed."""
+        old = {"invocation.json": b'{"old": "invocation"}\n', "run.json": b'{"old": "run"}\n',
+               "capture_000.bin": b"old capture", "capture_001.bin": b"old second capture"}
+        for name, data in old.items():
+            (self.d / name).write_bytes(data)
+        before = {p.name: (p.read_bytes(), p.stat().st_mtime_ns) for p in self.d.iterdir()}
+        code, brief = self.run_cli("--no-tx-during-rx")
+        self.assertEqual(code, 5, brief)
+        self.assertEqual((brief["stage"], brief["refusal"]), ("destination", "destination"))
+        self.assertIn("not empty", brief["refused"])
+        self.assertEqual(self.opened, [])                                       # the opener was never called
+        after = {p.name: (p.read_bytes(), p.stat().st_mtime_ns) for p in self.d.iterdir()}
+        self.assertEqual(after, before)                                         # byte-identical, nothing added
+        self.assertEqual(sorted(after), sorted(old))
+
+    def test_a_fresh_destination_is_created_and_an_empty_one_is_accepted(self):
+        fresh = self.d / "new" / "deeper"
+        code, brief = self.run_cli("--no-tx-during-rx", out=fresh)
+        self.assertEqual(code, 0, brief)
+        self.assertTrue((fresh / "run.json").is_file())
+        # a second run into the SAME directory is now a refusal, and the first run's files are intact
+        first = {p.name: p.read_bytes() for p in fresh.iterdir()}
+        self.opened.clear()
+        code, brief = self.run_cli("--no-tx-during-rx", out=fresh)
+        self.assertEqual(code, 5, brief)
+        self.assertEqual(self.opened, [])
+        self.assertEqual({p.name: p.read_bytes() for p in fresh.iterdir()}, first)
+
+    def test_the_claim_is_atomic_a_directory_claimed_between_check_and_claim_is_refused(self):
+        """Two runs racing for one empty directory: the check saw it empty, the other run's
+        `invocation.json` then appeared, and `O_EXCL` refuses the claim — no overwrite."""
+        empty = self.d / "race"
+        empty.mkdir()
+        (empty / "invocation.json").write_bytes(b"the other run's claim\n")
+        with unittest.mock.patch.object(rig.Path, "iterdir", lambda self_: iter(())):    # the stale "empty" view
+            fd, why = rig.claim_destination(empty)
+        self.assertIsNone(fd)
+        self.assertIn("claimed by another run", why)
+        self.assertEqual((empty / "invocation.json").read_bytes(), b"the other run's claim\n")
+        # and a file where the directory should be is refused too
+        as_file = self.d / "a_file"
+        as_file.write_bytes(b"x")
+        fd, why = rig.claim_destination(as_file)
+        self.assertIsNone(fd)
+        self.assertIn("not a directory", why)
+
+    # ---- P3, the recorded identity is metadata; `--expect-usb` is the gate
+
+    def test_expect_usb_refuses_before_opening_when_the_identity_is_unavailable_or_different(self):
+        code, brief = self.run_cli("--no-tx-during-rx", "--expect-usb", "1a86:7523")
+        self.assertEqual(code, 3, brief)                                        # /dev/NOT-A-DEVICE has no identity
+        self.assertEqual((brief["stage"], brief["refusal"]), ("identity", "identity"))
+        self.assertIn("cannot be confirmed", brief["refused"])
+        self.assertEqual(self.opened, [])                                       # refused BEFORE the port opened
+        inv = json.loads((self.d / "invocation.json").read_text())              # the attempt is recorded
+        self.assertFalse(inv["identity_check"]["matched"])
+        self.assertFalse((self.d / "preflight.json").exists())
+        other = {"path": "/dev/NOT-A-DEVICE", "realpath": "/dev/ttyUSB9", "char_device": True, "rdev": "188:9",
+                 "usb": {"idVendor": "0403", "idProduct": "6001"}}
+        with unittest.mock.patch.object(rig, "device_identity", lambda path: dict(other)):
+            code, brief = self.run_cli("--no-tx-during-rx", "--expect-usb", "1a86:7523", out=self.d / "ftdi")
+        self.assertEqual(code, 3, brief)
+        self.assertIn("the node is 0403:6001", brief["refused"])
+        self.assertEqual(self.opened, [])
+
+    def test_expect_usb_passes_the_declared_device_and_without_it_identity_is_metadata_only(self):
+        ch340 = {"path": "/dev/NOT-A-DEVICE", "realpath": "/dev/ttyUSB0", "char_device": True, "rdev": "188:0",
+                 "usb": {"idVendor": "1a86", "idProduct": "7523", "product": "USB Serial"}}
+        with unittest.mock.patch.object(rig, "device_identity", lambda path: dict(ch340)):
+            code, brief = self.run_cli("--no-tx-during-rx", "--expect-usb", "1A86:7523")   # case-insensitive
+        self.assertEqual(code, 0, brief)
+        inv = json.loads((self.d / "invocation.json").read_text())
+        self.assertTrue(inv["identity_check"]["matched"])
+        # without the flag a different device runs — and the record says the identity is not acceptance
+        other = {**ch340, "usb": {"idVendor": "0403", "idProduct": "6001"}}
+        with unittest.mock.patch.object(rig, "device_identity", lambda path: dict(other)):
+            code, brief = self.run_cli("--no-tx-during-rx", out=self.d / "generic")
+        self.assertEqual(code, 0, brief)
+        inv = json.loads((self.d / "generic" / "invocation.json").read_text())
+        self.assertNotIn("identity_check", inv)
+        self.assertIn("not acceptance", inv["identity_note"])
+
+    def test_identity_matches_never_passes_an_unavailable_identity(self):
+        self.assertEqual(rig.identity_matches({"path": "x", "error": "FileNotFoundError: x"}, "1a86:7523")[0], False)
+        self.assertEqual(rig.identity_matches({"usb": {"unavailable": True, "reason": "no idVendor"}}, "1a86:7523")[0],
+                         False)
+        self.assertEqual(rig.identity_matches({"usb": {}}, "1a86:7523")[0], False)
+        self.assertEqual(rig.identity_matches({"usb": {"idVendor": "1a86", "idProduct": "7523"}}, "1a86:7523"),
+                         (True, "USB 1a86:7523 as expected"))
 
 
 if __name__ == "__main__":
