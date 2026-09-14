@@ -1,0 +1,45 @@
+{
+  "tool": "b2_runner.py/0.1.0",
+  "session": "B2Q",
+  "scope": "session",
+  "outcome": "PASS",
+  "findings": [],
+  "kills": [],
+  "measured_rate_per_hour": 2976.9824011102987,
+  "audit_policy": "all-self-reporting",
+  "instrument": {
+    "rate": 2976.9824011102987,
+    "audit_policy": "all-self-reporting",
+    "run_log_validation": {
+      "scored": 20,
+      "audited": 20,
+      "chain_length": 21
+    },
+    "rate_report": {
+      "candidates": 18,
+      "evals_per_hour": 2976.9824011102987,
+      "cov": 0.018461536053035393,
+      "session_span_s": 24.24372354500008
+    }
+  },
+  "binding_checked": true,
+  "replay": {
+    "scope": "session",
+    "measurement": {
+      "records_checked": 18,
+      "readouts_served": 20
+    },
+    "replay": {
+      "records_replayed": 18,
+      "pairs": [
+        0
+      ]
+    },
+    "pair_seeds": [
+      [
+        3890725659,
+        1378470437
+      ]
+    ]
+  }
+}

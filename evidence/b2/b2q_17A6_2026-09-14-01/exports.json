@@ -1,0 +1,48 @@
+{
+ "complete": true,
+ "files": {
+  "audits.json": {
+   "bytes": 102676,
+   "sha256": "4f9e6e557a5d0af0f67763be6064e6f613a2e7dec2f19c4f631daae786ea572e",
+   "status": "ok"
+  },
+  "console.log": {
+   "bytes": 162779,
+   "sha256": "f01c937ac6c97ae4d43140dd1cfe462d266c9f12f07ea056642693377f74db5f",
+   "status": "ok"
+  },
+  "console.ts.log": {
+   "bytes": 179187,
+   "sha256": "73304347f9f041b85cf6dcc43c36e775d32d732dceeda704af9821efaafccd8e",
+   "status": "ok"
+  },
+  "run_log.json": {
+   "bytes": 120685,
+   "sha256": "873c2277172280e448b38cefa2200d530e0d5de8076c228f8ddbfd3ce51e9bea",
+   "status": "ok"
+  },
+  "timeline.json": {
+   "bytes": 112190,
+   "sha256": "713551c7c16955018028984d0e0f8f5d3f9e209d33b6445fb729466811b2c926",
+   "status": "ok"
+  }
+ },
+ "required": [
+  "console.log",
+  "console.ts.log",
+  "timeline.json",
+  "session_summary",
+  "run_log.json",
+  "audits.json"
+ ],
+ "schema": "b1_session_exports",
+ "schema_version": "1.0.0",
+ "statuses": {
+  "audits.json": "ok",
+  "console.log": "ok",
+  "console.ts.log": "ok",
+  "run_log.json": "ok",
+  "session_summary": "ok",
+  "timeline.json": "ok"
+ }
+}
