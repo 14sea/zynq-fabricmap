@@ -1,0 +1,60 @@
+{
+ "argv": [
+  "run",
+  "--device",
+  "/dev/ebaz-uart",
+  "--expect-usb",
+  "1a86:7523",
+  "--label",
+  "rehearsal-notx",
+  "--no-tx-during-rx",
+  "--repetitions",
+  "2",
+  "--out",
+  "evidence/b1q/transport_native_orangepi_2026_09_14/rehearsal_notx"
+ ],
+ "at": "2026-09-14T18:08:50Z",
+ "baud": 115200,
+ "capture_device": null,
+ "construction_errors": [],
+ "device": "/dev/ebaz-uart",
+ "expect_usb": "1a86:7523",
+ "host_device": null,
+ "identity": {
+  "source": {
+   "char_device": true,
+   "path": "/dev/ebaz-uart",
+   "rdev": "188:0",
+   "realpath": "/dev/ttyUSB0",
+   "usb": {
+    "busnum": "5",
+    "devnum": "3",
+    "idProduct": "7523",
+    "idVendor": "1a86",
+    "product": "USB Serial"
+   }
+  }
+ },
+ "identity_check": {
+  "expected_usb": "1a86:7523",
+  "matched": true,
+  "reason": "USB 1a86:7523 as expected"
+ },
+ "identity_note": "the kernel's record of what was opened \u2014 metadata, not acceptance; the gate is `expect_usb`, when given",
+ "label": "rehearsal-notx",
+ "pace": false,
+ "preflight": true,
+ "provenance": {
+  "framing_module": "/home/orangepi/zynq_psoracle/host/l5_notary.py",
+  "framing_sha256": "0ceab57cecf210fa449a13e5250038e611391f9500cf996d87b8fa5e80f25695",
+  "instrument_commit": null,
+  "instrument_root": "/home/orangepi/zynq_psoracle",
+  "loss_unit": "one expected frame that was not delivered byte-exact, counted once",
+  "tool": "host/transport_rig.py",
+  "tool_sha256": "e2af873d521b340d2f42d1c9248e2a28f9669687b2d24c762638dd05a5543478"
+ },
+ "read_timeout_s": 0.05,
+ "repetitions": 2,
+ "seconds": 3600.0,
+ "tx_during_rx": false
+}

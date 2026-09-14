@@ -1,0 +1,42 @@
+{
+ "censored_in_flight": 0,
+ "close_attempted": [
+  "/dev/ebaz-uart"
+ ],
+ "close_errors": [],
+ "completed_exposure": true,
+ "confirmed_losses": 0,
+ "counters_delta": {
+  "available": false,
+  "reason": "OSError: [Errno 22] Invalid argument"
+ },
+ "denominator_bytes": 197198,
+ "device": "/dev/ebaz-uart",
+ "entry_export_errors": [],
+ "entry_record": "entry.json",
+ "error": null,
+ "exit": 0,
+ "exit_meaning": "the run returned",
+ "export_complete": true,
+ "exported_to": "evidence/b1q/transport_native_orangepi_2026_09_14/rehearsal_notx",
+ "frames_accepted": 604,
+ "label": "rehearsal-notx",
+ "loss_metric": "exact",
+ "losses": 0,
+ "losses_per_100k_bytes": 0.0,
+ "ports_closed": [
+  "/dev/ebaz-uart"
+ ],
+ "ports_opened": [
+  "/dev/ebaz-uart"
+ ],
+ "repetitions_run": 2,
+ "run_export_complete": true,
+ "run_export_errors": [],
+ "run_record": "run.json",
+ "stage": "run",
+ "stopped": "exposure: 2 repetitions completed",
+ "terminal": "exposure_repetitions",
+ "topology": "one device: source, host and capture are the same port, so this rig's own host traffic returns in the capture and is counted as host_echo",
+ "unresolved_at_cutoff": 0
+}
