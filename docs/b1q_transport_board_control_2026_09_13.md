@@ -69,7 +69,13 @@ execute as issued. This tool cannot separate them and does not try. Specifically
   transport error before it; the remaining finalisation and both counters are still attempted;
   a response that completed before its file failed is still classified and its record names the
   missing file. `control.json` / `entry.json` are written after acquisition and cannot stop past
-  commands; they recompute `export_complete` truthfully.
+  commands; they recompute `export_complete` truthfully. **The terminal status is decided
+  explicitly after the loop** (the sixth review, 2026-09-14): if the last read's raw export
+  failed, the terminal is `tool_error` / `export read_NNNN.bin` and the exit is 2 **whatever that
+  read observed** — a cutoff, a missing prompt, a banner or a completed response — and the
+  observation is kept whole under `terminal.observed` (the read stays unclassified or classified
+  exactly as it was, partial bytes and denominators untouched). A transport error on the same
+  read stays the primary error with the export error beside it.
 - **Statistics name their denominators** (P2-4): `reads_attempted` (a command was issued),
   `reads_completed` (a prompt, no banner, no error), `reads_compared` (classified identical or
   mismatch; every completed read is compared), `reads_unclassified` (with `unclassified_by_reason`:
@@ -122,7 +128,7 @@ unit and an explicit `claims_not_made`.
 
 ## Offline proof
 
-`tests/test_board_transport_soak.py`, **45 tests**, drives `main([...])` against a fake U-Boot;
+`tests/test_board_transport_soak.py`, **48 tests**, drives `main([...])` against a fake U-Boot;
 no real port is opened. Each of the six findings of the fourth review, and each of the four of the
 fifth, has a test that fails on the reviewed implementation. The fifth review's: each required
 export (`sync.bin`, `reference.bin`, `reference.json`, `read_0000.bin`, `read_0001.bin`) faulted
@@ -133,7 +139,10 @@ with the genuine echo/prompt positive control kept; a banner with a prompt, with
 the reference, at the sync, banner-like text in the data column, and the four declared shapes;
 zero compared, an exposure cut-off, mixed completed-plus-unclassified with the compared
 denominator, and the positive and all-differ controls — stdout and archive compared in each.
-The fourth review's: an ASCII-column deletion and a ninth hex digit as mismatches (plus damage in the
+The sixth review's: a 67-byte cutoff alone (exit 0), the same cutoff with its raw export failed
+(exit 2, stage `export`, the cutoff and its 67 partial bytes retained under `observed`, statistics
+still null), and a silent cutoff, a missing prompt and a banner-with-prompt each with a failed
+export. The fourth review's: an ASCII-column deletion and a ninth hex digit as mismatches (plus damage in the
 address, hex, inter-word space and ASCII regions, and on a later line of a multi-line response);
 a provenance failure stopping before the port opens; a detach mid-response keeping the partial
 bytes, attempting both counters and still finalising; a failed `control.json` and a failed
@@ -159,7 +168,7 @@ read it, and none of its fields are enforced by the CLI.
   "authorises": "one run of host/board_transport_soak.py on 17A6 at the Zynq> prompt",
   "measures": "whether repeated identical md.l responses are byte-identical; the cause of any mismatch is unknown",
   "does_not": "bound or predict B2Q frame loss, qualify the carrier, lift the B1Q transport stop-loss, or authorise a B2Q or B2 session",
-  "tool_sha256": "73447f6172aff650fd697d10e8d24cb600bfce7fe97ad281f2fea104991e843e",
+  "tool_sha256": "37dfad21f75d9377dd03d2c69ce781135934082677bd349a46c034b9e332342e",
   "b1_manifest_sha256": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
   "operator_checks": [
     "the board on this console is 17A6 (the USB VID:PID identifies the adapter only)",

@@ -553,8 +553,6 @@ def _steps(a, out: Path, ports: list, attempt, export_errors: list[str]) -> tupl
             rec.update(unclassified_reason="board_reset", saw_prompt=bool(obs.get("saw_prompt")))
             records.append(rec)
             terminal = banner_terminal(f"read {i}", obs.get("saw_prompt"), raw, at_read=i)
-            if read_export:
-                terminal["export_error"] = read_export
             break
         if not obs.get("saw_prompt"):
             # a missing prompt is NOT evidence of a board reset without a banner; a cutoff by the
@@ -573,8 +571,6 @@ def _steps(a, out: Path, ports: list, attempt, export_errors: list[str]) -> tupl
                                        "cause unknown — transport loss, command failure or cutoff "
                                        "are all consistent with this observation"),
                             "partial_bytes": len(raw)}
-            if read_export:
-                terminal["export_error"] = read_export
             break
         body, framing = split_framing(raw, command)
         rec.update(completed=True, body_bytes=len(body), framing=framing)
@@ -593,10 +589,10 @@ def _steps(a, out: Path, ports: list, attempt, export_errors: list[str]) -> tupl
         records.append(rec)
         if read_export:
             # the response completed and is classified, but its raw bytes did not land: stop
-            # before the next command (the owner's P2-1)
-            terminal = {"reason": "tool_error", "phase": f"export read_{i:04d}.bin", "detail": read_export,
-                        "at_read": i, "note": ("a required acquisition export failed; the run stopped "
-                                               "before the next command")}
+            # before the next command (the owner's P2-1); the terminal is decided below
+            terminal = {"reason": "read_completed", "at_read": i,
+                        "classification": rec["classification"],
+                        "detail": f"read {i} completed and was classified {rec['classification']}"}
             break
         if rec["classification"] == "mismatch" and mismatches >= a.stop_after_mismatches:
             terminal = {"reason": "stop_rule_mismatches", "at_read": i,
@@ -607,6 +603,27 @@ def _steps(a, out: Path, ports: list, attempt, export_errors: list[str]) -> tupl
     else:
         terminal = {"reason": "exposure_repetitions",
                     "detail": f"{a.repetitions} repeated reads completed"}
+
+    # --- the explicit terminal-status decision (the owner's sixth review, 2026-09-14): a
+    #     required raw export that failed is a TOOL FAILURE whatever that read observed — a
+    #     cutoff, a missing prompt, a banner or a completed response. The observation is kept
+    #     whole under `observed` (the read stays unclassified or classified exactly as it was,
+    #     partial bytes and denominators untouched); only the terminal status changes. A
+    #     transport error on the same read stays the primary error, the export error beside it.
+    last = records[-1] if records else None
+    if last and last.get("raw_export_error"):
+        name = f"read_{last['i']:04d}.bin"
+        if terminal.get("reason") == "tool_error":
+            terminal["export_error"] = last["raw_export_error"]
+        else:
+            terminal = {"reason": "tool_error", "phase": f"export {name}", "at_read": last["i"],
+                        "detail": last["raw_export_error"], "export_error": last["raw_export_error"],
+                        "observed": terminal,
+                        "note": ("a required acquisition export failed; the run stopped before the "
+                                 "next command; what the read observed is under `observed` and is "
+                                 "neither a match nor a mismatch")}
+    elif terminal.get("reason") == "read_completed":     # cannot happen without an export error
+        terminal = {"reason": "tool_error", "phase": "internal", "detail": "read_completed without an export error"}
 
     counters_after = _counters(fdno)
     exported = _finalise(out, attempt, a, command, reference, records, counters_before,

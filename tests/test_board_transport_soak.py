@@ -519,6 +519,72 @@ class TheConsistencyControl(unittest.TestCase):
                 self.assertIn(name, last["raw_export_error"])
                 self.assertFalse((self.d / name).exists())
 
+    # ---------------------------------------------------------------- the sixth review (2026-09-14):
+    # a cutoff / missing prompt / banner on the read whose export failed masked the tool failure
+
+    def _cutoff_module(self, **kw):
+        """Read 0 returns 67 bytes and no prompt; the exposure then expires."""
+        def mutate(i, reply):
+            return reply[:67] if i == 1 else reply
+        return self.module(mutate=mutate, **kw)
+
+    def test_a_cutoff_with_a_nonempty_partial_response_alone_is_exit_0(self):
+        code, brief = self.run_cli("--seconds", "0.12", module=self._cutoff_module())
+        self.assertEqual(code, 0, brief)
+        self.assertEqual((brief["stage"], brief["terminal"]), ("control", "exposure_seconds"))
+        self.assertEqual(len(self.boards[0].commands), 2)
+        result = self._both_records(brief)
+        self.assertEqual((result["terminal"]["cut_short"], result["terminal"]["partial_bytes"]), (True, 67))
+        self.assertEqual(len((self.d / "read_0000.bin").read_bytes()), 67)
+        self.assertEqual(result["reads"][0]["unclassified_reason"], "exposure_cut_short")
+        self.assertIsNone(brief["mismatches_per_100_compared_responses"])
+        self.assertTrue(brief["export_complete"])
+
+    def test_a_cutoff_whose_raw_export_failed_is_a_tool_failure_with_the_cutoff_retained(self):
+        """Reviewed behaviour (`04d4b86`): the export error was recorded, no further command was
+        issued, and the run still returned exit 0 / `exposure_seconds`."""
+        code, brief = self.run_cli("--seconds", "0.12", fault_export=("read_0000.bin",),
+                                   module=self._cutoff_module())
+        self.assertEqual(code, 2, brief)
+        result = self._export_stop_common(brief, "read_0000.bin")
+        self.assertEqual(len(self.boards[0].commands), 2)                # no further command
+        self.assertFalse((self.d / "read_0000.bin").exists())
+        self.assertEqual(result["terminal"]["at_read"], 0)
+        observed = result["terminal"]["observed"]                        # the cutoff is retained whole
+        self.assertEqual((observed["reason"], observed["cut_short"], observed["partial_bytes"]),
+                         ("exposure_seconds", True, 67))
+        rec = result["reads"][0]
+        self.assertEqual((rec["classification"], rec["unclassified_reason"], rec["raw_bytes"]),
+                         ("unclassified", "exposure_cut_short", 67))
+        self.assertIn("read_0000.bin", rec["raw_export_error"])
+        self._both_records(brief)
+        self.assertEqual((brief["reads_attempted"], brief["reads_compared"], brief["reads_unclassified"]),
+                         (1, 0, 1))
+        self.assertIsNone(brief["mismatches_per_100_compared_responses"])  # still null, not a mismatch
+        self.assertIsNone(brief["all_compared_responses_differ"])
+        self.assertEqual(brief["unclassified_by_reason"], {"exposure_cut_short": 1})
+
+    def test_a_silent_cutoff_a_missing_prompt_and_a_banner_with_a_failed_export_are_tool_failures(self):
+        cases = {
+            "silent_cutoff": (("--seconds", "0.12"), dict(silent_from=1), "exposure_seconds"),
+            "no_prompt": (("--seconds", "100", "--command-timeout", "1.0"), dict(silent_from=1), "no_prompt"),
+            "banner_with_prompt": ((), dict(mutate=lambda i, r: b"\r\nU-Boot 2026.04\r\nZynq> " if i == 1 else r),
+                                   "board_reset"),
+        }
+        for name, (extra, kw, observed_reason) in cases.items():
+            with self.subTest(case=name):
+                self.boards.clear()
+                self.d = Path(tempfile.mkdtemp(prefix="ctl_"))
+                code, brief = self.run_cli(*extra, fault_export=("read_0000.bin",), module=self.module(**kw))
+                self.assertEqual(code, 2, brief)
+                result = self._export_stop_common(brief, "read_0000.bin")
+                self.assertEqual(result["terminal"]["observed"]["reason"], observed_reason)
+                self.assertEqual(len(self.boards[0].commands), 2)
+                self.assertEqual(result["reads"][0]["classification"], "unclassified")
+                self.assertEqual((brief["reads_compared"], brief["mismatches_per_100_compared_responses"]),
+                                 (0, None))
+                self._both_records(brief)
+
     def test_a_transport_error_and_an_export_failure_are_both_retained(self):
         code, brief = self.run_cli(fault_export=("read_0000.bin",), module=self.module(detach_at=1))
         self.assertEqual(code, 2, brief)

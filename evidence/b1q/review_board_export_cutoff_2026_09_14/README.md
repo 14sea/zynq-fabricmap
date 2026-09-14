@@ -23,3 +23,22 @@ The decisive compound case receives 67 bytes but cannot write read_0000.bin.
 It still exits 0 / control / exposure_seconds, while correctly recording the
 export error and export_complete false. No new command follows the error.
 The review requires the tool-failure exit contract to cover this combination.
+
+## After the correction (tool `37dfad21…`, see `results_after_fix.json` for the exact digest)
+
+`results_after_fix.json` is `probe.py` re-run unchanged against the corrected tool with its
+assertions not evaluated (`python3 -O`); the `head` it records is the last commit before the fix,
+the tree being modified and uncommitted when it ran, so the tool digest is the binding identifier.
+Observed on the sixteen cases, against the pre-fix `results.json`:
+
+| case | before | after |
+|---|---|---|
+| `partial_cutoff_and_export_failure` (67 bytes, no prompt, exposure expires, `read_0000.bin` fails) | exit 0 / `control` / `exposure_seconds` | **exit 2 / `export` / `tool_error`**, phase `export read_0000.bin`; `terminal.observed` = the `exposure_seconds` cutoff with `cut_short` true and 67 partial bytes; the read `unclassified` / `exposure_cut_short`; 2 commands; compared 0, rate null, all-differ null; `export_complete` false |
+| `cutoff_and_export_failure` (silent) | exit 0 / `exposure_seconds` | **exit 2 / `export` / `tool_error`**, `observed.reason` `exposure_seconds` |
+| `detach_and_export_failure` | exit 2, both errors | exit 2, the transport error primary, `terminal.export_error` beside it (unchanged) |
+| `partial_cutoff`, `exposure_cutoff` alone | exit 0 / `exposure_seconds` | unchanged: exit 0, `export_complete` true, statistics null |
+| the five single export faults, `reset_with_prompt`, `injected_command`, `leading_crlf`, the positive and echo controls | as the sixth review verified | unchanged |
+
+The board-control suite is now 48 tests (45 + 3), zero skips; the three transport suites 184;
+the pins/gate suites 37; B2 verify unchanged (S1, qualified false, refusal null, manifest
+`8699767…`). No physical run, push or ruling is claimed here.
