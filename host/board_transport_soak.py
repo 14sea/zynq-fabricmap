@@ -58,9 +58,8 @@ import transport_rig as _rig  # noqa: E402  — hashed as a declared dependency,
 # bytes unexamined is how a deleted ASCII byte and a ninth hex digit both read as clean
 # (the owner's P2-2).
 MD_LINE_FULL = re.compile(rb"^([0-9a-fA-F]{8}):((?: [0-9a-fA-F]{8}){1,4}) +(.*)$")
-PROMPT_RE = re.compile(rb"(?:zynq-uboot|Zynq)> ?$")
-PROMPT_ANY = re.compile(rb"(?:zynq-uboot|Zynq)> ")
-BOOT_BANNER_RE = re.compile(rb"U-Boot SPL|\r?\nU-Boot \d|Trying to boot from|Model: Ebang")
+PROMPT_RE = re.compile(rb"(?:zynq-uboot|Zynq)> \Z")   # the prompt WITH its trailing space, at the very end
+BOOT_BANNER_RE = re.compile(rb"^(?:U-Boot SPL|U-Boot \d|Trying to boot from|Model: Ebang)", re.M)  # a banner LINE
 
 EXPECT_USB = "1a86:7523"
 
@@ -145,41 +144,57 @@ def validate_exposure(repetitions: int, seconds: float, command_s: float) -> str
 # ---------------------------------------------------------------- framing and comparison
 
 
-def split_framing(reply: bytes, command: str) -> tuple[bytes, dict]:
-    """Separate the DECLARED framing from the body that is compared.
+LINE_END = b"\r\n"
 
-    Excluded by declaration, and only these: the echo of the command line, and the trailing
-    prompt. Everything that remains is the body and every byte of it is compared."""
-    framing: dict = {"echo_removed": False, "prompt_removed": False}
+
+def split_framing(reply: bytes, command: str) -> tuple[bytes, dict]:
+    """Separate the DECLARED framing from the body that is compared — by POSITION, never by search.
+
+    The framing grammar, declared here and nowhere else (the owner's P2-2):
+
+        reply  := [ echo ] body [ prompt ]
+        echo   := command LINE_END     recognised ONLY as the very first bytes of the reply
+        prompt := PROMPT_RE            recognised ONLY as the very last bytes of the reply, WITH
+                                       its trailing space
+        body   := every other byte, in order, untouched — CR and LF included
+
+    The declared line ending is CR LF and nothing is normalised: a command-like string anywhere
+    but at the start, a prompt-like string anywhere but at the end, an extra or a missing
+    separator, a stray byte before the echo — all of it is body, and every byte of the body is
+    compared. (The reviewed implementation found the echo ANYWHERE with `find` and stripped
+    unbounded leading/trailing CR/LF, so an injected command string inside the ASCII column and
+    an extra leading CRLF both read as identical.)"""
+    framing: dict = {
+        "grammar": ("reply := [echo] body [prompt]; echo := command CRLF at the reply start only; "
+                    "prompt := 'Zynq> ' or 'zynq-uboot> ' (trailing space included) at the reply "
+                    "end only; body := every other byte, unnormalised"),
+        "line_ending": "CRLF", "normalisation": "none",
+        "echo_removed": False, "prompt_removed": False}
     body = reply
-    echo = command.encode()
-    at = body.find(echo)
-    if at != -1:                                   # the echo and the EOL that ends it
-        end = at + len(echo)
-        while end < len(body) and body[end:end + 1] in (b"\r", b"\n"):
-            end += 1
-        body = body[:at] + body[end:]
+    echo = command.encode() + LINE_END
+    if body.startswith(echo):
+        body = body[len(echo):]
         framing["echo_removed"] = True
     m = PROMPT_RE.search(body)
     if m:
         body = body[:m.start()]
         framing["prompt_removed"] = True
-    stripped = body.lstrip(b"\r\n")
-    framing["leading_eol_stripped"] = len(body) - len(stripped)
-    body = stripped.rstrip(b"\r\n")
     framing["body_bytes"] = len(body)
     return body, framing
 
 
 def parse_response(body: bytes, addr: int, words: int) -> tuple[list[int] | None, str | None]:
-    """The body must be EXACTLY the expected data lines: every line fully matched by the
-    grammar, at consecutive addresses, totalling `words` values. Anything left over, any line
-    that does not match end to end, is malformed — never a prefix silently accepted."""
+    """The body must be EXACTLY the expected data lines: each terminated by the declared CR LF,
+    every line fully matched by the grammar, at consecutive addresses, totalling `words` values.
+    Anything left over, any line that does not match end to end, an extra or a missing
+    separator, is malformed — never a prefix silently accepted."""
     if not body:
         return None, "empty body"
+    if not body.endswith(LINE_END):
+        return None, "grammar: the body does not end with the declared line ending CR LF"
     values: list[int] = []
     expect = addr
-    lines = body.split(b"\r\n")
+    lines = body[:-len(LINE_END)].split(LINE_END)
     for n, line in enumerate(lines):
         m = MD_LINE_FULL.match(line)
         if not m:
@@ -193,6 +208,14 @@ def parse_response(body: bytes, addr: int, words: int) -> tuple[list[int] | None
     if len(values) != words:
         return None, f"{len(values)} words, not {words}"
     return values, None
+
+
+def observed_banner(raw: bytes) -> bool:
+    """A U-Boot boot banner LINE in the bytes — a line that BEGINS with a banner marker. The
+    ASCII column of an md.l line never starts a line (the address does), so memory that happens
+    to hold the text "U-Boot 2026" is not a reset; a banner line is, prompt or no prompt after it
+    (the owner's P2-3)."""
+    return BOOT_BANNER_RE.search(raw) is not None
 
 
 def first_difference(a: bytes, b: bytes) -> int | None:
@@ -269,7 +292,7 @@ def run_control(a) -> int:
     closed: list[str] = []
     close_errors: list[str] = []
     try:
-        code, stage, more = _steps(a, out, ports, attempt)
+        code, stage, more = _steps(a, out, ports, attempt, export_errors)
     finally:
         for name, p in reversed(ports):
             try:
@@ -300,7 +323,7 @@ def run_control(a) -> int:
     return code
 
 
-def _steps(a, out: Path, ports: list, attempt) -> tuple[int, str, dict]:
+def _steps(a, out: Path, ports: list, attempt, export_errors: list[str]) -> tuple[int, str, dict]:
     fd, refused = claim_destination(out)
     if fd is None:
         return 5, "destination", {"refusal": "destination", "refused": refused}
@@ -379,6 +402,46 @@ def _steps(a, out: Path, ports: list, attempt) -> tuple[int, str, dict]:
         """One deadline per command: the command budget, never past the exposure (P2-4)."""
         return min(time.monotonic() + a.command_timeout, exposure_end)
 
+    # --- every stop past this point finalises: the after-counters, control.json, the named
+    #     terminal — whatever else failed (the rig's contract; the owner's P2-3 of the previous round)
+    def halt(code: int, stage: str, terminal: dict, reference, records: list, brief: dict,
+             ref_body_bytes: int = 0) -> tuple[int, str, dict]:
+        exported = _finalise(out, attempt, a, command, reference, records, counters_before,
+                             _counters(fdno), terminal, prov, ref_body_bytes=ref_body_bytes)
+        summary = summarise(records)
+        return code, stage, {"terminal": terminal.get("reason"), "detail": terminal.get("detail"),
+                             **summary, "counters_delta": None, "records_exported": exported, **brief}
+
+    def required(name: str, fn) -> str | None:
+        """A REQUIRED acquisition export. Returns the export error, or None when it landed. The
+        caller stops before the next command on an error (the owner's P2-1): the error is kept in
+        `export_errors` AND named in the terminal, together with any transport error before it."""
+        before = len(export_errors)
+        if attempt(name, fn) is None:
+            return export_errors[-1] if len(export_errors) > before else f"{name}: export failed"
+        return None
+
+    def export_stop(stage: str, name: str, err: str, reference, records: list, transport_error=None,
+                    ref_body_bytes: int = 0) -> tuple[int, str, dict]:
+        terminal = {"reason": "tool_error", "phase": f"export {name}", "detail": err,
+                    "note": ("a required acquisition export failed; the run stopped before the next "
+                             "command; the bytes already received are in memory only if the file is "
+                             "absent")}
+        if transport_error:
+            terminal["transport_error"] = transport_error
+        return halt(2, stage, terminal, reference, records, {"error": err, "export_error": err},
+                    ref_body_bytes=ref_body_bytes)
+
+    def banner_terminal(phase: str, saw_prompt: bool, raw: bytes, at_read=None) -> dict:
+        t = {"reason": "board_reset", "phase": phase, "raw_bytes": len(raw),
+             "prompt_followed_the_banner": bool(saw_prompt),
+             "detail": ("a U-Boot boot banner line was observed in the reply"
+                        + (" and a fresh prompt followed it" if saw_prompt else " and no prompt followed")
+                        + "; classified before any comparison and before any further command")}
+        if at_read is not None:
+            t["at_read"] = at_read
+        return t
+
     # --- sync: an unconfirmed prompt refuses before any md is issued
     sync_buf = bytearray()
     primary: str | None = None
@@ -387,17 +450,22 @@ def _steps(a, out: Path, ports: list, attempt) -> tuple[int, str, dict]:
     except Exception as exc:                              # noqa: BLE001 — partial bytes survive in sync_buf
         primary = f"{type(exc).__name__}: {exc}"
         sync = {"wrote": False, "saw_prompt": False, "expired": False, "error": primary}
-    attempt("sync.bin", lambda: _write_evidence(out / "sync.bin", bytes(sync_buf)))
+    sync_export = required("sync.bin", lambda: _write_evidence(out / "sync.bin", bytes(sync_buf)))
     if primary:
-        _finalise(out, attempt, a, command, None, [], counters_before, _counters(fdno),
-                  {"reason": "tool_error", "detail": primary, "phase": "sync"}, prov)
-        return 2, "sync", {"error": primary}
+        t = {"reason": "tool_error", "detail": primary, "phase": "sync"}
+        if sync_export:
+            t["export_error"] = sync_export
+        return halt(2, "sync", t, None, [], {"error": primary})
+    if observed_banner(bytes(sync_buf)):
+        return halt(2, "sync", banner_terminal("sync", sync.get("saw_prompt"), bytes(sync_buf)), None, [],
+                    {"error": "a boot banner was observed at the sync"})
     if not sync.get("saw_prompt"):
-        _finalise(out, attempt, a, command, None, [], counters_before, _counters(fdno),
-                  {"reason": "no_prompt_at_sync",
-                   "detail": "no U-Boot prompt answered the sync CR; no md.l was issued"}, prov)
-        return 3, "sync", {"refusal": "no_prompt_at_sync",
-                           "refused": "no U-Boot prompt answered the sync CR; no md.l was issued"}
+        return halt(3, "sync", {"reason": "no_prompt_at_sync",
+                                "detail": "no U-Boot prompt answered the sync CR; no md.l was issued"},
+                    None, [], {"refusal": "no_prompt_at_sync",
+                               "refused": "no U-Boot prompt answered the sync CR; no md.l was issued"})
+    if sync_export:
+        return export_stop("export", "sync.bin", sync_export, None, [])
 
     # --- the reference response
     ref_buf = bytearray()
@@ -406,29 +474,50 @@ def _steps(a, out: Path, ports: list, attempt) -> tuple[int, str, dict]:
     except Exception as exc:                              # noqa: BLE001
         primary = f"{type(exc).__name__}: {exc}"
         ref = {"saw_prompt": False, "expired": False, "error": primary}
-    attempt("reference.bin", lambda: _write_evidence(out / "reference.bin", bytes(ref_buf)))
-    ref_body, ref_framing = split_framing(bytes(ref_buf), command)
-    ref_values, ref_error = (None, "no prompt") if not ref.get("saw_prompt") else \
-        parse_response(ref_body, a.addr, a.words)
-    reference = {"command": command, "raw_bytes": len(ref_buf), "framing": ref_framing,
+    ref_export = required("reference.bin", lambda: _write_evidence(out / "reference.bin", bytes(ref_buf)))
+    ref_raw = bytes(ref_buf)
+    banner_at_ref = observed_banner(ref_raw)
+    ref_body, ref_framing = split_framing(ref_raw, command)
+    if primary:
+        ref_values, ref_error = None, primary
+    elif banner_at_ref:
+        ref_values, ref_error = None, "a boot banner line was observed in the reply"
+    elif not ref.get("saw_prompt"):
+        ref_values, ref_error = None, "no prompt"
+    else:
+        ref_values, ref_error = parse_response(ref_body, a.addr, a.words)
+    reference = {"command": command, "raw_bytes": len(ref_raw), "framing": ref_framing,
                  "body_bytes": len(ref_body), "body_sha256": hashlib.sha256(ref_body).hexdigest(),
-                 "parsed": ref_values is not None, "error": primary or ref_error,
+                 "parsed": ref_values is not None, "error": ref_error,
                  "note": ("a REFERENCE OBSERVATION, not independently known transmitted bytes: it "
                           "does not establish that the window is stable, and a corruption present "
                           "in every response including this one is invisible by construction")}
-    attempt("reference.json", lambda: _write_evidence(
+    refrec_export = required("reference.json", lambda: _write_evidence(
         out / "reference.json", json.dumps(reference, indent=1, sort_keys=True) + "\n"))
     if primary:
-        _finalise(out, attempt, a, command, reference, [], counters_before, _counters(fdno),
-                  {"reason": "tool_error", "detail": primary, "phase": "reference"}, prov)
-        return 2, "reference", {"error": primary}
+        t = {"reason": "tool_error", "detail": primary, "phase": "reference"}
+        for name, err in (("reference.bin", ref_export), ("reference.json", refrec_export)):
+            if err:
+                t.setdefault("export_errors", []).append(err)
+        return halt(2, "reference", t, reference, [], {"error": primary}, ref_body_bytes=len(ref_body))
+    if banner_at_ref:
+        return halt(2, "reference", banner_terminal("reference", ref.get("saw_prompt"), ref_raw), reference,
+                    [], {"error": "a boot banner was observed at the reference read"},
+                    ref_body_bytes=len(ref_body))
+    for name, err in (("reference.bin", ref_export), ("reference.json", refrec_export)):
+        if err:
+            return export_stop("export", name, err, reference, [], ref_body_bytes=len(ref_body))
     if ref_values is None:
-        _finalise(out, attempt, a, command, reference, [], counters_before, _counters(fdno),
-                  {"reason": "no_reference", "detail": f"no valid reference response: {ref_error}"}, prov)
-        return 3, "reference", {"refusal": "reference",
-                                "refused": f"no valid reference response: {ref_error}"}
+        return halt(3, "reference", {"reason": "no_reference",
+                                     "detail": f"no valid reference response: {ref_error}"},
+                    reference, [], {"refusal": "reference",
+                                    "refused": f"no valid reference response: {ref_error}"},
+                    ref_body_bytes=len(ref_body))
 
-    # --- the repeated reads
+    # --- the repeated reads. Every attempted read is one record; a record is CLASSIFIED
+    #     (identical / mismatch) only when its response completed to a prompt with no banner and
+    #     no error; everything else is UNCLASSIFIED with its reason and is neither a match nor a
+    #     mismatch (the owner's P2-4)
     records: list[dict] = []
     mismatches = 0
     terminal: dict | None = None
@@ -438,47 +527,63 @@ def _steps(a, out: Path, ports: list, attempt) -> tuple[int, str, dict]:
                         "detail": f"the {a.seconds} s exposure ended after {i} repeated reads"}
             break
         buf = bytearray()
-        rec: dict = {"i": i}
+        rec: dict = {"i": i, "completed": False, "classification": "unclassified"}
         try:
             obs = ub.exchange(command, buf, phase_deadline())
         except Exception as exc:                          # noqa: BLE001 — the PARTIAL bytes are evidence
             primary = f"{type(exc).__name__}: {exc}"
             obs = {"saw_prompt": False, "expired": False, "error": primary}
-        attempt(f"read_{i:04d}.bin", lambda b=buf, n=i: _write_evidence(out / f"read_{n:04d}.bin", bytes(b)))
-        rec["raw_bytes"] = len(buf)
+        raw = bytes(buf)
+        rec["raw_bytes"] = len(raw)
+        read_export = required(f"read_{i:04d}.bin",
+                               lambda b=raw, n=i: _write_evidence(out / f"read_{n:04d}.bin", b))
+        if read_export:
+            rec["raw_export_error"] = read_export
         if primary:
-            rec["error"] = primary
+            rec.update(unclassified_reason="tool_error", error=primary)
             records.append(rec)
             terminal = {"reason": "tool_error", "detail": primary, "phase": f"read {i}",
-                        "partial_bytes": len(buf)}
+                        "partial_bytes": len(raw)}
+            if read_export:
+                terminal["export_error"] = read_export
+            break
+        if observed_banner(raw):
+            # classified BEFORE any comparison and before another command, whether or not a
+            # prompt followed the banner (the owner's P2-3)
+            rec.update(unclassified_reason="board_reset", saw_prompt=bool(obs.get("saw_prompt")))
+            records.append(rec)
+            terminal = banner_terminal(f"read {i}", obs.get("saw_prompt"), raw, at_read=i)
+            if read_export:
+                terminal["export_error"] = read_export
             break
         if not obs.get("saw_prompt"):
-            # a missing prompt is NOT evidence of a board reset unless a banner was seen; a
-            # cutoff by the exposure is not an error at all (the owner's P2-4)
-            rec["raw_bytes"] = len(buf)
-            records.append(rec)
-            if BOOT_BANNER_RE.search(bytes(buf)):
-                terminal = {"reason": "board_reset", "at_read": i,
-                            "detail": "a U-Boot boot banner was observed in the reply"}
-            elif time.monotonic() >= exposure_end:
+            # a missing prompt is NOT evidence of a board reset without a banner; a cutoff by the
+            # exposure is not an error at all (the owner's P2-4 of the previous round)
+            if time.monotonic() >= exposure_end:
+                rec.update(unclassified_reason="exposure_cut_short")
+                records.append(rec)
                 terminal = {"reason": "exposure_seconds", "at_read": i,
                             "detail": f"the {a.seconds} s exposure cut read {i} before its prompt",
-                            "cut_short": True, "partial_bytes": len(buf)}
+                            "cut_short": True, "partial_bytes": len(raw)}
             else:
+                rec.update(unclassified_reason="no_prompt")
+                records.append(rec)
                 terminal = {"reason": "no_prompt", "at_read": i,
                             "detail": (f"no prompt within the {a.command_timeout} s command budget; "
                                        "cause unknown — transport loss, command failure or cutoff "
                                        "are all consistent with this observation"),
-                            "partial_bytes": len(buf)}
+                            "partial_bytes": len(raw)}
+            if read_export:
+                terminal["export_error"] = read_export
             break
-        body, framing = split_framing(bytes(buf), command)
-        rec.update(body_bytes=len(body), framing_ok=framing["echo_removed"] or framing["prompt_removed"])
+        body, framing = split_framing(raw, command)
+        rec.update(completed=True, body_bytes=len(body), framing=framing)
         if body == ref_body:
-            rec["outcome"] = "identical"
+            rec["classification"] = "identical"
         else:
             mismatches += 1
             values, perr = parse_response(body, a.addr, a.words)
-            rec.update(outcome="mismatch",
+            rec.update(classification="mismatch",
                        first_diff_offset=first_difference(body, ref_body),
                        body_delta_bytes=len(body) - len(ref_body),
                        grammar_valid=values is not None, grammar_error=perr,
@@ -486,7 +591,14 @@ def _steps(a, out: Path, ports: list, attempt) -> tuple[int, str, dict]:
                                               if x != y][:16] if values is not None else None),
                        body_sha256=hashlib.sha256(body).hexdigest())
         records.append(rec)
-        if rec.get("outcome") == "mismatch" and mismatches >= a.stop_after_mismatches:
+        if read_export:
+            # the response completed and is classified, but its raw bytes did not land: stop
+            # before the next command (the owner's P2-1)
+            terminal = {"reason": "tool_error", "phase": f"export read_{i:04d}.bin", "detail": read_export,
+                        "at_read": i, "note": ("a required acquisition export failed; the run stopped "
+                                               "before the next command")}
+            break
+        if rec["classification"] == "mismatch" and mismatches >= a.stop_after_mismatches:
             terminal = {"reason": "stop_rule_mismatches", "at_read": i,
                         "detail": (f"{mismatches} mismatched responses over the run "
                                    f"(>= {a.stop_after_mismatches}); this is a run-total rule and is "
@@ -497,30 +609,54 @@ def _steps(a, out: Path, ports: list, attempt) -> tuple[int, str, dict]:
                     "detail": f"{a.repetitions} repeated reads completed"}
 
     counters_after = _counters(fdno)
-    # a transient mismatch (neighbours identical) and a persistent one (every later read differs)
-    # look different; both are DESCRIPTIVE — neither attributes a cause
-    outcomes = [r.get("outcome") for r in records]
-    persistent = bool(outcomes) and all(o == "mismatch" for o in outcomes if o is not None)
     exported = _finalise(out, attempt, a, command, reference, records, counters_before,
-                         counters_after, terminal, prov, mismatches=mismatches,
-                         persistent=persistent, ref_body_bytes=len(ref_body))
-    exit_code = 2 if (terminal or {}).get("reason") in ("tool_error", "board_reset", "no_prompt") else 0
+                         counters_after, terminal, prov, ref_body_bytes=len(ref_body))
+    exit_code = 2 if terminal.get("reason") in ("tool_error", "board_reset", "no_prompt") else 0
+    brief = {"terminal": terminal.get("reason"), "detail": terminal.get("detail"),
+             **summarise(records),
+             "counters_delta": counter_delta(counters_before, counters_after),
+             "records_exported": exported}
+    stage = "control"
+    if terminal.get("reason") == "tool_error":
+        brief["error"] = terminal.get("detail")
+        if str(terminal.get("phase", "")).startswith("export "):
+            stage, brief["export_error"] = "export", terminal.get("detail")
+    return exit_code, stage, brief
+
+
+def summarise(records: list[dict]) -> dict:
+    """The statistics, with their denominators NAMED (the owner's P2-4). attempted = every read
+    for which a command was issued; completed = the response reached a prompt with no banner and
+    no error; compared = classified identical or mismatch (every completed read is compared);
+    unclassified = attempted − compared, each with its reason in the record. A rate uses the
+    compared denominator and is null when that is zero; "all compared responses differ" is null
+    when nothing was compared — never true by discarding unclassified observations. A cut-short
+    or partial response is neither a match nor a mismatch."""
+    attempted = len(records)
+    compared = [r for r in records if r.get("classification") in ("identical", "mismatch")]
+    completed = sum(1 for r in records if r.get("completed"))
+    identical = sum(1 for r in compared if r["classification"] == "identical")
+    mismatched = len(compared) - identical
+    unclassified = [r for r in records if r not in compared]
+    reasons: dict[str, int] = {}
+    for r in unclassified:
+        k = r.get("unclassified_reason", "unknown")
+        reasons[k] = reasons.get(k, 0) + 1
     received = sum(r.get("raw_bytes", 0) for r in records)
-    return exit_code, "control", {
-        "terminal": (terminal or {}).get("reason"), "detail": (terminal or {}).get("detail"),
-        "reads_done": len(records), "mismatched_responses": mismatches,
-        "identical_responses": sum(1 for o in outcomes if o == "identical"),
-        "received_bytes_excluding_reference": received,
-        "mismatches_per_100_responses": (None if not records else 100.0 * mismatches / len(records)),
-        "all_observed_responses_differ": persistent,
-        "counters_delta": counter_delta(counters_before, counters_after),
-        "records_exported": exported}
+    return {"reads_attempted": attempted, "reads_completed": completed, "reads_compared": len(compared),
+            "reads_unclassified": len(unclassified), "unclassified_by_reason": reasons,
+            "identical_responses": identical, "mismatched_responses": mismatched,
+            "mismatches_per_100_compared_responses": (None if not compared else 100.0 * mismatched / len(compared)),
+            "all_compared_responses_differ": (None if not compared else mismatched == len(compared)),
+            "received_bytes_excluding_reference": received,
+            "denominators": ("rates use reads_compared; reads_unclassified (tool error, board reset, "
+                             "no prompt, exposure cut-short) are neither matches nor mismatches and "
+                             "are reported, not dropped")}
 
 
 def _finalise(out: Path, attempt, a, command, reference, records, before, after, terminal, prov,
-              mismatches: int = 0, persistent: bool = False, ref_body_bytes: int = 0) -> bool:
+              ref_body_bytes: int = 0) -> bool:
     """Always attempted, on every path past the port opening, each component independently."""
-    received = sum(r.get("raw_bytes", 0) for r in records)
     result = {"label": a.label, "command": command, "provenance": prov,
               "measurement_unit": MISMATCH_UNIT,
               "cause_of_a_mismatch": "unknown: transport, source memory, or command execution",
@@ -532,11 +668,7 @@ def _finalise(out: Path, attempt, a, command, reference, records, before, after,
                              "seconds": a.seconds, "command_timeout_s": a.command_timeout,
                              "stop_after_mismatches": a.stop_after_mismatches,
                              "probe_window": [WINDOW_BASE, WINDOW_LAST]},
-              "reads_done": len(records), "mismatched_responses": mismatches,
-              "identical_responses": sum(1 for r in records if r.get("outcome") == "identical"),
-              "received_bytes_excluding_reference": received,
-              "mismatches_per_100_responses": (None if not records else 100.0 * mismatches / len(records)),
-              "all_observed_responses_differ": persistent,
+              **summarise(records),
               "terminal": terminal, "counters_before": before, "counters_after": after,
               "counters_delta": counter_delta(before, after),
               "scope": ("a repeated-read consistency control at one U-Boot prompt; it attributes "

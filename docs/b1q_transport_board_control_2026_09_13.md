@@ -29,8 +29,14 @@ byte-identical response each time**, under stated conditions, over a stated expo
 
 - **Unit:** one *response*. A response whose framed body is not byte-identical to the reference
   response is one **mismatch**, counted once however many bytes differ.
-- **Framing exclusions, declared and only these:** the echo of the command line, and the trailing
-  prompt. Every remaining byte is compared.
+- **Framing, declared as a grammar and recognised by position only** (the fifth review's P2-2):
+  `reply := [echo] body [prompt]`. The echo is `command` + CR LF and is recognised **only as the
+  very first bytes** of the reply; the prompt is `Zynq> ` / `zynq-uboot> ` **with its trailing
+  space** and is recognised **only as the very last bytes**. The declared line ending is CR LF.
+  Nothing is normalised: every other byte — a command-like string inside the data, a prompt-like
+  string before the end, an extra or missing separator, a stray byte before the echo — is body
+  and is compared. A body that does not consist of complete CR LF-terminated `md.l` lines fails
+  the grammar and is a mismatch with `grammar_valid: false`.
 - **Reference:** the first valid response is a **reference observation** — not independently
   known transmitted bytes, and not proof that the window is stable.
 - **Stop rule:** `--stop-after-mismatches` (default 3), counted **over the whole run**. This is
@@ -52,6 +58,25 @@ execute as issued. This tool cannot separate them and does not try. Specifically
 - A missing prompt is classified `no_prompt` with the cause stated as unknown; only an observed
   boot banner is classified `board_reset`. A read cut by the exposure is `exposure_seconds` with
   `cut_short` and the partial bytes kept — not an error.
+- **A boot banner line is a `board_reset` whether or not a prompt follows it** (P2-3): it is
+  classified before any comparison and before any further command, in the sync, the reference and
+  every repeated read alike, the bytes preserved. A banner is a *line beginning* with a banner
+  marker; the ASCII column of an `md.l` line never begins a line, so memory holding banner-like
+  text is a mismatch, not a reset.
+- **A required acquisition export that fails stops the run before the next command** (P2-1):
+  `sync.bin`, `reference.bin`, `reference.json`, `read_NNNN.bin`. The primary export error is
+  named in the terminal (phase `export <file>`, stage `export`, exit 2) together with any
+  transport error before it; the remaining finalisation and both counters are still attempted;
+  a response that completed before its file failed is still classified and its record names the
+  missing file. `control.json` / `entry.json` are written after acquisition and cannot stop past
+  commands; they recompute `export_complete` truthfully.
+- **Statistics name their denominators** (P2-4): `reads_attempted` (a command was issued),
+  `reads_completed` (a prompt, no banner, no error), `reads_compared` (classified identical or
+  mismatch; every completed read is compared), `reads_unclassified` (with `unclassified_by_reason`:
+  `tool_error`, `board_reset`, `no_prompt`, `exposure_cut_short`). `mismatches_per_100_compared_responses`
+  divides by `reads_compared` and is **null** when that is zero; `all_compared_responses_differ` is
+  **null** when nothing was compared. A cut-short or partial response is neither a match nor a
+  mismatch, and is reported, not dropped.
 
 ## Scope enforced in the program, versus checks the operator must make
 
@@ -85,8 +110,8 @@ python3 -B host/board_transport_soak.py \
 ```
 
 Every command is bounded by one deadline: the per-command budget, never past the remaining
-exposure. Exit codes are the tool's state, not a verdict: `0` returned, `2` a tool error or a
-board/console condition, `3` refused before the control (identity, window, exposure, no prompt at
+exposure. Exit codes are the tool's state, not a verdict: `0` returned, `2` a tool error (a
+required export failure included, stage `export`) or a board/console condition, `3` refused before the control (identity, window, exposure, no prompt at
 sync, or no valid reference), `4` the device would not open, `5` the destination could not be
 claimed or written. Evidence: `invocation.json`, `sync.bin`, `reference.bin/json`,
 `read_NNNN.bin`, `control.json`, `entry.json`.
@@ -97,9 +122,18 @@ unit and an explicit `claims_not_made`.
 
 ## Offline proof
 
-`tests/test_board_transport_soak.py`, **26 tests**, drives `main([...])` against a fake U-Boot;
-no real port is opened. Each of the six findings has a test that fails on the reviewed
-implementation: an ASCII-column deletion and a ninth hex digit as mismatches (plus damage in the
+`tests/test_board_transport_soak.py`, **45 tests**, drives `main([...])` against a fake U-Boot;
+no real port is opened. Each of the six findings of the fourth review, and each of the four of the
+fifth, has a test that fails on the reviewed implementation. The fifth review's: each required
+export (`sync.bin`, `reference.bin`, `reference.json`, `read_0000.bin`, `read_0001.bin`) faulted
+separately with the issued-command count asserted, and a transport error plus an export failure
+both retained; command text inside the data, an extra leading separator, a missing / extra / bare-LF
+/ trailing-extra separator, an echo not at the start and a prompt not at the end all as mismatches
+with the genuine echo/prompt positive control kept; a banner with a prompt, without a prompt, at
+the reference, at the sync, banner-like text in the data column, and the four declared shapes;
+zero compared, an exposure cut-off, mixed completed-plus-unclassified with the compared
+denominator, and the positive and all-differ controls — stdout and archive compared in each.
+The fourth review's: an ASCII-column deletion and a ninth hex digit as mismatches (plus damage in the
 address, hex, inter-word space and ASCII regions, and on a later line of a multi-line response);
 a provenance failure stopping before the port opens; a detach mid-response keeping the partial
 bytes, attempting both counters and still finalising; a failed `control.json` and a failed
@@ -125,7 +159,7 @@ read it, and none of its fields are enforced by the CLI.
   "authorises": "one run of host/board_transport_soak.py on 17A6 at the Zynq> prompt",
   "measures": "whether repeated identical md.l responses are byte-identical; the cause of any mismatch is unknown",
   "does_not": "bound or predict B2Q frame loss, qualify the carrier, lift the B1Q transport stop-loss, or authorise a B2Q or B2 session",
-  "tool_sha256": "a435bc6492d69c16bc2a46c13ba355f2a56457b297fbd8ccd994ca97bf6a5e0f",
+  "tool_sha256": "73447f6172aff650fd697d10e8d24cb600bfce7fe97ad281f2fea104991e843e",
   "b1_manifest_sha256": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
   "operator_checks": [
     "the board on this console is 17A6 (the USB VID:PID identifies the adapter only)",
@@ -143,8 +177,9 @@ is the current committed B1 manifest (the earlier draft named an obsolete `38363
 1. Return the CH340's TX/RX from the loopback jumper to main-board **J7**.
 2. Power the board; confirm `/dev/ebaz-uart` and a `Zynq>` prompt; make both operator checks above.
 3. Place the ruling and authorise the run.
-4. Run the command; archive the evidence directory; report `mismatched_responses`,
-   `mismatches_per_100_responses` and the terminal reason — as a consistency observation with an
+4. Run the command; archive the evidence directory; report `reads_attempted` / `reads_compared` /
+   `reads_unclassified`, `mismatched_responses`, `mismatches_per_100_compared_responses` (null when
+   nothing was compared) and the terminal reason — as a consistency observation with an
    unknown cause, not as a transport rate and not as a B2Q prediction.
 
 What this result feeds into is a separate decision, which the owner makes.
