@@ -1,0 +1,123 @@
+{
+  "deletions": [
+    {
+      "deleted_ascii": "G4",
+      "deleted_bytes": 2,
+      "expected_bytes": 2860,
+      "first_difference": 1120,
+      "frame_index": 253,
+      "kind": "REC",
+      "next_frame_byte_exact": true,
+      "received_bytes": 2858,
+      "repetition": 36,
+      "run": "notx"
+    },
+    {
+      "deleted_ascii": "i",
+      "deleted_bytes": 1,
+      "expected_bytes": 2916,
+      "first_difference": 2432,
+      "frame_index": 299,
+      "kind": "REC",
+      "next_frame_byte_exact": true,
+      "received_bytes": 2915,
+      "repetition": 41,
+      "run": "notx"
+    },
+    {
+      "deleted_ascii": "q",
+      "deleted_bytes": 1,
+      "expected_bytes": 2804,
+      "first_difference": 192,
+      "frame_index": 199,
+      "kind": "REC",
+      "next_frame_byte_exact": true,
+      "received_bytes": 2803,
+      "repetition": 72,
+      "run": "notx"
+    },
+    {
+      "deleted_ascii": "6",
+      "deleted_bytes": 1,
+      "expected_bytes": 2667,
+      "first_difference": 1120,
+      "frame_index": 64,
+      "kind": "REC",
+      "next_frame_byte_exact": true,
+      "received_bytes": 2666,
+      "repetition": 86,
+      "run": "notx"
+    },
+    {
+      "deleted_ascii": "F",
+      "deleted_bytes": 1,
+      "expected_bytes": 2752,
+      "first_difference": 2176,
+      "frame_index": 145,
+      "kind": "REC",
+      "next_frame_byte_exact": true,
+      "received_bytes": 2751,
+      "repetition": 0,
+      "run": "tx"
+    }
+  ],
+  "head": "7815c8a95601ebb8a3d540ccb71da2e028af78c2",
+  "result": "PASS archive consistency",
+  "runs": [
+    {
+      "accepted": 30372,
+      "captures": 101,
+      "confirmed_losses": 4,
+      "delivered": 30368,
+      "directory": "notx",
+      "host_echoes": 0,
+      "received_bytes": 9907831,
+      "run_sha256": "034b5109cd5daa0f81f476cc5fa8f2cc09afe30453767eee314d646040d7abfa",
+      "terminal": "exposure_seconds_censored"
+    },
+    {
+      "accepted": 604,
+      "captures": 2,
+      "confirmed_losses": 0,
+      "delivered": 604,
+      "directory": "rehearsal_notx",
+      "host_echoes": 0,
+      "received_bytes": 197198,
+      "run_sha256": "d5a116ce88cb05a01211e16a2ec0abd2a33f7516bd48d4e4519a05e0ae4b4ef8",
+      "terminal": "exposure_repetitions"
+    },
+    {
+      "accepted": 604,
+      "captures": 2,
+      "confirmed_losses": 0,
+      "delivered": 604,
+      "directory": "rehearsal_tx",
+      "host_echoes": 250,
+      "received_bytes": 225776,
+      "run_sha256": "096933e763ee4f9242b0ad8eb8f76f78ceb047f9482d56b1e3c969d2093bf3b2",
+      "terminal": "exposure_repetitions"
+    },
+    {
+      "accepted": 6040,
+      "captures": 20,
+      "confirmed_losses": 1,
+      "delivered": 6039,
+      "directory": "tx",
+      "host_echoes": 2500,
+      "received_bytes": 2257759,
+      "run_sha256": "af9bb0dd7b84901f20506b38f34b2ddb7d7f7db4e0047d097f783f32298ca389",
+      "terminal": "exposure_repetitions"
+    }
+  ],
+  "scope": "local archived bytes and generator/driver consistency; host topology and wiring remain operator-reported",
+  "unchanged_core_between_wsl_and_native_tools": [
+    "Frame",
+    "token_for",
+    "plan_frames",
+    "host_frame",
+    "host_schedule",
+    "Driver",
+    "analyse",
+    "Run"
+  ]
+}
