@@ -1,0 +1,242 @@
+{
+  "archive_files": {
+    "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+    "B1_1_identity_page.json": "ed5886cc88dfcdf28c34b216d30ddd44abdda9ad6a52a3f52659c63e165f9905",
+    "adjudication.json": "38a707867e7a98d01657e0910adf04cc843d4942161a6e1a2eee02cd4962aeb7",
+    "audits.json": "4f9e6e557a5d0af0f67763be6064e6f613a2e7dec2f19c4f631daae786ea572e",
+    "console.log": "f01c937ac6c97ae4d43140dd1cfe462d266c9f12f07ea056642693377f74db5f",
+    "console.ts.log": "73304347f9f041b85cf6dcc43c36e775d32d732dceeda704af9821efaafccd8e",
+    "exports.json": "04762af4f345b4cd8fbb4926d6a6766c8255622008c4ede6aebf66728e42657d",
+    "manifest_at_run.json": "8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35",
+    "ruling_provisioning.json": "5c5c0661d2a56b3ced34aaa52e8c933e783843456ee7182de82b7b486bfcc6fc",
+    "ruling_whole_of_run.json": "0272e6d1758d54f8ce63d74ac0693a1cd6061bac010b88078022fc671434ac37",
+    "run_log.json": "873c2277172280e448b38cefa2200d530e0d5de8076c228f8ddbfd3ce51e9bea",
+    "summary.json": "91b1d3f7f19b2d9fd48f14ab08583497c061bce810e2edee039910f9f23d7c2f",
+    "timeline.json": "713551c7c16955018028984d0e0f8f5d3f9e209d33b6445fb729466811b2c926",
+    "ymodem.log": "fdfa300eb21f7cb22e863df53866ee5b1ae9c87bac75298cd72f53f2b8808213",
+    "ymodem_app.log": "32f4508184afce7650afa0c4c9a114533567878995104a2c1a7f88244cf0f80a"
+  },
+  "evidence": "evidence/b2/b2q_17A6_2026-09-14-01",
+  "fresh_process_s2_verify": {
+    "checks": {
+      "board": "17A6",
+      "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+      "instrument_pins": {
+        "b1_files_verified": 105,
+        "files_verified": 71,
+        "pins_sha256": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf"
+      },
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "qualification_plan": "ok (20 records at budget 8)",
+      "stage": "S2"
+    },
+    "manifest_sha256": "4f588cac9089e9acf4ddaf7c051529f8ad515623f27529c1c31003b637cd50ef",
+    "qualified": true,
+    "refusal": null,
+    "stage": "S2"
+  },
+  "head": "9fb951185ed7a704b08d986b8b097d24b17206f5",
+  "historical_boundary": {
+    "age_at_first_frame_s": 693.4372665882111,
+    "key_id": "b4c022a27ff87ac2f98a39e5eaa1e23456251d3b95d16189f3130cb69905c307",
+    "note": "Recorded boundary checked at the archived session time; no new permission probe.",
+    "sha256": "c8e741b19cabc85c994af00c9502fac361ff0da80176d8e2a7d3242fe3b5bb39"
+  },
+  "issued_ruling_bytes_match": {
+    "provisioning": "c56f9401d829b8b52f4d695b3f0d758bbc505b86f2a126f973b12572e51a552a",
+    "whole_of_run": "24e732d71c679ba86188408b4da8f0619c69dd8119b7512d887663ae2e17d1b0"
+  },
+  "production_manifest_and_archive_unchanged": true,
+  "readjudication": {
+    "audit_policy": "all-self-reporting",
+    "binding_checked": true,
+    "findings": [],
+    "instrument": {
+      "audit_policy": "all-self-reporting",
+      "rate": 2976.9824011102987,
+      "rate_report": {
+        "candidates": 18,
+        "cov": 0.018461536053035393,
+        "evals_per_hour": 2976.9824011102987,
+        "session_span_s": 24.24372354500008
+      },
+      "run_log_validation": {
+        "audited": 20,
+        "chain_length": 21,
+        "scored": 20
+      }
+    },
+    "kills": [],
+    "measured_rate_per_hour": 2976.9824011102987,
+    "outcome": "PASS",
+    "replay": {
+      "measurement": {
+        "readouts_served": 20,
+        "records_checked": 18
+      },
+      "pair_seeds": [
+        [
+          3890725659,
+          1378470437
+        ]
+      ],
+      "replay": {
+        "pairs": [
+          0
+        ],
+        "records_replayed": 18
+      },
+      "scope": "session"
+    },
+    "scope": "session",
+    "session": "B2Q",
+    "tool": "b2_runner.py/0.1.0"
+  },
+  "review_outcome": "PASS",
+  "s1_verify": {
+    "checks": {
+      "board": "17A6",
+      "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+      "instrument_pins": {
+        "b1_files_verified": 105,
+        "files_verified": 71,
+        "pins_sha256": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf"
+      },
+      "lineage": "ok (B1 chain re-verified)",
+      "map": "ok",
+      "pins": "ok",
+      "prereg": "ok",
+      "qualification_plan": "ok (20 records at budget 8)",
+      "stage": "S1"
+    },
+    "manifest_sha256": "8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35",
+    "qualified": false,
+    "refusal": null,
+    "stage": "S1"
+  },
+  "s2_preview": {
+    "calibration": {
+      "audit_policy": "all-self-reporting",
+      "pairs_per_session_max": 4,
+      "rate_per_hour": 2976.9824011102987,
+      "sessions": 3,
+      "source": "reconstructed from the B2Q evidence (adjudication.json) \u2014 the only source a B2 plan may be sized from"
+    },
+    "changed_fields": [
+      "calibration",
+      "history",
+      "qualification",
+      "qualified",
+      "status"
+    ],
+    "derived_split_not_pinned": {
+      "pairs_per_session_max": 4,
+      "rate_per_hour": 2976.9824011102987,
+      "sessions": [
+        {
+          "deadline_s": 7870.785340191213,
+          "expected_span_s": 5816.6282721529715,
+          "pairs": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "records": 4810
+        },
+        {
+          "deadline_s": 7870.785340191213,
+          "expected_span_s": 5816.6282721529715,
+          "pairs": [
+            4,
+            5,
+            6,
+            7
+          ],
+          "records": 4810
+        },
+        {
+          "deadline_s": 2419.963731723539,
+          "expected_span_s": 1455.970985378831,
+          "pairs": [
+            8
+          ],
+          "records": 1204
+        }
+      ],
+      "status": "DETERMINED",
+      "total_records": 10824
+    },
+    "record_file_count": 11
+  },
+  "transport": {
+    "board_summary": {
+      "audit": {
+        "audited": 20,
+        "total": 20
+      },
+      "closing": {
+        "baseline": "done",
+        "restore": "done",
+        "unsigned_control": "done"
+      },
+      "closing_control": {
+        "fault": 13,
+        "kind": "unsigned",
+        "nonce_after": "544b0ec76d00616d",
+        "nonce_before": "92fb2dcfc8ae9a19",
+        "status": "0x00000982"
+      },
+      "counts": {
+        "refused_by_gate": 0,
+        "scored": 20
+      },
+      "crc_dropped": 0,
+      "drop_budget": 16,
+      "epoch_end": {
+        "kind": "COMPLETED",
+        "last_seq": 20,
+        "reason": "budget"
+      },
+      "schema": "session_summary",
+      "schema_version": "1.0.0",
+      "token": "13f0030fe31fd17c755bdf989f0187a8",
+      "written_by": "app"
+    },
+    "crc_controls": [
+      {
+        "bad_crc": "130a2680",
+        "line": 4,
+        "same_body_as_valid_retransmission": true,
+        "seq": 1,
+        "type": "SIGNREQ",
+        "valid_crc": "130a2688"
+      },
+      {
+        "bad_crc": "6a65a230",
+        "line": 31,
+        "same_body_as_valid_retransmission": true,
+        "seq": 1,
+        "type": "REC",
+        "valid_crc": "6a65a23d"
+      }
+    ],
+    "crc_valid_frames": {
+      "AUDIT": 160,
+      "AUDIT_READY": 20,
+      "CLOSE": 1,
+      "HB": 320,
+      "IDENT": 1,
+      "REC": 20,
+      "SIGNREQ": 20,
+      "TERM": 1
+    },
+    "crc_valid_total": 543,
+    "host_budget": 3,
+    "non_control_crc_drops": 0,
+    "note": "Host-requested controls are generated by the firmware; board and host counters describe opposite receive directions."
+  }
+}
