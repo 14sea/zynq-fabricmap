@@ -12,7 +12,7 @@ Nothing is re-run to make a result look better.
 
 | stage | question | state |
 |---|---|---|
-| **B1** autonomous mapping | can the board build a correct map of 292 certified LUT-INIT bits from its own probes? | **qualified** — B1Q PASS on `17A6` (2026-09-08, attempt 3), self-map `c6a4b23e…` frozen |
+| **B1** autonomous mapping | can the board build a correct map of 292 certified LUT-INIT bits from its own probes? | **complete** — carrier qualified by B1Q PASS on `17A6` (2026-09-08, attempt 4); B1 mapping PASS later that day, self-map `c6a4b23e…` frozen |
 | **B2** map utility | does a search that consults that map reproduce, record for record, the host-predicted outcome? | **S2 QUALIFIED** — first B2Q PASS on silicon (2026-09-14), calibration 2976.98 evals/h pinned; S3 plan not yet pinned; no B2 mapping session authorised |
 | **B3** closed loop | map → evolve → re-map on the board | host-only architecture (`docs/b3_architecture.md`) |
 | **B4** expansion | FF and routing classes, on sacrificial silicon | not started |
@@ -30,6 +30,14 @@ The lifecycle B2 is on: S0 manifest → S1 freeze → **B2Q** on silicon → **S
 → S3 plan → B2 sessions. See `docs/b2_preregistration.md` §8.
 
 ## Verify it yourself
+
+The clone below is sufficient for source review. Production verification also needs
+the required LFS payloads, the pinned B1/B2 build outputs (the B2 binary and ELF are
+not tracked), and the pinned `zynq-psoracle` checkout. Reproducing and checking the
+builds additionally requires the recorded toolchain and Xilinx embeddedsw inputs;
+see `evidence/b2/build_evidence.json` and `docs/b2_section7_submission_2026_09_12.md`.
+The commands below assume those prerequisites have been restored. This is not a
+claim that a pointer-only clone can pass the production gates.
 
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/14sea/zynq-fabricmap.git
@@ -70,7 +78,8 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
   landed at the intended frame but the carrier's readback interlock faulted
   (`docs/claimb_findings.md`).
 - **2026-09-05** — the line re-shaped into B1–B4 (`docs/autonomous_cartography_roadmap.md`).
-- **2026-09-06..08** — four B1Q sessions: LOST, PASS-but-unpinnable, HOLD, PASS. Carrier qualified.
+- **2026-09-06..08** — four B1Q sessions: LOST, PASS-but-unpinnable, LOST, PASS.
+  Attempt 3's adjudicator returned HOLD; its session disposition was LOST. Carrier qualified.
 - **2026-09-07..14** — the transport investigation (WSL and native Linux, loopback and
   board-side controls), observations only, stop-loss kept.
 - **2026-09-14** — first B2Q on silicon: PASS, S2 qualified.
