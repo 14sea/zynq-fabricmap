@@ -1,0 +1,75 @@
+{
+  "at": "2026-09-16T20:47:34Z",
+  "authorization": "Explicit owner instruction in this conversation (2026-09-16) after accepting step 11: regenerate the plan with --rate-per-hour 3016.3995578641097, confirm the prediction bytes, pin once with the production re-adjudicator; no step 13, push, ruling or board.",
+  "base_head": "5cd1d534df8118724921a6b353bf3f3a9e4b82fe",
+  "board_contact": false,
+  "changed_top_level_fields": [
+    "history",
+    "plan",
+    "status"
+  ],
+  "commands": [
+    "python3 -B host/b2_plan.py --out evidence/b2 --rate-per-hour 3016.3995578641097",
+    "python: bm.pin_plan(m, Path('evidence/b2/plan.json'), readjudicate=rn.readjudicator(m)); bm.MANIFEST.write_text(bm.render(c))"
+  ],
+  "image_sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+  "lifecycle": 2,
+  "manifest_after_sha256": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0",
+  "manifest_before_sha256": "3415e290444959f3b9409569de52140ac923aaa2779d537e56098210e30c9bb2",
+  "operation": "S3 plan",
+  "pins_sha256": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1",
+  "plan_pin": {
+    "path": "evidence/b2/plan.json",
+    "prediction_path": "evidence/b2/prediction.json",
+    "prediction_sha256": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+    "sessions": 2,
+    "sha256": "62dc85934eec02e2fe31a90b336d0fd320d03a4f54bf90537e944ece72458b9c",
+    "total_records": 10822
+  },
+  "plan_sha256": "62dc85934eec02e2fe31a90b336d0fd320d03a4f54bf90537e944ece72458b9c",
+  "prediction_sha256": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+  "prereg_sha256": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf",
+  "ruling_issued": false,
+  "session_split": {
+    "rate_per_hour": 3016.3995578641097,
+    "sessions": [
+      {
+        "deadline_s": 9568.970947322621,
+        "expected_span_s": 7175.176757858097,
+        "pairs": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "records": 6012
+      },
+      {
+        "deadline_s": 7775.773495778743,
+        "expected_span_s": 5740.618796622995,
+        "pairs": [
+          5,
+          6,
+          7,
+          8
+        ],
+        "records": 4810
+      }
+    ],
+    "status": "DETERMINED",
+    "total_records": 10822
+  },
+  "verify_after": {
+    "manifest_sha256": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0",
+    "qualified": true,
+    "refusal": null,
+    "stage": "S3"
+  },
+  "verify_before": {
+    "manifest_sha256": "3415e290444959f3b9409569de52140ac923aaa2779d537e56098210e30c9bb2",
+    "qualified": true,
+    "refusal": null,
+    "stage": "S2"
+  }
+}
