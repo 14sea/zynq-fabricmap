@@ -9,7 +9,13 @@
   "part": "xc7z010clg400-1",
   "role": "verify"
  },
- "calibration": null,
+ "calibration": {
+  "audit_policy": "all-self-reporting",
+  "pairs_per_session_max": 5,
+  "rate_per_hour": 3016.3995578641097,
+  "sessions": 2,
+  "source": "reconstructed from the B2Q evidence (adjudication.json) \u2014 the only source a B2 plan may be sized from"
+ },
  "carrier": {
   "bitstream_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
   "variant": "0x42310001"
@@ -46,6 +52,12 @@
    "at": "2026-09-16T19:42:52Z",
    "prereg_sha256": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf",
    "transition": "S1 freeze"
+  },
+  {
+   "at": "2026-09-16T20:27:42Z",
+   "manifest_at_run_sha256": "90115453666218a44a4522f3404f612066bf5c79203fab6fec771d8f038933df",
+   "rate_per_hour": 3016.3995578641097,
+   "transition": "S2 qualify"
   }
  ],
  "image": {
@@ -90,7 +102,37 @@
   "path": "docs/b2_preregistration.md",
   "sha256": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf"
  },
- "qualification": null,
+ "qualification": {
+  "audit_policy": "all-self-reporting",
+  "binding": {
+   "b2_manifest_sha256": "90115453666218a44a4522f3404f612066bf5c79203fab6fec771d8f038933df",
+   "carrier_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+   "carrier_variant": "0x42310001",
+   "image_sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+   "map_canonical_json_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+   "prereg_sha256": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf",
+   "session": "B2Q"
+  },
+  "evidence_dir": "evidence/b2/b2q_17A6_2026-09-16-01",
+  "files": {
+   "adjudication.json": "08a99ec7dd821913c6142d9cd8f3d4eef1f5dcb9180fb8398232c0a74b511ee7",
+   "audits.json": "07b005cdda7a6f361bdbd45b139dad0a8a1b23856e90a7fe3191c008a01734ca",
+   "console.log": "78b73db213b4cadff150586b29e3d7da5cbef8035a59f9934f64f28128a7f9b0",
+   "console.ts.log": "3322b8dbc81e77c3b3b7bc879c0ddffda92b96e806cc1491ba7c8a402c990daf",
+   "exports.json": "93f92a245edcb42bf12ad2ee55784f44d91b9d2e3708679c5bc7b09911a1d9fe",
+   "manifest_at_run.json": "90115453666218a44a4522f3404f612066bf5c79203fab6fec771d8f038933df",
+   "ruling_provisioning.json": "6d8c98f27c58503659b2669bb0c96e6bff5f75e7de8699c1e50f408bb0fc9d45",
+   "ruling_whole_of_run.json": "b4e0d369b6ec4f01ee06c9a266003a61273c4e6fa35cb9219302c8a20e7670d0",
+   "run_log.json": "02b05ebe89716bf226bb14e545818dadc894fa095d56e58c81aded57a3b500aa",
+   "summary.json": "9fc5dd83c433d2a02e26c6f19fba286a060d1782cd92f1883fa5fd52e71a46c7",
+   "timeline.json": "1c7fc2c1bd9496e0cd1e04e870fd7b93b3477849d4a4dbf14e96e1b7b8051f5a"
+  },
+  "measured_rate_per_hour": 3016.3995578641097,
+  "outcome": "PASS",
+  "schema": "b2_image_qualification",
+  "schema_version": "1.2.0",
+  "session": "B2Q"
+ },
  "qualification_plan": {
   "budget_per_arm": 8,
   "master_seed": 505806527,
@@ -112,7 +154,7 @@
   "records": 20,
   "sha256": "3d194d76e083fd4ba3ce3cf0458af65637120fcda6761be36598833dbc659216"
  },
- "qualified": false,
+ "qualified": true,
  "rulings_binding": {
   "B2": [
    "session=B2",
@@ -190,7 +232,7 @@
   ],
   "rule": "first 4 bytes of sha256(label|instrument commit); archived seed sets explicitly excluded"
  },
- "status": "S1 FROZEN \u2014 prereg pinned, image board_ready by the owner; awaiting the B2Q ruling pair",
+ "status": "S2 QUALIFIED \u2014 the B2Q record reconstructed from its evidence and pinned, the calibration written from it; awaiting the plan (S3)",
  "universe": {
   "addresses": 292,
   "sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
