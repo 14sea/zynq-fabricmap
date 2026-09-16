@@ -233,8 +233,13 @@ def init(image_evidence: Path | None, root: Path = REPO_ROOT, b1_manifest: Path 
         evp = Path(image_evidence)
         ev = json.loads(evp.read_text())
         im = ev["image"]
+        ev_rel = str(evp.relative_to(root)) if evp.is_relative_to(root) else str(evp)
+        # The note must say what the record says (the owner's P2-1 of 2026-09-16: lifecycle 1's
+        # S0 carried "no B2 image exists yet" next to a pinned digest, and froze it).
         image.update({"path": im["path"], "sha256": im["sha256"], "elf_sha256": im.get("elf_sha256"), "bytes": im.get("bytes"),
-                      "build_evidence": {"path": str(evp.relative_to(root)) if evp.is_relative_to(root) else str(evp), "sha256": sha256_file(evp)}})
+                      "build_evidence": {"path": ev_rel, "sha256": sha256_file(evp)},
+                      "note": f"pinned from its build evidence ({ev_rel}); every verify opens the binary and compares its "
+                              f"digest and size with this record and with the evidence; board_ready is the owner's mark at the freeze"})
     m = {"schema": SCHEMA, "schema_version": SCHEMA_VERSION,
          "status": "S0 INIT — derived from the tree; not frozen; no qualification; no plan; NO BOARD RULING",
          "instrument": {"psoracle_commit": bp.INSTRUMENT_COMMIT},

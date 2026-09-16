@@ -148,6 +148,31 @@ class Lifecycle(unittest.TestCase):
         self.assertEqual(v["stage"], "S0"); self.assertFalse(v["qualified"]); self.assertEqual(v["checks"]["lineage"], "ok (B1 chain re-verified)")
         self.assertIn("binary hashed", v["checks"]["image"])          # the binary was opened, not just declared
 
+    def test_0a_the_image_note_says_what_the_image_record_says(self):
+        """The owner's P2-1 of 2026-09-16: lifecycle 1's S0 pinned the built image's digest and
+        size and, in the same record, kept the initialiser's default note "no B2 image exists yet"
+        — and froze it. A record with a digest must carry a note that describes a pinned image
+        and names its evidence; a record without one must say so. Both produced by the production
+        `init` in fresh processes; the stale sentence itself is the negative."""
+        STALE = "no B2 image exists yet"
+        d = self._load()                                              # setUpClass: init(<evidence>) in a fresh process
+        im = d["image"]
+        self.assertIsNotNone(im["sha256"]); self.assertEqual(im["bytes"], len(self.image_bytes))
+        self.assertNotIn(STALE, im["note"], "a populated image record still says no image exists")
+        self.assertIn("pinned from its build evidence", im["note"])
+        self.assertIn(im["build_evidence"]["path"], im["note"], "the note does not name the evidence it was pinned from")
+        p = run("import b2_manifest as m, json; print(json.dumps(m.init(None)['image']))")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        none = json.loads(p.stdout)
+        self.assertIsNone(none["sha256"]); self.assertIsNone(none["build_evidence"])
+        self.assertIn(STALE, none["note"], "an empty image record must say that no image exists")
+        # the control: the exact record lifecycle 1 froze (digest present, default note) — the same
+        # check that passed above must refuse it
+        frozen = dict(im, note="no B2 image exists yet; pinned from its build evidence when built; board_ready is the owner's mark at the freeze")
+        self.assertIsNotNone(frozen["sha256"])
+        with self.assertRaises(AssertionError):
+            self.assertNotIn(STALE, frozen["note"])
+
     def test_1_freeze(self):
         self._make_evidence(self.tmp / "b2q_early")
         p = run(f"import b2_manifest as m, json; from pathlib import Path; d = json.loads(open({str(self.manifest)!r}).read()); m.qualify(d, Path({str(self.tmp / 'b2q_early')!r}), readjudicate={STUB_PASS})")
