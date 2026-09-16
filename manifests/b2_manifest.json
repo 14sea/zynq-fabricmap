@@ -9,13 +9,7 @@
   "part": "xc7z010clg400-1",
   "role": "verify"
  },
- "calibration": {
-  "audit_policy": "all-self-reporting",
-  "pairs_per_session_max": 4,
-  "rate_per_hour": 2976.9824011102987,
-  "sessions": 3,
-  "source": "reconstructed from the B2Q evidence (adjudication.json) \u2014 the only source a B2 plan may be sized from"
- },
+ "calibration": null,
  "carrier": {
   "bitstream_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
   "variant": "0x42310001"
@@ -47,33 +41,16 @@
   },
   "pairs": 9
  },
- "history": [
-  {
-   "at": "2026-09-13T05:16:15Z",
-   "prereg_sha256": "68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0",
-   "transition": "S1 freeze"
-  },
-  {
-   "at": "2026-09-14T20:49:26Z",
-   "manifest_at_run_sha256": "8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35",
-   "rate_per_hour": 2976.9824011102987,
-   "transition": "S2 qualify"
-  },
-  {
-   "at": "2026-09-16T09:36:28Z",
-   "plan_sha256": "fec30a11dde658fec043acbc055b3b3a3198f5fa3d227f6edfa36194e87ab0f7",
-   "transition": "S3 plan"
-  }
- ],
+ "history": [],
  "image": {
-  "board_ready": true,
+  "board_ready": false,
   "build_evidence": {
    "path": "evidence/b2/build_evidence.json",
    "sha256": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b"
   },
   "bytes": 114708,
   "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc",
-  "note": "no B2 image exists yet; pinned from its build evidence when built; board_ready is the owner's mark at the freeze",
+  "note": "pinned from its build evidence (evidence/b2/build_evidence.json); every verify opens the binary and compares its digest and size with this record and with the evidence; board_ready is the owner's mark at the freeze",
   "path": "firmware/b2/bsp/out/b2_app.bin",
   "sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5"
  },
@@ -82,7 +59,7 @@
  },
  "instrument_pins": {
   "path": "manifests/b2_instrument_pins.json",
-  "sha256": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf"
+  "sha256": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1"
  },
  "map": {
   "canonical_json_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
@@ -95,56 +72,19 @@
   "docs/b2_architecture.md": "2393399094e2ae77389e454c2d435ea9e85dc48e5c9fafded30275de2da12172",
   "host/b2_gate.py": "34edc5632906685e2c83bb8fc90d05d31724b4b0a8af805188241e6b93fbaa2b",
   "host/b2_landscape.py": "c3ff39e8dd17514de698bcb03e3023bd5d8911b8ded011cbea231dc9cdcb3226",
-  "host/b2_manifest.py": "73c869af7f82c618df183b43137f9e2374ccad8cf5c084c02e8c24918ac854cd",
+  "host/b2_manifest.py": "a2cd18f4455a8905dc46099d44eab6a1bf3a98452db0dd5378da174266ce8249",
   "host/b2_maps.py": "efad161147f73d7083051d1923f82b91a3e9cb7234d3942d22df1a0f4c3fd09e",
   "host/b2_plan.py": "bb9cc4427ac7f44dac410f7f3aab130eab8e1fe94258e3693fe7c47526de4b5d",
   "host/b2_search.py": "3acb04714a6c677708892d171f6a418e6de7627210e2ec6ad65158db51eab1cf",
   "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
  },
- "plan": {
-  "path": "evidence/b2/plan.json",
-  "prediction_path": "evidence/b2/prediction.json",
-  "prediction_sha256": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
-  "sessions": 3,
-  "sha256": "fec30a11dde658fec043acbc055b3b3a3198f5fa3d227f6edfa36194e87ab0f7",
-  "total_records": 10824
- },
+ "plan": null,
  "prereg": {
-  "frozen": true,
+  "frozen": false,
   "path": "docs/b2_preregistration.md",
-  "sha256": "68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0"
+  "sha256": null
  },
- "qualification": {
-  "audit_policy": "all-self-reporting",
-  "binding": {
-   "b2_manifest_sha256": "8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35",
-   "carrier_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
-   "carrier_variant": "0x42310001",
-   "image_sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
-   "map_canonical_json_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
-   "prereg_sha256": "68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0",
-   "session": "B2Q"
-  },
-  "evidence_dir": "evidence/b2/b2q_17A6_2026-09-14-01",
-  "files": {
-   "adjudication.json": "38a707867e7a98d01657e0910adf04cc843d4942161a6e1a2eee02cd4962aeb7",
-   "audits.json": "4f9e6e557a5d0af0f67763be6064e6f613a2e7dec2f19c4f631daae786ea572e",
-   "console.log": "f01c937ac6c97ae4d43140dd1cfe462d266c9f12f07ea056642693377f74db5f",
-   "console.ts.log": "73304347f9f041b85cf6dcc43c36e775d32d732dceeda704af9821efaafccd8e",
-   "exports.json": "04762af4f345b4cd8fbb4926d6a6766c8255622008c4ede6aebf66728e42657d",
-   "manifest_at_run.json": "8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35",
-   "ruling_provisioning.json": "5c5c0661d2a56b3ced34aaa52e8c933e783843456ee7182de82b7b486bfcc6fc",
-   "ruling_whole_of_run.json": "0272e6d1758d54f8ce63d74ac0693a1cd6061bac010b88078022fc671434ac37",
-   "run_log.json": "873c2277172280e448b38cefa2200d530e0d5de8076c228f8ddbfd3ce51e9bea",
-   "summary.json": "91b1d3f7f19b2d9fd48f14ab08583497c061bce810e2edee039910f9f23d7c2f",
-   "timeline.json": "713551c7c16955018028984d0e0f8f5d3f9e209d33b6445fb729466811b2c926"
-  },
-  "measured_rate_per_hour": 2976.9824011102987,
-  "outcome": "PASS",
-  "schema": "b2_image_qualification",
-  "schema_version": "1.2.0",
-  "session": "B2Q"
- },
+ "qualification": null,
  "qualification_plan": {
   "budget_per_arm": 8,
   "master_seed": 505806527,
@@ -166,7 +106,7 @@
   "records": 20,
   "sha256": "3d194d76e083fd4ba3ce3cf0458af65637120fcda6761be36598833dbc659216"
  },
- "qualified": true,
+ "qualified": false,
  "rulings_binding": {
   "B2": [
    "session=B2",
@@ -244,7 +184,7 @@
   ],
   "rule": "first 4 bytes of sha256(label|instrument commit); archived seed sets explicitly excluded"
  },
- "status": "S3 PLANNED \u2014 the plan pinned from the calibration; the B2 ruling pair binds to THIS manifest's sha256",
+ "status": "S0 INIT \u2014 derived from the tree; not frozen; no qualification; no plan; NO BOARD RULING",
  "universe": {
   "addresses": 292,
   "sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
