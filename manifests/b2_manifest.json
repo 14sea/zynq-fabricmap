@@ -58,6 +58,11 @@
    "manifest_at_run_sha256": "8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35",
    "rate_per_hour": 2976.9824011102987,
    "transition": "S2 qualify"
+  },
+  {
+   "at": "2026-09-16T09:36:28Z",
+   "plan_sha256": "fec30a11dde658fec043acbc055b3b3a3198f5fa3d227f6edfa36194e87ab0f7",
+   "transition": "S3 plan"
   }
  ],
  "image": {
@@ -96,7 +101,14 @@
   "host/b2_search.py": "3acb04714a6c677708892d171f6a418e6de7627210e2ec6ad65158db51eab1cf",
   "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
  },
- "plan": null,
+ "plan": {
+  "path": "evidence/b2/plan.json",
+  "prediction_path": "evidence/b2/prediction.json",
+  "prediction_sha256": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+  "sessions": 3,
+  "sha256": "fec30a11dde658fec043acbc055b3b3a3198f5fa3d227f6edfa36194e87ab0f7",
+  "total_records": 10824
+ },
  "prereg": {
   "frozen": true,
   "path": "docs/b2_preregistration.md",
@@ -232,7 +244,7 @@
   ],
   "rule": "first 4 bytes of sha256(label|instrument commit); archived seed sets explicitly excluded"
  },
- "status": "S2 QUALIFIED \u2014 the B2Q record reconstructed from its evidence and pinned, the calibration written from it; awaiting the plan (S3)",
+ "status": "S3 PLANNED \u2014 the plan pinned from the calibration; the B2 ruling pair binds to THIS manifest's sha256",
  "universe": {
   "addresses": 292,
   "sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"

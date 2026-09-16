@@ -1,7 +1,7 @@
 {
  "architecture": {
   "path": "docs/b2_architecture.md",
-  "sha256": "6f063228284d2339391b09dea3afdd8a3e719025427455e49d011489b642524e"
+  "sha256": "2393399094e2ae77389e454c2d435ea9e85dc48e5c9fafded30275de2da12172"
  },
  "arm_order": "pair r runs A then B when r is even, B then A when r is odd",
  "audit_policy": "all-self-reporting",
@@ -63,7 +63,7 @@
   },
   "sha256": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c"
  },
- "generated_utc": "2026-09-10T07:54:39Z",
+ "generated_utc": "2026-09-16T09:36:26Z",
  "map": {
   "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json",
   "sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
@@ -143,54 +143,41 @@
  "session": "B2",
  "session_span_max_s": 7200,
  "session_split": {
-  "candidates": {
-   "1 pairs/session": {
-    "records": 1204,
-    "sessions": 9,
-    "total_records": 10836
+  "pairs_per_session_max": 4,
+  "rate_per_hour": 2976.9824011102987,
+  "sessions": [
+   {
+    "deadline_s": 7870.785340191213,
+    "expected_span_s": 5816.6282721529715,
+    "pairs": [
+     0,
+     1,
+     2,
+     3
+    ],
+    "records": 4810
    },
-   "2 pairs/session": {
-    "records": 2406,
-    "sessions": 5,
-    "total_records": 10828
+   {
+    "deadline_s": 7870.785340191213,
+    "expected_span_s": 5816.6282721529715,
+    "pairs": [
+     4,
+     5,
+     6,
+     7
+    ],
+    "records": 4810
    },
-   "3 pairs/session": {
-    "records": 3608,
-    "sessions": 3,
-    "total_records": 10824
-   },
-   "4 pairs/session": {
-    "records": 4810,
-    "sessions": 3,
-    "total_records": 10824
-   },
-   "5 pairs/session": {
-    "records": 6012,
-    "sessions": 2,
-    "total_records": 10822
-   },
-   "6 pairs/session": {
-    "records": 7214,
-    "sessions": 2,
-    "total_records": 10822
-   },
-   "7 pairs/session": {
-    "records": 8416,
-    "sessions": 2,
-    "total_records": 10822
-   },
-   "8 pairs/session": {
-    "records": 9618,
-    "sessions": 2,
-    "total_records": 10822
-   },
-   "9 pairs/session": {
-    "records": 10820,
-    "sessions": 1,
-    "total_records": 10820
+   {
+    "deadline_s": 2419.963731723539,
+    "expected_span_s": 1455.970985378831,
+    "pairs": [
+     8
+    ],
+    "records": 1204
    }
-  },
-  "records_per_pair": 1202,
-  "status": "UNDETERMINED until B2Q measures the all-self-reporting rate"
+  ],
+  "status": "DETERMINED",
+  "total_records": 10824
  }
 }
