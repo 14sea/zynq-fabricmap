@@ -1,6 +1,26 @@
-# B2 — map utility on the known 292 bits: preregistration (DRAFT v0.2, host-only, 2026-09-10)
+# B2 — map utility on the known 292 bits: preregistration (DRAFT v0.3, host-only, 2026-09-16)
 
-**Status: DRAFT — not frozen, not owner-approved, NO BOARD RULING, NO IMAGE BUILT; the
+**Status: DRAFT v0.3 — the preregistration of lifecycle 2; not frozen, not owner-approved,
+NO BOARD RULING for this version.** v0.3 exists because lifecycle 1 (v0.2 frozen at S1,
+sha256 `68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0`) reached a legal S3
+whose committed plan contradicted a test frozen in the pin table at S1
+(`docs/b2_s3_frozen_test_decision_2026_09_16.md`); under §8's own rule that contradiction
+cannot be repaired in place, so lifecycle 1 is **held before execution** and this version
+starts the lifecycle over. v0.3 changes exactly three things, all in §2 and §8: (i) the
+**committed-plan stage rule** is stated in words (before S3 the committed `plan.json` is
+generated without a rate and its split is UNDETERMINED; at S3 it is regenerated from *this*
+lifecycle's own calibration, DETERMINED, and its bytes and pin summary are the manifest's) and
+is what `tests/test_b2_plan.py` (`split_findings`, `StageCoverage`) checks at every stage;
+(ii) §8a records what lifecycle 1 produced and **what is not an input to lifecycle 2**: the
+silicon B2Q PASS of 2026-09-14 and its measured rate 2 976.98 / h are historical evidence for
+the v0.2 manifest only — lifecycle 2 needs its own B2Q, its own calibration and its own plan;
+(iii) §8a states the ordering the pin table imposes (every pinned-file edit first, the table
+regenerated once, then S0). Nothing in the claim (§1), the prediction (§3), the metrics and
+decision rule (§4), the falsifiers (§5) or the sessions (§6) changes; the prediction bytes are
+the same. The paragraph below is v0.2's, kept as written.
+
+**v0.2 (2026-09-10) status as written then: DRAFT — not frozen, not owner-approved, NO BOARD
+RULING, NO IMAGE BUILT; the
 package is under the owner's HOLD (`docs/b2_b3_host_review_2026_09_10.md`).** v0.2 is the
 correction batch after that review: the audit policy is **all-self-reporting** (the owner's
 decision), the replay contract is stated in terms of measured readouts, the silicon run is
@@ -69,9 +89,9 @@ mismatch is a HOLD / KILL of the instrument, not a result about the map (§4).
 | arm order | pair r runs A then B when r is even, B then A when r is odd |
 | records | **per pair 1 202** (2 × 600 search + 2 champion holdout evaluations; there is **no holdout mode bit** — the champion genome is written and read back as a real candidate and F1 is taken over the holdout columns of that fresh readout, because the arm gate sweeps all 64 vectors either way); **per session** 2 baselines (opening, closing) + the session's pairs; total = 2 × sessions + 9 × 1 202 (one session 10 820; two 10 822; three 10 824) |
 | audit policy | **all-self-reporting** (the owner, 2026-09-10): every record's six 64-bit readout words are served and host-verified (B1's `evidence.score.functional_readout`), so every fitness is recomputed from a *measured* readout. No sampled policy is specified for B2; one would need the fields, the sample rule, the mandatory audits and negative cases the review lists, demonstrated through the real exporter / adjudicator |
-| session split (frozen rule) | `host/b2_plan.session_split`: a session holds the largest whole number of pairs whose **expected span** `records × 3600 / R` ≤ 7 200 s, pairs assigned in order, each session with its own baselines; if not even one pair with its baselines fits (R < 602 / h at 600 per arm) the rate is **INFEASIBLE** — a named state, no plan, no S3 (an empty feasible set is not permission to exceed the limit); a rate that is not a finite positive number is invalid; **R = the B2Q-measured all-self-reporting rate** written into the manifest's `calibration` (S2). Until then the split is **UNDETERMINED** (the plan says so). Planning rates only, not calibration: S #3 sampled ≈ 6 690 / h, B1's plan 3 368 / h, the last B1 mapping ≈ 2 807 / h observed — at 2 807 / h the rule gives 4 pairs per session, three sessions (4 + 4 + 1), 10 824 records; whether two sessions suffice is **not assumed** |
+| session split (frozen rule) | `host/b2_plan.session_split`: a session holds the largest whole number of pairs whose **expected span** `records × 3600 / R` ≤ 7 200 s, pairs assigned in order, each session with its own baselines; if not even one pair with its baselines fits (R < 602 / h at 600 per arm) the rate is **INFEASIBLE** — a named state, no plan, no S3 (an empty feasible set is not permission to exceed the limit); a rate that is not a finite positive number is invalid; **R = the B2Q-measured all-self-reporting rate** written into the manifest's `calibration` (S2) **by this lifecycle's own B2Q** (§8a: the rate measured by lifecycle 1's B2Q is not carried over). Until then the split is **UNDETERMINED** and the committed plan file is the one generated without a rate (the committed-plan stage rule, row "plan / prediction"). Planning rates only, not calibration: S #3 sampled ≈ 6 690 / h, B1's plan 3 368 / h, the last B1 mapping ≈ 2 807 / h observed — at 2 807 / h the rule gives 4 pairs per session, three sessions (4 + 4 + 1), 10 824 records; whether two sessions suffice is **not assumed** |
 | deadline | per session, `1.25 × records × 3600 / R + 600` with the measured R |
-| plan / prediction | `evidence/b2/plan.json` (split UNDETERMINED until S2; the S3 plan is regenerated with `--rate-per-hour` from the calibration and pinned), `evidence/b2/prediction.json` |
+| plan / prediction | `evidence/b2/plan.json`, `evidence/b2/prediction.json`. **The committed-plan stage rule (v0.3):** *before S3* — from the pre-image tree through S0, S1 and S2 — the committed `plan.json` is the document `host/b2_plan.py` writes **without** `--rate-per-hour`: every operational field derived from the frozen inputs, `session_split.status` **UNDETERMINED**, no sessions; *at S3* it is regenerated with `--rate-per-hour` = **this lifecycle's own** `calibration` (§8 S2), its split **DETERMINED**, and the committed file is the pinned one — its bytes hash to `manifest.plan.sha256` and its session count and `total_records` equal what the pin records. The prediction's bytes are the same before and after (S3 requires `prediction_sha256` to equal both the sidecar and the manifest). `tests/test_b2_plan.py` holds the committed tree to this rule at whatever stage the manifest is at (`split_findings`), and `StageCoverage` there drives that test against S0, S1, S2 and S3 manifests, against the pairings the rule forbids, and against each guard removed — so the rule cannot be frozen in a form that a later legal stage falsifies (the defect of lifecycle 1) |
 | gate | `evidence/b2/gate/recomputed_2026_09_10/gate_report.json` (rules v0.3 over run 3's rows; `controls_report.json` G9); run 3 as run (`evidence/b2/gate/gate_report.json`, rules v0.2) and run 1 (`v0.1_2026-09-10/`, rules v0.1) kept |
 | manifest | `manifests/b2_manifest.json`, `host/b2_manifest.py` (S0 init / S1 freeze / S2 qualify / S3 plan / verify); does not exist until the image does |
 
@@ -187,7 +207,7 @@ pins) are re-established for the B2 image before the image package is submitted.
 | **S1 freeze** | the owner, after the compatibility review | `prereg.sha256` = this document; `image.board_ready` = true | the first transition; a freeze on a manifest with a qualification or a plan is refused |
 | **B2Q ruling pair** | the owner | bound to the S1 manifest's sha256 (session B2Q, image, prereg) | — |
 | **S2 qualify** | the tool, after B2Q PASS | the B2Q record **reconstructed from the evidence files** (the exact file set by hash, the adjudication's outcome / measured rate / policy, the binding from `manifest_at_run`) **and** `calibration` derived from that reconstruction under the split rule, in one licensed transition | the current manifest must equal `manifest_at_run` outside {qualification, qualified, calibration, plan, status, history}; the embedded record must equal the reconstruction field by field; the binding must be this manifest's image / prereg / carrier / map; the policy must be the frozen one; the rate must be finite, positive and feasible; re-adjudication must PASS and agree on rate and policy (pluggable until the B2 adjudicator exists; without it, not qualified) |
-| **S3 plan** | the tool | the plan regenerated with `--rate-per-hour` = the calibration and pinned (path, sha256, the prediction file's path and sha256, sessions, total records) | `plan_findings` — the same validator at pinning and at every verify — **rebuilds the canonical plan and prediction** from the frozen inputs and compares the whole structures field for field (schema and version, session, fitness, budget, pairs, engine, carrier, map, seed derivation, gate provenance, audit policy, record accounting, arm order, session split, span limit, deadline formula, planning-rate notes, the primary statistic with its α and tie policy, the architecture pin; and in the prediction every pair's runs, arm order, target, base fitness, delta, the aggregate deltas, the predicted primary and the sequence hash and length). Only `generated_utc` may differ; `prediction_sha256` must equal the sidecar's digest **and** the manifest's reference, so a relocated prediction is allowed only when it is the same bytes. A plan on an unqualified manifest, a second plan, or any other operational difference: refused |
+| **S3 plan** | the tool | the plan regenerated with `--rate-per-hour` = the calibration and pinned (path, sha256, the prediction file's path and sha256, sessions, total records) | `plan_findings` — the same validator at pinning and at every verify — **rebuilds the canonical plan and prediction** from the frozen inputs and compares the whole structures field for field (schema and version, session, fitness, budget, pairs, engine, carrier, map, seed derivation, gate provenance, audit policy, record accounting, arm order, session split, span limit, deadline formula, planning-rate notes, the primary statistic with its α and tie policy, the architecture pin; and in the prediction every pair's runs, arm order, target, base fitness, delta, the aggregate deltas, the predicted primary and the sequence hash and length). Only `generated_utc` may differ; `prediction_sha256` must equal the sidecar's digest **and** the manifest's reference, so a relocated prediction is allowed only when it is the same bytes. A plan on an unqualified manifest, a second plan, or any other operational difference: refused. **From S3 on, the committed `evidence/b2/plan.json` IS the pinned plan** (the committed-plan stage rule, §2): the same bytes, DETERMINED, its summary the manifest's; before S3 it is the rate-less UNDETERMINED document. The committed-tree test follows the manifest's stage, never a constant |
 | **B2 ruling pairs** | the owner | bound to the **S3** manifest's sha256 (session B2, master seed, image, prereg) | — |
 | any later change | — | image, prereg, map, seeds, lineage, experiment, calibration, plan file, pin, a lying `qualified` flag; **and file-only changes with the manifest untouched**: a pinned implementation file deleted or changed, the frozen preregistration or the map file edited, the B1 manifest file edited, **the image binary deleted, truncated or replaced with the same number of different bytes** | **refused** by `verify`, which re-hashes every frozen input — the image binary included, opened and sized — and re-verifies the B1 chain fresh on every call (each case a fresh-process test) |
 
@@ -197,3 +217,50 @@ invalidated the binding. Now the plan is *produced* by the qualification's calib
 that production is the licensed transition, checked field by field. The B1 verifier is not
 relaxed (the lifecycle test asserts the B1 files are unchanged since `6ac2cf2`). Any
 later change to this text is a new preregistration.
+
+## 8a. Lifecycle 2 — provenance, and what lifecycle 1 does not hand over (v0.3)
+
+**What lifecycle 1 (v0.2) reached, and where it stopped.** S0 (`fa0271e`), S1 freeze
+(`68cde86d…`, 2026-09-13), a silicon B2Q on `17A6` (`evidence/b2/b2q_17A6_2026-09-14-01`,
+PASS, measured all-self-reporting rate 2 976.982 4 / h), S2 qualify (`ac06141`, manifest
+`e6b8db65…`), S3 plan (`f007f92`, manifest `5d2312c3…`, split 4 + 4 + 1, 10 824 records). The
+S3 plan is correct. The whole-suite run at S3 could not be a clean-tree proof because
+`tests/test_b2_plan.py`, frozen in the pin table at S1, asserted the committed plan is
+UNDETERMINED — true until S2, false at S3 by construction. Correcting the test moved a pinned
+file off its pin; regenerating the pin table or editing v0.2 would make the B2Q record a record
+for another manifest (the S2 rule licenses only {qualification, qualified, calibration, plan,
+status, history} to differ from `manifest_at_run`). The owner's decision
+(`docs/b2_s3_frozen_test_decision_2026_09_16.md`): contain (revert the correction, `4800c15`),
+hold lifecycle 1 before any B2 ruling, and start again — this version.
+
+**What is carried into lifecycle 2 unchanged:** the claim (§1), the pins of §2 other than the
+plan row (instrument, carrier and lineage, signer / validator, map, oracle rendering, universe,
+landscape rule, gate), the prediction (§3, same bytes), the metrics and decision rule (§4), the
+falsifiers (§5), the sessions and rulings (§6), the compatibility obligations (§7), the
+lifecycle table (§8). The B2 image binary and its build evidence may be carried if they are
+byte-identical to what lifecycle 1's S0 recorded; S0 re-hashes them either way.
+
+**What is NOT an input to lifecycle 2 — stated so it cannot be argued in later:**
+
+- the B2Q PASS of 2026-09-14 and its measured rate **2 976.98 / h**. They are historical
+  evidence, bound to the v0.2 S1 manifest and valid as such; they qualify nothing about the
+  lifecycle-2 manifest and must not size its plan. Lifecycle 2 runs **its own B2Q** under its
+  own ruling pair bound to its own S1 manifest, and its `calibration` is that session's rate;
+- the lifecycle-1 manifests (`e6b8db65…`, `5d2312c3…`), the S3 plan they pin, and the pin
+  table `8d6f64a5…` — history, at `4800c15`;
+- the lifecycle-1 clean-tree proof at S2 (`test_report_2026-09-14T210104Z.json`) — it proved a
+  different pinned surface.
+
+**The ordering the pin table imposes (the audit's F2,
+`docs/b2_lifecycle2_pinned_test_audit_2026_09_16.md`).** Every lifecycle fixture in the suite
+reaches S2/S3 through the production `verify`, which checks the *committed* pin table; so while
+any pinned file differs from the table, every such fixture errors and the suite is red **by
+design**. Therefore, in this order and each step a separately authorised transition: (1) every
+pinned-file edit of lifecycle 2 is complete and reviewed — at this writing, the corrected
+`tests/test_b2_plan.py` and nothing else; (2) `evidence/b2/plan.json` is regenerated **without**
+a rate (UNDETERMINED; prediction bytes unchanged); (3) the pin table is regenerated **once**
+(`host/b2_pins.py --generate`); (4) S0 init, which pins the new table; (5) the whole suite
+green and a clean-tree proof; (6) S1 freeze of *this* document by the owner; (7) B2Q ruling
+pair, B2Q, S2, S3, and only then B2 ruling pairs. Between (1) and (4) a single edited test is
+checked with the pin check stubbed (`evidence/b2/lifecycle2_prep_2026_09_16/`): diagnostic
+only, never a proof.
