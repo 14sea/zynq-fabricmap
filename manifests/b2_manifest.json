@@ -41,9 +41,15 @@
   },
   "pairs": 9
  },
- "history": [],
+ "history": [
+  {
+   "at": "2026-09-16T19:42:52Z",
+   "prereg_sha256": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf",
+   "transition": "S1 freeze"
+  }
+ ],
  "image": {
-  "board_ready": false,
+  "board_ready": true,
   "build_evidence": {
    "path": "evidence/b2/build_evidence.json",
    "sha256": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b"
@@ -80,9 +86,9 @@
  },
  "plan": null,
  "prereg": {
-  "frozen": false,
+  "frozen": true,
   "path": "docs/b2_preregistration.md",
-  "sha256": null
+  "sha256": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf"
  },
  "qualification": null,
  "qualification_plan": {
@@ -184,7 +190,7 @@
   ],
   "rule": "first 4 bytes of sha256(label|instrument commit); archived seed sets explicitly excluded"
  },
- "status": "S0 INIT \u2014 derived from the tree; not frozen; no qualification; no plan; NO BOARD RULING",
+ "status": "S1 FROZEN \u2014 prereg pinned, image board_ready by the owner; awaiting the B2Q ruling pair",
  "universe": {
   "addresses": 292,
   "sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
