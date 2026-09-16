@@ -1,0 +1,20 @@
+{
+  "branch": "b2-lifecycle-2",
+  "commit_reviewed": "83f5ab8",
+  "diagnostic_only": true,
+  "owner_probe_rerun": {
+    "errors": 0,
+    "failures": 2,
+    "mutant_survived": false,
+    "skipped": 0,
+    "tests_run": 10
+  },
+  "pin_stubbed_module_run": {
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0,
+    "tests_run": 18
+  },
+  "result": "PASS for the pre-repin test correction",
+  "scope": "No clean-tree proof; the live old pin table must refuse the edited pinned test until lifecycle 2 creates a new table and S0."
+}
