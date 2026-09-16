@@ -1,0 +1,35 @@
+{
+  "commit_reviewed": "8de4dfc",
+  "pin_table": {
+    "sha256": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1",
+    "file_count": 71,
+    "matching_glob_files": 71,
+    "equals_generate_in_memory": true,
+    "all_file_hashes_match": true,
+    "changed_entries": [
+      "host/b2_manifest.py",
+      "tests/test_b2_lifecycle.py",
+      "tests/test_b2_plan.py"
+    ]
+  },
+  "old_manifest": {
+    "sha256": "5d2312c3d407a998bd9cbcef5d242c7bed3c016daca8c2ba5b5c9ffba6338db9",
+    "unchanged_in_step3": true,
+    "expected_refusal": "the new table does not hash to the lifecycle-1 manifest's old pin"
+  },
+  "s0_preview": {
+    "diagnostic_only_sha256": "a5e84423cfa8148f29cc70bd0f5c42ab785a0fcd2019b7694c2e2b718e3f4224",
+    "stage": "S0",
+    "qualified": false,
+    "refusal": null,
+    "pin_table_sha256": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1",
+    "prereg_sha256": null,
+    "prereg_frozen": false,
+    "board_ready": false,
+    "qualification": null,
+    "calibration": null,
+    "plan": null,
+    "history": []
+  },
+  "decision": "PASS; authorize lifecycle-2 step 4 only"
+}
