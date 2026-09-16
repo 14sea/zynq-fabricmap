@@ -1,0 +1,40 @@
+{
+  "draft": {
+    "claims_each_guard_removed": true,
+    "claims_image_not_built": true,
+    "sha256": "8ce35ac4564d1bc210060d0933848ef5a60458a20aff21163d6e0fcfa3df8c74"
+  },
+  "image_observed": {
+    "build_evidence_exists": true,
+    "bytes": 114708,
+    "exists": true,
+    "manifest_note": "no B2 image exists yet; pinned from its build evidence when built; board_ready is the owner's mark at the freeze",
+    "manifest_sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+    "path": "firmware/b2/bsp/out/b2_app.bin",
+    "sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5"
+  },
+  "lifecycle1_binding": {
+    "distinct_prereg_and_s1_manifest": true,
+    "post_freeze_report_manifest_sha256": "8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35",
+    "prereg_sha256": "68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0",
+    "s0_manifest_sha256": "86393ed781cb25c971aeb7a4ea3bf485b5aba5a353ef94968b3128050d5b2da1",
+    "s1_manifest_sha256": "8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35"
+  },
+  "ordering": {
+    "literal_tail": [
+      "(`host/b2_pins.py --generate`); (4) S0 init, which pins the new table; (5) the whole suite",
+      "green and a clean-tree proof; (6) S1 freeze of *this* document by the owner; (7) B2Q ruling",
+      "pair, B2Q, S2, S3, and only then B2 ruling pairs. Between (1) and (4) a single edited test is",
+      "checked with the pin check stubbed (`evidence/b2/lifecycle2_prep_2026_09_16/`): diagnostic",
+      "only, never a proof."
+    ],
+    "mentions_post_freeze_proof": false,
+    "runs_directly_from_s3_to_b2_rulings": true,
+    "s0_proof_before_s1_freeze": true
+  },
+  "prediction": {
+    "current_sha256": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+    "pre_v03_sha256": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+    "unchanged": true
+  }
+}
