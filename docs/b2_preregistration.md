@@ -3,11 +3,11 @@
 **Status: DRAFT v0.3 — the preregistration of lifecycle 2; not frozen, not owner-approved,
 NO BOARD RULING for this version.** v0.3 exists because lifecycle 1 (v0.2, the document's
 sha256 `68cde86d3f3decaf9775beac94c59731ada486ebe246006e7243156c084db8e0`, frozen into the S1
-manifest `86997677…` — §8a names all four lifecycle-1 manifests) reached a legal S3
+manifest `86997677…` — §8a names every lifecycle-1 manifest identity) reached a legal S3
 whose committed plan contradicted a test frozen in the pin table at S1
 (`docs/b2_s3_frozen_test_decision_2026_09_16.md`); under §8's own rule that contradiction
 cannot be repaired in place, so lifecycle 1 is **held before execution** and this version
-starts the lifecycle over. v0.3 changes exactly three things, all in §2 and §8: (i) the
+starts the lifecycle over. v0.3 changes four things, all in §2 and §8: (i) the
 **committed-plan stage rule** is stated in words (before S3 the committed `plan.json` is
 generated without a rate and its split is UNDETERMINED; at S3 it is regenerated from *this*
 lifecycle's own calibration, DETERMINED, and its bytes and pin summary are the manifest's) and
@@ -16,7 +16,11 @@ is what `tests/test_b2_plan.py` (`split_findings`, `StageCoverage`) checks at ev
 silicon B2Q PASS of 2026-09-14 and its measured rate 2 976.98 / h are historical evidence for
 the v0.2 manifest only — lifecycle 2 needs its own B2Q, its own calibration and its own plan;
 (iii) §8a states the ordering the pin table imposes (every pinned-file edit first, the table
-regenerated once, then S0). Nothing in the claim (§1), the prediction (§3), the metrics and
+regenerated once, then S0, with the post-freeze and final proofs and each ruling, session and
+transition as its own authorised step); (iv) the §2 image pin says the image **is built**
+(digest, size, ELF, evidence) and adds the **image-record note contract** — `init` must write a
+note that describes what the record pins, checked by a production-driven test — because
+lifecycle 1's S0 froze "no B2 image exists yet" next to a pinned digest. Nothing in the claim (§1), the prediction (§3), the metrics and
 decision rule (§4), the falsifiers (§5) or the sessions (§6) changes; the prediction bytes are
 the same. The paragraph below is v0.2's, kept as written.
 
@@ -226,7 +230,8 @@ identity a ruling or a proof was bound to (`evidence/b2/s1_2026_09_13/transition
 
 | lifecycle-1 stage | manifest sha256 | what bound to it |
 |---|---|---|
-| S0 init (`fa0271e`) | `86393ed781cb25c971aeb7a4ea3bf485b5aba5a353ef94968b3128050d5b2da1` | — |
+| S0 init, initial (`fa0271e`) | `af2717476a518f3fcb31d5c76599a17585367fdc421f9607b06aaca424924540` | — (superseded by the pre-freeze corrections) |
+| S0, final pre-freeze (`01acb5f`, pushed at `9429088`) | `86393ed781cb25c971aeb7a4ea3bf485b5aba5a353ef94968b3128050d5b2da1` | the S0 identity the S1 freeze consumed (`transition.json` `manifest_before_sha256`) |
 | S1 freeze (2026-09-13) | `8699767744b8f7c1f68a49252acddd91af0e9d1732a0a772476fc0f257949b35` | the B2Q ruling pair and `manifest_at_run`; the post-freeze clean-tree proof `test_report_2026-09-13T053400Z.json` |
 | S2 qualify (`ac06141`) | `e6b8db65afad8494c215fab442cd6b0a7fbbb66ce2478d74a751f84638a1685b` | calibration 2 976.982 4 / h; the clean-tree proof `test_report_2026-09-14T210104Z.json` |
 | S3 plan (`f007f92`) | `5d2312c3d407a998bd9cbcef5d242c7bed3c016daca8c2ba5b5c9ffba6338db9` | nothing — held before any B2 ruling |
@@ -257,10 +262,11 @@ byte-identical to what lifecycle 1's S0 recorded; S0 re-hashes them either way.
   nothing about the lifecycle-2 manifest and must not size its plan. Lifecycle 2 runs **its own
   B2Q** under its own ruling pair bound to its own S1 manifest, and its `calibration` is that
   session's rate;
-- **all four lifecycle-1 manifest identities** — S0 `86393ed7…`, S1 `86997677…`, S2
-  `e6b8db65…`, S3 `5d2312c3…` — the v0.2 document `68cde86d…` they froze, the S3 plan they
-  pin, and the pin table `8d6f64a5…` — history, at `4800c15`. No lifecycle-2 ruling, evidence
-  binding or `manifest_at_run` may name any of them;
+- **every lifecycle-1 manifest identity** — S0 initial `af271747…` (`fa0271e`) and S0 final
+  `86393ed7…` (`01acb5f`, the one S1 consumed), S1 `86997677…`, S2 `e6b8db65…`, S3
+  `5d2312c3…` — the v0.2 document `68cde86d…` they froze, the S3 plan they pin, and the pin
+  table `8d6f64a5…` — history, at `4800c15`. No lifecycle-2 ruling, evidence binding or
+  `manifest_at_run` may name any of them;
 - the lifecycle-1 clean-tree proofs (`test_report_2026-09-13T053400Z.json` at S1,
   `test_report_2026-09-14T210104Z.json` at S2) — they proved a different pinned surface.
 
@@ -285,14 +291,21 @@ design**. Therefore, in this order and each step a separately authorised transit
    cannot prove the changed manifest or the frozen bytes (lifecycle 1 did this:
    `test_report_2026-09-13T053400Z.json`, bound to `86997677…`); **required before the B2Q
    ruling pair**;
-8. B2Q ruling pair (bound to that S1 manifest), B2Q, S2 qualify — and, as lifecycle 1 did, a
-   clean-tree proof at S2 (`test_report_2026-09-14T210104Z.json` was its), a transition check;
-9. S3 plan;
-10. **the final clean-tree proof**: the whole suite green, zero failures and errors, on the
+8. the B2Q ruling pair (bound to that S1 manifest's sha256: session B2Q, image, prereg) —
+   the owner's; a ruling authorises **one board session** and nothing else;
+9. the B2Q board session under that ruling pair (§6 (a): fresh power cycle, boundary record,
+   the fixed order, every record audited); its outcome is the adjudicator's, and a PASS
+   authorises **no transition** by itself;
+10. S2 qualify — the tool, from the B2Q evidence, the record reconstructed and re-adjudicated
+    (§8 S2 row); a separately authorised transition;
+11. a clean-tree proof at S2 (lifecycle 1's was `test_report_2026-09-14T210104Z.json`) — a
+    transition check for the S2 surface; **required before S3**;
+12. S3 plan — the tool; a separately authorised transition;
+13. **the final clean-tree proof**: the whole suite green, zero failures and errors, on the
     tree that carries the S3 manifest and the pinned plan — the proof lifecycle 1 could not
     produce (`docs/b2_s3_frozen_test_decision_2026_09_16.md`); **required before any B2 ruling
     pair**;
-11. B2 ruling pairs, each bound to the S3 manifest's sha256.
+14. B2 ruling pairs, each bound to the S3 manifest's sha256 — the owner's, one per session.
 
 Between steps 1 and 4 a single edited test is checked with the pin check stubbed
 (`evidence/b2/lifecycle2_prep_2026_09_16/`): diagnostic only, never a proof.

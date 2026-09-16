@@ -30,7 +30,8 @@ def step_of(needle: str) -> int | None:
     return None
 
 
-ids = {"s0": "86393ed7", "s1": "86997677", "s2": "e6b8db65", "s3": "5d2312c3", "prereg_v02": "68cde86d"}
+ids = {"s0_initial": "af271747", "s0_final": "86393ed7", "s1": "86997677", "s2": "e6b8db65", "s3": "5d2312c3", "prereg_v02": "68cde86d"}
+non_input = sec8a[sec8a.index("**What is NOT an input"):sec8a.index("**The ordering the pin table imposes")]
 image_row = next(l for l in text.splitlines() if l.startswith("| B2 image |"))
 init_with = bman.init(ROOT / "evidence/b2/build_evidence.json")["image"]
 init_without = bman.init(None)["image"]
@@ -51,7 +52,7 @@ out = {
         "s1_freeze_step": step_of("S1 freeze of *this* document"),
         "post_freeze_proof_step": step_of("post-freeze clean-tree proof"),
         "post_freeze_proof_bound_to_actual_s1_manifest": "actual frozen S1 manifest's sha256" in ordering,
-        "b2q_ruling_step": step_of("B2Q ruling pair (bound to that S1 manifest)"),
+        "b2q_ruling_step": step_of("the B2Q ruling pair (bound to that S1 manifest's sha256"),
         "s3_step": step_of("S3 plan"),
         "final_proof_step": step_of("final clean-tree proof"),
         "b2_rulings_step": step_of("B2 ruling pairs, each bound to the S3 manifest"),
@@ -60,8 +61,24 @@ out = {
         "all_four_manifests_named_in_8a": {k: (v in sec8a) for k, v in ids.items()},
         "prereg_digest_labelled_as_document_not_manifest": "is the value written into `prereg.sha256` at S1; it is not a manifest identity" in sec8a,
         "s1_manifest_named_as_b2q_binding": "bound to the S1 manifest\n`86997677" in sec8a or "bound to the S1 manifest `86997677" in " ".join(sec8a.split()),
-        "non_input_list_names_all_four": "S0 `86393ed7…`, S1 `86997677…`, S2\n  `e6b8db65…`, S3 `5d2312c3…`" in sec8a
-        or "S0 `86393ed7…`, S1 `86997677…`, S2 `e6b8db65…`, S3 `5d2312c3…`" in " ".join(sec8a.split()),
+        "non_input_list_names_every_identity": {k: (v in non_input) for k, v in ids.items()},
+    },
+    # the owner's round 2 (docs/b2_prereg_v03_round2_review_2026_09_16.md)
+    "round2_p2_step8_split": {
+        "ruling_step": step_of("the B2Q ruling pair (bound to that S1 manifest's sha256"),
+        "board_session_step": step_of("the B2Q board session under that ruling pair"),
+        "s2_transition_step": step_of("S2 qualify"),
+        "s2_proof_step": step_of("clean-tree proof at S2"),
+        "s2_proof_required_before_s3": "required before S3" in (step_text.get(step_of("clean-tree proof at S2") or -1, "")),
+    },
+    "round2_p3_1_s0_rows": {
+        "fa0271e_paired_with_af271747": "`fa0271e`) | `af2717476a518f3fcb31d5c76599a17585367fdc421f9607b06aaca424924540`" in sec8a,
+        "01acb5f_paired_with_86393ed7": "`01acb5f`, pushed at `9429088`) | `86393ed781cb25c971aeb7a4ea3bf485b5aba5a353ef94968b3128050d5b2da1`" in sec8a,
+        "fa0271e_paired_with_86393ed7": "S0 init (`fa0271e`) | `86393ed7" in sec8a,
+    },
+    "round2_p3_2_change_count": {
+        "still_says_exactly_three": "v0.3 changes exactly three things" in text,
+        "says_four_with_item_iv": "v0.3 changes four things" in text and "(iv) the §2 image pin says the image **is built**" in text,
     },
     "p3_stagecoverage_claim": {
         "says_each_guard_removed": "against each guard removed" in text,
