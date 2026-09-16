@@ -3,13 +3,16 @@ the prediction equals a fresh run of the reference (docs/b2_preregistration.md �
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import sys
 import unittest
 from pathlib import Path
+from unittest import mock
 
 R = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(R / "host"))
+sys.path.insert(0, str(R / "tests"))
 import b1_model as bm  # noqa: E402
 import b2_gate as bg  # noqa: E402
 import b2_landscape as bl  # noqa: E402
@@ -19,6 +22,37 @@ import b2_search as bs  # noqa: E402
 
 PLAN = R / "evidence/b2/plan.json"
 PRED = R / "evidence/b2/prediction.json"
+MANIFEST = R / "manifests/b2_manifest.json"
+
+
+def split_findings(plan: dict, plan_bytes: bytes, manifest: dict | None) -> list[str]:
+    """The committed plan's split, held to the stage the manifest is at — never to a constant.
+
+    Before S3 (no manifest, or a manifest with no plan pinned) the committed plan is the
+    preregistered document with the split UNDETERMINED (docs/b2_preregistration.md §2: "split
+    UNDETERMINED until S2; the S3 plan is regenerated with --rate-per-hour ... and pinned"). From
+    S3 on, the committed plan IS the pinned one: DETERMINED, its bytes hashing to the manifest's
+    pin, its session count and record total equal to what the pin records. One rule for the
+    committed tree and for the stage guard below; the hard-coded UNDETERMINED this replaces was
+    frozen at S1 and could not survive the S3 transition (docs/b2_s3_frozen_test_decision_2026_09_16.md)."""
+    f: list[str] = []
+    split = plan.get("session_split") or {}
+    status = split.get("status")
+    pinned = (manifest or {}).get("plan")
+    if pinned is None:
+        if not isinstance(status, str) or not status.startswith("UNDETERMINED"):
+            f.append(f"no plan is pinned, so the committed split must be UNDETERMINED, not {status!r}")
+        return f
+    if status != "DETERMINED":
+        f.append(f"a plan is pinned, so the committed split must be DETERMINED, not {status!r}")
+    digest = hashlib.sha256(plan_bytes).hexdigest()
+    if digest != pinned.get("sha256"):
+        f.append(f"the committed plan hashes to {digest[:12]}…, the manifest pins {str(pinned.get('sha256'))[:12]}…")
+    if len(split.get("sessions") or []) != pinned.get("sessions"):
+        f.append(f"the committed split has {len(split.get('sessions') or [])} sessions, the pin records {pinned.get('sessions')}")
+    if split.get("total_records") != pinned.get("total_records"):
+        f.append(f"the committed split totals {split.get('total_records')} records, the pin records {pinned.get('total_records')}")
+    return f
 
 
 @unittest.skipUnless(PLAN.exists() and PRED.exists(), "no committed B2 plan / prediction")
@@ -52,7 +86,8 @@ class Committed(unittest.TestCase):
         self.assertEqual(self.plan["records"]["per_pair"], 2 * b + 2)
         self.assertEqual(self.pred["fitness_sequence_length"], n * 2 * b + n * 2)
         self.assertEqual(self.plan["audit_policy"], "all-self-reporting")
-        self.assertEqual(self.plan["session_split"]["status"][:12], "UNDETERMINED")
+        manifest = json.loads(MANIFEST.read_text()) if MANIFEST.is_file() else None
+        self.assertEqual(split_findings(self.plan, PLAN.read_bytes(), manifest), [])
         # the split rule: with a measured rate, whole pairs per session within the two-hour expected span
         s = bp.session_split(9, 600, 2500.0)
         self.assertEqual(s["pairs_per_session_max"], 4)
@@ -108,6 +143,143 @@ class Committed(unittest.TestCase):
     def test_arm_order_alternates(self):
         for p in self.pred["pairs"]:
             self.assertEqual(p["arm_order"], ["A", "B"] if p["pair"] % 2 == 0 else ["B", "A"])
+
+
+try:
+    from test_b2_runner import HAVE as _HAVE_RUNNER_FIXTURE, STUB_RATE, Fixture
+except ImportError:                      # the runner's suite is absent: the guard below has nothing to build with
+    _HAVE_RUNNER_FIXTURE, STUB_RATE, Fixture = False, None, None
+
+
+@unittest.skipUnless(_HAVE_RUNNER_FIXTURE, "the built B2 image, its build evidence or the gate report is absent")
+class StageCoverage(unittest.TestCase):
+    """The S3 frozen-test contradiction of 2026-09-16, inverted into a permanent guard.
+
+    `Committed.test_record_count_and_split_arithmetic` used to assert that the committed plan is
+    UNDETERMINED. That was true at S0, S1 and S2 and false at S3 by construction (the S3 plan is
+    regenerated from the calibration and pinned), and the file was frozen in the pin table at S1 —
+    so the first legal S3 transition produced a suite that could not be green. This drives the
+    real test function, unchanged, against a real manifest file and a real plan file at every
+    stage the lifecycle has, and requires it to PASS at each; then, so that passing means
+    something, against three illegal pairings, requiring it to fail for each one's own reason.
+
+    The fixtures are the runner suite's (`test_b2_runner.Fixture`): a manifest carried S0 → S3
+    in a temp directory with the B2Q evidence and re-adjudicator stubbed — test readiness, never
+    a qualification. Before S3 the plan file is the tool's own UNDETERMINED document
+    (`bp.build_plan(None)`), exactly what `b2_plan.py` writes without `--rate-per-hour`.
+    """
+
+    TEST = "test_record_count_and_split_arithmetic"
+
+    def drive(self, manifest_path: Path | None, plan_path: Path, pred_path: Path) -> unittest.TestResult:
+        """Run the committed test against these three files; the seams are the module constants
+        the test reads, patched by name."""
+        with mock.patch.object(sys.modules[__name__], "PLAN", plan_path), \
+                mock.patch.object(sys.modules[__name__], "PRED", pred_path), \
+                mock.patch.object(sys.modules[__name__], "MANIFEST",
+                                  manifest_path if manifest_path is not None else Path("/nonexistent/b2_manifest.json")):
+            suite = unittest.TestSuite([Committed(self.TEST)])
+            return unittest.TextTestRunner(stream=io.StringIO(), verbosity=0).run(suite)
+
+    @staticmethod
+    def undetermined_documents(f) -> tuple[Path, Path]:
+        """The pre-S3 committed documents for a fixture: the plan without a rate, the prediction
+        for the fixture's own seeds (what the committed prediction.json is before and after S3)."""
+        plan = bp.build_plan(None)
+        prediction = bp.build_prediction(plan["fitness"], plan["budget_per_arm"],
+                                         [tuple(p) for p in f.manifest["seeds"]["pairs"]],
+                                         f.manifest["map"]["canonical_json_sha256"])
+        return bp.write(f.d / "pre_s3", plan, prediction)
+
+    def accepts(self, stage: str) -> dict:
+        f = Fixture(stage)
+        try:
+            if stage == "S3":
+                plan_path, pred_path = f.plan_path, f.plan_path.parent / "prediction.json"
+            else:
+                plan_path, pred_path = self.undetermined_documents(f)
+            result = self.drive(f.path(), plan_path, pred_path)
+            self.assertEqual((len(result.failures), len(result.errors), len(result.skipped)), (0, 0, 0),
+                             f"{stage}: " + "".join(t for _, t in result.failures + result.errors)[:2000])
+            self.assertEqual(result.testsRun, 1)
+            return json.loads(plan_path.read_text())["session_split"]
+        finally:
+            f.close()
+
+    def rejects(self, stage: str, choose, *words: str) -> None:
+        """`choose(f) -> (manifest_path | None, plan_path, pred_path)` builds the illegal pairing."""
+        f = Fixture(stage)
+        try:
+            result = self.drive(*choose(f))
+            self.assertEqual(len(result.failures) + len(result.errors), 1,
+                             f"{stage}: an illegal plan/manifest pairing was accepted")
+            text = "".join(t for _, t in result.failures + result.errors)
+            for w in words:
+                self.assertIn(w, text)
+        finally:
+            f.close()
+
+    # ------------------------------------------------------------------ it survives every stage
+    def test_it_passes_at_s0_s1_and_s2_with_the_undetermined_plan(self):
+        for stage in ("S0", "S1", "S2"):
+            with self.subTest(stage=stage):
+                split = self.accepts(stage)
+                self.assertTrue(split["status"].startswith("UNDETERMINED"), split["status"])
+
+    def test_it_passes_at_s3_with_the_pinned_plan(self):
+        """The transition the frozen assertion could not survive."""
+        split = self.accepts("S3")
+        self.assertEqual(split["status"], "DETERMINED")
+
+    def test_it_passes_at_s3_for_every_split_a_calibration_can_give(self):
+        """Synthetic fixture rates, never a calibration: four legally different S3 splits, and the
+        test holds each committed plan to its own pin rather than to any one shape."""
+        seen = {}
+        for rate in (2807.0, 602.0, 4490.86, 6000.0):
+            with self.subTest(rate=rate), mock.patch.object(sys.modules["test_b2_runner"], "STUB_RATE", rate):
+                seen[rate] = len(self.accepts("S3")["sessions"])
+        self.assertEqual(len(set(seen.values())), 4, f"the rates did not give different splits: {seen}")
+
+    def test_it_passes_with_no_manifest_at_all(self):
+        """The pre-image tree (before S0 there is no manifest): the committed plan is UNDETERMINED."""
+        f = Fixture("S0")
+        try:
+            plan_path, pred_path = self.undetermined_documents(f)
+            result = self.drive(None, plan_path, pred_path)
+            self.assertEqual((len(result.failures), len(result.errors), result.testsRun), (0, 0, 1),
+                             "".join(t for _, t in result.failures + result.errors)[:2000])
+        finally:
+            f.close()
+
+    # ------------------------------------------------------------------ and still discriminates
+    def test_the_old_constant_is_exactly_what_fails_at_s3(self):
+        """The control for the correction itself: an UNDETERMINED plan file against an S3 manifest —
+        the pairing the frozen assertion demanded — is refused, naming the pin."""
+        def choose(f):
+            plan_path, pred_path = self.undetermined_documents(f)
+            return f.path(), plan_path, pred_path
+        self.rejects("S3", choose, "a plan is pinned, so the committed split must be DETERMINED")
+
+    def test_a_determined_split_with_nothing_pinned_is_refused(self):
+        """The inverse: a DETERMINED plan (any rate) in a tree whose manifest pins no plan."""
+        def choose(f):
+            plan = bp.build_plan(STUB_RATE)
+            prediction = bp.build_prediction(plan["fitness"], plan["budget_per_arm"],
+                                             [tuple(p) for p in f.manifest["seeds"]["pairs"]],
+                                             f.manifest["map"]["canonical_json_sha256"])
+            plan_path, pred_path = bp.write(f.d / "early", plan, prediction)
+            return f.path(), plan_path, pred_path
+        self.rejects("S2", choose, "no plan is pinned, so the committed split must be UNDETERMINED")
+
+    def test_a_pinned_plan_whose_bytes_drifted_is_refused(self):
+        """S3 with the committed plan edited after pinning: same shape, different bytes."""
+        def choose(f):
+            doc = json.loads(f.plan_path.read_text())
+            doc["generated_utc"] = "1970-01-01T00:00:00Z"
+            drifted = f.d / "drifted_plan.json"
+            drifted.write_text(json.dumps(doc, indent=1, sort_keys=True))
+            return f.path(), drifted, f.plan_path.parent / "prediction.json"
+        self.rejects("S3", choose, "the committed plan hashes to")
 
 
 if __name__ == "__main__":
