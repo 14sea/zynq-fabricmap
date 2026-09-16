@@ -281,6 +281,41 @@ class StageCoverage(unittest.TestCase):
             return f.path(), drifted, f.plan_path.parent / "prediction.json"
         self.rejects("S3", choose, "the committed plan hashes to")
 
+    # ---------------------------------------------------- the pin's own summary, one field at a time
+    # (the owner's review of 2026-09-16, P2: with both comparisons removed from split_findings the
+    # seven cases above still passed — the two summary guards had no discriminating negative)
+
+    @staticmethod
+    def _pinned_summary_off_by_one(field: str):
+        """A valid S3 fixture whose MANIFEST summary of the pin is wrong in exactly `field`; the
+        committed plan bytes are the pinned ones, untouched, so the digest still agrees."""
+        def choose(f):
+            f.manifest["plan"][field] += 1
+            return f.path(), f.plan_path, f.plan_path.parent / "prediction.json"
+        return choose
+
+    def test_a_pin_whose_session_count_disagrees_with_the_plan_is_refused(self):
+        self.rejects("S3", self._pinned_summary_off_by_one("sessions"), "sessions, the pin records")
+
+    def test_a_pin_whose_record_total_disagrees_with_the_plan_is_refused(self):
+        self.rejects("S3", self._pinned_summary_off_by_one("total_records"), "records, the pin records")
+
+    def test_each_summary_guard_is_load_bearing(self):
+        """The control for the two cases above (the review's item 3): delete either comparison from
+        `split_findings` and its negative case must FAIL — otherwise the case would pass for a
+        reason other than the guard it claims to exercise."""
+        original = split_findings
+        for needle, case in (("sessions, the pin records", "test_a_pin_whose_session_count_disagrees_with_the_plan_is_refused"),
+                             ("records, the pin records", "test_a_pin_whose_record_total_disagrees_with_the_plan_is_refused")):
+            with self.subTest(guard=needle):
+                def without(plan, plan_bytes, manifest, _needle=needle):
+                    return [x for x in original(plan, plan_bytes, manifest) if _needle not in x]
+                with mock.patch.object(sys.modules[__name__], "split_findings", without):
+                    suite = unittest.TestSuite([StageCoverage(case)])
+                    result = unittest.TextTestRunner(stream=io.StringIO(), verbosity=0).run(suite)
+                self.assertEqual((result.testsRun, len(result.failures) + len(result.errors)), (1, 1),
+                                 f"{case} still passes with its guard removed: the case is not load-bearing")
+
 
 if __name__ == "__main__":
     unittest.main()
