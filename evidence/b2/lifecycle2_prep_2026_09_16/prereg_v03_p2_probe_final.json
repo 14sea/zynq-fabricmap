@@ -1,0 +1,80 @@
+{
+  "diagnostic_only": true,
+  "draft_sha256": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf",
+  "p2_1_image": {
+    "init_with_evidence_note": "pinned from its build evidence (evidence/b2/build_evidence.json); every verify opens the binary and compares its digest and size with this record and with the evidence; board_ready is the owner's mark at the freeze",
+    "init_with_evidence_note_stale": false,
+    "init_without_evidence_note_stale": true,
+    "production_test_named": true,
+    "row_names_digest_size_elf_evidence": true,
+    "row_says_not_built": false
+  },
+  "p2_2_proofs": {
+    "b2_rulings_step": 14,
+    "b2q_ruling_step": 8,
+    "final_proof_step": 13,
+    "order_ok": true,
+    "post_freeze_proof_bound_to_actual_s1_manifest": true,
+    "post_freeze_proof_step": 7,
+    "s0_proof_step": 5,
+    "s1_freeze_step": 6,
+    "s3_step": 12,
+    "steps": {
+      "1": "every pinned-file edit of lifecycle 2 is complete and reviewed \u2014 at this writing, the corrected `tests/test_b2_plan.py`, `host/b2_manifest.py` (the image note, P2-1) and `tests/test_b2_lifecycle.py` (its production-driven test), and nothing else;",
+      "2": "`evidence/b2/plan.json` is regenerated **without** a rate (UNDETERMINED; prediction bytes unchanged);",
+      "3": "the pin table is regenerated **once** (`host/b2_pins.py --generate`);",
+      "4": "S0 init, which pins the new table and re-hashes the image;",
+      "5": "the whole suite green and a clean-tree proof at S0 \u2014 a transition check; it proves the S0 surface only and **cannot stand in for either proof below**;",
+      "6": "S1 freeze of *this* document by the owner (`prereg.sha256`, `board_ready`);",
+      "7": "**the post-freeze clean-tree proof**: the whole suite green with the report's artifact snapshot naming the **actual frozen S1 manifest's sha256** \u2014 a proof taken before the freeze cannot prove the changed manifest or the frozen bytes (lifecycle 1 did this: `test_report_2026-09-13T053400Z.json`, bound to `86997677\u2026`); **required before the B2Q ruling pair**;",
+      "8": "the B2Q ruling pair (bound to that S1 manifest's sha256: session B2Q, image, prereg) \u2014 the owner's; a ruling authorises **one board session** and nothing else;",
+      "9": "the B2Q board session under that ruling pair (\u00a76 (a): fresh power cycle, boundary record, the fixed order, every record audited); its outcome is the adjudicator's, and a PASS authorises **no transition** by itself;",
+      "10": "S2 qualify \u2014 the tool, from the B2Q evidence, the record reconstructed and re-adjudicated (\u00a78 S2 row); a separately authorised transition;",
+      "11": "a clean-tree proof at S2 (lifecycle 1's was `test_report_2026-09-14T210104Z.json`) \u2014 a transition check for the S2 surface; **required before S3**;",
+      "12": "S3 plan \u2014 the tool; a separately authorised transition;",
+      "13": "**the final clean-tree proof**: the whole suite green, zero failures and errors, on the tree that carries the S3 manifest and the pinned plan \u2014 the proof lifecycle 1 could not produce (`docs/b2_s3_frozen_test_decision_2026_09_16.md`); **required before any B2 ruling pair**;",
+      "14": "B2 ruling pairs, each bound to the S3 manifest's sha256 \u2014 the owner's, one per session."
+    }
+  },
+  "p2_3_identities": {
+    "all_four_manifests_named_in_8a": {
+      "prereg_v02": true,
+      "s0_final": true,
+      "s0_initial": true,
+      "s1": true,
+      "s2": true,
+      "s3": true
+    },
+    "non_input_list_names_every_identity": {
+      "prereg_v02": true,
+      "s0_final": true,
+      "s0_initial": true,
+      "s1": true,
+      "s2": true,
+      "s3": true
+    },
+    "prereg_digest_labelled_as_document_not_manifest": true,
+    "s1_manifest_named_as_b2q_binding": true
+  },
+  "p3_stagecoverage_claim": {
+    "says_each_guard_removed": false,
+    "says_each_of_the_two_pin_summary_guards_removed": true
+  },
+  "prediction_unchanged": true,
+  "round2_p2_step8_split": {
+    "board_session_step": 9,
+    "ruling_step": 8,
+    "s2_proof_required_before_s3": true,
+    "s2_proof_step": 11,
+    "s2_transition_step": 10
+  },
+  "round2_p3_1_s0_rows": {
+    "01acb5f_paired_with_86393ed7": true,
+    "fa0271e_paired_with_86393ed7": false,
+    "fa0271e_paired_with_af271747": true
+  },
+  "round2_p3_2_change_count": {
+    "says_four_with_item_iv": true,
+    "still_says_exactly_three": false
+  }
+}

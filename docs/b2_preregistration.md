@@ -274,7 +274,9 @@ byte-identical to what lifecycle 1's S0 recorded; S0 re-hashes them either way.
 `docs/b2_lifecycle2_pinned_test_audit_2026_09_16.md`).** Every lifecycle fixture in the suite
 reaches S2/S3 through the production `verify`, which checks the *committed* pin table; so while
 any pinned file differs from the table, every such fixture errors and the suite is red **by
-design**. Therefore, in this order and each step a separately authorised transition:
+design**. Therefore, in this order, **each numbered unit separately authorised** — some are
+manifest transitions (the tool's), some are rulings (the owner's), one is a board session, and
+some are proofs; none authorises the next:
 
 1. every pinned-file edit of lifecycle 2 is complete and reviewed — at this writing, the
    corrected `tests/test_b2_plan.py`, `host/b2_manifest.py` (the image note, P2-1) and
