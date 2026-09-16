@@ -1,0 +1,20 @@
+{
+  "current_implementation": {
+    "baseline": [],
+    "sessions_wrong": [
+      "the committed split has 3 sessions, the pin records 4"
+    ],
+    "total_records_wrong": [
+      "the committed split totals 10824 records, the pin records 10825"
+    ]
+  },
+  "diagnostic_only": true,
+  "mutation": "remove the sessions and total_records comparisons from split_findings",
+  "stage_coverage": {
+    "errors": 0,
+    "failures": 0,
+    "mutant_survived": true,
+    "skipped": 0,
+    "tests_run": 7
+  }
+}
