@@ -1,0 +1,26 @@
+{
+  "commit_reviewed": "dfa5424",
+  "preregistration": {
+    "sha256": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf",
+    "wording_p3_closed_at": "735a422"
+  },
+  "plan": {
+    "sha256": "9f742c8c6054b1340b48a4139d567208252c117307fffdf6da45f2d00c558734",
+    "canonical_build_plan_none": true,
+    "session_split_status": "UNDETERMINED until B2Q measures the all-self-reporting rate",
+    "has_sessions": false,
+    "prediction_sha256": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+    "prediction_reference_matches_bytes": true
+  },
+  "pre_step3": {
+    "old_pin_table_sha256": "8d6f64a5fed1fa222b2c29a0dddac6c6fd3346b23481ade1f00a3f104a907ebf",
+    "old_manifest_sha256": "5d2312c3d407a998bd9cbcef5d242c7bed3c016daca8c2ba5b5c9ffba6338db9",
+    "old_table_file_count": 71,
+    "pinned_files_changed": [
+      "host/b2_manifest.py",
+      "tests/test_b2_lifecycle.py",
+      "tests/test_b2_plan.py"
+    ]
+  },
+  "decision": "PASS; authorize lifecycle-2 step 3 only"
+}
