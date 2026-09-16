@@ -52,7 +52,15 @@ class Committed(unittest.TestCase):
         self.assertEqual(self.plan["records"]["per_pair"], 2 * b + 2)
         self.assertEqual(self.pred["fitness_sequence_length"], n * 2 * b + n * 2)
         self.assertEqual(self.plan["audit_policy"], "all-self-reporting")
-        self.assertEqual(self.plan["session_split"]["status"][:12], "UNDETERMINED")
+        # the committed plan's split follows the manifest's stage: UNDETERMINED until a plan is
+        # pinned (S3), DETERMINED and record-for-record equal to the pin afterwards
+        pinned = json.loads((R / "manifests/b2_manifest.json").read_text()).get("plan")
+        if pinned is None:
+            self.assertEqual(self.plan["session_split"]["status"][:12], "UNDETERMINED")
+        else:
+            self.assertEqual(self.plan["session_split"]["status"], "DETERMINED")
+            self.assertEqual(self.plan["session_split"]["total_records"], pinned["total_records"])
+            self.assertEqual(len(self.plan["session_split"]["sessions"]), pinned["sessions"])
         # the split rule: with a measured rate, whole pairs per session within the two-hour expected span
         s = bp.session_split(9, 600, 2500.0)
         self.assertEqual(s["pairs_per_session_max"], 4)
