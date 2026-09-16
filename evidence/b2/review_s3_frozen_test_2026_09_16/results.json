@@ -1,0 +1,46 @@
+{
+  "correction_commit": "8319683",
+  "failed_report": {
+    "clean_tree_proof": false,
+    "errors": 32,
+    "failures": 20,
+    "path": "evidence/b2/tests/test_report_2026-09-16T095911Z.json",
+    "pin_refusals": [
+      "the pinned surface did not verify at the start: PinRefusal: pinned files changed: tests/test_b2_plan.py: hash differs",
+      "the pinned surface did not verify at the end: PinRefusal: pinned files changed: tests/test_b2_plan.py: hash differs"
+    ],
+    "ran": 2067
+  },
+  "frozen_test": {
+    "asserts_undetermined": true,
+    "correction_blob_sha256": "b758b2ebbcfc26f6c42275445321b9d2d00a5d770737247d7e00ece9439eafc2",
+    "path": "tests/test_b2_plan.py",
+    "pin_sha256": "4dc42f84ff6b3399e8c2c8b0e5452de0c58d1a785a0bb2534603fd851f1bd84e",
+    "s3_blob_sha256": "4dc42f84ff6b3399e8c2c8b0e5452de0c58d1a785a0bb2534603fd851f1bd84e"
+  },
+  "review_result": "The S3 plan is internally bound, but the frozen test contract requires the pre-S3 plan state. The current lifecycle cannot produce both S3 and a zero-failure clean-tree proof.",
+  "s3_commit": "f007f92",
+  "s3_plan": {
+    "sha256": "fec30a11dde658fec043acbc055b3b3a3198f5fa3d227f6edfa36194e87ab0f7",
+    "split": [
+      4,
+      4,
+      1
+    ],
+    "status": "DETERMINED",
+    "total_records": 10824
+  },
+  "strict_transition": {
+    "consequence": "A repin or prereg edit is a new frozen identity and cannot reuse the existing B2Q qualification binding.",
+    "instrument_pins_is_licensed": false,
+    "licensed_top_level_fields": [
+      "calibration",
+      "history",
+      "plan",
+      "qualification",
+      "qualified",
+      "status"
+    ],
+    "prereg_is_licensed": false
+  }
+}
