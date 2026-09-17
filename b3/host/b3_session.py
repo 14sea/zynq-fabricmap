@@ -47,6 +47,7 @@ import b3_plan as pl  # noqa: E402
 
 MAX_PAIRS = 16
 SEED_MAX = 0xFFFFFFFF
+PREREGISTERED_FITNESS = "F1"        # preregistration v0.3.1 §2: F1, fixed by B2 and not re-selected — no other fitness runs here
 ARM_WIRE = {"R": bs.ARM_RANDOM_SAFE, "F": bs.ARM_MAP_GUIDED, "O": oa.ARM_ONLINE}
 
 
@@ -119,10 +120,12 @@ def run(budget: int, pairs_total: int, pair_first: int, pair_count: int, pair_se
         unscored_at: int | None = None) -> Session:
     """Drive the session over the fabric model; `unscored_at` makes that candidate (by seq) not
     SCORED, which must end the epoch. `view` is arm F's map view (the committed B1 self-map by
-    default); arm O starts empty every pair and takes no view."""
+    default); arm O starts empty every pair and takes no view. `fitness` must be the preregistered
+    F1 — a self-consistent plan / prediction / context under another fitness is refused by name
+    before any arm runs: the preregistration fixed F1 and gives no licence to re-select it."""
     seeds = check_inputs(budget, pairs_total, pair_first, pair_count, pair_seeds, unscored_at)
-    if not isinstance(fitness, str):
-        raise ValueError("fitness is not a string")
+    if fitness != PREREGISTERED_FITNESS:               # before any model or arm runs (the owner's P2 on 10733ac)
+        raise ValueError(f"fitness {fitness!r} is not the preregistered {PREREGISTERED_FITNESS!r}")
     truth = truth if truth is not None else bm.truth_mapping()
     masks = masks if masks is not None else bl.universe_mask(truth)
     fabric = fabric if fabric is not None else bs.ModelFabric(truth)
