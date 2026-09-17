@@ -92,6 +92,10 @@ def consistent(pred: dict) -> dict:
         o["map_version_final"] = o["ledger"][-1]["map_version_after"]
         o["anomalies"] = o["ledger"][-1]["anomalies"]
         o["moves_sha256"] = pl.sha256_json([[x["parent_born"], x["move_kind"], x["intervention"], x["fitness"]] for x in o["ledger"]])
+        carto, f = oa.replay_cartographer_only(o["ledger"])
+        if not f:                                                     # a ledger the cartographer accepts: its rendering is the digest
+            o["online_map_sha256"] = om.canonical_sha256(om.render(carto, {"landscape_seed": e["landscape_seed"], "operator_seed": e["operator_seed"],
+                                                                            "fitness": "F1", "budget": len(o["ledger"])}, o["ledger"]))
         e["delta1_O_minus_R"] = o["best_train"] - e["runs"]["R"]["best_train"]
         e["delta2_O_minus_endtoend_F"] = o["best_train"] - e["runs"]["F"]["end_to_end_at_budget"]
     pred["deltas1"] = [e["delta1_O_minus_R"] for e in pred["pairs"]]
@@ -513,23 +517,30 @@ class Holds(unittest.TestCase):
 
     # -- the ledger replay (arm O): the record and the prediction tampered together
     def test_a_decode_the_reference_cartographer_did_not_make(self):
+        """A board claiming a decode the cartographer would not make: the record layer names the drift
+        from the prediction (the prediction itself cannot carry such an entry — it is refused, see
+        Malformed); with the record layer bypassed, the replay's own cartographer refuses it."""
         n = next(i for i, e in enumerate(PRED["pairs"][0]["runs"]["O"]["ledger"]) if e["decoded"])
-        def tamper(e):
+        def mutate(log):
+            e = search_records(log, "online", 0)[n]["search"]["ledger"]
             e["decoded"] = e["decoded"] + [[291, 5, 63]]
-        mutate, pred = self._entry_and_prediction(0, n, tamper)
-        res = self._holds(mutate, "the ledger's decoded is", pred)
+        res = self._holds(mutate, "not the predicted entry")
+        self.assertIn("not_run", res["replay"])
+        with mock.patch.object(brec, "validate_run_log", lambda *a, **k: []):
+            res = self._holds(mutate, "the ledger's decoded is")
         self.assertTrue(any("ledger replay failed" in x for x in res["findings"]), res["findings"][:3])
         self.assertNotIn("online_maps", res)
 
     def test_a_decoded_position_the_reference_did_not_decode_is_a_hold_not_a_kill(self):
         """A wrong decode the replay does NOT reproduce: the image is at fault (a HOLD), never the
-        certificate."""
+        certificate — shown through the record-layer seam, since a prediction carrying it is refused."""
         n = next(i for i, e in enumerate(PRED["pairs"][0]["runs"]["O"]["ledger"]) if e["decoded"])
-        def tamper(e):
+        def mutate(log):
+            e = search_records(log, "online", 0)[n]["search"]["ledger"]
             i, k, v = e["decoded"][0]
             e["decoded"][0] = [i, k, (v + 1) % 64]
-        mutate, pred = self._entry_and_prediction(0, n, tamper)
-        res = self._holds(mutate, "the ledger's decoded is", pred)
+        with mock.patch.object(brec, "validate_run_log", lambda *a, **k: []):
+            res = self._holds(mutate, "the ledger's decoded is")
         self.assertFalse(any("wrong decode" in x for x in res["findings"] + res["kills"]))
 
     def test_a_map_version_or_anomaly_the_record_layer_names_is_never_replayed(self):
@@ -582,7 +593,7 @@ class Holds(unittest.TestCase):
 
     # -- the prediction
     def test_a_run_that_does_not_reproduce_a_predicted_value(self):
-        for arm, key in (("R", "best_train"), ("F", "end_to_end_at_budget"), ("O", "wrong_decodes"), ("O", "online_map_sha256"),
+        for arm, key in (("R", "best_train"), ("F", "end_to_end_at_budget"), ("O", "wrong_decodes"), ("O", "best_train"),
                          ("F", "champion_genome_sha256"), ("R", "moves_sha256"), ("O", "champion_holdout")):
             with self.subTest(arm=arm, key=key):
                 pred = copy.deepcopy(PRED)
@@ -818,6 +829,15 @@ class Malformed(unittest.TestCase):
             (lambda p: O(p).__setitem__("anomalies", B + 1), f"anomalies {B + 1} is not the"),
             (lambda p: O(p).__setitem__("wrong_decodes", 999), "wrong_decodes 999 exceed the"),
             (lambda p: O(p).__setitem__("moves_sha256", "f" * 64), "moves_sha256 is not the digest of its own ledger's moves"),
+            # the owner's P2 on 2cfd4e9: a four-bit intervention with an EMPTY delta, counters untouched — the cartographer would
+            # have refused it (|delta| != |intervention|) and counted an anomaly, so the ledger does not replay
+            (lambda p: L(p)[next(i for i, e in enumerate(L(p)) if len(e["intervention"]) == 4 and not e["decoded"])].__setitem__("behaviour_delta", []),
+             "the ledger does not replay through the reference cartographer"),
+            (lambda p: L(p)[next(i for i, e in enumerate(L(p)) if e["decoded"])].__setitem__("decoded", L(p)[next(i for i, e in enumerate(L(p)) if e["decoded"])]["decoded"] + [[291, 5, 63]]),
+             "the ledger does not replay through the reference cartographer"),
+            (lambda p: L(p)[next(i for i, e in enumerate(L(p)) if e["decoded"])]["decoded"][0].__setitem__(2, (L(p)[next(i for i, e in enumerate(L(p)) if e["decoded"])]["decoded"][0][2] + 1) % 64),
+             "the ledger does not replay through the reference cartographer"),
+            (lambda p: O(p).__setitem__("online_map_sha256", "f" * 64), "online_map_sha256 is not the rendering of the replayed cartographer"),
         )
         for mut, needle in cases:
             with self.subTest(needle=needle):

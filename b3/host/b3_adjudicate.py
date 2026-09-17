@@ -171,8 +171,9 @@ def check_prediction(prediction: dict, plan: dict) -> None:
     """The prediction fields this module compares against — every one typed and its domain checked
     before a comparison. The pair identities must cover the experiment exactly once IN ORDER, every
     run's values must be in domain, the deltas must account for their own runs, the primary must be
-    the sign test over its own Δ1 and the secondary report the one over its own Δ2. The ledger
-    entries' shape is the context's business (`b3_records.context_from`)."""
+    the sign test over its own Δ1 and the secondary report the one over its own Δ2; every O ledger
+    is checked entry by entry and replayed through the reference cartographer
+    (`check_prediction_ledger`)."""
     if not isinstance(prediction, dict) or prediction.get("schema") != "b3_prediction":
         raise Refusal("the prediction is not a b3_prediction document")
     if prediction.get("schema_version") != pl.SCHEMA_VERSION or prediction.get("lifecycle") != pl.LIFECYCLE:
@@ -230,7 +231,7 @@ def check_prediction(prediction: dict, plan: dict) -> None:
             raise Refusal(f"the prediction's pair {r} arm O: the ledger is not {budget} entries")
         if o_run["ledger_sha256"] != om.canonical_sha256(o_run["ledger"]):
             raise Refusal(f"the prediction's pair {r} arm O: ledger_sha256 is not the digest of its own ledger")
-        check_prediction_ledger(r, o_run, budget, train_ceiling)
+        check_prediction_ledger(r, o_run, budget, train_ceiling, entry["landscape_seed"], entry["operator_seed"], plan["fitness"])
         for k, want in (("delta1_O_minus_R", o_run["best_train"] - runs["R"]["best_train"]),
                         ("delta2_O_minus_endtoend_F", o_run["best_train"] - f_run["end_to_end_at_budget"])):
             if not _int(entry.get(k)):
@@ -269,13 +270,18 @@ def check_prediction(prediction: dict, plan: dict) -> None:
                       f"{want_len} values {plan['pairs']} pairs at budget {budget} produce")
 
 
-def check_prediction_ledger(r: int, o_run: dict, budget: int, train_ceiling: int) -> None:
+def check_prediction_ledger(r: int, o_run: dict, budget: int, train_ceiling: int, landscape_seed=None, operator_seed=None, fid: str = "F1") -> None:
     """The prediction's O ledger for pair r, entry by entry — the shape, the type of every value, its
-    domain and the run's continuity (the rules `b3_records` holds a board's entries to) — and the
-    summary's arithmetic against it: decoded_final, map_version_final and anomalies are what the
-    ledger produced, wrong_decodes cannot exceed the decodes, moves_sha256 is the digest of the
+    domain and the run's continuity (the rules `b3_records` holds a board's entries to) — then the
+    whole ledger REPLAYED through the reference cartographer (`b3_online_arm.replay_cartographer_only`:
+    every entry's map_version before, its decoded relations, its map_version_after and its anomaly
+    count must be what the cartographer itself produces from the entry's intervention and delta — a
+    delta the cartographer would refuse must be counted as an anomaly, a decode it would not make must
+    not be claimed) — and the summary's arithmetic against that replay: decoded_final,
+    map_version_final and anomalies are the replayed cartographer's, the online-map digest is the
+    rendering of it, wrong_decodes cannot exceed the decodes, moves_sha256 is the digest of the
     ledger's own moves. A prediction that fails here is REFUSED by name before any record is judged;
-    it is never a finding about a board."""
+    it is never a finding about a board (the owner's P2s on 537c144 and 2cfd4e9)."""
     where0 = f"the prediction's pair {r} arm O"
     ledger = o_run["ledger"]
     after, anomalies, decoded_all, taken = 0, 0, set(), set()
@@ -326,10 +332,17 @@ def check_prediction_ledger(r: int, o_run: dict, budget: int, train_ceiling: int
             decoded_all.add(i)
             taken.add((k, v))
         after, anomalies = e["map_version_after"], e["anomalies"]
-    want = {"decoded_final": len(decoded_all), "map_version_final": after, "anomalies": anomalies}
+    carto, replay = oa.replay_cartographer_only(ledger)
+    if replay:
+        raise Refusal(f"{where0}: the ledger does not replay through the reference cartographer — {replay[0]}")
+    want = {"decoded_final": len(carto.decoded), "map_version_final": carto.version, "anomalies": carto.anomalies}
     for k, v in want.items():
         if o_run[k] != v:
-            raise Refusal(f"{where0}: {k} {o_run[k]} is not the {v} its own ledger produces")
+            raise Refusal(f"{where0}: {k} {o_run[k]} is not the {v} the replayed cartographer produces")
+    if landscape_seed is not None:
+        doc = om.render(carto, {"landscape_seed": landscape_seed, "operator_seed": operator_seed, "fitness": fid, "budget": budget}, ledger)
+        if o_run["online_map_sha256"] != om.canonical_sha256(doc):
+            raise Refusal(f"{where0}: online_map_sha256 is not the rendering of the replayed cartographer")
     if o_run["wrong_decodes"] > o_run["decoded_final"]:
         raise Refusal(f"{where0}: wrong_decodes {o_run['wrong_decodes']} exceed the {o_run['decoded_final']} decodes")
     moves = pl.sha256_json([[e["parent_born"], e["move_kind"], e["intervention"], e["fitness"]] for e in ledger])
