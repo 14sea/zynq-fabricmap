@@ -72,6 +72,38 @@ def write_gate_fixture(d: Path, S: int = 200, head: str = FIXTURE_HEAD, label: s
     return d / "gate_report.json"
 
 
+def identity(ctx) -> dict:
+    """An `app_identity` 1.6.0 document for a `b3_records.Context` (the modelled shape, not the wire)."""
+    return {"schema": "app_identity", "schema_version": "1.6.0", "control_plane": "standalone",
+            "protocol": "rel-v4", "carrier_variant": "0x42310001",
+            "search_version": bs.ENGINE_VERSION, "map_sha256": ctx.map_sha256,
+            "operator_data_sha256": ctx.map_sha256, "fitness_id": ctx.fitness,
+            "budget_per_arm": ctx.budget, "master_seed": ctx.master_seed,
+            "pairs_total": ctx.pairs_total, "pair_first": ctx.pair_first, "pair_count": ctx.pair_count,
+            "carto_version": ctx.carto_version, "arms": ctx.arms, "b1_map_cost": ctx.b1_map_cost}
+
+
+def loop_records(session) -> list[dict]:
+    """The `loop_record` 1.4.0 documents of a `b3_session.Session`, one per candidate, every SCORED, the
+    `search` block parsed from the candidate's own block bytes (the modelled shape; the wire adds the
+    instrument's evidence)."""
+    import b1_carto as bc
+    out = []
+    for c in session.candidates:
+        rec = {"schema": "loop_record", "schema_version": "1.4.0", "seq": c.seq, "genome": bc.genome_to_hex(c.genome),
+               "outcome": "SCORED", "verified": "audited", "evidence": {}}
+        if c.arm:
+            rec["arm"] = c.arm
+        if c.block:
+            rec["search"] = json.loads(c.block)
+        out.append(rec)
+    return out
+
+
+def run_log(ctx, session) -> dict:
+    return {"app_identity": identity(ctx), "loop_records": loop_records(session)}
+
+
 def rewrite_report(path: Path, mutate) -> None:
     """Apply `mutate(rep)` to a fixture report in place (a tamper for a negative test)."""
     rep = json.loads(path.read_text())

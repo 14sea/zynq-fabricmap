@@ -2,11 +2,10 @@
 validator waves through, and must hold every O-arm search record to its ledger entry and to the
 prediction.
 
-The fixture is a well-formed B3 session built from the reference: `b2_search.run` for the R and F
-arms (the blocks exactly as the image writes them), `b3_online_arm.run_online` for the O arm (its
-blocks assembled from the run's search-state trace, its ledger and its combined commitments — the
-1.4.0 shape of docs/b3_architecture.md v0.3 §7), the prediction from `b3_plan.build_prediction` over
-the same seeds. The session is checked to be accepted with no finding, then one mutation is driven
+The fixture is a well-formed B3 session from the reference orchestrator `b3_session.run_context`
+(`b2_search.run` for the R and F arms, `b3_online_arm.run_online` for the O arm — every block the
+arm's own run produced, the 1.4.0 shape of docs/b3_architecture.md v0.3 §7), the prediction from
+`b3_plan.build_prediction` over the same seeds. The session is checked to be accepted with no finding, then one mutation is driven
 at a time — every case must be NAMED in the findings, and no malformed value may raise.
 
 Held here: the ledger sub-block is on O-arm SEARCH records only (an O champion's holdout record, an
@@ -21,13 +20,12 @@ order, the arm per record, the seq run, the record count and the identity 1.6.0 
 from __future__ import annotations
 
 import copy
-import json
 import sys
 import unittest
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[2]
-for p in (R / "host", R / "b3/host"):
+for p in (R / "host", R / "b3/host", R / "b3/tests"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 import b1_model as bm  # noqa: E402
@@ -38,6 +36,8 @@ import b3_carto as carto_mod  # noqa: E402
 import b3_online_arm as oa  # noqa: E402
 import b3_plan as pl  # noqa: E402
 import b3_records as brec  # noqa: E402
+import b3_session as bsess  # noqa: E402
+import b3_test_fixtures as fx  # noqa: E402
 
 TRUTH = bm.truth_mapping()
 MASKS = bl.universe_mask(TRUTH)
@@ -63,75 +63,10 @@ CTX = brec.context_from(PLAN, PRED, 0, PAIRS)
 CTX_SLICE = brec.context_from(PLAN, PRED, 1, 2)
 
 
-def identity(ctx: brec.Context = CTX) -> dict:
-    return {"schema": "app_identity", "schema_version": "1.6.0", "control_plane": "standalone",
-            "protocol": "rel-v4", "carrier_variant": "0x42310001",
-            "search_version": bs.ENGINE_VERSION, "map_sha256": ctx.map_sha256,
-            "operator_data_sha256": ctx.map_sha256, "fitness_id": ctx.fitness,
-            "budget_per_arm": ctx.budget, "master_seed": ctx.master_seed,
-            "pairs_total": ctx.pairs_total, "pair_first": ctx.pair_first, "pair_count": ctx.pair_count,
-            "carto_version": ctx.carto_version, "arms": ctx.arms, "b1_map_cost": ctx.b1_map_cost}
-
-
-def online_blocks(oo: oa.OnlineResult, pair: int, lseed: int, oseed: int, budget: int) -> tuple[list[dict], dict]:
-    """The O arm's `search` blocks in the 1.4.0 shape from what `run_online` exposes: B2's fields from
-    the per-evaluation search-state text (evals, generation, best, the population), the move from the
-    ledger entry, `selected` by B2's convention (the generation closes on its last child), the
-    column-move counter from the entries' kinds, `state_sha256` = the combined commitment, and the
-    ledger entry itself; then the champion's holdout block (no ledger, the final commitment)."""
-    blocks, col, prev_gen = [], 0, 0
-    for n, e in enumerate(oo.ledger):
-        parts = oo.search_state_trace[n].split("|")
-        evals, gen, best = int(parts[5]), int(parts[6]), int(parts[7])
-        pop = [{"born": int(x.split(":")[1]), "fit": int(x.split(":")[0])} for x in parts[8].split(";") if x]
-        if e["move_kind"] == "column":
-            col += 1
-        closed = gen > prev_gen
-        prev_gen = gen
-        blocks.append({"arm": "O", "best": best, "column_moves": col, "eval": evals, "fitness": e["fitness"], "generation": gen,
-                       "holdout": None, "landscape_seed": lseed, "move": {"bits": list(e["intervention"]), "kind": e["move_kind"]},
-                       "operator_seed": oseed, "pair": pair, "parent_born": e["parent_born"], "population": pop, "selected": closed,
-                       "state_sha256": oo.state_trace[n], "version": bs.ENGINE_VERSION, "ledger": copy.deepcopy(e)})
-    last = blocks[-1]
-    hold = {**{k: v for k, v in last.items() if k != "ledger"}, "eval": budget, "fitness": None, "holdout": oo.champion_holdout,
-            "move": None, "parent_born": None, "selected": False, "state_sha256": oo.state_trace[-1]}
-    return blocks, hold
-
-
 def run_log(ctx: brec.Context = CTX) -> dict:
-    seq = 0
-    recs: list[dict] = []
-
-    def rec(arm_wire, block):
-        nonlocal seq
-        seq += 1
-        r = {"schema": "loop_record", "schema_version": "1.4.0", "seq": seq, "genome": "0" * 80,
-             "outcome": "SCORED", "verified": "audited", "evidence": {}}
-        if arm_wire:
-            r["arm"] = arm_wire
-        if block is not None:
-            r["search"] = block
-        return r
-    recs.append(rec(None, None))
-    for i in range(ctx.pair_count):
-        r = ctx.pair_first + i
-        lseed, oseed = ctx.seeds[r]
-        land = bl.Landscape(ctx.fitness, lseed, masks=MASKS, truth=TRUTH)
-        order = brec.arm_order(r)
-        runs = {}
-        for a in order:
-            if a == "O":
-                oo = oa.run_online(land, oseed, ctx.budget, FAB)
-                runs[a] = online_blocks(oo, r, lseed, oseed, ctx.budget)
-            else:
-                res = bs.run(brec.ARM_WIRE[a], land, None if a == "R" else VIEW, oseed, ctx.budget, FAB, log_moves=True, pair=r)
-                runs[a] = ([json.loads(b) for b in res.blocks], json.loads(res.champion_block))
-            for b in runs[a][0]:
-                recs.append(rec(brec.ARM_WIRE[a], b))
-        for a in order:
-            recs.append(rec(brec.ARM_WIRE[a], runs[a][1]))
-    recs.append(rec(None, None))
-    return {"app_identity": identity(ctx), "loop_records": recs}
+    """A well-formed B3 session from the reference orchestrator (b3_session over the fabric model), as
+    loop_record 1.4.0 documents — the O-arm blocks are run_online's own production blocks."""
+    return fx.run_log(ctx, bsess.run_context(ctx, FAB, VIEW, TRUTH, MASKS))
 
 
 BASE = run_log()
@@ -499,7 +434,7 @@ class Types(unittest.TestCase):
 
     def test_never_raises_on_garbage(self):
         for log in ({}, {"loop_records": 5}, {"loop_records": [1, "x", None]}, {"app_identity": 3, "loop_records": [{"seq": 1, "search": 5}]},
-                    {"app_identity": identity(), "loop_records": [{"seq": 1}, {"seq": 2, "arm": "online", "outcome": "SCORED", "search": {"ledger": 1}}]}):
+                    {"app_identity": fx.identity(CTX), "loop_records": [{"seq": 1}, {"seq": 2, "arm": "online", "outcome": "SCORED", "search": {"ledger": 1}}]}):
             with self.subTest(log=str(log)[:40]):
                 try:
                     findings = brec.validate_run_log(log, CTX, common=False)

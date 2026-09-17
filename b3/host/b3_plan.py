@@ -348,7 +348,7 @@ def build_qualification_plan(fid: str, map_sha256: str, b3_pairs: list, gate_rep
     seeds = qualification_seeds(b3_pairs, gate_report)
     total = session_records(QUAL_PAIRS, QUAL_BUDGET)
     return {"schema": "b3_plan", "schema_version": SCHEMA_VERSION, "lifecycle": LIFECYCLE, "session": "B3Q", "fitness": fid,
-            "budget_per_arm": QUAL_BUDGET, "pairs": QUAL_PAIRS, "carto_version": carto_mod.CARTO_VERSION,
+            "budget_per_arm": QUAL_BUDGET, "pairs": QUAL_PAIRS, "carto_version": carto_mod.CARTO_VERSION, "b1_map_cost": oa.B1_MAP_COST,
             "map": {"path": str(bmaps.SELF_MAP.relative_to(REPO_ROOT)), "sha256": map_sha256},
             "seed_derivation": {"label": QUAL_LABEL, "commit": INSTRUMENT_COMMIT, "master_seed": qualification_master(),
                                 "pairs": [list(x) for x in seeds], "excluded_sources": sources,

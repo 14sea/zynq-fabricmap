@@ -178,6 +178,106 @@ class Ledger(unittest.TestCase):
                 self.assertEqual(f2, f)                                    # the production replay names it too
 
 
+class RecordBlocks(unittest.TestCase):
+    """Lifecycle 2, the session unit: run_online emits the O arm's record blocks itself — one search
+    block per evaluation carrying that evaluation's ledger entry and the combined commitment, and the
+    champion's holdout block with no ledger and the FINAL commitment; only a ledger-keeping, unpermuted
+    run is record-capable."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.res = oa.run_online(LAND, 9, 96, FAB, pair=5)
+
+    def test_one_search_block_per_evaluation_with_its_entry_and_commitment(self):
+        res = self.res
+        self.assertTrue(res.record_capable)
+        self.assertEqual((len(res.blocks), len(res.genomes), len(res.state_trace)), (96, 96, 96))
+        for n, raw in enumerate(res.blocks):
+            b = json.loads(raw)
+            self.assertEqual(sorted(b), sorted(oa.BLOCK_KEYS + ("ledger",)))
+            self.assertEqual(b["ledger"], res.ledger[n])
+            self.assertEqual(b["state_sha256"], res.state_trace[n])
+            self.assertEqual((b["arm"], b["pair"], b["eval"], b["version"], b["holdout"]), ("O", 5, n + 1, bs.ENGINE_VERSION, None))
+            self.assertEqual((b["landscape_seed"], b["operator_seed"]), (LAND.seed, 9))
+            self.assertEqual(b["move"], {"bits": res.ledger[n]["intervention"], "kind": res.ledger[n]["move_kind"]})
+            self.assertEqual((b["fitness"], b["parent_born"]), (res.ledger[n]["fitness"], res.ledger[n]["parent_born"]))
+            self.assertEqual(b["best"], res.best_trace[n])
+            self.assertEqual(len(b["population"]), bs.MU)
+            self.assertEqual(raw, json.dumps(b, sort_keys=True, separators=(",", ":")), "compact JSON, sorted keys, as the image writes it")
+        # B2's convention: the generation closes on its last child; the column-move counter is the running one
+        selected = [json.loads(r)["selected"] for r in res.blocks]
+        self.assertEqual(sum(selected), -(-96 // bs.LAMBDA))
+        self.assertTrue(selected[-1])
+        gens = [json.loads(r)["generation"] for r in res.blocks]
+        self.assertEqual(gens[bs.LAMBDA - 1], 1)
+        self.assertEqual(gens[bs.LAMBDA], 1)
+        self.assertEqual(gens[bs.LAMBDA - 2], 0)
+        cols = [json.loads(r)["column_moves"] for r in res.blocks]
+        self.assertEqual(cols, [sum(1 for e in res.ledger[:n + 1] if e["move_kind"] == "column") for n in range(96)])
+        self.assertEqual(cols[-1], res.column_moves)
+
+    def test_the_population_per_record_is_b2s_selection_convention(self):
+        """An independent oracle for every record's population (and so for the search half of every
+        commitment): the population changes only at a selection; a record that closes its generation
+        shows the (μ + λ) truncation of the previous population plus this generation's children (fit =
+        the records' fitness, born = μ + eval − 1), ordered by (−fit, born); every other record shows the
+        population as it was before the generation."""
+        res = self.res
+        base = LAND.train_fitness(FAB(0))
+        pop = [(base, i) for i in range(bs.MU)]                       # (fit, born), the initial population
+        gen_children = []
+        for raw in res.blocks:
+            b = json.loads(raw)
+            gen_children.append((b["fitness"], bs.MU + b["eval"] - 1))
+            if b["selected"]:
+                pool = sorted(pop + gen_children, key=lambda x: (-x[0], x[1]))[:bs.MU]
+                pop = pool
+                gen_children = []
+            self.assertEqual([(p["fit"], p["born"]) for p in b["population"]], pop, f"eval {b['eval']}")
+        self.assertEqual(gen_children, [], "the last record closes the last generation")
+        self.assertEqual([(p["fit"], p["born"]) for p in json.loads(res.champion_block)["population"]], pop)
+        # and the population did change at least once, so the oracle discriminates
+        self.assertNotEqual(pop, [(base, i) for i in range(bs.MU)])
+
+    def test_the_search_state_half_of_the_commitment_is_b2s_block_text(self):
+        """The block's own fields (eval, generation, best, population) are the ones the commitment hashed."""
+        res = self.res
+        for n, raw in enumerate(res.blocks):
+            b = json.loads(raw)
+            parts = res.search_state_trace[n].split("|")
+            self.assertEqual((int(parts[5]), int(parts[6]), int(parts[7])), (b["eval"], b["generation"], b["best"]))
+            pop = [(int(x.split(":")[0]), int(x.split(":")[1])) for x in parts[8].split(";") if x]
+            self.assertEqual(pop, [(p["fit"], p["born"]) for p in b["population"]])
+
+    def test_the_holdout_block_has_no_ledger_and_the_final_commitment(self):
+        res = self.res
+        hb = json.loads(res.champion_block)
+        self.assertEqual(sorted(hb), sorted(oa.BLOCK_KEYS))
+        self.assertNotIn("ledger", hb)
+        self.assertEqual((hb["holdout"], hb["move"], hb["fitness"], hb["parent_born"], hb["selected"], hb["eval"]),
+                         (res.champion_holdout, None, None, None, False, 96))
+        self.assertEqual(hb["state_sha256"], res.state_trace[-1])
+        last = json.loads(res.blocks[-1])
+        self.assertEqual((hb["best"], hb["generation"], hb["column_moves"], hb["population"]), (last["best"], last["generation"], last["column_moves"], last["population"]))
+        self.assertEqual(len(res.ledger), 96, "the holdout evaluation adds no entry")
+        self.assertEqual(hb["state_sha256"], oa.state_sha256(res.search_state_trace[-1], res.carto.state_text()))
+
+    def test_a_gate_control_is_not_record_capable(self):
+        for kw in ({"keep_ledger": False}, {"delta_perm": list(range(1, 384)) + [0]}, {"keep_ledger": False, "delta_perm": list(range(1, 384)) + [0]}):
+            with self.subTest(**{k: (v if not isinstance(v, list) else "perm") for k, v in kw.items()}):
+                res = oa.run_online(LAND, 9, 24, FAB, **kw)
+                self.assertFalse(res.record_capable)
+                self.assertEqual((res.blocks, res.champion_block), ([], ""))
+                self.assertEqual(len(res.best_trace), 24, "the search itself still runs")
+
+    def test_the_blocks_change_nothing_the_prediction_reads(self):
+        """The same run without and with `pair` (blocks differ only in `pair`): traces, ledger, commitments equal."""
+        a, b = self.res, oa.run_online(LAND, 9, 96, FAB, pair=0)
+        self.assertEqual((a.best_trace, a.ledger, a.state_trace, a.champion_holdout, a.genomes), (b.best_trace, b.ledger, b.state_trace, b.champion_holdout, b.genomes))
+        self.assertNotEqual(a.blocks, b.blocks)
+        self.assertEqual([dict(json.loads(x), pair=0) for x in a.blocks], [json.loads(x) for x in b.blocks])
+
+
 class EndToEnd(unittest.TestCase):
     def test_the_frozen_arm_is_charged_333(self):
         trace = list(range(1, 1001))
