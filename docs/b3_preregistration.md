@@ -1,6 +1,21 @@
-# B3 — the closed loop on the known 292 bits: preregistration (DRAFT v0.1, host-only, 2026-09-17)
+# B3 — the closed loop on the known 292 bits: preregistration (DRAFT v0.1.1, host-only, 2026-09-17)
 
-**Status: DRAFT v0.1 — not frozen, not owner-approved, NO BOARD RULING, NO IMAGE BUILT, NO GATE
+> **v0.1 → v0.1.1 (the owner's review of `4fbb305`, HOLD on six P2s).** (1) The gate's
+> bootstrap algorithm and seeds are B2's by import (architecture §9); H9 is a sign test at
+> every budget ≥ `B*`. (2) Control X is one fixed global derangement with a recorded digest.
+> (3) The arm order is the fixed prefix-balanced sequence RFO, FOR, ORF, ROF, OFR, FRO —
+> position counts differ by at most 1, equal only when N is a multiple of 6. (4) The ledger
+> sub-block is on O **search** records only, under `specimen_ledger` 1.1.0 (a new schema
+> file; the frozen 1.0.0 forbids the field); B3Q runs at budget **40** (the owner's choice):
+> 123 scored records, 40 ledger entries, 125 records with the baselines. (5) The online map
+> has its own schema and verifier, scored against the B1 truth mapping; passing B1's
+> map-lifecycle verifier is not claimed. (6) The two-primary design is **conditional with a
+> resolution rule** (§1): after the gate and before S1, v0.2 of this document states exactly
+> one claim; and falsifier 2 attributes a wrong decode to the image only when the replay
+> diverges. The 30 000 bound is a search-evaluation cap. Accepted as ruled: d ≥ 0.5, the
+> 0.85 margin.
+
+**Status: DRAFT v0.1.1 — not frozen, not owner-approved, NO BOARD RULING, NO IMAGE BUILT, NO GATE
 RUN, NO PIN TABLE, NO MANIFEST.** This is step 1 of the B3 lifecycle as the pinned-surface
 audit fixed it (`docs/b3_lifecycle1_pinned_surface_audit_2026_09_17.md` §8, PASS at `3a2063d`):
 architecture v0.2 (`docs/b3_architecture.md`) and this draft, both unpinned by B2, for the
@@ -24,12 +39,21 @@ where a row is B2's unchanged, it says so.
 > for record and decode for decode, the host-predicted outcome** of `<gate>` preregistered
 > landscape pairs at `<gate>` evaluations per arm: every run's best-so-far train fitness,
 > every champion's holdout known answer, every O-arm decode, map version and anomaly count
-> (predicted 0), and therefore the two predicted primaries — **primary 1**, the one-sided
-> exact sign test over the pairs' `Δ1 = best_O − best_R`; **primary 2**, the same test over
-> `Δ2 = best_O − end_to_end_F`, the frozen arm charged B1's 333 mapping evaluations — and
+> (predicted 0), and therefore the predicted primary or primaries fixed by the resolution
+> rule below — **primary 1**, the one-sided exact sign test over the pairs' `Δ1 = best_O −
+> best_R`; **primary 2**, the same test over `Δ2 = best_O − end_to_end_F`, the frozen arm
+> charged B1's 333 mapping evaluations — and
 > the host, recomputing every fitness and every behaviour delta from the served readouts,
 > replaying the three searches and the ledger, and auditing every decode against the
 > certificate, reproduces every choice and every map version the board reported.
+
+**Resolution rule (fixed now; the branch is removed before freeze).** This draft carries a
+conditional design and v0.2, written after the gate and before S1, carries exactly one claim:
+if the gate's H9 holds, the claim requires **both** primaries and both are PASS rows of §4;
+if H9 fails, the claim is **primary 1 alone**, Δ2 is reported in §4 as a non-required row, and
+the sentence above loses its primary-2 clause. Either way the predicted primary or primaries
+on the fixed board seeds must meet p ≤ 0.05 in the prediction (§3); if they do not, **the line
+stops** — the seeds are not redrawn and N is not raised to reach a threshold.
 
 What the claim rests on, and where each part is established:
 
@@ -69,12 +93,15 @@ is a HOLD / KILL of the instrument, §4); anything B4 asks.
 | universe | 292 addresses, digest `895baf85…` (B1's, unchanged) |
 | landscape rule, fitness | `host/b2_landscape.py` (B2's target rule; train = first 40 of the carrier order, holdout = last 24); **F1**, ceiling 40 — fixed by B2, not re-selected |
 | engine | `b2-es-v1`: μ = 4, λ = 8, k ≤ 4, truncation, ties by age; base-initialised — B2's, unchanged; **the operator is the only difference between arms**, and for O the only difference from F is where the map comes from |
-| budget | **`<gate>`** evaluations per arm per pair = `B*` by the frozen budget rule (architecture §9: smallest `N(B) × 3 × B` under H1) |
-| pairs | **`<gate>`** = `N(B*)` by the full ascending scan of the bootstrap power for Δ1 (α = 0.05, power ≥ 0.9, N ≥ 8) |
+| budget | **`<gate>`** evaluations per arm per pair = `B*` by the frozen budget rule (architecture §9: smallest `N(B) × 3 × B` under H1); exploratory, not the gate: ≈ 1 000 |
+| pairs | **`<gate>`** = `N(B*)` by the full ascending scan of the bootstrap power for Δ1 (α = 0.05, power ≥ 0.9, N ≥ 8); exploratory: ≈ 8 |
+| bootstrap / power algorithm | B2's by import and pinned by content: `b2_gate.sign_test_p` (one-sided exact, ties excluded and counted); `b2_gate.required_pairs` — every N from 8 to S ascending, 1 000 experiments of a with-replacement resample of size N from the S paired Δ1, `random.Random(1 + N)`; the control-X null non-rejection with `bootstrap_reject_rate` seed 7; the gate report records the seeds |
+| search-evaluation cap | `N × 3 × B*` ≤ 30 000 (H5); holdout evaluations, baselines and session record totals are outside it and are accounted by the plan |
 | mapping cost charged to F | **333** evaluations (B1's budget: 9 code probes + 292 confirmations + 32 pairs) — an evaluation-count constant, carried in the IDENT |
 | master seed | the first 4 bytes of sha256(`b3-session|` ‖ the instrument commit); pairs `(landscape, operator)` from one Rng stream; the fixed excluded seeds **and every archived set** explicitly excluded — B2's gate runs 1 and 3, the B3 simulation, **B2's 9 session pairs and its B2Q pair**, the B3 gate, the B3Q pair — `evidence/b3/plan.json` `seed_derivation` records every set; disjointness enforced, not assumed |
-| arm order | pair r runs the three arms in the order given by r mod 6 over the permutations of (R, F, O) — every arm in every position equally often across pairs; the order is part of the prediction |
-| records | **per pair 3 × B* + 3** (three searches + three champion holdout evaluations, no holdout-mode bit); **per session** 2 baselines + the session's pairs; O-arm records carry the `ledger` sub-block (architecture §7) |
+| arm order | pair r runs the fixed prefix-balanced sequence's (r mod 6)-th element: **RFO, FOR, ORF, ROF, OFR, FRO** — across any N the number of times an arm occupies a position differs by at most 1 between arms, and is equal only when N is a multiple of 6; the order is part of the plan and the prediction |
+| records | **per pair 3 × B* + 3** (three searches + three champion holdout evaluations, no holdout-mode bit); **per session** 2 baselines + the session's pairs; the `ledger` sub-block is on the O arm's **B* search records only** (an O holdout record evaluates a finished genome and does not update the map), under `specimen_ledger` **1.1.0** at `b3/schemas/specimen_ledger.schema.json` (architecture §7); the frozen `schemas/specimen_ledger.schema.json` 1.0.0 stays as it is |
+| online map document | `online_map` 1.0.0 (`b3/schemas/online_map.schema.json`) and its verifier `b3/host/b3_online_map.py`: schema, internal consistency, accuracy against the B1 truth mapping (host-only, post hoc). **Not** B1's map-lifecycle semantics (nine code probes, 32 interaction edges): neither required nor claimed |
 | audit policy | **all-self-reporting** (B2's, the owner's decision of 2026-09-10): every record's six readout words served and host-verified; every fitness and every behaviour delta recomputed from measured readouts |
 | session split (frozen rule, with a margin) | `b3/host/b3_plan.session_split`: a session holds the largest whole number of pairs whose **expected span** `records × 3600 / R_cal` ≤ 7 200 s; **`R_cal = 0.85 × R_measured`**, where `R_measured` is the B3Q-measured all-self-reporting rate written into the manifest's `calibration` (S2) by this lifecycle's own B3Q. *Why the margin (new in B3):* B2's two sessions ran at 2 630 / h and 2 724 / h against a B2Q calibration of 3 016 / h (0.87 and 0.90 of it); the 20-record B2Q was optimistic for long sessions, and session 1 exceeded 7 200 s (8 228 s) without violating its deadline. 0.85 is fixed here, before B3Q, and is not a calibration — the measured rate is. Not even one pair with its baselines fitting → **INFEASIBLE**, no plan, no S3. Until S2 the split is UNDETERMINED and the committed plan is the rate-less one (the committed-plan stage rule, B2 v0.3, verbatim; `b3/tests/test_b3_plan.py` holds the tree to it at every stage with `StageCoverage`) |
 | deadline | per session, `1.25 × records × 3600 / R_cal + 600` |
@@ -92,9 +119,10 @@ champion's holdout value, and for the O arm every ledger entry — every `behavi
 every decode, every map version, the final decoded count and the anomaly count (**0**).
 From these: the per-pair `Δ1_r` and `Δ2_r`, the two predicted primaries with their exact
 p-values, and the predicted final online map of every O run rendered as `self_map` 2.0.0
-with its canonical digest.
+with its canonical digest — an `online_map` 1.0.0 document, not a `self_map`.
 
-The table of predicted deltas is written here when the plan is generated, before S1. **Because
+The table of predicted deltas is written here when the plan is generated, before S1, and
+the resolution rule of §1 is applied to it in the same revision. **Because
 the fitness and the decode predictions are exact, a board run that reproduces every predicted
 record necessarily reproduces both primaries**; the session's information is the reproduction
 itself (§4). The seeds are drawn once by the rule and not redrawn; N is the gate's number.
@@ -112,12 +140,12 @@ recomputation from the records. EXACT = equality with the pinned prediction.
 | behaviour-delta recomputation | for every O-arm record, the served child readout ⊕ the served parent readout = the record's `behaviour_delta` | EXACT, per record |
 | autonomy replay (search) | the reference, fed the served readouts, reproduces every parent draw, move, fitness, selection and champion in all three arms; the fitness sequence hash | EXACT, per record |
 | **autonomy replay (ledger)** | the reference cartographer, fed the records' interventions and deltas, reproduces every `decoded`, every `map_version` / `map_version_after`, the anomaly count and the `state_sha256` projection at every step | EXACT, per record |
-| **decode audit** | every decoded relation of every O run equals the certificate's (`local_map.json`); wrong decodes = 0; the final online map, rendered as `self_map` 2.0.0, passes the B1 verifier's rule and equals the predicted rendering | EXACT (0 wrong) |
+| **decode audit** | every decoded relation of every O run equals the certificate's (`local_map.json`, via `b1_model.truth_mapping`); wrong decodes = 0; the final online map, rendered as `online_map` 1.0.0, validates under the B3 online-map verifier and equals the predicted rendering (B1's map-lifecycle verifier is not applied) | EXACT (0 wrong) |
 | anomalies | the anomaly count of every O run = the prediction (0) | EXACT |
 | holdout known answers | each champion's holdout F1 on the hardware = the prediction | EXACT (3 × N values) |
 | baselines | opening and closing baselines of every session equal, zero readout, the scorer's base counters | as B1 / B2 |
 | **primary 1** | the exact sign test over the N pairs' `Δ1` (best-so-far train F1 at `B*`, O − R), one-sided, α = 0.05, ties excluded from *n* and counted — **pooled across sessions** | p ≤ 0.05, and equal to the predicted p |
-| **primary 2** | the same test over `Δ2` (O at `B*` − F's own trace at `B* − 333`) | p ≤ 0.05, and equal to the predicted p; if the gate's H9 failed, primary 2 is **reported, not required** (§1's claim then covers primary 1 only) |
+| **primary 2** | the same test over `Δ2` (O at `B*` − F's own trace at `B* − 333`) | p ≤ 0.05, and equal to the predicted p — **a required row only if v0.2 claims it** (the resolution rule of §1: H9 held); otherwise reported, not required |
 
 Verdict: **PASS** = every required row; the primaries are then the predicted ones, reproduced on
 silicon. Any row failing is a **HOLD** (a rejection the validator names) or a **KILL** (a
@@ -130,11 +158,14 @@ fixed by the prediction is a separately preregistered design, not this one.
 1. **A fitness or a behaviour delta differs from the recomputation** on any record — the fabric
    is not the additive model, or the image mis-computes. KILL if the served readout contradicts
    the self-report; HOLD otherwise; a finding per record.
-2. **A wrong decode, or an anomaly, on silicon** — the board's specimens contradicted the
-   certificate or each other. A wrong decode with readouts that verify is a KILL of the image
-   (the cartographer twin is not the reference); an anomaly with readouts that verify is a HOLD
-   and a finding about the fabric under this carrier (B1 said additive; B3 does not claim
-   otherwise, §10 of the architecture).
+2. **A wrong decode, or an anomaly, on silicon** — KILL, attributed by the replay: if the
+   ledger replay **diverges** from the board's decode, the image is at fault (the cartographer
+   twin is not the reference); if the readouts verify **and** the replay reproduces the same
+   wrong decode, the reference itself decoded it from measured specimens, and the finding is a
+   **certificate / fabric / model contradiction** (the additive model or the certificate is
+   wrong for that address), not an image defect. An anomaly with readouts that verify and a
+   replay that reproduces it is a HOLD and a finding about the fabric under this carrier (B1
+   said additive; B3 does not claim otherwise, architecture §10).
 3. **The ledger replay or the search replay fails** — the board did not follow the algorithm on
    its own observations (a parent, a move, a selection, a decode or a version the reference
    would not have made).
@@ -150,15 +181,14 @@ fixed by the prediction is a separately preregistered design, not this one.
 **(a) Image qualification and calibration `B3Q`** — the B3 image on the qualified B1 carrier,
 against the **S1 manifest** (`manifest_at_run.json` in the evidence dir): load and identity
 (VARIANT, the map digest, the cartographer version, the arms, F1, `B*`, N, the slice), key
-provisioning, the baselines, **one pair at budget 8 in all three arms** (24 search records +
-3 holdout), the refused unsigned control; every record audited; PASS = the 27 fitness values,
-the champions, and the O arm's 8 ledger entries (decodes, versions, 0 anomalies) equal the
+provisioning, the baselines, **one pair at budget 40 in all three arms** (the owner's choice:
+3 × 40 + 3 = **123 scored records**, **40 ledger entries**, **125 records** with the two
+baselines — enough O-arm records with ledger bytes for the rate to mean something), the
+refused unsigned control; every record audited; PASS = the 123 fitness values, the three
+champions' holdout values and the 40 ledger entries (decodes, versions, 0 anomalies) equal the
 prediction for the qualification seeds (`b3-qualification|`, the same exclusions plus B3's own
 set). The session's **measured all-self-reporting rate** goes into its adjudication and, on
-pinning (S2), into the manifest's `calibration`; the split uses `0.85 × R_measured` (§2). *Open
-question for the owner:* whether B3Q's pair should run at a larger budget (e.g. 40) so that
-the rate is measured over more O-arm records with ledger bytes; the draft keeps B2's 8 for the
-known answers and puts the margin on the rate instead.
+pinning (S2), into the manifest's `calibration`; the split uses `0.85 × R_measured` (§2).
 
 **(b) The closed loop `B3`** — as many sessions as the split rule gives, each under its own
 ruling pair bound to the **S3 manifest** and carrying its own transport disposition; `17A6`,
@@ -237,8 +267,10 @@ pattern, `docs/b2_lifecycle2_pinned_test_audit_2026_09_16.md`) and precedes step
 
 ## 10. What is asked now
 
-The owner's review of `docs/b3_architecture.md` v0.2 (in particular §9's criteria, thresholds,
-the H5 effect-size threshold of 0.5 and the 30 000-evaluation planning bound, and the control X)
-and of this draft (in particular the 0.85 margin, the three-arm arm order, the B3Q budget
-question of §6, and the two-primary structure with H9's narrowing rule). Nothing else: no
-pinned edit, no gate run, no pin table, no manifest, no image, no ruling, no board.
+Decided by the owner on v0.1 (2026-09-17): d ≥ 0.5; the 30 000 search-evaluation cap; the
+0.85 margin; B3Q at budget 40; the conditional two-primary design with the resolution rule;
+control X as a fixed derangement; the prefix-balanced arm order. Asked now: the owner's review
+of architecture v0.2.1 and this v0.1.1 — that the six P2s are closed as written (§9's pinned
+bootstrap and H9; control X; the arm order; the ledger scope and schema version; the online-map
+verifier; the resolution rule and falsifier 2). Nothing else: no pinned edit, no gate run, no
+pin table, no manifest, no image, no ruling, no board.
