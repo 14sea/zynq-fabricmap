@@ -3,7 +3,7 @@
 > **v0.1.1 → v0.1.2 (the owner's review of `b729c39`).** B3Q's PASS count no longer counts
 > the holdout twice (123 fitness values = 120 search + 3 champion holdout; 40 ledger entries;
 > 2 baseline records; 125 records); arm-position equality holds when N is a multiple of 3;
-> control X and H2 are as architecture v0.2.2 states them.
+> control X and H2 are as architecture v0.2.3 states them (the derangement's rejection sampling made unique there).
 
 > **v0.1 → v0.1.1 (the owner's review of `4fbb305`, HOLD on six P2s).** (1) The gate's
 > bootstrap algorithm and seeds are B2's by import (architecture §9); H9 is a sign test at
@@ -276,7 +276,7 @@ pattern, `docs/b2_lifecycle2_pinned_test_audit_2026_09_16.md`) and precedes step
 Decided by the owner on v0.1 (2026-09-17): d ≥ 0.5; the 30 000 search-evaluation cap; the
 0.85 margin; B3Q at budget 40; the conditional two-primary design with the resolution rule;
 control X as a fixed derangement; the prefix-balanced arm order. Asked now: the owner's review
-of architecture v0.2.2 and this v0.1.2 — that the six P2s and the four points on `b729c39` are closed as written (§9's pinned
+of architecture v0.2.3 and this v0.1.2 — that the six P2s and the four points on `b729c39` are closed as written (§9's pinned
 bootstrap and H9; control X; the arm order; the ledger scope and schema version; the online-map
 verifier; the resolution rule and falsifier 2). Nothing else: no pinned edit, no gate run, no
 pin table, no manifest, no image, no ruling, no board.

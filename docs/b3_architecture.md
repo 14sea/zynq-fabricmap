@@ -1,4 +1,11 @@
-# B3 — the closed loop: architecture and host simulation (v0.2.2, host-only, 2026-09-17)
+# B3 — the closed loop: architecture and host simulation (v0.2.3, host-only, 2026-09-17)
+
+> **v0.2.2 → v0.2.3 (the owner's review of `faa7421`, HOLD on one P2).** The derangement's
+> rejection sampling is made unique: every attempt starts from the identity array and the
+> RNG continues from the preceding attempt (the owner showed that "repeat the shuffle on the
+> same stream" admitted a second reading — continuing from the previous attempt's array —
+> that yields a different π under the pinned instrument commit). No digest is written here:
+> the gate report records the one it computes.
 
 > **v0.2.1 → v0.2.2 (the owner's review of `b729c39`, HOLD on three P2s and one P3).** Control
 > X's move contract is made consistent (X's operator consumes X's own scrambled map; moves,
@@ -361,9 +368,11 @@ naturally — nothing is forced equal. One global permutation **π of the 384 po
 (index = 64 · LUT + vector, in (k, v) order) is drawn **once per gate run**: `seed_X =
 b2_search.master_seed("b3-gate-x", instrument_commit)` (= `int.from_bytes(sha256("b3-gate-x|" ‖
 commit)[:4], "big")`, the rule every B-line seed uses); PRNG = the instrument's `b1_carto.Rng`
-seeded with `seed_X`; Fisher–Yates from i = 383 down to 1 with `j = rng.uniform(i + 1)`, and if
-the result has any fixed point the whole shuffle is repeated on the **same continuing stream**
-until it has none (a derangement; deterministic). π acts on **only one thing**: the
+seeded with `seed_X`; Fisher–Yates from i = 383 down to 1 with `j = rng.uniform(i + 1)`,
+rejection-sampled until the result has no fixed point: **each attempt starts from the
+identity array `[0, …, 383]`; the RNG is not reset and continues from the preceding attempt**
+(a derangement; deterministic and unique — an implementation that shuffled the previous
+attempt's array again would produce a different π). π acts on **only one thing**: the
 `behaviour_delta` of each of X's specimens is mapped position-wise through π **before it
 enters X's cartographer**; the readouts, the fitness, the search state and the move it
 produced are untouched. **Self-consistency is proved, not assumed:** a **shadow
@@ -415,7 +424,7 @@ carries them as placeholders until then.
 
 | file | status | role |
 |---|---|---|
-| `docs/b3_architecture.md` | this document, v0.2.2 | design; the gate criteria of §9 |
+| `docs/b3_architecture.md` | this document, v0.2.3 | design; the gate criteria of §9 |
 | `docs/b3_preregistration.md` | DRAFT v0.1.2 | what a board session is judged by |
 | `docs/b3_lifecycle1_pinned_surface_audit_2026_09_17.md` | PASS (`3a2063d`) | the namespace / pin ruling (§6), the verifier contract, the lifecycle order, the stage-aware test rules, the authority boundary |
 | `host/b3_online.py`, `host/b3_sim.py`, `tests/test_b3_online.py` | **frozen by B2** | the v1.1 host reference and the v0.1.1 simulation; never edited |
