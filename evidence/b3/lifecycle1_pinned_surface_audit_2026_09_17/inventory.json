@@ -1,0 +1,548 @@
+{
+ "b2_authority_digests": {
+  "docs/b2_preregistration.md": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf",
+  "evidence/b2/plan.json": "62dc85934eec02e2fe31a90b336d0fd320d03a4f54bf90537e944ece72458b9c",
+  "evidence/b2/prediction.json": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+  "manifests/b1_instrument_pins.json": "3106d4a8445e16382b801a0791fde1fd2114846daef6aaf1fd6501e8e45c4709",
+  "manifests/b1_manifest.json": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+  "manifests/b2_instrument_pins.json": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1",
+  "manifests/b2_manifest.json": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0"
+ },
+ "b2_globs": [
+  "host/b2_*.py",
+  "host/b3_*.py",
+  "host/gen_b2_data.py",
+  "firmware/b2/*.c",
+  "firmware/b2/*.h",
+  "firmware/b2/Makefile",
+  "firmware/b2/IMPORT.json",
+  "firmware/b2/bsp/build.sh",
+  "firmware/b2/bsp/lscript.ld",
+  "firmware/b2/bsp/src/*.c",
+  "firmware/b2/bsp/include/*.h",
+  "tb/b2/hostapp/*.c",
+  "tb/b2/hostapp/*.sh",
+  "tb/b2/hostapp/hostbsp/*.h",
+  "tests/test_b2_*.py",
+  "tests/test_b3_*.py",
+  "schemas/self_map_v2.schema.json",
+  "manifests/b1_instrument_pins.json",
+  "docs/b2_architecture.md"
+ ],
+ "b2_globs_capturing_b3": [
+  "host/b3_*.py",
+  "tests/test_b3_*.py"
+ ],
+ "b2_image_binaries_not_tracked": {
+  "firmware/b1/bsp/out/b1_app.bin": true,
+  "firmware/b2/bsp/out/b2_app.bin": true
+ },
+ "b2_manifest_seed_exclusion_sources": {
+  "evidence/b2/gate/gate_report.json": {
+   "count": 200,
+   "master_seed": 1324512209,
+   "values": 401
+  },
+  "evidence/b2/gate/v0.1_2026-09-10/gate_report.json": {
+   "count": 200,
+   "master_seed": 2131041347,
+   "values": 401
+  },
+  "evidence/b3/sim/sim_report.json": {
+   "count": 200,
+   "master_seed": 3829368064,
+   "values": 401
+  }
+ },
+ "b2_manifest_sha256": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0",
+ "b2_pins_sha256": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1",
+ "b2_to_b3_references": {
+  "docs/b3_architecture.md": [
+   {
+    "file": "README.md",
+    "line": 17,
+    "text": "| **B3** closed loop | map \u2192 evolve \u2192 re-map on the board | host-only architecture (`docs/b3_architecture.md`) |"
+   },
+   {
+    "file": "docs/b2_package.md",
+    "line": 611,
+    "text": "| documentation / provenance (review \u00a73) | four changed rows; `9f347e9` vs `342450b`; canonical-JSON vs file-byte digests (`c6a4b23e\u2026` / `b6607a9a\u2026`), both pinn"
+   },
+   {
+    "file": "docs/b2_package.md",
+    "line": 719,
+    "text": "package (`docs/b3_architecture.md`, design and host simulation only)."
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/review_checks.json",
+    "line": 10,
+    "text": "\"docs/b3_architecture.md\": \"1bff536f20cb751c5dd00f57bc97b8acf11da0f612ee3d71ba69a56ecf09b4f6\","
+   }
+  ],
+  "evidence/b3/sim/raw_F1.json": [
+   {
+    "file": "evidence/b2/review_2026_09_10/recompute.py",
+    "line": 28,
+    "text": "rows=load('evidence/b3/sim/raw_'+fid+'.json')['rows'];assert sim.summarise(fid,rows)=={k:v for k,v in stored.items() if k!='wall_s'}"
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/review_checks.json",
+    "line": 21,
+    "text": "\"evidence/b3/sim/raw_F1.json\": \"ccf4d24622c7cfb3ee698623047ea461303c603449d47ffb0452f83656b74c53\","
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/review_checks.json",
+    "line": 22,
+    "text": "\"evidence/b3/sim/raw_F2.json\": \"953511d7540bbf0a0af7932f5c8c486a03f64d3d68cda576b2ed07f6e4ed4e1c\","
+   }
+  ],
+  "evidence/b3/sim/sim_report.json": [
+   {
+    "file": "evidence/b2/plan.json",
+    "line": 132,
+    "text": "\"evidence/b3/sim/sim_report.json\": {"
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/recompute.py",
+    "line": 9,
+    "text": "for name,path in [('gate1','evidence/b2/gate/v0.1_2026-09-10/gate_report.json'),('gate3','evidence/b2/gate/gate_report.json'),('b3','evidence/b3/sim/sim_report."
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/recompute.py",
+    "line": 26,
+    "text": "b3=load('evidence/b3/sim/sim_report.json')"
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/review_checks.json",
+    "line": 23,
+    "text": "\"evidence/b3/sim/sim_report.json\": \"d9c432f8b797933e26e24a77d33e5884f29c03c2be88e6c59c61bc0af250adf9\","
+   },
+   {
+    "file": "host/b2_plan.py",
+    "line": 63,
+    "text": "FROZEN_SEED_SETS = (\"evidence/b2/gate/v0.1_2026-09-10/gate_report.json\", \"evidence/b2/gate/gate_report.json\", \"evidence/b3/sim/sim_report.json\")"
+   },
+   {
+    "file": "manifests/b2_manifest.json",
+    "line": 199,
+    "text": "\"evidence/b3/sim/sim_report.json\": {"
+   }
+  ],
+  "evidence/b3/sim_v0.1.1/sim_report.json": [
+   {
+    "file": "docs/b2_package.md",
+    "line": 607,
+    "text": "| B3 ignored contradictions on decoded addresses; refusals mutated state | `SpecimenCarto.observe` validates (malformed specimens, a decoded moved address whose"
+   }
+  ],
+  "host/b3_online.py": [
+   {
+    "file": "docs/b2_b3_host_review_2026_09_10.md",
+    "line": 76,
+    "text": "`host/b3_online.py:61\u201394` excludes decoded addresses before checking their observations."
+   },
+   {
+    "file": "docs/b2_lifecycle2_pinned_test_audit_2026_09_16.md",
+    "line": 21,
+    "text": "test_b2_twin, test_b2_wire, test_b3_online`."
+   },
+   {
+    "file": "docs/b2_package.md",
+    "line": 607,
+    "text": "| B3 ignored contradictions on decoded addresses; refusals mutated state | `SpecimenCarto.observe` validates (malformed specimens, a decoded moved address whose"
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/recompute.py",
+    "line": 13,
+    "text": "code=['host/b2_search.py','host/b2_maps.py','host/b2_landscape.py']+(['host/b2_gate.py'] if name=='gate3' else ['host/b3_online.py','host/b3_sim.py'])"
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/reproduce_findings.py",
+    "line": 5,
+    "text": "import b3_online as b3,b2_gate as g,b2_maps as maps,b2_landscape as land,b1_model as bm"
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/review_checks.json",
+    "line": 30,
+    "text": "\"host/b3_online.py\": \"8d455b2ad6cbed9169da212ba05bdcd2df7a1346f44116feb7fd37820a0273ca\","
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/review_checks.json",
+    "line": 38,
+    "text": "\"tests/test_b3_online.py\": \"d7c55fed456ff4767ce3e5322ec54e3ca5ce2e8bb581e29c97bbd669891b34d8\""
+   },
+   {
+    "file": "manifests/b2_instrument_pins.json",
+    "line": 43,
+    "text": "\"host/b3_online.py\": \"fd2f27591f1c96bea1a1bc779ac5768401bc970593d10b9246ea6fe9b236fb87\","
+   },
+   {
+    "file": "manifests/b2_instrument_pins.json",
+    "line": 74,
+    "text": "\"tests/test_b3_online.py\": \"7ea1ef6148988460d7211e850d4df53891a8f0b130ccefe07269111eb7135adf\""
+   },
+   {
+    "file": "tests/test_b2_pins.py",
+    "line": 36,
+    "text": "\"host/b2_modelled_session.py\", \"host/gen_b2_data.py\", \"host/b3_online.py\","
+   }
+  ],
+  "host/b3_sim.py": [
+   {
+    "file": "evidence/b2/review_2026_09_10/recompute.py",
+    "line": 4,
+    "text": "import b2_gate as g,b2_search as s,b2_plan as p,b3_sim as sim,b2_maps as maps"
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/recompute.py",
+    "line": 13,
+    "text": "code=['host/b2_search.py','host/b2_maps.py','host/b2_landscape.py']+(['host/b2_gate.py'] if name=='gate3' else ['host/b3_online.py','host/b3_sim.py'])"
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/review_checks.json",
+    "line": 31,
+    "text": "\"host/b3_sim.py\": \"52778c8c403cdd8da8f3f6a36f4bcb1027ebd6db18fd420a05dd3b7d8b8cbb0c\","
+   },
+   {
+    "file": "manifests/b2_instrument_pins.json",
+    "line": 44,
+    "text": "\"host/b3_sim.py\": \"bdfcc5fe7dc82e79aac6270e4a130ddee751fd5504e4a78ed96afec2018fe7eb\","
+   }
+  ],
+  "schemas/specimen_ledger.schema.json": [
+   {
+    "file": "evidence/b2/review_2026_09_10/review_checks.json",
+    "line": 32,
+    "text": "\"schemas/specimen_ledger.schema.json\": \"7cc74295b5c76806bddaa995675b77dfea598fb6ad42fa4ec7bfbf426d12563d\","
+   }
+  ],
+  "tests/test_b3_online.py": [
+   {
+    "file": "docs/b2_lifecycle2_pinned_test_audit_2026_09_16.md",
+    "line": 21,
+    "text": "test_b2_twin, test_b2_wire, test_b3_online`."
+   },
+   {
+    "file": "docs/b2_package.md",
+    "line": 607,
+    "text": "| B3 ignored contradictions on decoded addresses; refusals mutated state | `SpecimenCarto.observe` validates (malformed specimens, a decoded moved address whose"
+   },
+   {
+    "file": "evidence/b2/review_2026_09_10/review_checks.json",
+    "line": 38,
+    "text": "\"tests/test_b3_online.py\": \"d7c55fed456ff4767ce3e5322ec54e3ca5ce2e8bb581e29c97bbd669891b34d8\""
+   },
+   {
+    "file": "manifests/b2_instrument_pins.json",
+    "line": 74,
+    "text": "\"tests/test_b3_online.py\": \"7ea1ef6148988460d7211e850d4df53891a8f0b130ccefe07269111eb7135adf\""
+   }
+  ]
+ },
+ "b3_files": {
+  "docs/b3_architecture.md": {
+   "b2_pin_sha256": null,
+   "bytes": 11531,
+   "exists": true,
+   "git_history": [
+    "df28407 2026-09-10 b2/b3 docs after the owner's review \u2014 preregistration DRAFT v0.2 (all-self-reporting; the replay contract on measured readouts; the silicon run as a prospective reproduction of the predicted outcome, mismatch = HOLD/KILL, the impossible falsifier removed; the frozen session-split rule on the B2Q-measured rate; the lifecycle S0\u2013S3 table); package v0.2 (\u00a70a finding-by-finding corrections, stale Cohen's d fixed, what is asked now); B3 v0.1.1 (atomic cartographer, evaluation-count accounting named, exploratory language); the v0.3 gate report rendered with the G9 section (docs only; HOLD stands; no image, no board)",
+    "fabbef1 2026-09-10 b3: architecture v0.1 (three arms on B2's engine, the specimen ledger, two accountings) and the host simulation over 200 seeds (c6e3705, clean tree) \u2014 the online map completes 292/292 in 200/200 runs (median 1 416 evaluations, 0 wrong decodes, 0 anomalies); online beats random-safe from 600 evaluations on and beats the frozen map end-to-end at every grid budget; the frozen map does not repay its 333 probes before ~800 (F1) / ~1 500 (F2) (design + simulation only; no preregistration, no image, no board)"
+   ],
+   "in_b1_pin_table": false,
+   "in_b2_pin_table": false,
+   "matches_b2_globs": [],
+   "sha256": "8201d40da429a7f83b9e72842493909634a6eb203317cc008161726e26aa5e95",
+   "tracked": true
+  },
+  "evidence/b3/sim/raw_F1.json": {
+   "b2_pin_sha256": null,
+   "bytes": 105109,
+   "exists": true,
+   "git_history": [
+    "fabbef1 2026-09-10 b3: architecture v0.1 (three arms on B2's engine, the specimen ledger, two accountings) and the host simulation over 200 seeds (c6e3705, clean tree) \u2014 the online map completes 292/292 in 200/200 runs (median 1 416 evaluations, 0 wrong decodes, 0 anomalies); online beats random-safe from 600 evaluations on and beats the frozen map end-to-end at every grid budget; the frozen map does not repay its 333 probes before ~800 (F1) / ~1 500 (F2) (design + simulation only; no preregistration, no image, no board)"
+   ],
+   "in_b1_pin_table": false,
+   "in_b2_pin_table": false,
+   "matches_b2_globs": [],
+   "sha256": "ccf4d24622c7cfb3ee698623047ea461303c603449d47ffb0452f83656b74c53",
+   "tracked": true
+  },
+  "evidence/b3/sim/raw_F2.json": {
+   "b2_pin_sha256": null,
+   "bytes": 113796,
+   "exists": true,
+   "git_history": [
+    "fabbef1 2026-09-10 b3: architecture v0.1 (three arms on B2's engine, the specimen ledger, two accountings) and the host simulation over 200 seeds (c6e3705, clean tree) \u2014 the online map completes 292/292 in 200/200 runs (median 1 416 evaluations, 0 wrong decodes, 0 anomalies); online beats random-safe from 600 evaluations on and beats the frozen map end-to-end at every grid budget; the frozen map does not repay its 333 probes before ~800 (F1) / ~1 500 (F2) (design + simulation only; no preregistration, no image, no board)"
+   ],
+   "in_b1_pin_table": false,
+   "in_b2_pin_table": false,
+   "matches_b2_globs": [],
+   "sha256": "953511d7540bbf0a0af7932f5c8c486a03f64d3d68cda576b2ed07f6e4ed4e1c",
+   "tracked": true
+  },
+  "evidence/b3/sim/sim_report.json": {
+   "b2_pin_sha256": null,
+   "bytes": 30632,
+   "exists": true,
+   "git_history": [
+    "fabbef1 2026-09-10 b3: architecture v0.1 (three arms on B2's engine, the specimen ledger, two accountings) and the host simulation over 200 seeds (c6e3705, clean tree) \u2014 the online map completes 292/292 in 200/200 runs (median 1 416 evaluations, 0 wrong decodes, 0 anomalies); online beats random-safe from 600 evaluations on and beats the frozen map end-to-end at every grid budget; the frozen map does not repay its 333 probes before ~800 (F1) / ~1 500 (F2) (design + simulation only; no preregistration, no image, no board)"
+   ],
+   "in_b1_pin_table": false,
+   "in_b2_pin_table": false,
+   "map": {
+    "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json",
+    "sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296"
+   },
+   "matches_b2_globs": [],
+   "provenance": {
+    "carto_version": null,
+    "generated_utc": "2026-09-10T07:20:31Z",
+    "head_at_run": "c6e3705cab43cf4cc6a42187ce0c866dd9cfcf9e",
+    "label": null,
+    "worktree_dirty_at_start": false
+   },
+   "seeds": {
+    "count": 200,
+    "label": "b3-sim",
+    "master_seed": 3829368064
+   },
+   "sha256": "d9c432f8b797933e26e24a77d33e5884f29c03c2be88e6c59c61bc0af250adf9",
+   "tracked": true
+  },
+  "evidence/b3/sim_v0.1.1/raw_F1.json": {
+   "b2_pin_sha256": null,
+   "bytes": 105109,
+   "exists": true,
+   "git_history": [
+    "cba1342 2026-09-10 b2/b3: corrections from the owner's review \u2014 required_pairs scans every N (the F3/300 N=89 counterexample is a test); G5 = total-evaluation bound; the \u00a77a controls T/W and G9 implemented (b2_maps.within_train_scrambled_map / train_membership_view / membership_counts); SpecimenCarto.observe validates and commits atomically (the review's three counterexamples + closure conflict + malformed specimens are tests; the ideal-model B3 rows reproduce bit-identically: evidence/b3/sim_v0.1.1); pair_seeds takes an explicit exclusion set and the plan excludes every archived seed set; plan = all-self-reporting with the frozen split rule; run 3's rows re-evaluated under v0.3 (evidence/b2/gate/recomputed_2026_09_10: F1 selected, B*=600, N=9, 10 800) (host-only; no board)"
+   ],
+   "in_b1_pin_table": false,
+   "in_b2_pin_table": false,
+   "matches_b2_globs": [],
+   "sha256": "ccf4d24622c7cfb3ee698623047ea461303c603449d47ffb0452f83656b74c53",
+   "tracked": true
+  },
+  "evidence/b3/sim_v0.1.1/raw_F2.json": {
+   "b2_pin_sha256": null,
+   "bytes": 113796,
+   "exists": true,
+   "git_history": [
+    "cba1342 2026-09-10 b2/b3: corrections from the owner's review \u2014 required_pairs scans every N (the F3/300 N=89 counterexample is a test); G5 = total-evaluation bound; the \u00a77a controls T/W and G9 implemented (b2_maps.within_train_scrambled_map / train_membership_view / membership_counts); SpecimenCarto.observe validates and commits atomically (the review's three counterexamples + closure conflict + malformed specimens are tests; the ideal-model B3 rows reproduce bit-identically: evidence/b3/sim_v0.1.1); pair_seeds takes an explicit exclusion set and the plan excludes every archived seed set; plan = all-self-reporting with the frozen split rule; run 3's rows re-evaluated under v0.3 (evidence/b2/gate/recomputed_2026_09_10: F1 selected, B*=600, N=9, 10 800) (host-only; no board)"
+   ],
+   "in_b1_pin_table": false,
+   "in_b2_pin_table": false,
+   "matches_b2_globs": [],
+   "sha256": "953511d7540bbf0a0af7932f5c8c486a03f64d3d68cda576b2ed07f6e4ed4e1c",
+   "tracked": true
+  },
+  "evidence/b3/sim_v0.1.1/sim_report.json": {
+   "b2_pin_sha256": null,
+   "bytes": 30955,
+   "exists": true,
+   "git_history": [
+    "cba1342 2026-09-10 b2/b3: corrections from the owner's review \u2014 required_pairs scans every N (the F3/300 N=89 counterexample is a test); G5 = total-evaluation bound; the \u00a77a controls T/W and G9 implemented (b2_maps.within_train_scrambled_map / train_membership_view / membership_counts); SpecimenCarto.observe validates and commits atomically (the review's three counterexamples + closure conflict + malformed specimens are tests; the ideal-model B3 rows reproduce bit-identically: evidence/b3/sim_v0.1.1); pair_seeds takes an explicit exclusion set and the plan excludes every archived seed set; plan = all-self-reporting with the frozen split rule; run 3's rows re-evaluated under v0.3 (evidence/b2/gate/recomputed_2026_09_10: F1 selected, B*=600, N=9, 10 800) (host-only; no board)"
+   ],
+   "in_b1_pin_table": false,
+   "in_b2_pin_table": false,
+   "map": {
+    "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json",
+    "sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296"
+   },
+   "matches_b2_globs": [],
+   "provenance": {
+    "carto_version": "specimen-carto-v1.1",
+    "generated_utc": "2026-09-10T07:42:43Z",
+    "head_at_run": "fcfff981cf007fd96889c88794b98d0df3988061",
+    "label": "identity re-run of evidence/b3/sim with specimen-carto v1.1 (atomic, validating) on the same seeds",
+    "worktree_dirty_at_start": true
+   },
+   "seeds": {
+    "count": 200,
+    "label": "b3-sim",
+    "master_seed": 3829368064,
+    "reused": true
+   },
+   "sha256": "dcbaa2a3cf2fe817c77ce24ab4a4250ec4c8a2c171117f55da9d80740e29401c",
+   "tracked": true
+  },
+  "host/b3_online.py": {
+   "b1_b2_modules_imported": [
+    "b1_carto",
+    "b2_landscape",
+    "b2_search",
+    "b2_maps"
+   ],
+   "b2_pin_sha256": "fd2f27591f1c96bea1a1bc779ac5768401bc970593d10b9246ea6fe9b236fb87",
+   "bytes": 9946,
+   "exists": true,
+   "git_history": [
+    "cba1342 2026-09-10 b2/b3: corrections from the owner's review \u2014 required_pairs scans every N (the F3/300 N=89 counterexample is a test); G5 = total-evaluation bound; the \u00a77a controls T/W and G9 implemented (b2_maps.within_train_scrambled_map / train_membership_view / membership_counts); SpecimenCarto.observe validates and commits atomically (the review's three counterexamples + closure conflict + malformed specimens are tests; the ideal-model B3 rows reproduce bit-identically: evidence/b3/sim_v0.1.1); pair_seeds takes an explicit exclusion set and the plan excludes every archived seed set; plan = all-self-reporting with the frozen split rule; run 3's rows re-evaluated under v0.3 (evidence/b2/gate/recomputed_2026_09_10: F1 selected, B*=600, N=9, 10 800) (host-only; no board)",
+    "c6e3705 2026-09-10 b3: host reference \u2014 the specimen cartographer (every evaluation is a specimen: child readout XOR parent readout; candidate-set intersection with global closure; anomalies counted), the online-updating arm on B2's engine and operator (nothing tuned; no dedicated probe), the specimen ledger schema 1.0.0, the three-arm simulation with search and end-to-end accounting; 9 tests (host-only; no board)"
+   ],
+   "imports": [
+    "__future__",
+    "sys",
+    "dataclasses",
+    "pathlib",
+    "b1_carto",
+    "b2_landscape",
+    "b2_search",
+    "b2_maps"
+   ],
+   "in_b1_pin_table": false,
+   "in_b2_pin_table": true,
+   "matches_b2_globs": [
+    "host/b3_*.py"
+   ],
+   "reads_committed_state": [
+    "The specimen ledger (schemas/specimen_ledger.schema.json) is written by the online arm:"
+   ],
+   "sha256": "fd2f27591f1c96bea1a1bc779ac5768401bc970593d10b9246ea6fe9b236fb87",
+   "tracked": true
+  },
+  "host/b3_sim.py": {
+   "b1_b2_modules_imported": [
+    "b1_model",
+    "b2_gate",
+    "b2_landscape",
+    "b2_maps",
+    "b2_search"
+   ],
+   "b2_pin_sha256": "bdfcc5fe7dc82e79aac6270e4a130ddee751fd5504e4a78ed96afec2018fe7eb",
+   "bytes": 8337,
+   "exists": true,
+   "git_history": [
+    "cba1342 2026-09-10 b2/b3: corrections from the owner's review \u2014 required_pairs scans every N (the F3/300 N=89 counterexample is a test); G5 = total-evaluation bound; the \u00a77a controls T/W and G9 implemented (b2_maps.within_train_scrambled_map / train_membership_view / membership_counts); SpecimenCarto.observe validates and commits atomically (the review's three counterexamples + closure conflict + malformed specimens are tests; the ideal-model B3 rows reproduce bit-identically: evidence/b3/sim_v0.1.1); pair_seeds takes an explicit exclusion set and the plan excludes every archived seed set; plan = all-self-reporting with the frozen split rule; run 3's rows re-evaluated under v0.3 (evidence/b2/gate/recomputed_2026_09_10: F1 selected, B*=600, N=9, 10 800) (host-only; no board)",
+    "c6e3705 2026-09-10 b3: host reference \u2014 the specimen cartographer (every evaluation is a specimen: child readout XOR parent readout; candidate-set intersection with global closure; anomalies counted), the online-updating arm on B2's engine and operator (nothing tuned; no dedicated probe), the specimen ledger schema 1.0.0, the three-arm simulation with search and end-to-end accounting; 9 tests (host-only; no board)"
+   ],
+   "imports": [
+    "__future__",
+    "argparse",
+    "json",
+    "os",
+    "statistics",
+    "subprocess",
+    "sys",
+    "time",
+    "multiprocessing",
+    "pathlib",
+    "b1_model",
+    "b2_gate",
+    "b2_landscape",
+    "b2_maps",
+    "b2_search",
+    "b3_online"
+   ],
+   "in_b1_pin_table": false,
+   "in_b2_pin_table": true,
+   "matches_b2_globs": [
+    "host/b3_*.py"
+   ],
+   "reads_committed_state": [
+    "b3_sim.py [--seeds 200] [--workers N] [--fitness F1,F2] [--out evidence/b3/sim]",
+    "view=bmaps.MapView(bmaps.load_self_map(), bl.train_vectors()))",
+    "ap.add_argument(\"--out\", default=\"evidence/b3/sim\")",
+    "\"map\": {\"path\": str(bmaps.SELF_MAP.relative_to(REPO_ROOT)), \"sha256\": bmaps.sha256_of(bmaps.load_self_map())}, \"results\": {}}"
+   ],
+   "sha256": "bdfcc5fe7dc82e79aac6270e4a130ddee751fd5504e4a78ed96afec2018fe7eb",
+   "tracked": true
+  },
+  "schemas/specimen_ledger.schema.json": {
+   "b2_pin_sha256": null,
+   "bytes": 3568,
+   "exists": true,
+   "git_history": [
+    "c6e3705 2026-09-10 b3: host reference \u2014 the specimen cartographer (every evaluation is a specimen: child readout XOR parent readout; candidate-set intersection with global closure; anomalies counted), the online-updating arm on B2's engine and operator (nothing tuned; no dedicated probe), the specimen ledger schema 1.0.0, the three-arm simulation with search and end-to-end accounting; 9 tests (host-only; no board)"
+   ],
+   "in_b1_pin_table": false,
+   "in_b2_pin_table": false,
+   "matches_b2_globs": [],
+   "sha256": "7cc74295b5c76806bddaa995675b77dfea598fb6ad42fa4ec7bfbf426d12563d",
+   "tracked": true
+  },
+  "tests/test_b3_online.py": {
+   "b1_b2_modules_imported": [
+    "b1_carto",
+    "b1_model",
+    "b2_landscape",
+    "b2_search"
+   ],
+   "b2_pin_sha256": "7ea1ef6148988460d7211e850d4df53891a8f0b130ccefe07269111eb7135adf",
+   "bytes": 8638,
+   "exists": true,
+   "git_history": [
+    "cba1342 2026-09-10 b2/b3: corrections from the owner's review \u2014 required_pairs scans every N (the F3/300 N=89 counterexample is a test); G5 = total-evaluation bound; the \u00a77a controls T/W and G9 implemented (b2_maps.within_train_scrambled_map / train_membership_view / membership_counts); SpecimenCarto.observe validates and commits atomically (the review's three counterexamples + closure conflict + malformed specimens are tests; the ideal-model B3 rows reproduce bit-identically: evidence/b3/sim_v0.1.1); pair_seeds takes an explicit exclusion set and the plan excludes every archived seed set; plan = all-self-reporting with the frozen split rule; run 3's rows re-evaluated under v0.3 (evidence/b2/gate/recomputed_2026_09_10: F1 selected, B*=600, N=9, 10 800) (host-only; no board)",
+    "c6e3705 2026-09-10 b3: host reference \u2014 the specimen cartographer (every evaluation is a specimen: child readout XOR parent readout; candidate-set intersection with global closure; anomalies counted), the online-updating arm on B2's engine and operator (nothing tuned; no dedicated probe), the specimen ledger schema 1.0.0, the three-arm simulation with search and end-to-end accounting; 9 tests (host-only; no board)"
+   ],
+   "imports": [
+    "__future__",
+    "json",
+    "sys",
+    "unittest",
+    "pathlib",
+    "b1_carto",
+    "b1_model",
+    "b2_landscape",
+    "b2_search",
+    "b3_online",
+    "jsonschema"
+   ],
+   "in_b1_pin_table": false,
+   "in_b2_pin_table": true,
+   "matches_b2_globs": [
+    "tests/test_b3_*.py"
+   ],
+   "reads_committed_state": [
+    "schema = json.loads((R / \"schemas/specimen_ledger.schema.json\").read_text())",
+    "(evidence/b2/review_2026_09_10/reproduce_findings.py) and the atomicity guarantee.\"\"\"",
+    "raw = R / \"evidence/b3/sim/raw_F1.json\""
+   ],
+   "sha256": "7ea1ef6148988460d7211e850d4df53891a8f0b130ccefe07269111eb7135adf",
+   "tracked": true
+  }
+ },
+ "base": "73b68d79fd43fc032c178da73dda2b2c95764db8",
+ "generated_utc": "2026-09-17T07:58:04Z",
+ "pinned_but_untracked": {
+  "manifests/b1_instrument_pins.json": {
+   "gitignore_rule": {
+    "vivado/carrier/generated/clockInfo.txt": ".gitignore:22:clockInfo.txt\tvivado/carrier/generated/clockInfo.txt",
+    "vivado/carrier/generated/vivado.jou": ".gitignore:16:*.jou\tvivado/carrier/generated/vivado.jou",
+    "vivado/carrier/generated/vivado.log": ".gitignore:17:*.log\tvivado/carrier/generated/vivado.log",
+    "vivado/carrier/generated/vivado_1012301.backup.jou": ".gitignore:16:*.jou\tvivado/carrier/generated/vivado_1012301.backup.jou",
+    "vivado/carrier/generated/vivado_1032984.backup.jou": ".gitignore:16:*.jou\tvivado/carrier/generated/vivado_1032984.backup.jou",
+    "vivado/carrier/generated/vivado_166704.backup.log": ".gitignore:17:*.log\tvivado/carrier/generated/vivado_166704.backup.log",
+    "vivado/carrier/generated/vivado_185775.backup.log": ".gitignore:17:*.log\tvivado/carrier/generated/vivado_185775.backup.log",
+    "vivado/carrier/generated/vivado_247824.backup.jou": ".gitignore:16:*.jou\tvivado/carrier/generated/vivado_247824.backup.jou",
+    "vivado/carrier/generated/vivado_268712.backup.jou": ".gitignore:16:*.jou\tvivado/carrier/generated/vivado_268712.backup.jou",
+    "vivado/carrier/generated/vivado_61436.backup.jou": ".gitignore:16:*.jou\tvivado/carrier/generated/vivado_61436.backup.jou",
+    "vivado/carrier/generated/vivado_61436.backup.log": ".gitignore:17:*.log\tvivado/carrier/generated/vivado_61436.backup.log",
+    "vivado/carrier/generated/vivado_72272.backup.log": ".gitignore:17:*.log\tvivado/carrier/generated/vivado_72272.backup.log",
+    "vivado/carrier/generated/vivado_92635.backup.log": ".gitignore:17:*.log\tvivado/carrier/generated/vivado_92635.backup.log"
+   },
+   "pinned": 105,
+   "untracked": [
+    "vivado/carrier/generated/clockInfo.txt",
+    "vivado/carrier/generated/vivado.jou",
+    "vivado/carrier/generated/vivado.log",
+    "vivado/carrier/generated/vivado_1012301.backup.jou",
+    "vivado/carrier/generated/vivado_1032984.backup.jou",
+    "vivado/carrier/generated/vivado_166704.backup.log",
+    "vivado/carrier/generated/vivado_185775.backup.log",
+    "vivado/carrier/generated/vivado_247824.backup.jou",
+    "vivado/carrier/generated/vivado_268712.backup.jou",
+    "vivado/carrier/generated/vivado_61436.backup.jou",
+    "vivado/carrier/generated/vivado_61436.backup.log",
+    "vivado/carrier/generated/vivado_72272.backup.log",
+    "vivado/carrier/generated/vivado_92635.backup.log"
+   ]
+  },
+  "manifests/b2_instrument_pins.json": {
+   "gitignore_rule": {},
+   "pinned": 71,
+   "untracked": []
+  }
+ },
+ "schema": "b3_lifecycle1_inventory",
+ "schema_version": "1.0.0"
+}
