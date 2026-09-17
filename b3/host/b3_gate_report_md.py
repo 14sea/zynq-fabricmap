@@ -17,6 +17,8 @@ def fmt(x, nd=3):
     if isinstance(x, bool):
         return "yes" if x else "no"
     if isinstance(x, float):
+        if x.is_integer() and (x == 0 or abs(x) >= 2):        # medians and counts; a p-value of 1.0 stays "1.00"
+            return str(int(x))
         return f"{x:.{nd}g}" if abs(x) < 1e-3 or abs(x) >= 1e4 else f"{x:.{nd}f}"
     return str(x)
 
@@ -49,7 +51,7 @@ def render(rep: dict) -> str:
         L.append("")
         if res.get("b_star"):
             L.append(f"Champion holdout medians at B_max: {res['champion_holdout_median']}. At B* = {res['b_star']}: medians {res['at_b_star_median']}, F end-to-end {res['at_b_star_median_F_end_to_end']}.\n")
-    return "\n".join(L) + "\n"
+    return "\n".join(L).rstrip("\n") + "\n"
 
 
 def main(argv=None) -> int:
