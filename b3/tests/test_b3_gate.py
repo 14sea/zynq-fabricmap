@@ -1,6 +1,10 @@
-"""b3/host/b3_gate.py — the criteria on synthetic rows (a passing set, and each criterion made to fail
-for its own reason), the budget rule and its tie-break, the seed exclusion sources, the pins the
-report carries, and a small real run of the whole pipeline into a temp directory."""
+"""b3/host/b3_gate.py (lifecycle 2) — the criteria on synthetic rows (a passing set, and each criterion
+made to fail for its own reason), the budget rule and its tie-break, H9 as a pure diagnostic (no pass,
+no claim condition; N2(B) and delta2's power at the gate's N by B2's functions), the lifecycle-2
+constants (label, rules version, output path), the seed exclusion sources including lifecycle 1's gate
+run 1 and its nine trial pairs, the pins the report carries, the renderer (never "H9 holds / fails",
+lifecycle 1's report refused), the refusal to overwrite lifecycle 1's outputs, and a small real run of
+the whole pipeline into a temp directory."""
 from __future__ import annotations
 
 import copy
@@ -8,8 +12,10 @@ import json
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 R = Path(__file__).resolve().parents[2]
 for p in (R / "host", R / "b3/host"):
@@ -19,6 +25,7 @@ import b2_plan as bp  # noqa: E402
 import b2_search as bs  # noqa: E402
 import b3_control_x as cx  # noqa: E402
 import b3_gate as g  # noqa: E402
+import b3_gate_report_md as md  # noqa: E402
 
 G = list(g.GRID)
 
@@ -51,6 +58,63 @@ def synthetic_rows(S=200, seed=1):
     return rows
 
 
+def synthetic_report(results: dict, label="synthetic") -> dict:
+    """A report shaped like main()'s, around evaluate()'s results — for the renderer."""
+    return {"schema": "b3_gate_report", "schema_version": "2.0.0", "lifecycle": g.LIFECYCLE, "label": label,
+            "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "head_at_run": "0" * 40, "worktree_dirty_at_start": False,
+            "architecture": {"path": "docs/b3_architecture.md", "sha256": "a" * 64, "last_commit": "b" * 40}, "thresholds": g.THRESHOLDS,
+            "engine": {"version": bs.ENGINE_VERSION, "mu": bs.MU, "lambda": bs.LAMBDA, "kmax": bs.KMAX}, "carto_version": "x",
+            "control_x": {"seed_x": 1, "attempts": 1, "permutation_sha256": "c" * 64},
+            "seeds": {"label": g.GATE_LABEL, "master_seed": 1, "count": 200, "excluded_values_total": 0, "excluded_sources": {}},
+            "map": {"path": "maps/x", "sha256": "d" * 64}, "gate_fitness": "F1", "results": results, "wall_s": 0.0}
+
+
+class Lifecycle2Constants(unittest.TestCase):
+    """Preregistration v0.3 §10 (ii): the label, the rules version, the output paths — and lifecycle 1's
+    never overwritten."""
+    def test_label_rules_version_and_paths(self):
+        self.assertEqual(g.GATE_LABEL, "b3-gate-2")
+        self.assertEqual(g.THRESHOLDS["rules_version"], "architecture v0.3 §9")
+        self.assertEqual(g.OUT_DEFAULT, "evidence/b3/gate_2")
+        self.assertEqual(g.LIFECYCLE, 2)
+        self.assertEqual(md.REPORT_DEFAULT, "evidence/b3/gate_2/gate_report.json")
+        self.assertEqual(md.OUT_DEFAULT, "docs/b3_gate_2_report.md")
+        self.assertNotEqual(g.GATE_LABEL, g.LIFECYCLE1_GATE_LABEL)
+        self.assertNotEqual(bs.master_seed(g.GATE_LABEL, "x"), bs.master_seed(g.LIFECYCLE1_GATE_LABEL, "x"))
+
+    def test_the_gate_refuses_lifecycle_1s_output_directory_before_touching_it(self):
+        """Hermetic: lifecycle 1's directory is a temp COPY here (the constant patched), so a broken guard
+        can damage only the copy — the first version of this test ran against the real evidence and a
+        guard-removed mutant overwrote evidence/b3/gate/ (restored from HEAD, 2026-09-17)."""
+        t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
+        d = t / "evidence/b3/gate"
+        shutil.copytree(g.LIFECYCLE1_GATE_DIR, d)
+        before = {p.name: (p.stat().st_mtime_ns, p.stat().st_size) for p in d.iterdir()}
+        real_before = {p.name: (p.stat().st_mtime_ns, p.stat().st_size) for p in g.LIFECYCLE1_GATE_DIR.iterdir()}
+        with mock.patch.object(g, "LIFECYCLE1_GATE_DIR", d):
+            for out in (str(d), str(t / "evidence/b3/../b3/gate"), str(d) + "/"):
+                self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", out]), 2, out)
+        self.assertEqual({p.name: (p.stat().st_mtime_ns, p.stat().st_size) for p in d.iterdir()}, before)
+        self.assertEqual({p.name: (p.stat().st_mtime_ns, p.stat().st_size) for p in g.LIFECYCLE1_GATE_DIR.iterdir()}, real_before)
+
+    def test_the_renderer_refuses_lifecycle_1s_output_path(self):
+        """Hermetic as above: the output constant patched to a temp copy of docs/b3_gate_report.md, and
+        the report a lifecycle-2-shaped one, so a broken guard would really write into the copy."""
+        t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
+        p = t / "docs/b3_gate_report.md"; p.parent.mkdir(parents=True)
+        shutil.copy(md.LIFECYCLE1_OUT, p)
+        rep = synthetic_report({"F1": {"pass": False, "b_star": None, "ceiling": 40, "seeds": 0, "per_budget": [],
+                                       "criteria": {"budget_rule": {"pass": False}}, "diagnostics": {"H9": None}}})
+        (t / "rep.json").write_text(json.dumps(rep))
+        before = (p.stat().st_mtime_ns, p.stat().st_size)
+        with mock.patch.object(md, "LIFECYCLE1_OUT", p):
+            for out in (str(p), str(t / "docs/../docs/b3_gate_report.md")):
+                self.assertEqual(md.main(["--report", str(t / "rep.json"), "--out", out]), 2, out)
+            self.assertEqual((p.stat().st_mtime_ns, p.stat().st_size), before)
+            self.assertEqual(md.main(["--report", str(t / "rep.json"), "--out", str(t / "docs/b3_gate_2_report.md")]), 0)   # the lifecycle-2 path is written
+        self.assertIn("H9 diagnostic: no B*, nothing to report.", (t / "docs/b3_gate_2_report.md").read_text())
+
+
 class Criteria(unittest.TestCase):
     """The bootstrap experiment count is lowered to 100 for these synthetic evaluations only (the
     production 1 000 makes every full ascending scan to N = 200 cost minutes; the rule under test is
@@ -74,6 +138,7 @@ class Criteria(unittest.TestCase):
         eligible = [c for c in cands if c["H1"] and c["N"] is not None]
         self.assertEqual(res["b_star"], min(eligible, key=lambda c: (c["cost"], c["budget"]))["budget"])
         self.assertEqual(res["criteria"]["H5"]["search_evaluations"], res["criteria"]["H5"]["required_pairs_N"] * 3 * res["b_star"])
+        self.assertEqual(set(res["criteria"]), {"budget_rule", "H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8"})
 
     def test_each_criterion_fails_for_its_own_reason(self):
         def with_rows(mutate):
@@ -82,13 +147,14 @@ class Criteria(unittest.TestCase):
             return g.evaluate("F1", rows)
         # H1: O saturates at the ceiling everywhere
         r = with_rows(lambda rows: [row["arms"]["O"].__setitem__("at_grid", [40] * len(G)) for row in rows])
-        self.assertFalse(r["pass"]); self.assertIsNone(r["b_star"])
+        self.assertFalse(r["pass"]); self.assertIsNone(r["b_star"]); self.assertIsNone(r["diagnostics"]["H9"])
         # H3: X profits like O
         r = with_rows(lambda rows: [row["arms"]["X"].__setitem__("at_grid", list(row["arms"]["O"]["at_grid"])) for row in rows])
         self.assertFalse(r["criteria"]["H3"]["pass"]); self.assertFalse(r["criteria"]["H2"]["pass"])
-        # H4: end-to-end F above O everywhere
+        # H4: end-to-end F above O everywhere — H4 fails; H9 reports it and decides nothing
         r = with_rows(lambda rows: [row["arms"]["F"].__setitem__("end_to_end_at_grid", [v + 5 for v in row["arms"]["O"]["at_grid"]]) for row in rows])
-        self.assertFalse(r["criteria"]["H4"]["pass"]); self.assertFalse(r["criteria"]["H9"]["pass"])
+        self.assertFalse(r["criteria"]["H4"]["pass"]); self.assertNotIn("H9", r["criteria"])
+        self.assertTrue(all(row["sign_test_p"] > g.THRESHOLDS["H9_alpha"] for row in r["diagnostics"]["H9"]["delta2_by_budget_from_b_star"]))
         # H7: one wrong decode anywhere
         r = with_rows(lambda rows: rows[3]["arms"]["O"].__setitem__("wrong_decodes", 1))
         self.assertFalse(r["criteria"]["H7"]["pass"])
@@ -116,8 +182,8 @@ class Criteria(unittest.TestCase):
 
 
 class LoadBearingGuards(unittest.TestCase):
-    """The owner's two read-only mutants of 2026-09-17 — H5's pass forced True, and H9's scope
-    narrowed to B* — survived the criteria tests. These cases discriminate them."""
+    """The owner's read-only mutant of 2026-09-17 (H5's pass forced True) and the v0.3 change of H9's
+    role: these cases discriminate them."""
     @classmethod
     def setUpClass(cls):
         cls._saved = g.THRESHOLDS["H2_bootstrap_experiments"]
@@ -157,14 +223,16 @@ class LoadBearingGuards(unittest.TestCase):
         finally:
             g.THRESHOLDS["H5_search_evaluation_cap"] = saved
 
-    def test_h9_must_hold_at_every_budget_from_b_star_up_not_only_at_b_star(self):
+    def test_h9_is_a_diagnostic_at_every_budget_from_b_star_and_decides_nothing(self):
+        """v0.3 §9 / preregistration §10 (ii): H9 is neither a criterion nor a claim condition. Δ2 ≤ 0 at
+        the largest budget: the gate still passes, nothing carries a pass for H9, the diagnostic reports
+        every budget ≥ B* with the last one above α, N2(B) and Δ2's power at the gate's N by B2's own
+        functions (seed 1 + N)."""
         base = synthetic_rows()
         res0 = g.evaluate("F1", base)
         b_star = res0["b_star"]
         above = [b for b in G if b > b_star]
-        below = [b for b in G if b < b_star]
-        self.assertTrue(above and below)
-        # Δ2 ≤ 0 at the LARGEST budget only: H4 (at B*) passes, H9 must fail
+        self.assertTrue(above)
         rows = copy.deepcopy(base)
         k = G.index(above[-1])
         for row in rows:
@@ -172,61 +240,116 @@ class LoadBearingGuards(unittest.TestCase):
         res = g.evaluate("F1", rows)
         self.assertEqual(res["b_star"], b_star)
         self.assertTrue(res["criteria"]["H4"]["pass"])
-        self.assertFalse(res["criteria"]["H9"]["pass"])
-        self.assertFalse(res["H9_claim_condition"])
-        self.assertTrue(res["pass"])                                      # H9 is the claim condition, not a pass row
-        rows_p = [r for r in res["criteria"]["H9"]["delta2_by_budget_from_b_star"]]
-        self.assertEqual([r[0] for r in rows_p], [b for b in G if b >= b_star])
-        self.assertGreater(rows_p[-1][1], g.THRESHOLDS["H9_alpha"])
-        # Δ2 ≤ 0 at a budget BELOW B* only: outside H9's scope, H9 holds
-        rows = copy.deepcopy(base)
-        k = G.index(below[0])
-        for row in rows:
-            row["arms"]["F"]["end_to_end_at_grid"][k] = row["arms"]["O"]["at_grid"][k] + 3
-        res = g.evaluate("F1", rows)
-        self.assertEqual(res["b_star"], b_star)
-        self.assertTrue(res["criteria"]["H9"]["pass"])
+        self.assertTrue(res["pass"])
+        self.assertNotIn("H9", res["criteria"])
+        self.assertNotIn("H9_claim_condition", res)
+        self.assertNotIn("H9_claim_condition", json.dumps(res))
+        h9 = res["diagnostics"]["H9"]
+        self.assertNotIn("pass", h9)
+        self.assertNotIn("claim_condition", h9)
+        self.assertEqual(h9["gate_N"], res["criteria"]["H5"]["required_pairs_N"])
+        drows = h9["delta2_by_budget_from_b_star"]
+        self.assertEqual([r["budget"] for r in drows], [b for b in G if b >= b_star])
+        self.assertGreater(drows[-1]["sign_test_p"], h9["alpha"])
+        self.assertLessEqual(drows[0]["sign_test_p"], h9["alpha"])
+        for r in drows:
+            self.assertNotIn("pass", r)
+            for key in ("mean", "median", "cohen_d", "positives", "negatives", "ties", "required_pairs_N2", "power_at_N2", "power_delta2_at_gate_N"):
+                self.assertIn(key, r)
+        # N2(B) and the power at the gate's N are B2's functions on delta2, the declared seeds
+        T = g.THRESHOLDS
+        n_gate = h9["gate_N"]
+        for r in drows:
+            d2 = g.deltas_at(rows, G.index(r["budget"]))["d2"]
+            n2, p2 = bg.required_pairs(d2, T["H9_alpha"], T["H5_power_min"], T["H2_bootstrap_experiments"], T["H5_power_scan_seed"], T["H5_pairs_min"], len(rows))
+            self.assertEqual((r["required_pairs_N2"], r["power_at_N2"]), (n2, p2))
+            self.assertEqual(r["power_delta2_at_gate_N"], bg.bootstrap_reject_rate(d2, n_gate, T["H9_alpha"], T["H2_bootstrap_experiments"], T["H5_power_scan_seed"] + n_gate))
+        self.assertIsNone(drows[-1]["required_pairs_N2"])                 # Δ2 ≤ 0 there: no N reaches power 0.9
+        self.assertLess(drows[-1]["power_delta2_at_gate_N"], 0.5)
+        self.assertIsNotNone(drows[0]["required_pairs_N2"])
+        # a pass forced into the diagnostic would be a defect: the gate's pass is H1–H8 only
+        self.assertEqual(res["pass"], all(res["criteria"][k]["pass"] for k in ("budget_rule", "H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8")))
 
 
 class Renderer(unittest.TestCase):
-    """docs/b3_gate_report.md is rendered from the committed gate_report.json: p-values keep their
-    exponent, small p-values do not round to 0, nested values are complete, H9's detail is present."""
+    """docs/b3_gate_2_report.md is rendered from a gate_report.json of the lifecycle-2 shape: never
+    "H9 holds" / "H9 fails", the H9 diagnostic table with N2(B) and the power at the gate's N, p-values
+    keep their exponent and never round to 0, nested values are complete; a lifecycle-1 report is refused."""
     @classmethod
     def setUpClass(cls):
-        import b3_gate_report_md as md
-        cls.md = md
-        cls.rep = json.loads((R / "evidence/b3/gate/gate_report.json").read_text())
+        cls._saved = g.THRESHOLDS["H2_bootstrap_experiments"]
+        g.THRESHOLDS["H2_bootstrap_experiments"] = 100
+        rows = synthetic_rows()
+        k = G.index(G[-1])
+        for row in rows:
+            row["arms"]["F"]["end_to_end_at_grid"][k] = row["arms"]["O"]["at_grid"][k] + 3
+        cls.rep = synthetic_report({"F1": g.evaluate("F1", rows)})
         cls.text = md.render(cls.rep)
+
+    @classmethod
+    def tearDownClass(cls):
+        g.THRESHOLDS["H2_bootstrap_experiments"] = cls._saved
+
+    def test_h9_is_rendered_as_a_diagnostic_never_holds_or_fails(self):
+        t = self.text
+        for phrase in ("H9 holds", "H9 fails", "H9 {'holds'", "claim condition", "condition on the claim"):
+            self.assertNotIn(phrase, t)
+        self.assertNotIn("| H9 |", t)                                        # not a criterion row
+        self.assertIn("H9 diagnostic (decides nothing)", t)
+        self.assertIn("| budget | p | mean Δ2 | median Δ2 | pos/neg/ties | Cohen's d | N₂(B) | power at N₂ | Δ2 power at the gate's N |", t)
+        h9 = self.rep["results"]["F1"]["diagnostics"]["H9"]
+        for r in h9["delta2_by_budget_from_b_star"]:
+            self.assertIn(f"| {r['budget']} | {md.fmt_p(r['sign_test_p'])} |", t)
+            self.assertIn(f"| {md.fmt(r['required_pairs_N2'])} | {md.fmt_p(r['power_at_N2'])} | {md.fmt_p(r['power_delta2_at_gate_N'])} |", t)
+        self.assertIn("| N₂(B) | Δ2 power at N(B) |", t)                      # the per-budget table carries them too
+        self.assertIn("lifecycle 2", t)
+        self.assertIn("B* = ", t)
 
     def test_p_values_keep_their_exponent_and_never_round_to_zero(self):
         f1 = self.rep["results"]["F1"]["criteria"]
         p_h4 = f1["H4"]["delta2"]["sign_test_p"]
         self.assertLess(p_h4, 1e-6)
-        self.assertIn(self.md.fmt_p(p_h4), self.text)                     # e.g. 3.79e-09
-        self.assertIn("e-", self.md.fmt_p(p_h4))
-        for b, pv, mn, mdn in f1["H9"]["delta2_by_budget_from_b_star"]:
-            self.assertIn(f"| {b} | {self.md.fmt_p(pv)} |", self.text)
-            self.assertNotEqual(self.md.fmt_p(pv), "0")
-            self.assertNotIn(f"| {b} | 0.00 |", self.text)
-        f2 = self.rep["results"]["F2"]["criteria"]["H4"]["delta2"]["sign_test_p"]
-        self.assertIn(self.md.fmt_p(f2), self.text)
-        self.assertEqual(self.md.fmt_p(0.0024), "0.0024")
-        self.assertEqual(self.md.fmt_p(3.793677e-09), "3.79e-09")
-        self.assertEqual(self.md.fmt_p(1.0), "1")
+        self.assertIn(md.fmt_p(p_h4), self.text)
+        self.assertIn("e-", md.fmt_p(p_h4))
+        for r in self.rep["results"]["F1"]["diagnostics"]["H9"]["delta2_by_budget_from_b_star"]:
+            self.assertNotEqual(md.fmt_p(r["sign_test_p"]), "0")
+            self.assertNotIn(f"| {r['budget']} | 0.00 |", self.text)
+        self.assertEqual(md.fmt_p(0.0024), "0.0024")
+        self.assertEqual(md.fmt_p(3.793677e-09), "3.79e-09")
+        self.assertEqual(md.fmt_p(1.0), "1")
+        self.assertEqual(md.fmt_p(None), "—")
 
-    def test_nested_values_are_complete_and_h9_detail_is_present(self):
-        self.assertIn("H9 detail", self.text)
+    def test_nested_values_are_complete(self):
         self.assertIn("Budget rule candidates", self.text)
         d2 = self.rep["results"]["F1"]["criteria"]["H4"]["delta2"]
         line = next(l for l in self.text.splitlines() if l.startswith("| H4 |"))
         for k in d2:
             self.assertIn(f"{k}:", line)
-        self.assertIn("ties: " + str(d2["ties"]) + "}", line)             # the dict is closed: nothing was cut
+        self.assertTrue(line.rstrip().endswith("} |"), line)              # the dict is closed: nothing was cut
+        self.assertIn(f"sign_test_p: {md.fmt_p(d2['sign_test_p'])}}}", line)
         self.assertNotIn("[:120]", (R / "b3/host/b3_gate_report_md.py").read_text())
+
+    def test_a_lifecycle_1_report_is_refused_not_rendered(self):
+        rep1 = json.loads((R / "evidence/b3/gate/gate_report.json").read_text())
+        self.assertIn("H9", rep1["results"]["F1"]["criteria"])
+        self.assertFalse(g.is_lifecycle2_report(rep1))
+        with self.assertRaises(ValueError):
+            md.render(rep1)
+        # the lifecycle-2 shape with H9 smuggled back as a criterion, or a claim condition, is refused too
+        for mutate in (lambda r: r["results"]["F1"]["criteria"].__setitem__("H9", {"pass": True}),
+                       lambda r: r["results"]["F1"].__setitem__("H9_claim_condition", True),
+                       lambda r: r["results"]["F1"].pop("diagnostics"),
+                       lambda r: r.__setitem__("lifecycle", 1)):
+            rep = copy.deepcopy(self.rep)
+            mutate(rep)
+            self.assertFalse(g.is_lifecycle2_report(rep))
+            with self.assertRaises(ValueError):
+                md.render(rep)
+        self.assertTrue(g.is_lifecycle2_report(self.rep))
 
 
 class SeedsAndPins(unittest.TestCase):
-    def test_exclusion_names_every_archived_source(self):
+    def test_exclusion_names_every_archived_source_including_lifecycle_1s(self):
         excl, where = g.gate_exclusion()
         for k in ("evidence/b3/sim/sim_report.json", "evidence/b2/gate/gate_report.json"):
             self.assertIn(k, where)
@@ -236,6 +359,27 @@ class SeedsAndPins(unittest.TestCase):
         for pair in m["seeds"]["pairs"]:
             self.assertTrue(set(pair) <= excl)
         self.assertIn(m["seeds"]["master_seed"], excl)
+        # lifecycle 1's gate run 1: its 200 pairs (from its raw rows) and its master
+        g1 = json.loads((R / "evidence/b3/gate/gate_report.json").read_text())
+        raw = json.loads((R / "evidence/b3/gate/raw_F1.json").read_text())["rows"]
+        self.assertEqual(len(raw), 200)
+        self.assertTrue({row["landscape_seed"] for row in raw} | {row["operator_seed"] for row in raw} <= excl)
+        self.assertIn(g1["seeds"]["master_seed"], excl)
+        k1 = "evidence/b3/gate/gate_report.json (lifecycle 1 gate run 1, pilot)"
+        self.assertEqual(where[k1], {"master_seed": g1["seeds"]["master_seed"], "count": 200, "values": 401})
+        # lifecycle 1's nine trial pairs and their master
+        t_plan = json.loads((R / "evidence/b3/plan_trial_2026_09_17/plan.json").read_text())["seed_derivation"]
+        t_pred = json.loads((R / "evidence/b3/plan_trial_2026_09_17/prediction.json").read_text())
+        self.assertEqual(len(t_pred["pairs"]), 9)
+        self.assertTrue({p["landscape_seed"] for p in t_pred["pairs"]} | {p["operator_seed"] for p in t_pred["pairs"]} <= excl)
+        self.assertIn(t_plan["master_seed"], excl)
+        k2 = "evidence/b3/plan_trial_2026_09_17/prediction.json (lifecycle 1 trial session pairs, pilot)"
+        self.assertEqual(where[k2], {"master_seed": t_plan["master_seed"], "count": 9, "values": 19})
+        # lifecycle 1's exclusion is a strict subset: the two lifecycle-1 sets are what lifecycle 2 adds
+        excl1, where1 = g.lifecycle1_exclusion()
+        self.assertTrue(excl1 < excl)
+        self.assertEqual(set(where) - set(where1), {k1, k2})
+        self.assertEqual(len(excl - excl1), 401 + 19)
         seeds = bs.pair_seeds(bs.master_seed(g.GATE_LABEL, "deadbeef"), 20, exclude=frozenset(excl))
         self.assertFalse({s for p in seeds for s in p} & excl)
 
@@ -264,14 +408,23 @@ class SmallRun(unittest.TestCase):
         self.assertGreater(row["X"]["wrong_decodes"], 0)
         self.assertEqual(row["X"]["perm_sha256"], rep["control_x"]["permutation_sha256"])
         self.assertEqual(rep["seeds"]["count"], 3)
+        self.assertEqual(rep["seeds"]["label"], "b3-gate-2")
+        self.assertEqual(rep["lifecycle"], 2)
+        self.assertEqual(rep["thresholds"]["rules_version"], "architecture v0.3 §9")
+        self.assertIn("evidence/b3/gate/gate_report.json (lifecycle 1 gate run 1, pilot)", rep["seeds"]["excluded_sources"])
+        self.assertIn("evidence/b3/plan_trial_2026_09_17/prediction.json (lifecycle 1 trial session pairs, pilot)", rep["seeds"]["excluded_sources"])
+        excl, _ = g.gate_exclusion()
+        self.assertFalse(({r["landscape_seed"] for r in raw["rows"]} | {r["operator_seed"] for r in raw["rows"]}) & excl)
         res = rep["results"]["F1"]
         self.assertIsNone(res["b_star"])                                        # 3 seeds: N(B) cannot exist (N >= 8), and the report says so
         self.assertFalse(res["criteria"]["budget_rule"]["pass"])
         self.assertFalse(res["pass"])
-        self.assertIsNone(res["H9_claim_condition"])
-        import b3_gate_report_md as md
+        self.assertNotIn("H9_claim_condition", res)
+        self.assertIsNone(res["diagnostics"]["H9"])
+        self.assertTrue(g.is_lifecycle2_report(rep))
         text = md.render(rep)
         self.assertIn("FAIL", text)
+        self.assertIn("H9 diagnostic: no B*, nothing to report.", text)
         self.assertIn(rep["architecture"]["sha256"], text)
 
 

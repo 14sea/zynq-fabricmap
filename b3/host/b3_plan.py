@@ -1,20 +1,32 @@
 #!/usr/bin/env python3
-"""B3 lifecycle 1 — the session plan and the preregistered prediction (host-only; preregistration
-DRAFT v0.2 §2–§3, §6a).
+"""B3 lifecycle 2 — the session plan and the preregistered prediction (host-only; preregistration
+DRAFT v0.3 §2–§3, §6a, §8).
 
     b3_plan.py [--out evidence/b3] [--rate-per-hour R] [--gate-report P] [--qualification]
 
-Seeds: master = first 4 bytes of sha256('b3-session|' + the instrument commit), N pairs from one Rng
+Seeds: master = first 4 bytes of sha256('b3-session-2|' + the instrument commit), N pairs from one Rng
 stream, skipping the fixed excluded seeds AND every value of every archived set — B2's two gate
-runs, the B3 simulation, B2's nine session pairs and master, B2Q's pair and master, and the B3 gate's
-200 pairs and master (`b3_gate.gate_exclusion` plus the gate report's own seeds). Disjointness is
-ENFORCED by explicit exclusion and every source is recorded in the plan.
+runs, the B3 simulation, B2's nine session pairs and master, B2Q's pair and master, lifecycle 1's gate
+run 1 and its nine trial pairs (pilot, §8b), and the lifecycle-2 gate's 200 pairs and master
+(`b3_gate.gate_exclusion` plus the gate report's own seeds). Disjointness is ENFORCED by explicit
+exclusion and every source is recorded in the plan. The gate report must be the lifecycle-2 one
+(label `b3-gate-2`, the current rules version); lifecycle 1's is refused by name.
 
 Prediction: the reference engine over the fabric model for every pair and the three arms in the
 pair's prefix-balanced order — the per-record fitness sequence (hashed), every arm's best, champion
-and holdout known answer, the O arm's whole ledger (digest), its final map (digest), map version and
-anomaly count, and the two paired deltas Δ1 = O − R and Δ2 = O − end-to-end F (333 charged from F's
-own trace); the two predicted primaries are computed here in advance.
+and holdout known answer, the O arm's EVERY ledger entry embedded in the document (`pairs[r].runs.O.ledger`,
+specimen_ledger 1.1.0, B* entries per run — §8's first P2: a digest and a count are not enough), its
+final map (digest), map version and anomaly count, and the two paired deltas Δ1 = O − R and
+Δ2 = O − end-to-end F (333 charged from F's own trace). ONE confirmatory primary (Δ1, one-sided exact
+sign test, α = 0.05) is predicted in advance; Δ2 is the SECONDARY OUTCOME, reported (positives /
+negatives / ties, exact p, mean, median, Cohen's d) with no threshold (v0.3, the owner's ruling).
+`prediction_findings` compares two prediction documents field for field and entry for entry, naming
+the path of every difference — the comparison `plan_findings` and the adjudicator use.
+
+Stop rule (§8's second P2): evaluated on the prediction BEFORE any canonical write — if the predicted
+primary does not reach α, nothing is written under `evidence/b3/` (plan.json, prediction.json), the
+CLI exits 3 naming the primary; a trial run can write only to an explicit NON-canonical `--out`.
+The seeds are not redrawn and N is not raised.
 
 Session split: the frozen rule with the calibration margin — a session holds the largest whole number
 of pairs whose expected span records × 3600 / (0.85 × R_measured) ≤ 7 200 s; INFEASIBLE is a named
@@ -48,12 +60,14 @@ import b3_online_arm as oa  # noqa: E402
 import b3_online_map as om  # noqa: E402
 
 INSTRUMENT_COMMIT = bp.INSTRUMENT_COMMIT
-SESSION_LABEL = "b3-session"
-QUAL_LABEL = "b3-qualification"
+LIFECYCLE = 2
+SESSION_LABEL = "b3-session-2"
+QUAL_LABEL = "b3-qualification-2"
 QUAL_BUDGET = 40                        # preregistration §6a (the owner's choice): one pair at budget 40 in all three arms
 QUAL_PAIRS = 1
-GATE_REPORT = REPO_ROOT / "evidence/b3/gate/gate_report.json"
-PLAN_DIR = REPO_ROOT / "evidence/b3"
+GATE_REPORT = REPO_ROOT / b3g.OUT_DEFAULT / "gate_report.json"
+PLAN_DIR = REPO_ROOT / "evidence/b3"    # the canonical output: plan.json / prediction.json live here and only after the stop rule passes
+SCHEMA_VERSION = "2.0.0"                # plan and prediction: one primary + a secondary outcome, the ledger embedded (lifecycle 2)
 ALPHA = 0.05
 AUDIT_POLICY = "all-self-reporting"
 SESSION_SPAN_MAX_S = 7200
@@ -125,9 +139,19 @@ def session_split(n_pairs: int, budget: int, rate_measured: float | None) -> dic
 
 
 def decision(deltas: list[int], verdict_text: str) -> dict:
+    """The primary: one-sided exact sign test against alpha, with a verdict."""
     p, pos, neg, ties = bg.sign_test_p(deltas)
     return {"positives": pos, "negatives": neg, "ties": ties, "sign_test_p": p, "alpha": ALPHA,
             "verdict": f"{verdict_text} SUPPORTED" if p <= ALPHA else "NOT SUPPORTED"}
+
+
+def secondary_report(deltas: list[int]) -> dict:
+    """The secondary outcome (preregistration v0.3 §4): every value reported, EXACT to the prediction on
+    the board, no significance threshold and no verdict."""
+    p, pos, neg, ties = bg.sign_test_p(deltas)
+    return {"positives": pos, "negatives": neg, "ties": ties, "sign_test_p": p,
+            "mean": bg.mean(deltas), "median": bg.median(deltas), "cohen_d": bg.cohen_d(deltas),
+            "threshold": None, "note": "reported secondary outcome: no significance threshold, no verdict (preregistration v0.3 §4)"}
 
 
 # ------------------------------------------------------------------ the gate's numbers and the seeds
@@ -139,12 +163,16 @@ def gate_inputs(gate_report: Path = GATE_REPORT) -> dict:
         raise ValueError("not a b3_gate_report")
     if gate["thresholds"].get("rules_version") != b3g.THRESHOLDS["rules_version"]:
         raise ValueError(f"the gate report's rules ({gate['thresholds'].get('rules_version')}) are not the current ones ({b3g.THRESHOLDS['rules_version']})")
+    if gate["seeds"].get("label") != b3g.GATE_LABEL:
+        raise ValueError(f"the gate report's label ({gate['seeds'].get('label')}) is not this lifecycle's ({b3g.GATE_LABEL})")
+    if not b3g.is_lifecycle2_report(gate):
+        raise ValueError("the gate report is not a lifecycle-2 report (H9 must be a diagnostic, never a criterion or a claim condition)")
     fid = gate["gate_fitness"]
     res = gate["results"][fid]
     if not res["pass"] or res["b_star"] is None:
         raise ValueError(f"the gate did not pass for {fid}: no plan")
     return {"fitness": fid, "budget_per_arm": res["b_star"], "pairs": res["criteria"]["H5"]["required_pairs_N"],
-            "H9_claim_condition": bool(res["H9_claim_condition"]), "head_at_run": gate["head_at_run"],
+            "head_at_run": gate["head_at_run"],
             "rules_version": gate["thresholds"]["rules_version"], "architecture_sha256": gate["architecture"]["sha256"],
             "control_x_permutation_sha256": gate["control_x"]["permutation_sha256"],
             "seeds": {"label": gate["seeds"]["label"], "master_seed": gate["seeds"]["master_seed"], "count": gate["seeds"]["count"]}}
@@ -160,7 +188,7 @@ def session_exclusion(gate_report: Path = GATE_REPORT) -> tuple[set[int], dict]:
     if [(row["landscape_seed"], row["operator_seed"]) for row in raw] != [tuple(x) for x in gseeds]:
         raise ValueError("the gate's rows do not carry the seeds its master and count re-derive")
     flat = {s for p in gseeds for s in p} | {gi["seeds"]["master_seed"]}
-    sources[str(gate_report.relative_to(REPO_ROOT)) + " (the B3 gate's pairs)"] = {"master_seed": gi["seeds"]["master_seed"], "count": gi["seeds"]["count"], "values": len(flat)}
+    sources[_rel(gate_report) + " (the B3 gate's pairs)"] = {"master_seed": gi["seeds"]["master_seed"], "count": gi["seeds"]["count"], "values": len(flat)}
     return excl | flat, sources
 
 
@@ -228,6 +256,8 @@ def predict(fid: str, budget: int, seeds: list[tuple[int, int]], map_sha256: str
                 runs[arm] = {"best_train": oo.best_trace[-1], "champion_genome_sha256": hashlib.sha256(bc.genome_to_hex(oo.champion.genome).encode()).hexdigest(),
                              "champion_holdout": oo.champion_holdout, "column_moves": oo.column_moves,
                              "moves_sha256": sha256_json([[e["parent_born"], e["move_kind"], e["intervention"], e["fitness"]] for e in oo.ledger]),
+                             "budget": budget, "ledger_schema_version": oa.LEDGER_SCHEMA_VERSION,
+                             "ledger": json.loads(json.dumps(oo.ledger)),      # EVERY entry, embedded (preregistration v0.3 §3 / §8); JSON-normalised so bytes compare
                              "ledger_sha256": om.canonical_sha256(oo.ledger), "ledger_entries": len(oo.ledger),
                              "decoded_final": len(oo.carto.decoded), "map_version_final": oo.carto.version, "anomalies": oo.anomalies,
                              "wrong_decodes": v["accuracy"]["wrong"], "final_state_sha256": oo.state_trace[-1],
@@ -247,25 +277,54 @@ def predict(fid: str, budget: int, seeds: list[tuple[int, int]], map_sha256: str
 
 def build_prediction(fid: str, budget: int, seeds: list[tuple[int, int]], map_sha256: str | None = None) -> dict:
     pr = predict(fid, budget, seeds, map_sha256)
-    return {"schema": "b3_prediction", "schema_version": "1.0.0", "fitness": fid, "budget_per_arm": budget, "pairs": pr["pairs"],
+    return {"schema": "b3_prediction", "schema_version": SCHEMA_VERSION, "lifecycle": LIFECYCLE, "fitness": fid, "budget_per_arm": budget, "pairs": pr["pairs"],
             "deltas1": pr["deltas1"], "deltas2": pr["deltas2"],
-            "predicted_primary_1": decision(pr["deltas1"], "online > random-safe"),
-            "predicted_primary_2": decision(pr["deltas2"], "online > charged frozen map (end-to-end)"),
+            "predicted_primary": decision(pr["deltas1"], "online > random-safe"),
+            "secondary_outcome": secondary_report(pr["deltas2"]),
             "fitness_sequence_sha256": pr["fitness_sequence_sha256"], "fitness_sequence_length": pr["fitness_sequence_length"],
             "b1_map_cost": oa.B1_MAP_COST, "carto_version": carto_mod.CARTO_VERSION,
-            "note": "every value is the reference engine and cartographer over the fabric model; on a correct instrument the board reproduces them "
-                    "byte for byte, decode for decode; both primaries are required (preregistration v0.2 §1)"}
+            "note": "every value is the reference engine and cartographer over the fabric model, every O-arm ledger entry included; on a correct "
+                    "instrument the board reproduces them byte for byte, decode for decode; one confirmatory primary (delta1), delta2 a reported "
+                    "secondary outcome with no threshold (preregistration v0.3 §1, §3, §4)"}
 
 
 def stop_rule_findings(prediction: dict) -> list[str]:
-    """Preregistration v0.2 §1: both predicted primaries on the fixed seeds must reach alpha, or the
-    line stops — the seeds are not redrawn and N is not raised. Named findings, one per primary."""
-    f = []
-    for key in ("predicted_primary_1", "predicted_primary_2"):
-        d = prediction[key]
-        if d["sign_test_p"] > d["alpha"]:
-            f.append(f"{key}: p = {d['sign_test_p']:.6g} > alpha {d['alpha']} ({d['positives']}/{d['negatives']}/{d['ties']}) — the line stops under the stop rule")
-    return f
+    """Preregistration v0.3 §3: the predicted PRIMARY (delta1 alone) on the fixed seeds must reach alpha,
+    or the line stops — the seeds are not redrawn and N is not raised. The secondary outcome has no
+    threshold and never stops the line. A named finding, or none."""
+    d = prediction["predicted_primary"]
+    if d["sign_test_p"] > d["alpha"]:
+        return [f"predicted_primary: p = {d['sign_test_p']:.6g} > alpha {d['alpha']} ({d['positives']}/{d['negatives']}/{d['ties']}) — the line stops under the stop rule"]
+    return []
+
+
+def prediction_findings(expected: dict, actual: dict, path: str = "") -> list[str]:
+    """Field for field, entry for entry: every difference between two prediction documents, each
+    named by its path (`pairs[3].runs.O.ledger[17].decoded`, ...). Both sides are JSON-normalised
+    first (a tuple and a list are the same entry). The comparison `plan_findings` and the
+    adjudicator use — a digest alone would say only that something differs (§8's first P2)."""
+    def norm(x):
+        return json.loads(json.dumps(x, sort_keys=True))
+
+    def walk(e, a, at):
+        if isinstance(e, dict) and isinstance(a, dict):
+            out = []
+            for k in e:
+                sub = f"{at}.{k}" if at else str(k)
+                out.extend([f"{sub}: absent"] if k not in a else walk(e[k], a[k], sub))
+            out.extend(f"{at}.{k}: unexpected" if at else f"{k}: unexpected" for k in a if k not in e)
+            return out
+        if isinstance(e, list) and isinstance(a, list):
+            out = []
+            if len(e) != len(a):
+                out.append(f"{at}: {len(a)} entries, expected {len(e)}")
+            for i in range(min(len(e), len(a))):
+                out.extend(walk(e[i], a[i], f"{at}[{i}]"))
+            return out
+        if e != a or type(e) is not type(a):
+            return [f"{at}: {a!r}, expected {e!r}"]
+        return []
+    return walk(norm(expected), norm(actual), path)
 
 
 def build_plan(rate_measured: float | None, gate_report: Path | None = None, root: Path = REPO_ROOT) -> dict:
@@ -276,7 +335,7 @@ def build_plan(rate_measured: float | None, gate_report: Path | None = None, roo
     self_map = bmaps.load_self_map()
     view = bmaps.MapView(self_map, bl.train_vectors())
     return {
-        "schema": "b3_plan", "schema_version": "1.0.0", "session": "B3",
+        "schema": "b3_plan", "schema_version": SCHEMA_VERSION, "lifecycle": LIFECYCLE, "session": "B3",
         "fitness": fid, "budget_per_arm": budget, "pairs": n_pairs,
         "engine": {"version": bs.ENGINE_VERSION, "mu": bs.MU, "lambda": bs.LAMBDA, "kmax": bs.KMAX},
         "carto_version": carto_mod.CARTO_VERSION, "b1_map_cost": oa.B1_MAP_COST,
@@ -290,7 +349,8 @@ def build_plan(rate_measured: float | None, gate_report: Path | None = None, roo
                             "excluded_values_total": len(exclusion | set(bs.EXCLUDED_SEEDS))},
         "gate": {"path": str(gate_report.relative_to(root)) if gate_report.is_relative_to(root) else str(gate_report), "sha256": sha256_file(gate_report),
                  "head_at_run": g["head_at_run"], "rules_version": g["rules_version"], "architecture_sha256": g["architecture_sha256"],
-                 "control_x_permutation_sha256": g["control_x_permutation_sha256"], "H9_claim_condition": g["H9_claim_condition"]},
+                 "control_x_permutation_sha256": g["control_x_permutation_sha256"],
+                 "H9": "a gate diagnostic (architecture v0.3 §9): reported in the gate report, it decides nothing here"},
         "audit_policy": AUDIT_POLICY,
         "records": {"per_pair": records_per_pair(budget), "ledger_entries_per_pair": budget, "single_session_total": session_records(n_pairs, budget),
                     "note": "one opening and one closing baseline PER SESSION; the total depends on the split (session_split)"},
@@ -299,10 +359,14 @@ def build_plan(rate_measured: float | None, gate_report: Path | None = None, roo
         "session_split": session_split(n_pairs, budget, rate_measured),
         "calibration_margin": CALIBRATION_MARGIN, "session_span_max_s": SESSION_SPAN_MAX_S, "deadline_formula": DEADLINE_FORMULA,
         "planning_rates_NOT_calibration": PLANNING_RATES,
-        "primary": {"primary_1": "one-sided exact sign test over the N pairs' delta1 (best-so-far train fitness at the budget, online minus random-safe)",
-                    "primary_2": "one-sided exact sign test over the N pairs' delta2 (online at the budget minus the frozen arm's own trace at budget - 333)",
-                    "alpha": ALPHA, "ties": "excluded from n, counted", "both_required": g["H9_claim_condition"],
-                    "stop_rule": "if either predicted primary does not reach alpha the line stops; seeds are not redrawn, N is not raised"},
+        "primary": {"statistic": "one-sided exact sign test over the N pairs' delta1 (best-so-far train fitness at the budget, online minus random-safe)",
+                    "alpha": ALPHA, "ties": "excluded from n, counted", "pooled": "across sessions",
+                    "pass": "p <= alpha and equal to the predicted p (preregistration v0.3 §4)",
+                    "stop_rule": "if the predicted primary does not reach alpha the line stops before any canonical write; seeds are not redrawn, N is not raised"},
+        "secondary_outcome": {"statistic": "the N pairs' delta2 (online at the budget minus the frozen arm's own trace at budget - 333): "
+                                           "positives / negatives / ties, the exact one-sided p, mean, median, Cohen's d",
+                              "pooled": "across sessions", "threshold": None,
+                              "pass": "every value EXACT to the prediction; no significance threshold (preregistration v0.3 §4, the owner's ruling)"},
         "architecture": {"path": "docs/b3_architecture.md", "sha256": sha256_file(root / "docs/b3_architecture.md")},
     }
 
@@ -311,7 +375,7 @@ def build_qualification_plan(fid: str, map_sha256: str, b3_pairs: list, gate_rep
     exclusion, sources = session_exclusion(gate_report)
     seeds = qualification_seeds(b3_pairs, gate_report)
     total = session_records(QUAL_PAIRS, QUAL_BUDGET)
-    return {"schema": "b3_plan", "schema_version": "1.0.0", "session": "B3Q", "fitness": fid,
+    return {"schema": "b3_plan", "schema_version": SCHEMA_VERSION, "lifecycle": LIFECYCLE, "session": "B3Q", "fitness": fid,
             "budget_per_arm": QUAL_BUDGET, "pairs": QUAL_PAIRS, "carto_version": carto_mod.CARTO_VERSION,
             "map": {"path": str(bmaps.SELF_MAP.relative_to(REPO_ROOT)), "sha256": map_sha256},
             "seed_derivation": {"label": QUAL_LABEL, "commit": INSTRUMENT_COMMIT, "master_seed": qualification_master(),
@@ -380,14 +444,23 @@ def main(argv=None) -> int:
     plan = build_plan(a.rate_per_hour, gate_report)
     _m, seeds, _s, _e = session_seeds(g["pairs"], gate_report)
     prediction = build_prediction(g["fitness"], g["budget_per_arm"], seeds, map_sha)
-    plan_path, pred_path = write(REPO_ROOT / a.out, plan, prediction)
-    print(json.dumps({"plan": _rel(plan_path), "prediction": _rel(pred_path),
-                      "fitness": plan["fitness"], "budget_per_arm": plan["budget_per_arm"], "pairs": plan["pairs"], "master_seed": plan["seed_derivation"]["master_seed"],
-                      "split": plan["session_split"]["status"], "deltas1": prediction["deltas1"], "deltas2": prediction["deltas2"],
-                      "primary_1": prediction["predicted_primary_1"], "primary_2": prediction["predicted_primary_2"],
-                      "fitness_sequence_length": prediction["fitness_sequence_length"],
-                      "stop_rule_findings": stop_rule_findings(prediction)}, indent=1))
-    return 0 if not stop_rule_findings(prediction) else 3
+    # the stop rule BEFORE any canonical write (preregistration v0.3 §3, §8): on a stop the canonical
+    # paths stay absent; only an explicit non-canonical --out may hold a trial
+    findings = stop_rule_findings(prediction)
+    out = REPO_ROOT / a.out
+    canonical = out.resolve() == PLAN_DIR.resolve()
+    summary = {"fitness": plan["fitness"], "budget_per_arm": plan["budget_per_arm"], "pairs": plan["pairs"], "master_seed": plan["seed_derivation"]["master_seed"],
+               "split": plan["session_split"]["status"], "deltas1": prediction["deltas1"], "deltas2": prediction["deltas2"],
+               "primary": prediction["predicted_primary"], "secondary_outcome": prediction["secondary_outcome"],
+               "fitness_sequence_length": prediction["fitness_sequence_length"], "stop_rule_findings": findings}
+    if findings and canonical:
+        print(json.dumps({**summary, "plan": None, "prediction": None,
+                          "written": f"nothing: the stop rule fired and {_rel(PLAN_DIR)} is the canonical path (a trial may write only to an explicit non-canonical --out)"}, indent=1))
+        return 3
+    plan_path, pred_path = write(out, plan, prediction)
+    print(json.dumps({**summary, "plan": _rel(plan_path), "prediction": _rel(pred_path),
+                      "written": "canonical" if canonical else "non-canonical (a trial)"}, indent=1))
+    return 0 if not findings else 3
 
 
 if __name__ == "__main__":
