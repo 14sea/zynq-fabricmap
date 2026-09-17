@@ -1,0 +1,106 @@
+{
+ "schema": "b2_session_evidence_archive",
+ "schema_version": "1.0.0",
+ "session_dir": "evidence/b2/b2_17A6_2026-09-16-01",
+ "why": "The five large exports (~200 MiB together) are stored as one deterministic compressed archive instead of ordinary Git blobs; the ten small, human-readable files stay as ordinary files (the owner's archival decision of 2026-09-17, form (c)).",
+ "archive": {
+  "path": "exports.tar.zst",
+  "bytes": 14342304,
+  "sha256": "607b362be8bd4c96d7a712a681eaea5c31e9d6586691f6f00ceb1db647f610ab",
+  "compression": "tar (GNU tar, --format=posix, --sort=name, --owner=0 --group=0 --numeric-owner, one fixed --mtime for every member, pax headers without atime/ctime) | zstd -19 -T0",
+  "member_mtime_epoch": 1789603087,
+  "members": [
+   {
+    "name": "audits.json",
+    "bytes": 32285587,
+    "sha256": "51205c4d18fe046cb0cc71dddb98e2a25f783b557d9d31b751669f1857b93263"
+   },
+   {
+    "name": "console.log",
+    "bytes": 51547549,
+    "sha256": "3e884e4f885ece2ba766957315b26561dc35f4163ee99605be4bfe14b38ca6ac"
+   },
+   {
+    "name": "console.ts.log",
+    "bytes": 56579705,
+    "sha256": "63494e39622f53109bcb651efcd420f28e85278984e91306a68db5f490173fa0"
+   },
+   {
+    "name": "run_log.json",
+    "bytes": 35773615,
+    "sha256": "ddaa74c813d27409e257dea197a9a351370bd9ba0f66eff23233894ca1087eae"
+   },
+   {
+    "name": "timeline.json",
+    "bytes": 33917069,
+    "sha256": "7ae07b6c597d22f6689b4e47e269b5b0cd296d743df589218807dab8172fcde3"
+   }
+  ]
+ },
+ "ordinary_files": [
+  {
+   "name": "B1_0_preflight.json",
+   "bytes": 109,
+   "sha256": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f"
+  },
+  {
+   "name": "B1_1_identity_page.json",
+   "bytes": 485,
+   "sha256": "f12c1ff63f47f3cde2b08fde9dccab46bb5e3ae73898bfe7910876df838478ac"
+  },
+  {
+   "name": "adjudication.json",
+   "bytes": 1411,
+   "sha256": "28f520883ad19f22eaf82b0b742787d44bf8a2a682e1c2bf119dcd8ddd66dda3"
+  },
+  {
+   "name": "exports.json",
+   "bytes": 1125,
+   "sha256": "e5bbb2a4fc58167439783abd1ebdea478bb307edd489defd98677c35cf665053"
+  },
+  {
+   "name": "manifest_at_run.json",
+   "bytes": 8894,
+   "sha256": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0"
+  },
+  {
+   "name": "ruling_provisioning.json",
+   "bytes": 9591,
+   "sha256": "7465f420b8ce7f5720b6f2e054c7f82945b9cb02530c3477b7e35d7fe9046b3c"
+  },
+  {
+   "name": "ruling_whole_of_run.json",
+   "bytes": 9239,
+   "sha256": "39320f4b6466c2db2a2e8321c8df2b098f026871f083a03a87844584ba401e80"
+  },
+  {
+   "name": "summary.json",
+   "bytes": 104988,
+   "sha256": "edd83ce9f4f8853e70c0d16320f27ca22dff1ce67439f9534ad41f00da087e7f"
+  },
+  {
+   "name": "ymodem.log",
+   "bytes": 79142,
+   "sha256": "e45eeffba4a14063ae01a8d079387bab7abfc3e2f9babb19b4fe9c073ff62f77"
+  },
+  {
+   "name": "ymodem_app.log",
+   "bytes": 4262,
+   "sha256": "f3e3f90eaf699fc5d76d05e1c0d60b227889ecd8f2b0f79614291bc2c8ea299e"
+  }
+ ],
+ "exports_json_seal_note": "exports.json (a sealed member of the session record) names the five exports by size and sha256; those digests are the ones listed under archive.members, so the seal is verifiable after restore.",
+ "restore": [
+  "cd evidence/b2/b2_17A6_2026-09-16-01",
+  "zstd -dc exports.tar.zst | tar -xf -",
+  "sha256sum -c <(python3 -c \"import json;d=json.load(open('archive.json'));[print(m['sha256'],' ',m['name']) for m in d['archive']['members']+d['ordinary_files']]\")"
+ ],
+ "rejudge": "from a directory holding all 15 files: b2_runner.judge_session(dir, manifest_at_run.json, summary.json['l6'] (the session plan the runner saved), evidence/b2/plan.json, evidence/b2/prediction.json, None, PSORACLE_ROOT) with PSORACLE_ROOT on sys.path; the result must equal adjudication.json key for key (done at archival: PASS, rate 2630.433828050359, findings [], kills []).",
+ "external_backup": {
+  "path": "/home/test/fabricmap_backups/b2_17A6_2026-09-16-01",
+  "hash_list": "/home/test/fabricmap_backups/b2_17A6_2026-09-16-01.SHA256SUMS",
+  "state": "complete original directory, 15 files, read-only, sha256sum -c passed at archival"
+ },
+ "archived_at_utc": "2026-09-17T03:57:42Z",
+ "note": "These hashes are an integrity anchor for the archived bytes; they do not prove the session's verdict \u2014 the verdict is re-derived by the production judge from the restored files."
+}

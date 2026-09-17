@@ -1,0 +1,81 @@
+{
+  "tool": "b2_runner.py/0.1.0",
+  "session": "B2",
+  "scope": "session",
+  "outcome": "PASS",
+  "findings": [],
+  "kills": [],
+  "measured_rate_per_hour": 2630.433828050359,
+  "audit_policy": "all-self-reporting",
+  "instrument": {
+    "rate": 2630.433828050359,
+    "audit_policy": "all-self-reporting",
+    "run_log_validation": {
+      "scored": 6012,
+      "audited": 6012,
+      "chain_length": 6013
+    },
+    "rate_report": {
+      "candidates": 6010,
+      "evals_per_hour": 2630.433828050359,
+      "cov": 0.059407927184976644,
+      "session_span_s": 8228.226138874998
+    }
+  },
+  "binding_checked": true,
+  "replay": {
+    "scope": "session",
+    "measurement": {
+      "records_checked": 6010,
+      "readouts_served": 6012
+    },
+    "replay": {
+      "records_replayed": 6010,
+      "pairs": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    "pair_seeds": [
+      [
+        3999265929,
+        2551437210
+      ],
+      [
+        2071443792,
+        2503381146
+      ],
+      [
+        1882088862,
+        2502935555
+      ],
+      [
+        2267199202,
+        3505262618
+      ],
+      [
+        33405527,
+        3399505749
+      ],
+      [
+        849734627,
+        3795939218
+      ],
+      [
+        1282363125,
+        3177433520
+      ],
+      [
+        171087639,
+        3868904327
+      ],
+      [
+        1595928170,
+        2211641680
+      ]
+    ]
+  }
+}
