@@ -1,5 +1,19 @@
 # B3 lifecycle 1, unit 1 — the pinned-surface audit (host-only, 2026-09-17)
 
+> **v1.1 (the owner's review of `c648d6e`, 2026-09-17: inventory and the 20 probes accepted,
+> direction 2b + 3 accepted, unit HELD on four P2s).** Closed in this follow-up: (1) P-F1 is now
+> resolved by a completion-input archive, not merely recorded (§6, P-F1); (2) P-F2 becomes a rule
+> the B3 verifier must satisfy — every indirect frozen input is checked by existence and digest
+> *before* the B2 verify is called, so a missing file is a named B3 refusal and never an inherited
+> `FileNotFoundError` (§7a); (3) the B3 pin rule `b3/**` was wrong — `Path.glob("b3/**")` yields
+> directories only — and is replaced by `b3/**/*` filtered to regular files, with the negative
+> tests it requires (§7, candidate 3); (4) the planned test command `discover -s b3/tests -t .`
+> does not run without packages — the measured, working form is chosen and the test report gets a
+> discovery sentinel and a removal control (§7, candidate 2b). Measurements in
+> `evidence/b3/lifecycle1_pinned_surface_audit_2026_09_17/glob_and_discovery.json` and
+> `evidence/b2/b2_completion_inputs_2026-09-17/runs/`. `c648d6e` is kept as is; the original 15
+> files, the B2 pins / manifest and the frozen B3 wrappers are untouched.
+
 Branch `b3-lifecycle-1`, base **`73b68d7`** (`main` = `origin/main`, the B2 completion merge: parents
 `4800c15` + `4cbeef2`, tree `84e8220…` = `b2-lifecycle-2`'s). Host-only: this unit adds one
 document and one evidence directory and changes **nothing else** — no B3 code, no test, no B2
@@ -38,6 +52,7 @@ clean, before anything was written (`verify_baseline.json`) and again after ever
 |---|---|---|---|---|---|
 | baseline, `73b68d7` clean | S3 | true | null | `aec84514…` | 71 B2 files, 105 B1 files, table `82a5f2fb…` |
 | closing, `73b68d7` + this unit's two untracked paths | S3 | true | null | `aec84514…` | same |
+| closing v1.1, `c648d6e` + the follow-up's paths (`verify_closing_v1.1.json`) | S3 | true | null | `aec84514…` | same |
 
 ## 3. The surface as it stands (read from the table, not from memory)
 
@@ -153,13 +168,34 @@ workstation's working tree. With all **15 non-tracked inputs** restored it verif
 B2 table itself pins nothing untracked. This is a B1-era condition B2 inherited by pinning B1's
 table by content; it is frozen and is not to be repaired here. It bears on candidate 1 in §7.
 
+*Resolved (v1.1) by the completion-input archive unit* `evidence/b2/b2_completion_inputs_2026-09-17/`:
+`inputs.tar.zst` (sha256 `20300d5f2476beafaa9411c11f2a412eb91f01149bf4318e79ccee2706337767`, 99 325
+bytes; the 15 files, 666 808 bytes, relative paths, deterministic ustar + zstd, rebuilt
+byte-identically on repeat) and `archive.json` (sha256
+`ca5fedd7bb7a119883a5b74a9f19b0d02d147e6183404ddde8766b03abd46c5d`: every member's bytes, sha256,
+why it is needed and the pin it equals). `restore_verify.py`, in a fresh detached checkout of
+`73b68d7` under `env -i PATH=/usr/local/bin:/usr/bin:/bin`, refused to overwrite nothing, restored
+exactly 15 files, verified each by size and digest before and after writing, and the production B2
+verify then gave **S3 / true / null / `aec84514…` / table `82a5f2fb…` / 71 files**
+(`runs/positive_env_i.json`, 3.1 s). Negative controls (`runs/summary.json`, 7/7 as expected):
+a member missing and one byte changed, each refused first by the outer archive digest and — with
+the outer digest patched to match — by the per-member check naming `clockInfo.txt`; a target
+already holding the files (`refuses to overwrite`, nothing written); a target at `4800c15`
+(`target HEAD … is not the base`). Nothing pinned changed: the archive is additive and each member
+hashes to the digest the frozen tables / manifests already carry. **The B3 S0 manifest pins
+`archive.json` and `inputs.tar.zst` by content** (§7a, §8 step 4); candidate 1's checkout is now
+the commit plus this archive, both in the repository.
+
 **P-F2 — deleting `evidence/b3/sim/sim_report.json` is refused by accident, not by name** (probe
 13). The frozen `b2_plan.frozen_seed_exclusion` reads each `FROZEN_SEED_SETS` path without an
 existence check; `plan_findings` catches only `Refusal`/`ValueError`, so the verify dies with
 `FileNotFoundError` instead of naming the missing frozen input. Modification (probe 12) *is* named.
 Practical consequence for B3: `evidence/b3/sim/` is a B2 verify input and must never be moved,
 renamed or rewritten; new B3 simulations go elsewhere (probe 20). The gap in `b2_plan.py` is a
-pinned-file matter for a future B2-line unit, not for B3; recorded, not fixed.
+pinned-file matter for a future B2-line unit, not for B3. *What B3 must do about it (v1.1):* the
+B3 verifier may not inherit that bare exception — it checks every indirect frozen input by
+existence and digest **before** calling the B2 verify, and names the one that is missing or
+drifted (§7a).
 
 **P-F3 — the B2 surface is exactly as narrow as its globs** (probes 14–20). Subdirectories under
 `host/` and `tests/`, a top-level `b3/`, `docs/b3_*`, the ledger schema, `evidence/b3/sim_v0.1.1/`
@@ -170,9 +206,9 @@ the B2 side.
 
 | candidate | what it does | verdict |
 |---|---|---|
-| **1. B2 reproduces only at a checkout of `73b68d7`** (tag the commit; let the working tree drift) | keeps B2's proof where it was taken | **Not sufficient alone; kept as the reproducibility record.** (a) A checkout does not verify without the 15 non-tracked inputs (P-F1): the "frozen tree" is the commit **plus** a restore list, which this audit now documents; the two read-only backups (`/home/test/fabricmap_backups/b2_17A6_2026-09-1{6,7}-01/`) hold only the session archives, so today the 15 inputs exist in this workstation's working tree and nowhere else. (b) README's "Verify it yourself" and every B2 ruling bind to the manifest sha and re-check the *current* tree; letting `main` drift off the B2 surface would make the published verify instruction false on `main`. An annotated tag `b2-complete` at `73b68d7` is recommended as an owner action; it is not created by this unit. |
-| **2. Keep the frozen wrappers; put the new B3 implementation in a namespace the B2 globs do not capture** | `host/b3_online.py`, `host/b3_sim.py`, `tests/test_b3_online.py` stay byte-frozen as B2 pinned them (historical host reference v1.1); B3 lifecycle 1 develops in a namespace outside `host/b3_*.py` / `tests/test_b3_*.py` | **Adopted.** Proved by probes 14–16. Two layouts qualify: **2b, a top-level `b3/`** (`b3/host/`, `b3/tests/`, `b3/schemas/`, `b3/firmware/` …) or **2a, subpackages** (`host/b3/`, `tests/b3/`). **Ruling: 2b.** It is the layout the negative control 16 proved, it makes the boundary visible in every path, and it keeps `unittest discover -s tests` (what every B2 proof runs) from silently absorbing B3 tests: Python 3.12 does not discover namespace packages, so `tests/b3/` would need an `__init__.py` to be found by the B2 discovery and would then be run inside any future B2 whole-suite proof. B3's own proof runs both start directories (`tests`, then `b3/tests` with `-t .`), so a B3 proof still covers the whole B2 suite it stands on. |
-| **3. A B3 pin table and manifest of its own** | `b3/host/b3_pins.py` → `manifests/b3_instrument_pins.json`; `b3/host/b3_manifest.py` → `manifests/b3_manifest.json` | **Adopted, together with 2.** B3 needs its own authority regardless. Its globs cover `b3/**` and its normative documents; the B2 modules B3 imports (`host/b2_search.py`, `b2_landscape.py`, `b2_maps.py`, `b2_gate.py`, `host/b1_carto.py`, `b1_model.py`) are pinned **by content** through `manifests/b2_instrument_pins.json` and `manifests/b2_manifest.json` — exactly as B2 pins B1's table — and the B3 verify re-runs the B2 S3 verify (`S3 / true / null / aec84514…`) the way B2 re-runs B1's chain. Any B2-surface drift then refuses B3, which is right: B3's F arm is B2's arm B. |
+| **1. B2 reproduces only at a checkout of `73b68d7`** (tag the commit; let the working tree drift) | keeps B2's proof where it was taken | **Not sufficient alone; kept as the reproducibility record.** (a) A checkout does not verify without the 15 non-tracked inputs (P-F1): the "frozen tree" is the commit **plus** a restore list, which this audit now documents; the two read-only backups (`/home/test/fabricmap_backups/b2_17A6_2026-09-1{6,7}-01/`) hold only the session archives; as of v1.1 the 15 inputs are archived in the repository (`evidence/b2/b2_completion_inputs_2026-09-17/`, P-F1) and a checkout plus that archive verifies under `env -i`. (b) README's "Verify it yourself" and every B2 ruling bind to the manifest sha and re-check the *current* tree; letting `main` drift off the B2 surface would make the published verify instruction false on `main`. An annotated tag `b2-complete` at `73b68d7` is recommended as an owner action; it is not created by this unit. |
+| **2. Keep the frozen wrappers; put the new B3 implementation in a namespace the B2 globs do not capture** | `host/b3_online.py`, `host/b3_sim.py`, `tests/test_b3_online.py` stay byte-frozen as B2 pinned them (historical host reference v1.1); B3 lifecycle 1 develops in a namespace outside `host/b3_*.py` / `tests/test_b3_*.py` | **Adopted.** Proved by probes 14–16. Two layouts qualify: **2b, a top-level `b3/`** (`b3/host/`, `b3/tests/`, `b3/schemas/`, `b3/firmware/` …) or **2a, subpackages** (`host/b3/`, `tests/b3/`). **Ruling: 2b.** It is the layout the negative control 16 proved, it makes the boundary visible in every path, and it keeps `unittest discover -s tests` (what every B2 proof runs) from silently absorbing B3 tests: Python 3.12 does not discover namespace packages, so `tests/b3/` would need an `__init__.py` to be found by the B2 discovery and would then be run inside any future B2 whole-suite proof. **The B3 test command is `python3 -B -m unittest discover -s b3/tests`** (no `-t`, no package files) — measured to run the sentinel test (`glob_and_discovery.json` `discovery` A); the form first written here, `-s b3/tests -t .`, fails with `Start directory is not importable` unless `b3/__init__.py` and `b3/tests/__init__.py` exist (B, C), and is not chosen. B3's test report runs both start directories (`-s tests`, then `-s b3/tests`) and must carry a **discovery sentinel and a removal control**: a named sentinel test must appear in the verbose listing, the parsed `Ran N tests` must count it, and the same command over a temporary copy with the sentinel file removed must run exactly one test fewer (measured: A `Ran 1 test`, E `Ran 0 tests` after removal; and B2's `-s tests` discovery never sees `b3/`, D). An empty `OK` is not a proof. |
+| **3. A B3 pin table and manifest of its own** | `b3/host/b3_pins.py` → `manifests/b3_instrument_pins.json`; `b3/host/b3_manifest.py` → `manifests/b3_manifest.json` | **Adopted, together with 2.** B3 needs its own authority regardless. Its pin rule is **`b3/**/*` filtered to regular files** (`.pyc` and `__pycache__` excluded) plus its normative documents — *not* `b3/**`, which `Path.glob` expands to directories only and would pin no file at all (measured: `glob_and_discovery.json` `glob`; `b3/**/*` filtered reaches depth 1, 2 and 4). `b3_pins.py`'s tests must prove that a new file at the top level (`b3/x`), at the second level (`b3/host/x`) and deeper (`b3/tests/deep/deeper/x`) each refuses as *not in the table*, and that a directory alone pins nothing; the B2 modules B3 imports (`host/b2_search.py`, `b2_landscape.py`, `b2_maps.py`, `b2_gate.py`, `host/b1_carto.py`, `b1_model.py`) are pinned **by content** through `manifests/b2_instrument_pins.json` and `manifests/b2_manifest.json` — exactly as B2 pins B1's table — and the B3 verify re-runs the B2 S3 verify (`S3 / true / null / aec84514…`) the way B2 re-runs B1's chain. Any B2-surface drift then refuses B3, which is right: B3's F arm is B2's arm B. |
 | **4. Regenerate the B2 pin table, edit its globs, or touch the B2 S3 manifest** | "release" B3 from inside B2 | **Not adopted, in any variant** — including a "one-time refresh" mechanism, a `PINNED_GLOBS` edit, or a re-pin followed by a new `instrument_pins` sha. The S2 rule licenses only {qualification, qualified, calibration, plan, status, history} to differ from `manifest_at_run`; a new table sha makes the B2Q record and both B2 session rulings records for another manifest; `tests/test_b2_pins.py:36` fails on a glob edit anyway. This is the owner's containment decision of 2026-09-16 applied to B3. |
 | (considered) **a separate repository for B3** (the standing preference for cross-project work) | pin `zynq-fabricmap` at `73b68d7` the way the instrument is pinned at `689dde1` | **Not adopted for lifecycle 1**, owner may override. B3 is the roadmap's third stage of this line, imports the B2 engine by content, runs on the B1 carrier under the B1 lineage and the same instrument, and its evidence chain continues B1/B2's. A second repository would have to re-implement the lineage verification (image, carrier, B1 chain, B2 S3, the 15 non-tracked inputs) against a pinned checkout, splitting the evidence trail. Candidate 2b gives the same visible boundary inside the repository. |
 
@@ -188,6 +224,35 @@ the B2 side.
 - I-5 `docs/b3_architecture.md` may be revised (unpinned by B2); the B3 table will pin it.
 - I-6 Before **any** edit on this line: `grep -n <path> manifests/*_instrument_pins.json`; a hit is
   a stop (`feedback-fabricmap-pinned-surface`).
+- I-7 (v1.1) The B3 verifier checks the indirect frozen inputs of §7a by existence and digest
+  before it calls the B2 verify; a miss is a named B3 refusal.
+
+### 7a. The B3 verifier's frozen-input contract (P-F2, v1.1)
+
+`b3_manifest.verify` runs, in this order, before anything else and before `b2_manifest.verify`
+is called: for each path below, *present* and *hashes to the B3 manifest's pin*; the first miss
+raises a named `b3_manifest.Refusal` (`frozen input <path>: absent` / `: hash differs`). Only
+then is the B2 verify called, and its own `Refusal` is re-raised under the B3 name (`B2 lineage:
+…`). **Any other exception is an INTERNAL ERROR**: it propagates as what it is and is never
+converted into an input refusal — a bare `FileNotFoundError` from inside a frozen tool means
+the contract above missed a path, which is a defect to fix, not a refusal to report.
+
+| indirect frozen input | sha256 at `73b68d7` | why the B2 verify depends on it |
+|---|---|---|
+| `evidence/b3/sim/sim_report.json` | `d9c432f8b797933e26e24a77d33e5884f29c03c2be88e6c59c61bc0af250adf9` | `b2_plan.FROZEN_SEED_SETS` (probes 12–13) |
+| `evidence/b3/sim/raw_F1.json` | `ccf4d24622c7cfb3ee698623047ea461303c603449d47ffb0452f83656b74c53` | read by the frozen `tests/test_b3_online.py` |
+| `schemas/specimen_ledger.schema.json` | `7cc74295b5c76806bddaa995675b77dfea598fb6ad42fa4ec7bfbf426d12563d` | read by the frozen `tests/test_b3_online.py` |
+| `evidence/b2/b2_completion_inputs_2026-09-17/archive.json` | `ca5fedd7bb7a119883a5b74a9f19b0d02d147e6183404ddde8766b03abd46c5d` | the completion-state restore manifest (P-F1) |
+| `evidence/b2/b2_completion_inputs_2026-09-17/inputs.tar.zst` | `20300d5f2476beafaa9411c11f2a412eb91f01149bf4318e79ccee2706337767` | the 15 non-tracked inputs themselves |
+| `manifests/b2_manifest.json` | `aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0` | the closed B2 identity (S3) |
+| `manifests/b2_instrument_pins.json` | `82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1` | the B2 decision surface, pinned by content |
+
+The 15 files inside the archive are checked by the B2 verify itself (image pins, B1 table); the
+B3 verifier checks the archive, not its members, and refuses if the archive that could restore
+them is gone. The B3 pin table pins none of these seven by glob (they are outside `b3/`); the B3
+manifest pins them by content in its own block, and `test_b3_manifest` must prove each of the
+seven refuses by name when absent and when one byte differs.
+
 
 ## 8. The B3 lifecycle — order of units (each separately authorised; none authorises the next)
 
@@ -209,11 +274,16 @@ by construction at every stage.
    report), `b3/tests/`, `b3/schemas/`, `b3/firmware/` sources and their build evidence, the
    hostapp twin; each reviewed. The pre-freeze **stage-aware test audit** (§9) is part of this
    unit and precedes step 3.
-3. **Pins generated once**: `b3/host/b3_pins.py --generate` → `manifests/b3_instrument_pins.json`.
+   The test report's discovery sentinel and removal control (§7, candidate 2b) and the seven
+   frozen-input refusal tests (§7a) are part of this unit.
+3. **Pins generated once**: `b3/host/b3_pins.py --generate` → `manifests/b3_instrument_pins.json`
+   (rule `b3/**/*`, regular files).
    Any later pinned edit returns the line to step 2 and step 3 is repeated; the table is not
    patched.
-4. **S0 init**: `manifests/b3_manifest.json` pins the B3 table, the B2 table and manifest by
-   content, re-verifies the B2 S3 and the B1 lineage, re-hashes the B3 image.
+4. **S0 init**: `manifests/b3_manifest.json` pins the B3 table, the seven indirect frozen inputs
+   of §7a by content (the B2 table and manifest, the completion-input archive and its manifest,
+   the three B3 files the B2 verify reads), re-verifies the B2 S3 and the B1 lineage after the
+   §7a pre-check, re-hashes the B3 image.
 5. **Pre-freeze proof**: the whole suite (`tests` + `b3/tests`) green, zero skip/fail/error,
    `clean_tree_proof` on the S0 tree — a transition check only.
 6. **Owner S1 freeze**: `prereg.sha256`, `board_ready`; then the **post-freeze proof** bound to
@@ -292,5 +362,12 @@ unit adds; `git worktree list` is `main` alone; `git diff --check` clean.
 
 Not done, by the owner's condition: no B3 code, test or schema edited or added outside this
 document and its evidence; no pin table generated; no manifest; no preregistration; no tag; no
-push; no board. **Next unit, if this audit passes review: step 1 of §8** (architecture v0.2 and the
-preregistration draft) — still host-only, still no pinned edit.
+push; no board.
+
+**v1.1 follow-up.** Added: `evidence/b2/b2_completion_inputs_2026-09-17/` (archive, manifest,
+producer, consumer, controls, runs) and `glob_and_discovery_probe.py` → `glob_and_discovery.json`
+in this unit's evidence directory; this document's §6 P-F1/P-F2, §7 candidates 2b and 3, §7a,
+§8 steps 2–4. `c648d6e` untouched; the original 15 files, the B2 pins / manifest and the frozen
+B3 wrappers untouched; closing verify on the tree S3 / true / null / `aec84514…`
+(`verify_closing_v1.1.json`). **Next unit, if the four P2s are accepted closed: step 1 of §8**
+(architecture v0.2 and the preregistration draft) — still host-only, still no pinned edit.
