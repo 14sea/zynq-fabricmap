@@ -17,7 +17,8 @@ Writes gate_report.json (the criteria with the numbers, the diagnostic, the pins
 document's sha256 and last commit, the control-X seed and permutation digest, the seeds' derivation and
 every exclusion source) and raw_<fid>.json (every per-seed value the statistics used). A criterion
 that fails is reported, never tuned here. Lifecycle 1's `evidence/b3/gate/` is never overwritten:
-the tool refuses that output directory.
+the tool refuses that output directory — and any existing --out: the outputs are built outside the
+repository, staged beside --out after the end-of-run check and published by one directory rename.
 """
 from __future__ import annotations
 
@@ -28,8 +29,10 @@ import json
 import os
 import re
 import statistics
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from multiprocessing import Pool
 from pathlib import Path
@@ -462,15 +465,13 @@ def tree_state() -> tuple[str, bool]:
 
 
 def run(a) -> Path:
-    import shutil
-    import tempfile
     out = REPO_ROOT / a.out
     refuse_lifecycle1_path(out)
     head, dirty = tree_state()
     fitnesses = [f for f in a.fitness.split(",") if f]
     if "F1" not in fitnesses:
         raise Refusal("the gate fitness F1 must be among --fitness")
-    refuse_bad_out(out)
+    refuse_no_clobber(out)
     prov0 = provenance_blocks(head, a.seeds)
     if prov0["architecture"]["sha256"] is None or prov0["architecture"]["sha256"] != sha256_bytes(ARCHITECTURE.read_bytes()):
         raise Refusal("docs/b3_architecture.md in the working tree is not the one HEAD carries")
@@ -503,16 +504,56 @@ def run(a) -> Path:
         if prov0["architecture"]["sha256"] != sha256_bytes(ARCHITECTURE.read_bytes()):
             raise Refusal("docs/b3_architecture.md changed during the run: the report is not published")
         report = build_report(a.label, head, dirty, a.seeds, results, raw_files, round(time.time() - started, 1), provenance=prov0)
+        report_bytes = (json.dumps(report, indent=1, sort_keys=True) + "\n").encode()
         with io_refusal("cannot write the report"):
-            (tmp / "gate_report.json").write_text(json.dumps(report, indent=1, sort_keys=True) + "\n")
-        with io_refusal(f"cannot create --out {_rel(out)}"):
-            out.mkdir(parents=True, exist_ok=True)
-        with io_refusal(f"cannot move the outputs into {_rel(out)}"):
-            for f in sorted(tmp.iterdir()):
-                shutil.move(str(f), str(out / f.name))
+            (tmp / "gate_report.json").write_bytes(report_bytes)
+        expected = {"gate_report.json": sha256_bytes(report_bytes), **{rf["path"]: rf["sha256"] for rf in raw_files.values()}}
+        publish(tmp, out, expected)
     finally:
         shutil.rmtree(tmp, True)
     return out / "gate_report.json"
+
+
+def refuse_no_clobber(out: Path) -> None:
+    """The gate never writes into an existing path: --out must not exist (a directory, a file, anything),
+    and its nearest existing ancestor must be a directory. Named, before any work."""
+    if out.exists() or out.is_symlink():
+        raise Refusal(f"--out {_rel(out)} exists: the gate never overwrites an output (choose a new --out)")
+    refuse_bad_out(out)
+
+
+_rename = os.rename                 # module-level so a test can make the final rename fail
+_copyfile = shutil.copyfile         # module-level so a test can make the second file's copy fail
+
+
+def publish(built: Path, out: Path, expected: dict[str, str]) -> None:
+    """No-clobber, atomic: the built files are copied into a staging directory created beside --out (the
+    same filesystem), the staged set is verified to be exactly `expected` (name -> sha256), and the
+    staging directory becomes --out by ONE directory rename. --out must still not exist at that
+    moment. On any failure the staging directory is removed and --out does not exist; nothing else
+    under out.parent is touched."""
+    if out.exists() or out.is_symlink():
+        raise Refusal(f"--out {_rel(out)} appeared during the run: the gate never overwrites an output")
+    with io_refusal(f"cannot create {_rel(out.parent)}"):
+        out.parent.mkdir(parents=True, exist_ok=True)
+    staging = None
+    try:
+        with io_refusal(f"cannot create a staging directory beside {_rel(out)}"):
+            staging = Path(tempfile.mkdtemp(prefix=f".{out.name}.staging_", dir=out.parent))
+        for name in sorted(expected):
+            with io_refusal(f"cannot stage {name}"):
+                _copyfile(str(built / name), str(staging / name))
+        staged = {f.name: sha256_bytes(f.read_bytes()) for f in staging.iterdir()}
+        if staged != expected:
+            raise Refusal(f"the staged set is not the built set: {sorted(staged)} vs {sorted(expected)} (or a digest differs) — nothing published")
+        if out.exists() or out.is_symlink():
+            raise Refusal(f"--out {_rel(out)} appeared during the run: the gate never overwrites an output")
+        with io_refusal(f"cannot publish {_rel(out)} (rename)"):
+            _rename(str(staging), str(out))
+        staging = None
+    finally:
+        if staging is not None:
+            shutil.rmtree(staging, True)
 
 
 def main(argv=None) -> int:

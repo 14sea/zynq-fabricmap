@@ -107,6 +107,19 @@ class Lifecycle2Constants(unittest.TestCase):
         with mock.patch.object(g, "git_dirty", return_value=False), mock.patch.object(g, "git_head", return_value=FIXTURE_HEAD), contextlib.redirect_stderr(err):
             self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F2", "--out", str(out)]), 2)
         self.assertIn("F1", err.getvalue()); self.assertFalse(out.exists())
+        # an existing --out of any kind is refused by name before any work (no-clobber, the owner's third HOLD)
+        for kind, make in (("directory with a report", lambda d: (d.mkdir(), (d / "gate_report.json").write_bytes(b"ORIGINAL"))),
+                           ("empty directory", lambda d: d.mkdir()), ("file", lambda d: d.write_bytes(b"ORIGINAL"))):
+            o = t / f"existing_{kind[:4]}"
+            make(o)
+            snap = sorted((x.relative_to(t).as_posix(), x.read_bytes() if x.is_file() else None) for x in t.rglob("*"))
+            err = io.StringIO()
+            with mock.patch.object(g, "git_dirty", return_value=False), mock.patch.object(g, "git_head", return_value=FIXTURE_HEAD), \
+                 mock.patch.object(g, "run_fitness", never), contextlib.redirect_stderr(err):
+                self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(o)]), 2, kind)
+            self.assertTrue(err.getvalue().startswith("REFUSED: "), (kind, err.getvalue())); self.assertIn("exists: the gate never overwrites", err.getvalue())
+            self.assertEqual(sorted((x.relative_to(t).as_posix(), x.read_bytes() if x.is_file() else None) for x in t.rglob("*")), snap, kind)
+        never.assert_not_called()
         # --out whose nearest existing ancestor is a regular file: refused by name before any work (the owner's P3)
         (t / "afile").write_text("x")
         err = io.StringIO()
@@ -114,6 +127,65 @@ class Lifecycle2Constants(unittest.TestCase):
             self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(t / "afile/gate_2")]), 2)
         self.assertTrue(err.getvalue().startswith("REFUSED: ")); self.assertIn("not a directory", err.getvalue())
         self.assertEqual((t / "afile").read_text(), "x")
+
+    def test_publishing_is_no_clobber_and_atomic(self):
+        """The owner's third HOLD: (1) a successful run publishes exactly the built set — gate_report.json
+        and raw_F1.json with the recorded digests — by one rename, leaving no staging directory beside it,
+        and a second run to the same --out is refused with the first run's bytes unchanged; (2) a failure
+        while staging the second file, or at the final rename, leaves --out absent, no staging directory,
+        the temp build directory removed, and everything else under out.parent byte-identical."""
+        t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
+        parent = t / "evidence/b3"; parent.mkdir(parents=True)
+        (parent / "sibling.json").write_bytes(b"SIBLING")
+        out = parent / "gate_2"
+        clean = dict(git_dirty=mock.patch.object(g, "git_dirty", return_value=False), git_head=mock.patch.object(g, "git_head", return_value=FIXTURE_HEAD))
+        snap = lambda: sorted((x.relative_to(parent).as_posix(), x.read_bytes() if x.is_file() else None) for x in parent.rglob("*"))  # noqa: E731
+        tmp_before = sorted(x.name for x in Path(tempfile.gettempdir()).glob("b3_gate_*"))
+        # (1) success
+        with clean["git_dirty"], clean["git_head"]:
+            self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(out)]), 0)
+        self.assertEqual(sorted(x.name for x in out.iterdir()), ["gate_report.json", "raw_F1.json"])
+        rep = json.loads((out / "gate_report.json").read_text())
+        self.assertEqual(g.sha256_bytes((out / "raw_F1.json").read_bytes()), rep["raw_files"]["F1"]["sha256"])
+        self.assertEqual(sorted(x.name for x in parent.iterdir()), ["gate_2", "sibling.json"])       # no staging directory left beside it
+        self.assertEqual(sorted(x.name for x in Path(tempfile.gettempdir()).glob("b3_gate_*")), tmp_before)
+        published = snap()
+        err = io.StringIO()
+        with clean["git_dirty"], clean["git_head"], contextlib.redirect_stderr(err):
+            self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(out)]), 2)
+        self.assertIn("exists: the gate never overwrites", err.getvalue())
+        self.assertEqual(snap(), published)                                                      # byte for byte
+        # (2) failures: the second file's copy, then the final rename
+        out2 = parent / "gate_3"
+        before = snap()
+        real_copy = g._copyfile
+        def second_copy_fails(src, dst, calls=[]):
+            calls.append(1)
+            if len(calls) == 2:
+                raise OSError(28, "No space left on device")
+            return real_copy(src, dst)
+        def rename_fails(src, dst):
+            raise OSError(5, "Input/output error")
+        for what, patch, needle in (("second copy", mock.patch.object(g, "_copyfile", side_effect=second_copy_fails), "cannot stage"),
+                                    ("final rename", mock.patch.object(g, "_rename", side_effect=rename_fails), "cannot publish")):
+            err = io.StringIO()
+            with clean["git_dirty"], clean["git_head"], patch, contextlib.redirect_stderr(err):
+                rc = g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(out2)])
+            self.assertEqual(rc, 2, what)
+            self.assertTrue(err.getvalue().startswith("REFUSED: " + needle), (what, err.getvalue()))
+            self.assertFalse(out2.exists(), what)
+            self.assertEqual(snap(), before, what)                                               # no staging directory, the sibling and gate_2 untouched
+            self.assertEqual(sorted(x.name for x in Path(tempfile.gettempdir()).glob("b3_gate_*")), tmp_before, what)
+        # a staged set that is not the built set is refused before the rename
+        real_copy2 = g._copyfile
+        def corrupting_copy(src, dst):
+            real_copy2(src, dst)
+            if dst.endswith("raw_F1.json"):
+                Path(dst).write_bytes(b"CORRUPT")
+        err = io.StringIO()
+        with clean["git_dirty"], clean["git_head"], mock.patch.object(g, "_copyfile", side_effect=corrupting_copy), contextlib.redirect_stderr(err):
+            self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(out2)]), 2)
+        self.assertIn("the staged set is not the built set", err.getvalue()); self.assertFalse(out2.exists()); self.assertEqual(snap(), before)
 
     def test_the_gate_publishes_nothing_when_head_the_tree_or_an_input_moves_during_the_run(self):
         """The owner's P2: the start-of-run check alone let a tree that changed during F1 / F2 publish a
@@ -707,8 +779,9 @@ class SeedsAndPins(unittest.TestCase):
 
 class SmallRun(unittest.TestCase):
     def test_the_pipeline_runs_end_to_end_into_a_temp_dir(self):
-        d = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, d, True)
+        t = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, t, True)
+        d = t / "gate_2"                                                                          # must not exist: the gate never overwrites an output
         head = g.git_head() if g.git_head() and g.HEX40.match(g.git_head()) else FIXTURE_HEAD
         with mock.patch.object(g, "git_dirty", return_value=False), mock.patch.object(g, "git_head", return_value=head):   # the tree may be dirty while developing
             rc = g.main(["--seeds", "3", "--workers", "3", "--fitness", "F1", "--out", str(d), "--label", "test"])
