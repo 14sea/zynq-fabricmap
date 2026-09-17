@@ -95,7 +95,7 @@
   "What it does, in order: (1) create an EMPTY temporary directory; (2) `zstd -dc exports.tar.zst | tar -xf -` into it \u2014 the five members; (3) copy the ten files listed under ordinary_files from this directory; (4) require the restored file set to be exactly those fifteen \u2014 no extra, no missing; (5) check every file's size and sha256 against this document.",
   "The archive must first match this document: bytes and sha256 under archive."
  ],
- "rejudge": "Performed by the same script after the restore: sys.path gets the repository's host/ and tests/ AND BOTH instrument paths \u2014 PSORACLE_ROOT and PSORACLE_ROOT/host (default /home/test/zynq_psoracle; l5_runner and validators live in different places) \u2014 then b2_runner.judge_session(restored_dir, manifest_at_run.json, summary.json['l6'] (the session plan the runner saved), evidence/b2/plan.json (checked against the manifest's plan pin), evidence/b2/prediction.json, None, PSORACLE_ROOT). The result must equal adjudication.json key for key. At archival: PASS, rate 2630.433828050359, findings [], kills [].",
+ "rejudge": "Performed by restore_rejudge.py after the restore. BOTH pinned documents are located through the run manifest's plan pin and verified byte-for-byte BEFORE being read \u2014 manifest_at_run.plan.path \u2192 plan.sha256 and manifest_at_run.plan.prediction_path \u2192 plan.prediction_sha256; a whitespace-only change to either is refused by name before any re-judge. Then sys.path gets host/, tests/ and BOTH instrument paths (PSORACLE_ROOT and PSORACLE_ROOT/host) and b2_runner.judge_session(restored_dir, manifest_at_run.json, summary.json['l6'], the verified plan, the verified prediction, None, PSORACLE_ROOT) must equal adjudication.json key for key. At archival: PASS, rate 2630.433828050359, findings [], kills [].",
  "external_backup": {
   "path": "/home/test/fabricmap_backups/b2_17A6_2026-09-16-01",
   "hash_list": "/home/test/fabricmap_backups/b2_17A6_2026-09-16-01.SHA256SUMS",
@@ -113,6 +113,10 @@
   {
    "at": "2026-09-17",
    "what": "restore/rejudge instructions replaced by the executable fresh-restore script and both instrument import paths named; external_backup.state made exact (the owner's review P2 and P3 of 893e25d). exports.tar.zst unchanged."
+  },
+  {
+   "at": "2026-09-17",
+   "what": "restore_rejudge.py now verifies the pinned prediction bytes (prediction_path \u2192 prediction_sha256) as well as the plan's, both through the run manifest's plan pin, before reading either (the owner's P2 on 359af85); isolated probe: a whitespace-only prediction edit is refused by name before the re-judge."
   }
  ]
 }

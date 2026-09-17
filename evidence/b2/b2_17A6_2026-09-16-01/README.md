@@ -14,8 +14,9 @@ Ten ordinary files are what a reviewer reads. The five large exports — `audits
 (14,342,304 bytes, sha256 `607b362be8bd4c96d7a712a681eaea5c31e9d6586691f6f00ceb1db647f610ab`), a deterministic archive whose member sizes
 and digests are listed in `archive.json`. `exports.json` (sealed by the runner) names the same five
 files by size and sha256, so the seal is checkable after restore. `restore_rejudge.py` is the executable fresh-restore and re-judge (empty temp dir → the five members → the
-ten ordinary files → exactly fifteen files, each checked by size and sha256 → production `judge_session`
-with both instrument import paths); its result must equal `adjudication.json` key for key, and did at
+ten ordinary files → exactly fifteen files, each checked by size and sha256 → the pinned plan **and** prediction located through the run
+manifest's plan pin and verified byte-for-byte before being read → production `judge_session` with both
+instrument import paths); its result must equal `adjudication.json` key for key, and did at
 archival and at the owner's review. The complete original directory (exactly the 15 original files) is kept read-only outside
 the repository at `/home/test/fabricmap_backups/b2_17A6_2026-09-16-01` with a per-file hash list.
 
