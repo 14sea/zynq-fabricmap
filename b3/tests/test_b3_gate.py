@@ -35,11 +35,11 @@ def synthetic_rows(S=200, seed=1):
         for b in G:
             rv = min(39, base + int(b ** 0.5 / 2) + rng.randint(-1, 1))
             fv = min(39, rv + 3 + b // 300 + rng.randint(-1, 1))
-            ov = min(39, rv + (b // 200 - 2) + rng.randint(-2, 2))          # negative-ish below 400, positive from 600
+            ov = min(39, rv + (b // 150 - 2) + rng.randint(-2, 2))          # negative-ish below 300, positive from 600
             xv = min(39, rv + rng.randint(-1, 1))
-            fe = base if b <= 333 else min(39, fv - 3)
+            fe = base if b <= 333 else max(0, fv - 6)                       # the charged frozen arm: below O from 600 on
             Rt.append(rv); Ft.append(fv); Ot.append(ov); Xt.append(xv); Fe.append(fe)
-            dec.append(min(292, b // 5))
+            dec.append(min(292, b // 3))                                       # decoded count: 200 at 600, complete by 900
         rows.append({"r": r, "landscape_seed": 1000 + r, "operator_seed": 5000 + r, "base_fit": base,
                      "arms": {"R": {"at_grid": Rt, "champion_holdout": 1, "column_moves": 0},
                               "F": {"at_grid": Ft, "champion_holdout": 1, "column_moves": 100, "end_to_end_at_grid": Fe},
@@ -52,10 +52,19 @@ def synthetic_rows(S=200, seed=1):
 
 
 class Criteria(unittest.TestCase):
+    """The bootstrap experiment count is lowered to 100 for these synthetic evaluations only (the
+    production 1 000 makes every full ascending scan to N = 200 cost minutes; the rule under test is
+    the same); it is restored afterwards and the real-run test below uses the production value."""
     @classmethod
     def setUpClass(cls):
+        cls._saved = g.THRESHOLDS["H2_bootstrap_experiments"]
+        g.THRESHOLDS["H2_bootstrap_experiments"] = 100
         cls.rows = synthetic_rows()
         cls.res = g.evaluate("F1", cls.rows)
+
+    @classmethod
+    def tearDownClass(cls):
+        g.THRESHOLDS["H2_bootstrap_experiments"] = cls._saved
 
     def test_the_synthetic_set_passes_and_names_a_budget(self):
         res = self.res
