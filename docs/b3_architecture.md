@@ -1,4 +1,21 @@
-# B3 — the closed loop: architecture and host simulation (v0.1.1, host-only, 2026-09-10)
+# B3 — the closed loop: architecture and host simulation (v0.2, host-only, 2026-09-17)
+
+> **v0.1.1 → v0.2 (2026-09-17, after B2 closed and after the B3 lifecycle-1 pinned-surface
+> audit `docs/b3_lifecycle1_pinned_surface_audit_2026_09_17.md` passed the owner's review at
+> `3a2063d`).** §1–§5 are v0.1.1's text, unchanged: the three arms, the specimen cartographer,
+> the ledger and the simulation numbers stand as **ideal-model, exploratory** evidence. What
+> is new is everything a board stage needs and did not have: **§6** the namespace and the
+> pin discipline the audit ruled (the frozen `host/b3_*.py` / `tests/test_b3_online.py` stay
+> as B2 pinned them; the B3 implementation lives under `b3/`, with its own pin table and
+> manifest that pin the B2 authority by content); **§7** the B3 image and the record / ledger
+> contract; **§8** the autonomy boundary and the replay obligations; **§9** the B3
+> discriminability gate — criteria and the budget / N rule **fixed before the gate simulation
+> is run** (B2's discipline, §7 there); **§10** what B3 does not claim; **§11** files. The
+> preregistration draft is `docs/b3_preregistration.md`. **Standing: host-only design. No
+> pinned edit, no pin table, no manifest, no image, no ruling, no board.** B2 closed at S3
+> `aec84514…` (PASS / SUPPORTED, `docs/b2_result_2026_09_17.md`); it is the historical
+> premise of this stage and hands B3 no authority (preregistration §8a).
+
 
 > **v0.1 → v0.1.1 (the owner's review of 2026-09-10).** The specimen cartographer now
 > validates every specimen against what is decoded and commits atomically (§3; the review's
@@ -144,26 +161,201 @@ about physical noise, or about a different operator. And the B2 caveat stands: t
 crossing points depend on the ½ mixture's poor-map cost, which was fixed before any
 simulation and not tuned.
 
-## 6. What a B3 board stage would need (not asked now)
+## 6. Where B3 lives — the namespace and the pin discipline (audit ruling 2b + 3)
 
-- B2 reviewed and, if ruled, run: B3's F arm *is* B2's arm B, and B2's board result is
-  the calibration for whether the simulation's arithmetic holds on silicon.
-- A B3 preregistration with its own gate (the B2 pattern): the primary a paired statistic
-  on O − R at a budget chosen by the cost rule, the end-to-end O − F as the second
-  primary, the ledger's replay and the post-hoc decode audit as EXACT rows, the online
-  map's `self_map` 2.0.0 rendering scored by the B1 verifier at the end of each run.
-- The image: B2's with the specimen cartographer (a C twin of `SpecimenCarto`) and the
-  ledger fields in the record block; the map version in every record's commitment.
-- Board time: the online arm needs ≥ 600 evaluations per run to show its benefit against
-  R on F1 (≥ 1 000 for a large one); with the three arms that is 3 × N × B — at N = 9,
-  B = 1 000, ≈ 27 000 evaluations, several sessions under the sampled-audit rate. The
-  owner decides whether B3 is worth that after B2.
+The completed B2 pins `host/b3_online.py`, `host/b3_sim.py` and `tests/test_b3_online.py` by
+name and captures `host/b3_*.py` / `tests/test_b3_*.py` by glob; the B2 S3 verify refuses by
+name if any of them is modified, deleted or joined by a new file (the audit's probes 4–11).
+B3 therefore does not develop in place:
 
-## 7. Files (host-only, additive)
+- **Frozen wrappers.** The three files stay byte-for-byte as B2 pinned them, for as long as
+  the tree is expected to verify B2 — which is always. They are the v1.1 host reference of
+  §3 and the record of the simulation of §5; they are imported, never edited, and never
+  joined by a `host/b3_*.py` or `tests/test_b3_*.py` file (audit I-1, I-2).
+- **The `b3/` namespace.** Every B3 implementation file lives under a top-level `b3/`:
+  `b3/host/` (the cartographer copied from the frozen reference and then developed; the
+  online arm; the runner, records, session, adjudicator, plan, manifest, pins, test report),
+  `b3/tests/`, `b3/schemas/`, `b3/firmware/` (the image sources and BSP inputs),
+  `b3/tb/hostapp/` (the C harness the pinned test compiles). The B2 globs cannot see any of
+  it (probe 16). The test command is `python3 -B -m unittest discover -s b3/tests` (no `-t`,
+  no package files — the `-t .` form is not importable without them; measured).
+- **The B3 pin table** `manifests/b3_instrument_pins.json` (`b3/host/b3_pins.py`): rule
+  **`b3/**/*` filtered to regular files** (`b3/**` alone lists directories only — measured),
+  plus `docs/b3_architecture.md`; its tests prove a new file at depth 1, 2 and deeper each
+  refuses as *not in the table*. The B2 modules B3 imports by content (`host/b2_search.py`,
+  `b2_landscape.py`, `b2_maps.py`, `b2_gate.py`, `host/b1_carto.py`, `b1_model.py`) are pinned
+  through `manifests/b2_instrument_pins.json`, which the B3 manifest pins by content — as B2
+  pins B1's table.
+- **The B3 manifest** `manifests/b3_manifest.json` (`b3/host/b3_manifest.py`) pins, in its
+  own block and by content, the seven **indirect frozen inputs** the audit named (§7a there):
+  the B2 manifest `aec84514…` and the B2 table `82a5f2fb…`; the completion-input archive
+  `evidence/b2/b2_completion_inputs_2026-09-17/inputs.tar.zst` `20300d5f…` and its manifest
+  `archive.json` `ca5fedd7…` (the 15 non-tracked files the B2 verify needs, so the B2 lineage
+  stays reproducible); and the three B3 files the B2 verify or its frozen test reads
+  (`evidence/b3/sim/sim_report.json`, `evidence/b3/sim/raw_F1.json`,
+  `schemas/specimen_ledger.schema.json`). **`verify` checks these seven by existence and
+  digest first**, naming the one that is absent or drifted; only then does it call the B2 S3
+  verify and require S3 / true / null / `aec84514…`, re-raising a B2 refusal under the B3
+  name; any other exception is an INTERNAL ERROR and is never converted into a refusal.
+- **Evidence.** `evidence/b3/sim/` and `evidence/b3/sim_v0.1.1/` are never moved or
+  rewritten (the first is a B2 verify input through the seed exclusion); new B3 evidence
+  goes under `evidence/b3/<unit>/`. A revised ledger schema is a new file under
+  `b3/schemas/`; `schemas/specimen_ledger.schema.json` stays.
+- **Order.** Every pinned edit first — the cartographer copy, the arms, the lifecycle tools,
+  the image sources, the tests (each reviewed; the stage-aware test audit of the
+  preregistration §9 before anything is frozen) — then the pin table generated **once**,
+  then S0. The table is never patched; a later pinned edit returns the line to the edits and
+  the table is regenerated.
 
-| file | role | tests |
+## 7. The B3 image and the record / ledger contract
+
+**Decision E1 — the image is B2's plus the cartographer.** `b3/firmware/` is derived from
+`firmware/b2/` the way B2's was derived from B1's (`IMPORT.json` names every verbatim file
+and every changed one): the instrument's `p3_derive` / `p3_rectx` / `p3_pull` / BSP / linker
+byte for byte; `b2_search.c` (the engine, the two operators) unchanged; new `b3_carto.c`, the
+C twin of the specimen cartographer (`SpecimenCarto` v1.1 semantics: candidate-set
+intersection, global closure, validate-then-commit, anomalies counted, the version bump);
+`b3_orch.c` running the **three arms per pair** (R, F, O) in the preregistered arm order;
+`b3_wire.c` = `b2_wire.c` with `app_identity` 1.6.0 and `loop_record` 1.4.0 (below). The F
+arm's map is the B1 self-map compiled as B2 compiled it (`B2_MAP_INIT` for the column view,
+`B2_MAP_LUT` only for the universe mask); the **O arm starts empty** and reads nothing but
+its own decoded state — a leakage test proves the online view is empty at evaluation 0 and
+that the O operator never reads `B2_MAP_INIT`. No LUT site key, no certificate, no oracle
+rendering in the image (B2's scans, extended to `b3_carto.c`'s tables).
+
+**app_identity 1.6.0** adds to B2's 1.5.0: `carto_version` (`specimen-carto-v1.1`), `arms`
+(`"RFO"`), `b1_map_cost` (333, the constant the end-to-end accounting charges — carried so
+the identity says what the accounting is), and the same per-session pair slice.
+
+**loop_record 1.4.0** keeps B2's `search` block (`arm`, `best`, `column_moves`, `eval`,
+`fitness`, `generation`, `holdout`, `landscape_seed`, `move`, `operator_seed`, `pair`,
+`parent_born`, `population`, `selected`, `state_sha256`, `version`) and, **on O-arm records
+only**, adds a `ledger` sub-block = one `specimen_ledger` entry: `seq`, `map_version`
+(before), `intervention` (the moved addresses), `move_kind` (`random` | `column`),
+`behaviour_delta` (the (LUT, vector) positions that toggled, from the board's own two
+readouts), `fitness`, `confidence` (2 for a single-bit specimen, 1 otherwise), `decoded`
+(the addresses this specimen decoded, with their positions), `map_version_after`, and
+`anomalies` (the running count). The **`state_sha256` commitment on O-arm records covers the
+cartographer state as well**: the map version, the sorted decoded relations, the sorted
+candidate sets and the anomaly count (`b3_carto_state_hex`), so the replay checks that the
+board's map at every step is the one its own specimens imply. The board never sees the
+certificate; `decoded` is what the board believes, audited afterwards (§8).
+
+**Records per pair** = 3 × B + 3 (three arms' searches, three champions' holdout
+evaluations, no holdout-mode bit — as B2). Per session: 2 baselines + the session's pairs.
+The ledger adds bytes to every O-arm record, so the all-self-reporting rate is B3's own
+(B3Q), never B2's 3 016 / h.
+
+## 8. What the board does, and what the host may do (the autonomy boundary, extended)
+
+Unchanged from B2 (roadmap §1) for the parent draw, the move, the fitness, the selection
+and the champion. **The map update is an executing decision and stays on the board**: the
+cartographer runs on the PS from the two readouts it already has (parent and child), and the
+O operator consults the current version. The host, after the session and never during:
+
+1. recomputes every fitness from the served readout (B2's rule, EXACT per record);
+2. replays the three searches from the records (EXACT per record);
+3. **replays the ledger**: feeding the O-arm records' `intervention` and `behaviour_delta` to
+   the reference cartographer must reproduce every `decoded`, every `map_version`, the
+   anomaly count and the `state_sha256` projection at every step (EXACT);
+4. recomputes every `behaviour_delta` from the served parent and child readouts (EXACT —
+   the board's delta is a self-report; the readouts are measured);
+5. **audits the decodes against the certificate** (`local_map.json`): every decoded
+   relation must be the certificate's (0 wrong decodes) — the B1 boundary: the certificate
+   is the host's, after the fact, never the board's;
+6. renders the final online map of every O run as a `self_map` 2.0.0 document and scores it
+   with the B1 verifier (`host/verify_local_map.py`'s rule) — the online map is a *map*, and
+   is judged as one.
+
+Because the fabric is additive (B1: 292/292, 32/32 pairs; P3: 12 570 / 12 570 predicted) and
+the cartographer is deterministic, **every fitness, every decode and every map version of a
+B3 session is predictable before the run** from the seeds — the O arm included. B3 is, like
+B2, a prospective reproduction of a fixed prediction (preregistration §3); its silicon
+information is that the board built its map from its own specimens under the interlocks and
+that the prediction reproduced record for record, decode for decode. The predicted anomaly
+count is 0; an anomaly on silicon is a finding about the fabric or the image, not about the
+loop (preregistration §5).
+
+## 9. The B3 discriminability gate — criteria fixed before the gate simulation runs
+
+`b3/host/b3_gate.py` (step 2 of the lifecycle; not yet written) runs the engine of §2 over
+the fabric model of `host/b1_model.py` for the three arms and the controls below, **S = 200
+landscape seeds** under the label `b3-gate` (disjoint from every archived set by explicit
+exclusion, as B2's), budget grid `{100, 200, 300, 400, 600, 800, 1000, 1500, 2000, 3000}`,
+fitness **F1** (B2's selected fitness — B3 does not re-select; F2 is reported for
+information). The v0.1.1 simulation (§5) is *not* the gate: it ran under a different label,
+before these criteria were written, and its numbers are exploratory.
+
+*Primary statistics, paired by landscape.* `Δ1_r = best_O(r) − best_R(r)` at `B*` (search
+accounting; R and O are charged nothing); `Δ2_r = best_O(r) − end_to_end_F(r)` at total budget
+`T = B*`, where `end_to_end_F(r)` is F's own best-so-far trace at `T − 333` (the base fitness
+while `T ≤ 333`) — the frozen arm charged B1's mapping cost, from **the same F run**, no extra
+evaluation. Decision statistic for each: the one-sided exact sign test (α = 0.05, ties
+excluded from *n* and counted). `N(B)` = the smallest pair count with bootstrap power ≥ 0.9
+for Δ1 at budget B (1 000 experiments, full ascending scan, N ≥ 8).
+
+*Budget rule (frozen).* `B*` = the grid budget with the smallest session cost `N(B) × 3 × B`
+among budgets at which H1 holds and `N(B)` exists; ties to the smaller budget. Every other
+row is evaluated at `B*`.
+
+| id | criterion | threshold |
 |---|---|---|
-| `host/b3_online.py` | the specimen cartographer, the online arm, the ledger entries | `tests/test_b3_online.py` (9): direct and narrowed decodes, anomalies, no wrong decode over a full run, ledger replay reproduces every map version, determinism, schema validation with a negative |
-| `host/b3_sim.py` | the three-arm simulation, both accountings, the report | — |
-| `schemas/specimen_ledger.schema.json` | `specimen_ledger` 1.0.0 | in the test above |
-| `evidence/b3/sim/` | `sim_report.json`, `raw_F1.json`, `raw_F2.json` | — |
+| H1 non-saturation | the 95th percentile of arm O's best-so-far at `B*` is below the ceiling (40); arm R's median at `B*` exceeds the base fitness | both hold |
+| H2 not a definitional lock | var(Δ1_r) > 0; Δ1_r takes **both signs at some grid budget** (v0.1.1: negative at 300, positive from 600 — the sign is a property of the budget, which is what a lock cannot show); and the same decision procedure applied to control **X** (below) does not reject H0 in ≥ 90 % of 1 000 bootstrap experiments of size N | holds |
+| H3 a wrong online map does not profit | control **X — scrambled specimens**: the online arm whose cartographer receives every `behaviour_delta` passed through a seeded permutation of positions (a self-consistent but wrong map grows at the same rate); mean Δ_X ≤ 10 % of mean Δ1 and its sign test is not significant over S | holds |
+| H4 the frozen map is the bound the online map approaches | search accounting: arm O's median at `B*` ≥ 80 % of arm F's; end-to-end: the sign test on Δ2 rejects (O − F > 0 at `B*`) | both hold |
+| H5 effect, power, N | Cohen's d of {Δ1_r} ≥ 0.5 (the online arm pays the poor-map cost first, §5.3; 0.8 is B2's threshold for a map that is correct from evaluation 0); `N = N(B*)`; `N × 3 × B*` ≤ **30 000** evaluations as a planning bound on the experiment's total (B2's was 13 000 for two arms; how many sessions this takes is decided by the B3Q-measured rate under the split rule with its margin, never by planning rates) | holds |
+| H6 no fixed-seed lock | S ≥ 200; N ≥ 8; board seeds under `b3-session|` with every archived set excluded (gate runs, the B3 simulation, B2's plan and B2Q seeds, this gate); var(Δ1_r) > 0 | holds |
+| H7 the online map is a map | over S: 0 wrong decodes and 0 anomalies in the ideal model (a nonzero count is a defect of the cartographer or the model, not a result); the median decoded count at `B*` ≥ 146 (half of 292); the fraction of seeds whose map is complete by the largest grid budget reported | holds |
+| H8 ledger replay | for every seed, replaying the ledger reproduces every map version and every decode (EXACT); the ledger validates against the schema | holds |
+| H9 (a condition on the claim, not on passing) | end-to-end Δ2 > 0 at `B*` by the sign test (= H4's second half) **and** Δ2 > 0 at every grid budget ≥ `B*` (the online arm is ahead of the charged frozen map wherever it is looked at) | if H9 fails, the claim is narrowed to primary 1 (O vs R) and Δ2 is reported |
+
+*Controls, all on the same seeds and rows:* **X** scrambled specimens (H2, H3); **F** is
+itself the positive control for the operator (B2 established that the correct map beats R);
+**R** the baseline. A degraded-map family is not needed: the online arm *is* the dose–response
+in time (its map grows from 0 to 292), and its curve against R is reported per grid budget.
+
+*Selection.* Nothing is selected: F1 is fixed by B2. The gate report (`evidence/b3/gate/`,
+`docs/b3_gate_report.md`) states every row PASS or FAIL with the numbers; a row that fails
+is reported, not tuned. **If any threshold above is changed after the first gate run, the
+change is recorded as a revision of this document with the reason, and the gate is re-run
+and re-reported under the new commit** — never silently. `B*` and `N` are the gate's
+numbers and are written into the preregistration before S1; the preregistration draft
+carries them as placeholders until then.
+
+## 10. What B3 does not claim
+
+- **Nothing about a non-additive fabric.** The cartographer's anomaly path is exercised by
+  tests, not by silicon; on this carrier the predicted anomaly count is 0 and any other
+  value is a falsifier of the instrument (preregistration §5), not a finding about
+  non-additive fabrics (B4's).
+- **Nothing about physical noise, timing, power, unattested bits, routing, FF, another die,
+  Linux or ICAPE2** (B2 §8, unchanged).
+- **The end-to-end accounting is an evaluation-count model.** B1's two baseline records,
+  setup, qualification, audits, retransmissions and compute time are not counted; the 333
+  charged to F is B1's probe budget, not its wall time. The second primary is a statement
+  inside that model.
+- **Not the best online cartographer** — one fixed rule (intersection with global closure)
+  on one fixed operator shape; nothing was tuned after the v0.1.1 simulation and nothing
+  is tuned after the gate.
+- **Not an independent silicon chance of a negative primary.** With fixed seeds and an
+  exact prediction the deltas are fixed; the board reproduces them or the instrument is
+  held (B2 §1, unchanged).
+- **The frozen host reference stays frozen.** `host/b3_online.py` v1.1 is B2's pinned
+  file; the `b3/host/` cartographer is a copy that may evolve *before* the B3 pin table is
+  generated and not after; a one-time equivalence test between the copy and the frozen
+  module over the simulation seeds is allowed (import, never edit).
+
+## 11. Files
+
+| file | status | role |
+|---|---|---|
+| `docs/b3_architecture.md` | this document, v0.2 | design; the gate criteria of §9 |
+| `docs/b3_preregistration.md` | DRAFT v0.1 | what a board session is judged by |
+| `docs/b3_lifecycle1_pinned_surface_audit_2026_09_17.md` | PASS (`3a2063d`) | the namespace / pin ruling (§6), the verifier contract, the lifecycle order, the stage-aware test rules, the authority boundary |
+| `host/b3_online.py`, `host/b3_sim.py`, `tests/test_b3_online.py` | **frozen by B2** | the v1.1 host reference and the v0.1.1 simulation; never edited |
+| `evidence/b3/sim/`, `evidence/b3/sim_v0.1.1/` | frozen (the first a B2 verify input) | the v0.1 / v1.1 simulations |
+| `evidence/b2/b2_completion_inputs_2026-09-17/` | committed (unit 1) | the 15 non-tracked B2 inputs, restorable and verified |
+| `b3/host/`, `b3/tests/`, `b3/schemas/`, `b3/firmware/`, `b3/tb/hostapp/` | **not yet written** (lifecycle step 2) | the implementation, under the pin rule `b3/**/*` |
+| `manifests/b3_instrument_pins.json`, `manifests/b3_manifest.json` | not yet generated (steps 3–4) | the B3 authority |
+| `evidence/b3/gate/` | not yet run (step 2) | the gate of §9 |
