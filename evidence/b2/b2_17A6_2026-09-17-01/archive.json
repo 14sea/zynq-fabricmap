@@ -1,0 +1,112 @@
+{
+ "schema": "b2_session_evidence_archive",
+ "schema_version": "1.0.0",
+ "session_dir": "evidence/b2/b2_17A6_2026-09-17-01",
+ "why": "The five large exports (~160 MiB together) are stored as one deterministic compressed archive instead of ordinary Git blobs; the ten small, human-readable files stay as ordinary files (the owner's archival decision of 2026-09-17, form (c), as for session 1).",
+ "archive": {
+  "path": "exports.tar.zst",
+  "bytes": 11479719,
+  "sha256": "78f5bffda31a09b27e0527a04c83c43c07b2e5927a4b9df254d9e47f6f667b66",
+  "compression": "tar (GNU tar, --format=posix, --sort=name, --owner=0 --group=0 --numeric-owner, one fixed --mtime for every member, pax headers without atime/ctime) | zstd -19 -T0",
+  "member_mtime_epoch": 1789626322,
+  "members": [
+   {
+    "name": "audits.json",
+    "bytes": 25823126,
+    "sha256": "2af65d26262368f856acd0ab943d1d0ae0f98879ebfd491f160d8f4810b53b90"
+   },
+   {
+    "name": "console.log",
+    "bytes": 41224733,
+    "sha256": "d74eea42b5f3e0d4d1d8dbe9431c58d256beae0f8cac77bbb36774c36e7e68e9"
+   },
+   {
+    "name": "console.ts.log",
+    "bytes": 45248989,
+    "sha256": "640c761c8c3109090d8cafd9f2d4417e450e85441381dec1360313d78b475f41"
+   },
+   {
+    "name": "run_log.json",
+    "bytes": 28623057,
+    "sha256": "a2556650ebf0fe844980162640af28d85e6cb6e9cf7256cc781b0d5afa1d01dc"
+   },
+   {
+    "name": "timeline.json",
+    "bytes": 27134184,
+    "sha256": "a1d41a2c00869e394ebcb21dc4c7029a521ccf575ff87e5f942c5caeacfdc301"
+   }
+  ]
+ },
+ "ordinary_files": [
+  {
+   "name": "B1_0_preflight.json",
+   "bytes": 109,
+   "sha256": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f"
+  },
+  {
+   "name": "B1_1_identity_page.json",
+   "bytes": 485,
+   "sha256": "c45989a5274b96d25673f5851e9b1292174375a5af9428deb5b1817cad096aa4"
+  },
+  {
+   "name": "adjudication.json",
+   "bytes": 1402,
+   "sha256": "d1201b058bdb10227226543b7a065e25e97f90f4f8e4b5e7c598e7486a33ded3"
+  },
+  {
+   "name": "exports.json",
+   "bytes": 1125,
+   "sha256": "b6ebe06140b14e989f7035b36c1e64eea0390dc6177ce2d1b2da390bb3c2e5b7"
+  },
+  {
+   "name": "manifest_at_run.json",
+   "bytes": 8894,
+   "sha256": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0"
+  },
+  {
+   "name": "ruling_provisioning.json",
+   "bytes": 10403,
+   "sha256": "62731206e803ab1516059c9f1ab3cd17d68b43f47eb6191e2ab7bcefeeae0e8a"
+  },
+  {
+   "name": "ruling_whole_of_run.json",
+   "bytes": 10051,
+   "sha256": "9cb5d75f8555eb11cdd36c0026687ad6a082ca97ff3fb4f1d3b0acef89d597d5"
+  },
+  {
+   "name": "summary.json",
+   "bytes": 91189,
+   "sha256": "2937f031a6375fbd688d86156f7b3efe4ae96da2a514ab6f69a240126c0e1a04"
+  },
+  {
+   "name": "ymodem.log",
+   "bytes": 79142,
+   "sha256": "196eea88838e3fe3d4e9833630ea92ad4bcfc0babcb05423fd2e5f28c961dc18"
+  },
+  {
+   "name": "ymodem_app.log",
+   "bytes": 4262,
+   "sha256": "97743c455a163cfa55bcf7d476287b6d1628b06c1fc8db110f5c19b926c706da"
+  }
+ ],
+ "exports_json_seal_note": "exports.json (a sealed member of the session record) names the five exports by size and sha256; those digests are the ones listed under archive.members, so the seal is verifiable after restore.",
+ "restore": [
+  "Fresh restore, executable: python3 -B evidence/b2/b2_17A6_2026-09-17-01/restore_rejudge.py (from the repository root).",
+  "What it does, in order: (1) create an EMPTY temporary directory; (2) `zstd -dc exports.tar.zst | tar -xf -` into it \u2014 the five members; (3) copy the ten files listed under ordinary_files from this directory; (4) require the restored file set to be exactly those fifteen \u2014 no extra, no missing; (5) check every file's size and sha256 against this document.",
+  "The archive must first match this document: bytes and sha256 under archive."
+ ],
+ "rejudge": "Performed by restore_rejudge.py after the restore. BOTH pinned documents are located through the run manifest's plan pin and verified byte-for-byte BEFORE being read \u2014 manifest_at_run.plan.path \u2192 plan.sha256 and manifest_at_run.plan.prediction_path \u2192 plan.prediction_sha256; a whitespace-only change to either is refused by name before any re-judge. Then sys.path gets host/, tests/ and BOTH instrument paths (PSORACLE_ROOT and PSORACLE_ROOT/host) and b2_runner.judge_session(restored_dir, manifest_at_run.json, summary.json['l6'], the verified plan, the verified prediction, None, PSORACLE_ROOT) must equal adjudication.json key for key. At archival: PASS, rate 2723.7861917937157, findings [], kills [].",
+ "external_backup": {
+  "path": "/home/test/fabricmap_backups/b2_17A6_2026-09-17-01",
+  "hash_list": "/home/test/fabricmap_backups/b2_17A6_2026-09-17-01.SHA256SUMS",
+  "state": "the complete original directory: exactly the 15 original files (the five exports and the ten ordinary files), nothing else; read-only; the hash list covers all 15 and sha256sum -c passed at archival."
+ },
+ "files_in_this_directory_not_part_of_the_session_record": [
+  "exports.tar.zst",
+  "archive.json",
+  "README.md",
+  "restore_rejudge.py"
+ ],
+ "archived_at_utc": "2026-09-17T06:36:13Z",
+ "note": "These hashes are an integrity anchor for the archived bytes; they do not prove the session's verdict \u2014 the verdict is re-derived by the production judge from the restored files."
+}
