@@ -4,8 +4,12 @@
 one member (with the original manifest, then with the outer digest patched to match so the
 per-member check is the one that refuses), an archive with one byte changed (same two forms), a
 target that already holds one of the files, and a target whose HEAD is not BASE. Every run's
-command, environment, exit code, stdout JSON and stderr are written to runs/. Throwaway worktrees
-live under the scratch directory given as argv[1] and are removed. The main tree is not touched.
+command, environment, exit code, stdout JSON and stderr are written to control_runs/. Then the
+producer's controls: in a restored checkout it must rebuild the archive byte-identically, and it must
+refuse the owner's two counterexamples — a member drifted together with a B1 pin table re-pinned to
+it, and the B1 image drifted together with a B1 manifest re-pinned to it (both "consistent" with
+themselves, neither the completion state). Throwaway worktrees live under the scratch directory
+given as argv[1] and are removed. The main tree is not touched.
 
     controls.py <scratch dir>
 """
@@ -23,7 +27,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]
-RUNS = HERE / "runs"
+RUNS = HERE / "control_runs"          # not `runs/`: .gitignore:6 ignores that name (the owner's P2 of 2026-09-17)
 BASE = "73b68d79fd43fc032c178da73dda2b2c95764db8"
 OTHER = "4800c15"                                  # main before the B2 merge: a checkout that is NOT the base
 PATH_ONLY = "/usr/local/bin:/usr/bin:/bin"
@@ -94,6 +98,59 @@ def tampered(kind: str, scratch: Path) -> tuple[Path, Path]:
     return a, mp
 
 
+def drift_b1_table_and_member(wt: Path) -> str:
+    """clockInfo.txt changed AND the B1 table re-pinned to the new digest: self-consistent, not the completion state."""
+    rel = "vivado/carrier/generated/clockInfo.txt"
+    (wt / rel).write_bytes((wt / rel).read_bytes() + b"# drifted\n")
+    t = json.loads((wt / "manifests/b1_instrument_pins.json").read_text())
+    t["files"][rel] = sha256((wt / rel).read_bytes())
+    (wt / "manifests/b1_instrument_pins.json").write_text(json.dumps(t, indent=1, sort_keys=True) + "\n")
+    return f"{rel} appended one line; manifests/b1_instrument_pins.json re-pinned to it"
+
+
+def drift_b1_manifest_and_image(wt: Path) -> str:
+    """b1_app.bin changed AND the B1 manifest re-pinned to the new digest."""
+    rel = "firmware/b1/bsp/out/b1_app.bin"
+    b = (wt / rel).read_bytes()
+    (wt / rel).write_bytes(bytes([b[0] ^ 0x01]) + b[1:])
+    m = json.loads((wt / "manifests/b1_manifest.json").read_text())
+    m["image"]["sha256"] = sha256((wt / rel).read_bytes())
+    (wt / "manifests/b1_manifest.json").write_text(json.dumps(m, indent=1, sort_keys=True) + "\n")
+    return f"{rel} one byte flipped; manifests/b1_manifest.json image.sha256 re-pinned to it"
+
+
+def producer(name: str, scratch: Path, mutate, expect_rc: int, expect_needle: str) -> dict:
+    """Run THIS directory's make_archive.py as checked out in a fresh worktree of BASE (so it reads
+    the worktree), after restoring the 15 inputs from the committed archive and applying `mutate`."""
+    wt = worktree(scratch, f"prod_{name[:24]}", BASE)
+    pre = subprocess.run([sys.executable, "-B", str(HERE / "restore_verify.py"), "--target", str(wt), "--skip-verify"],
+                         capture_output=True, text=True)
+    if pre.returncode != 0:
+        raise RuntimeError(f"the restore before the producer control failed: {pre.stderr[-300:]}")
+    # the producer under test is the one in this commit, copied into the worktree's own directory
+    here_in_wt = wt / HERE.relative_to(REPO)
+    here_in_wt.mkdir(parents=True, exist_ok=True)
+    (here_in_wt / "make_archive.py").write_bytes((HERE / "make_archive.py").read_bytes())
+    mutation = mutate(wt) if mutate else "none"
+    cmd = [sys.executable, "-B", str(here_in_wt / "make_archive.py")]
+    p = subprocess.run(cmd, cwd=wt, capture_output=True, text=True)
+    rec = {"name": name, "cmd": cmd, "worktree_head": subprocess.run(["git", "rev-parse", "HEAD"], cwd=wt, capture_output=True, text=True).stdout.strip(),
+           "mutation": mutation, "rc": p.returncode, "stdout": p.stdout.strip().splitlines()[-2:], "stderr": p.stderr.strip().splitlines()[-2:],
+           "expected": {"rc": expect_rc, "needle": expect_needle}}
+    if mutate is None and p.returncode == 0:
+        built = json.loads((here_in_wt / "archive.json").read_text())
+        orig = json.loads((HERE / "archive.json").read_text())
+        rec["rebuilt_archive_sha256"] = sha256((here_in_wt / "inputs.tar.zst").read_bytes())
+        rec["rebuilt_files_block_equal"] = built["files"] == orig["files"] and built["tar_sha256"] == orig["tar_sha256"]
+        rec["met"] = p.returncode == expect_rc and rec["rebuilt_archive_sha256"] == sha256((HERE / "inputs.tar.zst").read_bytes()) and rec["rebuilt_files_block_equal"]
+    else:
+        rec["met"] = p.returncode == expect_rc and expect_needle in (p.stdout + p.stderr)
+    drop(wt)
+    (RUNS / f"{name}.json").write_text(json.dumps(rec, indent=1, sort_keys=True) + "\n")
+    print(f"[{'ok' if rec['met'] else 'UNEXPECTED'}] {name}: rc {p.returncode} — {(p.stderr.strip().splitlines() or p.stdout.strip().splitlines() or [''])[-1][:150]}")
+    return rec
+
+
 def main(scratch: Path) -> int:
     RUNS.mkdir(exist_ok=True)
     orig_a, orig_m = HERE / "inputs.tar.zst", HERE / "archive.json"
@@ -118,10 +175,16 @@ def main(scratch: Path) -> int:
     wt = worktree(scratch, "otherhead", OTHER)
     recs.append(restore("neg_target_head_is_not_base", wt, orig_a, orig_m, {"PATH": PATH_ONLY}, 2, "is not the base"))
     drop(wt)
+    # the producer: positive reproduction, then the two drifted-B1-authority counterexamples
+    recs.append(producer("producer_positive_rebuilds_the_archive_byte_identically", scratch, None, 0, "sha256 " + sha256(orig_a.read_bytes())))
+    recs.append(producer("neg_producer_b1_table_repinned_to_a_drifted_member", scratch, drift_b1_table_and_member, 2,
+                         "manifests/b1_instrument_pins.json"))
+    recs.append(producer("neg_producer_b1_manifest_repinned_to_a_drifted_image", scratch, drift_b1_manifest_and_image, 2,
+                         "manifests/b1_manifest.json"))
     subprocess.run(["git", "worktree", "prune"], cwd=REPO)
     summary = {"at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "base": BASE,
                "archive_sha256": sha256(orig_a.read_bytes()), "manifest_sha256": sha256(orig_m.read_bytes()),
-               "runs": [{k: r[k] for k in ("name", "rc", "met", "seconds")} for r in recs],
+               "runs": [{k: r.get(k) for k in ("name", "rc", "met", "seconds")} for r in recs],
                "all_met": all(r["met"] for r in recs),
                "worktrees_after": subprocess.run(["git", "worktree", "list"], cwd=REPO, capture_output=True, text=True).stdout,
                "main_tree_status_porcelain": subprocess.run(["git", "status", "--porcelain"], cwd=REPO, capture_output=True, text=True).stdout}

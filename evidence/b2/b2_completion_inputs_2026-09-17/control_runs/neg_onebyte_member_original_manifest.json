@@ -1,0 +1,34 @@
+{
+ "cmd": [
+  "env",
+  "-i",
+  "PATH=/usr/local/bin:/usr/bin:/bin",
+  "/usr/bin/python3",
+  "-B",
+  "/home/test/zynq_fabricmap/evidence/b2/b2_completion_inputs_2026-09-17/restore_verify.py",
+  "--target",
+  "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/wt/cinp_onebyte_orig",
+  "--archive",
+  "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/cinp_tampered/inputs_onebyte.tar.zst",
+  "--manifest",
+  "/home/test/zynq_fabricmap/evidence/b2/b2_completion_inputs_2026-09-17/archive.json"
+ ],
+ "env": {
+  "PATH": "/usr/local/bin:/usr/bin:/bin"
+ },
+ "expected": {
+  "needle": "archive sha256",
+  "rc": 2
+ },
+ "met": true,
+ "name": "neg_onebyte_member_original_manifest",
+ "rc": 2,
+ "seconds": 0.0,
+ "stderr": [
+  "REFUSED: archive sha256 4553582798ef\u2026 differs from the manifest's 20300d5f2476\u2026"
+ ],
+ "stdout_json": {
+  "outcome": "REFUSED",
+  "refusal": "archive sha256 4553582798ef\u2026 differs from the manifest's 20300d5f2476\u2026"
+ }
+}

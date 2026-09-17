@@ -1,0 +1,22 @@
+{
+ "cmd": [
+  "/usr/bin/python3",
+  "-B",
+  "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/wt/cinp_prod_producer_positive_rebuil/evidence/b2/b2_completion_inputs_2026-09-17/make_archive.py"
+ ],
+ "expected": {
+  "needle": "sha256 20300d5f2476beafaa9411c11f2a412eb91f01149bf4318e79ccee2706337767",
+  "rc": 0
+ },
+ "met": true,
+ "mutation": "none",
+ "name": "producer_positive_rebuilds_the_archive_byte_identically",
+ "rc": 0,
+ "rebuilt_archive_sha256": "20300d5f2476beafaa9411c11f2a412eb91f01149bf4318e79ccee2706337767",
+ "rebuilt_files_block_equal": true,
+ "stderr": [],
+ "stdout": [
+  "15 files, 666808 bytes -> inputs.tar.zst 99325 bytes sha256 20300d5f2476beafaa9411c11f2a412eb91f01149bf4318e79ccee2706337767"
+ ],
+ "worktree_head": "73b68d79fd43fc032c178da73dda2b2c95764db8"
+}

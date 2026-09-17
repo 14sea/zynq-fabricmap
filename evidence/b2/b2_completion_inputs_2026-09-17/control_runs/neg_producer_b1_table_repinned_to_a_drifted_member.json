@@ -1,0 +1,20 @@
+{
+ "cmd": [
+  "/usr/bin/python3",
+  "-B",
+  "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/wt/cinp_prod_neg_producer_b1_table_re/evidence/b2/b2_completion_inputs_2026-09-17/make_archive.py"
+ ],
+ "expected": {
+  "needle": "manifests/b1_instrument_pins.json",
+  "rc": 2
+ },
+ "met": true,
+ "mutation": "vivado/carrier/generated/clockInfo.txt appended one line; manifests/b1_instrument_pins.json re-pinned to it",
+ "name": "neg_producer_b1_table_repinned_to_a_drifted_member",
+ "rc": 2,
+ "stderr": [
+  "REFUSED: manifests/b1_instrument_pins.json (3f61231ec418\u2026) is not the B1 pin table the B2 table pins (3106d4a8445e\u2026)"
+ ],
+ "stdout": [],
+ "worktree_head": "73b68d79fd43fc032c178da73dda2b2c95764db8"
+}

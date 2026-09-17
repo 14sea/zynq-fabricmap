@@ -1,0 +1,34 @@
+{
+ "cmd": [
+  "env",
+  "-i",
+  "PATH=/usr/local/bin:/usr/bin:/bin",
+  "/usr/bin/python3",
+  "-B",
+  "/home/test/zynq_fabricmap/evidence/b2/b2_completion_inputs_2026-09-17/restore_verify.py",
+  "--target",
+  "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/wt/cinp_onebyte_patched",
+  "--archive",
+  "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/cinp_tampered/inputs_onebyte.tar.zst",
+  "--manifest",
+  "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/cinp_tampered/archive_onebyte_outer_patched.json"
+ ],
+ "env": {
+  "PATH": "/usr/local/bin:/usr/bin:/bin"
+ },
+ "expected": {
+  "needle": "archive member vivado/carrier/generated/clockInfo.txt: 365 bytes sha256",
+  "rc": 2
+ },
+ "met": true,
+ "name": "neg_onebyte_member_outer_digest_patched",
+ "rc": 2,
+ "seconds": 0.2,
+ "stderr": [
+  "REFUSED: archive member vivado/carrier/generated/clockInfo.txt: 365 bytes sha256 f1b84d72b51d\u2026 differs from the manifest's 365 bytes 946222f005be\u2026"
+ ],
+ "stdout_json": {
+  "outcome": "REFUSED",
+  "refusal": "archive member vivado/carrier/generated/clockInfo.txt: 365 bytes sha256 f1b84d72b51d\u2026 differs from the manifest's 365 bytes 946222f005be\u2026"
+ }
+}

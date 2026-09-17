@@ -11,8 +11,19 @@
 > does not run without packages — the measured, working form is chosen and the test report gets a
 > discovery sentinel and a removal control (§7, candidate 2b). Measurements in
 > `evidence/b3/lifecycle1_pinned_surface_audit_2026_09_17/glob_and_discovery.json` and
-> `evidence/b2/b2_completion_inputs_2026-09-17/runs/`. `c648d6e` is kept as is; the original 15
+> `evidence/b2/b2_completion_inputs_2026-09-17/control_runs/`. `c648d6e` is kept as is; the original 15
 > files, the B2 pins / manifest and the frozen B3 wrappers are untouched.
+>
+> **v1.2 (the owner's review of `c5f5346`: the four directions accepted, two new P2s).** (1) The
+> control results had been written to `runs/`, which `.gitignore:6` ignores, so none entered git
+> and the evidence guard (`tests/test_evidence_manifests.py`, "nothing under evidence is excluded
+> by gitignore") failed naming all eight; they now live in `control_runs/`, are committed, and the
+> guard is green. (2) The archive producer trusted the B1 manifest and B1 pin table as found in
+> the tree; the owner's counterexample (a member drifted *and* the B1 table re-pinned to it) passed
+> it. It now refuses unless the B1 manifest hashes to `b2_manifest.carrier_lineage.b1_manifest.sha256`
+> and the B1 table hashes to the digest the B2 table pins for it, and the two counterexamples are
+> kept as negative controls (member + B1 table drifted together; image + B1 manifest drifted
+> together), beside a positive control that the producer rebuilds the archive byte-identically.
 
 Branch `b3-lifecycle-1`, base **`73b68d7`** (`main` = `origin/main`, the B2 completion merge: parents
 `4800c15` + `4cbeef2`, tree `84e8220…` = `b2-lifecycle-2`'s). Host-only: this unit adds one
@@ -177,12 +188,20 @@ why it is needed and the pin it equals). `restore_verify.py`, in a fresh detache
 `73b68d7` under `env -i PATH=/usr/local/bin:/usr/bin:/bin`, refused to overwrite nothing, restored
 exactly 15 files, verified each by size and digest before and after writing, and the production B2
 verify then gave **S3 / true / null / `aec84514…` / table `82a5f2fb…` / 71 files**
-(`runs/positive_env_i.json`, 3.1 s). Negative controls (`runs/summary.json`, 7/7 as expected):
-a member missing and one byte changed, each refused first by the outer archive digest and — with
-the outer digest patched to match — by the per-member check naming `clockInfo.txt`; a target
-already holding the files (`refuses to overwrite`, nothing written); a target at `4800c15`
-(`target HEAD … is not the base`). Nothing pinned changed: the archive is additive and each member
-hashes to the digest the frozen tables / manifests already carry. **The B3 S0 manifest pins
+(`control_runs/positive_env_i.json`). Negative controls (`control_runs/summary.json`, 10/10 as
+expected): a member missing and one byte changed, each refused first by the outer archive digest
+and — with the outer digest patched to match — by the per-member check naming `clockInfo.txt`; a
+target already holding the files (`refuses to overwrite`, nothing written); a target at `4800c15`
+(`target HEAD … is not the base`). The producer (v1.2) reads the B1 authority only through what
+the completion-state B2 documents pin — the B1 manifest must hash to
+`b2_manifest.carrier_lineage.b1_manifest.sha256` (`38238271…`), the B1 table to the digest the B2
+table pins for it (`3106d4a8…`) — and its controls are: a restored checkout rebuilds
+`inputs.tar.zst` byte-identically (`20300d5f…`, files block equal); `clockInfo.txt` drifted *and*
+the B1 table re-pinned to it → `REFUSED: manifests/b1_instrument_pins.json (…) is not the B1 pin
+table the B2 table pins`; `b1_app.bin` drifted *and* the B1 manifest re-pinned to it → `REFUSED:
+manifests/b1_manifest.json (…) is not the B1 manifest the B2 lineage pins`. Nothing pinned
+changed: the archive is additive and each member hashes to the digest the frozen tables /
+manifests already carry. **The B3 S0 manifest pins
 `archive.json` and `inputs.tar.zst` by content** (§7a, §8 step 4); candidate 1's checkout is now
 the commit plus this archive, both in the repository.
 
@@ -364,10 +383,10 @@ Not done, by the owner's condition: no B3 code, test or schema edited or added o
 document and its evidence; no pin table generated; no manifest; no preregistration; no tag; no
 push; no board.
 
-**v1.1 follow-up.** Added: `evidence/b2/b2_completion_inputs_2026-09-17/` (archive, manifest,
-producer, consumer, controls, runs) and `glob_and_discovery_probe.py` → `glob_and_discovery.json`
+**v1.1 / v1.2 follow-ups.** Added: `evidence/b2/b2_completion_inputs_2026-09-17/` (archive, manifest,
+producer, consumer, controls, `control_runs/` — committed, guard green) and `glob_and_discovery_probe.py` → `glob_and_discovery.json`
 in this unit's evidence directory; this document's §6 P-F1/P-F2, §7 candidates 2b and 3, §7a,
 §8 steps 2–4. `c648d6e` untouched; the original 15 files, the B2 pins / manifest and the frozen
 B3 wrappers untouched; closing verify on the tree S3 / true / null / `aec84514…`
-(`verify_closing_v1.1.json`). **Next unit, if the four P2s are accepted closed: step 1 of §8**
+(`verify_closing_v1.1.json`, `verify_closing_v1.2.json`). **Next unit, once the owner accepts the P2s closed: step 1 of §8**
 (architecture v0.2 and the preregistration draft) — still host-only, still no pinned edit.

@@ -3,7 +3,7 @@
 does not carry (the two image binaries, gitignored by design; the 13 gitignored Vivado files the B1
 pin table's glob `vivado/carrier/generated/*` captured) into a deterministic tar (sorted members,
 fixed metadata) compressed with zstd, and writes archive.json with every member's size and sha256.
-Refuses if the working tree is not at BASE or any input is absent. Reads only; writes only into this
+Refuses unless HEAD descends from BASE, the B2 manifest and table are the completion-state documents, the B1 manifest and B1 table are the ones those two pin by content, and every input hashes to its pin. Reads only; writes only into this
 directory. Run from anywhere: paths are resolved against the repository root."""
 from __future__ import annotations
 
@@ -41,6 +41,22 @@ def main() -> int:
         if sha256((REPO / t).read_bytes()) != want:
             print(f"REFUSED: {t} is not the completion-state document", file=sys.stderr)
             return 2
+    # The B1 authority is read ONLY through what the completion-state B2 documents pin (the owner's
+    # counterexample of 2026-09-17: a B1 table re-pinned to a drifted member, or a B1 manifest re-pinned
+    # to a drifted image, must refuse — the B2 table pins the B1 table by content and the B2 manifest
+    # pins the B1 manifest by content, so a drifted B1 document is not the completion-state one).
+    b2m = json.loads((REPO / "manifests/b2_manifest.json").read_text())
+    b2t = json.loads((REPO / "manifests/b2_instrument_pins.json").read_text())
+    want_b1m = b2m["carrier_lineage"]["b1_manifest"]["sha256"]
+    got_b1m = sha256((REPO / "manifests/b1_manifest.json").read_bytes())
+    if got_b1m != want_b1m:
+        print(f"REFUSED: manifests/b1_manifest.json ({got_b1m[:12]}…) is not the B1 manifest the B2 lineage pins ({want_b1m[:12]}…)", file=sys.stderr)
+        return 2
+    want_b1t = b2t["files"]["manifests/b1_instrument_pins.json"]
+    got_b1t = sha256((REPO / "manifests/b1_instrument_pins.json").read_bytes())
+    if got_b1t != want_b1t:
+        print(f"REFUSED: manifests/b1_instrument_pins.json ({got_b1t[:12]}…) is not the B1 pin table the B2 table pins ({want_b1t[:12]}…)", file=sys.stderr)
+        return 2
     image_pins = {json.loads((REPO / m).read_text())["image"]["path"]: json.loads((REPO / m).read_text())["image"]["sha256"]
                   for m in ("manifests/b1_manifest.json", "manifests/b2_manifest.json")}
     tracked = set(subprocess.run(["git", "ls-files"], cwd=REPO, capture_output=True, text=True, check=True).stdout.split("\n"))

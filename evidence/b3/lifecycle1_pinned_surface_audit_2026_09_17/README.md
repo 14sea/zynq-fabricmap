@@ -22,6 +22,6 @@ Re-run (from the repository root, on a clean tree at `73b68d7`; ~40 s; needs the
 | file | what |
 |---|---|
 | `glob_and_discovery_probe.py` → `glob_and_discovery.json` | in a throwaway worktree of the base: `Path.glob("b3/**")` lists directories only, `b3/**/*` filtered to regular files reaches depth 1, 2 and 4; `unittest discover -s b3/tests` runs a sentinel test without package files, `-s b3/tests -t .` fails (`Start directory is not importable`) without `__init__.py` files and works with them, B2's `-s tests` discovery never sees `b3/`, and removing the sentinel drops the count to 0 (the removal control) |
-| `verify_closing_v1.1.json` | the production S3 verify on the tree after the follow-up was written |
+| `verify_closing_v1.1.json`, `verify_closing_v1.2.json` | the production S3 verify on the tree after each follow-up was written |
 
 P-F1's archive lives in `evidence/b2/b2_completion_inputs_2026-09-17/` (see its README).
