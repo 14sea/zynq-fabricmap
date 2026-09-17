@@ -1,0 +1,213 @@
+{
+ "architecture": {
+  "path": "docs/b3_architecture.md",
+  "sha256": "f0f6b2920f7f4c33b477cf6157fb5b0c675084f68ffc1b3a23f8f338a2ad72b5"
+ },
+ "arm_order": {
+  "per_pair": [
+   "RFO",
+   "FOR",
+   "ORF",
+   "ROF",
+   "OFR",
+   "FRO",
+   "RFO",
+   "FOR"
+  ],
+  "rule": "pair r runs sequence[r mod 6]; position counts differ by at most 1, equal exactly when N is a multiple of 3",
+  "sequence": [
+   "RFO",
+   "FOR",
+   "ORF",
+   "ROF",
+   "OFR",
+   "FRO"
+  ]
+ },
+ "audit_policy": "all-self-reporting",
+ "b1_map_cost": 333,
+ "budget_per_arm": 1000,
+ "calibration_margin": 0.85,
+ "carrier": "the qualified B1 carrier (docs/b2_architecture.md D1; docs/b3_architecture.md \u00a77)",
+ "carto_version": "specimen-carto-v1.1",
+ "deadline_formula": "1.25 x records x 3600 / rate_for_split + 600 (rate_for_split = 0.85 x the B3Q-measured rate)",
+ "engine": {
+  "kmax": 4,
+  "lambda": 8,
+  "mu": 4,
+  "version": "b2-es-v1"
+ },
+ "fitness": "F1",
+ "gate": {
+  "H9": "a gate diagnostic (architecture v0.3 \u00a79): reported in the gate report, it decides nothing here",
+  "architecture_sha256": "f0f6b2920f7f4c33b477cf6157fb5b0c675084f68ffc1b3a23f8f338a2ad72b5",
+  "control_x_permutation_sha256": "9cc0b64ef1faa37ad89858a92f6beb03056c1308c9c3e270658c1196d1f217dd",
+  "head_at_run": "825ecf2ecb31a870501c2808992db9bf6c7ee006",
+  "path": "evidence/b3/gate_2/gate_report.json",
+  "rules_version": "architecture v0.3 \u00a79",
+  "sha256": "8f717b12bdc7258d49145bd47bbcfb8291d2b2a79cad42cb75491a19398fda90"
+ },
+ "generated_utc": "2026-09-17T16:24:06Z",
+ "lifecycle": 2,
+ "map": {
+  "note": "arm F's map; arm O starts empty and has no map pin",
+  "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json",
+  "sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+  "view": {
+   "cartographer": "carto-v1",
+   "map_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+   "mapped_bits_in_train": 183,
+   "train_columns_named": 40
+  }
+ },
+ "pairs": 8,
+ "planning_rates_NOT_calibration": {
+  "B2_calibration_B2Q_per_hour": 3016.3995578641097,
+  "B2_session_1_observed_per_hour": 2630.433828050359,
+  "B2_session_2_observed_per_hour": 2723.7861917937157,
+  "note": "B2's rates, for planning only; the B3 rate is measured by B3Q (ledger bytes on every O-arm search record) and written into the manifest's calibration before the split is determined; the 0.85 margin is frozen, not a calibration"
+ },
+ "prediction_sha256": "92b774ea62d290d380e72a4c990b384060db9006cf9160940fb4848ae4a14cf5",
+ "primary": {
+  "alpha": 0.05,
+  "pass": "p <= alpha and equal to the predicted p (preregistration v0.3 \u00a74)",
+  "pooled": "across sessions",
+  "statistic": "one-sided exact sign test over the N pairs' delta1 (best-so-far train fitness at the budget, online minus random-safe)",
+  "stop_rule": "if the predicted primary does not reach alpha the line stops before any canonical write; seeds are not redrawn, N is not raised",
+  "ties": "excluded from n, counted"
+ },
+ "records": {
+  "ledger_entries_per_pair": 1000,
+  "note": "one opening and one closing baseline PER SESSION; the total depends on the split (session_split)",
+  "per_pair": 3003,
+  "single_session_total": 24026
+ },
+ "schema": "b3_plan",
+ "schema_version": "2.0.0",
+ "secondary_outcome": {
+  "pass": "every value EXACT to the prediction; no significance threshold (preregistration v0.3 \u00a74, the owner's ruling)",
+  "pooled": "across sessions",
+  "statistic": "the N pairs' delta2 (online at the budget minus the frozen arm's own trace at budget - 333): positives / negatives / ties, the exact one-sided p, mean, median, Cohen's d",
+  "threshold": null
+ },
+ "seed_derivation": {
+  "commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "excluded_fixed": [
+   1,
+   2,
+   3,
+   5,
+   11,
+   77,
+   99,
+   1234,
+   4321,
+   176359248,
+   195948557,
+   324805736,
+   521288629,
+   1123460948,
+   1278624577,
+   1278628687,
+   1281816666,
+   2119807262,
+   3735928559,
+   4294967295
+  ],
+  "excluded_sources": {
+   "evidence/b2/b2q_plan.json seed_derivation (B2Q pairs)": {
+    "count": 1,
+    "master_seed": 505806527,
+    "values": 3
+   },
+   "evidence/b2/gate/gate_report.json": {
+    "count": 200,
+    "master_seed": 1324512209,
+    "values": 401
+   },
+   "evidence/b2/gate/v0.1_2026-09-10/gate_report.json": {
+    "count": 200,
+    "master_seed": 2131041347,
+    "values": 401
+   },
+   "evidence/b3/gate/gate_report.json (lifecycle 1 gate run 1, pilot)": {
+    "count": 200,
+    "master_seed": 3097524112,
+    "values": 401
+   },
+   "evidence/b3/gate_2/gate_report.json (the B3 gate's pairs)": {
+    "count": 200,
+    "master_seed": 4260131137,
+    "values": 401
+   },
+   "evidence/b3/plan_trial_2026_09_17/prediction.json (lifecycle 1 trial session pairs, pilot)": {
+    "count": 9,
+    "master_seed": 1273858430,
+    "values": 19
+   },
+   "evidence/b3/sim/sim_report.json": {
+    "count": 200,
+    "master_seed": 3829368064,
+    "values": 401
+   },
+   "manifests/b2_manifest.json seeds (B2 session pairs)": {
+    "count": 9,
+    "master_seed": 716169644,
+    "values": 19
+   }
+  },
+  "excluded_values_total": 2066,
+  "label": "b3-session-2",
+  "master_seed": 981420253,
+  "rule": "first 4 bytes of sha256(label + '|' + instrument commit); pairs from one Rng stream; the fixed excluded seeds AND every archived set skipped, the B3 gate's own pairs included (explicit exclusion \u2014 disjointness is enforced, not assumed)"
+ },
+ "session": "B3",
+ "session_span_max_s": 7200,
+ "session_split": {
+  "calibration_margin": 0.85,
+  "candidates": {
+   "1 pairs/session": {
+    "records": 3005,
+    "sessions": 8,
+    "total_records": 24040
+   },
+   "2 pairs/session": {
+    "records": 6008,
+    "sessions": 4,
+    "total_records": 24032
+   },
+   "3 pairs/session": {
+    "records": 9011,
+    "sessions": 3,
+    "total_records": 24030
+   },
+   "4 pairs/session": {
+    "records": 12014,
+    "sessions": 2,
+    "total_records": 24028
+   },
+   "5 pairs/session": {
+    "records": 15017,
+    "sessions": 2,
+    "total_records": 24028
+   },
+   "6 pairs/session": {
+    "records": 18020,
+    "sessions": 2,
+    "total_records": 24028
+   },
+   "7 pairs/session": {
+    "records": 21023,
+    "sessions": 2,
+    "total_records": 24028
+   },
+   "8 pairs/session": {
+    "records": 24026,
+    "sessions": 1,
+    "total_records": 24026
+   }
+  },
+  "records_per_pair": 3003,
+  "status": "UNDETERMINED until B3Q measures the all-self-reporting rate"
+ }
+}
