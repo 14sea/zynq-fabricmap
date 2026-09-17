@@ -119,11 +119,20 @@ class Ledger(unittest.TestCase):
         _, f = oa.replay(res.ledger, bad_s, res.state_trace)
         self.assertEqual(len(f), 1)
         self.assertIn("seq 6: state_sha256", f[0])
-        # a half-given check is a named finding, never a silent skip
-        for args in ((res.search_state_trace, None), (None, res.state_trace), (res.search_state_trace[:-1], res.state_trace)):
+        # the commitments cannot be omitted: the production replay has no optional form
+        with self.assertRaises(TypeError):
+            oa.replay(res.ledger)                                          # type: ignore[call-arg]
+        with self.assertRaises(TypeError):
+            oa.replay(res.ledger, res.search_state_trace)                  # type: ignore[call-arg]
+        for args in ((res.search_state_trace, None), (None, res.state_trace), (res.search_state_trace[:-1], res.state_trace),
+                     (res.search_state_trace, [1] * len(res.ledger))):
             _, f = oa.replay(res.ledger, *args)
             self.assertEqual(len(f), 1, args)
             self.assertIn("commitment check", f[0])
+        # the cartographer-only helper is a different, explicitly named function
+        c_only, f = oa.replay_cartographer_only(res.ledger)
+        self.assertEqual(f, [])
+        self.assertEqual(c_only.snapshot(), res.carto.snapshot())
 
     def test_the_commitment_is_b2s_text_plus_the_cartographer_and_load_bearing_in_both_halves(self):
         res = oa.run_online(LAND, 9, 96, FAB)
@@ -162,9 +171,11 @@ class Ledger(unittest.TestCase):
                 else:
                     k, v = target["behaviour_delta"][0]
                     target["behaviour_delta"][0] = [k, (v + 1) % 64]
-                _, f = oa.replay(ledger)
+                _, f = oa.replay_cartographer_only(ledger)
                 self.assertEqual(len(f), 1, f)
                 self.assertIn(f"seq {target['seq']}", f[0])
+                _, f2 = oa.replay(ledger, res.search_state_trace, res.state_trace)
+                self.assertEqual(f2, f)                                    # the production replay names it too
 
 
 class EndToEnd(unittest.TestCase):

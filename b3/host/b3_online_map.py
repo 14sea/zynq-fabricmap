@@ -22,6 +22,7 @@ for p in (REPO_ROOT / "host", REPO_ROOT / "b3/host"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 import b1_carto as bc  # noqa: E402
+import b2_landscape as bl  # noqa: E402
 import b3_carto as carto_mod  # noqa: E402
 
 SCHEMA_PATH = REPO_ROOT / "b3/schemas/online_map.schema.json"
@@ -97,8 +98,9 @@ def verify(doc, ledger, truth) -> dict:
     cartographer version; the ledger binding (one entry per search evaluation — `ledger_entries` =
     `binding.budget` = the ledger's length —, the ledger digest, the final map version and anomaly
     count); the anomaly count itself (the prediction is 0; a nonzero count is a finding the
-    adjudicator classifies, never a silent number); and every decode against the truth mapping
-    (each wrong decode is a finding). Returns {"ok", "findings", "accuracy"}: ok iff findings is
+    adjudicator classifies, never a silent number); the truth mapping's own shape for every address
+    the document names (`truth_findings`); and every decode against the truth mapping (each wrong
+    decode is a finding). Returns {"ok", "findings", "accuracy"}: ok iff findings is
     empty. There is no optional input and no separate verdict-free accuracy path."""
     f: list[str] = []
     if not isinstance(ledger, list):
@@ -106,6 +108,9 @@ def verify(doc, ledger, truth) -> dict:
     if not isinstance(truth, dict) or not isinstance(truth.get("mapping"), dict):
         f.append("truth: not a truth mapping — the decodes cannot be audited")
     f += schema_findings(doc)
+    if f:
+        return {"ok": False, "findings": f, "accuracy": None}
+    f += truth_findings(truth, [e["genome_bit"] for e in doc["entries"]])
     if f:
         return {"ok": False, "findings": f, "accuracy": None}
     if doc["carto_version"] != carto_mod.CARTO_VERSION:
@@ -132,6 +137,27 @@ def verify(doc, ledger, truth) -> dict:
         e = next(x for x in doc["entries"] if x["genome_bit"] == gb)
         f.append(f"wrong decode: address {gb} at ({e['relation']['lut_index']}, {e['relation']['init_index']}), the truth is {tuple(truth['mapping'][gb])}")
     return {"ok": not f, "findings": f, "accuracy": acc}
+
+
+def truth_findings(truth: dict, addresses: list[int]) -> list[str]:
+    """The truth mapping's shape, before any use: every address the document names must be present,
+    and every relation used must be exactly two integers, LUT 0..5 and vector 0..63 (a bool is not
+    an int here). Named findings, never a KeyError / TypeError inside the audit."""
+    f: list[str] = []
+    mapping = truth["mapping"]
+    for i in addresses:
+        if i not in mapping:
+            f.append(f"truth: address {i} has no relation in the truth mapping")
+            continue
+        rel = mapping[i]
+        ok = isinstance(rel, (tuple, list)) and len(rel) == 2 and all(isinstance(x, int) and not isinstance(x, bool) for x in rel) \
+            and 0 <= rel[0] < bl.LUTS and 0 <= rel[1] < bl.VECTORS
+        if not ok:
+            f.append(f"truth: address {i} has a malformed relation {rel!r} (want (lut 0..5, vector 0..63))")
+        if len(f) >= 5:
+            f.append("truth: … (further truth findings suppressed)")
+            break
+    return f
 
 
 def accuracy(doc: dict, truth: dict) -> dict:

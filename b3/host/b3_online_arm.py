@@ -151,20 +151,9 @@ def run_online(landscape: bl.Landscape, operator_seed: int, budget: int, fabric:
                         cx.permutation_sha256(delta_perm) if delta_perm is not None else None)
 
 
-def replay(ledger: list[dict], search_states: list[str] | None = None,
-           commitments: list[str] | None = None) -> tuple[carto_mod.SpecimenCarto, list[str]]:
-    """The reference cartographer over a ledger: reproduces every version and decode, or names the
-    first entry that does not follow (the host's ledger replay, architecture §8 item 3). With
-    `search_states` (B2's search state text per entry, as the search replay regenerates it) and
-    `commitments` (the records' `state_sha256` per entry) it also recomputes the combined commitment
-    after every specimen and names the first one that differs. Giving one without the other, or
-    lists of the wrong length, is a named finding, never a silent skip."""
+def _replay_entries(ledger: list[dict], on_entry=None) -> tuple[carto_mod.SpecimenCarto, list[str]]:
     c = carto_mod.SpecimenCarto()
     f: list[str] = []
-    check = search_states is not None or commitments is not None
-    if check and (search_states is None or commitments is None or len(search_states) != len(ledger) or len(commitments) != len(ledger)):
-        return c, [f"commitment check: search_states / commitments must both be given with one entry per ledger entry "
-                   f"({None if search_states is None else len(search_states)} / {None if commitments is None else len(commitments)} for {len(ledger)})"]
     for n, e in enumerate(ledger):
         if c.version != e["map_version"]:
             f.append(f"seq {e['seq']}: map_version {e['map_version']} but the replay is at {c.version}")
@@ -176,12 +165,38 @@ def replay(ledger: list[dict], search_states: list[str] | None = None,
         if c.version != e["map_version_after"] or c.anomalies != e["anomalies"]:
             f.append(f"seq {e['seq']}: version_after/anomalies {e['map_version_after']}/{e['anomalies']} but the replay is at {c.version}/{c.anomalies}")
             break
-        if check:
-            want = state_sha256(search_states[n], c.state_text())
-            if want != commitments[n]:
-                f.append(f"seq {e['seq']}: state_sha256 {commitments[n][:12]}… is not the recomputed {want[:12]}…")
+        if on_entry is not None:
+            what = on_entry(n, e, c)
+            if what:
+                f.append(what)
                 break
     return c, f
+
+
+def replay_cartographer_only(ledger: list[dict]) -> tuple[carto_mod.SpecimenCarto, list[str]]:
+    """The cartographer over a ledger WITHOUT the commitment check — for the gate and for unit tests
+    of the cartographer. Its empty findings list is not an autonomy replay and must never be reported
+    as one: the production replay is `replay`, which requires the commitments."""
+    return _replay_entries(ledger)
+
+
+def replay(ledger: list[dict], search_states: list[str], commitments: list[str]) -> tuple[carto_mod.SpecimenCarto, list[str]]:
+    """THE production ledger replay (architecture §8 item 3): the reference cartographer over the
+    ledger reproduces every version and decode, AND after every specimen the combined commitment
+    sha256(search_states[n] | cartographer text) equals commitments[n] — the records' `state_sha256`.
+    All three inputs are required (there is no way to run this without the commitments); a list of
+    the wrong type or length is a named finding, never a silent skip."""
+    for name, val in (("search_states", search_states), ("commitments", commitments)):
+        if not isinstance(val, list) or len(val) != len(ledger) or not all(isinstance(x, str) for x in val):
+            return carto_mod.SpecimenCarto(), [f"commitment check: {name} must be a list of one string per ledger entry "
+                                                f"({type(val).__name__ if not isinstance(val, list) else len(val)} for {len(ledger)})"]
+
+    def check(n, e, c):
+        want = state_sha256(search_states[n], c.state_text())
+        if want != commitments[n]:
+            return f"seq {e['seq']}: state_sha256 {commitments[n][:12]}… is not the recomputed {want[:12]}…"
+        return None
+    return _replay_entries(ledger, check)
 
 
 def end_to_end_frozen(best_trace_f: list[int], base_fit: int, total_budget: int) -> int:

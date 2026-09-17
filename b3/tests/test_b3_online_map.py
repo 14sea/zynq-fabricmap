@@ -69,6 +69,12 @@ class OnlineMap(unittest.TestCase):
             "a position decoded twice": (self._bad(lambda d: d["entries"][0]["relation"].update(d["entries"][1]["relation"])), self.res.ledger, TRUTH, "two addresses"),
             "decoded_count": (self._bad(lambda d: d.__setitem__("decoded_count", d["decoded_count"] + 1)), self.res.ledger, TRUTH, "decoded_count"),
             "a shorter ledger": (self.doc, self.res.ledger[:-1], TRUTH, "ledger_entries 300 is not the ledger's 299"),
+            # the owner's truth counterexamples of 2026-09-17: KeyError / TypeError before
+            "truth with an empty mapping": (self.doc, self.res.ledger, {"mapping": {}}, "truth: address"),
+            "truth with address 0 only": (self.doc, self.res.ledger, {"mapping": {0: TRUTH["mapping"][0]}}, "has no relation"),
+            "truth with a None relation": (self.doc, self.res.ledger, {"mapping": {**TRUTH["mapping"], self.doc["entries"][0]["genome_bit"]: None}}, "malformed relation"),
+            "truth with a relation out of domain": (self.doc, self.res.ledger, {"mapping": {**TRUTH["mapping"], self.doc["entries"][0]["genome_bit"]: (6, 0)}}, "malformed relation"),
+            "truth with a bool relation": (self.doc, self.res.ledger, {"mapping": {**TRUTH["mapping"], self.doc["entries"][0]["genome_bit"]: (True, 1)}}, "malformed relation"),
         }
         for name, (doc, ledger, truth, needle) in cases.items():
             with self.subTest(case=name):
