@@ -8,26 +8,30 @@ acts only as notary, auditor and collector. Every board session needs an owner-s
 ruling pair, is judged fail-closed by an offline adjudicator, and is archived as observed.
 Nothing is re-run to make a result look better.
 
-## Where the line is (2026-09-14)
+## Where the line is (2026-09-17)
 
 | stage | question | state |
 |---|---|---|
 | **B1** autonomous mapping | can the board build a correct map of 292 certified LUT-INIT bits from its own probes? | **complete** — carrier qualified by B1Q PASS on `17A6` (2026-09-08, attempt 4); B1 mapping PASS later that day, self-map `c6a4b23e…` frozen |
-| **B2** map utility | does a search that consults that map reproduce, record for record, the host-predicted outcome? | **S2 QUALIFIED** — first B2Q PASS on silicon (2026-09-14), calibration 2976.98 evals/h pinned; S3 plan not yet pinned; no B2 mapping session authorised |
+| **B2** map utility | does a search that consults that map reproduce, record for record, the host-predicted outcome? | **complete — PASS / SUPPORTED, p = 0.01953125** (lifecycle 2 on `17A6`, 2026-09-16..17: B2Q PASS, two B2 sessions PASS covering the nine preregistered pairs, pooled primary 8/1/0 equal to the prediction; `docs/b2_result_2026_09_17.md`) |
 | **B3** closed loop | map → evolve → re-map on the board | host-only architecture (`docs/b3_architecture.md`) |
 | **B4** expansion | FF and routing classes, on sacrificial silicon | not started |
 
 Standing constraints that no PASS lifts on its own:
 
 - **Transport stop-loss.** Single-byte deletions on the CH340 UART path were observed on
-  WSL and on native Linux, cause unresolved. The 2026-09-14 B2Q ran as one explicitly
-  authorised exception; any further board session needs its own transport disposition.
+  WSL and on native Linux, cause unresolved. The lifecycle-2 B2Q and both B2 sessions each
+  ran under its own explicitly authorised, session-scoped exception written into that
+  session's ruling pair; every exception was spent by its session. The stop-loss itself is
+  not lifted; any further board session needs its own transport disposition.
 - **Owner rulings only.** Rulings live in `rulings/` (gitignored), are bound to the exact
   manifest, preregistration and image digests, and are consumed by the run.
 - **Evidence is never rewritten.** Corrections are added beside the original.
 
-The lifecycle B2 is on: S0 manifest → S1 freeze → **B2Q** on silicon → **S2 qualify** (here)
-→ S3 plan → B2 sessions. See `docs/b2_preregistration.md` §8.
+B2's lifecycle 2 ran S0 manifest → S1 freeze → **B2Q** on silicon → S2 qualify → S3 plan →
+two B2 sessions → pooled primary, and **closed at S3, manifest `aec84514…`** — the
+preregistration defines no post-B2 transition and none was added (`docs/b2_preregistration.md`
+§8, §8a). Lifecycle 1 stopped before its B2 sessions (`docs/b2_s3_frozen_test_decision_2026_09_16.md`).
 
 ## Verify it yourself
 
@@ -45,7 +49,7 @@ cd zynq-fabricmap
 # S2 verify needs the production re-adjudicator, which the CLI deliberately does not supply:
 python3 -B -c 'import sys,json; sys.path.insert(0,"host"); import b2_manifest as bm, b2_runner as rn; \
   m=json.loads(bm.MANIFEST.read_text()); v=bm.verify(m, readjudicate=rn.readjudicator(m)); \
-  print(v["stage"], v["qualified"], v["refusal"])'      # S2 True None
+  print(v["stage"], v["qualified"], v["refusal"])'      # S3 True None
 python3 -B host/b2_test_report.py                     # whole suite; needs a clean tree
 python3 -B host/verify_local_map.py                   # the B1 self-map against the certificate
 scripts/extract_prjxray_subset.py --verify            # the frozen prjxray subset
@@ -82,7 +86,17 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
   Attempt 3's adjudicator returned HOLD; its session disposition was LOST. Carrier qualified.
 - **2026-09-07..14** — the transport investigation (WSL and native Linux, loopback and
   board-side controls), observations only, stop-loss kept.
-- **2026-09-14** — first B2Q on silicon: PASS, S2 qualified.
+- **2026-09-14** — first B2Q on silicon: PASS, S2 qualified (lifecycle 1).
+- **2026-09-16** — lifecycle 1's S3 plan was legal but contradicted a test frozen in the pin
+  table at S1; contained, not patched (`docs/b2_s3_frozen_test_decision_2026_09_16.md`).
+  Lifecycle 2 started over on `b2-lifecycle-2`: pinned-test audit, preregistration v0.3,
+  new pin table, S0 → S1 (post-freeze proof) → B2Q PASS on `17A6` (3016.40 evals/h) → S2 →
+  S3 (final clean-tree proof), each step a separately authorised unit.
+- **2026-09-16..17** — the two B2 sessions on `17A6`, pairs 0–4 (6012 records) and 5–8
+  (4810 records), both PASS / COMPLETED; the pooled primary over the nine pairs equalled
+  the preregistered prediction (8/1/0, p = 0.01953125, SUPPORTED) — **B2 PASS**
+  (`docs/b2_result_2026_09_17.md`). Session evidence archived in a hybrid form with
+  executable fresh-restore / re-judge scripts.
 
 The full running log that used to be this README is preserved verbatim at
 `docs/README_archive_2026_09_14.md`.
