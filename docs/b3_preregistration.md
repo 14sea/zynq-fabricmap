@@ -1,4 +1,9 @@
-# B3 — the closed loop on the known 292 bits: preregistration (DRAFT v0.1.1, host-only, 2026-09-17)
+# B3 — the closed loop on the known 292 bits: preregistration (DRAFT v0.1.2, host-only, 2026-09-17)
+
+> **v0.1.1 → v0.1.2 (the owner's review of `b729c39`).** B3Q's PASS count no longer counts
+> the holdout twice (123 fitness values = 120 search + 3 champion holdout; 40 ledger entries;
+> 2 baseline records; 125 records); arm-position equality holds when N is a multiple of 3;
+> control X and H2 are as architecture v0.2.2 states them.
 
 > **v0.1 → v0.1.1 (the owner's review of `4fbb305`, HOLD on six P2s).** (1) The gate's
 > bootstrap algorithm and seeds are B2's by import (architecture §9); H9 is a sign test at
@@ -15,7 +20,7 @@
 > diverges. The 30 000 bound is a search-evaluation cap. Accepted as ruled: d ≥ 0.5, the
 > 0.85 margin.
 
-**Status: DRAFT v0.1.1 — not frozen, not owner-approved, NO BOARD RULING, NO IMAGE BUILT, NO GATE
+**Status: DRAFT v0.1.2 — not frozen, not owner-approved, NO BOARD RULING, NO IMAGE BUILT, NO GATE
 RUN, NO PIN TABLE, NO MANIFEST.** This is step 1 of the B3 lifecycle as the pinned-surface
 audit fixed it (`docs/b3_lifecycle1_pinned_surface_audit_2026_09_17.md` §8, PASS at `3a2063d`):
 architecture v0.2 (`docs/b3_architecture.md`) and this draft, both unpinned by B2, for the
@@ -99,7 +104,7 @@ is a HOLD / KILL of the instrument, §4); anything B4 asks.
 | search-evaluation cap | `N × 3 × B*` ≤ 30 000 (H5); holdout evaluations, baselines and session record totals are outside it and are accounted by the plan |
 | mapping cost charged to F | **333** evaluations (B1's budget: 9 code probes + 292 confirmations + 32 pairs) — an evaluation-count constant, carried in the IDENT |
 | master seed | the first 4 bytes of sha256(`b3-session|` ‖ the instrument commit); pairs `(landscape, operator)` from one Rng stream; the fixed excluded seeds **and every archived set** explicitly excluded — B2's gate runs 1 and 3, the B3 simulation, **B2's 9 session pairs and its B2Q pair**, the B3 gate, the B3Q pair — `evidence/b3/plan.json` `seed_derivation` records every set; disjointness enforced, not assumed |
-| arm order | pair r runs the fixed prefix-balanced sequence's (r mod 6)-th element: **RFO, FOR, ORF, ROF, OFR, FRO** — across any N the number of times an arm occupies a position differs by at most 1 between arms, and is equal only when N is a multiple of 6; the order is part of the plan and the prediction |
+| arm order | pair r runs the fixed prefix-balanced sequence's (r mod 6)-th element: **RFO, FOR, ORF, ROF, OFR, FRO** — across any N the number of times an arm occupies a position differs by at most 1 between arms, and is equal exactly when N is a multiple of 3 (RFO, FOR, ORF already place every arm once in every position); the order is part of the plan and the prediction |
 | records | **per pair 3 × B* + 3** (three searches + three champion holdout evaluations, no holdout-mode bit); **per session** 2 baselines + the session's pairs; the `ledger` sub-block is on the O arm's **B* search records only** (an O holdout record evaluates a finished genome and does not update the map), under `specimen_ledger` **1.1.0** at `b3/schemas/specimen_ledger.schema.json` (architecture §7); the frozen `schemas/specimen_ledger.schema.json` 1.0.0 stays as it is |
 | online map document | `online_map` 1.0.0 (`b3/schemas/online_map.schema.json`) and its verifier `b3/host/b3_online_map.py`: schema, internal consistency, accuracy against the B1 truth mapping (host-only, post hoc). **Not** B1's map-lifecycle semantics (nine code probes, 32 interaction edges): neither required nor claimed |
 | audit policy | **all-self-reporting** (B2's, the owner's decision of 2026-09-10): every record's six readout words served and host-verified; every fitness and every behaviour delta recomputed from measured readouts |
@@ -184,9 +189,10 @@ against the **S1 manifest** (`manifest_at_run.json` in the evidence dir): load a
 provisioning, the baselines, **one pair at budget 40 in all three arms** (the owner's choice:
 3 × 40 + 3 = **123 scored records**, **40 ledger entries**, **125 records** with the two
 baselines — enough O-arm records with ledger bytes for the rate to mean something), the
-refused unsigned control; every record audited; PASS = the 123 fitness values, the three
-champions' holdout values and the 40 ledger entries (decodes, versions, 0 anomalies) equal the
-prediction for the qualification seeds (`b3-qualification|`, the same exclusions plus B3's own
+refused unsigned control; every record audited; PASS = the **123 fitness values (120 search
+plus 3 champion holdout)**, the **40 ledger entries** (decodes, versions, 0 anomalies) and the
+**2 baseline records** (zero readout, base counters) equal the prediction for the qualification
+seeds (`b3-qualification|`, the same exclusions plus B3's own
 set). The session's **measured all-self-reporting rate** goes into its adjudication and, on
 pinning (S2), into the manifest's `calibration`; the split uses `0.85 × R_measured` (§2).
 
@@ -270,7 +276,7 @@ pattern, `docs/b2_lifecycle2_pinned_test_audit_2026_09_16.md`) and precedes step
 Decided by the owner on v0.1 (2026-09-17): d ≥ 0.5; the 30 000 search-evaluation cap; the
 0.85 margin; B3Q at budget 40; the conditional two-primary design with the resolution rule;
 control X as a fixed derangement; the prefix-balanced arm order. Asked now: the owner's review
-of architecture v0.2.1 and this v0.1.1 — that the six P2s are closed as written (§9's pinned
+of architecture v0.2.2 and this v0.1.2 — that the six P2s and the four points on `b729c39` are closed as written (§9's pinned
 bootstrap and H9; control X; the arm order; the ledger scope and schema version; the online-map
 verifier; the resolution rule and falsifier 2). Nothing else: no pinned edit, no gate run, no
 pin table, no manifest, no image, no ruling, no board.

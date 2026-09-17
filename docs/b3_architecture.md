@@ -1,4 +1,12 @@
-# B3 — the closed loop: architecture and host simulation (v0.2.1, host-only, 2026-09-17)
+# B3 — the closed loop: architecture and host simulation (v0.2.2, host-only, 2026-09-17)
+
+> **v0.2.1 → v0.2.2 (the owner's review of `b729c39`, HOLD on three P2s and one P3).** Control
+> X's move contract is made consistent (X's operator consumes X's own scrambled map; moves,
+> readouts and fitness diverge naturally; π touches only what enters X's cartographer; the
+> scramble's self-consistency is proved by a shadow cartographer isomorphic under π) and its
+> PRNG, seed byte order and permutation serialisation are named; H2's sign condition is one
+> condition (both signs within one budget); the arm-position equality holds when N is a
+> multiple of **3**, not 6.
 
 > **v0.2 → v0.2.1 (the owner's review of `4fbb305`, HOLD on six P2s; the decisions on d ≥ 0.5,
 > the 30 000 cap, the 0.85 margin, B3Q at budget 40 and the conditional two-primary design
@@ -259,8 +267,9 @@ certificate; `decoded` is what the board believes, audited afterwards (§8).
 evaluations, no holdout-mode bit — as B2), of which B carry a ledger entry. Per session:
 2 baselines + the session's pairs. **Arm order** within pair r: the (r mod 6)-th of the fixed
 prefix-balanced sequence **RFO, FOR, ORF, ROF, OFR, FRO** — over any N the number of times an
-arm occupies a position differs by at most 1 between arms, and is equal only when N is a
-multiple of 6; the order is part of the plan and the prediction. The ledger adds bytes to
+arm occupies a position differs by at most 1 between arms, and is equal exactly when N is a
+multiple of **3** (the first three permutations already place every arm once in every
+position); the order is part of the plan and the prediction. The ledger adds bytes to
 every O-arm search record, so the all-self-reporting rate is B3's own (B3Q at budget 40:
 3 × 40 + 3 = 123 scored records, 40 ledger entries, plus 2 baselines = 125 records), never
 B2's 3 016 / h.
@@ -335,14 +344,36 @@ row is evaluated at `B*`.
 | id | criterion | threshold |
 |---|---|---|
 | H1 non-saturation | the 95th percentile of arm O's best-so-far at `B*` is below the ceiling (40); arm R's median at `B*` exceeds the base fitness | both hold |
-| H2 not a definitional lock | var(Δ1_r) > 0; Δ1_r takes **both signs at some grid budget** (v0.1.1: negative at 300, positive from 600 — the sign is a property of the budget, which is what a lock cannot show); and the same decision procedure applied to control **X** (below) does not reject H0 in ≥ 90 % of 1 000 bootstrap experiments of size N (`bootstrap_reject_rate`, seed 7) | holds |
-| H3 a wrong online map does not profit | control **X — scrambled specimens**: the online arm whose cartographer receives every `behaviour_delta` mapped through **one global derangement π of all 384 (LUT, vector) positions** — no fixed point, drawn once for the whole gate run from its own seed (the first 4 bytes of sha256(`b3-gate-x|` ‖ the instrument commit), seeded Fisher–Yates repeated until no position maps to itself, deterministic), the same π for every specimen of every seed and budget; π changes **only** what enters the cartographer — the fitness, the readouts, the search RNG stream and the move are untouched, so X's map is self-consistent (a bijection of positions) and grows at O's rate while naming wrong columns; the gate report records `permutation_sha256` (sha256 of the 384-entry list) and the seed. mean Δ_X ≤ 10 % of mean Δ1 and X's sign test against R is not significant over S | holds |
+| H2 not a definitional lock | var(Δ1_r) > 0 at `B*`; **there exists a grid budget B at which both `positives(Δ1(B)) > 0` and `negatives(Δ1(B)) > 0`** (one condition, evaluated within one budget; v0.1.1 already shows it at 300: 41 positives, 130 negatives — the mean's change of sign across budgets is *reported* next to it and is not a criterion); and the same decision procedure applied to control **X** (below) does not reject H0 in ≥ 90 % of 1 000 bootstrap experiments of size N (`bootstrap_reject_rate`, seed 7) | holds |
+| H3 a wrong online map does not profit | control **X — scrambled specimens** (the contract below): mean Δ_X (X − R) ≤ 10 % of mean Δ1 and X's sign test against R is not significant over S; X's map growth (decoded count per grid budget) is reported, not assumed equal to O's | holds |
 | H4 the frozen map is the bound the online map approaches | search accounting: arm O's median at `B*` ≥ 80 % of arm F's; end-to-end: the sign test on Δ2 rejects (O − F > 0 at `B*`) | both hold |
 | H5 effect, power, N | Cohen's d of {Δ1_r} ≥ 0.5 (the online arm pays the poor-map cost first, §5.3; 0.8 is B2's threshold for a map that is correct from evaluation 0); `N = N(B*)`; `N × 3 × B*` ≤ **30 000** as a **search-evaluation cap** — holdout evaluations, baselines and the session record totals are counted separately by the plan and are not inside this number (B2's cap was 13 000 for two arms); how many sessions the records take is decided by the B3Q-measured rate under the split rule with its margin, never by planning rates | holds |
 | H6 no fixed-seed lock | S ≥ 200; N ≥ 8; board seeds under `b3-session|` with every archived set excluded (gate runs, the B3 simulation, B2's plan and B2Q seeds, this gate); var(Δ1_r) > 0 | holds |
 | H7 the online map is a map | over S: 0 wrong decodes and 0 anomalies in the ideal model (a nonzero count is a defect of the cartographer or the model, not a result); the median decoded count at `B*` ≥ 146 (half of 292); the fraction of seeds whose map is complete by the largest grid budget reported | holds |
 | H8 ledger replay | for every seed, replaying the ledger reproduces every map version and every decode (EXACT); the ledger validates against the schema | holds |
 | H9 (a condition on the claim, not on passing) | the one-sided exact sign test on Δ2 (O − end-to-end F) gives **p ≤ 0.05 at every grid budget B ≥ `B*`** (at `B*` this is H4's second half); mean and median Δ2 per budget are reported but are not the criterion | if H9 fails, the preregistration's final claim is primary 1 alone and Δ2 is reported (preregistration §1, the resolution rule) |
+
+**Control X, precisely.** X is the online arm run by the **same algorithm and the same RNG
+rule as O** (`b1_carto.Rng(operator_seed)`, the same landscape and operator seeds per pair,
+the same engine and operator code path); its operator **consumes X's own scrambled map**, so
+after the first differing decode X's moves, readouts and fitness values diverge from O's
+naturally — nothing is forced equal. One global permutation **π of the 384 positions**
+(index = 64 · LUT + vector, in (k, v) order) is drawn **once per gate run**: `seed_X =
+b2_search.master_seed("b3-gate-x", instrument_commit)` (= `int.from_bytes(sha256("b3-gate-x|" ‖
+commit)[:4], "big")`, the rule every B-line seed uses); PRNG = the instrument's `b1_carto.Rng`
+seeded with `seed_X`; Fisher–Yates from i = 383 down to 1 with `j = rng.uniform(i + 1)`, and if
+the result has any fixed point the whole shuffle is repeated on the **same continuing stream**
+until it has none (a derangement; deterministic). π acts on **only one thing**: the
+`behaviour_delta` of each of X's specimens is mapped position-wise through π **before it
+enters X's cartographer**; the readouts, the fitness, the search state and the move it
+produced are untouched. **Self-consistency is proved, not assumed:** a **shadow
+cartographer** that takes no part in the search is fed X's actual specimens with their
+*unpermuted* deltas; after every specimen the gate requires the shadow's state and X's
+cartographer state to be **isomorphic under π** — same version, same anomaly count, and for
+every address the X candidate set / decoded position equals π applied to the shadow's (EXACT
+per specimen; a single mismatch fails the gate run as a defect, not a result). The gate
+report records `seed_X` and `permutation_sha256` = sha256 of the canonical JSON array
+`[π(0), …, π(383)]` (compact, no spaces, UTF-8).
 
 *Controls, all on the same seeds and rows:* **X** scrambled specimens (H2, H3); **F** is
 itself the positive control for the operator (B2 established that the correct map beats R);
@@ -384,8 +415,8 @@ carries them as placeholders until then.
 
 | file | status | role |
 |---|---|---|
-| `docs/b3_architecture.md` | this document, v0.2.1 | design; the gate criteria of §9 |
-| `docs/b3_preregistration.md` | DRAFT v0.1.1 | what a board session is judged by |
+| `docs/b3_architecture.md` | this document, v0.2.2 | design; the gate criteria of §9 |
+| `docs/b3_preregistration.md` | DRAFT v0.1.2 | what a board session is judged by |
 | `docs/b3_lifecycle1_pinned_surface_audit_2026_09_17.md` | PASS (`3a2063d`) | the namespace / pin ruling (§6), the verifier contract, the lifecycle order, the stage-aware test rules, the authority boundary |
 | `host/b3_online.py`, `host/b3_sim.py`, `tests/test_b3_online.py` | **frozen by B2** | the v1.1 host reference and the v0.1.1 simulation; never edited |
 | `evidence/b3/sim/`, `evidence/b3/sim_v0.1.1/` | frozen (the first a B2 verify input) | the v0.1 / v1.1 simulations |
