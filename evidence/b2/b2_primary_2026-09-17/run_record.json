@@ -1,0 +1,112 @@
+{
+ "schema": "b2_primary_adjudication_run_record",
+ "schema_version": "1.0.0",
+ "at_utc": "2026-09-17T07:00:58Z",
+ "authorization": "the owner's explicit release of one host-only pooled primary adjudication (2026-09-17), after accepting eefda65; common validator kept, no --no-common, no --seeds, scope run, a new empty output directory",
+ "command": "python3 -B host/b2_adjudicate.py --run-log /tmp/b2_s1_fresh_restore_yc0jzeox/run_log.json --run-log /tmp/b2_s1_fresh_restore_uo8c0gry/run_log.json --plan evidence/b2/plan.json --prediction evidence/b2/prediction.json --scope run --out evidence/b2/b2_primary_2026-09-17/adjudication.json",
+ "exit_code": 0,
+ "attempt1": "attempt1_shell_error/: the adjudicator was NOT invoked (zsh did not word-split an unquoted variable; exit 127); preserved as observed; this record is the single actual run",
+ "inputs": {
+  "session_1": {
+   "evidence_dir": "evidence/b2/b2_17A6_2026-09-16-01",
+   "archive_sha256": "607b362be8bd4c96d7a712a681eaea5c31e9d6586691f6f00ceb1db647f610ab",
+   "restored_by": "evidence/b2/b2_17A6_2026-09-16-01/restore_rejudge.py (env -i, exit 0, re-judge equal to the stored adjudication)",
+   "restored_dir": "/tmp/b2_s1_fresh_restore_yc0jzeox",
+   "run_log_sha256": "ddaa74c813d27409e257dea197a9a351370bd9ba0f66eff23233894ca1087eae"
+  },
+  "session_2": {
+   "evidence_dir": "evidence/b2/b2_17A6_2026-09-17-01",
+   "archive_sha256": "78f5bffda31a09b27e0527a04c83c43c07b2e5927a4b9df254d9e47f6f667b66",
+   "restored_by": "evidence/b2/b2_17A6_2026-09-17-01/restore_rejudge.py (env -i, exit 0, re-judge equal to the stored adjudication)",
+   "restored_dir": "/tmp/b2_s1_fresh_restore_uo8c0gry",
+   "run_log_sha256": "a2556650ebf0fe844980162640af28d85e6cb6e9cf7256cc781b0d5afa1d01dc"
+  },
+  "plan": {
+   "path": "evidence/b2/plan.json",
+   "sha256": "62dc85934eec02e2fe31a90b336d0fd320d03a4f54bf90537e944ece72458b9c"
+  },
+  "prediction": {
+   "path": "evidence/b2/prediction.json",
+   "sha256": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731"
+  },
+  "manifest_S3": {
+   "path": "manifests/b2_manifest.json",
+   "sha256": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0"
+  }
+ },
+ "outputs": {
+  "adjudication.json": {
+   "bytes": 1722,
+   "sha256": "35becfe24c906cba62a9483dcd27260658697e00dfe1815fdd14628c2cd259af"
+  },
+  "stdout.txt": {
+   "bytes": 1722,
+   "sha256": "35becfe24c906cba62a9483dcd27260658697e00dfe1815fdd14628c2cd259af"
+  },
+  "stderr.txt": {
+   "bytes": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+ },
+ "observed": {
+  "deltas": [
+   2,
+   5,
+   6,
+   3,
+   4,
+   6,
+   1,
+   -2,
+   5
+  ],
+  "fitness_sequence_length": 10818,
+  "fitness_sequence_sha256": "0b81b34369b73ebc24ef604014bae245cc6e0c67c176bc5988fbdbd50ee95f37",
+  "findings": [],
+  "kills": [],
+  "measurement": {
+   "readouts_served": 10822,
+   "records_checked": 10818
+  },
+  "primary": {
+   "alpha": 0.05,
+   "negatives": 1,
+   "positives": 8,
+   "sign_test_p": 0.01953125,
+   "ties": 0,
+   "verdict": "map-guided > random-safe SUPPORTED"
+  },
+  "outcome": "PASS",
+  "scope": "run",
+  "not_checked_here": [
+   "manifest pins",
+   "carrier qualification",
+   "instrument rate / deadline / CRC budgets",
+   "evidence exports",
+   "ruling binding"
+  ]
+ },
+ "preregistered_expectation_from_prediction_json": {
+  "deltas": [
+   2,
+   5,
+   6,
+   3,
+   4,
+   6,
+   1,
+   -2,
+   5
+  ],
+  "fitness_sequence_length": 10818,
+  "sequence_digest": "0b81b34369b73ebc24ef604014bae245cc6e0c67c176bc5988fbdbd50ee95f37",
+  "positives_negatives_ties": [
+   8,
+   1,
+   0
+  ],
+  "p_one_sided": 0.01953125,
+  "note": "stated by the owner at release from evidence/b2/prediction.json; an expectation the observation is compared against, not an observation"
+ },
+ "note": "one authorised run; command, inputs and outputs preserved as observed; the comparison with the expectation and any verdict beyond the adjudicator's own are the owner's; no push, manifest transition, ruling or board action"
+}
