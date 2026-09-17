@@ -522,16 +522,43 @@ def refuse_no_clobber(out: Path) -> None:
     refuse_bad_out(out)
 
 
-_rename = os.rename                 # module-level so a test can make the final rename fail
 _copyfile = shutil.copyfile         # module-level so a test can make the second file's copy fail
+
+
+def _read_staged(p: Path) -> bytes:  # module-level so a test can make the read-back fail
+    return p.read_bytes()
+
+
+def _rename_noreplace(src: str, dst: str) -> None:
+    """rename(2) with RENAME_NOREPLACE: atomic, and it never replaces an existing `dst` of any kind — an
+    empty directory included, which a plain os.rename would silently replace (the TOCTOU the owner
+    injected between an exists() check and the rename). FileExistsError when dst exists; OSError
+    otherwise (a filesystem without the flag gives EINVAL: no fallback to a replacing rename)."""
+    import ctypes
+    import errno
+    libc = ctypes.CDLL(None, use_errno=True)
+    if not hasattr(libc, "renameat2"):
+        raise OSError(errno.ENOSYS, "renameat2 is not available: no atomic no-replace rename on this system")
+    libc.renameat2.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+    AT_FDCWD, RENAME_NOREPLACE = -100, 1
+    if libc.renameat2(AT_FDCWD, os.fsencode(src), AT_FDCWD, os.fsencode(dst), RENAME_NOREPLACE) != 0:
+        e = ctypes.get_errno()
+        if e in (errno.EEXIST, errno.ENOTEMPTY):
+            raise FileExistsError(e, os.strerror(e), src, None, dst)
+        raise OSError(e, os.strerror(e), src, None, dst)
+
+
+_rename = _rename_noreplace         # module-level so a test can make the final rename fail
 
 
 def publish(built: Path, out: Path, expected: dict[str, str]) -> None:
     """No-clobber, atomic: the built files are copied into a staging directory created beside --out (the
-    same filesystem), the staged set is verified to be exactly `expected` (name -> sha256), and the
-    staging directory becomes --out by ONE directory rename. --out must still not exist at that
-    moment. On any failure the staging directory is removed and --out does not exist; nothing else
-    under out.parent is touched."""
+    same filesystem), the staged set is read back and verified to be exactly `expected` (name ->
+    sha256), and the staging directory becomes --out by ONE rename with RENAME_NOREPLACE — the
+    kernel refuses to replace anything that exists at --out at that instant (no exists() check can
+    close that window). On any failure — a copy, the read-back, the verification, the rename, a path
+    that appeared — the staging directory is removed, --out is whatever it was (never ours), and
+    nothing else under out.parent is touched."""
     if out.exists() or out.is_symlink():
         raise Refusal(f"--out {_rel(out)} appeared during the run: the gate never overwrites an output")
     with io_refusal(f"cannot create {_rel(out.parent)}"):
@@ -543,13 +570,16 @@ def publish(built: Path, out: Path, expected: dict[str, str]) -> None:
         for name in sorted(expected):
             with io_refusal(f"cannot stage {name}"):
                 _copyfile(str(built / name), str(staging / name))
-        staged = {f.name: sha256_bytes(f.read_bytes()) for f in staging.iterdir()}
+        with io_refusal("cannot read back the staged files"):
+            staged = {f.name: sha256_bytes(_read_staged(f)) for f in staging.iterdir()}
         if staged != expected:
             raise Refusal(f"the staged set is not the built set: {sorted(staged)} vs {sorted(expected)} (or a digest differs) — nothing published")
-        if out.exists() or out.is_symlink():
-            raise Refusal(f"--out {_rel(out)} appeared during the run: the gate never overwrites an output")
-        with io_refusal(f"cannot publish {_rel(out)} (rename)"):
+        try:
             _rename(str(staging), str(out))
+        except FileExistsError:
+            raise Refusal(f"--out {_rel(out)} appeared during the run: the gate never overwrites an output (the rename refused to replace it)") from None
+        except OSError as e:
+            raise Refusal(f"cannot publish {_rel(out)} (rename) ({e.__class__.__name__}: {e})") from None
         staging = None
     finally:
         if staging is not None:

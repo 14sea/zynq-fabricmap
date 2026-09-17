@@ -176,6 +176,28 @@ class Lifecycle2Constants(unittest.TestCase):
             self.assertFalse(out2.exists(), what)
             self.assertEqual(snap(), before, what)                                               # no staging directory, the sibling and gate_2 untouched
             self.assertEqual(sorted(x.name for x in Path(tempfile.gettempdir()).glob("b3_gate_*")), tmp_before, what)
+        # the owner's fourth HOLD: (a) a path created at --out AFTER every check and BEFORE the rename — the
+        # rename itself refuses (RENAME_NOREPLACE); the injected empty directory stays exactly as injected
+        real_read = g._read_staged
+        def read_then_race(f, calls=[]):
+            b = real_read(f)
+            calls.append(1)
+            if len(calls) == 2:                                             # the last staged file read back: the window before the rename
+                out2.mkdir()
+            return b
+        err = io.StringIO()
+        with clean["git_dirty"], clean["git_head"], mock.patch.object(g, "_read_staged", side_effect=read_then_race), contextlib.redirect_stderr(err):
+            self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(out2)]), 2)
+        self.assertTrue(err.getvalue().startswith("REFUSED: --out"), err.getvalue()); self.assertIn("the rename refused to replace it", err.getvalue())
+        self.assertTrue(out2.is_dir()); self.assertEqual(list(out2.iterdir()), [])       # the injected directory, untouched — not our files
+        self.assertEqual(sorted(x.name for x in parent.iterdir()), ["gate_2", "gate_3", "sibling.json"])   # no staging left
+        out2.rmdir(); self.assertEqual(snap(), before)
+        # (b) the staged read-back failing is a named refusal, not a traceback
+        err = io.StringIO()
+        with clean["git_dirty"], clean["git_head"], mock.patch.object(g, "_read_staged", side_effect=OSError(5, "synthetic staged read failure")), contextlib.redirect_stderr(err):
+            self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(out2)]), 2)
+        self.assertTrue(err.getvalue().startswith("REFUSED: cannot read back the staged files"), err.getvalue())
+        self.assertNotIn("Traceback", err.getvalue()); self.assertFalse(out2.exists()); self.assertEqual(snap(), before)
         # a staged set that is not the built set is refused before the rename
         real_copy2 = g._copyfile
         def corrupting_copy(src, dst):
@@ -186,6 +208,28 @@ class Lifecycle2Constants(unittest.TestCase):
         with clean["git_dirty"], clean["git_head"], mock.patch.object(g, "_copyfile", side_effect=corrupting_copy), contextlib.redirect_stderr(err):
             self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(out2)]), 2)
         self.assertIn("the staged set is not the built set", err.getvalue()); self.assertFalse(out2.exists()); self.assertEqual(snap(), before)
+
+    def test_the_final_rename_never_replaces_anything(self):
+        """_rename_noreplace: onto an absent path it renames; onto an EMPTY directory (which os.rename
+        would replace), a non-empty directory, a file or a symlink it raises FileExistsError and both
+        sides are untouched."""
+        t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
+        def fresh_src():
+            s = t / "src"; shutil.rmtree(s, True); s.mkdir(); (s / "a").write_bytes(b"A"); return s
+        src = fresh_src()
+        g._rename_noreplace(str(src), str(t / "absent"))
+        self.assertFalse(src.exists()); self.assertEqual((t / "absent" / "a").read_bytes(), b"A")
+        cases = {"empty dir": lambda d: d.mkdir(), "non-empty dir": lambda d: (d.mkdir(), (d / "x").write_bytes(b"X")),
+                 "file": lambda d: d.write_bytes(b"F"), "symlink": lambda d: d.symlink_to(t / "absent")}
+        for what, make in cases.items():
+            dst = t / what.replace(" ", "_"); make(dst)
+            snap = sorted((x.relative_to(t).as_posix(), x.read_bytes() if x.is_file() and not x.is_symlink() else None) for x in t.rglob("*"))
+            src = fresh_src()
+            snap = sorted((x.relative_to(t).as_posix(), x.read_bytes() if x.is_file() and not x.is_symlink() else None) for x in t.rglob("*"))
+            with self.assertRaises(FileExistsError, msg=what):
+                g._rename_noreplace(str(src), str(dst))
+            self.assertEqual(sorted((x.relative_to(t).as_posix(), x.read_bytes() if x.is_file() and not x.is_symlink() else None) for x in t.rglob("*")), snap, what)
+        self.assertIs(g._rename, g._rename_noreplace)                       # the publish path uses it
 
     def test_the_gate_publishes_nothing_when_head_the_tree_or_an_input_moves_during_the_run(self):
         """The owner's P2: the start-of-run check alone let a tree that changed during F1 / F2 publish a
