@@ -83,8 +83,9 @@ lifecycle's shape; architecture v0.2.3 and draft v0.1.2 accepted at `1aa06f1`; g
 `b3-lifecycle-1-stopped-2026-09-17` (§8b). Lifecycle 2 restarted from step 1 on the
 branch `b3-lifecycle-2`. **`B*` = 1 000 and N = 8** are the lifecycle-2 gate's numbers (§2), written
 here after the run under architecture v0.3 and this document's rules — never guessed. Frozen means the owner writes this document's sha256 into
-`manifests/b3_manifest.json` (S1 of §8) and marks the image `board_ready`; until then nothing
-may run. The structure and the wording follow `docs/b2_preregistration.md` v0.3 deliberately:
+`manifests/b3_manifest.json` (S1 of §8) and marks the image `board_ready`; until then no B3Q and
+no B3 board session may run (the host-only gate and the prediction preflight run before the freeze,
+as §8 orders them, and have). The structure and the wording follow `docs/b2_preregistration.md` v0.3 deliberately:
 where a row is B2's unchanged, it says so.
 
 ## 1. The claim, in one sentence, and its scope
@@ -415,9 +416,9 @@ Decided by the owner (2026-09-17): option 2 — one confirmatory primary Δ1; Δ
 outcome with a fixed definition and no threshold; H9 a gate diagnostic; the new gate sizes Δ1
 within the unchanged 30 000 cap; new labels; the lifecycle-1 pairs and gate run 1 as pilot /
 design evidence in the exclusion set; 7 200 s, 0.85, B3Q at 40, the stop rule and no redraw
-unchanged. Asked now: the owner's review of this v0.3 and of architecture v0.3 (H9's role, the
-labels, §11) — **documents only; no gate, no prediction, no code change under this unit**. After
-the review, in order: **the code unit** — (i) the plan-tool repairs of §8 (every ledger entry in
+unchanged. *The v0.3 request, as written then (done — see "Done" below):* the owner's review of
+v0.3 and of architecture v0.3 (H9's role, the labels, §11) — documents only; no gate, no
+prediction, no code change under that unit. After the review, in order: **the code unit** — (i) the plan-tool repairs of §8 (every ledger entry in
 the prediction with entry-level comparison; the stop rule before any canonical write); (ii) the
 gate tool: label `b3-gate-2`, rules version `architecture v0.3 §9`, lifecycle 1's gate run 1 and
 nine pairs in the exclusion, `H9_claim_condition` replaced by a pure diagnostic, N₂(B) and the
