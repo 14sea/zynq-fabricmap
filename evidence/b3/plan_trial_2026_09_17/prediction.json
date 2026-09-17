@@ -1,0 +1,528 @@
+{
+ "b1_map_cost": 333,
+ "budget_per_arm": 1000,
+ "carto_version": "specimen-carto-v1.1",
+ "deltas1": [
+  9,
+  5,
+  4,
+  5,
+  8,
+  4,
+  2,
+  6,
+  4
+ ],
+ "deltas2": [
+  4,
+  0,
+  -1,
+  3,
+  3,
+  2,
+  -1,
+  3,
+  -2
+ ],
+ "fitness": "F1",
+ "fitness_sequence_length": 27027,
+ "fitness_sequence_sha256": "1fb9c14c6b20c8f228691e0dccf93df97a3c54e4c86f152e49e6ede7c25aeec1",
+ "note": "every value is the reference engine and cartographer over the fabric model; on a correct instrument the board reproduces them byte for byte, decode for decode; both primaries are required (preregistration v0.2 \u00a71)",
+ "pairs": [
+  {
+   "arm_order": [
+    "R",
+    "F",
+    "O"
+   ],
+   "base_train_fitness": 0,
+   "delta1_O_minus_R": 9,
+   "delta2_O_minus_endtoend_F": 4,
+   "landscape_seed": 2708095725,
+   "operator_seed": 3561916994,
+   "pair": 0,
+   "runs": {
+    "F": {
+     "best_train": 19,
+     "champion_genome_sha256": "94d9e9bdcd8aae628dfdf99f80b144b55f4dbb6d749528fc920ea64d6f24d38f",
+     "champion_holdout": 2,
+     "column_moves": 497,
+     "end_to_end_at_budget": 14,
+     "moves_sha256": "1de5f5f70a5e7479c2a781339eaffcd815e4b41d703e7dcb0579d32fecae3cb6"
+    },
+    "O": {
+     "anomalies": 0,
+     "best_train": 18,
+     "champion_genome_sha256": "c5ace118e5fdcecff232026e93e31c2b149fcf9a21cb8093f9b7d150e84a64c8",
+     "champion_holdout": 1,
+     "column_moves": 497,
+     "decoded_final": 289,
+     "final_state_sha256": "62b101078b730de965d65cbf4e673cab30a2caf7aae603a4e6295b60cda81668",
+     "ledger_entries": 1000,
+     "ledger_sha256": "1a01d5e2c7d96be4fd85f40b56e051a6aa7d454c61393d0cdd8ca553e5c2e85e",
+     "map_version_final": 175,
+     "moves_sha256": "7153d7b948e3db88860d5c56b2d2efe98cade4b04968298b6d292baf827ade3e",
+     "online_map_sha256": "a7d3f9474fc9c20e47e2831016ceebd7cde562cc234aca1d3873f7c23e04a3d3",
+     "wrong_decodes": 0
+    },
+    "R": {
+     "best_train": 9,
+     "champion_genome_sha256": "8ebe5814b16de0823f404632dc47ba4735764cc4ffeb0a8ddd15e0660c5bc2cd",
+     "champion_holdout": 1,
+     "column_moves": 0,
+     "moves_sha256": "40cb34da83d71bc65e6e523d794273f22f39e724ab0ee63611bd97cb1608adae"
+    }
+   },
+   "target": [
+    "42141f896570ce0a",
+    "20e460756a2ded52",
+    "e6190a9121089968",
+    "d197d98064ecf82c",
+    "08166df888e84086",
+    "016945329b348312"
+   ]
+  },
+  {
+   "arm_order": [
+    "F",
+    "O",
+    "R"
+   ],
+   "base_train_fitness": 4,
+   "delta1_O_minus_R": 5,
+   "delta2_O_minus_endtoend_F": 0,
+   "landscape_seed": 3088089587,
+   "operator_seed": 4205935094,
+   "pair": 1,
+   "runs": {
+    "F": {
+     "best_train": 19,
+     "champion_genome_sha256": "ad032b086580627e2ebd5df0bdf12a0a7780eaaa169bda8705c65437ba10d692",
+     "champion_holdout": 4,
+     "column_moves": 482,
+     "end_to_end_at_budget": 18,
+     "moves_sha256": "ceb1fc8161f67039e88cebac8729f64611ffd44323c6c6df0247e928b215f825"
+    },
+    "O": {
+     "anomalies": 0,
+     "best_train": 18,
+     "champion_genome_sha256": "086b056c24fda9a7b81185cb7f241bc0ba8f2b9038d76f48921ba60f8eb3185b",
+     "champion_holdout": 3,
+     "column_moves": 483,
+     "decoded_final": 286,
+     "final_state_sha256": "d4870e2492c3b5ad006ec173301d1f87dd827d771b53c6d2a22b91228d5bceae",
+     "ledger_entries": 1000,
+     "ledger_sha256": "4c59c60f1ecf8ea102193320544efe5f485bdc9c112845eee96dfb5918a87ad4",
+     "map_version_final": 169,
+     "moves_sha256": "3da06da99ae03a36e402673fe2cfc1043530dfd2ac41f7bfce2fb771e8e396e4",
+     "online_map_sha256": "0019a4d8afa84728e7764c441aa5be9d23e530488a9d7edea0745f6f4e4af799",
+     "wrong_decodes": 0
+    },
+    "R": {
+     "best_train": 13,
+     "champion_genome_sha256": "e4e518bb346bc09e5d7a70bfd3051dcd2643ca4883a9ca31c2d8a9822a23d8aa",
+     "champion_holdout": 2,
+     "column_moves": 0,
+     "moves_sha256": "dd86ea3a70f15f541cd8a04b95a579986c0433a9982593ec692728505f3808a8"
+    }
+   },
+   "target": [
+    "4a244c2864216454",
+    "e02502146a0002e0",
+    "68d806846aa0d201",
+    "40de409d6d7030c0",
+    "a81943c4a04c92ae",
+    "05690f80d0b4b281"
+   ]
+  },
+  {
+   "arm_order": [
+    "O",
+    "R",
+    "F"
+   ],
+   "base_train_fitness": 3,
+   "delta1_O_minus_R": 4,
+   "delta2_O_minus_endtoend_F": -1,
+   "landscape_seed": 2214625414,
+   "operator_seed": 1176204519,
+   "pair": 2,
+   "runs": {
+    "F": {
+     "best_train": 23,
+     "champion_genome_sha256": "d42919559933d3ba6de1ccdf0d31dfef50e2580fe7f2757785fb6e224f3a07f5",
+     "champion_holdout": 0,
+     "column_moves": 512,
+     "end_to_end_at_budget": 20,
+     "moves_sha256": "812bdd0e9304f67693bbffdc2772290c83f528c20861b5433de5782b6fcdf8d7"
+    },
+    "O": {
+     "anomalies": 0,
+     "best_train": 19,
+     "champion_genome_sha256": "3aea88b7362e8fe0df380803a96cabba005007724632ece310bec7f53234d97d",
+     "champion_holdout": 3,
+     "column_moves": 487,
+     "decoded_final": 286,
+     "final_state_sha256": "0162d12602a9659d82fcf5b0d76f1016eb58b79c631e772e6e27d198527dc4a1",
+     "ledger_entries": 1000,
+     "ledger_sha256": "8a47b4439cb068228113948782debf923d5ff1368e7c06509d3303a63e6a3f30",
+     "map_version_final": 169,
+     "moves_sha256": "1bb6883c72ae5c9d48d84dee0d5dee2b3808e3942402a759ef8850b5b1077505",
+     "online_map_sha256": "8b707f42ffcf9ad7cb99aa1085e2c06db02de19bd9b2de3a3793242c624021e9",
+     "wrong_decodes": 0
+    },
+    "R": {
+     "best_train": 15,
+     "champion_genome_sha256": "8c4069f413f1f45bc483abbda47a33a6c124b86388d66c47f3e82d5a940625da",
+     "champion_holdout": 0,
+     "column_moves": 0,
+     "moves_sha256": "b9e78abd5e752fbfe1fbe98859ede315466348e5c9c41b38a2828fdedafc0121"
+    }
+   },
+   "target": [
+    "d06c432160602901",
+    "408cedc502a76df6",
+    "1e991ea74309a909",
+    "50548a81418492fd",
+    "ac0e680c6cab1014",
+    "8c1803818a00bb80"
+   ]
+  },
+  {
+   "arm_order": [
+    "R",
+    "O",
+    "F"
+   ],
+   "base_train_fitness": 1,
+   "delta1_O_minus_R": 5,
+   "delta2_O_minus_endtoend_F": 3,
+   "landscape_seed": 585796793,
+   "operator_seed": 3514613891,
+   "pair": 3,
+   "runs": {
+    "F": {
+     "best_train": 20,
+     "champion_genome_sha256": "a474d2d8130d292480c06e92636c03b5c53b8af147f5318b1c312cae7beff325",
+     "champion_holdout": 2,
+     "column_moves": 477,
+     "end_to_end_at_budget": 14,
+     "moves_sha256": "09d45b0af9814b6396062706f259b6e15b2c4cffce251dc0d92b5347e99a1590"
+    },
+    "O": {
+     "anomalies": 0,
+     "best_train": 17,
+     "champion_genome_sha256": "16fad9ea87b6d4bd42d35da70dd2a4ad8aabbd917cf5ceeb502ef373e554787d",
+     "champion_holdout": 1,
+     "column_moves": 473,
+     "decoded_final": 289,
+     "final_state_sha256": "de57ce70f2f25ea36152ad447814684df0df79e525364120e3eeba97d5cfd230",
+     "ledger_entries": 1000,
+     "ledger_sha256": "9b859a98c637f78c3a44398af9764df5d392342f99761558278814f92ea091c1",
+     "map_version_final": 185,
+     "moves_sha256": "b1099dc2802c3b83e6fe8053896bdb8d5fbf82aec0f0740180fb792d217fe82a",
+     "online_map_sha256": "448018529316db299f41eb0c77c412b5659a727cb00712837ee0057bad1e519c",
+     "wrong_decodes": 0
+    },
+    "R": {
+     "best_train": 12,
+     "champion_genome_sha256": "429fdec68fb9f00353d16d50dcbe7e041ce30a12cb3cae9a3d814399f8322fcc",
+     "champion_holdout": 0,
+     "column_moves": 0,
+     "moves_sha256": "bd3eb01005420c3a7706d63ccb14fd9d933cb555f963d55e3d582efd2851f585"
+    }
+   },
+   "target": [
+    "ca481828682eb215",
+    "a0c8e01052a15ed6",
+    "f0088191c380a151",
+    "23185a4108e4e0f9",
+    "6c176ebd0423d02c",
+    "06104540ba94a194"
+   ]
+  },
+  {
+   "arm_order": [
+    "O",
+    "F",
+    "R"
+   ],
+   "base_train_fitness": 3,
+   "delta1_O_minus_R": 8,
+   "delta2_O_minus_endtoend_F": 3,
+   "landscape_seed": 2210905615,
+   "operator_seed": 3546926324,
+   "pair": 4,
+   "runs": {
+    "F": {
+     "best_train": 21,
+     "champion_genome_sha256": "4ab78893e2014c2957f2011262f14c15e3a8995f1503188118ea4d28df430491",
+     "champion_holdout": 2,
+     "column_moves": 509,
+     "end_to_end_at_budget": 17,
+     "moves_sha256": "f94366df8071d0e189cac96a2b3419230b68c55da84524e972a187f10e56ac06"
+    },
+    "O": {
+     "anomalies": 0,
+     "best_train": 20,
+     "champion_genome_sha256": "28d5ab7f1e6f50b9fabc98b39b36a43ae45d5aba3d513ce6d78a5ec40c30fca8",
+     "champion_holdout": 2,
+     "column_moves": 494,
+     "decoded_final": 287,
+     "final_state_sha256": "2a13ec7245925cd4bf9ede8eb3e17cef0fc08fb828e055c1b9076bd75d06e843",
+     "ledger_entries": 1000,
+     "ledger_sha256": "05eb6985ec76e068510e062c409a3e8e4b2706d6cd490045e38b54e64d730991",
+     "map_version_final": 174,
+     "moves_sha256": "4a199ac9bdb2af032ff2822b26a9459714306564645815f004c2f97897fdd464",
+     "online_map_sha256": "d15e0ab74580dfbaef0600f68b22260784d5c39e97d97119acda06edf36e1ca8",
+     "wrong_decodes": 0
+    },
+    "R": {
+     "best_train": 12,
+     "champion_genome_sha256": "2570f39cf9a1eecf3c18eaa5b4244bcd205a9d35cdee35e61057ce83690012e8",
+     "champion_holdout": 3,
+     "column_moves": 0,
+     "moves_sha256": "a1ef8eae5eddfe381e9f488de61f10dca0c880af51dbf37344367a0ac6cecc4e"
+    }
+   },
+   "target": [
+    "02254420041a6954",
+    "a0c0c0961a8a8b94",
+    "aff911b10829df60",
+    "2200198825e45290",
+    "0c1f0df8e6b343b6",
+    "02604b900804a194"
+   ]
+  },
+  {
+   "arm_order": [
+    "F",
+    "R",
+    "O"
+   ],
+   "base_train_fitness": 4,
+   "delta1_O_minus_R": 4,
+   "delta2_O_minus_endtoend_F": 2,
+   "landscape_seed": 2510258003,
+   "operator_seed": 3006976030,
+   "pair": 5,
+   "runs": {
+    "F": {
+     "best_train": 21,
+     "champion_genome_sha256": "4efeeaf985ec5b371df701f6a8fae24c432b353bb4ba6219743e2310a7c1b58a",
+     "champion_holdout": 0,
+     "column_moves": 519,
+     "end_to_end_at_budget": 15,
+     "moves_sha256": "ebebd4da0427605712b6f6553d24764da79b7af5d4fe180e42da0c79647e2379"
+    },
+    "O": {
+     "anomalies": 0,
+     "best_train": 17,
+     "champion_genome_sha256": "abebef380ec155ad59d0aef620e92c8b9c53c53cf77eae5194584818221edb7e",
+     "champion_holdout": 0,
+     "column_moves": 506,
+     "decoded_final": 287,
+     "final_state_sha256": "cd5526a7b2a1b9e6d8f7f2d3e11d0bd4f102a507955adfa1e91af1784d32bde5",
+     "ledger_entries": 1000,
+     "ledger_sha256": "71f41ea411a15b27d273e360b0d6ab9bdefdd54fe01267b88453570adf1344fc",
+     "map_version_final": 175,
+     "moves_sha256": "6e943b9c93f3fc97356f1a3a670ead4cbcd708c1a9e26963cb76f73bd8ee257b",
+     "online_map_sha256": "d65cb47c1a9bd7f14940f148898cb4123bbf6dcee503ac59b34e5e424c20ee6d",
+     "wrong_decodes": 0
+    },
+    "R": {
+     "best_train": 13,
+     "champion_genome_sha256": "65be1098495a9fe3c254a8ccd0bde203ec751499ae47c6792f1b9dd1af46a6d3",
+     "champion_holdout": 0,
+     "column_moves": 0,
+     "moves_sha256": "6135cc383ac01b4a69dbe42f6573f693417215c601645e23258987abcea6b9e3"
+    }
+   },
+   "target": [
+    "880017a04d41d817",
+    "44ec20b772237bf0",
+    "3fe91f056181c941",
+    "110841003978aab1",
+    "61180eec046e513a",
+    "03014fd031b028d4"
+   ]
+  },
+  {
+   "arm_order": [
+    "R",
+    "F",
+    "O"
+   ],
+   "base_train_fitness": 3,
+   "delta1_O_minus_R": 2,
+   "delta2_O_minus_endtoend_F": -1,
+   "landscape_seed": 340754009,
+   "operator_seed": 1985447504,
+   "pair": 6,
+   "runs": {
+    "F": {
+     "best_train": 18,
+     "champion_genome_sha256": "7b62a55d8db2c2ac8dd6a92b030ead91b8944f92059208b7c95f8cfa3f85a121",
+     "champion_holdout": 3,
+     "column_moves": 506,
+     "end_to_end_at_budget": 18,
+     "moves_sha256": "9b71b415da18df3500b30d2bce62d7a384deb21d4f811abf47c5559a2305f8d9"
+    },
+    "O": {
+     "anomalies": 0,
+     "best_train": 17,
+     "champion_genome_sha256": "d600252ea66b5fd5f312b614d60097eea127bf746d3247f017b6ada4d8f0cd40",
+     "champion_holdout": 2,
+     "column_moves": 521,
+     "decoded_final": 290,
+     "final_state_sha256": "6b24cae9e6207613c4cb3bf5ea1dda8c409affc8fcd95d2edfeaebe393a42265",
+     "ledger_entries": 1000,
+     "ledger_sha256": "573fc8441fd95472e8c7eccbaf8496e21bbe965a942c0b9b67beefc886f3b3b3",
+     "map_version_final": 183,
+     "moves_sha256": "440c9735ee35c077ec110398801b18d0d7cdbbc415f474b5a75d298f7a8034fd",
+     "online_map_sha256": "4134bc4a5c4fa592c95dbcd58aba963550d2f7d892dcf883f3b28b2d439dc66f",
+     "wrong_decodes": 0
+    },
+    "R": {
+     "best_train": 15,
+     "champion_genome_sha256": "9e871483865d8bd59a0166401b4a8f65ada207a344f83b6473679dd25d0d7b13",
+     "champion_holdout": 3,
+     "column_moves": 0,
+     "moves_sha256": "ffa303703acb36d67365fef44da84bc58482cc3f362913bb16a4d4af36414ae5"
+    }
+   },
+   "target": [
+    "d83c0a00201a7e84",
+    "c4e50020502a3634",
+    "67381a310aa9d879",
+    "22520b8459c0e26c",
+    "851f02b18a7f02a8",
+    "074007828004a305"
+   ]
+  },
+  {
+   "arm_order": [
+    "F",
+    "O",
+    "R"
+   ],
+   "base_train_fitness": 2,
+   "delta1_O_minus_R": 6,
+   "delta2_O_minus_endtoend_F": 3,
+   "landscape_seed": 3355776938,
+   "operator_seed": 597216130,
+   "pair": 7,
+   "runs": {
+    "F": {
+     "best_train": 21,
+     "champion_genome_sha256": "91fd00622ab1ce5837d96ad5657484e48fd37cacd05fb46cf0e814c19d4ff429",
+     "champion_holdout": 1,
+     "column_moves": 496,
+     "end_to_end_at_budget": 17,
+     "moves_sha256": "2855f915f812ed68e5083bd55adf96cc9c65b7082a34a9f0362ad0cee6d00b21"
+    },
+    "O": {
+     "anomalies": 0,
+     "best_train": 20,
+     "champion_genome_sha256": "c48df026b809d0291ab714665c1538fc434bd1482baabe614f85ba1483ef44c5",
+     "champion_holdout": 0,
+     "column_moves": 481,
+     "decoded_final": 289,
+     "final_state_sha256": "cd075e74078155f631f19554819772e0fe372380e749f49f65db72d293ad1246",
+     "ledger_entries": 1000,
+     "ledger_sha256": "6176c33d23c445e19af59c7af6ebafb44fe216dda9b9894d711ffb24ac27dcce",
+     "map_version_final": 176,
+     "moves_sha256": "a47ce8a3c4e9e0bbd5a1c1bfd5a52015a9bcde332253294b010515cb515b8187",
+     "online_map_sha256": "7798db742a34e565d37d9ac9372eacd21cd418d2638b4c07db992d5582be0581",
+     "wrong_decodes": 0
+    },
+    "R": {
+     "best_train": 14,
+     "champion_genome_sha256": "b438782397d5d52f3906357bdb6ef902bc273b419d835b6c3a70d6b82f47bf73",
+     "champion_holdout": 1,
+     "column_moves": 0,
+     "moves_sha256": "07e26b8d2820e24c7f47eaee25869ba1fbd2b403669b50d641f29f99c2e17f4c"
+    }
+   },
+   "target": [
+    "820016484c014909",
+    "a4a9a7d12a85e322",
+    "14a8959289a1bd59",
+    "20be028448d00245",
+    "480b257d88ba80b4",
+    "816908f0a3242286"
+   ]
+  },
+  {
+   "arm_order": [
+    "O",
+    "R",
+    "F"
+   ],
+   "base_train_fitness": 1,
+   "delta1_O_minus_R": 4,
+   "delta2_O_minus_endtoend_F": -2,
+   "landscape_seed": 2327877106,
+   "operator_seed": 3640705872,
+   "pair": 8,
+   "runs": {
+    "F": {
+     "best_train": 21,
+     "champion_genome_sha256": "3f5aaeac67f4aa4fb7dc36544849287aaea03b3ca462128c29c97ce51fd77e3a",
+     "champion_holdout": 0,
+     "column_moves": 491,
+     "end_to_end_at_budget": 19,
+     "moves_sha256": "f8e2e6386b9e2b5b52de7e57cd4eee832ab88fcd5160e066e68b89c4b353cc85"
+    },
+    "O": {
+     "anomalies": 0,
+     "best_train": 17,
+     "champion_genome_sha256": "ad6098381bf94317a06c28c1cc7bdf22b2ac05288031f102c90a2db11d9d94c2",
+     "champion_holdout": 0,
+     "column_moves": 515,
+     "decoded_final": 287,
+     "final_state_sha256": "1a69810659f31e7d7515842e9b1f7c994d31f9c0f975a31fa276dcdd984ca2fa",
+     "ledger_entries": 1000,
+     "ledger_sha256": "6e07d3ba36264c4dda5702ece78659f87486c8cfdcb384fa973894d619031fd3",
+     "map_version_final": 167,
+     "moves_sha256": "cd11507d89b6ef8ec9b1f1f33b144404194bdabb5a6330707a0e2f65ff72acbe",
+     "online_map_sha256": "b79480d31cb913f4db7a85d77831099cd307e1ca9b8dd6a7d4840b2f741d2283",
+     "wrong_decodes": 0
+    },
+    "R": {
+     "best_train": 13,
+     "champion_genome_sha256": "025bdfd621833b4d700517160c5d1b18a435f0e4793c20d836fa4b8472ca8ddb",
+     "champion_holdout": 2,
+     "column_moves": 0,
+     "moves_sha256": "641f0173fdda7142b2b6ad61749bbbf2d72f44c8619b01cdd5e86870b1e238ef"
+    }
+   },
+   "target": [
+    "d86410880d66bf88",
+    "6021ebc24a0d6af4",
+    "dae0151140a1ab10",
+    "839bcb1844d83035",
+    "83026fa8ac7b0186",
+    "8d304230c32408d4"
+   ]
+  }
+ ],
+ "predicted_primary_1": {
+  "alpha": 0.05,
+  "negatives": 0,
+  "positives": 9,
+  "sign_test_p": 0.001953125,
+  "ties": 0,
+  "verdict": "online > random-safe SUPPORTED"
+ },
+ "predicted_primary_2": {
+  "alpha": 0.05,
+  "negatives": 3,
+  "positives": 5,
+  "sign_test_p": 0.36328125,
+  "ties": 1,
+  "verdict": "NOT SUPPORTED"
+ },
+ "schema": "b3_prediction",
+ "schema_version": "1.0.0"
+}
