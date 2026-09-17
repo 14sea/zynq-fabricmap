@@ -377,6 +377,37 @@ class Refuses(unittest.TestCase):
         self._refuses(lambda log: log["loop_records"].pop(4), f"records, the order requires {CTX.records}")
         self._refuses(lambda log: log["loop_records"].insert(4, copy.deepcopy(log["loop_records"][4])), f"records, the order requires {CTX.records}")
 
+    def test_a_whole_run_replaced_by_unscored_records_is_named(self):
+        """The owner's P2 on 989bac5: every search and holdout record of one arm of pair 0 replaced by a
+        non-SCORED record without a search block (the same count, the same seq run) — the run then
+        creates no state, and the session must still name it as missing, for R, F and O alike."""
+        for arm, text in (("random_safe", "random-safe"), ("map_guided", "frozen-map"), ("online", "online")):
+            with self.subTest(arm=arm):
+                def erase_run(log, arm=arm):
+                    for rec in log["loop_records"]:
+                        if rec.get("arm") == arm and rec["search"]["pair"] == 0:
+                            rec.pop("search")
+                            rec["outcome"] = "REFUSED_BY_GATE"
+                findings = self._refuses(erase_run, f"has no records at all — the whole {text} run of pair 0 is missing")
+                self.assertEqual(len(findings), 1, findings)          # the erased run is named exactly once; nothing else is wrong
+                key = (0, brec.ARM_LETTER[arm])
+                self.assertTrue(any(f"{key} has no records at all" in x for x in findings), findings)
+
+    def test_one_unscored_record_in_a_run_is_named_by_the_run_counts(self):
+        """One record of a run replaced by a non-SCORED record without a search block (the count and
+        the seq run intact): the record itself carries nothing to refuse, so the session's per-run
+        counts must name it — a search record as a short evaluation count, the holdout as a missing
+        holdout, an O search record also as a short ledger."""
+        def unscore(rec):
+            rec.pop("search")
+            rec["outcome"] = "REFUSED_BY_GATE"
+        self._refuses(lambda log: unscore(search_of(log, "random_safe", 0, BUDGET - 1)), f"session: (0, 'A') ran {BUDGET - 1} evaluations, not {BUDGET}")
+        self._refuses(lambda log: unscore(search_of(log, "map_guided", 0, 2)), f"session: (0, 'B') ran {BUDGET - 1} evaluations, not {BUDGET}")
+        self._refuses(lambda log: unscore(o_search(log, 1, 5)), f"session: (1, 'O') ran {BUDGET - 1} evaluations, not {BUDGET}",
+                      f"session: (1, 'O') carries {BUDGET - 1} ledger entries, not {BUDGET}")
+        for arm, letter in (("random_safe", "A"), ("map_guided", "B"), ("online", "O")):
+            self._refuses(lambda log, arm=arm: unscore(holdout_of(log, arm, 2)), f"session: (2, '{letter}') has no champion holdout record")
+
     def test_a_missing_ledger_entry_count_is_named(self):
         def drop_last_o_search(log):
             log["loop_records"].remove(o_search(log, 2, BUDGET - 1))

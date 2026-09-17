@@ -625,13 +625,24 @@ def session_findings(log: dict, ctx: Context) -> list[str]:
             f.append(f"session: record {i + 1} carries seq {rec.get('seq')!r}")
         f += record_findings(rec, ctx, order[i] if i < len(order) else None, state)
     if len(records) == len(order):
-        for key, st in state.items():
-            if st["evals"] != ctx.budget:
-                f.append(f"session: {key} ran {st['evals']} evaluations, not {ctx.budget}")
-            if not st["holdout_seen"]:
-                f.append(f"session: {key} has no champion holdout record")
-            if key[1] == oa.ARM_LETTER and st["ledger"]["entries"] != ctx.budget:
-                f.append(f"session: {key} carries {st['ledger']['entries']} ledger entries, not {ctx.budget}")
+        # Every run the slice EXPECTS is enumerated here — never only the runs the records happened
+        # to create: a whole arm replaced by non-SCORED records without a search block creates no
+        # state and would otherwise pass in silence (the owner's P2 on 989bac5).
+        for i in range(ctx.pair_count):
+            r = ctx.pair_first + i
+            for a in ARMS:
+                key = (r, ARM_LETTER[ARM_WIRE[a]])
+                st = state.get(key)
+                if st is None:
+                    f.append(f"session: {key} has no records at all — the whole {WIRE_TEXT[ARM_WIRE[a]]} run of pair {r} is missing "
+                             f"(no SCORED search record, no champion holdout record)")
+                    continue
+                if st["evals"] != ctx.budget:
+                    f.append(f"session: {key} ran {st['evals']} evaluations, not {ctx.budget}")
+                if not st["holdout_seen"]:
+                    f.append(f"session: {key} has no champion holdout record")
+                if a == "O" and st["ledger"]["entries"] != ctx.budget:
+                    f.append(f"session: {key} carries {st['ledger']['entries']} ledger entries, not {ctx.budget}")
     return f
 
 
