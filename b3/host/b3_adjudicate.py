@@ -231,6 +231,11 @@ def check_prediction(prediction: dict, plan: dict) -> None:
             raise Refusal(f"the prediction's pair {r} arm O: the ledger is not {budget} entries")
         if o_run["ledger_sha256"] != om.canonical_sha256(o_run["ledger"]):
             raise Refusal(f"the prediction's pair {r} arm O: ledger_sha256 is not the digest of its own ledger")
+        for k in ("landscape_seed", "operator_seed"):                # BEFORE they are indexed (the owner's P2 on bb5a750)
+            if k not in entry:
+                raise Refusal(f"the prediction's pair {r} carries no {k!r}")
+            if not _int(entry[k]) or not (0 <= entry[k] < UINT32):
+                raise Refusal(f"the prediction's pair {r}: {k} {entry[k]!r} is not a 32-bit integer")
         check_prediction_ledger(r, o_run, budget, train_ceiling, entry["landscape_seed"], entry["operator_seed"], plan["fitness"])
         for k, want in (("delta1_O_minus_R", o_run["best_train"] - runs["R"]["best_train"]),
                         ("delta2_O_minus_endtoend_F", o_run["best_train"] - f_run["end_to_end_at_budget"])):

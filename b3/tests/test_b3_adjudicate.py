@@ -843,6 +843,32 @@ class Malformed(unittest.TestCase):
             with self.subTest(needle=needle):
                 self._refused(pred=with_(mut), needle=needle)
 
+    def test_a_prediction_pair_without_its_seeds_is_refused_not_an_internal_error(self):
+        """The owner's P2 on bb5a750: a missing seed used to escape as a KeyError (an INTERNAL ERROR on
+        the CLI); it is a malformed prediction, refused by name before any record is judged."""
+        for key in ("landscape_seed", "operator_seed"):
+            with self.subTest(key=key):
+                pred = copy.deepcopy(PRED)
+                pred["pairs"][1].pop(key)
+                self._refused(pred=pred, needle=f"the prediction's pair 1 carries no '{key}'")
+                for bad in (True, "1001", 1.0, -1, 2 ** 32):
+                    pred = copy.deepcopy(PRED)
+                    pred["pairs"][1][key] = bad
+                    self._refused(pred=pred, needle=f"the prediction's pair 1: {key} {bad!r} is not a 32-bit integer")
+        pred = copy.deepcopy(PRED)
+        pred["pairs"][0].pop("operator_seed")
+        with tempfile.TemporaryDirectory() as d:
+            (Path(d) / "plan.json").write_text(json.dumps(PLAN))
+            (Path(d) / "prediction.json").write_text(json.dumps(pred))
+            (Path(d) / "run_log.json").write_text(json.dumps(self.base))
+            p = subprocess.run([sys.executable, "-B", str(R / "b3/host/b3_adjudicate.py"), "--run-log", str(Path(d) / "run_log.json"),
+                                "--plan", str(Path(d) / "plan.json"), "--prediction", str(Path(d) / "prediction.json"), "--no-common"],
+                               capture_output=True, text=True)
+        self.assertEqual(p.returncode, 1, p.stderr[-300:])
+        res = json.loads(p.stdout)
+        self.assertTrue(res["outcome"].startswith("REFUSED: the prediction's pair 0 carries no 'operator_seed'"), res["outcome"])
+        self.assertNotIn("internal_error", res)
+
     def test_a_prediction_the_context_refuses_is_refused_by_name(self):
         pred = copy.deepcopy(PRED)
         pred["pairs"][2]["runs"]["O"]["ledger_schema_version"] = "1.0.0"
