@@ -46,7 +46,7 @@ claim that a pointer-only clone can pass the production gates.
 ```bash
 GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/14sea/zynq-fabricmap.git
 cd zynq-fabricmap
-# S2 verify needs the production re-adjudicator, which the CLI deliberately does not supply:
+# S3 verify needs the production re-adjudicator, which the CLI deliberately does not supply:
 python3 -B -c 'import sys,json; sys.path.insert(0,"host"); import b2_manifest as bm, b2_runner as rn; \
   m=json.loads(bm.MANIFEST.read_text()); v=bm.verify(m, readjudicate=rn.readjudicator(m)); \
   print(v["stage"], v["qualified"], v["refusal"])'      # S3 True None
