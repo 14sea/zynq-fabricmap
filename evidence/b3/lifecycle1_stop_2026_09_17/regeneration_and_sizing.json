@@ -1,0 +1,54 @@
+{
+ "at_utc": "2026-09-17T10:53:50Z",
+ "b3_tests_at_b1b82d0": {
+  "log": "b3_tests_at_b1b82d0.log",
+  "note": "the commit message of b1b82d0 said 48 / 10; the owner's count of 47 / 9 is the correct one",
+  "ran": 47,
+  "result": "OK",
+  "test_b3_plan": 9
+ },
+ "head": "b1b82d0adf85004b452007cc412ebd7aed96d2cc",
+ "plan_equal_outside_non_operational": true,
+ "prediction_byte_identical": true,
+ "primaries": {
+  "primary_1": {
+   "alpha": 0.05,
+   "exact": "1/512",
+   "negatives": 0,
+   "positives": 9,
+   "sign_test_p": 0.001953125,
+   "ties": 0,
+   "verdict": "online > random-safe SUPPORTED"
+  },
+  "primary_2": {
+   "alpha": 0.05,
+   "exact": "93/256",
+   "negatives": 3,
+   "positives": 5,
+   "sign_test_p": 0.36328125,
+   "ties": 1,
+   "verdict": "NOT SUPPORTED"
+  }
+ },
+ "primary_2_sizing_by_the_gate_rule_at_b_star": {
+  "budget": 1000,
+  "cap": 30000,
+  "negatives": 49,
+  "positives": 125,
+  "power_at_N": 0.909,
+  "required_pairs_N": 53,
+  "rule": "b2_gate.required_pairs(d2, 0.05, 0.9, 1000, seed 1, 8..200)",
+  "search_cost_N_x_3_x_B": 159000,
+  "ties": 26
+ },
+ "regenerated_by_committed_code": {
+  "cli_exit_code": 3,
+  "cli_stop_rule_finding": "predicted_primary_2: p = 0.363281 > alpha 0.05 (5/3/1) \u2014 the line stops under the stop rule",
+  "plan_sha256_(generated_utc differs)": "3771466441e6a4077df69f0bd5350bc1b1733e988a1b4a68e2660e2702ea7d3b",
+  "prediction_sha256": "6e45a752bd3db536db0cbea7dcb0e531bb40889fff91f7dc6c28250f44f729b2"
+ },
+ "trial": {
+  "plan_sha256": "8b6142b06b883baee2e9e8b298635429384279d2be78efab18cd73bdcc3761d2",
+  "prediction_sha256": "6e45a752bd3db536db0cbea7dcb0e531bb40889fff91f7dc6c28250f44f729b2"
+ }
+}

@@ -1,5 +1,11 @@
 # B3 — the closed loop on the known 292 bits: preregistration (DRAFT v0.2, host-only, 2026-09-17)
 
+> **STOPPED — B3 lifecycle 1 stopped at the prediction preflight (the owner, 2026-09-17;
+> `docs/b3_lifecycle1_stop_decision_2026_09_17.md`).** The §1 stop rule triggered: on the fixed
+> session seeds the predicted primary 1 is 9 / 0 / 0 (p = 1/512) and the predicted primary 2 is
+> 5 / 3 / 1 (p = 93/256 > 0.05). Nothing below this banner is changed by the stop; this document was
+> never frozen and authorises nothing. A design-stage stop, not a board result.
+
 > **v0.1.2 → v0.2 (after gate run 1, `docs/b3_gate_report.md`, on the clean tree `f159dee`).** The
 > gate decided what the draft left open: **`B*` = 1 000** evaluations per arm (the budget rule:
 > min N(B) × 3 × B under H1 — 27 000 at 1 000 against 28 800 at 800 and 36 000 at 1 500),
