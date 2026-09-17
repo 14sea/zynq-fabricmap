@@ -30,11 +30,13 @@
 > diverges. The 30 000 bound is a search-evaluation cap. Accepted as ruled: d ≥ 0.5, the
 > 0.85 margin.
 
-**Status: DRAFT v0.2 — not frozen, not owner-approved, NO BOARD RULING, NO IMAGE BUILT, NO GATE
-RUN, NO PIN TABLE, NO MANIFEST.** This is step 1 of the B3 lifecycle as the pinned-surface
-audit fixed it (`docs/b3_lifecycle1_pinned_surface_audit_2026_09_17.md` §8, PASS at `3a2063d`):
-architecture v0.2 (`docs/b3_architecture.md`) and this draft, both unpinned by B2, for the
-owner's review rounds. The budget `B*` and the pair count `N` are the gate's numbers
+**Status: DRAFT v0.2 — not frozen, not owner-approved, NO BOARD RULING, NO IMAGE BUILT, NO PIN
+TABLE, NO MANIFEST; gate run 1 DONE** (`docs/b3_gate_report.md`, on `f159dee`). This document
+began as step 1 of the B3 lifecycle as the pinned-surface audit fixed it
+(`docs/b3_lifecycle1_pinned_surface_audit_2026_09_17.md` §8, PASS at `3a2063d`) — architecture
+v0.2 and the draft v0.1, both unpinned by B2, reviewed to architecture **v0.2.3** and draft v0.1.2
+(accepted at `1aa06f1`) — and is now in **step 2** (the pinned edits): the gate has run and this
+v0.2 carries its numbers. The budget `B*` and the pair count `N` are the gate's numbers
 (`docs/b3_gate_report.md`, run 1), written here after the gate ran and before any freeze; they
 were never guessed. Frozen means the owner writes this document's sha256 into
 `manifests/b3_manifest.json` (S1 of §8) and marks the image `board_ready`; until then nothing

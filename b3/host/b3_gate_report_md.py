@@ -12,15 +12,39 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def fmt(x, nd=3):
+    """Medians and counts: integral values as integers, others to `nd` significant digits."""
     if x is None:
         return "—"
     if isinstance(x, bool):
         return "yes" if x else "no"
     if isinstance(x, float):
-        if x.is_integer() and (x == 0 or abs(x) >= 2):        # medians and counts; a p-value of 1.0 stays "1.00"
+        if x.is_integer() and (x == 0 or abs(x) >= 2):
             return str(int(x))
-        return f"{x:.{nd}g}" if abs(x) < 1e-3 or abs(x) >= 1e4 else f"{x:.{nd}f}"
+        return f"{x:.{nd}g}"
     return str(x)
+
+
+def fmt_p(p) -> str:
+    """A p-value never rounds to 0: three significant digits, scientific when small (0.0024 -> 0.0024,
+    3.79e-09 -> 3.79e-09, 1.0 -> 1)."""
+    if p is None:
+        return "—"
+    return f"{p:.3g}"
+
+
+def fmt_any(v) -> str:
+    """Any JSON value, complete — nothing is truncated; floats to 6 significant digits."""
+    if isinstance(v, bool) or v is None or isinstance(v, str):
+        return fmt(v) if not isinstance(v, str) else v
+    if isinstance(v, int):
+        return str(v)
+    if isinstance(v, float):
+        return f"{v:.6g}"
+    if isinstance(v, list):
+        return "[" + ", ".join(fmt_any(x) for x in v) + "]"
+    if isinstance(v, dict):
+        return "{" + ", ".join(f"{k}: {fmt_any(x)}" for k, x in v.items()) + "}"
+    return str(v)
 
 
 def render(rep: dict) -> str:
@@ -40,15 +64,34 @@ def render(rep: dict) -> str:
         for t in res["per_budget"]:
             d1, d2, dx = t["delta1_O_minus_R"], t["delta2_O_minus_endtoend_F"], t["deltaX_X_minus_R"]
             L.append(f"| {t['budget']} | {fmt(t['median']['R'])} | {fmt(t['median']['F'])} | {fmt(t['median']['O'])} | {fmt(t['median']['X'])} | {fmt(t['median_F_end_to_end'])} | "
-                     f"{d1['mean']:+.2f} ({d1['positives']}/{d1['negatives']}/{d1['ties']}, {fmt(d1['sign_test_p'], 2)}) | {d2['mean']:+.2f} ({fmt(d2['sign_test_p'], 2)}) | "
-                     f"{dx['mean']:+.2f} ({fmt(dx['sign_test_p'], 2)}) | {fmt(t['decoded_median_O'])} | {fmt(t['required_pairs_N'])} | {fmt(t['search_evaluations'])} | {fmt(t['H1'])} |")
+                     f"{d1['mean']:+.2f} ({d1['positives']}/{d1['negatives']}/{d1['ties']}, p {fmt_p(d1['sign_test_p'])}) | {d2['mean']:+.2f} (p {fmt_p(d2['sign_test_p'])}) | "
+                     f"{dx['mean']:+.2f} (p {fmt_p(dx['sign_test_p'])}) | {fmt(t['decoded_median_O'])} | {fmt(t['required_pairs_N'])} | {fmt(t['search_evaluations'])} | {fmt(t['H1'])} |")
         L.append("")
         L.append("| criterion | result | numbers |")
         L.append("|---|---|---|")
         for name, c in res["criteria"].items():
             nums = {k: v for k, v in c.items() if k not in ("pass", "candidates", "signs_by_budget", "delta2_by_budget_from_b_star", "note", "rule", "claim_condition", "exclusions")}
-            L.append(f"| {name} | **{'PASS' if c['pass'] else 'FAIL'}** | " + "; ".join(f"{k} = {fmt(v)}" if not isinstance(v, (dict, list)) else f"{k} = {json.dumps(v)[:120]}" for k, v in nums.items()) + " |")
+            cells = []
+            for k, v in nums.items():
+                if k.startswith("sign_test_p") or k.endswith("_p") or k in ("power_at_N", "control_X_nonreject_rate"):
+                    cells.append(f"{k} = {fmt_p(v)}")
+                elif isinstance(v, dict) and "sign_test_p" in v:
+                    cells.append(f"{k} = " + fmt_any({kk: (fmt_p(vv) if kk == "sign_test_p" else vv) for kk, vv in v.items()}))
+                else:
+                    cells.append(f"{k} = {fmt_any(v)}")
+            L.append(f"| {name} | **{'PASS' if c['pass'] else 'FAIL'}** | " + "; ".join(cells) + " |")
         L.append("")
+        h9 = res["criteria"].get("H9")
+        if h9 and "delta2_by_budget_from_b_star" in h9:
+            L.append(f"H9 detail — Δ2 = O − end-to-end F at every budget ≥ B* (one-sided sign test, α = {h9['alpha']}):\n")
+            L.append("| budget | p | mean Δ2 | median Δ2 | p ≤ α |")
+            L.append("|---|---|---|---|---|")
+            for b, pv, mn, md in h9["delta2_by_budget_from_b_star"]:
+                L.append(f"| {b} | {fmt_p(pv)} | {mn:+.3f} | {fmt(md)} | {'yes' if pv <= h9['alpha'] else 'no'} |")
+            L.append("")
+        cands = res["criteria"]["budget_rule"].get("candidates")
+        if cands:
+            L.append("Budget rule candidates (N(B), search cost N × 3 × B, H1): " + "; ".join(f"{c['budget']}: N {fmt(c['N'])}, cost {fmt(c['cost'])}, H1 {fmt(c['H1'])}" for c in cands) + "\n")
         if res.get("b_star"):
             L.append(f"Champion holdout medians at B_max: {res['champion_holdout_median']}. At B* = {res['b_star']}: medians {res['at_b_star_median']}, F end-to-end {res['at_b_star_median_F_end_to_end']}.\n")
     return "\n".join(L).rstrip("\n") + "\n"

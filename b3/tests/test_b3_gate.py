@@ -115,6 +115,116 @@ class Criteria(unittest.TestCase):
         self.assertEqual(g.THRESHOLDS["b1_map_cost"], 333)
 
 
+class LoadBearingGuards(unittest.TestCase):
+    """The owner's two read-only mutants of 2026-09-17 — H5's pass forced True, and H9's scope
+    narrowed to B* — survived the criteria tests. These cases discriminate them."""
+    @classmethod
+    def setUpClass(cls):
+        cls._saved = g.THRESHOLDS["H2_bootstrap_experiments"]
+        g.THRESHOLDS["H2_bootstrap_experiments"] = 100
+
+    @classmethod
+    def tearDownClass(cls):
+        g.THRESHOLDS["H2_bootstrap_experiments"] = cls._saved
+
+    def test_h5_fails_on_the_cap_alone_when_the_effect_is_strong(self):
+        """Random-safe held at the base below 1 500 (H1 false there), so the budget rule lands on
+        1 500 with N = 8: cost 36 000 > 30 000 while d is large and every other row passes. With the
+        cap raised to 40 000 the same rows pass — the cap is what decides."""
+        import random
+        rng = random.Random(3)
+        rows = synthetic_rows()
+        for row in rows:
+            for k, b in enumerate(G):
+                if b < 1500:
+                    row["arms"]["R"]["at_grid"][k] = row["base_fit"]          # R never above the base: H1 fails below 1 500
+                    row["arms"]["X"]["at_grid"][k] = row["base_fit"]
+            row["arms"]["O"]["at_grid"][0] = row["base_fit"] + rng.choice([-1, 1, 2])   # both signs of Δ1 at budget 100 (H2's condition is over any budget)
+        res = g.evaluate("F1", rows)
+        self.assertEqual(res["b_star"], 1500)
+        c = res["criteria"]
+        self.assertFalse(c["H5"]["pass"])
+        self.assertGreater(c["H5"]["search_evaluations"], g.THRESHOLDS["H5_search_evaluation_cap"])
+        self.assertGreaterEqual(c["H5"]["cohen_d"], g.THRESHOLDS["H5_cohen_d_min"])
+        self.assertTrue(all(c[k]["pass"] for k in ("budget_rule", "H1", "H2", "H3", "H4", "H6", "H7", "H8")), {k: v["pass"] for k, v in c.items()})
+        self.assertFalse(res["pass"])
+        saved = g.THRESHOLDS["H5_search_evaluation_cap"]
+        try:
+            g.THRESHOLDS["H5_search_evaluation_cap"] = 40000
+            res2 = g.evaluate("F1", rows)
+            self.assertTrue(res2["criteria"]["H5"]["pass"])
+            self.assertTrue(res2["pass"])
+        finally:
+            g.THRESHOLDS["H5_search_evaluation_cap"] = saved
+
+    def test_h9_must_hold_at_every_budget_from_b_star_up_not_only_at_b_star(self):
+        base = synthetic_rows()
+        res0 = g.evaluate("F1", base)
+        b_star = res0["b_star"]
+        above = [b for b in G if b > b_star]
+        below = [b for b in G if b < b_star]
+        self.assertTrue(above and below)
+        # Δ2 ≤ 0 at the LARGEST budget only: H4 (at B*) passes, H9 must fail
+        rows = copy.deepcopy(base)
+        k = G.index(above[-1])
+        for row in rows:
+            row["arms"]["F"]["end_to_end_at_grid"][k] = row["arms"]["O"]["at_grid"][k] + 3
+        res = g.evaluate("F1", rows)
+        self.assertEqual(res["b_star"], b_star)
+        self.assertTrue(res["criteria"]["H4"]["pass"])
+        self.assertFalse(res["criteria"]["H9"]["pass"])
+        self.assertFalse(res["H9_claim_condition"])
+        self.assertTrue(res["pass"])                                      # H9 is the claim condition, not a pass row
+        rows_p = [r for r in res["criteria"]["H9"]["delta2_by_budget_from_b_star"]]
+        self.assertEqual([r[0] for r in rows_p], [b for b in G if b >= b_star])
+        self.assertGreater(rows_p[-1][1], g.THRESHOLDS["H9_alpha"])
+        # Δ2 ≤ 0 at a budget BELOW B* only: outside H9's scope, H9 holds
+        rows = copy.deepcopy(base)
+        k = G.index(below[0])
+        for row in rows:
+            row["arms"]["F"]["end_to_end_at_grid"][k] = row["arms"]["O"]["at_grid"][k] + 3
+        res = g.evaluate("F1", rows)
+        self.assertEqual(res["b_star"], b_star)
+        self.assertTrue(res["criteria"]["H9"]["pass"])
+
+
+class Renderer(unittest.TestCase):
+    """docs/b3_gate_report.md is rendered from the committed gate_report.json: p-values keep their
+    exponent, small p-values do not round to 0, nested values are complete, H9's detail is present."""
+    @classmethod
+    def setUpClass(cls):
+        import b3_gate_report_md as md
+        cls.md = md
+        cls.rep = json.loads((R / "evidence/b3/gate/gate_report.json").read_text())
+        cls.text = md.render(cls.rep)
+
+    def test_p_values_keep_their_exponent_and_never_round_to_zero(self):
+        f1 = self.rep["results"]["F1"]["criteria"]
+        p_h4 = f1["H4"]["delta2"]["sign_test_p"]
+        self.assertLess(p_h4, 1e-6)
+        self.assertIn(self.md.fmt_p(p_h4), self.text)                     # e.g. 3.79e-09
+        self.assertIn("e-", self.md.fmt_p(p_h4))
+        for b, pv, mn, mdn in f1["H9"]["delta2_by_budget_from_b_star"]:
+            self.assertIn(f"| {b} | {self.md.fmt_p(pv)} |", self.text)
+            self.assertNotEqual(self.md.fmt_p(pv), "0")
+            self.assertNotIn(f"| {b} | 0.00 |", self.text)
+        f2 = self.rep["results"]["F2"]["criteria"]["H4"]["delta2"]["sign_test_p"]
+        self.assertIn(self.md.fmt_p(f2), self.text)
+        self.assertEqual(self.md.fmt_p(0.0024), "0.0024")
+        self.assertEqual(self.md.fmt_p(3.793677e-09), "3.79e-09")
+        self.assertEqual(self.md.fmt_p(1.0), "1")
+
+    def test_nested_values_are_complete_and_h9_detail_is_present(self):
+        self.assertIn("H9 detail", self.text)
+        self.assertIn("Budget rule candidates", self.text)
+        d2 = self.rep["results"]["F1"]["criteria"]["H4"]["delta2"]
+        line = next(l for l in self.text.splitlines() if l.startswith("| H4 |"))
+        for k in d2:
+            self.assertIn(f"{k}:", line)
+        self.assertIn("ties: " + str(d2["ties"]) + "}", line)             # the dict is closed: nothing was cut
+        self.assertNotIn("[:120]", (R / "b3/host/b3_gate_report_md.py").read_text())
+
+
 class SeedsAndPins(unittest.TestCase):
     def test_exclusion_names_every_archived_source(self):
         excl, where = g.gate_exclusion()
