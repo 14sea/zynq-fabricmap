@@ -88,6 +88,10 @@ def consistent(pred: dict) -> dict:
         o = e["runs"]["O"]
         o["ledger_sha256"] = om.canonical_sha256(o["ledger"])
         o["ledger_entries"] = len(o["ledger"])
+        o["decoded_final"] = sum(len(x["decoded"]) for x in o["ledger"])
+        o["map_version_final"] = o["ledger"][-1]["map_version_after"]
+        o["anomalies"] = o["ledger"][-1]["anomalies"]
+        o["moves_sha256"] = pl.sha256_json([[x["parent_born"], x["move_kind"], x["intervention"], x["fitness"]] for x in o["ledger"]])
         e["delta1_O_minus_R"] = o["best_train"] - e["runs"]["R"]["best_train"]
         e["delta2_O_minus_endtoend_F"] = o["best_train"] - e["runs"]["F"]["end_to_end_at_budget"]
     pred["deltas1"] = [e["delta1_O_minus_R"] for e in pred["pairs"]]
@@ -302,6 +306,8 @@ class Qualification(unittest.TestCase):
         rec["search"]["fitness"] = rec["search"]["ledger"]["fitness"] = (rec["search"]["fitness"] + 1) % 41
         res = judge([log], self.qplan, self.qpred)
         self.assertTrue(res["outcome"].startswith("KILL"), res["outcome"][:160])
+        self.assertNotIn("qualification", res)
+        self.assertNotIn("online_maps", res)
 
     def test_a_b3_plan_that_calls_itself_b3q_is_refused(self):
         plan = dict(PLAN, session="B3Q")
@@ -382,6 +388,34 @@ class Kills(unittest.TestCase):
             self.assertEqual(badj.additive_scores(tables, CONSTS), rec["evidence"]["score"]["scores"])
         res = self._kills(mutate, "behaviour_delta")
         self.assertFalse(any("the train F1 of the readout" in x for x in res["kills"]), res["kills"][:3])
+
+    def test_a_kill_publishes_no_derived_metric(self):
+        """The owner's P2 on 537c144: one tampered additive score is a KILL — and then no primary, no
+        secondary report, no deltas, no digest, no online map, no comparison with the prediction."""
+        def one_score(log):
+            search_records(log, "map_guided")[0]["evidence"]["score"]["scores"][2] += 1
+        res = self._kills(one_score, "the PL's additive scores")
+        for k in METRIC_KEYS + ("online_maps", "qualification"):
+            self.assertNotIn(k, res)
+        self.assertEqual(res["replay"]["records_replayed"], PAIRS * (3 * BUDGET + 3), "the replay itself still walked the run")
+        self.assertFalse(any("the prediction's is" in x for x in res["findings"]), res["findings"][:3])
+
+    def test_a_decode_audit_kill_publishes_no_derived_metric(self):
+        """The audit is the last source of kills: its kill, too, withholds every derived metric."""
+        def nothing(log):
+            pass
+        with mock.patch.object(badj, "decode_audit", lambda *a, **k: (["pair 0 arm O: wrong decode reproduced (injected)"], [], {0: {}, 1: {}, 2: {}})):
+            res = self._kills(nothing, "injected")
+        for k in METRIC_KEYS + ("online_maps",):
+            self.assertNotIn(k, res)
+
+    def test_the_certificate_is_read_once_per_adjudication(self):
+        """The owner's P3 on 537c144: one truth snapshot serves the landscapes, the decode audit and the
+        comparison with the prediction."""
+        with mock.patch.object(bm, "truth_mapping", wraps=bm.truth_mapping) as tm:
+            res = judge([self.base])
+        self.assertEqual(res["outcome"], "PASS", res["findings"][:3])
+        self.assertEqual(tm.call_count, 1)
 
     def test_every_contradicting_record_is_named_not_only_the_first(self):
         def mutate(log):
@@ -548,8 +582,8 @@ class Holds(unittest.TestCase):
 
     # -- the prediction
     def test_a_run_that_does_not_reproduce_a_predicted_value(self):
-        for arm, key in (("R", "best_train"), ("F", "end_to_end_at_budget"), ("O", "decoded_final"), ("O", "online_map_sha256"),
-                         ("F", "champion_genome_sha256"), ("R", "moves_sha256"), ("O", "moves_sha256")):
+        for arm, key in (("R", "best_train"), ("F", "end_to_end_at_budget"), ("O", "wrong_decodes"), ("O", "online_map_sha256"),
+                         ("F", "champion_genome_sha256"), ("R", "moves_sha256"), ("O", "champion_holdout")):
             with self.subTest(arm=arm, key=key):
                 pred = copy.deepcopy(PRED)
                 run = pred["pairs"][2]["runs"][arm]
@@ -751,6 +785,43 @@ class Malformed(unittest.TestCase):
         self._refused(pred=with_(lambda p: p["predicted_primary"].__setitem__("verdict", "x")), needle="not the sign test over its own deltas1")
         self._refused(pred=with_(lambda p: p["secondary_outcome"].__setitem__("mean", 0.0)), needle="not the report over its own deltas2")
         self._refused(pred=with_(lambda p: p.__setitem__("fitness_sequence_length", 117.0)), needle="fitness_sequence_length 117.0 is not the 117 values")
+
+    def test_a_malformed_prediction_ledger_is_refused_not_held(self):
+        """The owner's second P2 on 537c144: a prediction whose O ledger or O summary is not the shape
+        a board could have produced is REFUSED by name — never attributed to the board as a HOLD."""
+        B = BUDGET
+        def with_(mut):
+            pred = copy.deepcopy(PRED)
+            mut(pred)
+            o = pred["pairs"][0]["runs"]["O"]
+            o["ledger_sha256"] = om.canonical_sha256(o["ledger"])          # the digest re-derived: the document is self-consistent
+            return pred
+        L = lambda p: p["pairs"][0]["runs"]["O"]["ledger"]              # noqa: E731
+        O = lambda p: p["pairs"][0]["runs"]["O"]                        # noqa: E731
+        cases = (
+            (lambda p: L(p)[3].__setitem__("fitness", "7"), "ledger entry 4: ledger.fitness is not an integer"),
+            (lambda p: L(p)[3].__setitem__("fitness", True), "ledger entry 4: ledger.fitness is not an integer"),
+            (lambda p: L(p)[3].__setitem__("fitness", 41), "ledger entry 4: fitness 41 is outside 0..40"),
+            (lambda p: L(p)[3].pop("anomalies"), "ledger entry 4: the keys are not exactly"),
+            (lambda p: L(p).__setitem__(3, [1]), "ledger entry 4 is not a JSON object"),
+            (lambda p: L(p)[3].__setitem__("seq", 9), "ledger entry 4: seq 9 is not 4"),
+            (lambda p: L(p)[3].__setitem__("intervention", [5, 5]), "ledger entry 4: intervention is not 1..4 distinct sorted"),
+            (lambda p: L(p)[3].__setitem__("move_kind", "probe"), "ledger entry 4: move_kind 'probe'"),
+            (lambda p: L(p)[3].__setitem__("behaviour_delta", [[6, 0]]), "ledger entry 4: behaviour_delta is not a set of distinct"),
+            (lambda p: L(p)[3].__setitem__("confidence", 3), "ledger entry 4: confidence 3 is not"),
+            (lambda p: L(p)[3].__setitem__("map_version", 7), "ledger entry 4: map_version 7 is not the previous entry's map_version_after"),
+            (lambda p: L(p)[3].__setitem__("map_version_after", L(p)[3]["map_version"] + 2), "ledger entry 4: map_version_after"),
+            (lambda p: L(p)[B - 1].__setitem__("anomalies", 2), "ledger entry 12: anomalies 0 -> 2"),
+            (lambda p: L(p)[0].__setitem__("decoded", [[291, 5, 63], [291, 5, 62]]), "ledger entry 1: decoded is not a set of distinct"),
+            (lambda p: O(p).__setitem__("decoded_final", 293), "decoded_final 293 is not the"),
+            (lambda p: O(p).__setitem__("map_version_final", B + 1), f"map_version_final {B + 1} is not the"),
+            (lambda p: O(p).__setitem__("anomalies", B + 1), f"anomalies {B + 1} is not the"),
+            (lambda p: O(p).__setitem__("wrong_decodes", 999), "wrong_decodes 999 exceed the"),
+            (lambda p: O(p).__setitem__("moves_sha256", "f" * 64), "moves_sha256 is not the digest of its own ledger's moves"),
+        )
+        for mut, needle in cases:
+            with self.subTest(needle=needle):
+                self._refused(pred=with_(mut), needle=needle)
 
     def test_a_prediction_the_context_refuses_is_refused_by_name(self):
         pred = copy.deepcopy(PRED)

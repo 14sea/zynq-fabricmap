@@ -230,6 +230,7 @@ def check_prediction(prediction: dict, plan: dict) -> None:
             raise Refusal(f"the prediction's pair {r} arm O: the ledger is not {budget} entries")
         if o_run["ledger_sha256"] != om.canonical_sha256(o_run["ledger"]):
             raise Refusal(f"the prediction's pair {r} arm O: ledger_sha256 is not the digest of its own ledger")
+        check_prediction_ledger(r, o_run, budget, train_ceiling)
         for k, want in (("delta1_O_minus_R", o_run["best_train"] - runs["R"]["best_train"]),
                         ("delta2_O_minus_endtoend_F", o_run["best_train"] - f_run["end_to_end_at_budget"])):
             if not _int(entry.get(k)):
@@ -266,6 +267,74 @@ def check_prediction(prediction: dict, plan: dict) -> None:
     if not _int(prediction.get("fitness_sequence_length")) or prediction["fitness_sequence_length"] != want_len:
         raise Refusal(f"the prediction's fitness_sequence_length {prediction.get('fitness_sequence_length')!r} is not the "
                       f"{want_len} values {plan['pairs']} pairs at budget {budget} produce")
+
+
+def check_prediction_ledger(r: int, o_run: dict, budget: int, train_ceiling: int) -> None:
+    """The prediction's O ledger for pair r, entry by entry — the shape, the type of every value, its
+    domain and the run's continuity (the rules `b3_records` holds a board's entries to) — and the
+    summary's arithmetic against it: decoded_final, map_version_final and anomalies are what the
+    ledger produced, wrong_decodes cannot exceed the decodes, moves_sha256 is the digest of the
+    ledger's own moves. A prediction that fails here is REFUSED by name before any record is judged;
+    it is never a finding about a board."""
+    where0 = f"the prediction's pair {r} arm O"
+    ledger = o_run["ledger"]
+    after, anomalies, decoded_all, taken = 0, 0, set(), set()
+    for n, e in enumerate(ledger, start=1):
+        where = f"{where0} ledger entry {n}"
+        if not isinstance(e, dict):
+            raise Refusal(f"{where} is not a JSON object")
+        if sorted(e) != sorted(brec.LEDGER_ENTRY_KEYS):
+            raise Refusal(f"{where}: the keys are not exactly {list(brec.LEDGER_ENTRY_KEYS)}")
+        types = brec.ledger_type_findings(e, where)
+        if types:
+            raise Refusal(types[0])
+        bits = e["intervention"]
+        if not (1 <= len(bits) <= bs.KMAX) or sorted(set(bits)) != bits or any(not (0 <= b < brec.UNIVERSE) for b in bits):
+            raise Refusal(f"{where}: intervention is not 1..{bs.KMAX} distinct sorted universe indices")
+        if e["move_kind"] not in ("random", "column"):
+            raise Refusal(f"{where}: move_kind {e['move_kind']!r}")
+        delta = [tuple(x) for x in e["behaviour_delta"]]
+        if len(set(delta)) != len(delta) or any(not (0 <= k < brec.LUTS and 0 <= v < brec.VECTORS) for k, v in delta):
+            raise Refusal(f"{where}: behaviour_delta is not a set of distinct (lut, vector) positions")
+        if e["confidence"] != (2 if len(bits) == 1 else 1):
+            raise Refusal(f"{where}: confidence {e['confidence']} is not {2 if len(bits) == 1 else 1} for a {len(bits)}-bit specimen")
+        if not (0 <= e["fitness"] <= train_ceiling):
+            raise Refusal(f"{where}: fitness {e['fitness']} is outside 0..{train_ceiling}")
+        if e["parent_born"] < 0 or e["map_version"] < 0 or e["map_version_after"] < 0 or e["anomalies"] < 0:
+            raise Refusal(f"{where}: a counter is negative")
+        if e["seq"] != n:
+            raise Refusal(f"{where}: seq {e['seq']} is not {n}")
+        if e["map_version"] != after:
+            raise Refusal(f"{where}: map_version {e['map_version']} is not the previous entry's map_version_after {after}")
+        dec = [tuple(x) for x in e["decoded"]]
+        addrs = [i for i, _, _ in dec]
+        if len(set(addrs)) != len(addrs) or any(not (0 <= i < brec.UNIVERSE and 0 <= k < brec.LUTS and 0 <= v < brec.VECTORS) for i, k, v in dec):
+            raise Refusal(f"{where}: decoded is not a set of distinct (address, lut, vector) relations")
+        d_anom = e["anomalies"] - anomalies
+        if d_anom not in (0, 1):
+            raise Refusal(f"{where}: anomalies {anomalies} -> {e['anomalies']} (one specimen is at most one anomaly, never fewer)")
+        if d_anom == 1 and (dec or e["map_version_after"] != e["map_version"]):
+            raise Refusal(f"{where}: a refused specimen changes nothing else")
+        if e["map_version_after"] != e["map_version"] + (1 if dec else 0):
+            raise Refusal(f"{where}: map_version_after {e['map_version_after']} is not map_version {e['map_version']}"
+                          f"{' + 1 for a specimen that decoded' if dec else ' for a specimen that decoded nothing'}")
+        for i, k, v in dec:
+            if i in decoded_all:
+                raise Refusal(f"{where}: address {i} decoded twice")
+            if (k, v) in taken:
+                raise Refusal(f"{where}: position ({k}, {v}) taken twice")
+            decoded_all.add(i)
+            taken.add((k, v))
+        after, anomalies = e["map_version_after"], e["anomalies"]
+    want = {"decoded_final": len(decoded_all), "map_version_final": after, "anomalies": anomalies}
+    for k, v in want.items():
+        if o_run[k] != v:
+            raise Refusal(f"{where0}: {k} {o_run[k]} is not the {v} its own ledger produces")
+    if o_run["wrong_decodes"] > o_run["decoded_final"]:
+        raise Refusal(f"{where0}: wrong_decodes {o_run['wrong_decodes']} exceed the {o_run['decoded_final']} decodes")
+    moves = pl.sha256_json([[e["parent_born"], e["move_kind"], e["intervention"], e["fitness"]] for e in ledger])
+    if o_run["moves_sha256"] != moves:
+        raise Refusal(f"{where0}: moves_sha256 is not the digest of its own ledger's moves")
 
 
 def structure_findings(log) -> list[str]:
@@ -799,8 +868,9 @@ def decode_audit(arms: dict, pairs: list[int], fid: str, budget: int, seeds: lis
     return kills, findings, maps
 
 
-def prediction_findings(arms: dict, prediction: dict, pairs_covered: list[int], maps: dict, budget: int) -> list[str]:
-    """Per pair and per arm, every predicted value the prediction carries."""
+def prediction_findings(arms: dict, prediction: dict, pairs_covered: list[int], maps: dict, budget: int, truth: dict) -> list[str]:
+    """Per pair and per arm, every predicted value the prediction carries. `truth` is the ONE
+    certificate snapshot the adjudication read (the decode audit used the same one)."""
     f: list[str] = []
     by_pair = {p["pair"]: p for p in prediction["pairs"]}
     for r in pairs_covered:
@@ -820,7 +890,7 @@ def prediction_findings(arms: dict, prediction: dict, pairs_covered: list[int], 
                 doc = maps[r]
                 got.update({"budget": budget, "ledger_entries": len(a.ledger), "ledger_sha256": om.canonical_sha256(a.ledger),
                             "decoded_final": len(a.carto.decoded), "map_version_final": a.carto.version, "anomalies": a.carto.anomalies,
-                            "wrong_decodes": om.accuracy(doc, {"mapping": bm.truth_mapping()["mapping"]})["wrong"],
+                            "wrong_decodes": om.accuracy(doc, truth)["wrong"],
                             "final_state_sha256": a.commitments[-1], "online_map_sha256": om.canonical_sha256(doc)})
             for k in got:
                 if got[k] != want.get(k):
@@ -923,14 +993,19 @@ def adjudicate(logs: list[dict], plan: dict, prediction: dict, consts: dict | No
                             f"no primary is computed from a partial run")
         replayed_all = not refused_sessions and not rp.findings and not rp.kills and \
             all((r, a) in rp.arms and rp.arms[(r, a)].champion_holdout is not None for r in covered for a in ARMS)
-        if replayed_all:
-            budget = plan["budget_per_arm"]
+        budget = plan["budget_per_arm"]
+        maps: dict = {}
+        if replayed_all:                                     # the decode audit is the last source of kills
             k2, f2, maps = decode_audit(rp.arms, covered, plan["fitness"], budget, seeds, truth)
             kills += k2
             findings += f2
+        # Every kill — measurement, replay, decode audit — is now collected. Nothing derived (the online
+        # maps, the qualification block, the digest, the deltas, the primary, the secondary report, the
+        # comparison with the prediction) is published once anything was killed (the owner's P2 on 537c144).
+        if replayed_all and not kills:
             out["online_maps"] = {str(r): {"decoded": len(rp.arms[(r, 'O')].carto.decoded), "map_version": rp.arms[(r, 'O')].carto.version,
                                            "anomalies": rp.arms[(r, 'O')].carto.anomalies, "sha256": om.canonical_sha256(maps[r])} for r in covered}
-            findings += prediction_findings(rp.arms, prediction, covered, maps, budget)
+            findings += prediction_findings(rp.arms, prediction, covered, maps, budget, truth)
             if qualification and complete:
                 seq = fitness_sequence(rp.arms, covered)
                 out["qualification"] = {"fitness_values": len(seq), "ledger_entries": sum(len(rp.arms[(r, "O")].ledger) for r in covered),
