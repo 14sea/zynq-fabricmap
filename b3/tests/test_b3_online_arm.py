@@ -1,7 +1,9 @@
 """b3/host/b3_online_arm.py — the online arm: trace-for-trace and entry-for-entry equivalence with the
 B2-pinned `host/b3_online.run_online`; the 1.1.0 ledger validates and the frozen 1.0.0 refuses it;
-the holdout has no entry and no map update; the replay reproduces every version, decode and state
-commitment, and names a tampered entry; the end-to-end frozen-arm rule."""
+the holdout has no entry and no map update; the combined record commitment (B2's search state text
+joined to the cartographer's text — held to B2's own function, and load-bearing in both halves); the
+replay reproduces every version, decode and commitment and names a tampered entry, a tampered
+commitment and a half-given commitment check; the end-to-end frozen-arm rule."""
 from __future__ import annotations
 
 import json
@@ -86,21 +88,66 @@ class Ledger(unittest.TestCase):
         self.assertEqual(res.ledger[-1]["map_version_after"], res.carto.version)
         self.assertEqual(res.ledger[-1]["anomalies"], res.carto.anomalies)
         self.assertEqual(res.champion_holdout, LAND.holdout_fitness(res.champion.tables))
-        self.assertEqual(res.state_trace[-1], res.carto.state_sha256())
+        self.assertEqual(res.carto_state_trace[-1], res.carto.state_text())
+        self.assertEqual(len(res.state_trace), 120)
+        self.assertEqual(len(res.search_state_trace), 120)
 
     def test_the_replay_reproduces_every_version_decode_and_commitment(self):
         res = oa.run_online(LAND, 9, 400, FAB)
         c = carto_mod.SpecimenCarto()
-        for e, want_state in zip(res.ledger, res.state_trace):
+        for e, ctext, stext, want in zip(res.ledger, res.carto_state_trace, res.search_state_trace, res.state_trace):
             self.assertEqual(c.version, e["map_version"])
             newly = c.observe(e["intervention"], [tuple(p) for p in e["behaviour_delta"]])
             self.assertEqual(sorted(newly), sorted(i for i, _, _ in e["decoded"]))
             self.assertEqual(c.version, e["map_version_after"])
             self.assertEqual(c.anomalies, e["anomalies"])
-            self.assertEqual(c.state_sha256(), want_state)
-        replayed, f = oa.replay(res.ledger)
+            self.assertEqual(c.state_text(), ctext)
+            self.assertEqual(oa.state_sha256(stext, ctext), want)
+        # the production replay, with the commitments: clean
+        replayed, f = oa.replay(res.ledger, res.search_state_trace, res.state_trace)
         self.assertEqual(f, [])
         self.assertEqual(replayed.snapshot(), res.carto.snapshot())
+        # a tampered commitment is named at its entry
+        bad = list(res.state_trace)
+        bad[77] = "0" * 64
+        _, f = oa.replay(res.ledger, res.search_state_trace, bad)
+        self.assertEqual(len(f), 1)
+        self.assertIn("seq 78: state_sha256", f[0])
+        # a tampered search state (the population) is named through the commitment
+        bad_s = list(res.search_state_trace)
+        bad_s[5] = bad_s[5].replace(";", ";9:9:00;", 1)
+        _, f = oa.replay(res.ledger, bad_s, res.state_trace)
+        self.assertEqual(len(f), 1)
+        self.assertIn("seq 6: state_sha256", f[0])
+        # a half-given check is a named finding, never a silent skip
+        for args in ((res.search_state_trace, None), (None, res.state_trace), (res.search_state_trace[:-1], res.state_trace)):
+            _, f = oa.replay(res.ledger, *args)
+            self.assertEqual(len(f), 1, args)
+            self.assertIn("commitment check", f[0])
+
+    def test_the_commitment_is_b2s_text_plus_the_cartographer_and_load_bearing_in_both_halves(self):
+        res = oa.run_online(LAND, 9, 96, FAB)
+        # the search half is byte for byte what b2_search.state_sha256 hashes (checked through B2's own function)
+        pop = [bs.Individual(3, [0] * 6, 7, born=1), bs.Individual(0, [0] * 6, 2, born=0)]
+        text = oa.search_state_text(1, 11, 22, 600, 33, 4, 7, pop)
+        import hashlib
+        self.assertEqual(hashlib.sha256(text.encode()).hexdigest(), bs.state_sha256(1, 11, 22, 600, 33, 4, 7, pop))
+        self.assertTrue(text.startswith(f"{bs.ENGINE_VERSION}|1|11|22|600|33|4|7|"))
+        # control 1: the search state changes, the cartographer does not -> the digest changes
+        stext, ctext = res.search_state_trace[-1], res.carto_state_trace[-1]
+        self.assertEqual(oa.state_sha256(stext, ctext), res.state_trace[-1])
+        other_pop = oa.search_state_text(oa.ARM_CODE, LAND.seed, 9, 96, 96, 12, res.best_trace[-1] + 1, [])
+        self.assertNotEqual(oa.state_sha256(other_pop, ctext), res.state_trace[-1])
+        # control 2: the cartographer changes, the search state does not -> the digest changes
+        c2 = carto_mod.SpecimenCarto()
+        for e in res.ledger:
+            c2.observe(e["intervention"], [tuple(p) for p in e["behaviour_delta"]])
+        self.assertEqual(c2.state_text(), ctext)
+        free = next(i for i in range(292) if i not in c2.decoded)
+        c2.observe([free], [TRUTH["mapping"][free]])           # one more decode
+        self.assertNotEqual(c2.state_text(), ctext)
+        self.assertNotEqual(oa.state_sha256(stext, c2.state_text()), res.state_trace[-1])
+        self.assertEqual(oa.ARM_CODE, 2)
 
     def test_a_tampered_ledger_is_named_by_the_replay(self):
         res = oa.run_online(LAND, 9, 200, FAB)
