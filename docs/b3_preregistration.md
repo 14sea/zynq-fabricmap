@@ -1,10 +1,24 @@
-# B3 — the closed loop on the known 292 bits: preregistration (DRAFT v0.2, host-only, 2026-09-17)
+# B3 — the closed loop on the known 292 bits: preregistration (DRAFT v0.3 — lifecycle 2, host-only, 2026-09-17)
 
-> **STOPPED — B3 lifecycle 1 stopped at the prediction preflight (the owner, 2026-09-17;
-> `docs/b3_lifecycle1_stop_decision_2026_09_17.md`).** The §1 stop rule triggered: on the fixed
-> session seeds the predicted primary 1 is 9 / 0 / 0 (p = 1/512) and the predicted primary 2 is
-> 5 / 3 / 1 (p = 93/256 > 0.05). Nothing below this banner is changed by the stop; this document was
-> never frozen and authorises nothing. A design-stage stop, not a board result.
+> **v0.2 → v0.3 — lifecycle 2 (the owner's ruling of 2026-09-17, after lifecycle 1 stopped at the
+> prediction preflight: `docs/b3_lifecycle1_stop_decision_2026_09_17.md`, tag
+> `b3-lifecycle-1-stopped-2026-09-17`).** Option 2 of the analysis the stop produced: **one
+> confirmatory primary** — Δ1 = O − R, the one-sided exact sign test at α = 0.05 — and **Δ2 = O −
+> end-to-end F becomes a preregistered secondary outcome**: its definition stays fixed, it is
+> predicted per pair, and it is *reported* (positives / negatives / ties, the exact p, the effect
+> size) with **no significance PASS threshold**; every value underneath it — records, replay,
+> ledger, map, binding, and the prediction's per-pair Δ2 — must still verify EXACTLY. H9 stays as an
+> S = 200 gate **diagnostic** and no longer decides the claim. The new gate derives `B*` and `N`
+> **from Δ1 alone within the 30 000 cap** — lifecycle 1's B = 1 000 / N = 9 is the pilot's
+> expectation and is not carried in. New labels: gate `b3-gate-2`, sessions `b3-session-2`,
+> qualification `b3-qualification-2` (control X's `b3-gate-x` is tied to the instrument commit and
+> is unchanged). The nine lifecycle-1 pairs and gate run 1 are **pilot / design evidence**: they
+> informed this ruling, they enter every exclusion set, and they are never a sizing input (§8b).
+> The two P2s the owner found on `b1b82d0` become requirements of §3 and §8 (every ledger entry in
+> the prediction; the stop rule before any canonical write). Unchanged: the 30 000 search-evaluation
+> cap, the 7 200 s expected span, the 0.85 margin, B3Q at budget 40, the stop rule and no redraw.
+> Options 1 (more board time to reproduce model arithmetic) and 3 (a different estimand for Δ2)
+> were rejected by the owner. **Nothing has run under this version: no gate, no prediction.**
 
 > **v0.1.2 → v0.2 (after gate run 1, `docs/b3_gate_report.md`, on the clean tree `f159dee`).** The
 > gate decided what the draft left open: **`B*` = 1 000** evaluations per arm (the budget rule:
@@ -36,15 +50,14 @@
 > diverges. The 30 000 bound is a search-evaluation cap. Accepted as ruled: d ≥ 0.5, the
 > 0.85 margin.
 
-**Status: DRAFT v0.2 — not frozen, not owner-approved, NO BOARD RULING, NO IMAGE BUILT, NO PIN
-TABLE, NO MANIFEST; gate run 1 DONE** (`docs/b3_gate_report.md`, on `f159dee`). This document
-began as step 1 of the B3 lifecycle as the pinned-surface audit fixed it
-(`docs/b3_lifecycle1_pinned_surface_audit_2026_09_17.md` §8, PASS at `3a2063d`) — architecture
-v0.2 and the draft v0.1, both unpinned by B2, reviewed to architecture **v0.2.3** and draft v0.1.2
-(accepted at `1aa06f1`) — and is now in **step 2** (the pinned edits): the gate has run and this
-v0.2 carries its numbers. The budget `B*` and the pair count `N` are the gate's numbers
-(`docs/b3_gate_report.md`, run 1), written here after the gate ran and before any freeze; they
-were never guessed. Frozen means the owner writes this document's sha256 into
+**Status: DRAFT v0.3 — lifecycle 2, step 1 (documents only); not frozen, not owner-approved, NO
+BOARD RULING, NO IMAGE BUILT, NO PIN TABLE, NO MANIFEST, NO GATE RUN AND NO PREDICTION UNDER THIS
+VERSION.** Lifecycle 1 (`docs/b3_lifecycle1_pinned_surface_audit_2026_09_17.md` §8 for the
+lifecycle's shape; architecture v0.2.3 and draft v0.1.2 accepted at `1aa06f1`; gate run 1
+`b7db6c7`; the plan tool `b1b82d0`) stopped at the prediction preflight and is closed at the tag
+`b3-lifecycle-1-stopped-2026-09-17` (§8b). This version restarts the lifecycle from step 1 on the
+branch `b3-lifecycle-2`. `B*` and `N` are `<gate-2>` placeholders until the new gate has run under
+architecture v0.3 and this document's rules; they are never guessed. Frozen means the owner writes this document's sha256 into
 `manifests/b3_manifest.json` (S1 of §8) and marks the image `board_ready`; until then nothing
 may run. The structure and the wording follow `docs/b2_preregistration.md` v0.3 deliberately:
 where a row is B2's unchanged, it says so.
@@ -58,38 +71,42 @@ where a row is B2's unchanged, it says so.
 > **O** an online map that **starts empty and is built on the board from the search's own
 > specimens** (every evaluation's child-readout ⊕ parent-readout, decoded by the specimen
 > cartographer, `specimen-carto-v1.1`; no dedicated probe) — **reproduces on silicon, record
-> for record and decode for decode, the host-predicted outcome** of **9** preregistered
-> landscape pairs at **1 000** evaluations per arm: every run's best-so-far train fitness,
+> for record and decode for decode, the host-predicted outcome** of **`<gate-2>`** preregistered
+> landscape pairs at **`<gate-2>`** evaluations per arm: every run's best-so-far train fitness,
 > every champion's holdout known answer, every O-arm decode, map version and anomaly count
-> (predicted 0), and therefore the **two** predicted primaries — **primary 1**, the one-sided
-> exact sign test over the nine pairs' `Δ1 = best_O − best_R`; **primary 2**, the same test over `Δ2 = best_O − end_to_end_F`, the frozen arm
-> charged B1's 333 mapping evaluations — and
+> (predicted 0), and therefore the **one** predicted **primary** — the one-sided exact sign test
+> over the N pairs' `Δ1 = best_O − best_R` — together with the predicted per-pair values of the
+> **secondary outcome** `Δ2 = best_O − end_to_end_F` (the frozen arm charged B1's 333 mapping
+> evaluations; reported, not a threshold) — and
 > the host, recomputing every fitness and every behaviour delta from the served readouts,
 > replaying the three searches and the ledger, and auditing every decode against the
 > certificate, reproduces every choice and every map version the board reported.
 
-**Resolution (v0.2).** v0.1.x carried a conditional design under a fixed rule: both primaries
-if the gate's H9 held, primary 1 alone otherwise. **H9 held in gate run 1**, so this document
-claims **both** primaries and both are required PASS rows of §4; no branch remains. The two
-predicted primaries on the fixed board seeds must meet p ≤ 0.05 in the prediction (§3); if
-either does not, **the line stops** — the seeds are not redrawn and N is not raised to reach a
-threshold.
+**The claim's structure (v0.3, the owner's ruling).** One confirmatory primary, Δ1. Δ2 is a
+preregistered **secondary outcome**: its definition (O's best-so-far at `B*` minus F's own trace at
+`B* − 333`), its per-pair prediction and its reporting (positives / negatives / ties, the exact
+one-sided sign-test p, the mean, median and Cohen's d of the paired differences) are fixed here;
+no significance threshold is attached to it and no PASS row depends on its sign. The stop rule
+applies to the primary: the predicted primary on the fixed board seeds must meet p ≤ 0.05 in the
+prediction (§3); if it does not, **the line stops** — the seeds are not redrawn and N is not
+raised. Lifecycle 1's two-primary design and the reason it could not be sized are in §8b.
 
 What the claim rests on, and where each part is established:
 
 - **that a correct map beats random-safe on this fitness and operator** — B2, on silicon
   (`docs/b2_result_2026_09_17.md`, p = 0.01953125): the historical premise, cited, not
   inherited as authority (§8a);
-- **that a map built online from specimens beats random-safe from `B*` on, and beats the
-  frozen map once its construction cost is charged** — established by the B3 gate over 200
-  landscapes (architecture §9, H1–H9) — a *model* result whose arithmetic the board
-  reproduces;
+- **that a map built online from specimens beats random-safe from `B*` on** — to be established
+  by the lifecycle-2 gate over 200 landscapes (architecture v0.3 §9, H1–H8; H9 is the
+  end-to-end diagnostic) — a *model* result whose arithmetic the board reproduces; gate run 1
+  of lifecycle 1 showed it under the same criteria and is pilot evidence (§8b), not this
+  lifecycle's gate;
 - **that the board builds its map autonomously from its own specimens under the interlocks
   and the model's arithmetic holds on silicon** — the board sessions (§4).
 
 Scope: one die, one carrier, the content-bit class, the 292 attested addresses, F1, one
 operator shape (B2 §5), one cartographer rule (architecture §3), the evaluation-count
-accounting for primary 2 (architecture §10). Not claimed: generalisation (holdout is a
+accounting for the secondary outcome (architecture §10). Not claimed: generalisation (holdout is a
 neutrality / known-answer control); a non-additive fabric (the anomaly path is tested, not
 exercised by silicon); physical noise, timing, power, unattested bits, routing, FF, another
 die, Linux, ICAPE2; the best online cartographer or operator; an independent silicon chance
@@ -113,39 +130,48 @@ is a HOLD / KILL of the instrument, §4); anything B4 asks.
 | universe | 292 addresses, digest `895baf85…` (B1's, unchanged) |
 | landscape rule, fitness | `host/b2_landscape.py` (B2's target rule; train = first 40 of the carrier order, holdout = last 24); **F1**, ceiling 40 — fixed by B2, not re-selected |
 | engine | `b2-es-v1`: μ = 4, λ = 8, k ≤ 4, truncation, ties by age; base-initialised — B2's, unchanged; **the operator is the only difference between arms**, and for O the only difference from F is where the map comes from |
-| budget | **1 000** evaluations per arm per pair = `B*` by the frozen budget rule (architecture §9: smallest `N(B) × 3 × B` under H1: 27 000 at 1 000, against 28 800 at 800, 36 000 at 1 500, 50 400 at 600; no finite N(B) below 600) — gate run 1 |
-| pairs | **N = 9** = `N(B*)` by the full ascending scan of the bootstrap power for Δ1 (α = 0.05, power 0.942 at N = 9, N ≥ 8) — gate run 1; at `B*` over the 200 gate seeds Δ1 is +5.30 mean, 182 / 7 / 11, d = 1.64 (a planning distribution, not guaranteed future power) |
+| labels (v0.3) | gate **`b3-gate-2`** (master = first 4 bytes of sha256(`b3-gate-2|` ‖ HEAD at the run)); sessions **`b3-session-2`**; qualification **`b3-qualification-2`** (masters from the instrument commit); control X **`b3-gate-x`** unchanged (its seed is the instrument commit's; π `9cc0b64e…` is expected to recur and is re-derived and recorded by the new gate) |
+| budget | **`<gate-2>`** evaluations per arm per pair = `B*` by the frozen budget rule (architecture v0.3 §9: smallest `N(B) × 3 × B` under H1, N(B) sized on **Δ1 alone**) — the lifecycle-2 gate; lifecycle 1's pilot gave 1 000 (27 000 at 1 000 against 28 800 at 800) and that is an expectation, not an input |
+| pairs | **`<gate-2>`** = `N(B*)` by the full ascending scan of the bootstrap power for Δ1 (α = 0.05, power ≥ 0.9, N ≥ 8) — the lifecycle-2 gate; the pilot's N = 9 (power 0.942) is an expectation, not an input |
 | bootstrap / power algorithm | B2's by import and pinned by content: `b2_gate.sign_test_p` (one-sided exact, ties excluded and counted); `b2_gate.required_pairs` — every N from 8 to S ascending, 1 000 experiments of a with-replacement resample of size N from the S paired Δ1, `random.Random(1 + N)`; the control-X null non-rejection with `bootstrap_reject_rate` seed 7; the gate report records the seeds |
-| search-evaluation cap | `N × 3 × B*` = 9 × 3 × 1 000 = **27 000** ≤ 30 000 (H5); holdout evaluations, baselines and session record totals are outside it and are accounted by the plan |
+| search-evaluation cap | `N × 3 × B*` ≤ **30 000** (H5, unchanged); holdout evaluations, baselines and session record totals are outside it and are accounted by the plan; the secondary outcome adds no evaluation (it reads the same runs' traces) |
 | mapping cost charged to F | **333** evaluations (B1's budget: 9 code probes + 292 confirmations + 32 pairs) — an evaluation-count constant, carried in the IDENT |
-| master seed | the first 4 bytes of sha256(`b3-session|` ‖ the instrument commit); pairs `(landscape, operator)` from one Rng stream; the fixed excluded seeds **and every archived set** explicitly excluded — B2's gate runs 1 and 3, the B3 simulation, **B2's 9 session pairs and its B2Q pair**, the B3 gate, the B3Q pair — `evidence/b3/plan.json` `seed_derivation` records every set; disjointness enforced, not assumed |
+| master seed | the first 4 bytes of sha256(`b3-session-2|` ‖ the instrument commit); pairs `(landscape, operator)` from one Rng stream; the fixed excluded seeds **and every archived set** explicitly excluded — B2's gate runs 1 and 3, the B3 simulation, B2's 9 session pairs and its B2Q pair, **the lifecycle-1 B3 gate run 1 (`b3-gate`, 200 pairs and master) and the lifecycle-1 nine session pairs and master (`b3-session`, the observed pilot)**, the lifecycle-2 gate (`b3-gate-2`), and the B3Q pair — `evidence/b3/plan.json` `seed_derivation` records every set; disjointness enforced, not assumed |
 | arm order | pair r runs the fixed prefix-balanced sequence's (r mod 6)-th element: **RFO, FOR, ORF, ROF, OFR, FRO** — across any N the number of times an arm occupies a position differs by at most 1 between arms, and is equal exactly when N is a multiple of 3 (RFO, FOR, ORF already place every arm once in every position); the order is part of the plan and the prediction |
-| records | **per pair 3 × 1 000 + 3 = 3 003** (three searches + three champion holdout evaluations, no holdout-mode bit); **per session** 2 baselines + the session's pairs; total = 2 × sessions + 27 027; the `ledger` sub-block is on the O arm's **B* search records only** (an O holdout record evaluates a finished genome and does not update the map), under `specimen_ledger` **1.1.0** at `b3/schemas/specimen_ledger.schema.json` (architecture §7); the frozen `schemas/specimen_ledger.schema.json` 1.0.0 stays as it is |
+| records | **per pair 3 × B* + 3** (three searches + three champion holdout evaluations, no holdout-mode bit); **per session** 2 baselines + the session's pairs; total = 2 × sessions + N × (3 × B* + 3); the `ledger` sub-block is on the O arm's **B* search records only** (an O holdout record evaluates a finished genome and does not update the map), under `specimen_ledger` **1.1.0** at `b3/schemas/specimen_ledger.schema.json` (architecture §7); the frozen `schemas/specimen_ledger.schema.json` 1.0.0 stays as it is |
 | online map document | `online_map` 1.0.0 (`b3/schemas/online_map.schema.json`) and its verifier `b3/host/b3_online_map.py`: schema, internal consistency, accuracy against the B1 truth mapping (host-only, post hoc). **Not** B1's map-lifecycle semantics (nine code probes, 32 interaction edges): neither required nor claimed |
 | audit policy | **all-self-reporting** (B2's, the owner's decision of 2026-09-10): every record's six readout words served and host-verified; every fitness and every behaviour delta recomputed from measured readouts |
 | session split (frozen rule, with a margin) | `b3/host/b3_plan.session_split`: a session holds the largest whole number of pairs whose **expected span** `records × 3600 / R_cal` ≤ 7 200 s; **`R_cal = 0.85 × R_measured`**, where `R_measured` is the B3Q-measured all-self-reporting rate written into the manifest's `calibration` (S2) by this lifecycle's own B3Q. *Why the margin (new in B3):* B2's two sessions ran at 2 630 / h and 2 724 / h against a B2Q calibration of 3 016 / h (0.87 and 0.90 of it); the 20-record B2Q was optimistic for long sessions, and session 1 exceeded 7 200 s (8 228 s) without violating its deadline. 0.85 is fixed here, before B3Q, and is not a calibration — the measured rate is. Not even one pair with its baselines fitting → **INFEASIBLE**, no plan, no S3. Until S2 the split is UNDETERMINED and the committed plan is the rate-less one (the committed-plan stage rule, B2 v0.3, verbatim; `b3/tests/test_b3_plan.py` holds the tree to it at every stage with `StageCoverage`) |
 | deadline | per session, `1.25 × records × 3600 / R_cal + 600` |
 | plan / prediction | `evidence/b3/plan.json`, `evidence/b3/prediction.json` (§3); the committed-plan stage rule as B2's |
-| gate | **run 1**: `evidence/b3/gate/gate_report.json` sha256 `477225f54bb40866abb08df69e6e34341c7516cd7e398e8bb6d0c06c8ae2aa68` (rows `raw_F1.json` `54f9c4fb…`, `raw_F2.json` `279b08ed…`; rendered `docs/b3_gate_report.md`), executed on the clean tree **`f159dee`** under `docs/b3_architecture.md` sha256 `0713dee9e6954bb9db20a3a8be0b52512de762ebe2c4674f18902646bd8dbac8` (v0.2.3; the file is not edited after the run so the pin stays exact — its §11 status rows are superseded by this table); seeds label `b3-gate`, master 3 097 524 112, 200 pairs, 1 245 excluded values from B2's two gate runs, the B3 simulation, B2's nine session pairs and master, B2Q's pair and master; **control X**: seed_x 2 041 341 936, 2 attempts (the first had fixed points), permutation sha256 `9cc0b64ef1faa37ad89858a92f6beb03056c1308c9c3e270658c1196d1f217dd`; F1 PASS H1–H8, H9 holds; 0 wrong decodes, 0 anomalies, 200 / 200 online maps verified, ledgers replayed with their commitments, X shadow-isomorphic |
+| gate | **lifecycle 2: not yet run.** `evidence/b3/gate_2/gate_report.json` under architecture v0.3 §9 and the label `b3-gate-2`, on a clean tree, after this document and the architecture are committed; it pins the architecture's sha256 and records its seeds and every exclusion source. **Run 1 of lifecycle 1** (`evidence/b3/gate/gate_report.json` `477225f5…`, on `f159dee`, architecture v0.2.3 `0713dee9…`: F1 PASS, B* = 1 000, N = 9, H9 held, control X π `9cc0b64e…`) is **pilot / design evidence** — it informed the v0.3 ruling and its 200 pairs are excluded; it is not this lifecycle's gate and not a sizing input |
 | manifest, pin table | `manifests/b3_manifest.json` (`b3/host/b3_manifest.py`: S0 init / S1 freeze / S2 qualify / S3 plan / verify with the §7a pre-check), `manifests/b3_instrument_pins.json` (`b3/host/b3_pins.py`, rule `b3/**/*` regular files + `docs/b3_architecture.md`) — do not exist until every pinned edit is done |
 | transport | the CH340 single-byte-deletion stop-loss is **in force** (B2's exceptions were session-scoped and are spent); every B3 session's ruling pair carries its own transport disposition and its rel-v4 resend budget `N = ceil(4 × expected_frames / 1000)` from the production computation; no session runs without one |
 
 ## 3. The preregistered prediction (`evidence/b3/prediction.json`)
 
 The reference (`b3/host/b3_plan.py` over `host/b1_model.py`'s fabric model — the certificate's
-mapping, the model that predicted B1, P3 and B2) for the 9 pairs, three arms, at
-F1 / 1 000: every fitness in the sequence (`fitness_sequence_sha256`), every champion, every
-champion's holdout value, and for the O arm every ledger entry — every `behaviour_delta`,
-every decode, every map version, the final decoded count and the anomaly count (**0**).
-From these: the per-pair `Δ1_r` and `Δ2_r`, the two predicted primaries with their exact
-p-values, and the predicted final online map of every O run rendered as `self_map` 2.0.0
-with its canonical digest — an `online_map` 1.0.0 document, not a `self_map`.
+mapping, the model that predicted B1, P3 and B2) for the `<gate-2>` pairs, three arms, at
+F1 / `B*`: every fitness in the sequence (`fitness_sequence_sha256`), every champion, every
+champion's holdout value, and for the O arm **every ledger entry, embedded in the prediction
+document itself** — every `behaviour_delta`, every decode, every map version and the running
+anomaly count, entry by entry (a digest and a count are not enough: `b3_plan.py` at `b1b82d0`
+stored only those, the owner's P2, and v0.3 requires the entries) — the final decoded count and
+the anomaly count (**0**), and the predicted final online map of every O run as an
+`online_map` 1.0.0 document with its canonical digest (not a `self_map`). From these: the
+per-pair `Δ1_r` and the **predicted primary** with its exact p; the per-pair `Δ2_r` and the
+**secondary outcome's** predicted report (positives / negatives / ties, exact p, mean, median,
+Cohen's d).
 
-The table of predicted deltas is written here when the plan is generated, before S1, and
-the resolution rule of §1 is applied to it in the same revision. **Because
-the fitness and the decode predictions are exact, a board run that reproduces every predicted
-record necessarily reproduces both primaries**; the session's information is the reproduction
-itself (§4). The seeds are drawn once by the rule and not redrawn; N is the gate's number.
+The table of predicted deltas is written here when the plan is generated, before S1. **The
+stop rule is evaluated on the prediction before any canonical file is written**: `b3_plan.py`
+computes the prediction, checks the primary against α, and writes `evidence/b3/plan.json` /
+`prediction.json` only if it passes; on a stop it writes nothing to a canonical path and exits 3
+naming the primary (the owner's second P2 on `b1b82d0`: the tool wrote first and checked
+after). **Because the fitness and the decode predictions are exact, a board run that reproduces
+every predicted record necessarily reproduces the primary and every secondary value**; the
+session's information is the reproduction itself (§4). The seeds are drawn once by the rule and
+not redrawn; N is the gate's number.
 
 ## 4. Metrics and the decision rule
 
@@ -164,11 +190,11 @@ recomputation from the records. EXACT = equality with the pinned prediction.
 | anomalies | the anomaly count of every O run = the prediction (0) | EXACT |
 | holdout known answers | each champion's holdout F1 on the hardware = the prediction | EXACT (3 × N values) |
 | baselines | opening and closing baselines of every session equal, zero readout, the scorer's base counters | as B1 / B2 |
-| **primary 1** | the exact sign test over the 9 pairs' `Δ1` (best-so-far train F1 at 1 000, O − R), one-sided, α = 0.05, ties excluded from *n* and counted — **pooled across sessions** | p ≤ 0.05, and equal to the predicted p |
-| **primary 2** | the same test over the 9 pairs' `Δ2` (O at 1 000 − F's own trace at 667), one-sided, α = 0.05, ties excluded from *n* and counted — **pooled across sessions** | p ≤ 0.05, and equal to the predicted p (**required**: H9 held, §1) |
+| **primary** | the exact sign test over the N pairs' `Δ1` (best-so-far train F1 at `B*`, O − R), one-sided, α = 0.05, ties excluded from *n* and counted — **pooled across sessions** | p ≤ 0.05, and equal to the predicted p |
+| **secondary outcome** (reported) | the N pairs' `Δ2` (O at `B*` − F's own trace at `B* − 333`): positives / negatives / ties, the exact one-sided p, mean, median, Cohen's d — **pooled across sessions** | every value EXACT to the prediction; **no significance threshold** (v0.3, the owner's ruling) |
 
-Verdict: **PASS** = every required row; the primaries are then the predicted ones, reproduced on
-silicon. Any row failing is a **HOLD** (a rejection the validator names) or a **KILL** (a
+Verdict: **PASS** = every required row; the primary is then the predicted one, reproduced on
+silicon, and the secondary outcome equals its prediction. Any row failing is a **HOLD** (a rejection the validator names) or a **KILL** (a
 falsification: a served readout contradicting a self-report — a fitness, a delta or a decode).
 There is no third outcome (B2 §4, unchanged). A silicon experiment whose primary is *not*
 fixed by the prediction is a separately preregistered design, not this one.
@@ -248,11 +274,15 @@ S3 plan, the B3 ruling pairs, any later change refused — with these additions:
 | **S2 qualify** | the calibration carries `rate_per_hour` (measured), `margin` (0.85, frozen here) and `rate_for_split`; the split rule and `plan_findings` use `rate_for_split` |
 | **S3 plan** | `plan_findings` rebuilds the canonical plan **and the prediction including every ledger entry** and compares field for field; the arm order per pair is part of the plan |
 | **the committed-plan stage rule** | B2 v0.3's, verbatim, held by `b3/tests/test_b3_plan.py` with `StageCoverage` at S0–S3 and against the forbidden pairings, before the pin table is generated (§9) |
+| **the plan tool (v0.3, the two P2s of `b1b82d0`)** | (a) the prediction document embeds **every ledger entry** of every O run (`pairs[r].runs.O.ledger`, `specimen_ledger` 1.1.0 entries, B* per run) and `plan_findings` / the adjudicator compare them entry by entry, not by digest alone; (b) `b3_plan.py` evaluates the **stop rule before any canonical write** — no `evidence/b3/plan.json` or `prediction.json` exists on a stop, the CLI exits 3 naming the primary, and a trial run can only write to an explicit non-canonical `--out`; tests for both (an entry-level tamper named; a stopping prediction leaves the canonical paths absent) precede the pin table |
 
 Ordering (the audit's §8, each unit separately authorised, none authorising the next): the
-owner's review of architecture v0.2 and this draft → every pinned edit (the `b3/` implementation,
-the tests with the §9 audit, the image sources and build evidence, the gate run and its report,
-`B*` and `N` written into this document) → the pin table generated **once** → S0 → the pre-freeze
+owner's review of architecture v0.3 and this v0.3 → the plan-tool repairs (the two P2s) → the
+lifecycle-2 gate run under `b3-gate-2` and its report → **the prediction preflight immediately
+after the gate** (the stop rule, before anything else is built) → `B*` and `N` written into this
+document → every other pinned edit (records, session, adjudicator, runner, manifest, pins, test
+report, the tests with the §9 audit, the image sources and build evidence) → the pin table
+generated **once** → S0 → the pre-freeze
 proof (both start directories, discovery sentinel and removal control, zero skip / fail / error,
 clean tree) → the owner's S1 freeze → the post-freeze proof bound to the S1 sha → the B3Q ruling
 pair → B3Q → S2 → the S2 proof → S3 → the final proof → the B3 ruling pairs, one per session →
@@ -274,6 +304,31 @@ sets as exclusion sets; the B2 image, its build evidence and BSP sources as the 
 image is diffed against; the instrument and the board as B2 pins them; the 15 completion
 inputs through their archive.
 
+## 8b. Lifecycle 1 — provenance, and what it does not hand over (v0.3)
+
+Lifecycle 1 (branch `b3-lifecycle-1`, closed at tag `b3-lifecycle-1-stopped-2026-09-17` →
+`2504467`, not merged) ran: the pinned-surface audit (`3a2063d`), architecture v0.2.3 and this
+document's v0.1.2 (`1aa06f1`), the `b3/` cartographer / online arm / control X / online map
+(`25c7ede`), the gate code (`f159dee`) and gate run 1 (`b7db6c7`; F1 PASS, B* = 1 000, N = 9, H9
+held), this document's v0.2 (`8b43205`), the plan tool and the prediction preflight (`b1b82d0`).
+The preflight triggered v0.2's stop rule: primary 1 (Δ1) 9 / 0 / 0, p = 1/512; primary 2 (Δ2)
+5 / 3 / 1, p = 93/256. The cause was structural — N was sized on Δ1 alone while Δ2 was required;
+under the same bootstrap rule Δ2 needed N = 53 at B* = 1 000 (power 0.213 at N = 9), and Δ2
+weakens with the budget as O's map completes, so no budget within the cap could carry both
+(`docs/b3_lifecycle1_stop_decision_2026_09_17.md` §2 and the owner's ruling of option 2).
+
+**Not an input, not an authority (history only):** gate run 1 and its `B*` / N (the lifecycle-2
+gate derives its own under v0.3 and the label `b3-gate-2`); the trial prediction
+(`evidence/b3/plan_trial_2026_09_17/`) and its nine pairs — an **observed pilot**, in every
+exclusion set of this lifecycle and never a draw; every lifecycle-1 label (`b3-gate`,
+`b3-session`); the v0.2 two-primary claim. **What the pilot did hand over, and how:** its
+numbers informed the v0.3 ruling (the choice of one confirmatory primary) — a design decision
+made before any lifecycle-2 gate or prediction, recorded here so it cannot be argued in later
+as a result. **Carried unchanged:** units 1 and 2 (the namespace, the pin discipline, the
+verifier contract, the authority boundary of §8a), the `b3/` code as reviewed (the gate code is
+re-run, not re-reviewed, except for the label and rules-version constants), architecture v0.3's
+criteria other than H9's role, the frozen wrappers, B2's authority as §2 pins it.
+
 ## 9. Stage-aware tests — the rule applied before anything is frozen (audit §9)
 
 Every B3 test that reads committed lifecycle state takes the stage from the production
@@ -288,11 +343,12 @@ pattern, `docs/b2_lifecycle2_pinned_test_audit_2026_09_16.md`) and precedes step
 
 ## 10. What is asked now
 
-Decided by the owner on v0.1 (2026-09-17): d ≥ 0.5; the 30 000 search-evaluation cap; the
-0.85 margin; B3Q at budget 40; the conditional two-primary design with the resolution rule;
-control X as a fixed derangement; the prefix-balanced arm order; v0.1.2 accepted at `1aa06f1`.
-Asked now: the owner's review of **gate run 1** (`docs/b3_gate_report.md`, `b7db6c7`) and of this
-v0.2 — the filled `B*` = 1 000 and N = 9, the resolved single claim with both primaries
-required, and the §2 gate provenance row. Still no pin table, no manifest, no image, no
-ruling, no board; the next pinned edits (the plan / prediction, records, session, adjudicator,
-runner, manifest, pins, test report, firmware) follow the owner's review.
+Decided by the owner (2026-09-17): option 2 — one confirmatory primary Δ1; Δ2 a reported secondary
+outcome with a fixed definition and no threshold; H9 a gate diagnostic; the new gate sizes Δ1
+within the unchanged 30 000 cap; new labels; the lifecycle-1 pairs and gate run 1 as pilot /
+design evidence in the exclusion set; 7 200 s, 0.85, B3Q at 40, the stop rule and no redraw
+unchanged. Asked now: the owner's review of this v0.3 and of architecture v0.3 (H9's role, the
+labels, §11) — **documents only; no gate, no prediction, no code change under this unit**. After
+the review, in order: the plan-tool repairs of §8 (the two P2s: entries in the prediction, the
+stop before any canonical write; plus the label / rules-version constants of the gate and plan
+tools), then the lifecycle-2 gate run, then the prediction preflight.

@@ -84,3 +84,11 @@ carries only a STOPPED banner).
 - everything else of unit 1 and 2 (the namespace, the pins discipline, the verifier contract, the
   authority boundary) stands as reviewed; the gate run 1 stays historical evidence under its own
   architecture hash and is not an input to a new sizing without a new gate ruling.
+
+**Addendum (2026-09-17, the owner's ruling after the closure — option 2).** The second condition
+above is superseded: lifecycle 2 sizes **one confirmatory primary, Δ1**, by the same rule within
+the unchanged 30 000 cap, and fixes a **reporting rule for Δ2 as a secondary outcome** (definition,
+per-pair prediction, positives / negatives / ties, exact p, effect size; no threshold). The
+pilot's data may inform that design decision and did; the nine pairs and gate run 1 remain in
+the exclusion set and are never a sizing input. Recorded in `docs/b3_preregistration.md` v0.3
+§8b and `docs/b3_architecture.md` v0.3.

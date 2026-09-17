@@ -1,4 +1,16 @@
-# B3 — the closed loop: architecture and host simulation (v0.2.3, host-only, 2026-09-17)
+# B3 — the closed loop: architecture and host simulation (v0.3 — lifecycle 2, host-only, 2026-09-17)
+
+> **v0.2.3 → v0.3 (lifecycle 2; the owner's ruling of 2026-09-17 after lifecycle 1 stopped at the
+> prediction preflight, `docs/b3_lifecycle1_stop_decision_2026_09_17.md`).** One change of role in
+> §9: **H9 is a gate diagnostic**, reported at every budget ≥ `B*`, and no longer a condition on
+> the claim — the preregistration (v0.3) has one confirmatory primary, Δ1 = O − R, and Δ2 is a
+> reported secondary outcome. The budget rule and N(B) were already sized on Δ1 alone and are
+> unchanged; the criteria H1–H8, control X, the arm order and the ledger contract are unchanged.
+> The gate is **re-run** under this version and a new label (`b3-gate-2`; sessions `b3-session-2`,
+> qualification `b3-qualification-2`; control X's `b3-gate-x` unchanged), with lifecycle 1's gate
+> run 1 and its nine session pairs in the exclusion set. Gate run 1 (`evidence/b3/gate/`, under the
+> v0.2.3 text `0713dee9…`) stays as pilot / design evidence. §11 updated. This revision is
+> recorded before any lifecycle-2 gate run, as §9's own rule requires.
 
 > **v0.2.2 → v0.2.3 (the owner's review of `faa7421`, HOLD on one P2).** The derangement's
 > rejection sampling is made unique: every attempt starts from the identity array and the
@@ -320,16 +332,17 @@ loop (preregistration §5).
 
 ## 9. The B3 discriminability gate — criteria fixed before the gate simulation runs
 
-`b3/host/b3_gate.py` (step 2 of the lifecycle; not yet written) runs the engine of §2 over
+`b3/host/b3_gate.py` runs the engine of §2 over
 the fabric model of `host/b1_model.py` for the three arms and the controls below, **S = 200
-landscape seeds** under the label `b3-gate` (disjoint from every archived set by explicit
-exclusion, as B2's), budget grid `{100, 200, 300, 400, 600, 800, 1000, 1500, 2000, 3000}`,
+landscape seeds** under the label **`b3-gate-2`** (lifecycle 2; disjoint from every archived set by
+explicit exclusion, as B2's — including lifecycle 1's gate run 1 under `b3-gate` and its nine
+session pairs under `b3-session`), budget grid `{100, 200, 300, 400, 600, 800, 1000, 1500, 2000, 3000}`,
 fitness **F1** (B2's selected fitness — B3 does not re-select; F2 is reported for
 information). The v0.1.1 simulation (§5) is *not* the gate: it ran under a different label,
 before these criteria were written, and its numbers are exploratory.
 
-*Primary statistics, paired by landscape.* `Δ1_r = best_O(r) − best_R(r)` at `B*` (search
-accounting; R and O are charged nothing); `Δ2_r = best_O(r) − end_to_end_F(r)` at total budget
+*The primary and the secondary statistic, paired by landscape.* The **primary** `Δ1_r = best_O(r) − best_R(r)` at `B*` (search
+accounting; R and O are charged nothing); the **secondary outcome** `Δ2_r = best_O(r) − end_to_end_F(r)` at total budget
 `T = B*`, where `end_to_end_F(r)` is F's own best-so-far trace at `T − 333` (the base fitness
 while `T ≤ 333`) — the frozen arm charged B1's mapping cost, from **the same F run**, no extra
 evaluation. Decision statistic for each: the one-sided exact sign test (α = 0.05, ties
@@ -353,12 +366,12 @@ row is evaluated at `B*`.
 | H1 non-saturation | the 95th percentile of arm O's best-so-far at `B*` is below the ceiling (40); arm R's median at `B*` exceeds the base fitness | both hold |
 | H2 not a definitional lock | var(Δ1_r) > 0 at `B*`; **there exists a grid budget B at which both `positives(Δ1(B)) > 0` and `negatives(Δ1(B)) > 0`** (one condition, evaluated within one budget; v0.1.1 already shows it at 300: 41 positives, 130 negatives — the mean's change of sign across budgets is *reported* next to it and is not a criterion); and the same decision procedure applied to control **X** (below) does not reject H0 in ≥ 90 % of 1 000 bootstrap experiments of size N (`bootstrap_reject_rate`, seed 7) | holds |
 | H3 a wrong online map does not profit | control **X — scrambled specimens** (the contract below): mean Δ_X (X − R) ≤ 10 % of mean Δ1 and X's sign test against R is not significant over S; X's map growth (decoded count per grid budget) is reported, not assumed equal to O's | holds |
-| H4 the frozen map is the bound the online map approaches | search accounting: arm O's median at `B*` ≥ 80 % of arm F's; end-to-end: the sign test on Δ2 rejects (O − F > 0 at `B*`) | both hold |
+| H4 the frozen map is the bound the online map approaches | search accounting: arm O's median at `B*` ≥ 80 % of arm F's; end-to-end: the sign test on Δ2 over the S seeds rejects (O − F > 0 at `B*`) — a property of the model over S = 200, not of N pairs (v0.3: Δ2 is the secondary outcome; this row says the population effect exists, not that N pairs will show it) | both hold |
 | H5 effect, power, N | Cohen's d of {Δ1_r} ≥ 0.5 (the online arm pays the poor-map cost first, §5.3; 0.8 is B2's threshold for a map that is correct from evaluation 0); `N = N(B*)`; `N × 3 × B*` ≤ **30 000** as a **search-evaluation cap** — holdout evaluations, baselines and the session record totals are counted separately by the plan and are not inside this number (B2's cap was 13 000 for two arms); how many sessions the records take is decided by the B3Q-measured rate under the split rule with its margin, never by planning rates | holds |
 | H6 no fixed-seed lock | S ≥ 200; N ≥ 8; board seeds under `b3-session|` with every archived set excluded (gate runs, the B3 simulation, B2's plan and B2Q seeds, this gate); var(Δ1_r) > 0 | holds |
 | H7 the online map is a map | over S: 0 wrong decodes and 0 anomalies in the ideal model (a nonzero count is a defect of the cartographer or the model, not a result); the median decoded count at `B*` ≥ 146 (half of 292); the fraction of seeds whose map is complete by the largest grid budget reported | holds |
 | H8 ledger replay | for every seed, replaying the ledger reproduces every map version and every decode (EXACT); the ledger validates against the schema | holds |
-| H9 (a condition on the claim, not on passing) | the one-sided exact sign test on Δ2 (O − end-to-end F) gives **p ≤ 0.05 at every grid budget B ≥ `B*`** (at `B*` this is H4's second half); mean and median Δ2 per budget are reported but are not the criterion | if H9 fails, the preregistration's final claim is primary 1 alone and Δ2 is reported (preregistration §1, the resolution rule) |
+| H9 (v0.3: a **diagnostic**, neither a pass criterion nor a claim condition) | the one-sided exact sign test on Δ2 (O − end-to-end F) at every grid budget B ≥ `B*`, with mean and median Δ2, and — reported next to it — the pair count N₂(B) the same bootstrap rule would need for Δ2 and its power at the gate's N | reported; it decides nothing (Δ2 is the preregistration's secondary outcome, v0.3) |
 
 **Control X, precisely.** X is the online arm run by the **same algorithm and the same RNG
 rule as O** (`b1_carto.Rng(operator_seed)`, the same landscape and operator seeds per pair,
@@ -424,12 +437,14 @@ carries them as placeholders until then.
 
 | file | status | role |
 |---|---|---|
-| `docs/b3_architecture.md` | this document, v0.2.3 | design; the gate criteria of §9 |
-| `docs/b3_preregistration.md` | DRAFT v0.1.2 | what a board session is judged by |
+| `docs/b3_architecture.md` | this document, v0.3 (lifecycle 2) | design; the gate criteria of §9 |
+| `docs/b3_preregistration.md` | DRAFT v0.3 (lifecycle 2) | what a board session is judged by |
 | `docs/b3_lifecycle1_pinned_surface_audit_2026_09_17.md` | PASS (`3a2063d`) | the namespace / pin ruling (§6), the verifier contract, the lifecycle order, the stage-aware test rules, the authority boundary |
 | `host/b3_online.py`, `host/b3_sim.py`, `tests/test_b3_online.py` | **frozen by B2** | the v1.1 host reference and the v0.1.1 simulation; never edited |
 | `evidence/b3/sim/`, `evidence/b3/sim_v0.1.1/` | frozen (the first a B2 verify input) | the v0.1 / v1.1 simulations |
 | `evidence/b2/b2_completion_inputs_2026-09-17/` | committed (unit 1) | the 15 non-tracked B2 inputs, restorable and verified |
-| `b3/host/`, `b3/tests/`, `b3/schemas/`, `b3/firmware/`, `b3/tb/hostapp/` | **not yet written** (lifecycle step 2) | the implementation, under the pin rule `b3/**/*` |
+| `b3/host/b3_carto.py`, `b3_online_arm.py`, `b3_control_x.py`, `b3_online_map.py`, `b3_gate.py`, `b3_gate_report_md.py`, `b3_plan.py`; `b3/schemas/`; `b3/tests/` | written in lifecycle 1 (reviewed to `25c7ede`, `8b43205`, `b1b82d0`); the plan tool carries two P2s to repair (preregistration §8) and the gate / plan tools carry lifecycle-1 label and rules-version constants to update | the implementation so far, under the pin rule `b3/**/*` |
+| `b3/host/` records, session, adjudicator, runner, manifest, pins, test report; `b3/firmware/`; `b3/tb/hostapp/` | **not yet written** | the rest of the pinned edits |
 | `manifests/b3_instrument_pins.json`, `manifests/b3_manifest.json` | not yet generated (steps 3–4) | the B3 authority |
-| `evidence/b3/gate/` | not yet run (step 2) | the gate of §9 |
+| `evidence/b3/gate/` | lifecycle-1 run 1 (pilot / design evidence, under v0.2.3) | the gate of §9 as it was |
+| `evidence/b3/gate_2/` | not yet run | the lifecycle-2 gate of §9 under this version and the label `b3-gate-2` |
