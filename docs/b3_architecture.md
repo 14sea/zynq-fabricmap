@@ -366,9 +366,9 @@ row is evaluated at `B*`.
 | H1 non-saturation | the 95th percentile of arm O's best-so-far at `B*` is below the ceiling (40); arm R's median at `B*` exceeds the base fitness | both hold |
 | H2 not a definitional lock | var(Δ1_r) > 0 at `B*`; **there exists a grid budget B at which both `positives(Δ1(B)) > 0` and `negatives(Δ1(B)) > 0`** (one condition, evaluated within one budget; v0.1.1 already shows it at 300: 41 positives, 130 negatives — the mean's change of sign across budgets is *reported* next to it and is not a criterion); and the same decision procedure applied to control **X** (below) does not reject H0 in ≥ 90 % of 1 000 bootstrap experiments of size N (`bootstrap_reject_rate`, seed 7) | holds |
 | H3 a wrong online map does not profit | control **X — scrambled specimens** (the contract below): mean Δ_X (X − R) ≤ 10 % of mean Δ1 and X's sign test against R is not significant over S; X's map growth (decoded count per grid budget) is reported, not assumed equal to O's | holds |
-| H4 the frozen map is the bound the online map approaches | search accounting: arm O's median at `B*` ≥ 80 % of arm F's; end-to-end: the sign test on Δ2 over the S seeds rejects (O − F > 0 at `B*`) — a property of the model over S = 200, not of N pairs (v0.3: Δ2 is the secondary outcome; this row says the population effect exists, not that N pairs will show it) | both hold |
+| H4 the frozen map is the bound the online map approaches | search accounting: arm O's median at `B*` ≥ 80 % of arm F's; end-to-end: the sign test on Δ2 over the S seeds rejects (O − F > 0 at `B*`) — an S = 200 **model-gate** statistic meeting its threshold before any board time, not a board-session or pooled-result threshold (v0.3: Δ2 is the preregistration's reported secondary outcome; this row says the S = 200 gate statistic met the threshold, not that N pairs will show it) | both hold |
 | H5 effect, power, N | Cohen's d of {Δ1_r} ≥ 0.5 (the online arm pays the poor-map cost first, §5.3; 0.8 is B2's threshold for a map that is correct from evaluation 0); `N = N(B*)`; `N × 3 × B*` ≤ **30 000** as a **search-evaluation cap** — holdout evaluations, baselines and the session record totals are counted separately by the plan and are not inside this number (B2's cap was 13 000 for two arms); how many sessions the records take is decided by the B3Q-measured rate under the split rule with its margin, never by planning rates | holds |
-| H6 no fixed-seed lock | S ≥ 200; N ≥ 8; board seeds under `b3-session|` with every archived set excluded (gate runs, the B3 simulation, B2's plan and B2Q seeds, this gate); var(Δ1_r) > 0 | holds |
+| H6 no fixed-seed lock | S ≥ 200; N ≥ 8; board seeds under `b3-session-2|` with every archived set excluded (B2's gate runs, the B3 simulation, B2's plan and B2Q seeds, lifecycle 1's gate run 1 and its nine `b3-session` pairs, this gate); var(Δ1_r) > 0 | holds |
 | H7 the online map is a map | over S: 0 wrong decodes and 0 anomalies in the ideal model (a nonzero count is a defect of the cartographer or the model, not a result); the median decoded count at `B*` ≥ 146 (half of 292); the fraction of seeds whose map is complete by the largest grid budget reported | holds |
 | H8 ledger replay | for every seed, replaying the ledger reproduces every map version and every decode (EXACT); the ledger validates against the schema | holds |
 | H9 (v0.3: a **diagnostic**, neither a pass criterion nor a claim condition) | the one-sided exact sign test on Δ2 (O − end-to-end F) at every grid budget B ≥ `B*`, with mean and median Δ2, and — reported next to it — the pair count N₂(B) the same bootstrap rule would need for Δ2 and its power at the gate's N | reported; it decides nothing (Δ2 is the preregistration's secondary outcome, v0.3) |
@@ -402,8 +402,10 @@ itself the positive control for the operator (B2 established that the correct ma
 **R** the baseline. A degraded-map family is not needed: the online arm *is* the dose–response
 in time (its map grows from 0 to 292), and its curve against R is reported per grid budget.
 
-*Selection.* Nothing is selected: F1 is fixed by B2. The gate report (`evidence/b3/gate/`,
-`docs/b3_gate_report.md`) states every row PASS or FAIL with the numbers; a row that fails
+*Selection.* Nothing is selected: F1 is fixed by B2. The lifecycle-2 gate report
+(**`evidence/b3/gate_2/gate_report.json`**, rendered as **`docs/b3_gate_2_report.md`** — lifecycle 1's
+`evidence/b3/gate/` and `docs/b3_gate_report.md` are historical evidence and are never overwritten)
+states every row PASS or FAIL with the numbers and H9 as a diagnostic; a row that fails
 is reported, not tuned. **If any threshold above is changed after the first gate run, the
 change is recorded as a revision of this document with the reason, and the gate is re-run
 and re-reported under the new commit** — never silently. `B*` and `N` are the gate's
@@ -420,7 +422,7 @@ carries them as placeholders until then.
   Linux or ICAPE2** (B2 §8, unchanged).
 - **The end-to-end accounting is an evaluation-count model.** B1's two baseline records,
   setup, qualification, audits, retransmissions and compute time are not counted; the 333
-  charged to F is B1's probe budget, not its wall time. The second primary is a statement
+  charged to F is B1's probe budget, not its wall time. The secondary outcome is a statement
   inside that model.
 - **Not the best online cartographer** — one fixed rule (intersection with global closure)
   on one fixed operator shape; nothing was tuned after the v0.1.1 simulation and nothing

@@ -86,7 +86,10 @@ where a row is B2's unchanged, it says so.
 preregistered **secondary outcome**: its definition (O's best-so-far at `B*` minus F's own trace at
 `B* − 333`), its per-pair prediction and its reporting (positives / negatives / ties, the exact
 one-sided sign-test p, the mean, median and Cohen's d of the paired differences) are fixed here;
-no significance threshold is attached to it and no PASS row depends on its sign. The stop rule
+**no board-session or pooled-result PASS threshold** is attached to it and no §4 PASS row depends
+on its sign. (The pre-board model gate still has its own S = 200 row on Δ2 — architecture v0.3
+H4's end-to-end half — which is a condition for going to the board at all, not a condition on the
+board result.) The stop rule
 applies to the primary: the predicted primary on the fixed board seeds must meet p ≤ 0.05 in the
 prediction (§3); if it does not, **the line stops** — the seeds are not redrawn and N is not
 raised. Lifecycle 1's two-primary design and the reason it could not be sized are in §8b.
@@ -233,7 +236,7 @@ baselines — enough O-arm records with ledger bytes for the rate to mean someth
 refused unsigned control; every record audited; PASS = the **123 fitness values (120 search
 plus 3 champion holdout)**, the **40 ledger entries** (decodes, versions, 0 anomalies) and the
 **2 baseline records** (zero readout, base counters) equal the prediction for the qualification
-seeds (`b3-qualification|`, the same exclusions plus B3's own
+seeds (`b3-qualification-2|`, the same exclusions plus B3's own
 set). The session's **measured all-self-reporting rate** goes into its adjudication and, on
 pinning (S2), into the manifest's `calibration`; the split uses `0.85 × R_measured` (§2).
 
@@ -241,7 +244,7 @@ pinning (S2), into the manifest's `calibration`; the split uses `0.85 × R_measu
 ruling pair bound to the **S3 manifest** and carrying its own transport disposition; `17A6`,
 `verify`; a fresh power cycle and boundary record per session; B2's fixed order; the host signs
 zero tables, audits every record, collects; the adjudicator runs over the files as written. The
-primaries are pooled over all sessions' pairs. A session lost is re-run for **the same pairs and
+primary and the secondary report are both pooled over all sessions' pairs. A session lost is re-run for **the same pairs and
 seeds** under a new ruling pair; never replaced by other seeds. **Stop immediately** on a
 preflight refusal, KEY_NOT_LOADED, PAGE_MISMATCH, a U-Boot banner, the deadline.
 
@@ -325,8 +328,10 @@ exclusion set of this lifecycle and never a draw; every lifecycle-1 label (`b3-g
 numbers informed the v0.3 ruling (the choice of one confirmatory primary) — a design decision
 made before any lifecycle-2 gate or prediction, recorded here so it cannot be argued in later
 as a result. **Carried unchanged:** units 1 and 2 (the namespace, the pin discipline, the
-verifier contract, the authority boundary of §8a), the `b3/` code as reviewed (the gate code is
-re-run, not re-reviewed, except for the label and rules-version constants), architecture v0.3's
+verifier contract, the authority boundary of §8a), the `b3/` code as reviewed — the gate and plan
+tools then change under the next unit exactly as §10 lists (labels, rules version, H9 as a pure
+diagnostic with N₂(B) and the gate-N power per budget, the renderer, the single-primary plan
+contract, the new output paths), each change with a load-bearing test — architecture v0.3's
 criteria other than H9's role, the frozen wrappers, B2's authority as §2 pins it.
 
 ## 9. Stage-aware tests — the rule applied before anything is frozen (audit §9)
@@ -349,6 +354,14 @@ within the unchanged 30 000 cap; new labels; the lifecycle-1 pairs and gate run 
 design evidence in the exclusion set; 7 200 s, 0.85, B3Q at 40, the stop rule and no redraw
 unchanged. Asked now: the owner's review of this v0.3 and of architecture v0.3 (H9's role, the
 labels, §11) — **documents only; no gate, no prediction, no code change under this unit**. After
-the review, in order: the plan-tool repairs of §8 (the two P2s: entries in the prediction, the
-stop before any canonical write; plus the label / rules-version constants of the gate and plan
-tools), then the lifecycle-2 gate run, then the prediction preflight.
+the review, in order: **the code unit** — (i) the plan-tool repairs of §8 (every ledger entry in
+the prediction with entry-level comparison; the stop rule before any canonical write); (ii) the
+gate tool: label `b3-gate-2`, rules version `architecture v0.3 §9`, lifecycle 1's gate run 1 and
+nine pairs in the exclusion, `H9_claim_condition` replaced by a pure diagnostic, N₂(B) and the
+gate-N power for Δ2 computed and reported per budget, output to **`evidence/b3/gate_2/`** and a
+separate rendered report **`docs/b3_gate_2_report.md`** (lifecycle 1's `evidence/b3/gate/` and
+`docs/b3_gate_report.md` are never overwritten); (iii) the renderer no longer prints "H9 holds /
+fails"; (iv) the plan tool: labels `b3-session-2` / `b3-qualification-2`, `primary_2` and
+`both_required` and the "either primary stops" contract removed, one primary plus the secondary
+report, the stop rule on the primary alone; (v) a load-bearing test for each of (i)–(iv) —
+then the lifecycle-2 gate run, then the prediction preflight.
