@@ -34,11 +34,13 @@ prefix-balanced arm order. Every O-arm run decoded ≥ 286 / 292 with 0 wrong de
   `manifests/b3_manifest.json` do not exist;
 - the B2 verify stays S3 / true / null / `aec84514…` (`verify_closing.json`).
 
-**Why nine pairs could not carry primary 2.** The gate sized N on Δ1 alone (H5, N(B*) = 9). Applying
-the gate's own bootstrap rule to Δ2 at B* = 1 000 over the 200 gate seeds (125 / 49 / 26) gives
-**N = 53, power 0.909, search cost 159 000** — more than five times the 30 000 cap. The nine pairs were
-not unlucky: the fixed N was sized for one required primary and cannot support the other. H9
-(significant over S = 200) established the population effect; it said nothing about nine pairs.
+**Why nine pairs did not provide the planned power for primary 2.** The gate sized N on Δ1 alone
+(H5, N(B*) = 9). The same bootstrap rule applied to Δ2 at B* = 1 000 over the 200 gate seeds
+(125 / 49 / 26) gives **power 0.213 at N = 9** and requires **N = 53 to reach 0.9** (power 0.909,
+search cost 159 000 — more than five times the 30 000 cap). Lifecycle 1 therefore sized Δ1 but left
+the required primary 2 underpowered. The fixed nine-pair prediction did not support primary 2; it
+cannot distinguish sampling variation from effect heterogeneity. H9 met the preregistered S = 200
+gate condition but did not guarantee significance at N = 9.
 
 ## 3. Identity chain of lifecycle 1 (history; no authority is carried forward)
 
