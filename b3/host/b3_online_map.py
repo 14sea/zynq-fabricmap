@@ -139,23 +139,36 @@ def verify(doc, ledger, truth) -> dict:
     return {"ok": not f, "findings": f, "accuracy": acc}
 
 
+TRUTH_FINDINGS_MAX = 5
+
+
 def truth_findings(truth: dict, addresses: list[int]) -> list[str]:
     """The truth mapping's shape, before any use: every address the document names must be present,
     and every relation used must be exactly two integers, LUT 0..5 and vector 0..63 (a bool is not
-    an int here). Named findings, never a KeyError / TypeError inside the audit."""
+    an int here). Named findings, never a KeyError / TypeError inside the audit. The first
+    TRUTH_FINDINGS_MAX findings are kept verbatim; on the first one beyond them a single suppression
+    marker is appended and the scan stops — the same rule for a missing address and for a
+    malformed relation."""
     f: list[str] = []
     mapping = truth["mapping"]
+
+    def add(what: str) -> bool:
+        """Append; return False when the scan must stop."""
+        if len(f) < TRUTH_FINDINGS_MAX:
+            f.append(what)
+            return True
+        f.append(f"truth: … (further truth findings suppressed after {TRUTH_FINDINGS_MAX})")
+        return False
+
     for i in addresses:
         if i not in mapping:
-            f.append(f"truth: address {i} has no relation in the truth mapping")
+            if not add(f"truth: address {i} has no relation in the truth mapping"):
+                break
             continue
         rel = mapping[i]
         ok = isinstance(rel, (tuple, list)) and len(rel) == 2 and all(isinstance(x, int) and not isinstance(x, bool) for x in rel) \
             and 0 <= rel[0] < bl.LUTS and 0 <= rel[1] < bl.VECTORS
-        if not ok:
-            f.append(f"truth: address {i} has a malformed relation {rel!r} (want (lut 0..5, vector 0..63))")
-        if len(f) >= 5:
-            f.append("truth: … (further truth findings suppressed)")
+        if not ok and not add(f"truth: address {i} has a malformed relation {rel!r} (want (lut 0..5, vector 0..63))"):
             break
     return f
 

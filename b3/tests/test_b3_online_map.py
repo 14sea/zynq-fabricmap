@@ -86,6 +86,42 @@ class OnlineMap(unittest.TestCase):
         self.assertEqual(om.schema_findings(d), [])                       # well-formed ...
         self.assertFalse(om.verify(d, self.res.ledger, TRUTH)["ok"])       # ... and refused
 
+    def test_truth_findings_keep_five_and_suppress_the_rest_on_both_paths(self):
+        """The owner's P3 of 2026-09-17: a missing address used to skip the cap; a malformed relation
+        used to add the marker at exactly the fifth finding. Now: the first five verbatim, one marker
+        on the sixth, then stop — on either path and on a mix."""
+        # missing addresses: 292 asked of an empty mapping -> 5 + 1 marker
+        f = om.truth_findings({"mapping": {}}, list(range(292)))
+        self.assertEqual(len(f), 6)
+        self.assertTrue(all("has no relation" in x for x in f[:5]))
+        self.assertIn("suppressed after 5", f[5])
+        # exactly five missing -> five, no marker
+        f = om.truth_findings({"mapping": {}}, list(range(5)))
+        self.assertEqual(len(f), 5)
+        self.assertFalse(any("suppressed" in x for x in f))
+        # exactly six missing -> five + marker
+        self.assertEqual(len(om.truth_findings({"mapping": {}}, list(range(6)))), 6)
+        # malformed relations: exactly five -> five, no marker; six -> five + marker
+        bad5 = {"mapping": {i: None for i in range(5)}}
+        f = om.truth_findings(bad5, list(range(5)))
+        self.assertEqual(len(f), 5)
+        self.assertTrue(all("malformed relation" in x for x in f))
+        bad6 = {"mapping": {i: (6, 0) for i in range(6)}}
+        f = om.truth_findings(bad6, list(range(6)))
+        self.assertEqual(len(f), 6)
+        self.assertIn("suppressed", f[5])
+        # a mix of both paths counts against the same cap
+        mixed = {"mapping": {0: None, 2: (0, 64), 4: (True, 1)}}
+        f = om.truth_findings(mixed, [0, 1, 2, 3, 4, 5, 6])          # 3 malformed + 4 missing = 7 -> 5 + marker
+        self.assertEqual(len(f), 6)
+        self.assertEqual(sum("malformed" in x for x in f[:5]) + sum("no relation" in x for x in f[:5]), 5)
+        # a clean mapping: nothing
+        self.assertEqual(om.truth_findings(TRUTH, list(range(292))), [])
+        # and the verifier reports the capped list, not 292 lines
+        v = om.verify(self.doc, self.res.ledger, {"mapping": {}})
+        self.assertFalse(v["ok"])
+        self.assertLessEqual(len(v["findings"]), 6)
+
     def test_the_schema_boundary_is_fail_closed_without_a_traceback(self):
         import tempfile
         d = Path(tempfile.mkdtemp())
