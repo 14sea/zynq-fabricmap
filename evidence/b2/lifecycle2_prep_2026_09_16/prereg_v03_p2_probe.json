@@ -1,0 +1,53 @@
+{
+  "diagnostic_only": true,
+  "draft_sha256": "cc12299497b7b22271dcca123f8970fe60ed2f3f87e48b50c09ba6a4211a6e18",
+  "p2_1_image": {
+    "init_with_evidence_note": "pinned from its build evidence (evidence/b2/build_evidence.json); every verify opens the binary and compares its digest and size with this record and with the evidence; board_ready is the owner's mark at the freeze",
+    "init_with_evidence_note_stale": false,
+    "init_without_evidence_note_stale": true,
+    "production_test_named": true,
+    "row_names_digest_size_elf_evidence": true,
+    "row_says_not_built": false
+  },
+  "p2_2_proofs": {
+    "b2_rulings_step": 11,
+    "b2q_ruling_step": 8,
+    "final_proof_step": 10,
+    "order_ok": true,
+    "post_freeze_proof_bound_to_actual_s1_manifest": true,
+    "post_freeze_proof_step": 7,
+    "s0_proof_step": 5,
+    "s1_freeze_step": 6,
+    "s3_step": 9,
+    "steps": {
+      "1": "every pinned-file edit of lifecycle 2 is complete and reviewed \u2014 at this writing, the corrected `tests/test_b2_plan.py`, `host/b2_manifest.py` (the image note, P2-1) and `tests/test_b2_lifecycle.py` (its production-driven test), and nothing else;",
+      "2": "`evidence/b2/plan.json` is regenerated **without** a rate (UNDETERMINED; prediction bytes unchanged);",
+      "3": "the pin table is regenerated **once** (`host/b2_pins.py --generate`);",
+      "4": "S0 init, which pins the new table and re-hashes the image;",
+      "5": "the whole suite green and a clean-tree proof at S0 \u2014 a transition check; it proves the S0 surface only and **cannot stand in for either proof below**;",
+      "6": "S1 freeze of *this* document by the owner (`prereg.sha256`, `board_ready`);",
+      "7": "**the post-freeze clean-tree proof**: the whole suite green with the report's artifact snapshot naming the **actual frozen S1 manifest's sha256** \u2014 a proof taken before the freeze cannot prove the changed manifest or the frozen bytes (lifecycle 1 did this: `test_report_2026-09-13T053400Z.json`, bound to `86997677\u2026`); **required before the B2Q ruling pair**;",
+      "8": "B2Q ruling pair (bound to that S1 manifest), B2Q, S2 qualify \u2014 and, as lifecycle 1 did, a clean-tree proof at S2 (`test_report_2026-09-14T210104Z.json` was its), a transition check;",
+      "9": "S3 plan;",
+      "10": "**the final clean-tree proof**: the whole suite green, zero failures and errors, on the tree that carries the S3 manifest and the pinned plan \u2014 the proof lifecycle 1 could not produce (`docs/b2_s3_frozen_test_decision_2026_09_16.md`); **required before any B2 ruling pair**;",
+      "11": "B2 ruling pairs, each bound to the S3 manifest's sha256."
+    }
+  },
+  "p2_3_identities": {
+    "all_four_manifests_named_in_8a": {
+      "prereg_v02": true,
+      "s0": true,
+      "s1": true,
+      "s2": true,
+      "s3": true
+    },
+    "non_input_list_names_all_four": true,
+    "prereg_digest_labelled_as_document_not_manifest": true,
+    "s1_manifest_named_as_b2q_binding": true
+  },
+  "p3_stagecoverage_claim": {
+    "says_each_guard_removed": false,
+    "says_each_of_the_two_pin_summary_guards_removed": true
+  },
+  "prediction_unchanged": true
+}

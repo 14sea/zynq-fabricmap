@@ -63,7 +63,7 @@
   },
   "sha256": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c"
  },
- "generated_utc": "2026-09-16T09:36:26Z",
+ "generated_utc": "2026-09-16T20:47:31Z",
  "map": {
   "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json",
   "sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
@@ -143,41 +143,34 @@
  "session": "B2",
  "session_span_max_s": 7200,
  "session_split": {
-  "pairs_per_session_max": 4,
-  "rate_per_hour": 2976.9824011102987,
+  "pairs_per_session_max": 5,
+  "rate_per_hour": 3016.3995578641097,
   "sessions": [
    {
-    "deadline_s": 7870.785340191213,
-    "expected_span_s": 5816.6282721529715,
+    "deadline_s": 9568.970947322621,
+    "expected_span_s": 7175.176757858097,
     "pairs": [
      0,
      1,
      2,
-     3
+     3,
+     4
     ],
-    "records": 4810
+    "records": 6012
    },
    {
-    "deadline_s": 7870.785340191213,
-    "expected_span_s": 5816.6282721529715,
+    "deadline_s": 7775.773495778743,
+    "expected_span_s": 5740.618796622995,
     "pairs": [
-     4,
      5,
      6,
-     7
-    ],
-    "records": 4810
-   },
-   {
-    "deadline_s": 2419.963731723539,
-    "expected_span_s": 1455.970985378831,
-    "pairs": [
+     7,
      8
     ],
-    "records": 1204
+    "records": 4810
    }
   ],
   "status": "DETERMINED",
-  "total_records": 10824
+  "total_records": 10822
  }
 }

@@ -1,0 +1,30 @@
+test_arm_order_alternates (test_b2_plan.Committed.test_arm_order_alternates) ... ok
+test_fitness_budget_pairs_are_the_gates (test_b2_plan.Committed.test_fitness_budget_pairs_are_the_gates) ... ok
+test_prediction_equals_a_fresh_reference_run (test_b2_plan.Committed.test_prediction_equals_a_fresh_reference_run) ... ok
+test_prediction_pinned_in_plan (test_b2_plan.Committed.test_prediction_pinned_in_plan) ... ok
+test_primary_is_the_sign_test_over_the_deltas (test_b2_plan.Committed.test_primary_is_the_sign_test_over_the_deltas) ... ok
+test_record_count_and_split_arithmetic (test_b2_plan.Committed.test_record_count_and_split_arithmetic) ... ok
+test_seed_exclusion_is_explicit_and_covers_every_archived_set (test_b2_plan.Committed.test_seed_exclusion_is_explicit_and_covers_every_archived_set) ... ok
+test_seeds_follow_the_rule_and_avoid_the_gate (test_b2_plan.Committed.test_seeds_follow_the_rule_and_avoid_the_gate) ... ok
+test_a_determined_split_with_nothing_pinned_is_refused (test_b2_plan.StageCoverage.test_a_determined_split_with_nothing_pinned_is_refused)
+The inverse: a DETERMINED plan (any rate) in a tree whose manifest pins no plan. ... ok
+test_a_pin_whose_record_total_disagrees_with_the_plan_is_refused (test_b2_plan.StageCoverage.test_a_pin_whose_record_total_disagrees_with_the_plan_is_refused) ... ok
+test_a_pin_whose_session_count_disagrees_with_the_plan_is_refused (test_b2_plan.StageCoverage.test_a_pin_whose_session_count_disagrees_with_the_plan_is_refused) ... ok
+test_a_pinned_plan_whose_bytes_drifted_is_refused (test_b2_plan.StageCoverage.test_a_pinned_plan_whose_bytes_drifted_is_refused)
+S3 with the committed plan edited after pinning: same shape, different bytes. ... ok
+test_each_summary_guard_is_load_bearing (test_b2_plan.StageCoverage.test_each_summary_guard_is_load_bearing)
+The control for the two cases above (the review's item 3): delete either comparison from ... ok
+test_it_passes_at_s0_s1_and_s2_with_the_undetermined_plan (test_b2_plan.StageCoverage.test_it_passes_at_s0_s1_and_s2_with_the_undetermined_plan) ... ok
+test_it_passes_at_s3_for_every_split_a_calibration_can_give (test_b2_plan.StageCoverage.test_it_passes_at_s3_for_every_split_a_calibration_can_give)
+Synthetic fixture rates, never a calibration: four legally different S3 splits, and the ... ok
+test_it_passes_at_s3_with_the_pinned_plan (test_b2_plan.StageCoverage.test_it_passes_at_s3_with_the_pinned_plan)
+The transition the frozen assertion could not survive. ... ok
+test_it_passes_with_no_manifest_at_all (test_b2_plan.StageCoverage.test_it_passes_with_no_manifest_at_all)
+The pre-image tree (before S0 there is no manifest): the committed plan is UNDETERMINED. ... ok
+test_the_old_constant_is_exactly_what_fails_at_s3 (test_b2_plan.StageCoverage.test_the_old_constant_is_exactly_what_fails_at_s3)
+The control for the correction itself: an UNDETERMINED plan file against an S3 manifest — ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 17.222s
+
+OK

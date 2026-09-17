@@ -1,0 +1,198 @@
+{
+ "audit": {
+  "note": "every record's readout served and host-verified (the owner's decision of 2026-09-10)",
+  "policy": "all-self-reporting"
+ },
+ "board": {
+  "boardid": "17A6",
+  "idcode": "0x13722093",
+  "part": "xc7z010clg400-1",
+  "role": "verify"
+ },
+ "calibration": null,
+ "carrier": {
+  "bitstream_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+  "variant": "0x42310001"
+ },
+ "carrier_lineage": {
+  "b1_manifest": {
+   "path": "manifests/b1_manifest.json",
+   "sha256": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8"
+  },
+  "b1_qualification_record_sha256": "7f2b76f03d509c50e8bc451e603157832d121ec0b4c71d56d0bb5d8502b517a8",
+  "bitstream": "builds/b1/b1.bit",
+  "bitstream_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+  "note": "the B1 evidence certifies the carrier's history under the B1 manifest and is re-verified FRESH by every verify(); it does not qualify this manifest \u2014 the B2 image needs its own B2Q session (S2)",
+  "variant": "0x42310001"
+ },
+ "experiment": {
+  "budget_per_arm": 600,
+  "engine": {
+   "kmax": 4,
+   "lambda": 8,
+   "mu": 4,
+   "version": "b2-es-v1"
+  },
+  "fitness": "F1",
+  "gate": {
+   "path": "evidence/b2/gate/recomputed_2026_09_10/gate_report.json",
+   "rules_version": "v0.3",
+   "sha256": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c"
+  },
+  "pairs": 9
+ },
+ "history": [
+  {
+   "at": "2026-09-16T19:42:52Z",
+   "prereg_sha256": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf",
+   "transition": "S1 freeze"
+  }
+ ],
+ "image": {
+  "board_ready": true,
+  "build_evidence": {
+   "path": "evidence/b2/build_evidence.json",
+   "sha256": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b"
+  },
+  "bytes": 114708,
+  "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc",
+  "note": "pinned from its build evidence (evidence/b2/build_evidence.json); every verify opens the binary and compares its digest and size with this record and with the evidence; board_ready is the owner's mark at the freeze",
+  "path": "firmware/b2/bsp/out/b2_app.bin",
+  "sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5"
+ },
+ "instrument": {
+  "psoracle_commit": "689dde1dad374536c625bbe2b05986ee89eb4c94"
+ },
+ "instrument_pins": {
+  "path": "manifests/b2_instrument_pins.json",
+  "sha256": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1"
+ },
+ "map": {
+  "canonical_json_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+  "cartographer": "carto-v1",
+  "file_sha256": "b6607a9a4de4ec16b4441395703d353ba438463e3ff0be3b5984ec6f1f1bfa38",
+  "note": "two digests, two encodings: canonical JSON (sorted keys, no spaces) and the file bytes; the IDENT carries the canonical one",
+  "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json"
+ },
+ "pins": {
+  "docs/b2_architecture.md": "2393399094e2ae77389e454c2d435ea9e85dc48e5c9fafded30275de2da12172",
+  "host/b2_gate.py": "34edc5632906685e2c83bb8fc90d05d31724b4b0a8af805188241e6b93fbaa2b",
+  "host/b2_landscape.py": "c3ff39e8dd17514de698bcb03e3023bd5d8911b8ded011cbea231dc9cdcb3226",
+  "host/b2_manifest.py": "a2cd18f4455a8905dc46099d44eab6a1bf3a98452db0dd5378da174266ce8249",
+  "host/b2_maps.py": "efad161147f73d7083051d1923f82b91a3e9cb7234d3942d22df1a0f4c3fd09e",
+  "host/b2_plan.py": "bb9cc4427ac7f44dac410f7f3aab130eab8e1fe94258e3693fe7c47526de4b5d",
+  "host/b2_search.py": "3acb04714a6c677708892d171f6a418e6de7627210e2ec6ad65158db51eab1cf",
+  "schemas/self_map_v2.schema.json": "410b132a408cfdcf3031b7f525e1f03e116b386de368b8ea007134b172fc51d6"
+ },
+ "plan": null,
+ "prereg": {
+  "frozen": true,
+  "path": "docs/b2_preregistration.md",
+  "sha256": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf"
+ },
+ "qualification": null,
+ "qualification_plan": {
+  "budget_per_arm": 8,
+  "master_seed": 505806527,
+  "pairs": [
+   [
+    3890725659,
+    1378470437
+   ]
+  ],
+  "path": "evidence/b2/b2q_plan.json",
+  "planning_bound": {
+   "deadline_formula": "1.25 x records x 3600 / rate + 600 (the instrument's l6_schedule.session_timeout_s)",
+   "rate_per_hour": 2807.0,
+   "rule": "the slowest archived planning rate (the last observed B1 mapping, this document's planning_rates_NOT_calibration); B2Q MEASURES the real one",
+   "session_timeout_s": 632.0627003918775
+  },
+  "prediction_path": "evidence/b2/b2q_prediction.json",
+  "prediction_sha256": "2ada4d5dab7ed08f081aa55bb4b6f138688a326bb859ab5d63f58c16e67b58aa",
+  "records": 20,
+  "sha256": "3d194d76e083fd4ba3ce3cf0458af65637120fcda6761be36598833dbc659216"
+ },
+ "qualified": false,
+ "rulings_binding": {
+  "B2": [
+   "session=B2",
+   "master_seed",
+   "image_sha256",
+   "prereg_sha256",
+   "b2_manifest_sha256 (the S3 manifest)"
+  ],
+  "B2Q": [
+   "session=B2Q",
+   "image_sha256",
+   "prereg_sha256",
+   "b2_manifest_sha256 (manifest_at_run: the S1 manifest)"
+  ]
+ },
+ "schema": "b2_manifest",
+ "schema_version": "0.2.5",
+ "seeds": {
+  "excluded_frozen_sets": {
+   "evidence/b2/gate/gate_report.json": {
+    "count": 200,
+    "master_seed": 1324512209,
+    "values": 401
+   },
+   "evidence/b2/gate/v0.1_2026-09-10/gate_report.json": {
+    "count": 200,
+    "master_seed": 2131041347,
+    "values": 401
+   },
+   "evidence/b3/sim/sim_report.json": {
+    "count": 200,
+    "master_seed": 3829368064,
+    "values": 401
+   }
+  },
+  "label": "b2-session",
+  "master_seed": 716169644,
+  "pairs": [
+   [
+    3999265929,
+    2551437210
+   ],
+   [
+    2071443792,
+    2503381146
+   ],
+   [
+    1882088862,
+    2502935555
+   ],
+   [
+    2267199202,
+    3505262618
+   ],
+   [
+    33405527,
+    3399505749
+   ],
+   [
+    849734627,
+    3795939218
+   ],
+   [
+    1282363125,
+    3177433520
+   ],
+   [
+    171087639,
+    3868904327
+   ],
+   [
+    1595928170,
+    2211641680
+   ]
+  ],
+  "rule": "first 4 bytes of sha256(label|instrument commit); archived seed sets explicitly excluded"
+ },
+ "status": "S1 FROZEN \u2014 prereg pinned, image board_ready by the owner; awaiting the B2Q ruling pair",
+ "universe": {
+  "addresses": 292,
+  "sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
+ }
+}

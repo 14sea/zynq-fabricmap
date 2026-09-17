@@ -1,0 +1,52 @@
+{
+  "at": "2026-09-16T20:27:42Z",
+  "authorization": "Explicit owner instruction in this conversation (2026-09-16) after the owner's technical review of the B2Q evidence: run bm.qualify once with evidence/b2/b2q_17A6_2026-09-16-01 and the production re-adjudicator; no step 11, S3, push or board.",
+  "base_head": "d4b565e06638345fe81406a7331822d2fb230de0",
+  "board_contact": false,
+  "calibration": {
+    "audit_policy": "all-self-reporting",
+    "pairs_per_session_max": 5,
+    "rate_per_hour": 3016.3995578641097,
+    "sessions": 2,
+    "source": "reconstructed from the B2Q evidence (adjudication.json) \u2014 the only source a B2 plan may be sized from"
+  },
+  "changed_top_level_fields": [
+    "calibration",
+    "history",
+    "qualification",
+    "qualified",
+    "status"
+  ],
+  "command": "python: bm.qualify(m, Path('evidence/b2/b2q_17A6_2026-09-16-01'), readjudicate=rn.readjudicator(m)); bm.MANIFEST.write_text(bm.render(c))",
+  "evidence_dir": "evidence/b2/b2q_17A6_2026-09-16-01",
+  "image_sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+  "lifecycle": 2,
+  "manifest_after_sha256": "3415e290444959f3b9409569de52140ac923aaa2779d537e56098210e30c9bb2",
+  "manifest_before_sha256": "90115453666218a44a4522f3404f612066bf5c79203fab6fec771d8f038933df",
+  "operation": "S2 qualify",
+  "pins_sha256": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1",
+  "plan": null,
+  "prereg_sha256": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf",
+  "qualification_summary": {
+    "audit_policy": "all-self-reporting",
+    "evidence_dir": "evidence/b2/b2q_17A6_2026-09-16-01",
+    "measured_rate_per_hour": 3016.3995578641097,
+    "outcome": "PASS",
+    "schema_version": "1.2.0",
+    "session": "B2Q"
+  },
+  "qualified": true,
+  "ruling_issued": false,
+  "verify_after": {
+    "manifest_sha256": "3415e290444959f3b9409569de52140ac923aaa2779d537e56098210e30c9bb2",
+    "qualified": true,
+    "refusal": null,
+    "stage": "S2"
+  },
+  "verify_before": {
+    "manifest_sha256": "90115453666218a44a4522f3404f612066bf5c79203fab6fec771d8f038933df",
+    "qualified": false,
+    "refusal": null,
+    "stage": "S1"
+  }
+}

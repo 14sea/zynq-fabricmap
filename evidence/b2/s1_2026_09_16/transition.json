@@ -1,0 +1,40 @@
+{
+  "at": "2026-09-16T19:42:52Z",
+  "authorization": "Explicit owner instruction in this conversation (2026-09-16): '\u6388\u6b0a\u6b65\u9a5f 6 S1 freeze\uff0cprereg sha fa401221\u2026'. No ruling or board access authorized.",
+  "base_head": "57c9406c6b923aea4e430254978607368e9c363c",
+  "board_contact": false,
+  "calibration": null,
+  "changed_fields": [
+    "history",
+    "image.board_ready",
+    "prereg.frozen",
+    "prereg.sha256",
+    "status"
+  ],
+  "command": "python3 -B host/b2_manifest.py freeze --prereg-sha256 fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf",
+  "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc",
+  "image_sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+  "lifecycle": 2,
+  "manifest_after_sha256": "90115453666218a44a4522f3404f612066bf5c79203fab6fec771d8f038933df",
+  "manifest_before_sha256": "a5e84423cfa8148f29cc70bd0f5c42ab785a0fcd2019b7694c2e2b718e3f4224",
+  "operation": "S1 freeze",
+  "pins_sha256": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1",
+  "plan": null,
+  "prereg_sha256": "fa401221d20869c2dc9f77bbf12f4c2ab92efee9bd15c287f3109d501161fccf",
+  "preregistration_version": "DRAFT v0.3 (2026-09-16), accepted by the owner at fa401221\u2026",
+  "qualification": null,
+  "qualified": false,
+  "ruling_issued": false,
+  "verify_after": {
+    "manifest_sha256": "90115453666218a44a4522f3404f612066bf5c79203fab6fec771d8f038933df",
+    "qualified": false,
+    "refusal": null,
+    "stage": "S1"
+  },
+  "verify_before": {
+    "manifest_sha256": "a5e84423cfa8148f29cc70bd0f5c42ab785a0fcd2019b7694c2e2b718e3f4224",
+    "qualified": false,
+    "refusal": null,
+    "stage": "S0"
+  }
+}

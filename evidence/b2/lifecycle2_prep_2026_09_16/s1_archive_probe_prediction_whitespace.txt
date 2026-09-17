@@ -1,0 +1,8 @@
+probe setup: isolated git worktree at HEAD 3588283; evidence/b2/prediction.json rewritten with different whitespace only; JSON equal; bytes differ
+restored 15/15 into /tmp/b2_s1_fresh_restore_wfgmni13: sizes and sha256 equal archive.json
+Traceback (most recent call last):
+  File "<isolated worktree>/evidence/b2/b2_17A6_2026-09-16-01/restore_rejudge.py", line 57, in <module>
+    assert got == pin[sha_key], (f"REFUSED before re-judge: the pinned {label} {pin[path_key]} hashes to {got[:16]}…, "
+           ^^^^^^^^^^^^^^^^^^^
+AssertionError: REFUSED before re-judge: the pinned prediction evidence/b2/prediction.json hashes to d329e465e39921d4…, the run manifest pins a611b8e03c88fa79… — the frozen bytes changed
+exit=1

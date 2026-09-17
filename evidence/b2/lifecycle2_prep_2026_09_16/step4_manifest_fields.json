@@ -1,0 +1,30 @@
+{
+ "status": "S0 INIT \u2014 derived from the tree; not frozen; no qualification; no plan; NO BOARD RULING",
+ "instrument_pins": {
+  "path": "manifests/b2_instrument_pins.json",
+  "sha256": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1"
+ },
+ "image": {
+  "board_ready": false,
+  "build_evidence": {
+   "path": "evidence/b2/build_evidence.json",
+   "sha256": "ce58eaf3cc79db5687e8324e77ec7c814d181e497cbeb069587fb3b66f33af5b"
+  },
+  "bytes": 114708,
+  "elf_sha256": "7de96ed25e01199ad4405dcc59b2ec92140c27679710e6acfbbad158e4986cdc",
+  "note": "pinned from its build evidence (evidence/b2/build_evidence.json); every verify opens the binary and compares its digest and size with this record and with the evidence; board_ready is the owner's mark at the freeze",
+  "path": "firmware/b2/bsp/out/b2_app.bin",
+  "sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5"
+ },
+ "prereg": {
+  "frozen": false,
+  "path": "docs/b2_preregistration.md",
+  "sha256": null
+ },
+ "qualification": null,
+ "qualified": false,
+ "calibration": null,
+ "plan": null,
+ "history": [],
+ "pins_b2_manifest_py": "a2cd18f4455a8905dc46099d44eab6a1bf3a98452db0dd5378da174266ce8249"
+}
