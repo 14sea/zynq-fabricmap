@@ -91,16 +91,28 @@
  ],
  "exports_json_seal_note": "exports.json (a sealed member of the session record) names the five exports by size and sha256; those digests are the ones listed under archive.members, so the seal is verifiable after restore.",
  "restore": [
-  "cd evidence/b2/b2_17A6_2026-09-16-01",
-  "zstd -dc exports.tar.zst | tar -xf -",
-  "sha256sum -c <(python3 -c \"import json;d=json.load(open('archive.json'));[print(m['sha256'],' ',m['name']) for m in d['archive']['members']+d['ordinary_files']]\")"
+  "Fresh restore, executable: python3 -B evidence/b2/b2_17A6_2026-09-16-01/restore_rejudge.py (from the repository root).",
+  "What it does, in order: (1) create an EMPTY temporary directory; (2) `zstd -dc exports.tar.zst | tar -xf -` into it \u2014 the five members; (3) copy the ten files listed under ordinary_files from this directory; (4) require the restored file set to be exactly those fifteen \u2014 no extra, no missing; (5) check every file's size and sha256 against this document.",
+  "The archive must first match this document: bytes and sha256 under archive."
  ],
- "rejudge": "from a directory holding all 15 files: b2_runner.judge_session(dir, manifest_at_run.json, summary.json['l6'] (the session plan the runner saved), evidence/b2/plan.json, evidence/b2/prediction.json, None, PSORACLE_ROOT) with PSORACLE_ROOT on sys.path; the result must equal adjudication.json key for key (done at archival: PASS, rate 2630.433828050359, findings [], kills []).",
+ "rejudge": "Performed by the same script after the restore: sys.path gets the repository's host/ and tests/ AND BOTH instrument paths \u2014 PSORACLE_ROOT and PSORACLE_ROOT/host (default /home/test/zynq_psoracle; l5_runner and validators live in different places) \u2014 then b2_runner.judge_session(restored_dir, manifest_at_run.json, summary.json['l6'] (the session plan the runner saved), evidence/b2/plan.json (checked against the manifest's plan pin), evidence/b2/prediction.json, None, PSORACLE_ROOT). The result must equal adjudication.json key for key. At archival: PASS, rate 2630.433828050359, findings [], kills [].",
  "external_backup": {
   "path": "/home/test/fabricmap_backups/b2_17A6_2026-09-16-01",
   "hash_list": "/home/test/fabricmap_backups/b2_17A6_2026-09-16-01.SHA256SUMS",
-  "state": "complete original directory, 15 files, read-only, sha256sum -c passed at archival"
+  "state": "the complete original directory: exactly the 15 original files (the five exports and the ten ordinary files), nothing else; read-only; the hash list covers all 15 and sha256sum -c passed after the archival. An extra copy of exports.tar.zst that had been copied along was removed on 2026-09-17 (the owner's P3) and the list re-checked."
  },
  "archived_at_utc": "2026-09-17T03:57:42Z",
- "note": "These hashes are an integrity anchor for the archived bytes; they do not prove the session's verdict \u2014 the verdict is re-derived by the production judge from the restored files."
+ "note": "These hashes are an integrity anchor for the archived bytes; they do not prove the session's verdict \u2014 the verdict is re-derived by the production judge from the restored files.",
+ "files_in_this_directory_not_part_of_the_session_record": [
+  "exports.tar.zst",
+  "archive.json",
+  "README.md",
+  "restore_rejudge.py"
+ ],
+ "archival_corrections": [
+  {
+   "at": "2026-09-17",
+   "what": "restore/rejudge instructions replaced by the executable fresh-restore script and both instrument import paths named; external_backup.state made exact (the owner's review P2 and P3 of 893e25d). exports.tar.zst unchanged."
+  }
+ ]
 }
