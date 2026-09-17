@@ -158,19 +158,14 @@ def secondary_report(deltas: list[int]) -> dict:
 
 
 def gate_inputs(gate_report: Path = GATE_REPORT) -> dict:
-    gate = json.loads(gate_report.read_text())
-    if gate.get("schema") != "b3_gate_report":
-        raise ValueError("not a b3_gate_report")
-    if gate["thresholds"].get("rules_version") != b3g.THRESHOLDS["rules_version"]:
-        raise ValueError(f"the gate report's rules ({gate['thresholds'].get('rules_version')}) are not the current ones ({b3g.THRESHOLDS['rules_version']})")
-    if gate["seeds"].get("label") != b3g.GATE_LABEL:
-        raise ValueError(f"the gate report's label ({gate['seeds'].get('label')}) is not this lifecycle's ({b3g.GATE_LABEL})")
-    if not b3g.is_lifecycle2_report(gate):
-        raise ValueError("the gate report is not a lifecycle-2 report (H9 must be a diagnostic, never a criterion or a claim condition)")
+    """The gate's numbers, read only through the production validator (`b3_gate.validate_report`:
+    schema 2.0.0, provenance, the architecture binding, every raw file's digest and seeds, evaluate()
+    re-run from the raw rows) — a Refusal names whatever fails; B* and N are trusted only after that."""
+    gate = b3g.validate_report(gate_report)
     fid = gate["gate_fitness"]
     res = gate["results"][fid]
     if not res["pass"] or res["b_star"] is None:
-        raise ValueError(f"the gate did not pass for {fid}: no plan")
+        raise b3g.Refusal(f"the gate did not pass for {fid}: no plan")
     return {"fitness": fid, "budget_per_arm": res["b_star"], "pairs": res["criteria"]["H5"]["required_pairs_N"],
             "head_at_run": gate["head_at_run"],
             "rules_version": gate["thresholds"]["rules_version"], "architecture_sha256": gate["architecture"]["sha256"],
@@ -179,14 +174,12 @@ def gate_inputs(gate_report: Path = GATE_REPORT) -> dict:
 
 
 def session_exclusion(gate_report: Path = GATE_REPORT) -> tuple[set[int], dict]:
-    """Every archived set the gate excluded, plus the gate's own seeds (re-derived from its master and
-    count under the same exclusion, and checked against the raw rows)."""
+    """Every archived set the gate excluded, plus the gate's own seeds (the validator has already
+    checked that the raw rows carry the seeds the master and count re-derive; they are read back from
+    the validated report's raw file)."""
     excl, sources = b3g.gate_exclusion()
     gi = gate_inputs(gate_report)
     gseeds = bs.pair_seeds(gi["seeds"]["master_seed"], gi["seeds"]["count"], exclude=frozenset(excl))
-    raw = json.loads((gate_report.parent / f"raw_{gi['fitness']}.json").read_text())["rows"]
-    if [(row["landscape_seed"], row["operator_seed"]) for row in raw] != [tuple(x) for x in gseeds]:
-        raise ValueError("the gate's rows do not carry the seeds its master and count re-derive")
     flat = {s for p in gseeds for s in p} | {gi["seeds"]["master_seed"]}
     sources[_rel(gate_report) + " (the B3 gate's pairs)"] = {"master_seed": gi["seeds"]["master_seed"], "count": gi["seeds"]["count"], "values": len(flat)}
     return excl | flat, sources
@@ -300,31 +293,10 @@ def stop_rule_findings(prediction: dict) -> list[str]:
 
 def prediction_findings(expected: dict, actual: dict, path: str = "") -> list[str]:
     """Field for field, entry for entry: every difference between two prediction documents, each
-    named by its path (`pairs[3].runs.O.ledger[17].decoded`, ...). Both sides are JSON-normalised
-    first (a tuple and a list are the same entry). The comparison `plan_findings` and the
-    adjudicator use — a digest alone would say only that something differs (§8's first P2)."""
-    def norm(x):
-        return json.loads(json.dumps(x, sort_keys=True))
-
-    def walk(e, a, at):
-        if isinstance(e, dict) and isinstance(a, dict):
-            out = []
-            for k in e:
-                sub = f"{at}.{k}" if at else str(k)
-                out.extend([f"{sub}: absent"] if k not in a else walk(e[k], a[k], sub))
-            out.extend(f"{at}.{k}: unexpected" if at else f"{k}: unexpected" for k in a if k not in e)
-            return out
-        if isinstance(e, list) and isinstance(a, list):
-            out = []
-            if len(e) != len(a):
-                out.append(f"{at}: {len(a)} entries, expected {len(e)}")
-            for i in range(min(len(e), len(a))):
-                out.extend(walk(e[i], a[i], f"{at}[{i}]"))
-            return out
-        if e != a or type(e) is not type(a):
-            return [f"{at}: {a!r}, expected {e!r}"]
-        return []
-    return walk(norm(expected), norm(actual), path)
+    named by its path (`pairs[3].runs.O.ledger[17].decoded`, ...) — `b3_gate.deep_findings`, the
+    same walk the gate validator uses. The comparison `plan_findings` and the adjudicator use — a
+    digest alone would say only that something differs (§8's first P2)."""
+    return b3g.deep_findings(expected, actual, path)
 
 
 def build_plan(rate_measured: float | None, gate_report: Path | None = None, root: Path = REPO_ROOT) -> dict:
@@ -430,14 +402,24 @@ def main(argv=None) -> int:
     ap.add_argument("--gate-report", default=None)
     ap.add_argument("--qualification", action="store_true", help="write B3Q's frozen experiment (b3q_plan.json, b3q_prediction.json) instead")
     a = ap.parse_args(argv)
+    try:
+        return run(a)
+    except b3g.Refusal as e:
+        print(f"REFUSED: {e}", file=sys.stderr)
+        return 2
+
+
+def run(a) -> int:
     gate_report = Path(a.gate_report) if a.gate_report else GATE_REPORT
+    out = REPO_ROOT / a.out
+    b3g.refuse_lifecycle1_path(out)                               # lifecycle 1's gate and trial directories: never written
     g = gate_inputs(gate_report)
     map_sha = bmaps.sha256_of(bmaps.load_self_map())
     if a.qualification:
         _m, seeds, _s, _e = session_seeds(g["pairs"], gate_report)
         qplan = build_qualification_plan(g["fitness"], map_sha, seeds, gate_report)
         qpred = build_qualification_prediction(g["fitness"], map_sha, seeds, gate_report)
-        pp, qp = write_qualification(REPO_ROOT / a.out, qplan, qpred)
+        pp, qp = write_qualification(out, qplan, qpred)
         print(json.dumps({"plan": _rel(pp), "prediction": _rel(qp), "pair_seeds": qplan["seed_derivation"]["pairs"],
                           "records": qplan["records"], "deltas1": qpred["deltas1"], "deltas2": qpred["deltas2"]}, indent=1))
         return 0
@@ -447,7 +429,6 @@ def main(argv=None) -> int:
     # the stop rule BEFORE any canonical write (preregistration v0.3 §3, §8): on a stop the canonical
     # paths stay absent; only an explicit non-canonical --out may hold a trial
     findings = stop_rule_findings(prediction)
-    out = REPO_ROOT / a.out
     canonical = out.resolve() == PLAN_DIR.resolve()
     summary = {"fitness": plan["fitness"], "budget_per_arm": plan["budget_per_arm"], "pairs": plan["pairs"], "master_seed": plan["seed_derivation"]["master_seed"],
                "split": plan["session_split"]["status"], "deltas1": prediction["deltas1"], "deltas2": prediction["deltas2"],

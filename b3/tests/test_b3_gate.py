@@ -13,12 +13,14 @@ import shutil
 import sys
 import tempfile
 import time
+import contextlib
+import io
 import unittest
 from pathlib import Path
 from unittest import mock
 
 R = Path(__file__).resolve().parents[2]
-for p in (R / "host", R / "b3/host"):
+for p in (R / "host", R / "b3/host", R / "b3/tests"):
     sys.path.insert(0, str(p))
 import b2_gate as bg  # noqa: E402
 import b2_plan as bp  # noqa: E402
@@ -26,36 +28,9 @@ import b2_search as bs  # noqa: E402
 import b3_control_x as cx  # noqa: E402
 import b3_gate as g  # noqa: E402
 import b3_gate_report_md as md  # noqa: E402
+from b3_test_fixtures import FIXTURE_HEAD, rewrite_report, synthetic_rows, write_gate_fixture  # noqa: E402
 
 G = list(g.GRID)
-
-
-def synthetic_rows(S=200, seed=1):
-    """Rows shaped like the gate's: O beats R from 600 on with both signs early, F above O in search
-    accounting, F end-to-end below O, X ≈ R and wrong everywhere, O decoding well, all obligations clean."""
-    import random
-    rng = random.Random(seed)
-    rows = []
-    for r in range(S):
-        base = 2
-        Rt, Ft, Ot, Xt, Fe, dec = [], [], [], [], [], []
-        for b in G:
-            rv = min(39, base + int(b ** 0.5 / 2) + rng.randint(-1, 1))
-            fv = min(39, rv + 3 + b // 300 + rng.randint(-1, 1))
-            ov = min(39, rv + (b // 150 - 2) + rng.randint(-2, 2))          # negative-ish below 300, positive from 600
-            xv = min(39, rv + rng.randint(-1, 1))
-            fe = base if b <= 333 else max(0, fv - 6)                       # the charged frozen arm: below O from 600 on
-            Rt.append(rv); Ft.append(fv); Ot.append(ov); Xt.append(xv); Fe.append(fe)
-            dec.append(min(292, b // 3))                                       # decoded count: 200 at 600, complete by 900
-        rows.append({"r": r, "landscape_seed": 1000 + r, "operator_seed": 5000 + r, "base_fit": base,
-                     "arms": {"R": {"at_grid": Rt, "champion_holdout": 1, "column_moves": 0},
-                              "F": {"at_grid": Ft, "champion_holdout": 1, "column_moves": 100, "end_to_end_at_grid": Fe},
-                              "O": {"at_grid": Ot, "champion_holdout": 1, "column_moves": 90, "decoded_at_grid": dec, "versions_final": 100,
-                                    "anomalies": 0, "wrong_decodes": 0, "evals_to_full_map": 1500, "ledger_entries": 3000, "ledger_schema_findings": [],
-                                    "replay_findings": [], "online_map_ok": True, "online_map_findings": [], "online_map_sha256": "0" * 64, "final_state_sha256": "0" * 64},
-                              "X": {"at_grid": Xt, "champion_holdout": 1, "column_moves": 90, "decoded_at_grid": dec, "anomalies": 0, "wrong_decodes": 200,
-                                    "decoded_final": 200, "shadow_findings": [], "perm_sha256": "0" * 64}}})
-    return rows
 
 
 def synthetic_report(results: dict, label="synthetic") -> dict:
@@ -82,37 +57,70 @@ class Lifecycle2Constants(unittest.TestCase):
         self.assertNotEqual(g.GATE_LABEL, g.LIFECYCLE1_GATE_LABEL)
         self.assertNotEqual(bs.master_seed(g.GATE_LABEL, "x"), bs.master_seed(g.LIFECYCLE1_GATE_LABEL, "x"))
 
-    def test_the_gate_refuses_lifecycle_1s_output_directory_before_touching_it(self):
-        """Hermetic: lifecycle 1's directory is a temp COPY here (the constant patched), so a broken guard
-        can damage only the copy — the first version of this test ran against the real evidence and a
-        guard-removed mutant overwrote evidence/b3/gate/ (restored from HEAD, 2026-09-17)."""
+    def test_the_gate_refuses_lifecycle_1s_directories_and_everything_under_them_before_touching_anything(self):
+        """Hermetic: lifecycle 1's directories are temp COPIES here (the constants patched), so a broken
+        guard can damage only the copies — the first version of this test ran against the real evidence
+        and a guard-removed mutant overwrote evidence/b3/gate/ (restored from HEAD, 2026-09-17). The
+        owner's P2: the exact path alone was refused; a descendant (evidence/b3/gate/child) was written."""
         t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
-        d = t / "evidence/b3/gate"
-        shutil.copytree(g.LIFECYCLE1_GATE_DIR, d)
-        before = {p.name: (p.stat().st_mtime_ns, p.stat().st_size) for p in d.iterdir()}
-        real_before = {p.name: (p.stat().st_mtime_ns, p.stat().st_size) for p in g.LIFECYCLE1_GATE_DIR.iterdir()}
+        d = t / "evidence/b3/gate"; shutil.copytree(g.LIFECYCLE1_GATE_DIR, d)
+        tr = t / "evidence/b3/plan_trial_2026_09_17"; shutil.copytree(g.LIFECYCLE1_TRIAL_DIR, tr)
+        snap = lambda p: sorted((x.relative_to(p).as_posix(), x.stat().st_size, x.stat().st_mtime_ns) for x in p.rglob("*"))  # noqa: E731
+        before, before_tr = snap(d), snap(tr)
+        real_before = snap(g.LIFECYCLE1_GATE_DIR) + snap(g.LIFECYCLE1_TRIAL_DIR)
+        with mock.patch.object(g, "LIFECYCLE1_GATE_DIR", d), mock.patch.object(g, "LIFECYCLE1_TRIAL_DIR", tr), \
+             mock.patch.object(g, "git_dirty", return_value=False), mock.patch.object(g, "git_head", return_value=FIXTURE_HEAD):
+            for out in (str(d), str(t / "evidence/b3/../b3/gate"), str(d) + "/", str(d / "child"), str(d / "a/b/c"), str(tr), str(tr / "gate_2")):
+                err = io.StringIO()
+                with contextlib.redirect_stderr(err):
+                    rc = g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", out])
+                self.assertEqual(rc, 2, out)
+                self.assertTrue(err.getvalue().startswith("REFUSED: "), err.getvalue())
+                self.assertIn("never overwritten", err.getvalue())
+        self.assertEqual(snap(d), before); self.assertEqual(snap(tr), before_tr)
+        self.assertEqual(snap(g.LIFECYCLE1_GATE_DIR) + snap(g.LIFECYCLE1_TRIAL_DIR), real_before)
+        # the guard is a function the plan tool uses too
         with mock.patch.object(g, "LIFECYCLE1_GATE_DIR", d):
-            for out in (str(d), str(t / "evidence/b3/../b3/gate"), str(d) + "/"):
-                self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", out]), 2, out)
-        self.assertEqual({p.name: (p.stat().st_mtime_ns, p.stat().st_size) for p in d.iterdir()}, before)
-        self.assertEqual({p.name: (p.stat().st_mtime_ns, p.stat().st_size) for p in g.LIFECYCLE1_GATE_DIR.iterdir()}, real_before)
+            with self.assertRaises(g.Refusal):
+                g.refuse_lifecycle1_path(d / "x" / "y")
+            g.refuse_lifecycle1_path(t / "evidence/b3/gate_2")                 # a sibling is fine
 
-    def test_the_renderer_refuses_lifecycle_1s_output_path(self):
-        """Hermetic as above: the output constant patched to a temp copy of docs/b3_gate_report.md, and
-        the report a lifecycle-2-shaped one, so a broken guard would really write into the copy."""
+    def test_the_gate_refuses_a_dirty_tree_or_no_head_before_writing_anything(self):
+        """The owner's P2: the report pins HEAD and the architecture bytes, so a run on a dirty tree or
+        without a commit is refused (REFUSED:, exit 2) and no output directory is created."""
+        t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
+        out = t / "gate_2"
+        for head, dirty, what in ((None, False, "no HEAD"), ("abc", False, "no HEAD"), (FIXTURE_HEAD, True, "dirty")):
+            err = io.StringIO()
+            with mock.patch.object(g, "git_dirty", return_value=dirty), mock.patch.object(g, "git_head", return_value=head), contextlib.redirect_stderr(err):
+                rc = g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(out)])
+            self.assertEqual(rc, 2, what)
+            self.assertTrue(err.getvalue().startswith("REFUSED: "), err.getvalue())
+            self.assertIn(what, err.getvalue())
+            self.assertFalse(out.exists(), what)
+        # F1 absent from --fitness: refused too
+        err = io.StringIO()
+        with mock.patch.object(g, "git_dirty", return_value=False), mock.patch.object(g, "git_head", return_value=FIXTURE_HEAD), contextlib.redirect_stderr(err):
+            self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F2", "--out", str(out)]), 2)
+        self.assertIn("F1", err.getvalue()); self.assertFalse(out.exists())
+
+    def test_the_renderer_refuses_lifecycle_1s_output_path_and_descendants(self):
+        """Hermetic as above: the output constant patched to a temp copy of docs/b3_gate_report.md and
+        the gate directory to a temp copy. The positive path (a valid fixture rendered to the lifecycle-2
+        path) is in Renderer.test_the_cli_renders_only_a_validated_report."""
         t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
         p = t / "docs/b3_gate_report.md"; p.parent.mkdir(parents=True)
         shutil.copy(md.LIFECYCLE1_OUT, p)
-        rep = synthetic_report({"F1": {"pass": False, "b_star": None, "ceiling": 40, "seeds": 0, "per_budget": [],
-                                       "criteria": {"budget_rule": {"pass": False}}, "diagnostics": {"H9": None}}})
-        (t / "rep.json").write_text(json.dumps(rep))
-        before = (p.stat().st_mtime_ns, p.stat().st_size)
-        with mock.patch.object(md, "LIFECYCLE1_OUT", p):
-            for out in (str(p), str(t / "docs/../docs/b3_gate_report.md")):
-                self.assertEqual(md.main(["--report", str(t / "rep.json"), "--out", out]), 2, out)
-            self.assertEqual((p.stat().st_mtime_ns, p.stat().st_size), before)
-            self.assertEqual(md.main(["--report", str(t / "rep.json"), "--out", str(t / "docs/b3_gate_2_report.md")]), 0)   # the lifecycle-2 path is written
-        self.assertIn("H9 diagnostic: no B*, nothing to report.", (t / "docs/b3_gate_2_report.md").read_text())
+        d = t / "evidence/b3/gate"; shutil.copytree(g.LIFECYCLE1_GATE_DIR, d)
+        before = (p.stat().st_mtime_ns, p.stat().st_size); before_d = sorted(x.name for x in d.iterdir())
+        with mock.patch.object(md, "LIFECYCLE1_OUT", p), mock.patch.object(g, "LIFECYCLE1_GATE_DIR", d):
+            for out in (str(p), str(t / "docs/../docs/b3_gate_report.md"), str(d / "report.md"), str(d / "x/report.md")):
+                err = io.StringIO()
+                with contextlib.redirect_stderr(err):
+                    self.assertEqual(md.main(["--report", str(d / "gate_report.json"), "--out", out]), 2, out)
+                self.assertTrue(err.getvalue().startswith("REFUSED: "), err.getvalue())
+        self.assertEqual((p.stat().st_mtime_ns, p.stat().st_size), before)
+        self.assertEqual(sorted(x.name for x in d.iterdir()), before_d)
 
 
 class Criteria(unittest.TestCase):
@@ -262,11 +270,34 @@ class LoadBearingGuards(unittest.TestCase):
         for r in drows:
             d2 = g.deltas_at(rows, G.index(r["budget"]))["d2"]
             n2, p2 = bg.required_pairs(d2, T["H9_alpha"], T["H5_power_min"], T["H2_bootstrap_experiments"], T["H5_power_scan_seed"], T["H5_pairs_min"], len(rows))
-            self.assertEqual((r["required_pairs_N2"], r["power_at_N2"]), (n2, p2))
+            self.assertEqual((r["required_pairs_N2"], r["power_at_N2"]), (n2, p2 if n2 else None))   # no N2 -> no "power at N2"
             self.assertEqual(r["power_delta2_at_gate_N"], bg.bootstrap_reject_rate(d2, n_gate, T["H9_alpha"], T["H2_bootstrap_experiments"], T["H5_power_scan_seed"] + n_gate))
-        self.assertIsNone(drows[-1]["required_pairs_N2"])                 # Δ2 ≤ 0 there: no N reaches power 0.9
-        self.assertLess(drows[-1]["power_delta2_at_gate_N"], 0.5)
-        self.assertIsNotNone(drows[0]["required_pairs_N2"])
+        # the owner's P2: when no N2 exists, "power at N2" is null — required_pairs' second value is then the power at the
+        # scan's LAST N (= S), reported under its own name with that N; when N2 exists the scan stopped there
+        last = drows[-1]
+        self.assertIsNone(last["required_pairs_N2"])                       # Δ2 ≤ 0 there: no N reaches power 0.9
+        self.assertIsNone(last["power_at_N2"])
+        self.assertEqual(last["scan_max_N"], len(rows))
+        self.assertEqual(last["power_delta2_at_scan_max_N"], bg.bootstrap_reject_rate(g.deltas_at(rows, G.index(last["budget"]))["d2"], len(rows), T["H9_alpha"], T["H2_bootstrap_experiments"], T["H5_power_scan_seed"] + len(rows)))
+        self.assertLess(last["power_delta2_at_scan_max_N"], 0.5)
+        self.assertLess(last["power_delta2_at_gate_N"], 0.5)
+        first = drows[0]
+        self.assertIsNotNone(first["required_pairs_N2"])
+        self.assertGreaterEqual(first["power_at_N2"], T["H5_power_min"])
+        self.assertIsNone(first["power_delta2_at_scan_max_N"])
+        # the same discipline for delta1 in per_budget: no N(B) -> no "power at N"
+        for t in res["per_budget"]:
+            self.assertEqual(t["power_at_N"] is None, t["required_pairs_N"] is None, t["budget"])
+            self.assertEqual(t["power_delta1_at_scan_max_N"] is None, t["required_pairs_N"] is not None, t["budget"])
+            self.assertEqual(t["power_at_N2"] is None, t["required_pairs_N2"] is None, t["budget"])
+            self.assertEqual(t["scan_max_N"], len(rows))
+        # a budget where no N(B) exists: delta1 flat -> power_at_N null, the scan-max power present and named
+        rows_flat = copy.deepcopy(base)
+        for row in rows_flat:
+            row["arms"]["O"]["at_grid"][0] = row["arms"]["R"]["at_grid"][0]
+        t0 = g.per_budget(rows_flat, 40)[0]
+        self.assertIsNone(t0["required_pairs_N"]); self.assertIsNone(t0["power_at_N"]); self.assertIsNone(t0["search_evaluations"])
+        self.assertEqual(t0["power_delta1_at_scan_max_N"], bg.bootstrap_reject_rate(g.deltas_at(rows_flat, 0)["d1"], len(rows_flat), T["H5_alpha"], T["H2_bootstrap_experiments"], T["H5_power_scan_seed"] + len(rows_flat)))
         # a pass forced into the diagnostic would be a defect: the gate's pass is H1–H8 only
         self.assertEqual(res["pass"], all(res["criteria"][k]["pass"] for k in ("budget_rule", "H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8")))
 
@@ -296,11 +327,18 @@ class Renderer(unittest.TestCase):
             self.assertNotIn(phrase, t)
         self.assertNotIn("| H9 |", t)                                        # not a criterion row
         self.assertIn("H9 diagnostic (decides nothing)", t)
-        self.assertIn("| budget | p | mean Δ2 | median Δ2 | pos/neg/ties | Cohen's d | N₂(B) | power at N₂ | Δ2 power at the gate's N |", t)
+        self.assertIn("| budget | p | mean Δ2 | median Δ2 | pos/neg/ties | Cohen's d | N₂(B) | power at N₂ | Δ2 power at the scan's last N (no N₂) | Δ2 power at the gate's N |", t)
         h9 = self.rep["results"]["F1"]["diagnostics"]["H9"]
+        seen_none = False
         for r in h9["delta2_by_budget_from_b_star"]:
             self.assertIn(f"| {r['budget']} | {md.fmt_p(r['sign_test_p'])} |", t)
-            self.assertIn(f"| {md.fmt(r['required_pairs_N2'])} | {md.fmt_p(r['power_at_N2'])} | {md.fmt_p(r['power_delta2_at_gate_N'])} |", t)
+            line = next(l for l in t.splitlines() if l.startswith(f"| {r['budget']} | {md.fmt_p(r['sign_test_p'])} |"))
+            if r["required_pairs_N2"] is None:
+                seen_none = True
+                self.assertIn(f"| — | — | {md.fmt_p(r['power_delta2_at_scan_max_N'])} at N = {r['scan_max_N']} | {md.fmt_p(r['power_delta2_at_gate_N'])} |", line)
+            else:
+                self.assertIn(f"| {r['required_pairs_N2']} | {md.fmt_p(r['power_at_N2'])} | — | {md.fmt_p(r['power_delta2_at_gate_N'])} |", line)
+        self.assertTrue(seen_none)                                            # the largest budget has no N2 in this fixture
         self.assertIn("| N₂(B) | Δ2 power at N(B) |", t)                      # the per-budget table carries them too
         self.assertIn("lifecycle 2", t)
         self.assertIn("B* = ", t)
@@ -329,6 +367,32 @@ class Renderer(unittest.TestCase):
         self.assertIn(f"sign_test_p: {md.fmt_p(d2['sign_test_p'])}}}", line)
         self.assertNotIn("[:120]", (R / "b3/host/b3_gate_report_md.py").read_text())
 
+    def test_the_cli_renders_only_a_validated_report_and_refuses_by_name(self):
+        """The CLI reads a report only through b3_gate.validate_report (the plan's validator): a valid
+        fixture renders to the lifecycle-2 path; lifecycle 1's report, a tampered fixture and a missing /
+        malformed file are REFUSED: (exit 2, no output) — never a traceback (the owner's P3)."""
+        t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
+        fx = write_gate_fixture(t / "gate_2")
+        out = t / "docs/b3_gate_2_report.md"; out.parent.mkdir()
+        self.assertEqual(md.main(["--report", str(fx), "--out", str(out)]), 0)
+        text = out.read_text()
+        self.assertIn("H9 diagnostic (decides nothing)", text); self.assertIn(FIXTURE_HEAD[:7], text); self.assertNotIn("H9 holds", text)
+        cases = {"lifecycle-1": (R / "evidence/b3/gate/gate_report.json", "schema_version"),
+                 "missing": (t / "nowhere.json", "cannot be read"), "malformed": (t / "bad.json", "not JSON")}
+        (t / "bad.json").write_text("{")
+        tampered = t / "tampered"; shutil.copytree(t / "gate_2", tampered)
+        rewrite_report(tampered / "gate_report.json", lambda r: r["results"]["F1"].__setitem__("b_star", 3000))
+        cases["tampered B*"] = (tampered / "gate_report.json", "results.F1.b_star")
+        for name, (rep_path, needle) in cases.items():
+            out2 = t / f"out_{name}.md"
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                rc = md.main(["--report", str(rep_path), "--out", str(out2)])
+            self.assertEqual(rc, 2, name)
+            self.assertTrue(err.getvalue().startswith("REFUSED: "), (name, err.getvalue()))
+            self.assertIn(needle, err.getvalue(), name)
+            self.assertFalse(out2.exists(), name)
+
     def test_a_lifecycle_1_report_is_refused_not_rendered(self):
         rep1 = json.loads((R / "evidence/b3/gate/gate_report.json").read_text())
         self.assertIn("H9", rep1["results"]["F1"]["criteria"])
@@ -346,6 +410,131 @@ class Renderer(unittest.TestCase):
             with self.assertRaises(ValueError):
                 md.render(rep)
         self.assertTrue(g.is_lifecycle2_report(self.rep))
+
+
+class Validator(unittest.TestCase):
+    """b3_gate.validate_report — the authority the plan and the renderer read a report through (the
+    owner's P2): a fixture built by the tool's own builder is accepted; every provenance, binding, raw
+    and result tamper is refused by name; lifecycle 1's report is refused."""
+    @classmethod
+    def setUpClass(cls):
+        cls._saved = g.THRESHOLDS["H2_bootstrap_experiments"]
+        g.THRESHOLDS["H2_bootstrap_experiments"] = 100
+        cls.t = Path(tempfile.mkdtemp())
+        cls.fx = write_gate_fixture(cls.t / "gate_2")
+
+    @classmethod
+    def tearDownClass(cls):
+        g.THRESHOLDS["H2_bootstrap_experiments"] = cls._saved
+        shutil.rmtree(cls.t, True)
+
+    def copy_fixture(self) -> Path:
+        d = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, d, True)
+        shutil.copy(self.fx, d / "gate_report.json"); shutil.copy(self.fx.parent / "raw_F1.json", d / "raw_F1.json")
+        return d / "gate_report.json"
+
+    def refused(self, path: Path, needle: str, what: str):
+        with self.assertRaises(g.Refusal, msg=what) as cm:
+            g.validate_report(path)
+        self.assertIn(needle, str(cm.exception), what)
+        self.assertTrue(str(cm.exception).startswith("gate report "), str(cm.exception))
+
+    def test_the_fixture_is_accepted_and_the_numbers_are_evaluates(self):
+        rep = g.validate_report(self.fx)
+        raw = json.loads((self.fx.parent / "raw_F1.json").read_text())
+        res = g.evaluate("F1", raw["rows"]); res["wall_s"] = 0.0
+        self.assertEqual(json.dumps(rep["results"]["F1"], sort_keys=True), json.dumps(res, sort_keys=True))
+        self.assertEqual(rep["seeds"]["master_seed"], bs.master_seed(g.GATE_LABEL, FIXTURE_HEAD))
+        self.assertEqual(rep["architecture"]["sha256"], g.sha256_bytes((R / "docs/b3_architecture.md").read_bytes()))
+        self.assertIn("F1", rep["raw_files"])
+
+    def test_lifecycle_1s_report_is_refused_by_name(self):
+        self.refused(R / "evidence/b3/gate/gate_report.json", "schema_version '1.0.0'", "lifecycle 1")
+
+    def test_every_provenance_and_binding_tamper_is_refused_by_name(self):
+        tampers = [
+            ("schema_version", lambda r: r.__setitem__("schema_version", "1.0.0"), "schema_version '1.0.0'"),
+            ("lifecycle", lambda r: r.__setitem__("lifecycle", 1), "lifecycle 1"),
+            ("H9 as a criterion", lambda r: r["results"]["F1"]["criteria"].__setitem__("H9", {"pass": True}), "lifecycle-2 shape"),
+            ("claim condition", lambda r: r["results"]["F1"].__setitem__("H9_claim_condition", True), "lifecycle-2 shape"),
+            ("head null", lambda r: r.__setitem__("head_at_run", None), "head_at_run None"),
+            ("head short", lambda r: r.__setitem__("head_at_run", "f159dee"), "head_at_run 'f159dee'"),
+            ("dirty", lambda r: r.__setitem__("worktree_dirty_at_start", True), "worktree_dirty_at_start True"),
+            ("dirty null", lambda r: r.__setitem__("worktree_dirty_at_start", None), "worktree_dirty_at_start None"),
+            ("thresholds", lambda r: r["thresholds"].__setitem__("H5_search_evaluation_cap", 40000), "thresholds.H5_search_evaluation_cap"),
+            ("rules version", lambda r: r["thresholds"].__setitem__("rules_version", "architecture v0.2.3 §9"), "thresholds.rules_version"),
+            ("label", lambda r: r["seeds"].__setitem__("label", "b3-gate"), "seeds.label 'b3-gate'"),
+            ("master seed", lambda r: r["seeds"].__setitem__("master_seed", r["seeds"]["master_seed"] + 1), "seeds.master_seed"),
+            ("architecture digest", lambda r: r["architecture"].__setitem__("sha256", "0" * 64), "architecture.sha256"),
+            ("architecture path", lambda r: r["architecture"].__setitem__("path", "docs/b2_architecture.md"), "architecture.path"),
+            ("control permutation", lambda r: r["control_x"].__setitem__("permutation_sha256", "0" * 64), "control_x.permutation_sha256"),
+            ("control seed", lambda r: r["control_x"].__setitem__("seed_x", 1), "control_x.seed_x"),
+            ("gate fitness", lambda r: r.__setitem__("gate_fitness", "F2"), "gate_fitness 'F2'"),
+            ("raw_files absent", lambda r: r.pop("raw_files"), "raw_files"),
+            ("raw digest", lambda r: r["raw_files"]["F1"].__setitem__("sha256", "0" * 64), "raw_files.F1.sha256"),
+            ("raw rows count", lambda r: r["raw_files"]["F1"].__setitem__("rows", 7), "rows, expected seeds.count"),
+        ]
+        for what, mutate, needle in tampers:
+            p = self.copy_fixture()
+            rewrite_report(p, mutate)
+            self.refused(p, needle, what)
+
+    def test_every_result_tamper_is_refused_by_its_path(self):
+        """A modified statistic, criterion, B*, N or pass — evaluate() re-run on the raw rows names it."""
+        tampers = [
+            ("B*", lambda r: r["results"]["F1"].__setitem__("b_star", 3000), "results.F1.b_star"),
+            ("N", lambda r: r["results"]["F1"]["criteria"]["H5"].__setitem__("required_pairs_N", 9), "results.F1.criteria.H5.required_pairs_N"),
+            ("pass", lambda r: r["results"]["F1"].__setitem__("pass", not r["results"]["F1"]["pass"]), "results.F1.pass"),
+            ("a criterion's pass", lambda r: r["results"]["F1"]["criteria"]["H3"].__setitem__("pass", False), "results.F1.criteria.H3.pass"),
+            ("a per-budget statistic", lambda r: r["results"]["F1"]["per_budget"][2]["delta1_O_minus_R"].__setitem__("mean", 99.0), "results.F1.per_budget[2].delta1_O_minus_R.mean"),
+            ("the H9 diagnostic", lambda r: r["results"]["F1"]["diagnostics"]["H9"]["delta2_by_budget_from_b_star"][0].__setitem__("sign_test_p", 0.5), "results.F1.diagnostics.H9.delta2_by_budget_from_b_star[0].sign_test_p"),
+            ("an added field", lambda r: r["results"]["F1"].__setitem__("H9_ok", True), "results.F1.H9_ok: unexpected"),
+        ]
+        for what, mutate, needle in tampers:
+            p = self.copy_fixture()
+            rewrite_report(p, mutate)
+            self.refused(p, needle, what)
+
+    def test_raw_tampers_are_refused(self):
+        """The raw file's digest, its seeds and its rows are bound: a changed byte (digest), a swapped seed
+        with the digest refreshed (the seeds re-derived), a changed value with the digest refreshed (the
+        re-evaluation), a missing or malformed raw file."""
+        def with_raw(mutate_raw, refresh_digest=True):
+            p = self.copy_fixture()
+            raw = json.loads((p.parent / "raw_F1.json").read_text())
+            mutate_raw(raw)
+            b = json.dumps(raw, separators=(",", ":")).encode()
+            (p.parent / "raw_F1.json").write_bytes(b)
+            if refresh_digest:
+                rewrite_report(p, lambda r: r["raw_files"]["F1"].__setitem__("sha256", g.sha256_bytes(b)))
+            return p
+        self.refused(with_raw(lambda raw: raw["rows"][0]["arms"]["O"]["at_grid"].__setitem__(5, 1), refresh_digest=False), "raw_files.F1.sha256", "digest")
+        self.refused(with_raw(lambda raw: raw["rows"][3].__setitem__("operator_seed", raw["rows"][3]["operator_seed"] + 1)), "do not carry the seeds", "seeds")
+        self.refused(with_raw(lambda raw: raw["rows"].pop()), "rows, expected seeds.count", "row count")
+        self.refused(with_raw(lambda raw: raw["rows"][0]["arms"]["O"]["at_grid"].__setitem__(5, 1)), "differs from evaluate() re-run", "value")
+        self.refused(with_raw(lambda raw: raw.__setitem__("fitness", "F2")), "fitness / grid", "fitness")
+        p = self.copy_fixture(); (p.parent / "raw_F1.json").unlink()
+        self.refused(p, "cannot be read", "missing raw")
+        p = self.copy_fixture(); (p.parent / "raw_F1.json").write_text("{")
+        self.refused(p, "raw_files.F1.sha256", "malformed raw, stale digest: the digest catches it first")
+        rewrite_report(p, lambda r: r["raw_files"]["F1"].__setitem__("sha256", g.sha256_bytes(b"{")))
+        self.refused(p, "not JSON", "malformed raw with its digest refreshed")
+        p = self.copy_fixture(); p.write_text("nope")
+        with self.assertRaises(g.Refusal) as cm:
+            g.validate_report(p)
+        self.assertIn("not JSON", str(cm.exception))
+        with self.assertRaises(g.Refusal) as cm:
+            g.validate_report(self.t / "absent.json")
+        self.assertIn("cannot be read", str(cm.exception))
+
+    def test_deep_findings_names_paths(self):
+        e = {"a": [1, {"b": 2}], "c": 3}
+        self.assertEqual(g.deep_findings(e, {"a": [1, {"b": 2}], "c": 3}), [])
+        self.assertEqual(g.deep_findings(e, {"a": [1, {"b": 3}], "c": 3}), ["a[1].b: 3, expected 2"])
+        self.assertEqual(g.deep_findings(e, {"a": [1], "c": 3}), ["a: 1 entries, expected 2"])
+        self.assertEqual(g.deep_findings(e, {"c": 3, "d": 1}), ["a: absent", "d: unexpected"])
+        self.assertEqual(g.deep_findings(e, {"a": (1, {"b": 2}), "c": 3}), [])              # JSON-normalised
+        self.assertEqual(g.deep_findings({"x": 1}, {"x": 1.0}), ["x: 1.0, expected 1"])       # a float is not an int
 
 
 class SeedsAndPins(unittest.TestCase):
@@ -394,7 +583,9 @@ class SmallRun(unittest.TestCase):
     def test_the_pipeline_runs_end_to_end_into_a_temp_dir(self):
         d = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, d, True)
-        rc = g.main(["--seeds", "3", "--workers", "3", "--fitness", "F1", "--out", str(d), "--label", "test"])
+        head = g.git_head() if g.git_head() and g.HEX40.match(g.git_head()) else FIXTURE_HEAD
+        with mock.patch.object(g, "git_dirty", return_value=False), mock.patch.object(g, "git_head", return_value=head):   # the tree may be dirty while developing
+            rc = g.main(["--seeds", "3", "--workers", "3", "--fitness", "F1", "--out", str(d), "--label", "test"])
         self.assertEqual(rc, 0)
         rep = json.loads((d / "gate_report.json").read_text())
         raw = json.loads((d / "raw_F1.json").read_text())
@@ -422,6 +613,9 @@ class SmallRun(unittest.TestCase):
         self.assertNotIn("H9_claim_condition", res)
         self.assertIsNone(res["diagnostics"]["H9"])
         self.assertTrue(g.is_lifecycle2_report(rep))
+        self.assertEqual(rep["raw_files"], {"F1": {"path": "raw_F1.json", "sha256": g.sha256_bytes((d / "raw_F1.json").read_bytes()), "rows": 3}})
+        self.assertEqual(rep["head_at_run"], head); self.assertFalse(rep["worktree_dirty_at_start"])
+        self.assertEqual(g.validate_report(d / "gate_report.json")["seeds"]["count"], 3)      # the real run's report passes the production validator
         text = md.render(rep)
         self.assertIn("FAIL", text)
         self.assertIn("H9 diagnostic: no B*, nothing to report.", text)

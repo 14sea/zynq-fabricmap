@@ -22,9 +22,11 @@ the tool refuses that output directory.
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import os
+import re
 import statistics
 import subprocess
 import sys
@@ -53,6 +55,15 @@ LEDGER_SCHEMA = REPO_ROOT / "b3/schemas/specimen_ledger.schema.json"
 LIFECYCLE = 2
 GATE_LABEL = "b3-gate-2"
 OUT_DEFAULT = "evidence/b3/gate_2"
+REPORT_SCHEMA_VERSION = "2.0.0"
+HEX40 = re.compile(r"^[0-9a-f]{40}$")
+
+
+class Refusal(ValueError):
+    """A named refusal of an input, a shape, a path or an I/O condition — the CLIs print it as
+    `REFUSED: ...` and exit 2, writing nothing. Any other exception is an INTERNAL ERROR (a traceback)."""
+
+
 # lifecycle 1 (branch b3-lifecycle-1, tag b3-lifecycle-1-stopped-2026-09-17): historical evidence, excluded, never overwritten
 LIFECYCLE1_GATE_LABEL = "b3-gate"
 LIFECYCLE1_GATE_DIR = REPO_ROOT / "evidence/b3/gate"
@@ -175,10 +186,13 @@ def per_budget(rows: list[dict], ceiling: int) -> list[dict]:
     out = []
     for i, b in enumerate(GRID):
         d = deltas_at(rows, i)
-        n_req, power = bg.required_pairs(d["d1"], T["H5_alpha"], T["H5_power_min"], T["H2_bootstrap_experiments"], T["H5_power_scan_seed"], T["H5_pairs_min"], S)
+        # required_pairs returns (N, power at N) when some N in [8, S] reaches the power, else (None, the power at the
+        # scan's last N = S): that second value is NOT "the power at N" — it is reported under its own name
+        n_req, p1 = bg.required_pairs(d["d1"], T["H5_alpha"], T["H5_power_min"], T["H2_bootstrap_experiments"], T["H5_power_scan_seed"], T["H5_pairs_min"], S)
         # H9 diagnostic (v0.3): the same bootstrap rule applied to delta2 — N2(B), and delta2's power at the gate's N(B)
-        n_req2, power2 = bg.required_pairs(d["d2"], T["H9_alpha"], T["H5_power_min"], T["H2_bootstrap_experiments"], T["H5_power_scan_seed"], T["H5_pairs_min"], S)
+        n_req2, p2 = bg.required_pairs(d["d2"], T["H9_alpha"], T["H5_power_min"], T["H2_bootstrap_experiments"], T["H5_power_scan_seed"], T["H5_pairs_min"], S)
         power2_at_n = bg.bootstrap_reject_rate(d["d2"], n_req, T["H9_alpha"], T["H2_bootstrap_experiments"], T["H5_power_scan_seed"] + n_req) if n_req else None
+        scan_max = S if S >= T["H5_pairs_min"] else None                      # the scan's last N (none when S < 8: nothing was scanned)
         o_p95 = bg.percentile(d["O"], T["H1_saturation_percentile"])
         r_med = bg.median(d["R"])
         out.append({"budget": b, "median": {a: bg.median(d[a]) for a in ARMS}, "median_F_end_to_end": bg.median(d["F_end_to_end"]),
@@ -188,8 +202,12 @@ def per_budget(rows: list[dict], ceiling: int) -> list[dict]:
                     "decoded_median_X": bg.median([row["arms"]["X"]["decoded_at_grid"][i] for row in rows]),
                     "O_p95": o_p95, "random_median": r_med, "base_median": base_med,
                     "H1": o_p95 < ceiling and r_med > base_med,
-                    "required_pairs_N": n_req, "power_at_N": power, "search_evaluations": (n_req * 3 * b) if n_req else None,
-                    "required_pairs_N2": n_req2, "power_at_N2": power2, "power_delta2_at_gate_N": power2_at_n})
+                    "required_pairs_N": n_req, "power_at_N": p1 if n_req else None, "search_evaluations": (n_req * 3 * b) if n_req else None,
+                    "scan_max_N": scan_max,
+                    "power_delta1_at_scan_max_N": None if n_req else (p1 if scan_max else None),
+                    "required_pairs_N2": n_req2, "power_at_N2": p2 if n_req2 else None,
+                    "power_delta2_at_scan_max_N": None if n_req2 else (p2 if scan_max else None),
+                    "power_delta2_at_gate_N": power2_at_n})
     return out
 
 
@@ -256,6 +274,7 @@ def evaluate(fid: str, rows: list[dict]) -> dict:
     h9 = {"alpha": T["H9_alpha"], "role": T["H9_role"], "gate_N": n_req, "power_min": T["H5_power_min"],
           "delta2_by_budget_from_b_star": [{"budget": t["budget"], **t["delta2_O_minus_endtoend_F"],
                                             "required_pairs_N2": t["required_pairs_N2"], "power_at_N2": t["power_at_N2"],
+                                            "scan_max_N": t["scan_max_N"], "power_delta2_at_scan_max_N": t["power_delta2_at_scan_max_N"],
                                             "power_delta2_at_gate_N": t["power_delta2_at_gate_N"]} for t in from_b]}
     holdout = {a: bg.median([row["arms"][a]["champion_holdout"] for row in rows]) for a in ARMS}
     gate_pass = all(crit[k]["pass"] for k in ("budget_rule", "H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8"))
@@ -333,6 +352,79 @@ def gate_exclusion() -> tuple[set[int], dict]:
     return excl | t_flat, where
 
 
+def control_x_draw() -> tuple[int, list[int], list]:
+    """seed_X and the derangement pi (architecture §9), with the attempt log."""
+    seed_x = cx.seed_x(bp.INSTRUMENT_COMMIT)
+    attempts: list = []
+    perm = cx.derangement(seed_x, log=attempts)
+    return seed_x, perm, attempts
+
+
+def build_report(label: str, head: str, dirty: bool, master: int, count: int, excl: set, sources: dict,
+                 seed_x: int, perm: list[int], attempts: list, results: dict, raw_files: dict, wall_s: float) -> dict:
+    """The report document — the criteria with the numbers, the diagnostic, the pins (the architecture
+    document's bytes, HEAD, the seeds' derivation and every exclusion source, control X, every raw
+    file's digest). Built here so a test fixture and the run write the same shape."""
+    sm = bmaps.load_self_map()
+    return {"schema": "b3_gate_report", "schema_version": REPORT_SCHEMA_VERSION, "lifecycle": LIFECYCLE, "label": label,
+            "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "head_at_run": head, "worktree_dirty_at_start": dirty, "architecture": architecture_pin(), "thresholds": copy.deepcopy(THRESHOLDS),
+            "engine": {"version": bs.ENGINE_VERSION, "mu": bs.MU, "lambda": bs.LAMBDA, "kmax": bs.KMAX}, "carto_version": carto_mod.CARTO_VERSION,
+            "control_x": {"instrument_commit": bp.INSTRUMENT_COMMIT, "seed_x": seed_x, "seed_rule": "b2_search.master_seed('b3-gate-x', instrument commit)",
+                          "prng": "b1_carto.Rng(seed_x); Fisher-Yates i=383..1, j=rng.uniform(i+1); rejection from the identity on the continuing stream",
+                          "attempts": len(attempts), "fixed_points_per_attempt": attempts, "permutation_sha256": cx.permutation_sha256(perm)},
+            "seeds": {"label": GATE_LABEL, "master_seed": master, "derivation": f"first 4 bytes of sha256('{GATE_LABEL}|' + HEAD), pairs from one Rng stream, every excluded seed skipped",
+                      "count": count, "excluded_fixed": sorted(bs.EXCLUDED_SEEDS), "excluded_sources": sources, "excluded_values_total": len(excl | set(bs.EXCLUDED_SEEDS))},
+            "map": {"path": str(bmaps.SELF_MAP.relative_to(REPO_ROOT)), "sha256": bmaps.sha256_of(sm)},
+            "raw_files": raw_files, "gate_fitness": "F1", "results": results, "wall_s": wall_s}
+
+
+def raw_bytes(fid: str, rows: list[dict]) -> bytes:
+    return json.dumps({"fitness": fid, "grid": list(GRID), "rows": rows}, separators=(",", ":")).encode()
+
+
+def refuse_lifecycle1_path(out: Path) -> None:
+    """Lifecycle 1's directories are historical evidence: neither they nor anything under them is written."""
+    r = out.resolve()
+    for d in (LIFECYCLE1_GATE_DIR, LIFECYCLE1_TRIAL_DIR):
+        if r == d.resolve() or r.is_relative_to(d.resolve()):
+            raise Refusal(f"{_rel(out)} is lifecycle 1's {_rel(d)} or under it — never overwritten (write to {OUT_DEFAULT})")
+
+
+def run(a) -> Path:
+    out = REPO_ROOT / a.out
+    refuse_lifecycle1_path(out)
+    head = git_head()
+    dirty = git_dirty()
+    if not head or not HEX40.match(head):
+        raise Refusal("no HEAD commit: the gate runs only on a committed tree (the report pins HEAD)")
+    if dirty:
+        raise Refusal("the working tree is dirty: the gate runs only on a clean committed tree (the report pins HEAD and the architecture bytes)")
+    fitnesses = [f for f in a.fitness.split(",") if f]
+    if "F1" not in fitnesses:
+        raise Refusal("the gate fitness F1 must be among --fitness")
+    out.mkdir(parents=True, exist_ok=True)
+    master = bs.master_seed(GATE_LABEL, head)
+    excl, sources = gate_exclusion()
+    seeds = bs.pair_seeds(master, a.seeds, exclude=frozenset(excl))
+    seed_x, perm, attempts = control_x_draw()
+    started = time.time()
+    results, raw_files = {}, {}
+    for fid in fitnesses:
+        t0 = time.time()
+        rows = run_fitness(fid, seeds, a.workers, perm)
+        b = raw_bytes(fid, rows)
+        (out / f"raw_{fid}.json").write_bytes(b)
+        raw_files[fid] = {"path": f"raw_{fid}.json", "sha256": sha256_bytes(b), "rows": len(rows)}
+        results[fid] = evaluate(fid, rows)
+        results[fid]["wall_s"] = round(time.time() - t0, 1)
+        print(f"[{fid}] B*={results[fid].get('b_star')} pass={results[fid]['pass']} "
+              f"{ {k: v['pass'] for k, v in results[fid]['criteria'].items()} } {results[fid]['wall_s']}s", flush=True)
+    report = build_report(a.label, head, dirty, master, a.seeds, excl, sources, seed_x, perm, attempts, results, raw_files, round(time.time() - started, 1))
+    (out / "gate_report.json").write_text(json.dumps(report, indent=1, sort_keys=True) + "\n")
+    return out / "gate_report.json"
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--seeds", type=int, default=SEEDS_DEFAULT)
@@ -341,50 +433,132 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default=OUT_DEFAULT)
     ap.add_argument("--label", default="")
     a = ap.parse_args(argv)
-    out = REPO_ROOT / a.out
-    if out.resolve() == LIFECYCLE1_GATE_DIR.resolve():
-        print(f"refused: {_rel(LIFECYCLE1_GATE_DIR)} is lifecycle 1's gate run 1 and is never overwritten (write to {OUT_DEFAULT})", file=sys.stderr)
+    try:
+        print(run(a))
+    except Refusal as e:
+        print(f"REFUSED: {e}", file=sys.stderr)
         return 2
-    out.mkdir(parents=True, exist_ok=True)
-    head = git_head()
-    dirty = git_dirty()
-    master = bs.master_seed(GATE_LABEL, head or "no-commit")
-    excl, sources = gate_exclusion()
-    seeds = bs.pair_seeds(master, a.seeds, exclude=frozenset(excl))
-    seed_x = cx.seed_x(bp.INSTRUMENT_COMMIT)
-    attempts: list = []
-    perm = cx.derangement(seed_x, log=attempts)
-    started = time.time()
-    results = {}
-    for fid in [f for f in a.fitness.split(",") if f]:
-        t0 = time.time()
-        rows = run_fitness(fid, seeds, a.workers, perm)
-        (out / f"raw_{fid}.json").write_text(json.dumps({"fitness": fid, "grid": list(GRID), "rows": rows}, separators=(",", ":")))
-        results[fid] = evaluate(fid, rows)
-        results[fid]["wall_s"] = round(time.time() - t0, 1)
-        print(f"[{fid}] B*={results[fid].get('b_star')} pass={results[fid]['pass']} "
-              f"{ {k: v['pass'] for k, v in results[fid]['criteria'].items()} } {results[fid]['wall_s']}s", flush=True)
-    sm = bmaps.load_self_map()
-    report = {"schema": "b3_gate_report", "schema_version": "2.0.0", "lifecycle": LIFECYCLE, "label": a.label,
-              "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-              "head_at_run": head, "worktree_dirty_at_start": dirty, "architecture": architecture_pin(), "thresholds": THRESHOLDS,
-              "engine": {"version": bs.ENGINE_VERSION, "mu": bs.MU, "lambda": bs.LAMBDA, "kmax": bs.KMAX}, "carto_version": carto_mod.CARTO_VERSION,
-              "control_x": {"instrument_commit": bp.INSTRUMENT_COMMIT, "seed_x": seed_x, "seed_rule": "b2_search.master_seed('b3-gate-x', instrument commit)",
-                            "prng": "b1_carto.Rng(seed_x); Fisher-Yates i=383..1, j=rng.uniform(i+1); rejection from the identity on the continuing stream",
-                            "attempts": len(attempts), "fixed_points_per_attempt": attempts, "permutation_sha256": cx.permutation_sha256(perm)},
-              "seeds": {"label": GATE_LABEL, "master_seed": master, "derivation": f"first 4 bytes of sha256('{GATE_LABEL}|' + HEAD), pairs from one Rng stream, every excluded seed skipped",
-                        "count": a.seeds, "excluded_fixed": sorted(bs.EXCLUDED_SEEDS), "excluded_sources": sources, "excluded_values_total": len(excl | set(bs.EXCLUDED_SEEDS))},
-              "map": {"path": str(bmaps.SELF_MAP.relative_to(REPO_ROOT)), "sha256": bmaps.sha256_of(sm)},
-              "gate_fitness": "F1", "results": results, "wall_s": round(time.time() - started, 1)}
-    (out / "gate_report.json").write_text(json.dumps(report, indent=1, sort_keys=True) + "\n")
-    print(out / "gate_report.json")
     return 0
+
+
+# ------------------------------------------------------------------ the production validator (the plan and the renderer read a report only through it)
 
 
 def is_lifecycle2_report(rep: dict) -> bool:
     """True for a report this tool writes: H9 under `diagnostics`, never a criterion or a claim condition."""
     return rep.get("schema") == "b3_gate_report" and rep.get("lifecycle") == LIFECYCLE and all(
-        "H9" not in res.get("criteria", {}) and "H9_claim_condition" not in res and "diagnostics" in res for res in rep.get("results", {}).values())
+        isinstance(res, dict) and "H9" not in res.get("criteria", {}) and "H9_claim_condition" not in res and "diagnostics" in res
+        for res in rep.get("results", {}).values())
+
+
+def deep_findings(expected, actual, path: str = "") -> list[str]:
+    """Field for field, entry for entry: every difference between two JSON documents, each named by
+    its path (`results.F1.criteria.H5.required_pairs_N`, `pairs[3].runs.O.ledger[17].decoded`, ...).
+    Both sides are JSON-normalised first (a tuple and a list are the same entry)."""
+    def norm(x):
+        return json.loads(json.dumps(x, sort_keys=True))
+
+    def walk(e, a, at):
+        if isinstance(e, dict) and isinstance(a, dict):
+            out = []
+            for k in e:
+                sub = f"{at}.{k}" if at else str(k)
+                out.extend([f"{sub}: absent"] if k not in a else walk(e[k], a[k], sub))
+            out.extend(f"{at}.{k}: unexpected" if at else f"{k}: unexpected" for k in a if k not in e)
+            return out
+        if isinstance(e, list) and isinstance(a, list):
+            out = []
+            if len(e) != len(a):
+                out.append(f"{at}: {len(a)} entries, expected {len(e)}")
+            for i in range(min(len(e), len(a))):
+                out.extend(walk(e[i], a[i], f"{at}[{i}]"))
+            return out
+        if e != a or type(e) is not type(a):
+            return [f"{at}: {a!r}, expected {e!r}"]
+        return []
+    return walk(norm(expected), norm(actual), path)
+
+
+def load_json(path: Path, what: str) -> dict:
+    try:
+        return json.loads(path.read_bytes())
+    except OSError as e:
+        raise Refusal(f"{what} {_rel(path)}: cannot be read ({e.__class__.__name__}: {e})") from None
+    except json.JSONDecodeError as e:
+        raise Refusal(f"{what} {_rel(path)}: not JSON ({e})") from None
+
+
+_VALIDATED: dict = {}
+
+
+def validate_report(path: Path) -> dict:
+    """The gate report as an authority, or a named Refusal: schema 2.0.0 of lifecycle 2 in the
+    lifecycle-2 shape; provenance (a 40-hex HEAD, a clean tree at the start, the label, the master seed
+    derived from HEAD, the thresholds equal to the current ones, control X's seed and permutation
+    re-derived); the architecture binding (path and the current file's bytes); every raw file present
+    with its recorded digest, its rows carrying the seeds the master and count re-derive under the
+    current exclusion; and `evaluate` re-run from every raw file with every field of the recorded
+    result equal (a modified statistic, criterion, B* or N is named by its path). Cached per report
+    bytes and thresholds."""
+    path = Path(path)
+    rep = load_json(path, "the gate report")
+    key = (str(path.resolve()), sha256_bytes(path.read_bytes()), json.dumps(THRESHOLDS, sort_keys=True))
+    if key in _VALIDATED:
+        return copy.deepcopy(_VALIDATED[key])
+
+    def need(cond: bool, msg: str):
+        if not cond:
+            raise Refusal(f"gate report {_rel(path)}: {msg}")
+    need(isinstance(rep, dict) and rep.get("schema") == "b3_gate_report", "schema is not b3_gate_report")
+    need(rep.get("schema_version") == REPORT_SCHEMA_VERSION, f"schema_version {rep.get('schema_version')!r}, expected {REPORT_SCHEMA_VERSION!r}")
+    need(rep.get("lifecycle") == LIFECYCLE, f"lifecycle {rep.get('lifecycle')!r}, expected {LIFECYCLE}")
+    need(is_lifecycle2_report(rep), "not the lifecycle-2 shape (H9 must be under diagnostics, never a criterion or a claim condition)")
+    head = rep.get("head_at_run")
+    need(isinstance(head, str) and bool(HEX40.match(head)), f"head_at_run {head!r} is not a commit")
+    need(rep.get("worktree_dirty_at_start") is False, f"worktree_dirty_at_start {rep.get('worktree_dirty_at_start')!r}: the gate must have run on a clean tree")
+    need(rep.get("thresholds") == json.loads(json.dumps(THRESHOLDS)), "thresholds differ from the current ones: " + "; ".join(deep_findings(THRESHOLDS, rep.get("thresholds"), "thresholds")[:5]))
+    seeds = rep.get("seeds") or {}
+    need(seeds.get("label") == GATE_LABEL, f"seeds.label {seeds.get('label')!r}, expected {GATE_LABEL!r}")
+    need(seeds.get("master_seed") == bs.master_seed(GATE_LABEL, head), "seeds.master_seed is not derived from the label and head_at_run")
+    need(isinstance(seeds.get("count"), int) and seeds["count"] > 0, "seeds.count is not a positive integer")
+    arch = rep.get("architecture") or {}
+    need(arch.get("path") == "docs/b3_architecture.md", f"architecture.path {arch.get('path')!r}")
+    need(arch.get("sha256") == sha256_bytes(ARCHITECTURE.read_bytes()), "architecture.sha256 is not the current docs/b3_architecture.md")
+    ctl = rep.get("control_x") or {}
+    seed_x, perm, _ = control_x_draw()
+    need(ctl.get("seed_x") == seed_x and ctl.get("instrument_commit") == bp.INSTRUMENT_COMMIT, "control_x.seed_x / instrument_commit are not the current derivation")
+    need(ctl.get("permutation_sha256") == cx.permutation_sha256(perm), "control_x.permutation_sha256 is not the derangement seed_x gives")
+    fid_gate = rep.get("gate_fitness")
+    results = rep.get("results") or {}
+    need(fid_gate == "F1" and fid_gate in results, f"gate_fitness {fid_gate!r} is not F1 with a result")
+    raw_files = rep.get("raw_files")
+    need(isinstance(raw_files, dict) and set(raw_files) == set(results), "raw_files must name exactly one raw file per result")
+    excl, _ = gate_exclusion()
+    expected_seeds = [tuple(x) for x in bs.pair_seeds(seeds["master_seed"], seeds["count"], exclude=frozenset(excl))]
+    for fid, res in results.items():
+        rf = raw_files[fid]
+        need(isinstance(rf, dict) and rf.get("path") == f"raw_{fid}.json", f"raw_files.{fid}.path must be raw_{fid}.json")
+        rp = path.parent / rf["path"]
+        try:
+            b = rp.read_bytes()
+        except OSError as e:
+            raise Refusal(f"gate report {_rel(path)}: raw file {rf['path']} cannot be read ({e.__class__.__name__})") from None
+        need(sha256_bytes(b) == rf.get("sha256"), f"raw_files.{fid}.sha256 does not match {rf['path']}")
+        try:
+            raw = json.loads(b)
+        except json.JSONDecodeError as e:
+            raise Refusal(f"gate report {_rel(path)}: raw file {rf['path']} is not JSON ({e})") from None
+        need(raw.get("fitness") == fid and raw.get("grid") == list(GRID), f"raw file {rf['path']}: fitness / grid are not this fitness and grid")
+        rows = raw.get("rows") or []
+        need(len(rows) == seeds["count"] and rf.get("rows") == len(rows), f"raw file {rf['path']}: {len(rows)} rows, expected seeds.count {seeds['count']}")
+        need([(r.get("landscape_seed"), r.get("operator_seed")) for r in rows] == expected_seeds,
+             f"raw file {rf['path']}: the rows do not carry the seeds the master and count re-derive under the current exclusion")
+        recomputed = evaluate(fid, rows)
+        recorded = {k: v for k, v in res.items() if k != "wall_s"}
+        diff = deep_findings(recomputed, recorded, f"results.{fid}")
+        need(not diff, "the recorded result differs from evaluate() re-run on the raw rows: " + "; ".join(diff[:5]) + (f" (+{len(diff) - 5} more)" if len(diff) > 5 else ""))
+    _VALIDATED[key] = copy.deepcopy(rep)
+    return rep
 
 
 if __name__ == "__main__":

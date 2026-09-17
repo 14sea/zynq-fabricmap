@@ -59,8 +59,10 @@ def fmt_any(v) -> str:
 
 
 def render(rep: dict) -> str:
+    """The Markdown of a report dict of the lifecycle-2 shape (the shape alone is checked here; the
+    CLI reads a report only through `b3_gate.validate_report`)."""
     if not b3g.is_lifecycle2_report(rep):
-        raise ValueError("not a lifecycle-2 gate report (H9 must be under diagnostics, never a criterion or a claim condition): not rendered")
+        raise b3g.Refusal("not a lifecycle-2 gate report (H9 must be under diagnostics, never a criterion or a claim condition): not rendered")
     L = []
     L.append(f"# B3 gate report (lifecycle {rep['lifecycle']}) — {rep['generated_utc']} (`{rep['head_at_run'][:7] if rep['head_at_run'] else 'no commit'}`, dirty at start: {rep['worktree_dirty_at_start']})\n")
     L.append(f"Rules: {rep['thresholds']['rules_version']} — `{rep['architecture']['path']}` sha256 `{rep['architecture']['sha256']}` "
@@ -101,11 +103,12 @@ def render(rep: dict) -> str:
         if h9:
             L.append(f"H9 diagnostic (decides nothing) — Δ2 = O − end-to-end F at every budget ≥ B* (one-sided sign test, α = {h9['alpha']}); "
                      f"N₂(B) = the pair count the gate's bootstrap rule would need for Δ2 (power ≥ {h9['power_min']}); the gate's N = {h9['gate_N']}:\n")
-            L.append("| budget | p | mean Δ2 | median Δ2 | pos/neg/ties | Cohen's d | N₂(B) | power at N₂ | Δ2 power at the gate's N |")
-            L.append("|---|---|---|---|---|---|---|---|---|")
+            L.append("| budget | p | mean Δ2 | median Δ2 | pos/neg/ties | Cohen's d | N₂(B) | power at N₂ | Δ2 power at the scan's last N (no N₂) | Δ2 power at the gate's N |")
+            L.append("|---|---|---|---|---|---|---|---|---|---|")
             for r in h9["delta2_by_budget_from_b_star"]:
+                at_max = "—" if r["power_delta2_at_scan_max_N"] is None else f"{fmt_p(r['power_delta2_at_scan_max_N'])} at N = {r['scan_max_N']}"
                 L.append(f"| {r['budget']} | {fmt_p(r['sign_test_p'])} | {r['mean']:+.3f} | {fmt(r['median'])} | {r['positives']}/{r['negatives']}/{r['ties']} | "
-                         f"{fmt(r['cohen_d'])} | {fmt(r['required_pairs_N2'])} | {fmt_p(r['power_at_N2'])} | {fmt_p(r['power_delta2_at_gate_N'])} |")
+                         f"{fmt(r['cohen_d'])} | {fmt(r['required_pairs_N2'])} | {fmt_p(r['power_at_N2'])} | {at_max} | {fmt_p(r['power_delta2_at_gate_N'])} |")
             L.append("")
         else:
             L.append("H9 diagnostic: no B*, nothing to report.\n")
@@ -122,12 +125,21 @@ def main(argv=None) -> int:
     ap.add_argument("--report", default=REPORT_DEFAULT)
     ap.add_argument("--out", default=OUT_DEFAULT)
     a = ap.parse_args(argv)
-    if (REPO_ROOT / a.out).resolve() == LIFECYCLE1_OUT.resolve():
-        print(f"refused: {b3g._rel(LIFECYCLE1_OUT)} is lifecycle 1's rendered report and is never overwritten (write to {OUT_DEFAULT})", file=sys.stderr)
+    out = REPO_ROOT / a.out
+    try:
+        if out.resolve() == LIFECYCLE1_OUT.resolve():
+            raise b3g.Refusal(f"{b3g._rel(LIFECYCLE1_OUT)} is lifecycle 1's rendered report and is never overwritten (write to {OUT_DEFAULT})")
+        b3g.refuse_lifecycle1_path(out)
+        rep = b3g.validate_report(REPO_ROOT / a.report)        # the same validator the plan uses: nothing unvalidated is rendered
+        text = render(rep)
+        try:
+            out.write_text(text)
+        except OSError as e:
+            raise b3g.Refusal(f"cannot write {b3g._rel(out)} ({e.__class__.__name__}: {e})") from None
+    except b3g.Refusal as e:
+        print(f"REFUSED: {e}", file=sys.stderr)
         return 2
-    rep = json.loads((REPO_ROOT / a.report).read_text())
-    (REPO_ROOT / a.out).write_text(render(rep))
-    print(REPO_ROOT / a.out)
+    print(out)
     return 0
 
 

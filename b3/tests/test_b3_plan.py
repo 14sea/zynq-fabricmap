@@ -1,16 +1,22 @@
-"""b3/host/b3_plan.py (lifecycle 2) — the gate's numbers (a lifecycle-2 report accepted, lifecycle 1's
-refused by name), the seed exclusion (every archived set, lifecycle 1's two sets, plus the gate's own
-pairs), the labels, the split rule with the 0.85 margin, the arm order, the record arithmetic, the
-prediction's determinism and structure with EVERY ledger entry embedded, the entry-level comparison
-naming a tamper, one primary plus the secondary outcome, the stop rule on the primary alone, the CLI's
-stop before any canonical write, and B3Q's frozen experiment.
+"""b3/host/b3_plan.py (lifecycle 2) — the gate's numbers read only through the production validator (a
+lifecycle-2 fixture accepted; lifecycle 1's report and every tamper refused by name), the seed exclusion
+(every archived set, lifecycle 1's two sets, plus the gate's own pairs), the labels, the split rule with
+the 0.85 margin, the arm order, the record arithmetic, the prediction's determinism and structure with
+EVERY ledger entry embedded, the entry-level comparison naming a tamper, one primary plus the secondary
+outcome, the stop rule on the primary alone, the CLI's stop before any canonical write, the CLI's named
+refusals (REFUSED:, exit 2, nothing written) and lifecycle 1's directories refused as outputs, and B3Q's
+frozen experiment.
 
-The gate fixture: a report of the lifecycle-2 shape written into a temp directory, its seeds drawn
-under the label `b3-gate-2` with the real exclusion (so the plan's re-derivation check holds), its
-numbers the pilot's (B* = 1 000, N = 9) — a fixture, not a gate result."""
+The gate fixture (b3_test_fixtures.write_gate_fixture): a report of the lifecycle-2 shape built by the
+tool's own builder into a temp directory, its seeds drawn under `b3-gate-2` with the real exclusion, its
+raw file digested, its results evaluate() on synthetic rows — accepted by b3_gate.validate_report under
+this module's thresholds (bootstrap experiments 100, restored afterwards). Its B* / N are a fixture's,
+never a gate result."""
 from __future__ import annotations
 
+import contextlib
 import copy
+import io
 import json
 import shutil
 import sys
@@ -20,44 +26,41 @@ from pathlib import Path
 from unittest import mock
 
 R = Path(__file__).resolve().parents[2]
-for p in (R / "host", R / "b3/host"):
+for p in (R / "host", R / "b3/host", R / "b3/tests"):
     sys.path.insert(0, str(p))
 import b2_maps as bmaps  # noqa: E402
 import b2_search as bs  # noqa: E402
 import b3_gate as b3g  # noqa: E402
 import b3_online_arm as oa  # noqa: E402
 import b3_plan as pl  # noqa: E402
+from b3_test_fixtures import FIXTURE_HEAD, rewrite_report, write_gate_fixture  # noqa: E402
 
 LIFECYCLE1_GATE = R / "evidence/b3/gate/gate_report.json"
 _TMP: Path | None = None
+_SAVED: int | None = None
 GATE: Path | None = None
-
-
-def write_gate_fixture(d: Path, count: int = 3, b_star: int = 1000, n: int = 9, head: str = "f" * 40) -> Path:
-    d.mkdir(parents=True, exist_ok=True)
-    excl, sources = b3g.gate_exclusion()
-    master = bs.master_seed(b3g.GATE_LABEL, head)
-    seeds = bs.pair_seeds(master, count, exclude=frozenset(excl))
-    rows = [{"r": r, "landscape_seed": l, "operator_seed": o, "base_fit": 2, "arms": {}} for r, (l, o) in enumerate(seeds)]
-    (d / "raw_F1.json").write_text(json.dumps({"fitness": "F1", "grid": list(b3g.GRID), "rows": rows}))
-    rep = {"schema": "b3_gate_report", "schema_version": "2.0.0", "lifecycle": b3g.LIFECYCLE, "label": "fixture", "head_at_run": head,
-           "thresholds": dict(b3g.THRESHOLDS), "architecture": {"path": "docs/b3_architecture.md", "sha256": "a" * 64, "last_commit": head},
-           "control_x": {"permutation_sha256": "c" * 64}, "gate_fitness": "F1",
-           "seeds": {"label": b3g.GATE_LABEL, "master_seed": master, "count": count, "excluded_sources": sources},
-           "results": {"F1": {"pass": True, "b_star": b_star, "criteria": {"H5": {"required_pairs_N": n, "pass": True}},
-                              "diagnostics": {"H9": {"alpha": 0.05, "delta2_by_budget_from_b_star": []}}}}}
-    (d / "gate_report.json").write_text(json.dumps(rep, indent=1, sort_keys=True) + "\n")
-    return d / "gate_report.json"
+FIX: dict = {}      # the fixture's own numbers (B*, N), read from its validated report
 
 
 def setUpModule():
-    global _TMP, GATE
+    global _TMP, _SAVED, GATE
+    _SAVED = b3g.THRESHOLDS["H2_bootstrap_experiments"]
+    b3g.THRESHOLDS["H2_bootstrap_experiments"] = 100
     _TMP = Path(tempfile.mkdtemp())
     GATE = write_gate_fixture(_TMP / "gate_2")
+    rep = b3g.validate_report(GATE)
+    FIX.update(b_star=rep["results"]["F1"]["b_star"], n=rep["results"]["F1"]["criteria"]["H5"]["required_pairs_N"])
 
 
 def tearDownModule():
+    b3g.THRESHOLDS["H2_bootstrap_experiments"] = _SAVED
     shutil.rmtree(_TMP, True)
+
+
+def copy_fixture(case) -> Path:
+    d = Path(tempfile.mkdtemp()); case.addCleanup(shutil.rmtree, d, True)
+    shutil.copy(GATE, d / "gate_report.json"); shutil.copy(GATE.parent / "raw_F1.json", d / "raw_F1.json")
+    return d / "gate_report.json"
 
 
 class GateAndSeeds(unittest.TestCase):
@@ -68,36 +71,48 @@ class GateAndSeeds(unittest.TestCase):
         self.assertEqual(pl.PLAN_DIR, R / "evidence/b3")
         self.assertEqual(pl.qualification_master(), bs.master_seed("b3-qualification-2", pl.INSTRUMENT_COMMIT))
 
-    def test_gate_inputs_accept_the_lifecycle_2_shape_and_carry_no_claim_condition(self):
+    def test_gate_inputs_come_from_the_validated_report_and_carry_no_claim_condition(self):
         g = pl.gate_inputs(GATE)
-        self.assertEqual((g["fitness"], g["budget_per_arm"], g["pairs"]), ("F1", 1000, 9))
+        self.assertEqual((g["fitness"], g["budget_per_arm"], g["pairs"]), ("F1", FIX["b_star"], FIX["n"]))
         self.assertEqual(g["seeds"]["label"], "b3-gate-2")
         self.assertEqual(g["rules_version"], "architecture v0.3 §9")
+        self.assertEqual(g["head_at_run"], FIXTURE_HEAD)
         self.assertNotIn("H9_claim_condition", g)
         self.assertNotIn("H9", json.dumps(g))
 
-    def test_gate_inputs_refuse_lifecycle_1s_report_by_name(self):
-        with self.assertRaises(ValueError) as cm:
+    def test_gate_inputs_refuse_lifecycle_1s_report_and_every_tamper_by_name(self):
+        """The owner's P2: B* and N are trusted only after b3_gate.validate_report — schema 2.0.0, a clean
+        committed tree, the architecture bytes, the raw digest, evaluate() re-run from the raw rows."""
+        with self.assertRaises(b3g.Refusal) as cm:
             pl.gate_inputs(LIFECYCLE1_GATE)
-        self.assertIn("architecture v0.2.3 §9", str(cm.exception))
-        # the rules version alone made current: the label still names it; the label made current too: the shape (H9 a criterion)
-        rep = json.loads(LIFECYCLE1_GATE.read_text())
-        rep["thresholds"]["rules_version"] = b3g.THRESHOLDS["rules_version"]
-        d = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, d, True)
-        (d / "gate_report.json").write_text(json.dumps(rep))
-        with self.assertRaises(ValueError) as cm:
-            pl.gate_inputs(d / "gate_report.json")
-        self.assertIn("b3-gate", str(cm.exception)); self.assertIn("b3-gate-2", str(cm.exception))
-        rep["seeds"]["label"] = b3g.GATE_LABEL
-        (d / "gate_report.json").write_text(json.dumps(rep))
-        with self.assertRaises(ValueError) as cm:
-            pl.gate_inputs(d / "gate_report.json")
-        self.assertIn("lifecycle-2", str(cm.exception))
-        # the fixture with its H5 pass removed: no plan
-        fx = json.loads(GATE.read_text()); fx["results"]["F1"]["pass"] = False
-        (d / "gate_report.json").write_text(json.dumps(fx))
-        with self.assertRaises(ValueError):
-            pl.gate_inputs(d / "gate_report.json")
+        self.assertIn("schema_version '1.0.0'", str(cm.exception))
+        for what, mutate, needle in (
+                ("dirty", lambda r: r.__setitem__("worktree_dirty_at_start", True), "worktree_dirty_at_start True"),
+                ("head null", lambda r: r.__setitem__("head_at_run", None), "head_at_run None"),
+                ("architecture", lambda r: r["architecture"].__setitem__("sha256", "0" * 64), "architecture.sha256"),
+                ("label", lambda r: r["seeds"].__setitem__("label", "b3-gate"), "seeds.label"),
+                ("rules", lambda r: r["thresholds"].__setitem__("rules_version", "architecture v0.2.3 §9"), "thresholds.rules_version"),
+                ("N", lambda r: r["results"]["F1"]["criteria"]["H5"].__setitem__("required_pairs_N", FIX["n"] + 1), "results.F1.criteria.H5.required_pairs_N"),
+                ("B*", lambda r: r["results"]["F1"].__setitem__("b_star", 3000), "results.F1.b_star"),
+                ("H9 back as a criterion", lambda r: r["results"]["F1"]["criteria"].__setitem__("H9", {"pass": True}), "lifecycle-2 shape"),
+                ("raw digest", lambda r: r["raw_files"]["F1"].__setitem__("sha256", "0" * 64), "raw_files.F1.sha256")):
+            p = copy_fixture(self)
+            rewrite_report(p, mutate)
+            with self.assertRaises(b3g.Refusal, msg=what) as cm:
+                pl.gate_inputs(p)
+            self.assertIn(needle, str(cm.exception), what)
+        # a report that validates but did not pass: no plan
+        p = copy_fixture(self)
+        raw = json.loads((p.parent / "raw_F1.json").read_text())
+        for row in raw["rows"]:
+            row["arms"]["O"]["at_grid"] = [40] * len(b3g.GRID)           # H1 fails everywhere: no B*
+        b = json.dumps(raw, separators=(",", ":")).encode(); (p.parent / "raw_F1.json").write_bytes(b)
+        res = b3g.evaluate("F1", raw["rows"]); res["wall_s"] = 0.0
+        rewrite_report(p, lambda r: (r["raw_files"]["F1"].__setitem__("sha256", b3g.sha256_bytes(b)), r["results"].__setitem__("F1", res)))
+        self.assertFalse(b3g.validate_report(p)["results"]["F1"]["pass"])
+        with self.assertRaises(b3g.Refusal) as cm:
+            pl.gate_inputs(p)
+        self.assertIn("did not pass", str(cm.exception))
 
     def test_session_seeds_avoid_every_archived_set_including_lifecycle_1s_and_the_gates(self):
         master, seeds, sources, excl = pl.session_seeds(9, GATE)
@@ -125,13 +140,14 @@ class GateAndSeeds(unittest.TestCase):
         self.assertFalse({s for p in q for s in p} & (flat | excl))
 
     def test_the_gates_rows_must_carry_the_seeds_its_master_rederives(self):
-        d = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, d, True)
-        p = write_gate_fixture(d)
-        raw = json.loads((d / "raw_F1.json").read_text())
+        p = copy_fixture(self)
+        raw = json.loads((p.parent / "raw_F1.json").read_text())
         raw["rows"][1]["operator_seed"] += 1
-        (d / "raw_F1.json").write_text(json.dumps(raw))
-        with self.assertRaises(ValueError):
+        b = json.dumps(raw, separators=(",", ":")).encode(); (p.parent / "raw_F1.json").write_bytes(b)
+        rewrite_report(p, lambda r: r["raw_files"]["F1"].__setitem__("sha256", b3g.sha256_bytes(b)))
+        with self.assertRaises(b3g.Refusal) as cm:
             pl.session_seeds(9, p)
+        self.assertIn("do not carry the seeds", str(cm.exception))
 
 
 class SplitAndArithmetic(unittest.TestCase):
@@ -299,7 +315,8 @@ class Prediction(unittest.TestCase):
 class PlanDocument(unittest.TestCase):
     def test_the_plan_names_one_primary_and_the_secondary_no_claim_condition(self):
         plan = pl.build_plan(None, GATE)
-        self.assertEqual((plan["schema_version"], plan["lifecycle"], plan["pairs"], plan["budget_per_arm"]), (pl.SCHEMA_VERSION, 2, 9, 1000))
+        self.assertEqual((plan["schema_version"], plan["lifecycle"], plan["pairs"], plan["budget_per_arm"]), (pl.SCHEMA_VERSION, 2, FIX["n"], FIX["b_star"]))
+        self.assertEqual(plan["gate"]["head_at_run"], FIXTURE_HEAD)
         self.assertEqual(plan["seed_derivation"]["label"], "b3-session-2")
         text = json.dumps(plan)
         for key in ("primary_1", "primary_2", "both_required", "H9_claim_condition", "either primary"):
@@ -325,7 +342,7 @@ class StopBeforeCanonicalWrite(unittest.TestCase):
 
     def run_cli(self, stopping: bool, out: str) -> tuple[int, dict]:
         p = 0.36 if stopping else 0.002
-        pred = {"schema": "b3_prediction", "schema_version": pl.SCHEMA_VERSION, "lifecycle": 2, "fitness": "F1", "budget_per_arm": 1000,
+        pred = {"schema": "b3_prediction", "schema_version": pl.SCHEMA_VERSION, "lifecycle": 2, "fitness": "F1", "budget_per_arm": FIX["b_star"],
                 "pairs": [], "deltas1": [1] * 9, "deltas2": [0] * 9,
                 "predicted_primary": {"sign_test_p": p, "alpha": 0.05, "positives": 5 if stopping else 9, "negatives": 3 if stopping else 0, "ties": 1 if stopping else 0,
                                       "verdict": "NOT SUPPORTED" if stopping else "online > random-safe SUPPORTED"},
@@ -334,7 +351,7 @@ class StopBeforeCanonicalWrite(unittest.TestCase):
         buf = io.StringIO()
         with mock.patch.object(pl, "PLAN_DIR", self.canon), mock.patch.object(pl, "REPO_ROOT", self.d), \
              mock.patch.object(pl, "build_prediction", return_value=pred), \
-             mock.patch.object(pl, "build_plan", return_value={"schema": "b3_plan", "fitness": "F1", "budget_per_arm": 1000, "pairs": 9,
+             mock.patch.object(pl, "build_plan", return_value={"schema": "b3_plan", "fitness": "F1", "budget_per_arm": FIX["b_star"], "pairs": FIX["n"],
                                                                 "seed_derivation": {"master_seed": 1}, "session_split": {"status": "UNDETERMINED"}}), \
              contextlib.redirect_stdout(buf):
             rc = pl.main(["--out", out, "--gate-report", str(GATE)])
@@ -371,9 +388,50 @@ class StopBeforeCanonicalWrite(unittest.TestCase):
         self.assertEqual(plan["prediction_sha256"], pl.sha256_file(self.canon / "prediction.json"))
 
 
+class Refusals(unittest.TestCase):
+    """The owner's P3: an input / shape / I/O refusal is `REFUSED: ...` on stderr, exit 2, nothing written —
+    never a traceback; and the owner's P2: lifecycle 1's directories and everything under them are
+    refused as --out (hermetic: the constants patched to temp copies)."""
+    def cli(self, argv) -> tuple[int, str, str]:
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            rc = pl.main(argv)
+        return rc, out.getvalue(), err.getvalue()
+
+    def test_a_lifecycle_1_report_missing_or_malformed_input_is_refused_by_name(self):
+        t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
+        (t / "bad.json").write_text("{")
+        tampered = copy_fixture(self); rewrite_report(tampered, lambda r: r.__setitem__("worktree_dirty_at_start", True))
+        for what, rep, needle in (("lifecycle 1", LIFECYCLE1_GATE, "schema_version '1.0.0'"), ("missing", t / "none.json", "cannot be read"),
+                                  ("malformed", t / "bad.json", "not JSON"), ("dirty", tampered, "worktree_dirty_at_start True")):
+            for extra in ((), ("--qualification",)):
+                rc, out, err = self.cli(["--out", str(t / "out"), "--gate-report", str(rep), *extra])
+                self.assertEqual(rc, 2, (what, extra))
+                self.assertTrue(err.startswith("REFUSED: "), (what, err))
+                self.assertIn(needle, err, what)
+                self.assertNotIn("Traceback", err)
+                self.assertEqual(out, "")
+                self.assertFalse((t / "out").exists(), what)
+
+    def test_lifecycle_1s_directories_are_refused_as_out_before_anything_is_read(self):
+        t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
+        d = t / "evidence/b3/gate"; shutil.copytree(b3g.LIFECYCLE1_GATE_DIR, d)
+        tr = t / "evidence/b3/plan_trial_2026_09_17"; shutil.copytree(b3g.LIFECYCLE1_TRIAL_DIR, tr)
+        snap = lambda p: sorted((x.name, x.stat().st_size, x.stat().st_mtime_ns) for x in p.iterdir())  # noqa: E731
+        before = snap(d) + snap(tr)
+        with mock.patch.object(b3g, "LIFECYCLE1_GATE_DIR", d), mock.patch.object(b3g, "LIFECYCLE1_TRIAL_DIR", tr):
+            for out in (str(d), str(d / "plan"), str(tr), str(tr / "x"), str(t / "evidence/b3/gate/../plan_trial_2026_09_17/y")):
+                for extra in ((), ("--qualification",)):
+                    rc, so, err = self.cli(["--out", out, "--gate-report", str(GATE), *extra])
+                    self.assertEqual(rc, 2, out)
+                    self.assertTrue(err.startswith("REFUSED: "), err); self.assertIn("never overwritten", err)
+        self.assertEqual(snap(d) + snap(tr), before)
+        self.assertFalse((d / "plan").exists()); self.assertFalse((tr / "x").exists())
+
+
 class Qualification(unittest.TestCase):
     def test_b3q_numbers_and_label(self):
-        _m, seeds, _s, _e = pl.session_seeds(9, GATE)
+        _m, seeds, _s, _e = pl.session_seeds(FIX["n"], GATE)
         q = pl.build_qualification_plan("F1", bmaps.sha256_of(bmaps.load_self_map()), seeds, GATE)
         self.assertEqual(q["budget_per_arm"], 40)
         self.assertEqual(q["records"], {"per_pair": 123, "search": 120, "holdout": 3, "ledger_entries": 40, "baselines": 2, "total": 125})
