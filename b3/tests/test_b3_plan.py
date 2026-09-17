@@ -33,7 +33,7 @@ import b2_search as bs  # noqa: E402
 import b3_gate as b3g  # noqa: E402
 import b3_online_arm as oa  # noqa: E402
 import b3_plan as pl  # noqa: E402
-from b3_test_fixtures import FIXTURE_HEAD, rewrite_report, write_gate_fixture  # noqa: E402
+from b3_test_fixtures import FIXTURE_HEAD, NOT_A_COMMIT, rewrite_report, write_gate_fixture  # noqa: E402
 
 LIFECYCLE1_GATE = R / "evidence/b3/gate/gate_report.json"
 _TMP: Path | None = None
@@ -85,16 +85,20 @@ class GateAndSeeds(unittest.TestCase):
         committed tree, the architecture bytes, the raw digest, evaluate() re-run from the raw rows."""
         with self.assertRaises(b3g.Refusal) as cm:
             pl.gate_inputs(LIFECYCLE1_GATE)
-        self.assertIn("schema_version '1.0.0'", str(cm.exception))
+        self.assertIn("not the lifecycle-2 shape", str(cm.exception))
         for what, mutate, needle in (
                 ("dirty", lambda r: r.__setitem__("worktree_dirty_at_start", True), "worktree_dirty_at_start True"),
-                ("head null", lambda r: r.__setitem__("head_at_run", None), "head_at_run None"),
+                ("head null", lambda r: r.__setitem__("head_at_run", None), "head_at_run None is not a commit"),
+                ("head not a commit", lambda r: r.__setitem__("head_at_run", NOT_A_COMMIT), "is not a commit"),
+                ("map digest", lambda r: r["map"].__setitem__("sha256", "0" * 64), "map.sha256"),
+                ("excluded sources", lambda r: r["seeds"]["excluded_sources"].popitem(), "seeds.excluded_sources"),
+                ("results a list", lambda r: r.__setitem__("results", []), "results: list, not an object"),
                 ("architecture", lambda r: r["architecture"].__setitem__("sha256", "0" * 64), "architecture.sha256"),
                 ("label", lambda r: r["seeds"].__setitem__("label", "b3-gate"), "seeds.label"),
                 ("rules", lambda r: r["thresholds"].__setitem__("rules_version", "architecture v0.2.3 §9"), "thresholds.rules_version"),
                 ("N", lambda r: r["results"]["F1"]["criteria"]["H5"].__setitem__("required_pairs_N", FIX["n"] + 1), "results.F1.criteria.H5.required_pairs_N"),
                 ("B*", lambda r: r["results"]["F1"].__setitem__("b_star", 3000), "results.F1.b_star"),
-                ("H9 back as a criterion", lambda r: r["results"]["F1"]["criteria"].__setitem__("H9", {"pass": True}), "lifecycle-2 shape"),
+                ("H9 back as a criterion", lambda r: r["results"]["F1"]["criteria"].__setitem__("H9", {"pass": True}), "results.F1.criteria.H9"),
                 ("raw digest", lambda r: r["raw_files"]["F1"].__setitem__("sha256", "0" * 64), "raw_files.F1.sha256")):
             p = copy_fixture(self)
             rewrite_report(p, mutate)
@@ -402,7 +406,7 @@ class Refusals(unittest.TestCase):
         t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
         (t / "bad.json").write_text("{")
         tampered = copy_fixture(self); rewrite_report(tampered, lambda r: r.__setitem__("worktree_dirty_at_start", True))
-        for what, rep, needle in (("lifecycle 1", LIFECYCLE1_GATE, "schema_version '1.0.0'"), ("missing", t / "none.json", "cannot be read"),
+        for what, rep, needle in (("lifecycle 1", LIFECYCLE1_GATE, "not the lifecycle-2 shape"), ("missing", t / "none.json", "cannot be read"),
                                   ("malformed", t / "bad.json", "not JSON"), ("dirty", tampered, "worktree_dirty_at_start True")):
             for extra in ((), ("--qualification",)):
                 rc, out, err = self.cli(["--out", str(t / "out"), "--gate-report", str(rep), *extra])
@@ -412,6 +416,13 @@ class Refusals(unittest.TestCase):
                 self.assertNotIn("Traceback", err)
                 self.assertEqual(out, "")
                 self.assertFalse((t / "out").exists(), what)
+        # --out under a regular file, or an existing file: refused by name before the gate is even read
+        (t / "afile").write_text("x")
+        for out_path, needle in ((t / "afile/plan", "not a directory"), (t / "afile", "not a directory")):
+            for extra in ((), ("--qualification",)):
+                rc, out, err = self.cli(["--out", str(out_path), "--gate-report", str(t / "none.json"), *extra])
+                self.assertEqual(rc, 2); self.assertTrue(err.startswith("REFUSED: ")); self.assertIn(needle, err); self.assertNotIn("none.json", err)
+        self.assertEqual((t / "afile").read_text(), "x")
 
     def test_lifecycle_1s_directories_are_refused_as_out_before_anything_is_read(self):
         t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)

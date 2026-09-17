@@ -285,19 +285,36 @@ def evaluate(fid: str, rows: list[dict]) -> dict:
 # ------------------------------------------------------------------ pins, seeds, main
 
 
+def _git(*args) -> subprocess.CompletedProcess:
+    return subprocess.run(["git", "-C", str(REPO_ROOT), *args], capture_output=True)
+
+
 def git_head() -> str | None:
-    p = subprocess.run(["git", "-C", str(REPO_ROOT), "rev-parse", "HEAD"], capture_output=True, text=True)
-    return p.stdout.strip() if p.returncode == 0 else None
+    p = _git("rev-parse", "HEAD")
+    return p.stdout.decode().strip() if p.returncode == 0 else None
 
 
 def git_dirty() -> bool:
-    p = subprocess.run(["git", "-C", str(REPO_ROOT), "status", "--porcelain"], capture_output=True, text=True)
-    return bool(p.stdout.strip())
+    return bool(_git("status", "--porcelain").stdout.strip())
 
 
-def architecture_pin() -> dict:
-    p = subprocess.run(["git", "-C", str(REPO_ROOT), "log", "-n", "1", "--format=%H", "--", "docs/b3_architecture.md"], capture_output=True, text=True)
-    return {"path": "docs/b3_architecture.md", "sha256": sha256_bytes(ARCHITECTURE.read_bytes()), "last_commit": p.stdout.strip() or None}
+def commit_exists(head) -> bool:
+    """True iff `head` is a 40-hex id of a commit object in this repository."""
+    return isinstance(head, str) and bool(HEX40.match(head)) and _git("cat-file", "-e", f"{head}^{{commit}}").returncode == 0
+
+
+def git_show_bytes(head: str, rel: str) -> bytes | None:
+    """The bytes of `rel` at commit `head`, or None when the commit does not carry it."""
+    p = _git("show", f"{head}:{rel}")
+    return p.stdout if p.returncode == 0 else None
+
+
+def architecture_pin(head: str) -> dict:
+    """The architecture document as commit `head` carries it: its bytes' sha256 and the last commit that
+    touched it as of `head` (deterministic in `head`; None when the commit lacks the file)."""
+    b = git_show_bytes(head, "docs/b3_architecture.md")
+    last = _git("log", "-n", "1", "--format=%H", head, "--", "docs/b3_architecture.md").stdout.decode().strip()
+    return {"path": "docs/b3_architecture.md", "sha256": sha256_bytes(b) if b is not None else None, "last_commit": last or None}
 
 
 def lifecycle1_exclusion() -> tuple[set[int], dict]:
@@ -360,23 +377,37 @@ def control_x_draw() -> tuple[int, list[int], list]:
     return seed_x, perm, attempts
 
 
-def build_report(label: str, head: str, dirty: bool, master: int, count: int, excl: set, sources: dict,
-                 seed_x: int, perm: list[int], attempts: list, results: dict, raw_files: dict, wall_s: float) -> dict:
-    """The report document — the criteria with the numbers, the diagnostic, the pins (the architecture
-    document's bytes, HEAD, the seeds' derivation and every exclusion source, control X, every raw
-    file's digest). Built here so a test fixture and the run write the same shape."""
+def provenance_blocks(head: str, count: int) -> dict:
+    """Every deterministic block of a report, computed afresh from `head`, the current inputs (the
+    thresholds, the engine, the cartographer, the self-map, the exclusion sources, control X) and the
+    seed count. The run writes them; the validator recomputes them and requires equality; the run
+    recomputes them at its end and requires that nothing moved."""
+    excl, sources = gate_exclusion()
+    seed_x, perm, attempts = control_x_draw()
     sm = bmaps.load_self_map()
-    return {"schema": "b3_gate_report", "schema_version": REPORT_SCHEMA_VERSION, "lifecycle": LIFECYCLE, "label": label,
-            "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "head_at_run": head, "worktree_dirty_at_start": dirty, "architecture": architecture_pin(), "thresholds": copy.deepcopy(THRESHOLDS),
+    return {"schema": "b3_gate_report", "schema_version": REPORT_SCHEMA_VERSION, "lifecycle": LIFECYCLE,
+            "architecture": architecture_pin(head), "thresholds": copy.deepcopy(THRESHOLDS),
             "engine": {"version": bs.ENGINE_VERSION, "mu": bs.MU, "lambda": bs.LAMBDA, "kmax": bs.KMAX}, "carto_version": carto_mod.CARTO_VERSION,
             "control_x": {"instrument_commit": bp.INSTRUMENT_COMMIT, "seed_x": seed_x, "seed_rule": "b2_search.master_seed('b3-gate-x', instrument commit)",
                           "prng": "b1_carto.Rng(seed_x); Fisher-Yates i=383..1, j=rng.uniform(i+1); rejection from the identity on the continuing stream",
                           "attempts": len(attempts), "fixed_points_per_attempt": attempts, "permutation_sha256": cx.permutation_sha256(perm)},
-            "seeds": {"label": GATE_LABEL, "master_seed": master, "derivation": f"first 4 bytes of sha256('{GATE_LABEL}|' + HEAD), pairs from one Rng stream, every excluded seed skipped",
+            "seeds": {"label": GATE_LABEL, "master_seed": bs.master_seed(GATE_LABEL, head),
+                      "derivation": f"first 4 bytes of sha256('{GATE_LABEL}|' + HEAD), pairs from one Rng stream, every excluded seed skipped",
                       "count": count, "excluded_fixed": sorted(bs.EXCLUDED_SEEDS), "excluded_sources": sources, "excluded_values_total": len(excl | set(bs.EXCLUDED_SEEDS))},
             "map": {"path": str(bmaps.SELF_MAP.relative_to(REPO_ROOT)), "sha256": bmaps.sha256_of(sm)},
-            "raw_files": raw_files, "gate_fitness": "F1", "results": results, "wall_s": wall_s}
+            "gate_fitness": "F1"}
+
+
+PROVENANCE_KEYS = ("schema", "schema_version", "lifecycle", "architecture", "thresholds", "engine", "carto_version", "control_x", "seeds", "map", "gate_fitness")
+
+
+def build_report(label: str, head: str, dirty: bool, count: int, results: dict, raw_files: dict, wall_s: float, provenance: dict | None = None) -> dict:
+    """The report document: the provenance blocks (recomputed unless given), HEAD and the dirty flag at
+    the start, every result, every raw file's digest. Built here so a test fixture and the run write
+    the same shape."""
+    prov = provenance if provenance is not None else provenance_blocks(head, count)
+    return {**copy.deepcopy(prov), "label": label, "generated_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "head_at_run": head, "worktree_dirty_at_start": dirty, "raw_files": raw_files, "results": results, "wall_s": wall_s}
 
 
 def raw_bytes(fid: str, rows: list[dict]) -> bytes:
@@ -391,37 +422,96 @@ def refuse_lifecycle1_path(out: Path) -> None:
             raise Refusal(f"{_rel(out)} is lifecycle 1's {_rel(d)} or under it — never overwritten (write to {OUT_DEFAULT})")
 
 
-def run(a) -> Path:
-    out = REPO_ROOT / a.out
-    refuse_lifecycle1_path(out)
-    head = git_head()
-    dirty = git_dirty()
-    if not head or not HEX40.match(head):
+def io_refusal(what: str):
+    """An expected OSError on a read / write / mkdir becomes a named Refusal (never a traceback)."""
+    import contextlib
+
+    @contextlib.contextmanager
+    def cm():
+        try:
+            yield
+        except OSError as e:
+            raise Refusal(f"{what} ({e.__class__.__name__}: {e})") from None
+    return cm()
+
+
+def refuse_bad_out(out: Path, kind: str = "directory") -> None:
+    """--out must be creatable as a `kind` ("directory" or "file"): an existing path of the other kind,
+    or a nearest existing ancestor that is not a directory, is a named Refusal before any work."""
+    if out.exists():
+        if kind == "directory" and not out.is_dir():
+            raise Refusal(f"--out {_rel(out)} exists and is not a directory")
+        if kind == "file" and out.is_dir():
+            raise Refusal(f"--out {_rel(out)} is a directory")
+        return
+    for anc in out.parents:
+        if anc.exists():
+            if not anc.is_dir():
+                raise Refusal(f"--out {_rel(out)}: {_rel(anc)} exists and is not a directory")
+            return
+
+
+def tree_state() -> tuple[str, bool]:
+    """HEAD and the dirty flag, refused unless a clean tree at an existing commit."""
+    head, dirty = git_head(), git_dirty()
+    if not commit_exists(head):
         raise Refusal("no HEAD commit: the gate runs only on a committed tree (the report pins HEAD)")
     if dirty:
         raise Refusal("the working tree is dirty: the gate runs only on a clean committed tree (the report pins HEAD and the architecture bytes)")
+    return head, dirty
+
+
+def run(a) -> Path:
+    import shutil
+    import tempfile
+    out = REPO_ROOT / a.out
+    refuse_lifecycle1_path(out)
+    head, dirty = tree_state()
     fitnesses = [f for f in a.fitness.split(",") if f]
     if "F1" not in fitnesses:
         raise Refusal("the gate fitness F1 must be among --fitness")
-    out.mkdir(parents=True, exist_ok=True)
-    master = bs.master_seed(GATE_LABEL, head)
-    excl, sources = gate_exclusion()
+    refuse_bad_out(out)
+    prov0 = provenance_blocks(head, a.seeds)
+    if prov0["architecture"]["sha256"] is None or prov0["architecture"]["sha256"] != sha256_bytes(ARCHITECTURE.read_bytes()):
+        raise Refusal("docs/b3_architecture.md in the working tree is not the one HEAD carries")
+    master = prov0["seeds"]["master_seed"]
+    excl, _ = gate_exclusion()
     seeds = bs.pair_seeds(master, a.seeds, exclude=frozenset(excl))
-    seed_x, perm, attempts = control_x_draw()
-    started = time.time()
-    results, raw_files = {}, {}
-    for fid in fitnesses:
-        t0 = time.time()
-        rows = run_fitness(fid, seeds, a.workers, perm)
-        b = raw_bytes(fid, rows)
-        (out / f"raw_{fid}.json").write_bytes(b)
-        raw_files[fid] = {"path": f"raw_{fid}.json", "sha256": sha256_bytes(b), "rows": len(rows)}
-        results[fid] = evaluate(fid, rows)
-        results[fid]["wall_s"] = round(time.time() - t0, 1)
-        print(f"[{fid}] B*={results[fid].get('b_star')} pass={results[fid]['pass']} "
-              f"{ {k: v['pass'] for k, v in results[fid]['criteria'].items()} } {results[fid]['wall_s']}s", flush=True)
-    report = build_report(a.label, head, dirty, master, a.seeds, excl, sources, seed_x, perm, attempts, results, raw_files, round(time.time() - started, 1))
-    (out / "gate_report.json").write_text(json.dumps(report, indent=1, sort_keys=True) + "\n")
+    _, perm, _ = control_x_draw()
+    tmp = Path(tempfile.mkdtemp(prefix="b3_gate_"))                    # outside the repository until the end-of-run check passes
+    try:
+        started = time.time()
+        results, raw_files = {}, {}
+        for fid in fitnesses:
+            t0 = time.time()
+            rows = run_fitness(fid, seeds, a.workers, perm)
+            b = raw_bytes(fid, rows)
+            with io_refusal(f"cannot write the raw file for {fid}"):
+                (tmp / f"raw_{fid}.json").write_bytes(b)
+            raw_files[fid] = {"path": f"raw_{fid}.json", "sha256": sha256_bytes(b), "rows": len(rows)}
+            results[fid] = evaluate(fid, rows)
+            results[fid]["wall_s"] = round(time.time() - t0, 1)
+            print(f"[{fid}] B*={results[fid].get('b_star')} pass={results[fid]['pass']} "
+                  f"{ {k: v['pass'] for k, v in results[fid]['criteria'].items()} } {results[fid]['wall_s']}s", flush=True)
+        # the end-of-run check: HEAD, the tree and every deterministic input exactly as at the start, or nothing is published
+        head1, dirty1 = git_head(), git_dirty()
+        if head1 != head or dirty1:
+            raise Refusal(f"the tree changed during the run (HEAD {head[:7]} -> {(head1 or 'none')[:7]}, dirty {dirty1}): the report is not published")
+        moved = deep_findings(prov0, provenance_blocks(head, a.seeds), "provenance")
+        if moved:
+            raise Refusal("an input changed during the run: " + "; ".join(moved[:5]) + " — the report is not published")
+        if prov0["architecture"]["sha256"] != sha256_bytes(ARCHITECTURE.read_bytes()):
+            raise Refusal("docs/b3_architecture.md changed during the run: the report is not published")
+        report = build_report(a.label, head, dirty, a.seeds, results, raw_files, round(time.time() - started, 1), provenance=prov0)
+        with io_refusal("cannot write the report"):
+            (tmp / "gate_report.json").write_text(json.dumps(report, indent=1, sort_keys=True) + "\n")
+        with io_refusal(f"cannot create --out {_rel(out)}"):
+            out.mkdir(parents=True, exist_ok=True)
+        with io_refusal(f"cannot move the outputs into {_rel(out)}"):
+            for f in sorted(tmp.iterdir()):
+                shutil.move(str(f), str(out / f.name))
+    finally:
+        shutil.rmtree(tmp, True)
     return out / "gate_report.json"
 
 
@@ -444,11 +534,44 @@ def main(argv=None) -> int:
 # ------------------------------------------------------------------ the production validator (the plan and the renderer read a report only through it)
 
 
-def is_lifecycle2_report(rep: dict) -> bool:
-    """True for a report this tool writes: H9 under `diagnostics`, never a criterion or a claim condition."""
-    return rep.get("schema") == "b3_gate_report" and rep.get("lifecycle") == LIFECYCLE and all(
-        isinstance(res, dict) and "H9" not in res.get("criteria", {}) and "H9_claim_condition" not in res and "diagnostics" in res
-        for res in rep.get("results", {}).values())
+def shape_findings(rep) -> list[str]:
+    """The lifecycle-2 report shape, type by type from the top: a dict with results = {fid: dict} each
+    carrying criteria (a dict of dicts with a bool pass) and diagnostics (a dict), never H9 as a
+    criterion nor H9_claim_condition; the provenance blocks dicts; raw_files a dict of dicts. Every
+    problem is named; nothing here raises on a wrong type."""
+    f: list[str] = []
+    if not isinstance(rep, dict):
+        return [f"the report is {type(rep).__name__}, not an object"]
+    if rep.get("schema") != "b3_gate_report":
+        f.append("schema is not b3_gate_report")
+    if rep.get("lifecycle") != LIFECYCLE:
+        f.append(f"lifecycle {rep.get('lifecycle')!r}, expected {LIFECYCLE}")
+    for k in ("architecture", "thresholds", "engine", "control_x", "seeds", "map", "raw_files"):
+        if not isinstance(rep.get(k), dict):
+            f.append(f"{k}: {type(rep.get(k)).__name__}, not an object")
+    results = rep.get("results")
+    if not isinstance(results, dict):
+        return f + [f"results: {type(results).__name__}, not an object"]
+    for fid, res in results.items():
+        if not isinstance(res, dict):
+            f.append(f"results.{fid}: {type(res).__name__}, not an object"); continue
+        crit = res.get("criteria")
+        if not isinstance(crit, dict) or not all(isinstance(c, dict) and isinstance(c.get("pass"), bool) for c in crit.values()):
+            f.append(f"results.{fid}.criteria: not an object of criteria each with a bool pass")
+        elif "H9" in crit:
+            f.append(f"results.{fid}.criteria.H9: H9 is a diagnostic, never a criterion")
+        if "H9_claim_condition" in res:
+            f.append(f"results.{fid}.H9_claim_condition: no claim condition in lifecycle 2")
+        if not isinstance(res.get("diagnostics"), dict):
+            f.append(f"results.{fid}.diagnostics: {type(res.get('diagnostics')).__name__}, not an object")
+        if not isinstance(res.get("pass"), bool):
+            f.append(f"results.{fid}.pass: not a bool")
+    return f
+
+
+def is_lifecycle2_report(rep) -> bool:
+    """True for a report this tool writes: the lifecycle-2 shape (shape_findings empty)."""
+    return not shape_findings(rep)
 
 
 def deep_findings(expected, actual, path: str = "") -> list[str]:
@@ -488,51 +611,52 @@ def load_json(path: Path, what: str) -> dict:
         raise Refusal(f"{what} {_rel(path)}: not JSON ({e})") from None
 
 
-_VALIDATED: dict = {}
+_EVAL_CACHE: dict = {}      # (sha256 of the raw bytes actually read, the thresholds) -> evaluate()'s result: the only thing cached
+
+
+def evaluate_raw(fid: str, b: bytes, rows: list[dict]) -> dict:
+    """evaluate() on rows read from raw bytes `b`, cached by the bytes' digest and the current
+    thresholds — the expensive step only; nothing about a verdict is remembered."""
+    key = (sha256_bytes(b), json.dumps(THRESHOLDS, sort_keys=True))
+    if key not in _EVAL_CACHE:
+        _EVAL_CACHE[key] = evaluate(fid, rows)
+    return copy.deepcopy(_EVAL_CACHE[key])
 
 
 def validate_report(path: Path) -> dict:
-    """The gate report as an authority, or a named Refusal: schema 2.0.0 of lifecycle 2 in the
-    lifecycle-2 shape; provenance (a 40-hex HEAD, a clean tree at the start, the label, the master seed
-    derived from HEAD, the thresholds equal to the current ones, control X's seed and permutation
-    re-derived); the architecture binding (path and the current file's bytes); every raw file present
-    with its recorded digest, its rows carrying the seeds the master and count re-derive under the
-    current exclusion; and `evaluate` re-run from every raw file with every field of the recorded
-    result equal (a modified statistic, criterion, B* or N is named by its path). Cached per report
-    bytes and thresholds."""
+    """The gate report as an authority, or a named Refusal — re-read and re-checked on EVERY call (no
+    verdict is cached; only evaluate() is, by the raw bytes' digest): the shape, type by type; the
+    provenance — head_at_run an existing commit, a clean tree at the start, and every deterministic
+    block (architecture at that commit, thresholds, engine, cartographer, control X, the seeds'
+    derivation and every exclusion source, the map, the gate fitness) equal to what provenance_blocks
+    computes now; the architecture bytes at that commit equal to the current file's; every raw file
+    present with its recorded digest, its rows carrying the seeds the master and count re-derive
+    under the current exclusion; and evaluate() re-run from every raw file with every field of the
+    recorded result equal (a modified statistic, criterion, B* or N is named by its path)."""
     path = Path(path)
     rep = load_json(path, "the gate report")
-    key = (str(path.resolve()), sha256_bytes(path.read_bytes()), json.dumps(THRESHOLDS, sort_keys=True))
-    if key in _VALIDATED:
-        return copy.deepcopy(_VALIDATED[key])
 
     def need(cond: bool, msg: str):
         if not cond:
             raise Refusal(f"gate report {_rel(path)}: {msg}")
-    need(isinstance(rep, dict) and rep.get("schema") == "b3_gate_report", "schema is not b3_gate_report")
+    shape = shape_findings(rep)
+    need(not shape, "not the lifecycle-2 shape: " + "; ".join(shape[:5]))
     need(rep.get("schema_version") == REPORT_SCHEMA_VERSION, f"schema_version {rep.get('schema_version')!r}, expected {REPORT_SCHEMA_VERSION!r}")
-    need(rep.get("lifecycle") == LIFECYCLE, f"lifecycle {rep.get('lifecycle')!r}, expected {LIFECYCLE}")
-    need(is_lifecycle2_report(rep), "not the lifecycle-2 shape (H9 must be under diagnostics, never a criterion or a claim condition)")
     head = rep.get("head_at_run")
-    need(isinstance(head, str) and bool(HEX40.match(head)), f"head_at_run {head!r} is not a commit")
+    need(commit_exists(head), f"head_at_run {head!r} is not a commit of this repository")
     need(rep.get("worktree_dirty_at_start") is False, f"worktree_dirty_at_start {rep.get('worktree_dirty_at_start')!r}: the gate must have run on a clean tree")
-    need(rep.get("thresholds") == json.loads(json.dumps(THRESHOLDS)), "thresholds differ from the current ones: " + "; ".join(deep_findings(THRESHOLDS, rep.get("thresholds"), "thresholds")[:5]))
-    seeds = rep.get("seeds") or {}
-    need(seeds.get("label") == GATE_LABEL, f"seeds.label {seeds.get('label')!r}, expected {GATE_LABEL!r}")
-    need(seeds.get("master_seed") == bs.master_seed(GATE_LABEL, head), "seeds.master_seed is not derived from the label and head_at_run")
-    need(isinstance(seeds.get("count"), int) and seeds["count"] > 0, "seeds.count is not a positive integer")
-    arch = rep.get("architecture") or {}
-    need(arch.get("path") == "docs/b3_architecture.md", f"architecture.path {arch.get('path')!r}")
-    need(arch.get("sha256") == sha256_bytes(ARCHITECTURE.read_bytes()), "architecture.sha256 is not the current docs/b3_architecture.md")
-    ctl = rep.get("control_x") or {}
-    seed_x, perm, _ = control_x_draw()
-    need(ctl.get("seed_x") == seed_x and ctl.get("instrument_commit") == bp.INSTRUMENT_COMMIT, "control_x.seed_x / instrument_commit are not the current derivation")
-    need(ctl.get("permutation_sha256") == cx.permutation_sha256(perm), "control_x.permutation_sha256 is not the derangement seed_x gives")
-    fid_gate = rep.get("gate_fitness")
-    results = rep.get("results") or {}
-    need(fid_gate == "F1" and fid_gate in results, f"gate_fitness {fid_gate!r} is not F1 with a result")
-    raw_files = rep.get("raw_files")
-    need(isinstance(raw_files, dict) and set(raw_files) == set(results), "raw_files must name exactly one raw file per result")
+    seeds = rep["seeds"]
+    need(isinstance(seeds.get("count"), int) and not isinstance(seeds.get("count"), bool) and seeds["count"] > 0, "seeds.count is not a positive integer")
+    prov = provenance_blocks(head, seeds["count"])
+    need(prov["architecture"]["sha256"] is not None, f"docs/b3_architecture.md is not in commit {head[:7]}")
+    diff = deep_findings({k: prov[k] for k in PROVENANCE_KEYS}, {k: rep.get(k) for k in PROVENANCE_KEYS})
+    need(not diff, "the provenance differs from the current derivation: " + "; ".join(diff[:5]) + (f" (+{len(diff) - 5} more)" if len(diff) > 5 else ""))
+    with io_refusal("docs/b3_architecture.md cannot be read"):
+        current_arch = sha256_bytes(ARCHITECTURE.read_bytes())
+    need(current_arch == prov["architecture"]["sha256"], f"docs/b3_architecture.md in the working tree is not the one commit {head[:7]} carries (the report's binding)")
+    results, raw_files = rep["results"], rep["raw_files"]
+    need("F1" in results, "no result for the gate fitness F1")
+    need(set(raw_files) == set(results), "raw_files must name exactly one raw file per result")
     excl, _ = gate_exclusion()
     expected_seeds = [tuple(x) for x in bs.pair_seeds(seeds["master_seed"], seeds["count"], exclude=frozenset(excl))]
     for fid, res in results.items():
@@ -548,16 +672,16 @@ def validate_report(path: Path) -> dict:
             raw = json.loads(b)
         except json.JSONDecodeError as e:
             raise Refusal(f"gate report {_rel(path)}: raw file {rf['path']} is not JSON ({e})") from None
-        need(raw.get("fitness") == fid and raw.get("grid") == list(GRID), f"raw file {rf['path']}: fitness / grid are not this fitness and grid")
-        rows = raw.get("rows") or []
+        need(isinstance(raw, dict) and raw.get("fitness") == fid and raw.get("grid") == list(GRID), f"raw file {rf['path']}: fitness / grid are not this fitness and grid")
+        rows = raw.get("rows")
+        need(isinstance(rows, list) and all(isinstance(r, dict) for r in rows), f"raw file {rf['path']}: rows is not a list of objects")
         need(len(rows) == seeds["count"] and rf.get("rows") == len(rows), f"raw file {rf['path']}: {len(rows)} rows, expected seeds.count {seeds['count']}")
         need([(r.get("landscape_seed"), r.get("operator_seed")) for r in rows] == expected_seeds,
              f"raw file {rf['path']}: the rows do not carry the seeds the master and count re-derive under the current exclusion")
-        recomputed = evaluate(fid, rows)
+        recomputed = evaluate_raw(fid, b, rows)
         recorded = {k: v for k, v in res.items() if k != "wall_s"}
         diff = deep_findings(recomputed, recorded, f"results.{fid}")
         need(not diff, "the recorded result differs from evaluate() re-run on the raw rows: " + "; ".join(diff[:5]) + (f" (+{len(diff) - 5} more)" if len(diff) > 5 else ""))
-    _VALIDATED[key] = copy.deepcopy(rep)
     return rep
 
 

@@ -28,7 +28,7 @@ import b2_search as bs  # noqa: E402
 import b3_control_x as cx  # noqa: E402
 import b3_gate as g  # noqa: E402
 import b3_gate_report_md as md  # noqa: E402
-from b3_test_fixtures import FIXTURE_HEAD, rewrite_report, synthetic_rows, write_gate_fixture  # noqa: E402
+from b3_test_fixtures import FIXTURE_HEAD, NOT_A_COMMIT, rewrite_report, synthetic_rows, write_gate_fixture  # noqa: E402
 
 G = list(g.GRID)
 
@@ -41,7 +41,8 @@ def synthetic_report(results: dict, label="synthetic") -> dict:
             "engine": {"version": bs.ENGINE_VERSION, "mu": bs.MU, "lambda": bs.LAMBDA, "kmax": bs.KMAX}, "carto_version": "x",
             "control_x": {"seed_x": 1, "attempts": 1, "permutation_sha256": "c" * 64},
             "seeds": {"label": g.GATE_LABEL, "master_seed": 1, "count": 200, "excluded_values_total": 0, "excluded_sources": {}},
-            "map": {"path": "maps/x", "sha256": "d" * 64}, "gate_fitness": "F1", "results": results, "wall_s": 0.0}
+            "map": {"path": "maps/x", "sha256": "d" * 64}, "gate_fitness": "F1", "raw_files": {"F1": {"path": "raw_F1.json", "sha256": "e" * 64, "rows": 200}},
+            "results": results, "wall_s": 0.0}
 
 
 class Lifecycle2Constants(unittest.TestCase):
@@ -90,19 +91,70 @@ class Lifecycle2Constants(unittest.TestCase):
         without a commit is refused (REFUSED:, exit 2) and no output directory is created."""
         t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
         out = t / "gate_2"
-        for head, dirty, what in ((None, False, "no HEAD"), ("abc", False, "no HEAD"), (FIXTURE_HEAD, True, "dirty")):
+        never = mock.Mock(side_effect=AssertionError("run_fitness was called: the refusal must come before any work"))
+        for head, dirty, what in ((None, False, "no HEAD commit"), ("abc", False, "no HEAD commit"), (NOT_A_COMMIT, False, "no HEAD commit"),
+                                  (FIXTURE_HEAD, True, "the working tree is dirty")):
             err = io.StringIO()
-            with mock.patch.object(g, "git_dirty", return_value=dirty), mock.patch.object(g, "git_head", return_value=head), contextlib.redirect_stderr(err):
+            with mock.patch.object(g, "git_dirty", return_value=dirty), mock.patch.object(g, "git_head", return_value=head), \
+                 mock.patch.object(g, "run_fitness", never), contextlib.redirect_stderr(err):
                 rc = g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(out)])
             self.assertEqual(rc, 2, what)
-            self.assertTrue(err.getvalue().startswith("REFUSED: "), err.getvalue())
-            self.assertIn(what, err.getvalue())
+            self.assertTrue(err.getvalue().startswith("REFUSED: " + what), (what, err.getvalue()))   # the start-of-run refusal, by its own sentence
             self.assertFalse(out.exists(), what)
+        never.assert_not_called()
         # F1 absent from --fitness: refused too
         err = io.StringIO()
         with mock.patch.object(g, "git_dirty", return_value=False), mock.patch.object(g, "git_head", return_value=FIXTURE_HEAD), contextlib.redirect_stderr(err):
             self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F2", "--out", str(out)]), 2)
         self.assertIn("F1", err.getvalue()); self.assertFalse(out.exists())
+        # --out whose nearest existing ancestor is a regular file: refused by name before any work (the owner's P3)
+        (t / "afile").write_text("x")
+        err = io.StringIO()
+        with mock.patch.object(g, "git_dirty", return_value=False), mock.patch.object(g, "git_head", return_value=FIXTURE_HEAD), contextlib.redirect_stderr(err):
+            self.assertEqual(g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(t / "afile/gate_2")]), 2)
+        self.assertTrue(err.getvalue().startswith("REFUSED: ")); self.assertIn("not a directory", err.getvalue())
+        self.assertEqual((t / "afile").read_text(), "x")
+
+    def test_the_gate_publishes_nothing_when_head_the_tree_or_an_input_moves_during_the_run(self):
+        """The owner's P2: the start-of-run check alone let a tree that changed during F1 / F2 publish a
+        report. The outputs are built outside the repository and moved in only after HEAD, the dirty
+        flag and every deterministic provenance block are re-checked at the end."""
+        t = Path(tempfile.mkdtemp()); self.addCleanup(shutil.rmtree, t, True)
+        out = t / "gate_2"
+        before_tmp = sorted(x.name for x in Path(tempfile.gettempdir()).glob("b3_gate_*"))
+        other = g._git("rev-parse", "HEAD~1").stdout.decode().strip() or NOT_A_COMMIT
+        from itertools import chain, repeat
+        seq = lambda *v: chain(v, repeat(v[-1]))                            # the first call sees the start state, every later call the changed one  # noqa: E731
+        cases = {"HEAD moved": dict(head=seq(FIXTURE_HEAD, other), dirty=seq(False)),
+                 "tree dirtied": dict(head=seq(FIXTURE_HEAD), dirty=seq(False, True))}
+        for what, se in cases.items():
+            err = io.StringIO()
+            with mock.patch.object(g, "git_head", side_effect=se["head"]), mock.patch.object(g, "git_dirty", side_effect=se["dirty"]), contextlib.redirect_stderr(err):
+                rc = g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(out)])
+            self.assertEqual(rc, 2, what)
+            self.assertTrue(err.getvalue().startswith("REFUSED: "), (what, err.getvalue()))
+            self.assertIn("changed during the run", err.getvalue(), what)
+            self.assertFalse(out.exists(), what)
+        # an input drifting during the run (here: the thresholds) — named, nothing published
+        real = g.provenance_blocks
+        calls = []
+        seen_out = []
+        def drifting(head, count):
+            calls.append(1)
+            prov = real(head, count)
+            if len(calls) > 1:                                              # the end-of-run recomputation: the run is over, nothing may be under --out yet
+                seen_out.append(out.exists())
+                prov["thresholds"]["H5_search_evaluation_cap"] = 40000
+            return prov
+        err = io.StringIO()
+        with mock.patch.object(g, "git_head", return_value=FIXTURE_HEAD), mock.patch.object(g, "git_dirty", return_value=False), \
+             mock.patch.object(g, "provenance_blocks", side_effect=drifting), contextlib.redirect_stderr(err):
+            rc = g.main(["--seeds", "1", "--workers", "1", "--fitness", "F1", "--out", str(out)])
+        self.assertEqual(rc, 2)
+        self.assertIn("an input changed during the run", err.getvalue()); self.assertIn("provenance.thresholds.H5_search_evaluation_cap", err.getvalue())
+        self.assertFalse(out.exists())
+        self.assertEqual(seen_out, [False])                                  # the outputs were built outside the repository, not under --out
+        self.assertEqual(sorted(x.name for x in Path(tempfile.gettempdir()).glob("b3_gate_*")), before_tmp)   # the temp build directory is removed
 
     def test_the_renderer_refuses_lifecycle_1s_output_path_and_descendants(self):
         """Hermetic as above: the output constant patched to a temp copy of docs/b3_gate_report.md and
@@ -377,12 +429,15 @@ class Renderer(unittest.TestCase):
         self.assertEqual(md.main(["--report", str(fx), "--out", str(out)]), 0)
         text = out.read_text()
         self.assertIn("H9 diagnostic (decides nothing)", text); self.assertIn(FIXTURE_HEAD[:7], text); self.assertNotIn("H9 holds", text)
-        cases = {"lifecycle-1": (R / "evidence/b3/gate/gate_report.json", "schema_version"),
+        cases = {"lifecycle-1": (R / "evidence/b3/gate/gate_report.json", "not the lifecycle-2 shape"),
                  "missing": (t / "nowhere.json", "cannot be read"), "malformed": (t / "bad.json", "not JSON")}
         (t / "bad.json").write_text("{")
         tampered = t / "tampered"; shutil.copytree(t / "gate_2", tampered)
         rewrite_report(tampered / "gate_report.json", lambda r: r["results"]["F1"].__setitem__("b_star", 3000))
         cases["tampered B*"] = (tampered / "gate_report.json", "results.F1.b_star")
+        listy = t / "listy"; shutil.copytree(t / "gate_2", listy)
+        rewrite_report(listy / "gate_report.json", lambda r: r.__setitem__("results", []))
+        cases["results a list"] = (listy / "gate_report.json", "results: list, not an object")
         for name, (rep_path, needle) in cases.items():
             out2 = t / f"out_{name}.md"
             err = io.StringIO()
@@ -392,6 +447,14 @@ class Renderer(unittest.TestCase):
             self.assertTrue(err.getvalue().startswith("REFUSED: "), (name, err.getvalue()))
             self.assertIn(needle, err.getvalue(), name)
             self.assertFalse(out2.exists(), name)
+        # --out a directory, or under a regular file: named refusals, nothing written
+        (t / "afile").write_text("x")
+        for out3, needle in ((t / "docs", "is a directory"), (t / "afile/r.md", "not a directory")):
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                self.assertEqual(md.main(["--report", str(fx), "--out", str(out3)]), 2)
+            self.assertTrue(err.getvalue().startswith("REFUSED: ")); self.assertIn(needle, err.getvalue())
+        self.assertEqual((t / "afile").read_text(), "x")
 
     def test_a_lifecycle_1_report_is_refused_not_rendered(self):
         rep1 = json.loads((R / "evidence/b3/gate/gate_report.json").read_text())
@@ -403,7 +466,9 @@ class Renderer(unittest.TestCase):
         for mutate in (lambda r: r["results"]["F1"]["criteria"].__setitem__("H9", {"pass": True}),
                        lambda r: r["results"]["F1"].__setitem__("H9_claim_condition", True),
                        lambda r: r["results"]["F1"].pop("diagnostics"),
-                       lambda r: r.__setitem__("lifecycle", 1)):
+                       lambda r: r.__setitem__("lifecycle", 1),
+                       lambda r: r.__setitem__("results", []),
+                       lambda r: r["results"].__setitem__("F1", [])):
             rep = copy.deepcopy(self.rep)
             mutate(rep)
             self.assertFalse(g.is_lifecycle2_report(rep))
@@ -449,28 +514,82 @@ class Validator(unittest.TestCase):
         self.assertIn("F1", rep["raw_files"])
 
     def test_lifecycle_1s_report_is_refused_by_name(self):
-        self.refused(R / "evidence/b3/gate/gate_report.json", "schema_version '1.0.0'", "lifecycle 1")
+        self.refused(R / "evidence/b3/gate/gate_report.json", "not the lifecycle-2 shape", "lifecycle 1")
+
+    def test_a_commit_that_lacks_the_architecture_document_is_refused_by_name(self):
+        """head_at_run exists but does not carry docs/b3_architecture.md (the parent of the commit that
+        added it): the named refusal, before the provenance comparison."""
+        added = g._git("log", "--diff-filter=A", "--format=%H", "--", "docs/b3_architecture.md").stdout.decode().split()[-1]
+        parent = g._git("rev-parse", f"{added}^").stdout.decode().strip()
+        self.assertTrue(g.commit_exists(parent))
+        self.assertIsNone(g.git_show_bytes(parent, "docs/b3_architecture.md"))
+        p = self.copy_fixture()
+        rewrite_report(p, lambda r: r.__setitem__("head_at_run", parent))
+        self.refused(p, f"docs/b3_architecture.md is not in commit {parent[:7]}", "architecture absent from the commit")
+
+    def test_no_verdict_is_cached_only_evaluate_is(self):
+        """The owner's P2: the first validator cached the whole verdict, so a raw file deleted after one
+        acceptance was still accepted in the same process. Now every call re-reads and re-checks; only
+        evaluate() is cached, by the digest of the raw bytes actually read plus the thresholds."""
+        p = self.copy_fixture()
+        g.validate_report(p)
+        raw = p.parent / "raw_F1.json"; b = raw.read_bytes()
+        key = (g.sha256_bytes(b), json.dumps(g.THRESHOLDS, sort_keys=True))
+        self.assertIn(key, g._EVAL_CACHE)
+        raw.unlink()
+        self.refused(p, "cannot be read", "raw deleted after an acceptance, same process")
+        raw.write_bytes(b)
+        g.validate_report(p)                                              # back: accepted again
+        rewrite_report(p, lambda r: r.__setitem__("worktree_dirty_at_start", True))
+        self.refused(p, "worktree_dirty_at_start True", "report tampered after an acceptance, same process")
+        self.assertFalse(hasattr(g, "_VALIDATED"))
+        # the evaluate cache is keyed by the raw bytes: a changed raw byte is re-evaluated (and refused by the digest first)
+        raw.write_bytes(b + b"\n")
+        rewrite_report(p, lambda r: (r.__setitem__("worktree_dirty_at_start", False), r["raw_files"]["F1"].__setitem__("sha256", g.sha256_bytes(b + b"\n"))))
+        g.validate_report(p)                                              # the same rows, a different byte: re-evaluated, equal
+        self.assertIn((g.sha256_bytes(b + b"\n"), key[1]), g._EVAL_CACHE)
 
     def test_every_provenance_and_binding_tamper_is_refused_by_name(self):
         tampers = [
             ("schema_version", lambda r: r.__setitem__("schema_version", "1.0.0"), "schema_version '1.0.0'"),
             ("lifecycle", lambda r: r.__setitem__("lifecycle", 1), "lifecycle 1"),
-            ("H9 as a criterion", lambda r: r["results"]["F1"]["criteria"].__setitem__("H9", {"pass": True}), "lifecycle-2 shape"),
-            ("claim condition", lambda r: r["results"]["F1"].__setitem__("H9_claim_condition", True), "lifecycle-2 shape"),
-            ("head null", lambda r: r.__setitem__("head_at_run", None), "head_at_run None"),
-            ("head short", lambda r: r.__setitem__("head_at_run", "f159dee"), "head_at_run 'f159dee'"),
+            ("H9 as a criterion", lambda r: r["results"]["F1"]["criteria"].__setitem__("H9", {"pass": True}), "results.F1.criteria.H9"),
+            ("claim condition", lambda r: r["results"]["F1"].__setitem__("H9_claim_condition", True), "results.F1.H9_claim_condition"),
+            ("results a list", lambda r: r.__setitem__("results", []), "results: list, not an object"),
+            ("a result a list", lambda r: r["results"].__setitem__("F1", []), "results.F1: list, not an object"),
+            ("criteria a list", lambda r: r["results"]["F1"].__setitem__("criteria", [1]), "results.F1.criteria: not an object"),
+            ("a criterion without a bool pass", lambda r: r["results"]["F1"]["criteria"]["H3"].__setitem__("pass", "yes"), "results.F1.criteria: not an object"),
+            ("diagnostics a list", lambda r: r["results"]["F1"].__setitem__("diagnostics", []), "results.F1.diagnostics: list"),
+            ("architecture a string", lambda r: r.__setitem__("architecture", "x"), "architecture: str, not an object"),
+            ("raw_files a list", lambda r: r.__setitem__("raw_files", []), "raw_files: list, not an object"),
+            ("seeds count a bool", lambda r: r["seeds"].__setitem__("count", True), "seeds.count is not a positive integer"),
+            ("head null", lambda r: r.__setitem__("head_at_run", None), "head_at_run None is not a commit"),
+            ("head short", lambda r: r.__setitem__("head_at_run", "f159dee"), "head_at_run 'f159dee' is not a commit"),
+            ("head 40 hex but no such commit", lambda r: r.__setitem__("head_at_run", NOT_A_COMMIT), f"head_at_run '{NOT_A_COMMIT}' is not a commit"),
+            ("map digest", lambda r: r["map"].__setitem__("sha256", "0" * 64), "map.sha256"),
+            ("engine version", lambda r: r["engine"].__setitem__("version", "x"), "engine.version"),
+            ("engine mu", lambda r: r["engine"].__setitem__("mu", 99), "engine.mu"),
+            ("cartographer version", lambda r: r.__setitem__("carto_version", "x"), "carto_version"),
+            ("control-X attempts", lambda r: r["control_x"].__setitem__("attempts", r["control_x"]["attempts"] + 1), "control_x.attempts"),
+            ("control-X fixed points", lambda r: r["control_x"].__setitem__("fixed_points_per_attempt", [0]), "control_x.fixed_points_per_attempt"),
+            ("control-X instrument commit", lambda r: r["control_x"].__setitem__("instrument_commit", "0" * 40), "control_x.instrument_commit"),
+            ("excluded sources", lambda r: r["seeds"]["excluded_sources"].popitem(), "seeds.excluded_sources"),
+            ("excluded count", lambda r: r["seeds"].__setitem__("excluded_values_total", 1), "seeds.excluded_values_total"),
+            ("seed derivation text", lambda r: r["seeds"].__setitem__("derivation", "x"), "seeds.derivation"),
+            ("excluded fixed", lambda r: r["seeds"].__setitem__("excluded_fixed", []), "seeds.excluded_fixed"),
+            ("architecture last commit", lambda r: r["architecture"].__setitem__("last_commit", "0" * 40), "architecture.last_commit"),
             ("dirty", lambda r: r.__setitem__("worktree_dirty_at_start", True), "worktree_dirty_at_start True"),
             ("dirty null", lambda r: r.__setitem__("worktree_dirty_at_start", None), "worktree_dirty_at_start None"),
             ("thresholds", lambda r: r["thresholds"].__setitem__("H5_search_evaluation_cap", 40000), "thresholds.H5_search_evaluation_cap"),
             ("rules version", lambda r: r["thresholds"].__setitem__("rules_version", "architecture v0.2.3 §9"), "thresholds.rules_version"),
-            ("label", lambda r: r["seeds"].__setitem__("label", "b3-gate"), "seeds.label 'b3-gate'"),
+            ("label", lambda r: r["seeds"].__setitem__("label", "b3-gate"), "seeds.label: 'b3-gate'"),
             ("master seed", lambda r: r["seeds"].__setitem__("master_seed", r["seeds"]["master_seed"] + 1), "seeds.master_seed"),
             ("architecture digest", lambda r: r["architecture"].__setitem__("sha256", "0" * 64), "architecture.sha256"),
             ("architecture path", lambda r: r["architecture"].__setitem__("path", "docs/b2_architecture.md"), "architecture.path"),
             ("control permutation", lambda r: r["control_x"].__setitem__("permutation_sha256", "0" * 64), "control_x.permutation_sha256"),
             ("control seed", lambda r: r["control_x"].__setitem__("seed_x", 1), "control_x.seed_x"),
-            ("gate fitness", lambda r: r.__setitem__("gate_fitness", "F2"), "gate_fitness 'F2'"),
-            ("raw_files absent", lambda r: r.pop("raw_files"), "raw_files"),
+            ("gate fitness", lambda r: r.__setitem__("gate_fitness", "F2"), "gate_fitness: 'F2'"),
+            ("raw_files absent", lambda r: r.pop("raw_files"), "raw_files: NoneType, not an object"),
             ("raw digest", lambda r: r["raw_files"]["F1"].__setitem__("sha256", "0" * 64), "raw_files.F1.sha256"),
             ("raw rows count", lambda r: r["raw_files"]["F1"].__setitem__("rows", 7), "rows, expected seeds.count"),
         ]
@@ -478,6 +597,10 @@ class Validator(unittest.TestCase):
             p = self.copy_fixture()
             rewrite_report(p, mutate)
             self.refused(p, needle, what)
+        # the shape check never raises on a wrong type, whatever the document
+        for doc in ([], "x", None, 1, {"results": []}, {"results": {"F1": []}}, {"results": {"F1": {"criteria": [1]}}}):
+            self.assertFalse(g.is_lifecycle2_report(doc), doc)
+            self.assertTrue(g.shape_findings(doc), doc)
 
     def test_every_result_tamper_is_refused_by_its_path(self):
         """A modified statistic, criterion, B*, N or pass — evaluate() re-run on the raw rows names it."""
@@ -573,9 +696,12 @@ class SeedsAndPins(unittest.TestCase):
         self.assertFalse({s for p in seeds for s in p} & excl)
 
     def test_architecture_pin_and_control_x(self):
-        pin = g.architecture_pin()
+        pin = g.architecture_pin(FIXTURE_HEAD)
         self.assertEqual(pin["path"], "docs/b3_architecture.md")
-        self.assertEqual(len(pin["sha256"]), 64)
+        self.assertEqual(pin["sha256"], g.sha256_bytes(g.git_show_bytes(FIXTURE_HEAD, "docs/b3_architecture.md")))
+        self.assertTrue(g.HEX40.match(pin["last_commit"]))
+        self.assertEqual(g.architecture_pin(NOT_A_COMMIT), {"path": "docs/b3_architecture.md", "sha256": None, "last_commit": None})
+        self.assertTrue(g.commit_exists(FIXTURE_HEAD)); self.assertFalse(g.commit_exists(NOT_A_COMMIT)); self.assertFalse(g.commit_exists(None)); self.assertFalse(g.commit_exists(FIXTURE_HEAD[:7]))
         self.assertEqual(cx.seed_x(bp.INSTRUMENT_COMMIT), bs.master_seed("b3-gate-x", bp.INSTRUMENT_COMMIT))
 
 

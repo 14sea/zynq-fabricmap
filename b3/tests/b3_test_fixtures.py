@@ -1,8 +1,9 @@
 """Shared fixtures for b3/tests (not a test module): synthetic gate rows shaped like the gate's, and
 a lifecycle-2 gate report FIXTURE written into a directory through the tool's own report builder —
-its seeds drawn under `b3-gate-2` from a chosen head with the real exclusion, its raw file digested,
-its results `evaluate()` on the synthetic rows — so `b3_gate.validate_report` accepts it exactly as it
-would a real run. Its numbers are a fixture, never a gate result. THRESHOLDS at the time of writing
+its seeds drawn under `b3-gate-2` from the REAL HEAD (the validator requires an existing commit that
+carries the architecture bytes — so these tests need docs/b3_architecture.md unchanged from HEAD) with
+the real exclusion, its raw file digested, its results `evaluate()` on the synthetic rows — so
+`b3_gate.validate_report` accepts it exactly as it would a real run. Its numbers are a fixture, never a gate result. THRESHOLDS at the time of writing
 are copied into the report: write it under the thresholds the validation will run under."""
 from __future__ import annotations
 
@@ -18,7 +19,8 @@ import b2_search as bs  # noqa: E402
 import b3_gate as g  # noqa: E402
 
 G = list(g.GRID)
-FIXTURE_HEAD = "f" * 40
+FIXTURE_HEAD = g.git_head()      # a real commit: the validator requires head_at_run to exist and to carry the architecture bytes
+NOT_A_COMMIT = "f" * 40
 
 
 def synthetic_rows(S=200, seed=1):
@@ -53,7 +55,7 @@ def write_gate_fixture(d: Path, S: int = 200, head: str = FIXTURE_HEAD, label: s
     """gate_report.json + raw_F1.json under d, valid for `validate_report` under the current THRESHOLDS.
     `mutate_rows(rows)` may reshape the synthetic rows before evaluation (the seeds are set afterwards)."""
     d.mkdir(parents=True, exist_ok=True)
-    excl, sources = g.gate_exclusion()
+    excl, _ = g.gate_exclusion()
     master = bs.master_seed(g.GATE_LABEL, head)
     seeds = bs.pair_seeds(master, S, exclude=frozenset(excl))
     rows = synthetic_rows(S)
@@ -65,9 +67,7 @@ def write_gate_fixture(d: Path, S: int = 200, head: str = FIXTURE_HEAD, label: s
     (d / "raw_F1.json").write_bytes(b)
     results = {"F1": g.evaluate("F1", rows)}
     results["F1"]["wall_s"] = 0.0
-    seed_x, perm, attempts = g.control_x_draw()
-    rep = g.build_report(label, head, False, master, S, excl, sources, seed_x, perm, attempts, results,
-                         {"F1": {"path": "raw_F1.json", "sha256": g.sha256_bytes(b), "rows": len(rows)}}, 0.0)
+    rep = g.build_report(label, head, False, S, results, {"F1": {"path": "raw_F1.json", "sha256": g.sha256_bytes(b), "rows": len(rows)}}, 0.0)
     (d / "gate_report.json").write_text(json.dumps(rep, indent=1, sort_keys=True) + "\n")
     return d / "gate_report.json"
 

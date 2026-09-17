@@ -376,22 +376,33 @@ def _rel(p: Path) -> str:
         return str(p)
 
 
+def _out_dir(out: Path) -> None:
+    """The output directory, or a named Refusal (a parent that is a file, a permission, ...)."""
+    b3g.refuse_bad_out(out)
+    with b3g.io_refusal(f"cannot create --out {_rel(out)}"):
+        out.mkdir(parents=True, exist_ok=True)
+
+
 def write(out: Path, plan: dict, prediction: dict) -> tuple[Path, Path]:
-    out.mkdir(parents=True, exist_ok=True)
+    _out_dir(out)
     pred_path, plan_path = out / "prediction.json", out / "plan.json"
-    pred_path.write_text(json.dumps(prediction, indent=1, sort_keys=True) + "\n")
+    with b3g.io_refusal(f"cannot write {_rel(pred_path)}"):
+        pred_path.write_text(json.dumps(prediction, indent=1, sort_keys=True) + "\n")
     plan = dict(plan, generated_utc=plan.get("generated_utc") or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 prediction_sha256=sha256_file(pred_path))
-    plan_path.write_text(json.dumps(plan, indent=1, sort_keys=True) + "\n")
+    with b3g.io_refusal(f"cannot write {_rel(plan_path)}"):
+        plan_path.write_text(json.dumps(plan, indent=1, sort_keys=True) + "\n")
     return plan_path, pred_path
 
 
 def write_qualification(out: Path, plan: dict, prediction: dict) -> tuple[Path, Path]:
-    out.mkdir(parents=True, exist_ok=True)
+    _out_dir(out)
     pp, qp = out / "b3q_plan.json", out / "b3q_prediction.json"
     plan = {**plan, "prediction_sha256": sha256_json(prediction)}
-    pp.write_text(json.dumps(plan, indent=1, sort_keys=True) + "\n")
-    qp.write_text(json.dumps(prediction, indent=1, sort_keys=True) + "\n")
+    with b3g.io_refusal(f"cannot write {_rel(pp)}"):
+        pp.write_text(json.dumps(plan, indent=1, sort_keys=True) + "\n")
+    with b3g.io_refusal(f"cannot write {_rel(qp)}"):
+        qp.write_text(json.dumps(prediction, indent=1, sort_keys=True) + "\n")
     return pp, qp
 
 
@@ -413,6 +424,7 @@ def run(a) -> int:
     gate_report = Path(a.gate_report) if a.gate_report else GATE_REPORT
     out = REPO_ROOT / a.out
     b3g.refuse_lifecycle1_path(out)                               # lifecycle 1's gate and trial directories: never written
+    b3g.refuse_bad_out(out)
     g = gate_inputs(gate_report)
     map_sha = bmaps.sha256_of(bmaps.load_self_map())
     if a.qualification:

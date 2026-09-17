@@ -130,12 +130,11 @@ def main(argv=None) -> int:
         if out.resolve() == LIFECYCLE1_OUT.resolve():
             raise b3g.Refusal(f"{b3g._rel(LIFECYCLE1_OUT)} is lifecycle 1's rendered report and is never overwritten (write to {OUT_DEFAULT})")
         b3g.refuse_lifecycle1_path(out)
+        b3g.refuse_bad_out(out, "file")
         rep = b3g.validate_report(REPO_ROOT / a.report)        # the same validator the plan uses: nothing unvalidated is rendered
         text = render(rep)
-        try:
+        with b3g.io_refusal(f"cannot write {b3g._rel(out)}"):
             out.write_text(text)
-        except OSError as e:
-            raise b3g.Refusal(f"cannot write {b3g._rel(out)} ({e.__class__.__name__}: {e})") from None
     except b3g.Refusal as e:
         print(f"REFUSED: {e}", file=sys.stderr)
         return 2
