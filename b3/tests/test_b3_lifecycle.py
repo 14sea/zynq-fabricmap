@@ -26,6 +26,7 @@ import io
 import json
 import os
 import shutil
+import subprocess  # noqa: F401 — the killed-publisher test
 import sys
 import tempfile
 import unittest
@@ -78,8 +79,8 @@ def restore_thresholds() -> None:
 
 
 def setUpModule():
-    use_fixture_thresholds()
-    world()
+    use_fixture_thresholds()          # the world is built lazily by the first test that needs one, so the
+                                      # publishing tests below can run (and fail) even when init is broken
 
 
 def tearDownModule():
@@ -281,7 +282,7 @@ class Base(unittest.TestCase):
         self.w = world()
 
     def refused(self, needle: str, fn, *a, **k) -> str:
-        with self.assertRaises(bman.Refusal) as cm:
+        with self.assertRaises((bman.Refusal, rn.Refusal)) as cm:
             fn(*a, **k)
         self.assertIn(needle, str(cm.exception))
         return str(cm.exception)
@@ -290,19 +291,77 @@ class Base(unittest.TestCase):
         """A refused command: exit 2, REFUSED naming the cause, the manifest bytes (or its absence) unchanged,
         no temp file left."""
         before = self.w.manifest_path.read_bytes() if self.w.manifest_path.is_file() else None
+        parts_before = sorted(p.name for p in self.w.manifest_path.parent.iterdir() if p.name.endswith(".part"))
         text = self.w.cli(*argv, expect=2, **over)
         self.assertIn("REFUSED:", text)
         self.assertIn(needle, text)
         self.assertNotIn("INTERNAL ERROR", text)
         after = self.w.manifest_path.read_bytes() if self.w.manifest_path.is_file() else None
         self.assertEqual(before, after, "a refused command changed the manifest")
-        self.assertEqual([p.name for p in self.w.manifest_path.parent.iterdir() if p.name.endswith(".part")], [])
+        self.assertEqual(sorted(p.name for p in self.w.manifest_path.parent.iterdir() if p.name.endswith(".part")), parts_before,
+                         "a refused command created or removed a temp file")
         return text
 
     def mutated(self, stage: str, mutate) -> dict:
         m = self.w.at(stage).manifest()
         mutate(m)
         return m
+
+
+class Publishing(unittest.TestCase):
+    """`publish_new` / `replace_atomic` / the journal on their own — no manifest, no world: what these do
+    with temp files, ownership and fsync must hold even when the lifecycle above cannot be built at all."""
+
+    def setUp(self):
+        self.d = Path(tempfile.mkdtemp(prefix="b3pub_"))
+        self.addCleanup(shutil.rmtree, self.d, True)
+        self.path = self.d / "m.json"
+
+    def names(self) -> list[str]:
+        return sorted(p.name for p in self.d.iterdir())
+
+    def test_a_published_manifest_leaves_no_temp_file(self):
+        bman.publish_new(self.path, "first\n")
+        self.assertEqual(self.names(), ["m.json"], "the temp file this invocation created is gone")
+        self.assertEqual(self.path.read_text(), "first\n")
+        self.assertEqual(bman.unresolved_transaction(self.path), [])
+
+    def test_a_committed_transition_leaves_no_temp_file_and_no_journal(self):
+        bman.publish_new(self.path, "first\n")
+        bman.replace_atomic(self.path, b"first\n", "second\n")
+        self.assertEqual(self.names(), ["m.json"])
+        self.assertEqual(self.path.read_text(), "second\n")
+
+    def test_neither_publisher_removes_a_temp_file_it_did_not_create(self):
+        """The owner's P2 on 3aa3010, at the source: the create fails on a name that is not ours."""
+        taken = self.d / f".m.json.{os.getpid()}.deadbeefdeadbeef.part"
+        for act, needle in ((lambda: bman.publish_new(self.path, "first\n"), "init: "),
+                            (lambda: bman.replace_atomic(self.path, b"first\n", "second\n"), "already exists")):
+            with self.subTest(act=needle):
+                taken.write_bytes(b"another publisher's")
+                with mock.patch.object(bman, "_own_part", lambda p: taken), mock.patch.object(bman, "unresolved_transaction", lambda p: []):
+                    with self.assertRaises(bman.Refusal) as cm:
+                        act()
+                self.assertIn("it is not this invocation's and was not touched", str(cm.exception))
+                self.assertEqual(taken.read_bytes(), b"another publisher's", "a foreign temp file was deleted")
+                taken.unlink()
+            if needle == "init: ":
+                bman.publish_new(self.path, "first\n")
+
+    def test_the_journal_is_on_disk_before_it_is_believed(self):
+        """Durability is not observable from a test that survives the crash it is about: assert the calls.
+        The journal's own bytes AND its directory entry are fsynced before `_write_journal` returns."""
+        synced = []
+        real = os.fsync
+        with mock.patch.object(bman.os, "fsync", lambda fd: synced.append(os.fstat(fd).st_mode) or real(fd)):
+            bman._write_journal(self.path, self.d / "tmp.part", b"a", b"b", "publishing")
+        import stat
+        self.assertEqual([stat.S_ISREG(m) for m in synced], [True, False], "the journal file, then its directory")
+        self.assertTrue(stat.S_ISDIR(synced[1]))
+        doc = json.loads((self.d / ".m.json.transaction").read_text())
+        self.assertEqual((doc["schema"], doc["pid"], doc["state"]), ("b3_manifest_transaction", os.getpid(), "publishing"))
+        self.assertEqual((doc["original_sha256"], doc["new_sha256"]), (hashlib.sha256(b"a").hexdigest(), hashlib.sha256(b"b").hexdigest()))
+        self.assertEqual(bman.unresolved_transaction(self.path), [".m.json.transaction"])
 
 
 class LegalPath(Base):
@@ -770,11 +829,12 @@ class StagesAndTransitions(Base):
         self.assertEqual(self.strays(), [])
         bman.replace_atomic(w.manifest_path, original, "new\n")                   # and the positive control: the swap stands
         self.assertEqual(w.manifest_path.read_bytes(), b"new\n")
-        self.assertEqual(self.strays(), [])
+        self.assertEqual(self.strays(), [], "a committed transition leaves no journal, no temp file, nothing")
+        self.assertEqual(bman.read_manifest(w.manifest_path), b"new\n")
 
     def strays(self) -> list[str]:
         return sorted(p.name for p in self.w.manifest_path.parent.iterdir()
-                      if any(x in p.name for x in (".part", ".conflict", ".displaced")) or p.name.endswith(".lock"))
+                      if any(x in p.name for x in (".part", ".conflict", ".displaced", ".transaction")) or p.name.endswith(".lock"))
 
     def racing(self, *intrusions, after=None, fail_on=None):
         """`_rename_exchange` with a competitor: before the n-th exchange — i.e. AFTER the last comparison the
@@ -823,7 +883,9 @@ class StagesAndTransitions(Base):
         kept = [p for p in w.manifest_path.parent.iterdir() if ".conflict." in p.name]
         self.assertEqual([p.read_bytes() for p in kept], [b"second"])
         self.assertIn(str(kept[0]), msg)
-        self.assertEqual([n for n in self.strays() if ".part" in n], [])
+        self.assertEqual([n for n in self.strays() if n.endswith(".part")], [])
+        self.assertEqual(bman.unresolved_transaction(w.manifest_path), [], "the rollback completed: nothing is unresolved")
+        self.assertEqual(bman.read_manifest(w.manifest_path), b"first")
 
     def test_a_trusted_reader_never_sees_the_speculative_exchange(self):
         """The owner's P2 on 9957934: between the two exchanges the path holds the withdrawn transition. A plain
@@ -850,6 +912,119 @@ class StagesAndTransitions(Base):
             w.cli("verify")
         self.assertEqual(calls, [w.manifest_path], "the command line reads the manifest through the locked reader")
 
+    def test_a_failed_exchange_back_leaves_no_trusted_authority_at_the_path(self):
+        """The owner's P1 on 3aa3010: after the rollback failed, the path held the WITHDRAWN transition — a
+        document that had passed _checked() — and the next trusted read took it as the new stage. Now the
+        journal stays, and every trusted reader refuses by name until the owner resolves it."""
+        w = self.w.at("S1")
+        original = w.manifest_path.read_bytes()
+        with self.racing(lambda p: p.write_bytes(b"competitor"), fail_on=1):
+            self.refused("NO trusted reader will accept it", bman.replace_atomic, w.manifest_path, original, "new\n")
+        journal = json.loads((w.manifest_path.parent / f".{w.manifest_path.name}.transaction").read_text())
+        self.assertEqual(journal["schema"], "b3_manifest_transaction")
+        self.assertEqual((journal["pid"], journal["new_sha256"]), (os.getpid(), hashlib.sha256(b"new\n").hexdigest()))
+        self.assertIn("withdrawing", journal["state"])
+        self.assertEqual(w.manifest_path.read_bytes(), b"new\n", "the withdrawn transition is still the file — which is the point")
+        for reader in (lambda: bman.read_manifest(w.manifest_path), lambda: rn.Authority().read_manifest(w.manifest_path)):
+            self.refused("a b3_manifest transition did not finish", reader)
+        self.assertIn("a b3_manifest transition did not finish", w.cli("verify", expect=2))
+        self.cli_refused("did not finish", "freeze", "--prereg-sha256", sha(w.root / bman.PREREG_REL))
+        self.refused("did not finish", bman.replace_atomic, w.manifest_path, b"new\n", "another\n")
+        names = bman.unresolved_transaction(w.manifest_path)
+        self.assertEqual(len(names), 2, names)
+        self.assertTrue(any(".transaction" in n for n in names) and any(".displaced." in n for n in names), names)
+        for n in names:                               # the owner resolves it by hand; then the tree is usable again
+            (w.manifest_path.parent / n).unlink() if ".transaction" in n else os.replace(w.manifest_path.parent / n, w.manifest_path)
+        self.assertEqual(bman.read_manifest(w.manifest_path), b"competitor")
+
+    def test_a_publisher_killed_after_the_first_exchange_leaves_the_refusal_behind(self):
+        """Not a simulated failure: a real process SIGKILLed between the two exchanges — no finally runs."""
+        import subprocess
+        w = self.w.at("S1")
+        original, text = w.manifest_path.read_bytes(), "new\n"
+        script = f"""
+import os, signal, sys
+sys.path[:0] = [{str(R / "host")!r}, {str(R / "b3/host")!r}]
+import b3_manifest as bman
+real = bman._rename_exchange
+def exchange(a, b):
+    real(a, b)
+    os.kill(os.getpid(), signal.SIGKILL)
+bman._rename_exchange = exchange
+bman.replace_atomic({str(w.manifest_path)!r}, {original!r}, {text!r})
+"""
+        r = subprocess.run([sys.executable, "-B", "-c", script], capture_output=True)
+        self.assertEqual(r.returncode, -9, r.stderr[-400:])
+        self.assertEqual(w.manifest_path.read_bytes(), b"new\n")
+        journal = w.manifest_path.parent / f".{w.manifest_path.name}.transaction"
+        self.assertTrue(journal.is_file(), "the journal was fsynced before the exchange")
+        self.assertIn("publishing", json.loads(journal.read_text())["state"])
+        self.refused("did not finish", bman.read_manifest, w.manifest_path)
+        self.refused("did not finish", rn.Authority().read_manifest, w.manifest_path)
+        self.assertIn("did not finish", w.cli("verify", expect=2))
+        parts = [n for n in bman.unresolved_transaction(w.manifest_path) if n.endswith(".part")]
+        self.assertEqual(len(parts), 1, "the dead publisher's temp file, holding the displaced original")
+        self.assertEqual((w.manifest_path.parent / parts[0]).read_bytes(), original)
+
+    def test_a_transition_refuses_while_an_earlier_one_is_unresolved(self):
+        w = self.w.at("S0")
+        original = w.manifest_path.read_bytes()
+        for name, body in ((f".{w.manifest_path.name}.transaction", b"{}"), (f".{w.manifest_path.name}.999.abcd.part", b"x"),
+                           (f"{w.manifest_path.name}.displaced.999.0", b"x")):
+            with self.subTest(artifact=name):
+                artifact = w.manifest_path.parent / name
+                artifact.write_bytes(body)
+                try:
+                    self.assertEqual(bman.unresolved_transaction(w.manifest_path), [name])
+                    self.assertEqual(rn.unfinished_transition(w.manifest_path), [name], "the runner names the same artifact")
+                    self.cli_refused("did not finish", "freeze", "--prereg-sha256", sha(w.root / bman.PREREG_REL))
+                    self.cli_refused("did not finish", "verify")
+                    self.refused("did not finish", bman.replace_atomic, w.manifest_path, original, "new\n")
+                    self.assertEqual(self.strays(), [name], "nothing of this invocation's was created")
+                finally:
+                    artifact.unlink(missing_ok=True)
+        conflict = w.manifest_path.parent / f"{w.manifest_path.name}.conflict.999.0"
+        conflict.write_bytes(b"a completed rollback's evidence")
+        self.assertEqual(bman.unresolved_transaction(w.manifest_path), [], "a .conflict is not an unfinished transaction")
+        self.assertEqual(w.verify()["stage"], "S0")
+        conflict.unlink()
+
+    def test_an_init_refuses_while_a_transaction_is_unresolved(self):
+        w = self.w.at("pre")
+        journal = w.manifest_path.parent / f".{w.manifest_path.name}.transaction"
+        journal.write_text('{"state": "withdrawing"}')
+        self.cli_refused("did not finish", "init")
+        self.assertFalse(w.manifest_path.exists())
+        journal.unlink()
+
+    def test_neither_publisher_deletes_a_temp_file_it_did_not_create(self):
+        """The owner's P2 on 3aa3010: open(..., 'xb') failing on an existing name still ran the unlink."""
+        w = self.w.at("S1")
+        original = w.manifest_path.read_bytes()
+        taken = w.manifest_path.parent / f".{w.manifest_path.name}.{os.getpid()}.deadbeefdeadbeef.part"
+        taken.write_bytes(b"another publisher's")
+        try:
+            with mock.patch.object(bman, "_own_part", lambda p: taken):
+                self.refused("did not finish", bman.replace_atomic, w.manifest_path, original, "new\n")   # named as unresolved, before the create
+                with mock.patch.object(bman, "unresolved_transaction", lambda p: []):                      # and, past that, by the create itself
+                    self.refused("already exists; it is not this invocation's and was not touched", bman.replace_atomic, w.manifest_path, original, "new\n")
+            self.assertEqual(taken.read_bytes(), b"another publisher's")
+            self.assertEqual(w.manifest_path.read_bytes(), original)
+        finally:
+            taken.unlink(missing_ok=True)
+        w2 = self.w.at("pre")
+        taken = w2.manifest_path.parent / f".{w2.manifest_path.name}.{os.getpid()}.deadbeefdeadbeef.part"
+        taken.write_bytes(b"another publisher's")
+        try:
+            with mock.patch.object(bman, "_own_part", lambda p: taken):
+                self.cli_refused("did not finish", "init")
+                with mock.patch.object(bman, "unresolved_transaction", lambda p: []):
+                    self.cli_refused("already exists; it is not this invocation's and was not touched", "init")
+            self.assertEqual(taken.read_bytes(), b"another publisher's")
+            self.assertFalse(w2.manifest_path.exists())
+        finally:
+            taken.unlink(missing_ok=True)
+
     def test_a_failed_exchange_back_keeps_the_competitors_bytes(self):
         """9957934 deleted the temp file — the only copy of the competitor's bytes — when the rollback failed."""
         w = self.w.at("S1")
@@ -861,7 +1036,9 @@ class StagesAndTransitions(Base):
         self.assertIn(str(kept[0]), msg)
         self.assertIn("holds the WITHDRAWN transition's bytes", msg)
         self.assertEqual(w.manifest_path.read_bytes(), b"new\n")
-        self.assertEqual([n for n in self.strays() if ".part" in n], [], "the temp name held this transition's own bytes by then")
+        self.assertEqual([n for n in self.strays() if n.endswith(".part")], [], "the temp name held this transition's own bytes by then")
+        for n in bman.unresolved_transaction(w.manifest_path):
+            (w.manifest_path.parent / n).unlink()
 
     def test_the_temp_file_is_never_deleted_while_it_is_the_only_copy(self):
         """If even the preserving link fails, the displaced bytes stay where they are — under the temp name."""
@@ -874,13 +1051,14 @@ class StagesAndTransitions(Base):
         self.assertEqual([p.read_bytes() for p in parts], [b"competitor"])
 
     def test_a_taken_name_never_costs_a_competitor_its_bytes(self):
+        """`.conflict` names may already be there (a completed rollback's evidence, including 9957934's exact
+        form): the counter walks past every one of them. A `.displaced` name cannot pre-exist — it is itself
+        an unresolved transaction, and the transition below refuses before touching anything."""
         w = self.w.at("S1")
         original = w.manifest_path.read_bytes()
-        d = w.manifest_path.parent
-        name = w.manifest_path.name
-        for tag in ("conflict", "displaced"):
-            for n in (0, 1):
-                (d / f"{name}.{tag}.{os.getpid()}.{n}").write_bytes(b"an older one")
+        d, name = w.manifest_path.parent, w.manifest_path.name
+        for n in (0, 1):
+            (d / f"{name}.conflict.{os.getpid()}.{n}").write_bytes(b"an older one")
         (d / f"{name}.conflict.{os.getpid()}").write_bytes(b"9957934's name")
         with self.racing(lambda p: p.write_bytes(b"first"), lambda p: p.write_bytes(b"second")):
             msg = self.refused("changed twice", bman.replace_atomic, w.manifest_path, original, "new\n")
@@ -889,10 +1067,16 @@ class StagesAndTransitions(Base):
         self.assertEqual([(d / f"{name}.conflict.{os.getpid()}.{n}").read_bytes() for n in (0, 1)], [b"an older one"] * 2)
         self.assertEqual((d / f"{name}.conflict.{os.getpid()}").read_bytes(), b"9957934's name")
         self.assertEqual(w.manifest_path.read_bytes(), b"first")
-        self.assertFalse((d / f"{name}.displaced.{os.getpid()}.2").exists(), "the first competitor IS the manifest; its extra name was dropped")
+        self.assertEqual(bman.unresolved_transaction(w.manifest_path), [], "the rollback completed; only .conflict evidence is left")
+        (d / f"{name}.displaced.{os.getpid()}.0").write_bytes(b"an unresolved one")
+        self.refused("did not finish", bman.replace_atomic, w.manifest_path, b"first", "new\n")
+        self.assertEqual((d / f"{name}.displaced.{os.getpid()}.0").read_bytes(), b"an unresolved one")
+        (d / f"{name}.displaced.{os.getpid()}.0").unlink()
         with self.racing(lambda p: p.write_bytes(b"third"), fail_on=1):
             self.refused("the exchange back FAILED", bman.replace_atomic, w.manifest_path, b"first", "new\n")
-        self.assertEqual((d / f"{name}.displaced.{os.getpid()}.2").read_bytes(), b"third")
+        self.assertEqual((d / f"{name}.displaced.{os.getpid()}.0").read_bytes(), b"third")
+        for n in bman.unresolved_transaction(w.manifest_path):
+            (d / n).unlink()
 
     def test_a_racing_competitor_defeats_the_command_line_transition_too(self):
         w = self.w.at("S0")

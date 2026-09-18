@@ -166,6 +166,19 @@ def _finite_positive(v) -> bool:
 # ------------------------------------------------------------------ the authority seam
 
 
+# The names a b3_manifest publish leaves beside the manifest while it is unfinished (b3_manifest's
+# TRANSACTION_SUFFIX / PART_SUFFIX / DISPLACED_TAG; a test holds the two modules to the same three).
+TRANSACTION_ARTIFACTS = (".{name}.transaction", ".{name}.*.part", "{name}.displaced.*")
+
+
+def unfinished_transition(path: Path) -> list[str]:
+    path = Path(path)
+    out: list[str] = []
+    for pattern in TRANSACTION_ARTIFACTS:
+        out += sorted(q.name for q in path.parent.glob(pattern.format(name=path.name)))
+    return out
+
+
 class Authority:
     """What the runner needs of the manifest / pin authority. `production_authority()` binds it to
     `b3_manifest` / `b3_pins` when they exist; a test injects an object with these members.
@@ -190,12 +203,20 @@ class Authority:
 
     def read_manifest(self, path: Path) -> bytes:
         """The manifest's bytes, read ONCE and under the shared flock on its directory that a publishing
-        lifecycle transition holds exclusively — a preflight never sees a transition half published."""
+        lifecycle transition holds exclusively — a preflight never sees a transition half published — and
+        refused while an unfinished transition is beside it (the owner's P1 on 3aa3010). Production goes
+        through `b3_manifest.read_manifest`, which is the authority for both; this is the same rule for a
+        tree whose authority module is not there, and a test holds the two to the same artifact names."""
         import fcntl
-        lock = os.open(Path(path).parent, os.O_RDONLY)
+        path = Path(path)
+        lock = os.open(path.parent, os.O_RDONLY)
         try:
             fcntl.flock(lock, fcntl.LOCK_SH)
-            return Path(path).read_bytes()
+            unfinished = unfinished_transition(path)
+            if unfinished:
+                raise Refusal(f"{path}: a b3_manifest transition did not finish — {unfinished} are beside it; the file at this path may hold "
+                              f"a WITHDRAWN transition and no session runs against it")
+            return path.read_bytes()
         finally:
             os.close(lock)
 

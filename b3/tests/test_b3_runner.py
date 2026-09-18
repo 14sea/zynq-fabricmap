@@ -1302,6 +1302,37 @@ class Readjudication(unittest.TestCase):
         finally:
             f.close()
 
+    def test_the_preflight_refuses_a_manifest_whose_transition_did_not_finish(self):
+        """The owner's P1 on 3aa3010: after a failed rollback the path holds a WITHDRAWN transition. The
+        runner's authority names the same artifacts b3_manifest does — held equal here, both ways."""
+        import b3_manifest as bman
+        self.assertEqual(rn.TRANSACTION_ARTIFACTS,
+                         (f".{{name}}{bman.TRANSACTION_SUFFIX}", f".{{name}}.*{bman.PART_SUFFIX}", f"{{name}}.{bman.DISPLACED_TAG}.*"))
+        f = Fixture("S1")                                  # a fresh one: this invocation's evidence directory must not exist yet
+        try:
+            for name in (f".{f.manifest_path.name}.transaction", f".{f.manifest_path.name}.999.abcd.part", f"{f.manifest_path.name}.displaced.999.0"):
+                with self.subTest(artifact=name):
+                    artifact = f.d / name
+                    artifact.write_bytes(b"x")
+                    try:
+                        self.assertEqual(rn.unfinished_transition(f.manifest_path), [name])
+                        self.assertEqual(bman.unresolved_transaction(f.manifest_path), [name], "b3_manifest names the same artifact")
+                        with self.assertRaises(rn.Refusal) as cm:
+                            rn.Authority().read_manifest(f.manifest_path)
+                        self.assertIn("a b3_manifest transition did not finish", str(cm.exception))
+                        with self.assertRaises(rn.Refusal) as cm:
+                            f.preflight()
+                        self.assertIn("did not finish", str(cm.exception))
+                        self.assertFalse((f.d / "evidence").exists())
+                        self.assertNotIn("port", f.calls)
+                    finally:
+                        artifact.unlink()
+            (f.d / f"{f.manifest_path.name}.conflict.999.0").write_bytes(b"x")
+            self.assertEqual(rn.unfinished_transition(f.manifest_path), [], "a .conflict is not an unfinished transition")
+            self.assertEqual(rn.Authority().read_manifest(f.manifest_path), f.manifest_path.read_bytes())
+        finally:
+            f.close()
+
     def test_the_finalisation_record_is_bound_to_the_rebuilt_session_plan_field_by_field(self):
         """The owner's P2 on 8ba72c4 — each of the probe's five fields, the transport authority, and the types."""
         good = json.loads((self.ev / "runner_session.json").read_text())
