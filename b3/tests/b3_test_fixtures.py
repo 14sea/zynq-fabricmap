@@ -72,6 +72,18 @@ def write_gate_fixture(d: Path, S: int = 200, head: str = FIXTURE_HEAD, label: s
     return d / "gate_report.json"
 
 
+def rows_selecting_budget_1000(rows) -> None:
+    """A `mutate_rows` for `write_gate_fixture`: below 1 000 the online arm is the random arm ± 1 (both
+    signs, mean 0 — no finite N there), so the budget rule selects B* = 1 000 with N = 8 — the numbers
+    the committed lifecycle-2 prediction was built for, whose predicted primary passes the stop rule
+    (at the default fixture's B* = 600 the same seeds predict 5 / 1 / 2 and the line would stop). A
+    fixture's shape, never a gate result."""
+    for row in rows:
+        for i, b in enumerate(G):
+            if b < 1000:
+                row["arms"]["O"]["at_grid"][i] = max(0, row["arms"]["R"]["at_grid"][i] + (1 if row["r"] % 2 == 0 else -1))
+
+
 def identity(ctx) -> dict:
     """An `app_identity` 1.6.0 document for a `b3_records.Context` (the modelled shape, not the wire)."""
     return {"schema": "app_identity", "schema_version": "1.6.0", "control_plane": "standalone",

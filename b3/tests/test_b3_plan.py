@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import contextlib
 import copy
+import hashlib
 import io
 import json
 import shutil
@@ -34,6 +35,16 @@ import b3_gate as b3g  # noqa: E402
 import b3_online_arm as oa  # noqa: E402
 import b3_plan as pl  # noqa: E402
 from b3_test_fixtures import FIXTURE_HEAD, NOT_A_COMMIT, rewrite_report, write_gate_fixture  # noqa: E402
+import b3_manifest as bman  # noqa: E402
+import test_b3_lifecycle as life  # noqa: E402 — the lifecycle world StageCoverage drives the committed-plan rule through
+
+# The COMMITTED tree (preregistration §2, §9): the plan, the prediction, the manifest once S0 exists — and how
+# its stage is established: the PRODUCTION verify (root, no seams) under the PRODUCTION thresholds.
+# StageCoverage re-points all four at the lifecycle world; nothing here is skipped when an artefact is absent.
+PLAN = R / "evidence/b3/plan.json"
+PRED = R / "evidence/b3/prediction.json"
+MANIFEST = R / "manifests/b3_manifest.json"
+TREE = {"root": R, "seams": None, "bootstrap_experiments": None}     # None: the thresholds the module was imported with
 
 LIFECYCLE1_GATE = R / "evidence/b3/gate/gate_report.json"
 _TMP: Path | None = None
@@ -55,6 +66,43 @@ def setUpModule():
 def tearDownModule():
     b3g.THRESHOLDS["H2_bootstrap_experiments"] = _SAVED
     shutil.rmtree(_TMP, True)
+
+
+def committed_stage() -> tuple[str | None, dict | None]:
+    """(stage, manifest) of the committed tree — the stage is what the production `b3_manifest.verify`
+    RETURNS, never a literal and never a field read off the manifest; (None, None) before S0 (no manifest).
+    A manifest that does not verify is an error of the test that asked, not a skip."""
+    if not MANIFEST.is_file():
+        return None, None
+    manifest = json.loads(MANIFEST.read_text())
+    want = TREE["bootstrap_experiments"] if TREE["bootstrap_experiments"] is not None else (_SAVED or b3g.THRESHOLDS["H2_bootstrap_experiments"])
+    with mock.patch.dict(b3g.THRESHOLDS, {"H2_bootstrap_experiments": want}):
+        return bman.verify(manifest, root=TREE["root"], seams=TREE["seams"])["stage"], manifest
+
+
+def split_findings(plan: dict, plan_bytes: bytes, stage: str | None, manifest: dict | None) -> list[str]:
+    """The committed-plan stage rule (B2 v0.3's, verbatim; preregistration §2, §8): until S3 the committed
+    plan is the rate-less document — split UNDETERMINED — and from S3 on it IS the pinned one: DETERMINED,
+    its bytes hashing to the manifest's pin, its session count and record total the pin's. Held to the stage
+    the production verify reports, never to a constant."""
+    f: list[str] = []
+    split = plan.get("session_split") or {}
+    status = split.get("status")
+    if stage != "S3":
+        if not isinstance(status, str) or not status.startswith("UNDETERMINED"):
+            f.append(f"no plan is pinned (stage {stage}), so the committed split must be UNDETERMINED, not {status!r}")
+        return f
+    pinned = (manifest or {}).get("plan") or {}
+    if status != "DETERMINED":
+        f.append(f"a plan is pinned, so the committed split must be DETERMINED, not {status!r}")
+    digest = hashlib.sha256(plan_bytes).hexdigest()
+    if digest != pinned.get("sha256"):
+        f.append(f"the committed plan hashes to {digest[:12]}…, the manifest pins {str(pinned.get('sha256'))[:12]}…")
+    if len(split.get("sessions") or []) != pinned.get("sessions"):
+        f.append(f"the committed split has {len(split.get('sessions') or [])} sessions, the pin records {pinned.get('sessions')}")
+    if split.get("total_records") != pinned.get("total_records"):
+        f.append(f"the committed split totals {split.get('total_records')} records, the pin records {pinned.get('total_records')}")
+    return f
 
 
 def copy_fixture(case) -> Path:
@@ -450,6 +498,171 @@ class Qualification(unittest.TestCase):
         self.assertEqual(q["seed_derivation"]["label"], "b3-qualification-2")
         self.assertEqual(q["seed_derivation"]["master_seed"], bs.master_seed("b3-qualification-2", pl.INSTRUMENT_COMMIT))
         self.assertAlmostEqual(q["planning_bound"]["session_timeout_s"], 1.25 * 125 * 3600 / pl.QUAL_PLANNING_RATE_PER_HOUR + 600)
+
+
+class Committed(unittest.TestCase):
+    """The committed plan and prediction. No skip: an absent artefact is a failure."""
+
+    def setUp(self):
+        self.plan = json.loads(PLAN.read_text())
+        self.pred = json.loads(PRED.read_text())
+
+    def test_record_arithmetic_and_the_prediction_pin(self):
+        n, b = self.plan["pairs"], self.plan["budget_per_arm"]
+        self.assertEqual(self.plan["records"]["per_pair"], 3 * b + 3)
+        self.assertEqual(self.plan["records"]["ledger_entries_per_pair"], b)
+        self.assertEqual(self.plan["records"]["single_session_total"], 2 + n * (3 * b + 3))
+        self.assertEqual(self.pred["fitness_sequence_length"], n * (3 * b + 3))
+        self.assertEqual(self.plan["prediction_sha256"], hashlib.sha256(PRED.read_bytes()).hexdigest())
+        self.assertEqual(self.plan["audit_policy"], "all-self-reporting")
+        self.assertEqual(self.plan["arm_order"]["per_pair"], ["".join(pl.arm_order(r)) for r in range(n)])
+        self.assertEqual([len(p["runs"]["O"]["ledger"]) for p in self.pred["pairs"]], [b] * n)
+        self.assertEqual(pl.stop_rule_findings(self.pred), [])
+
+    def test_the_committed_split_is_what_the_stage_licenses(self):
+        stage, manifest = committed_stage()
+        self.assertEqual(split_findings(self.plan, PLAN.read_bytes(), stage, manifest), [])
+
+
+class StageCoverage(unittest.TestCase):
+    """The committed-plan stage rule driven, unchanged, at every stage the lifecycle has — no manifest, S0, S1,
+    S2, S3 — over the lifecycle world (test_b3_lifecycle: a temp tree carried S0 → S3 through the production
+    command line), and against the illegal pairings, each failing for its own reason. The stage is always the
+    production verify's answer; no committed stage, split, session count or history length is a literal; nothing
+    is skipped."""
+
+    TEST = "test_the_committed_split_is_what_the_stage_licenses"
+
+    def setUp(self):
+        life.use_fixture_thresholds()
+        self.w = life.world()
+
+    def drive(self, plan_path: Path | None = None, test: str | None = None) -> unittest.TestResult:
+        w = self.w
+        me = sys.modules[__name__]
+        with mock.patch.object(me, "PLAN", plan_path or w.root / bman.PLAN_REL), mock.patch.object(me, "PRED", w.root / bman.PREDICTION_REL), \
+                mock.patch.object(me, "MANIFEST", w.manifest_path), \
+                mock.patch.object(me, "TREE", {"root": w.root, "seams": w.seams(), "bootstrap_experiments": 100}):
+            result = unittest.TestResult()
+            Committed(test or self.TEST).run(result)          # the case alone: a nested SUITE would run this module's tearDownModule
+        self.assertEqual((result.testsRun, len(result.skipped)), (1, 0), "a committed-state test is never skipped")
+        return result
+
+    def accepts(self) -> dict:
+        result = self.drive()
+        self.assertEqual((len(result.failures), len(result.errors)), (0, 0), "".join(t for _, t in result.failures + result.errors)[:2000])
+        return json.loads((self.w.root / bman.PLAN_REL).read_text())["session_split"]
+
+    def rejects(self, *words: str, plan_path: Path | None = None) -> None:
+        result = self.drive(plan_path)
+        self.assertEqual(len(result.failures) + len(result.errors), 1, "an illegal plan / manifest pairing was accepted")
+        text = "".join(t for _, t in result.failures + result.errors)
+        for w_ in words:
+            self.assertIn(w_, text)
+
+    # ------------------------------------------------------------------ it survives every stage
+    def test_it_passes_before_s0_and_at_s0_s1_s2_with_the_rate_less_plan(self):
+        for stage in ("pre", "S0", "S1", "S2"):
+            with self.subTest(stage=stage):
+                self.w.at(stage)
+                self.assertEqual(self.w.manifest_path.is_file(), stage != "pre")
+                self.assertTrue(self.accepts()["status"].startswith("UNDETERMINED"))
+                self.assertEqual("b2" in self.w.calls, stage != "pre", "with a manifest, the stage came from the production verify")
+
+    def test_it_passes_at_s3_with_the_pinned_plan(self):
+        self.w.at("S3")
+        split = self.accepts()
+        m = self.w.manifest()
+        self.assertEqual(split["status"], "DETERMINED")
+        self.assertEqual((len(split["sessions"]), split["total_records"]), (m["plan"]["sessions"], m["plan"]["total_records"]))
+
+    def test_it_passes_at_s3_for_another_split_a_calibration_can_give(self):
+        """A second synthetic rate (never a calibration): another legal S3, another session count — the test
+        holds each committed plan to its own pin, not to one shape."""
+        self.w.at("S3")
+        first = len(self.accepts()["sessions"])
+        w = self.w.at("S1")
+        life.make_b3q_evidence(w, w.evidence, rate=12000.0)
+        with mock.patch.object(w, "rate", 12000.0):
+            w.cli("qualify", "--evidence-dir", str(w.evidence))
+            pl.write(w.root / "evidence/b3", pl.build_plan(12000.0, w.root / bman.GATE_REL), w.prediction)
+            w.cli("plan", "--plan", str(w.root / bman.PLAN_REL))
+            second = len(self.accepts()["sessions"])
+        self.assertNotEqual(first, second, "the two rates did not give different splits")
+
+    def test_the_other_committed_test_passes_at_every_stage_too(self):
+        for stage in ("pre", "S0", "S3"):
+            with self.subTest(stage=stage):
+                self.w.at(stage)
+                result = self.drive(test="test_record_arithmetic_and_the_prediction_pin")
+                self.assertEqual((len(result.failures), len(result.errors)), (0, 0), "".join(t for _, t in result.failures + result.errors)[:2000])
+
+    # ------------------------------------------------------------------ and still discriminates
+    def test_a_determined_plan_with_nothing_pinned_is_refused(self):
+        for stage in ("pre", "S0", "S1", "S2"):
+            with self.subTest(stage=stage):
+                w = self.w.at(stage)
+                pl.write(w.root / "evidence/b3", pl.build_plan(life.STUB_RATE, w.root / bman.GATE_REL), w.prediction)
+                self.rejects("so the committed split must be UNDETERMINED, not 'DETERMINED'")
+
+    def test_the_rate_less_plan_against_an_s3_manifest_is_refused(self):
+        """The pairing B2's frozen constant demanded at S3: refused — by the production verify itself, which
+        holds the pinned bytes before the rule is even consulted."""
+        w = self.w.at("S3")
+        shutil.copy(w.snap / "S2" / bman.PLAN_REL, w.root / bman.PLAN_REL)
+        self.rejects("S3: the pinned plan file is absent or changed")
+
+    def test_a_pinned_plan_whose_bytes_drifted_is_refused(self):
+        w = self.w.at("S3")
+        doc = json.loads((w.root / bman.PLAN_REL).read_text())
+        doc["generated_utc"] = "1970-01-01T00:00:00Z"
+        (w.root / bman.PLAN_REL).write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n")
+        self.rejects("S3: the pinned plan file is absent or changed")
+        w = self.w.at("S3")                                                  # the committed path holds ANOTHER document than the pinned one
+        drifted = w.root / "evidence/b3/elsewhere/plan.json"
+        drifted.parent.mkdir()
+        drifted.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n")
+        self.rejects("the committed plan hashes to", plan_path=drifted)
+
+    def test_a_manifest_that_does_not_verify_is_an_error_never_a_skip_or_a_pass(self):
+        for stage, mutate, words in (("S3", lambda m: m.__setitem__("status", bman.STATUS["S2"]), "S3: the manifest's status is"),
+                                     ("S2", lambda m: m.__setitem__("plan", {"path": bman.PLAN_REL}), "S3: the manifest's status is"),
+                                     ("S1", lambda m: m.__setitem__("calibration", {"rate_per_hour": 4000.0}), "S1: qualified / calibration without a qualification record"),
+                                     ("S0", lambda m: m.__setitem__("plan", {"path": bman.PLAN_REL}), "S0: a plan on an unfrozen manifest")):
+            with self.subTest(stage=stage):
+                w = self.w.at(stage)
+                m = w.manifest()
+                mutate(m)
+                w.write_manifest(m)
+                self.rejects(words)
+        w = self.w.at("S1")
+        (w.root / "schemas/specimen_ledger.schema.json").unlink()
+        self.rejects("frozen inputs: schemas/specimen_ledger.schema.json is absent")
+
+    def test_an_absent_committed_plan_fails_it_is_not_skipped(self):
+        self.w.at("S0")
+        result = self.drive(plan_path=self.w.root / "evidence/b3/absent.json")
+        self.assertEqual((len(result.failures) + len(result.errors), len(result.skipped)), (1, 0))
+
+    # ------------------------------------------------------------------ the rule's own S3 guards, one at a time
+    def test_each_s3_guard_of_the_rule_is_load_bearing(self):
+        w = self.w.at("S3")
+        m = w.manifest()
+        raw = (w.root / bman.PLAN_REL).read_bytes()
+        plan = json.loads(raw)
+        self.assertEqual(split_findings(plan, raw, "S3", m), [])
+        undetermined = json.loads((w.snap / "S2" / bman.PLAN_REL).read_text())
+        for case, args, needle in (("status", (undetermined, raw, "S3", m), "must be DETERMINED, not 'UNDETERMINED"),
+                                   ("digest", (plan, raw + b" ", "S3", m), "the committed plan hashes to"),
+                                   ("sessions", (plan, raw, "S3", {"plan": {**m["plan"], "sessions": m["plan"]["sessions"] + 1}}), "sessions, the pin records"),
+                                   ("records", (plan, raw, "S3", {"plan": {**m["plan"], "total_records": m["plan"]["total_records"] + 1}}), "records, the pin records"),
+                                   ("no pin", (plan, raw, "S3", {"plan": None}), "the manifest pins None")):
+            with self.subTest(case=case):
+                got = split_findings(*args)
+                self.assertTrue(any(needle in x for x in got), got)
+        for stage in (None, "S0", "S1", "S2"):
+            self.assertEqual(split_findings(undetermined, raw, stage, m), [])
+            self.assertIn("must be UNDETERMINED", split_findings(plan, raw, stage, m)[0])
 
 
 if __name__ == "__main__":

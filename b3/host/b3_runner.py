@@ -45,9 +45,13 @@ THE AUTHORITY SEAM. `manifests/b3_manifest.json`, `b3/host/b3_manifest.py` and `
 do not exist yet (they are later pinned edits). The runner reaches them only through an `Authority`
 adapter: `production_authority()` imports them lazily and, while they are absent, is a named
 REFUSED — no output directory, no ruling claimed, no device touched. A test may inject a fake
-authority; the command line offers no way to skip or replace one. The manifest's production
-re-adjudicator wiring, the real pin verification and every stage transition belong to the
-manifest / pins units: this runner never transitions a manifest.
+authority; the command line offers no way to skip or replace one. The real pin verification and
+every stage transition belong to the manifest / pins units: this runner never transitions a manifest.
+What it GIVES the manifest lifecycle is the production re-adjudicator (`readjudicator`, B2's shape:
+`(evidence_dir, manifest_at_run)` → the S1 manifest's pinned B3Q plan / prediction → the session plan
+rebuilt → `judge_session`), which `ProductionAuthority.verify` passes when no hook is injected; a B3Q
+verdict keeps its `qualification` block (123 fitness values, 40 ledger entries, 2 baselines, the sequence
+digest), held to the pinned experiment.
 
 THE DEVICE SEAM. The image load, the serial port, the session loop, the ruling claim and the
 export are reached through `Ports`, whose production members import the instrument lazily; a test
@@ -241,6 +245,8 @@ class ProductionAuthority(Authority):
 
     def verify(self, manifest: dict, readjudicate=None) -> dict:
         m, _ = self._modules()
+        if readjudicate is None:              # no hook injected: the PRODUCTION re-adjudicator, never a skip
+            readjudicate = readjudicator(manifest)
         try:
             return m.verify(manifest, readjudicate=readjudicate)
         except self._refusals(m, "Refusal") as exc:
@@ -772,6 +778,30 @@ def instrument_findings(evidence: Path, log: dict, session_plan: dict, instrumen
 # ------------------------------------------------------------------ the session verdict
 
 
+QUALIFICATION_BLOCK_KEYS = ("fitness_values", "ledger_entries", "baselines", "fitness_sequence_sha256")
+
+
+def expected_qualification_block(plan_doc: dict, prediction_doc: dict) -> dict:
+    """What a B3Q adjudication's `qualification` block must say, from the PINNED experiment
+    (preregistration §6a): 3 × 40 + 3 = 123 fitness values, 40 ledger entries, 2 baselines, and the
+    preregistered fitness sequence's digest."""
+    budget, pairs = plan_doc["budget_per_arm"], plan_doc["pairs"]
+    return {"fitness_values": pairs * pl.records_per_pair(budget), "ledger_entries": pairs * budget, "baselines": 2,
+            "fitness_sequence_sha256": prediction_doc["fitness_sequence_sha256"]}
+
+
+def qualification_block_findings(block, plan_doc: dict, prediction_doc: dict) -> list[str]:
+    """The B3Q block the record replay published, KEPT in the session verdict and held to the pinned
+    experiment field by field — an absent block is a finding, never a pass."""
+    if not isinstance(block, dict):
+        return ["the B3Q adjudication published no qualification block (fitness values, ledger entries, baselines, sequence digest)"]
+    want = expected_qualification_block(plan_doc, prediction_doc)
+    f = [f"the B3Q qualification block's {k} is {_short(block.get(k))}, the pinned experiment's is {_short(want[k])}"
+         for k in QUALIFICATION_BLOCK_KEYS if block.get(k) != want[k] or isinstance(block.get(k), bool)]
+    f += [f"the B3Q qualification block carries an unexpected {k!r}" for k in sorted(set(block) - set(QUALIFICATION_BLOCK_KEYS))]
+    return f
+
+
 def judge_session(evidence_dir, manifest: dict, session_plan: dict, plan_doc: dict, prediction_doc: dict,
                   instrument_root: Path, ports: Ports) -> dict:
     """The session's verdict: the instrument and evidence contract COMPOSED with the B3 record
@@ -816,6 +846,10 @@ def judge_session(evidence_dir, manifest: dict, session_plan: dict, plan_doc: di
             out["findings"].append(f"the session adjudication published {k}: a session scope must not")
     out["findings"] += rep.get("findings") or []
     out["kills"] = rep.get("kills") or []
+    if session == QUAL_SESSION:                                # B3Q's own block: kept, and held to the pinned experiment
+        out["qualification"] = rep.get("qualification")
+        if not rep.get("refusal") and not out["kills"]:
+            out["findings"] += qualification_block_findings(rep.get("qualification"), plan_doc, prediction_doc)
     if rep.get("refusal"):
         out["outcome"] = f"REFUSED: the replay: {rep['refusal']}"
     elif out["kills"]:
@@ -843,6 +877,137 @@ def adjudication_for(cfg: dict):
     def judge(evidence_dir) -> dict:
         return judge_session(evidence_dir, cfg["manifest"], cfg["plan"], cfg["round_plan"], cfg["prediction"], cfg["instrument_root"], cfg["ports"])
     return judge
+
+
+# ------------------------------------------------------------------ the production re-adjudicator (the manifest lifecycle's hook)
+
+
+def archived_transport_disposition(evidence: Path) -> str:
+    """The transport disposition the B3Q invocation captured, as it recorded it in runner_session.json
+    — the only place the finished session keeps it; the archived whole-of-run ruling is then REBOUND to
+    it (`archived_ruling_findings`), so the two pinned files must agree."""
+    p = Path(evidence) / "runner_session.json"
+    if not p.is_file():
+        raise Refusal("the evidence carries no runner_session.json: the session's transport disposition was not recorded")
+    try:
+        doc = json.loads(p.read_text())
+    except ValueError as exc:
+        raise Refusal(f"runner_session.json is not readable JSON: {exc}") from None
+    transport = doc.get("transport") if isinstance(doc, dict) else None
+    disp = transport.get("transport_disposition") if isinstance(transport, dict) else None
+    if not isinstance(disp, str) or not disp.strip():
+        raise Refusal("runner_session.json records no transport_disposition")
+    return disp
+
+
+def qualification_session_plan(manifest: dict, manifest_file_sha256: str, plan_doc: dict, transport_disposition: str, ports: Ports) -> dict:
+    """B3Q's session plan REBUILT from the run manifest's pinned experiment — the plan the preflight
+    built for the live session (a test holds the two equal key for key), so the runner and the offline
+    re-adjudication judge the SAME session: the same slice, records, frames, budgets and deadline
+    (the pinned planning bound, never the rate the session went on to measure)."""
+    budget, pairs_total = plan_doc["budget_per_arm"], plan_doc["pairs"]
+    if budget != QUAL_BUDGET or pairs_total != QUAL_PAIRS:
+        raise Refusal(f"the pinned B3Q plan is {pairs_total} pairs at budget {budget}, not {QUAL_PAIRS} at {QUAL_BUDGET}")
+    master = plan_doc["seed_derivation"]["master_seed"]
+    pb = plan_doc.get("planning_bound") or {}
+    rate = pb.get("rate_per_hour")
+    if not _finite_positive(rate):
+        raise Refusal(f"the pinned B3Q planning bound's rate {rate!r} is not a finite positive rate")
+    if not _finite_positive(pb.get("session_timeout_s")):
+        raise Refusal(f"the pinned B3Q planning bound's session_timeout_s {pb.get('session_timeout_s')!r} is not a finite positive number")
+    records_expected = bsess.records(QUAL_PAIRS, budget)
+    if records_expected != (plan_doc.get("records") or {}).get("total"):
+        raise Refusal(f"the pinned B3Q plan says {(plan_doc.get('records') or {}).get('total')} records, the record arithmetic says {records_expected}")
+    timeout = deadline_s(records_expected, rate)
+    if not math.isclose(float(pb["session_timeout_s"]), timeout, rel_tol=1e-9):
+        raise Refusal(f"the pinned B3Q planning bound's session_timeout_s {pb['session_timeout_s']} is not the frozen formula's {timeout}")
+    try:
+        b1_manifest = json.loads(B1_MANIFEST.read_text())
+    except (OSError, ValueError) as exc:
+        raise Refusal(f"no readable B1 manifest: {exc}") from None
+    wire = (b1_manifest.get("protocol") or {}).get("wire")
+    if wire != PROTOCOL_WIRE:
+        raise Refusal(f"the pinned wire protocol {wire!r} is not the {PROTOCOL_WIRE!r} this stage speaks")
+    ls = ports.schedule()
+    try:
+        flags = b2sess.encode_slice(ls.flags_for(ls.MODE_ABBA, watchdog=True, rec_control=True, sign_control=True), pairs_total, 0, QUAL_PAIRS)
+    except ValueError as exc:
+        raise Refusal(f"the identity page cannot carry this slice: {exc}") from None
+    audit_seqs = set(range(1, records_expected + 1))
+    expected_frames = ls.expected_frames(records_expected - 2, audit_seqs, wire)
+    crc_budget = ls.crc_budget(expected_frames["total"])
+    resend = resend_budget(expected_frames["total"])
+    authority = Authority()
+    board = authority.check_board(manifest)
+    car = manifest.get("carrier") or {}
+    return {
+        "session": QUAL_SESSION, "mode": bs.ENGINE_VERSION, "master_seed": master, "n": budget, "schedule": [],
+        "audit_policy": AUDIT_POLICY, "audit_seqs": audit_seqs, "pair_first": 0, "pair_count": QUAL_PAIRS, "pairs_total": pairs_total,
+        "flags": flags, "expected_records": records_expected, "records_per_pair": pl.records_per_pair(budget),
+        "ledger_entries": QUAL_PAIRS * budget, "expected_frames": expected_frames,
+        "crc_budget": crc_budget, "bad_frame_budget": crc_budget,
+        "crc_formula": "ceil(4 x expected_total / 1000) (D-s4), from the instrument's l6_schedule",
+        "resend_budget": resend, "resend_formula": "ceil(4 x expected_frames / 1000) (preregistration v0.3.1 §2 transport)",
+        "transport_disposition": transport_disposition,
+        "session_timeout_s": timeout, "deadline_formula": pl.DEADLINE_FORMULA,
+        "deadline_rate": {"source": "the pinned B3Q planning bound (never a calibration)", "rule": pb.get("rule"), "rate_per_hour": rate},
+        "protocol": wire,
+        "rules_version": "b3/v0.3 over L6 v0.7 rules", "bad_frame_policy": "ledger", "hb_rule": "v07", "rec_retry_control": True,
+        "carto_version": carto_mod.CARTO_VERSION, "arms": brec.ARMS, "b1_map_cost": oa.B1_MAP_COST,
+        "inputs": expected_inputs(manifest, QUALIFICATION, authority),
+        "binding": {"image_sha256": (manifest.get("image") or {}).get("sha256"), "prereg_sha256": (manifest.get("prereg") or {}).get("sha256"),
+                    "session": QUAL_SESSION, "schedule_mode": bs.ENGINE_VERSION,
+                    "master_seed": master, "b3_manifest_sha256": manifest_file_sha256,
+                    "psoracle_commit": (manifest.get("instrument") or {}).get("psoracle_commit"),
+                    "map_canonical_json_sha256": manifest["map"]["canonical_json_sha256"], "fitness_id": manifest["experiment"]["fitness"],
+                    "budget_per_arm": budget, "pair_first": 0, "pair_count": QUAL_PAIRS, "protocol": wire,
+                    "carrier_sha256": car.get("bitstream_sha256"), "carrier_variant": B3_VARIANT,
+                    "universe_sha256": manifest["universe"]["sha256"], "boardid": board, "resend_budget": resend,
+                    "carto_version": carto_mod.CARTO_VERSION},
+    }
+
+
+def readjudicator(manifest: dict, instrument_root=None, ports: Ports | None = None, root: Path = REPO_ROOT):
+    """The callable `b3_manifest.verify` / `qualify` take to RE-ADJUDICATE the pinned B3Q evidence —
+    `(evidence_dir, manifest_at_run)` (B2's shape). It RECOMPUTES the outcome, the measured rate, the
+    audit policy and the qualification block from the evidence files through the production
+    `judge_session`; it never echoes adjudication.json, which is what the lifecycle compares its own
+    reconstruction against. It judges against the VALIDATED RUN MANIFEST the lifecycle hands it (the
+    S1 manifest the session ran under): B3Q's own pinned plan and prediction, read from the bytes that
+    manifest pins, and the session plan rebuilt from them. `ports=None` is the production instrument."""
+    def again(evidence_dir, manifest_at_run=None) -> dict:
+        refuse = {"tool": TOOL_VERSION, "session": QUAL_SESSION, "scope": "session", "findings": [], "kills": [],
+                  "measured_rate_per_hour": None, "audit_policy": None, "qualification": None}
+        if not isinstance(manifest_at_run, dict) or manifest_at_run.get("schema") != MANIFEST_SCHEMA:
+            refuse["outcome"] = ("REFUSED: no validated run manifest was given: a re-adjudication cannot judge a session against a "
+                                 "manifest it was not run under")
+            return refuse
+        run_manifest_path = Path(evidence_dir) / MANIFEST_AT_RUN
+        if not run_manifest_path.is_file():
+            refuse["outcome"] = f"REFUSED: the evidence carries no {MANIFEST_AT_RUN}"
+            return refuse
+        for path, label in ((("image", "sha256"), "image"), (("prereg", "sha256"), "preregistration"),
+                            (("qualification_plan",), "pinned B3Q experiment")):
+            a, b = manifest_at_run, manifest
+            for k in path:
+                a = (a or {}).get(k) if isinstance(a, dict) else None
+                b = (b or {}).get(k) if isinstance(b, dict) else None
+            if a != b or a is None:
+                refuse["outcome"] = f"REFUSED: the run manifest's {label} is not the one this transition is for"
+                return refuse
+        p = ports or Ports().production()
+        iroot = instrument_root or inst.DEFAULT_ROOT
+        try:
+            if ports is None:
+                p.bind_instrument(iroot)                       # production: the instrument's validators, bound before they are imported
+            plan_doc, prediction_doc, _pin = pinned_documents(manifest_at_run, "qualification_plan", QUAL_SESSION, root)
+            session_plan = qualification_session_plan(manifest_at_run, _sha(run_manifest_path), plan_doc,
+                                                      archived_transport_disposition(Path(evidence_dir)), p)
+        except Refusal as exc:
+            refuse["outcome"] = f"REFUSED: {exc}"
+            return refuse
+        return judge_session(evidence_dir, manifest_at_run, session_plan, plan_doc, prediction_doc, iroot, p)
+    return again
 
 
 # ------------------------------------------------------------------ preflight

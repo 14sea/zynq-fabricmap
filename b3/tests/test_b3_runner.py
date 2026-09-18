@@ -1137,5 +1137,128 @@ class Verdict(unittest.TestCase):
         self.assertEqual(res["outcome"], "REFUSED: the evidence carries no run_log.json")
 
 
+class Readjudication(unittest.TestCase):
+    """The manifest unit's wiring: B3Q's qualification block KEPT in the session verdict and held to the
+    pinned experiment; the production re-adjudicator `(evidence_dir, manifest_at_run)` that rebuilds the
+    session plan from the run manifest's pinned B3Q plan / prediction and calls `judge_session`; the
+    production authority taking it when no hook is injected."""
+
+    def setUp(self):
+        self.f = Fixture("S1")
+        self.cfg = self.f.preflight()
+        rc, outcome = rn.execute(self.f.args(), self.cfg)
+        self.assertEqual((rc, outcome), (0, "PASS"))
+        self.ev = self.f.d / "evidence"
+
+    def tearDown(self):
+        self.f.close()
+
+    def again(self, manifest=None, **kw):
+        return rn.readjudicator(self.f.manifest if manifest is None else manifest, ports=self.f.ports, **kw)
+
+    def test_the_b3q_verdict_keeps_its_qualification_block(self):
+        adjudication = json.loads((self.ev / "adjudication.json").read_text())
+        want = {"fitness_values": 123, "ledger_entries": 40, "baselines": 2, "fitness_sequence_sha256": QPRED["fitness_sequence_sha256"]}
+        self.assertEqual(adjudication["qualification"], want)
+        self.assertEqual(rn.expected_qualification_block(self.f.qplan_doc, QPRED), want)
+        s3 = Fixture("S3")
+        try:
+            rn.execute(s3.args(), s3.preflight())
+            self.assertNotIn("qualification", json.loads((s3.d / "evidence" / "adjudication.json").read_text()), "a B3 session has no B3Q block")
+        finally:
+            s3.close()
+
+    def test_the_block_is_held_to_the_pinned_experiment_field_by_field(self):
+        want = rn.expected_qualification_block(self.f.qplan_doc, QPRED)
+        self.assertEqual(rn.qualification_block_findings(want, self.f.qplan_doc, QPRED), [])
+        self.assertIn("published no qualification block", rn.qualification_block_findings(None, self.f.qplan_doc, QPRED)[0])
+        for key, bad in (("fitness_values", 120), ("ledger_entries", 39), ("baselines", 1), ("baselines", True), ("fitness_sequence_sha256", "0" * 64)):
+            with self.subTest(key=key, bad=bad):
+                got = rn.qualification_block_findings({**want, key: bad}, self.f.qplan_doc, QPRED)
+                self.assertEqual(len(got), 1)
+                self.assertIn(f"the B3Q qualification block's {key} is", got[0])
+        self.assertIn("unexpected 'primary'", rn.qualification_block_findings({**want, "primary": {}}, self.f.qplan_doc, QPRED)[0])
+        real = badj.adjudicate
+
+        def without_block(*a, **k):
+            rep = real(*a, **k)
+            rep.pop("qualification", None)
+            return rep
+
+        def short_block(*a, **k):
+            rep = real(*a, **k)
+            rep["qualification"]["ledger_entries"] = 39
+            return rep
+        with mock.patch.object(badj, "adjudicate", without_block):
+            res = self.again()(self.ev, self.f.manifest)
+        self.assertTrue(res["outcome"].startswith("HOLD: the B3Q adjudication published no qualification block"), res["outcome"])
+        with mock.patch.object(badj, "adjudicate", short_block):
+            res = self.again()(self.ev, self.f.manifest)
+        self.assertTrue(res["outcome"].startswith("HOLD: the B3Q qualification block's ledger_entries is 39"), res["outcome"])
+
+    def test_the_rebuilt_session_plan_is_the_preflights_key_for_key(self):
+        rebuilt = rn.qualification_session_plan(self.f.manifest, self.f.manifest_sha, self.f.qplan_doc,
+                                                rn.archived_transport_disposition(self.ev), self.f.ports)
+        self.assertEqual(sorted(rebuilt), sorted(self.cfg["plan"]))
+        for k in sorted(rebuilt):
+            self.assertEqual(rebuilt[k], self.cfg["plan"][k], k)
+
+    def test_it_recomputes_the_verdict_from_the_run_manifests_pinned_documents(self):
+        res = self.again()(self.ev, self.f.manifest)
+        self.assertEqual((res["outcome"], res["session"], res["scope"]), ("PASS", "B3Q", "session"))
+        self.assertEqual((res["measured_rate_per_hour"], res["audit_policy"]), (2500.0, "all-self-reporting"))
+        self.assertEqual(res["qualification"], rn.expected_qualification_block(self.f.qplan_doc, QPRED))
+        self.assertTrue(res["binding_checked"])
+        (self.ev / "adjudication.json").write_text(json.dumps({"outcome": "HOLD: a stored verdict", "measured_rate_per_hour": 1.0}))
+        self.assertEqual(self.again()(self.ev, self.f.manifest)["measured_rate_per_hour"], 2500.0, "the stored adjudication is never echoed")
+
+    def test_its_refusals(self):
+        self.assertIn("REFUSED: no validated run manifest was given", self.again()(self.ev)["outcome"])
+        self.assertIn("REFUSED: no validated run manifest was given", self.again()(self.ev, {"schema": "b2_manifest"})["outcome"])
+        self.assertIn("REFUSED: the evidence carries no manifest_at_run.json", self.again()(self.f.d, self.f.manifest)["outcome"])
+        other = copy.deepcopy(self.f.manifest); other["image"]["sha256"] = "0" * 64
+        self.assertIn("REFUSED: the run manifest's image is not the one this transition is for", self.again(other)(self.ev, self.f.manifest)["outcome"])
+        other = copy.deepcopy(self.f.manifest); other["prereg"]["sha256"] = "0" * 64
+        self.assertIn("the run manifest's preregistration is not", self.again(other)(self.ev, self.f.manifest)["outcome"])
+        other = copy.deepcopy(self.f.manifest); other["qualification_plan"]["sha256"] = "0" * 64
+        self.assertIn("the run manifest's pinned B3Q experiment is not", self.again(other)(self.ev, self.f.manifest)["outcome"])
+        drifted = copy.deepcopy(self.f.manifest); drifted["qualification_plan"]["prediction_sha256"] = "0" * 64
+        self.assertIn("REFUSED: the pinned prediction", self.again(drifted)(self.ev, drifted)["outcome"])
+        rs = json.loads((self.ev / "runner_session.json").read_text())
+        rs["transport"]["transport_disposition"] = "another disposition"
+        (self.ev / "runner_session.json").write_text(json.dumps(rs))
+        res = self.again()(self.ev, self.f.manifest)
+        self.assertTrue(res["outcome"].startswith("HOLD:"), res["outcome"])
+        self.assertTrue(any("carries the transport disposition" in x for x in res["findings"]), res["findings"][:3])
+        rs["transport"]["transport_disposition"] = " "
+        (self.ev / "runner_session.json").write_text(json.dumps(rs))
+        self.assertIn("REFUSED: runner_session.json records no transport_disposition", self.again()(self.ev, self.f.manifest)["outcome"])
+        (self.ev / "runner_session.json").unlink()
+        self.assertIn("REFUSED: the evidence carries no runner_session.json", self.again()(self.ev, self.f.manifest)["outcome"])
+
+    def test_the_production_authority_takes_the_production_re_adjudicator_when_no_hook_is_injected(self):
+        seen = {}
+        fake_m, fake_p = types.ModuleType("b3_manifest"), types.ModuleType("b3_pins")
+
+        class ManifestRefusal(Exception):
+            pass
+
+        def verify(manifest, readjudicate=None):
+            seen["readjudicate"] = readjudicate
+            return {"stage": "S1"}
+        fake_m.Refusal, fake_m.verify = ManifestRefusal, verify
+        with mock.patch.dict(sys.modules, {"b3_manifest": fake_m, "b3_pins": fake_p}), \
+                mock.patch.object(rn, "readjudicator", wraps=rn.readjudicator) as spy:
+            a = rn.ProductionAuthority()
+            a.verify(self.f.manifest)
+            self.assertEqual(spy.call_count, 1)
+            self.assertIs(spy.call_args.args[0], self.f.manifest)
+            self.assertTrue(callable(seen["readjudicate"]), "None is the production path, never a skip")
+            hook = lambda ev, m_run=None: {"outcome": "PASS"}       # noqa: E731
+            a.verify(self.f.manifest, readjudicate=hook)
+            self.assertIs(seen["readjudicate"], hook)
+            self.assertEqual(spy.call_count, 1, "an injected hook is passed through untouched")
+
+
 if __name__ == "__main__":
     unittest.main()
