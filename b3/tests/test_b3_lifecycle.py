@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import contextlib
 import copy
+import errno
 import hashlib
 import io
 import json
@@ -348,13 +349,131 @@ class Publishing(unittest.TestCase):
             if needle == "init: ":
                 bman.publish_new(self.path, "first\n")
 
+    def fsync_failing_on(self, nth: int):
+        """Let the first `nth` directory fsyncs through, then fail — the confirming one is the one that
+        decides whether the journal may be removed."""
+        real, calls = bman._fsync_dir, []
+
+        def fsync_dir(d):
+            calls.append(1)
+            if len(calls) > nth:
+                raise OSError(5, "injected fsync failure")
+            real(d)
+        return mock.patch.object(bman, "_fsync_dir", fsync_dir)
+
+    def test_a_commit_that_cannot_be_confirmed_durable_keeps_its_journal(self):
+        """The owner's P1 on 2e7c0cb: the journal was removed in the finally even though the confirming fsync
+        had failed, so the next trusted reader took the new bytes with nothing beside them to say otherwise."""
+        bman.publish_new(self.path, "first\n")
+        with self.fsync_failing_on(1):                  # the journal's own write is fsynced; the commit's confirmation is not
+            with self.assertRaises(OSError):
+                bman.replace_atomic(self.path, b"first\n", "second\n")
+        self.assertIn(".m.json.transaction", self.names(), "the journal stays: the commit was never confirmed")
+        self.assertEqual(bman.unresolved_transaction(self.path), [".m.json.transaction"])
+        with self.assertRaises(bman.Refusal) as cm:
+            bman.read_manifest(self.path)
+        self.assertIn("did not finish", str(cm.exception))
+        self.assertIn("publishing", json.loads((self.d / ".m.json.transaction").read_text())["state"])
+
+    def test_a_rollback_that_cannot_be_confirmed_durable_keeps_its_journal(self):
+        bman.publish_new(self.path, "first\n")
+        real = bman._rename_exchange
+
+        def exchange(a, b):
+            if not calls:
+                Path(b).write_bytes(b"competitor")
+            calls.append(1)
+            real(a, b)
+        calls = []
+        with mock.patch.object(bman, "_rename_exchange", exchange), self.fsync_failing_on(2):
+            with self.assertRaises(bman.Refusal) as cm:
+                bman.replace_atomic(self.path, b"first\n", "second\n")
+        self.assertIn("could NOT be confirmed durable", str(cm.exception))
+        self.assertEqual(self.path.read_bytes(), b"competitor", "the bytes ARE back")
+        self.assertIn(".m.json.transaction", self.names(), "but nothing may be concluded until the owner checks")
+        self.assertTrue(any(".displaced." in n for n in self.names()))
+        with self.assertRaises(bman.Refusal):
+            bman.read_manifest(self.path)
+
+    def test_a_cleanup_error_still_closes_the_lock(self):
+        """The last fsync raising used to skip os.close(lock): the descriptor leaked and the directory stayed
+        locked for this process, so the NEXT transition could not even start."""
+        bman.publish_new(self.path, "first\n")
+        with self.fsync_failing_on(2):                  # the journal's write and the commit's confirmation pass; the cleanup's fsync raises
+            with self.assertRaises(OSError):
+                bman.replace_atomic(self.path, b"first\n", "second\n")
+        self.assertEqual(self.path.read_text(), "second\n", "the transition itself committed")
+        self.assertEqual(self.names(), ["m.json"], "and its journal was removed: the commit WAS confirmed")
+        bman.replace_atomic(self.path, b"second\n", "third\n")      # the lock is free: no descriptor was leaked
+        self.assertEqual(self.path.read_text(), "third\n")
+        self.assertEqual(self.names(), ["m.json"])
+
+    def test_a_dangling_journal_symlink_is_an_unresolved_transaction_in_both_modules(self):
+        """The owner's P2 on 2e7c0cb: .exists() follows the link and said False while the runner's glob listed
+        it — the two modules disagreed, and _write_journal would have written THROUGH it."""
+        bman.publish_new(self.path, "first\n")
+        journal = self.d / ".m.json.transaction"
+        target = self.d / "nowhere.json"
+        journal.symlink_to(target)
+        self.assertFalse(journal.exists(), "dangling: this is what used to answer the question")
+        self.assertTrue(journal.is_symlink())
+        self.assertEqual(bman.unresolved_transaction(self.path), [journal.name])
+        self.assertEqual(rn.unfinished_transition(self.path), [journal.name], "and the runner says the same")
+        for reader in (lambda: bman.read_manifest(self.path), lambda: rn.Authority().read_manifest(self.path)):
+            with self.assertRaises((bman.Refusal, rn.Refusal)) as cm:
+                reader()
+            self.assertIn("did not finish", str(cm.exception))
+        with self.assertRaises(bman.Refusal):
+            bman.replace_atomic(self.path, b"first\n", "second\n")
+        self.assertFalse(target.exists(), "nothing was written through the symlink")
+        with mock.patch.object(bman, "unresolved_transaction", lambda p: []):     # past the gate: the write itself still refuses to follow
+            with self.assertRaises((OSError, bman.Refusal)) as cm:       # EEXIST (named) or ELOOP: never a write through the link
+                bman._write_journal(self.path, self.d / "t.part", b"a", b"b", "publishing", create=True)
+            if isinstance(cm.exception, OSError):
+                self.assertIn(cm.exception.errno, (errno.ELOOP, errno.EEXIST))
+            self.assertFalse(target.exists())
+            with self.assertRaises(OSError) as cm:                           # and the in-place update does not follow it either
+                bman._write_journal(self.path, self.d / "t.part", b"a", b"b", "withdrawing")
+            self.assertEqual(cm.exception.errno, errno.ELOOP)
+            self.assertFalse(target.exists())
+        journal.unlink()
+        self.assertEqual(bman.unresolved_transaction(self.path), [])
+        self.assertEqual(bman.read_manifest(self.path), b"first\n")
+
+    def test_a_journal_that_appeared_in_the_race_is_never_written_over(self):
+        """Past the gate (it was checked, then another writer created one): the create refuses instead of
+        truncating what is there — the other transition's record survives."""
+        bman.publish_new(self.path, "first\n")
+        journal = self.d / ".m.json.transaction"
+        journal.write_text('{"state": "another publisher\'s"}')
+        with mock.patch.object(bman, "unresolved_transaction", lambda p: []):
+            with self.assertRaises(bman.Refusal) as cm:
+                bman._write_journal(self.path, self.d / "t.part", b"a", b"b", "publishing", create=True)
+            self.assertIn("appeared while this transition was being published", str(cm.exception))
+            with self.assertRaises(bman.Refusal):
+                bman.replace_atomic(self.path, b"first\n", "second\n")
+        self.assertEqual(json.loads(journal.read_text())["state"], "another publisher's")
+        self.assertEqual(self.path.read_text(), "first\n")
+
+    def test_a_dangling_symlink_at_the_other_artifact_names_counts_too(self):
+        bman.publish_new(self.path, "first\n")
+        for name in (f".m.json.{os.getpid()}.abcd.part", "m.json.displaced.999.0"):
+            with self.subTest(artifact=name):
+                link = self.d / name
+                link.symlink_to(self.d / "nowhere.json")
+                try:
+                    self.assertEqual(bman.unresolved_transaction(self.path), [name])
+                    self.assertEqual(rn.unfinished_transition(self.path), [name])
+                finally:
+                    link.unlink()
+
     def test_the_journal_is_on_disk_before_it_is_believed(self):
         """Durability is not observable from a test that survives the crash it is about: assert the calls.
         The journal's own bytes AND its directory entry are fsynced before `_write_journal` returns."""
         synced = []
         real = os.fsync
         with mock.patch.object(bman.os, "fsync", lambda fd: synced.append(os.fstat(fd).st_mode) or real(fd)):
-            bman._write_journal(self.path, self.d / "tmp.part", b"a", b"b", "publishing")
+            bman._write_journal(self.path, self.d / "tmp.part", b"a", b"b", "publishing", create=True)
         import stat
         self.assertEqual([stat.S_ISREG(m) for m in synced], [True, False], "the journal file, then its directory")
         self.assertTrue(stat.S_ISDIR(synced[1]))
@@ -826,7 +945,17 @@ class StagesAndTransitions(Base):
             with self.assertRaises(OSError):
                 bman.replace_atomic(w.manifest_path, original, "new\n")
         self.assertEqual(w.manifest_path.read_bytes(), original)
-        self.assertEqual(self.strays(), [])
+        self.assertEqual(self.strays(), [], "the first exchange failed, the manifest is untouched: no marker is left behind")
+        def vanish_then_fail(a, b):                     # the same failure, but the manifest is NOT what we compared
+            Path(b).write_bytes(b"someone else")
+            raise OSError(5, "disk full")
+        with mock.patch.object(bman, "_rename_exchange", vanish_then_fail):
+            with self.assertRaises(OSError):
+                bman.replace_atomic(w.manifest_path, original, "new\n")
+        self.assertEqual(self.strays(), [f".{w.manifest_path.name}.transaction"], "the journal stays: the tree is not as it was found")
+        self.refused("did not finish", bman.read_manifest, w.manifest_path)
+        (w.manifest_path.parent / f".{w.manifest_path.name}.transaction").unlink()
+        w.manifest_path.write_bytes(original)
         bman.replace_atomic(w.manifest_path, original, "new\n")                   # and the positive control: the swap stands
         self.assertEqual(w.manifest_path.read_bytes(), b"new\n")
         self.assertEqual(self.strays(), [], "a committed transition leaves no journal, no temp file, nothing")

@@ -1101,7 +1101,10 @@ def unresolved_transaction(path: Path) -> list[str]:
     it sits beside a COMPLETED rollback. Every one of these must be resolved by the owner, by hand, because
     the file at the manifest's path may hold a WITHDRAWN transition (the owner's P1 on 3aa3010)."""
     path = Path(path)
-    out = [_journal(path).name] if _journal(path).exists() else []
+    j = _journal(path)
+    # ANY directory entry at the journal's name — a dangling symlink included (the owner's P2 on 2e7c0cb:
+    # .exists() follows the link and answered False while the runner's glob listed it).
+    out = [j.name] if os.path.lexists(j) else []
     out += sorted(q.name for q in path.parent.glob(f".{path.name}.*{PART_SUFFIX}"))
     out += sorted(q.name for q in path.parent.glob(f"{path.name}.{DISPLACED_TAG}.*"))
     return out
@@ -1172,15 +1175,21 @@ def _fsync_dir(d: Path) -> None:
         os.close(fd)
 
 
-def _write_journal(path: Path, tmp: Path, original: bytes, new: bytes, state: str) -> None:
+def _write_journal(path: Path, tmp: Path, original: bytes, new: bytes, state: str, create: bool = False) -> None:
     """The transaction marker, on disk and fsynced BEFORE the first exchange and updated in place: if this
     process dies at any point after that, the marker is what tells the next reader that the file at the
-    manifest's path cannot be trusted."""
+    manifest's path cannot be trusted. Never followed as a symlink and never created over an existing entry
+    (the owner's P2 on 2e7c0cb): a dangling symlink at this name is an unresolved transaction, not a target
+    to write through."""
     j = _journal(path)
     doc = {"schema": "b3_manifest_transaction", "pid": os.getpid(), "manifest": str(path), "part": str(tmp),
            "original_sha256": hashlib.sha256(original).hexdigest(), "new_sha256": hashlib.sha256(new).hexdigest(),
            "state": state, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
-    fd = os.open(j, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
+    flags = os.O_WRONLY | os.O_NOFOLLOW | (os.O_CREAT | os.O_EXCL if create else os.O_TRUNC)
+    try:
+        fd = os.open(j, flags, 0o644)
+    except FileExistsError:
+        raise Refusal(f"{j} appeared while this transition was being published; nothing more was written") from None
     with open(fd, "w", closefd=True) as f:
         f.write(json.dumps(doc, indent=1, sort_keys=True) + "\n")
         f.flush()
@@ -1251,11 +1260,17 @@ def replace_atomic(path: Path, original: bytes, text: str) -> None:
     under the temp name is exactly — not "probably" — the one displaced. Original bytes: the swap stands, the
     journal goes. Anything else: a writer that does not take the lock got in after the last comparison, and
       1. its bytes are FIRST preserved under a collision-safe `.displaced` name,
-      2. the files are exchanged back, making it the manifest again (the `.displaced` copy is then dropped and
-         the journal removed),
+      2. the files are exchanged back, making it the manifest again, and only once THAT is confirmed durable
+         are the `.displaced` copy and the journal removed,
       3. a second such writer, between the two exchanges, is kept under a collision-safe `.conflict` name,
-      4. if the exchange back FAILS, the `.displaced` copy and the JOURNAL both stay: the manifest holds the
-         withdrawn transition, and every trusted reader refuses by name until the owner restores it by hand.
+      0. if the FIRST exchange fails, nothing happened: the marker goes only once the manifest is confirmed to
+         still hold the bytes this transition compared,
+      4. if the exchange back FAILS — or succeeds but cannot be confirmed durable — the `.displaced` copy and
+         the JOURNAL both stay, and every trusted reader refuses by name until the owner resolves it by hand.
+    The journal is removed on EXACTLY one condition: the outcome, commit or rollback, was confirmed durable by
+    a directory fsync that returned (the owner's P1 on 2e7c0cb: a failing confirmation left a committed-looking
+    manifest with nothing beside it to say the transition had not finished). Cleanup is best-effort and nested
+    so that the lock's descriptor is closed whatever it raises.
     The temp file is deleted only when this invocation created it AND it holds this transition's own bytes or
     bytes already preserved."""
     import fcntl
@@ -1269,7 +1284,8 @@ def replace_atomic(path: Path, original: bytes, text: str) -> None:
     # P2 on 3aa3010 was exactly that) still cannot delete a file this invocation does not own.
     mine = False
     disposable = False
-    journalled = False
+    journalled = False                                  # is there a journal to remove at all?
+    resolved = False                                    # and is the outcome DURABLE — the one state that licenses removing it?
     try:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -1288,27 +1304,43 @@ def replace_atomic(path: Path, original: bytes, text: str) -> None:
         try:
             if path.read_bytes() != original:          # the cheap early answer; the exchange below is the authority
                 raise Refusal(f"{path} changed while the transition was being verified; nothing was written")
-            _write_journal(path, tmp, original, new, "publishing: the first exchange is about to happen")
+            _write_journal(path, tmp, original, new, "publishing: the first exchange is about to happen", create=True)
             journalled = True
             _rename_exchange(tmp, path)
         except FileNotFoundError:
             raise Refusal(f"{path} vanished while the transition was being verified; nothing was written") from None
+        except OSError:
+            # renameat2 reporting an error means the exchange did NOT happen. If the manifest is still the
+            # bytes this transition compared, the tree is exactly as it was found and the marker may go with
+            # it; if it is anything else, the journal stays and the owner is told.
+            try:
+                resolved = path.read_bytes() == original
+            except OSError:
+                resolved = False
+            raise
         disposable = False                              # the temp name now holds what was displaced
         if tmp.read_bytes() == original:
             disposable = True
-            os.fsync(lock)
-            return                                      # committed; the journal goes in the finally
+            _fsync_dir(path.parent)                     # the commit is DURABLE before the journal may go (the owner's P1 on 2e7c0cb)
+            resolved = True
+            return
         displaced = _keep(tmp, path, DISPLACED_TAG)     # 1: before anything that can fail
         _write_journal(path, tmp, original, new, f"withdrawing: the manifest holds this transition, the competitor's bytes are at {displaced}")
         disposable = True
         try:
             _rename_exchange(tmp, path)                 # 2
-        except OSError as exc:                          # 4
-            journalled = False                          # the journal STAYS: the file at this path is not the authority any more
+        except OSError as exc:                          # 4: `resolved` stays False, so the journal STAYS
             raise Refusal(f"{path} changed after the last comparison, and the exchange back FAILED ({type(exc).__name__}: {exc}): the manifest "
                           f"holds the WITHDRAWN transition's bytes and NO trusted reader will accept it; the competitor's bytes are preserved at "
                           f"{displaced} and {_journal(path)} records the state — restore them by hand") from None
         disposable = False                              # the temp name holds whatever was the manifest between the exchanges
+        try:
+            _fsync_dir(path.parent)                     # the rollback is confirmed DURABLE while the journal still exists
+        except OSError as exc:                          # the bytes are back but nothing may be concluded: the journal STAYS
+            raise Refusal(f"{path} changed after the last comparison; the competitor's bytes were put back but the rollback could NOT be "
+                          f"confirmed durable ({type(exc).__name__}: {exc}): no trusted reader will accept this path until the owner checks it "
+                          f"against {displaced} and removes {_journal(path)}") from None
+        resolved = True                                 # the competitor is the manifest again, durably
         if tmp.read_bytes() != new:                     # 3
             conflict = _keep(tmp, path, CONFLICT_TAG)
             disposable = True
@@ -1320,12 +1352,14 @@ def replace_atomic(path: Path, original: bytes, text: str) -> None:
         raise Refusal(f"{path} changed after the last comparison and before the publish; the transition was withdrawn and the "
                       f"competitor's bytes are preserved")
     finally:
-        if mine and disposable:
-            tmp.unlink(missing_ok=True)
-        if journalled:
-            _journal(path).unlink(missing_ok=True)
-            _fsync_dir(path.parent)
-        os.close(lock)
+        try:                                            # every cleanup step is best-effort; the lock fd is closed whatever happens
+            if mine and disposable:
+                tmp.unlink(missing_ok=True)
+            if journalled and resolved:                 # ONLY a durable outcome licenses removing the marker
+                _journal(path).unlink(missing_ok=True)
+                _fsync_dir(path.parent)
+        finally:
+            os.close(lock)
 
 
 # ------------------------------------------------------------------ CLI
