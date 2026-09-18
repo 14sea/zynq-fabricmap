@@ -1236,6 +1236,44 @@ class Readjudication(unittest.TestCase):
         (self.ev / "runner_session.json").unlink()
         self.assertIn("REFUSED: the evidence carries no runner_session.json", self.again()(self.ev, self.f.manifest)["outcome"])
 
+    def test_the_session_records_schema_is_what_the_runner_writes(self):
+        doc = json.loads((self.ev / "runner_session.json").read_text())
+        self.assertEqual(sorted(doc), sorted(rn.SESSION_RECORD_KEYS))
+        self.assertEqual(sorted(doc["transport"]), sorted(rn.SESSION_TRANSPORT_KEYS))
+        want = {**rn.session_record_expectation(self.cfg["plan"], "S1"), "outcome": "PASS", "cause": "PASS", "measured_rate_per_hour": 2500.0}
+        self.assertEqual(rn.session_record_findings(doc, want), [])
+        self.assertEqual(set(want["transport"]), set(rn.SESSION_TRANSPORT_AUTHORITY))
+        self.assertEqual(rn.session_record_findings([], want), ["runner_session.json is not a JSON object"])
+
+    def test_the_finalisation_record_is_bound_to_the_rebuilt_session_plan_field_by_field(self):
+        """The owner's P2 on 8ba72c4 — each of the probe's five fields, the transport authority, and the types."""
+        good = json.loads((self.ev / "runner_session.json").read_text())
+        cases = (("pair_first", 0.0, "pair_first 0.0 is not an integer"), ("pair_first", False, "pair_first false is not an integer".replace("false", "False")),
+                 ("pair_count", 2, "pair_count is 2, this session's is 1"), ("master_seed", 123, "master_seed is 123, this session's is 424242"),
+                 ("expected_records", 999, "expected_records is 999, this session's is 125"), ("reached", "claim", "reached is 'claim', this session's is 'session'"),
+                 ("tool", "foreign/tool", "tool is 'foreign/tool'"), ("session", "B3", "session is 'B3'"), ("profile_stage", "S3", "profile_stage is 'S3'"),
+                 ("outcome", "HOLD: x", "outcome is 'HOLD: x'"), ("cause", "LOST", "cause is 'LOST'"), ("measured_rate_per_hour", 2500, "measured_rate_per_hour is 2500, this session's is 2500.0"),
+                 ("finalise_errors", ["record_pk: OSError"], "records finalise errors"))
+        for key, bad, needle in cases:
+            with self.subTest(key=key, bad=bad):
+                (self.ev / "runner_session.json").write_text(json.dumps({**good, key: bad}))
+                res = self.again()(self.ev, self.f.manifest)
+                self.assertTrue(res["outcome"].startswith("HOLD: "), res["outcome"])
+                self.assertTrue(any(needle in x for x in res["findings"]), res["findings"])
+        for key in rn.SESSION_TRANSPORT_AUTHORITY:
+            with self.subTest(transport=key):
+                bad = "another" if key == "transport_disposition" else good["transport"][key] + 1
+                (self.ev / "runner_session.json").write_text(json.dumps({**good, "transport": {**good["transport"], key: bad}}))
+                res = self.again()(self.ev, self.f.manifest)
+                self.assertTrue(res["outcome"].startswith("HOLD"), res["outcome"])
+                self.assertTrue(any(f"transport.{key} is" in x or "transport disposition" in x for x in res["findings"]), res["findings"])
+        (self.ev / "runner_session.json").write_text(json.dumps({**good, "transport": {**good["transport"], "frames_seen": 10.0}}))
+        self.assertTrue(any("transport.frames_seen 10.0 is not a non-negative integer" in x for x in self.again()(self.ev, self.f.manifest)["findings"]))
+        (self.ev / "runner_session.json").write_text("{not json")
+        self.assertIn("REFUSED: runner_session.json is not readable JSON", self.again()(self.ev, self.f.manifest)["outcome"])
+        (self.ev / "runner_session.json").write_text(json.dumps(good))
+        self.assertEqual(self.again()(self.ev, self.f.manifest)["outcome"], "PASS")
+
     def test_the_production_authority_takes_the_production_re_adjudicator_when_no_hook_is_injected(self):
         seen = {}
         fake_m, fake_p = types.ModuleType("b3_manifest"), types.ModuleType("b3_pins")

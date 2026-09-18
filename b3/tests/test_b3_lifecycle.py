@@ -286,7 +286,7 @@ class Base(unittest.TestCase):
         self.assertIn(needle, str(cm.exception))
         return str(cm.exception)
 
-    def cli_refused(self, needle: str, *argv, **over) -> None:
+    def cli_refused(self, needle: str, *argv, **over) -> str:
         """A refused command: exit 2, REFUSED naming the cause, the manifest bytes (or its absence) unchanged,
         no temp file left."""
         before = self.w.manifest_path.read_bytes() if self.w.manifest_path.is_file() else None
@@ -297,6 +297,7 @@ class Base(unittest.TestCase):
         after = self.w.manifest_path.read_bytes() if self.w.manifest_path.is_file() else None
         self.assertEqual(before, after, "a refused command changed the manifest")
         self.assertEqual([p.name for p in self.w.manifest_path.parent.iterdir() if p.name.endswith(".part")], [])
+        return text
 
     def mutated(self, stage: str, mutate) -> dict:
         m = self.w.at(stage).manifest()
@@ -761,12 +762,87 @@ class StagesAndTransitions(Base):
         original = w.manifest_path.read_bytes()
         self.refused("changed while the transition was being verified; nothing was written", bman.replace_atomic, w.manifest_path, b"other bytes", "new\n")
         self.assertEqual(w.manifest_path.read_bytes(), original)
-        self.assertEqual([p.name for p in w.manifest_path.parent.iterdir() if p.name.endswith(".part")], [])
-        with mock.patch.object(bman.os, "replace", side_effect=OSError("disk full")):
+        self.assertEqual(self.strays(), [])
+        with mock.patch.object(bman, "_rename_exchange", side_effect=OSError("disk full")):
             with self.assertRaises(OSError):
                 bman.replace_atomic(w.manifest_path, original, "new\n")
         self.assertEqual(w.manifest_path.read_bytes(), original)
-        self.assertEqual([p.name for p in w.manifest_path.parent.iterdir() if p.name.endswith(".part")], [])
+        self.assertEqual(self.strays(), [])
+        bman.replace_atomic(w.manifest_path, original, "new\n")                   # and the positive control: the swap stands
+        self.assertEqual(w.manifest_path.read_bytes(), b"new\n")
+        self.assertEqual(self.strays(), [])
+
+    def strays(self) -> list[str]:
+        return sorted(p.name for p in self.w.manifest_path.parent.iterdir() if ".part" in p.name or ".conflict" in p.name or p.name.endswith(".lock"))
+
+    def racing(self, *intrusions):
+        """`_rename_exchange` with a competitor: before the n-th exchange — i.e. AFTER the last comparison the
+        function made and before it publishes — `intrusions[n]` writes the manifest."""
+        real, calls = bman._rename_exchange, []
+
+        def exchange(a, b):
+            if len(calls) < len(intrusions) and intrusions[len(calls)] is not None:
+                intrusions[len(calls)](Path(b))
+            calls.append(1)
+            real(a, b)
+        return mock.patch.object(bman, "_rename_exchange", exchange)
+
+    def test_the_replace_is_a_compare_and_swap_a_competitor_after_the_last_comparison_wins(self):
+        """The owner's P2 on 8ba72c4: the target changed between the comparison and the publish and was
+        overwritten. Now: refused, and the competitor's bytes are the manifest — whether it rewrote the file
+        in place or replaced it with another inode."""
+        def in_place(p):
+            p.write_bytes(b"intruder")
+
+        def new_inode(p):
+            other = p.with_name("intruder.tmp")
+            other.write_bytes(b"intruder")
+            os.replace(other, p)
+        for how in (in_place, new_inode):
+            with self.subTest(how=how.__name__):
+                w = self.w.at("S1")
+                original = w.manifest_path.read_bytes()
+                with self.racing(how):
+                    self.refused("changed after the last comparison and before the publish; the transition was withdrawn and the competitor's bytes are preserved",
+                                 bman.replace_atomic, w.manifest_path, original, "new\n")
+                self.assertEqual(w.manifest_path.read_bytes(), b"intruder")
+                self.assertEqual(self.strays(), [])
+
+    def test_a_second_competitor_between_the_exchanges_loses_nothing_either(self):
+        w = self.w.at("S1")
+        original = w.manifest_path.read_bytes()
+        with self.racing(lambda p: p.write_bytes(b"first"), lambda p: p.write_bytes(b"second")):
+            msg = self.refused("changed twice while the transition was being published", bman.replace_atomic, w.manifest_path, original, "new\n")
+        self.assertEqual(w.manifest_path.read_bytes(), b"first")
+        kept = [p for p in w.manifest_path.parent.iterdir() if ".conflict." in p.name]
+        self.assertEqual([p.read_bytes() for p in kept], [b"second"])
+        self.assertIn(str(kept[0]), msg)
+        self.assertEqual([n for n in self.strays() if ".part" in n], [])
+
+    def test_a_racing_competitor_defeats_the_command_line_transition_too(self):
+        w = self.w.at("S0")
+        with self.racing(lambda p: p.write_bytes(b"intruder")):
+            text = w.cli("freeze", "--prereg-sha256", sha(w.root / bman.PREREG_REL), expect=2)
+        self.assertIn("REFUSED:", text)
+        self.assertIn("the competitor's bytes are preserved", text)
+        self.assertEqual(w.manifest_path.read_bytes(), b"intruder")
+        self.assertEqual(self.strays(), [])
+
+    def test_transitions_are_serialised_by_a_lock_that_leaves_no_file(self):
+        import fcntl
+        w = self.w.at("S1")
+        original = w.manifest_path.read_bytes()
+        fd = os.open(w.manifest_path.parent, os.O_RDONLY)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX)
+            self.refused("another b3_manifest transition holds the directory lock; nothing was written", bman.replace_atomic, w.manifest_path, original, "new\n")
+        finally:
+            os.close(fd)
+        self.assertEqual(w.manifest_path.read_bytes(), original)
+        self.assertEqual(self.strays(), [])
+        (w.root / "gone.json").write_bytes(b"x")
+        with self.racing(lambda p: p.unlink()):
+            self.refused("vanished while the transition was being verified", bman.replace_atomic, w.root / "gone.json", b"x", "new\n")
 
     def test_the_candidate_is_verified_before_the_file_is_replaced(self):
         """The write is the LAST act: with the replace spied, a transition whose candidate does not verify
@@ -864,7 +940,7 @@ class Qualification(Base):
         """The three must agree: the evidence's adjudication, the re-adjudication, the calibration."""
         w = self.s2()
         other = rn.readjudicator(w.manifest(), ports=w.ports(rate=3500.0), root=w.root)
-        self.refused("the re-adjudication's measured_rate_per_hour (3500.0) disagrees with the evidence's adjudication (4000.0)", w.verify, readjudicate=other)
+        self.refused("runner_session.json's measured_rate_per_hour is 4000.0, this session's is 3500.0", w.verify, readjudicate=other)   # the verdict it recomputes is what the record is held to
         policy = rn.readjudicator(w.manifest(), ports=w.ports(policy="sampled"), root=w.root)
         self.refused("the re-adjudication's audit_policy (sampled) disagrees", w.verify, readjudicate=policy)
 
@@ -912,15 +988,60 @@ class Qualification(Base):
                                      ("summary.json", lambda d: d.__setitem__("token", "another"), "summary.json's token is not the session's"),
                                      ("summary.json", lambda d: d["ruling"].__setitem__("boardid", "08EB"), "recorded ruling is not the archived whole-of-run ruling"),
                                      ("summary.json", lambda d: d.__setitem__("provisioning_ruling_sha256", "0" * 64), "provisioning_ruling_sha256 is not"),
+                                     ("runner_session.json", lambda d: d.__setitem__("pair_first", 0.0), "runner_session.json's pair_first 0.0 is not an integer"),
+                                     ("runner_session.json", lambda d: d.__setitem__("pair_count", True), "runner_session.json's pair_count True is not an integer"),
+                                     ("runner_session.json", lambda d: d.__setitem__("pair_count", 2), "runner_session.json's pair_count is 2, this session's is 1"),
+                                     ("runner_session.json", lambda d: d.__setitem__("master_seed", 123), "runner_session.json's master_seed is 123, this session's is"),
+                                     ("runner_session.json", lambda d: d.__setitem__("expected_records", 999), "runner_session.json's expected_records is 999, this session's is 125"),
+                                     ("runner_session.json", lambda d: d.__setitem__("expected_records", 125.0), "runner_session.json's expected_records 125.0 is not an integer"),
+                                     ("runner_session.json", lambda d: d.__setitem__("reached", "claim"), "runner_session.json's reached is 'claim', this session's is 'session'"),
+                                     ("runner_session.json", lambda d: d.__setitem__("tool", "foreign/tool"), "runner_session.json's tool is 'foreign/tool'"),
+                                     ("runner_session.json", lambda d: d.__setitem__("profile_stage", "S3"), "runner_session.json's profile_stage is 'S3'"),
+                                     ("runner_session.json", lambda d: d.__setitem__("outcome", "HOLD: x"), "runner_session.json's outcome is 'HOLD: x'"),
+                                     ("runner_session.json", lambda d: d.__setitem__("measured_rate_per_hour", 4000), "runner_session.json's measured_rate_per_hour is 4000, this session's is 4000.0"),
+                                     ("runner_session.json", lambda d: d.__setitem__("note", "extra"), "runner_session.json's keys are not the schema's (missing [], unexpected ['note'])"),
+                                     ("runner_session.json", lambda d: d.pop("ruling_pair"), "runner_session.json's keys are not the schema's (missing ['ruling_pair']"),
+                                     ("runner_session.json", lambda d: d.__setitem__("ruling_pair", "may be retried"), "runner_session.json's ruling_pair is not the runner's statement"),
+                                     ("runner_session.json", lambda d: d.__setitem__("at", "yesterday"), "runner_session.json's at 'yesterday' is not a UTC timestamp"),
+                                     ("runner_session.json", lambda d: d.pop("transport"), "runner_session.json carries no transport block"),
+                                     ("runner_session.json", lambda d: d["transport"].__setitem__("timeline_error", "OSError"), "runner_session.json's transport keys are not the schema's"),
+                                     ("runner_session.json", lambda d: d["transport"].__setitem__("resend_budget", d["transport"]["resend_budget"] + 1), "runner_session.json's transport.resend_budget is"),
+                                     ("runner_session.json", lambda d: d["transport"].__setitem__("crc_dropped", None), "runner_session.json's transport.crc_dropped None is not a non-negative integer"),
+                                     ("runner_session.json", lambda d: d["transport"].__setitem__("bad_frames", 10 ** 6), "runner_session.json's transport.bad_frames 1000000 exceeds its bad_frame_budget"),
+                                     ("runner_session.json", lambda d: d["transport"].__setitem__("crc_budget", d["transport"]["crc_budget"] + 5),
+                                      "re-adjudicates to \"HOLD: runner_session.json's transport.crc_budget is"),
+                                     ("runner_session.json", lambda d: d["transport"].__setitem__("expected_frames_total", 1),
+                                      "re-adjudicates to \"HOLD: runner_session.json's transport.expected_frames_total is 1"),
                                      ("runner_session.json", lambda d: d.__setitem__("cause", "HOLD"), "runner_session.json's cause is 'HOLD'"),
                                      ("runner_session.json", lambda d: d.__setitem__("session", "B3"), "runner_session.json's session is 'B3'"),
                                      ("runner_session.json", lambda d: d.__setitem__("measured_rate_per_hour", 1.0), "runner_session.json's measured_rate_per_hour"),
                                      ("runner_session.json", lambda d: d.__setitem__("finalise_errors", ["transport close: OSError"]), "records finalise errors"),
                                      ("runner_session.json", lambda d: d["transport"].__setitem__("transport_disposition", "another disposition"),
-                                      "re-adjudicates to")):
+                                      "runner_session.json's transport.transport_disposition is 'another disposition'")):
             with self.subTest(file=name, needle=needle):
                 edit(name, mutate)
-                self.cli_refused(needle, "qualify", "--evidence-dir", str(self.w.evidence))
+                text = self.cli_refused(needle, "qualify", "--evidence-dir", str(self.w.evidence))
+                # WHICH layer refused: the manifest's own binding (before any re-adjudication), except for the frame / CRC
+                # budgets, which need the instrument's schedule and are the re-adjudicator's
+                if needle.startswith("re-adjudicates"):
+                    self.assertIn("readjudicate", self.w.calls)
+                else:
+                    self.assertIn("S2: the session's final records do not close this evidence", text)
+                    self.assertNotIn("readjudicate", self.w.calls)
+
+    def test_the_owners_probe_every_field_at_once_is_refused_and_nothing_is_pinned(self):
+        """8ba72c4 accepted this record and pinned its hash into an S2 qualification."""
+        w = self.w.at("S1")
+        make_b3q_evidence(w, w.evidence)
+        doc = json.loads((w.evidence / "runner_session.json").read_text())
+        doc.update(pair_first=0.0, master_seed=123, expected_records=999, reached="claim", tool="foreign/tool")
+        (w.evidence / "runner_session.json").write_text(json.dumps(doc))
+        before = w.manifest_path.read_bytes()
+        text = w.cli("qualify", "--evidence-dir", str(w.evidence), expect=2)
+        for needle in ("pair_first 0.0 is not an integer", "master_seed is 123", "expected_records is 999"):
+            self.assertIn(needle, text)
+        self.assertEqual(w.manifest_path.read_bytes(), before)
+        self.assertEqual(w.verify()["stage"], "S1")
 
     def test_the_adjudication_must_carry_b3qs_own_block(self):
         def edit(mutate):

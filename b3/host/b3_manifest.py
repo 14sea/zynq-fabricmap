@@ -753,15 +753,22 @@ def summary_findings(evidence_dir: Path) -> list[str]:
         rs = json.loads((ev / RUNNER_SESSION).read_text())
     except (OSError, ValueError) as exc:
         return f + [f"{RUNNER_SESSION} is not readable JSON: {exc}"]
-    if not isinstance(rs, dict):
-        return f + [f"{RUNNER_SESSION} is not a JSON object"]
-    for key, want in (("session", QUAL_SESSION), ("profile_stage", "S1"), ("outcome", adj["outcome"]), ("cause", "PASS"),
-                      ("pair_first", 0), ("pair_count", 1), ("measured_rate_per_hour", adj["measured_rate_per_hour"])):
-        if rs.get(key) != want or isinstance(rs.get(key), bool) != isinstance(want, bool):
-            f.append(f"{RUNNER_SESSION}'s {key} is {rs.get(key)!r}, the evidence's is {want!r}")
-    if rs.get("finalise_errors"):
-        f.append(f"{RUNNER_SESSION} records finalise errors: {str(rs['finalise_errors'])[:120]}")
-    return f
+    # The finalisation record's EXACT schema, and every authority field bound — type-strictly — to the B3Q
+    # session: the slice, the master seed and the record count from the experiment manifest_at_run pins, the
+    # profile / stage, the point reached, the tool, the outcome / cause / rate from the adjudication, the
+    # transport disposition and resend budget from the archived whole-of-run ruling. (The frame and CRC budgets
+    # need the instrument's schedule: the re-adjudicator binds those, with all of these again, to the session
+    # plan it rebuilds.) The owner's P2 on 8ba72c4.
+    import b3_runner  # noqa: E402
+    try:
+        qp = json.loads((ev / MANIFEST_AT_RUN).read_text())["qualification_plan"]
+        want = {"tool": b3_runner.TOOL_VERSION, "session": QUAL_SESSION, "profile_stage": "S1", "reached": "session",
+                "pair_first": 0, "pair_count": 1, "master_seed": qp["master_seed"], "expected_records": qp["records"],
+                "outcome": adj["outcome"], "cause": "PASS", "measured_rate_per_hour": adj["measured_rate_per_hour"],
+                "transport": {"transport_disposition": whole.get("transport_disposition"), "resend_budget": whole.get("resend_budget")}}
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        return f + [f"{RUNNER_SESSION} cannot be bound to {MANIFEST_AT_RUN}'s pinned experiment: {type(exc).__name__}: {exc}"]
+    return f + b3_runner.session_record_findings(rs, want)
 
 
 def calibration_from(record: dict, manifest: dict) -> dict:
@@ -808,7 +815,7 @@ def check_qualification(manifest: dict, evidence_dir, readjudicate, root: Path) 
             raise Refusal(f"S2: the record's {k} is not what the evidence gives")
     sf = summary_findings(ev)
     if sf:
-        raise Refusal("S2: the session's final records do not close this evidence: " + "; ".join(sf[:3]))
+        raise Refusal("S2: the session's final records do not close this evidence: " + "; ".join(sf[:8]))
     b = rebuilt["binding"]
     qp = manifest["qualification_plan"]
     if (b["image_sha256"], b["prereg_sha256"], b["carrier_sha256"], b["carrier_variant"], b["map_canonical_json_sha256"],
@@ -1093,21 +1100,66 @@ def publish_new(path: Path, text: str) -> None:
         tmp.unlink(missing_ok=True)
 
 
+def _rename_exchange(a: Path, b: Path) -> None:
+    """renameat2(RENAME_EXCHANGE): the two names swap their files in ONE atomic step. No fallback: a
+    system without it cannot give a transition compare-and-swap semantics, and that is an OSError."""
+    import ctypes
+    import errno
+    libc = ctypes.CDLL(None, use_errno=True)
+    if not hasattr(libc, "renameat2"):
+        raise OSError(errno.ENOSYS, "renameat2 is not available: no atomic exchange on this system")
+    libc.renameat2.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+    AT_FDCWD, RENAME_EXCHANGE = -100, 2
+    if libc.renameat2(AT_FDCWD, os.fsencode(a), AT_FDCWD, os.fsencode(b), RENAME_EXCHANGE) != 0:
+        e = ctypes.get_errno()
+        raise OSError(e, os.strerror(e), str(b))
+
+
 def replace_atomic(path: Path, original: bytes, text: str) -> None:
-    """A transition's write: a temp file beside the manifest, fsynced, then one rename — and only if the
-    bytes on disk are still the ones the transition was computed from."""
+    """A transition's write, as a COMPARE-AND-SWAP over the bytes it was computed from (the owner's P2 on
+    8ba72c4: a read followed by os.replace left a window in which a competitor's bytes were overwritten).
+
+    Writers of this tool are serialised by an exclusive flock on the manifest's DIRECTORY (no lock file is
+    left in the tree). The swap itself does not rely on that: the new file and the manifest are EXCHANGED in
+    one atomic rename, so what this function then holds under the temp name is exactly — not "probably" —
+    the file it displaced. If those are the original bytes, the swap stands. If they are not, a competitor
+    wrote after the last comparison: the files are exchanged back, the competitor's bytes are the manifest
+    again, and the transition is refused. Should yet another writer land between the two exchanges, its
+    bytes are kept under a `.conflict` name and named in the refusal — nothing a competitor wrote is lost."""
+    import fcntl
     path = Path(path)
+    new = text.encode()
     tmp = path.with_name(f".{path.name}.{os.getpid()}.part")
+    lock = os.open(path.parent, os.O_RDONLY)
     try:
-        with open(tmp, "x") as f:
-            f.write(text)
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise Refusal(f"{path}: another b3_manifest transition holds the directory lock; nothing was written") from None
+        with open(tmp, "xb") as f:
+            f.write(new)
             f.flush()
             os.fsync(f.fileno())
-        if path.read_bytes() != original:
-            raise Refusal(f"{path} changed while the transition was being verified; nothing was written")
-        os.replace(tmp, path)
+        try:
+            if path.read_bytes() != original:          # the cheap early answer; the exchange below is the authority
+                raise Refusal(f"{path} changed while the transition was being verified; nothing was written")
+            _rename_exchange(tmp, path)
+        except FileNotFoundError:
+            raise Refusal(f"{path} vanished while the transition was being verified; nothing was written") from None
+        displaced = tmp.read_bytes()
+        if displaced != original:
+            _rename_exchange(tmp, path)                # the competitor's file is the manifest again
+            if tmp.read_bytes() != new:                # a second writer, between the two exchanges
+                kept = path.with_name(f"{path.name}.conflict.{os.getpid()}")
+                os.link(tmp, kept)
+                raise Refusal(f"{path} changed twice while the transition was being published; the transition was withdrawn, the first "
+                              f"competitor's bytes are the manifest and the second's are kept at {kept}")
+            raise Refusal(f"{path} changed after the last comparison and before the publish; the transition was withdrawn and the "
+                          f"competitor's bytes are preserved")
+        os.fsync(lock)
     finally:
         tmp.unlink(missing_ok=True)
+        os.close(lock)
 
 
 # ------------------------------------------------------------------ CLI

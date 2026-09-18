@@ -78,6 +78,7 @@ import json
 import math
 import os
 import pwd
+import re
 import secrets
 import shutil
 import sys
@@ -1006,7 +1007,19 @@ def readjudicator(manifest: dict, instrument_root=None, ports: Ports | None = No
         except Refusal as exc:
             refuse["outcome"] = f"REFUSED: {exc}"
             return refuse
-        return judge_session(evidence_dir, manifest_at_run, session_plan, plan_doc, prediction_doc, iroot, p)
+        res = judge_session(evidence_dir, manifest_at_run, session_plan, plan_doc, prediction_doc, iroot, p)
+        try:                                   # the finalisation record, against the REBUILT plan and THIS verdict
+            record = json.loads((Path(evidence_dir) / "runner_session.json").read_text())
+        except (OSError, ValueError) as exc:
+            record = None
+            res["findings"] = list(res.get("findings") or []) + [f"runner_session.json is not readable JSON: {exc}"]
+        if record is not None:
+            want = {**session_record_expectation(session_plan, QUALIFICATION["stage"]), "outcome": res["outcome"], "cause": classify(res["outcome"]),
+                    "measured_rate_per_hour": res.get("measured_rate_per_hour")}
+            res["findings"] = list(res.get("findings") or []) + session_record_findings(record, want)
+        if res["outcome"] == "PASS" and res["findings"]:
+            res["outcome"] = "HOLD: " + "; ".join(res["findings"][:6])
+        return res
     return again
 
 
@@ -1293,6 +1306,79 @@ def measured_rate_from(out_dir: Path, summary: dict | None) -> float | None:
     return None
 
 
+RULING_PAIR_NOTE = "spent: one ruling pair, one attempt — no retry, no redraw of seeds, no lifting of the transport stop-loss by this runner"
+STOP_LOSS_NOTE = "the owner's process: two sessions lost to the same cause → stop; three without COMPLETED → design review"
+# runner_session.json's EXACT schema (what write_session_record writes; a test holds the two equal)
+SESSION_RECORD_KEYS = ("tool", "session", "profile_stage", "outcome", "cause", "reached", "pair_first", "pair_count", "master_seed",
+                       "expected_records", "transport", "ruling_pair", "cross_session_stop_loss", "measured_rate_per_hour", "finalise_errors", "at")
+SESSION_TRANSPORT_AUTHORITY = ("expected_frames_total", "crc_budget", "bad_frame_budget", "resend_budget", "transport_disposition")
+SESSION_TRANSPORT_COUNTS = ("crc_dropped", "bad_frames", "frames_seen", "transport_rereads")
+SESSION_TRANSPORT_KEYS = SESSION_TRANSPORT_AUTHORITY + SESSION_TRANSPORT_COUNTS + ("disruptions",)
+
+
+def session_record_expectation(session_plan: dict, stage: str) -> dict:
+    """What a COMPLETED session's runner_session.json must say, from the session plan this session was
+    authorised under — every authority field, the transport's included."""
+    return {"tool": TOOL_VERSION, "session": session_plan["session"], "profile_stage": stage, "reached": "session",
+            "pair_first": session_plan["pair_first"], "pair_count": session_plan["pair_count"], "master_seed": session_plan["master_seed"],
+            "expected_records": session_plan["expected_records"],
+            "transport": {"expected_frames_total": session_plan["expected_frames"]["total"], "crc_budget": session_plan["crc_budget"],
+                          "bad_frame_budget": session_plan["bad_frame_budget"], "resend_budget": session_plan["resend_budget"],
+                          "transport_disposition": session_plan["transport_disposition"]}}
+
+
+def _strictly(got, want) -> bool:
+    """Equal AND of the same JSON type: 0.0 is not 0, True is not 1."""
+    return type(got) is type(want) and got == want
+
+
+def session_record_findings(doc, want: dict) -> list[str]:
+    """runner_session.json of a COMPLETED session, held to its exact schema and, field by field and
+    type-strictly, to `want` (`session_record_expectation`, plus whatever outcome / cause / rate the caller
+    established): the finalisation record may not contradict the session's authority (the owner's P2 on
+    8ba72c4: a record with pair_first 0.0, another master seed, 999 records, reached "claim" and a foreign
+    tool was pinned into an S2 qualification)."""
+    name = "runner_session.json"
+    if not isinstance(doc, dict):
+        return [f"{name} is not a JSON object"]
+    f: list[str] = []
+    if set(doc) != set(SESSION_RECORD_KEYS):
+        f.append(f"{name}'s keys are not the schema's (missing {sorted(set(SESSION_RECORD_KEYS) - set(doc))}, unexpected {sorted(set(doc) - set(SESSION_RECORD_KEYS))})")
+    transport = doc.get("transport")
+    if not isinstance(transport, dict):
+        f.append(f"{name} carries no transport block")
+        transport = {}
+    elif set(transport) != set(SESSION_TRANSPORT_KEYS):
+        f.append(f"{name}'s transport keys are not the schema's (missing {sorted(set(SESSION_TRANSPORT_KEYS) - set(transport))}, "
+                 f"unexpected {sorted(set(transport) - set(SESSION_TRANSPORT_KEYS))})")
+    for k in ("pair_first", "pair_count", "master_seed", "expected_records"):
+        if not _int(doc.get(k)):
+            f.append(f"{name}'s {k} {doc.get(k)!r} is not an integer")
+    for k in ("expected_frames_total", "crc_budget", "bad_frame_budget", "resend_budget") + SESSION_TRANSPORT_COUNTS:
+        if not _int(transport.get(k)) or transport[k] < 0:
+            f.append(f"{name}'s transport.{k} {transport.get(k)!r} is not a non-negative integer")
+    if not isinstance(transport.get("disruptions"), list):
+        f.append(f"{name}'s transport.disruptions is not a list")
+    for k, budget in (("crc_dropped", "crc_budget"), ("bad_frames", "bad_frame_budget")):
+        if _int(transport.get(k)) and _int(transport.get(budget)) and transport[k] > transport[budget]:
+            f.append(f"{name}'s transport.{k} {transport[k]} exceeds its {budget} {transport[budget]}")
+    for k, v in want.items():
+        if k == "transport":
+            for tk, tv in v.items():
+                if not _strictly(transport.get(tk), tv):
+                    f.append(f"{name}'s transport.{tk} is {_short(transport.get(tk))}, this session's is {_short(tv)}")
+        elif not _strictly(doc.get(k), v):
+            f.append(f"{name}'s {k} is {_short(doc.get(k))}, this session's is {_short(v)}")
+    for k, v in (("ruling_pair", RULING_PAIR_NOTE), ("cross_session_stop_loss", STOP_LOSS_NOTE)):
+        if doc.get(k) != v:
+            f.append(f"{name}'s {k} is not the runner's statement")
+    if doc.get("finalise_errors") != []:
+        f.append(f"{name} records finalise errors: {str(doc.get('finalise_errors'))[:120]}")
+    if not isinstance(doc.get("at"), str) or not re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ", doc["at"]):
+        f.append(f"{name}'s at {doc.get('at')!r} is not a UTC timestamp")
+    return f
+
+
 def write_session_record(out_dir: Path, cfg: dict, outcome: str, summary: dict | None, stage: str, errors: list[str]) -> str | None:
     """runner_session.json: this session's outcome, its cause class, its transport accounting, and
     the statement that this ruling pair is spent — the runner retries nothing."""
@@ -1300,8 +1386,7 @@ def write_session_record(out_dir: Path, cfg: dict, outcome: str, summary: dict |
            "cause": classify(outcome), "reached": stage, "pair_first": cfg["plan"]["pair_first"], "pair_count": cfg["plan"]["pair_count"],
            "master_seed": cfg["plan"]["master_seed"], "expected_records": cfg["plan"]["expected_records"],
            "transport": transport_accounting(out_dir, summary, cfg["plan"]),
-           "ruling_pair": "spent: one ruling pair, one attempt — no retry, no redraw of seeds, no lifting of the transport stop-loss by this runner",
-           "cross_session_stop_loss": "the owner's process: two sessions lost to the same cause → stop; three without COMPLETED → design review",
+           "ruling_pair": RULING_PAIR_NOTE, "cross_session_stop_loss": STOP_LOSS_NOTE,
            "measured_rate_per_hour": measured_rate_from(out_dir, summary),
            "finalise_errors": list(errors), "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     try:
