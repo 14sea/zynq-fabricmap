@@ -168,7 +168,7 @@ def write_evidence(out: Path, cfg: dict, log: dict, adjudicate, tamper=None, par
         return summary
     res = adjudicate(out)
     (out / "adjudication.json").write_text(json.dumps(res, default=str))
-    summary["adjudication"] = res
+    summary["adjudication"] = {k: res.get(k) for k in ("outcome", "findings", "replay", "b1_result", "prediction_comparison")}   # b1_session.finalize's subset
     summary["outcome"] = res["outcome"]
     return summary
 
@@ -302,7 +302,17 @@ class Fixture:
             calls.append("instrument_layer")
             return {"findings": [], "rejected": None, "rate": 2500.0, "audit_policy": session_plan["audit_policy"], "rate_report": {"evals_per_hour": 2500.0}}
 
-        return rn.Ports(which=lambda name: "/usr/bin/sb" if name == "sb" else None,
+        class FakeSigner:
+            def __init__(self, key, user):
+                self.key, self.user = key, user
+
+            def sign_genome(self, req):
+                raise AssertionError("the fake signer signs nothing")
+
+            def provision(self, execute=True, ruling=None):
+                raise AssertionError("the fake signer provisions nothing")
+
+        return rn.Ports(which=lambda name: "/usr/bin/sb" if name == "sb" else None, make_signer=lambda key, user: FakeSigner(key, user),
                         bind_instrument=lambda root: dict(INSTRUMENT), verify_carrier_chain=lambda b1m, root: calls.append("carrier_chain"),
                         schedule=lambda: ls, write_artifacts=write_artifacts, claim_ruling=claim, record_outcome=record_outcome, record_pk=record_pk,
                         install_sigterm=lambda: calls.append("sigterm"), open_transport=open_transport, board_session=lambda t: ("board", t),
@@ -532,6 +542,70 @@ class ZeroContact(unittest.TestCase):
         self.assertIsInstance(argparse.ArgumentParser(), argparse.ArgumentParser)
 
 
+class SessionDriverContract(unittest.TestCase):
+    """The owner's P1 on ab71192: the cfg the preflight returns must carry everything the instrument's
+    session driver reads — `heartbeat_s` and `signer` before its own protected block — or a real
+    session would claim the ruling, open the port and crash."""
+
+    def setUp(self):
+        self.f = Fixture("S3", 0, 2)
+
+    def tearDown(self):
+        self.f.close()
+
+    def test_every_key_the_driver_reads_is_in_the_cfg_and_in_the_contract(self):
+        import re
+        src = (R / "host/b1_session.py").read_text()
+        keys = sorted(set(re.findall(r'cfg\["([a-z_0-9]+)"\]', src)))
+        self.assertEqual(keys, sorted(rn.SESSION_CFG_KEYS), "the contract list must be the driver's actual reads")
+        cfg = self.f.preflight()
+        for k in keys:
+            self.assertIsNotNone(cfg.get(k), k)
+        self.assertTrue(callable(cfg["signer"].sign_genome) and callable(cfg["signer"].provision))
+        self.assertEqual((cfg["signer"].key, cfg["signer"].user), (self.f.d / "keys" / "K.bin", "p3signer"))
+        l6m = json.loads((inst.DEFAULT_ROOT / "manifests/l6_manifest.json").read_text())
+        self.assertEqual(cfg["heartbeat_s"], l6m["protocol"]["heartbeat_s"])
+        self.assertEqual(cfg["l6_manifest"]["pinned_at_build"]["watchdog_load_value"], rn.WATCHDOG_LOAD)
+        self.assertEqual(cfg["carrier"]["bitstream_sha256"], self.f.manifest["carrier"]["bitstream_sha256"])
+        with self.assertRaises(rn.Refusal) as cm:
+            rn.check_session_cfg(dict(cfg, heartbeat_s=None))
+        self.assertIn("lacks ['heartbeat_s']", str(cm.exception))
+        with self.assertRaises(rn.Refusal):
+            rn.check_session_cfg(dict(cfg, signer=object()))
+        # and the PREFLIGHT itself holds its cfg to the contract: a signer without the driver's methods is a refusal, zero-contact
+        self.f.ports.make_signer = lambda key, user: object()
+        refusal(self.f, "the signer has no callable 'sign_genome': the session driver would crash after the ruling was claimed")
+        self.assertNotIn("port", self.f.calls)
+        self.assertFalse((self.f.d / "evidence").exists())
+
+    def test_the_real_session_driver_refuses_through_a_board_that_answers_nothing(self):
+        """The PRODUCTION driver (b1_session.run, the instrument's own code) over the preflight's cfg
+        and a board session whose every method refuses: it must reach its own refusal path and
+        persist a summary — never a KeyError on the cfg. Host-only: nothing is opened."""
+        import board_session as bsn
+        cfg = self.f.preflight()
+
+        class Nothing:
+            def __getattr__(self, name):
+                raise bsn.SessionRefusal(f"fixture: no board ({name})")
+        out = self.f.d / "evidence"
+        out.mkdir()
+        summary = rn._prod_run_session(Nothing(), out, cfg["ruling"], cfg, rn.identity_check_for(cfg), rn.adjudication_for(cfg), "test")
+        self.assertTrue(summary["outcome"].startswith("REFUSED: fixture: no board"), summary["outcome"])
+        self.assertTrue((out / "summary.json").is_file())
+        self.assertNotIn("host_error", summary)
+        shutil.rmtree(out)
+        self.f.ports.run_session = rn._prod_run_session
+        self.f.ports.board_session = lambda transport: Nothing()
+        self.f.ports.session_refusal = bsn.SessionRefusal
+        rc, outcome = rn.execute(self.f.args(), self.f.preflight())
+        self.assertEqual(rc, 1)
+        self.assertTrue(outcome.startswith("REFUSED: fixture: no board"), outcome)
+        rec = json.loads((out / "runner_session.json").read_text())
+        self.assertEqual(rec["cause"], "LOST")
+        self.assertIn(outcome, (self.f.d / "ruling.json.consumed").read_text())
+
+
 class Preflight(unittest.TestCase):
     def test_a_b3_slice_binds_the_actual_slice_seeds_and_transport(self):
         f = Fixture("S3", 0, 2)
@@ -593,6 +667,27 @@ class Preflight(unittest.TestCase):
             (f.d / "b3q_plan.json").write_text(rendered(q))
             m = copy.deepcopy(f.manifest); m["qualification_plan"]["sha256"] = sha(f.d / "b3q_plan.json"); f.manifest_path.write_text(rendered(m))
             refusal(f, "a B3Q plan runs at budget 40, not 41")
+        finally:
+            f.close()
+
+    def test_the_watchdog_build_contract_and_heartbeat_come_from_the_pinned_l6_manifest(self):
+        f = Fixture("S3", 0, 2)
+        try:
+            root = f.d / "inst"
+            (root / "manifests").mkdir(parents=True)
+            l6m = json.loads((inst.DEFAULT_ROOT / "manifests/l6_manifest.json").read_text())
+            for mutate, needle in ((lambda m: m["pinned_at_build"].__setitem__("watchdog_load_value", 1), "D-s1: the watchdog pins are not the instrument's"),
+                                   (lambda m: m["pinned_at_build"].__setitem__("watchdog_enabled", False), "D-s1"),
+                                   (lambda m: m["pinned_at_build"].__setitem__("watchdog_prescaler", 8), "D-s1"),
+                                   (lambda m: m["protocol"].pop("heartbeat_s"), "pins no positive heartbeat_s"),
+                                   (lambda m: m["protocol"].__setitem__("heartbeat_s", 0), "pins no positive heartbeat_s")):
+                with self.subTest(needle=needle):
+                    m = copy.deepcopy(l6m)
+                    mutate(m)
+                    (root / "manifests/l6_manifest.json").write_text(json.dumps(m))
+                    refusal(f, needle, instrument_root=root)
+                    self.assertNotIn("port", f.calls)
+            refusal(f, "no readable instrument l6 manifest", instrument_root=f.d / "nowhere")
         finally:
             f.close()
 
@@ -692,16 +787,30 @@ class Execution(unittest.TestCase):
         self.assertIn("provisioning session outcome: PASS", (f.d / "pk.json.consumed").read_text())
         self.assertEqual(f.calls.count("session"), 1)
 
-    def test_no_clobber_after_preflight_and_artifacts_before_any_claim(self):
+    def test_no_clobber_after_preflight_writes_nothing_into_a_directory_it_did_not_create(self):
+        """The owner's P2 on ab71192: a directory (or a symlink to one) that appears between the
+        preflight and the session is someone else's — REFUSED, and not a byte written into it."""
         f = self.f
         cfg = f.preflight()
         (f.d / "evidence").mkdir()
+        (f.d / "evidence" / "owner.txt").write_text("not ours\n")
         rc, outcome = rn.execute(f.args(), cfg)
         self.assertEqual(rc, 2)
-        self.assertTrue(outcome.startswith("REFUSED: session artifacts not archived"))
-        self.assertNotIn("claim", f.calls)
-        self.assertNotIn("port", f.calls)
+        self.assertTrue(outcome.startswith("REFUSED:") and "no-clobber" in outcome, outcome)
+        self.assertEqual([p.name for p in (f.d / "evidence").iterdir()], ["owner.txt"])
+        for contact in ("artifacts", "claim", "port"):
+            self.assertNotIn(contact, f.calls)
         self.assertFalse((f.d / "ruling.json.consumed").exists())
+        shutil.rmtree(f.d / "evidence")
+        target = f.d / "someone_elses"
+        target.mkdir()
+        (target / "owner.txt").write_text("not ours\n")
+        (f.d / "evidence").symlink_to(target)
+        rc, outcome = rn.execute(f.args(), cfg)
+        self.assertEqual(rc, 2)
+        self.assertIn("no-clobber", outcome)
+        self.assertEqual([p.name for p in target.iterdir()], ["owner.txt"])
+        self.assertNotIn("artifacts", f.calls)
 
     def test_a_ruling_that_changed_between_preflight_and_archive_is_refused_before_the_claim(self):
         f = self.f
@@ -814,6 +923,50 @@ class Execution(unittest.TestCase):
         self.assertEqual(self.f.manifest_path.read_bytes(), before, "the runner never transitions the manifest")
         self.assertNotIn("qualify", self.f.authority.calls)
 
+    def test_the_b3q_rate_is_read_from_the_adjudication_on_disk(self):
+        """The owner's P2 on ab71192: the production finalizer keeps only a subset of the verdict in
+        the summary; the rate comes from adjudication.json."""
+        self.f.close()
+        self.f = Fixture("S1")
+        rc, outcome, rec = self._run()
+        self.assertEqual(outcome, "PASS")
+        self.assertEqual(rec["measured_rate_per_hour"], 2500.0)
+        self.assertIsNone(rn.measured_rate_from(self.f.d, {"adjudication": {"outcome": "PASS"}}), "no file, no rate — never invented")
+        self.assertEqual(rn.measured_rate_from(self.f.d / "evidence", {"adjudication": {"outcome": "PASS", "measured_rate_per_hour": 7.0}}), 7.0)
+
+    def test_an_implementation_error_is_never_a_refusal(self):
+        """The owner's P3 on ab71192: a defect inside the authority propagates (an INTERNAL ERROR on
+        the CLI, exit 3), and only the authority's own refusal classes become REFUSED."""
+        class Buggy(FakeAuthority):
+            def verify(self, manifest, readjudicate=None):
+                raise AttributeError("'NoneType' object has no attribute 'stage'")
+        self.f.authority = Buggy()
+        with self.assertRaises(AttributeError):
+            self.f.preflight()
+        with mock.patch.object(rn, "production_authority", lambda: Buggy()), mock.patch.object(rn.Ports, "production", lambda self: self.f_ports):
+            rn.Ports.f_ports = self.f.ports
+            with mock.patch("sys.stderr", new=__import__("io").StringIO()) as err:
+                rc = rn.main(["--ruling", str(self.f.ruling), "--provision-ruling", str(self.f.pk), "--boundary", str(self.f.boundary),
+                              "--out", str(self.f.d / "evidence"), "--pair-first", "0", "--pair-count", "2", "--manifest", str(self.f.manifest_path),
+                              "--image", str(self.f.d / "b3_app.bin"), "--key", str(self.f.d / "keys" / "K.bin")])
+        self.assertEqual(rc, 3)
+        self.assertIn("INTERNAL ERROR: AttributeError", err.getvalue())
+        self.assertIn("Traceback", err.getvalue())
+        self.assertFalse((self.f.d / "evidence").exists())
+        # the production adapter converts ONLY the module's declared refusal classes
+        class ManifestRefusal(Exception):
+            pass
+        fake_m = types.SimpleNamespace(Refusal=ManifestRefusal, check_board=lambda m: "17A6", manifest_sha256=lambda m: "0" * 64,
+                                       verify=lambda m, readjudicate=None: (_ for _ in ()).throw(ManifestRefusal("S3: drifted")))
+        fake_p = types.SimpleNamespace(PinRefusal=ManifestRefusal, verify=lambda manifest=None: (_ for _ in ()).throw(TypeError("bad call")))
+        with mock.patch.dict(sys.modules, {"b3_manifest": fake_m, "b3_pins": fake_p}):
+            auth = rn.production_authority()
+            with self.assertRaises(rn.Refusal) as cm:
+                auth.verify({}, None)
+            self.assertEqual(str(cm.exception), "manifest: S3: drifted")
+            with self.assertRaises(TypeError):
+                auth.verify_pins({}, R)
+
     def test_the_session_verdict_refuses_without_the_plan_and_prediction(self):
         cfg = self.f.preflight()
         cfg = dict(cfg, prediction=None)
@@ -852,14 +1005,34 @@ class Verdict(unittest.TestCase):
         self.assertTrue(res["outcome"].startswith("HOLD: the archived manifest_at_run.json hashes to"), res["outcome"])
         self.assertEqual(res["replay"], {}, "the evidence does not belong to this invocation: nothing replayed")
 
-    def test_the_archived_rulings_are_rebound_with_the_slice_and_the_transport(self):
+    def test_the_archived_rulings_are_rebound_with_the_preflights_own_guards(self):
+        """The owner's P2 on ab71192: the offline rebinding uses the same semantics as the preflight —
+        the slice, the resend budget, the transport disposition EQUAL to the invocation's, and the
+        provisioning ruling binding no master seed and no slice."""
         import b1_qualification as bq
+
+        def archive(name, doc):
+            (self.ev / name).write_text(json.dumps(bq.archive_envelope(json.dumps(doc).encode()), indent=1) + "\n")
         r = self.f.ruling_doc(); r["pair_count"] = 1; r["resend_budget"] = 1
-        env = bq.archive_envelope(json.dumps(r).encode())
-        (self.ev / "ruling_whole_of_run.json").write_text(json.dumps(env, indent=1) + "\n")
+        archive("ruling_whole_of_run.json", r)
         res = self._judge()
         self.assertTrue(any("bound to pair_count = 1" in x for x in res["findings"]), res["findings"][:4])
-        self.assertTrue(any("archived resend_budget is 1" in x for x in res["findings"]), res["findings"][:4])
+        r = self.f.ruling_doc(); r["resend_budget"] = 1
+        archive("ruling_whole_of_run.json", r)
+        res = self._judge()
+        self.assertTrue(any("carries resend_budget 1, this session's schedule gives" in x for x in res["findings"]), res["findings"][:4])
+        r = self.f.ruling_doc(); r["transport_disposition"] = "stop-loss lifted for this session"
+        archive("ruling_whole_of_run.json", r)
+        res = self._judge()
+        self.assertTrue(any("carries the transport disposition 'stop-loss lifted for this session', this session's is" in x for x in res["findings"]), res["findings"][:4])
+        archive("ruling_whole_of_run.json", self.f.ruling_doc())
+        pk = self.f.pk_doc(); pk["master_seed"] = self.f.master; pk["pair_first"] = 0; pk["pair_count"] = 2
+        archive("ruling_provisioning.json", pk)
+        res = self._judge()
+        self.assertTrue(any("carries a master_seed: the provisioning ruling binds no experiment" in x for x in res["findings"]), res["findings"][:4])
+        self.assertTrue(any("carries 'pair_first': it binds no slice" in x for x in res["findings"]), res["findings"][:4])
+        archive("ruling_provisioning.json", self.f.pk_doc())
+        self.assertEqual(self._judge()["outcome"], "PASS")
 
     def test_the_identity_and_inputs_are_held(self):
         res = self._judge(tamper=lambda log: log["app_identity"].__setitem__("arms", "RF"))

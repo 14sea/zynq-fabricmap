@@ -205,11 +205,18 @@ class ProductionAuthority(Authority):
             self._m, self._p = m, p
         return self._m, self._p
 
+    @staticmethod
+    def _refusals(module, *names) -> tuple:
+        """The refusal classes the authority module DECLARES (`Refusal`, `PinRefusal`); only those become
+        this runner's Refusal — an AttributeError or TypeError inside the authority is an implementation
+        defect and stays an INTERNAL ERROR (the owner's P3 on ab71192)."""
+        return tuple(c for c in (getattr(module, n, None) for n in names) if isinstance(c, type) and issubclass(c, BaseException))
+
     def check_board(self, manifest: dict) -> str:
         m, _ = self._modules()
         try:
             return m.check_board(manifest)
-        except Exception as exc:
+        except self._refusals(m, "Refusal") as exc:
             raise Refusal(str(exc)) from None
 
     def manifest_sha256(self, manifest: dict) -> str:
@@ -220,14 +227,14 @@ class ProductionAuthority(Authority):
         m, _ = self._modules()
         try:
             return m.verify(manifest, readjudicate=readjudicate)
-        except Exception as exc:
+        except self._refusals(m, "Refusal") as exc:
             raise Refusal(f"manifest: {exc}") from None
 
     def verify_pins(self, manifest: dict, root: Path) -> dict:
         _, p = self._modules()
         try:
             return p.verify(manifest=manifest)
-        except Exception as exc:
+        except self._refusals(p, "PinRefusal", "Refusal") as exc:
             raise Refusal(f"instrument pins: {exc}") from None
 
 
@@ -259,6 +266,7 @@ class Ports:
     board_session: object = None                   # (transport) -> session
     run_session: object = None                     # (session, out_dir, ruling, cfg, identity_check, adjudicate, tool) -> summary dict
     instrument_layer: object = None                # (evidence, log, session_plan, instrument_root) -> {"findings", "rejected", "rate", "audit_policy", ...}
+    make_signer: object = None                     # (key_path, signer_user) -> the signer (sign_genome / provision), the gate-signer principal
     session_refusal: type = Exception              # the transport / session refusal exception type
     consts: object = None                          # the carrier constants for the adjudicator (None = the instrument's)
     common_validation: bool = True                 # the instrument's common-envelope validation inside the record replay (production: always)
@@ -268,7 +276,8 @@ class Ports:
                      schedule=_prod_schedule, write_artifacts=_prod_write_artifacts, claim_ruling=_prod_claim,
                      record_outcome=_prod_record_outcome, record_pk=_prod_record_pk, install_sigterm=_prod_sigterm,
                      open_transport=_prod_transport, board_session=_prod_board_session, run_session=_prod_run_session,
-                     instrument_layer=instrument_findings, session_refusal=_prod_session_refusal(), consts=None, common_validation=True)
+                     instrument_layer=instrument_findings, make_signer=_prod_signer, session_refusal=_prod_session_refusal(), consts=None,
+                     common_validation=True)
 
 
 def _prod_bind(root):
@@ -313,6 +322,31 @@ def _prod_record_outcome(consumed, why):
 def _prod_record_pk(pk_path, outcome):
     import l3_runner as l3  # noqa: E402
     l3._record_pk(Path(pk_path), outcome)
+
+
+def _prod_signer(key_path, signer_user):
+    import l3_runner as l3  # noqa: E402
+    return l3.SubprocessSigner(Path(key_path), script=REPO_ROOT / "host/b1_sign_arm.py", signer_user=signer_user)
+
+
+# The cfg keys the instrument's session driver (`b1_session.run`) reads — BEFORE its own protected
+# block for `heartbeat_s` and `signer`. A preflight that returns a cfg without any of them would claim
+# the ruling and open the port and then crash (the owner's P1 on ab71192); `check_session_cfg` holds
+# the returned cfg to this list.
+SESSION_CFG_KEYS = ("bitstream", "carrier", "heartbeat_s", "image", "image_sha256", "instrument", "manifest_sha256", "plan",
+                    "provision_execute", "provision_ruling", "signer", "token")
+
+
+def check_session_cfg(cfg: dict) -> None:
+    missing = [k for k in SESSION_CFG_KEYS if cfg.get(k) is None]
+    if missing:
+        raise Refusal(f"the session cfg lacks {missing}: the session driver would crash after the ruling was claimed")
+    signer = cfg["signer"]
+    for attr in ("sign_genome", "provision"):
+        if not callable(getattr(signer, attr, None)):
+            raise Refusal(f"the signer has no callable {attr!r}: the session driver would crash after the ruling was claimed")
+    if not isinstance(cfg["heartbeat_s"], (int, float)) or isinstance(cfg["heartbeat_s"], bool) or cfg["heartbeat_s"] <= 0:
+        raise Refusal(f"heartbeat_s {cfg['heartbeat_s']!r} is not a positive number")
 
 
 def _prod_sigterm():
@@ -397,13 +431,16 @@ def bind_ruling(ruling: dict, text: str, session: str, prereg_sha: str, image_sh
         raise Refusal(f"ruling {text!r} carries a master_seed: the provisioning ruling binds no experiment")
 
 
-def check_transport_ruling(ruling: dict, text: str, want_resend: int, expected_total: int) -> dict:
+def check_transport_ruling(ruling: dict, text: str, want_resend: int, expected_total: int, want_disposition: str | None = None) -> dict:
     """Preregistration §2: every B3 session's ruling pair carries its own transport disposition and
     its rel-v4 resend budget N = ceil(4 × expected_frames / 1000) — computed from the production
-    schedule over this session's actual record count, never a literal."""
+    schedule over this session's actual record count, never a literal. With `want_disposition` (the
+    offline rebinding) the disposition must be the one this invocation captured."""
     disp = ruling.get("transport_disposition")
     if not isinstance(disp, str) or not disp.strip():
         raise Refusal(f"ruling {text!r} carries no transport_disposition: no session runs without one (the CH340 stop-loss is in force)")
+    if want_disposition is not None and disp != want_disposition:
+        raise Refusal(f"ruling {text!r} carries the transport disposition {disp!r}, this session's is {want_disposition!r}")
     got = ruling.get("resend_budget")
     if not _int(got):
         raise Refusal(f"ruling {text!r} carries no integer resend_budget")
@@ -549,6 +586,7 @@ def archived_ruling_findings(evidence: Path, session_plan: dict) -> list[str]:
     want = session_plan.get("binding") or {}
     session = session_plan.get("session")
     texts = {"whole_of_run": QUAL_RULING_TEXT if session == QUAL_SESSION else RULING_TEXT, "provisioning": PROVISION_RULING_TEXT}
+    want = dict(want, transport_disposition=session_plan.get("transport_disposition"))
     f: list[str] = []
     boards: dict[str, object] = {}
     want_board = want.get("boardid")
@@ -565,33 +603,34 @@ def archived_ruling_findings(evidence: Path, session_plan: dict) -> list[str]:
         except bq.QualificationRefusal as exc:
             f.append(f"{name}: {exc}")
             continue
-        if ruling.get("ruling") != texts[key]:
-            f.append(f"{name}: the archived ruling text is {_short(ruling.get('ruling'))}, not {_short(texts[key])}")
+        text = texts[key]
+        if ruling.get("ruling") != text:
+            f.append(f"{name}: the archived ruling text is {_short(ruling.get('ruling'))}, not {_short(text)}")
         for field_ in ("boardid", "granted_by", "date"):
             if not ruling.get(field_):
                 f.append(f"{name}: the archived ruling lacks {field_!r}")
         boards[key] = ruling.get("boardid")
-        bind = {"session": session, "prereg_sha256": want.get("prereg_sha256"), "image_sha256": want.get("image_sha256"),
-                "b3_manifest_sha256": want.get("b3_manifest_sha256")}
-        if key == "whole_of_run":
-            bind["master_seed"] = want.get("master_seed")
-            bind["pair_first"], bind["pair_count"] = want.get("pair_first"), want.get("pair_count")
-            for k in ("transport_disposition", "resend_budget"):
-                if k not in ruling:
-                    f.append(f"{name}: the archived ruling carries no {k}")
-            if ruling.get("resend_budget") != want.get("resend_budget"):
-                f.append(f"{name}: the archived resend_budget is {_short(ruling.get('resend_budget'))}, this session's is {_short(want.get('resend_budget'))}")
-        for k, v in bind.items():
-            got = ruling.get(k)
-            if k in ("master_seed", "pair_first", "pair_count") and isinstance(got, str):
-                try:
-                    got = int(got, 0)
-                except ValueError:
-                    got = None
-            if v is None:
-                f.append(f"{name}: this invocation declares no {k}, so the archive cannot be rebound to one")
-            elif got != v:
-                f.append(f"{name}: the archived ruling is bound to {k} = {_short(got)}, this session's is {_short(v)}")
+        # the SAME guards the preflight applied to the live rulings (the owner's P2 on ab71192): the binding
+        # (the whole-of-run ruling to the master seed and the slice; the P3-K ruling to neither), and the
+        # transport disposition and resend budget equal to what this invocation captured
+        needed = ("session", "prereg_sha256", "image_sha256", "b3_manifest_sha256") + \
+            (("master_seed", "pair_first", "pair_count", "resend_budget", "transport_disposition") if key == "whole_of_run" else ())
+        absent = [k for k in needed if want.get(k) is None]
+        if absent:
+            f.append(f"{name}: this invocation declares no {absent}, so the archive cannot be rebound")
+            continue
+        try:
+            if key == "whole_of_run":
+                bind_ruling(ruling, text, session, want["prereg_sha256"], want["image_sha256"], want["b3_manifest_sha256"], want["master_seed"],
+                            (want["pair_first"], want["pair_count"]))
+                check_transport_ruling(ruling, text, want["resend_budget"], session_plan["expected_frames"]["total"], want["transport_disposition"])
+            else:
+                for k in ("pair_first", "pair_count"):
+                    if k in ruling:
+                        f.append(f"{name}: the archived provisioning ruling carries {k!r}: it binds no slice")
+                bind_ruling(ruling, text, session, want["prereg_sha256"], want["image_sha256"], want["b3_manifest_sha256"], None, None)
+        except Refusal as exc:
+            f.append(f"{name}: {exc}")
     if len(boards) == len(bq.RULING_FILES) and len(set(map(str, boards.values()))) != 1:
         f.append(f"the two archived authorisations name different boards: { {k: _short(v) for k, v in boards.items()} }")
     if want_board is not None:
@@ -810,10 +849,10 @@ def preflight(a, profile: dict = SEARCH, authority: Authority | None = None, por
         boundary = json.loads(Path(a.boundary).read_text())
     except (OSError, ValueError) as exc:
         raise Refusal(f"no readable principal boundary at {a.boundary}: {exc}") from None
+    import b1_records as br  # noqa: E402 — the instrument's validators, bound above
     try:
-        import b1_records as br  # noqa: E402 — the instrument's validators, bound above
         br.boundary_established(boundary, time.time())
-    except Exception as exc:
+    except (br.RecordError, br.SchemaError) as exc:
         raise Refusal(f"principal boundary: {exc}") from None
     me = pwd.getpwuid(os.getuid()).pw_name
     if boundary["runner_user"] != me:
@@ -941,6 +980,17 @@ def preflight(a, profile: dict = SEARCH, authority: Authority | None = None, por
             raise Refusal(f"the pinned B3Q planning bound's session_timeout_s {pb.get('session_timeout_s')} is not the frozen formula's {timeout}")
         rate_note = {"source": "the pinned B3Q planning bound (never a calibration)", "rule": pb.get("rule"), "rate_per_hour": rate}
     ls = ports.schedule()
+    l6m_path = Path(a.instrument_root) / "manifests/l6_manifest.json"
+    try:
+        l6m = json.loads(l6m_path.read_text())
+    except (OSError, ValueError) as exc:
+        raise Refusal(f"no readable instrument l6 manifest at {l6m_path}: {exc}") from None
+    wd = l6m.get("pinned_at_build") or {}
+    if not wd.get("watchdog_enabled") or wd.get("watchdog_load_value") != WATCHDOG_LOAD or wd.get("watchdog_prescaler") != WATCHDOG_PRESCALER:
+        raise Refusal("D-s1: the watchdog pins are not the instrument's (watchdog_enabled / watchdog_load_value / watchdog_prescaler)")
+    heartbeat_s = (l6m.get("protocol") or {}).get("heartbeat_s")
+    if not isinstance(heartbeat_s, (int, float)) or isinstance(heartbeat_s, bool) or heartbeat_s <= 0:
+        raise Refusal(f"the instrument's l6 manifest pins no positive heartbeat_s ({heartbeat_s!r})")
     wire = (b1_manifest.get("protocol") or {}).get("wire")
     if not isinstance(wire, str) or not wire:
         raise Refusal("the B1 manifest pins no protocol.wire: the frame arithmetic has no authority")
@@ -986,13 +1036,16 @@ def preflight(a, profile: dict = SEARCH, authority: Authority | None = None, por
                     "universe_sha256": manifest["universe"]["sha256"], "boardid": board, "resend_budget": resend,
                     "carto_version": carto_mod.CARTO_VERSION},
     }
-    return {"profile": profile, "ruling": ruling, "provision_ruling_parsed": pk, "manifest": manifest, "manifest_sha256": manifest_sha,
-            "manifest_path": manifest_path, "ruling_path": Path(a.ruling), "provision_ruling_path": Path(a.provision_ruling),
-            "pins": pins, "carrier": {"bitstream_sha256": car["bitstream_sha256"]}, "bitstream": bitstream,
-            "image": image_path, "image_sha256": image_sha, "plan": session_plan, "round_plan": plan_doc, "prediction": prediction_doc,
-            "seeds": seeds, "context": ctx, "signer": None, "provision_execute": True, "provision_ruling": a.provision_ruling,
-            "token": secrets.token_hex(16), "instrument": verified, "instrument_root": a.instrument_root, "ports": ports,
-            "authority": authority.name, "transport": transport}
+    cfg = {"profile": profile, "ruling": ruling, "provision_ruling_parsed": pk, "manifest": manifest, "manifest_sha256": manifest_sha,
+           "manifest_path": manifest_path, "ruling_path": Path(a.ruling), "provision_ruling_path": Path(a.provision_ruling),
+           "pins": pins, "carrier": {"bitstream_sha256": car["bitstream_sha256"]}, "bitstream": bitstream,
+           "image": image_path, "image_sha256": image_sha, "plan": session_plan, "round_plan": plan_doc, "prediction": prediction_doc,
+           "seeds": seeds, "context": ctx, "signer": ports.make_signer(a.key, a.signer_user), "provision_execute": True,
+           "provision_ruling": a.provision_ruling, "token": secrets.token_hex(16), "instrument": verified, "instrument_root": a.instrument_root,
+           "ports": ports, "authority": authority.name, "transport": transport, "l6_manifest": l6m, "heartbeat_s": heartbeat_s,
+           "seed_nonce": int(b1_manifest["carrier"]["nonce_seed"], 16)}
+    check_session_cfg(cfg)
+    return cfg
 
 
 # ------------------------------------------------------------------ execution
@@ -1034,6 +1087,24 @@ def transport_accounting(out_dir: Path, summary: dict | None, session_plan: dict
     return acc
 
 
+def measured_rate_from(out_dir: Path, summary: dict | None) -> float | None:
+    """The session verdict's measured all-self-reporting rate: from the summary when the driver kept
+    it, else from the adjudication.json the finalizer wrote (the production `b1_session.finalize`
+    copies only a subset of the verdict into the summary — the owner's P2 on ab71192)."""
+    adjud = (summary or {}).get("adjudication") if isinstance(summary, dict) else None
+    if isinstance(adjud, dict) and "measured_rate_per_hour" in adjud:
+        return adjud["measured_rate_per_hour"]
+    p = Path(out_dir) / "adjudication.json"
+    if p.is_file():
+        try:
+            doc = json.loads(p.read_text())
+            if isinstance(doc, dict):
+                return doc.get("measured_rate_per_hour")
+        except (OSError, ValueError):
+            return None
+    return None
+
+
 def write_session_record(out_dir: Path, cfg: dict, outcome: str, summary: dict | None, stage: str, errors: list[str]) -> str | None:
     """runner_session.json: this session's outcome, its cause class, its transport accounting, and
     the statement that this ruling pair is spent — the runner retries nothing."""
@@ -1043,7 +1114,7 @@ def write_session_record(out_dir: Path, cfg: dict, outcome: str, summary: dict |
            "transport": transport_accounting(out_dir, summary, cfg["plan"]),
            "ruling_pair": "spent: one ruling pair, one attempt — no retry, no redraw of seeds, no lifting of the transport stop-loss by this runner",
            "cross_session_stop_loss": "the owner's process: two sessions lost to the same cause → stop; three without COMPLETED → design review",
-           "measured_rate_per_hour": (summary or {}).get("adjudication", {}).get("measured_rate_per_hour") if isinstance(summary, dict) else None,
+           "measured_rate_per_hour": measured_rate_from(out_dir, summary),
            "finalise_errors": list(errors), "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     try:
         tmp = Path(out_dir) / "runner_session.json.part"
@@ -1067,12 +1138,15 @@ def execute(a, cfg: dict) -> tuple[int, str]:
     errors: list[str] = []
     stage = "artifacts"
     try:
-        out.mkdir(parents=True)
+        out.mkdir(parents=True, exist_ok=False)            # THIS invocation's directory, or nothing is ever written (the owner's P2 on ab71192)
+    except OSError as exc:
+        return 2, f"REFUSED: {out} appeared before the session could create it (no-clobber): {type(exc).__name__}: {exc}"
+    try:
         ports.write_artifacts(out, cfg["manifest_path"], cfg["ruling_path"], cfg["provision_ruling_path"], cfg["manifest_sha256"],
                               (cfg["ruling"], cfg["provision_ruling_parsed"]))
     except (Refusal, OSError, ValueError) as exc:
         outcome = f"REFUSED: session artifacts not archived: {exc}"
-        write_session_record(out, cfg, outcome, None, stage, errors) if out.is_dir() else None
+        write_session_record(out, cfg, outcome, None, stage, errors)
         return 2, outcome
     stage = "claim"
     try:
@@ -1134,12 +1208,12 @@ def main(argv=None, profile: dict = SEARCH) -> int:
     a = ap.parse_args(argv)
     try:
         cfg = preflight(a, profile)                       # the production authority and ports: no flag replaces them
-    except (Refusal, ValueError, OSError, KeyError) as exc:
+    except Refusal as exc:
         print(f"REFUSED: {exc}", file=sys.stderr)
         return 2
-    except Exception as exc:  # noqa: BLE001
-        print(f"REFUSED: {type(exc).__name__}: {exc}", file=sys.stderr)
-        return 2
+    except Exception as exc:  # noqa: BLE001 — a defect in this runner or its authority, never an input refusal
+        print(f"INTERNAL ERROR: {type(exc).__name__}: {exc}\n{traceback.format_exc()}", file=sys.stderr)
+        return 3
     rc, outcome = execute(a, cfg)
     print(outcome, file=sys.stderr if outcome != "PASS" else sys.stdout)
     return rc
