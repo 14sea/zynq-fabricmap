@@ -529,6 +529,40 @@ class ZeroContact(unittest.TestCase):
         self.assertFalse(list(self.f.d.glob("*.consumed")))
         self.assertNotIn("port", self.f.calls)
 
+    def test_a_dependency_missing_inside_an_existing_authority_module_is_an_internal_error(self):
+        """The owner's P3 on 69063f5: b3_manifest.py EXISTS but imports a dependency that does not —
+        that is an implementation defect, never "the authority does not exist yet": the
+        ModuleNotFoundError propagates from the API and is an INTERNAL ERROR (exit 3) on the CLI."""
+        d = self.f.d / "authority"
+        d.mkdir()
+        (d / "b3_manifest.py").write_text("import no_such_dependency_b3_xyz\n")
+        (d / "b3_pins.py").write_text("def verify(manifest=None):\n    return {}\n")
+        with mock.patch.object(sys, "path", [str(d)] + sys.path), mock.patch.dict(sys.modules):
+            for name in ("b3_manifest", "b3_pins", "no_such_dependency_b3_xyz"):
+                sys.modules.pop(name, None)
+            with self.assertRaises(ModuleNotFoundError) as cm:
+                rn.production_authority()
+            self.assertEqual(cm.exception.name, "no_such_dependency_b3_xyz")
+            with self.assertRaises(ModuleNotFoundError):
+                rn.preflight(self.f.args(), rn.SEARCH, authority=None, ports=self.f.ports)
+            with mock.patch("sys.stderr", new=__import__("io").StringIO()) as err:
+                rc = rn.main(["--ruling", str(self.f.ruling), "--provision-ruling", str(self.f.pk), "--boundary", str(self.f.boundary),
+                              "--out", str(self.f.d / "evidence"), "--pair-first", "0", "--pair-count", "2", "--manifest", str(self.f.manifest_path),
+                              "--image", str(self.f.d / "b3_app.bin"), "--key", str(self.f.d / "keys" / "K.bin")])
+            self.assertEqual(rc, 3)
+            self.assertIn("INTERNAL ERROR: ModuleNotFoundError", err.getvalue())
+            self.assertNotIn("REFUSED", err.getvalue())
+            # and the OTHER authority module absent, while this one exists, is still the named refusal
+            (d / "b3_pins.py").unlink()
+            (d / "b3_manifest.py").write_text("class Refusal(Exception):\n    pass\n")
+            for name in ("b3_manifest", "b3_pins"):
+                sys.modules.pop(name, None)
+            with self.assertRaises(rn.Refusal) as cm:
+                rn.production_authority()
+            self.assertIn("b3/host/b3_pins.py does not exist yet", str(cm.exception))
+        self.assertFalse((self.f.d / "evidence").exists())
+        self.assertFalse(list(self.f.d.glob("*.consumed")))
+
     def test_the_cli_offers_no_skip(self):
         import argparse
         text = (R / "b3/host/b3_runner.py").read_text()

@@ -198,16 +198,27 @@ class ProductionAuthority(Authority):
     def __init__(self):
         self._m = self._p = None
 
+    AUTHORITY_MODULES = ("b3_manifest", "b3_pins")
+
     def _modules(self):
+        """Import the two authority modules. ONLY the absence of the authority module itself (a
+        ModuleNotFoundError whose missing top-level name is b3_manifest or b3_pins) is the named
+        refusal "the authority does not exist yet"; a dependency missing INSIDE an existing authority
+        module, or any other ImportError, is an implementation defect and propagates as an INTERNAL
+        ERROR (the owner's P3 on 69063f5)."""
         if self._m is None:
-            try:
-                import b3_manifest as m  # noqa: E402
-                import b3_pins as p  # noqa: E402
-            except ImportError as exc:
-                raise Refusal("no B3 manifest / pin authority: b3/host/b3_manifest.py and b3/host/b3_pins.py do not exist "
-                              f"yet (they are later pinned edits; S0 has not happened) — host-only, no output, no ruling, "
-                              f"no device ({exc})") from None
-            self._m, self._p = m, p
+            import importlib
+            loaded = []
+            for name in self.AUTHORITY_MODULES:
+                try:
+                    loaded.append(importlib.import_module(name))
+                except ModuleNotFoundError as exc:
+                    if exc.name == name:
+                        raise Refusal(f"no B3 manifest / pin authority: b3/host/{name}.py does not exist yet (b3_manifest.py and "
+                                      f"b3_pins.py are later pinned edits; S0 has not happened) — host-only, no output, no ruling, "
+                                      f"no device") from None
+                    raise                      # a dependency missing inside the authority module: not an input refusal
+            self._m, self._p = loaded
         return self._m, self._p
 
     @staticmethod
