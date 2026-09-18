@@ -489,6 +489,11 @@ class ZeroContact(unittest.TestCase):
         self._refused("carries a master_seed: the provisioning ruling binds no experiment")
         pk = self.f.pk_doc(); pk["b3_manifest_sha256"] = "0" * 64; self.f.pk.write_text(json.dumps(pk))
         self._refused("ruling 'provisioning P3-K' is bound to b3_manifest_sha256")
+        for k in ("pair_first", "pair_count"):                  # the owner's P2-1 on 1c20eb9: the LIVE preflight, zero-contact
+            with self.subTest(field=k):
+                pk = self.f.pk_doc(); pk[k] = 0 if k == "pair_first" else 2; self.f.pk.write_text(json.dumps(pk))
+                self._refused(f"ruling 'provisioning P3-K' carries {k!r}: the provisioning ruling binds no slice")
+        self.f.pk.write_text(json.dumps(self.f.pk_doc()))
 
     def test_the_transport_disposition_and_resend_budget(self):
         r = self.f.ruling_doc(); r.pop("transport_disposition"); self.f.ruling.write_text(json.dumps(r))
@@ -690,6 +695,44 @@ class Preflight(unittest.TestCase):
             refusal(f, "no readable instrument l6 manifest", instrument_root=f.d / "nowhere")
         finally:
             f.close()
+
+    def test_a_pinned_number_of_the_wrong_type_is_refused_not_an_internal_error(self):
+        """The owner's P2-2 on 1c20eb9: a deadline, rate or record count that is a string, a bool, NaN or
+        Infinity is a malformed pinned document — refused by name before any float() or formula."""
+        bad_values = ("garbage", True, float("nan"), float("inf"), -1, 0)
+        f = Fixture("S3", 0, 2)
+        try:
+            for field_, needle in (("deadline_s", "carries no finite positive deadline_s"), ("records", "carries no integer records")):
+                for bad in bad_values:
+                    with self.subTest(field=field_, bad=bad):
+                        plan = copy.deepcopy(f.plan_doc); plan["session_split"]["sessions"][0][field_] = bad
+                        (f.d / "plan.json").write_text(rendered(plan))
+                        m = copy.deepcopy(f.manifest); m["plan"]["sha256"] = sha(f.d / "plan.json"); f.manifest_path.write_text(rendered(m))
+                        try:
+                            refusal(f, needle)
+                        except AssertionError:
+                            if field_ != "records" or bad not in (-1, 0):
+                                raise
+                            refusal(f, "the record arithmetic says")           # an integer that is merely wrong: the arithmetic names it
+            for bad in bad_values:
+                with self.subTest(field="rate_for_split", bad=bad):
+                    plan = copy.deepcopy(f.plan_doc); plan["session_split"]["rate_for_split"] = bad
+                    (f.d / "plan.json").write_text(rendered(plan))
+                    m = copy.deepcopy(f.manifest); m["plan"]["sha256"] = sha(f.d / "plan.json"); f.manifest_path.write_text(rendered(m))
+                    refusal(f, "carries no finite positive rate_for_split")
+        finally:
+            f.close()
+        q = Fixture("S1")
+        try:
+            for field_, needle in (("session_timeout_s", "session_timeout_s"), ("rate_per_hour", "is not a finite positive rate")):
+                for bad in bad_values:
+                    with self.subTest(field=field_, bad=bad):
+                        plan = copy.deepcopy(q.qplan_doc); plan["planning_bound"][field_] = bad
+                        (q.d / "b3q_plan.json").write_text(rendered(plan))
+                        m = copy.deepcopy(q.manifest); m["qualification_plan"]["sha256"] = sha(q.d / "b3q_plan.json"); q.manifest_path.write_text(rendered(m))
+                        refusal(q, needle)
+        finally:
+            q.close()
 
     def test_the_deadline_and_records_must_be_the_frozen_arithmetic(self):
         f = Fixture("S3", 0, 2)
@@ -1026,11 +1069,15 @@ class Verdict(unittest.TestCase):
         res = self._judge()
         self.assertTrue(any("carries the transport disposition 'stop-loss lifted for this session', this session's is" in x for x in res["findings"]), res["findings"][:4])
         archive("ruling_whole_of_run.json", self.f.ruling_doc())
-        pk = self.f.pk_doc(); pk["master_seed"] = self.f.master; pk["pair_first"] = 0; pk["pair_count"] = 2
+        pk = self.f.pk_doc(); pk["master_seed"] = self.f.master
         archive("ruling_provisioning.json", pk)
         res = self._judge()
         self.assertTrue(any("carries a master_seed: the provisioning ruling binds no experiment" in x for x in res["findings"]), res["findings"][:4])
-        self.assertTrue(any("carries 'pair_first': it binds no slice" in x for x in res["findings"]), res["findings"][:4])
+        for k in ("pair_first", "pair_count"):                    # the same shared guard the live preflight applies
+            pk = self.f.pk_doc(); pk[k] = 0 if k == "pair_first" else 2
+            archive("ruling_provisioning.json", pk)
+            res = self._judge()
+            self.assertTrue(any(f"carries {k!r}: the provisioning ruling binds no slice" in x for x in res["findings"]), res["findings"][:4])
         archive("ruling_provisioning.json", self.f.pk_doc())
         self.assertEqual(self._judge()["outcome"], "PASS")
 

@@ -153,6 +153,11 @@ def _int(v) -> bool:
     return isinstance(v, int) and not isinstance(v, bool)
 
 
+def _finite_positive(v) -> bool:
+    """A JSON number that is finite and > 0: not a bool, not a string, not NaN, not Infinity."""
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and v > 0
+
+
 # ------------------------------------------------------------------ the authority seam
 
 
@@ -429,6 +434,10 @@ def bind_ruling(ruling: dict, text: str, session: str, prereg_sha: str, image_sh
             raise Refusal(f"ruling {text!r} is bound to {k} = {got!r}, this session needs {v!r}")
     if master_seed is None and "master_seed" in ruling:
         raise Refusal(f"ruling {text!r} carries a master_seed: the provisioning ruling binds no experiment")
+    if slice_ is None:
+        for k in ("pair_first", "pair_count"):
+            if k in ruling:
+                raise Refusal(f"ruling {text!r} carries {k!r}: the provisioning ruling binds no slice")
 
 
 def check_transport_ruling(ruling: dict, text: str, want_resend: int, expected_total: int, want_disposition: str | None = None) -> dict:
@@ -625,9 +634,6 @@ def archived_ruling_findings(evidence: Path, session_plan: dict) -> list[str]:
                             (want["pair_first"], want["pair_count"]))
                 check_transport_ruling(ruling, text, want["resend_budget"], session_plan["expected_frames"]["total"], want["transport_disposition"])
             else:
-                for k in ("pair_first", "pair_count"):
-                    if k in ruling:
-                        f.append(f"{name}: the archived provisioning ruling carries {k!r}: it binds no slice")
                 bind_ruling(ruling, text, session, want["prereg_sha256"], want["image_sha256"], want["b3_manifest_sha256"], None, None)
         except Refusal as exc:
             f.append(f"{name}: {exc}")
@@ -938,8 +944,10 @@ def preflight(a, profile: dict = SEARCH, authority: Authority | None = None, por
         split_entry = None
         pb = plan_doc.get("planning_bound") or {}
         rate = pb.get("rate_per_hour")
-        if not isinstance(rate, (int, float)) or isinstance(rate, bool) or not math.isfinite(rate) or rate <= 0:
+        if not _finite_positive(rate):
             raise Refusal(f"the pinned B3Q planning bound's rate {rate!r} is not a finite positive rate")
+        if not _finite_positive(pb.get("session_timeout_s")):
+            raise Refusal(f"the pinned B3Q planning bound's session_timeout_s {pb.get('session_timeout_s')!r} is not a finite positive number")
     else:
         if a.pair_first is None or a.pair_count is None:
             raise Refusal("a B3 session needs --pair-first and --pair-count: the plan's split assigns them")
@@ -961,23 +969,27 @@ def preflight(a, profile: dict = SEARCH, authority: Authority | None = None, por
     # the record count, the deadline, the transport — the frozen arithmetic, never a literal
     records_expected = bsess.records(count, budget)
     if profile is SEARCH:
-        if split_entry.get("records") != records_expected:
-            raise Refusal(f"the plan's split says {split_entry.get('records')} records for this slice, the record arithmetic says {records_expected}")
+        if not _int(split_entry.get("records")):
+            raise Refusal(f"the plan's split entry carries no integer records ({split_entry.get('records')!r})")
+        if split_entry["records"] != records_expected:
+            raise Refusal(f"the plan's split says {split_entry['records']} records for this slice, the record arithmetic says {records_expected}")
         split = plan_doc["session_split"]
         rate_for_split = split.get("rate_for_split")
-        if not isinstance(rate_for_split, (int, float)) or isinstance(rate_for_split, bool) or rate_for_split <= 0:
-            raise Refusal("the plan's split carries no rate_for_split")
+        if not _finite_positive(rate_for_split):
+            raise Refusal(f"the plan's split carries no finite positive rate_for_split ({rate_for_split!r})")
+        if not _finite_positive(split_entry.get("deadline_s")):
+            raise Refusal(f"the plan's split entry carries no finite positive deadline_s ({split_entry.get('deadline_s')!r})")
         timeout = deadline_s(records_expected, rate_for_split)
-        if not math.isclose(float(split_entry.get("deadline_s", -1)), timeout, rel_tol=1e-9):
-            raise Refusal(f"the split's deadline {split_entry.get('deadline_s')} is not the frozen formula's {timeout}")
+        if not math.isclose(float(split_entry["deadline_s"]), timeout, rel_tol=1e-9):
+            raise Refusal(f"the split's deadline {split_entry['deadline_s']} is not the frozen formula's {timeout}")
         rate_note = {"source": "the plan's split, from the B3Q calibration under the 0.85 margin", "rate_for_split": rate_for_split,
                      "rate_measured": split.get("rate_measured"), "margin": split.get("calibration_margin")}
     else:
         if records_expected != (plan_doc.get("records") or {}).get("total"):
             raise Refusal(f"the pinned B3Q plan says {(plan_doc.get('records') or {}).get('total')} records, the record arithmetic says {records_expected}")
         timeout = deadline_s(records_expected, rate)
-        if not math.isclose(float(pb.get("session_timeout_s", -1)), timeout, rel_tol=1e-9):
-            raise Refusal(f"the pinned B3Q planning bound's session_timeout_s {pb.get('session_timeout_s')} is not the frozen formula's {timeout}")
+        if not math.isclose(float(pb["session_timeout_s"]), timeout, rel_tol=1e-9):
+            raise Refusal(f"the pinned B3Q planning bound's session_timeout_s {pb['session_timeout_s']} is not the frozen formula's {timeout}")
         rate_note = {"source": "the pinned B3Q planning bound (never a calibration)", "rule": pb.get("rule"), "rate_per_hour": rate}
     ls = ports.schedule()
     l6m_path = Path(a.instrument_root) / "manifests/l6_manifest.json"
