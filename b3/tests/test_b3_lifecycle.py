@@ -773,18 +773,24 @@ class StagesAndTransitions(Base):
         self.assertEqual(self.strays(), [])
 
     def strays(self) -> list[str]:
-        return sorted(p.name for p in self.w.manifest_path.parent.iterdir() if ".part" in p.name or ".conflict" in p.name or p.name.endswith(".lock"))
+        return sorted(p.name for p in self.w.manifest_path.parent.iterdir()
+                      if any(x in p.name for x in (".part", ".conflict", ".displaced")) or p.name.endswith(".lock"))
 
-    def racing(self, *intrusions):
+    def racing(self, *intrusions, after=None, fail_on=None):
         """`_rename_exchange` with a competitor: before the n-th exchange — i.e. AFTER the last comparison the
         function made and before it publishes — `intrusions[n]` writes the manifest."""
         real, calls = bman._rename_exchange, []
 
         def exchange(a, b):
-            if len(calls) < len(intrusions) and intrusions[len(calls)] is not None:
-                intrusions[len(calls)](Path(b))
+            n = len(calls)
+            if n < len(intrusions) and intrusions[n] is not None:
+                intrusions[n](Path(b))
             calls.append(1)
+            if fail_on == n:
+                raise OSError(5, "injected exchange failure")
             real(a, b)
+            if after is not None:
+                after(n, Path(b))
         return mock.patch.object(bman, "_rename_exchange", exchange)
 
     def test_the_replace_is_a_compare_and_swap_a_competitor_after_the_last_comparison_wins(self):
@@ -819,6 +825,75 @@ class StagesAndTransitions(Base):
         self.assertIn(str(kept[0]), msg)
         self.assertEqual([n for n in self.strays() if ".part" in n], [])
 
+    def test_a_trusted_reader_never_sees_the_speculative_exchange(self):
+        """The owner's P2 on 9957934: between the two exchanges the path holds the withdrawn transition. A plain
+        read there sees it (that is what an untrusted reader gets from any file); a TRUSTED reader — read_manifest,
+        which the command line and the runner's preflight use — cannot enter until the publisher is done."""
+        w = self.w.at("S1")
+        original = w.manifest_path.read_bytes()
+        plain, trusted = [], []
+
+        def observe(n, path):
+            plain.append(path.read_bytes())
+            try:
+                trusted.append(bman.read_manifest(path, wait=False))
+            except bman.Refusal as exc:
+                trusted.append(str(exc))
+        with self.racing(lambda p: p.write_bytes(b"competitor"), after=observe):
+            self.refused("the competitor's bytes are preserved", bman.replace_atomic, w.manifest_path, original, "new\n")
+        self.assertEqual(plain, [b"new\n", b"competitor"], "the speculative state exists — which is why readers take the lock")
+        self.assertEqual(len(trusted), 2)
+        self.assertTrue(all(isinstance(x, str) and "is being published; not read" in x for x in trusted), trusted)
+        self.assertEqual(bman.read_manifest(w.manifest_path), b"competitor")
+        calls = []
+        with mock.patch.object(bman, "read_manifest", lambda p, wait=True: calls.append(p) or original):
+            w.cli("verify")
+        self.assertEqual(calls, [w.manifest_path], "the command line reads the manifest through the locked reader")
+
+    def test_a_failed_exchange_back_keeps_the_competitors_bytes(self):
+        """9957934 deleted the temp file — the only copy of the competitor's bytes — when the rollback failed."""
+        w = self.w.at("S1")
+        original = w.manifest_path.read_bytes()
+        with self.racing(lambda p: p.write_bytes(b"competitor"), fail_on=1):
+            msg = self.refused("the exchange back FAILED (OSError: [Errno 5] injected exchange failure)", bman.replace_atomic, w.manifest_path, original, "new\n")
+        kept = [p for p in w.manifest_path.parent.iterdir() if ".displaced." in p.name]
+        self.assertEqual([p.read_bytes() for p in kept], [b"competitor"])
+        self.assertIn(str(kept[0]), msg)
+        self.assertIn("holds the WITHDRAWN transition's bytes", msg)
+        self.assertEqual(w.manifest_path.read_bytes(), b"new\n")
+        self.assertEqual([n for n in self.strays() if ".part" in n], [], "the temp name held this transition's own bytes by then")
+
+    def test_the_temp_file_is_never_deleted_while_it_is_the_only_copy(self):
+        """If even the preserving link fails, the displaced bytes stay where they are — under the temp name."""
+        w = self.w.at("S1")
+        original = w.manifest_path.read_bytes()
+        with self.racing(lambda p: p.write_bytes(b"competitor")), mock.patch.object(bman, "_keep", side_effect=OSError(28, "No space left on device")):
+            with self.assertRaises(OSError):
+                bman.replace_atomic(w.manifest_path, original, "new\n")
+        parts = [p for p in w.manifest_path.parent.iterdir() if p.name.endswith(".part")]
+        self.assertEqual([p.read_bytes() for p in parts], [b"competitor"])
+
+    def test_a_taken_name_never_costs_a_competitor_its_bytes(self):
+        w = self.w.at("S1")
+        original = w.manifest_path.read_bytes()
+        d = w.manifest_path.parent
+        name = w.manifest_path.name
+        for tag in ("conflict", "displaced"):
+            for n in (0, 1):
+                (d / f"{name}.{tag}.{os.getpid()}.{n}").write_bytes(b"an older one")
+        (d / f"{name}.conflict.{os.getpid()}").write_bytes(b"9957934's name")
+        with self.racing(lambda p: p.write_bytes(b"first"), lambda p: p.write_bytes(b"second")):
+            msg = self.refused("changed twice", bman.replace_atomic, w.manifest_path, original, "new\n")
+        self.assertEqual((d / f"{name}.conflict.{os.getpid()}.2").read_bytes(), b"second")
+        self.assertIn(f"{name}.conflict.{os.getpid()}.2", msg)
+        self.assertEqual([(d / f"{name}.conflict.{os.getpid()}.{n}").read_bytes() for n in (0, 1)], [b"an older one"] * 2)
+        self.assertEqual((d / f"{name}.conflict.{os.getpid()}").read_bytes(), b"9957934's name")
+        self.assertEqual(w.manifest_path.read_bytes(), b"first")
+        self.assertFalse((d / f"{name}.displaced.{os.getpid()}.2").exists(), "the first competitor IS the manifest; its extra name was dropped")
+        with self.racing(lambda p: p.write_bytes(b"third"), fail_on=1):
+            self.refused("the exchange back FAILED", bman.replace_atomic, w.manifest_path, b"first", "new\n")
+        self.assertEqual((d / f"{name}.displaced.{os.getpid()}.2").read_bytes(), b"third")
+
     def test_a_racing_competitor_defeats_the_command_line_transition_too(self):
         w = self.w.at("S0")
         with self.racing(lambda p: p.write_bytes(b"intruder")):
@@ -835,7 +910,8 @@ class StagesAndTransitions(Base):
         fd = os.open(w.manifest_path.parent, os.O_RDONLY)
         try:
             fcntl.flock(fd, fcntl.LOCK_EX)
-            self.refused("another b3_manifest transition holds the directory lock; nothing was written", bman.replace_atomic, w.manifest_path, original, "new\n")
+            self.refused("the manifest's directory lock is held (a transition or a reader); nothing was written", bman.replace_atomic, w.manifest_path, original, "new\n")
+            self.refused("a b3_manifest transition is being published; not read", bman.read_manifest, w.manifest_path, False)
         finally:
             os.close(fd)
         self.assertEqual(w.manifest_path.read_bytes(), original)

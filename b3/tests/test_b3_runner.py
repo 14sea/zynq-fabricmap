@@ -162,7 +162,7 @@ def write_evidence(out: Path, cfg: dict, log: dict, adjudicate, tamper=None, par
     if partial:
         statuses["audits.json"] = "PARTIAL: ledgers INCOMPLETE"
     doc = b1s.write_exports_manifest(out, statuses)
-    summary = {"outcome": None, "crc_dropped": 1, "bad_frames": 0, "disruptions": [], "transport_rereads": 0, "exports": statuses}
+    summary = {"outcome": None, "crc_dropped": 1, "bad_frames": 0, "disruptions": [], "transport_rereads": [], "exports": statuses}
     if not doc["complete"]:
         summary["outcome"] = "HOLD host-side: evidence export incomplete: audits.json"
         return summary
@@ -1244,6 +1244,63 @@ class Readjudication(unittest.TestCase):
         self.assertEqual(rn.session_record_findings(doc, want), [])
         self.assertEqual(set(want["transport"]), set(rn.SESSION_TRANSPORT_AUTHORITY))
         self.assertEqual(rn.session_record_findings([], want), ["runner_session.json is not a JSON object"])
+
+    def test_the_schema_accepts_what_the_production_driver_really_writes(self):
+        """The owner's P1 on 9957934: the fixture wrote transport_rereads as 0 and the schema followed the
+        fixture; production (host/b1_session.py) writes the ledger ARRAYS. Held here to a REAL archived
+        session's summary and timeline (B2Q on 17A6, tracked evidence, read only), through the runner's own
+        transport_accounting — and the modelled fixture is held to the same shapes."""
+        real = R / "evidence/b2/b2q_17A6_2026-09-16-01"
+        summary = json.loads((real / "summary.json").read_text())
+        self.assertEqual((summary["transport_rereads"], summary["disruptions"]), ([], []), "the archived production shape")
+        self.assertIs(type(summary["crc_dropped"]), int)
+        acc = rn.transport_accounting(real, summary, self.cfg["plan"])
+        self.assertEqual(sorted(acc), sorted(rn.SESSION_TRANSPORT_KEYS))
+        good = json.loads((self.ev / "runner_session.json").read_text())
+        self.assertEqual(rn.session_record_findings({**good, "transport": acc}, {}), [], "a production-shaped transport block is accepted")
+        modelled = good["transport"]
+        for k in rn.SESSION_TRANSPORT_KEYS:
+            self.assertIs(type(modelled[k]), type(acc[k]), f"the fixture's {k} is not the production type")
+        ledger = [{"seq": 7, "attempts": 2}]
+        self.assertEqual(rn.session_record_findings({**good, "transport": {**acc, "transport_rereads": ledger}}, {}), [], "the ledger is kept whole, whatever its length")
+        for bad, needle in ((0, "transport.transport_rereads 0 is not the driver's ledger array"), (None, "is not the driver's ledger array"),
+                            ([2], "transport.transport_rereads carries an entry that is not an object")):
+            got = rn.session_record_findings({**good, "transport": {**acc, "transport_rereads": bad}}, {})
+            self.assertTrue(any(needle in x for x in got), got)
+        got = rn.session_record_findings({**good, "transport": {**acc, "disruptions": 0}}, {})
+        self.assertTrue(any("transport.disruptions 0 is not the driver's ledger array" in x for x in got), got)
+
+    def test_the_preflight_reads_the_manifest_once_under_the_lifecycles_shared_lock(self):
+        import fcntl
+        f = Fixture("S1")
+        try:
+            with mock.patch.object(f.authority, "read_manifest", wraps=f.authority.read_manifest) as spy:
+                cfg = f.preflight()
+            self.assertEqual(spy.call_count, 1)
+            self.assertEqual(cfg["manifest_sha256"], sha(f.manifest_path))
+            seen = []
+            real_flock = fcntl.flock
+
+            def flock(fd, op):
+                seen.append(op)
+                return real_flock(fd, op)
+            with mock.patch.object(fcntl, "flock", flock):
+                self.assertEqual(rn.Authority().read_manifest(f.manifest_path), f.manifest_path.read_bytes())
+            self.assertEqual(seen, [fcntl.LOCK_SH])
+            fake_m, fake_p = types.ModuleType("b3_manifest"), types.ModuleType("b3_pins")
+
+            class ManifestRefusal(Exception):
+                pass
+
+            def read_manifest(path):
+                raise ManifestRefusal("a b3_manifest transition is being published; not read")
+            fake_m.Refusal, fake_m.read_manifest = ManifestRefusal, read_manifest
+            with mock.patch.dict(sys.modules, {"b3_manifest": fake_m, "b3_pins": fake_p}):
+                with self.assertRaises(rn.Refusal) as cm:
+                    rn.ProductionAuthority().read_manifest(f.manifest_path)
+            self.assertIn("manifest: a b3_manifest transition is being published", str(cm.exception))
+        finally:
+            f.close()
 
     def test_the_finalisation_record_is_bound_to_the_rebuilt_session_plan_field_by_field(self):
         """The owner's P2 on 8ba72c4 — each of the probe's five fields, the transport authority, and the types."""

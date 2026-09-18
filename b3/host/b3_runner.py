@@ -188,6 +188,17 @@ class Authority:
     def manifest_sha256(self, manifest: dict) -> str:
         return hashlib.sha256((json.dumps(manifest, indent=1, sort_keys=True) + "\n").encode()).hexdigest()
 
+    def read_manifest(self, path: Path) -> bytes:
+        """The manifest's bytes, read ONCE and under the shared flock on its directory that a publishing
+        lifecycle transition holds exclusively — a preflight never sees a transition half published."""
+        import fcntl
+        lock = os.open(Path(path).parent, os.O_RDONLY)
+        try:
+            fcntl.flock(lock, fcntl.LOCK_SH)
+            return Path(path).read_bytes()
+        finally:
+            os.close(lock)
+
     def verify(self, manifest: dict, readjudicate=None) -> dict:      # the manifest lifecycle verify (S0–S3, the §7a pre-check, B2 authority, B1 lineage)
         raise Refusal(f"{self.name}: no manifest verifier")
 
@@ -243,6 +254,13 @@ class ProductionAuthority(Authority):
     def manifest_sha256(self, manifest: dict) -> str:
         m, _ = self._modules()
         return m.manifest_sha256(manifest)
+
+    def read_manifest(self, path: Path) -> bytes:
+        m, _ = self._modules()
+        try:
+            return m.read_manifest(path)
+        except self._refusals(m, "Refusal") as exc:
+            raise Refusal(f"manifest: {exc}") from None
 
     def verify(self, manifest: dict, readjudicate=None) -> dict:
         m, _ = self._modules()
@@ -1062,13 +1080,14 @@ def preflight(a, profile: dict = SEARCH, authority: Authority | None = None, por
     manifest_path = Path(a.manifest)
     if not manifest_path.is_file():
         raise Refusal(f"no B3 manifest at {manifest_path}: the manifest does not exist until S0, and no board session exists without it")
+    manifest_bytes = authority.read_manifest(manifest_path)      # ONE read, under the lifecycle's shared lock: the document and its digest are the same bytes
     try:
-        manifest = json.loads(manifest_path.read_text())
+        manifest = json.loads(manifest_bytes)
     except ValueError as exc:
         raise Refusal(f"the B3 manifest is not readable JSON: {exc}") from None
     if not isinstance(manifest, dict) or manifest.get("schema") != MANIFEST_SCHEMA:
         raise Refusal(f"the manifest is not a {MANIFEST_SCHEMA} document")
-    manifest_sha = _sha(manifest_path)
+    manifest_sha = hashlib.sha256(manifest_bytes).hexdigest()
     board = authority.check_board(manifest)
     check_ruling_board(ruling, Path(a.ruling), board)
     check_ruling_board(pk, Path(a.provision_ruling), board)
@@ -1312,8 +1331,9 @@ STOP_LOSS_NOTE = "the owner's process: two sessions lost to the same cause → s
 SESSION_RECORD_KEYS = ("tool", "session", "profile_stage", "outcome", "cause", "reached", "pair_first", "pair_count", "master_seed",
                        "expected_records", "transport", "ruling_pair", "cross_session_stop_loss", "measured_rate_per_hour", "finalise_errors", "at")
 SESSION_TRANSPORT_AUTHORITY = ("expected_frames_total", "crc_budget", "bad_frame_budget", "resend_budget", "transport_disposition")
-SESSION_TRANSPORT_COUNTS = ("crc_dropped", "bad_frames", "frames_seen", "transport_rereads")
-SESSION_TRANSPORT_KEYS = SESSION_TRANSPORT_AUTHORITY + SESSION_TRANSPORT_COUNTS + ("disruptions",)
+SESSION_TRANSPORT_COUNTS = ("crc_dropped", "bad_frames", "frames_seen")               # integers (the timeline's counters; the frames it lists)
+SESSION_TRANSPORT_LEDGERS = ("disruptions", "transport_rereads")                       # ARRAYS: the driver's session.disruptions / session.rereads, kept whole
+SESSION_TRANSPORT_KEYS = SESSION_TRANSPORT_AUTHORITY + SESSION_TRANSPORT_COUNTS + SESSION_TRANSPORT_LEDGERS
 
 
 def session_record_expectation(session_plan: dict, stage: str) -> dict:
@@ -1357,8 +1377,12 @@ def session_record_findings(doc, want: dict) -> list[str]:
     for k in ("expected_frames_total", "crc_budget", "bad_frame_budget", "resend_budget") + SESSION_TRANSPORT_COUNTS:
         if not _int(transport.get(k)) or transport[k] < 0:
             f.append(f"{name}'s transport.{k} {transport.get(k)!r} is not a non-negative integer")
-    if not isinstance(transport.get("disruptions"), list):
-        f.append(f"{name}'s transport.disruptions is not a list")
+    for k in SESSION_TRANSPORT_LEDGERS:                 # production: host/b1_session.py writes the ledgers themselves ([] in every archived session);
+        ledger = transport.get(k)                       # a count, if wanted, is len() — never a substitute (the owner's P1 on 9957934)
+        if not isinstance(ledger, list):
+            f.append(f"{name}'s transport.{k} {_short(ledger)} is not the driver's ledger array")
+        elif any(not isinstance(e, dict) for e in ledger):
+            f.append(f"{name}'s transport.{k} carries an entry that is not an object")
     for k, budget in (("crc_dropped", "crc_budget"), ("bad_frames", "bad_frame_budget")):
         if _int(transport.get(k)) and _int(transport.get(budget)) and transport[k] > transport[budget]:
             f.append(f"{name}'s transport.{k} {transport[k]} exceeds its {budget} {transport[budget]}")

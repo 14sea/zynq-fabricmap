@@ -1115,27 +1115,64 @@ def _rename_exchange(a: Path, b: Path) -> None:
         raise OSError(e, os.strerror(e), str(b))
 
 
-def replace_atomic(path: Path, original: bytes, text: str) -> None:
-    """A transition's write, as a COMPARE-AND-SWAP over the bytes it was computed from (the owner's P2 on
-    8ba72c4: a read followed by os.replace left a window in which a competitor's bytes were overwritten).
+def read_manifest(path: Path, wait: bool = True) -> bytes:
+    """The manifest's bytes as a TRUSTED reader reads them: under a SHARED flock on the manifest's
+    directory — the lock a publishing transition holds exclusively — so a reader never observes the
+    speculative state between a transition's two exchanges (the owner's P2 on 9957934). The command line and
+    the runner's preflight read through here. `wait=False` refuses instead of waiting."""
+    import fcntl
+    path = Path(path)
+    lock = os.open(path.parent, os.O_RDONLY)
+    try:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_SH | (0 if wait else fcntl.LOCK_NB))
+        except BlockingIOError:
+            raise Refusal(f"{path}: a b3_manifest transition is being published; not read") from None
+        return path.read_bytes()
+    finally:
+        os.close(lock)
 
-    Writers of this tool are serialised by an exclusive flock on the manifest's DIRECTORY (no lock file is
-    left in the tree). The swap itself does not rely on that: the new file and the manifest are EXCHANGED in
-    one atomic rename, so what this function then holds under the temp name is exactly — not "probably" —
-    the file it displaced. If those are the original bytes, the swap stands. If they are not, a competitor
-    wrote after the last comparison: the files are exchanged back, the competitor's bytes are the manifest
-    again, and the transition is refused. Should yet another writer land between the two exchanges, its
-    bytes are kept under a `.conflict` name and named in the refusal — nothing a competitor wrote is lost."""
+
+def _keep(src: Path, beside: Path, tag: str) -> Path:
+    """Preserve `src`'s file under a COLLISION-SAFE name beside the manifest: a hard link (atomic, never
+    replaces an existing name), the counter advanced until a free name is found. Nothing a competitor wrote
+    is ever dropped because a name was taken."""
+    n = 0
+    while True:
+        kept = beside.with_name(f"{beside.name}.{tag}.{os.getpid()}.{n}")
+        try:
+            os.link(src, kept)
+            return kept
+        except FileExistsError:
+            n += 1
+
+
+def replace_atomic(path: Path, original: bytes, text: str) -> None:
+    """A transition's write, as a COMPARE-AND-SWAP over the bytes it was computed from.
+
+    The publisher holds an EXCLUSIVE flock on the manifest's DIRECTORY (no lock file is left in the tree);
+    trusted readers (`read_manifest`: this command line, the runner's preflight) take it SHARED, so they never
+    see what follows half done. The new file and the manifest are EXCHANGED in one atomic rename, so the file
+    then under the temp name is exactly — not "probably" — the one displaced. Original bytes: the swap stands.
+    Anything else: a writer that does not take the lock got in after the last comparison, and
+      1. its bytes are FIRST preserved under a collision-safe `.displaced` name,
+      2. the files are exchanged back, making it the manifest again (the `.displaced` copy is then dropped),
+      3. if a second such writer landed between the two exchanges, its bytes are kept under a collision-safe
+         `.conflict` name,
+      4. if the exchange back FAILS, the `.displaced` copy stays, and the refusal says that the manifest
+         holds the withdrawn transition and where the competitor's bytes are.
+    The temp file is only ever deleted when it holds this transition's own bytes or bytes already preserved."""
     import fcntl
     path = Path(path)
     new = text.encode()
     tmp = path.with_name(f".{path.name}.{os.getpid()}.part")
     lock = os.open(path.parent, os.O_RDONLY)
+    disposable = True                                   # may the temp file be deleted?
     try:
         try:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
-            raise Refusal(f"{path}: another b3_manifest transition holds the directory lock; nothing was written") from None
+            raise Refusal(f"{path}: the manifest's directory lock is held (a transition or a reader); nothing was written") from None
         with open(tmp, "xb") as f:
             f.write(new)
             f.flush()
@@ -1146,19 +1183,32 @@ def replace_atomic(path: Path, original: bytes, text: str) -> None:
             _rename_exchange(tmp, path)
         except FileNotFoundError:
             raise Refusal(f"{path} vanished while the transition was being verified; nothing was written") from None
-        displaced = tmp.read_bytes()
-        if displaced != original:
-            _rename_exchange(tmp, path)                # the competitor's file is the manifest again
-            if tmp.read_bytes() != new:                # a second writer, between the two exchanges
-                kept = path.with_name(f"{path.name}.conflict.{os.getpid()}")
-                os.link(tmp, kept)
-                raise Refusal(f"{path} changed twice while the transition was being published; the transition was withdrawn, the first "
-                              f"competitor's bytes are the manifest and the second's are kept at {kept}")
-            raise Refusal(f"{path} changed after the last comparison and before the publish; the transition was withdrawn and the "
-                          f"competitor's bytes are preserved")
-        os.fsync(lock)
+        disposable = False                              # the temp name now holds what was displaced
+        if tmp.read_bytes() == original:
+            disposable = True
+            os.fsync(lock)
+            return
+        displaced = _keep(tmp, path, "displaced")       # 1: before anything that can fail
+        disposable = True
+        try:
+            _rename_exchange(tmp, path)                 # 2
+        except OSError as exc:                          # 4
+            raise Refusal(f"{path} changed after the last comparison, and the exchange back FAILED ({type(exc).__name__}: {exc}): the manifest "
+                          f"holds the WITHDRAWN transition's bytes; the competitor's bytes are preserved at {displaced} — restore them by hand") from None
+        disposable = False                              # the temp name holds whatever was the manifest between the exchanges
+        if tmp.read_bytes() != new:                     # 3
+            conflict = _keep(tmp, path, "conflict")
+            disposable = True
+            displaced.unlink()
+            raise Refusal(f"{path} changed twice while the transition was being published; the transition was withdrawn, the first "
+                          f"competitor's bytes are the manifest and the second's are kept at {conflict}")
+        disposable = True
+        displaced.unlink()                              # the competitor's file IS the manifest again; the extra name goes
+        raise Refusal(f"{path} changed after the last comparison and before the publish; the transition was withdrawn and the "
+                      f"competitor's bytes are preserved")
     finally:
-        tmp.unlink(missing_ok=True)
+        if disposable:
+            tmp.unlink(missing_ok=True)
         os.close(lock)
 
 
@@ -1176,7 +1226,7 @@ def run(a, root: Path = REPO_ROOT, seams: Seams | None = None) -> int:
         return 0
     if not path.is_file():
         raise Refusal(f"no B3 manifest at {path}: the manifest does not exist until S0")
-    original = path.read_bytes()
+    original = read_manifest(path)
     try:
         before = json.loads(original)
     except ValueError as exc:
