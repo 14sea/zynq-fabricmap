@@ -24,6 +24,7 @@ import io
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -39,11 +40,15 @@ import b3_pins as bp  # noqa: E402
 import b3_test_report as tr  # noqa: E402
 
 B3_IDS = [tr.SENTINEL_ID, "test_b3_pins.TheRule.test_discovery_is_exactly_the_rule", "test_b3_records.Records.test_a", "test_b3_runner.ZeroContact.test_b"]
+# Tests with a docstring are listed on TWO lines: the header, then the docstring's first line ending in the status
+# (the owner's P1 on 5b12dd2). The fixture mixes both forms; a docstring line may itself look like prose with parentheses.
+DOCSTRINGS = {"test_b3_records.Records.test_a": "The owner's P2 on 02d179c: a source read earlier (in the snapshot) changed while a LATER one was",
+              "test_b3_runner.ZeroContact.test_b": "Listed, then unexaminable (its directory closed) before lstat: named."}
 RULE = "-" * 70
 
 
-def verbose_log(ids: list[str], ran: int | None = None, result: str = "OK") -> str:
-    body = "".join(f"{i.rsplit('.', 1)[1]} ({i}) ... ok\n" for i in ids)
+def verbose_log(ids: list[str], ran: int | None = None, result: str = "OK", status: str = "ok") -> str:
+    body = "".join((f"{i.rsplit('.', 1)[1]} ({i})\n{DOCSTRINGS[i]} ... {status}\n" if i in DOCSTRINGS else f"{i.rsplit('.', 1)[1]} ({i}) ... {status}\n") for i in ids)
     return f"{body}\n{RULE}\nRan {len(ids) if ran is None else ran} tests in 1.500s\n\n{result}\n"
 
 
@@ -186,6 +191,62 @@ class TheLogContract(Verdict):
         self.refused(lambda r: r["suites"]["b3_tree"].__setitem__("argv", tr.suite_argv("b2_tree")), "b3_tree: the command run was")
 
 
+# ------------------------------------------------------------------ the verbose listing
+
+
+class TheListing(unittest.TestCase):
+    CAPTURED = ("test_doc (test_demo.D.test_doc)\n"
+                "A docstring's first line. ... ok\n"
+                "test_skip (test_demo.D.test_skip) ... skipped 'why'\n"
+                "test_sub (test_demo.D.test_sub) ... \n"
+                "  test_sub (test_demo.D.test_sub) (i=1) ... FAIL\n"
+                "test_plain (test_demo.D.test_plain) ... ok\n"
+                "test_two (test_demo.E.test_two)\n"
+                "Listed, then unexaminable (its directory closed) before lstat: named. The permission itself is ... ok\n"
+                "test_err (test_demo.E.test_err) ... ERROR\n"
+                "\n" + RULE + "\nRan 6 tests in 0.010s\n\nFAILED (failures=1, errors=1, skipped=1)\n")
+
+    def test_the_shapes_unittest_prints(self):
+        """Measured on this interpreter: one line without a docstring; two lines with one; a subTest failure's
+        header with a bare ` ... ` and its indented lines; skipped / FAIL / ERROR statuses. A test is listed by its
+        header at column 0, exactly once."""
+        self.assertEqual(tr.listed_tests(self.CAPTURED),
+                         ["test_demo.D.test_doc", "test_demo.D.test_skip", "test_demo.D.test_sub", "test_demo.D.test_plain", "test_demo.E.test_two", "test_demo.E.test_err"])
+        self.assertEqual(len(tr.listed_tests(self.CAPTURED)), tr.parse_log(self.CAPTURED)["ran"])
+        self.assertEqual(tr.listed_tests(B3_LOG), B3_IDS)
+        self.assertEqual(tr.listed_tests(REMOVAL_LOG), [i for i in B3_IDS if i != tr.SENTINEL_ID])
+        self.assertEqual(tr.listed_tests(verbose_log(B3_IDS, status="FAIL")), B3_IDS)
+
+    def test_what_is_not_a_header(self):
+        for line in ("Listed, then unexaminable (its directory closed) before lstat: named. ... ok",       # a docstring line
+                     "The owner's P2 on 02d179c: a source (test_x.C.test_x) ... ok",                        # prose with an id-shaped token
+                     "  test_sub (test_demo.D.test_sub) (i=1) ... FAIL",                                   # indented: a subTest line
+                     "test_a (test_demo.D.test_b) ... ok",                                                # the name is not the id's last component
+                     "test_a (test_a) ... ok",                                                            # no module.Class
+                     "test_a(test_demo.D.test_a) ... ok",
+                     "Ran 4 tests in 1.000s", RULE, "OK", ""):
+            with self.subTest(line=line[:40]):
+                self.assertEqual(tr.listed_tests(line + "\n"), [])
+        self.assertEqual(tr.listed_tests(None), [])
+        self.assertEqual(tr.listed_tests(b"bytes"), [])
+
+    def test_a_real_verbose_run_lists_every_test_it_ran(self):
+        """The load-bearing fixture: the REAL command on this repository's test_b3_pins.py (docstring tests among
+        them) — the listing count equals the summary's Ran N, every id unique."""
+        p = subprocess.run(tr.suite_argv("b3_tree") + ["-p", "test_b3_pins.py"], cwd=R, capture_output=True, text=True)
+        log = p.stdout + p.stderr
+        parsed = tr.parse_log(log)
+        listed = tr.listed_tests(log)
+        self.assertEqual(p.returncode, 0, log[-500:])
+        self.assertEqual(parsed["result_line"], "OK")
+        self.assertGreater(parsed["ran"], 30)
+        self.assertEqual(len(listed), parsed["ran"])
+        self.assertEqual(len(set(listed)), parsed["ran"])
+        self.assertTrue(all(i.startswith("test_b3_pins.") for i in listed))
+        two_line = [ln for ln in log.splitlines() if tr.LISTED_LINE.fullmatch(ln) and " ... " not in ln]
+        self.assertGreater(len(two_line), 5, "the fixture must contain docstring (two-line) tests")
+
+
 # ------------------------------------------------------------------ the removal control
 
 
@@ -211,11 +272,24 @@ class TheRemovalControl(Verdict):
         self.refused(lambda r: r["suites"]["b3_tree"].__setitem__("log", verbose_log(B3_IDS, ran=5)),
                      "b3_tree: the verbose listing has 4 tests but the summary ran 5")
         ids = [i for i in B3_IDS if i != tr.SENTINEL_ID]
-        self.refused(lambda r: r["suites"]["b3_removal"].__setitem__("log", verbose_log(ids, ran=3).replace(f"test_b ({ids[-1]}) ... ok\n", "")),
-                     "b3_removal: the verbose listing has 2 tests but the summary ran 3")
-        # a line shaped like a listing but with a status unittest never prints is NOT a listed test
-        garbled = verbose_log(B3_IDS, ran=5).replace(f"\n{RULE}", f"test_z (mod.C.test_z) ... garbled\n\n{RULE}", 1)
-        self.refused(lambda r: r["suites"]["b3_tree"].__setitem__("log", garbled), "b3_tree: the verbose listing has 4 tests but the summary ran 5")
+        short = verbose_log(ids[:-1], ran=3)                                   # ids[-1] is a two-line (docstring) entry: dropped whole
+        self.assertEqual(len(tr.listed_tests(short)), 2)
+        self.refused(lambda r: r["suites"]["b3_removal"].__setitem__("log", short), "b3_removal: the verbose listing has 2 tests but the summary ran 3")
+        # a docstring line that mentions an id-shaped token is NOT a header; an indented subTest line is not either
+        prose = verbose_log(B3_IDS, ran=5).replace(f"\n{RULE}", f"The owner's note (mod.C.test_z) ... ok\n  test_z (mod.C.test_z) (i=1) ... FAIL\n\n{RULE}", 1)
+        self.refused(lambda r: r["suites"]["b3_tree"].__setitem__("log", prose), "b3_tree: the verbose listing has 4 tests but the summary ran 5")
+
+    def test_the_removal_listing_must_be_the_b3_listing_minus_the_sentinel(self):
+        """The owner's P1 on 5b12dd2: one fewer is not enough — a substituted id passed. Membership AND order."""
+        ids = [i for i in B3_IDS if i != tr.SENTINEL_ID]
+        substituted = ids[:-1] + ["test_b3_other.Other.test_z"]
+        rep = self.refused(lambda r: r["suites"]["b3_removal"].__setitem__("log", verbose_log(substituted)),
+                           f"b3_removal: the verbose listing is not b3_tree's listing minus the sentinel: missing ['{ids[-1]}']: unexpected ['test_b3_other.Other.test_z']")
+        self.assertEqual(rep["removal_control"]["removal_ran"], 3)                       # the count alone would have passed
+        self.refused(lambda r: r["suites"]["b3_removal"].__setitem__("log", verbose_log(list(reversed(ids)))),
+                     "b3_removal: the verbose listing is not b3_tree's listing minus the sentinel: the order differs")
+        self.refused(lambda r: r["suites"]["b3_removal"].__setitem__("log", verbose_log(ids[:2] + [ids[1]])),
+                     "b3_removal: the verbose listing is not b3_tree's listing minus the sentinel")
 
     def test_the_removal_run_itself_must_be_clean(self):
         ids = [i for i in B3_IDS if i != tr.SENTINEL_ID]
@@ -229,6 +303,30 @@ class TheRemovalControl(Verdict):
         self.refused(lambda r: r.__setitem__("shadow", None), "the shadow record is NoneType")
         self.refused(lambda r: r["shadow"].__setitem__("sentinel_in_tree", False), "was not in b3/tests: there was nothing to remove")
         self.refused(lambda r: r["shadow"].__setitem__("removed", "test_b3_pins.py"), "the shadow removed 'test_b3_pins.py', not test_b3_sentinel.py")
+        self.refused(lambda r: r["shadow"].__setitem__("removed_after", False), "the shadow was not removed after the run (removed_after is False)")
+        self.refused(lambda r: r["shadow"].pop("removed_after"), "the shadow was not removed after the run (removed_after is None)")
+
+    def test_the_runs_must_happen_in_the_snapshotted_root_and_the_shadow_outside_it(self):
+        """The owner's P1 on 5b12dd2: two runs in /elsewhere passed."""
+        for name in ("b2_tree", "b3_tree"):
+            with self.subTest(run=name):
+                self.refused(lambda r, n=name: r["suites"][n].__setitem__("cwd", "/elsewhere"), f"{name}: ran in '/elsewhere', not in the snapshotted root")
+                self.refused(lambda r, n=name: r["suites"][n].__setitem__("cwd", str(R) + "/b3"), f"{name}: ran in")
+                self.refused(lambda r, n=name: r["suites"][n].__setitem__("cwd", None), f"{name}: ran in None")
+        def both(r, cwd):
+            for n in ("b2_tree", "b3_tree"):
+                r["suites"][n]["cwd"] = cwd
+        self.refused(lambda r: both(r, "/elsewhere"), "b2_tree: ran in '/elsewhere'")
+        # the shadow must be outside the repository: inside it, or the repository inside it, or unnamed
+        def shadow_at(r, root):
+            r["shadow"]["root"] = root
+            r["suites"]["b3_removal"]["cwd"] = root
+        self.refused(lambda r: shadow_at(r, str(R) + "/shadow"), "is not outside the repository")
+        self.refused(lambda r: shadow_at(r, str(R)), "is not outside the repository")
+        self.refused(lambda r: shadow_at(r, str(R.parent)), "is not outside the repository")
+        self.refused(lambda r: shadow_at(r, None), "the shadow names no root (None)")
+        self.refused(lambda r: shadow_at(r, ""), "the shadow names no root ('')")
+        self.refused(lambda r: r["start"].__setitem__("root", None), "the start snapshot names no root (None)")
 
 
 # ------------------------------------------------------------------ the snapshots
@@ -535,7 +633,8 @@ class Tiny(unittest.TestCase):
         (self.t / "docs/b3_architecture.md").write_text("# arch\n")
         (self.t / "b3/host/a.py").write_text("x = 1\n")
         (self.t / "b3/tests" / tr.SENTINEL_FILE).write_text((R / tr.B3_START / tr.SENTINEL_FILE).read_text())
-        (self.t / "b3/tests/test_two.py").write_text("import unittest\nclass T(unittest.TestCase):\n    def test_a(self): pass\n    def test_b(self): pass\n")
+        (self.t / "b3/tests/test_two.py").write_text("import unittest\nclass T(unittest.TestCase):\n    def test_a(self):\n        \"\"\"A docstring (with parentheses) on its first line.\n        and more\"\"\"\n"
+                                                     "    def test_b(self): pass\n    def test_c(self):\n        \"\"\"Another.\"\"\"\n")
         (self.t / "b3/tests/__pycache__").mkdir()
         (self.t / "b3/tests/__pycache__/junk.pyc").write_bytes(b"\x00")
         (self.t / "tests/test_one.py").write_text("import unittest\nclass T(unittest.TestCase):\n    def test_x(self): pass\n")
@@ -627,6 +726,39 @@ class TheRuns(Tiny):
             self.assertEqual(run["suites"][name]["log"], "Ran 1 test in 0.001s\n\nOK\n")
             self.assertEqual(run["suites"][name]["exit_status"], 0)
 
+    def test_a_shadow_that_cannot_be_removed_is_exit_three_never_a_report(self):
+        """The owner's P2 on 5b12dd2: rmtree(ignore_errors=True) swallowed the failure and the function returned."""
+        real = shutil.rmtree
+        left: list = []
+
+        def failing_rmtree(path, *a, **kw):
+            if Path(path).name.startswith("b3_removal_control_") and not kw.get("ignore_errors"):
+                left.append(Path(path))
+                raise OSError(13, "Permission denied", str(path))
+            return real(path, *a, **kw)
+        with mock.patch.object(shutil, "rmtree", failing_rmtree):
+            with self.assertRaises(tr.ReportIOError) as cm:
+                tr.run_suites(self.t, runner=TheRuns.ok)
+        self.assertIn("could not be removed after the run", str(cm.exception))
+        self.assertEqual(len(left), 1)
+        self.assertTrue(left[0].exists())
+        shutil.rmtree(left[0], ignore_errors=True)
+
+        def silent_rmtree(path, *a, **kw):
+            if Path(path).name.startswith("b3_removal_control_"):
+                left.append(Path(path))
+                return None                                         # says nothing, removes nothing
+            return real(path, *a, **kw)
+        with mock.patch.object(shutil, "rmtree", silent_rmtree):
+            with self.assertRaises(tr.ReportIOError) as cm:
+                tr.run_suites(self.t, runner=TheRuns.ok)
+        self.assertIn("still exists after its removal", str(cm.exception))
+        shutil.rmtree(left[-1], ignore_errors=True)
+
+    @staticmethod
+    def ok(argv, cwd, capture_output, text):
+        return Completed(0, "", "Ran 1 test in 0.001s\n\nOK\n")
+
     def test_a_runner_failure_still_removes_the_shadow(self):
         shadows: list = []
 
@@ -644,14 +776,15 @@ class TheRuns(Tiny):
         """The REAL python3 -B -m unittest discover, in the tree and in its shadow: the sentinel listed once
         and gone from the removal run, exactly one fewer; the verdict's only refusals are the tiny tree's
         missing provenance and artifacts, never the runs or the removal control."""
-        with mock.patch.object(tr, "snapshot", lambda root: clean_snapshot()):
+        with mock.patch.object(tr, "snapshot", lambda root: dict(clean_snapshot(), root=str(self.t))):
             run = tr.run_suites(self.t)
         rep = tr.build(run)
-        self.assertEqual(rep["ran"], {"b2_tree": 1, "b3_tree": 3, "b3_removal": 2})
+        self.assertEqual(rep["ran"], {"b2_tree": 1, "b3_tree": 4, "b3_removal": 3})
         self.assertEqual(rep["exit_status"], {"b2_tree": 0, "b3_tree": 0, "b3_removal": 0})
-        self.assertEqual(rep["suites"]["b3_tree"]["listed"], [tr.SENTINEL_ID, "test_two.T.test_a", "test_two.T.test_b"])
-        self.assertEqual(rep["suites"]["b3_removal"]["listed"], ["test_two.T.test_a", "test_two.T.test_b"])
-        self.assertEqual(rep["removal_control"], {"b3_ran": 3, "removal_ran": 2, "sentinel_in_b3_listing": 1, "sentinel_in_removal_listing": 0})
+        self.assertEqual(rep["suites"]["b3_tree"]["listed"], [tr.SENTINEL_ID, "test_two.T.test_a", "test_two.T.test_b", "test_two.T.test_c"])
+        self.assertEqual(rep["suites"]["b3_removal"]["listed"], ["test_two.T.test_a", "test_two.T.test_b", "test_two.T.test_c"])
+        self.assertIn("A docstring (with parentheses) on its first line. ... ok", rep["suites"]["b3_tree"]["log_text"])   # the two-line form, for real
+        self.assertEqual(rep["removal_control"], {"b3_ran": 4, "removal_ran": 3, "sentinel_in_b3_listing": 1, "sentinel_in_removal_listing": 0})
         self.assertEqual(rep["proof_refusals"], [])                       # with clean snapshots injected, the runs alone qualify
         self.assertTrue(rep["clean_tree_proof"])
         self.assertFalse(list(self.t.rglob("*.pyc"))[1:], "-B: no bytecode written by the runs")   # only the fixture's junk.pyc
@@ -667,7 +800,7 @@ class TheCommandLine(Tiny):
     @staticmethod
     def ok_runner(argv, cwd, capture_output, text):
         if "-v" in argv:
-            ids = [tr.SENTINEL_ID, "test_two.T.test_a", "test_two.T.test_b"]
+            ids = [tr.SENTINEL_ID, "test_two.T.test_a", "test_two.T.test_b", "test_two.T.test_c"]
             if not (Path(cwd) / "b3/tests" / tr.SENTINEL_FILE).exists():
                 ids = ids[1:]
             return Completed(0, "", verbose_log(ids))
@@ -681,7 +814,7 @@ class TheCommandLine(Tiny):
         self.assertEqual(len(written), 1)
         self.assertEqual(sorted(os.listdir(out_dir)), [written[0].name])          # no .part left behind
         rep = json.loads(written[0].read_text())
-        self.assertEqual(rep["ran"], {"b2_tree": 1, "b3_tree": 3, "b3_removal": 2})
+        self.assertEqual(rep["ran"], {"b2_tree": 1, "b3_tree": 4, "b3_removal": 3})
         self.assertFalse(rep["clean_tree_proof"])
         self.assertEqual(rep["pins"]["mode"], "unbound_snapshot")
         self.assertTrue(any("('unbound_snapshot')" in x for x in rep["proof_refusals"]))
@@ -728,6 +861,48 @@ class TheCommandLine(Tiny):
         self.assertEqual(rc, 3)
         self.assertIn("EXIT 3: the report", e)
         self.assertIn("already exists", e)
+
+    def test_the_publishs_own_cleanup_and_sync_failures_are_exit_three(self):
+        """The owner's P2 on 5b12dd2: the .part's unlink failure and the directory fsync failure were swallowed."""
+        rep = tr.build(qualifying_run())
+        out = self.t / "r.json"
+        real_unlink = os.unlink
+
+        def failing_unlink(path, *a, **kw):
+            if ".part-" in str(path):
+                raise OSError(1, "Operation not permitted", str(path))
+            return real_unlink(path, *a, **kw)
+        with mock.patch.object(os, "unlink", failing_unlink):
+            with self.assertRaises(tr.ReportIOError) as cm:
+                tr.publish_once(rep, out)
+        self.assertIn("landed and its temporary file", str(cm.exception))
+        self.assertIn("could not be removed", str(cm.exception))
+        parts = [n for n in os.listdir(self.t) if ".part-" in n]
+        self.assertTrue(out.exists() and parts, (out.exists(), parts))                 # both left behind — and named, never silent
+        for n in parts:
+            os.unlink(self.t / n)
+        out.unlink()
+        real_fsync = os.fsync
+
+        def failing_fsync(fd):
+            if os.fstat(fd).st_mode & 0o170000 == 0o040000:                              # the directory's descriptor
+                raise OSError(5, "Input/output error")
+            return real_fsync(fd)
+        with mock.patch.object(os, "fsync", failing_fsync):
+            with self.assertRaises(tr.ReportIOError) as cm:
+                tr.publish_once(rep, out)
+        self.assertIn("directory could not be synced", str(cm.exception))
+        out.unlink()
+        with mock.patch.object(os, "unlink", failing_unlink):
+            rc, o, e = self.cli("--out-dir", str(self.t / "out"))
+        self.assertEqual(rc, 3)
+        self.assertIn("EXIT 3: the report", e)
+        self.assertIn("temporary file", e)
+        with mock.patch.object(os, "fsync", failing_fsync):
+            rc, o, e = self.cli("--out-dir", str(self.t / "out2"))
+        self.assertEqual(rc, 3)
+        self.assertIn("EXIT 3: the report", e)
+        self.assertIn("directory could not be synced", e)
 
     def test_io_failures_exit_three_and_defects_are_internal_errors(self):
         blocker = self.t / "not_a_dir"

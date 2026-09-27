@@ -28,7 +28,9 @@ did not (ONE definition, in the tool):
     thing the log says — and each run exited 0 with zero skips / failures / errors;
   * the B3 verbose listing names the discovery sentinel exactly once and lists exactly N tests; the removal
     run's listing does not name it, lists exactly N − 1, and `Ran N − 1`;
-  * the sentinel file was in the tree and the shadow was built outside the repository;
+  * the sentinel file was in the tree, the shadow was built outside the repository and removed after the run,
+    the B2 and B3 runs ran in the snapshotted root and the removal run in that shadow, and the removal listing is
+    EXACTLY the B3 listing minus the sentinel (membership and order, not merely the count);
   * the start and end snapshots AGREE — the same HEAD and root, both worktrees clean, the instrument at its
     pinned commit and clean in both, the pinned surface's path → digest map identical in both, every required
     artifact present in both with the same digest;
@@ -292,9 +294,16 @@ def run_suites(root: Path = REPO_ROOT, runner=subprocess.run, shadow_parent: Pat
     try:
         shadow = build_shadow(root, shadow_dir)
         suites["b3_removal"] = run_one("b3_removal", shadow_dir, runner)
-    finally:
-        shutil.rmtree(shadow_dir, ignore_errors=True)
-    shadow["removed_after"] = not shadow_dir.exists()
+    except BaseException:
+        shutil.rmtree(shadow_dir, ignore_errors=True)        # best effort under an exception already in flight
+        raise
+    try:
+        shutil.rmtree(shadow_dir)
+    except OSError as exc:                                   # the owner's P2 on 5b12dd2: never swallowed
+        raise ReportIOError(f"the shadow {shadow_dir} could not be removed after the run: {exc}") from None
+    shadow["removed_after"] = not os.path.lexists(shadow_dir)
+    if not shadow["removed_after"]:
+        raise ReportIOError(f"the shadow {shadow_dir} still exists after its removal")
     end = snapshot(root)
     return {"executed": True, "start": start, "end": end, "suites": suites, "shadow": shadow}
 
@@ -304,7 +313,11 @@ def run_suites(root: Path = REPO_ROOT, runner=subprocess.run, shadow_parent: Pat
 
 RAN_LINE = re.compile(r"Ran (\d+) tests? in (\d+(?:\.\d+)?)s")
 RESULT_LINE = re.compile(r"(OK|FAILED)(?: \((.*)\))?")
-LISTED_LINE = re.compile(r"(\S+) \(([^()\s]+)\) \.\.\. (ok|FAIL|ERROR|skipped.*|expected failure|unexpected success)")
+# A listed test is its HEADER at column 0: `name (module.Class.name)`, followed on the same line by ` ... <status>`
+# (no docstring), by ` ... ` alone (a subTest failure continues on indented lines), or by nothing (a docstring: its
+# first line follows on the next line, ending in ` ... <status>`). The name must be the id's last component, which
+# no docstring line satisfies; indented subTest lines are not at column 0. Measured on this interpreter (3.12).
+LISTED_LINE = re.compile(r"(\S+) \(([^()\s]+\.[^()\s]+)\)(?: \.\.\.(?: .*)?)?")
 
 
 def parse_log(text) -> dict:
@@ -360,10 +373,20 @@ def parse_log(text) -> dict:
 
 
 def listed_tests(text) -> list[str]:
-    """The test ids a verbose (-v) run listed, in order: `name (module.Class.name) ... ok`."""
+    """The test ids a verbose (-v) run listed, in order — from each test's header line at column 0, whether the
+    status follows on that line (`name (id) ... ok`) or, for a test with a docstring, on the next (`name (id)` then
+    `<first docstring line> ... ok`) — the owner's P1 on 5b12dd2: the one-line form alone missed every docstring
+    test (363 of 454 in the real run)."""
     if not isinstance(text, str):
         return []
-    return [m.group(2) for ln in text.splitlines() if (m := LISTED_LINE.fullmatch(ln.strip()))]
+    out = []
+    for ln in text.splitlines():
+        # column 0 is enforced by the pattern itself: `\S+` at position 0 under fullmatch admits no leading
+        # whitespace, so an indented subTest or traceback line never matches (a separate guard would be dead code)
+        m = LISTED_LINE.fullmatch(ln.rstrip())
+        if m and m.group(1) == m.group(2).rsplit(".", 1)[1]:
+            out.append(m.group(2))
+    return out
 
 
 # ------------------------------------------------------------------ the verdict
@@ -393,7 +416,7 @@ def proof_refusals(rep: dict) -> list[str]:
             out.append(f"{name}: the run exited {s.get('exit_status')!r}, not zero")
         if s.get("argv") != suite_argv(name):
             out.append(f"{name}: the command run was {s.get('argv')!r}, not this tool's {suite_argv(name)!r}")
-    # the removal control
+    # the removal control: the membership, not merely the count (the owner's P1 on 5b12dd2)
     b3, rm = suites.get("b3_tree"), suites.get("b3_removal")
     if isinstance(b3, dict) and isinstance(rm, dict):
         b3_listed, rm_listed = b3.get("listed") or [], rm.get("listed") or []
@@ -407,6 +430,13 @@ def proof_refusals(rep: dict) -> list[str]:
             out.append(f"b3_removal: the verbose listing has {len(rm_listed)} tests but the summary ran {rm['log']['ran']}")
         if isinstance(b3["log"]["ran"], int) and isinstance(rm["log"]["ran"], int) and rm["log"]["ran"] != b3["log"]["ran"] - 1:
             out.append(f"b3_removal: ran {rm['log']['ran']}, not exactly one fewer than b3_tree's {b3['log']['ran']}")
+        expected = [i for i in b3_listed if i != SENTINEL_ID]
+        if rm_listed != expected:
+            gone = sorted(set(expected) - set(rm_listed))
+            extra = sorted(set(rm_listed) - set(expected))
+            out.append("b3_removal: the verbose listing is not b3_tree's listing minus the sentinel"
+                       + (f": missing {gone[:3]}" if gone else "") + (f": unexpected {extra[:3]}" if extra else "")
+                       + ("" if gone or extra else ": the order differs"))
         if rm.get("cwd") == b3.get("cwd"):
             out.append("b3_removal: ran in the same directory as b3_tree, not in the shadow")
     shadow = run.get("shadow")
@@ -417,7 +447,9 @@ def proof_refusals(rep: dict) -> list[str]:
             out.append(f"the sentinel {SENTINEL_FILE} was not in b3/tests: there was nothing to remove")
         if shadow.get("removed") != SENTINEL_FILE:
             out.append(f"the shadow removed {shadow.get('removed')!r}, not {SENTINEL_FILE}")
-        if isinstance(rm, dict) and shadow.get("root") is not None and rm.get("cwd") != shadow.get("root"):
+        if shadow.get("removed_after") is not True:
+            out.append(f"the shadow was not removed after the run (removed_after is {shadow.get('removed_after')!r})")
+        if isinstance(rm, dict) and rm.get("cwd") != shadow.get("root"):
             out.append("b3_removal did not run in the shadow that was built")
     # the snapshots
     start, end = run.get("start"), run.get("end")
@@ -464,6 +496,21 @@ def proof_refusals(rep: dict) -> list[str]:
         out.append(f"HEAD moved during the run: {start.get('head')} -> {end.get('head')}")
     if start.get("root") != end.get("root"):
         out.append("the repository root changed during the run")
+    # the runs happened in THE tree that was snapshotted, and the removal outside it (the owner's P1 on 5b12dd2)
+    root = start.get("root")
+    if not isinstance(root, str) or not root:
+        out.append(f"the start snapshot names no root ({root!r})")
+    else:
+        for name in ("b2_tree", "b3_tree"):
+            s = suites.get(name)
+            if isinstance(s, dict) and s.get("cwd") != root:
+                out.append(f"{name}: ran in {s.get('cwd')!r}, not in the snapshotted root {root!r}")
+        if isinstance(shadow, dict):
+            sr = shadow.get("root")
+            if not isinstance(sr, str) or not sr:
+                out.append(f"the shadow names no root ({sr!r})")
+            elif sr == root or sr.startswith(root.rstrip("/") + "/") or root.startswith(sr.rstrip("/") + "/"):
+                out.append(f"the shadow {sr!r} is not outside the repository {root!r}")
     a0, a1 = start.get("artifacts_sha256"), end.get("artifacts_sha256")
     if isinstance(a0, dict) and isinstance(a1, dict) and a0 != a1:
         moved = sorted(k for k in set(a0) | set(a1) if a0.get(k) != a1.get(k))
@@ -532,30 +579,41 @@ def publish_once(rep: dict, out: Path) -> None:
         fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o644)
     except OSError as exc:
         raise ReportIOError(f"the report's temporary file could not be created: {exc}") from None
+    landed = False
     try:
-        try:
-            with os.fdopen(fd, "wb") as f:
-                f.write(data)
-                f.flush()
-                os.fsync(f.fileno())
-            os.link(tmp, out)
-        except FileExistsError:
-            raise ReportIOError(f"the report {out} already exists: a report is never overwritten") from None
-        except OSError as exc:
-            raise ReportIOError(f"the report did not land: {exc}") from None
-    finally:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+        os.link(tmp, out)
+        landed = True
+    except FileExistsError:
+        _unlink_part(tmp, out, landed)
+        raise ReportIOError(f"the report {out} already exists: a report is never overwritten") from None
+    except OSError as exc:
+        _unlink_part(tmp, out, landed)
+        raise ReportIOError(f"the report did not land: {exc}") from None
+    _unlink_part(tmp, out, landed)                           # the owner's P2 on 5b12dd2: its failure is EXIT 3, not silence
     try:
         dfd = os.open(out.parent, os.O_RDONLY)
-        try:
-            os.fsync(dfd)
-        finally:
-            os.close(dfd)
-    except OSError:
+    except OSError as exc:
+        raise ReportIOError(f"the report {out} landed but its directory could not be opened to sync: {exc}") from None
+    try:
+        os.fsync(dfd)
+    except OSError as exc:
+        raise ReportIOError(f"the report {out} landed but its directory could not be synced: {exc}") from None
+    finally:
+        os.close(dfd)
+
+
+def _unlink_part(tmp: Path, out: Path, landed: bool) -> None:
+    """Remove this publish's own temporary file; a failure is named (the report may or may not have landed)."""
+    try:
+        os.unlink(tmp)
+    except FileNotFoundError:
         pass
+    except OSError as exc:
+        raise ReportIOError(f"the report {'landed' if landed else 'did not land'} and its temporary file {tmp} could not be removed: {exc}") from None
 
 
 def parser() -> argparse.ArgumentParser:
