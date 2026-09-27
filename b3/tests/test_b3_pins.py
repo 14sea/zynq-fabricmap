@@ -697,6 +697,79 @@ class RaceProbes(Tree):
         self.assertFalse((self.d / bp.PIN_TABLE_REL).exists())
         self.refused("manifests/b3_instrument_pins.json is absent", self.verify)
 
+    def before_examining(self, rel: str, action, occurrence: int = 1):
+        """An lstat_name that performs `action()` right before the `occurrence`-th examination of rel — i.e. after
+        the rule listed it and before it is examined (the owner's P2 on ef0ce46)."""
+        real = bp.lstat_name
+        seen = {"n": 0}
+
+        def lstat_name(p):
+            if Path(p) == self.d / rel:
+                seen["n"] += 1
+                if seen["n"] == occurrence:
+                    action()
+            return real(p)
+        return mock.patch.object(bp, "lstat_name", lstat_name)
+
+    def test_a_source_vanishing_between_the_listing_and_its_examination(self):
+        """Listed by the rule, gone before lstat: a NAMED refusal, in the opening discovery, in the closing
+        discovery (the second examination of the same name), and in generate — never a FileNotFoundError."""
+        rel = "b3/host/a.py"
+        with self.before_examining(rel, lambda: (self.d / rel).unlink()):
+            msg = self.refused(f"{rel} vanished during discovery (listed by the rule, gone before it could be examined)", self.verify)
+        self.assertFalse((self.d / rel).exists())
+        self.refused(f"in the table but not in the tree by the rule: ['{rel}']", self.verify)      # settled: an ordinary loss
+        (self.d / rel).write_text(PINNED[rel])
+        self.m = rewrite_table(self.d, bp.generate(self.d))
+        self.verify()
+        # the CLOSING discovery: the file survives the opening one and its read, and vanishes before its second examination
+        with self.before_examining(rel, lambda: (self.d / rel).unlink(), occurrence=2):
+            self.refused(f"{rel} vanished during discovery", self.verify)
+        (self.d / rel).write_text(PINNED[rel])
+        self.m = rewrite_table(self.d, bp.generate(self.d))
+        with self.before_examining(rel, lambda: (self.d / rel).unlink()):
+            self.refused(f"{rel} vanished during discovery", bp.generate, self.d)
+        (self.d / rel).write_text(PINNED[rel])
+        with self.before_examining(rel, lambda: (self.d / rel).unlink(), occurrence=2):
+            self.refused(f"{rel} vanished during discovery", bp.generate, self.d)
+        (self.d / rel).write_text(PINNED[rel])
+        with self.before_examining("docs/b3_architecture.md", lambda: (self.d / "docs/b3_architecture.md").unlink()):
+            self.refused("docs/b3_architecture.md vanished during discovery", bp.discover, self.d)
+
+    def test_a_source_unreadable_at_its_examination_is_named_not_an_internal_error(self):
+        """Listed, then unexaminable (its directory closed) before lstat: named. The permission itself is
+        exercised for real when this user can be refused by it; the conversion is exercised for every user
+        through the seam (no skip: the suite must run with zero skips)."""
+        if os.geteuid() != 0:
+            locked = self.d / "b3/locked"
+            locked.mkdir()
+            (locked / "x").write_text("x\n")
+            try:
+                with self.before_examining("b3/locked/x", lambda: os.chmod(locked, 0)):
+                    self.refused("b3/locked/x: cannot be examined: Permission denied", bp.discover, self.d)
+            finally:
+                os.chmod(locked, 0o755)
+            shutil.rmtree(locked)
+            self.verify()
+        real = bp.lstat_name
+
+        def lstat_name(p):
+            if Path(p) == self.d / "b3/host/a.py":
+                raise PermissionError(13, "Permission denied", str(p))
+            return real(p)
+        with mock.patch.object(bp, "lstat_name", lstat_name):
+            self.refused("b3/host/a.py: cannot be examined: Permission denied", self.verify)
+            self.refused("b3/host/a.py: cannot be examined: Permission denied", bp.generate, self.d)
+
+    def test_an_implementation_defect_in_the_examination_stays_an_internal_error(self):
+        for exc in (TypeError("a defect"), KeyError("a defect"), ValueError("a defect")):
+            with self.subTest(exc=type(exc).__name__):
+                with mock.patch.object(bp, "lstat_name", side_effect=exc):
+                    with self.assertRaises(type(exc)):
+                        self.verify()
+                    with self.assertRaises(type(exc)):
+                        bp.generate(self.d)
+
     def test_the_reader_itself(self):
         rel = "b3/host/a.py"
         data, stamp = bp.read_regular(self.d / rel, rel)
@@ -836,6 +909,41 @@ class TheCommandLine(Tree):
         self.assertEqual(rc, 2)
         self.assertIn("REFUSED: the rule reaches what it cannot pin: b3/link is a symbolic link", e)
         self.assertFalse((self.d / "out" / "second.json").exists())
+
+    def test_a_source_vanishing_during_discovery_on_the_command_line(self):
+        """The owner's P2 on ef0ce46: rc 3, INTERNAL ERROR: FileNotFoundError. Now: REFUSED, exit 2, nothing written."""
+        rel = "b3/host/a.py"
+        out = self.d / "out" / "pins.json"
+        out.parent.mkdir()
+        real = bp.lstat_name
+
+        def vanish_before_examining(p):
+            if Path(p) == self.d / rel and (self.d / rel).exists():
+                (self.d / rel).unlink()
+            return real(p)
+        with mock.patch.object(bp, "lstat_name", vanish_before_examining):
+            rc, o, e = self.run_cli("--generate", "--root", str(self.d), "--out", str(out))
+        self.assertEqual((rc, o), (2, ""))
+        self.assertIn(f"REFUSED: {rel} vanished during discovery (listed by the rule, gone before it could be examined)", e)
+        self.assertNotIn("Traceback", e)
+        self.assertNotIn("INTERNAL ERROR", e)
+        self.assertFalse(out.exists())
+        self.assertEqual(os.listdir(out.parent), [])
+        (self.d / rel).write_text(PINNED[rel])
+        (self.d / bp.MANIFEST_REL).write_text(json.dumps(self.m))
+        with mock.patch.object(bp, "lstat_name", vanish_before_examining):
+            rc, o, e = self.run_cli("--root", str(self.d))
+        self.assertEqual((rc, o), (2, ""))
+        self.assertIn(f"REFUSED: {rel} vanished during discovery", e)
+        self.assertNotIn("Traceback", e)
+        # an implementation defect at the same step is still an INTERNAL ERROR, exit 3
+        (self.d / rel).write_text(PINNED[rel])
+        with mock.patch.object(bp, "lstat_name", side_effect=TypeError("a defect")):
+            rc, o, e = self.run_cli("--root", str(self.d))
+        self.assertEqual(rc, 3)
+        self.assertIn("INTERNAL ERROR: TypeError: a defect", e)
+        self.assertIn("Traceback", e)
+        self.assertNotIn("REFUSED", e)
 
     def test_verify_exits_0_2_or_3(self):
         (self.d / bp.MANIFEST_REL).write_text(json.dumps(self.m))

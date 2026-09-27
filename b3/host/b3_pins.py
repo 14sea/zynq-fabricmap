@@ -231,11 +231,19 @@ def excluded(rel: str) -> bool:
 # ------------------------------------------------------------------ discovery and the table
 
 
+def lstat_name(p: Path) -> os.stat_result:
+    """The lstat of a name the rule listed (the examine step of `discover`, on its own so a test can probe
+    the window between the listing and the examination)."""
+    return os.lstat(p)
+
+
 def discover(root: Path | None = None) -> list[str]:
     """The sorted normalized repo-relative paths the rule reaches in `root` NOW. Directories are not
     entries; `.pyc` and `__pycache__` contents are excluded; a symbolic link or any other non-regular
-    file the rule reaches is a named refusal; a rule that reaches no regular file (the architecture
-    absent, no b3/ tree) is a named refusal — a rule that pins nothing is not a table."""
+    file the rule reaches is a named refusal; a name the rule listed that is gone or unreadable by the time
+    it is examined is a named refusal (the tree drifted under the discovery — the owner's P2 on ef0ce46);
+    a rule that reaches no regular file (the architecture absent, no b3/ tree) is a named refusal — a rule
+    that pins nothing is not a table."""
     root = Path(REPO_ROOT if root is None else root)
     found: set[str] = set()
     bad: list[str] = []
@@ -246,7 +254,12 @@ def discover(root: Path | None = None) -> list[str]:
             rel = p.relative_to(root).as_posix()
             if excluded(rel):
                 continue
-            mode = os.lstat(p).st_mode          # lstat: a link is seen as a link, not as its target
+            try:
+                mode = lstat_name(p).st_mode    # lstat: a link is seen as a link, not as its target
+            except FileNotFoundError:           # listed by the rule, gone before it could be examined: the tree drifted
+                raise PinRefusal(f"{rel} vanished during discovery (listed by the rule, gone before it could be examined)") from None
+            except OSError as exc:              # unreadable: an input condition, named — never an INTERNAL ERROR
+                raise PinRefusal(f"{rel}: cannot be examined: {exc.strerror or exc}") from None
             if stat.S_ISDIR(mode):
                 continue
             if not stat.S_ISREG(mode):
