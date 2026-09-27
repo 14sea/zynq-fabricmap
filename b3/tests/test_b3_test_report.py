@@ -24,6 +24,7 @@ import io
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -875,7 +876,7 @@ class TheCommandLine(Tiny):
         with mock.patch.object(os, "unlink", failing_unlink):
             with self.assertRaises(tr.ReportIOError) as cm:
                 tr.publish_once(rep, out)
-        self.assertIn("landed and its temporary file", str(cm.exception))
+        self.assertIn(f"the report {out} landed; the temporary file", str(cm.exception))
         self.assertIn("could not be removed", str(cm.exception))
         parts = [n for n in os.listdir(self.t) if ".part-" in n]
         self.assertTrue(out.exists() and parts, (out.exists(), parts))                 # both left behind — and named, never silent
@@ -903,6 +904,155 @@ class TheCommandLine(Tiny):
         self.assertEqual(rc, 3)
         self.assertIn("EXIT 3: the report", e)
         self.assertIn("directory could not be synced", e)
+
+    def part_dir(self) -> Path:
+        d = self.t / "pub"
+        d.mkdir(exist_ok=True)
+        return d
+
+    def test_the_source_swap_probe_publishes_nothing_foreign(self):
+        """The owner's P1 on 3885926: with the descriptor closed and the temporary NAME linked, a same-name file
+        written in between was published as the report. Now the link is made from the open descriptor's inode:
+        the swapped name is not what lands — the kernel refuses the inode whose last name is gone — nothing stands
+        under the report's name, the foreign file under the temporary name is left in place and named."""
+        d = self.part_dir()
+        out = d / "report.json"
+        real = os.link
+
+        def swap_then_link(src, dst, *a, **kw):
+            part = [n for n in os.listdir(d) if ".part-" in n]
+            self.assertEqual(len(part), 1)
+            os.unlink(d / part[0])
+            (d / part[0]).write_text('{"attacker": true}\n')
+            return real(src, dst, *a, **kw)
+        with mock.patch.object(os, "link", swap_then_link):
+            with self.assertRaises(tr.ReportIOError) as cm:
+                tr.publish_once(tr.build(qualifying_run()), out)
+        msg = str(cm.exception)
+        self.assertIn("the report did not land", msg)
+        self.assertIn("is no longer this tool's inode (it was swapped) and is left in place", msg)
+        self.assertFalse(out.exists(), "nothing may stand under the report's name")
+        parts = [n for n in os.listdir(d) if ".part-" in n]
+        self.assertEqual(len(parts), 1)
+        self.assertEqual((d / parts[0]).read_text(), '{"attacker": true}\n', "the foreign file is not this tool's to delete")
+        (d / parts[0]).unlink()
+        with mock.patch.object(os, "link", swap_then_link):
+            rc, o, e = self.cli("--out-dir", str(d))
+        self.assertEqual(rc, 3)
+        self.assertIn("EXIT 3: the report did not land", e)
+        self.assertNotIn("Traceback", e)
+        self.assertFalse(list(d.glob("test_report_*.json")))
+
+    def test_a_link_made_by_name_is_caught_by_the_inode_check(self):
+        """The pre-fix behaviour, simulated: the link made from the temporary NAME after the swap. The inode
+        under the report's name is not the one this tool wrote — refused, the foreign file left in place (not this
+        tool's) and named, the swapped temporary left in place and named."""
+        d = self.part_dir()
+        out = d / "report.json"
+        real = os.link
+
+        def swap_then_link_by_name(src, dst, *a, **kw):
+            part = [n for n in os.listdir(d) if ".part-" in n][0]
+            os.unlink(d / part)
+            (d / part).write_text('{"attacker": true}\n')
+            return real(d / part, d / dst)
+        with mock.patch.object(os, "link", swap_then_link_by_name):
+            with self.assertRaises(tr.ReportIOError) as cm:
+                tr.publish_once(tr.build(qualifying_run()), out)
+        msg = str(cm.exception)
+        self.assertIn(f"the file at {out} is not the inode this tool wrote and fsync'd", msg)
+        self.assertIn("left in place (it is not this tool's)", msg)
+        self.assertIn("is no longer this tool's inode (it was swapped) and is left in place", msg)
+        self.assertEqual(out.read_text(), '{"attacker": true}\n')                    # left, named, never deleted by this tool
+        self.assertEqual(len([n for n in os.listdir(d) if ".part-" in n]), 1)
+
+    def test_the_read_back_must_be_the_bytes_written(self):
+        d = self.part_dir()
+        out = d / "report.json"
+        with mock.patch.object(tr.bp, "read_regular", return_value=(b"other bytes", ())):
+            with self.assertRaises(tr.ReportIOError) as cm:
+                tr.publish_once(tr.build(qualifying_run()), out)
+        self.assertIn("landed but its bytes are not the bytes this tool wrote", str(cm.exception))
+        out.unlink()
+        with mock.patch.object(tr.bp, "read_regular", side_effect=tr.bp.PinRefusal(f"{out} is a symbolic link")):
+            with self.assertRaises(tr.ReportIOError) as cm:
+                tr.publish_once(tr.build(qualifying_run()), out)
+        self.assertIn("does not read back as a regular file", str(cm.exception))
+        out.unlink()
+        # untouched, the publish verifies its own inode and bytes and leaves exactly the report
+        tr.publish_once(tr.build(qualifying_run()), out)
+        self.assertEqual(sorted(os.listdir(d)), ["report.json"])
+        self.assertEqual(json.loads(out.read_text())["schema"], tr.SCHEMA)
+
+    def test_every_descriptor_close_failure_is_named_and_fsync_stays_the_finding(self):
+        """The owner's P3 on 3885926: the directory descriptor's close raised a bare OSError (an INTERNAL ERROR on
+        the command line); when the fsync and the close both fail, the fsync is the finding."""
+        d = self.part_dir()
+        out = d / "report.json"
+        real_close, real_fsync = os.close, os.fsync
+
+        d_ino = (os.stat(d).st_dev, os.stat(d).st_ino)
+
+        def is_dir(fd):
+            """The REPORT directory's descriptor, and only it (rmtree's descriptors on other directories are not it)."""
+            try:
+                st = os.fstat(fd)
+            except OSError:
+                return False
+            return stat.S_ISDIR(st.st_mode) and (st.st_dev, st.st_ino) == d_ino
+
+        def dir_close_fails(fd):
+            if is_dir(fd):
+                real_close(fd)
+                raise OSError(5, "Input/output error")
+            return real_close(fd)
+        with mock.patch.object(os, "close", dir_close_fails):
+            with self.assertRaises(tr.ReportIOError) as cm:
+                tr.publish_once(tr.build(qualifying_run()), out)
+        self.assertIn("directory was synced, but the directory's descriptor could not be closed", str(cm.exception))
+        self.assertTrue(out.exists())
+        out.unlink()
+
+        def dir_fsync_fails(fd):
+            if is_dir(fd):
+                raise OSError(5, "Input/output error")
+            return real_fsync(fd)
+        with mock.patch.object(os, "close", dir_close_fails), mock.patch.object(os, "fsync", dir_fsync_fails):
+            with self.assertRaises(tr.ReportIOError) as cm:
+                tr.publish_once(tr.build(qualifying_run()), out)
+        msg = str(cm.exception)
+        self.assertIn("landed but its directory could not be synced: [Errno 5]", msg)          # the fsync is the finding
+        self.assertIn("and its descriptor could not be closed", msg)
+        out.unlink()
+
+        real_open = os.open
+        part_fds: set = set()
+
+        def recording_open(path, *a, **kw):
+            fd = real_open(path, *a, **kw)
+            if ".part-" in str(path):
+                part_fds.add(fd)                                      # the publish's OWN write descriptor, and only it
+            return fd
+
+        def file_close_fails(fd):
+            if fd in part_fds:
+                part_fds.discard(fd)
+                real_close(fd)
+                raise OSError(5, "Input/output error")
+            return real_close(fd)
+        with mock.patch.object(os, "open", recording_open), mock.patch.object(os, "close", file_close_fails):
+            with self.assertRaises(tr.ReportIOError) as cm:
+                tr.publish_once(tr.build(qualifying_run()), out)
+        self.assertIn(f"the report {out} landed but its descriptor could not be closed", str(cm.exception))
+        self.assertTrue(out.exists())
+        out.unlink()
+        with mock.patch.object(os, "close", dir_close_fails):
+            rc, o, e = self.cli("--out-dir", str(d))
+        self.assertEqual(rc, 3)
+        self.assertIn("EXIT 3: the report", e)
+        self.assertIn("descriptor could not be closed", e)
+        self.assertNotIn("Traceback", e)
+        self.assertNotIn("INTERNAL ERROR", e)
 
     def test_io_failures_exit_three_and_defects_are_internal_errors(self):
         blocker = self.t / "not_a_dir"
