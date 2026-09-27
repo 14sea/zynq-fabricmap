@@ -36,8 +36,12 @@ formula or a filesystem call that would raise something else.
 
 Every file this module reads — the table, every pinned file, in generate and in verify alike — is read
 through ONE reader (`read_regular`): opened with O_NOFOLLOW, fstat'd on the open descriptor as a regular
-file, read from that descriptor, and re-lstat'd as the same regular inode before the bytes are accepted;
-a name swapped for a symbolic link or another file between the check and the read is refused by name.
+file, read from that descriptor, and — with the descriptor still open — re-fstat'd and the name re-lstat'd
+to the same (device, inode, size, mtime_ns, ctime_ns) before the bytes are accepted; a name swapped for a
+symbolic link or another file, or an inode rewritten in place, is refused by name. The pinned surface is
+taken as a two-phase STABLE SNAPSHOT (`snapshot`): opening discovery, every file read and stamped, closing
+discovery equal to the opening (a file that appeared or vanished meanwhile is named), and every read path
+— the table too — re-stamped at the close (a file rewritten after its own read is named).
 The command line reads the manifest through `b3_manifest.read_manifest` — the lifecycle's shared lock and
 its unresolved-transaction refusal — never by name.
 """
@@ -96,14 +100,30 @@ def read_fd(fd: int) -> bytes:
         chunks.append(b)
 
 
-def read_regular(path: Path, rel: str) -> bytes:
-    """The bytes of `path`, which must be a REGULAR FILE from the open to the acceptance — the one reader
-    generate and verify share (the owner's P2 on b6439ea: a check by lstat and then a read by name is a
-    window in which the name can be swapped for a symbolic link or another file). The name is opened with
-    O_NOFOLLOW (a symbolic link is refused by the kernel, not by a prior look), the OPEN descriptor is
-    fstat'd and must be a regular file, the bytes are read from that descriptor, and before they are
-    accepted the name is lstat'd again and must still be that same regular inode — otherwise "changed
-    while being read"."""
+def stamp_of(st: os.stat_result) -> tuple:
+    """A regular file's identity AND content witness: (device, inode, size, mtime_ns, ctime_ns). The inode
+    alone says which file the name is; size / mtime / ctime say whether that inode's bytes moved — an
+    in-place rewrite keeps the inode (the owner's P2-1 on 02d179c)."""
+    return (st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns)
+
+
+def what_changed(now: os.stat_result, was: tuple) -> str:
+    if not stat.S_ISREG(now.st_mode):
+        return f"the name is now {kind_of(now.st_mode)}"
+    if (now.st_dev, now.st_ino) != was[:2]:
+        return "the name is now another regular file"
+    return "the inode's size / mtime / ctime moved"
+
+
+def read_regular(path: Path, rel: str) -> tuple[bytes, tuple]:
+    """The bytes of `path`, which must be ONE regular file, unchanged, from the open to the acceptance — the
+    one reader generate and verify share (the owner's P2 on b6439ea and P2-1 on 02d179c). The name is opened
+    with O_NOFOLLOW (a symbolic link is refused by the kernel, not by a prior look); the OPEN descriptor is
+    fstat'd and must be a regular file; the bytes are read from that descriptor; then, WITH THE DESCRIPTOR
+    STILL OPEN, the descriptor is fstat'd again and the name is lstat'd, and both must give the stamp the
+    read began with — the same (device, inode) with the same size / mtime_ns / ctime_ns. A name swapped for
+    a link or another file, and an inode rewritten in place, are each "changed while being read". Returns
+    the bytes and that stamp, for the closing check of the snapshot."""
     try:
         # O_NONBLOCK: a fifo at the name must not hang the open — fstat then names it. No effect on a regular file.
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK)
@@ -117,26 +137,60 @@ def read_regular(path: Path, rel: str) -> bytes:
         st = os.fstat(fd)
         if not stat.S_ISREG(st.st_mode):
             raise PinRefusal(f"{rel} is {kind_of(st.st_mode)}, not a regular file")
+        was = stamp_of(st)
         try:
             data = read_fd(fd)
         except OSError as exc:
             raise PinRefusal(f"{rel}: cannot be read: {exc.strerror or exc}") from None
+        after = os.fstat(fd)                      # the inode that was read, seen through the still-open descriptor
+        try:
+            now = os.lstat(path)                  # the name, while the descriptor is still open
+        except OSError:
+            raise PinRefusal(f"{rel} changed while being read (the name is gone or unreadable now)") from None
+        # Named most specifically first: a name that no longer refers to the opened inode (a swap — which also
+        # moves the old inode's ctime, so this is decided before the stamp), then the inode itself moved.
+        if (now.st_dev, now.st_ino) != was[:2] or not stat.S_ISREG(now.st_mode):
+            raise PinRefusal(f"{rel} changed while being read ({what_changed(now, was)}, not the inode that was opened)")
+        if stamp_of(after) != was or stamp_of(now) != was:
+            raise PinRefusal(f"{rel} changed while being read (the inode's size / mtime / ctime moved under the open descriptor)")
     finally:
         os.close(fd)
+    return data, was
+
+
+def recheck(path: Path, rel: str, was: tuple) -> None:
+    """The closing check of a file read earlier in the snapshot: the name must still be that regular inode
+    with the size / mtime / ctime it had when read (the owner's P2-2 on 02d179c: a file rewritten AFTER its
+    own read, while a later file was being hashed, must not stand)."""
     try:
         now = os.lstat(path)
     except OSError:
-        raise PinRefusal(f"{rel} changed while being read (the name is gone or unreadable now)") from None
-    # The same (device, inode) cannot change type, so inode equality already says "still that regular file";
-    # the kind is computed only to NAME what the swap put there.
-    if (now.st_dev, now.st_ino) != (st.st_dev, st.st_ino):
-        what = kind_of(now.st_mode) if not stat.S_ISREG(now.st_mode) else "another regular file"
-        raise PinRefusal(f"{rel} changed while being read (the name is now {what}, not the inode that was opened)")
-    return data
+        raise PinRefusal(f"{rel} changed after it was read (the name is gone or unreadable now)") from None
+    if stamp_of(now) != was:
+        raise PinRefusal(f"{rel} changed after it was read ({what_changed(now, was)})")
 
 
-def sha256_of(path: Path, rel: str) -> str:
-    return hashlib.sha256(read_regular(path, rel)).hexdigest()
+def snapshot(root: Path) -> tuple[dict, dict]:
+    """A STABLE snapshot of the pinned surface, in two phases (the owner's P2-2 on 02d179c): the opening
+    discovery; every file read through `read_regular` with its stamp kept; then the CLOSING discovery,
+    whose path set must equal the opening one (a file that appeared or vanished while the tree was being
+    read is named), and every read path re-lstat'd against its stamp (a file rewritten after its own read
+    is named). Returns ({rel: sha256}, {rel: stamp}) — generate writes the first, verify compares it."""
+    root = Path(root)
+    opening = discover(root)
+    digests, stamps = {}, {}
+    for rel in opening:
+        data, stamps[rel] = read_regular(root / rel, rel)
+        digests[rel] = hashlib.sha256(data).hexdigest()
+    closing = discover(root)
+    if closing != opening:
+        appeared = sorted(set(closing) - set(opening))
+        vanished = sorted(set(opening) - set(closing))
+        raise PinRefusal("the rule's path set changed while the tree was being read: "
+                         + "; ".join(f"{k} {v[:5]}" for k, v in (("appeared", appeared), ("vanished", vanished)) if v))
+    for rel in opening:
+        recheck(root / rel, rel, stamps[rel])
+    return digests, stamps
 
 
 def kind_of(mode: int) -> str:
@@ -210,10 +264,11 @@ def discover(root: Path | None = None) -> list[str]:
 
 
 def generate(root: Path | None = None) -> dict:
-    """The table for the tree NOW: a pure function of the pinned bytes (sorted entries; `render` gives
-    the canonical bytes). Never written by this function."""
+    """The table for the tree NOW, from a stable snapshot (opening discovery, every file read once and
+    stamped, closing discovery and re-stamp): a pure function of the pinned bytes (sorted entries; `render`
+    gives the canonical bytes). Never written by this function."""
     root = Path(REPO_ROOT if root is None else root)
-    files = {rel: sha256_of(root / rel, rel) for rel in discover(root)}
+    files, _ = snapshot(root)
     return {"schema": SCHEMA, "schema_version": SCHEMA_VERSION, "globs": list(PINNED_GLOBS),
             "file_count": len(files), "files": files}
 
@@ -278,7 +333,7 @@ def verify(manifest, root: Path | None = None) -> dict:
     if not is_sha256_hex(pinned):
         raise PinRefusal(f"the manifest's instrument_pins sha256 {pinned!r} is not 64 lower-case hex")
     # 2. the table's bytes
-    data = read_regular(root / PIN_TABLE_REL, PIN_TABLE_REL)         # O_NOFOLLOW, fstat, read, re-lstat: never by name alone
+    data, table_stamp = read_regular(root / PIN_TABLE_REL, PIN_TABLE_REL)   # O_NOFOLLOW, fstat, read, re-fstat / re-lstat: never by name alone
     if hashlib.sha256(data).hexdigest() != pinned:
         raise PinRefusal(f"{PIN_TABLE_REL} does not hash to the manifest's pin")
     # 3. the table's shape
@@ -309,8 +364,10 @@ def verify(manifest, root: Path | None = None) -> dict:
     bad = [f"{rel}: digest {sha!r} is not 64 lower-case hex" for rel, sha in sorted(files.items()) if not is_sha256_hex(sha)]
     if bad:
         raise PinRefusal(f"{PIN_TABLE_REL}: " + "; ".join(bad[:5]))
-    # 4. the path set: EXACTLY what the rule reaches now
-    now = discover(root)
+    # 4. the tree, as ONE stable snapshot (opening discovery, every file read and stamped, closing discovery
+    #    equal to the opening, every read path re-stamped) — and its path set EXACTLY the table's
+    digests, _ = snapshot(root)
+    now = sorted(digests)
     listed = set(files)
     missing = sorted(set(now) - listed)
     if missing:
@@ -318,15 +375,12 @@ def verify(manifest, root: Path | None = None) -> dict:
     extra = sorted(listed - set(now))
     if extra:
         raise PinRefusal(f"in the table but not in the tree by the rule: {extra[:5]} ({len(extra)} entry(ies) — deleted, renamed, or never there)")
-    # 5. every pinned file: regular (discover saw to it) and hashing to its entry
-    drift = []
-    for rel in now:
-        if sha256_of(root / rel, rel) != files[rel]:
-            drift.append(f"{rel}: hash differs")
-            if len(drift) >= 5:
-                break
+    # 5. every pinned file hashing to its entry
+    drift = [f"{rel}: hash differs" for rel in now if digests[rel] != files[rel]]
     if drift:
-        raise PinRefusal("pinned files changed: " + "; ".join(drift))
+        raise PinRefusal("pinned files changed: " + "; ".join(drift[:5]))
+    # 6. the table itself, at the close: still the regular inode with the stamp it was read with
+    recheck(root / PIN_TABLE_REL, PIN_TABLE_REL, table_stamp)
     return {"files_verified": len(now), "pins_sha256": pinned, "path": PIN_TABLE_REL}
 
 

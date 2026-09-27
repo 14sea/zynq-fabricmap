@@ -506,6 +506,32 @@ class RaceProbes(Tree):
         (self.d / rel).unlink()
         os.symlink(copy_, self.d / rel)
 
+    def rewrite_in_place(self, rel: str, same_length: bool):
+        """Rewrite the bytes at rel through the SAME inode (open for writing, truncate, write)."""
+        old = (self.d / rel).read_bytes()
+        new = bytes(b ^ 0x01 for b in old) if same_length else old + b"#\n"
+        assert new != old
+        ino = os.lstat(self.d / rel).st_ino
+        with open(self.d / rel, "r+b") as f:
+            f.truncate(0)
+            f.write(new)
+        assert os.lstat(self.d / rel).st_ino == ino, "the probe must keep the inode"
+        return new
+
+    def during_read_of(self, rel: str, action):
+        """A read_fd that performs `action()` right after the bytes of THAT file have been read (its open
+        descriptor still held by the reader)."""
+        target = os.lstat(self.d / rel)
+        real = bp.read_fd
+
+        def read_fd(fd):
+            st = os.fstat(fd)
+            data = real(fd)
+            if (st.st_dev, st.st_ino) == (target.st_dev, target.st_ino):
+                action()
+            return data
+        return mock.patch.object(bp, "read_fd", read_fd)
+
     def swap_for_other_regular(self, rel: str):
         """Replace the regular file at rel by ANOTHER regular file (a new inode) holding its exact bytes."""
         data = (self.d / rel).read_bytes()
@@ -567,9 +593,116 @@ class RaceProbes(Tree):
         msg = self.probe_read_step("b3/tests/deep/deeper/x", lambda rel: (self.d / rel).unlink())
         self.assertEqual(msg, "b3/tests/deep/deeper/x changed while being read (the name is gone or unreadable now)")
 
+    def test_a_pinned_source_rewritten_in_place_after_the_read_same_inode(self):
+        """The owner's P2-1 on 02d179c: the bytes were read, then the SAME inode was rewritten in place; the
+        inode compare alone accepted it. Now the descriptor is still open: its re-fstat sees the size / mtime /
+        ctime move. Both a length-changing and a same-length rewrite."""
+        for same_length in (False, True):
+            with self.subTest(same_length=same_length):
+                rel = "b3/host/a.py"
+                ino = os.lstat(self.d / rel).st_ino
+                with self.during_read_of(rel, lambda: self.rewrite_in_place(rel, same_length)):
+                    msg = self.refused(f"{rel} changed while being read (the inode's size / mtime / ctime moved under the open descriptor)", self.verify)
+                self.assertNotIn("hash differs", msg)
+                self.assertEqual(os.lstat(self.d / rel).st_ino, ino)                 # same inode, different bytes now
+                self.refused(f"pinned files changed: {rel}: hash differs", self.verify)   # settled: an ordinary drift
+                (self.d / rel).write_text(PINNED[rel])
+                self.m = rewrite_table(self.d, bp.generate(self.d))                    # mtime moved: re-pin the table
+                self.verify()
+
+    def test_the_table_rewritten_in_place_after_the_read_same_inode(self):
+        rel = bp.PIN_TABLE_REL
+        ino = os.lstat(self.d / rel).st_ino
+        for same_length in (False, True):
+            with self.subTest(same_length=same_length):
+                with self.during_read_of(rel, lambda: self.rewrite_in_place(rel, same_length)):
+                    self.refused(f"{rel} changed while being read (the inode's size / mtime / ctime moved under the open descriptor)", self.verify)
+                self.assertEqual(os.lstat(self.d / rel).st_ino, ino)
+                self.refused("does not hash to the manifest's pin", self.verify)          # settled: the bytes are not the pinned ones
+                rewrite_table(self.d, self.table)
+                self.verify()
+
+    def test_a_file_appearing_while_the_sources_are_hashed(self):
+        """The owner's P2-2 on 02d179c: discovery ran once, so a file matching the rule that appeared while the
+        sources were being hashed was never seen. The closing discovery must equal the opening one — in verify
+        AND in generate."""
+        first = sorted(PINNED)[0]
+        for new in ("b3/new.py", "b3/host/new.py", "b3/tests/deep/deeper/new"):
+            with self.subTest(new=new):
+                def appear():
+                    (self.d / new).write_text("late\n")
+                with self.during_read_of(first, appear):
+                    self.refused(f"the rule's path set changed while the tree was being read: appeared ['{new}']", self.verify)
+                self.assertTrue((self.d / new).exists())
+                self.refused(f"not in the table: ['{new}']", self.verify)              # settled: an ordinary new file
+                (self.d / new).unlink()
+                with self.during_read_of(first, appear):
+                    self.refused(f"the rule's path set changed while the tree was being read: appeared ['{new}']", bp.generate, self.d)
+                (self.d / new).unlink()
+                self.verify()
+        # a directory appearing is not an entry and changes nothing
+        with self.during_read_of(first, lambda: (self.d / "b3/latedir").mkdir()):
+            self.verify()
+
+    def test_an_already_read_source_vanishing_or_rewritten_while_another_is_hashed(self):
+        """The owner's P2-2 on 02d179c: a source read earlier in the snapshot, changed while a LATER one was
+        being hashed — its own read saw nothing. The closing check names it: vanished from the path set, or
+        the same inode re-stamped with another size / mtime / ctime, or the name now another file."""
+        early, late = "b3/host/.hidden", "b3/tests/test_a.py"
+        self.assertLess(early, late)
+        with self.during_read_of(late, lambda: (self.d / early).unlink()):
+            self.refused(f"the rule's path set changed while the tree was being read: vanished ['{early}']", self.verify)
+        (self.d / early).write_text(PINNED[early])
+        self.m = rewrite_table(self.d, bp.generate(self.d))
+        self.verify()
+        for same_length in (False, True):
+            with self.subTest(same_length=same_length):
+                with self.during_read_of(late, lambda: self.rewrite_in_place(early, same_length)):
+                    msg = self.refused(f"{early} changed after it was read (the inode's size / mtime / ctime moved)", self.verify)
+                self.assertNotIn("hash differs", msg)
+                (self.d / early).write_text(PINNED[early])
+                self.m = rewrite_table(self.d, bp.generate(self.d))
+                self.verify()
+        with self.during_read_of(late, lambda: self.swap_for_other_regular(early)):
+            self.refused(f"{early} changed after it was read (the name is now another regular file)", self.verify)
+        self.m = rewrite_table(self.d, bp.generate(self.d))
+        self.verify()
+        with self.during_read_of(late, lambda: self.swap_for_symlink(early)):
+            self.refused(f"the rule reaches what it cannot pin: {early} is a symbolic link", self.verify)   # the closing discovery, first
+        os.unlink(self.d / early)
+        (self.d / early).write_text(PINNED[early])
+        # generate shares the closing check
+        self.m = rewrite_table(self.d, bp.generate(self.d))
+        with self.during_read_of(late, lambda: self.rewrite_in_place(early, False)):
+            self.refused(f"{early} changed after it was read", bp.generate, self.d)
+
+    def test_the_table_rewritten_after_its_read_while_the_sources_are_hashed(self):
+        """The table's own closing check: read first, re-stamped last."""
+        first = sorted(PINNED)[0]
+        with self.during_read_of(first, lambda: self.rewrite_in_place(bp.PIN_TABLE_REL, True)):
+            self.refused("manifests/b3_instrument_pins.json changed after it was read (the inode's size / mtime / ctime moved)", self.verify)
+        rewrite_table(self.d, self.table)
+        with self.during_read_of(first, lambda: self.swap_for_symlink(bp.PIN_TABLE_REL)):
+            self.refused("manifests/b3_instrument_pins.json changed after it was read (the name is now a symbolic link)", self.verify)
+        os.unlink(self.d / bp.PIN_TABLE_REL)
+        rewrite_table(self.d, self.table)
+        with self.during_read_of(first, lambda: self.swap_for_other_regular(bp.PIN_TABLE_REL)):
+            self.refused("manifests/b3_instrument_pins.json changed after it was read (the name is now another regular file)", self.verify)
+
+    def test_the_table_removed_after_its_read_while_the_sources_are_hashed(self):
+        """The table is not in the rule's path set, so only its own closing check can see it go."""
+        first = sorted(PINNED)[0]
+        with self.during_read_of(first, lambda: (self.d / bp.PIN_TABLE_REL).unlink()):
+            self.refused("manifests/b3_instrument_pins.json changed after it was read (the name is gone or unreadable now)", self.verify)
+        self.assertFalse((self.d / bp.PIN_TABLE_REL).exists())
+        self.refused("manifests/b3_instrument_pins.json is absent", self.verify)
+
     def test_the_reader_itself(self):
         rel = "b3/host/a.py"
-        self.assertEqual(bp.read_regular(self.d / rel, rel), PINNED[rel].encode())
+        data, stamp = bp.read_regular(self.d / rel, rel)
+        self.assertEqual(data, PINNED[rel].encode())
+        st = os.lstat(self.d / rel)
+        self.assertEqual(stamp, (st.st_dev, st.st_ino, st.st_size, st.st_mtime_ns, st.st_ctime_ns))
         self.refused("b3/none is absent", bp.read_regular, self.d / "b3/none", "b3/none")
         os.symlink(self.d / rel, self.d / "b3/link")
         self.refused("b3/link is a symbolic link", bp.read_regular, self.d / "b3/link", "b3/link")
