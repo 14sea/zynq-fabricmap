@@ -571,77 +571,74 @@ def build(run) -> dict:
 
 
 def publish_once(rep: dict, out: Path) -> None:
-    """Atomic, no-clobber, and BOUND TO THE INODE THIS TOOL WROTE (the owner's P1 on 3885926: a publish that
-    linked the temporary NAME could publish a foreign file swapped in under that name).
+    """Atomic, no-clobber, and BOUND TO THE INODE THIS TOOL WROTE — with NO NAME of its own until the report's
+    (the owner's P1 on 3885926 and P1 / P2 on 4e97069: a named temporary file is a window, both before the link
+    and between an ownership check and its unlink; a second lstat does not close it).
 
-    The bytes go to a temporary file beside `out` (O_EXCL, O_NOFOLLOW), are fsync'd, and the descriptor stays
-    OPEN. The report is then linked from the descriptor itself — `/proc/self/fd/N`, the inode, never the name —
-    so a temporary name deleted or replaced meanwhile cannot be what lands (an inode whose last name is gone is
-    refused by the kernel). After the link, the name `out` must be that same regular inode (fstat of the
-    descriptor against lstat of the name) and must read back, through the stable reader, to exactly the bytes
-    written. Cleanup unlinks the temporary name ONLY while it is still this invocation's inode; anything else
-    standing under it is left in place and named. Every I/O failure at this boundary — the descriptor's close
-    and the directory's open, fsync and close included (the owner's P3) — is a ReportIOError; when the fsync
-    and the close both fail, the fsync is the finding reported."""
+    The bytes go to an ANONYMOUS inode — O_TMPFILE in the report's directory: it has no name, so nothing can be
+    swapped under it and nothing is left behind if anything fails (it is released when its descriptor closes).
+    Its (device, inode) is taken from the descriptor the moment it is open. The bytes are written and fsync'd, and
+    the report is linked from the descriptor itself — linkat(AT_FDCWD, "/proc/self/fd/N", dirfd, name,
+    AT_SYMLINK_FOLLOW) — which fails if the name exists (a symbolic link included) and can only ever land this
+    inode. After the link the name `out` must be that same regular inode (fstat of the descriptor against lstat
+    of the name) and must read back, through the stable reader, to exactly the bytes written. This function
+    creates no other name and unlinks nothing: a foreign file anywhere in the directory is never touched.
+    Every I/O failure at this boundary — the directory's open, the anonymous open (a filesystem without O_TMPFILE
+    is a named refusal), the write, the fsyncs, the link, the examination, both closes — is a ReportIOError; when
+    the directory's fsync and its close both fail, the fsync is the finding reported."""
     out = Path(out)
     data = (json.dumps(rep, indent=1, sort_keys=True) + "\n").encode()
     want = hashlib.sha256(data).hexdigest()
-    tmp = out.parent / f".{out.name}.part-{os.getpid()}"
-    try:
-        fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o644)
-    except OSError as exc:
-        raise ReportIOError(f"the report's temporary file could not be created: {exc}") from None
-    mine = None
     try:
         dfd = os.open(out.parent, os.O_RDONLY | os.O_CLOEXEC)
     except OSError as exc:
-        _close_quiet(fd)
-        raise ReportIOError(f"the report's directory could not be opened: {exc}" + _unlink_own(tmp, mine)) from None
+        raise ReportIOError(f"the report's directory {out.parent} could not be opened: {exc}") from None
+    try:
+        fd = os.open(out.parent, os.O_TMPFILE | os.O_WRONLY | os.O_CLOEXEC, 0o644)
+    except OSError as exc:
+        _close_quiet(dfd)
+        raise ReportIOError(f"an anonymous file could not be created in {out.parent} (O_TMPFILE): {exc}") from None
     try:
         try:
+            st = os.fstat(fd)                                # this invocation's inode, known from the first instant
+            mine = (st.st_dev, st.st_ino)
             view = memoryview(data)
             while view:
                 view = view[os.write(fd, view):]
             os.fsync(fd)
-            st = os.fstat(fd)
-            mine = (st.st_dev, st.st_ino)
         except OSError as exc:
-            raise ReportIOError(f"the report's bytes did not land in the temporary file: {exc}" + _unlink_own(tmp, mine)) from None
+            raise ReportIOError(f"the report's bytes did not land in the anonymous file: {exc}") from None
         try:
             # linkat(AT_FDCWD, "/proc/self/fd/N", dirfd, name, AT_SYMLINK_FOLLOW): the INODE this tool wrote and fsync'd,
-            # reached through the descriptor's magic link — never the temporary name. (Python's os.link takes the
-            # linkat path, which follows the magic link, only when a dir_fd is given; plain link(2) would not.)
+            # reached through the descriptor's magic link. (Python's os.link takes the linkat path, which follows the
+            # magic link, only when a dir_fd is given; plain link(2) would not.)
             os.link(f"/proc/self/fd/{fd}", out.name, dst_dir_fd=dfd, follow_symlinks=True)
         except FileExistsError:
-            raise ReportIOError(f"the report {out} already exists: a report is never overwritten" + _unlink_own(tmp, mine)) from None
+            raise ReportIOError(f"the report {out} already exists: a report is never overwritten") from None
         except OSError as exc:
-            raise ReportIOError(f"the report did not land: {exc}" + _unlink_own(tmp, mine)) from None
+            raise ReportIOError(f"the report did not land: {exc}") from None
         try:
             got = os.lstat(out)
         except OSError as exc:
-            raise ReportIOError(f"the report {out} was linked but cannot be examined: {exc}" + _unlink_own(tmp, mine)) from None
+            raise ReportIOError(f"the report {out} was linked but cannot be examined: {exc}") from None
         if not stat.S_ISREG(got.st_mode) or (got.st_dev, got.st_ino) != mine:
             raise ReportIOError(f"the file at {out} is not the inode this tool wrote and fsync'd: a foreign file stands under the "
-                                f"report's name and is left in place (it is not this tool's)" + _unlink_own(tmp, mine))
+                                f"report's name and is left in place (it is not this tool's)")
         try:
             back, _ = bp.read_regular(out, str(out))
         except bp.PinRefusal as exc:
-            raise ReportIOError(f"the report {out} landed but does not read back as a regular file: {exc}" + _unlink_own(tmp, mine)) from None
+            raise ReportIOError(f"the report {out} landed but does not read back as a regular file: {exc}") from None
         if hashlib.sha256(back).hexdigest() != want:
-            raise ReportIOError(f"the report {out} landed but its bytes are not the bytes this tool wrote" + _unlink_own(tmp, mine))
+            raise ReportIOError(f"the report {out} landed but its bytes are not the bytes this tool wrote")
     except ReportIOError:
-        _close_quiet(fd)                                   # the finding above is the one reported
+        _close_quiet(fd)                                   # an unlinked anonymous inode is released here: nothing is left behind
         _close_quiet(dfd)
         raise
     try:
         os.close(fd)
     except OSError as exc:
         _close_quiet(dfd)
-        raise ReportIOError(f"the report {out} landed but its descriptor could not be closed: {exc}" + _unlink_own(tmp, mine)) from None
-    note = _unlink_own(tmp, mine)
-    if note:
-        _close_quiet(dfd)
-        raise ReportIOError(f"the report {out} landed" + note)
+        raise ReportIOError(f"the report {out} landed but its descriptor could not be closed: {exc}") from None
     _sync_dir(out, dfd)
 
 
@@ -650,24 +647,6 @@ def _close_quiet(fd: int) -> None:
         os.close(fd)
     except OSError:
         pass
-
-
-def _unlink_own(tmp: Path, mine: tuple | None) -> str:
-    """Remove the temporary name ONLY if it still refers to this invocation's inode. Returns "" when it is
-    gone or removed, else a note for the caller's finding (never a second exception over the first)."""
-    try:
-        st = os.lstat(tmp)
-    except FileNotFoundError:
-        return ""
-    except OSError as exc:
-        return f"; the temporary name {tmp} cannot be examined: {exc}"
-    if mine is None or not stat.S_ISREG(st.st_mode) or (st.st_dev, st.st_ino) != mine:
-        return f"; the temporary name {tmp} is no longer this tool's inode (it was swapped) and is left in place"
-    try:
-        os.unlink(tmp)
-    except OSError as exc:
-        return f"; the temporary file {tmp} could not be removed: {exc}"
-    return ""
 
 
 def _sync_dir(out: Path, dfd: int) -> None:

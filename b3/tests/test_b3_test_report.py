@@ -863,42 +863,130 @@ class TheCommandLine(Tiny):
         self.assertIn("EXIT 3: the report", e)
         self.assertIn("already exists", e)
 
-    def test_the_publishs_own_cleanup_and_sync_failures_are_exit_three(self):
-        """The owner's P2 on 5b12dd2: the .part's unlink failure and the directory fsync failure were swallowed."""
-        rep = tr.build(qualifying_run())
-        out = self.t / "r.json"
-        real_unlink = os.unlink
+    def test_the_publish_has_no_name_of_its_own_and_unlinks_nothing(self):
+        """The owner's P1 on 4e97069: with a named temporary, the ownership check and the unlink can never be
+        atomic. Now the report is written to an ANONYMOUS inode (O_TMPFILE) and linked from its descriptor: during
+        the publish no name but the report's ever appears in the directory, and nothing is unlinked."""
+        d = self.part_dir()
+        out = d / "report.json"
+        (d / "pre_existing.json").write_text("keep\n")
+        opens: list = []
+        real_open, real_link = os.open, os.link
+        seen_during_link: list = []
 
-        def failing_unlink(path, *a, **kw):
-            if ".part-" in str(path):
-                raise OSError(1, "Operation not permitted", str(path))
-            return real_unlink(path, *a, **kw)
-        with mock.patch.object(os, "unlink", failing_unlink):
-            with self.assertRaises(tr.ReportIOError) as cm:
-                tr.publish_once(rep, out)
-        self.assertIn(f"the report {out} landed; the temporary file", str(cm.exception))
-        self.assertIn("could not be removed", str(cm.exception))
-        parts = [n for n in os.listdir(self.t) if ".part-" in n]
-        self.assertTrue(out.exists() and parts, (out.exists(), parts))                 # both left behind — and named, never silent
-        for n in parts:
-            os.unlink(self.t / n)
+        def recording_open(path, flags, *a, **kw):
+            opens.append((str(path), flags))
+            return real_open(path, flags, *a, **kw)
+
+        def observing_link(src, dst, *a, **kw):
+            seen_during_link.append(sorted(os.listdir(d)))
+            return real_link(src, dst, *a, **kw)
+
+        def never(*a, **kw):
+            self.fail(f"the publish must not remove or rename anything: {a}")
+        with mock.patch.object(os, "open", recording_open), mock.patch.object(os, "link", observing_link), \
+                mock.patch.object(os, "unlink", never), mock.patch.object(os, "remove", never), \
+                mock.patch.object(os, "rename", never), mock.patch.object(os, "replace", never):
+            tr.publish_once(tr.build(qualifying_run()), out)
+        dir_opens = [(pth, fl) for pth, fl in opens if pth == str(d)]
+        self.assertEqual(len([fl for _, fl in dir_opens if fl & os.O_TMPFILE]), 1, "exactly one anonymous inode in the report's directory")
+        self.assertEqual(len([fl for _, fl in dir_opens if not fl & os.O_TMPFILE]), 1, "and the directory itself, once")
+        self.assertFalse([pth for pth, fl in opens if pth.startswith(str(d) + "/") and fl & os.O_CREAT], "no named file is ever created")
+        self.assertEqual(seen_during_link, [["pre_existing.json"]])                      # right before the link: nothing of the tool's has a name
+        self.assertEqual(sorted(os.listdir(d)), ["pre_existing.json", "report.json"])
+        self.assertEqual(json.loads(out.read_text())["schema"], tr.SCHEMA)
+        text = (R / "b3/host/b3_test_report.py").read_text()
+        self.assertNotIn("os.unlink(", text)
+        self.assertNotIn("os.remove(", text)
+        self.assertNotIn(".part", text.split("def publish_once")[1])
+        self.assertFalse(hasattr(tr, "_unlink_own"))
+
+    def test_a_foreign_file_under_any_name_is_never_touched(self):
+        """The owner's probes on 3885926 / 4e97069, on the new protocol: a foreign file under the old temporary
+        name, present before the publish and another written during it, are left byte for byte; the report is the
+        tool's bytes; no error."""
+        d = self.part_dir()
+        out = d / "report.json"
+        stale = d / f".report.json.part-{os.getpid()}"
+        stale.write_text('{"attacker": "before"}\n')
+        real = os.link
+
+        def foreign_during_link(src, dst, *a, **kw):
+            (d / ".report.json.part-during").write_text('{"attacker": "during"}\n')
+            return real(src, dst, *a, **kw)
+        with mock.patch.object(os, "link", foreign_during_link):
+            tr.publish_once(tr.build(qualifying_run()), out)
+        self.assertEqual(json.loads(out.read_text())["schema"], tr.SCHEMA)
+        self.assertEqual(stale.read_text(), '{"attacker": "before"}\n')
+        self.assertEqual((d / ".report.json.part-during").read_text(), '{"attacker": "during"}\n')
+        self.assertEqual(sorted(os.listdir(d)), sorted([".report.json.part-during", stale.name, "report.json"]))
+
+    def test_an_early_failure_leaves_nothing_behind_and_does_not_block_a_retry(self):
+        """The owner's P2 on 4e97069: an early I/O failure left the tool's own .part and mis-named it swapped, and a
+        retry at the same path was then blocked. With an anonymous inode there is nothing to leave: after each
+        failure the directory is exactly as before, the report is absent, and the same path then publishes."""
+        d = self.part_dir()
+        out = d / "report.json"
+        before = sorted(os.listdir(d))
+        real_open, real_write, real_fsync = os.open, os.write, os.fsync
+
+        def dir_open_fails(path, flags, *a, **kw):
+            if str(path) == str(d) and not flags & os.O_TMPFILE:
+                raise OSError(13, "Permission denied", str(path))
+            return real_open(path, flags, *a, **kw)
+
+        def tmpfile_fails(path, flags, *a, **kw):
+            if flags & os.O_TMPFILE:
+                raise OSError(95, "Operation not supported", str(path))
+            return real_open(path, flags, *a, **kw)
+
+        def write_fails(fd, data):
+            raise OSError(28, "No space left on device")
+
+        def file_fsync_fails(fd):
+            if stat.S_ISREG(os.fstat(fd).st_mode):
+                raise OSError(5, "Input/output error")
+            return real_fsync(fd)
+        cases = [
+            (mock.patch.object(os, "open", dir_open_fails), f"the report's directory {d} could not be opened: [Errno 13]"),
+            (mock.patch.object(os, "open", tmpfile_fails), f"an anonymous file could not be created in {d} (O_TMPFILE): [Errno 95]"),
+            (mock.patch.object(os, "write", write_fails), "the report's bytes did not land in the anonymous file: [Errno 28]"),
+            (mock.patch.object(os, "fsync", file_fsync_fails), "the report's bytes did not land in the anonymous file: [Errno 5]"),
+        ]
+        for patch, needle in cases:
+            with self.subTest(needle=needle[:40]):
+                with patch:
+                    with self.assertRaises(tr.ReportIOError) as cm:
+                        tr.publish_once(tr.build(qualifying_run()), out)
+                self.assertIn(needle, str(cm.exception))
+                self.assertNotIn("swapped", str(cm.exception))
+                self.assertEqual(sorted(os.listdir(d)), before, "nothing of the tool's is left behind")
+                self.assertFalse(out.exists())
+        tr.publish_once(tr.build(qualifying_run()), out)                                  # the same path, not blocked
+        self.assertEqual(json.loads(out.read_text())["schema"], tr.SCHEMA)
         out.unlink()
+        with mock.patch.object(os, "write", write_fails):
+            rc, o, e = self.cli("--out-dir", str(d))
+        self.assertEqual(rc, 3)
+        self.assertIn("EXIT 3: the report's bytes did not land", e)
+        self.assertNotIn("Traceback", e)
+        self.assertEqual(sorted(os.listdir(d)), before)
+
+    def test_a_directory_sync_failure_is_exit_three(self):
+        d = self.part_dir()
+        out = d / "report.json"
         real_fsync = os.fsync
 
         def failing_fsync(fd):
-            if os.fstat(fd).st_mode & 0o170000 == 0o040000:                              # the directory's descriptor
+            if stat.S_ISDIR(os.fstat(fd).st_mode):
                 raise OSError(5, "Input/output error")
             return real_fsync(fd)
         with mock.patch.object(os, "fsync", failing_fsync):
             with self.assertRaises(tr.ReportIOError) as cm:
-                tr.publish_once(rep, out)
+                tr.publish_once(tr.build(qualifying_run()), out)
         self.assertIn("directory could not be synced", str(cm.exception))
+        self.assertTrue(out.exists())
         out.unlink()
-        with mock.patch.object(os, "unlink", failing_unlink):
-            rc, o, e = self.cli("--out-dir", str(self.t / "out"))
-        self.assertEqual(rc, 3)
-        self.assertIn("EXIT 3: the report", e)
-        self.assertIn("temporary file", e)
         with mock.patch.object(os, "fsync", failing_fsync):
             rc, o, e = self.cli("--out-dir", str(self.t / "out2"))
         self.assertEqual(rc, 3)
@@ -910,61 +998,31 @@ class TheCommandLine(Tiny):
         d.mkdir(exist_ok=True)
         return d
 
-    def test_the_source_swap_probe_publishes_nothing_foreign(self):
-        """The owner's P1 on 3885926: with the descriptor closed and the temporary NAME linked, a same-name file
-        written in between was published as the report. Now the link is made from the open descriptor's inode:
-        the swapped name is not what lands — the kernel refuses the inode whose last name is gone — nothing stands
-        under the report's name, the foreign file under the temporary name is left in place and named."""
-        d = self.part_dir()
-        out = d / "report.json"
-        real = os.link
-
-        def swap_then_link(src, dst, *a, **kw):
-            part = [n for n in os.listdir(d) if ".part-" in n]
-            self.assertEqual(len(part), 1)
-            os.unlink(d / part[0])
-            (d / part[0]).write_text('{"attacker": true}\n')
-            return real(src, dst, *a, **kw)
-        with mock.patch.object(os, "link", swap_then_link):
-            with self.assertRaises(tr.ReportIOError) as cm:
-                tr.publish_once(tr.build(qualifying_run()), out)
-        msg = str(cm.exception)
-        self.assertIn("the report did not land", msg)
-        self.assertIn("is no longer this tool's inode (it was swapped) and is left in place", msg)
-        self.assertFalse(out.exists(), "nothing may stand under the report's name")
-        parts = [n for n in os.listdir(d) if ".part-" in n]
-        self.assertEqual(len(parts), 1)
-        self.assertEqual((d / parts[0]).read_text(), '{"attacker": true}\n', "the foreign file is not this tool's to delete")
-        (d / parts[0]).unlink()
-        with mock.patch.object(os, "link", swap_then_link):
-            rc, o, e = self.cli("--out-dir", str(d))
-        self.assertEqual(rc, 3)
-        self.assertIn("EXIT 3: the report did not land", e)
-        self.assertNotIn("Traceback", e)
-        self.assertFalse(list(d.glob("test_report_*.json")))
-
     def test_a_link_made_by_name_is_caught_by_the_inode_check(self):
-        """The pre-fix behaviour, simulated: the link made from the temporary NAME after the swap. The inode
-        under the report's name is not the one this tool wrote — refused, the foreign file left in place (not this
-        tool's) and named, the swapped temporary left in place and named."""
+        """The pre-fix behaviour, simulated: a link made from a NAME a foreign file was written under, instead of
+        from the descriptor. The inode under the report's name is not the one this tool wrote — refused, the foreign
+        file left in place (not this tool's) and named; the tool's own inode, unnamed, is released."""
         d = self.part_dir()
         out = d / "report.json"
         real = os.link
 
-        def swap_then_link_by_name(src, dst, *a, **kw):
-            part = [n for n in os.listdir(d) if ".part-" in n][0]
-            os.unlink(d / part)
-            (d / part).write_text('{"attacker": true}\n')
-            return real(d / part, d / dst)
-        with mock.patch.object(os, "link", swap_then_link_by_name):
+        def link_a_foreign_name(src, dst, *a, **kw):
+            target_dir = Path(os.readlink(f"/proc/self/fd/{kw['dst_dir_fd']}"))          # the directory the tool is publishing into
+            (target_dir / "foreign.tmp").write_text('{"attacker": true}\n')
+            return real(target_dir / "foreign.tmp", target_dir / dst)
+        with mock.patch.object(os, "link", link_a_foreign_name):
             with self.assertRaises(tr.ReportIOError) as cm:
                 tr.publish_once(tr.build(qualifying_run()), out)
         msg = str(cm.exception)
         self.assertIn(f"the file at {out} is not the inode this tool wrote and fsync'd", msg)
         self.assertIn("left in place (it is not this tool's)", msg)
-        self.assertIn("is no longer this tool's inode (it was swapped) and is left in place", msg)
         self.assertEqual(out.read_text(), '{"attacker": true}\n')                    # left, named, never deleted by this tool
-        self.assertEqual(len([n for n in os.listdir(d) if ".part-" in n]), 1)
+        self.assertEqual(sorted(os.listdir(d)), ["foreign.tmp", "report.json"])
+        with mock.patch.object(os, "link", link_a_foreign_name):
+            rc, o, e = self.cli("--out-dir", str(self.t / "out3"))
+        self.assertEqual(rc, 3)
+        self.assertIn("EXIT 3: the file at", e)
+        self.assertNotIn("Traceback", e)
 
     def test_the_read_back_must_be_the_bytes_written(self):
         d = self.part_dir()
@@ -1010,6 +1068,7 @@ class TheCommandLine(Tiny):
             with self.assertRaises(tr.ReportIOError) as cm:
                 tr.publish_once(tr.build(qualifying_run()), out)
         self.assertIn("directory was synced, but the directory's descriptor could not be closed", str(cm.exception))
+        self.assertEqual(json.loads(out.read_text())["schema"], tr.SCHEMA)
         self.assertTrue(out.exists())
         out.unlink()
 
@@ -1028,10 +1087,10 @@ class TheCommandLine(Tiny):
         real_open = os.open
         part_fds: set = set()
 
-        def recording_open(path, *a, **kw):
-            fd = real_open(path, *a, **kw)
-            if ".part-" in str(path):
-                part_fds.add(fd)                                      # the publish's OWN write descriptor, and only it
+        def recording_open(path, flags, *a, **kw):
+            fd = real_open(path, flags, *a, **kw)
+            if flags & os.O_TMPFILE:
+                part_fds.add(fd)                                      # the publish's OWN anonymous write descriptor, and only it
             return fd
 
         def file_close_fails(fd):
