@@ -381,7 +381,7 @@ def _production_pins(manifest: dict, root: Path) -> dict:
         raise
     refusals = tuple(c for c in (getattr(b3_pins, n, None) for n in ("PinRefusal", "Refusal")) if isinstance(c, type) and issubclass(c, BaseException))
     try:
-        return b3_pins.verify(manifest=manifest)
+        return b3_pins.verify(manifest=manifest, root=root)      # THIS tree, never the module's default
     except refusals as exc:
         raise Refusal(f"instrument pins: {exc}") from None
 

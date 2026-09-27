@@ -295,7 +295,7 @@ class ProductionAuthority(Authority):
     def verify_pins(self, manifest: dict, root: Path) -> dict:
         _, p = self._modules()
         try:
-            return p.verify(manifest=manifest)
+            return p.verify(manifest=manifest, root=root)      # THIS tree, never the module's default
         except self._refusals(p, "PinRefusal", "Refusal") as exc:
             raise Refusal(f"instrument pins: {exc}") from None
 

@@ -33,10 +33,18 @@ This module imports the standard library only, so no dependency of its own can g
 
 Type before use, then domain, then lookup: a malformed value is a named refusal and never reaches a
 formula or a filesystem call that would raise something else.
+
+Every file this module reads — the table, every pinned file, in generate and in verify alike — is read
+through ONE reader (`read_regular`): opened with O_NOFOLLOW, fstat'd on the open descriptor as a regular
+file, read from that descriptor, and re-lstat'd as the same regular inode before the bytes are accepted;
+a name swapped for a symbolic link or another file between the check and the read is refused by name.
+The command line reads the manifest through `b3_manifest.read_manifest` — the lifecycle's shared lock and
+its unresolved-transaction refusal — never by name.
 """
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
 import os
@@ -77,11 +85,58 @@ def is_sha256_hex(s) -> bool:
     return isinstance(s, str) and len(s) == 64 and all(c in HEX for c in s)
 
 
-def sha256_of(path: Path, rel: str) -> str:
+def read_fd(fd: int) -> bytes:
+    """Every byte of an open descriptor (the read step of `read_regular`, on its own so a test can probe the
+    window between the open and the acceptance)."""
+    chunks = []
+    while True:
+        b = os.read(fd, 1 << 20)
+        if not b:
+            return b"".join(chunks)
+        chunks.append(b)
+
+
+def read_regular(path: Path, rel: str) -> bytes:
+    """The bytes of `path`, which must be a REGULAR FILE from the open to the acceptance — the one reader
+    generate and verify share (the owner's P2 on b6439ea: a check by lstat and then a read by name is a
+    window in which the name can be swapped for a symbolic link or another file). The name is opened with
+    O_NOFOLLOW (a symbolic link is refused by the kernel, not by a prior look), the OPEN descriptor is
+    fstat'd and must be a regular file, the bytes are read from that descriptor, and before they are
+    accepted the name is lstat'd again and must still be that same regular inode — otherwise "changed
+    while being read"."""
     try:
-        return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+        # O_NONBLOCK: a fifo at the name must not hang the open — fstat then names it. No effect on a regular file.
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK)
+    except FileNotFoundError:
+        raise PinRefusal(f"{rel} is absent") from None
     except OSError as exc:
+        if exc.errno == errno.ELOOP:
+            raise PinRefusal(f"{rel} is a symbolic link") from None
         raise PinRefusal(f"{rel}: cannot be read: {exc.strerror or exc}") from None
+    try:
+        st = os.fstat(fd)
+        if not stat.S_ISREG(st.st_mode):
+            raise PinRefusal(f"{rel} is {kind_of(st.st_mode)}, not a regular file")
+        try:
+            data = read_fd(fd)
+        except OSError as exc:
+            raise PinRefusal(f"{rel}: cannot be read: {exc.strerror or exc}") from None
+    finally:
+        os.close(fd)
+    try:
+        now = os.lstat(path)
+    except OSError:
+        raise PinRefusal(f"{rel} changed while being read (the name is gone or unreadable now)") from None
+    # The same (device, inode) cannot change type, so inode equality already says "still that regular file";
+    # the kind is computed only to NAME what the swap put there.
+    if (now.st_dev, now.st_ino) != (st.st_dev, st.st_ino):
+        what = kind_of(now.st_mode) if not stat.S_ISREG(now.st_mode) else "another regular file"
+        raise PinRefusal(f"{rel} changed while being read (the name is now {what}, not the inode that was opened)")
+    return data
+
+
+def sha256_of(path: Path, rel: str) -> str:
+    return hashlib.sha256(read_regular(path, rel)).hexdigest()
 
 
 def kind_of(mode: int) -> str:
@@ -223,17 +278,7 @@ def verify(manifest, root: Path | None = None) -> dict:
     if not is_sha256_hex(pinned):
         raise PinRefusal(f"the manifest's instrument_pins sha256 {pinned!r} is not 64 lower-case hex")
     # 2. the table's bytes
-    pins_path = root / PIN_TABLE_REL
-    try:
-        mode = os.lstat(pins_path).st_mode
-    except FileNotFoundError:
-        raise PinRefusal(f"{PIN_TABLE_REL} is absent") from None
-    if not stat.S_ISREG(mode):
-        raise PinRefusal(f"{PIN_TABLE_REL} is {kind_of(mode)}, not a regular file")
-    try:
-        data = pins_path.read_bytes()
-    except OSError as exc:
-        raise PinRefusal(f"{PIN_TABLE_REL} cannot be read: {exc.strerror or exc}") from None
+    data = read_regular(root / PIN_TABLE_REL, PIN_TABLE_REL)         # O_NOFOLLOW, fstat, read, re-lstat: never by name alone
     if hashlib.sha256(data).hexdigest() != pinned:
         raise PinRefusal(f"{PIN_TABLE_REL} does not hash to the manifest's pin")
     # 3. the table's shape
@@ -288,6 +333,25 @@ def verify(manifest, root: Path | None = None) -> dict:
 # ------------------------------------------------------------------ the command line
 
 
+def read_manifest_trusted(path: Path) -> bytes:
+    """The manifest's bytes as EVERY trusted reader reads them — `b3_manifest.read_manifest`: under the
+    lifecycle's shared lock and refusing by name while an unfinished transaction is beside the manifest, so
+    a WITHDRAWN transition is never verified against as the authority (the owner's P1 on b6439ea, which read
+    the path by name). Only the refusal b3_manifest declares becomes this tool's refusal; an import or
+    implementation error inside it propagates (an INTERNAL ERROR). Malformed JSON is named here."""
+    import importlib
+    bman = importlib.import_module("b3_manifest")
+    try:
+        data = bman.read_manifest(path)
+    except bman.Refusal as exc:
+        raise PinRefusal(f"the manifest {path}: {exc}") from None
+    try:
+        json.loads(data.decode("utf-8"))
+    except (ValueError, UnicodeDecodeError) as exc:
+        raise PinRefusal(f"the manifest {path} is not readable JSON: {exc}") from None
+    return data
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--generate", action="store_true", help="write the table for --root to --out (never over an existing file)")
@@ -307,10 +371,7 @@ def main(argv=None) -> int:
         mpath = root / MANIFEST_REL if a.manifest is None else a.manifest
         if not mpath.is_file():
             raise PinRefusal(f"the manifest {mpath} is absent")
-        try:
-            manifest = json.loads(mpath.read_text())
-        except (OSError, ValueError) as exc:
-            raise PinRefusal(f"the manifest {mpath} is not readable JSON: {exc}") from None
+        manifest = json.loads(read_manifest_trusted(mpath).decode("utf-8"))
         print(json.dumps(verify(manifest, root=root), sort_keys=True))
         return 0
     except Refusal as exc:

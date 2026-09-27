@@ -726,12 +726,15 @@ class PinsImageAndDocuments(Base):
             self.cli_refused("instrument pins: b3/host/b3_pins.py does not exist yet", "init", pins=None)
         d = self.w.at("S1").root / "fake_authority"
         d.mkdir()
-        (d / "b3_pins.py").write_text("class PinRefusal(Exception):\n    pass\n\n\ndef verify(manifest=None):\n"
+        # the fake verifier takes the ROOT the manifest was asked to verify (the owner's P2 on b6439ea: a consumer
+        # that drops it verifies the module's default tree, not this one) and holds it to this world's root
+        (d / "b3_pins.py").write_text("class PinRefusal(Exception):\n    pass\n\n\ndef verify(manifest=None, root=None):\n"
+                                      f"    assert str(root) == {str(w.root)!r}, root\n"
                                       "    if manifest.get('lifecycle') == 2:\n        raise PinRefusal('b3/host/new.py is not in the table')\n")
         with mock.patch.object(sys, "path", [str(d)] + sys.path), mock.patch.dict(sys.modules):
             sys.modules.pop("b3_pins", None)
             self.refused("instrument pins: b3/host/new.py is not in the table", w.verify, pins=None)
-        (d / "b3_pins.py").write_text("def verify(manifest=None):\n    return manifest['no such key']\n")
+        (d / "b3_pins.py").write_text("def verify(manifest=None, root=None):\n    return manifest['no such key']\n")
         with mock.patch.object(sys, "path", [str(d)] + sys.path), mock.patch.dict(sys.modules):
             sys.modules.pop("b3_pins", None)
             with self.assertRaises(KeyError):

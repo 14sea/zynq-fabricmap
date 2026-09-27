@@ -1039,7 +1039,7 @@ class Execution(unittest.TestCase):
             pass
         fake_m = types.SimpleNamespace(Refusal=ManifestRefusal, check_board=lambda m: "17A6", manifest_sha256=lambda m: "0" * 64,
                                        verify=lambda m, readjudicate=None: (_ for _ in ()).throw(ManifestRefusal("S3: drifted")))
-        fake_p = types.SimpleNamespace(PinRefusal=ManifestRefusal, verify=lambda manifest=None: (_ for _ in ()).throw(TypeError("bad call")))
+        fake_p = types.SimpleNamespace(PinRefusal=ManifestRefusal, verify=lambda manifest=None, root=None: (_ for _ in ()).throw(TypeError("bad call")))
         with mock.patch.dict(sys.modules, {"b3_manifest": fake_m, "b3_pins": fake_p}):
             auth = rn.production_authority()
             with self.assertRaises(rn.Refusal) as cm:
@@ -1047,6 +1047,19 @@ class Execution(unittest.TestCase):
             self.assertEqual(str(cm.exception), "manifest: S3: drifted")
             with self.assertRaises(TypeError):
                 auth.verify_pins({}, R)
+        # and the adapter passes the ROOT it was given to the pin verifier (the owner's P2 on b6439ea: dropping it
+        # verifies the module's default tree, not this one)
+        seen = {}
+
+        def verify(manifest=None, root=None):
+            seen["root"] = root
+            return {"files_verified": 0}
+        fake_p = types.SimpleNamespace(PinRefusal=ManifestRefusal, verify=verify)
+        with mock.patch.dict(sys.modules, {"b3_manifest": fake_m, "b3_pins": fake_p}):
+            auth = rn.production_authority()
+            other = self.f.d / "another_tree"
+            self.assertEqual(auth.verify_pins({}, other), {"files_verified": 0})
+            self.assertEqual(seen["root"], other)
 
     def test_the_session_verdict_refuses_without_the_plan_and_prediction(self):
         cfg = self.f.preflight()

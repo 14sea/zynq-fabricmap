@@ -316,7 +316,13 @@ class TheTable(Tree):
         self.refused("manifests/b3_instrument_pins.json is absent", self.verify)
         (self.d / "real.json").write_text(bp.render(self.table))
         os.symlink(self.d / "real.json", p)
-        self.refused("manifests/b3_instrument_pins.json is a symbolic link, not a regular file", self.verify)
+        self.refused("manifests/b3_instrument_pins.json is a symbolic link", self.verify)
+        p.unlink()
+        p.mkdir()
+        self.refused("manifests/b3_instrument_pins.json is a directory, not a regular file", self.verify)
+        p.rmdir()
+        os.mkfifo(p)                                                                   # must not hang the open
+        self.refused("manifests/b3_instrument_pins.json is a fifo, not a regular file", self.verify)
         p.unlink()
         p.write_text(bp.render(self.table) + " ")
         self.refused("does not hash to the manifest's pin", self.verify)              # the hash layer, unpinned
@@ -325,7 +331,7 @@ class TheTable(Tree):
         os.chmod(p, 0)
         try:
             if os.geteuid() != 0:
-                self.refused("manifests/b3_instrument_pins.json cannot be read", self.verify, repinned)
+                self.refused("manifests/b3_instrument_pins.json: cannot be read", self.verify, repinned)
         finally:
             os.chmod(p, 0o644)
 
@@ -467,14 +473,115 @@ class TheTreeAgainstTheTable(Tree):
         self.assertNotEqual(self.verify(m2)["pins_sha256"], s["pins_sha256"])
 
     def test_the_default_root_is_the_repository(self):
-        """verify(manifest=…) with no root — the consumers' call — reads REPO_ROOT at call time."""
-        with mock.patch.object(bp, "REPO_ROOT", self.d):
-            self.assertEqual(bp.verify(manifest=self.m)["files_verified"], len(PINNED))
-            self.assertEqual(bp.generate(), self.table)
-            self.assertEqual(bp.discover(), sorted(PINNED))
-        # unpatched: the repository has no table yet (it is generated once, after every pinned edit) — the named refusal
+        """root=None is THIS repository — shown against it, not by patching REPO_ROOT: discovery and the table
+        equal the explicit-R call, and the repository (no table yet: it is generated once, after every pinned
+        edit) refuses by name where the fixture tree verifies."""
+        self.assertEqual(bp.REPO_ROOT, R)
+        self.assertEqual(bp.discover(), bp.discover(R))
+        self.assertEqual(bp.generate(), bp.generate(R))
+        self.assertEqual(self.verify()["files_verified"], len(PINNED))
         if not (R / bp.PIN_TABLE_REL).exists():
             self.refused("manifests/b3_instrument_pins.json is absent", bp.verify, manifest=self.m)
+            self.refused("manifests/b3_instrument_pins.json is absent", bp.verify, self.m, root=None)
+
+
+# ------------------------------------------------------------------ the reader: a name swapped between the check and the read
+
+
+class RaceProbes(Tree):
+    """The owner's P2 on b6439ea: a regular-file check by lstat and a later read by name accepted a table or a
+    pinned source swapped, in between, for a symbolic link to the same bytes. The shared reader opens with
+    O_NOFOLLOW, fstat's the descriptor, reads from it and re-lstat's the name; each probe performs the swap at
+    the exact step and the bytes are identical, so only the identity check can refuse."""
+
+    def setUp(self):
+        super().setUp()
+        self.outside = Path(tempfile.mkdtemp(prefix="b3_pins_race_"))
+        self.addCleanup(shutil.rmtree, self.outside, True)
+
+    def swap_for_symlink(self, rel: str):
+        """Replace the regular file at rel by a symbolic link to a copy of its exact bytes."""
+        copy_ = self.outside / Path(rel).name
+        copy_.write_bytes((self.d / rel).read_bytes())
+        (self.d / rel).unlink()
+        os.symlink(copy_, self.d / rel)
+
+    def swap_for_other_regular(self, rel: str):
+        """Replace the regular file at rel by ANOTHER regular file (a new inode) holding its exact bytes."""
+        data = (self.d / rel).read_bytes()
+        tmp = self.d / (rel + ".swap")
+        tmp.write_bytes(data)
+        os.replace(tmp, self.d / rel)
+
+    def probe_read_step(self, rel: str, swap):
+        """Run verify with `swap(rel)` performed inside the read of THAT file — after its open and fstat, before
+        the acceptance — and return the refusal."""
+        target = os.lstat(self.d / rel)
+        real = bp.read_fd
+
+        def read_fd(fd):
+            st = os.fstat(fd)
+            data = real(fd)
+            if (st.st_dev, st.st_ino) == (target.st_dev, target.st_ino):
+                swap(rel)
+            return data
+        with mock.patch.object(bp, "read_fd", read_fd):
+            with self.assertRaises(bp.PinRefusal) as cm:
+                self.verify()
+        return str(cm.exception)
+
+    def test_the_table_swapped_for_a_symlink_between_the_open_and_the_acceptance(self):
+        msg = self.probe_read_step(bp.PIN_TABLE_REL, self.swap_for_symlink)
+        self.assertEqual(msg, "manifests/b3_instrument_pins.json changed while being read (the name is now a symbolic link, not the inode that was opened)")
+        self.assertTrue(os.path.islink(self.d / bp.PIN_TABLE_REL))                 # the swap did happen — and the bytes match
+        self.assertEqual((self.d / bp.PIN_TABLE_REL).read_bytes(), bp.render(self.table).encode())
+        # once the swap has happened, a plain verify names the link at the open
+        self.refused("manifests/b3_instrument_pins.json is a symbolic link", self.verify)
+
+    def test_a_pinned_source_swapped_for_a_symlink_between_discovery_and_the_read(self):
+        real = bp.discover
+
+        def discover(root=None):
+            out = real(root)
+            self.swap_for_symlink("b3/host/a.py")
+            return out
+        with mock.patch.object(bp, "discover", discover):
+            self.refused("b3/host/a.py is a symbolic link", self.verify)
+        self.assertTrue(os.path.islink(self.d / "b3/host/a.py"))
+        self.assertEqual((self.d / "b3/host/a.py").read_bytes(), PINNED["b3/host/a.py"].encode())
+        # generate shares the reader: the same swap at the same step is the same refusal
+        os.unlink(self.d / "b3/host/a.py")
+        (self.d / "b3/host/a.py").write_text(PINNED["b3/host/a.py"])
+        with mock.patch.object(bp, "discover", discover):
+            self.refused("b3/host/a.py is a symbolic link", bp.generate, self.d)
+
+    def test_a_pinned_source_swapped_for_another_regular_file_between_the_open_and_the_acceptance(self):
+        msg = self.probe_read_step("b3/host/a.py", self.swap_for_other_regular)
+        self.assertEqual(msg, "b3/host/a.py changed while being read (the name is now another regular file, not the inode that was opened)")
+        self.assertEqual((self.d / "b3/host/a.py").read_bytes(), PINNED["b3/host/a.py"].encode())
+        self.verify()                                                                 # settled, the same bytes verify
+        msg = self.probe_read_step("b3/host/a.py", self.swap_for_symlink)
+        self.assertEqual(msg, "b3/host/a.py changed while being read (the name is now a symbolic link, not the inode that was opened)")
+
+    def test_a_pinned_source_removed_between_the_open_and_the_acceptance(self):
+        msg = self.probe_read_step("b3/tests/deep/deeper/x", lambda rel: (self.d / rel).unlink())
+        self.assertEqual(msg, "b3/tests/deep/deeper/x changed while being read (the name is gone or unreadable now)")
+
+    def test_the_reader_itself(self):
+        rel = "b3/host/a.py"
+        self.assertEqual(bp.read_regular(self.d / rel, rel), PINNED[rel].encode())
+        self.refused("b3/none is absent", bp.read_regular, self.d / "b3/none", "b3/none")
+        os.symlink(self.d / rel, self.d / "b3/link")
+        self.refused("b3/link is a symbolic link", bp.read_regular, self.d / "b3/link", "b3/link")
+        self.refused("b3/host is a directory, not a regular file", bp.read_regular, self.d / "b3/host", "b3/host")
+        os.mkfifo(self.d / "b3/pipe")
+        self.refused("b3/pipe is a fifo, not a regular file", bp.read_regular, self.d / "b3/pipe", "b3/pipe")
+        text = (R / "b3/host/b3_pins.py").read_text()
+        self.assertNotIn("read_bytes(", text.split("def read_regular")[1].split("def sha256_of")[0])
+        # no other read of a pinned name exists: every read_bytes / read_text in the module is in a test-only helper or absent
+        body = text.split('"""', 2)[2]                                             # after the module docstring
+        self.assertEqual(body.count("read_bytes("), 0)
+        self.assertEqual(body.count("read_text("), 0)
 
 
 # ------------------------------------------------------------------ the consumers
@@ -485,37 +592,61 @@ class TheConsumers(Tree):
     a legal summary passes through, a PinRefusal is renamed `instrument pins: …`, and an implementation
     defect inside this module (a TypeError, a KeyError, a dependency missing) propagates unwrapped."""
 
-    def test_the_manifest_receives_the_summary_or_a_named_refusal(self):
-        with mock.patch.object(bp, "REPO_ROOT", self.d):
-            self.assertEqual(bman._production_pins(self.m, self.d)["files_verified"], len(PINNED))
-            self.assertEqual(bman.check_instrument_pins(self.m, self.d, bman.Seams())["pins_sha256"], self.m["instrument_pins"]["sha256"])
-            (self.d / "b3/host/new.py").write_text("new\n")
-            with self.assertRaises(bman.Refusal) as cm:
-                bman._production_pins(self.m, self.d)
-            self.assertEqual(str(cm.exception), "instrument pins: not in the table: ['b3/host/new.py'] (1 file(s) the rule reaches that the table lacks)")
-            self.assertNotIsInstance(cm.exception, bp.PinRefusal)
-            (self.d / "b3/host/new.py").unlink()
-            bad = {"instrument_pins": dict(self.m["instrument_pins"], sha256="z" * 64)}
-            with self.assertRaises(bman.Refusal) as cm:
-                bman._production_pins(bad, self.d)
-            self.assertTrue(str(cm.exception).startswith("instrument pins: the manifest's instrument_pins sha256 'zzzz"))
+    def other_tree(self) -> Path:
+        """A second, independent tree — pinned on its own — so a consumer that verified the wrong root is caught."""
+        o = Path(tempfile.mkdtemp(prefix="b3_pins_other_"))
+        self.addCleanup(shutil.rmtree, o, True)
+        make_tree(o, pinned={"b3/only.py": "other\n", "docs/b3_architecture.md": "other arch\n"}, unpinned={})
+        return o
 
-    def test_the_runner_receives_the_summary_or_a_named_refusal(self):
+    def test_the_manifest_receives_the_summary_or_a_named_refusal_for_the_root_it_was_given(self):
+        """The production b3_manifest path over THIS module, on an independent temporary tree, with REPO_ROOT
+        untouched (the owner's P2 on b6439ea: the consumer used to drop root and read the repository)."""
+        self.assertEqual(bp.REPO_ROOT, R)
+        self.assertEqual(bman._production_pins(self.m, self.d)["files_verified"], len(PINNED))
+        self.assertEqual(bman.check_instrument_pins(self.m, self.d, bman.Seams())["pins_sha256"], self.m["instrument_pins"]["sha256"])
+        # the SAME manifest against another root: that root's table (absent) is what is named — never this tree's
+        o = self.other_tree()
+        with self.assertRaises(bman.Refusal) as cm:
+            bman._production_pins(self.m, o)
+        self.assertEqual(str(cm.exception), "instrument pins: manifests/b3_instrument_pins.json is absent")
+        mo = pin(o)
+        self.assertEqual(bman._production_pins(mo, o)["files_verified"], 2)
+        with self.assertRaises(bman.Refusal) as cm:
+            bman._production_pins(mo, self.d)                                   # that tree's manifest against this tree
+        self.assertEqual(str(cm.exception), "instrument pins: manifests/b3_instrument_pins.json does not hash to the manifest's pin")
+        (self.d / "b3/host/new.py").write_text("new\n")
+        with self.assertRaises(bman.Refusal) as cm:
+            bman._production_pins(self.m, self.d)
+        self.assertEqual(str(cm.exception), "instrument pins: not in the table: ['b3/host/new.py'] (1 file(s) the rule reaches that the table lacks)")
+        self.assertNotIsInstance(cm.exception, bp.PinRefusal)
+        (self.d / "b3/host/new.py").unlink()
+        bad = {"instrument_pins": dict(self.m["instrument_pins"], sha256="z" * 64)}
+        with self.assertRaises(bman.Refusal) as cm:
+            bman._production_pins(bad, self.d)
+        self.assertTrue(str(cm.exception).startswith("instrument pins: the manifest's instrument_pins sha256 'zzzz"))
+
+    def test_the_runner_receives_the_summary_or_a_named_refusal_for_the_root_it_was_given(self):
         auth = rn.production_authority()                    # both authority modules exist now: no refusal here
         self.assertIs(auth._modules()[1], bp)
-        with mock.patch.object(bp, "REPO_ROOT", self.d):
-            self.assertEqual(auth.verify_pins(self.m, self.d)["files_verified"], len(PINNED))
-            (self.d / "b3/host/a.py").write_text("changed\n")
-            with self.assertRaises(rn.Refusal) as cm:
-                auth.verify_pins(self.m, self.d)
-            self.assertEqual(str(cm.exception), "instrument pins: pinned files changed: b3/host/a.py: hash differs")
-            self.assertNotIsInstance(cm.exception, bp.PinRefusal)
+        self.assertEqual(bp.REPO_ROOT, R)
+        self.assertEqual(auth.verify_pins(self.m, self.d)["files_verified"], len(PINNED))
+        o = self.other_tree()
+        with self.assertRaises(rn.Refusal) as cm:
+            auth.verify_pins(self.m, o)
+        self.assertEqual(str(cm.exception), "instrument pins: manifests/b3_instrument_pins.json is absent")
+        self.assertEqual(auth.verify_pins(pin(o), o)["files_verified"], 2)
+        (self.d / "b3/host/a.py").write_text("changed\n")
+        with self.assertRaises(rn.Refusal) as cm:
+            auth.verify_pins(self.m, self.d)
+        self.assertEqual(str(cm.exception), "instrument pins: pinned files changed: b3/host/a.py: hash differs")
+        self.assertNotIsInstance(cm.exception, bp.PinRefusal)
 
     def test_a_defect_inside_this_module_propagates_through_both_consumers(self):
         auth = rn.production_authority()
         for exc in (TypeError("a defect"), KeyError("a defect"), ModuleNotFoundError("No module named 'no_such_dependency_b3_pins'", name="no_such_dependency_b3_pins")):
             with self.subTest(exc=type(exc).__name__):
-                with mock.patch.object(bp, "discover", side_effect=exc), mock.patch.object(bp, "REPO_ROOT", self.d):
+                with mock.patch.object(bp, "discover", side_effect=exc):
                     with self.assertRaises(type(exc)) as cm:
                         bman._production_pins(self.m, self.d)
                     self.assertIs(cm.exception, exc)
@@ -533,9 +664,11 @@ class TheConsumers(Tree):
         self.assertEqual(rn.ProductionAuthority._refusals(bp, "PinRefusal", "Refusal"), (bp.PinRefusal, bp.Refusal))
         self.assertFalse(issubclass(bp.PinRefusal, (TypeError, KeyError, ImportError, OSError, ValueError)))
         text = (R / "b3/host/b3_pins.py").read_text()
-        self.assertNotIn("import b3_manifest", text)             # the B2 lineage and the manifest are not verified here
-        self.assertNotIn("b2_pins", text.replace("manifests/b2_instrument_pins", ""))
+        self.assertNotIn("b2_pins", text.replace("manifests/b2_instrument_pins", ""))     # the B2 lineage is not verified here
         self.assertNotIn("b2_manifest", text)
+        with mock.patch.dict(sys.modules, {"b3_manifest": None}):      # the API needs no b3_manifest: the CLI alone reads through it
+            self.assertEqual(self.verify()["files_verified"], len(PINNED))
+            self.assertEqual(bp.generate(self.d), self.table)
 
 
 # ------------------------------------------------------------------ the command line
@@ -594,6 +727,7 @@ class TheCommandLine(Tree):
         self.assertEqual(rc, 2)
         self.assertIn("REFUSED: the manifest", e)
         self.assertIn("is not readable JSON", e)
+        self.assertNotIn("Traceback", e)
         with mock.patch.object(bp, "discover", side_effect=KeyError("a defect")):
             rc, o, e = self.run_cli("--root", str(self.d))
         self.assertEqual((rc, o), (3, ""))
@@ -604,6 +738,63 @@ class TheCommandLine(Tree):
             rc, o, e = self.run_cli("--root", str(self.d))
         self.assertEqual(rc, 3)
         self.assertIn("INTERNAL ERROR: ModuleNotFoundError", e)
+
+    def test_the_cli_reads_the_manifest_as_a_trusted_reader(self):
+        """The owner's P1 on b6439ea: the CLI read the manifest by name and verified against a manifest with an
+        unfinished transaction beside it. Now it reads through b3_manifest.read_manifest — the shared lock and the
+        unresolved-transaction refusal — and only b3_manifest.Refusal becomes REFUSED; anything else is an
+        INTERNAL ERROR."""
+        (self.d / bp.MANIFEST_REL).write_text(json.dumps(self.m))
+        self.assertEqual(self.run_cli("--root", str(self.d))[0], 0)
+        journal = self.d / "manifests" / ".b3_manifest.json.transaction"
+        journal.write_text(json.dumps({"schema": "b3_manifest_transaction", "state": "exchanging", "pid": 1, "at": "t"}))
+        rc, o, e = self.run_cli("--root", str(self.d))
+        self.assertEqual((rc, o), (2, ""))
+        self.assertIn("REFUSED: the manifest", e)
+        self.assertIn("a b3_manifest transition did not finish", e)
+        self.assertIn(".b3_manifest.json.transaction", e)
+        self.assertIn("WITHDRAWN", e)
+        self.assertNotIn("Traceback", e)
+        journal.unlink()
+        os.symlink(self.d / "nowhere", journal)                                  # a dangling journal is unresolved too
+        self.assertEqual(self.run_cli("--root", str(self.d))[0], 2)
+        journal.unlink()
+        part = self.d / "manifests" / ".b3_manifest.json.1.part"
+        part.write_text("{}")
+        rc, o, e = self.run_cli("--root", str(self.d))
+        self.assertEqual(rc, 2)
+        self.assertIn(".b3_manifest.json.1.part", e)
+        part.unlink()
+        self.assertEqual(self.run_cli("--root", str(self.d))[0], 0)
+        # the read goes through b3_manifest.read_manifest, and through nothing else
+        seen = []
+        real = bman.read_manifest
+
+        def read_manifest(path, wait=True):
+            seen.append(Path(path))
+            return real(path, wait)
+        with mock.patch.object(bman, "read_manifest", read_manifest):
+            self.assertEqual(self.run_cli("--root", str(self.d))[0], 0)
+        self.assertEqual(seen, [self.d / bp.MANIFEST_REL])
+        with mock.patch.object(bman, "read_manifest", side_effect=bman.Refusal("a b3_manifest transition is being published; not read")):
+            rc, o, e = self.run_cli("--root", str(self.d))
+        self.assertEqual(rc, 2)
+        self.assertIn("REFUSED: the manifest", e)
+        self.assertIn("is being published; not read", e)
+        with mock.patch.object(bman, "read_manifest", side_effect=RuntimeError("a defect in the reader")):
+            rc, o, e = self.run_cli("--root", str(self.d))
+        self.assertEqual(rc, 3)
+        self.assertIn("INTERNAL ERROR: RuntimeError: a defect in the reader", e)
+        self.assertIn("Traceback", e)
+        self.assertNotIn("REFUSED", e)
+        with mock.patch.dict(sys.modules, {"b3_manifest": None}):                # an import error is not a refusal either
+            rc, o, e = self.run_cli("--root", str(self.d))
+        self.assertEqual(rc, 3)
+        self.assertIn("INTERNAL ERROR: ModuleNotFoundError", e)
+        self.assertNotIn("REFUSED", e)
+        text = (R / "b3/host/b3_pins.py").read_text()
+        self.assertNotIn("mpath.read_text", text)
+        self.assertNotIn("mpath.read_bytes", text)
 
     def test_the_cli_offers_no_skip(self):
         text = (R / "b3/host/b3_pins.py").read_text()
