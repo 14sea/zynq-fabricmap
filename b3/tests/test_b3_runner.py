@@ -552,13 +552,17 @@ class ZeroContact(unittest.TestCase):
             self.assertEqual(rc, 3)
             self.assertIn("INTERNAL ERROR: ModuleNotFoundError", err.getvalue())
             self.assertNotIn("REFUSED", err.getvalue())
-            # and the OTHER authority module absent, while this one exists, is still the named refusal
+            # and the OTHER authority module absent, while this one exists, is still the named refusal. The
+            # absence is INJECTED (sys.modules["b3_pins"] = None): the real tree carries b3/host/b3_pins.py
+            # since the pins unit, and a test of "the authority module is absent" must not depend on the
+            # working tree not having delivered it yet.
             (d / "b3_pins.py").unlink()
             (d / "b3_manifest.py").write_text("class Refusal(Exception):\n    pass\n")
             for name in ("b3_manifest", "b3_pins"):
                 sys.modules.pop(name, None)
-            with self.assertRaises(rn.Refusal) as cm:
-                rn.production_authority()
+            with mock.patch.dict(sys.modules, {"b3_pins": None}):
+                with self.assertRaises(rn.Refusal) as cm:
+                    rn.production_authority()
             self.assertIn("b3/host/b3_pins.py does not exist yet", str(cm.exception))
         self.assertFalse((self.f.d / "evidence").exists())
         self.assertFalse(list(self.f.d.glob("*.consumed")))
