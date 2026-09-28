@@ -472,17 +472,109 @@ class TheTreeAgainstTheTable(Tree):
         self.assertEqual(self.verify(m2)["files_verified"], len(PINNED) + 1)
         self.assertNotEqual(self.verify(m2)["pins_sha256"], s["pins_sha256"])
 
+    def assert_binding_of(self, root: Path, foreign: dict, *, default_root: bool = False) -> str:
+        """The three states a committed tree can be in, EACH asserted (the audit's F3 on 918d309: an `if not
+        table.exists()` guard asserted nothing once the table existed). Returns the state it found.
+        `foreign` is a manifest that pins ANOTHER tree's table (the fixture's); `default_root` calls the API
+        with root=None, i.e. against bp.REPO_ROOT — only meaningful when root IS the repository."""
+        call = (lambda m: bp.verify(manifest=m)) if default_root else (lambda m: bp.verify(m, root=root))
+        table, manifest = os.path.lexists(root / bp.PIN_TABLE_REL), os.path.lexists(root / bman.MANIFEST_REL)
+        if not table:
+            # absent: every manifest is refused by the table's absence, by name
+            self.refused("manifests/b3_instrument_pins.json is absent", call, foreign)
+            if default_root:
+                self.refused("manifests/b3_instrument_pins.json is absent", bp.verify, foreign, root=None)
+            return "absent"
+        data, _ = bp.read_regular(root / bp.PIN_TABLE_REL, bp.PIN_TABLE_REL)
+        own = {"instrument_pins": {"path": bp.PIN_TABLE_REL, "sha256": sha(data)}}
+        if not manifest:
+            # table only (generated, S0 not yet): the table's own bytes verify THIS tree; a foreign pin does not
+            res = call(own)
+            self.assertEqual(res, {"files_verified": bp.generate(root)["file_count"], "pins_sha256": sha(data), "path": bp.PIN_TABLE_REL})
+            self.assertEqual(set(json.loads(data)["files"]), set(bp.generate(root)["files"]))
+            self.refused("manifests/b3_instrument_pins.json does not hash to the manifest's pin", call, foreign)
+            return "table_only"
+        # table and manifest (S0 or later): the committed manifest, read as a trusted reader, verifies THIS tree
+        m = json.loads(bman.read_manifest(root / bman.MANIFEST_REL).decode("utf-8"))
+        self.assertEqual(m.get("instrument_pins"), {"path": bp.PIN_TABLE_REL, "sha256": sha(data)}, "the manifest pins this table's bytes")
+        try:
+            res = call(m)
+        except bp.PinRefusal as exc:                                        # a drifted tree is this helper's FAILURE, never a pass
+            self.fail(f"the production verifier refuses this tree under its own manifest: {exc}")
+        self.assertEqual(res, {"files_verified": bp.generate(root)["file_count"], "pins_sha256": sha(data), "path": bp.PIN_TABLE_REL})
+        self.assertEqual(call(own), res)
+        self.refused("manifests/b3_instrument_pins.json does not hash to the manifest's pin", call, foreign)
+        return "table_and_manifest"
+
+    def test_the_three_committed_states_each_assert_on_a_temporary_tree(self):
+        """The helper's every branch, before any of the states exists on the repository: a second tree walked
+        through absent → table only → table and manifest, the fixture's manifest as the foreign pin."""
+        o = Path(tempfile.mkdtemp(prefix="b3_pins_states_"))
+        self.addCleanup(shutil.rmtree, o, True)
+        make_tree(o, pinned={"b3/only.py": "other\n", "docs/b3_architecture.md": "other arch\n"}, unpinned={})
+        self.assertEqual(self.assert_binding_of(o, self.m), "absent")
+        bp.write_table_once(bp.generate(o), o / bp.PIN_TABLE_REL)
+        self.assertEqual(self.assert_binding_of(o, self.m), "table_only")
+        (o / bman.MANIFEST_REL).write_text(json.dumps({"schema": bman.SCHEMA, "instrument_pins": bman.instrument_pins_block(o)}))
+        self.assertEqual(self.assert_binding_of(o, self.m), "table_and_manifest")
+        # and this class's fixture tree, once its placeholder manifest carries the real block, is in the third state
+        (self.d / bman.MANIFEST_REL).write_text(json.dumps({"schema": bman.SCHEMA, "instrument_pins": bman.instrument_pins_block(self.d)}))
+        self.assertEqual(self.assert_binding_of(self.d, {"instrument_pins": {"path": bp.PIN_TABLE_REL, "sha256": "0" * 64}}), "table_and_manifest")
+        # a drifted tree in the third state is a failure of the helper, never a pass
+        (o / "b3/only.py").write_text("drifted\n")
+        with self.assertRaises(AssertionError):
+            self.assert_binding_of(o, self.m)
+        (o / "b3/only.py").write_text("other\n")
+        # NEGATIVE probes, one per branch: a verifier that lies must make the helper FAIL in every state
+        good = bp.verify(json.loads((o / bman.MANIFEST_REL).read_text()), root=o)
+        foreign_sha = self.m["instrument_pins"]["sha256"]
+
+        def liar(summary):
+            """A verifier that still refuses the FOREIGN pin (so that guard cannot be what fails) but answers
+            `summary` to every other manifest, whatever the tree says."""
+            def verify(manifest=None, root=None):
+                if (manifest.get("instrument_pins") or {}).get("sha256") == foreign_sha:
+                    raise bp.PinRefusal("manifests/b3_instrument_pins.json does not hash to the manifest's pin")
+                return dict(summary)
+            return mock.patch.object(bp, "verify", verify)
+        accept_anything = mock.patch.object(bp, "verify", lambda manifest=None, root=None: dict(good))
+        wrong_count = liar(dict(good, files_verified=good["files_verified"] + 1))
+        with accept_anything:                                                   # table and manifest: the foreign pin accepted
+            with self.assertRaises(AssertionError):
+                self.assert_binding_of(o, self.m)
+        with wrong_count:                                                       # table and manifest: the wrong summary (the foreign pin still refused)
+            with self.assertRaises(AssertionError):
+                self.assert_binding_of(o, self.m)
+        (o / bman.MANIFEST_REL).write_text(json.dumps({"schema": bman.SCHEMA, "instrument_pins": {"path": bp.PIN_TABLE_REL, "sha256": "0" * 64}}))
+        with liar(good):                                                        # the manifest's block is not this table's — the helper's own check, the verifier lying
+            with self.assertRaises(AssertionError):
+                self.assert_binding_of(o, self.m)
+        (o / bman.MANIFEST_REL).unlink()
+        self.assertEqual(self.assert_binding_of(o, self.m), "table_only")
+        with accept_anything:                                                   # table only: the foreign pin accepted
+            with self.assertRaises(AssertionError):
+                self.assert_binding_of(o, self.m)
+        with wrong_count:                                                       # table only: the wrong summary (the foreign pin still refused)
+            with self.assertRaises(AssertionError):
+                self.assert_binding_of(o, self.m)
+        (o / bp.PIN_TABLE_REL).unlink()
+        self.assertEqual(self.assert_binding_of(o, self.m), "absent")
+        with accept_anything:                                                   # absent: a verifier that does not refuse
+            with self.assertRaises(AssertionError):
+                self.assert_binding_of(o, self.m)
+
     def test_the_default_root_is_the_repository(self):
         """root=None is THIS repository — shown against it, not by patching REPO_ROOT: discovery and the table
-        equal the explicit-R call, and the repository (no table yet: it is generated once, after every pinned
-        edit) refuses by name where the fixture tree verifies."""
+        equal the explicit-R call, and the repository's committed state — the table absent (generated once, after
+        every pinned edit), the table alone, or the table and the manifest — is asserted for what it is, in
+        every state (no guard that asserts nothing once the table exists)."""
         self.assertEqual(bp.REPO_ROOT, R)
         self.assertEqual(bp.discover(), bp.discover(R))
         self.assertEqual(bp.generate(), bp.generate(R))
         self.assertEqual(self.verify()["files_verified"], len(PINNED))
-        if not (R / bp.PIN_TABLE_REL).exists():
-            self.refused("manifests/b3_instrument_pins.json is absent", bp.verify, manifest=self.m)
-            self.refused("manifests/b3_instrument_pins.json is absent", bp.verify, self.m, root=None)
+        state = self.assert_binding_of(R, self.m, default_root=True)
+        self.assertIn(state, ("absent", "table_only", "table_and_manifest"))
+        self.assertEqual(state == "absent", not os.path.lexists(R / bp.PIN_TABLE_REL))
 
 
 # ------------------------------------------------------------------ the reader: a name swapped between the check and the read

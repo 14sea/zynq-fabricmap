@@ -583,7 +583,9 @@ class TheBinding(unittest.TestCase):
 
 
 class TheRealTree(unittest.TestCase):
-    def test_a_snapshot_of_this_tree_has_the_shape_the_verdict_reads_and_is_not_yet_a_proof(self):
+    def test_a_snapshot_of_this_tree_has_the_shape_the_verdict_reads_and_says_what_its_binding_is(self):
+        """The real tree's provenance shape, its pinned surface, the frozen inputs, the carrier — and its binding
+        asserted for the state it is in (absent / table only / table and manifest), every state asserting."""
         snap = tr.snapshot(R)
         for key in ("at", "root", "head", "worktree_dirty", "instrument", "pins", "artifacts_sha256", "artifacts_refusals", "b1_carrier"):
             self.assertIn(key, snap)
@@ -599,15 +601,126 @@ class TheRealTree(unittest.TestCase):
             self.assertEqual(snap["artifacts_sha256"][rel], sha, rel)          # the seven frozen inputs, as frozen
         self.assertEqual(snap["b1_carrier"]["named"], tr.B1_CARRIER_REL)
         self.assertEqual(snap["artifacts_sha256"][tr.B1_CARRIER_REL], hashlib.sha256((R / tr.B1_CARRIER_REL).read_bytes()).hexdigest())
-        if not (R / bp.PIN_TABLE_REL).exists():                                # before the pin table is generated
+        state = self.assert_binding_state(R, pins, snap["artifacts_sha256"])
+        self.assertEqual(state == "absent", not os.path.lexists(R / bp.PIN_TABLE_REL))
+
+    def assert_binding_state(self, root: Path, pins: dict, artifacts: dict) -> str:
+        """The three states a committed tree can be in, EACH asserted for what the tool must say about it (the
+        audit's F3 on 918d309: an `if not table.exists()` guard asserted nothing once the table existed).
+        `pins` is `pin_state(root)` (or the snapshot's), `artifacts` the artifact digests. Returns the state."""
+        table, manifest = os.path.lexists(root / bp.PIN_TABLE_REL), os.path.lexists(root / bman.MANIFEST_REL)
+        self.assertEqual((pins["table_present"], pins["manifest_present"]), (table, manifest))
+        self.assertIsInstance(pins["snapshot"], dict, pins["snapshot_refusal"])
+        if not table:
             self.assertEqual(pins["mode"], "unbound_snapshot")
             self.assertFalse(pins["pins_verified"])
-            run = qualifying_run()
-            run["start"], run["end"] = snap, copy.deepcopy(snap)
-            rep = tr.build(run)
-            self.assertFalse(rep["clean_tree_proof"])
-            self.assertTrue(any("('unbound_snapshot')" in x for x in rep["proof_refusals"]))
-            self.assertTrue(any(f"required artifacts absent at the start: " in x and bp.PIN_TABLE_REL in x for x in rep["proof_refusals"]))
+            self.assertIsNone(pins["diagnostic"])
+            self.assertIn("unbound_snapshot", pins["pins_refusal"])
+            self.assertIsNone(artifacts[bp.PIN_TABLE_REL])
+            refusals = self.verdict_over(pins, artifacts)
+            self.assertTrue(any("('unbound_snapshot')" in x for x in refusals), refusals)
+            self.assertTrue(any("required artifacts absent at the start: " in x and bp.PIN_TABLE_REL in x for x in refusals), refusals)
+            return "absent"
+        data, _ = bp.read_regular(root / bp.PIN_TABLE_REL, bp.PIN_TABLE_REL)
+        self.assertEqual(artifacts[bp.PIN_TABLE_REL], hashlib.sha256(data).hexdigest())
+        if not manifest:
+            self.assertEqual(pins["mode"], "table_self_bound")
+            self.assertFalse(pins["pins_verified"])
+            self.assertEqual(pins["diagnostic"]["bound_to"], "the table's own bytes")
+            self.assertEqual((pins["diagnostic"]["verified"], pins["diagnostic"]["refusal"]), (True, None), pins["diagnostic"])
+            self.assertEqual(pins["diagnostic"]["files_verified"], bp.generate(root)["file_count"])
+            self.assertEqual(pins["diagnostic"]["pins_sha256"], hashlib.sha256(data).hexdigest())
+            self.assertIn("table_self_bound", pins["pins_refusal"])
+            self.assertIsNone(artifacts[bman.MANIFEST_REL])
+            refusals = self.verdict_over(pins, artifacts)
+            self.assertTrue(any("('table_self_bound')" in x for x in refusals), refusals)
+            self.assertTrue(any("required artifacts absent at the start: " in x and bman.MANIFEST_REL in x for x in refusals), refusals)
+            return "table_only"
+        m = json.loads(bman.read_manifest(root / bman.MANIFEST_REL).decode("utf-8"))
+        self.assertEqual(pins["mode"], "manifest_bound")
+        self.assertIsNone(pins["diagnostic"])
+        self.assertEqual(m.get("instrument_pins"), {"path": bp.PIN_TABLE_REL, "sha256": hashlib.sha256(data).hexdigest()})
+        try:
+            res = bp.verify(m, root=root)                                    # what the production verifier says of THIS tree
+        except bp.PinRefusal as exc:                                        # a drifted tree is this helper's FAILURE, never a pass
+            self.fail(f"the production verifier refuses this tree under its own manifest: {exc}")
+        self.assertEqual((pins["pins_verified"], pins["pins_refusal"], pins["files_verified"], pins["pins_sha256"]),
+                         (True, None, res["files_verified"], res["pins_sha256"]))
+        self.assertEqual(artifacts[bman.MANIFEST_REL], hashlib.sha256(bman.read_manifest(root / bman.MANIFEST_REL)).hexdigest())
+        refusals = self.verdict_over(pins, artifacts)
+        self.assertFalse([x for x in refusals if "not bound to the B3 manifest" in x or "did not verify at the" in x], refusals)
+        return "table_and_manifest"
+
+    def verdict_over(self, pins: dict, artifacts: dict) -> list:
+        """The production verdict over an otherwise-qualifying run whose snapshots carry these pins and artifacts."""
+        run = qualifying_run()
+        for end in ("start", "end"):
+            run[end]["pins"] = copy.deepcopy(pins)
+            run[end]["artifacts_sha256"] = copy.deepcopy(artifacts)
+        return tr.build(run)["proof_refusals"]
+
+    def test_the_three_committed_states_each_assert_on_a_temporary_tree(self):
+        """The helper's every branch, before any of the states exists on the repository: a temporary tree walked
+        through absent → table only → table and manifest, through the tool's own pin_state and artifact digests."""
+        d = Path(tempfile.mkdtemp(prefix="b3_tr_states_"))
+        self.addCleanup(shutil.rmtree, d, True)
+        make_tree(d)
+
+        def state():
+            digests, _ = tr.artifact_digests(d)
+            return self.assert_binding_state(d, tr.pin_state(d), digests)
+        self.assertEqual(state(), "absent")
+        bp.write_table_once(bp.generate(d), d / bp.PIN_TABLE_REL)
+        self.assertEqual(state(), "table_only")
+        (d / bman.MANIFEST_REL).write_text(json.dumps({"schema": bman.SCHEMA, "instrument_pins": bman.instrument_pins_block(d)}))
+        self.assertEqual(state(), "table_and_manifest")
+        # a drifted source in the third state, or a manifest pinning other bytes: the helper fails, never passes
+        (d / "b3/host/a.py").write_text("drifted\n")
+        with self.assertRaises(AssertionError):
+            state()
+        (d / "b3/host/a.py").write_text(PINNED["b3/host/a.py"])
+        (d / bman.MANIFEST_REL).write_text(json.dumps({"schema": bman.SCHEMA, "instrument_pins": {"path": bp.PIN_TABLE_REL, "sha256": "0" * 64}}))
+        with self.assertRaises(AssertionError):
+            state()
+        (d / bman.MANIFEST_REL).write_text(json.dumps({"schema": bman.SCHEMA, "instrument_pins": bman.instrument_pins_block(d)}))
+        # NEGATIVE probes, one per branch: a tampered pin_state or a verdict that lies must make the helper FAIL
+        digests, _ = tr.artifact_digests(d)
+
+        def tampered(**changes):
+            pins = tr.pin_state(d)
+            pins.update(changes)
+            with self.assertRaises(AssertionError):
+                self.assert_binding_state(d, pins, digests)
+        tampered(pins_verified=False, pins_refusal="instrument pins: x")            # table and manifest: not verified
+        tampered(files_verified=999)                                               # table and manifest: a summary the verdict never reads — the helper's own check
+        tampered(pins_sha256="0" * 64)
+        tampered(mode="table_self_bound")
+        tampered(manifest_present=False)
+        with mock.patch.object(tr, "proof_refusals", return_value=["the pinned surface was not bound to the B3 manifest at the start"]):
+            with self.assertRaises(AssertionError):
+                self.assert_binding_state(d, tr.pin_state(d), digests)             # table and manifest: a verdict naming the binding
+        (d / bman.MANIFEST_REL).unlink()
+        digests, _ = tr.artifact_digests(d)
+        self.assertEqual(state(), "table_only")
+        tampered(mode="manifest_bound")                                            # table only: the wrong mode
+        tampered(pins_verified=True)
+        tampered(table_present=False)
+        pins = tr.pin_state(d)
+        pins["diagnostic"] = dict(pins["diagnostic"], verified=False, refusal="x")
+        with self.assertRaises(AssertionError):
+            self.assert_binding_state(d, pins, digests)                            # table only: the diagnostic not verified
+        with mock.patch.object(tr, "proof_refusals", return_value=[]):
+            with self.assertRaises(AssertionError):
+                self.assert_binding_state(d, tr.pin_state(d), digests)             # table only: a verdict that names nothing
+        (d / bp.PIN_TABLE_REL).unlink()
+        digests, _ = tr.artifact_digests(d)
+        self.assertEqual(state(), "absent")
+        tampered(mode="manifest_bound")                                            # absent: the wrong mode
+        tampered(pins_verified=True)
+        tampered(diagnostic={"verified": True})
+        with mock.patch.object(tr, "proof_refusals", return_value=[]):
+            with self.assertRaises(AssertionError):
+                self.assert_binding_state(d, tr.pin_state(d), digests)             # absent: a verdict that names nothing
 
     def test_the_sentinel_constants_name_the_real_sentinel(self):
         text = (R / tr.B3_START / tr.SENTINEL_FILE).read_text()
