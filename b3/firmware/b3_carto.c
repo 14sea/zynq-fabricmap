@@ -196,20 +196,21 @@ static int check_on_copy(b3_carto *w, const uint16_t *moved, int n_moved, const 
     return n_newly;
 }
 
-int b3_carto_observe(b3_carto *c, const uint16_t *moved, int n_moved, const uint16_t *delta, int n_delta,
+int b3_carto_observe(b3_carto *c, b3_carto *scratch, const uint16_t *moved, int n_moved, const uint16_t *delta, int n_delta,
                      uint16_t *newly, int newly_cap)
 {
-    b3_carto work;
     int n;
-    memcpy(&work, c, sizeof(work));                      /* every check runs on the copy */
-    n = check_on_copy(&work, moved, n_moved, delta, n_delta, newly, newly_cap);
+    if (scratch == NULL || scratch == c)
+        return B3_CARTO_BAD_CALL;                        /* a programming error, not a specimen: nothing done */
+    memcpy(scratch, c, sizeof(*scratch));                /* every check runs on the caller's copy, never a stack frame */
+    n = check_on_copy(scratch, moved, n_moved, delta, n_delta, newly, newly_cap);
     if (n < 0) {
         c->anomalies++;                                  /* counted; nothing else changes */
-        return -1;
+        return B3_CARTO_REFUSED;
     }
     if (n > 0)
-        work.version++;
-    memcpy(c, &work, sizeof(work));                      /* committed whole, or not at all */
+        scratch->version++;
+    memcpy(c, scratch, sizeof(*c));                      /* committed whole, or not at all */
     return n;
 }
 

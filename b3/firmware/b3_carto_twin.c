@@ -4,6 +4,10 @@
  * Host-only: compiled with the host compiler, never for the board. One cartographer per process,
  * driven over a pipe, one command per line:
  *
+ * Every command is the whole line: "S", "R" and "Q" exactly (a trailing newline only), "O " followed by
+ * the specimen; anything else — "S junk", "R junk", "Observe …" — is "ERR unknown command" and changes
+ * nothing (the owner's P2 on 4817662).
+ *
  *   O <n> <i1> ... <in> | <m> <k1.v1> ... <km.vm>
  *       observe a specimen: n moved addresses, m toggled positions (LUT.vector). Prints
  *         NEWLY <count> <i:k:v> ...      the addresses this specimen decoded, in the cartographer's order
@@ -11,6 +15,10 @@
  *         ANOMALY                        the specimen was refused (counted; nothing else changed)
  *       then
  *         STATE <text>                   the commitment text (b3_carto_state_render), byte for byte
+ *   B <the same specimen syntax as O>
+ *       a PROBE of the API contract, not a cartographer operation: calls b3_carto_observe with the scratch
+ *       aliasing the state (scratch == &carto). The contract says B3_CARTO_BAD_CALL, nothing done, nothing
+ *       counted — printed as "ERR bad call" then STATE <text> (unchanged).
  *   S   print STATE <text>
  *   R   reset the cartographer, then print STATE <text>
  *   Q   exit 0
@@ -66,7 +74,7 @@ static int parse_u16(const char **p, unsigned *out)
 
 static int at_end(const char *p)
 {
-    while (*p == ' ' || *p == '\n' || *p == '\r')
+    while (*p == ' ')
         p++;
     return *p == '\0';
 }
@@ -133,7 +141,7 @@ static int parse_observe(const char *line, uint16_t *moved, int *n_moved, uint16
 int main(void)
 {
     static char line[LINE_MAX_BYTES];
-    static b3_carto carto;
+    static b3_carto carto, scratch;                       /* the scratch is BSS, as the image's will be — never a frame */
     static uint16_t moved[B3_CARTO_N], delta[B3_CARTO_POSITIONS], newly[B3_CARTO_N];
     b3_carto_init(&carto);
     while (fgets(line, sizeof(line), stdin)) {
@@ -145,14 +153,32 @@ int main(void)
             fflush(stdout);
             return 3;
         }
-        switch (line[0]) {
-        case 'O':
+        if (len && line[len - 1] == '\n')
+            line[--len] = '\0';                         /* the command is the whole line, without its newline */
+        if (strcmp(line, "S") == 0) {
+            print_state(&carto);
+            continue;
+        }
+        if (strcmp(line, "R") == 0) {
+            b3_carto_init(&carto);
+            print_state(&carto);
+            continue;
+        }
+        if (strcmp(line, "Q") == 0)
+            return 0;
+        if ((line[0] == 'O' || line[0] == 'B') && line[1] == ' ') {
+            int probe = line[0] == 'B';
             if (parse_observe(line, moved, &n_moved, delta, &n_delta, &why) < 0) {
                 printf("ERR cannot parse %s\n", why);
                 fflush(stdout);
-                break;
+                continue;
             }
-            n = b3_carto_observe(&carto, moved, n_moved, delta, n_delta, newly, B3_CARTO_N);
+            n = b3_carto_observe(&carto, probe ? &carto : &scratch, moved, n_moved, delta, n_delta, newly, B3_CARTO_N);
+            if (n == B3_CARTO_BAD_CALL) {
+                fputs("ERR bad call\n", stdout);        /* the contract's answer to an aliasing scratch (the B probe) */
+                print_state(&carto);
+                continue;
+            }
             if (n < 0) {
                 fputs("ANOMALY\n", stdout);
             } else {
@@ -164,20 +190,10 @@ int main(void)
                 fputc('\n', stdout);
             }
             print_state(&carto);
-            break;
-        case 'S':
-            print_state(&carto);
-            break;
-        case 'R':
-            b3_carto_init(&carto);
-            print_state(&carto);
-            break;
-        case 'Q':
-            return 0;
-        default:
-            fputs("ERR unknown command\n", stdout);
-            fflush(stdout);
+            continue;
         }
+        fputs("ERR unknown command\n", stdout);
+        fflush(stdout);
     }
     return 0;
 }

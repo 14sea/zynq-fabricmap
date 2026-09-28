@@ -22,9 +22,11 @@ from __future__ import annotations
 import json
 import os
 import random
+import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -37,9 +39,32 @@ import b1_model as bm  # noqa: E402
 import b2_landscape as bl  # noqa: E402
 import b3_carto as b3  # noqa: E402
 
+import b2_build_evidence as be  # noqa: E402  (the pinned ARM toolchain's path and arch flags; a frozen B2 module, imported by content)
+
 FW = R / "b3/firmware"
 BUILD = R / "build/b3_firmware"
 TWIN = BUILD / "b3_carto_twin"
+REQUIRED_SOURCES = ("Makefile", "b3_carto.c", "b3_carto.h", "b3_carto_twin.c")
+PRODUCT_SUFFIXES = (".o", ".su", ".d", ".map", ".a")
+FRAME_LIMIT = 1024                                    # bytes per function frame, host and ARM
+
+
+def firmware_findings(fw: Path) -> list:
+    """The rule for b3/firmware: the stage-1 sources are required; a build product anywhere under it (an object,
+    a stack-usage file, a dependency file, a linker map, an archive, the twin executable, a build/ directory) is
+    refused on its own; anything else — a later stage's sources, the BSP inputs, the committed image binaries
+    under bsp/out/ — is allowed."""
+    f = []
+    for name in REQUIRED_SOURCES:
+        if not (fw / name).is_file():
+            f.append(f"{name}: required, absent")
+    for p in sorted(fw.rglob("*")):
+        rel = p.relative_to(fw).as_posix()
+        if p.is_dir() and p.name == "build":
+            f.append(f"{rel}/: a build directory under b3/firmware")
+        elif p.is_file() and (p.suffix in PRODUCT_SUFFIXES or p.name == "b3_carto_twin"):
+            f.append(f"{rel}: a build product under b3/firmware")
+    return f
 TRUTH = bm.truth_mapping()
 P, Q, RR, T, U = (0, 0), (0, 1), (0, 2), (0, 3), (0, 4)
 _BUILT = {"log": None}
@@ -67,12 +92,21 @@ class Twin:
         self.p = subprocess.Popen([str(TWIN)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
 
     def close(self):
+        """Quit the twin, close both ends of the pipe, and hold it to exit status 0 (the owner's P2 on
+        4817662: an unclosed pipe is a ResourceWarning and an unchecked exit hides a crash)."""
         try:
             self.p.stdin.write("Q\n")
             self.p.stdin.flush()
         except (BrokenPipeError, ValueError):
             pass
-        self.p.wait(timeout=10)
+        try:
+            self.p.stdin.close()
+            rest = self.p.stdout.read()
+            self.p.stdout.close()
+        finally:
+            rc = self.p.wait(timeout=10)
+        if rc != 0:
+            raise AssertionError(f"the twin exited {rc}: {rest[-300:]!r}")
 
     def _line(self) -> str:
         line = self.p.stdout.readline()
@@ -159,8 +193,76 @@ class TheBuild(unittest.TestCase):
         for flag in ("-std=c99", "-Wall", "-Wextra", "-Werror", "-pedantic", "-Wshadow", "-Wstrict-prototypes", "-Wmissing-prototypes", "-Wconversion"):
             self.assertIn(flag, text, flag)
         self.assertIn("../../build/b3_firmware", text)                        # products go to the top-level build/, never under b3/
-        self.assertFalse(list((FW).glob("*.o")) + list(FW.glob("build")), "no build product under b3/firmware")
-        self.assertEqual(sorted(p.name for p in FW.iterdir()), ["Makefile", "b3_carto.c", "b3_carto.h", "b3_carto_twin.c"])
+        self.assertEqual(firmware_findings(FW), [])
+
+    def test_the_firmware_directory_rule_is_a_subset_never_the_exact_set(self):
+        """The owner's P1 on 4817662: an exact listing would go red at stage 2's first legitimate source
+        (the stage-constant defect §9 exists to prevent). The rule: the stage-1 files are REQUIRED, a build
+        product anywhere under b3/firmware is REFUSED on its own, and any other source is allowed."""
+        d = Path(tempfile.mkdtemp(prefix="b3_fw_rule_"))
+        self.addCleanup(shutil.rmtree, d, True)
+        shutil.copytree(FW, d / "firmware")
+        fw = d / "firmware"
+        self.assertEqual(firmware_findings(fw), [])
+        for later in ("b3_orch.c", "b3_orch.h", "b3_wire.c", "b3_app.c", "IMPORT.json", "p3_derive.c", "bsp/build.sh", "bsp/lscript.ld", "bsp/out/b3_app.bin", "bsp/out/b3_app.elf"):
+            (fw / later).parent.mkdir(parents=True, exist_ok=True)
+            (fw / later).write_text("later stage\n")
+        self.assertEqual(firmware_findings(fw), [], "a later stage's legitimate sources and the committed image are allowed")
+        for product in ("b3_carto.o", "b3_carto.su", "b3_carto.d", "b3_app.map", "libx.a", "b3_carto_twin", "bsp/out/x.o", "build/anything"):
+            (fw / product).parent.mkdir(parents=True, exist_ok=True)
+            (fw / product).write_text("product\n")
+            got = firmware_findings(fw)
+            needle = "build/" if product.startswith("build/") else product
+            self.assertTrue(any(needle in x for x in got), (product, got))
+            (fw / product).unlink()
+            if product.startswith("build/"):
+                (fw / "build").rmdir()
+        self.assertEqual(firmware_findings(fw), [])
+        (fw / "b3_carto.h").unlink()
+        self.assertTrue(any("b3_carto.h" in x and "required" in x for x in firmware_findings(fw)))
+
+    def test_every_frame_stays_far_below_the_bsp_stack_on_the_host_and_on_the_pinned_arm_toolchain(self):
+        """The owner's P1 on 4817662: b3_carto_observe once held the whole 15 KB state copy on the stack —
+        15 992 bytes on ARM against the BSP's 0x4000-byte stack (firmware/b2/bsp/lscript.ld, byte-for-byte
+        reused). The copy is now the caller's scratch; every function's frame is measured with -fstack-usage
+        by the host compiler AND by the pinned ARM toolchain (arm-none-eabi-gcc, cortex-a9, freestanding —
+        the compiler the image will be built with), and held under FRAME_LIMIT, with the deepest chain
+        (observe → check_on_copy, inlined or not) a small fraction of the stack. No skip: an absent toolchain
+        is a failure."""
+        ld = (R / "firmware/b2/bsp/lscript.ld").read_text()
+        m = re.search(r"_STACK_SIZE = DEFINED\(_STACK_SIZE\) \? _STACK_SIZE : (0x[0-9A-Fa-f]+);", ld)
+        self.assertIsNotNone(m, "the BSP stack size line")
+        stack = int(m.group(1), 16)
+        self.assertEqual(stack, 0x4000)
+        arm = Path(be.TC) / "bin/arm-none-eabi-gcc"
+        self.assertTrue(arm.is_file(), f"the pinned ARM toolchain is absent at {arm}: a failure, not a skip")
+        cases = {"host": [os.environ.get("CC", "cc"), "-std=c99", "-O2", "-Wall", "-Wextra", "-Werror", "-pedantic"],
+                 "arm": [str(arm), *be.ARCH_FLAGS, "-std=c99", "-O2", "-ffreestanding", "-Wall", "-Wextra", "-Werror", "-pedantic"]}
+        out = BUILD / "stack_usage"
+        out.mkdir(parents=True, exist_ok=True)
+        for name, cmd in cases.items():
+            with self.subTest(compiler=name):
+                obj = out / f"b3_carto_{name}.o"
+                p = subprocess.run(cmd + ["-fstack-usage", "-c", "-o", str(obj), str(FW / "b3_carto.c")], capture_output=True, text=True)
+                self.assertEqual(p.returncode, 0, p.stderr)
+                self.assertEqual(p.stderr, "", "a warning-free compile")
+                su = obj.with_suffix(".su").read_text()
+                frames = {}
+                for line in su.splitlines():
+                    parts = line.split("\t")
+                    frames[parts[0].split(":")[-1]] = (int(parts[1]), parts[2])
+                self.assertIn("b3_carto_observe", frames)
+                self.assertIn("b3_carto_state_render", frames)
+                for fn, (nbytes, kind) in frames.items():
+                    self.assertIn(kind, ("static", "dynamic,bounded"), (fn, kind))   # never an unbounded frame (no VLA, no alloca)
+                    self.assertLessEqual(nbytes, FRAME_LIMIT, (name, fn, nbytes))
+                deepest = frames["b3_carto_observe"][0] + max((n for fn, (n, _) in frames.items() if fn != "b3_carto_observe"), default=0)
+                self.assertLess(deepest * 8, stack, (name, deepest))
+        # and the scratch is where the copy lives: the state type is the size the frame no longer carries
+        src = (FW / "b3_carto.c").read_text()
+        self.assertNotIn("b3_carto work;", src)
+        self.assertIn("memcpy(scratch, c, sizeof(*scratch));", src)
+        self.assertIn("static b3_carto carto, scratch;", (FW / "b3_carto_twin.c").read_text())
 
     def test_the_cartographer_unit_is_freestanding(self):
         """b3_carto.c is the image's unit: no stdio, no allocation, no libc but memcpy / memset / strlen."""
@@ -289,23 +391,42 @@ class TheProtocol(Lockstep):
     def test_what_the_twin_cannot_parse_is_refused_without_touching_the_state(self):
         self.observe([4, 7], [P, Q])
         before = self.twin.state()
-        for line, why in (("O", "the address count"), ("O x", "the address count"), ("O 1", "an address token"), ("O 1 -1 | 1 0.0", "an address token"),
+        for line, why in (("O x", "the address count"), ("O 1", "an address token"), ("O 1 -1 | 1 0.0", "an address token"),
                           ("O 1 4 | 1 0", "the '.' of a position"), ("O 1 4 | 1 0.", "a vector token"), ("O 1 4 | 1 .0", "a LUT token"),
                           ("O 1 4 1 0.0", "the '|' separator"), ("O 1 4 | 2 0.0", "a LUT token"), ("O 1 4 | 1 0.0 extra", "trailing tokens"),
                           ("O 1 4 | 1 0.0 | 1 0.0", "trailing tokens"), ("O 293 " + " ".join(str(i) for i in range(293)) + " | 0", "too many addresses"),
                           ("O 1 4 | 385 " + " ".join("0.0" for _ in range(385)), "too many positions"), ("O 1 70000 | 1 0.0", "an address token"),
-                          ("O 1 4 | 1 0.70000", "a vector token"), ("X", "unknown command"), ("", "unknown command"), ("observe 1 4 | 1 0.0", "unknown command")):
+                          ("O 1 4 | 1 0.70000", "a vector token"), ("X", "unknown command"), ("", "unknown command"), ("observe 1 4 | 1 0.0", "unknown command"),
+                          ("S junk", "unknown command"), ("R junk", "unknown command"), ("Q junk", "unknown command"), ("Sx", "unknown command"),
+                          ("Rx", "unknown command"), ("S ", "unknown command"), (" S", "unknown command"), ("O1 4 | 1 0.0", "unknown command"),
+                          ("O", "unknown command"), ("Observe 1 4 | 1 0.0", "unknown command")):
             with self.subTest(line=line[:30]):
                 reply = self.twin.raw(line)
                 self.assertTrue(reply.startswith("ERR "), (line, reply))
                 self.assertIn(why, reply)
                 self.assertEqual(self.twin.state(), before)
         self.assertEqual(self.ref.anomalies, 0)
+        self.assertEqual(self.twin.state(), before, "in particular 'R junk' did not reset the cartographer (the owner's probe)")
         # values that parse but are out of the cartographer's range are the cartographer's refusal (an anomaly), as in Python
         self.assertIsNone(self.observe([292], [P]))
         self.assertIsNone(self.observe([4], [(6, 0)]))
         self.assertIsNone(self.observe([4], [(0, 64)]))
         self.assertEqual(self.twin.state(), before.replace("|0|0|", "|0|3|", 1))
+
+    def test_an_aliasing_scratch_is_a_bad_call_that_does_nothing_and_counts_nothing(self):
+        """The API contract (the owner's P1 on 4817662 made the scratch caller-owned): a scratch that IS the
+        state is a programming error — B3_CARTO_BAD_CALL, nothing done, nothing counted — probed through the
+        twin's B command, which deliberately aliases them. A consistent specimen that would decode, and a
+        refused one that would count, both leave the state byte-identical."""
+        k, v = TRUTH["mapping"][5]
+        self.observe([4, 7], [P, Q])
+        before = self.twin.state()
+        for moved, delta in (([5], [(k, v)]), ([0, 0], [P, Q]), ([4], [P])):
+            reply = self.twin.raw(self.twin.observe_line(moved, delta).replace("O ", "B ", 1))
+            self.assertEqual(reply, "ERR bad call", (moved, delta))
+            self.assertEqual(self.twin._line(), "STATE " + before)
+            self.assertEqual(self.twin.state(), before)
+        self.assertEqual(self.observe([5], [(k, v)]), [(5, k, v)])              # the same specimen through O: it decodes
 
     def test_reset_and_the_empty_state(self):
         self.assertEqual(self.twin.state(), f"{b3.CARTO_VERSION}|0|0||")
