@@ -38,6 +38,7 @@ import b1_carto as bc  # noqa: E402
 import b1_model as bm  # noqa: E402
 import b2_landscape as bl  # noqa: E402
 import b3_carto as b3  # noqa: E402
+import b3_manifest as bman  # noqa: E402
 
 import b2_build_evidence as be  # noqa: E402  (the pinned ARM toolchain's path and arch flags; a frozen B2 module, imported by content)
 
@@ -45,15 +46,17 @@ FW = R / "b3/firmware"
 BUILD = R / "build/b3_firmware"
 TWIN = BUILD / "b3_carto_twin"
 REQUIRED_SOURCES = ("Makefile", "b3_carto.c", "b3_carto.h", "b3_carto_twin.c")
-PRODUCT_SUFFIXES = (".o", ".su", ".d", ".map", ".a")
+PRODUCT_SUFFIXES = (".o", ".su", ".d", ".map", ".a", ".bin", ".elf")
+COMMITTED_IMAGE = ("bsp/out/b3_app.bin", "bsp/out/b3_app.elf")     # the owner's ruling (b): these two exact paths, and no other binary
 FRAME_LIMIT = 1024                                    # bytes per function frame, host and ARM
 
 
 def firmware_findings(fw: Path) -> list:
     """The rule for b3/firmware: the stage-1 sources are required; a build product anywhere under it (an object,
-    a stack-usage file, a dependency file, a linker map, an archive, the twin executable, a build/ directory) is
-    refused on its own; anything else — a later stage's sources, the BSP inputs, the committed image binaries
-    under bsp/out/ — is allowed."""
+    a stack-usage file, a dependency file, a linker map, an archive, ANY .bin or .elf, the twin executable, a
+    build/ directory) is refused on its own — with exactly two exceptions, the committed image at
+    bsp/out/b3_app.bin and bsp/out/b3_app.elf (the owner's ruling of 2026-09-28), by exact path; anything else
+    — a later stage's sources, the BSP inputs — is allowed."""
     f = []
     for name in REQUIRED_SOURCES:
         if not (fw / name).is_file():
@@ -62,6 +65,8 @@ def firmware_findings(fw: Path) -> list:
         rel = p.relative_to(fw).as_posix()
         if p.is_dir() and p.name == "build":
             f.append(f"{rel}/: a build directory under b3/firmware")
+        elif p.is_file() and rel in COMMITTED_IMAGE:
+            continue
         elif p.is_file() and (p.suffix in PRODUCT_SUFFIXES or p.name == "b3_carto_twin"):
             f.append(f"{rel}: a build product under b3/firmware")
     return f
@@ -208,7 +213,9 @@ class TheBuild(unittest.TestCase):
             (fw / later).parent.mkdir(parents=True, exist_ok=True)
             (fw / later).write_text("later stage\n")
         self.assertEqual(firmware_findings(fw), [], "a later stage's legitimate sources and the committed image are allowed")
-        for product in ("b3_carto.o", "b3_carto.su", "b3_carto.d", "b3_app.map", "libx.a", "b3_carto_twin", "bsp/out/x.o", "build/anything"):
+        for product in ("b3_carto.o", "b3_carto.su", "b3_carto.d", "b3_app.map", "libx.a", "b3_carto_twin", "bsp/out/x.o", "build/anything",
+                        "b3_app.bin", "b3_app.elf", "bsp/out/other.bin", "bsp/out/b3_app_old.elf", "bsp/b3_app.bin", "bsp/other/b3_app.elf",
+                        "nested/deeper/x.elf", "b3_carto_twin.bin"):                       # the owner's P2 on baae5f6: only the two exact paths are the image
             (fw / product).parent.mkdir(parents=True, exist_ok=True)
             (fw / product).write_text("product\n")
             got = firmware_findings(fw)
@@ -220,6 +227,8 @@ class TheBuild(unittest.TestCase):
         self.assertEqual(firmware_findings(fw), [])
         (fw / "b3_carto.h").unlink()
         self.assertTrue(any("b3_carto.h" in x and "required" in x for x in firmware_findings(fw)))
+        self.assertEqual(COMMITTED_IMAGE, ("bsp/out/b3_app.bin", "bsp/out/b3_app.elf"))
+        self.assertEqual(bman.IMAGE_REL, "b3/firmware/" + COMMITTED_IMAGE[0])
 
     def test_every_frame_stays_far_below_the_bsp_stack_on_the_host_and_on_the_pinned_arm_toolchain(self):
         """The owner's P1 on 4817662: b3_carto_observe once held the whole 15 KB state copy on the stack —
@@ -413,20 +422,26 @@ class TheProtocol(Lockstep):
         self.assertIsNone(self.observe([4], [(0, 64)]))
         self.assertEqual(self.twin.state(), before.replace("|0|0|", "|0|3|", 1))
 
-    def test_an_aliasing_scratch_is_a_bad_call_that_does_nothing_and_counts_nothing(self):
+    def test_an_aliasing_or_null_scratch_is_a_bad_call_that_does_nothing_and_counts_nothing(self):
         """The API contract (the owner's P1 on 4817662 made the scratch caller-owned): a scratch that IS the
-        state is a programming error — B3_CARTO_BAD_CALL, nothing done, nothing counted — probed through the
-        twin's B command, which deliberately aliases them. A consistent specimen that would decode, and a
-        refused one that would count, both leave the state byte-identical."""
+        state, or no scratch at all, is a programming error — B3_CARTO_BAD_CALL, nothing done, nothing counted
+        — probed through the twin's B (aliasing) and N (NULL) commands, each its own guard (the owner's P3 on
+        baae5f6). A consistent specimen that would decode, a refused one that would count, and a duplicate
+        decode all leave the state — the anomaly count included — byte-identical."""
         k, v = TRUTH["mapping"][5]
         self.observe([4, 7], [P, Q])
         before = self.twin.state()
-        for moved, delta in (([5], [(k, v)]), ([0, 0], [P, Q]), ([4], [P])):
-            reply = self.twin.raw(self.twin.observe_line(moved, delta).replace("O ", "B ", 1))
-            self.assertEqual(reply, "ERR bad call", (moved, delta))
-            self.assertEqual(self.twin._line(), "STATE " + before)
-            self.assertEqual(self.twin.state(), before)
+        for probe in ("B ", "N "):
+            for moved, delta in (([5], [(k, v)]), ([0, 0], [P, Q]), ([4], [P]), ([999], [P])):
+                with self.subTest(probe=probe.strip(), moved=moved):
+                    reply = self.twin.raw(self.twin.observe_line(moved, delta).replace("O ", probe, 1))
+                    self.assertEqual(reply, "ERR bad call", (probe, moved, delta))
+                    self.assertEqual(self.twin._line(), "STATE " + before)
+                    self.assertEqual(self.twin.state(), before)
+        self.assertEqual(self.ref.anomalies, 0)
         self.assertEqual(self.observe([5], [(k, v)]), [(5, k, v)])              # the same specimen through O: it decodes
+        self.assertIsNone(self.observe([0, 0], [P, Q]))                        # and the refused one through O: counted
+        self.assertTrue(self.twin.state().split("|")[2] == "1")
 
     def test_reset_and_the_empty_state(self):
         self.assertEqual(self.twin.state(), f"{b3.CARTO_VERSION}|0|0||")

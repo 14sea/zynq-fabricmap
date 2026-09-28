@@ -16,9 +16,10 @@
  *       then
  *         STATE <text>                   the commitment text (b3_carto_state_render), byte for byte
  *   B <the same specimen syntax as O>
- *       a PROBE of the API contract, not a cartographer operation: calls b3_carto_observe with the scratch
- *       aliasing the state (scratch == &carto). The contract says B3_CARTO_BAD_CALL, nothing done, nothing
- *       counted — printed as "ERR bad call" then STATE <text> (unchanged).
+ *   N <the same specimen syntax as O>
+ *       PROBES of the API contract, not cartographer operations: B calls b3_carto_observe with the scratch
+ *       aliasing the state (scratch == &carto), N with scratch == NULL. The contract says B3_CARTO_BAD_CALL
+ *       for both, nothing done, nothing counted — printed as "ERR bad call" then STATE <text> (unchanged).
  *   S   print STATE <text>
  *   R   reset the cartographer, then print STATE <text>
  *   Q   exit 0
@@ -166,16 +167,16 @@ int main(void)
         }
         if (strcmp(line, "Q") == 0)
             return 0;
-        if ((line[0] == 'O' || line[0] == 'B') && line[1] == ' ') {
-            int probe = line[0] == 'B';
+        if ((line[0] == 'O' || line[0] == 'B' || line[0] == 'N') && line[1] == ' ') {
+            b3_carto *use = line[0] == 'B' ? &carto : line[0] == 'N' ? NULL : &scratch;
             if (parse_observe(line, moved, &n_moved, delta, &n_delta, &why) < 0) {
                 printf("ERR cannot parse %s\n", why);
                 fflush(stdout);
                 continue;
             }
-            n = b3_carto_observe(&carto, probe ? &carto : &scratch, moved, n_moved, delta, n_delta, newly, B3_CARTO_N);
+            n = b3_carto_observe(&carto, use, moved, n_moved, delta, n_delta, newly, B3_CARTO_N);
             if (n == B3_CARTO_BAD_CALL) {
-                fputs("ERR bad call\n", stdout);        /* the contract's answer to an aliasing scratch (the B probe) */
+                fputs("ERR bad call\n", stdout);        /* the contract's answer to an aliasing or NULL scratch (the B / N probes) */
                 print_state(&carto);
                 continue;
             }
