@@ -6,6 +6,14 @@ Branch `b3-lifecycle-2`, audited HEAD **`f11daf2`** (the test-report unit's foll
 document-only unit: this file is the only change. Host-only: no test or production code is modified, no pin
 table, no manifest, no canonical proof, no ruling, no push, no board.
 
+**Closing re-audit (2026-09-28, at `ef25681`):** the F3 correction — a separately authorised pinned-edit unit
+over `b3/tests/test_b3_pins.py` and `b3/tests/test_b3_test_report.py` only, the owner's PASS of 2026-09-28,
+pushed — was re-audited here against R3 and the six categories; the two files' inventory rows carry their
+`ef25681` digests and counts, F3 is closed, R3 holds, and the verdict is PASS. Between `f11daf2` and
+`ef25681` exactly three files changed: the two F3 test files and this document (`git diff --stat f11daf2
+ef25681`); `b3/host`, `host`, `manifests` and `evidence` are identical, and the thirteen other test files are
+byte-identical.
+
 ## Question
 
 Preregistration §9 fixes six rules for the B3 tests before anything is frozen. B2's lifecycle 1 froze
@@ -45,11 +53,11 @@ naming a stage (`"S0"`…`"S3"`), `UNDETERMINED` / `DETERMINED`, `qualified`, `s
 meaning depends on it: `b3_manifest.check_b2_authority` / `_production_b2` / `B2_REQUIRED` /
 `b2_authority_block` / `stage_of` / `TRANSITIONS`; `b3_runner.SEARCH` / `QUALIFICATION` and the preflight's
 profile check; `b3_plan.build_plan` (which fields depend on the rate). (5) The collected test count per module
-taken from `unittest.defaultTestLoader.discover("b3/tests")` (467, the number the full suite ran at
-`f11daf2`), not from a grep of `def test_` (which over-counts by three string occurrences in
-`test_b3_test_report.py`).
+taken from `unittest.defaultTestLoader.discover("b3/tests")` (467 at `f11daf2`; 469 at `ef25681`, the number
+the full suite ran after the F3 correction — the owner's independent run: Ran 469, OK), not from a grep of
+`def test_` (which over-counts by three string occurrences in `test_b3_test_report.py`).
 
-## Inventory — the 15 files at `f11daf2`
+## Inventory — the 15 files at `f11daf2` (the two F3 files re-inventoried at `ef25681`)
 
 | file | SHA-256 | tests | categories present (dominant first) |
 |---|---|---|---|
@@ -61,13 +69,13 @@ taken from `unittest.defaultTestLoader.discover("b3/tests")` (467, the number th
 | `b3/tests/test_b3_lifecycle.py` | `f674891fc735fb27e29e76bdf41a3fbf0e1d9a33438e51a7cd468df7468a9084` | 75 | (d)+(c): every stage value asserted on the `World` temp tree, the stage always `w.verify()["stage"]` (production verify over the fixture) — 492, 772, 1121, 1358, 1436; (a) `FROZEN_INPUTS` bytes copied from `R` into the fixture (139); (e) `bman.STAGES` / `STATUS` / `HISTORY` / `TRANSITIONS` used as the protocol; (f) refusal texts (`"S3: the pinned plan file…"`, `"S0: a plan on an unfrozen manifest"`, …) |
 | `b3/tests/test_b3_online_arm.py` | `a0e135182fcf86d3d973014f4ce360eb8f3635cb8200540680a1d0a71612dcc3` | 14 | (a)+(b): one row of the frozen `evidence/b3/sim/raw_F1.json` (63, a `FROZEN_INPUTS` file) and the two ledger schemas (75, 80); no stage |
 | `b3/tests/test_b3_online_map.py` | `d37b7b26a53d926ee210861442765477b7e780a56c1143ff19efdeccaf45dcfb` | 5 | (d); the tool's own source text read once (151); no stage |
-| `b3/tests/test_b3_pins.py` | `8abaad9f355864b86128dbab43c447fe7cb17fe34f53ad63b90ed4e4e6fad137` | 47 | (d) temp trees; (a) the real tree's pin surface (`generate(R)`, 189–215) and, **conditionally on the committed table's absence**, its refusal (483–485 — F3); (f) path constants |
+| `b3/tests/test_b3_pins.py` | at `f11daf2` `8abaad9f355864b86128dbab43c447fe7cb17fe34f53ad63b90ed4e4e6fad137` (47); **at `ef25681` `71d480d98fabc73aa7549678248f0028dcc30e933ce0dd6b6b562699ca57f437` (48)** | 48 | (d) temp trees; (a)+(c) the real tree's pin surface (`generate(R)`, 189–215) and its binding asserted in every committed state through `assert_binding_of` (475–507; the real-tree call 566–577; every branch exercised on a temporary tree with negative probes, 509–564 — F3 closed); (f) path constants |
 | `b3/tests/test_b3_plan.py` | `f357eccdc6f23fc0d8590cefef9d93b82cacfe2c4acb61310846c6107f0a60af` | 32 | (a)+(c): `Committed` reads `evidence/b3/plan.json`, `prediction.json`, `manifests/b3_manifest.json` (44–47) and takes the stage from `committed_stage()` = the production `verify` (71–81); `StageCoverage` (527–664) drives it at pre/S0/S1/S2/S3 and the illegal pairings; (a)+(b) the committed B2 manifest's `seeds` (188) and lifecycle 1's pilot evidence (182–184); (f) `assertTrue(status.startswith("UNDETERMINED"))` on the tool's OWN rate-less document (381), not the committed one |
 | `b3/tests/test_b3_records.py` | `431a2a0a437f57bdc35d2c37aec1dfdbd82936284326f9474b9961ec3c98ccec` | 50 | (d) only (the word "R" at 12 is the R arm) |
 | `b3/tests/test_b3_runner.py` | `76b388c92943bd32e79dc4e0d3381e82dae83237102cca1df94a05ea1be165a8` | 57 | (d)+(e): `Fixture(stage)` builds a temp manifest at S1 or S3 and picks `rn.QUALIFICATION` / `rn.SEARCH` (180–216); `FakeAuthority.verify` returns `{"stage": "fixture"}` (121–127) — the runner tests never take a stage from a committed manifest; (a)+(b) the instrument's `manifests/l6_manifest.json` (609, 721 — the pinned watchdog contract, not lifecycle state) and one archived B2Q session's `summary.json` (1270, tracked evidence, read-only); (f) `profile_stage` refusal texts (1359) |
 | `b3/tests/test_b3_sentinel.py` | `96a3121f40958597ad3c6643b1b7be05c01e383774d549c9dc8a454e40e36dc6` | 1 | the discovery sentinel; no read, no stage |
 | `b3/tests/test_b3_session.py` | `d8b62687c1da78085163f7350743ea9a3324610dd2ea021446d1dd0903b5479b` | 26 | (a)+(b): `CommittedPrediction` reads the committed `evidence/b3/plan.json` and `prediction.json` (392–393) and asserts fields the S3 regeneration does not touch (F2); `range(8)` = the preregistered N (e); everything else (d) |
-| `b3/tests/test_b3_test_report.py` | `01ce023e764e29663385d2d4f172b745017c33c1e8388c046ccfd43833f051d0` | 56 | (d) temp trees and fake runs; (a) `tr.snapshot(R)` on the real tree (585–623): the pinned surface equal to `b3_pins.generate(R)`, the seven frozen inputs at their frozen digests, the B1 carrier — stage-invariant; **conditionally on the committed table's absence**, the diagnostic verdict (602–610 — F3) |
+| `b3/tests/test_b3_test_report.py` | at `f11daf2` `01ce023e764e29663385d2d4f172b745017c33c1e8388c046ccfd43833f051d0` (56); **at `ef25681` `70b59bcedff008b3309959e0daa470ad66802a475cce320a1f1df639e0a0c87f` (57)** | 57 | (d) temp trees and fake runs; (a)+(c) `tr.snapshot(R)` on the real tree (586–605): the pinned surface equal to `b3_pins.generate(R)`, the seven frozen inputs at their frozen digests, the B1 carrier — stage-invariant — and its binding asserted in every committed state through `assert_binding_state` (607–652; every branch exercised on a temporary tree with negative probes, 662–718 — F3 closed) |
 
 ## The six rules, one conclusion each
 
@@ -75,7 +83,7 @@ taken from `unittest.defaultTestLoader.discover("b3/tests")` (467, the number th
 |---|---|---|
 | R1 | **Holds.** Exactly one place reads committed lifecycle state and needs a stage: `test_b3_plan.Committed.test_the_committed_split_is_what_the_stage_licenses`. Its stage is `committed_stage()` — `bman.verify(manifest, root=TREE["root"], seams=TREE["seams"])["stage"]`, `(None, None)` before S0 when no manifest exists — never a field read off the manifest, never a literal. `split_findings` names what the stage licenses (UNDETERMINED until S3; DETERMINED, bytes-equal, session count and record total equal to the pin at S3). No committed split status, calibration, session count or history length is a literal anywhere in the fifteen files (the only `history`/`STATUS` literals are `bman.HISTORY` / `bman.STATUS`, the protocol's own tables, applied to the fixture). | `test_b3_plan.py:71–105, 503–525` |
 | R2 | **Holds for the committed-state test.** `StageCoverage` drives that test, unchanged, at pre, S0, S1, S2 (UNDETERMINED accepted; the production verify observed to have run when a manifest exists — `"b2" in w.calls`), S3 (DETERMINED, the pin's numbers), S3 under a second calibration rate (another split, held to its own pin), and against the illegal pairings: a DETERMINED plan with nothing pinned at pre/S0/S1/S2; the rate-less plan under an S3 manifest; a pinned plan whose bytes drifted; the committed path holding another document; a manifest that does not verify at S3, S2, S1, S0 (four field mutations) and a frozen input absent at S1; an absent committed plan — each a failure or error, `(testsRun, skipped) == (1, 0)` asserted every time. The second committed test is driven at pre, S0, S3. The matrix below quantifies the rest of the coverage. | `test_b3_plan.py:527–664` |
-| R3 | **Does not hold until F3 is corrected (HOLD).** No `skipUnless` / `skipIf` / `SkipTest` exists in `b3/tests/` (grep: 0), and `StageCoverage.drive` asserts `len(result.skipped) == 0` for every committed-state run. But two real-tree tests guard part of their assertions with `if not (R / PIN_TABLE_REL).exists():` — a conditional on a committed artefact that does what R3 forbids `skipUnless` to do, without the runner counting a skip: the moment the pin table is generated (the next legal lifecycle state) the guarded assertions stop executing and nothing in `b3/tests/` asserts the real tree's binding any more, while the suite stays green. A coverage gap that the next legal state is certain to open is a violation now, not a future one; the owner's ruling of 2026-09-27 on `918d309` fixes this reading. Correction: F3, a pinned-edit unit before the table. | `test_b3_pins.py:483`, `test_b3_test_report.py:602` |
+| R3 | **Holds (at `ef25681`; it did not at `f11daf2` — F3).** No `skipUnless` / `skipIf` / `SkipTest` / `skipTest` exists in `b3/tests/` (grep: 0), and `StageCoverage.drive` asserts `len(result.skipped) == 0` for every committed-state run. At `f11daf2` two real-tree tests guarded part of their assertions with `if not (R / PIN_TABLE_REL).exists():` — a conditional on a committed artefact that does what R3 forbids `skipUnless` to do, without the runner counting a skip: at the next legal lifecycle state (the pin table generated) the guarded assertions would have stopped executing while the suite stayed green — a violation now, not a future one (the owner's ruling of 2026-09-27 on `918d309`). At `ef25681` the guards are gone (grep `if not (R /`: 0): each test asserts the repository's binding in every committed state — absent, table only, table and manifest — through a helper whose every branch asserts, exercised with negative probes on a temporary tree before any of the states exists on the repository (F3, closed). | `test_b3_pins.py:483`, `test_b3_test_report.py:602` |
 | R4 | **Holds.** The lifecycle test holds each transition to `bman.TRANSITIONS` (`LegalPath.test_each_transition_changed_only_what_it_licenses`, 498–506) and names a field a step does not license (855–875, eleven cases plus an unexpected key). The committed-state tests name only invariants: the plan's `fitness`, `budget_per_arm`, `pairs`, `records.*`, `prediction_sha256`, `audit_policy`, `arm_order`, `map.sha256`, `seed_derivation` — none is in any `TRANSITIONS` path, and `b3_plan.build_plan` lets only `session_split` depend on the rate (so the S3 regeneration of the committed plan changes `session_split` alone); the prediction's bytes (the S3 sidecar is the S0 prediction, `PlanStage.test_the_s3_pin…`, 540–548). | `b3_manifest.py:131–135`, `b3_plan.build_plan` |
 | R5 | **Holds.** No test reads `manifests/b2_manifest.json` and asserts its stage, `qualified`, `refusal` or digest. The two reads of it (`test_b3_gate.py:786`, `test_b3_plan.py:188`) take `seeds.pairs` / `seeds.master_seed` for the exclusion — frozen values, no stage. B2's stage is asserted only as the B3 manifest's `b2_authority.required` block, the frozen requirement `{S3, true, null, aec84514…}` (`test_b3_lifecycle.py:513`), and through the production B2 verify's result compared to `B2_REQUIRED` (632–640). See the B2 authority section. | — |
 | R6 | **Holds.** `tests/test_b3_online.py` is not under `b3/tests/`, is not discovered by `discover -s b3/tests` (measured: the B3 suite lists 467 tests, none from it), and `test_b3_pins` asserts `host/b3_online.py` is not in the B3 pin rule (199). It is a B2-pinned frozen file (`manifests/b2_instrument_pins.json`, glob `tests/test_b3_*.py`) and is audited as such in B2's audit, not here (Not done here). | `test_b3_pins.py:198–199` |
@@ -118,7 +126,7 @@ inherited from `build_plan` and is exercised for the plan's arithmetic fields by
 the equivalent reads (its F3) the same way. Should a later plan-tool change make any of these fields
 rate-dependent, `test_b3_plan.StageCoverage` would fail first.
 
-### F3 — two real-tree tests narrow their assertions on a committed artefact's absence (P2, R3 — the audit's HOLD; correct before the pin table)
+### F3 — two real-tree tests narrowed their assertions on a committed artefact's absence (P2, R3 — the audit's HOLD at `f11daf2`; **CLOSED at `ef25681`**)
 
 Category (a), R3 in spirit.
 
@@ -140,11 +148,11 @@ own binding modes are exercised unconditionally on temporary trees (`test_b3_tes
 446–584) — but the gap is not hypothetical: generating the pin table is the very next step of §8, and the
 audit's question is what holds BEFORE anything is frozen, for the states the lifecycle will legally enter.
 A pattern that silently removes the only real-tree binding assertions at the first legal transition is a
-load-bearing R3 violation (P2), and the audit's verdict is HOLD until it is corrected (the owner's ruling on
-`918d309`, 2026-09-27).
+load-bearing R3 violation (P2), and it held the audit's verdict until it was corrected (the owner's ruling
+on `918d309`, 2026-09-27; corrected at `ef25681`, below).
 
-Correction (a later pinned-edit unit, **before** the table is generated — after it the edit would return
-the line to the pinned edits and the table would be regenerated): replace each guard with a two-branch
+Correction as specified on 2026-09-27 (a pinned-edit unit **before** the table is generated — after it the
+edit would return the line to the pinned edits and the table would be regenerated): replace each guard with a two-branch
 assertion, each branch asserting what the committed state licenses — table absent: `unbound_snapshot`,
 never a proof, the table named among the absent artifacts; table present and manifest absent:
 `table_self_bound`, the diagnostic verified against the table's own bytes, never `pins_verified`; table and
@@ -152,6 +160,34 @@ manifest present: `manifest_bound` with `pins_verified` equal to what the produc
 root=R)` gives (the stage of the manifest itself is not the point of these tests and is not asserted). Its
 test: each branch reached on a temporary tree (already the case for the modes in `TheBinding`), and a
 mutant that drops one branch failing. Two files, no production change.
+
+**Closed at `ef25681` (re-audited 2026-09-28).** `test_b3_pins.py`: `assert_binding_of(root, foreign,
+default_root)` (475–507) reads the committed state by `lexists` and asserts in EVERY branch — absent: every
+manifest refused by the table's absence by name (with `root=None` too on the repository); table only: the
+table's own bytes verify THIS tree to exactly `{files_verified = generate(root)'s count, pins_sha256 = the
+table's digest, path}`, the table's file set equal to discovery's, and a foreign pin refused; table and
+manifest: the committed manifest read through `b3_manifest.read_manifest` pins exactly this table's bytes,
+verifies this tree to the same summary as the table's own bytes, the foreign pin refused — a verifier
+refusal inside this branch is `self.fail`, never a pass. `test_the_default_root_is_the_repository` (566–577)
+calls it with `default_root=True` and holds the returned state to the table's presence.
+`test_b3_test_report.py`: `assert_binding_state(root, pins, artifacts)` (607–652) over the tool's own
+`pin_state` and artifact digests — absent: `unbound_snapshot`, not verified, no diagnostic, the table absent
+among the artifacts, the production verdict naming `('unbound_snapshot')` and the absent table; table only:
+`table_self_bound`, the diagnostic verified against the table's own bytes with `generate(root)`'s count and
+the table's digest, the manifest absent, the verdict naming `('table_self_bound')` and the absent manifest;
+table and manifest: `manifest_bound`, no diagnostic, the manifest pinning exactly this table's bytes, the
+four pin fields equal to what the production `b3_pins.verify(manifest, root=root)` gives, the manifest's
+digest among the artifacts, and the verdict naming neither "not bound to the B3 manifest" nor "did not
+verify". The real-tree test (586–605) calls it over `tr.snapshot(R)` and holds the state to the table's
+presence. In each file `test_the_three_committed_states_each_assert_on_a_temporary_tree` (509–564; 662–718)
+walks a temporary tree absent → table only → table and manifest, makes a drifted source and a manifest
+pinning other bytes FAIL the helper in the third state, and adds NEGATIVE probes per branch, isolated so
+that only the branch under test can be what fails (a verifier that still refuses the foreign pin but lies
+about the rest; `pin_state` tampered field by field, including fields the verdict never reads;
+`proof_refusals` patched to name the binding or to name nothing). Fifteen branch mutants over the two
+files (each helper branch's assertions removed, one at a time) all killed; the suite 469 OK, no skip; the
+owner's independent run Ran 469, OK. Category of the two real-tree tests: (a)+(c) — committed-state reads
+that are stage-aware in the sense R3 needs (every legal state asserted), not conditional.
 
 ### F4 — committed reads that are frozen inputs or pilot evidence — stage-invariant (PASS)
 
@@ -282,26 +318,25 @@ The seams' existence is therefore not a finding: they stand in for authorities t
 inside a temporary tree and they inject faults; they never substitute for the committed-state authority
 and never let a test bypass a B3 pin assertion.
 
-## Verdict — HOLD, pending F3's correction
+## Verdict — PASS (at `ef25681`; HOLD at `f11daf2`, closed by F3's correction)
 
-R1, R2, R4, R5 and R6 hold in the fifteen files at `f11daf2`: the one committed-state stage test (F1) takes
-its stage from the production verify and is driven at every stage and against the illegal pairings; every
-other committed read is stage-invariant (F2, F4) or fixture-local (F5); the profile constants are the
-runner's contract (F6); B2's stage is reached only through the B3 manifest's pin and the production B2
-verify (R5). R3 does not: F3's two `if not table.exists()` guards on real-tree tests are a skip on a
-committed artefact in everything but name, and the next legal lifecycle state — the pin table generated —
-is certain to make the only real-tree binding assertions disappear while the suite stays green. That is a
-load-bearing R3 violation (P2) and holds the verdict. The audit closes as PASS by a follow-up once F3's
-correction (a separately authorised pinned-edit unit, two test files, no production code) is committed and
-both branches are verified — the absent-table branch on this tree, the present-table branches on a
-temporary tree with the table and with the table and manifest — and re-audited here.
+R1, R2, R4, R5 and R6 held in the fifteen files at `f11daf2` and hold unchanged at `ef25681` (the thirteen
+other test files are byte-identical; no production code changed): the one committed-state stage test (F1) takes its stage from the
+production verify and is driven at every stage and against the illegal pairings; every other committed
+read is stage-invariant (F2, F4) or fixture-local (F5); the profile constants are the runner's contract
+(F6); B2's stage is reached only through the B3 manifest's pin and the production B2 verify (R5). R3 did
+not hold at `f11daf2`: F3's two `if not table.exists()` guards on real-tree tests were a skip on a committed
+artefact in everything but name, and the next legal lifecycle state — the pin table generated — was certain
+to make the only real-tree binding assertions disappear while the suite stayed green: a load-bearing R3
+violation (P2) that held the verdict. At `ef25681` the guards are gone and both tests assert the
+repository's binding in every committed state, each branch proven load-bearing on a temporary tree before
+any of the states exists on the repository (F3, closed; the owner's PASS of 2026-09-28). No open finding
+remains; the audit closes as PASS.
 
 ## What else must hold before S0 (for the owner's review)
 
-1. **F3's correction as a pinned-edit unit before the table.** `test_b3_pins.py:483–485` and
-   `test_b3_test_report.py:602–610`: two-branch assertions (absent → `unbound_snapshot` and the refusal;
-   present → the binding the production `b3_pins` / `b3_test_report.pin_state` give for THIS tree), each
-   branch mutant-tested. Separately authorised; two test files, no production code.
+1. **F3's correction — done (`ef25681`, the owner's PASS of 2026-09-28, pushed), before the table.** The
+   two tests assert the binding in every committed state; every branch mutant-tested on a temporary tree.
 2. **The ordering constraint of F7 / B2's F2.** Every pinned edit — F3's correction and anything the owner's
    review adds — before the table; the table generated once; `b3_manifest.py init`; only then a clean-tree
    proof. `docs/b3_architecture.md` must be committed (equal to HEAD) whenever the suite runs, or the gate
@@ -319,13 +354,11 @@ temporary tree with the table and with the table and manifest — and re-audited
 
 ## Not done here
 
-- No test or production code is modified; F3's correction is the NEXT unit — a separately authorised
-  pinned-edit unit over `b3/tests/test_b3_pins.py` and `b3/tests/test_b3_test_report.py` only, before the pin
-  table — after which a follow-up to this document re-audits the two tests and closes the verdict as PASS.
+- This document is the only file this unit and its two follow-ups touched; F3's correction was its own
+  pinned-edit unit (`ef25681`) over the two test files only, re-audited and closed above.
 - `tests/test_b3_online.py` is not audited here: it is a B2-pinned frozen file (glob `tests/test_b3_*.py` in
   `manifests/b2_instrument_pins.json`), a historical host reference, not discovered by `-s b3/tests`, and
   §9 R6 says it is not a B3 test; B2's audit of 2026-09-16 covers it as one of B2's nineteen.
 - No pin table, no manifest, no canonical clean-tree proof (`evidence/b3/tests` does not exist), no image, no
-  ruling, no push, no board. The next unit is the owner's review of this audit; after it, F3's correction
-  and this audit's closing follow-up; only then, in the §8 order, the image sources and build evidence, the
-  B3Q documents, then the pin table once, then S0.
+  ruling, no board. With the audit closed, the next unit in the §8 order is the image sources and build
+  evidence, then the B3Q documents, then the pin table once, then S0.
