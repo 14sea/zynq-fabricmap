@@ -1,4 +1,5 @@
-# B3 firmware — host twin only (image stage 1: the cartographer).
+# B3 firmware — host twins only (image stage 1: the cartographer; stage 2: the O arm's record, ledger and
+# combined commitment, with its online view).
 #
 # `make twin` builds the HOST driver (b3_carto_twin.c + b3_carto.c) that b3/tests/test_b3_carto_twin.py
 # drives against b3/host/b3_carto.py. It is host tooling, not a board image; nothing here is
@@ -16,12 +17,23 @@ CC      ?= cc
 CFLAGS  ?= -std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion
 BUILD   ?= $(abspath $(CURDIR)/../../build/b3_firmware)
 
-.PHONY: twin clean
+.PHONY: twin record-twin clean
 twin: $(BUILD)/b3_carto_twin
 
 $(BUILD)/b3_carto_twin: b3_carto_twin.c b3_carto.c b3_carto.h
 	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) -o $@ b3_carto_twin.c b3_carto.c
+
+# Stage 2: `make record-twin` builds the O arm's host driver (b3/tests/test_b3_record_twin.py) from the
+# stage-1 cartographer, the new record / online-view units and the byte-for-byte copies of B2's search
+# and hash units (b2_search.*, p3_derive.*, p3_data.h — equal to firmware/b2/, held by the test).
+RECORD_SRC = b3_record_twin.c b3_record.c b3_online_view.c b3_carto.c b2_search.c p3_derive.c
+RECORD_HDR = b3_record.h b3_online_view.h b3_carto.h b2_search.h p3_derive.h p3_data.h
+record-twin: $(BUILD)/b3_record_twin
+
+$(BUILD)/b3_record_twin: $(RECORD_SRC) $(RECORD_HDR)
+	@mkdir -p $(BUILD)
+	$(CC) $(CFLAGS) -o $@ $(RECORD_SRC)
 
 clean:
 	rm -rf $(BUILD)
