@@ -19,6 +19,12 @@ write. Held here:
   * synthetic search states (boundary integers) under the combined commitment;
   * b3_record_json's refusals (a search block without its entry, a holdout block with one, a buffer one byte
     short);
+  * the encoders fail closed (the owner's HOLD on 08030dd): b3_ledger_json refuses every entry outside the
+    specimen_ledger 1.1.0 schema or the cartographer's version rule — each rule with a control just inside it —
+    and bounds every count before any element is read (held under an AddressSanitizer build of the twin, over
+    arrays of exactly their capacity); b3_record_json binds the search record's entry field by field to the
+    observation just made and to this cartographer (each tampered field accepted by the ledger encoder alone,
+    refused by the record) and the holdout record to the champion's evaluation;
   * E1 leakage: the view is empty at evaluation 0; the O initializer and the bridge never name B2_MAP_INIT
     and the O path never calls b2_search_init (source with comments stripped, and the objects' symbols); and
     with ONLY p3_data.h's B2_MAP_INIT changed (a within-LUT permutation that keeps the universe mask) the whole
@@ -440,6 +446,190 @@ class TheRealOArm(unittest.TestCase):
         self.assertEqual(n, len(lines[4]) - len("BLOCK "))
         self.assertEqual(plus, n)
         self.assertEqual(twin.one("C"), "ERR no champion", "no champion before the budget is spent")
+
+
+# ------------------------------------------------------------------ the encoders fail closed (the owner's HOLD on 08030dd)
+
+ASAN_BUILD = R / "build/b3_firmware_asan"
+STRICT = "-std=c99 -O1 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion"
+
+
+def build_asan(fw: Path = FW, out: Path = ASAN_BUILD) -> Path:
+    """The same twin under AddressSanitizer: a count past an array's capacity that is read before it is refused
+    is a global-buffer-overflow report and a non-zero exit — never a quiet 0."""
+    key = ("asan", str(fw), str(out))
+    if key not in _BUILT:
+        p = subprocess.run(["make", "-s", "-C", str(fw), "record-twin", f"BUILD={out}",
+                            f"CFLAGS={STRICT} -g -fno-omit-frame-pointer -fsanitize=address"], capture_output=True, text=True)
+        if p.returncode != 0:
+            raise AssertionError(f"the ASan twin did not build (a failure, not a skip):\n{p.stdout}{p.stderr}")
+        _BUILT[key] = p.stdout + p.stderr
+    return out / "b3_record_twin"
+
+
+class _Probe:
+    """A twin on committed pair 0 with a small budget, observed `k` times (the harness is the fabric)."""
+
+    def __init__(self, tc: unittest.TestCase, exe: Path | None = None, budget: int = 16, k: int = 1):
+        self.pair = PRED["pairs"][0]
+        self.twin = Twin(exe)
+        tc.addCleanup(self.twin.close)
+        self.budget = budget
+        tc.assertEqual(self.twin.one(f"I 0 {self.pair['landscape_seed']} {self.pair['operator_seed']} {budget} {hexw(FABRIC(0))}"), "OK")
+        self.last = None
+        for _ in range(k):
+            self.observe()
+
+    def observe(self):
+        prop = self.twin.one("P").split()
+        self.genome = bc.genome_from_hex(prop[3])
+        out = self.twin.send("M " + hexw(FABRIC(self.genome)), 5)
+        self.entry = json.loads(out[3][len("LEDGER "):])
+        self.block = out[4][len("BLOCK "):]
+        return self.entry
+
+    def t(self, spec: str) -> int:
+        line = self.twin.one(("T " + spec).rstrip())
+        assert line.startswith("T "), line
+        return int(line[2:])
+
+    def full_ledger_carto(self):
+        """The LEDGER cartographer with all 292 addresses decoded (292 single-bit specimens of the truth)."""
+        assert self.twin.one("X") == "OK"
+        for i in range(bc.N):
+            k, v = TRUTH["mapping"][i]
+            assert self.twin.one(f"E {i + 1} 0 random 0 1 {i} | 1 {k}.{v}").startswith("LEDGER {")
+
+
+class TheLedgerEncoderFailsClosed(unittest.TestCase):
+    """P1: b3_ledger_json refuses (0) every entry outside the specimen_ledger 1.1.0 schema or the cartographer's
+    version rule, and bounds every count before any element is read. Each refusal has a control one step inside
+    the rule that renders."""
+
+    def test_the_owners_reproductions_through_the_ledger_cartographer(self):
+        pr = _Probe(self)
+        pos = lambda ids: " ".join(f"{k}.{v}" for k, v in sorted(TRUTH["mapping"][i] for i in ids))  # noqa: E731  (positions_of order)
+        self.assertEqual(pr.twin.one("X"), "OK")
+        for line, ok in ((f"E 1 0 random 1 5 1 2 3 4 5 | 5 {pos([1, 2, 3, 4, 5])}", False),       # five interventions (maxItems 4)
+                         ("E 1 0 random 1 0 | 0", False),                                        # an empty intervention (minItems 1)
+                         (f"E 0 0 random 1 1 7 | 1 {pos([7])}", False),                          # seq 0 (minimum 1)
+                         (f"E 1 0 random -1 1 8 | 1 {pos([8])}", False),                         # fitness -1 (minimum 0)
+                         (f"E 1 0 random 41 1 9 | 1 {pos([9])}", False),                         # fitness above F1's 40 train columns
+                         (f"E 1 0 random 1 3 12 11 13 | 3 {pos([11, 12, 13])}", False),           # an intervention out of order
+                         ("E 1 0 random 1 2 14 15 | 2 " + " ".join(f"{k}.{v}" for k, v in sorted((TRUTH["mapping"][i] for i in (14, 15)), reverse=True)),
+                          False),                                                                # a delta out of positions_of order
+                         (f"E 1 0 random 40 4 20 21 22 23 | 4 {pos([20, 21, 22, 23])}", True),    # the controls: inside every bound
+                         (f"E 1 0 column 0 1 30 | 1 {pos([30])}", True)):
+            with self.subTest(line=line[:40]):
+                got = pr.twin.one(line)
+                self.assertTrue(got.startswith("LEDGER {") if ok else got == "LEDGER ", (line, got))
+
+    def test_every_schema_rule_on_the_live_entry(self):
+        pr = _Probe(self)
+        e = pr.entry
+        self.assertEqual(pr.t("L"), len(canon(e)))                               # the untouched entry renders
+        refused = ["seq 0", "fitness -1", "fitness 41", "kind 2", "kind -1", "bits 0", "bits 2 5 3", "bits 2 3 3",
+                   "bits 1 292", "bits 1 65535", "delta 2 7 5", "delta 2 5 5", "delta 1 384", "delta 1 65535",
+                   f"map_version_after {e['map_version'] + 1}",                    # a bump without a decode
+                   f"newly 1 0 map_version_after {e['map_version'] + 1}",         # a decode of an undecoded address
+                   f"map_version {e['map_version_after'] + 1}"]
+        accepted = ["fitness 0", "fitness 40", "kind 1", "kind 0", "bits 1 291", "bits 4 0 1 2 291", "delta 1 383",
+                    "delta 0", "delta 3 0 64 383", "seq 4294967295", "anomalies 7", "parent_born 99"]
+        for spec in refused:
+            with self.subTest(refused=spec):
+                self.assertEqual(pr.t("L " + spec), 0, spec)
+        for spec in accepted:
+            with self.subTest(accepted=spec):
+                self.assertGreater(pr.t("L " + spec), 0, spec)
+
+    def test_newly_is_unique_decoded_and_bounded(self):
+        pr = _Probe(self)
+        pr.full_ledger_carto()
+        bump = "carto other map_version 0 map_version_after 1"
+        self.assertGreater(pr.t(f"L {bump} newly 2 5 6"), 0)
+        self.assertGreater(pr.t(f"L {bump} newly 3 200 5 100"), 0, "the cartographer's order, not sorted")
+        self.assertEqual(pr.t(f"L {bump} newly 2 5 5"), 0, "a duplicate")
+        self.assertEqual(pr.t(f"L {bump} newly 1 292"), 0, "out of range")
+        self.assertEqual(pr.t("L map_version 0 map_version_after 1 newly 1 5"), 0, "not decoded by the O arm's cartographer")
+        self.assertEqual(pr.t("L carto other newly 1 5"), 0, "a decode without the version bump")
+
+    def _counts(self, exe: Path | None):
+        pr = _Probe(self, exe)
+        pr.full_ledger_carto()
+        bump = "carto other map_version 0 map_version_after 1"
+        for spec, want in (("nbits 4", True), ("nbits 5", False), ("nbits 100000", False), ("nbits -1", False), ("nbits 0", False),
+                           ("ndelta 384", True), ("ndelta 385", False), ("ndelta 1000000", False), ("ndelta -1", False),
+                           (f"{bump} nnewly 292", True), (f"{bump} nnewly 293", False), (f"{bump} nnewly 1000000", False),
+                           (f"{bump} nnewly -1", False)):
+            with self.subTest(spec=spec):
+                got = pr.t("L " + spec)
+                self.assertTrue(got > 0 if want else got == 0, (spec, got))
+
+    def test_every_count_is_bounded_before_any_element_is_read_under_asan(self):
+        """The count probes run over arrays of EXACTLY their capacity filled 0, 1, 2 … — every element valid — so a
+        count one past the capacity is only refused in time if the bound is checked before the loop: under
+        AddressSanitizer a late check is a global-buffer-overflow and a crashed twin (which close() reports)."""
+        self._counts(None)
+        self._counts(build_asan())
+        self.assertEqual(_BUILT[("asan", str(FW), str(ASAN_BUILD))], "")
+
+
+class TheRecordBindsItsLedger(unittest.TestCase):
+    """P2: b3_record_json binds the search record's entry, field by field, to the observation just made and to this
+    cartographer, and the holdout record to the champion's evaluation. Every tampered field is ACCEPTED by the
+    ledger encoder alone (T L) — so the refusal is the binding, not the schema."""
+
+    def test_each_field_is_bound_to_the_search_and_the_cartographer(self):
+        pr = _Probe(self, k=3)
+        e = pr.entry
+        pr.full_ledger_carto()                       # so that "carto other" holds every newly address: only the binding refuses it
+        self.assertEqual(pr.t("B"), len(pr.block), "the untouched entry: the block the twin wrote")
+        bits = e["intervention"]
+        other = sorted(set(range(bc.N)) - set(bits))
+        same_len = sorted(other[:len(bits)])
+        cases = {
+            "seq": f"seq {e['seq'] + 1}",
+            "parent_born": f"parent_born {e['parent_born'] + 1}",
+            "move kind": f"kind {1 if e['move_kind'] == 'random' else 0}",
+            "fitness": f"fitness {e['fitness'] + 1 if e['fitness'] < 40 else e['fitness'] - 1}",
+            "bits (same count)": f"bits {len(same_len)} " + " ".join(map(str, same_len)),
+            "the cartographer": "carto other",
+            "the map version": f"map_version {e['map_version'] + 1} map_version_after {e['map_version_after'] + 1}",
+            "the anomaly count": f"anomalies {e['anomalies'] + 1}",
+        }
+        for what, spec in cases.items():
+            with self.subTest(field=what):
+                self.assertGreater(pr.t("L " + spec), 0, f"{what}: the ledger encoder alone accepts it")
+                self.assertEqual(pr.t("B " + spec), 0, f"{what}: the record refuses it")
+        # another bit count with the SAME prefix — on the first observation, four bits — so that only the count
+        # binding can tell (b2_search's last_bits beyond the count hold a previous move's stale values, which a
+        # longer tampered list would be compared against)
+        first = _Probe(self, k=1)
+        self.assertEqual(len(first.entry["intervention"]), 4)
+        prefix = first.entry["intervention"][:3]
+        spec = "bits 3 " + " ".join(map(str, prefix))
+        self.assertGreater(first.t("L " + spec), 0)
+        self.assertEqual(first.t("B " + spec), 0, "a prefix of the move's bits: the count binding refuses it")
+
+    def test_a_search_record_needs_a_fresh_observation_and_a_holdout_record_the_champions(self):
+        pr = _Probe(self, budget=16, k=16)
+        self.assertGreater(pr.t("B"), 0)
+        self.assertEqual(pr.twin.one("U 16 0"), "U 0", "no holdout before the champion's evaluation")
+        self.assertEqual(pr.twin.one("C").split()[0], "CHAMP")
+        self.assertEqual(pr.t("B"), 0, "the holdout is in flight: no search record")
+        self.assertEqual(pr.twin.one("U 16 0"), "U 0", "the holdout is in flight")
+        block, _commit = pr.twin.send("H " + hexw(FABRIC(pr.genome)), 2)   # any readout; the holdout value is the C side's
+        h = json.loads(block[len("BLOCK "):])["holdout"]
+        self.assertEqual(pr.twin.one(f"U 16 {h}"), f"U {len(block) - len('BLOCK ')}")
+        self.assertEqual(pr.twin.one(f"W 16 {h}"), "W 0", "the valid holdout block handed a ledger entry: refused")
+        for spec in (f"U 17 {h}", f"U 15 {h}", f"U 16 {h + 1}", f"U 0 {h}"):
+            with self.subTest(spec=spec):
+                self.assertEqual(pr.twin.one(spec), "U 0", spec)
+        self.assertEqual(pr.t("B"), 0, "the holdout is done: no search record")
+        fresh = _Probe(self, k=1)
+        self.assertEqual(fresh.twin.one("P").split()[0], "PROP")
+        self.assertEqual(fresh.t("B"), 0, "a proposal is in flight: the last observation is no longer fresh")
+        self.assertGreater(fresh.t("L"), 0)
 
 
 # ------------------------------------------------------------------ the committed ledger, the synthetic states

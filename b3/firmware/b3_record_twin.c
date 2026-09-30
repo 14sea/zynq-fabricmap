@@ -23,6 +23,17 @@
  *   K      probes of b3_record_json's refusals on the current state:
  *            K <search without ledger> <holdout with ledger> <exact buffer> <buffer + 1> <length>
  *              <an eval index that is not the entry's seq>
+ *   T <L|B> [<field> <args>] ...
+ *          a TAMPERED copy of the last observation's ledger entry, rendered by b3_ledger_json (L) or embedded in
+ *          b3_record_json's search block (B) -> T <length> (0 = refused). Fields, applied left to right:
+ *            seq | map_version | map_version_after | anomalies | parent_born <u32>;  fitness | kind <i32>;
+ *            bits <n> <b1..bn> (n <= 4)   delta <n> <p1..pn> (positions 64k+v, n <= 384)
+ *            newly <n> <a1..an> (n <= 292)   carto other (the LEDGER cartographer instead of the O arm's)
+ *            nbits | ndelta | nnewly <count>  (the count alone, over an array of EXACTLY its capacity holding
+ *                                              0, 1, 2 ... — a count past the capacity must be refused before
+ *                                              any element is read; the ASan build holds that)
+ *   U <eval_n> <holdout>   b3_record_json's holdout block for these values on the current state -> U <length>
+ *   W <eval_n> <holdout>   the same, but handed the last observation's ledger entry -> W <length> (must be 0)
  *   X      a fresh LEDGER cartographer (independent of the O arm's) -> OK
  *   E <seq> <parent_born> <kind> <fitness> <n> <b1..bn> | <m> <k.v ...>
  *          the ledger cartographer observes the specimen -> LEDGER <json> (the entry, map_version before)
@@ -47,10 +58,12 @@
 static b2_search search, synth;
 static b3_carto carto, lcarto, scratch;
 static int have_search, pair;
-static uint16_t delta[B3_CARTO_POSITIONS], newly[B3_CARTO_N], moved[B3_CARTO_N];
+static uint16_t delta[B3_CARTO_POSITIONS], newly[B3_CARTO_N];                        /* the O arm's: last_entry points here */
+static uint16_t moved[B3_CARTO_N], e_delta[B3_CARTO_POSITIONS], e_newly[B3_CARTO_N];  /* the E command's own */
 static char json[JSON_MAX];
 static b3_ledger_entry last_entry;
 static int have_entry;
+static uint16_t t_bits[B2_KMAX], t_delta[B3_CARTO_POSITIONS], t_newly[B3_CARTO_N];   /* exactly their capacities */
 
 static void emit_stdout(void *ctx, const char *bytes, size_t n)
 {
@@ -287,7 +300,6 @@ static void cmd_holdout(const char *p)
         return;
     }
     b2_search_champion_observe(&search, t);
-    have_entry = 0;
     len = b3_record_json(&search, &carto, pair, search.evals, search.champion_holdout, NULL, json, sizeof(json));
     printf("BLOCK %s\n", len ? json : "");
     print_commit(&search, &carto);
@@ -308,6 +320,131 @@ static void cmd_probe(void)
     wrong_seq = b3_record_json(&search, &carto, pair, search.evals + 1u, -1, &last_entry, json, sizeof(json));
     printf("K %lu %lu %lu %lu %lu %lu\n", (unsigned long)a, (unsigned long)b, (unsigned long)exact, (unsigned long)plus,
            (unsigned long)n, (unsigned long)wrong_seq);
+}
+
+static int word(const char **p, const char *w)
+{
+    size_t n = strlen(w);
+    if (strncmp(*p, w, n) != 0 || ((*p)[n] != ' ' && (*p)[n] != '\0'))
+        return 0;
+    *p += n;
+    return 1;
+}
+
+static int parse_list(const char **p, uint16_t *out, uint32_t cap, int *n_out)
+{
+    uint32_t n, j, v;
+    if (skip(p) < 0 || parse_u32(p, &n) < 0 || n > cap)
+        return -1;
+    for (j = 0; j < n; j++) {
+        if (skip(p) < 0 || parse_u32(p, &v) < 0 || v > 0xFFFFu)
+            return -1;
+        out[j] = (uint16_t)v;
+    }
+    *n_out = (int)n;
+    return 0;
+}
+
+static int parse_count(const char **p, uint16_t *arr, int cap, int *n_out)
+{
+    int32_t n;
+    int j;
+    if (skip(p) < 0 || parse_i32(p, &n) < 0)
+        return -1;
+    for (j = 0; j < cap; j++)
+        arr[j] = (uint16_t)j;
+    *n_out = (int)n;
+    return 0;
+}
+
+static void cmd_tamper(const char *p)
+{
+    b3_ledger_entry e;
+    int target;
+    size_t len;
+    if (!have_search || !have_entry) {
+        puts("ERR no observation");
+        return;
+    }
+    if (skip(&p) < 0 || (*p != 'L' && *p != 'B') || (p[1] != ' ' && p[1] != '\0')) {
+        puts("ERR cannot parse T target");
+        return;
+    }
+    target = *p++;
+    e = last_entry;
+    while (*p) {
+        int32_t i;
+        int bad;
+        if (skip(&p) < 0)
+            bad = 1;
+        else if (word(&p, "seq"))
+            bad = skip(&p) < 0 || parse_u32(&p, &e.seq) < 0;
+        else if (word(&p, "map_version_after"))
+            bad = skip(&p) < 0 || parse_u32(&p, &e.map_version_after) < 0;
+        else if (word(&p, "map_version"))
+            bad = skip(&p) < 0 || parse_u32(&p, &e.map_version) < 0;
+        else if (word(&p, "anomalies"))
+            bad = skip(&p) < 0 || parse_u32(&p, &e.anomalies) < 0;
+        else if (word(&p, "parent_born"))
+            bad = skip(&p) < 0 || parse_u32(&p, &e.parent_born) < 0;
+        else if (word(&p, "fitness"))
+            bad = skip(&p) < 0 || parse_i32(&p, &e.fitness) < 0;
+        else if (word(&p, "kind")) {
+            bad = skip(&p) < 0 || parse_i32(&p, &i) < 0;
+            e.kind = (int)i;
+        } else if (word(&p, "bits")) {
+            bad = parse_list(&p, t_bits, B2_KMAX, &e.n_bits) < 0;
+            e.bits = t_bits;
+        } else if (word(&p, "delta")) {
+            bad = parse_list(&p, t_delta, B3_CARTO_POSITIONS, &e.n_delta) < 0;
+            e.delta = t_delta;
+        } else if (word(&p, "newly")) {
+            bad = parse_list(&p, t_newly, B3_CARTO_N, &e.n_newly) < 0;
+            e.newly = t_newly;
+        } else if (word(&p, "nbits")) {
+            bad = parse_count(&p, t_bits, B2_KMAX, &e.n_bits) < 0;
+            e.bits = t_bits;
+        } else if (word(&p, "ndelta")) {
+            bad = parse_count(&p, t_delta, B3_CARTO_POSITIONS, &e.n_delta) < 0;
+            e.delta = t_delta;
+        } else if (word(&p, "nnewly")) {
+            bad = parse_count(&p, t_newly, B3_CARTO_N, &e.n_newly) < 0;
+            e.newly = t_newly;
+        } else if (word(&p, "carto")) {
+            bad = skip(&p) < 0 || !word(&p, "other");
+            e.carto = &lcarto;
+        } else
+            bad = 1;
+        if (bad) {
+            puts("ERR cannot parse T field");
+            return;
+        }
+    }
+    if (target == 'L')
+        len = b3_ledger_json(&e, json, sizeof(json));
+    else
+        len = b3_record_json(&search, &carto, pair, e.seq, -1, &e, json, sizeof(json));
+    printf("T %lu\n", (unsigned long)len);
+}
+
+static void cmd_holdout_probe(const char *p, int with_ledger)
+{
+    uint32_t e;
+    int32_t h;
+    if (skip(&p) < 0 || parse_u32(&p, &e) < 0 || skip(&p) < 0 || parse_i32(&p, &h) < 0 || !at_end(p)) {
+        puts("ERR cannot parse U");
+        return;
+    }
+    if (!have_search) {
+        puts("ERR no search");
+        return;
+    }
+    if (with_ledger && !have_entry) {
+        puts("ERR no observation");
+        return;
+    }
+    printf("%c %lu\n", with_ledger ? 'W' : 'U',
+           (unsigned long)b3_record_json(&search, &carto, pair, e, h, with_ledger ? &last_entry : NULL, json, sizeof(json)));
 }
 
 static void cmd_ledger(const char *p)
@@ -356,7 +493,7 @@ static void cmd_ledger(const char *p)
             puts("ERR cannot parse E position");
             return;
         }
-        delta[j] = (uint16_t)(k * B3_CARTO_VECTORS + v);
+        e_delta[j] = (uint16_t)(k * B3_CARTO_VECTORS + v);
     }
     if (!at_end(p)) {
         puts("ERR cannot parse E trailing");
@@ -364,7 +501,7 @@ static void cmd_ledger(const char *p)
     }
     e.seq = seq;
     e.map_version = lcarto.version;
-    n = b3_carto_observe(&lcarto, &scratch, moved, (int)nb, delta, (int)nd, newly, B3_CARTO_N);
+    n = b3_carto_observe(&lcarto, &scratch, moved, (int)nb, e_delta, (int)nd, e_newly, B3_CARTO_N);
     if (n == B3_CARTO_BAD_CALL) {
         puts("ERR bad call");
         return;
@@ -376,9 +513,9 @@ static void cmd_ledger(const char *p)
     e.kind = kind;
     e.bits = moved;
     e.n_bits = (int)nb;
-    e.delta = delta;
+    e.delta = e_delta;
     e.n_delta = (int)nd;
-    e.newly = newly;
+    e.newly = e_newly;
     e.n_newly = n < 0 ? 0 : n;
     e.carto = &lcarto;
     len = b3_ledger_json(&e, json, sizeof(json));
@@ -485,6 +622,12 @@ int main(void)
             cmd_measure(line + 1);
         else if (line[0] == 'H' && line[1] == ' ')
             cmd_holdout(line + 1);
+        else if (line[0] == 'T' && line[1] == ' ')
+            cmd_tamper(line + 1);
+        else if (line[0] == 'U' && line[1] == ' ')
+            cmd_holdout_probe(line + 1, 0);
+        else if (line[0] == 'W' && line[1] == ' ')
+            cmd_holdout_probe(line + 1, 1);
         else if (line[0] == 'E' && line[1] == ' ')
             cmd_ledger(line + 1);
         else if (line[0] == 'Z' && line[1] == ' ')

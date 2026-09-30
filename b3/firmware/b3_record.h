@@ -63,12 +63,18 @@ typedef struct {
 } b3_ledger_entry;
 
 /* The entry as compact sorted-key JSON into out[max] (NUL-terminated); returns the length, 0 if it would
- * not fit or the entry is malformed. */
+ * not fit or the entry is malformed — outside the specimen_ledger 1.1.0 schema or the cartographer's version
+ * rule (every count is checked against its bound before any array is read; see b3_record.c ledger_valid). */
 size_t b3_ledger_json(const b3_ledger_entry *e, char *out, size_t max);
 
 /* The O arm's record block for the observation just made (`ledger` = its entry, `holdout` < 0) or for the
- * champion's holdout evaluation (`holdout` >= 0, `ledger` NULL), into out[max] (NUL-terminated). A search
- * block without a ledger entry, or a holdout block with one, is refused (0). Returns the length or 0. */
+ * champion's holdout evaluation (`holdout` >= 0, `ledger` NULL), into out[max] (NUL-terminated). Refused (0):
+ * a search block without a ledger entry, or a holdout block with one; a search block whose entry is not the
+ * observation just made — seq, eval_n and s->evals, parent_born, move kind, fitness and bits must equal the
+ * search's last observation, and `carto` must be `c` with the same version and anomaly count — or made when
+ * no observation is fresh (a proposal or the holdout in flight, the holdout done); a holdout block unless the
+ * champion's evaluation is done, eval_n == s->evals and holdout == s->champion_holdout. Returns the length
+ * or 0. */
 size_t b3_record_json(const b2_search *s, const b3_carto *c, int pair, uint32_t eval_n, int32_t holdout,
                       const b3_ledger_entry *ledger, char *out, size_t max);
 

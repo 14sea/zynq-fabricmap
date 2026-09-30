@@ -1,6 +1,7 @@
 /* b3_record — the O arm's commitment, ledger entry and record block. See b3_record.h. */
 #include "b3_record.h"
 #include "p3_derive.h"
+#include "p3_data.h"
 
 #include <string.h>
 
@@ -170,21 +171,62 @@ static void jw_i32(jw *w, int32_t v)
 
 static const char *kind_name(int kind) { return kind == B2_MOVE_COLUMN ? "column" : "random"; }
 
+/* The specimen_ledger 1.1.0 entry schema (b3/schemas/specimen_ledger.schema.json), fail-closed, every count
+ * bounded BEFORE any array is read: seq >= 1; fitness in 0 .. B2_TRAIN_COUNT (F1); a known move kind; an
+ * intervention of 1 .. B2_KMAX addresses, each < B3_CARTO_N, strictly ascending (unique, as the move produces
+ * it); a behaviour delta of at most B3_CARTO_POSITIONS positions, each valid, strictly ascending (unique, in
+ * positions_of order); at most B3_CARTO_N newly-decoded addresses, each in range, unique and decoded by
+ * `carto`; and the cartographer's version rule — the version after is the version before plus one exactly
+ * when the specimen decoded something, else unchanged. */
 static int ledger_valid(const b3_ledger_entry *e)
 {
+    uint64_t seen[(B3_CARTO_N + 63) / 64];
     int i;
+    if (e->n_bits < 1 || e->n_bits > B2_KMAX || e->n_delta < 0 || e->n_delta > B3_CARTO_POSITIONS ||
+        e->n_newly < 0 || e->n_newly > B3_CARTO_N)
+        return 0;
+    if (!e->bits || (e->n_delta && !e->delta) || (e->n_newly && (!e->newly || !e->carto)))
+        return 0;
+    if (e->seq < 1u || e->fitness < 0 || e->fitness > B2_TRAIN_COUNT)
+        return 0;
     if (e->kind != B2_MOVE_RANDOM && e->kind != B2_MOVE_COLUMN)
         return 0;
-    if (e->n_bits < 0 || e->n_delta < 0 || e->n_newly < 0)
+    if (e->map_version_after != e->map_version + (e->n_newly > 0 ? 1u : 0u))
         return 0;
-    if ((e->n_bits && !e->bits) || (e->n_delta && !e->delta) || (e->n_newly && (!e->newly || !e->carto)))
-        return 0;
+    for (i = 0; i < e->n_bits; i++)
+        if (e->bits[i] >= B3_CARTO_N || (i && e->bits[i] <= e->bits[i - 1]))
+            return 0;
     for (i = 0; i < e->n_delta; i++)
-        if (e->delta[i] >= B3_CARTO_POSITIONS)
+        if (e->delta[i] >= B3_CARTO_POSITIONS || (i && e->delta[i] <= e->delta[i - 1]))
             return 0;
-    for (i = 0; i < e->n_newly; i++)
-        if (e->newly[i] >= B3_CARTO_N || b3_carto_decoded_position(e->carto, e->newly[i]) == B3_CARTO_NO_POSITION)
+    memset(seen, 0, sizeof(seen));
+    for (i = 0; i < e->n_newly; i++) {
+        uint16_t a = e->newly[i];
+        if (a >= B3_CARTO_N || ((seen[a / 64] >> (a % 64)) & 1ull) ||
+            b3_carto_decoded_position(e->carto, a) == B3_CARTO_NO_POSITION)
             return 0;
+        seen[a / 64] |= 1ull << (a % 64);
+    }
+    return 1;
+}
+
+/* A search record's entry must BE the observation just made: every field it shares with the search state
+ * and with this cartographer is bound to them (the owner's P2 on 08030dd). */
+static int ledger_bound(const b2_search *s, const b3_carto *c, uint32_t eval_n, const b3_ledger_entry *e)
+{
+    int i;
+    if (!ledger_valid(e))
+        return 0;
+    if (s->pending || s->champion_pending || s->champion_done || s->evals < 1u)
+        return 0;                                /* no observation just made (or the holdout already closed the arm) */
+    if (e->seq != eval_n || eval_n != s->evals || e->parent_born != s->last_parent_born || e->kind != s->last_kind ||
+        e->fitness != s->last_fit || e->n_bits != s->pending_nbits_last)
+        return 0;
+    for (i = 0; i < e->n_bits; i++)
+        if (e->bits[i] != s->last_bits[i])
+            return 0;
+    if (e->carto != c || e->map_version_after != c->version || e->anomalies != c->anomalies)
+        return 0;
     return 1;
 }
 
@@ -268,8 +310,11 @@ size_t b3_record_json(const b2_search *s, const b3_carto *c, int pair, uint32_t 
     int i, search = holdout < 0;
     if (!s || !c || !out || max == 0u || pair < 0)
         return 0u;
-    if (search ? (!ledger || !ledger_valid(ledger) || ledger->seq != eval_n) : ledger != NULL)
-        return 0u;                               /* a search record has exactly one ledger entry, a holdout record none */
+    if (search ? (!ledger || !ledger_bound(s, c, eval_n, ledger)) : ledger != NULL)
+        return 0u;                               /* a search record has exactly one ledger entry, bound; a holdout record none */
+    if (!search && (!s->champion_done || s->champion_pending || s->pending || eval_n != s->evals ||
+                    holdout != s->champion_holdout))
+        return 0u;                               /* the holdout record is the champion's evaluation just made */
     b3_state_hex(s, c, state);
     w.out = out;
     w.max = max;
