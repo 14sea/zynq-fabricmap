@@ -101,9 +101,20 @@ def build(fw: Path = FW, out: Path = BUILD) -> Path:
     return out / "b3_record_twin"
 
 
+_ASAN_EXES: set = set()                                # the ASan twins build_asan() produced
+
+
 class Twin:
-    def __init__(self, exe: Path | None = None):
-        self.p = subprocess.Popen([str(exe or build())], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1)
+    """One twin process. An ASan twin (one build_asan() produced) gets asan_env() unless `env` is given; any other
+    twin inherits the caller's environment unchanged. `self.env` is what was handed to the subprocess (None =
+    inherited)."""
+
+    def __init__(self, exe: Path | None = None, env: dict | None = None):
+        exe = exe or build()
+        if env is None and str(exe) in _ASAN_EXES:
+            env = asan_env()
+        self.env = env
+        self.p = subprocess.Popen([str(exe)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True, bufsize=1, env=env)
 
     def close(self):
         try:
@@ -464,15 +475,28 @@ def build_asan(fw: Path = FW, out: Path = ASAN_BUILD) -> Path:
         if p.returncode != 0:
             raise AssertionError(f"the ASan twin did not build (a failure, not a skip):\n{p.stdout}{p.stderr}")
         _BUILT[key] = p.stdout + p.stderr
+    _ASAN_EXES.add(str(out / "b3_record_twin"))
     return out / "b3_record_twin"
+
+
+def asan_env(base: dict | None = None) -> dict:
+    """The environment for an ASan twin: the caller's (os.environ unless `base`), every variable kept, with
+    detect_leaks=0 APPENDED to ASAN_OPTIONS (a later ASan option overrides an earlier one, so the caller's own
+    options are kept and a caller's detect_leaks=1 loses). LeakSanitizer cannot run under ptrace — the owner's
+    review of 9eb329e: "LeakSanitizer does not work under ptrace", a fatal error at the twin's exit — and these
+    tests hold buffer overflows only; the twin allocates nothing. os.environ itself is never changed."""
+    env = dict(os.environ if base is None else base)
+    opts = env.get("ASAN_OPTIONS", "")
+    env["ASAN_OPTIONS"] = f"{opts}:detect_leaks=0" if opts else "detect_leaks=0"
+    return env
 
 
 class _Probe:
     """A twin on committed pair 0 with a small budget, observed `k` times (the harness is the fabric)."""
 
-    def __init__(self, tc: unittest.TestCase, exe: Path | None = None, budget: int = 16, k: int = 1):
+    def __init__(self, tc: unittest.TestCase, exe: Path | None = None, budget: int = 16, k: int = 1, env: dict | None = None):
         self.pair = PRED["pairs"][0]
-        self.twin = Twin(exe)
+        self.twin = Twin(exe, env)
         tc.addCleanup(self.twin.close)
         self.budget = budget
         tc.assertEqual(self.twin.one(f"I 0 {self.pair['landscape_seed']} {self.pair['operator_seed']} {budget} {hexw(FABRIC(0))}"), "OK")
@@ -553,8 +577,8 @@ class TheLedgerEncoderFailsClosed(unittest.TestCase):
         self.assertEqual(pr.t("L map_version 0 map_version_after 1 newly 1 5"), 0, "not decoded by the O arm's cartographer")
         self.assertEqual(pr.t("L carto other newly 1 5"), 0, "a decode without the version bump")
 
-    def _counts(self, exe: Path | None):
-        pr = _Probe(self, exe)
+    def _counts(self, exe: Path | None, env: dict | None = None):
+        pr = _Probe(self, exe, env=env)
         pr.full_ledger_carto()
         bump = "carto other map_version 0 map_version_after 1"
         for spec, want in (("nbits 4", True), ("nbits 5", False), ("nbits 100000", False), ("nbits -1", False), ("nbits 0", False),
@@ -570,8 +594,38 @@ class TheLedgerEncoderFailsClosed(unittest.TestCase):
         count one past the capacity is only refused in time if the bound is checked before the loop: under
         AddressSanitizer a late check is a global-buffer-overflow and a crashed twin (which close() reports)."""
         self._counts(None)
-        self._counts(build_asan())
+        self._counts(build_asan())                           # Twin gives an ASan twin asan_env() itself
         self.assertEqual(_BUILT[("asan", str(FW), str(ASAN_BUILD))], "")
+
+    def test_the_asan_twin_runs_without_leak_detection_whatever_the_callers_environment(self):
+        """The owner's P2 on 9eb329e: under ptrace LeakSanitizer is a fatal error at exit, so the ASan twin is started
+        with detect_leaks=0 set for THAT subprocess only — appended to the caller's ASAN_OPTIONS, every other
+        variable kept, os.environ untouched — and the twin, started from a caller whose environment asks for leak
+        detection, still exits 0."""
+        from unittest import mock
+        base = {"PATH": "/usr/bin", "OTHER": "kept", "ASAN_OPTIONS": "abort_on_error=1:detect_leaks=1"}
+        env = asan_env(base)
+        self.assertEqual({k: v for k, v in env.items() if k != "ASAN_OPTIONS"}, {"PATH": "/usr/bin", "OTHER": "kept"})
+        self.assertEqual(env["ASAN_OPTIONS"], "abort_on_error=1:detect_leaks=1:detect_leaks=0")
+        self.assertEqual([o for o in env["ASAN_OPTIONS"].split(":") if o.startswith("detect_leaks=")][-1], "detect_leaks=0")
+        self.assertEqual(asan_env({})["ASAN_OPTIONS"], "detect_leaks=0")
+        self.assertEqual(base["ASAN_OPTIONS"], "abort_on_error=1:detect_leaks=1", "the base is not changed")
+        exe = build_asan()
+        syms = subprocess.run([shutil.which("nm") or "nm", str(exe)], capture_output=True, text=True, check=True).stdout
+        self.assertIn("__asan_init", syms, "the ASan build really is instrumented")
+        with mock.patch.dict(os.environ, {"ASAN_OPTIONS": "detect_leaks=1", "B3_PROBE_VAR": "kept"}):
+            before = dict(os.environ)
+            twin = Twin(exe)                                # the call the ASan tests make: no env passed
+            self.assertEqual(dict(os.environ), before, "os.environ is not changed")
+            self.assertIsNotNone(twin.env, "the ASan twin is handed its own environment")
+            self.assertEqual(twin.env["ASAN_OPTIONS"], "detect_leaks=1:detect_leaks=0")
+            self.assertEqual({k: v for k, v in twin.env.items() if k != "ASAN_OPTIONS"},
+                             {k: v for k, v in before.items() if k != "ASAN_OPTIONS"}, "every other variable kept")
+            self.assertEqual(twin.one("X"), "OK")
+            twin.close()                                    # exit status 0, or an AssertionError with the report
+            plain = Twin()                                  # the plain twin: the caller's environment, untouched
+            self.assertIsNone(plain.env)
+            plain.close()
 
 
 class TheRecordBindsItsLedger(unittest.TestCase):
