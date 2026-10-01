@@ -2,7 +2,7 @@
  "files": {
   "b3/firmware/Makefile": {
    "kind": "new",
-   "note": "the host twins' build (twin, record-twin, wire-twin, wire-parity) into the top-level ignored build/; not the image build.",
+   "note": "the host twins' build (twin, record-twin, wire-twin, wire-parity, orch-twin) into the top-level ignored build/; not the image build.",
    "role": "build"
   },
   "b3/firmware/b2_search.c": {
@@ -42,6 +42,25 @@
    "note": "the online view's header (image stage 2).",
    "role": "board unit"
   },
+  "b3/firmware/b3_orch.c": {
+   "base": "firmware/b2/b2_orch.c",
+   "base_sha256": "471b21afffdd94c5be5002d1c212dbabe5a378a46d461f74b4606512b8b22502",
+   "kind": "derived",
+   "note": "DERIVED from B2's orchestrator: three arms per pair in the prefix-balanced order (RFO, FOR, ORF, ROF, OFR, FRO by r mod 6), the three searches then the three holdouts; R / F through b2_search_init, O through b3_online_init with a fresh cartographer per pair; the O arm's board observation (the served parent / child delta before the search observes, the cartographer, the view rebuilt on a decode, the ledger entry held until the block renders; the holdout and an unscored candidate update no map); blocks from b2_search_record_json (R, F) and b3_record_json (O); the outer arm B3_WIRE_ARM_*; the formal B3 seed rule (b3_pair_seeds over b3_seed_data.h, B3Q excluding B3's pairs) and the exact (master, budget, pairs_total) profile check at init. B2's page-flags slice layout is kept. It must exist and must DIFFER from the base.",
+   "sha256": "dc413318733c6c68f072b0af2612046f54436504475c3f24f6175d8bb425440b"
+  },
+  "b3/firmware/b3_orch.h": {
+   "base": "firmware/b2/b2_orch.h",
+   "base_sha256": "957bd17ed7b957ba168f0fdebe437e8067243f8977e23dab07c380986bf8e2f4",
+   "kind": "derived",
+   "note": "DERIVED from B2's orchestrator header: the B3 state (three searches, the cartographer, its scratch, the ledger arrays — all caller-owned), the phases of three arms, the seed and profile API, b3_orch_observe returning a status. It must exist and must DIFFER from the base.",
+   "sha256": "f776bfda8c9ec562a010f6a7b58af46a3f781d7fc06784517d9e58134f3e972a"
+  },
+  "b3/firmware/b3_orch_twin.c": {
+   "kind": "new",
+   "note": "the orchestrator's host driver, linked with --wrap on b2_search_init and b3_online_init (b3/tests/test_b3_orch_twin.py); never linked into the image.",
+   "role": "host twin"
+  },
   "b3/firmware/b3_record.c": {
    "kind": "new",
    "note": "the O arm's combined commitment, ledger entry and record block (image stage 2).",
@@ -56,6 +75,12 @@
    "kind": "new",
    "note": "the O arm's host driver (b3/tests/test_b3_record_twin.py); never linked into the image.",
    "role": "host twin"
+  },
+  "b3/firmware/b3_seed_data.h": {
+   "generated_by": "b3/host/gen_b3_seed_data.py",
+   "kind": "new",
+   "note": "GENERATED: the formal B3 seed rule's sorted excluded set (b3_plan.session_exclusion() plus b2_search.EXCLUDED_SEEDS), the B3 and B3Q profiles and the source binding; nothing of the prediction (b3/tests/test_b3_orch_twin.py holds it to a fresh render).",
+   "role": "board unit"
   },
   "b3/firmware/b3_wire.c": {
    "base": "firmware/b2/b2_wire.c",
@@ -102,7 +127,7 @@
  },
  "schema": "b3_firmware_import",
  "schema_version": "1.0.0",
- "scope": "the CURRENT image-source surface of b3/firmware at image stage 3 — every file under it but this table, each classified verbatim (a byte-for-byte copy of a B2 file), derived (a B2 file changed as its note says, base and derived digests recorded) or new (B3's own, no base). It is NOT yet the final image import inventory: the application / build stage adds every remaining docs/b3_architecture.md §7 (E1) item — the instrument's p3_rectx / p3_pull, the BSP and the linker script verbatim, the application derived — and the image itself. The pin table has not been generated, so this table is extended in place until it is.",
+ "scope": "the CURRENT image-source surface of b3/firmware at image stage 4 — every file under it but this table, each classified verbatim (a byte-for-byte copy of a B2 file), derived (a B2 file changed as its note says, base and derived digests recorded) or new (B3's own, no base). It is NOT yet the final image import inventory: the application / build stage adds every remaining docs/b3_architecture.md §7 (E1) item — the instrument's p3_rectx / p3_pull, the BSP and the linker script verbatim, the application derived — and the image itself. The pin table has not been generated, so this table is extended in place until it is.",
  "source": "firmware/b2 of this repository (B2, main 73b68d7, S3), itself importing the instrument at github.com/14sea/zynq-psoracle 689dde1 (firmware/b2/IMPORT.json)",
- "stage": "image stage 3"
+ "stage": "image stage 4"
 }
