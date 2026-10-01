@@ -120,8 +120,9 @@ int b3_profile(uint32_t master, uint32_t budget, int pairs_total);
  * Returns the profile, or B3_PROFILE_NONE (out untouched) when (master, budget, pairs_total) is not one. */
 int b3_profile_seeds(uint32_t master, uint32_t budget, int pairs_total, uint32_t *out);
 
-/* The page's fields: the profile must match exactly and the slice must lie inside it; else -1, nothing to
- * propose. */
+/* The page's fields: the profile must match exactly and the slice must lie inside it — 0 <= pair_first <
+ * pairs_total and 1 <= pair_count <= pairs_total - pair_first, checked without an addition that can overflow, for
+ * ANY int arguments; else -1, and b3_orch_next proposes nothing. */
 int b3_orch_init(b3_orch *o, uint32_t master_seed, uint32_t budget, int pairs_total, int pair_first, int pair_count,
                  const char *token, const char *universe, uint32_t image_lo32);
 /* the next candidate (0 = the session is over). `*is_baseline` marks the two brackets. */

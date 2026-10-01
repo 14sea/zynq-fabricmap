@@ -47,14 +47,14 @@
    "base_sha256": "471b21afffdd94c5be5002d1c212dbabe5a378a46d461f74b4606512b8b22502",
    "kind": "derived",
    "note": "DERIVED from B2's orchestrator: three arms per pair in the prefix-balanced order (RFO, FOR, ORF, ROF, OFR, FRO by r mod 6), the three searches then the three holdouts; R / F through b2_search_init, O through b3_online_init with a fresh cartographer per pair; the O arm's board observation (the served parent / child delta before the search observes, the cartographer, the view rebuilt on a decode, the ledger entry held until the block renders; the holdout and an unscored candidate update no map); blocks from b2_search_record_json (R, F) and b3_record_json (O); the outer arm B3_WIRE_ARM_*; the formal B3 seed rule (b3_pair_seeds over b3_seed_data.h, B3Q excluding B3's pairs) and the exact (master, budget, pairs_total) profile check at init. B2's page-flags slice layout is kept. It must exist and must DIFFER from the base.",
-   "sha256": "dc413318733c6c68f072b0af2612046f54436504475c3f24f6175d8bb425440b"
+   "sha256": "6dad4d526858ded3b2d1dfffc67900938bf15c932014d35e1577c5ec1b4d5f53"
   },
   "b3/firmware/b3_orch.h": {
    "base": "firmware/b2/b2_orch.h",
    "base_sha256": "957bd17ed7b957ba168f0fdebe437e8067243f8977e23dab07c380986bf8e2f4",
    "kind": "derived",
    "note": "DERIVED from B2's orchestrator header: the B3 state (three searches, the cartographer, its scratch, the ledger arrays — all caller-owned), the phases of three arms, the seed and profile API, b3_orch_observe returning a status. It must exist and must DIFFER from the base.",
-   "sha256": "f776bfda8c9ec562a010f6a7b58af46a3f781d7fc06784517d9e58134f3e972a"
+   "sha256": "ec358a57cdd11f58ddeb1ac98b66c5fba3f514594b20750cf2914f6590af19d3"
   },
   "b3/firmware/b3_orch_twin.c": {
    "kind": "new",

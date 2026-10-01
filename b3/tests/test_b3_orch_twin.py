@@ -22,6 +22,10 @@ fabric (b2_search.ModelFabric over the truth mapping). Held here:
   * an unscored candidate — the opening baseline, each arm's search, each arm's holdout, the closing baseline —
     ends the epoch: nothing after it, complete 0, and an unscored O candidate leaves the map where it was;
   * reserved flags, an illegal slice, a wrong profile / master / budget / total are refused before any candidate;
+    at the C API, every slice whose check would overflow (pair_first or pair_count INT_MAX, INT_MIN, ...) is refused
+    and proposes nothing, also under UBSan with every report fatal (which also runs a whole B3Q session clean);
+  * the generator refuses — by name, before a header — a plan whose schema, version, lifecycle, session, types,
+    fitness, master, excluded count, or budget / N / gate binding against production's validated gate disagree;
   * the stack: every frame on the session path <= 1 KiB with the host compiler and the pinned ARM toolchain, but for
     the three named (compiler, unit, function) exceptions in B2's frozen b2_search.c (the owner's ruling, capped at
     2 KiB, counted in the chain); and a CALL-CHAIN ESTIMATE through b3_orch's entry points (from -fcallgraph-info, the
@@ -101,14 +105,24 @@ def cached_session_exclusion():
 
 
 _REAL_SESSION_EXCLUSION = pl.session_exclusion
+_REAL_GATE_INPUTS = pl.gate_inputs
+
+
+def cached_gate_inputs():
+    """Production's gate_inputs() (the validated gate report), computed once per process for the same reason."""
+    if "gi" not in _CACHE:
+        _CACHE["gi"] = _REAL_GATE_INPUTS()
+    return copy.deepcopy(_CACHE["gi"])
 
 
 def with_cached_exclusion(fn, *a, **k):
     pl.session_exclusion = lambda gate_report=pl.GATE_REPORT: cached_session_exclusion()
+    pl.gate_inputs = lambda gate_report=pl.GATE_REPORT: cached_gate_inputs()
     try:
         return fn(*a, **k)
     finally:
         pl.session_exclusion = _REAL_SESSION_EXCLUSION
+        pl.gate_inputs = _REAL_GATE_INPUTS
 
 
 def gen_inputs() -> dict:
@@ -260,6 +274,65 @@ class TheBuildAndTheSeedHeader(unittest.TestCase):
                 self.assertNotIn(t, text)
         for word in ("fitness", "genome", "ledger", "state_sha256"):
             self.assertNotIn(word, data, word)
+
+
+class TheGeneratorChecksThePlanAgainstTheGate(unittest.TestCase):
+    """The owner's P2 on 0fe24b0: the B3 profile is a contract the board accepts, so a plan that merely parses must not
+    be compiled in. Each probe is a COPY of the committed plan in a temp directory with one change (the committed file
+    is never touched); the generator must refuse it by name before rendering. No gate number is written here: the
+    budget and N the plan must agree with are production's gate_inputs()."""
+
+    @classmethod
+    def setUpClass(cls):
+        import tempfile
+        cls.dir = Path(tempfile.mkdtemp(prefix="b3_seedgen_"))
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(cls.dir, True)
+
+    def probe(self, name: str, edit) -> Path:
+        doc = copy.deepcopy(PLAN)
+        edit(doc)
+        p = self.dir / f"{name}.json"
+        p.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n")
+        return p
+
+    def test_the_unchanged_plan_renders_the_committed_header(self):
+        gi = cached_gate_inputs()
+        inp = gen_inputs()
+        self.assertEqual((inp["b3"]["budget"], inp["b3"]["pairs"]), (gi["budget_per_arm"], gi["pairs"]))
+        self.assertEqual(HEADER.read_text(), gen.render(inp))
+        copy_inp = with_cached_exclusion(gen.inputs, self.probe("unchanged", lambda d: None))
+        self.assertEqual((copy_inp["values"], copy_inp["b3"], copy_inp["b3q"]), (inp["values"], inp["b3"], inp["b3q"]))
+
+    def test_every_breach_is_refused_by_name_before_a_header(self):
+        gi = cached_gate_inputs()
+        cases = {
+            "budget_per_arm 999 is not the gate's B*": lambda d: d.__setitem__("budget_per_arm", gi["budget_per_arm"] - 1),
+            "pairs 7 is not the gate's required N": lambda d: d.__setitem__("pairs", gi["pairs"] - 1),
+            "schema 'b3_plan_x' is not 'b3_plan'": lambda d: d.__setitem__("schema", "b3_plan_x"),
+            "fitness 'F2' is not the preregistered 'F1'": lambda d: d.__setitem__("fitness", "F2"),
+            "schema_version '1.0.0' is not": lambda d: d.__setitem__("schema_version", "1.0.0"),
+            "lifecycle 1 is not the integer 2": lambda d: d.__setitem__("lifecycle", 1),
+            "lifecycle True is not the integer 2": lambda d: d.__setitem__("lifecycle", True),
+            "session 'B3Q' is not 'B3'": lambda d: d.__setitem__("session", "B3Q"),
+            "budget_per_arm True is not a positive integer": lambda d: d.__setitem__("budget_per_arm", True),
+            "budget_per_arm '1000' is not a positive integer": lambda d: d.__setitem__("budget_per_arm", str(gi["budget_per_arm"])),
+            "pairs 8.0 is not a positive integer": lambda d: d.__setitem__("pairs", float(gi["pairs"])),
+            "master_seed": lambda d: d["seed_derivation"].__setitem__("master_seed", d["seed_derivation"]["master_seed"] + 1),
+            "label / commit": lambda d: d["seed_derivation"].__setitem__("label", "b3-session-1"),
+            "gate binding (path, sha256)": lambda d: d["gate"].__setitem__("sha256", "0" * 64),
+            "gate head_at_run": lambda d: d["gate"].__setitem__("head_at_run", "0" * 40),
+            "gate rules_version": lambda d: d["gate"].__setitem__("rules_version", "architecture v0.2 §9"),
+            "excludes 2065 values": lambda d: d["seed_derivation"].__setitem__("excluded_values_total", d["seed_derivation"]["excluded_values_total"] - 1),
+            "no gate object": lambda d: d.pop("gate"),
+        }
+        for i, (needle, edit) in enumerate(cases.items()):
+            with self.subTest(breach=needle):
+                with self.assertRaises(ValueError) as cm:
+                    with_cached_exclusion(gen.inputs, self.probe(f"p{i}", edit))
+                self.assertIn(needle.replace("2065", str(PLAN["seed_derivation"]["excluded_values_total"] - 1)), str(cm.exception))
 
 
 # ------------------------------------------------------------------ the seed rule
@@ -477,6 +550,70 @@ class Unscored(unittest.TestCase):
                 self.assertEqual(got["blocks"], ref_blocks, name)
                 if seq > 1 and seq >= o_first:
                     self.assertEqual(got["carto"], self.carto_after(o_observed), f"{name}: the map holds exactly the observed specimens")
+
+
+STRICT = "-std=c99 -O1 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion"
+UBSAN_BUILD = R / "build/b3_firmware_ubsan"
+INT_MAX, INT_MIN = 2**31 - 1, -2**31
+
+
+def build_ubsan() -> Path:
+    """The same twin under UndefinedBehaviorSanitizer, every report fatal: an overflow is a crash, never a value."""
+    if "ubsan" not in _CACHE:
+        p = subprocess.run(["make", "-s", "-C", str(FW), "orch-twin", f"BUILD={UBSAN_BUILD}",
+                            f"CFLAGS={STRICT} -g -fsanitize=undefined -fno-sanitize-recover=all"], capture_output=True, text=True)
+        if p.returncode != 0:
+            raise AssertionError(f"the UBSan twin did not build (a failure, not a skip):\n{p.stdout}{p.stderr}")
+        _CACHE["ubsan"] = p.stdout + p.stderr
+    return UBSAN_BUILD / "b3_orch_twin"
+
+
+class TheSliceAtTheCApi(unittest.TestCase):
+    """The owner's P2 on 0fe24b0: b3_orch_init checked pair_first + pair_count > pairs_total, which overflows for
+    pair_first = INT_MAX or pair_count = INT_MAX — accepted, and a candidate proposed. INITRAW calls the C API with ANY
+    signed 32-bit values (SESSION's parser bounds them and hid this); a refusal must be -1 AND propose nothing, and
+    under UBSan (every report fatal) the check itself must not overflow."""
+
+    CASES = [(INT_MAX, 1), (1, INT_MAX), (INT_MAX, INT_MAX), (INT_MIN, 1), (0, INT_MIN), (-1, 2), (8, 1), (7, 2), (0, 9),
+             (0, 0), (0, -1), (7, INT_MAX)]
+
+    def run_cases(self, exe: Path):
+        t = Twin.__new__(Twin)
+        t.p = subprocess.Popen([str(exe)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1)
+        m, b, n = CTX.master_seed, CTX.budget, CTX.pairs_total
+        try:
+            for first, count in self.CASES:
+                with self.subTest(exe=exe.parent.name, first=first, count=count):
+                    self.assertEqual(t.one(f"INITRAW {m} {b} {n} {first} {count}"), "INIT -1 0")
+            for first, count in ((0, 8), (7, 1), (3, 5)):
+                self.assertEqual(t.one(f"INITRAW {m} {b} {n} {first} {count}"), "INIT 0 1", "the controls: a legal slice proposes")
+            for total in (INT_MAX, INT_MIN, 0, 17):
+                self.assertEqual(t.one(f"INITRAW {m} {b} {total} 0 1"), "INIT -1 0", total)
+        finally:
+            t.close()
+        self.assertEqual(t.p.stderr.read(), "", "no sanitizer report")
+        t.p.stderr.close()
+
+    def test_the_c_api_refuses_every_overflowing_slice_and_proposes_nothing(self):
+        build()
+        self.run_cases(TWIN)
+
+    def test_the_same_under_ubsan_and_a_whole_session_is_clean(self):
+        exe = build_ubsan()
+        self.assertEqual(_CACHE["ubsan"], "")
+        self.run_cases(exe)
+        qplan, _qpred, qctx = b3q()
+        ref, ref_blocks, _ = reference(qctx)
+        t = Twin.__new__(Twin)
+        t.p = subprocess.Popen([str(exe)], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1)
+        try:
+            got = drive(t, f"SESSION {qplan['seed_derivation']['master_seed']} {qplan['budget_per_arm']} {qplan['pairs']} 0 1")
+        finally:
+            t.close()
+        self.assertEqual(t.p.stderr.read(), "", "no sanitizer report over a whole B3Q session")
+        t.p.stderr.close()
+        self.assertEqual(got["cands"], ref)
+        self.assertEqual(got["blocks"], ref_blocks)
 
 
 class Refusals(unittest.TestCase):

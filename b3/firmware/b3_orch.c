@@ -161,7 +161,9 @@ int b3_orch_init(b3_orch *o, uint32_t master_seed, uint32_t budget, int pairs_to
     o->phase = B3_PH_DONE;                         /* a refused init proposes nothing */
     if (pairs_total <= 0 || pairs_total > B3_MAX_PAIRS)
         return -1;
-    if (pair_first < 0 || pair_count <= 0 || pair_first + pair_count > pairs_total)
+    /* the slice, without an addition that can overflow (the owner's P2 on 0fe24b0: pair_first + pair_count with
+     * pair_first = INT_MAX or pair_count = INT_MAX is signed overflow, and once accepted a candidate was proposed) */
+    if (pair_first < 0 || pair_first >= pairs_total || pair_count <= 0 || pair_count > pairs_total - pair_first)
         return -1;
     if (budget == 0u || token == NULL || universe == NULL)
         return -1;

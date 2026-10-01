@@ -21,6 +21,9 @@
  *            CARTO <the O cartographer's state text>
  *            INITS <b2|online>:<arm>:<landscape seed> ...   (every initializer call, in order)
  *   SESSIONF <flags> <master> <budget>     -> the same, the slice decoded from the page's flags first
+ *   INITRAW <master> <budget> <total> <first> <count>
+ *          the C API directly, the three ints as SIGNED 32-bit values (INT_MIN..INT_MAX, unlike SESSION's parser)
+ *          -> INIT <b3_orch_init's return> <b3_orch_next's return> (a refused init must propose nothing)
  *   Q                                       -> exit 0
  */
 #include "b2_search.h"
@@ -259,6 +262,41 @@ static void cmd_session(const char *p)
     run_session(master, budget, (int)total, (int)first, (int)count);
 }
 
+static int parse_i32(const char **p, int *out)
+{
+    const char *s = *p;
+    long v;
+    char *end;
+    if (*s != ' ')
+        return -1;
+    s++;
+    if (!((*s >= '0' && *s <= '9') || (*s == '-' && s[1] >= '0' && s[1] <= '9')))
+        return -1;
+    errno = 0;
+    v = strtol(s, &end, 10);
+    if (end == s || errno || v < -2147483647L - 1L || v > 2147483647L)
+        return -1;
+    *out = (int)v;
+    *p = end;
+    return 0;
+}
+
+static void cmd_init_raw(const char *p)
+{
+    uint32_t genome[B2_GENOME_WORDS];
+    uint32_t master, budget;
+    int total, first, count, rc, next, is_baseline = 0;
+    if (parse_u32(&p, &master) < 0 || parse_u32(&p, &budget) < 0 || parse_i32(&p, &total) < 0 || parse_i32(&p, &first) < 0 ||
+        parse_i32(&p, &count) < 0 || *p != '\0') {
+        puts("ERR cannot parse INITRAW");
+        return;
+    }
+    rc = b3_orch_init(&orch, master, budget, total, first, count, "a13f38b53355fd4c1cac3145244727f8",
+                      "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458", 0x5eedu);
+    next = b3_orch_next(&orch, genome, &is_baseline);
+    printf("INIT %d %d\n", rc, next);
+}
+
 static void cmd_session_flags(const char *p)
 {
     uint32_t flags, master, budget;
@@ -290,6 +328,8 @@ int main(void)
             cmd_session(line + 7);
         else if (strncmp(line, "SESSIONF ", 9) == 0)
             cmd_session_flags(line + 8);
+        else if (strncmp(line, "INITRAW ", 8) == 0)
+            cmd_init_raw(line + 7);
         else
             puts("ERR unknown command");
         fflush(stdout);
