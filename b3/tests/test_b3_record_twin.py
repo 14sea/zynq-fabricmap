@@ -8,7 +8,7 @@ the byte-for-byte copies of B2's b2_search.{c,h}, p3_derive.{c,h} and p3_data.h.
 PROPOSED genome, and the twin observes, updates the cartographer and the view, and renders what the image will
 write. Held here:
 
-  * the five copies equal firmware/b2/ by digest (IMPORT.json is stage 3);
+  * the five copies equal firmware/b2/ by digest, as b3/firmware/IMPORT.json records them (image stage 3);
   * the real O arm — every committed pair, pair 0 included, all 1 000 evaluations and the champion's holdout —
     evaluation by evaluation: the proposal (genome, move kind, parent, bits), the search text, the cartographer
     text, the exact bytes the commitment hashes (search text, "|", cartographer text), the commitment, the
@@ -242,13 +242,20 @@ def permute_init(text: str) -> str:
 
 
 class TheCopiesAndTheBuild(unittest.TestCase):
-    def test_the_five_copies_equal_firmware_b2_by_digest(self):
+    def test_the_five_copies_are_import_json_s_verbatim_entries_and_equal_firmware_b2(self):
+        """Driven by b3/firmware/IMPORT.json (image stage 3): each of the five is named there as a verbatim copy of
+        its firmware/b2 file, and base, copy and recorded digest agree. The whole table — its exact file set and
+        every entry — is b3/tests/test_b3_leakage.py's; this test holds the five this unit links."""
+        table = json.loads((FW / "IMPORT.json").read_text())["files"]
         for name in COPIES:
             with self.subTest(name=name):
+                e = table.get(f"b3/firmware/{name}")
+                self.assertIsNotNone(e, f"{name}: not in IMPORT.json")
+                self.assertEqual((e["kind"], e["base"]), ("verbatim", f"firmware/b2/{name}"))
                 a, b = (FW / name).read_bytes(), (B2FW / name).read_bytes()
-                self.assertEqual(hashlib.sha256(a).hexdigest(), hashlib.sha256(b).hexdigest(), name)
+                self.assertEqual(hashlib.sha256(a).hexdigest(), e["sha256"], f"{name}: the copy")
+                self.assertEqual(hashlib.sha256(b).hexdigest(), e["sha256"], f"{name}: the base")
                 self.assertGreater(len(a), 1000)
-        self.assertFalse((FW / "IMPORT.json").exists(), "IMPORT.json is stage 3")
 
     def test_the_record_twin_builds_silently_and_the_carto_twin_target_is_unchanged(self):
         self.assertEqual(build(), TWIN)

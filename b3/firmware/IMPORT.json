@@ -1,0 +1,108 @@
+{
+ "files": {
+  "b3/firmware/Makefile": {
+   "kind": "new",
+   "note": "the host twins' build (twin, record-twin, wire-twin, wire-parity) into the top-level ignored build/; not the image build.",
+   "role": "build"
+  },
+  "b3/firmware/b2_search.c": {
+   "base": "firmware/b2/b2_search.c",
+   "kind": "verbatim",
+   "note": "B2's engine and its two operators, unchanged (E1): the R and F arms run it through b2_search_init; the O arm through b3_online_init (b3_online_view.c), never b2_search_init.",
+   "sha256": "5111ed107fc0a226d7b2c55babc8629eef4c2aa56b381c3a3bce74ad5b7acc89"
+  },
+  "b3/firmware/b2_search.h": {
+   "base": "firmware/b2/b2_search.h",
+   "kind": "verbatim",
+   "note": "B2's engine header, unchanged.",
+   "sha256": "5daf4d2703c8f044d1c63f1ff43f648bf9042a4266bf1a7bf7f54737d4467cba"
+  },
+  "b3/firmware/b3_carto.c": {
+   "kind": "new",
+   "note": "the specimen cartographer, the C twin of b3/host/b3_carto.py (image stage 1).",
+   "role": "board unit"
+  },
+  "b3/firmware/b3_carto.h": {
+   "kind": "new",
+   "note": "the cartographer's header (image stage 1).",
+   "role": "board unit"
+  },
+  "b3/firmware/b3_carto_twin.c": {
+   "kind": "new",
+   "note": "the cartographer's host driver (b3/tests/test_b3_carto_twin.py); never linked into the image.",
+   "role": "host twin"
+  },
+  "b3/firmware/b3_online_view.c": {
+   "kind": "new",
+   "note": "the O arm's initializer and online view (image stage 2).",
+   "role": "board unit"
+  },
+  "b3/firmware/b3_online_view.h": {
+   "kind": "new",
+   "note": "the online view's header (image stage 2).",
+   "role": "board unit"
+  },
+  "b3/firmware/b3_record.c": {
+   "kind": "new",
+   "note": "the O arm's combined commitment, ledger entry and record block (image stage 2).",
+   "role": "board unit"
+  },
+  "b3/firmware/b3_record.h": {
+   "kind": "new",
+   "note": "the record unit's header (image stage 2).",
+   "role": "board unit"
+  },
+  "b3/firmware/b3_record_twin.c": {
+   "kind": "new",
+   "note": "the O arm's host driver (b3/tests/test_b3_record_twin.py); never linked into the image.",
+   "role": "host twin"
+  },
+  "b3/firmware/b3_wire.c": {
+   "base": "firmware/b2/b2_wire.c",
+   "base_sha256": "50f030483391f9f555cb2ec2ad497f0ec979879877780f8555badc57ea28aaf6",
+   "kind": "derived",
+   "note": "DERIVED from B2's wire unit: app_identity 1.6.0 (carto_version, arms, b1_map_cost in their sorted positions), loop_record 1.4.0 (the pre-rendered search block — B2's renderer's on R / F, b3_record_json's on O — embedded as given), and the outer arm refused unless it is random_safe | map_guided | online. Everything else is B2's byte for byte (b3/tests/test_b3_wire_contract.py, the B2 parity). It must exist and must DIFFER from the base.",
+   "sha256": "c5792f9e1401984707b05dd8e928b013f5ed22c4b096d65f37351de437ee5f69"
+  },
+  "b3/firmware/b3_wire.h": {
+   "base": "firmware/b2/b2_wire.h",
+   "base_sha256": "20f96b686a614a204e6c489d62c1908e4e4ee3779bf515d133aed6aadcc67cb1",
+   "kind": "derived",
+   "note": "DERIVED from B2's wire header: the identity's three B3 fields, the B3_WIRE_ARM_* names, B3_WIRE_ARMS and B3_WIRE_B1_MAP_COST, the 1.4.0 comments and the include guard. It must exist and must DIFFER from the base.",
+   "sha256": "d05d1e8427c7b01bf778611c98b6c7583293d3a0dc65c4192ed8034fc427cc8a"
+  },
+  "b3/firmware/b3_wire_parity.c": {
+   "kind": "new",
+   "note": "the B2 / B3 wire parity driver, compiled against both wire units (b3/tests/test_b3_wire_contract.py); never linked into the image.",
+   "role": "host twin"
+  },
+  "b3/firmware/b3_wire_twin.c": {
+   "kind": "new",
+   "note": "the wire's host driver (b3/tests/test_b3_wire_contract.py); never linked into the image.",
+   "role": "host twin"
+  },
+  "b3/firmware/p3_data.h": {
+   "base": "firmware/b2/p3_data.h",
+   "kind": "verbatim",
+   "note": "B2's generated data header (host/gen_b2_data.py): the B1 self-map compiled as B2 compiled it — B2_MAP_INIT for the F arm's column view only, B2_MAP_LUT / B2_MAP_INIT for the universe mask — the train / holdout vectors, the seed exclusion.",
+   "sha256": "518170dbb449e6e5eaef1cc34773f0bb2fa5256c34f3617b859c9880e1b6c295"
+  },
+  "b3/firmware/p3_derive.c": {
+   "base": "firmware/b2/p3_derive.c",
+   "kind": "verbatim",
+   "note": "the instrument's derive unit (sha256, CRC-32, the genome codec), as B2 imported it from the instrument (firmware/b2/IMPORT.json, kind=verbatim).",
+   "sha256": "21b4d7a9b4379a6d2d5ff9a76e111d1ae1641305a4647e18f70767c7af50d730"
+  },
+  "b3/firmware/p3_derive.h": {
+   "base": "firmware/b2/p3_derive.h",
+   "kind": "verbatim",
+   "note": "the instrument's derive header, as B2 imported it.",
+   "sha256": "38ee462f8b242bac2adc140ed3ca45dd86ce232415a65f00dc1b92d24100f091"
+  }
+ },
+ "schema": "b3_firmware_import",
+ "schema_version": "1.0.0",
+ "scope": "the CURRENT image-source surface of b3/firmware at image stage 3 — every file under it but this table, each classified verbatim (a byte-for-byte copy of a B2 file), derived (a B2 file changed as its note says, base and derived digests recorded) or new (B3's own, no base). It is NOT yet the final image import inventory: the application / build stage adds every remaining docs/b3_architecture.md §7 (E1) item — the instrument's p3_rectx / p3_pull, the BSP and the linker script verbatim, the application derived — and the image itself. The pin table has not been generated, so this table is extended in place until it is.",
+ "source": "firmware/b2 of this repository (B2, main 73b68d7, S3), itself importing the instrument at github.com/14sea/zynq-psoracle 689dde1 (firmware/b2/IMPORT.json)",
+ "stage": "image stage 3"
+}

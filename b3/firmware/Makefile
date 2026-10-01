@@ -17,7 +17,7 @@ CC      ?= cc
 CFLAGS  ?= -std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion
 BUILD   ?= $(abspath $(CURDIR)/../../build/b3_firmware)
 
-.PHONY: twin record-twin clean
+.PHONY: twin record-twin wire-twin wire-parity clean
 twin: $(BUILD)/b3_carto_twin
 
 $(BUILD)/b3_carto_twin: b3_carto_twin.c b3_carto.c b3_carto.h
@@ -34,6 +34,28 @@ record-twin: $(BUILD)/b3_record_twin
 $(BUILD)/b3_record_twin: $(RECORD_SRC) $(RECORD_HDR)
 	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) -o $@ $(RECORD_SRC)
+
+# Stage 3: `make wire-twin` builds the host driver that puts this image's wire bytes (b3_wire.c, derived from
+# firmware/b2/b2_wire.c) in front of the production validator; `make wire-parity` builds ONE parity driver
+# twice — against firmware/b2/b2_wire.c (-DWIRE_B2) and against b3_wire.c — for the B2 / B3 byte parity of
+# every public builder the derivation does not change (b3/tests/test_b3_wire_contract.py).
+WIRE_SRC = b3_wire_twin.c b3_wire.c b3_record.c b3_online_view.c b3_carto.c b2_search.c p3_derive.c
+WIRE_HDR = b3_wire.h b3_record.h b3_online_view.h b3_carto.h b2_search.h p3_derive.h p3_data.h
+B2FW    = $(abspath $(CURDIR)/../../firmware/b2)
+wire-twin: $(BUILD)/b3_wire_twin
+wire-parity: $(BUILD)/b3_wire_parity_b2 $(BUILD)/b3_wire_parity_b3
+
+$(BUILD)/b3_wire_twin: $(WIRE_SRC) $(WIRE_HDR)
+	@mkdir -p $(BUILD)
+	$(CC) $(CFLAGS) -o $@ $(WIRE_SRC)
+
+$(BUILD)/b3_wire_parity_b3: b3_wire_parity.c b3_wire.c b3_wire.h p3_derive.c p3_derive.h
+	@mkdir -p $(BUILD)
+	$(CC) $(CFLAGS) -o $@ b3_wire_parity.c b3_wire.c p3_derive.c
+
+$(BUILD)/b3_wire_parity_b2: b3_wire_parity.c $(B2FW)/b2_wire.c $(B2FW)/b2_wire.h $(B2FW)/p3_derive.c $(B2FW)/p3_derive.h
+	@mkdir -p $(BUILD)
+	$(CC) $(CFLAGS) -DWIRE_B2 -I$(B2FW) -o $@ b3_wire_parity.c $(B2FW)/b2_wire.c $(B2FW)/p3_derive.c
 
 clean:
 	rm -rf $(BUILD)
