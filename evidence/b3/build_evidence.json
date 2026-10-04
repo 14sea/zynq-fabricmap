@@ -1,5 +1,5 @@
 {
- "at": "2026-10-04T143958Z",
+ "at": "2026-10-04T193135Z",
  "bsp_inputs": {
   "build_script_lists": {
    "APP_SRCS": [
@@ -1622,7 +1622,7 @@
    "/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common/xil_sutil.c": "9fe6c449b4aa6075f9bcffcd81a4250514a6dbe3f8f605d2017f56bff683b6c0",
    "/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common/xil_util.c": "26ab5d3f19adc10d49378b8f0b3a4de39e9a0888bf746ee7cf304955aaf9ad4f",
    "/home/test/zynq_fabricmap/b3/firmware/b2_search.c": "5111ed107fc0a226d7b2c55babc8629eef4c2aa56b381c3a3bce74ad5b7acc89",
-   "/home/test/zynq_fabricmap/b3/firmware/b3_app.c": "c404abd6372ebe05ef723add251ef519261db6c568f08441957d562756f88dd8",
+   "/home/test/zynq_fabricmap/b3/firmware/b3_app.c": "42313f63d62083a94eae1f5fd82a6bf9c4822bea615efb77cb793141e925c93b",
    "/home/test/zynq_fabricmap/b3/firmware/b3_carto.c": "ebc68c470f2dcb7d1975d5bbf33acf93eec2933bbd834614d68abddd84d6d0db",
    "/home/test/zynq_fabricmap/b3/firmware/b3_online_view.c": "d21b608967b84e4643dfc99ebca6a31920e9a399e9463da177c5dc7f88288bb9",
    "/home/test/zynq_fabricmap/b3/firmware/b3_orch.c": "6dad4d526858ded3b2d1dfffc67900938bf15c932014d35e1577c5ec1b4d5f53",
@@ -1636,40 +1636,38 @@
  },
  "git": {
   "dirty": [
-   "b3/firmware/IMPORT.json",
-   "b3/firmware/bsp/build.sh",
+   "b3/firmware/b3_app.c",
+   "b3/firmware/bsp/out/b3_app.bin",
+   "b3/firmware/bsp/out/b3_app.elf",
    "b3/host/b3_build_evidence.py",
-   "b3/tests/test_b3_build_evidence.py",
-   "evidence/b3/build_evidence.json"
+   "b3/host/b3_image_stack.py"
   ],
-  "head": "171b6388a64b35d3d07eaefdb786cd6d62b6a96f"
+  "head": "a9de8c4c2249ff0da22cfb57889a4b1d28b0d6c1"
  },
  "image": {
   "bytes": 131092,
   "elf_path": "b3/firmware/bsp/out/b3_app.elf",
-  "elf_sha256": "fa927d82bc3618710c9452d7298f279ae4dc2e38b7d6a3b94402f5c482c81a6b",
+  "elf_sha256": "520508c9f110dd4bc4b247e85aca99a222c0610859f08a6a5ead21f7b5e74cb9",
   "entry": "go 0x2000000",
   "load_address": "0x02000000",
   "path": "b3/firmware/bsp/out/b3_app.bin",
-  "sha256": "1aedcb5ff7a5f20bb6e35d28a435ceda9d913eef96170426ef3a6908699ce1c9"
+  "sha256": "1f4af626024dec66ca5660f03cb427445dce312ef9c60c85bd97cf57bc73eae0"
  },
  "readiness": {
-  "blocking": [
-   "stack: INCOMPLETE"
-  ],
-  "image_ready": false,
-  "note": "the image is not ready while the stack assessment is incomplete (image stage 5 closes only after the stack unit is reviewed)"
+  "blocking": [],
+  "image_ready": true,
+  "note": "the image is ready only when the stack assessment is complete with no finding and within budget, and the provenance verifies; the analyser's conclusion is still subject to the owner's review"
  },
  "reproducibility": {
   "bin_identical": true,
   "builds": [
    {
-    "bin_sha256": "1aedcb5ff7a5f20bb6e35d28a435ceda9d913eef96170426ef3a6908699ce1c9",
-    "elf_sha256": "fa927d82bc3618710c9452d7298f279ae4dc2e38b7d6a3b94402f5c482c81a6b"
+    "bin_sha256": "1f4af626024dec66ca5660f03cb427445dce312ef9c60c85bd97cf57bc73eae0",
+    "elf_sha256": "520508c9f110dd4bc4b247e85aca99a222c0610859f08a6a5ead21f7b5e74cb9"
    },
    {
-    "bin_sha256": "1aedcb5ff7a5f20bb6e35d28a435ceda9d913eef96170426ef3a6908699ce1c9",
-    "elf_sha256": "fa927d82bc3618710c9452d7298f279ae4dc2e38b7d6a3b94402f5c482c81a6b"
+    "bin_sha256": "1f4af626024dec66ca5660f03cb427445dce312ef9c60c85bd97cf57bc73eae0",
+    "elf_sha256": "520508c9f110dd4bc4b247e85aca99a222c0610859f08a6a5ead21f7b5e74cb9"
    }
   ],
   "clean": "before each build: build/b3_bsp/ and both outputs removed",
@@ -1678,11 +1676,11 @@
   "reproduced_byte_identical": true
  },
  "schema": "b3_build_evidence",
- "schema_version": "1.0.0",
+ "schema_version": "1.1.0",
  "sources": {
   "b2_search.c": "5111ed107fc0a226d7b2c55babc8629eef4c2aa56b381c3a3bce74ad5b7acc89",
   "b2_search.h": "5daf4d2703c8f044d1c63f1ff43f648bf9042a4266bf1a7bf7f54737d4467cba",
-  "b3_app.c": "c404abd6372ebe05ef723add251ef519261db6c568f08441957d562756f88dd8",
+  "b3_app.c": "42313f63d62083a94eae1f5fd82a6bf9c4822bea615efb77cb793141e925c93b",
   "b3_carto.c": "ebc68c470f2dcb7d1975d5bbf33acf93eec2933bbd834614d68abddd84d6d0db",
   "b3_carto.h": "0dab4388ee11754551a772d6c2aa257761bf2fc71197b80ef8375a0ec6ac25a7",
   "b3_online_view.c": "d21b608967b84e4643dfc99ebca6a31920e9a399e9463da177c5dc7f88288bb9",
@@ -1709,15 +1707,370 @@
   "p3_rectx.h": "7064c86dff177fe3305f4d8a1a2381249641dae363f6cfbea7a2e89b437b580b"
  },
  "stack": {
-  "bounds": null,
-  "complete": false,
-  "elf_sha256": "fa927d82bc3618710c9452d7298f279ae4dc2e38b7d6a3b94402f5c482c81a6b",
-  "findings": [
-   "the image stack assessment has not been completed: it is the next unit of image stage 5 (the owner's ruling of 2026-10-04) \u2014 no stack bound is claimed for this image, and it is not ready"
-  ],
-  "note": "image stage 5 is split: this unit builds and records the image; the stack assessment of the final ELF (b3/host/b3_image_stack.py, the next unit) has not run, so NO stack bound is claimed here",
-  "status": "INCOMPLETE",
-  "tool": null
+  "capacity": {
+   "ABT": 2048,
+   "FIQ": 2048,
+   "IRQ": 2048,
+   "SVC": 4096,
+   "SYS": 16384,
+   "UND": 2048
+  },
+  "complete": true,
+  "elf_sha256": "520508c9f110dd4bc4b247e85aca99a222c0610859f08a6a5ead21f7b5e74cb9",
+  "entries": {
+   "data_abort": {
+    "bound": 24,
+    "capacity": 2048,
+    "function": "DataAbortHandler",
+    "mode": "ABT"
+   },
+   "fiq": {
+    "bound": 24,
+    "capacity": 2048,
+    "function": "FIQHandler",
+    "mode": "FIQ"
+   },
+   "irq": {
+    "bound": 24,
+    "capacity": 2048,
+    "function": "IRQHandler",
+    "mode": "IRQ"
+   },
+   "main": {
+    "bound": 5112,
+    "capacity": 16384,
+    "function": "_start",
+    "mode": "SYS"
+   },
+   "prefetch_abort": {
+    "bound": 24,
+    "capacity": 2048,
+    "function": "PrefetchAbortHandler",
+    "mode": "ABT"
+   },
+   "svc": {
+    "bound": 24,
+    "capacity": 4096,
+    "function": "SVCHandler",
+    "mode": "SVC"
+   },
+   "undefined": {
+    "bound": 24,
+    "capacity": 2048,
+    "function": "Undefined",
+    "mode": "UND"
+   }
+  },
+  "findings": [],
+  "indirect_targets": {
+   "address_taken": [
+    "_vector_table",
+    "__do_global_dtors_aux",
+    "frame_dummy",
+    "Xil_ExceptionNullHandler",
+    "Xil_DataAbortHandler",
+    "Xil_PrefetchAbortHandler",
+    "Xil_UndefinedExceptionHandler",
+    "pull_channel_failed_cb",
+    "pull_parse_cb",
+    "tx_recv_cb",
+    "app_now_ticks",
+    "app_rx_byte",
+    "app_rx_ready",
+    "pull_send_ready_cb",
+    "audit_word",
+    "pull_payload_fields_cb",
+    "rectx_payload_seq_cb",
+    "rectx_parse_cb",
+    "pull_recv_cb",
+    "rectx_recv_cb",
+    "rectx_send_cb",
+    "pull_serve_chunk_cb",
+    "pull_send_wait_cb",
+    "sha_emit",
+    "stdio_exit_handler",
+    "cleanup_stdio",
+    "__sread",
+    "__swrite",
+    "__sseek",
+    "__sclose",
+    "__libc_fini_array",
+    "register_fini",
+    "_fclose_r",
+    "__ascii_mbtowc",
+    "__ascii_wctomb"
+   ],
+   "exception_table": [
+    "Xil_ExceptionNullHandler",
+    "Xil_DataAbortHandler",
+    "Xil_PrefetchAbortHandler",
+    "Xil_UndefinedExceptionHandler"
+   ]
+  },
+  "main_limit": 8192,
+  "masks": {
+   "cleared_by_the_image": [
+    "A"
+   ],
+   "note": "a bit the image never clears keeps the state the loader entered it with"
+  },
+  "modes": {
+   "calls_before_any_stack": [
+    {
+     "depth": 0,
+     "to": "invalidate_dcache"
+    }
+   ],
+   "handoff": "0x2000338",
+   "stacks": {
+    "ABT": "0x214e5e0",
+    "FIQ": "0x214ede0",
+    "IRQ": "0x214cde0",
+    "SVC": "0x214dde0",
+    "SYS": "0x214c5e0",
+    "UND": "0x214f5e0"
+   },
+   "start_mode": "SYS"
+  },
+  "newlib": {
+   "binding": {
+    "libc_sha256": "920deffb255f7cd01f501a4eabae436f660b009331c6b61066ded2c628b42e44",
+    "member": "libc_a-vfiprintf.o",
+    "version": "4.4.0",
+    "version_header_sha256": "bfc4b55e8665b5c4ae407e090a6aac2fb829905f04a5a7519686631eb1633fff"
+   },
+   "facts": {
+    "before_the_guard": {
+     "flag_stores": [
+      "__swsetup_r 0x2013398",
+      "__swsetup_r 0x20133ce",
+      "__swsetup_r 0x2013438",
+      "__smakebuf_r 0x20134a6",
+      "__smakebuf_r 0x20134f8",
+      "__smakebuf_r 0x2013510"
+     ],
+     "routines": [
+      "__aeabi_idiv0",
+      "__errno",
+      "__malloc_lock",
+      "__malloc_unlock",
+      "__retarget_lock_acquire_recursive",
+      "__retarget_lock_init_recursive",
+      "__retarget_lock_release_recursive",
+      "__sinit",
+      "__smakebuf_r",
+      "__swsetup_r",
+      "__udivsi3",
+      "_free_r",
+      "_fstat",
+      "_fstat_r",
+      "_isatty",
+      "_isatty_r",
+      "_malloc_r",
+      "_malloc_trim_r",
+      "_sbrk",
+      "_sbrk_r",
+      "global_stdio_init.part.0",
+      "memset",
+      "sysconf"
+     ],
+     "smakebuf_only_when_the_buffer_is_null": [
+      {
+       "branch": "0x20133d0",
+       "site": "0x2013412",
+       "test": "0x20133d0",
+       "tested": "r2",
+       "value": [
+        "buffer"
+       ]
+      }
+     ],
+     "stores_that_cannot_set_snbf": [
+      [
+       "__swsetup_r",
+       "0x2013398"
+      ],
+      [
+       "__swsetup_r",
+       "0x20133ce"
+      ],
+      [
+       "__swsetup_r",
+       "0x2013438"
+      ]
+     ]
+    },
+    "calls_before_the_hand_over": [
+     "__retarget_lock_init_recursive at 0x2013012 (no store in its closure)"
+    ],
+    "fake_buffer": {
+     "frame_address_in": "r3",
+     "store": "0x2013004"
+    },
+    "fake_file": {
+     "call": "0x201301e",
+     "pass": "0x201301a"
+    },
+    "fake_flags": {
+     "clear": "0x2012fde",
+     "load": "0x2012fd6",
+     "store": "0x2012fe8"
+    },
+    "file_layout": {
+     "off_base": 16,
+     "off_flags": 12,
+     "size_flags": 2,
+     "snbf": 2,
+     "srw": 16,
+     "swr": 8
+    },
+    "guard": {
+     "call": "0x2011ff2",
+     "instances": [
+      {
+       "and": [
+        "0x2011e36"
+       ],
+       "branch": "0x2011e3c",
+       "cmp": "0x2011e3a",
+       "equal_outcome": [
+        "0x2011e3c",
+        "0x2011fd2"
+       ],
+       "file": [
+        "a reload (0x2011e02) of the frame slot the incoming r1 is stored to once (0x2011de8)",
+        "a reload (0x20122c6) of the frame slot the incoming r1 is stored to once (0x2011de8)"
+       ]
+      },
+      {
+       "and": [
+        "0x2011fc8"
+       ],
+       "branch": "0x2011fce",
+       "cmp": "0x2011fcc",
+       "equal_outcome": [
+        "0x2011fce",
+        "0x2011fd2"
+       ],
+       "file": [
+        "a reload (0x2011fb4) of the frame slot the incoming r1 is stored to once (0x2011de8)"
+       ]
+      }
+     ]
+    }
+   },
+   "max_activations": {
+    "__sbprintf": 1,
+    "_vfiprintf_r": 2
+   },
+   "rule": "newlib_bounded_sbprintf",
+   "sbprintf_to_vfiprintf": "0x201301e",
+   "semantics": "__sbprintf hands _vfiprintf_r a FAKE FILE on its own stack: the caller's flags with __SNBF cleared and a non-NULL buffer. _vfiprintf_r calls __sbprintf only when (flags & (__SNBF|__SWR|__SRW)) == (__SNBF|__SWR). Before that test the flags halfword is written only by __smakebuf_r, reached only from __swsetup_r when the FILE's buffer is NULL \u2014 never for the fake. So the nested _vfiprintf_r cannot call __sbprintf: at most two _vfiprintf_r and one __sbprintf activations. FILE._flags is a short; a word or wider store, or a store through memset / a pointer argument, into a FILE's flags is excluded by the source, not by the image check.",
+   "skipped_in_the_nested_activation": "0x2011ff2",
+   "source": {
+    "files": {
+     "newlib/libc/stdio/makebuf.c": "91bca8c3f40a8c4b01f35bbbf14687f2b6a196e368e75835438f408ad616cd9a",
+     "newlib/libc/stdio/vfiprintf.c": "baef3e6067f087990c381d5012a7f4d777732ed11a1cad37a88911764dc3a958",
+     "newlib/libc/stdio/vfprintf.c": "9be0ae8fa83117f45c7b00b7768e0b2be3bf29778b23b54fe15a977afa40bcc8",
+     "newlib/libc/stdio/wsetup.c": "e670db7ae0427d810d26ee93cc5e8c807e4696b3b9c2dc395e443ecf6de2cbdf"
+    },
+    "lines": {
+     "vfiprintf.c:1-2": "#define INTEGER_ONLY / #include \"vfprintf.c\"",
+     "vfprintf.c:215": "fake._flags = fp->_flags & ~__SNBF;",
+     "vfprintf.c:222": "fake._bf._base = fake._p = buf;",
+     "vfprintf.c:615": "if ((fp->_flags & (__SNBF|__SWR|__SRW)) == (__SNBF|__SWR) &&",
+     "wsetup.c:69": "if (fp->_bf._base == NULL \u2026) \u2192 __smakebuf_r"
+    },
+    "tarball": "https://sourceware.org/pub/newlib/newlib-4.4.0.20231231.tar.gz",
+    "tarball_sha256": "0c166a39e1bf0951dfafcd68949fe0e4b6d3658081d6282f39aeefc6310f2f13"
+   },
+   "statement": "a verified newlib semantic rule \u2014 the call graph does not prove itself bounded",
+   "vfiprintf_to_sbprintf": "0x2011ff2"
+  },
+  "note": "the stack pointer is tracked along every path of the final ELF; the main path is bounded at or below 0x2000 and each exception entry within its mode's stack, with the newlib printf recursion bounded by a verified source rule (b3/host/b3_image_stack.py)",
+  "objdump": "GNU objdump (xPack GNU Arm Embedded GCC x86_64) 2.43.1.20241119",
+  "rules": {
+   "app_function_pointers": {
+    "rule": "the pointers materialised (movw / movt) by the routines of b3/firmware that are ACTIVE on the call path; every materialisation goes only into its routine's own frame, a call's argument or a copy, none is a literal word, none is materialised outside the image's units",
+    "targets": [
+     "pull_channel_failed_cb",
+     "pull_parse_cb",
+     "tx_recv_cb",
+     "app_now_ticks",
+     "app_rx_byte",
+     "app_rx_ready",
+     "pull_send_ready_cb",
+     "audit_word",
+     "pull_payload_fields_cb",
+     "rectx_payload_seq_cb",
+     "rectx_parse_cb",
+     "pull_recv_cb",
+     "rectx_recv_cb",
+     "rectx_send_cb",
+     "pull_serve_chunk_cb",
+     "pull_send_wait_cb",
+     "sha_emit"
+    ]
+   },
+   "atexit_registrations": {
+    "rule": "the constants every caller of atexit passes (register_fini at 0x200d056); atexit forwards its r0 as __register_exitproc's function, and nothing else reaches __register_exitproc",
+    "targets": [
+     "__libc_fini_array"
+    ]
+   },
+   "exception_table": {
+    "rule": "XExc_VectorTable's initial entries; materialised only by the dispatchers, which never store",
+    "targets": [
+     "Xil_ExceptionNullHandler",
+     "Xil_DataAbortHandler",
+     "Xil_PrefetchAbortHandler",
+     "Xil_UndefinedExceptionHandler"
+    ]
+   },
+   "fwalk_callers": {
+    "rule": "the constants every caller passes in r1 (stdio_exit_handler at 0x200c46c); _fwalk_sglue calls only through its copy of r1",
+    "targets": [
+     "_fclose_r"
+    ]
+   },
+   "init_fini_arrays": {
+    "rule": "the words of .preinit_array / .init_array / .fini_array",
+    "targets": [
+     "__do_global_dtors_aux",
+     "frame_dummy",
+     "register_fini"
+    ]
+   },
+   "newlib_file_ops": {
+    "rule": "the address-taken functions of libc.a(libc_a-stdio.o): the FILE read / write / seek / close",
+    "targets": [
+     "__sread",
+     "__swrite",
+     "__sseek",
+     "__sclose"
+    ]
+   },
+   "newlib_locale_conversions": {
+    "rule": "the address-taken functions of libc.a(libc_a-mbtowc_r.o, libc_a-wctomb_r.o)",
+    "targets": [
+     "__ascii_mbtowc",
+     "__ascii_wctomb"
+    ]
+   },
+   "newlib_stdio_exit_handler": {
+    "rule": "the address-taken functions of libc.a(libc_a-findfp.o)",
+    "targets": [
+     "stdio_exit_handler",
+     "cleanup_stdio"
+    ]
+   },
+   "xil_assert_callback": {
+    "rule": "Xil_AssertCallbackRoutine starts at 0 and only Xil_Assert, which never stores, references it",
+    "targets": []
+   }
+  },
+  "status": "COMPLETE",
+  "tool": "b3-image-stack 1.0.0"
  },
  "toolchain": {
   "gcc_sha256": "a47ae91699d0611c817a166c986df647d56ce57e9162afa6d25385dd1771b204",

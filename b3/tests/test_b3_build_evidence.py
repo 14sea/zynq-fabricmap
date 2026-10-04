@@ -12,10 +12,11 @@ compared unit by unit — a header deleted from the hash table AND from every de
 clean builds are not only read from the evidence: TheRealBuild runs the production build.sh twice into fresh
 directories (B3_OUT_DIR / B3_IMG_DIR, never the committed image) and compares the binaries and the ELFs.
 
-THE STACK (the owner's ruling of 2026-10-04): the image stack assessment is the next unit. The evidence must carry a
-`stack` block stating it is INCOMPLETE and claiming no bound, `readiness.image_ready` must be false, a block that
-claims completion is refused by this version of the tool, and `readiness_findings` is never empty — whatever else
-stands, the image is NOT ready.
+THE STACK (the owner's ruling of 2026-10-04): the stack assessment of the final ELF now lands. The evidence carries a
+COMPLETE `stack` block, the verifier RE-RUNS b3/host/b3_image_stack.py and requires the block to match it and to be
+within budget (main <= 0x2000, each exception entry within its mode's stack), and `readiness.image_ready` is true
+only then. A block whose recorded bounds / findings / rules differ from a fresh analysis, or that claims completion
+with a finding, or that is over budget, is refused.
 
 No skip: the evidence, the image and the toolchain are required.
 """
@@ -64,15 +65,18 @@ class Committed(unittest.TestCase):
     def test_the_committed_evidence_has_no_provenance_finding(self):
         self.assertEqual(be.verify_findings(self.ev, R), [])
 
-    def test_the_image_is_not_ready_because_the_stack_assessment_is_incomplete(self):
+    def test_the_stack_assessment_is_complete_within_budget_and_the_image_is_ready(self):
         st = self.ev["stack"]
-        self.assertEqual((st["status"], st["complete"], st["bounds"], st["tool"]), ("INCOMPLETE", False, None, None))
+        self.assertEqual((st["status"], st["complete"], st["findings"]), ("COMPLETE", True, []))
         self.assertEqual(st["elf_sha256"], self.ev["image"]["elf_sha256"])
-        self.assertIn(be.STACK_INCOMPLETE, st["findings"])
-        self.assertIs(self.ev["readiness"]["image_ready"], False)
-        self.assertIn("stack: INCOMPLETE", self.ev["readiness"]["blocking"])
-        r = be.readiness_findings(self.ev, R)
-        self.assertEqual(r, [f"stack: {be.STACK_INCOMPLETE}"], "the stack is the one thing between this image and ready")
+        self.assertEqual(st["main_limit"], 0x2000)
+        self.assertLessEqual(st["entries"]["main"]["bound"], 0x2000, "the main path is within budget")
+        for name, b in st["entries"].items():
+            limit = 0x2000 if name == "main" else b["capacity"]
+            self.assertLessEqual(b["bound"], limit, f"{name} within its budget")
+        self.assertTrue(st["newlib"] and st["newlib"]["rule"] == "newlib_bounded_sbprintf")
+        self.assertIs(self.ev["readiness"]["image_ready"], True)
+        self.assertEqual(be.readiness_findings(self.ev, R), [], "nothing stands between this image and ready")
 
     def test_the_outputs_exist_and_are_the_ones_it_names(self):
         self.assertTrue(IMAGE.is_file() and ELF.is_file())
@@ -359,24 +363,35 @@ class Refuses(unittest.TestCase):
         ev["git"]["dirty"].append("docs/notes.md")
         self.assertEqual(be.verify_findings(ev, R), [])
 
-    def test_the_stack_block_cannot_be_dropped_softened_or_claimed_complete(self):
+    def test_the_stack_block_must_match_a_fresh_analysis_within_budget(self):
+        def bump_main(e):
+            e["stack"]["entries"]["main"]["bound"] = 0x2001
         cases = {
-            "this tool version cannot check a completed stack assessment": lambda e: e["stack"].update(complete=True, status="COMPLETE"),
-            "this tool version cannot check a completed stack assessment ": lambda e: e["stack"].__setitem__("status", "PASS"),
-            "must name why and claim no bound": lambda e: e["stack"].__setitem__("bounds", {"main": 1024}),
-            "must name why and claim no bound ": lambda e: e["stack"].__setitem__("findings", []),
-            "the block is not about the named ELF": lambda e: e["stack"].__setitem__("elf_sha256", BAD),
+            "the recorded entries is not the analyser's fresh result": bump_main,
+            "the recorded findings is not the analyser's fresh result": lambda e: e["stack"].__setitem__("findings", ["made up"]),
+            "the recorded newlib is not the analyser's fresh result": lambda e: e["stack"]["newlib"].__setitem__("rule", "x"),
+            "the recorded rules is not the analyser's fresh result": lambda e: e["stack"]["rules"].clear(),
+            "the recorded tool is not the analyser's fresh result": lambda e: e["stack"].__setitem__("tool", "forged 9.9"),
+            "the block's ELF digest is not the built image's": lambda e: e["stack"].__setitem__("elf_sha256", BAD),
             "the block's keys": lambda e: e["stack"].pop("note"),
-            "image_ready must be false": lambda e: e["readiness"].__setitem__("image_ready", True),
-            "the incomplete stack is not named among the blocking items": lambda e: e["readiness"].__setitem__("blocking", []),
+            "complete / status disagree": lambda e: e["stack"].__setitem__("status", "PASS"),
+            "image_ready must be": lambda e: e["readiness"].__setitem__("image_ready", False),
         }
         for needle, fn in cases.items():
             with self.subTest(breach=needle):
                 self.refused(fn, needle.strip())
 
-    def test_readiness_never_passes_while_the_stack_is_incomplete(self):
-        for mutate in (lambda e: None, lambda e: e["readiness"].__setitem__("image_ready", True),
-                       lambda e: e["stack"].update(complete=True, status="COMPLETE")):
+    def test_a_main_path_over_budget_is_refused_and_not_ready(self):
+        ev = copy.deepcopy(self.base)
+        ev["stack"]["entries"]["main"]["bound"] = 0x2001          # as if the main path exceeded 0x2000
+        self.assertTrue(any("exceeds its budget" in x or "not the analyser's fresh result" in x
+                            for x in be.verify_findings(ev, R)))
+
+    def test_readiness_is_empty_only_when_complete_and_within_budget(self):
+        self.assertEqual(be.readiness_findings(self.base, R), [])
+        for mutate in (lambda e: e["stack"].__setitem__("findings", ["x"]),
+                       lambda e: e["stack"].__setitem__("complete", False),
+                       lambda e: e["readiness"].__setitem__("image_ready", False)):
             ev = copy.deepcopy(self.base)
             mutate(ev)
             self.assertNotEqual(be.readiness_findings(ev, R), [])

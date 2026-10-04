@@ -21,8 +21,8 @@
    "base": "firmware/b2/b2_app.c",
    "base_sha256": "130429ebe22241eaa2ea7c23634ca027862fd45476f6c293bd722b656b36ecc0",
    "kind": "derived",
-   "note": "DERIVED from B2's application: the orchestrator is b3_orch.c (three arms, the O arm's observation inside it), b3_orch_observe < 0 and a search block that does not render are PROTOCOL (no record without its block), app_identity 1.6.0 (carto_version, arms, b1_map_cost) with the slice decoded by b3_page_slice and a page that is neither the B3 nor the B3Q profile an identity finding, and every outbound buffer sized from the theoretical maximum of its encoder (B3_*_MAX, held by b3/tests/test_b3_app_audit.py) with the base64 step checked against its buffer before it runs. The HAL, the transactions, the audit pull, the watchdog, the closing control and the AXI allowlist are B2's. It must exist and must DIFFER from the base.",
-   "sha256": "c404abd6372ebe05ef723add251ef519261db6c568f08441957d562756f88dd8"
+   "note": "DERIVED from B2's application: the orchestrator is b3_orch.c (three arms, the O arm's observation inside it), b3_orch_observe < 0 and a search block that does not render are PROTOCOL (no record without its block), app_identity 1.6.0 (carto_version, arms, b1_map_cost) with the slice decoded by b3_page_slice and a page that is neither the B3 nor the B3Q profile an identity finding, and every outbound buffer sized from the theoretical maximum of its encoder (B3_*_MAX, held by b3/tests/test_b3_app_audit.py) with the base64 step checked against its buffer before it runs. The HAL, the transactions, the audit pull, the watchdog, the closing control and the AXI allowlist are B2's. link2_witness's three working arrays (frames5 / reread / words, 9,004 B) are moved off the stack into a dedicated BSS workspace (g_link2) so the main-path stack stays within its 0x2000 budget; the record / parse / hash / reject flow is unchanged, every element is fully written before it is read, and the function is called only from the single-threaded record path (not re-entrant). It must exist and must DIFFER from the base.",
+   "sha256": "42313f63d62083a94eae1f5fd82a6bf9c4822bea615efb77cb793141e925c93b"
   },
   "b3/firmware/b3_carto.c": {
    "kind": "new",
@@ -60,7 +60,7 @@
    "base": "firmware/b2/b2_orch.h",
    "base_sha256": "957bd17ed7b957ba168f0fdebe437e8067243f8977e23dab07c380986bf8e2f4",
    "kind": "derived",
-   "note": "DERIVED from B2's orchestrator header: the B3 state (three searches, the cartographer, its scratch, the ledger arrays — all caller-owned), the phases of three arms, the seed and profile API, b3_orch_observe returning a status. It must exist and must DIFFER from the base.",
+   "note": "DERIVED from B2's orchestrator header: the B3 state (three searches, the cartographer, its scratch, the ledger arrays \u2014 all caller-owned), the phases of three arms, the seed and profile API, b3_orch_observe returning a status. It must exist and must DIFFER from the base.",
    "sha256": "ec358a57cdd11f58ddeb1ac98b66c5fba3f514594b20750cf2914f6590af19d3"
   },
   "b3/firmware/b3_orch_twin.c": {
@@ -93,7 +93,7 @@
    "base": "firmware/b2/b2_wire.c",
    "base_sha256": "50f030483391f9f555cb2ec2ad497f0ec979879877780f8555badc57ea28aaf6",
    "kind": "derived",
-   "note": "DERIVED from B2's wire unit: app_identity 1.6.0 (carto_version, arms, b1_map_cost in their sorted positions), loop_record 1.4.0 (the pre-rendered search block — B2's renderer's on R / F, b3_record_json's on O — embedded as given), and the outer arm refused unless it is random_safe | map_guided | online. Everything else is B2's byte for byte (b3/tests/test_b3_wire_contract.py, the B2 parity). It must exist and must DIFFER from the base.",
+   "note": "DERIVED from B2's wire unit: app_identity 1.6.0 (carto_version, arms, b1_map_cost in their sorted positions), loop_record 1.4.0 (the pre-rendered search block \u2014 B2's renderer's on R / F, b3_record_json's on O \u2014 embedded as given), and the outer arm refused unless it is random_safe | map_guided | online. Everything else is B2's byte for byte (b3/tests/test_b3_wire_contract.py, the B2 parity). It must exist and must DIFFER from the base.",
    "sha256": "c5792f9e1401984707b05dd8e928b013f5ed22c4b096d65f37351de437ee5f69"
   },
   "b3/firmware/b3_wire.h": {
@@ -149,14 +149,14 @@
    "kind": "built",
    "note": "the committed image (the owner's ruling of 2026-09-28): built by bsp/build.sh from the sources above, reproduced byte for byte by two clean builds recorded in the build evidence.",
    "produced_by": "b3/firmware/bsp/build.sh",
-   "sha256": "1aedcb5ff7a5f20bb6e35d28a435ceda9d913eef96170426ef3a6908699ce1c9"
+   "sha256": "1f4af626024dec66ca5660f03cb427445dce312ef9c60c85bd97cf57bc73eae0"
   },
   "b3/firmware/bsp/out/b3_app.elf": {
    "evidence": "evidence/b3/build_evidence.json",
    "kind": "built",
    "note": "the committed image (the owner's ruling of 2026-09-28): built by bsp/build.sh from the sources above, reproduced byte for byte by two clean builds recorded in the build evidence.",
    "produced_by": "b3/firmware/bsp/build.sh",
-   "sha256": "fa927d82bc3618710c9452d7298f279ae4dc2e38b7d6a3b94402f5c482c81a6b"
+   "sha256": "520508c9f110dd4bc4b247e85aca99a222c0610859f08a6a5ead21f7b5e74cb9"
   },
   "b3/firmware/bsp/src/console.c": {
    "base": "firmware/b2/bsp/src/console.c",
@@ -167,7 +167,7 @@
   "b3/firmware/p3_data.h": {
    "base": "firmware/b2/p3_data.h",
    "kind": "verbatim",
-   "note": "B2's generated data header (host/gen_b2_data.py): the B1 self-map compiled as B2 compiled it — B2_MAP_INIT for the F arm's column view only, B2_MAP_LUT / B2_MAP_INIT for the universe mask — the train / holdout vectors, the seed exclusion.",
+   "note": "B2's generated data header (host/gen_b2_data.py): the B1 self-map compiled as B2 compiled it \u2014 B2_MAP_INIT for the F arm's column view only, B2_MAP_LUT / B2_MAP_INIT for the universe mask \u2014 the train / holdout vectors, the seed exclusion.",
    "sha256": "518170dbb449e6e5eaef1cc34773f0bb2fa5256c34f3617b859c9880e1b6c295"
   },
   "b3/firmware/p3_derive.c": {
@@ -209,7 +209,7 @@
  },
  "schema": "b3_firmware_import",
  "schema_version": "1.0.0",
- "scope": "the final image import inventory of b3/firmware at image stage 5 — every file under it but this table, each classified verbatim (a byte-for-byte copy of a B2 file), derived (a B2 file changed as its note says, base and derived digests recorded), new (B3's own, no base) or built (the committed image, produced by bsp/build.sh and bound to the build evidence). The host application (image stage 6) lives outside b3/firmware. The pin table has not been generated.",
+ "scope": "the final image import inventory of b3/firmware at image stage 5 \u2014 every file under it but this table, each classified verbatim (a byte-for-byte copy of a B2 file), derived (a B2 file changed as its note says, base and derived digests recorded), new (B3's own, no base) or built (the committed image, produced by bsp/build.sh and bound to the build evidence). The host application (image stage 6) lives outside b3/firmware. The pin table has not been generated.",
  "source": "firmware/b2 of this repository (B2, main 73b68d7, S3), itself importing the instrument at github.com/14sea/zynq-psoracle 689dde1 (firmware/b2/IMPORT.json)",
  "stage": "image stage 5"
 }

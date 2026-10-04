@@ -739,11 +739,23 @@ static int stage_streams(void)
 }
 
 /* link 2: re-read the staged streams FROM DDR and hash what is actually there */
-static int link2_witness(char *staged_hex, char *stream_hex)
-{
+/* link2_witness's working set, moved off the stack into a dedicated BSS workspace: its
+ * three arrays were 9,004 B of locals (frames5 2,020 + reread 4,848 + words 2,136) and
+ * dominated the main-path stack. link2_witness is called only from the single-threaded
+ * record path (write_record), is never re-entrant, and no interrupt or callback runs
+ * concurrently, so one shared workspace is safe. Every element is fully written before it
+ * is read on each call — words and frames5 per envelope, and reread's twelve targets are
+ * the three envelopes' {0,1,2,3} / {4,5,6,7} / {8,9,10,11}, covering all P3_TARGET_FRAMES —
+ * and the only early return (a parse failure) stops before any hash, so no value left by a
+ * previous or a failed call is ever read. */
+static struct {
     uint32_t frames5[P3_ENVELOPE_FRAMES][P3_FRAME_WORDS];
     uint32_t reread[P3_TARGET_FRAMES][P3_FRAME_WORDS];
     uint32_t words[P3_STREAM_WORDS];
+} g_link2;
+
+static int link2_witness(char *staged_hex, char *stream_hex)
+{
     uint8_t digest[32];
     p3_sha256 c;
     int e, k, i;
@@ -751,19 +763,19 @@ static int link2_witness(char *staged_hex, char *stream_hex)
     for (e = 0; e < P3_ENVELOPE_COUNT; e++) {
         uint32_t far_set;
         for (i = 0; i < P3_STREAM_WORDS; i++)
-            words[i] = Xil_In32(P3_WR_BUF + (uint32_t)e * 4u * P3_STREAM_WORDS +
-                                4u * (uint32_t)i);
-        p3_sha256_words(&c, words, P3_STREAM_WORDS);
-        if (p3_parse_stream(words, &far_set, frames5) != 0 || far_set != P3_ENVELOPE[e].far_set) {
+            g_link2.words[i] = Xil_In32(P3_WR_BUF + (uint32_t)e * 4u * P3_STREAM_WORDS +
+                                        4u * (uint32_t)i);
+        p3_sha256_words(&c, g_link2.words, P3_STREAM_WORDS);
+        if (p3_parse_stream(g_link2.words, &far_set, g_link2.frames5) != 0 || far_set != P3_ENVELOPE[e].far_set) {
             p3_stop(P3_STOPPED, "STOP_LINK2: the staged stream does not parse");
             return -1;
         }
         for (k = 0; k < 4; k++)
-            memcpy(reread[P3_ENVELOPE[e].target[k]], frames5[k], sizeof(frames5[k]));
+            memcpy(g_link2.reread[P3_ENVELOPE[e].target[k]], g_link2.frames5[k], sizeof(g_link2.frames5[k]));
     }
     p3_sha256_final(&c, digest);
     p3_hex(digest, 32, stream_hex);
-    p3_frames_hash(P3_CFRAMES(reread), digest);
+    p3_frames_hash(P3_CFRAMES(g_link2.reread), digest);
     p3_hex(digest, 32, staged_hex);
     return 0;
 }

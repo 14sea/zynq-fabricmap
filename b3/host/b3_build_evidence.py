@@ -27,11 +27,13 @@ unit by unit and header by header — never trusting the paths, the lists or the
 (the owner's HOLD on 171b638). `build_once` runs the production build.sh clean; B3_OUT_DIR / B3_IMG_DIR let the
 hermetic test rebuild without touching the committed image.
 
-THE STACK (the owner's ruling of 2026-10-04): image stage 5 is split, and the image stack assessment — the analysis
-of the final ELF, b3/host/b3_image_stack.py — is the NEXT unit. The evidence therefore carries a `stack` block
-that states the assessment is INCOMPLETE and claims no bound, and `readiness.image_ready` is false. This version
-of the tool refuses an evidence document whose stack block claims completion (it cannot check one), and
-`readiness_findings` names the incomplete stack: the image is NOT ready, whatever else stands.
+THE STACK (the owner's rulings of 2026-10-04): the image stack assessment — the analysis of the final ELF by
+b3/host/b3_image_stack.py — now lands. The evidence carries a COMPLETE `stack` block (every entry's bound against
+its mode's stack, the indirect-target rules, the verified newlib bounded rule with its pinned digests). The verifier
+RE-RUNS the analysis on the named ELF and requires the block to equal it and to be within budget (the main path at
+or below 0x2000, each exception entry within its mode's stack); `readiness.image_ready` is true only then. A block
+whose recorded bounds / findings / rules differ from a fresh analysis, that claims completion with a finding, or
+that is over budget, is refused — and the analyser's conclusion is itself still subject to the owner's review.
 """
 from __future__ import annotations
 
@@ -53,7 +55,7 @@ for p in (REPO_ROOT / "host",):
 import b2_build_evidence as b2be  # noqa: E402  (frozen; read only: the toolchain, its flags, the resolution)
 
 SCHEMA = "b3_build_evidence"
-SCHEMA_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.1.0"
 FW_REL = "b3/firmware"
 FW = REPO_ROOT / FW_REL
 BUILD = FW / "bsp/build.sh"
@@ -223,11 +225,32 @@ def build_once(out_dir: Path | None = None, img_dir: Path | None = None) -> dict
     return {"bin_sha256": sha(img / "b3_app.bin"), "elf_sha256": sha(img / "b3_app.elf")}
 
 
-def stack_block(elf_sha256: str | None) -> dict:
-    return {"status": "INCOMPLETE", "complete": False, "elf_sha256": elf_sha256, "tool": None, "bounds": None,
-            "findings": [STACK_INCOMPLETE],
-            "note": "image stage 5 is split: this unit builds and records the image; the stack assessment of the final "
-                    "ELF (b3/host/b3_image_stack.py, the next unit) has not run, so NO stack bound is claimed here"}
+def stack_block(root: Path = REPO_ROOT) -> dict:
+    """The image stack assessment of the FINAL ELF, from b3/host/b3_image_stack.py: every entry's bound against its
+    mode's stack, the indirect-target rules, the verified newlib bounded rule, and every unresolved finding. The
+    block is COMPLETE only when the analyser reports `ok` (no finding) AND the main path is within its budget
+    (MAIN_LIMIT = 0x2000) and every exception entry within its mode's stack; otherwise it names the findings and is
+    not complete."""
+    import b3_image_stack as isa
+    r = isa.assess(root / ELF_REL)
+    findings = list(r["findings"])
+    for name, b in r["entries"].items():
+        limit = isa.MAIN_LIMIT if name == "main" else b["capacity"]
+        if b["bound"] is None:
+            continue
+        if limit is None or b["bound"] > limit:
+            msg = f"{name}: bound {b['bound']} exceeds {limit}"
+            if msg not in findings:
+                findings.append(msg)
+    complete = not findings
+    return {"status": "COMPLETE" if complete else "FINDINGS", "complete": complete,
+            "elf_sha256": r["elf"]["sha256"], "tool": r["tool"], "objdump": r["objdump"],
+            "main_limit": isa.MAIN_LIMIT, "entries": r["entries"], "modes": r["modes"], "capacity": r["capacity"],
+            "indirect_targets": r["indirect_targets"], "rules": r["rules"], "newlib": r["newlib"],
+            "masks": r["masks"], "findings": findings,
+            "note": "the stack pointer is tracked along every path of the final ELF; the main path is bounded at or "
+                    "below 0x2000 and each exception entry within its mode's stack, with the newlib printf recursion "
+                    "bounded by a verified source rule (b3/host/b3_image_stack.py)"}
 
 
 def build_evidence(do_build: bool) -> dict:
@@ -235,6 +258,9 @@ def build_evidence(do_build: bool) -> dict:
     image, elf = REPO_ROOT / IMAGE_REL, REPO_ROOT / ELF_REL
     cc = trusted_compiler()
     elf_sha = sha(elf) if elf.is_file() else None
+    stk = stack_block()
+    ready = bool(stk["complete"]) and not stk["findings"]
+    blocking = [] if ready else ([f"stack: {m}" for m in stk["findings"]] or ["stack: not complete"])
     bin_ok = len(builds) == 2 and builds[0]["bin_sha256"] == builds[1]["bin_sha256"]
     elf_ok = len(builds) == 2 and builds[0]["elf_sha256"] == builds[1]["elf_sha256"]
     return {"schema": SCHEMA, "schema_version": SCHEMA_VERSION,
@@ -255,10 +281,11 @@ def build_evidence(do_build: bool) -> dict:
                                 "clean": "before each build: build/b3_bsp/ and both outputs removed",
                                 "note": "each entry is one clean build's BOTH outputs; the claim is that the two builds agree "
                                         "in the binary AND in the ELF"},
-            "stack": stack_block(elf_sha),
-            "readiness": {"image_ready": False, "blocking": ["stack: INCOMPLETE"],
-                          "note": "the image is not ready while the stack assessment is incomplete (image stage 5 closes only "
-                                  "after the stack unit is reviewed)"}}
+            "stack": stk,
+            "readiness": {"image_ready": ready, "blocking": blocking,
+                          "note": "the image is ready only when the stack assessment is complete with no finding and "
+                                  "within budget, and the provenance verifies; the analyser's conclusion is still "
+                                  "subject to the owner's review"}}
 
 
 def _same_file(a: Path, b: Path) -> bool:
@@ -271,7 +298,8 @@ def _same_file(a: Path, b: Path) -> bool:
 SECTIONS = ("git", "toolchain", "sources", "bsp_inputs", "image", "reproducibility", "stack", "readiness")
 BSP_SECTIONS = ("translation_units", "headers", "dependencies", "toolchain_objects", "build_script_lists", "header_roots",
                 "dependency_flags")
-STACK_KEYS = ("status", "complete", "elf_sha256", "tool", "bounds", "findings", "note")
+STACK_KEYS = ("status", "complete", "elf_sha256", "tool", "objdump", "main_limit", "entries", "modes",
+              "capacity", "indirect_targets", "rules", "newlib", "masks", "findings", "note")
 
 
 def verify_findings(ev: dict, root: Path = REPO_ROOT, require_outputs: bool = True) -> list[str]:
@@ -423,33 +451,46 @@ def verify_findings(ev: dict, root: Path = REPO_ROOT, require_outputs: bool = Tr
     if require_outputs or elf.is_file():
         check(elf, im.get("elf_sha256"), "the ELF")
 
-    # the stack block: present, honest, and consistent with readiness
+    # the stack block: the verifier RE-RUNS the analysis on the named ELF and requires the block to match it, then
+    # holds the result to the budget (main <= 0x2000, each exception entry within its mode's stack)
     st = ev["stack"]
     if not isinstance(st, dict) or sorted(st) != sorted(STACK_KEYS):
         f.append(f"stack: the block's keys are not exactly {list(STACK_KEYS)}")
     else:
+        import b3_image_stack as isa
+        fresh = stack_block(root)
         if st["elf_sha256"] != im.get("elf_sha256"):
             f.append("stack: the block is not about the named ELF")
-        if st["complete"] is not False or st["status"] != "INCOMPLETE":
-            f.append("stack: this tool version cannot check a completed stack assessment — the stack unit has not "
-                     "landed; a block claiming completion is refused")
-        if not st["findings"] or st["bounds"] is not None or st["tool"] is not None:
-            f.append("stack: an INCOMPLETE block must name why and claim no bound and no tool")
+        if st["elf_sha256"] != fresh["elf_sha256"]:
+            f.append("stack: the block's ELF digest is not the built image's")
+        norm = lambda x: json.loads(json.dumps(x, sort_keys=True))     # the recorded block is JSON; normalise fresh the same
+        for key in ("entries", "findings", "newlib", "indirect_targets", "rules", "modes", "masks", "tool", "main_limit"):
+            if norm(st.get(key)) != norm(fresh.get(key)):
+                f.append(f"stack: the recorded {key} is not the analyser's fresh result")
+        if st["complete"] != (not fresh["findings"]) or st["status"] != ("COMPLETE" if not fresh["findings"] else "FINDINGS"):
+            f.append("stack: complete / status disagree with the findings")
+        for name, b in (st.get("entries") or {}).items():
+            limit = isa.MAIN_LIMIT if name == "main" else b.get("capacity")
+            if b.get("bound") is not None and (limit is None or b["bound"] > limit):
+                f.append(f"stack: {name} bound {b['bound']} exceeds its budget {limit}")
+        if st["complete"] and st["findings"]:
+            f.append("stack: a complete block must have no finding")
     rd = ev["readiness"]
-    if not isinstance(rd, dict) or rd.get("image_ready") is not False:
-        f.append("readiness: image_ready must be false while the stack assessment is incomplete")
-    elif "stack: INCOMPLETE" not in (rd.get("blocking") or []):
-        f.append("readiness: the incomplete stack is not named among the blocking items")
+    ready = isinstance(st, dict) and st.get("complete") is True and not st.get("findings") and not f
+    if not isinstance(rd, dict) or rd.get("image_ready") is not ready:
+        f.append(f"readiness: image_ready must be {ready} for this stack result and provenance")
     return f
 
 
 def readiness_findings(ev: dict, root: Path = REPO_ROOT) -> list[str]:
-    """Whether the image is READY: the provenance findings, plus every blocking item — with this version, always the
-    incomplete stack assessment. Never empty until the stack unit lands."""
+    """Whether the image is READY: the provenance findings, plus every unresolved stack finding. Empty only when the
+    provenance verifies AND the stack assessment is complete and within budget."""
     f = verify_findings(ev, root)
     st = ev.get("stack") if isinstance(ev, dict) else None
     if not isinstance(st, dict) or st.get("complete") is not True:
-        f.append(f"stack: {STACK_INCOMPLETE}")
+        f.append("stack: the image stack assessment is not complete")
+    for m in (st or {}).get("findings", []) if isinstance(st, dict) else []:
+        f.append(f"stack: {m}")
     return f
 
 
