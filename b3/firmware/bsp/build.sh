@@ -7,6 +7,13 @@
 # 2026-10-01: the image stack assessment, b3/host/b3_image_stack.py); the repository root taken from this script's
 # own location. The architecture, the BSP, the toolchain and every link setting are B2's.
 #
+# Two narrow controls for the build evidence (b3/host/b3_build_evidence.py; the owner's HOLD on 171b638), neither of
+# which changes a production build when unset:
+#   B3_PRINT_FLAGS=1   print the expanded BSP_CFLAGS / APP_CFLAGS — the ONE source of the compile flags, which the
+#                      evidence's -M dependency discovery uses — and exit before creating or building anything;
+#   B3_OUT_DIR / B3_IMG_DIR   the intermediate and the image output directories (default build/b3_bsp and bsp/out),
+#                      so that a hermetic test can run the real build twice without touching the committed image.
+#
 #   bash b3/firmware/bsp/build.sh
 #
 # B2's header, from here on unchanged:
@@ -27,6 +34,8 @@
 set -euo pipefail
 
 REPO=$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)
+cd "$REPO"   # the DWARF records the compiling directory: build from the repository root whoever calls, so the ELF does not
+             # depend on the caller's working directory (the owner's HOLD on 171b638, P2-3)
 INSTRUMENT=${PSORACLE_ROOT:-/home/test/zynq_psoracle}
 TC=$INSTRUMENT/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1
 CC=$TC/bin/arm-none-eabi-gcc
@@ -34,10 +43,9 @@ SA=/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src
 WD=/home/test/Xilinx/2025.2/data/embeddedsw/XilinxProcessorIPLib/drivers/scuwdt_v2_6/src
 FW=$REPO/b3/firmware
 BSP=$FW/bsp
-OUT=$REPO/build/b3_bsp          # the intermediate products: never under b3/
-IMG=$BSP/out                  # the image only: b3_app.elf and b3_app.bin
+OUT=${B3_OUT_DIR:-$REPO/build/b3_bsp}   # the intermediate products: never under b3/
+IMG=${B3_IMG_DIR:-$BSP/out}             # the image only: b3_app.elf and b3_app.bin
 IMAGE=b3_app
-mkdir -p "$OUT" "$IMG"
 
 ARCH="-mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard"
 INC="-I$BSP/include -I$SA/common -I$SA/arm/common -I$SA/arm/common/gcc \
@@ -45,6 +53,11 @@ INC="-I$BSP/include -I$SA/common -I$SA/arm/common -I$SA/arm/common/gcc \
 SU="-fstack-usage -fcallgraph-info=su"   # B3: the stack assessment's inputs, next to each object in $OUT
 BSP_CFLAGS="$ARCH -std=gnu11 -O2 -g $INC -DUSE_AMP=0 -ffunction-sections -fdata-sections $SU"
 APP_CFLAGS="$ARCH -std=c99 -O2 -g $INC -Wall -Wextra -ffreestanding -ffunction-sections -fdata-sections $SU"
+if [ "${B3_PRINT_FLAGS:-}" = 1 ]; then
+  printf 'BSP_CFLAGS=%s\nAPP_CFLAGS=%s\n' "$BSP_CFLAGS" "$APP_CFLAGS"
+  exit 0
+fi
+mkdir -p "$OUT" "$IMG"
 
 ASM_SRCS="arm/cortexa9/gcc/boot.S arm/cortexa9/gcc/cpu_init.S \
           arm/cortexa9/gcc/translation_table.S arm/cortexa9/gcc/xil-crt0.S \

@@ -6,6 +6,12 @@ copy that has exactly one thing wrong. The verifier re-resolves the trusted buil
 configuration — the pinned toolchain, -print-file-name under the build's flags, this module's mandatory inventory,
 build.sh's own unit lists — and never selects a file by the path the evidence supplies.
 
+The dependencies are RE-DISCOVERED by the verifier (the owner's HOLD on 171b638): every unit's -M is run again with
+build.sh's own compile flags (printed by build.sh itself, -O2 included; only the output-only options removed) and
+compared unit by unit — a header deleted from the hash table AND from every dependency list is still named. The two
+clean builds are not only read from the evidence: TheRealBuild runs the production build.sh twice into fresh
+directories (B3_OUT_DIR / B3_IMG_DIR, never the committed image) and compares the binaries and the ELFs.
+
 THE STACK (the owner's ruling of 2026-10-04): the image stack assessment is the next unit. The evidence must carry a
 `stack` block stating it is INCOMPLETE and claiming no bound, `readiness.image_ready` must be false, a block that
 claims completion is refused by this version of the tool, and `readiness_findings` is never empty — whatever else
@@ -18,7 +24,10 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
+import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -115,6 +124,76 @@ class Committed(unittest.TestCase):
         self.assertEqual(len({v["sha256"] for v in resolved.values()}), len(be.RUNTIME_OBJECTS))
 
 
+class TheFlags(unittest.TestCase):
+    def test_the_flags_are_build_sh_s_less_only_the_output_only_options(self):
+        bsp, app = be.build_flags()
+        raw = {}
+        p = subprocess_run_print_flags()
+        for line in p.splitlines():
+            k, _, v = line.partition("=")
+            raw[k] = v.split()
+        for got, key in ((bsp, "BSP_CFLAGS"), (app, "APP_CFLAGS")):
+            self.assertEqual(got, [t for t in raw[key] if not t.startswith(("-fstack-usage", "-fcallgraph-info"))])
+            self.assertIn("-O2", got)
+            self.assertIn("-g", got)
+        self.assertTrue(any(t.startswith("-fstack-usage") for t in raw["APP_CFLAGS"]), "the build itself still produces them")
+
+    def test_a_header_behind_optimize_is_found_with_the_build_s_flags_and_missed_without_o2(self):
+        """The owner's discriminating case on 171b638: a header read only under -O2 (`#ifdef __OPTIMIZE__`)."""
+        d = Path(tempfile.mkdtemp(prefix="b3_opt_"))
+        self.addCleanup(shutil.rmtree, d, True)
+        (d / "only_optimized.h").write_text("#define ONLY_OPTIMIZED 1\n")
+        (d / "unit.c").write_text('#ifdef __OPTIMIZE__\n#include "only_optimized.h"\n#endif\nint x;\n')
+        _bsp, app = be.build_flags()
+        with_build = be.dependency_set(d / "unit.c", app + ["-I", str(d)])
+        without_o2 = be.dependency_set(d / "unit.c", [t for t in app if t != "-O2"] + ["-I", str(d)])
+        self.assertIn(str(d / "only_optimized.h"), with_build)
+        self.assertNotIn(str(d / "only_optimized.h"), without_o2, "the control: without -O2 the header is not read")
+
+
+def subprocess_run_print_flags() -> str:
+    import subprocess
+    return subprocess.run(["bash", str(be.BUILD)], capture_output=True, text=True, check=True,
+                          env=dict(os.environ, B3_PRINT_FLAGS="1")).stdout
+
+
+class TheRealBuild(unittest.TestCase):
+    """The production build.sh, run twice, each time CLEAN, into fresh directories under the ignored build/ (never the
+    committed image, never the default intermediate directory), the second from another working directory: both
+    binaries and both ELFs identical — and identical to the committed image and to the evidence's record."""
+
+    def test_two_clean_builds_reproduce_the_committed_image(self):
+        before = (sha(IMAGE), sha(ELF), IMAGE.stat().st_mtime_ns, ELF.stat().st_mtime_ns)
+        default_map = be.INTERMEDIATE / "b3_app.map"
+        map_before = default_map.stat().st_mtime_ns if default_map.is_file() else None
+        root = Path(tempfile.mkdtemp(prefix="b3_rebuild_", dir=R / "build"))
+        self.addCleanup(shutil.rmtree, root, True)
+        results = []
+        for k in (1, 2):
+            out, img = root / f"out{k}", root / f"img{k}"
+            out.mkdir()
+            (out / "stale.o").write_text("a stale object from an earlier build\n")       # must not survive: a CLEAN build
+            img.mkdir()
+            (img / "b3_app.bin").write_text("stale image\n")
+            here = os.getcwd()
+            if k == 2:                                         # the second build from ANOTHER working directory: the
+                os.chdir(tempfile.mkdtemp(prefix="b3_cwd_", dir=root))   # ELF must not depend on the caller's cwd
+            try:
+                results.append(be.build_once(out, img))
+            finally:
+                os.chdir(here)
+            self.assertFalse((out / "stale.o").exists(), "the intermediate directory was removed before the build")
+            self.assertTrue((out / "b3_app.c.o").is_file() and (out / "b3_app.map").is_file())
+            self.assertEqual(sorted(x.name for x in img.iterdir()), ["b3_app.bin", "b3_app.elf"])
+        self.assertEqual(results[0], results[1], "the two builds agree in the binary AND the ELF")
+        ev = json.loads(EVIDENCE.read_text())
+        self.assertEqual(results[0], {"bin_sha256": ev["image"]["sha256"], "elf_sha256": ev["image"]["elf_sha256"]})
+        self.assertEqual(results[0], {"bin_sha256": before[0], "elf_sha256": before[1]}, "the committed image is what the build makes")
+        self.assertEqual((sha(IMAGE), sha(ELF), IMAGE.stat().st_mtime_ns, ELF.stat().st_mtime_ns), before, "the committed image was not touched")
+        if map_before is not None:
+            self.assertEqual(default_map.stat().st_mtime_ns, map_before, "the default intermediate directory was not touched")
+
+
 class Refuses(unittest.TestCase):
     """One thing wrong at a time; each must be named."""
 
@@ -140,7 +219,7 @@ class Refuses(unittest.TestCase):
             "two builds, each with both output digests": lambda e: e["reproducibility"]["builds"].pop(),
             "the recorded verdicts disagree": lambda e: e["reproducibility"].__setitem__("bin_identical", False),
             "header": lambda e: e["bsp_inputs"]["headers"].__setitem__(sorted(e["bsp_inputs"]["headers"])[0], BAD),
-            "is a recorded dependency but has no hash": lambda e: e["bsp_inputs"]["headers"].pop(sorted(e["bsp_inputs"]["headers"])[0]),
+            "is read by the build but has no hash": lambda e: e["bsp_inputs"]["headers"].pop(sorted(e["bsp_inputs"]["headers"])[0]),
             "compiled by the build script but not recorded": lambda e: e["bsp_inputs"]["translation_units"].pop(sorted(e["bsp_inputs"]["translation_units"])[0]),
             "is recorded but not compiled": lambda e: e["bsp_inputs"]["translation_units"].__setitem__("/tmp/extra.c", BAD),
             "no dependency list": lambda e: e["bsp_inputs"]["dependencies"].pop(sorted(e["bsp_inputs"]["dependencies"])[0]),
@@ -159,6 +238,38 @@ class Refuses(unittest.TestCase):
         for needle, fn in cases.items():
             with self.subTest(breach=needle):
                 self.refused(fn, needle)
+
+    def test_a_header_deleted_from_the_table_and_from_every_list_is_still_named(self):
+        """The owner's first counterexample on 171b638: stdio.h removed from the hash table AND from every unit's list."""
+        ev = copy.deepcopy(self.base)
+        bi = ev["bsp_inputs"]
+        gone = [h for h in bi["headers"] if h.endswith("/stdio.h")]
+        self.assertTrue(gone, "the build reads stdio.h")
+        for h in gone:
+            bi["headers"].pop(h)
+        for unit in bi["dependencies"]:
+            bi["dependencies"][unit] = [h for h in bi["dependencies"][unit] if h not in gone]
+        f = be.verify_findings(ev, R)
+        self.assertTrue(any("is not the compiler's dependency set" in x for x in f), f[:3])
+        self.assertTrue(any("stdio.h is read by the build but has no hash" in x for x in f), f[:3])
+
+    def test_an_emptied_header_table_and_empty_dependency_lists_are_named(self):
+        """The owner's second counterexample: every header gone and every unit's list emptied."""
+        ev = copy.deepcopy(self.base)
+        bi = ev["bsp_inputs"]
+        bi["headers"] = {}
+        bi["dependencies"] = {u: [] for u in bi["dependencies"]}
+        f = be.verify_findings(ev, R)
+        named = sum(1 for x in f if "is not the compiler's dependency set" in x)
+        reading = sum(1 for deps in be.fresh_dependencies(R).values() if deps)
+        self.assertGreater(reading, 40)
+        self.assertEqual(named, reading, "every unit that reads a header is named")
+        self.assertTrue(any("is read by the build but has no hash" in x for x in f))
+
+    def test_recorded_flags_that_are_not_build_sh_s_are_named(self):
+        ev = copy.deepcopy(self.base)
+        ev["bsp_inputs"]["dependency_flags"]["app"].remove("-O2")
+        self.assertIn("dependency_flags: the recorded -M flags are not build.sh's compile flags", be.verify_findings(ev, R))
 
     def test_a_dirty_path_outside_b3_firmware_is_not_an_image_input(self):
         ev = copy.deepcopy(self.base)

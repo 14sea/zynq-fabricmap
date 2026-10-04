@@ -117,8 +117,8 @@
    "base": "firmware/b2/bsp/build.sh",
    "base_sha256": "26df1e84dc3482c279b4e990204551ceae796a2fb1333372a1ce73da22b361a8",
    "kind": "derived",
-   "note": "DERIVED from B2's build script: the B3 application's translation units, the image name b3_app, the intermediate products in the top-level ignored build/b3_bsp/ and only the image (b3_app.bin / b3_app.elf) in b3/firmware/bsp/out/, -fstack-usage -fcallgraph-info=su added to the compile flags, the repository root taken from the script's location. The architecture, the BSP, the toolchain and every link setting are B2's. It must exist and must DIFFER from the base.",
-   "sha256": "c3a682309f9e936cb728b4c3d3219fda295c43a236ea214c38a8023922edda44"
+   "note": "DERIVED from B2's build script: the B3 application's translation units, the image name b3_app, the intermediate products in the top-level ignored build/b3_bsp/ and only the image (b3_app.bin / b3_app.elf) in b3/firmware/bsp/out/, -fstack-usage -fcallgraph-info=su added to the compile flags, the repository root taken from the script's location, and two narrow controls for the build evidence (B3_PRINT_FLAGS=1 prints the compile flags and exits; B3_OUT_DIR / B3_IMG_DIR redirect the products for a hermetic rebuild), neither changing a production build when unset; and the build runs from the repository root whoever calls it, so the ELF's DWARF does not depend on the caller's working directory. The architecture, the BSP, the toolchain and every link setting are B2's. It must exist and must DIFFER from the base.",
+   "sha256": "3ad5499422c81ca58e9720dd74ade69d6ae6902b0a16307eb8dc13e18765e525"
   },
   "b3/firmware/bsp/include/bspconfig.h": {
    "base": "firmware/b2/bsp/include/bspconfig.h",

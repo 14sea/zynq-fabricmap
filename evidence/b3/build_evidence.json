@@ -1,5 +1,5 @@
 {
- "at": "2026-10-04T140243Z",
+ "at": "2026-10-04T143958Z",
  "bsp_inputs": {
   "build_script_lists": {
    "APP_SRCS": [
@@ -1412,6 +1412,47 @@
     "/home/test/zynq_psoracle/toolchain/xpack-arm-none-eabi-gcc-14.2.1-1.1/lib/gcc/arm-none-eabi/14.2.1/include/stdint.h"
    ]
   },
+  "dependency_flags": {
+   "app": [
+    "-mcpu=cortex-a9",
+    "-mfpu=vfpv3",
+    "-mfloat-abi=hard",
+    "-std=c99",
+    "-O2",
+    "-g",
+    "-I/home/test/zynq_fabricmap/b3/firmware/bsp/include",
+    "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common",
+    "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/common",
+    "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/common/gcc",
+    "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/cortexa9",
+    "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/cortexa9/gcc",
+    "-I/home/test/Xilinx/2025.2/data/embeddedsw/XilinxProcessorIPLib/drivers/scuwdt_v2_6/src",
+    "-Wall",
+    "-Wextra",
+    "-ffreestanding",
+    "-ffunction-sections",
+    "-fdata-sections"
+   ],
+   "bsp": [
+    "-mcpu=cortex-a9",
+    "-mfpu=vfpv3",
+    "-mfloat-abi=hard",
+    "-std=gnu11",
+    "-O2",
+    "-g",
+    "-I/home/test/zynq_fabricmap/b3/firmware/bsp/include",
+    "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common",
+    "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/common",
+    "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/common/gcc",
+    "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/cortexa9",
+    "-I/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/arm/cortexa9/gcc",
+    "-I/home/test/Xilinx/2025.2/data/embeddedsw/XilinxProcessorIPLib/drivers/scuwdt_v2_6/src",
+    "-DUSE_AMP=0",
+    "-ffunction-sections",
+    "-fdata-sections"
+   ],
+   "source": "bash b3/firmware/bsp/build.sh with B3_PRINT_FLAGS=1, the output-only options removed"
+  },
   "header_roots": {
    "embeddedsw_standalone": "/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src",
    "embeddedsw_watchdog": "/home/test/Xilinx/2025.2/data/embeddedsw/XilinxProcessorIPLib/drivers/scuwdt_v2_6/src",
@@ -1595,22 +1636,13 @@
  },
  "git": {
   "dirty": [
-   "b3/firmware/b3_app.c",
+   "b3/firmware/IMPORT.json",
    "b3/firmware/bsp/build.sh",
-   "b3/firmware/bsp/include/bspconfig.h",
-   "b3/firmware/bsp/include/xmem_config.h",
-   "b3/firmware/bsp/include/xparameters.h",
-   "b3/firmware/bsp/lscript.ld",
-   "b3/firmware/bsp/out/b3_app.bin",
-   "b3/firmware/bsp/out/b3_app.elf",
-   "b3/firmware/bsp/src/console.c",
-   "b3/firmware/p3_pull.c",
-   "b3/firmware/p3_pull.h",
-   "b3/firmware/p3_rectx.c",
-   "b3/firmware/p3_rectx.h",
-   "b3/host/b3_build_evidence.py"
+   "b3/host/b3_build_evidence.py",
+   "b3/tests/test_b3_build_evidence.py",
+   "evidence/b3/build_evidence.json"
   ],
-  "head": "3b0a4a581eb7e66c0d6110db26fa38a195a5531b"
+  "head": "171b6388a64b35d3d07eaefdb786cd6d62b6a96f"
  },
  "image": {
   "bytes": 131092,
@@ -1662,7 +1694,7 @@
   "b3_seed_data.h": "e3eb2b84b8ece1f6f13c805be6d78c21a08fbf588287ce545cb8d5aec240a4a5",
   "b3_wire.c": "c5792f9e1401984707b05dd8e928b013f5ed22c4b096d65f37351de437ee5f69",
   "b3_wire.h": "d05d1e8427c7b01bf778611c98b6c7583293d3a0dc65c4192ed8034fc427cc8a",
-  "bsp/build.sh": "c3a682309f9e936cb728b4c3d3219fda295c43a236ea214c38a8023922edda44",
+  "bsp/build.sh": "3ad5499422c81ca58e9720dd74ade69d6ae6902b0a16307eb8dc13e18765e525",
   "bsp/include/bspconfig.h": "06307d4353e828e6be911e20a5e508fbf8139bf7fb50cf443e832fb82bd91617",
   "bsp/include/xmem_config.h": "5c0e0747268b8c7b46258559987659fca77f147f828873aff2e31e38274ba1bc",
   "bsp/include/xparameters.h": "04e7da5c306dcb8596da3d20a51472cd33b167d5d197b90de9558bec150ec522",

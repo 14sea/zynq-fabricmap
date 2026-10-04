@@ -21,8 +21,11 @@ The image bytes are COMMITTED (the owner's ruling of 2026-09-28): b3_app.bin and
 
 `verify_findings` is a pure function of an evidence document and the files it names: it RE-RESOLVES the trusted
 build description from the build configuration (the pinned toolchain, -print-file-name under the build's flags,
-this module's inventory, build.sh's own unit lists) and compares the evidence to that — never trusting the paths
-the evidence supplies.
+this module's inventory, build.sh's own unit lists and its own compile flags — printed by build.sh, B3_PRINT_FLAGS=1)
+and RE-DISCOVERS every unit's dependencies with the compiler's -M under exactly those flags, comparing the evidence
+unit by unit and header by header — never trusting the paths, the lists or the header table the evidence supplies
+(the owner's HOLD on 171b638). `build_once` runs the production build.sh clean; B3_OUT_DIR / B3_IMG_DIR let the
+hermetic test rebuild without touching the committed image.
 
 THE STACK (the owner's ruling of 2026-10-04): image stage 5 is split, and the image stack assessment — the analysis
 of the final ELF, b3/host/b3_image_stack.py — is the NEXT unit. The evidence therefore carries a `stack` block
@@ -34,7 +37,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -115,24 +120,48 @@ def build_script_sources(build: Path = BUILD) -> dict[str, list[str]]:
     return out
 
 
-def unit_flags() -> tuple[list[str], list[str]]:
-    """The -M flags of the BSP units and of the application units (build.sh's, without the output-only options)."""
-    inc = [f"-I{FW / 'bsp/include'}", f"-I{SA}/common", f"-I{SA}/arm/common", f"-I{SA}/arm/common/gcc",
-           f"-I{SA}/arm/cortexa9", f"-I{SA}/arm/cortexa9/gcc", f"-I{WD}"]
-    return [*ARCH_FLAGS, "-std=gnu11", "-DUSE_AMP=0", *inc], [*ARCH_FLAGS, "-std=c99", "-ffreestanding", *inc]
+OUTPUT_ONLY = ("-fstack-usage", "-fcallgraph-info")      # options that only add output files: not part of what a unit reads
 
 
-def units(lists: dict) -> list[tuple[Path, str]]:
+def build_flags(build: Path = BUILD) -> tuple[list[str], list[str]]:
+    """The BSP and the application compile flags, from build.sh ITSELF (B3_PRINT_FLAGS=1 makes it print its expanded
+    BSP_CFLAGS / APP_CFLAGS and exit before creating anything) — the one source of the flags, so the -M dependency
+    discovery reads with exactly the flags the build compiles with (-O2 included: a header behind `#ifdef
+    __OPTIMIZE__` is read). Only the output-only options are removed (the owner's HOLD on 171b638, P2-2)."""
+    env = dict(os.environ, B3_PRINT_FLAGS="1")
+    p = subprocess.run(["bash", str(build)], capture_output=True, text=True, env=env)
+    if p.returncode != 0:
+        raise RuntimeError(f"build.sh would not print its flags: {p.stderr[-500:]}")
+    got = {}
+    for line in p.stdout.splitlines():
+        k, _, v = line.partition("=")
+        if k in ("BSP_CFLAGS", "APP_CFLAGS"):
+            got[k] = [t for t in shlex.split(v) if not t.startswith(OUTPUT_ONLY)]
+    if sorted(got) != ["APP_CFLAGS", "BSP_CFLAGS"]:
+        raise RuntimeError("build.sh printed no BSP_CFLAGS / APP_CFLAGS")
+    return got["BSP_CFLAGS"], got["APP_CFLAGS"]
+
+
+def units(lists: dict, fw: Path = FW) -> list[tuple[Path, str]]:
     out = []
     for s in lists["ASM_SRCS"] + lists["C_SRCS"] + lists["SYS_SRCS"]:
         out.append((SA / s, "bsp"))
     for s in lists["WDT_SRCS"]:
         out.append((WD / s, "bsp"))
     for s in lists["CONSOLE_SRCS"]:
-        out.append((FW / s, "bsp"))
+        out.append((fw / s, "bsp"))
     for s in lists["APP_SRCS"]:
-        out.append((FW / s, "app"))
+        out.append((fw / s, "app"))
     return out
+
+
+def fresh_dependencies(root: Path = REPO_ROOT) -> dict[str, list[str]]:
+    """Every unit's dependencies as the compiler reports them NOW, with the build's own flags, for the tree at `root`:
+    what the verifier compares the evidence with (it never takes the evidence's word for them)."""
+    fw = Path(root) / FW_REL
+    lists = build_script_sources(fw / "bsp/build.sh")
+    bsp_flags, app_flags = build_flags(fw / "bsp/build.sh")
+    return {str(src): sorted(dependency_set(src, bsp_flags if kind == "bsp" else app_flags)) for src, kind in units(lists, fw)}
 
 
 def dependency_set(unit: Path, flags: list[str]) -> set[str]:
@@ -145,7 +174,7 @@ def dependency_set(unit: Path, flags: list[str]) -> set[str]:
 
 def bsp_inputs() -> dict:
     lists = build_script_sources()
-    bsp_flags, app_flags = unit_flags()
+    bsp_flags, app_flags = build_flags()
     tus, headers, deps = {}, {}, {}
     for src, kind in units(lists):
         if not src.is_file():
@@ -158,25 +187,37 @@ def bsp_inputs() -> dict:
     objs = {name: {"path": str(v["path"]), "sha256": v["sha256"]} for name, v in resolved_runtime_objects().items()}
     return {"translation_units": dict(sorted(tus.items())), "headers": dict(sorted(headers.items())),
             "dependencies": dict(sorted(deps.items())), "toolchain_objects": objs, "build_script_lists": lists,
+            "dependency_flags": {"bsp": bsp_flags, "app": app_flags,
+                                 "source": "bash b3/firmware/bsp/build.sh with B3_PRINT_FLAGS=1, the output-only options removed"},
             "header_roots": {"embeddedsw_standalone": str(SA), "embeddedsw_watchdog": str(WD), "firmware": str(FW),
                              "toolchain": str(TC)}}
 
 
-def expected_units(lists: dict) -> set[str]:
+def expected_units(lists: dict, fw: Path = FW) -> set[str]:
     """The COMPLETE set of translation units build.sh compiles, from ITS lists and the TRUSTED roots."""
-    return {str(p) for p, _ in units(lists)}
+    return {str(p) for p, _ in units(lists, fw)}
 
 
-def build_once() -> dict[str, str]:
-    """One clean build: the intermediate products and both outputs removed first; returns both output digests."""
-    if INTERMEDIATE.exists():
-        shutil.rmtree(INTERMEDIATE)
-    for rel in (IMAGE_REL, ELF_REL):
-        (REPO_ROOT / rel).unlink(missing_ok=True)
-    p = subprocess.run(["bash", str(BUILD)], capture_output=True, text=True)
+def build_once(out_dir: Path | None = None, img_dir: Path | None = None) -> dict[str, str]:
+    """One CLEAN build through the production build.sh: the intermediate directory and both outputs removed first.
+    `out_dir` / `img_dir` (B3_OUT_DIR / B3_IMG_DIR) redirect the products — the hermetic test's use, which leaves the
+    committed image untouched; the defaults are the production locations. Returns both output digests."""
+    inter = Path(out_dir) if out_dir else INTERMEDIATE
+    img = Path(img_dir) if img_dir else OUT
+    if inter.exists():
+        shutil.rmtree(inter)
+    for name in ("b3_app.bin", "b3_app.elf"):
+        (img / name).unlink(missing_ok=True)
+    env = dict(os.environ)
+    env.pop("B3_PRINT_FLAGS", None)
+    if out_dir:
+        env["B3_OUT_DIR"] = str(inter)
+    if img_dir:
+        env["B3_IMG_DIR"] = str(img)
+    p = subprocess.run(["bash", str(BUILD)], capture_output=True, text=True, env=env)
     if p.returncode != 0:
         raise RuntimeError(p.stdout[-2000:] + p.stderr[-2000:])
-    return {"bin_sha256": sha(REPO_ROOT / IMAGE_REL), "elf_sha256": sha(REPO_ROOT / ELF_REL)}
+    return {"bin_sha256": sha(img / "b3_app.bin"), "elf_sha256": sha(img / "b3_app.elf")}
 
 
 def stack_block(elf_sha256: str | None) -> dict:
@@ -225,7 +266,8 @@ def _same_file(a: Path, b: Path) -> bool:
 
 
 SECTIONS = ("git", "toolchain", "sources", "bsp_inputs", "image", "reproducibility", "stack", "readiness")
-BSP_SECTIONS = ("translation_units", "headers", "dependencies", "toolchain_objects", "build_script_lists", "header_roots")
+BSP_SECTIONS = ("translation_units", "headers", "dependencies", "toolchain_objects", "build_script_lists", "header_roots",
+                "dependency_flags")
 STACK_KEYS = ("status", "complete", "elf_sha256", "tool", "bounds", "findings", "note")
 
 
@@ -276,7 +318,7 @@ def verify_findings(ev: dict, root: Path = REPO_ROOT, require_outputs: bool = Tr
         return f + [f"the build script cannot be read: {e}"]
     if bi["build_script_lists"] != lists:
         f.append("build_script_lists: the recorded lists are not build.sh's")
-    want_units = {str(p).replace(str(REPO_ROOT), str(root)) for p in expected_units(lists)}
+    want_units = expected_units(lists, fw)
     recorded = set(bi["translation_units"])
     for missing in sorted(want_units - recorded):
         f.append(f"translation units: {missing} is compiled by the build script but not recorded")
@@ -288,19 +330,35 @@ def verify_findings(ev: dict, root: Path = REPO_ROOT, require_outputs: bool = Tr
         if rel not in ev["sources"]:
             f.append(f"source inventory: {rel} is linked by the build script but not recorded")
 
-    # the headers: exactly the union of the recorded dependencies
-    dep_union: set[str] = set()
+    # the flags the dependencies were discovered with: build.sh's own (the owner's HOLD on 171b638, P2-2)
+    try:
+        bsp_flags, app_flags = build_flags(fw / "bsp/build.sh")
+        fresh = fresh_dependencies(root)
+    except (OSError, RuntimeError) as e:
+        return f + [f"the dependencies cannot be re-discovered from the build configuration: {e}"]
+    df = bi["dependency_flags"]
+    if not isinstance(df, dict) or df.get("bsp") != bsp_flags or df.get("app") != app_flags:
+        f.append("dependency_flags: the recorded -M flags are not build.sh's compile flags")
+
+    # the dependencies, unit by unit, RE-DISCOVERED by the compiler with those flags — never the evidence's own lists
+    # (the owner's HOLD on 171b638, P2-1: a header deleted from both the table and every list must still be missed)
     for unit, deps in bi["dependencies"].items():
         if unit not in bi["translation_units"]:
             f.append(f"dependencies: {unit} is not a recorded translation unit")
-        dep_union |= set(deps)
-    for unit in bi["translation_units"]:
-        if unit not in bi["dependencies"]:
+    for unit, want in fresh.items():
+        got = bi["dependencies"].get(unit)
+        if got is None:
             f.append(f"dependencies: no dependency list for {unit}")
-    for missing in sorted(dep_union - set(bi["headers"])):
-        f.append(f"headers: {missing} is a recorded dependency but has no hash")
-    for extra in sorted(set(bi["headers"]) - dep_union):
-        f.append(f"headers: {extra} is recorded but is no unit's dependency")
+        elif sorted(got) != want:
+            missing = sorted(set(want) - set(got))
+            extra = sorted(set(got) - set(want))
+            f.append(f"dependencies: {unit} is not the compiler's dependency set "
+                     f"(missing {missing[:3]}{'…' if len(missing) > 3 else ''}, extra {extra[:3]}{'…' if len(extra) > 3 else ''})")
+    union = set().union(*fresh.values()) if fresh else set()
+    for missing in sorted(union - set(bi["headers"])):
+        f.append(f"headers: {missing} is read by the build but has no hash")
+    for extra in sorted(set(bi["headers"]) - union):
+        f.append(f"headers: {extra} is recorded but the build reads no such header")
     for path, want in bi["headers"].items():
         check(Path(path), want, "header")
 
