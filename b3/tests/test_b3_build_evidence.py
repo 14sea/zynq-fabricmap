@@ -30,6 +30,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 R = Path(__file__).resolve().parents[2]
 for p in (R / "host", R / "b3/host"):
@@ -192,6 +193,88 @@ class TheRealBuild(unittest.TestCase):
         self.assertEqual((sha(IMAGE), sha(ELF), IMAGE.stat().st_mtime_ns, ELF.stat().st_mtime_ns), before, "the committed image was not touched")
         if map_before is not None:
             self.assertEqual(default_map.stat().st_mtime_ns, map_before, "the default intermediate directory was not touched")
+
+
+class TheBuildDirectories(unittest.TestCase):
+    """build_once cleans, builds and reads ONE pair of directories, whatever B3_OUT_DIR / B3_IMG_DIR the caller's
+    environment carries (the owner's HOLD on 3405273). Hermetic: the module's default directories are patched to temp
+    directories under the ignored build/, the inherited variables point at decoys, and the committed image is never
+    the build's target."""
+
+    def setUp(self):
+        self.before = (sha(IMAGE), sha(ELF), IMAGE.stat().st_mtime_ns, ELF.stat().st_mtime_ns)
+        self.root = Path(tempfile.mkdtemp(prefix="b3_dirs_", dir=R / "build"))
+        self.addCleanup(shutil.rmtree, self.root, True)
+        self.ev = json.loads(EVIDENCE.read_text())
+
+    def tearDown(self):
+        self.assertEqual((sha(IMAGE), sha(ELF), IMAGE.stat().st_mtime_ns, ELF.stat().st_mtime_ns), self.before,
+                         "the committed image was not touched")
+
+    def dirs(self, *names):
+        out = []
+        for n in names:
+            d = self.root / n
+            d.mkdir()
+            out.append(d)
+        return out
+
+    def decoys(self):
+        """Two decoy directories the inherited environment names, each holding a marker that must survive."""
+        dout, dimg = self.dirs("decoy_out", "decoy_img")
+        for d in (dout, dimg):
+            (d / "marker").write_text("not the build's\n")
+        return dout, dimg
+
+    def assert_built(self, inter, img, result, decoys):
+        self.assertTrue((inter / "b3_app.c.o").is_file() and (inter / "b3_app.map").is_file(), "built into the chosen intermediate directory")
+        self.assertFalse((inter / "stale.o").exists(), "the chosen intermediate directory was cleaned")
+        self.assertEqual(sorted(x.name for x in img.iterdir()), ["b3_app.bin", "b3_app.elf"])
+        self.assertEqual(result, {"bin_sha256": sha(img / "b3_app.bin"), "elf_sha256": sha(img / "b3_app.elf")})
+        self.assertEqual(result, {"bin_sha256": self.ev["image"]["sha256"], "elf_sha256": self.ev["image"]["elf_sha256"]})
+        for d in decoys:
+            self.assertEqual(sorted(x.name for x in d.iterdir()), ["marker"], f"{d.name}: the inherited directory was not used")
+
+    def seed(self, inter, img):
+        (inter / "stale.o").write_text("stale\n")
+        (img / "b3_app.bin").write_text("stale image\n")
+
+    def test_no_argument_uses_the_defaults_not_the_environment(self):
+        inter, img = self.dirs("default_out", "default_img")
+        self.seed(inter, img)
+        dout, dimg = self.decoys()
+        with mock.patch.object(be, "INTERMEDIATE", inter), mock.patch.object(be, "OUT", img), \
+                mock.patch.dict(os.environ, {"B3_OUT_DIR": str(dout), "B3_IMG_DIR": str(dimg)}):
+            result = be.build_once()
+        self.assert_built(inter, img, result, (dout, dimg))
+
+    def test_only_the_intermediate_directory_given(self):
+        inter, img = self.dirs("given_out", "default_img")
+        self.seed(inter, img)
+        dout, dimg = self.decoys()
+        with mock.patch.object(be, "OUT", img), \
+                mock.patch.dict(os.environ, {"B3_OUT_DIR": str(dout), "B3_IMG_DIR": str(dimg)}):
+            result = be.build_once(out_dir=inter)
+        self.assert_built(inter, img, result, (dout, dimg))
+
+    def test_only_the_image_directory_given_relative_from_another_cwd(self):
+        """A RELATIVE directory means the caller's cwd, not the repository root build.sh builds from: here the two
+        resolve to different directories under the temp root, so a path handed over unresolved is caught."""
+        inter, cwd = self.dirs("default_out", "cwd")
+        img = cwd / "img"
+        img.mkdir()
+        self.seed(inter, img)
+        dout, dimg = self.decoys()
+        here = os.getcwd()
+        os.chdir(cwd)
+        try:
+            with mock.patch.object(be, "INTERMEDIATE", inter), \
+                    mock.patch.dict(os.environ, {"B3_OUT_DIR": str(dout), "B3_IMG_DIR": str(dimg)}):
+                result = be.build_once(img_dir=Path("img"))
+        finally:
+            os.chdir(here)
+        self.assert_built(inter, img, result, (dout, dimg))
+        self.assertFalse((R / "img").exists(), "nothing was built at the repository root")
 
 
 class Refuses(unittest.TestCase):

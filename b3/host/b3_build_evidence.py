@@ -201,19 +201,22 @@ def expected_units(lists: dict, fw: Path = FW) -> set[str]:
 def build_once(out_dir: Path | None = None, img_dir: Path | None = None) -> dict[str, str]:
     """One CLEAN build through the production build.sh: the intermediate directory and both outputs removed first.
     `out_dir` / `img_dir` (B3_OUT_DIR / B3_IMG_DIR) redirect the products — the hermetic test's use, which leaves the
-    committed image untouched; the defaults are the production locations. Returns both output digests."""
-    inter = Path(out_dir) if out_dir else INTERMEDIATE
-    img = Path(img_dir) if img_dir else OUT
+    committed image untouched; the defaults are the production locations. Returns both output digests.
+
+    The directories chosen here are made absolute and ALWAYS handed to build.sh, overriding any B3_OUT_DIR /
+    B3_IMG_DIR the caller's environment carries, so the clean, the build and the digests use one pair of directories
+    (the owner's HOLD on 3405273: without an argument the inherited variables sent the build elsewhere while the
+    defaults were cleaned and read). Absolute because build.sh builds from the repository root."""
+    inter = (Path(out_dir) if out_dir else INTERMEDIATE).resolve()
+    img = (Path(img_dir) if img_dir else OUT).resolve()
     if inter.exists():
         shutil.rmtree(inter)
     for name in ("b3_app.bin", "b3_app.elf"):
         (img / name).unlink(missing_ok=True)
     env = dict(os.environ)
     env.pop("B3_PRINT_FLAGS", None)
-    if out_dir:
-        env["B3_OUT_DIR"] = str(inter)
-    if img_dir:
-        env["B3_IMG_DIR"] = str(img)
+    env["B3_OUT_DIR"] = str(inter)
+    env["B3_IMG_DIR"] = str(img)
     p = subprocess.run(["bash", str(BUILD)], capture_output=True, text=True, env=env)
     if p.returncode != 0:
         raise RuntimeError(p.stdout[-2000:] + p.stderr[-2000:])
