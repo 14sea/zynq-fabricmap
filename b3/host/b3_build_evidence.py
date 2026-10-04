@@ -1,0 +1,410 @@
+#!/usr/bin/env python3
+"""B3 lifecycle 2 — build provenance for the B3 image (image stage 5, first unit; host-only; touches no board).
+
+    b3_build_evidence.py [--build] [--out evidence/b3/build_evidence.json]
+
+B2's discipline (host/b2_build_evidence.py, frozen and used read-only for the pinned toolchain's path, its
+architecture flags and the resolution of the compiler and the runtime objects), re-aimed at B3:
+
+  * with --build: TWO clean builds from scratch through b3/firmware/bsp/build.sh — the intermediate products
+    (build/b3_bsp/) and the two outputs (b3/firmware/bsp/out/b3_app.bin and .elf) removed before each — whose binary
+    AND ELF must be byte-identical, or the evidence says so and the exit is non-zero;
+  * always: the sha256 of the image and the ELF; of every source the image links (this module's MANDATORY inventory,
+    so the evidence's own lists cannot decide what is required — the build and linker scripts included); of every
+    translation unit build.sh compiles (BSP assembly and C, syscalls, the watchdog driver, the console glue, the
+    application); of every header any unit includes, from the compiler's own -M over each unit with the build's
+    flags (embeddedsw's, this repository's AND the toolchain's own — the compiler's hash does not cover the headers
+    beside it); of the compiler binary and of the seven runtime objects the link resolves; and the git state —
+    the head and every path that differs from it.
+
+The image bytes are COMMITTED (the owner's ruling of 2026-09-28): b3_app.bin and b3_app.elf at b3/firmware/bsp/out/.
+
+`verify_findings` is a pure function of an evidence document and the files it names: it RE-RESOLVES the trusted
+build description from the build configuration (the pinned toolchain, -print-file-name under the build's flags,
+this module's inventory, build.sh's own unit lists) and compares the evidence to that — never trusting the paths
+the evidence supplies.
+
+THE STACK (the owner's ruling of 2026-10-04): image stage 5 is split, and the image stack assessment — the analysis
+of the final ELF, b3/host/b3_image_stack.py — is the NEXT unit. The evidence therefore carries a `stack` block
+that states the assessment is INCOMPLETE and claims no bound, and `readiness.image_ready` is false. This version
+of the tool refuses an evidence document whose stack block claims completion (it cannot check one), and
+`readiness_findings` names the incomplete stack: the image is NOT ready, whatever else stands.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import shutil
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+for p in (REPO_ROOT / "host",):
+    if str(p) not in sys.path:
+        sys.path.insert(0, str(p))
+import b2_build_evidence as b2be  # noqa: E402  (frozen; read only: the toolchain, its flags, the resolution)
+
+SCHEMA = "b3_build_evidence"
+SCHEMA_VERSION = "1.0.0"
+FW_REL = "b3/firmware"
+FW = REPO_ROOT / FW_REL
+BUILD = FW / "bsp/build.sh"
+INTERMEDIATE = REPO_ROOT / "build/b3_bsp"
+OUT = FW / "bsp/out"
+IMAGE_REL = "b3/firmware/bsp/out/b3_app.bin"
+ELF_REL = "b3/firmware/bsp/out/b3_app.elf"
+EVIDENCE_REL = "evidence/b3/build_evidence.json"
+TC = b2be.TC
+SA = b2be.SA
+WD = b2be.WD
+ARCH_FLAGS = b2be.ARCH_FLAGS
+RUNTIME_OBJECTS = b2be.RUNTIME_OBJECTS
+CONSOLE_SRC = "bsp/src/console.c"
+# the MANDATORY inventory, relative to b3/firmware: every file the image is built from
+APP_SOURCES = ("b3_app.c", "b2_search.c", "b2_search.h", "b3_orch.c", "b3_orch.h", "b3_record.c", "b3_record.h",
+               "b3_online_view.c", "b3_online_view.h", "b3_carto.c", "b3_carto.h", "b3_wire.c", "b3_wire.h",
+               "p3_derive.c", "p3_derive.h", "p3_rectx.c", "p3_rectx.h", "p3_pull.c", "p3_pull.h", "p3_data.h",
+               "b3_seed_data.h", "bsp/build.sh", "bsp/lscript.ld", "bsp/src/console.c", "bsp/include/bspconfig.h",
+               "bsp/include/xmem_config.h", "bsp/include/xparameters.h")
+STACK_INCOMPLETE = ("the image stack assessment has not been completed: it is the next unit of image stage 5 (the owner's "
+                    "ruling of 2026-10-04) — no stack bound is claimed for this image, and it is not ready")
+
+
+def sha(p: Path) -> str:
+    return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+
+
+def git(*args: str) -> str | None:
+    p = subprocess.run(["git", "-C", str(REPO_ROOT), *args], capture_output=True, text=True)
+    return p.stdout if p.returncode == 0 else None
+
+
+def git_state() -> dict:
+    """The head and every path that differs from it (tracked changes and untracked files), repo-relative."""
+    head = (git("rev-parse", "HEAD") or "").strip() or None
+    out = git("status", "--porcelain", "--untracked-files=all") or ""
+    dirty = sorted({line[3:].split(" -> ")[-1] for line in out.splitlines() if len(line) > 3})
+    return {"head": head, "dirty": dirty}
+
+
+def trusted_compiler() -> Path:
+    return b2be.trusted_compiler()
+
+
+def resolved_runtime_objects() -> dict[str, dict]:
+    return b2be.resolved_runtime_objects()
+
+
+def build_script_sources(build: Path = BUILD) -> dict[str, list[str]]:
+    """The translation units build.sh compiles, read from build.sh itself (one source of truth)."""
+    text = Path(build).read_text()
+    out = {}
+    for name in ("ASM_SRCS", "C_SRCS", "SYS_SRCS", "WDT_SRCS"):
+        m = re.search(name + r'="([^"]*)"', text, re.S)
+        if not m:
+            raise RuntimeError(f"build.sh: {name} not found")
+        out[name] = m.group(1).replace("\\\n", " ").split()
+    line = [x for x in text.splitlines() if x.strip().startswith("for s in b3_app.c")]
+    if len(line) != 1:
+        raise RuntimeError("build.sh: the application unit list not found exactly once")
+    out["APP_SRCS"] = [t for t in line[0].split(" in ", 1)[1].split(";")[0].split() if t.endswith(".c")]
+    out["CONSOLE_SRCS"] = [CONSOLE_SRC]
+    return out
+
+
+def unit_flags() -> tuple[list[str], list[str]]:
+    """The -M flags of the BSP units and of the application units (build.sh's, without the output-only options)."""
+    inc = [f"-I{FW / 'bsp/include'}", f"-I{SA}/common", f"-I{SA}/arm/common", f"-I{SA}/arm/common/gcc",
+           f"-I{SA}/arm/cortexa9", f"-I{SA}/arm/cortexa9/gcc", f"-I{WD}"]
+    return [*ARCH_FLAGS, "-std=gnu11", "-DUSE_AMP=0", *inc], [*ARCH_FLAGS, "-std=c99", "-ffreestanding", *inc]
+
+
+def units(lists: dict) -> list[tuple[Path, str]]:
+    out = []
+    for s in lists["ASM_SRCS"] + lists["C_SRCS"] + lists["SYS_SRCS"]:
+        out.append((SA / s, "bsp"))
+    for s in lists["WDT_SRCS"]:
+        out.append((WD / s, "bsp"))
+    for s in lists["CONSOLE_SRCS"]:
+        out.append((FW / s, "bsp"))
+    for s in lists["APP_SRCS"]:
+        out.append((FW / s, "app"))
+    return out
+
+
+def dependency_set(unit: Path, flags: list[str]) -> set[str]:
+    p = subprocess.run([str(trusted_compiler()), *flags, "-M", str(unit)], capture_output=True, text=True)
+    if p.returncode != 0:
+        raise RuntimeError(f"{unit}: {p.stderr[-1000:]}")
+    return {str(Path(t)) for t in p.stdout.replace("\\\n", " ").split()[1:]
+            if Path(t).is_file() and Path(t).resolve() != Path(unit).resolve()}
+
+
+def bsp_inputs() -> dict:
+    lists = build_script_sources()
+    bsp_flags, app_flags = unit_flags()
+    tus, headers, deps = {}, {}, {}
+    for src, kind in units(lists):
+        if not src.is_file():
+            raise RuntimeError(f"build input missing: {src}")
+        tus[str(src)] = sha(src)
+        here = dependency_set(src, bsp_flags if kind == "bsp" else app_flags)
+        for h in here:
+            headers[h] = sha(Path(h))
+        deps[str(src)] = sorted(here)
+    objs = {name: {"path": str(v["path"]), "sha256": v["sha256"]} for name, v in resolved_runtime_objects().items()}
+    return {"translation_units": dict(sorted(tus.items())), "headers": dict(sorted(headers.items())),
+            "dependencies": dict(sorted(deps.items())), "toolchain_objects": objs, "build_script_lists": lists,
+            "header_roots": {"embeddedsw_standalone": str(SA), "embeddedsw_watchdog": str(WD), "firmware": str(FW),
+                             "toolchain": str(TC)}}
+
+
+def expected_units(lists: dict) -> set[str]:
+    """The COMPLETE set of translation units build.sh compiles, from ITS lists and the TRUSTED roots."""
+    return {str(p) for p, _ in units(lists)}
+
+
+def build_once() -> dict[str, str]:
+    """One clean build: the intermediate products and both outputs removed first; returns both output digests."""
+    if INTERMEDIATE.exists():
+        shutil.rmtree(INTERMEDIATE)
+    for rel in (IMAGE_REL, ELF_REL):
+        (REPO_ROOT / rel).unlink(missing_ok=True)
+    p = subprocess.run(["bash", str(BUILD)], capture_output=True, text=True)
+    if p.returncode != 0:
+        raise RuntimeError(p.stdout[-2000:] + p.stderr[-2000:])
+    return {"bin_sha256": sha(REPO_ROOT / IMAGE_REL), "elf_sha256": sha(REPO_ROOT / ELF_REL)}
+
+
+def stack_block(elf_sha256: str | None) -> dict:
+    return {"status": "INCOMPLETE", "complete": False, "elf_sha256": elf_sha256, "tool": None, "bounds": None,
+            "findings": [STACK_INCOMPLETE],
+            "note": "image stage 5 is split: this unit builds and records the image; the stack assessment of the final "
+                    "ELF (b3/host/b3_image_stack.py, the next unit) has not run, so NO stack bound is claimed here"}
+
+
+def build_evidence(do_build: bool) -> dict:
+    builds = [build_once(), build_once()] if do_build else []
+    image, elf = REPO_ROOT / IMAGE_REL, REPO_ROOT / ELF_REL
+    cc = trusted_compiler()
+    elf_sha = sha(elf) if elf.is_file() else None
+    bin_ok = len(builds) == 2 and builds[0]["bin_sha256"] == builds[1]["bin_sha256"]
+    elf_ok = len(builds) == 2 and builds[0]["elf_sha256"] == builds[1]["elf_sha256"]
+    return {"schema": SCHEMA, "schema_version": SCHEMA_VERSION,
+            "at": time.strftime("%Y-%m-%dT%H%M%SZ", time.gmtime()),
+            "git": git_state(),
+            "toolchain": {"path": str(TC), "gcc_sha256": sha(cc) if cc.is_file() else None,
+                          "version": subprocess.run([str(cc), "--version"], capture_output=True, text=True).stdout.splitlines()[0]
+                          if cc.is_file() else None,
+                          "instrument_role": "read-only use of the archived instrument's toolchain directory"},
+            "sources": {s: sha(FW / s) for s in APP_SOURCES},
+            "bsp_inputs": bsp_inputs(),
+            "image": {"path": IMAGE_REL, "elf_path": ELF_REL, "sha256": sha(image) if image.is_file() else None,
+                      "bytes": image.stat().st_size if image.is_file() else None, "elf_sha256": elf_sha,
+                      "load_address": "0x02000000", "entry": "go 0x2000000"},
+            "reproducibility": {"builds": builds, "bin_identical": bin_ok if do_build else None,
+                                "elf_identical": elf_ok if do_build else None,
+                                "reproduced_byte_identical": (bin_ok and elf_ok) if do_build else None,
+                                "clean": "before each build: build/b3_bsp/ and both outputs removed",
+                                "note": "each entry is one clean build's BOTH outputs; the claim is that the two builds agree "
+                                        "in the binary AND in the ELF"},
+            "stack": stack_block(elf_sha),
+            "readiness": {"image_ready": False, "blocking": ["stack: INCOMPLETE"],
+                          "note": "the image is not ready while the stack assessment is incomplete (image stage 5 closes only "
+                                  "after the stack unit is reviewed)"}}
+
+
+def _same_file(a: Path, b: Path) -> bool:
+    try:
+        return Path(a).resolve() == Path(b).resolve()
+    except OSError:
+        return str(a) == str(b)
+
+
+SECTIONS = ("git", "toolchain", "sources", "bsp_inputs", "image", "reproducibility", "stack", "readiness")
+BSP_SECTIONS = ("translation_units", "headers", "dependencies", "toolchain_objects", "build_script_lists", "header_roots")
+STACK_KEYS = ("status", "complete", "elf_sha256", "tool", "bounds", "findings", "note")
+
+
+def verify_findings(ev: dict, root: Path = REPO_ROOT, require_outputs: bool = True) -> list[str]:
+    """Every way the evidence can fail to describe the image, as named findings (empty = the PROVENANCE stands).
+    A pure function of the evidence and the files it names; readiness is `readiness_findings`."""
+    f: list[str] = []
+    root = Path(root)
+    fw = root / FW_REL
+
+    def check(path: Path, want, what: str):
+        if not path.is_file():
+            f.append(f"{what}: {path} does not exist")
+        elif want is None:
+            f.append(f"{what}: {path} has no recorded hash")
+        elif sha(path) != want:
+            f.append(f"{what}: {path} does not hash to the record")
+
+    if not isinstance(ev, dict) or ev.get("schema") != SCHEMA or ev.get("schema_version") != SCHEMA_VERSION:
+        return [f"the evidence is not {SCHEMA} {SCHEMA_VERSION}"]
+    for k in SECTIONS:
+        if k not in ev:
+            return [f"the evidence has no {k!r} section"]
+    bi = ev["bsp_inputs"]
+    for k in BSP_SECTIONS:
+        if k not in bi:
+            return [f"bsp_inputs has no {k!r}"]
+
+    # the git state: every change under b3/firmware must be a recorded input, an output, or the import table
+    allowed = {f"{FW_REL}/{s}" for s in ev["sources"]} | {IMAGE_REL, ELF_REL, f"{FW_REL}/IMPORT.json"}
+    for path in ev["git"].get("dirty", []):
+        if path.startswith(FW_REL + "/") and path not in allowed:
+            f.append(f"git: {path} differs from the head under b3/firmware but is neither a recorded source nor an output")
+    if not ev["git"].get("head"):
+        f.append("git: no head recorded")
+
+    # the sources: the MANDATORY set is this module's
+    for rel, want in ev["sources"].items():
+        check(fw / rel, want, f"source {rel}")
+    for rel in APP_SOURCES:
+        if rel not in ev["sources"]:
+            f.append(f"source inventory: {rel} is a required build input but is not recorded")
+
+    # the translation units: exactly what build.sh compiles (its lists read from the TRUSTED build.sh)
+    try:
+        lists = build_script_sources(fw / "bsp/build.sh")
+    except (OSError, RuntimeError) as e:
+        return f + [f"the build script cannot be read: {e}"]
+    if bi["build_script_lists"] != lists:
+        f.append("build_script_lists: the recorded lists are not build.sh's")
+    want_units = {str(p).replace(str(REPO_ROOT), str(root)) for p in expected_units(lists)}
+    recorded = set(bi["translation_units"])
+    for missing in sorted(want_units - recorded):
+        f.append(f"translation units: {missing} is compiled by the build script but not recorded")
+    for extra in sorted(recorded - want_units):
+        f.append(f"translation units: {extra} is recorded but not compiled by the build script")
+    for path, want in bi["translation_units"].items():
+        check(Path(path), want, "translation unit")
+    for rel in lists["APP_SRCS"] + lists["CONSOLE_SRCS"]:
+        if rel not in ev["sources"]:
+            f.append(f"source inventory: {rel} is linked by the build script but not recorded")
+
+    # the headers: exactly the union of the recorded dependencies
+    dep_union: set[str] = set()
+    for unit, deps in bi["dependencies"].items():
+        if unit not in bi["translation_units"]:
+            f.append(f"dependencies: {unit} is not a recorded translation unit")
+        dep_union |= set(deps)
+    for unit in bi["translation_units"]:
+        if unit not in bi["dependencies"]:
+            f.append(f"dependencies: no dependency list for {unit}")
+    for missing in sorted(dep_union - set(bi["headers"])):
+        f.append(f"headers: {missing} is a recorded dependency but has no hash")
+    for extra in sorted(set(bi["headers"]) - dep_union):
+        f.append(f"headers: {extra} is recorded but is no unit's dependency")
+    for path, want in bi["headers"].items():
+        check(Path(path), want, "header")
+
+    # the compiler and the runtime objects: resolved from the build configuration, then compared
+    cc = trusted_compiler()
+    tc = ev["toolchain"]
+    if not cc.is_file():
+        f.append(f"the compiler: {cc} does not exist")
+    else:
+        if not _same_file(Path(tc.get("path", "")) / "bin/arm-none-eabi-gcc", cc):
+            f.append(f"the compiler: the evidence names {tc.get('path')!r}, the build uses {cc.parent.parent}")
+        if tc.get("gcc_sha256") != sha(cc):
+            f.append("the compiler: the recorded hash is not the build compiler's")
+    objs = bi["toolchain_objects"]
+    resolved = resolved_runtime_objects()
+    for name in RUNTIME_OBJECTS:
+        if name not in objs:
+            f.append(f"toolchain objects: {name} is not recorded")
+            continue
+        want = resolved[name]
+        if want["sha256"] is None:
+            f.append(f"runtime object {name}: the link does not resolve it")
+            continue
+        if not _same_file(Path(objs[name].get("path", "")), want["path"]):
+            f.append(f"runtime object {name}: the evidence names {objs[name].get('path')}, the link resolves {want['path']}")
+        if objs[name].get("sha256") != want["sha256"]:
+            f.append(f"runtime object {name}: the recorded hash is not the resolved file's")
+
+    # the two clean builds: both outputs, equal to each other and to the named image
+    rep = ev["reproducibility"]
+    builds = rep.get("builds") or []
+    if len(builds) != 2 or not all(isinstance(b, dict) and "bin_sha256" in b and "elf_sha256" in b for b in builds):
+        f.append("reproducibility: two builds, each with both output digests, are required")
+    else:
+        bin_ok = builds[0]["bin_sha256"] == builds[1]["bin_sha256"]
+        elf_ok = builds[0]["elf_sha256"] == builds[1]["elf_sha256"]
+        if not bin_ok:
+            f.append("reproducibility: the two builds' binaries differ")
+        if not elf_ok:
+            f.append("reproducibility: the two builds' ELFs differ")
+        if rep.get("bin_identical") is not bin_ok or rep.get("elf_identical") is not elf_ok \
+                or rep.get("reproduced_byte_identical") is not (bin_ok and elf_ok):
+            f.append("reproducibility: the recorded verdicts disagree with the recorded digests")
+        for i, b in enumerate(builds):
+            if b["bin_sha256"] != ev["image"].get("sha256"):
+                f.append(f"reproducibility: build {i}'s binary is not the named image")
+            if b["elf_sha256"] != ev["image"].get("elf_sha256"):
+                f.append(f"reproducibility: build {i}'s ELF is not the named ELF")
+
+    # the outputs: the canonical paths, present and matching
+    im = ev["image"]
+    if im.get("path") != IMAGE_REL or im.get("elf_path") != ELF_REL:
+        f.append(f"the image: the evidence names {im.get('path')!r} / {im.get('elf_path')!r}, the B3 image is {IMAGE_REL} / {ELF_REL}")
+    image, elf = root / IMAGE_REL, root / ELF_REL
+    if require_outputs or image.is_file():
+        check(image, im.get("sha256"), "the image")
+        if image.is_file() and image.stat().st_size != im.get("bytes"):
+            f.append("the image on disk is not the recorded size")
+    if require_outputs or elf.is_file():
+        check(elf, im.get("elf_sha256"), "the ELF")
+
+    # the stack block: present, honest, and consistent with readiness
+    st = ev["stack"]
+    if not isinstance(st, dict) or sorted(st) != sorted(STACK_KEYS):
+        f.append(f"stack: the block's keys are not exactly {list(STACK_KEYS)}")
+    else:
+        if st["elf_sha256"] != im.get("elf_sha256"):
+            f.append("stack: the block is not about the named ELF")
+        if st["complete"] is not False or st["status"] != "INCOMPLETE":
+            f.append("stack: this tool version cannot check a completed stack assessment — the stack unit has not "
+                     "landed; a block claiming completion is refused")
+        if not st["findings"] or st["bounds"] is not None or st["tool"] is not None:
+            f.append("stack: an INCOMPLETE block must name why and claim no bound and no tool")
+    rd = ev["readiness"]
+    if not isinstance(rd, dict) or rd.get("image_ready") is not False:
+        f.append("readiness: image_ready must be false while the stack assessment is incomplete")
+    elif "stack: INCOMPLETE" not in (rd.get("blocking") or []):
+        f.append("readiness: the incomplete stack is not named among the blocking items")
+    return f
+
+
+def readiness_findings(ev: dict, root: Path = REPO_ROOT) -> list[str]:
+    """Whether the image is READY: the provenance findings, plus every blocking item — with this version, always the
+    incomplete stack assessment. Never empty until the stack unit lands."""
+    f = verify_findings(ev, root)
+    st = ev.get("stack") if isinstance(ev, dict) else None
+    if not isinstance(st, dict) or st.get("complete") is not True:
+        f.append(f"stack: {STACK_INCOMPLETE}")
+    return f
+
+
+def main(argv=None) -> int:
+    import argparse
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--build", action="store_true")
+    ap.add_argument("--out", type=Path, default=REPO_ROOT / EVIDENCE_REL)
+    a = ap.parse_args(argv)
+    ev = build_evidence(a.build)
+    a.out.parent.mkdir(parents=True, exist_ok=True)
+    a.out.write_text(json.dumps(ev, indent=1, sort_keys=True) + "\n")
+    print(f"image {ev['image']['sha256']} reproduced {ev['reproducibility']['reproduced_byte_identical']} "
+          f"stack {ev['stack']['status']} image_ready {ev['readiness']['image_ready']} -> {a.out}")
+    return 0 if (not a.build or ev["reproducibility"]["reproduced_byte_identical"]) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

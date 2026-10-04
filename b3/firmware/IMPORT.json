@@ -17,6 +17,13 @@
    "note": "B2's engine header, unchanged.",
    "sha256": "5daf4d2703c8f044d1c63f1ff43f648bf9042a4266bf1a7bf7f54737d4467cba"
   },
+  "b3/firmware/b3_app.c": {
+   "base": "firmware/b2/b2_app.c",
+   "base_sha256": "130429ebe22241eaa2ea7c23634ca027862fd45476f6c293bd722b656b36ecc0",
+   "kind": "derived",
+   "note": "DERIVED from B2's application: the orchestrator is b3_orch.c (three arms, the O arm's observation inside it), b3_orch_observe < 0 and a search block that does not render are PROTOCOL (no record without its block), app_identity 1.6.0 (carto_version, arms, b1_map_cost) with the slice decoded by b3_page_slice and a page that is neither the B3 nor the B3Q profile an identity finding, and every outbound buffer sized from the theoretical maximum of its encoder (B3_*_MAX, held by b3/tests/test_b3_app_audit.py) with the base64 step checked against its buffer before it runs. The HAL, the transactions, the audit pull, the watchdog, the closing control and the AXI allowlist are B2's. It must exist and must DIFFER from the base.",
+   "sha256": "c404abd6372ebe05ef723add251ef519261db6c568f08441957d562756f88dd8"
+  },
   "b3/firmware/b3_carto.c": {
    "kind": "new",
    "note": "the specimen cartographer, the C twin of b3/host/b3_carto.py (image stage 1).",
@@ -106,6 +113,57 @@
    "note": "the wire's host driver (b3/tests/test_b3_wire_contract.py); never linked into the image.",
    "role": "host twin"
   },
+  "b3/firmware/bsp/build.sh": {
+   "base": "firmware/b2/bsp/build.sh",
+   "base_sha256": "26df1e84dc3482c279b4e990204551ceae796a2fb1333372a1ce73da22b361a8",
+   "kind": "derived",
+   "note": "DERIVED from B2's build script: the B3 application's translation units, the image name b3_app, the intermediate products in the top-level ignored build/b3_bsp/ and only the image (b3_app.bin / b3_app.elf) in b3/firmware/bsp/out/, -fstack-usage -fcallgraph-info=su added to the compile flags, the repository root taken from the script's location. The architecture, the BSP, the toolchain and every link setting are B2's. It must exist and must DIFFER from the base.",
+   "sha256": "c3a682309f9e936cb728b4c3d3219fda295c43a236ea214c38a8023922edda44"
+  },
+  "b3/firmware/bsp/include/bspconfig.h": {
+   "base": "firmware/b2/bsp/include/bspconfig.h",
+   "kind": "verbatim",
+   "note": "the BSP configuration header, as B2 carries it.",
+   "sha256": "06307d4353e828e6be911e20a5e508fbf8139bf7fb50cf443e832fb82bd91617"
+  },
+  "b3/firmware/bsp/include/xmem_config.h": {
+   "base": "firmware/b2/bsp/include/xmem_config.h",
+   "kind": "verbatim",
+   "note": "the BSP memory configuration header, as B2 carries it.",
+   "sha256": "5c0e0747268b8c7b46258559987659fca77f147f828873aff2e31e38274ba1bc"
+  },
+  "b3/firmware/bsp/include/xparameters.h": {
+   "base": "firmware/b2/bsp/include/xparameters.h",
+   "kind": "verbatim",
+   "note": "the BSP parameters header, as B2 carries it.",
+   "sha256": "04e7da5c306dcb8596da3d20a51472cd33b167d5d197b90de9558bec150ec522"
+  },
+  "b3/firmware/bsp/lscript.ld": {
+   "base": "firmware/b2/bsp/lscript.ld",
+   "kind": "verbatim",
+   "note": "the BSP linker script, as B2 carries it (the 0x4000 main stack and the mode stacks the stack assessment reads).",
+   "sha256": "96942701c80022fc4a83672166ebe6a7573094aef541ed93f9d4e1deda5dd8d8"
+  },
+  "b3/firmware/bsp/out/b3_app.bin": {
+   "evidence": "evidence/b3/build_evidence.json",
+   "kind": "built",
+   "note": "the committed image (the owner's ruling of 2026-09-28): built by bsp/build.sh from the sources above, reproduced byte for byte by two clean builds recorded in the build evidence.",
+   "produced_by": "b3/firmware/bsp/build.sh",
+   "sha256": "1aedcb5ff7a5f20bb6e35d28a435ceda9d913eef96170426ef3a6908699ce1c9"
+  },
+  "b3/firmware/bsp/out/b3_app.elf": {
+   "evidence": "evidence/b3/build_evidence.json",
+   "kind": "built",
+   "note": "the committed image (the owner's ruling of 2026-09-28): built by bsp/build.sh from the sources above, reproduced byte for byte by two clean builds recorded in the build evidence.",
+   "produced_by": "b3/firmware/bsp/build.sh",
+   "sha256": "fa927d82bc3618710c9452d7298f279ae4dc2e38b7d6a3b94402f5c482c81a6b"
+  },
+  "b3/firmware/bsp/src/console.c": {
+   "base": "firmware/b2/bsp/src/console.c",
+   "kind": "verbatim",
+   "note": "the BSP console glue (outbyte / inbyte / RX FIFO), as B2 carries it.",
+   "sha256": "fb9ebd5e22de514d13e85a6b4ef246796da0b2b75b9a0d9c2b87913ca4858b83"
+  },
   "b3/firmware/p3_data.h": {
    "base": "firmware/b2/p3_data.h",
    "kind": "verbatim",
@@ -123,11 +181,35 @@
    "kind": "verbatim",
    "note": "the instrument's derive header, as B2 imported it.",
    "sha256": "38ee462f8b242bac2adc140ed3ca45dd86ce232415a65f00dc1b92d24100f091"
+  },
+  "b3/firmware/p3_pull.c": {
+   "base": "firmware/b2/p3_pull.c",
+   "kind": "verbatim",
+   "note": "the instrument's audit-pull unit, as B2 imported it.",
+   "sha256": "d58d688f12d75a4dfa7836dda947c2a92707097b42d681ea1d9bc274cccf1963"
+  },
+  "b3/firmware/p3_pull.h": {
+   "base": "firmware/b2/p3_pull.h",
+   "kind": "verbatim",
+   "note": "the instrument's audit-pull header, as B2 imported it.",
+   "sha256": "b3ce0da7ea33c7659d039ff870891f85c845051f5aaeb991cc77ce7c45eaa289"
+  },
+  "b3/firmware/p3_rectx.c": {
+   "base": "firmware/b2/p3_rectx.c",
+   "kind": "verbatim",
+   "note": "the instrument's REC transaction unit (rec-v3 / rel-v4), as B2 imported it (firmware/b2/IMPORT.json, kind=verbatim).",
+   "sha256": "6dfff8693e5312b600c95bf4be22aebb8dc14882614f2668fc081950e52315ba"
+  },
+  "b3/firmware/p3_rectx.h": {
+   "base": "firmware/b2/p3_rectx.h",
+   "kind": "verbatim",
+   "note": "the instrument's REC transaction header, as B2 imported it.",
+   "sha256": "7064c86dff177fe3305f4d8a1a2381249641dae363f6cfbea7a2e89b437b580b"
   }
  },
  "schema": "b3_firmware_import",
  "schema_version": "1.0.0",
- "scope": "the CURRENT image-source surface of b3/firmware at image stage 4 — every file under it but this table, each classified verbatim (a byte-for-byte copy of a B2 file), derived (a B2 file changed as its note says, base and derived digests recorded) or new (B3's own, no base). It is NOT yet the final image import inventory: the application / build stage adds every remaining docs/b3_architecture.md §7 (E1) item — the instrument's p3_rectx / p3_pull, the BSP and the linker script verbatim, the application derived — and the image itself. The pin table has not been generated, so this table is extended in place until it is.",
+ "scope": "the final image import inventory of b3/firmware at image stage 5 — every file under it but this table, each classified verbatim (a byte-for-byte copy of a B2 file), derived (a B2 file changed as its note says, base and derived digests recorded), new (B3's own, no base) or built (the committed image, produced by bsp/build.sh and bound to the build evidence). The host application (image stage 6) lives outside b3/firmware. The pin table has not been generated.",
  "source": "firmware/b2 of this repository (B2, main 73b68d7, S3), itself importing the instrument at github.com/14sea/zynq-psoracle 689dde1 (firmware/b2/IMPORT.json)",
- "stage": "image stage 4"
+ "stage": "image stage 5"
 }
