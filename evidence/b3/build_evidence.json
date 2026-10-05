@@ -1,5 +1,5 @@
 {
- "at": "2026-10-04T193135Z",
+ "at": "2026-10-05T084955Z",
  "bsp_inputs": {
   "build_script_lists": {
    "APP_SRCS": [
@@ -1636,13 +1636,10 @@
  },
  "git": {
   "dirty": [
-   "b3/firmware/b3_app.c",
-   "b3/firmware/bsp/out/b3_app.bin",
-   "b3/firmware/bsp/out/b3_app.elf",
-   "b3/host/b3_build_evidence.py",
-   "b3/host/b3_image_stack.py"
+   "b3/host/b3_image_stack.py",
+   "b3/tests/test_b3_image_stack.py"
   ],
-  "head": "a9de8c4c2249ff0da22cfb57889a4b1d28b0d6c1"
+  "head": "94073b37df9021ad1fbdfe17a6aa89319e2f9a89"
  },
  "image": {
   "bytes": 131092,
@@ -2064,13 +2061,26 @@
      "cleanup_stdio"
     ]
    },
+   "value_model": {
+    "rule": "a callback read from a frame slot or an object's field is the LAST word stored there on every path to the read / the hand-over (flow-sensitive, by the bytes each store writes; a conditional, partial, overlapping, register-indexed or frame-derived store, a path with no store, and a call that may store through a pointer reaching the slot each make it unknown, which is a finding). Stated limits, not proved from the image: (M1) a frame address is followed through registers, the routine's own frame slots and call arguments, not through memory outside the frame; (M2) a callee writes at non-negative offsets from a pointer it is given; (M3) for a prebuilt library routine or an indirect call only the four register arguments are followed. A prebuilt C-library routine handed a pointer is assumed to write anywhere from it, except the routines named here, taken at their C-standard contract (the destination is written for at most the constant byte count passed; the others do not write through their arguments), each bound to the libc member that is the image's code",
+    "targets": [
+     "memcpy",
+     "memset",
+     "snprintf",
+     "strcmp",
+     "strlen",
+     "strncpy",
+     "strrchr",
+     "strstr"
+    ]
+   },
    "xil_assert_callback": {
     "rule": "Xil_AssertCallbackRoutine starts at 0 and only Xil_Assert, which never stores, references it",
     "targets": []
    }
   },
   "status": "COMPLETE",
-  "tool": "b3-image-stack 1.0.0"
+  "tool": "b3-image-stack 1.1.0"
  },
  "toolchain": {
   "gcc_sha256": "a47ae91699d0611c817a166c986df647d56ce57e9162afa6d25385dd1771b204",
