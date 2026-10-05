@@ -991,15 +991,14 @@ static uint64_t app_now_ticks(void *ctx)
     return (uint64_t)now;
 }
 
+/* The receiver's primitives are fixed, so the table is a read-only constant (2026-10-05, the stack unit: no
+ * callback table is built on the stack; the values are the ones the stack copy held). */
+static const p3_rectx_rx APP_RX = { app_rx_ready, app_rx_byte, app_now_ticks, NULL };
+
 static int recv_line_bounded(char *out, size_t max, uint32_t idle_polls)
 {
-    p3_rectx_rx rx;
-    rx.rx_ready = app_rx_ready;
-    rx.rx_byte = app_rx_byte;
-    rx.now_ticks = app_now_ticks;
-    rx.ctx = NULL;
     /* the poll cap AND the clock bound (P3_BOUND_TICKS): the first to run out ends the wait */
-    return p3_rectx_recv_line_timed(&rx, out, max, idle_polls, P3_BOUND_TICKS);
+    return p3_rectx_recv_line_timed(&APP_RX, out, max, idle_polls, P3_BOUND_TICKS);
 }
 
 static void serve_sparse_chunk(uint32_t chunk, uint32_t chunks, uint32_t total, const char *span)
@@ -1076,6 +1075,16 @@ static int pull_channel_failed_cb(void *ctx)
     return S.kind == P3_PROTOCOL;
 }
 
+/* The pull's I/O is a read-only constant and its context a static (2026-10-05, the stack unit: no callback table
+ * on the stack). audit_pull is the only writer of g_pull_ctx, sets it immediately before its one p3_pull_run call,
+ * and is never re-entered (p3_pull_run's callbacks do not call it), so each run sees exactly the values the stack
+ * copy held. */
+static pull_ctx g_pull_ctx;
+static const p3_pull_io PULL_IO = {
+    pull_send_ready_cb, pull_serve_chunk_cb, pull_send_wait_cb, pull_recv_cb, pull_parse_cb,
+    pull_payload_fields_cb, pull_channel_failed_cb, g_line, sizeof(g_line), &g_pull_ctx
+};
+
 /* The host-paced audit pull (docs/l6_audit_pull_design.md). Announces the transaction
  * (AUDIT_READY), then answers every AUDITGET with the sparse chunk asked for — as often
  * as asked: a chunk the host lost is simply asked for again — until AUDITDONE (0: the
@@ -1089,8 +1098,6 @@ static int audit_pull(int with_readback)
     const char *span = with_readback ? "streams+readback" : "streams";
     uint32_t chunks = (total + P3_WIRE_SPARSE_WINDOW - 1u) / P3_WIRE_SPARSE_WINDOW;
     uint32_t nonzero = 0, i;
-    pull_ctx ctx;
-    p3_pull_io io;
     p3_pull_result pr;
     int rc;
 
@@ -1106,20 +1113,10 @@ static int audit_pull(int with_readback)
                             p3_wire_audit_ready(S.seq, span, total, chunks, nonzero, g_payload, sizeof(g_payload)),
                             g_ready_line, sizeof(g_ready_line)) == 0u)
         return -1;
-    ctx.chunks = chunks;
-    ctx.total = total;
-    ctx.span = span;
-    io.send_ready = pull_send_ready_cb;
-    io.serve_chunk = pull_serve_chunk_cb;
-    io.send_wait = pull_send_wait_cb;
-    io.recv_bounded = pull_recv_cb;
-    io.parse = pull_parse_cb;
-    io.payload_fields = pull_payload_fields_cb;
-    io.channel_failed = pull_channel_failed_cb;
-    io.rx = g_line;
-    io.rx_max = sizeof(g_line);
-    io.ctx = &ctx;
-    rc = p3_pull_run(S.seq, chunks, &io, &pr);
+    g_pull_ctx.chunks = chunks;          /* this pull's context, read by pull_serve_chunk_cb during the run */
+    g_pull_ctx.total = total;
+    g_pull_ctx.span = span;
+    rc = p3_pull_run(S.seq, chunks, &PULL_IO, &pr);
     S.audit_chunks_served = pr.chunks_served;
     if (rc == 0) {
         S.audit_served = 1;
@@ -1179,20 +1176,20 @@ static int rectx_payload_seq_cb(const char *payload, uint32_t *seq_out, void *ct
 /* rel-v4: one transaction over the line in g_tx_line (n bytes, newline included) — the
  * IDENT, the SIGNREQ or the TERM — with this file's I/O and the given poll cap; the clock
  * bound is P3_BOUND_TICKS through recv_line_bounded. Returns p3_tx_run's code. */
+/* The transactions' I/O tables are read-only constants (2026-10-05, the stack unit: no callback table on the
+ * stack; the values are the ones the stack copies held — REC_IO's ctx was zeroed by the memset, TX_IO's set NULL). */
+static const p3_rectx_io TX_IO = {
+    rectx_send_cb, tx_recv_cb, rectx_parse_cb, rectx_payload_seq_cb, g_line, sizeof(g_line), NULL
+};
+static const p3_rectx_io REC_IO = {
+    rectx_send_cb, rectx_recv_cb, rectx_parse_cb, rectx_payload_seq_cb, g_line, sizeof(g_line), NULL
+};
+
 static int tx_run_line(size_t n, uint32_t seq, const p3_tx_kinds *kinds, int corrupt_first,
                        uint32_t idle_polls, p3_rectx_result *r)
 {
-    p3_rectx_io io;
-
-    io.send = rectx_send_cb;
-    io.recv_bounded = tx_recv_cb;
-    io.parse = rectx_parse_cb;
-    io.payload_seq = rectx_payload_seq_cb;
-    io.rx = g_line;
-    io.rx_max = sizeof(g_line);
-    io.ctx = NULL;
     g_tx_idle_polls = idle_polls;
-    return p3_tx_run(g_tx_line, n, seq, kinds, corrupt_first, &io, g_rec_scratch, sizeof(g_rec_scratch), r);
+    return p3_tx_run(g_tx_line, n, seq, kinds, corrupt_first, &TX_IO, g_rec_scratch, sizeof(g_rec_scratch), r);
 }
 
 /* One candidate's record, built by p3_wire so it carries `seq`, `verified` and the nested
@@ -1209,7 +1206,6 @@ static int tx_run_line(size_t n, uint32_t seq, const p3_tx_kinds *kinds, int cor
  * of the FIRST transmission of the opening baseline's record (seq 1) only. */
 static int emit_record(p3_wire_record_in *rec, const char *outcome)
 {
-    p3_rectx_io io;
     p3_rectx_result r;
     size_t n;
     int rc;
@@ -1223,14 +1219,7 @@ static int emit_record(p3_wire_record_in *rec, const char *outcome)
                             g_rec_line, sizeof(g_rec_line));
     if (n == 0u)
         return -1; /* PROTOCOL already recorded by the builder */
-    memset(&io, 0, sizeof(io));
-    io.send = rectx_send_cb;
-    io.recv_bounded = rectx_recv_cb;
-    io.parse = rectx_parse_cb;
-    io.payload_seq = rectx_payload_seq_cb;
-    io.rx = g_line;
-    io.rx_max = sizeof(g_line);
-    rc = p3_rectx_run(g_rec_line, n, rec->seq, (S.rec_control && rec->seq == 1u) ? 1 : 0, &io,
+    rc = p3_rectx_run(g_rec_line, n, rec->seq, (S.rec_control && rec->seq == 1u) ? 1 : 0, &REC_IO,
                       g_rec_scratch, sizeof(g_rec_scratch), &r);
     S.rec_attempts += r.attempts;
     S.rec_gets += r.gets;

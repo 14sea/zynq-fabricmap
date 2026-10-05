@@ -1,5 +1,5 @@
 {
- "at": "2026-10-05T084955Z",
+ "at": "2026-10-05T142120Z",
  "bsp_inputs": {
   "build_script_lists": {
    "APP_SRCS": [
@@ -1622,7 +1622,7 @@
    "/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common/xil_sutil.c": "9fe6c449b4aa6075f9bcffcd81a4250514a6dbe3f8f605d2017f56bff683b6c0",
    "/home/test/Xilinx/2025.2/data/embeddedsw/lib/bsp/standalone_v9_4/src/common/xil_util.c": "26ab5d3f19adc10d49378b8f0b3a4de39e9a0888bf746ee7cf304955aaf9ad4f",
    "/home/test/zynq_fabricmap/b3/firmware/b2_search.c": "5111ed107fc0a226d7b2c55babc8629eef4c2aa56b381c3a3bce74ad5b7acc89",
-   "/home/test/zynq_fabricmap/b3/firmware/b3_app.c": "42313f63d62083a94eae1f5fd82a6bf9c4822bea615efb77cb793141e925c93b",
+   "/home/test/zynq_fabricmap/b3/firmware/b3_app.c": "2f7f1660d4f598c483139de4bd45d22afe273eecb7876e7419f142db1de8ff66",
    "/home/test/zynq_fabricmap/b3/firmware/b3_carto.c": "ebc68c470f2dcb7d1975d5bbf33acf93eec2933bbd834614d68abddd84d6d0db",
    "/home/test/zynq_fabricmap/b3/firmware/b3_online_view.c": "d21b608967b84e4643dfc99ebca6a31920e9a399e9463da177c5dc7f88288bb9",
    "/home/test/zynq_fabricmap/b3/firmware/b3_orch.c": "6dad4d526858ded3b2d1dfffc67900938bf15c932014d35e1577c5ec1b4d5f53",
@@ -1636,19 +1636,23 @@
  },
  "git": {
   "dirty": [
+   "b3/firmware/IMPORT.json",
+   "b3/firmware/b3_app.c",
+   "b3/firmware/bsp/out/b3_app.bin",
+   "b3/firmware/bsp/out/b3_app.elf",
    "b3/host/b3_image_stack.py",
    "b3/tests/test_b3_image_stack.py"
   ],
-  "head": "94073b37df9021ad1fbdfe17a6aa89319e2f9a89"
+  "head": "1e5596739f6b978d886fff0c153bf067b8dd3fac"
  },
  "image": {
   "bytes": 131092,
   "elf_path": "b3/firmware/bsp/out/b3_app.elf",
-  "elf_sha256": "520508c9f110dd4bc4b247e85aca99a222c0610859f08a6a5ead21f7b5e74cb9",
+  "elf_sha256": "7aab8833e76f49334615855361fe9a3d89991f6a9aba9be48d807ff05d72f008",
   "entry": "go 0x2000000",
   "load_address": "0x02000000",
   "path": "b3/firmware/bsp/out/b3_app.bin",
-  "sha256": "1f4af626024dec66ca5660f03cb427445dce312ef9c60c85bd97cf57bc73eae0"
+  "sha256": "c2f6fb5456bc06a34ef537d6b4a4e5aaf833325379ded66daa444fa6fed293bf"
  },
  "readiness": {
   "blocking": [],
@@ -1659,12 +1663,12 @@
   "bin_identical": true,
   "builds": [
    {
-    "bin_sha256": "1f4af626024dec66ca5660f03cb427445dce312ef9c60c85bd97cf57bc73eae0",
-    "elf_sha256": "520508c9f110dd4bc4b247e85aca99a222c0610859f08a6a5ead21f7b5e74cb9"
+    "bin_sha256": "c2f6fb5456bc06a34ef537d6b4a4e5aaf833325379ded66daa444fa6fed293bf",
+    "elf_sha256": "7aab8833e76f49334615855361fe9a3d89991f6a9aba9be48d807ff05d72f008"
    },
    {
-    "bin_sha256": "1f4af626024dec66ca5660f03cb427445dce312ef9c60c85bd97cf57bc73eae0",
-    "elf_sha256": "520508c9f110dd4bc4b247e85aca99a222c0610859f08a6a5ead21f7b5e74cb9"
+    "bin_sha256": "c2f6fb5456bc06a34ef537d6b4a4e5aaf833325379ded66daa444fa6fed293bf",
+    "elf_sha256": "7aab8833e76f49334615855361fe9a3d89991f6a9aba9be48d807ff05d72f008"
    }
   ],
   "clean": "before each build: build/b3_bsp/ and both outputs removed",
@@ -1677,7 +1681,7 @@
  "sources": {
   "b2_search.c": "5111ed107fc0a226d7b2c55babc8629eef4c2aa56b381c3a3bce74ad5b7acc89",
   "b2_search.h": "5daf4d2703c8f044d1c63f1ff43f648bf9042a4266bf1a7bf7f54737d4467cba",
-  "b3_app.c": "42313f63d62083a94eae1f5fd82a6bf9c4822bea615efb77cb793141e925c93b",
+  "b3_app.c": "2f7f1660d4f598c483139de4bd45d22afe273eecb7876e7419f142db1de8ff66",
   "b3_carto.c": "ebc68c470f2dcb7d1975d5bbf33acf93eec2933bbd834614d68abddd84d6d0db",
   "b3_carto.h": "0dab4388ee11754551a772d6c2aa257761bf2fc71197b80ef8375a0ec6ac25a7",
   "b3_online_view.c": "d21b608967b84e4643dfc99ebca6a31920e9a399e9463da177c5dc7f88288bb9",
@@ -1713,7 +1717,7 @@
    "UND": 2048
   },
   "complete": true,
-  "elf_sha256": "520508c9f110dd4bc4b247e85aca99a222c0610859f08a6a5ead21f7b5e74cb9",
+  "elf_sha256": "7aab8833e76f49334615855361fe9a3d89991f6a9aba9be48d807ff05d72f008",
   "entries": {
    "data_abort": {
     "bound": 24,
@@ -1771,6 +1775,7 @@
     "pull_channel_failed_cb",
     "pull_parse_cb",
     "tx_recv_cb",
+    "pull_recv_cb",
     "app_now_ticks",
     "app_rx_byte",
     "app_rx_ready",
@@ -1779,7 +1784,6 @@
     "pull_payload_fields_cb",
     "rectx_payload_seq_cb",
     "rectx_parse_cb",
-    "pull_recv_cb",
     "rectx_recv_cb",
     "rectx_send_cb",
     "pull_serve_chunk_cb",
@@ -1820,12 +1824,12 @@
    ],
    "handoff": "0x2000338",
    "stacks": {
-    "ABT": "0x214e5e0",
-    "FIQ": "0x214ede0",
-    "IRQ": "0x214cde0",
-    "SVC": "0x214dde0",
-    "SYS": "0x214c5e0",
-    "UND": "0x214f5e0"
+    "ABT": "0x214e5f0",
+    "FIQ": "0x214edf0",
+    "IRQ": "0x214cdf0",
+    "SVC": "0x214ddf0",
+    "SYS": "0x214c5f0",
+    "UND": "0x214f5f0"
    },
    "start_mode": "SYS"
   },
@@ -1839,12 +1843,12 @@
    "facts": {
     "before_the_guard": {
      "flag_stores": [
-      "__swsetup_r 0x2013398",
-      "__swsetup_r 0x20133ce",
-      "__swsetup_r 0x2013438",
-      "__smakebuf_r 0x20134a6",
-      "__smakebuf_r 0x20134f8",
-      "__smakebuf_r 0x2013510"
+      "__swsetup_r 0x20131f8",
+      "__swsetup_r 0x201322e",
+      "__swsetup_r 0x2013298",
+      "__smakebuf_r 0x2013306",
+      "__smakebuf_r 0x2013358",
+      "__smakebuf_r 0x2013370"
      ],
      "routines": [
       "__aeabi_idiv0",
@@ -1873,9 +1877,9 @@
      ],
      "smakebuf_only_when_the_buffer_is_null": [
       {
-       "branch": "0x20133d0",
-       "site": "0x2013412",
-       "test": "0x20133d0",
+       "branch": "0x2013230",
+       "site": "0x2013272",
+       "test": "0x2013230",
        "tested": "r2",
        "value": [
         "buffer"
@@ -1885,33 +1889,33 @@
      "stores_that_cannot_set_snbf": [
       [
        "__swsetup_r",
-       "0x2013398"
+       "0x20131f8"
       ],
       [
        "__swsetup_r",
-       "0x20133ce"
+       "0x201322e"
       ],
       [
        "__swsetup_r",
-       "0x2013438"
+       "0x2013298"
       ]
      ]
     },
     "calls_before_the_hand_over": [
-     "__retarget_lock_init_recursive at 0x2013012 (no store in its closure)"
+     "__retarget_lock_init_recursive at 0x2012e72 (no store in its closure)"
     ],
     "fake_buffer": {
      "frame_address_in": "r3",
-     "store": "0x2013004"
+     "store": "0x2012e64"
     },
     "fake_file": {
-     "call": "0x201301e",
-     "pass": "0x201301a"
+     "call": "0x2012e7e",
+     "pass": "0x2012e7a"
     },
     "fake_flags": {
-     "clear": "0x2012fde",
-     "load": "0x2012fd6",
-     "store": "0x2012fe8"
+     "clear": "0x2012e3e",
+     "load": "0x2012e36",
+     "store": "0x2012e48"
     },
     "file_layout": {
      "off_base": 16,
@@ -1922,35 +1926,35 @@
      "swr": 8
     },
     "guard": {
-     "call": "0x2011ff2",
+     "call": "0x2011e52",
      "instances": [
       {
        "and": [
-        "0x2011e36"
+        "0x2011c96"
        ],
-       "branch": "0x2011e3c",
-       "cmp": "0x2011e3a",
+       "branch": "0x2011c9c",
+       "cmp": "0x2011c9a",
        "equal_outcome": [
-        "0x2011e3c",
-        "0x2011fd2"
+        "0x2011c9c",
+        "0x2011e32"
        ],
        "file": [
-        "a reload (0x2011e02) of the frame slot the incoming r1 is stored to once (0x2011de8)",
-        "a reload (0x20122c6) of the frame slot the incoming r1 is stored to once (0x2011de8)"
+        "a reload (0x2011c62) of the frame slot the incoming r1 is stored to once (0x2011c48)",
+        "a reload (0x2012126) of the frame slot the incoming r1 is stored to once (0x2011c48)"
        ]
       },
       {
        "and": [
-        "0x2011fc8"
+        "0x2011e28"
        ],
-       "branch": "0x2011fce",
-       "cmp": "0x2011fcc",
+       "branch": "0x2011e2e",
+       "cmp": "0x2011e2c",
        "equal_outcome": [
-        "0x2011fce",
-        "0x2011fd2"
+        "0x2011e2e",
+        "0x2011e32"
        ],
        "file": [
-        "a reload (0x2011fb4) of the frame slot the incoming r1 is stored to once (0x2011de8)"
+        "a reload (0x2011e14) of the frame slot the incoming r1 is stored to once (0x2011c48)"
        ]
       }
      ]
@@ -1961,9 +1965,9 @@
     "_vfiprintf_r": 2
    },
    "rule": "newlib_bounded_sbprintf",
-   "sbprintf_to_vfiprintf": "0x201301e",
+   "sbprintf_to_vfiprintf": "0x2012e7e",
    "semantics": "__sbprintf hands _vfiprintf_r a FAKE FILE on its own stack: the caller's flags with __SNBF cleared and a non-NULL buffer. _vfiprintf_r calls __sbprintf only when (flags & (__SNBF|__SWR|__SRW)) == (__SNBF|__SWR). Before that test the flags halfword is written only by __smakebuf_r, reached only from __swsetup_r when the FILE's buffer is NULL \u2014 never for the fake. So the nested _vfiprintf_r cannot call __sbprintf: at most two _vfiprintf_r and one __sbprintf activations. FILE._flags is a short; a word or wider store, or a store through memset / a pointer argument, into a FILE's flags is excluded by the source, not by the image check.",
-   "skipped_in_the_nested_activation": "0x2011ff2",
+   "skipped_in_the_nested_activation": "0x2011e52",
    "source": {
     "files": {
      "newlib/libc/stdio/makebuf.c": "91bca8c3f40a8c4b01f35bbbf14687f2b6a196e368e75835438f408ad616cd9a",
@@ -1982,7 +1986,7 @@
     "tarball_sha256": "0c166a39e1bf0951dfafcd68949fe0e4b6d3658081d6282f39aeefc6310f2f13"
    },
    "statement": "a verified newlib semantic rule \u2014 the call graph does not prove itself bounded",
-   "vfiprintf_to_sbprintf": "0x2011ff2"
+   "vfiprintf_to_sbprintf": "0x2011e52"
   },
   "note": "the stack pointer is tracked along every path of the final ELF; the main path is bounded at or below 0x2000 and each exception entry within its mode's stack, with the newlib printf recursion bounded by a verified source rule (b3/host/b3_image_stack.py)",
   "objdump": "GNU objdump (xPack GNU Arm Embedded GCC x86_64) 2.43.1.20241119",
@@ -1993,6 +1997,7 @@
      "pull_channel_failed_cb",
      "pull_parse_cb",
      "tx_recv_cb",
+     "pull_recv_cb",
      "app_now_ticks",
      "app_rx_byte",
      "app_rx_ready",
@@ -2001,7 +2006,6 @@
      "pull_payload_fields_cb",
      "rectx_payload_seq_cb",
      "rectx_parse_cb",
-     "pull_recv_cb",
      "rectx_recv_cb",
      "rectx_send_cb",
      "pull_serve_chunk_cb",
@@ -2010,9 +2014,27 @@
     ]
    },
    "atexit_registrations": {
-    "rule": "the constants every caller of atexit passes (register_fini at 0x200d056); atexit forwards its r0 as __register_exitproc's function, and nothing else reaches __register_exitproc",
+    "rule": "the constants every caller of atexit passes (register_fini at 0x200ceb6); atexit forwards its r0 as __register_exitproc's function, and nothing else reaches __register_exitproc",
     "targets": [
      "__libc_fini_array"
+    ]
+   },
+   "callback_contracts": {
+    "rule": "the named routines are taken at their contract (Image.CONTRACTS: the bytes each may write through each argument, that it keeps no pointer, what it returns), each read from its source and bound to that source's digest and to the digest of its code closure in this image, and self-checked against the writes and keeps its own instructions show; listed: the contracts the analysis used",
+    "targets": [
+     "p3_hex: b3/firmware/p3_derive.c 21b4d7a9b4379a6d\u2026 code 96dc4ca59b157f59\u2026 arity 3 writes {\"2\": \"2 x argument 1 + 1\"} returns int \u2014 out[2i], out[2i + 1] for i < n, then out[2n] = 0: out[0, 2n + 1); in is only read",
+     "p3_sha256_final: b3/firmware/p3_derive.c 21b4d7a9b4379a6d\u2026 code ab9f4a86a6c8814b\u2026 arity 2 writes {\"0\": 108, \"1\": 32} returns int \u2014 p3_sha256_update(c, &pad / lenbe, \u2026) on its own locals; out[4i .. 4i+3] for i < 8 (32 bytes). p3_sha256 is {uint32_t h[8]; uint64_t len; uint8_t buf[64]; size_t n} = 108 bytes. sha256_block(h, p) writes h[0..8) and its own w[64] only. Precondition for update / final / words: c was set up by p3_sha256_init (c->n < 64, which update keeps: take <= 64 - c->n)",
+     "p3_sha256_init: b3/firmware/p3_derive.c 21b4d7a9b4379a6d\u2026 code 53dcdf6551d5c4b8\u2026 arity 1 writes {\"0\": 108} returns int \u2014 memcpy(c->h, iv, 32); c->len = 0; c->n = 0. p3_sha256 is {uint32_t h[8]; uint64_t len; uint8_t buf[64]; size_t n} = 108 bytes. sha256_block(h, p) writes h[0..8) and its own w[64] only. Precondition for update / final / words: c was set up by p3_sha256_init (c->n < 64, which update keeps: take <= 64 - c->n)",
+     "p3_sha256_update: b3/firmware/p3_derive.c 21b4d7a9b4379a6d\u2026 code 9dc14505f1488f71\u2026 arity 3 writes {\"0\": 108} returns int \u2014 c->len += n; memcpy(c->buf + c->n, data, take) with take <= 64 - c->n; c->n += take; at 64: sha256_block(c->h, c->buf), c->n = 0. p3_sha256 is {uint32_t h[8]; uint64_t len; uint8_t buf[64]; size_t n} = 108 bytes. sha256_block(h, p) writes h[0..8) and its own w[64] only. Precondition for update / final / words: c was set up by p3_sha256_init (c->n < 64, which update keeps: take <= 64 - c->n)",
+     "p3_sha256_words: b3/firmware/p3_derive.c 21b4d7a9b4379a6d\u2026 code 532af8d21f83ff7b\u2026 arity 3 writes {\"0\": 108} returns int \u2014 p3_sha256_update(c, be, 4) per word, be[4] its own local. p3_sha256 is {uint32_t h[8]; uint64_t len; uint8_t buf[64]; size_t n} = 108 bytes. sha256_block(h, p) writes h[0..8) and its own w[64] only. Precondition for update / final / words: c was set up by p3_sha256_init (c->n < 64, which update keeps: take <= 64 - c->n)",
+     "pull_parse_cb: b3/firmware/b3_app.c 2f7f1660d4f598c4\u2026 code 0b191ebf788a6ffa\u2026 arity 5 writes {\"0\": \"STR\", \"1\": \"argument 2\", \"3\": 4} returns in0 \u2014 parse_frame_any(line, type_out, type_max, seq_out): strrchr / *last = 0 and line[i] = 0 only inside the string at line; *seq_out = strtoul(\u2026, NULL, 10) (4 bytes); snprintf(type_out, type_max, \"%s\", \u2026) (at most type_max bytes); returns NULL or f[4], a pointer into line; f[] and expect[] are its own locals",
+     "pull_payload_fields_cb: b3/firmware/b3_app.c 2f7f1660d4f598c4\u2026 code 4ea251775f22295b\u2026 arity 5 writes {\"1\": 4, \"2\": 4, \"3\": 4} returns int \u2014 as rectx_payload_seq_cb, then *seq_out, *chunk_out (json_uint) and *has_chunk (an int), 4 bytes each",
+     "pull_recv_cb: b3/firmware/b3_app.c 2f7f1660d4f598c4\u2026 code 85e02c189c564f15\u2026 arity 3 writes {\"0\": \"argument 1\"} returns int \u2014 recv_line_bounded(out, max, \u2026) -> p3_rectx_recv_line_timed(&APP_RX, out, max, \u2026): returns -1 at max == 0 before any write; out[n] with n + 1 < max, and out[n] = 0 with n < max \u2014 within out[0, max)",
+     "rectx_parse_cb: b3/firmware/b3_app.c 2f7f1660d4f598c4\u2026 code 72e9dda05e408084\u2026 arity 5 writes {\"0\": \"STR\", \"1\": \"argument 2\", \"3\": 4} returns in0 \u2014 parse_frame_any(line, type_out, type_max, seq_out): strrchr / *last = 0 and line[i] = 0 only inside the string at line; *seq_out = strtoul(\u2026, NULL, 10) (4 bytes); snprintf(type_out, type_max, \"%s\", \u2026) (at most type_max bytes); returns NULL or f[4], a pointer into line; f[] and expect[] are its own locals",
+     "rectx_payload_seq_cb: b3/firmware/b3_app.c 2f7f1660d4f598c4\u2026 code 21277725af553d07\u2026 arity 3 writes {\"1\": 4} returns int \u2014 p3_base64url_decode(payload, g_json, sizeof g_json - 1) into the global; json_uint(g_json, key, seq_out) writes *seq_out (4 bytes) only",
+     "rectx_recv_cb: b3/firmware/b3_app.c 2f7f1660d4f598c4\u2026 code 14a874c7da636c79\u2026 arity 3 writes {\"0\": \"argument 1\"} returns int \u2014 recv_line_bounded(out, max, \u2026) -> p3_rectx_recv_line_timed(&APP_RX, out, max, \u2026): returns -1 at max == 0 before any write; out[n] with n + 1 < max, and out[n] = 0 with n < max \u2014 within out[0, max)",
+     "sha_emit: b3/firmware/b3_record.c 5c9e433e5732dc9f\u2026 code d1967bf1ba6f1b07\u2026 arity 3 writes {\"0\": 108} returns int \u2014 p3_sha256_update((p3_sha256 *)ctx, bytes, n): c->len (8 at 32), c->buf[c->n, c->n + take) with take <= 64 - c->n (inside buf, 40..104), c->n (4 at 104), sha256_block(c->h, c->buf) writes h (0..32) and its own w[64]; sizeof(p3_sha256) = 108. Precondition: ctx is a p3_sha256 set up by p3_sha256_init (c->n < 64, kept by update)",
+     "tx_recv_cb: b3/firmware/b3_app.c 2f7f1660d4f598c4\u2026 code d4fbc942382cf09d\u2026 arity 3 writes {\"0\": \"argument 1\"} returns int \u2014 recv_line_bounded(out, max, \u2026) -> p3_rectx_recv_line_timed(&APP_RX, out, max, \u2026): returns -1 at max == 0 before any write; out[n] with n + 1 < max, and out[n] = 0 with n < max \u2014 within out[0, max)"
     ]
    },
    "exception_table": {
@@ -2024,8 +2046,19 @@
      "Xil_UndefinedExceptionHandler"
     ]
    },
+   "frame_leaks": {
+    "rule": "the routines one of whose frame addresses may come to rest outside the frame (stored there, or handed to a routine that may keep it): no callback is resolved from such a frame",
+    "targets": [
+     "arm_attempt: stored outside the frame at 0x2002ae8",
+     "check_on_copy: stored outside the frame at 0x200968c",
+     "main: handed at 0x2003b94 (0): the callee may keep a frame address it loads from it",
+     "p3_frames_hash: handed at 0x2004ed8 (0): the callee may keep a frame address it loads from it",
+     "run_candidate: handed at 0x2002d9c (('stk', 16)): the callee may keep a frame address it loads from it",
+     "sha256_block: stored outside the frame at 0x2004564"
+    ]
+   },
    "fwalk_callers": {
-    "rule": "the constants every caller passes in r1 (stdio_exit_handler at 0x200c46c); _fwalk_sglue calls only through its copy of r1",
+    "rule": "the constants every caller passes in r1 (stdio_exit_handler at 0x200c2cc); _fwalk_sglue calls only through its copy of r1",
     "targets": [
      "_fclose_r"
     ]
@@ -2061,8 +2094,250 @@
      "cleanup_stdio"
     ]
    },
+   "printf_formats": {
+    "rule": "each printf-family call the callback resolution relied on: its format is a constant string in a read-only section on every path \u2014 directly, or as the calling routine's own argument, constant at every call of that routine, which is not address-taken \u2014 and has no %n conversion; a call whose format is not so proved is taken to write through every pointer it can see",
+    "targets": [
+     {
+      "call": "parse_frame_any 0x2001c20 snprintf",
+      "format": "constant",
+      "formats": [
+       "%08lx"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "parse_frame_any 0x2001cf4 snprintf",
+      "format": "constant",
+      "formats": [
+       "%s"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "run_candidate 0x2002dec snprintf",
+      "format": "constant",
+      "formats": [
+       "%s"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "run_candidate 0x2003538 snprintf",
+      "format": "constant",
+      "formats": [
+       "%08lx"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "run_candidate 0x20035ac snprintf",
+      "format": "constant",
+      "formats": [
+       "%08lx%08lx"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_state_hex 0x20065b8 snprintf",
+      "format": "constant",
+      "formats": [
+       "%s|%d|%lu|%lu|%lu|%lu|%lu|%ld|"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_state_hex 0x20065f4 snprintf",
+      "format": "constant",
+      "formats": [
+       "%ld:%lu:%s;"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_record_json 0x20066b4 snprintf",
+      "format": "constant",
+      "formats": [
+       "{\"arm\":\"%s\",\"best\":%ld,\"column_moves\":%lu,\"eval\":%lu,"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_record_json 0x2006708 snprintf",
+      "format": "constant",
+      "formats": [
+       "\"fitness\":%ld,\"generation\":%lu,\"holdout\":null,",
+       "\"fitness\":null,\"generation\":%lu,\"holdout\":%ld,"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_record_json 0x2006738 snprintf",
+      "format": "constant",
+      "formats": [
+       "\"landscape_seed\":%lu,\"move\":"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_record_json 0x2006770 snprintf",
+      "format": "constant",
+      "formats": [
+       "null,"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_record_json 0x20067b0 snprintf",
+      "format": "constant",
+      "formats": [
+       "\"operator_seed\":%lu,\"pair\":%d,"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_record_json 0x20067e8 snprintf",
+      "format": "constant",
+      "formats": [
+       "\"parent_born\":null,\"population\":["
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_record_json 0x2006858 snprintf",
+      "format": "constant",
+      "formats": [
+       "%s{\"born\":%lu,\"fit\":%ld}"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_record_json 0x2006894 snprintf",
+      "format": "constant",
+      "formats": [
+       "{\"bits\":["
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_record_json 0x200692c snprintf",
+      "format": "constant",
+      "formats": [
+       "%s%u"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_record_json 0x2006974 snprintf",
+      "format": "constant",
+      "formats": [
+       "],\"kind\":\"%s\"},"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_record_json 0x200698c snprintf",
+      "format": "constant",
+      "formats": [
+       "\"parent_born\":%lu,\"population\":["
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "b2_search_record_json 0x20069f0 snprintf",
+      "format": "constant",
+      "formats": [
+       "],\"selected\":%s,\"state_sha256\":\"%s\",\"version\":\"%s\"}"
+      ],
+      "no_percent_n": true
+     },
+     {
+      "call": "w_fmt 0x2009ff8 vsnprintf",
+      "format": "argument 1 of w_fmt, a constant at each of its 82 call sites",
+      "formats": [
+       " %08lx\n",
+       "\"",
+       "\"app_oracle_record\":{\"audit_available\":%s,\"readback_sha256\":",
+       "\"arm\":",
+       "\"arm\":{\"ctrl_readback\":\"unavailable: CTRL is write-only\",\"fault_after\":%lu,\"key_loaded_observed\":%s,\"nonce_after\":\"%016llx\",\"nonce_before\":\"%016llx\",",
+       "\"audit_stop\":{\"chunks_served\":%lu,\"why\":",
+       "\"evidence\":{",
+       "\"score\":{\"functional_readout\":",
+       "\"settle\":{\"polls\":%lu,\"polls_max\":%lu,\"settled\":%s,\"status_first\":\"0x%08lx\",\"status_last\":\"0x%08lx\"},",
+       "\"sign_refusal\":{\"finding_kinds\":[",
+       "\"sign_reply\":{\"commit\":",
+       "\"sign_stop\":{\"attempts\":%lu,\"why\":",
+       "\"status_after\":\"0x%08lx\",\"writes_issued\":%d}",
+       "%c",
+       "%lu",
+       ",",
+       ",\"b1_map_cost\":%lu",
+       ",\"budget_per_arm\":%lu,\"carrier_sha256\":",
+       ",\"carrier_variant\":\"0x%08lx\"",
+       ",\"carto_version\":",
+       ",\"closing_control\":{\"fault\":%lu,\"kind\":\"unsigned\",\"nonce_after\":\"%016llx\",\"nonce_before\":\"%016llx\",\"status\":\"0x%08lx\"}",
+       ",\"control_plane\":\"standalone\",\"fclk0_hz_decoded\":%lu,\"findings\":[",
+       ",\"counts\":{\"refused_by_gate\":%lu,\"scored\":%lu},\"crc_dropped\":%lu,\"drop_budget\":%lu,\"epoch_end\":{\"kind\":\"%s\",\"last_seq\":%lu,\"reason\":",
+       ",\"expected_tables\":",
+       ",\"heartbeat\":{\"after\":%lu,\"before\":%lu},\"hw_candidate_commit\":",
+       ",\"map_sha256\":",
+       ",\"master_seed\":%lu,\"nonce_at_start\":\"%016llx\",\"operator_data_sha256\":",
+       ",\"nonce\":\"%016llx\",\"schema\":\"sign_request\",\"schema_version\":\"1.0.0\",\"seq\":%lu,\"token\":",
+       ",\"outcome\":",
+       ",\"pair_count\":%lu,\"pair_first\":%lu,\"pairs_total\":%lu",
+       ",\"protocol\":",
+       ",\"pss_idcode\":\"0x%08lx\",\"rec_retry_control\":%s,\"schedule_mode\":",
+       ",\"schema\":\"app_audit_chunk\",\"schema_version\":\"2.0.0\",\"seq\":%lu,\"span\":",
+       ",\"schema\":\"app_identity\",\"schema_version\":\"1.6.0\",\"search_version\":",
+       ",\"schema\":\"app_oracle_record\",\"schema_version\":\"1.0.0\",\"seq\":%lu,\"staged_sha256\":",
+       ",\"schema\":\"loop_record\",\"schema_version\":\"1.4.0\"",
+       ",\"schema\":\"sign_reply\",\"schema_version\":\"1.0.0\",\"seq\":%lu,\"tag\":",
+       ",\"scores\":[",
+       ",\"search\":%s",
+       ",\"seq\":%lu,\"verified\":\"%s\"}",
+       ",\"sign_retry_control\":%s,\"status_at_start\":\"0x%08lx\",\"token\":",
+       ",\"staged_stream_sha256\":",
+       ",\"total_words\":%lu,\"window\":[%lu,%lu]}",
+       ",\"total_words\":%lu}",
+       ",\"uboot_epoch\":%lu,\"universe_sha256\":",
+       ",\"write\":{\"envelopes\":[",
+       ",\"written_by\":\"app\"}",
+       ",%lu",
+       "P3L5 %s %lu %s %s",
+       "[",
+       "]",
+       "],\"fitness_id\":",
+       "],\"schema\":\"sign_refusal\",\"schema_version\":\"1.0.0\",\"seq\":%lu}",
+       "]}",
+       "]}}",
+       "{",
+       "{\"app_epoch\":%lu,\"arms\":",
+       "{\"app_epoch\":%lu,\"genome\":",
+       "{\"audit\":{\"audited\":%lu,\"total\":%lu},\"closing\":{\"baseline\":\"%s\",\"restore\":\"%s\",\"unsigned_control\":\"%s\"}",
+       "{\"chunk\":%lu,\"chunks\":%lu,\"encoding\":\"%s\",\"entries\":",
+       "{\"chunks\":%lu,\"nonzero\":%lu,\"schema\":\"audit_ready\",\"schema_version\":\"1.0.0\",\"seq\":%lu,\"span\":",
+       "{\"fault\":%lu,\"kind\":\"unsigned\",\"nonce_after\":\"%016llx\",\"nonce_before\":\"%016llx\",\"status\":\"0x%08lx\"}",
+       "{\"i\":%lu}",
+       "{\"index\":%d,\"int_sts\":\"0x%08lx\"}",
+       "{\"seq\":%lu,\"served\":%lu}",
+       "}",
+       "},\"genome\":",
+       "},\"schema\":\"session_summary\",\"schema_version\":\"1.0.0\",\"token\":"
+      ],
+      "no_percent_n": true
+     }
+    ]
+   },
+   "read_only_tables": {
+    "rule": "a callback read from a field of a .rodata table is the ELF's word there: the table's address is materialised only by the image's own units and stored in no data word; no store's base may point into it, it is never stored outside a frame nor returned, and every call it is handed to writes nothing through it and keeps nothing; listed: each table so proved, who materialises it and which fields were read",
+    "targets": [
+     "REC_IO: materialised by emit_record; read +0x0 rectx_send_cb, +0x4 rectx_recv_cb, +0x8 rectx_parse_cb, +0xc rectx_payload_seq_cb",
+     "TX_IO: materialised by emit_summary, main, run_candidate; read +0x0 rectx_send_cb, +0x4 tx_recv_cb, +0x8 rectx_parse_cb, +0xc rectx_payload_seq_cb",
+     "PULL_IO: materialised by audit_pull; read +0x0 pull_send_ready_cb, +0x4 pull_serve_chunk_cb, +0x8 pull_send_wait_cb, +0xc pull_recv_cb, +0x10 pull_parse_cb, +0x14 pull_payload_fields_cb, +0x18 pull_channel_failed_cb",
+     "APP_RX: materialised by pull_recv_cb, rectx_recv_cb, tx_recv_cb; read +0x0 app_rx_ready, +0x4 app_rx_byte, +0x8 app_now_ticks"
+    ]
+   },
    "value_model": {
-    "rule": "a callback read from a frame slot or an object's field is the LAST word stored there on every path to the read / the hand-over (flow-sensitive, by the bytes each store writes; a conditional, partial, overlapping, register-indexed or frame-derived store, a path with no store, and a call that may store through a pointer reaching the slot each make it unknown, which is a finding). Stated limits, not proved from the image: (M1) a frame address is followed through registers, the routine's own frame slots and call arguments, not through memory outside the frame; (M2) a callee writes at non-negative offsets from a pointer it is given; (M3) for a prebuilt library routine or an indirect call only the four register arguments are followed. A prebuilt C-library routine handed a pointer is assumed to write anywhere from it, except the routines named here, taken at their C-standard contract (the destination is written for at most the constant byte count passed; the others do not write through their arguments), each bound to the libc member that is the image's code",
+    "rule": "a callback read from a frame slot or an object's field is the LAST word stored there on every path to the read / the hand-over (flow-sensitive, by the bytes each store writes; a conditional, partial, overlapping, register-indexed or frame-derived store, a path with no store, and a call that may store through a pointer reaching the slot each make it unknown, which is a finding). A call is held against its callee's summary \u2014 read off the code of every routine in the image, prebuilt ones included, or a named contract (rules.callback_contracts): what it may write through each pointer it is handed (signed offsets; an unbounded write reaches every slot of the frame, in either direction), what it writes through the words it loads from the object, and whether it may keep the pointer \u2014 for every position it can be handed one: the four argument registers, the stack words a readable callee reads, and for a callee that cannot be read every frame word that may hold an address. A frame address stored outside the frame or handed to a routine that may keep it LEAKS that frame (rules.frame_leaks): from then on any call, and any store through a pointer that is not provably elsewhere, may write any of its slots. A call clobbers the caller-saved registers its target's code writes (GCC's inter-procedural register allocation relies on the same). STATED, NOT PROVED FROM THE IMAGE: (B1) object provenance \u2014 a store through a pointer derived from ANOTHER object (a global, another routine's frame, a read-only table) does not reach this frame or that table; the analysis follows a frame's and a table's own addresses wherever they go, and does not prove that every write to every other object stays inside it; (B2) the callee-saved registers are preserved across a call (the AAPCS); (B3) a routine's contract is its source semantics as stated in it \u2014 bound to the source and code digests and self-checked, not derived",
     "targets": [
      "memcpy",
      "memset",
@@ -2071,7 +2346,8 @@
      "strlen",
      "strncpy",
      "strrchr",
-     "strstr"
+     "strstr",
+     "vsnprintf"
     ]
    },
    "xil_assert_callback": {
@@ -2080,7 +2356,7 @@
    }
   },
   "status": "COMPLETE",
-  "tool": "b3-image-stack 1.1.0"
+  "tool": "b3-image-stack 1.2.0"
  },
  "toolchain": {
   "gcc_sha256": "a47ae91699d0611c817a166c986df647d56ce57e9162afa6d25385dd1771b204",

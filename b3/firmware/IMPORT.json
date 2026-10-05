@@ -21,8 +21,8 @@
    "base": "firmware/b2/b2_app.c",
    "base_sha256": "130429ebe22241eaa2ea7c23634ca027862fd45476f6c293bd722b656b36ecc0",
    "kind": "derived",
-   "note": "DERIVED from B2's application: the orchestrator is b3_orch.c (three arms, the O arm's observation inside it), b3_orch_observe < 0 and a search block that does not render are PROTOCOL (no record without its block), app_identity 1.6.0 (carto_version, arms, b1_map_cost) with the slice decoded by b3_page_slice and a page that is neither the B3 nor the B3Q profile an identity finding, and every outbound buffer sized from the theoretical maximum of its encoder (B3_*_MAX, held by b3/tests/test_b3_app_audit.py) with the base64 step checked against its buffer before it runs. The HAL, the transactions, the audit pull, the watchdog, the closing control and the AXI allowlist are B2's. link2_witness's three working arrays (frames5 / reread / words, 9,004 B) are moved off the stack into a dedicated BSS workspace (g_link2) so the main-path stack stays within its 0x2000 budget; the record / parse / hash / reject flow is unchanged, every element is fully written before it is read, and the function is called only from the single-threaded record path (not re-entrant). It must exist and must DIFFER from the base.",
-   "sha256": "42313f63d62083a94eae1f5fd82a6bf9c4822bea615efb77cb793141e925c93b"
+   "note": "DERIVED from B2's application: the orchestrator is b3_orch.c (three arms, the O arm's observation inside it), b3_orch_observe < 0 and a search block that does not render are PROTOCOL (no record without its block), app_identity 1.6.0 (carto_version, arms, b1_map_cost) with the slice decoded by b3_page_slice and a page that is neither the B3 nor the B3Q profile an identity finding, and every outbound buffer sized from the theoretical maximum of its encoder (B3_*_MAX, held by b3/tests/test_b3_app_audit.py) with the base64 step checked against its buffer before it runs. The HAL, the transactions, the audit pull, the watchdog, the closing control and the AXI allowlist are B2's. link2_witness's three working arrays (frames5 / reread / words, 9,004 B) are moved off the stack into a dedicated BSS workspace (g_link2) so the main-path stack stays within its 0x2000 budget; the record / parse / hash / reject flow is unchanged, every element is fully written before it is read, and the function is called only from the single-threaded record path (not re-entrant). The I/O tables handed to the instrument's transaction, pull and receive units (APP_RX, TX_IO, REC_IO, PULL_IO) are read-only constants instead of structures built on the stack (the owner's ruling of 2026-10-05: no callback table on the stack); their values are the ones the stack copies held, and the pull's context is a static (g_pull_ctx) that audit_pull, its only writer and never re-entered, sets immediately before its one p3_pull_run call. It must exist and must DIFFER from the base.",
+   "sha256": "2f7f1660d4f598c483139de4bd45d22afe273eecb7876e7419f142db1de8ff66"
   },
   "b3/firmware/b3_carto.c": {
    "kind": "new",
@@ -149,14 +149,14 @@
    "kind": "built",
    "note": "the committed image (the owner's ruling of 2026-09-28): built by bsp/build.sh from the sources above, reproduced byte for byte by two clean builds recorded in the build evidence.",
    "produced_by": "b3/firmware/bsp/build.sh",
-   "sha256": "1f4af626024dec66ca5660f03cb427445dce312ef9c60c85bd97cf57bc73eae0"
+   "sha256": "c2f6fb5456bc06a34ef537d6b4a4e5aaf833325379ded66daa444fa6fed293bf"
   },
   "b3/firmware/bsp/out/b3_app.elf": {
    "evidence": "evidence/b3/build_evidence.json",
    "kind": "built",
    "note": "the committed image (the owner's ruling of 2026-09-28): built by bsp/build.sh from the sources above, reproduced byte for byte by two clean builds recorded in the build evidence.",
    "produced_by": "b3/firmware/bsp/build.sh",
-   "sha256": "520508c9f110dd4bc4b247e85aca99a222c0610859f08a6a5ead21f7b5e74cb9"
+   "sha256": "7aab8833e76f49334615855361fe9a3d89991f6a9aba9be48d807ff05d72f008"
   },
   "b3/firmware/bsp/src/console.c": {
    "base": "firmware/b2/bsp/src/console.c",

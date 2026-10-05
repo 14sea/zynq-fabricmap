@@ -35,6 +35,7 @@ the build evidence's `stack` block and b3/tests/test_b3_image_stack.py holds the
 from __future__ import annotations
 
 import argparse
+import copy
 import functools
 import hashlib
 import json
@@ -50,7 +51,7 @@ for p in (REPO_ROOT / "host", REPO_ROOT / "b3/host"):
         sys.path.insert(0, str(p))
 import b2_build_evidence as b2be  # noqa: E402  (the pinned toolchain's path; a frozen B2 module, read only)
 
-TOOL_VERSION = "b3-image-stack 1.1.0"
+TOOL_VERSION = "b3-image-stack 1.2.0"
 ELF_DEFAULT = REPO_ROOT / "b3/firmware/bsp/out/b3_app.elf"
 TC_BIN = Path(b2be.TC) / "bin"
 MAIN_LIMIT = 0x2000                     # the owner's ruling: the main path's verified bound is at most 0x2000 bytes
@@ -75,6 +76,11 @@ NAMED_CHAINS = ("select_generation", "b2_search_state_hex")
 
 class Finding(Exception):
     pass
+
+
+# the value analysis recurses along a routine's chain of calls and slots (each depends on the ones before it); the
+# chain is finite — a cycle is cut and iterated by the solver — but far deeper than Python's default allowance
+sys.setrecursionlimit(max(sys.getrecursionlimit(), 400_000))
 
 
 def tool(name: str) -> str:
@@ -850,13 +856,15 @@ class Image:
         return f
 
     def written(self, i: dict) -> set[str]:
-        """The core registers the instruction may write (a call: the AAPCS caller-saved ones)."""
+        """The core registers the instruction may write. A call: the caller-saved registers its target may write
+        (`_clobbers`) and lr; an indirect call, or a target the image does not hold: all the caller-saved ones."""
         fam = self._family(i)
         o = i["ops"].replace(" ", "")
         b, _ = base_mnem(i["mnem"])
         out: set[str] = set()
         if b in ("bl", "blx"):
-            return set(self.CALLER_SAVED)
+            bt = branch_target(i["ops"])
+            return (set(self._clobbers(bt[0])) | {"lr"}) if bt else set(self.CALLER_SAVED)
         if fam.startswith(("pop", "ldm")) and "{" in o:
             out |= set(reglist(i["ops"]))
         elif fam.startswith(("ldrd",)):
@@ -874,6 +882,44 @@ class Image:
         if fam.startswith(("ldm", "stm")) and re.match(r"(\w+)!", o):
             out.add(re.match(r"(\w+)!", o).group(1))
         return out
+
+    def _clobbers(self, callee: int) -> frozenset:
+        """The caller-saved registers (r0–r3, ip, lr) the routine at `callee` — with everything it calls or
+        branches to — may write, read off ALL its instructions (no path analysis: a superset). GCC's inter-
+        procedural register allocation relies on exactly this to keep a value in r2 across a call to a routine
+        that never writes r2. An indirect call or tail, a write to pc the model does not follow, a routine the image
+        does not hold, or a cycle back here (the placeholder): all of them. The callee-saved registers are taken to
+        be preserved (the AAPCS), as everywhere in this analysis."""
+        if callee not in self.ins_at or callee not in self.func_entries:
+            return self.CALLER_SAVED
+        return self._guarded("clobbers", callee, self._clobbers_compute, frozenset())
+
+    def _clobbers_compute(self, callee: int) -> frozenset:
+        out: set = set()
+        region = self.region(callee)
+        for k, i in enumerate(region):
+            if i["mnem"] == ".data":
+                continue
+            b = base_mnem(i["mnem"])[0]
+            o = i["ops"].replace(" ", "")
+            bt = branch_target(i["ops"]) if b in ("b", "bl", "blx", "cbz", "cbnz") else None
+            if b in ("bl", "blx"):
+                out |= set(self._clobbers(bt[0])) | {"lr"} if bt else set(self.CALLER_SAVED)
+            elif b == "bx" and o != "lr":
+                return self.CALLER_SAVED                   # an indirect tail
+            elif bt and bt[0] != callee and bt[0] in self.func_entries and not (callee <= bt[0] < region[-1]["addr"] + 4):
+                out |= set(self._clobbers(bt[0]))          # a tail branch to another routine
+            elif o.startswith("pc,") or (b in ("ldm", "ldmia", "ldmfd", "pop") and "pc" in o and b not in ("pop", "ldmia", "ldmfd")):
+                return self.CALLER_SAVED
+            else:
+                out |= self.written(i)
+            if k == len(region) - 1 and not (b == "bx" or (b in ("pop", "ldmia", "ldmfd", "ldm") and "pc" in o) or (b == "b" and bt)):
+                nxt = i["addr"] + i["size"]                # it may fall through into the next routine
+                if nxt in self.func_entries:
+                    out |= set(self._clobbers(nxt))
+                else:
+                    return self.CALLER_SAVED
+        return frozenset(out & self.CALLER_SAVED)
 
     @staticmethod
     def _next_reg(r: str) -> str:
@@ -1149,9 +1195,18 @@ class Image:
                         prod.setdefault(func, set()).add(v & ~1)
                         records.append({"routine": self.name(func), "at": f"{i['addr']:#x}", "pointer": self.name(v & ~1)})
         made = set().union(*prod.values()) if prod else set()
+        tables = self._ro_tables()
+        in_table = lambda a: any(v <= a < v + s for v, (_n, s) in tables.items())
         for a, w in self.words.items():
-            if (w & ~1) in made:
+            if (w & ~1) in made and not in_table(a):
                 raise Finding(f"the application pointer {self.name(w & ~1)} is also a literal word at {a:#x}")
+        for v, (tname, s) in tables.items():               # a read-only table's callbacks are produced by the table
+            for k in range(0, s - 3, 4):
+                w = self.words.get(v + k) or 0
+                if (w & ~1) in self.label_at and self.unit_of(w & ~1) in self.APP_UNITS:
+                    prod.setdefault(v, set()).add(w & ~1)
+                    records.append({"routine": tname, "at": f"{v + k:#x}", "pointer": self.name(w & ~1)})
+        made = set().union(*prod.values()) if prod else set()
         for name, ins in self.funcs.items():                 # pc-relative materialisations (adr / add rD, pc, #k)
             for i in ins:
                 o = i["ops"].replace(" ", "")
@@ -1254,10 +1309,13 @@ class Image:
     #                         one at the read or hand-over, not "whatever the routine ever stored there".
     #
     # An atom is ('cb', addr) an application callback, ('arg', n) the routine's incoming argument n (('stk', A): its
-    # stack word A), ('frame', A) the address of its own frame slot A, ('const', k), ('other',) an unknown value, or
-    # ('argo', n, k) argument n plus the constant k, or ('der', x) an unknown value DERIVED from x — 'frame' or
-    # ('arg', n) — by arithmetic the model does not follow (so a store through it may still write the frame / the
-    # argument's object). A value that keeps gaining addresses (a pointer stepped in a loop) is widened to 'der'.
+    # stack word A), ('argo', n, k) argument n plus the constant k, ('frame', A) the address of its own frame slot
+    # A, ('const', k), ('crange', lo, hi) one of the constants in [lo, hi] (a stepped constant address, widened on
+    # the side it grows, wrapping to everything past either end), ('tab', T, k) the address T + k inside the read-
+    # only callback table T (by provenance: born where T's address is materialised), ('ind', n, k) the word loaded
+    # from argument n + k, ('other',) an unknown value, or ('der', x) an unknown value DERIVED from x — 'frame',
+    # ('arg', n) or ('ind', n, k) — by arithmetic the model does not follow (so a store through it may still write
+    # the frame / that object). More than WIDEN addresses of one kind widen to the derived unknown.
     #
     # A store is described by the BYTES it writes (`_store_desc`): its base's atoms, each element's offset and
     # width, whether it is conditional. For the word at slot A a store is
@@ -1265,18 +1323,12 @@ class Image:
     #   exact, conditional   the same under a condition: its value AND whatever was there before;
     #   may        anything else that can touch any of the four bytes — a byte / halfword / vector store, a word
     #              that overlaps without coinciding, a register-indexed or frame-derived base, an ambiguous SP: the
-    #              slot is then UNKNOWN on that path (never the older callback);
+    #              slot is then UNKNOWN on that path (and still what was there before, if it did not run);
     #   none       a store that provably writes other bytes, or through a base that is not this frame.
-    # A call between the store and the read is a `may` when a pointer it is handed (an argument register, or — for
-    # a routine of the image's own units — a stack argument) can reach the slot and the callee, or anything the
-    # callee hands it on to, may store through it (`_arg_writes`; a library routine or an unnamed indirect target is
-    # assumed to write). A path that reaches the entry with no store leaves a local slot UNKNOWN (uninitialised).
-    #
-    # The model's stated limits (not proved from the image): (M1) a frame address is followed through registers,
-    # this routine's frame slots and call arguments — not through memory outside the frame (a pointer parked in a
-    # global, or reached through a field of another object); (M2) a callee writes at non-negative offsets from a
-    # pointer it is given; (M3) for a library routine or an indirect call only the four register arguments are
-    # followed.
+    # A call between the store and the read may write the slot when a pointer it is handed can reach the slot and
+    # the callee's summary (below) says it may write there, write through a frame address it loads from the object,
+    # or keep the pointer. A path that reaches the entry with no store leaves a local slot UNKNOWN (uninitialised).
+    # What is stated rather than proved is VALUE_MODEL's (B1)–(B3).
 
     _solving = None
     PURE_UNARY = frozenset("mov movs mvn mvns movw clz rbit rev rev16 uxtb uxth sxtb sxth neg negs adr".split())
@@ -1313,12 +1365,12 @@ class Image:
             cur: dict = {}
             self._solving = (prev, cur, set())
             try:
-                self._solve_inner(key)
+                v = self._solve_inner(key)
             finally:
                 self._solving = None
             if cur == prev:
                 memo.update(cur)
-                return memo[key]
+                return v
             prev = cur
         raise Finding(f"{self.name(key[1])}: the value analysis at {key[2]:#x} did not reach a fixpoint")
 
@@ -1335,6 +1387,11 @@ class Image:
             v = self._widen(self._reg_compute(*key[1:]) if key[0] == "reg" else self._slot_compute(*key[1:]))
         finally:
             active.discard(key)
+        before = [x for x in prev.get(key, ()) if x[0] == "crange"]
+        if before:                                         # an interval that grew since the previous round grows to
+            b = before[0]                                  # the end of the address space on that side, and never
+            v = frozenset({x if x[0] != "crange" else ("crange", 0 if x[1] < b[1] else b[1],      # shrinks: it settles
+                                                       0xFFFFFFFF if x[2] > b[2] else b[2]) for x in v})
         cur[key] = v
         return v
 
@@ -1344,13 +1401,100 @@ class Image:
         """Keep a value finite: more than WIDEN addresses of one kind become the derived unknown, and a derived
         unknown ABSORBS the specific addresses it covers (so a pointer stepped round a loop settles)."""
         v = set(v)
-        for kind in ("frame", "argo", "const"):
+        for kind in ("frame", "argo"):
             many = {x for x in v if x[0] == kind}
             if len(many) > self.WIDEN:
                 v = (v - many) | {("other",)} | self._derived(many)
+        consts = {x for x in v if x[0] in ("const", "crange")}   # too many constants (a stepped address): their
+        if len(consts) > self.WIDEN or any(x[0] == "crange" for x in consts):   # interval, which absorbs them all
+            lo = min(x[1] for x in consts)
+            hi = max(x[1] if x[0] == "const" else x[2] for x in consts)
+            v = (v - consts) | {("crange", lo, hi)}
+        many = {x for x in v if x[0] == "ind"}
+        if len(many) > self.WIDEN:
+            v = (v - many) | {("ind", x[1], None) for x in many}
+        many = {x for x in v if x[0] == "tab"}
+        if len(many) > self.WIDEN:
+            v = (v - many) | {("tab", x[1], None) for x in many}
         ders = {x[1] for x in v if x[0] == "der"}
         return frozenset(x for x in v if not ((x[0] == "frame" and "frame" in ders)
                                               or (x[0] == "argo" and ("arg", x[1]) in ders)))
+
+    # ---- facts that depend on themselves through other routines (a routine's frame, the callbacks it hands on,
+    # their summaries, its frame again): SPECULATE AND VERIFY. A fact asked while it is being computed answers its
+    # GUESS — on the first pass the placeholder its caller names, afterwards the value the previous pass computed
+    # for it — and the read is recorded. Everything is memoised in one pass. When the pass is over, every recorded
+    # read is compared with the fact's final value: if any differs, the pass is thrown away and the next starts with
+    # those final values as the guesses (`settle`). A result is accepted only from a pass in which every guess was
+    # what was then computed. Every placeholder is the fact's OPTIMISTIC end — no leak, no pointer slot, no register
+    # clobbered, nothing written, no target reached, a proof that holds — so the passes settle on the greatest self-
+    # consistent answer, which is sound by induction over the execution: computed on the assumption that nothing
+    # has leaked or been overwritten YET, every fact confirms it, so the first leak or overwrite would have to come
+    # from an instruction the analysis checked with values that were still valid — a contradiction.
+
+    def _guess(self, k, default):
+        return self.__dict__.get("_guesses", {}).get(k, default)
+
+    def _guarded(self, kind: str, key, compute, placeholder):
+        memo = self._cache("_memo_" + kind)
+        if key in memo:
+            return memo[key]
+        active = self._cache("_active")
+        k = (kind, key)
+        if k in active:
+            g = self._guess(k, placeholder)
+            self._cache("_spec").setdefault(k, []).append(g)
+            return g
+        active[k] = True
+        try:
+            v = self._isolated(compute, *(key if isinstance(key, tuple) else (key,)))
+        finally:
+            del active[k]
+        memo[key] = v
+        return v
+
+    TOP = "TOP"
+
+    def _fixed(self, kind: str, key, compute, bottom):
+        """`_guarded` for a least fixpoint (routines that call each other summarise each other): the fact's own
+        re-entrant reads are iterated to agreement (from its guess, or `bottom`); no agreement in 64 rounds: TOP."""
+        memo = self._cache("_memo_" + kind)
+        if key in memo:
+            return memo[key]
+        active, it = self._cache("_active"), self._cache("_iterate")
+        k = (kind, key)
+        if k in active:
+            g = it.get(k, self._guess(k, bottom))
+            self._cache("_spec").setdefault(k, []).append(g)
+            return g
+        spec = self._cache("_spec")
+        for rounds in range(65):
+            before = len(spec.get(k, ()))
+            active[k] = True
+            try:
+                v = self._isolated(compute, key) if rounds < 64 else self.TOP
+            finally:
+                del active[k]
+            read = spec.get(k, [])[before:]
+            if not read or all(r == v for r in read):
+                break
+            it[k] = v
+        it.pop(k, None)
+        memo[key] = v
+        return v
+
+    def _speculation_failed(self) -> dict:
+        """The facts read, while they were being computed, as a value other than their final one: {fact: final}. A
+        pass that returns normally has finished every fact it read, so every read is checked; one that ends in a
+        Finding is checked on the facts it finished."""
+        out = {}
+        for k, reads in self._cache("_spec").items():
+            memo = self._cache("_memo_" + k[0])
+            if k[1] not in memo:                           # never finished (a Finding ended the pass): its reads
+                continue                                   # cannot be checked — a refusal is fail-closed anyway
+            if any(r != memo[k[1]] for r in reads):
+                out[k] = memo[k[1]]
+        return out
 
     def _isolated(self, fn, *args):
         """Run a query about ANOTHER routine (or a whole-routine summary) outside the round in progress, so that it
@@ -1362,6 +1506,8 @@ class Image:
             self._solving = saved
 
     def _raw_reg(self, entry: int, at: int, reg: str) -> frozenset:
+        if entry not in self.sp_at:
+            self.analyse(entry)
         return self._solve(("reg", entry, at, reg))
 
     def _raw_slot(self, entry: int, at: int, slot: int) -> frozenset:
@@ -1371,7 +1517,8 @@ class Image:
     def _settled(v) -> set:
         """A solved value for a consumer: a derived unknown (or an offset argument) is an unknown; no reaching value
         at all is an unknown."""
-        return {a if a[0] not in ("der", "argo") else ("other",) for a in v} or {("other",)}
+        return {a if a[0] not in ("der", "argo", "ind", "crange") and not (a[0] == "tab" and a[2] is None) else ("other",)
+                for a in v} or {("other",)}
 
     def _pt_eval(self, entry: int, at: int, reg: str) -> set:
         """`reg`'s atoms just before `at`, from its reaching definitions (see the block comment above)."""
@@ -1395,7 +1542,17 @@ class Image:
                 out.add(("der", ("arg", a[1])))
             elif a[0] == "der":
                 out.add(a)
+            elif a[0] == "ind":                            # a loaded pointer with arithmetic on it: anywhere from it
+                out.add(("der", ("ind", a[1], a[2])))
+            elif a[0] == "tab":                            # into the table, somewhere
+                out.add(("tab", a[1], None))
         return out
+
+    def _const_atom(self, v: int) -> tuple:
+        """A materialised constant: ('tab', T, offset) when it is an address inside a read-only callback table T (its
+        provenance is the table: arithmetic keeps it), else ('const', v)."""
+        T = self._ro_table_of(v)
+        return ("tab", T, v - T) if T is not None else ("const", v)
 
     def _shift(self, atoms, k: int) -> set:
         """The atoms of (a value with `atoms`) + k."""
@@ -1406,28 +1563,40 @@ class Image:
             elif x[0] in ("arg", "argo"):
                 kk = k + (x[2] if x[0] == "argo" else 0)
                 out.add(("argo", x[1], kk) if kk else ("arg", x[1]))
+            elif x[0] == "const":
+                out.add(("const", (x[1] + k) & 0xFFFFFFFF))
+            elif x[0] == "tab":
+                out.add(("tab", x[1], None if x[2] is None else x[2] + k))
+            elif x[0] == "crange":                         # (32-bit: an interval pushed past either end wraps,
+                lo, hi = x[1] + k, x[2] + k                # so it is then every address)
+                out.add(("crange", lo, hi) if 0 <= lo and hi <= 0xFFFFFFFF else ("crange", 0, 0xFFFFFFFF))
             else:
-                out |= {("other",)} | self._derived({x})
+                out |= self._derived({x}) or {("other",)}
         return out
 
-    def _compiled(self, addr: int | None) -> bool:
-        """The routine was compiled into the image from source (it has a DWARF unit): its stores can be read. The
-        prebuilt archives' routines (libc / libgcc) cannot be summarised from here — see LIBC_CONTRACTS."""
-        return addr is not None and addr in self.ins_at and self.unit_of(addr) is not None
+    def _readable(self, addr: int | None) -> bool:
+        """The routine's instructions are in the image, so what it does with a pointer can be read off them —
+        whether it was compiled from the image's sources or linked from a prebuilt archive."""
+        return addr is not None and addr in self.ins_at and addr in self.func_entries
 
     # What a prebuilt C-library routine does with the pointers it is handed — the C standard's contract for the
     # routine, bound to the libc member that IS the image's code (`member_of`), not derived from the image:
     # name -> (member, the argument it writes through or None, the argument holding the byte count it writes at
     # most, what it returns: 'arg0' its first argument, 'in0' a pointer into its first argument's object, None a
-    # number).
+    # number, and — for a printf-family routine — the argument that is its FORMAT). None of them keeps a pointer or
+    # writes through a pointer it finds in memory; all but the printf family take register arguments only. A printf
+    # format can write through ANY later argument with %n (newlib implements it), so the contract of snprintf /
+    # vsnprintf holds only where `_printf_safe` proves the actual format has none; elsewhere the call is taken to
+    # write through every pointer it can see.
     LIBC_CONTRACTS = {
         "memset": ("libc_a-memset.o", 0, 2, "arg0"), "memcpy": ("libc_a-memcpy.o", 0, 2, "arg0"),
         "memmove": ("libc_a-memmove.o", 0, 2, "arg0"), "strncpy": ("libc_a-strncpy.o", 0, 2, "arg0"),
-        "snprintf": ("libc_a-snprintf.o", 0, 1, None), "vsnprintf": ("libc_a-vsnprintf.o", 0, 1, None),
+        "snprintf": ("libc_a-snprintf.o", 0, 1, None, 2), "vsnprintf": ("libc_a-vsnprintf.o", 0, 1, None, 2),
         "strlen": ("libc_a-strlen.o", None, None, None), "strcmp": ("libc_a-strcmp.o", None, None, None),
         "memcmp": ("libc_a-memcmp.o", None, None, None), "strstr": ("libc_a-strstr.o", None, None, "in0"),
         "strchr": ("libc_a-strchr.o", None, None, "in0"), "strrchr": ("libc_a-strrchr.o", None, None, "in0"),
     }
+    LIBC_CONTRACTS = {k: (v + (None,))[:5] for k, v in LIBC_CONTRACTS.items()}
 
     def _libc_contract(self, tgt: int | None):
         if tgt is None:
@@ -1441,11 +1610,7 @@ class Image:
     def _ret_atoms(self, callee: int):
         """What a compiled routine may return in r0, as atoms of ITS OWN arguments; None when it cannot be said (a
         tail transfer, recursion)."""
-        memo = self._cache("_ret_memo")
-        if callee not in memo:
-            memo[callee] = None
-            memo[callee] = self._isolated(self._ret_compute, callee)
-        return memo[callee]
+        return self._guarded("ret", callee, self._ret_compute, frozenset())
 
     def _ret_compute(self, callee: int):
         self.analyse(callee)
@@ -1475,16 +1640,49 @@ class Image:
             if c[3] is None:
                 return {("other",)}
             return set(args[0]) if (c[3] == "arg0" and reg == "r0") else {("other",)} | self._derived(args[0])
-        rets = self._ret_atoms(tgt) if self._compiled(tgt) else None
+        if tgt is None:                                    # an indirect call: the union over what it may reach
+            targets = self._indirect_targets(entry, a)
+            if targets is None:
+                return anything
+            out = set()
+            for t2 in targets:
+                out |= self._result_of(entry, a, t2, reg, args, anything)
+            return out or {("other",)}
+        return self._result_of(entry, a, tgt, reg, args, anything)
+
+    def _result_of(self, entry: int, a: int, tgt: int, reg: str, args, anything) -> set:
+        """What a call of the routine `tgt` at `a` leaves in r0 / r1, in the caller's atoms."""
+        c = self._contract(tgt)
+        if c is not None:
+            if c["returns"] == "in0" and reg == "r0":      # NULL, or a pointer into argument 0's object
+                return {("const", 0)} | (self._derived(args[0]) or {("other",)})
+            return {("other",)}
+        rets = self._ret_atoms(tgt) if self._readable(tgt) else None
         if rets is None:
             return anything
         out = {("other",)} if reg == "r1" else set()
         for x in rets:
             if x[0] in ("arg", "argo") and isinstance(x[1], int):
                 out |= self._shift(args[x[1]], x[2] if x[0] == "argo" else 0) if reg == "r0" else self._derived(args[x[1]])
+            elif x[0] == "der" and x[1] != "frame" and x[1][0] == "ind" and isinstance(x[1][1], int):
+                for y in args[x[1][1]]:                    # derived from a word the callee loaded through argument n
+                    if y[0] == "frame" and y[1] is not None and x[1][2] is not None:
+                        out |= {("other",)} | self._derived(self._raw_slot(entry, a, y[1] + x[1][2]))
+                    elif y[0] == "frame" or y == ("der", "frame"):
+                        out |= {("other",), ("der", "frame")}
+                    else:
+                        out |= {("other",)} | self._derived(self._through({y}, None))
             elif x[0] == "der" and x[1] != "frame" and isinstance(x[1][1], int):
                 out |= {("other",)} | self._derived(args[x[1][1]])
-            elif x[0] in ("arg", "argo") or (x[0] == "der" and x[1] != "frame"):
+            elif x[0] == "ind" and isinstance(x[1], int):   # a word the callee loaded through its argument
+                for y in args[x[1]]:
+                    if y[0] == "frame" and y[1] is not None and x[2] is not None:
+                        out |= self._raw_slot(entry, a, y[1] + x[2])
+                    elif y[0] == "frame" or y == ("der", "frame"):
+                        out |= {("other",), ("der", "frame")}
+                    else:
+                        out |= {("other",)} | self._through({y}, None)
+            elif x[0] in ("arg", "argo", "ind") or (x[0] == "der" and x[1] != "frame"):
                 return anything                            # (derived from) a stack argument: not followed
             else:
                 out.add(("other",))                        # a constant, an unknown, the callee's own (dead) frame
@@ -1508,15 +1706,37 @@ class Image:
 
     def _load_atoms(self, entry: int, a: int, base: str, off: int) -> set:
         """The word loaded from [base + off] at `a`: a frame slot's atoms when the base is ONE known frame address;
-        an unknown (possibly a parked frame address) when the base may be the frame; else an unknown (M1)."""
+        an unknown (possibly a parked frame address) when the base may be the frame; else an unknown — or, through
+        an argument, the word loaded from it (('ind', n, k))."""
         B = self._base_atoms(entry, a, base)
         if not B:
             return set()                                   # the base is still being solved (a cycle)
         if len(B) == 1 and next(iter(B))[0] == "frame" and next(iter(B))[1] is not None:
             return set(self._raw_slot(entry, a, next(iter(B))[1] + off))
         if any(x[0] == "frame" or x == ("der", "frame") for x in B):
-            return {("other",), ("der", "frame")}
-        return {("other",)}
+            return self._frame_word(entry)
+        return {("other",)} | self._through(B, off)
+
+    def _frame_word(self, entry: int) -> set:
+        """A word loaded from the routine's frame at a place the model does not pin: an unknown — which may be an
+        address of the frame only if some store of the routine can have parked one there."""
+        return {("other",)} if self._pointer_slots(entry) == frozenset() else {("other",), ("der", "frame")}
+
+    @staticmethod
+    def _through(B, off) -> set:
+        """A word loaded through the atoms `B` (+ off): ('ind', n, k) the word at argument n + k; ('ind', n, None)
+        a word reached through argument n at a place the model does not pin, or at a second remove."""
+        out = set()
+        for x in B:
+            if x[0] == "arg":
+                out.add(("ind", x[1], off))
+            elif x[0] == "argo":
+                out.add(("ind", x[1], None if off is None else x[2] + off))
+            elif x[0] == "der" and x[1] != "frame":
+                out.add(("ind", x[1][1], None))
+            elif x[0] == "ind":
+                out.add(("ind", x[1], None))
+        return out
 
     def _writer_atoms(self, entry: int, w: dict, reg: str) -> set:
         """What the writer `w` leaves in `reg`."""
@@ -1531,8 +1751,11 @@ class Image:
             regs = reglist(w["ops"])
             if reg in regs:                                # (a base in its own list is loaded, not kept)
                 return self._load_atoms(entry, a, base, 4 * regs.index(reg))
-            return {("other",)} | self._derived(self._base_atoms(entry, a, base))
+            return self._derived(self._base_atoms(entry, a, base)) or {("other",)}
         mld = re.fullmatch(r"(\w+)(?:,(\w+))?,\[(\w+)(?:,#(-?(?:0x[0-9a-f]+|\d+)))?\]", o)
+        if fam == "ldr" and mld and mld.group(3) == "pc" and not mld.group(2) and reg == mld.group(1):
+            lit = ((a + 4) & ~3 if w["thumb"] else a + 8) + (int(mld.group(4), 0) if mld.group(4) else 0)
+            return {self._const_atom(self.words[lit])} if lit in self.words else {("other",)}   # a literal-pool word
         if fam in ("ldr", "ldrd") and mld and mld.group(3) != "pc":
             data = [mld.group(1), mld.group(2) or (self._next_reg(mld.group(1)) if fam == "ldrd" else None)]
             if fam == "ldr" and mld.group(2):
@@ -1544,9 +1767,13 @@ class Image:
             base = mb.group(1) if mb else (re.match(r"(\w+)", o).group(1) if o else "sp")
             B = self._base_atoms(entry, a, base)
             if reg == base:
-                return {("other",)} | self._derived(B)
+                return self._derived(B) or {("other",)}
             word = fam in ("ldr", "ldrd", "pop") or fam.startswith("ldm")      # a byte / halfword is no address
-            return {("other",), ("der", "frame")} if word and any(x[0] == "frame" or x == ("der", "frame") for x in B) else {("other",)}
+            if not word:
+                return {("other",)}
+            if any(x[0] == "frame" or x == ("der", "frame") for x in B):
+                return self._frame_word(entry)
+            return {("other",)} | self._through(B, None)
         dest = rs[0] if rs else None
         if reg == dest:
             if fam in ("mov", "movs") and len(rs) == 2 and "#" not in o and o.count(",") == 1:
@@ -1560,16 +1787,16 @@ class Image:
                 for lo in self._raw_reg(entry, a, reg):
                     if lo[0] == "const":
                         v = (imm(o) << 16) | lo[1]
-                        out.add(("cb", v & ~1) if (v & ~1) in self.label_at and self.unit_of(v & ~1) in self.APP_UNITS else ("other",))
+                        out.add(("cb", v & ~1) if (v & ~1) in self.label_at and self.unit_of(v & ~1) in self.APP_UNITS else self._const_atom(v))
                     else:
                         out |= {("other",)} | self._derived({lo})
                 return out
         # anything else: an unknown, derived from whatever it read
         srcs = rs[1:] if (fam in self.PURE_UNARY or o.count(",") >= 2 or reg != dest) else rs
-        out = {("other",)}
+        out = set()
         for r in srcs:
             out |= self._derived(self._base_atoms(entry, a, r))
-        return out
+        return out or {("other",)}
 
     def _store_desc(self, entry: int, a: int) -> dict | None:
         """The bytes the store at `a` writes: {'cond', 'base' (the base's atoms), 'wild' (the offset from the base is
@@ -1671,7 +1898,8 @@ class Image:
             out |= unset
         pred = self._rpred(entry)
         kind = self._walk_kinds(entry)
-        seen: set = set()
+        loose = self._frame_leaks(entry)                   # an address of the frame is out: any call, and any store
+        seen: set = set()                                  # through a pointer that is not this frame's, may write it
         stack = list(pred.get(at, []))
         while stack:
             a = stack.pop()
@@ -1679,150 +1907,932 @@ class Image:
                 continue
             seen.add(a)
             eff = self._store_effect(entry, a, slot) if kind[a] == "store" else None
-            if eff is not None and eff[0] == "may":
-                out.add(("other",))
+            if loose and (kind[a] == "call" or (kind[a] == "store" and eff is None
+                                                and not all(x[0] == "frame" or (x[0] == "const" and not self._in_stacks(x[1]))
+                                                            for x in self._store_desc(entry, a)["base"]))):
+                out |= {("other",), ("der", "frame")}      # (through a pointer that may be the leaked address)
+            if eff is not None and eff[0] == "may":         # it may write the word, or part of it, or not: the unknown
+                out.add(("other",))                        # AND whatever was there before
                 for r in eff[1]["data"]:
                     out |= self._derived(self._base_atoms(entry, a, r))
-                continue
-            if eff is not None:
+            elif eff is not None:
                 out |= self._base_atoms(entry, a, eff[1])
                 if not eff[2]:
                     continue                               # an unconditional definition: nothing older survives
-            elif kind[a] == "call" and self._call_may_write(entry, a, slot):
-                out.add(("other",))
-                continue
+            elif kind[a] == "call":
+                left = self._call_may_write(entry, a, slot)
+                if left is not None:                       # (the callee MAY write it: the older value stays possible)
+                    out |= left
             if a == entry:
                 out |= unset
             stack += pred.get(a, [])
         return out
 
-    # ---- what a callee may write through a pointer it is handed
+    # ---- what a callee may do with a pointer it is handed (the owner's HOLD on 1e55967: nothing outside the model
+    # is assumed away — it is summarised, or it is the unknown)
+    #
+    # For argument n (0–3, or ('stk', A)) of a routine, `_arg_summary` gives (writes, ind, keep):
+    #   writes  the byte ranges, as SIGNED offsets from the pointer, it — or anything it hands the pointer on to — may
+    #           store through it: None, a set of (offset, bytes), or 'ALL';
+    #   ind     the offsets of the WORDS it loads through the pointer and then stores through, keeps or hands to a
+    #           routine that does (a pointer reached through the object): None, a set of offsets, or 'ALL';
+    #   keep    where it may leave the pointer (or one derived from it) as a stored WORD: None, or a set of (m, off) —
+    #           the word at its argument m + off, i.e. in an object the caller handed it — and 'EXT', anywhere else.
+    # A routine compiled into the image is read; a prebuilt one is EVERYTHING unless it is one of LIBC_CONTRACTS; an
+    # indirect call is the union over the application callbacks when that is its target set, else EVERYTHING.
+    #
+    # The caller's side (`_call_may_write`): every pointer the call is handed — the four argument registers; for a
+    # readable callee the stack words it reads; for an unknown one EVERY word of the caller's frame that may hold an
+    # address — is held against the callee's summary: 'ALL' writes reach any slot (no direction is assumed), ranges
+    # reach what they overlap, an `ind` offset reaches everything when the word there may be a frame address. A
+    # pointer the callee keeps IN an object of the caller's frame is then what that slot holds; a frame address stored
+    # outside the frame, or kept by a callee anywhere but in the caller's own frame, LEAKS: nothing about the
+    # routine's frame is known any more (`_frame_leaks`), and a callback read from it is a Finding.
+
+    NOTHING = (None, None, None)
+    EVERYTHING = ("ALL", "ALL", frozenset({"EXT"}))
+    POINTERISH = ("frame", "der", "arg", "argo", "ind")
+
+    @staticmethod
+    def _merge(x, y):
+        if x == "ALL" or y == "ALL":
+            return "ALL"
+        if x is None or y is None:
+            return y if x is None else x
+        return frozenset(x) | frozenset(y)
+
+    def _merge3(self, s, x) -> tuple:
+        """Two summaries joined (the writes, the loaded-pointer extents, the keeps)."""
+        if s[1] == "ALL" or x[1] == "ALL":
+            ind = "ALL"
+        else:
+            d: dict = {}
+            for off, ext in set(s[1] or ()) | set(x[1] or ()):
+                d.setdefault(off, set()).update({ext} if isinstance(ext, str) else ext)
+            ind = self._ind_norm(d)
+        return (self._merge(s[0], x[0]), ind, self._merge(s[2], x[2]))
 
     def _call_target(self, i: dict) -> int | None:
         bt = branch_target(i["ops"]) if base_mnem(i["mnem"])[0] in ("bl", "blx", "b") else None
         return bt[0] if bt else None
 
-    def _callee_writes(self, entry: int, a: int, n):
-        """The offsets the call at `a` may write through its argument `n`: None (none), 'ALL', or {(offset, bytes)}.
-        A direct call: the callee's summary. An application-pointer call: the union over every application callback
-        (the context-free set). Any other indirect call, or a routine outside the image's units: 'ALL'."""
+    def _cstring(self, addr: int) -> str | None:
+        """The NUL-terminated string at `addr`, when it lies in a read-only section of the image (.rodata / .text)."""
+        for sec in self.secs:
+            if sec["name"] in (".rodata", ".text") and sec["addr"] <= addr < sec["addr"] + sec["size"]:
+                o = sec["offset"] + addr - sec["addr"]
+                end = self.blob.find(b"\0", o, sec["offset"] + sec["size"])
+                return self.blob[o:end].decode("latin-1") if end >= 0 else None
+        return None
+
+    @staticmethod
+    def format_writes(fmt: str) -> bool:
+        """Whether a printf format may WRITE through one of its arguments: anything but plain text and the reading
+        conversions d i o u x X c s p e E f F g G a A and %% (with flags, width, precision, length) — so a %n in any
+        dress, an unfinished specification and an unknown conversion all count as writing."""
+        k = 0
+        while True:
+            k = fmt.find("%", k)
+            if k < 0:
+                return False
+            m = re.match(r"%[-+ #0']*(?:\*|\d+)?(?:\.(?:\*|\d+)?)?(?:hh|h|ll|l|L|j|z|t|q)?[diouxXcspeEfFgGaA%]", fmt[k:])
+            if not m:                                      # %n, or anything that is not a known reading conversion
+                return True
+            k += m.end()
+
+    def _printf_safe(self, entry: int, a: int, fidx: int) -> bool:
+        """The printf-family call at `a` cannot write through a format argument: its format (argument `fidx`) is, on
+        every path, a constant string of a read-only section with no %n; or it is the routine's own argument
+        forwarded unchanged, the routine is not address-taken, and EVERY call of the routine passes such a constant.
+        Anything else is not proved, and the call is then taken to write through any pointer it can see."""
+        # While the format is being evaluated the evaluation may come back to this very call (the format sits in a
+        # frame slot that this call could only disturb through a %n): it is then taken as proved — if every such
+        # call's format is constant and free of %n ON THAT ASSUMPTION, no call is the first to write, so none does.
+        return self._guarded("printf", (entry, a, fidx), self._printf_compute, (True, None))[0]
+
+    def _reg_pathwise(self, entry: int, at: int, reg: str) -> frozenset:
+        """`reg` just before `at`, its conditional writes CORRELATED: over the straight run that ends at `at` (no
+        branch enters it, nothing transfers out unconditionally), each path decides every condition once and keeps
+        the decision until an instruction may set the flags — so `movwge r2 / movtge r2` never pairs with
+        `movwlt r2`. A write the run does not model, or a value from before the run, is its reaching-definition
+        value."""
+        self.analyse(entry)
+        region = self.region(entry)
+        addrs = [i["addr"] for i in region]
+        if at not in addrs:
+            return self._raw_reg(entry, at, reg)
+        targets = self.branch_targets_of(entry)
+        k = addrs.index(at)
+        start = k
+        while start > 0:                                   # back to the run's first instruction
+            if addrs[start] in targets:
+                break
+            i = region[start - 1]
+            b, cond = base_mnem(i["mnem"])
+            if (b in ("b", "bx") and not cond) or b in ("cbz", "cbnz", "tbb", "tbh") or i["mnem"] == ".data" \
+                    or (b in ("pop", "ldm", "ldmia", "ldmfd") and "pc" in i["ops"]):
+                break
+            start -= 1
+        paths = [(frozenset(), None)]                      # (decisions, reg's value — None: as on entry to the run)
+        for i in region[start:k]:
+            nxt = []
+            for known, val in paths:
+                c = cond_of(i["mnem"]) if self._cond(i) else None
+                for executes, kn in ([(True, known)] if c is None else self._decide(c, known)):
+                    v = val
+                    if executes and reg in self.written(i):
+                        if self._family(i) == "movt" and ",#" in i["ops"].replace(" ", ""):
+                            lo = val if val is not None else self._raw_reg(entry, i["addr"], reg)
+                            v = frozenset(self._const_atom((imm(i["ops"]) << 16) | (x[1] & 0xFFFF)) if x[0] == "const"
+                                          else ("other",) for x in lo)
+                            v = frozenset(("cb", x[1] & ~1) if x[0] == "const" and (x[1] & ~1) in self.label_at and
+                                          self.unit_of(x[1] & ~1) in self.APP_UNITS else x for x in v)
+                        elif self._family(i) in ("movw", "mov", "movs") and re.fullmatch(r"\w+,#(?:0x[0-9a-f]+|\d+)", i["ops"].replace(" ", "")):
+                            v = frozenset({("const", imm(i["ops"]))})
+                        else:
+                            v = frozenset(self._writer_atoms(entry, i, reg))
+                    nxt.append((frozenset() if executes and sets_flags(i) else kn, v))
+            paths = list(set(nxt))
+            if len(paths) > 64:
+                return self._raw_reg(entry, at, reg)
+        out: set = set()
+        for _kn, v in paths:
+            out |= v if v is not None else self._raw_reg(entry, region[start]["addr"], reg)
+        return frozenset(out)
+
+    def _printf_compute(self, entry: int, a: int, fidx: int) -> tuple:
+
+        def constant(R, at, reg):
+            atoms = self._isolated(self._reg_pathwise, R, at, reg)
+            if not atoms or any(x[0] != "const" for x in atoms):
+                return None
+            strs = [self._cstring(x[1]) for x in atoms]
+            return None if any(s is None for s in strs) else sorted(strs)
+        fmts = constant(entry, a, f"r{fidx}")
+        how = "constant"
+        if fmts is None:
+            atoms = self._isolated(self._raw_reg, entry, a, f"r{fidx}")
+            if len(atoms) == 1 and next(iter(atoms))[0] == "arg" and isinstance(next(iter(atoms))[1], int) \
+                    and entry not in getattr(self, "address_taken", ()):
+                m = next(iter(atoms))[1]
+                sites = self.direct_sites(entry)
+                each = [constant(o, s, f"r{m}") for o, s, _k in sites]
+                if sites and all(e is not None for e in each):
+                    fmts = sorted({s for e in each for s in e})
+                    how = f"argument {m} of {self.name(entry)}, a constant at each of its {len(sites)} call sites"
+        ok = fmts is not None and not any(self.format_writes(s) for s in fmts)
+        return (ok, {"call": f"{self.name(entry)} {a:#x} {self.name(self._call_target(self.ins_at[a]))}",
+                     "format": how if fmts is not None else "NOT a provable constant", "formats": fmts or [], "no_percent_n": ok})
+
+    def _indirect_targets(self, entry: int, a: int):
+        """The routines the indirect call at `a` may reach, for the callee summaries: None when it is not an
+        application-pointer call (the unknown); else the callbacks the called pointer can be over EVERY caller of
+        the routine (`_site_callbacks` — context-insensitive, so a superset of what any one path resolves), or, when
+        that cannot be told, every application callback."""
+        sets = {e.get("set") for e in self.edges.get(entry, []) if e.get("site") == f"{a:#x}"}
+        if sets != {"app_function_pointers"}:
+            return None
+        t = self._guarded("sitecb", (entry, a), self._site_callbacks, frozenset())
+        return list(self.rule_targets("app_function_pointers")) if t is None else sorted(t)
+
+    def _site_callbacks(self, entry: int, a: int):
+        if (self.unit_of(entry) or "") not in self.APP_UNITS:
+            return None
+        rT = self._regs(self.ins_at[a]["ops"])[0]
+        try:
+            r = self._pt_read(entry, a, rT)
+        except Finding:
+            return None
+        if r[0] == "VAL":
+            return self._atoms_callbacks(entry, r[1])
+        return self._arg_field_callbacks(entry, r[0], r[1])
+
+    def _callers_values(self, entry: int, n):
+        """What every direct caller hands the routine as argument n: [(caller, site, atoms)], or None when the routine
+        can be entered any other way (address-taken, or no caller is seen)."""
+        if entry in self.address_taken or n is None:
+            return None
+        sites = self.direct_sites(entry)
+        out = []
+        for o, s, _k in sites:
+            self.analyse(o)
+            if isinstance(n, int):
+                atoms = self._pt_eval(o, s, f"r{n}")
+            else:
+                sp = self._pt_slot(o, s, 0)
+                if sp is None:
+                    return None
+                atoms = self._slot_atoms(o, s, sp + n[1])
+            out.append((o, s, atoms))
+        return out or None
+
+    def _atoms_callbacks(self, R: int, atoms):
+        out = set()
+        for x in atoms:
+            if x[0] == "cb":
+                out.add(x[1])
+            elif x[0] == "arg":
+                sub = self._guarded("argcb", (R, x[1]), self._arg_callbacks, frozenset())
+                if sub is None:
+                    return None
+                out |= sub
+            else:
+                return None
+        return frozenset(out)
+
+    def _arg_callbacks(self, entry: int, n):
+        vals = self._callers_values(entry, n)
+        if vals is None:
+            return None
+        out = set()
+        for o, _s, atoms in vals:
+            sub = self._atoms_callbacks(o, atoms)
+            if sub is None:
+                return None
+            out |= sub
+        return frozenset(out)
+
+    def _arg_field_callbacks(self, entry: int, n, off: int):
+        return self._guarded("fieldcb", (entry, n, off), self._arg_field_compute, frozenset())
+
+    def _arg_field_compute(self, entry: int, n, off: int):
+        vals = self._callers_values(entry, n)
+        if vals is None:
+            return None
+        out = set()
+        for o, s, atoms in vals:
+            for x in atoms:
+                if x[0] == "frame" and x[1] is not None:
+                    sub = self._atoms_callbacks(o, self._slot_atoms(o, s, x[1] + off))
+                elif x[0] == "tab" and x[2] is not None:
+                    try:
+                        sub = frozenset(self._ro_field(x[1] + x[2] + off, "a field read"))
+                    except Finding:
+                        sub = None
+                elif x[0] == "arg":
+                    sub = self._arg_field_callbacks(o, x[1], off)
+                else:
+                    sub = None
+                if sub is None:
+                    return None
+                out |= sub
+        return frozenset(out)
+
+    # ---- read-only callback tables (2026-10-05: b3_app.c's I/O tables are `static const`, in .rodata)
+    #
+    # A pointer into a table is followed by PROVENANCE (a ('tab', T, offset) atom, born only where the table's address
+    # is materialised and kept through arithmetic and copies), on the same footing as a frame address: a pointer
+    # derived from another object — a global, another frame — is taken not to reach the table (see VALUE_MODEL).
+    # A callback read from a field of a table in .rodata is the table's word in the ELF — provided the image shows
+    # nothing can write the table (`_ro_table_proof`): its address (any address inside it) is materialised only by the
+    # image's own units, by movw / movt or a literal-pool load, and appears in no other loaded word; in every routine
+    # that materialises it, no store's base may point into it, it is never stored outside the routine's own frame
+    # nor returned, and every call (or tail) it is handed to — with everything that callee hands it on to — writes
+    # nothing through it and keeps nothing (`_arg_summary`). A failed proof is a Finding.
+
+    def _ro_tables(self) -> dict:
+        """start -> (name, size): the .rodata data symbols holding at least one application callback."""
+        if "_ro_tables_cache" in self.__dict__:
+            return self._ro_tables_cache
+        rod = [s for s in self.secs if s["name"] == ".rodata"]
+        out = {}
+        for name, (v, size, typ) in self.syms.items():
+            if typ not in ("r", "R") or not size or not any(s["addr"] <= v and v + size <= s["addr"] + s["size"] for s in rod):
+                continue
+            if any(((self.words.get(v + k) or 0) & ~1) in self.label_at and self.unit_of((self.words.get(v + k) or 0) & ~1) in self.APP_UNITS
+                   for k in range(0, size - 3, 4)):
+                out[v] = (name, size)
+        self._ro_tables_cache = out
+        return out
+
+    def _ro_table_of(self, addr: int):
+        for v, (name, size) in self._ro_tables().items():
+            if v <= addr < v + size:
+                return v
+        return None
+
+    def _ro_field(self, addr: int, what: str) -> set:
+        """The callback at `addr`, a word of a read-only table proved unwritable. A Finding otherwise."""
+        T = self._ro_table_of(addr)
+        if T is None:
+            raise Finding(f"{what}: {addr:#x} is not in a read-only callback table")
+        why = self._guarded("roproof", T, self._ro_table_proof, None)
+        if why is not None:
+            raise Finding(f"{what}: the read-only table {self._ro_tables()[T][0]} may be written: {why}")
+        w = self.words.get(addr)
+        if addr & 3 or w is None or (w & ~1) not in self.label_at or self.unit_of(w & ~1) not in self.APP_UNITS:
+            raise Finding(f"{what}: the word at {addr:#x} ({self._ro_tables()[T][0]}+{addr - T:#x}) is not an application callback ({w!r})")
+        self._cache("_ro_reads")[(self._ro_tables()[T][0], addr - T)] = self.name(w & ~1)
+        return {w & ~1}
+
+    def _ro_table_proof(self, T: int):
+        """None when nothing in the image can write the table at T; else the reason (see the block comment)."""
+        name, size = self._ro_tables()[T]
+        inside = lambda v: T <= v < T + size
+        text = [s for s in self.secs if s["name"] in (".text", ".init", ".fini")]
+        intext = lambda a: any(s["addr"] <= a < s["addr"] + s["size"] for s in text)
+        for a, w in self.words.items():                    # a stored address: only in a literal pool of the code
+            if inside(w) and not intext(a):
+                return f"its address is a data word at {a:#x}"
+        users = set()
+        for fname, ins in self.funcs.items():
+            if not ins:
+                continue
+            lo: dict = {}
+            for i in ins:
+                o = i["ops"].replace(" ", "")
+                fam = self._family(i)
+                hit = False
+                if fam == "movw" and ",#" in o:
+                    lo[o.split(",")[0]] = imm(o)
+                elif fam == "movt" and ",#" in o:
+                    hit = inside((imm(o) << 16) | lo.get(o.split(",")[0], 0))
+                elif fam == "ldr" and re.fullmatch(r"\w+,\[pc,#-?\w+\]", o):
+                    lit = ((i["addr"] + 4) & ~3 if i["thumb"] else i["addr"] + 8) + imm(o)
+                    hit = inside(self.words.get(lit, 0))
+                elif base_mnem(i["mnem"])[0] in ("add", "adr") and re.fullmatch(r"\w+,pc,#-?\w+", o):
+                    hit = inside(((i["addr"] + 4) & ~3 if i["thumb"] else i["addr"] + 8) + imm(o))
+                if hit:
+                    owner = max(x for x in self.func_entries if x <= i["addr"])
+                    if (self.unit_of(owner) or "") not in self.APP_UNITS:
+                        return f"its address is materialised outside the image's units, in {self.name(owner)}"
+                    users.add(owner)
+        if not users:
+            return "its address is never materialised (a field read of it cannot be placed)"
+        mine = lambda atoms: any(x[0] == "tab" and x[1] == T for x in atoms)   # a pointer derived from the table
+        for R in sorted(users):
+            self.analyse(R)
+            for i in self.region(R):
+                a = i["addr"]
+                if a not in self.sp_at.get(R, {}):
+                    continue
+                kind = self._walk_kinds(R)[a]
+                b = base_mnem(i["mnem"])[0]
+                tgt = self._call_target(i)
+                if kind == "store":
+                    d = self._store_desc(R, a)
+                    if mine(d["base"]):
+                        return f"{self.name(R)} stores through it at {a:#x}"
+                    if any(mine(self._base_atoms(R, a, r)) for r in d["data"]) and not all(x[0] == "frame" for x in d["base"]):
+                        return f"{self.name(R)} stores it outside its frame at {a:#x}"
+                elif kind == "call" or (b == "b" and tgt is not None and tgt in self.func_entries and tgt != R):
+                    for pos, atoms, (w, _ind, keep) in self._handed(R, a):
+                        if mine(atoms) and (w is not None or keep is not None):
+                            return (f"{self.name(R)} hands it at {a:#x} ({pos}) to "
+                                    f"{self.name(tgt) if tgt else 'an indirect call'}, which may write through it or keep it")
+                elif b == "bx" or (b in ("pop", "ldmia", "ldmfd", "ldm") and "pc" in i["ops"]):
+                    if mine(self._raw_reg(R, a, "r0")):
+                        return f"{self.name(R)} returns it at {a:#x}"
+        self._cache("_ro_users")[name] = sorted(self.name(R) for R in users)
+        return None
+
+    # ---- named callback contracts (the owner's ruling of 2026-10-05: named write-range summaries for the finite set
+    # of routines that block, from their source semantics, bound to the source digest and to the image's code)
+    #
+    # A contract replaces the routine's summary: what it may write through each argument (its extent from the
+    # pointer: a byte count, the value of another argument or a linear function of it (mul x argument + add) — which
+    # must then be a constant at the call, else the write is unbounded — or 'STR', within the NUL-terminated string
+    # the argument points at, forward), that it
+    # writes through nothing else it is handed and keeps no pointer, and what it returns ('in0': NULL or a pointer
+    # into argument 0's object; 'int': a number). `keeps` names the argument positions it may keep (a kept frame
+    # address leaks that frame). An argument position at or above its arity is not read. It holds
+    # only while (1) the routine is the named unit's code, (2) that unit's source digest is the recorded one, (3) the
+    # digest of the routine's code WITH everything it calls or branches to (its closure) is the recorded one, and (4)
+    # the routine's own instructions do not write, at a pinned offset, more than the contract says (`_arg_summary`
+    # read off the code, where it is exact), nor store an argument pointer itself outside its frame unless `keeps`
+    # says so. Any of these failing is a Finding.
+    STR_EXTENT = 1 << 30
+    CONTRACT_SOURCES = {
+        "b3/firmware/b3_app.c": "2f7f1660d4f598c483139de4bd45d22afe273eecb7876e7419f142db1de8ff66",
+        "b3/firmware/p3_derive.c": "21b4d7a9b4379a6d2d5ff9a76e111d1ae1641305a4647e18f70767c7af50d730",
+        "b3/firmware/b3_record.c": "5c9e433e5732dc9f6eea504c5b21a70ceb70f41b33d6916c24d56d89ba6ab8ba",
+    }
+    CONTRACTS = {
+        "rectx_parse_cb": {"unit": "b3/firmware/b3_app.c", "arity": 5, "writes": {0: "STR", 1: ("arg", 2), 3: 4},
+                           "returns": "in0",
+                           "source": "parse_frame_any(line, type_out, type_max, seq_out): strrchr / *last = 0 and "
+                                     "line[i] = 0 only inside the string at line; *seq_out = strtoul(…, NULL, 10) (4 "
+                                     "bytes); snprintf(type_out, type_max, \"%s\", …) (at most type_max bytes); returns "
+                                     "NULL or f[4], a pointer into line; f[] and expect[] are its own locals"},
+        "pull_parse_cb": None,                             # (the same body: parse_frame_any; filled below)
+        "rectx_payload_seq_cb": {"unit": "b3/firmware/b3_app.c", "arity": 3, "writes": {1: 4}, "returns": "int",
+                                 "source": "p3_base64url_decode(payload, g_json, sizeof g_json - 1) into the global; "
+                                           "json_uint(g_json, key, seq_out) writes *seq_out (4 bytes) only"},
+        "pull_payload_fields_cb": {"unit": "b3/firmware/b3_app.c", "arity": 5, "writes": {1: 4, 2: 4, 3: 4},
+                                   "returns": "int",
+                                   "source": "as rectx_payload_seq_cb, then *seq_out, *chunk_out (json_uint) and "
+                                             "*has_chunk (an int), 4 bytes each"},
+        "tx_recv_cb": {"unit": "b3/firmware/b3_app.c", "arity": 3, "writes": {0: ("arg", 1)}, "returns": "int",
+                       "source": "recv_line_bounded(out, max, …) -> p3_rectx_recv_line_timed(&APP_RX, out, max, …): "
+                                 "returns -1 at max == 0 before any write; out[n] with n + 1 < max, and out[n] = 0 with "
+                                 "n < max — within out[0, max)"},
+        "rectx_recv_cb": None,
+        "pull_recv_cb": None,
+        "sha_emit": {"unit": "b3/firmware/b3_record.c", "arity": 3, "writes": {0: 108}, "returns": "int",
+                     "source": "p3_sha256_update((p3_sha256 *)ctx, bytes, n): c->len (8 at 32), c->buf[c->n, c->n + "
+                               "take) with take <= 64 - c->n (inside buf, 40..104), c->n (4 at 104), sha256_block("
+                               "c->h, c->buf) writes h (0..32) and its own w[64]; sizeof(p3_sha256) = 108. Precondition: "
+                               "ctx is a p3_sha256 set up by p3_sha256_init (c->n < 64, kept by update)"},
+    }
+    SHA = ("p3_sha256 is {uint32_t h[8]; uint64_t len; uint8_t buf[64]; size_t n} = 108 bytes. sha256_block(h, p) writes h[0..8) and its own w[64] only. Precondition for update / final / words: c was set up by p3_sha256_init (c->n < 64, which update keeps: take <= 64 - c->n)")
+    CONTRACTS.update({
+        "p3_sha256_init": {"unit": "b3/firmware/p3_derive.c", "arity": 1, "writes": {0: 108}, "returns": "int",
+                           "source": "memcpy(c->h, iv, 32); c->len = 0; c->n = 0. " + SHA},
+        "p3_sha256_update": {"unit": "b3/firmware/p3_derive.c", "arity": 3, "writes": {0: 108}, "returns": "int",
+                             "source": "c->len += n; memcpy(c->buf + c->n, data, take) with take <= 64 - c->n; c->n += "
+                                       "take; at 64: sha256_block(c->h, c->buf), c->n = 0. " + SHA},
+        "p3_sha256_final": {"unit": "b3/firmware/p3_derive.c", "arity": 2, "writes": {0: 108, 1: 32}, "returns": "int",
+                            "source": "p3_sha256_update(c, &pad / lenbe, …) on its own locals; out[4i .. 4i+3] for i < 8 "
+                                      "(32 bytes). " + SHA},
+        "p3_sha256_words": {"unit": "b3/firmware/p3_derive.c", "arity": 3, "writes": {0: 108}, "returns": "int",
+                            "source": "p3_sha256_update(c, be, 4) per word, be[4] its own local. " + SHA},
+        "p3_hex": {"unit": "b3/firmware/p3_derive.c", "arity": 3, "writes": {2: ("lin", 1, 2, 1)}, "returns": "int",
+                   "source": "out[2i], out[2i + 1] for i < n, then out[2n] = 0: out[0, 2n + 1); in is only read"},
+    })
+    CONTRACTS["pull_parse_cb"] = dict(CONTRACTS["rectx_parse_cb"])
+    CONTRACTS["rectx_recv_cb"] = dict(CONTRACTS["tx_recv_cb"])
+    CONTRACTS["pull_recv_cb"] = dict(CONTRACTS["tx_recv_cb"])
+    CONTRACT_CODE = {                                  # name -> the closure digest it is bound to (this image)
+        "p3_hex": "96dc4ca59b157f590820a34fe1cbda6f63c96bbbd2b4c41fea2d9ad51d0b2b92",
+        "p3_sha256_final": "ab9f4a86a6c8814ba361c0052c477622a682c81f9def945aa2da7b3c000dfd4b",
+        "p3_sha256_init": "53dcdf6551d5c4b8797b30c98ed768eb9b6d9e7a0283d91b8ce0c621be5dab61",
+        "p3_sha256_update": "9dc14505f1488f71ed29cd48815da26d2bc8afcec75874df35229b73fd1ec37c",
+        "p3_sha256_words": "532af8d21f83ff7b66b8385d456591bb260c518370201899771b2391d39fcdc0",
+        "pull_parse_cb": "0b191ebf788a6ffa878d582d06802ec090c9785620ed7b0eb570353f5ccf7781",
+        "pull_payload_fields_cb": "4ea251775f22295b7e4a76614cbd8c1677d742cc4a34da5d621d64a29afbb842",
+        "pull_recv_cb": "85e02c189c564f15b033c086bcda57b93e4bf9f387011f0e99af49517360f119",
+        "rectx_parse_cb": "72e9dda05e40808496b3a81f396505cd0d45d50ef53f8578f7a9cf5971cd2be9",
+        "rectx_payload_seq_cb": "21277725af553d07e572862953e444e26eed02f4ad71f90fd4b38cfb06b33e7d",
+        "rectx_recv_cb": "14a874c7da636c79c27c38ceaed885ba4d0dd8ed00e513f28b20254cca58ae78",
+        "sha_emit": "d1967bf1ba6f1b07e4f11c8e05c647b9549caaf37145bc8cf3d43703acabc573",
+        "tx_recv_cb": "d4fbc942382cf09dd440cf4081ccce01e09527ce0a9e71c34e6d7fbd9183d481",
+    }
+
+    def _closure(self, t: int) -> list[int] | None:
+        """The routine and every routine it can reach: each edge the path analysis records — a call, a tail, a fall-
+        through, and every target of an indirect call by its site's named target set (an application-pointer site:
+        every application callback — deliberately the whole set, so the closure does not depend on what else has
+        been resolved, and the digest is the same in every run). None when a transfer has no named set."""
+        seen, todo = set(), [t]
+        while todo:
+            r = todo.pop()
+            if r in seen:
+                continue
+            seen.add(r)
+            if r not in self.ins_at:
+                return None
+            try:
+                self.analyse(r)
+                for e in self.edges[r]:
+                    if e["kind"] in ("indirect_call", "indirect_tail"):
+                        todo += list(self.rule_targets(e["set"]))
+                    elif e.get("to") is not None:
+                        todo.append(e["to"])
+            except Finding:
+                return None
+        return sorted(seen)
+
+    def _code_digest(self, t: int):
+        cl = self._closure(t)
+        if cl is None:
+            return None
+        h = hashlib.sha256(f"closure of {self.name(t)}:".encode())
+        for r in cl:
+            body = self.region(r)
+            h.update(f"{self.name(r)}@{r:#x}:".encode())
+            try:
+                h.update(self.read_bytes(r, body[-1]["addr"] + body[-1]["size"] - r))
+            except Finding:                                # (a synthetic image has no bytes: its instruction text)
+                h.update("".join(f"{i['mnem']} {i['ops']};" for i in body).encode())
+        return h.hexdigest()
+
+    def _unit_sha(self, unit: str) -> str | None:
+        p = REPO_ROOT / unit
+        return sha256_file(p) if p.is_file() else None
+
+    def _contract(self, t: int | None):
+        """The verified contract of the routine at `t`, None when it has none; a Finding when its binding fails."""
+        if t is None or self.name(t) not in self.CONTRACTS:
+            return None
+        memo = self._cache("_contract_memo")
+        if t in memo:
+            if isinstance(memo[t], Finding):
+                raise memo[t]
+            return memo[t]
+        name, c = self.name(t), self.CONTRACTS[self.name(t)]
+        try:
+            if self.unit_of(t) != c["unit"]:
+                raise Finding(f"the contract of {name} is for {c['unit']}'s code; this is {self.unit_of(t)}'s")
+            want = self.CONTRACT_SOURCES.get(c["unit"])
+            if want is None or self._unit_sha(c["unit"]) != want:
+                raise Finding(f"the contract of {name} is bound to {c['unit']} at {want}, which is now {self._unit_sha(c['unit'])}")
+            got = self._code_digest(t)
+            if got is None or got != self.CONTRACT_CODE.get(name):
+                raise Finding(f"the contract of {name} is bound to its code closure {self.CONTRACT_CODE.get(name)}, "
+                              f"the image's is {got}")
+            memo[t] = c                                    # (set before the self-check: it reads the code, which may
+            for p in range(4):                             # call back into this routine's contract)
+                auto = self._isolated(self._auto_summary, t, p)
+                allowed = self._contract_cf(c, p)[0]
+                if auto[0] not in (None, "ALL") and allowed != "ALL" and not all(
+                        any(lo <= o and o + n <= lo + m for lo, m in (allowed or ())) for o, n in auto[0]):
+                    raise Finding(f"the contract of {name} lets argument {p} be written at {sorted(allowed or [])}, "
+                                  f"but its code writes {sorted(auto[0])}")
+                kept = self._cache("_exact_keeps").get((t, p))
+                if kept is not None and p not in c.get("keeps", {}):
+                    raise Finding(f"the contract of {name} says argument {p} is not kept, but its code stores that "
+                                  f"pointer outside its frame at {kept:#x}")
+        except Finding as e:
+            memo[t] = e
+            raise
+        self._cache("_contracts_used")[name] = {"unit": c["unit"], "source_sha256": self.CONTRACT_SOURCES[c["unit"]],
+                                                "code_sha256": self.CONTRACT_CODE[name], "arity": c["arity"],
+                                                "writes": {str(k): (v if not isinstance(v, tuple) else f"argument {v[1]}" if v[0] == "arg"
+                                    else f"{v[2]} x argument {v[1]} + {v[3]}")
+                                                           for k, v in sorted(c["writes"].items())},
+                                                "returns": c["returns"], "source": c["source"]}
+        return c
+
+    def _auto_summary(self, t: int, p):
+        s = self._fixed("summary", t, self._arg_summary_compute, {})
+        return self.EVERYTHING if s == self.TOP else s.get(p, self.NOTHING)
+
+    def _contract_pos(self, m):
+        if isinstance(m, int):
+            return m
+        if isinstance(m, tuple) and m[0] == "stk":
+            return 4 + m[1] // 4
+        return None
+
+    def _contract_cf(self, c: dict, m) -> tuple:
+        """The contract's summary for position `m`, context-free (an extent given by another argument: unbounded)."""
+        pos = self._contract_pos(m)
+        if pos is None or pos >= c["arity"]:
+            return self.NOTHING
+        keep = frozenset({"EXT"}) if pos in c.get("keeps", {}) else None
+        if pos not in c["writes"]:
+            return (None, None, keep)
+        ext = c["writes"][pos]
+        if isinstance(ext, int):
+            return (frozenset({(0, ext)}) if ext else None, None, keep)
+        if ext == "STR":
+            return (frozenset({(0, self.STR_EXTENT)}), None, keep)
+        return ("ALL", None, keep)
+
+    def _summary_at(self, entry: int, a: int, t: int, m) -> tuple:
+        """The summary of the routine `t` called at `a`, for position `m`: its contract evaluated at the call, or
+        its summary read off the code."""
+        c = self._contract(t)
+        if c is None:
+            return self._arg_summary(t, m)
+        pos = self._contract_pos(m)
+        ext = c["writes"].get(pos) if pos is not None and pos < c["arity"] else None
+        if isinstance(ext, tuple) and ext[0] in ("arg", "lin"):   # the extent is another argument's value here
+            k = ext[1]
+            mul, add = (ext[2], ext[3]) if ext[0] == "lin" else (1, 0)
+            if k < 4:
+                v = self._raw_reg(entry, a, f"r{k}")
+            else:
+                sp = self._pt_slot(entry, a, 0)
+                v = self._raw_slot(entry, a, sp + 4 * (k - 4)) if sp is not None else frozenset()
+            keep = self._contract_cf(c, m)[2]
+            if v and all(x[0] == "const" for x in v):
+                n = mul * max(x[1] for x in v) + add
+                return (frozenset({(0, n)}) if n > 0 else None, None, keep)
+            return ("ALL", None, keep)                     # the length is not a constant here: unbounded
+        return self._contract_cf(c, m)
+
+    def _callee_summary(self, entry: int, a: int, m) -> tuple:
+        """(writes, ind, keep) of the call at `a` for its argument `m`, memoised outside a solver round."""
+        key = (entry, a, m)
+        cache = self._cache("_csum")
+        if key in cache:
+            return cache[key]
+        out = self._callee_summary_compute(entry, a, m)
+        if self._solving is None:                          # (inside a solver round an argument value may still move)
+            cache[key] = out
+        return out
+
+    def _callee_summary_compute(self, entry: int, a: int, m) -> tuple:
         i = self.ins_at[a]
         tgt = self._call_target(i)
         c = self._libc_contract(tgt)
         if c is not None:
-            if c[1] is None or n != c[1]:
-                return None
+            if c[4] is not None:
+                if not self._printf_safe(entry, a, c[4]):
+                    return ("ALL", None, None)             # a %n is not excluded: it writes through any argument
+            if c[1] is None or m != c[1]:
+                return self.NOTHING
             size = self._raw_reg(entry, a, f"r{c[2]}")
             if not size or any(x[0] != "const" for x in size):
-                return "ALL"                               # the byte count is not a constant at the call
-            return frozenset({(0, max(x[1] for x in size))}) if max(x[1] for x in size) else None
+                return ("ALL", None, None)                 # the byte count is not a constant at the call
+            n = max(x[1] for x in size)
+            return (frozenset({(0, n)}) if n else None, None, None)
         if tgt is not None:
-            return self._arg_writes(tgt, n)
-        sets = {e.get("set") for e in self.edges.get(entry, []) if e.get("site") == f"{a:#x}"}
-        if sets != {"app_function_pointers"}:
-            return "ALL"
-        out: set = set()
-        for t in self.rule_targets("app_function_pointers"):
-            w = self._arg_writes(t, n)
-            if w == "ALL":
-                return "ALL"
-            out |= w or set()
-        return frozenset(out) or None
+            return self._summary_at(entry, a, tgt, m)
+        targets = self._indirect_targets(entry, a)
+        if targets is None:
+            return self.EVERYTHING
+        out = self.NOTHING
+        for t in targets:
+            out = self._merge3(out, self._summary_at(entry, a, t, m))
+        return out
+
+    def _pointer_slots(self, entry: int):
+        """The frame slots of the routine that some store may fill with an address (flow-insensitive), or None when
+        that cannot be listed (a store of one at a place the model cannot pin; or the list is being computed)."""
+        # asked while it is being computed (a word loaded from the frame is stored back into it): no slot yet — if no
+        # store parks an address ON THAT ASSUMPTION, none is the first to
+        return self._guarded("pslots", entry, self._pointer_slots_compute, frozenset())
+
+    def _pointer_slots_compute(self, entry: int):
+        self.analyse(entry)
+        out = set()
+        for i in self.region(entry):
+            a = i["addr"]
+            if a not in self.sp_at.get(entry, {}) or self._walk_kinds(entry)[a] != "store":
+                continue
+            d = self._store_desc(entry, a)
+            B = d["base"]
+            if not any(x[0] == "frame" or x == ("der", "frame") for x in B):
+                continue
+            pinned = len(B) == 1 and next(iter(B))[0] == "frame" and next(iter(B))[1] is not None and not d["wild"]
+            for off, nb, r in d["elems"]:
+                regs = [r] if r is not None else d["data"]
+                if any(x[0] in self.POINTERISH for q in regs for x in self._base_atoms(entry, a, q)):
+                    if not pinned or r is None:
+                        return None
+                    out.add(next(iter(B))[1] + off)
+        for i in self.region(entry):                       # … and the words a callee may park a pointer in
+            a = i["addr"]
+            if a not in self.sp_at.get(entry, {}) or self._walk_kinds(entry)[a] != "call":
+                continue
+            H = self._handed(entry, a)
+            where = {pos: atoms for pos, atoms, _s in H}
+            for _pos, atoms, (_w, _d, kp) in H:
+                if not kp or not any(x[0] in self.POINTERISH for x in atoms):
+                    continue
+                for dest in kp:
+                    for y in self._frameish(where.get(dest[0], ())) if dest != "EXT" else ():
+                        if y[0] != "frame" or y[1] is None:
+                            return None
+                        out.add(y[1] + dest[1])
+        return frozenset(out)
+
+    def _handed(self, entry: int, a: int) -> list:
+        """Every pointer position the call at `a` is handed: (position, the atoms there, the callee's summary for
+        it). The four argument registers always; the stack words a readable callee reads; for an unknown callee (or a
+        printf whose format is not proved free of %n) every frame word at or above SP that may hold an address."""
+        out = [(m, self._raw_reg(entry, a, f"r{m}"), self._callee_summary(entry, a, m)) for m in range(4)]
+        tgt = self._call_target(self.ins_at[a])
+        sp = self._pt_slot(entry, a, 0)
+        unknown = frozenset({("other",), ("der", "frame")} | {("der", ("arg", n)) for n in (0, 1, 2, 3)})
+        c = self._libc_contract(tgt)
+        if c is not None:
+            if c[4] is None or self._printf_safe(entry, a, c[4]):
+                return out                                 # a fixed register arity, or stack words that are only read
+            every = ("ALL", None, None)
+        else:
+            targets = [tgt] if self._readable(tgt) else (self._indirect_targets(entry, a) if tgt is None else None)
+            if targets is not None:
+                for k in range(0, 64, 4):
+                    s = self.NOTHING
+                    for t in targets:
+                        s = self._merge3(s, self._summary_at(entry, a, t, ("stk", k)))
+                    if s != self.NOTHING:
+                        out.append((("stk", k), unknown if sp is None else self._raw_slot(entry, a, sp + k), s))
+                return out
+            every = self.EVERYTHING
+        slots = self._pointer_slots(entry)
+        if sp is None or slots is None:
+            out.append(("frame", unknown, every))
+        else:
+            out += [(("frame", A), self._raw_slot(entry, a, A), every) for A in sorted(slots) if A >= sp]
+        return out
+
+    def _arg_summary(self, callee: int, n) -> tuple:
+        if not self._readable(callee):
+            return self.EVERYTHING
+        c = self._contract(callee)
+        if c is not None:
+            return self._contract_cf(c, n)
+        return self._auto_summary(callee, n)
 
     def _arg_writes(self, callee: int, n):
-        """The byte ranges, as offsets from the pointer, that `callee` — or anything it hands the pointer on to —
-        may store through its incoming argument `n` (0–3, or ('stk', A)): None, 'ALL' (an offset the model cannot
-        bound, a derived pointer, a routine outside the image's units, recursion), or a set of (offset, bytes)."""
-        memo = self._cache("_aw_memo")
-        key = (callee, n)
-        if key in memo:
-            return memo[key]
-        if not self._compiled(callee):
-            memo[key] = "ALL"
-            return "ALL"
-        memo[key] = "ALL"                                  # while in progress: a cycle back here is unbounded
-        memo[key] = self._isolated(self._arg_writes_compute, callee, n)
-        return memo[key]
+        return self._arg_summary(callee, n)[0]
 
-    def _arg_writes_compute(self, callee: int, n):
+    def _arg_summary_compute(self, callee: int) -> dict:
+        """The routine's summary for EVERY argument position at once: {n: (writes, ind, keep)}, absent = NOTHING.
+        `ind` = {(the offset, from argument n, of a word the routine loads, the extent it writes through THAT loaded
+        pointer: a set of (offset, bytes), 'ALL', or 'KEEP' when it may keep it)}; offset None: a word it reaches
+        at a place the model does not pin."""
         self.analyse(callee)
-        der = ("der", ("arg", n))
+        acc: dict = {}                                     # n -> [writes set, {off: ext set}, keep set]
 
-        def mine(atoms) -> list[int]:
-            """The constant offsets from argument n among `atoms`."""
-            return [0 if x[0] == "arg" else x[2] for x in atoms if x[0] in ("arg", "argo") and x[1] == n]
-        out: set = set()
+        def of(n):
+            return acc.setdefault(n, [set(), {}, set()])
+
+        def ind_add(n, off, ext):
+            cur = of(n)[1].setdefault(off, set())
+            cur |= ({ext} if isinstance(ext, str) else set(ext))
+
+        def split(atoms):
+            """Per argument n among `atoms`: [exact offsets from it, derived from it?, exact loaded words (offsets),
+            loaded words with arithmetic on them (offsets)]."""
+            out: dict = {}
+            for x in atoms:
+                if x[0] in ("arg", "argo"):
+                    out.setdefault(x[1], [[], False, [], []])[0].append(0 if x[0] == "arg" else x[2])
+                elif x[0] == "der" and x[1] != "frame" and x[1][0] == "arg":
+                    out.setdefault(x[1][1], [[], False, [], []])[1] = True
+                elif x[0] == "der" and x[1] != "frame" and x[1][0] == "ind":
+                    out.setdefault(x[1][1], [[], False, [], []])[3].append(x[1][2])
+                elif x[0] == "ind":
+                    out.setdefault(x[1], [[], False, [], []])[2].append(x[2])
+            return out
         reached = self.sp_at.get(callee, {})
+        kinds = self._walk_kinds(callee)
         for i in self.region(callee):
             a = i["addr"]
             if a not in reached:
                 continue
-            d = self._store_desc(callee, a)
-            if d is not None:
-                ks = mine(d["base"])
-                if der in d["base"] or (ks and d["wild"]):
-                    return "ALL"
-                out |= {(k + off, nb) for k in ks for off, nb, _r in d["elems"]}
+            if kinds[a] == "store":
+                d = self._store_desc(callee, a)
+                B = d["base"]
+                for n, (ks, dd, ii, iid) in split(B).items():
+                    if dd or (ks and d["wild"]):
+                        of(n)[0].add("ALL")
+                    of(n)[0].update((k + off, nb) for k in ks for off, nb, _r in d["elems"])
+                    for off in ii:
+                        ind_add(n, off, "ALL" if d["wild"] or off is None else {(eo, nb) for eo, nb, _r in d["elems"]})
+                    for off in iid:
+                        ind_add(n, off, "ALL")
+                if not (B and all(x[0] == "frame" or x == ("der", "frame") for x in B)):   # not into its own frame
+                    one = next(iter(B)) if len(B) == 1 and not d["wild"] else None
+                    for off, nb, r in d["elems"]:
+                        for q in ([r] if r is not None else d["data"]):
+                            for n, (ks, dd, ii, iid) in split(self._base_atoms(callee, a, q)).items():
+                                if (ks or dd) and r is not None and nb == 4:      # a whole word: the pointer is kept
+                                    self._cache("_keep_why").setdefault((callee, n), []).append(f"stored at {a:#x}")
+                                    if ks and not dd:
+                                        self._cache("_exact_keeps")[(callee, n)] = a      # the argument itself
+                                    of(n)[2].add((one[1], (0 if one[0] == "arg" else one[2]) + off)
+                                                 if one is not None and one[0] in ("arg", "argo") else "EXT")
+                                for off2 in ii + iid:      # a pointer loaded through argument n, kept
+                                    ind_add(n, off2, "KEEP")
                 continue
             b = base_mnem(i["mnem"])[0]
             tgt = self._call_target(i)
             tail = b == "b" and tgt is not None and tgt != callee and tgt in self.func_entries
             if not (b in ("bl", "blx") or tail):
                 continue
-            passed = [(m, self._raw_reg(callee, a, f"r{m}")) for m in range(4)]
-            if self._compiled(tgt):
-                sp = self._pt_slot(callee, a, 0)
-                for k in range(0, 64, 4):
-                    if self._arg_writes(tgt, ("stk", k)) is None:
-                        continue
-                    if sp is None:
-                        return "ALL"
-                    passed.append((("stk", k), self._raw_slot(callee, a, sp + k)))
-            for m, atoms in passed:
-                ks = mine(atoms)
-                if not ks and der not in atoms:
-                    continue
-                w = self._callee_writes(callee, a, m)
-                if w is None:
-                    continue
-                if w == "ALL" or der in atoms:
-                    return "ALL"
-                out |= {(k + off, nb) for k in ks for off, nb in w}
+            H = self._handed(callee, a)
+            where = {pos: atoms for pos, atoms, _s in H}
+            for _m, atoms, (w, d2, kp) in H:
+                for n, (ks, dd, ii, iid) in split(atoms).items():
+                    if ks or dd:
+                        for dest in kp or ():              # the callee keeps it: where, in THIS routine's terms
+                            A2 = where.get(dest[0], frozenset()) if dest != "EXT" else frozenset()
+                            if len(A2) == 1 and next(iter(A2))[0] in ("arg", "argo"):
+                                y = next(iter(A2))
+                                of(n)[2].add((y[1], (0 if y[0] == "arg" else y[2]) + dest[1]))
+                            elif not (A2 and all(x[0] == "frame" or x == ("der", "frame") for x in A2)):
+                                self._cache("_keep_why").setdefault((callee, n), []).append(f"handed on at {a:#x} {dest} {sorted(A2, key=str)[:3]}")
+                                of(n)[2].add("EXT")        # (in this routine's own frame: its slots carry it)
+                        if w == "ALL" or (w and dd):
+                            of(n)[0].add("ALL")
+                        elif w:
+                            of(n)[0].update((k + off, nb) for k in ks for off, nb in w)
+                        if d2 == "ALL" or (d2 and dd):
+                            ind_add(n, None, "ALL")
+                        elif d2:                           # the callee's loaded words, at our offsets
+                            for off2, ext in d2:
+                                for k in ks:
+                                    ind_add(n, None if off2 is None else k + off2, ext)
+                    for off in ii:                         # a word loaded through argument n, handed on
+                        if kp:
+                            ind_add(n, off, "KEEP")
+                        if w == "ALL" or off is None:
+                            ind_add(n, off, "ALL" if w else set())
+                        elif w:
+                            ind_add(n, off, w)
+                        if d2:
+                            ind_add(n, None, "ALL")        # (a word reached through it: a second remove)
+                    for off in iid:                        # … with arithmetic on it: anywhere from it
+                        if kp:
+                            ind_add(n, off, "KEEP")
+                        if w or d2:
+                            ind_add(n, off, "ALL")
+        out = {}
+        for n, (writes, ind, keep) in acc.items():
+            w = "ALL" if ("ALL" in writes or len(writes) > 64) else (frozenset(writes) or None)
+            d2 = self._ind_norm(ind)
+            kp = frozenset({"EXT"}) if ("EXT" in keep or len(keep) > 64) else (frozenset(keep) or None)
+            if (w, d2, kp) != self.NOTHING:
+                out[n] = (w, d2, kp)
+        return out
+
+    @staticmethod
+    def _ind_norm(ind: dict):
+        """{off: ext set} -> the summary's ind: None, or a frozenset of (off, ext) with ext a frozenset of ranges,
+        'ALL' or 'KEEP' (KEEP above ALL above ranges); more than 64 entries: ALL."""
+        out = set()
+        for off, ext in ind.items():
+            if "KEEP" in ext:
+                out.add((off, "KEEP"))
+            elif "ALL" in ext or len(ext) > 64:
+                out.add((off, "ALL"))
+            elif ext:
+                out.add((off, frozenset(ext)))
         if len(out) > 64:
             return "ALL"
         return frozenset(out) or None
 
-    def _call_may_write(self, entry: int, a: int, slot: int) -> bool:
-        """Whether the call at `a` may write the word at the caller's frame slot `slot` through a pointer it is
-        handed: an argument register (or, for a routine of the image's units, a stack argument it reads) holding a
-        frame address at or below the slot, with a callee that may store at a reaching offset through it."""
-        i = self.ins_at[a]
-        tgt = self._call_target(i)
-        passed = [(m, self._raw_reg(entry, a, f"r{m}")) for m in range(4)]
-        if self._compiled(tgt):
-            sp = self._pt_slot(entry, a, 0)
-            for k in range(0, 64, 4):
-                if self._arg_writes(tgt, ("stk", k)) is None:
-                    continue
-                if sp is None:
-                    return True
-                passed.append((("stk", k), self._raw_slot(entry, a, sp + k)))
-        for m, atoms in passed:
-            for x in atoms:
-                if x != ("der", "frame") and x[0] != "frame":
-                    continue
-                w = self._callee_writes(entry, a, m)
-                if w is None:
-                    continue
-                A0 = x[1] if x[0] == "frame" else None
-                if A0 is None:
-                    return True
-                if w == "ALL":
-                    if A0 < slot + 4:
-                        return True
-                elif any(A0 + off < slot + 4 and slot < A0 + off + nb for off, nb in w):
-                    return True
+    def _in_stacks(self, v: int) -> bool:
+        """`v` lies in the stacks' region (every mode's, from the linker symbols): a constant address that may be a
+        frame's. A store through any other constant cannot be through a leaked frame address — that would first have
+        to be loaded, and a loaded value is not a constant."""
+        lims = [self.syms[s][0] for pair in STACK_TOPS.values() for s in pair if s in self.syms]
+        return not lims or min(lims) <= v < max(lims)
+
+    @staticmethod
+    def _frameish(atoms) -> list:
+        return [x for x in atoms if x[0] == "frame" or x == ("der", "frame")]
+
+    def _frame_leaks(self, entry: int) -> bool:
+        """Whether an address of the routine's frame may come to rest in memory outside the frame: stored there by
+        the routine, or handed to a callee that may keep it. Then the frame can be written from anywhere."""
+        # while it is being computed the frame is taken not to leak: if no store and no hand-over leaks an address ON
+        # THAT ASSUMPTION, none is the first to, so none does (what is solved meanwhile is provisional, see _guarded)
+        why = self._guarded("leak", entry, self._frame_leaks_compute, False)
+        if why and entry in self._cache("_memo_leak"):
+            self._cache("_leaks")[self.name(entry)] = why
+        return bool(why)
+
+    def _frame_leaks_compute(self, entry: int):
+        if entry not in self.edges and entry not in self.ins_at:
+            return False
+        self.analyse(entry)
+        kinds = self._walk_kinds(entry)
+        for i in self.region(entry):
+            a = i["addr"]
+            if a not in self.sp_at.get(entry, {}):
+                continue
+            if kinds[a] == "store":
+                d = self._store_desc(entry, a)
+                if not (d["base"] and all(x[0] == "frame" or x == ("der", "frame") for x in d["base"])):
+                    if any(self._frameish(self._base_atoms(entry, a, r)) for r in d["data"]):
+                        return f"stored outside the frame at {a:#x}"
+            elif kinds[a] == "call" or (self._call_target(i) is not None and self._call_target(i) not in self.sp_at.get(entry, {})
+                                        and self._call_target(i) in self.func_entries and self._call_target(i) != entry):
+                H = self._handed(entry, a)
+                where = {pos: atoms for pos, atoms, _s in H}
+                for m, atoms, (_w, _d, kp) in H:
+                    for x in self._frameish(atoms) if isinstance(_d, frozenset) else ():
+                        for off, ext in _d:                # a frame address the callee loads from our object, kept
+                            if ext == "KEEP" and (off is None or x[1] is None or self._frameish(self._raw_slot(entry, a, x[1] + off))):
+                                return f"handed at {a:#x} ({m}): the callee may keep a frame address it loads from it"
+                    if _d == "ALL" and self._frameish(atoms) and self._pointer_slots(entry) != frozenset():
+                        return f"handed at {a:#x} ({m}): the callee may keep what it loads from it"
+                    if not kp or not self._frameish(atoms):
+                        continue
+                    for dest in kp:                        # kept in an object of this very frame: not a leak
+                        A2 = where.get(dest[0], frozenset()) if dest != "EXT" else frozenset()
+                        if not (A2 and all(x[0] == "frame" or x == ("der", "frame") for x in A2)):
+                            return f"handed at {a:#x} ({m}) to a routine that may keep it outside this frame"
         return False
+
+    def _call_may_write(self, entry: int, a: int, slot: int):
+        """What the call at `a` may leave in the word at the caller's frame slot `slot`: None when it cannot write
+        it; else the atoms it may put there — an unknown, and any pointer the callee keeps in that very word."""
+        H = self._handed(entry, a)
+        where = {pos: atoms for pos, atoms, _s in H}
+        out = None
+        for _m, atoms, (w, ind, keep) in H:
+            for x in self._frameish(atoms):
+                A0 = x[1] if x[0] == "frame" else None
+                if w == "ALL" or (keep and "EXT" in keep):
+                    out = out or set()
+                elif w and (A0 is None or any(A0 + off < slot + 4 and slot < A0 + off + nb for off, nb in w)):
+                    out = out or set()
+                if ind and (A0 is None or ind == "ALL"):
+                    if self._pointer_slots(entry) != frozenset():
+                        out = out or set()
+                elif ind:
+                    for off, ext in ind:                   # through a pointer the callee loads from our object
+                        if off is None:
+                            if self._pointer_slots(entry) != frozenset():
+                                out = out or set()
+                            continue
+                        for y in self._frameish(self._raw_slot(entry, a, A0 + off)):
+                            if y[0] != "frame" or y[1] is None or isinstance(ext, str) or any(
+                                    y[1] + lo < slot + 4 and slot < y[1] + lo + n for lo, n in ext):
+                                out = out or set()
+            for dest in keep or ():                        # a pointer handed here and kept in the word at `slot`
+                for y in self._frameish(where.get(dest[0], ())) if dest != "EXT" else ():
+                    if y[0] != "frame" or y[1] is None or (y[1] + dest[1] < slot + 4 and slot < y[1] + dest[1] + 4):
+                        out = (out or set()) | set(atoms)
+        return None if out is None else out | {("other",)}
 
     def _pt_read(self, entry: int, site: int, rT: str):
         """What the indirect call at `site` targets: ('VAL', atoms) when the pointer's value AT THE SITE is only
@@ -2293,6 +3303,8 @@ class Image:
         v = binding.get(argidx)
         if v is None:
             raise Finding(f"{self.name(entry)}: argument {argidx} of the indirect call at {site:#x} is not bound on the path")
+        if v[0] == "ro":
+            return sorted(self._ro_field(v[1] + off, f"{self.name(entry)}'s call at {site:#x}"))
         if v[0] != "obj":
             raise Finding(f"{self.name(entry)}: argument {argidx} of the field call at {site:#x} is {v[0]}, not an object")
         return sorted(self._field_callbacks(v[1], v[2] + off, dict(v[3]), v[4]))
@@ -2321,7 +3333,7 @@ class Image:
         between), and nothing the call itself may write through the pointer before the field is read."""
         if at not in self.ins_at or not (self._is_call(self.ins_at[at]) or self._call_target(self.ins_at[at]) is not None):
             raise Finding(f"{self.name(R)}: the object's hand-over at {at:#x} is not a call")
-        if self._isolated(self._call_may_write, R, at, slot):
+        if self._isolated(self._call_may_write, R, at, slot) is not None:
             raise Finding(f"{self.name(R)}: the call at {at:#x} that is handed the object may itself write its field at slot {slot:#x}")
         atoms = self._slot_atoms(R, at, slot)
         if not all(x[0] in ("cb", "arg") for x in atoms):
@@ -2338,6 +3350,9 @@ class Image:
         kinds = {a[0] for a in atoms}
         if kinds == {"cb"}:
             return ("cbs", frozenset(a[1] for a in atoms))
+        if len(atoms) == 1 and kinds == {"tab"}:          # a read-only table of the image (`_ro_table_proof`)
+            x = next(iter(atoms))
+            return ("ro", x[1] + x[2]) if x[2] is not None else None
         if atoms and all(a[0] == "frame" for a in atoms):
             A = {a[1] for a in atoms}
             return ("obj", caller, next(iter(A)), frozenset(binding.items()), site) if len(A) == 1 and None not in A else None
@@ -3047,19 +4062,42 @@ class Image:
 
 
 _ASSESS_CACHE: dict = {}
+MAX_PASSES = 12
 # what the callback resolution rests on beyond the image's own instructions, recorded with the result; `targets`
 # names the C-library routines whose contract (Image.LIBC_CONTRACTS) the analysis actually used on this image
 VALUE_MODEL = ("a callback read from a frame slot or an object's field is the LAST word stored there on every path to "
                "the read / the hand-over (flow-sensitive, by the bytes each store writes; a conditional, partial, "
                "overlapping, register-indexed or frame-derived store, a path with no store, and a call that may store "
-               "through a pointer reaching the slot each make it unknown, which is a finding). Stated limits, not proved "
-               "from the image: (M1) a frame address is followed through registers, the routine's own frame slots and "
-               "call arguments, not through memory outside the frame; (M2) a callee writes at non-negative offsets from "
-               "a pointer it is given; (M3) for a prebuilt library routine or an indirect call only the four register "
-               "arguments are followed. A prebuilt C-library routine handed a pointer is assumed to write anywhere "
-               "from it, except the routines named here, taken at their C-standard contract (the destination is "
-               "written for at most the constant byte count passed; the others do not write through their "
-               "arguments), each bound to the libc member that is the image's code")
+               "through a pointer reaching the slot each make it unknown, which is a finding). A call is held against "
+               "its callee's summary — read off the code of every routine in the image, prebuilt ones included, or a "
+               "named contract (rules.callback_contracts): what it may write through each pointer it is handed (signed "
+               "offsets; an unbounded write reaches every slot of the frame, in either direction), what it writes "
+               "through the words it loads from the object, and whether it may keep the pointer — for every position "
+               "it can be handed one: the four argument registers, the stack words a readable callee reads, and for a "
+               "callee that cannot be read every frame word that may hold an address. A frame address stored outside "
+               "the frame or handed to a routine that may keep it LEAKS that frame (rules.frame_leaks): from then on "
+               "any call, and any store through a pointer that is not provably elsewhere, may write any of its slots. "
+               "A call clobbers the caller-saved registers its target's code writes (GCC's inter-procedural register "
+               "allocation relies on the same). STATED, NOT PROVED FROM THE IMAGE: (B1) object provenance — a store "
+               "through a pointer derived from ANOTHER object (a global, another routine's frame, a read-only table) "
+               "does not reach this frame or that table; the analysis follows a frame's and a table's own addresses "
+               "wherever they go, and does not prove that every write to every other object stays inside it; (B2) the "
+               "callee-saved registers are preserved across a call (the AAPCS); (B3) a routine's contract is its "
+               "source semantics as stated in it — bound to the source and code digests and self-checked, not derived")
+PRINTF_RULE = ("each printf-family call the callback resolution relied on: its format is a constant string in a "
+               "read-only section on every path — directly, or as the calling routine's own argument, constant at every "
+               "call of that routine, which is not address-taken — and has no %n conversion; a call whose format is "
+               "not so proved is taken to write through every pointer it can see")
+CONTRACT_RULE = ("the named routines are taken at their contract (Image.CONTRACTS: the bytes each may write through "
+                 "each argument, that it keeps no pointer, what it returns), each read from its source and bound to "
+                 "that source's digest and to the digest of its code closure in this image, and self-checked against "
+                 "the writes and keeps its own instructions show; listed: the contracts the analysis used")
+RO_RULE = ("a callback read from a field of a .rodata table is the ELF's word there: the table's address is materialised "
+           "only by the image's own units and stored in no data word; no store's base may point into it, it is never "
+           "stored outside a frame nor returned, and every call it is handed to writes nothing through it and keeps "
+           "nothing; listed: each table so proved, who materialises it and which fields were read")
+LEAK_RULE = ("the routines one of whose frame addresses may come to rest outside the frame (stored there, or handed to a "
+             "routine that may keep it): no callback is resolved from such a frame")
 
 
 def assess(elf: Path = ELF_DEFAULT) -> dict:
@@ -3074,9 +4112,40 @@ def assess(elf: Path = ELF_DEFAULT) -> dict:
     return result
 
 
+def settle(img: "Image", fn, unsettled=None):
+    """fn(image) on passes until every speculative read agrees with the value then computed (see Image._guarded):
+    each pass runs on a fresh copy of `img` (left unanalysed), the previous pass's final values as its guesses. A
+    Finding raised in the settled pass is raised; one raised in a pass whose speculation failed is not trusted."""
+    if "_spec" in img.__dict__ or getattr(img, "_pt_eval_memo", None) or any(k.startswith("_memo_") for k in img.__dict__):
+        raise ValueError("settle needs an image no value analysis has run on (its guesses would be unverified)")
+    guesses: dict = {}
+    for attempt in range(MAX_PASSES):
+        im = copy.deepcopy(img)                            # (the image handed in is never analysed itself)
+        im._guesses = dict(guesses)
+        try:
+            out, err = fn(im), None
+        except Finding as e:
+            out, err = None, e
+        failed = im._speculation_failed()
+        if not failed:
+            im.__dict__["_passes"] = attempt + 1
+            if err is not None:
+                raise err
+            return out
+        guesses.update(failed)
+    msg = f"the analysis did not settle in {MAX_PASSES} passes: {sorted(map(str, failed))[:4]}"
+    if unsettled is not None and err is None:
+        return unsettled(out, msg)                         # (the last pass's result, refused)
+    raise Finding(msg)
+
+
 def assess_image(img: "Image") -> dict:
     """The assessment of one loaded Image (what `assess` runs; a test hands it an Image it has altered in memory, to
-    show that the sub-proof the alteration breaks is refused and no bound is published)."""
+    show that the sub-proof the alteration breaks is refused and no bound is published), settled (`settle`)."""
+    return settle(img, _assess_once, unsettled=lambda r, msg: dict(r, findings=r["findings"] + [msg], ok=False))
+
+
+def _assess_once(img: "Image") -> dict:
     findings: list[str] = []
     elf = img.elf
     memo: dict = {}
@@ -3161,7 +4230,18 @@ def assess_image(img: "Image") -> dict:
                              "note": "a bit the image never clears keeps the state the loader entered it with"},
                    "named_chains": named,
                    "rules": dict({n: {"rule": r["rule"], "targets": [img.name(t) for t in r["targets"]]} for n, r in sorted(img.site_rules.items())},
-                                 value_model={"rule": VALUE_MODEL, "targets": sorted(img._cache("_libc_used"))}),
+                                 value_model={"rule": VALUE_MODEL, "targets": sorted(img._cache("_libc_used"))},
+                                 printf_formats={"rule": PRINTF_RULE,
+                                                 "targets": [v[1] for _k, v in sorted(img._cache("_memo_printf").items())]},
+                                 frame_leaks={"rule": LEAK_RULE, "targets": [f"{n}: {w}" for n, w in sorted(img._cache("_leaks").items())]},
+                                 callback_contracts={"rule": CONTRACT_RULE, "targets": [
+                                     f"{n}: {c['unit']} {c['source_sha256'][:16]}… code {c['code_sha256'][:16]}… arity "
+                                     f"{c['arity']} writes {json.dumps(c['writes'], sort_keys=True)} returns {c['returns']} — {c['source']}"
+                                     for n, c in sorted(img._cache("_contracts_used").items())]},
+                                 read_only_tables={"rule": RO_RULE, "targets": [
+                                     f"{img._ro_tables()[T][0]}: materialised by {', '.join(img._cache('_ro_users').get(img._ro_tables()[T][0], []))}; "
+                                     f"read {', '.join(f'+{off:#x} {cb}' for (tn, off), cb in sorted(img._cache('_ro_reads').items()) if tn == img._ro_tables()[T][0])}"
+                                     for T in sorted(img._ro_tables()) if img._cache("_memo_roproof").get(T, "x") is None]}),
                    "application_pointers": img.produced,
                    "newlib": img._newlib,
                    "main_limit": MAIN_LIMIT,

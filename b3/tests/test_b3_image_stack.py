@@ -49,9 +49,9 @@ SLOT8 = 8 - SP                                            # the frame slot [sp, 
 def synth(seq, base=0x1000, sp_off=SP, more=None, library=()):
     """A bare Image carrying hand-written routines: `seq` at `base` (named "f") and `more` {name: (base, seq)}, each
     a list of (mnem, ops) at 4-byte spacing, every instruction at SP offset `sp_off`. Two callbacks (CB_A, CB_B)
-    exist as one-instruction routines. Every routine is in an application unit except the names in `library` (no
-    unit: a prebuilt routine the analysis cannot read). Direct calls and register calls are wired as the edges the
-    path analysis would record. No ELF is read."""
+    exist as one-instruction routines. Every routine is in an application unit except the names in `library`: those
+    have a label and NO instructions in the image — a routine the analysis cannot read. Direct calls and register
+    calls are wired as the edges the path analysis would record. No ELF is read."""
     img = isa.Image.__new__(isa.Image)
     routines = {"f": (base, seq), "cb_a": (CB_A, [("bx", "lr")]), "cb_b": (CB_B, [("bx", "lr")])}
     routines.update(more or {})
@@ -59,6 +59,9 @@ def synth(seq, base=0x1000, sp_off=SP, more=None, library=()):
     img.sp_at, img.edges, img.local, img.own_return, img.units = {}, {}, {}, {}, []
     for name, (b, s) in routines.items():
         body, a = [], b
+        if name in library:
+            img.label_at[b] = name
+            continue
         for mnem, ops in s:
             i = {"addr": a, "size": 4, "mnem": mnem, "ops": ops, "thumb": True}
             img.ins_at[a] = i
@@ -67,8 +70,7 @@ def synth(seq, base=0x1000, sp_off=SP, more=None, library=()):
         img.funcs[b] = body
         img.label_at[b] = img.func_entries[b] = name
         img.sp_at[b] = {i["addr"]: frozenset({sp_off}) for i in body}
-        if name not in library:
-            img.units.append((b, 4 * len(s), APP))
+        img.units.append((b, 4 * len(s), APP))
         edges = []
         for i in body:
             fam = i["mnem"]
@@ -79,7 +81,7 @@ def synth(seq, base=0x1000, sp_off=SP, more=None, library=()):
         img.edges[b], img.local[b], img.own_return[b] = edges, sp_off, True
     img.site_rules = {"app_function_pointers": {"targets": [CB_A, CB_B], "rule": "synthetic"}}
     img._rsucc_cache, img._rw_cache, img._pt_eval_memo, img._pt_cache, img._pt_state = {}, {}, {}, {}, {}
-    img._member_of, img.words, img.syms = {}, {}, {}
+    img._member_of, img.words, img.syms, img.address_taken, img.secs, img.blob = {}, {}, {}, [], [], b""
     return img, base
 
 
@@ -97,20 +99,22 @@ def site_of(img, base, nth=-1):
 
 
 def targets(img, base, binding=None, nth=-1):
-    """What the assessment resolves the routine's register call to — its own path, `_app_targets`."""
-    return img._app_targets(base, site_of(img, base, nth), binding or {})
+    """What the assessment resolves the routine's register call to — its own path, `_app_targets`, settled."""
+    site = site_of(img, base, nth)
+    return isa.settle(img, lambda im: im._app_targets(base, site, binding or {}))
 
 
 def handed(img, builder, consumer, nth=0):
     """What the consumer's register call resolves to when `builder` hands it its arguments at its nth call of it."""
     site = [i for i in img.funcs[builder] if i["mnem"] == "bl" and isa.branch_target(i["ops"])[0] == consumer][nth]["addr"]
-    return targets(img, consumer, dict(img._child_binding(builder, site, consumer, {})))
+    csite = site_of(img, consumer)
+    return isa.settle(img, lambda im: im._app_targets(consumer, csite, dict(im._child_binding(builder, site, consumer, {}))))
 
 
 def value(img, base, reg=None, at=None):
     """The atoms of the register the routine's last register call goes through (or of `reg` just before `at`)."""
     i = img.ins_at[at if at is not None else site_of(img, base)]
-    return img._pt_eval(base, i["addr"], reg or i["ops"].strip())
+    return isa.settle(img, lambda im: im._pt_eval(base, i["addr"], reg or i["ops"].strip()))
 
 
 class TheFinalImage(unittest.TestCase):
@@ -152,12 +156,23 @@ class TheFinalImage(unittest.TestCase):
         self.assertIn("app_function_pointers", rules)
         self.assertTrue(rules["app_function_pointers"]["targets"], "the application callbacks resolve")
 
-    def test_the_value_model_and_the_library_contracts_it_used_are_recorded(self):
-        vm = self.r["rules"]["value_model"]
-        for limit in ("(M1)", "(M2)", "(M3)"):
-            self.assertIn(limit, vm["rule"])
+    def test_what_the_bound_rests_on_is_recorded(self):
+        rules = self.r["rules"]
+        vm = rules["value_model"]
+        for stated in ("(B1)", "(B2)", "(B3)"):
+            self.assertIn(stated, vm["rule"])
+        for gone in ("(M1)", "(M2)", "(M3)"):               # the owner's HOLD on 1e55967: no longer assumed
+            self.assertNotIn(gone, vm["rule"])
         self.assertTrue(vm["targets"], "the library contracts the analysis relied on are named")
         self.assertLessEqual(set(vm["targets"]), set(isa.Image.LIBC_CONTRACTS))
+        formats = rules["printf_formats"]["targets"]
+        self.assertTrue(formats)
+        self.assertTrue(all(f["no_percent_n"] and f["formats"] for f in formats), "every printf format is proved")
+        used = {s.split(":")[0] for s in rules["callback_contracts"]["targets"]}
+        self.assertLessEqual(used, set(isa.Image.CONTRACTS))
+        self.assertIn("sha_emit", used)
+        tables = {s.split(":")[0] for s in rules["read_only_tables"]["targets"]}
+        self.assertEqual(tables, {"APP_RX", "TX_IO", "REC_IO", "PULL_IO"}, "every I/O table is proved read-only")
 
     def test_the_image_clears_only_the_async_abort_mask(self):
         self.assertEqual(self.r["masks"]["cleared_by_the_image"], ["A"])
@@ -277,6 +292,17 @@ class ACallbackInTheRoutinesOwnFrame(unittest.TestCase):
         self.assertEqual(value(img, b, "r4", at=0x1010), both, "the point inside the cycle, asked first")
         self.assertEqual(targets(img, b), [CB_A, CB_B])
 
+    def test_a_pointer_stepped_round_a_loop_reaches_the_slot(self):
+        # r4 starts at [sp, #4] and steps by 4 while it writes: only iterating the cycle carries it on to [sp, #40]
+        # (a cycle cut after a round or two sees [sp, #4] and [sp, #8] alone)
+        loop = [("mov", "r3, #0"), ("str", "r3, [r4]"), ("add", "r4, r4, #4"), ("cbnz", f"r2, {br(0x1010)}")]
+        self.refused(CB + [("str", "r0, [sp, #40]"), ("add", "r4, sp, #4")] + loop + [("ldr", "r1, [sp, #40]"), ("blx", "r1")])
+        # and its value there is every place it can reach — widened, not its first positions
+        img, b = synth(CB + [("str", "r0, [sp, #40]"), ("add", "r4, sp, #4")] + loop + [("ldr", "r1, [sp, #40]"), ("blx", "r1")])
+        raw = isa.settle(img, lambda im: im._raw_reg(b, 0x1014, "r4"))
+        self.assertIn(("der", "frame"), raw, f"the stepped pointer at the store: {sorted(raw)}")
+        # (no stepping-down control: once widened, a stepped frame pointer has no direction and is refused either way)
+
     def test_a_double_word_load_reads_each_registers_own_slot(self):
         seq = CB + [("str", "r0, [sp, #12]"), ("mov", "r3, #7"), ("str", "r3, [sp, #8]"), ("ldrd", "r2, r3, [sp, #8]")]
         img, b = synth(seq + [("blx", "r3")])
@@ -291,15 +317,43 @@ class ACallbackInTheRoutinesOwnFrame(unittest.TestCase):
         img, b = synth(pre + [("mov", "r0, #0"), ("mov", "r1, #0"), ("mov", "r2, #0"), ("mov", "r3, #0"),
                               ("bl", call(0x3000, "lib"))] + post, more=lib, library=("lib",))
         self.assertEqual(targets(img, b), [CB_A])
-        # a prebuilt routine handed a frame address at or below the slot may write it
+        # a prebuilt routine handed ANY address of the frame may write the slot — below it, at it or above it (no
+        # direction is assumed of a routine that cannot be read)
         for reg in ("r0", "r3"):
-            with self.subTest(reg):
-                regs = [("mov", f"r{n}, #0") for n in range(4) if f"r{n}" != reg]
-                self.refused(pre + regs + [("add", f"{reg}, sp, #4"), ("bl", call(0x3000, "lib"))] + post, more=lib, library=("lib",))
-        # … one handed an address above the slot does not reach down to it (M2)
-        img, b = synth(pre + [("mov", "r1, #0"), ("mov", "r2, #0"), ("mov", "r3, #0"), ("add", "r0, sp, #12"),
-                              ("bl", call(0x3000, "lib"))] + post, more=lib, library=("lib",))
+            for off in (4, 8, 12, 200):
+                with self.subTest(reg=reg, off=off):
+                    regs = [("mov", f"r{n}, #0") for n in range(4) if f"r{n}" != reg]
+                    self.refused(pre + regs + [("add", f"{reg}, sp, #{off}"), ("bl", call(0x3000, "lib"))] + post, more=lib, library=("lib",))
+
+    def test_a_frame_address_in_a_stack_word_of_a_call_to_an_unknown_routine(self):
+        # the fifth argument: the address goes into an outgoing stack word, the registers hold nothing
+        lib = {"lib": (0x3000, [("bx", "lr")])}
+        zero = [("mov", f"r{n}, #0") for n in range(4)]
+        post = [("ldr", "r1, [sp, #8]"), ("blx", "r1")]
+        for off in (0, 4, 40):
+            with self.subTest(off):
+                self.refused(CB + [("str", "r0, [sp, #8]"), ("add", "r4, sp, #8"), ("str", "r4, [sp, #%d]" % off)] + zero +
+                             [("bl", call(0x3000, "lib"))] + post, more=lib, library=("lib",))
+        # the control: a stack word that holds no address
+        img, b = synth(CB + [("str", "r0, [sp, #8]"), ("mov", "r4, #5"), ("str", "r4, [sp, #0]")] + zero +
+                       [("bl", call(0x3000, "lib"))] + post, more=lib, library=("lib",))
         self.assertEqual(targets(img, b), [CB_A])
+
+    def test_a_frame_address_parked_outside_the_frame(self):
+        W = 0x5000
+        writer = {"w": (W, [("mov", "r3, #0"), ("str", "r3, [r0]"), ("bx", "lr")])}
+        post = [("ldr", "r1, [sp, #8]"), ("blx", "r1")]
+        pre = CB + [("str", "r0, [sp, #8]"), ("add", "r4, sp, #8")]
+        # stored in outside memory, read back, handed to a writer
+        why = self.refused(pre + [("str", "r4, [r6]"), ("ldr", "r0, [r6]"), ("bl", call(W, "w"))] + post, more=writer)
+        # … and stored there with nothing else: the frame is loose all the same
+        self.refused(pre + [("str", "r4, [r6, #12]")] + post)
+        self.refused(pre + [("stm", "r6, {r4, r5}")] + post)
+        # the control: a value that is no frame address stored there
+        img, b = synth(CB + [("str", "r0, [sp, #8]"), ("mov", "r4, #9"), ("str", "r4, [r6]"), ("ldr", "r0, [r6]"),
+                             ("bl", call(W, "w"))] + post, more=writer)
+        self.assertEqual(targets(img, b), [CB_A])
+        self.assertIsInstance(why, str)
 
 
 CONSUMER = [("ldr", "r3, [r0]"), ("blx", "r3"), ("bx", "lr")]          # calls the first field of the object in r0
@@ -380,6 +434,77 @@ class ACallbackInAnObjectHandedToAConsumer(unittest.TestCase):
         # … and one that hands it to a prebuilt routine the analysis cannot read
         self.refused(seq, more={"h": (H, [("bl", call(0x3000, "lib")), ("bx", "lr")]), "lib": (0x3000, [("bx", "lr")])}, library=("lib",))
 
+    def test_a_helper_handed_a_pointer_behind_the_field_that_writes_backwards(self):
+        H = 0x5000
+        seq = CB + [("str", "r0, [sp, #8]"), ("add", "r0, sp, #16"), ("bl", call(H, "h"))] + self.HAND + [("bx", "lr")]
+        for name, body in (("a negative immediate", [("mov", "r3, #0"), ("str", "r3, [r0, #-8]"), ("bx", "lr")]),
+                           ("a stepped-back pointer", [("sub", "r4, r0, #8"), ("mov", "r3, #0"), ("str", "r3, [r4]"), ("bx", "lr")]),
+                           ("a pre-decrement", [("mov", "r3, #0"), ("str", "r3, [r0, #-8]!"), ("bx", "lr")]),
+                           ("a negative index", [("mov", "r3, #0"), ("str", "r3, [r0, -r1]"), ("bx", "lr")]),
+                           ("an index", [("mov", "r3, #0"), ("strb", "r3, [r0, r1]"), ("bx", "lr")])):
+            with self.subTest(name):
+                self.refused(seq, more={"h": (H, body)})
+        img, b = self.build(seq, more={"h": (H, [("mov", "r3, #0"), ("str", "r3, [r0, #-4]"), ("bx", "lr")])})
+        self.assertEqual(handed(img, b, C), [CB_A], "the word between the field and the pointer is not the field")
+
+    def test_a_field_pointer_in_a_fifth_stack_argument(self):
+        H = 0x5000
+        pre = CB + [("str", "r0, [sp, #8]"), ("add", "r4, sp, #8"), ("str", "r4, [sp, #0]")] + [("mov", f"r{n}, #0") for n in range(4)]
+        seq = pre + [("bl", call(H, "h"))] + self.HAND + [("bx", "lr")]
+        # a readable callee that stores through its first stack argument (SP offset 256 at its entry: [sp, #256])
+        self.refused(seq, more={"h": (H, [("ldr", "r4, [sp, #256]"), ("mov", "r3, #0"), ("str", "r3, [r4]"), ("bx", "lr")])})
+        img, b = self.build(seq, more={"h": (H, [("ldr", "r4, [sp, #256]"), ("ldr", "r3, [r4]"), ("bx", "lr")])})
+        self.assertEqual(handed(img, b, C), [CB_A], "a callee that only reads through it")
+        # an unknown callee
+        self.refused(seq, more={"h": (H, [("bx", "lr")])}, library=("h",))
+
+    def test_a_pointer_reached_through_the_object_or_kept_by_a_callee(self):
+        H, W = 0x5000, 0x6000
+        # the builder puts &field in a second object and hands THAT to a helper which loads it and writes through it
+        seq = CB + [("str", "r0, [sp, #8]"), ("add", "r4, sp, #8"), ("str", "r4, [sp, #32]"), ("add", "r0, sp, #32"),
+                    ("bl", call(H, "h"))] + self.HAND + [("bx", "lr")]
+        self.refused(seq, more={"h": (H, [("ldr", "r4, [r0]"), ("mov", "r3, #0"), ("str", "r3, [r4]"), ("bx", "lr")])})
+        self.refused(seq, more={"h": (H, [("ldr", "r0, [r0]"), ("bl", call(W, "w")), ("bx", "lr")]),
+                                "w": (W, [("mov", "r3, #0"), ("str", "r3, [r0]"), ("bx", "lr")])})
+        img, b = self.build(seq, more={"h": (H, [("ldr", "r4, [r0]"), ("ldr", "r3, [r4]"), ("bx", "lr")])})
+        self.assertEqual(handed(img, b, C), [CB_A], "a helper that only reads through the inner pointer")
+        img, b = self.build(seq, more={"h": (H, [("ldr", "r4, [r0, #4]"), ("mov", "r3, #0"), ("str", "r3, [r4]"), ("bx", "lr")])})
+        self.assertEqual(handed(img, b, C), [CB_A], "a helper that writes through ANOTHER word of the object")
+        # a helper that keeps the pointer it is handed (stores it through another pointer): the frame is loose
+        keep = CB + [("str", "r0, [sp, #8]"), ("add", "r0, sp, #8"), ("bl", call(H, "h"))] + self.HAND + [("bx", "lr")]
+        self.refused(keep, more={"h": (H, [("str", "r0, [r1]"), ("bx", "lr")])})
+        self.refused(keep, more={"h": (H, [("add", "r4, r0, #4"), ("str", "r4, [r1, #8]"), ("bx", "lr")])})
+
+    def test_a_printf_format_that_may_write_through_an_argument(self):
+        SN, FMT = 0x7000, 0x9000
+
+        def run(fmt, how=None, stack=False):
+            lead = [("movw", "r2, #36864"), ("movt", "r2, #0")] if how is None else how
+            hand = [("add", "r4, sp, #8"), ("str", "r4, [sp, #0]"), ("mov", "r3, #0")] if stack else [("add", "r3, sp, #8")]
+            seq = CB + [("str", "r0, [sp, #8]")] + lead + hand + [("add", "r0, sp, #64"), ("mov", "r1, #16"),
+                                                                  ("bl", call(SN, "snprintf"))] + self.HAND + [("bx", "lr")]
+            img, b = self.build(seq, more={"snprintf": (SN, [("bx", "lr")])}, library=("snprintf",))
+            img._member_of[SN] = "libc.a(libc_a-snprintf.o)"
+            img._cstring = lambda a: {FMT: fmt}.get(a)
+            return handed(img, b, C)
+        for stack in (False, True):
+            with self.subTest(stack=stack):
+                self.assertEqual(run("%s %d\n", stack=stack), [CB_A], "a format with no %n only reads its arguments")
+                for fmt in ("%n", "%d%n", "x %hhn", "%-5ln", "%*n", "%", "%!"):
+                    with self.subTest(fmt):
+                        with self.assertRaises(isa.Finding):
+                            run(fmt, stack=stack)
+                with self.assertRaises(isa.Finding):
+                    run("%d", how=[("ldr", "r2, [r6]")], stack=stack)       # a format that is not a constant
+                with self.assertRaises(isa.Finding):
+                    run(None, stack=stack)                                  # a constant that is not a read-only string
+
+    def test_the_format_reader(self):
+        for fmt, writes in (("", False), ("plain", False), ("%d %5.2f %-8s %llu %% %zx %c", False), ("100%%n", False),
+                            ("%n", True), ("%%%n", True), ("%08.3ln", True), ("%hhn", True), ("%*.*n", True),
+                            ("trailing %", True), ("%5", True), ("%.", True), ("%l", True)):
+            self.assertEqual(isa.Image.format_writes(fmt), writes, fmt)
+
     def test_a_consumer_that_writes_the_field_itself_is_refused(self):
         self.assertIn("may itself write its field", self.refused(
             CB + [("str", "r0, [sp, #8]")] + self.HAND + [("bx", "lr")],
@@ -390,9 +515,10 @@ class ACallbackInAnObjectHandedToAConsumer(unittest.TestCase):
         img, b = self.build([("str", "r1, [sp, #8]")] + self.HAND + [("bx", "lr")])
         site = [i for i in img.funcs[b] if i["mnem"] == "bl"][0]["addr"]
         outer = {1: ("cbs", frozenset({CB_B}))}
-        self.assertEqual(targets(img, C, dict(img._child_binding(b, site, C, outer))), [CB_B])
-        with self.assertRaises(isa.Finding):
-            targets(img, C, dict(img._child_binding(b, site, C, {})))          # the argument is not bound: refused
+        csite = site_of(img, C)
+        self.assertEqual(isa.settle(img, lambda im: im._app_targets(C, csite, dict(im._child_binding(b, site, C, outer)))), [CB_B])
+        with self.assertRaises(isa.Finding):                                     # the argument is not bound: refused
+            isa.settle(img, lambda im: im._app_targets(C, csite, dict(im._child_binding(b, site, C, {}))))
 
 
 class TheBytesAStoreWrites(unittest.TestCase):
@@ -451,6 +577,283 @@ class TheFlagSetters(unittest.TestCase):
         self.assertIn("_free_r", {img.name(e["to"]) for e in img.edges[W] if e["to"] is not None})
 
 
+H = 0x5000                                                # the contracted helper's entry
+
+
+class TheNamedContracts(unittest.TestCase):
+    """A named contract stands for a routine's code: what it writes through each argument it is handed (an extent
+    from the pointer), that it keeps nothing, what it returns. It is honoured only while bound — its unit, the unit's
+    source digest, its code closure's digest, and the routine's own instructions writing no more, at a pinned offset,
+    than it says nor storing an argument pointer outside its frame. The builder below stores CB_A at [sp, #8], hands
+    the helper a frame address, reads [sp, #8] back and calls it: the callback is resolved only when the contract,
+    evaluated at that call, leaves bytes 8..12 alone."""
+
+    BODY = [("mov", "r3, #0"), ("str", "r3, [r0]"), ("bx", "lr")]          # writes [p, p + 4)
+
+    def run_with(self, contract, hand, body=None, code=None, source="S", more_regs=()):
+        """`hand`: the instructions that set up the helper's arguments. Returns the resolved targets, or the
+        Finding's text."""
+        seq = CB + [("str", "r0, [sp, #8]")] + list(more_regs) + list(hand) + [("bl", call(H, "h")), ("ldr", "r1, [sp, #8]"), ("blx", "r1")]
+        img, b = synth(seq, more={"h": (H, body or self.BODY)})
+        c = dict({"unit": APP, "arity": 1, "returns": "int", "source": "synthetic"}, **contract)
+        digest = code if code is not None else img._code_digest(H)
+        with mock.patch.dict(isa.Image.CONTRACTS, {"h": c}, clear=True), \
+                mock.patch.dict(isa.Image.CONTRACT_SOURCES, {APP: "S"}, clear=True), \
+                mock.patch.dict(isa.Image.CONTRACT_CODE, {"h": digest}, clear=True), \
+                mock.patch.object(isa.Image, "_unit_sha", return_value=source):
+            try:
+                return targets(img, b)
+            except isa.Finding as e:
+                return str(e)
+
+    def refused(self, *a, why=None, **k):
+        r = self.run_with(*a, **k)
+        self.assertIsInstance(r, str, f"resolved {r}: the contract should have been refused here")
+        if why:
+            self.assertIn(why, r)
+        return r
+
+    # -- the positive controls: a legal write that does not reach the field
+    def test_a_bounded_write_elsewhere_in_the_frame_leaves_the_callback(self):
+        self.assertEqual(self.run_with({"writes": {0: 4}}, [("add", "r0, sp, #12")]), [CB_A])
+        self.assertEqual(self.run_with({"writes": {0: 4}}, [("add", "r0, sp, #4")]), [CB_A], "[4, 8): just below")
+        self.assertEqual(self.run_with({"arity": 2, "writes": {0: 4}}, [("add", "r0, sp, #12"), ("add", "r1, sp, #8")]),
+                         [CB_A], "a frame address in a position the contract says it does not write")
+        self.assertEqual(self.run_with({"writes": {0: 4}}, [("add", "r0, sp, #12"), ("add", "r1, sp, #8")]),
+                         [CB_A], "a frame address in a register beyond its arity")
+
+    # -- the write range made wider than the gap
+    def test_an_extent_that_reaches_the_field(self):
+        self.refused({"writes": {0: 8}}, [("add", "r0, sp, #4")], body=[("bx", "lr")])
+        self.refused({"writes": {0: 1}}, [("add", "r0, sp, #11")], body=[("bx", "lr")])
+        self.refused({"writes": {0: "STR"}}, [("add", "r0, sp, #4")], body=[("bx", "lr")])
+
+    def test_code_that_writes_more_than_its_contract(self):
+        self.refused({"writes": {0: 4}}, [("add", "r0, sp, #12")],
+                     body=[("mov", "r3, #0"), ("str", "r3, [r0, #4]"), ("bx", "lr")], why="but its code writes")
+        self.refused({"writes": {}}, [("add", "r0, sp, #12")], why="but its code writes")
+
+    def test_a_contract_not_bound_to_this_code_or_source(self):
+        self.refused({"writes": {0: 4}}, [("add", "r0, sp, #12")], code="0" * 64, why="bound to its code closure")
+        self.refused({"writes": {0: 4}}, [("add", "r0, sp, #12")], source="T", why="which is now")
+        with mock.patch.object(isa.Image, "unit_of", return_value="b3/firmware/b3_record.c"):
+            self.refused({"writes": {0: 4}}, [("add", "r0, sp, #12")], why="this is")
+
+    # -- a negative offset
+    def test_a_pointer_behind_the_field(self):
+        self.refused({"writes": {0: 8}}, [("add", "r0, sp, #6")], body=[("bx", "lr")])
+
+    def test_code_that_writes_below_its_pointer(self):
+        self.refused({"writes": {0: 4}}, [("add", "r0, sp, #12")],
+                     body=[("mov", "r3, #0"), ("str", "r3, [r0, #-4]"), ("bx", "lr")], why="but its code writes")
+
+    # -- the length precondition
+    def test_an_extent_given_by_another_argument(self):
+        c = {"arity": 2, "writes": {0: ("arg", 1)}}
+        self.assertEqual(self.run_with(c, [("add", "r0, sp, #12"), ("mov", "r1, #64")], body=[("bx", "lr")]), [CB_A])
+        self.assertEqual(self.run_with(c, [("add", "r0, sp, #0"), ("mov", "r1, #8")], body=[("bx", "lr")]), [CB_A],
+                         "[0, 8): up to the field")
+        self.refused(c, [("add", "r0, sp, #0"), ("mov", "r1, #9")], body=[("bx", "lr")])
+        self.refused(c, [("add", "r0, sp, #0"), ("ldr", "r1, [r6]")], body=[("bx", "lr")])   # not a constant here
+        lin = {"arity": 2, "writes": {0: ("lin", 1, 2, 1)}}                                  # 2n + 1 (a hex string)
+        self.assertEqual(self.run_with(lin, [("add", "r0, sp, #0"), ("mov", "r1, #3")], body=[("bx", "lr")]), [CB_A])
+        self.refused(lin, [("add", "r0, sp, #0"), ("mov", "r1, #4")], body=[("bx", "lr")])
+
+    # -- a kept pointer
+    def test_a_contract_that_keeps_the_pointer(self):
+        self.refused({"writes": {0: 4}, "keeps": {0: "EXT"}}, [("add", "r0, sp, #12")])
+
+    def test_code_that_keeps_the_pointer_under_a_contract_that_says_not(self):
+        self.refused({"writes": {}}, [("add", "r0, sp, #12")], body=[("str", "r0, [r6]"), ("bx", "lr")],
+                     why="is not kept")
+        # declared: the self-check passes, and the declared keep then leaks the frame
+        self.refused({"writes": {}, "keeps": {0: "EXT"}}, [("add", "r0, sp, #12")], body=[("str", "r0, [r6]"), ("bx", "lr")])
+
+
+class TheRealContracts(unittest.TestCase):
+    """The contracts the final image relies on are bound to it, and each one's code passes the self-check."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.img = isa.Image(ELF)                           # (kept unanalysed: every use goes through settle)
+
+    def test_every_contract_is_bound_and_consistent(self):
+        names = sorted(isa.Image.CONTRACTS)
+
+        def check(im):
+            return {n: (im._contract(im.syms[n][0] & ~1), im._code_digest(im.syms[n][0] & ~1)) for n in names}
+        got = isa.settle(self.img, check)
+        for name in names:
+            with self.subTest(name):
+                c, digest = got[name]
+                self.assertIsNotNone(c)
+                self.assertEqual(digest, isa.Image.CONTRACT_CODE[name])
+                self.assertEqual(isa.sha256_file(R / c["unit"]), isa.Image.CONTRACT_SOURCES[c["unit"]])
+
+    def test_the_bindings_are_read_off_the_bytes(self):
+        img = copy.deepcopy(self.img)
+        t = img.syms["p3_hex"][0] & ~1
+        sec = next(s for s in img.secs if s["addr"] <= t < s["addr"] + s["size"])
+        blob = bytearray(img.blob)
+        blob[sec["offset"] + t - sec["addr"]] ^= 1                        # one bit of p3_hex's code
+        img.blob = bytes(blob)
+        with self.assertRaises(isa.Finding) as c:
+            isa.settle(img, lambda im: im._contract(t))
+        self.assertIn("bound to its code closure", str(c.exception))
+
+T_ADDR = 0x9100                                           # a synthetic read-only table, in a synthetic .rodata
+
+
+def with_table(img, words=None, extra_words=None, name="TBL"):
+    """Give a synthetic image a .rodata section holding the table `name` at T_ADDR: its words (default CB_A | 1,
+    CB_B | 1), and any `extra_words` elsewhere {address: word}."""
+    words = words if words is not None else [CB_A | 1, CB_B | 1]
+    img.secs = [{"name": ".rodata", "addr": 0x9000, "offset": 0, "size": 0x1000},
+                {"name": ".data", "addr": 0xA000, "offset": 0x1000, "size": 0x1000}]
+    img.syms = {name: (T_ADDR, 4 * len(words), "r")}
+    img.words = {T_ADDR + 4 * k: w for k, w in enumerate(words)}
+    img.words.update(extra_words or {})
+    img.__dict__.pop("_ro_tables_cache", None)
+    return img
+
+
+TBL = [("movw", "r0, #37120"), ("movt", "r0, #0")]       # r0 = T_ADDR
+CONSUME = [("ldr", "r3, [r0, #4]"), ("blx", "r3"), ("mov", "r0, #0"), ("bx", "lr")]   # calls the 2nd word
+
+
+class TheReadOnlyTables(unittest.TestCase):
+    """A callback read from a field of a .rodata table is the ELF's word there — only while nothing can write the
+    table: materialised only by the image's units, no store through it, never stored outside a frame, every
+    callee it is handed to writing nothing through it and keeping nothing."""
+
+    def run_with(self, builder, consumer=CONSUME, more=None, **kw):
+        routines = {"c": (C, consumer)}
+        routines.update(more or {})
+        img, b = synth(builder + [("bl", call(C, "c")), ("mov", "r0, #0"), ("bx", "lr")], more=routines)
+        with_table(img, **kw)
+        try:
+            return handed(img, b, C)
+        except isa.Finding as e:
+            return str(e)
+
+    def test_a_table_read_resolves_to_its_word(self):
+        self.assertEqual(self.run_with(TBL), [CB_B])
+        self.assertEqual(self.run_with(TBL, consumer=[("ldr", "r3, [r0]"), ("blx", "r3"), ("mov", "r0, #0"), ("bx", "lr")]), [CB_A])
+
+    def test_a_store_through_it(self):
+        self.assertIn("may be written", self.run_with(TBL, consumer=[("mov", "r2, #0"), ("str", "r2, [r0, #4]")] + CONSUME))
+        self.assertIn("may be written", self.run_with(TBL + [("mov", "r2, #0"), ("strb", "r2, [r0, #5]")]))
+
+    def test_a_callee_that_writes_through_it_or_keeps_it(self):
+        H2 = 0x5000
+        for body in ([("mov", "r2, #0"), ("str", "r2, [r0, #4]"), ("mov", "r0, #0"), ("bx", "lr")],
+                     [("str", "r0, [r6]"), ("mov", "r0, #0"), ("bx", "lr")]):
+            with self.subTest(body):
+                self.assertIn("may be written", self.run_with(TBL + [("bl", call(H2, "h"))] + TBL, more={"h": (H2, body)}))
+        self.assertEqual(self.run_with(TBL + [("bl", call(H2, "h"))] + TBL,
+                                       more={"h": (H2, [("ldr", "r2, [r0]"), ("mov", "r0, #0"), ("bx", "lr")])}),
+                         [CB_B], "a callee that only reads it")
+
+    def test_stored_outside_the_frame(self):
+        self.assertIn("may be written", self.run_with(TBL + [("str", "r0, [r6]")]))
+        self.assertEqual(self.run_with(TBL + [("str", "r0, [sp, #8]")]), [CB_B], "spilled to its own frame")
+
+    def test_its_address_in_a_data_word(self):
+        self.assertIn("may be written", self.run_with(TBL, extra_words={0xA010: T_ADDR + 4}))
+
+    def test_materialised_outside_the_image_s_units(self):
+        routines = {"c": (C, CONSUME)}
+        img, b = synth(TBL + [("bl", call(C, "c")), ("mov", "r0, #0"), ("bx", "lr")], more=routines)
+        with_table(img)
+        img.units = [u for u in img.units if u[0] != b]
+        with self.assertRaises(isa.Finding) as c:
+            handed(img, b, C)
+        self.assertIn("outside the image's units", str(c.exception))
+
+    def test_a_word_that_is_not_a_callback(self):
+        self.assertIn("not an application callback", self.run_with(TBL, words=[CB_A | 1, 0x1234]))
+
+
+FMT2 = 0x19004                                            # a second format, in another 64 KiB page
+
+
+class ThePrintfFormatProof(unittest.TestCase):
+    """A printf-family call is taken at its contract only where its format is a read-only constant with no %n on
+    every path — the conditional halves of a movw / movt pair correlated by their condition, a register a callee
+    leaves untouched (GCC's inter-procedural register allocation) kept across that call."""
+
+    SN = 0x7000
+
+    def run_with(self, lead, more=None, strings=None):
+        hand = [("add", "r3, sp, #8"), ("add", "r0, sp, #64"), ("mov", "r1, #16")]
+        seq = CB + [("str", "r0, [sp, #8]")] + lead + hand + [("bl", call(self.SN, "snprintf")),
+                                                              ("ldr", "r1, [sp, #8]"), ("blx", "r1")]
+        routines = {"snprintf": (self.SN, [("bx", "lr")])}
+        routines.update(more or {})
+        img, b = synth(seq, more=routines, library=("snprintf",))
+        img._member_of[self.SN] = "libc.a(libc_a-snprintf.o)"
+        table = strings or {0x9000: "%s", FMT2: "%d"}
+        img._cstring = lambda a, table=table: table.get(a)
+        try:
+            return targets(img, b)
+        except isa.Finding as e:
+            return str(e)
+
+    def test_correlated_conditional_halves(self):
+        lead = [("cmp", "r5, #0"), ("movwge", "r2, #36864"), ("movwlt", "r2, #36868"), ("movtge", "r2, #0"),
+                ("movtlt", "r2, #1")]                       # ge: 0x9000; lt: 0x19004 — never 0x19000 or 0x9004
+        self.assertEqual(self.run_with(lead), [CB_A])
+        self.assertIsInstance(self.run_with(lead, strings={0x9000: "%s", FMT2: "%n"}), str, "a %n on one path")
+        mixed = [("cmp", "r5, #0"), ("movwge", "r2, #36864"), ("cmp", "r6, #0"), ("movtlt", "r2, #1")]
+        self.assertIsInstance(self.run_with(mixed), str, "halves under different flags: not one constant")
+
+    def test_a_register_a_callee_leaves_alone(self):
+        H2 = 0x5000
+        lead = [("movw", "r2, #36864"), ("movt", "r2, #0"), ("bl", call(H2, "h"))]
+        self.assertEqual(self.run_with(lead, more={"h": (H2, [("mov", "r0, #1"), ("bx", "lr")])}), [CB_A])
+        self.assertIsInstance(self.run_with(lead, more={"h": (H2, [("mov", "r2, #1"), ("bx", "lr")])}), str,
+                              "a callee that writes r2")
+
+
+class TheSpeculation(unittest.TestCase):
+    """A fact that depends on itself is guessed (its optimistic placeholder first), every guess is recorded and
+    checked against the fact's final value when the pass is over, and a pass with a wrong guess is thrown away:
+    the next one starts from the final values. Exercised on the mechanism itself: a fact whose computation reads
+    itself, through `_guarded`."""
+
+    @staticmethod
+    def fact(rule):
+        """A one-fact image: fact ('x', 1) computes rule(the value it reads of itself); returns (the outer result
+        — the value READ inside, which an unverified pass would hand out —, the fact's final value)."""
+        def fn(im):
+            seen = []
+
+            def compute(_key):
+                inner = im._guarded("x", 1, compute, False)
+                seen.append(inner)
+                return rule(inner)
+            final = im._guarded("x", 1, compute, False)
+            return seen[0], final
+        return fn
+
+    def test_a_consistent_guess_is_accepted_at_once(self):
+        img = isa.Image.__new__(isa.Image)
+        self.assertEqual(isa.settle(img, self.fact(lambda g: g)), (False, False))
+
+    def test_a_wrong_guess_is_thrown_away(self):
+        img = isa.Image.__new__(isa.Image)
+        first = copy.deepcopy(img)
+        self.assertEqual(self.fact(lambda g: True)(first), (False, True), "the first pass read False and computed True")
+        self.assertEqual(first._speculation_failed(), {("x", 1): True}, "its guess is seen to be wrong")
+        self.assertEqual(isa.settle(img, self.fact(lambda g: True)), (True, True), "the settled pass reads what it computes")
+
+    def test_a_contradiction_never_settles(self):
+        img = isa.Image.__new__(isa.Image)
+        with self.assertRaises(isa.Finding) as c:
+            isa.settle(img, self.fact(lambda g: not g))
+        self.assertIn("did not settle", str(c.exception))
+
+
 def find(img, routine, mnem, ops, nth=0):
     """The one instruction of `routine` with exactly this text (the nth, when several)."""
     hits = [i for i in img.region(img.syms[routine][0] & ~1) if i["mnem"] == mnem and i["ops"] == ops]
@@ -460,41 +863,52 @@ def find(img, routine, mnem, ops, nth=0):
 
 
 class TheNewlibRuleRefuses(unittest.TestCase):
-    """Each alteration of the final image breaks ONE sub-proof of the newlib bounded rule (or the cycle rule): that
-    sub-proof fails by name, the main path gets NO bound, and the build evidence's stack block is not complete."""
+    """Each alteration of the final image breaks ONE sub-proof of the newlib bounded rule (or the cycle rule), and
+    that sub-proof fails BY NAME. _vfiprintf_r is reached only through fiprintf, so the depth from fiprintf — the same
+    depth computation, the same rule, the same refusal the main path meets on its way there — is what each
+    alteration is judged by: it must raise, i.e. no bound is published for any entry that reaches it. One alteration
+    (`test_end_to_end`) is also run through the WHOLE assessment, the main path and the build evidence's stack block
+    included."""
 
     @classmethod
     def setUpClass(cls):
         cls.pristine = isa.Image(ELF)
-        cls.ref = copy.deepcopy(cls.pristine)
-        cls.ref_result = isa.assess_image(cls.ref)
+        cls.F = cls.pristine.syms["fiprintf"][0] & ~1
+        cls.ref_depth, cls.ref = isa.settle(cls.pristine, lambda im: (im.depth(cls.F, None, (), {}), im))
+
+    def depth(self, img):
+        return isa.settle(img, lambda im: im.depth(self.F, None, (), {}))
 
     def altered(self, *changes):
-        """assess_image of a fresh copy of the image with the named instructions rewritten. The identification of
-        each routine's archive member is the unaltered image's (the alteration is to the sub-proof, not to whose code
-        it is)."""
+        """A fresh copy of the image with the named instructions rewritten (each anchored on its own text). Whose
+        code each routine is (the archive member) is the unaltered image's: the alteration is to the sub-proof."""
         img = copy.deepcopy(self.pristine)
         img._member_of = dict(self.ref._member_of)
         for routine, old, new, *nth in changes:
             i = find(img, routine, old[0], old[1], *(nth or [0]))
             i["mnem"], i["ops"] = new
-        return isa.assess_image(img)
+        return img
 
     def refuses(self, why, *changes):
-        r = self.altered(*changes)
+        img = self.altered(*changes)
+        with self.assertRaises(isa.Finding) as c:
+            self.depth(img)
+        self.assertIn(why, str(c.exception), "the sub-proof that fails is the one the alteration breaks")
+        return img
+
+    def test_the_unaltered_copy_is_accepted_with_the_same_bound(self):
+        self.assertGreater(self.ref_depth, 0)
+        self.assertEqual(self.depth(self.altered()), self.ref_depth)
+
+    def test_end_to_end(self):
+        img = self.altered(("__swsetup_r", ("ldrmi", "r2, [r4, #16]"), ("movmi", "r2, #0")))   # a tested constant 0
+        r = isa.assess_image(img)
         self.assertFalse(r["ok"])
-        self.assertTrue(any(why in f for f in r["findings"]), f"no finding names {why!r}: {r['findings']}")
+        self.assertTrue(any(self.GATE in f for f in r["findings"]), r["findings"])
         self.assertIsNone(r["entries"]["main"]["bound"], "no bound is published for the main path")
         with mock.patch.object(isa, "assess", return_value=r):
             stk = be.stack_block()
-        self.assertEqual((stk["status"], stk["complete"]), ("FINDINGS", False))
-        self.assertFalse(bool(stk["complete"]) and not stk["findings"], "the image would not be ready")
-        return r
-
-    def test_the_unaltered_copy_is_accepted_with_the_same_bounds(self):
-        self.assertTrue(self.ref_result["ok"], self.ref_result["findings"])
-        self.assertEqual(self.ref_result["entries"], isa.assess(ELF)["entries"])
-        self.assertEqual(self.altered()["entries"], self.ref_result["entries"], "a copy with no alteration")
+        self.assertEqual((stk["status"], stk["complete"]), ("FINDINGS", False), "the image would not be ready")
 
     # -- __swsetup_r: __smakebuf_r runs only when the FILE's buffer is NULL
     GATE = "gating __smakebuf_r"
@@ -504,9 +918,8 @@ class TheNewlibRuleRefuses(unittest.TestCase):
         self.refuses(self.GATE, (*self.LOAD, ("movmi", "r2, #0")))
 
     def test_a_nonzero_tested_constant_is_still_accepted(self):
-        r = self.altered((*self.LOAD, ("movmi", "r2, #9")))            # the control: zero is what is refused
-        self.assertTrue(r["ok"], r["findings"])
-        self.assertEqual(r["entries"], self.ref_result["entries"])
+        img = self.altered((*self.LOAD, ("movmi", "r2, #9")))          # the control: zero is what is refused
+        self.assertEqual(self.depth(img), self.ref_depth)
 
     def test_the_wrong_file(self):
         self.refuses(self.GATE, (*self.LOAD, ("ldrmi", "r2, [r5, #16]")))
@@ -577,7 +990,7 @@ class TheNewlibRuleRefuses(unittest.TestCase):
         self.refuses("recursion", ("__swsetup_r", ("bl", i["ops"]), ("bl", f"{W:x} <__swsetup_r>")))
 
     def test_the_depth_rule_admits_one_nested_activation_and_no_more(self):
-        img = self.ref
+        img = copy.deepcopy(self.ref)
         V, S, P = (img.syms[n][0] & ~1 for n in ("_vfiprintf_r", "__sbprintf", "__sprint_r"))
         root, nested = img.ROOT_CTX, (frozenset(), True)
         self.assertGreater(img.depth(V, nested, ((V, root), (S, root)), {}), 0, "the one nested _vfiprintf_r")
