@@ -8,13 +8,13 @@ acts only as notary, auditor and collector. Every board session needs an owner-s
 ruling pair, is judged fail-closed by an offline adjudicator, and is archived as observed.
 Nothing is re-run to make a result look better.
 
-## Where the line is (2026-09-17)
+## Where the line is (2026-10-06)
 
 | stage | question | state |
 |---|---|---|
 | **B1** autonomous mapping | can the board build a correct map of 292 certified LUT-INIT bits from its own probes? | **complete** — carrier qualified by B1Q PASS on `17A6` (2026-09-08, attempt 4); B1 mapping PASS later that day, self-map `c6a4b23e…` frozen |
 | **B2** map utility | does a search that consults that map reproduce, record for record, the host-predicted outcome? | **complete — PASS / SUPPORTED, p = 0.01953125** (lifecycle 2 on `17A6`, 2026-09-16..17: B2Q PASS, two B2 sessions PASS covering the nine preregistered pairs, pooled primary 8/1/0 equal to the prediction; `docs/b2_result_2026_09_17.md`) |
-| **B3** closed loop | map → evolve → re-map on the board | host-only architecture (`docs/b3_architecture.md`) |
+| **B3** closed loop | map → evolve → re-map on the board | **in progress, host-only, no board session** — lifecycle 1 stopped at its prediction preflight and is archived unmerged (tag `b3-lifecycle-1-stopped-2026-09-17`, `docs/b3_lifecycle1_stop_decision_2026_09_17.md`); lifecycle 2 is on branch `b3-lifecycle-2` (`docs/b3_preregistration.md` v0.3.1, `docs/b3_architecture.md` v0.3): gate and prediction preflight done, host tools and image stages 1–4 of six reviewed, stage 5 (application, build evidence, stack assessment) open — the stack assessment is under review and no stack bound has been accepted |
 | **B4** expansion | FF and routing classes, on sacrificial silicon | not started |
 
 Standing constraints that no PASS lifts on its own:
@@ -67,8 +67,9 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
 | `docs/` | preregistrations, architecture, every owner review as received (`*_review_*.md`), the roadmap (`autonomous_cartography_roadmap.md`) |
 | `manifests/` | `b1_manifest.json`, `b2_manifest.json` and their instrument pin tables — the frozen authority for each stage |
 | `host/` | runners, adjudicators, lifecycle tools (`b2_runner.py`, `b2_manifest.py`, `b2_adjudicate.py`, `b1_*`) |
+| `b3/` | the B3 lifecycle-2 line, self-contained: host tools (`b3/host/`), board image sources and host twins (`b3/firmware/`), tests (`b3/tests/`), schemas |
 | `firmware/` | the B1 and B2 board images (bare-metal, on the P3 instrument's BSP) |
-| `evidence/` | every board session and review, as observed (`evidence/b1q/`, `evidence/b2/`) |
+| `evidence/` | every board session and review, as observed (`evidence/b1q/`, `evidence/b2/`); B3's host-only gate, prediction and build evidence (`evidence/b3/`) |
 | `data/` | the frozen, self-verifying prjxray subset (CC0) — 10,896 features in six classes |
 | `gate_runs/` | bit-class certificates and the carrier authority (LFS) |
 | `tests/` | the suite the test report runs (B1, B2, B3, transport) |
@@ -97,6 +98,16 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
   the preregistered prediction (8/1/0, p = 0.01953125, SUPPORTED) — **B2 PASS**
   (`docs/b2_result_2026_09_17.md`). Session evidence archived in a hybrid form with
   executable fresh-restore / re-judge scripts.
+- **2026-09-17** — B3 lifecycle 1 stopped at its prediction preflight: the fixed nine-pair
+  prediction did not support its second required primary, which lifecycle 1 had left
+  underpowered (`docs/b3_lifecycle1_stop_decision_2026_09_17.md`). Archived on
+  `b3-lifecycle-1`, not merged.
+- **2026-09-17 onward** — B3 lifecycle 2 on `b3-lifecycle-2`: one confirmatory primary (Δ1),
+  Δ2 reported as secondary; gate run 1 F1 PASS (B* = 1000, N = 8) and the prediction
+  preflight (primary 8/0/0, p = 1/256). Then host-only units, each reviewed separately:
+  records, session, adjudicator, runner, manifest, pins, test report, the §9 test audit, and
+  the board image in six stages, of which stages 1–4 are closed and stage 5 is open. No B3Q,
+  pin table, S0 or board session yet.
 
 The full running log that used to be this README is preserved verbatim at
 `docs/README_archive_2026_09_14.md`.
