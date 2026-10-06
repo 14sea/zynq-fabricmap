@@ -14,7 +14,7 @@ Nothing is re-run to make a result look better.
 |---|---|---|
 | **B1** autonomous mapping | can the board build a correct map of 292 certified LUT-INIT bits from its own probes? | **complete** — carrier qualified by B1Q PASS on `17A6` (2026-09-08, attempt 4); B1 mapping PASS later that day, self-map `c6a4b23e…` frozen |
 | **B2** map utility | does a search that consults that map reproduce, record for record, the host-predicted outcome? | **complete — PASS / SUPPORTED, p = 0.01953125** (lifecycle 2 on `17A6`, 2026-09-16..17: B2Q PASS, two B2 sessions PASS covering the nine preregistered pairs, pooled primary 8/1/0 equal to the prediction; `docs/b2_result_2026_09_17.md`) |
-| **B3** closed loop | map → evolve → re-map on the board | **in progress, host-only, no board session** — lifecycle 1 stopped at its prediction preflight and is archived unmerged (tag `b3-lifecycle-1-stopped-2026-09-17`, `docs/b3_lifecycle1_stop_decision_2026_09_17.md`); lifecycle 2 is on branch `b3-lifecycle-2` (`docs/b3_preregistration.md` v0.3.1, `docs/b3_architecture.md` v0.3): gate and prediction preflight done, host tools and image stages 1–4 of six reviewed, stage 5 (application, build evidence, stack assessment) open — the stack assessment is under review and no stack bound has been accepted |
+| **B3** closed loop | map → evolve → re-map on the board | **in progress, host-only, no board session** — lifecycle 1 stopped at its prediction preflight and is archived unmerged (tag `b3-lifecycle-1-stopped-2026-09-17`, `docs/b3_lifecycle1_stop_decision_2026_09_17.md`); lifecycle 2 is on branch `b3-lifecycle-2` (`docs/b3_preregistration.md` v0.3.1, `docs/b3_architecture.md` v0.3): gate and prediction preflight done, host tools and image stages 1–4 of six reviewed, stage 5 (application, build evidence, stack assessment) open — **the image is not ready**: its stack assessment stands at `FINDINGS` (`evidence/b3/build_evidence.json`): the analysis cannot place every write of the image, so none is proved to miss the cells indirect calls read their targets from, and no entry's stack bound is published |
 | **B4** expansion | FF and routing classes, on sacrificial silicon | not started |
 
 Standing constraints that no PASS lifts on its own:
@@ -108,6 +108,13 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
   records, session, adjudicator, runner, manifest, pins, test report, the §9 test audit, and
   the board image in six stages, of which stages 1–4 are closed and stage 5 is open. No B3Q,
   pin table, S0 or board session yet.
+- **2026-10-04..06** — image stage 5: the application, a reproducible cross-build (two clean
+  builds byte-identical) and its build evidence landed; the stack assessment of the final ELF
+  (`b3/host/b3_image_stack.py`) went through three reviewed rounds. Under the strict reading
+  ruled on 2026-10-06 — a write is taken to miss a callback cell only when the bytes it can
+  reach are shown to, never because of the object it was meant for — the committed image's
+  assessment is `FINDINGS`: each routine's unplaced writes are listed by address, no stack
+  bound is published, `image_ready` is false. Which of those writes to prove next is open.
 
 The full running log that used to be this README is preserved verbatim at
 `docs/README_archive_2026_09_14.md`.
