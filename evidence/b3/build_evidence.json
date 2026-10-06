@@ -1,5 +1,5 @@
 {
- "at": "2026-10-06T154711Z",
+ "at": "2026-10-06T164024Z",
  "bsp_inputs": {
   "build_script_lists": {
    "APP_SRCS": [
@@ -1636,11 +1636,10 @@
  },
  "git": {
   "dirty": [
-   "b3/host/b3_image_stack.py",
-   "b3/tests/test_b3_build_evidence.py",
-   "b3/tests/test_b3_image_stack.py"
+   "b3/host/b3_build_evidence.py",
+   "b3/tests/test_b3_build_evidence.py"
   ],
-  "head": "8f86ce2211e31d99e37b2ba6e4bee516ba949688"
+  "head": "ed45a0c30bb7b9fe31299daedf07be53e049c3f1"
  },
  "image": {
   "bytes": 131092,
@@ -2313,7 +2312,7 @@
    "statement": "a verified newlib semantic rule \u2014 the call graph does not prove itself bounded",
    "vfiprintf_to_sbprintf": "0x2011e52"
   },
-  "note": "the stack pointer is tracked along every path of the final ELF; the main path is bounded at or below 0x2000 and each exception entry within its mode's stack, with the newlib printf recursion bounded by a verified source rule (b3/host/b3_image_stack.py)",
+  "note": "the stack pointer is tracked along every path of the final ELF (b3/host/b3_image_stack.py), but this block is NOT complete: the findings listed stand, an entry whose bound is null has no published bound, and nothing here shows the main path within 0x2000 or an exception entry within its mode's stack",
   "objdump": "GNU objdump (xPack GNU Arm Embedded GCC x86_64) 2.43.1.20241119",
   "rules": {
    "app_function_pointers": {

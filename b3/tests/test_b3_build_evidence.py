@@ -86,6 +86,8 @@ class Committed(unittest.TestCase):
         self.assertIn("write_placement", st["rules"])
         self.assertEqual(st["rules"]["read_only_tables"]["targets"], [], "no table is proved read-only")
         self.assertTrue(st["newlib"] and st["newlib"]["rule"] == "newlib_bounded_sbprintf")
+        self.assertIn("this block is NOT complete", st["note"], "the note says what this block shows")
+        self.assertNotIn("the main path is bounded at or below 0x2000", st["note"])
         rd = self.ev["readiness"]
         self.assertIs(rd["image_ready"], False)
         self.assertEqual(rd["blocking"], [f"stack: {m}" for m in st["findings"]])
@@ -396,6 +398,25 @@ class Refuses(unittest.TestCase):
         for needle, fn in cases.items():
             with self.subTest(breach=needle):
                 self.refused(fn, needle.strip())
+
+    def test_the_note_follows_the_status(self):
+        """The block's note states the bounded result only for a COMPLETE block (the analyser stubbed either way)."""
+        import b3_image_stack as isa
+        r = dict(copy.deepcopy(self.base["stack"]), elf={"sha256": self.base["stack"]["elf_sha256"]})
+        with mock.patch.object(isa, "assess", return_value=r):
+            blocked = be.stack_block(R)
+        self.assertEqual((blocked["status"], blocked["complete"]), ("FINDINGS", False))
+        self.assertIn("this block is NOT complete", blocked["note"])
+        self.assertNotIn("is bounded at or below 0x2000", blocked["note"])
+        good = copy.deepcopy(r)
+        good["findings"] = []
+        for name, b in good["entries"].items():
+            b["bound"] = 0x1000 if name == "main" else 16
+        with mock.patch.object(isa, "assess", return_value=good):
+            done = be.stack_block(R)
+        self.assertEqual((done["status"], done["complete"]), ("COMPLETE", True))
+        self.assertIn("the main path is bounded at or below 0x2000", done["note"])
+        self.assertNotIn("NOT complete", done["note"])
 
     def test_a_main_path_over_budget_is_refused_and_not_ready(self):
         ev = copy.deepcopy(self.base)

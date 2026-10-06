@@ -248,9 +248,15 @@ def stack_block(root: Path = REPO_ROOT) -> dict:
             "main_limit": isa.MAIN_LIMIT, "entries": r["entries"], "modes": r["modes"], "capacity": r["capacity"],
             "indirect_targets": r["indirect_targets"], "rules": r["rules"], "newlib": r["newlib"],
             "masks": r["masks"], "findings": findings,
-            "note": "the stack pointer is tracked along every path of the final ELF; the main path is bounded at or "
-                    "below 0x2000 and each exception entry within its mode's stack, with the newlib printf recursion "
-                    "bounded by a verified source rule (b3/host/b3_image_stack.py)"}
+            # (the owner's instruction of 2026-10-06: the note says what THIS block shows — it used to state the
+            # bounded result whatever the status, which a FINDINGS block contradicts)
+            "note": ("the stack pointer is tracked along every path of the final ELF; the main path is bounded at or "
+                     "below 0x2000 and each exception entry within its mode's stack, with the newlib printf recursion "
+                     "bounded by a verified source rule (b3/host/b3_image_stack.py)") if complete else
+                    ("the stack pointer is tracked along every path of the final ELF (b3/host/b3_image_stack.py), but "
+                     "this block is NOT complete: the findings listed stand, an entry whose bound is null has no "
+                     "published bound, and nothing here shows the main path within 0x2000 or an exception entry "
+                     "within its mode's stack")}
 
 
 def build_evidence(do_build: bool) -> dict:
