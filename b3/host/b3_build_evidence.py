@@ -470,7 +470,8 @@ def verify_findings(ev: dict, root: Path = REPO_ROOT, require_outputs: bool = Tr
         if st["elf_sha256"] != fresh["elf_sha256"]:
             f.append("stack: the block's ELF digest is not the built image's")
         norm = lambda x: json.loads(json.dumps(x, sort_keys=True))     # the recorded block is JSON; normalise fresh the same
-        for key in ("entries", "findings", "newlib", "indirect_targets", "rules", "modes", "masks", "tool", "main_limit"):
+        for key in ("entries", "findings", "newlib", "indirect_targets", "rules", "modes", "masks", "tool", "main_limit",
+                    "note"):                               # (the owner, 2026-10-06: the note is the block's own claim)
             if norm(st.get(key)) != norm(fresh.get(key)):
                 f.append(f"stack: the recorded {key} is not the analyser's fresh result")
         if st["complete"] != (not fresh["findings"]) or st["status"] != ("COMPLETE" if not fresh["findings"] else "FINDINGS"):

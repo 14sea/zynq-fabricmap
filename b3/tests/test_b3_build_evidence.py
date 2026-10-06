@@ -389,6 +389,10 @@ class Refuses(unittest.TestCase):
             "the recorded newlib is not the analyser's fresh result": lambda e: e["stack"]["newlib"].__setitem__("rule", "x"),
             "the recorded rules is not the analyser's fresh result": lambda e: e["stack"]["rules"].clear(),
             "the recorded tool is not the analyser's fresh result": lambda e: e["stack"].__setitem__("tool", "forged 9.9"),
+            "the recorded note is not the analyser's fresh result": lambda e: e["stack"].__setitem__(
+                "note", "the stack pointer is tracked along every path of the final ELF; the main path is bounded at or "
+                        "below 0x2000 and each exception entry within its mode's stack, with the newlib printf recursion "
+                        "bounded by a verified source rule (b3/host/b3_image_stack.py)"),
             "the block's ELF digest is not the built image's": lambda e: e["stack"].__setitem__("elf_sha256", BAD),
             "the block's keys": lambda e: e["stack"].pop("note"),
             "complete / status disagree": lambda e: e["stack"].__setitem__("status", "PASS"),
@@ -427,12 +431,15 @@ class Refuses(unittest.TestCase):
     def complete(self):
         """A synthetic positive: the committed evidence as it would stand with a COMPLETE stack block — every entry
         bounded within its budget, no finding, ready. (The numbers are made up; they are no claim about the image.)"""
+        import b3_image_stack as isa
         ev = copy.deepcopy(self.base)
-        st = ev["stack"]
-        st.update(status="COMPLETE", complete=True, findings=[])
-        for name, b in st["entries"].items():
+        r = dict(copy.deepcopy(self.base["stack"]), elf={"sha256": self.base["stack"]["elf_sha256"]}, findings=[])
+        for name, b in r["entries"].items():
             b.pop("unpublished", None)
             b["bound"] = 0x1000 if name == "main" else 16
+        with mock.patch.object(isa, "assess", return_value=r):     # the tool's own block for that result, note included
+            ev["stack"] = be.stack_block(R)
+        self.assertEqual((ev["stack"]["status"], ev["stack"]["complete"]), ("COMPLETE", True))
         ev["readiness"].update(image_ready=True, blocking=[])
         return ev
 
@@ -453,6 +460,10 @@ class Refuses(unittest.TestCase):
         with mock.patch.object(be, "stack_block", side_effect=lambda root=R: copy.deepcopy(over["stack"])):
             f = be.verify_findings(over, R)                # even when the fresh analysis says the same
             self.assertIn("stack: main bound 8193 exceeds its budget 8192", f)
+        stale = self.complete()                            # a complete block carrying another status's note
+        stale["stack"]["note"] = self.base["stack"]["note"]
+        with mock.patch.object(be, "stack_block", side_effect=lambda root=R: copy.deepcopy(good["stack"])):
+            self.assertIn("stack: the recorded note is not the analyser's fresh result", be.verify_findings(stale, R))
             self.assertIn("readiness: image_ready must be False for this stack result and provenance", f)
 
 
