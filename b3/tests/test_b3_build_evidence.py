@@ -12,11 +12,14 @@ compared unit by unit — a header deleted from the hash table AND from every de
 clean builds are not only read from the evidence: TheRealBuild runs the production build.sh twice into fresh
 directories (B3_OUT_DIR / B3_IMG_DIR, never the committed image) and compares the binaries and the ELFs.
 
-THE STACK (the owner's ruling of 2026-10-04): the stack assessment of the final ELF now lands. The evidence carries a
-COMPLETE `stack` block, the verifier RE-RUNS b3/host/b3_image_stack.py and requires the block to match it and to be
-within budget (main <= 0x2000, each exception entry within its mode's stack), and `readiness.image_ready` is true
-only then. A block whose recorded bounds / findings / rules differ from a fresh analysis, or that claims completion
-with a finding, or that is over budget, is refused.
+THE STACK (the owner's rulings of 2026-10-04 and 2026-10-06): the evidence carries the stack assessment of the final
+ELF, the verifier RE-RUNS b3/host/b3_image_stack.py and requires the block to match it and to be within budget
+(main <= 0x2000, each exception entry within its mode's stack), and `readiness.image_ready` is true only for a
+COMPLETE block. THE COMMITTED IMAGE'S BLOCK IS `FINDINGS`: the image has writes the analysis cannot place, none of
+them is proved to miss a callback cell, no bound is published for an entry that calls through memory, and the image
+is NOT ready — the tests below require exactly that. A block whose recorded bounds / findings / rules differ from a
+fresh analysis, or that claims completion with a finding, or that is over budget, is refused; the passing case is a
+synthetic one (a COMPLETE block with the fresh analysis stubbed to it).
 
 No skip: the evidence, the image and the toolchain are required.
 """
@@ -65,18 +68,30 @@ class Committed(unittest.TestCase):
     def test_the_committed_evidence_has_no_provenance_finding(self):
         self.assertEqual(be.verify_findings(self.ev, R), [])
 
-    def test_the_stack_assessment_is_complete_within_budget_and_the_image_is_ready(self):
+    def test_the_stack_assessment_has_findings_and_the_image_is_blocked(self):
+        """The owner's strict ruling of 2026-10-06: the committed image's assessment is FINDINGS — no verified main
+        bound, no bound for any entry that calls through memory, and the image not ready."""
         st = self.ev["stack"]
-        self.assertEqual((st["status"], st["complete"], st["findings"]), ("COMPLETE", True, []))
+        self.assertEqual((st["status"], st["complete"]), ("FINDINGS", False))
         self.assertEqual(st["elf_sha256"], self.ev["image"]["elf_sha256"])
         self.assertEqual(st["main_limit"], 0x2000)
-        self.assertLessEqual(st["entries"]["main"]["bound"], 0x2000, "the main path is within budget")
+        self.assertEqual(sorted(st["entries"]), sorted(["main", "undefined", "svc", "prefetch_abort", "data_abort", "irq", "fiq"]))
         for name, b in st["entries"].items():
-            limit = 0x2000 if name == "main" else b["capacity"]
-            self.assertLessEqual(b["bound"], limit, f"{name} within its budget")
+            self.assertIsNone(b["bound"], f"{name}: no bound is published")
+        self.assertNotIn("unpublished", st["entries"]["main"], "no main bound was even computed")
+        self.assertEqual(sum(f.startswith("main (_start): ") and "may be written" in f and "it is not placed" in f
+                             for f in st["findings"]), 1, "main is refused where it reads a table's callback")
+        self.assertGreater(sum("write(s) not placed" in f for f in st["findings"]), 100)
+        self.assertEqual(sum("no bound is published" in f for f in st["findings"]), 6, "the six exception entries")
+        self.assertIn("write_placement", st["rules"])
+        self.assertEqual(st["rules"]["read_only_tables"]["targets"], [], "no table is proved read-only")
         self.assertTrue(st["newlib"] and st["newlib"]["rule"] == "newlib_bounded_sbprintf")
-        self.assertIs(self.ev["readiness"]["image_ready"], True)
-        self.assertEqual(be.readiness_findings(self.ev, R), [], "nothing stands between this image and ready")
+        rd = self.ev["readiness"]
+        self.assertIs(rd["image_ready"], False)
+        self.assertEqual(rd["blocking"], [f"stack: {m}" for m in st["findings"]])
+        rf = be.readiness_findings(self.ev, R)
+        self.assertIn("stack: the image stack assessment is not complete", rf)
+        self.assertLessEqual({f"stack: {m}" for m in st["findings"]}, set(rf), "every stack finding stands in the way")
 
     def test_the_outputs_exist_and_are_the_ones_it_names(self):
         self.assertTrue(IMAGE.is_file() and ELF.is_file())
@@ -375,7 +390,8 @@ class Refuses(unittest.TestCase):
             "the block's ELF digest is not the built image's": lambda e: e["stack"].__setitem__("elf_sha256", BAD),
             "the block's keys": lambda e: e["stack"].pop("note"),
             "complete / status disagree": lambda e: e["stack"].__setitem__("status", "PASS"),
-            "image_ready must be": lambda e: e["readiness"].__setitem__("image_ready", False),
+            "image_ready must be": lambda e: e["readiness"].__setitem__("image_ready", True),
+            "a complete block must have no finding": lambda e: e["stack"].update(complete=True),
         }
         for needle, fn in cases.items():
             with self.subTest(breach=needle):
@@ -387,14 +403,36 @@ class Refuses(unittest.TestCase):
         self.assertTrue(any("exceeds its budget" in x or "not the analyser's fresh result" in x
                             for x in be.verify_findings(ev, R)))
 
+    def complete(self):
+        """A synthetic positive: the committed evidence as it would stand with a COMPLETE stack block — every entry
+        bounded within its budget, no finding, ready. (The numbers are made up; they are no claim about the image.)"""
+        ev = copy.deepcopy(self.base)
+        st = ev["stack"]
+        st.update(status="COMPLETE", complete=True, findings=[])
+        for name, b in st["entries"].items():
+            b.pop("unpublished", None)
+            b["bound"] = 0x1000 if name == "main" else 16
+        ev["readiness"].update(image_ready=True, blocking=[])
+        return ev
+
     def test_readiness_is_empty_only_when_complete_and_within_budget(self):
-        self.assertEqual(be.readiness_findings(self.base, R), [])
-        for mutate in (lambda e: e["stack"].__setitem__("findings", ["x"]),
-                       lambda e: e["stack"].__setitem__("complete", False),
-                       lambda e: e["readiness"].__setitem__("image_ready", False)):
-            ev = copy.deepcopy(self.base)
-            mutate(ev)
-            self.assertNotEqual(be.readiness_findings(ev, R), [])
+        self.assertNotEqual(be.readiness_findings(self.base, R), [], "the committed image is not ready")
+        good = self.complete()
+        with mock.patch.object(be, "stack_block", side_effect=lambda root=R: copy.deepcopy(good["stack"])):
+            self.assertEqual(be.verify_findings(good, R), [], "a complete block the fresh analysis agrees with verifies")
+            self.assertEqual(be.readiness_findings(good, R), [], "and nothing stands between that image and ready")
+            for mutate in (lambda e: e["stack"].__setitem__("findings", ["x"]),
+                           lambda e: e["stack"].__setitem__("complete", False),
+                           lambda e: e["readiness"].__setitem__("image_ready", False)):
+                ev = self.complete()
+                mutate(ev)
+                self.assertNotEqual(be.readiness_findings(ev, R), [])
+        over = self.complete()
+        over["stack"]["entries"]["main"]["bound"] = 0x2001
+        with mock.patch.object(be, "stack_block", side_effect=lambda root=R: copy.deepcopy(over["stack"])):
+            f = be.verify_findings(over, R)                # even when the fresh analysis says the same
+            self.assertIn("stack: main bound 8193 exceeds its budget 8192", f)
+            self.assertIn("readiness: image_ready must be False for this stack result and provenance", f)
 
 
 if __name__ == "__main__":
