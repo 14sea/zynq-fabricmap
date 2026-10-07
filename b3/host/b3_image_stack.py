@@ -1941,10 +1941,18 @@ class Image:
             return None
         while stack:
             p, pending, child = stack.pop()
+            q = self.ins_at[p]
+            b, cond = base_mnem(q["mnem"])[0], self._cond_of(q)
+            if b == "b" and cond and branch_target(q["ops"]) and pending is None:
+                t = branch_target(q["ops"])[0]             # (the owner's HOLD on f624c87, P1) the outcome is the
+                outs = succ.get(p, [])                     # edge we came back over: each outcome is its own visit —
+                if len(set(outs)) < 2 or child not in outs:   # a branch whose target IS its fallthrough says nothing
+                    pending = None
+                else:
+                    pending = (cond, child == t)
             if (p, pending) in seen:
                 continue
             seen.add((p, pending))
-            q = self.ins_at[p]
             if reg in self.written(q):                     # this path's last definition, before any guard: it must
                 r = None if self._cond(q) else self._writer_range(entry, q, reg, depth + 1)   # bound the value itself
                 if r is None:
@@ -1954,14 +1962,8 @@ class Image:
                     return None
                 rules.add(r[2])
                 continue
-            b, cond = base_mnem(q["mnem"])[0], self._cond_of(q)
-            if b == "b" and cond and branch_target(q["ops"]) and pending is None:
-                t = branch_target(q["ops"])[0]
-                nxt = [x for x in succ.get(p, []) if x != t]
-                if t == child and nxt and child in nxt:
-                    pending = None                         # (target and fallthrough coincide: no information)
-                else:
-                    pending = (cond, child == t)
+            if b == "b" and cond and branch_target(q["ops"]):
+                pass                                       # (decided above)
             elif sets_flags(q):
                 o = q["ops"].replace(" ", "")
                 m = re.fullmatch(r"(\w+),(#(?:0x[0-9a-f]+|\d+)|\w+)", o) if q["mnem"].split(".")[0] == "cmp" else None
@@ -2973,9 +2975,9 @@ class Image:
         ca = self._computed_address(R, a, f"r{pos}")
         if ca is None:
             return reach, {}
-        base, lo, hi, rule = ca
-        ext = frozenset((lo + o, (hi - lo) + nb) for o, nb in w)
-        if any(o + n > 0xFFFFFFFF for o, n in ext):
+        base, lo, hi, rule = ca                            # (the owner's HOLD on f624c87, P2) hi may be a linear form
+        ext = frozenset((lo + o, self._lin_add(self._lin_add(hi, -lo), nb)) for o, nb in w)
+        if any(isinstance(n, int) and o + n > 0xFFFFFFFF for o, n in ext):
             return reach, {}
         return self._write_reach(R, base, ext, contract), {"a1": "a handed address computed from an index bounded by " + rule}
 

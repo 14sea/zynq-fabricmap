@@ -1454,6 +1454,26 @@ class TheBoundedIndex(unittest.TestCase):
                 self.refused([("cmp", "r4, #16"), (test, skip), ("strb", "r3, [r6, r4]")], self.UNB)
         self.refused([("strb", "r3, [r6, r4]")], self.UNB)
 
+    def test_both_outcomes_of_a_branch_are_paths_to_the_write(self):
+        """The owner's HOLD on f624c87, P1: the index is 64, the test is `< 16`, and BOTH outcomes of the branch
+        reach the write — through the table's first word. A walk that visited the branch once would see only the
+        outcome it came back over first and take its bound. Each outcome is a path of its own; a branch whose target
+        is its own fallthrough says nothing."""
+        tables = TheReadOnlyTables().run_with
+        prefix = [("movw", "r6, #37056"), ("movt", "r6, #0"), ("mov", "r4, #64"), ("mov", "r3, #0"), ("cmp", "r4, #16")]
+        first = [("ldr", "r3, [r0]"), ("blx", "r3"), ("mov", "r0, #0"), ("bx", "lr")]
+        for what, mid, store in (("no branch (the control)", [], 0x1014),
+                                 ("a branch whose target is its fallthrough", [("bcc", br(0x1018))], 0x1018),
+                                 ("both outcomes rejoin before the write", [("bcc", br(0x1020)), ("mov", "r5, #0"), ("b", br(0x1024)), ("mov", "r5, #1")], 0x1024),
+                                 ("the taken outcome rejoins from further on", [("bcc", br(0x1020)), ("mov", "r5, #0"), ("mov", "r5, #1")], 0x1020)):
+            with self.subTest(what):
+                r = tables(prefix + mid + [("str", "r3, [r6, r4]")] + TBL, consumer=first)
+                self.assertIsInstance(r, str, "accepted")
+                self.assertIn(f"f stores at {store:#x}: it may reach 0x9100..0x9104", r)
+        # and the control the other way: only the bounded outcome reaches the write
+        r = tables(prefix + [("bcs", br(0x101c)), ("str", "r3, [r6, r4]")] + TBL, consumer=first)
+        self.assertEqual(r, [CB_A], "r4 < 16 on the one path to the store: sixteen bytes below the table")
+
     def test_a_guard_a_path_goes_round_or_the_index_written_after_it(self):
         store = br(0x1024)
         self.refused([("cbz", f"r2, {store}"), ("cmp", "r4, #16"), ("bcs", br(0x1028)), ("strb", "r3, [r6, r4]")], self.UNB)
@@ -1615,6 +1635,23 @@ class TheArgumentBoundedIndex(unittest.TestCase):
         r, _ = self.go(self.FAR + [("mov", "r1, #16"), ("mov", "r2, #1")], h=self.writer(lead=lead))
         self.assertIsInstance(r, str, "placed")
         self.assertIn("over an extent that is not bounded", r)
+
+    def test_a_parametric_computed_address_handed_on_is_refused_by_name_not_by_a_crash(self):
+        """The owner's HOLD on f624c87, P2: h computes buf + index (index < len, its argument) and hands it to g,
+        which writes through it. The hand-over's extent is a form of h's argument: carried, not subtracted from."""
+        G2 = 0x6000
+        h = [("mov", "r4, #0"), ("cmp", "r4, r1"), ("bcs", br(self.HB + 0x18, self.HB)), ("add", "r0, r0, r4"),
+             ("bl", call(G2, "g")), ("mov", "r0, #0"), ("bx", "lr")]
+        g = [("strb", "r2, [r0]"), ("mov", "r0, #0"), ("bx", "lr")]
+        r, _ = self.go(self.FAR + [("mov", "r1, #16")], h=h, more={"g": (G2, g)})
+        self.assertIsInstance(r, str, "placed")                  # (conservative: h's summary for buf is unbounded)
+        self.assertIn("a call (h) handed r0, which the callee writes through, that is not placed", r)
+        img, _b = synth(self.PRE + self.FAR + [("mov", "r1, #16"), ("mov", "r2, #0"), ("bl", call(self.H2, "h"))] + self.POST,
+                        more={"h": (self.H2, h), "g": (G2, g)})
+        inv = isa.settle(img, lambda im: im.write_inventory()["routines"])
+        self.assertEqual(inv["h"]["placed_by_a1_at"], {"a handed address computed from an index bounded by an unsigned guard against argument 1": ["0x5010"]},
+                         "h's own hand-over: a parametric extent, placed at h's callers")
+        self.assertEqual((inv["h"]["at_the_callers"], inv["h"]["not_placed"]), (1, 0))
 
     def test_a_parametric_count_from_a_pointer_that_is_not_an_argument_is_unknown(self):
         """A constant base in the callee, a length from its argument: nothing at the call can place it."""
