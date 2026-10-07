@@ -91,7 +91,7 @@ class Committed(unittest.TestCase):
         self.assertTrue(all("synchronous paths only" in f for f in withheld))
         self.assertIn("SCOPE — SYNCHRONOUS PATHS ONLY", st["rules"]["value_model"]["rule"])
         self.assertNotIn("(B1)", st["rules"]["value_model"]["rule"])
-        self.assertEqual(st["tool"], "b3-image-stack 1.4.0")
+        self.assertEqual(st["tool"], "b3-image-stack 1.5.0")
         self.assertIn("write_placement", st["rules"])
         self.assertEqual(st["rules"]["read_only_tables"]["targets"], [], "no table is proved read-only")
         self.assertTrue(st["newlib"] and st["newlib"]["rule"] == "newlib_bounded_sbprintf")

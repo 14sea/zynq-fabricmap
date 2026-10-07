@@ -51,7 +51,7 @@ for p in (REPO_ROOT / "host", REPO_ROOT / "b3/host"):
         sys.path.insert(0, str(p))
 import b2_build_evidence as b2be  # noqa: E402  (the pinned toolchain's path; a frozen B2 module, read only)
 
-TOOL_VERSION = "b3-image-stack 1.4.0"
+TOOL_VERSION = "b3-image-stack 1.5.0"
 ELF_DEFAULT = REPO_ROOT / "b3/firmware/bsp/out/b3_app.elf"
 TC_BIN = Path(b2be.TC) / "bin"
 MAIN_LIMIT = 0x2000                     # the owner's ruling: the main path's verified bound is at most 0x2000 bytes
@@ -1803,6 +1803,229 @@ class Image:
             out |= self._derived(self._base_atoms(entry, a, r))
         return out or {("other",)}
 
+    # ---- A1: a bounded index (the owner's ruling of 2026-10-07 — the "fewer unplaced writes" unit, first part)
+    #
+    # A write at `base + index` (the index a register, scaled or not: `[rb, ri, lsl #s]`, or the address computed
+    # first by `add ra, rb, ri, lsl #s` and used at an immediate offset) is placed when the index has an UNSIGNED
+    # range read off the image: on EVERY path from the routine's entry to the write, after the index's last
+    # definition, either an unsigned comparison of the index against a constant (or a register whose own range is
+    # known) with the conditional branch — or the conditional write itself — taken the way that bounds it (`_guard`),
+    # or a definition that bounds it by construction (`uxtb`, `uxth`, `and #mask`, `lsr`, `ubfx`, a byte / halfword
+    # load, a constant, and `mov` / `add` / `sub` / `lsl` of a bounded value without wrapping). A signed comparison
+    # bounds nothing (the value may be negative: a huge unsigned offset), nor does an equality, nor a guard any path
+    # reaches the write without, nor one the index is written after. The extent is [lo << s, (hi << s) + width) from
+    # the base, with every addition checked against the 32-bit wrap; the base is then placed as any other pointer.
+
+    # An upper bound that is a linear form of an INCOMING argument's value — ('lin', n, mul, add) = mul * arg_n + add —
+    # (A1, the argument-bounded index): the guard compared the index with a register holding exactly the argument
+    # as the routine received it (its atoms are {('arg', n)}: never redefined, only copied). It is carried into the
+    # store's extent and the routine's summary, and substituted where the routine is called (`_subst_ext`).
+    @staticmethod
+    def _lin_add(h, k: int):
+        return h + k if isinstance(h, int) else ("lin", h[1], h[2], h[3] + k)
+
+    @staticmethod
+    def _lin_shl(h, sh: int):
+        return h << sh if isinstance(h, int) else ("lin", h[1], h[2] << sh, h[3] << sh)
+
+    @staticmethod
+    def _lin_text(h) -> str:
+        return f"{h}" if isinstance(h, int) else f"argument {h[1]}" + (f" x {h[2]}" if h[2] != 1 else "") + (f" {h[3]:+d}" if h[3] else "")
+
+    IDX_BOUNDED_BY_OP = {"uxtb": 0xFF, "uxth": 0xFFFF, "ldrb": 0xFF, "ldrh": 0xFFFF, "ldrsb": None, "ldrsh": None}
+    UNSIGNED_LT = {("cc", True): 0, ("lo", True): 0, ("cs", False): 0, ("hs", False): 0,   # taken / not taken ⇒ reg < N
+                   ("ls", True): 1, ("hi", False): 1}                                         # ⇒ reg <= N
+
+    def _reg_range(self, entry: int, at: int, reg: str, depth: int = 0):
+        """The unsigned range [lo, hi] `reg` holds just before `at`, read off the image (see the A1 comment), with
+        the rules that give it — on every path back from `at`, an unsigned guard or the path's last definition;
+        None when a path has neither."""
+        c = self._cache("_rr_cache")
+        key = (entry, at, reg)
+        if key in c:
+            return c[key]
+        c[key] = None                                      # (a cycle in the definitions: no range)
+        v = self._guard_range(entry, at, reg, depth) or self._def_range(entry, at, reg, depth)
+        c[key] = v
+        return v
+
+    def _def_range(self, entry: int, at: int, reg: str, depth: int):
+        """The range from `reg`'s reaching definitions alone: every one of them bounded."""
+        if depth > 8:
+            return None
+        lo, hi, rules = 0, -1, set()
+        for w in self.reaching_writers(entry, at, reg):
+            if w is None or self._cond(w):
+                return None
+            r = self._writer_range(entry, w, reg, depth + 1)
+            if r is None:
+                return None
+            hi = self._hi_max(hi, r[1]) if rules else r[1]
+            if hi is None:
+                return None
+            lo = min(lo, r[0]) if rules else r[0]
+            rules.add(r[2])
+        return (lo, hi, " / ".join(sorted(rules))) if rules else None
+
+    @staticmethod
+    def _hi_max(a, b):
+        """The larger of two upper bounds; None when they are forms of different arguments (or a form and a number)."""
+        if isinstance(a, int) and isinstance(b, int):
+            return max(a, b)
+        if a == b:
+            return a
+        if not isinstance(a, int) and not isinstance(b, int) and a[1] == b[1] and a[2] == b[2]:
+            return ("lin", a[1], a[2], max(a[3], b[3]))
+        return None
+
+    def _writer_range(self, entry: int, w: dict, reg: str, depth: int):
+        fam = self._family(w)
+        o = w["ops"].replace(" ", "")
+        rs = self._regs(o)
+        if not rs or rs[0] != reg:
+            return None
+        if fam in ("mov", "movs", "movw") and re.fullmatch(r"\w+,#(?:0x[0-9a-f]+|\d+)", o):
+            k = imm(o)
+            return (k, k, "a constant")
+        if fam in self.IDX_BOUNDED_BY_OP and self.IDX_BOUNDED_BY_OP[fam] is not None and len(rs) >= 1:
+            return (0, self.IDX_BOUNDED_BY_OP[fam], f"a {fam}")
+        if fam in ("and", "ands") and len(rs) == 2 and re.fullmatch(r"\w+,\w+,#(?:0x[0-9a-f]+|\d+)", o):
+            return (0, imm(o), "an and-mask")
+        if fam == "ubfx" and len(rs) == 2:
+            m = re.fullmatch(r"\w+,\w+,#(\d+),#(\d+)", o)
+            return (0, (1 << int(m.group(2))) - 1, "a ubfx") if m else None
+        if fam in ("lsr", "lsrs") and len(rs) == 2 and re.fullmatch(r"\w+,\w+,#(\d+)", o):
+            return (0, 0xFFFFFFFF >> imm(o), "an lsr")
+        if fam in ("mov", "movs") and len(rs) == 2 and re.fullmatch(r"\w+,\w+", o):
+            r = self._reg_range(entry, w["addr"], rs[1], depth)
+            return r and (r[0], r[1], r[2])
+        if fam in ("lsl", "lsls") and len(rs) == 2 and re.fullmatch(r"\w+,\w+,#(\d+)", o):
+            r = self._reg_range(entry, w["addr"], rs[1], depth)
+            n = imm(o)
+            if r is None or (isinstance(r[1], int) and (r[1] << n) > 0xFFFFFFFF):
+                return None
+            return (r[0] << n, self._lin_shl(r[1], n), r[2] + f" << {n}")
+        if fam in ("add", "adds", "addw", "sub", "subs", "subw") and len(rs) == 2 and re.fullmatch(r"\w+,\w+,#(?:0x[0-9a-f]+|\d+)", o):
+            r = self._reg_range(entry, w["addr"], rs[1], depth)
+            if r is None:
+                return None
+            k = imm(o)
+            if fam.startswith("add"):
+                if isinstance(r[1], int) and r[1] + k > 0xFFFFFFFF:
+                    return None
+                return (r[0] + k, self._lin_add(r[1], k), r[2] + f" + {k}")
+            return None if r[0] - k < 0 else (r[0] - k, self._lin_add(r[1], -k), r[2] + f" - {k}")
+        return None
+
+    def _cond_of(self, i: dict):
+        """The two-letter condition the instruction executes under (`bcs` → 'cs', `strbls` → 'ls'), or None."""
+        f = i["mnem"].split(".")[0]
+        return f[-2:] if self._cond(i) else None
+
+    def _guard_range(self, entry: int, at: int, reg: str, depth: int):
+        """The range an unsigned guard gives `reg` at `at` — on every path back to its definitions: [0, N) or [0, N]."""
+        i = self.ins_at[at]
+        pred = self._rpred(entry)
+        succ = self._region_succ(entry)
+        hi = None
+        rules: set = set()
+        start = []                                         # (node, the pending branch outcome, the node after it)
+        c0 = self._cond_of(i)
+        if c0:                                             # a conditional write: its own condition is the guard
+            start = [(p, (c0, True), at) for p in pred.get(at, [])]
+        else:
+            start = [(p, None, at) for p in pred.get(at, [])]
+        seen = set()
+        stack = list(start)
+        if not stack:
+            return None
+        while stack:
+            p, pending, child = stack.pop()
+            if (p, pending) in seen:
+                continue
+            seen.add((p, pending))
+            q = self.ins_at[p]
+            if reg in self.written(q):                     # this path's last definition, before any guard: it must
+                r = None if self._cond(q) else self._writer_range(entry, q, reg, depth + 1)   # bound the value itself
+                if r is None:
+                    return None
+                hi = r[1] if hi is None else self._hi_max(hi, r[1])
+                if hi is None:
+                    return None
+                rules.add(r[2])
+                continue
+            b, cond = base_mnem(q["mnem"])[0], self._cond_of(q)
+            if b == "b" and cond and branch_target(q["ops"]) and pending is None:
+                t = branch_target(q["ops"])[0]
+                nxt = [x for x in succ.get(p, []) if x != t]
+                if t == child and nxt and child in nxt:
+                    pending = None                         # (target and fallthrough coincide: no information)
+                else:
+                    pending = (cond, child == t)
+            elif sets_flags(q):
+                o = q["ops"].replace(" ", "")
+                m = re.fullmatch(r"(\w+),(#(?:0x[0-9a-f]+|\d+)|\w+)", o) if q["mnem"].split(".")[0] == "cmp" else None
+                bound = None
+                rule = "an unsigned guard"
+                if pending is not None and m and m.group(1) == reg:
+                    if m.group(2).startswith("#"):
+                        n = imm(o)
+                    else:
+                        r = self._reg_range(entry, p, m.group(2), depth + 1)
+                        n = None if r is None else r[1]
+                        if n is None:                      # the register holds an INCOMING argument, as received
+                            av = self._base_atoms(entry, p, m.group(2))
+                            if len(av) == 1 and next(iter(av))[0] == "arg" and isinstance(next(iter(av))[1], int):
+                                n = ("lin", next(iter(av))[1], 1, 0)
+                                rule = f"an unsigned guard against argument {n[1]}"
+                    k = self.UNSIGNED_LT.get(pending)
+                    if n is not None and k is not None:
+                        bound = self._lin_add(n, k - 1)
+                        if isinstance(bound, int) and bound < 0:
+                            return None
+                if bound is None:
+                    pending = None                         # (another flag setter, a signed or equal test: no bound)
+                    if p == entry:
+                        return None
+                    stack += [(x, pending, p) for x in pred.get(p, [])]
+                    continue
+                hi = bound if hi is None else self._hi_max(hi, bound)
+                if hi is None:
+                    return None
+                rules.add(rule)
+                continue                                   # this path is bounded here
+            if p == entry:
+                return None                                # the incoming value, no guard
+            stack += [(x, pending, p) for x in pred.get(p, [])]
+        return None if hi is None else (0, hi, " / ".join(sorted(rules)))
+
+    def _indexed_address(self, entry: int, at: int, base: str, inner: str | None):
+        """For `[base, inner]` with `inner` a register (scaled or not): (the base's atoms, lo, hi, the rule) when the
+        index is bounded; else None."""
+        m = re.fullmatch(r"(\w+)(?:,lsl#(\d+))?", inner or "")
+        if not m:
+            return None
+        r = self._reg_range(entry, at, m.group(1))
+        if r is None:
+            return None
+        sh = int(m.group(2)) if m.group(2) else 0
+        if isinstance(r[1], int) and (r[1] << sh) > 0xFFFFFFFF:
+            return None
+        return (self._base_atoms(entry, at, base), r[0] << sh, self._lin_shl(r[1], sh), r[2])
+
+    def _computed_address(self, entry: int, at: int, reg: str):
+        """For a register whose one reaching writer is `add reg, rb, ri(, lsl #s)` with `ri` bounded there: (rb's
+        atoms at the add, lo, hi, the rule); else None."""
+        ws = self.reaching_writers(entry, at, reg)
+        if len(ws) != 1 or ws[0] is None or self._cond(ws[0]):
+            return None
+        w = ws[0]
+        o = w["ops"].replace(" ", "")
+        m = re.fullmatch(r"(\w+),(\w+),(\w+)(?:,lsl#(\d+))?", o)
+        if self._family(w) not in ("add", "adds") or not m or m.group(1) != reg or m.group(3).startswith("#"):
+            return None
+        return self._indexed_address(entry, w["addr"], m.group(2), m.group(3) + (f",lsl#{m.group(4)}" if m.group(4) else ""))
+
     def _store_desc(self, entry: int, a: int) -> dict | None:
         """The bytes the store at `a` writes: {'cond', 'base' (the base's atoms), 'wild' (the offset from the base is
         not one known immediate), 'elems' [(offset from the base's value, bytes, the core register stored as that
@@ -1837,12 +2060,21 @@ class Image:
         base, inner, post = m.group(1), m.group(2), m.group(4)
         B = set(self._base_atoms(entry, a, base))
         off = 0
+        span = None                                            # (A1) a bounded index: [lo, hi] more from the base
         if inner is not None and inner.startswith("#"):
             off = int(inner[1:], 0)
-        elif inner is not None:                                # a register index: anywhere from the base
-            d["wild"] = True
-            for r in self._regs(inner):
-                B |= self._derived(self._base_atoms(entry, a, r))
+        elif inner is not None:                                # a register index: anywhere from the base …
+            ia = self._indexed_address(entry, a, base, inner)
+            if ia is not None:                                 # … unless the index is bounded
+                B, span, d["a1"] = set(ia[0]), (ia[1], ia[2]), "a register index bounded by " + ia[3]
+            else:
+                d["wild"] = True
+                for r in self._regs(inner):
+                    B |= self._derived(self._base_atoms(entry, a, r))
+        if span is None and (inner is None or inner.startswith("#")):
+            ca = self._computed_address(entry, a, base)        # the address computed before the store
+            if ca is not None and not (B and all(x[0] in ("frame", "const", "arg", "argo", "tab", "crange") for x in B)):
+                B, span, d["a1"] = set(ca[0]), (ca[1], ca[2]), "an address computed from an index bounded by " + ca[3]
         if post is not None and not post.startswith("#"):
             d["wild"] = True
         data = self._regs(o.split("[")[0])
@@ -1860,6 +2092,15 @@ class Image:
             data = data[-1:]
         else:
             raise Finding(f"{self.name(entry)}: a store the model does not know at {a:#x}: {i['mnem']} {i['ops']}")
+        if span is not None:                                   # one element spanning every index: not a word store
+            lo, hi = span                                      # of one register (a cell overlapping it is 'may')
+            n = max(e[0] + e[1] for e in elems) - min(e[0] for e in elems)
+            first = min(e[0] for e in elems)
+            if first + lo < 0 or (isinstance(hi, int) and first + hi + n > 0xFFFFFFFF):
+                d["wild"] = True
+                d.pop("a1", None)
+            else:                                              # the count: hi - lo + width — a form when hi is one
+                elems = [(first + lo, self._lin_add(hi, n - lo), None)]
         d.update(base=frozenset(B), data=data, elems=elems)
         return d
 
@@ -1877,10 +2118,10 @@ class Image:
         if d["wild"] or loose or len(B) != 1 or fr[0][1] is None:
             return ("may", d)
         A = fr[0][1]
-        hit = [(A + off, n, r) for off, n, r in d["elems"] if A + off < slot + 4 and slot < A + off + n]
+        hit = [(A + off, n, r) for off, n, r in d["elems"] if A + off < slot + 4 and (not isinstance(n, int) or slot < A + off + n)]
         if not hit:
             return None
-        if len(hit) == 1 and hit[0][0] == slot and hit[0][1] == 4 and hit[0][2] is not None:
+        if len(hit) == 1 and hit[0][0] == slot and hit[0][1] == 4 and hit[0][2] is not None:   # (an int: a register's word)
             return ("exact", hit[0][2], d["cond"])
         return ("may", d)
 
@@ -2124,7 +2365,7 @@ class Image:
             rest = frozenset(x for x in atoms if not (x[0] == "frame" or x == ("der", "frame")))
             if not w or (atoms and not rest):
                 continue                                   # (a frame address: held against the slot itself)
-            reach = self._write_reach(entry, rest, w, False)
+            reach, _m = self._handed_reach(entry, a, pos, rest, w, False)
             why = self._reach_blocks_frames(reach)
             if why is None and any(r[0] == "args" for r in reach):
                 for up in sorted({x[1] for x in rest if x[0] in ("arg", "argo")}, key=str):
@@ -2665,7 +2906,8 @@ class Image:
             return []
         span = self._stack_span()
         lo = hi = None
-        if ext != "ALL":
+        param = ext != "ALL" and any(not isinstance(n, int) for _o, n in ext)   # a count that is a linear form of an
+        if ext != "ALL" and not param:                                           # argument (A1): placed at the callers
             lo, hi = min(o for o, _n in ext), max(o + n for o, n in ext)
         out = []
         for x in sorted(atoms, key=str):
@@ -2676,6 +2918,8 @@ class Image:
             if k in ("arg", "argo") and ext != "ALL":
                 out.append(("args",) if self._args_followed(R) else
                            ("unknown", "through its own argument, and the routine is entered other than by a call whose arguments are read"))
+            elif param:
+                out.append(("unknown", "over a length held in one of its arguments, from a pointer that is not its argument"))
             elif k == "frame" and x[1] is not None and ext != "ALL":
                 own = self.local.get(R)                    # the routine's own frame is [-own, 0) from its entry SP
                 if own is not None and -own <= x[1] + lo and x[1] + hi <= 0:
@@ -2686,9 +2930,15 @@ class Image:
                 else:
                     out.append(("unknown", "through an address of its frame, over a range that leaves the frame"))
             elif k == "const" and ext != "ALL":
-                out += [("abs", x[1] + o, x[1] + o + n) for o, n in sorted(ext)]
+                if x[1] + hi > 0x100000000:
+                    out.append(("unknown", f"from the constant {x[1]:#x}, a range that wraps round the address space"))
+                else:
+                    out += [("abs", x[1] + o, x[1] + o + n) for o, n in sorted(ext)]
             elif k == "crange" and ext != "ALL" and (x[1], x[2]) != (0, 0xFFFFFFFF):
-                out.append(("abs", x[1] + lo, x[2] + hi))
+                if x[2] + hi > 0x100000000:
+                    out.append(("unknown", "from a stepped constant address, a range that wraps round the address space"))
+                else:
+                    out.append(("abs", x[1] + lo, x[2] + hi))
             elif k == "tab" and x[2] is not None and ext != "ALL":
                 out += [("abs", x[1] + x[2] + o, x[1] + x[2] + o + n) for o, n in sorted(ext)]
             else:
@@ -2714,6 +2964,21 @@ class Image:
                 return f"it may reach {max(r[1], lo):#x}..{min(r[2], hi):#x}"
         return None
 
+    def _handed_reach(self, R: int, a: int, pos, atoms, w, contract: bool) -> tuple:
+        """`_write_reach` for a pointer handed at `a` in position `pos` — and (A1) when that leaves it unplaced, the
+        register's address computed from a bounded index, if that is what it is: (reach, {'a1': rule} or {})."""
+        reach = self._write_reach(R, atoms, w, contract)
+        if w == "ALL" or not isinstance(pos, int) or not any(r[0] == "unknown" for r in reach):
+            return reach, {}
+        ca = self._computed_address(R, a, f"r{pos}")
+        if ca is None:
+            return reach, {}
+        base, lo, hi, rule = ca
+        ext = frozenset((lo + o, (hi - lo) + nb) for o, nb in w)
+        if any(o + n > 0xFFFFFFFF for o, n in ext):
+            return reach, {}
+        return self._write_reach(R, base, ext, contract), {"a1": "a handed address computed from an index bounded by " + rule}
+
     def _write_sites(self, R: int) -> list:
         """Every place routine R may write memory: [(address, what it does there, `_write_reach`)] — each store, and
         each call / tail handing a pointer that the callee's summary or contract writes through."""
@@ -2729,13 +2994,15 @@ class Image:
             if a in reached and kinds[a] == "store":
                 d = self._store_desc(R, a)
                 ext = "ALL" if d["wild"] else frozenset((off, nb) for off, nb, _r in d["elems"])
-                out.append((a, "stores", self._write_reach(R, d["base"], ext, contract), {"atoms": d["base"]}))
+                out.append((a, "stores", self._write_reach(R, d["base"], ext, contract),
+                            dict({"atoms": d["base"]}, **({"a1": d["a1"]} if "a1" in d else {}))))
         for a, tgt in sorted(self._transfers(R).items()):
             whom = self.name(tgt) if tgt is not None else "an indirect call"
             for pos, atoms, (w, _ind, _keep) in self._handed(R, a):
                 if w:                                      # (what it writes through a pointer it LOADS is its own store)
+                    reach, meta = self._handed_reach(R, a, pos, atoms, w, contract)
                     out.append((a, f"hands {'r%d' % pos if isinstance(pos, int) else pos} to {whom}, which writes through it",
-                                self._write_reach(R, atoms, w, contract), {"pos": pos, "atoms": atoms, "to": tgt}))
+                                reach, dict(meta, pos=pos, atoms=atoms, to=tgt)))
             _r, sw = self._stack_use_at(R, a)              # the callee writing its incoming stack words: OUR frame
             sp = self._pt_slot(R, a, 0)
             if sw is None:
@@ -2779,15 +3046,19 @@ class Image:
         span = self._stack_span()
         names = [self.name(R) for R in self._code_routines()]
         routines, total = {}, {"stores": 0, "hand_overs": 0, "placed": 0, "at_the_callers": 0, "by_contract": 0, "not_placed": 0,
-                                "not_placed_sites": 0, "overlapping_sites": 0}
+                                "not_placed_sites": 0, "overlapping_sites": 0, "placed_by_a1": 0}
         for R in self._code_routines():
             rec = {"stores": 0, "hand_overs": 0, "placed": 0, "at_the_callers": 0, "by_contract": 0, "not_placed": 0}
             unplaced: dict = {}
             over: dict = {}
-            for a, what, reach, _m in self._write_sites(R):
+            a1: dict = {}
+            for a, what, reach, m in self._write_sites(R):
                 kind = "stores" if what == "stores" else "hand_overs"
                 rec[kind] += 1
                 why = [r[1] for r in reach if r[0] == "unknown"]
+                if "a1" in m and not why:                  # (A1) placed only because its index is bounded
+                    a1.setdefault(m["a1"], []).append(f"{a:#x}")
+                    total["placed_by_a1"] += 1
                 if why:
                     rec["not_placed"] += 1
                     for w in sorted(set(why)):
@@ -2807,6 +3078,8 @@ class Image:
                 rec["not_placed_at"] = {k: sorted(set(v)) for k, v in sorted(unplaced.items())}
             if over:
                 rec["overlapping_at"] = {k: sorted(set(v)) for k, v in sorted(over.items())}
+            if a1:
+                rec["placed_by_a1_at"] = {k: sorted(set(v)) for k, v in sorted(a1.items())}
             if rec["stores"] or rec["hand_overs"]:           # (two routines of one name — the libc's two __sbprintf —
                 n = self.name(R)                           # are told apart by address: neither record is dropped)
                 routines[n if names.count(n) == 1 else f"{n}@{R:#x}"] = rec
@@ -3057,7 +3330,37 @@ class Image:
             cache[key] = out
         return out
 
+    def _subst_ext(self, entry: int, a: int, w):
+        """(A1) A callee's write extents with every count that is a linear form of one of ITS arguments replaced by
+        what that argument is at this call: a constant — the count (none when it is not positive: nothing is
+        written); exactly the caller's own incoming argument — the form in the caller's numbering (kept parametric,
+        for the caller's callers); anything else — the whole extent is unknown ('ALL')."""
+        if w is None or w == "ALL" or all(isinstance(nb, int) for _o, nb in w):
+            return w
+        out = set()
+        for off, nb in w:
+            if isinstance(nb, int):
+                out.add((off, nb))
+                continue
+            _l, k, mul, add = nb
+            v = self._raw_reg(entry, a, f"r{k}") if isinstance(k, int) and k < 4 else frozenset()
+            if v and all(x[0] == "const" for x in v):
+                cnt = mul * max(x[1] for x in v) + add
+                if cnt > 0:
+                    if off + cnt > 0xFFFFFFFF:
+                        return "ALL"
+                    out.add((off, cnt))
+            elif len(v) == 1 and next(iter(v))[0] == "arg" and isinstance(next(iter(v))[1], int):
+                out.add((off, ("lin", next(iter(v))[1], mul, add)))
+            else:
+                return "ALL"
+        return frozenset(out) or None
+
     def _callee_summary_compute(self, entry: int, a: int, m) -> tuple:
+        w, ind, keep = self._callee_summary_raw(entry, a, m)
+        return (self._subst_ext(entry, a, w), ind, keep)
+
+    def _callee_summary_raw(self, entry: int, a: int, m) -> tuple:
         i = self.ins_at[a]
         tgt = self._call_target(i)
         c = self._libc_contract(tgt)
@@ -3153,7 +3456,10 @@ class Image:
                 for x in d["base"]:
                     if x[0] == "frame" and x[1] is not None and not d["wild"]:
                         for off, n, _r in d["elems"]:
-                            writes |= words(x[1] + off, x[1] + off + n)
+                            if isinstance(n, int):
+                                writes |= words(x[1] + off, x[1] + off + n)
+                            else:
+                                unbounded_w = True         # (a length held in an argument: not a fixed set of words)
                     elif x[0] == "frame" or x == ("der", "frame"):
                         unbounded_w = True
                 for r in d["data"]:                        # a frame address at or above the entry SP, stored
@@ -3182,7 +3488,7 @@ class Image:
                             unbounded_r = True
                             if w is not None or keep is not None:
                                 unbounded_w = True
-                        elif w == "ALL" or (w and any(A0 + off + nb > 0 for off, nb in w)):
+                        elif w == "ALL" or (w and any(not isinstance(nb, int) or A0 + off + nb > 0 for off, nb in w)):
                             unbounded_w = True
         return (None if unbounded_r else frozenset(reads), None if unbounded_w else frozenset(writes))
 
@@ -3448,7 +3754,7 @@ class Image:
                 A0 = x[1] if x[0] == "frame" else None
                 if w == "ALL" or (keep and "EXT" in keep):
                     out = out or set()
-                elif w and (A0 is None or any(A0 + off < slot + 4 and slot < A0 + off + nb for off, nb in w)):
+                elif w and (A0 is None or any(A0 + off < slot + 4 and (not isinstance(nb, int) or slot < A0 + off + nb) for off, nb in w)):
                     out = out or set()
                 if ind and (A0 is None or ind == "ALL"):
                     if self._pointer_slots(entry) != frozenset():

@@ -211,6 +211,23 @@ class TheFinalImage(unittest.TestCase):
                         "this image has cells of both kinds")
         self.assertEqual(sum("the frame cell at slot" in f for f in self.r["findings"]), sum(not c["resolved"] for c in cells))
 
+    def test_what_a1_placed_is_listed_by_rule_and_is_placed(self):
+        """A1 (2026-10-07): every write placed only because its index is bounded is listed under its rule, counted
+        once, and is in no routine's not-placed list; the image's own numbers are not fixed here."""
+        w = self.r["writes"]
+        n = 0
+        for name, rec in w["routines"].items():
+            for rule, sites in rec.get("placed_by_a1_at", {}).items():
+                self.assertTrue(rule.startswith(("a register index bounded by ", "an address computed from an index bounded by ",
+                                                 "a handed address computed from an index bounded by ")), rule)
+                unplaced = {x for v in rec.get("not_placed_at", {}).values() for x in v}
+                for site in sites:
+                    self.assertNotIn(site, unplaced, f"{name} {site}: listed as placed by A1 and as not placed")
+                n += len(sites)
+        self.assertEqual(w["total"]["placed_by_a1"], n)
+        self.assertGreater(n, 0, "this image has writes A1 places")
+        self.assertIn(f"placed by a1: {n}", self.r["rules"]["write_placement"]["targets"])
+
     def test_the_inventory_leaves_out_no_store(self):
         """Counted independently, off the disassembly: every store instruction the path analysis reaches, in every
         routine of the image, is in its routine's record — placed, placed at its callers, its contract's, or listed."""
@@ -267,7 +284,7 @@ class TheFinalImage(unittest.TestCase):
                      "SCOPE — SYNCHRONOUS PATHS ONLY", "NOT covered", "not used as proof that no handler runs",
                      "no bound is published for an entry that calls through memory"):
             self.assertIn(said, vm["rule"])
-        self.assertEqual(self.r["tool"], "b3-image-stack 1.4.0")
+        self.assertEqual(self.r["tool"], "b3-image-stack 1.5.0")
         self.assertTrue(vm["targets"], "the library contracts the analysis relied on are named")
         self.assertLessEqual(set(vm["targets"]), set(isa.Image.LIBC_CONTRACTS))
         formats = rules["printf_formats"]["targets"]
@@ -1390,6 +1407,252 @@ class TheFrameCells(unittest.TestCase):
         self.assertEqual(c["blocked_by"], [{"at": "0x1014", "why": "a store that is not placed (through an unknown pointer)"}])
         self.assertIn("a path from the routine's entry with no store to the slot (uninitialised there)", everything,
                       "recorded against the early load, and rightly left out of the cell's reasons")
+
+
+class TheBoundedIndex(unittest.TestCase):
+    """A1 (the owner's ruling of 2026-10-07): a write at base + index is placed when the index has an UNSIGNED range
+    read off the image — an unsigned guard on every path after the index's last definition, or a definition that
+    bounds it — with the write's width and the 32-bit wrap counted. A signed test, an equality, a guard a path goes
+    round, an index written after the guard, a wrap: not placed. Each refusal has its placed control beside it."""
+
+    FAR = [("movw", "r6, #40960"), ("movt", "r6, #0")]            # r6 = 0xA000: a buffer outside the stacks
+    PRE = CB + [("str", "r0, [sp, #8]"), ("mov", "r3, #0")]
+    POST = [("ldr", "r1, [sp, #8]"), ("blx", "r1")]
+
+    def run_with(self, mid, **kw):
+        """f holds a callback at [sp, #8]; `mid` writes in between; the cell stands only if the write is placed."""
+        img, b = synth(self.PRE + self.FAR + list(mid) + self.POST, **kw)
+        try:
+            return targets(img, b), isa.settle(synth(self.PRE + self.FAR + list(mid) + self.POST, **kw)[0],
+                                               lambda im: im.write_inventory()["routines"]["f"])
+        except isa.Finding as e:
+            return str(e), None
+
+    def placed(self, mid, rule, **kw):
+        r, inv = self.run_with(mid, **kw)
+        self.assertEqual(r, [CB_A], f"not placed: {r}")
+        self.assertEqual(inv["not_placed"], 0)
+        self.assertEqual(list(inv["placed_by_a1_at"]), [rule], inv["placed_by_a1_at"])
+
+    def refused(self, mid, why, **kw):
+        r, _inv = self.run_with(mid, **kw)
+        self.assertIsInstance(r, str, f"placed: {r}")
+        self.assertIn(why, r)
+
+    UNB = "over an extent that is not bounded"
+    GUARD = "a register index bounded by an unsigned guard"
+
+    def test_an_unsigned_guard_on_the_index(self):
+        skip = br(0x1024)                                  # PRE 4 + FAR 2 = 6 instructions: the store is 0x1020
+        self.placed([("cmp", "r4, #16"), ("bcs", skip), ("strb", "r3, [r6, r4]")], self.GUARD)
+        self.placed([("cmp", "r4, #16"), ("bhi", skip), ("strb", "r3, [r6, r4]")], self.GUARD)
+        self.placed([("cmp", "r4, #16"), ("bcc", br(0x1024)), ("mov", "r4, #0"), ("strb", "r3, [r6, r4]")], "a register index bounded by a constant / an unsigned guard")
+        # a counted loop: the guard is the loop test, the store the body
+        self.placed([("cmp", "r4, #16"), ("bcs", br(0x102c)), ("strb", "r3, [r6, r4]"), ("add", "r4, r4, #1"), ("b", br(0x1018))], self.GUARD)
+        for what, test in (("a signed test", "bge"), ("an equality", "beq"), ("the other way round", "bcc")):
+            with self.subTest(what):
+                self.refused([("cmp", "r4, #16"), (test, skip), ("strb", "r3, [r6, r4]")], self.UNB)
+        self.refused([("strb", "r3, [r6, r4]")], self.UNB)
+
+    def test_a_guard_a_path_goes_round_or_the_index_written_after_it(self):
+        store = br(0x1024)
+        self.refused([("cbz", f"r2, {store}"), ("cmp", "r4, #16"), ("bcs", br(0x1028)), ("strb", "r3, [r6, r4]")], self.UNB)
+        self.placed([("cmp", "r4, #16"), ("bcs", br(0x1028)), ("add", "r4, r4, #1"), ("strb", "r3, [r6, r4]")], self.GUARD + " + 1")
+        self.placed([("cmp", "r4, #16"), ("bcs", br(0x1028)), ("add", "r5, r4, #1"), ("strb", "r3, [r6, r5]")], self.GUARD + " + 1")
+        self.refused([("cmp", "r4, #16"), ("bcs", br(0x1028)), ("add", "r4, r4, r7"), ("strb", "r3, [r6, r4]")], self.UNB)
+        self.refused([("cmp", "r4, #16"), ("bcs", br(0x1028)), ("ldr", "r5, [sp, #20]"), ("strb", "r3, [r6, r5]")], self.UNB)
+
+    def test_an_index_bounded_by_its_definition(self):
+        for what, defs, rule in (("uxtb", [("uxtb", "r4, r4")], "a uxtb"), ("an and-mask", [("and", "r4, r4, #7")], "an and-mask"),
+                                 ("an lsr", [("lsr", "r4, r4, #28")], "an lsr"), ("a byte load", [("ldrb", "r4, [sp, #20]")], "a ldrb"),
+                                 ("a constant", [("mov", "r4, #3")], "a constant"), ("a ubfx", [("ubfx", "r4, r4, #2, #4")], "a ubfx"),
+                                 ("a copy of one", [("uxtb", "r5, r4"), ("mov", "r4, r5")], "a uxtb"),
+                                 ("a shift of one", [("uxtb", "r4, r4"), ("lsl", "r4, r4, #2")], "a uxtb << 2")):
+            with self.subTest(what):
+                self.placed(defs + [("strb", "r3, [r6, r4]")], "a register index bounded by " + rule)
+        self.refused([("ldr", "r4, [sp, #20]"), ("strb", "r3, [r6, r4]")], self.UNB)
+        self.refused([("uxtb", "r4, r4"), ("lsl", "r4, r4, #25"), ("strb", "r3, [r6, r4]")], self.UNB, )   # 255 << 25 wraps
+        self.refused([("cbz", f"r2, {br(0x1020)}"), ("uxtb", "r4, r4"), ("strb", "r3, [r6, r4]")], self.UNB)   # unbounded on a path
+
+    def test_a_compare_against_a_bounded_register_and_a_conditional_store(self):
+        self.placed([("mov", "r7, #8"), ("cmp", "r4, r7"), ("bcs", br(0x1028)), ("strb", "r3, [r6, r4]")], self.GUARD)
+        self.refused([("cmp", "r4, r7"), ("bcs", br(0x1024)), ("strb", "r3, [r6, r4]")], self.UNB)
+        self.placed([("cmp", "r4, #16"), ("strbls", "r3, [r6, r4]")], self.GUARD)
+        self.refused([("cmp", "r4, #16"), ("strble", "r3, [r6, r4]")], self.UNB)
+
+    def test_the_extent_counts_the_scale_and_the_width_against_the_table(self):
+        """Through the read-only-table proof: a scaled index into the words just below the table."""
+        run = TheReadOnlyTables().run_with
+        below = [("movw", "r6, #37056"), ("movt", "r6, #0")]       # r6 = T_ADDR - 64: sixteen words below the table
+        for what, lead, want in (("fifteen words, then the table's first", [("cmp", "r4, #16"), ("bcs", br(0x101c)), ("str", "r3, [r6, r4, lsl #2]")], None),
+                                 ("sixteen: the table's first word", [("cmp", "r4, #16"), ("bhi", br(0x101c)), ("str", "r3, [r6, r4, lsl #2]")], "it may reach 0x9100..0x9104"),
+                                 ("a double word at the fifteenth", [("cmp", "r4, #16"), ("bcs", br(0x101c)), ("strd", "r2, r3, [r6, r4, lsl #2]")], "it may reach 0x9100..0x9104"),
+                                 ("a byte at the index, unscaled", [("cmp", "r4, #64"), ("bcs", br(0x101c)), ("strb", "r3, [r6, r4]")], None),
+                                 ("a byte one further", [("cmp", "r4, #65"), ("bcs", br(0x101c)), ("strb", "r3, [r6, r4]")], "it may reach 0x9100..0x9101")):
+            with self.subTest(what):
+                r = run(below + [("mov", "r2, #0"), ("mov", "r3, #0")] + lead + TBL)
+                if want is None:
+                    self.assertEqual(r, [CB_B])
+                else:
+                    self.assertIsInstance(r, str, "accepted")
+                    self.assertIn(want, r)
+
+    def test_an_address_computed_from_the_index(self):
+        skip = br(0x1028)
+        rule = "an address computed from an index bounded by an unsigned guard"
+        self.placed([("cmp", "r4, #16"), ("bcs", skip), ("add", "r5, r6, r4, lsl #2"), ("str", "r3, [r5, #4]")], rule)
+        self.placed([("cmp", "r4, #16"), ("bcs", skip), ("add", "r5, r6, r4"), ("strb", "r3, [r5]")], rule)
+        self.refused([("add", "r5, r6, r4, lsl #2"), ("str", "r3, [r5, #4]")], "that is not placed")
+        # the computed address handed to a callee that writes through it
+        H2 = 0x5000
+        w = {"h": (H2, [("mov", "r2, #0"), ("str", "r2, [r0, #4]"), ("mov", "r0, #0"), ("bx", "lr")])}
+        r, inv = self.run_with([("cmp", "r4, #16"), ("bcs", br(0x1034)), ("add", "r0, r6, r4, lsl #2"), ("mov", "r1, #0"), ("mov", "r2, #0"),
+                                ("mov", "r3, #0"), ("bl", call(H2, "h"))], more=w)
+        self.assertEqual(r, [CB_A])
+        self.assertEqual(list(inv["placed_by_a1_at"]), ["a handed address computed from an index bounded by an unsigned guard"])
+        self.refused([("add", "r0, r6, r4, lsl #2"), ("mov", "r1, #0"), ("mov", "r2, #0"), ("mov", "r3, #0"), ("bl", call(H2, "h"))],
+                     "that is not placed", more=w)
+
+    def test_the_wrap_and_the_cell_s_own_frame(self):
+        top = [("movw", "r6, #65520"), ("movt", "r6, #65535")]     # r6 = 0xFFFFFFF0: sixteen bytes to the end of memory
+        img, b = synth(self.PRE + top + [("uxtb", "r4, r4"), ("strb", "r3, [r6, r4]")] + self.POST)
+        with self.assertRaises(isa.Finding) as c:
+            targets(img, b)
+        self.assertIn("a range that wraps round the address space", str(c.exception), "255 from 0xFFFFFFF0 wraps: not placed")
+        # a bounded index into the routine's OWN frame: placed, and held against the cell like any frame store
+        skip = br(0x1028)
+        self.placed([("cmp", "r4, #16"), ("bcs", skip), ("add", "r5, sp, #16"), ("strb", "r3, [r5, r4]")], self.GUARD)
+        r, _ = self.run_with([("cmp", "r4, #16"), ("bcs", skip), ("add", "r5, sp, #0"), ("strb", "r3, [r5, r4]")])
+        self.assertIn("a store that may write the slot or part of it", r, "[sp, 0..16) covers the slot at [sp, #8]")
+
+
+class TheArgumentBoundedIndex(unittest.TestCase):
+    """A1, the argument-bounded index (the owner's ruling of 2026-10-07): an index guarded against the routine's
+    INCOMING argument — the register holding exactly what the routine received — gives a parametric extent,
+    substituted where the routine is called: a constant there places the write (none when the length is zero), the
+    caller's own argument keeps it parametric for the caller's callers, anything else leaves it unknown."""
+
+    H2, F2 = 0x5000, 0x6000
+    HB = 0x5000
+
+    def writer(self, store=("strb", "r3, [r0, r4]"), lead=()):
+        """h(buf = r0, len = r1): for (i = 0; i < len; i++) buf[i] = …, with `lead` before the loop."""
+        lead = list(lead)
+        base = self.HB + 4 * len(lead)
+        return lead + [("mov", "r4, #0"), ("cmp", "r4, r1"), ("bcs", br(base + 0x18, base)), store,
+                       ("add", "r4, r4, #1"), ("b", br(base + 0x4, base)), ("mov", "r0, #0"), ("bx", "lr")]
+
+    FAR = [("movw", "r0, #40960"), ("movt", "r0, #0")]            # r0 = 0xA000, outside the stacks
+    PRE = CB + [("str", "r0, [sp, #8]"), ("mov", "r3, #0")]
+    POST = [("ldr", "r1, [sp, #8]"), ("blx", "r1")]
+
+    def go(self, lead, h=None, more=None):
+        """The caller holds a callback at [sp, #8], sets up r0 / r1 with `lead`, calls h, reads the callback."""
+        routines = {"h": (self.H2, h or self.writer())}
+        routines.update(more or {})
+        img, b = synth(self.PRE + list(lead) + [("mov", "r2, #0"), ("bl", call(self.H2, "h"))] + self.POST, more=routines)
+        try:
+            r = targets(img, b)
+        except isa.Finding as e:
+            return str(e), None
+        inv = isa.settle(synth(self.PRE + list(lead) + [("mov", "r2, #0"), ("bl", call(self.H2, "h"))] + self.POST, more=routines)[0],
+                         lambda im: im.write_inventory()["routines"])
+        return r, inv
+
+    def test_a_constant_length_at_the_call_places_the_write(self):
+        r, inv = self.go(self.FAR + [("mov", "r1, #16")])
+        self.assertEqual(r, [CB_A])
+        self.assertEqual(inv["h"]["placed_by_a1_at"], {"a register index bounded by an unsigned guard against argument 1": ["0x500c"]})
+        self.assertEqual((inv["h"]["at_the_callers"], inv["h"]["not_placed"]), (1, 0), "h's store is placed where h is called")
+        self.assertEqual((inv["f"]["placed"], inv["f"]["not_placed"]), (2, 0), "f's frame store, and the pointer handed with 16 bytes to write")
+
+    def test_a_zero_length_writes_nothing(self):
+        r, inv = self.go(self.FAR + [("mov", "r1, #0")])
+        self.assertEqual(r, [CB_A])
+        self.assertEqual(inv["f"]["not_placed"], 0)
+
+    def test_an_unknown_length_leaves_the_write_unknown(self):
+        for what, lead in (("loaded from memory", self.FAR + [("ldr", "r1, [sp, #20]")]), ("the caller's register as it came", self.FAR + [("mov", "r1, r6")])):
+            with self.subTest(what):
+                r, _ = self.go(lead)
+                self.assertIsInstance(r, str, "placed")
+                self.assertIn("a call (h) handed r0, which the callee writes through, that is not placed (through the constant 0xa000, over an extent that is not bounded)", r)
+
+    def test_a_forwarded_length_stays_parametric_until_a_caller_fixes_it(self):
+        """f holds the callback and calls mid(buf, len); mid forwards both to h. The write is placed only at f."""
+        mid = [("bl", call(self.H2, "h")), ("bx", "lr")]          # mid(r0, r1) -> h(r0, r1), nothing else
+
+        def f(lead):
+            routines = {"h": (self.H2, self.writer()), "mid": (self.F2, mid)}
+            img, fb = synth(self.PRE + list(lead) + [("mov", "r2, #0"), ("bl", call(self.F2, "mid"))] + self.POST, more=routines)
+            try:
+                return targets(img, fb), isa.settle(synth(self.PRE + list(lead) + [("mov", "r2, #0"), ("bl", call(self.F2, "mid"))] + self.POST,
+                                                          more=routines)[0], lambda im: im.write_inventory()["routines"])
+            except isa.Finding as e:
+                return str(e), None
+        r, inv = f(self.FAR + [("mov", "r1, #16")])
+        self.assertEqual(r, [CB_A])
+        self.assertEqual((inv["mid"]["at_the_callers"], inv["mid"]["not_placed"]), (1, 0), "mid's hand-over stays parametric: placed at mid's caller")
+        self.assertEqual((inv["h"]["at_the_callers"], inv["mid"]["placed"]), (1, 0))
+        r, _ = f(self.FAR + [("ldr", "r1, [sp, #20]")])
+        self.assertIsInstance(r, str, "placed")
+        self.assertIn("a call (mid) handed r0, which the callee writes through, that is not placed", r)
+        # mid on its own, called by nothing: its argument is unknown
+        img, _b = synth(mid, more={"h": (self.H2, self.writer())})
+        inv = isa.settle(img, lambda im: im.write_inventory()["routines"])
+        self.assertIn("the routine is entered other than by a call whose arguments are read", str(inv["f"]["not_placed_at"]))
+
+    def test_a_length_redefined_before_the_guard_bounds_nothing(self):
+        for what, lead in (("replaced by an unknown", [("mov", "r1, r6")]), ("stepped by one", [("add", "r1, r1, #1")])):
+            with self.subTest(what):
+                r, _ = self.go(self.FAR + [("mov", "r1, #16")], h=self.writer(lead=lead))
+                self.assertIsInstance(r, str, "placed")
+                self.assertIn("over an extent that is not bounded", r)
+        r, _ = self.go(self.FAR + [("mov", "r1, #16")], h=self.writer(lead=[("mov", "r5, r1")]))
+        self.assertEqual(r, [CB_A], "a COPY of the argument is still the argument")
+        # the argument on one path and something else on another: not the argument as received
+        lead = [("cbz", f"r2, {br(self.HB + 0x8, self.HB)}"), ("mov", "r1, r6")]
+        r, _ = self.go(self.FAR + [("mov", "r1, #16"), ("mov", "r2, #1")], h=self.writer(lead=lead))
+        self.assertIsInstance(r, str, "placed")
+        self.assertIn("over an extent that is not bounded", r)
+
+    def test_a_parametric_count_from_a_pointer_that_is_not_an_argument_is_unknown(self):
+        """A constant base in the callee, a length from its argument: nothing at the call can place it."""
+        far_in_h = [("movw", "r0, #40960"), ("movt", "r0, #0")]
+        r, inv = self.go([("mov", "r0, #0"), ("mov", "r1, #16")], h=self.writer(lead=far_in_h))
+        self.assertIsInstance(r, str, "placed")
+        self.assertIn("over a length held in one of its arguments, from a pointer that is not its argument", str(inv) if inv else r)
+
+    def test_a_parametric_element_may_write_a_cell_of_its_own_frame(self):
+        """The slot walk: a store whose count is a form of an argument, into the routine's own frame at or below the
+        cell, MAY write it (its end is unknown there) — `_store_effect`'s own verdict, by name."""
+        h = [("mov", "r4, #0"), ("cmp", "r4, r1"), ("bcs", br(0x5018, 0x5000)), ("strb", "r3, [sp, r4]"), ("add", "r4, r4, #1"),
+             ("b", br(0x5004, 0x5000)), ("mov", "r0, #0"), ("bx", "lr")]
+        img, _b = synth([("bx", "lr")], more={"h": (0x5000, h)})
+        img.analyse(0x5000)
+        d = img._store_desc(0x5000, 0x500c)
+        self.assertEqual(d.get("a1"), "a register index bounded by an unsigned guard against argument 1")
+        self.assertEqual(d["elems"], [(0, ("lin", 1, 1, 0), None)])
+        self.assertEqual(img._store_effect(0x5000, 0x500c, 8 - SP)[0], "may", "[sp + 0 .. sp + len): the slot at [sp, #8] may be in it")
+        self.assertIsNone(img._store_effect(0x5000, 0x500c, -SP - 4), "a slot below the frame's base is not")
+
+    def test_the_scale_and_the_width_at_the_call_against_the_table_and_the_wrap(self):
+        tables = TheReadOnlyTables().run_with
+        below = [("movw", "r0, #37056"), ("movt", "r0, #0")]       # r0 = T_ADDR - 64: sixteen words below the table
+        words = self.writer(store=("str", "r3, [r0, r4, lsl #2]"))
+        dwords = self.writer(store=("strd", "r2, r3, [r0, r4, lsl #2]"))
+        for what, lead, h, want in (("sixteen words below the table", below + [("mov", "r1, #16")], words, None),
+                                    ("seventeen: the table's first word", below + [("mov", "r1, #17")], words, "it may reach 0x9100..0x9104"),
+                                    ("sixteen double words: four bytes too far", below + [("mov", "r1, #16")], dwords, "it may reach 0x9100..0x9104"),
+                                    ("sixteen bytes, unscaled, from the top of memory", [("movw", "r0, #65520"), ("movt", "r0, #65535"), ("mov", "r1, #16")], self.writer(), None),
+                                    ("seventeen: wrapping round", [("movw", "r0, #65520"), ("movt", "r0, #65535"), ("mov", "r1, #17")], self.writer(), "a range that wraps round the address space")):
+            with self.subTest(what):
+                r = tables([("mov", "r2, #0"), ("mov", "r3, #0")] + lead + [("bl", call(self.H2, "h"))] + TBL, more={"h": (self.H2, h)})
+                if want is None:
+                    self.assertEqual(r, [CB_B])
+                else:
+                    self.assertIsInstance(r, str, "accepted")
+                    self.assertIn(want, r)
 
 
 class TheWalkPastAFinding(unittest.TestCase):
