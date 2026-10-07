@@ -1706,12 +1706,13 @@ class TheDigitLoop(unittest.TestCase):
     def digits(self, *, magic=None, shift="#3", word="ip", update=("mov", "r1, ip"), flags=None, count=("add", "r5, r5, #1"), low=False,
                extra=(), copy_end="r5", copy_start="r5", first=("mov", "r0, sp"), store=("strb", "r3, [r0], #1"), bypass=False,
                copy_dest="#12", copy_store=("strb", "r0, [r3], #1"), step_after_cmp=False, copy_bypass=False,
-               cmp_imm="#9", reenter=False, copy_extra=(), after_extra=(), body_exit=False):
+               cmp_imm="#9", reenter=False, copy_extra=(), after_extra=(), body_exit=False,
+               umull="umull", lsr="lsr", cmp_mn="cmp", copy_cmp="cmp"):
         """h(ctx, value): the digits of `value` into a frame buffer at sp, reversed into sp + 12, as GCC emits it."""
         H = self.H2
         pre = list(magic or self.MAGIC) + [("mov", "r4, r0"), ("mov", "r2, sp"), first, ("mov", "r5, #0")]
         L = H + 4 * len(pre)
-        body = [("umull", f"r3, {word}, lr, r1" if not low else f"{word}, r3, lr, r1"), ("cmp", f"r1, {cmp_imm}"), count, ("lsr", f"ip, {word}, {shift}"),
+        body = [(umull, f"r3, {word}, lr, r1" if not low else f"{word}, r3, lr, r1"), (cmp_mn, f"r1, {cmp_imm}"), count, (lsr, f"ip, {word}, {shift}"),
                 ("add", "r3, ip, ip, lsl #2"), ("sub", "r3, r1, r3, lsl #1"), update, ("add", "r3, r3, #48")] + list(extra) + [store]
         if flags:
             body.insert(2, flags)
@@ -1727,7 +1728,7 @@ class TheDigitLoop(unittest.TestCase):
         if copy_bypass:                                    # a jump from before the copy loop into its middle
             after.insert(0, ("cbz", f"r6, {br(H + 4 * (len(body) + len(after) + 2), H)}"))
         L2 = H + 4 * (len(body) + len(after))
-        loop = [("ldrb", "r0, [r2, #-1]!"), copy_store] + list(copy_extra) + [("cmp", "r3, ip")]
+        loop = [("ldrb", "r0, [r2, #-1]!"), copy_store] + list(copy_extra) + [(copy_cmp, "r3, ip")]
         if step_after_cmp:
             loop = [("ldrb", "r0, [r2, #-1]!"), ("cmp", "r3, ip"), ("strb", "r0, [r3], #1")]
         return body + after + loop + [("bne", br(L2, H)), ("mov", "r0, #0"), ("bx", "lr")]
@@ -1859,6 +1860,58 @@ class TheDigitLoop(unittest.TestCase):
         ld = [i for i in img.region(self.H2) if i["mnem"] == "ldrb"][0]["addr"]
         self.assertIsNone(img._loop_frame_span(self.H2, ld, "r2"), "r2 = sp + the count BEFORE the step: not the end's count")
         self.assertIsNone(use[0])
+
+    def test_what_runs_only_under_a_condition_or_steps_the_other_way(self):
+        """The owner's HOLD on 4c9ee82: an instruction the rule relies on must run on EVERY pass (a conditional one
+        may not — `moveq r1, ip` never runs for 1234, the loop never ends); a step is read from its opcode, its
+        direction and its writeback (`sub r3, r3, #1` steps back)."""
+        for what, kw in (("the quotient's update only on EQ (the owner's probe)", {"update": ("moveq", "r1, ip")}),
+                         ("the multiply under a condition", {"umull": "umulleq"}),
+                         ("the shift under a condition", {"lsr": "lsrne"}),
+                         ("the compare under a condition", {"cmp_mn": "cmpne"}),
+                         ("the pointer's step under a condition", {"store": ("strbeq", "r3, [r0], #1")}),
+                         ("the pointer stepped back", {"store": ("strb", "r3, [r0], #-1")})):
+            with self.subTest(what):
+                d, _c, use, _img = self.facts(self.digits(**kw))
+                if what in ("the pointer's step under a condition", "the pointer stepped back"):
+                    self.assertEqual(list(d.values())[0]["ptr"] if d else {}, {}, "a pointer the loop steps forward on every pass")
+                else:
+                    self.assertEqual(d, {}, "recognised")
+                self.assertIsNone(use[1], "the digit store is not pinned")
+        d, _c, _use, _img = self.facts(self.digits(count=("addeq", "r5, r5, #1")))
+        self.assertEqual(list(d.values())[0]["count"], {}, "a count stepped under a condition is not the digit count")
+        for what, kw in (("the copy's pointer stepped back by a sub (the owner's probe)", {"copy_store": ("sub", "r3, r3, #1")}),
+                         ("stepped back by a post-indexed store", {"copy_store": ("strb", "r0, [r3], #-1")}),
+                         ("stepped under a condition", {"copy_store": ("strbeq", "r0, [r3], #1")}),
+                         ("the copy's compare under a condition", {"copy_cmp": "cmpeq"})):
+            with self.subTest(what):
+                _d, c, use, img = self.facts(self.digits(**kw))
+                self.assertEqual(c, {}, "recognised")
+                ld = [i for i in img.region(self.H2) if i["mnem"] == "ldrb"][0]["addr"]
+                self.assertIsNone(img._loop_frame_span(self.H2, ld, "r2"), "the reverse load is not placed")
+                self.assertIsNone(use[0], "its reads of the incoming area are not pinned")
+        # the controls: a forward step by an add, and by a pre-indexed store, are the loop's
+        _d, c, use, _img = self.facts(self.digits(copy_store=("add", "r3, r3, #1")))
+        self.assertEqual((len(c), use), (1, (frozenset(), frozenset())))
+        _d, c, use, _img = self.facts(self.digits(copy_store=("strb", "r0, [r3, #1]!")))
+        self.assertEqual((len(c), use), (1, (frozenset(), frozenset())))
+
+    def test_the_owner_s_probes_through_the_formal_path(self):
+        """The two probes of the HOLD, through callback resolution, in A32 (predicated without IT)."""
+        def run(**kw):
+            img, b = synth(CB + [("str", "r0, [sp, #8]"), ("add", "r0, sp, #8"), ("mov", "r1, #1234"), ("bl", call(self.H2, "h")),
+                                 ("ldr", "r1, [sp, #8]"), ("blx", "r1")], more={"h": (self.H2, self.digits(**kw))})
+            for ins in img.ins_at.values():
+                ins["thumb"] = False
+            try:
+                return targets(img, b)
+            except isa.Finding as e:
+                return str(e)
+        self.assertEqual(run(), [CB_A], "the loops as emitted")
+        r = run(update=("moveq", "r1, ip"))
+        self.assertIsInstance(r, str, "resolved")
+        self.assertIn("a call that may write the slot through a pointer it is handed, or its incoming stack words", r)
+        self.assertIsInstance(run(copy_store=("strb", "r0, [r3], #-1")), str, "a copy store stepping down: unbounded writes")
 
     def test_the_magic_constant_divides_every_32_bit_value_by_ten(self):
         """(x * 0xCCCCCCCD) >> 35 == x // 10 for EVERY unsigned 32-bit x: exhaustive, not sampled."""

@@ -2073,6 +2073,27 @@ class Image:
             return None                                    # the branch leaves only to L or to the next instruction
         return body
 
+    def _step_of(self, ins: dict, reg: str):
+        """(The owner's HOLD on 4c9ee82) the signed constant by which `ins` ALWAYS changes `reg`, read from its opcode,
+        its direction and its writeback: `add reg, reg, #k` +k, `sub reg, reg, #k` −k, a load or store post-indexed
+        `[reg], #k` or pre-indexed with writeback `[reg, #k]!` +k (k signed); None for anything else — and for any
+        instruction under a condition, which may not run on a given pass."""
+        if self._cond(ins):
+            return None
+        mn = ins["mnem"].split(".")[0]
+        o = ins["ops"].replace(" ", "")
+        if mn in ("add", "sub"):
+            m = re.fullmatch(r"(\w+),(\w+),#(-?(?:0x[0-9a-f]+|\d+))", o)
+            if m and m.group(1) == reg == m.group(2):
+                k = int(m.group(3), 0)
+                return k if mn == "add" else -k
+            return None
+        if mn.startswith(("ldr", "str")) and not mn.startswith(("ldrd", "strd", "strex", "ldrex")):
+            m = re.search(r"\[" + reg + r"\],#(-?(?:0x[0-9a-f]+|\d+))$", o) or re.search(r"\[" + reg + r",#(-?(?:0x[0-9a-f]+|\d+))\]!$", o)
+            if m and (mn.startswith("str") or self._regs(o.split("[")[0])[:1] != [reg]):
+                return int(m.group(1), 0)
+        return None
+
     def _flag_setter_before(self, entry: int, br: int, body: list):
         """The one instruction setting the flags the branch at `br` reads, when it is in the straight body."""
         for a in reversed([x for x in body if x < br]):
@@ -2106,7 +2127,7 @@ class Image:
                 continue
             q = m.group(1)
             um = [a for a in body if self._family(self.ins_at[a]) == "umull"]
-            if len(um) != 1:
+            if len(um) != 1 or self._cond(self.ins_at[um[0]]):
                 continue
             uo = self._regs(self.ins_at[um[0]]["ops"].replace(" ", ""))
             if len(uo) != 4 or q not in uo[2:]:
@@ -2116,13 +2137,13 @@ class Image:
                 continue
             lsr = [a for a in body if a > um[0] and re.fullmatch(r"(\w+)," + rH + r",#3", self.ins_at[a]["ops"].replace(" ", ""))
                    and self._family(self.ins_at[a]) == "lsr"]
-            if len(lsr) != 1 or self._writers_in([a for a in body if um[0] < a < lsr[0]], rH):
+            if len(lsr) != 1 or self._cond(self.ins_at[lsr[0]]) or self._writers_in([a for a in body if um[0] < a < lsr[0]], rH):
                 continue
             rD = self._regs(self.ins_at[lsr[0]]["ops"].replace(" ", ""))[0]
             qw = self._writers_in(body, q)                 # q is updated once, from rD, after the compare and the multiply
             upd = qw[0] if len(qw) == 1 else None
-            if upd is None or upd <= max(cmp["addr"], um[0]) or upd < lsr[0]:
-                continue
+            if upd is None or upd <= max(cmp["addr"], um[0]) or upd < lsr[0] or self._cond(self.ins_at[upd]):
+                continue                                   # (a conditional update may not run: the loop may not end)
             uo2 = self.ins_at[upd]["ops"].replace(" ", "")
             if not ((self._family(self.ins_at[upd]) in ("mov", "movs") and uo2 == f"{q},{rD}" and not self._writers_in([a for a in body if lsr[0] < a < upd], rD))
                     or (upd == lsr[0] and rD == q)):
@@ -2134,12 +2155,13 @@ class Image:
                 for r in self.written(ins):
                     if r in (q, rD, rH, uo[0], "sp", "pc"):
                         continue
-                    mp = re.search(r"\[" + r + r"\],#(\d+)$", o)
-                    ma = re.fullmatch(r"(\w+),(\w+),#(\d+)", o)
-                    if mp and len(self._writers_in(body, r)) == 1 and self._family(ins).startswith("str"):
-                        ptr[r] = int(mp.group(1))
-                    elif ma and ma.group(1) == r == ma.group(2) and self._family(ins) == "add" and len(self._writers_in(body, r)) == 1:
-                        (count if int(ma.group(3)) == 1 else ptr)[r] = int(ma.group(3))
+                    k = self._step_of(ins, r)
+                    if k is None or k <= 0 or len(self._writers_in(body, r)) != 1:
+                        continue
+                    if ins["mnem"].split(".")[0].startswith("str") and re.search(r"\[" + r + r"\],#", o):
+                        ptr[r] = k                         # a post-indexed store stepping forward
+                    elif ins["mnem"].split(".")[0] == "add":
+                        (count if k == 1 else ptr)[r] = k
             c0 = {}
             for r in list(count):                          # the counter's value entering the loop: one constant
                 ws = [w for w in self.reaching_writers(entry, L, r) if w is None or w["addr"] not in body]
@@ -2238,8 +2260,7 @@ class Image:
                 if self._writers_in(body, e) or len(self._writers_in(body, p)) != 1:
                     continue
                 pw = self.ins_at[self._writers_in(body, p)[0]]
-                po = pw["ops"].replace(" ", "")
-                if not (re.search(r"\[" + p + r"\],#1$", po) or re.search(r"\[" + p + r",#1\]!", po) or po == f"{p},{p},#1"):
+                if self._step_of(pw, p) != 1 or self._cond(cmp):
                     continue
                 if pw["addr"] > cmp["addr"]:               # stepped after the compare: count + 1 runs, not count
                     continue
@@ -2251,7 +2272,7 @@ class Image:
                     continue
                 A = next(iter(v))[1]
                 ew = [w for w in self.reaching_writers(entry, L, e)]
-                if len(ew) != 1 or ew[0] is None:
+                if len(ew) != 1 or ew[0] is None or self._cond(ew[0]):
                     continue
                 eo = ew[0]["ops"].replace(" ", "")
                 me = re.fullmatch(r"(\w+),(\w+),(\w+)", eo)
@@ -2283,13 +2304,8 @@ class Image:
         ws = self._writers_in(info["body"], reg)
         if len(ws) != 1 or ws[0] != at:
             return None                                    # (used at its own step only)
-        pw = self.ins_at[at]
-        po = pw["ops"].replace(" ", "")
-        if re.search(r"\[" + reg + r"\],#1$", po) or re.search(r"\[" + reg + r",#1\]!", po) or po == f"{reg},{reg},#1":
-            step = 1
-        elif re.search(r"\[" + reg + r"\],#-1$", po) or re.search(r"\[" + reg + r",#-1\]!", po) or po == f"{reg},{reg},#-1":
-            step = -1
-        else:
+        step = self._step_of(self.ins_at[at], reg)          # by opcode, direction and writeback
+        if step not in (1, -1):
             return None
         starts = set()
         for w in self.reaching_writers(entry, at, reg):
