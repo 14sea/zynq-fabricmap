@@ -51,7 +51,7 @@ for p in (REPO_ROOT / "host", REPO_ROOT / "b3/host"):
         sys.path.insert(0, str(p))
 import b2_build_evidence as b2be  # noqa: E402  (the pinned toolchain's path; a frozen B2 module, read only)
 
-TOOL_VERSION = "b3-image-stack 1.3.0"
+TOOL_VERSION = "b3-image-stack 1.4.0"
 ELF_DEFAULT = REPO_ROOT / "b3/firmware/bsp/out/b3_app.elf"
 TC_BIN = Path(b2be.TC) / "bin"
 MAIN_LIMIT = 0x2000                     # the owner's ruling: the main path's verified bound is at most 0x2000 bytes
@@ -1362,15 +1362,19 @@ class Image:
         if self._solving is not None:
             return self._solve_inner(key)
         prev: dict = {}
-        for _round in range(200):
-            cur: dict = {}
+        stage = self.__dict__.setdefault("_blk_stage", [])  # what the rounds record against cells: kept only from
+        for _round in range(200):                          # the round that converged (a provisional round reads
+            cur: dict = {}                                 # provisional values — its reasons are not the cell's)
             self._solving = (prev, cur, set())
+            stage.append([])
             try:
                 v = self._solve_inner(key)
             finally:
                 self._solving = None
+                staged = stage.pop()
             if cur == prev:
-                memo.update(cur)
+                memo.update(cur)                           # (final, like the values: a nested solve's keys are not
+                self._blocked_commit(staged)               # computed again by the round that asked for them)
                 return v
             prev = cur
         raise Finding(f"{self.name(key[1])}: the value analysis at {key[2]:#x} did not reach a fixpoint")
@@ -1897,6 +1901,8 @@ class Image:
         out: set = set()                                                    # word, or an uninitialised local
         if at == entry:
             out |= unset
+            if slot < 0:
+                self._blocked(entry, slot, at, "a path from the routine's entry with no store to the slot (uninitialised there)", at)
         pred = self._rpred(entry)
         kind = self._walk_kinds(entry)
         loose = self._frame_leaks(entry)                   # an address of the frame is out: any call, and any store
@@ -1912,21 +1918,304 @@ class Image:
                                                 and not all(x[0] == "frame" or (x[0] == "const" and not self._in_stacks(x[1]))
                                                             for x in self._store_desc(entry, a)["base"]))):
                 out |= {("other",), ("der", "frame")}      # (through a pointer that may be the leaked address)
+                self._blocked(entry, slot, a, "an address of this frame has left it (" + str(self._cache("_leaks").get(self.name(entry), "it leaks")) + "): this may write through it", at)
             if eff is not None and eff[0] == "may":         # it may write the word, or part of it, or not: the unknown
                 out.add(("other",))                        # AND whatever was there before
+                self._blocked(entry, slot, a, "a store that may write the slot or part of it (partial, overlapping, indexed, conditional base or an unpinned frame address)", at)
                 for r in eff[1]["data"]:
                     out |= self._derived(self._base_atoms(entry, a, r))
             elif eff is not None:
                 out |= self._base_atoms(entry, a, eff[1])
                 if not eff[2]:
                     continue                               # an unconditional definition: nothing older survives
+            elif kind[a] == "store":                       # a store that is not into this frame: WHERE it lands must
+                why = self._store_off_frames(entry, a)     # be shown — no object provenance is assumed
+                if why is not None:
+                    out.add(("other",))
+                    self._blocked(entry, slot, a, "a store " + why, at)
             elif kind[a] == "call":
                 left = self._call_may_write(entry, a, slot)
                 if left is not None:                       # (the callee MAY write it: the older value stays possible)
                     out |= left
+                    self._blocked(entry, slot, a, "a call that may write the slot through a pointer it is handed, or its incoming stack words", at)
+                for why in self._call_blockers(entry, a):  # … and every write under the call, wherever it points
+                    out.add(("other",))
+                    self._blocked(entry, slot, a, "a call " + why, at)
             if a == entry:
                 out |= unset
+                if slot < 0:
+                    self._blocked(entry, slot, a, "a path from the routine's entry with no store to the slot (uninitialised there)", at)
             stack += pred.get(a, [])
+        return out
+
+    # ---- a frame cell and the writes of its window (the owner's ruling of 2026-10-06 on the frame unit)
+    #
+    # The word at a frame slot is what was last stored there only if NOTHING ELSE can have written it between that
+    # store and the read. Object provenance (the old B1: "a pointer derived from another object does not reach this
+    # frame") is no longer assumed. On every path from the store to the read (the SYNCHRONOUS paths: what an
+    # exception taken in between may write is not covered, see VALUE_MODEL):
+    #   a store of the routine that is not into this frame must be PLACED (`_write_reach`) off every frame: a
+    #       constant range outside the stacks' region; through its own argument, when every caller's pointer for it
+    #       is so placed or is an address inside that caller's own frame (`_arg_landing`);
+    #   a call must be unable to write the slot through what it is handed (`_call_may_write`, as before), every
+    #       other pointer it is handed that the callee writes through must be so placed, and EVERY write of every
+    #       routine the call can reach — the context-free union of every indirect call's target set — must be
+    #       placed: inside its own routine's frame (never the incoming stack-argument area, which is the caller's),
+    #       a constant range outside the stacks, or through an argument (then it lands where a hand-over above it,
+    #       itself checked, points). One that is not placed, a frame range that leaves its frame, a target set that
+    #       does not resolve: the cell is unknown, and what blocked it is recorded (`_blocked`).
+
+    def _blocked(self, entry: int, slot: int, at: int, why: str, read: int | None = None) -> None:
+        stage = self.__dict__.get("_blk_stage")
+        if stage:                                          # inside a solver round: kept only if the round converges
+            stage[-1].append((entry, slot, at, why, read))
+        else:
+            self._blocked_commit([(entry, slot, at, why, read)])
+
+    def _blocked_commit(self, recs) -> None:
+        for entry, slot, at, why, read in recs:
+            self._cache("_cellblk").setdefault((entry, slot), set()).add((at, why))
+            if read is not None:                           # (… and against the one read the walk started from)
+                self._cache("_cellblk_at").setdefault((entry, slot, read), set()).add((at, why))
+
+    def _blockers_text(self, entry: int, slot: int, at: int | None = None, most: int = 3) -> str:
+        """What the slot walk recorded against the cell at the read `at` (against any read, when no read is named),
+        for a Finding's text: the first few, by address."""
+        bl = sorted(self._cache("_cellblk_at").get((entry, slot, at), ()) if at is not None else self._cache("_cellblk").get((entry, slot), ()))
+        if not bl:
+            return ""
+        return (f" — slot {slot:#x} blocked by: " + "; ".join(f"at {a:#x} {why}" for a, why in bl[:most])
+                + (f" (and {len(bl) - most} more)" if len(bl) > most else ""))
+
+    def _reach_blocks_frames(self, reach):
+        """Why a write with `reach` is not shown to miss every frame; None when it is (an own-frame range and one
+        placed at the callers are the business of whoever asks)."""
+        span = self._stack_span()
+        for r in reach:
+            if r[0] == "unknown":
+                return "that is not placed (" + r[1] + ")"
+            if r[0] == "abs" and len(r) == 3:
+                if span is None:
+                    return f"at the constant range {r[1]:#x}..{r[2]:#x}, in an image that names no stacks' region"
+                if r[1] < span[1] and span[0] < r[2]:
+                    return f"at the constant range {r[1]:#x}..{r[2]:#x}, inside the stacks' region"
+        return None
+
+    def _callers(self, R: int) -> list:
+        """[(caller, site)]: every call or tail the analysis reads that can enter R (an application-pointer call
+        enters every application callback)."""
+        idx = self.__dict__.get("_callers_cache")
+        if idx is None:
+            idx = {}
+            try:
+                app = list(self.rule_targets("app_function_pointers"))
+            except Finding:
+                app = []
+            for Q in self._code_routines():
+                self.analyse(Q)
+                sets = {int(e["site"], 16): e.get("set") for e in self.edges.get(Q, []) if e["kind"] in ("indirect_call", "indirect_tail")}
+                for site, tgt in self._transfers(Q).items():
+                    for t in ([tgt] if tgt is not None else (app if sets.get(site) == "app_function_pointers" else [])):
+                        idx.setdefault(t, []).append((Q, site))
+            self.__dict__["_callers_cache"] = idx
+        return idx.get(R, [])
+
+    def _arg_landing(self, R: int, n):
+        """Why a write of R through its argument `n` (0–3, ('stk', k), or 'incoming': into its incoming stack words)
+        is not shown to land off every frame cell but its callers' own; None when at every call that enters R the
+        pointer handed there is placed — a constant range outside the stacks, an address inside that caller's own
+        frame, or the caller's own argument (then its callers', and so on)."""
+        return self._guarded("argland", (R, n), self._arg_landing_compute, None)
+
+    def _arg_landing_compute(self, R: int, n):
+        if not self._args_followed(R):
+            return f"{self.name(R)} is entered other than by a call whose arguments are read"
+        for Q, site in self._callers(R):
+            items = [(what, reach, m) for a, what, reach, m in self._write_sites(Q) if a == site and m.get("pos") == n]
+            if not items:
+                return f"{self.name(Q)}'s call at {site:#x} shows no hand-over for it"
+            for what, reach, m in items:
+                why = self._reach_blocks_frames(reach)
+                if why is not None:
+                    return f"{self.name(Q)} {what} at {site:#x}, {why}"
+                if any(r[0] == "args" for r in reach):     # the caller's own argument (or its incoming area) passed on
+                    ups = {x[1] for x in m.get("atoms", ()) if x[0] in ("arg", "argo")} or {"incoming"}
+                    for up in sorted(ups, key=str):
+                        why = self._arg_landing(Q, up)
+                        if why is not None:
+                            return why
+        return None
+
+    def _store_off_frames(self, R: int, a: int):
+        """Why the store at `a` of routine R, which is not into R's frame at a pinned place, is not shown to miss
+        every frame cell; None when it is."""
+        d = self._store_desc(R, a)
+        ext = "ALL" if d["wild"] else frozenset((off, nb) for off, nb, _r in d["elems"])
+        reach = self._write_reach(R, d["base"], ext, False)
+        why = self._reach_blocks_frames(reach)
+        if why is not None:
+            return why
+        if any(r[0] == "args" for r in reach):
+            for up in sorted({x[1] for x in d["base"] if x[0] in ("arg", "argo")} or {"incoming"}, key=str):
+                why = self._arg_landing(R, up)
+                if why is not None:
+                    return "through its argument, and " + why
+        return None
+
+    def _under(self, t: int) -> tuple:
+        """(the routines a call of `t` can reach, `t` included — over every edge, an indirect one by its rule's whole
+        target set, context-free; the reasons a target set under it does not resolve)."""
+        c = self._cache("_under_cache")
+        if t not in c:
+            seen, notes, todo = set(), [], [t]
+            while todo:
+                q = todo.pop()
+                if q in seen or q not in self.ins_at or q not in self.func_entries:
+                    continue
+                seen.add(q)
+                try:
+                    self.analyse(q)
+                except Finding as f:
+                    notes.append(f"{self.name(q)} cannot be read: {f}")
+                    continue
+                for e in self.edges.get(q, []):
+                    try:
+                        todo += [x for x in self.targets(e) if x is not None]
+                    except Finding as f:
+                        notes.append(f"{self.name(q)}'s indirect call at {e.get('site')} has no resolved target set: {f}")
+            c[t] = (frozenset(seen), tuple(notes))
+        return c[t]
+
+    def _frame_blockers(self, Q: int) -> tuple:
+        """The writes of routine Q that are not shown to miss every frame but Q's own: ((address, what, why), …)."""
+        return self._fixed("wblock", Q, self._frame_blockers_compute, ())
+
+    def _frame_blockers_compute(self, Q: int) -> tuple:
+        out = []
+        for a, what, reach, _m in self._write_sites(Q):
+            why = self._reach_blocks_frames(reach)
+            if why is not None:
+                out.append((a, what, why))
+        return tuple(out)
+
+    def _under_blockers(self, t: int) -> tuple:
+        """What stands under a call of `t`: ((routine name, its blocking writes' count, the first as text), …) for
+        every routine it can reach that has one, and a line per unresolved target set."""
+        return self._fixed("ublock", t, self._under_blockers_compute, ())
+
+    def _under_blockers_compute(self, t: int) -> tuple:
+        routines, notes = self._under(t)
+        out = [("", 0, n) for n in notes]
+        for Q in sorted(routines):
+            bl = self._frame_blockers(Q)
+            if bl:
+                a, what, why = bl[0]
+                out.append((self.name(Q), len(bl), f"{what} at {a:#x}, {why}"))
+        return tuple(out)
+
+    def _call_blockers(self, entry: int, a: int) -> list:
+        """Why the call at `a` of `entry` is not shown unable to write a frame cell of `entry` OTHER than through a
+        frame address it is handed (that is `_call_may_write`'s): every other pointer it is handed that the callee
+        writes through, and every write of every routine it can reach."""
+        out = []
+        tgt = self._call_target(self.ins_at[a])
+        whom = self.name(tgt) if tgt is not None else "through a pointer"
+        for pos, atoms, (w, _ind, _keep) in self._handed(entry, a):
+            rest = frozenset(x for x in atoms if not (x[0] == "frame" or x == ("der", "frame")))
+            if not w or (atoms and not rest):
+                continue                                   # (a frame address: held against the slot itself)
+            reach = self._write_reach(entry, rest, w, False)
+            why = self._reach_blocks_frames(reach)
+            if why is None and any(r[0] == "args" for r in reach):
+                for up in sorted({x[1] for x in rest if x[0] in ("arg", "argo")}, key=str):
+                    why = why or self._arg_landing(entry, up)
+            if why is not None:
+                out.append(f"({whom}) handed {'r%d' % pos if isinstance(pos, int) else pos}, which the callee writes through, {why}")
+        if tgt is not None:
+            targets = [tgt]
+        else:
+            targets = []
+            for e in self.edges.get(entry, []):
+                if e.get("site") == f"{a:#x}" and e["kind"] in ("indirect_call", "indirect_tail"):
+                    try:
+                        targets = [x for x in self.targets(e) if x is not None]
+                    except Finding as f:
+                        out.append(f"through a pointer whose target set does not resolve: {f}")
+        under: dict = {}
+        first = None
+        for t in targets:
+            for name, n, text in self._isolated(self._under_blockers, t):
+                if not name:
+                    out.append(f"({whom}) under which {text}")
+                elif name not in under:
+                    under[name] = n
+                    first = first or f"{name} {text}"
+        if under:
+            names = sorted(under)
+            out.append(f"({whom}) under which {len(names)} routine(s) have a write that is not shown to miss a frame: "
+                       + ", ".join(f"{x} ({under[x]})" for x in names[:8]) + (f" and {len(names) - 8} more" if len(names) > 8 else "")
+                       + f"; the first, {first}")
+            self._cache("_callunder")[(entry, a)] = under
+        return out
+
+    def frame_cells(self) -> list:
+        """Every frame slot of every routine in the image that a load may find holding a callback, the address of a
+        read-only callback table, or an incoming argument the routine uses to reach a callback (calls it, calls a
+        field of it, or hands it on): [{routine, slot, holds, resolved, blocked_by}]. `resolved`: at every read
+        that may see such a value the slot holds nothing else. `blocked_by`: what the slot walk recorded against
+        those reads — each with its address, and for a call the routines under it with unplaced writes."""
+        for R in self._code_routines():                    # every routine's loads are evaluated, walked or not:
+            try:                                           # its hand-overs (the write sites) and its indirect calls
+                self._write_sites(R)
+                for e in self.edges.get(R, []):
+                    if e["kind"] in ("indirect_call", "indirect_tail") and e.get("site"):
+                        a = int(e["site"], 16)
+                        regs = self._regs(self.ins_at[a]["ops"])
+                        if regs:
+                            self._raw_reg(R, a, regs[0])
+            except Finding:
+                pass
+        cells: dict = {}
+        for key, v in list(self._pt_eval_memo.items()):
+            if key[0] != "slot":
+                continue
+            _k, entry, at, slot = key
+            try:
+                needs = self._pointsto(entry).get("needs", frozenset())
+            except Finding:
+                needs = None
+            holds = set()
+            for x in v:
+                if x[0] == "cb":
+                    holds.add("a callback")
+                elif x[0] == "tab":
+                    holds.add("a read-only table's address")
+                elif x[0] == "arg" and (needs is None or x[1] in needs):
+                    holds.add("an argument the routine reaches a callback through")
+            if not holds:
+                continue
+            c = cells.setdefault((entry, slot), {"holds": set(), "mixed": {}, "reads": 0})
+            c["holds"] |= holds
+            c["reads"] += 1
+            if not all(x[0] in ("cb", "arg") or (x[0] == "tab" and x[2] is not None) for x in v):
+                c["mixed"][at] = v
+        out = []
+        for (entry, slot), c in sorted(cells.items(), key=lambda kv: (self.name(kv[0][0]), kv[0][0], kv[0][1])):
+            blocked = []
+            for at in sorted(c["mixed"]):
+                for a, why in sorted(self._cache("_cellblk_at").get((entry, slot, at), ())):
+                    b = {"at": f"{a:#x}", "why": why}
+                    if (entry, a) in self._cache("_callunder") and "under which" in why:
+                        b["under"] = dict(sorted(self._cache("_callunder")[(entry, a)].items()))
+                    if b not in blocked:
+                        blocked.append(b)
+                if not self._cache("_cellblk_at").get((entry, slot, at)):
+                    b = {"at": f"{at:#x}", "why": "at this read the slot may hold " + ", ".join(sorted({x[0] for x in c["mixed"][at]}))
+                                                 + " — nothing in its own window blocks it: a value stored there was itself not resolved"}
+                    if b not in blocked:
+                        blocked.append(b)
+            out.append({"routine": self.name(entry), "slot": slot, "holds": sorted(c["holds"]), "reads": c["reads"],
+                        "resolved": not c["mixed"], "blocked_by": blocked})
         return out
 
     # ---- what a callee may do with a pointer it is handed (the owner's HOLD on 1e55967: nothing outside the model
@@ -2093,8 +2382,10 @@ class Image:
         sets = {e.get("set") for e in self.edges.get(entry, []) if e.get("site") == f"{a:#x}"}
         if sets != {"app_function_pointers"}:
             return None
-        t = self._guarded("sitecb", (entry, a), self._site_callbacks, frozenset())
-        return list(self.rule_targets("app_function_pointers")) if t is None else sorted(t)
+        # (the owner's ruling of 2026-10-06 on the frame unit) the CONTEXT-FREE union, always: what a call may
+        # write decides whether a frame cell stands, and the pointer it calls through may itself come from such a
+        # cell — a target set narrowed by the cell's own (optimistic) value would vouch for itself
+        return list(self.rule_targets("app_function_pointers"))
 
     def _site_callbacks(self, entry: int, a: int):
         if (self.unit_of(entry) or "") not in self.APP_UNITS:
@@ -2285,7 +2576,7 @@ class Image:
                     if mine(self._raw_reg(R, a, "r0")):
                         return f"{self.name(R)} returns it at {a:#x}"
         for R in self._code_routines():                    # (the owner's HOLD on 78c2bb0, P1-1) the BYTES every write
-            for a, what, reach in self._write_sites(R):    # of the image may reach, whatever its pointer came from
+            for a, what, reach, _m in self._write_sites(R):   # of the image may reach, whatever its pointer came from
                 why = self._reach_hits(reach, T, T + size)
                 if why is not None:
                     return f"{self.name(R)} {what} at {a:#x}: {why}"
@@ -2364,8 +2655,10 @@ class Image:
     def _write_reach(self, R: int, atoms, ext, contract: bool) -> list:
         """Where a write of routine R through a pointer with `atoms`, over `ext` — a set of (offset, bytes) from the
         pointer, or 'ALL' — may land: ('abs', lo, hi) an address range (with a fourth element 'frame' when it is the
-        routine's own frame, moved over the stacks' region); ('stack',) the stacks of an image that names none;
-        ('args',) placed at R's callers; ('unknown', why) not placed."""
+        routine's OWN frame — the bytes from its deepest SP up to its entry SP, never its incoming stack-argument
+        area, which is its caller's — moved over the stacks' region); ('stack',) the same in an image that names no
+        stacks; ('args',) placed at R's callers (through its argument, or into its incoming area); ('unknown', why)
+        not placed — a frame range that leaves the frame included."""
         if not atoms:
             return [("unknown", "no value is known to reach its pointer")]
         if ext != "ALL" and not ext:
@@ -2384,7 +2677,14 @@ class Image:
                 out.append(("args",) if self._args_followed(R) else
                            ("unknown", "through its own argument, and the routine is entered other than by a call whose arguments are read"))
             elif k == "frame" and x[1] is not None and ext != "ALL":
-                out.append(("abs", span[0] + x[1] + lo, span[1] + x[1] + hi, "frame") if span else ("stack",))
+                own = self.local.get(R)                    # the routine's own frame is [-own, 0) from its entry SP
+                if own is not None and -own <= x[1] + lo and x[1] + hi <= 0:
+                    out.append(("abs", span[0] + x[1] + lo, span[1] + x[1] + hi, "frame") if span else ("stack",))
+                elif x[1] + lo >= 0:                       # its INCOMING stack-argument area is its caller's frame
+                    out.append(("args",) if self._args_followed(R) else
+                               ("unknown", "into its incoming stack-argument area, and the routine is entered other than by a call whose arguments are read"))
+                else:
+                    out.append(("unknown", "through an address of its frame, over a range that leaves the frame"))
             elif k == "const" and ext != "ALL":
                 out += [("abs", x[1] + o, x[1] + o + n) for o, n in sorted(ext)]
             elif k == "crange" and ext != "ALL" and (x[1], x[2]) != (0, 0xFFFFFFFF):
@@ -2429,17 +2729,26 @@ class Image:
             if a in reached and kinds[a] == "store":
                 d = self._store_desc(R, a)
                 ext = "ALL" if d["wild"] else frozenset((off, nb) for off, nb, _r in d["elems"])
-                out.append((a, "stores", self._write_reach(R, d["base"], ext, contract)))
+                out.append((a, "stores", self._write_reach(R, d["base"], ext, contract), {"atoms": d["base"]}))
         for a, tgt in sorted(self._transfers(R).items()):
             whom = self.name(tgt) if tgt is not None else "an indirect call"
             for pos, atoms, (w, _ind, _keep) in self._handed(R, a):
                 if w:                                      # (what it writes through a pointer it LOADS is its own store)
                     out.append((a, f"hands {'r%d' % pos if isinstance(pos, int) else pos} to {whom}, which writes through it",
-                                self._write_reach(R, atoms, w, contract)))
+                                self._write_reach(R, atoms, w, contract), {"pos": pos, "atoms": atoms, "to": tgt}))
+            _r, sw = self._stack_use_at(R, a)              # the callee writing its incoming stack words: OUR frame
+            sp = self._pt_slot(R, a, 0)
+            if sw is None:
+                out.append((a, f"calls {whom}, which may write its incoming stack words at an offset that is not pinned",
+                            [("unknown", "into this routine's frame, at or above its SP at the call")], {"to": tgt}))
+            elif sw:
+                out.append((a, f"calls {whom}, which writes its incoming stack words",
+                            self._write_reach(R, frozenset({("frame", sp)}), frozenset((k, 4) for k in sw), contract)
+                            if sp is not None else [("unknown", "the SP at the call is not pinned")], {"to": tgt}))
         for e in self.edges.get(R, []):                    # falling into the next routine hands it the registers
             if e["kind"] == "fallthrough" and any(self._arg_summary(e["to"], m)[0] for m in range(4)):
                 out.append((int(e["site"], 16), f"falls into {self.name(e['to'])}, which writes through its arguments",
-                            [("unknown", "through whatever the registers hold there")]))
+                            [("unknown", "through whatever the registers hold there")], {"to": e["to"]}))
         if self._solving is None:
             c[R] = out
         return out
@@ -2475,7 +2784,7 @@ class Image:
             rec = {"stores": 0, "hand_overs": 0, "placed": 0, "at_the_callers": 0, "by_contract": 0, "not_placed": 0}
             unplaced: dict = {}
             over: dict = {}
-            for a, what, reach in self._write_sites(R):
+            for a, what, reach, _m in self._write_sites(R):
                 kind = "stores" if what == "stores" else "hand_overs"
                 rec[kind] += 1
                 why = [r[1] for r in reach if r[0] == "unknown"]
@@ -3073,7 +3382,9 @@ class Image:
 
     @staticmethod
     def _frameish(atoms) -> list:
-        return [x for x in atoms if x[0] == "frame" or x == ("der", "frame")]
+        return sorted((x for x in atoms if x[0] == "frame" or x == ("der", "frame")), key=str)   # (a fixed order: an
+        #                            early return in a loop over these decides which slots get read, and thereby
+        #                            what is recorded against them — never the process's hash seed)
 
     def _frame_leaks(self, entry: int) -> bool:
         """Whether an address of the routine's frame may come to rest in memory outside the frame: stored there by
@@ -3105,7 +3416,7 @@ class Image:
                 where = {pos: atoms for pos, atoms, _s in H}
                 for m, atoms, (_w, _d, kp) in H:
                     for x in self._frameish(atoms) if isinstance(_d, frozenset) else ():
-                        for off, ext in _d:                # a frame address the callee loads from our object, kept
+                        for off, ext in sorted(_d, key=str):   # a frame address the callee loads from our object, kept
                             if ext == "KEEP" and (off is None or x[0] != "frame" or x[1] is None
                                                   or self._frameish(self._raw_slot(entry, a, x[1] + off))):
                                 return f"handed at {a:#x} ({m}): the callee may keep a frame address it loads from it"
@@ -3188,13 +3499,16 @@ class Image:
             if len(batoms) == 1 and next(iter(batoms))[0] == "arg":
                 keys.add((next(iter(batoms))[1], off))
             elif any(x[0] == "frame" for x in batoms):
+                slots = ({self._pt_slot(entry, w["addr"], off)} if base == "sp" else
+                         {x[1] + off for x in batoms if x[0] == "frame" and x[1] is not None})
                 raise Finding(f"{self.name(entry)}: the callback loaded at {w['addr']:#x} from this routine's own frame is not "
                               f"provably the last callback stored there (uninitialised on a path, partially written, "
-                              f"overwritten, or possibly written by a callee): {sorted(atoms)}")
+                              f"overwritten, or possibly written by a callee): {sorted(atoms)}"
+                              + "".join(self._blockers_text(entry, A, w["addr"]) for A in sorted(x for x in slots if x is not None)))
             else:
                 raise Finding(f"{self.name(entry)}: the field base {base} at {w['addr']:#x} is neither an incoming argument nor this frame ({sorted(batoms)})")
         if len(keys) != 1:
-            raise Finding(f"{self.name(entry)}: the indirect target at {site:#x} is not one object field ({keys})")
+            raise Finding(f"{self.name(entry)}: the indirect target at {site:#x} is not one object field ({sorted(keys, key=str)})")
         return next(iter(keys))
 
     def rule_targets(self, name: str) -> list[int]:
@@ -3637,7 +3951,7 @@ class Image:
         """The callbacks a set of atoms of routine `R` denotes: constants directly; an incoming argument resolved in
         the binding active for R. Anything else is a Finding."""
         out = set()
-        for atom in atoms:
+        for atom in sorted(atoms, key=str):                # (a fixed order: the finding names the first non-callback)
             if atom[0] == "cb":
                 out.add(atom[1])
             elif atom[0] == "arg":
@@ -3663,7 +3977,7 @@ class Image:
         if not all(x[0] in ("cb", "arg") for x in atoms):
             raise Finding(f"{self.name(R)}: the field at slot {slot:#x} is not provably initialised with a callback at the "
                           f"hand-over {at:#x} (uninitialised on a path, partially written, overwritten, or possibly "
-                          f"written by a callee): {sorted(atoms)}")
+                          f"written by a callee): {sorted(atoms)}" + self._blockers_text(R, slot, at))
         return self._callbacks_of(R, atoms, builder_binding, f"the field at slot {slot:#x}")
 
     def _bind_one(self, caller: int, atoms: set, binding: dict, site: int):
@@ -3697,7 +4011,7 @@ class Image:
         offs = self.sp_at[caller].get(site, frozenset()) if caller in self.sp_at else frozenset()
         spoff = next(iter(offs)) if len(offs) == 1 else None
         cb = {}
-        for arg in needs:
+        for arg in sorted(needs, key=str):
             if isinstance(arg, int):                                   # a register argument
                 v = self._bind_one(caller, self._pt_eval(caller, site, f"r{arg}"), binding, site)
             elif spoff is not None:                                    # an outgoing stack argument
@@ -3715,7 +4029,14 @@ class Image:
         rule = self.newlib_rule()
         return e.get("site") == rule["sbprintf_to_vfiprintf"]
 
-    def depth(self, entry: int, ctx: tuple | None = None, path: tuple = (), memo: dict | None = None) -> int:
+    TAINTED = "__tainted__"                             # (in a depth memo: the nodes with a finding at or under them)
+
+    def depth(self, entry: int, ctx: tuple | None = None, path: tuple = (), memo: dict | None = None,
+              collect: dict | None = None) -> int:
+        """The deepest stack use from `entry`. With `collect` (a dict) a Finding does not end the walk: it is
+        recorded once — {its text: [what is left unwalked because of it]}, what lies under the edge that raised it
+        being left unwalked — the other edges are walked on, and the node, with every node above it, is marked in
+        memo[TAINTED]: the number returned for a tainted node is NOT a bound."""
         ctx = self.ROOT_CTX if ctx is None else ctx
         binding = dict(ctx[0])
         memo = {} if memo is None else memo
@@ -3732,22 +4053,45 @@ class Image:
         skip = self.newlib_rule()["vfiprintf_to_sbprintf"] if (ctx[1] and self.name(entry) == "_vfiprintf_r") else None
         d = self.local[entry]
         here = path + ((entry, ctx),)
+        tainted = memo.setdefault(self.TAINTED, set())
+        bad = False
+
+        def note(f, what):
+            if collect is None:
+                raise f
+            left = collect.setdefault(str(f), [])
+            if what not in left:
+                left.append(what)
         for e in self.edges[entry]:
             if skip is not None and e.get("site") == skip:
                 continue
-            if e["kind"] == "call_noreturn" and self.may_return(e["to"]):
-                raise Finding(f"{self.name(entry)}: nothing follows its call to {self.name(e['to'])}, which can return")
-            if e["kind"] in ("indirect_call", "indirect_tail") and e["set"] == "app_function_pointers":
-                tgts = self._app_targets(entry, int(e["site"], 16), binding)
-                child = frozenset()
-            elif e["kind"] in ("indirect_call", "indirect_tail"):
-                tgts, child = self.rule_targets(e["set"]), frozenset()
-            else:
-                tgts = [e["to"]]
-                child = self._child_binding(entry, int(e["site"], 16), e["to"], binding) if e.get("site") else frozenset()
+            try:
+                if e["kind"] == "call_noreturn" and self.may_return(e["to"]):
+                    raise Finding(f"{self.name(entry)}: nothing follows its call to {self.name(e['to'])}, which can return")
+                if e["kind"] in ("indirect_call", "indirect_tail") and e["set"] == "app_function_pointers":
+                    tgts = self._app_targets(entry, int(e["site"], 16), binding)
+                    child = frozenset()
+                elif e["kind"] in ("indirect_call", "indirect_tail"):
+                    tgts, child = self.rule_targets(e["set"]), frozenset()
+                else:
+                    tgts = [e["to"]]
+                    child = self._child_binding(entry, int(e["site"], 16), e["to"], binding) if e.get("site") else frozenset()
+            except Finding as f:
+                note(f, f"what {self.name(entry)}'s call at {e.get('site')} reaches")
+                bad = True
+                continue
             for t in tgts:
-                d = max(d, e["at"] + self.depth(t, (child, self._reentry(entry, e, t, here)), here, memo))
+                cctx = (child, self._reentry(entry, e, t, here))
+                try:
+                    d = max(d, e["at"] + self.depth(t, cctx, here, memo, collect))
+                except Finding as f:
+                    note(f, f"{self.name(t)}, called by {self.name(entry)} at {e.get('site')}")
+                    bad = True
+                else:
+                    bad = bad or (t, cctx) in tainted
         memo[key] = d
+        if bad:
+            tainted.add(key)
         return d
 
     # ---- the newlib bounded rule: what is checked on the image, and what is the verified source semantics
@@ -4402,12 +4746,19 @@ VALUE_MODEL = ("a callback read from a frame slot or an object's field is the LA
                "the frame or handed to a routine that may keep it LEAKS that frame (rules.frame_leaks): from then on "
                "any call, and any store through a pointer that is not provably elsewhere, may write any of its slots. "
                "A call clobbers the caller-saved registers its target's code writes (GCC's inter-procedural register "
-               "allocation relies on the same). STATED, NOT PROVED FROM THE IMAGE: (B1) object provenance, FOR A FRAME "
-               "ONLY — in resolving a frame slot, a store through a pointer derived from another object (a global, "
-               "another routine's frame) is taken not to reach it, and a write through a frame address handed down "
-               "is taken to stay in the frame it came from. It is NOT relied on for a published bound: a read-only "
-               "table is held against the bytes every write reaches, and any write that is not placed is a finding "
-               "that withholds the bound of every entry calling through memory (rules.write_placement); (B2) the "
+               "allocation relies on the same). NO OBJECT PROVENANCE IS ASSUMED (the former B1 is removed): a frame "
+               "cell stands only if every write on the paths from its store to the read is PLACED off it "
+               "(rules.write_placement) — the routine's own stores that are not into its frame, every pointer a call is "
+               "handed that its callee writes through, and every write of every routine the call can reach, each "
+               "indirect call by its rule's whole context-free target set. A frame write is placed only inside its "
+               "routine's own frame; a callee's incoming stack-argument area is its caller's frame. A write that is "
+               "not placed, a frame range that leaves its frame, a constant range in the stacks' region and a target "
+               "set that does not resolve each leave the cell unknown, with what blocked it recorded "
+               "(result.frame_cells; each unresolved cell is a finding). SCOPE — SYNCHRONOUS PATHS ONLY: what an "
+               "exception taken between a cell's store and its read may write is NOT covered, and no handler's "
+               "writes are analysed; that the image never clears the I / F masks is recorded (masks), not used as "
+               "proof that no handler runs; while this stands no bound is published for an entry that calls through "
+               "memory. STATED, NOT PROVED FROM THE IMAGE: (B2) the "
                "callee-saved registers are preserved across a call (the AAPCS); (B3) a routine's contract is its "
                "source semantics as stated in it — bound to the source and code digests and self-checked, not derived")
 PRINTF_RULE = ("each printf-family call the callback resolution relied on: its format is a constant string in a "
@@ -4427,7 +4778,9 @@ RO_RULE = ("a callback read from a field of a .rodata table is the ELF's word th
 WRITE_RULE = ("every write of every routine in the image — each store, and each call or tail handing a pointer the callee "
               "writes through — is placed by the bytes it may reach: a constant or a frame slot with a known extent, or "
               "the routine's own argument at a known offset (then placed at each call that hands it, when every way "
-              "into the routine is such a call). A write that is not so placed is not proved to miss any callback "
+              "into the routine is such a call); a frame slot only INSIDE the routine's own frame — its incoming "
+              "stack-argument area is its caller's, placed there — and each indirect call's callee is its rule's "
+              "whole context-free target set. A write that is not so placed is not proved to miss any callback "
               "cell, whatever object it was meant for: each is a finding, and while any remains no bound is published "
               "for an entry that calls through a pointer read from memory. A routine taken at its contract has its "
               "writes through its own arguments placed at its callers by that contract. Placed writes overlapping an "
@@ -4557,16 +4910,34 @@ def _assess_once(img: "Image") -> dict:
     except Finding as e:
         findings.append(str(e))
     bounds = {}
+    collected: dict = {}                                   # (the owner's ruling 4: every finding the walk can decide
+    listed: set = set()                                    # independently, not only the first)
+
+    def walked(prefix: str) -> list[str]:
+        """The findings collected since the last call, each with what was left unwalked because of it."""
+        out = []
+        for msg, left in collected.items():
+            if msg not in listed:
+                listed.add(msg)
+                out.append(f"{prefix}: {msg}" + (f" [not walked, depending on this: {left[0]}"
+                                                 + (f" and {len(left) - 1} more" if len(left) > 1 else "") + "]" if left else ""))
+        return out
     for entry, (addr, mode) in entries.items():
         try:
-            d = img.depth(addr, None, (), memo)
-            bounds[entry] = {"function": img.name(addr), "mode": mode, "bound": d, "capacity": capacity.get(mode)}
-            limit = MAIN_LIMIT if entry == "main" else capacity.get(mode)
-            if limit is None or d > limit:
-                findings.append(f"{entry} ({img.name(addr)}): bound {d} exceeds {limit}")
-        except Finding as e:
-            findings.append(f"{entry} ({img.name(addr)}): {e}")
+            d = img.depth(addr, None, (), memo, collected)
+            bad = (addr, img.ROOT_CTX) in memo.get(img.TAINTED, ())
+        except Finding as e:                               # (the entry itself cannot be walked)
+            collected.setdefault(str(e), [])
+            d, bad = None, True
+        if bad:
+            findings.extend(walked(f"{entry} ({img.name(addr)})") or
+                            [f"{entry} ({img.name(addr)}): its path reaches a routine with a finding listed under an earlier entry"])
             bounds[entry] = {"function": img.name(addr), "mode": mode, "bound": None, "capacity": capacity.get(mode)}
+            continue
+        bounds[entry] = {"function": img.name(addr), "mode": mode, "bound": d, "capacity": capacity.get(mode)}
+        limit = MAIN_LIMIT if entry == "main" else capacity.get(mode)
+        if limit is None or d > limit:
+            findings.append(f"{entry} ({img.name(addr)}): bound {d} exceeds {limit}")
     for r in img.resets:
         if not (r["routine"] == "_start" and r["to"] == "__stack"):
             findings.append(f"an absolute stack load outside crt0's reset of the main stack: {r}")
@@ -4579,7 +4950,11 @@ def _assess_once(img: "Image") -> dict:
         for n in copies:
             try:
                 a = img.syms[n][0] & ~1
-                named[n] = {"chain": img.depth(a, None, (), memo), "local": img.local[a]}
+                d = img.depth(a, None, (), memo, collected)
+                if (a, img.ROOT_CTX) in memo.get(img.TAINTED, ()):
+                    findings.extend(walked(n) or [f"{n}: its chain reaches a routine with a finding listed above"])
+                    d = None
+                named[n] = {"chain": d, "local": img.local[a]}
             except Finding as e:
                 findings.append(f"{n}: {e}")
     try:                                                   # (the owner's strict ruling of 2026-10-06)
@@ -4593,24 +4968,46 @@ def _assess_once(img: "Image") -> dict:
             findings.append(f"{n}: {len(sites)} write(s) not placed — not proved to miss the callback cells: {', '.join(sites)}")
         for obj, at in rec.get("overlapping_at", {}).items():
             findings.append(f"{n}: {len(at)} placed write(s) overlapping {obj}: {', '.join(at)}")
-    if writes["unproved"] != 0:                            # no bound for an entry whose targets are words in memory
-        for entry, (addr, _mode) in entries.items():
-            try:
-                through = img.calls_through_memory(addr)
-            except Finding:
-                through = True
-            if through and bounds.get(entry, {}).get("bound") is not None:
-                findings.append(f"{entry} ({img.name(addr)}): no bound is published — it calls through pointers read from memory, "
-                                f"and {writes['unproved']} write(s) of the image are not proved to miss those cells")
-                bounds[entry] = dict(bounds[entry], bound=None, unpublished=bounds[entry]["bound"])
-        for n in list(named):
-            try:
-                through = img.calls_through_memory(img.syms[n][0] & ~1)
-            except Finding:
-                through = True
-            if through:
-                findings.append(f"{n}: no chain bound is published — it calls through pointers read from memory")
-                named[n] = dict(named[n], chain=None, unpublished=named[n]["chain"])
+    try:                                                   # (the frame unit: every frame cell has a result)
+        cells = img.frame_cells()
+    except Finding as e:
+        cells = []
+        findings.append(f"the image's frame cells could not be listed: {e}")
+    for c in cells:
+        if not c["resolved"]:                              # (one line per cell; the same reason at several places once)
+            by: dict = {}
+            for b in c["blocked_by"]:
+                by.setdefault(b["why"], []).append(b["at"])
+            findings.append(f"{c['routine']}: the frame cell at slot {c['slot']:#x} (it may hold {', '.join(c['holds'])}) is not "
+                            f"resolved: " + "; ".join(f"{why} [at {', '.join(ats)}]" for why, ats in by.items()))
+    for _k, v in sorted(img._cache("_memo_printf").items()):   # a printf whose format is not proved is not hidden in
+        if not v[0]:                                            # the rule's list: it is a finding of its own
+            findings.append(f"{v[1]['call']}: its format is not a provable constant string free of %n (a value held in a frame "
+                            f"slot is unknown after a call under which a write is not placed): it is taken to write "
+                            f"through every pointer it can see")
+    open_cells = sum(1 for c in cells if not c["resolved"])
+    # No bound for an entry whose targets are words in memory: while a write is unproved or a frame cell unresolved —
+    # and, in this version, at all: the cells are held against the SYNCHRONOUS paths only (VALUE_MODEL's scope)
+    reasons = ([f"{writes['unproved']} write(s) of the image are not proved to miss those cells"] if writes["unproved"] != 0 else []) \
+        + ([f"{open_cells} frame cell(s) are not resolved"] if open_cells else []) \
+        + ["what an exception taken between a cell's store and its read may write is not covered (synchronous paths only)"]
+    for entry, (addr, _mode) in entries.items():
+        try:
+            through = img.calls_through_memory(addr)
+        except Finding:
+            through = True
+        if through and bounds.get(entry, {}).get("bound") is not None:
+            findings.append(f"{entry} ({img.name(addr)}): no bound is published — it calls through pointers read from memory, and "
+                            + "; ".join(reasons))
+            bounds[entry] = dict(bounds[entry], bound=None, unpublished=bounds[entry]["bound"])
+    for n in list(named):
+        try:
+            through = img.calls_through_memory(img.syms[n][0] & ~1)
+        except Finding:
+            through = True
+        if through and named[n]["chain"] is not None:
+            findings.append(f"{n}: no chain bound is published — it calls through pointers read from memory")
+            named[n] = dict(named[n], chain=None, unpublished=named[n]["chain"])
     cpsr = img.cpsr_writes()
     for w in cpsr:
         if w["clears_IFA_mask"] is None:
@@ -4628,6 +5025,7 @@ def _assess_once(img: "Image") -> dict:
                              "note": "a bit the image never clears keeps the state the loader entered it with"},
                    "named_chains": named,
                    "writes": writes,
+                   "frame_cells": cells,
                    "rules": dict({n: {"rule": r["rule"], "targets": [img.name(t) for t in r["targets"]]} for n, r in sorted(img.site_rules.items())},
                                  value_model={"rule": VALUE_MODEL, "targets": sorted(img._cache("_libc_used"))},
                                  printf_formats={"rule": PRINTF_RULE,

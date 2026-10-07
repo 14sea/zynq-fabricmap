@@ -79,10 +79,19 @@ class Committed(unittest.TestCase):
         for name, b in st["entries"].items():
             self.assertIsNone(b["bound"], f"{name}: no bound is published")
         self.assertNotIn("unpublished", st["entries"]["main"], "no main bound was even computed")
-        self.assertEqual(sum(f.startswith("main (_start): ") and "may be written" in f and "it is not placed" in f
-                             for f in st["findings"]), 1, "main is refused where it reads a table's callback")
+        self.assertGreaterEqual(sum(f.startswith("main (_start): ") and "the read-only table" in f and "may be written" in f
+                                    for f in st["findings"]), 1, "main is refused where it reads a table's callback")
+        self.assertEqual(sum(f.startswith("main (_start): b3_state_hex: the call at ") for f in st["findings"]), 1,
+                         "and the finding that refusal used to hide is listed")
         self.assertGreater(sum("write(s) not placed" in f for f in st["findings"]), 100)
-        self.assertEqual(sum("no bound is published" in f for f in st["findings"]), 6, "the six exception entries")
+        self.assertGreater(sum("the frame cell at slot" in f and "is not resolved: " in f for f in st["findings"]), 0,
+                           "each unresolved frame cell is a finding, with what blocked it")
+        withheld = [f for f in st["findings"] if "no bound is published" in f]
+        self.assertEqual(len(withheld), 6, "the six exception entries")
+        self.assertTrue(all("synchronous paths only" in f for f in withheld))
+        self.assertIn("SCOPE — SYNCHRONOUS PATHS ONLY", st["rules"]["value_model"]["rule"])
+        self.assertNotIn("(B1)", st["rules"]["value_model"]["rule"])
+        self.assertEqual(st["tool"], "b3-image-stack 1.4.0")
         self.assertIn("write_placement", st["rules"])
         self.assertEqual(st["rules"]["read_only_tables"]["targets"], [], "no table is proved read-only")
         self.assertTrue(st["newlib"] and st["newlib"]["rule"] == "newlib_bounded_sbprintf")

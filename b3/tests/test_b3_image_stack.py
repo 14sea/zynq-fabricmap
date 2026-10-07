@@ -46,7 +46,10 @@ SP = 256                                                  # every synthetic inst
 SLOT8 = 8 - SP                                            # the frame slot [sp, #8] denotes
 
 
-def synth(seq, base=0x1000, sp_off=SP, more=None, library=()):
+STACKS = (0x80000, 0x90000)                              # the synthetic images' stacks' region (all six modes)
+
+
+def synth(seq, base=0x1000, sp_off=SP, more=None, library=(), stacks=STACKS):
     """A bare Image carrying hand-written routines: `seq` at `base` (named "f") and `more` {name: (base, seq)}, each
     a list of (mnem, ops) at 4-byte spacing, every instruction at SP offset `sp_off`. Two callbacks (CB_A, CB_B)
     exist as one-instruction routines. Every routine is in an application unit except the names in `library`: those
@@ -82,6 +85,10 @@ def synth(seq, base=0x1000, sp_off=SP, more=None, library=()):
     img.site_rules = {"app_function_pointers": {"targets": [CB_A, CB_B], "rule": "synthetic"}}
     img._rsucc_cache, img._rw_cache, img._pt_eval_memo, img._pt_cache, img._pt_state = {}, {}, {}, {}, {}
     img._member_of, img.words, img.syms, img.address_taken, img.secs, img.blob = {}, {}, {}, [], [], b""
+    if stacks:                                            # the linker symbols that bound the stacks (STACK_TOPS): a
+        names = sorted({n for pair in isa.STACK_TOPS.values() for n in pair})   # constant address outside them is
+        step = (stacks[1] - stacks[0]) // (len(names) - 1)                      # then provably not a frame's
+        img.syms.update({n: (stacks[0] + k * step if k < len(names) - 1 else stacks[1], 0, "B") for k, n in enumerate(names)})
     return img, base
 
 
@@ -135,26 +142,74 @@ class TheFinalImage(unittest.TestCase):
         self.assertIsNone(e["main"]["bound"], "no main bound is published")
         self.assertNotIn("unpublished", e["main"], "nor computed: the path is refused where it reads a table's callback")
         main = [f for f in self.r["findings"] if f.startswith("main (_start): ")]
-        self.assertEqual(len(main), 1, main)
-        self.assertIn("the read-only table", main[0])
-        self.assertIn("may be written", main[0])
-        self.assertIn("it is not placed", main[0])
+        # (the owner's ruling 4 on the frame unit) EVERY finding the walk can decide independently, each once —
+        self.assertGreater(len(main), 1, "not only the first")
+        self.assertEqual(len(main), len(set(main)))
+        self.assertEqual(len({f.split(" [not walked")[0] for f in main}), len(main), "one line per finding, whatever it leaves unwalked")
+        tables = [f for f in main if "the read-only table" in f and "may be written" in f]
+        self.assertTrue(tables, "the table callbacks' reads are refused")
+        # — the one the table refusal used to hide included: b3_state_hex hands its frame object to search_render,
+        # whose stack-argument reads are not pinned (disclosed here, not fixed in this unit)
+        hidden = [f for f in main if "b3_state_hex: the call at " in f and "that is handed the object may itself write its field" in f]
+        self.assertEqual(len(hidden), 1, hidden)
+        self.assertIn("[not walked, depending on this: what search_render.constprop.0's call at ", hidden[0])
         for exc in ("undefined", "svc", "prefetch_abort", "data_abort", "irq", "fiq"):
             self.assertIn(exc, e)
             self.assertIsNone(e[exc]["bound"], f"{exc}: it calls through the exception table, a word in memory")
             self.assertEqual(e[exc]["unpublished"], 24, "what the call graph alone gives, kept apart and not a bound")
             self.assertLessEqual(e[exc]["unpublished"], e[exc]["capacity"])
-            self.assertEqual(sum(f.startswith(f"{exc} (") and "no bound is published" in f for f in self.r["findings"]), 1)
+            why = [f for f in self.r["findings"] if f.startswith(f"{exc} (") and "no bound is published" in f]
+            self.assertEqual(len(why), 1)
+            for reason in ("write(s) of the image are not proved to miss those cells", "frame cell(s) are not resolved",
+                           "what an exception taken between a cell's store and its read may write is not covered (synchronous paths only)"):
+                self.assertIn(reason, why[0])
         w = self.r["writes"]
         self.assertGreater(w["total"]["not_placed_sites"], 0)
         self.assertEqual(w["unproved"], w["total"]["not_placed_sites"] + w["total"]["overlapping_sites"])
         for name, rec in w["routines"].items():           # every routine with a write that is not placed is a finding
             sites = sorted({x for v in rec.get("not_placed_at", {}).values() for x in v})   # naming every such site
-            mine = [f for f in self.r["findings"] if f.startswith(f"{name}: ") and "not placed" in f]
+            mine = [f for f in self.r["findings"] if f.startswith(f"{name}: ") and "write(s) not placed — " in f]
             self.assertEqual(len(mine), 1 if sites else 0, name)
             if sites:
                 self.assertTrue(mine[0].endswith(": " + ", ".join(sites)), name)
                 self.assertIn(f"{len(sites)} write(s) not placed", mine[0])
+
+    def test_every_frame_cell_has_a_result_and_a_refusal_is_traceable(self):
+        """The frame unit's acceptance: each candidate cell is resolved or not, and one that is not names concrete
+        writes or calls — every one with its address; a call's routines are ones the inventory lists. (How many
+        cells there are is the image's business: no count is fixed here.)"""
+        cells = self.r["frame_cells"]
+        self.assertTrue(cells)
+        self.assertEqual(len({(c["routine"], c["slot"]) for c in cells}), len(cells))
+        kinds = ("a store ", "a call ", "an address of this frame has left it", "a path from the routine's entry with no store",
+                 "at this read the slot may hold ")
+        w = self.r["writes"]["routines"]
+
+        def listed(name):                                  # a routine with a write the inventory could not place
+            return any("not_placed_at" in rec or "the stacks" in rec.get("overlapping_at", {})
+                       for k, rec in w.items() if k == name or k.startswith(name + "@"))
+        for c in cells:
+            where = f"{c['routine']} slot {c['slot']:#x}"
+            self.assertTrue(c["holds"], where)
+            self.assertIsInstance(c["resolved"], bool)
+            mine = [f for f in self.r["findings"] if f.startswith(f"{c['routine']}: the frame cell at slot {c['slot']:#x} ")]
+            if c["resolved"]:
+                self.assertEqual((c["blocked_by"], mine), ([], []), where)
+                continue
+            self.assertEqual(len(mine), 1, where)
+            self.assertTrue(c["blocked_by"], f"{where}: unresolved with nothing named")
+            for b in c["blocked_by"]:
+                self.assertRegex(b["at"], r"^0x[0-9a-f]+$", where)
+                self.assertTrue(b["why"].startswith(kinds), f"{where}: {b['why'][:80]}")
+                self.assertIn(b["why"], mine[0], where)
+                self.assertIn(b["at"], mine[0], where)
+                if "routine(s) have a write that is not shown to miss a frame" in b["why"]:
+                    self.assertTrue(b["under"], where)
+                    for name in b["under"]:
+                        self.assertTrue(listed(name), f"{where}: {name} is named under a call but the inventory lists no such write of it")
+        self.assertTrue(any(c["resolved"] for c in cells) and any(not c["resolved"] for c in cells),
+                        "this image has cells of both kinds")
+        self.assertEqual(sum("the frame cell at slot" in f for f in self.r["findings"]), sum(not c["resolved"] for c in cells))
 
     def test_the_inventory_leaves_out_no_store(self):
         """Counted independently, off the disassembly: every store instruction the path analysis reaches, in every
@@ -204,15 +259,28 @@ class TheFinalImage(unittest.TestCase):
     def test_what_the_bound_rests_on_is_recorded(self):
         rules = self.r["rules"]
         vm = rules["value_model"]
-        for stated in ("(B1)", "(B2)", "(B3)"):
+        for stated in ("(B2)", "(B3)"):
             self.assertIn(stated, vm["rule"])
-        for gone in ("(M1)", "(M2)", "(M3)"):               # the owner's HOLD on 1e55967: no longer assumed
+        for gone in ("(M1)", "(M2)", "(M3)", "(B1)"):       # the owner's HOLD on 1e55967; the frame unit of 2026-10-06
             self.assertNotIn(gone, vm["rule"])
+        for said in ("NO OBJECT PROVENANCE IS ASSUMED", "a callee's incoming stack-argument area is its caller's frame",
+                     "SCOPE — SYNCHRONOUS PATHS ONLY", "NOT covered", "not used as proof that no handler runs",
+                     "no bound is published for an entry that calls through memory"):
+            self.assertIn(said, vm["rule"])
+        self.assertEqual(self.r["tool"], "b3-image-stack 1.4.0")
         self.assertTrue(vm["targets"], "the library contracts the analysis relied on are named")
         self.assertLessEqual(set(vm["targets"]), set(isa.Image.LIBC_CONTRACTS))
         formats = rules["printf_formats"]["targets"]
         self.assertTrue(formats)
-        self.assertTrue(all(f["no_percent_n"] and f["formats"] for f in formats), "every printf format is proved")
+        proved = [f for f in formats if f["no_percent_n"] and f["formats"]]
+        self.assertTrue(proved, "some printf format is proved")
+        for f in formats:                                  # one that is not is SAID not to be, and is a finding: with
+            if f in proved:                                # no object provenance a format pointer kept in a frame slot
+                continue                                   # across a call over unplaced writes is no longer a constant
+            self.assertEqual((f["format"], f["formats"], f["no_percent_n"]), ("NOT a provable constant", [], False))
+            self.assertEqual(sum(x.startswith(f["call"] + ": its format is not a provable constant string free of %n")
+                                 for x in self.r["findings"]), 1, f["call"])
+        self.assertEqual(sum("its format is not a provable constant" in x for x in self.r["findings"]), len(formats) - len(proved))
         used = {s.split(":")[0] for s in rules["callback_contracts"]["targets"]}
         self.assertLessEqual(used, set(isa.Image.CONTRACTS))
         self.assertIn("sha_emit", used)
@@ -221,7 +289,6 @@ class TheFinalImage(unittest.TestCase):
         wp = rules["write_placement"]
         self.assertIn("is not proved to miss any callback cell", wp["rule"])
         self.assertIn(f"not placed sites: {self.r['writes']['total']['not_placed_sites']}", wp["targets"])
-        self.assertIn("NOT relied on for a published bound", vm["rule"], "B1 is stated for the frames only")
 
     def test_the_image_clears_only_the_async_abort_mask(self):
         self.assertEqual(self.r["masks"]["cleared_by_the_image"], ["A"])
@@ -297,10 +364,167 @@ class ACallbackInTheRoutinesOwnFrame(unittest.TestCase):
             with self.subTest(seq):
                 self.refused(CB + [("str", "r0, [sp, #8]"), ("mov", "r3, #0")] + seq + [("ldr", "r1, [sp, #8]"), ("blx", "r1")])
 
-    def test_a_store_through_a_pointer_that_is_not_this_frame_does_not_touch_it(self):
-        img, b = synth(CB + [("str", "r0, [sp, #8]"), ("mov", "r3, #0"), ("str", "r3, [r6, #8]"), ("strb", "r3, [r6, r2]"),
-                             ("ldr", "r1, [sp, #8]"), ("blx", "r1")])
-        self.assertEqual(targets(img, b), [CB_A])
+    # ---- the frame unit (the owner's ruling of 2026-10-06): no object provenance. Between the store and the read,
+    # a write that is not into this frame must be SHOWN to land off every frame — the old B1 ("a pointer derived
+    # from another object does not reach this frame") is gone, and each of its three uses is refused below.
+
+    FAR = [("movw", "r6, #40960"), ("movt", "r6, #0")]            # r6 = 0xA000: a constant outside the stacks
+    INSIDE = [("movw", "r6, #16"), ("movt", "r6, #8")]            # r6 = 0x80010: a constant inside the stacks' region
+    PRE = CB + [("str", "r0, [sp, #8]"), ("mov", "r3, #0")]
+    POST = [("ldr", "r1, [sp, #8]"), ("blx", "r1")]
+
+    def test_a_store_of_the_routine_that_is_not_into_its_frame_must_be_placed(self):
+        """B1's first use: the routine's own store through another pointer, between the store and the read."""
+        P, Q = self.PRE, self.POST
+        for what, mid, why, kw in (
+                ("through an unknown pointer", [("str", "r3, [r6, #8]")], "at 0x1010 a store that is not placed (through an unknown pointer)", {}),
+                ("a byte at a register index from one", [("strb", "r3, [r6, r2]")], "at 0x1010 a store that is not placed", {}),
+                ("through a pointer loaded from memory", self.FAR + [("ldr", "r5, [r6]"), ("str", "r3, [r5]")], "at 0x101c a store that is not placed", {}),
+                ("through its own argument, in a routine nothing calls", [("str", "r3, [r1, #4]")],
+                 "at 0x1010 a store that is not placed (through its own argument, and the routine is entered other than by a call", {}),
+                ("at a constant inside the stacks' region", self.INSIDE + [("str", "r3, [r6]")],
+                 "at 0x1018 a store at the constant range 0x80010..0x80014, inside the stacks' region", {}),
+                ("at a constant index", self.FAR + [("str", "r3, [r6, r2]")], "over an extent that is not bounded", {}),
+                ("at a constant, in an image that names no stacks", self.FAR + [("str", "r3, [r6]")],
+                 "at 0x1018 a store at the constant range 0xa000..0xa004, in an image that names no stacks' region", {"stacks": None})):
+            with self.subTest(what):
+                r = self.refused(P + mid + Q, **kw)
+                self.assertIn("slot -0xf8 blocked by: ", r)
+                self.assertIn(why, r)
+        img, b = synth(P + self.FAR + [("str", "r3, [r6]"), ("strb", "r3, [r6, #9]"), ("strd", "r2, r3, [r6, #16]")] + Q)
+        self.assertEqual(targets(img, b), [CB_A], "stores at constants outside the stacks' region")
+        img, b = synth(P + [("str", "r3, [sp, #12]"), ("strb", "r3, [sp, #7]"), ("str", "r3, [sp, #4]")] + Q)
+        self.assertEqual(targets(img, b), [CB_A], "stores into its own frame, beside the slot")
+
+    def test_a_store_through_an_argument_lands_where_every_caller_points(self):
+        """h holds a callback in its frame and stores through its argument in between: the cell stands only when
+        every call of h hands it a pointer that is placed off the frames, or an address inside that caller's frame."""
+        H2 = 0x5000
+        h = self.PRE + [("str", "r3, [r1, #4]")] + self.POST + [("bx", "lr")]
+        ret = [("mov", "r0, #0"), ("bx", "lr")]
+
+        def go(*leads):
+            body = []
+            for lead in leads:
+                body += list(lead) + [("bl", call(H2, "h"))]
+            img, _b = synth(body + ret, more={"h": (H2, h)})
+            try:
+                return isa.settle(img, lambda im: im._app_targets(H2, site_of(im, H2), {}))
+            except isa.Finding as e:
+                return str(e)
+        far, inside = [("movw", "r1, #40960"), ("movt", "r1, #0")], [("movw", "r1, #16"), ("movt", "r1, #8")]
+        self.assertEqual(go(far), [CB_A], "a constant outside the stacks")
+        self.assertEqual(go([("add", "r1, sp, #16")]), [CB_A], "an address inside the caller's own frame")
+        self.assertEqual(go(far, [("add", "r1, sp, #16")]), [CB_A], "both callers placed")
+        for what, leads, why in (("a constant inside the stacks", (inside,), "f hands r1 to h, which writes through it at 0x1008, at the constant range 0x80014..0x80018, inside the stacks' region"),
+                                 ("an unknown pointer", ([("mov", "r1, r6")],), "f hands r1 to h, which writes through it at 0x1004, that is not placed (through an unknown pointer)"),
+                                 ("one caller of two unplaced", (far, [("mov", "r1, r6")]), "f hands r1 to h, which writes through it at 0x1010, that is not placed (through an unknown pointer)"),
+                                 ("a frame address whose range straddles the top of the caller's frame", ([("add", "r1, sp, #250")],),
+                                  "f hands r1 to h, which writes through it at 0x1004, that is not placed (through an address of its frame, over a range that leaves the frame)"),
+                                 ("an address in the caller's INCOMING area — its own caller's frame, and nothing calls f", ([("add", "r1, sp, #252")],),
+                                  "f hands r1 to h, which writes through it at 0x1004, that is not placed (into its incoming "
+                                  "stack-argument area, and the routine is entered other than by a call")):
+            with self.subTest(what):
+                r = go(*leads)
+                self.assertIsInstance(r, str, "resolved")
+                self.assertIn("a store through its argument, and " + why, r)
+
+    def test_every_write_under_a_call_must_be_placed(self):
+        """B1's second use: a call between the store and the read. Whatever the routines it can reach write — through
+        any pointer, not only one the call is handed — must be placed off the frames."""
+        H2, G2, L2 = 0x5000, 0x6000, 0x7000
+        ret = [("mov", "r0, #0"), ("bx", "lr")]
+        zero = [("mov", f"r{n}, #0") for n in range(4)]
+        far = [("movw", "r4, #40960"), ("movt", "r4, #0")]
+
+        def go(h, more=None, lead=None, library=(), tweak=None):
+            routines = {"h": (H2, h)}
+            routines.update(more or {})
+            img, b = synth(self.PRE + (zero if lead is None else lead) + [("bl", call(H2, "h"))] + self.POST, more=routines, library=library)
+            if tweak:
+                tweak(img)
+
+            def run(im):                                   # the result, and EVERYTHING recorded against the cell
+                try:
+                    r = im._app_targets(b, site_of(im, b), {})
+                except isa.Finding as e:
+                    r = str(e)
+                return r, [f"at {a:#x} {why}" for a, why in sorted(im._cache("_cellblk").get((b, SLOT8), ()))]
+            return isa.settle(img, run)
+        unk = [("mov", "r3, #0"), ("str", "r3, [r6]")] + ret
+        ptr = [("movw", "r3, #8193"), ("movt", "r3, #0"), ("blx", "r3")] + ret     # h calls CB_A through a pointer
+
+        def no_rule(img):
+            for e in img.edges[H2]:
+                if e["kind"] == "indirect_call":
+                    e["set"] = "no_such_rule"
+        for what, kw, why in (
+                ("the callee stores through an unknown pointer", {"h": unk},
+                 "a call (h) under which 1 routine(s) have a write that is not shown to miss a frame: h (1); the first, h stores at 0x5004, that is not placed (through an unknown pointer)"),
+                ("a routine two calls down does", {"h": [("bl", call(G2, "g"))] + ret, "more": {"g": (G2, unk)}},
+                 "a call (h) under which 1 routine(s) have a write that is not shown to miss a frame: g (1); the first, g stores at 0x6004, that is not placed"),
+                ("the callee stores at a constant inside the stacks", {"h": [("movw", "r4, #16"), ("movt", "r4, #8"), ("mov", "r3, #0"), ("str", "r3, [r4]")] + ret},
+                 "h (1); the first, h stores at 0x500c, at the constant range 0x80010..0x80014, inside the stacks' region"),
+                ("the callee calls a routine that cannot be read", {"h": zero + [("bl", call(L2, "lib"))] + ret, "more": {"lib": (L2, [])}, "library": ("lib",)},
+                 "; the first, h hands r0 to lib, which writes through it at 0x5010, that is not placed"),
+                ("a callback in the pointer's CONTEXT-FREE target set does, though this pointer is the other one",
+                 {"h": ptr, "more": {"cb_b": (CB_B, [("str", "r3, [r6]"), ("bx", "lr")])}},
+                 "a call (h) under which 1 routine(s) have a write that is not shown to miss a frame: cb_b (1); the first, cb_b stores at 0x2100, that is not placed"),
+                ("an indirect call under it has no resolved target set", {"h": ptr, "tweak": no_rule},
+                 "a call (h) under which h's indirect call at 0x5008 has no resolved target set: no rule 'no_such_rule'"),
+                ("the callee writes through its argument, handed an unknown pointer", {"h": [("mov", "r3, #0"), ("str", "r3, [r1, #4]")] + ret,
+                                                                                      "lead": [("mov", "r1, r6"), ("mov", "r0, #0"), ("mov", "r2, #0")]},
+                 "a call (h) handed r1, which the callee writes through, that is not placed (through an unknown pointer)")):
+            with self.subTest(what):
+                r, blocked = go(**kw)
+                self.assertIsInstance(r, str, "resolved")
+                self.assertIn("slot -0xf8 blocked by: at 0x10", r)
+                self.assertTrue(any(why in x for x in blocked), f"{why!r} not recorded against the cell: {blocked}")
+                self.assertTrue(all(x.startswith(("at 0x101c a call ", "at 0x1020 a call ")) for x in blocked), blocked)
+        for what, kw in (
+                ("the callee stores at a constant outside the stacks", {"h": far + [("mov", "r3, #0"), ("str", "r3, [r4]"), ("strb", "r3, [r4, #7]")] + ret}),
+                ("the callee stores into its own frame", {"h": [("mov", "r3, #0"), ("str", "r3, [sp, #8]"), ("str", "r3, [sp, #4]")] + ret}),
+                ("a routine two calls down writes its caller's frame through its argument",
+                 {"h": [("add", "r0, sp, #16"), ("bl", call(G2, "g"))] + ret, "more": {"g": (G2, [("mov", "r3, #0"), ("str", "r3, [r0, #4]")] + ret)}}),
+                ("the callee calls through a pointer whose whole target set writes nothing", {"h": ptr}),
+                ("the callee writes through its argument, handed a constant outside the stacks",
+                 {"h": [("mov", "r3, #0"), ("str", "r3, [r1, #4]")] + ret, "lead": [("movw", "r1, #40960"), ("movt", "r1, #0"), ("mov", "r0, #0"), ("mov", "r2, #0")]})):
+            with self.subTest(what):
+                self.assertEqual(go(**kw), ([CB_A], []), "resolved, and nothing recorded against the cell")
+
+    def test_the_incoming_stack_words_are_the_caller_s_frame(self):
+        """B1's third use, and the owner's condition: a callee's incoming stack-argument area is not its own frame. A
+        write there is held against the CALLER's slots; a range that leaves the frame it starts in is not placed."""
+        H2 = 0x5000
+        ret = [("mov", "r0, #0"), ("bx", "lr")]
+        zero = [("mov", f"r{n}, #0") for n in range(4)]
+
+        def go(h):
+            img, b = synth(self.PRE + zero + [("bl", call(H2, "h"))] + self.POST, more={"h": (H2, h)})
+            try:
+                return targets(img, b)
+            except isa.Finding as e:
+                return str(e)
+        r = go([("mov", "r3, #0"), ("str", "r3, [sp, #264]")] + ret)          # its incoming word 8 = the caller's [sp, #8]
+        self.assertIsInstance(r, str, "resolved")
+        self.assertIn("a call that may write the slot through a pointer it is handed, or its incoming stack words", r)
+        self.assertEqual(go([("mov", "r3, #0"), ("str", "r3, [sp, #268]")] + ret), [CB_A], "its incoming word 12: beside the slot")
+        r = go([("mov", "r3, #0"), ("mov", "r2, #0"), ("strd", "r2, r3, [sp, #252]")] + ret)   # [-4, 4): out of its own frame
+        self.assertIsInstance(r, str, "resolved")
+        self.assertIn("that is not placed (through an address of its frame, over a range that leaves the frame)", r)
+
+        def inventory(h):
+            img, _b = synth(zero + [("bl", call(H2, "h"))] + ret, more={"h": (H2, h)})
+            return isa.settle(img, lambda im: im.write_inventory())["routines"]
+        w = inventory([("mov", "r3, #0"), ("str", "r3, [sp, #264]")] + ret)
+        self.assertEqual((w["h"]["stores"], w["h"]["at_the_callers"], w["h"]["placed"]), (1, 1, 0), "not h's own frame: placed at its caller")
+        self.assertEqual((w["f"]["hand_overs"], w["f"]["placed"], w["f"]["not_placed"]), (1, 1, 0), "in f's own frame, where f's SP is at the call")
+        w = inventory([("mov", "r3, #0"), ("str", "r3, [sp, #512]")] + ret)    # h's incoming word 256 = f's entry SP + 0
+        self.assertEqual(w["h"]["at_the_callers"], 1)
+        self.assertEqual(w["f"]["not_placed"], 1, "f's own incoming area, and nothing calls f")
+        self.assertIn("into its incoming stack-argument area, and the routine is entered other than by a call", str(w["f"]["not_placed_at"]))
+        w = inventory([("mov", "r3, #0"), ("mov", "r2, #0"), ("strd", "r2, r3, [sp, #252]")] + ret)
+        self.assertEqual(w["h"]["not_placed_at"], {"stores: through an address of its frame, over a range that leaves the frame": ["0x5008"]})
 
     def test_two_branches_with_different_callbacks_keep_both(self):
         img, b = synth([("cbz", f"r2, {br(0x1014)}"),
@@ -410,11 +634,18 @@ class ACallbackInTheRoutinesOwnFrame(unittest.TestCase):
         # … and stored there with nothing else: the frame is loose all the same
         self.refused(pre + [("str", "r4, [r6, #12]")] + post)
         self.refused(pre + [("stm", "r6, {r4, r5}")] + post)
-        # the control: a value that is no frame address stored there
-        img, b = synth(CB + [("str", "r0, [sp, #8]"), ("mov", "r4, #9"), ("str", "r4, [r6]"), ("ldr", "r0, [r6]"),
+        self.assertIsInstance(why, str)
+        # a value that is NO frame address stored there, read back and handed to the writer: once taken for harmless
+        # (B1: "not this frame's pointer") — now the store and the writer's target are simply not placed
+        r = self.refused(CB + [("str", "r0, [sp, #8]"), ("mov", "r4, #9"), ("str", "r4, [r6]"), ("ldr", "r0, [r6]"),
+                               ("bl", call(W, "w"))] + post, more=writer)
+        self.assertIn("at 0x1010 a store that is not placed (through an unknown pointer)", r)
+        self.assertIn("at 0x1018 a call (w) handed r0, which the callee writes through, that is not placed", r)
+        # the control: the value stored at a constant outside the stacks, the writer handed such a constant
+        far = [("movw", "r6, #40960"), ("movt", "r6, #0")]
+        img, b = synth(CB + [("str", "r0, [sp, #8]"), ("mov", "r4, #9")] + far + [("str", "r4, [r6]"), ("add", "r0, r6, #16"),
                              ("bl", call(W, "w"))] + post, more=writer)
         self.assertEqual(targets(img, b), [CB_A])
-        self.assertIsInstance(why, str)
 
 
     def test_a_derived_frame_address_handed_to_a_callee_that_keeps_what_it_loads(self):
@@ -422,7 +653,8 @@ class ACallbackInTheRoutinesOwnFrame(unittest.TestCase):
         no slot) handed to a callee that keeps a word it loads at a KNOWN offset from it — and added that offset to
         the atom's tag. Through the assessment's own path it is a refusal: any slot may hold a frame address."""
         K = 0x5000
-        keeper = {"k": (K, [("ldr", "r2, [r0, #4]"), ("str", "r2, [r6]"), ("mov", "r0, #0"), ("bx", "lr")])}
+        keeper = {"k": (K, [("ldr", "r2, [r0, #4]"), ("movw", "r6, #40960"), ("movt", "r6, #0"), ("str", "r2, [r6]"),
+                            ("mov", "r0, #0"), ("bx", "lr")])}       # (keeps it at a constant outside the stacks)
         post = [("ldr", "r1, [sp, #8]"), ("blx", "r1")]
         park = [("add", "r3, sp, #20"), ("str", "r3, [sp, #16]")]            # a frame address parked in the frame
         derived = CB + [("str", "r0, [sp, #8]")] + park + [("add", "r0, sp, r4"), ("bl", call(K, "k"))] + post
@@ -555,8 +787,13 @@ class ACallbackInAnObjectHandedToAConsumer(unittest.TestCase):
                                 "w": (W, [("mov", "r3, #0"), ("str", "r3, [r0]"), ("bx", "lr")])})
         img, b = self.build(seq, more={"h": (H, [("ldr", "r4, [r0]"), ("ldr", "r3, [r4]"), ("bx", "lr")])})
         self.assertEqual(handed(img, b, C), [CB_A], "a helper that only reads through the inner pointer")
-        img, b = self.build(seq, more={"h": (H, [("ldr", "r4, [r0, #4]"), ("mov", "r3, #0"), ("str", "r3, [r4]"), ("bx", "lr")])})
-        self.assertEqual(handed(img, b, C), [CB_A], "a helper that writes through ANOTHER word of the object")
+        # a helper that writes through ANOTHER word of the object: once taken for harmless (B1) — the pointer it
+        # loads is not placed, so nothing shows where it writes
+        r = self.refused(seq, more={"h": (H, [("ldr", "r4, [r0, #4]"), ("mov", "r3, #0"), ("str", "r3, [r4]"), ("bx", "lr")])})
+        self.assertIn("a call (h) under which 1 routine(s) have a write that is not shown to miss a frame: h (1); the first, "
+                      "h stores at 0x5008, that is not placed (through a pointer loaded from memory)", r)
+        img, b = self.build(seq, more={"h": (H, [("movw", "r4, #40960"), ("movt", "r4, #0"), ("mov", "r3, #0"), ("str", "r3, [r4]"), ("bx", "lr")])})
+        self.assertEqual(handed(img, b, C), [CB_A], "a helper that writes at a constant outside the stacks")
         # a helper that keeps the pointer it is handed (stores it through another pointer): the frame is loose
         keep = CB + [("str", "r0, [sp, #8]"), ("add", "r0, sp, #8"), ("bl", call(H, "h"))] + self.HAND + [("bx", "lr")]
         self.refused(keep, more={"h": (H, [("str", "r0, [r1]"), ("bx", "lr")])})
@@ -797,7 +1034,7 @@ def with_table(img, words=None, extra_words=None, name="TBL"):
     words = words if words is not None else [CB_A | 1, CB_B | 1]
     img.secs = [{"name": ".rodata", "addr": 0x9000, "offset": 0, "size": 0x1000},
                 {"name": ".data", "addr": 0xA000, "offset": 0x1000, "size": 0x1000}]
-    img.syms = {name: (T_ADDR, 4 * len(words), "r")}
+    img.syms = dict(img.syms, **{name: (T_ADDR, 4 * len(words), "r")})
     img.words = {T_ADDR + 4 * k: w for k, w in enumerate(words)}
     img.words.update(extra_words or {})
     img.__dict__.pop("_ro_tables_cache", None)
@@ -896,7 +1133,8 @@ class TheReadOnlyTables(unittest.TestCase):
             routines = {"h": (H2, body)}
             routines.update(more or {})
             return self.run_with(beside + [("bl", call(H2, "h"))] + TBL, more=routines)
-        on = [("push", "{r4, lr}"), ("add", "r0, r0, #4"), ("bl", call(G2, "g")), ("mov", "r0, #0"), ("pop", "{r4, pc}")]
+        on = [("add", "r0, r0, #4"), ("bl", call(G2, "g")), ("mov", "r0, #0"), ("bx", "lr")]   # (no push: a synthetic
+        #                                         routine's SP is one fixed offset, so a push would leave its frame)
         for what, r, why in (
                 ("a word at its argument + 8", via([("mov", "r2, #0"), ("str", "r2, [r0, #8]")] + ret), "it may reach 0x9104..0x9108"),
                 ("eight bytes at its argument", via(self.ZERO + [("strd", "r2, r3, [r0]")] + ret), "it may reach 0x9100..0x9104"),
@@ -1087,20 +1325,139 @@ class TheWriteInventory(unittest.TestCase):
         self.assertFalse(img.calls_through_memory(self.H2), "a leaf")
 
 
-class TheGateOnTheInventory(unittest.TestCase):
-    """The withheld bounds are withheld BY the inventory: with the same image and an inventory that has nothing
-    unproved, the exception entries publish what the call graph gives — and main stays refused by the table proof,
-    which reads the writes itself."""
+class TheFrameCells(unittest.TestCase):
+    """Every frame slot that may hold a callback, a table's address or an argument the routine reaches a callback
+    through has a result (`Image.frame_cells`), and a cell that is not resolved names what blocked it — the write,
+    or the call and the routines under it."""
 
-    def test_a_clean_inventory_publishes_the_exception_entries_and_only_them(self):
+    G2, K2, U2, H2 = 0x5000, 0x6000, 0x7000, 0x7800
+    POST = [("ldr", "r1, [sp, #8]"), ("blx", "r1"), ("mov", "r0, #0"), ("bx", "lr")]
+
+    def cells(self, **kw):
+        ret = [("mov", "r0, #0"), ("bx", "lr")]
+        more = {"g": (self.G2, CB + [("str", "r0, [sp, #8]"), ("mov", "r3, #0"), ("str", "r3, [r6]")] + self.POST),   # an unplaced store
+                "k": (self.K2, [("str", "r0, [sp, #16]"), ("mov", "r2, #7"), ("str", "r2, [sp, #20]"),              # its argument, spilled
+                                ("str", "r1, [sp, #24]"), ("ldr", "r2, [sp, #24]"),      # (an argument it reaches no callback through)
+                                ("ldr", "r3, [sp, #16]"), ("blx", "r3")] + ret),
+                "u": (self.U2, CB + [("str", "r0, [sp, #8]"), ("bl", call(self.H2, "h"))] + self.POST),            # a call over an unplaced store
+                "h": (self.H2, [("mov", "r3, #0"), ("str", "r3, [r6]")] + ret)}
+        img, b = synth(CB + [("str", "r0, [sp, #8]"), ("mov", "r2, #5"), ("str", "r2, [sp, #24]")] + TBL +
+                       [("str", "r0, [sp, #12]"), ("ldr", "r0, [sp, #12]"), ("bl", call(C, "c"))] + self.POST,
+                       more=dict(more, c=(C, CONSUME)), **kw)
+        with_table(img)
+        return {(c["routine"], c["slot"]): c for c in isa.settle(img, lambda im: im.frame_cells())}
+
+    def test_every_candidate_has_a_result_and_a_refusal_names_what_blocked_it(self):
+        c = self.cells()
+        self.assertEqual(sorted(c), [("f", 8 - SP), ("f", 12 - SP), ("g", 8 - SP), ("k", 16 - SP), ("u", 8 - SP)],
+                         "the callback slots, the table-address slot and the spilled callback argument — not the data words, "
+                         "nor k's other argument")
+        self.assertEqual(c["f", 8 - SP]["holds"], ["a callback"])
+        self.assertEqual(c["f", 12 - SP]["holds"], ["a read-only table's address"])
+        self.assertEqual(c["k", 16 - SP]["holds"], ["an argument the routine reaches a callback through"])
+        for key in (("f", 8 - SP), ("f", 12 - SP), ("k", 16 - SP)):
+            self.assertEqual((c[key]["resolved"], c[key]["blocked_by"]), (True, []), key)
+        g = c["g", 8 - SP]
+        self.assertFalse(g["resolved"])
+        self.assertEqual(g["blocked_by"], [{"at": "0x5010", "why": "a store that is not placed (through an unknown pointer)"}])
+        u = c["u", 8 - SP]
+        self.assertFalse(u["resolved"])
+        self.assertEqual(len(u["blocked_by"]), 1)
+        self.assertEqual(u["blocked_by"][0]["at"], "0x700c")
+        self.assertEqual(u["blocked_by"][0]["under"], {"h": 1}, "the routines under the call with a write that is not placed")
+        self.assertIn("h stores at 0x7804, that is not placed (through an unknown pointer)", u["blocked_by"][0]["why"])
+
+    def test_a_cell_overwritten_by_a_value_that_is_no_callback_is_unresolved_with_a_reason(self):
+        img, b = synth(CB + [("str", "r0, [sp, #8]"), ("cbz", f"r2, {br(0x1018)}"), ("mov", "r3, #0"), ("str", "r3, [sp, #8]"),
+                             ("ldr", "r1, [sp, #8]"), ("blx", "r1"), ("mov", "r0, #0"), ("bx", "lr")])   # zeroed on one path
+        (c,) = isa.settle(img, lambda im: im.frame_cells())
+        self.assertEqual((c["routine"], c["slot"], c["resolved"]), ("f", 8 - SP, False))
+        self.assertTrue(c["blocked_by"], "an unresolved cell always carries a reason")
+        self.assertIn("at this read the slot may hold cb, const", c["blocked_by"][0]["why"])
+
+
+    def test_only_what_blocks_a_read_that_may_see_the_value_is_reported(self):
+        """The slot is also loaded BEFORE its store (uninitialised there: no callback to see, so not that read's
+        business); what is reported is what stands between the store and the read that may see the callback."""
+        img, b = synth([("ldr", "r2, [sp, #8]")] + CB + [("str", "r0, [sp, #8]"), ("mov", "r3, #0"), ("str", "r3, [r6]"),
+                                                         ("ldr", "r1, [sp, #8]"), ("blx", "r1"), ("mov", "r0, #0"), ("bx", "lr")])
+
+        def run(im):
+            cells = im.frame_cells()
+            return cells, sorted(why for _a, why in im._cache("_cellblk").get((b, 8 - SP), ()))
+        (c,), everything = isa.settle(img, run)
+        self.assertEqual((c["routine"], c["slot"], c["resolved"]), ("f", 8 - SP, False))
+        self.assertEqual(c["blocked_by"], [{"at": "0x1014", "why": "a store that is not placed (through an unknown pointer)"}])
+        self.assertIn("a path from the routine's entry with no store to the slot (uninitialised there)", everything,
+                      "recorded against the early load, and rightly left out of the cell's reasons")
+
+
+class TheWalkPastAFinding(unittest.TestCase):
+    """`depth` with a collector lists every finding it can decide independently: a refused edge leaves what is under
+    it unwalked (and says so), the other edges are walked on, and the node and all above it are tainted — the number
+    for a tainted node is not a bound. Without a collector the first finding ends the walk, as before."""
+
+    A2, B2, D2 = 0x5000, 0x6000, 0x7000
+
+    def build(self):
+        # f calls a and d; a's own pointer call is refused, and AFTER it a calls b, whose pointer call is refused too
+        bad = CB + [("str", "r0, [sp, #8]"), ("mov", "r3, #0"), ("str", "r3, [r6]"), ("ldr", "r1, [sp, #8]"), ("blx", "r1")]
+        good = CB + [("str", "r0, [sp, #8]"), ("ldr", "r1, [sp, #8]"), ("blx", "r1"), ("bx", "lr")]
+        return synth([("bl", call(self.A2, "a")), ("bl", call(self.D2, "d")), ("bx", "lr")],
+                     more={"a": (self.A2, bad + [("bl", call(self.B2, "b")), ("bx", "lr")]),
+                           "b": (self.B2, [("mov", "r3, #0")] + bad + [("bx", "lr")]), "d": (self.D2, good)})
+
+    def test_every_independent_finding_is_listed_and_the_path_is_tainted(self):
+        img, f = self.build()
+
+        def run(im):
+            memo, got = {}, {}
+            d = im.depth(f, None, (), memo, got)
+            return d, got, memo[im.TAINTED], im.depth(self.D2, None, (), memo, got), len(got)
+        d, got, tainted, d_clean, n = isa.settle(img, run)
+        self.assertEqual(len(got), 2, got)
+        (ma, la), (mb, lb) = got.items()                   # {the finding: what is left unwalked because of it}
+        self.assertIn("a: the callback loaded at 0x5014", ma)
+        self.assertIn("at 0x5010 a store that is not placed (through an unknown pointer)", ma)
+        self.assertEqual(la, ["what a's call at 0x5018 reaches"])
+        self.assertIn("b: the callback loaded at 0x6018", mb)
+        self.assertEqual(lb, ["what b's call at 0x601c reaches"])
+        root = isa.Image.ROOT_CTX
+        self.assertIn((f, root), tainted)
+        self.assertIn((self.A2, (frozenset(), False)), tainted)
+        self.assertIn((self.B2, (frozenset(), False)), tainted, "a's later edge was walked on after its refused one")
+        self.assertNotIn((self.D2, (frozenset(), False)), tainted, "the clean callee was walked and is not tainted")
+        self.assertEqual((d_clean, n), (SP + SP, 2), "a clean routine still has its depth, and adds no finding")
+        self.assertGreaterEqual(d, 3 * SP, "f -> a -> b was walked to the bottom")
+
+    def test_without_a_collector_the_first_finding_ends_the_walk(self):
+        img, f = self.build()
+        with self.assertRaises(isa.Finding) as c:
+            isa.settle(img, lambda im: im.depth(f, None, (), {}))
+        self.assertIn("a: the callback loaded at 0x5014", str(c.exception))
+
+
+class TheGateOnTheInventory(unittest.TestCase):
+    """What withholds a bound is computed, reason by reason: with the same image, an inventory that has nothing
+    unproved and a cell list with nothing unresolved, the exception entries are withheld for the one reason left —
+    the synchronous-paths scope, under which no entry calling through memory is published — and main stays refused
+    by the table proof and the frame cells, which read the writes themselves."""
+
+    def test_clean_lists_leave_only_the_scope_and_publish_nothing(self):
         clean = {"protected": [], "stacks": None, "routines": {}, "total": {"not_placed_sites": 0}, "unproved": 0}
-        with mock.patch.object(isa.Image, "write_inventory", lambda self: copy.deepcopy(clean)):
+        with mock.patch.object(isa.Image, "write_inventory", lambda self: copy.deepcopy(clean)), \
+                mock.patch.object(isa.Image, "frame_cells", lambda self: []):
             r = isa.assess_image(isa.Image(ELF))
         for exc in ("undefined", "svc", "prefetch_abort", "data_abort", "irq", "fiq"):
-            self.assertEqual(r["entries"][exc]["bound"], 24, exc)
-            self.assertNotIn("unpublished", r["entries"][exc])
-        self.assertFalse(any("no bound is published" in f or "no chain bound" in f for f in r["findings"]))
+            self.assertIsNone(r["entries"][exc]["bound"], exc)
+            self.assertEqual(r["entries"][exc]["unpublished"], 24)
+            (why,) = [f for f in r["findings"] if f.startswith(f"{exc} (") and "no bound is published" in f]
+            self.assertIn("synchronous paths only", why)
+            self.assertNotIn("are not proved to miss those cells", why, "the inventory's reason is the inventory's")
+            self.assertNotIn("frame cell(s) are not resolved", why, "the cells' reason is the cells'")
+        self.assertFalse(any("the frame cell at slot" in f or "write(s) not placed" in f for f in r["findings"]))
         self.assertIsNone(r["entries"]["main"]["bound"])
+        self.assertNotIn("unpublished", r["entries"]["main"])
         self.assertFalse(r["ok"])
         self.assertTrue(any(f.startswith("main (_start): ") and "may be written" in f for f in r["findings"]))
 
