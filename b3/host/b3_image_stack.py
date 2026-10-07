@@ -51,7 +51,7 @@ for p in (REPO_ROOT / "host", REPO_ROOT / "b3/host"):
         sys.path.insert(0, str(p))
 import b2_build_evidence as b2be  # noqa: E402  (the pinned toolchain's path; a frozen B2 module, read only)
 
-TOOL_VERSION = "b3-image-stack 1.5.0"
+TOOL_VERSION = "b3-image-stack 1.6.0"
 ELF_DEFAULT = REPO_ROOT / "b3/firmware/bsp/out/b3_app.elf"
 TC_BIN = Path(b2be.TC) / "bin"
 MAIN_LIMIT = 0x2000                     # the owner's ruling: the main path's verified bound is at most 0x2000 bytes
@@ -1884,6 +1884,9 @@ class Image:
         rs = self._regs(o)
         if not rs or rs[0] != reg:
             return None
+        cr = self._count_range(entry, w, reg)
+        if cr is not None:
+            return cr
         if fam in ("mov", "movs", "movw") and re.fullmatch(r"\w+,#(?:0x[0-9a-f]+|\d+)", o):
             k = imm(o)
             return (k, k, "a constant")
@@ -1928,6 +1931,7 @@ class Image:
         pred = self._rpred(entry)
         succ = self._region_succ(entry)
         hi = None
+        lo = None                                          # (a guard gives 0, unsigned; a definition its own low end)
         rules: set = set()
         start = []                                         # (node, the pending branch outcome, the node after it)
         c0 = self._cond_of(i)
@@ -1960,6 +1964,7 @@ class Image:
                 hi = r[1] if hi is None else self._hi_max(hi, r[1])
                 if hi is None:
                     return None
+                lo = r[0] if lo is None else min(lo, r[0])
                 rules.add(r[2])
                 continue
             if b == "b" and cond and branch_target(q["ops"]):
@@ -1994,12 +1999,13 @@ class Image:
                 hi = bound if hi is None else self._hi_max(hi, bound)
                 if hi is None:
                     return None
+                lo = 0
                 rules.add(rule)
                 continue                                   # this path is bounded here
             if p == entry:
                 return None                                # the incoming value, no guard
             stack += [(x, pending, p) for x in pred.get(p, [])]
-        return None if hi is None else (0, hi, " / ".join(sorted(rules)))
+        return None if hi is None else (lo or 0, hi, " / ".join(sorted(rules)))
 
     def _indexed_address(self, entry: int, at: int, base: str, inner: str | None):
         """For `[base, inner]` with `inner` a register (scaled or not): (the base's atoms, lo, hi, the rule) when the
@@ -2027,6 +2033,298 @@ class Image:
         if self._family(w) not in ("add", "adds") or not m or m.group(1) != reg or m.group(3).startswith("#"):
             return None
         return self._indexed_address(entry, w["addr"], m.group(2), m.group(3) + (f",lsl#{m.group(4)}" if m.group(4) else ""))
+
+    # ---- the ÷10 digit loop, and the copy loop that follows it (the owner's ruling of 2026-10-07 on the search_render
+    # unit): a specific, image-read trip-count bound.
+    #
+    # The unsigned decimal conversion GCC emits: `umull rL, rH, rM, q` with rM = MAGIC10, `lsr rD, rH, #3` (together
+    # q // 10 — for EVERY 32-bit q, see MAGIC10), the next q is rD, and the back edge `bhi` tests `cmp q, #9` on the
+    # value BEFORE that update (the dataflow decides, not the source's wording): the body runs once per decimal digit
+    # of the first q, 1 to 10 times. A register stepped by a constant once per body (a post-indexed store, an add)
+    # from a pinned frame address is then at A + k·step on the k-th run, k in [0, 9]; a counter stepped by one from a
+    # constant is c0 + k, c0 + 1 .. c0 + 10 after the loop. The copy loop that follows (`cmp p, e; bne`, p stepped
+    # by one from a pinned frame address, e = that address + the SAME count value — one reaching definition, unchanged
+    # — so that p reaches e exactly after count steps) bounds every pointer of its body stepped by ±1 from a pinned
+    # frame address or from one plus that same count. Everything else about such loops — another writer of q, p, c
+    # or e in the body, a branch into or out of it, flags set between the compare and the branch, a different
+    # multiplier, shift or word, an update that is not the quotient — leaves the pointer unpinned, as before.
+    MAGIC10 = 0xCCCCCCCD          # = ceil(2^35 / 10); 10 * MAGIC10 - 2^35 = 2, so for x < 2^32: x * MAGIC10 / 2^35
+    #                               = x / 10 + 2x / (10 * 2^35) < x / 10 + 1/40, and floor(x / 10)'s next integer is
+    #                               at least 1/10 away: floor((x * MAGIC10) >> 35) == x // 10 (the test is exhaustive)
+
+    def _straight_body(self, entry: int, L: int, br: int):
+        """The instruction addresses from L to the back-edge branch at `br` when they form ONE straight run entered
+        only at L (from the instruction before it, and from the branch) and left only by the branch; else None."""
+        succ, pred = self._region_succ(entry), self._rpred(entry)
+        body = [i["addr"] for i in self.region(entry) if L <= i["addr"] <= br]
+        if not body or body[0] != L or body[-1] != br:
+            return None
+        for k, a in enumerate(body):
+            if a != br and succ.get(a) != [body[k + 1]]:
+                return None                                # a branch out, a return, a computed jump
+            ins = set(pred.get(a, []))
+            if a == L:
+                outside = ins - {br}
+                if len(outside) != 1 or next(iter(outside)) >= L:
+                    return None                            # entered from elsewhere than straight above
+            elif ins != {body[k - 1]}:
+                return None                                # entered from elsewhere
+        if set(succ.get(br, [])) != {L, br + self.ins_at[br]["size"]}:
+            return None                                    # the branch leaves only to L or to the next instruction
+        return body
+
+    def _flag_setter_before(self, entry: int, br: int, body: list):
+        """The one instruction setting the flags the branch at `br` reads, when it is in the straight body."""
+        for a in reversed([x for x in body if x < br]):
+            if sets_flags(self.ins_at[a]):
+                return self.ins_at[a]
+        return None
+
+    def _writers_in(self, body: list, reg: str) -> list:
+        return [a for a in body if reg in self.written(self.ins_at[a])]
+
+    def _div10_loops(self, entry: int) -> dict:
+        """{back-edge address: {'L', 'q', 'ptr': {register: step}, 'count': {register: c0}, 'body'}} for every ÷10
+        digit loop of the routine read off its code (see the block comment)."""
+        c = self._cache("_div10_cache")
+        if entry in c:
+            return c[entry]
+        c[entry] = out = {}                                # (re-entrant reads while recognising: no loop yet)
+        self.analyse(entry)
+        for i in self.region(entry):
+            if i["mnem"].split(".")[0] != "bhi" or not branch_target(i["ops"]):
+                continue
+            L, br = branch_target(i["ops"])[0], i["addr"]
+            if L >= br:
+                continue
+            body = self._straight_body(entry, L, br)
+            if body is None:
+                continue
+            cmp = self._flag_setter_before(entry, br, body)
+            m = re.fullmatch(r"(\w+),#9", cmp["ops"].replace(" ", "")) if cmp is not None and cmp["mnem"].split(".")[0] == "cmp" else None
+            if not m:
+                continue
+            q = m.group(1)
+            um = [a for a in body if self._family(self.ins_at[a]) == "umull"]
+            if len(um) != 1:
+                continue
+            uo = self._regs(self.ins_at[um[0]]["ops"].replace(" ", ""))
+            if len(uo) != 4 or q not in uo[2:]:
+                continue
+            rH, rM = uo[1], (uo[3] if uo[2] == q else uo[2])
+            if self._raw_reg(entry, um[0], rM) != frozenset({("const", self.MAGIC10)}) or self._writers_in(body, rM):
+                continue
+            lsr = [a for a in body if a > um[0] and re.fullmatch(r"(\w+)," + rH + r",#3", self.ins_at[a]["ops"].replace(" ", ""))
+                   and self._family(self.ins_at[a]) == "lsr"]
+            if len(lsr) != 1 or self._writers_in([a for a in body if um[0] < a < lsr[0]], rH):
+                continue
+            rD = self._regs(self.ins_at[lsr[0]]["ops"].replace(" ", ""))[0]
+            qw = self._writers_in(body, q)                 # q is updated once, from rD, after the compare and the multiply
+            upd = qw[0] if len(qw) == 1 else None
+            if upd is None or upd <= max(cmp["addr"], um[0]) or upd < lsr[0]:
+                continue
+            uo2 = self.ins_at[upd]["ops"].replace(" ", "")
+            if not ((self._family(self.ins_at[upd]) in ("mov", "movs") and uo2 == f"{q},{rD}" and not self._writers_in([a for a in body if lsr[0] < a < upd], rD))
+                    or (upd == lsr[0] and rD == q)):
+                continue
+            ptr, count = {}, {}
+            for a in body:
+                ins = self.ins_at[a]
+                o = ins["ops"].replace(" ", "")
+                for r in self.written(ins):
+                    if r in (q, rD, rH, uo[0], "sp", "pc"):
+                        continue
+                    mp = re.search(r"\[" + r + r"\],#(\d+)$", o)
+                    ma = re.fullmatch(r"(\w+),(\w+),#(\d+)", o)
+                    if mp and len(self._writers_in(body, r)) == 1 and self._family(ins).startswith("str"):
+                        ptr[r] = int(mp.group(1))
+                    elif ma and ma.group(1) == r == ma.group(2) and self._family(ins) == "add" and len(self._writers_in(body, r)) == 1:
+                        (count if int(ma.group(3)) == 1 else ptr)[r] = int(ma.group(3))
+            c0 = {}
+            for r in list(count):                          # the counter's value entering the loop: one constant
+                ws = [w for w in self.reaching_writers(entry, L, r) if w is None or w["addr"] not in body]
+                vals = set()
+                for w in ws:
+                    rr = None if w is None else self._writer_range(entry, w, r, 0)
+                    if rr is None or rr[0] != rr[1] or not isinstance(rr[1], int):
+                        vals = None
+                        break
+                    vals.add(rr[0])
+                if vals and len(vals) == 1:
+                    c0[r] = next(iter(vals))
+            out[br] = {"L": L, "q": q, "ptr": ptr, "count": {r: c0[r] for r in count if r in c0}, "count_step": {r: self._writers_in(body, r)[0] for r in count}, "body": body}
+        c[entry] = dict(out)
+        return c[entry]
+
+    def _in_body(self, loops: dict, a: int):
+        for br, info in loops.items():
+            if a in info["body"]:
+                return br, info
+        return None, None
+
+    def _count_range(self, entry: int, w: dict, reg: str):
+        """(A1 hook) the writer `w` is the counter step of a ÷10 loop: the value it leaves is c0 + k, k in [1, 10]."""
+        for info in self._div10_loops(entry).values():
+            if reg in info["count"] and info["count_step"].get(reg) == w["addr"]:
+                return (info["count"][reg] + 1, info["count"][reg] + 10, "the digit count of a ÷10 loop")
+        return None
+
+    def _loop_frame_span(self, entry: int, at: int, reg: str):
+        """The pinned frame range [lo, hi] (slots relative to the entry SP) of the VALUE `reg` holds just before `at`
+        — the base the access at `at` starts from; a pre-indexed access adds its own offset to it, a post-indexed
+        one uses it as is — when `reg` is a pointer stepped by a ÷10 digit loop or by the copy loop after it (see
+        the block comment); None otherwise."""
+        c = self._cache("_lfs_cache")
+        key = (entry, at, reg)
+        if key in c:
+            return c[key]
+        c[key] = None
+        v = self._div10_span(entry, at, reg) or self._copy_span(entry, at, reg)
+        c[key] = v
+        return v
+
+    def _pinned_at(self, entry: int, at: int, reg: str):
+        """The one pinned frame slot `reg` holds just before `at`, or None."""
+        v = self._raw_reg(entry, at, reg)
+        return next(iter(v))[1] if len(v) == 1 and next(iter(v))[0] == "frame" and next(iter(v))[1] is not None else None
+
+    def _div10_span(self, entry: int, at: int, reg: str):
+        loops = self._div10_loops(entry)
+        br, info = self._in_body(loops, at)
+        if info is None or reg not in info["ptr"]:
+            return None
+        ws = self.reaching_writers(entry, at, reg)
+        step_at = self._writers_in(info["body"], reg)[0]
+        if at != step_at:
+            return None                                    # (the pointer is used at its own step only: the store)
+        starts = set()
+        for w in ws:
+            if w is None:
+                return None
+            if w["addr"] == step_at:
+                continue
+            v = self._writer_atoms(entry, w, reg)
+            if len(v) != 1 or next(iter(v))[0] != "frame" or next(iter(v))[1] is None:
+                return None
+            starts.add(next(iter(v))[1])
+        if len(starts) != 1:
+            return None
+        A, step = next(iter(starts)), info["ptr"][reg]
+        return (A, A + 9 * step, "a pointer stepped by a ÷10 digit loop")
+
+    def _copy_loops(self, entry: int) -> dict:
+        """{back-edge: {'L', 'p', 'e', 'count': (register, lo, hi), 'body', 'base'}}: `cmp p, e; bne L` loops, p stepped
+        by +1 from a pinned frame slot A, e = A + c with c the same count value throughout (one reaching
+        definition, not written in the body), c in [lo, hi], lo >= 1: p runs A .. A + c - 1."""
+        c = self._cache("_copy_cache")
+        if entry in c:
+            return c[entry]
+        out = {}
+        self.analyse(entry)
+        for i in self.region(entry):
+            if i["mnem"].split(".")[0] != "bne" or not branch_target(i["ops"]):
+                continue
+            L, br = branch_target(i["ops"])[0], i["addr"]
+            if L >= br:
+                continue
+            body = self._straight_body(entry, L, br)
+            if body is None:
+                continue
+            cmp = self._flag_setter_before(entry, br, body)
+            m = re.fullmatch(r"(\w+),(\w+)", cmp["ops"].replace(" ", "")) if cmp is not None and cmp["mnem"].split(".")[0] == "cmp" else None
+            if not m:
+                continue
+            for p, e in ((m.group(1), m.group(2)), (m.group(2), m.group(1))):
+                if self._writers_in(body, e) or len(self._writers_in(body, p)) != 1:
+                    continue
+                pw = self.ins_at[self._writers_in(body, p)[0]]
+                po = pw["ops"].replace(" ", "")
+                if not (re.search(r"\[" + p + r"\],#1$", po) or re.search(r"\[" + p + r",#1\]!", po) or po == f"{p},{p},#1"):
+                    continue
+                if pw["addr"] > cmp["addr"]:               # stepped after the compare: count + 1 runs, not count
+                    continue
+                starts = {frozenset(self._writer_atoms(entry, w, p)) for w in self.reaching_writers(entry, L, p) if w is not None and w["addr"] not in body}
+                if len(starts) != 1 or any(w is None for w in self.reaching_writers(entry, L, p)):
+                    continue
+                v = next(iter(starts))
+                if len(v) != 1 or next(iter(v))[0] != "frame" or next(iter(v))[1] is None:
+                    continue
+                A = next(iter(v))[1]
+                ew = [w for w in self.reaching_writers(entry, L, e)]
+                if len(ew) != 1 or ew[0] is None:
+                    continue
+                eo = ew[0]["ops"].replace(" ", "")
+                me = re.fullmatch(r"(\w+),(\w+),(\w+)", eo)
+                if not me or self._family(ew[0]) != "add" or me.group(1) != e:
+                    continue
+                base, cnt = None, None
+                for x, y in ((me.group(2), me.group(3)), (me.group(3), me.group(2))):
+                    if self._pinned_at(entry, ew[0]["addr"], x) == A:
+                        base, cnt = x, y
+                if base is None:
+                    continue
+                cws = self.reaching_writers(entry, ew[0]["addr"], cnt)
+                if len(cws) != 1 or cws[0] is None or self._writers_in(body, cnt):
+                    continue
+                rng = self._reg_range(entry, ew[0]["addr"], cnt)
+                if rng is None or not isinstance(rng[1], int) or rng[0] < 1:
+                    continue
+                out[br] = {"L": L, "p": p, "e": e, "count": (cnt, rng[0], rng[1], cws[0]["addr"]), "body": body, "A": A}
+                break
+        c[entry] = out
+        return out
+
+    def _copy_span(self, entry: int, at: int, reg: str):
+        loops = self._copy_loops(entry)
+        br, info = self._in_body(loops, at)
+        if info is None:
+            return None
+        cnt, lo, hi, cdef = info["count"]
+        ws = self._writers_in(info["body"], reg)
+        if len(ws) != 1 or ws[0] != at:
+            return None                                    # (used at its own step only)
+        pw = self.ins_at[at]
+        po = pw["ops"].replace(" ", "")
+        if re.search(r"\[" + reg + r"\],#1$", po) or re.search(r"\[" + reg + r",#1\]!", po) or po == f"{reg},{reg},#1":
+            step = 1
+        elif re.search(r"\[" + reg + r"\],#-1$", po) or re.search(r"\[" + reg + r",#-1\]!", po) or po == f"{reg},{reg},#-1":
+            step = -1
+        else:
+            return None
+        starts = set()
+        for w in self.reaching_writers(entry, at, reg):
+            if w is None:
+                return None
+            if w["addr"] == at:
+                continue
+            v = self._writer_atoms(entry, w, reg)
+            if len(v) == 1 and next(iter(v))[0] == "frame" and next(iter(v))[1] is not None:
+                starts.add(("A", next(iter(v))[1]))        # a pinned frame slot
+            else:                                          # or one plus the SAME count: add reg, base, cnt
+                o = w["ops"].replace(" ", "")
+                mm = re.fullmatch(r"(\w+),(\w+),(\w+)", o)
+                if not mm or self._family(w) != "add":
+                    return None
+                ok = False
+                for x, y in ((mm.group(2), mm.group(3)), (mm.group(3), mm.group(2))):
+                    if y == cnt:
+                        cws = self.reaching_writers(entry, w["addr"], cnt)
+                        Ab = self._pinned_at(entry, w["addr"], x)
+                        if len(cws) == 1 and cws[0] is not None and cws[0]["addr"] == cdef and Ab is not None:
+                            starts.add(("A+c", Ab))
+                            ok = True
+                if not ok:
+                    return None
+        if len(starts) != 1:
+            return None
+        kind, A = next(iter(starts))
+        # p (step +1 from A) runs A .. A + c - 1 over the c iterations; a pointer from A' + c stepping -1 (pre-indexed
+        # by -1: the access at A' + c - 1 - k) covers A' .. A' + c - 1; one from A' stepping +1 covers the same
+        if kind == "A" and step == 1:
+            return (A, A + hi - 1, "a pointer stepped by the copy loop after a ÷10 digit loop")
+        if kind == "A+c" and step == -1:
+            return (A + 1, A + hi, "a pointer stepped back by the copy loop after a ÷10 digit loop")
+        return None
 
     def _store_desc(self, entry: int, a: int) -> dict | None:
         """The bytes the store at `a` writes: {'cond', 'base' (the base's atoms), 'wild' (the offset from the base is
@@ -2073,6 +2371,10 @@ class Image:
                 d["wild"] = True
                 for r in self._regs(inner):
                     B |= self._derived(self._base_atoms(entry, a, r))
+        if span is None and (inner is None or inner.startswith("#")) and any(x == ("der", "frame") or (x[0] == "frame" and x[1] is None) for x in B):
+            ls = self._loop_frame_span(entry, a, base)         # a pointer stepped by a ÷10 digit loop / its copy loop
+            if ls is not None:
+                B, span, d["a1"] = {("frame", ls[0])}, (0, ls[1] - ls[0]), ls[2]
         if span is None and (inner is None or inner.startswith("#")):
             ca = self._computed_address(entry, a, base)        # the address computed before the store
             if ca is not None and not (B and all(x[0] in ("frame", "const", "arg", "argo", "tab", "crange") for x in B)):
@@ -3475,9 +3777,10 @@ class Image:
                 base, inner = m.group(1), (m.group(2) if m.re.groups > 1 else None)
                 n = 4 * len(reglist(i["ops"])) if "{" in o else (8 if fam in ("ldrd", "vldr") else 4)
                 k = int(inner[1:], 0) if inner and inner.startswith("#") else 0
-                for x in self._base_atoms(R, a, base):
+                ls = self._loop_frame_span(R, a, base) if not (inner and not inner.startswith("#")) else None
+                for x in (self._base_atoms(R, a, base) if ls is None else [("frame", ls[0])]):
                     if x[0] == "frame" and x[1] is not None and not (inner and not inner.startswith("#")):
-                        reads |= words(x[1] + k, x[1] + k + n)
+                        reads |= words(x[1] + k, (x[1] + k + n) if ls is None else (ls[1] + k + n))
                     elif x[0] == "frame" or x == ("der", "frame"):
                         unbounded_r = True
                 continue

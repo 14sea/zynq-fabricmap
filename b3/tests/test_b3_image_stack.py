@@ -219,7 +219,9 @@ class TheFinalImage(unittest.TestCase):
         for name, rec in w["routines"].items():
             for rule, sites in rec.get("placed_by_a1_at", {}).items():
                 self.assertTrue(rule.startswith(("a register index bounded by ", "an address computed from an index bounded by ",
-                                                 "a handed address computed from an index bounded by ")), rule)
+                                                 "a handed address computed from an index bounded by ")) or rule in (
+                    "a pointer stepped by a ÷10 digit loop", "a pointer stepped by the copy loop after a ÷10 digit loop",
+                    "a pointer stepped back by the copy loop after a ÷10 digit loop"), rule)
                 unplaced = {x for v in rec.get("not_placed_at", {}).values() for x in v}
                 for site in sites:
                     self.assertNotIn(site, unplaced, f"{name} {site}: listed as placed by A1 and as not placed")
@@ -284,7 +286,7 @@ class TheFinalImage(unittest.TestCase):
                      "SCOPE — SYNCHRONOUS PATHS ONLY", "NOT covered", "not used as proof that no handler runs",
                      "no bound is published for an entry that calls through memory"):
             self.assertIn(said, vm["rule"])
-        self.assertEqual(self.r["tool"], "b3-image-stack 1.5.0")
+        self.assertEqual(self.r["tool"], "b3-image-stack 1.6.0")
         self.assertTrue(vm["targets"], "the library contracts the analysis relied on are named")
         self.assertLessEqual(set(vm["targets"]), set(isa.Image.LIBC_CONTRACTS))
         formats = rules["printf_formats"]["targets"]
@@ -1690,6 +1692,183 @@ class TheArgumentBoundedIndex(unittest.TestCase):
                 else:
                     self.assertIsInstance(r, str, "accepted")
                     self.assertIn(want, r)
+
+
+class TheDigitLoop(unittest.TestCase):
+    """The ÷10 digit loop and the copy loop after it (the owner's ruling of 2026-10-07 on the search_render unit):
+    read off the code as GCC emits them, they bound a frame pointer stepped once per digit (1 to 10 times) and the
+    digit count, and the copy loop's pointers — so a routine's own frame stays its own and its incoming area is
+    shown untouched. Anything off the pattern leaves the pointer unpinned, as before."""
+
+    H2 = 0x5000
+    MAGIC = [("movw", "lr, #52429"), ("movt", "lr, #52428")]       # lr = 0xCCCCCCCD
+
+    def digits(self, *, magic=None, shift="#3", word="ip", update=("mov", "r1, ip"), flags=None, count=("add", "r5, r5, #1"), low=False,
+               extra=(), copy_end="r5", copy_start="r5", first=("mov", "r0, sp"), store=("strb", "r3, [r0], #1"), bypass=False,
+               copy_dest="#12", copy_store=("strb", "r0, [r3], #1"), step_after_cmp=False, copy_bypass=False,
+               cmp_imm="#9", reenter=False, copy_extra=(), after_extra=(), body_exit=False):
+        """h(ctx, value): the digits of `value` into a frame buffer at sp, reversed into sp + 12, as GCC emits it."""
+        H = self.H2
+        pre = list(magic or self.MAGIC) + [("mov", "r4, r0"), ("mov", "r2, sp"), first, ("mov", "r5, #0")]
+        L = H + 4 * len(pre)
+        body = [("umull", f"r3, {word}, lr, r1" if not low else f"{word}, r3, lr, r1"), ("cmp", f"r1, {cmp_imm}"), count, ("lsr", f"ip, {word}, {shift}"),
+                ("add", "r3, ip, ip, lsl #2"), ("sub", "r3, r1, r3, lsl #1"), update, ("add", "r3, r3, #48")] + list(extra) + [store]
+        if flags:
+            body.insert(2, flags)
+        if body_exit:                                      # leaves the body before the count is stepped
+            body.insert(1, ("cbz", f"r6, {br(L + 4 * (len(body) + 2), H)}"))
+        body = pre + body + [("bhi", br(L, H))]
+        if reenter:                                        # back into the loop's head from below it
+            body.append(("cbnz", f"r6, {br(L, H)}"))
+        if bypass:                                         # a jump from before the loop into its middle
+            body = [("cbz", f"r6, {br(L + 8, H)}")] + [x if x != ("bhi", br(L, H)) else ("bhi", br(L + 4, H)) for x in body]
+            L += 4
+        after = [("add", "r1, sp, " + copy_dest), ("add", "r2, r2, " + copy_start)] + list(after_extra) + [("mov", "r3, r1"), ("add", "ip, r1, " + copy_end)]
+        if copy_bypass:                                    # a jump from before the copy loop into its middle
+            after.insert(0, ("cbz", f"r6, {br(H + 4 * (len(body) + len(after) + 2), H)}"))
+        L2 = H + 4 * (len(body) + len(after))
+        loop = [("ldrb", "r0, [r2, #-1]!"), copy_store] + list(copy_extra) + [("cmp", "r3, ip")]
+        if step_after_cmp:
+            loop = [("ldrb", "r0, [r2, #-1]!"), ("cmp", "r3, ip"), ("strb", "r0, [r3], #1")]
+        return body + after + loop + [("bne", br(L2, H)), ("mov", "r0, #0"), ("bx", "lr")]
+
+    def facts(self, h):
+        img, _b = synth([("bx", "lr")], more={"h": (self.H2, h)})
+        img.analyse(self.H2)
+        d, c = img._div10_loops(self.H2), img._copy_loops(self.H2)
+        return d, c, img._stack_use_compute(self.H2), img
+
+    def test_the_loops_as_gcc_emits_them_pin_the_frame(self):
+        d, c, use, img = self.facts(self.digits())
+        (info,), = [list(d.values())]
+        self.assertEqual((info["q"], info["ptr"], info["count"]), ("r1", {"r0": 1}, {"r5": 0}))
+        (cinfo,), = [list(c.values())]
+        self.assertEqual((cinfo["p"], cinfo["e"], cinfo["count"][:3], cinfo["A"]), ("r3", "ip", ("r5", 1, 10), 12 - SP))
+        self.assertEqual(use, (frozenset(), frozenset()), "no incoming word is read or written")
+        store = [i for i in img.region(self.H2) if i["mnem"] == "strb" and i["ops"] == "r3, [r0], #1"][0]["addr"]
+        self.assertEqual(img._loop_frame_span(self.H2, store, "r0"), (-SP, -SP + 9, "a pointer stepped by a ÷10 digit loop"))
+        dsc = img._store_desc(self.H2, store)
+        self.assertEqual((sorted(dsc["base"]), dsc["elems"], dsc["a1"]), ([("frame", -SP)], [(0, 10, None)], "a pointer stepped by a ÷10 digit loop"))
+        copy = [i for i in img.region(self.H2) if i["mnem"] == "strb" and i["ops"] == "r0, [r3], #1"][0]["addr"]
+        self.assertEqual(img._loop_frame_span(self.H2, copy, "r3"), (12 - SP, 21 - SP, "a pointer stepped by the copy loop after a ÷10 digit loop"))
+        self.assertEqual(img._loop_frame_span(self.H2, copy - 4, "r2"), (1 - SP, 10 - SP, "a pointer stepped back by the copy loop after a ÷10 digit loop"))
+        after = [i for i in img.region(self.H2) if i["mnem"] == "add" and i["ops"] == "ip, r1, r5"][0]["addr"]
+        self.assertEqual(img._reg_range(self.H2, after, "r5"), (1, 10, "the digit count of a ÷10 loop"))
+
+    def test_a_caller_s_object_survives_such_a_callee(self):
+        """f holds a callback and hands its frame object to h; h's incoming area is shown untouched: resolved."""
+        for what, h, want in (("the loops as emitted", self.digits(), [CB_A]),
+                              ("a wrong multiplier", self.digits(magic=[("movw", "lr, #52428"), ("movt", "lr, #52428")]), None),
+                              ("the low word", self.digits(low=True), None)):
+            with self.subTest(what):
+                img, b = synth(CB + [("str", "r0, [sp, #8]"), ("add", "r0, sp, #8"), ("mov", "r1, #1234"), ("bl", call(self.H2, "h")),
+                                     ("ldr", "r1, [sp, #8]"), ("blx", "r1")], more={"h": (self.H2, h)})
+                if want is not None:
+                    self.assertEqual(targets(img, b), want)
+                else:
+                    with self.assertRaises(isa.Finding) as c:
+                        targets(img, b)
+                    self.assertIn("a call that may write the slot through a pointer it is handed, or its incoming stack words", str(c.exception))
+
+    def test_what_is_off_the_pattern_is_not_a_digit_loop(self):
+        for what, kw in (("a wrong multiplier", {"magic": [("movw", "lr, #52428"), ("movt", "lr, #52428")]}),
+                         ("a wrong shift", {"shift": "#2"}),
+                         ("the low word of the product", {"low": True}),
+                         ("an update that is not the quotient", {"update": ("mov", "r1, r3")}),
+                         ("flags set between the compare and the branch", {"flags": ("cmp", "r5, #3")}),
+                         ("a branch into the body", {"bypass": True}),
+                         ("a compare against another constant (#0: one run more than the digits)", {"cmp_imm": "#0"}),
+                         ("the head entered again from below the loop", {"reenter": True}),
+                         ("a branch out of the body before the count is stepped", {"body_exit": True}),
+                         ("a second step of the pointer in the body", {"extra": [("add", "r0, r0, #1")]})):
+            with self.subTest(what):
+                d, _c, use, _img = self.facts(self.digits(**kw))
+                if what == "a second step of the pointer in the body":
+                    self.assertEqual(list(d.values())[0]["ptr"], {}, "the pointer is not one the loop steps once")
+                else:
+                    self.assertEqual(d, {}, "recognised")
+                self.assertIsNone(use[1], "its writes to the incoming area are not pinned")
+
+    def test_the_count_and_the_copy_loop_s_ends(self):
+        for what, kw, copies in (("the count stepped twice", {"count": ("add", "r5, r5, #2")}, 0),
+                                 ("the count not stepped", {"count": ("nop", "")}, 0),
+                                 ("the copy's end from another count", {"copy_end": "r6"}, 0),
+                                 ("the copy's start from another count", {"copy_start": "r6"}, 1)):
+            with self.subTest(what):
+                d, c, use, img = self.facts(self.digits(**kw))
+                self.assertEqual(len(c), copies)
+                if what == "the copy's start from another count":
+                    load = [i for i in img.region(self.H2) if i["mnem"] == "ldrb"][0]["addr"]
+                    self.assertIsNone(img._loop_frame_span(self.H2, load, "r2"), "a pointer from a different count is not placed")
+                self.assertIsNone(use[0], "its reads of the incoming area are not pinned")
+
+    def test_the_pointer_from_the_loop_stays_in_its_frame_and_a_wider_store_does_not(self):
+        """The range is pinned either way; one that leaves the routine's own frame is the caller's (its incoming
+        words, held against the caller's slots) and is not PLACED (write placement: 'a range that leaves the frame')."""
+        def placed(h):
+            d, _c, use, img = self.facts(h)
+            self.assertTrue(d, "recognised")
+            img2, _b = synth([("bx", "lr")], more={"h": (self.H2, h)})
+            sites = isa.settle(img2, lambda im: [(a, reach) for a, what, reach, _m in im._write_sites(self.H2) if what == "stores"])
+            return use, [r for a, reach in sites for r in reach if r[0] == "unknown"]
+        use, unknown = placed(self.digits(first=("add", "r0, sp, #250")))        # 250 + 10 digits: past the frame's top
+        self.assertEqual(use[1], frozenset({0}), "the tenth digit lands in the incoming area: the caller's word 0")
+        self.assertIn(("unknown", "through an address of its frame, over a range that leaves the frame"), unknown)
+        use, unknown = placed(self.digits(first=("add", "r0, sp, #246")))        # 246 + 10 = 256: the frame's last byte
+        self.assertEqual((use, unknown), ((frozenset(), frozenset()), []))
+        use, unknown = placed(self.digits(store=("str", "r3, [r0], #1")))        # a word, stepped by one: 13 bytes
+        self.assertEqual((use, unknown), ((frozenset(), frozenset()), []), "still inside: 0 .. 13 of 256")
+        use, unknown = placed(self.digits(first=("add", "r0, sp, #244"), store=("str", "r3, [r0], #1")))
+        self.assertEqual(use[1], frozenset({0}), "244 + 9 + 4 = 257: the last word's last byte is the caller's")
+        self.assertIn(("unknown", "through an address of its frame, over a range that leaves the frame"), unknown)
+
+    def test_pre_and_post_index_and_the_copy_loop_s_own_bounds(self):
+        """The span is the BASE register's value before the access; a pre-indexed access adds its own offset."""
+        _d, c, use, img = self.facts(self.digits(copy_store=("strb", "r0, [r3, #1]!")))        # A + 1 .. A + c
+        self.assertEqual(len(c), 1)
+        self.assertEqual(use, (frozenset(), frozenset()))
+        st = [i for i in img.region(self.H2) if i["ops"] == "r0, [r3, #1]!"][0]["addr"]
+        self.assertEqual(img._loop_frame_span(self.H2, st, "r3")[:2], (12 - SP, 21 - SP))
+        dsc = img._store_desc(self.H2, st)
+        self.assertEqual(dsc["elems"], [(1, 10, None)], "base 12 - SP .. 21 - SP, plus the pre-index 1: 13 .. 22")
+        ld = [i for i in img.region(self.H2) if i["mnem"] == "ldrb"][0]["addr"]
+        self.assertEqual(img._loop_frame_span(self.H2, ld, "r2")[:2], (1 - SP, 10 - SP), "from sp + c back to sp + 1, pre-indexed by -1: sp .. sp + 9")
+        for what, kw, room in (("bytes ending at the frame's top", {"copy_dest": "#246"}, True),
+                               ("bytes one past it", {"copy_dest": "#247"}, False),
+                               ("pre-indexed bytes ending at the top", {"copy_dest": "#245", "copy_store": ("strb", "r0, [r3, #1]!")}, True),
+                               ("pre-indexed bytes one past it", {"copy_dest": "#246", "copy_store": ("strb", "r0, [r3, #1]!")}, False),
+                               ("words ending at the top", {"copy_dest": "#243", "copy_store": ("str", "r0, [r3], #1")}, True),
+                               ("words one byte past it", {"copy_dest": "#244", "copy_store": ("str", "r0, [r3], #1")}, False)):
+            with self.subTest(what):
+                _d, c, use, _img = self.facts(self.digits(**kw))
+                self.assertEqual(len(c), 1, "recognised")
+                self.assertEqual(use[1] == frozenset(), room, use)
+
+    def test_a_copy_loop_off_the_pattern(self):
+        for what, kw in (("the pointer stepped after the compare (count + 1 runs)", {"step_after_cmp": True}),
+                         ("a branch into the copy loop", {"copy_bypass": True}),
+                         ("the end from another count", {"copy_end": "r6"}),
+                         ("the end moved in the body", {"copy_extra": [("add", "ip, ip, #1")]})):
+            with self.subTest(what):
+                _d, c, use, _img = self.facts(self.digits(**kw))
+                self.assertEqual(c, {}, "recognised")
+                self.assertIsNone(use[1] if what != "the end from another count" else use[0])
+        # the reverse pointer from the SAME register but another definition of it: the count was stepped in between
+        _d, c, use, img = self.facts(self.digits(after_extra=[("add", "r5, r5, #1")]))
+        self.assertEqual(len(c), 1, "the copy loop itself: its end is r1 + the stepped count, which is still a count")
+        ld = [i for i in img.region(self.H2) if i["mnem"] == "ldrb"][0]["addr"]
+        self.assertIsNone(img._loop_frame_span(self.H2, ld, "r2"), "r2 = sp + the count BEFORE the step: not the end's count")
+        self.assertIsNone(use[0])
+
+    def test_the_magic_constant_divides_every_32_bit_value_by_ten(self):
+        """(x * 0xCCCCCCCD) >> 35 == x // 10 for EVERY unsigned 32-bit x: exhaustive, not sampled."""
+        import numpy as np
+        magic = np.uint64(isa.Image.MAGIC10)
+        step = 1 << 24
+        for lo in range(0, 1 << 32, step):
+            x = np.arange(lo, lo + step, dtype=np.uint64)
+            self.assertTrue(np.array_equal((x * magic) >> np.uint64(35), x // np.uint64(10)), f"at {lo:#x}")
+        self.assertEqual(isa.Image.MAGIC10, -(-(1 << 35) // 10))
 
 
 class TheWalkPastAFinding(unittest.TestCase):
