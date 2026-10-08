@@ -51,7 +51,7 @@ for p in (REPO_ROOT / "host", REPO_ROOT / "b3/host"):
         sys.path.insert(0, str(p))
 import b2_build_evidence as b2be  # noqa: E402  (the pinned toolchain's path; a frozen B2 module, read only)
 
-TOOL_VERSION = "b3-image-stack 1.6.0"
+TOOL_VERSION = "b3-image-stack 1.7.0"
 ELF_DEFAULT = REPO_ROOT / "b3/firmware/bsp/out/b3_app.elf"
 TC_BIN = Path(b2be.TC) / "bin"
 MAIN_LIMIT = 0x2000                     # the owner's ruling: the main path's verified bound is at most 0x2000 bytes
@@ -1282,7 +1282,7 @@ class Image:
             b = base_mnem(i["mnem"])[0]
             if a not in reached or tgt is None or not (b in ("bl", "blx") or (tgt != entry and tgt in self.func_entries)):
                 continue
-            for n in range(4):
+            for n in self._handed_regs(entry, a):          # (the registers the call hands, as `_handed` sees them)
                 needs |= {x[1] for x in self._pt_eval(entry, a, f"r{n}") if x[0] == "arg"}
             sp = self._pt_slot(entry, a, 0)
             if sp is not None:                             # its outgoing stack words the callee reads (all, if unpinned)
@@ -1603,14 +1603,271 @@ class Image:
     }
     LIBC_CONTRACTS = {k: (v + (None,))[:5] for k, v in LIBC_CONTRACTS.items()}
 
-    def _libc_contract(self, tgt: int | None):
+    # (the owner's ruling of 2026-10-08 on the arity unit) The register arguments each of them takes — its C
+    # prototype: a call hands only those (`_handed_regs`), and only while the member's OWN code shows that it uses no
+    # register at or above that number on entry (`_libc_arity`); else all four. snprintf names three and takes the
+    # rest variadic: which registers and incoming stack words those occupy follows from each proved format by the
+    # AAPCS (`_printf_layout`). vsnprintf's fourth is its va_list, a pointer it reads like any other.
+    LIBC_ARITY = {"memset": 3, "memcpy": 3, "memmove": 3, "strncpy": 3, "memcmp": 3, "strlen": 1, "strcmp": 2,
+                  "strstr": 2, "strchr": 2, "strrchr": 2, "snprintf": 3, "vsnprintf": 4}
+    LIBC_VARIADIC = frozenset({"snprintf"})
+    ALL_REGS = (0, 1, 2, 3)
+
+    def _libc_contract(self, tgt: int | None, record: bool = True):
         if tgt is None:
             return None
         c = self.LIBC_CONTRACTS.get(self.name(tgt))
         if c is None or self.member_of(tgt) != f"libc.a({c[0]})":
             return None
-        self._cache("_libc_used")[self.name(tgt)] = c
+        if record:
+            self._cache("_libc_used")[self.name(tgt)] = c
         return c
+
+    def _handed_regs(self, entry: int, a: int) -> tuple:
+        """The argument registers the call / tail at `a` hands its callee — `_handed` and the callback needs both ask
+        here: a C-library routine at its contract, its arity (fixed, shown on its code; variadic, by the proved
+        format); anything else, all four. Only what the callee is HANDED: what it clobbers and returns is unchanged."""
+        tgt = self._call_target(self.ins_at[a])
+        c = self._libc_contract(tgt)
+        if c is None:
+            return self.ALL_REGS
+        if self.name(tgt) in self.LIBC_VARIADIC:
+            lay = self._printf_layout(entry, a, tgt)
+            return self.ALL_REGS if lay is None else lay[0]
+        n = self._libc_arity(tgt)
+        return self.ALL_REGS if n is None else tuple(range(n))
+
+    def _libc_arity(self, tgt: int):
+        """LIBC_ARITY for the routine at `tgt` when its code shows it (`_arity_breach` finds nothing), else None — the
+        reason kept for rules.libc_arity. A routine asked while it is itself being checked (a cycle) is not shown."""
+        memo, busy = self._cache("_memo_libc_arity"), self._cache("_libc_arity_busy")
+        if tgt in memo:
+            return memo[tgt][0]
+        if tgt in busy:
+            return None
+        busy[tgt] = True
+        try:
+            n = self.LIBC_ARITY[self.name(tgt)]
+            why = self._isolated(self._arity_breach, tgt, n)
+        finally:
+            del busy[tgt]
+        memo[tgt] = (None if why else n, why)
+        return memo[tgt][0]
+
+    def arity_targets(self) -> list:
+        """rules.libc_arity's list: each C-library routine whose arity was asked, and each printf-family call's layout."""
+        out = []
+        for t, (n, why) in sorted(self._cache("_memo_libc_arity").items()):
+            name = self.name(t)
+            if name in self.LIBC_VARIADIC:
+                continue
+            out.append(f"{name}: all four registers — {why}" if not n else f"{name}: r0" if n == 1 else f"{name}: r0-r{n - 1}")
+        for (e, a), lay in sorted(self._cache("_printf_layouts").items()):
+            what = self.name(self._call_target(self.ins_at[a]))
+            out.append(f"{self.name(e)} {a:#x} {what}: " + ("all four registers and every incoming word — its format is "
+                       "not proved or not sized" if lay is None else
+                       f"r{', r'.join(map(str, lay[0]))}; incoming words {sorted(lay[1])}"))
+        return out
+
+    @staticmethod
+    def _mentions_arg(atoms, k: int) -> bool:
+        """Whether a value with these atoms may be (derived from) argument k's entry value, or a word read through it."""
+        def has(x):
+            if isinstance(x, tuple) and x:
+                if x[0] in ("arg", "argo", "ind") and len(x) > 1 and x[1] == k:
+                    return True
+                return any(has(y) for y in x[1:])
+            return False
+        return any(has(x) for x in atoms)
+
+    def _read_regs(self, i: dict) -> set:
+        """The core registers the instruction reads as operands (a call's arguments and a return's result are not
+        operands: the arity check looks at those itself). A destination that appears once and is not a memory base
+        is only written; movt / bfi / bfc keep part of theirs, so read it."""
+        o = re.sub(r"<[^>]*>", "", i["ops"]).replace(" ", "")
+        b = base_mnem(i["mnem"])[0]
+        fam = self._family(i)
+        if b in ("bl", "blx", "b") and branch_target(i["ops"]):
+            return set()
+        regs = self._regs(o)
+        if fam.startswith("pop") or (fam.startswith("ldm") and "{" in o):
+            m = re.match(r"(\w+)!?,\{", o)
+            return {m.group(1)} if m else set()
+        w = self.written(i)
+        bases = set(re.findall(r"\[(\w+)", o))
+        if fam.startswith(("stm", "ldm")) and re.match(r"(\w+)!?,", o):
+            bases.add(re.match(r"(\w+)!?,", o).group(1))
+        count = {r: regs.count(r) for r in regs}
+        return {r for r in count if not (r in w and count[r] == 1 and r not in bases and fam not in ("movt", "bfi", "bfc"))}
+
+    ARG_HOLDERS = ("r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "sl", "fp", "ip", "lr")
+
+    def _arity_breach(self, R: int, n: int):
+        """Where the routine's code may USE the entry value of a register at or above `n` (r<n>..r3), or None when
+        it shows none: read by an instruction; handed to a callee whose own arity is not shown to exclude that
+        position (a callee taken at LIBC_ARITY only once its code is checked; any other: all four); handed to an
+        indirect call; returned in r0; or saved where it may be read back unpinned. A save (push / stmdb sp!) is no use
+        while every later load is pinned and no frame address is handed on; a restore by pop / ldm is no use."""
+        if not self._readable(R):
+            return "its code is not in the image"
+        self.analyse(R)
+        ks = range(n, 4)
+        if not ks:
+            return None
+        region = self.region(R)
+        reached = self.sp_at.get(R, {})
+
+        def held(a, reg):
+            atoms = self._raw_reg(R, a, reg)
+            return [k for k in ks if self._mentions_arg(atoms, k)]
+        saved = False
+        for idx, i in enumerate(region):
+            a = i["addr"]
+            if a not in reached or i["mnem"] == ".data":
+                continue
+            b, cond = base_mnem(i["mnem"])
+            o = i["ops"].replace(" ", "")
+            tgt = self._call_target(i)
+            ret = b == "bx" and o == "lr" or (b in ("pop", "ldmia", "ldmfd", "ldm") and "pc" in o)
+            if idx == len(region) - 1 and (cond or self._cond(i) or not (ret or b in ("b", "bx"))):
+                return f"it may fall through at {a:#x} into what follows"
+            tail = b == "b" and tgt is not None and tgt != R and tgt in self.func_entries
+            if (b in ("bl", "blx") and branch_target(i["ops"])) or tail:
+                c_n = None
+                for j in range(4):
+                    hk = held(a, f"r{j}")
+                    if not hk:
+                        continue
+                    if c_n is None:
+                        c_n = (self._libc_arity(tgt) if tgt is not None and self._libc_contract(tgt, record=False) is not None
+                               and self.name(tgt) not in self.LIBC_VARIADIC else None)
+                        c_n = -1 if c_n is None else c_n
+                    if j < c_n or c_n < 0:
+                        return (f"r{hk[0]} may reach {self.name(tgt) if tgt is not None else 'a callee'} at {a:#x} as its r{j}, "
+                                f"which that callee's shown arity does not exclude")
+                continue
+            if b in ("blx", "bx") and o != "lr":           # an indirect call / tail: it may read every argument register
+                for j in range(4):
+                    hk = held(a, f"r{j}")
+                    if hk:
+                        return f"r{hk[0]} may reach an indirect callee at {a:#x} as its r{j}"
+            if ret:                                        # (its result is r0; a register merely left as it came
+                hk = held(a, "r0")                         # in is not returned — the caller's view of it is the
+                if hk:                                     # clobber analysis's, as for any call)
+                    return f"r{hk[0]} may be returned in r0 at {a:#x}"
+            if b in ("push", "stmdb", "stmfd") and (b == "push" or o.startswith("sp!,")):
+                if any(held(a, r) for r in reglist(i["ops"]) if r in self.ARG_HOLDERS):
+                    saved = True
+                continue
+            for r in sorted(self._read_regs(i)):
+                if r in self.ARG_HOLDERS:
+                    hk = held(a, r)
+                    if hk:
+                        return f"its entry r{hk[0]} may be read at {a:#x}, in {r} ({i['mnem']} {i['ops']})"
+        if saved:                                          # a saved argument read back where the model does not pin it,
+            for i in region:                               # or a frame address handed on (a callee may read the save)
+                a = i["addr"]
+                if a not in reached:
+                    continue
+                fam = self._family(i)
+                o = i["ops"].replace(" ", "")
+                if fam.startswith(("ldr", "vld")):
+                    m = re.search(r"\[(\w+)", o)
+                    if m and m.group(1) != "sp" and self._frameish(self._base_atoms(R, a, m.group(1))):
+                        return f"a saved argument may be read back at {a:#x} through an address the model does not pin"
+                if self._is_call(i) or base_mnem(i["mnem"])[0] == "b" and self._call_target(i) in self.func_entries:
+                    for j in range(4):
+                        if self._frameish(self._raw_reg(R, a, f"r{j}")):
+                            return f"a saved argument's frame is handed on at {a:#x}"
+        return None
+
+    # A printf conversion the model sizes: %[flags][width][.precision][length]conversion, `*` an int argument each.
+    PRINTF_SPEC = re.compile(r"%(?P<flags>[-+ #0']*)(?P<width>\*|\d+)?(?:\.(?P<prec>\*|\d*))?"
+                             r"(?P<len>hh|h|ll|l|L|j|z|t|q)?(?P<conv>[diouxXcspeEfFgGaA%])")
+
+    @classmethod
+    def printf_args(cls, fmt: str):
+        """The byte size of each variadic argument a printf format consumes, in order, after the default argument
+        promotions (4: int, unsigned, char / short promoted, a pointer, long, size_t, ptrdiff_t, wint_t; 8: long long,
+        intmax_t, double — float promoted — and long double, which is double on this ABI). None when a conversion is
+        one the model does not size (positional %n$, L with an integer, a length the conversion does not take, a
+        decorated %%, or anything else)."""
+        out, k = [], 0
+        while True:
+            k = fmt.find("%", k)
+            if k < 0:
+                return out
+            m = cls.PRINTF_SPEC.match(fmt, k)
+            if not m:
+                return None
+            k = m.end()
+            conv, ln = m["conv"], m["len"]
+            if conv == "%":
+                if m.group(0) != "%%":
+                    return None
+                continue
+            out += [4 for part in (m["width"], m["prec"]) if part == "*"]
+            if conv in "diouxX" and ln in (None, "hh", "h", "l", "z", "t"):
+                out.append(4)
+            elif conv in "diouxX" and ln in ("ll", "q", "j"):
+                out.append(8)
+            elif conv in "eEfFgGaA" and ln in (None, "l", "L"):
+                out.append(8)
+            elif conv in "cs" and ln in (None, "l"):
+                out.append(4)
+            elif conv == "p" and ln is None:
+                out.append(4)
+            else:
+                return None
+
+    @staticmethod
+    def vararg_layout(fixed: int, sizes) -> tuple:
+        """(the argument registers, the incoming stack-word offsets) a call with `fixed` named word arguments and
+        variadic ones of these sizes occupies — the AAPCS base standard, which a variadic call always uses (no VFP
+        registers): a word goes in the next core register while one is left, else on the stack; an 8-byte argument
+        first rounds the register number up to even, and when it does not fit in r0-r3 every register is taken as
+        used (NCRN = 4), it goes on the stack at an 8-byte aligned offset, and every later argument follows it there."""
+        ncrn, nsaa, regs, words = fixed, 0, set(range(fixed)), set()
+        for s in sizes:
+            if s == 8:
+                ncrn += ncrn & 1
+                if ncrn + 2 <= 4:
+                    regs |= {ncrn, ncrn + 1}
+                    ncrn += 2
+                    continue
+                ncrn, nsaa = 4, (nsaa + 7) & ~7
+            elif ncrn < 4:
+                regs.add(ncrn)
+                ncrn += 1
+                continue
+            words |= set(range(nsaa, nsaa + s, 4))
+            nsaa += s
+        return tuple(sorted(regs)), frozenset(words)
+
+    def _printf_layout(self, entry: int, a: int, tgt: int):
+        """(registers, incoming stack words) the printf-family call at `a` reads: the union over the call's proved
+        formats (`_printf_safe`'s), each laid out by `vararg_layout`; None when the format is not proved or one is
+        not sized — the call then reads every register and every incoming word."""
+        c = self._libc_contract(tgt)
+        fixed = self.LIBC_ARITY[self.name(tgt)]
+        ok, info = self._guarded("printf", (entry, a, c[4]), self._printf_compute, (True, None))
+        if not ok:
+            lay = None
+        elif info is None:                                 # read while it is being computed: its optimistic end (the
+            lay = (tuple(range(fixed)), frozenset())       # pass is accepted only once that read meets the final value)
+        else:
+            regs, words = set(), set()
+            for f in info["formats"]:
+                sizes = self.printf_args(f)
+                if sizes is None:
+                    regs = None
+                    break
+                r, w = self.vararg_layout(fixed, sizes)
+                regs |= set(r)
+                words |= w
+            lay = (tuple(sorted(regs)), frozenset(words)) if regs is not None and info["formats"] else None
+        self._cache("_printf_layouts")[(entry, a)] = lay
+        return lay
 
     def _ret_atoms(self, callee: int):
         """What a compiled routine may return in r0, as atoms of ITS OWN arguments; None when it cannot be said (a
@@ -3817,8 +4074,11 @@ class Image:
         """`_stack_use` of what the call at `a` may reach (the union over an indirect call's targets)."""
         tgt = self._call_target(self.ins_at[a])
         c = self._libc_contract(tgt)
-        if c is not None:                                  # register arity; a printf's variadic words are only read
-            return (frozenset(range(0, 64, 4)) if c[4] is not None else frozenset(), frozenset())
+        if c is not None:                                  # register arguments only — but a printf's variadic words,
+            if self.name(tgt) in self.LIBC_VARIADIC:       # only read: where its proved formats put them (unknown
+                lay = self._printf_layout(entry, a, tgt)   # when they are not proved or not sized)
+                return (None if lay is None else lay[1], frozenset())
+            return (frozenset(), frozenset())              # (vsnprintf: its va_list is a register; none of its own)
         targets = [tgt] if tgt is not None else self._indirect_targets(entry, a)
         if targets is None:
             return (None, None)
@@ -3834,7 +4094,7 @@ class Image:
         it). The four argument registers always; the stack words a readable callee reads; for an unknown callee (or a
         printf whose format is not proved free of %n, or a callee that reaches its stack arguments at an offset
         the model does not pin) every frame word at or above SP that may hold an address."""
-        out = [(m, self._raw_reg(entry, a, f"r{m}"), self._callee_summary(entry, a, m)) for m in range(4)]
+        out = [(m, self._raw_reg(entry, a, f"r{m}"), self._callee_summary(entry, a, m)) for m in self._handed_regs(entry, a)]
         tgt = self._call_target(self.ins_at[a])
         sp = self._pt_slot(entry, a, 0)
         unknown = frozenset({("other",), ("der", "frame")} | {("der", ("arg", n)) for n in (0, 1, 2, 3)})
@@ -5412,6 +5672,19 @@ WRITE_RULE = ("every write of every routine in the image — each store, and eac
               "for an entry that calls through a pointer read from memory. A routine taken at its contract has its "
               "writes through its own arguments placed at its callers by that contract. Placed writes overlapping an "
               "object that holds callback cells are listed. listed: the totals; result.writes has every site")
+ARITY_RULE = ("the argument registers a call of a C-library routine at its contract hands it (the owner's ruling of "
+              "2026-10-08): its C prototype's (Image.LIBC_ARITY), and only where the member's own code, read in this "
+              "image, uses no register at or above that number on entry — not read by an instruction, not handed to a "
+              "callee whose own arity is not shown to exclude it, not to an indirect call, not returned, a save not read "
+              "back unpinned; a routine that does not show it, or that depends on itself to, hands all four. snprintf's "
+              "variadic arguments occupy the registers and incoming stack words each proved format puts them in by the "
+              "AAPCS base standard (promoted sizes; an 8-byte one at an even register or an 8-byte aligned stack word, "
+              "and after one goes to the stack every later one does), the union over the call's formats; a format not "
+              "proved or not sized: all four registers and every incoming word. vsnprintf reads none of its own incoming "
+              "words; its va_list (r3) is handed like any pointer. An arity is what a call HANDS only: what the callee "
+              "clobbers, returns and writes is as before. The named callback contracts (Image.CONTRACTS) still hand all "
+              "four registers (not in this unit). listed: each routine's arity, or why it hands all four, and each "
+              "printf-family call's layout")
 LEAK_RULE = ("the routines one of whose frame addresses may come to rest outside the frame (stored there, or handed to a "
              "routine that may keep it): no callback is resolved from such a frame")
 
@@ -5451,7 +5724,7 @@ def proof_inputs(elf: Path) -> dict:
             "tool": TOOL_VERSION,
             "tables": _digest([Image.CONTRACTS, Image.CONTRACT_SOURCES, Image.CONTRACT_CODE, Image.LIBC_CONTRACTS, Image.NEWLIB,
                                list(Image.APP_UNITS), list(Image.PROTECTED_OBJECTS), list(Image.PROTECTED_SECTIONS),
-                               MAIN_LIMIT, STACK_TOPS, list(NAMED_CHAINS)]),
+                               MAIN_LIMIT, STACK_TOPS, list(NAMED_CHAINS), Image.LIBC_ARITY, sorted(Image.LIBC_VARIADIC)]),
             "source_root": str(REPO_ROOT),
             "contract_sources": {u: Image._unit_sha(None, u) for u in sorted(Image.CONTRACT_SOURCES)},
             "archives": {k: [str(v), sha256_file(v)] for k, v in sorted(runtime_archives().items())},
@@ -5659,6 +5932,7 @@ def _assess_once(img: "Image") -> dict:
                                                  "targets": [v[1] for _k, v in sorted(img._cache("_memo_printf").items())]},
                                  write_placement={"rule": WRITE_RULE, "targets": [
                                      f"{k.replace('_', ' ')}: {v}" for k, v in sorted(writes["total"].items())]},
+                                 libc_arity={"rule": ARITY_RULE, "targets": img.arity_targets()},
                                  frame_leaks={"rule": LEAK_RULE, "targets": [f"{n}: {w}" for n, w in sorted(img._cache("_leaks").items())]},
                                  callback_contracts={"rule": CONTRACT_RULE, "targets": [
                                      f"{n}: {c['unit']} {c['source_sha256'][:16]}… code {c['code_sha256'][:16]}… arity "

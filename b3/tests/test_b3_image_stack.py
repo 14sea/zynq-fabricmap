@@ -286,7 +286,7 @@ class TheFinalImage(unittest.TestCase):
                      "SCOPE — SYNCHRONOUS PATHS ONLY", "NOT covered", "not used as proof that no handler runs",
                      "no bound is published for an entry that calls through memory"):
             self.assertIn(said, vm["rule"])
-        self.assertEqual(self.r["tool"], "b3-image-stack 1.6.0")
+        self.assertEqual(self.r["tool"], "b3-image-stack 1.7.0")
         self.assertTrue(vm["targets"], "the library contracts the analysis relied on are named")
         self.assertLessEqual(set(vm["targets"]), set(isa.Image.LIBC_CONTRACTS))
         formats = rules["printf_formats"]["targets"]
@@ -308,6 +308,20 @@ class TheFinalImage(unittest.TestCase):
         wp = rules["write_placement"]
         self.assertIn("is not proved to miss any callback cell", wp["rule"])
         self.assertIn(f"not placed sites: {self.r['writes']['total']['not_placed_sites']}", wp["targets"])
+
+    def test_the_libc_arities_are_listed(self):
+        """The owner's ruling of 2026-10-08: each C-library routine's arity as its code shows it, or why it hands all
+        four; each printf-family call's layout — one that reads everything exactly where its format is not proved."""
+        arity = self.r["rules"]["libc_arity"]
+        self.assertIn("vsnprintf reads none of its own incoming words", arity["rule"])
+        self.assertIn("The named callback contracts (Image.CONTRACTS) still hand all four registers", arity["rule"])
+        listed = {t.split(":")[0]: t for t in arity["targets"] if " " not in t.split(":")[0]}
+        self.assertEqual(listed.get("strlen"), "strlen: r0")
+        self.assertEqual(listed.get("memcpy"), "memcpy: r0-r2")
+        calls = [t for t in arity["targets"] if " " in t.split(":")[0]]
+        self.assertTrue(calls, "the printf-family calls' layouts are listed")
+        unproved = [f for f in self.r["rules"]["printf_formats"]["targets"] if not f["no_percent_n"]]
+        self.assertEqual(sum("all four registers and every incoming word" in t for t in calls), len(unproved))
 
     def test_the_image_clears_only_the_async_abort_mask(self):
         self.assertEqual(self.r["masks"]["cleared_by_the_image"], ["A"])
@@ -1924,6 +1938,201 @@ class TheDigitLoop(unittest.TestCase):
         self.assertEqual(isa.Image.MAGIC10, -(-(1 << 35) // 10))
 
 
+class TheLibcArity(unittest.TestCase):
+    """The owner's ruling of 2026-10-08 on the arity unit: a call of a C-library routine at its contract hands only
+    the registers of its C prototype — and only where the member's own code shows it uses none above them, else all
+    four; snprintf's variadic arguments where the proved formats put them by the AAPCS. What the callee clobbers is
+    unchanged: an arity is not a promise to keep a register."""
+
+    ST, SC, SR, SN, VS, OT = 0x6000, 0x6400, 0x6800, 0x7000, 0x7400, 0x7800
+    STRLEN = [("ldrb", "r3, [r0]"), ("mov", "r0, r3"), ("bx", "lr")]      # reads r0; writes r3 and r0
+
+    def build(self, caller, strlen=None, member="libc.a(libc_a-strlen.o)", more=None):
+        routines = {"strlen": (self.ST, strlen or self.STRLEN)}
+        routines.update(more or {})
+        img, b = synth(caller, more=routines)
+        img._member_of[self.ST] = member
+        return img, b
+
+    def call_site(self, img, b, callee):
+        return [i["addr"] for i in img.funcs[b] if i["mnem"] == "bl" and isa.branch_target(i["ops"])[0] == callee][0]
+
+    def lead(self, r0, r1):
+        return [("add" if r0 == "frame" else "mov", "r0, sp, #300" if r0 == "frame" else "r0, #0"),
+                ("add" if r1 == "frame" else "mov", "r1, sp, #300" if r1 == "frame" else "r1, #0")]
+
+    def test_strlen_is_handed_only_r0(self):
+        """sp + 300 is the caller's incoming area (its entry SP + 44): left in r1, strlen does not take it."""
+        img, b = self.build(self.lead("const", "frame") + [("bl", call(self.ST, "strlen")), ("bx", "lr")])
+        a = self.call_site(img, b, self.ST)
+        self.assertEqual(img._handed_regs(b, a), (0,))
+        self.assertEqual([h[0] for h in img._handed(b, a)], [0])
+        self.assertEqual(img._stack_use_compute(b)[0], frozenset(), "nothing reaches the incoming area")
+        self.assertEqual(img._cache("_memo_libc_arity")[self.ST], (1, None))
+
+    def test_the_argument_itself_is_still_handed(self):
+        img, b = self.build(self.lead("frame", "const") + [("bl", call(self.ST, "strlen")), ("bx", "lr")])
+        a = self.call_site(img, b, self.ST)
+        self.assertEqual([h[0] for h in img._handed(b, a)], [0])
+        self.assertIsNone(img._stack_use_compute(b)[0], "strlen reads through r0 into the incoming area")
+
+    def test_code_that_reads_above_its_arity_hands_all_four(self):
+        img, b = self.build(self.lead("const", "frame") + [("bl", call(self.ST, "strlen")), ("bx", "lr")],
+                            strlen=[("ldrb", "r3, [r1]"), ("mov", "r0, r3"), ("bx", "lr")])
+        a = self.call_site(img, b, self.ST)
+        self.assertEqual(img._handed_regs(b, a), (0, 1, 2, 3))
+        self.assertIsNone(img._stack_use_compute(b)[0])
+        n, why = img._cache("_memo_libc_arity")[self.ST]
+        self.assertIsNone(n)
+        self.assertIn("its entry r1 may be read", why)
+        self.assertIn("strlen: all four registers — its entry r1 may be read", img.arity_targets()[0])
+
+    def test_a_routine_that_is_not_the_libc_member_hands_all_four(self):
+        for member in ("libc.a(libc_a-strnlen.o)", None):
+            with self.subTest(member=member):
+                img, b = self.build(self.lead("const", "frame") + [("bl", call(self.ST, "strlen")), ("bx", "lr")], member=member)
+                a = self.call_site(img, b, self.ST)
+                self.assertEqual(img._handed_regs(b, a), (0, 1, 2, 3))
+                self.assertIsNone(img._stack_use_compute(b)[0])
+
+    def test_an_arity_does_not_keep_a_register(self):
+        """After the call r1 is what strlen's code leaves there — its own write when it writes r1, whatever its
+        arity; the frame address the caller had in r1 survives only a callee whose code never writes r1."""
+        for body, kept in ((self.STRLEN, True), ([("ldrb", "r1, [r0]"), ("mov", "r0, r1"), ("bx", "lr")], False)):
+            with self.subTest(kept=kept):
+                img, b = self.build(self.lead("const", "frame") + [("bl", call(self.ST, "strlen")), ("str", "r0, [r1]"),
+                                                                   ("bx", "lr")], strlen=body)
+                a = self.call_site(img, b, self.ST)
+                self.assertEqual(img._handed_regs(b, a), (0,))
+                after = img._raw_reg(b, a + 4, "r1")
+                self.assertEqual(("frame", 300 - SP) in after, kept, sorted(after))
+                self.assertEqual("r1" in img._clobbers(self.ST), not kept)
+
+    def test_a_use_on_one_path_only(self):
+        body = [("cmp", "r0, #0"), ("beq", br(self.ST + 12, self.ST)), ("mov", "r0, r3"), ("bx", "lr")]
+        img, b = self.build(self.lead("const", "frame") + [("bl", call(self.ST, "strlen")), ("bx", "lr")], strlen=body)
+        self.assertEqual(img._handed_regs(b, self.call_site(img, b, self.ST)), (0, 1, 2, 3))
+        self.assertIn("its entry r3 may be read", img._cache("_memo_libc_arity")[self.ST][1])
+
+    def test_moved_or_fallen_through(self):
+        for body, said in (([("mov", "r0, r2"), ("bx", "lr")], "its entry r2 may be read"),
+                           ([("ldrb", "r3, [r1], #1"), ("mov", "r0, r3"), ("bx", "lr")], "its entry r1 may be read"),
+                           ([("mov", "ip, r0"), ("blx", "ip"), ("bx", "lr")], "r1 may reach an indirect callee"),
+                           ([("push", "{r3, lr}"), ("ldr", "r0, [sp, #-8]"), ("pop", "{r1, pc}")], "r3 may be returned in r0"),
+                           ([("ldrb", "r0, [r0]")], "may fall through")):
+            with self.subTest(said):
+                img, b = self.build(self.lead("const", "frame") + [("bl", call(self.ST, "strlen")), ("bx", "lr")], strlen=body)
+                self.assertEqual(img._handed_regs(b, self.call_site(img, b, self.ST)), (0, 1, 2, 3))
+                self.assertIn(said, img._cache("_memo_libc_arity")[self.ST][1])
+
+    def chain(self, strrchr, strchr, callee="strchr"):
+        """f calls strrchr (arity 2), which tail-branches to `callee` (strchr: arity 2; memcmp: 3) at SC."""
+        img, b = synth(self.lead("const", "frame") + [("bl", call(self.SR, "strrchr")), ("bx", "lr")],
+                       more={"strrchr": (self.SR, strrchr), callee: (self.SC, strchr)})
+        img._member_of[self.SR] = "libc.a(libc_a-strrchr.o)"
+        img._member_of[self.SC] = f"libc.a(libc_a-{callee}.o)"
+        return img, b, img._handed_regs(b, self.call_site(img, b, self.SR))
+
+    def test_a_tail_hand_off_needs_the_callee_s_shown_arity(self):
+        CHR = [("ldrb", "r2, [r0]"), ("mov", "r0, r2"), ("bx", "lr")]
+        tail = ("b", call(self.SC, "strchr"))
+        _img, _b, regs = self.chain([("mov", "r2, #0"), tail], CHR)
+        self.assertEqual(regs, (0, 1), "r3 untouched reaches strchr as its r3: above strchr's shown arity")
+        img, _b, regs = self.chain([("mov", "r0, r3"), tail], CHR)
+        self.assertEqual(regs, (0, 1, 2, 3), "r3 moved into strchr's r0: read")
+        self.assertIn("its entry r3 may be read", img._cache("_memo_libc_arity")[self.SR][1])
+        img, _b, regs = self.chain([("mov", "r3, #0"), ("b", call(self.SC, "memcmp"))], CHR, callee="memcmp")
+        self.assertEqual(regs, (0, 1, 2, 3), "r2 untouched reaches memcmp as its r2, inside memcmp's arity")
+        self.assertIn("may reach memcmp at", img._cache("_memo_libc_arity")[self.SR][1])
+        img, _b, regs = self.chain([("mov", "r2, #0"), tail], [("ldrb", "r2, [r3]"), ("mov", "r0, r2"), ("bx", "lr")])
+        self.assertEqual(regs, (0, 1, 2, 3), "strchr's own arity is not shown: it cannot exclude r3")
+        self.assertIsNone(img._cache("_memo_libc_arity")[self.SC][0])
+        img, _b, regs = self.chain([("mov", "r2, #0"), tail], [("mov", "r2, #0"), ("b", call(self.SR, "strrchr"))])
+        self.assertEqual(regs, (0, 1, 2, 3), "each hands r3 to the other: a cycle shows neither")
+
+    def test_a_save_is_no_use_unless_it_may_be_read_back(self):
+        OT = self.OT
+        more = {"o": (OT, [("bx", "lr")])}
+        for body, ok in (([("push", "{r3, lr}"), ("ldrb", "r0, [r0]"), ("pop", "{r3, pc}")], True),
+                         ([("push", "{r3, lr}"), ("mov", "r0, sp"), ("bl", call(OT, "o")), ("pop", "{r3, pc}")], False),
+                         ([("push", "{r3, lr}"), ("mov", "r2, sp"), ("ldr", "r0, [r2]"), ("pop", "{r3, pc}")], False)):
+            with self.subTest(ok=ok):
+                img, b = self.build(self.lead("const", "frame") + [("bl", call(self.ST, "strlen")), ("bx", "lr")],
+                                    strlen=body, more=more)
+                self.assertEqual(img._handed_regs(b, self.call_site(img, b, self.ST)), (0,) if ok else (0, 1, 2, 3))
+
+    def test_the_callback_needs_ask_the_same_helper(self):
+        """f hands its own r1 on in r1: to strlen (arity 1) that is not a need; to a strlen that reads r1, it is."""
+        for body, needed in ((self.STRLEN, False), ([("ldrb", "r3, [r1]"), ("mov", "r0, r3"), ("bx", "lr")], True)):
+            with self.subTest(needed=needed):
+                img, b = self.build([("mov", "r0, #0"), ("bl", call(self.ST, "strlen")), ("bx", "lr")], strlen=body)
+                self.assertEqual(1 in img._pointsto(b)["needs"], needed)
+
+    # ---- snprintf / vsnprintf (V2)
+
+    def test_the_promoted_sizes_of_a_format(self):
+        for fmt, sizes in (("plain", []), ("%%", []), ("%d %i %u %x %c %s %p", [4] * 7), ("%hhd %hd %ld %zu %td %lc %ls", [4] * 7),
+                           ("%lld %llu %qd %jd", [8] * 4), ("%f %e %g %a %lf %Lf", [8] * 6), ("%*d", [4, 4]),
+                           ("%-*.*f", [4, 4, 8]), ("%.*s", [4, 4]), ("%08.3llx", [8])):
+            self.assertEqual(isa.Image.printf_args(fmt), sizes, fmt)
+        for fmt in ("%5%", "%Ld", "%1$d", "%lp", "%hf", "%llf", "%llc", "%m", "%", "%!"):
+            self.assertIsNone(isa.Image.printf_args(fmt), fmt)
+
+    def test_the_aapcs_layout(self):
+        lay = isa.Image.vararg_layout
+        self.assertEqual(lay(3, []), ((0, 1, 2), frozenset()))
+        self.assertEqual(lay(3, [4]), ((0, 1, 2, 3), frozenset()))
+        self.assertEqual(lay(3, [8]), ((0, 1, 2), frozenset({0, 4})), "an 8-byte first one skips r3")
+        self.assertEqual(lay(3, [8, 4]), ((0, 1, 2), frozenset({0, 4, 8})), "and every later one follows on the stack")
+        self.assertEqual(lay(3, [4, 8]), ((0, 1, 2, 3), frozenset({0, 4})))
+        self.assertEqual(lay(3, [4, 4, 8]), ((0, 1, 2, 3), frozenset({0, 8, 12})), "8-byte aligned on the stack")
+        self.assertEqual(lay(2, [8]), ((0, 1, 2, 3), frozenset()), "an 8-byte one in an even register pair")
+        self.assertEqual(lay(2, [4, 8]), ((0, 1, 2), frozenset({0, 4})), "r3 left over: the 8-byte one skips it")
+        self.assertEqual(lay(1, [4, 8]), ((0, 1, 2, 3), frozenset()), "r1, then the pair r2-r3")
+        self.assertEqual(lay(1, [8]), ((0, 2, 3), frozenset()), "an 8-byte one skips the odd r1")
+
+    def snprintf(self, strings, lead=None, name="snprintf", member="libc.a(libc_a-snprintf.o)"):
+        lead = lead or [("movw", "r2, #36864"), ("movt", "r2, #0")]
+        seq = lead + [("add", "r3, sp, #8"), ("add", "r0, sp, #64"), ("mov", "r1, #16"), ("bl", call(self.SN, name)), ("bx", "lr")]
+        img, b = synth(seq, more={name: (self.SN, [("bx", "lr")])}, library=(name,))
+        img._member_of[self.SN] = member
+        img._cstring = lambda a, table=strings: table.get(a)
+        return img, b, self.call_site(img, b, self.SN)
+
+    def test_snprintf_reads_where_its_format_puts_its_arguments(self):
+        for fmt, regs, words in (("%d", (0, 1, 2, 3), frozenset()), ("%lld", (0, 1, 2), frozenset({0, 4})),
+                                 ("%d %f %s", (0, 1, 2, 3), frozenset({0, 4, 8})), ("no argument", (0, 1, 2), frozenset())):
+            with self.subTest(fmt):
+                img, b, a = self.snprintf({0x9000: fmt})
+                self.assertEqual(img._printf_layout(b, a, self.SN), (regs, words))
+                self.assertEqual(img._handed_regs(b, a), regs)
+                self.assertEqual(img._stack_use_at(b, a), (words, frozenset()))
+                self.assertEqual([h[0] for h in img._handed(b, a)], list(regs))
+
+    def test_two_possible_formats_are_joined(self):
+        lead = [("cmp", "r5, #0"), ("movwge", "r2, #36864"), ("movwlt", "r2, #36868"), ("movtge", "r2, #0"), ("movtlt", "r2, #1")]
+        img, b, a = self.snprintf({0x9000: "%lld", FMT2: "%d %d"}, lead=lead)
+        self.assertEqual(img._printf_layout(b, a, self.SN), ((0, 1, 2, 3), frozenset({0, 4})))
+
+    def test_a_format_not_proved_or_not_sized_reads_everything(self):
+        for strings, lead in (({0x9000: "%Ld"}, None), ({0x9000: "%n"}, None), ({}, None),
+                              ({0x9000: "%d"}, [("ldr", "r2, [r6]")])):
+            with self.subTest(strings=strings, lead=lead):
+                img, b, a = self.snprintf(strings, lead=lead)
+                self.assertIsNone(img._printf_layout(b, a, self.SN))
+                self.assertEqual(img._handed_regs(b, a), (0, 1, 2, 3))
+                self.assertIsNone(img._stack_use_at(b, a)[0], "no incoming word is excluded")
+        img, b, a = self.snprintf({0x9000: "%Ld"})
+        img._printf_layout(b, a, self.SN)
+        self.assertIn("all four registers and every incoming word", img.arity_targets()[-1])
+
+    def test_vsnprintf_reads_none_of_its_own_incoming_words_but_takes_its_va_list(self):
+        img, b, a = self.snprintf({0x9000: "%d"}, name="vsnprintf", member="libc.a(libc_a-vsnprintf.o)")
+        self.assertEqual(img._stack_use_at(b, a), (frozenset(), frozenset()))
+        self.assertEqual([h[0] for h in img._handed(b, a)], [0, 1, 2, 3], "r3, its va_list, is handed")
+        self.assertEqual([x for x in img._handed(b, a) if x[0] == 3][0][1], frozenset({("frame", 8 - SP)}))
+
+
 class TheWalkPastAFinding(unittest.TestCase):
     """`depth` with a collector lists every finding it can decide independently: a refused edge leaves what is under
     it unwalked (and says so), the other edges are walked on, and the node and all above it are tainted — the number
@@ -2030,6 +2239,8 @@ class TheAssessmentCache(unittest.TestCase):
                 "a contract's bound source digest": mock.patch.dict(isa.Image.CONTRACT_SOURCES, {APP: "3" * 64}),
                 "a contract's bound code digest": mock.patch.dict(isa.Image.CONTRACT_CODE, {"sha_emit": "4" * 64}),
                 "a library contract": mock.patch.dict(isa.Image.LIBC_CONTRACTS, {"memcpy": ("x.o", 0, 2, "arg0", None)}),
+                "a library arity": mock.patch.dict(isa.Image.LIBC_ARITY, {"memcpy": 4}),
+                "the variadic members": mock.patch.object(isa.Image, "LIBC_VARIADIC", frozenset({"snprintf", "vsnprintf"})),
                 "the main limit": mock.patch.object(isa, "MAIN_LIMIT", 0x4000),
                 "the tool version": mock.patch.object(isa, "TOOL_VERSION", "another"),
                 "the source root": mock.patch.object(isa, "REPO_ROOT", twin),
