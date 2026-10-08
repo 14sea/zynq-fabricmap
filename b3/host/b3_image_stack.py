@@ -1706,8 +1706,9 @@ class Image:
         """Where the routine's code may USE the entry value of a register at or above `n` (r<n>..r3), or None when
         it shows none: read by an instruction; handed to a callee whose own arity is not shown to exclude that
         position (a callee taken at LIBC_ARITY only once its code is checked; any other: all four); handed to an
-        indirect call; returned in r0; or saved where it may be read back unpinned. A save (push / stmdb sp!) is no use
-        while every later load is pinned and no frame address is handed on; a restore by pop / ldm is no use."""
+        indirect call; returned in r0 (by a pop / ldm into r0: what it loads); or saved where it may be read back
+        unpinned. A save (push / stmdb sp!) is no use while every later load is pinned and no frame address is handed
+        on, in an argument register or in an incoming word the callee reads; a restore by pop / ldm is no use."""
         if not self._readable(R):
             return "its code is not in the image"
         self.analyse(R)
@@ -1752,8 +1753,12 @@ class Image:
                     if hk:
                         return f"r{hk[0]} may reach an indirect callee at {a:#x} as its r{j}"
             if ret:                                        # (its result is r0; a register merely left as it came
-                hk = held(a, "r0")                         # in is not returned — the caller's view of it is the
-                if hk:                                     # clobber analysis's, as for any call)
+                if b != "bx" and "r0" in reglist(i["ops"]):     # in is not returned — the caller's view of it is the
+                    atoms = self._writer_atoms(R, i, "r0")      # clobber analysis's, as for any call). A pop / ldm
+                    hk = [k for k in ks if self._mentions_arg(atoms, k)]   # that loads r0 returns what it loads
+                else:
+                    hk = held(a, "r0")
+                if hk:
                     return f"r{hk[0]} may be returned in r0 at {a:#x}"
             if b in ("push", "stmdb", "stmfd") and (b == "push" or o.startswith("sp!,")):
                 if any(held(a, r) for r in reglist(i["ops"]) if r in self.ARG_HOLDERS):
@@ -1779,6 +1784,13 @@ class Image:
                     for j in range(4):
                         if self._frameish(self._raw_reg(R, a, f"r{j}")):
                             return f"a saved argument's frame is handed on at {a:#x}"
+                    reads = self._stack_use_at(R, a)[0]    # (and in the incoming words the callee reads)
+                    offs = reached.get(a, frozenset())
+                    if reads and len(offs) != 1 or reads is None:
+                        return f"a saved argument's frame may be handed on at {a:#x} in stack words the model does not pin"
+                    for k in sorted(reads):
+                        if self._frameish(self._raw_slot(R, a, k - next(iter(offs)))):
+                            return f"a saved argument's frame is handed on at {a:#x}, in the callee's incoming word {k}"
         return None
 
     # A printf conversion the model sizes: %[flags][width][.precision][length]conversion, `*` an int argument each.
@@ -5675,8 +5687,9 @@ WRITE_RULE = ("every write of every routine in the image — each store, and eac
 ARITY_RULE = ("the argument registers a call of a C-library routine at its contract hands it (the owner's ruling of "
               "2026-10-08): its C prototype's (Image.LIBC_ARITY), and only where the member's own code, read in this "
               "image, uses no register at or above that number on entry — not read by an instruction, not handed to a "
-              "callee whose own arity is not shown to exclude it, not to an indirect call, not returned, a save not read "
-              "back unpinned; a routine that does not show it, or that depends on itself to, hands all four. snprintf's "
+              "callee whose own arity is not shown to exclude it, not to an indirect call, not returned (by a pop / ldm "
+              "into r0: what it loads), a save neither read back unpinned nor its frame handed on, in an argument "
+              "register or in an incoming word the callee reads; a routine that does not show it, or that depends on itself to, hands all four. snprintf's "
               "variadic arguments occupy the registers and incoming stack words each proved format puts them in by the "
               "AAPCS base standard (promoted sizes; an 8-byte one at an even register or an 8-byte aligned stack word, "
               "and after one goes to the stack every later one does), the union over the call's formats; a format not "

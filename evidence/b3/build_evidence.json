@@ -1,5 +1,5 @@
 {
- "at": "2026-10-08T104850Z",
+ "at": "2026-10-08T174258Z",
  "bsp_inputs": {
   "build_script_lists": {
    "APP_SRCS": [
@@ -1637,10 +1637,9 @@
  "git": {
   "dirty": [
    "b3/host/b3_image_stack.py",
-   "b3/tests/test_b3_build_evidence.py",
    "b3/tests/test_b3_image_stack.py"
   ],
-  "head": "6d61e64e9af177e5668ae31976117c86472b8eee"
+  "head": "4860f68dbbe7d47734366b3390ba277000b920a4"
  },
  "image": {
   "bytes": 131092,
@@ -2568,7 +2567,7 @@
     ]
    },
    "libc_arity": {
-    "rule": "the argument registers a call of a C-library routine at its contract hands it (the owner's ruling of 2026-10-08): its C prototype's (Image.LIBC_ARITY), and only where the member's own code, read in this image, uses no register at or above that number on entry \u2014 not read by an instruction, not handed to a callee whose own arity is not shown to exclude it, not to an indirect call, not returned, a save not read back unpinned; a routine that does not show it, or that depends on itself to, hands all four. snprintf's variadic arguments occupy the registers and incoming stack words each proved format puts them in by the AAPCS base standard (promoted sizes; an 8-byte one at an even register or an 8-byte aligned stack word, and after one goes to the stack every later one does), the union over the call's formats; a format not proved or not sized: all four registers and every incoming word. vsnprintf reads none of its own incoming words; its va_list (r3) is handed like any pointer. An arity is what a call HANDS only: what the callee clobbers, returns and writes is as before. The named callback contracts (Image.CONTRACTS) still hand all four registers (not in this unit). listed: each routine's arity, or why it hands all four, and each printf-family call's layout",
+    "rule": "the argument registers a call of a C-library routine at its contract hands it (the owner's ruling of 2026-10-08): its C prototype's (Image.LIBC_ARITY), and only where the member's own code, read in this image, uses no register at or above that number on entry \u2014 not read by an instruction, not handed to a callee whose own arity is not shown to exclude it, not to an indirect call, not returned (by a pop / ldm into r0: what it loads), a save neither read back unpinned nor its frame handed on, in an argument register or in an incoming word the callee reads; a routine that does not show it, or that depends on itself to, hands all four. snprintf's variadic arguments occupy the registers and incoming stack words each proved format puts them in by the AAPCS base standard (promoted sizes; an 8-byte one at an even register or an 8-byte aligned stack word, and after one goes to the stack every later one does), the union over the call's formats; a format not proved or not sized: all four registers and every incoming word. vsnprintf reads none of its own incoming words; its va_list (r3) is handed like any pointer. An arity is what a call HANDS only: what the callee clobbers, returns and writes is as before. The named callback contracts (Image.CONTRACTS) still hand all four registers (not in this unit). listed: each routine's arity, or why it hands all four, and each printf-family call's layout",
     "targets": [
      "strcmp: r0-r1",
      "memcpy: r0-r2",

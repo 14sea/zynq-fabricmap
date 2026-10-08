@@ -2061,6 +2061,45 @@ class TheLibcArity(unittest.TestCase):
                                     strlen=body, more=more)
                 self.assertEqual(img._handed_regs(b, self.call_site(img, b, self.ST)), (0,) if ok else (0, 1, 2, 3))
 
+    def test_a_pop_into_r0_returns_what_it_loads(self):
+        """(the owner's HOLD on 4860f68, P1) push {r1, lr}; mov r0, #0; pop {r0, pc} returns the entry r1 — what the
+        pop loads, not the r0 before it. Restored into r1 instead, nothing is returned."""
+        for restored, regs in (("r1", (0,)), ("r0", (0, 1, 2, 3))):
+            with self.subTest(restored=restored):
+                img, b = self.build(self.lead("const", "frame") + [("bl", call(self.ST, "strlen")), ("bx", "lr")],
+                                    strlen=[("push", "{r1, lr}"), ("mov", "r0, #0"), ("pop", f"{{{restored}, pc}}")])
+                img.sp_at[self.ST] = {self.ST: frozenset({0}), self.ST + 4: frozenset({8}), self.ST + 8: frozenset({8})}
+                img.local[self.ST] = 8
+                self.assertEqual(img._handed_regs(b, self.call_site(img, b, self.ST)), regs)
+                if restored == "r0":
+                    self.assertIn("r1 may be returned in r0", img._cache("_memo_libc_arity")[self.ST][1])
+
+    def test_a_save_handed_on_in_an_incoming_word(self):
+        """(the owner's HOLD on 4860f68, P1) the saved entry r1's address goes out as the fifth argument: refused when
+        the callee reads that word, accepted when it reads no incoming word."""
+        body = [("push", "{r1, lr}"), ("sub", "sp, sp, #8"), ("add", "ip, sp, #8"), ("str", "ip, [sp]"),
+                ("mov", "r0, #0"), ("mov", "r1, #0"), ("mov", "r2, #0"), ("mov", "r3, #0"),
+                ("bl", call(self.OT, "o")), ("add", "sp, sp, #8"), ("pop", "{r1, pc}")]
+        for reads, regs in ((False, (0,)), (True, (0, 1, 2, 3)), (None, (0, 1, 2, 3))):
+            with self.subTest(reads_the_fifth=reads):
+                callee = [("ldr", "ip, [sp]"), ("ldr", "r0, [ip]"), ("bx", "lr")] if reads else [("bx", "lr")]
+                img, b = self.build(self.lead("const", "frame") + [("bl", call(self.ST, "strlen")), ("bx", "lr")],
+                                    strlen=body, more={"o": (self.OT, callee)})
+                if reads is None:                          # (a callee reaching its incoming words unpinned)
+                    real = img._stack_use
+                    img._stack_use = lambda c, _r=real: (None, None) if c == self.OT else _r(c)
+                img.sp_at[self.ST] = {self.ST + 4 * k: frozenset({off}) for k, off in enumerate([0, 8] + [16] * 8 + [8])}
+                img.local[self.ST] = 16
+                img.sp_at[self.OT] = {self.OT + 4 * k: frozenset({0}) for k in range(len(callee))}
+                img.local[self.OT] = 0
+                for edge in img.edges[self.ST]:
+                    edge["at"] = 16
+                self.assertEqual(img._stack_use(self.OT)[0], {False: frozenset(), True: frozenset({0}), None: None}[reads])
+                self.assertEqual(img._handed_regs(b, self.call_site(img, b, self.ST)), regs)
+                if reads is not False:
+                    self.assertIn("in the callee's incoming word 0" if reads else "in stack words the model does not pin",
+                                  img._cache("_memo_libc_arity")[self.ST][1])
+
     def test_the_callback_needs_ask_the_same_helper(self):
         """f hands its own r1 on in r1: to strlen (arity 1) that is not a need; to a strlen that reads r1, it is."""
         for body, needed in ((self.STRLEN, False), ([("ldrb", "r3, [r1]"), ("mov", "r0, r3"), ("bx", "lr")], True)):
