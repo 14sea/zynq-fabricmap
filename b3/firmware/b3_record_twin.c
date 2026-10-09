@@ -39,6 +39,9 @@
  *          the ledger cartographer observes the specimen -> LEDGER <json> (the entry, map_version before)
  *   Z <arm> <lseed> <oseed> <budget> <evals> <gen> <best> <fit:born:hex> x4
  *          a SYNTHETIC search state beside the ledger cartographer -> TEXT <bytes>, COMMIT <hex>
+ *   R <O|Z>   the byte ranges the commitment of the O arm's state (O) or of the last synthetic state (Z) is hashed
+ *          in, call for call -> EMIT <n>:<hex> ... (the owner's B-2 ruling of 2026-10-09: the image's compile branch,
+ *          `make record-twin-image`, against this emitter branch, range for range)
  *   Q      exit 0
  */
 #include "b2_search.h"
@@ -57,7 +60,7 @@
 
 static b2_search search, synth;
 static b3_carto carto, lcarto, scratch;
-static int have_search, pair;
+static int have_search, have_synth, pair;
 static uint16_t delta[B3_CARTO_POSITIONS], newly[B3_CARTO_N];                        /* the O arm's: last_entry points here */
 static uint16_t moved[B3_CARTO_N], e_delta[B3_CARTO_POSITIONS], e_newly[B3_CARTO_N];  /* the E command's own */
 static char json[JSON_MAX];
@@ -70,6 +73,77 @@ static void emit_stdout(void *ctx, const char *bytes, size_t n)
     (void)ctx;
     fwrite(bytes, 1, n, stdout);
 }
+
+/* One emitted byte range, as the R command lists it: " <n>:<the bytes in hex>". */
+static void emit_range(void *ctx, const char *bytes, size_t n)
+{
+    size_t i;
+    (void)ctx;
+    printf(" %lu:", (unsigned long)n);
+    for (i = 0; i < n; i++)
+        printf("%02x", (unsigned)(unsigned char)bytes[i]);
+}
+
+#ifdef B3_EMIT_SHA
+/* The image's compile branch (`make record-twin-image`: -DB3_EMIT_SHA, linked with --wrap=p3_sha256_update). The
+ * renderers call b3_sha_sink directly and it hands each byte range to p3_sha256_update; the wrap sees every range in
+ * the order it is hashed and, while `tap` is set, shows it before hashing it. The driver prints the texts this way:
+ * what it prints IS what the image's sink hashed. */
+static void (*tap)(void *ctx, const char *bytes, size_t n);
+
+void __real_p3_sha256_update(p3_sha256 *c, const uint8_t *data, size_t n);
+void __wrap_p3_sha256_update(p3_sha256 *c, const uint8_t *data, size_t n);
+
+void __wrap_p3_sha256_update(p3_sha256 *c, const uint8_t *data, size_t n)
+{
+    if (tap)
+        tap(NULL, (const char *)data, n);
+    __real_p3_sha256_update(c, data, n);
+}
+
+static void render_commitment(const b2_search *s, const b3_carto *c, void (*to)(void *, const char *, size_t))
+{
+    p3_sha256 h;
+    p3_sha256_init(&h);
+    tap = to;
+    (void)b3_commitment_render(s, c, &h);
+    tap = NULL;
+}
+
+static void render_search(const b2_search *s, void (*to)(void *, const char *, size_t))
+{
+    p3_sha256 h;
+    p3_sha256_init(&h);
+    tap = to;
+    (void)b3_search_state_render(s, &h);
+    tap = NULL;
+}
+
+/* R: every byte range b3_state_hex itself hashes, call for call. */
+static void emitted_ranges(const b2_search *s, const b3_carto *c)
+{
+    char hex[65];
+    tap = emit_range;
+    b3_state_hex(s, c, hex);
+    tap = NULL;
+}
+#else
+static void render_commitment(const b2_search *s, const b3_carto *c, void (*to)(void *, const char *, size_t))
+{
+    (void)b3_commitment_render(s, c, to, NULL);
+}
+
+static void render_search(const b2_search *s, void (*to)(void *, const char *, size_t))
+{
+    (void)b3_search_state_render(s, to, NULL);
+}
+
+/* R: every byte range the renderers emit, call for call. */
+static void emitted_ranges(const b2_search *s, const b3_carto *c)
+{
+    render_commitment(s, c, emit_range);
+}
+#endif
 
 static void done(void) { fflush(stdout); }
 
@@ -172,7 +246,7 @@ static void print_commit(const b2_search *s, const b3_carto *c)
 static void print_text(const b2_search *s, const b3_carto *c)
 {
     fputs("TEXT ", stdout);
-    b3_commitment_render(s, c, emit_stdout, NULL);
+    render_commitment(s, c, emit_stdout);
     fputc('\n', stdout);
 }
 
@@ -266,7 +340,7 @@ static void cmd_measure(const char *p)
     have_entry = 1;
     print_text(&search, &carto);
     fputs("SEARCH ", stdout);
-    b3_search_state_render(&search, emit_stdout, NULL);
+    render_search(&search, emit_stdout);
     fputc('\n', stdout);
     print_commit(&search, &carto);
     len = b3_ledger_json(&last_entry, json, sizeof(json));
@@ -528,6 +602,7 @@ static void cmd_synthetic(const char *p)
     int32_t best;
     int i, j;
     memset(&synth, 0, sizeof(synth));
+    have_synth = 0;                               /* until this Z parses whole */
     if (skip(&p) < 0 || parse_u32(&p, &arm) < 0 || arm > 0x7FFFFFFFu) {
         puts("ERR cannot parse Z");
         return;
@@ -577,8 +652,26 @@ static void cmd_synthetic(const char *p)
     synth.evals = u[3];
     synth.generation = u[4];
     synth.best = best;
+    have_synth = 1;
     print_text(&synth, &lcarto);
     print_commit(&synth, &lcarto);
+}
+
+/* R O | R Z: the byte ranges the commitment of the O arm's state (O) or of the last synthetic state beside the
+ * ledger cartographer (Z) is hashed in, call for call -> EMIT <n>:<hex> ... */
+static void cmd_ranges(const char *p)
+{
+    if (strcmp(p, " O") == 0 && have_search) {
+        fputs("EMIT", stdout);
+        emitted_ranges(&search, &carto);
+    } else if (strcmp(p, " Z") == 0 && have_synth) {
+        fputs("EMIT", stdout);
+        emitted_ranges(&synth, &lcarto);
+    } else {
+        puts("ERR cannot parse R, or no such state");
+        return;
+    }
+    fputc('\n', stdout);
 }
 
 int main(void)
@@ -602,7 +695,7 @@ int main(void)
         else if (strcmp(line, "S") == 0) {
             if (have_search) {
                 fputs("SEARCH ", stdout);
-                b3_search_state_render(&search, emit_stdout, NULL);
+                render_search(&search, emit_stdout);
                 fputc('\n', stdout);
             } else {
                 puts("ERR no search");
@@ -632,6 +725,8 @@ int main(void)
             cmd_ledger(line + 1);
         else if (line[0] == 'Z' && line[1] == ' ')
             cmd_synthetic(line + 1);
+        else if (line[0] == 'R' && line[1] == ' ')
+            cmd_ranges(line + 1);
         else
             puts("ERR unknown command");
         done();

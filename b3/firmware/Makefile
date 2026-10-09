@@ -17,7 +17,7 @@ CC      ?= cc
 CFLAGS  ?= -std=c99 -O2 -Wall -Wextra -Werror -pedantic -Wshadow -Wstrict-prototypes -Wmissing-prototypes -Wconversion
 BUILD   ?= $(abspath $(CURDIR)/../../build/b3_firmware)
 
-.PHONY: twin record-twin wire-twin wire-parity orch-twin clean
+.PHONY: twin record-twin record-twin-image wire-twin wire-parity orch-twin clean
 twin: $(BUILD)/b3_carto_twin
 
 $(BUILD)/b3_carto_twin: b3_carto_twin.c b3_carto.c b3_carto.h
@@ -34,6 +34,16 @@ record-twin: $(BUILD)/b3_record_twin
 $(BUILD)/b3_record_twin: $(RECORD_SRC) $(RECORD_HDR)
 	@mkdir -p $(BUILD)
 	$(CC) $(CFLAGS) -o $@ $(RECORD_SRC)
+
+# B-2 (the owner's ruling of 2026-10-09): `make record-twin-image` builds the SAME driver from the same sources in the
+# image's compile branch (IMAGE_BRANCH, as bsp/build.sh compiles the image): the renderers call b3_sha_sink directly,
+# no emitter pointer. Linked with --wrap=p3_sha256_update, the driver sees every byte range the sink hashes, in order.
+IMAGE_BRANCH = -DB3_EMIT_SHA
+record-twin-image: $(BUILD)/b3_record_twin_image
+
+$(BUILD)/b3_record_twin_image: $(RECORD_SRC) $(RECORD_HDR)
+	@mkdir -p $(BUILD)
+	$(CC) $(CFLAGS) $(IMAGE_BRANCH) -Wl,--wrap=p3_sha256_update -o $@ $(RECORD_SRC)
 
 # Stage 3: `make wire-twin` builds the host driver that puts this image's wire bytes (b3_wire.c, derived from
 # firmware/b2/b2_wire.c) in front of the production validator; `make wire-parity` builds ONE parity driver
