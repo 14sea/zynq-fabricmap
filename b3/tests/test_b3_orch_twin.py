@@ -86,7 +86,8 @@ B2_FRAME_EXCEPTIONS = {("host", "b2_search.c", "select_generation"), ("arm", "b2
 B2_FRAME_CAP = 2048
 ENTRY_POINTS = ("b3_orch_init", "b3_orch_next", "b3_orch_observe", "b3_orch_unobserved", "b3_orch_record_block",
                 "b3_page_slice", "b3_pair_seeds", "b3_profile_seeds")
-EMITTERS = ("sha_emit",)                     # the only emitter a board unit hands b3_carto_state_render / b3_commitment_render
+EMITTERS = ("b3_sha_sink",)                  # the only emitter b3_state_hex hands the renderers (the host's branch;
+                                             # the image's calls it directly, B-2)
 # ASSUMED library frames (not proven bounds; image stage 5 measures the libc actually linked)
 LIBRARY_ALLOWANCE = {"snprintf": 2048, "vsnprintf": 2048, "memcpy": 128, "memset": 128, "strlen": 64, "memmove": 128,
                      "__stack_chk_fail": 64,
@@ -664,7 +665,8 @@ class TheStack(unittest.TestCase):
         arm = Path(be.TC) / "bin/arm-none-eabi-gcc"
         self.assertTrue(arm.is_file(), f"the pinned ARM toolchain is absent at {arm}: a failure, not a skip")
         cases = {"host": [os.environ.get("CC", "cc"), "-std=c99", "-O2", "-Wall", "-Wextra", "-Werror", "-pedantic"],
-                 "arm": [str(arm), *be.ARCH_FLAGS, "-std=c99", "-O2", "-ffreestanding", "-Wall", "-Wextra", "-Werror", "-pedantic"]}
+                 "arm": [str(arm), *be.ARCH_FLAGS, "-std=c99", "-O2", "-ffreestanding", "-Wall", "-Wextra", "-Werror", "-pedantic",
+                         "-DB3_EMIT_SHA"]}                 # the board's units in the image's compile branch (B-2)
         seen_exceptions: set = set()
         for cname, cmd in cases.items():
             out = BUILD / f"stack_usage_stage4_{cname}"

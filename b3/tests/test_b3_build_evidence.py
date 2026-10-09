@@ -81,8 +81,9 @@ class Committed(unittest.TestCase):
         self.assertNotIn("unpublished", st["entries"]["main"], "no main bound was even computed")
         self.assertGreaterEqual(sum(f.startswith("main (_start): ") and "the read-only table" in f and "may be written" in f
                                     for f in st["findings"]), 1, "main is refused where it reads a table's callback")
-        self.assertEqual(sum(f.startswith("main (_start): b3_state_hex: the call at ") for f in st["findings"]), 1,
-                         "and the finding that refusal used to hide is listed")
+        self.assertEqual(sum(f.startswith("main (_start): b3_state_hex: ") or f.startswith("main (_start): b3_carto_state_render: ")
+                             for f in st["findings"]), 0,
+                         "the frame-object emitter findings are gone with the emitter pointer (the owner's B-2 ruling)")
         self.assertGreater(sum("write(s) not placed" in f for f in st["findings"]), 100)
         self.assertGreater(sum("the frame cell at slot" in f and "is not resolved: " in f for f in st["findings"]), 0,
                            "each unresolved frame cell is a finding, with what blocked it")

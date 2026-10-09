@@ -3711,7 +3711,7 @@ class Image:
     CONTRACT_SOURCES = {
         "b3/firmware/b3_app.c": "2f7f1660d4f598c483139de4bd45d22afe273eecb7876e7419f142db1de8ff66",
         "b3/firmware/p3_derive.c": "21b4d7a9b4379a6d2d5ff9a76e111d1ae1641305a4647e18f70767c7af50d730",
-        "b3/firmware/b3_record.c": "5c9e433e5732dc9f6eea504c5b21a70ceb70f41b33d6916c24d56d89ba6ab8ba",
+        "b3/firmware/b3_record.c": "35cdf9f7136d041e2456b33c719fbad5bc98e7552db0c8e210331df7bd492118",
     }
     CONTRACTS = {
         "rectx_parse_cb": {"unit": "b3/firmware/b3_app.c", "arity": 5, "writes": {0: "STR", 1: ("arg", 2), 3: 4},
@@ -3734,11 +3734,13 @@ class Image:
                                  "n < max — within out[0, max)"},
         "rectx_recv_cb": None,
         "pull_recv_cb": None,
-        "sha_emit": {"unit": "b3/firmware/b3_record.c", "arity": 3, "writes": {0: 108}, "returns": "int",
-                     "source": "p3_sha256_update((p3_sha256 *)ctx, bytes, n): c->len (8 at 32), c->buf[c->n, c->n + "
-                               "take) with take <= 64 - c->n (inside buf, 40..104), c->n (4 at 104), sha256_block("
-                               "c->h, c->buf) writes h (0..32) and its own w[64]; sizeof(p3_sha256) = 108. Precondition: "
-                               "ctx is a p3_sha256 set up by p3_sha256_init (c->n < 64, kept by update)"},
+        # (the owner's B-2 ruling of 2026-10-09: sha_emit's contract, moved to the direct SHA sink with the same range
+        #  and conditions — the image's renderers call it directly, no longer through an emitter pointer)
+        "b3_sha_sink": {"unit": "b3/firmware/b3_record.c", "arity": 3, "writes": {0: 108}, "returns": "int",
+                        "source": "p3_sha256_update((p3_sha256 *)ctx, bytes, n): c->len (8 at 32), c->buf[c->n, c->n + "
+                                  "take) with take <= 64 - c->n (inside buf, 40..104), c->n (4 at 104), sha256_block("
+                                  "c->h, c->buf) writes h (0..32) and its own w[64]; sizeof(p3_sha256) = 108. Precondition: "
+                                  "ctx is a p3_sha256 set up by p3_sha256_init (c->n < 64, kept by update)"},
     }
     SHA = ("p3_sha256 is {uint32_t h[8]; uint64_t len; uint8_t buf[64]; size_t n} = 108 bytes. sha256_block(h, p) writes h[0..8) and its own w[64] only. Precondition for update / final / words: c was set up by p3_sha256_init (c->n < 64, which update keeps: take <= 64 - c->n)")
     CONTRACTS.update({
@@ -3759,19 +3761,19 @@ class Image:
     CONTRACTS["rectx_recv_cb"] = dict(CONTRACTS["tx_recv_cb"])
     CONTRACTS["pull_recv_cb"] = dict(CONTRACTS["tx_recv_cb"])
     CONTRACT_CODE = {                                  # name -> the closure digest it is bound to (this image)
-        "p3_hex": "96dc4ca59b157f590820a34fe1cbda6f63c96bbbd2b4c41fea2d9ad51d0b2b92",
-        "p3_sha256_final": "ab9f4a86a6c8814ba361c0052c477622a682c81f9def945aa2da7b3c000dfd4b",
-        "p3_sha256_init": "53dcdf6551d5c4b8797b30c98ed768eb9b6d9e7a0283d91b8ce0c621be5dab61",
-        "p3_sha256_update": "9dc14505f1488f71ed29cd48815da26d2bc8afcec75874df35229b73fd1ec37c",
-        "p3_sha256_words": "532af8d21f83ff7b66b8385d456591bb260c518370201899771b2391d39fcdc0",
-        "pull_parse_cb": "0b191ebf788a6ffa878d582d06802ec090c9785620ed7b0eb570353f5ccf7781",
-        "pull_payload_fields_cb": "4ea251775f22295b7e4a76614cbd8c1677d742cc4a34da5d621d64a29afbb842",
-        "pull_recv_cb": "85e02c189c564f15b033c086bcda57b93e4bf9f387011f0e99af49517360f119",
-        "rectx_parse_cb": "72e9dda05e40808496b3a81f396505cd0d45d50ef53f8578f7a9cf5971cd2be9",
-        "rectx_payload_seq_cb": "21277725af553d07e572862953e444e26eed02f4ad71f90fd4b38cfb06b33e7d",
-        "rectx_recv_cb": "14a874c7da636c79c27c38ceaed885ba4d0dd8ed00e513f28b20254cca58ae78",
-        "sha_emit": "d1967bf1ba6f1b07e4f11c8e05c647b9549caaf37145bc8cf3d43703acabc573",
-        "tx_recv_cb": "d4fbc942382cf09dd440cf4081ccce01e09527ce0a9e71c34e6d7fbd9183d481",
+        "b3_sha_sink": "b81c7e91e164588d7fd48b85758b8edb6df39ca7286b079fbf4eb8d6e72fe850",
+        "p3_hex": "0cc2296f4668b27c9734b357b0de86b00821cb6d2bc93fa897ba37600b56ea65",
+        "p3_sha256_final": "95bff0cfa16c0916a96503e622714860168f9f5ae2ae8f085e7f12eb9d66a307",
+        "p3_sha256_init": "456da1bef38d5af45a037fff3e58aff2d7c182681b34d5b85f47572d3bbb8005",
+        "p3_sha256_update": "094d6613164ea9c3703f71b1d2071cb94c8f1c65bfe2e60bacdadbbee6116ab0",
+        "p3_sha256_words": "b556e90e9b5f9efd82ffe9aa15399cbfe36d8ec04ff118ff7458995963807c45",
+        "pull_parse_cb": "4154403f468017522a2def9a1bf4c5f06bdf49b810d6b1a86a3f24f02763f1d1",
+        "pull_payload_fields_cb": "cd19de2d024cd037e1705f9b6f49f8e54166975b15c070577779b8a9aa56d537",
+        "pull_recv_cb": "872d79b8c555d1316e6f57bd3809af62535630391d04e9dbc3e9f9e6cd0cbd7d",
+        "rectx_parse_cb": "81154d1abbe61d408db8ef30967cd46503ec5e618ee49bcfd99e023446edd40f",
+        "rectx_payload_seq_cb": "f531f1298f805e77c1aa9b7f4effa3c0fa6398ad6698dec8a6b4865366268579",
+        "rectx_recv_cb": "c04e58248f2244cc5434f70ebc43eb0ba58c3993dc885d659cf39922a98faf1d",
+        "tx_recv_cb": "f859dce9ea73489f54e7fa4b5b74203983d2e02b743235ce88a540486cddc60f",
     }
 
     def _closure(self, t: int) -> list[int] | None:

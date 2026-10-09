@@ -2,7 +2,7 @@
  "files": {
   "b3/firmware/Makefile": {
    "kind": "new",
-   "note": "the host twins' build (twin, record-twin, wire-twin, wire-parity, orch-twin) into the top-level ignored build/; not the image build.",
+   "note": "the host twins' build (twin, record-twin, record-twin-image \u2014 the record driver in the image's compile branch, B-2 \u2014 wire-twin, wire-parity, orch-twin) into the top-level ignored build/; not the image build.",
    "role": "build"
   },
   "b3/firmware/b2_search.c": {
@@ -26,12 +26,12 @@
   },
   "b3/firmware/b3_carto.c": {
    "kind": "new",
-   "note": "the specimen cartographer, the C twin of b3/host/b3_carto.py (image stage 1).",
+   "note": "the specimen cartographer, the C twin of b3/host/b3_carto.py (image stage 1). B-2 (the owner's ruling of 2026-10-09): under -DB3_EMIT_SHA, the image's compile branch, its renderer calls b3_sha_sink directly \u2014 no emitter pointer stored or passed; the host twins keep the emitter.",
    "role": "board unit"
   },
   "b3/firmware/b3_carto.h": {
    "kind": "new",
-   "note": "the cartographer's header (image stage 1).",
+   "note": "the cartographer's header (image stage 1). B-2: b3_sha_sink, and the renderer's two signatures (B3_EMIT_SHA).",
    "role": "board unit"
   },
   "b3/firmware/b3_carto_twin.c": {
@@ -70,17 +70,17 @@
   },
   "b3/firmware/b3_record.c": {
    "kind": "new",
-   "note": "the O arm's combined commitment, ledger entry and record block (image stage 2).",
+   "note": "the O arm's combined commitment, ledger entry and record block (image stage 2). B-2 (the owner's ruling of 2026-10-09): b3_sha_sink (was the static sha_emit) is the one SHA sink; under -DB3_EMIT_SHA the renderers call it directly.",
    "role": "board unit"
   },
   "b3/firmware/b3_record.h": {
    "kind": "new",
-   "note": "the record unit's header (image stage 2).",
+   "note": "the record unit's header (image stage 2). B-2: the renderers' two signatures (B3_EMIT_SHA).",
    "role": "board unit"
   },
   "b3/firmware/b3_record_twin.c": {
    "kind": "new",
-   "note": "the O arm's host driver (b3/tests/test_b3_record_twin.py); never linked into the image.",
+   "note": "the O arm's host driver (b3/tests/test_b3_record_twin.py); never linked into the image. B-2: also built in the image's compile branch (record-twin-image, --wrap=p3_sha256_update); R lists the byte ranges hashed.",
    "role": "host twin"
   },
   "b3/firmware/b3_seed_data.h": {
@@ -117,8 +117,8 @@
    "base": "firmware/b2/bsp/build.sh",
    "base_sha256": "26df1e84dc3482c279b4e990204551ceae796a2fb1333372a1ce73da22b361a8",
    "kind": "derived",
-   "note": "DERIVED from B2's build script: the B3 application's translation units, the image name b3_app, the intermediate products in the top-level ignored build/b3_bsp/ and only the image (b3_app.bin / b3_app.elf) in b3/firmware/bsp/out/, -fstack-usage -fcallgraph-info=su added to the compile flags, the repository root taken from the script's location, and two narrow controls for the build evidence (B3_PRINT_FLAGS=1 prints the compile flags and exits; B3_OUT_DIR / B3_IMG_DIR redirect the products for a hermetic rebuild), neither changing a production build when unset; and the build runs from the repository root whoever calls it, so the ELF's DWARF does not depend on the caller's working directory. The architecture, the BSP, the toolchain and every link setting are B2's. It must exist and must DIFFER from the base.",
-   "sha256": "3ad5499422c81ca58e9720dd74ade69d6ae6902b0a16307eb8dc13e18765e525"
+   "note": "DERIVED from B2's build script: the B3 application's translation units, the image name b3_app, the intermediate products in the top-level ignored build/b3_bsp/ and only the image (b3_app.bin / b3_app.elf) in b3/firmware/bsp/out/, -fstack-usage -fcallgraph-info=su added to the compile flags, -DB3_EMIT_SHA added to the application's compile flags (the owner's B-2 ruling of 2026-10-09: the renderers' direct SHA sink), the repository root taken from the script's location, and two narrow controls for the build evidence (B3_PRINT_FLAGS=1 prints the compile flags and exits; B3_OUT_DIR / B3_IMG_DIR redirect the products for a hermetic rebuild), neither changing a production build when unset; and the build runs from the repository root whoever calls it, so the ELF's DWARF does not depend on the caller's working directory. The architecture, the BSP, the toolchain and every link setting are B2's. It must exist and must DIFFER from the base.",
+   "sha256": "35a729c61a520793f801d200dd72b2a17fd14943b505c326a2d88dde91445b28"
   },
   "b3/firmware/bsp/include/bspconfig.h": {
    "base": "firmware/b2/bsp/include/bspconfig.h",
@@ -149,14 +149,14 @@
    "kind": "built",
    "note": "the committed image (the owner's ruling of 2026-09-28): built by bsp/build.sh from the sources above, reproduced byte for byte by two clean builds recorded in the build evidence.",
    "produced_by": "b3/firmware/bsp/build.sh",
-   "sha256": "c2f6fb5456bc06a34ef537d6b4a4e5aaf833325379ded66daa444fa6fed293bf"
+   "sha256": "28c80eca419efe88ac6e1969c9fc5d87d416d8a6137e4612288298b9e5da8299"
   },
   "b3/firmware/bsp/out/b3_app.elf": {
    "evidence": "evidence/b3/build_evidence.json",
    "kind": "built",
    "note": "the committed image (the owner's ruling of 2026-09-28): built by bsp/build.sh from the sources above, reproduced byte for byte by two clean builds recorded in the build evidence.",
    "produced_by": "b3/firmware/bsp/build.sh",
-   "sha256": "7aab8833e76f49334615855361fe9a3d89991f6a9aba9be48d807ff05d72f008"
+   "sha256": "0d0f99a6c1ffd8dcf29635032305b287f896e47cfc418d70903f922d4760d7a1"
   },
   "b3/firmware/bsp/src/console.c": {
    "base": "firmware/b2/bsp/src/console.c",

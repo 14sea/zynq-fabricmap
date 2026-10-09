@@ -217,7 +217,9 @@ int b3_carto_observe(b3_carto *c, b3_carto *scratch, const uint16_t *moved, int 
 /* ------------------------------------------------------------------ the commitment text */
 
 typedef struct {
+#ifndef B3_EMIT_SHA
     b3_carto_emit emit;
+#endif
     void *ctx;
     size_t n;
 } writer;
@@ -225,7 +227,11 @@ typedef struct {
 static void put(writer *wr, const char *s, size_t n)
 {
     if (n) {
+#ifdef B3_EMIT_SHA
+        b3_sha_sink(wr->ctx, s, n);                      /* the image: a direct call, no emitter pointer */
+#else
         wr->emit(wr->ctx, s, n);
+#endif
         wr->n += n;
     }
 }
@@ -251,11 +257,17 @@ static void put_uint(writer *wr, uint32_t v)
         put(wr, &buf[--n], 1);
 }
 
+#ifdef B3_EMIT_SHA
+size_t b3_carto_state_render(const b3_carto *c, void *ctx)
+#else
 size_t b3_carto_state_render(const b3_carto *c, b3_carto_emit emit, void *ctx)
+#endif
 {
     writer wr;
     int i, first;
+#ifndef B3_EMIT_SHA
     wr.emit = emit;
+#endif
     wr.ctx = ctx;
     wr.n = 0;
     put_str(&wr, B3_CARTO_VERSION);

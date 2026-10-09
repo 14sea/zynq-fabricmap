@@ -31,14 +31,20 @@ static size_t fmt_i32(int32_t v, char *buf)
 
 /* ------------------------------------------------------------------ the commitment text */
 typedef struct {
+#ifndef B3_EMIT_SHA
     b3_emit emit;
+#endif
     void *ctx;
     size_t n;
 } emitter;
 
 static void em_bytes(emitter *e, const char *b, size_t n)
 {
+#ifdef B3_EMIT_SHA
+    b3_sha_sink(e->ctx, b, n);                   /* the image: a direct call, no emitter pointer (b3_carto.h) */
+#else
     e->emit(e->ctx, b, n);
+#endif
     e->n += n;
 }
 
@@ -87,29 +93,45 @@ static void search_render(const b2_search *s, emitter *e)
     }
 }
 
+#ifdef B3_EMIT_SHA
+size_t b3_search_state_render(const b2_search *s, void *ctx)
+#else
 size_t b3_search_state_render(const b2_search *s, b3_emit emit, void *ctx)
+#endif
 {
     emitter e;
+#ifndef B3_EMIT_SHA
     e.emit = emit;
+#endif
     e.ctx = ctx;
     e.n = 0u;
     search_render(s, &e);
     return e.n;
 }
 
+#ifdef B3_EMIT_SHA
+size_t b3_commitment_render(const b2_search *s, const b3_carto *c, void *ctx)
+#else
 size_t b3_commitment_render(const b2_search *s, const b3_carto *c, b3_emit emit, void *ctx)
+#endif
 {
     emitter e;
+#ifndef B3_EMIT_SHA
     e.emit = emit;
+#endif
     e.ctx = ctx;
     e.n = 0u;
     search_render(s, &e);
     em_str(&e, "|");
+#ifdef B3_EMIT_SHA
+    e.n += b3_carto_state_render(c, ctx);
+#else
     e.n += b3_carto_state_render(c, emit, ctx);
+#endif
     return e.n;
 }
 
-static void sha_emit(void *ctx, const char *bytes, size_t n)
+void b3_sha_sink(void *ctx, const char *bytes, size_t n)
 {
     p3_sha256_update((p3_sha256 *)ctx, (const uint8_t *)bytes, n);
 }
@@ -119,7 +141,11 @@ void b3_state_hex(const b2_search *s, const b3_carto *c, char out[65])
     p3_sha256 h;
     uint8_t digest[32];
     p3_sha256_init(&h);
-    (void)b3_commitment_render(s, c, sha_emit, &h);
+#ifdef B3_EMIT_SHA
+    (void)b3_commitment_render(s, c, &h);
+#else
+    (void)b3_commitment_render(s, c, b3_sha_sink, &h);
+#endif
     p3_sha256_final(&h, digest);
     p3_hex(digest, 32u, out);
 }

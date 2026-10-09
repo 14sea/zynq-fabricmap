@@ -101,6 +101,31 @@ def build(fw: Path = FW, out: Path = BUILD) -> Path:
     return out / "b3_record_twin"
 
 
+def build_image(fw: Path = FW, out: Path = BUILD) -> Path:
+    """`make -s record-twin-image`: the same driver and sources in the image's compile branch (-DB3_EMIT_SHA, the
+    owner's B-2 ruling of 2026-10-09), once per (tree, out); the build must be silent."""
+    key = (str(fw), str(out), "image")
+    if key not in _BUILT:
+        p = subprocess.run(["make", "-s", "-C", str(fw), "record-twin-image", f"BUILD={out}"], capture_output=True, text=True)
+        if p.returncode != 0:
+            raise AssertionError(f"the image-branch record twin did not build:\n{p.stdout}{p.stderr}")
+        _BUILT[key] = p.stdout + p.stderr
+    return out / "b3_record_twin_image"
+
+
+def ranges(line: str) -> list[bytes]:
+    """An EMIT line as the byte ranges it lists, in order (each range's stated length checked)."""
+    head, *items = line.split(" ")
+    assert head == "EMIT", line[:80]
+    out = []
+    for it in items:
+        n, _, h = it.partition(":")
+        b = bytes.fromhex(h)
+        assert len(b) == int(n), it[:80]
+        out.append(b)
+    return out
+
+
 _ASAN_EXES: set = set()                                # the ASan twins build_asan() produced
 
 
@@ -210,6 +235,44 @@ def run_pair(twin: Twin, r: int, check) -> dict:
     return {"evaluations": budget, "ledger": oo.ledger}
 
 
+def lockstep(twins: list, r: int, check) -> int:
+    """Drive several twins through committed pair r's O arm TOGETHER: every reply of every twin equals the first
+    twin's, and after the initializer and after each evaluation the byte ranges the commitment is hashed in (R O)
+    are equal range for range — not only their text and their hash — and, after an evaluation, they are more than
+    one range and their concatenation is the TEXT the commitment hashes. Returns the number of range lists compared."""
+    pair = PRED["pairs"][r]
+    budget = PRED["budget_per_arm"]
+    compared = 0
+
+    def every(text: str, n: int, at: int) -> list[str]:
+        got = [t.send(text, n) for t in twins]
+        for k in range(1, len(twins)):
+            check(f"twin {k} on {text.split(' ')[0]}", got[k], got[0], at)
+        return got[0]
+
+    def emitted(at: int, text: str | None) -> None:
+        nonlocal compared
+        line = every("R O", 1, at)[0]
+        rs = ranges(line)
+        if text is not None:
+            check("the ranges are the commitment's bytes", b"".join(rs), text[5:].encode(), at)
+            check("streamed: more than one range", len(rs) > 1, True, at)
+        compared += 1
+
+    check("init", every(f"I {r} {pair['landscape_seed']} {pair['operator_seed']} {budget} {hexw(FABRIC(0))}", 1, 0), ["OK"], 0)
+    emitted(0, None)
+    for n in range(budget):
+        prop = every("P", 1, n)[0].split()
+        check("proposal line", prop[0], "PROP", n)
+        text = every("M " + hexw(FABRIC(bc.genome_from_hex(prop[3]))), 5, n)[0]
+        emitted(n, text)
+    check("budget spent", every("P", 1, budget), ["DONE"], budget)
+    champ = every("C", 1, budget)[0].split()
+    every("H " + hexw(FABRIC(bc.genome_from_hex(champ[1]))), 2, budget)
+    emitted(budget, None)
+    return compared
+
+
 def strip_comments(src: str) -> str:
     src = re.sub(r"/\*.*?\*/", " ", src, flags=re.S)
     return re.sub(r"//[^\n]*", " ", src)
@@ -270,7 +333,7 @@ class TheCopiesAndTheBuild(unittest.TestCase):
             self.assertTrue((FW / name).is_file(), name)
             self.assertIn(name, mk)
         for p in FW.rglob("*"):                           # no build product under b3/
-            self.assertFalse(p.is_file() and (p.suffix in (".o", ".su", ".d", ".map", ".a") or p.name in ("b3_record_twin", "b3_carto_twin")), p)
+            self.assertFalse(p.is_file() and (p.suffix in (".o", ".su", ".d", ".map", ".a") or p.name in ("b3_record_twin", "b3_record_twin_image", "b3_carto_twin")), p)
 
     def test_the_new_units_are_freestanding(self):
         for name in NEW_UNITS:
@@ -287,7 +350,8 @@ class TheCopiesAndTheBuild(unittest.TestCase):
         arm = Path(be.TC) / "bin/arm-none-eabi-gcc"
         self.assertTrue(arm.is_file(), f"the pinned ARM toolchain is absent at {arm}: a failure, not a skip")
         cases = {"host": [os.environ.get("CC", "cc"), "-std=c99", "-O2", "-Wall", "-Wextra", "-Werror", "-pedantic"],
-                 "arm": [str(arm), *be.ARCH_FLAGS, "-std=c99", "-O2", "-ffreestanding", "-Wall", "-Wextra", "-Werror", "-pedantic"]}
+                 "arm": [str(arm), *be.ARCH_FLAGS, "-std=c99", "-O2", "-ffreestanding", "-Wall", "-Wextra", "-Werror", "-pedantic",
+                         "-DB3_EMIT_SHA"]}                 # the board's units in the image's compile branch (B-2)
         out = BUILD / "stack_usage_stage2"
         out.mkdir(parents=True, exist_ok=True)
         # the units a record render reaches: the new ones, the cartographer's renderer and the hash
@@ -712,34 +776,203 @@ class TheCommittedLedger(unittest.TestCase):
         self.assertEqual(total, 8000)
 
 
+# boundary search states (arm, lseed, oseed, budget, evals, gen, best, [(fit, born, genome)] x 4), and the ledger
+# cartographer's specimens they are rendered beside (None: the fresh cartographer)
+SYNTH_STATES = [
+    (2, 0, 0, 0, 0, 0, 0, [(0, 0, 0), (0, 1, 0), (0, 2, 0), (0, 3, 0)]),
+    (2, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 2147483647,
+     [(40, 4294967295, (1 << 292) - 1), (-1, 7, 1 << 291), (-2147483648, 8, 1), (39, 9, 0xDEADBEEF << 100)]),
+    (0, 1, 2, 3, 4, 5, -7, [(-7, 10, 1 << 31), (3, 11, 1 << 32), (2, 12, 1 << 63), (1, 13, 1 << 64)]),
+]
+SYNTH_SPECIMENS = (None, ([5], [tuple(TRUTH["mapping"][5])]), ([4, 7], [(0, 0), (0, 1)]))
+
+
+def specimen_line(moved, delta) -> str:
+    return f"E 1 0 random 0 {len(moved)} " + " ".join(map(str, moved)) + f" | {len(delta)} " + " ".join(f"{a}.{b}" for a, b in delta)
+
+
+def synthetic_line(arm, ls, os_, budget, evals, gen, best, pop) -> str:
+    members = " ".join(f"{f}:{b}:{bc.genome_to_hex(g)}" for f, b, g in pop)
+    return f"Z {arm} {ls} {os_} {budget} {evals} {gen} {best} {members}"
+
+
 class SyntheticStates(unittest.TestCase):
     def test_boundary_search_states_under_the_combined_commitment(self):
         twin = Twin()
         self.addCleanup(twin.close)
         ref = b3.SpecimenCarto()
-        k, v = TRUTH["mapping"][5]
-        states = [
-            (2, 0, 0, 0, 0, 0, 0, [(0, 0, 0), (0, 1, 0), (0, 2, 0), (0, 3, 0)]),
-            (2, 4294967295, 4294967295, 4294967295, 4294967295, 4294967295, 2147483647,
-             [(40, 4294967295, (1 << 292) - 1), (-1, 7, 1 << 291), (-2147483648, 8, 1), (39, 9, 0xDEADBEEF << 100)]),
-            (0, 1, 2, 3, 4, 5, -7, [(-7, 10, 1 << 31), (3, 11, 1 << 32), (2, 12, 1 << 63), (1, 13, 1 << 64)]),
-        ]
         self.assertEqual(twin.one("X"), "OK")
-        for step, specimen in enumerate((None, ([5], [(k, v)]), ([4, 7], [(0, 0), (0, 1)]))):
+        for step, specimen in enumerate(SYNTH_SPECIMENS):
             if specimen is not None:
                 moved, delta = specimen
                 ref.observe(moved, delta)
-                twin.one(f"E 1 0 random 0 {len(moved)} " + " ".join(map(str, moved)) + f" | {len(delta)} " + " ".join(f"{a}.{b}" for a, b in delta))
-            for arm, ls, os_, budget, evals, gen, best, pop in states:
+                twin.one(specimen_line(moved, delta))
+            for arm, ls, os_, budget, evals, gen, best, pop in SYNTH_STATES:
                 with self.subTest(step=step, arm=arm, best=best):
-                    members = " ".join(f"{f}:{b}:{bc.genome_to_hex(g)}" for f, b, g in pop)
-                    text, commit = twin.send(f"Z {arm} {ls} {os_} {budget} {evals} {gen} {best} {members}", 2)
+                    text, commit = twin.send(synthetic_line(arm, ls, os_, budget, evals, gen, best, pop), 2)
                     inds = [bs.Individual(g, None, f, born=b) for f, b, g in pop]
                     stext = oa.search_state_text(arm, ls, os_, budget, evals, gen, best, inds)
                     self.assertEqual(text, f"TEXT {stext}|{ref.state_text()}")
                     self.assertEqual(commit, "COMMIT " + oa.state_sha256(stext, ref.state_text()))
                     if arm != 2:                         # B2's own commitment over the same search text (the text is B2's)
                         self.assertEqual(hashlib.sha256(stext.encode()).hexdigest(), bs.state_sha256(arm, ls, os_, budget, evals, gen, best, inds))
+
+
+# ------------------------------------------------------------------ B-2: the image's compile branch
+
+
+class TheImageBranch(unittest.TestCase):
+    """The owner's B-2 ruling of 2026-10-09: the image compiles the renderers with -DB3_EMIT_SHA — a direct call of
+    the SHA sink, no emitter pointer stored or passed — and the host twins keep the emitter interface. What is held
+    here is the image's branch EXECUTED (the same driver and sources, `make record-twin-image`, linked with
+    --wrap=p3_sha256_update so that every byte range the image's own sink hashes is seen): its text and its hash
+    against the Python reference, and its byte ranges, call for call, against the emitter branch's."""
+
+    def check(self, what, got, want, n):
+        self.assertEqual(got, want, f"{self._pair} evaluation {n}: {what}")
+
+    def test_the_image_branch_builds_silently_and_its_objects_call_no_emitter_through_a_pointer(self):
+        self.assertEqual(build_image(), BUILD / "b3_record_twin_image")
+        self.assertEqual(_BUILT[(str(FW), str(BUILD), "image")], "", "the build printed something")
+        mk = (FW / "Makefile").read_text()
+        self.assertIn("IMAGE_BRANCH = -DB3_EMIT_SHA\n", mk)
+        self.assertIn("\t$(CC) $(CFLAGS) $(IMAGE_BRANCH) -Wl,--wrap=p3_sha256_update -o $@ $(RECORD_SRC)\n", mk)
+        flags = subprocess.run(["bash", str(FW / "bsp/build.sh")], capture_output=True, text=True, check=True,
+                               env=dict(os.environ, B3_PRINT_FLAGS="1")).stdout
+        app = [ln for ln in flags.splitlines() if ln.startswith("APP_CFLAGS=")]
+        self.assertEqual(len(app), 1)
+        self.assertIn("-DB3_EMIT_SHA", app[0].split(), "the image is compiled in the branch held here")
+        # the pinned ARM toolchain on the two renderer units, in both branches: the image's makes no call through a
+        # register and calls the sink directly; the emitter branch (the control) does call through a register
+        arm, objdump = Path(be.TC) / "bin/arm-none-eabi-gcc", Path(be.TC) / "bin/arm-none-eabi-objdump"
+        out = BUILD / "image_branch_objects"
+        out.mkdir(parents=True, exist_ok=True)
+        for unit in ("b3_carto.c", "b3_record.c"):
+            for branch, extra in (("image", ["-DB3_EMIT_SHA"]), ("emitter", [])):
+                with self.subTest(unit=unit, branch=branch):
+                    obj = out / f"{Path(unit).stem}_{branch}.o"
+                    p = subprocess.run([str(arm), *be.ARCH_FLAGS, "-std=c99", "-O2", "-ffreestanding", "-Wall", "-Wextra",
+                                        "-Werror", "-pedantic", *extra, "-I", str(FW), "-c", "-o", str(obj), str(FW / unit)],
+                                       capture_output=True, text=True)
+                    self.assertEqual((p.returncode, p.stderr), (0, ""))
+                    dis = subprocess.run([str(objdump), "-d", "-r", str(obj)], capture_output=True, text=True, check=True).stdout
+                    through = re.findall(r"\tblx\t(r\d+|sb|sl|fp|ip|lr)\b", dis)
+                    if branch == "image":
+                        self.assertEqual(through, [], "a call through a register in the image's branch")
+                        self.assertIn("b3_sha_sink", dis, "the sink is called directly")
+                    else:
+                        self.assertNotEqual(through, [], "the control: the emitter branch calls through its pointer")
+
+    def test_every_committed_pair_through_the_image_branch(self):
+        """The image's branch through every committed pair, evaluation by evaluation and its holdout: the text the
+        commitment hashes, the search text, the commitment, the ledger and the block, against run_online."""
+        total = 0
+        for r in range(len(PRED["pairs"])):
+            self._pair = f"image branch, pair {r}"
+            twin = Twin(build_image())
+            try:
+                got = run_pair(twin, r, self.check)
+                self.assertEqual(got["ledger"], PRED["pairs"][r]["runs"]["O"]["ledger"], r)
+                total += got["evaluations"]
+            finally:
+                twin.close()
+        self.assertEqual(total, 8000)
+
+    def test_the_image_branch_hashes_the_emitter_branchs_ranges_call_for_call(self):
+        """Range for range: after the initializer and every evaluation of every committed pair, and on every
+        synthetic boundary state beside every ledger cartographer, the byte ranges the image's sink hashes are the
+        emitter branch's — the same bytes in the same calls (a merged or split range is a difference here even where
+        the text and the hash agree)."""
+        compared = 0
+        for r in range(len(PRED["pairs"])):
+            self._pair = f"pair {r}"
+            twins = [Twin(), Twin(build_image())]
+            try:
+                compared += lockstep(twins, r, self.check)
+            finally:
+                for t in twins:
+                    t.close()
+        self.assertEqual(compared, 8 * 1002)
+        twins = [Twin(), Twin(build_image())]
+        for t in twins:
+            self.addCleanup(t.close)
+        ref = b3.SpecimenCarto()
+        for t in twins:
+            self.assertEqual(t.one("X"), "OK")
+        for step, specimen in enumerate(SYNTH_SPECIMENS):
+            if specimen is not None:
+                ref.observe(*specimen)
+                for t in twins:
+                    t.one(specimen_line(*specimen))
+            for state in SYNTH_STATES:
+                with self.subTest(step=step, arm=state[0], best=state[6]):
+                    native, image = (t.send(synthetic_line(*state), 2) for t in twins)
+                    inds = [bs.Individual(g, None, f, born=b) for f, b, g in state[7]]
+                    stext = oa.search_state_text(*state[:7], inds)
+                    self.assertEqual(image, [f"TEXT {stext}|{ref.state_text()}", "COMMIT " + oa.state_sha256(stext, ref.state_text())])
+                    self.assertEqual(image, native)
+                    rn, ri = (ranges(t.one("R Z")) for t in twins)
+                    self.assertEqual(ri, rn)
+                    self.assertEqual(b"".join(ri), image[0][5:].encode())
+                    self.assertGreater(len(ri), 1)
+
+    def test_a_merged_or_dropped_range_and_a_misrouted_sink_are_each_caught(self):
+        """Three defects in a copy of the firmware, each built in the image's branch and held against the REAL
+        emitter-branch twin on pair 0: two ranges merged into one (the text and the hash are unchanged — only the
+        range comparison sees it); single-byte ranges dropped (the text, the hash and the ranges all differ); the
+        sink feeding a hash other than the caller's (the ranges are unchanged — only the hash sees it)."""
+        rec, cart = (FW / "b3_record.c").read_text(), (FW / "b3_carto.c").read_text()
+        merge_at = ('    em_str(e, B2_SEARCH_VERSION);                /* "%s|%d|%lu|%lu|%lu|%lu|%lu|%ld|" — b2_search_state_hex */\n'
+                    '    em_str(e, "|");\n')
+        drop_at = "        b3_sha_sink(wr->ctx, s, n);                      /* the image: a direct call, no emitter pointer */\n"
+        sink_at = "    p3_sha256_update((p3_sha256 *)ctx, (const uint8_t *)bytes, n);\n"
+        for src, at in ((rec, merge_at), (cart, drop_at), (rec, sink_at)):
+            self.assertEqual(src.count(at), 1, at)
+        defects = {
+            "merged": ("b3_record.c", rec.replace(merge_at, "    em_str(e, B2_SEARCH_VERSION \"|\");\n")),
+            "dropped": ("b3_carto.c", cart.replace(drop_at, "        if (n > 1)\n            b3_sha_sink(wr->ctx, s, n);\n")),
+            "misrouted": ("b3_record.c", rec.replace(sink_at, "    static p3_sha256 other;\n    (void)ctx;\n"
+                                                              "    p3_sha256_update(&other, (const uint8_t *)bytes, n);\n")),
+        }
+
+        def first(drive, exes, only=lambda what: True) -> tuple | None:
+            """The first difference `drive` meets whose description `only` admits (the others are passed over)."""
+            twins, found = [Twin(e) for e in exes], []
+
+            def check(what, got, want, n):
+                if got != want and only(what) and not found:
+                    found.append((what, n))
+                    raise _Stop()
+            try:
+                drive(twins, check)
+            except _Stop:
+                pass
+            finally:
+                for t in twins:
+                    try:
+                        t.close()
+                    except AssertionError:
+                        pass
+            return found[0] if found else None
+
+        seen = {}
+        for name, (unit, text) in defects.items():
+            d = Path(tempfile.mkdtemp(prefix=f"b3_b2_{name}_"))
+            self.addCleanup(shutil.rmtree, d, True)
+            shutil.copytree(FW, d / "fw")
+            (d / "fw" / unit).write_text(text)
+            exe = build_image(d / "fw", d / "build")
+            seen[name] = (first(lambda ts, c: run_pair(ts[0], 0, c), [exe]),
+                          first(lambda ts, c: lockstep(ts, 0, c), [build(), exe]),
+                          first(lambda ts, c: lockstep(ts, 0, c), [build(), exe], only=lambda w: w == "twin 1 on R"))
+        self.assertIsNone(seen["merged"][0], "a merged range keeps the text and the hash")
+        self.assertEqual(seen["merged"][1], ("twin 1 on R", 0), "a merged range is caught by the range comparison alone")
+        self.assertIsNotNone(seen["dropped"][0], "dropped ranges change the text and the hash")
+        self.assertIsNotNone(seen["dropped"][1])
+        self.assertIsNotNone(seen["misrouted"][0], "a misrouted sink changes the hash")
+        self.assertEqual(seen["misrouted"][0][0], "commitment = sha256 of those bytes", "the hash, not the text")
+        self.assertIsNotNone(seen["misrouted"][1], "its hash differs from the emitter branch's")
+        self.assertIsNone(seen["misrouted"][2], "a misrouted sink keeps every range: only the hash sees it")
 
 
 class TheProtocol(unittest.TestCase):

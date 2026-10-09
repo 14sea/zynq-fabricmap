@@ -11,7 +11,8 @@
  * The state commitment text — the projection the board commits to on every O-arm search record —
  * is rendered by b3_carto_state_render, byte for byte the Python `state_text()`:
  *   <carto_version>|<version>|<anomalies>|<decoded i:k:v; sorted by i>|<candidates i:k.v,k.v; sorted>
- * rendered through an emitter so that the image can hash it without a buffer.
+ * rendered through an emitter so that the image can hash it without a buffer (in the image's compile branch,
+ * B3_EMIT_SHA, the emitter is the SHA-256 sink called directly: see b3_carto_state_render).
  *
  * Freestanding C99: no allocation, no stdio, no libc but memcpy / memset / strlen (the board BSP has
  * them). The state is ~15 KB; b3_carto_observe runs every check on a COPY of it, and that copy is a
@@ -51,8 +52,14 @@ typedef struct {
     uint32_t anomalies;
 } b3_carto;
 
+/* The SHA-256 sink (defined in b3_record.c): hands each byte range to p3_sha256_update((p3_sha256 *)ctx, ...);
+ * `ctx` is a p3_sha256 set up by p3_sha256_init. */
+void b3_sha_sink(void *ctx, const char *bytes, size_t n);
+
+#ifndef B3_EMIT_SHA
 /* The emitter a renderer writes through: called with successive byte ranges of the text. */
 typedef void (*b3_carto_emit)(void *ctx, const char *bytes, size_t n);
+#endif
 
 void b3_carto_init(b3_carto *c);
 
@@ -76,7 +83,15 @@ int b3_carto_decoded_position(const b3_carto *c, int address);
 /* The number of decoded addresses. */
 int b3_carto_decoded_count(const b3_carto *c);
 
+#ifdef B3_EMIT_SHA
+/* The image's compile branch (bsp/build.sh compiles every unit with -DB3_EMIT_SHA; the owner's B-2 ruling of
+ * 2026-10-09): the renderers call b3_sha_sink DIRECTLY — no emitter function pointer is stored or passed — with the
+ * same byte ranges, call for call, as the emitter branch below (b3/tests/test_b3_record_twin.py runs both).
+ * Render the commitment text into the hash `ctx`. Returns the number of bytes rendered. */
+size_t b3_carto_state_render(const b3_carto *c, void *ctx);
+#else
 /* Render the commitment text through `emit`. Returns the number of bytes rendered. */
 size_t b3_carto_state_render(const b3_carto *c, b3_carto_emit emit, void *ctx);
+#endif
 
 #endif

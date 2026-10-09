@@ -148,11 +148,15 @@ class TheFinalImage(unittest.TestCase):
         self.assertEqual(len({f.split(" [not walked")[0] for f in main}), len(main), "one line per finding, whatever it leaves unwalked")
         tables = [f for f in main if "the read-only table" in f and "may be written" in f]
         self.assertTrue(tables, "the table callbacks' reads are refused")
-        # — the one the table refusal used to hide included: b3_state_hex hands its frame object to search_render,
-        # whose stack-argument reads are not pinned (disclosed here, not fixed in this unit)
-        hidden = [f for f in main if "b3_state_hex: the call at " in f and "that is handed the object may itself write its field" in f]
-        self.assertEqual(len(hidden), 1, hidden)
-        self.assertIn("[not walked, depending on this: what search_render.constprop.0's call at ", hidden[0])
+        # — and nothing else: the frame-object callbacks the table refusal used to hide (b3_state_hex's emitter handed
+        # to search_render, b3_carto_state_render's to put_uint) are gone with the emitter pointer (the owner's B-2
+        # ruling of 2026-10-09: the image calls the SHA sink directly); every walk finding left is a table's
+        hidden = [f for f in main if any(r in f for r in ("b3_state_hex", "b3_carto_state_render", "put_uint", "search_render",
+                                                          "em_u32", "em_i32"))]
+        self.assertEqual(hidden, [])
+        self.assertEqual(sorted(tables), sorted(main), "every walk finding of main is a table refusal")
+        self.assertEqual({t for t in ("TX_IO", "PULL_IO", "REC_IO", "APP_RX") if any(f"the read-only table {t} may" in f for f in tables)},
+                         {"TX_IO", "PULL_IO", "REC_IO"})
         for exc in ("undefined", "svc", "prefetch_abort", "data_abort", "irq", "fiq"):
             self.assertIn(exc, e)
             self.assertIsNone(e[exc]["bound"], f"{exc}: it calls through the exception table, a word in memory")
@@ -302,7 +306,7 @@ class TheFinalImage(unittest.TestCase):
         self.assertEqual(sum("its format is not a provable constant" in x for x in self.r["findings"]), len(formats) - len(proved))
         used = {s.split(":")[0] for s in rules["callback_contracts"]["targets"]}
         self.assertLessEqual(used, set(isa.Image.CONTRACTS))
-        self.assertIn("sha_emit", used)
+        self.assertIn("b3_sha_sink", used)
         tables = {s.split(":")[0] for s in rules["read_only_tables"]["targets"]}
         self.assertEqual(tables, set(), "no I/O table is proved read-only while a write of the image is not placed")
         wp = rules["write_placement"]
@@ -2274,9 +2278,9 @@ class TheAssessmentCache(unittest.TestCase):
             changes = {
                 "a contract unit's source": mock.patch.object(isa.Image, "_unit_sha", return_value="0" * 64),
                 "one contract unit's source": mock.patch.object(isa.Image, "_unit_sha", side_effect=lambda _s, u: "1" * 64 if u == APP else "2" * 64),
-                "a contract": mock.patch.dict(isa.Image.CONTRACTS, {"sha_emit": dict(isa.Image.CONTRACTS["sha_emit"], arity=9)}),
+                "a contract": mock.patch.dict(isa.Image.CONTRACTS, {"b3_sha_sink": dict(isa.Image.CONTRACTS["b3_sha_sink"], arity=9)}),
                 "a contract's bound source digest": mock.patch.dict(isa.Image.CONTRACT_SOURCES, {APP: "3" * 64}),
-                "a contract's bound code digest": mock.patch.dict(isa.Image.CONTRACT_CODE, {"sha_emit": "4" * 64}),
+                "a contract's bound code digest": mock.patch.dict(isa.Image.CONTRACT_CODE, {"b3_sha_sink": "4" * 64}),
                 "a library contract": mock.patch.dict(isa.Image.LIBC_CONTRACTS, {"memcpy": ("x.o", 0, 2, "arg0", None)}),
                 "a library arity": mock.patch.dict(isa.Image.LIBC_ARITY, {"memcpy": 4}),
                 "the variadic members": mock.patch.object(isa.Image, "LIBC_VARIADIC", frozenset({"snprintf", "vsnprintf"})),

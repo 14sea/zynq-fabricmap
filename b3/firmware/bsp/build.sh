@@ -4,8 +4,9 @@
 # products (objects, the map, the -fstack-usage / -fcallgraph-info files) in the repository's top-level ignored
 # build/b3_bsp/, and ONLY the image (b3_app.elf, b3_app.bin) in b3/firmware/bsp/out/, which is committed (the
 # owner's ruling of 2026-09-28); -fstack-usage -fcallgraph-info=su added to the compile flags (the owner's ruling of
-# 2026-10-01: the image stack assessment, b3/host/b3_image_stack.py); the repository root taken from this script's
-# own location. The architecture, the BSP, the toolchain and every link setting are B2's.
+# 2026-10-01: the image stack assessment, b3/host/b3_image_stack.py); -DB3_EMIT_SHA added to the application's compile
+# flags (the owner's B-2 ruling of 2026-10-09: the renderers' direct SHA sink, b3/firmware/b3_carto.h); the repository
+# root taken from this script's own location. The architecture, the BSP, the toolchain and every link setting are B2's.
 #
 # Two narrow controls for the build evidence (b3/host/b3_build_evidence.py; the owner's HOLD on 171b638), neither of
 # which changes a production build when unset:
@@ -52,7 +53,8 @@ INC="-I$BSP/include -I$SA/common -I$SA/arm/common -I$SA/arm/common/gcc \
      -I$SA/arm/cortexa9 -I$SA/arm/cortexa9/gcc -I$WD"
 SU="-fstack-usage -fcallgraph-info=su"   # B3: the stack assessment's inputs, next to each object in $OUT
 BSP_CFLAGS="$ARCH -std=gnu11 -O2 -g $INC -DUSE_AMP=0 -ffunction-sections -fdata-sections $SU"
-APP_CFLAGS="$ARCH -std=c99 -O2 -g $INC -Wall -Wextra -ffreestanding -ffunction-sections -fdata-sections $SU"
+EMIT="-DB3_EMIT_SHA"                     # B3: the renderers' compile branch, a direct SHA sink (the owner's B-2 ruling of 2026-10-09)
+APP_CFLAGS="$ARCH -std=c99 -O2 -g $INC -Wall -Wextra -ffreestanding -ffunction-sections -fdata-sections $SU $EMIT"
 if [ "${B3_PRINT_FLAGS:-}" = 1 ]; then
   printf 'BSP_CFLAGS=%s\nAPP_CFLAGS=%s\n' "$BSP_CFLAGS" "$APP_CFLAGS"
   exit 0

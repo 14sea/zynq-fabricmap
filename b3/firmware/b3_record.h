@@ -31,6 +31,11 @@
 #include "b2_search.h"
 #include "b3_carto.h"
 
+#ifdef B3_EMIT_SHA
+/* The image's compile branch (b3_carto.h): both renderers feed the hash `ctx` through b3_sha_sink, called directly. */
+size_t b3_search_state_render(const b2_search *s, void *ctx);
+size_t b3_commitment_render(const b2_search *s, const b3_carto *c, void *ctx);
+#else
 /* The emitter the renderers write through (the same shape as b3_carto_emit). */
 typedef b3_carto_emit b3_emit;
 
@@ -39,8 +44,9 @@ size_t b3_search_state_render(const b2_search *s, b3_emit emit, void *ctx);
 
 /* The whole commitment input: search text, "|", cartographer text; returns the bytes rendered. */
 size_t b3_commitment_render(const b2_search *s, const b3_carto *c, b3_emit emit, void *ctx);
+#endif
 
-/* sha256 of b3_commitment_render, as 64 lower-case hex digits and a NUL. */
+/* sha256 of b3_commitment_render (through b3_sha_sink), as 64 lower-case hex digits and a NUL. */
 void b3_state_hex(const b2_search *s, const b3_carto *c, char out[65]);
 
 /* The toggled positions between two readouts, as 64 * LUT + vector in (LUT, vector) order — Python's
