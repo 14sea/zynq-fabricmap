@@ -1,0 +1,4 @@
+#ifndef XPARAMETERS_H
+#define XPARAMETERS_H
+#define XPAR_PS7_SCUWDT_0_DEVICE_ID 0
+#endif
