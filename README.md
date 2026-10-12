@@ -14,7 +14,7 @@ Nothing is re-run to make a result look better.
 |---|---|---|
 | **B1** autonomous mapping | can the board build a correct map of 292 certified LUT-INIT bits from its own probes? | **complete** — carrier qualified by B1Q PASS on `17A6` (2026-09-08, attempt 4); B1 mapping PASS later that day, self-map `c6a4b23e…` frozen |
 | **B2** map utility | does a search that consults that map reproduce, record for record, the host-predicted outcome? | **complete — PASS / SUPPORTED, p = 0.01953125** (lifecycle 2 on `17A6`, 2026-09-16..17: B2Q PASS, two B2 sessions PASS covering the nine preregistered pairs, pooled primary 8/1/0 equal to the prediction; `docs/b2_result_2026_09_17.md`) |
-| **B3** closed loop | map → evolve → re-map on the board | **in progress, host-only, no board session** — lifecycle 1 stopped at its prediction preflight and is archived unmerged (tag `b3-lifecycle-1-stopped-2026-09-17`, `docs/b3_lifecycle1_stop_decision_2026_09_17.md`); lifecycle 2 is on branch `b3-lifecycle-2` (`docs/b3_preregistration.md` v0.3.1, `docs/b3_architecture.md` v0.3): gate and prediction preflight done, host tools and image stages 1–4 of six reviewed, stage 5 (application, build evidence, stack assessment) open — **the image is not ready**: its stack assessment stands at `FINDINGS` (`evidence/b3/build_evidence.json`): the analysis cannot place every write of the image, so none is proved to miss the cells indirect calls read their targets from, and no entry's stack bound is published |
+| **B3** closed loop | map → evolve → re-map on the board | **in progress, host-only, no board session** — lifecycle 1 stopped at its prediction preflight and is archived unmerged (tag `b3-lifecycle-1-stopped-2026-09-17`, `docs/b3_lifecycle1_stop_decision_2026_09_17.md`); lifecycle 2 is on branch `b3-lifecycle-2` (`docs/b3_preregistration.md` v0.3.1, `docs/b3_architecture.md` v0.3): gate and prediction preflight done, host tools and image stages 1–4 of six reviewed, stage 5 (application, build evidence, stack assessment) closed on its engineering acceptance (2026-10-12, `docs/b3_stage5_engineering_acceptance_2026_10_12.md`) — **the image is still not ready**: its stack assessment stands at `FINDINGS` (`evidence/b3/build_evidence.json`): the analysis cannot place every write of the image, so none is proved to miss the cells indirect calls read their targets from, and no entry's stack bound is published |
 | **B4** expansion | FF and routing classes, on sacrificial silicon | not started |
 
 Standing constraints that no PASS lifts on its own:
@@ -106,7 +106,7 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
   Δ2 reported as secondary; gate run 1 F1 PASS (B* = 1000, N = 8) and the prediction
   preflight (primary 8/0/0, p = 1/256). Then host-only units, each reviewed separately:
   records, session, adjudicator, runner, manifest, pins, test report, the §9 test audit, and
-  the board image in six stages, of which stages 1–4 are closed and stage 5 is open. No B3Q,
+  the board image in six stages, of which stages 1–5 are closed (stage 5 on its engineering acceptance). No B3Q,
   pin table, S0 or board session yet.
 - **2026-10-04..06** — image stage 5: the application, a reproducible cross-build (two clean
   builds byte-identical) and its build evidence landed; the stack assessment of the final ELF
@@ -115,6 +115,12 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
   reach are shown to, never because of the object it was meant for — the committed image's
   assessment is `FINDINGS`: each routine's unplaced writes are listed by address, no stack
   bound is published, `image_ready` is false. Which of those writes to prove next is open.
+- **2026-10-07..12** — stage 5 closed on an engineering exit (the owner, 2026-10-12): the
+  requirement to prove the whole image memory-safe first was withdrawn; the image's own PCAP DMA
+  became a write of the inventory (b3-image-stack 1.8.0); the assessment of the final ELF is
+  accepted with its established, conditional and diagnostic results and every remaining finding
+  classified (`docs/b3_stage5_engineering_acceptance_2026_10_12.md`). The formal result stays
+  `FINDINGS`, `image_ready` false; no board session, pin table, S0 or board_ready is authorised.
 
 The full running log that used to be this README is preserved verbatim at
 `docs/README_archive_2026_09_14.md`.
