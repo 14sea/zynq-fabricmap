@@ -253,7 +253,7 @@ class TheFinalImage(unittest.TestCase):
             listed = {int(x, 16) for k, v in rec.get("not_placed_at", {}).items() if k.startswith("stores: ") for x in v}
             self.assertLessEqual(listed, set(stores), n)
             if "hand_overs" in rec:                        # each write is counted exactly once
-                self.assertEqual(rec["stores"] + rec["hand_overs"],
+                self.assertEqual(rec["stores"] + rec["hand_overs"] + rec["dma_commands"],
                                  rec["placed"] + rec["at_the_callers"] + rec["by_contract"] + rec["not_placed"], n)
                 self.assertEqual(bool(rec["not_placed"]), bool(rec.get("not_placed_at")), n)
         self.assertEqual(w["total"]["stores"], total)
@@ -290,7 +290,7 @@ class TheFinalImage(unittest.TestCase):
                      "SCOPE — SYNCHRONOUS PATHS ONLY", "NOT covered", "not used as proof that no handler runs",
                      "no bound is published for an entry that calls through memory"):
             self.assertIn(said, vm["rule"])
-        self.assertEqual(self.r["tool"], "b3-image-stack 1.7.0")
+        self.assertEqual(self.r["tool"], "b3-image-stack 1.8.0")
         self.assertTrue(vm["targets"], "the library contracts the analysis relied on are named")
         self.assertLessEqual(set(vm["targets"]), set(isa.Image.LIBC_CONTRACTS))
         formats = rules["printf_formats"]["targets"]
@@ -326,6 +326,37 @@ class TheFinalImage(unittest.TestCase):
         self.assertTrue(calls, "the printf-family calls' layouts are listed")
         unproved = [f for f in self.r["rules"]["printf_formats"]["targets"] if not f["no_percent_n"]]
         self.assertEqual(sum("all four registers and every incoming word" in t for t in calls), len(unproved))
+
+    def test_the_dma_commands_of_the_final_image(self):
+        """The DMA unit (the owner's ruling of 2026-10-12) on the built ELF: one place queues DevC DMA commands —
+        devcfg_dma's DMA_DEST_LEN store — entered by four direct calls, each with a constant descriptor; in the
+        inventory the command is a write that is not placed; on P_DESC and P_DEC only DMA_READ_FRAME writes memory,
+        202 words at 0x10300000, overlapping no protected object nor the stacks; no end of its window is shown."""
+        d = self.r["dma"]
+        (c,) = d["commands"]
+        self.assertEqual((c["routine"], c["at"], c["unknown"]), ("devcfg_dma", "0x2001ad0", []))
+        self.assertIsNone(c["window"]["to"])
+        got = {x["objects_read"][0]: (x["caller"], x["site"], x["memory"]) for x in c["commands"]}
+        self.assertEqual(got, {"DMA_WRITE_ENVELOPE": ("write_envelopes", "0x2002800", None),
+                               "DMA_READ_COMMAND": ("run_candidate", "0x200332c", None),
+                               "DMA_READ_FRAME": ("run_candidate", "0x2003340", ["0x10300000", "0x10300328"]),
+                               "DMA_READ_CLEANUP": ("run_candidate", "0x2003394", None)})
+        (frame,) = [x for x in c["commands"] if x["memory"]]
+        self.assertEqual((frame["overlaps"], frame["premises"]), ([], ["P_DESC", "P_DEC"]))
+        self.assertEqual(d["other_masters"], [])
+        self.assertEqual(self.r["writes"]["routines"]["devcfg_dma"]["not_placed_at"],
+                         {"queues a DevC DMA command (it writes DMA_DEST_LEN): " + isa.DMA_WHY: ["0x2001ad0"]})
+        self.assertEqual(self.r["writes"]["total"]["dma_commands"], 1)
+        for tag in ("(F-DEC", "(F-WIN)", "(F-SUB)", "(F-PL)"):
+            self.assertTrue(any(tag in f for f in self.r["findings"]), tag)
+        sub = [f for f in self.r["findings"] if "(F-SUB)" in f]
+        self.assertEqual(sub, [f"{self.r['writes']['total']['not_placed_sites'] - 1} other write site(s) are not placed: any "
+                               f"of them may reach the DevC DMA registers or another master's, so the DMA commands listed "
+                               f"are complete only over the placed writes (F-SUB)"])
+        self.assertEqual(self.r["rules"]["dma_writes"]["rule"], isa.DMA_RULE)
+        self.assertIn("SCOPE — SYNCHRONOUS PATHS ONLY", self.r["rules"]["value_model"]["rule"])
+        self.assertIn("nor is what a DMA the image queued may write once the routine that queued it has returned",
+                      self.r["rules"]["value_model"]["rule"])
 
     def test_the_image_clears_only_the_async_abort_mask(self):
         self.assertEqual(self.r["masks"]["cleared_by_the_image"], ["A"])
@@ -1360,6 +1391,148 @@ class TheWriteInventory(unittest.TestCase):
         self.assertTrue(img.calls_through_memory(b), "f calls c, which calls a pointer")
         self.assertTrue(img.calls_through_memory(C))
         self.assertFalse(img.calls_through_memory(self.H2), "a leaf")
+
+
+class TheDmaCommands(unittest.TestCase):
+    """The owner's ruling of 2026-10-12, the DMA unit: a write of the DevC's DMA_DEST_LEN queues a DMA command — the
+    image's own write. In the inventory it is NOT PLACED, whatever its descriptor says; apart from it, its range on
+    P_DESC and P_DEC is listed (the tag bits decoded, the length the larger register, a wrap unknown, the PCAP not
+    memory), and its window has no end: it may land after the routine that queued it returns."""
+
+    D, DESC = 0x3000, 0x9200
+    DEVC = [("movw", "r2, #28672"), ("movt", "r2, #63488")]                          # r2 = 0xF8007000
+    QUEUE = DEVC + [("ldr", "r3, [r0, #4]"), ("str", "r3, [r2, #28]"),             # 0x300c DMA_DEST_ADDR
+                    ("ldr", "r3, [r0, #8]"), ("str", "r3, [r2, #32]"),             # 0x3014 DMA_SRC_LEN
+                    ("ldr", "r3, [r0, #12]"), ("str", "r3, [r2, #36]"),            # 0x301c DMA_DEST_LEN: queued
+                    ("mov", "r0, #0"), ("bx", "lr")]
+    CALL = [("movw", "r0, #37376"), ("movt", "r0, #0"), ("bl", call(D, "d"))]      # r0 = DESC
+
+    def image(self, desc, queue=None, caller=None, more=None):
+        routines = {"d": (self.D, queue or self.QUEUE)}
+        routines.update(more or {})
+        img, _b = synth((self.CALL if caller is None else caller) + [("mov", "r0, #0"), ("bx", "lr")], more=routines)
+        with_table(img, extra_words={self.DESC + 4 * k: w for k, w in enumerate(desc)} if desc else None)
+        img.syms["DESC"] = (self.DESC, 16, "r")
+        return img
+
+    def commands(self, desc, **kw):
+        (c,) = isa.settle(self.image(desc, **kw), lambda im: im.dma_writes())["commands"]
+        return c
+
+    READ_FRAME = [0xFFFFFFFF, 0x10300001, 0, 0xCA]          # b3's DMA_READ_FRAME: PCAP -> DST_BUF | tag, 202 words
+
+    def test_a_command_is_a_write_that_is_not_placed(self):
+        w = isa.settle(self.image(self.READ_FRAME), lambda im: im.write_inventory())
+        d = w["routines"]["d"]
+        self.assertEqual((d["stores"], d["dma_commands"], d["placed"], d["not_placed"]), (3, 1, 3, 1),
+                         "the three register stores are placed (MMIO); the command they queue is not")
+        (why, at), = d["not_placed_at"].items()
+        self.assertEqual(at, ["0x301c"])
+        self.assertTrue(why.startswith("queues a DevC DMA command (it writes DMA_DEST_LEN): "), why)
+        for said in ("P_DESC", "P_DEC", "never as a placed write", "may land after this routine returns", "no completion or stop is shown"):
+            self.assertIn(said, why)
+        self.assertEqual(w["total"]["dma_commands"], 1)
+        self.assertEqual(w["unproved"], 1)
+
+    def test_the_conditional_range_decodes_the_tag(self):
+        c = self.commands(self.READ_FRAME)
+        self.assertEqual(c["unknown"], [])
+        (x,) = c["commands"]
+        self.assertEqual(x["memory"], ["0x10300000", "0x10300328"], "202 words from 0x10300000: the tag is not address")
+        self.assertTrue(x["tag"].startswith("2'b01"))
+        self.assertEqual(x["premises"], ["P_DESC", "P_DEC"])
+        self.assertEqual(x["objects_read"], ["DESC"])
+        self.assertEqual(x["read_from"], ["0x9204", "0x9208", "0x920c"])
+        self.assertEqual((x["caller"], x["site"]), ("f", "0x1008"))
+        self.assertEqual(x["overlaps"], [])
+        untagged = self.commands([0xFFFFFFFF, 0x10300000, 0, 0xCA])["commands"][0]
+        self.assertEqual((untagged["memory"], untagged["tag"]), (["0x10300000", "0x10300328"], None))
+
+    def test_a_destination_that_overlaps_is_named(self):
+        x = self.commands([0, T_ADDR | 1, 0, 2])["commands"][0]
+        self.assertEqual((x["memory"], x["overlaps"]), (["0x9100", "0x9108"], ["TBL"]))
+        x = self.commands([0, self.DESC, 0, 4])["commands"][0]
+        self.assertEqual(x["overlaps"], ["DESC"], "a command that overwrites its own descriptor")
+        x = self.commands([0, 0x80000, 0, 1])["commands"][0]
+        self.assertEqual(x["overlaps"], ["the stacks"])
+
+    def test_the_length_and_a_wrap(self):
+        x = self.commands([0, 0x10300001, 8, 2])["commands"][0]
+        self.assertEqual(x["memory"], ["0x10300000", "0x10300020"], "the larger of the two length registers")
+        self.assertEqual(self.commands([0, 0x10300001, 0, 0])["commands"][0]["memory"], [])
+        x = self.commands([0, 0xFFFFF001, 0, 0x500])["commands"][0]
+        self.assertEqual(x["memory"], "unknown")
+        self.assertIn("wrap round the address space", x["why"])
+        x = self.commands([0, 0xFFFFF000, 0, 0x400])["commands"][0]
+        self.assertEqual(x["memory"], ["0xfffff000", "0x100000000"], "up to the top, not past it")
+
+    def test_the_low_bits_and_the_pcap(self):
+        for bits in (2, 3):
+            x = self.commands([0, 0x10300000 | bits, 0, 4])["commands"][0]
+            self.assertEqual(x["memory"], "unknown", bits)
+            self.assertIn("not a decoded form", x["why"])
+        x = self.commands([0x10200001, 0xFFFFFFFF, 0x2B, 0])["commands"][0]
+        self.assertIsNone(x["memory"])
+        self.assertIn("PCAP", x["note"])
+        self.assertIn("INFERRED", x["note"])
+        self.assertEqual(x["premises"], ["P_DESC"])
+
+    def test_an_unknown_descriptor_leaves_the_command_unknown(self):
+        c = self.commands(self.READ_FRAME, caller=[("ldr", "r0, [r1]"), ("bl", call(self.D, "d"))])
+        self.assertEqual(c["commands"], [])
+        self.assertTrue(any("not a constant" in u for u in c["unknown"]), c["unknown"])
+        c = self.commands(None)                            # the descriptor's words are not in the image
+        self.assertTrue(any("is not a word of a loaded section" in u for u in c["unknown"]), c["unknown"])
+        q = list(self.QUEUE)
+        q[2] = ("add", "r3, r0, #4")                       # DMA_DEST_ADDR not loaded from the descriptor
+        c = self.commands(self.READ_FRAME, queue=q)
+        self.assertTrue(any(u.startswith("DMA_DEST_ADDR: r3 is defined at 0x3008 by `add") for u in c["unknown"]), c["unknown"])
+        q = list(self.QUEUE)
+        q[7:7] = [("movne", "r3, #0")]                     # a conditional definition between the load and the store
+        c = self.commands(self.READ_FRAME, queue=q)
+        self.assertEqual(c["commands"], [])
+        self.assertTrue(any(u.startswith("DMA_DEST_LEN: r3 is not defined on a straight line") for u in c["unknown"]), c["unknown"])
+        self.assertTrue(any(u.startswith("DMA_DEST_ADDR: the store at 0x300c is not on a straight line") for u in c["unknown"]), c["unknown"])
+        c = self.commands(self.READ_FRAME, caller=[("mov", "r0, #0")])   # d is entered by no call that reads its arguments
+        self.assertTrue(any("entered other than by a call" in u for u in c["unknown"]), c["unknown"])
+        img = self.image(self.READ_FRAME)                  # an unknown command is still a write that is not placed
+        img.words.pop(self.DESC + 4)
+        w = isa.settle(img, lambda im: im.write_inventory())
+        self.assertEqual(w["routines"]["d"]["dma_commands"], 1)
+        self.assertEqual(w["routines"]["d"]["not_placed"], 1)
+
+    def test_the_write_may_land_after_the_routine_returns(self):
+        c = self.commands(self.READ_FRAME)
+        self.assertEqual(c["window"]["from"], "0x301c")
+        self.assertIsNone(c["window"]["to"], "no end is shown: not the return, not main's, not the image's")
+        for said in ("after the routine returns", "after main returns", "after the image has stopped",
+                     "a path that returns after an error or a timeout issues no stop"):
+            self.assertIn(said, c["window"]["why"])
+        img = self.image(self.READ_FRAME)                  # under a call of d, the command is a write that may reach a frame
+        bl = isa.settle(img, lambda im: im._frame_blockers(self.D))
+        self.assertEqual([(a, what) for a, what, _why in bl], [(0x301C, "queues a DevC DMA command (it writes DMA_DEST_LEN)")])
+
+    def test_a_read_only_table_is_not_proved_while_a_command_is_queued(self):
+        """Even a command whose conditional range misses every table leaves the table unproved: in the inventory the
+        command is unknown."""
+        img = self.image(self.READ_FRAME, caller=TBL + [("bl", call(C, "c"))] + self.CALL, more={"c": (C, CONSUME)})
+        why = isa.settle(img, lambda im: im._ro_table_proof(T_ADDR))
+        self.assertIsNotNone(why)
+        self.assertIn("queues a DevC DMA command", why)
+
+    def test_a_command_queued_through_a_call_is_unknown(self):
+        h = 0x5000
+        caller = [("movw", "r0, #28708"), ("movt", "r0, #63488"), ("bl", call(h, "h"))]   # r0 = DMA_DEST_LEN
+        more = {"h": (h, [("mov", "r2, #1"), ("str", "r2, [r0]"), ("mov", "r0, #0"), ("bx", "lr")])}
+        r = isa.settle(self.image(self.READ_FRAME, caller=caller, more=more), lambda im: im.dma_writes())
+        (c,) = [x for x in r["commands"] if x["routine"] == "f"]
+        self.assertEqual((c["at"], c["commands"]), ("0x1008", []))
+        self.assertIn("queued through a call", c["unknown"][0])
+
+    def test_a_placed_write_into_another_master_is_listed(self):
+        caller = [("movw", "r1, #12288"), ("movt", "r1, #63488"), ("mov", "r2, #1"), ("str", "r2, [r1, #4]")]   # 0xF8003004
+        r = isa.settle(self.image(self.READ_FRAME, caller=caller + self.CALL), lambda im: im.dma_writes())
+        self.assertEqual(r["other_masters"], [{"master": "DMAC_S", "routine": "f", "at": "0x100c", "what": "stores"}])
 
 
 class TheFrameCells(unittest.TestCase):

@@ -51,7 +51,7 @@ for p in (REPO_ROOT / "host", REPO_ROOT / "b3/host"):
         sys.path.insert(0, str(p))
 import b2_build_evidence as b2be  # noqa: E402  (the pinned toolchain's path; a frozen B2 module, read only)
 
-TOOL_VERSION = "b3-image-stack 1.7.0"
+TOOL_VERSION = "b3-image-stack 1.8.0"
 ELF_DEFAULT = REPO_ROOT / "b3/firmware/bsp/out/b3_app.elf"
 TC_BIN = Path(b2be.TC) / "bin"
 MAIN_LIMIT = 0x2000                     # the owner's ruling: the main path's verified bound is at most 0x2000 bytes
@@ -72,6 +72,13 @@ STACK_TOPS = {"SYS": ("__stack", "_stack_end"), "IRQ": ("__irq_stack", "__stack"
 COND = r"(?:eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le)"
 # the stage-4 stack exceptions (the owner's ruling of 2026-10-01) — their call chains as linked into the image
 NAMED_CHAINS = ("select_generation", "b2_search_state_hex")
+# the DevC DMA command registers (the owner's ruling of 2026-10-12, the DMA unit): the DEST_LEN write queues the
+# command; the PCAP's own address; the register blocks of the PS's other masters that can run a DMA of their own
+DEVC_DMA = {"DMA_SRC_ADDR": 0xF8007018, "DMA_DEST_ADDR": 0xF800701C, "DMA_SRC_LEN": 0xF8007020, "DMA_DEST_LEN": 0xF8007024}
+PCAP_ENDPOINT = 0xFFFFFFFF
+DMA_MASTERS = {"DMAC_S": (0xF8003000, 0xF8004000), "DMAC_NS": (0xF8004000, 0xF8005000), "GEM0": (0xE000B000, 0xE000C000),
+               "GEM1": (0xE000C000, 0xE000D000), "USB0": (0xE0002000, 0xE0003000), "USB1": (0xE0003000, 0xE0004000),
+               "SDIO0": (0xE0100000, 0xE0101000), "SDIO1": (0xE0101000, 0xE0102000)}
 
 
 class Finding(Exception):
@@ -3605,6 +3612,11 @@ class Image:
             if e["kind"] == "fallthrough" and any(self._arg_summary(e["to"], m)[0] for m in range(4)):
                 out.append((int(e["site"], 16), f"falls into {self.name(e['to'])}, which writes through its arguments",
                             [("unknown", "through whatever the registers hold there")], {"to": e["to"]}))
+        dl = DEVC_DMA["DMA_DEST_LEN"]                      # (the DMA unit) a placed write of DMA_DEST_LEN queues a
+        for a, what, reach, _m in list(out):               # DMA command: the image's own write, not placed
+            if any(r[0] == "abs" and r[1] < dl + 4 and dl < r[2] for r in reach):
+                out.append((a, "queues a DevC DMA command (it writes DMA_DEST_LEN)", [("unknown", DMA_WHY)],
+                            {"dma": "stores" if what == "stores" else "hands"}))
         if self._solving is None:
             c[R] = out
         return out
@@ -3627,22 +3639,23 @@ class Image:
 
     def write_inventory(self) -> dict:
         """Every write of every routine in the image, by where it is placed (`_write_sites`). Per routine: its
-        writes (stores + hand_overs — one per store, one per pointer position a call hands to a writer), each counted
+        writes (stores + hand_overs + dma_commands — one per store, one per pointer position a call hands to a
+        writer, one per DevC DMA command a write queues: never placed, see `dma_writes`), each counted
         once as placed / at_the_callers / by_contract / not_placed; `not_placed_at` every site that is not placed,
         grouped by why (none is left out); `overlapping_at` every placed site that overlaps a protected object.
         `unproved` counts the sites not proved to miss the callback cells."""
         prot = self._protected()
         span = self._stack_span()
         names = [self.name(R) for R in self._code_routines()]
-        routines, total = {}, {"stores": 0, "hand_overs": 0, "placed": 0, "at_the_callers": 0, "by_contract": 0, "not_placed": 0,
-                                "not_placed_sites": 0, "overlapping_sites": 0, "placed_by_a1": 0}
+        routines, total = {}, {"stores": 0, "hand_overs": 0, "dma_commands": 0, "placed": 0, "at_the_callers": 0, "by_contract": 0,
+                                "not_placed": 0, "not_placed_sites": 0, "overlapping_sites": 0, "placed_by_a1": 0}
         for R in self._code_routines():
-            rec = {"stores": 0, "hand_overs": 0, "placed": 0, "at_the_callers": 0, "by_contract": 0, "not_placed": 0}
+            rec = {"stores": 0, "hand_overs": 0, "dma_commands": 0, "placed": 0, "at_the_callers": 0, "by_contract": 0, "not_placed": 0}
             unplaced: dict = {}
             over: dict = {}
             a1: dict = {}
             for a, what, reach, m in self._write_sites(R):
-                kind = "stores" if what == "stores" else "hand_overs"
+                kind = "dma_commands" if "dma" in m else "stores" if what == "stores" else "hand_overs"
                 rec[kind] += 1
                 why = [r[1] for r in reach if r[0] == "unknown"]
                 if "a1" in m and not why:                  # (A1) placed only because its index is bounded
@@ -3669,12 +3682,184 @@ class Image:
                 rec["overlapping_at"] = {k: sorted(set(v)) for k, v in sorted(over.items())}
             if a1:
                 rec["placed_by_a1_at"] = {k: sorted(set(v)) for k, v in sorted(a1.items())}
-            if rec["stores"] or rec["hand_overs"]:           # (two routines of one name — the libc's two __sbprintf —
+            if rec["stores"] or rec["hand_overs"] or rec["dma_commands"]:   # (two routines of one name — the libc's two __sbprintf —
                 n = self.name(R)                           # are told apart by address: neither record is dropped)
                 routines[n if names.count(n) == 1 else f"{n}@{R:#x}"] = rec
         return {"protected": [{"name": n, "from": f"{lo:#x}", "to": f"{hi:#x}"} for n, lo, hi in prot],
                 "stacks": [f"{span[0]:#x}", f"{span[1]:#x}"] if span else None,
                 "routines": routines, "total": total, "unproved": total["not_placed_sites"] + total["overlapping_sites"]}
+
+    # ---- the DMA commands the image queues itself (the owner's ruling of 2026-10-12, the DMA unit)
+    #
+    # A write of the DevC's DMA_DEST_LEN queues a DMA command. That DMA is the image's own behaviour, not an external
+    # bus master's: it is a write of the inventory (`_write_sites`), and it is NOT PLACED — its destination and
+    # lengths are words the routine reads from memory whose stability nothing proves (P_DESC), the DevC's address
+    # decode is not proved (P_DEC), and it may land after the routine returns: no completion or stop is shown, so
+    # its window has no end. `dma_writes` lists, apart from the inventory, what each command would write on P_DESC
+    # and P_DEC (DMA_RULE) — a conditional range, never a placed write — and the placed writes into the registers of
+    # the PS's other masters that run DMAs of their own.
+
+    def dma_writes(self) -> dict:
+        prot = self._protected()
+        span = self._stack_span()
+        commands, masters = [], []
+        for R in self._code_routines():
+            for a, what, reach, m in self._write_sites(R):
+                if "dma" in m:
+                    rec = {"routine": self.name(R), "at": f"{a:#x}",
+                           "window": {"from": f"{a:#x}", "to": None, "why": DMA_WINDOW}, "commands": [], "unknown": []}
+                    if m["dma"] != "stores":
+                        rec["unknown"].append("it is queued through a call: the values written are not read by this rule")
+                    else:
+                        self._dma_commands(R, a, rec, prot, span)
+                    commands.append(rec)
+                    continue
+                for nm, (lo, hi) in sorted(DMA_MASTERS.items()):
+                    if any(r[0] == "abs" and r[1] < hi and lo < r[2] for r in reach):
+                        masters.append({"master": nm, "routine": self.name(R), "at": f"{a:#x}", "what": what})
+        return {"commands": commands, "other_masters": masters}
+
+    def _dma_commands(self, R: int, a: int, rec: dict, prot: list, span) -> None:
+        """Fill `rec` with the command(s) queued at `a` on P_DESC and P_DEC, or with why it is unknown."""
+        vals = {}
+        for reg in ("DMA_DEST_ADDR", "DMA_SRC_LEN", "DMA_DEST_LEN"):
+            v = self._dma_reg_value(R, a, DEVC_DMA[reg])
+            if isinstance(v, str):
+                rec["unknown"].append(f"{reg}: {v}")
+            vals[reg] = v
+        if rec["unknown"]:
+            return
+        args = sorted({v[1] for v in vals.values() if v[0] == "arg"})
+        entries = [(None, None)]
+        if args:                                           # read through an argument: at every call that enters R
+            if not self._args_followed(R):
+                rec["unknown"].append("the routine is entered other than by a call whose arguments are read")
+                return
+            entries = []
+            for Q, site in self._callers(R):
+                if self._transfers(Q).get(site) != R:
+                    rec["unknown"].append(f"{self.name(Q)} enters it at {site:#x} through a pointer")
+                    continue
+                entries.append((Q, site))
+            if not entries and not rec["unknown"]:
+                rec["unknown"].append("no call enters the routine")
+            if rec["unknown"]:
+                return
+        for Q, site in entries:
+            words, read = {}, []
+            for reg, v in vals.items():
+                if v[0] == "const":
+                    words[reg] = v[1]
+                    continue
+                if v[0] == "mem":
+                    at = v[1]
+                else:
+                    atoms = self._raw_reg(Q, site, f"r{v[1]}")
+                    if len(atoms) != 1 or next(iter(atoms))[0] != "const":
+                        rec["unknown"].append(f"{reg}: {self.name(Q)} at {site:#x} hands r{v[1]} = {sorted(map(str, atoms))}, not a constant")
+                        break
+                    at = next(iter(atoms))[1] + v[2]
+                w = self.words.get(at)
+                if at & 3 or w is None:
+                    rec["unknown"].append(f"{reg}: {at:#x} is not a word of a loaded section")
+                    break
+                words[reg] = w
+                read.append(at)
+            else:
+                rec["commands"].append(self._dma_decode(words, read, Q, site, prot, span))
+        if rec["unknown"]:
+            rec["commands"] = []
+
+    def _dma_decode(self, words: dict, read: list, Q, site, prot: list, span) -> dict:
+        dst, sl, dl = words["DMA_DEST_ADDR"], words["DMA_SRC_LEN"], words["DMA_DEST_LEN"]
+        objs = sorted({n for n, (v, size, _t) in self.syms.items() if size and any(v <= x < v + size for x in read)})
+        cmd = {"caller": None if Q is None else self.name(Q), "site": None if site is None else f"{site:#x}",
+               "read_from": [f"{x:#x}" for x in read], "objects_read": objs,
+               "DMA_DEST_ADDR": f"{dst:#x}", "DMA_SRC_LEN": sl, "DMA_DEST_LEN": dl,
+               "premises": (["P_DESC"] if read else []) + ["P_DEC"]}
+        if dst == PCAP_ENDPOINT:
+            return dict(cmd, memory=None, premises=["P_DESC"] if read else [],
+                        note="its destination is the PCAP: not a memory write (INFERRED)")
+        if dst & 3 not in (0, 1):
+            return dict(cmd, memory="unknown", why=f"address bits [1:0] = {dst & 3:#b}: not a decoded form")
+        lo, n = dst & ~3, max(sl, dl)
+        tag = "2'b01: hold DMA_DONE until the AXI and PCAP sides are done (UG585, N4)" if dst & 3 else None
+        if n == 0:
+            return dict(cmd, memory=[], tag=tag)
+        hi = lo + 4 * n
+        if hi > 1 << 32:
+            return dict(cmd, memory="unknown", tag=tag, why=f"{n} words from {lo:#x} wrap round the address space")
+        over = {nm for nm, plo, phi in prot if plo < hi and lo < phi} | set(o for o in objs if self.syms[o][0] < hi and lo < self.syms[o][0] + self.syms[o][1])
+        if span and span[0] < hi and lo < span[1]:
+            over.add("the stacks")
+        return dict(cmd, memory=[f"{lo:#x}", f"{hi:#x}"], tag=tag, overlaps=sorted(over))
+
+    def _dma_reg_value(self, R: int, a: int, reg_addr: int):
+        """The value the command queued at `a` takes in the DMA register at `reg_addr`: ('const', v); ('arg', n, k),
+        the word at argument n + k; ('mem', addr), the word at a constant address — read by the last store to the
+        register on a straight line before `a` (DMA_RULE); a str: why it is unknown."""
+        stores = [x for x, what, reach, _m in self._write_sites(R) if what == "stores"
+                  and any(r[0] == "abs" and r[1] < reg_addr + 4 and reg_addr < r[2] for r in reach)]
+        before = [x for x in stores if x <= a]
+        if not before:
+            return "not written by the routine before the command"
+        s = max(before)
+        exact = [r for x, what, reach, _m in self._write_sites(R) if x == s and what == "stores" for r in reach]
+        if exact != [("abs", reg_addr, reg_addr + 4)]:
+            return f"the store at {s:#x} does not write exactly that word"
+        if not self._straight(R, s, a):
+            return f"the store at {s:#x} is not on a straight line to the command"
+        data = self._store_desc(R, s)["data"]
+        if len(data) != 1:
+            return f"the store at {s:#x} writes more than one register"
+        reg = data[0]
+        atoms = self._base_atoms(R, s, reg)
+        if len(atoms) == 1 and next(iter(atoms))[0] == "const":
+            return ("const", next(iter(atoms))[1])
+        body = sorted((i for i in self.region(R) if i["addr"] < s), key=lambda i: i["addr"])
+        for p in reversed(body):
+            if not self._straight(R, p["addr"], s):
+                return f"{reg} is not defined on a straight line before the store at {s:#x}"
+            if not self._writes_reg(p, reg):
+                continue
+            m = re.fullmatch(r"(\w+),\[(\w+)(?:,#(-?\w+))?\]", p["ops"].replace(" ", ""))
+            if p["mnem"] != "ldr" or not m or m.group(1) != reg:
+                return f"{reg} is defined at {p['addr']:#x} by `{p['mnem']} {p['ops']}`, which this rule does not read"
+            k = int(m.group(3), 0) if m.group(3) else 0
+            b = self._raw_reg(R, p["addr"], m.group(2))
+            if len(b) == 1 and next(iter(b))[0] == "arg" and next(iter(b))[1] in (0, 1, 2, 3):
+                return ("arg", next(iter(b))[1], k)
+            if len(b) == 1 and next(iter(b))[0] == "const":
+                return ("mem", next(iter(b))[1] + k)
+            return f"{reg} is loaded at {p['addr']:#x} through {m.group(2)} = {sorted(map(str, b))}, not an argument or a constant"
+        return f"{reg} is not defined in the routine before the store at {s:#x}"
+
+    def _straight(self, R: int, lo: int, hi: int) -> bool:
+        """Whether every path to `hi` passes `lo` with nothing between: no branch target in (lo, hi], no transfer of
+        control and no conditional instruction in [lo, hi)."""
+        bt = self.branch_targets_of(R)
+        for i in self.region(R):
+            x = i["addr"]
+            if lo < x <= hi and x in bt:
+                return False
+            if lo <= x < hi:
+                b, cond = base_mnem(i["mnem"])
+                # any condition suffix counts (a mnemonic that only looks like one — teq, mls — is refused: unknown)
+                cond = cond or re.fullmatch(r"[a-z]+?" + COND + r"s?", i["mnem"].split(".")[0]) is not None
+                if cond or b in ("b", "bl", "blx", "bx", "cbz", "cbnz") or re.fullmatch(r"it[te]{0,3}", b) \
+                        or self._writes_reg(i, "pc"):
+                    return False
+        return True
+
+    @staticmethod
+    def _writes_reg(i: dict, reg: str) -> bool:
+        """Whether instruction `i` may write `reg` (over-approximate: a register listed before any memory operand of
+        anything but a store or a comparison)."""
+        b = base_mnem(i["mnem"])[0]
+        if b.startswith(("str", "push", "stm", "vst", "vpush", "cmp", "cmn", "tst", "teq", "pld", "dmb", "dsb", "isb", "nop")):
+            return False
+        head = i["ops"].split("[")[0].split("#")[0]
+        return reg in re.split(r"[,\s{}!]+", head)
 
     def calls_through_memory(self, entry: int) -> bool:
         """Whether a path from `entry` makes an indirect call or tail (context-free, over every rule's target set):
@@ -5657,7 +5842,9 @@ VALUE_MODEL = ("a callback read from a frame slot or an object's field is the LA
                "set that does not resolve each leave the cell unknown, with what blocked it recorded "
                "(result.frame_cells; each unresolved cell is a finding). SCOPE — SYNCHRONOUS PATHS ONLY: what an "
                "exception taken between a cell's store and its read may write is NOT covered, and no handler's "
-               "writes are analysed; that the image never clears the I / F masks is recorded (masks), not used as "
+               "writes are analysed; nor is what a DMA the image queued may write once the routine that queued it "
+               "has returned (rules.dma_writes: no end of its window is shown — under the call that queues it, it is "
+               "a write that is not placed); that the image never clears the I / F masks is recorded (masks), not used as "
                "proof that no handler runs; while this stands no bound is published for an entry that calls through "
                "memory. STATED, NOT PROVED FROM THE IMAGE: (B2) the "
                "callee-saved registers are preserved across a call (the AAPCS); (B3) a routine's contract is its "
@@ -5702,6 +5889,35 @@ ARITY_RULE = ("the argument registers a call of a C-library routine at its contr
               "printf-family call's layout")
 LEAK_RULE = ("the routines one of whose frame addresses may come to rest outside the frame (stored there, or handed to a "
              "routine that may keep it): no callback is resolved from such a frame")
+# (the owner's ruling of 2026-10-12, the DMA unit) the sources are locatable: github.com/14sea/zynq-psmap at 191ab05
+# (its origin/main), docs/s0_ug585_discharge.md lines 114-115 (N3, N4: UG585 edition 2026-02-06, the
+# XDCFG_DMA_{SRC,DEST}_{ADDR,LEN} register topics, quoted) and docs/s0_derived_sequence.md lines 37-38 (the PCAP
+# endpoint 0xFFFF_FFFF, quoted from UG585's "Configure the PL via PCAP Bridge Example"); what no quoted text gives is
+# marked INFERRED
+DMA_WHY = ("a DevC DMA command queued by this write of DMA_DEST_LEN: its destination and lengths are what the routine "
+           "wrote into the DMA registers, read from memory whose stability is not proved (P_DESC), and the DevC's "
+           "address decode is not proved (P_DEC) — what it would write on both is listed apart (rules.dma_writes), "
+           "never as a placed write; it may land after this routine returns, and no completion or stop is shown")
+DMA_WINDOW = ("from the DMA_DEST_LEN write that queues the command, to no shown end: the analysis does not take the DevC "
+              "status a routine polls as proof of completion (that is hardware semantics, INFERRED), and a path that "
+              "returns after an error or a timeout issues no stop — the write may land after the routine returns, after "
+              "main returns and after the image has stopped")
+DMA_RULE = ("each DevC DMA command the image queues — a write reaching DMA_DEST_LEN (0xf8007024), which queues it (UG585 "
+            "via zynq-psmap 191ab05 docs/s0_ug585_discharge.md N3) — is a write of the inventory that is NOT placed "
+            "(result.writes). Apart from the inventory, and only on two premises that are not proved — P_DESC: the "
+            "words the routine reads into DMA_DEST_ADDR, DMA_SRC_LEN and DMA_DEST_LEN hold, each time it reads them, "
+            "the values the ELF has there; P_DEC: the DevC's master port reaches memory at the address it is given — "
+            "each command's conditional range is listed: each value the store of that register takes, as the last "
+            "store to it on a straight line before the command — a constant, or the word an unconditional `ldr` reads "
+            "at a constant offset from an argument register, at every call that enters the routine (each a direct "
+            "call handing a constant there; the routine entered only by calls whose arguments are read); address "
+            "bits [1:0] = 2'b01 are UG585's 'hold DMA_DONE until the AXI and PCAP sides are done' tag (N4), not "
+            "address, and 2'b00 is no tag; any other low bits, or a value not so read, leave the command unknown; "
+            "DMA_DEST_ADDR 0xffffffff is the PCAP (docs/s0_derived_sequence.md 37-38), not a memory write (INFERRED); "
+            "the length is the larger of the two length registers, in 32-bit words (INFERRED); a range that wraps "
+            "round the address space is unknown. Each command's window has no shown end. listed: each command, its "
+            "conditional range and what that range overlaps; a placed write into another DMA-capable PS master's "
+            "registers (DMAC, GEM, USB, SDIO) is a finding of its own")
 
 
 def assess(elf: Path = ELF_DEFAULT) -> dict:
@@ -5883,6 +6099,39 @@ def _assess_once(img: "Image") -> dict:
             findings.append(f"{n}: {len(sites)} write(s) not placed — not proved to miss the callback cells: {', '.join(sites)}")
         for obj, at in rec.get("overlapping_at", {}).items():
             findings.append(f"{n}: {len(at)} placed write(s) overlapping {obj}: {', '.join(at)}")
+    try:                                                   # (the DMA unit: the commands the image queues itself)
+        dma = img.dma_writes()
+    except Finding as e:
+        dma = {"commands": [], "other_masters": []}
+        findings.append(f"the image's DMA commands could not be listed: {e}")
+    for c in dma["commands"]:
+        if c["unknown"]:
+            cond = "no conditional range either: " + "; ".join(c["unknown"])
+        else:
+            cond = "on P_DESC and P_DEC it would write " + "; ".join(
+                f"from {x['caller']} {x['site']}: " + (
+                f"{x['memory'][0]}..{x['memory'][1]}" + (f" (overlapping {', '.join(x['overlaps'])})" if x["overlaps"] else "")
+                if isinstance(x["memory"], list) and x["memory"] else "nothing" if x["memory"] == [] else
+                "the PCAP, not memory (INFERRED)" if x["memory"] is None else f"an unknown range ({x['why']})")
+                for x in c["commands"])
+        findings.append(f"{c['routine']}: the DevC DMA command queued at {c['at']} is a write that is not placed (F-DEC: its "
+                        f"descriptor's stability and the address decode are not proved) — {cond}; and its window has no "
+                        f"shown end (F-WIN): it may land after the routine returns")
+    others = sum(len({x for k, v in rec.get("not_placed_at", {}).items() if not k.startswith("queues a DevC DMA command")
+                      for x in v}) for rec in writes["routines"].values())
+    if others > 0:                                         # (the commands' own sites are not counted in)
+        findings.append(f"{others} other write site(s) are not placed: any of them may reach the DevC "
+                        f"DMA registers or another master's, so the DMA commands listed are complete only over the placed "
+                        f"writes (F-SUB)")
+    for c in dma["commands"]:
+        for x in c["commands"]:
+            if x["memory"] is None:
+                findings.append(f"{c['routine']} at {c['at']} (from {x['caller']} {x['site']}) writes the PL's configuration "
+                                f"through the PCAP: whether the PL so configured can master PS memory is not decided by the "
+                                f"image (F-PL)")
+    for w in dma["other_masters"]:
+        findings.append(f"{w['routine']} {w['what']} at {w['at']} into {w['master']}'s registers: a DMA that master may run is "
+                        f"not modelled")
     try:                                                   # (the frame unit: every frame cell has a result)
         cells = img.frame_cells()
     except Finding as e:
@@ -5905,7 +6154,9 @@ def _assess_once(img: "Image") -> dict:
     # and, in this version, at all: the cells are held against the SYNCHRONOUS paths only (VALUE_MODEL's scope)
     reasons = ([f"{writes['unproved']} write(s) of the image are not proved to miss those cells"] if writes["unproved"] != 0 else []) \
         + ([f"{open_cells} frame cell(s) are not resolved"] if open_cells else []) \
-        + ["what an exception taken between a cell's store and its read may write is not covered (synchronous paths only)"]
+        + ["what an exception taken between a cell's store and its read may write is not covered (synchronous paths only)"] \
+        + (["what a DMA the image queued may write after the routine that queued it returns is not covered (no end of its "
+            "window is shown)"] if dma["commands"] else [])
     for entry, (addr, _mode) in entries.items():
         try:
             through = img.calls_through_memory(addr)
@@ -5940,6 +6191,7 @@ def _assess_once(img: "Image") -> dict:
                              "note": "a bit the image never clears keeps the state the loader entered it with"},
                    "named_chains": named,
                    "writes": writes,
+                   "dma": dma,
                    "frame_cells": cells,
                    "rules": dict({n: {"rule": r["rule"], "targets": [img.name(t) for t in r["targets"]]} for n, r in sorted(img.site_rules.items())},
                                  value_model={"rule": VALUE_MODEL, "targets": sorted(img._cache("_libc_used"))},
@@ -5949,6 +6201,18 @@ def _assess_once(img: "Image") -> dict:
                                      f"{k.replace('_', ' ')}: {v}" for k, v in sorted(writes["total"].items())]},
                                  libc_arity={"rule": ARITY_RULE, "targets": img.arity_targets()},
                                  frame_leaks={"rule": LEAK_RULE, "targets": [f"{n}: {w}" for n, w in sorted(img._cache("_leaks").items())]},
+                                 dma_writes={"rule": DMA_RULE, "targets": [
+                                     f"{c['routine']} {c['at']}: window from {c['window']['from']} to no shown end; "
+                                     + ("unknown: " + "; ".join(c["unknown"]) if c["unknown"] else "; ".join(
+                                         f"from {x['caller']} {x['site']} reading {', '.join(x['objects_read']) or ', '.join(x['read_from']) or 'constants'}: "
+                                         f"DMA_DEST_ADDR {x['DMA_DEST_ADDR']} SRC_LEN {x['DMA_SRC_LEN']} DEST_LEN {x['DMA_DEST_LEN']} -> "
+                                         + ("the PCAP, not memory (INFERRED)" if x["memory"] is None else "nothing" if x["memory"] == [] else
+                                            f"unknown ({x['why']})" if x["memory"] == "unknown" else
+                                            f"{x['memory'][0]}..{x['memory'][1]} on {' and '.join(x['premises'])}"
+                                            + (f", overlapping {', '.join(x['overlaps'])}" if x["overlaps"] else ", overlapping no protected object nor the stacks"))
+                                         for x in c["commands"]))
+                                     for c in dma["commands"]]
+                                     + [f"{w['routine']} {w['at']}: a placed write into {w['master']}'s registers" for w in dma["other_masters"]]},
                                  callback_contracts={"rule": CONTRACT_RULE, "targets": [
                                      f"{n}: {c['unit']} {c['source_sha256'][:16]}… code {c['code_sha256'][:16]}… arity "
                                      f"{c['arity']} writes {json.dumps(c['writes'], sort_keys=True)} returns {c['returns']} — {c['source']}"
