@@ -1,0 +1,134 @@
+{
+ "arm_order": {
+  "per_pair": [
+   "RFO"
+  ],
+  "sequence": [
+   "RFO",
+   "FOR",
+   "ORF",
+   "ROF",
+   "OFR",
+   "FRO"
+  ]
+ },
+ "audit_policy": "all-self-reporting",
+ "b1_map_cost": 333,
+ "budget_per_arm": 40,
+ "carto_version": "specimen-carto-v1.1",
+ "fitness": "F1",
+ "lifecycle": 2,
+ "map": {
+  "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json",
+  "sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296"
+ },
+ "note": "B3Q's frozen experiment (preregistration \u00a76a): 120 search + 3 holdout = 123 fitness values, 40 ledger entries, 2 baselines, 125 records. It MEASURES the all-self-reporting rate; the planning bound only bounds its own deadline and is never a calibration",
+ "pairs": 1,
+ "planning_bound": {
+  "deadline_formula": "1.25 x records x 3600 / rate + 600",
+  "rate_per_hour": 2630.433828050359,
+  "rule": "the slowest archived observed all-self-reporting rate (B2 session 1); B3Q MEASURES the real one",
+  "session_timeout_s": 813.8430528081055
+ },
+ "prediction_sha256": "edcc7f65a1b481b0002050769fbdc282fae287150be8adc326d8d18da54789b3",
+ "records": {
+  "baselines": 2,
+  "holdout": 3,
+  "ledger_entries": 40,
+  "per_pair": 123,
+  "search": 120,
+  "total": 125
+ },
+ "schema": "b3_plan",
+ "schema_version": "2.0.0",
+ "seed_derivation": {
+  "commit": "689dde1dad374536c625bbe2b05986ee89eb4c94",
+  "excluded_b3_pairs": [
+   [
+    2961656459,
+    1343397103
+   ],
+   [
+    3785070923,
+    2731497693
+   ],
+   [
+    3587510309,
+    2084003005
+   ],
+   [
+    3491865220,
+    1136202755
+   ],
+   [
+    1595133113,
+    3832447288
+   ],
+   [
+    556892415,
+    1747787438
+   ],
+   [
+    2376967347,
+    1528092051
+   ],
+   [
+    205178539,
+    2230924639
+   ]
+  ],
+  "excluded_sources": {
+   "evidence/b2/b2q_plan.json seed_derivation (B2Q pairs)": {
+    "count": 1,
+    "master_seed": 505806527,
+    "values": 3
+   },
+   "evidence/b2/gate/gate_report.json": {
+    "count": 200,
+    "master_seed": 1324512209,
+    "values": 401
+   },
+   "evidence/b2/gate/v0.1_2026-09-10/gate_report.json": {
+    "count": 200,
+    "master_seed": 2131041347,
+    "values": 401
+   },
+   "evidence/b3/gate/gate_report.json (lifecycle 1 gate run 1, pilot)": {
+    "count": 200,
+    "master_seed": 3097524112,
+    "values": 401
+   },
+   "evidence/b3/gate_2/gate_report.json (the B3 gate's pairs)": {
+    "count": 200,
+    "master_seed": 4260131137,
+    "values": 401
+   },
+   "evidence/b3/plan_trial_2026_09_17/prediction.json (lifecycle 1 trial session pairs, pilot)": {
+    "count": 9,
+    "master_seed": 1273858430,
+    "values": 19
+   },
+   "evidence/b3/sim/sim_report.json": {
+    "count": 200,
+    "master_seed": 3829368064,
+    "values": 401
+   },
+   "manifests/b2_manifest.json seeds (B2 session pairs)": {
+    "count": 9,
+    "master_seed": 716169644,
+    "values": 19
+   }
+  },
+  "excluded_values_total": 2082,
+  "label": "b3-qualification-2",
+  "master_seed": 3776596183,
+  "pairs": [
+   [
+    55214469,
+    4020232539
+   ]
+  ],
+  "rule": "first 4 bytes of sha256(label|instrument commit); every archived set AND every B3 pair seed excluded"
+ },
+ "session": "B3Q"
+}
