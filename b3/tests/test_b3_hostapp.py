@@ -16,7 +16,7 @@ candidate before the one a test is about runs the application's whole path.
     first champion holdout and the closing baseline; an unacknowledged record; pages that propose nothing; the
     startup identity. Every record validates incrementally; the refused record carries no search block.
   * F-WIN FAULT INJECTION (the owner's ruling: a simulation, NEVER evidence that the hardware stopped a DMA): a
-    status that never completes, an error bit, completion on the last allowed poll and on the first poll past it,
+    status that never completes, each bit of INT_STS_ERROR_MASK in turn, completion on the last allowed poll and on the first poll past it,
     DMA_DONE without D_P_DONE, data written after the stop, D_P_DONE before the data lands, a device that stays
     stuck, and a pending transfer's late completion arriving during the cleanup. In each: after the fault no
     candidate is proposed and no candidate DMA or ARM follows; the restore-only cleanup's DMAs are counted APART
@@ -30,6 +30,7 @@ scenario runs under a timeout; the firmware's poll limits are the image's own (D
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -57,6 +58,8 @@ SCENARIO_TIMEOUT_S = 300
 SPIN_LIMIT = 1_000_000                      # b3_app.c DMA_SPIN_LIMIT: devcfg_wait_done reads INT_STS at most this often
 REFUSAL = "REFUSED_BY_GATE: an unscored candidate ends the epoch"
 TIMEOUT = "DEVCFG D_P_DONE never asserted"
+ERROR_MASK = int(re.search(r"#define INT_STS_ERROR_MASK (0x[0-9A-Fa-f]+)u", (R / "b3/firmware/b3_app.c").read_text()).group(1), 16)
+ERROR_BITS = [b for b in range(32) if ERROR_MASK >> b & 1]
 SENTINEL = "a5a5a5a5"                       # b3_app.c P3_SENTINEL: readback_frame's prefill of DST_BUF
 TIMINGS: dict[str, float] = {}
 _STATE: dict = {}
@@ -341,15 +344,32 @@ class TheDmaFaults(unittest.TestCase):
                 self.assertEqual([x["seq"] for x in r.records], list(range(1, seq)),
                                  "observed: a DMA fault in link 2 / link 3 ends the epoch with no record for that candidate")
 
-    def test_an_error_bit(self):
-        r = session("frame_error", fault="frame@1:error")
-        self.stopped(r, 1, "DEVCFG error bit after a DMA", 0)
-        self.assertEqual(r.result["dma_after_stop"]["env"], 3)
+    def test_each_error_bit(self):
+        """Every bit of the firmware's own INT_STS_ERROR_MASK, one at a time, on a candidate's first readback: the stop
+        and its reason, nothing proposed / staged / ARMed after it, the cleanup's three envelopes apart, the TERM."""
+        self.assertEqual(ERROR_BITS, [6, 11, 14, 15, 18, 20, 21, 22, 23], "the mask the scope draft enumerated")
+        for bit in ERROR_BITS:
+            with self.subTest(bit=bit):
+                r = session(f"frame_error_bit_{bit}", fault=f"frame@1:error:{bit}")
+                self.stopped(r, 1, "DEVCFG error bit after a DMA", 0)
+                (faulted,) = [d for d in r.dmas if d["error_bit"] >= 0]
+                self.assertEqual((faulted["kind"], faulted["phase"], faulted["seq"], faulted["error_bit"]),
+                                 ("frame", "candidate", 1, bit), "the bit injected is the bit named")
+                self.assertEqual(int(faulted["last_status"], 16) & ERROR_MASK, 1 << bit,
+                                 "the application read exactly that error bit, and no other")
+                self.assertEqual(faulted["polls"], 1, "it stopped on the first status read that showed it")
+                self.assertEqual(r.result["dma_after_stop"], {"env": 3, "cmd": 0, "frame": 0, "clean": 0, "other": 0})
+                self.assertEqual(r.result["closing_restore"], 1)
+
+    def test_an_error_rule_must_name_its_bit(self):
+        p = subprocess.run([str(BIN), "session", str(FABRIC), "fault=frame@1:error"], capture_output=True, text=True)
+        self.assertEqual(p.returncode, 2)
+        self.assertIn("needs a bit", p.stderr)
 
     def test_the_first_cause_survives_a_cleanup_that_fails_for_another(self):
         """The error bit stops the epoch; the device then stays stuck, so the cleanup's own wait times out — a second,
         different cause. The TERM keeps the first."""
-        r = session("frame_error_sticky", fault="frame@1:error", sticky=1)
+        r = session("frame_error_sticky", fault="frame@1:error:18", sticky=1)
         self.stopped(r, 1, "DEVCFG error bit after a DMA", 0)
         self.assertEqual((r.result["dma_after_stop"]["env"], r.result["closing_restore"]), (1, 0))
 

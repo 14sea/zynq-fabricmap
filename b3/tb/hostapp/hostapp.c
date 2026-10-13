@@ -33,7 +33,7 @@
  *         ackrec ackterm ackident strict   the host's acknowledgements (1 by default; strict: ACK only an identity
  *                        whose slice is the page's)
  *         fault=K@N:M[:P]  the N-th CANDIDATE submission of kind K (env | cmd | frame | clean) behaves as M:
- *                        never | error | poll (completes on status poll P) | dmadone (DMA_DONE only, never
+ *                        never | error (INT_STS bit P is set, P = 0..31) | poll (completes on status poll P) | dmadone (DMA_DONE only, never
  *                        D_P_DONE) | defer (completes, its data deferred)
  *         sticky=1       every submission after the faulted one never completes either
  *         late=W         fire every pending submission's deferred data (and, for one that never completed, its
@@ -135,6 +135,7 @@ typedef struct {
     uint32_t seq;                       /* the application's S.seq when it was submitted */
     int mode, poll_at;                  /* how it behaves */
     unsigned polls;
+    uint32_t last_status;               /* the INT_STS value the application last read while this was polled */
     int done, data_done, target;
 } dma_t;
 #define MAXQ 200000
@@ -193,8 +194,8 @@ static void dma_data(dma_t *d)
 static void print_dma(const dma_t *d, int idx)
 {
     printf("{\"dma\":%d,\"seq\":%u,\"kind\":\"%s\",\"phase\":\"%s\",\"ordinal\":%d,\"src\":\"%08x\",\"dst\":\"%08x\",\"src_len\":%u,"
-           "\"dst_len\":%u,\"mode\":%d}\n", idx, (unsigned)d->seq, KIND_NAME[d->kind], d->after_stop ? "after_stop" : "candidate", d->ordinal,
-           d->src, d->dst, d->slen, d->dlen, d->mode);
+           "\"dst_len\":%u,\"mode\":%d,\"error_bit\":%d,\"polls\":%u,\"last_status\":\"%08x\"}\n", idx, (unsigned)d->seq, KIND_NAME[d->kind], d->after_stop ? "after_stop" : "candidate", d->ordinal,
+           d->src, d->dst, d->slen, d->dlen, d->mode, d->mode == M_ERROR ? d->poll_at : -1, d->polls, d->last_status);
 }
 
 static void fire_late(int upto)      /* the late events of every submission before `upto` still pending, once */
@@ -229,11 +230,18 @@ static void submit(uint32_t dlen)
         d->mode = fault_mode; d->poll_at = fault_p;
         if (sticky) stuck = 1;
     }
-    print_dma(d, nq);
     cur = nq++;
 }
 
+static uint32_t devc_status_compute(void);
 static uint32_t devc_status(void)
+{
+    uint32_t v = devc_status_compute();
+    if (cur >= 0) q[cur].last_status = v;
+    return v;
+}
+
+static uint32_t devc_status_compute(void)
 {
     dma_t *d;
     if (cur < 0) return devc_sts;
@@ -246,7 +254,7 @@ static uint32_t devc_status(void)
     }
     switch (d->mode) {
     case M_NEVER: break;
-    case M_ERROR: devc_sts |= (1u << 18); break;                  /* RX_FIFO_OV, inside INT_STS_ERROR_MASK */
+    case M_ERROR: devc_sts |= 1u << d->poll_at; break;            /* the bit the rule names (fault=K@N:error:B) */
     case M_DMADONE: devc_sts |= INT_STS_DMA_DONE; break;
     case M_POLL: if (d->polls >= (unsigned)d->poll_at && !d->done) { d->done = 1; dma_data(d); devc_sts |= INT_STS_D_P_DONE | INT_STS_DMA_DONE; } break;
     case M_DEFER: if (!d->done) { d->done = 1; devc_sts |= INT_STS_D_P_DONE | INT_STS_DMA_DONE; } break;
@@ -415,6 +423,7 @@ void outbyte(char c)
 static void print_result(const char *mode)
 {
     int i;
+    for (i = 0; i < nq; i++) print_dma(&q[i], i);   /* every submission, with what its polling saw */
     printf("RESULT {\"mode\":\"%s\",\"kind\":\"%s\",\"reason\":\"%s\",\"seq\":%u,\"orch_phase\":%d,\"orch_complete\":%d,"
            "\"ident\":%u,\"identack\":%u,\"ident_slice\":[%d,%d,%d],\"ident_findings_empty\":%d,"
            "\"signreq\":%u,\"signreq_after_stop\":%u,\"rec\":%u,\"term\":%u,\"hb\":%u,\"close\":%u,\"audit_ready\":%u,\"other\":%u,"
@@ -468,9 +477,9 @@ static const char *sopt(int argc, char **argv, const char *key)
 
 static void parse_fault(const char *f)
 {
-    char kind[8], mode[12]; int n = 0, p = 0, k;
+    char kind[8], mode[12]; int n = 0, p = 0, k, got;
     if (!f) return;
-    if (sscanf(f, "%7[a-z]@%d:%11[a-z]:%d", kind, &n, mode, &p) < 3) { fprintf(stderr, "fault=%s\n", f); exit(2); }
+    if ((got = sscanf(f, "%7[a-z]@%d:%11[a-z]:%d", kind, &n, mode, &p)) < 3) { fprintf(stderr, "fault=%s\n", f); exit(2); }
     for (k = 0; k < 4; k++) if (!strcmp(kind, KIND_NAME[k])) fault_kind = k;
     if (fault_kind < 0 || n < 1) { fprintf(stderr, "fault kind %s\n", kind); exit(2); }
     fault_n = n; fault_p = p;
@@ -481,6 +490,7 @@ static void parse_fault(const char *f)
     else if (!strcmp(mode, "defer")) fault_mode = M_DEFER;
     else { fprintf(stderr, "fault mode %s\n", mode); exit(2); }
     if (fault_mode == M_POLL && p < 1) { fprintf(stderr, "fault poll needs P >= 1\n"); exit(2); }
+    if (fault_mode == M_ERROR && (got < 4 || p < 0 || p > 31)) { fprintf(stderr, "fault error needs a bit 0..31\n"); exit(2); }
 }
 
 int main(int argc, char **argv)
