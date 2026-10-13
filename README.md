@@ -37,7 +37,9 @@ preregistration defines no post-B2 transition and none was added (`docs/b2_prere
 
 The clone below is sufficient for source review. Production verification also needs
 the required LFS payloads, the pinned B1/B2 build outputs (the B2 binary and ELF are
-not tracked), and the pinned `zynq-psoracle` checkout. Reproducing and checking the
+not tracked), and the pinned `zynq-psoracle` checkout. Verification also requires the
+ignored B1/B2 artefacts at their pinned hashes; preserve or restore them before verifying.
+Reproducing and checking the
 builds additionally requires the recorded toolchain and Xilinx embeddedsw inputs;
 see `evidence/b2/build_evidence.json` and `docs/b2_section7_submission_2026_09_12.md`.
 The commands below assume those prerequisites have been restored. This is not a
@@ -106,8 +108,9 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
   Δ2 reported as secondary; gate run 1 F1 PASS (B* = 1000, N = 8) and the prediction
   preflight (primary 8/0/0, p = 1/256). Then host-only units, each reviewed separately:
   records, session, adjudicator, runner, manifest, pins, test report, the §9 test audit, and
-  the board image in six stages, of which stages 1–5 are closed (stage 5 on its engineering acceptance). No B3Q,
-  pin table, S0 or board session yet.
+  the board image in six stages. Image stages 1–6 are closed; stage 5 passed engineering
+  acceptance, with image_ready=false. B3Q documents, the pin table and the S0 manifest are
+  committed. No S1 freeze, B3Q session or board session yet.
 - **2026-10-04..06** — image stage 5: the application, a reproducible cross-build (two clean
   builds byte-identical) and its build evidence landed; the stack assessment of the final ELF
   (`b3/host/b3_image_stack.py`) went through three reviewed rounds. Under the strict reading
