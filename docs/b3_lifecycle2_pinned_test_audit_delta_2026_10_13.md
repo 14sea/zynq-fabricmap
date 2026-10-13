@@ -188,11 +188,16 @@ fitness values, 40 ledger entries, the `Unscored` positions) against `b3_session
 context. No file under `evidence/b3/b3q_*` exists at `64bca1e` (`QUAL_PLAN_REL` / `QUAL_PREDICTION_REL` are the
 qualification unit's), so nothing here is a committed read.
 
-Forward note for the "B3Q documents" unit (the next in the §8 order): when the canonical B3Q plan and prediction are
-committed, `qualification`, `qualified` and `calibration` become S1→S2 values (`TRANSITIONS`), and the manifest holds
-the committed documents to the canonical render (`b3_manifest.py:527–545`). A test that then reads the committed
-`b3q_plan.json` / `b3q_prediction.json` reads committed lifecycle inputs and is R1 / R2 / R4 business — it must be
-driven as `test_b3_plan.Committed` is, or confine itself to fields the S1→S2 transition does not change. The present
+Forward note for the "B3Q documents" unit (the next in the §8 order), with the owner's correction of 2026-10-13. Two
+different things must be kept apart. (1) The canonical `b3q_plan.json` / `b3q_prediction.json` are **bound at S0 by
+`qualification_plan_block`** (`b3_manifest.py:524–549`: "recorded at S0, unchanged ever after" — pinned by path and
+digest AND re-derived from the gate, the fitness, the map and the seeds at every verify, `init` 1015, `verify` 962) and
+are in no `TRANSITIONS` path: a test that reads them reads a pinned, stage-invariant input, like the plan's
+non-rate fields in D1, and a stage matrix is NOT required merely because it reads the documents. (2) `qualification`,
+`qualified` and `calibration` are the values the S1→S2 transition changes (`TRANSITIONS`): a test that reads the
+manifest's qualification record, the B3Q session evidence or the calibration reads lifecycle state and is R1 / R2 / R4
+business — it must be driven as `test_b3_plan.Committed` is. A future test reading the B3Q documents is still audited
+(R3, R4: which fields, and whether anything of (2) is reached through them), under that distinction. The present
 in-memory construction needs nothing.
 
 ### D5 — the image's own pinned inputs: `IMPORT.json`, the committed binary and ELF, the firmware sources, the B2 bases, the B1 RTL and map, the instrument — stage-invariant (PASS)
@@ -269,9 +274,11 @@ the tests pin is the one that acceptance recorded, and this audit says only that
    build twice and the hostapp's whole pair uncached. The 2026-09-27 item 3 (the committed-state verify after S0,
    about two minutes per `Committed` test) adds to that. The test-report tool's three runs and the pre-freeze proof
    should be budgeted at that order.
-4. **The B3Q documents unit (D4).** A test that reads the committed `b3q_plan.json` / `b3q_prediction.json` once they
-   exist reads S1→S2 inputs and must be audited under R1 / R2 / R4 before freeze; the present in-memory construction
-   in `test_b3_orch_twin` is not such a read.
+4. **The B3Q documents unit (D4, as corrected by the owner on 2026-10-13).** The committed `b3q_plan.json` /
+   `b3q_prediction.json` are bound at S0 and unchanged ever after (`qualification_plan_block`): a test reading them
+   reads a stage-invariant pinned input and is audited for the fields it uses, not made stage-aware for reading
+   them. The S1→S2 values are `qualification`, `qualified` and `calibration`; a test reading those is audited under
+   R1 / R2 / R4 before freeze. The present in-memory construction in `test_b3_orch_twin` is neither.
 5. **The runner's profile stage (the 2026-09-27 item 4)** is unchanged and still the owner's runner question, not a
    §9 finding.
 
