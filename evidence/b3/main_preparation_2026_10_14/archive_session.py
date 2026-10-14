@@ -34,7 +34,7 @@ ROOT = rr.ROOT
 sys.path.insert(0, str(ROOT / "host"))
 import b1_adjudicate as b1adj  # noqa: E402
 
-TOOL = "archive_session.py/1.0.1 (b3 lifecycle 2, main preparation 2026-10-14; follow-up to the owner's review of 0850e6b)"
+TOOL = "archive_session.py/1.0.2 (b3 lifecycle 2, main preparation 2026-10-14; follow-ups to the owner's reviews of 0850e6b and 0a86d00)"
 TAR = ("tar", "--format=posix", "--sort=name", "--owner=0", "--group=0", "--numeric-owner",
        "--pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime")
 
@@ -80,6 +80,7 @@ def build_tar(raw: Path, dst: Path, mtime_epoch: int) -> None:
 
 
 def backup(raw: Path, backup_root: Path, name: str) -> dict:
+    backup_root = Path(backup_root).resolve()        # the hash list is checked from inside the backup: its path must be absolute (the owner's P2 on 0a86d00)
     dst = backup_root / name
     if dst.exists():
         raise Refusal(f"the backup {dst} already exists")

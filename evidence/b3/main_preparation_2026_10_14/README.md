@@ -12,8 +12,8 @@ are recorded in §4 as applied.
 | file | sha256 | what |
 |---|---|---|
 | `restore_rejudge.py` | `e42a83ca5fa89d4a1f01a9ef925fbe62ffd52aaf98b409116cd28255a82df556` | the shared fresh-restore and production re-judge of ONE archived session (§2); the copy every session directory will carry must hash to this (archive.json records both digests) |
-| `archive_session.py` | `bb71680d495fb45a109b1390a91541acd7e0086834e10b3f8dd7307941c98b4a` | builds a form (c) archive from the runner's raw `--out` directory (§3); never modifies the raw directory |
-| `test_main_preparation.py`, `test_main_preparation.txt` | — | the hermetic tests over SYNTHETIC sessions behind the fake seams of `b3/tests/test_b3_runner.py`: **22 / 22 OK** (own process) |
+| `archive_session.py` | `03168a9fa7dae9f91f4d087769bf873b29eb57490f6c4b6a402843474bb7478d` | builds a form (c) archive from the runner's raw `--out` directory (§3); never modifies the raw directory |
+| `test_main_preparation.py`, `test_main_preparation.txt` | — | the hermetic tests over SYNTHETIC sessions behind the fake seams of `b3/tests/test_b3_runner.py`: **23 / 23 OK** (own process) |
 | `test_main_preparation_production.py`, `test_main_preparation_production.txt` | — | the PRODUCTION path over the real B3Q -02 archive: **1 / 1 OK, 147 s** (own process) |
 | `production_path_b3q_02_result.json` | — | that run's result document: ACCEPT, re-judge PASS at 3180.049965139327 evals/h, zero keys differing from the committed `adjudication.json`, 88 pins verified, manifest `bb917ec7…` verified at S1, the boundary record through the production validator (age at finalisation 618 s) |
 | `owner_review_0850e6b_reproduction_after_fix.txt` | — | the owner's three probes (`build/wip/b3_main_preparation_0850e6b_owner_review.py`, read-only) re-run on the follow-up: all three refused by name (§7) |
@@ -76,7 +76,8 @@ python3 -B evidence/b3/b3_17A6_<date>-NN/restore_rejudge.py        # the archive
 Refuses unless the raw directory holds EXACTLY the runner's sixteen files, its export seal holds, its finalisation
 record names a B3 / B3Q session, the boundary record is a passed `principal_boundary`, and `--out` does not exist.
 The external backup is refused if a backup of that name exists; its hash list is written beside the backup and
-checked with `sha256sum -c` from inside it; the backup must hold exactly the sixteen files.
+checked with `sha256sum -c` from inside it (the backup root is resolved to an absolute path at entry, so a relative
+`--backup-root` works); the backup must hold exactly the sixteen files.
 Then: the five large exports (`audits.json`, `console.log`, `console.ts.log`, `run_log.json`, `timeline.json`) into
 one deterministic `exports.tar.zst` (GNU tar, posix format, sorted names, owner 0, one fixed mtime = the finalisation
 record's `at`, pax headers without atime / ctime; zstd -19 — a second archive of the same directory is byte-identical,
@@ -153,3 +154,13 @@ The owner's reproduction script, re-run on the follow-up: all three probes refus
 (`owner_review_0850e6b_reproduction_after_fix.txt`). Both test modules re-run in their own processes (22 / 22;
 1 / 1 production over the real B3Q -02 archive, 146 s); the scripts' digests in §1 are the follow-up's. `0850e6b`
 is kept as committed; this is a separate commit.
+
+## 8. Follow-up to the owner's review of `0a86d00` (2026-10-14; one P2)
+
+| P2 | defect in `0a86d00` | fix | test |
+|---|---|---|---|
+| a relative backup root still failed | `backup()` passed `str(sums)` to `sha256sum -c` run from inside the backup; with a legal relative `--backup-root` (`backups`) the list's path was relative to the working directory, not to the backup → "No such file or directory" even on a complete 16-file backup | `backup_root` is resolved to an absolute path at the function's entry, so the backup, the hash list and the check all use absolute paths | `TheArchiver.test_the_backup_round_trip_with_a_relative_backup_root`: a relative root under a changed working directory — 16 files equal to the raw ones, absolute recorded paths, `sha256sum -c` passes from inside the backup, re-judge ACCEPT |
+
+The hermetic module re-run in its own process: 23 / 23. The production path and the full proof were not re-run
+(the owner's ruling: not needed for this narrow fix; `restore_rejudge.py` is unchanged — its digest in §1 stands).
+`0850e6b` and `0a86d00` are kept as committed; this is a separate commit.

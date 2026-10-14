@@ -1,6 +1,8 @@
 test_no_clobber (__main__.TheArchiver.test_no_clobber) ... ok
 test_the_backup_round_trip (__main__.TheArchiver.test_the_backup_round_trip)
 P1 of the owner's review of 0850e6b: the default backup failed on its own hash-list path. ... ok
+test_the_backup_round_trip_with_a_relative_backup_root (__main__.TheArchiver.test_the_backup_round_trip_with_a_relative_backup_root)
+P2 of the owner's review of 0a86d00: a legal relative --backup-root still failed inside the backup ... ok
 test_the_refusals (__main__.TheArchiver.test_the_refusals) ... ok
 test_the_first_split_session_equals_the_preflight_s_plan (__main__.ThePlanRebuild.test_the_first_split_session_equals_the_preflight_s_plan) ... ok
 test_the_refusals_are_the_preflight_s (__main__.ThePlanRebuild.test_the_refusals_are_the_preflight_s) ... ok
@@ -25,7 +27,7 @@ test_the_positive_control_accepts_and_equals_the_archived_verdict (__main__.TheR
 test_the_script_runs_from_a_session_copy_as_a_process (__main__.TheRoundTrip.test_the_script_runs_from_a_session_copy_as_a_process) ... ok
 
 ----------------------------------------------------------------------
-Ran 22 tests in 4.301s
+Ran 23 tests in 4.641s
 
 OK
-python3 -B $E/test_main_preparation.py  4.18s user 0.47s system 94% cpu 4.920 total
+python3 -B $E/test_main_preparation.py  4.46s user 0.58s system 95% cpu 5.258 total

@@ -449,6 +449,35 @@ class TheArchiver(unittest.TestCase):
         finally:
             f.close()
 
+    def test_the_backup_round_trip_with_a_relative_backup_root(self):
+        """P2 of the owner's review of 0a86d00: a legal relative --backup-root still failed inside the backup
+        (the hash list's path was not made absolute)."""
+        import subprocess
+        f = rt.Fixture("S3", 0, 2)
+        cwd = os.getcwd()
+        try:
+            cfg, raw = synth_session(f)
+            os.chdir(f.d)                                                  # a RELATIVE backup root, resolved against the working directory
+            out = f.d / "archived" / "rel_backup"
+            doc = ar.archive(raw, out, f.boundary, Path("backups_rel"), HERE / "restore_rejudge.py", root=rr.ROOT)
+            bk = Path(doc["external_backup"]["path"])
+            self.assertTrue(bk.is_absolute())
+            self.assertEqual(bk, (f.d / "backups_rel" / "rel_backup").resolve())
+            self.assertEqual(sorted(p.name for p in bk.iterdir()), list(rr.SESSION_FILES))
+            sums = Path(doc["external_backup"]["hash_list"])
+            self.assertTrue(sums.is_absolute())
+            self.assertEqual(len(sums.read_text().splitlines()), 16)
+            r = subprocess.run(["sha256sum", "-c", "--quiet", str(sums)], cwd=bk, capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            for p in bk.iterdir():
+                self.assertEqual(rt.sha(p), rt.sha(raw / p.name))
+            os.chdir(cwd)
+            res = rejudge(f, out)
+            self.assertEqual(res["verdict"], "ACCEPT", res)
+        finally:
+            os.chdir(cwd)
+            f.close()
+
     def test_no_clobber(self):
         f = rt.Fixture("S3", 0, 2)
         try:
