@@ -1,0 +1,49 @@
+{
+ "head": "2f8ff585e7a391e01e6aeff6865e53c6d4cd5dc3",
+ "worktree_dirty_at_start": [
+  "?? evidence/b3/s3_2026_10_14/proof_exception/",
+  "?? evidence/b3/tests/test_report_2026-10-14T180234Z.json"
+ ],
+ "inputs": {
+  "manifests/b3_manifest.json": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+  "manifests/b3_instrument_pins.json": "73cec93a72aa962f10b331c3720f50439201a73bee2ba34971dd2b8b677ac280",
+  "evidence/b3/plan.json": "b202a2800d5934978394ffca7ee8f24d9b2897c953d4f41b1050fed840c81dd1",
+  "evidence/b3/prediction.json": "92b774ea62d290d380e72a4c990b384060db9006cf9160940fb4848ae4a14cf5",
+  "evidence/b3/b3q_plan.json": "490347f4b3542147581940035a12eb9bb7db7cbd0ad550dd8bfd3e2b68261026",
+  "evidence/b3/b3q_prediction.json": "7eae26509b9488a111257c112c5cf90e9cc8f6e34311af837c79ccc40245ec27",
+  "evidence/b3/build_evidence.json": "288077c006ea67b2dec325113ba57b60fc4e3ffa4540526b84e5c223276c208a",
+  "manifests/b1_manifest.json": "38238271510536bda565ad1b8321dd04d75e78e1fe77ef94d2795bf9edfd4ba8",
+  "b3/tests/test_b3_plan.py": "f357eccdc6f23fc0d8590cefef9d93b82cacfe2c4acb61310846c6107f0a60af",
+  "b3/tests/test_b3_lifecycle.py": "f674891fc735fb27e29e76bdf41a3fbf0e1d9a33438e51a7cd468df7468a9084",
+  "b3/host/b3_manifest.py": "064eed468cc3612460c25082512b81b8da4d8b3fa1f6d2577be030ba05a4f1c8",
+  "b3/host/b3_runner.py": "f99dce4130e4ad516f4ee4b724b7752dfd30b3d145b0d6ba73c92dee810d8c5f",
+  "b3/host/b3_test_report.py": "cc51053920d32c58571ee533c6e0eab6230e29ecdd840b35ea04d50ca1a3bf53",
+  "b3/host/gen_b3_seed_data.py": "25597d188acb0e8b3a0533f7ae8113cf222139aa116a694aab2493f426b34c91",
+  "b3/tests/test_b3_orch_twin.py": "65f01c0f6df1142fa7363586a151a4723c8883fc4d7cca346e5c6c262fb53626",
+  "b3/firmware/b3_seed_data.h": "e3eb2b84b8ece1f6f13c805be6d78c21a08fbf588287ce545cb8d5aec240a4a5",
+  "evidence/b3/gate_2/gate_report.json": "8f717b12bdc7258d49145bd47bbcfb8291d2b2a79cad42cb75491a19398fda90"
+ },
+ "qualification_evidence": {
+  "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+  "B1_1_identity_page.json": "9022836ae0d797eb9e281952f6fb6656d8a05550fbb74ae03995709a32304b85",
+  "adjudication.json": "a697dc5e417c14e430d1895c730ba1ee05cb99dbbe0dd32f4fcbce1d4bcb74d2",
+  "audits.json": "287f81da0a87434df7d9e431632e72d2839a0d7bc984a473970a3e4df6870245",
+  "console.log": "e80017780646bc1b0f5b6bf60432f110f8a698fac39491f37c718ae213f19421",
+  "console.ts.log": "213c6645a0e1b58a3b5271700d3cbe87849e186e627fc7cc34e9928b759bc823",
+  "exports.json": "cabfdb8a497335467ead668dd7100804bf59f71b8452cee6eb9097c730ba4d95",
+  "manifest_at_run.json": "bb917ec7bde1a47da975162ff76bb27d4c6080e06a715d49f7f458e8115a23c6",
+  "ruling_provisioning.json": "b82be09f2eff0cbc30de6b71134355e1a9ba17f9792a28a9ad1125e419b9e886",
+  "ruling_whole_of_run.json": "619c499b068d85451b5b395ee5ced4865dab5e008d8fe530cff60686e296bb30",
+  "run_log.json": "10ccaf641b4511799717c0efbd52786138f7f93fe0a5e2b6d835c7e308b2211f",
+  "runner_session.json": "7fae059b109c3a96857f9b0e767b27416f45ba0ab0c4049fd8c503b3f3c443df",
+  "summary.json": "5f725097614266a00a820669070d80489587171b7d9a37cf42a4f570504d7870",
+  "timeline.json": "cdbfdbad8346420409e1c94abf3b7c11e0b0c1d076c7408eeac2a9be54fd9bc1",
+  "ymodem.log": "2574296846661e1022e6abbfecd7b1e641f30493f5e16dee96431496275d6135",
+  "ymodem_app.log": "61584da73253487b3c00281e343cd4afeccd3ad07f4c4add2436cb461afa53fd"
+ },
+ "commands": {
+  "tree": "python3 -B -m unittest -v b3.tests.test_b3_plan  (cwd: the repository)",
+  "shadow": "python3 -B -m unittest -v b3.tests.test_b3_plan  (cwd: the symlink shadow built by b3_test_report.build_shadow)",
+  "verify": "python3 -B b3/host/b3_manifest.py verify  (fresh process, after both runs)"
+ }
+}

@@ -1,0 +1,45 @@
+{
+ "all_refused_as_expected": true,
+ "controls": [
+  {
+   "expected_finding_substring": "2 lines differ",
+   "findings": [
+    "2 lines differ, not exactly one: [19, 24]"
+   ],
+   "name": "N1_fresh_with_a_second_changed_line",
+   "refused_as_expected": true,
+   "verdict": "REFUSE"
+  },
+  {
+   "expected_finding_substring": "not the manifest's plan pin",
+   "findings": [
+    "the fresh digest 0000000000000000\u2026 is not the manifest's plan pin b202a2800d593497\u2026"
+   ],
+   "name": "N2_fresh_digest_not_the_manifest_pin",
+   "refused_as_expected": true,
+   "verdict": "REFUSE"
+  },
+  {
+   "expected_finding_substring": "not the historical plan's",
+   "findings": [
+    "the committed digest 0000000000000000\u2026 is not the historical plan's fbd922baff7f1463\u2026",
+    "the committed header 20a975f9af99b4d4\u2026 is not the pin table's e3eb2b84b8ece1f6\u2026",
+    "the committed header 20a975f9af99b4d4\u2026 is not the build evidence's source e3eb2b84b8ece1f6\u2026"
+   ],
+   "name": "N3_committed_digest_not_the_historical_plan",
+   "refused_as_expected": true,
+   "verdict": "REFUSE"
+  },
+  {
+   "expected_finding_substring": "not the historical plan's",
+   "findings": [
+    "the committed digest fbd922baff7f1463\u2026 is not the historical plan's 0000000000000000\u2026"
+   ],
+   "name": "N4_historical_digest_wrong",
+   "refused_as_expected": true,
+   "verdict": "REFUSE"
+  }
+ ],
+ "temp_dir": "/tmp/b3_header_controls_ekswn9zc",
+ "temp_dir_removed": true
+}

@@ -51,8 +51,36 @@ and after); `prereg`, `image`, `instrument_pins`, `qualification_plan`, `qualifi
 ## Standing
 
 Every B3 ruling pair binds to THIS manifest's sha256 (`258bb14c…`); none exists yet, and no board session
-is authorised by this transition. The transport stop-loss stands. The S3 clean-tree proof is **pending at
-this commit** and is the next commit's: it runs the formal tool and archives its result as written; under
-the owner's named exception (`docs/b3_s2_proof_exception_2026_10_14.md`) a failure confined to the
-reproduced fixture-path contamination is followed by the supplementary verification recorded in
-`proof_exception/`; any other failure is reported, not accepted.
+is authorised by this transition. The transport stop-loss stands.
+
+## The S3 clean-tree proof (the next commit after the plan)
+
+The formal tool ran on the clean tree at `2f8ff58` (`evidence/b3/tests/test_report_2026-10-14T180234Z.json`,
+15:39:21Z – 18:02:34Z, archived as written) and **did not pass**: `clean_tree_proof = false`, twelve
+`proof_refusals`; `b2_tree` 2 096 OK, `b3_tree` 793 and `b3_removal` 792 each `FAILED (failures=2, errors=1)`,
+the start and end snapshots equal, the pins `manifest_bound` to `258bb14c…`, the sentinel 793 → 792.
+
+- **The error** is the first defect of `docs/b3_s2_proof_exception_2026_10_14.md` (the lifecycle World's
+  process-wide patch of the runner's B1-manifest path; `test_b3_plan.Committed.test_the_committed_split_is_what_the_stage_licenses`
+  erroring on the fixture's nonce `0000000000000000`), the same test and the same `Refusal` as at S2.
+- **The two failures are a second defect, named at this node**: the pinned `b3/firmware/b3_seed_data.h` carries
+  the plan file's digest (`fbd922ba…`, the pre-S3 plan) and the two byte-for-byte tests of `test_b3_orch_twin`
+  compare it to a fresh render, which now carries the S3 plan's `b202a280…`. The S3 transition necessarily changes
+  that digest, so the tests cannot pass at S3 with the header as pinned. The macro has no consumer; the header's
+  data is unchanged; the committed header `e3eb2b84…` is the one the pin table and the build evidence bind.
+
+The owner's ruling of 2026-10-14 narrowly extended the engineering-acceptance exception to the second defect and
+the supplementary verification was performed afresh at this node, recorded in `proof_exception/`:
+
+| | result |
+|---|---|
+| the generator's own check (read-only) | `STALE`, exit 1 — the formal failure reproduced directly |
+| the complete fresh render vs the committed header | **exactly line 19** differs (`header.diff`): `B3_SEED_PLAN_SHA256` `fbd922ba…` → `b202a280…`; old = the historical plan, new = the manifest's plan pin; the committed header = pin table = build evidence → `header_check.json` **ACCEPT** |
+| negative controls (temporary copies) | four mutants, **all refused by name** (`header_controls.json`) |
+| the plan module, tree / removal shadow (own process each) | **32 / 32 OK** and **32 / 32 OK** |
+| fresh-process verify after both | **S3 / qualified true / refusal null / `258bb14c…`** |
+
+**Engineering acceptance** of S3 rests on that supplement under the named exception. **The formal clean-tree
+proof did not pass**, and the archived report says so; no process isolation makes the two header tests pass. The
+first attempt of the header check failed on the checker script's own bug and is kept in
+`proof_exception/header_attempt_1_script_bug/`. Not done: any B3 ruling pair, any board session, any push.

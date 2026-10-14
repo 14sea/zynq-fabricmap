@@ -1,0 +1,5 @@
+First run of header_check.py (18:17:30Z-18:19:51Z): the script's own bug — `render` wrote the fresh header to --out and
+then main() wrote its JSON record over the same path, so `check` compared the committed header against a 6-line JSON
+file (REFUSE: "line count differs: committed 382, fresh 6") and the controls crashed on the missing budget line.
+Kept as observed; the script was corrected (render takes --record for its JSON) and re-run — see the parent directory.
+Nothing in the tree was touched.
