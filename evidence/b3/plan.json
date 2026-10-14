@@ -47,7 +47,7 @@
   "rules_version": "architecture v0.3 \u00a79",
   "sha256": "8f717b12bdc7258d49145bd47bbcfb8291d2b2a79cad42cb75491a19398fda90"
  },
- "generated_utc": "2026-09-17T16:24:06Z",
+ "generated_utc": "2026-10-14T15:32:14Z",
  "lifecycle": 2,
  "map": {
   "note": "arm F's map; arm O starts empty and has no map pin",
@@ -165,49 +165,76 @@
  "session_span_max_s": 7200,
  "session_split": {
   "calibration_margin": 0.85,
-  "candidates": {
-   "1 pairs/session": {
-    "records": 3005,
-    "sessions": 8,
-    "total_records": 24040
+  "pairs_per_session_max": 1,
+  "rate_for_split": 2703.042470368428,
+  "rate_measured": 3180.049965139327,
+  "sessions": [
+   {
+    "deadline_s": 5602.696090881941,
+    "expected_span_s": 4002.156872705553,
+    "pairs": [
+     0
+    ],
+    "records": 3005
    },
-   "2 pairs/session": {
-    "records": 6008,
-    "sessions": 4,
-    "total_records": 24032
+   {
+    "deadline_s": 5602.696090881941,
+    "expected_span_s": 4002.156872705553,
+    "pairs": [
+     1
+    ],
+    "records": 3005
    },
-   "3 pairs/session": {
-    "records": 9011,
-    "sessions": 3,
-    "total_records": 24030
+   {
+    "deadline_s": 5602.696090881941,
+    "expected_span_s": 4002.156872705553,
+    "pairs": [
+     2
+    ],
+    "records": 3005
    },
-   "4 pairs/session": {
-    "records": 12014,
-    "sessions": 2,
-    "total_records": 24028
+   {
+    "deadline_s": 5602.696090881941,
+    "expected_span_s": 4002.156872705553,
+    "pairs": [
+     3
+    ],
+    "records": 3005
    },
-   "5 pairs/session": {
-    "records": 15017,
-    "sessions": 2,
-    "total_records": 24028
+   {
+    "deadline_s": 5602.696090881941,
+    "expected_span_s": 4002.156872705553,
+    "pairs": [
+     4
+    ],
+    "records": 3005
    },
-   "6 pairs/session": {
-    "records": 18020,
-    "sessions": 2,
-    "total_records": 24028
+   {
+    "deadline_s": 5602.696090881941,
+    "expected_span_s": 4002.156872705553,
+    "pairs": [
+     5
+    ],
+    "records": 3005
    },
-   "7 pairs/session": {
-    "records": 21023,
-    "sessions": 2,
-    "total_records": 24028
+   {
+    "deadline_s": 5602.696090881941,
+    "expected_span_s": 4002.156872705553,
+    "pairs": [
+     6
+    ],
+    "records": 3005
    },
-   "8 pairs/session": {
-    "records": 24026,
-    "sessions": 1,
-    "total_records": 24026
+   {
+    "deadline_s": 5602.696090881941,
+    "expected_span_s": 4002.156872705553,
+    "pairs": [
+     7
+    ],
+    "records": 3005
    }
-  },
-  "records_per_pair": 3003,
-  "status": "UNDETERMINED until B3Q measures the all-self-reporting rate"
+  ],
+  "status": "DETERMINED",
+  "total_records": 24040
  }
 }

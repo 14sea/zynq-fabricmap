@@ -1,0 +1,87 @@
+{
+ "after": {
+  "generated_utc": "2026-10-14T15:32:14Z",
+  "history": [
+   {
+    "at": "2026-10-14T06:34:59Z",
+    "prereg_sha256": "e89c5677ac7f2be28e178b64d48b7a6f8bfdd35158d5ca5639ac8323c1451353",
+    "transition": "S1 freeze"
+   },
+   {
+    "at": "2026-10-14T12:13:20Z",
+    "manifest_at_run_sha256": "bb917ec7bde1a47da975162ff76bb27d4c6080e06a715d49f7f458e8115a23c6",
+    "rate_per_hour": 3180.049965139327,
+    "transition": "S2 qualify"
+   },
+   {
+    "at": "2026-10-14T15:34:42Z",
+    "plan_sha256": "b202a2800d5934978394ffca7ee8f24d9b2897c953d4f41b1050fed840c81dd1",
+    "transition": "S3 plan"
+   }
+  ],
+  "manifest_sha256": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+  "plan": {
+   "path": "evidence/b3/plan.json",
+   "prediction_path": "evidence/b3/prediction.json",
+   "prediction_sha256": "92b774ea62d290d380e72a4c990b384060db9006cf9160940fb4848ae4a14cf5",
+   "sessions": 8,
+   "sha256": "b202a2800d5934978394ffca7ee8f24d9b2897c953d4f41b1050fed840c81dd1",
+   "total_records": 24040
+  },
+  "plan_file_sha256": "b202a2800d5934978394ffca7ee8f24d9b2897c953d4f41b1050fed840c81dd1",
+  "plan_minus_generated_utc_sha256_json": "6267c8f7f42c664800b2f9405d880f2059a223068661318f5e43e3228cb588ac",
+  "prediction_file_sha256": "92b774ea62d290d380e72a4c990b384060db9006cf9160940fb4848ae4a14cf5",
+  "status": "S3 PLANNED \u2014 the plan pinned from the calibration; every B3 ruling pair binds to THIS manifest's sha256"
+ },
+ "before": {
+  "history": [
+   {
+    "at": "2026-10-14T06:34:59Z",
+    "prereg_sha256": "e89c5677ac7f2be28e178b64d48b7a6f8bfdd35158d5ca5639ac8323c1451353",
+    "transition": "S1 freeze"
+   },
+   {
+    "at": "2026-10-14T12:13:20Z",
+    "manifest_at_run_sha256": "bb917ec7bde1a47da975162ff76bb27d4c6080e06a715d49f7f458e8115a23c6",
+    "rate_per_hour": 3180.049965139327,
+    "transition": "S2 qualify"
+   }
+  ],
+  "manifest_sha256": "bea08769c4adb86a20654d455b79e015973192c67bf62199a91c561e97ecab8f",
+  "plan": null,
+  "plan_file_sha256_rateless": "fbd922baff7f1463e76c209e1fcbf83d8b44976f1080aa228f4919b5b5805fb9",
+  "status": "S2 QUALIFIED \u2014 the B3Q record reconstructed from its evidence and pinned, the calibration written from it; awaiting the plan (S3)"
+ },
+ "changed_fields_computed_from_the_bytes": [
+  "history",
+  "plan",
+  "status"
+ ],
+ "commands": [
+  "python3 -B b3/host/b3_plan.py --rate-per-hour 3180.049965139327   (canonical --out evidence/b3; the stop rule evaluated before the write: no finding)",
+  "python3 -B b3/host/b3_manifest.py plan --manifest manifests/b3_manifest.json --plan evidence/b3/plan.json"
+ ],
+ "scratch_baseline": {
+  "dir": "build/wip/scratch_2026_10_14/s3_trial (ignored)",
+  "plan_minus_generated_utc_sha256_json": "6267c8f7f42c664800b2f9405d880f2059a223068661318f5e43e3228cb588ac",
+  "prediction_byte_identical": true
+ },
+ "split": {
+  "sessions": 8,
+  "total_records": 24040
+ },
+ "transition": "S3 plan",
+ "unchanged_checks": {
+  "calibration": true,
+  "experiment": true,
+  "image": true,
+  "instrument_pins": true,
+  "map": true,
+  "prediction": true,
+  "prereg": true,
+  "qualification": true,
+  "qualification_plan": true,
+  "qualified": true,
+  "seeds": true
+ }
+}

@@ -95,6 +95,11 @@
    "manifest_at_run_sha256": "bb917ec7bde1a47da975162ff76bb27d4c6080e06a715d49f7f458e8115a23c6",
    "rate_per_hour": 3180.049965139327,
    "transition": "S2 qualify"
+  },
+  {
+   "at": "2026-10-14T15:34:42Z",
+   "plan_sha256": "b202a2800d5934978394ffca7ee8f24d9b2897c953d4f41b1050fed840c81dd1",
+   "transition": "S3 plan"
   }
  ],
  "image": {
@@ -124,7 +129,14 @@
   "note": "arm F's map, two digests (canonical JSON; the file bytes); arm O starts empty and has no map pin",
   "path": "evidence/b1/b1_17A6_2026-09-08-02/self_map_v2.json"
  },
- "plan": null,
+ "plan": {
+  "path": "evidence/b3/plan.json",
+  "prediction_path": "evidence/b3/prediction.json",
+  "prediction_sha256": "92b774ea62d290d380e72a4c990b384060db9006cf9160940fb4848ae4a14cf5",
+  "sessions": 8,
+  "sha256": "b202a2800d5934978394ffca7ee8f24d9b2897c953d4f41b1050fed840c81dd1",
+  "total_records": 24040
+ },
  "prediction": {
   "fitness_sequence_sha256": "8df40ac9a75ca0f9bb965aa65239cb1ac9cd14681f47e219627a7e7543cfde13",
   "note": "the preregistered prediction; the S3 plan's sidecar must be these bytes",
@@ -265,7 +277,7 @@
   ],
   "rule": "first 4 bytes of sha256(label|instrument commit); the fixed excluded seeds and every archived set explicitly excluded"
  },
- "status": "S2 QUALIFIED \u2014 the B3Q record reconstructed from its evidence and pinned, the calibration written from it; awaiting the plan (S3)",
+ "status": "S3 PLANNED \u2014 the plan pinned from the calibration; every B3 ruling pair binds to THIS manifest's sha256",
  "universe": {
   "addresses": 292,
   "sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
