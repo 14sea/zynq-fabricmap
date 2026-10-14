@@ -34,7 +34,7 @@ ROOT = rr.ROOT
 sys.path.insert(0, str(ROOT / "host"))
 import b1_adjudicate as b1adj  # noqa: E402
 
-TOOL = "archive_session.py/1.0.0 (b3 lifecycle 2, main preparation 2026-10-14)"
+TOOL = "archive_session.py/1.0.1 (b3 lifecycle 2, main preparation 2026-10-14; follow-up to the owner's review of 0850e6b)"
 TAR = ("tar", "--format=posix", "--sort=name", "--owner=0", "--group=0", "--numeric-owner",
        "--pax-option=exthdr.name=%d/PaxHeaders/%f,delete=atime,delete=ctime")
 
@@ -91,9 +91,11 @@ def backup(raw: Path, backup_root: Path, name: str) -> dict:
         p.chmod(stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
     sums = backup_root / f"{name}.SHA256SUMS"
     sums.write_text("".join(lines))
-    r = subprocess.run(["sha256sum", "-c", "--quiet", sums.name], cwd=dst, capture_output=True, text=True)
+    r = subprocess.run(["sha256sum", "-c", "--quiet", str(sums)], cwd=dst, capture_output=True, text=True)   # the list lives beside the backup, not in it
     if r.returncode != 0:
-        raise Refusal(f"sha256sum -c failed on the backup: {r.stderr.strip()[:200]}")
+        raise Refusal(f"sha256sum -c failed on the backup: {(r.stderr or r.stdout).strip()[:200]}")
+    if len(lines) != len(rr.SESSION_FILES):
+        raise Refusal(f"the backup holds {len(lines)} files, not the session's {len(rr.SESSION_FILES)}")
     dst.chmod(stat.S_IRUSR | stat.S_IXUSR | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
     return {"path": str(dst), "hash_list": str(sums), "files": len(lines),
             "state": "the complete original directory: exactly the 16 original files, read-only; the hash list covers all 16 and sha256sum -c passed at archival"}

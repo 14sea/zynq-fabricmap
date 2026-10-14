@@ -11,11 +11,12 @@ are recorded in §4 as applied.
 
 | file | sha256 | what |
 |---|---|---|
-| `restore_rejudge.py` | `4553aacd090ec27368783c866ff2f90d094117ab31befc0da37812d64ec8ffd6` | the shared fresh-restore and production re-judge of ONE archived session (§2); the copy every session directory will carry must hash to this (archive.json records both digests) |
-| `archive_session.py` | `05dab3b42ee4ec3a614c991d84e5b2fde57a75a843bd506394d8f09687967873` | builds a form (c) archive from the runner's raw `--out` directory (§3); never modifies the raw directory |
-| `test_main_preparation.py`, `test_main_preparation.txt` | — | the hermetic tests over SYNTHETIC sessions behind the fake seams of `b3/tests/test_b3_runner.py`: **19 / 19 OK** (own process) |
+| `restore_rejudge.py` | `e42a83ca5fa89d4a1f01a9ef925fbe62ffd52aaf98b409116cd28255a82df556` | the shared fresh-restore and production re-judge of ONE archived session (§2); the copy every session directory will carry must hash to this (archive.json records both digests) |
+| `archive_session.py` | `bb71680d495fb45a109b1390a91541acd7e0086834e10b3f8dd7307941c98b4a` | builds a form (c) archive from the runner's raw `--out` directory (§3); never modifies the raw directory |
+| `test_main_preparation.py`, `test_main_preparation.txt` | — | the hermetic tests over SYNTHETIC sessions behind the fake seams of `b3/tests/test_b3_runner.py`: **22 / 22 OK** (own process) |
 | `test_main_preparation_production.py`, `test_main_preparation_production.txt` | — | the PRODUCTION path over the real B3Q -02 archive: **1 / 1 OK, 147 s** (own process) |
-| `production_path_b3q_02_result.json` | — | that run's result document: ACCEPT, re-judge PASS at 3180.049965139327 evals/h, zero keys differing from the committed `adjudication.json`, 88 pins verified, manifest `bb917ec7…` verified at S1 |
+| `production_path_b3q_02_result.json` | — | that run's result document: ACCEPT, re-judge PASS at 3180.049965139327 evals/h, zero keys differing from the committed `adjudication.json`, 88 pins verified, manifest `bb917ec7…` verified at S1, the boundary record through the production validator (age at finalisation 618 s) |
+| `owner_review_0850e6b_reproduction_after_fix.txt` | — | the owner's three probes (`build/wip/b3_main_preparation_0850e6b_owner_review.py`, read-only) re-run on the follow-up: all three refused by name (§7) |
 
 Neither script is an instrument. They live in evidence, read the tree, write only where told, and mutate copies only
 in temporary directories. `restore_rejudge.py` exposes the same seams the runner does (`ports`, `authority`; `None`
@@ -24,9 +25,12 @@ is production) so the tests can inject fakes exactly as the pinned runner tests 
 ## 2. The re-judge (`restore_rejudge.py`), step by step — every step fail-closed by name
 
 1. **Restore.** `archive.json` (schema `b3_session_evidence_archive` 1.0.0) must list exactly the 5 members and the 11
-   ordinary files; `exports.tar.zst` must size and hash to it; an EMPTY temporary directory; the five members
-   extracted; the eleven copied; the restored set must be exactly the sixteen the runner writes; every file's size
-   and sha256 equal to archive.json.
+   ordinary files; `exports.tar.zst` must size and hash to it; an EMPTY temporary directory; **the archive's table of
+   contents is read BEFORE anything is written and must be exactly the five members by name, each a regular file — no
+   duplicate, no directory, no hard or symbolic link, no path** (`list_tar`); then the five extracted (no owner, no
+   permissions carried over) and checked to be regular files; the eleven copied, each refused if a link or if its
+   name already exists in the restore directory; the restored set must be exactly the sixteen the runner writes;
+   every file's size and sha256 equal to archive.json.
 2. **Seal.** The production `b1_adjudicate.check_exports` over the restored files.
 3. **Manifest, pins, pinned documents.** `manifest_at_run.json` must be a `b3_manifest`; its FILE digest is the
    binding every later check holds to; the archived whole-of-run ruling must bind that digest; the authority's
@@ -50,8 +54,12 @@ is production) so the tests can inject fakes exactly as the pinned runner tests 
    its verdict must equal the archived `adjudication.json` key for key; `runner_session.json` must satisfy the
    production `session_record_findings` against the rebuilt plan and THIS verdict, and its transport disposition
    must be the archived ruling's.
-7. **The boundary record** named in archive.json: present, hashing as recorded, a passed `principal_boundary` of the
-   recorded runner user.
+7. **The boundary record** named in archive.json: present, hashing as recorded, then through the PRODUCTION validator
+   `b1_records.boundary_established` (the schema with its version, exactly the five named checks, runner ≠ signer,
+   `all_passed` consistent with the checks, all passed) with the record's own timestamp as `now`; the recorded runner
+   user; and the record must PRECEDE the session's finalisation (`runner_session.json`'s `at`), its age at
+   finalisation reported. The six-hour freshness rule is the preflight's, enforced at run time; it is not re-judged
+   offline against today's clock.
 
 Exit 0 only on ACCEPT; 2 on a named refusal; 3 on an internal error. The result document records every step. The
 temporary directory is removed (kept with `--keep`). Run from the repository root, or pass `--repo-root`.
@@ -67,6 +75,8 @@ python3 -B evidence/b3/b3_17A6_<date>-NN/restore_rejudge.py        # the archive
 
 Refuses unless the raw directory holds EXACTLY the runner's sixteen files, its export seal holds, its finalisation
 record names a B3 / B3Q session, the boundary record is a passed `principal_boundary`, and `--out` does not exist.
+The external backup is refused if a backup of that name exists; its hash list is written beside the backup and
+checked with `sha256sum -c` from inside it; the backup must hold exactly the sixteen files.
 Then: the five large exports (`audits.json`, `console.log`, `console.ts.log`, `run_log.json`, `timeline.json`) into
 one deterministic `exports.tar.zst` (GNU tar, posix format, sorted names, owner 0, one fixed mtime = the finalisation
 record's `at`, pax headers without atime / ctime; zstd -19 — a second archive of the same directory is byte-identical,
@@ -130,3 +140,16 @@ to compress to a few MB.
 3 005 records (2 baselines + 3 × 1 000 + 3); expected frames 81 138 (IDENT 1, CLOSE 1, TERM 1, SIGNREQ 3 005,
 REC 3 005, AUDIT_READY 3 005, AUDIT 24 040, HB 48 080); CRC = bad-frame = resend budget 325; deadline
 5 602.696090881941 s from `go`; expected span 4 002.156872705553 s at `rate_for_split` 2 703.042470368428.
+
+## 7. Follow-up to the owner's review of `0850e6b` (2026-10-14; three P1s, all reproduced by the owner)
+
+| P1 | defect in `0850e6b` | fix (this follow-up) | test |
+|---|---|---|---|
+| the default backup failed | `archive_session.backup` ran `sha256sum -c` on the list's bare name from inside the backup directory, but the list lives beside it → "No such file or directory" on every backed-up archive | the list's absolute path; the backup must hold exactly 16 files; the same backup name is refused | `TheArchiver.test_the_backup_round_trip`: backup enabled, 16 read-only files equal to the raw ones, 16-line hash list, `sha256sum -c` passes, re-judge ACCEPT, the same name refused |
+| the restore could write outside its directory | the archive was extracted before its contents were checked; a planted symlink member named `summary.json` was followed by the later copy and overwrote a file outside the restore directory, and the restore still accepted | `list_tar` BEFORE extraction: exactly the five members, regular files only, no links / directories / duplicates / paths; after extraction every entry must be a regular file; ordinary files are refused if a link or if the name already exists | `TheRoundTrip.test_a_planted_link_member_is_refused_before_anything_is_written`: symlink, hard link, directory, extra regular member, duplicate, `../` path — each refused by name with the restore directory still empty and the external marker unchanged |
+| an invalid boundary record was accepted | only the schema name and `all_passed` were looked at; a record without `schema_version`, with empty checks and runner = signer, which the production validator rejects, was accepted | the production `b1_records.boundary_established` (structure, the five checks, runner ≠ signer, consistency, all passed) with the record's own timestamp as `now`; order against the finalisation; age reported; the 6 h rule stays the preflight's | `TheRoundTrip.test_an_invalid_boundary_record_is_refused_by_the_production_validator`: the owner's record, an inconsistent `all_passed`, a failed check, runner = signer, four checks, no `schema_version`, a record later than the finalisation — each refused; a month-old but valid record ACCEPTs offline |
+
+The owner's reproduction script, re-run on the follow-up: all three probes refused
+(`owner_review_0850e6b_reproduction_after_fix.txt`). Both test modules re-run in their own processes (22 / 22;
+1 / 1 production over the real B3Q -02 archive, 146 s); the scripts' digests in §1 are the follow-up's. `0850e6b`
+is kept as committed; this is a separate commit.

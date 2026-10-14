@@ -1,4 +1,6 @@
 test_no_clobber (__main__.TheArchiver.test_no_clobber) ... ok
+test_the_backup_round_trip (__main__.TheArchiver.test_the_backup_round_trip)
+P1 of the owner's review of 0850e6b: the default backup failed on its own hash-list path. ... ok
 test_the_refusals (__main__.TheArchiver.test_the_refusals) ... ok
 test_the_first_split_session_equals_the_preflight_s_plan (__main__.ThePlanRebuild.test_the_first_split_session_equals_the_preflight_s_plan) ... ok
 test_the_refusals_are_the_preflight_s (__main__.ThePlanRebuild.test_the_refusals_are_the_preflight_s) ... ok
@@ -10,16 +12,20 @@ test_a_changed_deadline_is_refused (__main__.TheRoundTrip.test_a_changed_deadlin
 test_a_changed_slice_is_refused (__main__.TheRoundTrip.test_a_changed_slice_is_refused) ... ok
 test_a_mislabelled_profile_is_refused (__main__.TheRoundTrip.test_a_mislabelled_profile_is_refused) ... ok
 test_a_missing_member_is_refused (__main__.TheRoundTrip.test_a_missing_member_is_refused) ... ok
+test_a_planted_link_member_is_refused_before_anything_is_written (__main__.TheRoundTrip.test_a_planted_link_member_is_refused_before_anything_is_written)
+P1 of the owner's review of 0850e6b: a symlink member named like an ordinary file was followed by the ... ok
 test_a_tampered_member_is_refused (__main__.TheRoundTrip.test_a_tampered_member_is_refused) ... ok
 test_a_wrong_boundary_is_refused (__main__.TheRoundTrip.test_a_wrong_boundary_is_refused) ... ok
 test_an_authority_refusal_is_the_verdict (__main__.TheRoundTrip.test_an_authority_refusal_is_the_verdict) ... ok
+test_an_invalid_boundary_record_is_refused_by_the_production_validator (__main__.TheRoundTrip.test_an_invalid_boundary_record_is_refused_by_the_production_validator)
+P1 of the owner's review of 0850e6b: schema name and all_passed alone were accepted. ... ok
 test_the_archive_is_deterministic (__main__.TheRoundTrip.test_the_archive_is_deterministic) ... ok
 test_the_archive_is_form_c (__main__.TheRoundTrip.test_the_archive_is_form_c) ... ok
 test_the_positive_control_accepts_and_equals_the_archived_verdict (__main__.TheRoundTrip.test_the_positive_control_accepts_and_equals_the_archived_verdict) ... ok
 test_the_script_runs_from_a_session_copy_as_a_process (__main__.TheRoundTrip.test_the_script_runs_from_a_session_copy_as_a_process) ... ok
 
 ----------------------------------------------------------------------
-Ran 19 tests in 2.360s
+Ran 22 tests in 4.301s
 
 OK
-python3 -B $E/test_main_preparation.py  2.56s user 0.33s system 96% cpu 2.983 total
+python3 -B $E/test_main_preparation.py  4.18s user 0.47s system 94% cpu 4.920 total

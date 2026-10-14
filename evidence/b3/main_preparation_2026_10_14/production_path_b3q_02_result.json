@@ -1,14 +1,19 @@
 {
- "at": "2026-10-14T19:15:54Z",
+ "at": "2026-10-14T19:32:57Z",
  "refusal": null,
  "restored_dir_removed": true,
- "session_dir": "../../../tmp/b3prep_prod_x8fgppmp/b3q_02",
+ "session_dir": "../../../tmp/b3prep_prod_j3duir16/b3q_02",
  "steps": {
   "boundary": {
-   "all_passed": true,
+   "age_at_finalisation_s": 618,
    "at": 1791977787.880124,
+   "finalised_at": "2026-10-14T11:46:45Z",
+   "freshness_rule": "the preflight's, at run time (6 h); not re-judged against today's clock",
    "path": "evidence/b3/principal_boundary_2026-10-14-02.json",
-   "sha256": "70dc2cd82fbf1ca2077fc2b17145573ee10fd31e27d70e881280a8c349ba41e8"
+   "runner_user": "test",
+   "sha256": "70dc2cd82fbf1ca2077fc2b17145573ee10fd31e27d70e881280a8c349ba41e8",
+   "signer_user": "p3signer",
+   "validator": "b1_records.boundary_established (structure, checks, runner != signer, all passed)"
   },
   "judge": {
    "findings": [],
@@ -37,7 +42,7 @@
   "restore": {
    "archive_sha256": "041e3c5f7912490ed17c78f349756b6807b31f7c1893cca7a45a569bda436757",
    "files": 16,
-   "restored_to": "/tmp/b3_fresh_restore_bczsk2mi"
+   "restored_to": "/tmp/b3_fresh_restore_nrqz_dcy"
   },
   "seal": "ok",
   "session_plan": {
@@ -54,6 +59,6 @@
   },
   "session_record": "ok"
  },
- "tool": "restore_rejudge.py/1.0.0 (b3 lifecycle 2, main preparation 2026-10-14)",
+ "tool": "restore_rejudge.py/1.0.1 (b3 lifecycle 2, main preparation 2026-10-14; follow-up to the owner's review of 0850e6b)",
  "verdict": "ACCEPT"
 }

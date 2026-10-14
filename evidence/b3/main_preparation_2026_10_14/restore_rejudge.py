@@ -82,7 +82,7 @@ import b3_runner as rn  # noqa: E402
 import b3_session as bsess  # noqa: E402
 import claimb_r1p_instrument as inst  # noqa: E402
 
-TOOL = "restore_rejudge.py/1.0.0 (b3 lifecycle 2, main preparation 2026-10-14)"
+TOOL = "restore_rejudge.py/1.0.1 (b3 lifecycle 2, main preparation 2026-10-14; follow-up to the owner's review of 0850e6b)"
 ARCHIVE_SCHEMA = "b3_session_evidence_archive"
 MEMBERS = ("audits.json", "console.log", "console.ts.log", "run_log.json", "timeline.json")
 ORDINARY = ("B1_0_preflight.json", "B1_1_identity_page.json", "adjudication.json", "exports.json", "manifest_at_run.json",
@@ -216,6 +216,35 @@ def read_archive_doc(session_dir: Path) -> dict:
     return doc
 
 
+def list_tar(archive: Path) -> list[str]:
+    """The archive's table of contents, read before any extraction: exactly the five members by name, each a
+    regular file, no duplicates, no directories, no links, no paths — anything else is refused and nothing is
+    written (the owner's P1 on 0850e6b: a planted symlink member was followed by the later copy)."""
+    r = subprocess.run(["bash", "-c", 'zstd -dc "$0" | tar -tvf -', str(archive)], capture_output=True, text=True)
+    if r.returncode != 0:
+        raise Refusal(f"listing {archive.name} failed: {r.stderr.strip()[:200]}")
+    names: list[str] = []
+    for line in r.stdout.splitlines():
+        if not line.strip():
+            continue
+        parts = line.split(None, 5)
+        if len(parts) < 6:
+            raise Refusal(f"{archive.name}: unreadable table-of-contents line {line!r}")
+        mode, name = parts[0], parts[5]
+        if " -> " in name or " link to " in name:
+            raise Refusal(f"{archive.name}: the archive carries a link entry {name!r}")
+        if mode[0] != "-":
+            raise Refusal(f"{archive.name}: the entry {name!r} is not a regular file (mode {mode})")
+        if "/" in name or name in (".", "..") or not name:
+            raise Refusal(f"{archive.name}: the entry {name!r} carries a path")
+        names.append(name)
+    if len(names) != len(set(names)):
+        raise Refusal(f"{archive.name}: duplicate entries {sorted(n for n in names if names.count(n) > 1)}")
+    if sorted(names) != sorted(MEMBERS):
+        raise Refusal(f"{archive.name}: the archive carries {sorted(names)}, not exactly the five members {sorted(MEMBERS)}")
+    return names
+
+
 def restore(session_dir: Path, doc: dict, tmp: Path) -> dict:
     members = {m["name"]: m for m in doc["archive"]["members"]}
     ordinary = {m["name"]: m for m in doc["ordinary_files"]}
@@ -227,14 +256,25 @@ def restore(session_dir: Path, doc: dict, tmp: Path) -> dict:
         raise Refusal(f"{archive.name} does not size / hash to archive.json")
     if any(tmp.iterdir()):
         raise Refusal(f"the restore directory {tmp} is not empty")
-    r = subprocess.run(["bash", "-c", 'zstd -dc "$0" | tar -xf - -C "$1"', str(archive), str(tmp)], capture_output=True, text=True)
+    list_tar(archive)                                   # BEFORE anything is written: exactly the five named regular files
+    r = subprocess.run(["bash", "-c", 'zstd -dc "$0" | tar -xf - --no-same-owner --no-same-permissions -C "$1"', str(archive), str(tmp)],
+                       capture_output=True, text=True)
     if r.returncode != 0:
         raise Refusal(f"extracting {archive.name} failed: {r.stderr.strip()[:200]}")
+    extracted = sorted(p.name for p in tmp.iterdir())
+    if extracted != sorted(MEMBERS):
+        raise Refusal(f"the archive extracted {extracted}, not exactly the five members")
+    for p in tmp.iterdir():
+        if p.is_symlink() or not p.is_file():
+            raise Refusal(f"the extracted {p.name} is not a regular file")
     for name in ordinary:
         src = session_dir / name
-        if not src.is_file():
-            raise Refusal(f"the ordinary file {name} is absent from {session_dir}")
-        shutil.copyfile(src, tmp / name)
+        if src.is_symlink() or not src.is_file():
+            raise Refusal(f"the ordinary file {name} is absent from {session_dir} or is not a regular file")
+        dst = tmp / name
+        if dst.exists() or dst.is_symlink():
+            raise Refusal(f"{name} already exists in the restore directory: the archive may not carry an ordinary file")
+        shutil.copyfile(src, dst, follow_symlinks=False)
     present = sorted(p.name for p in tmp.iterdir())
     if present != sorted(want):
         raise Refusal(f"the restored file set is not exactly the 16: extra {sorted(set(present) - set(want))}, missing {sorted(set(want) - set(present))}")
@@ -245,6 +285,41 @@ def restore(session_dir: Path, doc: dict, tmp: Path) -> dict:
         if sha(p) != m["sha256"]:
             raise Refusal(f"{name}: sha256 differs from archive.json")
     return {"restored_to": str(tmp), "files": len(present), "archive_sha256": doc["archive"]["sha256"]}
+
+
+# ------------------------------------------------------------------ (7) the boundary record, offline
+
+
+def boundary_findings(bdoc, archived: dict, record: dict) -> dict:
+    """The boundary record through the PRODUCTION validator (`b1_records.boundary_established`: the schema, the
+    five named checks, runner ≠ signer, all_passed consistent with the checks, all passed). The six-hour freshness
+    rule is the preflight's, enforced at run time against the clock then; it is NOT re-judged offline against
+    today's clock — the validator is given the record's own timestamp as `now`, and this step instead requires the
+    record to PRECEDE the session's finalisation (`runner_session.json`'s `at`) and reports the age at finalisation."""
+    import calendar
+    import b1_records as br  # noqa: E402 — the instrument's validators (host/b1_records.py binds them)
+    if not isinstance(bdoc, dict):
+        raise Refusal("the boundary record is not a JSON object")
+    try:
+        br.boundary_established(bdoc, float(bdoc.get("at", 0)))
+    except (br.RecordError, br.SchemaError) as exc:
+        raise Refusal(f"principal boundary: {exc}") from None
+    except (TypeError, ValueError, KeyError) as exc:
+        raise Refusal(f"principal boundary: not a readable record: {type(exc).__name__}: {exc}") from None
+    if archived.get("runner_user") and bdoc["runner_user"] != archived["runner_user"]:
+        raise Refusal("the boundary record's runner_user is not the one archive.json records")
+    at = record.get("at")
+    try:
+        finalised = calendar.timegm(time.strptime(at, "%Y-%m-%dT%H:%M:%SZ"))
+    except (TypeError, ValueError):
+        raise Refusal(f"runner_session.json's at {at!r} is not a UTC timestamp") from None
+    import math
+    age = finalised - math.floor(float(bdoc["at"]))      # the finalisation stamp has one-second resolution
+    if age < 0:
+        raise Refusal(f"the boundary record ({bdoc['at']}) is later than the session's finalisation ({at})")
+    return {"path": archived["path"], "sha256": archived["sha256"], "validator": "b1_records.boundary_established (structure, checks, runner != signer, all passed)",
+            "runner_user": bdoc["runner_user"], "signer_user": bdoc["signer_user"], "at": bdoc["at"], "finalised_at": at,
+            "age_at_finalisation_s": round(age, 3), "freshness_rule": "the preflight's, at run time (6 h); not re-judged against today's clock"}
 
 
 # ------------------------------------------------------------------ the re-judge
@@ -375,11 +450,7 @@ def rejudge(session_dir: Path, ports=None, authority=None, instrument_root=None,
             bdoc = json.loads(bpath.read_text())
         except ValueError as exc:
             raise Refusal(f"the boundary record is not JSON: {exc}") from None
-        if bdoc.get("schema") != "principal_boundary" or bdoc.get("all_passed") is not True:
-            raise Refusal("the boundary record is not a passed principal_boundary")
-        if b.get("runner_user") and bdoc.get("runner_user") != b.get("runner_user"):
-            raise Refusal("the boundary record's runner_user is not the one archive.json records")
-        out["steps"]["boundary"] = {"path": b["path"], "sha256": b["sha256"], "all_passed": True, "at": bdoc.get("at")}
+        out["steps"]["boundary"] = boundary_findings(bdoc, b, record)
         out["verdict"] = "ACCEPT"
     except Refusal as exc:
         out["verdict"], out["refusal"] = "REFUSE", str(exc)

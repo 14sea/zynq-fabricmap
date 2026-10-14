@@ -287,11 +287,106 @@ class TheRoundTrip(unittest.TestCase):
         (s / "archive.json").write_text(json.dumps(doc))
         self.refused(s, "boundary record does not hash")
         s = self.copy()
-        b = self.f.boundary_doc(); b["all_passed"] = False
+        b = self.f.boundary_doc(); b["checks"][0]["passed"] = False; b["all_passed"] = False
         bp = s.parent / "boundary_failed.json"; bp.write_text(json.dumps(b))
         doc = json.loads((s / "archive.json").read_text()); doc["boundary"] = {"path": os.path.relpath(bp, rr.ROOT), "sha256": rt.sha(bp)}
         (s / "archive.json").write_text(json.dumps(doc))
-        self.refused(s, "not a passed principal_boundary")
+        self.refused(s, "principal boundary: principal boundary NOT established")
+
+    def _tar_with(self, extra) -> tuple[Path, dict]:
+        """A session copy whose archive carries the five members plus whatever `extra(tar)` adds, archive.json
+        re-recorded so the restore's own byte checks pass and the table-of-contents check is the one that refuses."""
+        import io
+        import subprocess
+        import tarfile
+        s = self.copy()
+        stream = io.BytesIO()
+        with tarfile.open(fileobj=stream, mode="w") as tar:
+            for name in rr.MEMBERS:
+                data = (self.raw / name).read_bytes()
+                info = tarfile.TarInfo(name); info.size = len(data)
+                tar.addfile(info, io.BytesIO(data))
+            extra(tar)
+        z = subprocess.run(["zstd", "-q", "-c"], input=stream.getvalue(), capture_output=True, check=True)
+        (s / "exports.tar.zst").write_bytes(z.stdout)
+        doc = json.loads((s / "archive.json").read_text())
+        doc["archive"]["bytes"], doc["archive"]["sha256"] = (s / "exports.tar.zst").stat().st_size, rt.sha(s / "exports.tar.zst")
+        (s / "archive.json").write_text(json.dumps(doc))
+        return s, doc
+
+    def test_a_planted_link_member_is_refused_before_anything_is_written(self):
+        """P1 of the owner's review of 0850e6b: a symlink member named like an ordinary file was followed by the
+        later copy and overwrote a file outside the restore directory."""
+        import tarfile
+        marker = self.f.d / "external_marker.txt"
+        marker.write_text("original temporary marker\n")
+        def link(tar):
+            info = tarfile.TarInfo("summary.json"); info.type = tarfile.SYMTYPE; info.linkname = str(marker)
+            tar.addfile(info)
+        s, doc = self._tar_with(link)
+        empty = Path(tempfile.mkdtemp(prefix="b3prep_empty_", dir=self.f.d))
+        with self.assertRaises(rr.Refusal) as cm:
+            rr.restore(s, doc, empty)
+        self.assertIn("link entry", str(cm.exception))
+        self.assertEqual(list(empty.iterdir()), [], "nothing was written before the refusal")
+        self.assertEqual(marker.read_text(), "original temporary marker\n")
+        self.refused(s, "link entry")
+        self.assertEqual(marker.read_text(), "original temporary marker\n")
+        def hardlink(tar):
+            info = tarfile.TarInfo("summary.json"); info.type = tarfile.LNKTYPE; info.linkname = "audits.json"
+            tar.addfile(info)
+        s, doc = self._tar_with(hardlink)
+        self.refused(s, "link")
+        def directory(tar):
+            info = tarfile.TarInfo("summary.json"); info.type = tarfile.DIRTYPE
+            tar.addfile(info)
+        s, doc = self._tar_with(directory)
+        self.refused(s, "not a regular file")
+        def extra_regular(tar):
+            import io
+            data = b"{}\n"; info = tarfile.TarInfo("summary.json"); info.size = len(data); tar.addfile(info, io.BytesIO(data))
+        s, doc = self._tar_with(extra_regular)
+        self.refused(s, "not exactly the five members")
+        def duplicate(tar):
+            import io
+            data = b"{}\n"; info = tarfile.TarInfo("audits.json"); info.size = len(data); tar.addfile(info, io.BytesIO(data))
+        s, doc = self._tar_with(duplicate)
+        self.refused(s, "duplicate entries")
+        def pathed(tar):
+            import io
+            data = b"{}\n"; info = tarfile.TarInfo("../audits.json"); info.size = len(data); tar.addfile(info, io.BytesIO(data))
+        s, doc = self._tar_with(pathed)
+        self.refused(s, "carries a path")
+
+    def _with_boundary(self, bdoc: dict) -> Path:
+        s = self.copy()
+        bp = s.parent / "boundary_probe.json"; bp.write_text(json.dumps(bdoc))
+        doc = json.loads((s / "archive.json").read_text())
+        doc["boundary"] = {"path": os.path.relpath(bp, rr.ROOT), "sha256": rt.sha(bp), "runner_user": bdoc.get("runner_user")}
+        (s / "archive.json").write_text(json.dumps(doc))
+        return s
+
+    def test_an_invalid_boundary_record_is_refused_by_the_production_validator(self):
+        """P1 of the owner's review of 0850e6b: schema name and all_passed alone were accepted."""
+        self.refused(self._with_boundary({"schema": "principal_boundary", "all_passed": True, "runner_user": "same", "signer_user": "same", "checks": []}),
+                     "principal boundary")
+        b = self.f.boundary_doc(); b["checks"][2]["passed"] = False                 # all_passed disagrees with the checks
+        self.refused(self._with_boundary(b), "all_passed disagrees")
+        b = self.f.boundary_doc(); b["checks"][2]["passed"] = False; b["all_passed"] = False
+        self.refused(self._with_boundary(b), "NOT established")
+        b = self.f.boundary_doc(); b["signer_user"] = b["runner_user"]
+        self.refused(self._with_boundary(b), "same user")
+        b = self.f.boundary_doc(); b["checks"] = b["checks"][:4]
+        self.refused(self._with_boundary(b), "checks must be exactly")
+        b = self.f.boundary_doc(); b.pop("schema_version")
+        self.refused(self._with_boundary(b), "principal boundary")
+        b = self.f.boundary_doc(); b["at"] = b["at"] + 10 * 24 * 3600                # later than the session's finalisation
+        self.refused(self._with_boundary(b), "later than the session's finalisation")
+        b = self.f.boundary_doc(); b["at"] = b["at"] - 30 * 24 * 3600                # a month old: valid offline (the 6 h rule was the preflight's)
+        res = rejudge(self.f, self._with_boundary(b))
+        self.assertEqual(res["verdict"], "ACCEPT", res)
+        self.assertGreater(res["steps"]["boundary"]["age_at_finalisation_s"], 29 * 24 * 3600)
+        self.assertIn("boundary_established", res["steps"]["boundary"]["validator"])
 
     def test_an_authority_refusal_is_the_verdict(self):
         f = self.f
@@ -321,6 +416,36 @@ class TheArchiver(unittest.TestCase):
             with self.assertRaises(ar.Refusal) as cm:
                 ar.archive(raw, out, f.boundary, None, HERE / "restore_rejudge.py", root=rr.ROOT)
             self.assertIn("evidence seal", str(cm.exception))
+        finally:
+            f.close()
+
+    def test_the_backup_round_trip(self):
+        """P1 of the owner's review of 0850e6b: the default backup failed on its own hash-list path."""
+        import subprocess
+        f = rt.Fixture("S3", 0, 2)
+        try:
+            cfg, raw = synth_session(f)
+            broot = f.d / "backups"
+            out = f.d / "archived" / "with_backup"
+            doc = ar.archive(raw, out, f.boundary, broot, HERE / "restore_rejudge.py", root=rr.ROOT)
+            bk = Path(doc["external_backup"]["path"])
+            self.assertEqual(bk, broot / "with_backup")
+            self.assertEqual(sorted(p.name for p in bk.iterdir()), list(rr.SESSION_FILES))
+            sums = Path(doc["external_backup"]["hash_list"])
+            self.assertEqual(sums, broot / "with_backup.SHA256SUMS")
+            self.assertEqual(len(sums.read_text().splitlines()), 16)
+            r = subprocess.run(["sha256sum", "-c", "--quiet", str(sums)], cwd=bk, capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            for p in bk.iterdir():
+                self.assertFalse(os.access(p, os.W_OK), f"{p.name} is writable")
+                self.assertEqual(rt.sha(p), rt.sha(raw / p.name))
+            self.assertEqual(doc["external_backup"]["files"], 16)
+            res = rejudge(f, out)
+            self.assertEqual(res["verdict"], "ACCEPT", res)
+            with self.assertRaises(ar.Refusal) as cm:                      # the same backup NAME again (another out directory, same basename)
+                ar.archive(raw, f.d / "archived_again" / "with_backup", f.boundary, broot, HERE / "restore_rejudge.py", root=rr.ROOT)
+            self.assertIn("the backup", str(cm.exception)); self.assertIn("already exists", str(cm.exception))
+            self.assertFalse((f.d / "archived_again" / "with_backup").exists(), "the out directory is removed on the refusal")
         finally:
             f.close()
 
