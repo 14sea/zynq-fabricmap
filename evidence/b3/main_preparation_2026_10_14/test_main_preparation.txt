@@ -1,0 +1,25 @@
+test_no_clobber (__main__.TheArchiver.test_no_clobber) ... ok
+test_the_refusals (__main__.TheArchiver.test_the_refusals) ... ok
+test_the_first_split_session_equals_the_preflight_s_plan (__main__.ThePlanRebuild.test_the_first_split_session_equals_the_preflight_s_plan) ... ok
+test_the_refusals_are_the_preflight_s (__main__.ThePlanRebuild.test_the_refusals_are_the_preflight_s) ... ok
+test_the_second_split_session_equals_the_preflight_s_plan (__main__.ThePlanRebuild.test_the_second_split_session_equals_the_preflight_s_plan) ... ok
+test_a_synthetic_b3q_session_round_trips (__main__.TheQualificationProfile.test_a_synthetic_b3q_session_round_trips) ... ok
+test_a_changed_binding_is_refused (__main__.TheRoundTrip.test_a_changed_binding_is_refused) ... ok
+test_a_changed_budget_is_refused (__main__.TheRoundTrip.test_a_changed_budget_is_refused) ... ok
+test_a_changed_deadline_is_refused (__main__.TheRoundTrip.test_a_changed_deadline_is_refused) ... ok
+test_a_changed_slice_is_refused (__main__.TheRoundTrip.test_a_changed_slice_is_refused) ... ok
+test_a_mislabelled_profile_is_refused (__main__.TheRoundTrip.test_a_mislabelled_profile_is_refused) ... ok
+test_a_missing_member_is_refused (__main__.TheRoundTrip.test_a_missing_member_is_refused) ... ok
+test_a_tampered_member_is_refused (__main__.TheRoundTrip.test_a_tampered_member_is_refused) ... ok
+test_a_wrong_boundary_is_refused (__main__.TheRoundTrip.test_a_wrong_boundary_is_refused) ... ok
+test_an_authority_refusal_is_the_verdict (__main__.TheRoundTrip.test_an_authority_refusal_is_the_verdict) ... ok
+test_the_archive_is_deterministic (__main__.TheRoundTrip.test_the_archive_is_deterministic) ... ok
+test_the_archive_is_form_c (__main__.TheRoundTrip.test_the_archive_is_form_c) ... ok
+test_the_positive_control_accepts_and_equals_the_archived_verdict (__main__.TheRoundTrip.test_the_positive_control_accepts_and_equals_the_archived_verdict) ... ok
+test_the_script_runs_from_a_session_copy_as_a_process (__main__.TheRoundTrip.test_the_script_runs_from_a_session_copy_as_a_process) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 2.360s
+
+OK
+python3 -B $E/test_main_preparation.py  2.56s user 0.33s system 96% cpu 2.983 total

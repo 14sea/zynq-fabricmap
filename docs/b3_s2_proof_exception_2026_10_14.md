@@ -215,3 +215,12 @@ annotation, whose two values are the two plans the lifecycle has carried; the he
 the pinned one; the first defect's test passes outside the shared process; the production verify at this node is
 S3 with no refusal. It does not make the archived report a proof. The final proof node repeats both supplements
 afresh.
+
+## The final proof's position (the owner's ruling of 2026-10-14, after S3)
+
+Preregistration §8 orders "the final proof" before any B3 ruling pair. The owner rules that the accepted S3 proof
+node — the formal report `evidence/b3/tests/test_report_2026-10-14T180234Z.json` archived as failed, and the two
+supplements above — serves as that node's **engineering acceptance**; the formal clean-tree proof is **not passed**,
+and no identical full run is repeated for the position alone. Both named exceptions continue to apply to any later
+proof node of lifecycle 2 for the same failures only; any other failure is reported, not accepted. The main-experiment
+preparation that follows is recorded in `evidence/b3/main_preparation_2026_10_14/README.md`.

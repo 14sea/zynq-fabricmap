@@ -1,0 +1,59 @@
+{
+ "at": "2026-10-14T19:15:54Z",
+ "refusal": null,
+ "restored_dir_removed": true,
+ "session_dir": "../../../tmp/b3prep_prod_x8fgppmp/b3q_02",
+ "steps": {
+  "boundary": {
+   "all_passed": true,
+   "at": 1791977787.880124,
+   "path": "evidence/b3/principal_boundary_2026-10-14-02.json",
+   "sha256": "70dc2cd82fbf1ca2077fc2b17145573ee10fd31e27d70e881280a8c349ba41e8"
+  },
+  "judge": {
+   "findings": [],
+   "keys_differing_from_archived": [],
+   "kills": [],
+   "measured_rate_per_hour": 3180.049965139327,
+   "outcome": "PASS"
+  },
+  "manifest": {
+   "file_sha256": "bb917ec7bde1a47da975162ff76bb27d4c6080e06a715d49f7f458e8115a23c6",
+   "pins": {
+    "files_verified": 88,
+    "path": "manifests/b3_instrument_pins.json",
+    "pins_sha256": "73cec93a72aa962f10b331c3720f50439201a73bee2ba34971dd2b8b677ac280"
+   },
+   "verify": {
+    "qualified": false,
+    "refusal": null,
+    "stage": "S1"
+   }
+  },
+  "pinned_documents": {
+   "plan_sha256": "490347f4b3542147581940035a12eb9bb7db7cbd0ad550dd8bfd3e2b68261026",
+   "prediction_sha256": "7eae26509b9488a111257c112c5cf90e9cc8f6e34311af837c79ccc40245ec27"
+  },
+  "restore": {
+   "archive_sha256": "041e3c5f7912490ed17c78f349756b6807b31f7c1893cca7a45a569bda436757",
+   "files": 16,
+   "restored_to": "/tmp/b3_fresh_restore_bczsk2mi"
+  },
+  "seal": "ok",
+  "session_plan": {
+   "crc_budget": 14,
+   "expected_frames_total": 3378,
+   "expected_records": 125,
+   "pair_count": 1,
+   "pair_first": 0,
+   "rebuilt_by": "b3_runner.qualification_session_plan",
+   "resend_budget": 14,
+   "run_log_l6_equal": true,
+   "session_timeout_s": 813.8430528081055,
+   "summary_l6_equal": true
+  },
+  "session_record": "ok"
+ },
+ "tool": "restore_rejudge.py/1.0.0 (b3 lifecycle 2, main preparation 2026-10-14)",
+ "verdict": "ACCEPT"
+}
