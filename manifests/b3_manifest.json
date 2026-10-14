@@ -76,9 +76,15 @@
   "manifests/b2_manifest.json": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0",
   "schemas/specimen_ledger.schema.json": "7cc74295b5c76806bddaa995675b77dfea598fb6ad42fa4ec7bfbf426d12563d"
  },
- "history": [],
+ "history": [
+  {
+   "at": "2026-10-14T06:34:59Z",
+   "prereg_sha256": "e89c5677ac7f2be28e178b64d48b7a6f8bfdd35158d5ca5639ac8323c1451353",
+   "transition": "S1 freeze"
+  }
+ ],
  "image": {
-  "board_ready": false,
+  "board_ready": true,
   "build_evidence": {
    "path": "evidence/b3/build_evidence.json",
    "sha256": "288077c006ea67b2dec325113ba57b60fc4e3ffa4540526b84e5c223276c208a"
@@ -112,9 +118,9 @@
   "sha256": "92b774ea62d290d380e72a4c990b384060db9006cf9160940fb4848ae4a14cf5"
  },
  "prereg": {
-  "frozen": false,
+  "frozen": true,
   "path": "docs/b3_preregistration.md",
-  "sha256": null
+  "sha256": "e89c5677ac7f2be28e178b64d48b7a6f8bfdd35158d5ca5639ac8323c1451353"
  },
  "qualification": null,
  "qualification_plan": {
@@ -206,7 +212,7 @@
   ],
   "rule": "first 4 bytes of sha256(label|instrument commit); the fixed excluded seeds and every archived set explicitly excluded"
  },
- "status": "S0 INIT \u2014 derived from the tree; not frozen; no qualification; no plan; NO BOARD RULING",
+ "status": "S1 FROZEN \u2014 prereg pinned, image board_ready by the owner; awaiting the B3Q ruling pair",
  "universe": {
   "addresses": 292,
   "sha256": "895baf85ed31df9beae28a533646182ffb8d0e0735c9849ede9641af81ee7458"
