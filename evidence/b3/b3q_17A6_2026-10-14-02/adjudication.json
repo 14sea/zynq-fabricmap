@@ -1,0 +1,60 @@
+{
+  "tool": "b3_runner.py/0.1.0",
+  "session": "B3Q",
+  "scope": "session",
+  "outcome": "PASS",
+  "findings": [],
+  "kills": [],
+  "measured_rate_per_hour": 3180.049965139327,
+  "audit_policy": "all-self-reporting",
+  "instrument": {
+    "rate": 3180.049965139327,
+    "audit_policy": "all-self-reporting",
+    "run_log_validation": {
+      "scored": 125,
+      "audited": 125,
+      "chain_length": 126
+    },
+    "rate_report": {
+      "candidates": 123,
+      "evals_per_hour": 3180.049965139327,
+      "cov": 0.01627387599756771,
+      "session_span_s": 141.47856257398962
+    }
+  },
+  "binding_checked": true,
+  "replay": {
+    "scope": "session",
+    "measurement": {
+      "records_checked": 123,
+      "readouts_served": 125
+    },
+    "replay": {
+      "records_replayed": 123,
+      "pairs": [
+        0
+      ]
+    },
+    "pair_seeds": [
+      [
+        55214469,
+        4020232539
+      ]
+    ],
+    "online_maps": {
+      "0": {
+        "decoded": 8,
+        "map_version": 8,
+        "anomalies": 0,
+        "sha256": "74dcbb09e001c3510d758f1c91d385c3a7f5bb2d009015ea25c7902944452de9"
+      }
+    }
+  },
+  "pooled_primary": "not this runner's: b3_adjudicate --scope run over every session's log",
+  "qualification": {
+    "fitness_values": 123,
+    "ledger_entries": 40,
+    "baselines": 2,
+    "fitness_sequence_sha256": "cbd277e66f6e70a7d59507f636904ca27ba92527b3ecc0d9e90b047f2f3013cc"
+  }
+}
