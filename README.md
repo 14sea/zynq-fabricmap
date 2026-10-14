@@ -8,13 +8,13 @@ acts only as notary, auditor and collector. Every board session needs an owner-s
 ruling pair, is judged fail-closed by an offline adjudicator, and is archived as observed.
 Nothing is re-run to make a result look better.
 
-## Where the line is (2026-10-14)
+## Where the line is (2026-10-14, S2)
 
 | stage | question | state |
 |---|---|---|
 | **B1** autonomous mapping | can the board build a correct map of 292 certified LUT-INIT bits from its own probes? | **complete** — carrier qualified by B1Q PASS on `17A6` (2026-09-08, attempt 4); B1 mapping PASS later that day, self-map `c6a4b23e…` frozen |
 | **B2** map utility | does a search that consults that map reproduce, record for record, the host-predicted outcome? | **complete — PASS / SUPPORTED, p = 0.01953125** (lifecycle 2 on `17A6`, 2026-09-16..17: B2Q PASS, two B2 sessions PASS covering the nine preregistered pairs, pooled primary 8/1/0 equal to the prediction; `docs/b2_result_2026_09_17.md`) |
-| **B3** closed loop | map → evolve → re-map on the board | **S1 frozen, host-only; B3Q pending.** Image stages 1–6 are closed on their engineering acceptance. The owner has marked the image board_ready; the formal stack assessment remains FINDINGS, with image_ready=false. No B3Q ruling pair or board session yet. (Lifecycle 2 on branch `b3-lifecycle-2`: `docs/b3_preregistration.md` v0.3.1 frozen at S1, manifest `bb917ec7…`, `evidence/b3/s1_2026_10_14/`; `docs/b3_stage5_engineering_acceptance_2026_10_12.md`; lifecycle 1 archived unmerged at tag `b3-lifecycle-1-stopped-2026-09-17`. Post-freeze proof `evidence/b3/tests/test_report_2026-10-14T090238Z.json`: clean_tree_proof true, 2096 / 793 / 792 OK, zero skips, bound to the S1 manifest.) |
+| **B3** closed loop | map → evolve → re-map on the board | **S2 qualified; B3 main experiment pending S3 planning.** Image stages 1–6 closed on their engineering acceptance; the image is board_ready by the owner's mark with its formal stack assessment at FINDINGS (image_ready=false). B3Q on `17A6` (2026-10-14): attempt -01 HOLD (one 80-byte console deletion inside a heartbeat; `evidence/b3/b3q_17A6_2026-10-14-01/`), attempt -02 **PASS** (125 records, 123 fitness values, 40 ledger entries and 2 baselines equal to the prediction; `evidence/b3/b3q_17A6_2026-10-14-02/`). S2 pins the -02 record and the calibration reconstructed from it by the production re-adjudicator: measured rate 3180.049965139327 evals/h, margin 0.85, rate_for_split 2703.042470368428 (manifest `bea08769…`, `evidence/b3/s2_2026_10_14/`). Under the frozen split rule that rate gives **eight sessions of one pair each** (3 005 records, expected span 4 002.16 s, deadline 5 602.70 s per session; two pairs would need 8 001.65 s against the 7 200 s cap; 24 040 records in all, 16 of them baselines) — a derivation, not an authorisation of any board session. The transport stop-loss stands. Lifecycle 2 on `b3-lifecycle-2`: `docs/b3_preregistration.md` v0.3.1 frozen at S1 (`e89c5677…`); lifecycle 1 archived unmerged at tag `b3-lifecycle-1-stopped-2026-09-17`. S2 proof: pending.) |
 | **B4** expansion | FF and routing classes, on sacrificial silicon | not started |
 
 Standing constraints that no PASS lifts on its own:
@@ -71,7 +71,7 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
 | `host/` | runners, adjudicators, lifecycle tools (`b2_runner.py`, `b2_manifest.py`, `b2_adjudicate.py`, `b1_*`) |
 | `b3/` | the B3 lifecycle-2 line, self-contained: host tools (`b3/host/`), board image sources and host twins (`b3/firmware/`), tests (`b3/tests/`), schemas |
 | `firmware/` | the B1 and B2 board images (bare-metal, on the P3 instrument's BSP) |
-| `evidence/` | every board session and review, as observed (`evidence/b1q/`, `evidence/b2/`); B3's host-only gate, prediction and build evidence (`evidence/b3/`) |
+| `evidence/` | every board session and review, as observed (`evidence/b1q/`, `evidence/b2/`, `evidence/b3/b3q_*`); B3's gate, prediction, build evidence, lifecycle transitions and clean-tree proofs (`evidence/b3/`) |
 | `data/` | the frozen, self-verifying prjxray subset (CC0) — 10,896 features in six classes |
 | `gate_runs/` | bit-class certificates and the carrier authority (LFS) |
 | `tests/` | the suite the test report runs (B1, B2, B3, transport) |
@@ -114,8 +114,12 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
 - **2026-10-14** — S1 freeze: preregistration v0.3.1 `e89c5677…` pinned, image marked
   board_ready by the owner with the stack assessment still `FINDINGS` (`evidence/b3/s1_2026_10_14/`);
   manifest `bb917ec7…`. Post-freeze proof `test_report_2026-10-14T090238Z.json`: whole suite OK
-  (2096 / 793 / 792, zero skips), clean_tree_proof true, bound to `bb917ec7…`. No B3Q ruling
-  pair, B3Q session or board session yet.
+  (2096 / 793 / 792, zero skips), clean_tree_proof true, bound to `bb917ec7…`.
+- **2026-10-14** — B3Q on `17A6`, one ruling pair per attempt: -01 HOLD (`35d81c2`, a heartbeat
+  lost to an 80-byte console deletion; the two other CRC drops are the forced retry controls),
+  -02 PASS (`76534b7`, no transport loss). S2 qualify from -02 only: manifest `bea08769…`,
+  calibration 3180.049965139327 evals/h × 0.85 → eight one-pair sessions (`evidence/b3/s2_2026_10_14/`).
+  The transport stop-loss stands. S2 proof: pending. No S3 plan, no B3 ruling, no further board session.
 - **2026-10-04..06** — image stage 5: the application, a reproducible cross-build (two clean
   builds byte-identical) and its build evidence landed; the stack assessment of the final ELF
   (`b3/host/b3_image_stack.py`) went through three reviewed rounds. Under the strict reading
