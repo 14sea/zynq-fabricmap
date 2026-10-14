@@ -66,6 +66,13 @@ stays null. The history entry records the run manifest `bb917ec7…` and the rat
 
 The transport stop-loss stands: the -02 PASS is one attempt under a bounded exception and does
 not establish transport stability; the -01 HOLD (an 80-byte deletion inside a heartbeat burst) is
-archived as observed. Not done by this transition: the S2 clean-tree proof (**pending at this
-commit; the next commit's**, bound to `bea08769…`), the S3 plan (`b3_plan.py --rate-per-hour
-3180.049965139327`, the owner's unit), any ruling, any board session, any push.
+archived as observed. The S2 clean-tree proof was run on this manifest (`evidence/b3/tests/test_report_2026-10-14T144023Z.json`)
+and **did not pass**: `clean_tree_proof = false`, one test erroring in `b3_tree` and `b3_removal` alike through
+a fixture-path contamination of a pinned lifecycle test (the lifecycle World's process-wide patch of the
+runner's B1-manifest path; the fixture's nonce seed `00000000` turns the S2 re-adjudication inside the test
+process into a KILL). The owner's named exception (`docs/b3_s2_proof_exception_2026_10_14.md`) accepts S2 for
+engineering purposes on the supplementary verification in `proof_exception/` — the plan module in its own
+process on the tree (32 / 32 OK) and on a shadow built by the formal tool's `build_shadow` (32 / 32 OK), then a
+fresh-process verify (S2 / true / null / `bea08769…`). The archived report's verdict is not changed; the formal
+proof is not satisfied. Not done: the S3 plan (`b3_plan.py --rate-per-hour 3180.049965139327`, the owner's
+unit), any ruling, any board session, any push.
