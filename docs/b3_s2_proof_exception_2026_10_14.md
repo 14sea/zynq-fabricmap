@@ -41,9 +41,11 @@ self._patch.start()
 
 `world()` returns a **process-wide singleton** (`_WORLD`), and the patch is stopped only by
 `atexit.register(_WORLD.close)` — at interpreter exit, not at the end of the test or the module. In a
-discovery run the lifecycle tests (and `test_b3_plan.StageCoverage.setUp`, which also calls `life.world()`)
-run before `test_b3_plan.Committed`, so from then on `b3_runner.B1_MANIFEST` names the fixture's B1 manifest
-(`/tmp/b3life_*/manifests/b1_manifest.json`) for the rest of the process. The committed-state test runs the
+discovery run the order is `test_b3_lifecycle` → `test_b3_plan.Committed` → `test_b3_plan.StageCoverage`:
+the lifecycle tests create the World first, so from then on `b3_runner.B1_MANIFEST` names the fixture's B1
+manifest (`/tmp/b3life_*/manifests/b1_manifest.json`) for the rest of the process; the contamination comes
+from the lifecycle tests that ran earlier (`StageCoverage.setUp` also calls `life.world()`, but it runs
+after `Committed` and only reuses the same singleton). The committed-state test runs the
 **production** verify on the real tree; at S2 (and at every later stage: `b3_manifest.verify` re-adjudicates
 the pinned B3Q evidence whenever `stage >= "S2"`) that verify calls the production re-adjudicator, whose
 `instrument_findings` reads the model nonce chain's seed from `B1_MANIFEST["carrier"]["nonce_seed"]`
@@ -112,8 +114,9 @@ record), `exit_codes.txt`, `verify_after_supplement.json`, `started_utc.txt` / `
 | the plan module, removal shadow | `/tmp/b3_removal_control_ukehtkuo`, built by `b3_test_report.build_shadow` (the sentinel `test_b3_sentinel.py` not linked, every other entry linked back), removed afterwards (`shadow_removed=true`) | **Ran 32 tests in 191.203 s — OK**, 32 `ok` |
 | fresh-process verify, after both | `python3 -B b3/host/b3_manifest.py verify` | **S2 / qualified true / refusal null / `bea08769c4adb86a20654d455b79e015973192c67bf62199a91c561e97ecab8f`** |
 
-Window 15:02:26Z – 15:11:40Z on 2026-10-14; the worktree was clean at the start (the only untracked paths
-were this exception's own outputs and the archived failed report). The inputs' digests are in `inputs.json`:
+Window 15:02:26Z – 15:11:40Z on 2026-10-14; at the start no tracked file was modified, while the untracked
+paths listed in `inputs.json` existed (this exception's own outputs and the archived failed report) — not a
+clean worktree in the proof tool's sense. The inputs' digests are in `inputs.json`:
 the manifest `bea08769…`, the pin table `73cec93a…`, `b3/tests/test_b3_plan.py`, `b3/tests/test_b3_lifecycle.py`,
 `b3/host/b3_manifest.py`, `b3/host/b3_runner.py`, `b3/host/b3_test_report.py`, the plan / prediction / B3Q
 documents, the build evidence, the B1 manifest and the sixteen files of `evidence/b3/b3q_17A6_2026-10-14-02/`.
