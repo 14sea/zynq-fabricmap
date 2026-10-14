@@ -14,7 +14,7 @@ Nothing is re-run to make a result look better.
 |---|---|---|
 | **B1** autonomous mapping | can the board build a correct map of 292 certified LUT-INIT bits from its own probes? | **complete** — carrier qualified by B1Q PASS on `17A6` (2026-09-08, attempt 4); B1 mapping PASS later that day, self-map `c6a4b23e…` frozen |
 | **B2** map utility | does a search that consults that map reproduce, record for record, the host-predicted outcome? | **complete — PASS / SUPPORTED, p = 0.01953125** (lifecycle 2 on `17A6`, 2026-09-16..17: B2Q PASS, two B2 sessions PASS covering the nine preregistered pairs, pooled primary 8/1/0 equal to the prediction; `docs/b2_result_2026_09_17.md`) |
-| **B3** closed loop | map → evolve → re-map on the board | **S1 frozen, host-only; B3Q pending.** Image stages 1–6 are closed on their engineering acceptance. The owner has marked the image board_ready; the formal stack assessment remains FINDINGS, with image_ready=false. No B3Q ruling pair or board session yet. (Lifecycle 2 on branch `b3-lifecycle-2`: `docs/b3_preregistration.md` v0.3.1 frozen at S1, manifest `bb917ec7…`, `evidence/b3/s1_2026_10_14/`; `docs/b3_stage5_engineering_acceptance_2026_10_12.md`; lifecycle 1 archived unmerged at tag `b3-lifecycle-1-stopped-2026-09-17`. Post-freeze proof: pending.) |
+| **B3** closed loop | map → evolve → re-map on the board | **S1 frozen, host-only; B3Q pending.** Image stages 1–6 are closed on their engineering acceptance. The owner has marked the image board_ready; the formal stack assessment remains FINDINGS, with image_ready=false. No B3Q ruling pair or board session yet. (Lifecycle 2 on branch `b3-lifecycle-2`: `docs/b3_preregistration.md` v0.3.1 frozen at S1, manifest `bb917ec7…`, `evidence/b3/s1_2026_10_14/`; `docs/b3_stage5_engineering_acceptance_2026_10_12.md`; lifecycle 1 archived unmerged at tag `b3-lifecycle-1-stopped-2026-09-17`. Post-freeze proof `evidence/b3/tests/test_report_2026-10-14T090238Z.json`: clean_tree_proof true, 2096 / 793 / 792 OK, zero skips, bound to the S1 manifest.) |
 | **B4** expansion | FF and routing classes, on sacrificial silicon | not started |
 
 Standing constraints that no PASS lifts on its own:
@@ -113,8 +113,9 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
   committed.
 - **2026-10-14** — S1 freeze: preregistration v0.3.1 `e89c5677…` pinned, image marked
   board_ready by the owner with the stack assessment still `FINDINGS` (`evidence/b3/s1_2026_10_14/`);
-  manifest `bb917ec7…`. Post-freeze proof: pending. No B3Q ruling pair, B3Q session or
-  board session yet.
+  manifest `bb917ec7…`. Post-freeze proof `test_report_2026-10-14T090238Z.json`: whole suite OK
+  (2096 / 793 / 792, zero skips), clean_tree_proof true, bound to `bb917ec7…`. No B3Q ruling
+  pair, B3Q session or board session yet.
 - **2026-10-04..06** — image stage 5: the application, a reproducible cross-build (two clean
   builds byte-identical) and its build evidence landed; the stack assessment of the final ELF
   (`b3/host/b3_image_stack.py`) went through three reviewed rounds. Under the strict reading
