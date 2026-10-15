@@ -34,7 +34,11 @@ rule v07's budget* and did not add it to the two-sessions-same-cause count; **th
 in the same terms** — the facts are here, the counting decision is not this record's. The mechanism (where on the host-side
 path the bytes vanish) remains undetermined.
 
-Not a lost session; the stop-loss stands; nothing here establishes transport stability.
+**The owner's ruling (2026-10-15, on review of this session):** counted as session 3 was — *the same heartbeat-damage class
+recurring, absorbed by rule v07's budget* — and therefore **not added to the two-sessions-same-cause count**; it is recorded, as a
+matter of fact, that **two of the eight main sessions (3 and 7) carried this class of heartbeat damage**, each inside one record and
+inside the budget; the earlier HOLD and LOST counts stand; the stop-loss is not lifted. Not a lost session; nothing here establishes
+transport stability.
 
 ## Layout (form (c))
 
