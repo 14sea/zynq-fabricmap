@@ -25,7 +25,7 @@ Runner started 08:41:22Z, claim 08:43:54Z, identity page 08:47:22Z, image loaded
 
 **The damaged heartbeat burst, reconstructed from `console.log` (the raw bytes, not the timestamped copy).** Record 1075's
 burst arrived as 13 lines instead of 16: twelve intact 67-byte `HB 1075` lines (i = 0…10 and 15) and one 82-byte line that is
-**the first 51 bytes of HB i = 11 followed immediately by the last 31 bytes of HB i = 14** (`…eyJpIj` + `159ea85d eyJpIjoxNH0= 9175f4f2`),
+**the first 52 bytes of HB i = 11 followed immediately by the last 30 bytes of HB i = 14** (`P3L5 HB 1075 <tag> eyJpIj` + `159ea85d eyJpIjoxNH0= 9175f4f2`),
 rejected as a bad frame. The four heartbeats i = 11…14 would have occupied 272 bytes including separators; 83 were kept; **189
 contiguous bytes are absent with zero replacement bytes** — if one event, a single contiguous inbound deletion. This is the same
 loss class as B3Q attempt -01 (`evidence/b3/b3q_17A6_2026-10-14-01/`: a 51-byte prefix and an 80-byte deletion inside a heartbeat
@@ -35,7 +35,10 @@ contiguous inbound deletion causing a session HOLD" counted once for B3Q -01) is
 facts are stated here so that it can be made. The mechanism (where on the host-side path the bytes vanish) remains undetermined,
 as in every earlier observation.
 
-Not a lost session; the stop-loss stands; nothing here establishes transport stability.
+**The owner's ruling (2026-10-15, on review of this session):** recorded as *the same heartbeat-damage class recurring, absorbed by
+rule v07's budget* — one record short of heartbeats against a budget of three, no HOLD and no LOST — and therefore **not added to the
+two-sessions-same-cause count**; the earlier HOLD and LOST counts stand; the stop-loss is not lifted. Not a lost session; nothing here
+establishes transport stability.
 
 ## Layout (form (c))
 
