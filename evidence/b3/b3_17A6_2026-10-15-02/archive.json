@@ -1,0 +1,135 @@
+{
+ "archive": {
+  "bytes": 7112527,
+  "compression": "tar (GNU tar, --format=posix, --sort=name, --owner=0 --group=0 --numeric-owner, one fixed --mtime for every member = runner_session.json's at, pax headers without atime/ctime) | zstd -19 -T0",
+  "member_mtime_epoch": 1792049197,
+  "members": [
+   {
+    "bytes": 16136333,
+    "name": "audits.json",
+    "sha256": "1ba68d8d71aae2ca5320ba34fb38c6320048052be131ea8d0f4586c228295993"
+   },
+   {
+    "bytes": 26037814,
+    "name": "console.log",
+    "sha256": "6db0c841e4bb869929deb3e38191f9537b75ee1cf3b79590daa002374cf81539"
+   },
+   {
+    "bytes": 28633844,
+    "name": "console.ts.log",
+    "sha256": "442524e26a886e8389f0f4bb3357e9d561156e1ca51f8d17cf28ae72c75bd4f8"
+   },
+   {
+    "bytes": 18532904,
+    "name": "run_log.json",
+    "sha256": "e6640e9d69c41ea2c983a045db2edefe4f3226aa9daf7bac9dc76a0f7bd21e97"
+   },
+   {
+    "bytes": 17048116,
+    "name": "timeline.json",
+    "sha256": "e0d9772756962a39d588f2b9caff828e769c9d5aab9061eacfb371d65179b256"
+   }
+  ],
+  "path": "exports.tar.zst",
+  "sha256": "5b145a2cec83c2ea1ff244cb857f963f95b2a8e9bfd9e257dc55fca95cfad51e"
+ },
+ "archived_at_utc": "2026-10-15T08:28:27Z",
+ "boundary": {
+  "at": 1792048304.7397614,
+  "bytes": 1075,
+  "path": "evidence/b3/principal_boundary_2026-10-15-02.json",
+  "runner_user": "test",
+  "sha256": "1f706f3510ed1a573c8e8e99048e84a0ec21de554bc1b339c394f930bdbc8d5e"
+ },
+ "cause_at_archival": "PASS",
+ "exports_json_seal_note": "exports.json (a sealed member of the session record) names the five exports by size and sha256; those digests are the ones listed under archive.members, so the seal is verifiable after restore.",
+ "external_backup": {
+  "files": 16,
+  "hash_list": "/home/test/fabricmap_backups/b3_17A6_2026-10-15-02.SHA256SUMS",
+  "path": "/home/test/fabricmap_backups/b3_17A6_2026-10-15-02",
+  "state": "the complete original directory: exactly the 16 original files, read-only; the hash list covers all 16 and sha256sum -c passed at archival"
+ },
+ "files_in_this_directory_not_part_of_the_session_record": [
+  "exports.tar.zst",
+  "archive.json",
+  "README.md",
+  "restore_rejudge.py"
+ ],
+ "note": "These hashes are an integrity anchor for the archived bytes; they do not prove the session's verdict \u2014 the verdict is re-derived by the production judge from the restored files.",
+ "ordinary_files": [
+  {
+   "bytes": 109,
+   "name": "B1_0_preflight.json",
+   "sha256": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f"
+  },
+  {
+   "bytes": 484,
+   "name": "B1_1_identity_page.json",
+   "sha256": "0974128d313ebdedd5242a725422454fe93b3954c48516d812d8c653c116e529"
+  },
+  {
+   "bytes": 1620,
+   "name": "adjudication.json",
+   "sha256": "c8b1175633e16c6fbaee9cfc195711d57f25ffb4b1d155d457dabb130eedb963"
+  },
+  {
+   "bytes": 1125,
+   "name": "exports.json",
+   "sha256": "07bddea6d89ab5288a47968cf021cfc991a4d6edf3d2d089d353c3c2cddfda7e"
+  },
+  {
+   "bytes": 10553,
+   "name": "manifest_at_run.json",
+   "sha256": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628"
+  },
+  {
+   "bytes": 5083,
+   "name": "ruling_provisioning.json",
+   "sha256": "13e183e2c9a9139c6ef79900a9ee41ed3c29bb294da1d4f8c95c36884b6246e7"
+  },
+  {
+   "bytes": 14223,
+   "name": "ruling_whole_of_run.json",
+   "sha256": "89bebc5e67bd908943307d8d1c8ddd03671ba404ffbfa8d786cce2fc38fb3c36"
+  },
+  {
+   "bytes": 1056,
+   "name": "runner_session.json",
+   "sha256": "c4cdee4784c5c555338fda36619a06c7ad7779685ee5a4cb0ccc2a6620709a31"
+  },
+  {
+   "bytes": 73846,
+   "name": "summary.json",
+   "sha256": "a926872700de45e4573e6d1b301cb52c1810da3f105cc61cfeb6e0d9c93af3fb"
+  },
+  {
+   "bytes": 79142,
+   "name": "ymodem.log",
+   "sha256": "80675741885042a7ed47494bdebe14ae4835b1eaae9fb2d1c24e90446218653e"
+  },
+  {
+   "bytes": 4858,
+   "name": "ymodem_app.log",
+   "sha256": "2b6dc70f61641404b6954a80e3665bbd684459344237b18ed2876f470cd4717f"
+  }
+ ],
+ "outcome_at_archival": "PASS",
+ "profile_stage": "S3",
+ "restore": [
+  "Fresh restore and re-judge, executable: python3 -B evidence/b3/b3_17A6_2026-10-15-02/restore_rejudge.py (from the repository root).",
+  "What it does, in order: an EMPTY temporary directory; the five members extracted; the eleven ordinary files copied; exactly sixteen files, each checked by size and sha256 against this document; the export seal; the archived manifest verified with its pins; the pinned plan and prediction verified byte-for-byte before being read; the session plan REBUILT from the authoritative inputs (the archived manifest, the pinned documents, the archived ruling's slice and disposition, the bound instrument's arithmetic) and compared to summary.json's l6; the production judge_session, equal to adjudication.json key for key; runner_session.json against the rebuilt plan and that verdict; the boundary record."
+ ],
+ "restore_rejudge": {
+  "equals_preparation_copy": true,
+  "path": "restore_rejudge.py",
+  "preparation_copy": "evidence/b3/main_preparation_2026_10_14/restore_rejudge.py",
+  "preparation_sha256": "e42a83ca5fa89d4a1f01a9ef925fbe62ffd52aaf98b409116cd28255a82df556",
+  "sha256": "e42a83ca5fa89d4a1f01a9ef925fbe62ffd52aaf98b409116cd28255a82df556"
+ },
+ "schema": "b3_session_evidence_archive",
+ "schema_version": "1.0.0",
+ "session": "B3",
+ "session_dir": "evidence/b3/b3_17A6_2026-10-15-02",
+ "tool": "archive_session.py/1.0.2 (b3 lifecycle 2, main preparation 2026-10-14; follow-ups to the owner's reviews of 0850e6b and 0a86d00)",
+ "why": "The five large exports are stored as one deterministic compressed archive instead of ordinary Git blobs; the eleven small, human-readable files stay as ordinary files (form (c), the owner's archival ruling of 2026-10-14 for B3 main sessions)."
+}
