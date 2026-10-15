@@ -1,0 +1,82 @@
+{
+  "tool": "b3_runner.py/0.1.0",
+  "session": "B3",
+  "scope": "session",
+  "outcome": "PASS",
+  "findings": [],
+  "kills": [],
+  "measured_rate_per_hour": 2895.5920859950797,
+  "audit_policy": "all-self-reporting",
+  "instrument": {
+    "rate": 2895.5920859950797,
+    "audit_policy": "all-self-reporting",
+    "run_log_validation": {
+      "scored": 3005,
+      "audited": 3005,
+      "chain_length": 3006
+    },
+    "rate_report": {
+      "candidates": 3003,
+      "evals_per_hour": 2895.5920859950797,
+      "cov": 0.12069348000443658,
+      "session_span_s": 3735.8287523420004
+    }
+  },
+  "binding_checked": true,
+  "replay": {
+    "scope": "session",
+    "measurement": {
+      "records_checked": 3003,
+      "readouts_served": 3005
+    },
+    "replay": {
+      "records_replayed": 3003,
+      "pairs": [
+        5
+      ]
+    },
+    "pair_seeds": [
+      [
+        2961656459,
+        1343397103
+      ],
+      [
+        3785070923,
+        2731497693
+      ],
+      [
+        3587510309,
+        2084003005
+      ],
+      [
+        3491865220,
+        1136202755
+      ],
+      [
+        1595133113,
+        3832447288
+      ],
+      [
+        556892415,
+        1747787438
+      ],
+      [
+        2376967347,
+        1528092051
+      ],
+      [
+        205178539,
+        2230924639
+      ]
+    ],
+    "online_maps": {
+      "5": {
+        "decoded": 290,
+        "map_version": 175,
+        "anomalies": 0,
+        "sha256": "4caf2c6eed77c66f06568b2f13cdfee3565cca7492de761ea2b9492ba5ebcd1c"
+      }
+    }
+  },
+  "pooled_primary": "not this runner's: b3_adjudicate --scope run over every session's log"
+}

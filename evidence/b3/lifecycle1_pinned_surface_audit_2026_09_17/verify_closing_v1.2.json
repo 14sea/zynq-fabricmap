@@ -1,0 +1,31 @@
+{
+ "at_utc": "2026-09-17T08:36:28Z",
+ "branch": "b3-lifecycle-1",
+ "checks": {
+  "board": "17A6",
+  "image": "ok (binary hashed: d164cd1d5b30\u2026, 114708 bytes)",
+  "instrument_pins": {
+   "b1_files_verified": 105,
+   "files_verified": 71,
+   "pins_sha256": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1"
+  },
+  "lineage": "ok (B1 chain re-verified)",
+  "map": "ok",
+  "pins": "ok",
+  "prereg": "ok",
+  "qualification_plan": "ok (20 records at budget 8)",
+  "stage": "S3"
+ },
+ "evidence_guard": [
+  "Ran 5 tests in 0.269s",
+  "",
+  "OK"
+ ],
+ "head": "c5f5346a7d01a177f5fafb6e5035023ad5c58c96",
+ "manifest_sha256": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0",
+ "qualified": true,
+ "refusal": null,
+ "stage": "S3",
+ "status_porcelain": " M docs/b3_lifecycle1_pinned_surface_audit_2026_09_17.md\n M evidence/b2/b2_completion_inputs_2026-09-17/README.md\n M evidence/b2/b2_completion_inputs_2026-09-17/controls.py\n M evidence/b2/b2_completion_inputs_2026-09-17/make_archive.py\n M evidence/b3/lifecycle1_pinned_surface_audit_2026_09_17/README.md\n?? evidence/b2/b2_completion_inputs_2026-09-17/control_runs/\n",
+ "worktrees": "/home/test/zynq_fabricmap  c5f5346 [b3-lifecycle-1]\n"
+}

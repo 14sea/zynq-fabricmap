@@ -1,0 +1,60 @@
+{
+ "files_sha256": {
+  "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+  "manifest_at_run.json": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+  "ruling_provisioning.json": "4ba9c35d3b5ae62290b1000615041e5bc22888829af4bc13551a8dfd9a168532",
+  "ruling_whole_of_run.json": "41ef457597617e8c141ca57f894fa1db7a069d20573eab92eb20a5da13e432f4",
+  "runner_session.json": "7b4cf4ca900cdb02d43825c88c19db5c273e1b044811a0c2d9242ceb2693fbf6",
+  "summary.json": "34ab3dedb8013450011870c4254977d159d1a096a8d0e092f13734162e2f69f0",
+  "ymodem.log": "811d8fe94e70524c4961252fa2f56d4e17192d65128c5b4f2cf42fed94afc3cb"
+ },
+ "manifest_at_run_sha256": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+ "manifest_findings": [],
+ "pins": {
+  "files_verified": 88,
+  "path": "manifests/b3_instrument_pins.json",
+  "pins_sha256": "73cec93a72aa962f10b331c3720f50439201a73bee2ba34971dd2b8b677ac280"
+ },
+ "record": {
+  "at": "2026-10-14T20:06:41Z",
+  "cause": "LOST",
+  "cross_session_stop_loss": "the owner's process: two sessions lost to the same cause \u2192 stop; three without COMPLETED \u2192 design review",
+  "expected_records": 3005,
+  "finalise_errors": [],
+  "master_seed": 981420253,
+  "measured_rate_per_hour": null,
+  "outcome": "REFUSED: configuration did not happen: INT_STS=0xa802000b, PCFG_DONE clear",
+  "pair_count": 1,
+  "pair_first": 0,
+  "profile_stage": "S3",
+  "reached": "session",
+  "ruling_pair": "spent: one ruling pair, one attempt \u2014 no retry, no redraw of seeds, no lifting of the transport stop-loss by this runner",
+  "session": "B3",
+  "tool": "b3_runner.py/0.1.0",
+  "transport": {
+   "bad_frame_budget": 325,
+   "bad_frames": 0,
+   "crc_budget": 325,
+   "crc_dropped": 0,
+   "disruptions": [],
+   "expected_frames_total": 81138,
+   "frames_seen": null,
+   "resend_budget": 325,
+   "transport_disposition": "One explicitly authorized B3 session (session 0 of 8, pair 0) as a bounded exception to the standing CH340 single-byte-deletion transport stop-loss; no general release.",
+   "transport_rereads": []
+  }
+ },
+ "ruling_findings": [],
+ "session_plan": {
+  "crc_budget": 325,
+  "expected_records": 3005,
+  "pair_count": 1,
+  "pair_first": 0,
+  "resend_budget": 325,
+  "session_timeout_s": 5602.696090881941
+ },
+ "session_record_findings": [
+  "runner_session.json's transport.frames_seen None is not a non-negative integer"
+ ],
+ "tool": "offline binding check for a LOST attempt (no run log: judge_session / restore_rejudge not applicable)"
+}

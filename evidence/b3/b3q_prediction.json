@@ -1,0 +1,1119 @@
+{
+ "b1_map_cost": 333,
+ "budget_per_arm": 40,
+ "carto_version": "specimen-carto-v1.1",
+ "deltas1": [
+  -2
+ ],
+ "deltas2": [
+  0
+ ],
+ "fitness": "F1",
+ "fitness_sequence_length": 123,
+ "fitness_sequence_sha256": "cbd277e66f6e70a7d59507f636904ca27ba92527b3ecc0d9e90b047f2f3013cc",
+ "lifecycle": 2,
+ "note": "every value is the reference engine and cartographer over the fabric model, every O-arm ledger entry included; on a correct instrument the board reproduces them byte for byte, decode for decode; one confirmatory primary (delta1), delta2 a reported secondary outcome with no threshold (preregistration v0.3 \u00a71, \u00a73, \u00a74)",
+ "pairs": [
+  {
+   "arm_order": [
+    "R",
+    "F",
+    "O"
+   ],
+   "base_train_fitness": 3,
+   "delta1_O_minus_R": -2,
+   "delta2_O_minus_endtoend_F": 0,
+   "landscape_seed": 55214469,
+   "operator_seed": 4020232539,
+   "pair": 0,
+   "runs": {
+    "F": {
+     "best_train": 5,
+     "champion_genome_sha256": "dcfaa9cdaaeb9b0827fa6555087e12236ea25539029fff5de864e8ad21c5da45",
+     "champion_holdout": 1,
+     "column_moves": 21,
+     "end_to_end_at_budget": 3,
+     "moves_sha256": "b425537325c8df3b887f2e2a772e807ce4e8cd5066960ddae0a5429e186386f8"
+    },
+    "O": {
+     "anomalies": 0,
+     "best_train": 3,
+     "budget": 40,
+     "champion_genome_sha256": "4c7f3da0386523b102328418c28d886bb9dc9c555671884e8fcc9bcba407e819",
+     "champion_holdout": 1,
+     "column_moves": 18,
+     "decoded_final": 8,
+     "final_state_sha256": "c9edebe2b7ed11cd1ea3ef4381d1349b231dbb30426cdfdd31027a545fd8f3be",
+     "ledger": [
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         53
+        ],
+        [
+         1,
+         23
+        ],
+        [
+         2,
+         21
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        26,
+        43,
+        130
+       ],
+       "map_version": 0,
+       "map_version_after": 0,
+       "move_kind": "random",
+       "parent_born": 1,
+       "seq": 1
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ],
+        [
+         1,
+         11
+        ],
+        [
+         1,
+         62
+        ],
+        [
+         4,
+         40
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57,
+        72,
+        87,
+        203
+       ],
+       "map_version": 0,
+       "map_version_after": 0,
+       "move_kind": "random",
+       "parent_born": 0,
+       "seq": 2
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         1,
+         8
+        ],
+        [
+         3,
+         44
+        ],
+        [
+         5,
+         23
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        97,
+        190,
+        288
+       ],
+       "map_version": 0,
+       "map_version_after": 0,
+       "move_kind": "random",
+       "parent_born": 0,
+       "seq": 3
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         1,
+         33
+        ],
+        [
+         2,
+         30
+        ],
+        [
+         2,
+         55
+        ],
+        [
+         3,
+         20
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        42,
+        117,
+        123,
+        180
+       ],
+       "map_version": 0,
+       "map_version_after": 0,
+       "move_kind": "random",
+       "parent_born": 2,
+       "seq": 4
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         4,
+         18
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [
+        [
+         254,
+         4,
+         18
+        ]
+       ],
+       "fitness": 3,
+       "intervention": [
+        254
+       ],
+       "map_version": 0,
+       "map_version_after": 1,
+       "move_kind": "random",
+       "parent_born": 0,
+       "seq": 5
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         63
+        ],
+        [
+         2,
+         63
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        50,
+        146
+       ],
+       "map_version": 1,
+       "map_version_after": 1,
+       "move_kind": "random",
+       "parent_born": 0,
+       "seq": 6
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         1,
+         45
+        ],
+        [
+         2,
+         53
+        ],
+        [
+         3,
+         19
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        64,
+        124,
+        142
+       ],
+       "map_version": 1,
+       "map_version_after": 1,
+       "move_kind": "random",
+       "parent_born": 3,
+       "seq": 7
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         27
+        ],
+        [
+         0,
+         42
+        ],
+        [
+         3,
+         21
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        56,
+        78,
+        141
+       ],
+       "map_version": 1,
+       "map_version_after": 1,
+       "move_kind": "random",
+       "parent_born": 0,
+       "seq": 8
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ],
+        [
+         2,
+         24
+        ],
+        [
+         3,
+         18
+        ],
+        [
+         4,
+         61
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [
+        [
+         57,
+         0,
+         15
+        ]
+       ],
+       "fitness": 3,
+       "intervention": [
+        57,
+        118,
+        181,
+        220
+       ],
+       "map_version": 1,
+       "map_version_after": 2,
+       "move_kind": "random",
+       "parent_born": 3,
+       "seq": 9
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 2,
+       "map_version_after": 2,
+       "move_kind": "column",
+       "parent_born": 0,
+       "seq": 10
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 2,
+       "map_version_after": 2,
+       "move_kind": "column",
+       "parent_born": 1,
+       "seq": 11
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 2,
+       "map_version_after": 2,
+       "move_kind": "column",
+       "parent_born": 0,
+       "seq": 12
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 2,
+       "map_version_after": 2,
+       "move_kind": "column",
+       "parent_born": 0,
+       "seq": 13
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 2,
+       "map_version_after": 2,
+       "move_kind": "column",
+       "parent_born": 3,
+       "seq": 14
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 2,
+       "map_version_after": 2,
+       "move_kind": "column",
+       "parent_born": 1,
+       "seq": 15
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 2,
+       "map_version_after": 2,
+       "move_kind": "column",
+       "parent_born": 2,
+       "seq": 16
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 2,
+       "map_version_after": 2,
+       "move_kind": "column",
+       "parent_born": 3,
+       "seq": 17
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 2,
+       "map_version_after": 2,
+       "move_kind": "column",
+       "parent_born": 3,
+       "seq": 18
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         2,
+         60
+        ],
+        [
+         4,
+         17
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 2,
+       "intervention": [
+        174,
+        278
+       ],
+       "map_version": 2,
+       "map_version_after": 2,
+       "move_kind": "random",
+       "parent_born": 3,
+       "seq": 19
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         52
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [
+        [
+         1,
+         0,
+         52
+        ]
+       ],
+       "fitness": 3,
+       "intervention": [
+        1
+       ],
+       "map_version": 2,
+       "map_version_after": 3,
+       "move_kind": "random",
+       "parent_born": 2,
+       "seq": 20
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         1,
+         7
+        ],
+        [
+         4,
+         51
+        ],
+        [
+         5,
+         41
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        47,
+        236,
+        270
+       ],
+       "map_version": 3,
+       "map_version_after": 3,
+       "move_kind": "random",
+       "parent_born": 2,
+       "seq": 21
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         14
+        ],
+        [
+         2,
+         29
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        83,
+        154
+       ],
+       "map_version": 3,
+       "map_version_after": 3,
+       "move_kind": "random",
+       "parent_born": 2,
+       "seq": 22
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 3,
+       "map_version_after": 3,
+       "move_kind": "column",
+       "parent_born": 0,
+       "seq": 23
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         4,
+         2
+        ],
+        [
+         4,
+         3
+        ],
+        [
+         4,
+         45
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        223,
+        257,
+        281
+       ],
+       "map_version": 3,
+       "map_version_after": 3,
+       "move_kind": "random",
+       "parent_born": 3,
+       "seq": 24
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         2,
+         25
+        ],
+        [
+         3,
+         26
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        156,
+        194
+       ],
+       "map_version": 3,
+       "map_version_after": 3,
+       "move_kind": "random",
+       "parent_born": 0,
+       "seq": 25
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 3,
+       "map_version_after": 3,
+       "move_kind": "column",
+       "parent_born": 2,
+       "seq": 26
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         2,
+         32
+        ],
+        [
+         4,
+         41
+        ],
+        [
+         5,
+         9
+        ],
+        [
+         5,
+         59
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        103,
+        225,
+        233,
+        244
+       ],
+       "map_version": 3,
+       "map_version_after": 3,
+       "move_kind": "random",
+       "parent_born": 0,
+       "seq": 27
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         1,
+         18
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [
+        [
+         21,
+         1,
+         18
+        ]
+       ],
+       "fitness": 3,
+       "intervention": [
+        21
+       ],
+       "map_version": 3,
+       "map_version_after": 4,
+       "move_kind": "random",
+       "parent_born": 2,
+       "seq": 28
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 4,
+       "map_version_after": 4,
+       "move_kind": "column",
+       "parent_born": 3,
+       "seq": 29
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 4,
+       "map_version_after": 4,
+       "move_kind": "column",
+       "parent_born": 1,
+       "seq": 30
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         1,
+         33
+        ],
+        [
+         3,
+         27
+        ],
+        [
+         4,
+         46
+        ],
+        [
+         4,
+         63
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [
+        [
+         42,
+         1,
+         33
+        ]
+       ],
+       "fitness": 3,
+       "intervention": [
+        42,
+        168,
+        201,
+        219
+       ],
+       "map_version": 4,
+       "map_version_after": 5,
+       "move_kind": "random",
+       "parent_born": 3,
+       "seq": 31
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         1,
+         33
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        42
+       ],
+       "map_version": 5,
+       "map_version_after": 5,
+       "move_kind": "column",
+       "parent_born": 3,
+       "seq": 32
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 5,
+       "map_version_after": 5,
+       "move_kind": "column",
+       "parent_born": 3,
+       "seq": 33
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         1,
+         33
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        42
+       ],
+       "map_version": 5,
+       "map_version_after": 5,
+       "move_kind": "column",
+       "parent_born": 0,
+       "seq": 34
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         3,
+         38
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [
+        [
+         112,
+         3,
+         38
+        ]
+       ],
+       "fitness": 3,
+       "intervention": [
+        112
+       ],
+       "map_version": 5,
+       "map_version_after": 6,
+       "move_kind": "random",
+       "parent_born": 2,
+       "seq": 35
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 6,
+       "map_version_after": 6,
+       "move_kind": "column",
+       "parent_born": 3,
+       "seq": 36
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         5,
+         1
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [
+        [
+         291,
+         5,
+         1
+        ]
+       ],
+       "fitness": 3,
+       "intervention": [
+        291
+       ],
+       "map_version": 6,
+       "map_version_after": 7,
+       "move_kind": "random",
+       "parent_born": 2,
+       "seq": 37
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         1,
+         62
+        ],
+        [
+         3,
+         41
+        ],
+        [
+         4,
+         29
+        ],
+        [
+         5,
+         46
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [
+        [
+         87,
+         1,
+         62
+        ]
+       ],
+       "fitness": 3,
+       "intervention": [
+        87,
+        166,
+        211,
+        227
+       ],
+       "map_version": 7,
+       "map_version_after": 8,
+       "move_kind": "random",
+       "parent_born": 1,
+       "seq": 38
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         2,
+         54
+        ],
+        [
+         5,
+         6
+        ]
+       ],
+       "confidence": 1,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        98,
+        266
+       ],
+       "map_version": 8,
+       "map_version_after": 8,
+       "move_kind": "random",
+       "parent_born": 0,
+       "seq": 39
+      },
+      {
+       "anomalies": 0,
+       "behaviour_delta": [
+        [
+         0,
+         15
+        ]
+       ],
+       "confidence": 2,
+       "decoded": [],
+       "fitness": 3,
+       "intervention": [
+        57
+       ],
+       "map_version": 8,
+       "map_version_after": 8,
+       "move_kind": "column",
+       "parent_born": 2,
+       "seq": 40
+      }
+     ],
+     "ledger_entries": 40,
+     "ledger_schema_version": "1.1.0",
+     "ledger_sha256": "fe2e4544488f3233eb1abfe4490b38196ae703b80d1a601cb85d42158de069b2",
+     "map_version_final": 8,
+     "moves_sha256": "6b67e108c8cf791b146be563ecd939c87290098c09b3f0789b5260bea4f3b9ab",
+     "online_map_sha256": "74dcbb09e001c3510d758f1c91d385c3a7f5bb2d009015ea25c7902944452de9",
+     "wrong_decodes": 0
+    },
+    "R": {
+     "best_train": 5,
+     "champion_genome_sha256": "365d73215e6d19f8504c9573409f6590bf9fe95debb0f5bd23eeced7e9d39350",
+     "champion_holdout": 0,
+     "column_moves": 0,
+     "moves_sha256": "631653b1dc875b220bbc1015079dde59f5c1c7a49b9e9f6aecd7d38c36ee575e"
+    }
+   },
+   "target": [
+    "80554e884416034f",
+    "04c84a444aa4e8b0",
+    "81009b23e0a84050",
+    "6176000c39c03ac1",
+    "0a014525200610a4",
+    "81304b538b0491d3"
+   ]
+  }
+ ],
+ "predicted_primary": {
+  "alpha": 0.05,
+  "negatives": 1,
+  "positives": 0,
+  "sign_test_p": 1.0,
+  "ties": 0,
+  "verdict": "NOT SUPPORTED"
+ },
+ "schema": "b3_prediction",
+ "schema_version": "2.0.0",
+ "secondary_outcome": {
+  "cohen_d": 0.0,
+  "mean": 0.0,
+  "median": 0,
+  "negatives": 0,
+  "note": "reported secondary outcome: no significance threshold, no verdict (preregistration v0.3 \u00a74)",
+  "positives": 0,
+  "sign_test_p": 1.0,
+  "threshold": null,
+  "ties": 1
+ }
+}

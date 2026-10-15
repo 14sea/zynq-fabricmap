@@ -1,0 +1,71 @@
+{
+ "all_met": true,
+ "archive_sha256": "20300d5f2476beafaa9411c11f2a412eb91f01149bf4318e79ccee2706337767",
+ "at_utc": "2026-09-17T08:35:57Z",
+ "base": "73b68d79fd43fc032c178da73dda2b2c95764db8",
+ "main_tree_status_porcelain": " M evidence/b2/b2_completion_inputs_2026-09-17/controls.py\n M evidence/b2/b2_completion_inputs_2026-09-17/make_archive.py\n?? evidence/b2/b2_completion_inputs_2026-09-17/control_runs/\n",
+ "manifest_sha256": "ca5fedd7bb7a119883a5b74a9f19b0d02d147e6183404ddde8766b03abd46c5d",
+ "runs": [
+  {
+   "met": true,
+   "name": "positive_env_i",
+   "rc": 0,
+   "seconds": 2.1
+  },
+  {
+   "met": true,
+   "name": "neg_target_already_holds_the_files",
+   "rc": 2,
+   "seconds": 0.3
+  },
+  {
+   "met": true,
+   "name": "neg_missing_member_original_manifest",
+   "rc": 2,
+   "seconds": 0.0
+  },
+  {
+   "met": true,
+   "name": "neg_missing_member_outer_digest_patched",
+   "rc": 2,
+   "seconds": 0.6
+  },
+  {
+   "met": true,
+   "name": "neg_onebyte_member_original_manifest",
+   "rc": 2,
+   "seconds": 0.0
+  },
+  {
+   "met": true,
+   "name": "neg_onebyte_member_outer_digest_patched",
+   "rc": 2,
+   "seconds": 0.2
+  },
+  {
+   "met": true,
+   "name": "neg_target_head_is_not_base",
+   "rc": 2,
+   "seconds": 0.0
+  },
+  {
+   "met": true,
+   "name": "producer_positive_rebuilds_the_archive_byte_identically",
+   "rc": 0,
+   "seconds": null
+  },
+  {
+   "met": true,
+   "name": "neg_producer_b1_table_repinned_to_a_drifted_member",
+   "rc": 2,
+   "seconds": null
+  },
+  {
+   "met": true,
+   "name": "neg_producer_b1_manifest_repinned_to_a_drifted_image",
+   "rc": 2,
+   "seconds": null
+  }
+ ],
+ "worktrees_after": "/home/test/zynq_fabricmap  c5f5346 [b3-lifecycle-1]\n"
+}

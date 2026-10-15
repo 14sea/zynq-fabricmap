@@ -1,0 +1,121 @@
+{
+ "after": {
+  "calibration": {
+   "audit_policy": "all-self-reporting",
+   "margin": 0.85,
+   "pairs_per_session_max": 1,
+   "rate_for_split": 2703.042470368428,
+   "rate_per_hour": 3180.049965139327,
+   "sessions": 8,
+   "source": "reconstructed from the B3Q evidence and its re-adjudication (the measured all-self-reporting rate; the audit policy VERIFIED by the instrument layer) \u2014 the only source a B3 plan may be sized from; the margin is frozen, not measured"
+  },
+  "history": [
+   {
+    "at": "2026-10-14T06:34:59Z",
+    "prereg_sha256": "e89c5677ac7f2be28e178b64d48b7a6f8bfdd35158d5ca5639ac8323c1451353",
+    "transition": "S1 freeze"
+   },
+   {
+    "at": "2026-10-14T12:13:20Z",
+    "manifest_at_run_sha256": "bb917ec7bde1a47da975162ff76bb27d4c6080e06a715d49f7f458e8115a23c6",
+    "rate_per_hour": 3180.049965139327,
+    "transition": "S2 qualify"
+   }
+  ],
+  "manifest_sha256": "bea08769c4adb86a20654d455b79e015973192c67bf62199a91c561e97ecab8f",
+  "qualification_summary": {
+   "audit_policy": "all-self-reporting",
+   "binding": {
+    "b3_manifest_sha256": "bb917ec7bde1a47da975162ff76bb27d4c6080e06a715d49f7f458e8115a23c6",
+    "carrier_sha256": "d85daef4e3aa1ff925c327e1c1f98465a83d96e79955aca432d664d98aa4f38f",
+    "carrier_variant": "0x42310001",
+    "image_sha256": "28c80eca419efe88ac6e1969c9fc5d87d416d8a6137e4612288298b9e5da8299",
+    "map_canonical_json_sha256": "c6a4b23e1871e1889621191d671886f804c88edaa9748119d9a5006fd0b64296",
+    "prereg_sha256": "e89c5677ac7f2be28e178b64d48b7a6f8bfdd35158d5ca5639ac8323c1451353",
+    "qualification_plan_sha256": "490347f4b3542147581940035a12eb9bb7db7cbd0ad550dd8bfd3e2b68261026",
+    "qualification_prediction_sha256": "7eae26509b9488a111257c112c5cf90e9cc8f6e34311af837c79ccc40245ec27",
+    "session": "B3Q"
+   },
+   "evidence_dir": "evidence/b3/b3q_17A6_2026-10-14-02",
+   "measured_rate_per_hour": 3180.049965139327,
+   "outcome": "PASS",
+   "qualification_block": {
+    "baselines": 2,
+    "fitness_sequence_sha256": "cbd277e66f6e70a7d59507f636904ca27ba92527b3ecc0d9e90b047f2f3013cc",
+    "fitness_values": 123,
+    "ledger_entries": 40
+   }
+  },
+  "qualified": true,
+  "status": "S2 QUALIFIED \u2014 the B3Q record reconstructed from its evidence and pinned, the calibration written from it; awaiting the plan (S3)"
+ },
+ "before": {
+  "calibration": null,
+  "history": [
+   {
+    "at": "2026-10-14T06:34:59Z",
+    "prereg_sha256": "e89c5677ac7f2be28e178b64d48b7a6f8bfdd35158d5ca5639ac8323c1451353",
+    "transition": "S1 freeze"
+   }
+  ],
+  "manifest_sha256": "bb917ec7bde1a47da975162ff76bb27d4c6080e06a715d49f7f458e8115a23c6",
+  "qualification": null,
+  "qualified": false,
+  "status": "S1 FROZEN \u2014 prereg pinned, image board_ready by the owner; awaiting the B3Q ruling pair"
+ },
+ "changed_fields_computed_from_the_bytes": [
+  "calibration",
+  "history",
+  "qualification",
+  "qualified",
+  "status"
+ ],
+ "command": "python3 -B b3/host/b3_manifest.py qualify --manifest manifests/b3_manifest.json --evidence-dir evidence/b3/b3q_17A6_2026-10-14-02",
+ "split_consequence": {
+  "deadline_s": 5602.696090881941,
+  "expected_span_s": 4002.156872705553,
+  "note": "the frozen split rule over the pinned rate; derived here, authorising no board session",
+  "pairs_per_session_max": 1,
+  "records_per_session": 3005,
+  "session_span_max_s": 7200,
+  "sessions": 8,
+  "total_records": 24040,
+  "two_pairs_would_need_s": 8001.650144
+ },
+ "transition": "S2 qualify",
+ "unchanged": {
+  "image": {
+   "board_ready": true,
+   "build_evidence": {
+    "path": "evidence/b3/build_evidence.json",
+    "sha256": "288077c006ea67b2dec325113ba57b60fc4e3ffa4540526b84e5c223276c208a"
+   },
+   "bytes": 131092,
+   "elf_sha256": "0d0f99a6c1ffd8dcf29635032305b287f896e47cfc418d70903f922d4760d7a1",
+   "note": "pinned from its build evidence (evidence/b3/build_evidence.json); every verify opens the binary and compares its digest and size with this record and with the evidence; board_ready is the owner's mark at the freeze",
+   "path": "b3/firmware/bsp/out/b3_app.bin",
+   "sha256": "28c80eca419efe88ac6e1969c9fc5d87d416d8a6137e4612288298b9e5da8299"
+  },
+  "instrument_pins": {
+   "path": "manifests/b3_instrument_pins.json",
+   "sha256": "73cec93a72aa962f10b331c3720f50439201a73bee2ba34971dd2b8b677ac280"
+  },
+  "plan": null,
+  "prereg": {
+   "frozen": true,
+   "path": "docs/b3_preregistration.md",
+   "sha256": "e89c5677ac7f2be28e178b64d48b7a6f8bfdd35158d5ca5639ac8323c1451353"
+  },
+  "qualification_plan_sha256": "490347f4b3542147581940035a12eb9bb7db7cbd0ad550dd8bfd3e2b68261026"
+ },
+ "unchanged_checks": {
+  "experiment": true,
+  "image": true,
+  "pins": true,
+  "plan_null": true,
+  "prediction": true,
+  "prereg": true,
+  "qualification_plan": true,
+  "seeds": true
+ }
+}

@@ -1,0 +1,47 @@
+test_record_arithmetic_and_the_prediction_pin (b3.tests.test_b3_plan.Committed.test_record_arithmetic_and_the_prediction_pin) ... ok
+test_the_committed_split_is_what_the_stage_licenses (b3.tests.test_b3_plan.Committed.test_the_committed_split_is_what_the_stage_licenses) ... ok
+test_gate_inputs_come_from_the_validated_report_and_carry_no_claim_condition (b3.tests.test_b3_plan.GateAndSeeds.test_gate_inputs_come_from_the_validated_report_and_carry_no_claim_condition) ... ok
+test_gate_inputs_refuse_lifecycle_1s_report_and_every_tamper_by_name (b3.tests.test_b3_plan.GateAndSeeds.test_gate_inputs_refuse_lifecycle_1s_report_and_every_tamper_by_name)
+The owner's P2: B* and N are trusted only after b3_gate.validate_report — schema 2.0.0, a clean ... ok
+test_lifecycle_2_labels (b3.tests.test_b3_plan.GateAndSeeds.test_lifecycle_2_labels) ... ok
+test_session_seeds_avoid_every_archived_set_including_lifecycle_1s_and_the_gates (b3.tests.test_b3_plan.GateAndSeeds.test_session_seeds_avoid_every_archived_set_including_lifecycle_1s_and_the_gates) ... ok
+test_the_gates_rows_must_carry_the_seeds_its_master_rederives (b3.tests.test_b3_plan.GateAndSeeds.test_the_gates_rows_must_carry_the_seeds_its_master_rederives) ... ok
+test_the_plan_names_one_primary_and_the_secondary_no_claim_condition (b3.tests.test_b3_plan.PlanDocument.test_the_plan_names_one_primary_and_the_secondary_no_claim_condition) ... ok
+test_deterministic_and_structured_on_a_small_budget (b3.tests.test_b3_plan.Prediction.test_deterministic_and_structured_on_a_small_budget) ... ok
+test_every_ledger_entry_is_embedded (b3.tests.test_b3_plan.Prediction.test_every_ledger_entry_is_embedded)
+Preregistration v0.3 §3 / §8 (a): pairs[r].runs.O.ledger holds every entry — specimen_ledger ... ok
+test_one_primary_and_a_secondary_outcome_no_second_primary (b3.tests.test_b3_plan.Prediction.test_one_primary_and_a_secondary_outcome_no_second_primary)
+§10 (iv): predicted_primary (delta1, alpha, verdict); secondary_outcome (delta2: pos / neg / ... ok
+test_the_entry_level_comparison_names_a_tamper (b3.tests.test_b3_plan.Prediction.test_the_entry_level_comparison_names_a_tamper)
+§8 (a): plan_findings / the adjudicator compare entry by entry — a tamper in one field of ... ok
+test_the_stop_rule_is_on_the_primary_alone (b3.tests.test_b3_plan.Prediction.test_the_stop_rule_is_on_the_primary_alone) ... ok
+test_b3q_numbers_and_label (b3.tests.test_b3_plan.Qualification.test_b3q_numbers_and_label) ... ok
+test_a_lifecycle_1_report_missing_or_malformed_input_is_refused_by_name (b3.tests.test_b3_plan.Refusals.test_a_lifecycle_1_report_missing_or_malformed_input_is_refused_by_name) ... ok
+test_lifecycle_1s_directories_are_refused_as_out_before_anything_is_read (b3.tests.test_b3_plan.Refusals.test_lifecycle_1s_directories_are_refused_as_out_before_anything_is_read) ... ok
+test_arm_order_is_prefix_balanced (b3.tests.test_b3_plan.SplitAndArithmetic.test_arm_order_is_prefix_balanced) ... ok
+test_records (b3.tests.test_b3_plan.SplitAndArithmetic.test_records) ... ok
+test_split_rule_with_the_margin (b3.tests.test_b3_plan.SplitAndArithmetic.test_split_rule_with_the_margin) ... ok
+test_a_determined_plan_with_nothing_pinned_is_refused (b3.tests.test_b3_plan.StageCoverage.test_a_determined_plan_with_nothing_pinned_is_refused) ... ok
+test_a_manifest_that_does_not_verify_is_an_error_never_a_skip_or_a_pass (b3.tests.test_b3_plan.StageCoverage.test_a_manifest_that_does_not_verify_is_an_error_never_a_skip_or_a_pass) ... ok
+test_a_pinned_plan_whose_bytes_drifted_is_refused (b3.tests.test_b3_plan.StageCoverage.test_a_pinned_plan_whose_bytes_drifted_is_refused) ... ok
+test_an_absent_committed_plan_fails_it_is_not_skipped (b3.tests.test_b3_plan.StageCoverage.test_an_absent_committed_plan_fails_it_is_not_skipped) ... ok
+test_each_s3_guard_of_the_rule_is_load_bearing (b3.tests.test_b3_plan.StageCoverage.test_each_s3_guard_of_the_rule_is_load_bearing) ... ok
+test_it_passes_at_s3_for_another_split_a_calibration_can_give (b3.tests.test_b3_plan.StageCoverage.test_it_passes_at_s3_for_another_split_a_calibration_can_give)
+A second synthetic rate (never a calibration): another legal S3, another session count — the test ... ok
+test_it_passes_at_s3_with_the_pinned_plan (b3.tests.test_b3_plan.StageCoverage.test_it_passes_at_s3_with_the_pinned_plan) ... ok
+test_it_passes_before_s0_and_at_s0_s1_s2_with_the_rate_less_plan (b3.tests.test_b3_plan.StageCoverage.test_it_passes_before_s0_and_at_s0_s1_s2_with_the_rate_less_plan) ... ok
+test_the_other_committed_test_passes_at_every_stage_too (b3.tests.test_b3_plan.StageCoverage.test_the_other_committed_test_passes_at_every_stage_too) ... ok
+test_the_rate_less_plan_against_an_s3_manifest_is_refused (b3.tests.test_b3_plan.StageCoverage.test_the_rate_less_plan_against_an_s3_manifest_is_refused)
+The pairing B2's frozen constant demanded at S3: refused — by the production verify itself, which ... ok
+test_a_passing_prediction_is_written_canonically_with_exit_0 (b3.tests.test_b3_plan.StopBeforeCanonicalWrite.test_a_passing_prediction_is_written_canonically_with_exit_0) ... ok
+test_a_stop_writes_nothing_canonical_and_exits_3_naming_the_primary (b3.tests.test_b3_plan.StopBeforeCanonicalWrite.test_a_stop_writes_nothing_canonical_and_exits_3_naming_the_primary) ... ok
+test_a_trial_may_write_only_to_an_explicit_non_canonical_out (b3.tests.test_b3_plan.StopBeforeCanonicalWrite.test_a_trial_may_write_only_to_an_explicit_non_canonical_out) ... ok
+
+----------------------------------------------------------------------
+Ran 32 tests in 191.203s
+
+OK
+
+real	3m22.662s
+user	3m18.572s
+sys	0m1.508s

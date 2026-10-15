@@ -1,0 +1,109 @@
+{
+ "archive": "inputs.tar.zst",
+ "archive_bytes": 99325,
+ "archive_sha256": "20300d5f2476beafaa9411c11f2a412eb91f01149bf4318e79ccee2706337767",
+ "base": "73b68d79fd43fc032c178da73dda2b2c95764db8",
+ "created_utc": "2026-09-17T08:18:57Z",
+ "expect_manifest_sha256": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0",
+ "expect_pins_sha256": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1",
+ "file_count": 15,
+ "files": {
+  "firmware/b1/bsp/out/b1_app.bin": {
+   "bytes": 114708,
+   "pinned_sha256": "300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb",
+   "sha256": "300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb",
+   "why": "manifests/b1_manifest.json image.path (gitignored: firmware/b1/bsp/out/)"
+  },
+  "firmware/b2/bsp/out/b2_app.bin": {
+   "bytes": 114708,
+   "pinned_sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+   "sha256": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+   "why": "manifests/b2_manifest.json image.path (gitignored: firmware/b2/bsp/out/)"
+  },
+  "vivado/carrier/generated/clockInfo.txt": {
+   "bytes": 365,
+   "pinned_sha256": "946222f005be2e920563b36b9f73dfff2a9b5340364183a8da36d832f004b3ca",
+   "sha256": "946222f005be2e920563b36b9f73dfff2a9b5340364183a8da36d832f004b3ca",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  },
+  "vivado/carrier/generated/vivado.jou": {
+   "bytes": 1171,
+   "pinned_sha256": "89f65840491a0ae8fd53c5afb05cec2928220c63e6f18219c2591c64804f120e",
+   "sha256": "89f65840491a0ae8fd53c5afb05cec2928220c63e6f18219c2591c64804f120e",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  },
+  "vivado/carrier/generated/vivado.log": {
+   "bytes": 8312,
+   "pinned_sha256": "9f681fb0e19fb08738f715faadb6cf3a59f6be37c51b16f7a494d7275dce3e25",
+   "sha256": "9f681fb0e19fb08738f715faadb6cf3a59f6be37c51b16f7a494d7275dce3e25",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  },
+  "vivado/carrier/generated/vivado_1012301.backup.jou": {
+   "bytes": 1158,
+   "pinned_sha256": "f9a8f40980d6ebe7f3707f8e18a7d2900f05f9466ed5e98f9ff634f8dbceaf13",
+   "sha256": "f9a8f40980d6ebe7f3707f8e18a7d2900f05f9466ed5e98f9ff634f8dbceaf13",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  },
+  "vivado/carrier/generated/vivado_1032984.backup.jou": {
+   "bytes": 1207,
+   "pinned_sha256": "516a89577ef35215de9692e281fbde388ee267a94380a72c5a98ce638e83438a",
+   "sha256": "516a89577ef35215de9692e281fbde388ee267a94380a72c5a98ce638e83438a",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  },
+  "vivado/carrier/generated/vivado_166704.backup.log": {
+   "bytes": 134882,
+   "pinned_sha256": "508b75cf8b31b0e75aa4d1225287089c98f52f32e122ad86279b482550f71553",
+   "sha256": "508b75cf8b31b0e75aa4d1225287089c98f52f32e122ad86279b482550f71553",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  },
+  "vivado/carrier/generated/vivado_185775.backup.log": {
+   "bytes": 8466,
+   "pinned_sha256": "e3829614725bb2e06c6c4de633fad8b3b49ac871c2aee1cda91188b57eba81d3",
+   "sha256": "e3829614725bb2e06c6c4de633fad8b3b49ac871c2aee1cda91188b57eba81d3",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  },
+  "vivado/carrier/generated/vivado_247824.backup.jou": {
+   "bytes": 1163,
+   "pinned_sha256": "7bddc91216909b786fa64c4f1e4c7e973cd4f2f2522806107c0054f12f32edaf",
+   "sha256": "7bddc91216909b786fa64c4f1e4c7e973cd4f2f2522806107c0054f12f32edaf",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  },
+  "vivado/carrier/generated/vivado_268712.backup.jou": {
+   "bytes": 1212,
+   "pinned_sha256": "b871b4032a34d5b79d92cd145f77804c1c38afb021b989cd550f5adca4143d7d",
+   "sha256": "b871b4032a34d5b79d92cd145f77804c1c38afb021b989cd550f5adca4143d7d",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  },
+  "vivado/carrier/generated/vivado_61436.backup.jou": {
+   "bytes": 1122,
+   "pinned_sha256": "511e3f3f057fd49c53e647b6b430422b252de1dfb57da4276bfc6ce955acf609",
+   "sha256": "511e3f3f057fd49c53e647b6b430422b252de1dfb57da4276bfc6ce955acf609",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  },
+  "vivado/carrier/generated/vivado_61436.backup.log": {
+   "bytes": 134981,
+   "pinned_sha256": "bb8111f528223a12553e7568b989750515855c06be3f1dd57cdf13b00dfce73a",
+   "sha256": "bb8111f528223a12553e7568b989750515855c06be3f1dd57cdf13b00dfce73a",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  },
+  "vivado/carrier/generated/vivado_72272.backup.log": {
+   "bytes": 134885,
+   "pinned_sha256": "fa1f0a53c7af45ae8b90f8bee593a886402fad93175fd06b5a87acda4378bba5",
+   "sha256": "fa1f0a53c7af45ae8b90f8bee593a886402fad93175fd06b5a87acda4378bba5",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  },
+  "vivado/carrier/generated/vivado_92635.backup.log": {
+   "bytes": 8468,
+   "pinned_sha256": "5e1be1aec89aa3115548af0186833598b360a4b7d23f46f061ae857ea463843d",
+   "sha256": "5e1be1aec89aa3115548af0186833598b360a4b7d23f46f061ae857ea463843d",
+   "why": "manifests/b1_instrument_pins.json pins it (glob vivado/carrier/generated/*); gitignored"
+  }
+ },
+ "head_at_creation": "c648d6ef307fd25eee1d0db03b1defbca4c4d19d",
+ "schema": "b2_completion_inputs",
+ "schema_version": "1.0.0",
+ "source": "the working tree of /home/test/zynq_fabricmap, the only copy of these files at creation; every file hashes to the digest the frozen B1/B2 pin tables or the B1/B2 manifests' image pins carry",
+ "tar_format": "ustar, members sorted by path, mtime 0, mode 0644, uid/gid 0",
+ "tar_sha256": "800850d1c71cbbda9e36aed7852fa83683e46894fa5782a5b0b62d6d25492f91",
+ "total_bytes": 666808
+}

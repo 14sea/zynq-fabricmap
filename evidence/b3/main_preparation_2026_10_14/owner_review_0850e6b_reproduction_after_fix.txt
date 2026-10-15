@@ -1,0 +1,18 @@
+owner's reproduction script build/wip/b3_main_preparation_0850e6b_owner_review.py re-run on the follow-up (read-only; temp files only)
+Wed Oct 14 19:35:27 UTC 2026
+{
+  "backup": {
+    "refusal": "the backup holds 1 files, not the session's 16",
+    "hash_list_exists": true
+  },
+  "restore": {
+    "refusal": "exports.tar.zst: the archive carries a link entry 'summary.json -> /tmp/owner_b3_restore_review_70cpb3pr/marker.txt'"
+  },
+  "boundary": {
+    "baseline": "ACCEPT",
+    "production_rejection": "schema_version '' is not MAJOR.MINOR.PATCH",
+    "invalid_boundary_rejudge": "REFUSE",
+    "refusal": "principal boundary: schema_version '' is not MAJOR.MINOR.PATCH"
+  }
+}
+exit=0

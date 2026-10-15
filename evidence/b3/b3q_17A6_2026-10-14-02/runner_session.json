@@ -1,0 +1,29 @@
+{
+ "at": "2026-10-14T11:46:45Z",
+ "cause": "PASS",
+ "cross_session_stop_loss": "the owner's process: two sessions lost to the same cause \u2192 stop; three without COMPLETED \u2192 design review",
+ "expected_records": 125,
+ "finalise_errors": [],
+ "master_seed": 3776596183,
+ "measured_rate_per_hour": 3180.049965139327,
+ "outcome": "PASS",
+ "pair_count": 1,
+ "pair_first": 0,
+ "profile_stage": "S1",
+ "reached": "session",
+ "ruling_pair": "spent: one ruling pair, one attempt \u2014 no retry, no redraw of seeds, no lifting of the transport stop-loss by this runner",
+ "session": "B3Q",
+ "tool": "b3_runner.py/0.1.0",
+ "transport": {
+  "bad_frame_budget": 14,
+  "bad_frames": 0,
+  "crc_budget": 14,
+  "crc_dropped": 2,
+  "disruptions": [],
+  "expected_frames_total": 3378,
+  "frames_seen": 4759,
+  "resend_budget": 14,
+  "transport_disposition": "One explicitly authorized B3Q attempt as a bounded exception to the standing CH340 single-byte-deletion transport stop-loss; no general release.",
+  "transport_rereads": []
+ }
+}

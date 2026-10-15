@@ -1,0 +1,70 @@
+{
+ "cmd": [
+  "env",
+  "-i",
+  "PATH=/usr/local/bin:/usr/bin:/bin",
+  "/usr/bin/python3",
+  "-B",
+  "/home/test/zynq_fabricmap/evidence/b2/b2_completion_inputs_2026-09-17/restore_verify.py",
+  "--target",
+  "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/wt/cinp_positive",
+  "--archive",
+  "/home/test/zynq_fabricmap/evidence/b2/b2_completion_inputs_2026-09-17/inputs.tar.zst",
+  "--manifest",
+  "/home/test/zynq_fabricmap/evidence/b2/b2_completion_inputs_2026-09-17/archive.json"
+ ],
+ "env": {
+  "PATH": "/usr/local/bin:/usr/bin:/bin"
+ },
+ "expected": {
+  "needle": "OK: restored 15 files",
+  "rc": 0
+ },
+ "met": true,
+ "name": "positive_env_i",
+ "rc": 0,
+ "seconds": 2.1,
+ "stderr": [
+  "OK: restored 15 files into /tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/wt/cinp_positive; verify S3 / true / null / aec84514\u2026"
+ ],
+ "stdout_json": {
+  "archive": "/home/test/zynq_fabricmap/evidence/b2/b2_completion_inputs_2026-09-17/inputs.tar.zst",
+  "archive_sha256": "20300d5f2476beafaa9411c11f2a412eb91f01149bf4318e79ccee2706337767",
+  "at_utc": "2026-09-17T08:35:46Z",
+  "base": "73b68d79fd43fc032c178da73dda2b2c95764db8",
+  "file_count": 15,
+  "manifest": "/home/test/zynq_fabricmap/evidence/b2/b2_completion_inputs_2026-09-17/archive.json",
+  "manifest_sha256": "ca5fedd7bb7a119883a5b74a9f19b0d02d147e6183404ddde8766b03abd46c5d",
+  "outcome": "OK",
+  "restored": {
+   "firmware/b1/bsp/out/b1_app.bin": "300b12b1104b70d1612f4c6236a9280a0556443757b2ddf9dbadd9ef993d5abb",
+   "firmware/b2/bsp/out/b2_app.bin": "d164cd1d5b30aa5eb91f230b1373be8dda60d219249924e280957b26348d85f5",
+   "vivado/carrier/generated/clockInfo.txt": "946222f005be2e920563b36b9f73dfff2a9b5340364183a8da36d832f004b3ca",
+   "vivado/carrier/generated/vivado.jou": "89f65840491a0ae8fd53c5afb05cec2928220c63e6f18219c2591c64804f120e",
+   "vivado/carrier/generated/vivado.log": "9f681fb0e19fb08738f715faadb6cf3a59f6be37c51b16f7a494d7275dce3e25",
+   "vivado/carrier/generated/vivado_1012301.backup.jou": "f9a8f40980d6ebe7f3707f8e18a7d2900f05f9466ed5e98f9ff634f8dbceaf13",
+   "vivado/carrier/generated/vivado_1032984.backup.jou": "516a89577ef35215de9692e281fbde388ee267a94380a72c5a98ce638e83438a",
+   "vivado/carrier/generated/vivado_166704.backup.log": "508b75cf8b31b0e75aa4d1225287089c98f52f32e122ad86279b482550f71553",
+   "vivado/carrier/generated/vivado_185775.backup.log": "e3829614725bb2e06c6c4de633fad8b3b49ac871c2aee1cda91188b57eba81d3",
+   "vivado/carrier/generated/vivado_247824.backup.jou": "7bddc91216909b786fa64c4f1e4c7e973cd4f2f2522806107c0054f12f32edaf",
+   "vivado/carrier/generated/vivado_268712.backup.jou": "b871b4032a34d5b79d92cd145f77804c1c38afb021b989cd550f5adca4143d7d",
+   "vivado/carrier/generated/vivado_61436.backup.jou": "511e3f3f057fd49c53e647b6b430422b252de1dfb57da4276bfc6ce955acf609",
+   "vivado/carrier/generated/vivado_61436.backup.log": "bb8111f528223a12553e7568b989750515855c06be3f1dd57cdf13b00dfce73a",
+   "vivado/carrier/generated/vivado_72272.backup.log": "fa1f0a53c7af45ae8b90f8bee593a886402fad93175fd06b5a87acda4378bba5",
+   "vivado/carrier/generated/vivado_92635.backup.log": "5e1be1aec89aa3115548af0186833598b360a4b7d23f46f061ae857ea463843d"
+  },
+  "restored_count": 15,
+  "target": "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/wt/cinp_positive",
+  "target_head": "73b68d79fd43fc032c178da73dda2b2c95764db8",
+  "tool": "restore_verify 1.0.0",
+  "verify": {
+   "files_verified": 71,
+   "manifest_sha256": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0",
+   "outcome": "verified",
+   "pins_sha256": "82a5f2fb1d246c9cab506df65d53a0f329ca219ec3c5cdf50a272ff79ee319d1",
+   "qualified": true,
+   "refusal": null,
+   "stage": "S3"
+  }
+ }
+}

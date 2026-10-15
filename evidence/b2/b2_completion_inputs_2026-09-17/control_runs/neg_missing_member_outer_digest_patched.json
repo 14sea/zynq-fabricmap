@@ -1,0 +1,34 @@
+{
+ "cmd": [
+  "env",
+  "-i",
+  "PATH=/usr/local/bin:/usr/bin:/bin",
+  "/usr/bin/python3",
+  "-B",
+  "/home/test/zynq_fabricmap/evidence/b2/b2_completion_inputs_2026-09-17/restore_verify.py",
+  "--target",
+  "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/wt/cinp_missing_patched",
+  "--archive",
+  "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/cinp_tampered/inputs_missing.tar.zst",
+  "--manifest",
+  "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/cinp_tampered/archive_missing_outer_patched.json"
+ ],
+ "env": {
+  "PATH": "/usr/local/bin:/usr/bin:/bin"
+ },
+ "expected": {
+  "needle": "archive members are not exactly the 15 listed: missing ['vivado/carrier/generated/clockInfo.txt']",
+  "rc": 2
+ },
+ "met": true,
+ "name": "neg_missing_member_outer_digest_patched",
+ "rc": 2,
+ "seconds": 0.6,
+ "stderr": [
+  "REFUSED: archive members are not exactly the 15 listed: missing ['vivado/carrier/generated/clockInfo.txt'], extra []"
+ ],
+ "stdout_json": {
+  "outcome": "REFUSED",
+  "refusal": "archive members are not exactly the 15 listed: missing ['vivado/carrier/generated/clockInfo.txt'], extra []"
+ }
+}

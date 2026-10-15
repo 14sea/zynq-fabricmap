@@ -8,13 +8,13 @@ acts only as notary, auditor and collector. Every board session needs an owner-s
 ruling pair, is judged fail-closed by an offline adjudicator, and is archived as observed.
 Nothing is re-run to make a result look better.
 
-## Where the line is (2026-09-17)
+## Where the line is (2026-10-14, S3)
 
 | stage | question | state |
 |---|---|---|
 | **B1** autonomous mapping | can the board build a correct map of 292 certified LUT-INIT bits from its own probes? | **complete** — carrier qualified by B1Q PASS on `17A6` (2026-09-08, attempt 4); B1 mapping PASS later that day, self-map `c6a4b23e…` frozen |
 | **B2** map utility | does a search that consults that map reproduce, record for record, the host-predicted outcome? | **complete — PASS / SUPPORTED, p = 0.01953125** (lifecycle 2 on `17A6`, 2026-09-16..17: B2Q PASS, two B2 sessions PASS covering the nine preregistered pairs, pooled primary 8/1/0 equal to the prediction; `docs/b2_result_2026_09_17.md`) |
-| **B3** closed loop | map → evolve → re-map on the board | host-only architecture (`docs/b3_architecture.md`) |
+| **B3** closed loop | map → evolve → re-map on the board | **complete — PASS / SUPPORTED, p = 0.00390625** (lifecycle 2 on `17A6`, 2026-10-14..15: B3Q -01 HOLD / -02 PASS; eight one-pair B3 sessions, nine attempts — session 0's first attempt LOST at the carrier configuration, then eight PASS sessions, pairs 0–7, 24 040 records; the pooled primary 8 positives / 0 negatives / 0 ties, equal to the preregistered prediction, Δ1 = [11, 9, 7, 7, 4, 6, 9, 2]; the secondary outcome reported without a threshold; result document `docs/b3_result_2026_10_15.md` — **lifecycle 2 closed on the owner's review, 2026-10-15**). Manifest S3 `258bb14c…`, no post-B3 transition. Standing: the formal S2 and S3 clean-tree proofs did NOT pass (two pinned-test defects, accepted for engineering purposes under the named exceptions, `docs/b3_s2_proof_exception_2026_10_14.md`; the S3 node serves as §8's final proof by the owner's ruling of 2026-10-14); the image is board_ready with image_ready=false / FINDINGS; sessions 3 and 7 carried heartbeat-burst byte deletions absorbed by rule v07 (not counted toward the stop-loss, which stands). The eight PASS main sessions archived in form (c) with a fresh-restore re-judge (`evidence/b3/main_preparation_2026_10_14/`). |
 | **B4** expansion | FF and routing classes, on sacrificial silicon | not started |
 
 Standing constraints that no PASS lifts on its own:
@@ -37,7 +37,9 @@ preregistration defines no post-B2 transition and none was added (`docs/b2_prere
 
 The clone below is sufficient for source review. Production verification also needs
 the required LFS payloads, the pinned B1/B2 build outputs (the B2 binary and ELF are
-not tracked), and the pinned `zynq-psoracle` checkout. Reproducing and checking the
+not tracked), and the pinned `zynq-psoracle` checkout. Verification also requires the
+ignored B1/B2 artefacts at their pinned hashes; preserve or restore them before verifying.
+Reproducing and checking the
 builds additionally requires the recorded toolchain and Xilinx embeddedsw inputs;
 see `evidence/b2/build_evidence.json` and `docs/b2_section7_submission_2026_09_12.md`.
 The commands below assume those prerequisites have been restored. This is not a
@@ -67,8 +69,9 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
 | `docs/` | preregistrations, architecture, every owner review as received (`*_review_*.md`), the roadmap (`autonomous_cartography_roadmap.md`) |
 | `manifests/` | `b1_manifest.json`, `b2_manifest.json` and their instrument pin tables — the frozen authority for each stage |
 | `host/` | runners, adjudicators, lifecycle tools (`b2_runner.py`, `b2_manifest.py`, `b2_adjudicate.py`, `b1_*`) |
+| `b3/` | the B3 lifecycle-2 line, self-contained: host tools (`b3/host/`), board image sources and host twins (`b3/firmware/`), tests (`b3/tests/`), schemas |
 | `firmware/` | the B1 and B2 board images (bare-metal, on the P3 instrument's BSP) |
-| `evidence/` | every board session and review, as observed (`evidence/b1q/`, `evidence/b2/`) |
+| `evidence/` | every board session and review, as observed (`evidence/b1q/`, `evidence/b2/`, `evidence/b3/b3q_*`); B3's gate, prediction, build evidence, lifecycle transitions and clean-tree proofs (`evidence/b3/`) |
 | `data/` | the frozen, self-verifying prjxray subset (CC0) — 10,896 features in six classes |
 | `gate_runs/` | bit-class certificates and the carrier authority (LFS) |
 | `tests/` | the suite the test report runs (B1, B2, B3, transport) |
@@ -97,6 +100,60 @@ and only sets `clean_tree_proof` when HEAD and both worktrees are clean before a
   the preregistered prediction (8/1/0, p = 0.01953125, SUPPORTED) — **B2 PASS**
   (`docs/b2_result_2026_09_17.md`). Session evidence archived in a hybrid form with
   executable fresh-restore / re-judge scripts.
+- **2026-09-17** — B3 lifecycle 1 stopped at its prediction preflight: the fixed nine-pair
+  prediction did not support its second required primary, which lifecycle 1 had left
+  underpowered (`docs/b3_lifecycle1_stop_decision_2026_09_17.md`). Archived on
+  `b3-lifecycle-1`, not merged.
+- **2026-09-17 onward** — B3 lifecycle 2 on `b3-lifecycle-2`: one confirmatory primary (Δ1),
+  Δ2 reported as secondary; gate run 1 F1 PASS (B* = 1000, N = 8) and the prediction
+  preflight (primary 8/0/0, p = 1/256). Then host-only units, each reviewed separately:
+  records, session, adjudicator, runner, manifest, pins, test report, the §9 test audit, and
+  the board image in six stages. Image stages 1–6 are closed; stage 5 passed engineering
+  acceptance, with image_ready=false. B3Q documents, the pin table and the S0 manifest are
+  committed.
+- **2026-10-14** — S1 freeze: preregistration v0.3.1 `e89c5677…` pinned, image marked
+  board_ready by the owner with the stack assessment still `FINDINGS` (`evidence/b3/s1_2026_10_14/`);
+  manifest `bb917ec7…`. Post-freeze proof `test_report_2026-10-14T090238Z.json`: whole suite OK
+  (2096 / 793 / 792, zero skips), clean_tree_proof true, bound to `bb917ec7…`.
+- **2026-10-14** — B3Q on `17A6`, one ruling pair per attempt: -01 HOLD (`35d81c2`, a heartbeat
+  lost to an 80-byte console deletion; the two other CRC drops are the forced retry controls),
+  -02 PASS (`76534b7`, no transport loss). S2 qualify from -02 only: manifest `bea08769…`,
+  calibration 3180.049965139327 evals/h × 0.85 → eight one-pair sessions (`evidence/b3/s2_2026_10_14/`).
+  The transport stop-loss stands. S2 clean-tree proof `test_report_2026-10-14T144023Z.json`: **not passed**
+  (one isolation ERROR in a pinned test, `docs/b3_s2_proof_exception_2026_10_14.md`); S2 accepted under the
+  owner's named engineering-acceptance exception, with the plan module re-verified in isolation (32 / 32, tree
+  and removal shadow) and a fresh S2 verify.
+- **2026-10-14** — S3 plan: `b3_plan.py --rate-per-hour 3180.049965139327` regenerated the canonical
+  `evidence/b3/plan.json` (stop rule: no finding, primary 8/0/0 p = 1/256; the prediction byte-identical),
+  pinned as manifest `258bb14c…` — eight sessions of one pair, 24 040 records. S3 clean-tree proof
+  `test_report_2026-10-14T180234Z.json`: **not passed** (the S2 isolation ERROR plus two FAILs of a second
+  stage-latent defect: the pinned seed header's plan digest, `docs/b3_s2_proof_exception_2026_10_14.md`); S3
+  accepted under the owner's narrowly extended engineering-acceptance exception, with the header's divergence
+  verified to be exactly the digest line (negative controls refused), the plan module 32 / 32 on the tree and on
+  a removal shadow, and a fresh S3 verify. No B3 ruling pair, no board session.
+- **2026-10-14..15** — the B3 main experiment on `17A6`: main-experiment preparation (`evidence/b3/main_preparation_2026_10_14/`,
+  the form (c) archiver and the fresh-restore re-judge); session 0 attempt 1 LOST at the carrier configuration (`7677d23`),
+  attempt 2 PASS (`2e99381`); sessions 1–7 PASS (`03de515`, `50b5420`, `8cd83f1`, `0ff8bd1`, `da973b7`, `fe2f2d1`, `283aced`),
+  each under its own ruling pair, boundary record and transport disposition, each re-judged from a fresh restore; the pooled
+  primary PASS 8 / 0 / 0, p = 1/256, every quantity equal to the prediction (`evidence/b3/b3_primary_2026-10-15/`, `4e872c1`);
+  the result document `docs/b3_result_2026_10_15.md` (owner-reviewed; lifecycle 2 closed).
+- **2026-10-14** — main-experiment preparation (owner's ten rulings on the batch scope draft): form (c) archiver
+  and the shared fresh-restore re-judge (`evidence/b3/main_preparation_2026_10_14/`), synthetic SEARCH and B3Q round
+  trips with the named negative cases, the production path over the real B3Q -02 archive; the S3 node ruled to serve
+  as §8's final proof for engineering purposes. No ruling pair, no board session, no push.
+- **2026-10-04..06** — image stage 5: the application, a reproducible cross-build (two clean
+  builds byte-identical) and its build evidence landed; the stack assessment of the final ELF
+  (`b3/host/b3_image_stack.py`) went through three reviewed rounds. Under the strict reading
+  ruled on 2026-10-06 — a write is taken to miss a callback cell only when the bytes it can
+  reach are shown to, never because of the object it was meant for — the committed image's
+  assessment is `FINDINGS`: each routine's unplaced writes are listed by address, no stack
+  bound is published, `image_ready` is false. Which of those writes to prove next is open.
+- **2026-10-07..12** — stage 5 closed on an engineering exit (the owner, 2026-10-12): the
+  requirement to prove the whole image memory-safe first was withdrawn; the image's own PCAP DMA
+  became a write of the inventory (b3-image-stack 1.8.0); the assessment of the final ELF is
+  accepted with its established, conditional and diagnostic results and every remaining finding
+  classified (`docs/b3_stage5_engineering_acceptance_2026_10_12.md`). The formal result stays
+  `FINDINGS`, `image_ready` false; no board session, pin table, S0 or board_ready is authorised.
 
 The full running log that used to be this README is preserved verbatim at
 `docs/README_archive_2026_09_14.md`.

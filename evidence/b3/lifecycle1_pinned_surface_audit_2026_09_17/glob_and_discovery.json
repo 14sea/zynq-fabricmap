@@ -1,0 +1,104 @@
+{
+ "at_utc": "2026-09-17T08:19:23Z",
+ "base": "73b68d79fd43fc032c178da73dda2b2c95764db8",
+ "discovery": {
+  "A_no_packages_-s_b3/tests": {
+   "cmd": "/usr/bin/python3 -B -m unittest discover -s b3/tests -v",
+   "rc": 0,
+   "tail": [
+    "Ran 1 test in 0.000s",
+    "",
+    "OK"
+   ]
+  },
+  "B_no_packages_-s_b3/tests_-t_.": {
+   "cmd": "/usr/bin/python3 -B -m unittest discover -s b3/tests -t .",
+   "rc": 1,
+   "tail": [
+    "  File \"/usr/lib/python3.12/unittest/loader.py\", line 307, in discover",
+    "    raise ImportError('Start directory is not importable: %r' % start_dir)",
+    "ImportError: Start directory is not importable: '/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/wt/glob_discovery/b3/tests'"
+   ]
+  },
+  "C_packages_-s_b3/tests_-t_.": {
+   "cmd": "/usr/bin/python3 -B -m unittest discover -s b3/tests -t . -v",
+   "rc": 0,
+   "tail": [
+    "Ran 1 test in 0.000s",
+    "",
+    "OK"
+   ]
+  },
+  "D_b2_discovery_-s_tests_does_not_see_b3": {
+   "cmd": "/usr/bin/python3 -B -m unittest discover -s tests -p test_sentinel*.py",
+   "rc": 5,
+   "tail": [
+    "Ran 0 tests in 0.000s",
+    "",
+    "NO TESTS RAN"
+   ]
+  },
+  "E_removal_control_A_form": {
+   "cmd": "/usr/bin/python3 -B -m unittest discover -s b3/tests",
+   "rc": 5,
+   "tail": [
+    "Ran 0 tests in 0.000s",
+    "",
+    "NO TESTS RAN"
+   ]
+  }
+ },
+ "discovery_finding": {
+  "A works without packages": true,
+  "B fails: Start directory is not importable": true,
+  "C works with packages": true,
+  "D: B2's discovery never runs a b3/ test": true,
+  "E: removing the sentinel changes the count (Ran 0)": true
+ },
+ "glob": {
+  "b3/*": {
+   "all": [
+    "b3/host",
+    "b3/tests",
+    "b3/top.py"
+   ],
+   "regular_files": [
+    "b3/top.py"
+   ]
+  },
+  "b3/**": {
+   "all": [
+    "b3",
+    "b3/host",
+    "b3/tests",
+    "b3/tests/deep",
+    "b3/tests/deep/deeper"
+   ],
+   "regular_files": []
+  },
+  "b3/**/*": {
+   "all": [
+    "b3/host",
+    "b3/host/online.py",
+    "b3/tests",
+    "b3/tests/deep",
+    "b3/tests/deep/deeper",
+    "b3/tests/deep/deeper/leaf.json",
+    "b3/tests/test_x.py",
+    "b3/top.py"
+   ],
+   "regular_files": [
+    "b3/host/online.py",
+    "b3/tests/deep/deeper/leaf.json",
+    "b3/tests/test_x.py",
+    "b3/top.py"
+   ]
+  }
+ },
+ "glob_finding": {
+  "b3/** pins no file": true,
+  "b3/**/* filtered to files reaches depth 1, 2 and 4": true
+ },
+ "main_tree_status_porcelain": "?? evidence/b2/b2_completion_inputs_2026-09-17/\n?? evidence/b3/lifecycle1_pinned_surface_audit_2026_09_17/glob_and_discovery_probe.py\n",
+ "python": "3.12.3"
+}

@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/14sea/zynq-fabricmap/b3/schemas/online_map.schema.json",
+  "title": "online_map 1.0.0 \u2014 the map an O-arm run built from its own specimens, rendered for the post-hoc audit",
+  "description": "Stage B3 (docs/b3_architecture.md v0.2.3 \u00a78 item 6). One document per O-arm run: the decoded relations at the run's final map version, bound to the run's seeds, fitness, budget and cartographer version, and to the ledger it was built from (sha256 of the canonical JSON of the ledger entries). It is NOT a self_map 2.0.0: it carries no code probes, no interaction edges and no confirmations, and the B1 map-lifecycle verifier is neither applied to it nor claimed. Its verifier (b3/host/b3_online_map.py) checks this schema, internal consistency (one position per address, no position twice, entries sorted by genome_bit) and, host-only and after the fact, accuracy against the B1 truth mapping.",
+  "type": "object",
+  "required": [
+    "schema",
+    "schema_version",
+    "carto_version",
+    "binding",
+    "map_version",
+    "anomalies",
+    "decoded_count",
+    "ledger_entries",
+    "ledger_sha256",
+    "entries"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "online_map"
+    },
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "carto_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "binding": {
+      "type": "object",
+      "required": [
+        "landscape_seed",
+        "operator_seed",
+        "fitness",
+        "budget"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "landscape_seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "operator_seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "fitness": {
+          "enum": [
+            "F1",
+            "F2",
+            "F3"
+          ]
+        },
+        "budget": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "map_version": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "anomalies": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "decoded_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 292
+    },
+    "ledger_entries": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "ledger_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "genome_bit",
+          "relation",
+          "confidence",
+          "state"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "genome_bit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 291
+          },
+          "relation": {
+            "type": "object",
+            "required": [
+              "kind",
+              "lut_index",
+              "init_index"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "const": "lut_init"
+              },
+              "lut_index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 5
+              },
+              "init_index": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 63
+              }
+            }
+          },
+          "confidence": {
+            "const": 2
+          },
+          "state": {
+            "const": "decoded"
+          }
+        }
+      }
+    }
+  }
+}

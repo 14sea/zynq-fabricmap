@@ -1,0 +1,62 @@
+{
+  "tool": "b3_runner.py/0.1.0",
+  "session": "B3Q",
+  "scope": "session",
+  "outcome": "HOLD: 1 SCORED records miss heartbeats (1 in all: [(106, 1)]) > the record budget floor(R/1000) = 0",
+  "findings": [
+    "1 SCORED records miss heartbeats (1 in all: [(106, 1)]) > the record budget floor(R/1000) = 0"
+  ],
+  "kills": [],
+  "measured_rate_per_hour": 2970.272868976666,
+  "audit_policy": "all-self-reporting",
+  "instrument": {
+    "rate": 2970.272868976666,
+    "audit_policy": "all-self-reporting",
+    "run_log_validation": {
+      "scored": 125,
+      "audited": 125,
+      "chain_length": 126
+    },
+    "rate_report": {
+      "candidates": 123,
+      "evals_per_hour": 2970.272868976666,
+      "cov": 0.5878776971577261,
+      "session_span_s": 151.29969661100768
+    }
+  },
+  "binding_checked": true,
+  "replay": {
+    "scope": "session",
+    "measurement": {
+      "records_checked": 123,
+      "readouts_served": 125
+    },
+    "replay": {
+      "records_replayed": 123,
+      "pairs": [
+        0
+      ]
+    },
+    "pair_seeds": [
+      [
+        55214469,
+        4020232539
+      ]
+    ],
+    "online_maps": {
+      "0": {
+        "decoded": 8,
+        "map_version": 8,
+        "anomalies": 0,
+        "sha256": "74dcbb09e001c3510d758f1c91d385c3a7f5bb2d009015ea25c7902944452de9"
+      }
+    }
+  },
+  "pooled_primary": "not this runner's: b3_adjudicate --scope run over every session's log",
+  "qualification": {
+    "fitness_values": 123,
+    "ledger_entries": 40,
+    "baselines": 2,
+    "fitness_sequence_sha256": "cbd277e66f6e70a7d59507f636904ca27ba92527b3ecc0d9e90b047f2f3013cc"
+  }
+}

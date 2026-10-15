@@ -1,0 +1,57 @@
+{
+ "after": {
+  "history": [
+   {
+    "at": "2026-10-14T06:34:59Z",
+    "prereg_sha256": "e89c5677ac7f2be28e178b64d48b7a6f8bfdd35158d5ca5639ac8323c1451353",
+    "transition": "S1 freeze"
+   }
+  ],
+  "image_board_ready": true,
+  "manifest_sha256": "bb917ec7bde1a47da975162ff76bb27d4c6080e06a715d49f7f458e8115a23c6",
+  "prereg": {
+   "frozen": true,
+   "path": "docs/b3_preregistration.md",
+   "sha256": "e89c5677ac7f2be28e178b64d48b7a6f8bfdd35158d5ca5639ac8323c1451353"
+  },
+  "status": "S1 FROZEN \u2014 prereg pinned, image board_ready by the owner; awaiting the B3Q ruling pair"
+ },
+ "before": {
+  "history": [],
+  "image_board_ready": false,
+  "manifest_sha256": "00b330c57ff3d26b6d4a669a26a0d6157f81f4847a1e229e0fe64e08aeb81a31",
+  "prereg": {
+   "frozen": false,
+   "path": "docs/b3_preregistration.md",
+   "sha256": null
+  },
+  "status": "S0 INIT \u2014 derived from the tree; not frozen; no qualification; no plan; NO BOARD RULING"
+ },
+ "changed_fields_computed_from_the_bytes": [
+  "history",
+  "image.board_ready",
+  "prereg.frozen",
+  "prereg.sha256",
+  "status"
+ ],
+ "command": "python3 -B b3/host/b3_manifest.py freeze --manifest manifests/b3_manifest.json --prereg-sha256 e89c5677ac7f2be28e178b64d48b7a6f8bfdd35158d5ca5639ac8323c1451353",
+ "image_unchanged": true,
+ "pins_unchanged": true,
+ "qualification_plan_unchanged": true,
+ "transition": "S1 freeze",
+ "unchanged": {
+  "calibration": null,
+  "image_bytes": 131092,
+  "image_elf_sha256": "0d0f99a6c1ffd8dcf29635032305b287f896e47cfc418d70903f922d4760d7a1",
+  "image_sha256": "28c80eca419efe88ac6e1969c9fc5d87d416d8a6137e4612288298b9e5da8299",
+  "instrument_pins": {
+   "path": "manifests/b3_instrument_pins.json",
+   "sha256": "73cec93a72aa962f10b331c3720f50439201a73bee2ba34971dd2b8b677ac280"
+  },
+  "plan": null,
+  "qualification": null,
+  "qualification_plan_prediction_sha256": "7eae26509b9488a111257c112c5cf90e9cc8f6e34311af837c79ccc40245ec27",
+  "qualification_plan_sha256": "490347f4b3542147581940035a12eb9bb7db7cbd0ad550dd8bfd3e2b68261026",
+  "qualified": false
+ }
+}

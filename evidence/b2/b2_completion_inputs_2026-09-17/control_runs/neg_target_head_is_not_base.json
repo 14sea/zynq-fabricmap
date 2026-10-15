@@ -1,0 +1,34 @@
+{
+ "cmd": [
+  "env",
+  "-i",
+  "PATH=/usr/local/bin:/usr/bin:/bin",
+  "/usr/bin/python3",
+  "-B",
+  "/home/test/zynq_fabricmap/evidence/b2/b2_completion_inputs_2026-09-17/restore_verify.py",
+  "--target",
+  "/tmp/claude-1000/-home-test-xilinx/dd60545e-0d28-4c6d-8695-2fe8dee92ace/scratchpad/wt/cinp_otherhead",
+  "--archive",
+  "/home/test/zynq_fabricmap/evidence/b2/b2_completion_inputs_2026-09-17/inputs.tar.zst",
+  "--manifest",
+  "/home/test/zynq_fabricmap/evidence/b2/b2_completion_inputs_2026-09-17/archive.json"
+ ],
+ "env": {
+  "PATH": "/usr/local/bin:/usr/bin:/bin"
+ },
+ "expected": {
+  "needle": "is not the base",
+  "rc": 2
+ },
+ "met": true,
+ "name": "neg_target_head_is_not_base",
+ "rc": 2,
+ "seconds": 0.0,
+ "stderr": [
+  "REFUSED: target HEAD 4800c157c65d is not the base 73b68d79fd43"
+ ],
+ "stdout_json": {
+  "outcome": "REFUSED",
+  "refusal": "target HEAD 4800c157c65d is not the base 73b68d79fd43"
+ }
+}

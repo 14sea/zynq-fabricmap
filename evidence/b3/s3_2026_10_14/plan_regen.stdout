@@ -1,0 +1,51 @@
+{
+ "fitness": "F1",
+ "budget_per_arm": 1000,
+ "pairs": 8,
+ "master_seed": 981420253,
+ "split": "DETERMINED",
+ "deltas1": [
+  11,
+  9,
+  7,
+  7,
+  4,
+  6,
+  9,
+  2
+ ],
+ "deltas2": [
+  -1,
+  7,
+  3,
+  6,
+  -7,
+  0,
+  4,
+  -1
+ ],
+ "primary": {
+  "positives": 8,
+  "negatives": 0,
+  "ties": 0,
+  "sign_test_p": 0.00390625,
+  "alpha": 0.05,
+  "verdict": "online > random-safe SUPPORTED"
+ },
+ "secondary_outcome": {
+  "positives": 4,
+  "negatives": 3,
+  "ties": 1,
+  "sign_test_p": 0.5,
+  "mean": 1.375,
+  "median": 1.5,
+  "cohen_d": 0.30120438050370163,
+  "threshold": null,
+  "note": "reported secondary outcome: no significance threshold, no verdict (preregistration v0.3 \u00a74)"
+ },
+ "fitness_sequence_length": 24024,
+ "stop_rule_findings": [],
+ "plan": "evidence/b3/plan.json",
+ "prediction": "evidence/b3/prediction.json",
+ "written": "canonical"
+}

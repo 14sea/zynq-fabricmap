@@ -1,0 +1,302 @@
+{
+ "tool": "pooled primary unit (the owner's authorisation of 2026-10-15)",
+ "head": "3246c15c7ace9135753a76b6d9b78671529e79fa",
+ "started_utc": "2026-10-15T15:41:58Z",
+ "finished_utc": "2026-10-15T15:50:03Z",
+ "exit_codes": [
+  "rejudge_exit[b3_17A6_2026-10-14-02]=0",
+  "rejudge_exit[b3_17A6_2026-10-15-01]=0",
+  "rejudge_exit[b3_17A6_2026-10-15-03]=0",
+  "rejudge_exit[b3_17A6_2026-10-15-02]=0",
+  "rejudge_exit[b3_17A6_2026-10-15-05]=0",
+  "rejudge_exit[b3_17A6_2026-10-15-04]=0",
+  "rejudge_exit[b3_17A6_2026-10-15-07]=0",
+  "rejudge_exit[b3_17A6_2026-10-15-06]=0",
+  "adjudicate_exit=0"
+ ],
+ "command": "python3 -B b3/host/b3_adjudicate.py --evidence \"/tmp/b3_fresh_restore_92m1kxy4\" --evidence \"/tmp/b3_fresh_restore_n9fg2ujq\" --evidence \"/tmp/b3_fresh_restore_kzyfrfz3\" --evidence \"/tmp/b3_fresh_restore_umlsq5qp\" --evidence \"/tmp/b3_fresh_restore_000g_536\" --evidence \"/tmp/b3_fresh_restore_of4h1x5n\" --evidence \"/tmp/b3_fresh_restore_9jhhtz3y\" --evidence \"/tmp/b3_fresh_restore_ydtldj01\" --plan \"evidence/b3/plan.json\" --prediction \"evidence/b3/prediction.json\" --scope run --out \"evidence/b3/b3_primary_2026-10-15/adjudication.json\"",
+ "adjudication_sha256": "1b8f092d1c7a32507862b40a10cfb33efdc2cf686366bf80290dc38b503b7403",
+ "stdout_sha256": "1b8f092d1c7a32507862b40a10cfb33efdc2cf686366bf80290dc38b503b7403",
+ "stderr_bytes": 0,
+ "comparison_with_prediction": {
+  "fitness_sequence_sha256": {
+   "adjudicated": "8df40ac9a75ca0f9bb965aa65239cb1ac9cd14681f47e219627a7e7543cfde13",
+   "predicted": "8df40ac9a75ca0f9bb965aa65239cb1ac9cd14681f47e219627a7e7543cfde13",
+   "equal": true
+  },
+  "fitness_sequence_length": {
+   "adjudicated": 24024,
+   "predicted": 24024,
+   "equal": true
+  },
+  "deltas1": {
+   "adjudicated": [
+    11,
+    9,
+    7,
+    7,
+    4,
+    6,
+    9,
+    2
+   ],
+   "predicted": [
+    11,
+    9,
+    7,
+    7,
+    4,
+    6,
+    9,
+    2
+   ],
+   "equal": true
+  },
+  "deltas2": {
+   "adjudicated": [
+    -1,
+    7,
+    3,
+    6,
+    -7,
+    0,
+    4,
+    -1
+   ],
+   "predicted": [
+    -1,
+    7,
+    3,
+    6,
+    -7,
+    0,
+    4,
+    -1
+   ],
+   "equal": true
+  },
+  "primary": {
+   "adjudicated": {
+    "positives": 8,
+    "negatives": 0,
+    "ties": 0,
+    "sign_test_p": 0.00390625
+   },
+   "predicted": {
+    "positives": 8,
+    "negatives": 0,
+    "ties": 0,
+    "sign_test_p": 0.00390625
+   },
+   "equal": true
+  },
+  "secondary": {
+   "adjudicated": {
+    "positives": 4,
+    "negatives": 3,
+    "ties": 1,
+    "sign_test_p": 0.5,
+    "mean": 1.375,
+    "median": 1.5,
+    "cohen_d": 0.30120438050370163
+   },
+   "predicted": {
+    "positives": 4,
+    "negatives": 3,
+    "ties": 1,
+    "sign_test_p": 0.5,
+    "mean": 1.375,
+    "median": 1.5,
+    "cohen_d": 0.30120438050370163
+   },
+   "equal": true
+  }
+ },
+ "restored_dirs": [
+  {
+   "session_dir": "evidence/b3/b3_17A6_2026-10-14-02",
+   "restored_dir": "/tmp/b3_fresh_restore_92m1kxy4",
+   "files_sha256": {
+    "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+    "B1_1_identity_page.json": "ec490a4952a943cf9c1bd14c23e626d0f78cc7a7c2d10e4883a94fddcd6ee39a",
+    "adjudication.json": "c37cd5e8be7182791e097792011184c6b881a2b9f9142579d67577e8f9c4f8e9",
+    "audits.json": "1df1f9c07449f7b0bcbf7b0c1a18387e5a835c26ebbb651aa765eaf6d26ba434",
+    "console.log": "1d3c05ae76b7fe312a406615287d5b324d12a06d4b12b75db6b8a28d92ad1e71",
+    "console.ts.log": "54246f2b3c5597b0ae227b202f5e57f023048fa894c9d09d1d5624bef2894bf8",
+    "exports.json": "e14e89d5d17d87955d03b215a67698e7681088a83afcb4d5e9e189f8bd555f72",
+    "manifest_at_run.json": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+    "ruling_provisioning.json": "cb580c8b92f6cb2f3d83c3d85124eeba695e3e4d08cedab88d23ac15b3429785",
+    "ruling_whole_of_run.json": "f7262cadd57e49729554a6edf6858559dba85e473c72ab17698f91d531cbffeb",
+    "run_log.json": "ef9917539261e4c2bca2991d5ac832d49aeeb96d98146e42d698e4de9e350aae",
+    "runner_session.json": "4863f3a5affdbc911c1bda092b8f45adc2182808bc53e3219b349d7342d85217",
+    "summary.json": "fe9d3795936f56f7c535a1d4f1bd7a8a0ece4784c4655b8664d575bf93708b76",
+    "timeline.json": "0efe5d996afdd75690997920889dd15db8c5915706b24abeff66980573117b2f",
+    "ymodem.log": "bc0578a7459a3ce2fbd5a06712eba4877a64962bfc5a2249d37f7eea80b9802f",
+    "ymodem_app.log": "b14ae036d0e47b1d72f61d4fa1ef44701ac2e3115a65f7a1bda758380b37f7bc"
+   },
+   "removed": true
+  },
+  {
+   "session_dir": "evidence/b3/b3_17A6_2026-10-15-01",
+   "restored_dir": "/tmp/b3_fresh_restore_n9fg2ujq",
+   "files_sha256": {
+    "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+    "B1_1_identity_page.json": "46939e5a7cbbed9a37881c50e646835488e04d1bb2c4afaafeaad75eaf2e0f9a",
+    "adjudication.json": "0e04627cfc309adc9b3126f029c931d0a025cd641bfd0391e1077cb336e65e17",
+    "audits.json": "b5a0fa4612930c9563db98462070e0236ddd97a589b2876c7a65872de2562539",
+    "console.log": "04c4bdf1d1cb3a7faacb0be6e321ce7f28d05e3e70a90b525e5e8b5afd05839e",
+    "console.ts.log": "c69e1e0630b3ef08aa9ed3764a3d2fc056ad3deb20a21b5dabd807af957ba408",
+    "exports.json": "5ef20e9cbba54e571ddfd97e83cbf401073f1a6841ac27be57da7e90bf75ca5d",
+    "manifest_at_run.json": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+    "ruling_provisioning.json": "93c931574b04c79ab09d1eb2ebea9c9895aea68dbf1048bb0f4179d248e4c9ca",
+    "ruling_whole_of_run.json": "fb75c47afe93e8f0051a89686d92fef371907d2fc81ae7dfb5e0e5e34c2f08a4",
+    "run_log.json": "60f2f87bb040052eca44956506ccdef3aa617d60f686e3b0a52a54a30b23edb8",
+    "runner_session.json": "43cca79e03249c6830fc0dc77fa8c11e2cfdf7ae986f4c51431a15cfd256068e",
+    "summary.json": "4b8785e04ccf95e4a208dc48c1e8f5cc82feb882968b3ecfd59f6321296e5911",
+    "timeline.json": "b3c8d5d7418f926eb935d07355af92b3a3ee450a6fb0bad046b9e4957db0b367",
+    "ymodem.log": "7c1cb1fa59dd8e6de1d910d258096d515f7c6608b6db3d0525b0b5333b0d2e2f",
+    "ymodem_app.log": "b196bb750502188b772d5bc3996494e3ee25d84f2cb079d6aed9f5c5777c1baa"
+   },
+   "removed": true
+  },
+  {
+   "session_dir": "evidence/b3/b3_17A6_2026-10-15-02",
+   "restored_dir": "/tmp/b3_fresh_restore_kzyfrfz3",
+   "files_sha256": {
+    "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+    "B1_1_identity_page.json": "0974128d313ebdedd5242a725422454fe93b3954c48516d812d8c653c116e529",
+    "adjudication.json": "c8b1175633e16c6fbaee9cfc195711d57f25ffb4b1d155d457dabb130eedb963",
+    "audits.json": "1ba68d8d71aae2ca5320ba34fb38c6320048052be131ea8d0f4586c228295993",
+    "console.log": "6db0c841e4bb869929deb3e38191f9537b75ee1cf3b79590daa002374cf81539",
+    "console.ts.log": "442524e26a886e8389f0f4bb3357e9d561156e1ca51f8d17cf28ae72c75bd4f8",
+    "exports.json": "07bddea6d89ab5288a47968cf021cfc991a4d6edf3d2d089d353c3c2cddfda7e",
+    "manifest_at_run.json": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+    "ruling_provisioning.json": "13e183e2c9a9139c6ef79900a9ee41ed3c29bb294da1d4f8c95c36884b6246e7",
+    "ruling_whole_of_run.json": "89bebc5e67bd908943307d8d1c8ddd03671ba404ffbfa8d786cce2fc38fb3c36",
+    "run_log.json": "e6640e9d69c41ea2c983a045db2edefe4f3226aa9daf7bac9dc76a0f7bd21e97",
+    "runner_session.json": "c4cdee4784c5c555338fda36619a06c7ad7779685ee5a4cb0ccc2a6620709a31",
+    "summary.json": "a926872700de45e4573e6d1b301cb52c1810da3f105cc61cfeb6e0d9c93af3fb",
+    "timeline.json": "e0d9772756962a39d588f2b9caff828e769c9d5aab9061eacfb371d65179b256",
+    "ymodem.log": "80675741885042a7ed47494bdebe14ae4835b1eaae9fb2d1c24e90446218653e",
+    "ymodem_app.log": "2b6dc70f61641404b6954a80e3665bbd684459344237b18ed2876f470cd4717f"
+   },
+   "removed": true
+  },
+  {
+   "session_dir": "evidence/b3/b3_17A6_2026-10-15-03",
+   "restored_dir": "/tmp/b3_fresh_restore_umlsq5qp",
+   "files_sha256": {
+    "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+    "B1_1_identity_page.json": "c32171015afe88ef58d8bef1c0e89a5497cccb34e1acf54ec5f50e3b21893c6b",
+    "adjudication.json": "058cbb15c8cfcfb1da362e1483d5f68e59d611f6335d56370aaa1a465c205156",
+    "audits.json": "9db19a4cb6e14e2a289dc873392e81ba568cbd3d00be2d77b6dba0d75d0a12a5",
+    "console.log": "e229c2bfe24b8e4709f933c768ba599dbfb611e197e32aa9e02ed04b4885c742",
+    "console.ts.log": "441126ca313ae0978ad2a62a45857b9a2f5865aa8d3c2e32195e0bcc5daa5e47",
+    "exports.json": "017efdf26241d53a0a2f56a1fa8e94198afa09501b0f8123a37789a06478e559",
+    "manifest_at_run.json": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+    "ruling_provisioning.json": "4f190e21bb349d5d3cd7e3324c88485bb29feea2bd014c779e649d7a5a86271a",
+    "ruling_whole_of_run.json": "9e1bc2b9b00d0171d19fedf8412b27cf24136ef25f9c624be7b6dc173eeaefe8",
+    "run_log.json": "f69dafe0122f76f313747fb790825607e7e80c8f1b42fa69c835ec412d5be3f5",
+    "runner_session.json": "961404a47a41db4adbe75eeec0c830c7acd1f6e272adc09155063fbc2bd17cec",
+    "summary.json": "50586006d14c0e0dab61bca5009124fdb536b106340b2a7164fa68ac37aec4b8",
+    "timeline.json": "0c3cbde45c1fbb91757fc646fbd858d794989448f4b875a415e49c5169aceed9",
+    "ymodem.log": "2574296846661e1022e6abbfecd7b1e641f30493f5e16dee96431496275d6135",
+    "ymodem_app.log": "94ba0d5bea9a119f3bfe76da89adafb18c0d4e43e85087ef1a4f3dc7b1f86cb2"
+   },
+   "removed": true
+  },
+  {
+   "session_dir": "evidence/b3/b3_17A6_2026-10-15-04",
+   "restored_dir": "/tmp/b3_fresh_restore_000g_536",
+   "files_sha256": {
+    "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+    "B1_1_identity_page.json": "c40a2001c5d1ef6a5d0b4678034828958159d1118d51d2e23f0dbbc43cb2edd5",
+    "adjudication.json": "b39baf06bdb9229f8d184f4745d283e761271e28b8ad0641b11f4ab698d5e312",
+    "audits.json": "1ca8313620b8838f215c815311832c55a622b468d8d06bdece120100f88fcd54",
+    "console.log": "0d4b2154b1e61b3949c02d291dc9a0f2956738922f3cd2883612ce8715809719",
+    "console.ts.log": "dad3c9d0f0f70ef9bf5e719d0ae23de7e1e89f889c111e987700ef1de800b682",
+    "exports.json": "d0bc35596ebe91ed212fd52e6037329b976da2739b0cf9e9d3f2c893cc9286e4",
+    "manifest_at_run.json": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+    "ruling_provisioning.json": "9eb6f1e6bef7e40df7d3fb8dbab8f8d5a105efa5d4fb37fc5802052bf6b2a045",
+    "ruling_whole_of_run.json": "d81465d94c86441a1c175af82296c154f63dc6780a430dafea2bb364ca0bf00c",
+    "run_log.json": "de278b67330e7d539e4c9ff0426c1cc5be7b3e91a0dbf8dcab9d780cc81e16c7",
+    "runner_session.json": "0969dd9e33b0d39f2f24a308293ef6ae6abe6478936d8e2b80c536a2d2c1ab45",
+    "summary.json": "452c1104210f77709841d57c0a7bd763ff6102dab66e2fd14f08a7fefb6bd251",
+    "timeline.json": "ae50b066bf50d1641df952ec341bc20d75b94f404d76e7b9d301fbd3ce1bde3a",
+    "ymodem.log": "53b344be5c67a645c9028d6b1c0439f216fe86682c19d4e49f551dc363dd4f48",
+    "ymodem_app.log": "ab93d8f46c68de408b8bbd204d7845b174c33662eb178b00a24071118135b871"
+   },
+   "removed": true
+  },
+  {
+   "session_dir": "evidence/b3/b3_17A6_2026-10-15-05",
+   "restored_dir": "/tmp/b3_fresh_restore_of4h1x5n",
+   "files_sha256": {
+    "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+    "B1_1_identity_page.json": "be1540db97cb929f3c34bad1b30407a7ca0202d1632dde9a20d4c2409349009b",
+    "adjudication.json": "4d9acf9508c42c6ce66dc7a7ee570105bd00b418e51e768bb25868d48e786d78",
+    "audits.json": "b7ca778ac182d281d39c7d36a09030e2536416b827be0d2ba6da6f496c66206a",
+    "console.log": "eb2ff8af1d61c560d899e5bc04080aaddcf048d6777935d595ab3f30a6f1e36a",
+    "console.ts.log": "e973a4943613e55374fb286801a4da603bd147c9115553198c818e94e6eff536",
+    "exports.json": "42b6d7d3b87b8c13223b31191797476299ffcb8eff14c07f0b2c431352ad7dd7",
+    "manifest_at_run.json": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+    "ruling_provisioning.json": "12dd5e295a63aff320356e1d9f7d69ef3d433d4945f942692c6a09f22b6488f5",
+    "ruling_whole_of_run.json": "a103dbb641b748858db89d7bd4eef9ca7a9c48236eb3789d87eeb376c596071c",
+    "run_log.json": "9b0ed305fa45a8f1fe0a3eb38c5871abfcf4ef874508d3fa27c9d9b486b9c30c",
+    "runner_session.json": "66ba41de9822e92c5ac9d9fcb9cc9954a44562ff234abc03de84de6c58c89977",
+    "summary.json": "3895df8b626df58f79d7da77ae78f36d01668d0fc322e3b7ba85e8db7a5a8f4c",
+    "timeline.json": "de5344deed0ef861abf228a23ff8fd18d4d64a9fc7818e26c145473859c71823",
+    "ymodem.log": "bc0578a7459a3ce2fbd5a06712eba4877a64962bfc5a2249d37f7eea80b9802f",
+    "ymodem_app.log": "d27f5a020a10e8f12aa208824df7889a56a1cbca23bf508f40fecef8231d8455"
+   },
+   "removed": true
+  },
+  {
+   "session_dir": "evidence/b3/b3_17A6_2026-10-15-06",
+   "restored_dir": "/tmp/b3_fresh_restore_9jhhtz3y",
+   "files_sha256": {
+    "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+    "B1_1_identity_page.json": "91e72920bedbc91d9468b453fdd4e98e076134a942cc07cfe2e0217bb98cfea7",
+    "adjudication.json": "6da5823657fb2169b03180bf2d4fc98c89d0d95961a75fa116411a7cb55995d3",
+    "audits.json": "880755322641ed650b48786c93951388e3de6e2540222987ada17a5888f78b38",
+    "console.log": "430fd6d0f686c8b302db1d589bb7e66bd69423a456c9f7838a5536367fc36ce5",
+    "console.ts.log": "7f577c55034f2b3a50f3c4da5eaa17feb10c615812f7f984fa25e25889cdebb8",
+    "exports.json": "30495556ff8f71c85e32137892a51409c651f15ef26ecb2034e72e7865da7477",
+    "manifest_at_run.json": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+    "ruling_provisioning.json": "164a2c97f1d64b1d5dd3be8f503cf816eba9a481edc115c72b585b150639c796",
+    "ruling_whole_of_run.json": "8ee3e6fd3ba72a10c3fe6fd15a25a23595d2a35e619a2d7b49b2ec1a0faea93a",
+    "run_log.json": "351353965ef94dc740c448c50ba996e029efbc592e31809472d5b8e8239a84fd",
+    "runner_session.json": "7a5a1d5195de2141d504176dd705a57760b1d993a5aa20fcb2feabf1692a4789",
+    "summary.json": "6bffac5f071c40c3f853a006ce445675f8a3f8264570006d4ec9546b7bdf621e",
+    "timeline.json": "bb2d7e76f572b9626e5901a4e6da166ab39463bb86c29a1518ca16ad4409d3dd",
+    "ymodem.log": "2af96c561631721a3b1efabee0e60cb4a600c85a11ca8a4cca0ec34eae044390",
+    "ymodem_app.log": "b196bb750502188b772d5bc3996494e3ee25d84f2cb079d6aed9f5c5777c1baa"
+   },
+   "removed": true
+  },
+  {
+   "session_dir": "evidence/b3/b3_17A6_2026-10-15-07",
+   "restored_dir": "/tmp/b3_fresh_restore_ydtldj01",
+   "files_sha256": {
+    "B1_0_preflight.json": "b75e8c9e2c9833febae2682adc468382fe9a7e3d5ef7ff219a8bfffc1c6fb82f",
+    "B1_1_identity_page.json": "a084e853db6ee8764af75fe6efe34b52983a4e41c0fc6fd8dd1cffe2eed5cf13",
+    "adjudication.json": "7335b8f6073b6b8da291efec235f19605e67d04edc951dc7af830de993d7576a",
+    "audits.json": "52c46c84500bc6f513234602ec9e17732894c1f373d439f39778b1a806d07609",
+    "console.log": "a9d3d33e896bbf3048cea68faaf993c327d10c00b674160eda77b8bc4e283c3f",
+    "console.ts.log": "1e1e6ba52641f32daaf303f0ea0509535dd843f9196b0485b28cbb76bca85baa",
+    "exports.json": "964df3324c47f497650db5a5b9953409193b74593132787b9e1a3c1b1f3350a1",
+    "manifest_at_run.json": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+    "ruling_provisioning.json": "aae40891499c5c2ccaa73e5713a108e2eb4c4b600b9725d9f8aff8f4bf19064d",
+    "ruling_whole_of_run.json": "9bc90d558299821979a8ff2f5a57d0ab9a30990029012298483f129e7697d5e2",
+    "run_log.json": "2e8d25d87fd9433e6bc8cd43d68e49ba2effd5c726c262f8484cb684f465bb5a",
+    "runner_session.json": "75bd6cde5129c891ffedacee19b88d630331608a6c365e4aad28dd0acd633420",
+    "summary.json": "662c821057b5f4fd0de0c8a3182b3b95211e2d78783e836215d428afa495d902",
+    "timeline.json": "b53acb6ab6808c5aa3e6398b647530ee079e39c3de8160af3cf7be3c0eec49de",
+    "ymodem.log": "d16952b158853724037158afd4a64f3ae3c775f4ed47a4e62136f1b9a2c346f9",
+    "ymodem_app.log": "c429e811edf0489f6d0373b0a6aa2e1e55a697807be01e76d495902a068d0925"
+   },
+   "removed": true
+  }
+ ],
+ "note": "the eight fresh restores were made by each session's restore_rejudge.py --keep in its own process (rejudge/*.json, all ACCEPT; inputs.json holds the restored run_log digests equal to the archives'); the restored temporary directories were removed after the adjudication, their run_log digests recorded"
+}

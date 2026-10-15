@@ -1,0 +1,253 @@
+#!/usr/bin/env python3
+"""B3 lifecycle 1 — the online-updating arm O (and, with a permutation, control X), on B2's engine.
+
+The loop is the frozen reference's (`host/b3_online.run_online`, B2-pinned; the equivalence test in
+b3/tests/test_b3_online_arm.py holds this copy to it trace for trace and entry for entry). What this
+copy adds, per docs/b3_architecture.md v0.2.3 §7–§9:
+  * every ledger entry is a `specimen_ledger` 1.1.0 entry (the running `anomalies` count);
+  * the champion's holdout evaluation, as B2's run does it — it produces NO ledger entry and does
+    not update the map (the ledger has exactly `budget` entries);
+  * the O-arm record commitment after every evaluation (`state_trace`): ONE digest over B2's search
+    state text (engine, arm, seeds, budget, evaluations, generation, best, the whole population —
+    byte for byte the text `b2_search.state_sha256` hashes) joined by `|` to the cartographer's
+    state text (`b3_carto.SpecimenCarto.state_text`), so a change in either changes the digest
+    (`state_sha256`, the twin of the C image's `b3_state_hex`); `replay` recomputes and compares it;
+  * control X: `delta_perm` maps every behaviour delta through π before it enters the cartographer
+    (and nothing else); with `shadow=True` a shadow cartographer is fed the unpermuted deltas and the
+    isomorphism under π is checked after every specimen (`shadow_findings`);
+  * (lifecycle 2, the session unit) the O arm's RECORD BLOCKS, produced here and nowhere else: one
+    `loop_record` 1.4.0 `search` block per evaluation (`blocks`, compact JSON exactly as the image writes
+    it — B2's fields, `arm` "O", `state_sha256` = the combined commitment, plus the `ledger` sub-block =
+    this evaluation's 1.1.0 entry) and the champion's holdout block (`champion_block`: no ledger, no move,
+    the holdout value, the FINAL combined commitment — the holdout evaluation updates neither the search
+    nor the map). Only a run that keeps its ledger and permutes nothing is record-capable
+    (`record_capable`): a gate control (`keep_ledger=False`, or `delta_perm`) emits no block at all and
+    cannot be passed off as an O run that may produce records.
+"""
+from __future__ import annotations
+
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+for p in (REPO_ROOT / "host", REPO_ROOT / "b3/host"):
+    if str(p) not in sys.path:
+        sys.path.insert(0, str(p))
+import b1_carto as bc  # noqa: E402
+import b2_landscape as bl  # noqa: E402
+import b2_search as bs  # noqa: E402
+import b3_carto as carto_mod  # noqa: E402
+import b3_control_x as cx  # noqa: E402
+
+ARM_ONLINE = "online"
+ARM_LETTER = "O"
+ARM_CODE = 2                 # B2's record commitment codes the arm as an integer: 0 random-safe, 1 map-guided; 2 = online
+BLOCK_KEYS = ("arm", "best", "column_moves", "eval", "fitness", "generation", "holdout", "landscape_seed", "move",
+              "operator_seed", "pair", "parent_born", "population", "selected", "state_sha256", "version")
+
+
+def search_state_text(arm: int, landscape_seed: int, operator_seed: int, budget: int, evals: int,
+                      generation: int, best: int, pop: list) -> str:
+    """Byte for byte the text `b2_search.state_sha256` hashes (b3/tests/test_b3_online_arm.py holds
+    this to B2's function); kept as text here so the cartographer's text can be appended."""
+    text = f"{bs.ENGINE_VERSION}|{arm}|{landscape_seed}|{operator_seed}|{budget}|{evals}|{generation}|{best}|"
+    for ind in pop:
+        text += f"{ind.fit}:{ind.born}:{bc.genome_to_hex(ind.genome)};"
+    return text
+
+
+def state_sha256(search_text: str, carto_text: str) -> str:
+    """The O-arm record commitment: sha256(<B2 search state text> | <cartographer state text>)."""
+    import hashlib
+    return hashlib.sha256(f"{search_text}|{carto_text}".encode()).hexdigest()
+
+
+def record_block(pair: int, landscape_seed: int, operator_seed: int, generation: int, best: int, column_moves: int,
+                 pop: list, eval_n: int, fitness: int | None, parent_born: int | None, bits: list[int] | None,
+                 kind: str | None, selected: bool, holdout: int | None, commitment: str, ledger_entry: dict | None) -> str:
+    """The O arm's `search` block exactly as the image writes it (compact JSON, sorted keys): B2's
+    `b2_search.record_block` shape with `arm` "O", `state_sha256` = the COMBINED commitment given, and —
+    on a search record — the `ledger` sub-block = this evaluation's specimen_ledger 1.1.0 entry. A
+    holdout block (`ledger_entry` None) carries no ledger key at all."""
+    import json
+    doc = {"arm": ARM_LETTER, "best": best, "column_moves": column_moves, "eval": eval_n, "fitness": fitness,
+           "generation": generation, "holdout": holdout, "landscape_seed": landscape_seed,
+           "move": None if bits is None else {"bits": list(bits), "kind": kind},
+           "operator_seed": operator_seed, "pair": pair, "parent_born": parent_born,
+           "population": [{"born": ind.born, "fit": ind.fit} for ind in pop],
+           "selected": bool(selected), "state_sha256": commitment, "version": bs.ENGINE_VERSION}
+    if ledger_entry is not None:
+        doc["ledger"] = ledger_entry
+    return json.dumps(doc, sort_keys=True, separators=(",", ":"))
+B1_MAP_COST = 333            # B1's budget: 9 code probes + 292 confirmations + 32 pairs — the evaluation-count constant charged to F
+LEDGER_SCHEMA_VERSION = "1.1.0"
+
+
+@dataclass
+class OnlineResult:
+    best_trace: list[int]
+    decoded_trace: list[int]
+    version_trace: list[int]
+    ledger: list[dict]
+    anomalies: int
+    champion: bs.Individual
+    champion_holdout: int
+    column_moves: int
+    carto: carto_mod.SpecimenCarto
+    state_trace: list[str] = field(default_factory=list)          # the combined commitment after evaluation 1..budget
+    search_state_trace: list[str] = field(default_factory=list)   # B2's search state text per evaluation (what a search replay regenerates)
+    carto_state_trace: list[str] = field(default_factory=list)    # the cartographer's text per evaluation (what the ledger replay regenerates)
+    shadow_findings: list[tuple[int, str]] = field(default_factory=list)
+    perm_sha256: str | None = None
+    genomes: list[int] = field(default_factory=list)              # the child genome of evaluation 1..budget (the candidate the record scores)
+    record_capable: bool = False                                    # True only for a ledger-keeping, unpermuted run: the one kind that may produce records
+    blocks: list[str] = field(default_factory=list)                 # the `search` record block per evaluation (empty unless record_capable)
+    champion_block: str = ""                                        # the champion's holdout record block ("" unless record_capable)
+
+
+def ledger_entry(seq: int, version_before: int, parent_born: int, bits: list[int], kind: str,
+                 delta: list[tuple[int, int]], fit: int, newly: list[int], carto: carto_mod.SpecimenCarto) -> dict:
+    return {"seq": seq, "map_version": version_before, "parent_born": parent_born, "intervention": list(bits),
+            "move_kind": kind, "behaviour_delta": [[k, v] for k, v in delta], "fitness": fit,
+            "confidence": 2 if len(bits) == 1 else 1,
+            "decoded": [[i, carto.decoded[i][0], carto.decoded[i][1]] for i in newly],
+            "map_version_after": carto.version, "anomalies": carto.anomalies}
+
+
+def run_online(landscape: bl.Landscape, operator_seed: int, budget: int, fabric: bs.ModelFabric,
+               keep_ledger: bool = True, delta_perm: list[int] | None = None, shadow: bool = False, pair: int = 0) -> OnlineResult:
+    """`pair` is the absolute pair index the record blocks carry (the search itself does not depend on it)."""
+    record_capable = bool(keep_ledger) and delta_perm is None
+    rng = bc.Rng(operator_seed)
+    carto = carto_mod.SpecimenCarto()
+    shadow_carto = carto_mod.SpecimenCarto() if shadow else None
+    view = carto.map_view(landscape.train)
+    base_tables = fabric(0)
+    base_fit = landscape.train_fitness(base_tables)
+    pop = [bs.Individual(0, base_tables, base_fit, born=i) for i in range(bs.MU)]
+    born = bs.MU
+    evals = 0
+    best = base_fit
+    trace, dtrace, vtrace, ledger, states, findings = [], [], [], [], [], []
+    search_states, carto_states = [], []
+    genomes, blocks = [], []
+    column_moves = 0
+    generation = 0
+    while evals < budget:
+        children = []
+        pending = []                                  # per child: (evals, best, carto_text, fit, parent_born, bits, kind, column_moves so far), committed after the selection as B2 does
+        pop_before = list(pop)
+        for _ in range(bs.LAMBDA):
+            if evals == budget:
+                break
+            pidx = rng.uniform(bs.MU)
+            parent = pop[pidx]
+            bits, kind = bs.map_guided_move(rng, view)
+            if kind == "column":
+                column_moves += 1
+            genome = bs.apply_move(parent.genome, bits)
+            tables = fabric.toggle(parent.tables, bits)
+            fit = landscape.train_fitness(tables)
+            delta = carto_mod.positions_of([tables[k] ^ parent.tables[k] for k in range(bl.LUTS)])
+            fed = cx.map_delta(delta, delta_perm) if delta_perm is not None else delta
+            version_before = carto.version
+            newly = carto.observe(bits, fed)
+            if shadow_carto is not None:
+                shadow_carto.observe(bits, delta)
+                for what in cx.isomorphism_findings(carto, shadow_carto, delta_perm or list(range(cx.N_POS))):
+                    findings.append((evals + 1, what))
+            if newly:
+                view = carto.map_view(landscape.train)
+            children.append(bs.Individual(genome, tables, fit, born))
+            genomes.append(genome)
+            born += 1
+            evals += 1
+            best = max(best, fit)
+            trace.append(best)
+            dtrace.append(len(carto.decoded))
+            vtrace.append(carto.version)
+            pending.append((evals, best, carto.state_text(), fit, parent.born, bits, kind, column_moves))
+            if keep_ledger:
+                ledger.append(ledger_entry(evals, version_before, parent.born, bits, kind, fed, fit, newly, carto))
+        pool = pop + children
+        pool.sort(key=lambda ind: (-ind.fit, ind.born))
+        pop = pool[:bs.MU]
+        generation += 1
+        for j, (ev, bst, ctext, fit, pborn, bits, kind, cmoves) in enumerate(pending):
+            closed = j == len(pending) - 1            # B2's convention: the image selects on the last child of the generation
+            gen = generation if closed else generation - 1
+            pop_at = pop if closed else pop_before
+            stext = search_state_text(ARM_CODE, landscape.seed, operator_seed, budget, ev, gen, bst, pop_at)
+            search_states.append(stext)
+            carto_states.append(ctext)
+            commitment = state_sha256(stext, ctext)
+            states.append(commitment)
+            if record_capable:
+                blocks.append(record_block(pair, landscape.seed, operator_seed, gen, bst, cmoves, pop_at, ev, fit, pborn,
+                                           bits, kind, closed, None, commitment, ledger[ev - 1]))
+    champion = min(pop, key=lambda ind: (-ind.fit, ind.born))
+    champion_holdout = landscape.holdout_fitness(champion.tables)          # no specimen, no ledger entry, no map update
+    champion_block = ""
+    if record_capable:                                 # the holdout evaluation changes neither the search nor the map: the FINAL commitment
+        champion_block = record_block(pair, landscape.seed, operator_seed, generation, best, column_moves, pop, evals,
+                                      None, None, None, None, False, champion_holdout, states[-1], None)
+    return OnlineResult(trace, dtrace, vtrace, ledger, carto.anomalies, champion, champion_holdout, column_moves, carto,
+                        states, search_states, carto_states, findings,
+                        cx.permutation_sha256(delta_perm) if delta_perm is not None else None,
+                        genomes, record_capable, blocks, champion_block)
+
+
+def _replay_entries(ledger: list[dict], on_entry=None) -> tuple[carto_mod.SpecimenCarto, list[str]]:
+    c = carto_mod.SpecimenCarto()
+    f: list[str] = []
+    for n, e in enumerate(ledger):
+        if c.version != e["map_version"]:
+            f.append(f"seq {e['seq']}: map_version {e['map_version']} but the replay is at {c.version}")
+            break
+        newly = c.observe(e["intervention"], [tuple(p) for p in e["behaviour_delta"]])
+        if sorted(newly) != sorted(i for i, _, _ in e["decoded"]) or any(c.decoded.get(i) != (k, v) for i, k, v in e["decoded"]):
+            f.append(f"seq {e['seq']}: decoded {e['decoded']} but the replay decoded {sorted(newly)}")
+            break
+        if c.version != e["map_version_after"] or c.anomalies != e["anomalies"]:
+            f.append(f"seq {e['seq']}: version_after/anomalies {e['map_version_after']}/{e['anomalies']} but the replay is at {c.version}/{c.anomalies}")
+            break
+        if on_entry is not None:
+            what = on_entry(n, e, c)
+            if what:
+                f.append(what)
+                break
+    return c, f
+
+
+def replay_cartographer_only(ledger: list[dict]) -> tuple[carto_mod.SpecimenCarto, list[str]]:
+    """The cartographer over a ledger WITHOUT the commitment check — for the gate and for unit tests
+    of the cartographer. Its empty findings list is not an autonomy replay and must never be reported
+    as one: the production replay is `replay`, which requires the commitments."""
+    return _replay_entries(ledger)
+
+
+def replay(ledger: list[dict], search_states: list[str], commitments: list[str]) -> tuple[carto_mod.SpecimenCarto, list[str]]:
+    """THE production ledger replay (architecture §8 item 3): the reference cartographer over the
+    ledger reproduces every version and decode, AND after every specimen the combined commitment
+    sha256(search_states[n] | cartographer text) equals commitments[n] — the records' `state_sha256`.
+    All three inputs are required (there is no way to run this without the commitments); a list of
+    the wrong type or length is a named finding, never a silent skip."""
+    for name, val in (("search_states", search_states), ("commitments", commitments)):
+        if not isinstance(val, list) or len(val) != len(ledger) or not all(isinstance(x, str) for x in val):
+            return carto_mod.SpecimenCarto(), [f"commitment check: {name} must be a list of one string per ledger entry "
+                                                f"({type(val).__name__ if not isinstance(val, list) else len(val)} for {len(ledger)})"]
+
+    def check(n, e, c):
+        want = state_sha256(search_states[n], c.state_text())
+        if want != commitments[n]:
+            return f"seq {e['seq']}: state_sha256 {commitments[n][:12]}… is not the recomputed {want[:12]}…"
+        return None
+    return _replay_entries(ledger, check)
+
+
+def end_to_end_frozen(best_trace_f: list[int], base_fit: int, total_budget: int) -> int:
+    """The frozen arm's end-to-end value at total budget T: its own trace at T − 333, the base
+    fitness while T ≤ 333 (architecture §9)."""
+    s = total_budget - B1_MAP_COST
+    return base_fit if s <= 0 else best_trace_f[s - 1]

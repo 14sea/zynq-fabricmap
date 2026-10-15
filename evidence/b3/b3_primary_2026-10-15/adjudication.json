@@ -1,0 +1,217 @@
+{
+  "deltas1": [
+    11,
+    9,
+    7,
+    7,
+    4,
+    6,
+    9,
+    2
+  ],
+  "deltas2": [
+    -1,
+    7,
+    3,
+    6,
+    -7,
+    0,
+    4,
+    -1
+  ],
+  "findings": [],
+  "fitness_sequence_length": 24024,
+  "fitness_sequence_sha256": "8df40ac9a75ca0f9bb965aa65239cb1ac9cd14681f47e219627a7e7543cfde13",
+  "inputs": [
+    "/tmp/b3_fresh_restore_92m1kxy4/run_log.json",
+    "/tmp/b3_fresh_restore_n9fg2ujq/run_log.json",
+    "/tmp/b3_fresh_restore_kzyfrfz3/run_log.json",
+    "/tmp/b3_fresh_restore_umlsq5qp/run_log.json",
+    "/tmp/b3_fresh_restore_000g_536/run_log.json",
+    "/tmp/b3_fresh_restore_of4h1x5n/run_log.json",
+    "/tmp/b3_fresh_restore_9jhhtz3y/run_log.json",
+    "/tmp/b3_fresh_restore_ydtldj01/run_log.json"
+  ],
+  "kills": [],
+  "measurement": {
+    "readouts_served": 24040,
+    "records_checked": 24024
+  },
+  "not_checked_here": [
+    "manifest pins and the B2 authority behind them",
+    "carrier qualification",
+    "instrument rate / deadline / CRC budgets",
+    "evidence exports",
+    "ruling binding"
+  ],
+  "online_maps": {
+    "0": {
+      "anomalies": 0,
+      "decoded": 288,
+      "map_version": 178,
+      "sha256": "b4045d797c2a3c417dd52a9daafcaef327d6993190b1465fd5ea8a06ac87a381"
+    },
+    "1": {
+      "anomalies": 0,
+      "decoded": 286,
+      "map_version": 179,
+      "sha256": "dcb5baea9dfd6e282dade66256d4448866b4ec2618eae29353e99e7078356717"
+    },
+    "2": {
+      "anomalies": 0,
+      "decoded": 289,
+      "map_version": 172,
+      "sha256": "421290de3abc0c274edd0afb232e84781ffce750ebb665f880eeef8790c3c498"
+    },
+    "3": {
+      "anomalies": 0,
+      "decoded": 287,
+      "map_version": 174,
+      "sha256": "1778bfa87968ed8767a3698985d126a5bbce14c343f039eac197a9a6dba00b63"
+    },
+    "4": {
+      "anomalies": 0,
+      "decoded": 285,
+      "map_version": 169,
+      "sha256": "0cf6a1fc49ff965c00535fcd71aa834159741028ca3fa7e2e01af96d4a480190"
+    },
+    "5": {
+      "anomalies": 0,
+      "decoded": 290,
+      "map_version": 175,
+      "sha256": "4caf2c6eed77c66f06568b2f13cdfee3565cca7492de761ea2b9492ba5ebcd1c"
+    },
+    "6": {
+      "anomalies": 0,
+      "decoded": 290,
+      "map_version": 187,
+      "sha256": "eab56b63f8626ef0e2b8d1a64f01e1d1bd1f94021b13822a42151d228c8677db"
+    },
+    "7": {
+      "anomalies": 0,
+      "decoded": 291,
+      "map_version": 180,
+      "sha256": "9dfa32811b2fca3ef9c1186655a13e963f6c0572765008dc31b57c2ef3245230"
+    }
+  },
+  "outcome": "PASS",
+  "pair_seeds": [
+    [
+      2961656459,
+      1343397103
+    ],
+    [
+      3785070923,
+      2731497693
+    ],
+    [
+      3587510309,
+      2084003005
+    ],
+    [
+      3491865220,
+      1136202755
+    ],
+    [
+      1595133113,
+      3832447288
+    ],
+    [
+      556892415,
+      1747787438
+    ],
+    [
+      2376967347,
+      1528092051
+    ],
+    [
+      205178539,
+      2230924639
+    ]
+  ],
+  "primary": {
+    "alpha": 0.05,
+    "negatives": 0,
+    "positives": 8,
+    "sign_test_p": 0.00390625,
+    "ties": 0,
+    "verdict": "online > random-safe SUPPORTED"
+  },
+  "replay": {
+    "pairs": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "records_replayed": 24024
+  },
+  "scope": "run",
+  "secondary_outcome": {
+    "cohen_d": 0.30120438050370163,
+    "mean": 1.375,
+    "median": 1.5,
+    "negatives": 3,
+    "note": "reported secondary outcome: no significance threshold, no verdict (preregistration v0.3 \u00a74)",
+    "positives": 4,
+    "sign_test_p": 0.5,
+    "threshold": null,
+    "ties": 1
+  },
+  "session": "B3",
+  "sessions": [
+    {
+      "index": 0,
+      "pair_count": 1,
+      "pair_first": 0,
+      "records": 3005
+    },
+    {
+      "index": 1,
+      "pair_count": 1,
+      "pair_first": 1,
+      "records": 3005
+    },
+    {
+      "index": 2,
+      "pair_count": 1,
+      "pair_first": 2,
+      "records": 3005
+    },
+    {
+      "index": 3,
+      "pair_count": 1,
+      "pair_first": 3,
+      "records": 3005
+    },
+    {
+      "index": 4,
+      "pair_count": 1,
+      "pair_first": 4,
+      "records": 3005
+    },
+    {
+      "index": 5,
+      "pair_count": 1,
+      "pair_first": 5,
+      "records": 3005
+    },
+    {
+      "index": 6,
+      "pair_count": 1,
+      "pair_first": 6,
+      "records": 3005
+    },
+    {
+      "index": 7,
+      "pair_count": 1,
+      "pair_first": 7,
+      "records": 3005
+    }
+  ],
+  "tool": "b3_adjudicate.py/0.1.0"
+}
