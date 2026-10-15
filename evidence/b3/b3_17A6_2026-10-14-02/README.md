@@ -18,14 +18,15 @@ Runner started 20:20:38Z, claim 20:23:10Z, identity page 20:26:38Z, image loaded
 |---|---|
 | expected frames / seen | 81 138 / 114 209 (the extra are the reply and request kinds the schedule does not count) |
 | HB | **48 080 = 16 × 3 005 — every heartbeat arrived** (rule v07's record budget of 3 unused) |
-| CRC drops | **6** of budget 325: SIGNREQ at t=0.0 s and REC at 1.1 s are the two **forced controls** (identity flags 0x32); the other four — REC at 875.8 s, AUDIT at 215.6 / 1 519.0 / 2 162.5 s — were recovered by rel-v4 (RECGET 2, AUDITGET 24 043 = 24 040 + 3) |
+| CRC drops | **6** of budget 325: SIGNREQ at t=0.0 s and REC at 1.1 s are the two **forced controls** (identity flags 0x32); the other four — REC at 875.8 s, AUDIT at 215.6 / 1 519.0 / 2 162.5 s — were recovered by rel-v4 (RECGET 2, AUDITGET 24 043 = 24 040 + 3). A CRC failure says a line arrived corrupted; it does not by itself say how (a deletion, a substitution, an insertion) — the cause of these four is not determined here |
 | bad frames | 0 of budget 325 |
-| fragments | **2** resyncs ("a frame head arrived with no line end before it"): a SIGNREQ line of seq 93 at 113.3 s (320 bytes) and one at 2 410.6 s (160 bytes) — the inbound line-end lost, the frame retransmitted by the board; no record, audit or heartbeat was lost |
+| fragments | **2** resyncs ("a frame head arrived with no line end before it"): a SIGNREQ line of seq 93 at 113.3 s and an AUDIT_READY line of seq 2018 at 2 410.6 s — in each case the next frame head arrived before the line's end; the board retransmitted and no record, audit or heartbeat was lost. The 320 and 160 bytes are the lengths of the fragments the host kept, not a measured number of lost bytes |
 | disruptions / rereads | 0 / 0 |
 
-So this session saw transport events of the deletion class (four unforced CRC drops and two fragments in 3 671 s, ≈ 26 MB of
-console) and absorbed all of them inside the frozen budgets and rules; it is not a lost session and does not count toward the
-two-sessions-same-cause stop-loss, which stands. Nothing here establishes transport stability.
+So this session saw six inbound transport events besides the two forced controls (four unforced CRC drops and two fragments
+in 3 671 s, ≈ 26 MB of console); their mechanism is not established by these records (the fragments are consistent with a lost
+line end, the CRC drops with any corruption). All were absorbed inside the frozen budgets and rules; it is not a lost session
+and does not count toward the two-sessions-same-cause stop-loss, which stands. Nothing here establishes transport stability.
 
 ## Layout (form (c), the owner's archival ruling of 2026-10-14)
 
