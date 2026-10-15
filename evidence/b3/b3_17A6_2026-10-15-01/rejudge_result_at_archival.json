@@ -1,0 +1,64 @@
+{
+ "at": "2026-10-15T06:52:02Z",
+ "refusal": null,
+ "restored_dir_removed": true,
+ "session_dir": "evidence/b3/b3_17A6_2026-10-15-01",
+ "steps": {
+  "boundary": {
+   "age_at_finalisation_s": 4376,
+   "at": 1792042688.6746073,
+   "finalised_at": "2026-10-15T06:51:04Z",
+   "freshness_rule": "the preflight's, at run time (6 h); not re-judged against today's clock",
+   "path": "evidence/b3/principal_boundary_2026-10-15-01.json",
+   "runner_user": "test",
+   "sha256": "dd50657006ac7a409b18638989f0e099c55290841c0e50bb3caad9e2c8334f1f",
+   "signer_user": "p3signer",
+   "validator": "b1_records.boundary_established (structure, checks, runner != signer, all passed)"
+  },
+  "judge": {
+   "findings": [],
+   "keys_differing_from_archived": [],
+   "kills": [],
+   "measured_rate_per_hour": 2928.0826286989204,
+   "outcome": "PASS"
+  },
+  "manifest": {
+   "file_sha256": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628",
+   "pins": {
+    "files_verified": 88,
+    "path": "manifests/b3_instrument_pins.json",
+    "pins_sha256": "73cec93a72aa962f10b331c3720f50439201a73bee2ba34971dd2b8b677ac280"
+   },
+   "verify": {
+    "qualified": true,
+    "refusal": null,
+    "stage": "S3"
+   }
+  },
+  "pinned_documents": {
+   "plan_sha256": "b202a2800d5934978394ffca7ee8f24d9b2897c953d4f41b1050fed840c81dd1",
+   "prediction_sha256": "92b774ea62d290d380e72a4c990b384060db9006cf9160940fb4848ae4a14cf5"
+  },
+  "restore": {
+   "archive_sha256": "35dd55ddf22bef981fe1bbb843463853bea65f6bbfd4d2b47084ae34b5579c34",
+   "files": 16,
+   "restored_to": "/tmp/b3_fresh_restore_v4s2p1rc"
+  },
+  "seal": "ok",
+  "session_plan": {
+   "crc_budget": 325,
+   "expected_frames_total": 81138,
+   "expected_records": 3005,
+   "pair_count": 1,
+   "pair_first": 1,
+   "rebuilt_by": "search_session_plan (mirrors b3_runner.preflight)",
+   "resend_budget": 325,
+   "run_log_l6_equal": true,
+   "session_timeout_s": 5602.696090881941,
+   "summary_l6_equal": true
+  },
+  "session_record": "ok"
+ },
+ "tool": "restore_rejudge.py/1.0.1 (b3 lifecycle 2, main preparation 2026-10-14; follow-up to the owner's review of 0850e6b)",
+ "verdict": "ACCEPT"
+}
