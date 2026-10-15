@@ -54,6 +54,6 @@ check the manifest pins, the carrier qualification, the instrument's rate / dead
 ruling bindings (`not_checked_here`) — those are established per session by the production verdicts, the fresh re-judges above,
 the archived rulings and boundary records. Standing facts the result document must carry: the formal S2 and S3 clean-tree
 proofs did not pass and the two named exceptions apply (`docs/b3_s2_proof_exception_2026_10_14.md`; the S3 node serves as §8's
-final proof for engineering purposes by the owner's ruling of 2026-10-15); session 0's first attempt was LOST at the carrier
+final proof for engineering purposes by the owner's ruling of 2026-10-14, reaffirmed on 2026-10-15); session 0's first attempt was LOST at the carrier
 configuration; sessions 3 and 7 carried heartbeat-burst damage absorbed by rule v07; the transport stop-loss stands; the claim's
 scope is one die, one carrier, the content-bit class, F1, one operator and one cartographer rule.
