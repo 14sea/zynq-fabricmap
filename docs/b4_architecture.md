@@ -1,4 +1,4 @@
-# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1, host-only, 2026-10-16)
+# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.1, host-only, 2026-10-16)
 
 > **Standing: a draft architecture, not a preregistration and not a ruling.** Written under the
 > owner's authorisation of 2026-10-16 (unit 2a of the B4 pre-work: this one document, on the
@@ -12,6 +12,16 @@
 > prerequisite with no measurement evidence yet. Every number in this document is either
 > quoted from a named source or marked `<gate>` (to be fixed by unit 2b before it is measured).
 > Nothing here authorises any board contact.
+>
+> **Revision v0.1.1 (2026-10-16, the owner's HOLD on `cec6aac`, documents only):** P1 — INIT and
+> the set / reset value separated into two restore mechanisms with their own observation points,
+> which mechanism restores which state a condition the carrier must prove (§5.1, §5.2, A8); P1 — the
+> observability quantifier corrected: a positive control per semantic, discriminability judged per
+> address and per applicable context, uncovered and `unknown` reported (K9, A2); P1 — the primary
+> Δ named (O − R, search accounting), the H2 control bootstrap non-rejection restored, and an
+> operable interaction criterion (the four-corner index) written (§9); P2 — `observed_transition`
+> (and `evidence`) are not class-agnostic in v2 (§6); P2 — the certificate's mapping separated from
+> the hypothesised behaviour model (§4.4, §13).
 
 ## 0. The question, and why it is two studies
 
@@ -173,7 +183,7 @@ It does **not** prove:
 ### 4.3 The certificate's role in B4-FF
 
 A **reference answer invisible to the executing side** (§2), used by the unit-2b simulation
-(the fabric model and the oracle-map control) and by the post-session adjudicator (scoring the
+(the model of §4.4 — the certificate mapping plus the behaviour hypothesis — and the oracle-map control) and by the post-session adjudicator (scoring the
 frozen, hashed map; the B1 primary metrics — precision, recall, polarity errors, sample
 efficiency, confidence calibration, cold-boot replay, map-hash consistency — apply per address,
 with "polarity" now meaning the Z reading of §4.1). The certificate's **22 / 154 mine /
@@ -182,6 +192,21 @@ engineering holdout against *its* tuning; it is **not** B4's holdout. B4-FF's ho
 whole site instance, not consulted while the FF cartographer is developed — is fixed by the
 preregistration (unit 2c), and the preregistration says in one sentence why it is an
 engineering holdout and not a claim that the truth was unseen.
+
+### 4.4 The model: what the certificate supplies, and what is a hypothesis
+
+Every "model" in this document and in unit 2b is two things that must stay apart in every
+file, report and sentence:
+
+| | the **certificate mapping** | the **behaviour hypothesis** |
+|---|---|---|
+| what it is | per address: the feature name, the Z polarity reading, the site, the element (§4.1); per specimen: which design variant moved which bit | per storage element and per configuration value: the state machine the element is *assumed* to follow — the value after an initialisation event, the value after a user SR operation, whether CE gates capture, whether SR acts without an edge, transparency, the capturing edge |
+| source | `gate_runs/run_2026_08_05_ff/certificate.json`, the plan's attestation fields (plan §3) | written by unit 2b from the vendor's description of the primitives, **not** from any measurement of this line |
+| status | host-attested (§4.2) | **unverified on silicon**; a modelling assumption until the carrier-v2 unit demonstrates each row on the board under its own ruling |
+| what 2b's simulation can say | that the cartographer recovers the mapping *given* the hypothesis | nothing — a simulation under the hypothesis cannot confirm the hypothesis |
+
+A gate report that says "the model" without saying which of the two is meant, or that reads a
+PASS under the hypothesis as evidence that the fabric behaves so, is wrong by construction.
 
 ## 5. The observation contract for FF semantics — functional requirements, not RTL
 
@@ -197,27 +222,40 @@ later, separately authorised unit and is not sketched here.
 For every candidate the board must be able to perform, and the ledger to record, the
 following in order, with nothing of it computed on the host before the measurement:
 
-1. **Initial state** — the slice under test brought to a defined state before any clock:
-   the configuration written (link 1 as today: the host signs writability only), the fabric
-   readback hashing to the commit (link 3), then **a global or regional reset of the storage
-   elements under a stated discipline** (which reset, asserted how long, released when) so
-   that what is observed next is the configuration's power-up / reset behaviour and not the
-   previous candidate's leftover state.
-2. **Stimulus sequence** — a preregistered, seed-derivable sequence of `(clock-enable,
-   synchronous-set / reset, data)` vectors applied over `K` clock edges to every storage
-   element of the site, with the clock itself under the scorer's control (so that an inverted
-   clock, an enable that is or is not driven, a synchronous versus asynchronous reset and a
-   latch's transparency each produce a **distinguishable** observation at least once in the
-   sequence — the sequence's discriminating power is a 2b simulation result, not an assumption).
-3. **Readout** — the storage elements' outputs sampled at stated points of the sequence
-   (after each edge, and between edges for transparency), exposed **raw**: no comparison with
-   an expected value anywhere in the PL or the application before the record is written.
-4. **Restore** — the candidate undone and the base configuration re-established and read back
-   (link 3 again), **and the storage elements reset once more**, before the next candidate.
-5. **Isolation between candidates** — the record of candidate *n+1* must not depend on the
-   state candidate *n* left behind: the reset of step 1 is part of every candidate, the
-   stimulus sequence restarts from its seed, and the scorer's own state machine is returned
-   to idle; an audit recomputes the fitness from the raw observation alone (§5.3).
+1. **Configuration** — the candidate written (link 1 as today: the host signs writability
+   only) and the fabric readback hashing to the commit (link 3).
+2. **Initialisation event, and the init observation** — an event under a stated discipline
+   (which event, asserted how long, released when) after which the storage elements are read
+   **before any clock edge and with the user SR input de-asserted**: the *init readout*. Two
+   restore mechanisms exist on the primitives and **this document does not say which restores
+   what**: (i) an *initialisation event* — the configuration load itself, or an explicit global
+   set / reset event the carrier can raise — hypothesised to bring each element to its `INIT`
+   value; (ii) a *user SR operation* — the element's own set / reset input, applied at or
+   between edges — hypothesised to bring it to its `SRVAL`. Which mechanism restores which
+   state, on this die, is **a condition the carrier-v2 unit must demonstrate** (A8), with
+   positive controls per mechanism, before either observation is read as a semantic. Until
+   it is demonstrated, and on any carrier where an initialisation observation cannot be
+   established at all, every `ff_init` relation stays `unknown` (§5.2).
+3. **Stimulus sequence, with the SR observations inside it** — a preregistered, seed-derivable
+   sequence of `(clock-enable, user set / reset, data)` vectors applied over `K` clock edges
+   to every storage element of the site, with the clock under the scorer's control; the user
+   SR operations of (ii) are steps of this sequence, each followed by its own readout point
+   (the *SR readout*), so that the value an SR operation restores is observed separately from
+   the value the initialisation event left. The sequence must give an inverted clock, an
+   enable that is or is not driven, a synchronous versus asynchronous SR and a latch's
+   transparency each a **distinguishable** observation at least once — the sequence's
+   discriminating power is a 2b result under the behaviour hypothesis (§4.4), not an assumption.
+4. **Readout** — the storage elements' outputs sampled at stated points (the init readout,
+   after each edge, after each SR operation, and between edges for transparency), exposed
+   **raw**: no comparison with an expected value anywhere in the PL or the application before
+   the record is written; every readout carries which event or step preceded it.
+5. **Restore** — the candidate undone and the base configuration re-established and read back
+   (link 3 again), **and an initialisation event raised once more** (the same mechanism as
+   step 2, recorded as such), before the next candidate.
+6. **Isolation between candidates** — the record of candidate *n+1* must not depend on the
+   state candidate *n* left behind: the initialisation event of step 2 is part of every
+   candidate, the stimulus sequence restarts from its seed, and the scorer's own state machine
+   is returned to idle; an audit recomputes the fitness from the raw observation alone (§5.3).
 
 Everything the instrument's links already give — the signed ARM, the staging re-read, the
 twelve-frame readback, the nonce chain, the identity page, the watchdog — is kept unchanged;
@@ -226,14 +264,21 @@ sweep emits tables.
 
 ### 5.2 What the observation must be able to tell apart
 
-For each configuration semantic of the class, at least one preregistered stimulus / readout
-pair in the sequence under which the two values of the bit give different observations; the
-semantics are the certificate's seven attestation fields (plan §3) read as behaviours:
+The semantics are the certificate's seven attestation fields (plan §3) read as behaviours. The
+requirement has two levels, and the quantifiers matter: **for each semantic, at least one
+positive control** — an address which, under the certificate mapping and the behaviour
+hypothesis (§4.4), carries that semantic, and a preregistered stimulus / readout pair in the
+sequence under which the two values of that bit give different observations; and **for each
+address, for each semantic applicable to it** (an address is one bit and carries one semantic;
+a `ZINI` address is never asked to show a clock-mode effect), whether the sequence separates
+the two values — judged per address and per applicable context, with the addresses it does
+not cover reported as uncovered and their relations left `unknown`. K9 and A2 use exactly
+this wording.
 
 | semantic (plan §3 field) | behaviour to be distinguishable | observed where |
 |---|---|---|
-| `ff_init` (`ZINI`) | the value after reset, before any edge | step 1 readout |
-| `ff_srval` (`ZRST`) | the value after a synchronous set / reset edge | after an edge with SR asserted |
+| `ff_init` (`ZINI`) | the value after the initialisation event, before any edge, SR de-asserted — **only once A8 has shown which event restores INIT** | the init readout (§5.1 step 2) |
+| `ff_srval` (`ZRST`) | the value after a user SR operation | the SR readout (§5.1 step 3) |
 | `ce_mode` (`CEUSEDMUX`) | whether the enable input gates the capture | an edge with CE de-asserted |
 | `sr_mode` (`SRUSEDMUX`) | whether the SR input has any effect | an edge with SR asserted vs not |
 | `sr_kind` (`FFSYNC`) | whether SR acts without an edge | SR asserted between edges |
@@ -242,7 +287,9 @@ semantics are the certificate's seven attestation fields (plan §3) read as beha
 
 A semantic for which **no** pair in the sequence separates the two values on a given address
 is not decoded: the map keeps `state = unknown` for that relation (§6) and the ledger records
-that the sequence did not discriminate. Decoding by assumption ("a bit that did nothing must
+that the sequence did not discriminate. `ff_init` in particular stays `unknown` on every
+address while the restore mechanisms are undemonstrated (A8), however clean the init readout
+looks: an init readout that merely *agrees* with the hypothesis is not a demonstration. Decoding by assumption ("a bit that did nothing must
 be the enable mux") is forbidden; the B1 rule "a relation is a claim only when state is
 decoded or confirmed; every claim must carry an observed transition"
 (`schemas/self_map_v2.schema.json`, description) carries over unchanged.
@@ -272,9 +319,11 @@ Stated now so that a later design unit is judged against something written first
 
 - **A1** the observation of §5.1 is a single transaction per candidate under the instrument's
   existing links, watchdog and stop-loss, with no new host-side computation before the record;
-- **A2** every semantic of §5.2 is distinguishable on at least one address of the fabric
-  *model* (unit 2b) and, under the ruling that first loads the carrier, on the board for the
-  positive-control addresses the preregistration names — before any mapping session;
+- **A2** the §5.2 quantifiers hold: for each semantic a positive-control address under the
+  model of §4.4 (unit 2b) and, under the ruling that first loads the carrier, on the board for
+  the positive-control addresses the preregistration names — before any mapping session;
+  per address and per applicable context the discriminability is reported, the uncovered
+  addresses named and left `unknown`;
 - **A3** the raw observation validates against a schema that forbids an expected value;
 - **A4** the readback contract (links 2–3), the identity page and the `VARIANT` word are
   extended, not replaced, and the application refuses any other carrier;
@@ -283,7 +332,13 @@ Stated now so that a later design unit is judged against something written first
 - **A6** the bench (iverilog) reproduces every scenario of the B1 carrier's bench that still
   applies and adds one per row of §5.2;
 - **A7** the MMIO allowlist of the application matches the RTL's AXI-Lite decode, reported as
-  mismatches only (the standing check of this line).
+  mismatches only (the standing check of this line);
+- **A8** the two restore mechanisms of §5.1 step 2 are demonstrated on the board, each with a
+  positive control: which event restores an element to its `INIT` value and which operation
+  restores it to its `SRVAL`, under which conditions (SR de-asserted, no edge pending); an
+  element for which neither is demonstrated keeps `ff_init` / `ff_srval` `unknown`, and a
+  carrier on which no initialisation observation can be established is accepted only with
+  `ff_init` excluded from the semantics it claims to observe.
 
 ## 6. The map — `self_map` v2 and the contracts the FF class needs
 
@@ -296,7 +351,9 @@ from the schema itself:
 | `interaction_edges[].kind` | `same_lut` \| `cross_lut` | the FF interactions of interest are within a slice (an enable or a reset mode shared by eight elements) and between a storage element and the LUT feeding it |
 | `code_probe_seqs` | exactly 9 integers | nine code probes are B1's design for 6 LUTs × 64 entries; the FF probe design is 2b's to fix and its count is not nine by construction |
 | `universe.safety_class` | `content` \| `routing` | sufficient — the FF class is `content` |
-| `confidence`, `state`, `observed_transition`, `evidence`, `anomalies`, `binding` | class-agnostic | kept as they are |
+| `entries[].observed_transition` | `null` or exactly `{base: 0, set: 1}` (both `const`): "what the board actually saw at the claimed position: 0 in the base, 1 with the address set" | a single lit position under a single-address probe is B1's observation; an FF observation is a *trace* — the stimulus applied, the initialisation / SR context it was taken in, the outputs before and after — and must be expressible as such, with evidence references, not as two constants |
+| `entries[].evidence` | exactly `{code_probe_seqs: [...], confirm_seq}` | B1's probe design (code probes + one confirming single-address probe); the FF evidence is the record seqs of the observation steps that separated the two values, per context |
+| `confidence`, `state`, `anomalies`, `binding` | class-agnostic | kept as they are |
 
 What B4-FF needs, as **new contracts** (names provisional; fixed by unit 2b with the probe
 design, so that the schema is written against a probe plan and not before it):
@@ -308,7 +365,12 @@ design, so that the schema is written against a probe plan and not before it):
   feeds a storage element), and the cross-slice edge kept for anomalies;
 - a probe-sequence record whose length is the plan's, with the stimulus sequence's seed and
   the number of edges recorded, not a fixed count;
-- the observation record of §5.3 referenced from `evidence` by digest.
+- an `observed_transition` for the class: the stimulus step (or initialisation event) under
+  which the value separated, the context (initialisation / SR state, CE, the edge), the output
+  trace before and after (or their digests), and the record seqs that carry the raw trace;
+  `null` while the state is `unknown`;
+- an `evidence` block naming the observation steps per context (the FF analogue of
+  `code_probe_seqs` / `confirm_seq`), and the observation record of §5.3 referenced by digest.
 
 **Version strategy.** v2 is frozen by three pin tables and is not modified. The FF contracts
 go into a **new schema file** (working name `schemas/self_map_v3.schema.json` or
@@ -371,22 +433,32 @@ change is recorded as a revision of this document with the reason, and the gate 
 re-reported under the new commit — never silently" (`docs/b3_architecture.md` §9). **A
 threshold is never derived from the run it judges.**
 
+**The primary and the secondary statistic, and the accounting (B3's, named here so that 2b
+cannot pick):** paired by landscape seed *r*, the **primary** `Δ1_r = best_O(r) − best_R(r)` at
+`B*` under **search accounting** (R and O charged nothing; the online arm pays its map cost in
+time, not in evaluations); the **secondary outcome** `Δ2_r = best_O(r) − end_to_end_F(r)` at
+total budget `T = B*`, F's own best-so-far trace charged the mapping cost of the frozen map's
+build, from the same F run — reported, no threshold (`docs/b3_architecture.md` §9). The
+decision statistic for each is the one-sided exact sign test at α = 0.05, ties excluded from
+*n* and counted (`b2_gate.sign_test_p`, by copy). The frozen arm's own benefit over R
+(`best_F − best_R`, B2's primary) is reported next to Δ1 as the dose the online arm approaches.
+
 | id | criterion | method (fixed) | threshold |
 |---|---|---|---|
 | K1 non-saturation | arm Ω's 95th percentile of best-so-far at `B*` below the ceiling; arm R's median at `B*` above the base | B2 G1's computation | `<gate>` |
-| K2 not a definitional lock | var(Δ_r) > 0 at `B*`; positives and negatives of Δ both present at one grid budget | B3 H2's computation, one budget | `<gate>` |
+| K2 not a definitional lock | var(Δ1_r) > 0 at `B*`; there exists a grid budget B at which both `positives(Δ1(B)) > 0` and `negatives(Δ1(B)) > 0` (one condition, within one budget); **and** the same decision procedure applied to control X's pairs does **not** reject H0 in ≥ `<gate>` of 1 000 bootstrap experiments of size N (`b2_gate.bootstrap_reject_rate`, seed 7, by copy — B3's: ≥ 90 %) | B3 H2, in full | `<gate>` |
 | K3 wrong maps do not profit | D's and X's mean Δ against R as a fraction of F's / O's; their sign tests not significant over S | B2 G3 / B3 H3 | `<gate>` |
 | K4 oracle headroom | Ω's median at `B*` below the ceiling by a margin; F's mean Δ as a fraction of Ω's | B2 G4 | `<gate>` |
 | K5 effect, power, N | Cohen's d of {Δ_r}; `N(B)` by `b2_gate.required_pairs`'s ascending scan (1 000 bootstrap experiments, seed `1 + N`), the sign test by `b2_gate.sign_test_p` — both **by copy into the B4 namespace with their digests recorded**, never by import across the pinned boundary; the session cost `N × arms × B*` under a stated cap | B2 G5 / B3 H5 | `<gate>` |
 | K6 no fixed-seed lock | S ≥ `<gate>`; N ≥ `<gate>`; board seeds under a B4 label with every archived set excluded | B2 G6 / B3 H6 | `<gate>` |
-| K7 the map is a map | over S: wrong decodes and anomalies in the ideal model; the median decoded count at `B*`; `unknown` count reported, never forced to zero | B3 H7, extended by the `unknown` rule of §5.2 | `<gate>` |
+| K7 the map is a map | over S: wrong decodes and anomalies in the model of §4.4 (under the behaviour hypothesis); the median decoded count at `B*`; `unknown` count reported, never forced to zero | B3 H7, extended by the `unknown` rule of §5.2 | `<gate>` |
 | K8 ledger replay | every map version and decode reproduced from the ledger; the raw observation reproduces the fitness | B3 H8 + §5.3 | holds |
-| K9 observability | every semantic of §5.2 distinguishable on every address of the model under the preregistered stimulus sequence; the fraction of addresses per semantic reported | new; §5.2 | `<gate>` |
-| K10 real interaction | the fraction of landscape seeds on which the score depends jointly on ≥ 2 elements or modes | new; §7 | `<gate>` |
+| K9 observability | (a) for each of the seven semantics, at least one positive-control address on which the preregistered stimulus sequence separates the two values under the model of §4.4; (b) per address and per applicable context (§5.2), the separation judged and the fraction of addresses covered per semantic reported, the uncovered addresses named and their relations `unknown`; `ff_init` reported separately as "conditional on A8" | new; §5.2 — the same wording as A2 | `<gate>` (per-semantic coverage fractions) |
+| K10 real interaction | for each landscape seed and each pair (a, b) of elements or modes whose **four corner configurations** `00, 01, 10, 11` are all **legal** under the class's composition rule (§4.2), the **four-corner index** `I_ab = f11 − f10 − f01 + f00` computed from the landscape's fitness on the model of §4.4; a pair with an illegal corner is recorded as *not comparable* with the corner named, excluded from the denominator and counted; the seed is **interacting** when some comparable pair has `|I_ab| > <gate>` (a stated fraction of the fitness range), **additive** when every comparable pair has `I_ab = 0` (an additive score `f = a + b` gives `I = 0` on every pair and fails this row); the criterion is the fraction of seeds that are interacting, with the fraction having no comparable pair at all reported | new; §7 | `<gate>` |
 
-The primary statistic and the budget rule are B3's in form (Δ paired by landscape at `B*`,
-the one-sided exact sign test, `B*` = the grid budget with the smallest session cost among
-budgets at which K1 holds and `N(B)` exists); the secondary outcome and the diagnostic rows
+The budget rule is B3's: `B*` = the grid budget with the smallest session cost `N(B) × 3 × B`
+(three arms R, F, O charged at `B`) among budgets at which K1 holds and `N(B)` exists, ties to
+the smaller budget; every other row is evaluated at `B*`. The diagnostic rows (B3's H9 form)
 are the preregistration's to add. A row that fails is reported, not tuned.
 
 ## 10. Provenance, paths and proofs — rules B4 adopts from the repair of 2026-10-15/16
@@ -456,7 +528,7 @@ evidence** and is listed as a prerequisite, not described as a protection.
 
 | unit | deliverable | gate |
 |---|---|---|
-| 2b | `b4/host/b4_sim.py`, `b4/tests/`, the FF fabric model from the certificate, the stimulus-sequence design, the K1–K10 thresholds written into §9 **before** the run, `docs/b4_gate_report.md`, the v3 map schema draft | the thresholds committed before measurement; the report states every row PASS / FAIL |
+| 2b | `b4/host/b4_sim.py`, `b4/tests/`; **two separate inputs kept apart in code, files and the report** (§4.4): the *certificate mapping* (address ↔ element, semantic, polarity reading, read from `gate_runs/run_2026_08_05_ff/certificate.json`) and the *behaviour hypothesis* (the per-element state machine under each configuration value, written from the primitives' description and marked unverified); the stimulus-sequence design; the K1–K10 thresholds written into §9 **before** the run; `docs/b4_gate_report.md` stating every result as "under the behaviour hypothesis"; the v3 map schema draft (§6) | the thresholds committed before measurement; the report states every row PASS / FAIL and never reads a PASS as evidence about the fabric |
 | 2c | `docs/b4_preregistration.md` DRAFT (B4-FF: claim, pins, prediction, metrics, falsifiers, sessions and rulings, compatibility, lifecycle, §9 rule; B4-R: prerequisites and prohibitions only) | the owner's review; the holdout and the universe fixed by whole site instance |
 | carrier v2 design | RTL, bench, XDC, isolation — against §5.5 A1–A7 | a separate unit after 2c |
 | 2d | provisioning and the supply measurements (§11) | board work; the owner's rulings per step |
