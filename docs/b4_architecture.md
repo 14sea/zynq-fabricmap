@@ -1,4 +1,4 @@
-# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.1, host-only, 2026-10-16)
+# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.2, host-only, 2026-10-16; revised 2026-10-17)
 
 > **Standing: a draft architecture, not a preregistration and not a ruling.** Written under the
 > owner's authorisation of 2026-10-16 (unit 2a of the B4 pre-work: this one document, on the
@@ -22,6 +22,13 @@
 > operable interaction criterion (the four-corner index) written (§9); P2 — `observed_transition`
 > (and `evidence`) are not class-agnostic in v2 (§6); P2 — the certificate's mapping separated from
 > the hypothesised behaviour model (§4.4, §13).
+>
+> **Revision v0.1.2 (2026-10-17, the owner's engineering PASS on `24b2e21` with four corrections, documents
+> only):** §2 cites §5.2 for `unknown`; §13 cites A1–A8; K5 names `{Δ1_r}`; K10 — a seed with no
+> comparable pair is *not assessable*, kept in the denominator of all S and counted, never judged
+> additive; a seed whose comparable pairs all give `I = 0` is "no interaction seen among the tested
+> comparisons", not "every context additive". The PASS covers the architecture document, not any gate
+> result or hardware observation.
 
 ## 0. The question, and why it is two studies
 
@@ -99,7 +106,7 @@ Applied to B4-FF, two things are added, both consequences rather than new rules:
 2. **The observation is raw before it is a fitness.** For a sequential class the board must
    first *observe* (§5) and only then *score*; the two records are separate in the ledger, so
    that an audit can recompute the fitness from the raw observation and a semantic that the
-   observation cannot resolve stays `unknown` (§5.4) instead of being decoded by assumption.
+   observation cannot resolve stays `unknown` (§5.2) instead of being decoded by assumption.
 
 ## 3. B4-R — the routing study: question, prerequisites, prohibitions (nothing else here)
 
@@ -449,12 +456,12 @@ decision statistic for each is the one-sided exact sign test at α = 0.05, ties 
 | K2 not a definitional lock | var(Δ1_r) > 0 at `B*`; there exists a grid budget B at which both `positives(Δ1(B)) > 0` and `negatives(Δ1(B)) > 0` (one condition, within one budget); **and** the same decision procedure applied to control X's pairs does **not** reject H0 in ≥ `<gate>` of 1 000 bootstrap experiments of size N (`b2_gate.bootstrap_reject_rate`, seed 7, by copy — B3's: ≥ 90 %) | B3 H2, in full | `<gate>` |
 | K3 wrong maps do not profit | D's and X's mean Δ against R as a fraction of F's / O's; their sign tests not significant over S | B2 G3 / B3 H3 | `<gate>` |
 | K4 oracle headroom | Ω's median at `B*` below the ceiling by a margin; F's mean Δ as a fraction of Ω's | B2 G4 | `<gate>` |
-| K5 effect, power, N | Cohen's d of {Δ_r}; `N(B)` by `b2_gate.required_pairs`'s ascending scan (1 000 bootstrap experiments, seed `1 + N`), the sign test by `b2_gate.sign_test_p` — both **by copy into the B4 namespace with their digests recorded**, never by import across the pinned boundary; the session cost `N × arms × B*` under a stated cap | B2 G5 / B3 H5 | `<gate>` |
+| K5 effect, power, N | Cohen's d of {Δ1_r}; `N(B)` by `b2_gate.required_pairs`'s ascending scan (1 000 bootstrap experiments, seed `1 + N`), the sign test by `b2_gate.sign_test_p` — both **by copy into the B4 namespace with their digests recorded**, never by import across the pinned boundary; the session cost `N × arms × B*` under a stated cap | B2 G5 / B3 H5 | `<gate>` |
 | K6 no fixed-seed lock | S ≥ `<gate>`; N ≥ `<gate>`; board seeds under a B4 label with every archived set excluded | B2 G6 / B3 H6 | `<gate>` |
 | K7 the map is a map | over S: wrong decodes and anomalies in the model of §4.4 (under the behaviour hypothesis); the median decoded count at `B*`; `unknown` count reported, never forced to zero | B3 H7, extended by the `unknown` rule of §5.2 | `<gate>` |
 | K8 ledger replay | every map version and decode reproduced from the ledger; the raw observation reproduces the fitness | B3 H8 + §5.3 | holds |
 | K9 observability | (a) for each of the seven semantics, at least one positive-control address on which the preregistered stimulus sequence separates the two values under the model of §4.4; (b) per address and per applicable context (§5.2), the separation judged and the fraction of addresses covered per semantic reported, the uncovered addresses named and their relations `unknown`; `ff_init` reported separately as "conditional on A8" | new; §5.2 — the same wording as A2 | `<gate>` (per-semantic coverage fractions) |
-| K10 real interaction | for each landscape seed and each pair (a, b) of elements or modes whose **four corner configurations** `00, 01, 10, 11` are all **legal** under the class's composition rule (§4.2), the **four-corner index** `I_ab = f11 − f10 − f01 + f00` computed from the landscape's fitness on the model of §4.4; a pair with an illegal corner is recorded as *not comparable* with the corner named, excluded from the denominator and counted; the seed is **interacting** when some comparable pair has `|I_ab| > <gate>` (a stated fraction of the fitness range), **additive** when every comparable pair has `I_ab = 0` (an additive score `f = a + b` gives `I = 0` on every pair and fails this row); the criterion is the fraction of seeds that are interacting, with the fraction having no comparable pair at all reported | new; §7 | `<gate>` |
+| K10 real interaction | for each landscape seed and each pair (a, b) of elements or modes whose **four corner configurations** `00, 01, 10, 11` are all **legal** under the class's composition rule (§4.2), the **four-corner index** `I_ab = f11 − f10 − f01 + f00` computed from the landscape's fitness on the model of §4.4; a pair with an illegal corner is recorded as *not comparable* with the corner named, excluded from the pair denominator and counted. Per seed, three outcomes: **interacting** when some comparable pair has `|I_ab| > <gate>` (a stated fraction of the fitness range); **no interaction seen among the tested comparisons** when every comparable pair has `I_ab = 0` — a statement about the comparisons made, not that every context is additive (an additive score `f = a + b` gives `I = 0` on every pair and lands here); **not assessable** when the seed has no comparable pair at all — never counted as additive. The criterion is the fraction of interacting seeds over **all S seeds** (the not-assessable seeds stay in the denominator), with the counts of the three outcomes reported | new; §7 | `<gate>` |
 
 The budget rule is B3's: `B*` = the grid budget with the smallest session cost `N(B) × 3 × B`
 (three arms R, F, O charged at `B`) among budgets at which K1 holds and `N(B)` exists, ties to
@@ -530,7 +537,7 @@ evidence** and is listed as a prerequisite, not described as a protection.
 |---|---|---|
 | 2b | `b4/host/b4_sim.py`, `b4/tests/`; **two separate inputs kept apart in code, files and the report** (§4.4): the *certificate mapping* (address ↔ element, semantic, polarity reading, read from `gate_runs/run_2026_08_05_ff/certificate.json`) and the *behaviour hypothesis* (the per-element state machine under each configuration value, written from the primitives' description and marked unverified); the stimulus-sequence design; the K1–K10 thresholds written into §9 **before** the run; `docs/b4_gate_report.md` stating every result as "under the behaviour hypothesis"; the v3 map schema draft (§6) | the thresholds committed before measurement; the report states every row PASS / FAIL and never reads a PASS as evidence about the fabric |
 | 2c | `docs/b4_preregistration.md` DRAFT (B4-FF: claim, pins, prediction, metrics, falsifiers, sessions and rulings, compatibility, lifecycle, §9 rule; B4-R: prerequisites and prohibitions only) | the owner's review; the holdout and the universe fixed by whole site instance |
-| carrier v2 design | RTL, bench, XDC, isolation — against §5.5 A1–A7 | a separate unit after 2c |
+| carrier v2 design | RTL, bench, XDC, isolation — against §5.5 A1–A8 | a separate unit after 2c |
 | 2d | provisioning and the supply measurements (§11) | board work; the owner's rulings per step |
 
 ## 14. Files and references
