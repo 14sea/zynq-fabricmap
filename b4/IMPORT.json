@@ -1,0 +1,94 @@
+{
+ "external_sources": [
+  {
+   "path": "FDRE.v",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "e2965e4b5174bd8de84b82e89a7b4ea5df36d8715c4f585580c16b8e6d9aa80d",
+   "used_by": "b4/hypothesis/ff_behaviour_v0.1.json (vendor_primitive)"
+  },
+  {
+   "path": "FDSE.v",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "055468fd8372bcf67f359ec4c496c966bae1fdd5e8a6aaa71dd658ae99c69c68",
+   "used_by": "b4/hypothesis/ff_behaviour_v0.1.json (vendor_primitive)"
+  },
+  {
+   "path": "FDCE.v",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "74d30d7c788e7db47f12b92d5b4b57b707974a0962708b309e4cc081d5f98b04",
+   "used_by": "b4/hypothesis/ff_behaviour_v0.1.json (vendor_primitive)"
+  },
+  {
+   "path": "FDPE.v",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "4ec91e1101288ae35ebda302ed5e31b670f5bb5b16cd48922d1cbf891407bcfc",
+   "used_by": "b4/hypothesis/ff_behaviour_v0.1.json (vendor_primitive)"
+  },
+  {
+   "path": "LDCE.v",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "882344674b9669df2039bd417a90e1a549872c53488823346370df9c3cfbba05",
+   "used_by": "b4/hypothesis/ff_behaviour_v0.1.json (vendor_primitive)"
+  },
+  {
+   "path": "LDPE.v",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "8b63ec584c90cf02ef77c77268162b8852272abffe0175feedca1770ded5ec7f",
+   "used_by": "b4/hypothesis/ff_behaviour_v0.1.json (vendor_primitive)"
+  }
+ ],
+ "files": {
+  "b4/host/b4_ff_hypothesis.py": {
+   "kind": "new",
+   "note": "the behaviour hypothesis loader: shape, the re-hash of every named source, the decode through the hypothesis's own readings, the swap fixtures.",
+   "role": "host model",
+   "sha256": "61cfa77ba6b4daf389b8d3933bf2ab075341d95795695c3a6b48693c95007df9"
+  },
+  "b4/host/b4_ff_mapping.py": {
+   "kind": "new",
+   "note": "the certificate mapping of one site, read from gate_runs/run_2026_08_05_ff/certificate.json and held to its specimen pairs; the project's bit readings (plan section 2) checked against the certificate, never inferred from names.",
+   "role": "host model",
+   "sha256": "8f949493ef789ac5735bfdf400cd63428b9a3485343d53064f2dac52a287499b"
+  },
+  "b4/host/b4_ff_model.py": {
+   "kind": "new",
+   "note": "the simulated fabric: configuration + stimulus -> observation trace under a mapping and a hypothesis passed in separately; starts every observation from nothing; fixtures truth / permuted / dropout and the six hypothesis swaps.",
+   "role": "host model",
+   "sha256": "43b1f9e5262e7a14824b6f59ef144ddf0352bef52bef3c73f43d01e006311a70"
+  },
+  "b4/hypothesis/ff_behaviour_v0.1.json": {
+   "kind": "new",
+   "note": "status unverified; sources by kind \u2014 the vendor's UNISIM models by root + path + sha256 + the lines adopted, the certificate by path + sha256, the project's decode assumptions; the eleven behaviour flags; valid_configuration / applicable_semantics / observation_context kept apart.",
+   "role": "hypothesis (data)",
+   "sha256": "40e4102ab1e264b6187f80978f2a65f9149293ef4cbabf333bcd7a31a6ccc858"
+  },
+  "b4/tests/test_b4_ff_hypothesis.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "9498d2bdb0ecad2e8932f34a62c17241aacb4efa261bf15fdfa39b3e4873a45f"
+  },
+  "b4/tests/test_b4_ff_mapping.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "9e140a4476b76e3446490ae71fee3e00036cd6fa1544096e106106a2cf458124"
+  },
+  "b4/tests/test_b4_ff_model.py": {
+   "kind": "new",
+   "note": "every expected trace derived by hand from the hypothesis's adopted lines, never by running the model.",
+   "role": "test",
+   "sha256": "7b6413a48c24796e882bd95c9bec61bf8b40a073ee73d41b83c58913a9336488"
+  }
+ },
+ "repository_inputs": [
+  {
+   "path": "gate_runs/run_2026_08_05_ff/certificate.json",
+   "sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef",
+   "used_by": "b4/host/b4_ff_mapping.py; b4/hypothesis/ff_behaviour_v0.1.json (certificate_mapping)"
+  }
+ ],
+ "schema": "b4_import",
+ "schema_version": "1.0.0",
+ "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) \u2014 none of the latter yet; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
+ "source": "docs/b4_architecture.md v0.1.3; the owner's authorisation of unit 2b-1 (2026-10-17)",
+ "stage": "B4 pre-work, unit 2b-1 (the model contract)"
+}

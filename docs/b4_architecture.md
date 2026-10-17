@@ -1,4 +1,4 @@
-# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.2, host-only, 2026-10-16; revised 2026-10-17)
+# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.3, host-only, 2026-10-16; revised 2026-10-17)
 
 > **Standing: a draft architecture, not a preregistration and not a ruling.** Written under the
 > owner's authorisation of 2026-10-16 (unit 2a of the B4 pre-work: this one document, on the
@@ -29,6 +29,16 @@
 > additive; a seed whose comparable pairs all give `I = 0` is "no interaction seen among the tested
 > comparisons", not "every context additive". The PASS covers the architecture document, not any gate
 > result or hardware observation.
+>
+> **Revision v0.1.3 (2026-10-17, unit 2b-1, the owner's three contract corrections):** the sources of the
+> behaviour hypothesis are the vendor's UNISIM models, recorded by root, path and digest, kept apart from the
+> certificate mapping and from the project's own decode assumptions (§4.4); `valid_configuration`,
+> `applicable_semantics` and `observation_context` are three different things (§5.0); the context is
+> complete enough to replay a readout (§5.1); K10's four-corner comparisons fix everything but (a, b) (§9);
+> a seed anchor fixed once with every exploration seed and failure retained — determinism from HEAD is not
+> a protection against selection (§9). Unit 2b-1 delivered `b4/host/b4_ff_mapping.py`,
+> `b4/host/b4_ff_hypothesis.py`, `b4/hypothesis/ff_behaviour_v0.1.json`, `b4/host/b4_ff_model.py` and
+> their tests (§13).
 
 ## 0. The question, and why it is two studies
 
@@ -208,7 +218,7 @@ file, report and sentence:
 | | the **certificate mapping** | the **behaviour hypothesis** |
 |---|---|---|
 | what it is | per address: the feature name, the Z polarity reading, the site, the element (§4.1); per specimen: which design variant moved which bit | per storage element and per configuration value: the state machine the element is *assumed* to follow — the value after an initialisation event, the value after a user SR operation, whether CE gates capture, whether SR acts without an edge, transparency, the capturing edge |
-| source | `gate_runs/run_2026_08_05_ff/certificate.json`, the plan's attestation fields (plan §3) | written by unit 2b from the vendor's description of the primitives, **not** from any measurement of this line |
+| source | `gate_runs/run_2026_08_05_ff/certificate.json`, the plan's attestation fields (plan §3) | **three kinds, listed per entry in `b4/hypothesis/ff_behaviour_v0.1.json` `sources`**: (1) the vendor's UNISIM simulation models — `FDRE.v`, `FDSE.v`, `FDCE.v`, `FDPE.v`, `LDCE.v`, `LDPE.v` under the root `/home/test/Xilinx/2025.2/data/verilog/src/unisims` — each by path, sha256 and the lines adopted (the GSR initialisation, the edge and level rules, the latch UDP table); (2) the certificate mapping, by path and sha256; (3) the project's own decode assumptions (the Z readings, the primitive-selection table, the pin correspondence, the initialisation event modelled as GSR). Nothing of (1)–(3) is a measurement of this line |
 | status | host-attested (§4.2) | **unverified on silicon**; a modelling assumption until the carrier-v2 unit demonstrates each row on the board under its own ruling |
 | what 2b's simulation can say | that the cartographer recovers the mapping *given* the hypothesis | nothing — a simulation under the hypothesis cannot confirm the hypothesis |
 
@@ -223,6 +233,21 @@ LUT. An FF configuration bit has no truth table; its effect appears only across 
 resets and time. A **carrier v2 scorer** is therefore required, and this section states what
 it must do and how it will be accepted — the design (RTL, timing, placement) belongs to a
 later, separately authorised unit and is not sketched here.
+
+### 5.0 Three contracts that are not one: `valid_configuration`, `applicable_semantics`, `observation_context`
+
+The hypothesis file carries them as three separate blocks, and the model and every later tool keep them
+apart:
+
+| contract | what it answers | status of what it says |
+|---|---|---|
+| `valid_configuration` | which assignments of the 21 bits the **model accepts as its domain** (v0.1: all of them) | a domain definition — never a statement that a configuration is legal to build, safe to write, or has been observed |
+| `applicable_semantics` | which relations **exist** for an address under a configuration (under a latch the x5FF elements are not storage elements, so their `ff_init` / `ff_srval` are *not applicable* — distinct from `unknown`; a latch has no `sr_kind`) | a model assumption drawn from `docs/ff_latch_probe.md`; a changed context is not an illegal configuration |
+| `observation_context` | what every readout must carry so that it can be replayed from the trace alone (§5.1) | a recording requirement |
+
+The legal-composition question of §4.2 (which configurations may be written to silicon) is none of these
+three; it is a later, separately stated rule of the preregistration (unit 2c), and no "accepted by the model"
+is ever read as "legal".
 
 ### 5.1 One observation, as a sequence the board can replay
 
@@ -268,6 +293,15 @@ Everything the instrument's links already give — the signed ARM, the staging r
 twelve-frame readback, the nonce chain, the identity page, the watchdog — is kept unchanged;
 the new scorer sits where the 64-vector sweep sits now and emits an observation where the
 sweep emits tables.
+
+**The context, completely.** A readout that cannot be replayed is not an observation. Every readout record
+carries: the step index and kind (initialisation event or input / clock step); the previous event
+(`none` / `init` / `edge` / `level`); the slice clock before and after and the edge it made; **per element,
+the edge in its physical clock** (the slice clock through the decoded inversion); the `ce`, `sr` and `d`
+vectors applied; **Q before and Q after** per element; and the applicability of each element. The trace
+header carries the configuration (and its digest), the initial state (clock low, inputs low, Q never
+initialised), the stimulus sequence, the mapping's certificate digest and the hypothesis's digest and
+version. The model's trace of unit 2b-1 is this record (`b4/host/b4_ff_model.py`).
 
 ### 5.2 What the observation must be able to tell apart
 
@@ -461,12 +495,20 @@ decision statistic for each is the one-sided exact sign test at α = 0.05, ties 
 | K7 the map is a map | over S: wrong decodes and anomalies in the model of §4.4 (under the behaviour hypothesis); the median decoded count at `B*`; `unknown` count reported, never forced to zero | B3 H7, extended by the `unknown` rule of §5.2 | `<gate>` |
 | K8 ledger replay | every map version and decode reproduced from the ledger; the raw observation reproduces the fitness | B3 H8 + §5.3 | holds |
 | K9 observability | (a) for each of the seven semantics, at least one positive-control address on which the preregistered stimulus sequence separates the two values under the model of §4.4; (b) per address and per applicable context (§5.2), the separation judged and the fraction of addresses covered per semantic reported, the uncovered addresses named and their relations `unknown`; `ff_init` reported separately as "conditional on A8" | new; §5.2 — the same wording as A2 | `<gate>` (per-semantic coverage fractions) |
-| K10 real interaction | for each landscape seed and each pair (a, b) of elements or modes whose **four corner configurations** `00, 01, 10, 11` are all **legal** under the class's composition rule (§4.2), the **four-corner index** `I_ab = f11 − f10 − f01 + f00` computed from the landscape's fitness on the model of §4.4; a pair with an illegal corner is recorded as *not comparable* with the corner named, excluded from the pair denominator and counted. Per seed, three outcomes: **interacting** when some comparable pair has `|I_ab| > <gate>` (a stated fraction of the fitness range); **no interaction seen among the tested comparisons** when every comparable pair has `I_ab = 0` — a statement about the comparisons made, not that every context is additive (an additive score `f = a + b` gives `I = 0` on every pair and lands here); **not assessable** when the seed has no comparable pair at all — never counted as additive. The criterion is the fraction of interacting seeds over **all S seeds** (the not-assessable seeds stay in the denominator), with the counts of the three outcomes reported | new; §7 | `<gate>` |
+| K10 real interaction | for each landscape seed and each pair (a, b) of elements or modes whose **four corner configurations** `00, 01, 10, 11` are all **legal** under the class's composition rule (§4.2), the **four-corner index** `I_ab = f11 − f10 − f01 + f00` computed from the landscape's fitness on the model of §4.4 — the four corners differing in (a, b) **only**: every other configuration bit, the initial state (the same initialisation event) and the stimulus sequence are held fixed across the four, and the fixed values are recorded with the index; a pair with an illegal corner is recorded as *not comparable* with the corner named, excluded from the pair denominator and counted. Per seed, three outcomes: **interacting** when some comparable pair has `|I_ab| > <gate>` (a stated fraction of the fitness range); **no interaction seen among the tested comparisons** when every comparable pair has `I_ab = 0` — a statement about the comparisons made, not that every context is additive (an additive score `f = a + b` gives `I = 0` on every pair and lands here); **not assessable** when the seed has no comparable pair at all — never counted as additive. The criterion is the fraction of interacting seeds over **all S seeds** (the not-assessable seeds stay in the denominator), with the counts of the three outcomes reported | new; §7 | `<gate>` |
 
 The budget rule is B3's: `B*` = the grid budget with the smallest session cost `N(B) × 3 × B`
 (three arms R, F, O charged at `B`) among budgets at which K1 holds and `N(B)` exists, ties to
 the smaller budget; every other row is evaluated at `B*`. The diagnostic rows (B3's H9 form)
 are the preregistration's to add. A row that fails is reported, not tuned.
+
+**Seeds, and what determinism does not buy.** The gate's seeds are derived by the line's rule from a label
+and a **seed anchor fixed once**, in the same commit that fixes the thresholds, and recorded in the gate
+report; every exploration seed set (`b4-sim`) and every failed, aborted or superseded run is retained under
+`evidence/b4/sim/` with its seeds, so that the gate's exclusion set and the record of what was tried are
+both complete. That a derivation from a commit is deterministic is **not** a protection against selecting
+a favourable seed set — a commit can be re-made — and is not claimed as one; the protection is the fixed
+anchor, the retained record and the owner's review of the thresholds commit before the gate runs.
 
 ## 10. Provenance, paths and proofs — rules B4 adopts from the repair of 2026-10-15/16
 
@@ -535,13 +577,17 @@ evidence** and is listed as a prerequisite, not described as a protection.
 
 | unit | deliverable | gate |
 |---|---|---|
-| 2b | `b4/host/b4_sim.py`, `b4/tests/`; **two separate inputs kept apart in code, files and the report** (§4.4): the *certificate mapping* (address ↔ element, semantic, polarity reading, read from `gate_runs/run_2026_08_05_ff/certificate.json`) and the *behaviour hypothesis* (the per-element state machine under each configuration value, written from the primitives' description and marked unverified); the stimulus-sequence design; the K1–K10 thresholds written into §9 **before** the run; `docs/b4_gate_report.md` stating every result as "under the behaviour hypothesis"; the v3 map schema draft (§6) | the thresholds committed before measurement; the report states every row PASS / FAIL and never reads a PASS as evidence about the fabric |
+| 2b-1 (**delivered**, this revision) | `b4/host/b4_ff_mapping.py` (the certificate mapping of `SLICE_X2Y25`, 21 addresses / 22 names, held to the specimen pairs), `b4/hypothesis/ff_behaviour_v0.1.json` + `b4/host/b4_ff_hypothesis.py` (the behaviour hypothesis: sources by kind with digests, the eleven behaviour flags, the decode readings, the three contracts of §5.0), `b4/host/b4_ff_model.py` (the fabric: configuration + stimulus → trace under mapping and hypothesis passed in separately; the fixtures truth / permuted / dropout / six hypothesis swaps), `b4/tests/test_b4_ff_*.py`, `b4/IMPORT.json` | hand-derived expected traces; INIT and SR separated; CE, edge, kind, transparency; isolation; permutation; hypothesis swap; the mutants (a model that ignores its hypothesis is killed) |
+| 2b-2 | the landscape and fitness (§7), the engine and arms (§8), the FF cartographer, the exploration under `b4-sim` (S = 32 first) | the architecture §7 requirements, on the model of §4.4 |
+| 2b-3 | the K1–K10 thresholds and τ written into §9, the seed anchor, in one commit | the owner's review before any gate run |
+| 2b-4 | `b4/host/b4_gate.py`, the formal gate under `b4-gate-1` (S = 200), `docs/b4_gate_report.md` stating every result as "under the behaviour hypothesis"; the v3 map schema draft (§6) | every row PASS / FAIL; a PASS never read as evidence about the fabric |
 | 2c | `docs/b4_preregistration.md` DRAFT (B4-FF: claim, pins, prediction, metrics, falsifiers, sessions and rulings, compatibility, lifecycle, §9 rule; B4-R: prerequisites and prohibitions only) | the owner's review; the holdout and the universe fixed by whole site instance |
 | carrier v2 design | RTL, bench, XDC, isolation — against §5.5 A1–A8 | a separate unit after 2c |
 | 2d | provisioning and the supply measurements (§11) | board work; the owner's rulings per step |
 
 ## 14. Files and references
 
+`b4/host/b4_ff_mapping.py` · `b4/host/b4_ff_hypothesis.py` · `b4/hypothesis/ff_behaviour_v0.1.json` · `b4/host/b4_ff_model.py` · `b4/IMPORT.json` ·
 `docs/autonomous_cartography_roadmap.md` (§1–§7) · `docs/board_roles.md` ·
 `docs/ff_preregistration_plan.md` (§1–§5, §7) · `gate_runs/run_2026_08_05_ff/certificate.json` ·
 `data/MANIFEST.json` · `schemas/self_map_v2.schema.json` · `docs/b1_carrier_contract.md` ·

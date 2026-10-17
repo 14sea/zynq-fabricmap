@@ -1,0 +1,192 @@
+{
+ "applicable_semantics": {
+  "rule": "when storage_kind = latch, the elements A5FF, B5FF, C5FF, D5FF are not storage elements: their ff_init and ff_srval relations are not applicable (not unknown); sr_kind is not applicable to a latch (its SR is asynchronous)",
+  "status": "a model assumption drawn from docs/ff_latch_probe.md; a changed context is not an illegal configuration"
+ },
+ "behaviour": {
+  "async_sr_acts_on_level": true,
+  "ce_gates_capture": true,
+  "clock_inversion_swaps_edge": true,
+  "ff_capture_on_physical_rising_edge": true,
+  "init_event_sets_q_to_init": true,
+  "latch_gate_is_physical_clock": true,
+  "latch_transparent_when_gate_high_and_ge": true,
+  "sr_has_priority_over_capture": true,
+  "sr_tied_low_when_not_driven": true,
+  "sync_sr_acts_on_edge_only": true,
+  "x5ff_not_storage_when_latch": true
+ },
+ "decode": {
+  "ce_mode": {
+   "bit_one_means": "CE driven from the slice input",
+   "bit_zero_means": "CE tied high (always enabled)",
+   "per": "slice"
+  },
+  "clock_mode": {
+   "bit_one_means": "clock inverted (IS_C_INVERTED / IS_G_INVERTED = 1)",
+   "bit_zero_means": "clock not inverted",
+   "per": "slice"
+  },
+  "ff_init": {
+   "bit_one_means": "INIT = 0",
+   "bit_zero_means": "INIT = 1",
+   "per": "element"
+  },
+  "ff_srval": {
+   "bit_one_means": "SRVAL = 0",
+   "bit_zero_means": "SRVAL = 1",
+   "per": "element"
+  },
+  "sr_kind": {
+   "bit_one_means": "synchronous (R / S)",
+   "bit_zero_means": "asynchronous (CLR / PRE)",
+   "per": "slice"
+  },
+  "sr_mode": {
+   "bit_one_means": "SR driven from the slice input",
+   "bit_zero_means": "SR tied low (never asserted)",
+   "per": "slice"
+  },
+  "storage_kind": {
+   "bit_one_means": "latch (AFF..DFF are LDCE / LDPE; A5FF..D5FF are not storage elements)",
+   "bit_zero_means": "flip-flop",
+   "per": "slice"
+  }
+ },
+ "elements": [
+  "AFF",
+  "A5FF",
+  "BFF",
+  "B5FF",
+  "CFF",
+  "C5FF",
+  "DFF",
+  "D5FF"
+ ],
+ "initialisation_event": {
+  "assumption": "sets Q := INIT on every applicable element and clears nothing else; modelled on the UNISIM GSR",
+  "status": "unverified; A8 of docs/b4_architecture.md section 5.5"
+ },
+ "observation_context": {
+  "fields": [
+   "step",
+   "kind (init | set)",
+   "prev_event (none | init | edge | level)",
+   "clock_before",
+   "clock_after",
+   "edge (rising | falling | null)",
+   "physical_edge per element",
+   "ce, sr, d (one bit per element)",
+   "q_before, q_after per element (0 | 1 | null = not applicable or never initialised)",
+   "applicable per element"
+  ],
+  "status": "every readout carries all of these; the stimulus sequence, the configuration and the initial state are part of the trace header"
+ },
+ "primitive_selection": {
+  "rule": "by (storage_kind, sr_kind, SRVAL): flip-flop + synchronous + SRVAL 0 -> FDRE; + SRVAL 1 -> FDSE; flip-flop + asynchronous + SRVAL 0 -> FDCE; + SRVAL 1 -> FDPE; latch + SRVAL 0 -> LDCE; latch + SRVAL 1 -> LDPE (a latch's SR is always asynchronous; sr_kind is not applicable to a latch)"
+ },
+ "schema": "b4_ff_behaviour_hypothesis",
+ "schema_version": "0.1.0",
+ "scope": "SLICE_X2Y25 (CLBLL_L_X2Y25, SLICEL_X0): the 21 addresses of the clb_ff_config class on that site, the eight storage elements of the slice. A model's definitions. Nothing here is a claim about silicon: no row below has been observed on a board (docs/b4_architecture.md section 4.4).",
+ "semantics": [
+  "ff_init",
+  "ff_srval",
+  "ce_mode",
+  "sr_mode",
+  "sr_kind",
+  "storage_kind",
+  "clock_mode"
+ ],
+ "sources": [
+  {
+   "adopted": [
+    "glblGSR asserted: Q_out = INIT (lines 63-65)",
+    "on the active edge of C (posedge; negedge when IS_C_INVERTED, lines 71-98): if R then Q <= 0 else if CE then Q <= D",
+    "R is synchronous: it acts only at the edge"
+   ],
+   "kind": "vendor_primitive",
+   "path": "FDRE.v",
+   "primitive": "FDRE",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "e2965e4b5174bd8de84b82e89a7b4ea5df36d8715c4f585580c16b8e6d9aa80d"
+  },
+  {
+   "adopted": [
+    "as FDRE with the synchronous input S setting Q <= 1 at the edge (lines 75-82)"
+   ],
+   "kind": "vendor_primitive",
+   "path": "FDSE.v",
+   "primitive": "FDSE",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "055468fd8372bcf67f359ec4c496c966bae1fdd5e8a6aaa71dd658ae99c69c68"
+  },
+  {
+   "adopted": [
+    "glblGSR asserted: Q_out = INIT; CLR_in asserted: Q_out = 0 at any time, level-sensitive (lines 72-80)",
+    "on the active edge of C with CLR_in low: if CE then Q <= D (lines 84-111)"
+   ],
+   "kind": "vendor_primitive",
+   "path": "FDCE.v",
+   "primitive": "FDCE",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "74d30d7c788e7db47f12b92d5b4b57b707974a0962708b309e4cc081d5f98b04"
+  },
+  {
+   "adopted": [
+    "as FDCE with the asynchronous input PRE setting Q_out = 1, level-sensitive (lines 72-76)"
+   ],
+   "kind": "vendor_primitive",
+   "path": "FDPE.v",
+   "primitive": "FDPE",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "4ec91e1101288ae35ebda302ed5e31b670f5bb5b16cd48922d1cbf891407bcfc"
+  },
+  {
+   "adopted": [
+    "G_in = G xor IS_G_INVERTED; GE_in = GE (lines 63-71)",
+    "the UDP latchsre_ldce (lines 183-209): with set = rst = 0, q+ = d while clk = 1 and ge = 1 (transparent), q+ = q while clk = 0 or ge = 0 (hold); rst = 1 gives q+ = 0 and set = 1 gives q+ = 1 at any time",
+    "GSR asserted: Q = INIT (lines 117-119)"
+   ],
+   "kind": "vendor_primitive",
+   "path": "LDCE.v",
+   "primitive": "LDCE",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "882344674b9669df2039bd417a90e1a549872c53488823346370df9c3cfbba05"
+  },
+  {
+   "adopted": [
+    "as LDCE with the asynchronous input PRE setting Q = 1 (lines 64-71)"
+   ],
+   "kind": "vendor_primitive",
+   "path": "LDPE.v",
+   "primitive": "LDPE",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "8b63ec584c90cf02ef77c77268162b8852272abffe0175feedca1770ded5ec7f"
+  },
+  {
+   "adopted": [
+    "which address each of the 22 mine-site feature names moves (21 distinct addresses; CLKINV and NOCLKINV share one)",
+    "the specimen pair of every feature, from which the direction of every bit reading below is taken"
+   ],
+   "kind": "certificate_mapping",
+   "path": "gate_runs/run_2026_08_05_ff/certificate.json",
+   "schema_version": "1.6.0",
+   "sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef"
+  },
+  {
+   "items": [
+    "the bit readings in `decode`",
+    "the primitive selection table",
+    "the pin correspondence: the slice clock is C (or G for a latch), CE is CE (or GE), SR is R / S / CLR / PRE by the decoded kind and value",
+    "the initialisation event of the carrier is modelled as the UNISIM GSR: every applicable element takes its INIT \u2014 whether the carrier's event does so on silicon is condition A8 of docs/b4_architecture.md section 5.5"
+   ],
+   "kind": "project_decode_assumption",
+   "source": "docs/ff_preregistration_plan.md section 2 (the Z polarity readings) and section 3 (the attestation fields); docs/ff_latch_probe.md (a slice holds four latches, on AFF..DFF); this project's own choice of how the seven semantics select a primitive and its parameters"
+  }
+ ],
+ "status": "unverified",
+ "valid_configuration": {
+  "rule": "every assignment of the 21 bits is in the model's domain",
+  "status": "a domain definition for the model (v0.1); not a statement that any configuration is legal to build, safe to write, or observed"
+ }
+}
