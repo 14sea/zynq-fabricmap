@@ -152,13 +152,20 @@ class Latches(Base):
         wrong = fm.fixture("latch_gate_inverted", self.m, self.h)            # the reading the probe says must NOT be applied to a latch
         self.assertEqual(q_after(wrong.observe(c, [fm.init(), fm.set_(0, ce=ALL, sr=0, d=0)]))[1], [0, None, 0, None, 0, None, 0, None])
 
-    def test_a_latch_with_the_clkinv_bit_clear_is_outside_the_domain(self):
+    def test_a_latch_with_the_clkinv_bit_clear_is_outside_the_domain_and_the_refusal_says_only_that(self):
+        """The owner's probe on b91162c: the refusal the executing side receives is the fixed code and carries no
+        reading, no semantic and no reason; the reason is diagnose()'s."""
         c = self.cfg(storage_kind=1)                       # clock_mode bit 0 under a latch: nothing attests a reading
-        with self.assertRaises(fm.ModelRefusal) as cm:
-            self.fab.observe(c, [fm.init()])
-        self.assertIn("outside the hypothesis's domain: no attested reading for clock_mode bit 0 under latch", str(cm.exception))
+        for stim in ([fm.init()], []):
+            with self.assertRaises(fm.DomainRefusal) as cm:
+                self.fab.observe(c, stim)
+            self.assertEqual(str(cm.exception), fm.DomainRefusal.MESSAGE)
+            self.assertEqual(cm.exception.CODE, "DOMAIN")
+            for word in ("clock", "latch", "unknown", "bit", "reading", "inverted", "storage"):
+                self.assertNotIn(word, str(cm.exception).lower().replace("domain", ""), f"the refusal must not carry {word!r}")
+        self.assertTrue(issubclass(fm.DomainRefusal, fm.ModelRefusal))
         diag = self.fab.diagnose(c)
-        self.assertEqual((diag["in_domain"], diag["unknown_readings"]), (False, [["clock_mode", "latch", 0]]))
+        self.assertEqual((diag["visibility"], diag["in_domain"], diag["unknown_readings"]), ("host_only", False, [["clock_mode", "latch", 0]]))
 
     def test_a_latch_with_ge_low_holds_and_its_sr_is_asynchronous(self):
         c = self.cfg(storage_kind=1, clock_mode=1, DFF__ff_srval=0)
@@ -238,7 +245,7 @@ class Fixtures(Base):
                 self.assertNotEqual(swapped.hypothesis.sha256, self.h.sha256)
                 self.assertNotEqual(q_after(swapped.observe(c, stim)), q_after(truth.observe(c, stim)), "the swap left the trace unchanged: the model is not reading its hypothesis")
                 head = swapped.observe(c, stim)["hypothesis"]
-                self.assertEqual((head["version"], head["fixture"]), (f"0.2.0+{kind}", True), "a swapped hypothesis is marked in the trace")
+                self.assertEqual((head["version"], head["fixture"]), (f"0.2.1+{kind}", True), "a swapped hypothesis is marked in the trace")
         self.assertIs(truth.observe(self.cfg(), [fm.init()])["hypothesis"]["fixture"], False)
 
     def test_an_unknown_fixture_is_refused(self):

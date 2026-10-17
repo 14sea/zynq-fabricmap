@@ -3,7 +3,7 @@
 configuration (docs/b4_architecture.md section 4.4). Read from `b4/hypothesis/ff_behaviour_v0.2.json`, whose
 `status` is "unverified": nothing in it has been observed on silicon.
 
-    h = load()                        # THE entry: the file's shape held, EVERY named source re-hashed from disk
+    h = load()                        # THE entry, no path: the committed file only, held to HYPOTHESIS_SHA256, its shape, EVERY source re-hashed
     h.decode(config_bits, mapping)    # per element: primitive, INIT, SRVAL, modes, kind, inversion, applicability
     h.flag("ce_gates_capture")        # a behaviour flag the model reads (never a literal in the model)
 
@@ -13,9 +13,11 @@ by storage context: for a flip-flop bit 1 means inverted; under a latch the CLKI
 IS_G_INVERTED = 0 (docs/ff_latch_probe.md), so bit 1 means NOT inverted and bit 0 has no attested reading —
 `unknown`, which puts that configuration outside the model's domain (the owner's P1).
 
-Fixtures: a hypothesis that is not the committed file enters ONLY through `fixture(doc, label)`, which marks the
-object `fixture = True` (the model writes that into every trace header) and verifies no source; `load()` has no
-switch to skip the source check (the owner's P1).
+Fixtures: a hypothesis that is not the committed file — a changed copy anywhere, a document built in a test —
+enters ONLY through `fixture(doc, label)` / `fixture_file(path, label)`, which mark the object `fixture = True`
+(the model writes that into every trace header) and verify no source; `load()` takes no path and reads the
+committed file only, against the digest pinned here, so no external file can be loaded as formal (the owner's
+P1 on 2bad829 and on b91162c). `unknown` is a reading only in clock_mode's latch context (the shape check).
 """
 from __future__ import annotations
 
@@ -28,6 +30,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 HYPOTHESIS_REL = "b4/hypothesis/ff_behaviour_v0.2.json"
 HYPOTHESIS = REPO_ROOT / HYPOTHESIS_REL
+HYPOTHESIS_SHA256 = "1118bedf4831bac3806be4aa3d9b56630912a946156869807f2c26f6374e6ed2"   # the committed file; a change to it is a change here
 SCHEMA = "b4_ff_behaviour_hypothesis"
 ELEMENTS = ("AFF", "A5FF", "BFF", "B5FF", "CFF", "C5FF", "DFF", "D5FF")
 X5FF = ("A5FF", "B5FF", "C5FF", "D5FF")
@@ -43,6 +46,8 @@ READINGS = {
 PER = {"ff_init": "element", "ff_srval": "element", "ce_mode": "slice", "sr_mode": "slice", "sr_kind": "slice", "storage_kind": "slice", "clock_mode": "slice"}
 CONTEXTS = ("flipflop", "latch")
 SOURCE_KINDS = ("vendor_primitive", "certificate_mapping", "repository_document", "project_decode_assumption")
+UNKNOWN_ALLOWED = {("clock_mode", "latch")}        # the only (semantic, context) with no attested reading for one bit value
+REQUIRED_BLOCKS = ("valid_configuration", "applicable_semantics", "observation_context", "initialisation_event", "domain_refusal", "formal_input")
 
 
 class HypothesisRefusal(ValueError):
@@ -186,8 +191,8 @@ def shape_findings(doc) -> list[str]:
                     r = (t or {}).get(side) if isinstance(t, dict) else None
                     if r not in READINGS[k]:
                         f.append(f"decode.{k}{('.' + ctx) if ctx else ''}.{side}: {r!r} is not one of {READINGS[k]}")
-                    elif r == "unknown" and k != "clock_mode":
-                        f.append(f"decode.{k}: unknown is allowed only where the file says no attestation exists (clock_mode under a latch)")
+                    elif r == "unknown" and (k, ctx) not in UNKNOWN_ALLOWED:
+                        f.append(f"decode.{k}{('.' + ctx) if ctx else ''}.{side}: unknown is allowed only where no attestation exists — clock_mode under a latch")
             if not isinstance(v.get("meaning"), dict) or set(v["meaning"]) != set(READINGS[k]) - ({"unknown"} if k != "clock_mode" else set()):
                 f.append(f"decode.{k}.meaning must give the human meaning of every reading")
     src = doc.get("sources")
@@ -208,7 +213,7 @@ def shape_findings(doc) -> list[str]:
                     f.append(f"vendor source {s.get('path')!r} names no root")
             if not s.get("adopted") and not s.get("items"):
                 f.append(f"source {s['kind']} {s.get('path', '')!r} states nothing adopted")
-    for k in ("valid_configuration", "applicable_semantics", "observation_context", "initialisation_event"):
+    for k in REQUIRED_BLOCKS:
         if not isinstance(doc.get(k), dict):
             f.append(f"{k} is absent")
     oc = doc.get("observation_context")
@@ -235,18 +240,31 @@ def source_findings(doc: dict, repo_root: Path = REPO_ROOT) -> list[str]:
     return f
 
 
-def load(path: Path = HYPOTHESIS) -> Hypothesis:
-    """THE entry for a committed hypothesis: shape AND sources, always. There is no switch to skip either."""
+def load() -> Hypothesis:
+    """THE entry for the formal hypothesis: the committed file, held to HYPOTHESIS_SHA256, its shape, its sources —
+    always, and nothing else can be loaded here (no path argument exists)."""
     try:
-        text = Path(path).read_text()
-        doc = json.loads(text)
+        raw = HYPOTHESIS.read_bytes()
+        doc = json.loads(raw)
     except (OSError, ValueError) as exc:
-        raise HypothesisRefusal(f"the hypothesis {path} cannot be read: {exc}") from exc
+        raise HypothesisRefusal(f"the committed hypothesis {HYPOTHESIS_REL} cannot be read: {exc}") from exc
+    got = hashlib.sha256(raw).hexdigest()
+    if got != HYPOTHESIS_SHA256:
+        raise HypothesisRefusal(f"the committed hypothesis hashes to {got[:16]}…, not the pinned {HYPOTHESIS_SHA256[:16]}…")
     f = shape_findings(doc) or source_findings(doc)
     if f:
         raise HypothesisRefusal("; ".join(f))
-    rel = str(Path(path).resolve().relative_to(REPO_ROOT)) if Path(path).resolve().is_relative_to(REPO_ROOT) else str(path)
-    return Hypothesis(doc, rel, hashlib.sha256(text.encode()).hexdigest(), fixture=False)
+    return Hypothesis(doc, HYPOTHESIS_REL, got, fixture=False)
+
+
+def fixture_file(path: Path, label: str) -> Hypothesis:
+    """A hypothesis document from ANY file — including a valid copy of the committed one — is a fixture: marked,
+    its sources unverified. There is no path by which a file becomes the formal hypothesis."""
+    try:
+        doc = json.loads(Path(path).read_text())
+    except (OSError, ValueError) as exc:
+        raise HypothesisRefusal(f"the fixture {path} cannot be read: {exc}") from exc
+    return fixture(doc, label)
 
 
 def fixture(doc: dict, label: str) -> Hypothesis:

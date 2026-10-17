@@ -35,6 +35,10 @@ a latch means the gate is the slice clock itself), settles again, and reads out.
 Fixtures (`fixture`): `truth`, `permuted`, `dropout`, and the hypothesis swaps `ce_ungated`, `init_no_effect`,
 `zini_polarity`, `latch_hold`, `sync_level`, `x5ff_storage`, `latch_gate_inverted` — each a marked fixture
 hypothesis (its trace header says `fixture: true`).
+
+A configuration outside the hypothesis's domain is refused with `DomainRefusal`: the executing side receives the
+fixed code DOMAIN and no reason (the reason is `diagnose`'s, host-only); such a refusal is never a specimen, a
+redraw condition or a map-update signal — a rule 2b-2's cartographer and engine inherit.
 """
 from __future__ import annotations
 
@@ -59,6 +63,17 @@ VISIBLE_STEP_KEYS = ("step", "kind", "prev_event", "clock_before", "clock_after"
 
 class ModelRefusal(ValueError):
     pass
+
+
+class DomainRefusal(ModelRefusal):
+    """What the executing side receives for a configuration outside the hypothesis's domain: the fixed code and
+    nothing else — no reading, no semantic, no reason (the owner's P1 on b91162c). The reason is `diagnose`'s
+    (host-only). A domain refusal is never a specimen, a redraw condition or a map-update signal."""
+    CODE = "DOMAIN"
+    MESSAGE = "REFUSED: configuration outside the model's domain (DOMAIN)"
+
+    def __init__(self):
+        super().__init__(self.MESSAGE)
 
 
 # ------------------------------------------------------------------ the stimulus
@@ -208,8 +223,7 @@ class Fabric:
         steps_in = [validate_step(st, n) for n, st in enumerate(stimulus)]
         decoded = self.decode(config)
         if not decoded.in_domain:
-            raise ModelRefusal("the configuration is outside the hypothesis's domain: no attested reading for " +
-                               ", ".join(f"{s} bit {b} under {c}" for s, c, b in decoded.unknown_readings))
+            raise DomainRefusal()                                   # the fixed code; the reason only through diagnose()
         q: list = [None] * N
         clock, ce, sr, d = 0, 0, 0, 0
         prev_event = "none"

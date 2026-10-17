@@ -91,6 +91,17 @@
    "per": "slice"
   }
  },
+ "domain_refusal": {
+  "executing_side_receives": "a fixed refusal code, DOMAIN, carrying no reading, no semantic and no reason",
+  "never": [
+   "a specimen of the cartographer",
+   "a redraw condition of the search",
+   "a map-update signal",
+   "an input to any decision in a session"
+  ],
+  "reason_available_through": "the host-only diagnose() (unknown_readings), for audits and simulation reports",
+  "status": "a contract of the model and of every later tool (2b-2's cartographer and engine)"
+ },
  "elements": [
   "AFF",
   "A5FF",
@@ -101,6 +112,9 @@
   "DFF",
   "D5FF"
  ],
+ "formal_input": {
+  "rule": "the committed file b4/hypothesis/ff_behaviour_v0.2.json, read by b4_ff_hypothesis.load() with no path and held to the digest pinned in that module, is the only formal hypothesis; any other document enters through fixture() / fixture_file(), verifies no source, and is marked fixture = true in every trace it produces"
+ },
  "initialisation_event": {
   "allowed_context": "the slice clock low and the SR input de-asserted (docs/b4_architecture.md section 5.1 step 2); an init step in any other context is refused by the model",
   "assumption": "sets Q := INIT on every applicable element and clears nothing else; modelled on the UNISIM GSR",
@@ -128,9 +142,9 @@
  "primitive_selection": {
   "rule": "by (storage_kind, sr_kind, SRVAL): flip-flop + synchronous + SRVAL 0 -> FDRE; + SRVAL 1 -> FDSE; flip-flop + asynchronous + SRVAL 0 -> FDCE; + SRVAL 1 -> FDPE; latch + SRVAL 0 -> LDCE; latch + SRVAL 1 -> LDPE (a latch's SR is always asynchronous; sr_kind is not applicable to a latch)"
  },
- "revision": "0.2.0 (2026-10-17, the owner's HOLD on 2bad829): the readings are machine enums validated by the loader (an unrecognised reading is refused, never read as a default); clock_mode is decoded BY STORAGE CONTEXT \u2014 under a latch the CLKINV bit is asserted with IS_G_INVERTED = 0 (docs/ff_latch_probe.md, 'The finding worth keeping'), so bit 1 means NOT inverted there and bit 0 has no attested reading (unknown: outside the model's domain); valid_configuration restated accordingly; the initialisation event's allowed context stated; the sources now include the latch probe record by path and digest.",
+ "revision": "0.2.0 (2026-10-17, the owner's HOLD on 2bad829): the readings are machine enums validated by the loader (an unrecognised reading is refused, never read as a default); clock_mode is decoded BY STORAGE CONTEXT \u2014 under a latch the CLKINV bit is asserted with IS_G_INVERTED = 0 (docs/ff_latch_probe.md, 'The finding worth keeping'), so bit 1 means NOT inverted there and bit 0 has no attested reading (unknown: outside the model's domain); valid_configuration restated accordingly; the initialisation event's allowed context stated; the sources now include the latch probe record by path and digest. 0.2.1 (the owner's HOLD on b91162c): the domain refusal the executing side receives is a fixed code with no reason (block `domain_refusal`); `unknown` is allowed in the latch context of clock_mode only, held by the loader's shape check; the committed file is the only formal hypothesis \u2014 read by `load()` against a pinned digest; every other document is a fixture and marked.",
  "schema": "b4_ff_behaviour_hypothesis",
- "schema_version": "0.2.0",
+ "schema_version": "0.2.1",
  "scope": "SLICE_X2Y25 (CLBLL_L_X2Y25, SLICEL_X0): the 21 addresses of the clb_ff_config class on that site, the eight storage elements of the slice. A model's definitions. Nothing here is a claim about silicon: no row below has been observed on a board (docs/b4_architecture.md section 4.4).",
  "semantics": [
   "ff_init",

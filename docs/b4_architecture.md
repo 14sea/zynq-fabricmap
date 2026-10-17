@@ -1,4 +1,4 @@
-# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.4, host-only, 2026-10-16; revised 2026-10-17)
+# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.5, host-only, 2026-10-16; revised 2026-10-17)
 
 > **Standing: a draft architecture, not a preregistration and not a ruling.** Written under the
 > owner's authorisation of 2026-10-16 (unit 2a of the B4 pre-work: this one document, on the
@@ -48,6 +48,13 @@
 > a marked boundary (§10); readings are validated enums, an unrecognised one refused (§4.4); the mapping
 > loader cross-checks ranges, endpoints and polarity; `observe` validates what it is handed and the init
 > step's context (§5.1). Hypothesis file `ff_behaviour_v0.2.json`.
+>
+> **Revision v0.1.5 (2026-10-17, the owner's HOLD on `b91162c`, three probes):** a domain refusal reaches the
+> executing side as a fixed code with no reason, and is never a specimen, a redraw condition or a map-update
+> signal (§5.3); the formal hypothesis is the committed file only, read without a path against a pinned digest —
+> every other document, a valid copy included, is a marked fixture (§10); a token's reading direction is the
+> class's, not the row's, and the two readings of a shared bit must be complementary (§4.4); `unknown` is a
+> reading in the latch context of the clock mode only, held by the shape check.
 
 ## 0. The question, and why it is two studies
 
@@ -226,7 +233,7 @@ file, report and sentence:
 
 | | the **certificate mapping** | the **behaviour hypothesis** |
 |---|---|---|
-| what it is | per address: the feature name, the Z polarity reading, the site, the element (§4.1); per specimen: which design variant moved which bit. **The clock-mode reading is per storage context**: the clkinv pair attests bit 1 = inverted for a flip-flop; the latch probe attests the LDCE endpoint with the CLKINV bit set and `IS_G_INVERTED = 0`, so under a latch bit 1 = *not* inverted and bit 0 has no attested reading (`docs/ff_latch_probe.md`, "The finding worth keeping") | per storage element and per configuration value: the state machine the element is *assumed* to follow — the value after an initialisation event, the value after a user SR operation, whether CE gates capture, whether SR acts without an edge, transparency, the capturing edge |
+| what it is | per address: the feature name, the Z polarity reading, the site, the element (§4.1); per specimen: which design variant moved which bit — **each token's reading direction is the class's** (every token direct — the bit set in its feature endpoint — but `NOCLKINV`, the negated, complementary reading of `CLKINV`'s bit), so a row that re-labels a direction, however self-consistent, is refused. **The clock-mode reading is per storage context**: the clkinv pair attests bit 1 = inverted for a flip-flop; the latch probe attests the LDCE endpoint with the CLKINV bit set and `IS_G_INVERTED = 0`, so under a latch bit 1 = *not* inverted and bit 0 has no attested reading (`docs/ff_latch_probe.md`, "The finding worth keeping") | per storage element and per configuration value: the state machine the element is *assumed* to follow — the value after an initialisation event, the value after a user SR operation, whether CE gates capture, whether SR acts without an edge, transparency, the capturing edge |
 | source | `gate_runs/run_2026_08_05_ff/certificate.json`, the plan's attestation fields (plan §3) | **three kinds, listed per entry in `b4/hypothesis/ff_behaviour_v0.2.json` `sources`**: (1) the vendor's UNISIM simulation models — `FDRE.v`, `FDSE.v`, `FDCE.v`, `FDPE.v`, `LDCE.v`, `LDPE.v` under the root `/home/test/Xilinx/2025.2/data/verilog/src/unisims` — each by path, sha256 and the lines adopted (the GSR initialisation, the edge and level rules, the latch UDP table); (2) the certificate mapping, by path and sha256; (3) the project's own decode assumptions (the Z readings, the primitive-selection table, the pin correspondence, the initialisation event modelled as GSR). Nothing of (1)–(3) is a measurement of this line |
 | status | host-attested (§4.2) | **unverified on silicon**; a modelling assumption until the carrier-v2 unit demonstrates each row on the board under its own ruling |
 | what 2b's simulation can say | that the cartographer recovers the mapping *given* the hypothesis | nothing — a simulation under the hypothesis cannot confirm the hypothesis |
@@ -369,6 +376,12 @@ an input to a decision in a session (§2). A Q of `null` in an observation says 
 readout exists for that element in that configuration or that it was never initialised — it is
 not labelled with the reason. A cartographer that could obtain the decode without measuring
 would not be mapping; the split is what makes 2b-2's cartographer honest by construction.
+
+**A refusal is not an observation either.** A configuration outside the model's domain is refused
+with a **fixed code** (`DOMAIN`) that carries no reading, no semantic and no reason; the reason is
+host-only (`diagnose`). Such a refusal is never a specimen, never a redraw condition of the search
+and never a map-update signal — 2b-2's cartographer and engine inherit this rule (the hypothesis
+file's `domain_refusal` block).
 
 ### 5.4 Nobody in the loop
 
@@ -567,6 +580,9 @@ rules before any B4 tool is written:
    other file only with its digest given explicitly; a hypothesis that is not the committed
    file is built through `fixture(doc, label)` and marked `fixture: true` in every trace it
    produces. A tool that silently accepts a changed source would make "same digest" mean nothing.
+   **The formal hypothesis is the committed file and nothing else**: its loader takes no path and holds
+   the file to a digest pinned in the module (a change to the file is a change to the pin, reviewed);
+   a valid copy at another path is a fixture like any other document (`formal_input` in the file).
 
 And the inherited disciplines: a pin table generated once per lifecycle over `b4/**`; a
 manifest S0 → S3 with the clean-tree proof at each node (`docs/b3_preregistration.md` §8);

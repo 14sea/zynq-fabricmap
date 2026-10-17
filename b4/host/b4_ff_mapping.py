@@ -22,10 +22,11 @@ Counting (section 4.1): 22 feature names, 21 addresses — CLKINV and NOCLKINV a
 The certificate is host evidence of a mapping, not of behaviour (section 4.2); this module makes no
 behavioural statement. No board, no write.
 
-Refusals (the owner's P2 on 2bad829): an address out of range (far 32-bit, word 0..100 of a 7-series frame,
-bit 0..31); a feature or baseline endpoint that is not a specimen of the certificate, or not on the site; a
-primary assignment whose expected_value disagrees with its transition (1 <=> 0 -> 1), or a negated reading
-whose expected_value disagrees (0 <=> 1 -> 0); the certificate's digest not the authorised one.
+Refusals (the owner's P2 on 2bad829 and on b91162c): an address out of range (far 32-bit, word 0..100 of a
+7-series frame, bit 0..31); a feature or baseline endpoint that is not a specimen of the certificate, or not on
+the site; a row whose `negated` flag is not the TOKEN's direction (every token is direct but NOCLKINV), or whose
+expected_value / transition disagree with that direction; a shared address whose two readings are not one
+direct and one negated (CLKINV / NOCLKINV); the certificate's digest not the authorised one.
 """
 from __future__ import annotations
 
@@ -46,13 +47,18 @@ DEFAULT_SITE = "SLICE_X2Y25"
 ELEMENTS = ("AFF", "A5FF", "BFF", "B5FF", "CFF", "C5FF", "DFF", "D5FF")
 SEMANTICS = ("ff_init", "ff_srval", "ce_mode", "sr_mode", "sr_kind", "storage_kind", "clock_mode")
 
-# feature token -> (semantic, per-element?, the specimen suffix the FEATURE endpoint must carry)
+# feature token -> (semantic, per-element?, the specimen suffix the FEATURE endpoint must carry, the DIRECTION of the
+# token's reading: direct = the bit is 1 in the feature endpoint (expected_value 1, transition 0 -> 1); negated = the
+# bit is 0 there (expected_value 0, transition 1 -> 0). The direction is the TOKEN's, fixed by the class's preregistration
+# (docs/ff_preregistration_plan.md section 2) — a row that re-labels it, however self-consistent, is refused (the owner's
+# P2 on b91162c). The one negated token is NOCLKINV, the complementary reading of CLKINV's bit.
 TOKENS = {
-    "ZINI": ("ff_init", True, "zini_"), "ZRST": ("ff_srval", True, "base"),
-    "CEUSEDMUX": ("ce_mode", False, "base"), "SRUSEDMUX": ("sr_mode", False, "base"),
-    "FFSYNC": ("sr_kind", False, "base"), "LATCH": ("storage_kind", False, "latch"),
-    "CLKINV": ("clock_mode", False, "clkinv"), "NOCLKINV": ("clock_mode", False, "base"),
+    "ZINI": ("ff_init", True, "zini_", "direct"), "ZRST": ("ff_srval", True, "base", "direct"),
+    "CEUSEDMUX": ("ce_mode", False, "base", "direct"), "SRUSEDMUX": ("sr_mode", False, "base", "direct"),
+    "FFSYNC": ("sr_kind", False, "base", "direct"), "LATCH": ("storage_kind", False, "latch", "direct"),
+    "CLKINV": ("clock_mode", False, "clkinv", "direct"), "NOCLKINV": ("clock_mode", False, "base", "negated"),
 }
+DIRECTION = {"direct": (False, 1, (0, 1)), "negated": (True, 0, (1, 0))}   # negated flag, expected_value, (before, after)
 # the project's reading of bit = 1 per semantic (plan section 2; a decode assumption, section 4.4)
 BIT_ONE_MEANS = {
     "ff_init": "INIT = 0", "ff_srval": "SRVAL = 0", "ce_mode": "CE driven", "sr_mode": "SR driven",
@@ -174,29 +180,32 @@ def site_mapping(site: str = DEFAULT_SITE, path: Path = CERTIFICATE, expected_sh
                 raise MappingRefusal(f"{r['feature']}: the {role} {sid!r} is not a specimen of the certificate")
             if specimens[sid].get("loc_site") != site:
                 raise MappingRefusal(f"{r['feature']}: the {role} {sid!r} is not on site {site}")
+        token = r["feature"].split(".")[-1]
+        if token not in TOKENS:
+            raise MappingRefusal(f"{r['feature']}: the token {token!r} is not a clb_ff_config token this module reads")
+        direction = TOKENS[token][3]
+        want_neg, want_value, want_tr = DIRECTION[direction]
+        if (a["segbit"].get("negated") is True) != want_neg:
+            raise MappingRefusal(f"{r['feature']}: the token's reading is {direction} but the row says negated = {a['segbit'].get('negated')!r}")
         tr = r.get("expected_transition") or {}
-        negated = a["segbit"].get("negated") is True
-        want_value, want_tr = (0, (1, 0)) if negated else (1, (0, 1))
         if a.get("expected_value") != want_value or (tr.get("before"), tr.get("after")) != want_tr:
-            raise MappingRefusal(f"{r['feature']}: expected_value {a.get('expected_value')!r} and transition {tr} do not agree with a {'negated' if negated else 'direct'} reading ({want_value}, {want_tr[0]} -> {want_tr[1]})")
+            raise MappingRefusal(f"{r['feature']}: expected_value {a.get('expected_value')!r} and transition {tr} do not agree with the token's {direction} reading ({want_value}, {want_tr[0]} -> {want_tr[1]})")
         by_address.setdefault(addr, []).append(r)
     entries: dict[str, Entry] = {}
     for addr, rows in sorted(by_address.items()):
-        tokens = {}
-        for r in rows:
-            name = r["feature"]
-            token = name.split(".")[-1]
-            if token not in TOKENS:
-                raise MappingRefusal(f"{name}: the token {token!r} is not a clb_ff_config token this module reads")
-            tokens[token] = r
+        tokens = {r["feature"].split(".")[-1]: r for r in rows}
         if set(tokens) == {"CLKINV", "NOCLKINV"}:
-            primary = tokens["CLKINV"]          # NOCLKINV's negated reading was already held by the per-row polarity cross-check
+            primary = tokens["CLKINV"]
+            dirs = {t: TOKENS[t][3] for t in tokens}
+            negs = {t: tokens[t]["predicted_assignments"][0]["segbit"].get("negated") is True for t in tokens}
+            if not (dirs["CLKINV"] == "direct" and dirs["NOCLKINV"] == "negated" and negs == {"CLKINV": False, "NOCLKINV": True}):
+                raise MappingRefusal(f"{addr}: the two readings of the shared bit are not complementary (CLKINV direct, NOCLKINV negated)")
         elif len(tokens) == 1:
             (primary,) = tokens.values()
         else:
             raise MappingRefusal(f"{addr}: {sorted(tokens)} share one address; only CLKINV / NOCLKINV may")
         token = primary["feature"].split(".")[-1]
-        semantic, per_element, suffix = TOKENS[token]
+        semantic, per_element, suffix, _direction = TOKENS[token]
         element = primary["feature"].split(".")[-2] if per_element else None
         if per_element and element not in ELEMENTS:
             raise MappingRefusal(f"{primary['feature']}: {element!r} is not a storage element")

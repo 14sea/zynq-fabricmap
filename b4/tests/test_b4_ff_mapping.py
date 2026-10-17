@@ -111,10 +111,10 @@ class Refusals(unittest.TestCase):
 
     def test_a_reading_that_the_specimen_pair_does_not_support(self):
         self.refused("the feature endpoint is 'SLICE_X2Y25_base', not 'SLICE_X2Y25_zini_AFF'", lambda d: self.mine(d, "ZINI", "AFF").__setitem__("feature_specimen_id", "SLICE_X2Y25_base"))
-        self.refused("do not agree with a direct reading (1, 0 -> 1)", lambda d: self.mine(d, "ZRST", "BFF").__setitem__("expected_transition", {"before": 1, "after": 0}))
+        self.refused("do not agree with the token's direct reading (1, 0 -> 1)", lambda d: self.mine(d, "ZRST", "BFF").__setitem__("expected_transition", {"before": 1, "after": 0}))
 
     def test_the_shared_address_rule(self):
-        self.refused("NOCLKINV: expected_value 0 and transition {'before': 1, 'after': 0} do not agree with a direct reading", lambda d: self.mine(d, "NOCLKINV")["predicted_assignments"][0]["segbit"].__setitem__("negated", False))
+        self.refused("NOCLKINV: the token's reading is negated but the row says negated = False", lambda d: self.mine(d, "NOCLKINV")["predicted_assignments"][0]["segbit"].__setitem__("negated", False))
 
         def collide(d):   # LATCH moved onto FFSYNC's address: two unrelated features on one bit
             self.mine(d, "LATCH")["predicted_assignments"][0]["address"] = self.mine(d, "FFSYNC")["predicted_assignments"][0]["address"]
@@ -152,8 +152,24 @@ class Refusals(unittest.TestCase):
         self.refused("the baseline endpoint 'DOES_NOT_EXIST' is not a specimen of the certificate", lambda d: self.mine(d, "ZINI", "AFF").__setitem__("baseline_specimen_id", "DOES_NOT_EXIST"))
         self.refused("20 addresses / 21 features, not 21 / 22", lambda d: self.mine(d, "ZRST", "AFF").__setitem__("feature_specimen_id", "SLICE_X14Y25_base"))   # a feature endpoint on another site leaves this site a feature short
         self.refused("the baseline endpoint 'SLICE_X14Y25_base' is not on site SLICE_X2Y25", lambda d: self.mine(d, "ZINI", "AFF").__setitem__("baseline_specimen_id", "SLICE_X14Y25_base"))
-        self.refused("expected_value 0 and transition {'before': 0, 'after': 1} do not agree with a direct reading (1, 0 -> 1)", lambda d: self.mine(d, "ZINI", "AFF")["predicted_assignments"][0].__setitem__("expected_value", 0))
-        self.refused("do not agree with a negated reading (0, 1 -> 0)", lambda d: self.mine(d, "NOCLKINV")["predicted_assignments"][0].__setitem__("expected_value", 1))
+        self.refused("expected_value 0 and transition {'before': 0, 'after': 1} do not agree with the token's direct reading (1, 0 -> 1)", lambda d: self.mine(d, "ZINI", "AFF")["predicted_assignments"][0].__setitem__("expected_value", 0))
+        self.refused("do not agree with the token's negated reading (0, 1 -> 0)", lambda d: self.mine(d, "NOCLKINV")["predicted_assignments"][0].__setitem__("expected_value", 1))
+
+    def test_a_coordinated_re_labelling_of_a_token_s_direction_is_refused(self):
+        """The owner's probe on b91162c: negated, expected_value and the transition changed TOGETHER, self-consistent,
+        so that NOCLKINV would read in CLKINV's direction, or AFF.ZINI would read backwards while the mapping still
+        declared INIT = 0. The direction is the token's, not the row's."""
+        def flip(token, element=None):
+            def edit(d):
+                row = self.mine(d, token, element)
+                a = row["predicted_assignments"][0]
+                neg = not a["segbit"]["negated"]
+                a["segbit"]["negated"] = neg
+                a["expected_value"] = 0 if neg else 1
+                row["expected_transition"] = {"before": 1 if neg else 0, "after": 0 if neg else 1}
+            return edit
+        self.refused("NOCLKINV: the token's reading is negated but the row says negated = False", flip("NOCLKINV"))
+        self.refused("AFF.ZINI: the token's reading is direct but the row says negated = True", flip("ZINI", "AFF"))
 
 
 if __name__ == "__main__":

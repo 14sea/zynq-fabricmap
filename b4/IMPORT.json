@@ -40,43 +40,43 @@
  "files": {
   "b4/host/b4_ff_hypothesis.py": {
    "kind": "new",
-   "note": "the behaviour hypothesis loader: shape with validated enum readings, EVERY named source re-hashed on every load (no switch), the decode by equality with clock_mode per storage context and unknown readings reported, fixtures only through fixture(doc, label) and marked.",
+   "note": "the behaviour hypothesis loader: load() takes no path, reads the committed file only against the pinned HYPOTHESIS_SHA256, holds the shape (validated enum readings; unknown only in clock_mode's latch context) and re-hashes every named source, always; any other document \u2014 a valid copy included \u2014 enters through fixture() / fixture_file() and is marked; the decode by equality with clock_mode per storage context and unknown readings reported.",
    "role": "host model",
-   "sha256": "b1eb87e95763a15526ee28aa14aa4fad911492f77c2e80556ec78215c363dabc"
+   "sha256": "a05b0a5bfe00ede4ea97bd7fae926fec5cda3b98ec68ac417bec4113ac9bc8d6"
   },
   "b4/host/b4_ff_mapping.py": {
    "kind": "new",
-   "note": "the certificate mapping of one site, read from the committed certificate against its pinned digest (another file only with its digest given explicitly); address ranges, endpoint existence and site, the expected_value / transition cross-check per row; the project's bit readings held to the certificate's specimen pairs.",
+   "note": "the certificate mapping of one site, read from the committed certificate against its pinned digest (another file only with its digest given explicitly); address ranges, endpoint existence and site; each token's reading DIRECTION is the class's (every token direct but NOCLKINV, negated) and the row's negated / expected_value / transition must agree with it; the two readings of a shared bit must be complementary; the project's bit readings held to the certificate's specimen pairs.",
    "role": "host model",
-   "sha256": "cd257260c46a977d5d13555d2f16280a98fdc4846fcc99ec8664e6684de4c002"
+   "sha256": "e750d02a8e77805587cb490aff47ce0cae93c5e1cce3e3ba39745019618df08f"
   },
   "b4/host/b4_ff_model.py": {
    "kind": "new",
-   "note": "the simulated fabric: configuration + stimulus -> the EXECUTING SIDE's trace under a mapping and a hypothesis passed in separately; the decode and everything derived from it host-only (diagnose / step_diagnostics); validation of the configuration, every step as handed and the init step's context at the entry; out-of-domain configurations refused; fixtures truth / permuted / dropout and seven hypothesis swaps.",
+   "note": "the simulated fabric: configuration + stimulus -> the EXECUTING SIDE's trace under a mapping and a hypothesis passed in separately; the decode and everything derived from it host-only (diagnose / step_diagnostics); validation of the configuration, every step as handed and the init step's context at the entry; a configuration outside the domain refused with the fixed code DOMAIN and no reason (never a specimen, a redraw condition or a map-update signal); fixtures truth / permuted / dropout and seven hypothesis swaps.",
    "role": "host model",
-   "sha256": "c141b16a5c9ab5caf69b9affa774dec36388fbac8662708019cdd9dd2024edb9"
+   "sha256": "d1d2e78df84624344140a441ead73199f06cad66bdb27e488b00212f9efcf93d"
   },
   "b4/hypothesis/ff_behaviour_v0.2.json": {
    "kind": "new",
-   "note": "status unverified; v0.2: machine-enum readings, clock_mode by storage context (the latch probe's finding), the domain rule, the initialisation event's allowed context, the executing-side / host-only split of the observation context; sources by kind \u2014 the vendor's UNISIM models by root + path + sha256 + the lines adopted, the certificate and docs/ff_latch_probe.md by path + sha256, the project's decode assumptions.",
+   "note": "status unverified; v0.2: machine-enum readings, clock_mode by storage context (the latch probe's finding), the domain rule, the initialisation event's allowed context, the executing-side / host-only split of the observation context; sources by kind \u2014 the vendor's UNISIM models by root + path + sha256 + the lines adopted, the certificate and docs/ff_latch_probe.md by path + sha256, the project's decode assumptions. 0.2.1: the domain_refusal and formal_input blocks.",
    "role": "hypothesis (data)",
-   "sha256": "5105002b8fd3abd903324f00f7e73962203968f553f2ec154845bf471a97cde4"
+   "sha256": "1118bedf4831bac3806be4aa3d9b56630912a946156869807f2c26f6374e6ed2"
   },
   "b4/tests/test_b4_ff_hypothesis.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "63e1943d84bbb716d4155b43894a2ba2971af2c7982407f99e257201efe4d698"
+   "sha256": "cb1b068a0120d94794ed97e51a4cde82e97c1e7d76bc70b7ec90d3c7b89963b7"
   },
   "b4/tests/test_b4_ff_mapping.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "0ce637b301cf555b2c1802ef72bcf372baaf2971a3e0bf8c213b2edf289b202f"
+   "sha256": "4b960a7c4489964eed064158010cddeeea0572c564b982a253d0d7b55e6b2201"
   },
   "b4/tests/test_b4_ff_model.py": {
    "kind": "new",
    "note": "every expected trace derived by hand from the hypothesis's adopted lines, never by running the model.",
    "role": "test",
-   "sha256": "0cd30e969899b1f30f1b9cb6a2ad0e82694ec534e0e3e90c180292684db82681"
+   "sha256": "7cabc04e7cdc43eed70c17fef6cee9512d68b47a95315c3e5f966553d9363d88"
   }
  },
  "repository_inputs": [
@@ -94,6 +94,6 @@
  "schema": "b4_import",
  "schema_version": "1.0.0",
  "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) \u2014 none of the latter yet; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
- "source": "docs/b4_architecture.md v0.1.4; the owner's authorisation of unit 2b-1 (2026-10-17) and the HOLD on 2bad829",
- "stage": "B4 pre-work, unit 2b-1 (the model contract), corrected on the owner's HOLD of 2026-10-17"
+ "source": "docs/b4_architecture.md v0.1.5; the owner's authorisation of unit 2b-1 (2026-10-17) and the HOLDs on 2bad829 and b91162c",
+ "stage": "B4 pre-work, unit 2b-1 (the model contract), corrected on the owner's HOLDs of 2026-10-17 (2bad829, b91162c)"
 }
