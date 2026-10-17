@@ -18,38 +18,76 @@
  },
  "decode": {
   "ce_mode": {
-   "bit_one_means": "CE driven from the slice input",
-   "bit_zero_means": "CE tied high (always enabled)",
+   "bit_one": "driven",
+   "bit_zero": "tied_high",
+   "meaning": {
+    "driven": "CE driven from the slice input",
+    "tied_high": "CE tied high (always enabled)"
+   },
    "per": "slice"
   },
   "clock_mode": {
-   "bit_one_means": "clock inverted (IS_C_INVERTED / IS_G_INVERTED = 1)",
-   "bit_zero_means": "clock not inverted",
+   "basis": "the clkinv pair (fdce_inv: IS_C_INVERTED = 1 => bit 0 -> 1) for a flip-flop; the LDCE endpoint of docs/ff_latch_probe.md (CLKINV = 1 with IS_G_INVERTED = 0) for a latch; nothing attests a latch with the bit clear",
+   "by_storage_context": {
+    "flipflop": {
+     "bit_one": "inverted",
+     "bit_zero": "not_inverted"
+    },
+    "latch": {
+     "bit_one": "not_inverted",
+     "bit_zero": "unknown"
+    }
+   },
+   "meaning": {
+    "inverted": "IS_C_INVERTED = 1: the physical clock is the slice clock inverted",
+    "not_inverted": "the physical clock (or gate) is the slice clock",
+    "unknown": "no attested reading: the configuration is outside the model's domain"
+   },
    "per": "slice"
   },
   "ff_init": {
-   "bit_one_means": "INIT = 0",
-   "bit_zero_means": "INIT = 1",
+   "bit_one": "init_0",
+   "bit_zero": "init_1",
+   "meaning": {
+    "init_0": "INIT = 0",
+    "init_1": "INIT = 1"
+   },
    "per": "element"
   },
   "ff_srval": {
-   "bit_one_means": "SRVAL = 0",
-   "bit_zero_means": "SRVAL = 1",
+   "bit_one": "srval_0",
+   "bit_zero": "srval_1",
+   "meaning": {
+    "srval_0": "SRVAL = 0",
+    "srval_1": "SRVAL = 1"
+   },
    "per": "element"
   },
   "sr_kind": {
-   "bit_one_means": "synchronous (R / S)",
-   "bit_zero_means": "asynchronous (CLR / PRE)",
+   "bit_one": "synchronous",
+   "bit_zero": "asynchronous",
+   "meaning": {
+    "asynchronous": "CLR / PRE, acting on the level",
+    "synchronous": "R / S, acting at the edge"
+   },
    "per": "slice"
   },
   "sr_mode": {
-   "bit_one_means": "SR driven from the slice input",
-   "bit_zero_means": "SR tied low (never asserted)",
+   "bit_one": "driven",
+   "bit_zero": "tied_low",
+   "meaning": {
+    "driven": "SR driven from the slice input",
+    "tied_low": "SR tied low (never asserted)"
+   },
    "per": "slice"
   },
   "storage_kind": {
-   "bit_one_means": "latch (AFF..DFF are LDCE / LDPE; A5FF..D5FF are not storage elements)",
-   "bit_zero_means": "flip-flop",
+   "bit_one": "latch",
+   "bit_zero": "flipflop",
+   "meaning": {
+    "flipflop": "eight flip-flops",
+    "latch": "AFF..DFF are LDCE / LDPE; A5FF..D5FF are not storage elements"
+   },
    "per": "slice"
   }
  },
@@ -64,29 +102,35 @@
   "D5FF"
  ],
  "initialisation_event": {
+  "allowed_context": "the slice clock low and the SR input de-asserted (docs/b4_architecture.md section 5.1 step 2); an init step in any other context is refused by the model",
   "assumption": "sets Q := INIT on every applicable element and clears nothing else; modelled on the UNISIM GSR",
   "status": "unverified; A8 of docs/b4_architecture.md section 5.5"
  },
  "observation_context": {
-  "fields": [
+  "executing_side_visible": [
    "step",
    "kind (init | set)",
    "prev_event (none | init | edge | level)",
    "clock_before",
    "clock_after",
-   "edge (rising | falling | null)",
-   "physical_edge per element",
-   "ce, sr, d (one bit per element)",
-   "q_before, q_after per element (0 | 1 | null = not applicable or never initialised)",
-   "applicable per element"
+   "edge (rising | falling | null) of the slice clock",
+   "ce, sr, d (one bit per element, as applied)",
+   "q_before, q_after per element (0 | 1 | null = no readout given by the hypothesis for that element in that configuration, or never initialised)"
   ],
-  "status": "every readout carries all of these; the stimulus sequence, the configuration and the initial state are part of the trace header"
+  "host_only_diagnostics": [
+   "the decode per element (primitive, INIT, SRVAL, CE / SR modes, kind, inversion)",
+   "applicability per element",
+   "the physical edge per element per step",
+   "the unknown readings"
+  ],
+  "status": "the executing side (the board, the cartographer, the search) sees only the first list; the second is derived from the decode and is for the host's audit and simulation reports, never an input to a decision in a session"
  },
  "primitive_selection": {
   "rule": "by (storage_kind, sr_kind, SRVAL): flip-flop + synchronous + SRVAL 0 -> FDRE; + SRVAL 1 -> FDSE; flip-flop + asynchronous + SRVAL 0 -> FDCE; + SRVAL 1 -> FDPE; latch + SRVAL 0 -> LDCE; latch + SRVAL 1 -> LDPE (a latch's SR is always asynchronous; sr_kind is not applicable to a latch)"
  },
+ "revision": "0.2.0 (2026-10-17, the owner's HOLD on 2bad829): the readings are machine enums validated by the loader (an unrecognised reading is refused, never read as a default); clock_mode is decoded BY STORAGE CONTEXT \u2014 under a latch the CLKINV bit is asserted with IS_G_INVERTED = 0 (docs/ff_latch_probe.md, 'The finding worth keeping'), so bit 1 means NOT inverted there and bit 0 has no attested reading (unknown: outside the model's domain); valid_configuration restated accordingly; the initialisation event's allowed context stated; the sources now include the latch probe record by path and digest.",
  "schema": "b4_ff_behaviour_hypothesis",
- "schema_version": "0.1.0",
+ "schema_version": "0.2.0",
  "scope": "SLICE_X2Y25 (CLBLL_L_X2Y25, SLICEL_X0): the 21 addresses of the clb_ff_config class on that site, the eight storage elements of the slice. A model's definitions. Nothing here is a claim about silicon: no row below has been observed on a board (docs/b4_architecture.md section 4.4).",
  "semantics": [
   "ff_init",
@@ -175,18 +219,28 @@
   },
   {
    "items": [
-    "the bit readings in `decode`",
+    "the bit readings in `decode` (machine enums; the human meaning beside each)",
+    "clock_mode read by storage context: flip-flop \u2014 bit 1 inverted; latch \u2014 bit 1 NOT inverted (the attested LDCE endpoint), bit 0 unknown",
     "the primitive selection table",
     "the pin correspondence: the slice clock is C (or G for a latch), CE is CE (or GE), SR is R / S / CLR / PRE by the decoded kind and value",
-    "the initialisation event of the carrier is modelled as the UNISIM GSR: every applicable element takes its INIT \u2014 whether the carrier's event does so on silicon is condition A8 of docs/b4_architecture.md section 5.5"
+    "the initialisation event of the carrier is modelled as the UNISIM GSR, taken with the slice clock low and SR de-asserted: every applicable element takes its INIT \u2014 whether the carrier's event does so on silicon is condition A8 of docs/b4_architecture.md section 5.5"
    ],
    "kind": "project_decode_assumption",
    "source": "docs/ff_preregistration_plan.md section 2 (the Z polarity readings) and section 3 (the attestation fields); docs/ff_latch_probe.md (a slice holds four latches, on AFF..DFF); this project's own choice of how the seven semantics select a primitive and its parameters"
+  },
+  {
+   "adopted": [
+    "LDCE reports IS_G_INVERTED = 0 and still sets the CLKINV bit; the clock-mode reading of the clkinv pair must not be applied to a latch specimen",
+    "a slice holds four latches, on AFF..DFF; A5FF and its siblings will not hold an LDCE"
+   ],
+   "kind": "repository_document",
+   "path": "docs/ff_latch_probe.md",
+   "sha256": "545bf34de94f83e39aa22b7e186a0797a0b7b2c92466bf55be8efecfd61efd27"
   }
  ],
  "status": "unverified",
  "valid_configuration": {
-  "rule": "every assignment of the 21 bits is in the model's domain",
-  "status": "a domain definition for the model (v0.1); not a statement that any configuration is legal to build, safe to write, or observed"
+  "rule": "an assignment of the 21 bits is in the model's domain when every decoded reading is known; the one unknown reading is clock_mode bit 0 under storage_kind = latch, so those assignments are outside the domain and the model refuses to observe them by name",
+  "status": "a domain definition for the model (v0.2); not a statement that any configuration is legal to build, safe to write, or observed"
  }
 }

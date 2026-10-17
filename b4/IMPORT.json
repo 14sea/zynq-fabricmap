@@ -40,43 +40,43 @@
  "files": {
   "b4/host/b4_ff_hypothesis.py": {
    "kind": "new",
-   "note": "the behaviour hypothesis loader: shape, the re-hash of every named source, the decode through the hypothesis's own readings, the swap fixtures.",
+   "note": "the behaviour hypothesis loader: shape with validated enum readings, EVERY named source re-hashed on every load (no switch), the decode by equality with clock_mode per storage context and unknown readings reported, fixtures only through fixture(doc, label) and marked.",
    "role": "host model",
-   "sha256": "61cfa77ba6b4daf389b8d3933bf2ab075341d95795695c3a6b48693c95007df9"
+   "sha256": "b1eb87e95763a15526ee28aa14aa4fad911492f77c2e80556ec78215c363dabc"
   },
   "b4/host/b4_ff_mapping.py": {
    "kind": "new",
-   "note": "the certificate mapping of one site, read from gate_runs/run_2026_08_05_ff/certificate.json and held to its specimen pairs; the project's bit readings (plan section 2) checked against the certificate, never inferred from names.",
+   "note": "the certificate mapping of one site, read from the committed certificate against its pinned digest (another file only with its digest given explicitly); address ranges, endpoint existence and site, the expected_value / transition cross-check per row; the project's bit readings held to the certificate's specimen pairs.",
    "role": "host model",
-   "sha256": "8f949493ef789ac5735bfdf400cd63428b9a3485343d53064f2dac52a287499b"
+   "sha256": "cd257260c46a977d5d13555d2f16280a98fdc4846fcc99ec8664e6684de4c002"
   },
   "b4/host/b4_ff_model.py": {
    "kind": "new",
-   "note": "the simulated fabric: configuration + stimulus -> observation trace under a mapping and a hypothesis passed in separately; starts every observation from nothing; fixtures truth / permuted / dropout and the six hypothesis swaps.",
+   "note": "the simulated fabric: configuration + stimulus -> the EXECUTING SIDE's trace under a mapping and a hypothesis passed in separately; the decode and everything derived from it host-only (diagnose / step_diagnostics); validation of the configuration, every step as handed and the init step's context at the entry; out-of-domain configurations refused; fixtures truth / permuted / dropout and seven hypothesis swaps.",
    "role": "host model",
-   "sha256": "43b1f9e5262e7a14824b6f59ef144ddf0352bef52bef3c73f43d01e006311a70"
+   "sha256": "c141b16a5c9ab5caf69b9affa774dec36388fbac8662708019cdd9dd2024edb9"
   },
-  "b4/hypothesis/ff_behaviour_v0.1.json": {
+  "b4/hypothesis/ff_behaviour_v0.2.json": {
    "kind": "new",
-   "note": "status unverified; sources by kind \u2014 the vendor's UNISIM models by root + path + sha256 + the lines adopted, the certificate by path + sha256, the project's decode assumptions; the eleven behaviour flags; valid_configuration / applicable_semantics / observation_context kept apart.",
+   "note": "status unverified; v0.2: machine-enum readings, clock_mode by storage context (the latch probe's finding), the domain rule, the initialisation event's allowed context, the executing-side / host-only split of the observation context; sources by kind \u2014 the vendor's UNISIM models by root + path + sha256 + the lines adopted, the certificate and docs/ff_latch_probe.md by path + sha256, the project's decode assumptions.",
    "role": "hypothesis (data)",
-   "sha256": "40e4102ab1e264b6187f80978f2a65f9149293ef4cbabf333bcd7a31a6ccc858"
+   "sha256": "5105002b8fd3abd903324f00f7e73962203968f553f2ec154845bf471a97cde4"
   },
   "b4/tests/test_b4_ff_hypothesis.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "9498d2bdb0ecad2e8932f34a62c17241aacb4efa261bf15fdfa39b3e4873a45f"
+   "sha256": "63e1943d84bbb716d4155b43894a2ba2971af2c7982407f99e257201efe4d698"
   },
   "b4/tests/test_b4_ff_mapping.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "9e140a4476b76e3446490ae71fee3e00036cd6fa1544096e106106a2cf458124"
+   "sha256": "0ce637b301cf555b2c1802ef72bcf372baaf2971a3e0bf8c213b2edf289b202f"
   },
   "b4/tests/test_b4_ff_model.py": {
    "kind": "new",
    "note": "every expected trace derived by hand from the hypothesis's adopted lines, never by running the model.",
    "role": "test",
-   "sha256": "7b6413a48c24796e882bd95c9bec61bf8b40a073ee73d41b83c58913a9336488"
+   "sha256": "0cd30e969899b1f30f1b9cb6a2ad0e82694ec534e0e3e90c180292684db82681"
   }
  },
  "repository_inputs": [
@@ -84,11 +84,16 @@
    "path": "gate_runs/run_2026_08_05_ff/certificate.json",
    "sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef",
    "used_by": "b4/host/b4_ff_mapping.py; b4/hypothesis/ff_behaviour_v0.1.json (certificate_mapping)"
+  },
+  {
+   "path": "docs/ff_latch_probe.md",
+   "sha256": "545bf34de94f83e39aa22b7e186a0797a0b7b2c92466bf55be8efecfd61efd27",
+   "used_by": "b4/hypothesis/ff_behaviour_v0.2.json (repository_document): the LDCE endpoint's clock-mode reading"
   }
  ],
  "schema": "b4_import",
  "schema_version": "1.0.0",
  "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) \u2014 none of the latter yet; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
- "source": "docs/b4_architecture.md v0.1.3; the owner's authorisation of unit 2b-1 (2026-10-17)",
- "stage": "B4 pre-work, unit 2b-1 (the model contract)"
+ "source": "docs/b4_architecture.md v0.1.4; the owner's authorisation of unit 2b-1 (2026-10-17) and the HOLD on 2bad829",
+ "stage": "B4 pre-work, unit 2b-1 (the model contract), corrected on the owner's HOLD of 2026-10-17"
 }

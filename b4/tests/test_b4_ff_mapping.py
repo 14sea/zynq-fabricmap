@@ -2,8 +2,10 @@
 else: 22 feature names on 21 addresses (CLKINV / NOCLKINV one bit, two readings), every (element, semantic) of
 the class exactly once, the addresses in numeric (far, word, bit) order, the certificate's digest pinned; the
 project's bit readings are held to the certificate's own specimen pairs, and a certificate that disagrees is
-refused by name (every refusal driven on a TEMP COPY — the real certificate is never touched). No skip: an
-absent certificate is a failure."""
+refused by name (every refusal driven on a TEMP COPY with its own digest given explicitly — the fixture boundary;
+the real certificate is never touched); the default entry reads only the certificate that hashes to the pinned
+CERTIFICATE_SHA256. Address ranges, endpoint existence and the polarity cross-check (the owner's P2 on 2bad829).
+No skip: an absent certificate is a failure."""
 from __future__ import annotations
 
 import copy
@@ -93,7 +95,7 @@ class Refusals(unittest.TestCase):
         p = self.d / "certificate.json"
         p.write_text(json.dumps(doc))
         with self.assertRaises(bm.MappingRefusal) as cm:
-            bm.site_mapping(path=p)
+            bm.site_mapping(path=p, expected_sha256=bm.sha256_file(p))     # the fixture boundary: the copy's own digest, explicitly
         self.assertIn(needle, str(cm.exception))
 
     def mine(self, doc, token: str, element: str | None = None) -> dict:
@@ -109,10 +111,10 @@ class Refusals(unittest.TestCase):
 
     def test_a_reading_that_the_specimen_pair_does_not_support(self):
         self.refused("the feature endpoint is 'SLICE_X2Y25_base', not 'SLICE_X2Y25_zini_AFF'", lambda d: self.mine(d, "ZINI", "AFF").__setitem__("feature_specimen_id", "SLICE_X2Y25_base"))
-        self.refused("is {'before': 1, 'after': 0}, not 0 -> 1", lambda d: self.mine(d, "ZRST", "BFF").__setitem__("expected_transition", {"before": 1, "after": 0}))
+        self.refused("do not agree with a direct reading (1, 0 -> 1)", lambda d: self.mine(d, "ZRST", "BFF").__setitem__("expected_transition", {"before": 1, "after": 0}))
 
     def test_the_shared_address_rule(self):
-        self.refused("NOCLKINV is not the negated reading of the CLKINV bit", lambda d: self.mine(d, "NOCLKINV")["predicted_assignments"][0]["segbit"].__setitem__("negated", False))
+        self.refused("NOCLKINV: expected_value 0 and transition {'before': 1, 'after': 0} do not agree with a direct reading", lambda d: self.mine(d, "NOCLKINV")["predicted_assignments"][0]["segbit"].__setitem__("negated", False))
 
         def collide(d):   # LATCH moved onto FFSYNC's address: two unrelated features on one bit
             self.mine(d, "LATCH")["predicted_assignments"][0]["address"] = self.mine(d, "FFSYNC")["predicted_assignments"][0]["address"]
@@ -125,7 +127,33 @@ class Refusals(unittest.TestCase):
 
     def test_an_unreadable_file(self):
         with self.assertRaises(bm.MappingRefusal):
-            bm.site_mapping(path=self.d / "absent.json")
+            bm.site_mapping(path=self.d / "absent.json", expected_sha256="0" * 64)
+
+    def test_the_default_entry_is_pinned_to_the_authorised_digest(self):
+        """A copy that is byte-identical still needs its digest given; a copy that differs is refused by the digest
+        BEFORE any content check; the default path is held to CERTIFICATE_SHA256; None is never accepted."""
+        p = self.d / "copy.json"
+        p.write_bytes(CERT.read_bytes())
+        self.assertEqual(bm.site_mapping(path=p).addresses, bm.site_mapping().addresses, "a byte-identical copy passes the pinned digest")
+        p.write_text(json.dumps(self.doc))                                      # re-serialised: other bytes, same content
+        with self.assertRaises(bm.MappingRefusal) as cm:
+            bm.site_mapping(path=p)
+        self.assertIn("not the expected c69e419f83668487", str(cm.exception))
+        with self.assertRaises(bm.MappingRefusal) as cm:
+            bm.site_mapping(path=p, expected_sha256=None)
+        self.assertIn("explicit 64-hex expected digest", str(cm.exception))
+        self.assertEqual(bm.CERTIFICATE_SHA256, bm.sha256_file(CERT))
+
+    def test_address_ranges_endpoints_and_the_polarity_cross_check(self):
+        """The owner's three probes on 2bad829, each refused by name."""
+        self.refused("word -1 is not in 0..100", lambda d: self.mine(d, "ZINI", "AFF")["predicted_assignments"][0]["address"].__setitem__("word", -1))
+        self.refused("bit 32 is not in 0..31", lambda d: self.mine(d, "ZINI", "AFF")["predicted_assignments"][0]["address"].__setitem__("bit", 32))
+        self.refused("frame address '0x100000000' is not 32-bit", lambda d: self.mine(d, "ZINI", "AFF")["predicted_assignments"][0]["address"].__setitem__("far", "0x100000000"))
+        self.refused("the baseline endpoint 'DOES_NOT_EXIST' is not a specimen of the certificate", lambda d: self.mine(d, "ZINI", "AFF").__setitem__("baseline_specimen_id", "DOES_NOT_EXIST"))
+        self.refused("20 addresses / 21 features, not 21 / 22", lambda d: self.mine(d, "ZRST", "AFF").__setitem__("feature_specimen_id", "SLICE_X14Y25_base"))   # a feature endpoint on another site leaves this site a feature short
+        self.refused("the baseline endpoint 'SLICE_X14Y25_base' is not on site SLICE_X2Y25", lambda d: self.mine(d, "ZINI", "AFF").__setitem__("baseline_specimen_id", "SLICE_X14Y25_base"))
+        self.refused("expected_value 0 and transition {'before': 0, 'after': 1} do not agree with a direct reading (1, 0 -> 1)", lambda d: self.mine(d, "ZINI", "AFF")["predicted_assignments"][0].__setitem__("expected_value", 0))
+        self.refused("do not agree with a negated reading (0, 1 -> 0)", lambda d: self.mine(d, "NOCLKINV")["predicted_assignments"][0].__setitem__("expected_value", 1))
 
 
 if __name__ == "__main__":

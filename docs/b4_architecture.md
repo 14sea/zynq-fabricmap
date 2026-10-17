@@ -1,4 +1,4 @@
-# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.3, host-only, 2026-10-16; revised 2026-10-17)
+# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.4, host-only, 2026-10-16; revised 2026-10-17)
 
 > **Standing: a draft architecture, not a preregistration and not a ruling.** Written under the
 > owner's authorisation of 2026-10-16 (unit 2a of the B4 pre-work: this one document, on the
@@ -39,6 +39,15 @@
 > a protection against selection (§9). Unit 2b-1 delivered `b4/host/b4_ff_mapping.py`,
 > `b4/host/b4_ff_hypothesis.py`, `b4/hypothesis/ff_behaviour_v0.1.json`, `b4/host/b4_ff_model.py` and
 > their tests (§13).
+>
+> **Revision v0.1.4 (2026-10-17, the owner's HOLD on `2bad829`, six probes):** the clock-mode reading is
+> decoded by storage context — under a latch the CLKINV bit is asserted with `IS_G_INVERTED = 0`
+> (`docs/ff_latch_probe.md`), so there bit 1 means not inverted and bit 0 has no attested reading (outside
+> the model's domain, §5.0); an observation is the executing side's view only, the decode and everything
+> derived from it a host-only diagnostic (§5.3); the loaders verify by default and fixtures enter only through
+> a marked boundary (§10); readings are validated enums, an unrecognised one refused (§4.4); the mapping
+> loader cross-checks ranges, endpoints and polarity; `observe` validates what it is handed and the init
+> step's context (§5.1). Hypothesis file `ff_behaviour_v0.2.json`.
 
 ## 0. The question, and why it is two studies
 
@@ -217,13 +226,18 @@ file, report and sentence:
 
 | | the **certificate mapping** | the **behaviour hypothesis** |
 |---|---|---|
-| what it is | per address: the feature name, the Z polarity reading, the site, the element (§4.1); per specimen: which design variant moved which bit | per storage element and per configuration value: the state machine the element is *assumed* to follow — the value after an initialisation event, the value after a user SR operation, whether CE gates capture, whether SR acts without an edge, transparency, the capturing edge |
-| source | `gate_runs/run_2026_08_05_ff/certificate.json`, the plan's attestation fields (plan §3) | **three kinds, listed per entry in `b4/hypothesis/ff_behaviour_v0.1.json` `sources`**: (1) the vendor's UNISIM simulation models — `FDRE.v`, `FDSE.v`, `FDCE.v`, `FDPE.v`, `LDCE.v`, `LDPE.v` under the root `/home/test/Xilinx/2025.2/data/verilog/src/unisims` — each by path, sha256 and the lines adopted (the GSR initialisation, the edge and level rules, the latch UDP table); (2) the certificate mapping, by path and sha256; (3) the project's own decode assumptions (the Z readings, the primitive-selection table, the pin correspondence, the initialisation event modelled as GSR). Nothing of (1)–(3) is a measurement of this line |
+| what it is | per address: the feature name, the Z polarity reading, the site, the element (§4.1); per specimen: which design variant moved which bit. **The clock-mode reading is per storage context**: the clkinv pair attests bit 1 = inverted for a flip-flop; the latch probe attests the LDCE endpoint with the CLKINV bit set and `IS_G_INVERTED = 0`, so under a latch bit 1 = *not* inverted and bit 0 has no attested reading (`docs/ff_latch_probe.md`, "The finding worth keeping") | per storage element and per configuration value: the state machine the element is *assumed* to follow — the value after an initialisation event, the value after a user SR operation, whether CE gates capture, whether SR acts without an edge, transparency, the capturing edge |
+| source | `gate_runs/run_2026_08_05_ff/certificate.json`, the plan's attestation fields (plan §3) | **three kinds, listed per entry in `b4/hypothesis/ff_behaviour_v0.2.json` `sources`**: (1) the vendor's UNISIM simulation models — `FDRE.v`, `FDSE.v`, `FDCE.v`, `FDPE.v`, `LDCE.v`, `LDPE.v` under the root `/home/test/Xilinx/2025.2/data/verilog/src/unisims` — each by path, sha256 and the lines adopted (the GSR initialisation, the edge and level rules, the latch UDP table); (2) the certificate mapping, by path and sha256; (3) the project's own decode assumptions (the Z readings, the primitive-selection table, the pin correspondence, the initialisation event modelled as GSR). Nothing of (1)–(3) is a measurement of this line |
 | status | host-attested (§4.2) | **unverified on silicon**; a modelling assumption until the carrier-v2 unit demonstrates each row on the board under its own ruling |
 | what 2b's simulation can say | that the cartographer recovers the mapping *given* the hypothesis | nothing — a simulation under the hypothesis cannot confirm the hypothesis |
 
 A gate report that says "the model" without saying which of the two is meant, or that reads a
 PASS under the hypothesis as evidence that the fabric behaves so, is wrong by construction.
+
+The hypothesis file's readings are **machine enums**, validated by its loader against a closed list per
+semantic; an unrecognised reading is refused by name at load and at decode and is never read as a default.
+The one `unknown` reading (clock mode, bit 0, under a latch) puts a configuration **outside the model's
+domain** (§5.0), and the model refuses to observe it rather than simulate it with an assumption.
 
 ## 5. The observation contract for FF semantics — functional requirements, not RTL
 
@@ -241,7 +255,7 @@ apart:
 
 | contract | what it answers | status of what it says |
 |---|---|---|
-| `valid_configuration` | which assignments of the 21 bits the **model accepts as its domain** (v0.1: all of them) | a domain definition — never a statement that a configuration is legal to build, safe to write, or has been observed |
+| `valid_configuration` | which assignments of the 21 bits the **model accepts as its domain**: those whose every decoded reading is known — v0.2 excludes a latch with the CLKINV bit clear, which nothing attests | a domain definition — never a statement that a configuration is legal to build, safe to write, or has been observed |
 | `applicable_semantics` | which relations **exist** for an address under a configuration (under a latch the x5FF elements are not storage elements, so their `ff_init` / `ff_srval` are *not applicable* — distinct from `unknown`; a latch has no `sr_kind`) | a model assumption drawn from `docs/ff_latch_probe.md`; a changed context is not an illegal configuration |
 | `observation_context` | what every readout must carry so that it can be replayed from the trace alone (§5.1) | a recording requirement |
 
@@ -258,7 +272,7 @@ following in order, with nothing of it computed on the host before the measureme
    only) and the fabric readback hashing to the commit (link 3).
 2. **Initialisation event, and the init observation** — an event under a stated discipline
    (which event, asserted how long, released when) after which the storage elements are read
-   **before any clock edge and with the user SR input de-asserted**: the *init readout*. Two
+   **before any clock edge and with the user SR input de-asserted**: the *init readout* (the model refuses an init step in any other context). Two
    restore mechanisms exist on the primitives and **this document does not say which restores
    what**: (i) an *initialisation event* — the configuration load itself, or an explicit global
    set / reset event the carrier can raise — hypothesised to bring each element to its `INIT`
@@ -335,7 +349,7 @@ be the enable mux") is forbidden; the B1 rule "a relation is a claim only when s
 decoded or confirmed; every claim must carry an observed transition"
 (`schemas/self_map_v2.schema.json`, description) carries over unchanged.
 
-### 5.3 Raw observation and fitness are two records
+### 5.3 Raw observation and fitness are two records; the decode is a third thing, host-only
 
 The ledger entry of every evaluation carries the raw observation (the sampled outputs per
 step, or a digest of them with the full vector retrievable through the audit pull) **and**,
@@ -343,6 +357,18 @@ separately, the fitness the board computed from it under the landscape rule (§7
 adjudicator recomputes the fitness from the raw observation; a mismatch is a finding against
 the board, never corrected. This is B3's specimen-ledger discipline
 (`docs/b3_architecture.md` §3) with the readout replaced by an observation sequence.
+
+**What the executing side sees, and what it never sees.** An observation (the model's `observe`,
+the carrier's record) carries only what the executing side applied and read: the configuration
+it wrote, the stimulus, and per step the context of §5.1 and the Q values. Everything derived
+from the decode — the primitive, INIT, SRVAL, the CE / SR modes, the kind, the inversion, the
+applicability of an element, the edge in an element's *physical* clock — is a **host-only
+diagnostic** (the model's `diagnose` / `step_diagnostics`), classified item by item in the
+hypothesis file's `observation_context`, produced for audits and simulation reports, and never
+an input to a decision in a session (§2). A Q of `null` in an observation says only that no
+readout exists for that element in that configuration or that it was never initialised — it is
+not labelled with the reason. A cartographer that could obtain the decode without measuring
+would not be mapping; the split is what makes 2b-2's cartographer honest by construction.
 
 ### 5.4 Nobody in the loop
 
@@ -535,6 +561,12 @@ rules before any B4 tool is written:
 3. **R7**: every `mock.patch(...).start()` in a B4 test is stopped within the same test,
    fixture close or module; `atexit` is not a stop; the §9 audit of B4's tests inventories
    every start and reads each for its cleanup and exception paths.
+4. **A loader's default entry verifies; a fixture enters through a marked boundary.** The
+   hypothesis loader re-hashes every named source on every load and has no switch to skip it;
+   the mapping loader reads the committed certificate only against its pinned digest, and any
+   other file only with its digest given explicitly; a hypothesis that is not the committed
+   file is built through `fixture(doc, label)` and marked `fixture: true` in every trace it
+   produces. A tool that silently accepts a changed source would make "same digest" mean nothing.
 
 And the inherited disciplines: a pin table generated once per lifecycle over `b4/**`; a
 manifest S0 → S3 with the clean-tree proof at each node (`docs/b3_preregistration.md` §8);
@@ -577,7 +609,7 @@ evidence** and is listed as a prerequisite, not described as a protection.
 
 | unit | deliverable | gate |
 |---|---|---|
-| 2b-1 (**delivered**, this revision) | `b4/host/b4_ff_mapping.py` (the certificate mapping of `SLICE_X2Y25`, 21 addresses / 22 names, held to the specimen pairs), `b4/hypothesis/ff_behaviour_v0.1.json` + `b4/host/b4_ff_hypothesis.py` (the behaviour hypothesis: sources by kind with digests, the eleven behaviour flags, the decode readings, the three contracts of §5.0), `b4/host/b4_ff_model.py` (the fabric: configuration + stimulus → trace under mapping and hypothesis passed in separately; the fixtures truth / permuted / dropout / six hypothesis swaps), `b4/tests/test_b4_ff_*.py`, `b4/IMPORT.json` | hand-derived expected traces; INIT and SR separated; CE, edge, kind, transparency; isolation; permutation; hypothesis swap; the mutants (a model that ignores its hypothesis is killed) |
+| 2b-1 (**delivered**; corrected on the owner's HOLD, v0.1.4) | `b4/host/b4_ff_mapping.py` (the certificate mapping of `SLICE_X2Y25`, 21 addresses / 22 names, held to the specimen pairs), `b4/hypothesis/ff_behaviour_v0.2.json` + `b4/host/b4_ff_hypothesis.py` (the behaviour hypothesis: sources by kind with digests, the eleven behaviour flags, the enum readings with the clock mode by storage context, the three contracts of §5.0; the loader verifies by default, fixtures marked), `b4/host/b4_ff_model.py` (the fabric: configuration + stimulus → the executing side's trace under mapping and hypothesis passed in separately, the decode a host-only diagnostic, validation at the entry, out-of-domain configurations refused; the fixtures truth / permuted / dropout / seven hypothesis swaps), `b4/tests/test_b4_ff_*.py`, `b4/IMPORT.json` | hand-derived expected traces; INIT and SR separated; CE, edge, kind, transparency; isolation; permutation; hypothesis swap; the mutants (a model that ignores its hypothesis is killed) |
 | 2b-2 | the landscape and fitness (§7), the engine and arms (§8), the FF cartographer, the exploration under `b4-sim` (S = 32 first) | the architecture §7 requirements, on the model of §4.4 |
 | 2b-3 | the K1–K10 thresholds and τ written into §9, the seed anchor, in one commit | the owner's review before any gate run |
 | 2b-4 | `b4/host/b4_gate.py`, the formal gate under `b4-gate-1` (S = 200), `docs/b4_gate_report.md` stating every result as "under the behaviour hypothesis"; the v3 map schema draft (§6) | every row PASS / FAIL; a PASS never read as evidence about the fabric |
@@ -587,7 +619,7 @@ evidence** and is listed as a prerequisite, not described as a protection.
 
 ## 14. Files and references
 
-`b4/host/b4_ff_mapping.py` · `b4/host/b4_ff_hypothesis.py` · `b4/hypothesis/ff_behaviour_v0.1.json` · `b4/host/b4_ff_model.py` · `b4/IMPORT.json` ·
+`b4/host/b4_ff_mapping.py` · `b4/host/b4_ff_hypothesis.py` · `b4/hypothesis/ff_behaviour_v0.2.json` · `b4/host/b4_ff_model.py` · `b4/IMPORT.json` ·
 `docs/autonomous_cartography_roadmap.md` (§1–§7) · `docs/board_roles.md` ·
 `docs/ff_preregistration_plan.md` (§1–§5, §7) · `gate_runs/run_2026_08_05_ff/certificate.json` ·
 `data/MANIFEST.json` · `schemas/self_map_v2.schema.json` · `docs/b1_carrier_contract.md` ·

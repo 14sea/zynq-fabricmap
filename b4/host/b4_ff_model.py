@@ -1,41 +1,50 @@
 #!/usr/bin/env python3
 """B4-FF — the simulated fabric: a configuration of the 21 addresses plus a stimulus sequence gives an
-OBSERVATION TRACE, under a certificate mapping and a behaviour hypothesis that are passed in separately
-and never merged (docs/b4_architecture.md sections 4.4, 5.1-5.3). Host-only; no board; no RTL.
+OBSERVATION TRACE, under a certificate mapping and a behaviour hypothesis that are passed in separately and
+never merged (docs/b4_architecture.md sections 4.4, 5.0-5.3). Host-only; no board; no RTL.
 
     fab = Fabric(site_mapping(), load())
     trace = fab.observe(config, [init(), set_(clock=1, ce=0xff, sr=0, d=0x0f), set_(clock=0, ...)])
+    diag = fab.diagnose(config)            # HOST-ONLY: the decode, applicability, the physical edges — never in a trace
 
-The state machine is PARAMETERISED by the hypothesis: every reading of a configuration bit goes through
-`Hypothesis.decode`, every behavioural choice through `Hypothesis.flag(...)`; nothing about INIT, SRVAL,
-CE, SR, latches or clock inversion is a literal here. A different hypothesis therefore gives a different
-trace (the swap fixtures), and a model that stopped consulting its hypothesis is caught by those fixtures.
+TWO OUTPUTS, KEPT APART (the owner's P1 on 2bad829, section 5.0 of the hypothesis file):
+  * `observe` returns what the EXECUTING SIDE can see: the configuration it wrote, the stimulus it applied, and
+    per step the readout — Q before / after per element — with the context it applied (clock before / after,
+    the slice-clock edge, ce / sr / d, the previous event). Nothing derived from the decode is in it: no
+    primitive, no INIT / SRVAL, no kind, no inversion, no applicability, no physical edge. A Q of None means the
+    hypothesis gives no readout for that element in that configuration (the x5FF elements under a latch) or the
+    element was never initialised — that is all a None says.
+  * `diagnose` returns the host-only diagnostics for audits and simulation reports: the decode per element, the
+    applicability, the unknown readings; `step_diagnostics(trace)` adds the physical edge per element per step.
+    A session tool may never feed these to a decision (section 2).
 
-One observation (section 5.1): `observe` starts from NOTHING — every element's Q is None (never initialised),
-the clock low, the inputs low — so no state can cross from one candidate to the next; the stimulus's own
-`init` step is what gives Q a value (the initialisation event, modelled as the UNISIM GSR: Q := INIT on every
-applicable element — an assumption, A8). A `set` step applies the inputs, settles the level-sensitive
-effects at the old clock level, applies the clock change (an edge per element in ITS physical clock, which
-is the slice clock XOR the decoded inversion), settles again at the new level, and reads out. Every step's
-record carries the whole context (section 5.1 of the hypothesis file: prev_event, clock before / after, the
-edge, the physical edge per element, ce / sr / d, Q before / after, applicability), so a readout can be
-replayed from the trace alone. Q is None for an element that is not applicable in the configuration
-(the x5FF elements under a latch) or that was never initialised.
+VALIDATION AT THE ENTRY (the owner's P2): `observe` checks the configuration (exactly the mapping's addresses,
+each 0 or 1, no bool) and every step as a dict (an init step carries nothing else; a set step's clock in {0, 1},
+ce / sr / d in 0..255, ints not bools) — whatever built them; a step that bypassed `set_` is refused the same.
+The init step's allowed context (the hypothesis's `initialisation_event.allowed_context`): the slice clock low
+and SR de-asserted at that moment, else refused. A configuration outside the hypothesis's domain (an unknown
+reading — clock_mode bit 0 under a latch) is refused by name, never simulated with a default.
 
-Fixtures (`fixture`): `truth` (the certificate mapping), `permuted` (the same 21 targets dealt to the
-addresses by a seeded permutation: a cartographer that still names the truth is hard-coded), `dropout`
-(addresses with no effect), and the hypothesis swaps `ce_ungated`, `init_no_effect`, `zini_polarity`,
-`latch_hold`, `sync_level`, `x5ff_storage`.
+The state machine is PARAMETERISED by the hypothesis: every reading goes through `Hypothesis.decode`, every
+behavioural choice through `Hypothesis.flag(...)`; nothing about INIT, SRVAL, CE, SR, latches or clock inversion
+is a literal here. `observe` starts from NOTHING (Q None, clock and inputs low): no state crosses candidates.
+A `set` step applies the inputs, settles the level-sensitive effects at the old clock level, applies the clock
+change (an edge per element in ITS physical clock — the slice clock through the decoded inversion, which under
+a latch means the gate is the slice clock itself), settles again, and reads out.
+
+Fixtures (`fixture`): `truth`, `permuted`, `dropout`, and the hypothesis swaps `ce_ungated`, `init_no_effect`,
+`zini_polarity`, `latch_hold`, `sync_level`, `x5ff_storage`, `latch_gate_inverted` — each a marked fixture
+hypothesis (its trace header says `fixture: true`).
 """
 from __future__ import annotations
 
 import hashlib
 import json
 import random
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-import sys  # noqa: E402
 for p in (REPO_ROOT / "b4/host",):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
@@ -44,6 +53,8 @@ import b4_ff_mapping as bm  # noqa: E402
 
 ELEMENTS = bm.ELEMENTS
 N = 8
+STEP_KEYS = {"init": {"kind"}, "set": {"kind", "clock", "ce", "sr", "d"}}
+VISIBLE_STEP_KEYS = ("step", "kind", "prev_event", "clock_before", "clock_after", "edge", "ce", "sr", "d", "q_before", "q_after")
 
 
 class ModelRefusal(ValueError):
@@ -51,15 +62,34 @@ class ModelRefusal(ValueError):
 
 
 # ------------------------------------------------------------------ the stimulus
+def _int_in(name: str, v, hi: int) -> int:
+    if not isinstance(v, int) or isinstance(v, bool) or not 0 <= v <= hi:
+        raise ModelRefusal(f"{name} = {v!r} is not an integer in [0, {hi}]")
+    return v
+
+
+def validate_step(st, n: int | None = None) -> dict:
+    """The one validator, used by the builders AND by `observe` on whatever it is handed."""
+    where = f"step {n}: " if n is not None else ""
+    if not isinstance(st, dict):
+        raise ModelRefusal(f"{where}a step must be a dict")
+    kind = st.get("kind")
+    if kind not in STEP_KEYS:
+        raise ModelRefusal(f"{where}kind {kind!r} is not init / set")
+    if set(st) != STEP_KEYS[kind]:
+        raise ModelRefusal(f"{where}{'an' if kind == 'init' else 'a'} {kind} step carries exactly {sorted(STEP_KEYS[kind])}, not {sorted(st)}")
+    if kind == "set":
+        for name, hi in (("clock", 1), ("ce", 0xFF), ("sr", 0xFF), ("d", 0xFF)):
+            _int_in(where + name, st[name], hi)
+    return dict(st)
+
+
 def init() -> dict:
     return {"kind": "init"}
 
 
 def set_(clock: int, ce: int = 0, sr: int = 0, d: int = 0) -> dict:
-    for name, v, hi in (("clock", clock, 1), ("ce", ce, 0xFF), ("sr", sr, 0xFF), ("d", d, 0xFF)):
-        if not isinstance(v, int) or isinstance(v, bool) or not 0 <= v <= hi:
-            raise ModelRefusal(f"step {name} = {v!r} is not an integer in [0, {hi}]")
-    return {"kind": "set", "clock": clock, "ce": ce, "sr": sr, "d": d}
+    return validate_step({"kind": "set", "clock": clock, "ce": ce, "sr": sr, "d": d})
 
 
 def pulse(ce: int = 0, sr: int = 0, d: int = 0) -> list[dict]:
@@ -77,7 +107,6 @@ class Fabric:
                  dropout: frozenset[str] = frozenset()):
         self.mapping = mapping
         self.hypothesis = hypothesis
-        # effect: address -> the (element, semantic) its bit drives. The truth is the mapping's own entries.
         self.effect = dict(effect) if effect is not None else {a: (e.element, e.semantic) for a, e in mapping.entries.items()}
         if set(self.effect) != set(mapping.addresses):
             raise ModelRefusal("the effect table does not cover exactly the mapping's addresses")
@@ -86,26 +115,37 @@ class Fabric:
 
     # -- configuration
     def config_from_genome(self, genome: int) -> dict[str, int]:
-        if not isinstance(genome, int) or genome < 0 or genome >> len(self.mapping.addresses):
+        if not isinstance(genome, int) or isinstance(genome, bool) or genome < 0 or genome >> len(self.mapping.addresses):
             raise ModelRefusal("the genome is not a non-negative integer over the mapping's addresses")
         return {a: (genome >> i) & 1 for i, a in enumerate(self.mapping.addresses)}
 
+    def validate_config(self, config) -> dict[str, int]:
+        if not isinstance(config, dict) or set(config) != set(self.mapping.addresses):
+            raise ModelRefusal("the configuration must map exactly the mapping's addresses")
+        for a, b in config.items():
+            if not isinstance(b, int) or isinstance(b, bool) or b not in (0, 1):
+                raise ModelRefusal(f"the configuration's value for {a} is {b!r}, not 0 / 1")
+        return {a: int(config[a]) for a in self.mapping.addresses}
+
     def _virtual(self, config: dict[str, int]) -> dict[str, int]:
-        """The configuration as the decoder sees it: each address's bit routed to the target its effect names
-        (identity for the truth); a dropped address moves nothing (its target stays 0 unless another drives it)."""
         v = {a: 0 for a in self.mapping.addresses}
         for a in self.mapping.addresses:
-            b = config.get(a)
-            if b not in (0, 1):
-                raise ModelRefusal(f"the configuration has no 0/1 value for {a}")
-            if a in self.dropout or not b:
+            if a in self.dropout or not config[a]:
                 continue
             element, semantic = self.effect[a]
             v[self.mapping.address_of(element, semantic)] = 1
         return v
 
-    def decode(self, config: dict[str, int]) -> dict[str, hyp.ElementConfig]:
-        return self.hypothesis.decode(self._virtual(config), self.mapping)
+    def decode(self, config: dict[str, int]) -> hyp.Decode:
+        return self.hypothesis.decode(self._virtual(self.validate_config(config)), self.mapping)
+
+    def diagnose(self, config: dict[str, int]) -> dict:
+        """HOST-ONLY. The decode and its derived facts; never part of a trace, never an input to a session decision."""
+        d = self.decode(config)
+        return {"visibility": "host_only", "in_domain": d.in_domain, "unknown_readings": [list(u) for u in d.unknown_readings],
+                "decoded": {e: {"applicable": c.applicable, "primitive": c.primitive, "init": c.init, "srval": c.srval, "ce_driven": c.ce_driven,
+                                "sr_driven": c.sr_driven, "sync": c.sync, "latch": c.latch, "clk_inverted": c.clk_inverted} for e, c in d.elements.items()},
+                "applicable": [d[e].applicable for e in ELEMENTS]}
 
     # -- the state machine, parameterised by the hypothesis
     def _phys(self, cfg: hyp.ElementConfig, clock: int) -> int:
@@ -113,7 +153,7 @@ class Fabric:
 
     def _ce_ok(self, cfg: hyp.ElementConfig, ce: int, i: int) -> bool:
         if not cfg.ce_driven:
-            return True                                            # CE tied high
+            return True
         return bool(bit(ce, i)) if self.hypothesis.flag("ce_gates_capture") else True
 
     def _sr_active(self, cfg: hyp.ElementConfig, sr: int, i: int) -> bool:
@@ -121,8 +161,7 @@ class Fabric:
             return False
         return bool(bit(sr, i))
 
-    def _settle(self, q: list, decoded: dict, clock: int, ce: int, sr: int, d: int) -> None:
-        """Level-sensitive effects at the current clock level: asynchronous SR, latch transparency."""
+    def _settle(self, q: list, decoded: hyp.Decode, clock: int, ce: int, sr: int, d: int) -> None:
         h = self.hypothesis
         for i, e in enumerate(ELEMENTS):
             cfg = decoded[e]
@@ -138,72 +177,82 @@ class Fabric:
                 if gate and self._ce_ok(cfg, ce, i):
                     q[i] = bit(d, i)
 
-    def _edges(self, q: list, decoded: dict, clock_before: int, clock_after: int, ce: int, sr: int, d: int) -> list:
-        """The clock change: per element the edge in its physical clock; a flip-flop captures on the physical
-        rising edge (the hypothesis's rule), SR first when synchronous and active."""
-        h = self.hypothesis
-        phys_edges = []
-        for i, e in enumerate(ELEMENTS):
+    def _physical_edges(self, decoded: hyp.Decode, clock_before: int, clock_after: int) -> list:
+        out = []
+        for e in ELEMENTS:
             cfg = decoded[e]
             if not cfg.applicable:
-                phys_edges.append(None)
-                continue
+                out.append(None); continue
             pb, pa = self._phys(cfg, clock_before), self._phys(cfg, clock_after)
-            edge = "rising" if (pb, pa) == (0, 1) else "falling" if (pb, pa) == (1, 0) else None
-            phys_edges.append(edge)
-            if cfg.latch or edge is None:
-                continue
-            capture_edge = "rising" if h.flag("ff_capture_on_physical_rising_edge") else "falling"
-            if edge != capture_edge:
+            out.append("rising" if (pb, pa) == (0, 1) else "falling" if (pb, pa) == (1, 0) else None)
+        return out
+
+    def _edges(self, q: list, decoded: hyp.Decode, clock_before: int, clock_after: int, ce: int, sr: int, d: int) -> None:
+        h = self.hypothesis
+        capture_edge = "rising" if h.flag("ff_capture_on_physical_rising_edge") else "falling"
+        for i, (e, edge) in enumerate(zip(ELEMENTS, self._physical_edges(decoded, clock_before, clock_after))):
+            cfg = decoded[e]
+            if not cfg.applicable or cfg.latch or edge != capture_edge:
                 continue
             if cfg.sync and self._sr_active(cfg, sr, i) and h.flag("sr_has_priority_over_capture"):
                 q[i] = cfg.srval
             elif self._ce_ok(cfg, ce, i):
                 q[i] = bit(d, i)
-        return phys_edges
 
-    # -- one observation
-    def observe(self, config: dict[str, int], stimulus: list[dict]) -> dict:
+    # -- one observation: the executing side's view
+    def observe(self, config, stimulus) -> dict:
         self.calls += 1
+        config = self.validate_config(config)
+        if not isinstance(stimulus, (list, tuple)):
+            raise ModelRefusal("the stimulus must be a list of steps")
+        steps_in = [validate_step(st, n) for n, st in enumerate(stimulus)]
         decoded = self.decode(config)
-        q: list = [None] * N                                        # never initialised: NOTHING crosses from an earlier observation
+        if not decoded.in_domain:
+            raise ModelRefusal("the configuration is outside the hypothesis's domain: no attested reading for " +
+                               ", ".join(f"{s} bit {b} under {c}" for s, c, b in decoded.unknown_readings))
+        q: list = [None] * N
         clock, ce, sr, d = 0, 0, 0, 0
         prev_event = "none"
         steps = []
-        for n, st in enumerate(stimulus):
-            kind = st.get("kind")
+        for n, st in enumerate(steps_in):
             q_before = list(q)
-            if kind == "init":
+            if st["kind"] == "init":
+                if clock != 0 or sr != 0:
+                    raise ModelRefusal(f"step {n}: an init step is allowed only with the slice clock low and SR de-asserted (clock {clock}, sr {sr:#04x})")
                 if self.hypothesis.flag("init_event_sets_q_to_init"):
                     for i, e in enumerate(ELEMENTS):
                         q[i] = decoded[e].init if decoded[e].applicable else None
-                rec = {"step": n, "kind": "init", "prev_event": prev_event, "clock_before": clock, "clock_after": clock, "edge": None,
-                       "physical_edge": [None] * N, "ce": ce, "sr": sr, "d": d}
+                rec = {"step": n, "kind": "init", "prev_event": prev_event, "clock_before": clock, "clock_after": clock, "edge": None, "ce": ce, "sr": sr, "d": d}
                 prev_event = "init"
-            elif kind == "set":
+            else:
                 ce, sr, d = st["ce"], st["sr"], st["d"]
                 self._settle(q, decoded, clock, ce, sr, d)
                 clock_before, clock = clock, st["clock"]
                 edge = "rising" if (clock_before, clock) == (0, 1) else "falling" if (clock_before, clock) == (1, 0) else None
-                phys = self._edges(q, decoded, clock_before, clock, ce, sr, d) if edge else [None] * N
+                if edge:
+                    self._edges(q, decoded, clock_before, clock, ce, sr, d)
                 self._settle(q, decoded, clock, ce, sr, d)
-                rec = {"step": n, "kind": "set", "prev_event": prev_event, "clock_before": clock_before, "clock_after": clock, "edge": edge,
-                       "physical_edge": phys, "ce": ce, "sr": sr, "d": d}
+                rec = {"step": n, "kind": "set", "prev_event": prev_event, "clock_before": clock_before, "clock_after": clock, "edge": edge, "ce": ce, "sr": sr, "d": d}
                 prev_event = "edge" if edge else "level"
-            else:
-                raise ModelRefusal(f"step {n}: kind {kind!r} is not init / set")
             rec["q_before"], rec["q_after"] = q_before, list(q)
-            rec["applicable"] = [decoded[e].applicable for e in ELEMENTS]
             steps.append(rec)
-        cfg_text = json.dumps({a: config[a] for a in self.mapping.addresses}, sort_keys=True)
-        return {"schema": "b4_ff_observation_trace", "schema_version": "0.1.0",
-                "hypothesis": {"path": self.hypothesis.path, "sha256": self.hypothesis.sha256, "version": self.hypothesis.version},
+        cfg_text = json.dumps(config, sort_keys=True)
+        return {"schema": "b4_ff_observation_trace", "schema_version": "0.2.0", "visibility": "executing_side",
+                "q_null_means": "no readout is given by the hypothesis for that element in that configuration, or the element was never initialised",
+                "hypothesis": {"path": self.hypothesis.path, "sha256": self.hypothesis.sha256, "version": self.hypothesis.version, "fixture": self.hypothesis.fixture},
                 "mapping": {"site": self.mapping.site, "certificate": self.mapping.certificate_rel, "certificate_sha256": self.mapping.certificate_sha256},
-                "config": {a: config[a] for a in self.mapping.addresses}, "config_sha256": hashlib.sha256(cfg_text.encode()).hexdigest(),
-                "decoded": {e: {"applicable": c.applicable, "primitive": c.primitive, "init": c.init, "srval": c.srval, "ce_driven": c.ce_driven,
-                                "sr_driven": c.sr_driven, "sync": c.sync, "latch": c.latch, "clk_inverted": c.clk_inverted} for e, c in decoded.items()},
-                "initial": {"clock": 0, "ce": 0, "sr": 0, "d": 0, "q": [None] * N},
+                "config": config, "config_sha256": hashlib.sha256(cfg_text.encode()).hexdigest(),
+                "stimulus": steps_in, "initial": {"clock": 0, "ce": 0, "sr": 0, "d": 0, "q": [None] * N},
                 "elements": list(ELEMENTS), "steps": steps}
+
+    def step_diagnostics(self, trace: dict) -> list[dict]:
+        """HOST-ONLY: per step, the edge in each element's physical clock and the applicability, from the decode."""
+        decoded = self.decode(trace["config"])
+        out = []
+        for s in trace["steps"]:
+            out.append({"step": s["step"], "physical_edge": self._physical_edges(decoded, s["clock_before"], s["clock_after"]) if s["edge"] else [None] * N,
+                        "applicable": [decoded[e].applicable for e in ELEMENTS]})
+        return out
 
 
 # ------------------------------------------------------------------ fixtures
@@ -213,7 +262,8 @@ SWAPS = {
     "latch_hold": ("flag", "latch_transparent_when_gate_high_and_ge", False),
     "sync_level": ("flag", "sync_sr_acts_on_edge_only", False),
     "x5ff_storage": ("flag", "x5ff_not_storage_when_latch", False),
-    "zini_polarity": ("reading", "ff_init", "INIT = 1", "INIT = 0"),
+    "zini_polarity": ("reading", "ff_init", "init_1", "init_0", None),
+    "latch_gate_inverted": ("reading", "clock_mode", "inverted", "not_inverted", "latch"),   # the reading the probe says must NOT be applied
 }
 
 
@@ -230,7 +280,10 @@ def fixture(kind: str, mapping: bm.Mapping, hypothesis: hyp.Hypothesis, seed: in
         return Fabric(mapping, hypothesis, truth, dropout=frozenset(rng.sample(list(mapping.addresses), drop)))
     if kind in SWAPS:
         spec = SWAPS[kind]
-        h2 = hypothesis.with_flag(spec[1], spec[2], kind) if spec[0] == "flag" else hypothesis.with_reading(spec[1], spec[2], spec[3], kind)
+        if spec[0] == "flag":
+            h2 = hypothesis.with_flag(spec[1], spec[2], kind)
+        else:
+            h2 = hypothesis.with_reading(spec[1], spec[2], spec[3], kind, context=spec[4])
         return Fabric(mapping, h2, truth)
     raise ModelRefusal(f"no fixture {kind!r}")
 
@@ -242,4 +295,4 @@ if __name__ == "__main__":
         if e.semantic in ("ff_srval", "ce_mode", "sr_mode", "sr_kind"):
             base[a] = 1
     t = fab.observe(base, [init(), *pulse(ce=0xFF, d=0x00)])
-    print(json.dumps([s["q_after"] for s in t["steps"]]))
+    print(json.dumps([s["q_after"] for s in t["steps"]]), sorted(t["steps"][0]))

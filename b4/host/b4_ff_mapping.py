@@ -2,7 +2,9 @@
 """B4-FF — the CERTIFICATE MAPPING of one site: which address carries which storage element and which
 semantic, read from the clb_ff_config certificate and nothing else (docs/b4_architecture.md section 4.4).
 
-    mapping = site_mapping()            # SLICE_X2Y25, the mine site (the owner's ruling 1 of 2026-10-17)
+    mapping = site_mapping()            # SLICE_X2Y25, the mine site (the owner's ruling 1 of 2026-10-17); the committed
+                                        # certificate, held to CERTIFICATE_SHA256 — any other file needs its digest given
+                                        # explicitly (`site_mapping(path, expected_sha256=...)`, the fixture boundary)
     mapping.addresses                   # the 21 addresses, sorted, "0x00400a00/52/16" (self_map v2's address form)
     mapping.entries[address]            # element, semantic, feature names, the reading of bit = 1, the specimen pair
     mapping.genome_bit(address)         # the address's position in the sorted list
@@ -19,6 +21,11 @@ name; nothing is inferred from a name alone.
 Counting (section 4.1): 22 feature names, 21 addresses — CLKINV and NOCLKINV are two readings of one bit.
 The certificate is host evidence of a mapping, not of behaviour (section 4.2); this module makes no
 behavioural statement. No board, no write.
+
+Refusals (the owner's P2 on 2bad829): an address out of range (far 32-bit, word 0..100 of a 7-series frame,
+bit 0..31); a feature or baseline endpoint that is not a specimen of the certificate, or not on the site; a
+primary assignment whose expected_value disagrees with its transition (1 <=> 0 -> 1), or a negated reading
+whose expected_value disagrees (0 <=> 1 -> 0); the certificate's digest not the authorised one.
 """
 from __future__ import annotations
 
@@ -31,6 +38,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 CERTIFICATE_REL = "gate_runs/run_2026_08_05_ff/certificate.json"
 CERTIFICATE = REPO_ROOT / CERTIFICATE_REL
 CERTIFICATE_SCHEMA_VERSION = "1.6.0"
+CERTIFICATE_SHA256 = "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef"   # 90527e6, the authorised certificate
+FRAME_WORDS = 101           # a 7-series configuration frame
 BIT_CLASS = "clb_ff_config"
 DEFAULT_SITE = "SLICE_X2Y25"
 
@@ -60,10 +69,16 @@ def sha256_file(p: Path) -> str:
 
 
 def address_string(far: str, word: int, bit: int) -> str:
-    """self_map v2's address form: lowercase 0x + 8 hex, /word/bit."""
-    f = int(far, 16)
-    if not (0 <= f <= 0xFFFFFFFF) or not isinstance(word, int) or not isinstance(bit, int):
-        raise MappingRefusal(f"malformed address {far!r}/{word!r}/{bit!r}")
+    """self_map v2's address form: lowercase 0x + 8 hex, /word/bit — range-checked."""
+    try:
+        f = int(far, 16)
+    except (TypeError, ValueError):
+        raise MappingRefusal(f"malformed frame address {far!r}") from None
+    if not (0 <= f <= 0xFFFFFFFF):
+        raise MappingRefusal(f"frame address {far!r} is not 32-bit")
+    for name, v, hi in (("word", word, FRAME_WORDS - 1), ("bit", bit, 31)):
+        if not isinstance(v, int) or isinstance(v, bool) or not 0 <= v <= hi:
+            raise MappingRefusal(f"address {far}/{word}/{bit}: {name} {v!r} is not in 0..{hi}")
     return f"0x{f:08x}/{word}/{bit}"
 
 
@@ -110,11 +125,19 @@ class Mapping:
                             for a, e in self.entries.items()}}
 
 
-def load_certificate(path: Path = CERTIFICATE) -> dict:
+def load_certificate(path: Path = CERTIFICATE, expected_sha256: str | None = CERTIFICATE_SHA256) -> dict:
+    """The committed certificate must hash to CERTIFICATE_SHA256. Another file is read only with its digest given
+    explicitly (the fixture boundary); `expected_sha256=None` is refused."""
+    if not (isinstance(expected_sha256, str) and len(expected_sha256) == 64):
+        raise MappingRefusal("a certificate is read only against an explicit 64-hex expected digest")
     try:
-        doc = json.loads(Path(path).read_text())
+        raw = Path(path).read_bytes()
+        doc = json.loads(raw)
     except (OSError, ValueError) as exc:
         raise MappingRefusal(f"the certificate {path} cannot be read: {exc}") from exc
+    got = hashlib.sha256(raw).hexdigest()
+    if got != expected_sha256:
+        raise MappingRefusal(f"the certificate {path} hashes to {got[:16]}…, not the expected {expected_sha256[:16]}…")
     if not isinstance(doc, dict) or doc.get("schema_version") != CERTIFICATE_SCHEMA_VERSION:
         raise MappingRefusal(f"the certificate's schema_version is not {CERTIFICATE_SCHEMA_VERSION}")
     if doc.get("status") != "passed":
@@ -127,8 +150,8 @@ def load_certificate(path: Path = CERTIFICATE) -> dict:
     return doc
 
 
-def site_mapping(site: str = DEFAULT_SITE, path: Path = CERTIFICATE) -> Mapping:
-    doc = load_certificate(path)
+def site_mapping(site: str = DEFAULT_SITE, path: Path = CERTIFICATE, expected_sha256: str | None = CERTIFICATE_SHA256) -> Mapping:
+    doc = load_certificate(path, expected_sha256)
     specimens = {s["specimen_id"]: s for s in doc["specimens"] if isinstance(s, dict) and "specimen_id" in s}
     tiles = {s["tile"] for s in specimens.values() if s.get("loc_site") == site}
     if len(tiles) != 1:
@@ -143,7 +166,19 @@ def site_mapping(site: str = DEFAULT_SITE, path: Path = CERTIFICATE) -> Mapping:
         if not isinstance(assigns, list) or len(assigns) != 1:
             raise MappingRefusal(f"{r.get('feature')}: {0 if not isinstance(assigns, list) else len(assigns)} predicted assignments, not one (the class is single-bit)")
         a = assigns[0]
-        addr = address_string(a["address"]["far"], a["address"]["word"], a["address"]["bit"])
+        if not isinstance(a, dict) or not isinstance(a.get("address"), dict) or not isinstance(a.get("segbit"), dict):
+            raise MappingRefusal(f"{r.get('feature')}: the assignment lacks an address or a segbit")
+        addr = address_string(a["address"].get("far"), a["address"].get("word"), a["address"].get("bit"))
+        for role, sid in (("feature endpoint", fs), ("baseline endpoint", bs)):
+            if sid not in specimens:
+                raise MappingRefusal(f"{r['feature']}: the {role} {sid!r} is not a specimen of the certificate")
+            if specimens[sid].get("loc_site") != site:
+                raise MappingRefusal(f"{r['feature']}: the {role} {sid!r} is not on site {site}")
+        tr = r.get("expected_transition") or {}
+        negated = a["segbit"].get("negated") is True
+        want_value, want_tr = (0, (1, 0)) if negated else (1, (0, 1))
+        if a.get("expected_value") != want_value or (tr.get("before"), tr.get("after")) != want_tr:
+            raise MappingRefusal(f"{r['feature']}: expected_value {a.get('expected_value')!r} and transition {tr} do not agree with a {'negated' if negated else 'direct'} reading ({want_value}, {want_tr[0]} -> {want_tr[1]})")
         by_address.setdefault(addr, []).append(r)
     entries: dict[str, Entry] = {}
     for addr, rows in sorted(by_address.items()):
@@ -155,10 +190,7 @@ def site_mapping(site: str = DEFAULT_SITE, path: Path = CERTIFICATE) -> Mapping:
                 raise MappingRefusal(f"{name}: the token {token!r} is not a clb_ff_config token this module reads")
             tokens[token] = r
         if set(tokens) == {"CLKINV", "NOCLKINV"}:
-            primary = tokens["CLKINV"]
-            neg = tokens["NOCLKINV"]["predicted_assignments"][0]
-            if not (neg["segbit"].get("negated") is True and neg.get("expected_value") == 0):
-                raise MappingRefusal(f"{addr}: NOCLKINV is not the negated reading of the CLKINV bit")
+            primary = tokens["CLKINV"]          # NOCLKINV's negated reading was already held by the per-row polarity cross-check
         elif len(tokens) == 1:
             (primary,) = tokens.values()
         else:
@@ -172,9 +204,6 @@ def site_mapping(site: str = DEFAULT_SITE, path: Path = CERTIFICATE) -> Mapping:
         want = f"{site}_{suffix}{element}" if suffix == "zini_" else f"{site}_{suffix}"
         if fs != want:
             raise MappingRefusal(f"{primary['feature']}: the feature endpoint is {fs!r}, not {want!r} — the bit reading cannot be taken from this pair")
-        tr = primary.get("expected_transition") or {}
-        if (tr.get("before"), tr.get("after")) != (0, 1):
-            raise MappingRefusal(f"{primary['feature']}: the expected transition is {tr}, not 0 -> 1")
         entries[addr] = Entry(addr, element, semantic, tuple(sorted(r["feature"] for r in rows)), BIT_ONE_MEANS[semantic], fs, bs, str(primary.get("split")))
     if len(entries) != 21 or sum(len(e.features) for e in entries.values()) != 22:
         raise MappingRefusal(f"site {site}: {len(entries)} addresses / {sum(len(e.features) for e in entries.values())} features, not 21 / 22")

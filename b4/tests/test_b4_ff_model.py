@@ -12,8 +12,12 @@ plan's bit readings (never by running the model):
   * the permuted fixture is the truth with its effects dealt to other addresses — the trace of a configuration
     on it equals the truth's trace of the correspondingly re-addressed configuration — and is not the truth;
   * every hypothesis swap changes the trace of a configuration built to expose it; the model reads its hypothesis;
-  * every readout carries the complete context of the hypothesis's observation_context, and a trace is
-    deterministic and JSON-serialisable.
+  * every readout carries the complete EXECUTING-SIDE context and nothing derived from the decode (no primitive,
+    INIT, SRVAL, kind, inversion, applicability or physical edge — those come only from the host-only `diagnose`
+    / `step_diagnostics`); a trace is deterministic and JSON-serialisable;
+  * (the owner's HOLD on 2bad829) the attested LDCE endpoint — CLKINV = 1 with IS_G_INVERTED = 0 — holds INIT
+    with the gate low; a latch with the CLKINV bit clear is outside the domain and refused; `observe` validates
+    the configuration, every step as handed (not only through `set_`) and the init step's context.
 No skip."""
 from __future__ import annotations
 
@@ -79,8 +83,8 @@ class InitAndSrAreTwoMechanisms(Base):
         sr_readout = [0, 0, 1, 0, 0, 0, 0, 0]                       # by hand: at the edge SR wins, Q := SRVAL; BFF (index 2) has SRVAL 1
         self.assertEqual(q_after(t)[5], sr_readout)
         self.assertNotEqual(init_readout, sr_readout, "the two restore mechanisms are observed at different readouts and differ")
-        self.assertEqual(t["decoded"]["BFF"]["primitive"], "FDSE")
-        self.assertEqual(t["decoded"]["AFF"]["primitive"], "FDRE")
+        diag = self.fab.diagnose(c)
+        self.assertEqual((diag["decoded"]["BFF"]["primitive"], diag["decoded"]["AFF"]["primitive"], diag["visibility"]), ("FDSE", "FDRE", "host_only"))
 
     def test_sr_not_driven_is_tied_low(self):
         c = self.cfg(sr_mode=0, BFF__ff_srval=0)
@@ -104,24 +108,26 @@ class CeEdgeAndKind(Base):
         # by hand: the physical clock starts HIGH (slice clock 0 xor inverted); slice 0->1 is a physical falling edge
         # (no capture); slice 1->0 is the physical rising edge, capturing D = 1
         self.assertEqual(q_after(inv), [[1] * 8, [1] * 8, [1] * 8])
-        self.assertEqual(inv["steps"][1]["physical_edge"], ["falling"] * 8)
-        self.assertEqual(inv["steps"][2]["physical_edge"], ["rising"] * 8)
-        self.assertEqual(inv["steps"][2]["edge"], "falling", "the slice-clock edge is recorded as it is; the physical edge per element")
+        sd = self.fab.step_diagnostics(inv)                                  # host-only: the physical edge per element
+        self.assertEqual(sd[1]["physical_edge"], ["falling"] * 8)
+        self.assertEqual(sd[2]["physical_edge"], ["rising"] * 8)
+        self.assertEqual(inv["steps"][2]["edge"], "falling", "the slice-clock edge is recorded as applied; the physical edge is a diagnostic")
+        self.assertNotIn("physical_edge", inv["steps"][2])
 
     def test_asynchronous_sr_acts_on_the_level_and_synchronous_only_at_the_edge(self):
         sync = self.fab.observe(self.cfg(), [fm.init(), fm.set_(0, ce=ALL, sr=ALL, d=ALL)])
         self.assertEqual(q_after(sync)[1], [1] * 8, "synchronous: SR asserted without an edge does nothing")
         async_ = self.fab.observe(self.cfg(sr_kind=0), [fm.init(), fm.set_(0, ce=ALL, sr=ALL, d=ALL)])
         self.assertEqual(q_after(async_)[1], [0] * 8, "asynchronous: SR asserted at the level clears to SRVAL at once")
-        self.assertEqual(async_["decoded"]["AFF"]["primitive"], "FDCE")
+        self.assertEqual(self.fab.diagnose(self.cfg(sr_kind=0))["decoded"]["AFF"]["primitive"], "FDCE")
         preset = self.fab.observe(self.cfg(sr_kind=0, CFF__ff_srval=0), [fm.init(), *fm.pulse(ce=ALL, d=0), fm.set_(0, ce=ALL, sr=ALL, d=0)])
         self.assertEqual(q_after(preset)[3], [0, 0, 0, 0, 1, 0, 0, 0], "FDPE: the asynchronous preset sets CFF (index 4) to 1")
-        self.assertEqual(preset["decoded"]["CFF"]["primitive"], "FDPE")
+        self.assertEqual(self.fab.diagnose(self.cfg(sr_kind=0, CFF__ff_srval=0))["decoded"]["CFF"]["primitive"], "FDPE")
 
 
 class Latches(Base):
     def test_transparent_while_the_gate_is_high_hold_when_low_and_x5ff_not_applicable(self):
-        c = self.cfg(storage_kind=1)
+        c = self.cfg(storage_kind=1, clock_mode=1)        # the attested latch endpoint carries CLKINV = 1 with IS_G_INVERTED = 0: the gate IS the slice clock
         t = self.fab.observe(c, [fm.init(), fm.set_(1, ce=ALL, d=0x05), fm.set_(1, ce=ALL, d=0x00), fm.set_(0, ce=ALL, d=0x00), fm.set_(0, ce=ALL, d=0x55)])
         na = None
         # by hand: AFF, BFF, CFF, DFF are LDCE (indices 0, 2, 4, 6); the x5FF elements are not storage elements -> None
@@ -130,16 +136,36 @@ class Latches(Base):
         self.assertEqual(q_after(t)[2], [0, na, 0, na, 0, na, 0, na], "gate still high, D changed without an edge: Q follows")
         self.assertEqual(q_after(t)[3], [0, na, 0, na, 0, na, 0, na], "gate closed")
         self.assertEqual(q_after(t)[4], [0, na, 0, na, 0, na, 0, na], "gate low: D changed, Q holds")
-        self.assertEqual(t["steps"][4]["applicable"], [True, False] * 4)
-        self.assertEqual(t["decoded"]["AFF"]["primitive"], "LDCE")
-        self.assertIsNone(t["decoded"]["A5FF"]["primitive"])
+        self.assertNotIn("applicable", t["steps"][4])
+        diag = self.fab.diagnose(c)
+        self.assertEqual(diag["applicable"], [True, False] * 4)
+        self.assertEqual((diag["decoded"]["AFF"]["primitive"], diag["decoded"]["A5FF"]["primitive"], diag["decoded"]["AFF"]["clk_inverted"]), ("LDCE", None, False))
+
+    def test_the_attested_ldce_endpoint_holds_init_with_the_gate_low(self):
+        """The owner's probe (docs/ff_latch_probe.md): the latch specimen has CLKINV = 1 and IS_G_INVERTED = 0. With the
+        slice clock low the gate is CLOSED: GE high and D = 0 must not disturb INIT = 1. By hand: [1, None, 1, None, 1, None, 1, None]."""
+        c = self.cfg(storage_kind=1, sr_kind=0, clock_mode=1)
+        t = self.fab.observe(c, [fm.init(), fm.set_(0, ce=ALL, sr=0, d=0)])
+        self.assertEqual(q_after(t), [[1, None, 1, None, 1, None, 1, None], [1, None, 1, None, 1, None, 1, None]])
+        t2 = self.fab.observe(c, [fm.init(), fm.set_(1, ce=ALL, sr=0, d=0)])
+        self.assertEqual(q_after(t2)[1], [0, None, 0, None, 0, None, 0, None], "with the slice clock high the gate opens and D = 0 passes")
+        wrong = fm.fixture("latch_gate_inverted", self.m, self.h)            # the reading the probe says must NOT be applied to a latch
+        self.assertEqual(q_after(wrong.observe(c, [fm.init(), fm.set_(0, ce=ALL, sr=0, d=0)]))[1], [0, None, 0, None, 0, None, 0, None])
+
+    def test_a_latch_with_the_clkinv_bit_clear_is_outside_the_domain(self):
+        c = self.cfg(storage_kind=1)                       # clock_mode bit 0 under a latch: nothing attests a reading
+        with self.assertRaises(fm.ModelRefusal) as cm:
+            self.fab.observe(c, [fm.init()])
+        self.assertIn("outside the hypothesis's domain: no attested reading for clock_mode bit 0 under latch", str(cm.exception))
+        diag = self.fab.diagnose(c)
+        self.assertEqual((diag["in_domain"], diag["unknown_readings"]), (False, [["clock_mode", "latch", 0]]))
 
     def test_a_latch_with_ge_low_holds_and_its_sr_is_asynchronous(self):
-        c = self.cfg(storage_kind=1, DFF__ff_srval=0)
+        c = self.cfg(storage_kind=1, clock_mode=1, DFF__ff_srval=0)
         t = self.fab.observe(c, [fm.init(), fm.set_(1, ce=0, d=0), fm.set_(1, ce=ALL, sr=ALL, d=0)])
         self.assertEqual(q_after(t)[1], [1, None, 1, None, 1, None, 1, None], "GE low: the open gate does not pass D")
         self.assertEqual(q_after(t)[2], [0, None, 0, None, 0, None, 1, None], "SR on a latch acts at the level: CLR to 0, PRE on DFF to 1")
-        self.assertEqual(t["decoded"]["DFF"]["primitive"], "LDPE")
+        self.assertEqual(self.fab.diagnose(c)["decoded"]["DFF"]["primitive"], "LDPE")
 
 
 class Isolation(Base):
@@ -170,15 +196,19 @@ class Fixtures(Base):
         # target sits at mapping.address_of(*perm.effect[a])
         rng = random.Random(11)
         stim = [fm.init(), fm.set_(0, ce=0xA5, sr=0x30, d=0x5A), *fm.pulse(ce=0xA5, sr=0x30, d=0x5A), fm.set_(1, ce=ALL, d=0xC3)]
-        differs = 0
-        for _ in range(12):
+        differs = compared = 0
+        for _ in range(48):
             c = {a: rng.randint(0, 1) for a in self.m.addresses}
             c_truth = {a: 0 for a in self.m.addresses}
             for a in self.m.addresses:
                 if c[a]:
                     c_truth[self.m.address_of(*perm.effect[a])] = 1
+            if not (perm.decode(c).in_domain and truth.decode(c_truth).in_domain and truth.decode(c).in_domain):
+                continue                                     # a latch with the CLKINV bit clear is outside the domain on either side
+            compared += 1
             self.assertEqual(q_after(perm.observe(c, stim)), q_after(truth.observe(c_truth, stim)))
             differs += q_after(perm.observe(c, stim)) != q_after(truth.observe(c, stim))
+        self.assertGreaterEqual(compared, 12, "too few in-domain draws")
         self.assertGreater(differs, 0, "the permuted fabric is not the truth")
 
     def test_dropout_addresses_move_nothing(self):
@@ -195,10 +225,11 @@ class Fixtures(Base):
         probes = {
             "ce_ungated": (self.cfg(), [fm.init(), *fm.pulse(ce=0, d=0)]),
             "init_no_effect": (self.cfg(), [fm.init()]),
-            "latch_hold": (self.cfg(storage_kind=1), [fm.init(), fm.set_(1, ce=ALL, d=0)]),
+            "latch_hold": (self.cfg(storage_kind=1, clock_mode=1), [fm.init(), fm.set_(1, ce=ALL, d=0)]),
             "sync_level": (self.cfg(), [fm.init(), fm.set_(0, ce=ALL, sr=ALL, d=ALL)]),
-            "x5ff_storage": (self.cfg(storage_kind=1), [fm.init()]),
+            "x5ff_storage": (self.cfg(storage_kind=1, clock_mode=1), [fm.init()]),
             "zini_polarity": (self.cfg(AFF__ff_init=1), [fm.init()]),
+            "latch_gate_inverted": (self.cfg(storage_kind=1, clock_mode=1), [fm.init(), fm.set_(0, ce=ALL, d=0)]),
         }
         self.assertEqual(set(probes), set(fm.SWAPS))
         for kind, (c, stim) in probes.items():
@@ -206,7 +237,9 @@ class Fixtures(Base):
                 swapped = fm.fixture(kind, self.m, self.h)
                 self.assertNotEqual(swapped.hypothesis.sha256, self.h.sha256)
                 self.assertNotEqual(q_after(swapped.observe(c, stim)), q_after(truth.observe(c, stim)), "the swap left the trace unchanged: the model is not reading its hypothesis")
-                self.assertEqual(swapped.observe(c, stim)["hypothesis"]["version"], f"0.1.0+{kind}")
+                head = swapped.observe(c, stim)["hypothesis"]
+                self.assertEqual((head["version"], head["fixture"]), (f"0.2.0+{kind}", True), "a swapped hypothesis is marked in the trace")
+        self.assertIs(truth.observe(self.cfg(), [fm.init()])["hypothesis"]["fixture"], False)
 
     def test_an_unknown_fixture_is_refused(self):
         with self.assertRaises(fm.ModelRefusal):
@@ -214,24 +247,76 @@ class Fixtures(Base):
 
 
 class TheTrace(Base):
-    def test_every_readout_carries_the_whole_context_and_the_trace_is_serialisable(self):
+    def test_every_readout_carries_the_executing_side_context_only_and_the_trace_is_serialisable(self):
         t = self.fab.observe(self.cfg(clock_mode=1), [fm.init(), fm.set_(1, ce=0x3C, sr=0x01, d=0x81), fm.set_(1, ce=0x3C, sr=0x00, d=0x7E), fm.set_(0, ce=ALL, d=0)])
-        want = {"step", "kind", "prev_event", "clock_before", "clock_after", "edge", "physical_edge", "ce", "sr", "d", "q_before", "q_after", "applicable"}
+        want = set(fm.VISIBLE_STEP_KEYS)
         for s in t["steps"]:
             self.assertEqual(set(s), want)
         self.assertEqual([s["prev_event"] for s in t["steps"]], ["none", "init", "edge", "level"])
         self.assertEqual([s["edge"] for s in t["steps"]], [None, "rising", None, "falling"])
         self.assertEqual(t["steps"][1]["q_before"], [1] * 8)
-        self.assertEqual((t["hypothesis"]["sha256"], t["mapping"]["certificate_sha256"]), (self.h.sha256, self.m.certificate_sha256))
+        self.assertEqual((t["hypothesis"]["sha256"], t["mapping"]["certificate_sha256"], t["visibility"]), (self.h.sha256, self.m.certificate_sha256, "executing_side"))
         self.assertEqual(len(t["config_sha256"]), 64)
+        self.assertEqual(t["stimulus"][1], {"kind": "set", "clock": 1, "ce": 0x3C, "sr": 0x01, "d": 0x81})
         self.assertEqual(json.loads(json.dumps(t)), t)
-        fields = self.h.doc["observation_context"]["fields"]
-        self.assertTrue(any(f.startswith("prev_event") for f in fields) and any(f.startswith("physical_edge") for f in fields))
+        def keys_of(o, acc):
+            if isinstance(o, dict):
+                acc.update(o); [keys_of(v, acc) for v in o.values()]
+            elif isinstance(o, list):
+                [keys_of(v, acc) for v in o]
+            return acc
+        for leak in ("decoded", "applicable", "physical_edge", "primitive", "srval", "clk_inverted", "ce_driven", "sr_driven", "sync", "latch", "in_domain", "unknown_readings"):
+            self.assertNotIn(leak, keys_of(t, set()), f"{leak!r} is a decode-derived fact and must not be a key of an executing-side trace")
+        oc = self.h.doc["observation_context"]
+        self.assertTrue(any(f.startswith("prev_event") for f in oc["executing_side_visible"]))
+        self.assertTrue(any(f.startswith("the physical edge") for f in oc["host_only_diagnostics"]))
+
+    def test_an_observation_without_stimuli_hands_over_nothing(self):
+        """The owner's probe: observe(config, []) used to return the whole decode. Now: no steps, no decode-derived key."""
+        t = self.fab.observe(self.cfg(), [])
+        self.assertEqual(t["steps"], [])
+        for leak in ("decoded", "applicable", "physical_edge", "primitive"):
+            self.assertNotIn(leak, json.dumps(t))
+
+    def test_observe_validates_whatever_it_is_handed(self):
+        """Steps that bypass set_() are validated at the entry (the owner's probes clock = 2 and sr = -1), and so is the configuration."""
+        for bad, needle in ((dict(kind="set", clock=2, ce=255, sr=0, d=0), "clock = 2 is not an integer in [0, 1]"),
+                            (dict(kind="set", clock=0, ce=0, sr=-1, d=0), "sr = -1 is not an integer in [0, 255]"),
+                            (dict(kind="set", clock=True, ce=0, sr=0, d=0), "clock = True is not an integer"),
+                            (dict(kind="set", clock=0, ce=0, sr=0), "a set step carries exactly"),
+                            (dict(kind="init", clock=0), "an init step carries exactly"),
+                            ("init", "a step must be a dict"),
+                            (dict(kind="readout"), "kind 'readout' is not init / set")):
+            with self.subTest(step=bad):
+                with self.assertRaises(fm.ModelRefusal) as cm:
+                    self.fab.observe(self.cfg(), [fm.init(), bad])
+                self.assertIn(needle, str(cm.exception))
+        with self.assertRaises(fm.ModelRefusal):
+            self.fab.observe(self.cfg(), "init")
+        c = self.cfg(); c[self.m.addresses[0]] = True
+        with self.assertRaises(fm.ModelRefusal) as cm:
+            self.fab.observe(c, [fm.init()])
+        self.assertIn("not 0 / 1", str(cm.exception))
+        c = self.cfg(); c["0x00000000/0/0"] = 0
+        with self.assertRaises(fm.ModelRefusal):
+            self.fab.observe(c, [fm.init()])
+        with self.assertRaises(fm.ModelRefusal):
+            self.fab.observe({a: 0 for a in self.m.addresses[:-1]}, [fm.init()])
+
+    def test_the_init_step_is_allowed_only_with_the_clock_low_and_sr_de_asserted(self):
+        with self.assertRaises(fm.ModelRefusal) as cm:
+            self.fab.observe(self.cfg(), [fm.set_(1, ce=ALL), fm.init()])
+        self.assertIn("an init step is allowed only with the slice clock low and SR de-asserted (clock 1, sr 0x00)", str(cm.exception))
+        with self.assertRaises(fm.ModelRefusal):
+            self.fab.observe(self.cfg(), [fm.set_(0, sr=0x01), fm.init()])
+        t = self.fab.observe(self.cfg(), [fm.set_(1, ce=ALL, sr=ALL), fm.set_(0, ce=ALL, sr=0), fm.init()])
+        self.assertEqual(q_after(t)[2], [1] * 8, "after the clock falls and SR is released, an init is allowed and gives INIT")
 
     def test_the_genome_order_is_the_mapping_s_and_bad_input_is_refused(self):
         c = self.fab.config_from_genome(1 << self.m.genome_bit(self.m.address_of("AFF", "ff_init")))
         self.assertEqual(sum(c.values()), 1)
-        self.assertEqual(self.fab.observe(c, [fm.init()])["decoded"]["AFF"]["init"], 0)
+        self.assertEqual(self.fab.diagnose(c)["decoded"]["AFF"]["init"], 0)
+        self.assertEqual(q_after(self.fab.observe(c, [fm.init()]))[0], [0, 1, 1, 1, 1, 1, 1, 1])
         with self.assertRaises(fm.ModelRefusal):
             self.fab.config_from_genome(1 << 21)
         with self.assertRaises(fm.ModelRefusal):
