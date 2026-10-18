@@ -38,6 +38,28 @@
   }
  ],
  "files": {
+  "b4/host/b4_carto.py": {
+   "base": "b3/host/b3_control_x.py",
+   "base_sha256": "c9d8375374ddedf9e13b45a82eb711e3c32a762e7da0fd8f985020f8ff2d3c37",
+   "kind": "derived",
+   "note": "the observation cartographer (closed-book: single-bit pairs under one stimulus -> seen cells / presence / no effect seen / context-dependent / unknown; multi-bit pairs counted, never decomposed; no semantic claim), the operator's groups, the v3 draft's shape check, control X (the derangement rule and the shadow isomorphism derived from B3's control-X contract, re-aimed at the eight visible lanes), A0, D and the PRIVILEGED oracle view.",
+   "role": "host",
+   "sha256": "4440bfb41e34af2540a3fcf3eb8a023758cec6c4fa04588d6ffb1251f38fd653"
+  },
+  "b4/host/b4_engine.py": {
+   "base": "host/b2_search.py",
+   "base_sha256": "3acb04714a6c677708892d171f6a418e6de7627210e2ec6ad65158db51eab1cf",
+   "kind": "derived",
+   "note": "B2's (mu, lambda) = (4, 8), KMAX = 4 engine re-implemented over the FF universe with the execution boundary at every observation: the arms R / F (a seeded probe pass, then frozen; or a given view with its provenance) / O / X, DOMAIN termination (the measured prefix, the pending children, no further draw, observation, score, selection or learning, the generator not rolled back), the ledger with map versions and commitments, generation closes, the holdout once for a completed run.",
+   "role": "host",
+   "sha256": "c13ac9befbb969769f66b891561426a9a1719664e298c5adfd10ee4dbf0e1fa0"
+  },
+  "b4/host/b4_execution.py": {
+   "kind": "new",
+   "note": "the execution boundary: ObservationPort (observe and the addresses, nothing else), SpyPort, PublicTask, TerminalEvent / Terminated / OtherRefusal, observe_candidate (DOMAIN -> a terminal event with the state before the call; any other refusal by its name).",
+   "role": "host",
+   "sha256": "41480503cb091fbfc06f68b2ae3c1ac52657cf1ffd3d4e9053e075c0407243c2"
+  },
   "b4/host/b4_ff_hypothesis.py": {
    "kind": "new",
    "note": "the behaviour hypothesis loader: load() takes no path, reads the committed file only against the pinned HYPOTHESIS_SHA256, holds the shape (validated enum readings; unknown only in clock_mode's latch context) and re-hashes every named source, always; any other document \u2014 a valid copy included \u2014 enters through fixture() / fixture_file() and is marked; the decode by equality with clock_mode per storage context and unknown readings reported.",
@@ -56,11 +78,65 @@
    "role": "host model",
    "sha256": "d1d2e78df84624344140a441ead73199f06cad66bdb27e488b00212f9efcf93d"
   },
+  "b4/host/b4_landscape.py": {
+   "kind": "new",
+   "note": "the public task generator task-v0.1 (stimulus, mask, target, weights from the landscape seed alone; the all-zero base declared; the holdout stimulus its own derivation) and the scoring (None scores nothing, is counted, never moves the ceiling).",
+   "role": "host",
+   "sha256": "abf8c6b3de4c1d0ad92b1d05611aef9976307ae74b94fbac0650fef4d2da0865"
+  },
+  "b4/host/b4_replay.py": {
+   "kind": "new",
+   "note": "EXACT ledger replay from the task alone: fitness per entry, the cartographer's versions and commitments, the best-so-far prefix, the populations at every generation close, the terminal event's consistency; every difference named.",
+   "role": "host",
+   "sha256": "64140868edbdaa663834650c1dc77ae0da56eb88565d09fa475f0eb07d168af9"
+  },
+  "b4/host/b4_rng.py": {
+   "base": "host/b1_carto.py",
+   "base_sha256": "e3e71c1606b1fc8517c98151eba28346ee8f6f505592d6b52211194f8bdbe726",
+   "kind": "derived",
+   "note": "the line's PRNG (xorshift64 over a 32-bit seed, uniform by rejection, partial Fisher-Yates sample) copied from b1_carto.Rng with a state() accessor added; behavioural equality held by b4/tests/test_b4_rng.py by import of the pinned original (read-only).",
+   "role": "host",
+   "sha256": "f2ef921176d46f1fec3f0d496300a42bce66a4d051c8c3e6f87e4bfff067b42a"
+  },
+  "b4/host/b4_stats.py": {
+   "kind": "new",
+   "note": "the four-corner interaction index and its four per-seed outcomes as a pure computation; tau a parameter with no default; every seed in the denominator.",
+   "role": "host",
+   "sha256": "9b6dd9ef6020eb1aa6673bdfa442e7fe6c02d96ed06632b9ecd83acead5e258d"
+  },
   "b4/hypothesis/ff_behaviour_v0.2.json": {
    "kind": "new",
    "note": "status unverified; v0.2: machine-enum readings, clock_mode by storage context (the latch probe's finding), the domain rule, the initialisation event's allowed context, the executing-side / host-only split of the observation context; sources by kind \u2014 the vendor's UNISIM models by root + path + sha256 + the lines adopted, the certificate and docs/ff_latch_probe.md by path + sha256, the project's decode assumptions. 0.2.1: the domain_refusal and formal_input blocks.",
    "role": "hypothesis (data)",
    "sha256": "1118bedf4831bac3806be4aa3d9b56630912a946156869807f2c26f6374e6ed2"
+  },
+  "b4/schemas/self_map_v3.schema.json": {
+   "kind": "new",
+   "note": "self_map 3.0.0-draft: observation relations, groups, an empty semantic_claims slot, host_verdict null; v2 untouched.",
+   "role": "schema (draft)",
+   "sha256": "4492f83c57ff7b0f7d28dc3c1012c32906808a7221783f0f5cfacca932220513"
+  },
+  "b4/tests/b4_test_fixtures.py": {
+   "kind": "new",
+   "note": "the MARKED mechanics hypothesis (the latch's clock bit 0 read as not inverted: a complete domain for exercising mechanics; says nothing about the fabric) and the injecting port.",
+   "role": "test",
+   "sha256": "fa1dd94c12865f0b27f4223e0779765de714beb3ac042f3056614213063bc76c"
+  },
+  "b4/tests/test_b4_carto.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "2c91ca636bf57eadbcc9d204ee3c0bfac8860ba87b1371ccb2b258b6e8a9503d"
+  },
+  "b4/tests/test_b4_engine.py": {
+   "kind": "new",
+   "note": "complete runs under the mechanics fixture; DOMAIN injected at the base, in the probe pass and mid-generation; the formal-hypothesis fact that F's probe pass terminates at the LATCH flip.",
+   "role": "test",
+   "sha256": "3ce66f8c565c0c0f9a88bfaddad007ad2d28f088197b62e47b0cf6c0f939ced1"
+  },
+  "b4/tests/test_b4_execution.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "f1eb422b87697f1bed0fa1129feaf32e18d1e3f5b4e8bb965f52c69d702734c1"
   },
   "b4/tests/test_b4_ff_hypothesis.py": {
    "kind": "new",
@@ -77,6 +153,26 @@
    "note": "every expected trace derived by hand from the hypothesis's adopted lines, never by running the model.",
    "role": "test",
    "sha256": "7cabc04e7cdc43eed70c17fef6cee9512d68b47a95315c3e5f966553d9363d88"
+  },
+  "b4/tests/test_b4_landscape.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "d0ae5e8ba258e613807c54306399d70135d0eb22fb090f268449b7f102c1601b"
+  },
+  "b4/tests/test_b4_replay.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "b235a3e609ce1d16ff3f3cf50fb8947c9274e98b8c4394f504bffd03bf21cf9d"
+  },
+  "b4/tests/test_b4_rng.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "edb9f37a97bc4f95c2070198c26260c97fff0bbdca97bb539a932885047b9f21"
+  },
+  "b4/tests/test_b4_stats.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "26b61508f5968d5f7191bccb9f228e524a0f4bc7d18d67aa102873295b8ada24"
   }
  },
  "repository_inputs": [
@@ -94,6 +190,6 @@
  "schema": "b4_import",
  "schema_version": "1.0.0",
  "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) \u2014 none of the latter yet; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
- "source": "docs/b4_architecture.md v0.1.5; the owner's authorisation of unit 2b-1 (2026-10-17) and the HOLDs on 2bad829 and b91162c",
- "stage": "B4 pre-work, unit 2b-1 (the model contract), corrected on the owner's HOLDs of 2026-10-17 (2bad829, b91162c)"
+ "source": "docs/b4_architecture.md; the owner's authorisations of 2026-10-17 (2b-1) and 2026-10-18 (2b-2, the revised scope with five rulings)",
+ "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics)"
 }

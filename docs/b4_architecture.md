@@ -1,4 +1,4 @@
-# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.5, host-only, 2026-10-16; revised 2026-10-17)
+# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.6, host-only, 2026-10-16; revised 2026-10-18)
 
 > **Standing: a draft architecture, not a preregistration and not a ruling.** Written under the
 > owner's authorisation of 2026-10-16 (unit 2a of the B4 pre-work: this one document, on the
@@ -55,6 +55,15 @@
 > every other document, a valid copy included, is a marked fixture (§10); a token's reading direction is the
 > class's, not the row's, and the two readings of a shared bit must be complementary (§4.4); `unknown` is a
 > reading in the latch context of the clock mode only, held by the shape check.
+>
+> **Revision v0.1.6 (2026-10-18, unit 2b-2 — the owner's five rulings on the revised scope):** the 21 addresses
+> and the formal hypothesis kept, no reading added, no universe narrowed, no candidate filtered by diagnostics; a
+> DOMAIN refusal terminates the run — the measured prefix and the terminal state are kept, nothing is added to a
+> curve, no seed is dropped, an incomplete pair never yields a primary PASS (§5.3, §9); the task is PUBLIC —
+> stimulus, mask M, target t and weights w from the landscape seed alone, the base all-zero by declared choice,
+> None scoring nothing and moving no ceiling (§7); reachability, a non-optimal base and interaction are separate
+> host audits, never satisfied by choosing seeds. Unit 2b-2 delivered the execution boundary, the task generator,
+> the engine, the observation cartographer, the replay and the four-corner computation with their tests (§13).
 
 ## 0. The question, and why it is two studies
 
@@ -383,6 +392,22 @@ host-only (`diagnose`). Such a refusal is never a specimen, never a redraw condi
 and never a map-update signal — 2b-2's cartographer and engine inherit this rule (the hypothesis
 file's `domain_refusal` block).
 
+**What a DOMAIN does to a run (the owner's ruling 2 of 2026-10-18; `b4/host/b4_engine.py`).** Every
+observation of a run — the base, each mapping probe, each search candidate, the holdout — passes the
+one boundary. The first DOMAIN terminates the run: the event is recorded as it came (the phase, the
+attempt ordinal, the candidate's and the stimulus's digests, the seeds, the budget, the successful
+observations, the generator's state, the population's and the map's commitments as they stood before
+the call), kept apart from the specimen ledger; the candidate has no fitness, no specimen and no place
+in the population; the generation's successful children stay pending — no selection pretends the
+generation closed; nothing is generated, observed, scored, selected or learned afterwards; the
+generator is not rolled back. The best-so-far trace is the **measured prefix**: the unexecuted budget
+points are missing, never filled with zero or with the last value; an incomplete run never enters a
+pair as if complete, and a seed is never dropped and replaced. Any other refusal is recorded by its own
+name, never as DOMAIN. One consequence stated now, as a fact and not a defect: from the all-zero base
+(CLKINV clear, in the domain) the single flip of the LATCH address is outside the domain, so a mapping
+probe pass that covers every address terminates there, in whatever order — under the formal
+hypothesis the frozen arm's own probe pass cannot complete (`test_b4_engine`).
+
 ### 5.4 Nobody in the loop
 
 The certificate, the oracle map, the attestation fields and the Z readings are not available
@@ -484,6 +509,19 @@ sequence with the target under a rule fixed in the preregistration. Requirements
   (`master = first 4 bytes of sha256(label | instrument commit)`, every archived seed set
   excluded — `docs/b3_architecture.md` §9 H6);
 - the holdout (a site instance, §4.3) is never part of the search's fitness.
+
+**The public task as implemented (`b4/host/b4_landscape.py`, task-v0.1; the owner's ruling 3 of
+2026-10-18).** The stimulus (an initialisation step, K alternating clock steps, two input-only steps),
+the scoring mask M (every readout cell after the init step), the target t (a bit per cell) and the
+weights w (one) are generated from the landscape seed alone by a versioned generator that imports
+neither the mapping nor the hypothesis; every arm of a pair receives the same task. The base is the
+all-zero configuration — a declared design choice (all-one is permutation-invariant and in the domain
+too). The fitness is `f = Σ_{j∈M} w_j · [q_j ∈ {0,1} and q_j = t_j]`; a None cell scores nothing and is
+counted; the ceiling `Σ w` never moves with a candidate's applicability; None = None is not a hit. The
+holdout stimulus is its own derivation, scored once for a completed run's champion. Whether a task's
+ceiling is reachable, whether its base is not already optimal, and whether it carries interaction
+(K10) are NOT given by the generator: they are claims for a separate host audit, and a task that lacks
+them is an unresolved problem of that task, never a reason to draw another seed.
 
 Whether such a fitness exists with the properties above is **the first thing unit 2b must
 show in simulation**; if it does not, B4-FF stops at the gate like round 1′ did
@@ -626,7 +664,7 @@ evidence** and is listed as a prerequisite, not described as a protection.
 | unit | deliverable | gate |
 |---|---|---|
 | 2b-1 (**delivered**; corrected on the owner's HOLD, v0.1.4) | `b4/host/b4_ff_mapping.py` (the certificate mapping of `SLICE_X2Y25`, 21 addresses / 22 names, held to the specimen pairs), `b4/hypothesis/ff_behaviour_v0.2.json` + `b4/host/b4_ff_hypothesis.py` (the behaviour hypothesis: sources by kind with digests, the eleven behaviour flags, the enum readings with the clock mode by storage context, the three contracts of §5.0; the loader verifies by default, fixtures marked), `b4/host/b4_ff_model.py` (the fabric: configuration + stimulus → the executing side's trace under mapping and hypothesis passed in separately, the decode a host-only diagnostic, validation at the entry, out-of-domain configurations refused; the fixtures truth / permuted / dropout / seven hypothesis swaps), `b4/tests/test_b4_ff_*.py`, `b4/IMPORT.json` | hand-derived expected traces; INIT and SR separated; CE, edge, kind, transparency; isolation; permutation; hypothesis swap; the mutants (a model that ignores its hypothesis is killed) |
-| 2b-2 | the landscape and fitness (§7), the engine and arms (§8), the FF cartographer, the exploration under `b4-sim` (S = 32 first) | the architecture §7 requirements, on the model of §4.4 |
+| 2b-2 (**delivered**, v0.1.6; the pure-function part) | `b4/host/b4_execution.py` (the port that exposes `observe` and the addresses only; the terminal event), `b4/host/b4_landscape.py` (the public task and the scoring), `b4/host/b4_engine.py` (the derived (μ, λ) engine over the FF universe; R / F / O / X; DOMAIN termination as ruled), `b4/host/b4_carto.py` (the observation cartographer: seen cells, presence, no-effect-seen, context-dependent, unknown; groups; the v3 draft; control X with its shadow isomorphism; A0, D, the privileged Ω), `b4/host/b4_replay.py` (EXACT replay), `b4/host/b4_stats.py` (the four-corner computation), `b4/host/b4_rng.py` (the PRNG copy), `b4/schemas/self_map_v3.schema.json`, the tests. **No exploration run, no gate number, no threshold.** The exploration under `b4-sim` (S = 32 first) follows 2b-3 and its own authorisation | the revised scope's acceptance list (section 6); the thresholds commit before any exploration |
 | 2b-3 | the K1–K10 thresholds and τ written into §9, the seed anchor, in one commit | the owner's review before any gate run |
 | 2b-4 | `b4/host/b4_gate.py`, the formal gate under `b4-gate-1` (S = 200), `docs/b4_gate_report.md` stating every result as "under the behaviour hypothesis"; the v3 map schema draft (§6) | every row PASS / FAIL; a PASS never read as evidence about the fabric |
 | 2c | `docs/b4_preregistration.md` DRAFT (B4-FF: claim, pins, prediction, metrics, falsifiers, sessions and rulings, compatibility, lifecycle, §9 rule; B4-R: prerequisites and prohibitions only) | the owner's review; the holdout and the universe fixed by whole site instance |

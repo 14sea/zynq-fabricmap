@@ -1,0 +1,35 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "title": "self_map 3.0.0-draft — the FF class's BOARD-AUTHORED map: observation relations, groups, no semantic claim yet",
+ "description": "Stage B4-FF (docs/b4_architecture.md sections 5.3 and 6; the revised 2b-2 scope section 4.2). Three things kept apart: an OBSERVATION RELATION (what an address was seen to change, in which contexts — the cartographer's, closed-book), a SEMANTIC CLAIM (a later rule with its own controls; empty in v0.1) and the HOST VERDICT (a separate document; null here). self_map v2 (B1-B3) is untouched; a v3 document carries no LUT relation and a B1-B3 tool never reads it.",
+ "type": "object",
+ "required": ["schema", "schema_version", "cartographer", "binding", "universe", "version", "relations", "semantic_claims", "groups", "multi_bit_pairs_seen", "host_verdict"],
+ "additionalProperties": false,
+ "properties": {
+  "schema": {"const": "self_map"},
+  "schema_version": {"const": "3.0.0-draft"},
+  "cartographer": {"type": "string"},
+  "binding": {"type": "object"},
+  "universe": {"type": "object", "required": ["addresses", "class", "safety_class"], "additionalProperties": false,
+               "properties": {"addresses": {"type": "integer", "minimum": 1}, "class": {"const": "clb_ff_config"}, "safety_class": {"const": "content"}}},
+  "version": {"type": "integer", "minimum": 0},
+  "relations": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+    "required": ["genome_bit", "address", "state", "affected_cells", "presence_cells", "affected_elements", "pairs_with_effect", "pairs_without_effect", "contexts", "evidence"],
+    "properties": {
+     "genome_bit": {"type": "integer", "minimum": 0},
+     "address": {"type": "string", "pattern": "^0x[0-9a-f]{8}/[0-9]+/[0-9]+$"},
+     "state": {"enum": ["unknown", "effect_seen", "no_effect_seen", "context_dependent"]},
+     "affected_cells": {"type": "array", "items": {"type": "array", "items": {"type": "integer", "minimum": 0}, "minItems": 2, "maxItems": 2}},
+     "presence_cells": {"type": "array", "items": {"type": "array", "items": {"type": "integer", "minimum": 0}, "minItems": 2, "maxItems": 2}},
+     "affected_elements": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 7}},
+     "pairs_with_effect": {"type": "integer", "minimum": 0},
+     "pairs_without_effect": {"type": "integer", "minimum": 0},
+     "contexts": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{64}$"}},
+     "evidence": {"type": "array", "items": {"type": "array", "items": {"type": "integer", "minimum": 1}, "minItems": 2, "maxItems": 2}}
+    }}},
+  "semantic_claims": {"type": "array", "maxItems": 0, "description": "v0.1: none. A semantic rule enters with its own positive and negative trace controls, separately reviewed."},
+  "groups": {"type": "array", "items": {"type": "array", "items": {"type": "integer", "minimum": 0}, "minItems": 1}},
+  "multi_bit_pairs_seen": {"type": "integer", "minimum": 0},
+  "host_verdict": {"type": "null", "description": "the host's judgement of this map lives in a separate document, never inside the board-authored map"}
+ }
+}
