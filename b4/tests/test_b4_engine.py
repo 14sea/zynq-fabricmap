@@ -196,7 +196,10 @@ class Termination(Base):
                 return t
         r = be.run("R", self.task, Drifting(self.fab), 11, 8)
         self.assertFalse(r.completed)
+        self.assertEqual(r.other_refusal["kind"], "SourceRefusal")
         self.assertIn("identity changed between observations", r.other_refusal["message"])
+        self.assertEqual(set(r.provenance), {"hypothesis", "mapping", "fabric"})
+        self.assertEqual((r.fixture, r.fabric_fixture), (True, False), "a hypothesis fixture over the truth fabric")
 
     def test_another_refusal_is_recorded_by_name_not_as_domain(self):
         port = InjectingPort(self.fab, refuse_at=3, exc=fm.ModelRefusal("boom"))

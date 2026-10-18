@@ -77,6 +77,33 @@ class ThePort(unittest.TestCase):
         self.assertEqual(str(cm.exception), "boom")
         self.assertNotIsInstance(cm.exception, fm.DomainRefusal)
 
+    def test_the_source_identity_validator_is_exact(self):
+        fab = mechanics_fabric()
+        t = fab.observe({a: 0 for a in fab.mapping.addresses}, [fm.init()])
+        hdr = {k: t[k] for k in ("hypothesis", "mapping", "fabric")}
+        self.assertEqual(ex.provenance_findings(hdr), [])
+        self.assertEqual(set(hdr["fabric"]), {"kind", "effect_sha256", "dropout_sha256", "dropout_count", "seed"})
+        import copy
+        for edit, needle in (
+            (lambda h: h.pop("fabric"), "exactly hypothesis, mapping and fabric"),
+            (lambda h: h["hypothesis"].__setitem__("sha256", "x"), "hypothesis identity: sha256 is not a 64-hex digest"),
+            (lambda h: h["hypothesis"].__setitem__("fixture", 1), "fixture is not a bool"),
+            (lambda h: h["hypothesis"].pop("version"), "hypothesis identity: exactly path, sha256, version, fixture"),
+            (lambda h: h["mapping"].__setitem__("certificate_sha256", "Y" * 64), "certificate_sha256 is not a 64-hex digest"),
+            (lambda h: h["fabric"].__setitem__("kind", "oracle"), "fabric identity: kind 'oracle'"),
+            (lambda h: h["fabric"].__setitem__("dropout_count", True), "fabric identity: dropout_count"),
+            (lambda h: h["fabric"].__setitem__("seed", "5"), "fabric identity: seed"),
+        ):
+            h = copy.deepcopy(hdr); edit(h)
+            self.assertTrue(any(needle in x for x in ex.provenance_findings(h)), needle)
+        self.assertEqual([ex.refusal_kind(e) for e in (ex.SourceRefusal("s"), fm.ModelRefusal("m"), ValueError("v"), fm.DomainRefusal(), KeyError("k"))], ["SourceRefusal", "ModelRefusal", "ValueError", None, None])
+        for kind, cls in (("SourceRefusal", ex.SourceRefusal), ("ModelRefusal", fm.ModelRefusal), ("ValueError", ValueError)):
+            with self.assertRaises(cls) as cm:
+                ex.raise_refusal(kind, "msg")
+            self.assertEqual(str(cm.exception), "msg")
+        with self.assertRaises(ValueError):
+            ex.raise_refusal("KeyError", "msg")
+
     def test_the_task_and_the_genome_helpers(self):
         fab = mechanics_fabric()
         task = bl.make_task(3, fab.mapping.addresses)

@@ -31,6 +31,85 @@ import b4_ff_model as fm  # noqa: E402  (the DomainRefusal / ModelRefusal classe
 
 DOMAIN = fm.DomainRefusal.CODE
 PHASES = ("base", "probe", "search", "holdout")
+REFUSAL_KINDS = ("ValueError", "ModelRefusal", "SourceRefusal")      # the finite set the engine records and the replay re-raises
+SOURCE_KINDS = ("truth", "permuted", "dropout", "custom")
+
+
+def _hex64(v) -> bool:
+    return isinstance(v, str) and len(v) == 64 and all(c in "0123456789abcdef" for c in v)
+
+
+def _is_int(v) -> bool:
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+class SourceRefusal(ValueError):
+    """The observation source's identity is absent, malformed or drifting — a refusal by its own name."""
+
+
+def provenance_findings(hdr) -> list[str]:
+    """The observation source's identity as EVERY trace must carry it: the hypothesis (path, sha256, version, fixture),
+    the mapping (site, certificate, certificate_sha256) and the fabric (kind, effect_sha256, dropout_sha256, dropout_count,
+    seed) — exact fields, exact types, 64-hex digests. Used by the engine on every observation and by the replay on the
+    record; a descriptor identifies the input and never carries the effect table itself."""
+    f: list[str] = []
+    if not isinstance(hdr, dict) or set(hdr) != {"hypothesis", "mapping", "fabric"}:
+        return ["the source identity must carry exactly hypothesis, mapping and fabric"]
+    h, m, fb = hdr["hypothesis"], hdr["mapping"], hdr["fabric"]
+    if not isinstance(h, dict) or set(h) != {"path", "sha256", "version", "fixture"}:
+        f.append("hypothesis identity: exactly path, sha256, version, fixture")
+    else:
+        if not (isinstance(h["path"], str) and h["path"]):
+            f.append("hypothesis identity: path")
+        if not _hex64(h["sha256"]):
+            f.append("hypothesis identity: sha256 is not a 64-hex digest")
+        if not (isinstance(h["version"], str) and h["version"]):
+            f.append("hypothesis identity: version")
+        if not isinstance(h["fixture"], bool):
+            f.append("hypothesis identity: fixture is not a bool")
+    if not isinstance(m, dict) or set(m) != {"site", "certificate", "certificate_sha256"}:
+        f.append("mapping identity: exactly site, certificate, certificate_sha256")
+    else:
+        if not (isinstance(m["site"], str) and m["site"]) or not (isinstance(m["certificate"], str) and m["certificate"]):
+            f.append("mapping identity: site / certificate")
+        if not _hex64(m["certificate_sha256"]):
+            f.append("mapping identity: certificate_sha256 is not a 64-hex digest")
+    if not isinstance(fb, dict) or set(fb) != {"kind", "effect_sha256", "dropout_sha256", "dropout_count", "seed"}:
+        f.append("fabric identity: exactly kind, effect_sha256, dropout_sha256, dropout_count, seed")
+    else:
+        if fb["kind"] not in SOURCE_KINDS:
+            f.append(f"fabric identity: kind {fb['kind']!r}")
+        if not _hex64(fb["effect_sha256"]) or not _hex64(fb["dropout_sha256"]):
+            f.append("fabric identity: effect_sha256 / dropout_sha256 are not 64-hex digests")
+        if not _is_int(fb["dropout_count"]) or fb["dropout_count"] < 0:
+            f.append("fabric identity: dropout_count")
+        if not (fb["seed"] is None or _is_int(fb["seed"])):
+            f.append("fabric identity: seed")
+    return f
+
+
+def refusal_kind(exc: BaseException) -> str | None:
+    """The finite name the engine records for a non-DOMAIN refusal; None for anything else (which propagates)."""
+    if isinstance(exc, SourceRefusal):
+        return "SourceRefusal"
+    if isinstance(exc, fm.DomainRefusal):
+        return None
+    if isinstance(exc, fm.ModelRefusal):
+        return "ModelRefusal"
+    if isinstance(exc, ValueError):
+        return "ValueError"
+    return None
+
+
+def raise_refusal(kind: str, message: str):
+    """The replay re-raises a recorded refusal by its finite kind — never by importing a name."""
+    if kind == "SourceRefusal":
+        raise SourceRefusal(message)
+    if kind == "ModelRefusal":
+        raise fm.ModelRefusal(message)
+    if kind == "ValueError":
+        raise ValueError(message)
+    raise ValueError(f"unknown refusal kind {kind!r}")
 
 
 def sha256_json(obj) -> str:

@@ -1,4 +1,4 @@
-# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.7, host-only, 2026-10-16; revised 2026-10-18)
+# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.8, host-only, 2026-10-16; revised 2026-10-18)
 
 > **Standing: a draft architecture, not a preregistration and not a ruling.** Written under the
 > owner's authorisation of 2026-10-16 (unit 2a of the B4 pre-work: this one document, on the
@@ -73,6 +73,15 @@
 > is a SYMMETRY control, not yet the negative control K2 / K3 name — a design note is before the owner (§8); the design
 > is not gate-ready: the frozen arm cannot complete its probe pass under the formal hypothesis, and 2b-3 does not
 > follow until that is ruled on.
+>
+> **Revision v0.1.8 (2026-10-18, the owner's HOLD on `8d2757a`):** the observation source's identity includes the
+> FABRIC (kind, effect digest, dropout digest and count, seed — digests only), is validated field by field on every
+> observation and in the replay, and a malformed or drifting identity is a `SourceRefusal` by its own name (§10);
+> non-DOMAIN refusals are recorded under a finite set of kinds and replayed by kind (§5.3); the replay's validation is
+> total and type-exact and a malformed record is a named finding, never an exception or a pass (§5.3); the X-A design
+> note is corrected — a derangement of addresses does not guarantee a changed partition, π is fixed blind and never
+> redrawn, residual structure is reported post hoc, the lane permutation is a symmetry check of the relation /
+> partition structure, no trajectory-equality claim (§8). Still not gate-ready; nothing implemented for X-A.
 
 ## 0. The question, and why it is two studies
 
@@ -430,7 +439,11 @@ holding every call to the record; the whole result must reconstruct field by fie
 INTERNAL EXECUTION SEQUENCE — nothing decided, drawn, selected or learned beyond the declared inputs and
 the recorded observations. It does not prove that an observation or a DOMAIN came from the model or
 from hardware: the observation source's identity is bound and checked for consistency, not re-derived
-(`b4/host/b4_replay.py`).
+(`b4/host/b4_replay.py`). Its validation is total and type-exact — every field, every entry, every q grid
+against the phase's public stimulus, the terminal event, the refusal (one of the finite kinds `ValueError`,
+`ModelRefusal`, `SourceRefusal`, re-raised by kind at its attempt), the given view, the source identity —
+before anything is hashed, indexed or reconstructed; a malformed record is a named finding and an internal
+error is reported as such, distinct from a refusal. A source that told a consistent lie passes: the limit stands.
 
 ### 5.4 Nobody in the loop
 
@@ -560,7 +573,7 @@ All on the same seeds and rows, the form of B2 §7 / §7a and B3 §9:
 | **R** random-safe | the engine with the uniform operator over the universe | the baseline |
 | **F** frozen self-map | the engine consulting a map the FF cartographer built and froze | the search benefit of a correct map (B2's claim, re-asked) |
 | **O** online self-map | the map updated from every specimen (B3's arm) | whether updating pays on this class |
-| **X** scrambled specimens | O with each specimen's observation transformed before the cartographer, a shadow over the untransformed observations proving the same algorithm under the transformation (B3 §9's contract) — **as implemented in 2b-2 the transformation is a permutation of the eight visible lanes, which relabels elements but keeps the partition of addresses the operator uses: a SYMMETRY control, not yet the negative control this row names.** A design note (address relabelling before the cartographer, X-A) is before the owner; no change until ruled | a wrong online map does not profit — the reading this row needs is not yet carried by the implemented X |
+| **X** scrambled specimens | O with each specimen's observation transformed before the cartographer, a shadow over the untransformed observations proving the same algorithm under the transformation (B3 §9's contract) — **as implemented in 2b-2 the transformation is a permutation of the eight visible lanes, which relabels elements but keeps the partition of addresses the operator uses: a SYMMETRY control, not yet the negative control this row names.** A design note (address relabelling before the cartographer, X-A) is before the owner — ruled an acceptable direction with corrections: a derangement does not guarantee a changed partition (a within-group swap preserves it), π is fixed blind and never redrawn, residual structure is reported post hoc, the full per-specimen isomorphism is checked, and the lane permutation is a symmetry CHECK of the relation / partition structure with no trajectory-equality claim; nothing implemented | a wrong online map does not profit — the reading this row needs is not yet carried by the implemented X |
 | **D** shuffled map | F with the map's relations permuted across addresses (B2 §5's control) | a wrong frozen map does not profit |
 | **Ω** oracle map | F with the certificate-derived map — host simulation only, never on the board (§2) | the upper bound and the headroom (B2 G4) |
 | **A0** address-only baseline | what address structure alone predicts (B1's guard) | the map carries more than addresses |
@@ -643,8 +656,12 @@ rules before any B4 tool is written:
    file is built through `fixture(doc, label)` and marked `fixture: true` in every trace it
    produces. A tool that silently accepts a changed source would make "same digest" mean nothing.
    **Provenance is bound through results**: every run records the observation source's identity (the
-   hypothesis's path, digest, version and fixture marker; the mapping's site and certificate digest) from
-   its first observation, requires it equal on every later one, and binds it into every ledger entry; a
+   hypothesis's path, digest, version and fixture marker; the mapping's site and certificate digest; the
+   FABRIC's kind — truth, permuted, dropout, custom — with its effect and dropout digests, count and seed:
+   digests only, never the effect table) from its first observation, validates it field by field (exact
+   fields and types, 64-hex digests; a malformed or drifting identity is a `SourceRefusal` by its own name),
+   requires it equal on every later one, surfaces the hypothesis-fixture and the fabric-fixture markers
+   separately, and binds it into every ledger entry; a
    given frozen map is recorded with its whole provenance chain, and a transformation never drops its
    parent — a shuffled oracle is oracle-derived and privileged, never a learned source. A descriptor
    identifies an input; it is no licence to inspect the decode.

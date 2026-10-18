@@ -278,6 +278,25 @@ class TheTrace(Base):
         self.assertTrue(any(f.startswith("prev_event") for f in oc["executing_side_visible"]))
         self.assertTrue(any(f.startswith("the physical edge") for f in oc["host_only_diagnostics"]))
 
+    def test_the_trace_header_names_the_fabric_by_digests_only(self):
+        t = self.fab.observe(self.cfg(), [fm.init()])
+        self.assertEqual(t["fabric"], {"kind": "truth", "effect_sha256": self.fab.source["effect_sha256"], "dropout_sha256": self.fab.source["dropout_sha256"], "dropout_count": 0, "seed": None})
+        perm = fm.fixture("permuted", self.m, self.h, seed=3)
+        drop = fm.fixture("dropout", self.m, self.h, seed=3, drop=4)
+        self.assertEqual((perm.source["kind"], perm.source["seed"], drop.source["kind"], drop.source["dropout_count"]), ("permuted", 3, "dropout", 4))
+        self.assertNotEqual(perm.source["effect_sha256"], self.fab.source["effect_sha256"])
+        self.assertEqual(drop.source["effect_sha256"], self.fab.source["effect_sha256"])
+        self.assertNotEqual(drop.source["dropout_sha256"], self.fab.source["dropout_sha256"])
+        custom = fm.Fabric(self.m, self.h, effect=perm.effect)
+        self.assertEqual(custom.source["kind"], "custom")
+        self.assertEqual(fm.fixture("ce_ungated", self.m, self.h).source["kind"], "truth", "a hypothesis swap is a truth fabric under another hypothesis")
+        import json
+        text = json.dumps(t["fabric"])
+        for leak in ("ff_init", "AFF", "0x00400a", "SLICEL"):
+            self.assertNotIn(leak, text, "digests only")
+        with self.assertRaises(fm.ModelRefusal):
+            fm.Fabric(self.m, self.h, kind="oracle")
+
     def test_an_observation_without_stimuli_hands_over_nothing(self):
         """The owner's probe: observe(config, []) used to return the whole decode. Now: no steps, no decode-derived key."""
         t = self.fab.observe(self.cfg(), [])

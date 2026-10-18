@@ -73,7 +73,8 @@ class Replay(unittest.TestCase):
         self.named(lambda d: (d["terminal"].__setitem__("rng_state", 0), d.__setitem__("rng_state_final", 0)), "result.rng_state_final", base=t)
         self.named(lambda d: d.__setitem__("pending_children", []), "result.pending_children", base=t)
         self.named(lambda d: d.__setitem__("population", []), "result.population", base=t)
-        self.named(lambda d: d["ledger"][1].update(bits=[], parent_born=999, move_kind="oracle"), "result.ledger[1]", base=o)
+        self.named(lambda d: d["ledger"][1].update(bits=[], parent_born=999, move_kind="oracle"), "ledger[1]: a field has the wrong type or range", base=o)
+        self.named(lambda d: d["ledger"][1].update(bits=[0], parent_born=999, move_kind="random"), "result.ledger[1]", base=o)
         self.named(lambda d: d.__setitem__("champion", {"genome": 0, "fit": 999, "born": 999}), "result.champion", base=o)
         self.named(lambda d: d.update(evals=999, cost={"base": 0, "probes": 0, "search": 0, "holdout": 0}, map_version_final=999, map_specimens_final=999, map_commitment_final="0" * 64), "result.evals", base=o)
         self.named(lambda d: d["ledger"][1].update(map_version_before=999, map_version_after=999, map_commitment_after="0" * 64), "result.ledger[1].map_commitment_after", base=ff)
@@ -109,7 +110,7 @@ class Replay(unittest.TestCase):
         self.assertIs(self.ff["provenance"]["hypothesis"]["fixture"], False, "the formal hypothesis is not a fixture")
         self.assertEqual(self.ff["provenance"]["hypothesis"]["sha256"], hy.HYPOTHESIS_SHA256)
         self.named(lambda d: d["provenance"]["hypothesis"].__setitem__("fixture", False), "the entry's provenance digest is not the result's")
-        self.named(lambda d: d.__setitem__("provenance", None), "no complete observation-source provenance")
+        self.named(lambda d: d.__setitem__("provenance", None), "observations were made but no source identity is recorded")
         self.named(lambda d: d["ledger"][0].__setitem__("provenance_sha256", "0" * 64), "seq 1: the entry's provenance digest")
 
     def test_the_holdout_contract(self):
@@ -120,6 +121,114 @@ class Replay(unittest.TestCase):
         self.named(lambda d: d.__setitem__("champion", None), "a champion is carried if and only if", base=h)
         self.named(lambda d: d.__setitem__("champion_holdout", 3), "carries a holdout score", base=h)
         self.named(lambda d: d.__setitem__("completed", True), "a terminated run is marked completed", base=h)
+
+    def test_legitimate_non_domain_refusals_replay_by_their_recorded_kind(self):
+        """The owner's P2 on 8d2757a: a provenance drift (SourceRefusal), a ValueError and a ModelRefusal each replay to the
+        same recorded kind, message, phase and attempt."""
+        class Drifting(ex.ObservationPort):
+            __slots__ = ()
+            def observe(self, config, stimulus):
+                t = super().observe(config, stimulus)
+                if self.calls == 3:
+                    t = dict(t); t["hypothesis"] = dict(t["hypothesis"], sha256="0" * 64)
+                return t
+        drift = be.run("R", self.task, Drifting(self.fab), 11, 8).as_dict()
+        self.assertEqual((drift["other_refusal"]["kind"], drift["other_refusal"]["phase"], drift["other_refusal"]["attempt"]), ("SourceRefusal", "search", 3))
+        self.assertIn("identity changed between observations", drift["other_refusal"]["message"])
+        self.assertEqual(br.replay(drift, self.task), [])
+        val = be.run("R", self.task, InjectingPort(self.fab, 3, exc=ValueError("value refusal")), 11, 8).as_dict()
+        self.assertEqual(val["other_refusal"]["kind"], "ValueError")
+        self.assertEqual(br.replay(val, self.task), [])
+        mod = be.run("R", self.task, InjectingPort(self.fab, 3, exc=fm.ModelRefusal("boom")), 11, 8).as_dict()
+        self.assertEqual(mod["other_refusal"]["kind"], "ModelRefusal")
+        self.assertEqual(br.replay(mod, self.task), [])
+        self.named(lambda d: d["other_refusal"].__setitem__("kind", "KeyError"), "other_refusal is not a typed refusal of a finite kind", base=val)
+        self.named(lambda d: d["other_refusal"].__setitem__("attempt", 2), "the refusal's attempt is not the observation after the ledger's last", base=val)
+        # the authenticity limit, stated: a record that relabels a ValueError as a ModelRefusal, or rewrites the message, is a
+        # CONSISTENT record — the re-execution re-raises what is recorded and reconstructs it; the replay cannot tell what the
+        # port really raised, as it cannot tell what a fabric really returned
+        d = copy.deepcopy(val); d["other_refusal"]["kind"] = "ModelRefusal"
+        self.assertEqual(br.replay(d, self.task), [], "a consistent relabelling of the refusal's kind is within the authenticity limit")
+
+    def test_a_malformed_source_identity_is_a_named_refusal_and_replays(self):
+        """The owner's P1 on 8d2757a: a port returning {"sha256": "x", "fixture": false} … must not complete."""
+        class Incomplete(ex.ObservationPort):
+            __slots__ = ()
+            def observe(self, config, stimulus):
+                t = dict(super().observe(config, stimulus))
+                t["hypothesis"] = {"sha256": "x", "fixture": False}; t["mapping"] = {"certificate_sha256": "y"}
+                return t
+        r = be.run("R", self.task, Incomplete(self.fab), 11, 8).as_dict()
+        self.assertFalse(r["completed"])
+        self.assertEqual((r["other_refusal"]["kind"], r["other_refusal"]["phase"], r["other_refusal"]["attempt"], r["provenance"], r["ledger"]), ("SourceRefusal", "base", 1, None, []))
+        self.assertIn("is malformed", r["other_refusal"]["message"])
+        self.assertEqual(br.replay(r, self.task), [])
+
+        class NoFabric(ex.ObservationPort):
+            __slots__ = ()
+            def observe(self, config, stimulus):
+                t = dict(super().observe(config, stimulus)); t.pop("fabric"); return t
+        r = be.run("R", self.task, NoFabric(self.fab), 11, 8).as_dict()
+        self.assertEqual(r["other_refusal"]["kind"], "SourceRefusal")
+
+        class BoolCoerced(ex.ObservationPort):
+            __slots__ = ()
+            def observe(self, config, stimulus):
+                t = dict(super().observe(config, stimulus)); t["hypothesis"] = dict(t["hypothesis"], fixture=1); return t
+        r = be.run("R", self.task, BoolCoerced(self.fab), 11, 8).as_dict()
+        self.assertIn("fixture is not a bool", r["other_refusal"]["message"])
+
+    def test_the_fabric_identity_tells_truth_permuted_and_dropout_apart(self):
+        """The owner's P1 on 8d2757a: under the same formal hypothesis three fabrics must declare three identities — as
+        digests, never the effect table."""
+        import json
+        m, h = self.m, hy.load()
+        results = {k: be.run("R", self.task, ex.ObservationPort(fm.fixture(k, m, h, seed=5)), 11, 8).as_dict() for k in ("truth", "permuted", "dropout")}
+        provs = {k: r["provenance"] for k, r in results.items()}
+        self.assertEqual({p["hypothesis"]["fixture"] for p in provs.values()}, {False}, "the hypothesis is the formal one in all three")
+        self.assertEqual({k: p["fabric"]["kind"] for k, p in provs.items()}, {"truth": "truth", "permuted": "permuted", "dropout": "dropout"})
+        self.assertEqual(len({ex.sha256_json(p) for p in provs.values()}), 3, "three different identities")
+        self.assertEqual({k: r["fabric_fixture"] for k, r in results.items()}, {"truth": False, "permuted": True, "dropout": True})
+        self.assertEqual(provs["truth"]["fabric"]["effect_sha256"], provs["dropout"]["fabric"]["effect_sha256"], "dropout keeps the truth's effect table")
+        self.assertNotEqual(provs["truth"]["fabric"]["dropout_sha256"], provs["dropout"]["fabric"]["dropout_sha256"])
+        self.assertEqual(provs["dropout"]["fabric"]["dropout_count"], 5)
+        for r in results.values():
+            text = json.dumps(r)
+            for leak in ("ff_init", "ff_srval", "ce_mode", "clock_mode", "AFF", "A5FF", "SLICEL"):
+                self.assertNotIn(leak, text, "the effect table never reaches a result")
+            self.assertEqual(br.replay(r, self.task), [])
+        self.named(lambda d: d["provenance"]["fabric"].__setitem__("kind", "truth"), "the result's fabric_fixture marker is not its provenance's", base=results["permuted"])
+        self.named(lambda d: d["provenance"]["fabric"].__setitem__("effect_sha256", "0" * 64), "the entry's provenance digest is not the result's", base=results["permuted"])
+
+    def test_malformed_records_are_named_findings_never_exceptions(self):
+        """The owner's P2 on 8d2757a, and more: every malformed value is a named finding, type-exact."""
+        cases = [
+            (lambda d: d.__setitem__("terminal", [1]), "terminal is not a complete, typed terminal event"),
+            (lambda d: d["ledger"][0].__setitem__("q_grid", []), "ledger[0]: the q grid is not 9 rows of 8 cells"),
+            (lambda d: d["ledger"][0]["q_grid"][1].__setitem__(2, 2), "ledger[0]: the q grid is not"),
+            (lambda d: d["ledger"][0]["q_grid"][1].__setitem__(2, True), "ledger[0]: the q grid is not"),
+            (lambda d: d["ledger"][0].__setitem__("genome", "bad"), "ledger[0]: a field has the wrong type or range"),
+            (lambda d: d["ledger"][0].__setitem__("genome", 1 << 21), "ledger[0]: a field has the wrong type or range"),
+            (lambda d: d["ledger"][0].__setitem__("move_kind", "oracle"), "ledger[0]: a field has the wrong type or range"),
+            (lambda d: d.__setitem__("given_view", {"groups": []}), "given_view is not a complete, typed view record"),
+            (lambda d: d.__setitem__("completed", 1), "completed is not a bool"),
+            (lambda d: d.__setitem__("search_completed", "yes"), "search_completed is not a bool"),
+            (lambda d: d.__setitem__("evals", True), "evals is not a non-negative integer"),
+            (lambda d: d.__setitem__("best_trace", [1, None]), "best_trace is not a list"),
+            (lambda d: d.__setitem__("population", [[0, 1]]), "population is not a list of [genome, fit, born]"),
+            (lambda d: d.__setitem__("cost", {"base": 1}), "cost"),
+            (lambda d: d.__setitem__("provenance", {"hypothesis": {"sha256": "x", "fixture": False}, "mapping": {"certificate_sha256": "y"}}), "provenance: the source identity must carry exactly"),
+            (lambda d: d["provenance"]["fabric"].__setitem__("kind", "oracle"), "provenance: fabric identity: kind 'oracle'"),
+            (lambda d: d["provenance"]["hypothesis"].__setitem__("sha256", "x"), "provenance: hypothesis identity: sha256 is not a 64-hex digest"),
+            (lambda d: d.__setitem__("ledger", None), "the ledger is not a list"),
+            (lambda d: d.__setitem__("other_refusal", {"kind": "ValueError"}), "other_refusal is not a typed refusal"),
+            (lambda d: d["generation_closes"].append({"generation": 9}), "generation_closes[3]"),
+        ]
+        for edit, needle in cases:
+            with self.subTest(needle=needle):
+                self.named(edit, needle)
+        self.assertEqual(br.replay("not a dict", self.task), ["the result is not an object"])
+        self.assertIn("the result's keys differ from the engine's", br.replay({"arm": "R"}, self.task)[0])
 
     def test_the_replay_port_serves_only_the_ledger(self):
         port = br.ReplayPort(self.t, self.task)
@@ -134,6 +243,8 @@ class Replay(unittest.TestCase):
         with self.assertRaises(br.ReplayMismatch):
             port.observe(ex.genome_to_config(1, self.task.addresses), list(self.task.stimulus))     # the first entry is the base, genome 0
         self.assertEqual(sorted(n for n in dir(port) if not n.startswith("_")), ["addresses", "calls", "ledger", "mismatches", "observe", "other", "provenance", "terminal"])
+        for leak in ("ff_init", "AFF", "0x00400a", "SLICEL"):
+            self.assertNotIn(leak, str(port.provenance), "the port holds digests, not the effect table")
 
 
 if __name__ == "__main__":

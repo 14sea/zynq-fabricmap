@@ -52,13 +52,13 @@
    "kind": "derived",
    "note": "B2's (mu, lambda) = (4, 8), KMAX = 4 engine re-implemented over the FF universe with the execution boundary at every observation: the arms R / F (a seeded probe pass, then frozen; or a given view with its provenance) / O / X, DOMAIN termination (the measured prefix, the pending children, no further draw, observation, score, selection or learning, the generator not rolled back), the ledger with map versions and commitments, generation closes, the holdout once for a completed run. Provenance: the observation source's identity (hypothesis digest and fixture marker, certificate digest) bound into the result and every ledger entry; a given view kept with its provenance chain; a DOMAIN at the holdout keeps the search's champion without a holdout score.",
    "role": "host",
-   "sha256": "2bb7ccd40d322955c33c79b60e442a9e4f71ebcc6894c5744e68a66fa0eafd22"
+   "sha256": "15038f4a50e7a3c1b3de6f08de7060d74d538d1d19fdd3839b571b780b23240a"
   },
   "b4/host/b4_execution.py": {
    "kind": "new",
-   "note": "the execution boundary: ObservationPort (observe and the addresses, nothing else), SpyPort, PublicTask, TerminalEvent / Terminated / OtherRefusal, observe_candidate (DOMAIN -> a terminal event with the state before the call; any other refusal by its name).",
+   "note": "the execution boundary: ObservationPort (observe and the addresses, nothing else), SpyPort, PublicTask, TerminalEvent / Terminated / OtherRefusal, observe_candidate (DOMAIN -> a terminal event with the state before the call; any other refusal by its name). The strict source-identity validator (provenance_findings: hypothesis, mapping and FABRIC fields, exact types, 64-hex digests), SourceRefusal, the finite refusal kinds and raise_refusal.",
    "role": "host",
-   "sha256": "41480503cb091fbfc06f68b2ae3c1ac52657cf1ffd3d4e9053e075c0407243c2"
+   "sha256": "c487d1a3bd229a6921afb4234290a9f309b880bc2f0172f344d0bce833ef0a7d"
   },
   "b4/host/b4_ff_hypothesis.py": {
    "kind": "new",
@@ -74,9 +74,9 @@
   },
   "b4/host/b4_ff_model.py": {
    "kind": "new",
-   "note": "the simulated fabric: configuration + stimulus -> the EXECUTING SIDE's trace under a mapping and a hypothesis passed in separately; the decode and everything derived from it host-only (diagnose / step_diagnostics); validation of the configuration, every step as handed and the init step's context at the entry; a configuration outside the domain refused with the fixed code DOMAIN and no reason (never a specimen, a redraw condition or a map-update signal); fixtures truth / permuted / dropout and seven hypothesis swaps.",
+   "note": "the simulated fabric: configuration + stimulus -> the EXECUTING SIDE's trace under a mapping and a hypothesis passed in separately; the decode and everything derived from it host-only (diagnose / step_diagnostics); validation of the configuration, every step as handed and the init step's context at the entry; a configuration outside the domain refused with the fixed code DOMAIN and no reason (never a specimen, a redraw condition or a map-update signal); fixtures truth / permuted / dropout and seven hypothesis swaps. Every Fabric carries a source descriptor (kind, effect digest, dropout digest and count, seed \u2014 digests only) in every trace header.",
    "role": "host model",
-   "sha256": "d1d2e78df84624344140a441ead73199f06cad66bdb27e488b00212f9efcf93d"
+   "sha256": "52ad9bee0955532383bfe7b52e39f872772c1aca2e8c7d63bea57072c1db761f"
   },
   "b4/host/b4_landscape.py": {
    "kind": "new",
@@ -86,9 +86,9 @@
   },
   "b4/host/b4_replay.py": {
    "kind": "new",
-   "note": "replay as RE-EXECUTION: the engine run again from the declared inputs against a ledger-backed port that serves the recorded observations in order, raises the recorded refusal at its attempt and holds every call to the record; the whole result compared field by field; the authenticity limit stated (the execution sequence is proved, the observations' origin is bound, not re-derived).",
+   "note": "replay as RE-EXECUTION: the engine run again from the declared inputs against a ledger-backed port that serves the recorded observations in order, raises the recorded refusal at its attempt and holds every call to the record; the whole result compared field by field; the authenticity limit stated (the execution sequence is proved, the observations' origin is bound, not re-derived). Validation total and type-exact before any use; refusals re-raised by their finite kind; a malformed record a named finding, an internal error reported as such.",
    "role": "host",
-   "sha256": "45f4c3a78afbaf4b0345dde8763b9b30f97cc44aea60cc015ec0b6c8b1a1e822"
+   "sha256": "246806442cc3a694c1aa3f71f736b66fcab2accc1098693fb8d52c2d8f4abe64"
   },
   "b4/host/b4_rng.py": {
    "base": "host/b1_carto.py",
@@ -131,12 +131,12 @@
    "kind": "new",
    "note": "complete runs under the mechanics fixture; DOMAIN injected at the base, in the probe pass and mid-generation; the formal-hypothesis fact that F's probe pass terminates at the LATCH flip.",
    "role": "test",
-   "sha256": "f4d6e6922afa2fc080f07cde021caa06c105d7ad2ec05b3e0d290781ee8482a6"
+   "sha256": "fe979a3beca5b8748ffe54fb7af7357545aaea46b7e2fb8c9c01c69a65580c51"
   },
   "b4/tests/test_b4_execution.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "f1eb422b87697f1bed0fa1129feaf32e18d1e3f5b4e8bb965f52c69d702734c1"
+   "sha256": "8abba01ed67720910935aa362ab76bbe9ce62fc4350a562cb4f8f493d066fe29"
   },
   "b4/tests/test_b4_ff_hypothesis.py": {
    "kind": "new",
@@ -152,7 +152,7 @@
    "kind": "new",
    "note": "every expected trace derived by hand from the hypothesis's adopted lines, never by running the model.",
    "role": "test",
-   "sha256": "7cabc04e7cdc43eed70c17fef6cee9512d68b47a95315c3e5f966553d9363d88"
+   "sha256": "be22b9837adc57ed94e0bc7298577c577418f67070015c6f3adc80e094c0da71"
   },
   "b4/tests/test_b4_landscape.py": {
    "kind": "new",
@@ -162,7 +162,7 @@
   "b4/tests/test_b4_replay.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "5705f31d9cfc8fa458eea8b8d25b25eb0c1e6611176b50f2b7601cd5cc56db3e"
+   "sha256": "26492d498b11f315baf1fbaf4df4014f24c3ce91bb2ef72904598f010e36e7ce"
   },
   "b4/tests/test_b4_rng.py": {
    "kind": "new",

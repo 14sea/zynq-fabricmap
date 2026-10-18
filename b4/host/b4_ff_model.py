@@ -117,9 +117,12 @@ def bit(vec: int, i: int) -> int:
 
 
 # ------------------------------------------------------------------ the fabric
+SOURCE_KINDS = ("truth", "permuted", "dropout", "custom")
+
+
 class Fabric:
     def __init__(self, mapping: bm.Mapping, hypothesis: hyp.Hypothesis, effect: dict[str, tuple[str | None, str]] | None = None,
-                 dropout: frozenset[str] = frozenset()):
+                 dropout: frozenset[str] = frozenset(), kind: str | None = None, seed: int | None = None):
         self.mapping = mapping
         self.hypothesis = hypothesis
         self.effect = dict(effect) if effect is not None else {a: (e.element, e.semantic) for a, e in mapping.entries.items()}
@@ -127,6 +130,20 @@ class Fabric:
             raise ModelRefusal("the effect table does not cover exactly the mapping's addresses")
         self.dropout = frozenset(dropout)
         self.calls = 0
+        truth = {a: (e.element, e.semantic) for a, e in mapping.entries.items()}
+        if kind is None:
+            kind = "truth" if (self.effect == truth and not self.dropout) else "custom"
+        if kind not in SOURCE_KINDS:
+            raise ModelRefusal(f"source kind {kind!r}")
+        if not (seed is None or (isinstance(seed, int) and not isinstance(seed, bool))):
+            raise ModelRefusal("the source seed must be an int or None")
+        # the SOURCE descriptor: the fabric's identity as DIGESTS — the effect table (address -> target) and the dropout set are
+        # never in it; a trace header carries it so that a truth, a permuted and a dropout fabric are told apart (the owner's P1 on
+        # 8d2757a) without the executing side learning what the effect is
+        effect_text = json.dumps([[a, list(self.effect[a])] for a in mapping.addresses], sort_keys=True, separators=(",", ":"))
+        drop_text = json.dumps(sorted(self.dropout), separators=(",", ":"))
+        self.source = {"kind": kind, "effect_sha256": hashlib.sha256(effect_text.encode()).hexdigest(),
+                       "dropout_sha256": hashlib.sha256(drop_text.encode()).hexdigest(), "dropout_count": len(self.dropout), "seed": seed}
 
     # -- configuration
     def config_from_genome(self, genome: int) -> dict[str, int]:
@@ -255,6 +272,7 @@ class Fabric:
                 "q_null_means": "no readout is given by the hypothesis for that element in that configuration, or the element was never initialised",
                 "hypothesis": {"path": self.hypothesis.path, "sha256": self.hypothesis.sha256, "version": self.hypothesis.version, "fixture": self.hypothesis.fixture},
                 "mapping": {"site": self.mapping.site, "certificate": self.mapping.certificate_rel, "certificate_sha256": self.mapping.certificate_sha256},
+                "fabric": dict(self.source),
                 "config": config, "config_sha256": hashlib.sha256(cfg_text.encode()).hexdigest(),
                 "stimulus": steps_in, "initial": {"clock": 0, "ce": 0, "sr": 0, "d": 0, "q": [None] * N},
                 "elements": list(ELEMENTS), "steps": steps}
@@ -285,20 +303,20 @@ def fixture(kind: str, mapping: bm.Mapping, hypothesis: hyp.Hypothesis, seed: in
     truth = {a: (e.element, e.semantic) for a, e in mapping.entries.items()}
     rng = random.Random(seed)
     if kind == "truth":
-        return Fabric(mapping, hypothesis, truth)
+        return Fabric(mapping, hypothesis, truth, kind="truth")
     if kind == "permuted":
         targets = [truth[a] for a in mapping.addresses]
         rng.shuffle(targets)
-        return Fabric(mapping, hypothesis, {a: targets[i] for i, a in enumerate(mapping.addresses)})
+        return Fabric(mapping, hypothesis, {a: targets[i] for i, a in enumerate(mapping.addresses)}, kind="permuted", seed=seed)
     if kind == "dropout":
-        return Fabric(mapping, hypothesis, truth, dropout=frozenset(rng.sample(list(mapping.addresses), drop)))
+        return Fabric(mapping, hypothesis, truth, dropout=frozenset(rng.sample(list(mapping.addresses), drop)), kind="dropout", seed=seed)
     if kind in SWAPS:
         spec = SWAPS[kind]
         if spec[0] == "flag":
             h2 = hypothesis.with_flag(spec[1], spec[2], kind)
         else:
             h2 = hypothesis.with_reading(spec[1], spec[2], spec[3], kind, context=spec[4])
-        return Fabric(mapping, h2, truth)
+        return Fabric(mapping, h2, truth, kind="truth")
     raise ModelRefusal(f"no fixture {kind!r}")
 
 

@@ -27,11 +27,16 @@ digests, the visible q grid, the fitness, the move, and the map version / commit
 closes with the population commitment. The engine holds the port and the task only — never a fabric, a mapping or
 a hypothesis.
 
-Provenance (the owner's P1-2 on 2eae943): the observation source's identity — the hypothesis's path, sha256,
-version and fixture marker and the mapping's site and certificate sha256, as every trace header carries them — is
-taken from the first observation, required equal on every later one, kept in `result.provenance`, and bound into
-every ledger entry (`provenance_sha256`); a given frozen view is kept whole (`given_view`: groups, commitment,
-privilege and the provenance chain). A descriptor identifies the input; it is never a licence to inspect the decode.
+Provenance (the owner's P1-2 on 2eae943 and P1 on 8d2757a): the observation source's identity — the hypothesis's
+path, sha256, version and fixture marker; the mapping's site, certificate and certificate sha256; the FABRIC's kind
+(truth / permuted / dropout / custom), effect digest, dropout digest and count, and seed, as every trace header
+carries them — is validated field by field on EVERY observation (`b4_execution.provenance_findings`: exact fields,
+exact types, 64-hex digests; a malformed or missing identity is a `SourceRefusal`, recorded by that name), taken from
+the first observation, required equal on every later one (a drift is a `SourceRefusal`), kept in `result.provenance`,
+surfaced as `fixture` (the hypothesis) and `fabric_fixture` (the fabric is not the truth), and bound into every
+ledger entry (`provenance_sha256`); a given frozen view is kept whole (`given_view`). A descriptor identifies the
+input — digests only, never the effect table — and is never a licence to inspect the decode. A non-DOMAIN refusal is
+recorded under one of the finite kinds `ValueError`, `ModelRefusal`, `SourceRefusal`.
 
 The holdout (the owner's P2): the search's champion is fixed when the loop completes (`search_completed`); the
 holdout observation then passes the same boundary; a DOMAIN there terminates the run with phase `holdout` — the
@@ -131,7 +136,8 @@ class RunResult:
     provenance: dict | None = None            # the observation source's identity, from the first observation and equal for all:
                                               # the hypothesis (path, sha256, version, fixture) and the mapping (site, certificate sha256)
     search_completed: bool = False            # the search loop ran to its budget (a DOMAIN at the holdout leaves this True, completed False)
-    fixture: bool | None = None               # the observation source's fixture marker, surfaced at the top level (provenance.hypothesis.fixture)
+    fixture: bool | None = None               # the HYPOTHESIS fixture marker, surfaced at the top level (provenance.hypothesis.fixture)
+    fabric_fixture: bool | None = None        # the FABRIC is not the truth (permuted / dropout / custom): provenance.fabric.kind != "truth"
 
     def as_dict(self) -> dict:
         d = dict(self.__dict__)
@@ -172,15 +178,16 @@ def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: 
         nonlocal attempt
         attempt += 1
         trace = ex.observe_candidate(port, genome, stimulus, phase, attempt, ctx())
-        hdr = {"hypothesis": dict(trace.get("hypothesis") or {}), "mapping": dict(trace.get("mapping") or {})}
-        for k in ("hypothesis", "mapping"):
-            if not hdr[k]:
-                raise ValueError(f"the observation carries no {k} identity")
+        hdr = {k: trace.get(k) for k in ("hypothesis", "mapping", "fabric")} if isinstance(trace, dict) else None
+        f = ex.provenance_findings(hdr)
+        if f:
+            raise ex.SourceRefusal("the observation source's identity is malformed: " + "; ".join(f))
         if res.provenance is None:
             res.provenance = hdr
-            res.fixture = bool(hdr["hypothesis"].get("fixture"))
+            res.fixture = hdr["hypothesis"]["fixture"]
+            res.fabric_fixture = hdr["fabric"]["kind"] != "truth"
         elif hdr != res.provenance:
-            raise ValueError("the observation source's identity changed between observations")
+            raise ex.SourceRefusal("the observation source's identity changed between observations")
         res.observations += 1
         return trace
 
@@ -281,7 +288,7 @@ def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: 
         res.terminal = t.event.as_dict()
         res.completed = False
     except (ValueError, ex.fm.ModelRefusal) as e:                 # not DOMAIN (DomainRefusal is caught above as Terminated)
-        res.other_refusal = ex.OtherRefusal(type(e).__name__, str(e), phase, attempt).as_dict()
+        res.other_refusal = ex.OtherRefusal(ex.refusal_kind(e), str(e), phase, attempt).as_dict()   # a finite kind
         res.completed = False
     res.population = [[i.genome, i.fit, i.born] for i in pop]
     res.pending_children = [[i.genome, i.fit, i.born] for i in children]
