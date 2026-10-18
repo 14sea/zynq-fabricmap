@@ -183,3 +183,21 @@ defence-in-depth test added afterwards makes 240 on the committed tree.
 `33c1739` + this verification commit; local only — not pushed, not merged; `main` is `d5bf815`. Delivered for the owner's
 review. Pending the owner: the treatment of the prior exposure (section 1). Still not authorised: the S = 32 `b4-sim-1`
 exploration, the formal gate tool and run, units 2c / 2d, the full proof, push / merge, procurement and board work.
+
+## 5. Verification on the clean committed tree — round 3 (HEAD `21699cd`; files `round3_*`)
+
+Same method as sections 3 and 4.
+
+| file | command (from `/home/test/zynq_fabricmap`) | result |
+|---|---|---|
+| `round3_tests.txt` | `python3 -m unittest -v` over the 20 `b4.tests.test_b4_*` modules | **Ran 243 tests … OK**, exit 0 |
+| `round3_mutants.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/b4_2b4a_mutants.py evidence/b4/unit_2b4a_repair_2026_10_18/round3_mutants.txt` | **61 / 61 killed** in 706 s; no `SURVIVED`, `BASELINE-NOT-GREEN` or `EDIT-MISS` line |
+| `round3_import_check.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/import_check.py` | 49 entries, every digest equal; no tracked file under `b4/` without an entry |
+
+The archived battery is now the 61-mutant script (M58–M61 added, one per round-3 contract; no survivor on the dry run).
+
+**Status.** `b4-prework`: A `8939fb9`, B `feda985`, C `edfc93c`, evidence `cdf2c53`, repair `e03dca1` + `f2c4bca`, second round
+`33c1739` + `6c00156`, third round `21699cd` + this verification commit; local only — not pushed, not merged; `main` is
+`d5bf815`. Delivered for the owner's review. Pending the owner: the treatment of the prior exposure (section 1). Still not
+authorised: the S = 32 `b4-sim-1` exploration, the formal gate tool and run, units 2c / 2d, the full proof, push / merge,
+procurement and board work.
