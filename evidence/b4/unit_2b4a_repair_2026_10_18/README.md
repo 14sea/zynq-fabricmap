@@ -144,3 +144,26 @@ the named reason), before the commit. The two defects are recorded because a kil
 verification commit, local only — not pushed, not merged; `main` is `d5bf815`. Delivered for the owner's batch review.
 Pending the owner: the treatment of the prior exposure (section 1). Still not authorised: the S = 32 `b4-sim-1`
 exploration, the formal gate tool and run, units 2c / 2d, the full proof, push / merge, procurement and board work.
+
+## 4. Verification on the clean committed tree — round 2 (HEAD `33c1739`; files `round2_*`)
+
+Same method as section 3 (raw tool output with a three-line header; porcelain empty apart from this directory's own files;
+every batch on a `b4-mech-<n>` fixture schedule under the derivation guard; nothing edited).
+
+| file | command (from `/home/test/zynq_fabricmap`) | result |
+|---|---|---|
+| `round2_tests.txt` | `python3 -m unittest -v` over the 20 `b4.tests.test_b4_*` modules | **Ran 240 tests … OK**, exit 0 |
+| `round2_mutants.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/b4_2b4a_mutants.py evidence/b4/unit_2b4a_repair_2026_10_18/round2_mutants.txt` | **57 / 57 killed** in 642 s; no `SURVIVED`, `BASELINE-NOT-GREEN` or `EDIT-MISS` line |
+| `round2_import_check.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/import_check.py` | 49 entries, every digest equal; no tracked file under `b4/` without an entry |
+
+**The battery** is the archived 57-mutant script (the 50 of round 1 plus M51–M57, one per residual finding). On the pre-commit
+dry run M52 (the deep re-audit of an unaudited arm removed) survived: the planned-record validator and the pair-index
+validator refuse such an archive before the deep stage is reached, so the deep check is defence in depth. It is kept, and
+held by a test that mocks the two record validators away and shows the deep stage alone refusing — recorded here because a
+check nothing can reach is not a check. The commit message of `33c1739` says 239 tests on the pre-commit tree; the
+defence-in-depth test added afterwards makes 240 on the committed tree.
+
+**Status.** `b4-prework`: A `8939fb9`, B `feda985`, C `edfc93c`, evidence `cdf2c53`, repair `e03dca1` + `f2c4bca`, second round
+`33c1739` + this verification commit; local only — not pushed, not merged; `main` is `d5bf815`. Delivered for the owner's
+review. Pending the owner: the treatment of the prior exposure (section 1). Still not authorised: the S = 32 `b4-sim-1`
+exploration, the formal gate tool and run, units 2c / 2d, the full proof, push / merge, procurement and board work.
