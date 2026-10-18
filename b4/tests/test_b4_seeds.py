@@ -1,0 +1,246 @@
+"""b4/host/b4_seeds.py — the seed anchor, the typed exclusion sources, the archived-set registry, the pooled set and the
+`pair_seeds` copy (compared BY IMPORT of the pinned B2 original, read-only). No formal set is derived here: every master
+in these tests comes from a FAKE anchor digest or a literal master value; the formal labels' masters are never computed.
+The only seed literals are the exposed ones of docs/b4_architecture.md section 9.2 and values that are not seeds (masters). No skip."""
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import shutil
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+R = Path(__file__).resolve().parents[2]
+for p in (R / "b4/host", R / "host"):
+    if str(p) not in sys.path:
+        sys.path.insert(0, str(p))
+import b4_seeds as bs  # noqa: E402
+import b2_search as original  # noqa: E402  (the pinned original, read-only, for the comparison only)
+
+FAKE_ANCHOR = "ab" * 32
+FAKE_MASTER = 424242                   # not a seed of any run: a literal master for the derivation tests
+
+
+def seeds_doc(label: str, master: int, pairs: list) -> dict:
+    return {"schema": "b4_sim_seeds", "schema_version": "1.0.0", "label": label,
+            "anchor": {"rule": "sha256(label|anchor)[:4]", "hypothesis_sha256": FAKE_ANCHOR, "label": label},
+            "master_seed": master, "count": len(pairs), "pairs": pairs,
+            "exclusion": {"sources": [], "b4_exposed_values": [], "sim_registry": [], "pooled_total": 0}, "generated_utc": "2026-10-18T00:00:00Z"}
+
+
+class TheAnchor(unittest.TestCase):
+    def test_the_formula_by_hand_and_the_label_beside_the_anchor(self):
+        want = int.from_bytes(hashlib.sha256(f"b4-fake-1|{FAKE_ANCHOR}".encode()).digest()[:4], "big")
+        self.assertEqual(bs.master_seed("b4-fake-1", FAKE_ANCHOR), want)
+        self.assertNotEqual(bs.master_seed("b4-fake-1", FAKE_ANCHOR), bs.master_seed("b4-fake-2", FAKE_ANCHOR), "different labels, different masters")
+        self.assertNotEqual(bs.master_seed("b4-fake-1", FAKE_ANCHOR), bs.master_seed("b4-fake-1", "cd" * 32), "a different anchor is a different set")
+
+    def test_a_pre_joined_label_and_a_malformed_anchor_are_refused(self):
+        for bad in ("b4-fake-1|" + FAKE_ANCHOR, "B4-Fake", "-b4", "b4-", "b4 sim", ""):
+            with self.assertRaises(ValueError, msg=bad):
+                bs.master_seed(bad, FAKE_ANCHOR)
+        for bad in (FAKE_ANCHOR[:-1], FAKE_ANCHOR.upper(), 12, None):
+            with self.assertRaises(ValueError, msg=repr(bad)):
+                bs.master_seed("b4-fake-1", bad)
+
+
+class ThePairs(unittest.TestCase):
+    def test_the_copy_is_b2_s_pair_seeds(self):
+        for master, count, excl in ((FAKE_MASTER, 10, frozenset()), (FAKE_MASTER, 25, {7, 8, 11}), (99999, 3, {3})):
+            self.assertEqual(bs.pair_seeds(master, count, excl), original.pair_seeds(master, count, excl), (master, count))
+
+    def test_values_are_32_bit_distinct_and_never_the_excluded_ones(self):
+        pairs = bs.pair_seeds(FAKE_MASTER, 40, set())
+        flat = [v for p in pairs for v in p]
+        self.assertEqual(len(set(flat)), 80, "all values distinct across both positions")
+        self.assertTrue(all(0 <= v <= 0xFFFFFFFF for v in flat))
+        self.assertTrue(not (set(flat) & set(bs.B2_EXCLUDED_SEEDS)))
+
+    def test_the_pooled_set_screens_both_positions(self):
+        base = bs.pair_seeds(FAKE_MASTER, 6, set())
+        l0, o0 = base[0]
+        for banned in (l0, o0):
+            again = bs.pair_seeds(FAKE_MASTER, 6, {banned})
+            self.assertNotIn(banned, [v for p in again for v in p], "the banned value appears in neither position")
+            self.assertNotEqual(again[0], base[0], "the first draw was skipped")
+
+    def test_a_coinciding_draw_is_skipped(self):
+        class Scripted:
+            def __init__(self, seed):
+                self.vals = [5000, 5000, 9000, 10000]
+            def next32(self):
+                return self.vals.pop(0)
+        with mock.patch.object(bs, "Rng", Scripted):
+            self.assertEqual(bs.pair_seeds(FAKE_MASTER, 1, set()), [(9000, 10000)])
+
+    def test_bad_arguments(self):
+        with self.assertRaises(ValueError):
+            bs.pair_seeds(True, 1, set())
+        with self.assertRaises(ValueError):
+            bs.pair_seeds(FAKE_MASTER, -1, set())
+
+
+class TypedExtraction(unittest.TestCase):
+    def test_paths_resolve_to_seed_ints_only(self):
+        doc = {"seeds": {"master_seed": 7, "pairs": [[1, 2], [3, 4]], "sets": {"a": {"master_seed": 9, "values": 401}, "b": {"master_seed": 10, "values": 5}}},
+               "rows": [{"landscape_seed": 11, "operator_seed": 12}]}
+        self.assertEqual(bs.extract_ints(doc, "seeds.master_seed", "t"), [7])
+        self.assertEqual(bs.extract_ints(doc, "seeds.pairs[][]", "t"), [1, 2, 3, 4])
+        self.assertEqual(bs.extract_ints(doc, "seeds.sets.*.master_seed", "t"), [9, 10], "the counts beside them are never read")
+        self.assertEqual(bs.extract_ints(doc, "rows[].operator_seed", "t"), [12])
+
+    def test_a_missing_path_a_bool_a_float_an_empty_list_are_refusals(self):
+        for doc, path in (({"a": {}}, "a.b"), ({"a": True}, "a"), ({"a": 1.0}, "a"), ({"a": []}, "a[]"), ({"a": {}}, "a.*"),
+                          ({"a": -1}, "a"), ({"a": 1 << 32}, "a"), ({"a": "7"}, "a"), ({"a": [1, [2]]}, "a[]")):
+            with self.assertRaises(bs.ExclusionSourceRefusal, msg=(doc, path)):
+                bs.extract_ints(doc, path, "t")
+
+    def test_the_python_source_must_parse_to_the_kept_copy(self):
+        text = "x = 1\nEXCLUDED_SEEDS = frozenset([" + ", ".join(map(str, bs.B2_EXCLUDED_SEEDS)) + "])\n"
+        self.assertEqual(bs.parse_python_excluded(text, "t"), list(bs.B2_EXCLUDED_SEEDS))
+        with self.assertRaises(bs.ExclusionSourceRefusal):
+            bs.parse_python_excluded(text.replace("77", "78"), "t")
+        with self.assertRaises(bs.ExclusionSourceRefusal):
+            bs.parse_python_excluded("nothing here", "t")
+
+
+class TheHistoricalSources(unittest.TestCase):
+    def test_every_source_reads_hashes_and_yields_seeds(self):
+        ex = bs.load_exclusion_set(R)
+        self.assertEqual(len(ex.sources), 38)
+        self.assertEqual([s.path for s in ex.sources], [f[0] for f in bs.FIELDS])
+        for s in ex.sources:
+            self.assertGreater(len(s.values), 0, s.path)
+            self.assertTrue(all(isinstance(v, int) and not isinstance(v, bool) for v in s.values), s.path)
+        by = {s.path: s for s in ex.sources}
+        self.assertEqual(by["host/b2_search.py"].values, bs.B2_EXCLUDED_SEEDS)
+        self.assertEqual(len(by["evidence/b2/gate/raw_F1.json"].values), 400, "200 pairs, both positions")
+        self.assertEqual(len(by["evidence/b3/sim/sim_report.json"].values), 1, "the master only; count and label are not seeds")
+        self.assertIn(2041341936, by["evidence/b3/gate_2/gate_report.json"].values, "control_x.seed_x")
+        self.assertIn(4260131137, by["evidence/b3/gate_2/gate_report.json"].values, "the b3-gate-2 master")
+        self.assertEqual(ex.registry, ())
+        self.assertIn("does not exist yet", ex.registry_note)
+
+    def test_the_pool_holds_the_copy_the_exposed_values_and_every_source_value(self):
+        ex = bs.load_exclusion_set(R)
+        self.assertTrue(set(bs.B2_EXCLUDED_SEEDS) <= ex.values)
+        self.assertTrue(set(bs.B4_EXPOSED_VALUES) <= ex.values)
+        for s in ex.sources:
+            self.assertTrue(set(s.values) <= ex.values, s.path)
+        self.assertEqual(ex.values, set(bs.B2_EXCLUDED_SEEDS) | set(bs.B4_EXPOSED_VALUES) | {v for s in ex.sources for v in s.values})
+        in_sources = {v for s in ex.sources for v in s.values}
+        for v in (6, 7, 8, 9, 12, 13):
+            self.assertNotIn(v, in_sources, f"{v} comes only from B4's exposed values")
+            self.assertIn(v, ex.values, f"{v} is pooled")
+        self.assertEqual(ex.as_dict()["pooled_total"], len(ex.values))
+
+    def test_a_rehashed_or_missing_source_is_refused_by_name(self):
+        rel, paths, sha = bs.FIELDS[3]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / rel).parent.mkdir(parents=True)
+            shutil.copy(R / rel, root / rel)
+            self.assertEqual(bs.read_source(root, rel, paths, sha).sha256, sha)
+            (root / rel).write_bytes((R / rel).read_bytes() + b"\n")
+            with self.assertRaises(bs.ExclusionSourceRefusal) as cm:
+                bs.read_source(root, rel, paths, sha)
+            self.assertIn("hashes to", str(cm.exception))
+            (root / rel).unlink()
+            with self.assertRaises(bs.ExclusionSourceRefusal) as cm:
+                bs.read_source(root, rel, paths, sha)
+            self.assertIn("missing", str(cm.exception))
+
+    def test_the_fields_table_is_the_architecture_s_section_9_2_table(self):
+        doc = (R / "docs/b4_architecture.md").read_text(encoding="utf-8")
+        rows = re.findall(r"^\| `([^`]+)` \| (.+?) \| `([0-9a-f]{64})` \|$", doc, re.M)
+        table = {(p, s) for p, _, s in rows}
+        self.assertEqual(table, {(p, s) for p, _, s in bs.FIELDS}, "every path and digest of FIELDS is in the table and vice versa")
+        prose = {p: f for p, f, _ in rows}
+        for path, paths, _ in bs.FIELDS:
+            for fp in paths:
+                head = fp.split(":")[-1].split("[")[0].split(".")[0]
+                self.assertIn(head, prose[path], f"{path}: the field {fp}'s root is named in the table's prose")
+        i = doc.index("**B4's own exposed values.**")
+        para = doc[i:i + 1500]
+        for v in sorted(bs.B4_EXPOSED_VALUES):
+            self.assertRegex(para, rf"\*\*[^*]*\b{v}\b[^*]*\*\*", f"the exposed value {v} is listed in section 9.2")
+
+
+class TheRegistry(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.sim = Path(self.tmp.name) / "sim"
+
+    def write(self, name: str, fname: str, doc) -> Path:
+        d = self.sim / name
+        d.mkdir(parents=True, exist_ok=True)
+        (d / fname).write_text(json.dumps(doc) if not isinstance(doc, (bytes, str)) else doc)
+        return d
+
+    def test_no_directory_is_not_a_missing_source(self):
+        recs, note = bs.sim_registry(R, str(self.sim))
+        self.assertEqual(recs, [])
+        self.assertIn("does not exist yet", note)
+
+    def test_every_archived_set_is_read_whatever_its_outcome(self):
+        self.write("b4-fake-1_20261018T000000Z", "seeds.json", seeds_doc("b4-fake-1", 1000001, [[2000001, 2000002], [2000003, 2000004]]))
+        self.write("b4-fake-1_20261018T000001Z", "seeds.json", seeds_doc("b4-fake-1", 1000002, [[2000005, 2000006]]))
+        self.write("b4-fake-1_20261018T000002Z", "INIT_FAILED.json", {"schema": "b4_sim_init_failed", "schema_version": "1.0.0", "label": "b4-fake-1",
+                                                                         "seeds_derived": False, "reason": "dirty tree", "generated_utc": "x"})
+        recs, note = bs.sim_registry(R, str(self.sim))
+        self.assertEqual([r.status for r in recs], ["seeds", "seeds", "init_failed_no_seeds"], "path order")
+        self.assertEqual(recs[0].values, (1000001, 2000001, 2000002, 2000003, 2000004), "the master and every planned pair")
+        self.assertEqual(recs[1].master_seed, 1000002)
+        ex = bs.load_exclusion_set(R, str(self.sim))
+        for v in (1000001, 2000001, 2000004, 1000002, 2000005, 2000006):
+            self.assertIn(v, ex.values)
+        self.assertEqual(len(ex.registry), 3)
+        self.assertEqual(ex.as_dict()["sim_registry"][0]["count"], 5)
+
+    def test_a_damaged_or_missing_seed_record_is_refused_never_skipped(self):
+        self.write("b4-fake-1_a", "seeds.json", seeds_doc("b4-fake-1", 1000001, [[2000001, 2000002]]))
+        self.write("b4-fake-1_b", "seeds.json", "{not json")
+        with self.assertRaises(bs.ExclusionSourceRefusal) as cm:
+            bs.sim_registry(R, str(self.sim))
+        self.assertIn("b4-fake-1_b", str(cm.exception))
+        shutil.rmtree(self.sim / "b4-fake-1_b")
+        (self.sim / "b4-fake-1_c").mkdir()
+        with self.assertRaises(bs.ExclusionSourceRefusal) as cm:
+            bs.sim_registry(R, str(self.sim))
+        self.assertIn("neither", str(cm.exception))
+        shutil.rmtree(self.sim / "b4-fake-1_c")
+        bad = seeds_doc("b4-fake-1", 1000003, [[2000007, 2000008]])
+        bad["pairs"][0][0] = True
+        self.write("b4-fake-1_d", "seeds.json", bad)
+        with self.assertRaises(bs.ExclusionSourceRefusal) as cm:
+            bs.sim_registry(R, str(self.sim))
+        self.assertIn("malformed", str(cm.exception))
+        shutil.rmtree(self.sim / "b4-fake-1_d")
+        self.write("b4-fake-1_e", "INIT_FAILED.json", {"schema": "b4_sim_init_failed", "schema_version": "1.0.0", "label": "b4-fake-1",
+                                                       "seeds_derived": True, "reason": "x", "generated_utc": "x"})
+        with self.assertRaises(bs.ExclusionSourceRefusal) as cm:
+            bs.sim_registry(R, str(self.sim))
+        self.assertIn("says seeds were derived", str(cm.exception))
+        shutil.rmtree(self.sim / "b4-fake-1_e")
+        (self.sim / "stray.txt").write_text("x")
+        with self.assertRaises(bs.ExclusionSourceRefusal):
+            bs.sim_registry(R, str(self.sim))
+
+    def test_the_seeds_document_shape(self):
+        good = seeds_doc("b4-fake-1", 1000001, [[2000001, 2000002]])
+        self.assertEqual(bs.seeds_doc_findings(good), [])
+        for mutate in (lambda d: d.pop("count"), lambda d: d.update(count=5), lambda d: d["anchor"].update(label="other"),
+                       lambda d: d.update(master_seed=-1), lambda d: d["pairs"].append([1, 1]), lambda d: d["exclusion"].pop("pooled_total"),
+                       lambda d: d.update(schema_version="0.9")):
+            d = json.loads(json.dumps(good))
+            mutate(d)
+            self.assertTrue(bs.seeds_doc_findings(d), mutate)
+
+
+if __name__ == "__main__":
+    unittest.main()

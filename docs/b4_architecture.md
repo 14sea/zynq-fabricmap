@@ -1,4 +1,4 @@
-# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.13a, host-only, 2026-10-16; revised 2026-10-18)
+# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.14, host-only, 2026-10-16; revised 2026-10-18)
 
 > **Standing: a draft architecture, not a preregistration and not a ruling.** Written under the
 > owner's authorisation of 2026-10-16 (unit 2a of the B4 pre-work: this one document, on the
@@ -142,13 +142,23 @@
 > itself no gate-readiness verdict, and a later revision keeps the old version, its reason and its results, needs its own
 > authorisation and a complete re-run, and never re-labels an earlier run.
 >
-> **Revision v0.1.13a (2026-10-18, wording only, after `3564236`; no threshold, grid, formula or seed changed):** K2 and K3
+> **Revision v0.1.13a (2026-10-18, after `3564236`; no threshold, grid, formula or seed changed; wording, except that the
+> K9 (b) rule "one not-assessable seed makes the semantic's median not assessable" is a DECISION-POLICY ADDITION fixed in
+> advance — accepted as such by the owner's ruling of 2026-10-18 on unit 2b-4a §1, not a wording change):** K2 and K3
 > name the sign test's direction (H1: the control beats R) and the population it runs on; K7 (b) defines O's `B*` prefix
 > as ledger records (base through the `B*`-th search evaluation); K9 names the seven semantics, states that `ff_init`
 > counts as the others do with its A8 flag in addition, and fixes the median's population (all S seeds; one
 > not-assessable seed makes the semantic's median not assessable); K10 says why a not-comparable corner can only be a
 > DOMAIN refusal under v0.3; the `B*` paragraph says K1 is evaluated at every grid budget for eligibility and that a bare
 > `N` is `N(B*)`; §9.2 says the exclusion set is one pooled set of integers applied to both positions of a pair.
+>
+> **Revision v0.1.14 (2026-10-18, unit 2b-4a commit A, the owner's ruling of 2026-10-18 on the exploration-harness scope
+> draft; no threshold, grid, τ or anchor changed):** the owner's P3 — the sign test's H1 is written in its conditional form
+> P(Δ > 0 | Δ ≠ 0) > ½ (ties excluded from *n*; all ties → p = 1, never a 0 filled in); §9.2 names the typed reading of the
+> exclusion table and the rule that every archived set under `evidence/b4/sim/` joins the pooled set; the two manifests'
+> `seeds.pairs` fields are listed as seed-bearing (they were read by the typed loader and the table now says so); §13 carries
+> unit 2b-4a with commit A delivered. The v0.1.13a note now states that its K9 (b) rule is a decision-policy addition the
+> owner accepted, not a wording change.
 
 ## 0. The question, and why it is two studies
 
@@ -699,7 +709,11 @@ probe candidate is never read as a search champion and a prefix cut short by a t
 never filled in. The holdout score never enters a training curve. Δ2 is reported with no threshold
 (`docs/b3_architecture.md` §9). The
 decision statistic for each is the one-sided exact sign test at α = 0.05, ties excluded from
-*n* and counted (`b2_gate.sign_test_p`, by copy). The frozen arm's own benefit over R
+*n* and counted (`b2_gate.sign_test_p`, by copy): its H1 is **P(Δ > 0 | Δ ≠ 0) > ½** — the
+conditional form is what the copied function computes; an unconditional P(Δ > 0) > ½ is not equivalent once ties
+are excluded from *n*. With every pair tied there is no evidence either way and the function returns p = 1
+(B2's rule); the conditional probability is never filled in as 0. The bootstrap of K2 resamples all S pairs,
+ties included. The frozen arm's own benefit over R
 (`best_F − best_R`, B2's primary) is reported next to Δ1 as the dose the online arm approaches, and
 it carries **no significance threshold of its own**; K3 and K4 below do use it as a comparison
 reference, including the condition that its mean is positive, and those conditions are stated there
@@ -708,8 +722,8 @@ rather than hidden behind the word *reported*.
 | id | criterion | method (fixed) | threshold |
 |---|---|---|---|
 | K1 non-saturation | `percentile(best_Ω(B*), 95) < 64` (the task's ceiling, §7) **and** `median_r(best_R(B*)) > median_r(base_r)` — two medians compared, *not* `median(best_R − base) > 0`; the percentile is B2's linear interpolation (`b2_gate.percentile`, by copy) | B2 G1's computation | holds / fails (no fraction) |
-| K2 not a definitional lock | the **population** variance of {Δ1_r} at `B*` is > 0; there exists one grid budget B at which both `positives(Δ1(B)) > 0` and `negatives(Δ1(B)) > 0` (one condition, within one budget); **and** at `B*`, with size `N(B*)`, the same one-sided sign test — H1: P(X − R > 0) > ½, the direction in which X would profit — applied to the S values of X − R does **not** reject H0 in **≥ 90 %** of 1 000 bootstrap experiments (`b2_gate.bootstrap_reject_rate` by copy, α = 0.05, rejection at `p ≤ 0.05`, `random.Random(7)`; ties do not enter the sign test's effective *n*, yet the tied pairs stay in the resampled population). Every X run's residual structure (`partition_preserved`, `groups_moved` / `groups_true`) is reported in full, never used to drop or re-pick a run | B3 H2, in full | ≥ 90 % non-rejection |
-| K3 wrong maps do not profit | `mean(F − R) > 0` **and** `mean(D − R) ≤ 0.10 · mean(F − R)`; `mean(O − R) > 0` **and** `mean(X − R) ≤ 0.10 · mean(O − R)`; D's and X's one-sided sign tests over the S pairs at `B*`, each with H1: P(control − R > 0) > ½ (the direction in which a wrong map would profit), not significant (`p > 0.05`). A negative numerator passes the inequality and is **not** made absolute; a zero or negative denominator means the ratio condition cannot be read as satisfied — the row fails and says so. X's residual-structure counts are reported beside its numbers (§8) | B2 G3 / B3 H3 | 10 %; `p > 0.05` |
+| K2 not a definitional lock | the **population** variance of {Δ1_r} at `B*` is > 0; there exists one grid budget B at which both `positives(Δ1(B)) > 0` and `negatives(Δ1(B)) > 0` (one condition, within one budget); **and** at `B*`, with size `N(B*)`, the same one-sided sign test — H1: P(X − R > 0 | X − R ≠ 0) > ½, the direction in which X would profit — applied to the S values of X − R does **not** reject H0 in **≥ 90 %** of 1 000 bootstrap experiments (`b2_gate.bootstrap_reject_rate` by copy, α = 0.05, rejection at `p ≤ 0.05`, `random.Random(7)`; ties do not enter the sign test's effective *n*, yet the tied pairs stay in the resampled population). Every X run's residual structure (`partition_preserved`, `groups_moved` / `groups_true`) is reported in full, never used to drop or re-pick a run | B3 H2, in full | ≥ 90 % non-rejection |
+| K3 wrong maps do not profit | `mean(F − R) > 0` **and** `mean(D − R) ≤ 0.10 · mean(F − R)`; `mean(O − R) > 0` **and** `mean(X − R) ≤ 0.10 · mean(O − R)`; D's and X's one-sided sign tests over the S pairs at `B*`, each with H1: P(control − R > 0 | control − R ≠ 0) > ½ (the direction in which a wrong map would profit), not significant (`p > 0.05`). A negative numerator passes the inequality and is **not** made absolute; a zero or negative denominator means the ratio condition cannot be read as satisfied — the row fails and says so. X's residual-structure counts are reported beside its numbers (§8) | B2 G3 / B3 H3 | 10 %; `p > 0.05` |
 | K4 headroom against the certificate-derived grouping | `median_r(best_Ω(B*)) ≤ 0.90 · 64 = 57.6`; `mean(Ω − R) > 0` **and** `mean(F − R) ≥ 0.50 · mean(Ω − R)`. The 50 % is this unit's advance criterion, **not** a known attainable effect: Ω is a privileged grouping reference (§8), not a proved global bound | B2 G4 | 57.6; 50 % |
 | K5 effect, power, N | paired Cohen's d of {Δ1_r} at `B*` **≥ 0.5**; `N(B)` by `b2_gate.required_pairs`'s **complete ascending scan over every integer from 8 to S** (no bisection, no skipping; α = 0.05, bootstrap power **≥ 0.90**, 1 000 experiments, `random.Random(1 + N)`); the sign test by `b2_gate.sign_test_p` — all three **by copy into the B4 namespace with their digests recorded**, never by import across the pinned boundary; `N × 3 × B* ≤ 4 000` **search evaluations** | B2 G5 / B3 H5 | d ≥ 0.5; power ≥ 0.90; cap 4 000 |
 | K6 no fixed-seed lock | **S = 200** and **N ≥ 8**; the gate's seeds derived once by §9.2's formula with the complete exclusion set. S is the number of seeds planned, never the number that completed | B2 G6 / B3 H6 | S = 200; N ≥ 8 |
@@ -794,8 +808,8 @@ file as of this commit):
 | source | seed-bearing field | sha256 |
 |---|---|---|
 | `host/b2_search.py` | `EXCLUDED_SEEDS`, the line's frozen list of 20 values | `3acb04714a6c677708892d171f6a418e6de7627210e2ec6ad65158db51eab1cf` |
-| `manifests/b2_manifest.json` | `seeds.master_seed`, `seeds.excluded_frozen_sets`, `qualification_plan.master_seed` | `aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0` |
-| `manifests/b3_manifest.json` | `seeds.master_seed`, `qualification_plan.master_seed` | `258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628` |
+| `manifests/b2_manifest.json` | `seeds.master_seed`, `seeds.pairs`, `seeds.excluded_frozen_sets` (each set's `master_seed`), `qualification_plan.master_seed` | `aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0` |
+| `manifests/b3_manifest.json` | `seeds.master_seed`, `seeds.pairs`, `qualification_plan.master_seed` | `258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628` |
 | `evidence/b2/gate/gate_report.json` | `seeds` (schema `b2_gate_report` 1.0.0) | `571196bd509e5eb09897d206a634b508655bb42f293be7eeaf7fba8d4c514c43` |
 | `evidence/b2/gate/raw_F1.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `b821c24998dece562026d41c094509da98cfd5430b099ea52ec35dc44050e0bf` |
 | `evidence/b2/gate/raw_F2.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `6194ed690afd5107a76cd081f158a174d2147c3f364e331e0c58ebba74dcab5f` |
@@ -831,6 +845,14 @@ file as of this commit):
 | `evidence/b3/b3q_prediction.json` | `pairs[].landscape_seed` / `pairs[].operator_seed` | `7eae26509b9488a111257c112c5cf90e9cc8f6e34311af837c79ccc40245ec27` |
 | `evidence/b3/plan_trial_2026_09_17/plan.json` | `seed_derivation` (the lifecycle 1 trial, pilot) | `8b6142b06b883baee2e9e8b298635429384279d2be78efab18cd73bdcc3761d2` |
 | `evidence/b3/plan_trial_2026_09_17/prediction.json` | `pairs[].landscape_seed` / `pairs[].operator_seed` | `6e45a752bd3db536db0cbea7dcb0e531bb40889fff91f7dc6c28250f44f729b2` |
+
+**The typed reading of the table, and the sets that join it later** (unit 2b-4a, `b4/host/b4_seeds.py`): each file above is
+read against its digest through a typed field path — a path that does not resolve, or a leaf that is not an integer in
+0 .. 2³² − 1, or a bool, is a refusal by name; counts, versions and timestamps are never read as seeds because no path
+points at them. The pooled set is those values, B4's exposed values below, and **every archived exploration set under
+`evidence/b4/sim/`** — each run directory's `seeds.json` (its master and every planned pair, whether the batch
+completed, was invalid, incomplete, failed, aborted or void), read in path order; a run directory with no readable,
+valid seed record (and no record stating that no seeds were derived) is a refusal, never skipped.
 
 **B4's own exposed values.** `evidence/b4/sim/` **does not exist yet** — it is named here as the
 directory the exploration sets will be archived in, and its absence is not a missing source. That
@@ -987,6 +1009,7 @@ evidence** and is listed as a prerequisite, not described as a protection.
 | v0.3 model revision (**delivered**; the owner's ruling of 2026-10-18 on the scope draft, after the PASSes on `e0b5f04` and `c0689f8`) | `b4/hypothesis/ff_behaviour_v0.3.json` (the latch bit-0 reading on the D1′ pair, labelled host correspondence; the three layers L1 / L2 / L3 in their own source entries; the domain complete by assumption; the init step's atomic assignment named a model abstraction), `b4/host/b4_ff_hypothesis.py` (the formal pointer and digest only), the v0.2 file kept byte for byte, the tests (the hand-derived inverted-gate trace in the model's settle order; the `v021_hole` fixture carrying the 0.2.1 result; F completing under 0.3.0), `b4/IMPORT.json`, this document, `evidence/b4/unit_v03_2026_10_18/` | the local regression and the mutants; the owner's review; silicon status unverified; not gate-ready |
 | X-A (**delivered; PASS on `c0689f8`**; the ruling of 2026-10-18 §4) | `b4/host/b4_carto.py` (`derangement_attempts`, `relabel_genome`, `isomorphic_addresses`, `residual_structure`; the lane permutation kept as the symmetry test), `b4/host/b4_engine.py` (arm X over relabelled addresses with its own control seed, π before the base, the shadow contract after every ingest, the control failure event, the residual post hoc), `b4/host/b4_replay.py` (π re-derived from the control seed; the control fields typed; a control failure must reproduce), the tests, `evidence/b4/unit_xa_2026_10_18/` | the partition-changing fixture and the partition-preserving counterexample; π from the control generator (the operator's untouched); base / mid-generation termination; the control failure's commit point; full replay; 19 mutants. Mechanism only: no arm advantage measured, no seed scan, no landscape exploration |
 | 2b-3 (**delivered**; the owner's ruling of 2026-10-18 on the thresholds scope draft; wording follow-up v0.1.13a, no number changed) | one documents-only commit: §9's K1–K10 thresholds, τ = 2, the grid and `B*` rule, what the 4 000 cap is and is not, §9.1 the incomplete-run / invalid policy, §9.2 the anchor on the hypothesis digest with the control-generator formulas and the file-by-file exclusion set, §9.3 K9's fixed comparison set, §8's D row as the shuffled F-learned view; `evidence/b4/unit_2b3_2026_10_18/` | the owner's review; the exploration harness comes next, then the formal gate — neither authorised here |
+| 2b-4a (**in progress**; the owner's ruling of 2026-10-18 on the exploration-harness scope draft: three commits A / B / C, reviewed as one batch) | **A (delivered):** `b4/host/b4_seeds.py` (the anchor formula with the label beside it; the 38 historical sources read against their digests through typed field paths; B4's exposed values; the `evidence/b4/sim/` registry of every archived set; one pooled set; B2's `pair_seeds` by copy), `b4/host/b4_controls.py` (the X and D control seeds; F's frozen view REBUILT from the base and the 21 probes and held to the record, replayed first; D as that view through `shuffled_view` once with the permutation and residual recorded and verified), `b4/host/b4_snapshot.py` (K7: the map rebuilt from the ledger under each arm's rule — O online, X relabelled with its shadow, F base + probes then frozen, given views and R not applicable; O's `B*` prefix of exactly `B* + 1` records; the final fields held to the rebuild), their tests. **B (next):** K9's fixed comparison set, K10's driver, the statistics copied from B2 with digests. **C (last):** the harness, its schemas, the integration tests, the evidence | the owner's review of the batch; no exploration run, no gate, no threshold changed |
 | 2b-4 | `b4/host/b4_gate.py`, the formal gate under `b4-gate-1` (S = 200), `docs/b4_gate_report.md` stating every result as "under the behaviour hypothesis"; the v3 map schema draft (§6) | every row PASS / FAIL; a PASS never read as evidence about the fabric |
 | 2c | `docs/b4_preregistration.md` DRAFT (B4-FF: claim, pins, prediction, metrics, falsifiers, sessions and rulings, compatibility, lifecycle, §9 rule; B4-R: prerequisites and prohibitions only) | the owner's review; the holdout and the universe fixed by whole site instance |
 | carrier v2 design | RTL, bench, XDC, isolation — against §5.5 A1–A8 | a separate unit after 2c |
