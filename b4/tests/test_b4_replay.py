@@ -39,12 +39,12 @@ class Replay(unittest.TestCase):
         cls.t = be.run("O", cls.task, InjectingPort(cls.fab, 6), 11, 24).as_dict()
         cls.h = be.run("O", cls.task, InjectingPort(cls.fab, 26), 11, 24).as_dict()
         cls.ff = be.run("F", cls.task, ex.ObservationPort(fm.Fabric(cls.m, hy.load())), 11, 24).as_dict()      # the formal hypothesis: terminates in the probe pass
-        cls.perm = bc.derangement(5)
+        cls.x = be.run("X", cls.task, port(), 11, 24, control_seed=5).as_dict()
 
-    def named(self, edit, needle: str, base=None, x_perm=None):
+    def named(self, edit, needle: str, base=None):
         d = copy.deepcopy(base if base is not None else self.o)
         edit(d)
-        f = br.replay(d, self.task, x_perm=x_perm)
+        f = br.replay(d, self.task)
         self.assertTrue(any(needle in x for x in f), f"{needle!r} not among {f[:6]}")
 
     def test_the_clean_runs_replay_with_no_finding(self):
@@ -58,10 +58,12 @@ class Replay(unittest.TestCase):
             ("other refusal", be.run("R", self.task, InjectingPort(self.fab, 3, exc=fm.ModelRefusal("boom")), 11, 24).as_dict(), None),
             ("D from oracle", be.run("F", self.task, port(), 11, 16, view=bc.shuffled_view(bc.oracle_view(self.m), 2)).as_dict(), None),
             ("A0", be.run("F", self.task, port(), 11, 16, view=bc.address_only_view(self.m.addresses)).as_dict(), None),
-            ("X", be.run("X", self.task, port(), 11, 24, x_perm=self.perm).as_dict(), self.perm),
+            ("X", self.x, None),
+            ("base-terminated X", be.run("X", self.task, InjectingPort(self.fab, 1), 11, 24, control_seed=5).as_dict(), None),
+            ("mid-generation-terminated X", be.run("X", self.task, InjectingPort(self.fab, 7), 11, 24, control_seed=6).as_dict(), None),
         ):
             with self.subTest(run=name):
-                self.assertEqual(br.replay(result, self.task, x_perm=perm), [])
+                self.assertEqual(br.replay(result, self.task), [])
         self.assertNotEqual(br.replay(self.o, bl.make_task(8, self.task.addresses)), [])
 
     def test_the_owner_s_nine_tampers_are_named(self):
@@ -245,6 +247,37 @@ class Replay(unittest.TestCase):
         self.assertEqual(sorted(n for n in dir(port) if not n.startswith("_")), ["addresses", "calls", "ledger", "mismatches", "observe", "other", "provenance", "terminal"])
         for leak in ("ff_init", "AFF", "0x00400a", "SLICEL"):
             self.assertNotIn(leak, str(port.provenance), "the port holds digests, not the effect table")
+
+
+class ControlXARecords(Replay):
+    """Control X-A's record: π re-derived from the control seed, the control fields X's only, the control failure typed."""
+
+    def test_pi_not_derived_from_the_control_seed_is_named(self):
+        self.named(lambda d: d.__setitem__("x_perm", d["x_perm"][1:] + d["x_perm"][:1]), "not the ones B3's rule derives from the control seed", base=self.x)
+        self.named(lambda d: d.__setitem__("x_perm_attempts", [d["x_perm"]]), "not the ones B3's rule derives from the control seed", base=self.x)
+        self.named(lambda d: d.__setitem__("x_control_seed", 6), "not the ones B3's rule derives from the control seed", base=self.x)
+        self.named(lambda d: d.__setitem__("x_control_seed", None), "carries no control seed", base=self.x)
+        self.named(lambda d: d.__setitem__("x_perm", list(range(len(self.task.addresses)))[::-1] + [0]), "x_perm is not a permutation", base=self.x)
+        self.named(lambda d: d.__setitem__("x_perm_attempts", []), "x_perm_attempts is not a non-empty list", base=self.x)
+
+    def test_control_fields_on_another_arm_are_named(self):
+        self.named(lambda d: d.__setitem__("x_control_seed", 5), "x_control_seed on an arm other than X")
+        self.named(lambda d: d.__setitem__("x_residual", self.x["x_residual"]), "x_residual on an arm other than X")
+        self.named(lambda d: d.__setitem__("control_failure", {"phase": "search", "attempt": 1, "seq": 1, "findings": ["x"], "successful_observations": 1, "rng_state": 1,
+                                                               "population_commitment": "0" * 64, "map_version": 0, "map_commitment": "0" * 64, "shadow_commitment": "0" * 64}), "control_failure on an arm other than X")
+
+    def test_a_malformed_residual_or_control_failure_is_a_named_finding(self):
+        self.named(lambda d: d["x_residual"].__setitem__("partition_preserved", 1), "x_residual is not a complete", base=self.x)
+        self.named(lambda d: d["x_residual"].pop("groups_moved"), "x_residual is not a complete", base=self.x)
+        self.named(lambda d: d.__setitem__("control_failure", {"phase": "search"}), "control_failure is not a complete", base=self.x)
+        self.named(lambda d: d.__setitem__("control_failure", {"phase": "search", "attempt": 1, "seq": 1, "findings": [], "successful_observations": 1, "rng_state": 1,
+                                                               "population_commitment": "0" * 64, "map_version": 0, "map_commitment": "0" * 64, "shadow_commitment": "0" * 64}), "control_failure is not a complete", base=self.x)
+        # a well-typed but inconsistent control failure on a completed record
+        cf = {"phase": "search", "attempt": 3, "seq": 3, "findings": ["x"], "successful_observations": 3, "rng_state": self.x["rng_state_final"],
+              "population_commitment": "0" * 64, "map_version": 0, "map_commitment": "0" * 64, "shadow_commitment": "0" * 64}
+        self.named(lambda d: d.__setitem__("control_failure", cf), "a run with a control failure is marked completed", base=self.x)
+        self.named(lambda d: (d.__setitem__("control_failure", cf), d.__setitem__("completed", False), d.__setitem__("search_completed", False), d.__setitem__("champion", None), d.__setitem__("champion_holdout", None)),
+                   "exposing observation is not the ledger's last entry", base=self.x)
 
 
 if __name__ == "__main__":

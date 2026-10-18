@@ -8,7 +8,11 @@ field. The replay port holds every call to the ledger (config and stimulus diges
 the terminal event's; nothing beyond the ledger is served); the replay never re-observes after DOMAIN and never
 consults a fabric, a mapping or a hypothesis.
 
-    findings = replay(result_dict, task, x_perm=None)      # [] only when everything reconstructs EXACTLY
+    findings = replay(result_dict, task)                   # [] only when everything reconstructs EXACTLY
+
+Control X-A's π is re-derived from the recorded control seed by the engine itself and compared with the recorded
+π and attempts; a recorded control failure must reproduce from the ledger (the relabelled cartographer and the
+shadow disagreeing at the same observation) or it is a named finding.
 
 VALIDATION IS TOTAL AND TYPE-EXACT before anything is hashed, indexed, scored or reconstructed: every field of the
 record, every ledger entry, every q grid (its dimensions against the phase's public stimulus, its cells 0 / 1 / None,
@@ -42,6 +46,8 @@ ENTRY_KEYS = {"seq", "phase", "genome", "genome_hex", "config_sha256", "provenan
 TERMINAL_KEYS = {"code", "phase", "attempt", "genome", "config_sha256", "stimulus_sha256", "landscape_seed", "operator_seed", "budget",
                  "successful_observations", "rng_state", "population_commitment", "map_commitment", "map_version"}
 REFUSAL_KEYS = {"kind", "message", "phase", "attempt"}
+CONTROL_FAILURE_KEYS = {"phase", "attempt", "seq", "findings", "successful_observations", "rng_state", "population_commitment", "map_version", "map_commitment", "shadow_commitment"}
+RESIDUAL_KEYS = {"partition_preserved", "groups_moved", "groups_true", "groups_x", "true_groups", "x_groups"}
 VIEW_KEYS = {"groups", "version", "commitment", "privileged", "origin", "provenance", "base_commitment"}
 MOVE_KINDS = ("base", "probe", "random", "group", "holdout")
 ELEMENTS = 8
@@ -177,6 +183,22 @@ def shape_findings(result, task: ex.PublicTask) -> list[str]:
             f.append("given_view is not a complete, typed view record")
     if not (r["x_isomorphism_findings"] is None or (isinstance(r["x_isomorphism_findings"], list) and all(isinstance(x, str) for x in r["x_isomorphism_findings"]))):
         f.append("x_isomorphism_findings")
+    if not (r["x_control_seed"] is None or _nonneg(r["x_control_seed"])):
+        f.append("x_control_seed is not a non-negative integer / None")
+    perm_ok = lambda p: isinstance(p, list) and len(p) == n and all(_nonneg(b) and b < n for b in p) and sorted(p) == list(range(n))  # noqa: E731
+    if not (r["x_perm"] is None or perm_ok(r["x_perm"])):
+        f.append("x_perm is not a permutation of the addresses / None")
+    if not (r["x_perm_attempts"] is None or (isinstance(r["x_perm_attempts"], list) and r["x_perm_attempts"] and all(perm_ok(p) for p in r["x_perm_attempts"]))):
+        f.append("x_perm_attempts is not a non-empty list of permutations / None")
+    xr = r["x_residual"]
+    if not (xr is None or (isinstance(xr, dict) and set(xr) == RESIDUAL_KEYS and _is_bool(xr["partition_preserved"]) and all(_nonneg(xr[k]) for k in ("groups_moved", "groups_true", "groups_x"))
+                           and all(isinstance(xr[k], list) and all(isinstance(g, list) and all(_nonneg(b) and b < n for b in g) for g in xr[k]) for k in ("true_groups", "x_groups")))):
+        f.append("x_residual is not a complete, typed residual-structure record / None")
+    cf = r["control_failure"]
+    if not (cf is None or (isinstance(cf, dict) and set(cf) == CONTROL_FAILURE_KEYS and cf["phase"] in ex.PHASES and all(_nonneg(cf[k]) for k in ("attempt", "seq", "successful_observations", "rng_state", "map_version"))
+                           and isinstance(cf["findings"], list) and cf["findings"] and all(isinstance(x, str) for x in cf["findings"])
+                           and _hex64(cf["population_commitment"]) and _hex64(cf["map_commitment"]) and _hex64(cf["shadow_commitment"]))):
+        f.append("control_failure is not a complete, typed control-failure event / None")
     gc = r["generation_closes"]
     if not isinstance(gc, list):
         f.append("generation_closes is not a list")
@@ -218,6 +240,8 @@ def shape_findings(result, task: ex.PublicTask) -> list[str]:
         f.append("other_refusal is not a typed refusal of a finite kind")
     if t is not None and o is not None:
         f.append("a terminal event and another refusal on one run")
+    if cf is not None and (t is not None or o is not None):
+        f.append("a control failure beside a terminal event or a refusal on one run")
     return f
 
 
@@ -257,7 +281,32 @@ def structural_findings(result: dict, task: ex.PublicTask) -> list[str]:
             f.append("the result's fixture marker is not its provenance's")
         if r["fabric_fixture"] is not (r["provenance"]["fabric"]["kind"] != "truth"):
             f.append("the result's fabric_fixture marker is not its provenance's")
-    t, o = r["terminal"], r["other_refusal"]
+    # control X-A: π re-derived from the control seed; the other arms carry no control fields
+    if r["arm"] == "X":
+        if r["x_control_seed"] is None or r["x_perm"] is None or r["x_perm_attempts"] is None:
+            f.append("control X carries no control seed / π / attempts")
+        else:
+            attempts = bc.derangement_attempts(r["x_control_seed"], len(task.addresses))
+            if r["x_perm_attempts"] != attempts or r["x_perm"] != attempts[-1]:
+                f.append("the recorded π / attempts are not the ones B3's rule derives from the control seed")
+    else:
+        for k in ("x_control_seed", "x_perm", "x_perm_attempts", "x_residual", "control_failure", "x_isomorphism_findings"):
+            if r[k] is not None:
+                f.append(f"{k} on an arm other than X")
+    t, o, cf = r["terminal"], r["other_refusal"], r["control_failure"]
+    if cf is not None:
+        if r["completed"] or r["search_completed"]:
+            f.append("a run with a control failure is marked completed")
+        if not L or cf["attempt"] != len(L) or cf["seq"] != len(L) or cf["successful_observations"] != len(L):
+            f.append("the control failure's exposing observation is not the ledger's last entry")
+        if L and cf["phase"] != L[-1]["phase"]:
+            f.append("the control failure's phase is not the exposing entry's")
+        if L and (cf["map_version"], cf["map_commitment"]) != (L[-1]["map_version_after"], L[-1]["map_commitment_after"]):
+            f.append("the control failure's map state is not the exposing entry's")
+        if r["rng_state_final"] != cf["rng_state"]:
+            f.append("the generator advanced after the control failure")
+        if r["champion"] is not None or r["champion_holdout"] is not None:
+            f.append("a run with a control failure carries a champion")
     if t is not None:
         if r["completed"]:
             f.append("a terminated run is marked completed")
@@ -280,17 +329,19 @@ def structural_findings(result: dict, task: ex.PublicTask) -> list[str]:
             f.append("a refused run is marked completed")
         if o["attempt"] != len(L) + 1:
             f.append("the refusal's attempt is not the observation after the ledger's last")
+    elif cf is not None:
+        pass
     elif r["completed"]:
         if not L or L[-1]["phase"] != "holdout":
             f.append("a completed run's last entry is not the holdout")
     else:
-        f.append("a run that neither completed nor was terminated nor refused")
+        f.append("a run that neither completed nor was terminated nor refused nor failed its control")
     if r["completed"] and not r["search_completed"]:
         f.append("completed without the search completed")
     return f
 
 
-def replay(result, task: ex.PublicTask, x_perm: list[int] | None = None) -> list[str]:
+def replay(result, task: ex.PublicTask) -> list[str]:
     try:
         f = structural_findings(result, task)
     except Exception as exc:  # noqa: BLE001 — never a pass, never an uncaught exception
@@ -300,7 +351,7 @@ def replay(result, task: ex.PublicTask, x_perm: list[int] | None = None) -> list
     try:
         view = bc.MapView.from_dict(result["given_view"]) if result["given_view"] is not None else None
         port = ReplayPort(result, task)
-        again = be.run(result["arm"], task, port, result["operator_seed"], result["budget"], view=view, x_perm=x_perm)
+        again = be.run(result["arm"], task, port, result["operator_seed"], result["budget"], view=view, control_seed=result["x_control_seed"])
     except (ReplayMismatch, ValueError, fm.ModelRefusal) as exc:
         return (port.mismatches if "port" in dir() else []) + [f"the re-execution did not run to its end: {type(exc).__name__}: {exc}"]
     except Exception as exc:  # noqa: BLE001
@@ -309,5 +360,7 @@ def replay(result, task: ex.PublicTask, x_perm: list[int] | None = None) -> list
     implied = len(result["ledger"]) + (1 if (result["terminal"] or result["other_refusal"]) else 0)
     if port.calls != implied:
         out.append(f"the re-execution made {port.calls} observations, the record implies {implied}")
+    if result["control_failure"] is not None and again.control_failure is None:
+        out.append("the recorded control failure did not reproduce: on re-execution the relabelled cartographer and the shadow agree")
     _diff(result, again.as_dict(), "result", out)
     return out

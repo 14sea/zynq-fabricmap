@@ -42,17 +42,17 @@
    "base": "b3/host/b3_control_x.py",
    "base_sha256": "c9d8375374ddedf9e13b45a82eb711e3c32a762e7da0fd8f985020f8ff2d3c37",
    "kind": "derived",
-   "note": "the observation cartographer (closed-book: single-bit pairs under one stimulus -> seen cells / presence / no effect seen / context-dependent / unknown; multi-bit pairs counted, never decomposed; no semantic claim), the operator's groups, the v3 draft's shape check, control X (the derangement rule and the shadow isomorphism derived from B3's control-X contract, re-aimed at the eight visible lanes), A0, D and the PRIVILEGED oracle view.",
+   "note": "the observation cartographer (closed-book: single-bit pairs under one stimulus -> seen cells / presence / no effect seen / context-dependent / unknown; multi-bit pairs counted, never decomposed; no semantic claim), the operator's groups, the v3 draft's shape check, control X (the derangement rule and the shadow isomorphism derived from B3's control-X contract, re-aimed at the eight visible lanes), A0, D and the PRIVILEGED oracle view.; X-A: derangement_attempts (every attempt kept), relabel_genome, isomorphic_addresses (the full shadow contract under π), residual_structure (post hoc); the lane permutation kept as the symmetry test",
    "role": "host",
-   "sha256": "c4352ef7574d0ecf8c7903328ce4d14ee08e80e47c347401a8268058e5ef2301"
+   "sha256": "f4933fcbf9af3d70a9949af8f61762361c27f26a46fe7ff6dbc44824ceadb2cd"
   },
   "b4/host/b4_engine.py": {
    "base": "host/b2_search.py",
    "base_sha256": "3acb04714a6c677708892d171f6a418e6de7627210e2ec6ad65158db51eab1cf",
    "kind": "derived",
-   "note": "B2's (mu, lambda) = (4, 8), KMAX = 4 engine re-implemented over the FF universe with the execution boundary at every observation: the arms R / F (a seeded probe pass, then frozen; or a given view with its provenance) / O / X, DOMAIN termination (the measured prefix, the pending children, no further draw, observation, score, selection or learning, the generator not rolled back), the ledger with map versions and commitments, generation closes, the holdout once for a completed run. Provenance: the observation source's identity (hypothesis digest and fixture marker, certificate digest) bound into the result and every ledger entry; a given view kept with its provenance chain; a DOMAIN at the holdout keeps the search's champion without a holdout score.",
+   "note": "B2's (mu, lambda) = (4, 8), KMAX = 4 engine re-implemented over the FF universe with the execution boundary at every observation: the arms R / F (a seeded probe pass, then frozen; or a given view with its provenance) / O / X, DOMAIN termination (the measured prefix, the pending children, no further draw, observation, score, selection or learning, the generator not rolled back), the ledger with map versions and commitments, generation closes, the holdout once for a completed run. Provenance: the observation source's identity (hypothesis digest and fixture marker, certificate digest) bound into the result and every ledger entry; a given view kept with its provenance chain; a DOMAIN at the holdout keeps the search's champion without a holdout score.; X-A: arm X over relabelled addresses with its own control seed, π drawn before the base observation from the control generator, the shadow contract after every ingest, a control failure as its own event at a stated commit point, the residual structure post hoc",
    "role": "host",
-   "sha256": "15038f4a50e7a3c1b3de6f08de7060d74d538d1d19fdd3839b571b780b23240a"
+   "sha256": "1cc7708d681f8cc2c09126093974fd62ffc9286eaa9191b3f77efed83d70a9e4"
   },
   "b4/host/b4_execution.py": {
    "kind": "new",
@@ -86,9 +86,9 @@
   },
   "b4/host/b4_replay.py": {
    "kind": "new",
-   "note": "replay as RE-EXECUTION: the engine run again from the declared inputs against a ledger-backed port that serves the recorded observations in order, raises the recorded refusal at its attempt and holds every call to the record; the whole result compared field by field; the authenticity limit stated (the execution sequence is proved, the observations' origin is bound, not re-derived). Validation total and type-exact before any use; refusals re-raised by their finite kind; a malformed record a named finding, an internal error reported as such.",
+   "note": "replay as RE-EXECUTION: the engine run again from the declared inputs against a ledger-backed port that serves the recorded observations in order, raises the recorded refusal at its attempt and holds every call to the record; the whole result compared field by field; the authenticity limit stated (the execution sequence is proved, the observations' origin is bound, not re-derived). Validation total and type-exact before any use; refusals re-raised by their finite kind; a malformed record a named finding, an internal error reported as such.; X-A: π re-derived from the control seed and compared with the record, the control fields typed and X's only, a recorded control failure must reproduce",
    "role": "host",
-   "sha256": "246806442cc3a694c1aa3f71f736b66fcab2accc1098693fb8d52c2d8f4abe64"
+   "sha256": "e3302363a947a6598b6eeb5d63ee4d8120b25449f05fcdf19b73e4a9af59f40d"
   },
   "b4/host/b4_rng.py": {
    "base": "host/b1_carto.py",
@@ -147,13 +147,13 @@
   "b4/tests/test_b4_carto.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "116ffb46864a511a4a9e4e1df63c170f78ac5bfb2472bafa4e263757c156f5da"
+   "sha256": "8c0f354aff80159ee4cb9f5feed72e4ed3328d4ba788a3784be95c9f605de45e"
   },
   "b4/tests/test_b4_engine.py": {
    "kind": "new",
    "note": "complete runs under the mechanics fixture; DOMAIN injected at the base, in the probe pass and mid-generation; the formal-hypothesis fact that F's probe pass terminates at the LATCH flip.",
    "role": "test",
-   "sha256": "fe979a3beca5b8748ffe54fb7af7357545aaea46b7e2fb8c9c01c69a65580c51"
+   "sha256": "177bcf31dc8d510507e8b677c8c396cbab91b8219a51ce89ef866f4de215f2b7"
   },
   "b4/tests/test_b4_execution.py": {
    "kind": "new",
@@ -190,7 +190,7 @@
   "b4/tests/test_b4_replay.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "26492d498b11f315baf1fbaf4df4014f24c3ce91bb2ef72904598f010e36e7ce"
+   "sha256": "dbdd59351fee58ab647871b4f482f5a3930e66f49c9cfdd1248f72b6e9eab50d"
   },
   "b4/tests/test_b4_rng.py": {
    "kind": "new",
@@ -274,5 +274,5 @@
  "schema_version": "1.0.0",
  "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) — none of the latter yet; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
  "source": "docs/b4_architecture.md; the owner's authorisations of 2026-10-17 (2b-1) and 2026-10-18 (2b-2, the revised scope with five rulings)",
- "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18)"
+ "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4)"
 }

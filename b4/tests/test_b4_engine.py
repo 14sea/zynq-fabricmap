@@ -21,9 +21,25 @@ import b4_ff_mapping as bm  # noqa: E402
 import b4_ff_model as fm  # noqa: E402
 import b4_landscape as bl  # noqa: E402
 import b4_replay as br  # noqa: E402
+from unittest import mock  # noqa: E402
 
 
 from b4_test_fixtures import InjectingPort  # noqa: E402
+
+
+def failing_isomorphism(at_call: int):
+    """A stand-in for b4_carto.isomorphic_addresses that reports a finding on its at_call-th call (the real check
+    otherwise) — the only way to exercise a control failure without a defective control. Used under `with`, so every
+    patch start has its stop (R7)."""
+    real = bc.isomorphic_addresses
+    calls = {"n": 0}
+
+    def fake(x, shadow, perm):
+        calls["n"] += 1
+        if calls["n"] == at_call:
+            return ["injected: the shadow contract broken"]
+        return real(x, shadow, perm)
+    return fake
 
 
 class Base(unittest.TestCase):
@@ -89,12 +105,35 @@ class CompleteRuns(Base):
         self.assertEqual(r.map_origin, "online")
         self.assertEqual(r.map_specimens_final, len([e for e in r.ledger if e["phase"] != "holdout"]))
         self.assertEqual(br.replay(r.as_dict(), self.task), [])
-        perm = bc.derangement(5)
-        x = be.run("X", self.task, self.port(), 11, 32, x_perm=perm)
+        x = be.run("X", self.task, self.port(), 11, 32, control_seed=5)
         self.assertTrue(x.completed)
         self.assertEqual(x.x_isomorphism_findings, [])
-        self.assertEqual(br.replay(x.as_dict(), self.task, x_perm=perm), [])
-        self.assertNotEqual(x.map_commitment_final, r.map_commitment_final, "X's map is over permuted lanes")
+        self.assertIsNone(x.control_failure)
+        self.assertEqual(br.replay(x.as_dict(), self.task), [])
+        self.assertNotEqual(x.map_commitment_final, r.map_commitment_final, "X's map is over relabelled addresses")
+        n = len(self.task.addresses)
+        self.assertEqual((x.x_control_seed, x.x_perm, x.x_perm_attempts[-1]), (5, bc.derangement(5, n), bc.derangement(5, n)))
+        self.assertTrue(all(x.x_perm[a] != a for a in range(n)))
+        # the ledger keeps the TRUE genomes: each search child is its parent's genome with the recorded bits flipped
+        born = {}
+        for e in x.ledger:
+            if e["phase"] == "base":
+                for i in range(be.MU):
+                    born[i] = e["genome"]
+            elif e["phase"] == "search":
+                self.assertEqual(e["genome"], be.apply_move(born[e["parent_born"]], e["bits"]))
+                born[len(born)] = e["genome"]
+        # X's map is the cartographer over the RELABELLED ledger genomes, reconstructible from π; the shadow's over the true ones
+        xc, sc = bc.ObservationCarto(n), bc.ObservationCarto(n)
+        stim = ex.sha256_json(list(self.task.stimulus))
+        for e in x.ledger:
+            if e["phase"] != "holdout":
+                xc.ingest(e["seq"], bc.relabel_genome(e["genome"], x.x_perm), stim, e["q_grid"]); sc.ingest(e["seq"], e["genome"], stim, e["q_grid"])
+        self.assertEqual((xc.commitment(), xc.version), (x.map_commitment_final, x.map_version_final))
+        self.assertEqual(bc.isomorphic_addresses(xc, sc, x.x_perm), [])
+        self.assertEqual(x.x_residual, bc.residual_structure(xc.view(), sc.view()))
+        self.assertEqual(set(x.x_residual), {"partition_preserved", "groups_moved", "groups_true", "groups_x", "true_groups", "x_groups"})
+        self.assertEqual(x.x_residual["true_groups"], [list(g) for g in sc.view().groups])
 
     def test_given_views_carry_their_provenance(self):
         omega = be.run("F", self.task, self.port(), 11, 16, view=bc.oracle_view(self.m))
@@ -111,9 +150,103 @@ class CompleteRuns(Base):
         with self.assertRaises(ValueError):
             be.run("O", self.task, self.port(), 11, 16, view=bc.oracle_view(self.m))
         with self.assertRaises(ValueError):
-            be.run("X", self.task, self.port(), 11, 16)
+            be.run("X", self.task, self.port(), 11, 16)                       # no control seed
+        with self.assertRaises(ValueError):
+            be.run("X", self.task, self.port(), 11, 16, control_seed=True)    # a bool is not a seed
+        with self.assertRaises(ValueError):
+            be.run("O", self.task, self.port(), 11, 16, control_seed=5)       # a control seed is X's only
         with self.assertRaises(ValueError):
             be.run("Q", self.task, self.port(), 11, 16)
+
+
+class ControlXA(Base):
+    """The owner's ruling of 2026-10-18 section 4: π from its own generator before the base observation, never the
+    operator's; the ledger's true genomes; the shadow contract after every ingest with a control failure as its own
+    event at a stated commit point; the residual structure post hoc; termination at the base and mid-generation."""
+
+    def test_pi_is_drawn_before_the_base_from_the_control_generator_not_the_operator_s(self):
+        n = len(self.task.addresses)
+        # DOMAIN at the base: π and its attempts are already recorded, nothing observed
+        r = be.run("X", self.task, InjectingPort(self.fab, 1), 11, 24, control_seed=5)
+        self.assertEqual((r.terminal["phase"], r.ledger, r.x_perm, r.x_perm_attempts[-1]), ("base", [], bc.derangement(5, n), bc.derangement(5, n)))
+        self.assertEqual(r.x_perm_attempts, bc.derangement_attempts(5, n))
+        self.assertEqual(r.x_residual, {"partition_preserved": True, "groups_moved": 0, "groups_true": 0, "groups_x": 0, "true_groups": [], "x_groups": []}, "nothing learned: an empty partition on both sides")
+        self.assertEqual(br.replay(r.as_dict(), self.task), [])
+        # DOMAIN at attempt 2: the first move was drawn by the operator's generator; its state is the same under any
+        # control seed, and the same as O's with the same operator seed — π consumed nothing of the operator's
+        states = set()
+        for c in (5, 6, 7):
+            rx = be.run("X", self.task, InjectingPort(self.fab, 2), 11, 24, control_seed=c)
+            self.assertEqual(rx.terminal["attempt"], 2)
+            states.add(rx.terminal["rng_state"])
+            self.assertNotEqual(rx.x_perm, be.run("X", self.task, InjectingPort(self.fab, 2), 11, 24, control_seed=c + 1).x_perm)
+        ro = be.run("O", self.task, InjectingPort(self.fab, 2), 11, 24)
+        self.assertEqual(states, {ro.terminal["rng_state"]})
+        self.assertEqual(rx.terminal["genome"], ro.terminal["genome"], "the same first candidate: the operator's draw is untouched by π")
+
+    def test_domain_mid_generation_under_x_keeps_pi_and_reports_the_residual_post_hoc(self):
+        r = be.run("X", self.task, InjectingPort(self.fab, 6), 11, 24, control_seed=5)
+        self.assertEqual((r.terminal["phase"], r.terminal["attempt"], len(r.ledger), r.evals, len(r.pending_children)), ("search", 6, 5, 4, 4))
+        self.assertEqual(r.x_perm, bc.derangement(5, len(self.task.addresses)))
+        self.assertIsNone(r.control_failure)
+        self.assertEqual(r.x_isomorphism_findings, [])
+        self.assertIsNotNone(r.x_residual)
+        self.assertEqual(br.replay(r.as_dict(), self.task), [])
+
+    def test_the_operator_s_group_moves_use_x_s_relabelled_groups(self):
+        """Mechanism only (a fixed seed, no measurement of any advantage): every group move of the X run draws from a
+        group of X's RELABELLED map as it stood at that moment — reconstructed from the ledger and π — and at this
+        seed at least one such move is not a subset of any group of the TRUE partition, i.e. the operator really used
+        the wrong grouping. The residual structure is reported, never consulted here."""
+        n = len(self.task.addresses)
+        x = be.run("X", self.task, self.port(), 11, 32, control_seed=5)
+        self.assertTrue(x.completed)
+        self.assertGreaterEqual(x.group_moves, 1)
+        stim = ex.sha256_json(list(self.task.stimulus))
+        xc, sc = bc.ObservationCarto(n), bc.ObservationCarto(n)
+        outside_true = 0
+        for e in x.ledger:
+            if e["phase"] == "search" and e["move_kind"] == "group":
+                bits = set(e["bits"])
+                self.assertTrue(any(bits <= set(g) for g in xc.view().groups), "a group move outside X's groups at that moment")
+                outside_true += not any(bits <= set(g) for g in sc.view().groups)
+            if e["phase"] != "holdout":
+                xc.ingest(e["seq"], bc.relabel_genome(e["genome"], x.x_perm), stim, e["q_grid"]); sc.ingest(e["seq"], e["genome"], stim, e["q_grid"])
+        self.assertGreaterEqual(outside_true, 1, "at this seed the wrong grouping was used at least once")
+        self.assertFalse(x.x_residual["partition_preserved"])
+        self.assertEqual(x.x_residual["groups_moved"], 3)
+
+    def test_a_control_failure_is_its_own_event_at_its_commit_point(self):
+        """The 5th ingest (attempt 5 = the 4th search child of generation 1) exposes a (injected) contract break."""
+        port = self.port()
+        with mock.patch.object(bc, "isomorphic_addresses", failing_isomorphism(5)):
+            r = be.run("X", self.task, port, 11, 24, control_seed=5)
+        cf = r.control_failure
+        self.assertIsNotNone(cf)
+        self.assertEqual((cf["phase"], cf["attempt"], cf["seq"], cf["successful_observations"]), ("search", 5, 5, 5))
+        self.assertEqual(cf["findings"], ["injected: the shadow contract broken"])
+        self.assertEqual((r.terminal, r.other_refusal, r.completed, r.search_completed, r.champion, r.champion_holdout), (None, None, False, False, None, None))
+        # the exposing observation is KEPT: in the ledger, scored, counted, among the pending children
+        self.assertEqual(len(r.ledger), 5)
+        self.assertEqual((r.evals, r.cost["search"], len(r.best_trace), len(r.pending_children)), (4, 4, 4, 4))
+        self.assertEqual(r.pending_children[-1][0], r.ledger[-1]["genome"])
+        self.assertEqual(r.ledger[-1]["fitness"], r.pending_children[-1][1])
+        # and nothing after it: no further observation, no selection, no generator move, the map as the entry left it
+        self.assertEqual(port.calls, 5)
+        self.assertEqual(r.generation_closes, [])
+        self.assertEqual(r.population, [[0, r.base_fit, i] for i in range(be.MU)])
+        self.assertEqual(r.rng_state_final, cf["rng_state"])
+        self.assertEqual((cf["map_version"], cf["map_commitment"]), (r.ledger[-1]["map_version_after"], r.ledger[-1]["map_commitment_after"]))
+        self.assertEqual((r.map_version_final, r.map_specimens_final), (cf["map_version"], 5))
+        self.assertIsNotNone(r.x_residual)
+        # the record is consistent for the replay; the failure reproduces only under the same contract break
+        with mock.patch.object(bc, "isomorphic_addresses", failing_isomorphism(5)):
+            self.assertEqual(br.replay(r.as_dict(), self.task), [])
+        f = br.replay(r.as_dict(), self.task)
+        self.assertTrue(any("did not reproduce" in x for x in f), f[:3])
+        # a control failure is not a DOMAIN and not a refusal: the structural check refuses a record that says both
+        d = r.as_dict(); d["other_refusal"] = {"kind": "ValueError", "message": "x", "phase": "search", "attempt": 6}
+        self.assertTrue(any("beside a terminal event or a refusal" in x for x in br.replay(d, self.task)))
 
 
 class Termination(Base):

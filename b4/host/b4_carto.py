@@ -17,10 +17,14 @@ positive and negative controls.
     carto.commitment()                           # sha256 of the canonical relations document
     carto.render(binding)                        # a self_map v3 (draft) document
 
-Controls: `derangement` (B3's rule, Fisher–Yates with rejection, the generator continuing across attempts),
-`permute_grid` (control X: the visible lanes relabelled before X's cartographer), `isomorphic` (X against its
-shadow under the permutation); `address_only_view` (A0, from the addresses' frame field alone), `shuffled_view`
-(D); `oracle_view` (Omega) is PRIVILEGED — it reads the mapping — and says so in the view.
+Controls: `derangement` / `derangement_attempts` (B3's rule, Fisher–Yates with rejection, the generator continuing
+across attempts; every attempt auditable), `relabel_genome` (control X-A: the ADDRESSES relabelled by a fixed
+derangement π before X's cartographer — bit a of the genome moves to bit π(a), the q grid untouched),
+`isomorphic_addresses` (X against its shadow under π, in full), `residual_structure` (post hoc: did π preserve the
+operator's partition — reported, never fed back); `permute_grid` / `isomorphic` (the LANE permutation, kept as the
+cartographer's symmetry test of the relation / partition structure — not an arm); `address_only_view` (A0, from
+the addresses' frame field alone), `shuffled_view` (D); `oracle_view` (Omega) is PRIVILEGED — it reads the
+mapping — and says so in the view.
 """
 from __future__ import annotations
 
@@ -228,21 +232,78 @@ def schema_findings(doc) -> list[str]:
 
 
 # ------------------------------------------------------------------ controls
-def derangement(seed_x: int, n: int = ELEMENTS) -> list[int]:
-    """B3's rule: Fisher–Yates from i = n-1 down to 1 with j = rng.uniform(i + 1), each attempt from the identity,
-    the generator continuing across attempts, until no fixed point."""
+def derangement_attempts(seed_x: int, n: int = ELEMENTS) -> list[list[int]]:
+    """B3's rule, every attempt kept: Fisher–Yates from i = n-1 down to 1 with j = rng.uniform(i + 1), each attempt
+    from the identity, the generator continuing across attempts, until no fixed point. The rejected attempts are a
+    generation procedure fixed in advance — never a choice made after seeing a map, a partition or a result — and
+    they are recorded with the final one (the last of the list) so the rule is auditable."""
     rng = Rng(seed_x)
+    attempts: list[list[int]] = []
     while True:
         p = list(range(n))
         for i in range(n - 1, 0, -1):
             j = rng.uniform(i + 1)
             p[i], p[j] = p[j], p[i]
+        attempts.append(p)
         if all(p[i] != i for i in range(n)):
-            return p
+            return attempts
+
+
+def derangement(seed_x: int, n: int = ELEMENTS) -> list[int]:
+    """The derangement B3's rule yields: the last attempt of `derangement_attempts`."""
+    return derangement_attempts(seed_x, n)[-1]
+
+
+def relabel_genome(genome: int, perm: list[int]) -> int:
+    """Control X-A: bit a of the genome moves to bit perm[a]. The TRUE genome is what the search observed and what
+    the ledger keeps; the relabelled genome is the cartographer's input only, reconstructible from the fixed π."""
+    if not isinstance(genome, int) or genome < 0 or genome >> len(perm):
+        raise ValueError("the genome is not over the permutation's addresses")
+    out = 0
+    for a, pa in enumerate(perm):
+        if (genome >> a) & 1:
+            out |= 1 << pa
+    return out
+
+
+def isomorphic_addresses(x: ObservationCarto, shadow: ObservationCarto, perm: list[int]) -> list[str]:
+    """X-A's shadow contract, EXACT and in full: X's relation at perm[a] equals the shadow's relation at a — the
+    seen cells, the presence cells, the pair counts, the contexts, the evidence references — and the version, the
+    multi-bit count and the specimen count agree. Any difference is named; a difference is a defect of the control
+    (a control failure), never a result."""
+    f: list[str] = []
+    if x.n != shadow.n or len(perm) != shadow.n or sorted(perm) != list(range(shadow.n)):
+        return ["the permutation is not over the cartographers' addresses"]
+    if x.version != shadow.version:
+        f.append(f"version {x.version} != shadow {shadow.version}")
+    if x.multi_bit_pairs != shadow.multi_bit_pairs:
+        f.append("multi-bit pair counts differ")
+    if len(x.specimens) != len(shadow.specimens):
+        f.append("specimen counts differ")
+    for a in range(shadow.n):
+        s, xr = shadow.rel[a], x.rel[perm[a]]
+        if (xr.cells, xr.presence, xr.pairs_with_effect, xr.pairs_without_effect, xr.contexts, xr.evidence) != \
+           (s.cells, s.presence, s.pairs_with_effect, s.pairs_without_effect, s.contexts, s.evidence):
+            f.append(f"address {a} -> {perm[a]}: X's relation is not the shadow's under the relabelling")
+    return f
+
+
+def residual_structure(x_view: MapView, shadow_view: MapView) -> dict:
+    """POST HOC, reported and never fed back: did the relabelling preserve the operator's partition? The TRUE
+    partition is the shadow's groups; X's partition is its image under π. `groups_moved` counts the true groups
+    that are not, as a set of addresses, a group of X's partition; `partition_preserved` is the two partitions being
+    equal as sets of address sets. A derangement does not guarantee a changed partition (a within-group swap preserves
+    it), so a preserved partition is a fact of the run, reported beside its numbers — never a reason to redraw."""
+    true_groups = [frozenset(g) for g in shadow_view.groups]
+    x_groups = {frozenset(g) for g in x_view.groups}
+    moved = sum(1 for g in true_groups if g not in x_groups)
+    return {"partition_preserved": set(true_groups) == x_groups, "groups_moved": moved, "groups_true": len(true_groups),
+            "groups_x": len(x_groups), "true_groups": [sorted(g) for g in shadow_view.groups], "x_groups": [sorted(g) for g in x_view.groups]}
 
 
 def permute_grid(q_grid: list, perm: list[int]) -> list:
-    """Control X: the visible lanes relabelled — lane i's readout appears at lane perm[i] — before X's cartographer."""
+    """The LANE permutation — lane i's readout appears at lane perm[i]. Kept as the cartographer's symmetry test (the
+    relation / partition structure is invariant under lane relabelling); not an arm, not the negative control."""
     out = []
     for row in q_grid:
         new = [None] * len(row)
@@ -253,8 +314,9 @@ def permute_grid(q_grid: list, perm: list[int]) -> list:
 
 
 def isomorphic(x: ObservationCarto, shadow: ObservationCarto, perm: list[int]) -> list[str]:
-    """X's relations must equal the shadow's with every element mapped through perm — version and multi-bit count
-    included. EXACT; any difference named."""
+    """The lane symmetry: a cartographer over lane-permuted grids equals the untransformed one with every element
+    mapped through perm — version and multi-bit count included. EXACT; any difference named. A test of the
+    cartographer, not the engine's control."""
     f: list[str] = []
     if x.version != shadow.version:
         f.append(f"version {x.version} != shadow {shadow.version}")

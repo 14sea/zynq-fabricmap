@@ -172,6 +172,91 @@ class ControlX(unittest.TestCase):
         self.assertTrue(bc.isomorphic(x, shadow, wrong))
         self.assertTrue(bc.isomorphic(x, bc.ObservationCarto(3), perm))
 
+    def test_the_attempts_are_recorded_and_the_last_is_the_derangement(self):
+        """Every attempt of B3's rule is kept, the rejected ones included; checked on a seed whose rule needs more
+        than one attempt (found by the rule itself, not chosen for its outcome), and against the rule by hand."""
+        from b4_rng import Rng
+        seed = next(s for s in range(1, 1000) if len(bc.derangement_attempts(s, 21)) >= 2)
+        at = bc.derangement_attempts(seed, 21)
+        self.assertGreaterEqual(len(at), 2)
+        self.assertEqual(at[-1], bc.derangement(seed, 21))
+        self.assertTrue(all(sorted(p) == list(range(21)) for p in at))
+        self.assertTrue(all(any(p[i] == i for i in range(21)) for p in at[:-1]), "every rejected attempt had a fixed point")
+        self.assertTrue(all(at[-1][i] != i for i in range(21)))
+        rng, by_hand = Rng(seed), []
+        while True:
+            q = list(range(21))
+            for i in range(20, 0, -1):
+                j = rng.uniform(i + 1); q[i], q[j] = q[j], q[i]
+            by_hand.append(q)
+            if all(q[i] != i for i in range(21)):
+                break
+        self.assertEqual(at, by_hand, "the attempts are exactly the rule's, in order")
+
+    def test_relabel_genome(self):
+        perm = [2, 0, 1]
+        self.assertEqual(bc.relabel_genome(0b001, perm), 0b100)
+        self.assertEqual(bc.relabel_genome(0b110, perm), 0b011)
+        self.assertEqual(bc.relabel_genome(0, perm), 0)
+        self.assertEqual(bc.relabel_genome(0b111, perm), 0b111)
+        with self.assertRaises(ValueError):
+            bc.relabel_genome(0b1000, perm)
+        inv = [perm.index(a) for a in range(3)]
+        for g in range(8):
+            self.assertEqual(bc.relabel_genome(bc.relabel_genome(g, perm), inv), g)
+
+    def ingest_pair(self, n, perm, obs):
+        x, shadow = bc.ObservationCarto(n), bc.ObservationCarto(n)
+        for seq, genome, gr in obs:
+            x.ingest(seq, bc.relabel_genome(genome, perm), S1, gr); shadow.ingest(seq, genome, S1, gr)
+        return x, shadow
+
+    def test_x_a_relabels_the_addresses_and_stays_isomorphic_in_full(self):
+        n, perm = 3, [1, 2, 0]
+        obs = [(1, 0, grid([[1] * 8])), (2, 1, grid([[0, 1, 1, 1, 1, 1, 1, 1]])), (3, 2, grid([[1, 1, None, 1, 1, 1, 1, 1]])), (4, 4, grid([[1] * 8])), (5, 3, grid([[0, 1, None, 1, 1, 1, 1, 1]]))]
+        x, shadow = self.ingest_pair(n, perm, obs)
+        self.assertEqual(bc.isomorphic_addresses(x, shadow, perm), [])
+        self.assertEqual(x.rel[perm[0]].elements, shadow.rel[0].elements, "the effect of address 0 is credited to address perm[0]")
+        self.assertEqual((x.rel[perm[0]].evidence, x.rel[perm[0]].contexts), (shadow.rel[0].evidence, shadow.rel[0].contexts))
+        self.assertEqual(x.multi_bit_pairs, shadow.multi_bit_pairs)
+        self.assertTrue(bc.isomorphic_addresses(x, shadow, [2, 0, 1]), "another permutation is named")
+        self.assertTrue(bc.isomorphic_addresses(x, bc.ObservationCarto(n), perm))
+        x.rel[perm[1]].evidence.append((9, 9))
+        self.assertEqual(len(bc.isomorphic_addresses(x, shadow, perm)), 1, "one evidence reference off: named")
+        self.assertEqual(bc.isomorphic_addresses(x, shadow, [0, 1]), ["the permutation is not over the cartographers' addresses"])
+
+    def test_the_two_hand_fixtures_of_the_ruling(self):
+        """A partition-CHANGING π and the partition-PRESERVING derangement counterexample (swap within every pair,
+        rotate the five-address group): both keep the isomorphism; only the first changes the operator's partition.
+        No test requires every π to change the partition."""
+        n = 9
+        # the true structure: addresses 0,1 affect element 0; 2,3 element 1; 4..8 affect elements 0 and 1 (slice-wide)
+        base = grid([[1] * 8])
+        def eff(*els):
+            row = [1] * 8
+            for e in els:
+                row[e] = 0
+            return grid([row])
+        obs = [(1, 0, base)] + [(2 + a, 1 << a, eff(0) if a in (0, 1) else eff(1) if a in (2, 3) else eff(0, 1)) for a in range(n)]
+        shadow = bc.ObservationCarto(n)
+        for seq, g, gr in obs:
+            shadow.ingest(seq, g, S1, gr)
+        self.assertEqual([list(g) for g in shadow.view().groups], [[0, 1], [2, 3], [4, 5, 6, 7, 8]])
+        changing = [1, 2, 3, 0, 5, 6, 7, 8, 4]           # {0,1} -> {1,2}: not a group any more
+        preserving = [1, 0, 3, 2, 5, 6, 7, 8, 4]         # swap within the pairs, rotate the five: no fixed point, the same partition
+        for perm in (changing, preserving):
+            self.assertTrue(all(perm[i] != i for i in range(n)), "both are derangements")
+        xc, sc = self.ingest_pair(n, changing, obs)
+        self.assertEqual(bc.isomorphic_addresses(xc, sc, changing), [])
+        rc = bc.residual_structure(xc.view(), sc.view())
+        self.assertEqual((rc["partition_preserved"], rc["groups_moved"], rc["groups_true"], rc["groups_x"]), (False, 2, 3, 3))
+        self.assertEqual(rc["x_groups"], [[1, 2], [3, 0][::-1] if False else [0, 3], [4, 5, 6, 7, 8]])
+        xp, sp = self.ingest_pair(n, preserving, obs)
+        self.assertEqual(bc.isomorphic_addresses(xp, sp, preserving), [])
+        rp = bc.residual_structure(xp.view(), sp.view())
+        self.assertEqual((rp["partition_preserved"], rp["groups_moved"]), (True, 0), "a derangement that preserves the partition: reported as such, not an error")
+        self.assertEqual(rp["x_groups"], rp["true_groups"])
+
     def test_a0_d_and_omega(self):
         m = bm.site_mapping()
         a0 = bc.address_only_view(m.addresses)

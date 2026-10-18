@@ -7,12 +7,27 @@ observation (the revised 2b-2 scope, sections 3 and 5; the owner's rulings of 20
     r = run("F", task, port, operator_seed, budget)                       # frozen map LEARNED by a probe pass first
     r = run("F", task, port, operator_seed, budget, view=given_view)      # frozen map given (D / Omega / A0 — the view says what it is)
     r = run("O", task, port, operator_seed, budget)                       # online map, updated from every specimen
-    r = run("X", task, port, operator_seed, budget, x_perm=perm)          # control X: O with the visible lanes permuted
+    r = run("X", task, port, operator_seed, budget, control_seed=c)      # control X-A: O over ADDRESSES relabelled by a fixed derangement
 
 The arms differ in how the map is obtained and kept (R none; F learned once by single-bit probes from the base in a
-seeded random order, then frozen; O learned from every specimen as it comes; X as O over permuted lanes with a
-shadow over the true lanes) and in the operator (random-safe, or half random-safe / half a group move); the fitness,
-the population rule, the budget, the seeds, the stimulus and the termination are shared.
+seeded random order, then frozen; O learned from every specimen as it comes; X as O with the cartographer's input
+relabelled, a shadow over the true input) and in the operator (random-safe, or half random-safe / half a group
+move); the fitness, the population rule, the budget, the seeds, the stimulus and the termination are shared.
+
+CONTROL X-A (the owner's ruling of 2026-10-18, section 4; `docs/b4_architecture.md` section 8). Before the base
+observation, a derangement π of the n addresses is drawn ONCE from its own control RNG (`control_seed`; B3's
+Fisher–Yates-with-rejection rule, every attempt recorded) — it never consumes the operator's generator and is never
+redrawn or rejected after anything is learned. X's cartographer ingests each specimen with its genome's bits
+relabelled through π (bit a -> bit π(a)) and the q grid untouched, so every seen effect is credited to the wrong
+address; the shadow ingests the true genome. The ledger keeps the TRUE genome (what the search observed); the
+cartographer's input is reconstructible from π and is never stored as if observed. After EVERY ingest the shadow
+contract is checked in full (`b4_carto.isomorphic_addresses`): a difference is a CONTROL FAILURE — its own event
+(`control_failure`), not DOMAIN, not a refusal, not a result. Its commit point: the observation that exposed it is
+already in the ledger, scored and counted (a search child stays among the pending children); after it nothing is
+drawn, observed, selected or learned, the generator is not rolled back. The residual structure (did π preserve the
+operator's partition; `b4_carto.residual_structure`) is computed once at the end and reported — never read during the
+run, never a reason to redraw or to select. The lane permutation of 2b-2 is not an arm: it stays as the
+cartographer's symmetry test.
 
 EVERY observation — the base, each probe, each search candidate, the holdout — goes through the one boundary. On
 the first DOMAIN the run terminates: the event is recorded as it came (the state as it stood before that call), the
@@ -62,6 +77,15 @@ LAMBDA = 8
 KMAX = 4
 ENGINE_VERSION = "b4-es-v0.1 (derived from b2-es-v1)"
 ARMS = ("R", "F", "O", "X")
+
+
+class ControlFailure(Exception):
+    """Raised inside the engine when X's cartographer and its shadow stop agreeing under π: a defect of the control,
+    recorded by its own name after the exposing observation is in the ledger."""
+
+    def __init__(self, phase: str, attempt: int, seq: int, findings: list[str]):
+        super().__init__("control failure")
+        self.phase, self.attempt, self.seq, self.findings = phase, attempt, seq, list(findings)
 
 
 @dataclass
@@ -138,6 +162,11 @@ class RunResult:
     search_completed: bool = False            # the search loop ran to its budget (a DOMAIN at the holdout leaves this True, completed False)
     fixture: bool | None = None               # the HYPOTHESIS fixture marker, surfaced at the top level (provenance.hypothesis.fixture)
     fabric_fixture: bool | None = None        # the FABRIC is not the truth (permuted / dropout / custom): provenance.fabric.kind != "truth"
+    x_control_seed: int | None = None         # control X-A: the control RNG's seed (never the operator's)
+    x_perm: list | None = None                # the derangement π drawn from it before the base observation, fixed for the run
+    x_perm_attempts: list | None = None       # every Fisher–Yates attempt of the rule, the last being π (auditable, never chosen)
+    x_residual: dict | None = None            # post hoc: did π preserve the operator's partition (b4_carto.residual_structure)
+    control_failure: dict | None = None       # the shadow contract broken: its own event, after the exposing observation
 
     def as_dict(self) -> dict:
         d = dict(self.__dict__)
@@ -145,16 +174,24 @@ class RunResult:
 
 
 def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: int, budget: int,
-        view: bc.MapView | None = None, x_perm: list[int] | None = None) -> RunResult:
+        view: bc.MapView | None = None, control_seed: int | None = None) -> RunResult:
     if arm not in ARMS:
         raise ValueError(arm)
-    if arm == "X" and x_perm is None:
-        raise ValueError("control X needs its lane permutation")
+    if arm == "X" and not (isinstance(control_seed, int) and not isinstance(control_seed, bool)):
+        raise ValueError("control X needs its own control seed")
+    if arm != "X" and control_seed is not None:
+        raise ValueError("a control seed is for control X only")
     if view is not None and arm != "F":
         raise ValueError("a given view is for the frozen arm only")
     n = len(task.addresses)
     rng = Rng(operator_seed)
     res = RunResult(arm, task.digest(), task.seed, operator_seed, budget)
+    x_perm: list[int] | None = None
+    if arm == "X":
+        # π from the CONTROL generator, before any observation; fixed for the run, every attempt kept
+        attempts = bc.derangement_attempts(control_seed, n)
+        x_perm = attempts[-1]
+        res.x_control_seed, res.x_perm, res.x_perm_attempts = control_seed, list(x_perm), [list(p) for p in attempts]
     stim_sha = ex.sha256_json(list(task.stimulus))
     carto = bc.ObservationCarto(n) if arm in ("F", "O", "X") and view is None else None
     shadow = bc.ObservationCarto(n) if arm == "X" else None
@@ -191,23 +228,25 @@ def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: 
         res.observations += 1
         return trace
 
-    def learn(seq_: int, genome: int, grid: list) -> tuple[int, int, str]:
-        """Feed the cartographer(s); return (version_before, version_after, commitment_after)."""
+    def learn(seq_: int, genome: int, grid: list) -> tuple[int, int, str, list[str]]:
+        """Feed the cartographer(s); return (version_before, version_after, commitment_after, control findings)."""
         if carto is None:
-            return (frozen.version, frozen.version, frozen.commitment) if frozen else (0, 0, "")
+            return ((frozen.version, frozen.version, frozen.commitment) if frozen else (0, 0, "")) + ([],)
         before = carto.version
+        findings: list[str] = []
         if arm == "X":
-            carto.ingest(seq_, genome, stim_sha, bc.permute_grid(grid, x_perm))
-            shadow.ingest(seq_, genome, stim_sha, grid)
+            carto.ingest(seq_, bc.relabel_genome(genome, x_perm), stim_sha, grid)     # the addresses relabelled, the grid untouched
+            shadow.ingest(seq_, genome, stim_sha, grid)                                # the truth, for the contract only
+            findings = bc.isomorphic_addresses(carto, shadow, x_perm)                  # after EVERY ingest
         else:
             carto.ingest(seq_, genome, stim_sha, grid)
-        return before, carto.version, carto.commitment()
+        return before, carto.version, carto.commitment(), findings
 
     def entry(phase: str, genome: int, trace: dict, fit: int, nones: int, **more) -> dict:
         nonlocal seq
         seq += 1
         grid = [s["q_after"] for s in trace["steps"]]
-        vb, va, cm = learn(seq, genome, grid) if phase != "holdout" else ((frozen.version, frozen.version, frozen.commitment) if frozen else ((carto.version, carto.version, carto.commitment()) if carto else (0, 0, "")))
+        vb, va, cm, control = learn(seq, genome, grid) if phase != "holdout" else (((frozen.version, frozen.version, frozen.commitment) if frozen else ((carto.version, carto.version, carto.commitment()) if carto else (0, 0, ""))) + ([],))
         e = {"seq": seq, "phase": phase, "genome": genome, "genome_hex": ex.genome_hex(genome, n), "config_sha256": ex.sha256_json(ex.genome_to_config(genome, task.addresses)),
              "provenance_sha256": ex.sha256_json(res.provenance), "fixture": res.fixture,
              "stimulus_sha256": ex.sha256_json(list(task.holdout_stimulus if phase == "holdout" else task.stimulus)),
@@ -215,6 +254,9 @@ def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: 
              "map_version_before": vb, "map_version_after": va, "map_commitment_after": cm}
         e.update(more)
         res.ledger.append(e)
+        if control:
+            # the commit point of a control failure: the exposing observation is in the ledger, scored and counted
+            raise ControlFailure(phase, attempt, seq, control)
         return e
 
     phase = "base"
@@ -287,6 +329,12 @@ def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: 
     except ex.Terminated as t:
         res.terminal = t.event.as_dict()
         res.completed = False
+    except ControlFailure as c:                                   # the shadow contract broken: its own event, never DOMAIN or a refusal
+        res.control_failure = {"phase": c.phase, "attempt": c.attempt, "seq": c.seq, "findings": c.findings,
+                               "successful_observations": res.observations, "rng_state": rng.state(),
+                               "population_commitment": population_commitment(pop),
+                               "map_version": carto.version, "map_commitment": carto.commitment(), "shadow_commitment": shadow.commitment()}
+        res.completed = False
     except (ValueError, ex.fm.ModelRefusal) as e:                 # not DOMAIN (DomainRefusal is caught above as Terminated)
         res.other_refusal = ex.OtherRefusal(ex.refusal_kind(e), str(e), phase, attempt).as_dict()   # a finite kind
         res.completed = False
@@ -299,7 +347,8 @@ def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: 
         res.map_specimens_final, res.map_multi_bit_pairs_final = len(live_carto.specimens), live_carto.multi_bit_pairs
         res.map_origin = "online" if arm in ("O", "X") else res.map_origin
         if arm == "X":
-            res.x_isomorphism_findings = bc.isomorphic(live_carto, shadow, x_perm)
+            res.x_isomorphism_findings = bc.isomorphic_addresses(live_carto, shadow, x_perm)
+            res.x_residual = bc.residual_structure(live_carto.view(), shadow.view())     # post hoc only
     elif frozen is not None:
         res.map_version_final, res.map_commitment_final = frozen.version, frozen.commitment
     return res
