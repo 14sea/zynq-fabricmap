@@ -94,3 +94,34 @@ Not changed: `b4_stats`, `b4_engine`, `b4_carto`, `b4_replay`, `b4_execution`, `
 the loaders, every threshold, the grid, τ, the anchor rule, the hypothesis. The seeds schema is 1.1.0 (the `fixture`
 flag), the manifest schema 1.1.0 (`fixture`, `external_inputs`, `code_root`, `exclusion.registry_snapshot`), the K9 record
 1.1.0 (`invalid`); no 1.0.0 record exists under the real `evidence/b4/sim/` (the directory does not exist).
+
+## 3. Verification on the clean committed tree (the owner's follow-up scope)
+
+Everything here ran on `b4-prework` at **HEAD `e03dca1`** (the repair commit) with `git status --porcelain` empty apart from
+this directory's own new files (each header records it). The files are raw tool output with a three-line header (HEAD, the
+exact command, the UTC time); nothing in them was edited. No production set was derived by any of these runs: every batch
+inside them runs on a `b4-mech-<n>` fixture schedule under the derivation guard.
+
+| file | command (from `/home/test/zynq_fabricmap`) | result |
+|---|---|---|
+| `tests.txt` | `python3 -m unittest -v` over the 20 `b4.tests.test_b4_*` modules (the list is in the header) | **Ran 234 tests … OK**, exit 0 |
+| `mutants.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/b4_2b4a_mutants.py evidence/b4/unit_2b4a_repair_2026_10_18/mutants.txt` | **50 / 50 killed** in 497 s; every line `KILLED … [Ran N > 0, FAILED]` with the failing tests named; no `SURVIVED`, `BASELINE-NOT-GREEN` or `EDIT-MISS` line |
+| `import_check.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/import_check.py` | 49 entries; file digests, base digests and copied-function digests all equal; no tracked file under `b4/` without an entry |
+
+**The battery** (`b4_2b4a_mutants.py`, archived here as run): the 32 mutants of the previous unit — M1 (the registry) now
+held by the seeds tests alone, M16 (K10 absorbing a refusal) re-targeted to the `CornerRefused` conversion, M20 (the result
+written only after the audit) and M22 (the drift test's new name) re-targeted to the moved code — and 18 new ones, one per
+repaired contract: M33–M36 F1 (a non-exposed fixture value accepted; a production label on a schedule; a master derived
+for a fixture batch, which the tests' guard turns into a failure; a fixture document under a production label), M37 F7,
+M38–M40 F6, M41–M42 F4, M43 F8, M44–M45 F9, M46–M47 F2, M48–M50 F3. On the pre-commit dry run two survived — M36 (the
+test's mutation was caught by the anchor-label rule, not the label rule) and M37 (the symlink was caught by the re-check at
+creation, not by the pre-flight) — and were killed by sharpening the tests to the exact contract (both tests now fail for
+the named reason), before the commit. The two defects are recorded because a kill for another reason is not a kill.
+
+**Independence.** These are the author's runs. The owner's independent results at `cdf2c53` (207 tests, 21 mutants) are in
+`owner_review_cdf2c53/`; nothing here re-labels them.
+
+**Status.** `b4-prework` holds A `8939fb9`, B `feda985`, C `edfc93c`, the evidence `cdf2c53`, this repair `e03dca1` and its
+verification commit, local only — not pushed, not merged; `main` is `d5bf815`. Delivered for the owner's batch review.
+Pending the owner: the treatment of the prior exposure (section 1). Still not authorised: the S = 32 `b4-sim-1`
+exploration, the formal gate tool and run, units 2c / 2d, the full proof, push / merge, procurement and board work.
