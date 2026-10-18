@@ -120,9 +120,9 @@
   },
   "b4/probes/latch_ginv/probe_latch_ginv.py": {
    "kind": "new",
-   "note": "builds the pair main_latch / main_latch_ginv on the mine site with stamps, imports the analysis helpers of scripts/ read-only (named by digest in the report), buckets the full diff, verifies every cell, evaluates the expectation fixed before the build, exports the evidence; any miss archived as it came and exit 2",
+   "note": "builds the pair main_latch / main_latch_ginv on the mine site with stamps, imports the analysis helpers of scripts/ read-only (named by digest in the report), buckets the full diff, verifies every cell, evaluates the expectation fixed before the build, exports the evidence; any miss archived as it came and exit 2; attempt 2: the cell rule accepts ROUTED and INTRASITE (the owner's follow-up ruling), its own raw and evidence directories, attempt 1 kept",
    "role": "probe",
-   "sha256": "63e6ed911e56a6428462816294606df56d50b87452288f293dc4d6adfebf49e5"
+   "sha256": "62037078a6244f0960fe5fcf713ab6c405b87c85a067a75a684f8371beebe809"
   },
   "b4/probes/latch_ginv/specimen_ff_latch_ginv.v": {
    "base": "vivado/specimen/specimen_ff_probe.v",
@@ -185,7 +185,7 @@
    "kind": "new",
    "note": "the probe's pure parts without Vivado: per-cell verification, structure comparison, the expectation, the build cache, the recipe's fixed facts and the untouched originals",
    "role": "test",
-   "sha256": "d2c6c508e7421abc0d4fc52659c9563419bce5867788a7e16abcb261ca15c1cc"
+   "sha256": "306c1336babc5807d8a250e32970a47782c8b7486da3de365d8173084adf5492"
   },
   "b4/tests/test_b4_replay.py": {
    "kind": "new",
