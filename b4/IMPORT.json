@@ -157,19 +157,19 @@
    "kind": "new",
    "note": "unit 2b-4a C: the host-only exploration harness \u2014 a pre-flight that writes nothing on refusal (label b4-sim-<n>, a clean tree with no override, the formal source, the root's inputs at their pinned digests, every exclusion source, an output directory directly under evidence/b4/sim/ created exclusively); seeds.json then manifest.json then the first observation; per pair R > F > O > X > D > Omega > A0 on one worker, each RunResult written exclusively before its audit, the typed completion checks, replay, ledger recompute, given-view checks, D from F's rebuilt map, K7 prefixes, K9, K10, curves, the pair index, the HEAD / input checkpoint; fail-closed stops (invalid / incomplete) with STOPPED.json, a typed sim_report.json always and a pooled summary only when complete; values beside the section-9 thresholds, no verdict field; exit codes 0 / 1 / 2 / 3. Running it is a separate authorisation.",
    "role": "host",
-   "sha256": "d81bf5d892e48f09c16fb6e1da327911243ea7e2d0fd3fa38b073c06f222ef85"
+   "sha256": "791370b07b6a3763ea76e13f9787e3deae82bb046508e46397fa309833af87f8"
   },
   "b4/host/b4_sim_schema.py": {
    "kind": "new",
    "note": "unit 2b-4a C: typed validators (named findings, total over keys, type-exact scalars) for every file the harness writes \u2014 seeds, manifest, arm result (the engine's shape check), arm audit, controls, k7, k9, k10, curves, pair index, STOPPED, INIT_FAILED, the report (a summary only when complete; no verdict-like key) \u2014 applied before each write and offline over a run directory.",
    "role": "host",
-   "sha256": "30fe3114f0616058b3813032e520fa8c38c3b139e129d35170f0198837b21b43"
+   "sha256": "b5e09075dca7550141e987dff1777f145b329cbe6b657ab56b676885b5363ffb"
   },
   "b4/host/b4_sim_verify.py": {
    "kind": "new",
-   "note": "unit 2b-4a repair (the owner's HOLD on cdf2c53, F2 / F3 / F4): the archive-wide verifier of a run directory \u2014 the required file set of the recorded status and of every pair's state, no unlisted or duplicate file, every listed digest / size, seeds / manifest / report linkage, STOPPED exactly when not complete, every file against its typed validator with the pair's task bound, and (deep) every conclusion recomputed from the raw readouts on the formal model (arm re-audits, controls, K7 prefixes, K9 / K10, curves, the pooled summary); run by the batch on itself before the report is written; offline CLI; writes nothing; the authenticity limit of b4_replay stated.",
+   "note": "unit 2b-4a repair (the owner's HOLD on cdf2c53, F2 / F3 / F4): the archive-wide verifier of a run directory \u2014 the required file set of the recorded status and of every pair's state, no unlisted or duplicate file, every listed digest / size, seeds / manifest / report linkage, STOPPED exactly when not complete, every file against its typed validator with the pair's task bound, and (deep) every conclusion recomputed from the raw readouts on the formal model (arm re-audits, controls, K7 prefixes, K9 / K10, curves, the pooled summary); run by the batch on itself before the report is written; offline CLI; writes nothing; the authenticity limit of b4_replay stated. Second round (the owner's HOLD on f2c4bca, R1\u2013R5): every record bound to the planned pair / role / seeds and the formal source, a complete pair's every arm re-audited whatever its recorded state, exact scalar types.",
    "role": "host",
-   "sha256": "d65cbaeabfb28df0de393e0496c2ddde9d02c8dc8a1787cc581740d065467836"
+   "sha256": "c6edcdc2037bb22f6c5841cebf18dfbe20688a65ebc747b48d3db2141174bcca"
   },
   "b4/host/b4_snapshot.py": {
    "kind": "new",
@@ -321,7 +321,7 @@
   "b4/tests/test_b4_sim.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "73bc15bde79de769572bdcd461d42f210b9e3d0a8c85ffef13a0a260e8abd6e0"
+   "sha256": "383bd8082e5e6b3d5119bf67e7fa80e08bf7fe6de2988c1ffd0d0b3e9e24d0a9"
   },
   "b4/tests/test_b4_snapshot.py": {
    "kind": "new",
@@ -415,5 +415,5 @@
  "schema_version": "1.0.0",
  "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) \u2014 b4_rng.py, b4_engine.py, b4_carto.py and b4_seeds.py and b4_gate_stats.py derived so far; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
  "source": "docs/b4_architecture.md; the owner's authorisations of 2026-10-17 (2b-1) and 2026-10-18 (2b-2, the revised scope with five rulings); the owner's rulings of 2026-10-18 (D1', X-A) and on the v0.3 scope draft",
- "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4); the v0.3 model revision (the latch's clock-mode bit 0 on the D1' pair, the owner's ruling of 2026-10-18 on the scope draft; the v0.2 file kept); unit 2b-4a (the host-only exploration harness, the owner's ruling of 2026-10-18 on the scope draft; commits A: seeds / controls / snapshot; B: deadline / statistics copies / observation memo / K9 / K10; C: the harness, its validators, the thresholds table; the repair unit after the owner's HOLD on cdf2c53 of 2026-10-18 \u2014 F1 fixture schedules in place of production derivations in the tests, F2 the archive-wide verifier, F3 total validators and the fixed comparison sets, F4 verification and the report as conditions of success, F5 no corner after a refused one, F6 quarantine and partial records kept, F7 no symlink in the namespace, F8 the deadline before finalisation, F9 every input bound at the checkpoints)"
+ "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4); the v0.3 model revision (the latch's clock-mode bit 0 on the D1' pair, the owner's ruling of 2026-10-18 on the scope draft; the v0.2 file kept); unit 2b-4a (the host-only exploration harness, the owner's ruling of 2026-10-18 on the scope draft; commits A: seeds / controls / snapshot; B: deadline / statistics copies / observation memo / K9 / K10; C: the harness, its validators, the thresholds table; the repair unit after the owner's HOLD on cdf2c53 of 2026-10-18 \u2014 F1 fixture schedules in place of production derivations in the tests, F2 the archive-wide verifier, F3 total validators and the fixed comparison sets, F4 verification and the report as conditions of success, F5 no corner after a refused one, F6 quarantine and partial records kept, F7 no symlink in the namespace, F8 the deadline before finalisation, F9 every input bound at the checkpoints; the second repair round after the owner's HOLD on f2c4bca of 2026-10-18 \u2014 R1 completeness invariants (a complete pair has every arm audited, the deep re-audit cannot be switched off by a weaker recorded state), R2 every record bound to the planned pair / role / seeds and every descriptor to the formal source, R3 exact scalar types, R4 the deadline and R5 the inputs re-checked after the final verification and before publication)"
 }

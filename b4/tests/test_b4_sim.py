@@ -516,6 +516,27 @@ class InvalidStops(Base):
         self.assertEqual((res["status"], res["stopped"]["kind"], res["stopped"]["stage"]), ("invalid", "input_drift", "pair 0 end"))
         self.assertIn("registry changed", res["stopped"]["detail"])
 
+    def test_an_input_drift_during_the_final_verification_is_invalid(self):
+        """R5: the architecture document changes while the deep verification runs (after it returns clean) — the final
+        checkpoint after the verification catches it: invalid, input_drift, stage publication, no success published."""
+        arch = self.root / "docs/b4_architecture.md"
+        original = arch.read_bytes()
+        real = sv.verify_run_dir
+
+        def drift_late(*a, **kw):
+            f = real(*a, **kw)
+            if kw.get("deep"):
+                arch.write_bytes(original + b"\n<!-- drift during the final verification -->\n")
+            return f
+        try:
+            with mock.patch.object(sv, "verify_run_dir", side_effect=drift_late):
+                res = self.run_with(None)
+        finally:
+            arch.write_bytes(original)
+        self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"], res["stopped"]["stage"]), ("invalid", 1, "input_drift", "publication"))
+        self.assertIn("docs/b4_architecture.md", res["stopped"]["detail"])
+        self.assertIsNone(self.report(res)["summary"])
+
     def test_self_validation_findings_and_an_unwritable_report_are_never_complete(self):
         """F4: a finding of the batch's own archive-wide verification turns a would-be complete batch invalid (exit 1, no
         summary, STOPPED written); a report that cannot be validated leaves no sim_report.json, an ERROR file, status invalid, exit 1."""
@@ -591,6 +612,24 @@ class IncompleteStops(Base):
         self.assertEqual((k9d["complete"], k9d["invalid"], len(k9d["observations"])), (False, None, 4), "F6: the partial before the interrupt is on disk, as a stop")
         self.assertIsNotNone(k9d["stopped"]); self.assertEqual(self.report(res)["pairs"][0]["k9"], "partial")
 
+    def test_the_deadline_expiring_during_the_final_verification_is_incomplete(self):
+        """R4: the clock crosses the deadline while the batch's own deep verification runs (after it returns clean) — the
+        success is not published: incomplete, exit 3, no summary, the deadline record taken after the check says expired."""
+        clock = Clock(step=0.0)
+        real = sv.verify_run_dir
+
+        def late(*a, **kw):
+            f = real(*a, **kw)
+            if kw.get("deep"):
+                clock.t += 10000
+            return f
+        with mock.patch.object(sv, "verify_run_dir", side_effect=late):
+            res = self.run_with(None, dl=60, clock=clock)
+        self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"], res["stopped"]["stage"]), ("incomplete", 3, "deadline", "publication"))
+        rep = self.report(res)
+        self.assertIsNone(rep["summary"]); self.assertTrue(rep["deadline"]["expired"]); self.assertGreaterEqual(rep["deadline"]["elapsed_s"], 10000)
+        self.assertTrue(all(p["status"] == "complete" for p in rep["pairs"]), "every pair's work is kept")
+
     def test_the_deadline_expiring_before_finalisation_is_incomplete(self):
         """F8: the clock crosses the deadline at the final input checkpoint — after the statistics, before finalisation: the
         batch is incomplete (exit 3), no summary, the deadline record says expired; never complete / exit 0."""
@@ -611,8 +650,26 @@ class IncompleteStops(Base):
         self.assertEqual(sc.report_findings(rep), [])
 
 
+def entry(p: Path, rel: str) -> dict:
+    b = p.read_bytes()
+    return {"path": rel, "sha256": sim.sha_bytes(b), "size": len(b)}
+
+
+def reindex(out: Path) -> None:
+    """Refresh every digest a tampered archive carries (the pair index, the report's file index and identity) so that the
+    verifier's finding, if any, comes from the contract and not from a stale hash (the owner's probe method)."""
+    idx = json.loads((out / "pair_000/index.json").read_text())
+    idx["files"] = [entry(p, p.name) for p in sorted((out / "pair_000").iterdir()) if p.is_file() and p.name != "index.json"]
+    (out / "pair_000/index.json").write_text(json.dumps(idx, sort_keys=True, indent=1) + "\n")
+    rep = json.loads((out / "sim_report.json").read_text())
+    rep["files"] = [entry(p, str(p.relative_to(out))) for p in sorted(out.rglob("*")) if p.is_file() and p.name != "sim_report.json"]
+    rep["identity"]["seeds_sha256"] = sim.sha_file(out / "seeds.json"); rep["identity"]["manifest_sha256"] = sim.sha_file(out / "manifest.json")
+    (out / "sim_report.json").write_text(json.dumps(rep, sort_keys=True, indent=1) + "\n")
+
+
 class TheArchiveVerifier(Base):
-    """F2 / F3: the archive-wide verifier on a complete S = 1 fixture archive, tampered one way at a time (every file restored after)."""
+    """F2 / F3 and the owner's second review R1–R3: the archive-wide verifier on a complete S = 1 fixture archive, tampered one
+    way at a time with every digest refreshed (every file restored after), so that each finding is the contract's."""
 
     @classmethod
     def setUpClass(cls):
@@ -690,6 +747,111 @@ class TheArchiveVerifier(Base):
         self.assertTrue(sc.k10_findings({"schema": 1}, self.task))
         self.assertTrue(all(not x.startswith("k9_findings: the validator raised") for x in sc.k9_findings({k: None for k in sc.K9_KEYS | {"schema", "schema_version", "pair"}}, self.task)))
 
+    def test_a_downgraded_arm_state_cannot_switch_the_audit_off(self):
+        """R1: R's state set to `written` in the report and the pair index, its audit deleted, one bit of its final RNG state
+        flipped, every digest refreshed — the planned-state validator, the pair-index validator and the deep verifier all name it."""
+        out = self.out_dir
+        rep = self.load("sim_report.json"); rep["pairs"][0]["arms"]["R"] = "written"; self.put("sim_report.json", rep)
+        idx = self.load("pair_000/index.json"); idx["arms"]["R"] = "written"; self.put("pair_000/index.json", idx)
+        (out / "pair_000/arm_R.audit.json").unlink()
+        doc = self.load("pair_000/arm_R.result.json"); doc["result"]["rng_state_final"] ^= 1; self.put("pair_000/arm_R.result.json", doc)
+        reindex(out)
+        rep2 = json.loads((out / "sim_report.json").read_text())
+        self.assertTrue(any("weaker state" in x for x in sc.report_findings(rep2)), "the planned record alone is refused")
+        self.assertTrue(any("every arm audited" in x for x in sc.pair_index_findings(json.loads((out / "pair_000/index.json").read_text()))))
+        f = self.findings()
+        self.assertTrue(f, "the archive does not verify")
+        self.assertTrue(any("not audited" in x or "weaker" in x for xs in f.values() for x in xs), f)
+        # the same with the report left saying `audited` but the audit deleted and the RNG flipped: the deep re-audit names the RNG
+        (out / "pair_000/arm_R.audit.json").unlink()
+        doc = self.load("pair_000/arm_R.result.json"); doc["result"]["rng_state_final"] ^= 1; self.put("pair_000/arm_R.result.json", doc)
+        reindex(out)
+        f = self.findings()
+        self.assertTrue(any("re-audit" in x or "missing" in x for xs in f.values() for x in xs), f)
+
+    def test_the_deep_verifier_re_audits_even_if_the_record_validators_were_bypassed(self):
+        """R1, defence in depth: with the planned-record and pair-index validators mocked to accept everything, a complete pair
+        whose R is recorded `written` with no audit file and a flipped RNG state is still refused by the deep stage itself."""
+        out = self.out_dir
+        rep = self.load("sim_report.json"); rep["pairs"][0]["arms"]["R"] = "written"; self.put("sim_report.json", rep)
+        idx = self.load("pair_000/index.json"); idx["arms"]["R"] = "written"; self.put("pair_000/index.json", idx)
+        (out / "pair_000/arm_R.audit.json").unlink()
+        doc = self.load("pair_000/arm_R.result.json"); doc["result"]["rng_state_final"] ^= 1; self.put("pair_000/arm_R.result.json", doc)
+        reindex(out)
+        real_report, real_index = sc.report_findings, sc.pair_index_findings
+        try:
+            with mock.patch.object(sc, "report_findings", lambda d: []), mock.patch.dict(sc.VALIDATORS, {"index.json": lambda d: []}):
+                f = sv.verify_run_dir(out, deep=True)
+        finally:
+            self.restore()
+        self.assertTrue(any("not audited" in x for x in f.get("pair_000/arm_R.result.json", [])), f)
+        self.assertIs(sc.report_findings, real_report); self.assertIs(sc.VALIDATORS["index.json"], real_index)
+
+    def test_every_record_is_bound_to_the_planned_pair_and_the_formal_source(self):
+        """R2: a self-consistent R from ANOTHER exposed operator seed (12) under a plan that says 11 — replay accepts it, the
+        verifier must not; a wrapper naming another pair / role; a manifest whose fabric / mapping / constants are not the formal ones."""
+        import b4_engine as be
+        import b4_snapshot as sn
+        out = self.out_dir
+        task = self.task
+        fabric = sim.fm.Fabric(bm.site_mapping(), hy.load())
+        port = ex.ObservationPort(fabric)
+        d = be.run("R", task, port, 12, sim.B_MAX).as_dict()
+        doc = self.load("pair_000/arm_R.result.json"); doc.update(operator_seed=12, result=d, port_calls=port.calls); self.put("pair_000/arm_R.result.json", doc)
+        rc = sn.recompute_findings(d, task)
+        aud = self.load("pair_000/arm_R.audit.json")
+        aud.update(completion_findings=sim.completion_findings(d, "R", task, port.calls, None), replay_findings=br.replay(d, task),
+                   recompute={k: v for k, v in rc.items() if k != "relations_final"} | {"relations_final_sha256": ex.sha256_json(rc["relations_final"])},
+                   states=sn.arm_states(d, task), view_findings=[], invalid=False)
+        self.put("pair_000/arm_R.audit.json", aud)
+        self.assertEqual(br.replay(d, task), [], "the foreign result replays clean under its own seed: replay alone cannot see the plan")
+        results = {role: self.load(f"pair_000/arm_{role}.result.json")["result"] for role in ROLES}; results["R"] = d
+        curves = sim.curves_of(results, 0, 7, 11); self.put("pair_000/curves.json", curves)
+        reindex(out)
+        f = self.findings()
+        self.assertTrue(any("planned" in x and "11" in x for xs in f.values() for x in xs), f)
+        # a wrapper naming another pair and role
+        doc = self.load("pair_000/arm_R.result.json"); doc.update(pair=99, role="O"); self.put("pair_000/arm_R.result.json", doc); reindex(out)
+        f = self.findings()
+        self.assertTrue(any("planned" in x for xs in f.values() for x in xs), f)
+        doc = self.load("pair_000/curves.json"); doc["operator_seed"] = 12; self.put("pair_000/curves.json", doc); reindex(out)
+        f = self.findings(); self.assertTrue(any("planned pair" in x for xs in f.values() for x in xs), f)
+        # the manifest's descriptors are the formal inputs', not merely well-formed
+        for mutate, why in ((lambda m: m.update(fabric={"kind": "dropout"}), "fabric"), (lambda m: m["mapping"].update(addresses=[None] * 21), "mapping"),
+                            (lambda m: m["hypothesis"].update(version="0.2.1"), "hypothesis"), (lambda m: m["constants"]["engine"].update(mu=5), "constants")):
+            man = self.load("manifest.json"); mutate(man); self.put("manifest.json", man); reindex(out)
+            direct = sc.manifest_findings(man)
+            f = self.findings()
+            self.assertTrue(f, why)
+            if why != "constants":
+                self.assertTrue(any(why in x for x in direct), (why, direct))
+            else:
+                self.assertTrue(any("constants" in x for xs in f.values() for x in xs), f)
+        self.assertEqual(self.findings(), {}, "restored")
+
+    def test_nested_scalars_are_exact_in_type(self):
+        """R3: an observation id of false, a float interaction index, a float count — equal in Python, refused by the validators
+        and by the verifier after re-indexing (the finding is the type, not a hash)."""
+        out = self.out_dir
+        d = self.load("pair_000/k9.json"); d["observations"][0]["id"] = False
+        self.assertTrue(any("int 0" in x for x in sc.k9_findings(d, self.task)), sc.k9_findings(d, self.task)[:3])
+        self.put("pair_000/k9.json", d); reindex(out); self.assertIn("pair_000/k9.json", self.findings())
+        d = self.load("pair_000/k10.json"); d["units"][0]["index"] = float(d["units"][0]["index"])
+        self.assertTrue(any("index" in x for x in sc.k10_findings(d, self.task)))
+        self.put("pair_000/k10.json", d); reindex(out); self.assertIn("pair_000/k10.json", self.findings())
+        d = self.load("pair_000/k10.json"); d["logical_corners"] = float(d["logical_corners"])
+        self.assertTrue(any("logical_corners" in x for x in sc.k10_findings(d, self.task)))
+        d = self.load("pair_000/k10.json"); d["tau"] = 2.0
+        self.assertTrue(any("tau" in x for x in sc.k10_findings(d, self.task)))
+        d = self.load("pair_000/k9.json"); d["pairs"][0]["obs0"] = False
+        self.assertTrue(sc.k9_findings(d, self.task))
+        d = self.load("pair_000/k9.json"); d["logical_observations"] = float(d["logical_observations"])
+        self.assertTrue(any("logical_observations" in x for x in sc.k9_findings(d, self.task)))
+        d = self.load("sim_report.json"); d["summary"]["per_budget"]["8"]["deltas"]["delta1_O_minus_R"]["positives"] = float(d["summary"]["per_budget"]["8"]["deltas"]["delta1_O_minus_R"]["positives"])
+        self.put("sim_report.json", d); reindex(out)
+        f = self.findings(); self.assertTrue(any("pooled summary" in x for x in f.get("sim_report.json", [])), "a float where the recomputed summary has an int")
+        self.assertEqual(self.findings(), {}, "restored")
+
     def test_the_cli_of_the_verifier(self):
         import io
         from contextlib import redirect_stdout
@@ -745,7 +907,11 @@ class TheSummaryAndTheValidators(unittest.TestCase):
         self.assertTrue(any("expired" in f for f in sc.report_findings(rep)), "F8: a complete report's deadline has not expired")
         rep["deadline"] = {"expired": False}; rep["self_validation"] = {"x": ["y"]}
         self.assertTrue(any("self-validation" in f for f in sc.report_findings(rep)), "F4: a complete report has no self-validation finding")
-        rep["self_validation"] = {}; rep["status"] = "invalid"
+        rep["self_validation"] = {}; rep["pairs"][0]["arms"]["R"] = "written"
+        self.assertTrue(any("weaker state" in f for f in sc.report_findings(rep)), "R1: a complete pair with an arm not audited is refused by the planned-record validator")
+        rep["pairs"][0]["arms"]["R"] = "audited"; rep["pairs"][0]["k9"] = "partial"
+        self.assertTrue(any("weaker state" in f for f in sc.report_findings(rep)))
+        rep["pairs"][0]["k9"] = "complete"; rep["status"] = "invalid"
         self.assertTrue(sc.report_findings(rep), "a batch that did not complete carries no summary and needs its STOPPED record")
 
     def test_write_exclusive_never_overwrites_and_refuses_non_finite(self):

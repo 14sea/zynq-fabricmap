@@ -406,9 +406,7 @@ class Batch:
                     "repo_root_kind": "the repository root the batch read its inputs from (git HEAD above); the model code is the b4/host tree of the tool files (code_root)",
                     "code_root": {"head": cr["head"], "clean": cr["clean"], "same_as_input_root": REPO_ROOT.resolve() == c["root"]},
                     "deadline_s": c["deadline_s"], "arm_order": list(ROLES), "engine_arm": dict(ENGINE_ARM), "budget": B_MAX, "grid": list(GRID),
-                    "constants": {"engine": {"version": be.ENGINE_VERSION, "mu": be.MU, "lambda": be.LAMBDA, "kmax": be.KMAX}, "cartographer": bc.CARTO_VERSION,
-                                  "task": bl.TASK_VERSION, "probes_per_F": PROBES, "expected_cost": EXPECTED_COST, "k9_panel": k9.PANEL_VERSION, "k10_salt": k10.SALT, "tau": k10.TAU,
-                                  "prng": "b4_rng.Rng (xorshift64, a derived copy of b1_carto.Rng); the bootstrap random.Random", "anchor": th.THRESHOLDS["anchor"], "controls": th.THRESHOLDS["controls"]},
+                    "constants": manifest_constants(),
                     "thresholds": th.THRESHOLDS, "inputs": c["inputs"], "external_inputs": c["external"], "tool_files": c["tools"],
                     "hypothesis": {"path": h.path, "sha256": h.sha256, "version": h.version, "fixture": h.fixture, "sources": h.doc["sources"]},
                     "mapping": {"site": m.site, "certificate": m.certificate_rel, "certificate_sha256": m.certificate_sha256, "addresses": list(m.addresses)},
@@ -496,7 +494,7 @@ class Batch:
                 raise Invalid("schema", f"the engine's return cannot be read as a RunResult ({type(exc).__name__}); quarantined", role=role, stage="engine_return")
             doc = {"schema": "b4_sim_arm_result", "schema_version": "1.0.0", "pair": r, "role": role, "engine_arm": ENGINE_ARM[role], "landscape_seed": l,
                    "operator_seed": o, "budget": B_MAX, "port_calls": port.calls, "wall_s": round(wall, 6), "written_utc": utc(), "result": d}
-            f = sc.arm_result_findings(doc, task)
+            f = sc.arm_result_findings(doc, task, {"pair": r, "role": role, "landscape_seed": l, "operator_seed": o, "x_control_seed": x_seed})
             if f:
                 plan["arms"][role] = "result_malformed"
                 self.quarantine(f"pair_{r:03d}/arm_{role}.result.QUARANTINE.json", r, role, "engine_return", f, doc)
@@ -665,6 +663,20 @@ class Batch:
             first = next(iter(self_validation.items()))
             return self.finish("invalid", {"kind": "self_validation", "detail": f"the archive does not verify: {first[0]}: {first[1][0]} ({sum(len(v) for v in self_validation.values())} findings)",
                                            "role": None, "stage": "finalisation", "traceback": json.dumps(self_validation)[:20000]}, 1)
+        if status == "complete":
+            # the deep verification was a long unit: the deadline (R4) and every input, the registry and the tree (R5) are
+            # checked again before the success is published, and the deadline record is taken AFTER these checks
+            try:
+                self.dl.check()
+                self.hold_inputs("publication")
+                self.hold_tree()
+                self.dl.check()
+            except StopWork as exc:
+                return self.finish("incomplete", {"kind": "deadline", "detail": f"the deadline expired during the final verification: {exc}", "role": None, "stage": "publication"}, 3)
+            except Invalid as exc:
+                return self.finish("invalid", {"kind": exc.kind, "detail": exc.detail, "role": None, "stage": "publication"}, 1)
+            report["deadline"] = self.dl.record()
+            report["generated_utc"] = utc()
         report["self_validation"] = self_validation
         out = {"status": status, "exit_code": exit_code, "out": str(self.out), "stopped": stopped_doc, "report": report}
         try:
@@ -677,6 +689,13 @@ class Batch:
                 pass
             out.update(status="invalid", exit_code=1, report_error=msg, original_status=status)
         return out
+
+
+def manifest_constants() -> dict:
+    """The constants a manifest records; the verifier binds a manifest to exactly these (R2)."""
+    return {"engine": {"version": be.ENGINE_VERSION, "mu": be.MU, "lambda": be.LAMBDA, "kmax": be.KMAX}, "cartographer": bc.CARTO_VERSION,
+            "task": bl.TASK_VERSION, "probes_per_F": PROBES, "expected_cost": EXPECTED_COST, "k9_panel": k9.PANEL_VERSION, "k10_salt": k10.SALT, "tau": k10.TAU,
+            "prng": "b4_rng.Rng (xorshift64, a derived copy of b1_carto.Rng); the bootstrap random.Random", "anchor": th.THRESHOLDS["anchor"], "controls": th.THRESHOLDS["controls"]}
 
 
 def _head_or_none(root: Path):
@@ -697,7 +716,7 @@ def completion_findings(d: dict, role: str, task: ex.PublicTask, port_calls: int
     if d.get("evals") != B_MAX or len(d.get("best_trace") or []) != B_MAX:
         f.append(f"evals / len(best_trace) are not exactly {B_MAX}")
     if d.get("cost") != EXPECTED_COST[role]:
-        f.append(f"cost {d.get('cost')} is not the arm's {EXPECTED_COST[role]}")
+        f.append(f"cost {json.dumps(d.get('cost'), sort_keys=True)} is not the arm's {json.dumps(EXPECTED_COST[role], sort_keys=True)}")   # deterministic text: the audit is compared offline
     total = sum(EXPECTED_COST[role].values())
     if not (d.get("observations") == total == port_calls == len(d.get("ledger") or [])):
         f.append(f"observations {d.get('observations')} / port calls {port_calls} / ledger {len(d.get('ledger') or [])} are not all {total}")

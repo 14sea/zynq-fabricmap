@@ -50,6 +50,7 @@ import b4_k9 as k9  # noqa: E402
 import b4_replay as br  # noqa: E402
 import b4_seeds as bs  # noqa: E402
 import b4_stats as st  # noqa: E402
+import b4_thresholds as th  # noqa: E402
 
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
@@ -129,8 +130,8 @@ def _observations(obs, f: list[str], where: str, stimulus_sha: str | None, memo:
     for i, o in enumerate(obs):
         if not (isinstance(o, dict) and {"id", "genome", "genome_hex", "config_sha256", "stimulus_sha256", "provenance_sha256", "trace_sha256", "q_grid", "fixture", "fabric_kind"} <= set(o)):
             f.append(f"{where}[{i}]: not an observation record"); return out
-        if o["id"] != i:
-            f.append(f"{where}[{i}]: id {o['id']!r} is not {i} (ids are 0 .. n-1 in order)"); return out
+        if not _int(o["id"]) or o["id"] != i:
+            f.append(f"{where}[{i}]: id {o['id']!r} is not the int {i} (ids are 0 .. n-1 in order)"); return out
         if not _genome(o["genome"]):
             f.append(f"{where}[{i}]: the genome is not a {GENOME_BITS}-bit int"); return out
         for k in ("config_sha256", "stimulus_sha256", "provenance_sha256", "trace_sha256"):
@@ -164,8 +165,8 @@ def _memo(m, f: list[str], n_obs: int) -> None:
     prov = m["provenance"]
     if not (isinstance(prov, dict) and ex.provenance_findings(prov) == [] and ex.sha256_json(prov) == m["provenance_sha256"]):
         f.append("memo.provenance: malformed or not hashing to provenance_sha256"); return
-    if prov["hypothesis"].get("sha256") != hy.HYPOTHESIS_SHA256 or prov["hypothesis"].get("fixture") is not False or prov["fabric"].get("kind") != "truth":
-        f.append("memo.provenance: not the formal hypothesis on the truth fabric")
+    if canonical(prov) != canonical(formal_provenance()):
+        f.append("memo.provenance: not the formal source's identity (hypothesis, mapping, truth fabric)")
 
 
 def _task_binding(doc, task, f: list[str]) -> None:
@@ -177,6 +178,23 @@ def _task_binding(doc, task, f: list[str]) -> None:
         f.append("task_digest is not the task's")
     if doc["stimulus_sha256"] != ex.sha256_json(list(task.stimulus)):
         f.append("stimulus_sha256 is not the task's")
+
+
+@functools.lru_cache(maxsize=1)
+def formal_provenance() -> dict:
+    """The source identity EVERY formal observation carries (b4_execution.provenance_findings' shape), built from the formal
+    inputs: the hypothesis (path, sha256, version, fixture False), the mapping (site, certificate, its digest), the truth
+    fabric's descriptor. Every recorded provenance — a RunResult's, a memo's, the manifest's descriptors — is bound to it."""
+    h, m = hy.load(), bm.site_mapping()
+    fab = fm.Fabric(m, h)
+    return {"hypothesis": {"path": h.path, "sha256": h.sha256, "version": h.version, "fixture": h.fixture},
+            "mapping": {"site": m.site, "certificate": m.certificate_rel, "certificate_sha256": m.certificate_sha256},
+            "fabric": dict(fab.source)}
+
+
+def canonical(x) -> str:
+    """The canonical JSON text of a value: comparisons through it are exact in type (2, 2.0, true are three different texts)."""
+    return json.dumps(x, sort_keys=True, allow_nan=False)
 
 
 def total(fn):
@@ -253,6 +271,17 @@ def manifest_findings(doc) -> list[str]:
     if not (isinstance(m, dict) and set(m) == {"site", "certificate", "certificate_sha256", "addresses"} and isinstance(m["certificate_sha256"], str) and HEX64.match(m["certificate_sha256"])
             and isinstance(m["addresses"], list) and len(m["addresses"]) == 21):
         f.append("mapping")
+    if not f:                                                           # R2: the descriptors are the FORMAL inputs', not merely well-formed
+        formal = formal_provenance()
+        fh, fm_ = hy.load(), bm.site_mapping()
+        if canonical({k: h[k] for k in ("path", "sha256", "version", "fixture")}) != canonical(formal["hypothesis"]) or canonical(h["sources"]) != canonical(fh.doc["sources"]):
+            f.append("hypothesis: not the formal hypothesis's descriptor and sources")
+        if canonical(m) != canonical({**formal["mapping"], "addresses": list(fm_.addresses)}):
+            f.append("mapping: not the formal mapping's site / certificate / addresses")
+        if canonical(doc["fabric"]) != canonical(formal["fabric"]):
+            f.append("fabric: not the truth fabric's descriptor")
+        if canonical(doc["thresholds"]) != canonical(th.THRESHOLDS) or doc["grid"] != list(th.GRID) or doc["budget"] != th.B_MAX:
+            f.append("thresholds / grid / budget: not the fixed table's")
     if not (isinstance(doc["seeds_sha256"], str) and HEX64.match(doc["seeds_sha256"])):
         f.append("seeds_sha256")
     for k in ("note", "repo_root_kind", "generated_utc"):
@@ -264,8 +293,13 @@ def manifest_findings(doc) -> list[str]:
 ARM_RESULT_KEYS = {"schema", "schema_version", "pair", "role", "engine_arm", "landscape_seed", "operator_seed", "budget", "port_calls", "wall_s", "written_utc", "result"}
 
 
+ENGINE_ARM = {"R": "R", "F": "F", "O": "O", "X": "X", "D": "F", "Omega": "F", "A0": "F"}
+
+
 @total
-def arm_result_findings(doc, task=None) -> list[str]:
+def arm_result_findings(doc, task=None, expect=None) -> list[str]:
+    """`expect` (R2): {"pair", "role", "landscape_seed", "operator_seed", "x_control_seed"} — the planned identity the file must
+    carry, in the wrapper and in the result; with a task, the result's digest and provenance are bound to the formal ones."""
     f: list[str] = []
     if not _keys(doc, ARM_RESULT_KEYS, f, "arm result"):
         return f
@@ -289,8 +323,23 @@ def arm_result_findings(doc, task=None) -> list[str]:
     if isinstance(r, dict):
         if r.get("arm") != doc["engine_arm"]:
             f.append("result.arm is not engine_arm")
-        if r.get("landscape_seed") != doc["landscape_seed"] or r.get("operator_seed") != doc["operator_seed"] or r.get("budget") != doc["budget"]:
+        if canonical([r.get("landscape_seed"), r.get("operator_seed"), r.get("budget")]) != canonical([doc["landscape_seed"], doc["operator_seed"], doc["budget"]]):
             f.append("result's seeds / budget are not the file's")
+        if doc["role"] in ROLES and doc["engine_arm"] != ENGINE_ARM[doc["role"]]:
+            f.append("engine_arm is not the role's")
+        if doc["budget"] != th.B_MAX:
+            f.append("budget is not the fixed B_max")
+        if task is not None:
+            if r.get("task_digest") != task.digest() or r.get("landscape_seed") != task.seed:
+                f.append("result: not the pair's task")
+            if canonical(r.get("provenance")) != canonical(formal_provenance()) or r.get("fixture") is not False or r.get("fabric_fixture") is not False:
+                f.append("result: the provenance is not the formal source's")
+        if expect is not None:
+            if canonical([doc["pair"], doc["role"], doc["landscape_seed"], doc["operator_seed"]]) != canonical([expect["pair"], expect["role"], expect["landscape_seed"], expect["operator_seed"]]):
+                f.append(f"the wrapper's pair / role / seeds are not the planned {expect['pair']} / {expect['role']} / {expect['landscape_seed']} / {expect['operator_seed']}")
+            want_x = expect["x_control_seed"] if expect["role"] == "X" else None
+            if canonical(r.get("x_control_seed")) != canonical(want_x):
+                f.append("result.x_control_seed is not the planned control seed (X) / null (every other role)")
     return f
 
 
@@ -444,7 +493,7 @@ def k9_findings(doc, task=None) -> list[str]:
         if not isinstance(p["applicable"], bool) or (p["applicable"] and not isinstance(p["covered"], bool)) or (not p["applicable"] and p["covered"] is not None):
             f.append(f"pairs[{i}]: applicable / covered typing"); break
         if p["applicable"]:
-            if not (p["obs0"] in obs and p["obs1"] in obs and isinstance(p["hit0"], bool) and isinstance(p["hit1"], bool)):
+            if not (_int(p["obs0"]) and _int(p["obs1"]) and p["obs0"] in obs and p["obs1"] in obs and isinstance(p["hit0"], bool) and isinstance(p["hit1"], bool)):
                 f.append(f"pairs[{i}]: an applicable pair's observations are not kept records"); break
             if (obs[p["obs0"]]["genome"], obs[p["obs1"]]["genome"]) != (p["g0"], p["g1"]):
                 f.append(f"pairs[{i}]: the observations are not of the pair's endpoints"); break
@@ -455,9 +504,9 @@ def k9_findings(doc, task=None) -> list[str]:
     if f:
         return f
     f += k9.canonical_findings(doc, mapping)
-    if doc["logical_observations"] != 2 * sum(1 for p in doc["pairs"] if p["applicable"]):
+    if not _int(doc["logical_observations"]) or doc["logical_observations"] != 2 * sum(1 for p in doc["pairs"] if p["applicable"]):
         f.append("logical_observations is not twice the applicable pairs")
-    if doc["complete"] and doc["summary"] != k9.summarise(doc["pairs"], mapping):
+    if doc["complete"] and canonical(doc["summary"]) != canonical(k9.summarise(doc["pairs"], mapping)):
         f.append("the summary is not what the pairs give")
     if doc["stopped"] is not None and not (isinstance(doc["stopped"], dict) and {"before_pair_index", "reason"} <= set(doc["stopped"]) and doc["stopped"]["before_pair_index"] == doc["pairs_done"]):
         f.append("stopped: not a record of the pair it stopped before")
@@ -488,7 +537,7 @@ def k10_findings(doc, task=None) -> list[str]:
         f.append("backgrounds: not the seed's two fixed backgrounds")
     if doc["backgrounds_equal"] is not (doc["backgrounds"][0] == doc["backgrounds"][1]):
         f.append("backgrounds_equal")
-    if doc["tau"] != k10.TAU:
+    if not _int(doc["tau"]) or doc["tau"] != k10.TAU:
         f.append("tau is not the fixed threshold")
     if not isinstance(doc["complete"], bool) or not isinstance(doc["units"], list):
         f.append("complete / units"); return f
@@ -509,7 +558,7 @@ def k10_findings(doc, task=None) -> list[str]:
         sc_ = {}
         for k, c in u["corners"].items():
             if not (isinstance(c, dict) and set(c) == {"genome", "score", "obs"} and c["genome"] == k10._corner_genome(u["background"], u["a"], u["b"], k)
-                    and (c["score"] is None or _int(c["score"])) and (c["obs"] is None or c["obs"] in obs) and ((c["score"] is None) == (c["obs"] is None))):
+                    and (c["score"] is None or _int(c["score"])) and (c["obs"] is None or (_int(c["obs"]) and c["obs"] in obs)) and ((c["score"] is None) == (c["obs"] is None))):
                 f.append(f"units[{i}].corners[{k}]: typing"); break
             if c["obs"] is not None and obs[c["obs"]]["genome"] != c["genome"]:
                 f.append(f"units[{i}].corners[{k}]: the observation is not of this corner"); break
@@ -517,7 +566,7 @@ def k10_findings(doc, task=None) -> list[str]:
         if len(sc_) != 4:
             break
         if u["comparable"]:
-            if u["illegal_corners"] != [] or any(v is None for v in sc_.values()) or u["index"] != sc_["11"] - sc_["10"] - sc_["01"] + sc_["00"]:
+            if u["illegal_corners"] != [] or any(v is None for v in sc_.values()) or not _int(u["index"]) or u["index"] != sc_["11"] - sc_["10"] - sc_["01"] + sc_["00"]:
                 f.append(f"units[{i}]: a comparable unit has four scores and index = f11 - f10 - f01 + f00"); break
         elif u["index"] is not None or not u["illegal_corners"] or not set(u["illegal_corners"]) <= set(k10.CORNERS) or any(sc_[k] is not None for k in u["illegal_corners"]):
             f.append(f"units[{i}]: a not-comparable unit names its refused corner(s), with no score there and no index"); break
@@ -526,9 +575,11 @@ def k10_findings(doc, task=None) -> list[str]:
     if f:
         return f
     f += k10.canonical_findings(doc)
+    if not _int(doc["logical_corners"]):
+        f.append("logical_corners is not an int")
     if doc["complete"]:
         m, counts = st.seed_max(doc["units"])
-        if (doc["max_abs_index"], doc["comparable_pairs"], doc["not_comparable_pairs"]) != (m, counts["comparable_pairs"], counts["not_comparable_pairs"]):
+        if canonical([doc["max_abs_index"], doc["comparable_pairs"], doc["not_comparable_pairs"]]) != canonical([m, counts["comparable_pairs"], counts["not_comparable_pairs"]]):
             f.append("max_abs_index / counts are not the units'")
         if doc["outcome"] != st.classify(m, doc["tau"]):
             f.append("the outcome is not the classification of the max")
@@ -585,6 +636,8 @@ def pair_index_findings(doc) -> list[str]:
         f.append("status")
     if not (isinstance(doc["arms"], dict) and set(doc["arms"]) == set(ROLES) and all(v in ARM_STATES for v in doc["arms"].values())):
         f.append("arms")
+    elif doc["status"] == "complete" and any(v != "audited" for v in doc["arms"].values()):
+        f.append("a complete pair's index has every arm audited")
     _file_entries(doc["files"], f, "files")
     return f
 
@@ -627,6 +680,8 @@ def _planned(pl, f: list[str]) -> None:
                 and isinstance(p["arms"], dict) and set(p["arms"]) == set(ROLES) and all(v in ARM_STATES for v in p["arms"].values())
                 and all(p[k] in DIAG_STATES for k in ("k7", "k9", "k10"))):
             f.append(f"planned[{i}]"); return
+        if p["status"] == "complete" and not (all(v == "audited" for v in p["arms"].values()) and all(p[k] == "complete" for k in ("k7", "k9", "k10"))):
+            f.append(f"planned[{i}]: a complete pair has every arm audited and K7 / K9 / K10 complete — a weaker state cannot be recorded as complete"); return
 
 
 REPORT_KEYS = {"schema", "schema_version", "status", "label", "fixture", "count", "head", "generated_utc", "deadline", "standing", "thresholds", "identity",

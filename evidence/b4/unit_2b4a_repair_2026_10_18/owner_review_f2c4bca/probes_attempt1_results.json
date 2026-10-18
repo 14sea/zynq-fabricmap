@@ -1,0 +1,44 @@
+{
+ "baseline": {
+  "exit_code": 0,
+  "status": "complete",
+  "verify": {}
+ },
+ "complete_pair_without_R_audit": {
+  "findings": {},
+  "path": "/tmp/b4_owner_repair_probe_rveg2xn5_unaudited_complete"
+ },
+ "deadline_after_deep_verification": {
+  "actual_elapsed": 20000.0,
+  "exit_code": 1,
+  "published": true,
+  "report_deadline": {
+   "checks": 1,
+   "clock": "time.monotonic",
+   "elapsed_s": 10000.0,
+   "expired": true,
+   "first_expired_at_s": 10000.0,
+   "seconds": 60
+  },
+  "status": "invalid",
+  "summary_present": false
+ },
+ "input_drift_after_deep_verification": {
+  "exit_code": 1,
+  "input_digest_changed": true,
+  "published": false,
+  "status": "invalid"
+ },
+ "root": "/tmp/b4_owner_repair_probe_rveg2xn5",
+ "snapshot": "/tmp/b4_owner_f2c4bca_7__gab_9",
+ "wrong_R_operator_seed": {
+  "actual": 12,
+  "findings": {},
+  "path": "/tmp/b4_owner_repair_probe_rveg2xn5_wrong_operator",
+  "planned": 11
+ },
+ "wrong_pair_role": {
+  "findings": {},
+  "path": "/tmp/b4_owner_repair_probe_rveg2xn5_wrong_pair_role"
+ }
+}

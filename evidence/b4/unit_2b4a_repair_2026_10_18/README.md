@@ -95,7 +95,26 @@ the loaders, every threshold, the grid, τ, the anchor rule, the hypothesis. The
 flag), the manifest schema 1.1.0 (`fixture`, `external_inputs`, `code_root`, `exclusion.registry_snapshot`), the K9 record
 1.1.0 (`invalid`); no 1.0.0 record exists under the real `evidence/b4/sim/` (the directory does not exist).
 
-## 3. Verification on the clean committed tree (the owner's follow-up scope)
+## 2b. The second round — the owner's HOLD on `f2c4bca` (R1–R5)
+
+The owner's second review (`owner_review_f2c4bca/README.md`, with the probe scripts and raw results, copied here unchanged
+from `build/wip/`) independently confirmed 234 tests OK, 50 / 50 mutants killed, 49 IMPORT entries equal, the F1 isolation
+and the 85 preserved exposure records (zero differences), and reproduced five residual gaps with new probes. Each is
+fixed below with a negative test written after the owner's probe (the archive tampered one way at a time, every digest
+re-indexed so that the finding is the contract's, not a stale hash).
+
+| gap | what the owner reproduced | what changed | where it is tested |
+|---|---|---|---|
+| R1 P1 | a complete pair with R recorded `written`, its audit deleted and its final RNG state flipped: deep verification `{}` | the planned-record validator and the pair-index validator refuse a complete pair with any arm not `audited` or K7 / K9 / K10 not `complete`; independently, the deep verifier re-audits every arm of a complete pair whatever its recorded state and names an arm without an audit; the completion finding's text is deterministic so the recorded audit equals the recomputed one | `TheArchiveVerifier.test_a_downgraded_arm_state_cannot_switch_the_audit_off`, `…test_the_deep_verifier_re_audits_even_if_the_record_validators_were_bypassed` (the record validators mocked away: the deep stage alone refuses), `TheSummaryAndTheValidators` |
+| R2 P1 | a self-consistent R generated under exposed operator seed 12 beneath a plan saying 11: `{}`; a wrapper naming pair 99 / role O: `{}`; a manifest with `fabric: dropout` and 21 null addresses: no finding | `arm_result_findings(doc, task, expect)`: the wrapper's pair / role / seeds equal the planned ones (from the file's position), `engine_arm` is the role's, the budget is B_max, the result's seeds / budget / task digest / provenance are the pair's and the formal source's, `x_control_seed` is the planned X seed or null — applied at write time by the harness and offline by the verifier; every pair file names its pair and (audits, quarantines) its role; curves and index name the planned seeds; the index's arm states are the plan's; the manifest's hypothesis / mapping / fabric descriptors are the formal inputs' (`formal_provenance()`), its constants the harness's, its thresholds the table's; every memo provenance equals the formal one | `TheArchiveVerifier.test_every_record_is_bound_to_the_planned_pair_and_the_formal_source` (the foreign-seed R replays clean and is refused by the binding) |
+| R3 P2 | `id: false` and a float interaction index accepted | `_int` before every equality on ids, references, indices, counts and τ; every recomputed value (audits, prefixes, curves, summaries, max / counts) compared as canonical JSON text, so `2`, `2.0` and `true` differ | `TheArchiveVerifier.test_nested_scalars_are_exact_in_type` (id false, float index, float counts, float τ, a float in the pooled summary) |
+| R4 P2 | the clock crossing the deadline during the deep verification: complete / exit 0 with an on-time record | after the deep verification `finish` checks the deadline, holds the inputs, checks again, and only then takes the deadline record and publishes; expiry → `incomplete`, stage `publication`, no summary | `IncompleteStops.test_the_deadline_expiring_during_the_final_verification_is_incomplete` (a full `run_batch`) |
+| R5 P2 | an input changed during the deep verification: complete / exit 0 | the same post-verification checkpoint: `hold_inputs("publication")` and `hold_tree()` → `invalid`, `input_drift`, stage `publication` | `InvalidStops.test_an_input_drift_during_the_final_verification_is_invalid` (a full `run_batch`) |
+
+Not changed in this round: the model, the engine, the cartographer, the replay, the statistics primitives, every
+threshold, the seeds module, the anchor. The exposure disposition (section 1) remains the owner's.
+
+## 3. Verification on the clean committed tree — round 1 (HEAD `e03dca1`; files `round1_*`)
 
 Everything here ran on `b4-prework` at **HEAD `e03dca1`** (the repair commit) with `git status --porcelain` empty apart from
 this directory's own new files (each header records it). The files are raw tool output with a three-line header (HEAD, the
@@ -104,9 +123,9 @@ inside them runs on a `b4-mech-<n>` fixture schedule under the derivation guard.
 
 | file | command (from `/home/test/zynq_fabricmap`) | result |
 |---|---|---|
-| `tests.txt` | `python3 -m unittest -v` over the 20 `b4.tests.test_b4_*` modules (the list is in the header) | **Ran 234 tests … OK**, exit 0 |
-| `mutants.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/b4_2b4a_mutants.py evidence/b4/unit_2b4a_repair_2026_10_18/mutants.txt` | **50 / 50 killed** in 497 s; every line `KILLED … [Ran N > 0, FAILED]` with the failing tests named; no `SURVIVED`, `BASELINE-NOT-GREEN` or `EDIT-MISS` line |
-| `import_check.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/import_check.py` | 49 entries; file digests, base digests and copied-function digests all equal; no tracked file under `b4/` without an entry |
+| `round1_tests.txt` | `python3 -m unittest -v` over the 20 `b4.tests.test_b4_*` modules (the list is in the header) | **Ran 234 tests … OK**, exit 0 |
+| `round1_mutants.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/b4_2b4a_mutants.py evidence/b4/unit_2b4a_repair_2026_10_18/mutants.txt` (the 50-mutant script of that commit; the archived script is now the 57-mutant one) | **50 / 50 killed** in 497 s; every line `KILLED … [Ran N > 0, FAILED]` with the failing tests named; no `SURVIVED`, `BASELINE-NOT-GREEN` or `EDIT-MISS` line |
+| `round1_import_check.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/import_check.py` | 49 entries; file digests, base digests and copied-function digests all equal; no tracked file under `b4/` without an entry |
 
 **The battery** (`b4_2b4a_mutants.py`, archived here as run): the 32 mutants of the previous unit — M1 (the registry) now
 held by the seeds tests alone, M16 (K10 absorbing a refusal) re-targeted to the `CornerRefused` conversion, M20 (the result

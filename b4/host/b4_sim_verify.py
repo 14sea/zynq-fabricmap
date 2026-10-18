@@ -55,9 +55,9 @@ def _sha(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
 
-def _j(x):
-    """JSON-normalised (tuples to lists, keys to strings) for comparison with a document read back from disk."""
-    return json.loads(json.dumps(x, sort_keys=True, allow_nan=False))
+def _j(x) -> str:
+    """The canonical JSON text (sc.canonical): comparisons through it are exact in type (2, 2.0 and true differ)."""
+    return sc.canonical(x)
 
 
 def _load(path: Path):
@@ -171,12 +171,15 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
         F.add("linkage", "label / count / fixture differ between seeds.json, manifest.json and the report")
     if manifest["head"] != report["head"]:
         F.add("linkage", "HEAD differs between manifest.json and the report")
-    if manifest["thresholds"] != th.THRESHOLDS or report["thresholds"] != th.THRESHOLDS:
+    if _j(manifest["thresholds"]) != _j(th.THRESHOLDS) or _j(report["thresholds"]) != _j(th.THRESHOLDS):
         F.add("linkage", "the thresholds table is not the module's")
+    import b4_sim as sim  # the harness's own constants and pure functions; imported here to avoid a cycle
+    if _j(manifest["constants"]) != _j(sim.manifest_constants()) or _j(manifest["engine_arm"]) != _j(sim.ENGINE_ARM):
+        F.add("manifest.json", "constants / engine_arm are not the harness's")
     if manifest["grid"] != list(GRID) or manifest["budget"] != th.B_MAX:
         F.add("manifest.json", "grid / budget are not the fixed ones")
     planned = report["pairs"]
-    if [[p["landscape_seed"], p["operator_seed"]] for p in planned] != seeds["pairs"]:
+    if _j([[p["landscape_seed"], p["operator_seed"]] for p in planned]) != _j(seeds["pairs"]):
         F.add("linkage", "the planned pairs are not seeds.json's")
     if F:
         return F.d
@@ -199,7 +202,7 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
     if "STOPPED.json" in disk:
         sd, err = _load(disk["STOPPED.json"])
         F.add("STOPPED.json", *([err] if err else sc.stopped_findings(sd)))
-        if sd is not None and not err and sd != report["stopped"]:
+        if sd is not None and not err and _j(sd) != _j(report["stopped"]):
             F.add("STOPPED.json", "not the report's copy")
     expected: set[str] = set(TOP)
     for plan in planned:
@@ -223,12 +226,42 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
     # --- every file against its validator, the pair's task bound
     mapping = bm.site_mapping()
     tasks = {p["pair"]: bl.make_task(p["landscape_seed"], mapping.addresses) for p in planned}
+    by_pair = {p["pair"]: p for p in planned}
     for rel, path in disk.items():
         if rel == "sim_report.json" or rel in TOP or rel == "STOPPED.json":
             continue
-        m = re.match(r"pair_(\d+)/", rel)
-        f = sc.validate_file(path, tasks[int(m.group(1))] if m else None)
+        m = re.match(r"pair_(\d+)/(.*)$", rel)
+        if not m:
+            F.add(rel, "not inside a pair directory"); continue
+        r, name = int(m.group(1)), m.group(2)
+        plan = by_pair.get(r)
+        if plan is None:
+            F.add(rel, "a pair directory the plan does not have"); continue
+        expect = None
+        am = re.match(r"arm_([A-Za-z0-9]+)\.result\.json$", name)
+        if am:
+            expect = {"pair": r, "role": am.group(1), "landscape_seed": plan["landscape_seed"], "operator_seed": plan["operator_seed"],
+                      "x_control_seed": ctl.x_control_seed(plan["landscape_seed"], plan["operator_seed"])}
+            if am.group(1) not in ROLES:
+                F.add(rel, "not a role's result file"); continue
+            doc, err = _load(path)
+            F.add(rel, *([err] if err else sc.arm_result_findings(doc, tasks[r], expect)))
+            continue
+        f = sc.validate_file(path, tasks[r])
         F.add(rel, *f)
+        if f:
+            continue
+        doc, _ = _load(path)
+        # R2: every file of a pair names that pair (and the role of its name); curves / index name the pair's seeds
+        if doc.get("pair") != r:
+            F.add(rel, f"names pair {doc.get('pair')!r}, lies in pair {r}")
+        rm = re.match(r"arm_([A-Za-z0-9]+)\.(audit|result\.QUARANTINE)\.json$", name)
+        if rm and doc.get("role") != rm.group(1):
+            F.add(rel, f"names role {doc.get('role')!r}, is the file of {rm.group(1)}")
+        if name in ("curves.json", "index.json") and _j([doc.get("landscape_seed"), doc.get("operator_seed")]) != _j([plan["landscape_seed"], plan["operator_seed"]]):
+            F.add(rel, "the seeds named are not the planned pair's")
+        if name == "index.json" and _j(doc.get("arms")) != _j(plan["arms"]):
+            F.add(rel, "the arm states are not the plan's")
     for plan in planned:
         if plan["status"] != "complete":
             continue
@@ -269,13 +302,15 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
                 F.add(pre + "controls.json", "omega_view / a0_view are not the ones built from the mapping")
         for role in ROLES:
             if pre + f"arm_{role}.result.json" not in disk:
+                if plan["status"] == "complete":
+                    F.add(pre + f"arm_{role}.result.json", "a complete pair without this arm's result")
                 continue
             doc = _load(disk[pre + f"arm_{role}.result.json"])[0]
             d = doc["result"]
             results[role] = d
-            if plan["arms"][role] != "audited":
-                continue
-            audit = _load(disk[pre + f"arm_{role}.audit.json"])[0]
+            audit = _load(disk[pre + f"arm_{role}.audit.json"])[0] if pre + f"arm_{role}.audit.json" in disk else None
+            if plan["status"] == "complete" and (plan["arms"][role] != "audited" or audit is None):
+                F.add(pre + f"arm_{role}.result.json", "a complete pair's arm is not audited (R1: a weaker recorded state cannot switch the audit off)")
             completion = sim.completion_findings(d, role, task, doc["port_calls"], views.get(role))
             replay = br.replay(d, task)
             rc = sn.recompute_findings(d, task)
@@ -286,18 +321,19 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
                     view_f.append("the recorded given view is not the one handed to the arm")
                 if role == "D" and "F" in results:
                     view_f += ctl.verify_d_view(d["given_view"], results["F"], task)
-            if _j((completion, replay, rc["findings"], states, view_f)) != _j((audit["completion_findings"], audit["replay_findings"], audit["recompute"]["findings"], audit["states"], audit["view_findings"])):
-                F.add(pre + f"arm_{role}.audit.json", "the audit recorded is not the audit recomputed (completion / replay / recompute / states / view)")
-            if plan["status"] == "complete" and (completion or replay or rc["findings"] or view_f):
-                F.add(pre + f"arm_{role}.result.json", "a complete pair's arm does not re-audit clean: " + "; ".join((completion + replay + rc["findings"] + view_f)[:3]))
-            if rc["relations_final"] is not None and audit["recompute"].get("relations_final_sha256") != ex.sha256_json(rc["relations_final"]):
-                F.add(pre + f"arm_{role}.audit.json", "relations_final_sha256 is not the recomputed relations'")
+            if audit is not None:
+                if _j((completion, replay, rc["findings"], states, view_f)) != _j((audit["completion_findings"], audit["replay_findings"], audit["recompute"]["findings"], audit["states"], audit["view_findings"])):
+                    F.add(pre + f"arm_{role}.audit.json", "the audit recorded is not the audit recomputed (completion / replay / recompute / states / view)")
+                if rc["relations_final"] is not None and audit["recompute"].get("relations_final_sha256") != ex.sha256_json(rc["relations_final"]):
+                    F.add(pre + f"arm_{role}.audit.json", "relations_final_sha256 is not the recomputed relations'")
+            if (plan["status"] == "complete" or plan["arms"][role] == "audited") and (completion or replay or rc["findings"] or view_f):
+                F.add(pre + f"arm_{role}.result.json", "the arm does not re-audit clean: " + "; ".join((completion + replay + rc["findings"] + view_f)[:3]))
         if controls is not None and "F" in results:
             F.add(pre + "controls.json", *ctl.verify_d_view(controls["d_view"], results["F"], task))
         if pre + "k7.json" in disk and "O" in results:
             k7 = _load(disk[pre + "k7.json"])[0]
             for B, p in k7["prefixes"].items():
-                if _j(sn.prefix_states(results["O"], task, int(B))) != p:
+                if _j(sn.prefix_states(results["O"], task, int(B))) != _j(p):
                     F.add(pre + "k7.json", f"the prefix at B = {B} is not the one recomputed from O's ledger"); break
         k9d = _load(disk[pre + "k9.json"])[0] if pre + "k9.json" in disk else None
         if k9d is not None:
@@ -308,7 +344,7 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
         if plan["status"] == "complete":
             curves = _load(disk[pre + "curves.json"])[0]
             want = sim.curves_of(results, r, plan["landscape_seed"], plan["operator_seed"])
-            if {k: v for k, v in curves.items() if k != "written_utc"} != _j({k: v for k, v in want.items() if k != "written_utc"}):
+            if _j({k: v for k, v in curves.items() if k != "written_utc"}) != _j({k: v for k, v in want.items() if k != "written_utc"}):
                 F.add(pre + "curves.json", "not the curves of the arm results")
             k7 = _load(disk[pre + "k7.json"])[0]
             rows.append({"pair": r, "landscape_seed": plan["landscape_seed"], "operator_seed": plan["operator_seed"], "base_fit": curves["base_fit"], "best_at_grid": curves["best_at_grid"],

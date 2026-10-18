@@ -1,0 +1,46 @@
+{
+ "baseline": {
+  "exit_code": 0,
+  "status": "complete",
+  "verify": {}
+ },
+ "complete_pair_without_R_audit": {
+  "findings": {},
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7_unaudited_complete"
+ },
+ "deadline_after_deep_verification": {
+  "actual_elapsed": 10000.0,
+  "exit_code": 0,
+  "published": true,
+  "report_deadline": {
+   "checks": 1,
+   "clock": "time.monotonic",
+   "elapsed_s": 0.0,
+   "expired": false,
+   "first_expired_at_s": null,
+   "seconds": 60
+  },
+  "self_validation": {},
+  "status": "complete",
+  "summary_present": true
+ },
+ "input_drift_after_deep_verification": {
+  "exit_code": 0,
+  "input_digest_changed": true,
+  "published": true,
+  "self_validation": {},
+  "status": "complete"
+ },
+ "root": "/tmp/b4_owner_repair_probe_ue7j_5m7",
+ "snapshot": "/tmp/b4_owner_f2c4bca_7__gab_9",
+ "wrong_R_operator_seed": {
+  "actual": 12,
+  "findings": {},
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7_wrong_operator",
+  "planned": 11
+ },
+ "wrong_pair_role": {
+  "findings": {},
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7_wrong_pair_role"
+ }
+}
