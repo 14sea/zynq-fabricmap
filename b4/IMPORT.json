@@ -111,7 +111,7 @@
    "kind": "new",
    "note": "unit 2b-4a B: K10's driver \u2014 the two fixed backgrounds (0 and the salted generator's first uniform(1 << 21), equal ones kept), 2 x 210 four-corner units through b4_stats.four_corner with every corner's genome / score / observation kept, the per-seed max and outcome at tau = 2, a comparable = False return escalated at once to K10Invalid with the partial kept (never 'not comparable'), the deadline between units, the offline recompute.",
    "role": "host",
-   "sha256": "d108add652151c40e65d5bb6a788561c8bee78625f09e7f032e78c95b52e70a7"
+   "sha256": "c45794259c3d501dfe0893c52f9d5226ac65da4c2204f6744a02ed1e5da35668"
   },
   "b4/host/b4_k9.py": {
    "kind": "new",
@@ -153,6 +153,18 @@
    "role": "host",
    "sha256": "c0e66700df246d6a17fbec473435c0fc68018a9184ddb4ee9f987f20cfc6e749"
   },
+  "b4/host/b4_sim.py": {
+   "kind": "new",
+   "note": "unit 2b-4a C: the host-only exploration harness \u2014 a pre-flight that writes nothing on refusal (label b4-sim-<n>, a clean tree with no override, the formal source, the root's inputs at their pinned digests, every exclusion source, an output directory directly under evidence/b4/sim/ created exclusively); seeds.json then manifest.json then the first observation; per pair R > F > O > X > D > Omega > A0 on one worker, each RunResult written exclusively before its audit, the typed completion checks, replay, ledger recompute, given-view checks, D from F's rebuilt map, K7 prefixes, K9, K10, curves, the pair index, the HEAD / input checkpoint; fail-closed stops (invalid / incomplete) with STOPPED.json, a typed sim_report.json always and a pooled summary only when complete; values beside the section-9 thresholds, no verdict field; exit codes 0 / 1 / 2 / 3. Running it is a separate authorisation.",
+   "role": "host",
+   "sha256": "4fa350771630163b0f1bc8ca083ed53c0fe5083af782f09392dd6ca65cec3232"
+  },
+  "b4/host/b4_sim_schema.py": {
+   "kind": "new",
+   "note": "unit 2b-4a C: typed validators (named findings, total over keys, type-exact scalars) for every file the harness writes \u2014 seeds, manifest, arm result (the engine's shape check), arm audit, controls, k7, k9, k10, curves, pair index, STOPPED, INIT_FAILED, the report (a summary only when complete; no verdict-like key) \u2014 applied before each write and offline over a run directory.",
+   "role": "host",
+   "sha256": "99068e3b4bf67918dbcb8f4418cdb797a0c669295a54741566a63ee23119c5c3"
+  },
   "b4/host/b4_snapshot.py": {
    "kind": "new",
    "note": "unit 2b-4a A: K7 from the ledger alone, no engine / RunResult change \u2014 the map rebuilt under each arm's rule (O online; X relabelled through the recorded pi with a shadow on the true genome, the contract checked after every ingest against the record; F the base + 21 probes then frozen, later records held to the frozen version; given views and R not applicable, their records held to the given / absent map); O's B* prefix of exactly B + 1 records (base + B search), the four states summing to 21; the final fields held to the rebuild; the rebuilt relations for the archive.",
@@ -164,6 +176,12 @@
    "note": "the four-corner interaction index and its four per-seed outcomes as a pure computation; tau a parameter with no default; every seed in the denominator.",
    "role": "host",
    "sha256": "9b6dd9ef6020eb1aa6673bdfa442e7fe6c02d96ed06632b9ecd83acead5e258d"
+  },
+  "b4/host/b4_thresholds.py": {
+   "kind": "new",
+   "note": "unit 2b-4a C: the machine table of docs/b4_architecture.md section 9's fixed thresholds, grid, anchor and control formulas, pinned field by field to the document's text by b4/tests/test_b4_thresholds.py; listed beside exploration values for reference; never a verdict.",
+   "role": "host",
+   "sha256": "0794990eda9a3186695acbc7a3a93e83fab3e6961efce7120b3e3c7facc239db"
   },
   "b4/hypothesis/ff_behaviour_v0.2.json": {
    "kind": "new",
@@ -266,7 +284,7 @@
   "b4/tests/test_b4_k9.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "4e968fbd5c4f034a722b09c796d52415e3ccd46815279f8bd44037717fa63a89"
+   "sha256": "bcedba78d1ac633481857a11de10abbb619887c47308855f83202ab7ac61c133"
   },
   "b4/tests/test_b4_landscape.py": {
    "kind": "new",
@@ -294,6 +312,11 @@
    "role": "test",
    "sha256": "9e296ea7b244405bbfa4e380cb006a53c32996e7c0725cc1e96396508a4a09cd"
   },
+  "b4/tests/test_b4_sim.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "504b896d5e359a8eab01650bf1207cd365f366aea8464a106b3e48a5bfb79cab"
+  },
   "b4/tests/test_b4_snapshot.py": {
    "kind": "new",
    "role": "test",
@@ -303,6 +326,11 @@
    "kind": "new",
    "role": "test",
    "sha256": "26b61508f5968d5f7191bccb9f228e524a0f4bc7d18d67aa102873295b8ada24"
+  },
+  "b4/tests/test_b4_thresholds.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "c049030e3db12ee8b679d754f7275a6e667ecb384248a06a01bae57b32b39453"
   }
  },
  "repository_inputs": [
@@ -381,5 +409,5 @@
  "schema_version": "1.0.0",
  "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) \u2014 b4_rng.py, b4_engine.py, b4_carto.py and b4_seeds.py and b4_gate_stats.py derived so far; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
  "source": "docs/b4_architecture.md; the owner's authorisations of 2026-10-17 (2b-1) and 2026-10-18 (2b-2, the revised scope with five rulings); the owner's rulings of 2026-10-18 (D1', X-A) and on the v0.3 scope draft",
- "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4); the v0.3 model revision (the latch's clock-mode bit 0 on the D1' pair, the owner's ruling of 2026-10-18 on the scope draft; the v0.2 file kept); unit 2b-4a (the host-only exploration harness, the owner's ruling of 2026-10-18 on the scope draft; commits A: seeds / controls / snapshot; B: deadline / statistics copies / observation memo / K9 / K10)"
+ "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4); the v0.3 model revision (the latch's clock-mode bit 0 on the D1' pair, the owner's ruling of 2026-10-18 on the scope draft; the v0.2 file kept); unit 2b-4a (the host-only exploration harness, the owner's ruling of 2026-10-18 on the scope draft; commits A: seeds / controls / snapshot; B: deadline / statistics copies / observation memo / K9 / K10; C: the harness, its validators, the thresholds table)"
 }

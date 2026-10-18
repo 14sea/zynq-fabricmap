@@ -105,6 +105,9 @@ class TheComputation(Base):
             self.assertTrue(v["assessable"]); self.assertLessEqual(v["covered"], v["applicable"])
             self.assertEqual(v["fraction"], v["covered"] / v["applicable"])
         self.assertTrue(s["ff_init"]["conditional_on_A8"]); self.assertFalse(s["ff_srval"]["conditional_on_A8"])
+        for k, v in s.items():
+            self.assertTrue(v["positive_control"], f"{k}: covered > 0 on the exposed seed is a positive control — ff_init counts as the other six do")
+        self.assertTrue(r["summary"]["all_seven_positive_controls"]); self.assertEqual(r["summary"]["semantics_without_positive_control"], [])
         self.assertEqual(s["ff_init"]["covered"], 384, "INIT differs at the init readout for every applicable element (atomic init, conditional on A8)")
         self.assertEqual(s["storage_kind"]["covered"], 32, "a latch endpoint removes the x5FF readouts: a presence difference")
         self.assertEqual(r["memo"]["port_calls"], port.calls)
@@ -122,6 +125,30 @@ class TheComputation(Base):
         self.assertIn(identical[0]["semantic"], [u["semantic"] for u in r["summary"]["uncovered_applicable_pairs"]], "it stays in the denominator and is listed")
         json.dumps(r, allow_nan=False)
         self.assertEqual(k9.recompute(r, self.task, self.fab), [])
+
+    def test_summarise_by_hand_an_empty_denominator_is_not_assessable_and_never_a_positive_control(self):
+        """Hand pairs over the 21 addresses: sr_kind has no applicable pair (fraction None, not assessable, no positive control, so
+        not all seven); clock_mode is applicable but never covered (fraction 0.0, assessable, no positive control); the other
+        five — ff_init among them, counted as the others are — are covered once each (fraction 1.0, positive control)."""
+        pairs = []
+        for a in self.m.addresses:
+            sem = self.m.entries[a].semantic
+            applicable = sem != "sr_kind"
+            covered = (sem != "clock_mode") if applicable else None
+            pairs.append({"semantic": sem, "address": a, "applicable": applicable, "covered": covered, "g0": 0, "g1": 1})
+        s = k9.summarise(pairs, self.m)
+        ps = s["per_semantic"]
+        self.assertEqual((ps["sr_kind"]["applicable"], ps["sr_kind"]["fraction"], ps["sr_kind"]["assessable"], ps["sr_kind"]["positive_control"]), (0, None, False, False))
+        self.assertGreater(ps["sr_kind"]["not_applicable"], 0)
+        self.assertEqual((ps["clock_mode"]["fraction"], ps["clock_mode"]["assessable"], ps["clock_mode"]["positive_control"]), (0.0, True, False))
+        for sem in ("ff_init", "ff_srval", "ce_mode", "sr_mode", "storage_kind"):
+            self.assertEqual((ps[sem]["fraction"], ps[sem]["assessable"], ps[sem]["positive_control"]), (1.0, True, True), sem)
+            self.assertEqual(ps[sem]["covered"], ps[sem]["applicable"])
+        self.assertFalse(s["all_seven_positive_controls"])
+        self.assertEqual(s["semantics_without_positive_control"], ["sr_kind", "clock_mode"], "in the order of the seven")
+        self.assertEqual(sorted(u["semantic"] for u in s["uncovered_applicable_pairs"]), ["clock_mode"] * ps["clock_mode"]["applicable"])
+        for a, c in s["per_address"].items():
+            self.assertEqual(c["fraction"], None if c["semantic"] == "sr_kind" else (0.0 if c["semantic"] == "clock_mode" else 1.0))
 
     def test_the_denominators_do_not_depend_on_the_seed(self):
         r7 = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab)

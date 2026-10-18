@@ -89,7 +89,9 @@ def seed_k10(task: ex.PublicTask, port: ex.ObservationPort, tau: float = TAU, ch
                                   "index": None, "corners": {k: {"genome": _corner_genome(bg, a, b, k), "score": r["values"].get(k), "obs": corner_obs.get(str(_corner_genome(bg, a, b, k)))} for k in ("00", "01", "10", "11")}})
                     p = partial()
                     p.update(complete=False, stopped=None, invalid={"unit_index": len(units) - 1, "illegal_corners": r["illegal_corners"],
-                                                                   "reason": "a corner was refused (DOMAIN): invalid under section 9.1, never 'not comparable'"})
+                                                                   "reason": "a corner was refused (DOMAIN): invalid under section 9.1, never 'not comparable'"},
+                             max_abs_index=None, comparable_pairs=None, not_comparable_pairs=None, outcome=None, logical_corners=4 * len(units),
+                             note="invalid: the partial result as obtained; no outcome")
                     raise K10Invalid(f"K10 unit (background {bi}, {a}, {b}): corners {r['illegal_corners']} refused", p)
                 units.append({"background_index": bi, "background": bg, "a": a, "b": b, "comparable": True, "illegal_corners": [], "index": r["index"],
                               "corners": {k: {"genome": _corner_genome(bg, a, b, k), "score": r["values"][k], "obs": corner_obs[str(_corner_genome(bg, a, b, k))]} for k in ("00", "01", "10", "11")}})
