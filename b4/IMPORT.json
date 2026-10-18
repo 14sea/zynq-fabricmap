@@ -62,7 +62,7 @@
   },
   "b4/host/b4_ff_hypothesis.py": {
    "kind": "new",
-   "note": "the behaviour hypothesis loader: load() takes no path, reads the committed file only against the pinned HYPOTHESIS_SHA256, holds the shape (validated enum readings; unknown only in clock_mode's latch context) and re-hashes every named source, always; any other document \u2014 a valid copy included \u2014 enters through fixture() / fixture_file() and is marked; the decode by equality with clock_mode per storage context and unknown readings reported.",
+   "note": "the behaviour hypothesis loader: load() takes no path, reads the committed file only against the pinned HYPOTHESIS_SHA256, holds the shape (validated enum readings; unknown only in clock_mode's latch context) and re-hashes every named source, always; any other document — a valid copy included — enters through fixture() / fixture_file() and is marked; the decode by equality with clock_mode per storage context and unknown readings reported.",
    "role": "host model",
    "sha256": "a05b0a5bfe00ede4ea97bd7fae926fec5cda3b98ec68ac417bec4113ac9bc8d6"
   },
@@ -74,7 +74,7 @@
   },
   "b4/host/b4_ff_model.py": {
    "kind": "new",
-   "note": "the simulated fabric: configuration + stimulus -> the EXECUTING SIDE's trace under a mapping and a hypothesis passed in separately; the decode and everything derived from it host-only (diagnose / step_diagnostics); validation of the configuration, every step as handed and the init step's context at the entry; a configuration outside the domain refused with the fixed code DOMAIN and no reason (never a specimen, a redraw condition or a map-update signal); fixtures truth / permuted / dropout and seven hypothesis swaps. Every Fabric carries a source descriptor (kind, effect digest, dropout digest and count, seed \u2014 digests only) in every trace header.",
+   "note": "the simulated fabric: configuration + stimulus -> the EXECUTING SIDE's trace under a mapping and a hypothesis passed in separately; the decode and everything derived from it host-only (diagnose / step_diagnostics); validation of the configuration, every step as handed and the init step's context at the entry; a configuration outside the domain refused with the fixed code DOMAIN and no reason (never a specimen, a redraw condition or a map-update signal); fixtures truth / permuted / dropout and seven hypothesis swaps. Every Fabric carries a source descriptor (kind, effect digest, dropout digest and count, seed — digests only) in every trace header.",
    "role": "host model",
    "sha256": "52ad9bee0955532383bfe7b52e39f872772c1aca2e8c7d63bea57072c1db761f"
   },
@@ -106,9 +106,31 @@
   },
   "b4/hypothesis/ff_behaviour_v0.2.json": {
    "kind": "new",
-   "note": "status unverified; v0.2: machine-enum readings, clock_mode by storage context (the latch probe's finding), the domain rule, the initialisation event's allowed context, the executing-side / host-only split of the observation context; sources by kind \u2014 the vendor's UNISIM models by root + path + sha256 + the lines adopted, the certificate and docs/ff_latch_probe.md by path + sha256, the project's decode assumptions. 0.2.1: the domain_refusal and formal_input blocks.",
+   "note": "status unverified; v0.2: machine-enum readings, clock_mode by storage context (the latch probe's finding), the domain rule, the initialisation event's allowed context, the executing-side / host-only split of the observation context; sources by kind — the vendor's UNISIM models by root + path + sha256 + the lines adopted, the certificate and docs/ff_latch_probe.md by path + sha256, the project's decode assumptions. 0.2.1: the domain_refusal and formal_input blocks.",
    "role": "hypothesis (data)",
    "sha256": "1118bedf4831bac3806be4aa3d9b56630912a946156869807f2c26f6374e6ed2"
+  },
+  "b4/probes/latch_ginv/build_ff_latch_ginv.tcl": {
+   "base": "vivado/specimen/build_ff_probe.tcl",
+   "base_sha256": "889898db455343a8dc4f93a047f5e62173cec3e1ca4e531c055245300f74c5c9",
+   "kind": "derived",
+   "note": "the LATCH probe's build script reading the derived Verilog, passing GINV as a generic, and reading back every inversion property and every pin of every storage cell",
+   "role": "probe",
+   "sha256": "8e80e5a1389a7c6f0aac88df74104dcbf99bc623d85503a967d35f27c4aea288"
+  },
+  "b4/probes/latch_ginv/probe_latch_ginv.py": {
+   "kind": "new",
+   "note": "builds the pair main_latch / main_latch_ginv on the mine site with stamps, imports the analysis helpers of scripts/ read-only (named by digest in the report), buckets the full diff, verifies every cell, evaluates the expectation fixed before the build, exports the evidence; any miss archived as it came and exit 2",
+   "role": "probe",
+   "sha256": "63e6ed911e56a6428462816294606df56d50b87452288f293dc4d6adfebf49e5"
+  },
+  "b4/probes/latch_ginv/specimen_ff_latch_ginv.v": {
+   "base": "vivado/specimen/specimen_ff_probe.v",
+   "base_sha256": "e1ece6fe9635277b7307a97f4bff7a41c8f421a76d608349f67b6f10d98805d9",
+   "kind": "derived",
+   "note": "the LATCH probe's specimen family with one parameter GINV applied as IS_G_INVERTED on every LDCE (D1' latch_ginv probe); the original pinned and unchanged",
+   "role": "probe",
+   "sha256": "d7f4eeccad88838e32610d0335a196113a4eb2201476d4122f9172663914125a"
   },
   "b4/schemas/self_map_v3.schema.json": {
    "kind": "new",
@@ -159,6 +181,12 @@
    "role": "test",
    "sha256": "d0ae5e8ba258e613807c54306399d70135d0eb22fb090f268449b7f102c1601b"
   },
+  "b4/tests/test_b4_probe_latch_ginv.py": {
+   "kind": "new",
+   "note": "the probe's pure parts without Vivado: per-cell verification, structure comparison, the expectation, the build cache, the recipe's fixed facts and the untouched originals",
+   "role": "test",
+   "sha256": "d2c6c508e7421abc0d4fc52659c9563419bce5867788a7e16abcb261ca15c1cc"
+  },
   "b4/tests/test_b4_replay.py": {
    "kind": "new",
    "role": "test",
@@ -185,11 +213,66 @@
    "path": "docs/ff_latch_probe.md",
    "sha256": "545bf34de94f83e39aa22b7e186a0797a0b7b2c92466bf55be8efecfd61efd27",
    "used_by": "b4/hypothesis/ff_behaviour_v0.2.json (repository_document): the LDCE endpoint's clock-mode reading"
+  },
+  {
+   "path": "scripts/bitstream_frames.py",
+   "sha256": "a55246e68e082cbb7d15833e6da134388059ffdb0497c29634a9b740eb9091b3",
+   "used_by": "b4/probes/latch_ginv/probe_latch_ginv.py (read-only: imported analysis helper / frozen data / the original recipe and historical record cross-checked by digest)"
+  },
+  {
+   "path": "scripts/decode_groups.py",
+   "sha256": "70d9a276784406f1682257c18793b74e32d5135d2f6054139fb8d2a185a93f0e",
+   "used_by": "b4/probes/latch_ginv/probe_latch_ginv.py (read-only: imported analysis helper / frozen data / the original recipe and historical record cross-checked by digest)"
+  },
+  {
+   "path": "scripts/gate_measure_ff.py",
+   "sha256": "9dcf41518c97ce8529375d0139574e14edc9eb95f02be63c0e14645711b7965a",
+   "used_by": "b4/probes/latch_ginv/probe_latch_ginv.py (read-only: imported analysis helper / frozen data / the original recipe and historical record cross-checked by digest)"
+  },
+  {
+   "path": "scripts/specimen_diff.py",
+   "sha256": "effa4af1920b73818321bdb74ceba4f95ba32d7ba2f69e343441f6eac32ea950",
+   "used_by": "b4/probes/latch_ginv/probe_latch_ginv.py (read-only: imported analysis helper / frozen data / the original recipe and historical record cross-checked by digest)"
+  },
+  {
+   "path": "scripts/frame_ecc.py",
+   "sha256": "e595c8e0467fd46de90d6f526792cedf09a4eafa1599b2c2c04a3bbcbb78a646",
+   "used_by": "b4/probes/latch_ginv/probe_latch_ginv.py (read-only: imported analysis helper / frozen data / the original recipe and historical record cross-checked by digest)"
+  },
+  {
+   "path": "scripts/run_vivado.sh",
+   "sha256": "1c43f93cb362091fc4906b485d89ebc9721de26b7746451acf8f16a37bf4e4a5",
+   "used_by": "b4/probes/latch_ginv/probe_latch_ginv.py (read-only: imported analysis helper / frozen data / the original recipe and historical record cross-checked by digest)"
+  },
+  {
+   "path": "data/prjxray/zynq7/xc7z010/tilegrid.json",
+   "sha256": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee",
+   "used_by": "b4/probes/latch_ginv/probe_latch_ginv.py (read-only: imported analysis helper / frozen data / the original recipe and historical record cross-checked by digest)"
+  },
+  {
+   "path": "data/subset_spec.json",
+   "sha256": "ffe4fb9f6bdc118904a6dcbb5625f87d12b12e633ad4dee8c6772fbe45da8e37",
+   "used_by": "b4/probes/latch_ginv/probe_latch_ginv.py (read-only: imported analysis helper / frozen data / the original recipe and historical record cross-checked by digest)"
+  },
+  {
+   "path": "data/prjxray/zynq7/segbits_clbll_l.db",
+   "sha256": "9bf6bdffdc814569a7da53c696e46207aab23ea66c9dd92c47e50a6211dd739b",
+   "used_by": "b4/probes/latch_ginv/probe_latch_ginv.py (read-only: imported analysis helper / frozen data / the original recipe and historical record cross-checked by digest)"
+  },
+  {
+   "path": "scripts/gate_build_ff.py",
+   "sha256": "1ff5a6bf5150ad680063b9dbb8d93235de175b9bf715e1b9badb3fd797fb4387",
+   "used_by": "b4/probes/latch_ginv/probe_latch_ginv.py (read-only: imported analysis helper / frozen data / the original recipe and historical record cross-checked by digest)"
+  },
+  {
+   "path": "evidence/ff_latch_probe_2026_08_04/manifest.json",
+   "sha256": "bf510ff48d60287e87b8a07a8339dfd54a36912a81ba06ea632fcb4139d4e66f",
+   "used_by": "b4/probes/latch_ginv/probe_latch_ginv.py (read-only: imported analysis helper / frozen data / the original recipe and historical record cross-checked by digest)"
   }
  ],
  "schema": "b4_import",
  "schema_version": "1.0.0",
- "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) \u2014 none of the latter yet; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
+ "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) — none of the latter yet; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
  "source": "docs/b4_architecture.md; the owner's authorisations of 2026-10-17 (2b-1) and 2026-10-18 (2b-2, the revised scope with five rulings)",
- "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics)"
+ "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18)"
 }

@@ -1,0 +1,62 @@
+{
+  "schema": "b4_latch_ginv_probe_evidence",
+  "schema_version": "1.0.0",
+  "note": "exploration on the mine site; no prediction, commitment, certificate or hypothesis change",
+  "site": "SLICE_X2Y25",
+  "tile": "CLBLL_L_X2Y25",
+  "tile_type": "CLBLL_L",
+  "recipe": {
+    "b4/probes/latch_ginv/specimen_ff_latch_ginv.v": "d7f4eeccad88838e32610d0335a196113a4eb2201476d4122f9172663914125a",
+    "b4/probes/latch_ginv/build_ff_latch_ginv.tcl": "8e80e5a1389a7c6f0aac88df74104dcbf99bc623d85503a967d35f27c4aea288",
+    "b4/probes/latch_ginv/probe_latch_ginv.py": "63e6ed911e56a6428462816294606df56d50b87452288f293dc4d6adfebf49e5"
+  },
+  "borrowed": {
+    "scripts/bitstream_frames.py": "a55246e68e082cbb7d15833e6da134388059ffdb0497c29634a9b740eb9091b3",
+    "scripts/decode_groups.py": "70d9a276784406f1682257c18793b74e32d5135d2f6054139fb8d2a185a93f0e",
+    "scripts/gate_measure_ff.py": "9dcf41518c97ce8529375d0139574e14edc9eb95f02be63c0e14645711b7965a",
+    "scripts/specimen_diff.py": "effa4af1920b73818321bdb74ceba4f95ba32d7ba2f69e343441f6eac32ea950",
+    "scripts/frame_ecc.py": "e595c8e0467fd46de90d6f526792cedf09a4eafa1599b2c2c04a3bbcbb78a646",
+    "scripts/run_vivado.sh": "1c43f93cb362091fc4906b485d89ebc9721de26b7746451acf8f16a37bf4e4a5",
+    "data/prjxray/zynq7/xc7z010/tilegrid.json": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee",
+    "data/subset_spec.json": "ffe4fb9f6bdc118904a6dcbb5625f87d12b12e633ad4dee8c6772fbe45da8e37",
+    "data/prjxray/zynq7/segbits_clbll_l.db": "9bf6bdffdc814569a7da53c696e46207aab23ea66c9dd92c47e50a6211dd739b"
+  },
+  "originals_unchanged": {
+    "vivado/specimen/specimen_ff_probe.v": "e1ece6fe9635277b7307a97f4bff7a41c8f421a76d608349f67b6f10d98805d9",
+    "vivado/specimen/build_ff_probe.tcl": "889898db455343a8dc4f93a047f5e62173cec3e1ca4e531c055245300f74c5c9",
+    "scripts/gate_build_ff.py": "1ff5a6bf5150ad680063b9dbb8d93235de175b9bf715e1b9badb3fd797fb4387"
+  },
+  "historical_main_latch": {
+    "manifest": "evidence/ff_latch_probe_2026_08_04/manifest.json",
+    "manifest_sha256": "bf510ff48d60287e87b8a07a8339dfd54a36912a81ba06ea632fcb4139d4e66f",
+    "main_latch_bitstream_sha256": "e260d4fc2ea5e7ade0bee50341307da391ca05fab88d7c34c82e5ca604bf83ef",
+    "rebuilt_main_latch_bitstream_sha256": "ee675f96813905be242322a5f037c4107ca526d143a6470818c63c2766257449",
+    "bit_identical": false,
+    "note": "a different recipe file (the derived copy) \u2014 equality is reported, never required"
+  },
+  "bitstreams_not_copied": {
+    "main_latch": {
+      "bitstream_sha256": "ee675f96813905be242322a5f037c4107ca526d143a6470818c63c2766257449",
+      "checkpoint_sha256": "aa3ddf6a7c3936ed1fc8f80b2f875d56bf5bfa99e058e6f372187beb431406f3",
+      "readback_sha256": "c5c6b978912afdacc2f0718404b11241ca862ce5534122f44b0151f5b7869daa"
+    },
+    "main_latch_ginv": {
+      "bitstream_sha256": "68ae24ebc93d5e71ed3b23aaf9dd1f0a59889bddf68a8fe44cf8ca6d905683d7",
+      "checkpoint_sha256": "8259aef6daeec512974d54e76a4a708fcc12c6ba1bc73e0f0271678fd4b4eda7",
+      "readback_sha256": "214dc46b83e8b49e07b7ecc63754038d90af4224ab0bb8c492835063c616df5e"
+    }
+  },
+  "endpoints_not_built": {},
+  "expectation_met": false,
+  "files": {
+    "probe_report.json": "7aa0c4145db40020cce3501eb560cbf35562994391b6a4a8779de3693916096d",
+    "readbacks/main_latch.tsv": "c5c6b978912afdacc2f0718404b11241ca862ce5534122f44b0151f5b7869daa",
+    "stamps/main_latch.stamp.json": "6e9194725b563a7f70793001d4a86498e6ad6761dadb760f171fc824eeedcd15",
+    "logs/main_latch.run.out.txt": "2f94bd2347ee02fb4ab9aa1c4fb5ac230d8e897fc468a7fb02da91d1686f387e",
+    "logs/main_latch.vivado.log.txt": "88fd16276306c68ee431f40300c048fddd81fbf316eb873df439210c686db4a8",
+    "readbacks/main_latch_ginv.tsv": "214dc46b83e8b49e07b7ecc63754038d90af4224ab0bb8c492835063c616df5e",
+    "stamps/main_latch_ginv.stamp.json": "e658bab5168c3b90c54d305b5c4bd4279ed38fc5f7689760a1616f236cd39774",
+    "logs/main_latch_ginv.run.out.txt": "d17457e162466d84acb81833a4f961fbdd36b927d575459ad013184c4942b137",
+    "logs/main_latch_ginv.vivado.log.txt": "0c1dc977cb02fcb5ce1c809b294e5c60f4904a5c3596df7555730ff581a61540"
+  }
+}
