@@ -83,6 +83,36 @@ class Cells(unittest.TestCase):
         self.assertTrue(any("requested_ginv" in f for f in P.cell_findings(rb, 0)))
 
 
+class RouteStatus(unittest.TestCase):
+    """The owner's follow-up ruling (2026-10-18): ROUTED and INTRASITE are complete routes; nothing else is."""
+
+    def test_intrasite_on_the_intra_slice_d_nets_is_accepted_as_attempt_1_s_readbacks_have_it(self):
+        for ginv in (0, 1):
+            rb = good_readback(ginv)
+            for n in (1, 2, 3):
+                rb[f"store.{n}.pin.D.route_status"] = "INTRASITE"
+            self.assertEqual(P.cell_findings(rb, ginv), [])
+        self.assertEqual(P.COMPLETE_ROUTE_STATUS, ("ROUTED", "INTRASITE"))
+
+    def test_the_real_attempt_1_readbacks_pass_the_cell_rule_and_nothing_else_changed(self):
+        base = REPO / "evidence/b4/unit_d1prime_latch_ginv_2026_10_18/readbacks"
+        for name, ginv in (("main_latch", 0), ("main_latch_ginv", 1)):
+            rb = P.read_tsv(base / f"{name}.tsv")
+            self.assertEqual(sorted({rb[f"store.{n}.pin.D.route_status"] for n in (1, 2, 3)}), ["INTRASITE"])
+            self.assertEqual(P.cell_findings(rb, ginv), [])
+            self.assertTrue(P.cell_findings(rb, 1 - ginv))                 # the inversion check still bites
+
+    def test_every_other_status_and_a_missing_one_is_still_a_finding(self):
+        for bad in ("UNROUTED", "PARTIAL", "CONFLICTS", "NODRIVER", "NOLOADS", "HIERPORT", "", "routed", "INTRA_SITE"):
+            rb = good_readback(0); rb["store.2.pin.D.route_status"] = bad
+            f = P.cell_findings(rb, 0)
+            self.assertEqual(len(f), 1, bad); self.assertIn("cell 2", f[0]); self.assertIn("route status", f[0])
+        rb = good_readback(0); del rb["store.2.pin.D.route_status"]
+        f = P.cell_findings(rb, 0); self.assertEqual(len(f), 1); self.assertIn("route status None", f[0])
+        rb = good_readback(0); rb["store.0.pin.G.route_status"] = "INTRASITE"; rb["store.0.pin.Q.route_status"] = "UNROUTED"
+        self.assertEqual(len(P.cell_findings(rb, 0)), 1)                    # INTRASITE fine on any pin; UNROUTED not
+
+
 class Structure(unittest.TestCase):
     def test_the_pair_differing_in_the_gate_inversion_alone_is_structurally_equal(self):
         self.assertEqual(P.structure_findings(good_readback(0), good_readback(1)), [])
@@ -156,6 +186,9 @@ class Recipe(unittest.TestCase):
         self.assertEqual({e["mode"] for e in P.ENDPOINTS.values()}, {7})
         self.assertEqual([P.ENDPOINTS[n]["ginv"] for n in P.PAIR], [0, 1])
         self.assertEqual(P.EXPECTED_CLKINV_DIRECTION, "1->0")
+        self.assertEqual(P.ATTEMPT, 2)
+        self.assertTrue(P.DEFAULT_OUT.name.endswith("attempt2") and "attempt2" in P.DEFAULT_EVIDENCE.name)
+        self.assertNotEqual(P.DEFAULT_OUT, REPO / "build/b4_ff_latch_ginv_probe")        # attempt 1 never reused
 
     def test_the_original_recipe_is_the_one_the_old_evidence_pins(self):
         m = json.loads((REPO / "evidence/ff_latch_probe_2026_08_04/manifest.json").read_text())

@@ -28,6 +28,14 @@ IMPORTED read-only and named by digest in the report — nothing under `scripts/
 
     python3 -B b4/probes/latch_ginv/probe_latch_ginv.py                 # build both, report, export
     python3 -B b4/probes/latch_ginv/probe_latch_ginv.py --report-only   # re-derive from verified artifacts
+
+Attempt 2 (the owner's follow-up ruling of 2026-10-18): attempt 1 (evidence/b4/unit_d1prime_latch_ginv_2026_10_18/,
+build/b4_ff_latch_ginv_probe/) met every bitstream clause and the structure, and failed on this driver's own cell
+rule, which accepted ROUTE_STATUS == ROUTED only while the intra-slice LUT O6 -> latch D nets report INTRASITE
+(UG912: the net is routed entirely within one site — complete, not an error). The one change: the rule accepts
+ROUTED and INTRASITE (COMPLETE_ROUTE_STATUS); every other clause is as it was. Attempt 1's directories, stamps and
+record stay untouched and are never overwritten or back-filled; attempt 2 writes to its own raw and evidence
+directories (ATTEMPT) with its own stamps under the new recipe digest.
 """
 
 from __future__ import annotations
@@ -60,8 +68,12 @@ MINE_SITE = "SLICE_X2Y25"
 MODE = 7                                  # four main storage elements, LDCE (docs/ff_latch_probe.md)
 BELS = ("AFF", "BFF", "CFF", "DFF")
 ANCHOR_ARGS = ("AFF", "1", "SLICE_X4Y20", "SLICE_X2Y20")   # the old recipe's defaults, passed explicitly
-DEFAULT_OUT = REPO / "build/b4_ff_latch_ginv_probe"
-DEFAULT_EVIDENCE = REPO / "evidence/b4/unit_d1prime_latch_ginv_2026_10_18"
+ATTEMPT = 2                               # attempt 1's directories are kept as they are; never reused
+DEFAULT_OUT = REPO / f"build/b4_ff_latch_ginv_probe_attempt{ATTEMPT}"
+DEFAULT_EVIDENCE = REPO / f"evidence/b4/unit_d1prime_latch_ginv_attempt{ATTEMPT}_2026_10_18"
+# Vivado ROUTE_STATUS values that mean a complete route (UG912): ROUTED, and INTRASITE for a net routed
+# entirely inside one site. UNROUTED, PARTIAL, CONFLICTS, NODRIVER, NOLOADS, HIERPORT and a missing value are not.
+COMPLETE_ROUTE_STATUS = ("ROUTED", "INTRASITE")
 
 ENDPOINTS = {
     "main_latch": {"mode": MODE, "ginv": 0,
@@ -257,7 +269,7 @@ def cell_findings(readback: dict[str, str], ginv: int) -> list[str]:
             rec = c["pins"].get(pin)
             if rec is None or not rec.get("net"):
                 findings.append(f"{tag}: pin {pin} has no net in the readback")
-            elif rec.get("route_status") != "ROUTED":
+            elif rec.get("route_status") not in COMPLETE_ROUTE_STATUS:
                 findings.append(f"{tag}: pin {pin} net {rec.get('net')!r} route status {rec.get('route_status')!r}")
     if len(cells) == 4 and sorted(bels) != sorted(BELS):
         findings.append(f"BELs are {bels}, expected each of {BELS} exactly once")
@@ -456,7 +468,8 @@ def main() -> int:
                       "note": "a different recipe file (the derived copy) — equality is reported, never required"}
 
     report = {
-        "schema": "b4_latch_ginv_probe", "schema_version": "1.0.0",
+        "schema": "b4_latch_ginv_probe", "schema_version": "1.1.0", "attempt": ATTEMPT,
+        "complete_route_status": list(COMPLETE_ROUTE_STATUS),
         "status": "host build / readback / bitstream correspondence on the mine site — exploration; not a certificate, not a silicon observation, not a domain verification",
         "ruling": "build/wip/b4_f_domain_xa_owner_ruling_2026_10_18.md section 2 (D1'); ignored file, quoted in the evidence README",
         "bit_class": BIT_CLASS, "site": MINE_SITE, "site_split": "mine (evidence already spent; can never score)",
@@ -485,7 +498,7 @@ def main() -> int:
                 target.write_bytes((d / src).read_bytes())
                 copied[dst] = sha256_file(target)
     (evidence / "manifest.json").write_text(json.dumps({
-        "schema": "b4_latch_ginv_probe_evidence", "schema_version": "1.0.0",
+        "schema": "b4_latch_ginv_probe_evidence", "schema_version": "1.1.0", "attempt": ATTEMPT,
         "note": "exploration on the mine site; no prediction, commitment, certificate or hypothesis change",
         "site": MINE_SITE, "tile": tile_name, "tile_type": tile_type,
         "recipe": recipe_hashes(), "borrowed": borrowed_hashes(), "originals_unchanged": originals_hashes(),
