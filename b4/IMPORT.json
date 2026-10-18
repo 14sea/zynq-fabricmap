@@ -52,6 +52,12 @@
    "role": "host",
    "sha256": "f8727cca7ed6fec4d0d84c18bb33c009b97532ead1ee38cfb1b48cdc8625b724"
   },
+  "b4/host/b4_deadline.py": {
+   "kind": "new",
+   "note": "unit 2b-4a B: the soft monotonic deadline (time.monotonic; UTC only a timestamp): check() between work units raises StopWork; a started unit is never interrupted; the record carries seconds / elapsed / checks / first expiry.",
+   "role": "host",
+   "sha256": "56dce330311d56325682a0030a701b9ba6c26f369c9e1394a49fdf0620d2a79b"
+  },
   "b4/host/b4_engine.py": {
    "base": "host/b2_search.py",
    "base_sha256": "3acb04714a6c677708892d171f6a418e6de7627210e2ec6ad65158db51eab1cf",
@@ -84,11 +90,46 @@
    "role": "host model",
    "sha256": "d6529700c766eeb354d01ae190adad5adb5241ab26ebfc10a6a3bb3a3fd15dbf"
   },
+  "b4/host/b4_gate_stats.py": {
+   "base": "host/b2_gate.py",
+   "base_sha256": "34edc5632906685e2c83bb8fc90d05d31724b4b0a8af805188241e6b93fbaa2b",
+   "copied_functions": {
+    "bootstrap_reject_rate": "a9e531c735ab7882aa064373c3db95fa321548094b2f9b4dae5e17a0eefb30bf",
+    "cohen_d": "ea66c10daa8e91f3cbb074e4bf38c7b3796eef5c081df9ddf2ef7cf0af10ab42",
+    "mean": "13e046f5fd378552636ca050ebb7ac18d762f0b00d6a22b5f54a753736463208",
+    "median": "2db6a69d01aef48a2bfebafcbf0ed75cf4beab8734a181a2d9320895c05459bc",
+    "percentile": "b7bcbbf17e7d3e369f4715b5a312c6b1de1eb006918f9056046388012d55ca76",
+    "required_pairs": "640943502771365d6cb5cf2183df019b6e9e06f9e849a96863dd284e255ecd14",
+    "sign_test_p": "4ae2bea2366f2a1ecf8ba95a0a6c59d4f188e1ec23e52b56cf2de400495bac7d"
+   },
+   "kind": "derived",
+   "note": "unit 2b-4a B: median / percentile / mean / cohen_d / sign_test_p / bootstrap_reject_rate / required_pairs copied VERBATIM from host/b2_gate.py (the source text of each held equal to the original's by read-only import in the tests; per-function digests of the copied source above); dependencies math / statistics / random only; required_pairs_scan = the same complete ascending scan with a deadline check before each N (identical numbers); encode_stat / finite_findings for JSON without NaN / Infinity (a +inf Cohen's d kept as a named special, never 0).",
+   "role": "host",
+   "sha256": "f03f2203a9db8b75c567316ac257a3cd4163dee9a2fd297a75887d676b779a0a"
+  },
+  "b4/host/b4_k10.py": {
+   "kind": "new",
+   "note": "unit 2b-4a B: K10's driver \u2014 the two fixed backgrounds (0 and the salted generator's first uniform(1 << 21), equal ones kept), 2 x 210 four-corner units through b4_stats.four_corner with every corner's genome / score / observation kept, the per-seed max and outcome at tau = 2, a comparable = False return escalated at once to K10Invalid with the partial kept (never 'not comparable'), the deadline between units, the offline recompute.",
+   "role": "host",
+   "sha256": "d108add652151c40e65d5bb6a788561c8bee78625f09e7f032e78c95b52e70a7"
+  },
+  "b4/host/b4_k9.py": {
+   "kind": "new",
+   "note": "unit 2b-4a B: K9's fixed comparison set (section 9.3): the 64 backgrounds, the forced pairs (32 per slice-wide, 64 per per-element address; 1 184), applicability from the host decode of the two endpoints only (x5FF under a latch, sr_kind under a latch; storage_kind with presence), the differences by position and kind, the per-semantic / per-address counts (an empty denominator not assessable, never 100 %), the deadline between pairs, and the offline recompute from the kept grids.",
+   "role": "host",
+   "sha256": "4dc636a3c679596850350dc7b2a48b47e1218f1becdb31a475d96b87a0039bcd"
+  },
   "b4/host/b4_landscape.py": {
    "kind": "new",
    "note": "the public task generator task-v0.1 (stimulus, mask, target, weights from the landscape seed alone; the all-zero base declared; the holdout stimulus its own derivation) and the scoring (None scores nothing, is counted, never moves the ceiling).",
    "role": "host",
    "sha256": "abf8c6b3de4c1d0ad92b1d05611aef9976307ae74b94fbac0650fef4d2da0865"
+  },
+  "b4/host/b4_observe.py": {
+   "kind": "new",
+   "note": "unit 2b-4a B: the per-seed observation memo of K9 / K10 \u2014 (genome, stimulus digest) under ONE source identity held by provenance_findings; every unique observation kept whole (config digest, stimulus digest, provenance digest, trace digest, the full q grid); true port calls vs cache hits; DOMAIN propagates; enters no ledger.",
+   "role": "host",
+   "sha256": "d39ebb6bb9a5216deb0b7f0393c217a6d524dcdf61fa874e0e663da0dc0402dd"
   },
   "b4/host/b4_replay.py": {
    "kind": "new",
@@ -180,6 +221,11 @@
    "role": "test",
    "sha256": "30ee04ac701ecd009613ac469c8cc08ff137fc593174342c86c41bfd9c32e426"
   },
+  "b4/tests/test_b4_deadline.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "fd2fce2d9feca10ad4977096445ab7e6a7580f951db68fe84be228f8fe6cb304"
+  },
   "b4/tests/test_b4_engine.py": {
    "kind": "new",
    "note": "complete runs under the mechanics fixture; DOMAIN injected at the base, in the probe pass and mid-generation; the two F facts \u2014 under the formal v0.3 the probe pass completes (base + 21; a complete run B + 23 observations), under the kept 0.2.1 reading (v021_hole) it terminates at the LATCH flip.",
@@ -206,6 +252,21 @@
    "note": "every expected trace derived by hand from the hypothesis's adopted lines, never by running the model. v0.3: the inverted-gate latch's trace derived by hand in the model's settle order (the new inputs at the old clock first; the init step atomic), the 0.2.1 refusal kept on the v021_hole fixture.",
    "role": "test",
    "sha256": "dfefb73b79ee26966ddc75e4bf0f0941247c67241be38d7520662eb2418bd15b"
+  },
+  "b4/tests/test_b4_gate_stats.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "c3b321c33f658d6065af72770d36181d87e8f037cf95eb7ed27813a3fd76f54d"
+  },
+  "b4/tests/test_b4_k10.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "9a9ccc15aac840b831aa3fc99bd3ad34abe0a0fd76ffe927d73b60010ab91e3d"
+  },
+  "b4/tests/test_b4_k9.py": {
+   "kind": "new",
+   "role": "test",
+   "sha256": "4e968fbd5c4f034a722b09c796d52415e3ccd46815279f8bd44037717fa63a89"
   },
   "b4/tests/test_b4_landscape.py": {
    "kind": "new",
@@ -318,7 +379,7 @@
  ],
  "schema": "b4_import",
  "schema_version": "1.0.0",
- "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) \u2014 b4_rng.py, b4_engine.py, b4_carto.py and b4_seeds.py derived so far; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
+ "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) \u2014 b4_rng.py, b4_engine.py, b4_carto.py and b4_seeds.py and b4_gate_stats.py derived so far; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
  "source": "docs/b4_architecture.md; the owner's authorisations of 2026-10-17 (2b-1) and 2026-10-18 (2b-2, the revised scope with five rulings); the owner's rulings of 2026-10-18 (D1', X-A) and on the v0.3 scope draft",
- "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4); the v0.3 model revision (the latch's clock-mode bit 0 on the D1' pair, the owner's ruling of 2026-10-18 on the scope draft; the v0.2 file kept); unit 2b-4a (the host-only exploration harness, the owner's ruling of 2026-10-18 on the scope draft; commit A: seeds / controls / snapshot)"
+ "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4); the v0.3 model revision (the latch's clock-mode bit 0 on the D1' pair, the owner's ruling of 2026-10-18 on the scope draft; the v0.2 file kept); unit 2b-4a (the host-only exploration harness, the owner's ruling of 2026-10-18 on the scope draft; commits A: seeds / controls / snapshot; B: deadline / statistics copies / observation memo / K9 / K10)"
 }
