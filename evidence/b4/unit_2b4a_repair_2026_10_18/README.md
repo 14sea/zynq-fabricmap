@@ -114,6 +114,22 @@ re-indexed so that the finding is the contract's, not a stale hash).
 Not changed in this round: the model, the engine, the cartographer, the replay, the statistics primitives, every
 threshold, the seeds module, the anchor. The exposure disposition (section 1) remains the owner's.
 
+## 2c. The third round — the owner's HOLD on `6c00156` (three residual findings)
+
+The owner's third review (`owner_review_6c00156/`, copied unchanged) independently confirmed 240 tests OK, 57 / 57 mutants,
+49 IMPORT entries, that every round-2 probe is now refused and that the runtime publication paths (R4 / R5) are fixed in a
+full `run_batch`; it reproduced three residual gaps, each fixed below with a negative test after the owner's probe (every
+digest re-indexed, the pooled summary recomputed where it changes, so that the finding is the contract's).
+
+| gap | what the owner reproduced | what changed | where it is tested |
+|---|---|---|---|
+| 1 P1 | a GENUINE partial K10 (the production driver stopped after 1 / 420 units: `complete: false`, a stop record, no outcome) replacing the complete one under a plan still saying complete, summary and digests recomputed: `{}` | `b4_sim_verify.diagnostic_state_findings`: a plan's K7 / K9 / K10 state is confirmed by its document — `complete` needs a complete document with neither stop nor invalid record and the full fixed set (1 184 pairs / 420 units); `partial` a stopped, not-complete document; `invalid` an invalid partial (or its quarantine); `not_started` no document; a complete pair needs all three complete; the pooled row is built only from complete K9 / K10 documents | `TheArchiveVerifier.test_a_genuine_partial_diagnostic_cannot_belong_to_a_complete_batch` (a production partial K10 and a production partial K9) |
+| 2 P2 | `pairs_total` 1184.0, `units_total` 420.0, a corner genome `false` accepted | `_int` on `pairs_total`, `units_total`, K7 budgets / counts, K9 pair backgrounds; `_genome` on corner genomes; the curves' T and the canonical-set sequences compared as JSON text; `k9/k10.canonical_findings` exact on the totals | `TheArchiveVerifier.test_the_remaining_counts_and_genomes_are_exact_in_type` |
+| 3 P2 | manifest `deadline_s` 1 vs report 3600 accepted; report `elapsed_s` 10 000 with `expired: false` accepted | `b4_sim_schema.deadline_findings`: the record's exact types and ranges and its self-consistency at the record's millisecond precision (`expired` ⇔ `elapsed_s ≥ seconds` up to 1 ms; `first_expired_at_s` exactly when expired, within [seconds, elapsed_s]); applied to the report's and STOPPED's records, bound to the manifest's `deadline_s` (written before the first observation); the stop record's elapsed time ≤ the report's; a complete report's elapsed time ≤ its seconds; a late stopped record remains a consistent record | `TheArchiveVerifier.test_the_deadline_records_are_consistent_and_bound_to_the_manifest` (boundary and late-stop positives, six malformed negatives, the manifest binding) |
+
+Not changed in this round: the model, the engine, the cartographer, the replay, the statistics primitives, every
+threshold, the seeds module, the anchor, the deadline module (its record is validated, not altered).
+
 ## 3. Verification on the clean committed tree — round 1 (HEAD `e03dca1`; files `round1_*`)
 
 Everything here ran on `b4-prework` at **HEAD `e03dca1`** (the repair commit) with `git status --porcelain` empty apart from

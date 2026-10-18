@@ -852,6 +852,84 @@ class TheArchiveVerifier(Base):
         f = self.findings(); self.assertTrue(any("pooled summary" in x for x in f.get("sim_report.json", [])), "a float where the recomputed summary has an int")
         self.assertEqual(self.findings(), {}, "restored")
 
+    def test_a_genuine_partial_diagnostic_cannot_belong_to_a_complete_batch(self):
+        """Round 3, finding 1: a VALID partial K10 (the production driver stopped by StopWork after one unit) and a valid
+        partial K9 put under a plan that still says complete, the pooled summary and every digest recomputed — refused by the
+        diagnostic state ↔ file contract, not by a hash."""
+        from b4_deadline import StopWork
+        import b4_k9 as k9
+        out = self.out_dir
+        fabric = sim.fm.Fabric(bm.site_mapping(), hy.load())
+        n = {"k": 0}
+
+        def one_unit():
+            n["k"] += 1
+            if n["k"] > 1:
+                raise StopWork("stopped after one unit")
+        partial = k10.seed_k10(self.task, ex.ObservationPort(fabric), check=one_unit)
+        self.assertEqual((partial["complete"], len(partial["units"])), (False, 1))
+        doc = self.load("pair_000/k10.json"); doc.update(partial); self.put("pair_000/k10.json", doc)
+        self.assertEqual(sc.k10_findings(doc, self.task), [], "the partial is a valid record in itself")
+        curves, k7, k9d = self.load("pair_000/curves.json"), self.load("pair_000/k7.json"), self.load("pair_000/k9.json")
+        row = {"pair": 0, "landscape_seed": 7, "operator_seed": 11, "base_fit": curves["base_fit"], "best_at_grid": curves["best_at_grid"],
+               "f_end_to_end_at_grid": [x["value"] for x in curves["f_end_to_end_at_grid"]], "k7_not_unknown_at_grid": [k7["prefixes"][str(B)]["not_unknown"] for B in th.GRID],
+               "k9": k9d["summary"]["per_semantic"], "k9_all_seven": k9d["summary"]["all_seven_positive_controls"], "k10_max_abs": partial["max_abs_index"], "k10_outcome": partial["outcome"]}
+        rep = self.load("sim_report.json"); rep["summary"] = sim.summarise_batch([row], 1)[0]; self.put("sim_report.json", rep); reindex(out)
+        f = self.findings()
+        self.assertTrue(any("k10: recorded complete" in x for xs in f.values() for x in xs), f)
+        n["k"] = 0
+
+        def three_pairs():
+            n["k"] += 1
+            if n["k"] > 3:
+                raise StopWork("stopped after three pairs")
+        p9 = k9.coverage(self.task, ex.ObservationPort(fabric), bm.site_mapping(), fabric, check=three_pairs)
+        self.assertFalse(p9["complete"])
+        doc = self.load("pair_000/k9.json"); doc.update(p9); self.put("pair_000/k9.json", doc); reindex(out)
+        f = self.findings()
+        self.assertTrue(any("k9: recorded complete" in x for xs in f.values() for x in xs), f)
+        self.assertEqual(self.findings(), {}, "restored")
+
+    def test_the_remaining_counts_and_genomes_are_exact_in_type(self):
+        """Round 3, finding 2: pairs_total 1184.0, units_total 420.0, a corner genome of false, a float prefix budget — equal in
+        Python, refused by the validators and, re-indexed, by the verifier."""
+        out = self.out_dir
+        d = self.load("pair_000/k9.json"); d["pairs_total"] = 1184.0
+        self.assertTrue(sc.k9_findings(d, self.task)); self.put("pair_000/k9.json", d); reindex(out); self.assertIn("pair_000/k9.json", self.findings())
+        d = self.load("pair_000/k10.json"); d["units_total"] = 420.0
+        self.assertTrue(sc.k10_findings(d, self.task)); self.put("pair_000/k10.json", d); reindex(out); self.assertIn("pair_000/k10.json", self.findings())
+        d = self.load("pair_000/k10.json"); d["units"][0]["corners"]["00"]["genome"] = False
+        self.assertTrue(any("corners[00]" in x for x in sc.k10_findings(d, self.task))); self.put("pair_000/k10.json", d); reindex(out); self.assertIn("pair_000/k10.json", self.findings())
+        d = self.load("pair_000/k7.json"); d["prefixes"]["8"]["budget"] = 8.0
+        self.assertTrue(any("budget" in x for x in sc.k7_findings(d)))
+        d = self.load("pair_000/k9.json"); d["pairs"][0]["backgrounds"] = [0.0, 1]
+        self.assertTrue(sc.k9_findings(d, self.task))
+        d = self.load("pair_000/curves.json"); d["f_end_to_end_at_grid"][0]["T"] = 8.0
+        self.assertTrue(any("T is not the grid" in x for x in sc.curves_findings(d)))
+        self.assertEqual(self.findings(), {}, "restored")
+
+    def test_the_deadline_records_are_consistent_and_bound_to_the_manifest(self):
+        """Round 3, finding 3: the manifest's deadline_s changed to 1 while the report says 3600; a report elapsed_s of 10 000
+        with expired false; malformed records — each refused; a genuinely late stopped record stays acceptable."""
+        out = self.out_dir
+        man = self.load("manifest.json"); man["deadline_s"] = 1; self.put("manifest.json", man); reindex(out)
+        f = self.findings(); self.assertTrue(any("not the declared 1" in x for x in f.get("sim_report.json", [])), f)
+        rep = self.load("sim_report.json"); rep["deadline"].update(elapsed_s=10000.0, expired=False, first_expired_at_s=None)
+        self.assertTrue(any("not expired with elapsed_s" in x for x in sc.report_findings(rep)))
+        self.put("sim_report.json", rep); reindex(out); f = self.findings(); self.assertIn("sim_report.json", f)
+        self.assertEqual(sc.deadline_findings({"seconds": 60, "elapsed_s": 60.0, "checks": 3, "expired": True, "first_expired_at_s": 60.0, "clock": "time.monotonic"}), [], "expired at the boundary")
+        self.assertEqual(sc.deadline_findings({"seconds": 60, "elapsed_s": 59.999, "checks": 3, "expired": False, "first_expired_at_s": None, "clock": "time.monotonic"}), [])
+        self.assertEqual(sc.deadline_findings({"seconds": 60, "elapsed_s": 10000.0, "checks": 3, "expired": True, "first_expired_at_s": 60.0, "clock": "time.monotonic"}), [], "a late stop is a consistent record")
+        for bad, why in (({"seconds": 60, "elapsed_s": 10.0, "checks": 3, "expired": True, "first_expired_at_s": 10.0, "clock": "time.monotonic"}, "expired before the deadline"),
+                         ({"seconds": 60, "elapsed_s": 61.0, "checks": 3, "expired": False, "first_expired_at_s": None, "clock": "time.monotonic"}, "not expired after it"),
+                         ({"seconds": 60, "elapsed_s": 61.0, "checks": 3, "expired": True, "first_expired_at_s": None, "clock": "time.monotonic"}, "expired without a first expiry"),
+                         ({"seconds": 60.0, "elapsed_s": 1.0, "checks": 3, "expired": False, "first_expired_at_s": None, "clock": "time.monotonic"}, "float seconds"),
+                         ({"seconds": 60, "elapsed_s": 1.0, "checks": 3, "expired": False, "first_expired_at_s": None, "clock": "time.time"}, "another clock"),
+                         ({"seconds": 60, "elapsed_s": 1.0, "checks": 3, "expired": False, "first_expired_at_s": None}, "a missing key")):
+            self.assertTrue(sc.deadline_findings(bad), why)
+        self.assertTrue(sc.deadline_findings({"seconds": 60, "elapsed_s": 1.0, "checks": 3, "expired": False, "first_expired_at_s": None, "clock": "time.monotonic"}, seconds=3600), "bound to another duration")
+        self.assertEqual(self.findings(), {}, "restored")
+
     def test_the_cli_of_the_verifier(self):
         import io
         from contextlib import redirect_stdout
@@ -898,14 +976,15 @@ class TheSummaryAndTheValidators(unittest.TestCase):
     def test_a_summary_with_a_verdict_key_is_refused_by_the_report_validator(self):
         plan = {"pair": 0, "landscape_seed": 7, "operator_seed": 11, "status": "complete", "arms": {r: "audited" for r in ROLES}, "k7": "complete", "k9": "complete", "k10": "complete"}
         rep = {"schema": "b4_sim_report", "schema_version": "1.0.0", "status": "complete", "label": "b4-mech-1", "fixture": True, "count": 1, "head": "0" * 40, "generated_utc": "x",
-               "deadline": {"expired": False}, "standing": "not a gate verdict", "thresholds": {}, "identity": {}, "pairs": [plan], "files": [], "stopped": None,
+               "deadline": {"seconds": 60, "elapsed_s": 1.5, "checks": 3, "expired": False, "first_expired_at_s": None, "clock": "time.monotonic"},
+               "standing": "not a gate verdict", "thresholds": {}, "identity": {}, "pairs": [plan], "files": [], "stopped": None,
                "summary": {"k1_pass": True}, "missing": [], "self_validation": {}}
         self.assertTrue(any("verdict-like" in f for f in sc.report_findings(rep)))
         rep["summary"] = {"thresholds_for_reference": {}}
         self.assertEqual(sc.report_findings(rep), [], "'thresholds' is not a verdict word")
-        rep["deadline"] = {"expired": True}
+        rep["deadline"] = {"seconds": 60, "elapsed_s": 61.0, "checks": 3, "expired": True, "first_expired_at_s": 60.0, "clock": "time.monotonic"}
         self.assertTrue(any("expired" in f for f in sc.report_findings(rep)), "F8: a complete report's deadline has not expired")
-        rep["deadline"] = {"expired": False}; rep["self_validation"] = {"x": ["y"]}
+        rep["deadline"] = {"seconds": 60, "elapsed_s": 1.5, "checks": 3, "expired": False, "first_expired_at_s": None, "clock": "time.monotonic"}; rep["self_validation"] = {"x": ["y"]}
         self.assertTrue(any("self-validation" in f for f in sc.report_findings(rep)), "F4: a complete report has no self-validation finding")
         rep["self_validation"] = {}; rep["pairs"][0]["arms"]["R"] = "written"
         self.assertTrue(any("weaker state" in f for f in sc.report_findings(rep)), "R1: a complete pair with an arm not audited is refused by the planned-record validator")

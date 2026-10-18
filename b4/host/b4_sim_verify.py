@@ -109,6 +109,41 @@ def expected_pair_files(plan: dict) -> tuple[set, set]:
     return must, may
 
 
+def diagnostic_state_findings(plan: dict, docs: dict) -> list[str]:
+    """The recorded K7 / K9 / K10 state of a pair against its documents: `complete` needs a document that is complete (and
+    for K9 / K10 neither stopped nor invalid, with the full fixed set); `partial` a document that is stopped and not complete;
+    `invalid` a document with an invalid record (or its quarantine, checked by the file set); `in_progress` (K7 only, an
+    invalid prefix) a document that is not complete; `not_started` no document. A complete pair needs all three complete."""
+    f: list[str] = []
+    for k in ("k7", "k9", "k10"):
+        state, doc = plan[k], docs.get(k)
+        if state == "complete":
+            if doc is None or doc.get("complete") is not True:
+                f.append(f"{k}: recorded complete, the document is {'missing' if doc is None else 'not complete'}"); continue
+            if k != "k7" and (doc.get("stopped") is not None or doc.get("invalid") is not None):
+                f.append(f"{k}: recorded complete, the document carries a stop or an invalid record")
+            if k == "k9" and len(doc.get("pairs") or []) != 1184:
+                f.append("k9: recorded complete without the 1 184 pairs")
+            if k == "k10" and len(doc.get("units") or []) != 420:
+                f.append("k10: recorded complete without the 420 units")
+        elif state == "partial":
+            if doc is None or doc.get("complete") is not False or doc.get("stopped") is None or doc.get("invalid") is not None:
+                f.append(f"{k}: recorded partial, the document is not a stopped partial")
+        elif state == "invalid":
+            if doc is not None and (doc.get("complete") is not False or doc.get("invalid") is None):
+                f.append(f"{k}: recorded invalid, the document is not an invalid partial")
+        elif state == "in_progress":
+            if k == "k7" and doc is not None and doc.get("complete") is not False:
+                f.append("k7: recorded in progress, the document says complete")
+            if k != "k7" and doc is not None:
+                f.append(f"{k}: recorded in progress with a document")
+        elif doc is not None:
+            f.append(f"{k}: recorded not started with a document")
+    if plan["status"] == "complete" and any(plan[k] != "complete" for k in ("k7", "k9", "k10")):
+        f.append("a complete pair with a diagnostic not complete")
+    return f
+
+
 def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> dict:
     """The archive-wide verification; returns {location: [findings]} ({} = nothing found). `report` is the report document
     when the harness verifies its own directory before writing sim_report.json; otherwise the file is read."""
@@ -181,6 +216,15 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
     planned = report["pairs"]
     if _j([[p["landscape_seed"], p["operator_seed"]] for p in planned]) != _j(seeds["pairs"]):
         F.add("linkage", "the planned pairs are not seeds.json's")
+    if F:
+        return F.d
+    # --- the deadline records bound to the declared duration (the manifest's, written before the first observation)
+    F.add("sim_report.json", *sc.deadline_findings(report["deadline"], manifest["deadline_s"], "deadline"))
+    if report["stopped"] is not None and isinstance(report["stopped"], dict) and isinstance(report["stopped"].get("deadline"), dict):
+        F.add("sim_report.json", *sc.deadline_findings(report["stopped"]["deadline"], manifest["deadline_s"], "stopped.deadline"))
+        sd_, rd_ = report["stopped"]["deadline"], report["deadline"]
+        if isinstance(sd_.get("elapsed_s"), (int, float)) and isinstance(rd_.get("elapsed_s"), (int, float)) and sd_["elapsed_s"] > rd_["elapsed_s"] + sc.MS:
+            F.add("sim_report.json", "the stop record's elapsed time exceeds the report's (the report is written after the stop)")
     if F:
         return F.d
     # --- the file set
@@ -262,6 +306,12 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
             F.add(rel, "the seeds named are not the planned pair's")
         if name == "index.json" and _j(doc.get("arms")) != _j(plan["arms"]):
             F.add(rel, "the arm states are not the plan's")
+    # --- the diagnostic state ↔ file contract: a plan's K7 / K9 / K10 state is confirmed by the document, never its own authority
+    for plan in planned:
+        pre = f"pair_{plan['pair']:03d}/"
+        F.add(pre, *diagnostic_state_findings(plan, {k: _load(disk[pre + f"{k}.json"])[0] for k in ("k7", "k9", "k10") if pre + f"{k}.json" in disk}))
+    if F:
+        return F.d
     for plan in planned:
         if plan["status"] != "complete":
             continue
@@ -342,6 +392,8 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
         if k10d is not None:
             F.add(pre + "k10.json", *k10.recompute(k10d, task))
         if plan["status"] == "complete":
+            if not (k9d and k9d.get("complete") is True and k10d and k10d.get("complete") is True):
+                F.add(pre, "a complete pair's row needs complete K9 and K10 documents"); continue
             curves = _load(disk[pre + "curves.json"])[0]
             want = sim.curves_of(results, r, plan["landscape_seed"], plan["operator_seed"])
             if _j({k: v for k, v in curves.items() if k != "written_utc"}) != _j({k: v for k, v in want.items() if k != "written_utc"}):

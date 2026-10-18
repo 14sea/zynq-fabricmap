@@ -197,6 +197,46 @@ def canonical(x) -> str:
     return json.dumps(x, sort_keys=True, allow_nan=False)
 
 
+DEADLINE_KEYS = {"seconds", "elapsed_s", "checks", "expired", "first_expired_at_s", "clock"}
+MS = 0.001                                                           # the record's precision: elapsed times are rounded to milliseconds
+
+
+def deadline_findings(rec, seconds=None, where: str = "deadline") -> list[str]:
+    """The deadline record (b4_deadline.Deadline.record()): exact types and ranges, and self-consistency — `expired` is
+    `elapsed >= seconds` at the moment of the record, the elapsed time rounded to ms, so an expired record carries
+    elapsed_s >= seconds - 1 ms and an unexpired one elapsed_s <= seconds; `first_expired_at_s` exists exactly when
+    expired and lies in [seconds - 1 ms, elapsed_s + 1 ms]. `seconds` binds the record to the declared duration."""
+    f: list[str] = []
+    if not (isinstance(rec, dict) and set(rec) == DEADLINE_KEYS):
+        return [f"{where}: keys"]
+    if not (_int(rec["seconds"]) and rec["seconds"] > 0):
+        f.append(f"{where}.seconds: not a positive int")
+    if not (_num(rec["elapsed_s"]) and rec["elapsed_s"] >= 0):
+        f.append(f"{where}.elapsed_s: not a finite non-negative number")
+    if not _nonneg(rec["checks"]):
+        f.append(f"{where}.checks: not a non-negative int")
+    if not isinstance(rec["expired"], bool):
+        f.append(f"{where}.expired: not a bool")
+    if not (rec["first_expired_at_s"] is None or (_num(rec["first_expired_at_s"]) and rec["first_expired_at_s"] >= 0)):
+        f.append(f"{where}.first_expired_at_s: not null or a finite non-negative number")
+    if rec["clock"] != "time.monotonic":
+        f.append(f"{where}.clock: not time.monotonic")
+    if f:
+        return f
+    s, e, x, fe = rec["seconds"], rec["elapsed_s"], rec["expired"], rec["first_expired_at_s"]
+    if seconds is not None and s != seconds:
+        f.append(f"{where}.seconds {s} is not the declared {seconds}")
+    if x and e < s - MS:
+        f.append(f"{where}: expired with elapsed_s {e} < seconds {s}")
+    if not x and e > s:
+        f.append(f"{where}: not expired with elapsed_s {e} > seconds {s}")
+    if x is not (fe is not None):
+        f.append(f"{where}: first_expired_at_s exists exactly when expired")
+    if fe is not None and not (s - MS <= fe <= e + MS):
+        f.append(f"{where}: first_expired_at_s {fe} is not within [seconds, elapsed_s]")
+    return f
+
+
 def total(fn):
     """A validator never raises: an exception while validating is itself a finding."""
     @functools.wraps(fn)
@@ -440,8 +480,10 @@ def k7_findings(doc) -> list[str]:
     for b, p in pre.items():
         if not (isinstance(p, dict) and {"arm", "budget", "records", "findings", "states", "not_unknown", "map_version", "map_commitment", "relations"} <= set(p)):
             f.append(f"prefixes[{b}]"); continue
-        if p["budget"] != int(b) or not (isinstance(p["findings"], list) and all(isinstance(x, str) for x in p["findings"])):
+        if not _int(p["budget"]) or p["budget"] != int(b) or not (isinstance(p["findings"], list) and all(isinstance(x, str) for x in p["findings"])):
             f.append(f"prefixes[{b}]: budget / findings")
+        if not ((p["not_unknown"] is None or _nonneg(p["not_unknown"])) and (p["map_version"] is None or _nonneg(p["map_version"])) and (p["records"] is None or _nonneg(p["records"]))):
+            f.append(f"prefixes[{b}]: not_unknown / map_version / records are not ints")
         if p["states"] is not None and (not isinstance(p["states"], dict) or set(p["states"]) != {"unknown", "effect_seen", "no_effect_seen", "context_dependent"}
                                         or not all(_nonneg(v) for v in p["states"].values()) or sum(p["states"].values()) != 21):
             f.append(f"prefixes[{b}]: the four states do not sum to 21")
@@ -478,8 +520,8 @@ def k9_findings(doc, task=None) -> list[str]:
         f.append("stopped and invalid at once")
     if doc["complete"] is not (doc["summary"] is not None):
         f.append("a summary exists exactly when complete")
-    if not (isinstance(doc["pairs"], list) and _nonneg(doc["pairs_done"]) and len(doc["pairs"]) == doc["pairs_done"]):
-        f.append("pairs / pairs_done"); return f
+    if not (isinstance(doc["pairs"], list) and _nonneg(doc["pairs_done"]) and len(doc["pairs"]) == doc["pairs_done"] and _int(doc["pairs_total"])):
+        f.append("pairs / pairs_done / pairs_total"); return f
     steps = len(task.stimulus) if task is not None else None
     obs = _observations(doc["observations"], f, "observations", doc["stimulus_sha256"], doc["memo"] if isinstance(doc["memo"], dict) else None, steps)
     _memo(doc["memo"], f, len(doc["observations"]) if isinstance(doc["observations"], list) else 0)
@@ -487,7 +529,7 @@ def k9_findings(doc, task=None) -> list[str]:
         if not (isinstance(p, dict) and K9_PAIR_KEYS <= set(p)):
             f.append(f"pairs[{i}]: keys"); break
         if not (_nonneg(p["bit"]) and p["bit"] < GENOME_BITS and isinstance(p["address"], str) and p["semantic"] in k9.SEMANTICS and (p["element"] is None or isinstance(p["element"], str))
-                and _genome(p["g0"]) and _genome(p["g1"]) and p["g0"] != p["g1"] and isinstance(p["backgrounds"], list) and (p["reason"] is None or isinstance(p["reason"], str))
+                and _genome(p["g0"]) and _genome(p["g1"]) and p["g0"] != p["g1"] and isinstance(p["backgrounds"], list) and all(_int(b) for b in p["backgrounds"]) and (p["reason"] is None or isinstance(p["reason"], str))
                 and isinstance(p["scope"], list) and isinstance(p["differences"], list)):
             f.append(f"pairs[{i}]: typing"); break
         if not isinstance(p["applicable"], bool) or (p["applicable"] and not isinstance(p["covered"], bool)) or (not p["applicable"] and p["covered"] is not None):
@@ -539,8 +581,8 @@ def k10_findings(doc, task=None) -> list[str]:
         f.append("backgrounds_equal")
     if not _int(doc["tau"]) or doc["tau"] != k10.TAU:
         f.append("tau is not the fixed threshold")
-    if not isinstance(doc["complete"], bool) or not isinstance(doc["units"], list):
-        f.append("complete / units"); return f
+    if not isinstance(doc["complete"], bool) or not isinstance(doc["units"], list) or not _int(doc["units_total"]):
+        f.append("complete / units / units_total"); return f
     if doc["complete"] is not (doc["stopped"] is None and doc["invalid"] is None):
         f.append("complete exactly when neither stopped nor invalid")
     if doc["stopped"] is not None and doc["invalid"] is not None:
@@ -557,7 +599,7 @@ def k10_findings(doc, task=None) -> list[str]:
             f.append(f"units[{i}]: typing"); break
         sc_ = {}
         for k, c in u["corners"].items():
-            if not (isinstance(c, dict) and set(c) == {"genome", "score", "obs"} and c["genome"] == k10._corner_genome(u["background"], u["a"], u["b"], k)
+            if not (isinstance(c, dict) and set(c) == {"genome", "score", "obs"} and _genome(c["genome"]) and c["genome"] == k10._corner_genome(u["background"], u["a"], u["b"], k)
                     and (c["score"] is None or _int(c["score"])) and (c["obs"] is None or (_int(c["obs"]) and c["obs"] in obs)) and ((c["score"] is None) == (c["obs"] is None))):
                 f.append(f"units[{i}].corners[{k}]: typing"); break
             if c["obs"] is not None and obs[c["obs"]]["genome"] != c["genome"]:
@@ -616,7 +658,7 @@ def curves_findings(doc) -> list[str]:
     fe = doc["f_end_to_end_at_grid"]
     if not (isinstance(fe, list) and len(fe) == len(g) and all(isinstance(e, dict) and set(e) == {"T", "value", "mapping_in_progress"} and _nonneg(e["value"]) and isinstance(e["mapping_in_progress"], bool) for e in fe)):
         f.append("f_end_to_end_at_grid")
-    elif [e["T"] for e in fe] != g:
+    elif canonical([e["T"] for e in fe]) != canonical(g):
         f.append("f_end_to_end_at_grid: T is not the grid")
     if not (isinstance(doc["holdout"], dict) and set(doc["holdout"]) == set(ROLES) and all(_nonneg(v) for v in doc["holdout"].values())):
         f.append("holdout")
@@ -661,8 +703,7 @@ def stopped_findings(doc) -> list[str]:
         f.append("pair")
     if not isinstance(doc["stage"], str) or not (doc["role"] is None or doc["role"] in ROLES or doc["role"] in ("K9", "K10")):
         f.append("stage / role")
-    if not isinstance(doc["deadline"], dict):
-        f.append("deadline")
+    f += deadline_findings(doc["deadline"])
     _planned(doc["planned"], f)
     if not (doc["head_at_stop"] is None or (isinstance(doc["head_at_stop"], str) and HEX40.match(doc["head_at_stop"]))):
         f.append("head_at_stop")
@@ -704,9 +745,10 @@ def report_findings(doc) -> list[str]:
         f.append("count")
     if not (isinstance(doc["head"], str) and HEX40.match(doc["head"])):
         f.append("head")
-    for k in ("deadline", "thresholds", "identity"):
+    for k in ("thresholds", "identity"):
         if not isinstance(doc[k], dict):
             f.append(k)
+    f += deadline_findings(doc["deadline"])
     if not isinstance(doc["standing"], str) or "not a gate verdict" not in doc["standing"]:
         f.append("standing must say it is not a gate verdict")
     pl = doc["pairs"]
@@ -719,8 +761,8 @@ def report_findings(doc) -> list[str]:
             f.append("a complete report has a summary, no STOPPED and nothing missing")
         if isinstance(pl, list) and any(not isinstance(p, dict) or p.get("status") != "complete" for p in pl):
             f.append("a complete report has every pair complete")
-        if isinstance(doc["deadline"], dict) and doc["deadline"].get("expired") is not False:
-            f.append("a complete report's deadline has not expired")
+        if isinstance(doc["deadline"], dict) and (doc["deadline"].get("expired") is not False or not (_num(doc["deadline"].get("elapsed_s")) and _int(doc["deadline"].get("seconds")) and doc["deadline"]["elapsed_s"] <= doc["deadline"]["seconds"])):
+            f.append("a complete report's deadline has not expired and its elapsed time is within the declared seconds")
         if doc["self_validation"] != {}:
             f.append("a complete report has an empty self-validation")
     else:

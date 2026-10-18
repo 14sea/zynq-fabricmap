@@ -239,6 +239,20 @@ MUTANTS = [
  ("M57 R5: no input checkpoint after the final verification",
   edit(SIM, [("                self.hold_inputs(\"publication\")\n                self.hold_tree()\n", "")]),
   [T + "test_b4_sim.InvalidStops.test_an_input_drift_during_the_final_verification_is_invalid"]),
+ ("M58 round 3 / 1: the diagnostic state ↔ file contract is not enforced by the verifier",
+  edit(VER, [('        F.add(pre, *diagnostic_state_findings(plan, {k: _load(disk[pre + f"{k}.json"])[0] for k in ("k7", "k9", "k10") if pre + f"{k}.json" in disk}))', '        pass')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_genuine_partial_diagnostic_cannot_belong_to_a_complete_batch"]),
+ ("M59 round 3 / 2: pairs_total / units_total / corner genomes compared by Python equality",
+  edit(SCH, [('    if not (isinstance(doc["pairs"], list) and _nonneg(doc["pairs_done"]) and len(doc["pairs"]) == doc["pairs_done"] and _int(doc["pairs_total"])):', '    if not (isinstance(doc["pairs"], list) and _nonneg(doc["pairs_done"]) and len(doc["pairs"]) == doc["pairs_done"]):'),
+             ('    if not isinstance(doc["complete"], bool) or not isinstance(doc["units"], list) or not _int(doc["units_total"]):', '    if not isinstance(doc["complete"], bool) or not isinstance(doc["units"], list):'),
+             ('            if not (isinstance(c, dict) and set(c) == {"genome", "score", "obs"} and _genome(c["genome"]) and c["genome"] == k10._corner_genome(u["background"], u["a"], u["b"], k)', '            if not (isinstance(c, dict) and set(c) == {"genome", "score", "obs"} and c["genome"] == k10._corner_genome(u["background"], u["a"], u["b"], k)')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_remaining_counts_and_genomes_are_exact_in_type"]),
+ ("M60 round 3 / 3: the deadline record's self-consistency is not checked",
+  edit(SCH, [('    if x and e < s - MS:\n        f.append(f"{where}: expired with elapsed_s {e} < seconds {s}")\n    if not x and e > s:\n        f.append(f"{where}: not expired with elapsed_s {e} > seconds {s}")\n', '')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_deadline_records_are_consistent_and_bound_to_the_manifest"]),
+ ("M61 round 3 / 3: the report's deadline is not bound to the manifest's declared duration",
+  edit(VER, [('    F.add("sim_report.json", *sc.deadline_findings(report["deadline"], manifest["deadline_s"], "deadline"))', '    F.add("sim_report.json", *sc.deadline_findings(report["deadline"], None, "deadline"))')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_deadline_records_are_consistent_and_bound_to_the_manifest"]),
 ]
 
 

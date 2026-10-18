@@ -33,6 +33,7 @@ grids and the decode and names any difference.
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -228,10 +229,12 @@ def canonical_findings(result: dict, mapping) -> list[str]:
     if len(pairs) > len(want):
         f.append(f"{len(pairs)} pairs recorded, more than the fixed set's {len(want)}")
     for i, (p, w) in enumerate(zip(pairs, want)):
-        if (p["bit"], p["g0"], p["g1"], p["semantic"], p["element"], p["backgrounds"]) != (w["bit"], w["g0"], w["g1"], w["semantic"], w["element"], w["backgrounds"]):
+        if json.dumps([p["bit"], p["g0"], p["g1"], p["semantic"], p["element"], p["backgrounds"]]) != json.dumps([w["bit"], w["g0"], w["g1"], w["semantic"], w["element"], w["backgrounds"]]):
             f.append(f"pair {i}: not the fixed set's pair {i}"); break
-    if result["pairs_done"] != len(pairs):
+    if not isinstance(result["pairs_done"], int) or isinstance(result["pairs_done"], bool) or result["pairs_done"] != len(pairs):
         f.append("pairs_done is not the number of pairs recorded")
+    if not isinstance(result["pairs_total"], int) or isinstance(result["pairs_total"], bool) or result["pairs_total"] != len(want):
+        f.append(f"pairs_total is not the int {len(want)}")
     return f
 
 

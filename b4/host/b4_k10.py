@@ -23,6 +23,7 @@ interrupt) leaves the partial result on the exception as `k10_partial`.
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -166,11 +167,11 @@ def canonical_findings(result: dict) -> list[str]:
     if len(units) > len(want):
         f.append(f"{len(units)} units recorded, more than the fixed set's {len(want)}")
     for i, (u, w) in enumerate(zip(units, want)):
-        if (u["background_index"], u["a"], u["b"]) != w:
+        if json.dumps([u["background_index"], u["a"], u["b"]]) != json.dumps(list(w)):
             f.append(f"unit {i}: not the fixed set's unit {i} (background {w[0]}, {w[1]}, {w[2]})"); break
-    if result["units_total"] != len(want):
-        f.append(f"units_total {result['units_total']} != {len(want)}")
-    if result["logical_corners"] != 4 * len(units):
+    if not isinstance(result["units_total"], int) or isinstance(result["units_total"], bool) or result["units_total"] != len(want):
+        f.append(f"units_total {result['units_total']!r} is not the int {len(want)}")
+    if not isinstance(result["logical_corners"], int) or isinstance(result["logical_corners"], bool) or result["logical_corners"] != 4 * len(units):
         f.append("logical_corners is not four per unit")
     return f
 
