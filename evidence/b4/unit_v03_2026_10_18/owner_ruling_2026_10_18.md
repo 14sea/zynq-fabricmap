@@ -1,4 +1,10 @@
-# The owner's rulings that open and bound this unit (2026-10-18; pasted text, verbatim)
+# The owner's rulings that open and bound this unit (2026-10-18; pasted text)
+
+> **Labelling (the owner's P3 on `12eaa72`):** the X-A PASS below is the pasted text in full. The v0.3 section below is an
+> **EXCERPT** — the summary the owner pasted as the final response to the scope draft. The owner's **full, detailed ruling** on
+> the v0.3 scope draft (five sections: source strength and G1–G6, the kept v0.2 file, the acceptance corrections, the file
+> scope, regression and mutants) is archived beside this file as `owner_ruling_v03_full_2026_10_18.md`, copied from
+> `build/wip/b4_v03_model_revision_owner_ruling_2026_10_18.md` (an ignored path, not a tracked archive by itself).
 
 ## The X-A PASS on c0689f8, naming the next step
 
@@ -10,7 +16,7 @@ c0689f8 PASS，X-A 工程驗收結案。
 
 十四筆本地 commit 保留。下一步可提 v0.3 模型修訂的只讀範圍草案，分清 host 對應證據、UNISIM 行為與推廣假設。v0.3 實作、2b-3、探索、gate、push／merge、板上工作仍未授權。
 
-## The ruling on the v0.3 scope draft (`build/wip/b4_v03_model_revision_scope_draft_2026_10_18.md`, ignored), authorising this unit
+## The ruling on the v0.3 scope draft (`build/wip/b4_v03_model_revision_scope_draft_2026_10_18.md`, ignored), authorising this unit — AN EXCERPT (the full ruling: `owner_ruling_v03_full_2026_10_18.md`)
 
 - L1 標為 host correspondence，釘 attempt 2 的 probe_report.json；整體讀法仍依賴具名前提，維持 unverified。
 - 保留原 v0.2 檔案，bytes 不變；v021_hole 從此檔核對舊 digest 後建立標記 fixture。
