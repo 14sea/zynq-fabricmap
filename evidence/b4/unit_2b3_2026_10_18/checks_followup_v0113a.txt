@@ -1,0 +1,19 @@
+# Checks run for the wording follow-up v0.1.13a (documents only; no test, no run, no seed drawn)
+
+## Edit anchors
+Nine anchors, each found exactly once in docs/b4_architecture.md before replacement
+(header; K2; K3; K7 (b); K9; K10; the B* paragraph; section 9.2 pair_seeds sentence; section 9.3 step 5),
+plus the section 13 row and the revision-note insertion point.
+
+## Number tokens (regex over the whole file, multiset before vs after)
+added:   2026 x1, 10 x1, 18 x1 (the revision date); 5.2 x2, 9.2 x1 (section references);
+         0 x3 (P(... > 0) twice, "count is 0"); 1 x1 (B* + 1); 21 x1 (the 21 bits); 32 x1 (32-bit);
+         3564236 x1 (the commit the note refers to)
+removed: none
+
+## Whitespace
+git diff --check: clean.
+
+## What was NOT done here
+No threshold, grid, formula, seed, path or digest changed; nothing under b4/ touched; no test run,
+no model run, no seed value generated, no K result computed; nothing pushed or merged.

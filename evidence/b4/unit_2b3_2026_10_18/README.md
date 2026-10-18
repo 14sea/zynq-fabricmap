@@ -54,3 +54,25 @@ The S = 32 exploration is **not** authorised. Next comes the exploration harness
 scope (the D and X controls, K7's prefix snapshot, K9's fixed set, replay, the seed and archive
 rules, time limits, the dirty-tree / no-clobber / stop rules) for the owner's review. Exploration,
 the formal gate, unit 2b-4, 2c, 2d, purchases, push, merge and board work all remain unauthorised.
+
+## Follow-up v0.1.13a — wording only (2026-10-18, after `3564236`)
+
+Made on the user's instruction that the document must not leave a sentence open to two readings. **No
+threshold, grid, formula, seed, path or digest changed**; `checks_followup_v0113a.txt` lists the
+number tokens the edit added (dates, section references, the literals `0`, `1`, `21`, `32`, the commit
+`3564236`) and confirms none was removed. Each sentence below was ambiguous before and is fixed now:
+
+| where | the two readings it allowed | fixed as |
+|---|---|---|
+| K2, K3 | the one-sided sign test's direction was only implied by the copied function | H1: P(control − R > 0) > ½, the direction in which the control would profit; K3 runs over the S pairs at `B*` |
+| K7 (b) | "O's `B*` search prefix" did not say which ledger records | the records from the base observation through the `B*`-th search evaluation inclusive — O's first `B* + 1` records — and the map state after ingesting exactly those |
+| K9 | "`ff_init` is reported separately" could be read as "excluded from the seven"; "median over seeds" did not say whether a not-assessable seed enters it | the seven are named from §5.2; `ff_init` counts as the others do and carries its A8 flag in addition; the median is over all S seeds and one not-assessable seed makes the semantic's median not assessable (fail-closed; condition (b) not met for that semantic) |
+| K10 | "not comparable" and "DOMAIN is invalid" sat side by side without saying how they relate | under v0.3 every assignment is in the domain, so a not-comparable corner can arise only from a DOMAIN refusal, which is invalid; the expected not-comparable count is 0 |
+| `B*` paragraph | K1 appeared both as a row at `B*` and as an eligibility condition at `B`; a bare `N` had no budget | K1 is evaluated at every grid budget for eligibility and its row restates it at `B*`; a bare `N` means `N(B*)` |
+| §9.2 | "both values de-duplicated and screened against the exclusion set" did not say whether a value exposed as an operator seed also bars a landscape seed | one pooled set of integers from every listed field whatever its role, applied to both positions, as B2's `pair_seeds` does; a coinciding or repeated draw is skipped |
+| §9.3 step 5 | — | repeats K9 (b)'s population rule so the two places cannot drift |
+
+The K9 median rule (one not-assessable seed → the semantic's median not assessable) is this follow-up's
+own fail-closed reading of the ruling's "a zero denominator is not assessable, never 100 %"; the ruling
+did not say how such a seed enters the median, and the owner may rule otherwise. §13's 2b-3 row and the
+document header carry the suffix `a`.
