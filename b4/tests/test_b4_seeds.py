@@ -26,9 +26,16 @@ FAKE_MASTER = 424242                   # not a seed of any run: a literal master
 
 
 def seeds_doc(label: str, master: int, pairs: list) -> dict:
-    return {"schema": "b4_sim_seeds", "schema_version": "1.0.0", "label": label,
+    return {"schema": "b4_sim_seeds", "schema_version": "1.1.0", "label": label, "fixture": False,
             "anchor": {"rule": "sha256(label|anchor)[:4]", "hypothesis_sha256": FAKE_ANCHOR, "label": label},
             "master_seed": master, "count": len(pairs), "pairs": pairs,
+            "exclusion": {"sources": [], "b4_exposed_values": [], "sim_registry": [], "pooled_total": 0}, "generated_utc": "2026-10-18T00:00:00Z"}
+
+
+def fixture_doc(label: str, pairs: list) -> dict:
+    return {"schema": "b4_sim_seeds", "schema_version": "1.1.0", "label": label, "fixture": True,
+            "anchor": {"rule": "mechanics fixture: explicit already-exposed values; no anchor", "hypothesis_sha256": None, "label": label},
+            "master_seed": None, "count": len(pairs), "pairs": pairs,
             "exclusion": {"sources": [], "b4_exposed_values": [], "sim_registry": [], "pooled_total": 0}, "generated_utc": "2026-10-18T00:00:00Z"}
 
 
@@ -236,10 +243,40 @@ class TheRegistry(unittest.TestCase):
         self.assertEqual(bs.seeds_doc_findings(good), [])
         for mutate in (lambda d: d.pop("count"), lambda d: d.update(count=5), lambda d: d["anchor"].update(label="other"),
                        lambda d: d.update(master_seed=-1), lambda d: d["pairs"].append([1, 1]), lambda d: d["exclusion"].pop("pooled_total"),
-                       lambda d: d.update(schema_version="0.9")):
+                       lambda d: d.update(schema_version="1.0.0"), lambda d: d.pop("fixture"), lambda d: d.update(fixture="no"),
+                       lambda d: d.update(fixture=True), lambda d: d.update(label="b4-mech-1"),
+                       lambda d: (d.update(label="b4-mech-1"), d["anchor"].update(label="b4-mech-1"))):   # a production set under a fixture label: the label rule alone
             d = json.loads(json.dumps(good))
             mutate(d)
             self.assertTrue(bs.seeds_doc_findings(d), mutate)
+
+    def test_the_fixture_form_of_the_seeds_document(self):
+        """A mechanics fixture set: a b4-mech-<n> label, no master, no anchor digest, only already-exposed values (the owner's
+        review of 2026-10-18, F1)."""
+        good = fixture_doc("b4-mech-1", [[7, 11], [8, 12]])
+        self.assertEqual(bs.seeds_doc_findings(good), [])
+        self.assertTrue(all(v in bs.FIXTURE_VALUES for p in good["pairs"] for v in p))
+        for mutate, why in ((lambda d: d.update(label="b4-sim-1"), "a production label on a fixture set"),
+                            (lambda d: (d.update(label="b4-sim-1"), d["anchor"].update(label="b4-sim-1")), "a production label on a fixture set, the anchor's label moved with it: the label rule alone refuses"),
+                            (lambda d: d["anchor"].update(label="b4-sim-1"), "the anchor's label differs"),
+                            (lambda d: d.update(master_seed=1000001), "a fixture set derives no master"),
+                            (lambda d: d["anchor"].update(hypothesis_sha256=FAKE_ANCHOR), "a fixture set has no anchor digest"),
+                            (lambda d: d["anchor"].update(rule="sha256(label|anchor)[:4]"), "the rule must name the fixture"),
+                            (lambda d: d["pairs"].append([7, 1000001]), "a value that is not already exposed"),
+                            (lambda d: d.update(fixture=False), "a production set with a fixture label")):
+            d = json.loads(json.dumps(good))
+            mutate(d)
+            self.assertTrue(bs.seeds_doc_findings(d), why)
+        self.assertEqual(bs.FIXTURE_VALUES, frozenset(bs.B2_EXCLUDED_SEEDS) | bs.B4_EXPOSED_VALUES)
+
+    def test_a_fixture_set_in_the_registry_is_read_without_a_master(self):
+        self.write("b4-mech-1_x", "seeds.json", fixture_doc("b4-mech-1", [[7, 11], [8, 12]]))
+        self.write("b4-fake-1_y", "seeds.json", seeds_doc("b4-fake-1", 1000001, [[2000001, 2000002]]))
+        recs, _ = bs.sim_registry(R, str(self.sim))
+        self.assertEqual([(r.status, r.master_seed, r.values) for r in recs], [("seeds", 1000001, (1000001, 2000001, 2000002)), ("seeds_fixture", None, (7, 11, 8, 12))])
+        ex = bs.load_exclusion_set(R, str(self.sim))
+        self.assertEqual(ex.as_dict()["sim_registry"][1], {"dir": f"{self.sim}/b4-mech-1_x", "status": "seeds_fixture", "seeds_sha256": recs[1].seeds_sha256, "master_seed": None, "count": 4})
+        self.assertTrue({7, 11, 8, 12, 1000001, 2000001} <= ex.values)
 
 
 if __name__ == "__main__":

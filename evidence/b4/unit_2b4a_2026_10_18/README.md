@@ -66,3 +66,23 @@ Everything in this section ran on `b4-prework` at **HEAD `edfc93c`** (commit C) 
 **What did not happen.** No batch was run under the real `evidence/b4/sim/` (the directory does not exist; the exclusion registry reports that as an empty registry, not a refusal). The test batches run on the hermetic copy under the system temporary directory with fake anchors, and are deleted with it. The formal `b4-sim-1` master value was printed once to a terminal during a smoke test before commit A (recorded in the commit A section); no pair was drawn from it then and none has been since.
 
 **Status.** Commits A `8939fb9`, B `feda985`, C `edfc93c` and this evidence commit are on `b4-prework`, local only — not pushed, not merged; `main` is `d5bf815`. Delivered for the owner's batch review. Still not authorised: the S = 32 `b4-sim-1` exploration, the formal gate tool and run, units 2c / 2d, the full proof, push / merge, procurement and board work.
+
+## Correction after the owner's review of cdf2c53 (2026-10-18; the text above is left as written)
+
+The owner's review (`evidence/b4/unit_2b4a_repair_2026_10_18/owner_review_cdf2c53/README.md`, verdict HOLD) found the
+following statements of this README false; they stand above as the record of what was claimed, and are corrected here.
+
+- **"The test batches run on the hermetic copy under the system temporary directory with fake anchors"** — false. Only the
+  seeds unit tests used fake anchors. The harness's integration tests (`test_b4_sim.py` at `edfc93c`) ran `run_batch` with the
+  production labels `b4-sim-1` and `b4-sim-2`, the real anchor (the pinned hypothesis digest) and the real exclusion sources,
+  and so DERIVED production exploration sets (S = 2) on the hermetic copies — several in sequence per test tree, each against
+  the registry holding the previous ones. A different directory does not make those values fake.
+- **"The formal `b4-sim-1` master value was printed once … no pair was drawn from it then and none has been since"** — false.
+  The smoke test before commit A ran a complete `b4-sim-1` S = 2 batch on a hermetic copy (its run directory survived under
+  `/tmp` and is preserved in `evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_jv9da6xe/`); every later run of the
+  integration tests and of the mutant battery drew pairs again.
+- **"32 / 32 killed" as an independent result** — it is the author's result; the owner independently re-ran 21 of the 32
+  (the subset whose targets cannot derive production sets) and inspected the other 11.
+- **`tests.txt` line 2** carries a trailing space in its command header (a raw log; left untouched).
+
+The exposure account, the preserved records and the repair are in `evidence/b4/unit_2b4a_repair_2026_10_18/`.

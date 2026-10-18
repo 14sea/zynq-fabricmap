@@ -1,45 +1,59 @@
 #!/usr/bin/env python3
 """B4 — the HOST-ONLY EXPLORATION HARNESS (docs/b4_architecture.md sections 8, 9, 9.1–9.3; the owner's ruling of 2026-10-18 on
-unit 2b-4a). It runs the seven arms per pair on the FORMAL model, audits every run, computes K7 / K9 / K10's data and the
-descriptive statistics, and archives everything typed — values beside the fixed thresholds, NEVER a gate verdict.
+unit 2b-4a; repaired after the owner's review of cdf2c53, F1–F9). It runs the seven arms per pair on the FORMAL model, audits
+every run, computes K7 / K9 / K10's data and the descriptive statistics, and archives everything typed — values beside the
+fixed thresholds, NEVER a gate verdict.
 
     b4_sim.py --label b4-sim-1 --seeds 32 --deadline-s 3600 [--out evidence/b4/sim/<label>_<UTC>]
 
 NOTHING IS AUTHORISED BY THIS FILE: running it is a separate authorisation (ruling section 5). The CLI has no fixture,
-no allow-dirty, no test mode; a test drives `run_batch` on a hermetic repository copy with its own `port_factory`.
+no allow-dirty, no test mode; a test drives `run_batch` on a hermetic repository copy with its own `port_factory` and a
+`FixtureSchedule`.
 
-PRE-FLIGHT (no write on any failure; exit 2): the label is `b4-sim-<n>`; S and the deadline are positive ints; the tree is
-clean (`git status --porcelain` empty, no override); the formal hypothesis loads (not a fixture), the mapping, the truth
-fabric; the root's copies of the formal inputs hash to the pinned digests; every exclusion source reads; the output
-directory lies directly under `evidence/b4/sim/`, is named `<label>_…`, follows no symlink and does not exist. Then the
-directory is created EXCLUSIVELY and the batch begins; the deadline counts from the pre-flight's start.
+SEEDS (F1). A PRODUCTION batch (label `b4-sim-<n>`) derives its master from the anchor and draws its pairs against the pooled
+exclusion set — that derivation is the formal act of section 9.2 and happens ONLY here, only for a production label. A
+MECHANICS batch (label `b4-mech-<n>`, Python API only) takes a `FixtureSchedule`: an explicit list of pairs made solely of
+values already exposed under section 9.2 (`b4_seeds.FIXTURE_VALUES`); no anchor, no master, no draw, `fixture = true` in
+every record; it can never reach a production set. A production label with a schedule, or a fixture label without one, is
+refused before anything is written.
 
-FREEZING ORDER: `seeds.json` (the anchor, the master, the exclusion snapshot, every planned pair) is written, then
-`manifest.json` (HEAD, every input's digest, the tool files' digests, the constants, the thresholds table), and only then
-the first observation. An initialisation failure after the directory exists leaves `INIT_FAILED.json`.
+PRE-FLIGHT (no write on any failure; exit 2): the label and the schedule as above; S and the deadline are positive ints; the
+tree is clean (`git status --porcelain` empty, no override); the formal hypothesis loads (not a fixture), the mapping, the
+truth fabric; the root's copies of the formal inputs hash to the pinned digests; the hypothesis's repository AND external
+(vendor) sources hash to their recorded digests; every exclusion source reads; the output directory is `evidence/b4/sim/
+<label>_…` LITERALLY under the resolved root — no ancestor of the namespace is a symlink, the leaf does not exist — then
+it is created EXCLUSIVELY and checked again (F7); the deadline counts from the pre-flight's start.
+
+FREEZING ORDER: `seeds.json`, then `manifest.json` (HEAD, every input's digest — the root inputs, the hypothesis's
+repository sources, the 38 exclusion sources, the external sources by absolute path — the tool files' digests, the code
+root's HEAD and cleanliness, the archived-set registry snapshot, the constants, the thresholds table), and only then the
+first observation (F9). An initialisation failure after the directory exists leaves `INIT_FAILED.json`.
 
 PER PAIR, IN THE FIXED ORDER R → F → O → X → D → Ω → A0 (one worker, never more): a new port per arm; the engine's
-`RunResult` is written AT ONCE, exclusively, before any audit; then the typed completion checks (section 4.3), the replay,
-the ledger recompute (K7 a), the given-view checks; a finding is `invalid`. After F the D view is built from F's rebuilt
-map (`b4_controls`); after O the K7 prefix snapshots at every grid budget; after the arms K9 and K10 on their own ports;
-the curves; the pair index last. After every pair the HEAD and the input digests are held to the manifest (a drift is
-`invalid`). Every file is validated against `b4_sim_schema` BEFORE it is written.
+`RunResult` is validated and written AT ONCE, exclusively, before any audit — a returned object that does not validate is
+QUARANTINED raw with the findings (`arm_<role>.result.QUARANTINE.json`, state `result_malformed`) and the batch is invalid
+(F6); then the typed completion checks (section 4.3), the replay, the ledger recompute (K7 a), the given-view checks; a
+finding is `invalid`. After F the D view from F's rebuilt map; after O the K7 prefixes at every grid budget; after the arms
+K9 and K10 on their own ports — a refusal, an error or an interrupt inside them leaves the PARTIAL record on disk (F5, F6;
+K10 observes no corner after the first refused one); the curves; the pair index last. After every pair and at the end the
+HEAD, every input digest, every external digest, every tool digest and the registry snapshot are held to the manifest (a
+drift is `invalid`); at the end the working tree must carry nothing but this batch's output.
 
 STOP RULES (section 9.1; fail-closed): a DOMAIN, another refusal, a control failure, a replay or recompute finding, a
-K10 `comparable = False`, a schema finding, an input drift or an unexpected exception is `invalid`; the soft deadline
-(`b4_deadline`, checked before and after every arm, every replay, every snapshot, every K9 pair, every K10 unit, every
-statistics unit) or an external interrupt is `incomplete`. In every case what has returned is on disk, `STOPPED.json`
-names the kind, the pair, the stage and the whole planned list (unstarted pairs `not_started`, an interrupted engine call
-`result_unavailable`), and `sim_report.json` carries the status, the identity and the archive index — a pooled numeric
-summary ONLY when the batch is `complete`. Nothing is skipped, swapped or redrawn. Exit codes: 0 complete, 1 invalid,
-2 refused / init failed, 3 incomplete.
+K10 `comparable = False`, a schema finding, an input drift, an unexpected exception or a finding of the batch's own
+archive-wide verification is `invalid`; the soft deadline (checked before and after every arm, replay, snapshot, K9 pair,
+K10 unit, statistics unit AND before every finalisation unit — a batch whose deadline expired is never `complete`, F8) or
+an external interrupt is `incomplete`. In every case what has returned is on disk, `STOPPED.json` names the kind, the pair,
+the stage and the whole planned list, and `sim_report.json` carries the status, the identity, the archive index and the
+self-validation — a pooled numeric summary ONLY when the batch is `complete` AND its archive verifies clean. A report that
+cannot be validated or written is itself a failure: the batch is then `invalid`, exit 1, whatever happened before (F4).
+Nothing is skipped, swapped or redrawn. Exit codes: 0 complete, 1 invalid, 2 refused / init failed, 3 incomplete.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
-import math
 import os
 import re
 import statistics
@@ -47,6 +61,7 @@ import subprocess
 import sys
 import time
 import traceback
+from dataclasses import dataclass
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -67,13 +82,15 @@ import b4_landscape as bl  # noqa: E402
 import b4_replay as br  # noqa: E402
 import b4_seeds as bs  # noqa: E402
 import b4_sim_schema as sc  # noqa: E402
+import b4_sim_verify as sv  # noqa: E402
 import b4_snapshot as sn  # noqa: E402
 import b4_stats as st  # noqa: E402
 import b4_thresholds as th  # noqa: E402
 from b4_deadline import Deadline, StopWork  # noqa: E402
 
 SIM_REL = bs.SIM_REL
-LABEL_RE = re.compile(r"^b4-sim-[1-9][0-9]*$")
+LABEL_RE = re.compile(r"^b4-sim-[1-9][0-9]*$")                      # production exploration labels (the CLI's only labels)
+FIXTURE_LABEL_RE = bs.FIXTURE_LABEL_RE                              # mechanics fixture labels (Python API only)
 ROLES = sc.ROLES
 ENGINE_ARM = {"R": "R", "F": "F", "O": "O", "X": "X", "D": "F", "Omega": "F", "A0": "F"}
 GRID = th.GRID
@@ -81,8 +98,9 @@ B_MAX = th.B_MAX
 PROBES = th.PROBES
 EXPECTED_COST = {role: {"base": 1, "probes": PROBES if role == "F" else 0, "search": B_MAX, "holdout": 1} for role in ROLES}
 STANDING = ("exploration data under the label given, S as planned; not a gate verdict; the thresholds of docs/b4_architecture.md "
-            "v0.1.14 section 9 are listed for reference only; candidate B* / N are estimates on this S, never the formal S = 200's")
+            "v0.1.15 section 9 are listed for reference only; candidate B* / N are estimates on this S, never the formal S = 200's")
 ROOT_INPUTS = ("docs/b4_architecture.md", "b4/IMPORT.json", hy.HYPOTHESIS_REL, bm.CERTIFICATE_REL)
+FIXTURE_ANCHOR_RULE = "mechanics fixture: an explicit schedule of already-exposed values (b4_seeds.FIXTURE_VALUES); no anchor, no master, no draw"
 
 
 class Refusal(Exception):
@@ -93,6 +111,32 @@ class Invalid(Exception):
     def __init__(self, kind: str, detail: str, role: str | None = None, stage: str = ""):
         super().__init__(detail)
         self.kind, self.detail, self.role, self.stage = kind, detail, role, stage
+
+
+@dataclass(frozen=True)
+class FixtureSchedule:
+    """A MECHANICS fixture: the pairs of a `b4-mech-<n>` batch, given explicitly, every value already exposed under
+    section 9.2. Nothing is derived from it and nothing production-like can be reached through it."""
+    label: str
+    pairs: tuple
+
+    def findings(self) -> list[str]:
+        f: list[str] = []
+        if not (isinstance(self.label, str) and FIXTURE_LABEL_RE.match(self.label)):
+            f.append(f"the fixture label {self.label!r} is not b4-mech-<n>")
+        if not (isinstance(self.pairs, tuple) and self.pairs):
+            return f + ["the schedule is a non-empty tuple of (landscape_seed, operator_seed) pairs"]
+        for i, p in enumerate(self.pairs):
+            if not (isinstance(p, tuple) and len(p) == 2 and all(bs.is_seed_int(v) for v in p)):
+                f.append(f"pair {i}: not two seed ints"); continue
+            if p[0] == p[1]:
+                f.append(f"pair {i}: the two seeds are equal")
+            for v in p:
+                if v not in bs.FIXTURE_VALUES:
+                    f.append(f"pair {i}: the value {v} is not an already-exposed value (b4_seeds.FIXTURE_VALUES)")
+        if len(set(self.pairs)) != len(self.pairs):
+            f.append("a pair is scheduled twice")
+        return f
 
 
 # ------------------------------------------------------------------ small helpers
@@ -125,8 +169,21 @@ def tool_files(code_root: Path) -> list[str]:
     return out
 
 
-def input_snapshot(root: Path, hypothesis: hy.Hypothesis) -> tuple[dict, dict]:
-    """The digests of every root-relative input the batch depends on, and of the tool files (from the code tree)."""
+def code_root_state() -> dict:
+    """The model code's tree (REPO_ROOT): its HEAD and cleanliness, recorded so that a hermetic input root is never mistaken
+    for the code root (F9). None when the code root is not a git tree."""
+    try:
+        head = git(REPO_ROOT, "rev-parse", "HEAD").strip()
+        clean = not porcelain(REPO_ROOT)
+    except Refusal:
+        head, clean = None, None
+    return {"head": head, "clean": clean}
+
+
+def input_snapshot(root: Path, hypothesis: hy.Hypothesis, exclusion) -> tuple[dict, dict, dict, list]:
+    """The digests of every input the batch depends on: root-relative (the root inputs, the hypothesis's repository sources,
+    the 38 exclusion sources), external by absolute path (the hypothesis's vendor sources), the tool files (from the code
+    tree), and the registry snapshot [(dir, status, seeds_sha256)] of the archived sets (F9)."""
     inputs: dict[str, str] = {}
     for rel in ROOT_INPUTS:
         p = root / rel
@@ -137,8 +194,19 @@ def input_snapshot(root: Path, hypothesis: hy.Hypothesis) -> tuple[dict, dict]:
         raise Refusal("the root's hypothesis file does not hash to the pinned formal digest")
     if inputs[bm.CERTIFICATE_REL] != bm.CERTIFICATE_SHA256:
         raise Refusal("the root's certificate does not hash to the pinned digest")
+    external: dict[str, str] = {}
     for s in hypothesis.doc["sources"]:
-        if s.get("kind") in ("repository_document", "certificate_mapping") and "root" not in s:
+        if "path" not in s or "sha256" not in s:
+            continue
+        if "root" in s:
+            p = Path(s["root"]) / s["path"]
+            if not p.is_file():
+                raise Refusal(f"the external source {p} is missing")
+            got = sha_file(p)
+            if got != s["sha256"]:
+                raise Refusal(f"the external source {p} hashes to {got[:16]}…, not its recorded digest")
+            external[str(p)] = got
+        else:
             rel = s["path"]
             p = root / rel
             if not p.is_file():
@@ -147,8 +215,11 @@ def input_snapshot(root: Path, hypothesis: hy.Hypothesis) -> tuple[dict, dict]:
             if got != s["sha256"]:
                 raise Refusal(f"the hypothesis source {rel} hashes to {got[:16]}…, not its recorded digest")
             inputs[rel] = got
+    for src in exclusion.sources:                                   # read against their digests already; bound here for the checkpoints
+        inputs[src.path] = src.sha256
     tools = {rel: sha_file(REPO_ROOT / rel) for rel in tool_files(REPO_ROOT)}
-    return inputs, tools
+    registry = [[r.dir, r.status, r.seeds_sha256] for r in exclusion.registry]
+    return inputs, external, tools, registry
 
 
 def json_text(doc) -> bytes:
@@ -177,10 +248,36 @@ def write_exclusive(path: Path, doc, validator=None) -> dict:
     return {"path": path.name, "sha256": sha_bytes(data), "size": len(data)}
 
 
+def raw_projection(obj) -> tuple:
+    """(a JSON-able projection of a returned object or None, its repr) for a quarantine record."""
+    try:
+        d = obj.as_dict() if hasattr(obj, "as_dict") else obj
+        return json.loads(json.dumps(d, default=repr, allow_nan=False)), repr(obj)[:20000]
+    except Exception:  # noqa: BLE001
+        return None, repr(obj)[:20000]
+
+
 # ------------------------------------------------------------------ pre-flight
-def preflight(root: Path, label: str, count: int, deadline_s: int, out: Path | None) -> dict:
-    if not isinstance(label, str) or not LABEL_RE.match(label):
-        raise Refusal(f"the label {label!r} is not an exploration label b4-sim-<n> (the gate's label is unit 2b-4's)")
+def namespace_chain(root: Path) -> list[Path]:
+    """root/evidence, root/evidence/b4, root/evidence/b4/sim — every existing one must be a real directory, none a symlink."""
+    parts = Path(SIM_REL).parts
+    return [root.joinpath(*parts[:i + 1]) for i in range(len(parts))]
+
+
+def preflight(root: Path, label: str, count: int, deadline_s: int, out: Path | None, schedule: FixtureSchedule | None = None) -> dict:
+    if schedule is None:
+        if not isinstance(label, str) or not LABEL_RE.match(label):
+            raise Refusal(f"the label {label!r} is not an exploration label b4-sim-<n> (the gate's label is unit 2b-4's; a mechanics batch needs a FixtureSchedule)")
+    else:
+        if not isinstance(schedule, FixtureSchedule):
+            raise Refusal("the schedule is not a FixtureSchedule")
+        if not isinstance(label, str) or not FIXTURE_LABEL_RE.match(label):
+            raise Refusal(f"a batch with a FixtureSchedule carries a mechanics label b4-mech-<n>, not {label!r}: a production label never runs on a fixture")
+        f = schedule.findings()
+        if f or schedule.label != label:
+            raise Refusal("the fixture schedule is refused: " + "; ".join(f or ["its label is not the batch's"]))
+        if count != len(schedule.pairs):
+            raise Refusal(f"--seeds {count} is not the schedule's {len(schedule.pairs)} pairs")
     if not isinstance(count, int) or isinstance(count, bool) or count <= 0:
         raise Refusal("--seeds must be a positive int")
     if not isinstance(deadline_s, int) or isinstance(deadline_s, bool) or deadline_s <= 0:
@@ -200,26 +297,42 @@ def preflight(root: Path, label: str, count: int, deadline_s: int, out: Path | N
     fabric = fm.Fabric(mapping, hypothesis)
     if fabric.source["kind"] != "truth":
         raise Refusal("the fabric is not the truth")
-    inputs, tools = input_snapshot(root, hypothesis)
     try:
         exclusion = bs.load_exclusion_set(root)
     except bs.ExclusionSourceRefusal as exc:
         raise Refusal(f"the exclusion set cannot be loaded: {exc}") from None
+    inputs, external, tools, registry = input_snapshot(root, hypothesis, exclusion)
+    # the output directory: literally <root>/evidence/b4/sim/<label>_…, through no symlink anywhere in the chain (F7)
     ns = root / SIM_REL
+    for anc in namespace_chain(root):
+        if anc.is_symlink():
+            raise Refusal(f"{anc.relative_to(root)} is a symlink: the exploration namespace must be a real directory chain under the root")
+        if anc.exists() and not anc.is_dir():
+            raise Refusal(f"{anc.relative_to(root)} exists and is not a directory")
     stamp = utc().replace("-", "").replace(":", "")
     out_p = Path(out) if out is not None else ns / f"{label}_{stamp}"
     out_p = out_p if out_p.is_absolute() else root / out_p
+    if Path(os.path.normpath(out_p)) != out_p or out_p.parent != ns:
+        raise Refusal(f"the output directory must lie directly under {SIM_REL}/ of the root, written plainly; got {out_p}")
+    if not out_p.name.startswith(label + "_") or "/" in out_p.name:
+        raise Refusal(f"the output directory's name must begin with {label}_")
     if out_p.is_symlink() or out_p.exists():
         raise Refusal(f"the output directory {out_p} exists (or is a symlink); nothing is overwritten")
-    parent = out_p.parent
-    if parent.exists() and parent.resolve() != ns.resolve():
-        raise Refusal(f"the output directory must lie directly under {SIM_REL}/ (resolved); got {out_p}")
-    if not parent.exists() and parent != ns:
-        raise Refusal(f"the output directory must lie directly under {SIM_REL}/; got {out_p}")
-    if not out_p.name.startswith(label + "_"):
-        raise Refusal(f"the output directory's name must begin with {label}_")
-    return {"root": root, "head": head, "hypothesis": hypothesis, "mapping": mapping, "fabric": fabric, "inputs": inputs, "tools": tools,
-            "exclusion": exclusion, "out": out_p, "label": label, "count": count, "deadline_s": deadline_s}
+    return {"root": root, "head": head, "hypothesis": hypothesis, "mapping": mapping, "fabric": fabric, "inputs": inputs, "external": external, "tools": tools,
+            "registry": registry, "exclusion": exclusion, "out": out_p, "label": label, "count": count, "deadline_s": deadline_s, "schedule": schedule,
+            "code_root": code_root_state()}
+
+
+def create_out_dir(ctx: dict) -> None:
+    """Create the namespace chain and the output directory exclusively, then check the chain again: no symlink anywhere."""
+    root = ctx["root"]
+    for anc in namespace_chain(root):
+        if anc.is_symlink():
+            raise Refusal(f"{anc.relative_to(root)} became a symlink")
+        anc.mkdir(exist_ok=True)
+    ctx["out"].mkdir(exist_ok=False)
+    if ctx["out"].is_symlink() or ctx["out"].resolve() != ctx["out"] or any(a.is_symlink() for a in namespace_chain(root)):
+        raise Refusal(f"the output directory {ctx['out']} does not resolve to itself under the root")
 
 
 # ------------------------------------------------------------------ the batch
@@ -238,6 +351,7 @@ class Batch:
         self.summary: dict | None = None
         self.stats_record: dict | None = None
         self.current: dict = {"pair": None, "stage": "init", "role": None}
+        self.own_rel = str(self.out.relative_to(ctx["root"]))
 
     # -- writing
     def write(self, rel: str, doc, validator) -> dict:
@@ -246,14 +360,40 @@ class Batch:
         self.files.append(e)
         return e
 
+    def quarantine(self, rel: str, pair: int, role: str | None, stage: str, findings: list[str], obj) -> dict:
+        """Keep a returned object that did not validate, raw, with the findings that refused it (F6)."""
+        raw, rep = raw_projection(obj)
+        doc = {"schema": "b4_sim_quarantine", "schema_version": "1.0.0", "pair": pair, "role": role, "stage": stage, "findings": list(findings), "raw": raw, "raw_repr": rep, "written_utc": utc()}
+        try:
+            return self.write(rel, doc, sc.quarantine_findings)
+        except Invalid:
+            doc["raw"] = None                                       # a raw projection that is not finite JSON: keep the repr only
+            return self.write(rel, doc, sc.quarantine_findings)
+
+    def write_or_quarantine(self, rel: str, doc, validator, pair: int, role: str | None, stage: str) -> bool:
+        """Write `rel` if it validates, else its quarantine; True when the document was written as itself."""
+        f = validator(doc)
+        if not f:
+            self.write(rel, doc, validator)
+            return True
+        self.quarantine(rel.replace(".json", ".QUARANTINE.json"), pair, role, stage, f, doc)
+        return False
+
     # -- init: seeds, then manifest, then (and only then) observations
     def init(self) -> None:
         c = self.c
-        master = bs.master_seed(c["label"], hy.HYPOTHESIS_SHA256)
-        self.pairs = bs.pair_seeds(master, c["count"], c["exclusion"].values)
         exd = c["exclusion"].as_dict()
-        seeds = {"schema": "b4_sim_seeds", "schema_version": "1.0.0", "label": c["label"],
-                 "anchor": {"rule": th.THRESHOLDS["anchor"]["rule"], "hypothesis_sha256": hy.HYPOTHESIS_SHA256, "label": c["label"]},
+        if c["schedule"] is None:
+            master = bs.master_seed(c["label"], hy.HYPOTHESIS_SHA256)              # the formal derivation: production labels only
+            self.pairs = bs.pair_seeds(master, c["count"], c["exclusion"].values)
+            anchor = {"rule": th.THRESHOLDS["anchor"]["rule"], "hypothesis_sha256": hy.HYPOTHESIS_SHA256, "label": c["label"]}
+            fixture = False
+        else:
+            master = None
+            self.pairs = [tuple(p) for p in c["schedule"].pairs]
+            anchor = {"rule": FIXTURE_ANCHOR_RULE, "hypothesis_sha256": None, "label": c["label"]}
+            fixture = True
+        seeds = {"schema": bs.SEEDS_SCHEMA[0], "schema_version": bs.SEEDS_SCHEMA[1], "label": c["label"], "fixture": fixture, "anchor": anchor,
                  "master_seed": master, "count": c["count"], "pairs": [list(p) for p in self.pairs],
                  "exclusion": {"sources": exd["sources"], "b4_exposed_values": exd["b4_exposed_values"], "sim_registry": exd["sim_registry"], "pooled_total": exd["pooled_total"]},
                  "generated_utc": utc()}
@@ -261,18 +401,21 @@ class Batch:
         self.planned = [{"pair": r, "landscape_seed": l, "operator_seed": o, "status": "not_started", "arms": {role: "not_started" for role in ROLES},
                          "k7": "not_started", "k9": "not_started", "k10": "not_started"} for r, (l, o) in enumerate(self.pairs)]
         h, m = c["hypothesis"], c["mapping"]
-        manifest = {"schema": "b4_sim_manifest", "schema_version": "1.0.0", "label": c["label"], "count": c["count"], "generated_utc": utc(), "head": c["head"],
-                    "repo_root_kind": "the repository root the batch read its inputs from (git HEAD above); the model code is the b4/host tree of the tool files",
+        cr = c["code_root"]
+        manifest = {"schema": "b4_sim_manifest", "schema_version": "1.1.0", "label": c["label"], "fixture": fixture, "count": c["count"], "generated_utc": utc(), "head": c["head"],
+                    "repo_root_kind": "the repository root the batch read its inputs from (git HEAD above); the model code is the b4/host tree of the tool files (code_root)",
+                    "code_root": {"head": cr["head"], "clean": cr["clean"], "same_as_input_root": REPO_ROOT.resolve() == c["root"]},
                     "deadline_s": c["deadline_s"], "arm_order": list(ROLES), "engine_arm": dict(ENGINE_ARM), "budget": B_MAX, "grid": list(GRID),
                     "constants": {"engine": {"version": be.ENGINE_VERSION, "mu": be.MU, "lambda": be.LAMBDA, "kmax": be.KMAX}, "cartographer": bc.CARTO_VERSION,
                                   "task": bl.TASK_VERSION, "probes_per_F": PROBES, "expected_cost": EXPECTED_COST, "k9_panel": k9.PANEL_VERSION, "k10_salt": k10.SALT, "tau": k10.TAU,
                                   "prng": "b4_rng.Rng (xorshift64, a derived copy of b1_carto.Rng); the bootstrap random.Random", "anchor": th.THRESHOLDS["anchor"], "controls": th.THRESHOLDS["controls"]},
-                    "thresholds": th.THRESHOLDS, "inputs": c["inputs"], "tool_files": c["tools"],
+                    "thresholds": th.THRESHOLDS, "inputs": c["inputs"], "external_inputs": c["external"], "tool_files": c["tools"],
                     "hypothesis": {"path": h.path, "sha256": h.sha256, "version": h.version, "fixture": h.fixture, "sources": h.doc["sources"]},
                     "mapping": {"site": m.site, "certificate": m.certificate_rel, "certificate_sha256": m.certificate_sha256, "addresses": list(m.addresses)},
                     "fabric": dict(c["fabric"].source),
-                    "exclusion": {"historical_sources": len(exd["sources"]), "pooled_total": exd["pooled_total"], "sim_registry": exd["sim_registry"], "sim_registry_note": exd["sim_registry_note"]},
-                    "seeds_sha256": self.seeds_sha, "note": "written before the first observation; held at every pair's end and at the batch's end"}
+                    "exclusion": {"historical_sources": len(exd["sources"]), "pooled_total": exd["pooled_total"], "sim_registry": exd["sim_registry"], "sim_registry_note": exd["sim_registry_note"],
+                                  "registry_snapshot": c["registry"]},
+                    "seeds_sha256": self.seeds_sha, "note": "written before the first observation; every digest and the registry snapshot held at every pair's end and at the batch's end"}
         self.manifest_sha = self.write("manifest.json", manifest, sc.manifest_findings)["sha256"]
 
     # -- checkpoints
@@ -282,16 +425,29 @@ class Batch:
         if head != c["head"]:
             raise Invalid("input_drift", f"HEAD moved from {c['head'][:12]} to {head[:12]} ({stage})", stage=stage)
         for rel, sha in c["inputs"].items():
-            if sha_file(c["root"] / rel) != sha:
-                raise Invalid("input_drift", f"the input {rel} changed during the batch ({stage})", stage=stage)
+            p = c["root"] / rel
+            if not p.is_file() or sha_file(p) != sha:
+                raise Invalid("input_drift", f"the input {rel} changed or disappeared during the batch ({stage})", stage=stage)
+        for abs_path, sha in c["external"].items():
+            p = Path(abs_path)
+            if not p.is_file() or sha_file(p) != sha:
+                raise Invalid("input_drift", f"the external source {abs_path} changed or disappeared during the batch ({stage})", stage=stage)
         for rel, sha in c["tools"].items():
-            if sha_file(REPO_ROOT / rel) != sha:
-                raise Invalid("input_drift", f"the tool file {rel} changed during the batch ({stage})", stage=stage)
+            p = REPO_ROOT / rel
+            if not p.is_file() or sha_file(p) != sha:
+                raise Invalid("input_drift", f"the tool file {rel} changed or disappeared during the batch ({stage})", stage=stage)
+        try:
+            recs, _ = bs.sim_registry(c["root"])
+        except bs.ExclusionSourceRefusal as exc:
+            raise Invalid("input_drift", f"the archived-set registry no longer reads: {exc} ({stage})", stage=stage)
+        now = [[r.dir, r.status, r.seeds_sha256] for r in recs if r.dir != self.own_rel]
+        if now != c["registry"]:
+            raise Invalid("input_drift", f"the archived-set registry changed during the batch ({stage}): {len(c['registry'])} records at start, {len(now)} now", stage=stage)
 
     def hold_tree(self) -> None:
         """At the end: the only untracked / changed entries are this batch's own output."""
         c = self.c
-        own = str(self.out.relative_to(c["root"])).rstrip("/") + "/"
+        own = self.own_rel.rstrip("/") + "/"
         for ln in porcelain(c["root"]):
             path = ln[3:].strip()
             if not (ln.startswith("??") and (path == own or path.startswith(own))):
@@ -310,6 +466,7 @@ class Batch:
         fabric, mapping = c["fabric"], c["mapping"]
         results: dict[str, dict] = {}
         views: dict[str, bc.MapView] = {}
+        prefixes: dict = {}
         x_seed = ctl.x_control_seed(l, o)
         for role in ROLES:
             self.current["role"] = role
@@ -331,11 +488,20 @@ class Batch:
                 plan["arms"][role] = "result_unavailable"
                 raise Invalid("unexpected_exception", f"the engine raised {type(exc).__name__}: {exc}", role=role, stage="engine")
             wall = time.monotonic() - t0
-            d = res.as_dict()
-            self.write(f"pair_{r:03d}/arm_{role}.result.json",
-                       {"schema": "b4_sim_arm_result", "schema_version": "1.0.0", "pair": r, "role": role, "engine_arm": ENGINE_ARM[role], "landscape_seed": l,
-                        "operator_seed": o, "budget": B_MAX, "port_calls": port.calls, "wall_s": round(wall, 6), "written_utc": utc(), "result": d},
-                       lambda doc: sc.arm_result_findings(doc, task))
+            try:
+                d = res.as_dict()
+            except Exception as exc:  # noqa: BLE001
+                plan["arms"][role] = "result_malformed"
+                self.quarantine(f"pair_{r:03d}/arm_{role}.result.QUARANTINE.json", r, role, "engine_return", [f"as_dict raised {type(exc).__name__}: {exc}"], res)
+                raise Invalid("schema", f"the engine's return cannot be read as a RunResult ({type(exc).__name__}); quarantined", role=role, stage="engine_return")
+            doc = {"schema": "b4_sim_arm_result", "schema_version": "1.0.0", "pair": r, "role": role, "engine_arm": ENGINE_ARM[role], "landscape_seed": l,
+                   "operator_seed": o, "budget": B_MAX, "port_calls": port.calls, "wall_s": round(wall, 6), "written_utc": utc(), "result": d}
+            f = sc.arm_result_findings(doc, task)
+            if f:
+                plan["arms"][role] = "result_malformed"
+                self.quarantine(f"pair_{r:03d}/arm_{role}.result.QUARANTINE.json", r, role, "engine_return", f, doc)
+                raise Invalid("schema", f"arm_{role}.result.json: the returned RunResult does not validate (quarantined): " + "; ".join(f[:4]), role=role, stage="engine_return")
+            self.write(f"pair_{r:03d}/arm_{role}.result.json", doc, None)
             plan["arms"][role] = "written"
             results[role] = d
             self.dl.check()
@@ -371,7 +537,6 @@ class Batch:
             if role == "O":
                 self.current["stage"] = "k7"
                 plan["k7"] = "in_progress"
-                prefixes = {}
                 for B in GRID:
                     self.dl.check()
                     prefixes[str(B)] = sn.prefix_states(d, task, B)
@@ -381,31 +546,48 @@ class Batch:
                 self.write(f"pair_{r:03d}/k7.json", {"schema": "b4_sim_k7", "schema_version": "1.0.0", "pair": r, "arm": "O", "grid": list(GRID), "prefixes": prefixes, "complete": True, "written_utc": utc()}, sc.k7_findings)
                 plan["k7"] = "complete"
                 self.current["stage"] = "arms"
-        # K9
+        # K9 — a refusal, an error or an interrupt inside it leaves the partial on disk (F6)
         self.current.update(stage="k9", role="K9")
         plan["k9"] = "in_progress"
         self.dl.check()
         try:
             k9r = k9.coverage(task, self.port_factory(fabric, "K9", r), mapping, fabric, check=self.dl.check)
-        except (fm.DomainRefusal, ex.SourceRefusal, fm.ModelRefusal, ValueError) as exc:
-            raise Invalid("k9_invalid", f"K9 observation refused: {type(exc).__name__}: {exc}", role="K9", stage="k9")
-        self.write(f"pair_{r:03d}/k9.json", {"schema": "b4_sim_k9", "schema_version": "1.0.0", "pair": r, **k9r}, sc.k9_findings)
+        except KeyboardInterrupt as exc:
+            plan["k9"] = "partial"
+            self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "interrupt")
+            raise
+        except Exception as exc:  # noqa: BLE001 — DOMAIN, another refusal or an error: invalid, the partial kept
+            plan["k9"] = "invalid"
+            kept = self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "refusal")
+            raise Invalid("k9_invalid", f"K9 observation refused or failed: {type(exc).__name__}: {exc}" + ("" if kept else " [no partial record was available]"), role="K9", stage="k9")
+        if not self.write_or_quarantine(f"pair_{r:03d}/k9.json", {"schema": "b4_sim_k9", "schema_version": "1.1.0", "pair": r, **k9r}, lambda doc: sc.k9_findings(doc, task), r, "K9", "k9_return"):
+            plan["k9"] = "invalid"
+            raise Invalid("schema", "k9.json: the K9 record returned does not validate (quarantined)", role="K9", stage="k9")
         if not k9r["complete"]:
             plan["k9"] = "partial"
             raise StopWork(k9r["stopped"]["reason"])
         plan["k9"] = "complete"
-        # K10
+        # K10 — no corner is observed after the first refused one (F5); the partial is kept on every failure (F6)
         self.current.update(stage="k10", role="K10")
         plan["k10"] = "in_progress"
         self.dl.check()
         try:
             k10r = k10.seed_k10(task, self.port_factory(fabric, "K10", r), tau=k10.TAU, check=self.dl.check)
         except k10.K10Invalid as exc:
-            self.write(f"pair_{r:03d}/k10.json", {"schema": "b4_sim_k10", "schema_version": "1.0.0", "pair": r, **exc.partial}, sc.k10_findings)
+            plan["k10"] = "invalid"
+            self._keep_partial(r, "k10", exc.partial, lambda doc: sc.k10_findings(doc, task), "K10", "refusal")
             raise Invalid("k10_invalid", str(exc), role="K10", stage="k10")
-        except (ex.SourceRefusal, fm.ModelRefusal) as exc:
-            raise Invalid("k10_invalid", f"K10 observation refused: {type(exc).__name__}: {exc}", role="K10", stage="k10")
-        self.write(f"pair_{r:03d}/k10.json", {"schema": "b4_sim_k10", "schema_version": "1.0.0", "pair": r, **k10r}, sc.k10_findings)
+        except KeyboardInterrupt as exc:
+            plan["k10"] = "partial"
+            self._keep_partial(r, "k10", getattr(exc, "k10_partial", None), lambda doc: sc.k10_findings(doc, task), "K10", "interrupt")
+            raise
+        except Exception as exc:  # noqa: BLE001
+            plan["k10"] = "invalid"
+            kept = self._keep_partial(r, "k10", getattr(exc, "k10_partial", None), lambda doc: sc.k10_findings(doc, task), "K10", "refusal")
+            raise Invalid("k10_invalid", f"K10 observation refused or failed: {type(exc).__name__}: {exc}" + ("" if kept else " [no partial record was available]"), role="K10", stage="k10")
+        if not self.write_or_quarantine(f"pair_{r:03d}/k10.json", {"schema": "b4_sim_k10", "schema_version": "1.0.0", "pair": r, **k10r}, lambda doc: sc.k10_findings(doc, task), r, "K10", "k10_return"):
+            plan["k10"] = "invalid"
+            raise Invalid("schema", "k10.json: the K10 record returned does not validate (quarantined)", role="K10", stage="k10")
         if not k10r["complete"]:
             plan["k10"] = "partial"
             raise StopWork(k10r["stopped"]["reason"])
@@ -426,14 +608,31 @@ class Batch:
                                                 "arms": dict(plan["arms"]), "files": [dict(e, path=e["path"].split("/", 1)[1]) for e in self.files if e["path"].startswith(f"pair_{r:03d}/")],
                                                 "written_utc": utc()}, sc.pair_index_findings)
 
+    def _keep_partial(self, r: int, name: str, partial: dict | None, validator, role: str, stage: str) -> bool:
+        """Write the partial K9 / K10 record (or its quarantine when it does not validate); False when none was carried."""
+        if partial is None:
+            return False
+        version = "1.1.0" if name == "k9" else "1.0.0"
+        doc = {"schema": f"b4_sim_{name}", "schema_version": version, "pair": r, **partial}
+        try:
+            self.write_or_quarantine(f"pair_{r:03d}/{name}.json", doc, validator, r, role, stage)
+        except (Invalid, OSError):
+            return False
+        return True
+
     # -- the statistics stage
     def stats(self) -> None:
         self.current = {"pair": None, "stage": "statistics", "role": None}
         self.summary, self.stats_record = summarise_batch(self.rows, self.c["count"], check=self.dl.check)
 
-    # -- the end
+    # -- the end: the archive verified, the report written — both conditions of success (F4, F8)
     def finish(self, status: str, stop: dict | None, exit_code: int) -> dict:
         self.current["stage"] = "finish"
+        if status == "complete":
+            try:
+                self.dl.check()                                     # a finalisation unit never starts after the expiry
+            except StopWork as exc:
+                return self.finish("incomplete", {"kind": "deadline", "detail": f"the deadline expired before finalisation: {exc}", "role": None, "stage": "finalisation"}, 3)
         for p in self.planned:
             if p["status"] == "in_progress":
                 p["status"] = "partial"
@@ -452,19 +651,32 @@ class Batch:
             for p in self.planned:
                 if p["status"] != "complete":
                     missing.append(f"pair {p['pair']}: {p['status']} (arms {p['arms']}, k7 {p['k7']}, k9 {p['k9']}, k10 {p['k10']})")
-        self_validation = sc.validate_run_dir(self.out, task_of=lambda r: bl.make_task(self.pairs[r][0], self.c["mapping"].addresses)) if self.pairs else {}
-        report = {"schema": "b4_sim_report", "schema_version": "1.0.0", "status": status, "label": self.c["label"], "count": self.c["count"], "head": self.c["head"],
-                  "generated_utc": utc(), "deadline": self.dl.record(), "standing": STANDING, "thresholds": th.THRESHOLDS,
+        report = {"schema": "b4_sim_report", "schema_version": "1.0.0", "status": status, "label": self.c["label"], "fixture": self.c["schedule"] is not None, "count": self.c["count"],
+                  "head": self.c["head"], "generated_utc": utc(), "deadline": self.dl.record(), "standing": STANDING, "thresholds": th.THRESHOLDS,
                   "identity": {"seeds_sha256": self.seeds_sha, "manifest_sha256": self.manifest_sha, "hypothesis_sha256": hy.HYPOTHESIS_SHA256, "certificate_sha256": bm.CERTIFICATE_SHA256,
-                               "inputs": self.c["inputs"], "out": str(self.out.relative_to(self.c["root"]))},
+                               "inputs": self.c["inputs"], "out": self.own_rel},
                   "pairs": [dict(p) for p in self.planned], "files": [dict(e) for e in self.files], "stopped": stopped_doc,
-                  "summary": self.summary if status == "complete" else None, "missing": missing, "self_validation": self_validation}
+                  "summary": self.summary if status == "complete" else None, "missing": missing, "self_validation": {}}
+        try:
+            self_validation = sv.verify_run_dir(self.out, report=report, deep=(status == "complete"))
+        except Exception as exc:  # noqa: BLE001 — the verifier itself failing is a finding, never a pass
+            self_validation = {"verifier": [f"the archive verifier raised {type(exc).__name__}: {exc}"]}
+        if status == "complete" and self_validation:
+            first = next(iter(self_validation.items()))
+            return self.finish("invalid", {"kind": "self_validation", "detail": f"the archive does not verify: {first[0]}: {first[1][0]} ({sum(len(v) for v in self_validation.values())} findings)",
+                                           "role": None, "stage": "finalisation", "traceback": json.dumps(self_validation)[:20000]}, 1)
+        report["self_validation"] = self_validation
+        out = {"status": status, "exit_code": exit_code, "out": str(self.out), "stopped": stopped_doc, "report": report}
         try:
             self.write("sim_report.json", report, sc.report_findings)
-        except Invalid as exc:
-            report["status_report_error"] = str(exc)
-            (self.out / "sim_report.ERROR.txt").write_text(str(exc) + "\n")
-        return {"status": status, "exit_code": exit_code, "out": str(self.out), "stopped": stopped_doc, "report": report}
+        except (Invalid, OSError) as exc:                           # the report is a condition of success: no report, no success (F4)
+            msg = f"sim_report.json could not be validated / written: {type(exc).__name__}: {exc}"
+            try:
+                (self.out / "sim_report.ERROR.txt").write_text(msg + "\n" + json.dumps({"original_status": status, "original_exit_code": exit_code}) + "\n")
+            except OSError:
+                pass
+            out.update(status="invalid", exit_code=1, report_error=msg, original_status=status)
+        return out
 
 
 def _head_or_none(root: Path):
@@ -623,19 +835,18 @@ def summarise_batch(rows: list[dict], S: int, check=None) -> tuple[dict, dict]:
 
 
 # ------------------------------------------------------------------ the batch runner and the CLI
-def run_batch(root: Path, label: str, count: int, deadline_s: int, out: Path | None = None, clock=time.monotonic, port_factory=None) -> dict:
-    t_start = clock()
+def run_batch(root: Path, label: str, count: int, deadline_s: int, out: Path | None = None, clock=time.monotonic, port_factory=None, schedule: FixtureSchedule | None = None) -> dict:
     try:
         dl = Deadline(deadline_s, clock=clock) if isinstance(deadline_s, int) and not isinstance(deadline_s, bool) and deadline_s > 0 else None
-        ctx = preflight(root, label, count, deadline_s, out)
+        ctx = preflight(root, label, count, deadline_s, out, schedule)
     except Refusal as exc:
         return {"status": "refused", "exit_code": 2, "out": None, "reason": str(exc), "stopped": None, "report": None}
-    ns = ctx["root"] / SIM_REL
-    ns.mkdir(parents=True, exist_ok=True)
     try:
-        ctx["out"].mkdir(exist_ok=False)
+        create_out_dir(ctx)
     except FileExistsError:
         return {"status": "refused", "exit_code": 2, "out": None, "reason": f"{ctx['out']} appeared before it could be created exclusively", "stopped": None, "report": None}
+    except Refusal as exc:
+        return {"status": "refused", "exit_code": 2, "out": None, "reason": str(exc), "stopped": None, "report": None}
     batch = Batch(ctx, dl, port_factory)
     try:
         batch.init()
@@ -651,8 +862,11 @@ def run_batch(root: Path, label: str, count: int, deadline_s: int, out: Path | N
         for r in range(count):
             batch.run_pair(r)
         batch.stats()
+        batch.dl.check()                                            # after the last statistics unit (F8)
+        batch.current = {"pair": None, "stage": "final", "role": None}
         batch.hold_inputs("final")
         batch.hold_tree()
+        batch.dl.check()                                            # before the finalisation units (F8)
     except StopWork as exc:
         return batch.finish("incomplete", {"kind": "deadline", "detail": str(exc), "role": batch.current.get("role"), "stage": batch.current.get("stage")}, 3)
     except KeyboardInterrupt:
@@ -662,19 +876,19 @@ def run_batch(root: Path, label: str, count: int, deadline_s: int, out: Path | N
     except Exception as exc:  # noqa: BLE001 — never lose what is on disk; name it
         return batch.finish("invalid", {"kind": "unexpected_exception", "detail": f"{type(exc).__name__}: {exc}", "role": batch.current.get("role"),
                                         "stage": batch.current.get("stage"), "traceback": traceback.format_exc()}, 1)
-    _ = t_start
     return batch.finish("complete", None, 0)
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="B4 host-only exploration harness (values beside thresholds; no gate verdict). Running it needs the owner's authorisation.")
+    ap = argparse.ArgumentParser(description="B4 host-only exploration harness (values beside thresholds; no gate verdict). Running it needs the owner's authorisation. "
+                                             "Production labels only: a mechanics fixture batch has no CLI.")
     ap.add_argument("--label", required=True, help="b4-sim-<n>")
     ap.add_argument("--seeds", required=True, type=int, help="S, the number of pairs planned")
     ap.add_argument("--deadline-s", required=True, type=int, help="the soft monotonic deadline in seconds, from the pre-flight on (no default)")
     ap.add_argument("--out", default=None, help=f"the output directory, directly under {SIM_REL}/ and named <label>_…; default <label>_<UTC>")
     a = ap.parse_args(argv)
     res = run_batch(REPO_ROOT, a.label, a.seeds, a.deadline_s, Path(a.out) if a.out else None)
-    print(json.dumps({k: v for k, v in res.items() if k in ("status", "exit_code", "out", "reason")}, indent=1))
+    print(json.dumps({k: v for k, v in res.items() if k in ("status", "exit_code", "out", "reason", "report_error")}, indent=1))
     return res["exit_code"]
 
 

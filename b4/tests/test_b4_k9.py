@@ -150,6 +150,32 @@ class TheComputation(Base):
         for a, c in s["per_address"].items():
             self.assertEqual(c["fraction"], None if c["semantic"] == "sr_kind" else (0.0 if c["semantic"] == "clock_mode" else 1.0))
 
+    def test_a_refusal_inside_a_pair_carries_the_partial_and_a_truncated_complete_record_is_named(self):
+        """F6 of the owner's review: a DOMAIN at the second observation raises with `k9_partial` — the first observation and
+        the pairs before are kept, `invalid` names the pair; F3: a complete record with the pairs removed is named by
+        `recompute` and by `canonical_findings`."""
+        from b4_test_fixtures import InjectingPort
+        port = InjectingPort(self.fab, 2)
+        with self.assertRaises(fm.DomainRefusal) as cm:
+            k9.coverage(self.task, port, self.m, self.fab)
+        p = cm.exception.k9_partial
+        self.assertEqual((p["complete"], p["stopped"], p["pairs_done"], len(p["observations"]), p["summary"]), (False, None, 0, 1, None))
+        self.assertEqual((p["invalid"]["pair_index"], p["invalid"]["exception"]), (0, "DomainRefusal"))
+        self.assertEqual(port.calls, 2, "nothing was observed after the refusal")
+        self.assertEqual(k9.recompute(p, self.task, self.fab), [], "a partial record recomputes clean")
+        port = InjectingPort(self.fab, 3, KeyboardInterrupt())
+        with self.assertRaises(KeyboardInterrupt) as cm:
+            k9.coverage(self.task, port, self.m, self.fab)
+        p = cm.exception.k9_partial
+        self.assertEqual((p["invalid"], p["stopped"]["before_pair_index"], p["pairs_done"], len(p["observations"])), (None, 1, 1, 2), "an interrupt is a stop, not an invalid event")
+        full = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab)
+        bad = json.loads(json.dumps(full)); bad["pairs"] = []; bad["pairs_done"] = 0; bad["summary"] = k9.summarise([], self.m); bad["logical_observations"] = 0
+        self.assertTrue(any("fixed set has 1184" in f for f in k9.recompute(bad, self.task, self.fab)), "an emptied complete record is named")
+        bad = json.loads(json.dumps(full)); bad["pairs"] = bad["pairs"][:10] + bad["pairs"][11:]; bad["pairs_done"] -= 1
+        self.assertTrue(any("not the fixed set's pair" in f for f in k9.canonical_findings(bad, self.m)), "an omitted pair shifts the sequence and is named")
+        bad = json.loads(json.dumps(full)); bad["pairs"].append(bad["pairs"][0]); bad["pairs_done"] += 1
+        self.assertTrue(any("more than the fixed set" in f for f in k9.recompute(bad, self.task, self.fab)), "a duplicated pair is named")
+
     def test_the_denominators_do_not_depend_on_the_seed(self):
         r7 = k9.coverage(self.task, ex.ObservationPort(self.fab), self.m, self.fab)
         r8 = k9.coverage(bl.make_task(8, self.m.addresses), ex.ObservationPort(self.fab), self.m, self.fab)

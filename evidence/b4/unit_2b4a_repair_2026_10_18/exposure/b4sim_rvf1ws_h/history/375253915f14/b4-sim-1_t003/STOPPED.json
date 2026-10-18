@@ -1,0 +1,59 @@
+{
+ "deadline": {
+  "checks": 1296,
+  "clock": "time.monotonic",
+  "elapsed_s": 3.827,
+  "expired": false,
+  "first_expired_at_s": null,
+  "seconds": 3600
+ },
+ "detail": "K10 unit (background 0, 4, 8): corners ['11'] refused",
+ "head_at_stop": "5a47e5e9b2023cc81121ce1b1dbbea4fa4e47b58",
+ "kind": "k10_invalid",
+ "pair": 0,
+ "planned": [
+  {
+   "arms": {
+    "A0": "audited",
+    "D": "audited",
+    "F": "audited",
+    "O": "audited",
+    "Omega": "audited",
+    "R": "audited",
+    "X": "audited"
+   },
+   "k10": "in_progress",
+   "k7": "complete",
+   "k9": "complete",
+   "landscape_seed": 1728435565,
+   "operator_seed": 2327199381,
+   "pair": 0,
+   "status": "partial"
+  },
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "not_started",
+    "O": "not_started",
+    "Omega": "not_started",
+    "R": "not_started",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 4253232248,
+   "operator_seed": 3880354669,
+   "pair": 1,
+   "status": "not_started"
+  }
+ ],
+ "role": "K10",
+ "schema": "b4_sim_stopped",
+ "schema_version": "1.0.0",
+ "stage": "k10",
+ "status": "invalid",
+ "stopped_utc": "2026-10-18T18:29:01Z",
+ "traceback": null
+}

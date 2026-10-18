@@ -1,0 +1,405 @@
+{
+ "arm_order": [
+  "R",
+  "F",
+  "O",
+  "X",
+  "D",
+  "Omega",
+  "A0"
+ ],
+ "budget": 256,
+ "constants": {
+  "anchor": {
+   "exploration_label": "b4-sim-1",
+   "gate_label": "b4-gate-1",
+   "hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "rule": "int.from_bytes(sha256(utf8(label + '|' + anchor))[:4], 'big'), the label passed beside the anchor"
+  },
+  "cartographer": "b4-obs-carto-v0.1",
+  "controls": {
+   "d_shuffle_seed": "int.from_bytes(sha256('b4-d-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')",
+   "x_control_seed": "int.from_bytes(sha256('b4-x-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')"
+  },
+  "engine": {
+   "kmax": 4,
+   "lambda": 8,
+   "mu": 4,
+   "version": "b4-es-v0.1 (derived from b2-es-v1)"
+  },
+  "expected_cost": {
+   "A0": {
+    "base": 1,
+    "holdout": 1,
+    "probes": 0,
+    "search": 256
+   },
+   "D": {
+    "base": 1,
+    "holdout": 1,
+    "probes": 0,
+    "search": 256
+   },
+   "F": {
+    "base": 1,
+    "holdout": 1,
+    "probes": 21,
+    "search": 256
+   },
+   "O": {
+    "base": 1,
+    "holdout": 1,
+    "probes": 0,
+    "search": 256
+   },
+   "Omega": {
+    "base": 1,
+    "holdout": 1,
+    "probes": 0,
+    "search": 256
+   },
+   "R": {
+    "base": 1,
+    "holdout": 1,
+    "probes": 0,
+    "search": 256
+   },
+   "X": {
+    "base": 1,
+    "holdout": 1,
+    "probes": 0,
+    "search": 256
+   }
+  },
+  "k10_salt": 1275743829,
+  "k9_panel": "k9-panel-v1 (section 9.3: 32 mode combinations x INIT/SRVAL all-0 / all-1)",
+  "prng": "b4_rng.Rng (xorshift64, a derived copy of b1_carto.Rng); the bootstrap random.Random",
+  "probes_per_F": 21,
+  "task": "task-v0.1",
+  "tau": 2
+ },
+ "count": 2,
+ "deadline_s": 3600,
+ "engine_arm": {
+  "A0": "F",
+  "D": "F",
+  "F": "F",
+  "O": "O",
+  "Omega": "F",
+  "R": "R",
+  "X": "X"
+ },
+ "exclusion": {
+  "historical_sources": 38,
+  "pooled_total": 2093,
+  "sim_registry": [],
+  "sim_registry_note": "evidence/b4/sim/ does not exist yet (not a missing source)"
+ },
+ "fabric": {
+  "dropout_count": 0,
+  "dropout_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "effect_sha256": "a1be61d03939f98673eb29b39f00310ba27c4c6b0fe2d768e62f9166bc4829c0",
+  "kind": "truth",
+  "seed": null
+ },
+ "generated_utc": "2026-10-18T18:28:56Z",
+ "grid": [
+  8,
+  16,
+  24,
+  32,
+  48,
+  64,
+  96,
+  128,
+  192,
+  256
+ ],
+ "head": "39f027e20d68be638e315f50aa2ce7efb4c40d4c",
+ "hypothesis": {
+  "fixture": false,
+  "path": "b4/hypothesis/ff_behaviour_v0.3.json",
+  "sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+  "sources": [
+   {
+    "adopted": [
+     "glblGSR asserted: Q_out = INIT (lines 63-65)",
+     "on the active edge of C (posedge; negedge when IS_C_INVERTED, lines 71-98): if R then Q <= 0 else if CE then Q <= D",
+     "R is synchronous: it acts only at the edge"
+    ],
+    "kind": "vendor_primitive",
+    "path": "FDRE.v",
+    "primitive": "FDRE",
+    "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+    "sha256": "e2965e4b5174bd8de84b82e89a7b4ea5df36d8715c4f585580c16b8e6d9aa80d"
+   },
+   {
+    "adopted": [
+     "as FDRE with the synchronous input S setting Q <= 1 at the edge (lines 75-82)"
+    ],
+    "kind": "vendor_primitive",
+    "path": "FDSE.v",
+    "primitive": "FDSE",
+    "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+    "sha256": "055468fd8372bcf67f359ec4c496c966bae1fdd5e8a6aaa71dd658ae99c69c68"
+   },
+   {
+    "adopted": [
+     "glblGSR asserted: Q_out = INIT; CLR_in asserted: Q_out = 0 at any time, level-sensitive (lines 72-80)",
+     "on the active edge of C with CLR_in low: if CE then Q <= D (lines 84-111)"
+    ],
+    "kind": "vendor_primitive",
+    "path": "FDCE.v",
+    "primitive": "FDCE",
+    "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+    "sha256": "74d30d7c788e7db47f12b92d5b4b57b707974a0962708b309e4cc081d5f98b04"
+   },
+   {
+    "adopted": [
+     "as FDCE with the asynchronous input PRE setting Q_out = 1, level-sensitive (lines 72-76)"
+    ],
+    "kind": "vendor_primitive",
+    "path": "FDPE.v",
+    "primitive": "FDPE",
+    "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+    "sha256": "4ec91e1101288ae35ebda302ed5e31b670f5bb5b16cd48922d1cbf891407bcfc"
+   },
+   {
+    "adopted": [
+     "G_in = G xor IS_G_INVERTED; GE_in = GE (lines 63-71)",
+     "the UDP latchsre_ldce (lines 183-209): with set = rst = 0, q+ = d while clk = 1 and ge = 1 (transparent), q+ = q while clk = 0 or ge = 0 (hold); rst = 1 gives q+ = 0 and set = 1 gives q+ = 1 at any time",
+     "GSR asserted: Q = INIT (lines 117-119)"
+    ],
+    "kind": "vendor_primitive",
+    "path": "LDCE.v",
+    "primitive": "LDCE",
+    "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+    "sha256": "882344674b9669df2039bd417a90e1a549872c53488823346370df9c3cfbba05"
+   },
+   {
+    "adopted": [
+     "as LDCE with the asynchronous input PRE setting Q = 1 (lines 64-71)"
+    ],
+    "kind": "vendor_primitive",
+    "path": "LDPE.v",
+    "primitive": "LDPE",
+    "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+    "sha256": "8b63ec584c90cf02ef77c77268162b8852272abffe0175feedca1770ded5ec7f"
+   },
+   {
+    "adopted": [
+     "which address each of the 22 mine-site feature names moves (21 distinct addresses; CLKINV and NOCLKINV share one)",
+     "the specimen pair of every feature, from which the direction of every bit reading below is taken"
+    ],
+    "kind": "certificate_mapping",
+    "path": "gate_runs/run_2026_08_05_ff/certificate.json",
+    "schema_version": "1.6.0",
+    "sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef"
+   },
+   {
+    "items": [
+     "the bit readings in `decode` (machine enums; the human meaning beside each)",
+     "clock_mode read by storage context: flip-flop \u2014 bit 1 inverted; latch \u2014 bit 1 NOT inverted (the attested LDCE endpoint of docs/ff_latch_probe.md), bit 0 inverted (the D1' host correspondence pair, v0.3); three layers kept apart: L1 the host endpoint correspondence (the repository_document sources), L2 the vendor's primitive behaviour (the vendor_primitive sources), L3 the project's generalisation assumptions G1-G6 below",
+     "the primitive selection table",
+     "the pin correspondence: the slice clock is C (or G for a latch), CE is CE (or GE), SR is R / S / CLR / PRE by the decoded kind and value",
+     "the initialisation event of the carrier is modelled as the UNISIM GSR, taken with the slice clock low and SR de-asserted: every applicable element takes its INIT \u2014 whether the carrier's event does so on silicon is condition A8 of docs/b4_architecture.md section 5.5",
+     "G1 (v0.3) the other bits do not change the reading: CLKINV under a latch means the same for every assignment of the other 19 bits, although the D1' pair held them fixed (INIT 0, SRVAL 0 -> LDCE, CE and CLR driven, four main elements, the x5FF elements empty)",
+     "G2 (v0.3) the property is the behaviour: the bitstream bit that corresponds to the resolved IS_G_INVERTED property is realised on silicon as the slice-level clock inversion \u2014 the same mechanism CLKINV encodes for a flip-flop; nothing on silicon has been observed",
+     "G3 (v0.3) the vendor's simulation model describes the silicon gate: G_in = G xor IS_G_INVERTED and the UDP table of LDCE.v / LDPE.v (the standing premise of every vendor_primitive source, applied to one more configuration)",
+     "G4 (v0.3) the correspondence is tool- and recipe-invariant: the pair was built once, under Vivado 2025.2 and one recipe (two attempts, identical readbacks); other tool versions, anchors or occupations are not attested",
+     "G5 (v0.3) the per-slice reading: four main elements speak for the slice-level bit (clock_mode is per slice in the certificate mapping), and the x5FF elements, not storage elements under a latch, carry no reading of their own",
+     "G6 (v0.3) the initialisation context: with the gate inverted the slice clock low at the init step means the gate is OPEN; the init readout still shows INIT only because the model's init step assigns INIT atomically and settles nothing (initialisation_event); which event restores INIT on the board is A8, unresolved"
+    ],
+    "kind": "project_decode_assumption",
+    "source": "docs/ff_preregistration_plan.md section 2 (the Z polarity readings) and section 3 (the attestation fields); docs/ff_latch_probe.md (a slice holds four latches, on AFF..DFF); this project's own choice of how the seven semantics select a primitive and its parameters"
+   },
+   {
+    "adopted": [
+     "LDCE reports IS_G_INVERTED = 0 and still sets the CLKINV bit; the clock-mode reading of the clkinv pair must not be applied to a latch specimen",
+     "a slice holds four latches, on AFF..DFF; A5FF and its siblings will not hold an LDCE"
+    ],
+    "kind": "repository_document",
+    "path": "docs/ff_latch_probe.md",
+    "sha256": "545bf34de94f83e39aa22b7e186a0797a0b7b2c92466bf55be8efecfd61efd27"
+   },
+   {
+    "adopted": [
+     "for this recipe on SLICE_X2Y25 (four main LDCE on AFF / BFF / CFF / DFF, Vivado 2025.2, xc7z010clg400-1): IS_G_INVERTED resolved 1'b1 on every cell clears CLKINV (CLBLL_L.SLICEL_X0.CLKINV, 01_51, 0x00400A01 word 52 bit 19) from 1 to 0, LATCH (30_32) stays 1, the raw diff is that one in-scope bit plus nine frame-ECC bits, no other same-class mover",
+     "the two endpoints' structures are identical but for IS_G_INVERTED; the readbacks are byte-identical to attempt 1's; the rebuilt main_latch equals the 2026-08-04 endpoint frame for frame",
+     "host build / readback / bitstream correspondence only: not a certificate, not a silicon observation, no routing-path identity, no verification of the 21-address domain or of other latch combinations (the owner's ruling and PASS of 2026-10-18)"
+    ],
+    "kind": "repository_document",
+    "path": "evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json",
+    "sha256": "af482824b10f5248db262bb5e6f417830f3b67a45c43e4c75d1dd3eae4a34e55"
+   }
+  ],
+  "version": "0.3.0"
+ },
+ "inputs": {
+  "b4/IMPORT.json": "503f35eca5fce4f04e70fdc0341680280d5aa2477a3c16b0348328013eda30fc",
+  "b4/hypothesis/ff_behaviour_v0.3.json": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+  "docs/b4_architecture.md": "8492b71ef7db62233d5a5b1313369c750efbbeb5bf2874c26bc788a938a55cec",
+  "docs/ff_latch_probe.md": "545bf34de94f83e39aa22b7e186a0797a0b7b2c92466bf55be8efecfd61efd27",
+  "evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json": "af482824b10f5248db262bb5e6f417830f3b67a45c43e4c75d1dd3eae4a34e55",
+  "gate_runs/run_2026_08_05_ff/certificate.json": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef"
+ },
+ "label": "b4-sim-1",
+ "mapping": {
+  "addresses": [
+   "0x00400a00/52/16",
+   "0x00400a01/51/7",
+   "0x00400a01/51/19",
+   "0x00400a01/52/3",
+   "0x00400a01/52/7",
+   "0x00400a01/52/15",
+   "0x00400a01/52/19",
+   "0x00400a01/52/23",
+   "0x00400a1e/51/12",
+   "0x00400a1e/51/30",
+   "0x00400a1e/52/0",
+   "0x00400a1e/52/1",
+   "0x00400a1e/52/18",
+   "0x00400a1f/51/3",
+   "0x00400a1f/51/6",
+   "0x00400a1f/51/22",
+   "0x00400a1f/51/28",
+   "0x00400a1f/52/1",
+   "0x00400a1f/52/9",
+   "0x00400a1f/52/19",
+   "0x00400a1f/52/26"
+  ],
+  "certificate": "gate_runs/run_2026_08_05_ff/certificate.json",
+  "certificate_sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef",
+  "site": "SLICE_X2Y25"
+ },
+ "note": "written before the first observation; held at every pair's end and at the batch's end",
+ "repo_root_kind": "the repository root the batch read its inputs from (git HEAD above); the model code is the b4/host tree of the tool files",
+ "schema": "b4_sim_manifest",
+ "schema_version": "1.0.0",
+ "seeds_sha256": "71b874b591831d9d57718c4e411ce329a3408fa1b279770b784aaad5da417af5",
+ "thresholds": {
+  "B_max": 256,
+  "B_star": {
+   "no_eligible_budget": "the budget rule FAILS; B* and N are not invented (exploration: candidate B* / N are null with the reason)",
+   "rule": "the smallest N(B) x 3 x B among budgets where K1 holds and N(B) exists; ties to the smaller budget"
+  },
+  "K1": {
+   "medians": "median_r(best_R(B)) > median_r(base_r), two medians compared",
+   "omega_best_p95_lt": 64,
+   "percentile": 95
+  },
+  "K10": {
+   "background_rule": "0 and Rng((seed ^ salt) & 0xffffffff).uniform(1 << 21), the first call",
+   "background_salt": 1275743829,
+   "backgrounds": 2,
+   "interacting": "max|I| > 2 (exactly 2 is nonzero below threshold)",
+   "interacting_seeds_over_S_min": 0.5,
+   "pairs_per_background": 210,
+   "tau": 2
+  },
+  "K2": {
+   "alpha": 0.05,
+   "bootstrap_experiments": 1000,
+   "bootstrap_seed": 7,
+   "population_variance_gt": 0,
+   "rejection": "p <= 0.05",
+   "ties": "excluded from the sign test's n, kept in the resampled population",
+   "x_minus_r_nonrejection_min": 0.9
+  },
+  "K3": {
+   "alpha": 0.05,
+   "denominators": "mean(F - R) > 0 and mean(O - R) > 0 required; a non-positive denominator is not readable as satisfied",
+   "ratio_max": 0.1,
+   "sign_test_h1": "P(control - R > 0 | control - R != 0) > 1/2"
+  },
+  "K4": {
+   "f_over_omega_min": 0.5,
+   "omega_median_max": 57.6,
+   "omega_median_rule": "0.90 * 64"
+  },
+  "K5": {
+   "alpha": 0.05,
+   "bootstrap_experiments": 1000,
+   "bootstrap_seed_rule": "random.Random(1 + N)",
+   "cap_formula": "N x 3 x B*",
+   "cap_search_evaluations": 4000,
+   "cohen_d_min": 0.5,
+   "n_min": 8,
+   "n_scan": "every integer from 8 to S, ascending, no bisection",
+   "power_min": 0.9
+  },
+  "K6": {
+   "N_min": 8,
+   "S_gate": 200,
+   "note": "S is the number planned, never the number that completed"
+  },
+  "K7": {
+   "o_prefix_median_not_unknown_min": 11,
+   "of_addresses": 21,
+   "prefix": "arm O's first B* + 1 ledger records (base + B* search)",
+   "recomputation_mismatches": 0
+  },
+  "K8": {
+   "replay": "no finding on every executed run; a broken tool contract is invalid under section 9.1"
+  },
+  "K9": {
+   "median_coverage_per_semantic_min": 0.5,
+   "median_population": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
+   "panel": "section 9.3: 32 mode combinations x INIT/SRVAL all-0 / all-1 = 64 backgrounds",
+   "seeds_with_all_seven_positive_controls_min": 0.9,
+   "semantics": 7
+  },
+  "addresses": 21,
+  "anchor": {
+   "exploration_label": "b4-sim-1",
+   "gate_label": "b4-gate-1",
+   "hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "rule": "int.from_bytes(sha256(utf8(label + '|' + anchor))[:4], 'big'), the label passed beside the anchor"
+  },
+  "controls": {
+   "d_shuffle_seed": "int.from_bytes(sha256('b4-d-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')",
+   "x_control_seed": "int.from_bytes(sha256('b4-x-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')"
+  },
+  "delta2_F_shift": 21,
+  "grid": [
+   8,
+   16,
+   24,
+   32,
+   48,
+   64,
+   96,
+   128,
+   192,
+   256
+  ],
+  "lambda": 8,
+  "probes_per_F_run": 21,
+  "source": "docs/b4_architecture.md section 9 (v0.1.14), fixed before any exploration or gate run",
+  "standing": "engineering research criteria fixed in advance; no number is claimed to be empirically guaranteed, statistically calibrated or valid for silicon; listed beside exploration values for reference only \u2014 never a gate verdict here"
+ },
+ "tool_files": {
+  "b4/host/b4_carto.py": "f4933fcbf9af3d70a9949af8f61762361c27f26a46fe7ff6dbc44824ceadb2cd",
+  "b4/host/b4_controls.py": "f8727cca7ed6fec4d0d84c18bb33c009b97532ead1ee38cfb1b48cdc8625b724",
+  "b4/host/b4_deadline.py": "56dce330311d56325682a0030a701b9ba6c26f369c9e1394a49fdf0620d2a79b",
+  "b4/host/b4_engine.py": "1cc7708d681f8cc2c09126093974fd62ffc9286eaa9191b3f77efed83d70a9e4",
+  "b4/host/b4_execution.py": "c487d1a3bd229a6921afb4234290a9f309b880bc2f0172f344d0bce833ef0a7d",
+  "b4/host/b4_ff_hypothesis.py": "e5e7f43233b4cf7db3a411ce224b480e5ec59c0e841a99a0001da02c93eb6ff1",
+  "b4/host/b4_ff_mapping.py": "e750d02a8e77805587cb490aff47ce0cae93c5e1cce3e3ba39745019618df08f",
+  "b4/host/b4_ff_model.py": "d6529700c766eeb354d01ae190adad5adb5241ab26ebfc10a6a3bb3a3fd15dbf",
+  "b4/host/b4_gate_stats.py": "f03f2203a9db8b75c567316ac257a3cd4163dee9a2fd297a75887d676b779a0a",
+  "b4/host/b4_k10.py": "c45794259c3d501dfe0893c52f9d5226ac65da4c2204f6744a02ed1e5da35668",
+  "b4/host/b4_k9.py": "4dc636a3c679596850350dc7b2a48b47e1218f1becdb31a475d96b87a0039bcd",
+  "b4/host/b4_landscape.py": "abf8c6b3de4c1d0ad92b1d05611aef9976307ae74b94fbac0650fef4d2da0865",
+  "b4/host/b4_observe.py": "d39ebb6bb9a5216deb0b7f0393c217a6d524dcdf61fa874e0e663da0dc0402dd",
+  "b4/host/b4_replay.py": "e3302363a947a6598b6eeb5d63ee4d8120b25449f05fcdf19b73e4a9af59f40d",
+  "b4/host/b4_rng.py": "f2ef921176d46f1fec3f0d496300a42bce66a4d051c8c3e6f87e4bfff067b42a",
+  "b4/host/b4_seeds.py": "c0e66700df246d6a17fbec473435c0fc68018a9184ddb4ee9f987f20cfc6e749",
+  "b4/host/b4_sim.py": "4fa350771630163b0f1bc8ca083ed53c0fe5083af782f09392dd6ca65cec3232",
+  "b4/host/b4_sim_schema.py": "99068e3b4bf67918dbcb8f4418cdb797a0c669295a54741566a63ee23119c5c3",
+  "b4/host/b4_snapshot.py": "a8960ec81383a8a39b15e7d9393460862b64e6e306f74864d75f0c6e71a2f14d",
+  "b4/host/b4_stats.py": "9b6dd9ef6020eb1aa6673bdfa442e7fe6c02d96ed06632b9ecd83acead5e258d",
+  "b4/host/b4_thresholds.py": "0794990eda9a3186695acbc7a3a93e83fab3e6961efce7120b3e3c7facc239db",
+  "b4/schemas/self_map_v3.schema.json": "4492f83c57ff7b0f7d28dc3c1012c32906808a7221783f0f5cfacca932220513"
+ }
+}

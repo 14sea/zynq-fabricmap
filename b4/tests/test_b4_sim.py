@@ -1,10 +1,18 @@
-"""b4/host/b4_sim.py and b4/host/b4_sim_schema.py — the exploration harness on a HERMETIC repository copy (only the files the
-harness reads from its root, under its own git history; the model code and the pinned formal inputs are the real tree's,
-read-only). S = 2 batches under the exploration labels b4-sim-1 / b4-sim-2 of the hermetic root (the formal namespace of the
-real repository is never written). Mechanics: the pre-flight refusals write nothing; the freezing order; a complete batch
-and its files; the registry of a second batch; the invalid stops (DOMAIN, a control failure, a replay finding, an unexpected
-exception, an input drift); the incomplete stops (the deadline inside K9 and in the statistics, an external interrupt);
-the typed validators; the pure summary on hand rows (a +inf Cohen's d). No K value is read as a result. No skip."""
+"""b4/host/b4_sim.py, b4/host/b4_sim_schema.py, b4/host/b4_sim_verify.py — the exploration harness on a HERMETIC repository
+copy (only the files the harness reads from its root, under its own git history; the model code and the pinned formal
+inputs are the real tree's, read-only), driven by MECHANICS FIXTURE SCHEDULES ONLY (`b4-mech-<n>` labels; explicit pairs of
+values already exposed under section 9.2: 7 / 11, 8 / 12, 3 / 13, 5 / 12). NO PRODUCTION SET IS DERIVED HERE: for every
+class, `b4_seeds.master_seed` and `b4_seeds.pair_seeds` are replaced by guards that raise, and the class's teardown
+asserts they were never called (the owner's review of cdf2c53, F1). The real repository's exploration namespace is never
+written.
+
+Mechanics: the pre-flight refusals write nothing (incl. a symlinked namespace, F7); the freezing order; a complete batch
+and its files (every file typed, the archive-wide verifier clean, no verdict); the registry of a second fixture batch; the
+invalid stops (DOMAIN, a control failure, a replay finding, an unexpected exception, an input / external / registry drift
+F9, a quarantined malformed RunResult F6, a refusal inside K9 with its partial kept F6, a bad q cell from the source F3,
+self-validation findings and an unwritable report F4); the incomplete stops (the deadline inside K9, in the statistics,
+before finalisation F8, an external interrupt); the archive-wide verifier on a tampered complete archive (F2 / F3); the
+pure summary on hand rows. No K value is read as a result. No skip."""
 from __future__ import annotations
 
 import json
@@ -25,17 +33,21 @@ import b4_carto as bc  # noqa: E402
 import b4_execution as ex  # noqa: E402
 import b4_ff_hypothesis as hy  # noqa: E402
 import b4_ff_mapping as bm  # noqa: E402
-import b4_ff_model as fm  # noqa: E402
 import b4_gate_stats as gs  # noqa: E402
+import b4_k10 as k10  # noqa: E402
 import b4_landscape as bl  # noqa: E402
 import b4_replay as br  # noqa: E402
 import b4_seeds as bs  # noqa: E402
 import b4_sim as sim  # noqa: E402
 import b4_sim_schema as sc  # noqa: E402
+import b4_sim_verify as sv  # noqa: E402
 import b4_thresholds as th  # noqa: E402
 from b4_test_fixtures import InjectingPort  # noqa: E402
 
 ROLES = sim.ROLES
+SCHED1 = sim.FixtureSchedule("b4-mech-1", ((7, 11), (8, 12)))
+SCHED2 = sim.FixtureSchedule("b4-mech-2", ((3, 13), (5, 12)))
+SCHED_ONE = sim.FixtureSchedule("b4-mech-1", ((7, 11),))
 
 
 def git(root: Path, *args) -> str:
@@ -55,6 +67,10 @@ def build_hermetic(dst: Path) -> Path:
     return dst
 
 
+def production_derivation_reached(*a, **kw):
+    raise AssertionError("a production seed derivation (b4_seeds.master_seed / pair_seeds) was reached from a test")
+
+
 class RaisingPort(ex.ObservationPort):
     def __init__(self, fabric, at: int, exc):
         super().__init__(fabric)
@@ -65,6 +81,16 @@ class RaisingPort(ex.ObservationPort):
         if self.calls == self.at:
             raise self.exc
         return self._observe(config, stimulus)
+
+
+class BadGridPort(ex.ObservationPort):
+    """A source whose first trace carries a q cell of 2 (not 0 / 1 / null): the model never does this; the harness must not archive it as valid."""
+
+    def observe(self, config, stimulus):
+        t = super().observe(config, stimulus)
+        if self.calls == 1:
+            t["steps"][0]["q_after"][0] = 2
+        return t
 
 
 class Clock:
@@ -84,16 +110,25 @@ class Clock:
 class Base(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.tmp = tempfile.TemporaryDirectory(prefix="b4sim_")
+        cls.guards = [mock.patch.object(bs, "master_seed", side_effect=production_derivation_reached),
+                      mock.patch.object(bs, "pair_seeds", side_effect=production_derivation_reached)]
+        cls.guard_mocks = [g.start() for g in cls.guards]
+        cls.tmp = tempfile.TemporaryDirectory(prefix="b4mech_")
         cls.root = build_hermetic(Path(cls.tmp.name))
         cls.ns = cls.root / sim.SIM_REL
         cls.counter = 0
 
     @classmethod
     def tearDownClass(cls):
-        cls.tmp.cleanup()
+        try:
+            calls = [m.call_count for m in cls.guard_mocks]
+            for g in cls.guards:
+                g.stop()
+            assert calls == [0, 0], f"a production derivation was attempted from {cls.__name__}: {calls}"
+        finally:
+            cls.tmp.cleanup()
 
-    def out(self, label="b4-sim-1") -> Path:
+    def out(self, label="b4-mech-1") -> Path:
         type(self).counter += 1
         return self.ns / f"{label}_t{type(self).counter:03d}"
 
@@ -102,6 +137,9 @@ class Base(unittest.TestCase):
         if self.ns.exists() and git(self.root, "status", "--porcelain").strip():
             git(self.root, "add", "-A"); git(self.root, "commit", "-q", "-m", "archive")
 
+    def run_with(self, factory, out=None, label="b4-mech-1", schedule=SCHED1, S=2, dl=3600, **kw):
+        return sim.run_batch(self.root, label, S, dl, out or self.out(label), port_factory=factory, schedule=schedule, **kw)
+
     def report(self, res) -> dict:
         return json.loads((Path(res["out"]) / "sim_report.json").read_text())
 
@@ -109,30 +147,70 @@ class Base(unittest.TestCase):
 class Preflight(Base):
     def test_refusals_write_nothing(self):
         before = sorted(p.name for p in self.ns.iterdir()) if self.ns.exists() else []
-        cases = [("b4-gate-1", 2, 60, None, "exploration label"), ("b4-sim-1", 0, 60, None, "--seeds"), ("b4-sim-1", 2, 0, None, "--deadline-s"),
-                 ("b4-sim-1", 2, True, None, "--deadline-s"), ("b4-sim-1", 2, 60, Path(self.tmp.name) / "elsewhere" / "b4-sim-1_x", "directly under"),
-                 ("b4-sim-1", 2, 60, self.ns / "other_x", "begin with b4-sim-1_")]
-        for label, S, dl, out, msg in cases:
-            res = sim.run_batch(self.root, label, S, dl, out)
-            self.assertEqual((res["status"], res["exit_code"]), ("refused", 2), (label, S, dl, out))
-            self.assertIn(msg, res["reason"], (label, S, dl, out))
-        existing = self.ns / "b4-sim-1_exists"
+        cases = [("b4-sim-1", 2, 60, None, SCHED1, "mechanics label"),            # a production label never runs on a fixture
+                 ("b4-mech-1", 2, 60, None, None, "needs a FixtureSchedule"),       # a fixture label never derives
+                 ("b4-gate-1", 2, 60, None, None, "exploration label"), ("b4-sim-1", 0, 60, None, None, "--seeds"), ("b4-sim-1", 2, 0, None, None, "--deadline-s"),
+                 ("b4-mech-1", 2, True, None, SCHED1, "--deadline-s"), ("b4-mech-1", 1, 60, None, SCHED1, "schedule's 2 pairs"),
+                 ("b4-mech-1", 1, 60, None, sim.FixtureSchedule("b4-mech-1", ((7, 1000001),)), "already-exposed"),
+                 ("b4-mech-1", 1, 60, None, sim.FixtureSchedule("b4-mech-1", ((7, 7),)), "equal"),
+                 ("b4-mech-1", 2, 60, None, SCHED2, "its label is not the batch's"),
+                 ("b4-mech-1", 2, 60, Path(self.tmp.name) / "elsewhere" / "b4-mech-1_x", "directly under", SCHED1),
+                 ("b4-mech-1", 2, 60, self.ns / "other_x", "begin with b4-mech-1_", SCHED1),
+                 ("b4-mech-1", 2, 60, self.ns / ".." / "sim" / "b4-mech-1_dots", "written plainly", SCHED1)]
+        for case in cases:
+            label, S, dl, out, a, b = case
+            schedule, msg = (a, b) if isinstance(a, (sim.FixtureSchedule, type(None))) else (b, a)
+            res = sim.run_batch(self.root, label, S, dl, out, schedule=schedule)
+            self.assertEqual((res["status"], res["exit_code"]), ("refused", 2), case)
+            self.assertIn(msg, res["reason"], case)
+        existing = self.ns / "b4-mech-1_exists"
         existing.mkdir(parents=True)
-        res = sim.run_batch(self.root, "b4-sim-1", 2, 60, existing)
+        res = sim.run_batch(self.root, "b4-mech-1", 2, 60, existing, schedule=SCHED1)
         self.assertEqual(res["status"], "refused"); self.assertIn("exists", res["reason"])
         self.assertEqual(sorted(os.listdir(existing)), [], "nothing written inside an existing directory")
         existing.rmdir()
-        link = self.ns / "b4-sim-1_link"
+        link = self.ns / "b4-mech-1_link"
         link.symlink_to(Path(self.tmp.name))
-        res = sim.run_batch(self.root, "b4-sim-1", 2, 60, link)
+        res = sim.run_batch(self.root, "b4-mech-1", 2, 60, link, schedule=SCHED1)
         self.assertEqual(res["status"], "refused"); link.unlink()
         (self.root / "dirty.txt").write_text("x")
-        res = sim.run_batch(self.root, "b4-sim-1", 2, 60, self.out())
+        res = sim.run_batch(self.root, "b4-mech-1", 2, 60, self.out(), schedule=SCHED1)
         self.assertEqual(res["status"], "refused"); self.assertIn("not clean", res["reason"])
         (self.root / "dirty.txt").unlink()
         after = sorted(p.name for p in self.ns.iterdir()) if self.ns.exists() else []
         self.assertEqual(before, after, "a refusal creates no run directory")
         self.assertFalse(git(self.root, "status", "--porcelain").strip())
+        self.assertEqual([m.call_count for m in self.guard_mocks], [0, 0], "no refusal reached a derivation")
+
+    def test_a_symlinked_namespace_is_refused_at_every_level(self):
+        """F7: evidence/b4/sim, evidence/b4 or evidence as a tracked symlink to a directory outside the root — the pre-flight
+        refuses; the outside directory stays empty."""
+        for level in ("evidence/b4/sim", "evidence/b4", "evidence"):
+            with tempfile.TemporaryDirectory(prefix="b4mech_sym_") as tmp:
+                root = build_hermetic(Path(tmp) / "root")
+                outside = Path(tmp) / "outside"; outside.mkdir()
+                link = root / level
+                if link.exists():                                  # the inputs under it stay readable through the symlink: only the chain is wrong
+                    shutil.copytree(link, outside, dirs_exist_ok=True)
+                    shutil.rmtree(link)
+                link.parent.mkdir(parents=True, exist_ok=True)
+                link.symlink_to(outside, target_is_directory=True)
+                git(root, "add", "-A"); git(root, "commit", "-q", "-m", "symlink namespace")
+                res = sim.run_batch(root, "b4-mech-1", 2, 60, root / sim.SIM_REL / "b4-mech-1_probe", schedule=SCHED1)
+                self.assertEqual((res["status"], res["exit_code"]), ("refused", 2), level)
+                self.assertIn("real directory chain", res["reason"], f"{level}: refused by the PRE-FLIGHT's chain check (not only by the re-check at creation)")
+                before = sorted(str(p.relative_to(outside)) for p in outside.rglob("*"))
+                self.assertFalse(any("b4-mech-1_" in x for x in before), f"{level}: nothing written through the symlink")
+                res = sim.run_batch(root, "b4-mech-1", 2, 60, None, schedule=SCHED1)
+                self.assertEqual(res["status"], "refused", f"{level}: the default output path is refused too")
+                self.assertEqual(sorted(str(p.relative_to(outside)) for p in outside.rglob("*")), before)
+
+    def test_the_cli_has_no_fixture_path(self):
+        """The CLI accepts production labels only and cannot build a schedule: a mechanics label is refused before any tree is read."""
+        with mock.patch.object(sim, "porcelain", side_effect=AssertionError("the tree was read")):
+            with mock.patch("sys.stdout"):
+                code = sim.main(["--label", "b4-mech-1", "--seeds", "2", "--deadline-s", "60"])
+        self.assertEqual(code, 2)
 
 
 class CompleteBatch(Base):
@@ -144,9 +222,9 @@ class CompleteBatch(Base):
         def factory(fabric, role, pair):
             cls.seen.append((pair, role, (cls.out_dir / "seeds.json").exists(), (cls.out_dir / "manifest.json").exists()))
             return ex.ObservationPort(fabric)
-        cls.out_dir = cls.ns / "b4-sim-1_complete"
+        cls.out_dir = cls.ns / "b4-mech-1_complete"
         cls.head_at_run = git(cls.root, "rev-parse", "HEAD").strip()
-        cls.res = sim.run_batch(cls.root, "b4-sim-1", 2, 3600, cls.out_dir, port_factory=factory)
+        cls.res = sim.run_batch(cls.root, "b4-mech-1", 2, 3600, cls.out_dir, port_factory=factory, schedule=SCHED1)
         git(cls.root, "add", "-A"); git(cls.root, "commit", "-q", "-m", "archive complete")
 
     def test_complete_with_every_file_typed_and_no_verdict(self):
@@ -160,9 +238,10 @@ class CompleteBatch(Base):
         self.assertEqual(names, sorted(want))
         pairs = json.loads((out / "seeds.json").read_text())["pairs"]
         self.assertEqual(sc.validate_run_dir(out, task_of=lambda r: bl.make_task(pairs[r][0], bm.site_mapping().addresses)), {})
+        self.assertEqual(sv.verify_run_dir(out, deep=True), {}, "the archive-wide verifier is clean on the untouched archive")
         rep = self.report(res)
         self.assertEqual(rep["status"], "complete"); self.assertIsNone(rep["stopped"]); self.assertEqual(rep["missing"], [])
-        self.assertEqual(rep["self_validation"], {})
+        self.assertEqual(rep["self_validation"], {}); self.assertTrue(rep["fixture"]); self.assertFalse(rep["deadline"]["expired"])
         self.assertEqual(rep["thresholds"], th.THRESHOLDS)
         self.assertIn("not a gate verdict", rep["standing"])
         s = rep["summary"]
@@ -178,30 +257,34 @@ class CompleteBatch(Base):
         self.assertEqual(sc.report_findings(rep), [])
         self.assertEqual([p["status"] for p in rep["pairs"]], ["complete", "complete"])
         self.assertTrue(all(all(v == "audited" for v in p["arms"].values()) for p in rep["pairs"]))
-        self.assertEqual({e["path"] for e in rep["files"]} - {"sim_report.json"}, set(names) - {"sim_report.json"})
+        self.assertEqual({e["path"] for e in rep["files"]}, set(names) - {"sim_report.json"})
         for e in rep["files"]:
-            if e["path"] != "sim_report.json":
-                self.assertEqual(sim.sha_file(out / e["path"]), e["sha256"], e["path"])
+            self.assertEqual(sim.sha_file(out / e["path"]), e["sha256"], e["path"])
 
-    def test_the_freezing_order_and_the_seeds(self):
+    def test_the_freezing_order_the_fixture_seeds_and_the_manifest(self):
         self.assertTrue(self.seen, "ports were created")
         self.assertTrue(all(s and m for _, _, s, m in self.seen), "seeds.json and manifest.json existed before every port was created")
         self.assertEqual([(p, role) for p, role, _, _ in self.seen], [(p, role) for p in (0, 1) for role in list(ROLES) + ["K9", "K10"]], "one worker, the fixed order")
         seeds = json.loads((self.out_dir / "seeds.json").read_text())
         self.assertEqual(bs.seeds_doc_findings(seeds), [])
-        self.assertEqual(seeds["anchor"]["hypothesis_sha256"], hy.HYPOTHESIS_SHA256)
-        self.assertEqual(seeds["master_seed"], bs.master_seed("b4-sim-1", hy.HYPOTHESIS_SHA256))
-        flat = [v for p in seeds["pairs"] for v in p]
-        self.assertEqual(len(set(flat)), 4)
-        ex_ = bs.load_exclusion_set(self.root, str(self.ns / "nonexistent"))
-        self.assertFalse(set(flat) & ex_.values, "no planned value is in the pooled set")
+        self.assertEqual((seeds["fixture"], seeds["master_seed"], seeds["anchor"]["hypothesis_sha256"], seeds["label"]), (True, None, None, "b4-mech-1"))
+        self.assertIn("fixture", seeds["anchor"]["rule"])
+        self.assertEqual(seeds["pairs"], [[7, 11], [8, 12]], "the schedule, as given; nothing derived")
         self.assertEqual(len(seeds["exclusion"]["sources"]), 38)
         self.assertEqual(seeds["exclusion"]["sim_registry"], [], "the first batch: no archived set yet")
+        self.assertEqual([m.call_count for m in self.guard_mocks], [0, 0], "no production derivation was reached by the complete batch")
         man = json.loads((self.out_dir / "manifest.json").read_text())
         self.assertEqual(sc.manifest_findings(man), [])
         self.assertEqual(man["head"], self.head_at_run, "the HEAD the batch ran under (the archive commit came after)")
         self.assertEqual(man["inputs"][hy.HYPOTHESIS_REL], hy.HYPOTHESIS_SHA256)
-        self.assertIn("b4/host/b4_sim.py", man["tool_files"])
+        self.assertTrue(man["fixture"])
+        for rel, _, sha in bs.FIELDS:
+            self.assertEqual(man["inputs"].get(rel), sha, f"F9: the exclusion source {rel} is bound at the start")
+        vendors = {str(Path(s["root"]) / s["path"]): s["sha256"] for s in hy.load().doc["sources"] if "root" in s}
+        self.assertEqual(len(vendors), 6); self.assertEqual(man["external_inputs"], vendors, "F9: the six external sources are bound by absolute path and digest")
+        self.assertEqual(man["exclusion"]["registry_snapshot"], [])
+        self.assertFalse(man["code_root"]["same_as_input_root"], "a hermetic input root is not the code root")
+        self.assertIn("b4/host/b4_sim.py", man["tool_files"]); self.assertIn("b4/host/b4_sim_verify.py", man["tool_files"])
         self.assertEqual(man["seeds_sha256"], sim.sha_file(self.out_dir / "seeds.json"))
 
     def test_the_arm_files_are_the_engine_s_and_the_audits_clean(self):
@@ -216,29 +299,28 @@ class CompleteBatch(Base):
             self.assertEqual(c["d_view"]["provenance"], ["learned", "shuffled"]); self.assertTrue(c["omega_view"]["privileged"])
             k7 = json.loads((self.out_dir / f"pair_{r:03d}/k7.json").read_text())
             self.assertTrue(k7["complete"]); self.assertEqual(sorted(int(b) for b in k7["prefixes"]), list(th.GRID))
-            k9 = json.loads((self.out_dir / f"pair_{r:03d}/k9.json").read_text()); self.assertTrue(k9["complete"])
-            k10 = json.loads((self.out_dir / f"pair_{r:03d}/k10.json").read_text()); self.assertTrue(k10["complete"])
+            k9 = json.loads((self.out_dir / f"pair_{r:03d}/k9.json").read_text()); self.assertTrue(k9["complete"]); self.assertIsNone(k9["invalid"])
+            k10r = json.loads((self.out_dir / f"pair_{r:03d}/k10.json").read_text()); self.assertTrue(k10r["complete"])
+            self.assertEqual([(u["background_index"], u["a"], u["b"]) for u in k10r["units"]], k10.canonical_units())
             cv = json.loads((self.out_dir / f"pair_{r:03d}/curves.json").read_text())
             self.assertTrue(cv["f_end_to_end_at_grid"][0]["mapping_in_progress"]); self.assertFalse(cv["f_end_to_end_at_grid"][-1]["mapping_in_progress"])
 
-    def test_a_second_batch_excludes_the_first_s_archived_set(self):
-        out2 = self.ns / "b4-sim-2_second"
-        res = sim.run_batch(self.root, "b4-sim-2", 2, 3600, out2)
+    def test_a_second_fixture_batch_lists_the_first_in_its_registry(self):
+        out2 = self.ns / "b4-mech-2_second"
+        res = sim.run_batch(self.root, "b4-mech-2", 2, 3600, out2, schedule=SCHED2)
         self.assertEqual(res["status"], "complete", res.get("reason"))
         s1 = json.loads((self.out_dir / "seeds.json").read_text()); s2 = json.loads((out2 / "seeds.json").read_text())
         reg = s2["exclusion"]["sim_registry"]
-        self.assertEqual([(r["status"], r["master_seed"], r["count"]) for r in reg], [("seeds", s1["master_seed"], 5)])
-        self.assertTrue(reg[0]["dir"].endswith("b4-sim-1_complete"))
-        v1 = {s1["master_seed"]} | {v for p in s1["pairs"] for v in p}
-        v2 = {v for p in s2["pairs"] for v in p}
-        self.assertFalse(v1 & v2, "the second set avoids every value of the first")
-        self.assertNotEqual(s1["master_seed"], s2["master_seed"], "another label, another master")
+        self.assertEqual([(r["status"], r["master_seed"], r["count"]) for r in reg], [("seeds_fixture", None, 4)])
+        self.assertTrue(reg[0]["dir"].endswith("b4-mech-1_complete"))
+        self.assertEqual(s2["exclusion"]["pooled_total"], s1["exclusion"]["pooled_total"], "fixture values are already in the pool: the pooled total does not grow")
+        man2 = json.loads((out2 / "manifest.json").read_text())
+        self.assertEqual(man2["exclusion"]["registry_snapshot"], [[reg[0]["dir"], "seeds_fixture", reg[0]["seeds_sha256"]]])
+        self.assertEqual(s2["pairs"], [[3, 13], [5, 12]])
+        self.assertEqual([m.call_count for m in self.guard_mocks], [0, 0])
 
 
 class InvalidStops(Base):
-    def run_with(self, factory, out=None, **kw):
-        return sim.run_batch(self.root, "b4-sim-1", 2, 3600, out or self.out(), port_factory=factory, **kw)
-
     def test_domain_in_the_second_pair_s_o_arm(self):
         def factory(fabric, role, pair):
             return InjectingPort(fabric, 30) if (pair, role) == (1, "O") else ex.ObservationPort(fabric)
@@ -259,7 +341,8 @@ class InvalidStops(Base):
         self.assertEqual(rep["pairs"][0]["status"], "complete"); self.assertEqual(rep["pairs"][1]["status"], "partial")
         self.assertEqual(rep["pairs"][1]["arms"], {"R": "audited", "F": "audited", "O": "written", "X": "not_started", "D": "not_started", "Omega": "not_started", "A0": "not_started"})
         self.assertEqual(sc.stopped_findings(rep["stopped"]), []); self.assertEqual(sc.report_findings(rep), [])
-        self.assertEqual(sc.validate_run_dir(out), {})
+        self.assertEqual(rep["self_validation"], {}, "an invalid archive still verifies as the archive of its recorded state")
+        self.assertEqual(sv.verify_run_dir(out, deep=True), {})
 
     def test_a_control_failure_a_replay_finding_and_a_k10_domain(self):
         real = bc.isomorphic_addresses
@@ -284,10 +367,13 @@ class InvalidStops(Base):
             return InjectingPort(fabric, 100) if (pair, role) == (0, "K10") else ex.ObservationPort(fabric)
         res = self.run_with(factory)
         self.assertEqual((res["status"], res["stopped"]["kind"], res["stopped"]["role"]), ("invalid", "k10_invalid", "K10"))
-        k10 = json.loads((Path(res["out"]) / "pair_000/k10.json").read_text())
-        self.assertFalse(k10["complete"]); self.assertIsNotNone(k10["invalid"]); self.assertFalse(k10["units"][-1]["comparable"])
+        k10d = json.loads((Path(res["out"]) / "pair_000/k10.json").read_text())
+        self.assertFalse(k10d["complete"]); self.assertIsNotNone(k10d["invalid"]); self.assertFalse(k10d["units"][-1]["comparable"])
+        self.assertEqual(len(k10d["units"][-1]["illegal_corners"]), 1)
+        self.assertEqual((k10d["memo"]["port_calls"], len(k10d["observations"])), (100, 99), "F5: the refused call was the last one; nothing was observed after it")
+        self.assertEqual(self.report(res)["pairs"][0]["k10"], "invalid")
         self.assertTrue((Path(res["out"]) / "pair_000/k9.json").exists())
-        self.assertEqual(sc.validate_run_dir(Path(res["out"])), {})
+        self.assertEqual(sv.verify_run_dir(Path(res["out"]), deep=True), {})
 
     def test_a_crashing_audit_does_not_lose_the_run_that_returned(self):
         def boom(result, task):
@@ -300,7 +386,60 @@ class InvalidStops(Base):
         self.assertFalse((out / "pair_000/arm_R.audit.json").exists())
         self.assertEqual(self.report(res)["pairs"][0]["arms"]["R"], "written")
 
-    def test_an_unexpected_exception_and_an_input_drift(self):
+    def test_a_malformed_returned_result_is_quarantined_not_lost(self):
+        """F6: the engine returns a RunResult with completed = 1 (not the bool True): the pre-write validator refuses it, the
+        object is kept raw in a quarantine file with the findings, the arm's state says so, the batch is invalid."""
+        orig = sim.be.run
+
+        def malformed(*a, **kw):
+            x = orig(*a, **kw)
+            x.completed = 1
+            return x
+        with mock.patch.object(sim.be, "run", malformed):
+            res = self.run_with(None)
+        self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"], res["stopped"]["stage"], res["stopped"]["role"]), ("invalid", 1, "schema", "engine_return", "R"))
+        out = Path(res["out"])
+        self.assertFalse((out / "pair_000/arm_R.result.json").exists(), "an object that does not validate is never written as the result")
+        q = json.loads((out / "pair_000/arm_R.result.QUARANTINE.json").read_text())
+        self.assertEqual(sc.quarantine_findings(q), [])
+        self.assertEqual(q["raw"]["result"]["completed"], 1, "the returned object, raw")
+        self.assertTrue(any("completed" in f for f in q["findings"]))
+        rep = self.report(res)
+        self.assertEqual(rep["pairs"][0]["arms"]["R"], "result_malformed")
+        self.assertEqual(sv.verify_run_dir(out, deep=True), {})
+
+    def test_a_refusal_inside_k9_keeps_the_partial(self):
+        """F6: a DOMAIN at K9's second observation — the first observation and the pair in progress are on disk, the plan says
+        `invalid`, the batch is k9_invalid; the archive verifies as the archive of that state."""
+        def factory(fabric, role, pair):
+            return InjectingPort(fabric, 2) if (pair, role) == (0, "K9") else ex.ObservationPort(fabric)
+        res = self.run_with(factory)
+        self.assertEqual((res["status"], res["stopped"]["kind"], res["stopped"]["role"], res["stopped"]["stage"]), ("invalid", "k9_invalid", "K9", "k9"))
+        out = Path(res["out"])
+        k9d = json.loads((out / "pair_000/k9.json").read_text())
+        self.assertEqual((k9d["complete"], k9d["stopped"], k9d["pairs_done"], len(k9d["observations"]), k9d["summary"]), (False, None, 0, 1, None))
+        self.assertEqual((k9d["invalid"]["pair_index"], k9d["invalid"]["exception"]), (0, "DomainRefusal"))
+        self.assertEqual(self.report(res)["pairs"][0]["k9"], "invalid")
+        self.assertNotIn("no partial record", res["stopped"]["detail"])
+        self.assertEqual(sv.verify_run_dir(out, deep=True), {})
+
+    def test_a_bad_q_cell_from_the_source_is_never_archived_as_complete(self):
+        """F3: a source trace with a q cell of 2 — the K9 record returned does not validate, is quarantined, and the batch is
+        invalid (schema), never complete with exit 0."""
+        def factory(fabric, role, pair):
+            return BadGridPort(fabric) if (pair, role) == (0, "K9") else ex.ObservationPort(fabric)
+        res = self.run_with(factory)
+        self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"], res["stopped"]["role"]), ("invalid", 1, "schema", "K9"))
+        out = Path(res["out"])
+        self.assertFalse((out / "pair_000/k9.json").exists())
+        q = json.loads((out / "pair_000/k9.QUARANTINE.json").read_text())
+        self.assertEqual(sc.quarantine_findings(q), [])
+        self.assertTrue(any("q_grid" in f for f in q["findings"]), q["findings"][:3])
+        self.assertEqual(q["raw"]["observations"][0]["q_grid"][0][0], 2, "the bad readout is kept raw, where it was")
+        self.assertEqual(self.report(res)["pairs"][0]["k9"], "invalid")
+        self.assertEqual(sv.verify_run_dir(out, deep=True), {})
+
+    def test_an_unexpected_exception_and_the_three_drifts(self):
         def factory(fabric, role, pair):
             return RaisingPort(fabric, 7, RuntimeError("boom")) if (pair, role) == (0, "O") else ex.ObservationPort(fabric)
         res = self.run_with(factory)
@@ -310,6 +449,7 @@ class InvalidStops(Base):
         self.assertTrue((Path(res["out"]) / "pair_000/arm_F.audit.json").exists(), "the six arms before it are not lost")
         self.assertIn("RuntimeError", res["stopped"]["detail"])
         self.tearDown()
+        # an input drift: the architecture document edited during pair 1
         arch = self.root / "docs/b4_architecture.md"
         original = arch.read_bytes()
 
@@ -323,27 +463,101 @@ class InvalidStops(Base):
             arch.write_bytes(original)
         self.assertEqual((res["status"], res["stopped"]["kind"]), ("invalid", "input_drift"))
         self.assertEqual(res["stopped"]["stage"], "pair 1 end", "caught by the input checkpoint at the end of the pair it drifted in — not by the final working-tree check")
-        self.assertIn("the input docs/b4_architecture.md changed during the batch", res["stopped"]["detail"])
+        self.assertIn("the input docs/b4_architecture.md changed", res["stopped"]["detail"])
         self.assertTrue((Path(res["out"]) / "pair_001/k10.json").exists(), "the pair's work is kept; the drift is caught at its checkpoint")
+        self.assertIsNone(self.report(res)["summary"])
+        self.tearDown()
+        # F9: an exclusion source (one of the 38) edited during pair 0
+        src = self.root / bs.FIELDS[0][0]
+        orig_src = src.read_bytes()
+
+        def drift_source(fabric, role, pair):
+            if (pair, role) == (0, "X"):
+                src.write_bytes(orig_src + b"\n")
+            return ex.ObservationPort(fabric)
+        try:
+            res = self.run_with(drift_source)
+        finally:
+            src.write_bytes(orig_src)
+        self.assertEqual((res["status"], res["stopped"]["kind"], res["stopped"]["stage"]), ("invalid", "input_drift", "pair 0 end"))
+        self.assertIn(bs.FIELDS[0][0], res["stopped"]["detail"])
+        self.tearDown()
+        # F9: an external (vendor) source changing its digest — simulated through the digest function, the vendor file untouched
+        vendor = next(str(Path(s["root"]) / s["path"]) for s in hy.load().doc["sources"] if "root" in s)
+        real_sha = sim.sha_file
+        state = {"armed": False}
+
+        def sha(p):
+            if state["armed"] and str(p) == vendor:
+                return "0" * 64
+            return real_sha(p)
+
+        def arm_external(fabric, role, pair):
+            if (pair, role) == (0, "A0"):
+                state["armed"] = True
+            return ex.ObservationPort(fabric)
+        with mock.patch.object(sim, "sha_file", sha):
+            res = self.run_with(arm_external)
+        self.assertEqual((res["status"], res["stopped"]["kind"], res["stopped"]["stage"]), ("invalid", "input_drift", "pair 0 end"))
+        self.assertIn("external source", res["stopped"]["detail"]); self.assertIn(vendor, res["stopped"]["detail"])
+        self.tearDown()
+        # F9: a foreign run directory appearing in the namespace during the batch (the registry snapshot drifts)
+        foreign = self.ns / "b4-mech-9_foreign"
+
+        def drift_registry(fabric, role, pair):
+            if (pair, role) == (0, "D"):
+                foreign.mkdir()
+                (foreign / "INIT_FAILED.json").write_text(json.dumps({"schema": "b4_sim_init_failed", "schema_version": "1.0.0", "label": "b4-mech-9", "seeds_derived": False, "reason": "x", "generated_utc": "x"}))
+            return ex.ObservationPort(fabric)
+        try:
+            res = self.run_with(drift_registry)
+        finally:
+            shutil.rmtree(foreign, ignore_errors=True)
+        self.assertEqual((res["status"], res["stopped"]["kind"], res["stopped"]["stage"]), ("invalid", "input_drift", "pair 0 end"))
+        self.assertIn("registry changed", res["stopped"]["detail"])
+
+    def test_self_validation_findings_and_an_unwritable_report_are_never_complete(self):
+        """F4: a finding of the batch's own archive-wide verification turns a would-be complete batch invalid (exit 1, no
+        summary, STOPPED written); a report that cannot be validated leaves no sim_report.json, an ERROR file, status invalid, exit 1."""
+        with mock.patch.object(sv, "verify_run_dir", return_value={"file": ["injected corruption"]}):
+            res = self.run_with(None)
+        self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"], res["stopped"]["stage"]), ("invalid", 1, "self_validation", "finalisation"))
+        out = Path(res["out"])
+        self.assertTrue((out / "STOPPED.json").exists())
         rep = self.report(res)
-        self.assertIsNone(rep["summary"])
+        self.assertEqual((rep["status"], rep["summary"], rep["self_validation"]), ("invalid", None, {"file": ["injected corruption"]}))
+        self.assertEqual(sc.report_findings(rep), [])
+        self.tearDown()
+        real_write = sim.Batch.write
+
+        def failing_report_write(self_, rel, doc, validator):
+            if rel == "sim_report.json":
+                raise sim.Invalid("schema", "injected report validation error", stage="write")
+            return real_write(self_, rel, doc, validator)
+        with mock.patch.object(sim.Batch, "write", failing_report_write):
+            res = self.run_with(None)
+        self.assertEqual((res["status"], res["exit_code"], res["original_status"]), ("invalid", 1, "complete"), "the batch had completed; the report could not be written: invalid")
+        out = Path(res["out"])
+        self.assertFalse((out / "sim_report.json").exists()); self.assertTrue((out / "sim_report.ERROR.txt").exists())
+        self.assertIn("injected report validation error", res["report_error"])
+        self.assertIn("missing", sv.verify_run_dir(out, deep=False).get("sim_report.json", []), "an archive without its report does not verify")
 
 
 class IncompleteStops(Base):
     def test_the_deadline_inside_k9(self):
         clock = Clock(step=1.0)
-        res = sim.run_batch(self.root, "b4-sim-1", 2, 60, self.out(), clock=clock)
+        res = self.run_with(None, dl=60, clock=clock)
         self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"], res["stopped"]["role"]), ("incomplete", 3, "deadline", "K9"))
         out = Path(res["out"])
-        k9 = json.loads((out / "pair_000/k9.json").read_text())
-        self.assertFalse(k9["complete"]); self.assertIsNone(k9["summary"]); self.assertGreater(k9["pairs_done"], 0); self.assertLess(k9["pairs_done"], 1184)
+        k9d = json.loads((out / "pair_000/k9.json").read_text())
+        self.assertFalse(k9d["complete"]); self.assertIsNone(k9d["summary"]); self.assertIsNone(k9d["invalid"]); self.assertGreater(k9d["pairs_done"], 0); self.assertLess(k9d["pairs_done"], 1184)
         for role in ROLES:
             self.assertTrue((out / f"pair_000/arm_{role}.audit.json").exists(), role)
         rep = self.report(res)
         self.assertEqual((rep["status"], rep["summary"]), ("incomplete", None))
         self.assertEqual(rep["pairs"][0]["k9"], "partial"); self.assertEqual(rep["pairs"][1]["status"], "not_started")
         self.assertTrue(rep["deadline"]["expired"]); self.assertEqual(rep["deadline"]["clock"], "time.monotonic")
-        self.assertEqual(sc.validate_run_dir(out), {})
+        self.assertEqual(sv.verify_run_dir(out, deep=True), {})
 
     def test_the_deadline_in_the_statistics_and_an_interrupt(self):
         clock = Clock(step=0.0)
@@ -352,7 +566,7 @@ class IncompleteStops(Base):
             if (pair, role) == (1, "K10"):
                 clock.jump_at, clock.jump = clock.calls + 423, 10 ** 6       # after K10's 421 checks and the curves' check
             return ex.ObservationPort(fabric)
-        res = sim.run_batch(self.root, "b4-sim-1", 2, 60, self.out(), clock=clock, port_factory=factory)
+        res = self.run_with(factory, dl=60, clock=clock)
         self.assertEqual((res["status"], res["stopped"]["kind"]), ("incomplete", "deadline"))
         self.assertIn(res["stopped"]["stage"], ("statistics", "curves"))
         out = Path(res["out"])
@@ -362,11 +576,135 @@ class IncompleteStops(Base):
 
         def interrupt(fabric, role, pair):
             return RaisingPort(fabric, 5, KeyboardInterrupt()) if (pair, role) == (0, "F") else ex.ObservationPort(fabric)
-        res = sim.run_batch(self.root, "b4-sim-1", 2, 3600, self.out(), port_factory=interrupt)
+        res = self.run_with(interrupt)
         self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"], res["stopped"]["role"]), ("incomplete", 3, "interrupted", "F"))
         rep = self.report(res)
         self.assertEqual((rep["pairs"][0]["arms"]["R"], rep["pairs"][0]["arms"]["F"]), ("audited", "result_unavailable"))
         self.assertNotIn("DOMAIN", res["stopped"]["detail"])
+        self.tearDown()
+
+        def interrupt_k9(fabric, role, pair):
+            return RaisingPort(fabric, 5, KeyboardInterrupt()) if (pair, role) == (0, "K9") else ex.ObservationPort(fabric)
+        res = self.run_with(interrupt_k9)
+        self.assertEqual((res["status"], res["stopped"]["kind"], res["stopped"]["role"]), ("incomplete", "interrupted", "K9"))
+        k9d = json.loads((Path(res["out"]) / "pair_000/k9.json").read_text())
+        self.assertEqual((k9d["complete"], k9d["invalid"], len(k9d["observations"])), (False, None, 4), "F6: the partial before the interrupt is on disk, as a stop")
+        self.assertIsNotNone(k9d["stopped"]); self.assertEqual(self.report(res)["pairs"][0]["k9"], "partial")
+
+    def test_the_deadline_expiring_before_finalisation_is_incomplete(self):
+        """F8: the clock crosses the deadline at the final input checkpoint — after the statistics, before finalisation: the
+        batch is incomplete (exit 3), no summary, the deadline record says expired; never complete / exit 0."""
+        clock = Clock(step=0.0)
+        original_hold = sim.Batch.hold_inputs
+
+        def hold(self_, stage):
+            if stage == "final":
+                clock.t += 10000
+            return original_hold(self_, stage)
+        with mock.patch.object(sim.Batch, "hold_inputs", hold):
+            res = self.run_with(None, dl=60, clock=clock)
+        self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"]), ("incomplete", 3, "deadline"))
+        self.assertIn(res["stopped"]["stage"], ("final", "finalisation"))
+        rep = self.report(res)
+        self.assertIsNone(rep["summary"]); self.assertTrue(rep["deadline"]["expired"])
+        self.assertTrue(all(p["status"] == "complete" for p in rep["pairs"]), "every pair's work is kept")
+        self.assertEqual(sc.report_findings(rep), [])
+
+
+class TheArchiveVerifier(Base):
+    """F2 / F3: the archive-wide verifier on a complete S = 1 fixture archive, tampered one way at a time (every file restored after)."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.out_dir = cls.ns / "b4-mech-1_verify"
+        cls.res = sim.run_batch(cls.root, "b4-mech-1", 1, 3600, cls.out_dir, schedule=SCHED_ONE)
+        assert cls.res["status"] == "complete", cls.res
+        cls.originals = {str(p.relative_to(cls.out_dir)): p.read_bytes() for p in cls.out_dir.rglob("*") if p.is_file()}
+        cls.task = bl.make_task(7, bm.site_mapping().addresses)
+        git(cls.root, "add", "-A"); git(cls.root, "commit", "-q", "-m", "archive verify")
+
+    def restore(self):
+        for rel, b in self.originals.items():
+            p = self.out_dir / rel
+            p.parent.mkdir(parents=True, exist_ok=True)
+            if not p.exists() or p.read_bytes() != b:
+                p.write_bytes(b)
+        for p in list(self.out_dir.rglob("*")):
+            if p.is_file() and str(p.relative_to(self.out_dir)) not in self.originals:
+                p.unlink()
+
+    def load(self, rel):
+        return json.loads(self.originals[rel])
+
+    def put(self, rel, doc):
+        (self.out_dir / rel).write_text(json.dumps(doc))
+
+    def findings(self, deep=True):
+        try:
+            return sv.verify_run_dir(self.out_dir, deep=deep)
+        finally:
+            self.restore()
+
+    def test_the_untouched_archive_is_clean_and_every_tamper_is_named(self):
+        self.assertEqual(self.findings(), {})
+        d = self.load("pair_000/curves.json"); d["best_at_grid"]["O"] = [0] * len(th.GRID); self.put("pair_000/curves.json", d)
+        f = self.findings(); self.assertIn("pair_000/curves.json", f, f)
+        (self.out_dir / "pair_000/arm_R.result.json").unlink()
+        f = self.findings(); self.assertTrue(any("missing" in x for x in f.get("pair_000/arm_R.result.json", [])), f)
+        d = self.load("sim_report.json"); d["summary"]["per_budget"]["8"]["deltas"]["delta1_O_minus_R"]["mean"] = 999; self.put("sim_report.json", d)
+        f = self.findings(); self.assertTrue(any("pooled summary" in x for x in f.get("sim_report.json", [])), f)
+        (self.out_dir / "stray.json").write_text("{}")
+        f = self.findings(); self.assertIn("stray.json", f)
+        (self.out_dir / "STOPPED.json").write_text("{}")
+        f = self.findings(); self.assertIn("STOPPED.json", f)
+        d = self.load("manifest.json"); d["arm_order"] = None; self.put("manifest.json", d)
+        f = self.findings(); self.assertTrue(any("arm_order" in x for x in f.get("manifest.json", [])), f)
+        self.assertEqual(self.findings(), {}, "restored")
+
+    def test_the_comparison_sets_and_the_cell_types_are_enforced_by_the_validators(self):
+        d = self.load("pair_000/k10.json")
+        d["units"] = [json.loads(json.dumps(d["units"][0])) for _ in range(420)]
+        from b4_stats import classify, seed_max
+        m, counts = seed_max(d["units"]); d.update(max_abs_index=m, comparable_pairs=counts["comparable_pairs"], not_comparable_pairs=counts["not_comparable_pairs"], outcome=classify(m, d["tau"]))
+        self.assertTrue(any("not the fixed set's unit" in x for x in sc.k10_findings(d, self.task)))
+        self.assertTrue(any("not the fixed set's unit" in x for x in k10.recompute(d, self.task)))
+        self.put("pair_000/k10.json", d); f = self.findings(); self.assertIn("pair_000/k10.json", f)
+        import b4_k9 as k9
+        d = self.load("pair_000/k9.json"); d["pairs"] = []; d["pairs_done"] = 0; d["summary"] = k9.summarise([], bm.site_mapping()); d["logical_observations"] = 0
+        self.assertTrue(any("fixed set has 1184" in x for x in sc.k9_findings(d, self.task)))
+        self.put("pair_000/k9.json", d); f = self.findings(); self.assertIn("pair_000/k9.json", f)
+        d = self.load("pair_000/k9.json"); d["observations"][0]["q_grid"][0][0] = 2
+        self.assertTrue(any("q_grid" in x for x in sc.k9_findings(d, self.task)), "a q cell of 2 is named")
+        d = self.load("pair_000/k9.json"); d["observations"][0]["id"] = 5
+        self.assertTrue(sc.k9_findings(d, self.task), "a duplicated / shifted observation id is named")
+        d = self.load("pair_000/k9.json"); d["landscape_seed"] = 8
+        self.assertTrue(any("task's" in x for x in sc.k9_findings(d, self.task)), "the declared task is checked, not another user string")
+        d = self.load("pair_000/k10.json"); d["units"][3]["corners"]["11"]["score"] += 1
+        self.assertTrue(any("index" in x for x in sc.k10_findings(d, self.task)), "a score that no longer gives the index is named")
+        for mutate in (lambda m: m.update(arm_order=None), lambda m: m.update(inputs=None), lambda m: m.update(grid="x"), lambda m: m.update(code_root=[])):
+            d = self.load("manifest.json"); mutate(d)
+            f = sc.manifest_findings(d)
+            self.assertTrue(f and not any("raised" in x for x in f), (mutate, f))
+        self.assertEqual(sc.k9_findings(None, self.task), ["k9: not an object"])
+        self.assertTrue(sc.k10_findings({"schema": 1}, self.task))
+        self.assertTrue(all(not x.startswith("k9_findings: the validator raised") for x in sc.k9_findings({k: None for k in sc.K9_KEYS | {"schema", "schema_version", "pair"}}, self.task)))
+
+    def test_the_cli_of_the_verifier(self):
+        import io
+        from contextlib import redirect_stdout
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            code = sv.main([str(self.out_dir), "--shallow"])
+        self.assertEqual(code, 0); self.assertTrue(json.loads(buf.getvalue())["clean"])
+        (self.out_dir / "pair_000/k7.json").unlink()
+        buf = io.StringIO()
+        try:
+            with redirect_stdout(buf):
+                code = sv.main([str(self.out_dir), "--shallow"])
+        finally:
+            self.restore()
+        self.assertEqual(code, 1); self.assertFalse(json.loads(buf.getvalue())["clean"])
 
 
 class TheSummaryAndTheValidators(unittest.TestCase):
@@ -396,13 +734,18 @@ class TheSummaryAndTheValidators(unittest.TestCase):
         self.assertEqual((s2["k9"]["per_semantic"]["sr_kind"]["not_assessable_seeds"], s2["k9"]["per_semantic"]["sr_kind"]["median_coverage_over_all_S"]), (1, None), "one not-assessable seed: the median is not assessable")
 
     def test_a_summary_with_a_verdict_key_is_refused_by_the_report_validator(self):
-        rep = {"schema": "b4_sim_report", "schema_version": "1.0.0", "status": "complete", "label": "b4-sim-1", "count": 1, "head": "0" * 40, "generated_utc": "x",
-               "deadline": {}, "standing": "not a gate verdict", "thresholds": {}, "identity": {}, "pairs": [{"status": "complete"}], "files": [], "stopped": None,
+        plan = {"pair": 0, "landscape_seed": 7, "operator_seed": 11, "status": "complete", "arms": {r: "audited" for r in ROLES}, "k7": "complete", "k9": "complete", "k10": "complete"}
+        rep = {"schema": "b4_sim_report", "schema_version": "1.0.0", "status": "complete", "label": "b4-mech-1", "fixture": True, "count": 1, "head": "0" * 40, "generated_utc": "x",
+               "deadline": {"expired": False}, "standing": "not a gate verdict", "thresholds": {}, "identity": {}, "pairs": [plan], "files": [], "stopped": None,
                "summary": {"k1_pass": True}, "missing": [], "self_validation": {}}
         self.assertTrue(any("verdict-like" in f for f in sc.report_findings(rep)))
         rep["summary"] = {"thresholds_for_reference": {}}
         self.assertEqual(sc.report_findings(rep), [], "'thresholds' is not a verdict word")
-        rep["status"] = "invalid"
+        rep["deadline"] = {"expired": True}
+        self.assertTrue(any("expired" in f for f in sc.report_findings(rep)), "F8: a complete report's deadline has not expired")
+        rep["deadline"] = {"expired": False}; rep["self_validation"] = {"x": ["y"]}
+        self.assertTrue(any("self-validation" in f for f in sc.report_findings(rep)), "F4: a complete report has no self-validation finding")
+        rep["self_validation"] = {}; rep["status"] = "invalid"
         self.assertTrue(sc.report_findings(rep), "a batch that did not complete carries no summary and needs its STOPPED record")
 
     def test_write_exclusive_never_overwrites_and_refuses_non_finite(self):
@@ -417,6 +760,14 @@ class TheSummaryAndTheValidators(unittest.TestCase):
                 sim.write_exclusive(Path(tmp) / "b.json", {"d": float("inf")})
             self.assertFalse((Path(tmp) / "b.json").exists())
             self.assertEqual([q.name for q in Path(tmp).iterdir()], ["a.json"], "no .part file is left behind")
+
+    def test_the_fixture_schedule_s_own_findings(self):
+        self.assertEqual(SCHED1.findings(), [])
+        self.assertTrue(sim.FixtureSchedule("b4-sim-1", ((7, 11),)).findings())
+        self.assertTrue(any("already-exposed" in f for f in sim.FixtureSchedule("b4-mech-1", ((7, 4242),)).findings()))
+        self.assertTrue(any("twice" in f for f in sim.FixtureSchedule("b4-mech-1", ((7, 11), (7, 11))).findings()))
+        self.assertTrue(sim.FixtureSchedule("b4-mech-1", ()).findings())
+        self.assertTrue(sim.FixtureSchedule("b4-mech-1", ((True, 11),)).findings())
 
 
 def sc_semantics():

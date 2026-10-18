@@ -64,8 +64,8 @@ class ThePins(unittest.TestCase):
         self.assertEqual(T["delta2_F_shift"], 21)
 
     def test_the_document_version_is_the_table_s(self):
-        self.assertIn("v0.1.14", th.ARCHITECTURE_SECTION)
-        self.assertIn("(DRAFT v0.1.14,", self.doc.splitlines()[0])
+        self.assertIn("v0.1.15", th.ARCHITECTURE_SECTION)
+        self.assertIn("(DRAFT v0.1.15,", self.doc.splitlines()[0])
 
     def test_a_changed_number_would_be_caught(self):
         rows = dict(self.rows)

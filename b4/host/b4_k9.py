@@ -180,6 +180,13 @@ def coverage(task: ex.PublicTask, port: ex.ObservationPort, mapping, fabric, che
     memo = Memo(port)
     done: list[dict] = []
     stopped = None
+
+    def record(complete: bool, stopped, invalid) -> dict:
+        return {"panel_version": PANEL_VERSION, "landscape_seed": task.seed, "task_digest": task.digest(), "stimulus_sha256": ex.sha256_json(list(task.stimulus)),
+                "backgrounds": bgs, "pairs_total": len(pairs), "pairs_done": len(done), "pairs": list(done),
+                "observations": memo.records(), "memo": memo.summary(), "logical_observations": 2 * sum(1 for r in done if r["applicable"]),
+                "complete": complete, "stopped": stopped, "invalid": invalid, "summary": summarise(done, mapping) if complete else None,
+                "note": NOTE}
     for i, p in enumerate(pairs):
         if check is not None:
             try:
@@ -187,20 +194,45 @@ def coverage(task: ex.PublicTask, port: ex.ObservationPort, mapping, fabric, che
             except StopWork as exc:
                 stopped = {"before_pair_index": i, "reason": str(exc)}
                 break
-        app = applicability(fabric, p)
-        rec = {**p, **app, "obs0": None, "obs1": None, "hit0": None, "hit1": None, "differences": [], "covered": None}
-        if app["applicable"]:
-            id0, grid0, hit0 = memo.observe(p["g0"], task.stimulus)
-            id1, grid1, hit1 = memo.observe(p["g1"], task.stimulus)
-            diffs = differences(grid0, grid1, app["scope"])
-            rec.update(obs0=id0, obs1=id1, hit0=hit0, hit1=hit1, differences=diffs, covered=bool(diffs))
+        try:
+            app = applicability(fabric, p)
+            rec = {**p, **app, "obs0": None, "obs1": None, "hit0": None, "hit1": None, "differences": [], "covered": None}
+            if app["applicable"]:
+                id0, grid0, hit0 = memo.observe(p["g0"], task.stimulus)
+                id1, grid1, hit1 = memo.observe(p["g1"], task.stimulus)
+                diffs = differences(grid0, grid1, app["scope"])
+                rec.update(obs0=id0, obs1=id1, hit0=hit0, hit1=hit1, differences=diffs, covered=bool(diffs))
+        except BaseException as exc:  # noqa: BLE001 — the evidence obtained so far travels with the exception, whatever it is
+            if isinstance(exc, KeyboardInterrupt):
+                exc.k9_partial = record(False, {"before_pair_index": i, "reason": "KeyboardInterrupt: an external interrupt inside pair " + str(i)}, None)
+            else:
+                exc.k9_partial = record(False, None, {"pair_index": i, "bit": p["bit"], "g0": p["g0"], "g1": p["g1"], "exception": type(exc).__name__, "reason": str(exc),
+                                                      "note": "a refusal or an error inside the K9 computation: invalid under section 9.1; the pairs and observations obtained before it are kept"})
+            raise
         done.append(rec)
-    complete = stopped is None
-    return {"panel_version": PANEL_VERSION, "landscape_seed": task.seed, "task_digest": task.digest(), "stimulus_sha256": ex.sha256_json(list(task.stimulus)),
-            "backgrounds": bgs, "pairs_total": len(pairs), "pairs_done": len(done), "pairs": done,
-            "observations": memo.records(), "memo": memo.summary(), "logical_observations": 2 * sum(1 for r in done if r["applicable"]),
-            "complete": complete, "stopped": stopped, "summary": summarise(done, mapping) if complete else None,
-            "note": "host-only observability on the fixed section 9.3 set; applicability is read from the configuration's decode, never from the traces; identical traces are covered = False and stay in the denominator; these observations enter no ledger and no cartographer"}
+    return record(stopped is None, stopped, None)
+
+
+NOTE = ("host-only observability on the fixed section 9.3 set; applicability is read from the configuration's decode, never from the traces; "
+        "identical traces are covered = False and stay in the denominator; these observations enter no ledger and no cartographer")
+
+
+def canonical_findings(result: dict, mapping) -> list[str]:
+    """The fixed comparison set: a complete record holds EXACTLY the 1 184 forced pairs in their order; a partial record
+    holds a prefix of them; nothing is omitted, duplicated or reordered."""
+    want = forced_pairs(mapping, panel(mapping))
+    f: list[str] = []
+    pairs = result["pairs"]
+    if result["complete"] and len(pairs) != len(want):
+        f.append(f"a complete K9 record holds {len(pairs)} pairs, the fixed set has {len(want)}")
+    if len(pairs) > len(want):
+        f.append(f"{len(pairs)} pairs recorded, more than the fixed set's {len(want)}")
+    for i, (p, w) in enumerate(zip(pairs, want)):
+        if (p["bit"], p["g0"], p["g1"], p["semantic"], p["element"], p["backgrounds"]) != (w["bit"], w["g0"], w["g1"], w["semantic"], w["element"], w["backgrounds"]):
+            f.append(f"pair {i}: not the fixed set's pair {i}"); break
+    if result["pairs_done"] != len(pairs):
+        f.append("pairs_done is not the number of pairs recorded")
+    return f
 
 
 def recompute(result: dict, task: ex.PublicTask, fabric) -> list[str]:
@@ -213,6 +245,9 @@ def recompute(result: dict, task: ex.PublicTask, fabric) -> list[str]:
     want_pairs = forced_pairs(mapping, panel(mapping))
     if result["pairs_total"] != len(want_pairs):
         f.append(f"pairs_total {result['pairs_total']} != {len(want_pairs)}")
+    f += canonical_findings(result, mapping)
+    if len(result["pairs"]) > len(want_pairs):
+        return f
     obs = {o["id"]: o for o in result["observations"]}
     for o in obs.values():
         if ex.sha256_json(o["q_grid"]) != o["trace_sha256"]:
@@ -242,6 +277,15 @@ def recompute(result: dict, task: ex.PublicTask, fabric) -> list[str]:
     if result["complete"]:
         if result["summary"] != summarise(result["pairs"], mapping):
             f.append("the summary is not what the pairs give")
+        if result["stopped"] is not None or result.get("invalid") is not None:
+            f.append("a complete result carries a stop or an invalid record")
     elif result["summary"] is not None:
         f.append("an incomplete result carries a summary")
+    ids = [o["id"] for o in result["observations"]]
+    if ids != list(range(len(ids))):
+        f.append("the observation ids are not 0 .. n-1 in order")
+    if result["memo"]["unique_observations"] != len(ids):
+        f.append("memo.unique_observations is not the number of observations kept")
+    if result["logical_observations"] != 2 * sum(1 for p in result["pairs"] if p["applicable"]):
+        f.append("logical_observations is not twice the applicable pairs")
     return f

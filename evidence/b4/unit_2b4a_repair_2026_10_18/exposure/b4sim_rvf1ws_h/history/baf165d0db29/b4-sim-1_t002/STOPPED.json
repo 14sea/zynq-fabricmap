@@ -1,0 +1,59 @@
+{
+ "deadline": {
+  "checks": 3,
+  "clock": "time.monotonic",
+  "elapsed_s": 0.191,
+  "expired": false,
+  "first_expired_at_s": null,
+  "seconds": 3600
+ },
+ "detail": "an injected replay finding",
+ "head_at_stop": "d3d5607254775debfd5b734e2cc30b971388c663",
+ "kind": "contract",
+ "pair": 0,
+ "planned": [
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "not_started",
+    "O": "not_started",
+    "Omega": "not_started",
+    "R": "written",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 1427447052,
+   "operator_seed": 994545473,
+   "pair": 0,
+   "status": "partial"
+  },
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "not_started",
+    "O": "not_started",
+    "Omega": "not_started",
+    "R": "not_started",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 901432056,
+   "operator_seed": 1779806758,
+   "pair": 1,
+   "status": "not_started"
+  }
+ ],
+ "role": "R",
+ "schema": "b4_sim_stopped",
+ "schema_version": "1.0.0",
+ "stage": "audit",
+ "status": "invalid",
+ "stopped_utc": "2026-10-18T18:28:58Z",
+ "traceback": null
+}

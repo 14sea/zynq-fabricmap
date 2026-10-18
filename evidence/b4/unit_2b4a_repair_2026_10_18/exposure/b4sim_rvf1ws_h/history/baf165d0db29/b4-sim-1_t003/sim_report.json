@@ -1,0 +1,345 @@
+{
+ "count": 2,
+ "deadline": {
+  "checks": 1296,
+  "clock": "time.monotonic",
+  "elapsed_s": 3.909,
+  "expired": false,
+  "first_expired_at_s": null,
+  "seconds": 3600
+ },
+ "files": [
+  {
+   "path": "seeds.json",
+   "sha256": "42e8694289410aeb34aa2a79f43915326c44ee034392519197b7e9f36e790f36",
+   "size": 131290
+  },
+  {
+   "path": "manifest.json",
+   "sha256": "3b43a0865b9ae3b1c7b91f68a18869c4da96af4b99cb112bd1c462e1726d9503",
+   "size": 17818
+  },
+  {
+   "path": "pair_000/arm_R.result.json",
+   "sha256": "5752abb5e054bb6d8f531e3a9678e3486c866a02599213c4f733a8b381cce2f0",
+   "size": 423236
+  },
+  {
+   "path": "pair_000/arm_R.audit.json",
+   "sha256": "207fc534a8b52e1f7cfe8d23cd8f697f8a1659d97e8b2218afbd292df16a5cd1",
+   "size": 610
+  },
+  {
+   "path": "pair_000/arm_F.result.json",
+   "sha256": "b0986d3e49b792bbbd5d38b1a9be8e1feacd73d9753f7f19f1e76cf2fa11c2e5",
+   "size": 470643
+  },
+  {
+   "path": "pair_000/arm_F.audit.json",
+   "sha256": "005229b287e499c21aa0abba4f1764d32361d147a4416af1cf50db82c1e08819",
+   "size": 928
+  },
+  {
+   "path": "pair_000/controls.json",
+   "sha256": "3413a34e1bd768b23bea5b90f957db27be4d5db88c5edf41a7b8918d8504b52a",
+   "size": 2770
+  },
+  {
+   "path": "pair_000/arm_O.result.json",
+   "sha256": "8e69bcb5e1ba8635ecd73c83b5e91f9d22249492dde3822b582a36a189503ca5",
+   "size": 436604
+  },
+  {
+   "path": "pair_000/arm_O.audit.json",
+   "sha256": "525879e97d56b7f12af62d06bbd6511d9036082547e1ccdfa81bcb2b6bf4ea0b",
+   "size": 913
+  },
+  {
+   "path": "pair_000/k7.json",
+   "sha256": "78430ed49e9be3303fe1160780577c5fb8c97240337c6562e7c7e7ac8971c27d",
+   "size": 171715
+  },
+  {
+   "path": "pair_000/arm_X.result.json",
+   "sha256": "b85aad53d7bba872c6f0b3364ac9dbd850a87cbc5b231d4b247df2f09df8077b",
+   "size": 439747
+  },
+  {
+   "path": "pair_000/arm_X.audit.json",
+   "sha256": "58d9fccd03d5fb312d8aca957b4879ec454f06bff8677abc351ed9264f27633f",
+   "size": 921
+  },
+  {
+   "path": "pair_000/arm_D.result.json",
+   "sha256": "76de035b2526822f4086f946fd8ace843be47c3b912913c014053088f2eea190",
+   "size": 438386
+  },
+  {
+   "path": "pair_000/arm_D.audit.json",
+   "sha256": "12b9ed771b81b66370fcbcc7e3caed5faf859e8fac60bfa41ddd88ab535a6540",
+   "size": 612
+  },
+  {
+   "path": "pair_000/arm_Omega.result.json",
+   "sha256": "13c0cdc7225fcf854eabd1ab48d164e0f53487fcbe7ff5f1db86d3269b5bc867",
+   "size": 437139
+  },
+  {
+   "path": "pair_000/arm_Omega.audit.json",
+   "sha256": "f9d1a1fba3a2f23ab36d7dfbcb0ad9dd0472fa2968069c249156260b87521d82",
+   "size": 616
+  },
+  {
+   "path": "pair_000/arm_A0.result.json",
+   "sha256": "06a9fbf9fc9f48af02d4f56955124a058cbc02190bf5cc58ef812425d5975f9a",
+   "size": 439488
+  },
+  {
+   "path": "pair_000/arm_A0.audit.json",
+   "sha256": "1e49bff76ee8abb82e9cbfda19b2f7b51bcaefaea549855f6efa46260dca90f0",
+   "size": 613
+  },
+  {
+   "path": "pair_000/k9.json",
+   "sha256": "9dec8ad27663803bfeaf69000a788016f24bf011a20e69737690dae865adde20",
+   "size": 1994715
+  },
+  {
+   "path": "pair_000/k10.json",
+   "sha256": "2e09dac55d6ad744a30823bea9eb5d125d048e341a895a231e136535a1a20131",
+   "size": 153357
+  },
+  {
+   "path": "STOPPED.json",
+   "sha256": "2e311b277e6b523019a4c5022c59c1e36850bb2ae25581b507bb6631689403aa",
+   "size": 1233
+  }
+ ],
+ "generated_utc": "2026-10-18T18:29:02Z",
+ "head": "5a47e5e9b2023cc81121ce1b1dbbea4fa4e47b58",
+ "identity": {
+  "certificate_sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef",
+  "hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+  "inputs": {
+   "b4/IMPORT.json": "503f35eca5fce4f04e70fdc0341680280d5aa2477a3c16b0348328013eda30fc",
+   "b4/hypothesis/ff_behaviour_v0.3.json": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "docs/b4_architecture.md": "8492b71ef7db62233d5a5b1313369c750efbbeb5bf2874c26bc788a938a55cec",
+   "docs/ff_latch_probe.md": "545bf34de94f83e39aa22b7e186a0797a0b7b2c92466bf55be8efecfd61efd27",
+   "evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json": "af482824b10f5248db262bb5e6f417830f3b67a45c43e4c75d1dd3eae4a34e55",
+   "gate_runs/run_2026_08_05_ff/certificate.json": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef"
+  },
+  "manifest_sha256": "3b43a0865b9ae3b1c7b91f68a18869c4da96af4b99cb112bd1c462e1726d9503",
+  "out": "evidence/b4/sim/b4-sim-1_t003",
+  "seeds_sha256": "42e8694289410aeb34aa2a79f43915326c44ee034392519197b7e9f36e790f36"
+ },
+ "label": "b4-sim-1",
+ "missing": [
+  "no pooled numeric summary: the batch did not complete",
+  "pair 0: partial (arms {'R': 'audited', 'F': 'audited', 'O': 'audited', 'X': 'audited', 'D': 'audited', 'Omega': 'audited', 'A0': 'audited'}, k7 complete, k9 complete, k10 in_progress)",
+  "pair 1: not_started (arms {'R': 'not_started', 'F': 'not_started', 'O': 'not_started', 'X': 'not_started', 'D': 'not_started', 'Omega': 'not_started', 'A0': 'not_started'}, k7 not_started, k9 not_started, k10 not_started)"
+ ],
+ "pairs": [
+  {
+   "arms": {
+    "A0": "audited",
+    "D": "audited",
+    "F": "audited",
+    "O": "audited",
+    "Omega": "audited",
+    "R": "audited",
+    "X": "audited"
+   },
+   "k10": "in_progress",
+   "k7": "complete",
+   "k9": "complete",
+   "landscape_seed": 1728435565,
+   "operator_seed": 2327199381,
+   "pair": 0,
+   "status": "partial"
+  },
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "not_started",
+    "O": "not_started",
+    "Omega": "not_started",
+    "R": "not_started",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 4253232248,
+   "operator_seed": 3880354669,
+   "pair": 1,
+   "status": "not_started"
+  }
+ ],
+ "schema": "b4_sim_report",
+ "schema_version": "1.0.0",
+ "self_validation": {},
+ "standing": "exploration data under the label given, S as planned; not a gate verdict; the thresholds of docs/b4_architecture.md v0.1.14 section 9 are listed for reference only; candidate B* / N are estimates on this S, never the formal S = 200's",
+ "status": "invalid",
+ "stopped": {
+  "deadline": {
+   "checks": 1296,
+   "clock": "time.monotonic",
+   "elapsed_s": 3.827,
+   "expired": false,
+   "first_expired_at_s": null,
+   "seconds": 3600
+  },
+  "detail": "K10 unit (background 0, 4, 8): corners ['11'] refused",
+  "head_at_stop": "5a47e5e9b2023cc81121ce1b1dbbea4fa4e47b58",
+  "kind": "k10_invalid",
+  "pair": 0,
+  "planned": [
+   {
+    "arms": {
+     "A0": "audited",
+     "D": "audited",
+     "F": "audited",
+     "O": "audited",
+     "Omega": "audited",
+     "R": "audited",
+     "X": "audited"
+    },
+    "k10": "in_progress",
+    "k7": "complete",
+    "k9": "complete",
+    "landscape_seed": 1728435565,
+    "operator_seed": 2327199381,
+    "pair": 0,
+    "status": "partial"
+   },
+   {
+    "arms": {
+     "A0": "not_started",
+     "D": "not_started",
+     "F": "not_started",
+     "O": "not_started",
+     "Omega": "not_started",
+     "R": "not_started",
+     "X": "not_started"
+    },
+    "k10": "not_started",
+    "k7": "not_started",
+    "k9": "not_started",
+    "landscape_seed": 4253232248,
+    "operator_seed": 3880354669,
+    "pair": 1,
+    "status": "not_started"
+   }
+  ],
+  "role": "K10",
+  "schema": "b4_sim_stopped",
+  "schema_version": "1.0.0",
+  "stage": "k10",
+  "status": "invalid",
+  "stopped_utc": "2026-10-18T18:29:01Z",
+  "traceback": null
+ },
+ "summary": null,
+ "thresholds": {
+  "B_max": 256,
+  "B_star": {
+   "no_eligible_budget": "the budget rule FAILS; B* and N are not invented (exploration: candidate B* / N are null with the reason)",
+   "rule": "the smallest N(B) x 3 x B among budgets where K1 holds and N(B) exists; ties to the smaller budget"
+  },
+  "K1": {
+   "medians": "median_r(best_R(B)) > median_r(base_r), two medians compared",
+   "omega_best_p95_lt": 64,
+   "percentile": 95
+  },
+  "K10": {
+   "background_rule": "0 and Rng((seed ^ salt) & 0xffffffff).uniform(1 << 21), the first call",
+   "background_salt": 1275743829,
+   "backgrounds": 2,
+   "interacting": "max|I| > 2 (exactly 2 is nonzero below threshold)",
+   "interacting_seeds_over_S_min": 0.5,
+   "pairs_per_background": 210,
+   "tau": 2
+  },
+  "K2": {
+   "alpha": 0.05,
+   "bootstrap_experiments": 1000,
+   "bootstrap_seed": 7,
+   "population_variance_gt": 0,
+   "rejection": "p <= 0.05",
+   "ties": "excluded from the sign test's n, kept in the resampled population",
+   "x_minus_r_nonrejection_min": 0.9
+  },
+  "K3": {
+   "alpha": 0.05,
+   "denominators": "mean(F - R) > 0 and mean(O - R) > 0 required; a non-positive denominator is not readable as satisfied",
+   "ratio_max": 0.1,
+   "sign_test_h1": "P(control - R > 0 | control - R != 0) > 1/2"
+  },
+  "K4": {
+   "f_over_omega_min": 0.5,
+   "omega_median_max": 57.6,
+   "omega_median_rule": "0.90 * 64"
+  },
+  "K5": {
+   "alpha": 0.05,
+   "bootstrap_experiments": 1000,
+   "bootstrap_seed_rule": "random.Random(1 + N)",
+   "cap_formula": "N x 3 x B*",
+   "cap_search_evaluations": 4000,
+   "cohen_d_min": 0.5,
+   "n_min": 8,
+   "n_scan": "every integer from 8 to S, ascending, no bisection",
+   "power_min": 0.9
+  },
+  "K6": {
+   "N_min": 8,
+   "S_gate": 200,
+   "note": "S is the number planned, never the number that completed"
+  },
+  "K7": {
+   "o_prefix_median_not_unknown_min": 11,
+   "of_addresses": 21,
+   "prefix": "arm O's first B* + 1 ledger records (base + B* search)",
+   "recomputation_mismatches": 0
+  },
+  "K8": {
+   "replay": "no finding on every executed run; a broken tool contract is invalid under section 9.1"
+  },
+  "K9": {
+   "median_coverage_per_semantic_min": 0.5,
+   "median_population": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
+   "panel": "section 9.3: 32 mode combinations x INIT/SRVAL all-0 / all-1 = 64 backgrounds",
+   "seeds_with_all_seven_positive_controls_min": 0.9,
+   "semantics": 7
+  },
+  "addresses": 21,
+  "anchor": {
+   "exploration_label": "b4-sim-1",
+   "gate_label": "b4-gate-1",
+   "hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "rule": "int.from_bytes(sha256(utf8(label + '|' + anchor))[:4], 'big'), the label passed beside the anchor"
+  },
+  "controls": {
+   "d_shuffle_seed": "int.from_bytes(sha256('b4-d-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')",
+   "x_control_seed": "int.from_bytes(sha256('b4-x-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')"
+  },
+  "delta2_F_shift": 21,
+  "grid": [
+   8,
+   16,
+   24,
+   32,
+   48,
+   64,
+   96,
+   128,
+   192,
+   256
+  ],
+  "lambda": 8,
+  "probes_per_F_run": 21,
+  "source": "docs/b4_architecture.md section 9 (v0.1.14), fixed before any exploration or gate run",
+  "standing": "engineering research criteria fixed in advance; no number is claimed to be empirically guaranteed, statistically calibrated or valid for silicon; listed beside exploration values for reference only \u2014 never a gate verdict here"
+ }
+}

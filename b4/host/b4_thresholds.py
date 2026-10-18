@@ -18,7 +18,7 @@ for p in (REPO_ROOT / "b4/host",):
 from b4_ff_hypothesis import HYPOTHESIS_SHA256  # noqa: E402
 
 ARCHITECTURE_REL = "docs/b4_architecture.md"
-ARCHITECTURE_SECTION = "9 (v0.1.14)"
+ARCHITECTURE_SECTION = "9 (v0.1.15)"
 
 GRID = (8, 16, 24, 32, 48, 64, 96, 128, 192, 256)
 B_MAX = 256

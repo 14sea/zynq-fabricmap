@@ -126,6 +126,44 @@ class TheComputation(Base):
         self.assertIsNone(last["corners"]["11"]["obs"]); self.assertIsNotNone(last["corners"]["00"]["obs"], "the corners obtained are kept")
         self.assertLess(len(p["units"]), 420)
 
+    def test_no_corner_is_observed_after_the_first_refused_one(self):
+        """F5 of the owner's review: a DOMAIN at the first corner of the first unit leaves port calls at 1 (not 4), no
+        observation kept, the unit recorded with its refused corner named; at the second corner: 2 calls, 1 observation."""
+        from b4_test_fixtures import InjectingPort
+        for at, obs_kept, corner in ((1, 0, "00"), (2, 1, "01"), (4, 3, "11")):
+            port = InjectingPort(self.fab, at)
+            with self.assertRaises(k10.K10Invalid) as cm:
+                k10.seed_k10(self.task, port)
+            p = cm.exception.partial
+            self.assertEqual(port.calls, at, f"refused at call {at}: no further corner observed")
+            self.assertEqual((len(p["observations"]), len(p["units"]), p["units"][0]["comparable"], p["units"][0]["illegal_corners"]), (obs_kept, 1, False, [corner]))
+            self.assertIsNone(p["units"][0]["corners"][corner]["score"]); self.assertIsNone(p["units"][0]["corners"][corner]["obs"])
+            self.assertEqual((p["invalid"]["unit_index"], p["invalid"]["exception"], p["complete"], p["outcome"]), (0, "DomainRefusal", False, None))
+            self.assertEqual(k10.recompute(p, self.task), [], "the partial recomputes clean")
+        port = InjectingPort(self.fab, 6, KeyboardInterrupt())
+        with self.assertRaises(KeyboardInterrupt) as cm:
+            k10.seed_k10(self.task, port)
+        p = cm.exception.k10_partial
+        self.assertEqual((p["invalid"], p["stopped"]["before_unit_index"], len(p["units"]), len(p["observations"])), (None, 1, 1, 5), "an interrupt inside the second unit: a stop, the first unit kept")
+        port = InjectingPort(self.fab, 6, ex.SourceRefusal("injected"))
+        with self.assertRaises(ex.SourceRefusal) as cm:
+            k10.seed_k10(self.task, port)
+        self.assertEqual(cm.exception.k10_partial["invalid"]["exception"], "SourceRefusal")
+
+    def test_duplicated_or_missing_units_in_a_complete_record_are_named(self):
+        """F3 of the owner's review: the fixed comparison set is enforced — the first unit repeated 420 times, a unit dropped,
+        or an empty complete record are all named by `recompute`."""
+        full = k10.seed_k10(self.task, ex.ObservationPort(self.fab))
+        self.assertEqual(k10.recompute(full, self.task), [])
+        self.assertEqual([(u["background_index"], u["a"], u["b"]) for u in full["units"]], k10.canonical_units())
+        bad = json.loads(json.dumps(full)); bad["units"] = [json.loads(json.dumps(bad["units"][0])) for _ in range(420)]
+        m, counts = st.seed_max(bad["units"]); bad.update(max_abs_index=m, comparable_pairs=counts["comparable_pairs"], not_comparable_pairs=counts["not_comparable_pairs"], outcome=st.classify(m, bad["tau"]))
+        self.assertTrue(any("not the fixed set's unit 1" in f for f in k10.recompute(bad, self.task)))
+        bad = json.loads(json.dumps(full)); del bad["units"][5]; bad["logical_corners"] -= 4
+        self.assertTrue(any("fixed set has 420" in f for f in k10.recompute(bad, self.task)))
+        bad = json.loads(json.dumps(full)); bad["units"] = []; bad["logical_corners"] = 0
+        self.assertTrue(any("fixed set has 420" in f for f in k10.recompute(bad, self.task)))
+
     def test_the_deadline_stops_between_units_and_the_partial_is_kept(self):
         budget = {"left": 7}
 

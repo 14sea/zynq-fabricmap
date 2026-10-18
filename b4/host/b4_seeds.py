@@ -53,7 +53,8 @@ HEX64_RE = re.compile(r"^[0-9a-f]{64}$")
 SIM_REL = "evidence/b4/sim"                                  # the exploration namespace; its seed registries are sources
 SEEDS_FILE = "seeds.json"
 INIT_FAILED_FILE = "INIT_FAILED.json"
-SEEDS_SCHEMA = ("b4_sim_seeds", "1.0.0")
+SEEDS_SCHEMA = ("b4_sim_seeds", "1.1.0")                      # 1.1.0 (the repair of 2026-10-18): the `fixture` flag
+FIXTURE_LABEL_RE = re.compile(r"^b4-mech-[1-9][0-9]*$")       # a MECHANICS fixture set: explicit, already-exposed values, no master
 INIT_FAILED_SCHEMA = ("b4_sim_init_failed", "1.0.0")
 
 # B2's frozen list (host/b2_search.py EXCLUDED_SEEDS), copied; the text of the pinned file must parse to exactly this.
@@ -65,6 +66,10 @@ B2_EXCLUDED_SEEDS = (1, 2, 3, 5, 11, 77, 99, 1234, 4321, 195948557, 324805736, 5
 # fixture seeds 1 / 2 / 3 / 5; the derangement seeds 5 / 6 / 9 and the scanned value 1; the single formal base
 # observation of the 2b-3 scope draft under landscape seed 7. One pooled set; the roles are history, not structure.
 B4_EXPOSED_VALUES = frozenset((3, 5, 7, 8, 11, 12, 13, 5, 6, 7, 8, 1, 2, 3, 5, 5, 6, 9, 1, 7))
+
+# The values a mechanics FIXTURE schedule may use: already exposed under section 9.2 (B2's copy and B4's exposed values).
+# A fixture set derives nothing: no anchor, no master, no draw; it can never reach a production set.
+FIXTURE_VALUES = frozenset(B2_EXCLUDED_SEEDS) | B4_EXPOSED_VALUES
 
 # ------------------------------------------------------------------ the typed field paths
 # A path is dot-separated; a step `name` indexes a dict key, `name[]` iterates a list under that key, `[]` alone
@@ -269,22 +274,36 @@ def read_source(repo_root: Path, rel: str, paths: tuple, expected_sha256: str) -
 
 # ------------------------------------------------------------------ the archived exploration registries
 def seeds_doc_findings(doc) -> list[str]:
-    """The shape of an archived `seeds.json` (schema b4_sim_seeds 1.0.0), total and type-exact."""
+    """The shape of an archived `seeds.json` (schema b4_sim_seeds 1.1.0), total and type-exact. `fixture` False: a
+    production set — a label that is not a fixture label, an anchor, an int master. `fixture` True: a MECHANICS fixture
+    set — a `b4-mech-<n>` label, `master_seed` null, `anchor.hypothesis_sha256` null, every pair value in FIXTURE_VALUES."""
     f: list[str] = []
     if not isinstance(doc, dict):
         return ["not an object"]
-    want = {"schema", "schema_version", "label", "anchor", "master_seed", "count", "pairs", "exclusion", "generated_utc"}
+    want = {"schema", "schema_version", "label", "fixture", "anchor", "master_seed", "count", "pairs", "exclusion", "generated_utc"}
     if set(doc) != want:
         return [f"keys {sorted(set(doc) ^ want)} differ from the schema's"]
     if (doc["schema"], doc["schema_version"]) != SEEDS_SCHEMA:
         f.append("schema / schema_version")
+    if not isinstance(doc["fixture"], bool):
+        return f + ["fixture is not a bool"]
+    fixture = doc["fixture"]
     if not (isinstance(doc["label"], str) and LABEL_RE.match(doc["label"])):
         f.append("label")
+    elif fixture is not bool(FIXTURE_LABEL_RE.match(doc["label"])):
+        f.append("label: a fixture set has a b4-mech-<n> label and a production set has not")
     a = doc["anchor"]
-    if not (isinstance(a, dict) and set(a) == {"rule", "hypothesis_sha256", "label"} and isinstance(a["rule"], str)
-            and isinstance(a["hypothesis_sha256"], str) and HEX64_RE.match(a["hypothesis_sha256"]) and a["label"] == doc["label"]):
+    if not (isinstance(a, dict) and set(a) == {"rule", "hypothesis_sha256", "label"} and isinstance(a["rule"], str) and a["label"] == doc["label"]):
         f.append("anchor")
-    if not is_seed_int(doc["master_seed"]):
+    elif fixture:
+        if a["hypothesis_sha256"] is not None or "fixture" not in a["rule"]:
+            f.append("anchor: a fixture set has no anchor (hypothesis_sha256 null, the rule naming the fixture)")
+    elif not (isinstance(a["hypothesis_sha256"], str) and HEX64_RE.match(a["hypothesis_sha256"])):
+        f.append("anchor.hypothesis_sha256")
+    if fixture:
+        if doc["master_seed"] is not None:
+            f.append("master_seed: a fixture set derives no master (null)")
+    elif not is_seed_int(doc["master_seed"]):
         f.append("master_seed")
     if not (isinstance(doc["count"], int) and not isinstance(doc["count"], bool) and doc["count"] >= 0):
         f.append("count")
@@ -293,6 +312,8 @@ def seeds_doc_findings(doc) -> list[str]:
         f.append("pairs")
     elif isinstance(doc["count"], int) and len(pairs) != doc["count"]:
         f.append(f"count {doc['count']} != {len(pairs)} pairs")
+    elif fixture and any(v not in FIXTURE_VALUES for p in pairs for v in p):
+        f.append("pairs: a fixture set uses already-exposed values only (FIXTURE_VALUES)")
     e = doc["exclusion"]
     if not (isinstance(e, dict) and set(e) == {"sources", "b4_exposed_values", "sim_registry", "pooled_total"}):
         f.append("exclusion")
@@ -329,10 +350,10 @@ def init_failed_findings(doc) -> list[str]:
 @dataclass(frozen=True)
 class RegistryRecord:
     dir: str                     # repository-relative run directory
-    status: str                  # "seeds" (a seeds.json read) or "init_failed_no_seeds" (an INIT_FAILED.json stating no seeds were derived)
+    status: str                  # "seeds" (a production seeds.json), "seeds_fixture" (a mechanics fixture set) or "init_failed_no_seeds"
     seeds_sha256: str | None
-    master_seed: int | None
-    values: tuple                # the master and every planned pair value (empty for init_failed_no_seeds)
+    master_seed: int | None      # None for a fixture set (no master is derived)
+    values: tuple                # the master and every planned pair value (a fixture set: its pair values; init_failed_no_seeds: empty)
 
     def as_dict(self) -> dict:
         return {"dir": self.dir, "status": self.status, "seeds_sha256": self.seeds_sha256, "master_seed": self.master_seed, "count": len(self.values)}
@@ -361,8 +382,8 @@ def sim_registry(repo_root: Path, sim_rel: str = SIM_REL) -> tuple[list[Registry
             f = seeds_doc_findings(doc)
             if f:
                 raise ExclusionSourceRefusal(f"{rel}/{SEEDS_FILE}: malformed: " + "; ".join(f))
-            vals = [doc["master_seed"]] + [v for p in doc["pairs"] for v in p]
-            out.append(RegistryRecord(rel, "seeds", sha256_bytes(raw), doc["master_seed"], tuple(vals)))
+            vals = ([] if doc["fixture"] else [doc["master_seed"]]) + [v for p in doc["pairs"] for v in p]
+            out.append(RegistryRecord(rel, "seeds_fixture" if doc["fixture"] else "seeds", sha256_bytes(raw), doc["master_seed"], tuple(vals)))
         elif init_p.exists():
             try:
                 doc = json.loads(init_p.read_bytes())
