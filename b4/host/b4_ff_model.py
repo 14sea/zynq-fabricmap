@@ -22,15 +22,19 @@ VALIDATION AT THE ENTRY (the owner's P2): `observe` checks the configuration (ex
 each 0 or 1, no bool) and every step as a dict (an init step carries nothing else; a set step's clock in {0, 1},
 ce / sr / d in 0..255, ints not bools) — whatever built them; a step that bypassed `set_` is refused the same.
 The init step's allowed context (the hypothesis's `initialisation_event.allowed_context`): the slice clock low
-and SR de-asserted at that moment, else refused. A configuration outside the hypothesis's domain (an unknown
-reading — clock_mode bit 0 under a latch) is refused by name, never simulated with a default.
+and SR de-asserted at that moment, else refused. A configuration outside the hypothesis's domain (a reading the
+hypothesis leaves unknown — v0.2's clock_mode bit 0 under a latch; none in v0.3) is refused by name, never simulated
+with a default.
 
 The state machine is PARAMETERISED by the hypothesis: every reading goes through `Hypothesis.decode`, every
 behavioural choice through `Hypothesis.flag(...)`; nothing about INIT, SRVAL, CE, SR, latches or clock inversion
 is a literal here. `observe` starts from NOTHING (Q None, clock and inputs low): no state crosses candidates.
 A `set` step applies the inputs, settles the level-sensitive effects at the old clock level, applies the clock
 change (an edge per element in ITS physical clock — the slice clock through the decoded inversion, which under
-a latch means the gate is the slice clock itself), settles again, and reads out.
+a latch means the gate is the slice clock or, under v0.3's bit-0 reading, the slice clock inverted), settles
+again, and reads out. The order matters and is the model's: the new inputs are settled at the OLD clock level
+first, so a step that changes D while closing a latch's gate passes the new D before the gate closes; the init
+step assigns INIT atomically and settles nothing (a model abstraction the hypothesis file names).
 
 Fixtures (`fixture`): `truth`, `permuted`, `dropout`, and the hypothesis swaps `ce_ungated`, `init_no_effect`,
 `zini_polarity`, `latch_hold`, `sync_level`, `x5ff_storage`, `latch_gate_inverted` — each a marked fixture

@@ -1,17 +1,21 @@
-"""b4/hypothesis/ff_behaviour_v0.2.json and b4/host/b4_ff_hypothesis.py — the behaviour hypothesis is held to
+"""b4/hypothesis/ff_behaviour_v0.3.json and b4/host/b4_ff_hypothesis.py — the behaviour hypothesis is held to
 its shape (status unverified, the eleven flags, the seven decoded semantics with machine-enum readings, sources
 of every kind each naming what it adopts); `load()` takes NO path, reads the committed file only against the
 pinned HYPOTHESIS_SHA256 and ALWAYS re-hashes every named source (an absent or changed source is a refusal,
 never a skip, and there is no switch); a hypothesis that is not the committed file — a changed copy, a VALID
 copy at another path, a document built in a test — enters only through `fixture()` / `fixture_file()` and is
-marked; `unknown` is a reading in clock_mode's latch context only; the decode goes through the hypothesis's readings by equality (an
+marked; `unknown` is a reading in clock_mode's latch context only (v0.3 uses it nowhere: every assignment of the 21 bits is in its domain;
+the superseded v0.2 file is kept byte for byte and enters only as the marked v021_hole fixture, whose domain has the 0.2.1 hole); the
+decode goes through the hypothesis's readings by equality (an
 unrecognised reading is refused by name at load and at decode, never read as a default); clock_mode is decoded
 by storage context (the latch probe's finding); a swap is another, marked object with its own digest. No skip."""
 from __future__ import annotations
 
 import copy
+import hashlib
 import inspect
 import json
+import random
 import shutil
 import sys
 import tempfile
@@ -20,23 +24,31 @@ from pathlib import Path
 from unittest import mock
 
 R = Path(__file__).resolve().parents[2]
-for p in (R / "b4/host",):
+for p in (R / "b4/host", R / "b4/tests"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 import b4_ff_hypothesis as hy  # noqa: E402
 import b4_ff_mapping as bm  # noqa: E402
+from b4_test_fixtures import V021_REL, V021_SHA256, v021_hole_hypothesis  # noqa: E402
 
 
 class TheFile(unittest.TestCase):
     def test_it_loads_and_every_source_hashes(self):
         h = hy.load()
         self.assertEqual(h.doc["status"], "unverified")
-        self.assertEqual(h.version, "0.2.1")
+        self.assertEqual(h.version, "0.3.0")
         self.assertEqual((h.path, h.fixture, h.sha256), (hy.HYPOTHESIS_REL, False, hy.HYPOTHESIS_SHA256))
+        self.assertEqual(hy.HYPOTHESIS_REL, "b4/hypothesis/ff_behaviour_v0.3.json")
         self.assertEqual(hy.source_findings(h.doc), [])
         kinds = [s["kind"] for s in h.doc["sources"]]
         self.assertEqual(kinds.count("vendor_primitive"), 6)
-        self.assertEqual(kinds.count("repository_document"), 1)
+        self.assertEqual(kinds.count("repository_document"), 2, "docs/ff_latch_probe.md and the D1' probe report")
+        self.assertEqual([s["path"] for s in h.doc["sources"] if s["kind"] == "repository_document"],
+                         ["docs/ff_latch_probe.md", "evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json"])
+        items = next(s for s in h.doc["sources"] if s["kind"] == "project_decode_assumption")["items"]
+        self.assertEqual([t[:2] for t in items if t[:1] == "G" and t[1:2].isdigit()], ["G1", "G2", "G3", "G4", "G5", "G6"], "the six generalisation assumptions, each its own item")
+        self.assertEqual(h.doc["decode"]["clock_mode"]["by_storage_context"], {"flipflop": {"bit_one": "inverted", "bit_zero": "not_inverted"},
+                                                                               "latch": {"bit_one": "not_inverted", "bit_zero": "inverted"}})
         self.assertEqual({s["primitive"] for s in h.doc["sources"] if s["kind"] == "vendor_primitive"}, {"FDRE", "FDSE", "FDCE", "FDPE", "LDCE", "LDPE"})
         cert = next(s for s in h.doc["sources"] if s["kind"] == "certificate_mapping")
         self.assertEqual(cert["sha256"], bm.site_mapping().certificate_sha256)
@@ -68,29 +80,62 @@ class TheFile(unittest.TestCase):
         d = h.decode(base, m)
         self.assertEqual((d["AFF"].init, d["AFF"].primitive), (0, "FDCE"))
         self.assertEqual((d["BFF"].srval, d["BFF"].primitive), (1, "FDPE"))
-        base[m.address_of(None, "storage_kind")] = 1      # latch, clock_mode bit still 0: NO attested reading
+        base[m.address_of(None, "storage_kind")] = 1      # latch, clock_mode bit still 0: v0.3 reads the gate INVERTED (the D1' pair)
         d = h.decode(base, m)
         self.assertEqual((d["AFF"].primitive, d["BFF"].primitive, d["AFF"].sync), ("LDCE", "LDPE", False))
         self.assertEqual([d[e].applicable for e in bm.ELEMENTS], [True, False, True, False, True, False, True, False])
         self.assertEqual(d["A5FF"].primitive, None)
-        self.assertFalse(d.in_domain)
-        self.assertEqual(d.unknown_readings, (("clock_mode", "latch", 0),))
-        self.assertIsNone(d["AFF"].clk_inverted)
+        self.assertTrue(d.in_domain)
+        self.assertEqual(d.unknown_readings, ())
+        self.assertIs(d["AFF"].clk_inverted, True, "v0.3: under a latch the CLKINV bit clear means the gate is the slice clock inverted")
+        hole = v021_hole_hypothesis()                     # the 0.2.1 reading, kept as a marked fixture: the same configuration is outside ITS domain
+        d0 = hole.decode(base, m)
+        self.assertFalse(d0.in_domain)
+        self.assertEqual(d0.unknown_readings, (("clock_mode", "latch", 0),))
+        self.assertIsNone(d0["AFF"].clk_inverted)
         base[m.address_of(None, "clock_mode")] = 1        # the attested LDCE endpoint: CLKINV = 1 with IS_G_INVERTED = 0
         d = h.decode(base, m)
         self.assertTrue(d.in_domain)
         self.assertIs(d["AFF"].clk_inverted, False, "under a latch the CLKINV bit does not mean an inverted gate")
+        self.assertIs(hole.decode(base, m)["AFF"].clk_inverted, False, "the bit-1 reading is the same in 0.2.1 and 0.3.0")
         base[m.address_of(None, "storage_kind")] = 0      # a flip-flop with the same bit: inverted
         self.assertIs(h.decode(base, m)["AFF"].clk_inverted, True)
         with self.assertRaises(hy.HypothesisRefusal):
             h.decode({}, m)
+
+    def test_every_assignment_is_in_the_v03_domain_and_the_v02_file_is_kept_as_a_marked_fixture(self):
+        """v0.3 declares no unknown reading, so no decode can leave the domain (held table by table, not by sampling); the kept
+        v0.2 file hashes to the 0.2.1 digest, is never the formal hypothesis, and enters as the marked v021_hole fixture whose
+        only unknown is the latch's bit 0."""
+        h, m = hy.load(), bm.site_mapping()
+        for semantic, entry in h.doc["decode"].items():
+            tables = entry["by_storage_context"].values() if semantic == "clock_mode" else [entry]
+            for t in tables:
+                self.assertNotIn("unknown", (t["bit_one"], t["bit_zero"]), semantic)
+        rng = random.Random(5)
+        latch, clk = m.address_of(None, "storage_kind"), m.address_of(None, "clock_mode")
+        for _ in range(64):
+            c = {a: rng.randint(0, 1) for a in m.addresses}
+            c[latch], c[clk] = 1, 0                                  # the 0.2.1 hole, with the 19 free bits random
+            self.assertTrue(h.decode(c, m).in_domain)
+            self.assertFalse(v021_hole_hypothesis().decode(c, m).in_domain)
+        raw = (R / V021_REL).read_bytes()
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), V021_SHA256, "the kept v0.2 file is byte for byte the 0.2.1 file")
+        self.assertNotEqual(V021_SHA256, hy.HYPOTHESIS_SHA256)
+        hole = v021_hole_hypothesis()
+        self.assertEqual((hole.version, hole.fixture, hole.path, hole.sha256), ("0.2.1", True, "fixture:v021_hole", V021_SHA256))
+        self.assertEqual(hole.doc["decode"]["clock_mode"]["by_storage_context"]["latch"], {"bit_one": "not_inverted", "bit_zero": "unknown"})
+        self.assertEqual({k: v for k, v in hole.doc["behaviour"].items()}, h.doc["behaviour"], "the eleven flags are the same in 0.2.1 and 0.3.0")
+        with mock.patch.object(hashlib, "sha256", side_effect=lambda b: hashlib.sha3_256(b)):
+            with self.assertRaises(AssertionError):
+                v021_hole_hypothesis()                             # a kept file that does not hash to the 0.2.1 digest is an error, not another fixture
 
     def test_a_swapped_reading_decodes_differently_and_is_another_object(self):
         h, m = hy.load(), bm.site_mapping()
         base = {a: 0 for a in m.addresses}
         h2 = h.with_reading("ff_init", "init_1", "init_0", "test")
         self.assertNotEqual(h2.sha256, h.sha256)
-        self.assertEqual((h2.version, h2.fixture, h.fixture), ("0.2.1+test", True, False))
+        self.assertEqual((h2.version, h2.fixture, h.fixture), ("0.3.0+test", True, False))
         self.assertEqual(h.decode(base, m)["AFF"].init, 1)
         self.assertEqual(h2.decode(base, m)["AFF"].init, 0)
         h3 = h.with_flag("x5ff_not_storage_when_latch", False, "t")

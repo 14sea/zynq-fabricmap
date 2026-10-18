@@ -1,4 +1,4 @@
-# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.8, host-only, 2026-10-16; revised 2026-10-18)
+# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.12, host-only, 2026-10-16; revised 2026-10-18)
 
 > **Standing: a draft architecture, not a preregistration and not a ruling.** Written under the
 > owner's authorisation of 2026-10-16 (unit 2a of the B4 pre-work: this one document, on the
@@ -105,6 +105,19 @@
 > in (§8); K2 / K3 carry the residual-structure counts beside X's numbers, no threshold or τ filled (§9); the lane
 > permutation kept as the cartographer's symmetry test, no fifth arm. The model, the hypothesis, the domain and the F
 > fact unchanged; still not gate-ready.
+>
+> **Revision v0.1.12 (2026-10-18, the v0.3 model revision, authorised by the owner's ruling on the v0.3 scope draft after
+> D1′'s PASS on `e0b5f04` and X-A's PASS on `c0689f8`):** the hypothesis file is `b4/hypothesis/ff_behaviour_v0.3.json`
+> (0.3.0): the latch's clock-mode bit 0 reads *inverted* on the D1′ host correspondence pair, with three layers kept apart in
+> the file — L1 the host endpoint correspondence (the probe report pinned by digest as a source), L2 the vendor's primitive
+> behaviour (the UNISIM lines already adopted), L3 the project's generalisation assumptions G1–G6, each its own item; status
+> unverified. Every assignment of the 21 bits is in the domain **by an added assumption, not by any observation** (§4.4, §5.0);
+> the DOMAIN refusal, the `unknown` enum and the executing-side contract unchanged; the initialisation event's atomic,
+> unsettled assignment named as a model abstraction (A8 unresolved). The v0.2 file is kept byte for byte and its result —
+> F's probe pass terminating at the LATCH flip — is kept as a test on the marked `v021_hole` fixture built from it; under
+> 0.3.0 the pass completes (§5.3). The behaviour state machine, the engine, the cartographer and the replay are not changed.
+> `b4/IMPORT.json` refreshed (its stale `v0.1.json` references corrected) and this document's title version synchronised.
+> v0.3 fills a hole the model itself defined; **it does not make the design gate-ready** (2b-3, §13).
 
 ## 0. The question, and why it is two studies
 
@@ -283,7 +296,7 @@ file, report and sentence:
 
 | | the **certificate mapping** | the **behaviour hypothesis** |
 |---|---|---|
-| what it is | per address: the feature name, the Z polarity reading, the site, the element (§4.1); per specimen: which design variant moved which bit — **each token's reading direction is the class's** (every token direct — the bit set in its feature endpoint — but `NOCLKINV`, the negated, complementary reading of `CLKINV`'s bit), so a row that re-labels a direction, however self-consistent, is refused. **The clock-mode reading is per storage context**: the clkinv pair attests bit 1 = inverted for a flip-flop; the latch probe attests the LDCE endpoint with the CLKINV bit set and `IS_G_INVERTED = 0`, so under a latch bit 1 = *not* inverted and bit 0 has no attested reading (`docs/ff_latch_probe.md`, "The finding worth keeping") | per storage element and per configuration value: the state machine the element is *assumed* to follow — the value after an initialisation event, the value after a user SR operation, whether CE gates capture, whether SR acts without an edge, transparency, the capturing edge |
+| what it is | per address: the feature name, the Z polarity reading, the site, the element (§4.1); per specimen: which design variant moved which bit — **each token's reading direction is the class's** (every token direct — the bit set in its feature endpoint — but `NOCLKINV`, the negated, complementary reading of `CLKINV`'s bit), so a row that re-labels a direction, however self-consistent, is refused. **The clock-mode reading is per storage context**: the clkinv pair attests bit 1 = inverted for a flip-flop; the latch probe attests the LDCE endpoint with the CLKINV bit set and `IS_G_INVERTED = 0`, so under a latch bit 1 = *not* inverted (`docs/ff_latch_probe.md`, "The finding worth keeping"); **since v0.3** bit 0 under a latch = *inverted* — the gate is the slice clock inverted — on the D1′ pair of `evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/` (`IS_G_INVERTED` 0 → 1 clears CLKINV, LATCH kept, no other same-class mover): a **host correspondence** source of the same kind as the bit-1 endpoint, not a certificate and not silicon | per storage element and per configuration value: the state machine the element is *assumed* to follow — the value after an initialisation event, the value after a user SR operation, whether CE gates capture, whether SR acts without an edge, transparency, the capturing edge |
 | source | `gate_runs/run_2026_08_05_ff/certificate.json`, the plan's attestation fields (plan §3) | **three kinds, listed per entry in `b4/hypothesis/ff_behaviour_v0.2.json` `sources`**: (1) the vendor's UNISIM simulation models — `FDRE.v`, `FDSE.v`, `FDCE.v`, `FDPE.v`, `LDCE.v`, `LDPE.v` under the root `/home/test/Xilinx/2025.2/data/verilog/src/unisims` — each by path, sha256 and the lines adopted (the GSR initialisation, the edge and level rules, the latch UDP table); (2) the certificate mapping, by path and sha256; (3) the project's own decode assumptions (the Z readings, the primitive-selection table, the pin correspondence, the initialisation event modelled as GSR). Nothing of (1)–(3) is a measurement of this line |
 | status | host-attested (§4.2) | **unverified on silicon**; a modelling assumption until the carrier-v2 unit demonstrates each row on the board under its own ruling |
 | what 2b's simulation can say | that the cartographer recovers the mapping *given* the hypothesis | nothing — a simulation under the hypothesis cannot confirm the hypothesis |
@@ -293,8 +306,19 @@ PASS under the hypothesis as evidence that the fabric behaves so, is wrong by co
 
 The hypothesis file's readings are **machine enums**, validated by its loader against a closed list per
 semantic; an unrecognised reading is refused by name at load and at decode and is never read as a default.
-The one `unknown` reading (clock mode, bit 0, under a latch) puts a configuration **outside the model's
-domain** (§5.0), and the model refuses to observe it rather than simulate it with an assumption.
+An `unknown` reading puts a configuration **outside the model's domain** (§5.0), and the model refuses to observe it
+rather than simulate it with a default; v0.2 had one (clock mode, bit 0, under a latch), v0.3 has none.
+
+**The v0.3 latch reading, in three layers that the hypothesis file keeps in separate source entries** (the owner's ruling
+of 2026-10-18): **L1** the host endpoint correspondence — the D1′ probe report, pinned by digest, says only that on one
+recipe, one site and one tool version a resolved `IS_G_INVERTED` property corresponds to one bitstream bit; **L2** the
+vendor's primitive behaviour — `LDCE.v`'s `G_in = G xor IS_G_INVERTED` and its UDP table, a simulation model, not a
+measurement; **L3** the project's generalisation assumptions, each named — G1 the other 19 bits do not change the reading,
+G2 the property is realised as the slice-level clock inversion on silicon, G3 the vendor's model describes the silicon gate,
+G4 the correspondence is tool- and recipe-invariant, G5 four main elements speak for the per-slice bit, G6 the init readout
+under an open gate rests on the model's atomic, unsettled init step (A8 unresolved). The reading is L1 ∧ L2 ∧ L3; its status
+is unverified, like every row of the hypothesis, and the model's domain is complete **because of L3**, not because anything
+was observed.
 
 ## 5. The observation contract for FF semantics — functional requirements, not RTL
 
@@ -312,7 +336,7 @@ apart:
 
 | contract | what it answers | status of what it says |
 |---|---|---|
-| `valid_configuration` | which assignments of the 21 bits the **model accepts as its domain**: those whose every decoded reading is known — v0.2 excludes a latch with the CLKINV bit clear, which nothing attests | a domain definition — never a statement that a configuration is legal to build, safe to write, or has been observed |
+| `valid_configuration` | which assignments of the 21 bits the **model accepts as its domain**: those whose every decoded reading is known — v0.2 excluded a latch with the CLKINV bit clear (19 free bits, 2^19 assignments), which nothing attested; v0.3 reads that bit on the D1′ pair under the assumptions G1–G6 (§4.4), so every assignment is in its domain | a domain definition — never a statement that a configuration is legal to build, safe to write, or has been observed; v0.3's completeness rests on an added assumption |
 | `applicable_semantics` | which relations **exist** for an address under a configuration (under a latch the x5FF elements are not storage elements, so their `ff_init` / `ff_srval` are *not applicable* — distinct from `unknown`; a latch has no `sr_kind`) | a model assumption drawn from `docs/ff_latch_probe.md`; a changed context is not an illegal configuration |
 | `observation_context` | what every readout must carry so that it can be replayed from the trace alone (§5.1) | a recording requirement |
 
@@ -444,12 +468,15 @@ generation closed; nothing is generated, observed, scored, selected or learned a
 generator is not rolled back. The best-so-far trace is the **measured prefix**: the unexecuted budget
 points are missing, never filled with zero or with the last value; an incomplete run never enters a
 pair as if complete, and a seed is never dropped and replaced. Any other refusal is recorded by its own
-name, never as DOMAIN. One consequence stated now, as a fact and not a defect: from the all-zero base
-(CLKINV clear, in the domain) the single flip of the LATCH address is outside the domain, so a mapping
-probe pass that covers every address terminates there, in whatever order — under the formal
-hypothesis the frozen arm's own probe pass cannot complete (`test_b4_engine`). **The three-arm design
-is therefore not gate-ready as it stands**: it cannot produce complete F inputs; what to do about the
-domain, the prior or the probe design is a separate owner decision, and no threshold is set before it.
+name, never as DOMAIN. **The F fact, under each hypothesis revision.** Under 0.2.1, from the all-zero base
+(CLKINV clear, in the domain) the single flip of the LATCH address was outside the domain, so a mapping
+probe pass that covers every address terminated there, in whatever order — the frozen arm's own probe
+pass could not complete; that result is kept as a test on the marked `v021_hole` fixture built from the
+kept v0.2 file. Under 0.3.0 every assignment is in the domain, so the pass completes — base + 21 probes,
+a complete F run B + 23 observations with its B search evaluations and one holdout (`test_b4_engine`) —
+**because a reading was added (§4.4, L1 ∧ L2 ∧ L3), not because anything was observed**. v0.3 fills a
+hole the model itself defined; **it does not make the design gate-ready**: the thresholds, τ and the seed
+anchor are 2b-3's, to be written and reviewed before any landscape exploration, and no number is set here.
 
 **The holdout.** The champion is fixed when the search loop completes; the holdout observation passes
 the same boundary; a DOMAIN there terminates the run with phase `holdout` — the champion is kept as the
@@ -629,7 +656,7 @@ decision statistic for each is the one-sided exact sign test at α = 0.05, ties 
 | K4 oracle headroom | Ω's median at `B*` below the ceiling by a margin; F's mean Δ as a fraction of Ω's | B2 G4 | `<gate>` |
 | K5 effect, power, N | Cohen's d of {Δ1_r}; `N(B)` by `b2_gate.required_pairs`'s ascending scan (1 000 bootstrap experiments, seed `1 + N`), the sign test by `b2_gate.sign_test_p` — both **by copy into the B4 namespace with their digests recorded**, never by import across the pinned boundary; the session cost `N × arms × B*` under a stated cap | B2 G5 / B3 H5 | `<gate>` |
 | K6 no fixed-seed lock | S ≥ `<gate>`; N ≥ `<gate>`; board seeds under a B4 label with every archived set excluded | B2 G6 / B3 H6 | `<gate>` |
-| K7 the map is a map | over S: wrong decodes and anomalies in the model of §4.4 (under the behaviour hypothesis); the median decoded count at `B*`; `unknown` count reported, never forced to zero | B3 H7, extended by the `unknown` rule of §5.2 | `<gate>` |
+| K7 the map is a map | over S: wrong decodes and anomalies in the model of §4.4 (under the behaviour hypothesis — since v0.3 including the latch bit-0 reading of L1 ∧ L2 ∧ L3, so a decode that rests on it is reported as such); the median decoded count at `B*`; `unknown` count reported, never forced to zero | B3 H7, extended by the `unknown` rule of §5.2 | `<gate>` |
 | K8 ledger replay | every map version and decode reproduced from the ledger; the raw observation reproduces the fitness | B3 H8 + §5.3 | holds |
 | K9 observability | (a) for each of the seven semantics, at least one positive-control address on which the preregistered stimulus sequence separates the two values under the model of §4.4; (b) per address and per applicable context (§5.2), the separation judged and the fraction of addresses covered per semantic reported, the uncovered addresses named and their relations `unknown`; `ff_init` reported separately as "conditional on A8" | new; §5.2 — the same wording as A2 | `<gate>` (per-semantic coverage fractions) |
 | K10 real interaction | for each landscape seed and each pair (a, b) of elements or modes whose **four corner configurations** `00, 01, 10, 11` are all **legal** under the class's composition rule (§4.2), the **four-corner index** `I_ab = f11 − f10 − f01 + f00` computed from the landscape's fitness on the model of §4.4 — the four corners differing in (a, b) **only**: every other configuration bit, the initial state (the same initialisation event) and the stimulus sequence are held fixed across the four, and the fixed values are recorded with the index; a pair with an illegal corner is recorded as *not comparable* with the corner named, excluded from the pair denominator and counted. Per seed, three outcomes: **interacting** when some comparable pair has `|I_ab| > <gate>` (a stated fraction of the fitness range); **no interaction seen among the tested comparisons** when every comparable pair has `I_ab = 0` — a statement about the comparisons made, not that every context is additive (an additive score `f = a + b` gives `I = 0` on every pair and lands here); **not assessable** when the seed has no comparable pair at all — never counted as additive. The criterion is the fraction of interacting seeds over **all S seeds** (the not-assessable seeds stay in the denominator), with the counts of the three outcomes reported | new; §7 | `<gate>` |
@@ -735,9 +762,9 @@ evidence** and is listed as a prerequisite, not described as a protection.
 |---|---|---|
 | 2b-1 (**delivered**; corrected on the owner's HOLD, v0.1.4) | `b4/host/b4_ff_mapping.py` (the certificate mapping of `SLICE_X2Y25`, 21 addresses / 22 names, held to the specimen pairs), `b4/hypothesis/ff_behaviour_v0.2.json` + `b4/host/b4_ff_hypothesis.py` (the behaviour hypothesis: sources by kind with digests, the eleven behaviour flags, the enum readings with the clock mode by storage context, the three contracts of §5.0; the loader verifies by default, fixtures marked), `b4/host/b4_ff_model.py` (the fabric: configuration + stimulus → the executing side's trace under mapping and hypothesis passed in separately, the decode a host-only diagnostic, validation at the entry, out-of-domain configurations refused; the fixtures truth / permuted / dropout / seven hypothesis swaps), `b4/tests/test_b4_ff_*.py`, `b4/IMPORT.json` | hand-derived expected traces; INIT and SR separated; CE, edge, kind, transparency; isolation; permutation; hypothesis swap; the mutants (a model that ignores its hypothesis is killed) |
 | 2b-2 (delivered v0.1.6; **HOLD and follow-up v0.1.7**: replay as re-execution, provenance bound, the holdout contract; X a symmetry control pending the design review) | `b4/host/b4_execution.py` (the port that exposes `observe` and the addresses only; the terminal event), `b4/host/b4_landscape.py` (the public task and the scoring), `b4/host/b4_engine.py` (the derived (μ, λ) engine over the FF universe; R / F / O / X; DOMAIN termination as ruled), `b4/host/b4_carto.py` (the observation cartographer: seen cells, presence, no-effect-seen, context-dependent, unknown; groups; the v3 draft; control X with its shadow isomorphism; A0, D, the privileged Ω), `b4/host/b4_replay.py` (EXACT replay), `b4/host/b4_stats.py` (the four-corner computation), `b4/host/b4_rng.py` (the PRNG copy), `b4/schemas/self_map_v3.schema.json`, the tests. **No exploration run, no gate number, no threshold.** The exploration under `b4-sim` (S = 32 first) follows 2b-3 and its own authorisation | the revised scope's acceptance list (section 6); the thresholds commit before any exploration |
-| D1′ latch_ginv probe (**delivered; attempt 2 awaiting the owner's review**; the owner's ruling of 2026-10-18 §2 and the follow-up ruling) | `b4/probes/latch_ginv/` (the derived specimen and build script with `GINV`, the driver with the expectation fixed before the build, the test), `evidence/b4/unit_d1prime_latch_ginv_2026_10_18/` (attempt 1: the six bitstream clauses and the structure held, the cell rule's `ROUTED`-only reading of `INTRASITE` the finding, kept as it was) and `…_attempt2_2026_10_18/` (the rule accepting `ROUTED` / `INTRASITE`: every clause met, no finding; readbacks and configuration frames identical to attempt 1's; the historical `main_latch` reproduced frame-for-frame) | host correspondence only; nothing of the model changed; v0.3 a separate unit |
-| v0.3 model revision (not authorised; the ruling §3) | the latch clock-mode reading for bit 0 with its source strength as the owner rules it; `HYPOTHESIS_SHA256`, `b4/IMPORT.json`, the F fact test, §4.4 / §5.0 / §5.3 | a separate review; silicon status stays unverified |
-| X-A (**delivered**; the ruling of 2026-10-18 §4) | `b4/host/b4_carto.py` (`derangement_attempts`, `relabel_genome`, `isomorphic_addresses`, `residual_structure`; the lane permutation kept as the symmetry test), `b4/host/b4_engine.py` (arm X over relabelled addresses with its own control seed, π before the base, the shadow contract after every ingest, the control failure event, the residual post hoc), `b4/host/b4_replay.py` (π re-derived from the control seed; the control fields typed; a control failure must reproduce), the tests, `evidence/b4/unit_xa_2026_10_18/` | the partition-changing fixture and the partition-preserving counterexample; π from the control generator (the operator's untouched); base / mid-generation termination; the control failure's commit point; full replay; 19 mutants. Mechanism only: no arm advantage measured, no seed scan, no landscape exploration |
+| D1′ latch_ginv probe (**delivered; PASS on `e0b5f04`**; the owner's ruling of 2026-10-18 §2 and the follow-up ruling) | `b4/probes/latch_ginv/` (the derived specimen and build script with `GINV`, the driver with the expectation fixed before the build, the test), `evidence/b4/unit_d1prime_latch_ginv_2026_10_18/` (attempt 1: the six bitstream clauses and the structure held, the cell rule's `ROUTED`-only reading of `INTRASITE` the finding, kept as it was) and `…_attempt2_2026_10_18/` (the rule accepting `ROUTED` / `INTRASITE`: every clause met, no finding; readbacks and configuration frames identical to attempt 1's; the historical `main_latch` reproduced frame-for-frame) | host correspondence only; nothing of the model changed; v0.3 a separate unit |
+| v0.3 model revision (**delivered**; the owner's ruling of 2026-10-18 on the scope draft, after the PASSes on `e0b5f04` and `c0689f8`) | `b4/hypothesis/ff_behaviour_v0.3.json` (the latch bit-0 reading on the D1′ pair, labelled host correspondence; the three layers L1 / L2 / L3 in their own source entries; the domain complete by assumption; the init step's atomic assignment named a model abstraction), `b4/host/b4_ff_hypothesis.py` (the formal pointer and digest only), the v0.2 file kept byte for byte, the tests (the hand-derived inverted-gate trace in the model's settle order; the `v021_hole` fixture carrying the 0.2.1 result; F completing under 0.3.0), `b4/IMPORT.json`, this document, `evidence/b4/unit_v03_2026_10_18/` | the local regression and the mutants; the owner's review; silicon status unverified; not gate-ready |
+| X-A (**delivered; PASS on `c0689f8`**; the ruling of 2026-10-18 §4) | `b4/host/b4_carto.py` (`derangement_attempts`, `relabel_genome`, `isomorphic_addresses`, `residual_structure`; the lane permutation kept as the symmetry test), `b4/host/b4_engine.py` (arm X over relabelled addresses with its own control seed, π before the base, the shadow contract after every ingest, the control failure event, the residual post hoc), `b4/host/b4_replay.py` (π re-derived from the control seed; the control fields typed; a control failure must reproduce), the tests, `evidence/b4/unit_xa_2026_10_18/` | the partition-changing fixture and the partition-preserving counterexample; π from the control generator (the operator's untouched); base / mid-generation termination; the control failure's commit point; full replay; 19 mutants. Mechanism only: no arm advantage measured, no seed scan, no landscape exploration |
 | 2b-3 | the K1–K10 thresholds and τ written into §9, the seed anchor, in one commit | the owner's review before any gate run |
 | 2b-4 | `b4/host/b4_gate.py`, the formal gate under `b4-gate-1` (S = 200), `docs/b4_gate_report.md` stating every result as "under the behaviour hypothesis"; the v3 map schema draft (§6) | every row PASS / FAIL; a PASS never read as evidence about the fabric |
 | 2c | `docs/b4_preregistration.md` DRAFT (B4-FF: claim, pins, prediction, metrics, falsifiers, sessions and rulings, compatibility, lifecycle, §9 rule; B4-R: prerequisites and prohibitions only) | the owner's review; the holdout and the universe fixed by whole site instance |
@@ -746,7 +773,8 @@ evidence** and is listed as a prerequisite, not described as a protection.
 
 ## 14. Files and references
 
-`b4/host/b4_ff_mapping.py` · `b4/host/b4_ff_hypothesis.py` · `b4/hypothesis/ff_behaviour_v0.2.json` · `b4/host/b4_ff_model.py` · `b4/IMPORT.json` ·
+`b4/host/b4_ff_mapping.py` · `b4/host/b4_ff_hypothesis.py` · `b4/hypothesis/ff_behaviour_v0.3.json` (the formal hypothesis; `ff_behaviour_v0.2.json` kept as the 0.2.1 record) · `b4/host/b4_ff_model.py` · `b4/IMPORT.json` ·
+`evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json` (the v0.3 L1 source) ·
 `docs/autonomous_cartography_roadmap.md` (§1–§7) · `docs/board_roles.md` ·
 `docs/ff_preregistration_plan.md` (§1–§5, §7) · `gate_runs/run_2026_08_05_ff/certificate.json` ·
 `data/MANIFEST.json` · `schemas/self_map_v2.schema.json` · `docs/b1_carrier_contract.md` ·

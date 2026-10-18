@@ -14,13 +14,12 @@ for p in (R / "b4/host", R / "b4/tests"):
         sys.path.insert(0, str(p))
 import b4_engine as be  # noqa: E402
 import b4_execution as ex  # noqa: E402
-import b4_ff_hypothesis as hy  # noqa: E402
 import b4_ff_mapping as bm  # noqa: E402
 import b4_ff_model as fm  # noqa: E402
 import b4_landscape as bl  # noqa: E402
 
 
-from b4_test_fixtures import mechanics_fabric  # noqa: E402
+from b4_test_fixtures import mechanics_fabric, v021_hole_fabric  # noqa: E402
 
 
 class ThePort(unittest.TestCase):
@@ -47,9 +46,9 @@ class ThePort(unittest.TestCase):
         self.assertEqual(spy.touched, ["calls"])
 
     def test_domain_becomes_a_terminal_event_with_the_state_before_the_call(self):
-        m, h = bm.site_mapping(), hy.load()
-        port = ex.ObservationPort(fm.Fabric(m, h))
-        latch_only = 1 << m.genome_bit(m.address_of(None, "storage_kind"))     # CLKINV clear: outside the domain
+        m = bm.site_mapping()
+        port = ex.ObservationPort(v021_hole_fabric())                          # the kept 0.2.1 reading: its domain has the hole
+        latch_only = 1 << m.genome_bit(m.address_of(None, "storage_kind"))     # CLKINV clear: outside the 0.2.1 domain (in v0.3's)
         ctx = {"landscape_seed": 7, "operator_seed": 11, "budget": 40, "successful_observations": 3, "rng_state": 12345,
                "population_commitment": "p" * 64, "map_commitment": "m" * 64, "map_version": 2}
         with self.assertRaises(ex.Terminated) as cm:

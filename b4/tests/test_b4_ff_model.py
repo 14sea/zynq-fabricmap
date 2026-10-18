@@ -16,8 +16,11 @@ plan's bit readings (never by running the model):
     INIT, SRVAL, kind, inversion, applicability or physical edge — those come only from the host-only `diagnose`
     / `step_diagnostics`); a trace is deterministic and JSON-serialisable;
   * (the owner's HOLD on 2bad829) the attested LDCE endpoint — CLKINV = 1 with IS_G_INVERTED = 0 — holds INIT
-    with the gate low; a latch with the CLKINV bit clear is outside the domain and refused; `observe` validates
-    the configuration, every step as handed (not only through `set_`) and the init step's context.
+    with the gate low; (v0.3) a latch with the CLKINV bit clear has its gate INVERTED — transparent while the slice
+    clock is low — and the trace follows the model's order (the new inputs settled at the OLD clock level before the
+    clock changes; the init step atomic, settling nothing); under the kept 0.2.1 reading (the marked v021_hole fixture)
+    the same configuration is outside the domain and refused with the fixed code; `observe` validates the
+    configuration, every step as handed (not only through `set_`) and the init step's context.
 No skip."""
 from __future__ import annotations
 
@@ -28,12 +31,13 @@ import unittest
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[2]
-for p in (R / "b4/host",):
+for p in (R / "b4/host", R / "b4/tests"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 import b4_ff_hypothesis as hy  # noqa: E402
 import b4_ff_mapping as bm  # noqa: E402
 import b4_ff_model as fm  # noqa: E402
+from b4_test_fixtures import v021_hole_fabric  # noqa: E402
 
 E = bm.ELEMENTS                     # index: AFF 0, A5FF 1, BFF 2, B5FF 3, CFF 4, C5FF 5, DFF 6, D5FF 7 — bit i of ce / sr / d is element i
 IDX = {e: i for i, e in enumerate(E)}
@@ -152,20 +156,57 @@ class Latches(Base):
         wrong = fm.fixture("latch_gate_inverted", self.m, self.h)            # the reading the probe says must NOT be applied to a latch
         self.assertEqual(q_after(wrong.observe(c, [fm.init(), fm.set_(0, ce=ALL, sr=0, d=0)]))[1], [0, None, 0, None, 0, None, 0, None])
 
-    def test_a_latch_with_the_clkinv_bit_clear_is_outside_the_domain_and_the_refusal_says_only_that(self):
-        """The owner's probe on b91162c: the refusal the executing side receives is the fixed code and carries no
-        reading, no semantic and no reason; the reason is diagnose()'s."""
-        c = self.cfg(storage_kind=1)                       # clock_mode bit 0 under a latch: nothing attests a reading
+    def test_the_inverted_gate_latch_is_transparent_while_the_slice_clock_is_low(self):
+        """v0.3: a latch with the CLKINV bit clear reads IS_G_INVERTED = 1 (the D1' pair), so G_in = ~G: transparent while
+        the slice clock is LOW and GE is high, hold while it is high (LDCE.v lines 63-71 and the UDP table). By hand, in the
+        model's order — the new inputs settled at the OLD clock level, then the clock change, then settled again:
+          init                       -> [1, -, 1, -, 1, -, 1, -]  INIT assigned atomically; nothing settles although the gate is open
+          set(clk 0, d 0x00)         -> [0, -, 0, -, 0, -, 0, -]  old clock 0: gate OPEN, D = 0 passes (the mirror of the bit-1 endpoint)
+          set(clk 1, d 0x0F)         -> [1, -, 1, -, 0, -, 0, -]  D = 0x0F settles at the OLD clock (gate still open: AFF, BFF take 1),
+                                                                 THEN the clock rises and the gate closes — the old Q is not kept
+          set(clk 1, d 0x00)         -> [1, -, 1, -, 0, -, 0, -]  gate closed: D changes, Q holds
+          set(clk 0, d 0x00)         -> [0, -, 0, -, 0, -, 0, -]  D = 0 settles at the old clock (closed: hold), the clock falls, the
+                                                                 gate opens, Q follows D = 0
+        The x5FF elements are not storage elements under a latch (None). With CE DRIVEN and low at the init step the open gate
+        holds anyway (GE low); with CE TIED HIGH the init readout shows INIT only because the init step assigns it atomically and
+        settles nothing (G6, a model abstraction) — the first set step with the slice clock low then passes D at once:
+          init                       -> [1, -, 1, -, 1, -, 1, -]
+          set(clk 0, d 0x00)         -> [0, -, 0, -, 0, -, 0, -]"""
+        c = self.cfg(storage_kind=1, sr_kind=0, clock_mode=0)
+        na = None
+        t = self.fab.observe(c, [fm.init(), fm.set_(0, ce=ALL, sr=0, d=0x00), fm.set_(1, ce=ALL, sr=0, d=0x0F), fm.set_(1, ce=ALL, sr=0, d=0x00), fm.set_(0, ce=ALL, sr=0, d=0x00)])
+        self.assertEqual(q_after(t), [[1, na, 1, na, 1, na, 1, na], [0, na, 0, na, 0, na, 0, na], [1, na, 1, na, 0, na, 0, na], [1, na, 1, na, 0, na, 0, na], [0, na, 0, na, 0, na, 0, na]])
+        self.assertIs(t["hypothesis"]["fixture"], False, "the formal v0.3 hypothesis, not a fixture")
+        diag = self.fab.diagnose(c)
+        self.assertEqual((diag["in_domain"], diag["unknown_readings"], diag["decoded"]["AFF"]["primitive"], diag["decoded"]["AFF"]["clk_inverted"]), (True, [], "LDCE", True))
+        attested = self.cfg(storage_kind=1, sr_kind=0, clock_mode=1)              # the bit-1 endpoint: the same stimulus, the mirror image
+        self.assertEqual(q_after(self.fab.observe(attested, [fm.init(), fm.set_(0, ce=ALL, sr=0, d=0x00)]))[1], [1, na, 1, na, 1, na, 1, na], "gate closed with the slice clock low")
+        swapped = fm.fixture("latch_gate_inverted", self.m, self.h)                # bit 0 -> not_inverted there: the gate closed, INIT held
+        self.assertEqual(q_after(swapped.observe(c, [fm.init(), fm.set_(0, ce=ALL, sr=0, d=0x00)]))[1], [1, na, 1, na, 1, na, 1, na])
+        tied = self.cfg(storage_kind=1, sr_kind=0, clock_mode=0, ce_mode=0)        # CE tied high: the gate is open and enabled at the init step
+        self.assertEqual(q_after(self.fab.observe(tied, [fm.init(), fm.set_(0, ce=0, sr=0, d=0x00)])), [[1, na, 1, na, 1, na, 1, na], [0, na, 0, na, 0, na, 0, na]],
+                         "the init readout is INIT by the atomic, unsettled init step; the first set step at the low slice clock passes D")
+        with self.assertRaises(fm.DomainRefusal):
+            v021_hole_fabric().observe(c, [fm.init()])                              # the kept 0.2.1 reading refuses the same configuration
+
+    def test_a_latch_with_the_clkinv_bit_clear_is_outside_the_v021_domain_and_the_refusal_says_only_that(self):
+        """The owner's probe on b91162c, kept on the marked v021_hole fixture (the 0.2.1 reading, read from the kept v0.2 file):
+        the refusal the executing side receives is the fixed code and carries no reading, no semantic and no reason; the
+        reason is diagnose()'s. Under the formal v0.3 the same configuration is observed (the test above)."""
+        hole = v021_hole_fabric()
+        c = self.cfg(storage_kind=1)                       # clock_mode bit 0 under a latch: 0.2.1 attests no reading
         for stim in ([fm.init()], []):
             with self.assertRaises(fm.DomainRefusal) as cm:
-                self.fab.observe(c, stim)
+                hole.observe(c, stim)
             self.assertEqual(str(cm.exception), fm.DomainRefusal.MESSAGE)
             self.assertEqual(cm.exception.CODE, "DOMAIN")
             for word in ("clock", "latch", "unknown", "bit", "reading", "inverted", "storage"):
                 self.assertNotIn(word, str(cm.exception).lower().replace("domain", ""), f"the refusal must not carry {word!r}")
         self.assertTrue(issubclass(fm.DomainRefusal, fm.ModelRefusal))
-        diag = self.fab.diagnose(c)
+        diag = hole.diagnose(c)
         self.assertEqual((diag["visibility"], diag["in_domain"], diag["unknown_readings"]), ("host_only", False, [["clock_mode", "latch", 0]]))
+        self.assertIs(hole.observe(self.cfg(storage_kind=1, clock_mode=1), [fm.init()])["hypothesis"]["fixture"], True, "the hole fixture is marked in every trace")
+        self.assertEqual(self.fab.diagnose(c)["in_domain"], True, "formal v0.3: in the domain")
 
     def test_a_latch_with_ge_low_holds_and_its_sr_is_asynchronous(self):
         c = self.cfg(storage_kind=1, clock_mode=1, DFF__ff_srval=0)
@@ -210,12 +251,11 @@ class Fixtures(Base):
             for a in self.m.addresses:
                 if c[a]:
                     c_truth[self.m.address_of(*perm.effect[a])] = 1
-            if not (perm.decode(c).in_domain and truth.decode(c_truth).in_domain and truth.decode(c).in_domain):
-                continue                                     # a latch with the CLKINV bit clear is outside the domain on either side
+            self.assertTrue(perm.decode(c).in_domain and truth.decode(c_truth).in_domain and truth.decode(c).in_domain, "v0.3: every assignment is in the domain")
             compared += 1
             self.assertEqual(q_after(perm.observe(c, stim)), q_after(truth.observe(c_truth, stim)))
             differs += q_after(perm.observe(c, stim)) != q_after(truth.observe(c, stim))
-        self.assertGreaterEqual(compared, 12, "too few in-domain draws")
+        self.assertEqual(compared, 48, "no draw skipped: v0.3 has no hole")
         self.assertGreater(differs, 0, "the permuted fabric is not the truth")
 
     def test_dropout_addresses_move_nothing(self):
@@ -245,7 +285,7 @@ class Fixtures(Base):
                 self.assertNotEqual(swapped.hypothesis.sha256, self.h.sha256)
                 self.assertNotEqual(q_after(swapped.observe(c, stim)), q_after(truth.observe(c, stim)), "the swap left the trace unchanged: the model is not reading its hypothesis")
                 head = swapped.observe(c, stim)["hypothesis"]
-                self.assertEqual((head["version"], head["fixture"]), (f"0.2.1+{kind}", True), "a swapped hypothesis is marked in the trace")
+                self.assertEqual((head["version"], head["fixture"]), (f"0.3.0+{kind}", True), "a swapped hypothesis is marked in the trace")
         self.assertIs(truth.observe(self.cfg(), [fm.init()])["hypothesis"]["fixture"], False)
 
     def test_an_unknown_fixture_is_refused(self):

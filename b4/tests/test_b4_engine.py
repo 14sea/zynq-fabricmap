@@ -1,8 +1,9 @@
 """b4/host/b4_engine.py — the derived (mu, lambda) engine over the FF universe with the execution boundary at every
 observation. Complete runs are exercised under a MARKED mechanics fixture (the latch's clock bit 0 read as not
 inverted, so the domain has no hole — it says nothing about the fabric); the DOMAIN semantics under injection at the
-base, in the probe pass and mid-generation; the fact that under the FORMAL hypothesis F's probe pass from the all-zero
-base terminates at the LATCH single flip whatever the probe order; the given views' provenance. No skip."""
+base, in the probe pass and mid-generation; two facts about F's probe pass from the all-zero base — under the FORMAL v0.3
+hypothesis it completes (base + 21 probes; a complete run B + 23 observations), under the kept 0.2.1 reading (the marked
+v021_hole fixture) it terminates at the LATCH single flip whatever the probe order; the given views' provenance. No skip."""
 from __future__ import annotations
 
 import sys
@@ -24,7 +25,7 @@ import b4_replay as br  # noqa: E402
 from unittest import mock  # noqa: E402
 
 
-from b4_test_fixtures import InjectingPort  # noqa: E402
+from b4_test_fixtures import InjectingPort, V021_SHA256, v021_hole_fabric  # noqa: E402
 
 
 def failing_isomorphism(at_call: int):
@@ -342,17 +343,37 @@ class Termination(Base):
         self.assertEqual((r.other_refusal["kind"], r.other_refusal["message"], r.other_refusal["phase"], r.other_refusal["attempt"]), ("ModelRefusal", "boom", "search", 3))
         self.assertEqual(len(r.ledger), 2)
 
-    def test_under_the_formal_hypothesis_f_s_probe_pass_terminates_at_the_latch_flip(self):
-        """A fact, not a defect: from the all-zero base (CLKINV clear, in the domain) the single flip of the LATCH
-        address is outside the domain, so a probe pass that covers every address terminates there — in whatever order."""
+    def test_under_the_formal_v03_hypothesis_f_s_probe_pass_completes(self):
+        """v0.3 (the owner's ruling of 2026-10-18): every assignment is in the domain, so from the all-zero base the probe pass
+        covers every address — base + 21 probes = 22 observations — and a complete run makes B + 23 (the B search evaluations
+        and one holdout). A fact about the model's domain under an added reading, not an observation of anything."""
+        latch = 1 << self.m.genome_bit(self.m.address_of(None, "storage_kind"))
+        for seed, budget in ((11, 24), (12, 24), (13, 16)):
+            port = ex.ObservationPort(fm.Fabric(self.m, self.h))
+            r = be.run("F", self.task, port, seed, budget)
+            self.assertTrue(r.completed, seed)
+            self.assertIsNone(r.terminal)
+            self.assertEqual((r.cost, port.calls, r.observations), ({"base": 1, "probes": 21, "search": budget, "holdout": 1}, budget + 23, budget + 23), seed)
+            probes = [e["genome"] for e in r.ledger if e["phase"] == "probe"]
+            self.assertEqual(sorted(probes), [1 << i for i in range(21)], "every address probed once, the LATCH flip among them")
+            self.assertIn(latch, probes)
+            self.assertEqual((r.provenance["hypothesis"]["fixture"], r.provenance["hypothesis"]["sha256"], r.provenance["hypothesis"]["version"]), (False, hy.HYPOTHESIS_SHA256, "0.3.0"))
+            self.assertEqual(br.replay(r.as_dict(), self.task), [])
+
+    def test_under_the_kept_v021_reading_f_s_probe_pass_terminates_at_the_latch_flip(self):
+        """The 0.2.1 result, kept: from the all-zero base (CLKINV clear, in the domain) the single flip of the LATCH address
+        is outside the 0.2.1 domain, so a probe pass that covers every address terminates there — in whatever order. Run on
+        the marked v021_hole fixture (the kept v0.2 file, verified against its digest), never on the formal hypothesis."""
         formal = ex.ObservationPort(fm.Fabric(self.m, self.h))
         latch = 1 << self.m.genome_bit(self.m.address_of(None, "storage_kind"))
         for seed in (11, 12, 13):
-            port = ex.ObservationPort(fm.Fabric(self.m, self.h))
+            port = ex.ObservationPort(v021_hole_fabric())
             r = be.run("F", self.task, port, seed, 24)
+            self.assertEqual((r.provenance["hypothesis"]["fixture"], r.provenance["hypothesis"]["sha256"], r.provenance["hypothesis"]["version"]), (True, V021_SHA256, "0.2.1"))
             self.assertFalse(r.completed, seed)
             self.assertEqual((r.terminal["code"], r.terminal["phase"], r.terminal["genome"]), ("DOMAIN", "probe", latch), seed)
             self.assertEqual(br.replay(r.as_dict(), self.task), [])
+            self.assertLess(port.calls, 23, "terminated inside the probe pass")
         self.assertEqual(formal.calls, 0)
 
 

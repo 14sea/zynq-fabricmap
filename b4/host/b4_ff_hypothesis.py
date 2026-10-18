@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """B4-FF — the BEHAVIOUR HYPOTHESIS: the per-element state machine the model assumes under each decoded
-configuration (docs/b4_architecture.md section 4.4). Read from `b4/hypothesis/ff_behaviour_v0.2.json`, whose
-`status` is "unverified": nothing in it has been observed on silicon.
+configuration (docs/b4_architecture.md section 4.4). Read from `b4/hypothesis/ff_behaviour_v0.3.json`, whose
+`status` is "unverified": nothing in it has been observed on silicon. The superseded `ff_behaviour_v0.2.json` is kept byte
+for byte as the record of 0.2.1; it is a fixture like any other document, never the formal hypothesis.
 
     h = load()                        # THE entry, no path: the committed file only, held to HYPOTHESIS_SHA256, its shape, EVERY source re-hashed
     h.decode(config_bits, mapping)    # per element: primitive, INIT, SRVAL, modes, kind, inversion, applicability
@@ -10,8 +11,10 @@ configuration (docs/b4_architecture.md section 4.4). Read from `b4/hypothesis/ff
 Readings are MACHINE ENUMS (`READINGS`): the loader refuses a reading it does not know, and the decode compares
 enums — an unrecognised reading is never read as a default (the owner's P2 on 2bad829). `clock_mode` is decoded
 by storage context: for a flip-flop bit 1 means inverted; under a latch the CLKINV bit is asserted while
-IS_G_INVERTED = 0 (docs/ff_latch_probe.md), so bit 1 means NOT inverted and bit 0 has no attested reading —
-`unknown`, which puts that configuration outside the model's domain (the owner's P1).
+IS_G_INVERTED = 0 (docs/ff_latch_probe.md), so bit 1 means NOT inverted; since v0.3 bit 0 means the gate inverted,
+on the D1' host correspondence pair read through the vendor's model and the named assumptions G1-G6 (the file's
+sources). The `unknown` reading — which puts a configuration outside the model's domain (the owner's P1) — stays a
+reading the loader accepts in that one context; v0.3 uses it nowhere, the tests' v021_hole fixture does.
 
 Fixtures: a hypothesis that is not the committed file — a changed copy anywhere, a document built in a test —
 enters ONLY through `fixture(doc, label)` / `fixture_file(path, label)`, which mark the object `fixture = True`
@@ -28,9 +31,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-HYPOTHESIS_REL = "b4/hypothesis/ff_behaviour_v0.2.json"
+HYPOTHESIS_REL = "b4/hypothesis/ff_behaviour_v0.3.json"
 HYPOTHESIS = REPO_ROOT / HYPOTHESIS_REL
-HYPOTHESIS_SHA256 = "1118bedf4831bac3806be4aa3d9b56630912a946156869807f2c26f6374e6ed2"   # the committed file; a change to it is a change here
+HYPOTHESIS_SHA256 = "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8"   # the committed file; a change to it is a change here
 SCHEMA = "b4_ff_behaviour_hypothesis"
 ELEMENTS = ("AFF", "A5FF", "BFF", "B5FF", "CFF", "C5FF", "DFF", "D5FF")
 X5FF = ("A5FF", "B5FF", "C5FF", "D5FF")
@@ -46,7 +49,7 @@ READINGS = {
 PER = {"ff_init": "element", "ff_srval": "element", "ce_mode": "slice", "sr_mode": "slice", "sr_kind": "slice", "storage_kind": "slice", "clock_mode": "slice"}
 CONTEXTS = ("flipflop", "latch")
 SOURCE_KINDS = ("vendor_primitive", "certificate_mapping", "repository_document", "project_decode_assumption")
-UNKNOWN_ALLOWED = {("clock_mode", "latch")}        # the only (semantic, context) with no attested reading for one bit value
+UNKNOWN_ALLOWED = {("clock_mode", "latch")}        # the only (semantic, context) a document may leave unknown (v0.2 did; v0.3 does not)
 REQUIRED_BLOCKS = ("valid_configuration", "applicable_semantics", "observation_context", "initialisation_event", "domain_refusal", "formal_input")
 
 

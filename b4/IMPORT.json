@@ -4,37 +4,37 @@
    "path": "FDRE.v",
    "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
    "sha256": "e2965e4b5174bd8de84b82e89a7b4ea5df36d8715c4f585580c16b8e6d9aa80d",
-   "used_by": "b4/hypothesis/ff_behaviour_v0.1.json (vendor_primitive)"
+   "used_by": "b4/hypothesis/ff_behaviour_v0.3.json (vendor_primitive; the same entry in the superseded v0.2 file)"
   },
   {
    "path": "FDSE.v",
    "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
    "sha256": "055468fd8372bcf67f359ec4c496c966bae1fdd5e8a6aaa71dd658ae99c69c68",
-   "used_by": "b4/hypothesis/ff_behaviour_v0.1.json (vendor_primitive)"
+   "used_by": "b4/hypothesis/ff_behaviour_v0.3.json (vendor_primitive; the same entry in the superseded v0.2 file)"
   },
   {
    "path": "FDCE.v",
    "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
    "sha256": "74d30d7c788e7db47f12b92d5b4b57b707974a0962708b309e4cc081d5f98b04",
-   "used_by": "b4/hypothesis/ff_behaviour_v0.1.json (vendor_primitive)"
+   "used_by": "b4/hypothesis/ff_behaviour_v0.3.json (vendor_primitive; the same entry in the superseded v0.2 file)"
   },
   {
    "path": "FDPE.v",
    "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
    "sha256": "4ec91e1101288ae35ebda302ed5e31b670f5bb5b16cd48922d1cbf891407bcfc",
-   "used_by": "b4/hypothesis/ff_behaviour_v0.1.json (vendor_primitive)"
+   "used_by": "b4/hypothesis/ff_behaviour_v0.3.json (vendor_primitive; the same entry in the superseded v0.2 file)"
   },
   {
    "path": "LDCE.v",
    "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
    "sha256": "882344674b9669df2039bd417a90e1a549872c53488823346370df9c3cfbba05",
-   "used_by": "b4/hypothesis/ff_behaviour_v0.1.json (vendor_primitive)"
+   "used_by": "b4/hypothesis/ff_behaviour_v0.3.json (vendor_primitive; the same entry in the superseded v0.2 file)"
   },
   {
    "path": "LDPE.v",
    "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
    "sha256": "8b63ec584c90cf02ef77c77268162b8852272abffe0175feedca1770ded5ec7f",
-   "used_by": "b4/hypothesis/ff_behaviour_v0.1.json (vendor_primitive)"
+   "used_by": "b4/hypothesis/ff_behaviour_v0.3.json (vendor_primitive; the same entry in the superseded v0.2 file)"
   }
  ],
  "files": {
@@ -62,9 +62,9 @@
   },
   "b4/host/b4_ff_hypothesis.py": {
    "kind": "new",
-   "note": "the behaviour hypothesis loader: load() takes no path, reads the committed file only against the pinned HYPOTHESIS_SHA256, holds the shape (validated enum readings; unknown only in clock_mode's latch context) and re-hashes every named source, always; any other document — a valid copy included — enters through fixture() / fixture_file() and is marked; the decode by equality with clock_mode per storage context and unknown readings reported.",
+   "note": "the behaviour hypothesis loader: load() takes no path, reads the committed v0.3 file only against the pinned HYPOTHESIS_SHA256, holds the shape (validated enum readings; unknown only in clock_mode's latch context) and re-hashes every named source, always; any other document — a valid copy included — enters through fixture() / fixture_file() and is marked; the decode by equality with clock_mode per storage context and unknown readings reported. v0.3: the pointer and the pin rotated; no logic changed.",
    "role": "host model",
-   "sha256": "a05b0a5bfe00ede4ea97bd7fae926fec5cda3b98ec68ac417bec4113ac9bc8d6"
+   "sha256": "e5e7f43233b4cf7db3a411ce224b480e5ec59c0e841a99a0001da02c93eb6ff1"
   },
   "b4/host/b4_ff_mapping.py": {
    "kind": "new",
@@ -76,7 +76,7 @@
    "kind": "new",
    "note": "the simulated fabric: configuration + stimulus -> the EXECUTING SIDE's trace under a mapping and a hypothesis passed in separately; the decode and everything derived from it host-only (diagnose / step_diagnostics); validation of the configuration, every step as handed and the init step's context at the entry; a configuration outside the domain refused with the fixed code DOMAIN and no reason (never a specimen, a redraw condition or a map-update signal); fixtures truth / permuted / dropout and seven hypothesis swaps. Every Fabric carries a source descriptor (kind, effect digest, dropout digest and count, seed — digests only) in every trace header.",
    "role": "host model",
-   "sha256": "52ad9bee0955532383bfe7b52e39f872772c1aca2e8c7d63bea57072c1db761f"
+   "sha256": "d6529700c766eeb354d01ae190adad5adb5241ab26ebfc10a6a3bb3a3fd15dbf"
   },
   "b4/host/b4_landscape.py": {
    "kind": "new",
@@ -106,8 +106,8 @@
   },
   "b4/hypothesis/ff_behaviour_v0.2.json": {
    "kind": "new",
-   "note": "status unverified; v0.2: machine-enum readings, clock_mode by storage context (the latch probe's finding), the domain rule, the initialisation event's allowed context, the executing-side / host-only split of the observation context; sources by kind — the vendor's UNISIM models by root + path + sha256 + the lines adopted, the certificate and docs/ff_latch_probe.md by path + sha256, the project's decode assumptions. 0.2.1: the domain_refusal and formal_input blocks.",
-   "role": "hypothesis (data)",
+   "note": "status unverified; v0.2: machine-enum readings, clock_mode by storage context (the latch probe's finding), the domain rule, the initialisation event's allowed context, the executing-side / host-only split of the observation context; sources by kind — the vendor's UNISIM models by root + path + sha256 + the lines adopted, the certificate and docs/ff_latch_probe.md by path + sha256, the project's decode assumptions. 0.2.1: the domain_refusal and formal_input blocks. SUPERSEDED by ff_behaviour_v0.3.json on 2026-10-18 (the owner's ruling): kept byte for byte as the record of 0.2.1 — never loaded as formal (load() reads the v0.3 file only); the tests' marked v021_hole fixture is built from it after its bytes hash to this digest.",
+   "role": "hypothesis (data; SUPERSEDED by v0.3, kept byte for byte)",
    "sha256": "1118bedf4831bac3806be4aa3d9b56630912a946156869807f2c26f6374e6ed2"
   },
   "b4/probes/latch_ginv/build_ff_latch_ginv.tcl": {
@@ -140,9 +140,9 @@
   },
   "b4/tests/b4_test_fixtures.py": {
    "kind": "new",
-   "note": "the MARKED mechanics hypothesis (the latch's clock bit 0 read as not inverted: a complete domain for exercising mechanics; says nothing about the fabric) and the injecting port.",
+   "note": "the MARKED mechanics hypothesis (the latch's clock bit 0 read as not inverted: a complete domain for exercising mechanics; says nothing about the fabric) and the injecting port. v0.3: the marked v021_hole hypothesis / fabric built from the kept v0.2 file after its bytes hash to the 0.2.1 digest.",
    "role": "test",
-   "sha256": "fa1dd94c12865f0b27f4223e0779765de714beb3ac042f3056614213063bc76c"
+   "sha256": "af91a636cd2c4075ace29b90c62c03099d6ec27013b37ec5c63fb6499d53c009"
   },
   "b4/tests/test_b4_carto.py": {
    "kind": "new",
@@ -151,19 +151,19 @@
   },
   "b4/tests/test_b4_engine.py": {
    "kind": "new",
-   "note": "complete runs under the mechanics fixture; DOMAIN injected at the base, in the probe pass and mid-generation; the formal-hypothesis fact that F's probe pass terminates at the LATCH flip.",
+   "note": "complete runs under the mechanics fixture; DOMAIN injected at the base, in the probe pass and mid-generation; the two F facts — under the formal v0.3 the probe pass completes (base + 21; a complete run B + 23 observations), under the kept 0.2.1 reading (v021_hole) it terminates at the LATCH flip.",
    "role": "test",
-   "sha256": "177bcf31dc8d510507e8b677c8c396cbab91b8219a51ce89ef866f4de215f2b7"
+   "sha256": "a9db81576c3ce8bed3dbf7aa1f6a77031410367c7a685f47e28f5414bb1458d4"
   },
   "b4/tests/test_b4_execution.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "8abba01ed67720910935aa362ab76bbe9ce62fc4350a562cb4f8f493d066fe29"
+   "sha256": "9af0f69bb1e592a838b4c82f72963f02d33e1ffa73521c0e42dc4a96065e52df"
   },
   "b4/tests/test_b4_ff_hypothesis.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "cb1b068a0120d94794ed97e51a4cde82e97c1e7d76bc70b7ec90d3c7b89963b7"
+   "sha256": "37ae431f0125bd6d59248691731872dc030b42d178814e93643575dfc28bd91f"
   },
   "b4/tests/test_b4_ff_mapping.py": {
    "kind": "new",
@@ -172,9 +172,9 @@
   },
   "b4/tests/test_b4_ff_model.py": {
    "kind": "new",
-   "note": "every expected trace derived by hand from the hypothesis's adopted lines, never by running the model.",
+   "note": "every expected trace derived by hand from the hypothesis's adopted lines, never by running the model. v0.3: the inverted-gate latch's trace derived by hand in the model's settle order (the new inputs at the old clock first; the init step atomic), the 0.2.1 refusal kept on the v021_hole fixture.",
    "role": "test",
-   "sha256": "be22b9837adc57ed94e0bc7298577c577418f67070015c6f3adc80e094c0da71"
+   "sha256": "dfefb73b79ee26966ddc75e4bf0f0941247c67241be38d7520662eb2418bd15b"
   },
   "b4/tests/test_b4_landscape.py": {
    "kind": "new",
@@ -201,18 +201,29 @@
    "kind": "new",
    "role": "test",
    "sha256": "26b61508f5968d5f7191bccb9f228e524a0f4bc7d18d67aa102873295b8ada24"
+  },
+  "b4/hypothesis/ff_behaviour_v0.3.json": {
+   "kind": "new",
+   "role": "hypothesis (data)",
+   "note": "THE formal hypothesis since the v0.3 unit (the owner's ruling of 2026-10-18 on the scope draft); status unverified; 0.3.0: the latch's clock-mode bit 0 reads inverted on the D1' host correspondence pair (evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json, a repository_document source by path + sha256), through the vendor's LDCE model and the named generalisation assumptions G1-G6 (project_decode_assumption items) — the three layers in their own source entries; every assignment of the 21 bits in the domain by that added reading; the DOMAIN refusal, the unknown enum and the executing-side contract unchanged; the initialisation event's atomic, unsettled assignment named a model abstraction (A8 unresolved).",
+   "sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8"
   }
  },
  "repository_inputs": [
   {
    "path": "gate_runs/run_2026_08_05_ff/certificate.json",
    "sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef",
-   "used_by": "b4/host/b4_ff_mapping.py; b4/hypothesis/ff_behaviour_v0.1.json (certificate_mapping)"
+   "used_by": "b4/host/b4_ff_mapping.py; b4/hypothesis/ff_behaviour_v0.3.json (certificate_mapping; the same entry in the superseded v0.2 file)"
   },
   {
    "path": "docs/ff_latch_probe.md",
    "sha256": "545bf34de94f83e39aa22b7e186a0797a0b7b2c92466bf55be8efecfd61efd27",
-   "used_by": "b4/hypothesis/ff_behaviour_v0.2.json (repository_document): the LDCE endpoint's clock-mode reading"
+   "used_by": "b4/hypothesis/ff_behaviour_v0.3.json (repository_document): the LDCE endpoint's clock-mode bit-1 reading (the same entry in the superseded v0.2 file)"
+  },
+  {
+   "path": "evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json",
+   "sha256": "af482824b10f5248db262bb5e6f417830f3b67a45c43e4c75d1dd3eae4a34e55",
+   "used_by": "b4/hypothesis/ff_behaviour_v0.3.json (repository_document): the D1' host correspondence pair, the latch's clock-mode bit-0 reading (L1); re-hashed by the loader on every load"
   },
   {
    "path": "scripts/bitstream_frames.py",
@@ -273,6 +284,6 @@
  "schema": "b4_import",
  "schema_version": "1.0.0",
  "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) — none of the latter yet; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
- "source": "docs/b4_architecture.md; the owner's authorisations of 2026-10-17 (2b-1) and 2026-10-18 (2b-2, the revised scope with five rulings)",
- "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4)"
+ "source": "docs/b4_architecture.md; the owner's authorisations of 2026-10-17 (2b-1) and 2026-10-18 (2b-2, the revised scope with five rulings); the owner's rulings of 2026-10-18 (D1', X-A) and on the v0.3 scope draft",
+ "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4); the v0.3 model revision (the latch's clock-mode bit 0 on the D1' pair, the owner's ruling of 2026-10-18 on the scope draft; the v0.2 file kept)"
 }

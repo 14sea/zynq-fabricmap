@@ -1,0 +1,276 @@
+{
+ "applicable_semantics": {
+  "rule": "when storage_kind = latch, the elements A5FF, B5FF, C5FF, D5FF are not storage elements: their ff_init and ff_srval relations are not applicable (not unknown); sr_kind is not applicable to a latch (its SR is asynchronous)",
+  "status": "a model assumption drawn from docs/ff_latch_probe.md; a changed context is not an illegal configuration"
+ },
+ "behaviour": {
+  "async_sr_acts_on_level": true,
+  "ce_gates_capture": true,
+  "clock_inversion_swaps_edge": true,
+  "ff_capture_on_physical_rising_edge": true,
+  "init_event_sets_q_to_init": true,
+  "latch_gate_is_physical_clock": true,
+  "latch_transparent_when_gate_high_and_ge": true,
+  "sr_has_priority_over_capture": true,
+  "sr_tied_low_when_not_driven": true,
+  "sync_sr_acts_on_edge_only": true,
+  "x5ff_not_storage_when_latch": true
+ },
+ "decode": {
+  "ce_mode": {
+   "bit_one": "driven",
+   "bit_zero": "tied_high",
+   "meaning": {
+    "driven": "CE driven from the slice input",
+    "tied_high": "CE tied high (always enabled)"
+   },
+   "per": "slice"
+  },
+  "clock_mode": {
+   "basis": "the clkinv pair (fdce_inv: IS_C_INVERTED = 1 => bit 0 -> 1) for a flip-flop; for a latch, two host endpoints on the mine site SLICE_X2Y25: the LDCE endpoint of docs/ff_latch_probe.md (CLKINV = 1 with IS_G_INVERTED = 0, bit 1 = not inverted) and the D1' pair of evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json (IS_G_INVERTED = 1 on the four main LDCE clears CLKINV to 0 with LATCH kept and no other same-class mover, bit 0 = inverted) \u2014 host build / readback / bitstream correspondence for one recipe under Vivado 2025.2, not a certificate and not silicon; the bit-0 reading is carried from that one pair to every latch assignment by the named generalisation assumptions G1-G6 of the project_decode_assumption source, and the gate behaviour it implies is the vendor's simulation model (LDCE.v, G_in = G xor IS_G_INVERTED)",
+   "by_storage_context": {
+    "flipflop": {
+     "bit_one": "inverted",
+     "bit_zero": "not_inverted"
+    },
+    "latch": {
+     "bit_one": "not_inverted",
+     "bit_zero": "inverted"
+    }
+   },
+   "meaning": {
+    "inverted": "IS_C_INVERTED = 1: the physical clock is the slice clock inverted; for a latch, IS_G_INVERTED = 1: the gate is the slice clock inverted (transparent while the slice clock is low and GE is high)",
+    "not_inverted": "the physical clock (or gate) is the slice clock",
+    "unknown": "no attested reading: the configuration is outside the model's domain (no reading of v0.3 is unknown; the enum is kept so that the loader's domain mechanism and the marked v021_hole fixture of the tests keep working)"
+   },
+   "per": "slice"
+  },
+  "ff_init": {
+   "bit_one": "init_0",
+   "bit_zero": "init_1",
+   "meaning": {
+    "init_0": "INIT = 0",
+    "init_1": "INIT = 1"
+   },
+   "per": "element"
+  },
+  "ff_srval": {
+   "bit_one": "srval_0",
+   "bit_zero": "srval_1",
+   "meaning": {
+    "srval_0": "SRVAL = 0",
+    "srval_1": "SRVAL = 1"
+   },
+   "per": "element"
+  },
+  "sr_kind": {
+   "bit_one": "synchronous",
+   "bit_zero": "asynchronous",
+   "meaning": {
+    "asynchronous": "CLR / PRE, acting on the level",
+    "synchronous": "R / S, acting at the edge"
+   },
+   "per": "slice"
+  },
+  "sr_mode": {
+   "bit_one": "driven",
+   "bit_zero": "tied_low",
+   "meaning": {
+    "driven": "SR driven from the slice input",
+    "tied_low": "SR tied low (never asserted)"
+   },
+   "per": "slice"
+  },
+  "storage_kind": {
+   "bit_one": "latch",
+   "bit_zero": "flipflop",
+   "meaning": {
+    "flipflop": "eight flip-flops",
+    "latch": "AFF..DFF are LDCE / LDPE; A5FF..D5FF are not storage elements"
+   },
+   "per": "slice"
+  }
+ },
+ "domain_refusal": {
+  "executing_side_receives": "a fixed refusal code, DOMAIN, carrying no reading, no semantic and no reason",
+  "never": [
+   "a specimen of the cartographer",
+   "a redraw condition of the search",
+   "a map-update signal",
+   "an input to any decision in a session"
+  ],
+  "reason_available_through": "the host-only diagnose() (unknown_readings), for audits and simulation reports",
+  "status": "a contract of the model and of every later tool (2b-2's cartographer and engine)"
+ },
+ "elements": [
+  "AFF",
+  "A5FF",
+  "BFF",
+  "B5FF",
+  "CFF",
+  "C5FF",
+  "DFF",
+  "D5FF"
+ ],
+ "formal_input": {
+  "rule": "the committed file b4/hypothesis/ff_behaviour_v0.3.json, read by b4_ff_hypothesis.load() with no path and held to the digest pinned in that module, is the only formal hypothesis; any other document enters through fixture() / fixture_file(), verifies no source, and is marked fixture = true in every trace it produces; the superseded b4/hypothesis/ff_behaviour_v0.2.json is kept byte for byte (sha256 1118bedf4831bac3806be4aa3d9b56630912a946156869807f2c26f6374e6ed2) as the record of 0.2.1 and is a fixture like any other document (the tests' v021_hole)"
+ },
+ "initialisation_event": {
+  "allowed_context": "the slice clock low and the SR input de-asserted (docs/b4_architecture.md section 5.1 step 2); an init step in any other context is refused by the model",
+  "assumption": "sets Q := INIT on every applicable element and clears nothing else; modelled on the UNISIM GSR. A MODEL ABSTRACTION: the assignment is atomic and the init step settles no level effect \u2014 a latch whose gate is open at the init step (v0.3: the slice clock low under the inverted-gate reading) still reads INIT at the init readout; the first set step then settles at the old clock level before the clock changes (b4_ff_model)",
+  "status": "unverified; A8 of docs/b4_architecture.md section 5.5 (which event restores INIT on the board) is still unresolved"
+ },
+ "observation_context": {
+  "executing_side_visible": [
+   "step",
+   "kind (init | set)",
+   "prev_event (none | init | edge | level)",
+   "clock_before",
+   "clock_after",
+   "edge (rising | falling | null) of the slice clock",
+   "ce, sr, d (one bit per element, as applied)",
+   "q_before, q_after per element (0 | 1 | null = no readout given by the hypothesis for that element in that configuration, or never initialised)"
+  ],
+  "host_only_diagnostics": [
+   "the decode per element (primitive, INIT, SRVAL, CE / SR modes, kind, inversion)",
+   "applicability per element",
+   "the physical edge per element per step",
+   "the unknown readings"
+  ],
+  "status": "the executing side (the board, the cartographer, the search) sees only the first list; the second is derived from the decode and is for the host's audit and simulation reports, never an input to a decision in a session"
+ },
+ "primitive_selection": {
+  "rule": "by (storage_kind, sr_kind, SRVAL): flip-flop + synchronous + SRVAL 0 -> FDRE; + SRVAL 1 -> FDSE; flip-flop + asynchronous + SRVAL 0 -> FDCE; + SRVAL 1 -> FDPE; latch + SRVAL 0 -> LDCE; latch + SRVAL 1 -> LDPE (a latch's SR is always asynchronous; sr_kind is not applicable to a latch)"
+ },
+ "revision": "0.2.0 (2026-10-17, the owner's HOLD on 2bad829): the readings are machine enums validated by the loader (an unrecognised reading is refused, never read as a default); clock_mode is decoded BY STORAGE CONTEXT \u2014 under a latch the CLKINV bit is asserted with IS_G_INVERTED = 0 (docs/ff_latch_probe.md, 'The finding worth keeping'), so bit 1 means NOT inverted there and bit 0 has no attested reading (unknown: outside the model's domain); valid_configuration restated accordingly; the initialisation event's allowed context stated; the sources now include the latch probe record by path and digest. 0.2.1 (the owner's HOLD on b91162c): the domain refusal the executing side receives is a fixed code with no reason (block `domain_refusal`); `unknown` is allowed in the latch context of clock_mode only, held by the loader's shape check; the committed file is the only formal hypothesis \u2014 read by `load()` against a pinned digest; every other document is a fixture and marked. 0.3.0 (2026-10-18, the owner's ruling on the v0.3 scope draft, after D1' PASS on e0b5f04 and X-A PASS on c0689f8): the latch's clock-mode bit 0 reads `inverted` \u2014 the gate is the slice clock inverted \u2014 on the D1' host correspondence pair (L1, pinned by digest), through the vendor's simulation model (L2) and the named generalisation assumptions G1-G6 (L3), each written in its own source entry; every assignment of the 21 bits is now in the domain, by an added assumption and not by any observation; status stays unverified; the DOMAIN refusal, the `unknown` enum and the executing-side contract are unchanged; the initialisation event's atomic, unsettled assignment named as a model abstraction (A8 unresolved); the 0.2.1 file is kept byte for byte and its result \u2014 F's probe pass from the all-zero base terminates at the LATCH flip \u2014 is kept as a test on the marked v021_hole fixture built from it; under 0.3.0 that pass completes (base + 21 probes; a complete F run makes B + 23 observations with its B search evaluations and one holdout). v0.3 fills a hole the model itself defined; it does not make the design gate-ready.",
+ "schema": "b4_ff_behaviour_hypothesis",
+ "schema_version": "0.3.0",
+ "scope": "SLICE_X2Y25 (CLBLL_L_X2Y25, SLICEL_X0): the 21 addresses of the clb_ff_config class on that site, the eight storage elements of the slice. A model's definitions. Nothing here is a claim about silicon: no row below has been observed on a board (docs/b4_architecture.md section 4.4).",
+ "semantics": [
+  "ff_init",
+  "ff_srval",
+  "ce_mode",
+  "sr_mode",
+  "sr_kind",
+  "storage_kind",
+  "clock_mode"
+ ],
+ "sources": [
+  {
+   "adopted": [
+    "glblGSR asserted: Q_out = INIT (lines 63-65)",
+    "on the active edge of C (posedge; negedge when IS_C_INVERTED, lines 71-98): if R then Q <= 0 else if CE then Q <= D",
+    "R is synchronous: it acts only at the edge"
+   ],
+   "kind": "vendor_primitive",
+   "path": "FDRE.v",
+   "primitive": "FDRE",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "e2965e4b5174bd8de84b82e89a7b4ea5df36d8715c4f585580c16b8e6d9aa80d"
+  },
+  {
+   "adopted": [
+    "as FDRE with the synchronous input S setting Q <= 1 at the edge (lines 75-82)"
+   ],
+   "kind": "vendor_primitive",
+   "path": "FDSE.v",
+   "primitive": "FDSE",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "055468fd8372bcf67f359ec4c496c966bae1fdd5e8a6aaa71dd658ae99c69c68"
+  },
+  {
+   "adopted": [
+    "glblGSR asserted: Q_out = INIT; CLR_in asserted: Q_out = 0 at any time, level-sensitive (lines 72-80)",
+    "on the active edge of C with CLR_in low: if CE then Q <= D (lines 84-111)"
+   ],
+   "kind": "vendor_primitive",
+   "path": "FDCE.v",
+   "primitive": "FDCE",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "74d30d7c788e7db47f12b92d5b4b57b707974a0962708b309e4cc081d5f98b04"
+  },
+  {
+   "adopted": [
+    "as FDCE with the asynchronous input PRE setting Q_out = 1, level-sensitive (lines 72-76)"
+   ],
+   "kind": "vendor_primitive",
+   "path": "FDPE.v",
+   "primitive": "FDPE",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "4ec91e1101288ae35ebda302ed5e31b670f5bb5b16cd48922d1cbf891407bcfc"
+  },
+  {
+   "adopted": [
+    "G_in = G xor IS_G_INVERTED; GE_in = GE (lines 63-71)",
+    "the UDP latchsre_ldce (lines 183-209): with set = rst = 0, q+ = d while clk = 1 and ge = 1 (transparent), q+ = q while clk = 0 or ge = 0 (hold); rst = 1 gives q+ = 0 and set = 1 gives q+ = 1 at any time",
+    "GSR asserted: Q = INIT (lines 117-119)"
+   ],
+   "kind": "vendor_primitive",
+   "path": "LDCE.v",
+   "primitive": "LDCE",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "882344674b9669df2039bd417a90e1a549872c53488823346370df9c3cfbba05"
+  },
+  {
+   "adopted": [
+    "as LDCE with the asynchronous input PRE setting Q = 1 (lines 64-71)"
+   ],
+   "kind": "vendor_primitive",
+   "path": "LDPE.v",
+   "primitive": "LDPE",
+   "root": "/home/test/Xilinx/2025.2/data/verilog/src/unisims",
+   "sha256": "8b63ec584c90cf02ef77c77268162b8852272abffe0175feedca1770ded5ec7f"
+  },
+  {
+   "adopted": [
+    "which address each of the 22 mine-site feature names moves (21 distinct addresses; CLKINV and NOCLKINV share one)",
+    "the specimen pair of every feature, from which the direction of every bit reading below is taken"
+   ],
+   "kind": "certificate_mapping",
+   "path": "gate_runs/run_2026_08_05_ff/certificate.json",
+   "schema_version": "1.6.0",
+   "sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef"
+  },
+  {
+   "items": [
+    "the bit readings in `decode` (machine enums; the human meaning beside each)",
+    "clock_mode read by storage context: flip-flop \u2014 bit 1 inverted; latch \u2014 bit 1 NOT inverted (the attested LDCE endpoint of docs/ff_latch_probe.md), bit 0 inverted (the D1' host correspondence pair, v0.3); three layers kept apart: L1 the host endpoint correspondence (the repository_document sources), L2 the vendor's primitive behaviour (the vendor_primitive sources), L3 the project's generalisation assumptions G1-G6 below",
+    "the primitive selection table",
+    "the pin correspondence: the slice clock is C (or G for a latch), CE is CE (or GE), SR is R / S / CLR / PRE by the decoded kind and value",
+    "the initialisation event of the carrier is modelled as the UNISIM GSR, taken with the slice clock low and SR de-asserted: every applicable element takes its INIT \u2014 whether the carrier's event does so on silicon is condition A8 of docs/b4_architecture.md section 5.5",
+    "G1 (v0.3) the other bits do not change the reading: CLKINV under a latch means the same for every assignment of the other 19 bits, although the D1' pair held them fixed (INIT 0, SRVAL 0 -> LDCE, CE and CLR driven, four main elements, the x5FF elements empty)",
+    "G2 (v0.3) the property is the behaviour: the bitstream bit that corresponds to the resolved IS_G_INVERTED property is realised on silicon as the slice-level clock inversion \u2014 the same mechanism CLKINV encodes for a flip-flop; nothing on silicon has been observed",
+    "G3 (v0.3) the vendor's simulation model describes the silicon gate: G_in = G xor IS_G_INVERTED and the UDP table of LDCE.v / LDPE.v (the standing premise of every vendor_primitive source, applied to one more configuration)",
+    "G4 (v0.3) the correspondence is tool- and recipe-invariant: the pair was built once, under Vivado 2025.2 and one recipe (two attempts, identical readbacks); other tool versions, anchors or occupations are not attested",
+    "G5 (v0.3) the per-slice reading: four main elements speak for the slice-level bit (clock_mode is per slice in the certificate mapping), and the x5FF elements, not storage elements under a latch, carry no reading of their own",
+    "G6 (v0.3) the initialisation context: with the gate inverted the slice clock low at the init step means the gate is OPEN; the init readout still shows INIT only because the model's init step assigns INIT atomically and settles nothing (initialisation_event); which event restores INIT on the board is A8, unresolved"
+   ],
+   "kind": "project_decode_assumption",
+   "source": "docs/ff_preregistration_plan.md section 2 (the Z polarity readings) and section 3 (the attestation fields); docs/ff_latch_probe.md (a slice holds four latches, on AFF..DFF); this project's own choice of how the seven semantics select a primitive and its parameters"
+  },
+  {
+   "adopted": [
+    "LDCE reports IS_G_INVERTED = 0 and still sets the CLKINV bit; the clock-mode reading of the clkinv pair must not be applied to a latch specimen",
+    "a slice holds four latches, on AFF..DFF; A5FF and its siblings will not hold an LDCE"
+   ],
+   "kind": "repository_document",
+   "path": "docs/ff_latch_probe.md",
+   "sha256": "545bf34de94f83e39aa22b7e186a0797a0b7b2c92466bf55be8efecfd61efd27"
+  },
+  {
+   "adopted": [
+    "for this recipe on SLICE_X2Y25 (four main LDCE on AFF / BFF / CFF / DFF, Vivado 2025.2, xc7z010clg400-1): IS_G_INVERTED resolved 1'b1 on every cell clears CLKINV (CLBLL_L.SLICEL_X0.CLKINV, 01_51, 0x00400A01 word 52 bit 19) from 1 to 0, LATCH (30_32) stays 1, the raw diff is that one in-scope bit plus nine frame-ECC bits, no other same-class mover",
+    "the two endpoints' structures are identical but for IS_G_INVERTED; the readbacks are byte-identical to attempt 1's; the rebuilt main_latch equals the 2026-08-04 endpoint frame for frame",
+    "host build / readback / bitstream correspondence only: not a certificate, not a silicon observation, no routing-path identity, no verification of the 21-address domain or of other latch combinations (the owner's ruling and PASS of 2026-10-18)"
+   ],
+   "kind": "repository_document",
+   "path": "evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json",
+   "sha256": "af482824b10f5248db262bb5e6f417830f3b67a45c43e4c75d1dd3eae4a34e55"
+  }
+ ],
+ "status": "unverified",
+ "valid_configuration": {
+  "rule": "an assignment of the 21 bits is in the model's domain when every decoded reading is known; in v0.3 every reading of every semantic in both storage contexts is known, so every assignment of the 21 bits is in the domain \u2014 the assignments with LATCH = 1 and CLKINV = 0 (19 free bits, 2^19 assignments) that v0.2 refused are in it under the v0.3 latch reading",
+  "status": "a domain definition for the model (v0.3); the completeness of the domain rests on the v0.3 latch reading \u2014 one host correspondence pair, the vendor's simulation model and the named assumptions G1-G6 \u2014 and on no observation; not a statement that any configuration is legal to build, safe to write, or observed; the DOMAIN refusal remains the contract for any reading a later revision declares unknown"
+ }
+}
