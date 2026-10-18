@@ -186,7 +186,13 @@ class ControlX(unittest.TestCase):
         self.assertEqual([len(g) for g in d.groups], [len(g) for g in omega.groups])
         self.assertNotEqual(d.groups, omega.groups)
         self.assertEqual(sorted(b for g in d.groups for b in g), sorted(b for g in omega.groups for b in g))
-        self.assertEqual(d.origin, "shuffled")
+        self.assertEqual((d.origin, d.privileged, d.provenance, d.base_commitment), ("shuffled", True, ("oracle", "shuffled"), omega.commitment), "a shuffled oracle keeps the oracle's privilege and chain")
+        c = bc.ObservationCarto(21)
+        learned = c.view()
+        self.assertEqual((learned.privileged, learned.provenance), (False, ("learned",)))
+        d2 = bc.shuffled_view(bc.address_only_view(m.addresses), 2)
+        self.assertEqual((d2.privileged, d2.provenance), (False, ("address_only", "shuffled")))
+        self.assertEqual(bc.MapView.from_dict(d.as_dict()), d)
 
 
 if __name__ == "__main__":

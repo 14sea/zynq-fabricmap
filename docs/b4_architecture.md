@@ -1,4 +1,4 @@
-# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.6, host-only, 2026-10-16; revised 2026-10-18)
+# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.7, host-only, 2026-10-16; revised 2026-10-18)
 
 > **Standing: a draft architecture, not a preregistration and not a ruling.** Written under the
 > owner's authorisation of 2026-10-16 (unit 2a of the B4 pre-work: this one document, on the
@@ -64,6 +64,15 @@
 > None scoring nothing and moving no ceiling (§7); reachability, a non-optimal base and interaction are separate
 > host audits, never satisfied by choosing seeds. Unit 2b-2 delivered the execution boundary, the task generator,
 > the engine, the observation cartographer, the replay and the four-corner computation with their tests (§13).
+>
+> **Revision v0.1.7 (2026-10-18, the owner's HOLD on `2eae943`):** the replay is a RE-EXECUTION from the declared
+> inputs and the recorded observations, with its authenticity limit stated (§5.3); the observation source's identity
+> (the hypothesis's digest and fixture marker, the certificate's digest) and a given view's provenance chain are bound
+> into every result and ledger entry and checked — a shuffled oracle stays oracle-derived (§10); a DOMAIN at the
+> holdout keeps the search's champion without a holdout score and the run incomplete (§5.3); the implemented control X
+> is a SYMMETRY control, not yet the negative control K2 / K3 name — a design note is before the owner (§8); the design
+> is not gate-ready: the frozen arm cannot complete its probe pass under the formal hypothesis, and 2b-3 does not
+> follow until that is ruled on.
 
 ## 0. The question, and why it is two studies
 
@@ -406,7 +415,22 @@ pair as if complete, and a seed is never dropped and replaced. Any other refusal
 name, never as DOMAIN. One consequence stated now, as a fact and not a defect: from the all-zero base
 (CLKINV clear, in the domain) the single flip of the LATCH address is outside the domain, so a mapping
 probe pass that covers every address terminates there, in whatever order — under the formal
-hypothesis the frozen arm's own probe pass cannot complete (`test_b4_engine`).
+hypothesis the frozen arm's own probe pass cannot complete (`test_b4_engine`). **The three-arm design
+is therefore not gate-ready as it stands**: it cannot produce complete F inputs; what to do about the
+domain, the prior or the probe design is a separate owner decision, and no threshold is set before it.
+
+**The holdout.** The champion is fixed when the search loop completes; the holdout observation passes
+the same boundary; a DOMAIN there terminates the run with phase `holdout` — the champion is kept as the
+search's result, the holdout score stays absent, the run is not complete.
+
+**Replay is re-execution, and what it proves.** A run's record is replayed by running the engine again
+from the declared inputs (arm, task, operator seed, budget, a given view, X's permutation) against a port
+that hands back the recorded observations in order and raises the recorded refusal at its attempt,
+holding every call to the record; the whole result must reconstruct field by field. This proves the
+INTERNAL EXECUTION SEQUENCE — nothing decided, drawn, selected or learned beyond the declared inputs and
+the recorded observations. It does not prove that an observation or a DOMAIN came from the model or
+from hardware: the observation source's identity is bound and checked for consistency, not re-derived
+(`b4/host/b4_replay.py`).
 
 ### 5.4 Nobody in the loop
 
@@ -536,7 +560,7 @@ All on the same seeds and rows, the form of B2 §7 / §7a and B3 §9:
 | **R** random-safe | the engine with the uniform operator over the universe | the baseline |
 | **F** frozen self-map | the engine consulting a map the FF cartographer built and froze | the search benefit of a correct map (B2's claim, re-asked) |
 | **O** online self-map | the map updated from every specimen (B3's arm) | whether updating pays on this class |
-| **X** scrambled specimens | O with each specimen's behaviour delta permuted before the cartographer (B3 §9's contract, the shadow-cartographer isomorphism check included) | a wrong online map does not profit |
+| **X** scrambled specimens | O with each specimen's observation transformed before the cartographer, a shadow over the untransformed observations proving the same algorithm under the transformation (B3 §9's contract) — **as implemented in 2b-2 the transformation is a permutation of the eight visible lanes, which relabels elements but keeps the partition of addresses the operator uses: a SYMMETRY control, not yet the negative control this row names.** A design note (address relabelling before the cartographer, X-A) is before the owner; no change until ruled | a wrong online map does not profit — the reading this row needs is not yet carried by the implemented X |
 | **D** shuffled map | F with the map's relations permuted across addresses (B2 §5's control) | a wrong frozen map does not profit |
 | **Ω** oracle map | F with the certificate-derived map — host simulation only, never on the board (§2) | the upper bound and the headroom (B2 G4) |
 | **A0** address-only baseline | what address structure alone predicts (B1's guard) | the map carries more than addresses |
@@ -618,6 +642,12 @@ rules before any B4 tool is written:
    other file only with its digest given explicitly; a hypothesis that is not the committed
    file is built through `fixture(doc, label)` and marked `fixture: true` in every trace it
    produces. A tool that silently accepts a changed source would make "same digest" mean nothing.
+   **Provenance is bound through results**: every run records the observation source's identity (the
+   hypothesis's path, digest, version and fixture marker; the mapping's site and certificate digest) from
+   its first observation, requires it equal on every later one, and binds it into every ledger entry; a
+   given frozen map is recorded with its whole provenance chain, and a transformation never drops its
+   parent — a shuffled oracle is oracle-derived and privileged, never a learned source. A descriptor
+   identifies an input; it is no licence to inspect the decode.
    **The formal hypothesis is the committed file and nothing else**: its loader takes no path and holds
    the file to a digest pinned in the module (a change to the file is a change to the pin, reviewed);
    a valid copy at another path is a fixture like any other document (`formal_input` in the file).
@@ -664,7 +694,7 @@ evidence** and is listed as a prerequisite, not described as a protection.
 | unit | deliverable | gate |
 |---|---|---|
 | 2b-1 (**delivered**; corrected on the owner's HOLD, v0.1.4) | `b4/host/b4_ff_mapping.py` (the certificate mapping of `SLICE_X2Y25`, 21 addresses / 22 names, held to the specimen pairs), `b4/hypothesis/ff_behaviour_v0.2.json` + `b4/host/b4_ff_hypothesis.py` (the behaviour hypothesis: sources by kind with digests, the eleven behaviour flags, the enum readings with the clock mode by storage context, the three contracts of §5.0; the loader verifies by default, fixtures marked), `b4/host/b4_ff_model.py` (the fabric: configuration + stimulus → the executing side's trace under mapping and hypothesis passed in separately, the decode a host-only diagnostic, validation at the entry, out-of-domain configurations refused; the fixtures truth / permuted / dropout / seven hypothesis swaps), `b4/tests/test_b4_ff_*.py`, `b4/IMPORT.json` | hand-derived expected traces; INIT and SR separated; CE, edge, kind, transparency; isolation; permutation; hypothesis swap; the mutants (a model that ignores its hypothesis is killed) |
-| 2b-2 (**delivered**, v0.1.6; the pure-function part) | `b4/host/b4_execution.py` (the port that exposes `observe` and the addresses only; the terminal event), `b4/host/b4_landscape.py` (the public task and the scoring), `b4/host/b4_engine.py` (the derived (μ, λ) engine over the FF universe; R / F / O / X; DOMAIN termination as ruled), `b4/host/b4_carto.py` (the observation cartographer: seen cells, presence, no-effect-seen, context-dependent, unknown; groups; the v3 draft; control X with its shadow isomorphism; A0, D, the privileged Ω), `b4/host/b4_replay.py` (EXACT replay), `b4/host/b4_stats.py` (the four-corner computation), `b4/host/b4_rng.py` (the PRNG copy), `b4/schemas/self_map_v3.schema.json`, the tests. **No exploration run, no gate number, no threshold.** The exploration under `b4-sim` (S = 32 first) follows 2b-3 and its own authorisation | the revised scope's acceptance list (section 6); the thresholds commit before any exploration |
+| 2b-2 (delivered v0.1.6; **HOLD and follow-up v0.1.7**: replay as re-execution, provenance bound, the holdout contract; X a symmetry control pending the design review) | `b4/host/b4_execution.py` (the port that exposes `observe` and the addresses only; the terminal event), `b4/host/b4_landscape.py` (the public task and the scoring), `b4/host/b4_engine.py` (the derived (μ, λ) engine over the FF universe; R / F / O / X; DOMAIN termination as ruled), `b4/host/b4_carto.py` (the observation cartographer: seen cells, presence, no-effect-seen, context-dependent, unknown; groups; the v3 draft; control X with its shadow isomorphism; A0, D, the privileged Ω), `b4/host/b4_replay.py` (EXACT replay), `b4/host/b4_stats.py` (the four-corner computation), `b4/host/b4_rng.py` (the PRNG copy), `b4/schemas/self_map_v3.schema.json`, the tests. **No exploration run, no gate number, no threshold.** The exploration under `b4-sim` (S = 32 first) follows 2b-3 and its own authorisation | the revised scope's acceptance list (section 6); the thresholds commit before any exploration |
 | 2b-3 | the K1–K10 thresholds and τ written into §9, the seed anchor, in one commit | the owner's review before any gate run |
 | 2b-4 | `b4/host/b4_gate.py`, the formal gate under `b4-gate-1` (S = 200), `docs/b4_gate_report.md` stating every result as "under the behaviour hypothesis"; the v3 map schema draft (§6) | every row PASS / FAIL; a PASS never read as evidence about the fabric |
 | 2c | `docs/b4_preregistration.md` DRAFT (B4-FF: claim, pins, prediction, metrics, falsifiers, sessions and rulings, compatibility, lifecycle, §9 rule; B4-R: prerequisites and prohibitions only) | the owner's review; the holdout and the universe fixed by whole site instance |

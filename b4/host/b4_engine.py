@@ -26,6 +26,16 @@ The ledger: one entry per successful observation, in order, with the phase, the 
 digests, the visible q grid, the fitness, the move, and the map version / commitment before and after; generation
 closes with the population commitment. The engine holds the port and the task only — never a fabric, a mapping or
 a hypothesis.
+
+Provenance (the owner's P1-2 on 2eae943): the observation source's identity — the hypothesis's path, sha256,
+version and fixture marker and the mapping's site and certificate sha256, as every trace header carries them — is
+taken from the first observation, required equal on every later one, kept in `result.provenance`, and bound into
+every ledger entry (`provenance_sha256`); a given frozen view is kept whole (`given_view`: groups, commitment,
+privilege and the provenance chain). A descriptor identifies the input; it is never a licence to inspect the decode.
+
+The holdout (the owner's P2): the search's champion is fixed when the loop completes (`search_completed`); the
+holdout observation then passes the same boundary; a DOMAIN there terminates the run with phase `holdout` — the
+champion is kept as the search's result, `champion_holdout` stays None, `completed` stays False.
 """
 from __future__ import annotations
 
@@ -115,8 +125,13 @@ class RunResult:
     map_specimens_final: int = 0              # specimens the live cartographer holds: never more than the ledger learned
     map_multi_bit_pairs_final: int = 0
     frozen_view: list | None = None
+    given_view: dict | None = None            # a frozen map handed in: its groups, commitment, privilege and provenance chain
     rng_state_final: int = 0
     x_isomorphism_findings: list | None = None
+    provenance: dict | None = None            # the observation source's identity, from the first observation and equal for all:
+                                              # the hypothesis (path, sha256, version, fixture) and the mapping (site, certificate sha256)
+    search_completed: bool = False            # the search loop ran to its budget (a DOMAIN at the holdout leaves this True, completed False)
+    fixture: bool | None = None               # the observation source's fixture marker, surfaced at the top level (provenance.hypothesis.fixture)
 
     def as_dict(self) -> dict:
         d = dict(self.__dict__)
@@ -141,6 +156,7 @@ def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: 
     if view is not None:
         res.map_origin, res.map_privileged = view.origin, view.privileged
         res.frozen_view = [list(g) for g in view.groups]
+        res.given_view = view.as_dict()
     pop: list[Individual] = []
     children: list[Individual] = []
     seq = 0
@@ -156,6 +172,15 @@ def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: 
         nonlocal attempt
         attempt += 1
         trace = ex.observe_candidate(port, genome, stimulus, phase, attempt, ctx())
+        hdr = {"hypothesis": dict(trace.get("hypothesis") or {}), "mapping": dict(trace.get("mapping") or {})}
+        for k in ("hypothesis", "mapping"):
+            if not hdr[k]:
+                raise ValueError(f"the observation carries no {k} identity")
+        if res.provenance is None:
+            res.provenance = hdr
+            res.fixture = bool(hdr["hypothesis"].get("fixture"))
+        elif hdr != res.provenance:
+            raise ValueError("the observation source's identity changed between observations")
         res.observations += 1
         return trace
 
@@ -177,6 +202,7 @@ def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: 
         grid = [s["q_after"] for s in trace["steps"]]
         vb, va, cm = learn(seq, genome, grid) if phase != "holdout" else ((frozen.version, frozen.version, frozen.commitment) if frozen else ((carto.version, carto.version, carto.commitment()) if carto else (0, 0, "")))
         e = {"seq": seq, "phase": phase, "genome": genome, "genome_hex": ex.genome_hex(genome, n), "config_sha256": ex.sha256_json(ex.genome_to_config(genome, task.addresses)),
+             "provenance_sha256": ex.sha256_json(res.provenance), "fixture": res.fixture,
              "stimulus_sha256": ex.sha256_json(list(task.holdout_stimulus if phase == "holdout" else task.stimulus)),
              "trace_sha256": ex.sha256_json(grid), "q_grid": grid, "fitness": fit, "none_cells": nones,
              "map_version_before": vb, "map_version_after": va, "map_commitment_after": cm}
@@ -242,14 +268,15 @@ def run(arm: str, task: ex.PublicTask, port: ex.ObservationPort, operator_seed: 
             generation += 1
             res.generation_closes.append({"generation": generation, "after_seq": seq, "population_commitment": population_commitment(pop),
                                           "population": [[i.genome, i.fit, i.born] for i in pop], "before": [[i.genome, i.fit, i.born] for i in pop_before]})
-        res.completed = True
+        res.search_completed = True
         champion = min(pop, key=lambda ind: (-ind.fit, ind.born))
-        res.champion = {"genome": champion.genome, "fit": champion.fit, "born": champion.born}
+        res.champion = {"genome": champion.genome, "fit": champion.fit, "born": champion.born}    # the search's result, kept even if the holdout is refused
         phase = "holdout"
         trace = observe(champion.genome, task.holdout_stimulus, "holdout")
         res.champion_holdout, res.champion_holdout_nones = bl.score_holdout(trace, task)
         res.cost["holdout"] = 1
         entry("holdout", champion.genome, trace, res.champion_holdout, res.champion_holdout_nones, parent_born=champion.born, bits=[], move_kind="holdout", best=best)
+        res.completed = True                                       # only with the holdout observed
     except ex.Terminated as t:
         res.terminal = t.event.as_dict()
         res.completed = False

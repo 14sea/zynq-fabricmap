@@ -77,8 +77,18 @@ class MapView:
     groups: tuple                 # tuple of tuples of genome bits, disjoint; empty when nothing is known
     version: int
     commitment: str
-    privileged: bool = False      # True only for the oracle view (it read the mapping)
-    origin: str = "learned"
+    privileged: bool = False      # True when the view, or ANY view it was derived from, read the mapping
+    origin: str = "learned"       # the last transformation
+    provenance: tuple = ("learned",)   # the whole chain, first to last (a transformation never drops its parent)
+    base_commitment: str = ""     # the parent view's commitment, for a derived view
+
+    def as_dict(self) -> dict:
+        return {"groups": [list(g) for g in self.groups], "version": self.version, "commitment": self.commitment, "privileged": self.privileged,
+                "origin": self.origin, "provenance": list(self.provenance), "base_commitment": self.base_commitment}
+
+    @staticmethod
+    def from_dict(d: dict) -> "MapView":
+        return MapView(tuple(tuple(g) for g in d["groups"]), d["version"], d["commitment"], bool(d["privileged"]), d["origin"], tuple(d["provenance"]), d.get("base_commitment", ""))
 
 
 class ObservationCarto:
@@ -159,7 +169,7 @@ class ObservationCarto:
         groups = [tuple(sorted(single[e])) for e in sorted(single)]
         if multi:
             groups.append(tuple(sorted(multi)))
-        return MapView(tuple(groups), self.version, self.commitment())
+        return MapView(tuple(groups), self.version, self.commitment(), False, "learned", ("learned",))
 
     def render(self, binding: dict, addresses: tuple) -> dict:
         return {"schema": "self_map", "schema_version": "3.0.0-draft", "cartographer": CARTO_VERSION, "binding": dict(binding),
@@ -266,18 +276,20 @@ def address_only_view(addresses: tuple) -> MapView:
     for i, a in enumerate(addresses):
         by_far.setdefault(a.split("/")[0], []).append(i)
     groups = tuple(tuple(v) for _, v in sorted(by_far.items()))
-    return MapView(groups, 0, sha256_json([list(g) for g in groups]), origin="address_only")
+    return MapView(groups, 0, sha256_json([list(g) for g in groups]), origin="address_only", provenance=("address_only",))
 
 
 def shuffled_view(view: MapView, seed: int) -> MapView:
     """D: the view's addresses relabelled by a seeded permutation of the bits that appear in it — the group sizes
-    kept, the membership wrong."""
+    kept, the membership wrong. The parent's provenance and privilege are KEPT: a shuffled oracle is still
+    oracle-derived, never a learned, closed-book source (the owner's P1-2 on 2eae943)."""
     bits = sorted(b for g in view.groups for b in g)
     rng = Rng(seed)
     perm = rng.sample(bits, len(bits))
     relabel = dict(zip(bits, perm))
     groups = tuple(tuple(sorted(relabel[b] for b in g)) for g in view.groups)
-    return MapView(groups, view.version, sha256_json([list(g) for g in groups]), origin="shuffled")
+    return MapView(groups, view.version, sha256_json([list(g) for g in groups]), privileged=view.privileged, origin="shuffled",
+                   provenance=view.provenance + ("shuffled",), base_commitment=view.commitment)
 
 
 def oracle_view(mapping) -> MapView:
@@ -287,4 +299,4 @@ def oracle_view(mapping) -> MapView:
     for a, e in mapping.entries.items():
         by.setdefault(e.element or "slice", []).append(mapping.genome_bit(a))
     groups = tuple(tuple(sorted(by[k])) for k in sorted(by))
-    return MapView(groups, 0, sha256_json([list(g) for g in groups]), privileged=True, origin="oracle")
+    return MapView(groups, 0, sha256_json([list(g) for g in groups]), privileged=True, origin="oracle", provenance=("oracle",))

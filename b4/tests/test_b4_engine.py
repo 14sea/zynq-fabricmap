@@ -99,10 +99,15 @@ class CompleteRuns(Base):
     def test_given_views_carry_their_provenance(self):
         omega = be.run("F", self.task, self.port(), 11, 16, view=bc.oracle_view(self.m))
         self.assertEqual((omega.map_origin, omega.map_privileged, omega.cost["probes"]), ("oracle", True, 0))
+        self.assertEqual((omega.given_view["provenance"], omega.given_view["privileged"]), (["oracle"], True))
         a0 = be.run("F", self.task, self.port(), 11, 16, view=bc.address_only_view(self.m.addresses))
-        self.assertEqual((a0.map_origin, a0.map_privileged), ("address_only", False))
+        self.assertEqual((a0.map_origin, a0.map_privileged, a0.given_view["provenance"]), ("address_only", False, ["address_only"]))
         d = be.run("F", self.task, self.port(), 11, 16, view=bc.shuffled_view(bc.oracle_view(self.m), 2))
-        self.assertEqual(d.map_origin, "shuffled")
+        self.assertEqual((d.map_origin, d.map_privileged, d.given_view["provenance"]), ("shuffled", True, ["oracle", "shuffled"]), "a shuffled oracle is still oracle-derived")
+        self.assertEqual(d.given_view["base_commitment"], bc.oracle_view(self.m).commitment)
+        learned = be.run("F", self.task, self.port(), 11, 16)
+        self.assertIsNone(learned.given_view)
+        self.assertEqual(learned.map_origin, "learned")
         with self.assertRaises(ValueError):
             be.run("O", self.task, self.port(), 11, 16, view=bc.oracle_view(self.m))
         with self.assertRaises(ValueError):
@@ -157,6 +162,41 @@ class Termination(Base):
         self.assertEqual(br.replay(r.as_dict(), self.task), [])
         full = be.run("O", self.task, self.port(), 11, 24)
         self.assertEqual([e["q_grid"] for e in full.ledger[:5]], [e["q_grid"] for e in r.ledger], "the prefix is the same run's prefix")
+
+    def test_domain_at_the_holdout_keeps_the_search_s_champion_without_a_holdout_score(self):
+        """The owner's P2: budget 24 = base + 24 search observations; the 26th attempt is the holdout."""
+        port = InjectingPort(self.fab, refuse_at=26)
+        r = be.run("O", self.task, port, 11, 24)
+        self.assertEqual((r.completed, r.search_completed, r.terminal["phase"], r.terminal["attempt"], r.terminal["successful_observations"]), (False, True, "holdout", 26, 25))
+        self.assertIsNotNone(r.champion)
+        self.assertEqual((r.champion_holdout, r.champion_holdout_nones, r.cost["holdout"]), (None, None, 0))
+        self.assertEqual(len(r.ledger), 25)
+        self.assertEqual(len(r.generation_closes), 3, "the search completed every generation")
+        self.assertEqual(r.rng_state_final, r.terminal["rng_state"])
+        self.assertEqual(br.replay(r.as_dict(), self.task), [])
+        full = be.run("O", self.task, self.port(), 11, 24)
+        self.assertEqual(full.champion, r.champion, "the same search gives the same champion")
+        self.assertTrue(full.completed)
+
+    def test_the_observation_source_is_bound_into_the_result(self):
+        r = be.run("R", self.task, self.port(), 11, 8)
+        self.assertEqual(r.provenance["hypothesis"]["fixture"], True, "the mechanics fixture is marked in the result")
+        self.assertEqual(r.provenance["hypothesis"]["sha256"], self.hfix.sha256)
+        self.assertEqual(r.provenance["mapping"]["certificate_sha256"], self.m.certificate_sha256)
+        formal = be.run("R", self.task, ex.ObservationPort(fm.Fabric(self.m, self.h)), 11, 8)
+        self.assertEqual((formal.provenance["hypothesis"]["fixture"], formal.provenance["hypothesis"]["sha256"]), (False, hy.HYPOTHESIS_SHA256))
+        self.assertNotEqual(r.provenance, formal.provenance, "the fixture and the formal hypothesis are told apart by the result alone")
+
+        class Drifting(ex.ObservationPort):
+            __slots__ = ()
+            def observe(self, config, stimulus):
+                t = super().observe(config, stimulus)
+                if self.calls == 3:
+                    t = dict(t); t["hypothesis"] = dict(t["hypothesis"], sha256="0" * 64)
+                return t
+        r = be.run("R", self.task, Drifting(self.fab), 11, 8)
+        self.assertFalse(r.completed)
+        self.assertIn("identity changed between observations", r.other_refusal["message"])
 
     def test_another_refusal_is_recorded_by_name_not_as_domain(self):
         port = InjectingPort(self.fab, refuse_at=3, exc=fm.ModelRefusal("boom"))
