@@ -1,4 +1,4 @@
-# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.12, host-only, 2026-10-16; revised 2026-10-18)
+# B4 — expansion from LUT content bits to the FF class, then routing: architecture (DRAFT v0.1.13, host-only, 2026-10-16; revised 2026-10-18)
 
 > **Standing: a draft architecture, not a preregistration and not a ruling.** Written under the
 > owner's authorisation of 2026-10-16 (unit 2a of the B4 pre-work: this one document, on the
@@ -10,7 +10,8 @@
 > entries not in scope; the FF scorer specified as functional requirements, an observation
 > contract and acceptance conditions, never as RTL; the current-limited supply recorded as a
 > prerequisite with no measurement evidence yet. Every number in this document is either
-> quoted from a named source or marked `<gate>` (to be fixed by unit 2b before it is measured).
+> quoted from a named source or, for the gate's thresholds, fixed in advance by unit 2b-3 under the
+> owner's ruling of 2026-10-18 (§9): an advance engineering criterion, never an empirical result.
 > Nothing here authorises any board contact.
 >
 > **Revision v0.1.1 (2026-10-16, the owner's HOLD on `cec6aac`, documents only):** P1 — INIT and
@@ -122,6 +123,24 @@
 > **Revision v0.1.12a (2026-10-18, the owner's PASS on `12eaa72` with two P3 documentation corrections; documents only):**
 > §4.4's source row now names the formal v0.3 file and its four machine source kinds, with the v0.2 identity kept apart as
 > historical; the unit's evidence labels the pasted v0.3 ruling an excerpt and archives the owner's full ruling beside it.
+>
+> **Revision v0.1.13 (2026-10-18, unit 2b-3, the owner's ruling on the thresholds scope draft after the PASS on
+> `b2a958c`):** every `<gate>` of §9 replaced by a threshold fixed in advance — K1 two medians with B2's interpolated
+> percentile, K2 population variance with X's bootstrap non-rejection ≥ 90 %, K3 the 10 % ratios with `mean(F − R) > 0`
+> and `mean(O − R) > 0` required and a non-positive denominator failing the row, K4 57.6 and 50 % against a grouping
+> reference that is no proved bound, K5 d ≥ 0.5 with power ≥ 0.90 on a complete ascending scan and the 4 000-evaluation
+> cap, K6 S = 200 and N ≥ 8, K7 rewritten (zero ledger-recomputation mismatches; O's `B*` prefix median ≥ 11 of 21; the
+> certificate-versus-observed partition difference a diagnostic, not a defect), K8 over every executed run, K9 the ≥ 90 %
+> of seeds and ≥ 0.50 median coverage on §9.3's fixed comparison set, K10 τ = 2 score units with `max|I| > 2`, two fixed
+> backgrounds, all 210 address pairs and ≥ 0.50 of S. The grid `{8 … 256}` and the `B*` rule; no eligible budget means
+> the budget rule FAILS and the gate cannot PASS. §9.1: a verdict needs every planned run complete, a contract break is
+> `invalid`, no PASS from survivors, and no `N` on valid complete data is an ordinary result. §9.2: the anchor is the
+> formal hypothesis's digest with the label passed beside it, the X and D control seeds have their own formulas, and the
+> exclusion set is listed file by file with digests, with `evidence/b4/sim/` named as not yet created and B4's exposed
+> seeds listed. §8: D is the same seed's F-learned frozen map passed once through `shuffled_view`, never a shuffled
+> oracle. Documents only — no code, no run, no seed value, no K result. **Not gate-ready**; the thresholds commit is
+> itself no gate-readiness verdict, and a later revision keeps the old version, its reason and its results, needs its own
+> authorisation and a complete re-run, and never re-labels an earlier run.
 
 ## 0. The question, and why it is two studies
 
@@ -628,16 +647,34 @@ All on the same seeds and rows, the form of B2 §7 / §7a and B3 §9:
 | **F** frozen self-map | the engine consulting a map the FF cartographer built and froze | the search benefit of a correct map (B2's claim, re-asked) |
 | **O** online self-map | the map updated from every specimen (B3's arm) | whether updating pays on this class |
 | **X** relabelled addresses (X-A) | O with the cartographer's input transformed: before the base observation a derangement π of the addresses is drawn ONCE from its own control generator (B3's Fisher–Yates-with-rejection rule; every attempt recorded; never the operator's generator, never redrawn or rejected after anything is learned); X's cartographer ingests each specimen with the genome's bits relabelled through π and the q grid untouched, so every seen effect is credited to the wrong address; the shadow ingests the true genome and the contract is checked in full after EVERY ingest (`b4_carto.isomorphic_addresses`: X's relation at π(a) equals the shadow's at a — cells, presence, pair counts, contexts, evidence references — with the version, multi-bit and specimen counts); the ledger keeps the TRUE genome, the transformed input is reconstructible from π. A difference is a **control failure** — its own event, not DOMAIN, not a refusal, not a result: the exposing observation stays in the ledger, scored and counted (a search child among the pending children); after it nothing is drawn, observed, selected or learned; the replay must reproduce it or names it. **What the transformation does not guarantee:** a derangement does not guarantee a changed partition (swapping within every pair and rotating the slice-wide group has no fixed point and maps every group onto itself), so the **residual structure** (`b4_carto.residual_structure`: `partition_preserved`, `groups_moved` = the true groups that are not, as address sets, groups of X's partition) is computed once at the end and REPORTED beside X's rows — never read during the run, never a reason to redraw or to select. The lane permutation of 2b-2 is not an arm: it stays as the cartographer's symmetry test (`permute_grid` / `isomorphic`) | a wrong online map does not profit — evidence under the stated null, its strength per run read with the residual structure, not a logical proof |
-| **D** shuffled map | F with the map's relations permuted across addresses (B2 §5's control) | a wrong frozen map does not profit |
-| **Ω** oracle map | F with the certificate-derived map — host simulation only, never on the board (§2) | the upper bound and the headroom (B2 G4) |
-| **A0** address-only baseline | what address structure alone predicts (B1's guard) | the map carries more than addresses |
+| **D** shuffled map | **the frozen `MapView` that the SAME seed's F arm learned from its 21 single-flip probes over the slice's configuration-bit addresses**, passed ONCE through `b4_carto.shuffled_view` with its parent provenance kept — *not* a shuffled oracle view. That one view is handed to the frozen arm (`run("F", …, view=…)`): nothing is relearned, and no later result may be consulted to pick the map. D is a host control and may reuse F's probe artefacts, but its logical cost is listed separately as the 21 probes obtained once; its search comparison is aligned with the others at the same `B` | a wrong frozen map does not profit |
+| **Ω** oracle map | F with the certificate-derived map (`b4_carto.oracle_view`) — host simulation only, never on the board (§2); the view is marked `privileged` and Ω is a **grouping reference**, not a proved global bound or optimum of the search | the headroom against a certificate-derived grouping (B2 G4) |
+| **A0** address-only baseline | what address structure alone predicts (`b4_carto.address_only_view`; B1's guard) | the map carries more than addresses |
 | T / W (optional) | train-membership-only and within-train scramble (B2 §7a) | grouping versus membership, if the preregistration asks |
 
-## 9. The discriminability gate — criteria with their methods; thresholds `<gate>`
+Ω, A0 and D are given views on the frozen arm; **none of them is ever handed to the main R / F / O / X runs**.
 
-The gate is unit 2b's simulation; this section fixes **what is computed and how**, and leaves
-each threshold as `<gate>` to be written into this document **before** the gate simulation is
-run — the B3 rule applies verbatim: "if any threshold is changed after the first gate run, the
+**The two control generators are fixed before any observation** (the owner's ruling of 2026-10-18 §2), each from the
+pair's own seeds, as UTF-8 decimal text with no spaces, and each driving its own generator so that neither the task's
+nor the operator's stream is consumed:
+
+```
+X control seed = int.from_bytes(sha256('b4-x-control-1|<landscape_seed>|<operator_seed>').digest()[:4], 'big')
+D shuffle seed = int.from_bytes(sha256('b4-d-control-1|<landscape_seed>|<operator_seed>').digest()[:4], 'big')
+```
+
+A coincidental collision between the two values is recorded, never redrawn. X keeps every attempt of the derangement
+rule itself (§8's X row); D uses an ordinary shuffle, which **may** leave the partition unchanged — the permutation it
+applied and the residual structure are recorded, and a residual is never a reason to redraw.
+
+## 9. The discriminability gate — criteria with their methods and their fixed thresholds
+
+The gate is unit 2b's simulation; this section fixes **what is computed and how** and, since unit
+2b-3 (the owner's ruling of 2026-10-18), **every threshold**. The thresholds were written here
+before any exploration or gate run of this class. They are fixed engineering research criteria,
+chosen in advance: no number below is claimed to be empirically guaranteed, statistically
+calibrated, or valid for silicon, and a criterion that fails under valid complete data is
+reported as a failure, never retuned. The B3 rule applies verbatim: "if any threshold is changed after the first gate run, the
 change is recorded as a revision of this document with the reason, and the gate is re-run and
 re-reported under the new commit — never silently" (`docs/b3_architecture.md` §9). **A
 threshold is never derived from the run it judges.**
@@ -647,36 +684,201 @@ cannot pick):** paired by landscape seed *r*, the **primary** `Δ1_r = best_O(r)
 `B*` under **search accounting** (R and O charged nothing; the online arm pays its map cost in
 time, not in evaluations); the **secondary outcome** `Δ2_r = best_O(r) − end_to_end_F(r)` at
 total budget `T = B*`, F's own best-so-far trace charged the mapping cost of the frozen map's
-build, from the same F run — reported, no threshold (`docs/b3_architecture.md` §9). The
+build — **21 probes, one per address of the slice's configuration-bit universe** — from the same
+F run: at `T ≤ 21` the value is F's observed base score, marked *mapping-in-progress* because the
+search has not begun; at `T > 21` it is F's best-so-far after its `T − 21`-th search evaluation. A
+probe candidate is never read as a search champion and a prefix cut short by a terminated run is
+never filled in. The holdout score never enters a training curve. Δ2 is reported with no threshold
+(`docs/b3_architecture.md` §9). The
 decision statistic for each is the one-sided exact sign test at α = 0.05, ties excluded from
 *n* and counted (`b2_gate.sign_test_p`, by copy). The frozen arm's own benefit over R
-(`best_F − best_R`, B2's primary) is reported next to Δ1 as the dose the online arm approaches.
+(`best_F − best_R`, B2's primary) is reported next to Δ1 as the dose the online arm approaches, and
+it carries **no significance threshold of its own**; K3 and K4 below do use it as a comparison
+reference, including the condition that its mean is positive, and those conditions are stated there
+rather than hidden behind the word *reported*.
 
 | id | criterion | method (fixed) | threshold |
 |---|---|---|---|
-| K1 non-saturation | arm Ω's 95th percentile of best-so-far at `B*` below the ceiling; arm R's median at `B*` above the base | B2 G1's computation | `<gate>` |
-| K2 not a definitional lock | var(Δ1_r) > 0 at `B*`; there exists a grid budget B at which both `positives(Δ1(B)) > 0` and `negatives(Δ1(B)) > 0` (one condition, within one budget); **and** the same decision procedure applied to control X's pairs does **not** reject H0 in ≥ `<gate>` of 1 000 bootstrap experiments of size N (`b2_gate.bootstrap_reject_rate`, seed 7, by copy — B3's: ≥ 90 %); X's rows carry, per run, the residual structure of its π (`partition_preserved`, `groups_moved` / `groups_true`) and the count of runs whose π preserved the partition — reported, never used to drop or re-pick a run | B3 H2, in full | `<gate>` |
-| K3 wrong maps do not profit | D's and X's mean Δ against R as a fraction of F's / O's; their sign tests not significant over S; X's residual-structure counts reported beside its numbers (§8) | B2 G3 / B3 H3 | `<gate>` |
-| K4 oracle headroom | Ω's median at `B*` below the ceiling by a margin; F's mean Δ as a fraction of Ω's | B2 G4 | `<gate>` |
-| K5 effect, power, N | Cohen's d of {Δ1_r}; `N(B)` by `b2_gate.required_pairs`'s ascending scan (1 000 bootstrap experiments, seed `1 + N`), the sign test by `b2_gate.sign_test_p` — both **by copy into the B4 namespace with their digests recorded**, never by import across the pinned boundary; the session cost `N × arms × B*` under a stated cap | B2 G5 / B3 H5 | `<gate>` |
-| K6 no fixed-seed lock | S ≥ `<gate>`; N ≥ `<gate>`; board seeds under a B4 label with every archived set excluded | B2 G6 / B3 H6 | `<gate>` |
-| K7 the map is a map | over S: wrong decodes and anomalies in the model of §4.4 (under the behaviour hypothesis — since v0.3 including the latch bit-0 reading of L1 ∧ L2 ∧ L3, so a decode that rests on it is reported as such); the median decoded count at `B*`; `unknown` count reported, never forced to zero | B3 H7, extended by the `unknown` rule of §5.2 | `<gate>` |
-| K8 ledger replay | every map version and decode reproduced from the ledger; the raw observation reproduces the fitness | B3 H8 + §5.3 | holds |
-| K9 observability | (a) for each of the seven semantics, at least one positive-control address on which the preregistered stimulus sequence separates the two values under the model of §4.4; (b) per address and per applicable context (§5.2), the separation judged and the fraction of addresses covered per semantic reported, the uncovered addresses named and their relations `unknown`; `ff_init` reported separately as "conditional on A8" | new; §5.2 — the same wording as A2 | `<gate>` (per-semantic coverage fractions) |
-| K10 real interaction | for each landscape seed and each pair (a, b) of elements or modes whose **four corner configurations** `00, 01, 10, 11` are all **legal** under the class's composition rule (§4.2), the **four-corner index** `I_ab = f11 − f10 − f01 + f00` computed from the landscape's fitness on the model of §4.4 — the four corners differing in (a, b) **only**: every other configuration bit, the initial state (the same initialisation event) and the stimulus sequence are held fixed across the four, and the fixed values are recorded with the index; a pair with an illegal corner is recorded as *not comparable* with the corner named, excluded from the pair denominator and counted. Per seed, three outcomes: **interacting** when some comparable pair has `|I_ab| > <gate>` (a stated fraction of the fitness range); **no interaction seen among the tested comparisons** when every comparable pair has `I_ab = 0` — a statement about the comparisons made, not that every context is additive (an additive score `f = a + b` gives `I = 0` on every pair and lands here); **not assessable** when the seed has no comparable pair at all — never counted as additive. The criterion is the fraction of interacting seeds over **all S seeds** (the not-assessable seeds stay in the denominator), with the counts of the three outcomes reported | new; §7 | `<gate>` |
+| K1 non-saturation | `percentile(best_Ω(B*), 95) < 64` (the task's ceiling, §7) **and** `median_r(best_R(B*)) > median_r(base_r)` — two medians compared, *not* `median(best_R − base) > 0`; the percentile is B2's linear interpolation (`b2_gate.percentile`, by copy) | B2 G1's computation | holds / fails (no fraction) |
+| K2 not a definitional lock | the **population** variance of {Δ1_r} at `B*` is > 0; there exists one grid budget B at which both `positives(Δ1(B)) > 0` and `negatives(Δ1(B)) > 0` (one condition, within one budget); **and** at `B*`, with size `N(B*)`, the same one-sided sign test applied to X − R does **not** reject H0 in **≥ 90 %** of 1 000 bootstrap experiments (`b2_gate.bootstrap_reject_rate` by copy, α = 0.05, rejection at `p ≤ 0.05`, `random.Random(7)`; ties do not enter the sign test's effective *n*, yet the tied pairs stay in the resampled population). Every X run's residual structure (`partition_preserved`, `groups_moved` / `groups_true`) is reported in full, never used to drop or re-pick a run | B3 H2, in full | ≥ 90 % non-rejection |
+| K3 wrong maps do not profit | `mean(F − R) > 0` **and** `mean(D − R) ≤ 0.10 · mean(F − R)`; `mean(O − R) > 0` **and** `mean(X − R) ≤ 0.10 · mean(O − R)`; D's and X's one-sided sign tests over S not significant (`p > 0.05`). A negative numerator passes the inequality and is **not** made absolute; a zero or negative denominator means the ratio condition cannot be read as satisfied — the row fails and says so. X's residual-structure counts are reported beside its numbers (§8) | B2 G3 / B3 H3 | 10 %; `p > 0.05` |
+| K4 headroom against the certificate-derived grouping | `median_r(best_Ω(B*)) ≤ 0.90 · 64 = 57.6`; `mean(Ω − R) > 0` **and** `mean(F − R) ≥ 0.50 · mean(Ω − R)`. The 50 % is this unit's advance criterion, **not** a known attainable effect: Ω is a privileged grouping reference (§8), not a proved global bound | B2 G4 | 57.6; 50 % |
+| K5 effect, power, N | paired Cohen's d of {Δ1_r} at `B*` **≥ 0.5**; `N(B)` by `b2_gate.required_pairs`'s **complete ascending scan over every integer from 8 to S** (no bisection, no skipping; α = 0.05, bootstrap power **≥ 0.90**, 1 000 experiments, `random.Random(1 + N)`); the sign test by `b2_gate.sign_test_p` — all three **by copy into the B4 namespace with their digests recorded**, never by import across the pinned boundary; `N × 3 × B* ≤ 4 000` **search evaluations** | B2 G5 / B3 H5 | d ≥ 0.5; power ≥ 0.90; cap 4 000 |
+| K6 no fixed-seed lock | **S = 200** and **N ≥ 8**; the gate's seeds derived once by §9.2's formula with the complete exclusion set. S is the number of seeds planned, never the number that completed | B2 G6 / B3 H6 | S = 200; N ≥ 8 |
+| K7 the map is a map | (a) **zero recomputation mismatches**: from the arm's own ledger, the single-flip pairs are recomputed — affected cells, presence, pair counts, contexts, evidence references, the map version and the map at that budget — and must equal what the run recorded. This is an internal-consistency check, not a claim about semantic truth. (b) coverage on **arm O's `B*` search prefix** (no information from after `B*` and none from the holdout, the snapshot rebuilt from the true ledger prefix without re-running candidates): `median_r(#addresses whose state is not unknown) ≥ 11` of 21. Per seed the 21 addresses are reported in the four states `unknown` / `effect_seen` / `no_effect_seen` / `context_dependent`, summing to 21; *not unknown* means the latter three and implies **neither** a usable grouping **nor** a decoded semantic. F's frozen post-probe map and the other controls are reported separately and never substitute for O's ≥ 11. The difference between the certificate-derived partition (Ω) and an observed partition is reported as a **diagnostic with no threshold**: the cartographer groups by the elements an address was *seen* to affect and puts every multi-element address in one group, so a slice-wide configuration bit that moved one element under one stimulus lands beside that element's address — that is not a defect, and the model never promised the two partitions agree. X's own relations are judged against its shadow under the X-A contract (§8), never against the certificate partition | B3 H7, extended by the `unknown` rule of §5.2 | 0 mismatches; median ≥ 11 |
+| K8 ledger replay | for **every** run actually executed (R / F / O / X / D / Ω / A0): the replay reports no finding, the recorded q grid recomputes the recorded fitness, X's shadow isomorphism holds and the source-identity / fixture boundary holds. A broken tool contract is `invalid` under §9.1 and is never packaged as an ordinary landscape failure | B3 H8 + §5.3 | holds |
+| K9 observability | computed on the fixed host-only comparison set of **§9.3** (the stimulus of `task-v0.1` as generated, the whole public `q_after` trace including the init readout, no champion and no holdout): (a) **≥ 90 % of all S seeds** have, for each of the seven semantics, at least one applicable address-and-background pair whose two readouts differ; (b) per semantic, the **median over seeds of the coverage fraction** (distinguishable applicable pairs / all applicable pairs) **≥ 0.50** — per semantic, never averaged across the seven. A semantic with an empty denominator is *not assessable* and is never recorded as 100 %. `ff_init` is reported separately as conditional on A8 | new; §5.2 — the same wording as A2 | ≥ 90 % of seeds; median coverage ≥ 0.50 per semantic |
+| K10 real interaction | τ = **2 fitness score units** (the task's weights are all 1, so two scoring cells of 64). For each landscape seed, two fixed background configurations — `genome0 = 0` and `genome1 = Rng((landscape_seed ^ 0x4C0A4E55) & 0xffffffff).uniform(1 << 21)`, the first `uniform` call of that new generator, independent of the task, operator and control generators, drawn once and kept even if the two backgrounds coincide — and in each background **all 210 unordered pairs** of the 21 configuration-bit addresses: the four-corner index `I_ab = f11 − f10 − f01 + f00` with every other bit, the initial state and the stimulus held fixed across the four corners (`b4_stats.four_corner`), recording the background, the four corner configurations, their scores and `I`. `max|I|` per seed is taken over all comparable values of both backgrounds. Outcomes: **interacting** when `max|I| > 2` (exactly 2 falls in *nonzero below threshold*), *nonzero below threshold*, *no interaction seen among the tested comparisons*, *not assessable*; all four counts and the comparable / not-comparable counts are reported, and the criterion is **interacting seeds / all S ≥ 0.50** (not-assessable seeds stay in the denominator). Comparability here is **comparability inside the model's domain under hypothesis v0.3** — it is *not* a statement that a corner is buildable, writable or safe as a bitstream on a device; if 2c needs composition legality, that is a separate frozen condition and this result never stands in for it. An unexpected DOMAIN refusal is `invalid` under §9.1, never absorbed as *not assessable* | new; §7 | τ = 2; ≥ 0.50 of S |
 
-The budget rule is B3's: `B*` = the grid budget with the smallest session cost `N(B) × 3 × B`
-(three arms R, F, O charged at `B`) among budgets at which K1 holds and `N(B)` exists, ties to
-the smaller budget; every other row is evaluated at `B*`. The diagnostic rows (B3's H9 form)
-are the preregistration's to add. A row that fails is reported, not tuned.
+**The budget grid and `B*`.** The grid is `G = {8, 16, 24, 32, 48, 64, 96, 128, 192, 256}` with
+`B_max = 256` — multiples of λ = 8 over a universe of 21 configuration-bit addresses, where one
+generation of the (μ, λ) = (4, 8) engine costs 8 evaluations. `B*` = the grid budget with the
+smallest cost `N(B) × 3 × B` (three arms R, F, O charged at `B`) **among the budgets at which K1
+holds and `N(B)` exists**, ties to the smaller budget; every other row is evaluated at `B*`, and
+`B*` is never re-chosen to let another row pass. A budget at which `required_pairs` has no
+solution is not eligible; if no budget is eligible, `B*` does not exist, the budget rule FAILS,
+every row that depends on `B*` or `N` is marked *not assessable*, the gate cannot PASS, and
+neither `B*` nor `N` is invented. The diagnostic rows (B3's H9 form) are the preregistration's to
+add. A row that fails is reported, not tuned.
 
-**Seeds, and what determinism does not buy.** The gate's seeds are derived by the line's rule from a label
-and a **seed anchor fixed once**, in the same commit that fixes the thresholds, and recorded in the gate
-report; every exploration seed set (`b4-sim`) and every failed, aborted or superseded run is retained under
-`evidence/b4/sim/` with its seeds, so that the gate's exclusion set and the record of what was tried are
-both complete. That a derivation from a commit is deterministic is **not** a protection against selecting
-a favourable seed set — a commit can be re-made — and is not claimed as one; the protection is the fixed
-anchor, the retained record and the owner's review of the thresholds commit before the gate runs.
+**What the cap of 4 000 is and is not.** `N × 3 × B* ≤ 4 000` bounds the **search evaluations of
+the planned three-arm main experiment** and nothing else. It is not a bound on a single board
+session, on time, on total observations or on total records. F pays 21 probes per pair on top; a
+complete R or O run calls the observation boundary `B + 2` times and a complete F run `B + 23`, so
+the main arms' base observations come to `3B + 27` per pair, before any board-side baseline,
+audit, transport or retry that is not designed yet. B4 has no measured rate of its own: the
+session split stays with unit 2c and its qualification, and B3's measured rate is never borrowed
+as a guarantee for this class. An eligible combination under the cap is, for example,
+`N = 16, B* = 64` → `16 × 3 × 64 = 3 072`.
+
+### 9.1 Incomplete runs, invalid runs, and no solution
+
+**A gate verdict needs every planned run complete.** For every planned arm and seed the run goes
+to `B_max` and the existing holdout: `completed` is the boolean `True`, `search_completed` is
+`True`, the search evaluations and `len(best_trace)` are both exactly `B_max`, and the refusal and
+`control_failure` fields are `None`. The curve at each grid budget is the measured prefix of that
+one complete run. All planned runs complete is a **precondition** for any PASS verdict.
+
+**Contract breaks are `invalid`, not results.** A DOMAIN refusal under the formal v0.3 hypothesis,
+any other refusal, a control failure, or a violation of the source-identity or replay contract makes
+the batch `invalid`: under the stop rule the run and the prefix it completed are kept as they are,
+and the unit halts and reports. Such a break is never dressed up as an ordinary landscape failure.
+
+**No judging by survivors.** A PASS is never computed from the subset of pairs that happened to
+finish. Every planned seed stays on the list; a seed that was never started or was aborted is named
+as such. No seed is swapped, no value is filled in, nothing is redrawn. A resource limit, a time
+limit or an external abort is an incomplete evaluation like any other. Diagnostics may report how
+many pairs completed and what they measured, **marked explicitly as not a formal gate verdict**;
+the denominator stays all S seeds. Whether the unexecuted runs are resumed is decided separately.
+
+**A complete, valid run with no `N` is an ordinary result.** If `required_pairs` has no solution on
+valid complete data, that is a discriminability result about this class — not a tool defect and not
+an artefact of incomplete runs; §9's `B*` and `N` rules then apply as written. A threshold that
+fails on valid complete data is a FAIL, and no threshold is adjusted in response.
+
+### 9.2 The seed anchor, the control generators and the exclusion set
+
+**The anchor is the formal hypothesis's digest; the label is passed beside it**, never pre-joined
+into the anchor (which would put two labels in one string):
+
+```
+gate master = int.from_bytes(sha256(utf8('b4-gate-1|' + HYPOTHESIS_SHA256)).digest()[:4], 'big')
+exploration = the same formula with the label 'b4-sim-1'
+HYPOTHESIS_SHA256 = 59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8
+```
+
+Binding the anchor to the hypothesis's digest makes it auditable, keeps it stable when a commit is
+re-made, and ties the seed set to the model being judged: a different hypothesis is a different
+anchor and therefore a different gate. This unit fixes the formula only; **no seed value is
+generated here and no candidate result is read.** Pairs are drawn by a copy of B2's `pair_seeds`
+algorithm, with both the landscape and the operator value de-duplicated and screened against the
+exclusion set. The two control generators of §8 are separate from this derivation.
+
+**The exclusion set, file by file** (path, the field that carries the seeds, and the digest of the
+file as of this commit):
+
+| source | seed-bearing field | sha256 |
+|---|---|---|
+| `host/b2_search.py` | `EXCLUDED_SEEDS`, the line's frozen list of 20 values | `3acb04714a6c677708892d171f6a418e6de7627210e2ec6ad65158db51eab1cf` |
+| `manifests/b2_manifest.json` | `seeds.master_seed`, `seeds.excluded_frozen_sets`, `qualification_plan.master_seed` | `aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0` |
+| `manifests/b3_manifest.json` | `seeds.master_seed`, `qualification_plan.master_seed` | `258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628` |
+| `evidence/b2/gate/gate_report.json` | `seeds` (schema `b2_gate_report` 1.0.0) | `571196bd509e5eb09897d206a634b508655bb42f293be7eeaf7fba8d4c514c43` |
+| `evidence/b2/gate/raw_F1.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `b821c24998dece562026d41c094509da98cfd5430b099ea52ec35dc44050e0bf` |
+| `evidence/b2/gate/raw_F2.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `6194ed690afd5107a76cd081f158a174d2147c3f364e331e0c58ebba74dcab5f` |
+| `evidence/b2/gate/raw_F3.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `8a751a23c7e3088f85f39f2da32a175648623861d525099dcfb05c93eb8111a9` |
+| `evidence/b2/gate/v0.1_2026-09-10/gate_report.json` | `seeds` (the superseded v0.1 gate run) | `d547144fce433078531b125937b946c2df94ad69d5c44f7ba37c45976984e4ce` |
+| `evidence/b2/gate/v0.1_2026-09-10/raw_F1.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `ffb0bf396f975585cc9bd88f7500ea188612ab2e8a5e9f59076dbd675dcab532` |
+| `evidence/b2/gate/v0.1_2026-09-10/raw_F2.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `859b96a03cdccd23b116a0b64e41f5f3c091ba85da4c13c404027c8b77ca7522` |
+| `evidence/b2/gate/v0.1_2026-09-10/raw_F3.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `f37ae4e4b38b4b9508c424bf0cedc85f1b5f88b1c3b01f75cdc2c90047fce21d` |
+| `evidence/b2/gate/recomputed_2026_09_10/gate_report.json` | `source.seeds` (schema `b2_gate_recomputation` 1.0.0) | `997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c` |
+| `evidence/b2/gate/recomputed_2026_09_10/controls_report.json` | `source.seeds` (schema `b2_gate_controls` 1.0.0) | `4a5042e283069f7112cf45c2dbbbb913ef81ea7d5fede97450c2d6b4084c2f89` |
+| `evidence/b2/gate/recomputed_2026_09_10/raw_controls_F1.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `bddc7ad93003e787cebe5fb569131d161b05d76f931212fe4e52f658bc2e4aa6` |
+| `evidence/b2/gate/recomputed_2026_09_10/raw_controls_F2.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `7948e974be96fd983e5155bdbb72f0d97bc646dc5a0bfdb1cda22c3188f33ed8` |
+| `evidence/b2/gate/recomputed_2026_09_10/raw_controls_F3.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `a5ed062f6591acc4fe782a35e8cca1910269145ce8682465f8022c181890d394` |
+| `evidence/b2/plan.json` | `seed_derivation` incl. `excluded_frozen_sets` (schema `b2_plan` 1.0.0) | `62dc85934eec02e2fe31a90b336d0fd320d03a4f54bf90537e944ece72458b9c` |
+| `evidence/b2/b2q_plan.json` | `seed_derivation` (B2Q pairs) | `3d194d76e083fd4ba3ce3cf0458af65637120fcda6761be36598833dbc659216` |
+| `evidence/b2/prediction.json` | `pairs[].landscape_seed` / `pairs[].operator_seed` | `a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731` |
+| `evidence/b2/b2q_prediction.json` | `pairs[].landscape_seed` / `pairs[].operator_seed` | `2ada4d5dab7ed08f081aa55bb4b6f138688a326bb859ab5d63f58c16e67b58aa` |
+| `evidence/b3/sim/sim_report.json` | `seeds` (schema `b3_sim_report` 1.0.0) | `d9c432f8b797933e26e24a77d33e5884f29c03c2be88e6c59c61bc0af250adf9` |
+| `evidence/b3/sim/raw_F1.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `ccf4d24622c7cfb3ee698623047ea461303c603449d47ffb0452f83656b74c53` |
+| `evidence/b3/sim/raw_F2.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `953511d7540bbf0a0af7932f5c8c486a03f64d3d68cda576b2ed07f6e4ed4e1c` |
+| `evidence/b3/sim_v0.1.1/sim_report.json` | `seeds` (the v0.1.1 simulation) | `dcbaa2a3cf2fe817c77ce24ab4a4250ec4c8a2c171117f55da9d80740e29401c` |
+| `evidence/b3/sim_v0.1.1/raw_F1.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `ccf4d24622c7cfb3ee698623047ea461303c603449d47ffb0452f83656b74c53` |
+| `evidence/b3/sim_v0.1.1/raw_F2.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `953511d7540bbf0a0af7932f5c8c486a03f64d3d68cda576b2ed07f6e4ed4e1c` |
+| `evidence/b3/gate/gate_report.json` | `seeds`, `control_x.seed_x` (lifecycle 1 gate run 1) | `477225f54bb40866abb08df69e6e34341c7516cd7e398e8bb6d0c06c8ae2aa68` |
+| `evidence/b3/gate/raw_F1.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `54f9c4fbc0bac8c0bfe1c6ce203f8848367d201b85b610e40c031f96c1746ed6` |
+| `evidence/b3/gate/raw_F2.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `279b08ede52cf73d948f69e1390e2c02c09e417ca8406bb52da78439ff1b3e2d` |
+| `evidence/b3/gate_2/gate_report.json` | `seeds`, `control_x.seed_x` (schema `b3_gate_report` 2.0.0) | `8f717b12bdc7258d49145bd47bbcfb8291d2b2a79cad42cb75491a19398fda90` |
+| `evidence/b3/gate_2/raw_F1.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `631aac7119dc054b9db835a756e2fbc1f56b4071f027506b13d5a3630c08b0fc` |
+| `evidence/b3/gate_2/raw_F2.json` | `rows[].landscape_seed` / `rows[].operator_seed` | `cba55465bde4a35c39cc33ce0a853db4a3db5f9ac85e0ded6d671a87732cbfe5` |
+| `evidence/b3/plan.json` | `seed_derivation.excluded_sources` (schema `b3_plan` 2.0.0) | `b202a2800d5934978394ffca7ee8f24d9b2897c953d4f41b1050fed840c81dd1` |
+| `evidence/b3/b3q_plan.json` | `seed_derivation.excluded_sources` (B3Q pairs) | `490347f4b3542147581940035a12eb9bb7db7cbd0ad550dd8bfd3e2b68261026` |
+| `evidence/b3/prediction.json` | `pairs[].landscape_seed` / `pairs[].operator_seed` | `92b774ea62d290d380e72a4c990b384060db9006cf9160940fb4848ae4a14cf5` |
+| `evidence/b3/b3q_prediction.json` | `pairs[].landscape_seed` / `pairs[].operator_seed` | `7eae26509b9488a111257c112c5cf90e9cc8f6e34311af837c79ccc40245ec27` |
+| `evidence/b3/plan_trial_2026_09_17/plan.json` | `seed_derivation` (the lifecycle 1 trial, pilot) | `8b6142b06b883baee2e9e8b298635429384279d2be78efab18cd73bdcc3761d2` |
+| `evidence/b3/plan_trial_2026_09_17/prediction.json` | `pairs[].landscape_seed` / `pairs[].operator_seed` | `6e45a752bd3db536db0cbea7dcb0e531bb40889fff91f7dc6c28250f44f729b2` |
+
+**B4's own exposed values.** `evidence/b4/sim/` **does not exist yet** — it is named here as the
+directory the exploration sets will be archived in, and its absence is not a missing source. That
+is deliberately kept apart from a historical seed source that ought to exist: a missing one of
+those is refused, never silently skipped. Already exposed on this line, and excluded
+conservatively: the landscape seeds **3, 5, 7, 8** and the operator seeds **11, 12, 13** used as
+literal arguments in the B4 tests and in the v0.3 mechanism fixing; the X control values **5, 6, 7,
+8**; the fabric-fixture seeds **1, 2, 3, 5**; the derangement seeds **5, 6, 9** and the value **1**
+that a test finds by scanning for the first seed whose rule needs at least two attempts; and the
+single formal base observation made while drafting this unit's scope under landscape seed **7**
+(recorded as executed — this line does not claim the model was never run). Excluding exposed values
+is a conservative measure; it is not a basis for estimating any distribution.
+
+**Freezing order.** The exploration set is produced once, before any exploration, and archived; it
+is never redrawn after a result is seen. The gate set is derived **once**, after every exploration,
+failed and void set is archived, from the fixed master and the complete exclusion set; the input
+list, the digests and the final seeds are frozen, and once the run has started the exclusion set
+may not be changed in order to redraw. Both the anchor and the exclusion set determine the set, so
+a fixed anchor is **not** by itself a guarantee against selection bias; the protection is the frozen
+input list, the retained record of everything tried, and the owner's review of this commit before
+any run. That a derivation is deterministic buys nothing here — a commit can be re-made. Changing
+the hypothesis or the anchor does not license a redraw and retry: that needs its own ruling, and the
+earlier set and its results are kept.
+
+### 9.3 K9's fixed comparison set, written before it is measured
+
+Writing only "90 %" and "0.50" would leave the choice of comparison contexts free after the fact,
+so the method is fixed here (and executed by no code in this unit):
+
+1. **The stimulus is the task's own.** Each seed uses the `task-v0.1` search stimulus exactly as
+   generated — nothing modified, nothing selected — and the whole public `q_after` trace is read,
+   **including the init readout**. K9 measures observational distinguishability, not coverage of the
+   fitness mask. A difference visible only at the init readout rests on the model's atomic
+   initialisation abstraction and stays conditional on A8.
+2. **64 fixed background configurations.** All 32 combinations of the five slice-wide mode bits
+   (`ce_mode`, `sr_mode`, `sr_kind`, `storage_kind`, `clock_mode`), crossed with the 16 per-element
+   INIT / SRVAL bits taken at all-zero and at all-one. The set is built from the host mapping for
+   audit only and is **never handed to the cartographer or the engine as a prior**.
+3. **One forced address at a time.** For each real address and each background, that bit is forced
+   to 0 and to 1 with every other bit held at the background; identical endpoint pairs are
+   de-duplicated, ordered by genome value, and both complete configurations are kept with references
+   to their traces. This covers that finite set only — it is no claim about the remaining 19 free
+   bits in every combination.
+4. **Which readouts may be compared.** A per-element semantic compares only its own element's
+   `q_after`; a slice-wide semantic may compare any applicable element. Under a latch the x5FF
+   elements' INIT / SRVAL are not applicable and `sr_kind` is not applicable: those are named and
+   removed from their denominators. `storage_kind`'s own endpoints may differ by an element being
+   present or absent; every other relation needs readouts applicable at **both** endpoints. Value
+   differences (0 versus 1) and `storage_kind`'s None-versus-present differences are reported with
+   the positions where they occur; separation is never asserted from the decode instead of the trace.
+5. **Coverage.** `covered(address, background)` means the pair's two traces differ in at least one
+   readout within that scope. Per seed and semantic, coverage = distinguishable applicable pairs /
+   all applicable pairs, each pair weighted equally; the per-address applicable and covered counts
+   and their ratio are also reported, as are the addresses and backgrounds with no coverage at all.
+   An empty denominator is *not assessable* and is never recorded as 100 %. A semantic's positive
+   control is one applicable address-and-background pair that is distinguishable, and only a seed
+   with all seven counts toward the 90 %.
+
+This set is an advance host-side engineering diagnostic. It is **not** the same contract as unit
+2c's board stimulus, and it says nothing about what is legal or safe to write to a device. An
+uncovered semantic is never repaired by adding one favourable background afterwards; changing the
+set requires a new version of this section, the reason, and a complete re-report.
 
 ## 10. Provenance, paths and proofs — rules B4 adopts from the repair of 2026-10-15/16
 
@@ -752,8 +954,8 @@ evidence** and is listed as a prerequisite, not described as a protection.
 - Nothing about routing beyond §3's prerequisites and prohibitions; no routing design, no
   contention model assessment, no board-loss estimate (roadmap §5: "none of those is
   evidenced for this hardware").
-- Nothing numerical about the gate (§9, every threshold `<gate>`), the universe size per
-  session, the stimulus length `K`, the budget, N or the effect size.
+- No gate **result**: §9's thresholds are fixed in advance (unit 2b-3) and no row of them has been
+  measured; N, `B*`, the effect size and the per-session universe size are not known here.
 - No schema change (§6 proposes; v2 is untouched), no code, no RTL, no image.
 - No authorisation: units 2b (gate simulation), 2c (preregistration) and 2d (provisioning)
   are each separately authorised; no board contact, no port, no purchase.
@@ -769,7 +971,7 @@ evidence** and is listed as a prerequisite, not described as a protection.
 | D1′ latch_ginv probe (**delivered; PASS on `e0b5f04`**; the owner's ruling of 2026-10-18 §2 and the follow-up ruling) | `b4/probes/latch_ginv/` (the derived specimen and build script with `GINV`, the driver with the expectation fixed before the build, the test), `evidence/b4/unit_d1prime_latch_ginv_2026_10_18/` (attempt 1: the six bitstream clauses and the structure held, the cell rule's `ROUTED`-only reading of `INTRASITE` the finding, kept as it was) and `…_attempt2_2026_10_18/` (the rule accepting `ROUTED` / `INTRASITE`: every clause met, no finding; readbacks and configuration frames identical to attempt 1's; the historical `main_latch` reproduced frame-for-frame) | host correspondence only; nothing of the model changed; v0.3 a separate unit |
 | v0.3 model revision (**delivered**; the owner's ruling of 2026-10-18 on the scope draft, after the PASSes on `e0b5f04` and `c0689f8`) | `b4/hypothesis/ff_behaviour_v0.3.json` (the latch bit-0 reading on the D1′ pair, labelled host correspondence; the three layers L1 / L2 / L3 in their own source entries; the domain complete by assumption; the init step's atomic assignment named a model abstraction), `b4/host/b4_ff_hypothesis.py` (the formal pointer and digest only), the v0.2 file kept byte for byte, the tests (the hand-derived inverted-gate trace in the model's settle order; the `v021_hole` fixture carrying the 0.2.1 result; F completing under 0.3.0), `b4/IMPORT.json`, this document, `evidence/b4/unit_v03_2026_10_18/` | the local regression and the mutants; the owner's review; silicon status unverified; not gate-ready |
 | X-A (**delivered; PASS on `c0689f8`**; the ruling of 2026-10-18 §4) | `b4/host/b4_carto.py` (`derangement_attempts`, `relabel_genome`, `isomorphic_addresses`, `residual_structure`; the lane permutation kept as the symmetry test), `b4/host/b4_engine.py` (arm X over relabelled addresses with its own control seed, π before the base, the shadow contract after every ingest, the control failure event, the residual post hoc), `b4/host/b4_replay.py` (π re-derived from the control seed; the control fields typed; a control failure must reproduce), the tests, `evidence/b4/unit_xa_2026_10_18/` | the partition-changing fixture and the partition-preserving counterexample; π from the control generator (the operator's untouched); base / mid-generation termination; the control failure's commit point; full replay; 19 mutants. Mechanism only: no arm advantage measured, no seed scan, no landscape exploration |
-| 2b-3 | the K1–K10 thresholds and τ written into §9, the seed anchor, in one commit | the owner's review before any gate run |
+| 2b-3 (**delivered**; the owner's ruling of 2026-10-18 on the thresholds scope draft) | one documents-only commit: §9's K1–K10 thresholds, τ = 2, the grid and `B*` rule, what the 4 000 cap is and is not, §9.1 the incomplete-run / invalid policy, §9.2 the anchor on the hypothesis digest with the control-generator formulas and the file-by-file exclusion set, §9.3 K9's fixed comparison set, §8's D row as the shuffled F-learned view; `evidence/b4/unit_2b3_2026_10_18/` | the owner's review; the exploration harness comes next, then the formal gate — neither authorised here |
 | 2b-4 | `b4/host/b4_gate.py`, the formal gate under `b4-gate-1` (S = 200), `docs/b4_gate_report.md` stating every result as "under the behaviour hypothesis"; the v3 map schema draft (§6) | every row PASS / FAIL; a PASS never read as evidence about the fabric |
 | 2c | `docs/b4_preregistration.md` DRAFT (B4-FF: claim, pins, prediction, metrics, falsifiers, sessions and rulings, compatibility, lifecycle, §9 rule; B4-R: prerequisites and prohibitions only) | the owner's review; the holdout and the universe fixed by whole site instance |
 | carrier v2 design | RTL, bench, XDC, isolation — against §5.5 A1–A8 | a separate unit after 2c |

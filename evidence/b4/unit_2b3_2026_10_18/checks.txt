@@ -1,0 +1,40 @@
+# Checks run for unit 2b-3 (documents only; no test, no run, no seed drawn)
+
+## Exclusion-set sources (section 9.2): 38 files cited
+Every path exists and hashes to the digest printed in the table.
+
+## The seed anchor (section 9.2)
+loader pin == file == document: True (59948f9be3b45165…)
+
+## Thresholds
+criteria rows found: K1, K2, K3, K4, K5, K6, K7, K8, K9, K10, K7
+rows still carrying a placeholder: 0
+
+## Cited repository paths
+87 distinct paths cited. 78 exist on this branch. The nine that do not are each accounted for:
+
+  evidence/b4/sim/                       named in section 9.2 as NOT YET CREATED (the directory the
+                                         exploration sets will be archived in); its absence is not a
+                                         missing source, and section 9.2 keeps that case apart from a
+                                         historical seed source that ought to exist
+  b4/host/b4_gate.py                     unit 2b-4's deliverable, cited in section 13 as still to come
+  docs/b4_gate_report.md                 unit 2b-4's deliverable
+  docs/b4_preregistration.md             unit 2c's deliverable
+  schemas/self_map_v3.schema.json        section 6 cites it as a WORKING NAME for the v3 draft; the
+                                         file actually delivered is b4/schemas/self_map_v3.schema.json
+  b4/hypothesis/ff_behaviour_v0.1.json   cited only inside the dated revision note v0.1.3, as the
+                                         record of what unit 2b-1 delivered at that time; v0.1 was
+                                         removed at b91162c and the note is left as written
+  docs/b3_lifecycle2_pinned_test_audit_delta_2026_10_15.md
+  evidence/b3/repair_2026_10_15/README.md
+  evidence/b3/repair_2026_10_16_canonical/README.md
+                                         all three cited in section 10 and section 14 WITH their branch
+                                         and tip (b3-pinned-test-repair at 4db22e5, not merged), so they
+                                         are correctly absent from this branch
+
+## Whitespace
+git diff --check on the staged change: clean.
+
+## What was NOT done here (the ruling's limits)
+No test run, no model run, no landscape exploration, no seed value generated, no K result computed,
+no file under b4/ changed, no hypothesis or production code touched, nothing pushed or merged.
