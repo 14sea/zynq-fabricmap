@@ -1,0 +1,6 @@
+HEAD 7cf6c7fc66d6bf302e9654c6a00cc515bc65c9dc (the battery script with G30 added, uncommitted at run time; committed with this evidence)
+command: python3 -B evidence/b4/unit_2b4_gate_tool_2026_10_19/b4_gate_mutants.py <out> G30
+UTC 2026-10-19T14:15:50Z
+KILLED  G30 the statistics stage ignores the deadline (2b-4a's M18 on the changed line)  [Ran 1, FAILED]  ['test_the_deadline_in_the_statistics_and_an_interrupt']
+# 1 / 1 killed (30 defined); 25 s
+UTC_END 2026-10-19T14:16:15Z

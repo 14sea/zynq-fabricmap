@@ -135,9 +135,18 @@ MUTANTS = [
  ("G28 the verifier does not re-hash the batch's sim_report.json",
   edit(GV, [('        if _sha(raw) != b["sha256"]:\n            F.add("batch", "sim_report.json does not hash to the recorded digest")\n', "")]),
   [E + "test_every_tamper_of_the_gate_report_is_named_with_the_digests_refreshed"]),
+ # G29 SURVIVED on the clean tree 4f3806d (Ran 1, OK): an equivalent mutant — the state it would expose (a not-assessable row with nothing
+ # failed and the budget rule PASS) is unreachable by construction, since a row is not assessable only without B* / N, which fails the
+ # budget rule. Kept and reported as a survivor (README section 6.1); the report-side claim is held by the validator (G24) and the verifier.
  ("G29 the verdict can be PASS although a row is not assessable",
   edit(GATE, [('    if not fails and not na and out["budget_rule"]["status"] == "PASS":', '    if not fails and out["budget_rule"]["status"] == "PASS":')]),
   [J + "test_no_b_star_leaves_the_dependent_rows_not_assessable_and_the_gate_cannot_pass"]),
+ # G30 is unit 2b-4a's M18 re-targeted: the gate mode's change of the statistics line (the standing parameter) made M18's edit target
+ # miss in the 2b-4a battery's re-run (EDIT-MISS, recorded in mutants_2b4a_rerun.txt); the same contract, the same test, the new line.
+ ("G30 the statistics stage ignores the deadline (2b-4a's M18 on the changed line)",
+  edit(SIM, [('        self.summary, self.stats_record = summarise_batch(self.rows, self.c["count"], check=self.dl.check, standing=standing_for(self.c["label"]))',
+              '        self.summary, self.stats_record = summarise_batch(self.rows, self.c["count"], check=None, standing=standing_for(self.c["label"]))')]),
+  [T + "test_b4_sim.IncompleteStops.test_the_deadline_in_the_statistics_and_an_interrupt"]),
 ]
 
 

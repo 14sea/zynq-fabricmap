@@ -1,0 +1,145 @@
+{
+ "cases": {
+  "fail": {
+   "batch_out": "evidence/b4/sim/b4-mech-1_fail",
+   "budget_rule": "FAIL",
+   "exit_code": 0,
+   "formal": false,
+   "fresh_verifier_exit_in_hermetic_root": 0,
+   "fresh_verifier_exit_on_the_evidence_copy": 0,
+   "gate_out": "evidence/b4/gate/b4-mech-1_fail",
+   "reason": null,
+   "rows": {
+    "K1": "not_assessable",
+    "K10": "PASS",
+    "K2": "not_assessable",
+    "K3": "not_assessable",
+    "K4": "not_assessable",
+    "K5": "not_assessable",
+    "K6": "FAIL",
+    "K7": "not_assessable",
+    "K8": "PASS",
+    "K9": "FAIL"
+   },
+   "status": "FAIL",
+   "verdict": {
+    "reason": "a complete, valid batch on which budget rule FAILS; K6 FAILS; K9 FAILS; not assessable: K1, K2, K3, K4, K5, K7 \u2014 no threshold is adjusted, no budget or sample repaired",
+    "status": "FAIL"
+   }
+  },
+  "fail_b_star": {
+   "batch_out": null,
+   "budget_rule": "PASS",
+   "exit_code": 0,
+   "formal": false,
+   "fresh_verifier_exit_in_hermetic_root": 0,
+   "fresh_verifier_exit_on_the_evidence_copy": 0,
+   "gate_out": "evidence/b4/gate/b4-mech-7_fail_b_star",
+   "reason": null,
+   "rows": {
+    "K1": "PASS",
+    "K10": "PASS",
+    "K2": "PASS",
+    "K3": "PASS",
+    "K4": "PASS",
+    "K5": "PASS",
+    "K6": "PASS",
+    "K7": "PASS",
+    "K8": "PASS",
+    "K9": "FAIL"
+   },
+   "status": "FAIL",
+   "verdict": {
+    "reason": "a complete, valid batch on which K9 FAILS \u2014 no threshold is adjusted, no budget or sample repaired",
+    "status": "FAIL"
+   }
+  },
+  "incomplete": {
+   "batch_out": "evidence/b4/sim/b4-mech-1_incomplete",
+   "budget_rule": "not_assessable",
+   "exit_code": 3,
+   "formal": false,
+   "fresh_verifier_exit_in_hermetic_root": 0,
+   "fresh_verifier_exit_on_the_evidence_copy": 0,
+   "gate_out": "evidence/b4/gate/b4-mech-1_incomplete",
+   "reason": null,
+   "rows": {
+    "K1": "not_assessable",
+    "K10": "not_assessable",
+    "K2": "not_assessable",
+    "K3": "not_assessable",
+    "K4": "not_assessable",
+    "K5": "not_assessable",
+    "K6": "not_assessable",
+    "K7": "not_assessable",
+    "K8": "not_assessable",
+    "K9": "not_assessable"
+   },
+   "status": "incomplete",
+   "verdict": {
+    "reason": "unfinished work is incomplete, never a result",
+    "status": "incomplete"
+   }
+  },
+  "invalid": {
+   "batch_out": "evidence/b4/sim/b4-mech-1_invalid",
+   "budget_rule": "not_assessable",
+   "exit_code": 1,
+   "formal": false,
+   "fresh_verifier_exit_in_hermetic_root": 0,
+   "fresh_verifier_exit_on_the_evidence_copy": 0,
+   "gate_out": "evidence/b4/gate/b4-mech-1_invalid",
+   "reason": null,
+   "rows": {
+    "K1": "not_assessable",
+    "K10": "not_assessable",
+    "K2": "not_assessable",
+    "K3": "not_assessable",
+    "K4": "not_assessable",
+    "K5": "not_assessable",
+    "K6": "not_assessable",
+    "K7": "not_assessable",
+    "K8": "not_assessable",
+    "K9": "not_assessable"
+   },
+   "status": "invalid",
+   "verdict": {
+    "reason": "a tool / source / replay / control contract break is invalid, never a landscape failure",
+    "status": "invalid"
+   }
+  },
+  "pass": {
+   "batch_out": null,
+   "budget_rule": "PASS",
+   "exit_code": 0,
+   "formal": false,
+   "fresh_verifier_exit_in_hermetic_root": 0,
+   "fresh_verifier_exit_on_the_evidence_copy": 0,
+   "gate_out": "evidence/b4/gate/b4-mech-7_pass",
+   "reason": null,
+   "rows": {
+    "K1": "PASS",
+    "K10": "PASS",
+    "K2": "PASS",
+    "K3": "PASS",
+    "K4": "PASS",
+    "K5": "PASS",
+    "K6": "PASS",
+    "K7": "PASS",
+    "K8": "PASS",
+    "K9": "PASS"
+   },
+   "status": "PASS",
+   "verdict": {
+    "reason": "the budget rule and every row PASS on a complete, valid batch \u2014 NOT a gate result (the evidence is synthetic_summary, not a batch archive; a fixture batch; the label 'b4-mech-7' is not the pinned gate label 'b4-gate-1')",
+    "status": "PASS"
+   }
+  }
+ },
+ "head": "4f3806d92774d5b8cd1937465fb2a31c6c286b6f",
+ "production_derivation_calls": [
+  0,
+  0
+ ],
+ "utc": "2026-10-19T13:57:44Z"
+}
