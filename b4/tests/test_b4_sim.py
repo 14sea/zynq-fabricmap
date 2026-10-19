@@ -753,6 +753,9 @@ def reindex(out: Path) -> None:
     idx = json.loads((out / "pair_000/index.json").read_text())
     idx["files"] = [entry(p, p.name) for p in sorted((out / "pair_000").iterdir()) if p.is_file() and p.name != "index.json"]
     (out / "pair_000/index.json").write_text(json.dumps(idx, sort_keys=True, indent=1) + "\n")
+    man = json.loads((out / "manifest.json").read_text())
+    if man["seeds_sha256"] != sim.sha_file(out / "seeds.json"):                  # seeds.json rewritten: the manifest's copy of its digest refreshed too
+        man["seeds_sha256"] = sim.sha_file(out / "seeds.json"); (out / "manifest.json").write_text(json.dumps(man, sort_keys=True, indent=1) + "\n")
     rep = json.loads((out / "sim_report.json").read_text())
     rep["files"] = [entry(p, str(p.relative_to(out))) for p in sorted(out.rglob("*")) if p.is_file() and p.name != "sim_report.json"]
     rep["identity"]["seeds_sha256"] = sim.sha_file(out / "seeds.json"); rep["identity"]["manifest_sha256"] = sim.sha_file(out / "manifest.json")
@@ -1076,6 +1079,32 @@ class TheArchiveVerifier(Base):
         with mock.patch.dict(sc.VALIDATORS, {"seeds.json": lambda d: [], "manifest.json": lambda d: []}):     # defence in depth: the linkage check alone
             man = self.load("manifest.json"); man["exclusion"]["exposure_receipt"]["sha256"] = "00" * 32; self.put("manifest.json", man); reindex(out)
             f = self.findings(); self.assertTrue(any("exposure receipt" in x for x in f.get("linkage", [])), f)
+        self.assertEqual(self.findings(), {}, "restored")
+
+    def test_a_coordinated_wrong_receipt_count_in_both_records_is_refused(self):
+        """The owner's review of 2026-10-19 on 1d9525c (P2): seeds.json's and the manifest's receipt counts changed TOGETHER
+        (0, 1, 67 against a 66-value receipt), every digest and index refreshed — two records agreeing is not the authority;
+        the count must be the pooled length of the hash-verified pinned receipt. Named by the validators, and by the linkage
+        alone when the record validators are mocked away. The pristine count stays clean."""
+        out = self.out_dir
+        n_true = bs.pinned_receipt_count()
+        self.assertEqual(n_true, len(bs.read_exposure_receipt(self.root).values))
+
+        def both(n):
+            sd = self.load("seeds.json"); sd["exclusion"]["exposure_receipt"]["count"] = n; self.put("seeds.json", sd)
+            man = self.load("manifest.json"); man["exclusion"]["exposure_receipt"]["count"] = n; self.put("manifest.json", man)
+            reindex(out)
+        for n in (0, 1, n_true + 1):
+            both(n)
+            f = self.findings()
+            self.assertTrue(any("pooled length" in x for xs in f.values() for x in xs), (n, f))
+            self.assertTrue(f.get("seeds.json") and f.get("manifest.json"), (n, f))
+            with mock.patch.dict(sc.VALIDATORS, {"seeds.json": lambda d: [], "manifest.json": lambda d: []}):
+                both(n)
+                f = self.findings()
+                self.assertTrue(any("pooled length" in x for x in f.get("linkage", [])), (n, f))
+        both(n_true)
+        self.assertEqual(self.findings(), {}, "the true count is clean")
         self.assertEqual(self.findings(), {}, "restored")
 
     def test_the_cli_of_the_verifier(self):

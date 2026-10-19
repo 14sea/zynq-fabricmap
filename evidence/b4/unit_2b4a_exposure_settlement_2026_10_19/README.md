@@ -109,7 +109,27 @@ not pushed, not merged (the earlier push permission does not extend to this unit
 owner's review. Still not authorised: the S = 32 `b4-sim-3` exploration, the formal gate tool and run, units 2c / 2d, the
 full proof, push / merge, procurement and board work.
 
-## 6. What this does not claim
+## 6. After the owner's review of `1d9525c` (HOLD, one P2): the receipt count bound to the authority
+
+The owner's review (`owner_review_1d9525c/`, copied unchanged) independently repeated the seed-only reconstruction from the
+`edfc93c` blobs (V1–V9, 22 / 22 records, 66 values, the 2 159-value pool all agree), reran 254 tests OK and 14 / 14 focused
+mutants, and reproduced one P2: `seeds.json`'s and the manifest's receipt **counts changed together** (0, 1 or 67 against the
+66-value receipt), every digest and index refreshed, passed the validators and the deep verifier — the reference validator
+accepted any non-negative int and the linkage only compared the two records with each other.
+
+Fixed here (the receipt bytes untouched; no historical reconstruction rerun): `b4_seeds.pinned_receipt_count()` reads the
+pinned receipt in the code tree through `read_exposure_receipt` (hash-verified) and returns its pooled length — the ONE
+authority, never a literal kept apart from the file; `receipt_reference_findings` (used by the seeds and manifest validators)
+requires the count to equal it and names the finding (`… is not the pinned receipt's pooled length 66`; an unreadable pinned
+receipt is itself a finding); the verifier's linkage binds the common count to the same authority after the two records are
+found to agree. Tests: `TheArchiveVerifier.test_a_coordinated_wrong_receipt_count_in_both_records_is_refused` (both records
+changed together to 0, 1, 67 with every digest and index refreshed — including the manifest's copy of the seeds digest, which
+the `reindex` helper now refreshes as the owner's probe did; named by the validators, and by the linkage alone with the
+record validators mocked away; the true count clean) and the receipt test's direct checks of `receipt_reference_findings`
+(0, 1, 65, 67 refused; an unreadable pinned receipt refused). Mutants M76 (the reference validator's binding removed) and M77
+(the linkage's binding removed). Validation of this fix on the clean committed tree: the `p2_*` files beside this README (the table below).
+
+## 7. What this does not claim
 
 The receipt makes the known and the reconstructable exposure excluded. It does not make the historical exposure record
 complete, does not recover any deleted readout, manifest or verdict, and does not show that no deleted outcome was looked

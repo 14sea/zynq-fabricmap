@@ -214,6 +214,15 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
     if not (isinstance(s_rc, dict) and isinstance(m_rc, dict) and {k: s_rc.get(k) for k in rc} == rc and {k: m_rc.get(k) for k in rc} == rc
             and s_rc.get("count") == m_rc.get("count") and manifest["inputs"].get(bs.EXPOSURE_RECEIPT_REL) == bs.EXPOSURE_RECEIPT_SHA256):
         F.add("linkage", "the exposure receipt is not the pinned one in seeds.json, manifest.json and the held inputs")
+    else:
+        # the count is bound to the AUTHORITATIVE length — the pooled list of the hash-verified pinned receipt — not to the other record's copy
+        try:
+            n = bs.pinned_receipt_count()
+        except bs.ExclusionSourceRefusal as exc:
+            F.add("linkage", f"the receipt count cannot be bound: the pinned receipt does not read ({exc})")
+        else:
+            if s_rc.get("count") != n:
+                F.add("linkage", f"the receipt count {s_rc.get('count')!r} recorded in seeds.json and manifest.json is not the pinned receipt's pooled length {n}")
     if not (seeds["label"] == manifest["label"] == report["label"]) or not (seeds["count"] == manifest["count"] == report["count"]) or not (seeds["fixture"] == manifest["fixture"] == report["fixture"]):
         F.add("linkage", "label / count / fixture differ between seeds.json, manifest.json and the report")
     if manifest["head"] != report["head"]:

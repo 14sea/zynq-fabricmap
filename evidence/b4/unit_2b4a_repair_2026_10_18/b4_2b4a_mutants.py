@@ -305,6 +305,13 @@ MUTANTS = [
  ("M75 settlement: a seeds record's receipt reference is not held to the pinned receipt",
   edit(SEEDS, [('        if with_receipt:\n            f.extend(receipt_reference_findings(e["exposure_receipt"], "exclusion.exposure_receipt"))\n', '')]),
   [T + "test_b4_seeds.TheRegistry.test_the_seeds_document_shape"]),
+ # ---- the owner's review of 2026-10-19 on 1d9525c (P2): the receipt count bound to the hash-verified receipt's pooled length
+ ("M76 settlement P2: a record's receipt count is any non-negative int (not the pinned receipt's pooled length)",
+  edit(SEEDS, [('    try:\n        n = pinned_receipt_count()\n    except ExclusionSourceRefusal as exc:\n        return f + [f"{where}.count cannot be bound: the pinned receipt does not read ({exc})"]\n    if ref["count"] != n:\n        f.append(f"{where}.count {ref[\'count\']} is not the pinned receipt\'s pooled length {n}")\n', '')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_coordinated_wrong_receipt_count_in_both_records_is_refused", T + "test_b4_seeds.TheExposureReceipt.test_the_pinned_receipt_reads_and_is_the_reconstruction_s"]),
+ ("M77 settlement P2: the verifier's linkage accepts two records agreeing on a receipt count without the authoritative length",
+  edit(VER, [('            if s_rc.get("count") != n:\n                F.add("linkage", f"the receipt count {s_rc.get(\'count\')!r} recorded in seeds.json and manifest.json is not the pinned receipt\'s pooled length {n}")\n', '            pass\n')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_coordinated_wrong_receipt_count_in_both_records_is_refused"]),
 ]
 
 

@@ -312,6 +312,15 @@ class TheExposureReceipt(unittest.TestCase):
         pooled = list(self.rec.values)
         self.assertEqual(pooled, sorted(set(pooled))); self.assertTrue(all(bs.is_seed_int(v) for v in pooled))
         self.assertEqual(self.doc["pooled_sha256"], hashlib.sha256(bs.canonical_ints(pooled).encode()).hexdigest())
+        self.assertEqual(bs.pinned_receipt_count(), len(pooled), "the authoritative count is the hash-verified file's pooled length")
+        ref = {"path": bs.EXPOSURE_RECEIPT_REL, "sha256": bs.EXPOSURE_RECEIPT_SHA256, "count": len(pooled)}
+        self.assertEqual(bs.receipt_reference_findings(ref, "x"), [])
+        for n in (0, 1, len(pooled) - 1, len(pooled) + 1):
+            f = bs.receipt_reference_findings({**ref, "count": n}, "x")
+            self.assertTrue(any("pooled length" in x for x in f), (n, f))
+        with mock.patch.object(bs, "EXPOSURE_RECEIPT_SHA256", "00" * 32):
+            f = bs.receipt_reference_findings({**ref, "sha256": "00" * 32}, "x")
+            self.assertTrue(any("cannot be bound" in x for x in f), f)
         recomputed = set()
         for v in self.doc["variants"]:
             self.assertIn(v["label"], bs.RETIRED_LABELS, "every variant is a RETIRED label")

@@ -39,6 +39,7 @@ equal the copy `B2_EXCLUDED_SEEDS` kept here.
 """
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
 import re
@@ -361,8 +362,21 @@ def seeds_doc_findings(doc) -> list[str]:
     return f
 
 
+@functools.lru_cache(maxsize=4)
+def _pinned_receipt_count(pinned_sha256: str) -> int:
+    return len(read_exposure_receipt(REPO_ROOT).values)
+
+
+def pinned_receipt_count() -> int:
+    """The AUTHORITATIVE count a record's receipt reference must carry: the pooled length of the pinned receipt in the code
+    tree, read and hash-verified (`read_exposure_receipt`); never a literal kept apart from the file. Raises
+    `ExclusionSourceRefusal` when the pinned receipt cannot be read (the owner's review of 2026-10-19 on 1d9525c)."""
+    return _pinned_receipt_count(EXPOSURE_RECEIPT_SHA256)
+
+
 def receipt_reference_findings(ref, where: str) -> list[str]:
-    """A record's reference to the exposure receipt: exactly the pinned path and digest, an int count."""
+    """A record's reference to the exposure receipt: exactly the pinned path and digest, and a count equal to the pooled
+    length of the hash-verified pinned receipt (two records agreeing with each other is not enough)."""
     if not (isinstance(ref, dict) and set(ref) == {"path", "sha256", "count"}):
         return [f"{where}: keys"]
     f: list[str] = []
@@ -371,7 +385,13 @@ def receipt_reference_findings(ref, where: str) -> list[str]:
     if ref["sha256"] != EXPOSURE_RECEIPT_SHA256:
         f.append(f"{where}.sha256 is not the pinned receipt's digest")
     if not (isinstance(ref["count"], int) and not isinstance(ref["count"], bool) and ref["count"] >= 0):
-        f.append(f"{where}.count")
+        return f + [f"{where}.count"]
+    try:
+        n = pinned_receipt_count()
+    except ExclusionSourceRefusal as exc:
+        return f + [f"{where}.count cannot be bound: the pinned receipt does not read ({exc})"]
+    if ref["count"] != n:
+        f.append(f"{where}.count {ref['count']} is not the pinned receipt's pooled length {n}")
     return f
 
 

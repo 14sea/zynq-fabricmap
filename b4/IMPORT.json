@@ -151,7 +151,7 @@
    "kind": "derived",
    "note": "unit 2b-4a A: the seed anchor (sha256(label|anchor)[:4], the label beside the anchor, '|' in a label refused); the 38 historical exclusion sources of docs/b4_architecture.md section 9.2 read against their digests through TYPED field paths (no count / version / timestamp can be read as a seed); B2's EXCLUDED_SEEDS copied and held to the pinned file's text; B4's exposed literal values; the evidence/b4/sim/ registry of every archived set (a run directory without a valid seed record is refused); one pooled set; pair_seeds copied from host/b2_search.py (held equal to the original by import in the tests, read-only). Runtime imports no pinned module.",
    "role": "host",
-   "sha256": "6b9f400009282d71244421ea351ceb1dc55c339e3079846fcbf1c3fe379efd29"
+   "sha256": "856f99c04ba98045e781224f0ec4e1762a55c0d6f0adf89ca76a39139696677e"
   },
   "b4/host/b4_sim.py": {
    "kind": "new",
@@ -169,7 +169,7 @@
    "kind": "new",
    "note": "unit 2b-4a repair (the owner's HOLD on cdf2c53, F2 / F3 / F4): the archive-wide verifier of a run directory \u2014 the required file set of the recorded status and of every pair's state, no unlisted or duplicate file, every listed digest / size, seeds / manifest / report linkage, STOPPED exactly when not complete, every file against its typed validator with the pair's task bound, and (deep) every conclusion recomputed from the raw readouts on the formal model (arm re-audits, controls, K7 prefixes, K9 / K10, curves, the pooled summary); run by the batch on itself before the report is written; offline CLI; writes nothing; the authenticity limit of b4_replay stated. Second round (the owner's HOLD on f2c4bca, R1\u2013R5): every record bound to the planned pair / role / seeds and the formal source, a complete pair's every arm re-audited whatever its recorded state, exact scalar types.",
    "role": "host",
-   "sha256": "1119699badda363e27e9e75c6e41588dfb3df246a9de149c1b54d9da170a1e20"
+   "sha256": "f27a8699fe5f5d4ba6820919a0571183c5646f76d935e328cffcbcea6e74f942"
   },
   "b4/host/b4_snapshot.py": {
    "kind": "new",
@@ -316,12 +316,12 @@
   "b4/tests/test_b4_seeds.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "fb42d4519489855fac8b35b9be4e67c0c3006d02ee81b41046125065120de16a"
+   "sha256": "8e541fe8357d4ab409c969edaffe6fd277f0c9f03dc428b9e4eba2877cd266d7"
   },
   "b4/tests/test_b4_sim.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "5b2ac318180b6ab7732b974b37cde0fff34f2472a92b1e21d2a814d1c422181e"
+   "sha256": "6f5625cb15285b608b565be5bfc1d5a1910eec2163a8c4aeb28f35345265fb0a"
   },
   "b4/tests/test_b4_snapshot.py": {
    "kind": "new",
