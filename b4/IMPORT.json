@@ -56,7 +56,7 @@
    "kind": "new",
    "note": "unit 2b-4a B: the soft monotonic deadline (time.monotonic; UTC only a timestamp): check() between work units raises StopWork; a started unit is never interrupted; the record carries seconds / elapsed / checks / first expiry.",
    "role": "host",
-   "sha256": "56dce330311d56325682a0030a701b9ba6c26f369c9e1394a49fdf0620d2a79b"
+   "sha256": "77629dde20e2e338f36f7980ad92e068453b86f881816b6e8a6b650e699f4682"
   },
   "b4/host/b4_engine.py": {
    "base": "host/b2_search.py",
@@ -157,7 +157,7 @@
    "kind": "new",
    "note": "unit 2b-4a C: the host-only exploration harness \u2014 a pre-flight that writes nothing on refusal (label b4-sim-<n>, a clean tree with no override, the formal source, the root's inputs at their pinned digests, every exclusion source, an output directory directly under evidence/b4/sim/ created exclusively); seeds.json then manifest.json then the first observation; per pair R > F > O > X > D > Omega > A0 on one worker, each RunResult written exclusively before its audit, the typed completion checks, replay, ledger recompute, given-view checks, D from F's rebuilt map, K7 prefixes, K9, K10, curves, the pair index, the HEAD / input checkpoint; fail-closed stops (invalid / incomplete) with STOPPED.json, a typed sim_report.json always and a pooled summary only when complete; values beside the section-9 thresholds, no verdict field; exit codes 0 / 1 / 2 / 3. Running it is a separate authorisation.",
    "role": "host",
-   "sha256": "791370b07b6a3763ea76e13f9787e3deae82bb046508e46397fa309833af87f8"
+   "sha256": "e0e855d75dd2b4c69842ee9c8a20239d3352d170f0067dfba22dfd3a4e9ea57f"
   },
   "b4/host/b4_sim_schema.py": {
    "kind": "new",
@@ -169,7 +169,7 @@
    "kind": "new",
    "note": "unit 2b-4a repair (the owner's HOLD on cdf2c53, F2 / F3 / F4): the archive-wide verifier of a run directory \u2014 the required file set of the recorded status and of every pair's state, no unlisted or duplicate file, every listed digest / size, seeds / manifest / report linkage, STOPPED exactly when not complete, every file against its typed validator with the pair's task bound, and (deep) every conclusion recomputed from the raw readouts on the formal model (arm re-audits, controls, K7 prefixes, K9 / K10, curves, the pooled summary); run by the batch on itself before the report is written; offline CLI; writes nothing; the authenticity limit of b4_replay stated. Second round (the owner's HOLD on f2c4bca, R1\u2013R5): every record bound to the planned pair / role / seeds and the formal source, a complete pair's every arm re-audited whatever its recorded state, exact scalar types.",
    "role": "host",
-   "sha256": "d235187626288b9f54981076d748ad76d25353685ea79dbd14d32b40a2db029d"
+   "sha256": "a16ec467870c2e39cc70916d6ebde37ee824c0f85315f72fd038b523a63966aa"
   },
   "b4/host/b4_snapshot.py": {
    "kind": "new",
@@ -248,7 +248,7 @@
   "b4/tests/test_b4_deadline.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "fd2fce2d9feca10ad4977096445ab7e6a7580f951db68fe84be228f8fe6cb304"
+   "sha256": "672d8b45f69c1079815dd1e8037f60faf8bc600cc0f8ad2b2522e3f86b7a09fa"
   },
   "b4/tests/test_b4_engine.py": {
    "kind": "new",
@@ -321,7 +321,7 @@
   "b4/tests/test_b4_sim.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "38ea18624240e782031450fe533eae7db7ad1105e0965e5d62ff57d112726343"
+   "sha256": "1ebbed8d73c0520ee7a083897d5c61de65b9f07afe3a5bdfe728e22ccfdfbdc4"
   },
   "b4/tests/test_b4_snapshot.py": {
    "kind": "new",
@@ -415,5 +415,5 @@
  "schema_version": "1.0.0",
  "scope": "every file under b4/ but this table, each classified new (B4's own, no base), verbatim or derived (a copy of a pinned B1-B3 file with base and digests recorded) \u2014 b4_rng.py, b4_engine.py, b4_carto.py and b4_seeds.py and b4_gate_stats.py derived so far; plus the EXTERNAL sources the hypothesis was written from, named by root and digest (docs/b4_architecture.md section 10: repository-internal provenance by repository-relative path; external trees by an explicit root plus the digest of what is used). The pin table of B4 has not been generated.",
  "source": "docs/b4_architecture.md; the owner's authorisations of 2026-10-17 (2b-1) and 2026-10-18 (2b-2, the revised scope with five rulings); the owner's rulings of 2026-10-18 (D1', X-A) and on the v0.3 scope draft",
- "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4); the v0.3 model revision (the latch's clock-mode bit 0 on the D1' pair, the owner's ruling of 2026-10-18 on the scope draft; the v0.2 file kept); unit 2b-4a (the host-only exploration harness, the owner's ruling of 2026-10-18 on the scope draft; commits A: seeds / controls / snapshot; B: deadline / statistics copies / observation memo / K9 / K10; C: the harness, its validators, the thresholds table; the repair unit after the owner's HOLD on cdf2c53 of 2026-10-18 \u2014 F1 fixture schedules in place of production derivations in the tests, F2 the archive-wide verifier, F3 total validators and the fixed comparison sets, F4 verification and the report as conditions of success, F5 no corner after a refused one, F6 quarantine and partial records kept, F7 no symlink in the namespace, F8 the deadline before finalisation, F9 every input bound at the checkpoints; the second repair round after the owner's HOLD on f2c4bca of 2026-10-18 \u2014 R1 completeness invariants (a complete pair has every arm audited, the deep re-audit cannot be switched off by a weaker recorded state), R2 every record bound to the planned pair / role / seeds and every descriptor to the formal source, R3 exact scalar types, R4 the deadline and R5 the inputs re-checked after the final verification and before publication; the third repair round after the owner's HOLD on 6c00156 of 2026-10-18 \u2014 the diagnostic state \u2194 file contract (a genuine partial K9 / K10 cannot sit in a complete batch), the remaining counts and corner genomes type-exact, the deadline records validated for self-consistency and bound to the manifest's declared duration)"
+ "stage": "B4 pre-work, units 2b-1 (the model contract, corrected on two HOLDs) and 2b-2 (the pure-function implementation: execution boundary, public task, engine, cartographer, replay, statistics); the D1' latch_ginv probe (a host-only pair of latch endpoints on the mine site, the owner's ruling of 2026-10-18); the X-A unit (control X as address relabelling, the ruling of 2026-10-18 section 4); the v0.3 model revision (the latch's clock-mode bit 0 on the D1' pair, the owner's ruling of 2026-10-18 on the scope draft; the v0.2 file kept); unit 2b-4a (the host-only exploration harness, the owner's ruling of 2026-10-18 on the scope draft; commits A: seeds / controls / snapshot; B: deadline / statistics copies / observation memo / K9 / K10; C: the harness, its validators, the thresholds table; the repair unit after the owner's HOLD on cdf2c53 of 2026-10-18 \u2014 F1 fixture schedules in place of production derivations in the tests, F2 the archive-wide verifier, F3 total validators and the fixed comparison sets, F4 verification and the report as conditions of success, F5 no corner after a refused one, F6 quarantine and partial records kept, F7 no symlink in the namespace, F8 the deadline before finalisation, F9 every input bound at the checkpoints; the second repair round after the owner's HOLD on f2c4bca of 2026-10-18 \u2014 R1 completeness invariants (a complete pair has every arm audited, the deep re-audit cannot be switched off by a weaker recorded state), R2 every record bound to the planned pair / role / seeds and every descriptor to the formal source, R3 exact scalar types, R4 the deadline and R5 the inputs re-checked after the final verification and before publication; the third repair round after the owner's HOLD on 6c00156 of 2026-10-18 \u2014 the diagnostic state \u2194 file contract (a genuine partial K9 / K10 cannot sit in a complete batch), the remaining counts and corner genomes type-exact, the deadline records validated for self-consistency and bound to the manifest's declared duration; the fourth repair round after the owner's HOLD on 8d1eefd of 2026-10-19 \u2014 the diagnostic state \u2194 file contract total and asked only of documents their typed validator accepted (the verifier's CLI reports an exception as a finding), the deadline record one monotonic sample so the producer never writes a record its validator refuses, an interrupt before any K9 / K10 record recorded as in_progress, not partial)"
 }

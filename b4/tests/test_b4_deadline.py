@@ -15,6 +15,7 @@ import b4_ff_hypothesis as hy  # noqa: E402
 import b4_ff_mapping as bm  # noqa: E402
 import b4_ff_model as fm  # noqa: E402
 import b4_landscape as bl  # noqa: E402
+import b4_sim_schema as sc  # noqa: E402
 from b4_deadline import Deadline, StopWork  # noqa: E402
 from b4_observe import Memo  # noqa: E402
 from b4_test_fixtures import InjectingPort, mechanics_fabric  # noqa: E402
@@ -43,6 +44,31 @@ class TheDeadline(unittest.TestCase):
         self.assertAlmostEqual(rec["first_expired_at_s"], 10.0)
         with self.assertRaises(StopWork):
             d.check()
+
+    def test_the_record_is_one_monotonic_sample(self):
+        """The owner's review of 2026-10-19 (finding 2): with the clock crossing the deadline between two samples
+        (1059.990 then 1060.010 after a start of 1000.000) a record of several samples said elapsed 59.99, expired true,
+        first expiry 60.01 — refused by the record's own validator. Every record is now one sample: consistent at the
+        boundary, the first expiry never later than the elapsed time beside it, the same under check()."""
+        values = iter([1000.0, 1059.990, 1060.010, 1060.030, 1060.050, 1060.070])
+        d = Deadline(60, clock=lambda: next(values))
+        r1, r2, r3 = d.record(), d.record(), d.record()
+        self.assertEqual((r1["elapsed_s"], r1["expired"], r1["first_expired_at_s"]), (59.99, False, None))
+        self.assertEqual((r2["elapsed_s"], r2["expired"], r2["first_expired_at_s"]), (60.01, True, 60.01))
+        self.assertEqual((r3["elapsed_s"], r3["expired"], r3["first_expired_at_s"]), (60.03, True, 60.01), "the first expiry is kept")
+        for r in (r1, r2, r3):
+            self.assertEqual(sc.deadline_findings(r, 60), [], r)
+        with self.assertRaises(StopWork) as cm:
+            d.check()
+        self.assertIn("after 60.050 s", str(cm.exception), "the check's message is the sample that expired it")
+        values = iter([1000.0, 1060.010, 1060.030])
+        d = Deadline(60, clock=lambda: next(values))
+        with self.assertRaises(StopWork):
+            d.check()
+        self.assertAlmostEqual(d.first_expired_at, 60.01, places=6, msg="the first expiry is the sample that expired the check, not a later one")
+        r = d.record()
+        self.assertEqual((r["elapsed_s"], r["expired"], r["first_expired_at_s"], r["checks"]), (60.03, True, 60.01, 1))
+        self.assertEqual(sc.deadline_findings(r, 60), [])
 
     def test_only_a_positive_int(self):
         for bad in (0, -1, True, 1.5, "10", None):

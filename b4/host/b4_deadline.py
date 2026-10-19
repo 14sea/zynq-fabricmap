@@ -37,20 +37,34 @@ class Deadline:
         self.checks = 0
         self.first_expired_at: float | None = None
 
-    def elapsed(self) -> float:
+    # Every observation of the clock is ONE monotonic sample, and every value derived from it (elapsed, expired, the first
+    # expiry) describes that same instant (the owner's review of 2026-10-19 on 8d1eefd, finding 2): record() can therefore
+    # never say "not yet 60 s" and "expired" at once, and first_expired_at is never later than the elapsed time it is
+    # recorded beside.
+    def _sample(self) -> float:
         return self._clock() - self.start
 
-    def expired(self) -> bool:
-        e = self.elapsed() >= self.seconds
+    def _expired_at(self, elapsed: float) -> bool:
+        e = elapsed >= self.seconds
         if e and self.first_expired_at is None:
-            self.first_expired_at = self.elapsed()
+            self.first_expired_at = elapsed
         return e
+
+    def elapsed(self) -> float:
+        return self._sample()
+
+    def expired(self) -> bool:
+        return self._expired_at(self._sample())
 
     def check(self) -> None:
         self.checks += 1
-        if self.expired():
-            raise StopWork(f"the soft deadline of {self.seconds} s passed after {self.elapsed():.3f} s (check {self.checks})")
+        elapsed = self._sample()
+        if self._expired_at(elapsed):
+            raise StopWork(f"the soft deadline of {self.seconds} s passed after {elapsed:.3f} s (check {self.checks})")
 
     def record(self) -> dict:
-        return {"seconds": self.seconds, "elapsed_s": round(self.elapsed(), 3), "checks": self.checks, "expired": self.expired(),
+        """A coherent snapshot of one monotonic sample (b4_sim_schema.deadline_findings holds the record to it)."""
+        elapsed = self._sample()
+        expired = self._expired_at(elapsed)
+        return {"seconds": self.seconds, "elapsed_s": round(elapsed, 3), "checks": self.checks, "expired": expired,
                 "first_expired_at_s": None if self.first_expired_at is None else round(self.first_expired_at, 3), "clock": "time.monotonic"}

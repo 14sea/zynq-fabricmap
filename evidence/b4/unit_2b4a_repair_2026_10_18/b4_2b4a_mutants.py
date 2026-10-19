@@ -20,8 +20,9 @@ import b4_seeds as bs  # noqa: E402
 
 COPY = ["b4", "host/b1_carto.py", "host/b1_model.py", "host/b2_landscape.py", "host/b2_maps.py", "host/b2_gate.py", "host/b2_search.py", "docs/b4_architecture.md", "docs/ff_latch_probe.md",
         "gate_runs/run_2026_08_05_ff/certificate.json", "evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json"] + [f[0] for f in bs.FIELDS]
-SEEDS, CTL, SNAP, K9, K10, SIM, SCH, GS, TH, VER = ("b4/host/b4_seeds.py", "b4/host/b4_controls.py", "b4/host/b4_snapshot.py", "b4/host/b4_k9.py", "b4/host/b4_k10.py",
-                                                    "b4/host/b4_sim.py", "b4/host/b4_sim_schema.py", "b4/host/b4_gate_stats.py", "b4/host/b4_thresholds.py", "b4/host/b4_sim_verify.py")
+SEEDS, CTL, SNAP, K9, K10, SIM, SCH, GS, TH, VER, DL = ("b4/host/b4_seeds.py", "b4/host/b4_controls.py", "b4/host/b4_snapshot.py", "b4/host/b4_k9.py", "b4/host/b4_k10.py",
+                                                        "b4/host/b4_sim.py", "b4/host/b4_sim_schema.py", "b4/host/b4_gate_stats.py", "b4/host/b4_thresholds.py", "b4/host/b4_sim_verify.py",
+                                                        "b4/host/b4_deadline.py")
 T = "b4.tests."
 
 
@@ -240,7 +241,7 @@ MUTANTS = [
   edit(SIM, [("                self.hold_inputs(\"publication\")\n                self.hold_tree()\n", "")]),
   [T + "test_b4_sim.InvalidStops.test_an_input_drift_during_the_final_verification_is_invalid"]),
  ("M58 round 3 / 1: the diagnostic state ↔ file contract is not enforced by the verifier",
-  edit(VER, [('        F.add(pre, *diagnostic_state_findings(plan, {k: _load(disk[pre + f"{k}.json"])[0] for k in ("k7", "k9", "k10") if pre + f"{k}.json" in disk}))', '        pass')]),
+  edit(VER, [('        F.add(pre, *diagnostic_state_findings(plan, {rel[len(pre):-5]: _load(disk[rel])[0] for rel in present}))', '        pass')]),
   [T + "test_b4_sim.TheArchiveVerifier.test_a_genuine_partial_diagnostic_cannot_belong_to_a_complete_batch"]),
  ("M59 round 3 / 2: pairs_total / units_total / corner genomes compared by Python equality",
   edit(SCH, [('    if not (isinstance(doc["pairs"], list) and _nonneg(doc["pairs_done"]) and len(doc["pairs"]) == doc["pairs_done"] and _int(doc["pairs_total"])):', '    if not (isinstance(doc["pairs"], list) and _nonneg(doc["pairs_done"]) and len(doc["pairs"]) == doc["pairs_done"]):'),
@@ -253,6 +254,30 @@ MUTANTS = [
  ("M61 round 3 / 3: the report's deadline is not bound to the manifest's declared duration",
   edit(VER, [('    F.add("sim_report.json", *sc.deadline_findings(report["deadline"], manifest["deadline_s"], "deadline"))', '    F.add("sim_report.json", *sc.deadline_findings(report["deadline"], None, "deadline"))')]),
   [T + "test_b4_sim.TheArchiveVerifier.test_the_deadline_records_are_consistent_and_bound_to_the_manifest"]),
+ # ---- round 4: the owner's review of 2026-10-19 on 8d1eefd (two P2 findings) and the gap found while fixing the second
+ ("M62 round 4 / 1: the diagnostic state ↔ file contract is asked about every document (malformed ones too) and raises on a non-object",
+  edit(VER, [('        if doc is not None and not isinstance(doc, dict):\n            f.append(f"{k}: the document is not an object"); continue\n', ''),
+             ('        if any(F.d.get(rel) for rel in present):\n            continue\n', '')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_malformed_diagnostic_is_a_named_finding_never_an_exception"]),
+ ("M63 round 4 / 1: the contract's nested set counts raise on a set that is not a list",
+  edit(VER, [('            if k == "k9" and not (isinstance(doc.get("pairs"), list) and len(doc["pairs"]) == 1184):', '            if k == "k9" and len(doc.get("pairs") or []) != 1184:'),
+             ('            if k == "k10" and not (isinstance(doc.get("units"), list) and len(doc["units"]) == 420):', '            if k == "k10" and len(doc.get("units") or []) != 420:')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_malformed_diagnostic_is_a_named_finding_never_an_exception"]),
+ ("M64 round 4 / 1: the verifier's CLI lets an exception escape as a traceback instead of a finding",
+  edit(VER, [('    try:\n        f = verify_run_dir(Path(a.run_dir), deep=not a.shallow)\n    except Exception as exc:  # noqa: BLE001 — the verifier failing is a finding, never a traceback in place of the result\n        f = {"verifier": [f"the archive verifier raised {type(exc).__name__}: {exc}"]}\n',
+              '    f = verify_run_dir(Path(a.run_dir), deep=not a.shallow)\n')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_malformed_diagnostic_is_a_named_finding_never_an_exception"]),
+ ("M65 round 4 / 2: the deadline record is several clock samples (elapsed, expired and the first expiry each sampled apart)",
+  edit(DL, [('        elapsed = self._sample()\n        expired = self._expired_at(elapsed)\n        return {"seconds": self.seconds, "elapsed_s": round(elapsed, 3), "checks": self.checks, "expired": expired,',
+             '        return {"seconds": self.seconds, "elapsed_s": round(self._sample(), 3), "checks": self.checks, "expired": self._expired_at(self._sample()),')]),
+  [T + "test_b4_deadline.TheDeadline.test_the_record_is_one_monotonic_sample", T + "test_b4_sim.IncompleteStops.test_a_stop_at_the_deadline_boundary_still_writes_stopped_json"]),
+ ("M66 round 4 / 2: the first expiry is a fresh clock sample, not the sample that expired the deadline",
+  edit(DL, [('            self.first_expired_at = elapsed', '            self.first_expired_at = self._sample()')]),
+  [T + "test_b4_deadline.TheDeadline.test_the_record_is_one_monotonic_sample"]),
+ ("M67 round 4 (found while fixing 2): an interrupt before any K9 record is recorded as `partial` without a document",
+  edit(SIM, [('            plan["k9"] = "partial" if self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "interrupt") else "in_progress"',
+              '            plan["k9"] = "partial"; self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "interrupt")')]),
+  [T + "test_b4_sim.IncompleteStops.test_a_stop_at_the_deadline_boundary_still_writes_stopped_json"]),
 ]
 
 

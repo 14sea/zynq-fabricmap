@@ -649,6 +649,44 @@ class IncompleteStops(Base):
         self.assertTrue(all(p["status"] == "complete" for p in rep["pairs"]), "every pair's work is kept")
         self.assertEqual(sc.report_findings(rep), [])
 
+    def test_a_stop_at_the_deadline_boundary_still_writes_stopped_json(self):
+        """The owner's review of 2026-10-19 (finding 2), the full-batch form: an external interrupt at the K9 entry while the
+        monotonic clock crosses the deadline between the stop record's and the report's samples (1059.990 / 1060.010 /
+        1060.030 after a start of 1000.000, through the public clock argument, the record method untouched). Before: the
+        stop record contradicted itself, failed its own pre-write validation and STOPPED.json was not written. Now: STOPPED.json
+        (not yet expired at 59.99 s), the report (expired at 60.01 s), the original stop cause kept, offline verification clean.
+        Then the same with the stop itself past the boundary: STOPPED expired, first expiry equal to its elapsed time."""
+        class Values:
+            def __init__(self):
+                self.t, self.queue = 1000.0, []
+
+            def __call__(self):
+                if self.queue:
+                    self.t = self.queue.pop(0)
+                return self.t
+        for queue, stop_expired, stop_first in (([1059.990, 1060.010, 1060.030, 1060.050], False, None), ([1060.010, 1060.030, 1060.050, 1060.070], True, 60.01)):
+            clock = Values()
+
+            def interrupt(*a, **kw):
+                clock.queue = list(queue)
+                raise KeyboardInterrupt("an external interruption at the K9 entry")
+            with mock.patch.object(sim.k9, "coverage", side_effect=interrupt):
+                res = self.run_with(None, dl=60, clock=clock, S=1, schedule=SCHED_ONE)
+            out = Path(res["out"])
+            self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"], res["stopped"]["role"]), ("incomplete", 3, "interrupted", "K9"))
+            self.assertTrue((out / "STOPPED.json").exists(), "the stop record is written at the boundary")
+            self.assertNotIn("STOPPED.json not written", res["stopped"]["detail"])
+            stopped, rep = json.loads((out / "STOPPED.json").read_text()), self.report(res)
+            self.assertEqual((stopped["kind"], stopped["deadline"]["expired"], stopped["deadline"]["first_expired_at_s"]), ("interrupted", stop_expired, stop_first))
+            self.assertEqual((stopped["deadline"]["elapsed_s"], rep["deadline"]["elapsed_s"]), (round(queue[0] - 1000.0, 3), round(queue[1] - 1000.0, 3)))
+            self.assertTrue(rep["deadline"]["expired"]); self.assertEqual(rep["deadline"]["first_expired_at_s"], 60.01)
+            self.assertEqual((rep["status"], rep["summary"], rep["stopped"]["kind"]), ("incomplete", None, "interrupted"))
+            # nothing returned from K9 before the interrupt: the stage is recorded as entered (`in_progress`), not as a
+            # `partial` that would promise a stopped document the directory does not hold
+            self.assertEqual(rep["pairs"][0]["k9"], "in_progress"); self.assertFalse((out / "pair_000/k9.json").exists())
+            self.assertEqual(sv.verify_run_dir(out, deep=True), {})
+            self.tearDown()
+
 
 def entry(p: Path, rel: str) -> dict:
     b = p.read_bytes()
@@ -928,6 +966,45 @@ class TheArchiveVerifier(Base):
                          ({"seconds": 60, "elapsed_s": 1.0, "checks": 3, "expired": False, "first_expired_at_s": None}, "a missing key")):
             self.assertTrue(sc.deadline_findings(bad), why)
         self.assertTrue(sc.deadline_findings({"seconds": 60, "elapsed_s": 1.0, "checks": 3, "expired": False, "first_expired_at_s": None, "clock": "time.monotonic"}, seconds=3600), "bound to another duration")
+        self.assertEqual(self.findings(), {}, "restored")
+
+    def test_a_malformed_diagnostic_is_a_named_finding_never_an_exception(self):
+        """The owner's review of 2026-10-19 (finding 1): a K7 / K9 document replaced by a list, a K10 by a string, a K9
+        with `pairs: 5`, null, an unreadable file — each with every digest refreshed — made the verifier raise
+        AttributeError / TypeError out of the diagnostic state ↔ file contract instead of returning the typed finding.
+        Now: the contract is asked only about documents their typed validator accepted, the helper itself is total, and
+        the CLI reports a finding (exit 1) instead of a traceback."""
+        out = self.out_dir
+        cases = (("k7", json.dumps([])), ("k9", json.dumps([])), ("k10", json.dumps("malformed")), ("k9", json.dumps(None)), ("k9", json.dumps(5)),
+                 ("k7", b"\x00{not json"), ("k9", json.dumps({**self.load("pair_000/k9.json"), "pairs": 5})),
+                 ("k10", json.dumps({**self.load("pair_000/k10.json"), "units": "x"})), ("k10", json.dumps({**self.load("pair_000/k10.json"), "complete": "yes"})))
+        for k, body in cases:
+            f_path = out / f"pair_000/{k}.json"
+            f_path.write_bytes(body if isinstance(body, bytes) else body.encode())
+            reindex(out)
+            f = self.findings()                                     # raises → the test errors: that is the regression
+            self.assertIn(f"pair_000/{k}.json", f, (k, body[:40], f))
+            self.assertNotIn("pair_000/", f, "the contract is not asked about a pair whose diagnostic did not validate")
+        plan = {"pair": 0, "status": "complete", "k7": "complete", "k9": "complete", "k10": "complete"}
+        for doc in ([], "x", 5, True, {"complete": True, "pairs": 5}, {"complete": True, "units": None}, {"complete": True}):
+            self.assertTrue(sv.diagnostic_state_findings(plan, {"k7": doc, "k9": doc, "k10": doc}), doc)
+        self.assertTrue(sv.diagnostic_state_findings({**plan, "k9": "partial"}, {"k9": []}))
+        import io
+        from contextlib import redirect_stdout
+        (out / "pair_000/k9.json").write_text("[]"); reindex(out)
+        buf = io.StringIO()
+        try:
+            with redirect_stdout(buf):
+                code = sv.main([str(out), "--shallow"])
+        finally:
+            self.restore()
+        res = json.loads(buf.getvalue())
+        self.assertEqual((code, res["clean"]), (1, False)); self.assertIn("pair_000/k9.json", res["findings"])
+        buf = io.StringIO()
+        with mock.patch.object(sv, "verify_run_dir", side_effect=RuntimeError("boom")), redirect_stdout(buf):
+            code = sv.main([str(out), "--shallow"])
+        res = json.loads(buf.getvalue())
+        self.assertEqual((code, res["clean"]), (1, False)); self.assertIn("RuntimeError", res["findings"]["verifier"][0])
         self.assertEqual(self.findings(), {}, "restored")
 
     def test_the_cli_of_the_verifier(self):

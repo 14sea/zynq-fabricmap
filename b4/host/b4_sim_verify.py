@@ -103,7 +103,7 @@ def expected_pair_files(plan: dict) -> tuple[set, set]:
         if plan[k] in ("complete", "partial"):
             must.add(f"{pre}{k}.json")
         elif plan[k] == "invalid":
-            may |= {f"{pre}{k}.json", f"{pre}{k}.QUARANTINE.json"}      # one of the two, checked below
+            may |= {f"{pre}{k}.json", f"{pre}{k}.QUARANTINE.json"}      # the invalid partial or its quarantine; none when the refusal came before any record
     if plan["status"] == "complete":
         must |= {f"{pre}curves.json", f"{pre}index.json"}
     return must, may
@@ -112,19 +112,24 @@ def expected_pair_files(plan: dict) -> tuple[set, set]:
 def diagnostic_state_findings(plan: dict, docs: dict) -> list[str]:
     """The recorded K7 / K9 / K10 state of a pair against its documents: `complete` needs a document that is complete (and
     for K9 / K10 neither stopped nor invalid, with the full fixed set); `partial` a document that is stopped and not complete;
-    `invalid` a document with an invalid record (or its quarantine, checked by the file set); `in_progress` (K7 only, an
-    invalid prefix) a document that is not complete; `not_started` no document. A complete pair needs all three complete."""
+    `invalid` a document with an invalid record (or its quarantine, or none when the refusal came before any record);
+    `in_progress` for K7 (an invalid prefix) a document that is not complete, for K9 / K10 (entered, nothing returned — an
+    interrupt before any record) no document; `not_started` no document. A complete pair needs all three complete.
+    Total: a document that is not an object, or whose set is not a list, is a finding, never an exception (the owner's
+    review of 2026-10-19 on 8d1eefd, finding 1) — the verifier passes only documents their typed validator accepted."""
     f: list[str] = []
     for k in ("k7", "k9", "k10"):
         state, doc = plan[k], docs.get(k)
+        if doc is not None and not isinstance(doc, dict):
+            f.append(f"{k}: the document is not an object"); continue
         if state == "complete":
             if doc is None or doc.get("complete") is not True:
                 f.append(f"{k}: recorded complete, the document is {'missing' if doc is None else 'not complete'}"); continue
             if k != "k7" and (doc.get("stopped") is not None or doc.get("invalid") is not None):
                 f.append(f"{k}: recorded complete, the document carries a stop or an invalid record")
-            if k == "k9" and len(doc.get("pairs") or []) != 1184:
+            if k == "k9" and not (isinstance(doc.get("pairs"), list) and len(doc["pairs"]) == 1184):
                 f.append("k9: recorded complete without the 1 184 pairs")
-            if k == "k10" and len(doc.get("units") or []) != 420:
+            if k == "k10" and not (isinstance(doc.get("units"), list) and len(doc["units"]) == 420):
                 f.append("k10: recorded complete without the 420 units")
         elif state == "partial":
             if doc is None or doc.get("complete") is not False or doc.get("stopped") is None or doc.get("invalid") is not None:
@@ -306,10 +311,15 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
             F.add(rel, "the seeds named are not the planned pair's")
         if name == "index.json" and _j(doc.get("arms")) != _j(plan["arms"]):
             F.add(rel, "the arm states are not the plan's")
-    # --- the diagnostic state ↔ file contract: a plan's K7 / K9 / K10 state is confirmed by the document, never its own authority
+    # --- the diagnostic state ↔ file contract: a plan's K7 / K9 / K10 state is confirmed by the document, never its own authority.
+    # Only documents their typed validator accepted above enter the contract: a malformed one is already a named finding
+    # (its own location), and the contract is not asked about a pair whose diagnostic files did not validate.
     for plan in planned:
         pre = f"pair_{plan['pair']:03d}/"
-        F.add(pre, *diagnostic_state_findings(plan, {k: _load(disk[pre + f"{k}.json"])[0] for k in ("k7", "k9", "k10") if pre + f"{k}.json" in disk}))
+        present = [pre + f"{k}.json" for k in ("k7", "k9", "k10") if pre + f"{k}.json" in disk]
+        if any(F.d.get(rel) for rel in present):
+            continue
+        F.add(pre, *diagnostic_state_findings(plan, {rel[len(pre):-5]: _load(disk[rel])[0] for rel in present}))
     if F:
         return F.d
     for plan in planned:
@@ -422,7 +432,10 @@ def main(argv=None) -> int:
     ap.add_argument("run_dir")
     ap.add_argument("--shallow", action="store_true", help="file set, linkage and validators only (no re-execution)")
     a = ap.parse_args(argv)
-    f = verify_run_dir(Path(a.run_dir), deep=not a.shallow)
+    try:
+        f = verify_run_dir(Path(a.run_dir), deep=not a.shallow)
+    except Exception as exc:  # noqa: BLE001 — the verifier failing is a finding, never a traceback in place of the result
+        f = {"verifier": [f"the archive verifier raised {type(exc).__name__}: {exc}"]}
     print(json.dumps({"run_dir": a.run_dir, "findings": f, "clean": not f,
                       "limit": "a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth"}, indent=1))
     return 0 if not f else 1

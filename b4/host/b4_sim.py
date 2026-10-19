@@ -551,8 +551,9 @@ class Batch:
         try:
             k9r = k9.coverage(task, self.port_factory(fabric, "K9", r), mapping, fabric, check=self.dl.check)
         except KeyboardInterrupt as exc:
-            plan["k9"] = "partial"
-            self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "interrupt")
+            # `partial` promises a stopped document on disk; an interrupt before anything returned (nothing carried, or the
+            # partial not even quarantinable) leaves the stage `in_progress`: entered, no record (the owner's review of 2026-10-19)
+            plan["k9"] = "partial" if self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "interrupt") else "in_progress"
             raise
         except Exception as exc:  # noqa: BLE001 — DOMAIN, another refusal or an error: invalid, the partial kept
             plan["k9"] = "invalid"
@@ -576,8 +577,9 @@ class Batch:
             self._keep_partial(r, "k10", exc.partial, lambda doc: sc.k10_findings(doc, task), "K10", "refusal")
             raise Invalid("k10_invalid", str(exc), role="K10", stage="k10")
         except KeyboardInterrupt as exc:
-            plan["k10"] = "partial"
-            self._keep_partial(r, "k10", getattr(exc, "k10_partial", None), lambda doc: sc.k10_findings(doc, task), "K10", "interrupt")
+            # `partial` promises a stopped document on disk; an interrupt before anything returned (nothing carried, or the
+            # partial not even quarantinable) leaves the stage `in_progress`: entered, no record (the owner's review of 2026-10-19)
+            plan["k10"] = "partial" if self._keep_partial(r, "k10", getattr(exc, "k10_partial", None), lambda doc: sc.k10_findings(doc, task), "K10", "interrupt") else "in_progress"
             raise
         except Exception as exc:  # noqa: BLE001
             plan["k10"] = "invalid"
