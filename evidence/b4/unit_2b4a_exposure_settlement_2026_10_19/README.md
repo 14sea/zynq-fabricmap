@@ -82,9 +82,32 @@ not-covered statement, the 22 records with their digests and verdicts, and its l
 After the receipt the pooled exclusion set is 2 093 + 66 = 2 159 values; a `b4-mech-*` fixture batch records it in
 `seeds.json` and the manifest and holds it at every checkpoint (section 5's tests).
 
-## 5. Validation (clean committed tree; files beside this README)
+## 5. Validation (clean committed tree, HEAD `8955647`; files beside this README)
 
-(filled in by the verification commit)
+The three runs started together on the committed tree; no tool file, document or receipt was edited during them. Each raw
+file has a three-line header (HEAD, command, UTC time) and is otherwise unedited.
+
+| file | command (from `/home/test/zynq_fabricmap`) | result |
+|---|---|---|
+| `tests.txt` | `python3 -m unittest -v` over the 20 `b4.tests.test_b4_*` modules | **Ran 254 tests … OK**, exit 0 (the production-derivation guards of every harness test class: 0 calls) |
+| `mutants.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/b4_2b4a_mutants.py evidence/b4/unit_2b4a_exposure_settlement_2026_10_19/mutants.txt` | **75 / 75 killed** in 850 s; no `SURVIVED`, `BASELINE-NOT-GREEN` or `EDIT-MISS` line |
+| `import_check.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/import_check.py` | 49 entries, every digest equal; no tracked file under `b4/` without an entry |
+
+The battery is the shared 2b-4a battery, now 75 mutants: M35 re-targeted to the moved `init` line (it would otherwise be an
+`EDIT-MISS`); M68–M75 one per settlement contract — the receipt not pooled (M68), its digest not held (M69), a retired label
+accepted by the pre-flight (M70), the receipt not a root input / not held at the checkpoints (M71; the hermetic trees copy
+the receipt in its own right so this mutant is killed by the checkpoint tests, not by a missing file), the manifest validator
+not binding it (M72), the verifier's linkage not binding it (M73), the thresholds table naming a retired label (M74), a seeds
+record's receipt reference not held (M75). 9 / 9 on the dry run of the new and re-targeted mutants, 75 / 75 on the full run.
+
+Tests use the mechanics schedules (`b4-mech-*`, exposed values only) and hand-made receipts / records; the only values of a
+retired label that appear in a test are the OBSERVED ones read from the receipt (no derivation function is called — the
+registry test mocks both to fail). No test creates a batch under `b4-sim-3` or a gate label.
+
+**Status.** `b4-prework`: … `82e863e` (2b-4a accepted), the settlement `8955647` + this verification commit; local only —
+not pushed, not merged (the earlier push permission does not extend to this unit); `main` is `d5bf815`. Delivered for the
+owner's review. Still not authorised: the S = 32 `b4-sim-3` exploration, the formal gate tool and run, units 2c / 2d, the
+full proof, push / merge, procurement and board work.
 
 ## 6. What this does not claim
 
