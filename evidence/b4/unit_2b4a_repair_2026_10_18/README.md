@@ -217,3 +217,23 @@ The archived battery is now the 61-mutant script (M58–M61 added, one per round
 `d5bf815`. Delivered for the owner's review. Pending the owner: the treatment of the prior exposure (section 1). Still not
 authorised: the S = 32 `b4-sim-1` exploration, the formal gate tool and run, units 2c / 2d, the full proof, push / merge,
 procurement and board work.
+
+## 6. Verification on the clean committed tree — round 4 (HEAD `15bc214`; files `round4_*`)
+
+Same method as sections 3 to 5 (the three runs started together on the committed tree; no edit to any tool file during them).
+
+| file | command (from `/home/test/zynq_fabricmap`) | result |
+|---|---|---|
+| `round4_tests.txt` | `python3 -m unittest -v` over the 20 `b4.tests.test_b4_*` modules | **Ran 246 tests … OK**, exit 0 |
+| `round4_mutants.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/b4_2b4a_mutants.py evidence/b4/unit_2b4a_repair_2026_10_18/round4_mutants.txt` | **67 / 67 killed** in 986 s; no `SURVIVED`, `BASELINE-NOT-GREEN` or `EDIT-MISS` line |
+| `round4_import_check.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/import_check.py` | 49 entries, every digest equal; no tracked file under `b4/` without an entry |
+
+The archived battery is now the 67-mutant script: M58's target moved with the contract line it disables (it would otherwise
+have been an `EDIT-MISS`); M62–M67 added, one per round-4 contract (M62–M64 finding 1, M65–M66 finding 2, M67 the gap found
+here); 7 / 7 on the dry run of the new and re-targeted mutants, 67 / 67 on the full run.
+
+**Status.** `b4-prework`: A `8939fb9`, B `feda985`, C `edfc93c`, evidence `cdf2c53`, repair `e03dca1` + `f2c4bca`, second round
+`33c1739` + `6c00156`, third round `21699cd` + `8d1eefd`, fourth round `15bc214` + this verification commit; local only — not
+pushed, not merged; `main` is `d5bf815`. Delivered for the owner's review. Pending the owner: the treatment of the prior
+exposure (section 1). Still not authorised: the S = 32 `b4-sim-1` exploration, the formal gate tool and run, units 2c / 2d,
+the full proof, push / merge, procurement and board work.
