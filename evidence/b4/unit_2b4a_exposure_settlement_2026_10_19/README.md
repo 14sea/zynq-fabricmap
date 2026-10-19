@@ -141,7 +141,15 @@ verification commit; local only — not pushed, not merged; `main` is `d5bf815`.
 authorised: the S = 32 `b4-sim-3` exploration, the formal gate tool and run, units 2c / 2d, the full proof, push / merge,
 procurement and board work.
 
-## 7. What this does not claim
+## 7. Closure
+
+The owner's review of `d293cd5` (`owner_review_d293cd5/`, copied unchanged): **PASS, the P2 closed, the exposure settlement
+unit accepted** (255 tests OK, 7 / 7 relevant mutants killed, the coordinated counts 0 / 1 / 67 refused by the validators and
+by the linkage alone, the correct count accepted, the receipt bytes unchanged, IMPORT 49). The PASS is limited to the
+settlement of the known and reconstructable exposure; the historical gap stays on record permanently. Push, merge, the S = 32
+exploration and the formal gate remain unauthorised.
+
+## 8. What this does not claim
 
 The receipt makes the known and the reconstructable exposure excluded. It does not make the historical exposure record
 complete, does not recover any deleted readout, manifest or verdict, and does not show that no deleted outcome was looked
