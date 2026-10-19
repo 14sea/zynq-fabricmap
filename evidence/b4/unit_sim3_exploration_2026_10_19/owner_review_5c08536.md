@@ -1,4 +1,4 @@
-# The owner's review of 5c08536 (2026-10-19), copied unchanged
+# The owner's review of 5c08536 (2026-10-19) — 覆核重點摘錄 (the key points, as relayed by the user; not the review copied unchanged — the owner's item 3 on 00754d3)
 
 獨立 deep verify：exit 0、findings {}。B* = null 與資料一致，但摘要有三處錯誤：
 

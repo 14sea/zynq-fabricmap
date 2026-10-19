@@ -2,13 +2,15 @@
 
 The batch itself is the archive `evidence/b4/sim/b4-sim-3_20261019T121833Z/` (committed unchanged in `5c08536`; nothing in
 it is edited by this unit — its file set is bound by the archive verification). This directory holds the run record, the
-owner's review of `5c08536` copied unchanged (`owner_review_5c08536.md`), and the corrected summary. Documents only.
+key points of the owner's review of `5c08536` as relayed by the user (`owner_review_5c08536.md`, a 覆核重點摘錄 — an excerpt of
+the review's key points, not the review copied unchanged; corrected on the owner's item 3 of the ruling on `00754d3`), the
+owner's ruling on `00754d3` as relayed (`owner_ruling_00754d3.md`), and the corrected summary. Documents only.
 
 ## 1. The run
 
 | item | value |
 |---|---|
-| authorisation | the user's instruction in session, 2026-10-19 ("接下來繼續 S=32 b4-sim-3 探索"); the owner's ruling of 2026-10-19 section 6 made the run a separate execution authorisation and did not grant it that day |
+| authorisation | the user confirmed in session that this exploration was authorised by them (2026-10-19; verbatim: 「繼續探索是我授權的」); the owner's ruling of 2026-10-19 section 6 had made the run a separate execution authorisation; the owner's ruling on `00754d3` closes the authorisation question — no further proof is required |
 | code tree | HEAD `933545a`, `git status --porcelain` empty |
 | command | `python3 -B b4/host/b4_sim.py --label b4-sim-3 --seeds 32 --deadline-s 3600` (one worker; no smoke test before it) |
 | pre-flight / report | 2026-10-19T12:18:33Z / 12:22:03Z |
@@ -21,7 +23,7 @@ owner's review of `5c08536` copied unchanged (`owner_review_5c08536.md`), and th
 
 ## 2. The corrected summary — values beside the thresholds, NOT a gate verdict; S = 32 is never the formal S = 200
 
-The owner's review of `5c08536` named three errors in that commit's message and in the session summary. All three are
+The owner's review of `5c08536` (its key points, section 0) named three errors in that commit's message and in the session summary. All three are
 confirmed against `sim_report.json`; the corrected statements are below, the errors in section 3.
 
 **K1.** eligibility true at all ten grid budgets (median best_R 36 … 42 over base 32; Ω best p95 41.45 … 46.45; reference < 64).
@@ -58,7 +60,7 @@ clock_mode 1.0, ff_init 1.0 (conditional on A8), sr_mode 1.0, storage_kind 1.0, 
 
 | # | what 5c08536's message / the summary said | what the data say | how it happened |
 |---|---|---|---|
-| 1 | "F − R … so N is null" — K5 attributed to F − R | K5 is on Δ1 = O − R (code and section 9); N is null because O − R shows no effect (d −0.321 … +0.027), not because of F − R | the F − R row was read as the K5 input without checking which delta the scan takes |
+| 1 | "F − R … so N is null" — K5 attributed to F − R | K5 is on Δ1 = O − R (code and section 9); in this S = 32 sample, Δ1 = O − R did not reach bootstrap power 0.90 at any N of the fixed scan N = 8 … 32 (d −0.321 … +0.027 descriptively), which is why N is null; F − R plays no part. No inference that the effect is absent, or that S = 200 would give the same, is drawn | the F − R row was read as the K5 input without checking which delta the scan takes |
 | 2 | "K9 … per-semantic median coverage 1.0" | ff_srval 0.427083 and sr_kind 0.5; the other five 1.0 | the per-semantic block was read from an output truncated after ff_init |
 | 3 | "K5's N scan 8 … 32 reaches power 0.001 … 0.007 at every budget" | over all budgets 0.000 … 0.064; at N = 32 alone 0.000 … 0.046 | budget 256's scan alone was generalised to every budget |
 
@@ -66,7 +68,19 @@ The commit message of `5c08536` is not rewritten (history kept); this file is th
 untouched. The observation reported with `5c08536` stands and is unchanged here: `b4_sim.py`'s STANDING string says
 "v0.1.15 section 9" while the report's thresholds block and `b4_thresholds.ARCHITECTURE_SECTION` say v0.1.16.
 
-## 4. What this does not claim
+## 4. The owner's ruling on 00754d3 and this follow-up (2026-10-19)
+
+The owner's review of `00754d3` (`owner_ruling_00754d3.md`, as relayed): the numeric correction PASS; the ten budgets' table
+values and the three archive digests checked and equal; the raw output unchanged; B* = null is a valid S = 32 exploration
+result, neither a tool defect nor a formal gate verdict; the exploration delivery unit closes after three P3 document
+corrections, which this follow-up carries: (1) section 2 and section 3 no longer say "O − R shows no effect" — the
+statement is that Δ1 = O − R did not reach bootstrap power 0.90 at any N of the fixed scan 8 … 32 in this S = 32 sample, with
+no inference about the effect's existence or about S = 200; (2) the authorisation row records the user's confirmation;
+(3) the seven-line owner text is marked a 覆核重點摘錄 and the "copied unchanged" descriptions are corrected (the commit
+message of `00754d3` still says "copied unchanged" and "shows no effect"; it is not rewritten, this file is the record).
+The existing commits, the 643 raw files and the receipt are kept; no code changed, no test or exploration rerun.
+
+## 5. What this does not claim
 
 Nothing here is a gate result, a statement about silicon, or an authorisation. The formal gate, 2c / 2d, any b4-sim-4,
 push / merge and board work remain unauthorised; a batch with no B* does not license another batch (ruling section 6).
