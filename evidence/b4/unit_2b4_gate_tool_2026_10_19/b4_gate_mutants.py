@@ -151,13 +151,13 @@ MUTANTS = [
   edit(GATE, [('        elif any(e[1] >= pmin for e in scan[:-1]) or scan[-1][1] < pmin:\n            f.append(f"{where}: N is not the first n whose rate reaches {pmin}")', '        elif False:\n            f.append(f"{where}: N is not the first n whose rate reaches {pmin}")')]),
   [J + "test_an_incoherent_or_malformed_summary_is_invalid_never_judged_and_never_an_exception"]),
  ("G33 the at-B* Cohen's d is not bound to the per-budget delta1 record",
-  edit(GATE, [('            if sc.canonical(k5["cohen_d_delta1"]) != sc.canonical(dl["delta1_O_minus_R"]["cohen_d"]):\n                f.append("k5.cohen_d_delta1 is not delta1\'s Cohen\'s d at B*")\n', '')]),
+  edit(GATE, [('            if not _same(k5["cohen_d_delta1"], dl["delta1_O_minus_R"]["cohen_d"]):\n                f.append("k5.cohen_d_delta1 is not delta1\'s Cohen\'s d at B*")\n', '')]),   # the line as the exact-type binding writes it (retargeted after the second HOLD; the first-round target is in hold_gate_mutants.txt)
   [J + "test_an_incoherent_or_malformed_summary_is_invalid_never_judged_and_never_an_exception"]),
  ("G34 a +inf special with a non-null value is accepted",
   edit(GATE, [('    elif s == "+inf":\n        if v is not None:', '    elif s == "+inf":\n        if False:')]),
   [J + "test_an_incoherent_or_malformed_summary_is_invalid_never_judged_and_never_an_exception", E + "test_an_incoherent_synthetic_summary_cannot_be_made_a_clean_pass_by_refreshed_hashes"]),
  ("G35 K9's fraction_of_S is not bound to its count and S",
-  edit(GATE, [('        elif not (_fin(k9s["fraction_of_S"]) and k9s["fraction_of_S"] == k9_all / S):', '        elif False:')]),
+  edit(GATE, [('        elif not _same(k9s["fraction_of_S"], k9_all / S):', '        elif False:')]),   # retargeted after the second HOLD (the exact-type binding)
   [J + "test_an_incoherent_or_malformed_summary_is_invalid_never_judged_and_never_an_exception", E + "test_an_incoherent_synthetic_summary_cannot_be_made_a_clean_pass_by_refreshed_hashes"]),
  ("G36 the document's identity fields are not validated before the judgement",
   edit(GATE, [("    if idf:\n        out[\"contract_findings\"] = idf", "    if False:\n        out[\"contract_findings\"] = idf")]),

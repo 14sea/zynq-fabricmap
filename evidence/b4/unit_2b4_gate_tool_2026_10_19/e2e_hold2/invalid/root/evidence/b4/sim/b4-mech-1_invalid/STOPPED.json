@@ -1,0 +1,59 @@
+{
+ "deadline": {
+  "checks": 1649,
+  "clock": "time.monotonic",
+  "elapsed_s": 4.258,
+  "expired": false,
+  "first_expired_at_s": null,
+  "seconds": 3600
+ },
+ "detail": "completed / search_completed are not the bool True; terminal is not None; evals / len(best_trace) are not exactly 256; cost {\"base\": 1, \"holdout\": 0, \"probes\": 0, \"search\": 28} is not the arm's {\"base\": 1, \"holdout\": 1, \"probes\": 0, \"search\": 256}; observations 29 / port calls 30 / ledger 29 are not all 258; the holdout is not exactly the last record, once",
+ "head_at_stop": "aa06da86103d8ed3f985284e25a99ef6adc0c32e",
+ "kind": "domain",
+ "pair": 1,
+ "planned": [
+  {
+   "arms": {
+    "A0": "audited",
+    "D": "audited",
+    "F": "audited",
+    "O": "audited",
+    "Omega": "audited",
+    "R": "audited",
+    "X": "audited"
+   },
+   "k10": "complete",
+   "k7": "complete",
+   "k9": "complete",
+   "landscape_seed": 7,
+   "operator_seed": 11,
+   "pair": 0,
+   "status": "complete"
+  },
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "audited",
+    "O": "written",
+    "Omega": "not_started",
+    "R": "audited",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 8,
+   "operator_seed": 12,
+   "pair": 1,
+   "status": "partial"
+  }
+ ],
+ "role": "O",
+ "schema": "b4_sim_stopped",
+ "schema_version": "1.0.0",
+ "stage": "audit",
+ "status": "invalid",
+ "stopped_utc": "2026-10-19T18:17:35Z",
+ "traceback": null
+}

@@ -14,10 +14,10 @@ acceptance.
 | `b4/host/b4_gate_verify.py` | the independent verifier of a gate directory; a fresh-process CLI |
 | `b4/host/b4_sim.py` | mode `"gate"` (b4-gate-<n> labels, reached through `b4_gate.py` only; the exploration CLI unchanged), `standing_for(label)`, `STANDING_GATE`; `summarise_batch(..., standing=)`; **no constant changed; the archived explorations' `STANDING` text untouched** |
 | `b4/host/b4_sim_verify.py` | the report's standing bound to its label; the summary recomputed with it |
-| `b4/tests/test_b4_gate.py` | 22 tests at `4f3806d`; 24 after the HOLD round (sections 4 and 9) |
+| `b4/tests/test_b4_gate.py` | 22 tests at `4f3806d`; 24 after the first HOLD; 26 after the second (sections 4, 9, 9.1) |
 | `b4/tests/test_b4_seeds.py` | two tests repaired (section 5) |
 | `b4/IMPORT.json` | 52 entries, refreshed |
-| `b4_gate_mutants.py` (here) | 36 mutants, one contract each (G30 added after the re-run of unit 2b-4a's battery, section 6; G31–G36 after the HOLD, section 9) |
+| `b4_gate_mutants.py` (here) | 39 mutants, one contract each (G30 after the re-run of unit 2b-4a's battery, section 6; G31–G36 after the first HOLD, section 9; G37–G39 after the second, section 9.1) |
 | `e2e_fixtures.py` (here) | the five end-to-end cases, fresh-process verified, copied as evidence (section 7); after the HOLD the six refreshed-hash negatives and their invalid controls (section 9) |
 
 ### 1.1 Where things live
@@ -204,6 +204,48 @@ tests re-expressed on the coherent builder. The set-up stops its derivation guar
 The first round's raw files (`tests.txt`, `gate_mutants.txt`, `gate_mutants_g30.txt`, `mutants_2b4a_rerun.txt`, `import_check.txt`, `e2e/`, `sim3_deep_verify.txt`)
 are kept unchanged as the record of `4f3806d`. Two evidence scripts changed after `77a6c8c` and are committed with this evidence:
 `e2e_fixtures.py` takes the output directory name (`e2e_hold`), `b4_gate_mutants.py` has G21's test name and edit target corrected.
+
+### 9.1 The owner's second HOLD on `a8f2da1` and the correction (commit `6431e9f`; the raw files `hold2_*`)
+
+The owner's review (`owner_review_a8f2da1.md`, as relayed) accepted R3 and D1, the six original probes and G21's correction, and held two
+residual P2 workstreams of the same contract: (1) Cohen's d was bound by sign and by copy agreement only, so a coordinated edit of both
+copies at B* turned a K5 FAIL into a PASS that verified clean; and the fixture used the population standard deviation where the frozen
+production statistic (`b4_gate_stats.cohen_d`, by copy of `host/b2_gate.py`: mean / `statistics.stdev`) uses the sample one, so the
+fixture's "0.5" sat at production's 0.4987…; (2) totality and exact types were incomplete: a decoded `10**400` raised `OverflowError` in
+`math.isfinite`, `1e400` in the thresholds table raised `ValueError` in the canonical serialisation, and five numerically-equal float aliases
+(8.0 for `n_min`, 7.0 for the bootstrap seed, 2.0 for `tau`, 16.0 for the at-B* N, 15.0 in the at-B* K7 values) passed `==` bindings.
+
+| workstream | correction |
+|---|---|
+| Cohen's d magnitude | `implied_cohen_d(mean, pvariance, S)` reproduces the production function's value from the recorded statistics: S < 2 → 0.0; variance 0 → +inf when the mean is positive, 0.0 otherwise; else mean / sqrt(pvariance · S / (S − 1)) — the **sample** standard deviation from the recorded **population** variance. A recorded finite d must lie within `D_REL_TOL = 1e-12` (relative, floor 1) of it. **The comparison is documented in the module and is not a criterion change:** the two routes to d agree to ≈ 2.2 × 10⁻¹⁶ on every one of the 140 archived delta records (the S = 32 exploration and the fixture archives), so 1e-12 is four orders above rounding noise and eleven below any difference a criterion could notice; the judgement always reads the **recorded** value (the production function's), the bound only refuses a record whose d is not that function's. The fixture now computes d by the same convention; the K5 boundary expectations are the production's (mean 1, population variance 4, S 200 → 0.49874843358150006, the FAIL side; the PASS-side boundary case uses variance 3.9 → 0.5051…). |
+| totality | `numeric_findings` walks the decoded JSON first — every float finite, every int within ±2^63 (a bool is not a number) — in the summary contract, the identity fields, the synthetic summary, the gate report and `judge_batch`, before any canonical serialisation, comparison or arithmetic; `_fin` / `_int` are safe on huge ints; the planned count is bounded (`S_MAX` = 1 000 000: the scan is enumerated to S). `10**400`, `1e400` and NaN at any path, the thresholds table included, are named findings. A synthetic summary carrying such a number is **refused** at the evidence boundary (no judgement could carry it into a report), with nothing written — the refusal is named. |
+| exact types | every copy and constant binding compares through `_same` (canonical JSON: 8.0 is never 8, 7.0 never the seed 7, 2.0 never tau 2, 16.0 never N 16, 15.0 never an address count, true never 1); K7's median is bound to the production median's own type (`statistics.median`); the five aliases and the bool aliases are named findings. |
+
+**The new tests** (`test_b4_gate.py`, 26): `test_cohen_s_d_is_bound_by_magnitude_under_the_production_sample_variance_convention` — a concrete
+200-value delta sequence: the production function against the implied value (within 1e-12; equal to `mean / statistics.stdev` to 15 places);
+the owner's boundary numbers; the special cases on the production function itself (`cohen_d([5]) = 0.0`, `[5, 5] = +inf`, `[-5, -5] = 0.0`)
+and on a one-pair summary (+inf there is a finding); the coordinated two-copy edit over a mean of 0.5 and a variance of 4 (a named finding
+"is not the production statistic of its mean … sample standard deviation", an invalid judgement); a d within 1e-14 of its implied value
+accepted, one 1e-9 away refused. `test_numerically_equal_foreign_types_and_numeric_edges_are_findings_never_exceptions` — the five aliases,
+bool aliases in originals and copies, `10**400`, `1e400`, NaN at several paths including the thresholds table, the count bound; then the
+alias fuzz: every int leaf of a coherent summary replaced by its float alias, and every 0 / 1 leaf by its bool alias, is invalid (over 100
+and over 10 cases). The totality fuzz's replacement set extended with `10**400`, inf and NaN. End to end: eight more negatives
+(the coordinated d over the owner's base, the five aliases, the huge integer, the infinite literal — the last two written as the decoder
+reads them) refused by the fresh-process verifier with the PASS report kept and every digest refreshed; judged directly, the first six are
+invalid reports that verify clean and the last two named refusals with nothing written.
+
+**Validation on the clean committed tree `6431e9f`:**
+
+| file | what | result |
+|---|---|---|
+| `hold2_tests.txt` | the 21 modules, verbose | **Ran 282 tests, OK**, exit 0, no skip (8 min) |
+| `hold2_gate_mutants.txt` | G1–G39 on hermetic copies (1 637 s) | **36 / 39 killed**; G29 SURVIVED (the accepted equivalent survivor); **G33 and G35 EDIT-MISS** — their edit targets were the `==` / `sc.canonical` lines that this round rewrote as `_same` bindings (a stale target in the battery, not a product finding; the first round's kills of both stand in `hold_gate_mutants.txt`) |
+| `hold2_gate_mutants_g33_g35.txt` | G33 and G35 retargeted to the exact-type binding lines | **2 / 2 killed** — so 38 / 39 with the one equivalent survivor |
+| `hold2_e2e_run.txt`, `e2e_hold2/` | the five cases, fourteen negatives, fourteen controls | the five: verifier exit 0 both places; the fourteen negatives: **exit 1** both places; twelve invalid controls: the tool exit 1 (verdict invalid), the verifier exit 0; the two refusal controls (`huge_json_integer`, `infinite_literal_in_thresholds`): refused by name, nothing written; derivation calls [0, 0] |
+| `hold2_import_check.txt` | `b4/IMPORT.json` | 52 entries, every digest equal, nothing untabled |
+| `hold2_sim3_deep_verify.txt` | the committed `b4-sim-3` archive under the magnitude binding and the exact-type bindings | findings {}, clean true (its 70 delta records agree with the production formula to ≈ 2 × 10⁻¹⁶) |
+
+The first two rounds' raw files are kept unchanged.
 
 ## 10. What this unit does not claim, and what remains withheld
 

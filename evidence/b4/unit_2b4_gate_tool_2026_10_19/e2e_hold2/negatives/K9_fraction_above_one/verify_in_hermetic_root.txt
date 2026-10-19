@@ -1,0 +1,15 @@
+HEAD 6431e9f73483a0849500c9d52fe77d9efecb1415
+expected: exit 1 (the PASS report is not the judgement of its evidence)
+command: python3 -B b4/host/b4_gate_verify.py /tmp/b4gate_e2e_x5il7qoa/evidence/b4/gate/b4-mech-7_neg_K9_fraction_above_one
+exit 1
+
+{
+ "gate_dir": "/tmp/b4gate_e2e_x5il7qoa/evidence/b4/gate/b4-mech-7_neg_K9_fraction_above_one",
+ "findings": {
+  "batch": [
+   "the synthetic summary's path 'evidence/b4/gate/b4-mech-7_pass/synthetic_summary.json' is not 'evidence/b4/gate/b4-mech-7_neg_K9_fraction_above_one/synthetic_summary.json'"
+  ]
+ },
+ "clean": false,
+ "limit": "a clean verification shows the judgement follows from its evidence under the fixed criteria; it is not itself a PASS, and a fixture or synthetic judgement is never a gate result"
+}
