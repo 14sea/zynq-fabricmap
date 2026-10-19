@@ -127,7 +127,19 @@ changed together to 0, 1, 67 with every digest and index refreshed — including
 the `reindex` helper now refreshes as the owner's probe did; named by the validators, and by the linkage alone with the
 record validators mocked away; the true count clean) and the receipt test's direct checks of `receipt_reference_findings`
 (0, 1, 65, 67 refused; an unreadable pinned receipt refused). Mutants M76 (the reference validator's binding removed) and M77
-(the linkage's binding removed). Validation of this fix on the clean committed tree: the `p2_*` files beside this README (the table below).
+(the linkage's binding removed). Validation of this fix on the clean committed tree (HEAD `33d41e8`; the three runs started
+together, nothing edited during them; three-line headers, otherwise unedited):
+
+| file | command (from `/home/test/zynq_fabricmap`) | result |
+|---|---|---|
+| `p2_tests.txt` | `python3 -m unittest -v` over the 20 `b4.tests.test_b4_*` modules | **Ran 255 tests … OK**, exit 0 |
+| `p2_mutants.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/b4_2b4a_mutants.py evidence/b4/unit_2b4a_exposure_settlement_2026_10_19/p2_mutants.txt` | **77 / 77 killed** in 915 s; no `SURVIVED`, `BASELINE-NOT-GREEN` or `EDIT-MISS` line |
+| `p2_import_check.txt` | `python3 evidence/b4/unit_2b4a_repair_2026_10_18/import_check.py` | 49 entries, every digest equal; no tracked file under `b4/` without an entry |
+
+**Status.** `b4-prework`: … `82e863e` (2b-4a accepted), the settlement `8955647` + `1d9525c`, the P2 fix `33d41e8` + this
+verification commit; local only — not pushed, not merged; `main` is `d5bf815`. Delivered for the owner's review. Still not
+authorised: the S = 32 `b4-sim-3` exploration, the formal gate tool and run, units 2c / 2d, the full proof, push / merge,
+procurement and board work.
 
 ## 7. What this does not claim
 
