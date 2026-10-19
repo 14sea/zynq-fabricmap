@@ -90,6 +90,8 @@ from b4_deadline import Deadline, StopWork  # noqa: E402
 
 SIM_REL = bs.SIM_REL
 LABEL_RE = re.compile(r"^b4-sim-[1-9][0-9]*$")                      # production exploration labels (the CLI's only labels)
+GATE_LABEL_RE = re.compile(r"^b4-gate-[1-9][0-9]*$")                 # the formal gate's labels: accepted in mode "gate" only (b4_gate.py, unit 2b-4); the exploration CLI refuses them
+MODES = ("exploration", "gate")
 FIXTURE_LABEL_RE = bs.FIXTURE_LABEL_RE                              # mechanics fixture labels (Python API only)
 ROLES = sc.ROLES
 ENGINE_ARM = {"R": "R", "F": "F", "O": "O", "X": "X", "D": "F", "Omega": "F", "A0": "F"}
@@ -99,6 +101,17 @@ PROBES = th.PROBES
 EXPECTED_COST = {role: {"base": 1, "probes": PROBES if role == "F" else 0, "search": B_MAX, "holdout": 1} for role in ROLES}
 STANDING = ("exploration data under the label given, S as planned; not a gate verdict; the thresholds of docs/b4_architecture.md "
             "v0.1.15 section 9 are listed for reference only; candidate B* / N are estimates on this S, never the formal S = 200's")
+# (the text above is the one every archived exploration carries in its summary; the archive-wide verifier recomputes the summary
+# with it, so it is never edited — the "v0.1.15" it names is the section-9 revision the exploration was written against)
+STANDING_GATE = ("the batch of the formal gate under the label given, S as planned; values beside the thresholds of docs/b4_architecture.md section 9 "
+                 "and not a gate verdict here: the verdict is b4_gate.py's, written in a gate directory under evidence/b4/gate/ and bound to this "
+                 "archive by digest (unit 2b-4); candidate B* / N are the budget rule's on this batch")
+
+
+def standing_for(label: str) -> str:
+    """The standing text a batch's report and summary carry: the gate's for a b4-gate-<n> label, the exploration's otherwise
+    (a mechanics fixture carries the exploration's). A function of the label alone, so the verifier needs no other input."""
+    return STANDING_GATE if isinstance(label, str) and GATE_LABEL_RE.match(label) else STANDING
 ROOT_INPUTS = ("docs/b4_architecture.md", "b4/IMPORT.json", hy.HYPOTHESIS_REL, bm.CERTIFICATE_REL, bs.EXPOSURE_RECEIPT_REL)   # the receipt: pinned, pooled, held at every checkpoint
 FIXTURE_ANCHOR_RULE = "mechanics fixture: an explicit schedule of already-exposed values (b4_seeds.FIXTURE_VALUES); no anchor, no master, no draw"
 
@@ -266,10 +279,15 @@ def namespace_chain(root: Path) -> list[Path]:
     return [root.joinpath(*parts[:i + 1]) for i in range(len(parts))]
 
 
-def preflight(root: Path, label: str, count: int, deadline_s: int, out: Path | None, schedule: FixtureSchedule | None = None) -> dict:
+def preflight(root: Path, label: str, count: int, deadline_s: int, out: Path | None, schedule: FixtureSchedule | None = None, mode: str = "exploration") -> dict:
+    if mode not in MODES:
+        raise Refusal(f"the mode {mode!r} is not one of {MODES}")
     if schedule is None:
-        if not isinstance(label, str) or not LABEL_RE.match(label):
-            raise Refusal(f"the label {label!r} is not an exploration label b4-sim-<n> (the gate's label is unit 2b-4's; a mechanics batch needs a FixtureSchedule)")
+        if mode == "gate":
+            if not isinstance(label, str) or not GATE_LABEL_RE.match(label):
+                raise Refusal(f"the label {label!r} is not a gate label b4-gate-<n> (mode gate; a mechanics batch needs a FixtureSchedule)")
+        elif not isinstance(label, str) or not LABEL_RE.match(label):
+            raise Refusal(f"the label {label!r} is not an exploration label b4-sim-<n> (the gate's label is unit 2b-4's, accepted by b4_gate.py in mode gate only; a mechanics batch needs a FixtureSchedule)")
         try:
             bs.check_label_not_retired(label)                   # a retired label is refused here, before any tree is read and before any master is formed
         except bs.RetiredLabelRefusal as exc:
@@ -631,7 +649,7 @@ class Batch:
     # -- the statistics stage
     def stats(self) -> None:
         self.current = {"pair": None, "stage": "statistics", "role": None}
-        self.summary, self.stats_record = summarise_batch(self.rows, self.c["count"], check=self.dl.check)
+        self.summary, self.stats_record = summarise_batch(self.rows, self.c["count"], check=self.dl.check, standing=standing_for(self.c["label"]))
 
     # -- the end: the archive verified, the report written — both conditions of success (F4, F8)
     def finish(self, status: str, stop: dict | None, exit_code: int) -> dict:
@@ -660,7 +678,7 @@ class Batch:
                 if p["status"] != "complete":
                     missing.append(f"pair {p['pair']}: {p['status']} (arms {p['arms']}, k7 {p['k7']}, k9 {p['k9']}, k10 {p['k10']})")
         report = {"schema": "b4_sim_report", "schema_version": "1.0.0", "status": status, "label": self.c["label"], "fixture": self.c["schedule"] is not None, "count": self.c["count"],
-                  "head": self.c["head"], "generated_utc": utc(), "deadline": self.dl.record(), "standing": STANDING, "thresholds": th.THRESHOLDS,
+                  "head": self.c["head"], "generated_utc": utc(), "deadline": self.dl.record(), "standing": standing_for(self.c["label"]), "thresholds": th.THRESHOLDS,
                   "identity": {"seeds_sha256": self.seeds_sha, "manifest_sha256": self.manifest_sha, "hypothesis_sha256": hy.HYPOTHESIS_SHA256, "certificate_sha256": bm.CERTIFICATE_SHA256,
                                "inputs": self.c["inputs"], "out": self.own_rel},
                   "pairs": [dict(p) for p in self.planned], "files": [dict(e) for e in self.files], "stopped": stopped_doc,
@@ -783,10 +801,10 @@ def _ratio(num: float | None, den: float | None) -> dict:
     return {"numerator": num, "denominator": den, "ratio": num / den, "readable": True, "note": None}
 
 
-def summarise_batch(rows: list[dict], S: int, check=None) -> tuple[dict, dict]:
+def summarise_batch(rows: list[dict], S: int, check=None, standing: str = STANDING) -> tuple[dict, dict]:
     """Descriptive statistics over the completed rows (= all S rows when the batch is complete), per grid budget and at the
     candidate B*; every value beside the fixed threshold it is compared with elsewhere. Pure; `check` is called before each
-    budget's N scan, each bootstrap and each K9 / K10 unit."""
+    budget's N scan, each bootstrap and each K9 / K10 unit. `standing` is the text the summary carries (`standing_for(label)`)."""
     T = th.THRESHOLDS
     if len(rows) != S:
         raise ValueError("the summary is computed on all S rows only")
@@ -859,15 +877,19 @@ def summarise_batch(rows: list[dict], S: int, check=None) -> tuple[dict, dict]:
     summary = {"S": S, "grid": list(GRID), "per_budget": per_budget, "eligible_budgets": eligible,
                "candidate_B_star": {"value": b_star, "reason_if_none": reason, "note": T["B_star"]["no_eligible_budget"]}, "at_candidate_B_star": at,
                "k9": {"per_semantic": k9s, "seeds_with_all_seven_positive_controls": k9_all, "fraction_of_S": k9_all / S},
-               "k10": k10s, "thresholds_for_reference": T, "standing": STANDING}
+               "k10": k10s, "thresholds_for_reference": T, "standing": standing}
     return summary, record
 
 
 # ------------------------------------------------------------------ the batch runner and the CLI
-def run_batch(root: Path, label: str, count: int, deadline_s: int, out: Path | None = None, clock=time.monotonic, port_factory=None, schedule: FixtureSchedule | None = None) -> dict:
+def run_batch(root: Path, label: str, count: int, deadline_s: int, out: Path | None = None, clock=time.monotonic, port_factory=None, schedule: FixtureSchedule | None = None,
+              mode: str = "exploration") -> dict:
+    """`mode` "exploration" (the default and the CLI's only mode) accepts b4-sim-<n> labels; "gate" accepts b4-gate-<n> and is
+    reached through b4_gate.py only (unit 2b-4). Everything else — the pre-flight, the freezing order, the arms, the audits, the
+    diagnostics, the statistics, the archive verification — is the same batch."""
     try:
         dl = Deadline(deadline_s, clock=clock) if isinstance(deadline_s, int) and not isinstance(deadline_s, bool) and deadline_s > 0 else None
-        ctx = preflight(root, label, count, deadline_s, out, schedule)
+        ctx = preflight(root, label, count, deadline_s, out, schedule, mode)
     except Refusal as exc:
         return {"status": "refused", "exit_code": 2, "out": None, "reason": str(exc), "stopped": None, "report": None}
     try:

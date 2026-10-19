@@ -232,6 +232,8 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
     import b4_sim as sim  # the harness's own constants and pure functions; imported here to avoid a cycle
     if _j(manifest["constants"]) != _j(sim.manifest_constants()) or _j(manifest["engine_arm"]) != _j(sim.ENGINE_ARM):
         F.add("manifest.json", "constants / engine_arm are not the harness's")
+    if report["standing"] != sim.standing_for(report["label"]):
+        F.add("sim_report.json", "the standing text is not the one of the label (exploration / gate)")
     if manifest["grid"] != list(GRID) or manifest["budget"] != th.B_MAX:
         F.add("manifest.json", "grid / budget are not the fixed ones")
     planned = report["pairs"]
@@ -433,7 +435,7 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
             F.add("sim_report.json", "a complete report without a complete row per pair")
         else:
             try:
-                summary, _ = sim.summarise_batch(rows, report["count"])
+                summary, _ = sim.summarise_batch(rows, report["count"], standing=sim.standing_for(report["label"]))
             except Exception as exc:  # noqa: BLE001
                 F.add("sim_report.json", f"the summary cannot be recomputed from the rows: {type(exc).__name__}: {exc}")
             else:

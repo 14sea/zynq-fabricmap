@@ -136,8 +136,17 @@ class TheHistoricalSources(unittest.TestCase):
         self.assertEqual(len(by["evidence/b3/sim/sim_report.json"].values), 1, "the master only; count and label are not seeds")
         self.assertIn(2041341936, by["evidence/b3/gate_2/gate_report.json"].values, "control_x.seed_x")
         self.assertIn(4260131137, by["evidence/b3/gate_2/gate_report.json"].values, "the b3-gate-2 master")
-        self.assertEqual(ex.registry, ())
-        self.assertIn("does not exist yet", ex.registry_note)
+        # the registry: exactly the run directories archived under evidence/b4/sim/ (since 5c08536 the S = 32 exploration b4-sim-3 of
+        # 2026-10-19 — read whatever its outcome; a later archived batch appears here too), each read from its own seeds.json
+        archived = sorted(str(d.relative_to(R)) for d in (R / bs.SIM_REL).iterdir() if d.is_dir()) if (R / bs.SIM_REL).is_dir() else []
+        self.assertEqual([r.dir for r in ex.registry], archived)
+        self.assertIn("evidence/b4/sim/b4-sim-3_20261019T121833Z", archived, "the committed exploration is in the registry")
+        for r in ex.registry:
+            self.assertEqual(r.status, "seeds", r.dir)
+            seeds = json.loads((R / r.dir / bs.SEEDS_FILE).read_text())
+            self.assertEqual((r.master_seed, r.seeds_sha256), (seeds["master_seed"], bs.sha256_bytes((R / r.dir / bs.SEEDS_FILE).read_bytes())), r.dir)
+            self.assertEqual(set(r.values), {seeds["master_seed"]} | {v for pr in seeds["pairs"] for v in pr}, r.dir)
+        self.assertIn(f"holds {len(archived)} run directories", ex.registry_note)
 
     def test_the_pool_holds_the_copy_the_exposed_values_and_every_source_value(self):
         ex = bs.load_exclusion_set(R)
@@ -146,7 +155,8 @@ class TheHistoricalSources(unittest.TestCase):
         for s in ex.sources:
             self.assertTrue(set(s.values) <= ex.values, s.path)
         self.assertTrue(set(ex.receipt.values) <= ex.values, "the exposure receipt's values are pooled")
-        self.assertEqual(ex.values, set(bs.B2_EXCLUDED_SEEDS) | set(bs.B4_EXPOSED_VALUES) | {v for s in ex.sources for v in s.values} | set(ex.receipt.values))
+        self.assertTrue(all(set(r.values) <= ex.values for r in ex.registry), "every archived set's values are pooled")
+        self.assertEqual(ex.values, set(bs.B2_EXCLUDED_SEEDS) | set(bs.B4_EXPOSED_VALUES) | {v for s in ex.sources for v in s.values} | set(ex.receipt.values) | {v for r in ex.registry for v in r.values})
         self.assertEqual(ex.as_dict()["exposure_receipt"], {"path": bs.EXPOSURE_RECEIPT_REL, "sha256": bs.EXPOSURE_RECEIPT_SHA256, "count": len(ex.receipt.values)})
         in_sources = {v for s in ex.sources for v in s.values}
         for v in (6, 7, 8, 9, 12, 13):
