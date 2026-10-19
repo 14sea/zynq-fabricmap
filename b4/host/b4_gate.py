@@ -36,8 +36,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import re
+import statistics
 import sys
 import time
 from pathlib import Path
@@ -53,6 +55,7 @@ import b4_k9 as k9  # noqa: E402
 import b4_seeds as bs  # noqa: E402
 import b4_sim as sim  # noqa: E402
 import b4_sim_schema as sc  # noqa: E402
+import b4_stats as st  # noqa: E402
 import b4_thresholds as th  # noqa: E402
 
 GATE_REL = "evidence/b4/gate"                                          # the gate namespace: one directory per judgement, <label>_<UTC>
@@ -69,6 +72,7 @@ VERDICTS = ("PASS", "FAIL", "invalid", "incomplete")
 K_IDS = tuple(f"K{i}" for i in range(1, 11))
 GRID = th.GRID
 SEMANTICS = k9.SEMANTICS
+K10_NOTE = st.summarise([None], th.THRESHOLDS["K10"]["tau"], 1)["note"]          # the driver's own note text, bound by the summary contract
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
 
@@ -121,93 +125,346 @@ def _na(rid: str, criterion: str, method: str, threshold, reason: str, value=Non
     return _row(rid, criterion, method, threshold, value, "not_assessable", reason)
 
 
-# ------------------------------------------------------------------ the summary's own contract (a tampered or malformed summary is `invalid`, never judged)
-def summary_contract_findings(s, S: int) -> list[str]:
-    """The structure the judge reads and its internal consistency: every grid budget present with its k1 / required_pairs / deltas /
-    k7 record; the eligible list equal to the budgets with K1 eligibility and an N; the candidate B* the cheapest eligible one (ties
-    to the smaller budget) or null with its reason; the at-B* record naming the same B* / N / cost; K9 per semantic over the seven;
-    K10 counts summing to S. A finding here is a contract break of the evidence, not a landscape failure."""
+# ------------------------------------------------------------------ the summary's own contract (a tampered, malformed or incoherent summary is `invalid`, never judged)
+#
+# TOTAL on arbitrary decoded JSON (the owner's review of 4cdc0c1, R1 / R2): every shape and exact type is checked before it is indexed or
+# used in arithmetic (a bool is never an int, 64.0 is never the budget 64, a non-finite float is never a number); every field K1–K10 read
+# is bound to the quantity it represents elsewhere in the summary — the at-B* copies to their per-budget originals, the ratios to the
+# means they are made of (through the harness's own `_ratio`), the sign-test p to its counts, Cohen's d to its mean and variance with the
+# one valid encoding of +inf, the N scan to its ascending structure and to the claimed N / power, the fractions to their counts and S,
+# the budget rule to its inputs. The intentional representations (a null N, a null power below n_min, a +inf d, a null median for a
+# semantic with a not-assessable seed) are kept as such; an absent number is a contract finding, never a landscape FAIL.
+def _fin(v) -> bool:
+    return isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+
+
+def _int(v) -> bool:
+    return type(v) is int
+
+
+def _in01(v) -> bool:
+    return _fin(v) and 0 <= v <= 1
+
+
+def _exact(d, want: set, f: list[str], where: str) -> bool:
+    if not isinstance(d, dict):
+        f.append(f"{where}: not an object"); return False
+    if set(d) != want:
+        f.append(f"{where}: keys {sorted(set(d) ^ want)} differ from the schema's"); return False
+    return True
+
+
+def _close(a, b, tol: float = 1e-9) -> bool:
+    return _fin(a) and _fin(b) and abs(a - b) <= tol * max(1.0, abs(a), abs(b))
+
+
+def _sign_p(pos: int, neg: int) -> float:
+    n = pos + neg
+    if n == 0:
+        return 1.0
+    return sum(math.comb(n, i) for i in range(pos, n + 1)) / 2 ** n
+
+
+def _stat_findings(enc, f: list[str], where: str, mean=None, var=None) -> None:
+    """An encoded statistic ({"value", "special"}): special None with a finite value, or special "+inf" with value None — the only two
+    encodings the copied cohen_d produces ("-inf" / "nan" / "none" never occur for a delta list of S ≥ 2). Bound to its mean and
+    population variance when given: variance 0 → +inf when mean > 0, 0.0 when mean ≤ 0; variance > 0 → finite with the sign of the mean."""
+    if not _exact(enc, {"value", "special"}, f, where):
+        return
+    v, s = enc["value"], enc["special"]
+    if s is None:
+        if not _fin(v):
+            f.append(f"{where}: special null needs a finite value"); return
+    elif s == "+inf":
+        if v is not None:
+            f.append(f"{where}: special +inf carries a null value, not {v!r}"); return
+    else:
+        f.append(f"{where}: special {s!r} is not an encoding the copied cohen_d produces"); return
+    if mean is None or var is None:
+        return
+    if var == 0:
+        if mean > 0 and s != "+inf":
+            f.append(f"{where}: all deltas equal and positive encode +inf")
+        if mean <= 0 and not (s is None and v == 0):
+            f.append(f"{where}: all deltas equal and not positive encode 0.0")
+    else:
+        if s is not None:
+            f.append(f"{where}: a positive variance gives a finite d")
+        elif (v > 0) != (mean > 0) or (v < 0) != (mean < 0):
+            f.append(f"{where}: the sign of d {v!r} is not the sign of the mean {mean!r}")
+
+
+def _delta_findings(d, f: list[str], where: str, S: int, expect_mean=None) -> None:
+    if not _exact(d, {"n", "mean", "median", "positives", "negatives", "ties", "sign_test_p", "population_variance", "cohen_d"}, f, where):
+        return
+    if not (_int(d["n"]) and d["n"] == S):
+        f.append(f"{where}.n is not S"); return
+    if not all(_int(d[k]) and d[k] >= 0 for k in ("positives", "negatives", "ties")) or d["positives"] + d["negatives"] + d["ties"] != S:
+        f.append(f"{where}: positives + negatives + ties is not S"); return
+    if not (_fin(d["mean"]) and _fin(d["median"]) and _fin(d["population_variance"]) and d["population_variance"] >= 0):
+        f.append(f"{where}: mean / median / population_variance are not finite numbers (variance ≥ 0)"); return
+    if d["positives"] == 0 and d["negatives"] == 0 and d["ties"] == S and d["mean"] != 0:
+        f.append(f"{where}: all pairs tied with a non-zero mean")
+    if not (_in01(d["sign_test_p"]) and d["sign_test_p"] == _sign_p(d["positives"], d["negatives"])):
+        f.append(f"{where}.sign_test_p is not the one-sided exact p of its counts")
+    if d["population_variance"] == 0 and d["median"] != d["mean"]:
+        f.append(f"{where}: zero variance with median ≠ mean")
+    if expect_mean is not None and not _close(d["mean"], expect_mean):
+        f.append(f"{where}.mean {d['mean']!r} is not the difference of the arm means {expect_mean!r}")
+    _stat_findings(d["cohen_d"], f, where + ".cohen_d", d["mean"], d["population_variance"])
+
+
+def _scan_findings(rp, f: list[str], where: str, S: int, T) -> None:
+    """required_pairs: n_min / n_max; the scan an ascending complete list [[n, rate]] from n_min; with no N every n to S scanned below
+    power_min (empty when S < n_min, then the power is null); with N the scan ends at N whose rate reaches power_min and N is at least 8."""
+    if not _exact(rp, {"N", "power_at_N_or_last", "scan", "n_min", "n_max"}, f, where):
+        return
+    n_min, pmin = T["K5"]["n_min"], T["K5"]["power_min"]
+    if rp["n_min"] != n_min or rp["n_max"] != S:
+        f.append(f"{where}: n_min / n_max are not {n_min} / S"); return
+    scan = rp["scan"]
+    if not (isinstance(scan, list) and all(isinstance(e, list) and len(e) == 2 and _int(e[0]) and _in01(e[1]) for e in scan)):
+        f.append(f"{where}.scan is not a list of [n, rate] with rates in [0, 1]"); return
+    ns = [e[0] for e in scan]
+    if ns != list(range(n_min, n_min + len(ns))):
+        f.append(f"{where}.scan is not the complete ascending scan from {n_min}"); return
+    N, last = rp["N"], rp["power_at_N_or_last"]
+    if N is None:
+        if S < n_min:
+            if scan or last is not None:
+                f.append(f"{where}: S < n_min scans nothing and has no power")
+        else:
+            if ns != list(range(n_min, S + 1)):
+                f.append(f"{where}: no N needs every n from {n_min} to S scanned")
+            elif any(e[1] >= pmin for e in scan):
+                f.append(f"{where}: no N although a scanned rate reaches {pmin}")
+            elif last != scan[-1][1]:
+                f.append(f"{where}: power_at_N_or_last is not the last scanned rate")
+    else:
+        if not (_int(N) and n_min <= N <= S):
+            f.append(f"{where}.N {N!r} is not an int in [{n_min}, S]"); return
+        if ns != list(range(n_min, N + 1)):
+            f.append(f"{where}: the scan does not end at N = {N}")
+        elif any(e[1] >= pmin for e in scan[:-1]) or scan[-1][1] < pmin:
+            f.append(f"{where}: N is not the first n whose rate reaches {pmin}")
+        elif last != scan[-1][1]:
+            f.append(f"{where}: power_at_N_or_last is not the rate at N")
+
+
+def _ratio_findings(r, f: list[str], where: str, num, den) -> None:
+    want = sim._ratio(num, den)
+    if not _exact(r, set(want), f, where):
+        return
+    if sc.canonical(r) != sc.canonical(want):
+        f.append(f"{where} is not the harness's ratio record of its numerator and denominator")
+
+
+def summary_contract_findings(s, S) -> list[str]:
+    """The structure the judge reads, its exact types and its internal coherence (see the module note above). Total: a finding, never an
+    exception, for any decoded JSON. Empty = the summary is well formed and coherent under the frozen method (which says nothing about
+    whether its observations are authentic — that is the archive verifier's)."""
+    T = th.THRESHOLDS
     f: list[str] = []
-    if not isinstance(s, dict):
-        return ["the summary is not an object"]
-    for k in ("S", "grid", "per_budget", "eligible_budgets", "candidate_B_star", "at_candidate_B_star", "k9", "k10"):
-        if k not in s:
-            f.append(f"summary.{k} missing")
-    if f:
+    if not (_int(S) and S > 0):
+        return ["the batch's count is not a positive int"]
+    if not _exact(s, {"S", "grid", "per_budget", "eligible_budgets", "candidate_B_star", "at_candidate_B_star", "k9", "k10", "thresholds_for_reference", "standing"}, f, "summary"):
         return f
-    if s["S"] != S:
+    if s["S"] != S or not _int(s["S"]):
         f.append(f"summary.S {s['S']!r} is not the batch's count {S}")
-    if s["grid"] != list(GRID):
+    if not (isinstance(s["grid"], list) and all(_int(b) for b in s["grid"]) and s["grid"] == list(GRID)):
         f.append("summary.grid is not the fixed grid")
+    if sc.canonical(s["thresholds_for_reference"]) != sc.canonical(T):
+        f.append("summary.thresholds_for_reference is not the thresholds table")
+    if not isinstance(s["standing"], str):
+        f.append("summary.standing is not a string")
     pb = s["per_budget"]
     if not (isinstance(pb, dict) and set(pb) == {str(B) for B in GRID}):
         return f + ["summary.per_budget does not carry exactly the grid budgets"]
-    elig_expected = []
+    elig_expected, both_signs_expected = [], []
     for B in GRID:
+        w = f"per_budget[{B}]"
         v = pb[str(B)]
-        if not (isinstance(v, dict) and all(k in v for k in ("budget", "arm_values", "base", "deltas", "k1", "required_pairs", "cost_N_x_3_x_B", "k7_O_prefix_not_unknown"))):
-            f.append(f"per_budget[{B}]: keys"); continue
-        if v["budget"] != B:
-            f.append(f"per_budget[{B}].budget is {v['budget']!r}")
-        k1, rp = v["k1"], v["required_pairs"]
-        if not (isinstance(k1, dict) and isinstance(k1.get("eligibility"), bool) and _num(k1.get("omega_best_p95")) and _num(k1.get("median_best_R")) and _num(k1.get("median_base"))):
-            f.append(f"per_budget[{B}].k1"); continue
-        if k1["eligibility"] is not bool(k1["omega_best_p95"] < th.THRESHOLDS["K1"]["omega_best_p95_lt"] and k1["median_best_R"] > k1["median_base"]):
-            f.append(f"per_budget[{B}].k1.eligibility is not the one of its own numbers")
-        if not (isinstance(rp, dict) and "N" in rp and "power_at_N_or_last" in rp and (rp["N"] is None or (isinstance(rp["N"], int) and not isinstance(rp["N"], bool) and rp["N"] >= th.THRESHOLDS["K5"]["n_min"]))):
-            f.append(f"per_budget[{B}].required_pairs"); continue
+        if not _exact(v, {"budget", "arm_values", "base", "f_end_to_end", "deltas", "k1", "required_pairs", "cost_N_x_3_x_B", "k7_O_prefix_not_unknown"}, f, w):
+            continue
+        if v["budget"] != B or not _int(v["budget"]):
+            f.append(f"{w}.budget is {v['budget']!r}")
+        av = v["arm_values"]
+        ok_av = _exact(av, set(sc.ROLES), f, w + ".arm_values")
+        if ok_av:
+            for role in sc.ROLES:
+                a = av[role]
+                if not (_exact(a, {"mean", "median", "min", "max"}, f, f"{w}.arm_values.{role}") and all(_fin(a[k]) for k in a) and a["min"] <= a["median"] <= a["max"] and a["min"] <= a["mean"] <= a["max"]):
+                    f.append(f"{w}.arm_values.{role}: finite numbers with min ≤ median, mean ≤ max"); ok_av = False
+        base = v["base"]
+        ok_base = _exact(base, {"mean", "median"}, f, w + ".base") and all(_fin(base[k]) for k in base)
+        if not ok_base:
+            f.append(f"{w}.base: finite mean / median")
+        fe = v["f_end_to_end"]
+        ok_fe = _exact(fe, {"mean", "median", "mapping_in_progress"}, f, w + ".f_end_to_end") and _fin(fe["mean"]) and _fin(fe["median"]) and fe["mapping_in_progress"] is (B <= th.PROBES)
+        if not ok_fe:
+            f.append(f"{w}.f_end_to_end: finite mean / median, mapping_in_progress exactly when B ≤ {th.PROBES}")
+        if ok_fe and B <= th.PROBES and ok_base and not (_close(fe["mean"], base["mean"]) and fe["median"] == base["median"]):
+            f.append(f"{w}.f_end_to_end: mapping in progress means F's base score")
+        dl = v["deltas"]
+        names = {"delta1_O_minus_R": ("O", "R"), "delta2_O_minus_endtoend_F": ("O", None), "F_minus_R": ("F", "R"), "X_minus_R": ("X", "R"), "D_minus_R": ("D", "R"), "Omega_minus_R": ("Omega", "R"), "A0_minus_R": ("A0", "R")}
+        ok_dl = _exact(dl, set(names), f, w + ".deltas")
+        if ok_dl:
+            for name, (x, y) in names.items():
+                em = None
+                if ok_av and ok_fe:
+                    em = av[x]["mean"] - (av[y]["mean"] if y else fe["mean"])
+                _delta_findings(dl[name], f, f"{w}.deltas.{name}", S, em)
+        k1 = v["k1"]
+        ok_k1 = _exact(k1, {"omega_best_p95", "median_best_R", "median_base", "eligibility"}, f, w + ".k1") and all(_fin(k1[k]) for k in ("omega_best_p95", "median_best_R", "median_base")) and isinstance(k1["eligibility"], bool)
+        if not ok_k1:
+            f.append(f"{w}.k1: finite numbers and a bool eligibility")
+        else:
+            if k1["eligibility"] is not bool(k1["omega_best_p95"] < T["K1"]["omega_best_p95_lt"] and k1["median_best_R"] > k1["median_base"]):
+                f.append(f"{w}.k1.eligibility is not the one of its own numbers")
+            if ok_av and not (av["Omega"]["min"] <= k1["omega_best_p95"] <= av["Omega"]["max"]):
+                f.append(f"{w}.k1.omega_best_p95 lies outside Omega's values")
+            if ok_av and k1["median_best_R"] != av["R"]["median"]:
+                f.append(f"{w}.k1.median_best_R is not arm R's median")
+            if ok_base and k1["median_base"] != base["median"]:
+                f.append(f"{w}.k1.median_base is not the base median")
+        rp = v["required_pairs"]
+        before = len(f)
+        _scan_findings(rp, f, w + ".required_pairs", S, T)
+        ok_rp = len(f) == before
         cost = v["cost_N_x_3_x_B"]
-        if (rp["N"] is None and cost is not None) or (rp["N"] is not None and cost != rp["N"] * 3 * B):
-            f.append(f"per_budget[{B}].cost_N_x_3_x_B is not N x 3 x B")
-        for d in ("delta1_O_minus_R", "F_minus_R", "X_minus_R", "D_minus_R", "Omega_minus_R", "delta2_O_minus_endtoend_F"):
-            if not (isinstance(v["deltas"], dict) and isinstance(v["deltas"].get(d), dict)):
-                f.append(f"per_budget[{B}].deltas.{d}")
-        if not (isinstance(v["k7_O_prefix_not_unknown"], dict) and _num(v["k7_O_prefix_not_unknown"].get("median"))):
-            f.append(f"per_budget[{B}].k7_O_prefix_not_unknown")
-        if k1["eligibility"] and rp["N"] is not None:
+        if ok_rp:
+            if rp["N"] is None:
+                if cost is not None:
+                    f.append(f"{w}.cost_N_x_3_x_B is not null without N")
+            elif not (_int(cost) and cost == rp["N"] * 3 * B):
+                f.append(f"{w}.cost_N_x_3_x_B is not N x 3 x B")
+        k7 = v["k7_O_prefix_not_unknown"]
+        if not (_exact(k7, {"values", "median"}, f, w + ".k7_O_prefix_not_unknown") and isinstance(k7["values"], list) and len(k7["values"]) == S
+                and all(_int(x) and 0 <= x <= th.ADDRESSES for x in k7["values"]) and _fin(k7["median"]) and k7["median"] == statistics.median(k7["values"])):
+            f.append(f"{w}.k7_O_prefix_not_unknown: S ints in [0, {th.ADDRESSES}] and their median")
+        if ok_k1 and ok_rp and k1["eligibility"] and rp["N"] is not None:
             elig_expected.append(B)
+        if ok_dl and isinstance(dl.get("delta1_O_minus_R"), dict) and _int(dl["delta1_O_minus_R"].get("positives")) and _int(dl["delta1_O_minus_R"].get("negatives")) \
+                and dl["delta1_O_minus_R"]["positives"] > 0 and dl["delta1_O_minus_R"]["negatives"] > 0:
+            both_signs_expected.append(B)
     if f:
         return f
-    if s["eligible_budgets"] != elig_expected:
+    if not (isinstance(s["eligible_budgets"], list) and all(_int(b) for b in s["eligible_budgets"]) and s["eligible_budgets"] == elig_expected):
         f.append(f"eligible_budgets {s['eligible_budgets']!r} are not the budgets with K1 eligibility and an N {elig_expected!r}")
     cb = s["candidate_B_star"]
-    if not (isinstance(cb, dict) and "value" in cb and "reason_if_none" in cb):
-        return f + ["candidate_B_star"]
+    if not _exact(cb, {"value", "reason_if_none", "note"}, f, "candidate_B_star"):
+        return f
+    if cb["note"] != T["B_star"]["no_eligible_budget"]:
+        f.append("candidate_B_star.note is not the table's")
+    at = s["at_candidate_B_star"]
     if elig_expected:
         want = min(elig_expected, key=lambda B: (pb[str(B)]["cost_N_x_3_x_B"], B))
-        if cb["value"] != want:
+        if not (_int(cb["value"]) and cb["value"] == want):
             f.append(f"candidate_B_star {cb['value']!r} is not the cheapest eligible budget {want} (ties to the smaller)")
-        at = s["at_candidate_B_star"]
-        if not isinstance(at, dict):
-            f.append("at_candidate_B_star is not a record although B* exists")
-        else:
-            B = cb["value"]
-            if at.get("B_star") != B or at.get("N") != pb[str(B)]["required_pairs"]["N"] or at.get("cost_N_x_3_x_B_star") != pb[str(B)]["cost_N_x_3_x_B"]:
-                f.append("at_candidate_B_star's B* / N / cost are not per_budget's")
-            for k in ("k2", "k3", "k4", "k5", "k7"):
-                if not isinstance(at.get(k), dict):
-                    f.append(f"at_candidate_B_star.{k}")
+        if cb["reason_if_none"] is not None:
+            f.append("candidate_B_star.reason_if_none is not null although B* exists")
+        if f:
+            return f
+        B = cb["value"]
+        v, dl = pb[str(B)], pb[str(B)]["deltas"]
+        if not _exact(at, {"B_star", "N", "cost_N_x_3_x_B_star", "k2", "k3", "k4", "k5", "k7"}, f, "at_candidate_B_star"):
+            return f
+        if at["B_star"] != B or not _int(at["B_star"]) or at["N"] != v["required_pairs"]["N"] or at["cost_N_x_3_x_B_star"] != v["cost_N_x_3_x_B"]:
+            f.append("at_candidate_B_star's B* / N / cost are not per_budget's")
+        k2 = at["k2"]
+        if _exact(k2, {"population_variance_delta1", "budgets_with_both_signs", "x_minus_r_bootstrap_nonrejection", "bootstrap"}, f, "at_candidate_B_star.k2"):
+            if k2["population_variance_delta1"] != dl["delta1_O_minus_R"]["population_variance"]:
+                f.append("k2.population_variance_delta1 is not delta1's population variance at B*")
+            if k2["budgets_with_both_signs"] != both_signs_expected:
+                f.append(f"k2.budgets_with_both_signs {k2['budgets_with_both_signs']!r} are not the budgets with both signs of delta1 {both_signs_expected!r}")
+            if not _in01(k2["x_minus_r_bootstrap_nonrejection"]):
+                f.append("k2.x_minus_r_bootstrap_nonrejection is not a rate in [0, 1]")
+            bt = k2["bootstrap"]
+            if not (_exact(bt, {"N", "experiments", "alpha", "seed"}, f, "k2.bootstrap") and bt["N"] == at["N"] and bt["experiments"] == T["K2"]["bootstrap_experiments"] and bt["alpha"] == T["K2"]["alpha"] and bt["seed"] == T["K2"]["bootstrap_seed"]):
+                f.append("k2.bootstrap is not (N, 1000, 0.05, 7)")
+        k3 = at["k3"]
+        if _exact(k3, {"D_over_F", "X_over_O", "D_sign_test_p", "X_sign_test_p"}, f, "at_candidate_B_star.k3"):
+            _ratio_findings(k3["D_over_F"], f, "k3.D_over_F", dl["D_minus_R"]["mean"], dl["F_minus_R"]["mean"])
+            _ratio_findings(k3["X_over_O"], f, "k3.X_over_O", dl["X_minus_R"]["mean"], dl["delta1_O_minus_R"]["mean"])
+            if k3["D_sign_test_p"] != dl["D_minus_R"]["sign_test_p"] or k3["X_sign_test_p"] != dl["X_minus_R"]["sign_test_p"]:
+                f.append("k3's sign-test p values are not the controls' at B*")
+        k4 = at["k4"]
+        if _exact(k4, {"median_best_Omega", "mean_Omega_minus_R", "mean_F_minus_R", "F_over_Omega"}, f, "at_candidate_B_star.k4"):
+            if k4["median_best_Omega"] != v["arm_values"]["Omega"]["median"] or k4["mean_Omega_minus_R"] != dl["Omega_minus_R"]["mean"] or k4["mean_F_minus_R"] != dl["F_minus_R"]["mean"]:
+                f.append("k4's medians / means are not the arm values' at B*")
+            _ratio_findings(k4["F_over_Omega"], f, "k4.F_over_Omega", dl["F_minus_R"]["mean"], dl["Omega_minus_R"]["mean"])
+        k5 = at["k5"]
+        if _exact(k5, {"cohen_d_delta1", "N", "cost"}, f, "at_candidate_B_star.k5"):
+            if sc.canonical(k5["cohen_d_delta1"]) != sc.canonical(dl["delta1_O_minus_R"]["cohen_d"]):
+                f.append("k5.cohen_d_delta1 is not delta1's Cohen's d at B*")
+            if k5["N"] != at["N"] or k5["cost"] != at["cost_N_x_3_x_B_star"]:
+                f.append("k5's N / cost are not the budget rule's")
+        k7 = at["k7"]
+        if _exact(k7, {"median_O_prefix_not_unknown", "values"}, f, "at_candidate_B_star.k7"):
+            if k7["median_O_prefix_not_unknown"] != v["k7_O_prefix_not_unknown"]["median"] or k7["values"] != v["k7_O_prefix_not_unknown"]["values"]:
+                f.append("k7 at B* is not per_budget's K7 record")
     else:
         if cb["value"] is not None or not isinstance(cb["reason_if_none"], str) or not cb["reason_if_none"]:
             f.append("no eligible budget: candidate_B_star must be null with its reason")
-        if s["at_candidate_B_star"] is not None:
+        if at is not None:
             f.append("no B*: at_candidate_B_star must be null")
     k9s = s["k9"]
-    if not (isinstance(k9s, dict) and isinstance(k9s.get("per_semantic"), dict) and set(k9s["per_semantic"]) == set(SEMANTICS) and _num(k9s.get("fraction_of_S"))):
-        f.append("k9: per_semantic over the seven semantics and fraction_of_S")
-    else:
-        for sem, rec in k9s["per_semantic"].items():
-            m = rec.get("median_coverage_over_all_S") if isinstance(rec, dict) else "x"
-            if not (m is None or _num(m)) or not isinstance(rec.get("not_assessable_seeds"), int):
-                f.append(f"k9.per_semantic.{sem}")
-            elif (m is None) is not (rec["not_assessable_seeds"] > 0):
-                f.append(f"k9.per_semantic.{sem}: the median is null exactly when a seed is not assessable")
+    if _exact(k9s, {"per_semantic", "seeds_with_all_seven_positive_controls", "fraction_of_S"}, f, "k9"):
+        k9_all = k9s["seeds_with_all_seven_positive_controls"]
+        if not (_int(k9_all) and 0 <= k9_all <= S):
+            f.append("k9.seeds_with_all_seven_positive_controls is not an int in [0, S]")
+        elif not (_fin(k9s["fraction_of_S"]) and k9s["fraction_of_S"] == k9_all / S):
+            f.append("k9.fraction_of_S is not seeds_with_all_seven_positive_controls / S")
+        per = k9s["per_semantic"]
+        if _exact(per, set(SEMANTICS), f, "k9.per_semantic"):
+            for sem in SEMANTICS:
+                rec = per[sem]
+                w = f"k9.per_semantic.{sem}"
+                if not _exact(rec, {"seeds_with_positive_control", "not_assessable_seeds", "median_coverage_over_all_S", "median_rule", "conditional_on_A8"}, f, w):
+                    continue
+                if not (_int(rec["seeds_with_positive_control"]) and 0 <= rec["seeds_with_positive_control"] <= S and _int(rec["not_assessable_seeds"]) and 0 <= rec["not_assessable_seeds"] <= S):
+                    f.append(f"{w}: counts are ints in [0, S]"); continue
+                if _int(k9_all) and rec["seeds_with_positive_control"] < k9_all:
+                    f.append(f"{w}: fewer seeds with a positive control than seeds with all seven")
+                m = rec["median_coverage_over_all_S"]
+                if rec["not_assessable_seeds"] > 0:
+                    if m is not None:
+                        f.append(f"{w}: a not-assessable seed leaves no median")
+                elif not _in01(m):
+                    f.append(f"{w}: the median coverage is not a number in [0, 1]")
+                if rec["median_rule"] != T["K9"]["median_population"]:
+                    f.append(f"{w}.median_rule is not the table's")
+                if rec["conditional_on_A8"] is not (sem == "ff_init"):
+                    f.append(f"{w}.conditional_on_A8 is not {sem == 'ff_init'}")
     k10s = s["k10"]
-    if not (isinstance(k10s, dict) and isinstance(k10s.get("counts"), dict) and _num(k10s.get("fraction_interacting_over_S")) and k10s.get("tau") == th.THRESHOLDS["K10"]["tau"]):
-        f.append("k10: counts, fraction_interacting_over_S, tau")
-    elif sum(v for v in k10s["counts"].values() if isinstance(v, int)) != S or k10s["counts"].get("interacting") is None \
-            or abs(k10s["fraction_interacting_over_S"] - k10s["counts"]["interacting"] / S) > 1e-12:
-        f.append("k10: the counts do not sum to S or the fraction is not interacting / S")
+    if _exact(k10s, {"tau", "S", "counts", "fraction_interacting_over_S", "note"}, f, "k10"):
+        if k10s["tau"] != T["K10"]["tau"] or k10s["S"] != S or not _int(k10s["S"]):
+            f.append("k10: tau / S are not the table's / the batch's")
+        if k10s["note"] != K10_NOTE:
+            f.append("k10.note is not the driver's")
+        c = k10s["counts"]
+        if _exact(c, set(st.OUTCOMES), f, "k10.counts"):
+            if not all(_int(x) and x >= 0 for x in c.values()) or sum(c.values()) != S:
+                f.append("k10.counts: non-negative ints summing to S")
+            elif not (_fin(k10s["fraction_interacting_over_S"]) and k10s["fraction_interacting_over_S"] == c[st.INTERACTING] / S):
+                f.append("k10.fraction_interacting_over_S is not interacting / S")
+    return f
+
+
+def doc_identity_findings(doc) -> list[str]:
+    """The report-like document's identity fields the judge reads: status one of the harness's, label a string of the label grammar,
+    fixture a bool, count a positive int. Total."""
+    f: list[str] = []
+    if not isinstance(doc, dict):
+        return ["the document is not an object"]
+    if doc.get("status") not in sc.STATUSES:
+        f.append(f"status {doc.get('status')!r} is not one of {sc.STATUSES}")
+    if not (isinstance(doc.get("label"), str) and bs.LABEL_RE.match(doc["label"])):
+        f.append("label is not a label")
+    if not isinstance(doc.get("fixture"), bool):
+        f.append("fixture is not a bool")
+    if not (_int(doc.get("count")) and doc["count"] > 0):
+        f.append("count is not a positive int")
     return f
 
 
@@ -235,9 +492,11 @@ def judge(doc: dict, evidence_kind: str = "batch_archive") -> dict:
     if evidence_kind not in EVIDENCE_KINDS:
         raise ValueError(f"evidence kind {evidence_kind!r}")
     T = th.THRESHOLDS
-    status, S, label = doc.get("status"), doc.get("count"), doc.get("label")
-    formal_r = formal_reasons(doc, evidence_kind)
-    out = {"label": label, "S": S, "fixture": doc.get("fixture"), "batch_status": status, "evidence_kind": evidence_kind,
+    idf = doc_identity_findings(doc)
+    g = (lambda k: doc.get(k)) if isinstance(doc, dict) else (lambda k: None)
+    status, S, label = g("status"), g("count"), g("label")
+    formal_r = formal_reasons(doc if isinstance(doc, dict) else {}, evidence_kind)
+    out = {"label": label, "S": S, "fixture": g("fixture"), "batch_status": status, "evidence_kind": evidence_kind,
            "formal": not formal_r, "formal_reasons": formal_r, "contract_findings": []}
     meth = {
         "K1": "percentile(best_Omega(B*), 95) < 64 (B2 linear interpolation, by copy) and median_r(best_R(B*)) > median_r(base_r), two medians compared; eligibility at every grid budget decides B*",
@@ -271,6 +530,11 @@ def judge(doc: dict, evidence_kind: str = "batch_archive") -> dict:
         out["verdict"] = {"status": verdict, "reason": verdict_reason}
         return out
 
+    if idf:
+        out["contract_findings"] = idf
+        out["formal"], out["formal_reasons"] = False, formal_r + ["the document's identity fields break the contract"]
+        return all_na("the document's identity fields break the contract: nothing is judged", "not_assessable", "the document breaks its contract", "invalid",
+                      "the document's identity fields break the contract: " + "; ".join(idf[:3]))
     if status in ("invalid", "incomplete"):
         return all_na(f"the batch is {status}: no pooled summary, nothing is judged", "not_assessable", f"the batch is {status}", status,
                       "a tool / source / replay / control contract break is invalid, never a landscape failure" if status == "invalid" else "unfinished work is incomplete, never a result")

@@ -6,6 +6,9 @@ b4_seeds.master_seed / pair_seeds guarded so that NO PRODUCTION SET can be deriv
   incomplete  — the same under a fake clock that expires the 60 s deadline inside pair 0's K9: judged incomplete;
   pass        — a SYNTHETIC summary (invented numbers, label b4-mech-7) judged PASS with formal = false;
   fail_b_star — the same synthetic summary with ff_srval's median coverage 0.427083 (the exploration's value): B* exists, K9 FAILS.
+  negatives/… — six incoherent summaries (the owner's review of 4cdc0c1, R1 / R2) written over the synthetic PASS evidence with the PASS
+                report kept and every digest refreshed: the fresh-process verifier must refuse each (exit 1);
+  invalid_controls/… — the same six judged directly: invalid reports that verify clean.
 Each gate directory is verified by the verifier CLI in a FRESH PROCESS (stdout and exit code kept), then the hermetic root's
 evidence/b4/{sim,gate} trees of the case are copied here under e2e/<case>/root/ so that the verification can be repeated from
 this evidence directory, and repeated it is (a second fresh-process run on the copy). Nothing here is a gate result.
@@ -22,7 +25,17 @@ import b4_gate as bg  # noqa: E402
 import b4_seeds as bs  # noqa: E402
 import b4_sim as sim  # noqa: E402
 from b4_test_fixtures import InjectingPort  # noqa: E402
-from test_b4_gate import SCHED1, SYN_LABEL, Clock, build_hermetic, git, synthetic_doc, synthetic_summary  # noqa: E402
+from test_b4_gate import SCHED1, SYN_LABEL, Clock, build_hermetic, git, regate, synthetic_doc, synthetic_summary  # noqa: E402
+
+NEGATIVES = {  # the owner's review of 4cdc0c1 (R1 / R2): incoherent or malformed summaries that must never become a clean PASS artifact
+    "empty_N_scan": lambda s: s["per_budget"]["64"]["required_pairs"].__setitem__("scan", []),
+    "contradictory_delta1_d": lambda s: s["per_budget"]["64"]["deltas"]["delta1_O_minus_R"].__setitem__("cohen_d", {"value": -1.0, "special": None}),
+    "inconsistent_positive_infinity": lambda s: (s["per_budget"]["64"]["deltas"]["delta1_O_minus_R"].__setitem__("cohen_d", {"value": -100, "special": "+inf"}),
+                                                 s["at_candidate_B_star"]["k5"].__setitem__("cohen_d_delta1", {"value": -100, "special": "+inf"})),
+    "K9_fraction_above_one": lambda s: s["k9"].__setitem__("fraction_of_S", 2.0),
+    "D_over_F_null": lambda s: s["at_candidate_B_star"]["k3"].__setitem__("D_over_F", None),
+    "B_star_as_float": lambda s: s["candidate_B_star"].__setitem__("value", 64.0),
+}
 
 
 def guard(*a, **k):
@@ -81,10 +94,45 @@ def main() -> int:
                 (case_dir / "verify_on_the_evidence_copy.txt").write_text(f"HEAD {head}\ncommand: python3 -B b4/host/b4_gate_verify.py {case_dir / 'root' / bg.GATE_REL / gdir.name}\nexit {code2}\n\n{text2}")
                 summary["cases"][name] = rec
                 print(name, rec["status"], rec["exit_code"], "verifier", code, code2, flush=True)
+            # the negatives: the committed synthetic PASS evidence overwritten by an incoherent summary with the PASS report kept, every
+            # digest refreshed and the markdown re-rendered — the fresh-process verifier must refuse it (exit 1); and the positive control:
+            # the same evidence judged directly is an invalid report that verifies clean (exit 0 from the verifier, exit 1 from the tool)
+            pass_dir = gns / f"{SYN_LABEL}_pass"
+            summary["negatives"], summary["invalid_controls"] = {}, {}
+            bad = 0
+            for name, mutate in NEGATIVES.items():
+                tdir = gns / f"{SYN_LABEL}_neg_{name}"
+                shutil.copytree(pass_dir, tdir)
+                syn = json.loads((tdir / bg.SYNTHETIC_JSON).read_text()); mutate(syn["summary"])
+                (tdir / bg.SYNTHETIC_JSON).write_bytes(sim.json_text(syn))
+                doc = json.loads((tdir / bg.REPORT_JSON).read_text()); doc["batch"]["sha256"] = bg.sha_file(tdir / bg.SYNTHETIC_JSON)
+                (tdir / bg.REPORT_JSON).write_bytes(sim.json_text(doc)); regate(tdir)
+                commit()
+                code, text = fresh(tdir)
+                case_dir = out / "negatives" / name
+                (case_dir / "root" / "evidence/b4").mkdir(parents=True)
+                shutil.copytree(tdir, case_dir / "root" / bg.GATE_REL / tdir.name)
+                (case_dir / "verify_in_hermetic_root.txt").write_text(f"HEAD {head}\nexpected: exit 1 (the PASS report is not the judgement of its evidence)\ncommand: python3 -B b4/host/b4_gate_verify.py {tdir}\nexit {code}\n\n{text}")
+                code2, text2 = fresh(case_dir / "root" / bg.GATE_REL / tdir.name)
+                (case_dir / "verify_on_the_evidence_copy.txt").write_text(f"HEAD {head}\nexpected: exit 1\ncommand: python3 -B b4/host/b4_gate_verify.py {case_dir / 'root' / bg.GATE_REL / tdir.name}\nexit {code2}\n\n{text2}")
+                summary["negatives"][name] = {"expected_verifier_exit": 1, "fresh_verifier_exit_in_hermetic_root": code, "fresh_verifier_exit_on_the_evidence_copy": code2}
+                bad += (code != 1) + (code2 != 1)
+                r = bg.judge_synthetic(root, syn, gns / f"{SYN_LABEL}_invalid_{name}")
+                commit()
+                gdir = Path(r["gate_out"]); d = json.loads((gdir / bg.REPORT_JSON).read_text())
+                code3, text3 = fresh(gdir)
+                c3 = out / "invalid_controls" / name
+                (c3 / "root" / "evidence/b4").mkdir(parents=True)
+                shutil.copytree(gdir, c3 / "root" / bg.GATE_REL / gdir.name)
+                (c3 / "verify_in_hermetic_root.txt").write_text(f"HEAD {head}\nexpected: the tool exit 1 (verdict invalid), the verifier exit 0\ncommand: python3 -B b4/host/b4_gate_verify.py {gdir}\nexit {code3}\n\n{text3}")
+                summary["invalid_controls"][name] = {"tool_status": r["status"], "tool_exit": r["exit_code"], "verdict": d["verdict"]["status"], "contract_findings": d["contract_findings"][:3], "fresh_verifier_exit": code3}
+                bad += (r["status"] != "invalid") + (code3 != 0)
+                print("negative", name, "verifier", code, code2, "| invalid control", r["status"], "verifier", code3, flush=True)
         summary["production_derivation_calls"] = [g1.call_count, g2.call_count]
+        summary["negatives_as_expected"] = bad == 0
     (out / "summary.json").write_text(json.dumps(summary, indent=1, sort_keys=True) + "\n")
-    print(json.dumps(summary["production_derivation_calls"]))
-    return 0
+    print(json.dumps(summary["production_derivation_calls"]), "negatives as expected:", summary["negatives_as_expected"])
+    return 0 if summary["negatives_as_expected"] else 1
 
 
 if __name__ == "__main__":

@@ -37,6 +37,7 @@ import b4_seeds as bs  # noqa: E402
 import b4_sim as sim  # noqa: E402
 import b4_sim_schema as sc  # noqa: E402
 import b4_sim_verify as sv  # noqa: E402
+import b4_stats as st  # noqa: E402
 import b4_thresholds as th  # noqa: E402
 from b4_test_fixtures import InjectingPort  # noqa: E402
 from test_b4_sim import SCHED1, Clock, build_hermetic, entry, git, production_derivation_reached, reindex  # noqa: E402
@@ -46,65 +47,118 @@ SIM3_REPORT = R / "evidence/b4/sim/b4-sim-3_20261019T121833Z/sim_report.json"   
 SYN_LABEL = "b4-mech-7"
 
 
-# ------------------------------------------------------------------ a synthetic summary shaped like summarise_batch's output
-def _delta(mean, d, pos, neg, ties, p, var=4.0):
-    return {"n": pos + neg + ties, "mean": mean, "median": mean, "positives": pos, "negatives": neg, "ties": ties, "sign_test_p": p,
-            "population_variance": var, "cohen_d": {"value": d, "special": None}}
+# ------------------------------------------------------------------ a synthetic summary shaped like summarise_batch's output, COHERENT by construction
+def _fit(pos, neg, ties, S):
+    """The count primitives (given for S = 200) scaled to S by the largest-remainder rule (so that a small S keeps a non-tied pair)."""
+    total = pos + neg + ties
+    if total == S:
+        return pos, neg, ties
+    exact = [pos * S / total, neg * S / total, ties * S / total]
+    out = [int(x) for x in exact]
+    for i in sorted(range(3), key=lambda i: exact[i] - int(exact[i]), reverse=True)[:S - sum(out)]:
+        out[i] += 1
+    return tuple(out)
 
 
-def _ratio(num, den):
-    if den <= 0:
-        return {"numerator": num, "denominator": den, "ratio": None, "readable": False, "note": "a non-positive denominator cannot be read as a ratio condition"}
-    return {"numerator": num, "denominator": den, "ratio": num / den, "readable": True, "note": None}
+def _delta(mean, pos, neg, ties, var, S):
+    """A delta record from primitives, coherent under the summary contract: counts summing to S, the exact sign-test p of the counts,
+    Cohen's d with the sign of the mean (finite when the variance is positive; +inf when all deltas are equal and positive, 0.0 when
+    equal and not positive)."""
+    pos, neg, ties = _fit(pos, neg, ties, S)
+    if var == 0:
+        pos, neg, ties = (S, 0, 0) if mean > 0 else (0, S, 0) if mean < 0 else (0, 0, S)
+    assert pos + neg + ties == S, (pos, neg, ties, S)
+    if var == 0:
+        d = {"value": None, "special": "+inf"} if mean > 0 else {"value": 0.0, "special": None}
+    else:
+        d = {"value": mean / var ** 0.5, "special": None}
+    return {"n": S, "mean": mean, "median": mean, "positives": pos, "negatives": neg, "ties": ties, "sign_test_p": bg._sign_p(pos, neg), "population_variance": var, "cohen_d": d}
 
 
-def synthetic_summary(S=200, b_star=64, N=16, power=0.95) -> dict:
-    """A PASS-shaped summary: K1 eligible at every budget, an N only at `b_star` (so it is the one eligible budget), delta1 with a
-    clear positive effect, controls flat, Omega within the margin, K9 / K10 full. Every number is invented: it is a fixture of
-    the judge's paths, never data."""
-    T = th.THRESHOLDS
+def _arm(mean, spread=5.0):
+    return {"mean": mean, "median": mean, "min": mean - spread, "max": mean + spread}
+
+
+def synthetic_summary(S=200, b_star=64, N=16, power=0.95, *, d1=(5.0, 150, 20, 30), f=(5.0, 150, 20, 30), x=(0.1, 60, 70, 70), d=(0.1, 60, 70, 70),
+                      om=(8.0, 190, 5, 5), a0=(0.0, 50, 50, 100), var=4.0, var1=None, r_mean=12.0, base=4.0, omega_p95=None, k7_median=15, k9_medians=None, k9_na=None,
+                      k9_all=None, nonreject=0.97, k10=None, f_end=11.0) -> dict:
+    """A PASS-shaped summary built from primitives so that every binding of the summary contract holds: the arm means from the deltas,
+    the delta records from (mean, positives, negatives, ties) and the common variance, K1 from the arm values, the N scan from N and the
+    power, the eligible list and B* by the budget rule, the at-B* record copied from the per-budget originals, K9 / K10 from their counts.
+    Every number is invented: a fixture of the judge's paths, never data. A parameter outside the PASS region makes exactly the row it
+    belongs to fail — coherently."""
+    import copy
+    T = copy.deepcopy(th.THRESHOLDS)                                   # a copy: a test that mutates the table in a summary never touches the module's
+    var1 = var if var1 is None else var1
+    k9_all = S if k9_all is None else k9_all
+    k10 = (S, 0, 0, 0) if k10 is None else k10
+    k9_medians = dict.fromkeys(k9.SEMANTICS, 1.0) | (k9_medians or {})
+    k9_na = dict.fromkeys(k9.SEMANTICS, 0) | (k9_na or {})
+    means = {"R": r_mean, "O": r_mean + d1[0], "F": r_mean + f[0], "X": r_mean + x[0], "D": r_mean + d[0], "Omega": r_mean + om[0], "A0": r_mean + a0[0]}
     per_budget = {}
     for B in GRID:
         n = N if B == b_star else None
-        scan = [[k, 0.3] for k in range(8, S + 1)] if n is None else [[k, 0.3] for k in range(8, n)] + [[n, power]]
+        if S < T["K5"]["n_min"]:
+            scan, last = [], None
+        elif n is None:
+            scan = [[k, 0.3] for k in range(T["K5"]["n_min"], S + 1)]; last = 0.3
+        else:
+            scan = [[k, 0.3] for k in range(T["K5"]["n_min"], n)] + [[n, power]]; last = power
+        fe_mean = base if B <= th.PROBES else f_end
+        arm_values = {role: _arm(means[role]) for role in sc.ROLES}
+        p95 = omega_p95 if omega_p95 is not None else arm_values["Omega"]["max"]
+        k1 = {"omega_best_p95": p95, "median_best_R": arm_values["R"]["median"], "median_base": base,
+              "eligibility": bool(p95 < T["K1"]["omega_best_p95_lt"] and arm_values["R"]["median"] > base)}
         per_budget[str(B)] = {
-            "budget": B,
-            "arm_values": {role: {"mean": 12.0, "median": 12.0, "min": 8, "max": 16} for role in sc.ROLES} | {"Omega": {"mean": 30.0, "median": 30.0, "min": 20, "max": 40}},
-            "base": {"mean": 4.0, "median": 4.0}, "f_end_to_end": {"mean": 11.0, "median": 11.0, "mapping_in_progress": B <= 21},
-            "deltas": {"delta1_O_minus_R": _delta(5.0, 0.9, 150, 20, 30, 1e-20), "delta2_O_minus_endtoend_F": _delta(1.0, 0.2, 90, 80, 30, 0.2),
-                       "F_minus_R": _delta(5.0, 0.2, 150, 20, 30, 1e-20), "X_minus_R": _delta(0.1, 0.03, 60, 70, 70, 0.8), "D_minus_R": _delta(0.1, 0.03, 60, 70, 70, 0.6),
-                       "Omega_minus_R": _delta(8.0, 1.5, 190, 5, 5, 1e-40), "A0_minus_R": _delta(0.0, 0.0, 50, 50, 100, 0.5)},
-            "k1": {"omega_best_p95": 40.0, "median_best_R": 12.0, "median_base": 4.0, "eligibility": True},
-            "required_pairs": {"N": n, "power_at_N_or_last": power if n is not None else 0.3, "scan": scan, "n_min": T["K5"]["n_min"], "n_max": S},
+            "budget": B, "arm_values": arm_values, "base": {"mean": base, "median": base},
+            "f_end_to_end": {"mean": fe_mean, "median": fe_mean, "mapping_in_progress": B <= th.PROBES},
+            "deltas": {"delta1_O_minus_R": _delta(d1[0], d1[1], d1[2], d1[3], var1, S), "delta2_O_minus_endtoend_F": _delta(means["O"] - fe_mean, 90, 80, 30, var, S),
+                       "F_minus_R": _delta(f[0], f[1], f[2], f[3], var, S), "X_minus_R": _delta(x[0], x[1], x[2], x[3], var, S), "D_minus_R": _delta(d[0], d[1], d[2], d[3], var, S),
+                       "Omega_minus_R": _delta(om[0], om[1], om[2], om[3], var, S), "A0_minus_R": _delta(a0[0], a0[1], a0[2], a0[3], var, S)},
+            "k1": k1, "required_pairs": {"N": n, "power_at_N_or_last": last, "scan": scan, "n_min": T["K5"]["n_min"], "n_max": S},
             "cost_N_x_3_x_B": None if n is None else n * 3 * B,
-            "k7_O_prefix_not_unknown": {"values": [15] * S, "median": 15.0}}
+            "k7_O_prefix_not_unknown": {"values": [k7_median] * S, "median": float(k7_median)}}
     eligible = [B for B in GRID if per_budget[str(B)]["k1"]["eligibility"] and per_budget[str(B)]["required_pairs"]["N"] is not None]
-    pb = per_budget[str(b_star)]
-    dl = pb["deltas"]
-    at = {"B_star": b_star, "N": N, "cost_N_x_3_x_B_star": pb["cost_N_x_3_x_B"],
-          "k2": {"population_variance_delta1": 4.0, "budgets_with_both_signs": list(GRID), "x_minus_r_bootstrap_nonrejection": 0.97,
-                 "bootstrap": {"N": N, "experiments": 1000, "alpha": 0.05, "seed": 7}},
-          "k3": {"D_over_F": _ratio(dl["D_minus_R"]["mean"], dl["F_minus_R"]["mean"]), "X_over_O": _ratio(dl["X_minus_R"]["mean"], dl["delta1_O_minus_R"]["mean"]),
-                 "D_sign_test_p": dl["D_minus_R"]["sign_test_p"], "X_sign_test_p": dl["X_minus_R"]["sign_test_p"]},
-          "k4": {"median_best_Omega": 30.0, "mean_Omega_minus_R": 8.0, "mean_F_minus_R": 5.0, "F_over_Omega": _ratio(5.0, 8.0)},
-          "k5": {"cohen_d_delta1": dl["delta1_O_minus_R"]["cohen_d"], "N": N, "cost": pb["cost_N_x_3_x_B"]},
-          "k7": {"median_O_prefix_not_unknown": 15.0, "values": [15] * S}}
-    k9s = {s: {"seeds_with_positive_control": S, "not_assessable_seeds": 0, "median_coverage_over_all_S": 1.0, "median_rule": T["K9"]["median_population"], "conditional_on_A8": s == "ff_init"}
-           for s in k9.SEMANTICS}
-    return {"S": S, "grid": list(GRID), "per_budget": per_budget, "eligible_budgets": eligible,
-            "candidate_B_star": {"value": b_star, "reason_if_none": None, "note": T["B_star"]["no_eligible_budget"]}, "at_candidate_B_star": at,
-            "k9": {"per_semantic": k9s, "seeds_with_all_seven_positive_controls": S, "fraction_of_S": 1.0},
-            "k10": {"tau": 2, "S": S, "counts": {"interacting": S, "nonzero_below_threshold": 0, "no_interaction_seen_among_tested_comparisons": 0, "not_assessable": 0},
-                    "fraction_interacting_over_S": 1.0, "note": "synthetic"},
-            "thresholds_for_reference": T, "standing": "SYNTHETIC: invented numbers shaped like the harness's summary; a fixture of the judge's paths, never data"}
+    both = [B for B in GRID if per_budget[str(B)]["deltas"]["delta1_O_minus_R"]["positives"] > 0 and per_budget[str(B)]["deltas"]["delta1_O_minus_R"]["negatives"] > 0]
+    if eligible:
+        bs_ = min(eligible, key=lambda B: (per_budget[str(B)]["cost_N_x_3_x_B"], B))
+        pb = per_budget[str(bs_)]; dl = pb["deltas"]
+        at = {"B_star": bs_, "N": pb["required_pairs"]["N"], "cost_N_x_3_x_B_star": pb["cost_N_x_3_x_B"],
+              "k2": {"population_variance_delta1": dl["delta1_O_minus_R"]["population_variance"], "budgets_with_both_signs": both, "x_minus_r_bootstrap_nonrejection": nonreject,
+                     "bootstrap": {"N": pb["required_pairs"]["N"], "experiments": T["K2"]["bootstrap_experiments"], "alpha": T["K2"]["alpha"], "seed": T["K2"]["bootstrap_seed"]}},
+              "k3": {"D_over_F": sim._ratio(dl["D_minus_R"]["mean"], dl["F_minus_R"]["mean"]), "X_over_O": sim._ratio(dl["X_minus_R"]["mean"], dl["delta1_O_minus_R"]["mean"]),
+                     "D_sign_test_p": dl["D_minus_R"]["sign_test_p"], "X_sign_test_p": dl["X_minus_R"]["sign_test_p"]},
+              "k4": {"median_best_Omega": pb["arm_values"]["Omega"]["median"], "mean_Omega_minus_R": dl["Omega_minus_R"]["mean"], "mean_F_minus_R": dl["F_minus_R"]["mean"],
+                     "F_over_Omega": sim._ratio(dl["F_minus_R"]["mean"], dl["Omega_minus_R"]["mean"])},
+              "k5": {"cohen_d_delta1": dl["delta1_O_minus_R"]["cohen_d"], "N": pb["required_pairs"]["N"], "cost": pb["cost_N_x_3_x_B"]},
+              "k7": {"median_O_prefix_not_unknown": pb["k7_O_prefix_not_unknown"]["median"], "values": pb["k7_O_prefix_not_unknown"]["values"]}}
+        cb = {"value": bs_, "reason_if_none": None, "note": T["B_star"]["no_eligible_budget"]}
+    else:
+        at = None
+        cb = {"value": None, "reason_if_none": "no grid budget has both K1 eligibility and an N: the budget rule's candidate does not exist on this S (not invented)", "note": T["B_star"]["no_eligible_budget"]}
+    k9s = {s: {"seeds_with_positive_control": S, "not_assessable_seeds": k9_na[s], "median_coverage_over_all_S": None if k9_na[s] > 0 else k9_medians[s],
+               "median_rule": T["K9"]["median_population"], "conditional_on_A8": s == "ff_init"} for s in k9.SEMANTICS}
+    counts = dict(zip(st.OUTCOMES, k10))
+    return {"S": S, "grid": list(GRID), "per_budget": per_budget, "eligible_budgets": eligible, "candidate_B_star": cb, "at_candidate_B_star": at,
+            "k9": {"per_semantic": k9s, "seeds_with_all_seven_positive_controls": k9_all, "fraction_of_S": k9_all / S},
+            "k10": {"tau": T["K10"]["tau"], "S": S, "counts": counts, "fraction_interacting_over_S": counts[st.INTERACTING] / S, "note": bg.K10_NOTE},
+            "thresholds_for_reference": T, "standing": sim.STANDING}
 
 
 def no_b_star(summary: dict) -> dict:
-    """The same summary with no N anywhere: the budget rule's candidate does not exist."""
+    """The same summary with no N anywhere: the budget rule's candidate does not exist (rebuilt coherently)."""
+    return synthetic_summary(S=summary["S"], N=None, b_star=None) if False else _no_b_star(summary)
+
+
+def _no_b_star(summary: dict) -> dict:
+    S = summary["S"]
     for B in GRID:
         v = summary["per_budget"][str(B)]
-        v["required_pairs"]["N"] = None; v["required_pairs"]["power_at_N_or_last"] = 0.3; v["required_pairs"]["scan"] = [[k, 0.3] for k in range(8, summary["S"] + 1)]
-        v["cost_N_x_3_x_B"] = None
+        v["required_pairs"]["N"] = None; v["cost_N_x_3_x_B"] = None
+        if S < th.THRESHOLDS["K5"]["n_min"]:
+            v["required_pairs"]["scan"], v["required_pairs"]["power_at_N_or_last"] = [], None
+        else:
+            v["required_pairs"]["scan"] = [[k, 0.3] for k in range(th.THRESHOLDS["K5"]["n_min"], S + 1)]; v["required_pairs"]["power_at_N_or_last"] = 0.3
     summary["eligible_budgets"] = []
     summary["candidate_B_star"] = {"value": None, "reason_if_none": "no grid budget has both K1 eligibility and an N: the budget rule's candidate does not exist on this S (not invented)", "note": th.THRESHOLDS["B_star"]["no_eligible_budget"]}
     summary["at_candidate_B_star"] = None
@@ -121,10 +175,36 @@ def rows_by_id(j: dict) -> dict:
     return {r["id"]: r for r in j["rows"]}
 
 
+def paths_of(obj, prefix=()):
+    """Every path (as a tuple of keys / indexes) to every node of a JSON structure, containers included."""
+    yield prefix, obj
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            yield from paths_of(v, prefix + (k,))
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            yield from paths_of(v, prefix + (i,))
+
+
+def with_replaced(obj, path, value):
+    """A deep copy of obj with the node at `path` replaced by `value`."""
+    import copy
+    o = copy.deepcopy(obj)
+    if not path:
+        return value
+    node = o
+    for k in path[:-1]:
+        node = node[k]
+    node[path[-1]] = value
+    return o
+
+
 # ------------------------------------------------------------------ the judge, pure
 class TheJudge(unittest.TestCase):
-    def test_a_pass_shaped_synthetic_summary_passes_every_row_but_is_never_formal(self):
-        j = bg.judge(synthetic_doc(synthetic_summary()), "synthetic_summary")
+    def test_the_synthetic_summary_is_coherent_under_the_contract_and_passes_every_row_but_is_never_formal(self):
+        s = synthetic_summary()
+        self.assertEqual(bg.summary_contract_findings(s, 200), [])
+        j = bg.judge(synthetic_doc(s), "synthetic_summary")
         self.assertEqual([r["status"] for r in j["rows"]], ["PASS"] * 10)
         self.assertEqual([r["id"] for r in j["rows"]], list(bg.K_IDS))
         self.assertEqual((j["budget_rule"]["status"], j["budget_rule"]["B_star"], j["budget_rule"]["N"], j["budget_rule"]["cost_N_x_3_x_B_star"]), ("PASS", 64, 16, 3072))
@@ -133,7 +213,7 @@ class TheJudge(unittest.TestCase):
         self.assertEqual(len(j["formal_reasons"]), 3, j["formal_reasons"])          # the evidence kind, the fixture, the label
         self.assertTrue(any("synthetic_summary" in x for x in j["formal_reasons"]) and any("fixture" in x for x in j["formal_reasons"]) and any("pinned gate label" in x for x in j["formal_reasons"]))
         rows = rows_by_id(j)
-        self.assertEqual(rows["K5"]["value"]["N"], 16); self.assertEqual(rows["K5"]["value"]["cohen_d_delta1"], {"value": 0.9, "special": None})
+        self.assertEqual(rows["K5"]["value"]["N"], 16); self.assertEqual(rows["K5"]["value"]["cohen_d_delta1"], {"value": 2.5, "special": None})
         self.assertEqual(rows["K6"]["value"], {"S_planned": 200, "N": 16})
         for r in j["rows"]:
             self.assertTrue(r["method"] and r["criterion"] and r["reason"], r["id"])
@@ -145,72 +225,67 @@ class TheJudge(unittest.TestCase):
         self.assertTrue(j["formal"]); self.assertEqual(j["formal_reasons"], []); self.assertEqual(j["verdict"]["status"], "PASS"); self.assertNotIn("NOT", j["verdict"]["reason"])
         for kind, over in (("synthetic_summary", {}), ("batch_archive", {"fixture": True}), ("batch_archive", {"label": "b4-gate-2"}), ("batch_archive", {"count": 199}), ("batch_archive", {"status": "invalid"})):
             dd = dict(d, **over)
+            if "count" in over:
+                dd["summary"] = synthetic_summary(S=199)
             self.assertFalse(bg.judge(dd, kind)["formal"], (kind, over))
 
     def test_each_row_fails_on_its_own_number_and_the_verdict_names_it(self):
-        def case(mutate, rid, reason_part):
-            s = synthetic_summary()
-            mutate(s)
-            j = bg.judge(synthetic_doc(s), "synthetic_summary")
+        """Every FAIL is produced COHERENTLY (the summary passes the contract) by one primitive outside the PASS region; where coherence
+        forces a second row to fail with it (a non-positive denominator shared by K3 and K4; a zero variance shared by K2 and the +inf d),
+        that row is listed."""
+        def case(kw, rid, reason_part, also=()):
+            s = synthetic_summary(**kw)
+            self.assertEqual(bg.summary_contract_findings(s, s["S"]), [], (rid, reason_part))
+            j = bg.judge(synthetic_doc(s, S=s["S"]), "synthetic_summary")
             self.assertEqual(j["contract_findings"], [], (rid, reason_part))
             rows = rows_by_id(j)
             self.assertEqual(rows[rid]["status"], "FAIL", (rid, reason_part, rows[rid]["reason"]))
             self.assertIn(reason_part, rows[rid]["reason"], rid)
-            self.assertEqual([r["id"] for r in j["rows"] if r["status"] != "PASS"], [rid], (rid, reason_part))
+            self.assertEqual(sorted(r["id"] for r in j["rows"] if r["status"] != "PASS"), sorted({rid, *also}), (rid, reason_part))
             self.assertEqual(j["verdict"]["status"], "FAIL"); self.assertIn(f"{rid} FAILS", j["verdict"]["reason"]); self.assertIn("no threshold is adjusted", j["verdict"]["reason"])
-        at = lambda s: s["at_candidate_B_star"]  # noqa: E731
-        case(lambda s: at(s)["k2"].__setitem__("population_variance_delta1", 0.0), "K2", "variance")
-        case(lambda s: at(s)["k2"].__setitem__("budgets_with_both_signs", []), "K2", "both positive and negative")
-        case(lambda s: at(s)["k2"].__setitem__("x_minus_r_bootstrap_nonrejection", 0.899), "K2", "non-rejection")
-        case(lambda s: at(s)["k3"].__setitem__("D_over_F", _ratio(0.6, 5.0)), "K3", "D / F ratio")
-        case(lambda s: at(s)["k3"].__setitem__("D_over_F", _ratio(-0.1, 0.0)), "K3", "non-positive denominator")
-        case(lambda s: at(s)["k3"].__setitem__("X_over_O", _ratio(0.6, 5.0)), "K3", "X / O ratio")
-        case(lambda s: at(s)["k3"].__setitem__("D_sign_test_p", 0.05), "K3", "D_sign_test_p")
-        case(lambda s: at(s)["k3"].__setitem__("X_sign_test_p", 0.01), "K3", "X_sign_test_p")
-        case(lambda s: at(s)["k4"].__setitem__("median_best_Omega", 57.7), "K4", "57.6")
-        case(lambda s: at(s)["k4"].__setitem__("F_over_Omega", _ratio(3.9, 8.0)), "K4", "F / Omega ratio")
-        case(lambda s: at(s)["k4"].__setitem__("F_over_Omega", _ratio(5.0, 0.0)), "K4", "non-positive denominator")
-        case(lambda s: at(s)["k5"].__setitem__("cohen_d_delta1", {"value": 0.49, "special": None}), "K5", "Cohen's d")
-        case(lambda s: at(s)["k5"].__setitem__("cohen_d_delta1", {"value": None, "special": "-inf"}), "K5", "-inf")
-        case(lambda s: s["per_budget"]["64"]["required_pairs"].__setitem__("power_at_N_or_last", 0.899), "K5", "power")
-        case(lambda s: at(s)["k7"].__setitem__("median_O_prefix_not_unknown", 10.0), "K7", "< 11")
-        case(lambda s: s["k9"].__setitem__("fraction_of_S", 0.899), "K9", "(a)")
-        case(lambda s: s["k9"]["per_semantic"]["ff_srval"].__setitem__("median_coverage_over_all_S", 0.4270833), "K9", "ff_srval 0.427083")
-        case(lambda s: s["k9"]["per_semantic"]["sr_kind"].update(median_coverage_over_all_S=None, not_assessable_seeds=3), "K9", "not assessable: sr_kind (3 seeds")
-        case(lambda s: (s["k10"].__setitem__("fraction_interacting_over_S", 0.495), s["k10"]["counts"].update(interacting=99, not_assessable=101)), "K10", "< 0.50")
-        # the cap: N = 21 at B* = 64 is 4 032 search evaluations
-        def cap(s):
-            v = s["per_budget"]["64"]; v["required_pairs"]["N"] = 21; v["required_pairs"]["scan"] = [[k, 0.3] for k in range(8, 21)] + [[21, 0.95]]; v["cost_N_x_3_x_B"] = 21 * 3 * 64
-            at(s).update(N=21, cost_N_x_3_x_B_star=21 * 3 * 64); at(s)["k5"].update(N=21, cost=21 * 3 * 64); at(s)["k2"]["bootstrap"]["N"] = 21
-        case(cap, "K5", "4 000")
+        case({"var1": 0.0}, "K2", "variance")                                                  # all delta1 equal and positive: variance 0 (K5's d is +inf and PASSES)
+        case({"d1": (5.0, 170, 0, 30)}, "K2", "both positive and negative")
+        case({"nonreject": 0.899}, "K2", "non-rejection")
+        case({"d": (0.6, 60, 70, 70)}, "K3", "D / F ratio")
+        case({"f": (-0.1, 20, 150, 30)}, "K3", "non-positive denominator", also=("K4",))          # F - R ≤ 0: D / F unreadable, and F / Omega < 0.50
+        case({"x": (0.6, 60, 70, 70)}, "K3", "X / O ratio")
+        case({"d": (0.1, 120, 50, 30)}, "K3", "D_sign_test_p")
+        case({"x": (0.1, 120, 50, 30)}, "K3", "X_sign_test_p")
+        case({"om": (45.7, 190, 5, 5), "omega_p95": 60.0}, "K4", "57.6")                        # Omega mean 57.7 (R 12 + 45.7), p95 60 < 64 keeps K1
+        case({"f": (3.9, 150, 20, 30)}, "K4", "F / Omega ratio")
+        case({"om": (-1.0, 5, 190, 5)}, "K4", "non-positive denominator")
+        case({"var1": (5.0 / 0.49) ** 2}, "K5", "Cohen's d")
+        case({"k7_median": 10}, "K7", "< 11")
+        case({"k9_all": 179}, "K9", "(a)")
+        case({"k9_medians": {"ff_srval": 0.4270833}}, "K9", "ff_srval 0.427083")
+        case({"k9_na": {"sr_kind": 3}}, "K9", "not assessable: sr_kind (3 seeds")
+        case({"k10": (99, 0, 0, 101)}, "K10", "< 0.50")
+        case({"N": 21}, "K5", "4 000")                                                          # N = 21 at B* = 64: 4 032 search evaluations
 
     def test_the_boundaries_written_with_an_equal_sign_pass_and_an_infinite_d_passes(self):
-        s = synthetic_summary()
+        s = synthetic_summary(nonreject=0.90, om=(45.6, 190, 5, 5), omega_p95=60.0, f=(22.8, 150, 20, 30), d=(2.28, 60, 70, 70), x=(0.5, 60, 70, 70), power=0.90, k7_median=11,
+                              k9_all=180, k9_medians=dict.fromkeys(k9.SEMANTICS, 0.5), k10=(100, 0, 0, 100))
+        self.assertEqual(bg.summary_contract_findings(s, 200), [])
         at = s["at_candidate_B_star"]
-        at["k2"]["x_minus_r_bootstrap_nonrejection"] = 0.90
-        at["k4"]["median_best_Omega"] = 57.6; at["k4"]["F_over_Omega"] = _ratio(4.0, 8.0)
-        at["k3"]["D_over_F"] = _ratio(0.5, 5.0); at["k3"]["X_over_O"] = _ratio(0.5, 5.0)
-        at["k5"]["cohen_d_delta1"] = {"value": None, "special": "+inf"}
-        s["per_budget"]["64"]["required_pairs"]["power_at_N_or_last"] = 0.90
-        at["k7"]["median_O_prefix_not_unknown"] = 11.0
-        s["k9"]["fraction_of_S"] = 0.90; s["k9"]["seeds_with_all_seven_positive_controls"] = 180
-        for sem in k9.SEMANTICS:
-            s["k9"]["per_semantic"][sem]["median_coverage_over_all_S"] = 0.5
-        s["k10"]["fraction_interacting_over_S"] = 0.5; s["k10"]["counts"].update(interacting=100, not_assessable=100)
+        self.assertEqual((at["k4"]["median_best_Omega"], at["k4"]["F_over_Omega"]["ratio"], at["k3"]["X_over_O"]["ratio"]), (57.6, 0.5, 0.1))
+        self.assertAlmostEqual(at["k3"]["D_over_F"]["ratio"], 0.1, places=12); self.assertLessEqual(at["k3"]["D_over_F"]["ratio"], 0.1)
         j = bg.judge(synthetic_doc(s), "synthetic_summary")
         self.assertEqual(j["contract_findings"], [])
         self.assertEqual([r["status"] for r in j["rows"]], ["PASS"] * 10, [(r["id"], r["reason"]) for r in j["rows"] if r["status"] != "PASS"])
         self.assertEqual(j["verdict"]["status"], "PASS")
-        self.assertEqual(rows_by_id(j)["K5"]["value"]["cohen_d_delta1"], {"value": None, "special": "+inf"}, "a legitimate +inf d is kept as such, never as 0")
+        # a legitimate +inf d (all delta1 equal and positive) PASSES K5 — coherently it also means a zero variance, which FAILS K2
+        s = synthetic_summary(var1=0.0)
+        self.assertEqual(bg.summary_contract_findings(s, 200), [])
+        rows = rows_by_id(bg.judge(synthetic_doc(s), "synthetic_summary"))
+        self.assertEqual((rows["K5"]["status"], rows["K5"]["value"]["cohen_d_delta1"], rows["K2"]["status"]), ("PASS", {"value": None, "special": "+inf"}, "FAIL"), "a legitimate +inf d is kept as such, never as 0")
 
     def test_k5_is_delta1_o_minus_r_not_f_minus_r(self):
-        s = synthetic_summary()
-        s["per_budget"]["64"]["deltas"]["F_minus_R"]["cohen_d"] = {"value": 0.1, "special": None}        # F - R weak, delta1 strong: K5 PASSES
+        s = synthetic_summary(f=(0.2, 110, 60, 30))                                                 # F - R weak, delta1 strong: K5 PASSES
+        self.assertEqual(bg.summary_contract_findings(s, 200), [])
         j = bg.judge(synthetic_doc(s), "synthetic_summary")
         self.assertEqual(rows_by_id(j)["K5"]["status"], "PASS")
-        s["at_candidate_B_star"]["k5"]["cohen_d_delta1"] = {"value": 0.1, "special": None}                 # delta1 weak: K5 FAILS whatever F - R
-        s["per_budget"]["64"]["deltas"]["delta1_O_minus_R"]["cohen_d"] = {"value": 0.1, "special": None}
-        s["per_budget"]["64"]["deltas"]["F_minus_R"]["cohen_d"] = {"value": 2.0, "special": None}
+        s = synthetic_summary(d1=(0.2, 110, 60, 30), f=(8.0, 190, 5, 5))                            # delta1 weak: K5 FAILS whatever F - R
+        self.assertEqual(bg.summary_contract_findings(s, 200), [])
         self.assertEqual(rows_by_id(bg.judge(synthetic_doc(s), "synthetic_summary"))["K5"]["status"], "FAIL")
 
     def test_k6_fails_when_s_is_not_the_planned_200(self):
@@ -221,22 +296,26 @@ class TheJudge(unittest.TestCase):
         self.assertIn("S = 199 is not the planned 200", j["formal_reasons"])
 
     def test_no_b_star_leaves_the_dependent_rows_not_assessable_and_the_gate_cannot_pass(self):
-        j = bg.judge(synthetic_doc(no_b_star(synthetic_summary())), "synthetic_summary")
+        s = no_b_star(synthetic_summary())
+        self.assertEqual(bg.summary_contract_findings(s, 200), [])
+        j = bg.judge(synthetic_doc(s), "synthetic_summary")
         self.assertEqual(j["contract_findings"], [])
         br = j["budget_rule"]
         self.assertEqual((br["status"], br["B_star"], br["N"], br["cost_N_x_3_x_B_star"], br["eligible_budgets"]), ("FAIL", None, None, None, []))
         self.assertIn("not invented", br["reason"]); self.assertIn("cannot PASS", br["reason"])
         self.assertEqual(br["k1_eligibility_by_budget"], {str(B): True for B in GRID}); self.assertEqual(br["N_by_budget"], {str(B): None for B in GRID})
-        st = {r["id"]: r["status"] for r in j["rows"]}
-        self.assertEqual(st, {"K1": "not_assessable", "K2": "not_assessable", "K3": "not_assessable", "K4": "not_assessable", "K5": "not_assessable", "K6": "not_assessable",
-                              "K7": "not_assessable", "K8": "PASS", "K9": "PASS", "K10": "PASS"})
+        st_ = {r["id"]: r["status"] for r in j["rows"]}
+        self.assertEqual(st_, {"K1": "not_assessable", "K2": "not_assessable", "K3": "not_assessable", "K4": "not_assessable", "K5": "not_assessable", "K6": "not_assessable",
+                               "K7": "not_assessable", "K8": "PASS", "K9": "PASS", "K10": "PASS"})
         rows = rows_by_id(j)
         self.assertIn("no B*", rows["K2"]["reason"]); self.assertIn("(b) needs B*", rows["K7"]["reason"]); self.assertEqual(rows["K7"]["value"]["a_recomputation_mismatches"], 0)
         self.assertIn("N does not exist", rows["K6"]["reason"]); self.assertEqual(rows["K6"]["value"], {"S_planned": 200, "N": None})
         self.assertEqual(j["verdict"]["status"], "FAIL"); self.assertIn("budget rule FAILS", j["verdict"]["reason"]); self.assertIn("not assessable: K1, K2, K3, K4, K5, K6, K7", j["verdict"]["reason"])
-        # with S != 200 and no B*, K6 FAILS outright
+        # with S != 200 and no B*, K6 FAILS outright; with S = 2 < n_min the scan is empty and the power null, as the harness writes it
         j2 = bg.judge(synthetic_doc(no_b_star(synthetic_summary(S=32)), S=32), "synthetic_summary")
-        self.assertEqual(rows_by_id(j2)["K6"]["status"], "FAIL")
+        self.assertEqual(j2["contract_findings"], []); self.assertEqual(rows_by_id(j2)["K6"]["status"], "FAIL")
+        s2 = no_b_star(synthetic_summary(S=2))
+        self.assertEqual(bg.summary_contract_findings(s2, 2), []); self.assertEqual(s2["per_budget"]["8"]["required_pairs"], {"N": None, "power_at_N_or_last": None, "scan": [], "n_min": 8, "n_max": 2})
 
     def test_an_invalid_or_incomplete_batch_is_that_verdict_with_nothing_judged(self):
         for status in ("invalid", "incomplete"):
@@ -248,46 +327,141 @@ class TheJudge(unittest.TestCase):
         self.assertIn("contract break", bg.judge(synthetic_doc(None, status="invalid"), "synthetic_summary")["verdict"]["reason"])
         self.assertIn("unfinished", bg.judge(synthetic_doc(None, status="incomplete"), "synthetic_summary")["verdict"]["reason"])
 
-    def test_a_summary_that_breaks_its_contract_is_invalid_never_judged(self):
+    def test_an_incoherent_or_malformed_summary_is_invalid_never_judged_and_never_an_exception(self):
+        """R1 / R2 of the owner's review of 4cdc0c1: the four accepted contradictions and the two exceptions, each now a named contract
+        finding and an invalid judgement; plus one case per binding the contract makes."""
         def case(mutate, part):
             s = synthetic_summary()
             mutate(s)
+            f = bg.summary_contract_findings(s, 200)
+            self.assertTrue(any(part in x for x in f), (part, f))
             j = bg.judge(synthetic_doc(s), "synthetic_summary")
             self.assertEqual(j["verdict"]["status"], "invalid", part)
-            self.assertTrue(any(part in x for x in j["contract_findings"]), (part, j["contract_findings"]))
+            self.assertEqual(j["contract_findings"], f, part)
             self.assertEqual([r["status"] for r in j["rows"]], ["not_assessable"] * 10, part)
-        case(lambda s: s["per_budget"]["64"].__setitem__("cost_N_x_3_x_B", 3000), "N x 3 x B")
-        case(lambda s: s["per_budget"]["32"]["k1"].__setitem__("eligibility", False) or s["per_budget"]["32"]["k1"].__setitem__("omega_best_p95", 40.0), "eligibility is not the one of its own numbers")
-        case(lambda s: s["candidate_B_star"].__setitem__("value", 32), "cheapest eligible")
-        case(lambda s: s["at_candidate_B_star"].__setitem__("N", 15), "B* / N / cost")
+            self.assertEqual(j["budget_rule"]["status"], "not_assessable", part)
+        at = lambda s: s["at_candidate_B_star"]  # noqa: E731
+        pb = lambda s, B="64": s["per_budget"][B]  # noqa: E731
+        # the owner's reproductions
+        case(lambda s: at(s)["k3"].__setitem__("D_over_F", None), "k3.D_over_F: not an object")
+        case(lambda s: s["candidate_B_star"].__setitem__("value", 64.0), "is not the cheapest eligible budget")
+        case(lambda s: pb(s)["required_pairs"].__setitem__("scan", []), "the scan does not end at N")
+        case(lambda s: pb(s)["deltas"]["delta1_O_minus_R"].__setitem__("cohen_d", {"value": -1.0, "special": None}), "the sign of d")
+        case(lambda s: (pb(s)["deltas"]["delta1_O_minus_R"].__setitem__("cohen_d", {"value": -100, "special": "+inf"}), at(s)["k5"].__setitem__("cohen_d_delta1", {"value": -100, "special": "+inf"})), "special +inf carries a null value")
+        case(lambda s: s["k9"].__setitem__("fraction_of_S", 2.0), "fraction_of_S is not")
+        # the at-B* copies bound to their originals
+        case(lambda s: at(s)["k5"].__setitem__("cohen_d_delta1", {"value": 0.9, "special": None}), "k5.cohen_d_delta1 is not delta1's")
+        case(lambda s: at(s)["k2"].__setitem__("population_variance_delta1", 1.0), "k2.population_variance_delta1")
+        case(lambda s: at(s)["k2"].__setitem__("budgets_with_both_signs", [64]), "budgets_with_both_signs")
+        case(lambda s: at(s)["k2"]["bootstrap"].__setitem__("seed", 8), "k2.bootstrap")
+        case(lambda s: at(s)["k3"].__setitem__("D_over_F", sim._ratio(0.0, 5.0)), "k3.D_over_F is not the harness's ratio")
+        case(lambda s: at(s)["k3"].__setitem__("X_sign_test_p", 0.5), "sign-test p values")
+        case(lambda s: at(s)["k4"].__setitem__("median_best_Omega", 30.5), "k4's medians")
+        case(lambda s: at(s)["k4"].__setitem__("F_over_Omega", sim._ratio(5.0, 8.1)), "k4.F_over_Omega")
+        case(lambda s: at(s)["k5"].__setitem__("N", 15), "k5's N / cost")
+        case(lambda s: at(s)["k7"].__setitem__("median_O_prefix_not_unknown", 14.0), "k7 at B*")
+        case(lambda s: at(s).__setitem__("N", 15), "B* / N / cost")
+        # the scan and the budget rule
+        case(lambda s: pb(s)["required_pairs"]["scan"].__setitem__(-1, [16, 0.5]), "N is not the first n whose rate reaches")
+        case(lambda s: pb(s)["required_pairs"]["scan"].pop(3), "complete ascending scan")
+        case(lambda s: pb(s)["required_pairs"].__setitem__("power_at_N_or_last", 0.94), "power_at_N_or_last is not the rate at N")
+        case(lambda s: pb(s, "32")["required_pairs"]["scan"].__setitem__(0, [8, 0.95]), "no N although a scanned rate reaches")
+        case(lambda s: pb(s, "32")["required_pairs"]["scan"].pop(), "no N needs every n")
+        case(lambda s: pb(s).__setitem__("cost_N_x_3_x_B", 3000), "N x 3 x B")
+        case(lambda s: pb(s, "32").__setitem__("cost_N_x_3_x_B", 0), "is not null without N")
         case(lambda s: s.__setitem__("eligible_budgets", [64, 96]), "eligible_budgets")
-        case(lambda s: s["per_budget"].pop("8"), "exactly the grid budgets")
-        case(lambda s: s["k10"]["counts"].__setitem__("interacting", 150), "do not sum to S")
-        case(lambda s: s["k9"]["per_semantic"]["ff_init"].__setitem__("median_coverage_over_all_S", None), "exactly when a seed is not assessable")
+        case(lambda s: pb(s, "32")["k1"].__setitem__("eligibility", False), "eligibility is not the one of its own numbers")
+        case(lambda s: pb(s)["k1"].__setitem__("median_best_R", 13.0), "median_best_R is not arm R's median")
+        case(lambda s: pb(s)["k1"].__setitem__("omega_best_p95", 70.0), "lies outside Omega's values")
+        case(lambda s: s["candidate_B_star"].__setitem__("reason_if_none", "x"), "reason_if_none is not null")
+        # the deltas
+        case(lambda s: pb(s)["deltas"]["delta1_O_minus_R"].__setitem__("sign_test_p", 0.5), "sign_test_p is not the one-sided exact p")
+        case(lambda s: pb(s)["deltas"]["delta1_O_minus_R"].__setitem__("positives", 151), "positives + negatives + ties")
+        case(lambda s: pb(s)["deltas"]["delta1_O_minus_R"].__setitem__("n", 199), ".n is not S")
+        case(lambda s: pb(s)["deltas"]["F_minus_R"].__setitem__("mean", 5.5), "difference of the arm means")
+        case(lambda s: pb(s)["deltas"]["F_minus_R"].__setitem__("cohen_d", {"value": None, "special": "-inf"}), "not an encoding the copied cohen_d produces")
+        case(lambda s: pb(s)["deltas"]["F_minus_R"].__setitem__("cohen_d", {"value": None, "special": None}), "special null needs a finite value")
+        case(lambda s: pb(s)["deltas"]["F_minus_R"].__setitem__("population_variance", -1.0), "variance ≥ 0")
+        # the arm values, the base, F end to end, K7
+        case(lambda s: pb(s)["arm_values"]["R"].__setitem__("min", 20.0), "min ≤ median, mean ≤ max")
+        case(lambda s: pb(s)["arm_values"].pop("A0"), "arm_values: keys")
+        case(lambda s: pb(s, "8")["f_end_to_end"].__setitem__("mean", 5.0), "mapping in progress means F's base score")
+        case(lambda s: pb(s)["f_end_to_end"].__setitem__("mapping_in_progress", True), "mapping_in_progress exactly when")
+        case(lambda s: pb(s)["k7_O_prefix_not_unknown"].__setitem__("median", 14.0), "their median")
+        case(lambda s: pb(s)["k7_O_prefix_not_unknown"]["values"].__setitem__(0, 22), "ints in [0, 21]")
+        # K9 / K10
+        case(lambda s: s["k9"].__setitem__("seeds_with_all_seven_positive_controls", 201), "int in [0, S]")
+        case(lambda s: s["k9"]["per_semantic"]["ff_init"].__setitem__("median_coverage_over_all_S", None), "leaves no median" if False else "not a number in [0, 1]")
+        case(lambda s: s["k9"]["per_semantic"]["ff_init"].__setitem__("median_coverage_over_all_S", 1.5), "not a number in [0, 1]")
+        case(lambda s: s["k9"]["per_semantic"]["ff_init"].update(not_assessable_seeds=2), "a not-assessable seed leaves no median")
+        case(lambda s: s["k9"]["per_semantic"]["ff_init"].__setitem__("seeds_with_positive_control", 100), "fewer seeds with a positive control")
+        case(lambda s: s["k9"]["per_semantic"]["ff_init"].__setitem__("conditional_on_A8", False), "conditional_on_A8")
+        case(lambda s: s["k9"]["per_semantic"]["ce_mode"].__setitem__("median_rule", "x"), "median_rule")
+        case(lambda s: s["k10"]["counts"].__setitem__("interacting", 150), "summing to S")
+        case(lambda s: s["k10"]["counts"].__setitem__("interacting", None), "non-negative ints")
+        case(lambda s: s["k10"].__setitem__("fraction_interacting_over_S", 0.99), "interacting / S")
+        case(lambda s: s["k10"].__setitem__("note", "x"), "k10.note")
+        case(lambda s: s["k10"].__setitem__("tau", 3), "tau / S")
+        # the frame
         case(lambda s: s.__setitem__("S", 201), "summary.S")
-        def two(s):
-            s["per_budget"]["32"]["required_pairs"]["N"] = 8; s["per_budget"]["32"]["required_pairs"]["scan"] = [[8, 0.95]]; s["per_budget"]["32"]["cost_N_x_3_x_B"] = 8 * 3 * 32   # cheaper (768) than 64's 3 072
-            s["eligible_budgets"] = [32, 64]
-        case(two, "cheapest eligible budget 32")
-        j = bg.judge(synthetic_doc({"S": 200}), "synthetic_summary")
-        self.assertEqual(j["verdict"]["status"], "invalid"); self.assertTrue(j["contract_findings"])
-        j = bg.judge(synthetic_doc(None, status="complete"), "synthetic_summary")
-        self.assertEqual(j["verdict"]["status"], "invalid")
+        case(lambda s: s.__setitem__("S", True), "summary.S")
+        case(lambda s: s.__setitem__("grid", [8.0, 16, 24, 32, 48, 64, 96, 128, 192, 256]), "fixed grid")
+        case(lambda s: s["per_budget"].pop("8"), "exactly the grid budgets")
+        case(lambda s: s["thresholds_for_reference"]["K9"].__setitem__("median_coverage_per_semantic_min", 0.4), "thresholds_for_reference")
+        case(lambda s: s.__setitem__("standing", None), "standing")
+        # identity fields and the frame of the document itself
+        for over in ({"count": 200.0}, {"count": True}, {"count": 0}, {"status": "done"}, {"label": 5}, {"fixture": "yes"}, {"label": "B4 gate"}):
+            j = bg.judge(dict(synthetic_doc(synthetic_summary()), **over), "synthetic_summary")
+            self.assertEqual(j["verdict"]["status"], "invalid", over); self.assertTrue(j["contract_findings"], over); self.assertFalse(j["formal"], over)
+        for doc in (None, [], "x", {"status": "complete"}, {"status": "complete", "label": "b4-mech-7", "fixture": True, "count": 200}, {"status": "complete", "label": "b4-mech-7", "fixture": True, "count": 200, "summary": []}):
+            j = bg.judge(doc, "synthetic_summary")
+            self.assertEqual(j["verdict"]["status"], "invalid", doc)
         with self.assertRaises(ValueError):
             bg.judge(synthetic_doc(synthetic_summary()), "other")
 
+    def test_the_contract_is_total_every_node_replaced_by_every_foreign_value(self):
+        """Totality: every node of a coherent summary (containers included) replaced by None / a string / a bool / a float / an empty list /
+        an empty object: the judge never raises; a null in place of any non-null node is a named finding (the summary has no optional field
+        whose absence is not bound elsewhere); every other foreign value either breaks the contract or leaves a coherent, judgeable summary."""
+        base = synthetic_summary()
+        n_paths, n_null_invalid = 0, 0
+        for path, node in list(paths_of(base)):
+            if not path:
+                continue
+            if len(path) > 1 and path[0] == "per_budget" and path[1] not in ("8", "64"):
+                continue                                                 # the ten budgets share one structure: one below the probes, the B* one
+            n_paths += 1
+            for value in (None, "x", True, 1.5, [], {}):
+                if value == node and type(value) is type(node):
+                    continue
+                s = with_replaced(base, path, value)
+                try:
+                    j = bg.judge(synthetic_doc(s), "synthetic_summary")
+                except Exception as exc:  # noqa: BLE001
+                    self.fail(f"the judge raised {type(exc).__name__}: {exc} at {path} with {value!r}")
+                self.assertIn(j["verdict"]["status"], bg.VERDICTS, (path, value))
+                if value is None and node is not None:
+                    self.assertEqual(j["verdict"]["status"], "invalid", (path, "null"))
+                    self.assertTrue(j["contract_findings"], (path, "null"))
+                    n_null_invalid += 1
+        self.assertGreater(n_paths, 500)
+        self.assertGreater(n_null_invalid, 400)
+
     def test_the_committed_exploration_report_as_a_read_only_reference(self):
         """The S = 32 exploration of 2026-10-19 judged in memory: not formal (an exploration label, S = 32), the budget rule FAILS (no N),
-        K6 FAILS on S, K9 FAILS on ff_srval's median 0.427083, K8 / K10 PASS. Nothing is written; the archive is not touched."""
+        K6 FAILS on S, K9 FAILS on ff_srval's median 0.427083, K8 / K10 PASS. Nothing is written; the archive is not touched; the real
+        summary passes the full contract."""
         before = SIM3_REPORT.read_bytes()
-        j = bg.judge(json.loads(before), "batch_archive")
+        rep = json.loads(before)
+        self.assertEqual(bg.summary_contract_findings(rep["summary"], rep["count"]), [], "the harness's own summary is coherent under the contract")
+        j = bg.judge(rep, "batch_archive")
         self.assertEqual(SIM3_REPORT.read_bytes(), before)
         self.assertFalse(j["formal"]); self.assertEqual(len(j["formal_reasons"]), 2)
         self.assertEqual(j["contract_findings"], [])
         self.assertEqual(j["budget_rule"]["status"], "FAIL"); self.assertEqual(j["budget_rule"]["k1_eligibility_by_budget"], {str(B): True for B in GRID})
-        st = {r["id"]: r["status"] for r in j["rows"]}
-        self.assertEqual(st, {"K1": "not_assessable", "K2": "not_assessable", "K3": "not_assessable", "K4": "not_assessable", "K5": "not_assessable", "K6": "FAIL",
-                              "K7": "not_assessable", "K8": "PASS", "K9": "FAIL", "K10": "PASS"})
+        st_ = {r["id"]: r["status"] for r in j["rows"]}
+        self.assertEqual(st_, {"K1": "not_assessable", "K2": "not_assessable", "K3": "not_assessable", "K4": "not_assessable", "K5": "not_assessable", "K6": "FAIL",
+                               "K7": "not_assessable", "K8": "PASS", "K9": "FAIL", "K10": "PASS"})
         rows = rows_by_id(j)
         self.assertIn("ff_srval 0.427083", rows["K9"]["reason"]); self.assertNotIn("sr_kind", rows["K9"]["reason"], "sr_kind's median 0.5 meets the >= 0.50 written with an equal sign")
         self.assertEqual(rows["K9"]["value"]["per_semantic"]["sr_kind"]["median_coverage_over_all_S"], 0.5)
@@ -312,6 +486,7 @@ class TheJudge(unittest.TestCase):
         self.assertTrue(bg.synthetic_findings(dict(d, summary=None)))
         self.assertTrue(bg.synthetic_findings(dict(d, status="invalid")))
         self.assertTrue(bg.synthetic_findings({k: v for k, v in d.items() if k != "note"}))
+        self.assertTrue(bg.synthetic_findings(None)); self.assertTrue(bg.synthetic_findings([]))
 
 
 # ------------------------------------------------------------------ end to end on a hermetic copy
@@ -320,11 +495,21 @@ class Base(unittest.TestCase):
     def setUpClass(cls):
         cls.guards = [mock.patch.object(bs, "master_seed", side_effect=production_derivation_reached), mock.patch.object(bs, "pair_seeds", side_effect=production_derivation_reached)]
         cls.guard_mocks = [g.start() for g in cls.guards]
-        cls.tmp = tempfile.TemporaryDirectory(prefix="b4gate_")
-        cls.root = build_hermetic(Path(cls.tmp.name))
-        cls.ns = cls.root / sim.SIM_REL
-        cls.gns = cls.root / bg.GATE_REL
-        cls.counter = 0
+        try:
+            cls.tmp = tempfile.TemporaryDirectory(prefix="b4gate_")
+            cls.root = build_hermetic(Path(cls.tmp.name))
+            cls.ns = cls.root / sim.SIM_REL
+            cls.gns = cls.root / bg.GATE_REL
+            cls.counter = 0
+            cls.setup_fixtures()
+        except BaseException:
+            for g in cls.guards:                                     # a failed set-up never leaks the guards into other modules
+                g.stop()
+            raise
+
+    @classmethod
+    def setup_fixtures(cls):
+        pass
 
     @classmethod
     def tearDownClass(cls):
@@ -368,8 +553,7 @@ def regate(gate_dir: Path) -> None:
 
 class EndToEnd(Base):
     @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
+    def setup_fixtures(cls):
         cls.a = bg.run_gate(cls.root, "b4-mech-1", 2, 3600, out_batch=cls.ns / "b4-mech-1_fail", out_gate=cls.gns / "b4-mech-1_fail", schedule=SCHED1)
         cls.commit()
         cls.b = bg.judge_synthetic(cls.root, synthetic_doc(synthetic_summary()), cls.gns / f"{SYN_LABEL}_pass")
@@ -565,7 +749,7 @@ class EndToEnd(Base):
     def test_the_synthetic_evidence_is_bound_and_re_judged(self):
         g = Path(self.b["gate_out"])
         syn = json.loads(self.originals[g][bg.SYNTHETIC_JSON])
-        syn["summary"]["k10"]["fraction_interacting_over_S"] = 0.4; syn["summary"]["k10"]["counts"].update(interacting=80, not_assessable=120)
+        syn["summary"]["k10"]["fraction_interacting_over_S"] = 0.4; syn["summary"]["k10"]["counts"].update(interacting=80, not_assessable=120)   # coherent: K10 FAILS
         raw = sim.json_text(syn); (g / bg.SYNTHETIC_JSON).write_bytes(raw)
         doc = json.loads(self.originals[g][bg.REPORT_JSON]); doc["batch"]["sha256"] = sim.sha_file(g / bg.SYNTHETIC_JSON)
         (g / bg.REPORT_JSON).write_bytes(sim.json_text(doc)); regate(g)
@@ -578,6 +762,38 @@ class EndToEnd(Base):
         (g / bg.REPORT_JSON).write_bytes(sim.json_text(doc)); regate(g)
         f = self.findings(g)
         self.assertTrue(any("b4-mech" in m for m in f.get(bg.SYNTHETIC_JSON, [])), f)
+        self.assertEqual(gv.verify_gate_dir(g), {}, "restored")
+
+    def test_an_incoherent_synthetic_summary_cannot_be_made_a_clean_pass_by_refreshed_hashes(self):
+        """R2 of the owner's review: the four accepted contradictions and the two exceptions, each written over the committed synthetic PASS
+        evidence with the PASS report kept, every digest refreshed and the markdown re-rendered — the fresh-process verifier names it (the
+        re-judgement is invalid, not PASS). The positive control: judged directly, each is an invalid report that verifies clean."""
+        g = Path(self.b["gate_out"])
+        cases = {"empty_N_scan": lambda s: s["per_budget"]["64"]["required_pairs"].__setitem__("scan", []),
+                 "contradictory_delta1_d": lambda s: s["per_budget"]["64"]["deltas"]["delta1_O_minus_R"].__setitem__("cohen_d", {"value": -1.0, "special": None}),
+                 "inconsistent_positive_infinity": lambda s: (s["per_budget"]["64"]["deltas"]["delta1_O_minus_R"].__setitem__("cohen_d", {"value": -100, "special": "+inf"}),
+                                                              s["at_candidate_B_star"]["k5"].__setitem__("cohen_d_delta1", {"value": -100, "special": "+inf"})),
+                 "K9_fraction_above_one": lambda s: s["k9"].__setitem__("fraction_of_S", 2.0),
+                 "D_over_F_null": lambda s: s["at_candidate_B_star"]["k3"].__setitem__("D_over_F", None),
+                 "B_star_as_float": lambda s: s["candidate_B_star"].__setitem__("value", 64.0)}
+        for name, mutate in cases.items():
+            syn = json.loads(self.originals[g][bg.SYNTHETIC_JSON]); mutate(syn["summary"])
+            self.assertTrue(bg.summary_contract_findings(syn["summary"], 200), name)
+            (g / bg.SYNTHETIC_JSON).write_bytes(sim.json_text(syn))
+            doc = json.loads(self.originals[g][bg.REPORT_JSON]); doc["batch"]["sha256"] = sim.sha_file(g / bg.SYNTHETIC_JSON)
+            (g / bg.REPORT_JSON).write_bytes(sim.json_text(doc)); regate(g)
+            code, out = self.fresh(g)
+            self.restore(g)
+            self.assertEqual(code, 1, name)
+            msgs = [m for v in out["findings"].values() for m in v]
+            self.assertTrue(any("not the ones recomputed" in m or "verdict PASS is not the recomputed invalid" in m for m in msgs), (name, out["findings"]))
+            # the positive control: the same evidence judged directly is an invalid report, cleanly verifiable, exit 1
+            r = bg.judge_synthetic(self.root, syn, self.gns / f"{SYN_LABEL}_neg_{name}")
+            self.assertEqual((r["status"], r["exit_code"]), ("invalid", 1), name)
+            d = json.loads((Path(r["gate_out"]) / bg.REPORT_JSON).read_text())
+            self.assertEqual(d["verdict"]["status"], "invalid"); self.assertTrue(d["contract_findings"]); self.assertEqual([x["status"] for x in d["rows"]], ["not_assessable"] * 10)
+            self.assertEqual(gv.verify_gate_dir(Path(r["gate_out"])), {}, name)
+            self.commit()
         self.assertEqual(gv.verify_gate_dir(g), {}, "restored")
 
     def test_refusals_write_nothing_and_the_derivation_is_never_reached(self):

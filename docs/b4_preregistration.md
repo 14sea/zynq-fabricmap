@@ -1,4 +1,12 @@
-# B4-FF — the flip-flop configuration-bit class on the board: preregistration (DRAFT v0.0.1 — a SKELETON, host-only, 2026-10-19)
+# B4-FF — the flip-flop configuration-bit class on the board: preregistration (DRAFT v0.0.2 — a SKELETON, host-only, 2026-10-19)
+
+> **v0.0.1 → v0.0.2 (2026-10-19, the owner's P3 on `7cf6c7f`): the reference to B3's lifecycle corrected.** v0.0.1 wrote S0 as
+> "freeze: the pins, the seeds, the plan", S1 as "the prediction" and S2 / S3 as "the sessions and the adjudication". The production
+> reference `b3/host/b3_manifest.py` defines: **S0 init** — the manifest derived from the tree, the prediction already pinned, not frozen,
+> no qualification, no main-plan binding; **S1 freeze** — the preregistration pinned and the owner's board-ready mark; **S2 qualify** — the
+> qualification record reconstructed from its evidence and the calibration written from it; **S3 plan** — the calibrated plan bound;
+> the board sessions and the pooled adjudication introduce no later transition. Sections 0, 2, 7 and 11 now say so, and the B4
+> lifecycle, tool and stage contract stay **unresolved** — this correction authorises no lifecycle design. Nothing else changed.
 
 > **What this document is.** The skeleton of unit 2c, written under the owner's ruling of 2026-10-19 ("B4 gate tool versus
 > production execution", section 4) alongside the gate-tool unit and kept separable from it. It lays out the sections a B4-FF
@@ -18,7 +26,7 @@
 | section | fixed elsewhere (by reference) | unresolved here |
 |---|---|---|
 | 1 claim and scope | the question (architecture section 0), the class (`clb_ff_config`, content; section 3's routing prohibitions) | the one-sentence claim's N, B*, the pairs count |
-| 2 pins | the hypothesis v0.3 digest, the certificate digest, the thresholds table's source (`b4_thresholds`) | every pin taken at S0 (tool digests, image, carrier, the gate report's digests) |
+| 2 pins | the hypothesis v0.3 digest, the certificate digest, the thresholds table's source (`b4_thresholds`) | every pin taken by the B4 lifecycle tool at the stage it defines for it (unresolved; B3 pinned at S0 init and froze at S1): tool digests, image, carrier, the gate report's digests |
 | 3 universe and holdout | the 21 addresses of the certified site (section 4.1–4.3), `safety_class` content | the choice address-only universe versus whole-site-instance holdout; which site instance is the holdout |
 | 4 authority | section 2 verbatim | nothing — restated, not changed |
 | 5 raw observation versus scoring | sections 5.1–5.4 | the schema file that forbids an expected value (A3) |
@@ -45,9 +53,9 @@ diagnostic, never a claim about silicon by itself (architecture section 4.2). Ou
 own preregistration: every routing-class (`int_pip`) write, anywhere; no routing bit in any universe, control or landscape;
 `08EB` is not a sacrificial board under this document.
 
-## 2. Pins (taken at S0 by the lifecycle tool; none taken by this skeleton)
+## 2. Pins (taken by the B4 lifecycle tool at the stage it defines — unresolved; B3 pinned at S0 init and froze at S1; none taken by this skeleton)
 
-| what | fixed by reference now | pinned at S0 |
+| what | fixed by reference now | pinned by the lifecycle tool (stage unresolved) |
 |---|---|---|
 | the behaviour hypothesis | `b4/hypothesis/ff_behaviour_v0.3.json`, sha256 `59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8` (`b4_ff_hypothesis.HYPOTHESIS_SHA256`) | its digest, re-verified |
 | the certificate mapping | `gate_runs/run_2026_08_05_ff/certificate.json`, sha256 `c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef` | its digest, re-verified |
@@ -57,7 +65,7 @@ own preregistration: every routing-class (`int_pip`) write, anywhere; no routing
 | the carrier v2, the image | `<unresolved>` (a separate design unit after 2c; the image build evidence as B3 recorded it) | bitstream, `VARIANT`, ELF / BIN, build evidence |
 | the instrument | `zynq-psoracle` as B2 / B3 pinned it (archived, read-only) | re-verified |
 | the universe, the holdout | section 3 below | the universe digest; the holdout site instance |
-| the seeds | the anchor of section 9.2 with the exclusion set as pooled at S0 (the exposure receipt, every archived set under `evidence/b4/sim/`) | the main seeds — derived once at S0, never here |
+| the seeds | the anchor of section 9.2 with the exclusion set as pooled at the derivation (the exposure receipt, every archived set under `evidence/b4/sim/`) | the main seeds — derived once, at the lifecycle step B4 defines for it (unresolved), never here |
 
 ## 3. The universe and the holdout — choices to be decided
 
@@ -112,9 +120,9 @@ observation (A3: it forbids an expected value), its name under `b4/schemas/`, an
   ascending scan). This skeleton records neither a candidate nor an estimate: the S = 32 exploration of 2026-10-19 (`b4-sim-3`) found
   no N on its sample and is a descriptive reference only (its settlement README and the gate tool's read-only test say what it
   does and does not show); it fixes nothing here.
-- **The main seeds and the prediction**: `<unresolved>` — derived once at S0 by section 9.2's anchor under a session label, against the
-  exclusion set as pooled then (the receipt, every archived set); the prediction embeds every O-arm ledger entry, as B3's did. No
-  value appears in this document before S0.
+- **The main seeds and the prediction**: `<unresolved>` — derived once, at the lifecycle step B4 defines for it, by section 9.2's anchor
+  under a session label, against the exclusion set as pooled then (the receipt, every archived set); the prediction embeds every O-arm
+  ledger entry, as B3's did (B3 pinned its prediction at S0 init, before the S1 freeze). No value appears in this document before that step.
 - **The stop rule**: `<unresolved>` — B3's form (the primary alone; no redraw; a stopped lifecycle is a stop decision document) is the
   template; whether B4 adds a stop on A8's demonstration is for the review.
 
@@ -149,10 +157,13 @@ the FF names and fields; the instrument unchanged. `<unresolved>`: the carrier v
 ## 11. Provenance and the lifecycle
 
 Section 10's rules apply to every B4 file: repository-internal provenance by repository-relative path; external tools and trees by
-an explicit root plus the digest of what is used; the clean-tree proof at the canonical path. The lifecycle is B3's S0 (freeze:
-the pins, the seeds, the plan) → S1 (the prediction) → S2 / S3 (the sessions and the adjudication) with the manifest init / verify
-pattern; `<unresolved>`: whether `b3/host/b3_manifest.py`'s form is copied into the B4 namespace (by copy, with digests, never by import
-across the pinned boundary) or rewritten. Section 9's revision rule stands: a threshold changed after the first gate run is a
+an explicit root plus the digest of what is used; the clean-tree proof at the canonical path. The historical reference is B3's
+lifecycle (`b3/host/b3_manifest.py`): **S0 init** (the manifest derived from the tree, the prediction already pinned, not frozen, no
+qualification, no plan) → **S1 freeze** (the preregistration pinned, the owner's board-ready mark) → **S2 qualify** (the qualification record
+reconstructed from its evidence, the calibration) → **S3 plan** (the calibrated plan bound); the board sessions and the pooled adjudication
+introduce no later transition. `<unresolved>` for B4: the stages, the tool (whether `b3_manifest.py`'s form is copied into the B4 namespace
+— by copy, with digests, never by import across the pinned boundary — or rewritten), which stage pins which of section 2's pins and
+derives the seeds; nothing of this is decided by naming B3's. Section 9's revision rule stands: a threshold changed after the first gate run is a
 revision of the architecture with its reason, and the gate is re-run and re-reported under the new commit — never silently.
 
 ## 12. Unresolved dependencies (each a separate ruling; none implied here)

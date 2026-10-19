@@ -92,9 +92,9 @@
   },
   "b4/host/b4_gate.py": {
    "kind": "new",
-   "note": "unit 2b-4 (the gate-tool half; the owner's ruling of 2026-10-19 on gate tool versus production execution): the formal gate tool \u2014 judge (pure: the budget rule, the ten rows K1\u2013K10 with method / value / threshold / status / reason, the verdict PASS / FAIL / invalid / incomplete; a valid complete failure FAIL, a contract break invalid, unfinished work incomplete, no B* / N leaving the dependent rows not assessable and the gate unable to PASS; the summary's own contract checked before anything is judged), the formal identity (the pinned gate label, S = 200, a production batch archive; fixture / synthetic judgements written with formal = false and a NOT A GATE RESULT standing), the gate report document (gate_report.json + its deterministic markdown rendering, bound by digest; typed validator), the gate directory under evidence/b4/gate/ (exclusive, no symlink, nothing overwritten; the self-validation by the verifier before the report is written \u2014 findings make the verdict invalid), run_gate (b4_sim.run_batch in mode gate, then the judgement), judge_batch (an existing gate or mechanics archive), judge_synthetic (Python API, b4-mech labels only), the production CLI (run: the pinned label and S = 200 only; judge: production archives on a clean tree only; no fixture / allow-dirty path). Running the production gate is withheld by the ruling.",
+   "note": "unit 2b-4 (the gate-tool half; the owner's ruling of 2026-10-19 on gate tool versus production execution): the formal gate tool \u2014 judge (pure: the budget rule, the ten rows K1\u2013K10 with method / value / threshold / status / reason, the verdict PASS / FAIL / invalid / incomplete; a valid complete failure FAIL, a contract break invalid, unfinished work incomplete, no B* / N leaving the dependent rows not assessable and the gate unable to PASS; the summary's own contract checked before anything is judged), the formal identity (the pinned gate label, S = 200, a production batch archive; fixture / synthetic judgements written with formal = false and a NOT A GATE RESULT standing), the gate report document (gate_report.json + its deterministic markdown rendering, bound by digest; typed validator), the gate directory under evidence/b4/gate/ (exclusive, no symlink, nothing overwritten; the self-validation by the verifier before the report is written \u2014 findings make the verdict invalid), run_gate (b4_sim.run_batch in mode gate, then the judgement), judge_batch (an existing gate or mechanics archive), judge_synthetic (Python API, b4-mech labels only), the production CLI (run: the pinned label and S = 200 only; judge: production archives on a clean tree only; no fixture / allow-dirty path). Running the production gate is withheld by the ruling. The owner's HOLD on 4cdc0c1 (R1 / R2): the summary contract made TOTAL on arbitrary decoded JSON (exact types \u2014 a bool is never an int, 64.0 never the budget 64; finite numbers; nested shapes before any index) and COHERENT (the at-B* copies bound to their per-budget originals, the ratios to the means through the harness's _ratio, the sign-test p to its counts, Cohen's d to its mean and variance with +inf's one encoding, the N scan ascending and bound to N / power, the fractions to their counts and S, the budget rule to its inputs); the document's identity fields validated before anything is read.",
    "role": "host",
-   "sha256": "601db79a4e3988a95f35570ec6c824e30e5d7fb3091f44bc7c36d810110474c4"
+   "sha256": "9bcc72fec146633381680ec92212968be4371201a6eefa94eed394bdfc9d85fb"
   },
   "b4/host/b4_gate_stats.py": {
    "base": "host/b2_gate.py",
@@ -291,9 +291,9 @@
   },
   "b4/tests/test_b4_gate.py": {
    "kind": "new",
-   "note": "unit 2b-4: the judge on synthetic summaries (the PASS path; every row's FAIL on its own number; the boundaries written with an equal sign; +inf d; no B*; invalid / incomplete; the summary contract; the formal identity; the committed S = 32 report as a read-only reference), end to end on a hermetic copy (a valid FAIL archive without B*, a synthetic PASS, an invalid and an incomplete archive; the verifier in process and in a fresh process; the tampering negatives with digests refreshed, the coordinated tamper of the evidence caught by the deep re-verification; refusals and persistence; the production-only CLI). Production derivation guarded and asserted never reached.",
+   "note": "unit 2b-4: the judge on synthetic summaries (the PASS path; every row's FAIL on its own number; the boundaries written with an equal sign; +inf d; no B*; invalid / incomplete; the summary contract; the formal identity; the committed S = 32 report as a read-only reference), end to end on a hermetic copy (a valid FAIL archive without B*, a synthetic PASS, an invalid and an incomplete archive; the verifier in process and in a fresh process; the tampering negatives with digests refreshed, the coordinated tamper of the evidence caught by the deep re-verification; refusals and persistence; the production-only CLI). Production derivation guarded and asserted never reached. After the HOLD on 4cdc0c1: the synthetic summary built coherently from primitives; every row's FAIL produced coherently; the owner's six reproductions and one case per binding as invalid judgements; the totality fuzz (every node replaced by every foreign value: never an exception, a null always a finding); the refreshed-hash negatives and the invalid positive controls end to end.",
    "role": "test",
-   "sha256": "98ee10e2da32fb1830f819de38766f9d28af355a87b8740f073fef9936842458"
+   "sha256": "9c33a2baa3e260b5b4ba025b702317e9437325ca6b9f3e65e90453b594ed0f4c"
   },
   "b4/tests/test_b4_gate_stats.py": {
    "kind": "new",
@@ -333,9 +333,9 @@
   },
   "b4/tests/test_b4_seeds.py": {
    "kind": "new",
-   "note": "Unit 2b-4: the two historical-source tests no longer assume an empty exploration registry (the S = 32 exploration b4-sim-3 is archived under evidence/b4/sim/ since 5c08536): the registry is exactly the archived run directories, each read from its seeds.json, and their values are in the pool.",
+   "note": "Unit 2b-4: the two historical-source tests no longer assume an empty exploration registry (the S = 32 exploration b4-sim-3 is archived under evidence/b4/sim/ since 5c08536): the registry is exactly the archived run directories, each read from its seeds.json, and their values are in the pool. R3 of the HOLD on 4cdc0c1: the registry assertions status-aware (seeds / seeds_fixture / init_failed_no_seeds) with exact membership, digests and the pooled union; a mixed-registry case beside the committed set.",
    "role": "test",
-   "sha256": "6b4d84674aa6e0a06ab3aadb88c23b260ef0c032fa542510a9e7ece18629dccf"
+   "sha256": "828a35f66d5e7c61e2e6c43cd6311c6242be414cdfbbf77c95afe49a2d403628"
   },
   "b4/tests/test_b4_sim.py": {
    "kind": "new",

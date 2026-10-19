@@ -122,6 +122,26 @@ class TypedExtraction(unittest.TestCase):
             bs.parse_python_excluded("nothing here", "t")
 
 
+def check_registry_record(tc, root: Path, r, sim_root: Path | None = None) -> None:
+    """A registry record against its own directory, status by status: `seeds` (a production set: master + pairs, the digest of
+    seeds.json), `seeds_fixture` (pairs only, no master), `init_failed_no_seeds` (INIT_FAILED.json with seeds_derived false, no seeds.json,
+    no values)."""
+    d = (sim_root / Path(r.dir).name) if sim_root is not None else root / r.dir
+    tc.assertIn(r.status, ("seeds", "seeds_fixture", "init_failed_no_seeds"), r.dir)
+    if r.status == "init_failed_no_seeds":
+        tc.assertFalse((d / bs.SEEDS_FILE).exists(), r.dir)
+        init = json.loads((d / bs.INIT_FAILED_FILE).read_text())
+        tc.assertEqual((init["seeds_derived"], r.seeds_sha256, r.master_seed, r.values), (False, None, None, ()), r.dir)
+        return
+    raw = (d / bs.SEEDS_FILE).read_bytes()
+    seeds = json.loads(raw)
+    tc.assertEqual(r.seeds_sha256, bs.sha256_bytes(raw), r.dir)
+    tc.assertEqual(seeds["fixture"], r.status == "seeds_fixture", r.dir)
+    tc.assertEqual(r.master_seed, seeds["master_seed"], r.dir)
+    want = ([] if seeds["fixture"] else [seeds["master_seed"]]) + [v for pr in seeds["pairs"] for v in pr]
+    tc.assertEqual(list(r.values), want, r.dir)
+
+
 class TheHistoricalSources(unittest.TestCase):
     def test_every_source_reads_hashes_and_yields_seeds(self):
         ex = bs.load_exclusion_set(R)
@@ -142,11 +162,27 @@ class TheHistoricalSources(unittest.TestCase):
         self.assertEqual([r.dir for r in ex.registry], archived)
         self.assertIn("evidence/b4/sim/b4-sim-3_20261019T121833Z", archived, "the committed exploration is in the registry")
         for r in ex.registry:
-            self.assertEqual(r.status, "seeds", r.dir)
-            seeds = json.loads((R / r.dir / bs.SEEDS_FILE).read_text())
-            self.assertEqual((r.master_seed, r.seeds_sha256), (seeds["master_seed"], bs.sha256_bytes((R / r.dir / bs.SEEDS_FILE).read_bytes())), r.dir)
-            self.assertEqual(set(r.values), {seeds["master_seed"]} | {v for pr in seeds["pairs"] for v in pr}, r.dir)
+            check_registry_record(self, R, r)
         self.assertIn(f"holds {len(archived)} run directories", ex.registry_note)
+
+    def test_a_mixed_registry_beside_the_committed_set_is_read_status_by_status(self):
+        """R3 of the owner's review of 4cdc0c1: every legal record kind — a production seeds record (the committed S = 32 set, copied), a
+        mechanics fixture set, and a no-seeds INIT_FAILED record — in one registry; exact membership, digests and the pooled union held."""
+        tmp = tempfile.TemporaryDirectory(); self.addCleanup(tmp.cleanup)
+        simdir = Path(tmp.name) / "sim"
+        src = R / bs.SIM_REL / "b4-sim-3_20261019T121833Z"
+        (simdir / src.name).mkdir(parents=True)
+        shutil.copy(src / bs.SEEDS_FILE, simdir / src.name / bs.SEEDS_FILE)
+        (simdir / "b4-mech-1_fixture").mkdir(); (simdir / "b4-mech-1_fixture" / bs.SEEDS_FILE).write_text(json.dumps(fixture_doc("b4-mech-1", [[7, 11], [8, 12]])))
+        (simdir / "b4-mech-2_init_failed").mkdir()
+        (simdir / "b4-mech-2_init_failed" / bs.INIT_FAILED_FILE).write_text(json.dumps({"schema": "b4_sim_init_failed", "schema_version": "1.0.0", "label": "b4-mech-2",
+                                                                                     "seeds_derived": False, "reason": "dirty tree", "generated_utc": "x"}))
+        ex = bs.load_exclusion_set(R, str(simdir))
+        self.assertEqual([(r.dir.rsplit("/", 1)[1], r.status) for r in ex.registry], [("b4-mech-1_fixture", "seeds_fixture"), ("b4-mech-2_init_failed", "init_failed_no_seeds"), (src.name, "seeds")], "path order")
+        for r in ex.registry:
+            check_registry_record(self, Path(tmp.name), r, sim_root=simdir)
+        self.assertEqual(ex.values, set(bs.B2_EXCLUDED_SEEDS) | set(bs.B4_EXPOSED_VALUES) | {v for s in ex.sources for v in s.values} | set(ex.receipt.values) | {v for r in ex.registry for v in r.values})
+        self.assertEqual(ex.as_dict()["sim_registry"][1], {"dir": str(simdir / "b4-mech-2_init_failed"), "status": "init_failed_no_seeds", "seeds_sha256": None, "master_seed": None, "count": 0})
 
     def test_the_pool_holds_the_copy_the_exposed_values_and_every_source_value(self):
         ex = bs.load_exclusion_set(R)
