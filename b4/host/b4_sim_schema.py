@@ -12,7 +12,7 @@ in their order, a complete K10 record exactly the 420 units in theirs; a partial
 and source are checked against the document whenever a task is given (seed, digest, stimulus digest, provenance).
 
 Files of a run directory `evidence/b4/sim/<label>_<UTC>/`:
-    seeds.json                      b4_sim_seeds 1.1.0         (b4_seeds.seeds_doc_findings; `fixture` False = production, True = mechanics)
+    seeds.json                      b4_sim_seeds 1.2.0         (b4_seeds.seeds_doc_findings; `fixture` False = production, True = mechanics; exclusion.exposure_receipt pinned)
     manifest.json                   b4_sim_manifest 1.1.0      the provenance snapshot before the first observation (external sources, registry snapshot)
     pair_NNN/arm_<role>.result.json b4_sim_arm_result 1.0.0    the engine's RunResult as returned, written before any audit
     pair_NNN/arm_<role>.result.QUARANTINE.json  b4_sim_quarantine 1.0.0  a returned RunResult that did NOT validate, kept raw with the findings
@@ -300,9 +300,13 @@ def manifest_findings(doc) -> list[str]:
         if not (isinstance(doc[k], dict) and all(isinstance(p, str) and isinstance(s, str) and HEX64.match(s) for p, s in doc[k].items())):
             f.append(k)
     e = doc["exclusion"]
-    if not (isinstance(e, dict) and {"historical_sources", "pooled_total", "sim_registry", "sim_registry_note", "registry_snapshot"} <= set(e)
+    if not (isinstance(e, dict) and {"historical_sources", "pooled_total", "sim_registry", "sim_registry_note", "registry_snapshot", "exposure_receipt"} <= set(e)
             and isinstance(e["registry_snapshot"], list) and all(isinstance(r, list) and len(r) == 3 for r in e["registry_snapshot"])):
         f.append("exclusion")
+    else:
+        f.extend(bs.receipt_reference_findings(e["exposure_receipt"], "exclusion.exposure_receipt"))     # the pinned receipt, pooled into this batch's derivation
+    if isinstance(doc["inputs"], dict) and doc["inputs"].get(bs.EXPOSURE_RECEIPT_REL) != bs.EXPOSURE_RECEIPT_SHA256:
+        f.append("inputs: the exposure receipt is not held at its pinned digest")
     h = doc["hypothesis"]
     if not (isinstance(h, dict) and set(h) == {"path", "sha256", "version", "fixture", "sources"} and isinstance(h["sha256"], str) and HEX64.match(h["sha256"]) and h["fixture"] is False
             and isinstance(h["sources"], list)):

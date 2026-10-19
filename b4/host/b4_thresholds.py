@@ -18,7 +18,7 @@ for p in (REPO_ROOT / "b4/host",):
 from b4_ff_hypothesis import HYPOTHESIS_SHA256  # noqa: E402
 
 ARCHITECTURE_REL = "docs/b4_architecture.md"
-ARCHITECTURE_SECTION = "9 (v0.1.15)"
+ARCHITECTURE_SECTION = "9 (v0.1.16)"
 
 GRID = (8, 16, 24, 32, 48, 64, 96, 128, 192, 256)
 B_MAX = 256
@@ -51,7 +51,8 @@ THRESHOLDS = {
                "no_eligible_budget": "the budget rule FAILS; B* and N are not invented (exploration: candidate B* / N are null with the reason)"},
     "delta2_F_shift": PROBES,
     "anchor": {"rule": "int.from_bytes(sha256(utf8(label + '|' + anchor))[:4], 'big'), the label passed beside the anchor",
-               "hypothesis_sha256": HYPOTHESIS_SHA256, "gate_label": "b4-gate-1", "exploration_label": "b4-sim-1"},
+               "hypothesis_sha256": HYPOTHESIS_SHA256, "gate_label": "b4-gate-1", "exploration_label": "b4-sim-3",
+               "retired_exploration_labels": ["b4-sim-1", "b4-sim-2"]},
     "controls": {"x_control_seed": "int.from_bytes(sha256('b4-x-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')",
                  "d_shuffle_seed": "int.from_bytes(sha256('b4-d-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')"},
 }
@@ -72,7 +73,8 @@ PINS = (
     ("K9.median_population", "K9", "if a semantic is not assessable for even one seed, its median is *not assessable*"),
     ("K10.tau", "K10", "τ = **2 fitness score units**"), ("K10.interacting", "K10", "**interacting** when `max|I| > 2`"), ("K10.interacting_seeds_over_S_min", "K10", "**interacting seeds / all S ≥ 0.50**"),
     ("K10.pairs_per_background", "K10", "**all 210 unordered pairs**"), ("K10.background_salt", "K10", "0x4C0A4E55"),
-    ("anchor.hypothesis_sha256", "9.2", HYPOTHESIS_SHA256), ("anchor.gate_label", "9.2", "'b4-gate-1|'"), ("anchor.exploration_label", "9.2", "'b4-sim-1'"),
+    ("anchor.hypothesis_sha256", "9.2", HYPOTHESIS_SHA256), ("anchor.gate_label", "9.2", "'b4-gate-1|'"), ("anchor.exploration_label", "9.2", "'b4-sim-3'"),
+    ("anchor.retired_exploration_labels", "9.2", "`b4-sim-1` and `b4-sim-2` are retired"),
     ("controls.x_control_seed", "8", "sha256('b4-x-control-1|<landscape_seed>|<operator_seed>')"), ("controls.d_shuffle_seed", "8", "sha256('b4-d-control-1|<landscape_seed>|<operator_seed>')"),
     ("delta2_F_shift", "9-intro", "**21 probes, one per address of the slice's configuration-bit universe**"),
 )

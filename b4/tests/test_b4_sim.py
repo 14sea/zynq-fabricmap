@@ -55,7 +55,7 @@ def git(root: Path, *args) -> str:
 
 
 def build_hermetic(dst: Path) -> Path:
-    files = [f[0] for f in bs.FIELDS] + list(sim.ROOT_INPUTS)
+    files = [f[0] for f in bs.FIELDS] + list(sim.ROOT_INPUTS) + [bs.EXPOSURE_RECEIPT_REL]   # the receipt copied in its own right (not only as a root input)
     for s in hy.load().doc["sources"]:
         if s.get("kind") in ("repository_document", "certificate_mapping") and "root" not in s:
             files.append(s["path"])
@@ -149,7 +149,8 @@ class Preflight(Base):
         before = sorted(p.name for p in self.ns.iterdir()) if self.ns.exists() else []
         cases = [("b4-sim-1", 2, 60, None, SCHED1, "mechanics label"),            # a production label never runs on a fixture
                  ("b4-mech-1", 2, 60, None, None, "needs a FixtureSchedule"),       # a fixture label never derives
-                 ("b4-gate-1", 2, 60, None, None, "exploration label"), ("b4-sim-1", 0, 60, None, None, "--seeds"), ("b4-sim-1", 2, 0, None, None, "--deadline-s"),
+                 ("b4-gate-1", 2, 60, None, None, "exploration label"), ("b4-sim-3", 0, 60, None, None, "--seeds"), ("b4-sim-3", 2, 0, None, None, "--deadline-s"),
+                 ("b4-sim-1", 2, 60, None, None, "retired"), ("b4-sim-2", 32, 3600, None, None, "retired"),      # the settlement of 2026-10-19: refused before any master
                  ("b4-mech-1", 2, True, None, SCHED1, "--deadline-s"), ("b4-mech-1", 1, 60, None, SCHED1, "schedule's 2 pairs"),
                  ("b4-mech-1", 1, 60, None, sim.FixtureSchedule("b4-mech-1", ((7, 1000001),)), "already-exposed"),
                  ("b4-mech-1", 1, 60, None, sim.FixtureSchedule("b4-mech-1", ((7, 7),)), "equal"),
@@ -204,6 +205,36 @@ class Preflight(Base):
                 res = sim.run_batch(root, "b4-mech-1", 2, 60, None, schedule=SCHED1)
                 self.assertEqual(res["status"], "refused", f"{level}: the default output path is refused too")
                 self.assertEqual(sorted(str(p.relative_to(outside)) for p in outside.rglob("*")), before)
+
+    def test_a_retired_label_is_refused_before_the_tree_is_read(self):
+        """The owner's ruling of 2026-10-19 (section 4): b4-sim-1 / b4-sim-2 are refused on the new-production-derivation path
+        before any tree is read and before any master is formed — through the API and the CLI; the exploration label is not."""
+        for label in ("b4-sim-1", "b4-sim-2"):
+            with mock.patch.object(sim, "porcelain", side_effect=AssertionError("the tree was read")):
+                res = sim.run_batch(self.root, label, 32, 3600, None)
+                self.assertEqual((res["status"], res["exit_code"]), ("refused", 2)); self.assertIn("retired", res["reason"]); self.assertIn("b4-sim-3", res["reason"])
+                with mock.patch("sys.stdout"):
+                    self.assertEqual(sim.main(["--label", label, "--seeds", "32", "--deadline-s", "3600"]), 2)
+        self.assertEqual([m.call_count for m in self.guard_mocks], [0, 0], "no retired label reached a derivation")
+        self.assertEqual(bs.EXPLORATION_LABEL, "b4-sim-3"); bs.check_label_not_retired(bs.EXPLORATION_LABEL)
+        self.assertEqual(th.THRESHOLDS["anchor"]["exploration_label"], bs.EXPLORATION_LABEL, "the table and the loader name the same next label")
+        self.assertTrue(sim.LABEL_RE.match(bs.EXPLORATION_LABEL))
+
+    def test_a_missing_or_rehashed_receipt_refuses_the_pre_flight(self):
+        """The receipt is a root input: a root whose receipt is re-hashed or missing is refused before anything is written."""
+        for variant in ("rehashed", "missing"):
+            with tempfile.TemporaryDirectory(prefix="b4mech_rcpt_") as tmp:
+                root = build_hermetic(Path(tmp) / "root")
+                p = root / bs.EXPOSURE_RECEIPT_REL
+                if variant == "rehashed":
+                    p.write_bytes(p.read_bytes() + b"\n")
+                else:
+                    p.unlink()
+                git(root, "add", "-A"); git(root, "commit", "-q", "-m", variant)
+                res = sim.run_batch(root, "b4-mech-1", 2, 60, None, schedule=SCHED1)
+                self.assertEqual((res["status"], res["exit_code"]), ("refused", 2), variant)
+                self.assertIn("receipt", res["reason"], variant)
+                self.assertFalse((root / sim.SIM_REL).exists(), f"{variant}: nothing written")
 
     def test_the_cli_has_no_fixture_path(self):
         """The CLI accepts production labels only and cannot build a schedule: a mechanics label is refused before any tree is read."""
@@ -272,6 +303,10 @@ class CompleteBatch(Base):
         self.assertEqual(seeds["pairs"], [[7, 11], [8, 12]], "the schedule, as given; nothing derived")
         self.assertEqual(len(seeds["exclusion"]["sources"]), 38)
         self.assertEqual(seeds["exclusion"]["sim_registry"], [], "the first batch: no archived set yet")
+        rc = bs.read_exposure_receipt(self.root)
+        self.assertEqual(seeds["exclusion"]["exposure_receipt"], {"path": bs.EXPOSURE_RECEIPT_REL, "sha256": bs.EXPOSURE_RECEIPT_SHA256, "count": len(rc.values)}, "the receipt was pooled into this derivation")
+        self.assertEqual(seeds["exclusion"]["pooled_total"], len(bs.load_exclusion_set(self.root).values))
+        self.assertEqual(seeds["schema_version"], "1.2.0")
         self.assertEqual([m.call_count for m in self.guard_mocks], [0, 0], "no production derivation was reached by the complete batch")
         man = json.loads((self.out_dir / "manifest.json").read_text())
         self.assertEqual(sc.manifest_findings(man), [])
@@ -283,6 +318,8 @@ class CompleteBatch(Base):
         vendors = {str(Path(s["root"]) / s["path"]): s["sha256"] for s in hy.load().doc["sources"] if "root" in s}
         self.assertEqual(len(vendors), 6); self.assertEqual(man["external_inputs"], vendors, "F9: the six external sources are bound by absolute path and digest")
         self.assertEqual(man["exclusion"]["registry_snapshot"], [])
+        self.assertEqual(man["exclusion"]["exposure_receipt"], seeds["exclusion"]["exposure_receipt"])
+        self.assertEqual(man["inputs"][bs.EXPOSURE_RECEIPT_REL], bs.EXPOSURE_RECEIPT_SHA256, "the receipt is a root input held at the checkpoints")
         self.assertFalse(man["code_root"]["same_as_input_root"], "a hermetic input root is not the code root")
         self.assertIn("b4/host/b4_sim.py", man["tool_files"]); self.assertIn("b4/host/b4_sim_verify.py", man["tool_files"])
         self.assertEqual(man["seeds_sha256"], sim.sha_file(self.out_dir / "seeds.json"))
@@ -515,6 +552,23 @@ class InvalidStops(Base):
             shutil.rmtree(foreign, ignore_errors=True)
         self.assertEqual((res["status"], res["stopped"]["kind"], res["stopped"]["stage"]), ("invalid", "input_drift", "pair 0 end"))
         self.assertIn("registry changed", res["stopped"]["detail"])
+
+    def test_a_receipt_drift_during_the_batch_is_invalid(self):
+        """The exposure receipt changes during the batch: caught at the pair's input checkpoint as input_drift, never complete."""
+        rc = self.root / bs.EXPOSURE_RECEIPT_REL
+        original = rc.read_bytes()
+
+        def drift(fabric, role, pair):
+            if (pair, role) == (1, "R"):
+                rc.write_bytes(original + b"\n")
+            return ex.ObservationPort(fabric)
+        try:
+            res = self.run_with(drift)
+        finally:
+            rc.write_bytes(original)
+        self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"]), ("invalid", 1, "input_drift"))
+        self.assertIn(bs.EXPOSURE_RECEIPT_REL, res["stopped"]["detail"]); self.assertEqual(res["stopped"]["stage"], "pair 1 end")
+        self.assertIsNone(self.report(res)["summary"])
 
     def test_an_input_drift_during_the_final_verification_is_invalid(self):
         """R5: the architecture document changes while the deep verification runs (after it returns clean) — the final
@@ -1005,6 +1059,23 @@ class TheArchiveVerifier(Base):
             code = sv.main([str(out), "--shallow"])
         res = json.loads(buf.getvalue())
         self.assertEqual((code, res["clean"]), (1, False)); self.assertIn("RuntimeError", res["findings"]["verifier"][0])
+        self.assertEqual(self.findings(), {}, "restored")
+
+    def test_the_exposure_receipt_is_bound_in_seeds_the_manifest_and_the_inputs(self):
+        """The settlement of 2026-10-19: the receipt named by seeds.json and the manifest, and held in the inputs, is exactly
+        the pinned one — a changed digest, path or count, or a held input digest that is not the pinned one, is a finding."""
+        out = self.out_dir
+        man = self.load("manifest.json"); man["exclusion"]["exposure_receipt"]["sha256"] = "00" * 32; self.put("manifest.json", man); reindex(out)
+        f = self.findings(); self.assertTrue(any("exposure_receipt" in x for x in f.get("manifest.json", [])), f)
+        man = self.load("manifest.json"); man["inputs"][bs.EXPOSURE_RECEIPT_REL] = "00" * 32; self.put("manifest.json", man); reindex(out)
+        f = self.findings(); self.assertTrue(any("receipt" in x for x in f.get("manifest.json", [])), f)
+        sd = self.load("seeds.json"); sd["exclusion"]["exposure_receipt"]["count"] = 1; self.put("seeds.json", sd); reindex(out)
+        f = self.findings(); self.assertTrue(any("receipt" in x for xs in f.values() for x in xs), f)
+        sd = self.load("seeds.json"); del sd["exclusion"]["exposure_receipt"]; self.put("seeds.json", sd); reindex(out)
+        f = self.findings(); self.assertIn("seeds.json", f, f)
+        with mock.patch.dict(sc.VALIDATORS, {"seeds.json": lambda d: [], "manifest.json": lambda d: []}):     # defence in depth: the linkage check alone
+            man = self.load("manifest.json"); man["exclusion"]["exposure_receipt"]["sha256"] = "00" * 32; self.put("manifest.json", man); reindex(out)
+            f = self.findings(); self.assertTrue(any("exposure receipt" in x for x in f.get("linkage", [])), f)
         self.assertEqual(self.findings(), {}, "restored")
 
     def test_the_cli_of_the_verifier(self):

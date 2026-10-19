@@ -1,0 +1,1832 @@
+{
+ "already_in_base_pool": [],
+ "envelope": {
+  "labels": [
+   "b4-sim-1",
+   "b4-sim-2"
+  ],
+  "not_covered": "uncommitted development versions of the tests and of the mutant battery that ran before edfc93c / cdf2c53 (the author's runs with 217 and 218 tests) \u2014 their recipes are not recoverable; the number of historical attempts and whether any deleted outcome was inspected cannot be shown",
+  "observed_registry_depths": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "observed_variants": [
+   "V1",
+   "V2",
+   "V3",
+   "V4",
+   "V5",
+   "V6"
+  ],
+  "rationale": "the committed recipes of edfc93c (test classes on fresh hermetic trees: CompleteBatch 1 + 1, InvalidStops 7, IncompleteStops 3; the smoke test 1; the owner's interrupted re-run 6) and the one derivation-changing mutant of the cdf2c53 battery that ran a batch (M1); M32 derives set 1 again; the k-th set of a label depends only on the k-1 sets before it, never on the order of tests",
+  "reconstructed_only_variants": [
+   "V7",
+   "V8",
+   "V9"
+  ],
+  "variants": [
+   "V1",
+   "V2",
+   "V3",
+   "V4",
+   "V5",
+   "V6",
+   "V7",
+   "V8",
+   "V9"
+  ]
+ },
+ "historical_inputs": {
+  "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+  "base_pool_count": 2093,
+  "base_pool_sha256": "188a88180f82df0d0a1f8733c71b7111ef0139fb3e7ffec371a28ba357a6ee5f",
+  "commit": "edfc93c",
+  "files": {
+   "b4/host/b4_rng.py": {
+    "git_blob": "ec59a60dc7afa936313002af29203a8e596b3ebf",
+    "sha256": "f2ef921176d46f1fec3f0d496300a42bce66a4d051c8c3e6f87e4bfff067b42a"
+   },
+   "b4/host/b4_seeds.py": {
+    "git_blob": "daae6d5a0819344f7bc8a0142c8f0fa93b69bcb7",
+    "sha256": "c0e66700df246d6a17fbec473435c0fc68018a9184ddb4ee9f987f20cfc6e749"
+   }
+  },
+  "historical_sources": [
+   {
+    "count": 20,
+    "path": "host/b2_search.py",
+    "sha256": "3acb04714a6c677708892d171f6a418e6de7627210e2ec6ad65158db51eab1cf"
+   },
+   {
+    "count": 23,
+    "path": "manifests/b2_manifest.json",
+    "sha256": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0"
+   },
+   {
+    "count": 18,
+    "path": "manifests/b3_manifest.json",
+    "sha256": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628"
+   },
+   {
+    "count": 21,
+    "path": "evidence/b2/gate/gate_report.json",
+    "sha256": "571196bd509e5eb09897d206a634b508655bb42f293be7eeaf7fba8d4c514c43"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b2/gate/raw_F1.json",
+    "sha256": "b821c24998dece562026d41c094509da98cfd5430b099ea52ec35dc44050e0bf"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b2/gate/raw_F2.json",
+    "sha256": "6194ed690afd5107a76cd081f158a174d2147c3f364e331e0c58ebba74dcab5f"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b2/gate/raw_F3.json",
+    "sha256": "8a751a23c7e3088f85f39f2da32a175648623861d525099dcfb05c93eb8111a9"
+   },
+   {
+    "count": 21,
+    "path": "evidence/b2/gate/v0.1_2026-09-10/gate_report.json",
+    "sha256": "d547144fce433078531b125937b946c2df94ad69d5c44f7ba37c45976984e4ce"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b2/gate/v0.1_2026-09-10/raw_F1.json",
+    "sha256": "ffb0bf396f975585cc9bd88f7500ea188612ab2e8a5e9f59076dbd675dcab532"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b2/gate/v0.1_2026-09-10/raw_F2.json",
+    "sha256": "859b96a03cdccd23b116a0b64e41f5f3c091ba85da4c13c404027c8b77ca7522"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b2/gate/v0.1_2026-09-10/raw_F3.json",
+    "sha256": "f37ae4e4b38b4b9508c424bf0cedc85f1b5f88b1c3b01f75cdc2c90047fce21d"
+   },
+   {
+    "count": 21,
+    "path": "evidence/b2/gate/recomputed_2026_09_10/gate_report.json",
+    "sha256": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c"
+   },
+   {
+    "count": 21,
+    "path": "evidence/b2/gate/recomputed_2026_09_10/controls_report.json",
+    "sha256": "4a5042e283069f7112cf45c2dbbbb913ef81ea7d5fede97450c2d6b4084c2f89"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b2/gate/recomputed_2026_09_10/raw_controls_F1.json",
+    "sha256": "bddc7ad93003e787cebe5fb569131d161b05d76f931212fe4e52f658bc2e4aa6"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b2/gate/recomputed_2026_09_10/raw_controls_F2.json",
+    "sha256": "7948e974be96fd983e5155bdbb72f0d97bc646dc5a0bfdb1cda22c3188f33ed8"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b2/gate/recomputed_2026_09_10/raw_controls_F3.json",
+    "sha256": "a5ed062f6591acc4fe782a35e8cca1910269145ce8682465f8022c181890d394"
+   },
+   {
+    "count": 24,
+    "path": "evidence/b2/plan.json",
+    "sha256": "62dc85934eec02e2fe31a90b336d0fd320d03a4f54bf90537e944ece72458b9c"
+   },
+   {
+    "count": 24,
+    "path": "evidence/b2/b2q_plan.json",
+    "sha256": "3d194d76e083fd4ba3ce3cf0458af65637120fcda6761be36598833dbc659216"
+   },
+   {
+    "count": 18,
+    "path": "evidence/b2/prediction.json",
+    "sha256": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731"
+   },
+   {
+    "count": 2,
+    "path": "evidence/b2/b2q_prediction.json",
+    "sha256": "2ada4d5dab7ed08f081aa55bb4b6f138688a326bb859ab5d63f58c16e67b58aa"
+   },
+   {
+    "count": 1,
+    "path": "evidence/b3/sim/sim_report.json",
+    "sha256": "d9c432f8b797933e26e24a77d33e5884f29c03c2be88e6c59c61bc0af250adf9"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b3/sim/raw_F1.json",
+    "sha256": "ccf4d24622c7cfb3ee698623047ea461303c603449d47ffb0452f83656b74c53"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b3/sim/raw_F2.json",
+    "sha256": "953511d7540bbf0a0af7932f5c8c486a03f64d3d68cda576b2ed07f6e4ed4e1c"
+   },
+   {
+    "count": 1,
+    "path": "evidence/b3/sim_v0.1.1/sim_report.json",
+    "sha256": "dcbaa2a3cf2fe817c77ce24ab4a4250ec4c8a2c171117f55da9d80740e29401c"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b3/sim_v0.1.1/raw_F1.json",
+    "sha256": "ccf4d24622c7cfb3ee698623047ea461303c603449d47ffb0452f83656b74c53"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b3/sim_v0.1.1/raw_F2.json",
+    "sha256": "953511d7540bbf0a0af7932f5c8c486a03f64d3d68cda576b2ed07f6e4ed4e1c"
+   },
+   {
+    "count": 27,
+    "path": "evidence/b3/gate/gate_report.json",
+    "sha256": "477225f54bb40866abb08df69e6e34341c7516cd7e398e8bb6d0c06c8ae2aa68"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b3/gate/raw_F1.json",
+    "sha256": "54f9c4fbc0bac8c0bfe1c6ce203f8848367d201b85b610e40c031f96c1746ed6"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b3/gate/raw_F2.json",
+    "sha256": "279b08ede52cf73d948f69e1390e2c02c09e417ca8406bb52da78439ff1b3e2d"
+   },
+   {
+    "count": 29,
+    "path": "evidence/b3/gate_2/gate_report.json",
+    "sha256": "8f717b12bdc7258d49145bd47bbcfb8291d2b2a79cad42cb75491a19398fda90"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b3/gate_2/raw_F1.json",
+    "sha256": "631aac7119dc054b9db835a756e2fbc1f56b4071f027506b13d5a3630c08b0fc"
+   },
+   {
+    "count": 400,
+    "path": "evidence/b3/gate_2/raw_F2.json",
+    "sha256": "cba55465bde4a35c39cc33ce0a853db4a3db5f9ac85e0ded6d671a87732cbfe5"
+   },
+   {
+    "count": 29,
+    "path": "evidence/b3/plan.json",
+    "sha256": "b202a2800d5934978394ffca7ee8f24d9b2897c953d4f41b1050fed840c81dd1"
+   },
+   {
+    "count": 27,
+    "path": "evidence/b3/b3q_plan.json",
+    "sha256": "490347f4b3542147581940035a12eb9bb7db7cbd0ad550dd8bfd3e2b68261026"
+   },
+   {
+    "count": 16,
+    "path": "evidence/b3/prediction.json",
+    "sha256": "92b774ea62d290d380e72a4c990b384060db9006cf9160940fb4848ae4a14cf5"
+   },
+   {
+    "count": 2,
+    "path": "evidence/b3/b3q_prediction.json",
+    "sha256": "7eae26509b9488a111257c112c5cf90e9cc8f6e34311af837c79ccc40245ec27"
+   },
+   {
+    "count": 27,
+    "path": "evidence/b3/plan_trial_2026_09_17/plan.json",
+    "sha256": "8b6142b06b883baee2e9e8b298635429384279d2be78efab18cd73bdcc3761d2"
+   },
+   {
+    "count": 18,
+    "path": "evidence/b3/plan_trial_2026_09_17/prediction.json",
+    "sha256": "6e45a752bd3db536db0cbea7dcb0e531bb40889fff91f7dc6c28250f44f729b2"
+   }
+  ],
+  "note": "the 38 sources were read by the historical loader against their pinned digests; the exploration namespace did not exist (empty registry), as in every exposing run"
+ },
+ "limits": [
+  "seed-only: no engine, fabric, cartographer, K9 / K10 or statistic was run",
+  "the retired labels only were derived; b4-sim-3 and the gate labels were not",
+  "a value's class is the strongest claim the surviving evidence supports: observed (in a preserved seeds.json), reconstructed_recipe (the committed recipe drew it, no record survives), conservative_superset (derivable from a drawn pair; whether that run reached the control is not shown)",
+  "this receipt makes the known and the reconstructable exposure EXCLUDED; it does not make the historical exposure record complete"
+ ],
+ "pooled": [
+  111850748,
+  115165240,
+  145141952,
+  402662889,
+  406542843,
+  480881440,
+  868593365,
+  901432056,
+  948989157,
+  975954876,
+  984548463,
+  994545473,
+  995532098,
+  1007726774,
+  1010293224,
+  1024312358,
+  1090143361,
+  1248490914,
+  1275287146,
+  1318790079,
+  1427447052,
+  1472419039,
+  1483009057,
+  1484069272,
+  1504960266,
+  1573202848,
+  1580242079,
+  1585362902,
+  1596556259,
+  1605787265,
+  1728435565,
+  1779806758,
+  1819600574,
+  1837160684,
+  1948371387,
+  2009503361,
+  2039217094,
+  2096574601,
+  2137505051,
+  2240621149,
+  2294942776,
+  2327199381,
+  2341665010,
+  2365826131,
+  2431506770,
+  2496791140,
+  2546603417,
+  2596893929,
+  2657895865,
+  2825126967,
+  2908038371,
+  3132814250,
+  3268807065,
+  3452627742,
+  3576832716,
+  3593265337,
+  3795587446,
+  3837672233,
+  3860780153,
+  3880354669,
+  3904939537,
+  3929607331,
+  4092029078,
+  4095200487,
+  4253232248,
+  4263957882
+ ],
+ "pooled_count": 66,
+ "pooled_sha256": "f22888d044edd17bb5a4ea949e9f6b7014f2425b620934131c353783c22cbef7",
+ "preserved_records": [
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T16:54:13Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2137505051,
+     111850748
+    ],
+    [
+     4092029078,
+     2596893929
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_jv9da6xe/worktree/b4-sim-1_20261018T165413Z/seeds.json",
+   "pooled_total": 2093,
+   "problems": [],
+   "registry_depth": 0,
+   "sha256": "fdc0001bd3ff32b307c3e2baff24c2ac6dc5ea4d9cf8196ce8c801b2f3d8d00d",
+   "variant": "V1"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:56Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2137505051,
+     111850748
+    ],
+    [
+     4092029078,
+     2596893929
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/375253915f14/b4-sim-1_t001/seeds.json",
+   "pooled_total": 2093,
+   "problems": [],
+   "registry_depth": 0,
+   "sha256": "71b874b591831d9d57718c4e411ce329a3408fa1b279770b784aaad5da417af5",
+   "variant": "V1"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:57Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     1427447052,
+     994545473
+    ],
+    [
+     901432056,
+     1779806758
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/375253915f14/b4-sim-1_t002/seeds.json",
+   "pooled_total": 2098,
+   "problems": [],
+   "registry_depth": 1,
+   "sha256": "ea380382fef4af97708b7a419ce3e8b2276161c07df0b26c838d7c721c74f402",
+   "variant": "V2"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:58Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     1728435565,
+     2327199381
+    ],
+    [
+     4253232248,
+     3880354669
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/375253915f14/b4-sim-1_t003/seeds.json",
+   "pooled_total": 2102,
+   "problems": [],
+   "registry_depth": 2,
+   "sha256": "42e8694289410aeb34aa2a79f43915326c44ee034392519197b7e9f36e790f36",
+   "variant": "V3"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:29:02Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     145141952,
+     1472419039
+    ],
+    [
+     984548463,
+     3132814250
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/375253915f14/b4-sim-1_t004/seeds.json",
+   "pooled_total": 2106,
+   "problems": [],
+   "registry_depth": 3,
+   "sha256": "968a35fe6b262a2a1da3ddbe5b9182e59e677fe052eebac94873c22fb897fe39",
+   "variant": "V4"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:29:02Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2825126967,
+     1484069272
+    ],
+    [
+     4263957882,
+     948989157
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/375253915f14/b4-sim-1_t005/seeds.json",
+   "pooled_total": 2110,
+   "problems": [],
+   "registry_depth": 4,
+   "sha256": "ec0f2b4cf844c2b242d5b3fea03faec109ed2799a891900afa2b2eb181ac43c8",
+   "variant": "V5"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:56Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2137505051,
+     111850748
+    ],
+    [
+     4092029078,
+     2596893929
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/5a47e5e9b202/b4-sim-1_t001/seeds.json",
+   "pooled_total": 2093,
+   "problems": [],
+   "registry_depth": 0,
+   "sha256": "71b874b591831d9d57718c4e411ce329a3408fa1b279770b784aaad5da417af5",
+   "variant": "V1"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:57Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     1427447052,
+     994545473
+    ],
+    [
+     901432056,
+     1779806758
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/5a47e5e9b202/b4-sim-1_t002/seeds.json",
+   "pooled_total": 2098,
+   "problems": [],
+   "registry_depth": 1,
+   "sha256": "ea380382fef4af97708b7a419ce3e8b2276161c07df0b26c838d7c721c74f402",
+   "variant": "V2"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:56Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2137505051,
+     111850748
+    ],
+    [
+     4092029078,
+     2596893929
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/baf165d0db29/b4-sim-1_t001/seeds.json",
+   "pooled_total": 2093,
+   "problems": [],
+   "registry_depth": 0,
+   "sha256": "71b874b591831d9d57718c4e411ce329a3408fa1b279770b784aaad5da417af5",
+   "variant": "V1"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:57Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     1427447052,
+     994545473
+    ],
+    [
+     901432056,
+     1779806758
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/baf165d0db29/b4-sim-1_t002/seeds.json",
+   "pooled_total": 2098,
+   "problems": [],
+   "registry_depth": 1,
+   "sha256": "ea380382fef4af97708b7a419ce3e8b2276161c07df0b26c838d7c721c74f402",
+   "variant": "V2"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:58Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     1728435565,
+     2327199381
+    ],
+    [
+     4253232248,
+     3880354669
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/baf165d0db29/b4-sim-1_t003/seeds.json",
+   "pooled_total": 2102,
+   "problems": [],
+   "registry_depth": 2,
+   "sha256": "42e8694289410aeb34aa2a79f43915326c44ee034392519197b7e9f36e790f36",
+   "variant": "V3"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:56Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2137505051,
+     111850748
+    ],
+    [
+     4092029078,
+     2596893929
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/d3d560725477/b4-sim-1_t001/seeds.json",
+   "pooled_total": 2093,
+   "problems": [],
+   "registry_depth": 0,
+   "sha256": "71b874b591831d9d57718c4e411ce329a3408fa1b279770b784aaad5da417af5",
+   "variant": "V1"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:56Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2137505051,
+     111850748
+    ],
+    [
+     4092029078,
+     2596893929
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/ea987288f097/b4-sim-1_t001/seeds.json",
+   "pooled_total": 2093,
+   "problems": [],
+   "registry_depth": 0,
+   "sha256": "71b874b591831d9d57718c4e411ce329a3408fa1b279770b784aaad5da417af5",
+   "variant": "V1"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:57Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     1427447052,
+     994545473
+    ],
+    [
+     901432056,
+     1779806758
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/ea987288f097/b4-sim-1_t002/seeds.json",
+   "pooled_total": 2098,
+   "problems": [],
+   "registry_depth": 1,
+   "sha256": "ea380382fef4af97708b7a419ce3e8b2276161c07df0b26c838d7c721c74f402",
+   "variant": "V2"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:58Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     1728435565,
+     2327199381
+    ],
+    [
+     4253232248,
+     3880354669
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/ea987288f097/b4-sim-1_t003/seeds.json",
+   "pooled_total": 2102,
+   "problems": [],
+   "registry_depth": 2,
+   "sha256": "42e8694289410aeb34aa2a79f43915326c44ee034392519197b7e9f36e790f36",
+   "variant": "V3"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:29:02Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     145141952,
+     1472419039
+    ],
+    [
+     984548463,
+     3132814250
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/history/ea987288f097/b4-sim-1_t004/seeds.json",
+   "pooled_total": 2106,
+   "problems": [],
+   "registry_depth": 3,
+   "sha256": "968a35fe6b262a2a1da3ddbe5b9182e59e677fe052eebac94873c22fb897fe39",
+   "variant": "V4"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:56Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2137505051,
+     111850748
+    ],
+    [
+     4092029078,
+     2596893929
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/worktree/b4-sim-1_t001/seeds.json",
+   "pooled_total": 2093,
+   "problems": [],
+   "registry_depth": 0,
+   "sha256": "71b874b591831d9d57718c4e411ce329a3408fa1b279770b784aaad5da417af5",
+   "variant": "V1"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:57Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     1427447052,
+     994545473
+    ],
+    [
+     901432056,
+     1779806758
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/worktree/b4-sim-1_t002/seeds.json",
+   "pooled_total": 2098,
+   "problems": [],
+   "registry_depth": 1,
+   "sha256": "ea380382fef4af97708b7a419ce3e8b2276161c07df0b26c838d7c721c74f402",
+   "variant": "V2"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:28:58Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     1728435565,
+     2327199381
+    ],
+    [
+     4253232248,
+     3880354669
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/worktree/b4-sim-1_t003/seeds.json",
+   "pooled_total": 2102,
+   "problems": [],
+   "registry_depth": 2,
+   "sha256": "42e8694289410aeb34aa2a79f43915326c44ee034392519197b7e9f36e790f36",
+   "variant": "V3"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:29:02Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     145141952,
+     1472419039
+    ],
+    [
+     984548463,
+     3132814250
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/worktree/b4-sim-1_t004/seeds.json",
+   "pooled_total": 2106,
+   "problems": [],
+   "registry_depth": 3,
+   "sha256": "968a35fe6b262a2a1da3ddbe5b9182e59e677fe052eebac94873c22fb897fe39",
+   "variant": "V4"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:29:02Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2825126967,
+     1484069272
+    ],
+    [
+     4263957882,
+     948989157
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/worktree/b4-sim-1_t005/seeds.json",
+   "pooled_total": 2110,
+   "problems": [],
+   "registry_depth": 4,
+   "sha256": "ec0f2b4cf844c2b242d5b3fea03faec109ed2799a891900afa2b2eb181ac43c8",
+   "variant": "V5"
+  },
+  {
+   "agrees_with_recipe": true,
+   "anchor_hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "count": 2,
+   "generated_utc": "2026-10-18T18:29:03Z",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2496791140,
+     2294942776
+    ],
+    [
+     3452627742,
+     1605787265
+    ]
+   ],
+   "path": "evidence/b4/unit_2b4a_repair_2026_10_18/exposure/b4sim_rvf1ws_h/worktree/b4-sim-1_t006/seeds.json",
+   "pooled_total": 2114,
+   "problems": [],
+   "registry_depth": 5,
+   "sha256": "44fd0943611b88ee4dd8a0d9901c8f41a014c87c5eacb603dd93b97a8e656f2f",
+   "variant": "V6"
+  }
+ ],
+ "reconstruction_script": "evidence/b4/unit_2b4a_exposure_settlement_2026_10_19/reconstruct_exposure.py",
+ "reconstruction_utc": "2026-10-19T10:10:59Z",
+ "ruling": "build/wip/b4_exposure_owner_ruling_2026_10_19.md (copied unchanged as owner_ruling_2026_10_19.md beside this script)",
+ "schema": "b4_exposure_receipt",
+ "schema_version": "1.0.0",
+ "status": "reconstructed \u2014 a conservative exclusion receipt, NOT a record of execution; the raw evidence of the deleted runs is lost and is not recreated",
+ "values": [
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V1:pair0.operator"
+   ],
+   "value": 111850748
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "reconstructed_recipe"
+   ],
+   "origins": [
+    "V7:pair0.operator"
+   ],
+   "value": 115165240
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V4:pair0.landscape"
+   ],
+   "value": 145141952
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V6:pair0.x_control_seed"
+   ],
+   "value": 402662889
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V5:pair1.d_shuffle_seed"
+   ],
+   "value": 406542843
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V5:pair1.x_control_seed"
+   ],
+   "value": 480881440
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V7:pair1.x_control_seed"
+   ],
+   "value": 868593365
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V2:pair1.landscape"
+   ],
+   "value": 901432056
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V5:pair1.operator"
+   ],
+   "value": 948989157
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V7:pair1.d_shuffle_seed"
+   ],
+   "value": 975954876
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V4:pair1.landscape"
+   ],
+   "value": 984548463
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V2:pair0.operator"
+   ],
+   "value": 994545473
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V5:pair0.x_control_seed"
+   ],
+   "value": 995532098
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V2:pair1.d_shuffle_seed"
+   ],
+   "value": 1007726774
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "reconstructed_recipe"
+   ],
+   "origins": [
+    "V8:pair1.operator",
+    "V9:pair1.operator"
+   ],
+   "value": 1010293224
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V1:pair0.x_control_seed"
+   ],
+   "value": 1024312358
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V1:pair0.d_shuffle_seed"
+   ],
+   "value": 1090143361
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V1:pair1.x_control_seed"
+   ],
+   "value": 1248490914
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V7:pair0.d_shuffle_seed"
+   ],
+   "value": 1275287146
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed",
+    "reconstructed_recipe"
+   ],
+   "origins": [
+    "V1:master",
+    "V2:master",
+    "V3:master",
+    "V4:master",
+    "V5:master",
+    "V6:master",
+    "V7:master"
+   ],
+   "value": 1318790079
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V2:pair0.landscape"
+   ],
+   "value": 1427447052
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V4:pair0.operator"
+   ],
+   "value": 1472419039
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V4:pair1.d_shuffle_seed"
+   ],
+   "value": 1483009057
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V5:pair0.operator"
+   ],
+   "value": 1484069272
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "reconstructed_recipe"
+   ],
+   "origins": [
+    "V8:pair0.landscape",
+    "V9:pair0.landscape"
+   ],
+   "value": 1504960266
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V3:pair1.d_shuffle_seed"
+   ],
+   "value": 1573202848
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "reconstructed_recipe"
+   ],
+   "origins": [
+    "V8:pair1.landscape",
+    "V9:pair1.landscape"
+   ],
+   "value": 1580242079
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V4:pair0.d_shuffle_seed"
+   ],
+   "value": 1585362902
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V3:pair0.d_shuffle_seed"
+   ],
+   "value": 1596556259
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V6:pair1.operator"
+   ],
+   "value": 1605787265
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V3:pair0.landscape"
+   ],
+   "value": 1728435565
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V2:pair1.operator"
+   ],
+   "value": 1779806758
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "reconstructed_recipe"
+   ],
+   "origins": [
+    "V8:master",
+    "V9:master"
+   ],
+   "value": 1819600574
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V6:pair1.d_shuffle_seed"
+   ],
+   "value": 1837160684
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "reconstructed_recipe"
+   ],
+   "origins": [
+    "V8:pair0.operator",
+    "V9:pair0.operator"
+   ],
+   "value": 1948371387
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "reconstructed_recipe"
+   ],
+   "origins": [
+    "V7:pair1.landscape"
+   ],
+   "value": 2009503361
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V8:pair0.x_control_seed",
+    "V9:pair0.x_control_seed"
+   ],
+   "value": 2039217094
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V8:pair1.d_shuffle_seed",
+    "V9:pair1.d_shuffle_seed"
+   ],
+   "value": 2096574601
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V1:pair0.landscape"
+   ],
+   "value": 2137505051
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V4:pair1.x_control_seed"
+   ],
+   "value": 2240621149
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V6:pair0.operator"
+   ],
+   "value": 2294942776
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V3:pair0.operator"
+   ],
+   "value": 2327199381
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V1:pair1.d_shuffle_seed"
+   ],
+   "value": 2341665010
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V2:pair0.x_control_seed"
+   ],
+   "value": 2365826131
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V3:pair0.x_control_seed"
+   ],
+   "value": 2431506770
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V6:pair0.landscape"
+   ],
+   "value": 2496791140
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V2:pair1.x_control_seed"
+   ],
+   "value": 2546603417
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V1:pair1.operator"
+   ],
+   "value": 2596893929
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V5:pair0.d_shuffle_seed"
+   ],
+   "value": 2657895865
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V5:pair0.landscape"
+   ],
+   "value": 2825126967
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "reconstructed_recipe"
+   ],
+   "origins": [
+    "V7:pair1.operator"
+   ],
+   "value": 2908038371
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V4:pair1.operator"
+   ],
+   "value": 3132814250
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V8:pair0.d_shuffle_seed",
+    "V9:pair0.d_shuffle_seed"
+   ],
+   "value": 3268807065
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V6:pair1.landscape"
+   ],
+   "value": 3452627742
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V8:pair1.x_control_seed",
+    "V9:pair1.x_control_seed"
+   ],
+   "value": 3576832716
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "reconstructed_recipe"
+   ],
+   "origins": [
+    "V7:pair0.landscape"
+   ],
+   "value": 3593265337
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V2:pair0.d_shuffle_seed"
+   ],
+   "value": 3795587446
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V4:pair0.x_control_seed"
+   ],
+   "value": 3837672233
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V3:pair1.x_control_seed"
+   ],
+   "value": 3860780153
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V3:pair1.operator"
+   ],
+   "value": 3880354669
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V6:pair1.x_control_seed"
+   ],
+   "value": 3904939537
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V7:pair0.x_control_seed"
+   ],
+   "value": 3929607331
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V1:pair1.landscape"
+   ],
+   "value": 4092029078
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "conservative_superset"
+   ],
+   "origins": [
+    "V6:pair0.d_shuffle_seed"
+   ],
+   "value": 4095200487
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V3:pair1.landscape"
+   ],
+   "value": 4253232248
+  },
+  {
+   "already_in_base_pool": false,
+   "classes": [
+    "observed"
+   ],
+   "origins": [
+    "V5:pair1.landscape"
+   ],
+   "value": 4263957882
+  }
+ ],
+ "variants": [
+  {
+   "control_seeds": [
+    {
+     "d_shuffle_seed": 1090143361,
+     "pair": 0,
+     "x_control_seed": 1024312358
+    },
+    {
+     "d_shuffle_seed": 2341665010,
+     "pair": 1,
+     "x_control_seed": 1248490914
+    }
+   ],
+   "count": 2,
+   "exclusion_pooled_total": 2093,
+   "historical_variant": "committed recipe (edfc93c tests; the smoke test; the owner's re-run)",
+   "id": "V1",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2137505051,
+     111850748
+    ],
+    [
+     4092029078,
+     2596893929
+    ]
+   ],
+   "recipe": "b4-sim-1 S=2, set 1: drawn against P0 (an empty registry)",
+   "registry_depth": 0
+  },
+  {
+   "control_seeds": [
+    {
+     "d_shuffle_seed": 3795587446,
+     "pair": 0,
+     "x_control_seed": 2365826131
+    },
+    {
+     "d_shuffle_seed": 1007726774,
+     "pair": 1,
+     "x_control_seed": 2546603417
+    }
+   ],
+   "count": 2,
+   "exclusion_pooled_total": 2098,
+   "historical_variant": "committed recipe (edfc93c tests; the smoke test; the owner's re-run)",
+   "id": "V2",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     1427447052,
+     994545473
+    ],
+    [
+     901432056,
+     1779806758
+    ]
+   ],
+   "recipe": "b4-sim-1 S=2, set 2: drawn against P0 \u222a {master} \u222a the values of sets 1..1 (the hermetic tree's registry after 1 archived batches)",
+   "registry_depth": 1
+  },
+  {
+   "control_seeds": [
+    {
+     "d_shuffle_seed": 1596556259,
+     "pair": 0,
+     "x_control_seed": 2431506770
+    },
+    {
+     "d_shuffle_seed": 1573202848,
+     "pair": 1,
+     "x_control_seed": 3860780153
+    }
+   ],
+   "count": 2,
+   "exclusion_pooled_total": 2102,
+   "historical_variant": "committed recipe (edfc93c tests; the smoke test; the owner's re-run)",
+   "id": "V3",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     1728435565,
+     2327199381
+    ],
+    [
+     4253232248,
+     3880354669
+    ]
+   ],
+   "recipe": "b4-sim-1 S=2, set 3: drawn against P0 \u222a {master} \u222a the values of sets 1..2 (the hermetic tree's registry after 2 archived batches)",
+   "registry_depth": 2
+  },
+  {
+   "control_seeds": [
+    {
+     "d_shuffle_seed": 1585362902,
+     "pair": 0,
+     "x_control_seed": 3837672233
+    },
+    {
+     "d_shuffle_seed": 1483009057,
+     "pair": 1,
+     "x_control_seed": 2240621149
+    }
+   ],
+   "count": 2,
+   "exclusion_pooled_total": 2106,
+   "historical_variant": "committed recipe (edfc93c tests; the smoke test; the owner's re-run)",
+   "id": "V4",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     145141952,
+     1472419039
+    ],
+    [
+     984548463,
+     3132814250
+    ]
+   ],
+   "recipe": "b4-sim-1 S=2, set 4: drawn against P0 \u222a {master} \u222a the values of sets 1..3 (the hermetic tree's registry after 3 archived batches)",
+   "registry_depth": 3
+  },
+  {
+   "control_seeds": [
+    {
+     "d_shuffle_seed": 2657895865,
+     "pair": 0,
+     "x_control_seed": 995532098
+    },
+    {
+     "d_shuffle_seed": 406542843,
+     "pair": 1,
+     "x_control_seed": 480881440
+    }
+   ],
+   "count": 2,
+   "exclusion_pooled_total": 2110,
+   "historical_variant": "committed recipe (edfc93c tests; the smoke test; the owner's re-run)",
+   "id": "V5",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2825126967,
+     1484069272
+    ],
+    [
+     4263957882,
+     948989157
+    ]
+   ],
+   "recipe": "b4-sim-1 S=2, set 5: drawn against P0 \u222a {master} \u222a the values of sets 1..4 (the hermetic tree's registry after 4 archived batches)",
+   "registry_depth": 4
+  },
+  {
+   "control_seeds": [
+    {
+     "d_shuffle_seed": 4095200487,
+     "pair": 0,
+     "x_control_seed": 402662889
+    },
+    {
+     "d_shuffle_seed": 1837160684,
+     "pair": 1,
+     "x_control_seed": 3904939537
+    }
+   ],
+   "count": 2,
+   "exclusion_pooled_total": 2114,
+   "historical_variant": "committed recipe (edfc93c tests; the smoke test; the owner's re-run)",
+   "id": "V6",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     2496791140,
+     2294942776
+    ],
+    [
+     3452627742,
+     1605787265
+    ]
+   ],
+   "recipe": "b4-sim-1 S=2, set 6: drawn against P0 \u222a {master} \u222a the values of sets 1..5 (the hermetic tree's registry after 5 archived batches)",
+   "registry_depth": 5
+  },
+  {
+   "control_seeds": [
+    {
+     "d_shuffle_seed": 1275287146,
+     "pair": 0,
+     "x_control_seed": 3929607331
+    },
+    {
+     "d_shuffle_seed": 975954876,
+     "pair": 1,
+     "x_control_seed": 868593365
+    }
+   ],
+   "count": 2,
+   "exclusion_pooled_total": 2118,
+   "historical_variant": "committed recipe (edfc93c tests; the smoke test; the owner's re-run)",
+   "id": "V7",
+   "label": "b4-sim-1",
+   "master_seed": 1318790079,
+   "pairs": [
+    [
+     3593265337,
+     115165240
+    ],
+    [
+     2009503361,
+     2908038371
+    ]
+   ],
+   "recipe": "b4-sim-1 S=2, set 7: drawn against P0 \u222a {master} \u222a the values of sets 1..6 (the hermetic tree's registry after 6 archived batches)",
+   "registry_depth": 6
+  },
+  {
+   "control_seeds": [
+    {
+     "d_shuffle_seed": 3268807065,
+     "pair": 0,
+     "x_control_seed": 2039217094
+    },
+    {
+     "d_shuffle_seed": 2096574601,
+     "pair": 1,
+     "x_control_seed": 3576832716
+    }
+   ],
+   "count": 2,
+   "exclusion_pooled_total": 2098,
+   "historical_variant": "committed recipe (edfc93c tests)",
+   "id": "V8",
+   "label": "b4-sim-2",
+   "master_seed": 1819600574,
+   "pairs": [
+    [
+     1504960266,
+     1948371387
+    ],
+    [
+     1580242079,
+     1010293224
+    ]
+   ],
+   "recipe": "b4-sim-2 S=2, set 1: drawn against P0 \u222a {master_1} \u222a set 1 of b4-sim-1 (CompleteBatch's second batch, the registry holding the first)",
+   "registry_depth": 1
+  },
+  {
+   "control_seeds": [
+    {
+     "d_shuffle_seed": 3268807065,
+     "pair": 0,
+     "x_control_seed": 2039217094
+    },
+    {
+     "d_shuffle_seed": 2096574601,
+     "pair": 1,
+     "x_control_seed": 3576832716
+    }
+   ],
+   "count": 2,
+   "exclusion_pooled_total": 2093,
+   "historical_variant": "mutant M1 (cdf2c53 battery); b4-sim-1 under M1 re-draws set 1",
+   "id": "V9",
+   "label": "b4-sim-2",
+   "master_seed": 1819600574,
+   "pairs": [
+    [
+     1504960266,
+     1948371387
+    ],
+    [
+     1580242079,
+     1010293224
+    ]
+   ],
+   "recipe": "b4-sim-2 S=2 under the M1 mutant: the registry ignored, drawn against P0 alone (the mutated copy of CompleteBatch's second batch)",
+   "registry_depth": 0
+  }
+ ]
+}

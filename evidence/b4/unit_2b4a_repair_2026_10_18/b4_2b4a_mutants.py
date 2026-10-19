@@ -19,7 +19,8 @@ sys.path.insert(0, str(R / "b4/host"))
 import b4_seeds as bs  # noqa: E402
 
 COPY = ["b4", "host/b1_carto.py", "host/b1_model.py", "host/b2_landscape.py", "host/b2_maps.py", "host/b2_gate.py", "host/b2_search.py", "docs/b4_architecture.md", "docs/ff_latch_probe.md",
-        "gate_runs/run_2026_08_05_ff/certificate.json", "evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json"] + [f[0] for f in bs.FIELDS]
+        "gate_runs/run_2026_08_05_ff/certificate.json", "evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json",
+        bs.EXPOSURE_RECEIPT_REL] + [f[0] for f in bs.FIELDS]
 SEEDS, CTL, SNAP, K9, K10, SIM, SCH, GS, TH, VER, DL = ("b4/host/b4_seeds.py", "b4/host/b4_controls.py", "b4/host/b4_snapshot.py", "b4/host/b4_k9.py", "b4/host/b4_k10.py",
                                                         "b4/host/b4_sim.py", "b4/host/b4_sim_schema.py", "b4/host/b4_gate_stats.py", "b4/host/b4_thresholds.py", "b4/host/b4_sim_verify.py",
                                                         "b4/host/b4_deadline.py")
@@ -164,7 +165,7 @@ MUTANTS = [
              ('        if f or schedule.label != label:', '        if f:')]),
   [T + "test_b4_sim.Preflight.test_refusals_write_nothing"]),
  ("M35 F1: the harness derives a production master even for a fixture batch",
-  edit(SIM, [("        if c[\"schedule\"] is None:\n            master = bs.master_seed(c[\"label\"], hy.HYPOTHESIS_SHA256)", "        if True:\n            master = bs.master_seed(c[\"label\"], hy.HYPOTHESIS_SHA256)")]),
+  edit(SIM, [("        if c[\"schedule\"] is None:\n            bs.check_label_not_retired(c[\"label\"])", "        if True:\n            bs.check_label_not_retired(c[\"label\"])")]),
   [T + "test_b4_sim.CompleteBatch.test_the_freezing_order_the_fixture_seeds_and_the_manifest"]),
  ("M36 F1: a fixture seeds document with a production label passes the seeds validator",
   edit(SEEDS, [('    elif fixture is not bool(FIXTURE_LABEL_RE.match(doc["label"])):\n        f.append("label: a fixture set has a b4-mech-<n> label and a production set has not")', "    elif False:\n        pass")]),
@@ -278,6 +279,32 @@ MUTANTS = [
   edit(SIM, [('            plan["k9"] = "partial" if self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "interrupt") else "in_progress"',
               '            plan["k9"] = "partial"; self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "interrupt")')]),
   [T + "test_b4_sim.IncompleteStops.test_a_stop_at_the_deadline_boundary_still_writes_stopped_json"]),
+ # ---- the exposure settlement (the owner's ruling of 2026-10-19 on the prior production-seed exposure)
+ ("M68 settlement: the exposure receipt's values are not pooled into the exclusion set",
+  edit(SEEDS, [("    pooled.update(receipt.values)\n", "")]),
+  [T + "test_b4_seeds.TheHistoricalSources.test_the_pool_holds_the_copy_the_exposed_values_and_every_source_value", T + "test_b4_seeds.TheExposureReceipt.test_the_receipt_s_values_are_screened_at_both_positions"]),
+ ("M69 settlement: the receipt's digest is not held to the pinned one (a re-hashed receipt is read)",
+  edit(SEEDS, [('    if got != EXPOSURE_RECEIPT_SHA256:\n        raise ExclusionSourceRefusal(f"{EXPOSURE_RECEIPT_REL}: the exposure receipt hashes to {got[:16]}…, not its pinned {EXPOSURE_RECEIPT_SHA256[:16]}… (re-hashed or replaced; never skipped)")\n', "")]),
+  [T + "test_b4_seeds.TheExposureReceipt.test_a_missing_rehashed_or_malformed_receipt_is_refused_by_name"]),
+ ("M70 settlement: a retired label is accepted by the pre-flight (the derivation path is open to b4-sim-1 / b4-sim-2)",
+  edit(SIM, [('        try:\n            bs.check_label_not_retired(label)                   # a retired label is refused here, before any tree is read and before any master is formed\n        except bs.RetiredLabelRefusal as exc:\n            raise Refusal(str(exc)) from None\n', "")]),
+  [T + "test_b4_sim.Preflight.test_a_retired_label_is_refused_before_the_tree_is_read", T + "test_b4_sim.Preflight.test_refusals_write_nothing"]),
+ ("M71 settlement: the receipt is not a root input (not held at the checkpoints)",
+  edit(SIM, [(', bs.EXPOSURE_RECEIPT_REL)   # the receipt: pinned, pooled, held at every checkpoint', ')'),
+             ('    if inputs[bs.EXPOSURE_RECEIPT_REL] != bs.EXPOSURE_RECEIPT_SHA256:\n        raise Refusal("the root\'s exposure receipt does not hash to the pinned digest")\n', '')]),
+  [T + "test_b4_sim.InvalidStops.test_a_receipt_drift_during_the_batch_is_invalid", T + "test_b4_sim.CompleteBatch.test_the_freezing_order_the_fixture_seeds_and_the_manifest"]),
+ ("M72 settlement: the manifest validator does not bind the receipt (digest, path, held input)",
+  edit(SCH, [('    else:\n        f.extend(bs.receipt_reference_findings(e["exposure_receipt"], "exclusion.exposure_receipt"))     # the pinned receipt, pooled into this batch\'s derivation\n    if isinstance(doc["inputs"], dict) and doc["inputs"].get(bs.EXPOSURE_RECEIPT_REL) != bs.EXPOSURE_RECEIPT_SHA256:\n        f.append("inputs: the exposure receipt is not held at its pinned digest")\n', '')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_exposure_receipt_is_bound_in_seeds_the_manifest_and_the_inputs"]),
+ ("M73 settlement: the verifier's linkage does not bind the receipt across seeds.json, the manifest and the inputs",
+  edit(VER, [('        F.add("linkage", "the exposure receipt is not the pinned one in seeds.json, manifest.json and the held inputs")\n', '        pass\n')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_exposure_receipt_is_bound_in_seeds_the_manifest_and_the_inputs"]),
+ ("M74 settlement: the thresholds table names a retired label as the exploration label",
+  edit(TH, [('"exploration_label": "b4-sim-3",', '"exploration_label": "b4-sim-1",')]),
+  [T + "test_b4_thresholds.ThePins.test_the_numbers_are_the_document_s", T + "test_b4_sim.Preflight.test_a_retired_label_is_refused_before_the_tree_is_read"]),
+ ("M75 settlement: a seeds record's receipt reference is not held to the pinned receipt",
+  edit(SEEDS, [('        if with_receipt:\n            f.extend(receipt_reference_findings(e["exposure_receipt"], "exclusion.exposure_receipt"))\n', '')]),
+  [T + "test_b4_seeds.TheRegistry.test_the_seeds_document_shape"]),
 ]
 
 

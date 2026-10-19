@@ -42,6 +42,7 @@ import b4_k10 as k10  # noqa: E402
 import b4_k9 as k9  # noqa: E402
 import b4_landscape as bl  # noqa: E402
 import b4_replay as br  # noqa: E402
+import b4_seeds as bs  # noqa: E402
 import b4_sim_schema as sc  # noqa: E402
 import b4_snapshot as sn  # noqa: E402
 import b4_thresholds as th  # noqa: E402
@@ -208,6 +209,11 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
         F.add("manifest.json", "the hypothesis / certificate digests are not the pinned ones")
     if ident.get("inputs") != manifest["inputs"]:
         F.add("sim_report.json", "identity.inputs are not the manifest's")
+    rc = {"path": bs.EXPOSURE_RECEIPT_REL, "sha256": bs.EXPOSURE_RECEIPT_SHA256}
+    s_rc, m_rc = (seeds.get("exclusion") or {}).get("exposure_receipt"), (manifest.get("exclusion") or {}).get("exposure_receipt")
+    if not (isinstance(s_rc, dict) and isinstance(m_rc, dict) and {k: s_rc.get(k) for k in rc} == rc and {k: m_rc.get(k) for k in rc} == rc
+            and s_rc.get("count") == m_rc.get("count") and manifest["inputs"].get(bs.EXPOSURE_RECEIPT_REL) == bs.EXPOSURE_RECEIPT_SHA256):
+        F.add("linkage", "the exposure receipt is not the pinned one in seeds.json, manifest.json and the held inputs")
     if not (seeds["label"] == manifest["label"] == report["label"]) or not (seeds["count"] == manifest["count"] == report["count"]) or not (seeds["fixture"] == manifest["fixture"] == report["fixture"]):
         F.add("linkage", "label / count / fixture differ between seeds.json, manifest.json and the report")
     if manifest["head"] != report["head"]:

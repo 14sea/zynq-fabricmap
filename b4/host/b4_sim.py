@@ -4,7 +4,7 @@ unit 2b-4a; repaired after the owner's review of cdf2c53, F1–F9). It runs the 
 every run, computes K7 / K9 / K10's data and the descriptive statistics, and archives everything typed — values beside the
 fixed thresholds, NEVER a gate verdict.
 
-    b4_sim.py --label b4-sim-1 --seeds 32 --deadline-s 3600 [--out evidence/b4/sim/<label>_<UTC>]
+    b4_sim.py --label b4-sim-3 --seeds 32 --deadline-s 3600 [--out evidence/b4/sim/<label>_<UTC>]   # b4-sim-1 / b4-sim-2 are retired (the ruling of 2026-10-19)
 
 NOTHING IS AUTHORISED BY THIS FILE: running it is a separate authorisation (ruling section 5). The CLI has no fixture,
 no allow-dirty, no test mode; a test drives `run_batch` on a hermetic repository copy with its own `port_factory` and a
@@ -99,7 +99,7 @@ PROBES = th.PROBES
 EXPECTED_COST = {role: {"base": 1, "probes": PROBES if role == "F" else 0, "search": B_MAX, "holdout": 1} for role in ROLES}
 STANDING = ("exploration data under the label given, S as planned; not a gate verdict; the thresholds of docs/b4_architecture.md "
             "v0.1.15 section 9 are listed for reference only; candidate B* / N are estimates on this S, never the formal S = 200's")
-ROOT_INPUTS = ("docs/b4_architecture.md", "b4/IMPORT.json", hy.HYPOTHESIS_REL, bm.CERTIFICATE_REL)
+ROOT_INPUTS = ("docs/b4_architecture.md", "b4/IMPORT.json", hy.HYPOTHESIS_REL, bm.CERTIFICATE_REL, bs.EXPOSURE_RECEIPT_REL)   # the receipt: pinned, pooled, held at every checkpoint
 FIXTURE_ANCHOR_RULE = "mechanics fixture: an explicit schedule of already-exposed values (b4_seeds.FIXTURE_VALUES); no anchor, no master, no draw"
 
 
@@ -194,6 +194,8 @@ def input_snapshot(root: Path, hypothesis: hy.Hypothesis, exclusion) -> tuple[di
         raise Refusal("the root's hypothesis file does not hash to the pinned formal digest")
     if inputs[bm.CERTIFICATE_REL] != bm.CERTIFICATE_SHA256:
         raise Refusal("the root's certificate does not hash to the pinned digest")
+    if inputs[bs.EXPOSURE_RECEIPT_REL] != bs.EXPOSURE_RECEIPT_SHA256:
+        raise Refusal("the root's exposure receipt does not hash to the pinned digest")
     external: dict[str, str] = {}
     for s in hypothesis.doc["sources"]:
         if "path" not in s or "sha256" not in s:
@@ -268,6 +270,10 @@ def preflight(root: Path, label: str, count: int, deadline_s: int, out: Path | N
     if schedule is None:
         if not isinstance(label, str) or not LABEL_RE.match(label):
             raise Refusal(f"the label {label!r} is not an exploration label b4-sim-<n> (the gate's label is unit 2b-4's; a mechanics batch needs a FixtureSchedule)")
+        try:
+            bs.check_label_not_retired(label)                   # a retired label is refused here, before any tree is read and before any master is formed
+        except bs.RetiredLabelRefusal as exc:
+            raise Refusal(str(exc)) from None
     else:
         if not isinstance(schedule, FixtureSchedule):
             raise Refusal("the schedule is not a FixtureSchedule")
@@ -384,6 +390,7 @@ class Batch:
         c = self.c
         exd = c["exclusion"].as_dict()
         if c["schedule"] is None:
+            bs.check_label_not_retired(c["label"])                                  # defence in depth: the pre-flight refused already
             master = bs.master_seed(c["label"], hy.HYPOTHESIS_SHA256)              # the formal derivation: production labels only
             self.pairs = bs.pair_seeds(master, c["count"], c["exclusion"].values)
             anchor = {"rule": th.THRESHOLDS["anchor"]["rule"], "hypothesis_sha256": hy.HYPOTHESIS_SHA256, "label": c["label"]}
@@ -395,7 +402,8 @@ class Batch:
             fixture = True
         seeds = {"schema": bs.SEEDS_SCHEMA[0], "schema_version": bs.SEEDS_SCHEMA[1], "label": c["label"], "fixture": fixture, "anchor": anchor,
                  "master_seed": master, "count": c["count"], "pairs": [list(p) for p in self.pairs],
-                 "exclusion": {"sources": exd["sources"], "b4_exposed_values": exd["b4_exposed_values"], "sim_registry": exd["sim_registry"], "pooled_total": exd["pooled_total"]},
+                 "exclusion": {"sources": exd["sources"], "b4_exposed_values": exd["b4_exposed_values"], "sim_registry": exd["sim_registry"],
+                               "exposure_receipt": exd["exposure_receipt"], "pooled_total": exd["pooled_total"]},
                  "generated_utc": utc()}
         self.seeds_sha = self.write("seeds.json", seeds, sc.seeds_findings)["sha256"]
         self.planned = [{"pair": r, "landscape_seed": l, "operator_seed": o, "status": "not_started", "arms": {role: "not_started" for role in ROLES},
@@ -412,7 +420,7 @@ class Batch:
                     "mapping": {"site": m.site, "certificate": m.certificate_rel, "certificate_sha256": m.certificate_sha256, "addresses": list(m.addresses)},
                     "fabric": dict(c["fabric"].source),
                     "exclusion": {"historical_sources": len(exd["sources"]), "pooled_total": exd["pooled_total"], "sim_registry": exd["sim_registry"], "sim_registry_note": exd["sim_registry_note"],
-                                  "registry_snapshot": c["registry"]},
+                                  "registry_snapshot": c["registry"], "exposure_receipt": exd["exposure_receipt"]},
                     "seeds_sha256": self.seeds_sha, "note": "written before the first observation; every digest and the registry snapshot held at every pair's end and at the batch's end"}
         self.manifest_sha = self.write("manifest.json", manifest, sc.manifest_findings)["sha256"]
 
@@ -903,7 +911,7 @@ def run_batch(root: Path, label: str, count: int, deadline_s: int, out: Path | N
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="B4 host-only exploration harness (values beside thresholds; no gate verdict). Running it needs the owner's authorisation. "
                                              "Production labels only: a mechanics fixture batch has no CLI.")
-    ap.add_argument("--label", required=True, help="b4-sim-<n>")
+    ap.add_argument("--label", required=True, help="b4-sim-<n> (b4-sim-1 and b4-sim-2 are retired; the next exploration label is b4-sim-3)")
     ap.add_argument("--seeds", required=True, type=int, help="S, the number of pairs planned")
     ap.add_argument("--deadline-s", required=True, type=int, help="the soft monotonic deadline in seconds, from the pre-flight on (no default)")
     ap.add_argument("--out", default=None, help=f"the output directory, directly under {SIM_REL}/ and named <label>_…; default <label>_<UTC>")

@@ -60,12 +60,16 @@ class ThePins(unittest.TestCase):
         self.assertEqual((T["K10"]["tau"], T["K10"]["interacting_seeds_over_S_min"], T["K10"]["pairs_per_background"], T["K10"]["backgrounds"], T["K10"]["background_salt"]), (2, 0.50, 210, 2, 0x4C0A4E55))
         self.assertEqual((T["K10"]["tau"], T["K10"]["background_salt"]), (k10.TAU, k10.SALT), "the driver's constants are the table's")
         self.assertEqual(T["anchor"]["hypothesis_sha256"], HYPOTHESIS_SHA256)
-        self.assertEqual((T["anchor"]["gate_label"], T["anchor"]["exploration_label"]), ("b4-gate-1", "b4-sim-1"))
+        self.assertEqual((T["anchor"]["gate_label"], T["anchor"]["exploration_label"]), ("b4-gate-1", "b4-sim-3"), "the retired labels are never the exploration label")
+        self.assertEqual(sorted(T["anchor"]["retired_exploration_labels"]), ["b4-sim-1", "b4-sim-2"])
+        import b4_seeds as bs
+        self.assertEqual((set(T["anchor"]["retired_exploration_labels"]), T["anchor"]["exploration_label"]), (set(bs.RETIRED_LABELS), bs.EXPLORATION_LABEL), "the table and the loader agree")
+        self.assertNotIn(bs.EXPLORATION_LABEL, bs.RETIRED_LABELS)
         self.assertEqual(T["delta2_F_shift"], 21)
 
     def test_the_document_version_is_the_table_s(self):
-        self.assertIn("v0.1.15", th.ARCHITECTURE_SECTION)
-        self.assertIn("(DRAFT v0.1.15,", self.doc.splitlines()[0])
+        self.assertIn("v0.1.16", th.ARCHITECTURE_SECTION)
+        self.assertIn("(DRAFT v0.1.16,", self.doc.splitlines()[0])
 
     def test_a_changed_number_would_be_caught(self):
         rows = dict(self.rows)

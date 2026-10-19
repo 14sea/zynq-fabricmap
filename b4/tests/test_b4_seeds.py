@@ -20,23 +20,30 @@ for p in (R / "b4/host", R / "host"):
         sys.path.insert(0, str(p))
 import b4_seeds as bs  # noqa: E402
 import b2_search as original  # noqa: E402  (the pinned original, read-only, for the comparison only)
+import b4_controls as ctl  # noqa: E402
 
 FAKE_ANCHOR = "ab" * 32
 FAKE_MASTER = 424242                   # not a seed of any run: a literal master for the derivation tests
 
 
-def seeds_doc(label: str, master: int, pairs: list) -> dict:
-    return {"schema": "b4_sim_seeds", "schema_version": "1.1.0", "label": label, "fixture": False,
-            "anchor": {"rule": "sha256(label|anchor)[:4]", "hypothesis_sha256": FAKE_ANCHOR, "label": label},
-            "master_seed": master, "count": len(pairs), "pairs": pairs,
-            "exclusion": {"sources": [], "b4_exposed_values": [], "sim_registry": [], "pooled_total": 0}, "generated_utc": "2026-10-18T00:00:00Z"}
+RECEIPT_REF = {"path": bs.EXPOSURE_RECEIPT_REL, "sha256": bs.EXPOSURE_RECEIPT_SHA256, "count": 66}   # the pinned receipt, as a record names it
+
+
+def seeds_doc(label: str, master: int, pairs: list, version: str = "1.2.0", anchor: str = FAKE_ANCHOR) -> dict:
+    """A production-form seeds document; 1.2.0 (current) names the exposure receipt, 1.1.0 (archived before the settlement) does not."""
+    ex = {"sources": [], "b4_exposed_values": [], "sim_registry": [], "pooled_total": 0}
+    if version == "1.2.0":
+        ex["exposure_receipt"] = dict(RECEIPT_REF)
+    return {"schema": "b4_sim_seeds", "schema_version": version, "label": label, "fixture": False,
+            "anchor": {"rule": "sha256(label|anchor)[:4]", "hypothesis_sha256": anchor, "label": label},
+            "master_seed": master, "count": len(pairs), "pairs": pairs, "exclusion": ex, "generated_utc": "2026-10-18T00:00:00Z"}
 
 
 def fixture_doc(label: str, pairs: list) -> dict:
-    return {"schema": "b4_sim_seeds", "schema_version": "1.1.0", "label": label, "fixture": True,
+    return {"schema": "b4_sim_seeds", "schema_version": "1.2.0", "label": label, "fixture": True,
             "anchor": {"rule": "mechanics fixture: explicit already-exposed values; no anchor", "hypothesis_sha256": None, "label": label},
             "master_seed": None, "count": len(pairs), "pairs": pairs,
-            "exclusion": {"sources": [], "b4_exposed_values": [], "sim_registry": [], "pooled_total": 0}, "generated_utc": "2026-10-18T00:00:00Z"}
+            "exclusion": {"sources": [], "b4_exposed_values": [], "sim_registry": [], "exposure_receipt": dict(RECEIPT_REF), "pooled_total": 0}, "generated_utc": "2026-10-18T00:00:00Z"}
 
 
 class TheAnchor(unittest.TestCase):
@@ -138,7 +145,9 @@ class TheHistoricalSources(unittest.TestCase):
         self.assertTrue(set(bs.B4_EXPOSED_VALUES) <= ex.values)
         for s in ex.sources:
             self.assertTrue(set(s.values) <= ex.values, s.path)
-        self.assertEqual(ex.values, set(bs.B2_EXCLUDED_SEEDS) | set(bs.B4_EXPOSED_VALUES) | {v for s in ex.sources for v in s.values})
+        self.assertTrue(set(ex.receipt.values) <= ex.values, "the exposure receipt's values are pooled")
+        self.assertEqual(ex.values, set(bs.B2_EXCLUDED_SEEDS) | set(bs.B4_EXPOSED_VALUES) | {v for s in ex.sources for v in s.values} | set(ex.receipt.values))
+        self.assertEqual(ex.as_dict()["exposure_receipt"], {"path": bs.EXPOSURE_RECEIPT_REL, "sha256": bs.EXPOSURE_RECEIPT_SHA256, "count": len(ex.receipt.values)})
         in_sources = {v for s in ex.sources for v in s.values}
         for v in (6, 7, 8, 9, 12, 13):
             self.assertNotIn(v, in_sources, f"{v} comes only from B4's exposed values")
@@ -245,10 +254,18 @@ class TheRegistry(unittest.TestCase):
                        lambda d: d.update(master_seed=-1), lambda d: d["pairs"].append([1, 1]), lambda d: d["exclusion"].pop("pooled_total"),
                        lambda d: d.update(schema_version="1.0.0"), lambda d: d.pop("fixture"), lambda d: d.update(fixture="no"),
                        lambda d: d.update(fixture=True), lambda d: d.update(label="b4-mech-1"),
-                       lambda d: (d.update(label="b4-mech-1"), d["anchor"].update(label="b4-mech-1"))):   # a production set under a fixture label: the label rule alone
+                       lambda d: (d.update(label="b4-mech-1"), d["anchor"].update(label="b4-mech-1")),   # a production set under a fixture label: the label rule alone
+                       lambda d: d["exclusion"].pop("exposure_receipt"),                                # 1.2.0 names the receipt
+                       lambda d: d["exclusion"]["exposure_receipt"].update(sha256="00" * 32),           # exactly the pinned digest
+                       lambda d: d["exclusion"]["exposure_receipt"].update(path="elsewhere.json"),
+                       lambda d: d["exclusion"]["exposure_receipt"].update(count=66.0),
+                       lambda d: d.update(schema_version="1.1.0")):                                      # a 1.1.0 record carries no receipt entry
             d = json.loads(json.dumps(good))
             mutate(d)
             self.assertTrue(bs.seeds_doc_findings(d), mutate)
+        legacy = seeds_doc("b4-fake-1", 1000001, [[2000001, 2000002]], version="1.1.0")
+        self.assertEqual(bs.seeds_doc_findings(legacy), [], "a 1.1.0 record archived before the settlement is still read")
+        self.assertEqual(bs.SEEDS_SCHEMA, ("b4_sim_seeds", "1.2.0"))
 
     def test_the_fixture_form_of_the_seeds_document(self):
         """A mechanics fixture set: a b4-mech-<n> label, no master, no anchor digest, only already-exposed values (the owner's
@@ -277,6 +294,112 @@ class TheRegistry(unittest.TestCase):
         ex = bs.load_exclusion_set(R, str(self.sim))
         self.assertEqual(ex.as_dict()["sim_registry"][1], {"dir": f"{self.sim}/b4-mech-1_x", "status": "seeds_fixture", "seeds_sha256": recs[1].seeds_sha256, "master_seed": None, "count": 4})
         self.assertTrue({7, 11, 8, 12, 1000001, 2000001} <= ex.values)
+
+
+class TheExposureReceipt(unittest.TestCase):
+    """The owner's ruling of 2026-10-19: the exposure receipt is pinned, validated, pooled at both positions, and the two
+    retired labels are refused on the new-derivation path while their archived records are still read."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.rec = bs.read_exposure_receipt(R)
+        cls.doc = json.loads((R / bs.EXPOSURE_RECEIPT_REL).read_text())
+
+    def test_the_pinned_receipt_reads_and_is_the_reconstruction_s(self):
+        self.assertEqual(bs.receipt_findings(self.doc), [])
+        self.assertEqual((self.rec.path, self.rec.sha256), (bs.EXPOSURE_RECEIPT_REL, bs.EXPOSURE_RECEIPT_SHA256))
+        self.assertEqual(self.rec.sha256, hashlib.sha256((R / bs.EXPOSURE_RECEIPT_REL).read_bytes()).hexdigest())
+        pooled = list(self.rec.values)
+        self.assertEqual(pooled, sorted(set(pooled))); self.assertTrue(all(bs.is_seed_int(v) for v in pooled))
+        self.assertEqual(self.doc["pooled_sha256"], hashlib.sha256(bs.canonical_ints(pooled).encode()).hexdigest())
+        recomputed = set()
+        for v in self.doc["variants"]:
+            self.assertIn(v["label"], bs.RETIRED_LABELS, "every variant is a RETIRED label")
+            recomputed.add(v["master_seed"])
+            for i, (l, o) in enumerate(v["pairs"]):
+                recomputed.update((l, o))
+                c = v["control_seeds"][i]
+                self.assertEqual((c["x_control_seed"], c["d_shuffle_seed"]), (ctl.x_control_seed(l, o), ctl.d_shuffle_seed(l, o)), "the control seeds are the formulas' on the drawn pair")
+                recomputed.update((c["x_control_seed"], c["d_shuffle_seed"]))
+        self.assertEqual(recomputed, set(pooled), "the pooled list is exactly the variants' masters, pairs and control seeds")
+        classes = {c for e in self.doc["values"] for c in e["classes"]}
+        self.assertEqual(classes, {"observed", "reconstructed_recipe", "conservative_superset"})
+        self.assertEqual(sorted(self.doc["envelope"]["observed_variants"]), ["V1", "V2", "V3", "V4", "V5", "V6"])
+        self.assertEqual(sorted(self.doc["envelope"]["reconstructed_only_variants"]), ["V7", "V8", "V9"])
+        self.assertEqual(len(self.doc["preserved_records"]), 22); self.assertTrue(all(r["agrees_with_recipe"] for r in self.doc["preserved_records"]))
+        self.assertIn("NOT a record of execution", self.doc["status"])
+
+    def test_the_receipt_s_values_are_screened_at_both_positions(self):
+        ex = bs.load_exclusion_set(R)
+        self.assertTrue(set(self.rec.values) <= ex.values)
+        drawn = bs.pair_seeds(FAKE_MASTER, 40, ex.values)
+        self.assertFalse(set(v for p in drawn for v in p) & set(self.rec.values))
+        v0, v1 = self.rec.values[0], self.rec.values[-1]
+
+        class Scripted:                                        # a generator that offers receipt values in each position, then clean values
+            def __init__(self, seed):
+                self.it = iter([v0, 3000001, 3000002, v1, 3000003, 3000004])
+
+            def next32(self):
+                return next(self.it)
+        with mock.patch.object(bs, "Rng", Scripted):
+            self.assertEqual(bs.pair_seeds(FAKE_MASTER, 1, set(self.rec.values)), [(3000003, 3000004)], "a receipt value in the landscape or the operator position skips the draw")
+
+    def test_a_missing_rehashed_or_malformed_receipt_is_refused_by_name(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with self.assertRaises(bs.ExclusionSourceRefusal) as cm:
+                bs.read_exposure_receipt(root)
+            self.assertIn("missing", str(cm.exception))
+            p = root / bs.EXPOSURE_RECEIPT_REL; p.parent.mkdir(parents=True)
+            p.write_bytes((R / bs.EXPOSURE_RECEIPT_REL).read_bytes() + b"\n")
+            with self.assertRaises(bs.ExclusionSourceRefusal) as cm:
+                bs.read_exposure_receipt(root)
+            self.assertIn("hashes to", str(cm.exception))
+            p.write_bytes((R / bs.EXPOSURE_RECEIPT_REL).read_bytes())
+            self.assertEqual(bs.read_exposure_receipt(root).values, self.rec.values)
+        with mock.patch.object(bs, "EXPOSURE_RECEIPT_SHA256", "00" * 32):
+            with self.assertRaises(bs.ExclusionSourceRefusal) as cm:
+                bs.load_exclusion_set(R)
+            self.assertIn("hashes to", str(cm.exception))
+        good = self.doc
+        self.assertEqual(bs.receipt_findings(good), [])
+        for mutate, why in ((lambda d: d["pooled"].reverse(), "unsorted"), (lambda d: d["pooled"].append(d["pooled"][0]), "a duplicate"),
+                            (lambda d: d.update(pooled_count=d["pooled_count"] + 1), "the count"), (lambda d: d.update(pooled_sha256="00" * 32), "the digest"),
+                            (lambda d: d["variants"][0].update(label="b4-sim-3"), "a variant under a label that is not retired"),
+                            (lambda d: d["variants"][0]["pairs"][0].__setitem__(0, 3000009), "a pair value not pooled"),
+                            (lambda d: d["variants"][0]["control_seeds"][0].update(x_control_seed=3000009), "a control seed not pooled"),
+                            (lambda d: d["values"][0]["classes"].append("guessed"), "an unknown class"),
+                            (lambda d: d["values"].pop(), "the value entries are not the pooled list"),
+                            (lambda d: d.pop("limits"), "a missing key"), (lambda d: d.update(schema_version="0.9.0"), "the schema"),
+                            (lambda d: d["pooled"].__setitem__(0, 1.0), "a float value")):
+            d = json.loads(json.dumps(good))
+            mutate(d)
+            self.assertTrue(bs.receipt_findings(d), why)
+        self.assertEqual(bs.receipt_findings([]), ["not an object"])
+        self.assertTrue(bs.receipt_findings({**good, "pooled": "x"}))
+
+    def test_retired_labels_are_refused_before_a_master_and_still_read_from_the_registry(self):
+        for label in ("b4-sim-1", "b4-sim-2"):
+            with self.assertRaises(bs.RetiredLabelRefusal) as cm:
+                bs.check_label_not_retired(label)
+            self.assertIn("b4-sim-3", str(cm.exception))
+        bs.check_label_not_retired("b4-sim-3"); bs.check_label_not_retired(bs.EXPLORATION_LABEL)
+        self.assertNotIn(bs.EXPLORATION_LABEL, bs.RETIRED_LABELS); self.assertEqual(bs.RETIRED_LABELS, {"b4-sim-1", "b4-sim-2"})
+        v1 = next(v for v in self.doc["variants"] if v["id"] == "V1"); v8 = next(v for v in self.doc["variants"] if v["id"] == "V8")
+        anchor = self.doc["historical_inputs"]["anchor_hypothesis_sha256"]
+        with tempfile.TemporaryDirectory() as tmp:
+            simdir = Path(tmp) / "sim"
+            for name, doc in (("b4-sim-1_legacy", seeds_doc("b4-sim-1", v1["master_seed"], v1["pairs"], version="1.1.0", anchor=anchor)),
+                              ("b4-sim-2_current", seeds_doc("b4-sim-2", v8["master_seed"], v8["pairs"], anchor=anchor))):
+                (simdir / name).mkdir(parents=True); (simdir / name / "seeds.json").write_text(json.dumps(doc))
+            with mock.patch.object(bs, "master_seed", side_effect=AssertionError("reading an archive derives nothing")), \
+                 mock.patch.object(bs, "pair_seeds", side_effect=AssertionError("reading an archive derives nothing")):
+                recs, _ = bs.sim_registry(R, str(simdir))
+                self.assertEqual([(r.status, r.master_seed) for r in recs], [("seeds", v1["master_seed"]), ("seeds", v8["master_seed"])], "retired labels' archived records are read")
+                ex = bs.load_exclusion_set(R, str(simdir))
+            self.assertEqual(len(ex.registry), 2)
+            self.assertTrue({v1["master_seed"], v8["master_seed"]} | {x for p in v1["pairs"] + v8["pairs"] for x in p} <= ex.values)
 
 
 if __name__ == "__main__":
