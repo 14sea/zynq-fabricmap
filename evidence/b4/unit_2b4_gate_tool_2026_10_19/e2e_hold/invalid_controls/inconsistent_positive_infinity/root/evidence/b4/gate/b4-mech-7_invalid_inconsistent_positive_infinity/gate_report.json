@@ -1,0 +1,1123 @@
+{
+ "S": 200,
+ "batch": {
+  "count": 200,
+  "fixture": true,
+  "generated_utc": "2026-10-19T00:00:00Z",
+  "head": null,
+  "kind": "synthetic_summary",
+  "label": "b4-mech-7",
+  "manifest_sha256": null,
+  "path": "evidence/b4/gate/b4-mech-7_invalid_inconsistent_positive_infinity/synthetic_summary.json",
+  "seeds_sha256": null,
+  "sha256": "3609f18f32fc0dea85c0b969bfee0a019030e3ac774de2d0316f214e37d7d8cb",
+  "status": "complete"
+ },
+ "budget_rule": {
+  "B_star": null,
+  "N": null,
+  "cost_N_x_3_x_B_star": null,
+  "eligible_budgets": null,
+  "reason": "the summary breaks its contract",
+  "rule": "the smallest N(B) x 3 x B among budgets where K1 holds and N(B) exists; ties to the smaller budget",
+  "status": "not_assessable"
+ },
+ "clean_tree": true,
+ "contract_findings": [
+  "per_budget[64].deltas.delta1_O_minus_R.cohen_d: special +inf carries a null value, not -100"
+ ],
+ "diagnostics": {
+  "deadline": null,
+  "k10": {
+   "S": 200,
+   "counts": {
+    "interacting": 200,
+    "no_interaction_seen_among_tested_comparisons": 0,
+    "nonzero_below_threshold": 0,
+    "not_assessable": 0
+   },
+   "fraction_interacting_over_S": 1.0,
+   "note": "a seed with no comparable pair is not assessable and stays in the denominator; all comparable pairs at zero means no interaction seen among the tested comparisons, not that every context is additive; with tau = 0 the nonzero-below-threshold class is empty by definition",
+   "tau": 2
+  },
+  "k9_per_semantic": {
+   "ce_mode": {
+    "conditional_on_A8": false,
+    "median_coverage_over_all_S": 1.0,
+    "median_rule": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
+    "not_assessable_seeds": 0,
+    "seeds_with_positive_control": 200
+   },
+   "clock_mode": {
+    "conditional_on_A8": false,
+    "median_coverage_over_all_S": 1.0,
+    "median_rule": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
+    "not_assessable_seeds": 0,
+    "seeds_with_positive_control": 200
+   },
+   "ff_init": {
+    "conditional_on_A8": true,
+    "median_coverage_over_all_S": 1.0,
+    "median_rule": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
+    "not_assessable_seeds": 0,
+    "seeds_with_positive_control": 200
+   },
+   "ff_srval": {
+    "conditional_on_A8": false,
+    "median_coverage_over_all_S": 1.0,
+    "median_rule": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
+    "not_assessable_seeds": 0,
+    "seeds_with_positive_control": 200
+   },
+   "sr_kind": {
+    "conditional_on_A8": false,
+    "median_coverage_over_all_S": 1.0,
+    "median_rule": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
+    "not_assessable_seeds": 0,
+    "seeds_with_positive_control": 200
+   },
+   "sr_mode": {
+    "conditional_on_A8": false,
+    "median_coverage_over_all_S": 1.0,
+    "median_rule": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
+    "not_assessable_seeds": 0,
+    "seeds_with_positive_control": 200
+   },
+   "storage_kind": {
+    "conditional_on_A8": false,
+    "median_coverage_over_all_S": 1.0,
+    "median_rule": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
+    "not_assessable_seeds": 0,
+    "seeds_with_positive_control": 200
+   }
+  },
+  "per_budget": {
+   "128": {
+    "F_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "N": null,
+    "X_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 0.05
+     },
+     "mean": 0.1,
+     "median": 0.1,
+     "n": 200,
+     "negatives": 70,
+     "population_variance": 4.0,
+     "positives": 60,
+     "sign_test_p": 0.832656120631536,
+     "ties": 70
+    },
+    "arm_medians": {
+     "A0": 12.0,
+     "D": 12.1,
+     "F": 17.0,
+     "O": 17.0,
+     "Omega": 20.0,
+     "R": 12.0,
+     "X": 12.1
+    },
+    "base_median": 4.0,
+    "delta1_O_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "delta2_O_minus_endtoend_F": {
+     "cohen_d": {
+      "special": null,
+      "value": 3.0
+     },
+     "mean": 6.0,
+     "median": 6.0,
+     "n": 200,
+     "negatives": 80,
+     "population_variance": 4.0,
+     "positives": 90,
+     "sign_test_p": 0.24506928355195023,
+     "ties": 30
+    },
+    "k1": {
+     "eligibility": true,
+     "median_base": 4.0,
+     "median_best_R": 12.0,
+     "omega_best_p95": 25.0
+    },
+    "power_at_N_or_last": 0.3
+   },
+   "16": {
+    "F_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "N": null,
+    "X_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 0.05
+     },
+     "mean": 0.1,
+     "median": 0.1,
+     "n": 200,
+     "negatives": 70,
+     "population_variance": 4.0,
+     "positives": 60,
+     "sign_test_p": 0.832656120631536,
+     "ties": 70
+    },
+    "arm_medians": {
+     "A0": 12.0,
+     "D": 12.1,
+     "F": 17.0,
+     "O": 17.0,
+     "Omega": 20.0,
+     "R": 12.0,
+     "X": 12.1
+    },
+    "base_median": 4.0,
+    "delta1_O_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "delta2_O_minus_endtoend_F": {
+     "cohen_d": {
+      "special": null,
+      "value": 6.5
+     },
+     "mean": 13.0,
+     "median": 13.0,
+     "n": 200,
+     "negatives": 80,
+     "population_variance": 4.0,
+     "positives": 90,
+     "sign_test_p": 0.24506928355195023,
+     "ties": 30
+    },
+    "k1": {
+     "eligibility": true,
+     "median_base": 4.0,
+     "median_best_R": 12.0,
+     "omega_best_p95": 25.0
+    },
+    "power_at_N_or_last": 0.3
+   },
+   "192": {
+    "F_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "N": null,
+    "X_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 0.05
+     },
+     "mean": 0.1,
+     "median": 0.1,
+     "n": 200,
+     "negatives": 70,
+     "population_variance": 4.0,
+     "positives": 60,
+     "sign_test_p": 0.832656120631536,
+     "ties": 70
+    },
+    "arm_medians": {
+     "A0": 12.0,
+     "D": 12.1,
+     "F": 17.0,
+     "O": 17.0,
+     "Omega": 20.0,
+     "R": 12.0,
+     "X": 12.1
+    },
+    "base_median": 4.0,
+    "delta1_O_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "delta2_O_minus_endtoend_F": {
+     "cohen_d": {
+      "special": null,
+      "value": 3.0
+     },
+     "mean": 6.0,
+     "median": 6.0,
+     "n": 200,
+     "negatives": 80,
+     "population_variance": 4.0,
+     "positives": 90,
+     "sign_test_p": 0.24506928355195023,
+     "ties": 30
+    },
+    "k1": {
+     "eligibility": true,
+     "median_base": 4.0,
+     "median_best_R": 12.0,
+     "omega_best_p95": 25.0
+    },
+    "power_at_N_or_last": 0.3
+   },
+   "24": {
+    "F_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "N": null,
+    "X_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 0.05
+     },
+     "mean": 0.1,
+     "median": 0.1,
+     "n": 200,
+     "negatives": 70,
+     "population_variance": 4.0,
+     "positives": 60,
+     "sign_test_p": 0.832656120631536,
+     "ties": 70
+    },
+    "arm_medians": {
+     "A0": 12.0,
+     "D": 12.1,
+     "F": 17.0,
+     "O": 17.0,
+     "Omega": 20.0,
+     "R": 12.0,
+     "X": 12.1
+    },
+    "base_median": 4.0,
+    "delta1_O_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "delta2_O_minus_endtoend_F": {
+     "cohen_d": {
+      "special": null,
+      "value": 3.0
+     },
+     "mean": 6.0,
+     "median": 6.0,
+     "n": 200,
+     "negatives": 80,
+     "population_variance": 4.0,
+     "positives": 90,
+     "sign_test_p": 0.24506928355195023,
+     "ties": 30
+    },
+    "k1": {
+     "eligibility": true,
+     "median_base": 4.0,
+     "median_best_R": 12.0,
+     "omega_best_p95": 25.0
+    },
+    "power_at_N_or_last": 0.3
+   },
+   "256": {
+    "F_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "N": null,
+    "X_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 0.05
+     },
+     "mean": 0.1,
+     "median": 0.1,
+     "n": 200,
+     "negatives": 70,
+     "population_variance": 4.0,
+     "positives": 60,
+     "sign_test_p": 0.832656120631536,
+     "ties": 70
+    },
+    "arm_medians": {
+     "A0": 12.0,
+     "D": 12.1,
+     "F": 17.0,
+     "O": 17.0,
+     "Omega": 20.0,
+     "R": 12.0,
+     "X": 12.1
+    },
+    "base_median": 4.0,
+    "delta1_O_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "delta2_O_minus_endtoend_F": {
+     "cohen_d": {
+      "special": null,
+      "value": 3.0
+     },
+     "mean": 6.0,
+     "median": 6.0,
+     "n": 200,
+     "negatives": 80,
+     "population_variance": 4.0,
+     "positives": 90,
+     "sign_test_p": 0.24506928355195023,
+     "ties": 30
+    },
+    "k1": {
+     "eligibility": true,
+     "median_base": 4.0,
+     "median_best_R": 12.0,
+     "omega_best_p95": 25.0
+    },
+    "power_at_N_or_last": 0.3
+   },
+   "32": {
+    "F_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "N": null,
+    "X_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 0.05
+     },
+     "mean": 0.1,
+     "median": 0.1,
+     "n": 200,
+     "negatives": 70,
+     "population_variance": 4.0,
+     "positives": 60,
+     "sign_test_p": 0.832656120631536,
+     "ties": 70
+    },
+    "arm_medians": {
+     "A0": 12.0,
+     "D": 12.1,
+     "F": 17.0,
+     "O": 17.0,
+     "Omega": 20.0,
+     "R": 12.0,
+     "X": 12.1
+    },
+    "base_median": 4.0,
+    "delta1_O_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "delta2_O_minus_endtoend_F": {
+     "cohen_d": {
+      "special": null,
+      "value": 3.0
+     },
+     "mean": 6.0,
+     "median": 6.0,
+     "n": 200,
+     "negatives": 80,
+     "population_variance": 4.0,
+     "positives": 90,
+     "sign_test_p": 0.24506928355195023,
+     "ties": 30
+    },
+    "k1": {
+     "eligibility": true,
+     "median_base": 4.0,
+     "median_best_R": 12.0,
+     "omega_best_p95": 25.0
+    },
+    "power_at_N_or_last": 0.3
+   },
+   "48": {
+    "F_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "N": null,
+    "X_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 0.05
+     },
+     "mean": 0.1,
+     "median": 0.1,
+     "n": 200,
+     "negatives": 70,
+     "population_variance": 4.0,
+     "positives": 60,
+     "sign_test_p": 0.832656120631536,
+     "ties": 70
+    },
+    "arm_medians": {
+     "A0": 12.0,
+     "D": 12.1,
+     "F": 17.0,
+     "O": 17.0,
+     "Omega": 20.0,
+     "R": 12.0,
+     "X": 12.1
+    },
+    "base_median": 4.0,
+    "delta1_O_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "delta2_O_minus_endtoend_F": {
+     "cohen_d": {
+      "special": null,
+      "value": 3.0
+     },
+     "mean": 6.0,
+     "median": 6.0,
+     "n": 200,
+     "negatives": 80,
+     "population_variance": 4.0,
+     "positives": 90,
+     "sign_test_p": 0.24506928355195023,
+     "ties": 30
+    },
+    "k1": {
+     "eligibility": true,
+     "median_base": 4.0,
+     "median_best_R": 12.0,
+     "omega_best_p95": 25.0
+    },
+    "power_at_N_or_last": 0.3
+   },
+   "64": {
+    "F_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "N": 16,
+    "X_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 0.05
+     },
+     "mean": 0.1,
+     "median": 0.1,
+     "n": 200,
+     "negatives": 70,
+     "population_variance": 4.0,
+     "positives": 60,
+     "sign_test_p": 0.832656120631536,
+     "ties": 70
+    },
+    "arm_medians": {
+     "A0": 12.0,
+     "D": 12.1,
+     "F": 17.0,
+     "O": 17.0,
+     "Omega": 20.0,
+     "R": 12.0,
+     "X": 12.1
+    },
+    "base_median": 4.0,
+    "delta1_O_minus_R": {
+     "cohen_d": {
+      "special": "+inf",
+      "value": -100
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "delta2_O_minus_endtoend_F": {
+     "cohen_d": {
+      "special": null,
+      "value": 3.0
+     },
+     "mean": 6.0,
+     "median": 6.0,
+     "n": 200,
+     "negatives": 80,
+     "population_variance": 4.0,
+     "positives": 90,
+     "sign_test_p": 0.24506928355195023,
+     "ties": 30
+    },
+    "k1": {
+     "eligibility": true,
+     "median_base": 4.0,
+     "median_best_R": 12.0,
+     "omega_best_p95": 25.0
+    },
+    "power_at_N_or_last": 0.95
+   },
+   "8": {
+    "F_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "N": null,
+    "X_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 0.05
+     },
+     "mean": 0.1,
+     "median": 0.1,
+     "n": 200,
+     "negatives": 70,
+     "population_variance": 4.0,
+     "positives": 60,
+     "sign_test_p": 0.832656120631536,
+     "ties": 70
+    },
+    "arm_medians": {
+     "A0": 12.0,
+     "D": 12.1,
+     "F": 17.0,
+     "O": 17.0,
+     "Omega": 20.0,
+     "R": 12.0,
+     "X": 12.1
+    },
+    "base_median": 4.0,
+    "delta1_O_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "delta2_O_minus_endtoend_F": {
+     "cohen_d": {
+      "special": null,
+      "value": 6.5
+     },
+     "mean": 13.0,
+     "median": 13.0,
+     "n": 200,
+     "negatives": 80,
+     "population_variance": 4.0,
+     "positives": 90,
+     "sign_test_p": 0.24506928355195023,
+     "ties": 30
+    },
+    "k1": {
+     "eligibility": true,
+     "median_base": 4.0,
+     "median_best_R": 12.0,
+     "omega_best_p95": 25.0
+    },
+    "power_at_N_or_last": 0.3
+   },
+   "96": {
+    "F_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "N": null,
+    "X_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 0.05
+     },
+     "mean": 0.1,
+     "median": 0.1,
+     "n": 200,
+     "negatives": 70,
+     "population_variance": 4.0,
+     "positives": 60,
+     "sign_test_p": 0.832656120631536,
+     "ties": 70
+    },
+    "arm_medians": {
+     "A0": 12.0,
+     "D": 12.1,
+     "F": 17.0,
+     "O": 17.0,
+     "Omega": 20.0,
+     "R": 12.0,
+     "X": 12.1
+    },
+    "base_median": 4.0,
+    "delta1_O_minus_R": {
+     "cohen_d": {
+      "special": null,
+      "value": 2.5
+     },
+     "mean": 5.0,
+     "median": 5.0,
+     "n": 200,
+     "negatives": 20,
+     "population_variance": 4.0,
+     "positives": 150,
+     "sign_test_p": 4.0161803977113074e-26,
+     "ties": 30
+    },
+    "delta2_O_minus_endtoend_F": {
+     "cohen_d": {
+      "special": null,
+      "value": 3.0
+     },
+     "mean": 6.0,
+     "median": 6.0,
+     "n": 200,
+     "negatives": 80,
+     "population_variance": 4.0,
+     "positives": 90,
+     "sign_test_p": 0.24506928355195023,
+     "ties": 30
+    },
+    "k1": {
+     "eligibility": true,
+     "median_base": 4.0,
+     "median_best_R": 12.0,
+     "omega_best_p95": 25.0
+    },
+    "power_at_N_or_last": 0.3
+   }
+  },
+  "standing_of_the_batch": null
+ },
+ "evidence_kind": "synthetic_summary",
+ "files": [
+  {
+   "path": "gate_report.md",
+   "sha256": "4f0aa175e81c7b12e7892196f74890c5837b0a68d33ebfa0ddc3f86e24a1daa2",
+   "size": 23223
+  },
+  {
+   "path": "synthetic_summary.json",
+   "sha256": "3609f18f32fc0dea85c0b969bfee0a019030e3ac774de2d0316f214e37d7d8cb",
+   "size": 133337
+  }
+ ],
+ "fixture": true,
+ "formal": false,
+ "formal_reasons": [
+  "the evidence is synthetic_summary, not a batch archive",
+  "a fixture batch",
+  "the label 'b4-mech-7' is not the pinned gate label 'b4-gate-1'"
+ ],
+ "generated_utc": "2026-10-19T15:03:32Z",
+ "head": "d5119bc1f4b76e3d543de9e9a431bd8d34bcf590",
+ "identity": {
+  "certificate_sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef",
+  "gate_label": "b4-gate-1",
+  "hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+  "thresholds_source": "docs/b4_architecture.md section 9 (v0.1.16), fixed before any exploration or gate run"
+ },
+ "label": "b4-mech-7",
+ "rows": [
+  {
+   "criterion": "non-saturation",
+   "id": "K1",
+   "method": "percentile(best_Omega(B*), 95) < 64 (B2 linear interpolation, by copy) and median_r(best_R(B*)) > median_r(base_r), two medians compared; eligibility at every grid budget decides B*",
+   "reason": "the summary breaks its contract: nothing is judged",
+   "status": "not_assessable",
+   "threshold": {
+    "medians": "median_r(best_R(B)) > median_r(base_r), two medians compared",
+    "omega_best_p95_lt": 64
+   },
+   "value": null
+  },
+  {
+   "criterion": "not a definitional lock",
+   "id": "K2",
+   "method": "population variance of {delta1_r} at B* > 0; one grid budget with positives and negatives of delta1; the one-sided exact sign test on X - R at B* with size N (H1: P(X - R > 0 | X - R != 0) > 1/2) not rejecting H0 in >= 90 % of 1 000 bootstrap experiments (random.Random(7), alpha 0.05, ties out of n and kept in the population)",
+   "reason": "the summary breaks its contract: nothing is judged",
+   "status": "not_assessable",
+   "threshold": {
+    "population_variance_gt": 0,
+    "x_minus_r_nonrejection_min": 0.9
+   },
+   "value": null
+  },
+  {
+   "criterion": "wrong maps do not profit",
+   "id": "K3",
+   "method": "mean(F - R) > 0 and mean(D - R) <= 0.10 mean(F - R); mean(O - R) > 0 and mean(X - R) <= 0.10 mean(O - R); D's and X's one-sided sign tests (H1: P(control - R > 0 | != 0) > 1/2) not significant (p > 0.05); a non-positive denominator is not readable as satisfied",
+   "reason": "the summary breaks its contract: nothing is judged",
+   "status": "not_assessable",
+   "threshold": {
+    "ratio_max": 0.1,
+    "sign_test_p_gt": 0.05
+   },
+   "value": null
+  },
+  {
+   "criterion": "headroom against the certificate-derived grouping",
+   "id": "K4",
+   "method": "median_r(best_Omega(B*)) <= 0.90 * 64 = 57.6; mean(Omega - R) > 0 and mean(F - R) >= 0.50 mean(Omega - R)",
+   "reason": "the summary breaks its contract: nothing is judged",
+   "status": "not_assessable",
+   "threshold": {
+    "f_over_omega_min": 0.5,
+    "omega_median_max": 57.6
+   },
+   "value": null
+  },
+  {
+   "criterion": "effect, power, N",
+   "id": "K5",
+   "method": "paired Cohen's d of {delta1_r} at B* >= 0.5; N(B*) by the complete ascending scan of required_pairs (8 .. S, alpha 0.05, bootstrap power >= 0.90, 1 000 experiments, random.Random(1 + N)); N x 3 x B* <= 4 000 search evaluations",
+   "reason": "the summary breaks its contract: nothing is judged",
+   "status": "not_assessable",
+   "threshold": {
+    "cap_search_evaluations": 4000,
+    "cohen_d_min": 0.5,
+    "power_min": 0.9
+   },
+   "value": null
+  },
+  {
+   "criterion": "no fixed-seed lock",
+   "id": "K6",
+   "method": "S = 200 planned (never the number completed) and N >= 8",
+   "reason": "the summary breaks its contract: nothing is judged",
+   "status": "not_assessable",
+   "threshold": {
+    "N_min": 8,
+    "S_gate": 200
+   },
+   "value": null
+  },
+  {
+   "criterion": "the map is a map",
+   "id": "K7",
+   "method": "(a) zero recomputation mismatches on every arm's own ledger (the completion contract: each audit's recompute findings empty, re-audited by the archive-wide verifier); (b) median_r over seeds of the addresses whose state is not unknown in arm O's B* prefix >= 11 of 21",
+   "reason": "the summary breaks its contract: nothing is judged",
+   "status": "not_assessable",
+   "threshold": {
+    "o_prefix_median_not_unknown_min": 11,
+    "recomputation_mismatches": 0
+   },
+   "value": null
+  },
+  {
+   "criterion": "ledger replay",
+   "id": "K8",
+   "method": "the replay of every executed run reports no finding, the recorded q grid recomputes the recorded fitness, X's shadow isomorphism and the source-identity / fixture boundary hold (the completion contract; a break is invalid under 9.1)",
+   "reason": "the summary breaks its contract: nothing is judged",
+   "status": "not_assessable",
+   "threshold": {
+    "replay": "no finding on every executed run; a broken tool contract is invalid under section 9.1"
+   },
+   "value": null
+  },
+  {
+   "criterion": "observability",
+   "id": "K9",
+   "method": "on the fixed comparison set of 9.3: (a) >= 90 % of all S seeds have, for each of the seven semantics, an applicable pair whose readouts differ; (b) per semantic, the median over all S seeds of the coverage fraction >= 0.50 (a semantic not assessable for one seed has no median and does not meet (b))",
+   "reason": "the summary breaks its contract: nothing is judged",
+   "status": "not_assessable",
+   "threshold": {
+    "median_coverage_per_semantic_min": 0.5,
+    "seeds_with_all_seven_positive_controls_min": 0.9
+   },
+   "value": null
+  },
+  {
+   "criterion": "real interaction",
+   "id": "K10",
+   "method": "tau = 2: interacting seeds (max|I| > 2 over both fixed backgrounds, all 210 pairs) / all S >= 0.50; not-assessable seeds stay in the denominator",
+   "reason": "the summary breaks its contract: nothing is judged",
+   "status": "not_assessable",
+   "threshold": {
+    "interacting_seeds_over_S_min": 0.5,
+    "tau": 2
+   },
+   "value": null
+  }
+ ],
+ "schema": "b4_gate_report",
+ "schema_version": "1.0.0",
+ "scope": "every result is under the behaviour hypothesis v0.3 and the certificate mapping of the one site; a FAIL is confined to this model, public task / panel, operator / control design, budget grid and declared decision procedure; nothing here is a statement about silicon, about the carrier, or about the content class in general; a PASS is never read as evidence about the fabric",
+ "self_validation": {},
+ "standing": "NOT A GATE RESULT: the gate's rows applied as written to synthetic_summary evidence under the label 'b4-mech-7' so that the tool's paths are exercised; this judgement can never be represented as a real gate result \u2014 the formal result needs the pinned gate label, S = 200 as planned and a production batch archive",
+ "thresholds": {
+  "B_max": 256,
+  "B_star": {
+   "no_eligible_budget": "the budget rule FAILS; B* and N are not invented (exploration: candidate B* / N are null with the reason)",
+   "rule": "the smallest N(B) x 3 x B among budgets where K1 holds and N(B) exists; ties to the smaller budget"
+  },
+  "K1": {
+   "medians": "median_r(best_R(B)) > median_r(base_r), two medians compared",
+   "omega_best_p95_lt": 64,
+   "percentile": 95
+  },
+  "K10": {
+   "background_rule": "0 and Rng((seed ^ salt) & 0xffffffff).uniform(1 << 21), the first call",
+   "background_salt": 1275743829,
+   "backgrounds": 2,
+   "interacting": "max|I| > 2 (exactly 2 is nonzero below threshold)",
+   "interacting_seeds_over_S_min": 0.5,
+   "pairs_per_background": 210,
+   "tau": 2
+  },
+  "K2": {
+   "alpha": 0.05,
+   "bootstrap_experiments": 1000,
+   "bootstrap_seed": 7,
+   "population_variance_gt": 0,
+   "rejection": "p <= 0.05",
+   "ties": "excluded from the sign test's n, kept in the resampled population",
+   "x_minus_r_nonrejection_min": 0.9
+  },
+  "K3": {
+   "alpha": 0.05,
+   "denominators": "mean(F - R) > 0 and mean(O - R) > 0 required; a non-positive denominator is not readable as satisfied",
+   "ratio_max": 0.1,
+   "sign_test_h1": "P(control - R > 0 | control - R != 0) > 1/2"
+  },
+  "K4": {
+   "f_over_omega_min": 0.5,
+   "omega_median_max": 57.6,
+   "omega_median_rule": "0.90 * 64"
+  },
+  "K5": {
+   "alpha": 0.05,
+   "bootstrap_experiments": 1000,
+   "bootstrap_seed_rule": "random.Random(1 + N)",
+   "cap_formula": "N x 3 x B*",
+   "cap_search_evaluations": 4000,
+   "cohen_d_min": 0.5,
+   "n_min": 8,
+   "n_scan": "every integer from 8 to S, ascending, no bisection",
+   "power_min": 0.9
+  },
+  "K6": {
+   "N_min": 8,
+   "S_gate": 200,
+   "note": "S is the number planned, never the number that completed"
+  },
+  "K7": {
+   "o_prefix_median_not_unknown_min": 11,
+   "of_addresses": 21,
+   "prefix": "arm O's first B* + 1 ledger records (base + B* search)",
+   "recomputation_mismatches": 0
+  },
+  "K8": {
+   "replay": "no finding on every executed run; a broken tool contract is invalid under section 9.1"
+  },
+  "K9": {
+   "median_coverage_per_semantic_min": 0.5,
+   "median_population": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
+   "panel": "section 9.3: 32 mode combinations x INIT/SRVAL all-0 / all-1 = 64 backgrounds",
+   "seeds_with_all_seven_positive_controls_min": 0.9,
+   "semantics": 7
+  },
+  "addresses": 21,
+  "anchor": {
+   "exploration_label": "b4-sim-3",
+   "gate_label": "b4-gate-1",
+   "hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "retired_exploration_labels": [
+    "b4-sim-1",
+    "b4-sim-2"
+   ],
+   "rule": "int.from_bytes(sha256(utf8(label + '|' + anchor))[:4], 'big'), the label passed beside the anchor"
+  },
+  "controls": {
+   "d_shuffle_seed": "int.from_bytes(sha256('b4-d-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')",
+   "x_control_seed": "int.from_bytes(sha256('b4-x-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')"
+  },
+  "delta2_F_shift": 21,
+  "grid": [
+   8,
+   16,
+   24,
+   32,
+   48,
+   64,
+   96,
+   128,
+   192,
+   256
+  ],
+  "lambda": 8,
+  "probes_per_F_run": 21,
+  "source": "docs/b4_architecture.md section 9 (v0.1.16), fixed before any exploration or gate run",
+  "standing": "engineering research criteria fixed in advance; no number is claimed to be empirically guaranteed, statistically calibrated or valid for silicon; listed beside exploration values for reference only \u2014 never a gate verdict here"
+ },
+ "verdict": {
+  "reason": "the pooled summary does not satisfy the harness's contract: per_budget[64].deltas.delta1_O_minus_R.cohen_d: special +inf carries a null value, not -100",
+  "status": "invalid"
+ }
+}

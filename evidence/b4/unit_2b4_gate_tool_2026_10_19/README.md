@@ -14,11 +14,11 @@ acceptance.
 | `b4/host/b4_gate_verify.py` | the independent verifier of a gate directory; a fresh-process CLI |
 | `b4/host/b4_sim.py` | mode `"gate"` (b4-gate-<n> labels, reached through `b4_gate.py` only; the exploration CLI unchanged), `standing_for(label)`, `STANDING_GATE`; `summarise_batch(..., standing=)`; **no constant changed; the archived explorations' `STANDING` text untouched** |
 | `b4/host/b4_sim_verify.py` | the report's standing bound to its label; the summary recomputed with it |
-| `b4/tests/test_b4_gate.py` | 22 tests (section 4) |
+| `b4/tests/test_b4_gate.py` | 22 tests at `4f3806d`; 24 after the HOLD round (sections 4 and 9) |
 | `b4/tests/test_b4_seeds.py` | two tests repaired (section 5) |
 | `b4/IMPORT.json` | 52 entries, refreshed |
-| `b4_gate_mutants.py` (here) | 30 mutants, one contract each (G30 added after the re-run of unit 2b-4a's battery, section 6) |
-| `e2e_fixtures.py` (here) | the five end-to-end cases, fresh-process verified, copied as evidence (section 7) |
+| `b4_gate_mutants.py` (here) | 36 mutants, one contract each (G30 added after the re-run of unit 2b-4a's battery, section 6; G31–G36 after the HOLD, section 9) |
+| `e2e_fixtures.py` (here) | the five end-to-end cases, fresh-process verified, copied as evidence (section 7); after the HOLD the six refreshed-hash negatives and their invalid controls (section 9) |
 
 ### 1.1 Where things live
 
@@ -168,7 +168,44 @@ verifier output in the hermetic root (`verify_in_hermetic_root.txt`) and again o
 
 None of these is a gate result. The `fail` case's K9 / K10 statuses are whatever the model gives on two fixture pairs and are not read.
 
-## 8. What this unit does not claim, and what remains withheld
+## 9. The owner's HOLD on `4cdc0c1` and the correction round (commit `77a6c8c`; the raw files `hold_*` beside this README)
+
+The owner's review (`owner_review_4cdc0c1.md`, as relayed; its probe artifacts stay in the ignored review directory) held the unit on
+three P2 findings and one P3, with the first round's independent checks confirmed (277 tests, the five e2e cases, IMPORT, the sim-3
+deep verify, G29 and G30 accepted). Fixed as one unit; nothing of the first round's commits or evidence rewritten.
+
+| id | finding | correction |
+|---|---|---|
+| R1 (P2) | the summary contract was shallow: `D_over_F = null` and `B* = 64.0` escaped as `AttributeError` / `KeyError` instead of an invalid judgement | `summary_contract_findings` rewritten as a **total** validator on arbitrary decoded JSON: every nested shape and exact type checked before it is indexed or used in arithmetic (a bool is never an int, 64.0 is never the budget 64, every number finite); `doc_identity_findings` validates status / label / fixture / count before anything is read; a non-object document is invalid |
+| R2 (P2) | four incoherent synthetic summaries (an empty N scan beside N = 16, a per-budget d of −1 beside an at-B* copy of +0.9, `{value: −100, special: "+inf"}`, `fraction_of_S = 2.0`) were judged PASS and verified clean in a fresh process | every field K1–K10 reads is **bound** to the quantity it represents: the at-B* copies to their per-budget originals (k2's variance and both-signs list; k3's ratios through the harness's `_ratio` and its sign-test p values; k4's medians / means / ratio; k5's Cohen's d and N / cost; k7's record); a delta's sign-test p to its counts, its counts to S, its mean to the difference of the arm means, its Cohen's d to its mean and variance with the one valid encoding of +inf (`"-inf"` / `"nan"` never occur); the N scan complete and ascending from 8, ending at the first n whose rate reaches 0.90 when N exists, covering every n to S below it otherwise, empty with a null power below n_min; the cost to N × 3 × B; K1's eligibility to its numbers and its medians to the arm values; K7's median to its values; K9's fraction to its count and S, a null median exactly with a not-assessable seed, each semantic's positive-control count ≥ the all-seven count; K10's counts summing to S and the fraction to the interacting count; the thresholds table, the driver's note, the grid, the eligible list and the cheapest candidate. The intentional representations are kept (a null N; a null power below n_min; +inf; a null median with a not-assessable seed). The synthetic fixture is now **built coherently from primitives** (arm means from the deltas, counts scaled to S, the exact sign-test p, d from mean and variance, the scan from N and the power, the at-B* record copied from the originals), so every row's FAIL is produced coherently — and two consequences are recorded: K5's *power* condition cannot fail when N exists (the scan's definition), and a non-positive denominator shared by K3 and K4, or a zero variance shared by K2 and the +inf d, fails both rows at once |
+| R3 (P2) | the repaired seed regression assumed every registry record has seeds; a legal `init_failed_no_seeds` record failed it | the assertions are status-aware for every legal record kind (`seeds`, `seeds_fixture`, `init_failed_no_seeds`), with exact membership, digests and the pooled union; a mixed-registry case beside the committed set (`test_a_mixed_registry_beside_the_committed_set_is_read_status_by_status`); no loader code changed |
+| D1 (P3) | the 2c skeleton misstated B3's lifecycle | `docs/b4_preregistration.md` v0.0.2: S0 init (derived from the tree, the prediction already pinned, not frozen), S1 freeze, S2 qualify, S3 plan; the sessions and the pooled adjudication introduce no later transition; the B4 lifecycle / tool / stage contract stays unresolved |
+
+**The new tests** (`test_b4_gate.py`, 24): `test_an_incoherent_or_malformed_summary_is_invalid_never_judged_and_never_an_exception` (the owner's six
+reproductions and one case per binding — 55 incoherent summaries, each a named finding, an invalid verdict, every row not assessable);
+`test_the_contract_is_total_every_node_replaced_by_every_foreign_value` (every node of a coherent summary, containers included, replaced by
+null / a string / a bool / a float / an empty list / an empty object: the judge never raises; a null in place of a non-null node is always a
+finding); the identity-field and non-object documents; `EndToEnd.test_an_incoherent_synthetic_summary_cannot_be_made_a_clean_pass_by_refreshed_hashes`
+(the six written over the committed synthetic PASS evidence with the PASS report kept, every digest refreshed and the markdown re-rendered:
+the fresh-process verifier refuses each; the same evidence judged directly: invalid reports that verify clean). The row-FAIL and boundary
+tests re-expressed on the coherent builder. The set-up stops its derivation guards if it fails, so they never leak into other modules.
+
+**Validation on the clean committed tree `77a6c8c`:**
+
+| file | what | result |
+|---|---|---|
+| `hold_tests.txt` | the 21 modules, verbose | **Ran 280 tests, OK**, exit 0, no skip (7.5 min) |
+| `hold_gate_mutants.txt` | G1–G36 on hermetic copies (the computer slept during the run: 9 775 s wall time; no batch was affected — every kill names its expected tests) | **34 / 36 killed**; G29 SURVIVED (the equivalent survivor of 6.1, accepted by the owner); **G21 BASELINE-NOT-GREEN** — its named test was renamed in this round (a stale name in the battery, not a product finding) |
+| `hold_gate_mutants_g21.txt` | G21 with its test name and its edit target (the rewritten line) corrected | **1 / 1 killed** — so 35 / 36 with the one equivalent survivor |
+| `hold_e2e_run.txt`, `e2e_hold/` | the five cases, the six negatives, the six invalid controls | the five: verifier exit 0 in the hermetic root and on the copy; the six negatives: **exit 1** both places, naming the rows / verdict as not the recomputed; the six invalid controls: the tool exit 1 (verdict invalid, the finding named), the verifier exit 0; derivation calls [0, 0] |
+| `hold_import_check.txt` | `b4/IMPORT.json` | 52 entries, every digest equal, nothing untabled |
+| `hold_sim3_deep_verify.txt` | the committed `b4-sim-3` archive under the corrected tree | findings {}, clean true — the real summary passes the total contract (asserted in the read-only test too) |
+
+The first round's raw files (`tests.txt`, `gate_mutants.txt`, `gate_mutants_g30.txt`, `mutants_2b4a_rerun.txt`, `import_check.txt`, `e2e/`, `sim3_deep_verify.txt`)
+are kept unchanged as the record of `4f3806d`. Two evidence scripts changed after `77a6c8c` and are committed with this evidence:
+`e2e_fixtures.py` takes the output directory name (`e2e_hold`), `b4_gate_mutants.py` has G21's test name and edit target corrected.
+
+## 10. What this unit does not claim, and what remains withheld
 
 No gate result exists. The tool reports; it does not decide what the owner has not ruled. The production execution of `b4-gate-1`
 (S = 200), carrier v2 RTL, image builds, provisioning, electrical measurements, purchase, routing operations, 2d and B4-R implementation,

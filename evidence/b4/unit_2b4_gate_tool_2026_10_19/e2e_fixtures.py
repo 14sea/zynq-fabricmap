@@ -48,7 +48,7 @@ def fresh(gate_dir: Path) -> tuple[int, str]:
 
 
 def main() -> int:
-    out = HERE / "e2e"
+    out = HERE / (sys.argv[1] if len(sys.argv) > 1 else "e2e")          # the output directory name (the round after the HOLD writes e2e_hold/)
     if out.exists():
         raise SystemExit(f"{out} exists: nothing is overwritten")
     head = subprocess.run(["git", "-C", str(R), "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()

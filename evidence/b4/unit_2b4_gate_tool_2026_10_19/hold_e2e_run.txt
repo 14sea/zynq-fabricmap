@@ -1,0 +1,16 @@
+HEAD 77a6c8cf55ab5b6d285d1700c5f92dc3b7dfe015 (e2e_fixtures.py with the output-directory argument added after the commit; committed with this evidence)
+command: python3 -B evidence/b4/unit_2b4_gate_tool_2026_10_19/e2e_fixtures.py e2e_hold
+UTC 2026-10-19T15:02:23Z
+fail FAIL 0 verifier 0 0
+invalid invalid 1 verifier 0 0
+incomplete incomplete 3 verifier 0 0
+pass PASS 0 verifier 0 0
+fail_b_star FAIL 0 verifier 0 0
+negative empty_N_scan verifier 1 1 | invalid control invalid verifier 0
+negative contradictory_delta1_d verifier 1 1 | invalid control invalid verifier 0
+negative inconsistent_positive_infinity verifier 1 1 | invalid control invalid verifier 0
+negative K9_fraction_above_one verifier 1 1 | invalid control invalid verifier 0
+negative D_over_F_null verifier 1 1 | invalid control invalid verifier 0
+negative B_star_as_float verifier 1 1 | invalid control invalid verifier 0
+[0, 0] negatives as expected: True
+exit 0

@@ -1,0 +1,384 @@
+{
+ "count": 2,
+ "deadline": {
+  "checks": 60,
+  "clock": "time.monotonic",
+  "elapsed_s": 62.0,
+  "expired": true,
+  "first_expired_at_s": 60.0,
+  "seconds": 60
+ },
+ "files": [
+  {
+   "path": "seeds.json",
+   "sha256": "b80a1f152de8ffc88c99f95ab21eb69529340337526c41a233f240e0cf833184",
+   "size": 131456
+  },
+  {
+   "path": "manifest.json",
+   "sha256": "8d9e6517129d77556ee64dcb792a238a537a4269a89a56b44d774a106a1f699d",
+   "size": 24076
+  },
+  {
+   "path": "pair_000/arm_R.result.json",
+   "sha256": "a79d52cec1cc99e16e41b3234a0464fa354992a757e4ce438a88272a0f0d8c39",
+   "size": 421198
+  },
+  {
+   "path": "pair_000/arm_R.audit.json",
+   "sha256": "48e04fe54f2e48cd67c16b654ed39e8d1d7581a30dd4b70475e565ad2b01e8c7",
+   "size": 610
+  },
+  {
+   "path": "pair_000/arm_F.result.json",
+   "sha256": "99093e2ce866fda4dcf2d9fe8934efc13e1500dc136c2ac736cfa9b6a6226d6c",
+   "size": 470554
+  },
+  {
+   "path": "pair_000/arm_F.audit.json",
+   "sha256": "c3a365c825d914872a7e4ca0e78db5a2530274566a900269ceca8a35c11d399d",
+   "size": 928
+  },
+  {
+   "path": "pair_000/controls.json",
+   "sha256": "b29bc05a8e10d642f913efb3a103355dcecac63be99e64fdabd05d42c38648f7",
+   "size": 2768
+  },
+  {
+   "path": "pair_000/arm_O.result.json",
+   "sha256": "c8a343f05b20aa35c7698aa598e7d8d6d9117e7a05114b242ffdf03774beabb3",
+   "size": 436532
+  },
+  {
+   "path": "pair_000/arm_O.audit.json",
+   "sha256": "701e1e28e7b2e6d5460a3bbf4aaa24ef5d447bce415f365ab57452a046225d27",
+   "size": 913
+  },
+  {
+   "path": "pair_000/k7.json",
+   "sha256": "d3b70a61db33253ad412164a9101771f444a194212454c672e2348ff19388899",
+   "size": 147544
+  },
+  {
+   "path": "pair_000/arm_X.result.json",
+   "sha256": "e0119e0351c0a459e2c8350217637b09c1610d4bb622901d279972570b599b99",
+   "size": 436481
+  },
+  {
+   "path": "pair_000/arm_X.audit.json",
+   "sha256": "bfd8d29bb3a998fef0c26eaa793916894452fafd12afd17d50d04a807f2c1a55",
+   "size": 921
+  },
+  {
+   "path": "pair_000/arm_D.result.json",
+   "sha256": "79e205dbb3840fc27453c7bf12f0e95111df96a3459e586369e3833a564962bb",
+   "size": 438096
+  },
+  {
+   "path": "pair_000/arm_D.audit.json",
+   "sha256": "a4288563def8bd17eea0419c1d6e6356ccc25956253676814e471e3b59027dca",
+   "size": 612
+  },
+  {
+   "path": "pair_000/arm_Omega.result.json",
+   "sha256": "3126ea0de2bd31e5c1f4f33d30572197d68f733379216b12e16880c25b0396ac",
+   "size": 438061
+  },
+  {
+   "path": "pair_000/arm_Omega.audit.json",
+   "sha256": "134dd7dfdff29889c1ae1d4695460fa4b7c543994504d5d96da49963232e6038",
+   "size": 616
+  },
+  {
+   "path": "pair_000/arm_A0.result.json",
+   "sha256": "79a2b336abb25ca18d57ad7c6faf835dc01a07a9ea9515ff1fd5025c72f15201",
+   "size": 439772
+  },
+  {
+   "path": "pair_000/arm_A0.audit.json",
+   "sha256": "28db2a8e6ab34b882909f5a3f37e00800a4120b67bfabe6ba1dadbe861d4a090",
+   "size": 613
+  },
+  {
+   "path": "pair_000/k9.json",
+   "sha256": "6418167c50200866232413d61a9c45e551080832112831f597ccf2ca09c7e849",
+   "size": 56844
+  },
+  {
+   "path": "STOPPED.json",
+   "sha256": "14b42cf836791d01be09a3d5b818ff3e3128b432b508fc1853eadd0a08ed69a0",
+   "size": 1195
+  }
+ ],
+ "fixture": true,
+ "generated_utc": "2026-10-19T15:03:21Z",
+ "head": "d496bd92d085a235578e2da025d4cf9425d21bc5",
+ "identity": {
+  "certificate_sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef",
+  "hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+  "inputs": {
+   "b4/IMPORT.json": "b23943eca39debd61de10d388009dbd4dec6701dcc4991d813810bcc8114bbc6",
+   "b4/hypothesis/ff_behaviour_v0.3.json": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "docs/b4_architecture.md": "8097e2d05651a6b1b8481ae874005e792782823aae6258d40b59bc7fb9df5922",
+   "docs/ff_latch_probe.md": "545bf34de94f83e39aa22b7e186a0797a0b7b2c92466bf55be8efecfd61efd27",
+   "evidence/b2/b2q_plan.json": "3d194d76e083fd4ba3ce3cf0458af65637120fcda6761be36598833dbc659216",
+   "evidence/b2/b2q_prediction.json": "2ada4d5dab7ed08f081aa55bb4b6f138688a326bb859ab5d63f58c16e67b58aa",
+   "evidence/b2/gate/gate_report.json": "571196bd509e5eb09897d206a634b508655bb42f293be7eeaf7fba8d4c514c43",
+   "evidence/b2/gate/raw_F1.json": "b821c24998dece562026d41c094509da98cfd5430b099ea52ec35dc44050e0bf",
+   "evidence/b2/gate/raw_F2.json": "6194ed690afd5107a76cd081f158a174d2147c3f364e331e0c58ebba74dcab5f",
+   "evidence/b2/gate/raw_F3.json": "8a751a23c7e3088f85f39f2da32a175648623861d525099dcfb05c93eb8111a9",
+   "evidence/b2/gate/recomputed_2026_09_10/controls_report.json": "4a5042e283069f7112cf45c2dbbbb913ef81ea7d5fede97450c2d6b4084c2f89",
+   "evidence/b2/gate/recomputed_2026_09_10/gate_report.json": "997317fb8763925ffcaa1ae63700471165e2f804c527648205a31622d02f625c",
+   "evidence/b2/gate/recomputed_2026_09_10/raw_controls_F1.json": "bddc7ad93003e787cebe5fb569131d161b05d76f931212fe4e52f658bc2e4aa6",
+   "evidence/b2/gate/recomputed_2026_09_10/raw_controls_F2.json": "7948e974be96fd983e5155bdbb72f0d97bc646dc5a0bfdb1cda22c3188f33ed8",
+   "evidence/b2/gate/recomputed_2026_09_10/raw_controls_F3.json": "a5ed062f6591acc4fe782a35e8cca1910269145ce8682465f8022c181890d394",
+   "evidence/b2/gate/v0.1_2026-09-10/gate_report.json": "d547144fce433078531b125937b946c2df94ad69d5c44f7ba37c45976984e4ce",
+   "evidence/b2/gate/v0.1_2026-09-10/raw_F1.json": "ffb0bf396f975585cc9bd88f7500ea188612ab2e8a5e9f59076dbd675dcab532",
+   "evidence/b2/gate/v0.1_2026-09-10/raw_F2.json": "859b96a03cdccd23b116a0b64e41f5f3c091ba85da4c13c404027c8b77ca7522",
+   "evidence/b2/gate/v0.1_2026-09-10/raw_F3.json": "f37ae4e4b38b4b9508c424bf0cedc85f1b5f88b1c3b01f75cdc2c90047fce21d",
+   "evidence/b2/plan.json": "62dc85934eec02e2fe31a90b336d0fd320d03a4f54bf90537e944ece72458b9c",
+   "evidence/b2/prediction.json": "a611b8e03c88fa797e2b9d9c5d10bb97e42c590bc8754f1defccc6c11c9e3731",
+   "evidence/b3/b3q_plan.json": "490347f4b3542147581940035a12eb9bb7db7cbd0ad550dd8bfd3e2b68261026",
+   "evidence/b3/b3q_prediction.json": "7eae26509b9488a111257c112c5cf90e9cc8f6e34311af837c79ccc40245ec27",
+   "evidence/b3/gate/gate_report.json": "477225f54bb40866abb08df69e6e34341c7516cd7e398e8bb6d0c06c8ae2aa68",
+   "evidence/b3/gate/raw_F1.json": "54f9c4fbc0bac8c0bfe1c6ce203f8848367d201b85b610e40c031f96c1746ed6",
+   "evidence/b3/gate/raw_F2.json": "279b08ede52cf73d948f69e1390e2c02c09e417ca8406bb52da78439ff1b3e2d",
+   "evidence/b3/gate_2/gate_report.json": "8f717b12bdc7258d49145bd47bbcfb8291d2b2a79cad42cb75491a19398fda90",
+   "evidence/b3/gate_2/raw_F1.json": "631aac7119dc054b9db835a756e2fbc1f56b4071f027506b13d5a3630c08b0fc",
+   "evidence/b3/gate_2/raw_F2.json": "cba55465bde4a35c39cc33ce0a853db4a3db5f9ac85e0ded6d671a87732cbfe5",
+   "evidence/b3/plan.json": "b202a2800d5934978394ffca7ee8f24d9b2897c953d4f41b1050fed840c81dd1",
+   "evidence/b3/plan_trial_2026_09_17/plan.json": "8b6142b06b883baee2e9e8b298635429384279d2be78efab18cd73bdcc3761d2",
+   "evidence/b3/plan_trial_2026_09_17/prediction.json": "6e45a752bd3db536db0cbea7dcb0e531bb40889fff91f7dc6c28250f44f729b2",
+   "evidence/b3/prediction.json": "92b774ea62d290d380e72a4c990b384060db9006cf9160940fb4848ae4a14cf5",
+   "evidence/b3/sim/raw_F1.json": "ccf4d24622c7cfb3ee698623047ea461303c603449d47ffb0452f83656b74c53",
+   "evidence/b3/sim/raw_F2.json": "953511d7540bbf0a0af7932f5c8c486a03f64d3d68cda576b2ed07f6e4ed4e1c",
+   "evidence/b3/sim/sim_report.json": "d9c432f8b797933e26e24a77d33e5884f29c03c2be88e6c59c61bc0af250adf9",
+   "evidence/b3/sim_v0.1.1/raw_F1.json": "ccf4d24622c7cfb3ee698623047ea461303c603449d47ffb0452f83656b74c53",
+   "evidence/b3/sim_v0.1.1/raw_F2.json": "953511d7540bbf0a0af7932f5c8c486a03f64d3d68cda576b2ed07f6e4ed4e1c",
+   "evidence/b3/sim_v0.1.1/sim_report.json": "dcbaa2a3cf2fe817c77ce24ab4a4250ec4c8a2c171117f55da9d80740e29401c",
+   "evidence/b4/unit_2b4a_exposure_settlement_2026_10_19/exposure_receipt.json": "68764bbc1a51ec2506bf9d9bcbb3f55f88f3d7642b5eb46c6fd3dd39f8dae146",
+   "evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json": "af482824b10f5248db262bb5e6f417830f3b67a45c43e4c75d1dd3eae4a34e55",
+   "gate_runs/run_2026_08_05_ff/certificate.json": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef",
+   "host/b2_search.py": "3acb04714a6c677708892d171f6a418e6de7627210e2ec6ad65158db51eab1cf",
+   "manifests/b2_manifest.json": "aec84514ff29dda7957d46d650a370e155f6dc60a281b992e148f8a0fae6c4c0",
+   "manifests/b3_manifest.json": "258bb14c4b3ba1a3d33741f23b1663f563de64da800843d30c8a615e2f128628"
+  },
+  "manifest_sha256": "8d9e6517129d77556ee64dcb792a238a537a4269a89a56b44d774a106a1f699d",
+  "out": "evidence/b4/sim/b4-mech-1_incomplete",
+  "seeds_sha256": "b80a1f152de8ffc88c99f95ab21eb69529340337526c41a233f240e0cf833184"
+ },
+ "label": "b4-mech-1",
+ "missing": [
+  "no pooled numeric summary: the batch did not complete",
+  "pair 0: partial (arms {'R': 'audited', 'F': 'audited', 'O': 'audited', 'X': 'audited', 'D': 'audited', 'Omega': 'audited', 'A0': 'audited'}, k7 complete, k9 partial, k10 not_started)",
+  "pair 1: not_started (arms {'R': 'not_started', 'F': 'not_started', 'O': 'not_started', 'X': 'not_started', 'D': 'not_started', 'Omega': 'not_started', 'A0': 'not_started'}, k7 not_started, k9 not_started, k10 not_started)"
+ ],
+ "pairs": [
+  {
+   "arms": {
+    "A0": "audited",
+    "D": "audited",
+    "F": "audited",
+    "O": "audited",
+    "Omega": "audited",
+    "R": "audited",
+    "X": "audited"
+   },
+   "k10": "not_started",
+   "k7": "complete",
+   "k9": "partial",
+   "landscape_seed": 7,
+   "operator_seed": 11,
+   "pair": 0,
+   "status": "partial"
+  },
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "not_started",
+    "O": "not_started",
+    "Omega": "not_started",
+    "R": "not_started",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 8,
+   "operator_seed": 12,
+   "pair": 1,
+   "status": "not_started"
+  }
+ ],
+ "schema": "b4_sim_report",
+ "schema_version": "1.0.0",
+ "self_validation": {},
+ "standing": "exploration data under the label given, S as planned; not a gate verdict; the thresholds of docs/b4_architecture.md v0.1.15 section 9 are listed for reference only; candidate B* / N are estimates on this S, never the formal S = 200's",
+ "status": "incomplete",
+ "stopped": {
+  "deadline": {
+   "checks": 60,
+   "clock": "time.monotonic",
+   "elapsed_s": 61.0,
+   "expired": true,
+   "first_expired_at_s": 60.0,
+   "seconds": 60
+  },
+  "detail": "the soft deadline of 60 s passed after 60.000 s (check 60)",
+  "head_at_stop": "d496bd92d085a235578e2da025d4cf9425d21bc5",
+  "kind": "deadline",
+  "pair": 0,
+  "planned": [
+   {
+    "arms": {
+     "A0": "audited",
+     "D": "audited",
+     "F": "audited",
+     "O": "audited",
+     "Omega": "audited",
+     "R": "audited",
+     "X": "audited"
+    },
+    "k10": "not_started",
+    "k7": "complete",
+    "k9": "partial",
+    "landscape_seed": 7,
+    "operator_seed": 11,
+    "pair": 0,
+    "status": "partial"
+   },
+   {
+    "arms": {
+     "A0": "not_started",
+     "D": "not_started",
+     "F": "not_started",
+     "O": "not_started",
+     "Omega": "not_started",
+     "R": "not_started",
+     "X": "not_started"
+    },
+    "k10": "not_started",
+    "k7": "not_started",
+    "k9": "not_started",
+    "landscape_seed": 8,
+    "operator_seed": 12,
+    "pair": 1,
+    "status": "not_started"
+   }
+  ],
+  "role": "K9",
+  "schema": "b4_sim_stopped",
+  "schema_version": "1.0.0",
+  "stage": "k9",
+  "status": "incomplete",
+  "stopped_utc": "2026-10-19T15:03:21Z",
+  "traceback": null
+ },
+ "summary": null,
+ "thresholds": {
+  "B_max": 256,
+  "B_star": {
+   "no_eligible_budget": "the budget rule FAILS; B* and N are not invented (exploration: candidate B* / N are null with the reason)",
+   "rule": "the smallest N(B) x 3 x B among budgets where K1 holds and N(B) exists; ties to the smaller budget"
+  },
+  "K1": {
+   "medians": "median_r(best_R(B)) > median_r(base_r), two medians compared",
+   "omega_best_p95_lt": 64,
+   "percentile": 95
+  },
+  "K10": {
+   "background_rule": "0 and Rng((seed ^ salt) & 0xffffffff).uniform(1 << 21), the first call",
+   "background_salt": 1275743829,
+   "backgrounds": 2,
+   "interacting": "max|I| > 2 (exactly 2 is nonzero below threshold)",
+   "interacting_seeds_over_S_min": 0.5,
+   "pairs_per_background": 210,
+   "tau": 2
+  },
+  "K2": {
+   "alpha": 0.05,
+   "bootstrap_experiments": 1000,
+   "bootstrap_seed": 7,
+   "population_variance_gt": 0,
+   "rejection": "p <= 0.05",
+   "ties": "excluded from the sign test's n, kept in the resampled population",
+   "x_minus_r_nonrejection_min": 0.9
+  },
+  "K3": {
+   "alpha": 0.05,
+   "denominators": "mean(F - R) > 0 and mean(O - R) > 0 required; a non-positive denominator is not readable as satisfied",
+   "ratio_max": 0.1,
+   "sign_test_h1": "P(control - R > 0 | control - R != 0) > 1/2"
+  },
+  "K4": {
+   "f_over_omega_min": 0.5,
+   "omega_median_max": 57.6,
+   "omega_median_rule": "0.90 * 64"
+  },
+  "K5": {
+   "alpha": 0.05,
+   "bootstrap_experiments": 1000,
+   "bootstrap_seed_rule": "random.Random(1 + N)",
+   "cap_formula": "N x 3 x B*",
+   "cap_search_evaluations": 4000,
+   "cohen_d_min": 0.5,
+   "n_min": 8,
+   "n_scan": "every integer from 8 to S, ascending, no bisection",
+   "power_min": 0.9
+  },
+  "K6": {
+   "N_min": 8,
+   "S_gate": 200,
+   "note": "S is the number planned, never the number that completed"
+  },
+  "K7": {
+   "o_prefix_median_not_unknown_min": 11,
+   "of_addresses": 21,
+   "prefix": "arm O's first B* + 1 ledger records (base + B* search)",
+   "recomputation_mismatches": 0
+  },
+  "K8": {
+   "replay": "no finding on every executed run; a broken tool contract is invalid under section 9.1"
+  },
+  "K9": {
+   "median_coverage_per_semantic_min": 0.5,
+   "median_population": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
+   "panel": "section 9.3: 32 mode combinations x INIT/SRVAL all-0 / all-1 = 64 backgrounds",
+   "seeds_with_all_seven_positive_controls_min": 0.9,
+   "semantics": 7
+  },
+  "addresses": 21,
+  "anchor": {
+   "exploration_label": "b4-sim-3",
+   "gate_label": "b4-gate-1",
+   "hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "retired_exploration_labels": [
+    "b4-sim-1",
+    "b4-sim-2"
+   ],
+   "rule": "int.from_bytes(sha256(utf8(label + '|' + anchor))[:4], 'big'), the label passed beside the anchor"
+  },
+  "controls": {
+   "d_shuffle_seed": "int.from_bytes(sha256('b4-d-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')",
+   "x_control_seed": "int.from_bytes(sha256('b4-x-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')"
+  },
+  "delta2_F_shift": 21,
+  "grid": [
+   8,
+   16,
+   24,
+   32,
+   48,
+   64,
+   96,
+   128,
+   192,
+   256
+  ],
+  "lambda": 8,
+  "probes_per_F_run": 21,
+  "source": "docs/b4_architecture.md section 9 (v0.1.16), fixed before any exploration or gate run",
+  "standing": "engineering research criteria fixed in advance; no number is claimed to be empirically guaranteed, statistically calibrated or valid for silicon; listed beside exploration values for reference only \u2014 never a gate verdict here"
+ }
+}

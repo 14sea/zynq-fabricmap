@@ -110,8 +110,8 @@ MUTANTS = [
   edit(GATE, [('    if not (isinstance(doc["label"], str) and FIXTURE_LABEL_RE.match(doc["label"])):', '    if not isinstance(doc["label"], str):')]),
   [J + "test_the_synthetic_summary_s_own_findings", E + "test_refusals_write_nothing_and_the_derivation_is_never_reached", E + "test_the_synthetic_evidence_is_bound_and_re_judged"]),
  ("G21 the summary contract does not check that B* is the cheapest eligible budget",
-  edit(GATE, [('        if cb["value"] != want:', "        if False:")]),
-  [J + "test_a_summary_that_breaks_its_contract_is_invalid_never_judged"]),
+  edit(GATE, [('        if not (_int(cb["value"]) and cb["value"] == want):', "        if False:")]),   # the line as the total validator writes it
+  [J + "test_an_incoherent_or_malformed_summary_is_invalid_never_judged_and_never_an_exception"]),   # the test renamed in the HOLD round (G21's baseline was not green in hold_gate_mutants.txt: a stale name, re-run in hold_gate_mutants_g21.txt)
  ("G22 standing_for returns the exploration's text for a gate label",
   edit(SIM, [("    return STANDING_GATE if isinstance(label, str) and GATE_LABEL_RE.match(label) else STANDING", "    return STANDING")]),
   [J + "test_standing_for_the_harness_s_labels"]),

@@ -1,0 +1,3680 @@
+{
+ "budget": 256,
+ "engine_arm": "O",
+ "landscape_seed": 8,
+ "operator_seed": 12,
+ "pair": 1,
+ "port_calls": 30,
+ "result": {
+  "arm": "O",
+  "base_fit": 36,
+  "best_trace": [
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36,
+   36
+  ],
+  "budget": 256,
+  "champion": null,
+  "champion_holdout": null,
+  "champion_holdout_nones": null,
+  "completed": false,
+  "control_failure": null,
+  "cost": {
+   "base": 1,
+   "holdout": 0,
+   "probes": 0,
+   "search": 28
+  },
+  "evals": 28,
+  "fabric_fixture": false,
+  "fixture": false,
+  "frozen_view": null,
+  "generation_closes": [
+   {
+    "after_seq": 9,
+    "before": [
+     [
+      0,
+      36,
+      0
+     ],
+     [
+      0,
+      36,
+      1
+     ],
+     [
+      0,
+      36,
+      2
+     ],
+     [
+      0,
+      36,
+      3
+     ]
+    ],
+    "generation": 1,
+    "population": [
+     [
+      0,
+      36,
+      0
+     ],
+     [
+      0,
+      36,
+      1
+     ],
+     [
+      0,
+      36,
+      2
+     ],
+     [
+      0,
+      36,
+      3
+     ]
+    ],
+    "population_commitment": "1d6e58aeec1826af59e2e7ff8afe63e5a13ebeda2f8d396c5203008c10257364"
+   },
+   {
+    "after_seq": 17,
+    "before": [
+     [
+      0,
+      36,
+      0
+     ],
+     [
+      0,
+      36,
+      1
+     ],
+     [
+      0,
+      36,
+      2
+     ],
+     [
+      0,
+      36,
+      3
+     ]
+    ],
+    "generation": 2,
+    "population": [
+     [
+      0,
+      36,
+      0
+     ],
+     [
+      0,
+      36,
+      1
+     ],
+     [
+      0,
+      36,
+      2
+     ],
+     [
+      0,
+      36,
+      3
+     ]
+    ],
+    "population_commitment": "1d6e58aeec1826af59e2e7ff8afe63e5a13ebeda2f8d396c5203008c10257364"
+   },
+   {
+    "after_seq": 25,
+    "before": [
+     [
+      0,
+      36,
+      0
+     ],
+     [
+      0,
+      36,
+      1
+     ],
+     [
+      0,
+      36,
+      2
+     ],
+     [
+      0,
+      36,
+      3
+     ]
+    ],
+    "generation": 3,
+    "population": [
+     [
+      0,
+      36,
+      0
+     ],
+     [
+      0,
+      36,
+      1
+     ],
+     [
+      0,
+      36,
+      2
+     ],
+     [
+      0,
+      36,
+      3
+     ]
+    ],
+    "population_commitment": "1d6e58aeec1826af59e2e7ff8afe63e5a13ebeda2f8d396c5203008c10257364"
+   }
+  ],
+  "given_view": null,
+  "group_moves": 7,
+  "landscape_seed": 8,
+  "ledger": [
+   {
+    "best": 36,
+    "bits": [],
+    "config_sha256": "a62e54ba3e0a61114627f2b3b36ddd48d97136565446e4ce4de437922c24a6c9",
+    "fitness": 36,
+    "fixture": false,
+    "genome": 0,
+    "genome_hex": "000000",
+    "map_commitment_after": "67498d3bf534a1e952daa032ee6400468580814d4d5183309b7df12d2564de89",
+    "map_version_after": 0,
+    "map_version_before": 0,
+    "move_kind": "base",
+    "none_cells": 0,
+    "parent_born": null,
+    "phase": "base",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 1,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "795bd2399be97b5ed2b75337a57681a567acb2856cef136d8278692328945c77"
+   },
+   {
+    "best": 36,
+    "bits": [
+     2,
+     5,
+     18
+    ],
+    "config_sha256": "fb66507e19e8abc082c41eadd93350992593505c7eb09ba96f857d7a6c4ee620",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 0,
+    "genome": 262180,
+    "genome_hex": "040024",
+    "map_commitment_after": "67498d3bf534a1e952daa032ee6400468580814d4d5183309b7df12d2564de89",
+    "map_version_after": 0,
+    "map_version_before": 0,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 1,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 2,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "2ac6c4b1e4eeb82a9a5161365c4529b1f9203a4f29d4dc24aaae56f38455349e"
+   },
+   {
+    "best": 36,
+    "bits": [
+     15,
+     17,
+     20
+    ],
+    "config_sha256": "7e4b46cb91e93b73f232ed13c147d1c132a6acca7d494e15e62bbd20309c1ed3",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 0,
+    "genome": 1212416,
+    "genome_hex": "128000",
+    "map_commitment_after": "67498d3bf534a1e952daa032ee6400468580814d4d5183309b7df12d2564de89",
+    "map_version_after": 0,
+    "map_version_before": 0,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 3,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 3,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "a01ac6a41757597edd27c3521fa47a3415f9888b1e234ce496f1054751617491"
+   },
+   {
+    "best": 36,
+    "bits": [
+     6,
+     9,
+     12
+    ],
+    "config_sha256": "f254c92b5ea01f839db8fb0610c845f51d22aa741fd26d49e789d894054e1c58",
+    "fitness": 35,
+    "fixture": false,
+    "generation": 0,
+    "genome": 4672,
+    "genome_hex": "001240",
+    "map_commitment_after": "67498d3bf534a1e952daa032ee6400468580814d4d5183309b7df12d2564de89",
+    "map_version_after": 0,
+    "map_version_before": 0,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 3,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    ],
+    "seq": 4,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "a92b9c6ac0ad4096af820fafeba1bd9296b9f28baa299877a79822b0e2b7972f"
+   },
+   {
+    "best": 36,
+    "bits": [
+     2,
+     13,
+     16,
+     17
+    ],
+    "config_sha256": "dd4f915bcc2cf3307dcbe0d4d20758a854299abfb728e747751dfac6e68c6219",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 0,
+    "genome": 204804,
+    "genome_hex": "032004",
+    "map_commitment_after": "67498d3bf534a1e952daa032ee6400468580814d4d5183309b7df12d2564de89",
+    "map_version_after": 0,
+    "map_version_before": 0,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 3,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 5,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "f8f7c17e9b065f332e2c157dbcbfa1f76063c3f097d33fea8d43b790f1369304"
+   },
+   {
+    "best": 36,
+    "bits": [
+     12
+    ],
+    "config_sha256": "74831191db06fa0b8a0529aea235c8b85f72a7f236e573120e0573a6a2bbb639",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 0,
+    "genome": 4096,
+    "genome_hex": "001000",
+    "map_commitment_after": "b8a7562cec4311a96d0bb9550eb78c35fb8b483560fe2feefc50924e7a68bb80",
+    "map_version_after": 1,
+    "map_version_before": 0,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 1,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 6,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "795bd2399be97b5ed2b75337a57681a567acb2856cef136d8278692328945c77"
+   },
+   {
+    "best": 36,
+    "bits": [
+     7,
+     14,
+     18,
+     19
+    ],
+    "config_sha256": "84762e243da1ec8cfd931eee41bc49ce548db7b6caf9da1845a2cc4adae4a3c7",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 0,
+    "genome": 802944,
+    "genome_hex": "0c4080",
+    "map_commitment_after": "b8a7562cec4311a96d0bb9550eb78c35fb8b483560fe2feefc50924e7a68bb80",
+    "map_version_after": 1,
+    "map_version_before": 1,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 2,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 7,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "054399226ba689728efac0fde29bc64ef7c15e000ff8a9dcc180c76f9d6bbcbe"
+   },
+   {
+    "best": 36,
+    "bits": [
+     18,
+     19
+    ],
+    "config_sha256": "7c450a230d4ec13c68db278a482020bbbe1ca9bb5921264f674176593dab43bf",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 0,
+    "genome": 786432,
+    "genome_hex": "0c0000",
+    "map_commitment_after": "b8a7562cec4311a96d0bb9550eb78c35fb8b483560fe2feefc50924e7a68bb80",
+    "map_version_after": 1,
+    "map_version_before": 1,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 0,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 8,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "808837e5bfa502597d317a7e561d6bcb89dbfa211603a5944b5ca031b1fa44b9"
+   },
+   {
+    "best": 36,
+    "bits": [
+     0,
+     6,
+     9
+    ],
+    "config_sha256": "6a930722c4c2ee68684b421833b7ff6176188324a9df3e87c54dff92b32065c6",
+    "fitness": 35,
+    "fixture": false,
+    "generation": 0,
+    "genome": 577,
+    "genome_hex": "000241",
+    "map_commitment_after": "b8a7562cec4311a96d0bb9550eb78c35fb8b483560fe2feefc50924e7a68bb80",
+    "map_version_after": 1,
+    "map_version_before": 1,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 2,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+     ]
+    ],
+    "seq": 9,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "a92b9c6ac0ad4096af820fafeba1bd9296b9f28baa299877a79822b0e2b7972f"
+   },
+   {
+    "best": 36,
+    "bits": [
+     4,
+     5,
+     8,
+     15
+    ],
+    "config_sha256": "ad3d5fcb679048f80e0b163459ed7c32f14cd400b9217c075b523eb6d42689f8",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 1,
+    "genome": 33072,
+    "genome_hex": "008130",
+    "map_commitment_after": "b8a7562cec4311a96d0bb9550eb78c35fb8b483560fe2feefc50924e7a68bb80",
+    "map_version_after": 1,
+    "map_version_before": 1,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 2,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+     ]
+    ],
+    "seq": 10,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "ba3fe484cf7b611bf7a0aaa47f13fe39940578a3d0514eea8042fa6414c98d2d"
+   },
+   {
+    "best": 36,
+    "bits": [
+     10
+    ],
+    "config_sha256": "b502934042e0d6cbc60162f5f9f959cad391f962132e8969a2c3610b62612e31",
+    "fitness": 14,
+    "fixture": false,
+    "generation": 1,
+    "genome": 1024,
+    "genome_hex": "000400",
+    "map_commitment_after": "58e4abd1364af5f5707aac071c7eb5dcbf2b93c555f1ea25c1c65023deadc693",
+    "map_version_after": 2,
+    "map_version_before": 1,
+    "move_kind": "random",
+    "none_cells": 32,
+    "parent_born": 3,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      null,
+      1,
+      null,
+      1,
+      null,
+      1,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      1,
+      null,
+      0,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      1,
+      null,
+      1,
+      null
+     ],
+     [
+      0,
+      null,
+      0,
+      null,
+      1,
+      null,
+      0,
+      null
+     ],
+     [
+      1,
+      null,
+      0,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      1,
+      null,
+      0,
+      null,
+      1,
+      null,
+      1,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      1,
+      null,
+      0,
+      null
+     ]
+    ],
+    "seq": 11,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "e58154dbc0020a6c4534c651ddf33fd5e61dc73bef12764399960591c6c44d5d"
+   },
+   {
+    "best": 36,
+    "bits": [
+     18,
+     20
+    ],
+    "config_sha256": "327ec47fe6c27d31bfc504be09b1bb414ac5e8e425c0190f61afa9e3b76c4edf",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 1,
+    "genome": 1310720,
+    "genome_hex": "140000",
+    "map_commitment_after": "58e4abd1364af5f5707aac071c7eb5dcbf2b93c555f1ea25c1c65023deadc693",
+    "map_version_after": 2,
+    "map_version_before": 2,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 1,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 12,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "c9b1cab4c5b545815dbbf6e5f3ee4d8f7f5a5fb4a8a35ee77e459873cbf03408"
+   },
+   {
+    "best": 36,
+    "bits": [
+     4,
+     13
+    ],
+    "config_sha256": "4b30e04887c5c23fdc08e979f3d83a31760719b47b0266e30e8e297c115d7382",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 1,
+    "genome": 8208,
+    "genome_hex": "002010",
+    "map_commitment_after": "58e4abd1364af5f5707aac071c7eb5dcbf2b93c555f1ea25c1c65023deadc693",
+    "map_version_after": 2,
+    "map_version_before": 2,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 2,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ]
+    ],
+    "seq": 13,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "622b10844274df1fe20a47626bea0f789a87cd62271413219214a3d0ce06249f"
+   },
+   {
+    "best": 36,
+    "bits": [
+     2,
+     15
+    ],
+    "config_sha256": "63583d20eb616d20c0e9d57b2e5d2ed7dc8acba36ed507a266d34a05bf193074",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 1,
+    "genome": 32772,
+    "genome_hex": "008004",
+    "map_commitment_after": "58e4abd1364af5f5707aac071c7eb5dcbf2b93c555f1ea25c1c65023deadc693",
+    "map_version_after": 2,
+    "map_version_before": 2,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 1,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 14,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "87562abd08e0b0d351f2317ab9041ed8dcccef6829a050dbdf9e9496e840bcd5"
+   },
+   {
+    "best": 36,
+    "bits": [
+     13,
+     14,
+     17,
+     18
+    ],
+    "config_sha256": "b5a9b6572042e335dbcd6c2cf5e0bc8b96b0e5fa00e9135f37b5693b204c6f6e",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 1,
+    "genome": 417792,
+    "genome_hex": "066000",
+    "map_commitment_after": "58e4abd1364af5f5707aac071c7eb5dcbf2b93c555f1ea25c1c65023deadc693",
+    "map_version_after": 2,
+    "map_version_before": 2,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 2,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 15,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "0d525e3e1434bbcc8191a272ab16200142825cc78bf5e2a53cab0a97f40b9eb2"
+   },
+   {
+    "best": 36,
+    "bits": [
+     11,
+     15
+    ],
+    "config_sha256": "06c5f6d95909c252743be84871354eeac264926c1d4c8b36575296f7c375c7ed",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 1,
+    "genome": 34816,
+    "genome_hex": "008800",
+    "map_commitment_after": "58e4abd1364af5f5707aac071c7eb5dcbf2b93c555f1ea25c1c65023deadc693",
+    "map_version_after": 2,
+    "map_version_before": 2,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 2,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 16,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "87562abd08e0b0d351f2317ab9041ed8dcccef6829a050dbdf9e9496e840bcd5"
+   },
+   {
+    "best": 36,
+    "bits": [
+     13
+    ],
+    "config_sha256": "f4797caf316830c2ab9f2dce7bfe950b3fe07e86ae4906404f44ac4c30cb92bb",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 1,
+    "genome": 8192,
+    "genome_hex": "002000",
+    "map_commitment_after": "a3563ec702af712ed300af0593459ce2d48afbbcea63b3f3717e50cd5558975a",
+    "map_version_after": 3,
+    "map_version_before": 2,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 2,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 17,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "1411c720fc2668a0cf5065f5d45fd1f78fae944407ddd738d0bbe06bb99a5d88"
+   },
+   {
+    "best": 36,
+    "bits": [
+     1
+    ],
+    "config_sha256": "05f2caeb6c219b5af1af6bb5a209f5f30f94a9799cb750407763437d654d863e",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 2,
+    "genome": 2,
+    "genome_hex": "000002",
+    "map_commitment_after": "7df8f5ceb697ee6f08d7a472c3be52665262cd888371d887bb5333858edf6f93",
+    "map_version_after": 4,
+    "map_version_before": 3,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 0,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 18,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "795bd2399be97b5ed2b75337a57681a567acb2856cef136d8278692328945c77"
+   },
+   {
+    "best": 36,
+    "bits": [
+     4,
+     8
+    ],
+    "config_sha256": "0b11369fd2ba310da2753162bd86c729e0fdd4351093ee4162970c1b2f23ae08",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 2,
+    "genome": 272,
+    "genome_hex": "000110",
+    "map_commitment_after": "7df8f5ceb697ee6f08d7a472c3be52665262cd888371d887bb5333858edf6f93",
+    "map_version_after": 4,
+    "map_version_before": 4,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 2,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ]
+    ],
+    "seq": 19,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "8a4c7bb2ecefdfcbf2049e11a0c8a9ce9746bad0a3d178337d3451de030adf00"
+   },
+   {
+    "best": 36,
+    "bits": [
+     4,
+     10
+    ],
+    "config_sha256": "310f05a9f1e8299acfb41c3b6f6f7cff43ef9cb87ea5686ec3b080012cd34930",
+    "fitness": 16,
+    "fixture": false,
+    "generation": 2,
+    "genome": 1040,
+    "genome_hex": "000410",
+    "map_commitment_after": "9f33ca9fc22c94fb97263fe52a01894707bef73bd6960c39bc01872949772632",
+    "map_version_after": 5,
+    "map_version_before": 4,
+    "move_kind": "group",
+    "none_cells": 32,
+    "parent_born": 2,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      null,
+      1,
+      null,
+      1,
+      null,
+      1,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      0,
+      null,
+      1,
+      null
+     ],
+     [
+      1,
+      null,
+      0,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      1,
+      null,
+      0,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      1,
+      null,
+      0,
+      null
+     ],
+     [
+      1,
+      null,
+      1,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      1,
+      null,
+      0,
+      null,
+      0,
+      null,
+      1,
+      null
+     ],
+     [
+      0,
+      null,
+      0,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      0,
+      null,
+      0,
+      null,
+      0,
+      null,
+      0,
+      null
+     ]
+    ],
+    "seq": 20,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "19b37da8f65f126b00ae0ced905045b9c8d74b51ccf5ff5c1b51e6d133ef2e7e"
+   },
+   {
+    "best": 36,
+    "bits": [
+     13
+    ],
+    "config_sha256": "f4797caf316830c2ab9f2dce7bfe950b3fe07e86ae4906404f44ac4c30cb92bb",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 2,
+    "genome": 8192,
+    "genome_hex": "002000",
+    "map_commitment_after": "4c7947aa16485c41bec83ab38dc139323a7569e5a0ee9707f4c7154dc37033d3",
+    "map_version_after": 6,
+    "map_version_before": 5,
+    "move_kind": "group",
+    "none_cells": 0,
+    "parent_born": 1,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 21,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "1411c720fc2668a0cf5065f5d45fd1f78fae944407ddd738d0bbe06bb99a5d88"
+   },
+   {
+    "best": 36,
+    "bits": [
+     14,
+     17,
+     18
+    ],
+    "config_sha256": "e1d5cd6725513f3de95d5cbb5430825daba152053b65a7c1ab1c7c08ad3076f0",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 2,
+    "genome": 409600,
+    "genome_hex": "064000",
+    "map_commitment_after": "764f83656d2258682be9a4131cb3db5830fc474d5547f45dcc47893c7f519dc3",
+    "map_version_after": 7,
+    "map_version_before": 6,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 1,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 22,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "f9466ca1a42f4dae2aff2e267218e1cf95b65a5930997647196e30ed5be7e7f4"
+   },
+   {
+    "best": 36,
+    "bits": [
+     0,
+     19
+    ],
+    "config_sha256": "d06c4949c08424e7f9d028e5e570b3314efe7aed1789f539727aae70d2f092bf",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 2,
+    "genome": 524289,
+    "genome_hex": "080001",
+    "map_commitment_after": "764f83656d2258682be9a4131cb3db5830fc474d5547f45dcc47893c7f519dc3",
+    "map_version_after": 7,
+    "map_version_before": 7,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 2,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 23,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "56105a26b22dc04aa8d66bce733f4b8730449395454946c97e50eb6926d3f119"
+   },
+   {
+    "best": 36,
+    "bits": [
+     1,
+     7,
+     12
+    ],
+    "config_sha256": "48d633d865c4daca605a27b1aec62130456d85c71bc58d2504cd023742eed674",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 2,
+    "genome": 4226,
+    "genome_hex": "001082",
+    "map_commitment_after": "764f83656d2258682be9a4131cb3db5830fc474d5547f45dcc47893c7f519dc3",
+    "map_version_after": 7,
+    "map_version_before": 7,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 2,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 24,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "795bd2399be97b5ed2b75337a57681a567acb2856cef136d8278692328945c77"
+   },
+   {
+    "best": 36,
+    "bits": [
+     4
+    ],
+    "config_sha256": "c438b2338159bc86cc8e616266e99104f54f2fde2aa45d9d2e1439952ee8dc22",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 2,
+    "genome": 16,
+    "genome_hex": "000010",
+    "map_commitment_after": "66d150c3603964fb69e21eaa0d49c2976e3a057e80a7c2d33563341d7bda86bb",
+    "map_version_after": 8,
+    "map_version_before": 7,
+    "move_kind": "group",
+    "none_cells": 0,
+    "parent_born": 0,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ]
+    ],
+    "seq": 25,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "8a4c7bb2ecefdfcbf2049e11a0c8a9ce9746bad0a3d178337d3451de030adf00"
+   },
+   {
+    "best": 36,
+    "bits": [
+     0,
+     15
+    ],
+    "config_sha256": "56d89dea1f50fd880f61cd0605d3af3b66adc9c8ac1efa2d8b55a45acd034c1a",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 3,
+    "genome": 32769,
+    "genome_hex": "008001",
+    "map_commitment_after": "66d150c3603964fb69e21eaa0d49c2976e3a057e80a7c2d33563341d7bda86bb",
+    "map_version_after": 8,
+    "map_version_before": 8,
+    "move_kind": "random",
+    "none_cells": 0,
+    "parent_born": 3,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+     ]
+    ],
+    "seq": 26,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "87562abd08e0b0d351f2317ab9041ed8dcccef6829a050dbdf9e9496e840bcd5"
+   },
+   {
+    "best": 36,
+    "bits": [
+     10
+    ],
+    "config_sha256": "b502934042e0d6cbc60162f5f9f959cad391f962132e8969a2c3610b62612e31",
+    "fitness": 14,
+    "fixture": false,
+    "generation": 3,
+    "genome": 1024,
+    "genome_hex": "000400",
+    "map_commitment_after": "112f284305a4a27c2952151cb6a4730630ea344926b9a61a93d7d1c67019d927",
+    "map_version_after": 9,
+    "map_version_before": 8,
+    "move_kind": "group",
+    "none_cells": 32,
+    "parent_born": 1,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      null,
+      1,
+      null,
+      1,
+      null,
+      1,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      1,
+      null,
+      0,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      1,
+      null,
+      1,
+      null
+     ],
+     [
+      0,
+      null,
+      0,
+      null,
+      1,
+      null,
+      0,
+      null
+     ],
+     [
+      1,
+      null,
+      0,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      1,
+      null,
+      0,
+      null,
+      1,
+      null,
+      1,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      1,
+      null,
+      0,
+      null
+     ]
+    ],
+    "seq": 27,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "e58154dbc0020a6c4534c651ddf33fd5e61dc73bef12764399960591c6c44d5d"
+   },
+   {
+    "best": 36,
+    "bits": [
+     4,
+     10
+    ],
+    "config_sha256": "310f05a9f1e8299acfb41c3b6f6f7cff43ef9cb87ea5686ec3b080012cd34930",
+    "fitness": 16,
+    "fixture": false,
+    "generation": 3,
+    "genome": 1040,
+    "genome_hex": "000410",
+    "map_commitment_after": "48eb1e845da62176c792966ddfb16619b0a05ee8ff8251ff5f511d9b456b3a80",
+    "map_version_after": 10,
+    "map_version_before": 9,
+    "move_kind": "group",
+    "none_cells": 32,
+    "parent_born": 0,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      null,
+      1,
+      null,
+      1,
+      null,
+      1,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      0,
+      null,
+      1,
+      null
+     ],
+     [
+      1,
+      null,
+      0,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      1,
+      null,
+      0,
+      null
+     ],
+     [
+      0,
+      null,
+      1,
+      null,
+      1,
+      null,
+      0,
+      null
+     ],
+     [
+      1,
+      null,
+      1,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      1,
+      null,
+      0,
+      null,
+      0,
+      null,
+      1,
+      null
+     ],
+     [
+      0,
+      null,
+      0,
+      null,
+      0,
+      null,
+      0,
+      null
+     ],
+     [
+      0,
+      null,
+      0,
+      null,
+      0,
+      null,
+      0,
+      null
+     ]
+    ],
+    "seq": 28,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "19b37da8f65f126b00ae0ced905045b9c8d74b51ccf5ff5c1b51e6d133ef2e7e"
+   },
+   {
+    "best": 36,
+    "bits": [
+     4
+    ],
+    "config_sha256": "c438b2338159bc86cc8e616266e99104f54f2fde2aa45d9d2e1439952ee8dc22",
+    "fitness": 36,
+    "fixture": false,
+    "generation": 3,
+    "genome": 16,
+    "genome_hex": "000010",
+    "map_commitment_after": "a13bcbc827cb94b76c8b1fe351c7199a9a78fce326f693f5c54e8e215ded3d33",
+    "map_version_after": 11,
+    "map_version_before": 10,
+    "move_kind": "group",
+    "none_cells": 0,
+    "parent_born": 0,
+    "phase": "search",
+    "provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+    "q_grid": [
+     [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+     ]
+    ],
+    "seq": 29,
+    "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+    "trace_sha256": "8a4c7bb2ecefdfcbf2049e11a0c8a9ce9746bad0a3d178337d3451de030adf00"
+   }
+  ],
+  "map_commitment_final": "a13bcbc827cb94b76c8b1fe351c7199a9a78fce326f693f5c54e8e215ded3d33",
+  "map_multi_bit_pairs_final": 379,
+  "map_origin": "online",
+  "map_privileged": false,
+  "map_specimens_final": 29,
+  "map_version_final": 11,
+  "observations": 29,
+  "operator_seed": 12,
+  "other_refusal": null,
+  "pending_children": [
+   [
+    32769,
+    36,
+    28
+   ],
+   [
+    1024,
+    14,
+    29
+   ],
+   [
+    1040,
+    16,
+    30
+   ],
+   [
+    16,
+    36,
+    31
+   ]
+  ],
+  "population": [
+   [
+    0,
+    36,
+    0
+   ],
+   [
+    0,
+    36,
+    1
+   ],
+   [
+    0,
+    36,
+    2
+   ],
+   [
+    0,
+    36,
+    3
+   ]
+  ],
+  "provenance": {
+   "fabric": {
+    "dropout_count": 0,
+    "dropout_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "effect_sha256": "a1be61d03939f98673eb29b39f00310ba27c4c6b0fe2d768e62f9166bc4829c0",
+    "kind": "truth",
+    "seed": null
+   },
+   "hypothesis": {
+    "fixture": false,
+    "path": "b4/hypothesis/ff_behaviour_v0.3.json",
+    "sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+    "version": "0.3.0"
+   },
+   "mapping": {
+    "certificate": "gate_runs/run_2026_08_05_ff/certificate.json",
+    "certificate_sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef",
+    "site": "SLICE_X2Y25"
+   }
+  },
+  "rng_state_final": 14218125345707961680,
+  "search_completed": false,
+  "task_digest": "b1ddbd3cfbdfd2d62eb01c586820b7c1a49eac4f222e7591da5dd5da7e1d8957",
+  "terminal": {
+   "attempt": 30,
+   "budget": 256,
+   "code": "DOMAIN",
+   "config_sha256": "f4797caf316830c2ab9f2dce7bfe950b3fe07e86ae4906404f44ac4c30cb92bb",
+   "genome": 8192,
+   "landscape_seed": 8,
+   "map_commitment": "a13bcbc827cb94b76c8b1fe351c7199a9a78fce326f693f5c54e8e215ded3d33",
+   "map_version": 11,
+   "operator_seed": 12,
+   "phase": "search",
+   "population_commitment": "1d6e58aeec1826af59e2e7ff8afe63e5a13ebeda2f8d396c5203008c10257364",
+   "rng_state": 14218125345707961680,
+   "stimulus_sha256": "0a59bb1ff8b3ce5a7f63ef0ee00c060b2d0ed1d0c5deb459cf18f676d32c5046",
+   "successful_observations": 29
+  },
+  "x_control_seed": null,
+  "x_isomorphism_findings": null,
+  "x_perm": null,
+  "x_perm_attempts": null,
+  "x_residual": null
+ },
+ "role": "O",
+ "schema": "b4_sim_arm_result",
+ "schema_version": "1.0.0",
+ "wall_s": 0.021165,
+ "written_utc": "2026-10-19T15:03:06Z"
+}
