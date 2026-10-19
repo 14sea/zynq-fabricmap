@@ -16,8 +16,10 @@ guards. No K value is read as a result. No skip."""
 from __future__ import annotations
 
 import json
+import math
 import os
 import shutil
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -31,6 +33,7 @@ for p in (R / "b4/host", R / "b4/tests"):
         sys.path.insert(0, str(p))
 import b4_execution as ex  # noqa: E402
 import b4_gate as bg  # noqa: E402
+import b4_gate_stats as gs  # noqa: E402
 import b4_gate_verify as gv  # noqa: E402
 import b4_k9 as k9  # noqa: E402
 import b4_seeds as bs  # noqa: E402
@@ -68,10 +71,7 @@ def _delta(mean, pos, neg, ties, var, S):
     if var == 0:
         pos, neg, ties = (S, 0, 0) if mean > 0 else (0, S, 0) if mean < 0 else (0, 0, S)
     assert pos + neg + ties == S, (pos, neg, ties, S)
-    if var == 0:
-        d = {"value": None, "special": "+inf"} if mean > 0 else {"value": 0.0, "special": None}
-    else:
-        d = {"value": mean / var ** 0.5, "special": None}
+    d = bg.implied_cohen_d(mean, var, S)                   # the production convention: mean / the SAMPLE standard deviation (the owner's review of a8f2da1)
     return {"n": S, "mean": mean, "median": mean, "positives": pos, "negatives": neg, "ties": ties, "sign_test_p": bg._sign_p(pos, neg), "population_variance": var, "cohen_d": d}
 
 
@@ -117,7 +117,7 @@ def synthetic_summary(S=200, b_star=64, N=16, power=0.95, *, d1=(5.0, 150, 20, 3
                        "Omega_minus_R": _delta(om[0], om[1], om[2], om[3], var, S), "A0_minus_R": _delta(a0[0], a0[1], a0[2], a0[3], var, S)},
             "k1": k1, "required_pairs": {"N": n, "power_at_N_or_last": last, "scan": scan, "n_min": T["K5"]["n_min"], "n_max": S},
             "cost_N_x_3_x_B": None if n is None else n * 3 * B,
-            "k7_O_prefix_not_unknown": {"values": [k7_median] * S, "median": float(k7_median)}}
+            "k7_O_prefix_not_unknown": {"values": [k7_median] * S, "median": statistics.median([k7_median] * S)}}       # the production median's own type
     eligible = [B for B in GRID if per_budget[str(B)]["k1"]["eligibility"] and per_budget[str(B)]["required_pairs"]["N"] is not None]
     both = [B for B in GRID if per_budget[str(B)]["deltas"]["delta1_O_minus_R"]["positives"] > 0 and per_budget[str(B)]["deltas"]["delta1_O_minus_R"]["negatives"] > 0]
     if eligible:
@@ -213,7 +213,8 @@ class TheJudge(unittest.TestCase):
         self.assertEqual(len(j["formal_reasons"]), 3, j["formal_reasons"])          # the evidence kind, the fixture, the label
         self.assertTrue(any("synthetic_summary" in x for x in j["formal_reasons"]) and any("fixture" in x for x in j["formal_reasons"]) and any("pinned gate label" in x for x in j["formal_reasons"]))
         rows = rows_by_id(j)
-        self.assertEqual(rows["K5"]["value"]["N"], 16); self.assertEqual(rows["K5"]["value"]["cohen_d_delta1"], {"value": 2.5, "special": None})
+        self.assertEqual(rows["K5"]["value"]["N"], 16); self.assertEqual(rows["K5"]["value"]["cohen_d_delta1"], bg.implied_cohen_d(5.0, 4.0, 200))
+        self.assertAlmostEqual(rows["K5"]["value"]["cohen_d_delta1"]["value"], 5.0 / math.sqrt(4.0 * 200 / 199), places=15)
         self.assertEqual(rows["K6"]["value"], {"S_planned": 200, "N": 16})
         for r in j["rows"]:
             self.assertTrue(r["method"] and r["criterion"] and r["reason"], r["id"])
@@ -254,7 +255,7 @@ class TheJudge(unittest.TestCase):
         case({"om": (45.7, 190, 5, 5), "omega_p95": 60.0}, "K4", "57.6")                        # Omega mean 57.7 (R 12 + 45.7), p95 60 < 64 keeps K1
         case({"f": (3.9, 150, 20, 30)}, "K4", "F / Omega ratio")
         case({"om": (-1.0, 5, 190, 5)}, "K4", "non-positive denominator")
-        case({"var1": (5.0 / 0.49) ** 2}, "K5", "Cohen's d")
+        case({"d1": (1.0, 150, 20, 30), "var1": 4.0}, "K5", "Cohen's d")                      # the owner's boundary numbers: mean 1, population variance 4, S 200 → d 0.4987… < 0.5
         case({"k7_median": 10}, "K7", "< 11")
         case({"k9_all": 179}, "K9", "(a)")
         case({"k9_medians": {"ff_srval": 0.4270833}}, "K9", "ff_srval 0.427083")
@@ -263,9 +264,10 @@ class TheJudge(unittest.TestCase):
         case({"N": 21}, "K5", "4 000")                                                          # N = 21 at B* = 64: 4 032 search evaluations
 
     def test_the_boundaries_written_with_an_equal_sign_pass_and_an_infinite_d_passes(self):
-        s = synthetic_summary(nonreject=0.90, om=(45.6, 190, 5, 5), omega_p95=60.0, f=(22.8, 150, 20, 30), d=(2.28, 60, 70, 70), x=(0.5, 60, 70, 70), power=0.90, k7_median=11,
-                              k9_all=180, k9_medians=dict.fromkeys(k9.SEMANTICS, 0.5), k10=(100, 0, 0, 100))
+        s = synthetic_summary(nonreject=0.90, om=(45.6, 190, 5, 5), omega_p95=60.0, f=(22.8, 150, 20, 30), d=(2.28, 60, 70, 70), x=(0.1, 60, 70, 70), power=0.90, k7_median=11,
+                              k9_all=180, k9_medians=dict.fromkeys(k9.SEMANTICS, 0.5), k10=(100, 0, 0, 100), d1=(1.0, 150, 20, 30), var1=3.9)   # d = 1 / sqrt(3.9 · 200 / 199) = 0.5051… ≥ 0.5
         self.assertEqual(bg.summary_contract_findings(s, 200), [])
+        self.assertGreaterEqual(s["at_candidate_B_star"]["k5"]["cohen_d_delta1"]["value"], 0.5); self.assertLess(s["at_candidate_B_star"]["k5"]["cohen_d_delta1"]["value"], 0.51)
         at = s["at_candidate_B_star"]
         self.assertEqual((at["k4"]["median_best_Omega"], at["k4"]["F_over_Omega"]["ratio"], at["k3"]["X_over_O"]["ratio"]), (57.6, 0.5, 0.1))
         self.assertAlmostEqual(at["k3"]["D_over_F"]["ratio"], 0.1, places=12); self.assertLessEqual(at["k3"]["D_over_F"]["ratio"], 0.1)
@@ -346,7 +348,7 @@ class TheJudge(unittest.TestCase):
         case(lambda s: at(s)["k3"].__setitem__("D_over_F", None), "k3.D_over_F: not an object")
         case(lambda s: s["candidate_B_star"].__setitem__("value", 64.0), "is not the cheapest eligible budget")
         case(lambda s: pb(s)["required_pairs"].__setitem__("scan", []), "the scan does not end at N")
-        case(lambda s: pb(s)["deltas"]["delta1_O_minus_R"].__setitem__("cohen_d", {"value": -1.0, "special": None}), "the sign of d")
+        case(lambda s: pb(s)["deltas"]["delta1_O_minus_R"].__setitem__("cohen_d", {"value": -1.0, "special": None}), "is not the production statistic")
         case(lambda s: (pb(s)["deltas"]["delta1_O_minus_R"].__setitem__("cohen_d", {"value": -100, "special": "+inf"}), at(s)["k5"].__setitem__("cohen_d_delta1", {"value": -100, "special": "+inf"})), "special +inf carries a null value")
         case(lambda s: s["k9"].__setitem__("fraction_of_S", 2.0), "fraction_of_S is not")
         # the at-B* copies bound to their originals
@@ -431,7 +433,7 @@ class TheJudge(unittest.TestCase):
             if len(path) > 1 and path[0] == "per_budget" and path[1] not in ("8", "64"):
                 continue                                                 # the ten budgets share one structure: one below the probes, the B* one
             n_paths += 1
-            for value in (None, "x", True, 1.5, [], {}):
+            for value in (None, "x", True, 1.5, [], {}, 10 ** 400, float("inf"), float("nan")):
                 if value == node and type(value) is type(node):
                     continue
                 s = with_replaced(base, path, value)
@@ -446,6 +448,102 @@ class TheJudge(unittest.TestCase):
                     n_null_invalid += 1
         self.assertGreater(n_paths, 500)
         self.assertGreater(n_null_invalid, 400)
+
+    def test_cohen_s_d_is_bound_by_magnitude_under_the_production_sample_variance_convention(self):
+        """The owner's review of a8f2da1, P2 1: (a) a concrete 200-value delta sequence — the production function (mean / statistics.stdev,
+        the SAMPLE standard deviation) against the value implied by its recorded mean and POPULATION variance: equal to 1e-12 relative
+        (the archives agree to ~1e-16); (b) the owner's boundary: mean 1, population variance 4, S 200 gives 0.4987… (FAIL side), not the
+        population-formula 0.5; (c) the special cases S < 2 and zero variance; (d) the coordinated two-copy edit — both copies of d at B*
+        set to 0.9 over a mean of 0.5 and a variance of 4 — is a named contract finding and an invalid judgement, not a PASS."""
+        import random
+        rng = random.Random(11)
+        deltas = [rng.choice([-3, -1, 0, 1, 2, 4, 7]) for _ in range(200)]
+        d_prod = gs.cohen_d(deltas)
+        want = bg.implied_cohen_d(gs.mean(deltas), statistics.pvariance(deltas), 200)["value"]
+        self.assertLessEqual(abs(d_prod - want), bg.D_REL_TOL * max(1.0, abs(want)))
+        self.assertAlmostEqual(d_prod, gs.mean(deltas) / statistics.stdev(deltas), places=15)
+        b = bg.implied_cohen_d(1, 4, 200)
+        self.assertAlmostEqual(b["value"], 0.49874843358150006, places=15); self.assertLess(b["value"], 0.5)
+        self.assertAlmostEqual(bg.implied_cohen_d(1, 4.5, 200)["value"], 0.47022453265552955, places=14)
+        self.assertEqual(bg.implied_cohen_d(5.0, 0, 200), {"value": None, "special": "+inf"}); self.assertEqual(bg.implied_cohen_d(-5.0, 0, 200), {"value": 0.0, "special": None})
+        self.assertEqual(bg.implied_cohen_d(5.0, 0, 1), {"value": 0.0, "special": None}, "S < 2: the production function returns 0.0")
+        self.assertEqual(gs.cohen_d([5]), 0.0); self.assertEqual(gs.cohen_d([5, 5]), math.inf); self.assertEqual(gs.cohen_d([-5, -5]), 0.0)
+        # (c) a one-pair summary must record d = 0.0 whatever its mean; +inf there is a finding
+        s1 = no_b_star(synthetic_summary(S=1))
+        self.assertEqual(bg.summary_contract_findings(s1, 1), [])
+        self.assertEqual(s1["per_budget"]["64"]["deltas"]["delta1_O_minus_R"]["cohen_d"], {"value": 0.0, "special": None})
+        s1["per_budget"]["64"]["deltas"]["delta1_O_minus_R"]["cohen_d"] = {"value": None, "special": "+inf"}
+        self.assertTrue(any("S < 2" in x for x in bg.summary_contract_findings(s1, 1)))
+        # (d) the coordinated two-copy edit over the owner's base (mean 0.5, variance 4: K5 FAILS on its own numbers)
+        s = synthetic_summary(d1=(0.5, 110, 60, 30), var1=4.0)
+        self.assertEqual(bg.summary_contract_findings(s, 200), [])
+        self.assertEqual(rows_by_id(bg.judge(synthetic_doc(s), "synthetic_summary"))["K5"]["status"], "FAIL")
+        s["per_budget"]["64"]["deltas"]["delta1_O_minus_R"]["cohen_d"] = {"value": 0.9, "special": None}
+        s["at_candidate_B_star"]["k5"]["cohen_d_delta1"] = {"value": 0.9, "special": None}
+        f = bg.summary_contract_findings(s, 200)
+        self.assertTrue(any("is not the production statistic of its mean 0.5" in x and "sample standard deviation" in x for x in f), f)
+        j = bg.judge(synthetic_doc(s), "synthetic_summary")
+        self.assertEqual(j["verdict"]["status"], "invalid"); self.assertEqual([r["status"] for r in j["rows"]], ["not_assessable"] * 10)
+        # a d within the tolerance of its implied value is accepted; one 1e-9 away is not
+        s = synthetic_summary()
+        w = s["per_budget"]["64"]["deltas"]["delta1_O_minus_R"]["cohen_d"]["value"]
+        for budget in GRID:
+            s["per_budget"][str(budget)]["deltas"]["delta1_O_minus_R"]["cohen_d"] = {"value": w * (1 + 1e-14), "special": None}
+        s["at_candidate_B_star"]["k5"]["cohen_d_delta1"] = {"value": w * (1 + 1e-14), "special": None}
+        self.assertEqual(bg.summary_contract_findings(s, 200), [])
+        for budget in GRID:
+            s["per_budget"][str(budget)]["deltas"]["delta1_O_minus_R"]["cohen_d"] = {"value": w * (1 + 1e-9), "special": None}
+        s["at_candidate_B_star"]["k5"]["cohen_d_delta1"] = {"value": w * (1 + 1e-9), "special": None}
+        self.assertTrue(bg.summary_contract_findings(s, 200))
+
+    def test_numerically_equal_foreign_types_and_numeric_edges_are_findings_never_exceptions(self):
+        """The owner's review of a8f2da1, P2 2: the five aliases (8.0 for n_min, 7.0 for the bootstrap seed, 2.0 for tau, 16.0 for the at-B* N,
+        15.0 in the at-B* K7 values) and bool aliases are named findings; a decoded integer beyond 2^63, an infinite literal (1e400) and a NaN at
+        any path — the thresholds table included — are findings before any serialisation or arithmetic, never exceptions; then the fuzz: every
+        int leaf of a coherent summary replaced by its float alias, and every 0 / 1 leaf by its bool alias, is invalid."""
+        def case(mutate, part):
+            s = synthetic_summary(); mutate(s)
+            f = bg.summary_contract_findings(s, 200)
+            self.assertTrue(any(part in x for x in f), (part, f))
+            j = bg.judge(synthetic_doc(s), "synthetic_summary")
+            self.assertEqual(j["verdict"]["status"], "invalid", part); self.assertEqual([r["status"] for r in j["rows"]], ["not_assessable"] * 10, part)
+        at = lambda s: s["at_candidate_B_star"]  # noqa: E731
+        case(lambda s: s["per_budget"]["64"]["required_pairs"].__setitem__("n_min", 8.0), "n_min / n_max")
+        case(lambda s: at(s)["k2"]["bootstrap"].__setitem__("seed", 7.0), "k2.bootstrap")
+        case(lambda s: s["k10"].__setitem__("tau", 2.0), "tau / S")
+        case(lambda s: at(s)["k5"].__setitem__("N", 16.0), "k5's N / cost")
+        case(lambda s: at(s)["k7"].__setitem__("values", [15.0] * 200), "k7 at B*")
+        case(lambda s: s["per_budget"]["64"]["k7_O_prefix_not_unknown"].__setitem__("values", [15.0] * 200), "ints in [0, 21]")
+        case(lambda s: s["per_budget"]["64"]["required_pairs"].__setitem__("N", 16.0), "required_pairs.N")
+        case(lambda s: s["k10"]["counts"].__setitem__("nonzero_below_threshold", False), "non-negative ints")
+        case(lambda s: s["k9"]["per_semantic"]["ff_init"].__setitem__("not_assessable_seeds", False), "counts are ints")
+        case(lambda s: s.__setitem__("eligible_budgets", [64.0]), "eligible_budgets")
+        case(lambda s: s["per_budget"]["64"].__setitem__("budget", 64.0), ".budget is")
+        case(lambda s: s["per_budget"]["64"]["k1"].__setitem__("omega_best_p95", 10 ** 400), "beyond ±2^63")
+        case(lambda s: s["thresholds_for_reference"]["K10"].__setitem__("tau", float("inf")), "is not finite")
+        case(lambda s: s["per_budget"]["8"]["deltas"]["F_minus_R"].__setitem__("mean", float("nan")), "is not finite")
+        case(lambda s: s["k10"].__setitem__("S", 2 ** 70), "beyond ±2^63")
+        for over in ({"count": 10 ** 400}, {"count": 2 ** 64}, {"count": bg.S_MAX + 1}):
+            j = bg.judge(dict(synthetic_doc(synthetic_summary()), **over), "synthetic_summary")
+            self.assertEqual(j["verdict"]["status"], "invalid", over); self.assertTrue(j["contract_findings"], over)
+        self.assertTrue(bg.synthetic_findings(dict(synthetic_doc(synthetic_summary()), head=None, count=10 ** 400)))
+        self.assertTrue(bg.numeric_findings({"a": [1, {"b": float("-inf")}]}) and bg.numeric_findings(10 ** 19) and not bg.numeric_findings({"a": [1, 2.5, True, "x", None, 2 ** 62]}))
+        # the alias fuzz
+        base = synthetic_summary()
+        n_int, n_bool = 0, 0
+        for path, node in list(paths_of(base)):
+            if not path or (len(path) > 1 and path[0] == "per_budget" and path[1] not in ("8", "64")):
+                continue
+            if type(node) is int:
+                j = bg.judge(synthetic_doc(with_replaced(base, path, float(node))), "synthetic_summary")
+                self.assertEqual(j["verdict"]["status"], "invalid", (path, "float alias")); n_int += 1
+                if node in (0, 1):
+                    j = bg.judge(synthetic_doc(with_replaced(base, path, bool(node))), "synthetic_summary")
+                    self.assertEqual(j["verdict"]["status"], "invalid", (path, "bool alias")); n_bool += 1
+            elif type(node) is float and node in (0.0, 1.0):
+                j = bg.judge(synthetic_doc(with_replaced(base, path, bool(node))), "synthetic_summary")
+                self.assertEqual(j["verdict"]["status"], "invalid", (path, "bool alias of a float")); n_bool += 1
+        self.assertGreater(n_int, 100); self.assertGreater(n_bool, 10)
 
     def test_the_committed_exploration_report_as_a_read_only_reference(self):
         """The S = 32 exploration of 2026-10-19 judged in memory: not formal (an exploration label, S = 32), the budget rule FAILS (no N),
@@ -775,20 +873,36 @@ class EndToEnd(Base):
                                                               s["at_candidate_B_star"]["k5"].__setitem__("cohen_d_delta1", {"value": -100, "special": "+inf"})),
                  "K9_fraction_above_one": lambda s: s["k9"].__setitem__("fraction_of_S", 2.0),
                  "D_over_F_null": lambda s: s["at_candidate_B_star"]["k3"].__setitem__("D_over_F", None),
-                 "B_star_as_float": lambda s: s["candidate_B_star"].__setitem__("value", 64.0)}
+                 "B_star_as_float": lambda s: s["candidate_B_star"].__setitem__("value", 64.0),
+                 "coordinated_false_cohen_pass": lambda s: (s["per_budget"]["64"]["deltas"]["delta1_O_minus_R"].__setitem__("cohen_d", {"value": 0.9, "special": None}),
+                                                            s["at_candidate_B_star"]["k5"].__setitem__("cohen_d_delta1", {"value": 0.9, "special": None})),
+                 "float_scan_n_min": lambda s: s["per_budget"]["64"]["required_pairs"].__setitem__("n_min", 8.0),
+                 "float_at_k7_values": lambda s: s["at_candidate_B_star"]["k7"].__setitem__("values", [15.0] * 200),
+                 "huge_json_integer": lambda s: s["per_budget"]["64"]["k1"].__setitem__("omega_best_p95", 10 ** 400),
+                 "infinite_literal_in_thresholds": lambda s: s["thresholds_for_reference"]["K10"].__setitem__("tau", float("inf"))}
+        refused = {"huge_json_integer", "infinite_literal_in_thresholds"}                   # a number no judgement could carry: refused at the evidence boundary, never written
         for name, mutate in cases.items():
-            syn = json.loads(self.originals[g][bg.SYNTHETIC_JSON]); mutate(syn["summary"])
+            syn = json.loads(self.originals[g][bg.SYNTHETIC_JSON])
+            if name == "coordinated_false_cohen_pass":
+                syn["summary"] = synthetic_summary(d1=(0.5, 110, 60, 30), var1=4.0)         # the owner's base: K5 FAILS on its own numbers
+                self.assertEqual(bg.summary_contract_findings(syn["summary"], 200), [])
+            mutate(syn["summary"])
             self.assertTrue(bg.summary_contract_findings(syn["summary"], 200), name)
-            (g / bg.SYNTHETIC_JSON).write_bytes(sim.json_text(syn))
+            (g / bg.SYNTHETIC_JSON).write_bytes((json.dumps(syn, indent=1, sort_keys=True) + "\n").encode())    # allow_nan: the infinite literal is written as the decoder reads it
             doc = json.loads(self.originals[g][bg.REPORT_JSON]); doc["batch"]["sha256"] = sim.sha_file(g / bg.SYNTHETIC_JSON)
             (g / bg.REPORT_JSON).write_bytes(sim.json_text(doc)); regate(g)
             code, out = self.fresh(g)
             self.restore(g)
             self.assertEqual(code, 1, name)
             msgs = [m for v in out["findings"].values() for m in v]
-            self.assertTrue(any("not the ones recomputed" in m or "verdict PASS is not the recomputed invalid" in m for m in msgs), (name, out["findings"]))
-            # the positive control: the same evidence judged directly is an invalid report, cleanly verifiable, exit 1
+            self.assertTrue(any("not the ones recomputed" in m or "verdict PASS is not the recomputed invalid" in m or "beyond ±2^63" in m or "is not finite" in m for m in msgs), (name, out["findings"]))
+            # the positive control: the same evidence judged directly is an invalid report, cleanly verifiable, exit 1 — or, for a number no
+            # judgement could carry, a named refusal with nothing written
             r = bg.judge_synthetic(self.root, syn, self.gns / f"{SYN_LABEL}_neg_{name}")
+            if name in refused:
+                self.assertEqual((r["status"], r["gate_out"]), ("refused", None), name); self.assertTrue(("finite" in r["reason"]) or ("2^63" in r["reason"]), r["reason"])
+                self.assertFalse((self.gns / f"{SYN_LABEL}_neg_{name}").exists())
+                continue
             self.assertEqual((r["status"], r["exit_code"]), ("invalid", 1), name)
             d = json.loads((Path(r["gate_out"]) / bg.REPORT_JSON).read_text())
             self.assertEqual(d["verdict"]["status"], "invalid"); self.assertTrue(d["contract_findings"]); self.assertEqual([x["status"] for x in d["rows"]], ["not_assessable"] * 10)

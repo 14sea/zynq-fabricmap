@@ -6,9 +6,10 @@ b4_seeds.master_seed / pair_seeds guarded so that NO PRODUCTION SET can be deriv
   incomplete  — the same under a fake clock that expires the 60 s deadline inside pair 0's K9: judged incomplete;
   pass        — a SYNTHETIC summary (invented numbers, label b4-mech-7) judged PASS with formal = false;
   fail_b_star — the same synthetic summary with ff_srval's median coverage 0.427083 (the exploration's value): B* exists, K9 FAILS.
-  negatives/… — six incoherent summaries (the owner's review of 4cdc0c1, R1 / R2) written over the synthetic PASS evidence with the PASS
-                report kept and every digest refreshed: the fresh-process verifier must refuse each (exit 1);
-  invalid_controls/… — the same six judged directly: invalid reports that verify clean.
+  negatives/… — incoherent or malformed summaries (the owner's reviews of 4cdc0c1 and a8f2da1: six, then the coordinated two-copy
+                Cohen's d, five numerically-equal float aliases, a huge integer, an infinite literal) written over the synthetic PASS
+                evidence with the PASS report kept and every digest refreshed: the fresh-process verifier must refuse each (exit 1);
+  invalid_controls/… — the same judged directly: invalid reports that verify clean, or (a number no judgement could carry) a named refusal.
 Each gate directory is verified by the verifier CLI in a FRESH PROCESS (stdout and exit code kept), then the hermetic root's
 evidence/b4/{sim,gate} trees of the case are copied here under e2e/<case>/root/ so that the verification can be repeated from
 this evidence directory, and repeated it is (a second fresh-process run on the copy). Nothing here is a gate result.
@@ -35,7 +36,19 @@ NEGATIVES = {  # the owner's review of 4cdc0c1 (R1 / R2): incoherent or malforme
     "K9_fraction_above_one": lambda s: s["k9"].__setitem__("fraction_of_S", 2.0),
     "D_over_F_null": lambda s: s["at_candidate_B_star"]["k3"].__setitem__("D_over_F", None),
     "B_star_as_float": lambda s: s["candidate_B_star"].__setitem__("value", 64.0),
+    # the owner's review of a8f2da1 (P2 1 / P2 2)
+    "coordinated_false_cohen_pass": lambda s: (s["per_budget"]["64"]["deltas"]["delta1_O_minus_R"].__setitem__("cohen_d", {"value": 0.9, "special": None}),
+                                               s["at_candidate_B_star"]["k5"].__setitem__("cohen_d_delta1", {"value": 0.9, "special": None})),
+    "float_scan_n_min": lambda s: s["per_budget"]["64"]["required_pairs"].__setitem__("n_min", 8.0),
+    "float_bootstrap_seed": lambda s: s["at_candidate_B_star"]["k2"]["bootstrap"].__setitem__("seed", 7.0),
+    "float_k10_tau": lambda s: s["k10"].__setitem__("tau", 2.0),
+    "float_at_k5_N": lambda s: s["at_candidate_B_star"]["k5"].__setitem__("N", 16.0),
+    "float_at_k7_values": lambda s: s["at_candidate_B_star"]["k7"].__setitem__("values", [15.0] * 200),
+    "huge_json_integer": lambda s: s["per_budget"]["64"]["k1"].__setitem__("omega_best_p95", 10 ** 400),
+    "infinite_literal_in_thresholds": lambda s: s["thresholds_for_reference"]["K10"].__setitem__("tau", float("inf")),
 }
+REFUSED = {"huge_json_integer", "infinite_literal_in_thresholds"}       # a number no judgement could carry: the direct judgement is a named refusal, nothing written
+COORDINATED_BASE = {"coordinated_false_cohen_pass"}                       # built over the owner's base (delta1 mean 0.5, variance 4: K5 FAILS on its own numbers)
 
 
 def guard(*a, **k):
@@ -103,8 +116,11 @@ def main() -> int:
             for name, mutate in NEGATIVES.items():
                 tdir = gns / f"{SYN_LABEL}_neg_{name}"
                 shutil.copytree(pass_dir, tdir)
-                syn = json.loads((tdir / bg.SYNTHETIC_JSON).read_text()); mutate(syn["summary"])
-                (tdir / bg.SYNTHETIC_JSON).write_bytes(sim.json_text(syn))
+                syn = json.loads((tdir / bg.SYNTHETIC_JSON).read_text())
+                if name in COORDINATED_BASE:
+                    syn["summary"] = synthetic_summary(d1=(0.5, 110, 60, 30), var1=4.0)
+                mutate(syn["summary"])
+                (tdir / bg.SYNTHETIC_JSON).write_bytes((json.dumps(syn, indent=1, sort_keys=True) + "\n").encode())   # allow_nan: the infinite literal written as the decoder reads it
                 doc = json.loads((tdir / bg.REPORT_JSON).read_text()); doc["batch"]["sha256"] = bg.sha_file(tdir / bg.SYNTHETIC_JSON)
                 (tdir / bg.REPORT_JSON).write_bytes(sim.json_text(doc)); regate(tdir)
                 commit()
@@ -119,9 +135,16 @@ def main() -> int:
                 bad += (code != 1) + (code2 != 1)
                 r = bg.judge_synthetic(root, syn, gns / f"{SYN_LABEL}_invalid_{name}")
                 commit()
+                c3 = out / "invalid_controls" / name
+                c3.mkdir(parents=True)
+                if name in REFUSED:
+                    (c3 / "refusal.txt").write_text(f"HEAD {head}\nexpected: a named refusal, nothing written\nstatus {r['status']} exit {r['exit_code']}\nreason: {r.get('reason')}\n")
+                    summary["invalid_controls"][name] = {"tool_status": r["status"], "tool_exit": r["exit_code"], "reason": r.get("reason"), "written": r.get("gate_out") is not None}
+                    bad += (r["status"] != "refused") + (r.get("gate_out") is not None)
+                    print("negative", name, "verifier", code, code2, "| refused:", r["status"], flush=True)
+                    continue
                 gdir = Path(r["gate_out"]); d = json.loads((gdir / bg.REPORT_JSON).read_text())
                 code3, text3 = fresh(gdir)
-                c3 = out / "invalid_controls" / name
                 (c3 / "root" / "evidence/b4").mkdir(parents=True)
                 shutil.copytree(gdir, c3 / "root" / bg.GATE_REL / gdir.name)
                 (c3 / "verify_in_hermetic_root.txt").write_text(f"HEAD {head}\nexpected: the tool exit 1 (verdict invalid), the verifier exit 0\ncommand: python3 -B b4/host/b4_gate_verify.py {gdir}\nexit {code3}\n\n{text3}")
