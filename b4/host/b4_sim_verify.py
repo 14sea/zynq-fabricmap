@@ -103,7 +103,7 @@ def expected_pair_files(plan: dict) -> tuple[set, set]:
         if plan[k] in ("complete", "partial"):
             must.add(f"{pre}{k}.json")
         elif plan[k] == "invalid":
-            may |= {f"{pre}{k}.json", f"{pre}{k}.QUARANTINE.json"}      # the invalid partial or its quarantine; none when the refusal came before any record
+            may |= {f"{pre}{k}.json", f"{pre}{k}.QUARANTINE.json"}      # EXACTLY one of the two, held by the file-set check below
     if plan["status"] == "complete":
         must |= {f"{pre}curves.json", f"{pre}index.json"}
     return must, may
@@ -112,7 +112,8 @@ def expected_pair_files(plan: dict) -> tuple[set, set]:
 def diagnostic_state_findings(plan: dict, docs: dict) -> list[str]:
     """The recorded K7 / K9 / K10 state of a pair against its documents: `complete` needs a document that is complete (and
     for K9 / K10 neither stopped nor invalid, with the full fixed set); `partial` a document that is stopped and not complete;
-    `invalid` a document with an invalid record (or its quarantine, or none when the refusal came before any record);
+    `invalid` a document with an invalid record (or its quarantine — exactly one of the two, held by the file-set check of
+    verify_run_dir; a refusal before any record was returned leaves none, and that archive is refused there by name);
     `in_progress` for K7 (an invalid prefix) a document that is not complete, for K9 / K10 (entered, nothing returned — an
     interrupt before any record) no document; `not_started` no document. A complete pair needs all three complete.
     Total: a document that is not an object, or whose set is not a list, is a finding, never an exception (the owner's

@@ -140,11 +140,33 @@ the second uncovered a third gap that the owner's probe could not reach (the ver
 |---|---|---|---|
 | 1 P2 | `pair_000/k7.json` or `k9.json` replaced by `[]`, `k10.json` by a string, a K9 with `pairs: 5` — every digest refreshed — made `verify_run_dir` raise AttributeError / TypeError out of the new diagnostic state ↔ file contract instead of returning the typed finding; the CLI printed a traceback | `b4_sim_verify`: the contract is asked only about documents their typed validator accepted (a pair with a malformed diagnostic file is already a named finding at the file's location); `diagnostic_state_findings` is total on the outer object (not an object → a finding) and on the nested sets (`pairs` / `units` must be lists); `main()` reports an exception from the verifier as a finding (exit 1), never as a traceback in place of the result | `TheArchiveVerifier.test_a_malformed_diagnostic_is_a_named_finding_never_an_exception` (nine whole-archive negatives with correct hashes: list, string, null, scalar, unreadable bytes, `pairs: 5`, `units: "x"`, `complete: "yes"`; the helper on seven malformed values; the CLI on a malformed K9 and on a raising verifier) |
 | 2 P2 | a real `Deadline(60, clock=…)` on the monotonic sequence 1000.000 / 1059.990 / 1060.010 / 1060.010: `record()` said `elapsed_s 59.99, expired true, first_expired_at_s 60.01` — three samples, refused by `deadline_findings`; in a full `run_batch` stopped by an interrupt at the K9 entry the stop record failed its own pre-write validation and STOPPED.json was not written | `b4_deadline.Deadline`: every observation of the clock is ONE sample (`_sample`), and elapsed / expired / the first expiry derive from that same sample (`_expired_at`), in `record()`, `expired()` and `check()` alike; the first expiry is the sample that expired the deadline, never a later one; the precision (ms rounding) is unchanged, the validator's tolerance is not widened, the soft deadline and the first stop reason are kept | `TheDeadline.test_the_record_is_one_monotonic_sample` (the owner's sequence: three consecutive records consistent, the first expiry kept, `check()`'s message and `first_expired_at` from the expiring sample); `IncompleteStops.test_a_stop_at_the_deadline_boundary_still_writes_stopped_json` (the owner's full-batch form through the public `clock` argument, the record method untouched: STOPPED.json written at 59.99 s not expired, the report expired at 60.01 s, the interrupt kept as the stop cause, offline verification `{}`; then the same with the stop itself past the boundary) |
-| 3 (found here) | with finding 2 fixed, the same stopped batch still did not verify: the interrupt came before K9 had returned anything (nothing carried), yet the plan recorded K9 as `partial` — a state that promises a stopped document — and `pair_000/k9.json` did not exist (`required by pair 0's recorded state (partial) but missing`) | `b4_sim.Batch.run_pair`: on an interrupt inside K9 / K10 the state is `partial` only when a partial record was kept; otherwise `in_progress` (entered, nothing returned), which the verifier already defined for K9 / K10 as "no document"; the verifier's comment on `invalid` without a document corrected (none is required when the refusal came before any record — the harness says so in its detail) | the same full-batch test asserts `k9: in_progress` and no `k9.json`, and that the archive verifies |
+| 3 (found here) | with finding 2 fixed, the same stopped batch still did not verify: the interrupt came before K9 had returned anything (nothing carried), yet the plan recorded K9 as `partial` — a state that promises a stopped document — and `pair_000/k9.json` did not exist (`required by pair 0's recorded state (partial) but missing`) | `b4_sim.Batch.run_pair`: on an interrupt inside K9 / K10 the state is `partial` only when a partial record was kept; otherwise `in_progress` (entered, nothing returned), which the verifier already defined for K9 / K10 as "no document"; the verifier's comment on `invalid` without a document was ALSO changed in `15bc214`, wrongly — see section 2e (the owner's P3): the file-set check requires exactly one record for an invalid K9 / K10, and the original comment was right | the same full-batch test asserts `k9: in_progress` and no `k9.json`, and that the archive verifies |
 
 Not changed in this round: the model, the engine, the cartographer, the replay, the statistics primitives, every
 threshold, the seeds module, the anchor, the validators' tolerances. The deadline module changed for the first time since
 commit B (its sampling structure only; the soft policy, the record's keys and precision are the same).
+
+## 2e. After the fourth review — the owner's PASS on `43ca57d` with one P3 (wording only)
+
+The owner's fifth review (`owner_review_43ca57d/`, copied unchanged) passed the functional repair (246 tests OK, 15 focused
+mutants killed independently, IMPORT 49, the three round-4 fixes reproduced) and found one P3: in `15bc214` I changed the
+verifier's comment on `invalid` without a document (`b4_sim_verify.py`, the `may` line of `expected_pair_files` and the
+helper's docstring) to say that none is required when the refusal came before any record, and said the same in the row
+above, in the commit message and in the delivery summary. **That claim was wrong.** The file-set check of `verify_run_dir`
+(the lines after `expected_pair_files` is applied) requires EXACTLY one record — the invalid partial or its quarantine —
+for an invalid K9 / K10, and the original comment ("one of the two, checked below") described it correctly; my grep for the
+check missed it because it is written with the `on_disk` / `have` names. The owner reproduced the consequence: a K9 entry
+that raises before returning anything gives an invalid batch (exit 1, STOPPED and report kept, no summary, no K9 document)
+whose self-validation and offline verification carry the named finding `an invalid diagnostic keeps exactly one record:
+the partial or its quarantine`. That is the stricter policy as delivered, a conservative refusal, not a false completion;
+it stays. The harness's own detail text `[no partial record was available]` remains true of what happened, not a claim
+that the archive verifies.
+
+Corrected here, with no change to executable behaviour (the owner's ruling: wording and IMPORT only, no test rerun needed):
+the two comments restored to the actual contract, this README, `b4/IMPORT.json` (the verifier's digest), the import check
+rerun (`round4_p3_import_check.txt`). The `15bc214` commit message and the earlier delivery summary are not rewritten;
+this section is their correction. The `in_progress` behaviour for an interrupt before any record (row 3 above) is a
+different case, accepted by the owner as delivered.
 
 ## 3. Verification on the clean committed tree — round 1 (HEAD `e03dca1`; files `round1_*`)
 
@@ -233,7 +255,7 @@ have been an `EDIT-MISS`); M62–M67 added, one per round-4 contract (M62–M64 
 here); 7 / 7 on the dry run of the new and re-targeted mutants, 67 / 67 on the full run.
 
 **Status.** `b4-prework`: A `8939fb9`, B `feda985`, C `edfc93c`, evidence `cdf2c53`, repair `e03dca1` + `f2c4bca`, second round
-`33c1739` + `6c00156`, third round `21699cd` + `8d1eefd`, fourth round `15bc214` + this verification commit; local only — not
+`33c1739` + `6c00156`, third round `21699cd` + `8d1eefd`, fourth round `15bc214` + `43ca57d`, the P3 wording correction after the owner's PASS in the commit that carries section 2e; local only — not
 pushed, not merged; `main` is `d5bf815`. Delivered for the owner's review. Pending the owner: the treatment of the prior
 exposure (section 1). Still not authorised: the S = 32 `b4-sim-1` exploration, the formal gate tool and run, units 2c / 2d,
 the full proof, push / merge, procurement and board work.
