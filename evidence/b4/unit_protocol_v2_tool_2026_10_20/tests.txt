@@ -1,4 +1,4 @@
-# tree: 04385ae + working tree (b4-protocol-v2, the correction round after the owner's HOLD on 04385ae), 2026-10-20T18:33:01Z
+# tree: b29b0fb + working tree (b4-protocol-v2, the second correction round after the owner's HOLD on b29b0fb), 2026-10-20T21:39:55Z
 # cmd: python3 -B -m unittest -v b4.tests.test_b4_carto b4.tests.test_b4_controls b4.tests.test_b4_deadline b4.tests.test_b4_engine b4.tests.test_b4_execution b4.tests.test_b4_ff_hypothesis b4.tests.test_b4_ff_mapping b4.tests.test_b4_ff_model b4.tests.test_b4_gate b4.tests.test_b4_gate_stats b4.tests.test_b4_gonogo b4.tests.test_b4_k10 b4.tests.test_b4_k9 b4.tests.test_b4_landscape b4.tests.test_b4_probe_latch_ginv b4.tests.test_b4_protocol b4.tests.test_b4_replay b4.tests.test_b4_rng b4.tests.test_b4_seeds b4.tests.test_b4_sim b4.tests.test_b4_snapshot b4.tests.test_b4_stats b4.tests.test_b4_target b4.tests.test_b4_thresholds 
 test_a0_d_and_omega (b4.tests.test_b4_carto.ControlX.test_a0_d_and_omega) ... ok
 test_permute_and_isomorphism (b4.tests.test_b4_carto.ControlX.test_permute_and_isomorphism) ... ok
@@ -317,6 +317,8 @@ test_a_control_failure_a_replay_finding_and_a_k10_domain (b4.tests.test_b4_sim.I
 test_a_crashing_audit_does_not_lose_the_run_that_returned (b4.tests.test_b4_sim.InvalidStops.test_a_crashing_audit_does_not_lose_the_run_that_returned) ... ok
 test_a_domain_at_the_target_setup_is_target_invalid_with_the_plan_kept (b4.tests.test_b4_sim.InvalidStops.test_a_domain_at_the_target_setup_is_target_invalid_with_the_plan_kept)
 Section 7.1: a DOMAIN at the first target observation — task_setup.json was persisted before the call, no target file, no arm ... ok
+test_a_float_cell_is_refused_type_exactly_and_the_original_return_is_kept_even_when_a_later_layer_refuses (b4.tests.test_b4_sim.InvalidStops.test_a_float_cell_is_refused_type_exactly_and_the_original_return_is_kept_even_when_a_later_layer_refuses)
+C1 (the owner's review of b29b0fb): a 0.0 / 1.0 cell (equal to 0 / 1 in Python) is refused by the early check at either phase, the ... ok
 test_a_malformed_returned_result_is_quarantined_not_lost (b4.tests.test_b4_sim.InvalidStops.test_a_malformed_returned_result_is_quarantined_not_lost)
 F6: the engine returns a RunResult with completed = 1 (not the bool True): the pre-write validator refuses it, the ... ok
 test_a_receipt_drift_during_the_batch_is_invalid (b4.tests.test_b4_sim.InvalidStops.test_a_receipt_drift_during_the_batch_is_invalid)
@@ -331,6 +333,8 @@ test_a_source_drift_inside_the_setup_and_a_setup_port_that_calls_more_than_twice
 R2 (the owner's review of 04385ae): a second setup observation from another source identity — a VALID-SHAPED trace whose fabric ... ok
 test_an_input_drift_during_the_final_verification_is_invalid (b4.tests.test_b4_sim.InvalidStops.test_an_input_drift_during_the_final_verification_is_invalid)
 R5: the architecture document changes while the deep verification runs (after it returns clean) — the final ... ok
+test_an_interrupt_right_after_a_quarantine_is_written_is_reconciled_and_forged_combinations_stay_refused (b4.tests.test_b4_sim.InvalidStops.test_an_interrupt_right_after_a_quarantine_is_written_is_reconciled_and_forged_combinations_stay_refused)
+C2 (the owner's review of b29b0fb): the interrupt landing after the quarantine's durable write and before the in-memory state — at ... ok
 test_an_unexpected_exception_and_the_three_drifts (b4.tests.test_b4_sim.InvalidStops.test_an_unexpected_exception_and_the_three_drifts) ... ok
 test_domain_in_the_second_pair_s_o_arm (b4.tests.test_b4_sim.InvalidStops.test_domain_in_the_second_pair_s_o_arm) ... ok
 test_self_validation_findings_and_an_unwritable_report_are_never_complete (b4.tests.test_b4_sim.InvalidStops.test_self_validation_findings_and_an_unwritable_report_are_never_complete)
@@ -368,6 +372,8 @@ test_the_deep_verifier_re_audits_even_if_the_record_validators_were_bypassed (b4
 R1, defence in depth: with the planned-record and pair-index validators mocked to accept everything, a complete pair ... ok
 test_the_exposure_receipt_is_bound_in_seeds_the_manifest_and_the_inputs (b4.tests.test_b4_sim.TheArchiveVerifier.test_the_exposure_receipt_is_bound_in_seeds_the_manifest_and_the_inputs)
 The settlement of 2026-10-19: the receipt named by seeds.json and the manifest, and held in the inputs, is exactly ... ok
+test_the_quarantine_context_is_bound_to_the_trusted_setup_inputs (b4.tests.test_b4_sim.TheArchiveVerifier.test_the_quarantine_context_is_bound_to_the_trusted_setup_inputs)
+C3 (the owner's review of b29b0fb): on a genuine first-phase and second-phase quarantine, with every report hash refreshed — the ... ok
 test_the_remaining_counts_and_genomes_are_exact_in_type (b4.tests.test_b4_sim.TheArchiveVerifier.test_the_remaining_counts_and_genomes_are_exact_in_type)
 Round 3, finding 2: pairs_total 1184.0, units_total 420.0, a corner genome of false, a float prefix budget — equal in ... ok
 test_the_setup_records_are_bound_and_every_tamper_is_named (b4.tests.test_b4_sim.TheArchiveVerifier.test_the_setup_records_are_bound_and_every_tamper_is_named)
@@ -409,6 +415,6 @@ The new pin / identity contract (the owner's choice 6, 2026-10-20): the document
 test_the_numbers_are_the_document_s (b4.tests.test_b4_thresholds.ThePins.test_the_numbers_are_the_document_s) ... ok
 
 ----------------------------------------------------------------------
-Ran 323 tests in 634.543s
+Ran 326 tests in 727.039s
 
 OK

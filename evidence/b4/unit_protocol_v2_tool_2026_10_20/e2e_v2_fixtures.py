@@ -9,8 +9,9 @@ that NO PRODUCTION SET can be derived. Nothing here is a result.
 
 THE NORMALISED DIGEST of a JSON file (`normalise`), stated before any comparison:
   1. the keys VOLATILE below are dropped at every depth (times, wall-clock durations, the deadline record, the quarantine's repr, the
-     traceback, the hermetic root's `code_root` block, the tree-cleanliness flag, a stop's free-text `reason` / `detail` that may quote a
-     path);
+     traceback, the hermetic root's `code_root` block, the tree-cleanliness flag) and, by field path, the `detail` of a stop record whose
+     `kind` is "deadline" (it quotes the elapsed seconds); every other explanation — the gate's row and verdict reasons, the stop kinds'
+     texts, the quarantine findings, the go / no-go reason — is deterministic and IS compared (P3 of the owner's review of b29b0fb);
   2. every string equal to a commit hash of the HERMETIC repository is replaced by "<HEAD>", every occurrence of the hermetic root's
      absolute path by "<ROOT>";
   3. every string equal to the RAW sha256 of a file under the hermetic root's evidence/ is replaced by "norm:" + that file's NORMALISED
@@ -52,6 +53,12 @@ Cases (every archive re-verified by its verifier CLI in a FRESH PROCESS; expecta
                                                         threshold number changed -> refused unrefreshed, another digest refreshed;
   tampered/…                                            the six tampers of the first driver, each refused and named;
   old_archives                                          the committed v0.1.16 archives refused by name, untouched;
+  return_float_first / return_float_second              the owner's C1 case (b29b0fb): a 0.0 / 1.0 cell with a marker at either phase: refused type-exactly,
+                                                        the ORIGINAL return kept (the marker found), invalid;
+  interrupt_after_first/second_quarantine               the owner's C2 case: the interrupt right after the quarantine is durably written, before the state:
+                                                        incomplete (interrupted) with the pair's task invalid and the quarantine recorded, verified clean;
+  explanation_tamper                                    the owner's P3: a gate row's reason and the verdict's reason changed: the normalised comparison
+                                                        differs in gate_report.json (explanations are compared, not dropped);
   semantic_tamper                                       the proof that the normalised comparison FAILS on a semantic change: the complete archive
                                                         copied, one target-grid cell flipped with every chain digest refreshed: exactly the file
                                                         and its dependents differ, every other file is equal.
@@ -74,7 +81,11 @@ import b4_thresholds as th  # noqa: E402
 from b4_test_fixtures import InjectingPort  # noqa: E402
 from test_b4_sim import SCHED1, Clock, RaisingPort, build_hermetic, entry, git, reindex  # noqa: E402
 
-VOLATILE = {"written_utc", "generated_utc", "audited_utc", "stopped_utc", "reconstruction_utc", "wall_s", "deadline", "raw_repr", "traceback", "code_root", "clean_tree", "reason", "detail"}
+VOLATILE = {"written_utc", "generated_utc", "audited_utc", "stopped_utc", "reconstruction_utc", "wall_s", "deadline", "raw_repr", "traceback", "code_root", "clean_tree"}
+# the ONE free-text field that is genuinely volatile: the `detail` of a stop record of kind "deadline" quotes the elapsed seconds (the owner's
+# review of b29b0fb, P3: every other reason / detail — the gate's row and verdict explanations, the stop kinds' texts, the quarantine findings —
+# is deterministic and IS compared; the root path and the hermetic HEADs inside any string are symbolised, not dropped)
+VOLATILE_DEADLINE_DETAIL = ("kind", "deadline", "detail")
 TOOLS = {"sim": "b4/host/b4_sim_verify.py", "gate": "b4/host/b4_gate_verify.py", "gonogo": "b4/host/b4_gonogo.py"}
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
 
@@ -110,7 +121,7 @@ def normalise(root: Path, heads: set, compare_dirs: dict) -> dict:
 
     def subst(x):
         if isinstance(x, dict):
-            d = {k: subst(v) for k, v in x.items() if k not in VOLATILE}
+            d = {k: subst(v) for k, v in x.items() if k not in VOLATILE and not (k == VOLATILE_DEADLINE_DETAIL[2] and x.get(VOLATILE_DEADLINE_DETAIL[0]) == VOLATILE_DEADLINE_DETAIL[1])}
             if set(x) >= {"path", "sha256", "size"} and (x.get("sha256") in norm or x.get("sha256") in varsize):
                 d["size"] = "<N>"
             return d
@@ -213,7 +224,7 @@ def main() -> int:
     ident = bp.identity()
     summary = {"head": head, "utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "protocol_sha256": bp.protocol_sha256(ident), "architecture_revision": ident["architecture_revision"],
                "normalisation": {"volatile_keys_dropped": sorted(VOLATILE), "rule": "see the module docstring: volatile keys dropped, <HEAD> / <ROOT> symbols, embedded raw digests replaced by the referenced file's normalised digest to a fixed point, variable sizes marked"},
-               "cases": {}, "tampered": {}, "old_archives": {}, "semantic_tamper": {}, "identity_revision": {}}
+               "cases": {}, "tampered": {}, "old_archives": {}, "semantic_tamper": {}, "explanation_tamper": {}, "identity_revision": {}}
     bad = 0
     pending: dict = {}
 
@@ -315,6 +326,27 @@ def main() -> int:
                 ("return_bad_cell", lambda f: Alter(f, "bad_cell"), None, ("invalid", "target_invalid", "invalid", 1, "target"), ["target_search.QUARANTINE.json", "task_setup.json"], "2 is not 0 / 1"),
                 ("return_nonserialisable", lambda f: Alter(f, "nan"), None, ("invalid", "target_invalid", "invalid", 1, "target"), ["target_search.QUARANTINE.json", "task_setup.json"], "nan"),
             ]
+            class FloatReturn(ex.ObservationPort):
+                def __init__(self, fabric, at):
+                    super().__init__(fabric); self.at = at
+
+                def observe(self, config, stimulus):
+                    t = super().observe(config, stimulus)
+                    if self.calls == self.at:
+                        t["owner_raw_marker"] = "preserve_entire_original_target_return"; t["steps"][0]["q_after"][0] = float(t["steps"][0]["q_after"][0])
+                    return t
+
+            def interrupt_after_quarantine(self_, rel, doc, validator):
+                e = original_write(self_, rel, doc, validator)
+                if rel.endswith(".QUARANTINE.json"):
+                    raise KeyboardInterrupt()
+                return e
+            setup_cases += [
+                ("return_float_first", lambda f: FloatReturn(f, 1), None, ("invalid", "target_invalid", "invalid", 1, "target"), ["target_search.QUARANTINE.json", "task_setup.json"], "preserve_entire_original_target_return"),
+                ("return_float_second", lambda f: FloatReturn(f, 2), None, ("invalid", "target_invalid", "invalid", 2, "target_holdout"), ["target_holdout.QUARANTINE.json", "target_search.json", "task_setup.json"], "preserve_entire_original_target_return"),
+                ("interrupt_after_first_quarantine", lambda f: Alter(f, "malformed"), interrupt_after_quarantine, ("incomplete", "interrupted", "invalid", 1, "target"), ["target_search.QUARANTINE.json", "task_setup.json"], "returned_malformed_target"),
+                ("interrupt_after_second_quarantine", lambda f: Alter(f, "drift"), interrupt_after_quarantine, ("incomplete", "interrupted", "invalid", 2, "target_holdout"), ["target_holdout.QUARANTINE.json", "target_search.json", "task_setup.json"], "returned_target_with_drift"),
+            ]
             drift_out = None
             for name, make, write_patch, want, want_files, marker in setup_cases:
                 def factory(fabric, role, pair, make=make):
@@ -404,6 +436,11 @@ def main() -> int:
                 k = json.loads((d / "pair_000/task.json").read_text()); k["setup_files_sha256"]["target_search.json"] = sim.sha_file(d / "pair_000/target_search.json")
                 (d / "pair_000/task.json").write_bytes(sim.json_text(k)); reindex(d)
             sdir = ns / "b4-mech-1_complete_semantic"; shutil.copytree(complete_batch, sdir); flip_grid_chain(sdir); commit()
+            # --- the explanation-only semantic tamper (P3): a row's reason and the verdict's reason changed, the rendering and index refreshed
+            edir = gns / "b4-mech-1_complete_explanation"; shutil.copytree(complete_gate, edir)
+            g = json.loads((edir / bg.REPORT_JSON).read_text()); g["verdict"]["reason"] = "another explanation of the same verdict"; next(r for r in g["rows"] if r["id"] == "K6")["reason"] = "a different criterion text"
+            (edir / bg.REPORT_MD).write_bytes(bg.render_md(g).encode("utf-8")); b_ = (edir / bg.REPORT_MD).read_bytes(); g["files"] = [{"path": bg.REPORT_MD, "sha256": sha(b_), "size": len(b_)}]
+            (edir / bg.REPORT_JSON).write_bytes(sim.json_text(g)); commit()
             # --- the committed v0.1.16 archives, read-only
             olds = {"b4-sim-3": R / "evidence/b4/sim/b4-sim-3_20261019T121833Z", "b4-gate-1": R / "evidence/b4/sim/b4-gate-1_20261020T102526Z"}
             gate1 = R / "evidence/b4/gate/b4-gate-1_20261020T102526Z"
@@ -463,6 +500,14 @@ def main() -> int:
             differ = sorted(k for k in n_orig if k in n_sem and n_orig[k]["normalised_sha256"] != n_sem[k]["normalised_sha256"])
             equal = sorted(k for k in n_orig if k in n_sem and n_orig[k]["normalised_sha256"] == n_sem[k]["normalised_sha256"])
             expected = ["pair_000/index.json", "pair_000/target_search.json", "pair_000/task.json", "sim_report.json"]
+            n_g = normalise(root, heads, {"gate": complete_gate})["digests"]["gate"]; n_e = normalise(root, heads, {"gate": edir})["digests"]["gate"]
+            e_differ = sorted(k for k in n_g if k in n_e and n_g[k]["normalised_sha256"] != n_e[k]["normalised_sha256"])
+            summary["explanation_tamper"] = {"mutation": "gate_report.json verdict.reason and the K6 row's reason changed, gate_report.md re-rendered, the file index refreshed",
+                                             "differ": e_differ, "expected_to_differ": [bg.REPORT_JSON], "renderings_not_compared": [k for k in n_g if n_g[k]["normalised_sha256"] is None],
+                                             "localised": e_differ == [bg.REPORT_JSON]}
+            (out / "explanation_tamper").mkdir(); (out / "explanation_tamper/record.json").write_text(json.dumps({"original": n_g, "tampered": n_e, **summary["explanation_tamper"]}, indent=1, sort_keys=True) + "\n")
+            bad += (not summary["explanation_tamper"]["localised"])
+            print("explanation_tamper", {k: v for k, v in summary["explanation_tamper"].items() if k != "mutation"}, flush=True)
             summary["semantic_tamper"] = {"mutation": "pair_000/target_search.json q_grid[2][1] flipped, trace_sha256 refreshed, task.json's setup_files_sha256 binding refreshed, the pair index and the report's file index refreshed (reindex)",
                                           "differ": differ, "expected_to_differ": expected, "equal_count": len(equal), "localised": differ == expected and set(n_orig) == set(n_sem)}
             (out / "semantic_tamper").mkdir(); (out / "semantic_tamper/record.json").write_text(json.dumps({"original": n_orig, "tampered": n_sem, **summary["semantic_tamper"]}, indent=1, sort_keys=True) + "\n")

@@ -1,0 +1,5 @@
+SURVIVED  M31 the task state does not advance when the first setup observation is persisted (stays in_progress)  [Ran 2, OK]  []
+SURVIVED  M45 R3: the producer records prefix 2 after the holdout write (the third file unaccounted for)  [Ran 1, OK]  []
+KILLED  M51 R3: the stop does not reconcile the prefix from the files on disk (the interrupt window after a write is unrecorded)  [Ran 1, FAILED]  ['test_an_interrupt_or_the_deadline_at_every_persistence_boundary_keeps_the_ordered_prefix']
+KILLED  M52 R3: the stop reconciles the prefix but not the task state  [Ran 1, FAILED]  ['test_an_interrupt_or_the_deadline_at_every_persistence_boundary_keeps_the_ordered_prefix']
+# 2 / 4 killed (52 defined); 19 s

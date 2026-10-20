@@ -1,0 +1,702 @@
+{
+ "architecture_revision": "v0.2.0",
+ "as_expected": true,
+ "cases": {
+  "complete": {
+   "batch_status": "complete",
+   "call": "bg.run_gate(root, 'b4-mech-1', 2, 3600, schedule=SCHED1) then gg.write_decision(root, batch)",
+   "decision": "no_decision",
+   "decision_exit": 3,
+   "decision_reason": "no decision: the precondition is not met (S_is_32); the batch is complete with S = 2 \u2014 stop and report",
+   "exit_code": 0,
+   "formal": false,
+   "fresh_batch_exit": 0,
+   "fresh_gate_exit": 0,
+   "fresh_gonogo_exit": 0,
+   "identity_protocol_sha256": "d4fd2b7f6f23a5a0e4c3a7046d47a9f8197595cab60134215976aac6004f1047",
+   "normalisation": {
+    "files_in_raw_map": 994,
+    "fixed_point_passes": 19,
+    "substituted_references": 4290
+   },
+   "raw_links": {
+    "resolved": 98,
+    "unresolved": []
+   },
+   "rows": {
+    "K1": "not_assessable",
+    "K10": "PASS",
+    "K2": "not_assessable",
+    "K3": "not_assessable",
+    "K4": "not_assessable",
+    "K5": "not_assessable",
+    "K6": "FAIL",
+    "K7": "not_assessable",
+    "K8": "PASS",
+    "K9": "PASS"
+   },
+   "status": "FAIL",
+   "verdict": "FAIL"
+  },
+  "complete_32": {
+   "call": "sim.run_batch(root, 'b4-mech-5', 32, 7200, schedule=<32 explicit pairs>) then gg.write_decision",
+   "decision": "no-go",
+   "decision_exit": 0,
+   "decision_reason": "no-go: at B = 64 positives 7 are not more than negatives 12; at B = 64 the one-sided sign-test p 0.9164657592773438 > 0.2 \u2014 the exploration is archived as a result; what follows needs its own ruling (no automatic successor)",
+   "exit_code": 0,
+   "formal": false,
+   "fresh_batch_exit": 0,
+   "fresh_gonogo_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 994,
+    "fixed_point_passes": 19,
+    "substituted_references": 4290
+   },
+   "raw_links": {
+    "resolved": 1507,
+    "unresolved": []
+   },
+   "statistic_1": {
+    "alpha_go": 0.2,
+    "budget": 64,
+    "cohen_d": {
+     "special": null,
+     "value": -0.3062301249561531
+    },
+    "mean": -1.40625,
+    "negatives": 12,
+    "p_le_alpha_go": false,
+    "positives": 7,
+    "positives_gt_negatives": false,
+    "sign_test_p": 0.9164657592773438,
+    "ties": 13
+   },
+   "statistic_2": {
+    "all_ge_min": true,
+    "all_panel_medians_descriptive": {
+     "ce_mode": 1.0,
+     "clock_mode": 1.0,
+     "ff_init": 1.0,
+     "ff_srval": 0.3541666666666667,
+     "sr_kind": 0.5,
+     "sr_mode": 1.0,
+     "storage_kind": 1.0
+    },
+    "conditional_medians": {
+     "ce_mode": 1.0,
+     "clock_mode": 1.0,
+     "ff_init": 1.0,
+     "ff_srval": 0.7083333333333334,
+     "sr_kind": 1.0,
+     "sr_mode": 1.0,
+     "storage_kind": 1.0
+    },
+    "judged_estimand": "conditional_sr_driven",
+    "min": 0.5
+   },
+   "status": "complete"
+  },
+  "gonogo_contract": {
+   "extra_subdirectory": {
+    "fresh_verifier_exit": 1,
+    "named": true
+   },
+   "float_count": {
+    "fresh_verifier_exit": 1,
+    "named": true
+   },
+   "integer_fixture": {
+    "fresh_verifier_exit": 1,
+    "named": true
+   },
+   "outside_root_path": {
+    "fresh_verifier_exit": 1,
+    "named": true
+   },
+   "restored": {
+    "fresh_verifier_exit": 0
+   }
+  },
+  "impossible_order": {
+   "fresh_verifier_exit": 1,
+   "named": true
+  },
+  "incomplete": {
+   "batch_status": "incomplete",
+   "exit_code": 3,
+   "fresh_batch_exit": 0,
+   "fresh_gate_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 994,
+    "fixed_point_passes": 19,
+    "substituted_references": 4290
+   },
+   "pairs": [
+    {
+     "k9": "partial",
+     "status": "partial",
+     "task": "complete",
+     "task_prefix": 4
+    },
+    {
+     "k9": "not_started",
+     "status": "not_started",
+     "task": "not_started",
+     "task_prefix": 0
+    }
+   ],
+   "raw_links": {
+    "resolved": 25,
+    "unresolved": []
+   },
+   "status": "incomplete",
+   "stopped_kind": "deadline",
+   "stopped_stage": "k9",
+   "verdict": "incomplete"
+  },
+  "interrupt_after_holdout": {
+   "exit_code": 3,
+   "expected": {
+    "files": [
+     "target_holdout.json",
+     "target_search.json",
+     "task_setup.json"
+    ],
+    "kind": "interrupted",
+    "prefix": 3,
+    "quarantine": null,
+    "status": "incomplete",
+    "task": "partial"
+   },
+   "fresh_batch_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 994,
+    "fixed_point_passes": 19,
+    "substituted_references": 4290
+   },
+   "pair_000": {
+    "status": "partial",
+    "task": "partial",
+    "task_prefix": 3,
+    "task_quarantine": null
+   },
+   "pair_000_files": [
+    "target_holdout.json",
+    "target_search.json",
+    "task_setup.json"
+   ],
+   "raw_links": {
+    "resolved": 6,
+    "unresolved": []
+   },
+   "status": "incomplete",
+   "stopped_kind": "interrupted",
+   "stopped_role": "TARGET",
+   "stopped_stage": "target_setup"
+  },
+  "invalid": {
+   "batch_status": "invalid",
+   "exit_code": 1,
+   "fresh_batch_exit": 0,
+   "fresh_gate_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 994,
+    "fixed_point_passes": 19,
+    "substituted_references": 4290
+   },
+   "pairs": [
+    {
+     "k9": "complete",
+     "status": "complete",
+     "task": "complete",
+     "task_prefix": 4
+    },
+    {
+     "k9": "not_started",
+     "status": "partial",
+     "task": "complete",
+     "task_prefix": 4
+    }
+   ],
+   "raw_links": {
+    "resolved": 62,
+    "unresolved": []
+   },
+   "status": "invalid",
+   "stopped_kind": "domain",
+   "stopped_stage": "audit",
+   "verdict": "invalid"
+  },
+  "return_bad_cell": {
+   "exit_code": 1,
+   "expected": {
+    "files": [
+     "target_search.QUARANTINE.json",
+     "task_setup.json"
+    ],
+    "kind": "target_invalid",
+    "prefix": 1,
+    "quarantine": "target",
+    "status": "invalid",
+    "task": "invalid"
+   },
+   "fresh_batch_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 994,
+    "fixed_point_passes": 19,
+    "substituted_references": 4290
+   },
+   "pair_000": {
+    "status": "partial",
+    "task": "invalid",
+    "task_prefix": 1,
+    "task_quarantine": "target"
+   },
+   "pair_000_files": [
+    "target_search.QUARANTINE.json",
+    "task_setup.json"
+   ],
+   "quarantine": {
+    "context": {
+     "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+     "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+     "genome": 588756,
+     "genome_hex": "08fbd4",
+     "phase": "target",
+     "returned_sha256": "ae859c98074d03be30e2e90b23c80c6785befc2814fd10de791cf9a05ee3c3cb",
+     "stimulus_sha256": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2"
+    },
+    "findings": [
+     "step 2, element 5: 2 is not 0 / 1"
+    ],
+    "marker_found": true,
+    "raw_is_null": false
+   },
+   "raw_links": {
+    "resolved": 5,
+    "unresolved": []
+   },
+   "status": "invalid",
+   "stopped_kind": "target_invalid",
+   "stopped_role": "TARGET",
+   "stopped_stage": "target_setup"
+  },
+  "return_init_none": {
+   "exit_code": 1,
+   "expected": {
+    "files": [
+     "target_search.QUARANTINE.json",
+     "task_setup.json"
+    ],
+    "kind": "target_invalid",
+    "prefix": 1,
+    "quarantine": "target",
+    "status": "invalid",
+    "task": "invalid"
+   },
+   "fresh_batch_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 994,
+    "fixed_point_passes": 19,
+    "substituted_references": 4290
+   },
+   "pair_000": {
+    "status": "partial",
+    "task": "invalid",
+    "task_prefix": 1,
+    "task_quarantine": "target"
+   },
+   "pair_000_files": [
+    "target_search.QUARANTINE.json",
+    "task_setup.json"
+   ],
+   "quarantine": {
+    "context": {
+     "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+     "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+     "genome": 588756,
+     "genome_hex": "08fbd4",
+     "phase": "target",
+     "returned_sha256": "a0ff98c652966125d1dd6376ba2b29b5f9ecbca9548587ddbbc3bc0feea94208",
+     "stimulus_sha256": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2"
+    },
+    "findings": [
+     "step 0, element 0: None \u2014 not a target observation under T-i (invalid, never narrowed)"
+    ],
+    "marker_found": true,
+    "raw_is_null": false
+   },
+   "raw_links": {
+    "resolved": 5,
+    "unresolved": []
+   },
+   "status": "invalid",
+   "stopped_kind": "target_invalid",
+   "stopped_role": "TARGET",
+   "stopped_stage": "target_setup"
+  },
+  "return_malformed": {
+   "exit_code": 1,
+   "expected": {
+    "files": [
+     "target_search.QUARANTINE.json",
+     "task_setup.json"
+    ],
+    "kind": "target_invalid",
+    "prefix": 1,
+    "quarantine": "target",
+    "status": "invalid",
+    "task": "invalid"
+   },
+   "fresh_batch_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 994,
+    "fixed_point_passes": 19,
+    "substituted_references": 4290
+   },
+   "pair_000": {
+    "status": "partial",
+    "task": "invalid",
+    "task_prefix": 1,
+    "task_quarantine": "target"
+   },
+   "pair_000_files": [
+    "target_search.QUARANTINE.json",
+    "task_setup.json"
+   ],
+   "quarantine": {
+    "context": {
+     "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+     "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+     "genome": 588756,
+     "genome_hex": "08fbd4",
+     "phase": "target",
+     "returned_sha256": "9061b07f4f0adf817866bf5b0c0e45ea089998466967200bc7e26cc4ff9bbff5",
+     "stimulus_sha256": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2"
+    },
+    "findings": [
+     "step 0: no q_after row of 8 cells"
+    ],
+    "marker_found": true,
+    "raw_is_null": false
+   },
+   "raw_links": {
+    "resolved": 5,
+    "unresolved": []
+   },
+   "status": "invalid",
+   "stopped_kind": "target_invalid",
+   "stopped_role": "TARGET",
+   "stopped_stage": "target_setup"
+  },
+  "return_nonserialisable": {
+   "exit_code": 1,
+   "expected": {
+    "files": [
+     "target_search.QUARANTINE.json",
+     "task_setup.json"
+    ],
+    "kind": "target_invalid",
+    "prefix": 1,
+    "quarantine": "target",
+    "status": "invalid",
+    "task": "invalid"
+   },
+   "fresh_batch_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 994,
+    "fixed_point_passes": 19,
+    "substituted_references": 4290
+   },
+   "pair_000": {
+    "status": "partial",
+    "task": "invalid",
+    "task_prefix": 1,
+    "task_quarantine": "target"
+   },
+   "pair_000_files": [
+    "target_search.QUARANTINE.json",
+    "task_setup.json"
+   ],
+   "quarantine": {
+    "context": {
+     "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+     "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+     "genome": 588756,
+     "genome_hex": "08fbd4",
+     "phase": "target",
+     "returned_sha256": null,
+     "stimulus_sha256": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2"
+    },
+    "findings": [
+     "step 1, element 1: nan is not 0 / 1"
+    ],
+    "marker_found": true,
+    "raw_is_null": true
+   },
+   "raw_links": {
+    "resolved": 5,
+    "unresolved": []
+   },
+   "status": "invalid",
+   "stopped_kind": "target_invalid",
+   "stopped_role": "TARGET",
+   "stopped_stage": "target_setup"
+  },
+  "source_drift": {
+   "exit_code": 1,
+   "expected": {
+    "files": [
+     "target_holdout.QUARANTINE.json",
+     "target_search.json",
+     "task_setup.json"
+    ],
+    "kind": "target_invalid",
+    "prefix": 2,
+    "quarantine": "target_holdout",
+    "status": "invalid",
+    "task": "invalid"
+   },
+   "fresh_batch_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 994,
+    "fixed_point_passes": 19,
+    "substituted_references": 4290
+   },
+   "pair_000": {
+    "status": "partial",
+    "task": "invalid",
+    "task_prefix": 2,
+    "task_quarantine": "target_holdout"
+   },
+   "pair_000_files": [
+    "target_holdout.QUARANTINE.json",
+    "target_search.json",
+    "task_setup.json"
+   ],
+   "quarantine": {
+    "context": {
+     "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+     "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+     "genome": 588756,
+     "genome_hex": "08fbd4",
+     "phase": "target_holdout",
+     "returned_sha256": "e8bf66231a4b4fcd655968ad8d9d346cc0a0ba89ab3bd5fd75f0b67231d28fc0",
+     "stimulus_sha256": "b7635314ae9020681615fa5f32a85e4debc460bd9439807d9cb8bbd2251821d4"
+    },
+    "findings": [
+     "the source identity is not the expected one (a drift inside the setup)"
+    ],
+    "marker_found": true,
+    "raw_is_null": false
+   },
+   "raw_links": {
+    "resolved": 6,
+    "unresolved": []
+   },
+   "status": "invalid",
+   "stopped_kind": "target_invalid",
+   "stopped_role": "TARGET",
+   "stopped_stage": "target_setup"
+  },
+  "target_invalid": {
+   "exit_code": 1,
+   "expected": {
+    "files": [
+     "task_setup.json"
+    ],
+    "kind": "target_invalid",
+    "prefix": 1,
+    "quarantine": null,
+    "status": "invalid",
+    "task": "invalid"
+   },
+   "fresh_batch_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 994,
+    "fixed_point_passes": 19,
+    "substituted_references": 4290
+   },
+   "pair_000": {
+    "status": "partial",
+    "task": "invalid",
+    "task_prefix": 1,
+    "task_quarantine": null
+   },
+   "pair_000_files": [
+    "task_setup.json"
+   ],
+   "raw_links": {
+    "resolved": 4,
+    "unresolved": []
+   },
+   "status": "invalid",
+   "stopped_kind": "target_invalid",
+   "stopped_role": "TARGET",
+   "stopped_stage": "target_setup"
+  },
+  "target_partial": {
+   "exit_code": 3,
+   "expected": {
+    "files": [
+     "target_search.json",
+     "task_setup.json"
+    ],
+    "kind": "interrupted",
+    "prefix": 2,
+    "quarantine": null,
+    "status": "incomplete",
+    "task": "partial"
+   },
+   "fresh_batch_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 994,
+    "fixed_point_passes": 19,
+    "substituted_references": 4290
+   },
+   "pair_000": {
+    "status": "partial",
+    "task": "partial",
+    "task_prefix": 2,
+    "task_quarantine": null
+   },
+   "pair_000_files": [
+    "target_search.json",
+    "task_setup.json"
+   ],
+   "raw_links": {
+    "resolved": 5,
+    "unresolved": []
+   },
+   "status": "incomplete",
+   "stopped_kind": "interrupted",
+   "stopped_role": "TARGET",
+   "stopped_stage": "target_setup"
+  }
+ },
+ "head": "04385ae42373a4db33716f8aa5d6c58a4789de09",
+ "identity_revision": {
+  "before": {
+   "architecture_revision": "v0.2.0",
+   "exit": 0,
+   "protocol_sha256": "d4fd2b7f6f23a5a0e4c3a7046d47a9f8197595cab60134215976aac6004f1047"
+  },
+  "method_changed_by_the_number": true,
+  "method_unchanged_by_the_revision": true,
+  "revision_file_changed_entry_refreshed": {
+   "architecture_revision": "v0.2.1",
+   "exit": 0,
+   "protocol_sha256": "d4fd2b7f6f23a5a0e4c3a7046d47a9f8197595cab60134215976aac6004f1047"
+  },
+  "threshold_changed_refreshed": {
+   "exit": 0,
+   "protocol_sha256": "7392d02b0699429793ec0583d471848f96601d569c79422f6fc9d690c25c74eb"
+  },
+  "threshold_changed_unrefreshed": {
+   "exit": 2,
+   "refused_by_name": true
+  }
+ },
+ "normalisation": {
+  "rule": "see the module docstring: volatile keys dropped, <HEAD> / <ROOT> symbols, embedded raw digests replaced by the referenced file's normalised digest to a fixed point, variable sizes marked",
+  "volatile_keys_dropped": [
+   "audited_utc",
+   "clean_tree",
+   "code_root",
+   "deadline",
+   "detail",
+   "generated_utc",
+   "raw_repr",
+   "reason",
+   "reconstruction_utc",
+   "stopped_utc",
+   "traceback",
+   "wall_s",
+   "written_utc"
+  ]
+ },
+ "old_archives": {
+  "b4-gate-1": {
+   "fresh_verifier_exit": 1,
+   "gonogo": "refused",
+   "gonogo_reason": "evidence/b4/sim/b4-gate-1_20261020T102526Z: the archive carries no protocol identity: written by a tool before the identity existed (its thresholds source 'docs/b4_architecture.md section 9 (v0.1.16),",
+   "judge": "refused",
+   "judge_reason": "evidence/b4/sim/b4-gate-1_20261020T102526Z: the archive carries no protocol identity: written by a tool before the identity existed (its thresholds source 'docs/b4_architecture.md section 9 (v0.1.16),",
+   "named": true
+  },
+  "b4-gate-1_gate_dir": {
+   "fresh_verifier_exit": 1,
+   "named": true
+  },
+  "b4-sim-3": {
+   "fresh_verifier_exit": 1,
+   "gonogo": "refused",
+   "gonogo_reason": "evidence/b4/sim/b4-sim-3_20261019T121833Z: the archive carries no protocol identity: written by a tool before the identity existed (its thresholds source 'docs/b4_architecture.md section 9 (v0.1.16), ",
+   "judge": "refused",
+   "judge_reason": "evidence/b4/sim/b4-sim-3_20261019T121833Z: the archive carries no protocol identity: written by a tool before the identity existed (its thresholds source 'docs/b4_architecture.md section 9 (v0.1.16), ",
+   "named": true
+  },
+  "untouched": true
+ },
+ "production_derivation_calls": [
+  0,
+  0
+ ],
+ "protocol_sha256": "d4fd2b7f6f23a5a0e4c3a7046d47a9f8197595cab60134215976aac6004f1047",
+ "semantic_tamper": {
+  "differ": [
+   "pair_000/index.json",
+   "pair_000/target_search.json",
+   "pair_000/task.json",
+   "sim_report.json"
+  ],
+  "equal_count": 47,
+  "expected_to_differ": [
+   "pair_000/index.json",
+   "pair_000/target_search.json",
+   "pair_000/task.json",
+   "sim_report.json"
+  ],
+  "localised": true,
+  "mutation": "pair_000/target_search.json q_grid[2][1] flipped, trace_sha256 refreshed, task.json's setup_files_sha256 binding refreshed, the pair index and the report's file index refreshed (reindex)"
+ },
+ "tampered": {
+  "gate_identity_digest_changed": {
+   "expected_exit": 1,
+   "fresh_verifier_exit": 1,
+   "named": true,
+   "needle": "not this tool's"
+  },
+  "planted_genome_changed": {
+   "expected_exit": 1,
+   "fresh_verifier_exit": 1,
+   "named": true,
+   "needle": "not what the seed, the rule and the mapping give"
+  },
+  "protocol_identity_component_changed": {
+   "expected_exit": 1,
+   "fresh_verifier_exit": 1,
+   "named": true,
+   "needle": "k9: judged"
+  },
+  "protocol_identity_removed": {
+   "expected_exit": 1,
+   "fresh_verifier_exit": 1,
+   "named": true,
+   "needle": "no protocol identity"
+  },
+  "target_grid_cell_flipped": {
+   "expected_exit": 1,
+   "fresh_verifier_exit": 1,
+   "named": true,
+   "needle": "rebuilt"
+  },
+  "task_target_flipped": {
+   "expected_exit": 1,
+   "fresh_verifier_exit": 1,
+   "named": true,
+   "needle": "task"
+  }
+ },
+ "utc": "2026-10-20T20:00:18Z"
+}

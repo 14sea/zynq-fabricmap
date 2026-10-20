@@ -343,6 +343,7 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
     # --- every file against its validator, the pair's task bound. The task of a pair is REBUILT from its setup records (task-v0.2):
     # the three setup files validated first; a pair without a complete setup has no task and no arm / diagnostic files
     mapping = bm.site_mapping()
+    formal_prov_sha = ex.sha256_json(sc.formal_provenance())
     by_pair = {p["pair"]: p for p in planned}
     tasks: dict = {}
     setup_docs: dict = {}
@@ -371,8 +372,21 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
                 F.add(pre + qname, f"not pair {r}'s TARGET quarantine of the {ph} return"); continue
             if plan.get("task_quarantine") != ph or plan.get("task") != "invalid":
                 F.add(pre + qname, "a quarantined target return the planned record does not carry (task_quarantine) as an invalid setup"); continue
-            if docs_.get("task_setup.json") is not None and (doc["context"].get("genome") != docs_["task_setup.json"]["planted_genome"] or doc["context"].get("config_sha256") != docs_["task_setup.json"]["planted_config_sha256"]):
+            sd0 = docs_.get("task_setup.json")
+            if sd0 is None:
+                F.add(pre + qname, "a quarantined target return without its plan (task_setup.json)"); continue
+            ctx = doc["context"]
+            if ctx.get("genome") != sd0["planted_genome"] or ctx.get("config_sha256") != sd0["planted_config_sha256"]:
                 F.add(pre + qname, "the quarantine's context is not the plan's planted configuration")
+            # C3 (the owner's review of b29b0fb): the context's stimulus and expected source are DERIVED from trusted inputs, never their own authority
+            parts = bl.public_parts(sd0["landscape_seed"])
+            if ctx.get("stimulus_sha256") != ex.sha256_json(list(parts["stimulus"] if ph == "target" else parts["holdout_stimulus"])):
+                F.add(pre + qname, f"context.stimulus_sha256 is not the digest of the {ph} stimulus derived from the plan's seed")
+            want_src = formal_prov_sha if ph == "target" else (docs_.get("target_search.json") or {}).get("provenance_sha256")
+            if want_src is None:
+                F.add(pre + qname, "a quarantined holdout return without the retained first observation to bind its expected source to")
+            elif ctx.get("expected_provenance_sha256") != want_src:
+                F.add(pre + qname, "context.expected_provenance_sha256 is not the expected source identity (the formal source for the first call; the retained first observation's for the second); null is never accepted on this path")
         setup_docs[r] = docs_
         if plan["task"] == "complete" and all(n in docs_ for n in bt.SETUP_FILES):
             try:

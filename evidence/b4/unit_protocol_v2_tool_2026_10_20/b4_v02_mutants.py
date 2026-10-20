@@ -57,8 +57,8 @@ MUTANTS = [
   edit(SIM, [('''        digests = {"task_setup.json": self.write(f"pair_{r:03d}/task_setup.json", setup, sc.task_setup_findings)["sha256"]}
         plan["task"], plan["task_prefix"] = "in_progress", 1''', '''        digests = {}
         plan["task"], plan["task_prefix"] = "in_progress", 1'''),
-             ('''                rec = bt.observe_target(port, setup["planted_genome"], stim, mapping.addresses, phase, expected_prov)''',
-              '''                rec = bt.observe_target(port, setup["planted_genome"], stim, mapping.addresses, phase, expected_prov)
+             ('''                trace = bt.observe_raw(port, setup["planted_genome"], stim, mapping.addresses)''',
+              '''                trace = bt.observe_raw(port, setup["planted_genome"], stim, mapping.addresses)
                 if "task_setup.json" not in digests:
                     digests["task_setup.json"] = self.write(f"pair_{r:03d}/task_setup.json", setup, sc.task_setup_findings)["sha256"]''')]),
   [T + "test_b4_sim.InvalidStops.test_a_domain_at_the_target_setup_is_target_invalid_with_the_plan_kept"]),
@@ -268,7 +268,9 @@ MUTANTS = [
   [T + "test_b4_sim.TheArchiveVerifier.test_the_archive_holds_real_files_in_pair_directories_only"]),
  # M31 and M45 mutate the producer's IN-MEMORY state only; since the correction round the stop reconciles that state from the files on
  # disk (Batch.reconcile_setup, R3: the durable prefix is the record), so both are EQUIVALENT mutants — expected to SURVIVE, counted as
- # survivors, not as kills. The reconciliation itself is attacked by M51 / M52.
+ # survivors, not as kills. The reconciliation itself is attacked by M51 / M52. Since the second correction round (C2) the same holds for
+ # M39: a quarantine durably on disk is recorded from disk at the stop, so the in-memory task_quarantine assignment it removes is
+ # overwritten — EQUIVALENT, expected to SURVIVE; the reconciliation of the quarantine is attacked by M55.
  ("M51 R3: the stop does not reconcile the prefix from the files on disk (the interrupt window after a write is unrecorded)",
   edit(SIM, [('''            plan["task_prefix"] = n
             if plan["task"] != "invalid":''', '''            if plan["task"] != "invalid":''')]),
@@ -276,6 +278,30 @@ MUTANTS = [
  ("M52 R3: the stop reconciles the prefix but not the task state",
   edit(SIM, [('''                plan["task"] = "complete" if n == 4 else "partial" if n >= 2 else "in_progress" if n == 1 else plan["task"]''', '''                pass''')]),
   [T + "test_b4_sim.IncompleteStops.test_an_interrupt_or_the_deadline_at_every_persistence_boundary_keeps_the_ordered_prefix"]),
+ # ---- the second correction round after the owner's HOLD on b29b0fb (C1-C3)
+ ("M53 C1: the return check compares cells loosely (0.0 == 0 passes)",
+  edit(TGT, [('''            elif type(c) is not int or c not in (0, 1):''', '''            elif isinstance(c, bool) or c not in (0, 1):''')]),
+  [T + "test_b4_target.TheReturn.test_every_bad_return_is_refused_with_the_object_attached", T + "test_b4_sim.InvalidStops.test_a_float_cell_is_refused_type_exactly_and_the_original_return_is_kept_even_when_a_later_layer_refuses"]),
+ ("M54 C1: the defence-in-depth path quarantines the derived record instead of the original return",
+  edit(SIM, [('''                ctx = bt.quarantine_context(phase, setup["planted_genome"], mapping.addresses, stim, trace, expected_prov)
+                self.quarantine(qrel, r, SETUP_ROLE, "target_setup", ["the derived record was refused by its validator; the original return is kept: " + f[0]] + f, trace, context=ctx)''',
+              '''                ctx = bt.quarantine_context(phase, setup["planted_genome"], mapping.addresses, stim, doc, expected_prov)
+                self.quarantine(qrel, r, SETUP_ROLE, "target_setup", f, doc, context=ctx)''')]),
+  [T + "test_b4_sim.InvalidStops.test_a_float_cell_is_refused_type_exactly_and_the_original_return_is_kept_even_when_a_later_layer_refuses"]),
+ ("M55 C2: the stop indexes a durably written quarantine but does not record it (task_quarantine / invalid)",
+  edit(SIM, [('''                    if plan["task_quarantine"] is None and n == {"target": 1, "target_holdout": 2}[ph]:      # the interrupt landed after the quarantine's link, before the state (C2)
+                        plan["task"], plan["task_quarantine"] = "invalid", ph''', '''                    pass''')]),
+  [T + "test_b4_sim.InvalidStops.test_an_interrupt_right_after_a_quarantine_is_written_is_reconciled_and_forged_combinations_stay_refused"]),
+ ("M56 C3: the verifier does not bind the quarantine's stimulus digest to the plan's seed",
+  edit(VER, [('''            if ctx.get("stimulus_sha256") != ex.sha256_json(list(parts["stimulus"] if ph == "target" else parts["holdout_stimulus"])):''', '''            if False:''')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_quarantine_context_is_bound_to_the_trusted_setup_inputs"]),
+ ("M57 C3: the verifier does not bind the quarantine's expected source (null accepted)",
+  edit(VER, [('''            if want_src is None:
+                F.add(pre + qname, "a quarantined holdout return without the retained first observation to bind its expected source to")
+            elif ctx.get("expected_provenance_sha256") != want_src:''', '''            if False:
+                pass
+            elif False:''')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_quarantine_context_is_bound_to_the_trusted_setup_inputs"]),
 ]
 
 

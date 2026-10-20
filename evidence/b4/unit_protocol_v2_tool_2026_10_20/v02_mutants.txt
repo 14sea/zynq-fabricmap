@@ -36,7 +36,7 @@ KILLED  M35 the planned record's validator lets an arm start without a complete 
 KILLED  M36 the pinned labels of the table are the consumed ones  [Ran 2, FAILED]  ['test_the_numbers_are_the_document_s']
 KILLED  M37 R1: the revision is a literal in a tool file again (not read from b4/architecture_revision.json)  [Ran 2, FAILED]  ['test_a_documentation_only_revision_moves_nothing_of_the_method_in_fresh_interpreters', 'test_the_document_version_is_informational_outside_the_table_and_outside_the_method_digest']
 KILLED  M38 R2: a refused target return is dropped (no quarantine) before the pair is invalid  [Ran 2, FAILED]  ['test_a_returned_object_that_is_not_a_target_observation_is_quarantined_then_invalid', 'test_a_source_drift_inside_the_setup_and_a_setup_port_that_calls_more_than_twice']
-KILLED  M39 R2/R3: the quarantine is written but the plan does not record it (task_quarantine stays null)  [Ran 1, FAILED]  ['test_a_returned_object_that_is_not_a_target_observation_is_quarantined_then_invalid']
+SURVIVED  M39 R2/R3: the quarantine is written but the plan does not record it (task_quarantine stays null)  [Ran 1, OK]  []
 KILLED  M40 R4: the producer's return check lets a None cell through (the validator's defence in depth catches it with another text)  [Ran 2, FAILED]  ['test_a_returned_object_that_is_not_a_target_observation_is_quarantined_then_invalid', 'test_every_bad_return_is_refused_with_the_object_attached']
 KILLED  M41 R4: the record validator accepts a None cell in a kept target observation  [Ran 1, FAILED]  ['test_a_kept_record_with_a_none_is_named_by_the_validator_and_the_reconstruction']
 KILLED  M42 R4: the offline reconstruction accepts a None cell in a kept target observation  [Ran 1, FAILED]  ['test_a_kept_record_with_a_none_is_named_by_the_validator_and_the_reconstruction']
@@ -50,4 +50,9 @@ KILLED  M49 R5: a symlinked batch directory is accepted by the gonogo verifier  
 KILLED  M50 the archive verifier ignores directory entries and symlinks  [Ran 1, FAILED]  ['test_the_archive_holds_real_files_in_pair_directories_only']
 KILLED  M51 R3: the stop does not reconcile the prefix from the files on disk (the interrupt window after a write is unrecorded)  [Ran 1, FAILED]  ['test_an_interrupt_or_the_deadline_at_every_persistence_boundary_keeps_the_ordered_prefix']
 KILLED  M52 R3: the stop reconciles the prefix but not the task state  [Ran 1, FAILED]  ['test_an_interrupt_or_the_deadline_at_every_persistence_boundary_keeps_the_ordered_prefix']
-# 50 / 52 killed (52 defined); 677 s
+KILLED  M53 C1: the return check compares cells loosely (0.0 == 0 passes)  [Ran 2, FAILED]  ['test_every_bad_return_is_refused_with_the_object_attached']
+KILLED  M54 C1: the defence-in-depth path quarantines the derived record instead of the original return  [Ran 1, FAILED]  ['test_a_float_cell_is_refused_type_exactly_and_the_original_return_is_kept_even_when_a_later_layer_refuses']
+KILLED  M55 C2: the stop indexes a durably written quarantine but does not record it (task_quarantine / invalid)  [Ran 1, FAILED]  ['test_an_interrupt_right_after_a_quarantine_is_written_is_reconciled_and_forged_combinations_stay_refused']
+KILLED  M56 C3: the verifier does not bind the quarantine's stimulus digest to the plan's seed  [Ran 1, FAILED]  ['test_the_quarantine_context_is_bound_to_the_trusted_setup_inputs']
+KILLED  M57 C3: the verifier does not bind the quarantine's expected source (null accepted)  [Ran 1, FAILED]  ['test_the_quarantine_context_is_bound_to_the_trusted_setup_inputs']
+# 54 / 57 killed (57 defined); 825 s

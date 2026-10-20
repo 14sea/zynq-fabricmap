@@ -648,17 +648,90 @@ class InvalidStops(Base):
                 self.assertEqual(sv.verify_run_dir(out, deep=True), {}, kind)
                 self.tearDown()
 
+    def test_a_float_cell_is_refused_type_exactly_and_the_original_return_is_kept_even_when_a_later_layer_refuses(self):
+        """C1 (the owner's review of b29b0fb): a 0.0 / 1.0 cell (equal to 0 / 1 in Python) is refused by the early check at either phase, the
+        ORIGINAL return kept (the marker, the steps); with the early check bypassed, the record validator refuses the derived record and the
+        quarantine still holds the original return, not the derived record."""
+        class FloatReturn(ex.ObservationPort):
+            def __init__(self, fabric, at):
+                super().__init__(fabric); self.at = at
+
+            def observe(self, config, stimulus):
+                t = super().observe(config, stimulus)
+                if self.calls == self.at:
+                    t["owner_raw_marker"] = "preserve_entire_original_target_return"; t["steps"][0]["q_after"][0] = float(t["steps"][0]["q_after"][0])
+                return t
+        for at, phase, qname, bypass in ((1, "target", "target_search.QUARANTINE.json", False), (2, "target_holdout", "target_holdout.QUARANTINE.json", False), (1, "target", "target_search.QUARANTINE.json", True), (2, "target_holdout", "target_holdout.QUARANTINE.json", True)):
+            with self.subTest(phase=phase, early_check_bypassed=bypass):
+                try:
+                    with (mock.patch.object(sim.bt, "observation_findings", lambda *a, **k: []) if bypass else contextlib.nullcontext()):
+                        res = self.run_with(lambda fabric, role, pair, at=at: FloatReturn(fabric, at) if (pair, role) == (0, sim.SETUP_ROLE) else ex.ObservationPort(fabric))
+                    self.assertEqual((res["status"], res["stopped"]["kind"]), ("invalid", "target_invalid"), res.get("reason"))
+                    out = Path(res["out"]); q = json.loads((out / f"pair_000/{qname}").read_text())
+                    self.assertEqual(q["raw"]["owner_raw_marker"], "preserve_entire_original_target_return", "the original return, not a derived record")
+                    self.assertIn("steps", q["raw"]); self.assertNotIn("q_grid", q["raw"]); self.assertEqual(q["raw"]["steps"][0]["q_after"][0], 0.0)
+                    self.assertTrue(any(("is not 0 / 1 (an int)" in x) or ("derived record was refused" in x) for x in q["findings"]), q["findings"])
+                    self.assertEqual(q["context"]["returned_sha256"], ex.sha256_json(q["raw"]))
+                    p0 = self.report(res)["pairs"][0]; self.assertEqual((p0["task"], p0["task_prefix"], p0["task_quarantine"]), ("invalid", at, phase))
+                    self.assertEqual(sv.verify_run_dir(out, deep=True), {})
+                finally:
+                    self.tearDown()
+
+    def test_an_interrupt_right_after_a_quarantine_is_written_is_reconciled_and_forged_combinations_stay_refused(self):
+        """C2 (the owner's review of b29b0fb): the interrupt landing after the quarantine's durable write and before the in-memory state — at
+        either phase — gives an incomplete (interrupted) batch whose pair records the invalid return and its phase; the archive verifies clean.
+        A quarantine the plan does not carry, or carried at the wrong prefix, stays refused."""
+        class Alter(ex.ObservationPort):
+            def __init__(self, fabric, at):
+                super().__init__(fabric); self.at = at
+
+            def observe(self, config, stimulus):
+                t = super().observe(config, stimulus)
+                if self.calls == self.at:
+                    t["steps"][0] = {"owner_raw_marker": "owner_malformed_return"}
+                return t
+        original = sim.Batch.write
+
+        def write(self_, rel, doc, validator):
+            e = original(self_, rel, doc, validator)
+            if rel.endswith(".QUARANTINE.json"):
+                raise KeyboardInterrupt()
+            return e
+        for at, phase, prefix in ((1, "target", 1), (2, "target_holdout", 2)):
+            with self.subTest(phase=phase):
+                try:
+                    with mock.patch.object(sim.Batch, "write", write):
+                        res = self.run_with(lambda fabric, role, pair, at=at: Alter(fabric, at) if (pair, role) == (0, sim.SETUP_ROLE) else ex.ObservationPort(fabric))
+                    self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"], res["stopped"]["stage"]), ("incomplete", 3, "interrupted", "target_setup"), res.get("reason"))
+                    out = Path(res["out"]); rep = self.report(res); p0 = rep["pairs"][0]
+                    self.assertEqual((p0["status"], p0["task"], p0["task_prefix"], p0["task_quarantine"]), ("partial", "invalid", prefix, phase), "the invalid-return fact AND the interrupt are both recorded")
+                    qname = f"pair_000/{'target_search' if phase == 'target' else 'target_holdout'}.QUARANTINE.json"
+                    self.assertIn(qname, {e["path"] for e in rep["files"]}, "indexed from disk")
+                    self.assertEqual(sorted(p.name for p in (out / "pair_000").iterdir()), sorted(SETUP_FILES[:prefix] + [qname.split("/")[1]]))
+                    self.assertEqual(sv.verify_run_dir(out, deep=True), {})
+                    # forged: the quarantine's phase moved to the other prefix; a second quarantine added
+                    rep2 = json.loads((out / "sim_report.json").read_text()); st = json.loads((out / "STOPPED.json").read_text())
+                    other = "target_holdout" if phase == "target" else "target"
+                    for d in (rep2["pairs"][0], rep2["stopped"]["planned"][0], st["planned"][0]):
+                        d["task_quarantine"] = other
+                    (out / "sim_report.json").write_text(json.dumps(rep2, sort_keys=True, indent=1) + "\n"); (out / "STOPPED.json").write_text(json.dumps(st, sort_keys=True, indent=1) + "\n")
+                    rep3 = json.loads((out / "sim_report.json").read_text()); rep3["files"] = [entry(p, str(p.relative_to(out))) for p in sorted(out.rglob("*")) if p.is_file() and p.name != "sim_report.json"]
+                    (out / "sim_report.json").write_text(json.dumps(rep3, sort_keys=True, indent=1) + "\n")
+                    f = sv.verify_run_dir(out, deep=True); self.assertTrue(f, "a quarantine recorded at the wrong phase / prefix is refused")
+                finally:
+                    self.tearDown()
+
     def test_a_setup_that_observes_more_than_twice_is_named(self):
         """Section 7.1: the setup makes exactly two port calls per pair; a setup observation routine that made a third call (here: the target
         observation wrapped to observe once more) is `target_invalid` — the shared cost is two observations, never more."""
-        real = bt.observe_target
+        real = bt.observe_raw
 
-        def thrice(port, genome, stimulus, addresses, phase, *rest):
-            rec = real(port, genome, stimulus, addresses, phase, *rest)
-            if phase == "target_holdout":
-                port.observe(ex.genome_to_config(genome, addresses), list(stimulus))          # an extra, unrecorded observation
-            return rec
-        with mock.patch.object(sim.bt, "observe_target", thrice):
+        def thrice(port, genome, stimulus, addresses):
+            trace = real(port, genome, stimulus, addresses)
+            if port.calls == 2:                                                             # after the holdout return: an extra, unrecorded observation
+                port.observe(ex.genome_to_config(genome, addresses), list(stimulus))
+            return trace
+        with mock.patch.object(sim.bt, "observe_raw", thrice):
             res = self.run_with(None)
         self.assertEqual((res["status"], res["stopped"]["kind"], res["stopped"]["role"]), ("invalid", "target_invalid", sim.SETUP_ROLE)); self.assertIn("port calls, not 2", res["stopped"]["detail"])
         self.assertEqual(self.report(res)["pairs"][0]["task"], "invalid")
@@ -1454,6 +1527,42 @@ class TheArchiveVerifier(Base):
         names(p3, "pair_000/target_holdout.json", "not a file any pair's recorded state accounts for")
         set_plan(p3, task_prefix=4); names(p3, "does not carry the durable ordered prefix")
         shutil.rmtree(p3); self.tearDown()
+
+    def test_the_quarantine_context_is_bound_to_the_trusted_setup_inputs(self):
+        """C3 (the owner's review of b29b0fb): on a genuine first-phase and second-phase quarantine, with every report hash refreshed — the
+        context's stimulus digest changed, the expected source changed, the expected source set to null — each is named by the verifier
+        (the stimulus derived from the plan's seed and the phase; the expected source the formal one for the first call, the retained first
+        observation's for the second); the genuine archives verify clean."""
+        def refresh(out):
+            rep = json.loads((out / "sim_report.json").read_text())
+            rep["files"] = [entry(p, str(p.relative_to(out))) for p in sorted(out.rglob("*")) if p.is_file() and p.name != "sim_report.json"]
+            (out / "sim_report.json").write_text(json.dumps(rep, sort_keys=True, indent=1) + "\n")
+
+        class Bad(ex.ObservationPort):
+            def __init__(self, fabric, at):
+                super().__init__(fabric); self.at = at
+
+            def observe(self, config, stimulus):
+                t = super().observe(config, stimulus)
+                if self.calls == self.at:
+                    t["steps"][0] = {"marker": "owner_malformed_return"}
+                return t
+        for at, qname in ((1, "target_search.QUARANTINE.json"), (2, "target_holdout.QUARANTINE.json")):
+            res = self.run_with(lambda fabric, role, pair, at=at: Bad(fabric, at) if (pair, role) == (0, sim.SETUP_ROLE) else ex.ObservationPort(fabric), out=self.ns / f"b4-mech-1_ctx{at}")
+            self.assertEqual(res["status"], "invalid"); self.tearDown()
+            src = Path(res["out"]); self.assertEqual(sv.verify_run_dir(src, deep=True), {})
+            for label, key, value, needle in (("wrong_stimulus", "stimulus_sha256", "a" * 64, "context.stimulus_sha256"), ("wrong_expected_source", "expected_provenance_sha256", "b" * 64, "context.expected_provenance_sha256"),
+                                              ("missing_expected_source", "expected_provenance_sha256", None, "context.expected_provenance_sha256")):
+                with self.subTest(phase=at, tamper=label):
+                    out = self.ns / f"b4-mech-1_ctx{at}_{label}"; shutil.copytree(src, out)
+                    try:
+                        q = json.loads((out / "pair_000" / qname).read_text()); q["context"][key] = value; (out / "pair_000" / qname).write_text(json.dumps(q, indent=1) + "\n"); refresh(out)
+                        self.assertEqual(sc.quarantine_findings(q), [], "shape-valid: the schema alone cannot know; the verifier must")
+                        f = sv.verify_run_dir(out, deep=True)
+                        self.assertTrue(any(needle in x for xs in f.values() for x in xs), (label, f))
+                    finally:
+                        shutil.rmtree(out)
+            self.tearDown()
 
     def test_the_archive_holds_real_files_in_pair_directories_only(self):
         """A subdirectory inside a pair, a directory that is not a pair directory, a pair directory the plan does not have, a symlink — each

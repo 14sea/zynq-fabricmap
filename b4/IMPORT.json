@@ -187,7 +187,7 @@
    "kind": "new",
    "note": "unit 2b-4a C: the host-only exploration harness — a pre-flight that writes nothing on refusal (label b4-sim-<n>, a clean tree with no override, the formal source, the root's inputs at their pinned digests, every exclusion source, an output directory directly under evidence/b4/sim/ created exclusively); seeds.json then manifest.json then the first observation; per pair R > F > O > X > D > Omega > A0 on one worker, each RunResult written exclusively before its audit, the typed completion checks, replay, ledger recompute, given-view checks, D from F's rebuilt map, K7 prefixes, K9, K10, curves, the pair index, the HEAD / input checkpoint; fail-closed stops (invalid / incomplete) with STOPPED.json, a typed sim_report.json always and a pooled summary only when complete; values beside the section-9 thresholds, no verdict field; exit codes 0 / 1 / 2 / 3. Running it is a separate authorisation. Unit 2b-4 (the gate tool, 2026-10-19): mode \"gate\" (b4-gate-<n> labels, reached through b4_gate.py only; the exploration CLI unchanged), standing_for(label) — the gate's standing text for a gate label, the exploration's text (unchanged, as the archived summaries carry it) otherwise; summarise_batch takes the standing as a parameter; no constant changed.",
    "role": "host",
-   "sha256": "d1d0e46a556b599cf36b62ddd1bcf4b2e033b34f8cb464ca8fbb2c6d69e659fc"
+   "sha256": "5334fb3537f6805e72365fb4ad4ca71b296ca8f8ca6cbcb598b5ba6c45313001"
   },
   "b4/host/b4_sim_schema.py": {
    "kind": "new",
@@ -199,7 +199,7 @@
    "kind": "new",
    "note": "unit 2b-4a repair (the owner's HOLD on cdf2c53, F2 / F3 / F4): the archive-wide verifier of a run directory — the required file set of the recorded status and of every pair's state, no unlisted or duplicate file, every listed digest / size, seeds / manifest / report linkage, STOPPED exactly when not complete, every file against its typed validator with the pair's task bound, and (deep) every conclusion recomputed from the raw readouts on the formal model (arm re-audits, controls, K7 prefixes, K9 / K10, curves, the pooled summary); run by the batch on itself before the report is written; offline CLI; writes nothing; the authenticity limit of b4_replay stated. Second round (the owner's HOLD on f2c4bca, R1–R5): every record bound to the planned pair / role / seeds and the formal source, a complete pair's every arm re-audited whatever its recorded state, exact scalar types. Unit 2b-4: the report's standing bound to its label (standing_for) and the summary recomputed with it.",
    "role": "host",
-   "sha256": "57c7137810bf87c5d62e4c931aeb198afc432fb87f26cd2f5ad54bcda78ea940"
+   "sha256": "8b05aa38a2b69ff52750e789dc561385f1baf6af8bcd610fd6f1911c011c8402"
   },
   "b4/host/b4_snapshot.py": {
    "kind": "new",
@@ -217,7 +217,7 @@
    "kind": "new",
    "note": "protocol v0.2.0 (the owner's rulings of 2026-10-20, choices 2-3 and the target-setup contract): the per-pair target setup of task-v0.2 — the private plan (seeds, the planted flip-flop genome by the fixed rule, the stimulus digests) persisted before the first target call, each setup observation of the planted configuration through the execution port saved on return, the PublicTask (no seed, no planted genome, no private record) and task.json last; the offline reconstruction (setup_findings) from the kept records, the fabric never asked again.",
    "role": "host",
-   "sha256": "c98fde40551203c427819b558314d504d10087ffc9e51808cf309f787819719a"
+   "sha256": "447841ee1b66e1d71d6e62ff4b9cede483ac0059bcb4bedf1549553d5ffccb53"
   },
   "b4/host/b4_thresholds.py": {
    "kind": "new",
@@ -374,7 +374,7 @@
   "b4/tests/test_b4_sim.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "b6d47f3c15115646338a767278730db100984c97df7db48d2c29dd30600e1e8b"
+   "sha256": "27536ad11c7b04043b49f404ae66b1a6377d7a595e0d0a4d62a206c8d8fbc838"
   },
   "b4/tests/test_b4_snapshot.py": {
    "kind": "new",
@@ -389,7 +389,7 @@
   "b4/tests/test_b4_target.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "c14672e582b7313220fd6c641da38253e7f26b873e6e4bcde23d6aac6e79240b"
+   "sha256": "f5283035e951c7fc5aeefd16af1a96ab235709fe77a7e90b92ccde2a9e50ff83"
   },
   "b4/tests/test_b4_thresholds.py": {
    "kind": "new",

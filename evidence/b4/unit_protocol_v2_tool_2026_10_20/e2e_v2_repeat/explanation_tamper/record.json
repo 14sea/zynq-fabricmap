@@ -1,0 +1,37 @@
+{
+ "differ": [
+  "gate_report.json"
+ ],
+ "expected_to_differ": [
+  "gate_report.json"
+ ],
+ "localised": true,
+ "mutation": "gate_report.json verdict.reason and the K6 row's reason changed, gate_report.md re-rendered, the file index refreshed",
+ "original": {
+  "gate_report.json": {
+   "normalised_sha256": "722af9f75fe174c8ffcabce3b368daafe9718e01438dc300e839712d6d399e78",
+   "sha256": "30376103cec6d9c5ffeb7f69cb227d1b796b2f6da6fc8ef0399ab8bbfcbc6805",
+   "size": 38631
+  },
+  "gate_report.md": {
+   "normalised_sha256": null,
+   "sha256": "60278a336f9b03b35466cc9762943f82348c8a501c7694c2fa517da142e93c03",
+   "size": 29697
+  }
+ },
+ "renderings_not_compared": [
+  "gate_report.md"
+ ],
+ "tampered": {
+  "gate_report.json": {
+   "normalised_sha256": "37723ccf49aaba3bbf875228792c9add588de73d468e83b802f466045b59cdda",
+   "sha256": "0ad22f62e249de4a8d6ba3671618052d2c7cb9bfd5bba60a4aa62441da0037a5",
+   "size": 38488
+  },
+  "gate_report.md": {
+   "normalised_sha256": null,
+   "sha256": "099092f034ff3877400d87cef5b4fac74cf39e050d128828426af4ec33a171a2",
+   "size": 29557
+  }
+ }
+}

@@ -1,0 +1,103 @@
+{
+  "reviewed_head": "b29b0fb838ae62af6bff436505d200402520230d",
+  "parent": "04385ae42373a4db33716f8aa5d6c58a4789de09",
+  "completed_utc": "2026-10-20T21:13:37.489665+00:00",
+  "verdict": "HOLD",
+  "blocking_findings": [
+    "C1 (P2)",
+    "C2 (P2)",
+    "C3 (P2)"
+  ],
+  "fold_in_p3": "preserve deterministic semantic reasons in fixture normalisation",
+  "command_tests": "python3 -B -m unittest -v b4.tests.test_b4_carto b4.tests.test_b4_controls b4.tests.test_b4_deadline b4.tests.test_b4_engine b4.tests.test_b4_execution b4.tests.test_b4_ff_hypothesis b4.tests.test_b4_ff_mapping b4.tests.test_b4_ff_model b4.tests.test_b4_gate b4.tests.test_b4_gate_stats b4.tests.test_b4_gonogo b4.tests.test_b4_k10 b4.tests.test_b4_k9 b4.tests.test_b4_landscape b4.tests.test_b4_probe_latch_ginv b4.tests.test_b4_protocol b4.tests.test_b4_replay b4.tests.test_b4_rng b4.tests.test_b4_seeds b4.tests.test_b4_sim b4.tests.test_b4_snapshot b4.tests.test_b4_stats b4.tests.test_b4_target b4.tests.test_b4_thresholds",
+  "tests": {
+    "exit": 0,
+    "count": 323,
+    "wall_s": 599.263
+  },
+  "command_e2e": "python3 -B evidence/b4/unit_protocol_v2_tool_2026_10_20/e2e_v2_fixtures.py /tmp/owner_b29b0fb_e2e",
+  "e2e": {
+    "exit": 0,
+    "as_expected": true,
+    "production_derivation_calls": [
+      0,
+      0
+    ],
+    "semantic_tamper": {
+      "differ": [
+        "pair_000/index.json",
+        "pair_000/target_search.json",
+        "pair_000/task.json",
+        "sim_report.json"
+      ],
+      "equal_count": 47,
+      "expected_to_differ": [
+        "pair_000/index.json",
+        "pair_000/target_search.json",
+        "pair_000/task.json",
+        "sim_report.json"
+      ],
+      "localised": true,
+      "mutation": "pair_000/target_search.json q_grid[2][1] flipped, trace_sha256 refreshed, task.json's setup_files_sha256 binding refreshed, the pair index and the report's file index refreshed (reindex)"
+    }
+  },
+  "command_comparison": "python3 -B evidence/b4/unit_protocol_v2_tool_2026_10_20/e2e_v2_compare.py evidence/b4/unit_protocol_v2_tool_2026_10_20/e2e_v2 /tmp/owner_b29b0fb_e2e",
+  "e2e_comparison": {
+    "exit": 0,
+    "total": {
+      "comparable": 940,
+      "equal": 940,
+      "different": 0,
+      "missing": 0
+    },
+    "pass": true
+  },
+  "command_selected_mutants": "python3 -B evidence/b4/unit_protocol_v2_tool_2026_10_20/b4_v02_mutants.py /tmp/owner_b29b0fb_selected_mutants.txt M31,M45,M51,M52",
+  "selected_mutants": {
+    "exit": 0,
+    "M31": "SURVIVED",
+    "M45": "SURVIVED",
+    "M51": "KILLED",
+    "M52": "KILLED",
+    "full_52_rerun_by_reviewer": false
+  },
+  "command_import": "python3 -B evidence/b4/unit_2b4a_repair_2026_10_18/import_check.py",
+  "import_entries": 59,
+  "import_findings": [],
+  "command_probes": "python3 -B /tmp/owner_b29b0fb_probes.py /tmp/owner_b29b0fb_final_probes",
+  "command_float_probe": "python3 -B /tmp/owner_b29b0fb_float_return.py /tmp/owner_b29b0fb_final_probes",
+  "probe_production_derivation_calls": [
+    0,
+    0
+  ],
+  "float_probe_production_derivation_calls": [
+    0,
+    0
+  ],
+  "protected_paths": [
+    "b3/",
+    "host/",
+    "tests/",
+    "firmware/",
+    "manifests/",
+    "evidence/b3/",
+    "evidence/b4/sim/",
+    "evidence/b4/gate/",
+    "b4/hypothesis/",
+    "b4/host/b4_ff_model.py",
+    "b4/host/b4_ff_hypothesis.py",
+    "b4/host/b4_ff_mapping.py",
+    "b4/host/b4_gate_stats.py",
+    "b4/host/b4_rng.py"
+  ],
+  "protected_diff_exit": 0,
+  "archived_previous_owner_review_byte_comparison": {
+    "missing": [],
+    "different": [],
+    "sha256sum_failures": []
+  },
+  "tracked_changes_by_reviewer": false,
+  "tracked_status": "",
+  "no_new_production_seed_derivation": true,
+  "no_push_merge_proof_or_board_work": true
+}

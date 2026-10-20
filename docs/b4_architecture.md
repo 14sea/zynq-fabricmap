@@ -861,9 +861,15 @@ mask does not narrow this check** — or a source identity that is not the expec
 the first observation's for the second: a drift) is kept **raw** in `target_search.QUARANTINE.json` / `target_holdout.QUARANTINE.json`
 with the findings that refused it, the phase, the planted configuration, the stimulus digest, the expected source identity and the
 digest of the kept projection (`raw` null and the `repr` kept when it cannot be serialised), and *then* the pair is **`invalid`** with
-`task_quarantine` naming the phase (R2 / R4); the same check is made by the record validator and by the offline reconstruction. The
-deadline or an external interrupt is **`incomplete`**; whatever was durably written is kept; no task digest and no arm record is
-manufactured for a task that was not completed.
+`task_quarantine` naming the phase (R2 / R4); the same check is made by the record validator and by the offline reconstruction. **What
+is kept is the object the port returned**, never a record derived from it — the cell check is type-exact (0.0, 1.0 and true are not the
+ints 0 / 1), and a return that only a later layer refuses (the record validator, the defence in depth) is still quarantined as it came
+(the owner's review of b29b0fb, C1). The quarantine's context is **derived from trusted inputs and held to them by the verifier**: the
+stimulus digest from the plan's seed and the phase, the expected source identity from the formal source (the first call) or from the
+retained first observation (the second call) — never null on this path, never its own authority (C3). An interrupt landing after a
+quarantine's durable write and before the in-memory state is reconciled from disk like the four setup files: the pair's record carries
+the invalid return and its phase, the batch's stop carries the interrupt (C2). The deadline or an external interrupt is **`incomplete`**;
+whatever was durably written is kept; no task digest and no arm record is manufactured for a task that was not completed.
 
 **Isolation.** The target observations pass through no arm's ledger and no `learn`: they are pair-level records with their own
 offline reconstruction, never a specimen, never in the map, the population, a parent, the champion, the best-so-far trace or the

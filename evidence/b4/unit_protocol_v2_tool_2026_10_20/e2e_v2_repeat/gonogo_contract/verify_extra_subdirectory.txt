@@ -1,10 +1,10 @@
-HEAD 04385ae42373a4db33716f8aa5d6c58a4789de09
+HEAD b29b0fb838ae62af6bff436505d200402520230d
 expected: exit 1 naming 'no subdirectory'
 exit 1
 
-/home/test/zynq_fabricmap/b4/host/b4_gonogo.py verify /tmp/b4v02_e2e_ip3il3b0/evidence/b4/gonogo/b4-mech-1_contract --shallow
+/home/test/zynq_fabricmap/b4/host/b4_gonogo.py verify /tmp/b4v02_e2e_2xto6j73/evidence/b4/gonogo/b4-mech-1_contract --shallow
 {
- "gonogo_dir": "/tmp/b4v02_e2e_ip3il3b0/evidence/b4/gonogo/b4-mech-1_contract",
+ "gonogo_dir": "/tmp/b4v02_e2e_2xto6j73/evidence/b4/gonogo/b4-mech-1_contract",
  "findings": {
   "sub": [
    "a gonogo directory holds its two files only: no subdirectory, no symlink"

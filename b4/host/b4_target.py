@@ -118,28 +118,41 @@ def observation_findings(trace, steps: int, expected_provenance_sha256: str | No
         for e, c in enumerate(q):
             if c is None:
                 f.append(f"step {i}, element {e}: None — not a target observation under T-i (invalid, never narrowed)")
-            elif isinstance(c, bool) or c not in (0, 1):
-                f.append(f"step {i}, element {e}: {c!r} is not 0 / 1")
+            elif type(c) is not int or c not in (0, 1):                      # type-exact: 0.0 / 1.0 / True are not the ints 0 / 1 (the owner's review of b29b0fb, C1)
+                f.append(f"step {i}, element {e}: {c!r} is not 0 / 1 (an int)")
     return f[:40]
 
 
-def observe_target(port: ex.ObservationPort, genome: int, stimulus, addresses: tuple, phase: str, expected_provenance_sha256: str | None = None) -> dict:
-    """One setup observation through the execution port; the record carries the FULL q grid and the source identity. A DOMAIN
-    propagates as DomainRefusal (nothing was returned); a returned object that `observation_findings` refuses raises ReturnRefusal
-    CARRYING that object — the caller quarantines it, then records the pair invalid."""
+def observe_raw(port: ex.ObservationPort, genome: int, stimulus, addresses: tuple):
+    """The port call alone: whatever the port returns, untouched (a DOMAIN propagates as DomainRefusal: nothing was returned). The
+    harness keeps THIS object when any later layer refuses it (the owner's review of b29b0fb, C1: the evidence is the original return,
+    never a record derived from it)."""
+    return port.observe(ex.genome_to_config(genome, addresses), list(stimulus))
+
+
+def record_from_trace(trace, genome: int, stimulus, addresses: tuple, phase: str) -> dict:
+    """The setup observation record from a return that `observation_findings` accepted: the FULL q grid and the source identity."""
     if phase not in PHASES:
         raise ValueError(phase)
     steps = list(stimulus)
-    config = ex.genome_to_config(genome, addresses)
-    trace = port.observe(config, steps)
-    f = observation_findings(trace, len(steps), expected_provenance_sha256)
-    if f:
-        raise ReturnRefusal(f, trace)
     hdr = {k: trace[k] for k in ("hypothesis", "mapping", "fabric")}
     grid = [list(s["q_after"]) for s in trace["steps"]]
-    return {"phase": phase, "genome": genome, "genome_hex": ex.genome_hex(genome, len(addresses)), "config_sha256": ex.sha256_json(config),
+    return {"phase": phase, "genome": genome, "genome_hex": ex.genome_hex(genome, len(addresses)), "config_sha256": ex.sha256_json(ex.genome_to_config(genome, addresses)),
             "stimulus_sha256": ex.sha256_json(steps), "trace_sha256": ex.sha256_json(grid), "q_grid": grid,
             "provenance": hdr, "provenance_sha256": ex.sha256_json(hdr), "fixture": hdr["hypothesis"]["fixture"], "fabric_kind": hdr["fabric"]["kind"]}
+
+
+def observe_target(port: ex.ObservationPort, genome: int, stimulus, addresses: tuple, phase: str, expected_provenance_sha256: str | None = None) -> dict:
+    """observe_raw + observation_findings + record_from_trace: a returned object that is refused raises ReturnRefusal CARRYING that
+    object — the caller quarantines it, then records the pair invalid. (The harness uses the three steps separately so that a return
+    refused by a LATER layer is still kept as it came.)"""
+    if phase not in PHASES:
+        raise ValueError(phase)
+    trace = observe_raw(port, genome, stimulus, addresses)
+    f = observation_findings(trace, len(list(stimulus)), expected_provenance_sha256)
+    if f:
+        raise ReturnRefusal(f, trace)
+    return record_from_trace(trace, genome, stimulus, addresses, phase)
 
 
 def quarantine_context(phase: str, genome: int, addresses: tuple, stimulus, returned, expected_provenance_sha256: str | None) -> dict:

@@ -136,6 +136,16 @@ class TheReturn(Base):
             t["steps"][3]["q_after"][4] = 2; return t
         e = self.alter(cell2); self.assertTrue(any("2 is not 0 / 1" in x for x in e.findings), e.findings)
 
+        def float_cell(t):                                            # C1 (the owner's review of b29b0fb): 0.0 == 0 in Python; the check is type-exact
+            t["steps"][0]["q_after"][0] = float(t["steps"][0]["q_after"][0]); return t
+        e = self.alter(float_cell); self.assertTrue(any("is not 0 / 1 (an int)" in x for x in e.findings), e.findings); self.assertIsInstance(e.returned["steps"][0]["q_after"][0], float)
+
+        def bool_cell(t):
+            t["steps"][0]["q_after"][1] = bool(t["steps"][0]["q_after"][1]); return t
+        e = self.alter(bool_cell); self.assertTrue(any("is not 0 / 1 (an int)" in x for x in e.findings), e.findings)
+        parts_ = bl.public_parts(L); raw = bt.observe_raw(ex.ObservationPort(self.fab), self.plan["planted_genome"], parts_["stimulus"], self.m.addresses)
+        self.assertEqual(bt.record_from_trace(raw, self.plan["planted_genome"], parts_["stimulus"], self.m.addresses, "target"), self.r1, "the three steps compose to observe_target")
+
         def malformed(t):
             t["steps"][1] = {"owner_raw_marker": "m"}; return t
         e = self.alter(malformed); self.assertTrue(any("no q_after" in x for x in e.findings)); self.assertEqual(e.returned["steps"][1]["owner_raw_marker"], "m")

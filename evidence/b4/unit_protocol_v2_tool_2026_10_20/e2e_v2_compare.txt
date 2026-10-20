@@ -1,4 +1,4 @@
-# e2e_v2 (round 1, 2026-10-20T19:32:28Z) against e2e_v2_repeat (round 2: a fresh hermetic root, 2026-10-20T20:00:18Z), by NORMALISED digests (the rule: e2e_v2_fixtures.py docstring)
+# e2e_v2 (one run, 2026-10-20T22:58:26Z) against e2e_v2_repeat (another run of the same driver on the same tree in a fresh hermetic root, 2026-10-20T22:14:41Z), by NORMALISED digests (the rule: e2e_v2_fixtures.py docstring)
 # cmd: python3 -B e2e_v2_compare.py e2e_v2 e2e_v2_repeat
 {
  "per_directory": {
@@ -66,7 +66,23 @@
     "gate_report.md"
    ]
   },
+  "interrupt_after_first_quarantine/batch": {
+   "comparable": 6,
+   "equal": 6,
+   "different": [],
+   "missing_in_b": [],
+   "extra_in_b": [],
+   "renderings_skipped": []
+  },
   "interrupt_after_holdout/batch": {
+   "comparable": 7,
+   "equal": 7,
+   "different": [],
+   "missing_in_b": [],
+   "extra_in_b": [],
+   "renderings_skipped": []
+  },
+  "interrupt_after_second_quarantine/batch": {
    "comparable": 7,
    "equal": 7,
    "different": [],
@@ -95,6 +111,22 @@
   "return_bad_cell/batch": {
    "comparable": 6,
    "equal": 6,
+   "different": [],
+   "missing_in_b": [],
+   "extra_in_b": [],
+   "renderings_skipped": []
+  },
+  "return_float_first/batch": {
+   "comparable": 6,
+   "equal": 6,
+   "different": [],
+   "missing_in_b": [],
+   "extra_in_b": [],
+   "renderings_skipped": []
+  },
+  "return_float_second/batch": {
+   "comparable": 7,
+   "equal": 7,
    "different": [],
    "missing_in_b": [],
    "extra_in_b": [],
@@ -150,8 +182,8 @@
   }
  },
  "total": {
-  "comparable": 940,
-  "equal": 940,
+  "comparable": 966,
+  "equal": 966,
   "different": 0,
   "missing": 0
  },
@@ -159,11 +191,11 @@
 }
 exit 0
 
-# the semantic tamper: the complete batch against its tampered copy (one grid cell flipped, the whole chain refreshed) — expected to FAIL and to name the files
-# cmd: python3 -B e2e_v2_compare.py --files <original record> <tampered record> batch   (both from e2e_v2/semantic_tamper/record.json)
+# the semantic tamper: the complete batch against its copy with one grid cell flipped and the whole chain refreshed — expected to FAIL naming the four chained files
+# cmd: python3 -B e2e_v2_compare.py --files <original> <tampered> d   (both from e2e_v2/semantic_tamper/record.json)
 {
  "per_directory": {
-  "batch": {
+  "d": {
    "comparable": 51,
    "equal": 47,
    "different": [
@@ -181,6 +213,33 @@ exit 0
   "comparable": 51,
   "equal": 47,
   "different": 4,
+  "missing": 0
+ },
+ "pass": false
+}
+exit 1
+
+# the explanation tamper (P3): the gate directory against its copy with a row's reason and the verdict's reason changed — expected to FAIL naming gate_report.json
+# cmd: python3 -B e2e_v2_compare.py --files <original> <tampered> d   (both from e2e_v2/explanation_tamper/record.json)
+{
+ "per_directory": {
+  "d": {
+   "comparable": 1,
+   "equal": 0,
+   "different": [
+    "gate_report.json"
+   ],
+   "missing_in_b": [],
+   "extra_in_b": [],
+   "renderings_skipped": [
+    "gate_report.md"
+   ]
+  }
+ },
+ "total": {
+  "comparable": 1,
+  "equal": 0,
+  "different": 1,
   "missing": 0
  },
  "pass": false

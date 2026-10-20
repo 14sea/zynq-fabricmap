@@ -525,8 +525,13 @@ class Batch:
         expected_prov = ex.sha256_json(sc.formal_provenance())                  # the first return must carry the batch's (formal) source identity; the second, the first's
         for phase, stim, name in (("target", parts["stimulus"], "target_search.json"), ("target_holdout", parts["holdout_stimulus"], "target_holdout.json")):
             self.dl.check()                                                     # a deadline here is `incomplete` with what was written kept
+            trace = None
             try:
-                rec = bt.observe_target(port, setup["planted_genome"], stim, mapping.addresses, phase, expected_prov)
+                trace = bt.observe_raw(port, setup["planted_genome"], stim, mapping.addresses)
+                f0 = bt.observation_findings(trace, len(list(stim)), expected_prov)
+                if f0:
+                    raise bt.ReturnRefusal(f0, trace)
+                rec = bt.record_from_trace(trace, setup["planted_genome"], stim, mapping.addresses, phase)
             except KeyboardInterrupt:
                 raise                                                           # the plan's task state stays in_progress / partial: nothing is lost, nothing fabricated
             except fm.DomainRefusal:
@@ -546,10 +551,10 @@ class Batch:
                 raise Invalid("unexpected_exception", f"the target setup observation ({phase}) raised {type(exc).__name__}: {exc}", role=SETUP_ROLE, stage="target_setup")
             doc = {"schema": bt.TARGET_SCHEMA[0], "schema_version": bt.TARGET_SCHEMA[1], "pair": r, "written_utc": utc(), **rec}
             f = sc.target_observation_findings(doc, phase)
-            if f:                                                               # defence in depth: a record the validator refuses is kept in quarantine, never written as itself
+            if f:                                                               # defence in depth: a record the validator refuses — the ORIGINAL return is what is kept (C1), never the derived record
                 qrel = f"pair_{r:03d}/{name.replace('.json', '.QUARANTINE.json')}"
-                ctx = bt.quarantine_context(phase, setup["planted_genome"], mapping.addresses, stim, doc, expected_prov)
-                self.quarantine(qrel, r, SETUP_ROLE, "target_setup", f, doc, context=ctx)
+                ctx = bt.quarantine_context(phase, setup["planted_genome"], mapping.addresses, stim, trace, expected_prov)
+                self.quarantine(qrel, r, SETUP_ROLE, "target_setup", ["the derived record was refused by its validator; the original return is kept: " + f[0]] + f, trace, context=ctx)
                 plan["task"], plan["task_quarantine"] = "invalid", phase
                 raise Invalid("target_invalid", f"the target setup observation ({phase}) does not validate — kept in {qrel}: {f[0]}", role=SETUP_ROLE, stage="target_setup")
             digests[name] = self.write(f"pair_{r:03d}/{name}", doc, lambda d, ph=phase: sc.target_observation_findings(d, ph))["sha256"]   # saved at once, before the next call
@@ -760,9 +765,11 @@ class Batch:
                 if not (pdir / name).is_file():
                     break
                 n += 1; index(pre + name, pdir / name)
-            for qname in ("target_search.QUARANTINE.json", "target_holdout.QUARANTINE.json"):
+            for ph, qname in (("target", "target_search.QUARANTINE.json"), ("target_holdout", "target_holdout.QUARANTINE.json")):
                 if (pdir / qname).is_file():
                     index(pre + qname, pdir / qname)
+                    if plan["task_quarantine"] is None and n == {"target": 1, "target_holdout": 2}[ph]:      # the interrupt landed after the quarantine's link, before the state (C2)
+                        plan["task"], plan["task_quarantine"] = "invalid", ph
             plan["task_prefix"] = n
             if plan["task"] != "invalid":
                 plan["task"] = "complete" if n == 4 else "partial" if n >= 2 else "in_progress" if n == 1 else plan["task"]

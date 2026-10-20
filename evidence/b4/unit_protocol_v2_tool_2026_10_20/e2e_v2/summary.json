@@ -13,11 +13,11 @@
    "fresh_batch_exit": 0,
    "fresh_gate_exit": 0,
    "fresh_gonogo_exit": 0,
-   "identity_protocol_sha256": "d4fd2b7f6f23a5a0e4c3a7046d47a9f8197595cab60134215976aac6004f1047",
+   "identity_protocol_sha256": "2f096d4adbd83e0ec6350e6da2942cc862e99df4e81539719fa7261dad5a258c",
    "normalisation": {
-    "files_in_raw_map": 995,
-    "fixed_point_passes": 19,
-    "substituted_references": 4290
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
    },
    "raw_links": {
     "resolved": 98,
@@ -48,9 +48,9 @@
    "fresh_batch_exit": 0,
    "fresh_gonogo_exit": 0,
    "normalisation": {
-    "files_in_raw_map": 995,
-    "fixed_point_passes": 19,
-    "substituted_references": 4290
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
    },
    "raw_links": {
     "resolved": 1507,
@@ -127,9 +127,9 @@
    "fresh_batch_exit": 0,
    "fresh_gate_exit": 0,
    "normalisation": {
-    "files_in_raw_map": 995,
-    "fixed_point_passes": 19,
-    "substituted_references": 4290
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
    },
    "pairs": [
     {
@@ -154,6 +154,60 @@
    "stopped_stage": "k9",
    "verdict": "incomplete"
   },
+  "interrupt_after_first_quarantine": {
+   "exit_code": 3,
+   "expected": {
+    "files": [
+     "target_search.QUARANTINE.json",
+     "task_setup.json"
+    ],
+    "kind": "interrupted",
+    "prefix": 1,
+    "quarantine": "target",
+    "status": "incomplete",
+    "task": "invalid"
+   },
+   "fresh_batch_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
+   },
+   "pair_000": {
+    "status": "partial",
+    "task": "invalid",
+    "task_prefix": 1,
+    "task_quarantine": "target"
+   },
+   "pair_000_files": [
+    "target_search.QUARANTINE.json",
+    "task_setup.json"
+   ],
+   "quarantine": {
+    "context": {
+     "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+     "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+     "genome": 588756,
+     "genome_hex": "08fbd4",
+     "phase": "target",
+     "returned_sha256": "9061b07f4f0adf817866bf5b0c0e45ea089998466967200bc7e26cc4ff9bbff5",
+     "stimulus_sha256": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2"
+    },
+    "findings": [
+     "step 0: no q_after row of 8 cells"
+    ],
+    "marker_found": true,
+    "raw_is_null": false
+   },
+   "raw_links": {
+    "resolved": 5,
+    "unresolved": []
+   },
+   "status": "incomplete",
+   "stopped_kind": "interrupted",
+   "stopped_role": "TARGET",
+   "stopped_stage": "target_setup"
+  },
   "interrupt_after_holdout": {
    "exit_code": 3,
    "expected": {
@@ -170,9 +224,9 @@
    },
    "fresh_batch_exit": 0,
    "normalisation": {
-    "files_in_raw_map": 995,
-    "fixed_point_passes": 19,
-    "substituted_references": 4290
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
    },
    "pair_000": {
     "status": "partial",
@@ -194,15 +248,71 @@
    "stopped_role": "TARGET",
    "stopped_stage": "target_setup"
   },
+  "interrupt_after_second_quarantine": {
+   "exit_code": 3,
+   "expected": {
+    "files": [
+     "target_holdout.QUARANTINE.json",
+     "target_search.json",
+     "task_setup.json"
+    ],
+    "kind": "interrupted",
+    "prefix": 2,
+    "quarantine": "target_holdout",
+    "status": "incomplete",
+    "task": "invalid"
+   },
+   "fresh_batch_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
+   },
+   "pair_000": {
+    "status": "partial",
+    "task": "invalid",
+    "task_prefix": 2,
+    "task_quarantine": "target_holdout"
+   },
+   "pair_000_files": [
+    "target_holdout.QUARANTINE.json",
+    "target_search.json",
+    "task_setup.json"
+   ],
+   "quarantine": {
+    "context": {
+     "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+     "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+     "genome": 588756,
+     "genome_hex": "08fbd4",
+     "phase": "target_holdout",
+     "returned_sha256": "e8bf66231a4b4fcd655968ad8d9d346cc0a0ba89ab3bd5fd75f0b67231d28fc0",
+     "stimulus_sha256": "b7635314ae9020681615fa5f32a85e4debc460bd9439807d9cb8bbd2251821d4"
+    },
+    "findings": [
+     "the source identity is not the expected one (a drift inside the setup)"
+    ],
+    "marker_found": true,
+    "raw_is_null": false
+   },
+   "raw_links": {
+    "resolved": 6,
+    "unresolved": []
+   },
+   "status": "incomplete",
+   "stopped_kind": "interrupted",
+   "stopped_role": "TARGET",
+   "stopped_stage": "target_setup"
+  },
   "invalid": {
    "batch_status": "invalid",
    "exit_code": 1,
    "fresh_batch_exit": 0,
    "fresh_gate_exit": 0,
    "normalisation": {
-    "files_in_raw_map": 995,
-    "fixed_point_passes": 19,
-    "substituted_references": 4290
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
    },
    "pairs": [
     {
@@ -242,9 +352,9 @@
    },
    "fresh_batch_exit": 0,
    "normalisation": {
-    "files_in_raw_map": 995,
-    "fixed_point_passes": 19,
-    "substituted_references": 4290
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
    },
    "pair_000": {
     "status": "partial",
@@ -267,13 +377,123 @@
      "stimulus_sha256": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2"
     },
     "findings": [
-     "step 2, element 5: 2 is not 0 / 1"
+     "step 2, element 5: 2 is not 0 / 1 (an int)"
     ],
     "marker_found": true,
     "raw_is_null": false
    },
    "raw_links": {
     "resolved": 5,
+    "unresolved": []
+   },
+   "status": "invalid",
+   "stopped_kind": "target_invalid",
+   "stopped_role": "TARGET",
+   "stopped_stage": "target_setup"
+  },
+  "return_float_first": {
+   "exit_code": 1,
+   "expected": {
+    "files": [
+     "target_search.QUARANTINE.json",
+     "task_setup.json"
+    ],
+    "kind": "target_invalid",
+    "prefix": 1,
+    "quarantine": "target",
+    "status": "invalid",
+    "task": "invalid"
+   },
+   "fresh_batch_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
+   },
+   "pair_000": {
+    "status": "partial",
+    "task": "invalid",
+    "task_prefix": 1,
+    "task_quarantine": "target"
+   },
+   "pair_000_files": [
+    "target_search.QUARANTINE.json",
+    "task_setup.json"
+   ],
+   "quarantine": {
+    "context": {
+     "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+     "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+     "genome": 588756,
+     "genome_hex": "08fbd4",
+     "phase": "target",
+     "returned_sha256": "7fde17fa7243f9c4e33262bbcb9dc919d8c194cf0b830c8aafe93210a0c52cb3",
+     "stimulus_sha256": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2"
+    },
+    "findings": [
+     "step 0, element 0: 0.0 is not 0 / 1 (an int)"
+    ],
+    "marker_found": true,
+    "raw_is_null": false
+   },
+   "raw_links": {
+    "resolved": 5,
+    "unresolved": []
+   },
+   "status": "invalid",
+   "stopped_kind": "target_invalid",
+   "stopped_role": "TARGET",
+   "stopped_stage": "target_setup"
+  },
+  "return_float_second": {
+   "exit_code": 1,
+   "expected": {
+    "files": [
+     "target_holdout.QUARANTINE.json",
+     "target_search.json",
+     "task_setup.json"
+    ],
+    "kind": "target_invalid",
+    "prefix": 2,
+    "quarantine": "target_holdout",
+    "status": "invalid",
+    "task": "invalid"
+   },
+   "fresh_batch_exit": 0,
+   "normalisation": {
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
+   },
+   "pair_000": {
+    "status": "partial",
+    "task": "invalid",
+    "task_prefix": 2,
+    "task_quarantine": "target_holdout"
+   },
+   "pair_000_files": [
+    "target_holdout.QUARANTINE.json",
+    "target_search.json",
+    "task_setup.json"
+   ],
+   "quarantine": {
+    "context": {
+     "config_sha256": "a7a35e288218b36c7e5e7e67e788b2101b190c783e400cf0a767c689c40eceef",
+     "expected_provenance_sha256": "5c319800af1630d71703ca92e3c05f55564fa0b6783e706c8a2c8cb14aa526ac",
+     "genome": 588756,
+     "genome_hex": "08fbd4",
+     "phase": "target_holdout",
+     "returned_sha256": "a4b87dc52ab0016b301fdcfe507cd5cc6206d0e894f3699dafa180d6a23815f9",
+     "stimulus_sha256": "b7635314ae9020681615fa5f32a85e4debc460bd9439807d9cb8bbd2251821d4"
+    },
+    "findings": [
+     "step 0, element 0: 0.0 is not 0 / 1 (an int)"
+    ],
+    "marker_found": true,
+    "raw_is_null": false
+   },
+   "raw_links": {
+    "resolved": 6,
     "unresolved": []
    },
    "status": "invalid",
@@ -296,9 +516,9 @@
    },
    "fresh_batch_exit": 0,
    "normalisation": {
-    "files_in_raw_map": 995,
-    "fixed_point_passes": 19,
-    "substituted_references": 4290
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
    },
    "pair_000": {
     "status": "partial",
@@ -350,9 +570,9 @@
    },
    "fresh_batch_exit": 0,
    "normalisation": {
-    "files_in_raw_map": 995,
-    "fixed_point_passes": 19,
-    "substituted_references": 4290
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
    },
    "pair_000": {
     "status": "partial",
@@ -404,9 +624,9 @@
    },
    "fresh_batch_exit": 0,
    "normalisation": {
-    "files_in_raw_map": 995,
-    "fixed_point_passes": 19,
-    "substituted_references": 4290
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
    },
    "pair_000": {
     "status": "partial",
@@ -429,7 +649,7 @@
      "stimulus_sha256": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2"
     },
     "findings": [
-     "step 1, element 1: nan is not 0 / 1"
+     "step 1, element 1: nan is not 0 / 1 (an int)"
     ],
     "marker_found": true,
     "raw_is_null": true
@@ -459,9 +679,9 @@
    },
    "fresh_batch_exit": 0,
    "normalisation": {
-    "files_in_raw_map": 995,
-    "fixed_point_passes": 19,
-    "substituted_references": 4290
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
    },
    "pair_000": {
     "status": "partial",
@@ -513,9 +733,9 @@
    },
    "fresh_batch_exit": 0,
    "normalisation": {
-    "files_in_raw_map": 995,
-    "fixed_point_passes": 19,
-    "substituted_references": 4290
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
    },
    "pair_000": {
     "status": "partial",
@@ -550,9 +770,9 @@
    },
    "fresh_batch_exit": 0,
    "normalisation": {
-    "files_in_raw_map": 995,
-    "fixed_point_passes": 19,
-    "substituted_references": 4290
+    "files_in_raw_map": 1021,
+    "fixed_point_passes": 23,
+    "substituted_references": 4942
    },
    "pair_000": {
     "status": "partial",
@@ -574,23 +794,36 @@
    "stopped_stage": "target_setup"
   }
  },
- "head": "04385ae42373a4db33716f8aa5d6c58a4789de09",
+ "explanation_tamper": {
+  "differ": [
+   "gate_report.json"
+  ],
+  "expected_to_differ": [
+   "gate_report.json"
+  ],
+  "localised": true,
+  "mutation": "gate_report.json verdict.reason and the K6 row's reason changed, gate_report.md re-rendered, the file index refreshed",
+  "renderings_not_compared": [
+   "gate_report.md"
+  ]
+ },
+ "head": "b29b0fb838ae62af6bff436505d200402520230d",
  "identity_revision": {
   "before": {
    "architecture_revision": "v0.2.0",
    "exit": 0,
-   "protocol_sha256": "d4fd2b7f6f23a5a0e4c3a7046d47a9f8197595cab60134215976aac6004f1047"
+   "protocol_sha256": "2f096d4adbd83e0ec6350e6da2942cc862e99df4e81539719fa7261dad5a258c"
   },
   "method_changed_by_the_number": true,
   "method_unchanged_by_the_revision": true,
   "revision_file_changed_entry_refreshed": {
    "architecture_revision": "v0.2.1",
    "exit": 0,
-   "protocol_sha256": "d4fd2b7f6f23a5a0e4c3a7046d47a9f8197595cab60134215976aac6004f1047"
+   "protocol_sha256": "2f096d4adbd83e0ec6350e6da2942cc862e99df4e81539719fa7261dad5a258c"
   },
   "threshold_changed_refreshed": {
    "exit": 0,
-   "protocol_sha256": "7392d02b0699429793ec0583d471848f96601d569c79422f6fc9d690c25c74eb"
+   "protocol_sha256": "7f748112bc69e30896f5f545501ca108fd0de3021a9bc888288492e32ebfa0df"
   },
   "threshold_changed_unrefreshed": {
    "exit": 2,
@@ -604,10 +837,8 @@
    "clean_tree",
    "code_root",
    "deadline",
-   "detail",
    "generated_utc",
    "raw_repr",
-   "reason",
    "reconstruction_utc",
    "stopped_utc",
    "traceback",
@@ -642,7 +873,7 @@
   0,
   0
  ],
- "protocol_sha256": "d4fd2b7f6f23a5a0e4c3a7046d47a9f8197595cab60134215976aac6004f1047",
+ "protocol_sha256": "2f096d4adbd83e0ec6350e6da2942cc862e99df4e81539719fa7261dad5a258c",
  "semantic_tamper": {
   "differ": [
    "pair_000/index.json",
@@ -698,5 +929,5 @@
    "needle": "task"
   }
  },
- "utc": "2026-10-20T19:32:28Z"
+ "utc": "2026-10-20T22:58:26Z"
 }

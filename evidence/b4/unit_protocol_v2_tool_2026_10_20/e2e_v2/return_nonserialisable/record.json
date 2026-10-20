@@ -2,34 +2,34 @@
  "digests": {
   "batch": {
    "STOPPED.json": {
-    "normalised_sha256": "9fdf9bba3e867a86793daf1cd35b7937982a39e794dbaa8734be5ff47f555cfd",
-    "sha256": "f1ec24d0605c5e4751f8e85df41a376937c0c3f593468309b16841f2bb42a677",
-    "size": 1522
+    "normalised_sha256": "2c97ca6331a10e9c9edc1bf7327bda3d664b00e37b83fda11215b7e061fce288",
+    "sha256": "3a136bacd91c6481e5728ae3f3d4d4d6dff1dec135693d1f8dd7c012ba800731",
+    "size": 1531
    },
    "manifest.json": {
-    "normalised_sha256": "c9b9f353170339611d5df1d3f66cdadc3cc45a205f64a66da8d926e40c3b0a00",
-    "sha256": "0ba45cda4f3bc36d43136dc307468178acce75ac57cd91498e0ce729a760a9a5",
+    "normalised_sha256": "9088b5b16d38b032240b6b6a971fc202d7dfa7203c34be3c6c37c03830b9b9f2",
+    "sha256": "434e3b3100237f5cce5e62bc749c6f7d0ede6294d876fa89ea19f37639602d1c",
     "size": 43060
    },
    "pair_000/target_search.QUARANTINE.json": {
-    "normalised_sha256": "a9aebf6de24a0903a8e518d98094a31c59fedd2c0ab198483fa077d0dceacbcc",
-    "sha256": "654eef4a915367cb116fa1240518fc370a89c5f09a2ab708cf753385d51afe6a",
-    "size": 4635
+    "normalised_sha256": "b0cfa472d64602086a9be0648ee176b310b27229f232d2cf960a6b80965593fe",
+    "sha256": "bbad9a1d8c434eadd1307c8193111ab095a20be4dca0c79fcf3c03064f7e2adb",
+    "size": 4644
    },
    "pair_000/task_setup.json": {
     "normalised_sha256": "588ec68e41643dcabff186104a63ae0ba5e4b4b417429bda327f682b2a61d19d",
-    "sha256": "c310ada057ff6b4e4bc620961bab0f4684b19560a372579105b0aed90cc6230c",
+    "sha256": "1eaa6dfdb07a52d4f27a4da1ce34850377afc6d95be9d51f6193c664009ce5c4",
     "size": 2118
    },
    "seeds.json": {
     "normalised_sha256": "06db444d7c370f46781d8be708c6428887d34b96237220734716fe41dfdfb5ba",
-    "sha256": "c69004e7f7bdc285e32b0fb1f739d25678a53927ca9c32dd2c1de0124f155d67",
+    "sha256": "8797abfd83356dab11f9cc665f1343612615c0eeb539abdaadcc23ab5270d7ca",
     "size": 133490
    },
    "sim_report.json": {
-    "normalised_sha256": "89ccd68d1b0de0360f3dc2643e34297222c5e7a0f188de806e4f60f490e4ba25",
-    "sha256": "5e886af683cb72672b69877174a00f7acfaa82b21a8f6442e526c71302df56e8",
-    "size": 15346
+    "normalised_sha256": "90cac8f414222baa0e5ded8dd16fc457fd87b64bb86f0322f41ae2d212606dc4",
+    "sha256": "9d13b34111fa301b152ad69214dd9919d35801c8d936f8e3f0617bdce4397780",
+    "size": 15355
    }
   }
  },
@@ -47,9 +47,9 @@
  },
  "fresh_batch_exit": 0,
  "normalisation": {
-  "files_in_raw_map": 995,
-  "fixed_point_passes": 19,
-  "substituted_references": 4290
+  "files_in_raw_map": 1021,
+  "fixed_point_passes": 23,
+  "substituted_references": 4942
  },
  "pair_000": {
   "status": "partial",
@@ -72,7 +72,7 @@
    "stimulus_sha256": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2"
   },
   "findings": [
-   "step 1, element 1: nan is not 0 / 1"
+   "step 1, element 1: nan is not 0 / 1 (an int)"
   ],
   "marker_found": true,
   "raw_is_null": true
