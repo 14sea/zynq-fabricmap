@@ -1,5 +1,9 @@
 # Unit 2b-4, the gate-tool half — the formal gate tool, its verifier, the harness's gate mode (2026-10-19)
 
+> **Closed: the owner's engineering acceptance PASS on `19597e7` (2026-10-20; `owner_review_19597e7_pass.md`, as relayed) — no remaining
+> finding (section 11).** The acceptance is of the tool's engineering; it is not a gate result, it does not authorise the production `b4-gate-1`
+> execution or seed derivation, it does not freeze the 2c skeleton, and it authorises no RTL, 2d, routing, push or merge.
+
 The owner's ruling of 2026-10-19 (`owner_ruling_gate_tool_2026_10_19.md`, as relayed by the user) split unit 2b-4 into (a) a host-only
 gate-tool unit, authorised, and (b) the production `b4-gate-1` execution, withheld. This directory is the evidence of (a). **No gate
 master or pairs were derived, no production batch was run, no b4-sim set was drawn; the committed S = 32 exploration was read once,
@@ -275,6 +279,28 @@ derived-arithmetic cases as refreshed-hash negatives (refused by the fresh-proce
 | `hold3_e2e_run.txt`, `e2e_hold3/` | the five cases, sixteen negatives, sixteen controls | the five: verifier exit 0 both places; the sixteen negatives: **exit 1** both places; fourteen invalid controls: the tool exit 1 (verdict invalid), the verifier exit 0; the two refusal controls: refused by name, nothing written; derivation calls [0, 0] |
 | `hold3_import_check.txt` | `b4/IMPORT.json` | 52 entries, every digest equal, nothing untabled |
 | `hold3_sim3_deep_verify.txt` | the committed `b4-sim-3` archive under the derived-arithmetic guards | findings {}, clean true |
+
+## 11. Closure (documents only; the owner's review of `19597e7`, 2026-10-20)
+
+**PASS — the gate-tool engineering unit accepted and closed, no remaining findings.** The third correction closed the residual P2 (the derived
+arithmetic: the finite-operand and representability checks of `_ratio_findings` and the `unrepresentable` encoding of `implied_cohen_d`,
+rejected by `_stat_findings`, never compared) and the P3 (the tolerance described as a summary-consistency check, the 140-record measurement
+as a measurement on those records, the boundary limit disclosed and tested, the frozen threshold 0.5 with no epsilon). The owner's
+independent validation: 284 tests OK with zero skips on the extracted committed source; G40 / G41 rerun 2 / 2 killed, the full log
+inspected (40 / 41, G29 the accepted equivalent survivor, no edit miss); 36 / 36 expected exits from fresh processes (the five ordinary
+cases, the sixteen negatives, the fourteen invalid controls, the unchanged S = 32 archive; the two refusal controls confirmed to have no
+gate output); IMPORT 52 entries and 78 digest checks with no mismatch; the previous raw artifacts unchanged; twelve concrete delta vectors
+against the unchanged production statistic, all matched; sixty finite-extreme helper cases without an escaped exception.
+
+The record of the unit: `4f3806d` (the implementation) → `4cdc0c1` (evidence; HOLD, section 9) → `77a6c8c` / `a8f2da1` (the first correction
+and its evidence; HOLD, section 9.1) → `6431e9f` / `b49b2ec` (the second; HOLD, section 9.2) → `b543af1` / `19597e7` (the third; PASS) → this
+closure. The 2c skeleton (`7cf6c7f`, `docs/b4_preregistration.md` v0.0.2) stays an accepted, unresolved skeleton — not a frozen preregistration.
+
+**Boundaries, as the owner states them:** the engineering acceptance does not authorise the production `b4-gate-1` execution or seed derivation;
+it does not freeze 2c, resolve N / B* / the prediction / the sessions, authorise RTL, 2d, routing, push or merge, or constitute evidence about
+silicon; the fixed methods, model and thresholds are unchanged; this closure is a document-only note, no test rerun and no implementation
+change. The design issue recorded in sections 3 and 9 (the architecture's revision number inside the thresholds table that every archived
+batch binds) stays open for the owner before any architecture revision.
 
 ## 10. What this unit does not claim, and what remains withheld
 
