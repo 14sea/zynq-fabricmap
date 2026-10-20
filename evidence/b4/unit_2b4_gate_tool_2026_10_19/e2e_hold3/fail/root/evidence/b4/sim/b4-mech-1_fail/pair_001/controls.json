@@ -1,0 +1,265 @@
+{
+ "a0_view": {
+  "base_commitment": "",
+  "commitment": "2f6734cf5df5fbde39780f388a8eb02fed08b58abd17f4c3a7575b37a6ba1655",
+  "groups": [
+   [
+    0
+   ],
+   [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   [
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   [
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20
+   ]
+  ],
+  "origin": "address_only",
+  "privileged": false,
+  "provenance": [
+   "address_only"
+  ],
+  "version": 0
+ },
+ "d": {
+  "d_shuffle_seed": 3438545619,
+  "identity": false,
+  "logical_cost_probes": 21,
+  "parent_commitment": "81077e1739593d7273f5bd648b214df392f47b6170225b525ff9b888b700066c",
+  "parent_groups": [
+   [
+    13
+   ],
+   [
+    14
+   ],
+   [
+    16
+   ],
+   [
+    15
+   ],
+   [
+    17
+   ],
+   [
+    18
+   ],
+   [
+    20
+   ],
+   [
+    19
+   ],
+   [
+    3,
+    4,
+    6,
+    10
+   ]
+  ],
+  "permutation": {
+   "10": 6,
+   "13": 10,
+   "14": 14,
+   "15": 17,
+   "16": 18,
+   "17": 19,
+   "18": 20,
+   "19": 13,
+   "20": 15,
+   "3": 3,
+   "4": 16,
+   "6": 4
+  },
+  "reobserved": 0,
+  "residual_structure": {
+   "groups_moved": 2,
+   "groups_true": 9,
+   "groups_x": 9,
+   "partition_preserved": false,
+   "true_groups": [
+    [
+     13
+    ],
+    [
+     14
+    ],
+    [
+     16
+    ],
+    [
+     15
+    ],
+    [
+     17
+    ],
+    [
+     18
+    ],
+    [
+     20
+    ],
+    [
+     19
+    ],
+    [
+     3,
+     4,
+     6,
+     10
+    ]
+   ],
+   "x_groups": [
+    [
+     10
+    ],
+    [
+     14
+    ],
+    [
+     18
+    ],
+    [
+     17
+    ],
+    [
+     19
+    ],
+    [
+     20
+    ],
+    [
+     15
+    ],
+    [
+     13
+    ],
+    [
+     3,
+     4,
+     6,
+     16
+    ]
+   ]
+  }
+ },
+ "d_view": {
+  "base_commitment": "81077e1739593d7273f5bd648b214df392f47b6170225b525ff9b888b700066c",
+  "commitment": "ec3d898f0e2e4ecff3059d3c8c72c15de8544b45ea572a5878aa107f8c62f7f5",
+  "groups": [
+   [
+    10
+   ],
+   [
+    14
+   ],
+   [
+    18
+   ],
+   [
+    17
+   ],
+   [
+    19
+   ],
+   [
+    20
+   ],
+   [
+    15
+   ],
+   [
+    13
+   ],
+   [
+    3,
+    4,
+    6,
+    16
+   ]
+  ],
+  "origin": "shuffled",
+  "privileged": false,
+  "provenance": [
+   "learned",
+   "shuffled"
+  ],
+  "version": 21
+ },
+ "omega_view": {
+  "base_commitment": "",
+  "commitment": "e030d947b652f30c21d78ccf39dc2b8af3bc65012467e3505325081074880ec0",
+  "groups": [
+   [
+    1,
+    14
+   ],
+   [
+    8,
+    13
+   ],
+   [
+    2,
+    15
+   ],
+   [
+    9,
+    16
+   ],
+   [
+    5,
+    18
+   ],
+   [
+    11,
+    17
+   ],
+   [
+    7,
+    19
+   ],
+   [
+    12,
+    20
+   ],
+   [
+    0,
+    3,
+    4,
+    6,
+    10
+   ]
+  ],
+  "origin": "oracle",
+  "privileged": true,
+  "provenance": [
+   "oracle"
+  ],
+  "version": 0
+ },
+ "pair": 1,
+ "schema": "b4_sim_controls",
+ "schema_version": "1.0.0",
+ "written_utc": "2026-10-20T08:06:11Z",
+ "x_control_seed": 2805971459
+}

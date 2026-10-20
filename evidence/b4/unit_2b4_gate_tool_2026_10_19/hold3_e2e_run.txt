@@ -1,0 +1,26 @@
+HEAD b543af1d900a8a45e6b77e26cdc7d5b6e65fb320
+command: python3 -B evidence/b4/unit_2b4_gate_tool_2026_10_19/e2e_fixtures.py e2e_hold3
+UTC 2026-10-20T08:06:06Z
+fail FAIL 0 verifier 0 0
+invalid invalid 1 verifier 0 0
+incomplete incomplete 3 verifier 0 0
+pass PASS 0 verifier 0 0
+fail_b_star FAIL 0 verifier 0 0
+negative empty_N_scan verifier 1 1 | invalid control invalid verifier 0
+negative contradictory_delta1_d verifier 1 1 | invalid control invalid verifier 0
+negative inconsistent_positive_infinity verifier 1 1 | invalid control invalid verifier 0
+negative K9_fraction_above_one verifier 1 1 | invalid control invalid verifier 0
+negative D_over_F_null verifier 1 1 | invalid control invalid verifier 0
+negative B_star_as_float verifier 1 1 | invalid control invalid verifier 0
+negative coordinated_false_cohen_pass verifier 1 1 | invalid control invalid verifier 0
+negative float_scan_n_min verifier 1 1 | invalid control invalid verifier 0
+negative float_bootstrap_seed verifier 1 1 | invalid control invalid verifier 0
+negative float_k10_tau verifier 1 1 | invalid control invalid verifier 0
+negative float_at_k5_N verifier 1 1 | invalid control invalid verifier 0
+negative float_at_k7_values verifier 1 1 | invalid control invalid verifier 0
+negative huge_json_integer verifier 1 1 | refused: refused
+negative infinite_literal_in_thresholds verifier 1 1 | refused: refused
+negative finite_ratio_overflow verifier 1 1 | invalid control invalid verifier 0
+negative overflowing_implied_d verifier 1 1 | invalid control invalid verifier 0
+[0, 0] negatives as expected: True
+exit 0

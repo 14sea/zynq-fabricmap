@@ -14,10 +14,10 @@ acceptance.
 | `b4/host/b4_gate_verify.py` | the independent verifier of a gate directory; a fresh-process CLI |
 | `b4/host/b4_sim.py` | mode `"gate"` (b4-gate-<n> labels, reached through `b4_gate.py` only; the exploration CLI unchanged), `standing_for(label)`, `STANDING_GATE`; `summarise_batch(..., standing=)`; **no constant changed; the archived explorations' `STANDING` text untouched** |
 | `b4/host/b4_sim_verify.py` | the report's standing bound to its label; the summary recomputed with it |
-| `b4/tests/test_b4_gate.py` | 22 tests at `4f3806d`; 24 after the first HOLD; 26 after the second (sections 4, 9, 9.1) |
+| `b4/tests/test_b4_gate.py` | 22 tests at `4f3806d`; 24 after the first HOLD; 26 after the second; 28 after the third (sections 4, 9, 9.1, 9.2) |
 | `b4/tests/test_b4_seeds.py` | two tests repaired (section 5) |
 | `b4/IMPORT.json` | 52 entries, refreshed |
-| `b4_gate_mutants.py` (here) | 39 mutants, one contract each (G30 after the re-run of unit 2b-4a's battery, section 6; G31–G36 after the first HOLD, section 9; G37–G39 after the second, section 9.1) |
+| `b4_gate_mutants.py` (here) | 41 mutants, one contract each (G30 after the re-run of unit 2b-4a's battery, section 6; G31–G36 after the first HOLD, section 9; G37–G39 after the second, section 9.1; G40–G41 after the third, section 9.2) |
 | `e2e_fixtures.py` (here) | the five end-to-end cases, fresh-process verified, copied as evidence (section 7); after the HOLD the six refreshed-hash negatives and their invalid controls (section 9) |
 
 ### 1.1 Where things live
@@ -217,7 +217,7 @@ fixture's "0.5" sat at production's 0.4987…; (2) totality and exact types were
 
 | workstream | correction |
 |---|---|
-| Cohen's d magnitude | `implied_cohen_d(mean, pvariance, S)` reproduces the production function's value from the recorded statistics: S < 2 → 0.0; variance 0 → +inf when the mean is positive, 0.0 otherwise; else mean / sqrt(pvariance · S / (S − 1)) — the **sample** standard deviation from the recorded **population** variance. A recorded finite d must lie within `D_REL_TOL = 1e-12` (relative, floor 1) of it. **The comparison is documented in the module and is not a criterion change:** the two routes to d agree to ≈ 2.2 × 10⁻¹⁶ on every one of the 140 archived delta records (the S = 32 exploration and the fixture archives), so 1e-12 is four orders above rounding noise and eleven below any difference a criterion could notice; the judgement always reads the **recorded** value (the production function's), the bound only refuses a record whose d is not that function's. The fixture now computes d by the same convention; the K5 boundary expectations are the production's (mean 1, population variance 4, S 200 → 0.49874843358150006, the FAIL side; the PASS-side boundary case uses variance 3.9 → 0.5051…). |
+| Cohen's d magnitude | `implied_cohen_d(mean, pvariance, S)` reproduces the production function's value from the recorded statistics: S < 2 → 0.0; variance 0 → +inf when the mean is positive, 0.0 otherwise; else mean / sqrt(pvariance · S / (S − 1)) — the **sample** standard deviation from the recorded **population** variance. A recorded finite d must lie within `D_REL_TOL = 1e-12` (relative, floor 1) of it. **What this tolerance is (corrected on the owner's review of `b49b2ec`, section 9.2):** a consistency check of a summary with its own statistics, measured against rounding on the 140 archived delta records (≤ 2.2 × 10⁻¹⁶ there — on those records, not a bound on every possible record); it is **not** the K5 threshold and **not** smaller than every difference a criterion can notice: a threshold comparison is discontinuous at its boundary, so near d = 0.5 a perturbation within the tolerance passes the check and can change a synthetic judgement (9.2). The judgement always reads the **recorded** value (the production function's); no epsilon is added to K5; a production archive's d is bound to its raw delta sequence by the archive-wide verifier's exact recomputation, which this summary-only check does not replace. The fixture now computes d by the same convention; the K5 boundary expectations are the production's (mean 1, population variance 4, S 200 → 0.49874843358150006, the FAIL side; the PASS-side boundary case uses variance 3.9 → 0.5051…). |
 | totality | `numeric_findings` walks the decoded JSON first — every float finite, every int within ±2^63 (a bool is not a number) — in the summary contract, the identity fields, the synthetic summary, the gate report and `judge_batch`, before any canonical serialisation, comparison or arithmetic; `_fin` / `_int` are safe on huge ints; the planned count is bounded (`S_MAX` = 1 000 000: the scan is enumerated to S). `10**400`, `1e400` and NaN at any path, the thresholds table included, are named findings. A synthetic summary carrying such a number is **refused** at the evidence boundary (no judgement could carry it into a report), with nothing written — the refusal is named. |
 | exact types | every copy and constant binding compares through `_same` (canonical JSON: 8.0 is never 8, 7.0 never the seed 7, 2.0 never tau 2, 16.0 never N 16, 15.0 never an address count, true never 1); K7's median is bound to the production median's own type (`statistics.median`); the five aliases and the bool aliases are named findings. |
 
@@ -246,6 +246,35 @@ invalid reports that verify clean and the last two named refusals with nothing w
 | `hold2_sim3_deep_verify.txt` | the committed `b4-sim-3` archive under the magnitude binding and the exact-type bindings | findings {}, clean true (its 70 delta records agree with the production formula to ≈ 2 × 10⁻¹⁶) |
 
 The first two rounds' raw files are kept unchanged.
+
+### 9.2 The owner's third HOLD on `b49b2ec` and the correction (commit `b543af1`; the raw files `hold3_*`)
+
+The owner's review (`owner_review_b49b2ec.md`, as relayed) accepted the d formula, the exact-type corrections and the G33 / G35 relocation, and
+held one P2 and one P3.
+
+| id | finding | correction |
+|---|---|---|
+| P2 derived arithmetic | finite inputs do not give finite results: `1e308 / 5e-324` is +inf, and `_ratio_findings` serialised the derived record (`ValueError`) — the contract, the judge and the synthetic writer all raised; with mean 1e308 and population variance 5e-324 the implied d overflowed to +inf and the magnitude check reduced to `inf > inf` (false), so a recorded −0.9 passed | `implied_cohen_d` is numerically safe: the sample variance, its root and the quotient are each checked finite (an overflow, or a root that underflows to zero, is `{"value": null, "special": "unrepresentable"}`), and `_stat_findings` names an unrepresentable implied d instead of comparing it; `_ratio_findings` checks its inputs finite and the quotient representable before any serialisation or comparison and names an overflow. The production special cases (S < 2 → 0.0; zero variance → +inf / 0.0) are kept. No source-range constant was added: the guard is on the derived result. |
+| P3 the tolerance wording | "eleven orders below any difference a criterion could notice" was false: a threshold comparison is discontinuous at its boundary | the module comment and 9.1 now say what the tolerance is (a consistency check of a summary with its statistics; the archived rounding measurement is of those records) and what it is not (the K5 threshold; a bound below every criterion difference); the limit is disclosed with the owner's example as a test |
+
+**The new tests** (`test_b4_gate.py`, 28): `test_derived_arithmetic_is_guarded_finite_inputs_that_overflow_are_named_findings` — both direct
+helper reproductions (1a, 1b), the safe implied d on an overflowing sample variance (never a silent 0.0), a representable tiny variance kept,
+the special cases, and the two whole-summary cases (`finite_ratio_overflow`, `overflowing_implied_d`: every input finite, the derived
+quotient objects) through the validator and the judge. `test_the_tolerance_is_a_consistency_check_not_a_criterion_the_boundary_limit_disclosed`
+— the owner's integer delta sequence `[20, −18, 7, −5, 2, 0] + [1] × 194` (mean 1, population variance 3.98, production d exactly 0.5): the
+synthetic summary with those statistics PASSES K5; both recorded copies moved to 0.5 − 5e-13 stay within the tolerance with no finding and
+K5 and the verdict become FAIL — asserted as the disclosed limit, with the frozen threshold asserted unchanged. End to end: the two
+derived-arithmetic cases as refreshed-hash negatives (refused by the fresh-process verifier) and as invalid controls.
+
+**Validation on the clean committed tree `b543af1`:**
+
+| file | what | result |
+|---|---|---|
+| `hold3_tests.txt` | the 21 modules, verbose | **Ran 284 tests, OK**, exit 0, no skip (8.9 min) |
+| `hold3_gate_mutants.txt` | G1–G41 on hermetic copies (1 903 s) | **40 / 41 killed**, each with Ran N > 0 and FAILED and the failing tests named; G29 SURVIVED (the accepted equivalent survivor); no edit miss, no baseline failure |
+| `hold3_e2e_run.txt`, `e2e_hold3/` | the five cases, sixteen negatives, sixteen controls | the five: verifier exit 0 both places; the sixteen negatives: **exit 1** both places; fourteen invalid controls: the tool exit 1 (verdict invalid), the verifier exit 0; the two refusal controls: refused by name, nothing written; derivation calls [0, 0] |
+| `hold3_import_check.txt` | `b4/IMPORT.json` | 52 entries, every digest equal, nothing untabled |
+| `hold3_sim3_deep_verify.txt` | the committed `b4-sim-3` archive under the derived-arithmetic guards | findings {}, clean true |
 
 ## 10. What this unit does not claim, and what remains withheld
 
