@@ -199,6 +199,31 @@ def with_replaced(obj, path, value):
     return o
 
 
+def finite_ratio_overflow(s: dict) -> None:
+    """Every input finite; the derived D / F ratio at B* overflows: D − R mean 1e308 over F − R mean 5e-324 (the arm values and the deltas'
+    own statistics kept coherent so that only the derived quotient objects)."""
+    v = s["per_budget"]["64"]
+    v["arm_values"]["D"] = {"mean": 1e308, "median": 1e308, "min": 1e308, "max": 1e308}
+    v["deltas"]["D_minus_R"] = _delta(1e308, 60, 70, 70, 4.0, 200)
+    v["arm_values"]["F"] = {"mean": 12.0 + 5e-324, "median": 12.0, "min": 7.0, "max": 17.0}
+    v["deltas"]["F_minus_R"] = _delta(5e-324, 150, 20, 30, 4.0, 200)
+    s["at_candidate_B_star"]["k3"]["D_over_F"] = {"numerator": 1e308, "denominator": 5e-324, "ratio": 1.0, "readable": True, "note": None}
+    s["at_candidate_B_star"]["k4"]["mean_F_minus_R"] = 5e-324
+    s["at_candidate_B_star"]["k4"]["F_over_Omega"] = sim._ratio(5e-324, 8.0)
+
+
+def overflowing_implied_d(s: dict) -> None:
+    """Every input finite; the implied d of delta1 at B* overflows (mean 1e308, population variance 5e-324) and a finite −0.9 is recorded."""
+    v = s["per_budget"]["64"]
+    v["arm_values"]["O"] = {"mean": 1e308, "median": 1e308, "min": 1e308, "max": 1e308}
+    d = v["deltas"]["delta1_O_minus_R"]
+    d.update(mean=1e308, median=1e308, population_variance=5e-324, cohen_d={"value": -0.9, "special": None})
+    v["deltas"]["delta2_O_minus_endtoend_F"].update(mean=1e308, median=1e308, cohen_d=bg.implied_cohen_d(1e308, 4.0, 200))
+    s["at_candidate_B_star"]["k2"]["population_variance_delta1"] = 5e-324
+    s["at_candidate_B_star"]["k3"]["X_over_O"] = sim._ratio(0.1, 1e308)
+    s["at_candidate_B_star"]["k5"]["cohen_d_delta1"] = {"value": -0.9, "special": None}
+
+
 # ------------------------------------------------------------------ the judge, pure
 class TheJudge(unittest.TestCase):
     def test_the_synthetic_summary_is_coherent_under_the_contract_and_passes_every_row_but_is_never_formal(self):
@@ -545,6 +570,50 @@ class TheJudge(unittest.TestCase):
                 self.assertEqual(j["verdict"]["status"], "invalid", (path, "bool alias of a float")); n_bool += 1
         self.assertGreater(n_int, 100); self.assertGreater(n_bool, 10)
 
+    def test_derived_arithmetic_is_guarded_finite_inputs_that_overflow_are_named_findings(self):
+        """The owner's review of b49b2ec, section 1: (1a) 1e308 / 5e-324 is +inf — the ratio record is a named finding, never a ValueError
+        from the canonical serialisation; (1b) mean 1e308 with population variance 5e-324 implies an unrepresentable d — a recorded −0.9 is a
+        named finding, never accepted through inf > inf; the same through a whole, otherwise finite summary, the judge and the artifact path;
+        the production special cases kept."""
+        f = []; bg._ratio_findings(sim._ratio(1.0, 2.0), f, "r", 1e308, 5e-324)
+        self.assertTrue(any("not representable" in x for x in f), f)
+        f = []; bg._stat_findings({"value": -0.9, "special": None}, f, "d", 1e308, 5e-324, 200)
+        self.assertTrue(any("not representable" in x for x in f), f)
+        self.assertEqual(bg.implied_cohen_d(1e308, 5e-324, 200), {"value": None, "special": bg.UNREPRESENTABLE})
+        self.assertEqual(bg.implied_cohen_d(1.0, 1e308, 200), {"value": None, "special": bg.UNREPRESENTABLE}, "the sample variance overflows: never a silent 0.0")
+        self.assertEqual(bg.implied_cohen_d(1.0, 5e-324, 200)["special"], None, "a representable tiny variance keeps its finite d")
+        self.assertEqual(bg.implied_cohen_d(5.0, 0, 200), {"value": None, "special": "+inf"}); self.assertEqual(bg.implied_cohen_d(5.0, 0, 1), {"value": 0.0, "special": None})
+        for name, mutate, part in (("finite_ratio_overflow", finite_ratio_overflow, "not representable (overflow)"),
+                                   ("overflowing_implied_d", overflowing_implied_d, "not representable (overflow / underflow)")):
+            s = synthetic_summary(); mutate(s)
+            self.assertEqual(bg.numeric_findings(s), [], name)                       # every input finite: only the derived arithmetic can object
+            f = bg.summary_contract_findings(s, 200)
+            self.assertTrue(any(part in x for x in f), (name, f))
+            j = bg.judge(synthetic_doc(s), "synthetic_summary")
+            self.assertEqual(j["verdict"]["status"], "invalid", name); self.assertEqual([r["status"] for r in j["rows"]], ["not_assessable"] * 10, name)
+
+    def test_the_tolerance_is_a_consistency_check_not_a_criterion_the_boundary_limit_disclosed(self):
+        """The owner's review of b49b2ec, section 2, recorded as a limit: the integer delta sequence [20, −18, 7, −5, 2, 0] + [1] × 194 has mean 1,
+        population variance 3.98 and the production d exactly 0.5; a synthetic summary with those statistics PASSES K5; both recorded copies of
+        d moved to 0.5 − 5e-13 stay within D_REL_TOL (no contract finding) and K5 and the verdict become FAIL. The tolerance validates the
+        consistency of a summary with its own statistics; it is not the K5 threshold, no epsilon is added to K5, and a production archive's d is
+        bound to its raw delta sequence by the archive-wide verifier's exact recomputation, which this summary-only check does not replace."""
+        deltas = [20, -18, 7, -5, 2, 0] + [1] * 194
+        self.assertEqual((gs.mean(deltas), statistics.pvariance(deltas), gs.cohen_d(deltas)), (1.0, 3.98, 0.5))
+        self.assertEqual(bg.implied_cohen_d(1.0, 3.98, 200), {"value": 0.5, "special": None})
+        s = synthetic_summary(d1=(1.0, 150, 20, 30), var1=3.98)
+        self.assertEqual(bg.summary_contract_findings(s, 200), [])
+        self.assertEqual(s["at_candidate_B_star"]["k5"]["cohen_d_delta1"], {"value": 0.5, "special": None})
+        self.assertEqual(rows_by_id(bg.judge(synthetic_doc(s), "synthetic_summary"))["K5"]["status"], "PASS")
+        below = {"value": 0.5 - 5e-13, "special": None}
+        for B in GRID:
+            s["per_budget"][str(B)]["deltas"]["delta1_O_minus_R"]["cohen_d"] = dict(below)
+        s["at_candidate_B_star"]["k5"]["cohen_d_delta1"] = dict(below)
+        self.assertEqual(bg.summary_contract_findings(s, 200), [], "within the consistency tolerance: no finding — the disclosed limit")
+        j = bg.judge(synthetic_doc(s), "synthetic_summary")
+        self.assertEqual((rows_by_id(j)["K5"]["status"], j["verdict"]["status"], j["formal"]), ("FAIL", "FAIL", False))
+        self.assertEqual(th.THRESHOLDS["K5"]["cohen_d_min"], 0.5, "the frozen threshold, unchanged: no epsilon")
+
     def test_the_committed_exploration_report_as_a_read_only_reference(self):
         """The S = 32 exploration of 2026-10-19 judged in memory: not formal (an exploration label, S = 32), the budget rule FAILS (no N),
         K6 FAILS on S, K9 FAILS on ff_srval's median 0.427083, K8 / K10 PASS. Nothing is written; the archive is not touched; the real
@@ -879,7 +948,8 @@ class EndToEnd(Base):
                  "float_scan_n_min": lambda s: s["per_budget"]["64"]["required_pairs"].__setitem__("n_min", 8.0),
                  "float_at_k7_values": lambda s: s["at_candidate_B_star"]["k7"].__setitem__("values", [15.0] * 200),
                  "huge_json_integer": lambda s: s["per_budget"]["64"]["k1"].__setitem__("omega_best_p95", 10 ** 400),
-                 "infinite_literal_in_thresholds": lambda s: s["thresholds_for_reference"]["K10"].__setitem__("tau", float("inf"))}
+                 "infinite_literal_in_thresholds": lambda s: s["thresholds_for_reference"]["K10"].__setitem__("tau", float("inf")),
+                 "finite_ratio_overflow": finite_ratio_overflow, "overflowing_implied_d": overflowing_implied_d}
         refused = {"huge_json_integer", "infinite_literal_in_thresholds"}                   # a number no judgement could carry: refused at the evidence boundary, never written
         for name, mutate in cases.items():
             syn = json.loads(self.originals[g][bg.SYNTHETIC_JSON])

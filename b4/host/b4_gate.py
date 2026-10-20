@@ -136,10 +136,15 @@ def _na(rid: str, criterion: str, method: str, threshold, reason: str, value=Non
 # semantic with a not-assessable seed) are kept as such; an absent number is a contract finding, never a landscape FAIL.
 INT_BOUND = 2 ** 63                                                    # a decoded JSON integer beyond this is out of every numeric contract here (and would overflow float conversion)
 S_MAX = 1_000_000                                                      # the planned count's bound in the contract (K6 plans 200; the scan is enumerated to S)
-D_REL_TOL = 1e-12                                                      # the relative tolerance binding a recorded finite Cohen's d to the value implied by its mean, variance and S (section 1.4 of the unit README):
-#   the two routes to d (the production function on the deltas; mean / sqrt(pvariance * S / (S - 1)) from the recorded statistics) agree to ~1e-16 on
-#   every archived record; 1e-12 is four orders above that rounding and eleven below any difference a criterion could notice. The judgement itself
-#   always reads the RECORDED value (the production function's); the bound only refuses a record whose d is not that function's value.
+D_REL_TOL = 1e-12                                                      # the relative tolerance (floor 1) of the CONSISTENCY check binding a recorded finite Cohen's d to the value implied by
+#   its mean, population variance and S. What it is: on the 140 archived delta records (the S = 32 exploration and the fixture archives) the two
+#   routes to d — the production function on the deltas, and mean / sqrt(pvariance · S / (S − 1)) from the recorded statistics — differ by at
+#   most 2.2e-16, a rounding discrepancy measured on THOSE records, not a bound on every possible record. What it is not: it is not the K5
+#   threshold and not smaller than every difference a criterion can notice — a threshold comparison is discontinuous at its boundary, so near
+#   d = 0.5 a summary perturbation within this tolerance passes the consistency check and can change a SYNTHETIC judgement (the owner's review
+#   of b49b2ec, section 2; test_b4_gate documents the example). The judgement reads the RECORDED value, the production function's, and no
+#   epsilon is added to K5. For a production archive the source authenticity and the exact replay / recomputation of the summary from the raw
+#   records are separate requirements of the archive-wide verifier; this check only refuses a summary whose d is not that function's value.
 
 
 def numeric_findings(obj, path: str = "$") -> list[str]:
@@ -207,15 +212,29 @@ def _sign_p(pos: int, neg: int) -> float:
     return sum(math.comb(n, i) for i in range(pos, n + 1)) / 2 ** n
 
 
+UNREPRESENTABLE = "unrepresentable"                                    # a derived value no finite float carries: a named finding wherever it arises, never a comparison
+
+
 def implied_cohen_d(mean, pvariance, S: int):
     """The value the production statistic (`b4_gate_stats.cohen_d`, by copy of host/b2_gate.py: mean / statistics.stdev, the SAMPLE standard
     deviation) takes on a delta list of S values with this mean and POPULATION variance: S < 2 → 0.0; variance 0 → +inf when the mean is
-    positive, 0.0 otherwise; else mean / sqrt(pvariance · S / (S − 1)). Returned as the encoded statistic."""
+    positive, 0.0 otherwise; else mean / sqrt(pvariance · S / (S − 1)). Returned as the encoded statistic. Numerically safe (the owner's
+    review of b49b2ec, section 1): every intermediate — the sample variance, its root, the quotient — is checked finite; an overflow or an
+    underflow to zero of the root is {"value": None, "special": "unrepresentable"}, which the caller names and never compares."""
     if S < 2:
         return {"value": 0.0, "special": None}
     if pvariance == 0:
         return {"value": None, "special": "+inf"} if mean > 0 else {"value": 0.0, "special": None}
-    return {"value": mean / math.sqrt(pvariance * S / (S - 1)), "special": None}
+    sample_var = pvariance * S / (S - 1)
+    if not math.isfinite(sample_var) or sample_var <= 0:
+        return {"value": None, "special": UNREPRESENTABLE}
+    sd = math.sqrt(sample_var)
+    if not math.isfinite(sd) or sd == 0:
+        return {"value": None, "special": UNREPRESENTABLE}
+    d = mean / sd
+    if not math.isfinite(d):
+        return {"value": None, "special": UNREPRESENTABLE}
+    return {"value": d, "special": None}
 
 
 def _stat_findings(enc, f: list[str], where: str, mean=None, var=None, S=None) -> None:
@@ -238,6 +257,8 @@ def _stat_findings(enc, f: list[str], where: str, mean=None, var=None, S=None) -
     if mean is None or var is None or S is None:
         return
     want = implied_cohen_d(mean, var, S)
+    if want["special"] == UNREPRESENTABLE:
+        f.append(f"{where}: the d implied by mean {mean!r}, population variance {var!r} and S = {S} is not representable (overflow / underflow): out of the contract's range"); return
     if want["special"] == "+inf":
         if s != "+inf":
             f.append(f"{where}: all deltas equal and positive encode +inf")
@@ -307,10 +328,16 @@ def _scan_findings(rp, f: list[str], where: str, S: int, T) -> None:
 
 
 def _ratio_findings(r, f: list[str], where: str, num, den) -> None:
+    """The ratio record held to the harness's own `_ratio` of its numerator and denominator. Numerically safe: a quotient that overflows
+    (finite inputs such as 1e308 / 5e-324 give +inf) is a named finding before any serialisation or comparison."""
+    if not (_fin(num) and _fin(den)):
+        f.append(f"{where}: its numerator / denominator are not finite numbers"); return
     want = sim._ratio(num, den)
+    if want["ratio"] is not None and not math.isfinite(want["ratio"]):
+        f.append(f"{where}: the ratio {num!r} / {den!r} is not representable (overflow): out of the contract's range"); return
     if not _exact(r, set(want), f, where):
         return
-    if sc.canonical(r) != sc.canonical(want):
+    if not _same(r, want):
         f.append(f"{where} is not the harness's ratio record of its numerator and denominator")
 
 

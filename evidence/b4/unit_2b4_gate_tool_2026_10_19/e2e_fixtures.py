@@ -7,7 +7,8 @@ b4_seeds.master_seed / pair_seeds guarded so that NO PRODUCTION SET can be deriv
   pass        — a SYNTHETIC summary (invented numbers, label b4-mech-7) judged PASS with formal = false;
   fail_b_star — the same synthetic summary with ff_srval's median coverage 0.427083 (the exploration's value): B* exists, K9 FAILS.
   negatives/… — incoherent or malformed summaries (the owner's reviews of 4cdc0c1 and a8f2da1: six, then the coordinated two-copy
-                Cohen's d, five numerically-equal float aliases, a huge integer, an infinite literal) written over the synthetic PASS
+                Cohen's d, five numerically-equal float aliases, a huge integer, an infinite literal; b49b2ec: two finite inputs whose
+                derived ratio / implied d overflow) written over the synthetic PASS
                 evidence with the PASS report kept and every digest refreshed: the fresh-process verifier must refuse each (exit 1);
   invalid_controls/… — the same judged directly: invalid reports that verify clean, or (a number no judgement could carry) a named refusal.
 Each gate directory is verified by the verifier CLI in a FRESH PROCESS (stdout and exit code kept), then the hermetic root's
@@ -26,7 +27,7 @@ import b4_gate as bg  # noqa: E402
 import b4_seeds as bs  # noqa: E402
 import b4_sim as sim  # noqa: E402
 from b4_test_fixtures import InjectingPort  # noqa: E402
-from test_b4_gate import SCHED1, SYN_LABEL, Clock, build_hermetic, git, regate, synthetic_doc, synthetic_summary  # noqa: E402
+from test_b4_gate import SCHED1, SYN_LABEL, Clock, build_hermetic, finite_ratio_overflow, git, overflowing_implied_d, regate, synthetic_doc, synthetic_summary  # noqa: E402
 
 NEGATIVES = {  # the owner's review of 4cdc0c1 (R1 / R2): incoherent or malformed summaries that must never become a clean PASS artifact
     "empty_N_scan": lambda s: s["per_budget"]["64"]["required_pairs"].__setitem__("scan", []),
@@ -46,6 +47,9 @@ NEGATIVES = {  # the owner's review of 4cdc0c1 (R1 / R2): incoherent or malforme
     "float_at_k7_values": lambda s: s["at_candidate_B_star"]["k7"].__setitem__("values", [15.0] * 200),
     "huge_json_integer": lambda s: s["per_budget"]["64"]["k1"].__setitem__("omega_best_p95", 10 ** 400),
     "infinite_literal_in_thresholds": lambda s: s["thresholds_for_reference"]["K10"].__setitem__("tau", float("inf")),
+    # the owner's review of b49b2ec (P2): finite inputs whose DERIVED arithmetic overflows
+    "finite_ratio_overflow": finite_ratio_overflow,
+    "overflowing_implied_d": overflowing_implied_d,
 }
 REFUSED = {"huge_json_integer", "infinite_literal_in_thresholds"}       # a number no judgement could carry: the direct judgement is a named refusal, nothing written
 COORDINATED_BASE = {"coordinated_false_cohen_pass"}                       # built over the owner's base (delta1 mean 0.5, variance 4: K5 FAILS on its own numbers)
