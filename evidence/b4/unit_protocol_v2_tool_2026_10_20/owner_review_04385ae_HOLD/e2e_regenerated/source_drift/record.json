@@ -1,0 +1,50 @@
+{
+ "digests": {
+  "batch": {
+   "STOPPED.json": {
+    "canonical_sha256": "25d27153b0c7cf225e8e39147ba47088505c394fb2bba3709d710e5b3a2ce045",
+    "sha256": "ef1f89aa49fb2771802f383bcb3ea721afccd9b5679ac1bfb4b273645b19fb1d",
+    "size": 1371
+   },
+   "manifest.json": {
+    "canonical_sha256": "92ee5019c45d470b2c04ce0ab3dfd8c5028fb2a9fd8c3aceba214f7898799fb3",
+    "sha256": "33837527717e53876dbd60d8d4f6fda1736aa7e51eb881be26b0b2bfb6773e2e",
+    "size": 41154
+   },
+   "pair_000/target_search.json": {
+    "canonical_sha256": "286da0cc6e6ab489f78ebf7cbc2ba9fcee5beb5219d64d13579a63eab89b761b",
+    "sha256": "40bac54acad272219c921b382aef3bfa7cc64a3b056b418585079923970c240f",
+    "size": 1777
+   },
+   "pair_000/task_setup.json": {
+    "canonical_sha256": "588ec68e41643dcabff186104a63ae0ba5e4b4b417429bda327f682b2a61d19d",
+    "sha256": "24e3a714198f8af49dc73275be09c0448840456846a069e7453c13ebef61b518",
+    "size": 2118
+   },
+   "seeds.json": {
+    "canonical_sha256": "3be9b343a57c4d91018dc3eae3e2915931037448a78163e056485038390f8065",
+    "sha256": "1810f4e7475ac5eb971a6df6f7456e84939154fc8926b0a3c825a61014feac49",
+    "size": 132353
+   },
+   "sim_report.json": {
+    "canonical_sha256": "f90313f81d5ba9e1d93ac14e02b2dc9370f7d57c1e1abac306ef46ef694dd6c7",
+    "sha256": "57c6ecad51b230b6ae837534ce9103e8bfb1abb1246173f6bad8ef0fc246a71c",
+    "size": 15068
+   }
+  }
+ },
+ "exit_code": 1,
+ "fresh_batch_exit": 0,
+ "pair_000": {
+  "status": "partial",
+  "task": "invalid"
+ },
+ "pair_000_files": [
+  "target_search.json",
+  "task_setup.json"
+ ],
+ "status": "invalid",
+ "stopped_kind": "target_invalid",
+ "stopped_role": "TARGET",
+ "stopped_stage": "target_setup"
+}

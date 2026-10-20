@@ -13,9 +13,14 @@ Per pair, BEFORE any arm starts, the harness (b4_sim) does, in this order:
   4. finish(...)          the PublicTask (no seed, no g*, no private record) and task.json: the public fields, the task digest,
                           the commitment to the two setup observations and the digests of the three setup files.
 Two logical observations, two physical port calls per pair, shared by the seven arms (the arms' own counts unchanged). A
-DOMAIN, a SourceRefusal or a provenance drift inside the setup is `invalid` (a contract break under section 9.1); the deadline
-or an interrupt is `incomplete`; a first observation that succeeded is kept when the second does not happen; a pair whose setup
-began is never recorded as `not_started`; nothing is redrawn and no task digest is manufactured for an incomplete setup.
+DOMAIN (nothing returned) is `invalid`; a RETURNED object that is not a valid target observation — malformed, a q cell that is not
+0 / 1 (a None anywhere in the grid, the init readout included), a source identity that is not the expected one (a drift) — is kept
+RAW in a quarantine (`target_search.QUARANTINE.json` / `target_holdout.QUARANTINE.json`, with its findings, the phase, the planted
+configuration and the digests) and THEN the pair is `invalid` (a contract break under section 9.1; the owner's review of 04385ae,
+R2 / R4); the deadline or an interrupt is `incomplete`; whatever was durably written before the stop is kept, in order: the pair's
+planned record carries `task_prefix` (how many of the four setup files exist, in this order) and `task_quarantine` (the phase whose
+return is quarantined, or null), and the verifier holds the files to exactly that ordered prefix (R3); a pair whose setup began is
+never recorded as `not_started`; nothing is redrawn and no task digest is manufactured for an incomplete setup.
 
 ISOLATION. The setup observations pass through no arm's ledger and no cartographer: they are pair-level records with their own
 offline reconstruction (`setup_findings`), never a specimen, never in a map, a population, a parent, a champion, a best-so-far
@@ -29,6 +34,7 @@ observation-authenticity limit of section 5.3).
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -73,22 +79,79 @@ def plan(pair: int, landscape_seed: int, operator_seed: int, mapping) -> dict:
             "note": "the private record of the pair's task: persisted before the first target observation; never read by an arm; the arms receive the PublicTask of task.json"}
 
 
-def observe_target(port: ex.ObservationPort, genome: int, stimulus, addresses: tuple, phase: str) -> dict:
+class ReturnRefusal(ex.SourceRefusal):
+    """The port RETURNED an object that is not a valid target observation (malformed, a q cell that is not 0 / 1 — a None included —
+    a source identity that is not the expected one: a drift). The returned object travels with the refusal so that the harness keeps
+    it in a quarantine BEFORE the pair is recorded invalid (the owner's review of 04385ae, R2 / R4): nothing returned is dropped,
+    nothing malformed or drifting is written as a valid observation, nothing is redrawn."""
+
+    def __init__(self, findings: list, returned):
+        super().__init__("; ".join(findings))
+        self.findings = list(findings)
+        self.returned = returned
+
+
+def observation_findings(trace, steps: int, expected_provenance_sha256: str | None = None) -> list[str]:
+    """TOTAL over whatever the port returned: the shape (an object with a `steps` list of `steps` objects each carrying a `q_after`
+    row of ELEMENTS cells), every cell 0 / 1 — a None anywhere in the grid, the init readout included, is a finding (section 7.1: a
+    formal target observation that contains a None or a malformed value is invalid; the mask does not narrow this check) — the source
+    identity well formed and, when given, equal to the expected one (the batch's source for the first call, the first observation's
+    for the second: a difference is a drift). A finding, never an exception."""
+    f: list[str] = []
+    if not isinstance(trace, dict):
+        return [f"the returned object is not an object ({type(trace).__name__})"]
+    hdr = {k: trace.get(k) for k in ("hypothesis", "mapping", "fabric")}
+    pf = ex.provenance_findings(hdr)
+    if pf:
+        f.append("the source identity is malformed: " + "; ".join(pf[:3]))
+    elif expected_provenance_sha256 is not None and ex.sha256_json(hdr) != expected_provenance_sha256:
+        f.append("the source identity is not the expected one (a drift inside the setup)")
+    rows = trace.get("steps")
+    if not isinstance(rows, list):
+        return f + ["steps is not a list"]
+    if len(rows) != steps:
+        f.append(f"{len(rows)} steps returned, {steps} in the stimulus")
+    for i, row in enumerate(rows):
+        q = row.get("q_after") if isinstance(row, dict) else None
+        if not (isinstance(q, list) and len(q) == bl.ELEMENTS):
+            f.append(f"step {i}: no q_after row of {bl.ELEMENTS} cells"); continue
+        for e, c in enumerate(q):
+            if c is None:
+                f.append(f"step {i}, element {e}: None — not a target observation under T-i (invalid, never narrowed)")
+            elif isinstance(c, bool) or c not in (0, 1):
+                f.append(f"step {i}, element {e}: {c!r} is not 0 / 1")
+    return f[:40]
+
+
+def observe_target(port: ex.ObservationPort, genome: int, stimulus, addresses: tuple, phase: str, expected_provenance_sha256: str | None = None) -> dict:
     """One setup observation through the execution port; the record carries the FULL q grid and the source identity. A DOMAIN
-    propagates as DomainRefusal, a malformed or drifting identity as SourceRefusal — the caller decides (invalid)."""
+    propagates as DomainRefusal (nothing was returned); a returned object that `observation_findings` refuses raises ReturnRefusal
+    CARRYING that object — the caller quarantines it, then records the pair invalid."""
     if phase not in PHASES:
         raise ValueError(phase)
     steps = list(stimulus)
     config = ex.genome_to_config(genome, addresses)
     trace = port.observe(config, steps)
-    hdr = {k: trace.get(k) for k in ("hypothesis", "mapping", "fabric")} if isinstance(trace, dict) else None
-    f = ex.provenance_findings(hdr)
+    f = observation_findings(trace, len(steps), expected_provenance_sha256)
     if f:
-        raise ex.SourceRefusal("the setup observation's source identity is malformed: " + "; ".join(f))
+        raise ReturnRefusal(f, trace)
+    hdr = {k: trace[k] for k in ("hypothesis", "mapping", "fabric")}
     grid = [list(s["q_after"]) for s in trace["steps"]]
     return {"phase": phase, "genome": genome, "genome_hex": ex.genome_hex(genome, len(addresses)), "config_sha256": ex.sha256_json(config),
             "stimulus_sha256": ex.sha256_json(steps), "trace_sha256": ex.sha256_json(grid), "q_grid": grid,
             "provenance": hdr, "provenance_sha256": ex.sha256_json(hdr), "fixture": hdr["hypothesis"]["fixture"], "fabric_kind": hdr["fabric"]["kind"]}
+
+
+def quarantine_context(phase: str, genome: int, addresses: tuple, stimulus, returned, expected_provenance_sha256: str | None) -> dict:
+    """The context a target quarantine carries beside the raw returned object: the phase, the planted configuration, the stimulus
+    digest, the expected source identity and the digest of the JSON projection of what came back (None when it has none)."""
+    steps = list(stimulus)
+    try:
+        returned_sha = ex.sha256_json(json.loads(json.dumps(returned, default=repr, allow_nan=False)))
+    except (TypeError, ValueError):
+        returned_sha = None
+    return {"phase": phase, "genome": genome, "genome_hex": ex.genome_hex(genome, len(addresses)), "config_sha256": ex.sha256_json(ex.genome_to_config(genome, addresses)),
+            "stimulus_sha256": ex.sha256_json(steps), "expected_provenance_sha256": expected_provenance_sha256, "returned_sha256": returned_sha}
 
 
 def source_fields(rec: dict) -> dict:
@@ -175,6 +238,8 @@ def setup_findings(plan_doc: dict, rec_search: dict | None, rec_holdout: dict | 
             grid = rec.get("q_grid")
             if not (isinstance(grid, list) and len(grid) == len(stim) and all(isinstance(r, list) and len(r) == bl.ELEMENTS and all(c is None or (c in (0, 1) and not isinstance(c, bool)) for c in r) for r in grid)):
                 f.append(f"{w}: the q grid is not {len(stim)} rows of {bl.ELEMENTS} cells in 0 / 1 / None"); continue
+            if any(c is None for row in grid for c in row):
+                f.append(f"{w}: the kept target observation carries a None cell — a formal target observation containing a None is invalid and is kept in quarantine, never as an observation (T-i, the whole grid, the init readout included)")
             if ex.sha256_json(grid) != rec.get("trace_sha256"):
                 f.append(f"{w}: the q grid does not hash to trace_sha256")
             pf = ex.provenance_findings(rec.get("provenance"))

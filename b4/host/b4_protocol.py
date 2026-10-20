@@ -56,9 +56,9 @@ HEX64 = lambda v: isinstance(v, str) and len(v) == 64 and all(c in "0123456789ab
 RECORD_SCHEMAS = {                                               # every record schema the method writes, by version and by the module that validates it
     "b4_sim_seeds": ("1.2.0", "b4/host/b4_seeds.py"), "b4_exposure_receipt": ("1.0.0", "b4/host/b4_seeds.py"), "b4_sim_init_failed": ("1.0.0", "b4/host/b4_seeds.py"),
     "b4_sim_manifest": ("1.2.0", "b4/host/b4_sim_schema.py"), "b4_sim_arm_result": ("1.0.0", "b4/host/b4_sim_schema.py"), "b4_sim_arm_audit": ("1.0.0", "b4/host/b4_sim_schema.py"),
-    "b4_sim_quarantine": ("1.0.0", "b4/host/b4_sim_schema.py"), "b4_sim_controls": ("1.0.0", "b4/host/b4_sim_schema.py"), "b4_sim_k7": ("1.0.0", "b4/host/b4_sim_schema.py"),
+    "b4_sim_quarantine": ("1.1.0", "b4/host/b4_sim_schema.py"), "b4_sim_controls": ("1.0.0", "b4/host/b4_sim_schema.py"), "b4_sim_k7": ("1.0.0", "b4/host/b4_sim_schema.py"),
     "b4_sim_k9": ("1.2.0", "b4/host/b4_sim_schema.py"), "b4_sim_k10": ("1.0.0", "b4/host/b4_sim_schema.py"), "b4_sim_curves": ("1.1.0", "b4/host/b4_sim_schema.py"),
-    "b4_sim_pair_index": ("1.1.0", "b4/host/b4_sim_schema.py"), "b4_sim_stopped": ("1.1.0", "b4/host/b4_sim_schema.py"), "b4_sim_report": ("1.1.0", "b4/host/b4_sim_schema.py"),
+    "b4_sim_pair_index": ("1.1.0", "b4/host/b4_sim_schema.py"), "b4_sim_stopped": ("1.2.0", "b4/host/b4_sim_schema.py"), "b4_sim_report": ("1.2.0", "b4/host/b4_sim_schema.py"),
     "b4_sim_task_setup": ("1.0.0", "b4/host/b4_sim_schema.py"), "b4_sim_target_observation": ("1.0.0", "b4/host/b4_sim_schema.py"), "b4_sim_task": ("1.0.0", "b4/host/b4_sim_schema.py"),
     "b4_gate_report": ("1.1.0", "b4/host/b4_gate.py"), "b4_gate_synthetic_summary": ("1.0.0", "b4/host/b4_gate.py"),
     "b4_gonogo_decision": ("1.0.0", "b4/host/b4_gonogo.py"), "b4_protocol_identity": ("1.0.0", "b4/host/b4_protocol.py"),

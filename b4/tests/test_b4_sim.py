@@ -15,6 +15,7 @@ before finalisation F8, an external interrupt); the archive-wide verifier on a t
 pure summary on hand rows. No K value is read as a result. No skip."""
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import shutil
@@ -554,6 +555,7 @@ class InvalidStops(Base):
         self.assertFalse((out / "pair_000/target_search.json").exists()); self.assertFalse((out / "pair_000/task.json").exists()); self.assertFalse((out / "pair_000/arm_R.result.json").exists())
         rep = self.report(res)
         self.assertEqual((rep["pairs"][0]["status"], rep["pairs"][0]["task"], rep["pairs"][0]["arms"]["R"]), ("partial", "invalid", "not_started"))
+        self.assertEqual((rep["pairs"][0]["task_prefix"], rep["pairs"][0]["task_quarantine"]), (1, None), "a DOMAIN returns nothing: no quarantine, the plan alone")
         self.assertIn("DOMAIN", res["stopped"]["detail"]); self.assertIn("never a redraw", res["stopped"]["detail"])
         self.assertEqual(sv.verify_run_dir(out, deep=True), {})
         self.tearDown()
@@ -564,35 +566,95 @@ class InvalidStops(Base):
         self.assertEqual((res["status"], res["stopped"]["kind"]), ("invalid", "target_invalid"))
         out = Path(res["out"])
         self.assertTrue((out / "pair_000/target_search.json").exists(), "the first observation is kept"); self.assertFalse((out / "pair_000/target_holdout.json").exists())
-        self.assertEqual(self.report(res)["pairs"][0]["task"], "invalid")
+        p0 = self.report(res)["pairs"][0]
+        self.assertEqual((p0["task"], p0["task_prefix"], p0["task_quarantine"]), ("invalid", 2, None))
         self.assertEqual(sv.verify_run_dir(out, deep=True), {})
 
     def test_a_source_drift_inside_the_setup_and_a_setup_port_that_calls_more_than_twice(self):
-        """A second setup observation from another source identity (the fabric kind changed between the two calls) is `target_invalid`; the
-        first record is kept; nothing is redrawn. A setup port that is called a third time is named."""
+        """R2 (the owner's review of 04385ae): a second setup observation from another source identity — a VALID-SHAPED trace whose fabric
+        identity differs — is `target_invalid`; the RETURNED object is kept raw in target_holdout.QUARANTINE.json with its findings and its
+        context BEFORE the stop; the first record is kept; the plan carries prefix 2 / quarantine target_holdout; nothing is redrawn; the
+        archive verifies. (A setup port that is called a third time is the next test's.)"""
         class Drifting(ex.ObservationPort):
             def observe(self, config, stimulus):
                 t = super().observe(config, stimulus)
                 if self.calls == 2:
-                    t["fabric"] = dict(t["fabric"], kind="dropout")
+                    t["fabric"] = dict(t["fabric"], effect_sha256="a" * 64); t["owner_raw_marker"] = "returned_target_with_drift"
                 return t
 
         def factory(fabric, role, pair):
             return Drifting(fabric) if (pair, role) == (0, sim.SETUP_ROLE) else ex.ObservationPort(fabric)
         res = self.run_with(factory)
-        self.assertEqual((res["status"], res["stopped"]["kind"], res["stopped"]["role"]), ("invalid", "target_invalid", sim.SETUP_ROLE)); self.assertIn("drift", res["stopped"]["detail"])
+        self.assertEqual((res["status"], res["stopped"]["kind"], res["stopped"]["role"]), ("invalid", "target_invalid", sim.SETUP_ROLE))
+        self.assertIn("drift", res["stopped"]["detail"]); self.assertIn("target_holdout.QUARANTINE.json", res["stopped"]["detail"])
         out = Path(res["out"])
         self.assertTrue((out / "pair_000/target_search.json").exists()); self.assertFalse((out / "pair_000/target_holdout.json").exists())
-        self.assertEqual(self.report(res)["pairs"][0]["task"], "invalid")
+        q = json.loads((out / "pair_000/target_holdout.QUARANTINE.json").read_text())
+        self.assertEqual(sc.quarantine_findings(q), [])
+        self.assertEqual((q["role"], q["stage"], q["context"]["phase"], q["raw"]["owner_raw_marker"], q["raw"]["fabric"]["effect_sha256"]), (sim.SETUP_ROLE, "target_setup", "target_holdout", "returned_target_with_drift", "a" * 64))
+        self.assertTrue(any("drift" in x for x in q["findings"])); self.assertEqual(q["context"]["returned_sha256"], ex.sha256_json(q["raw"]))
+        first = json.loads((out / "pair_000/target_search.json").read_text())
+        self.assertEqual(q["context"]["expected_provenance_sha256"], first["provenance_sha256"]); self.assertEqual(q["context"]["genome"], first["genome"])
+        p0 = self.report(res)["pairs"][0]
+        self.assertEqual((p0["status"], p0["task"], p0["task_prefix"], p0["task_quarantine"]), ("partial", "invalid", 2, "target_holdout"))
         self.assertEqual(sv.verify_run_dir(out, deep=True), {})
+
+    def test_a_returned_object_that_is_not_a_target_observation_is_quarantined_then_invalid(self):
+        """R2 / R4: a malformed step at the first call, a None in the INIT readout (outside the scored mask), a cell of 2, a non-finite
+        (non-serialisable) cell, a non-object at the second call, a truncated grid at the second call — each RETURN is kept raw with its
+        findings and context (raw null + repr when it cannot be serialised), the pair is `invalid` with the exact prefix and the quarantined
+        phase recorded, no observation file is written for that phase, the stop names the quarantine file, the archive verifies clean."""
+        class Alter(ex.ObservationPort):
+            def __init__(self, fabric, kind):
+                super().__init__(fabric); self.kind = kind
+
+            def observe(self, config, stimulus):
+                t = super().observe(config, stimulus)
+                if self.kind == "malformed" and self.calls == 1:
+                    t["steps"][0] = {"owner_raw_marker": "returned_malformed_target"}
+                if self.kind == "init_none" and self.calls == 1:
+                    t["steps"][0]["q_after"][0] = None
+                if self.kind == "bad_cell" and self.calls == 1:
+                    t["steps"][2]["q_after"][5] = 2
+                if self.kind == "nan" and self.calls == 1:
+                    t["steps"][1]["q_after"][1] = float("nan")
+                if self.kind == "not_an_object" and self.calls == 2:
+                    return ["not", "an", "object"]
+                if self.kind == "short_second" and self.calls == 2:
+                    t["steps"] = t["steps"][:3]
+                return t
+        for kind, phase, needle in (("malformed", "target", "no q_after"), ("init_none", "target", "element 0: None"), ("bad_cell", "target", "2 is not 0 / 1"), ("nan", "target", "nan"),
+                                    ("not_an_object", "target_holdout", "not an object"), ("short_second", "target_holdout", "steps returned")):
+            with self.subTest(kind=kind):
+                res = self.run_with(lambda fabric, role, pair, kind=kind: Alter(fabric, kind) if (pair, role) == (0, sim.SETUP_ROLE) else ex.ObservationPort(fabric))
+                self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"], res["stopped"]["role"], res["stopped"]["stage"]), ("invalid", 1, "target_invalid", sim.SETUP_ROLE, "target_setup"), kind)
+                out = Path(res["out"]); qname = {"target": "target_search", "target_holdout": "target_holdout"}[phase] + ".QUARANTINE.json"
+                want = ["task_setup.json"] + (["target_search.json"] if phase == "target_holdout" else []) + [qname]
+                self.assertEqual(sorted(p.name for p in (out / "pair_000").iterdir()), sorted(want), kind)
+                q = json.loads((out / f"pair_000/{qname}").read_text())
+                self.assertEqual(sc.quarantine_findings(q), []); self.assertEqual((q["role"], q["stage"], q["context"]["phase"]), (sim.SETUP_ROLE, "target_setup", phase))
+                self.assertTrue(any(needle in x for x in q["findings"]), (kind, q["findings"]))
+                if kind == "nan":
+                    self.assertIsNone(q["raw"]); self.assertIsNone(q["context"]["returned_sha256"]); self.assertIn("nan", q["raw_repr"])
+                elif kind == "malformed":
+                    self.assertEqual(q["raw"]["steps"][0]["owner_raw_marker"], "returned_malformed_target"); self.assertEqual(q["context"]["returned_sha256"], ex.sha256_json(q["raw"]))
+                elif kind == "init_none":
+                    self.assertIsNone(q["raw"]["steps"][0]["q_after"][0])
+                elif kind == "not_an_object":
+                    self.assertEqual(q["raw"], ["not", "an", "object"])
+                p0 = self.report(res)["pairs"][0]
+                self.assertEqual((p0["status"], p0["task"], p0["task_prefix"], p0["task_quarantine"], p0["arms"]["R"]), ("partial", "invalid", 1 if phase == "target" else 2, phase, "not_started"), kind)
+                self.assertIn(qname, res["stopped"]["detail"])
+                self.assertEqual(sv.verify_run_dir(out, deep=True), {}, kind)
+                self.tearDown()
 
     def test_a_setup_that_observes_more_than_twice_is_named(self):
         """Section 7.1: the setup makes exactly two port calls per pair; a setup observation routine that made a third call (here: the target
         observation wrapped to observe once more) is `target_invalid` — the shared cost is two observations, never more."""
         real = bt.observe_target
 
-        def thrice(port, genome, stimulus, addresses, phase):
-            rec = real(port, genome, stimulus, addresses, phase)
+        def thrice(port, genome, stimulus, addresses, phase, *rest):
+            rec = real(port, genome, stimulus, addresses, phase, *rest)
             if phase == "target_holdout":
                 port.observe(ex.genome_to_config(genome, addresses), list(stimulus))          # an extra, unrecorded observation
             return rec
@@ -769,6 +831,49 @@ class IncompleteStops(Base):
         out = Path(res["out"])
         self.assertTrue((out / "pair_000/target_search.json").exists()); self.assertFalse((out / "pair_000/target_holdout.json").exists())
         self.assertEqual(self.report(res)["pairs"][0]["task"], "partial")
+        self.assertEqual(sv.verify_run_dir(out, deep=True), {})
+
+    def test_an_interrupt_or_the_deadline_at_every_persistence_boundary_keeps_the_ordered_prefix(self):
+        """R3 (the owner's review of 04385ae): at EVERY boundary of the setup — right after each of the four writes returned, during each
+        of the two observations, at the deadline check before each observation — the pair's planned record carries the durable ordered
+        prefix (task_prefix) and exactly those files are on disk; every archive verifies clean. A prefix of three (both observations
+        written, the interrupt before task.json) is a genuine partial, not an unaccounted file."""
+        original = sim.Batch.write
+
+        def after(suffix):
+            def write(self_, rel, doc, validator):
+                e = original(self_, rel, doc, validator)
+                if rel.endswith(suffix):
+                    raise KeyboardInterrupt()
+                return e
+            return write
+        cases = [("after task_setup.json", "/task_setup.json", None, "in_progress", 1), ("during the first observation", None, 1, "in_progress", 1),
+                 ("after target_search.json", "/target_search.json", None, "partial", 2), ("during the second observation", None, 2, "partial", 2),
+                 ("after target_holdout.json", "/target_holdout.json", None, "partial", 3), ("after task.json", "/task.json", None, "complete", 4)]
+        for name, suffix, at, task_state, prefix in cases:
+            with self.subTest(boundary=name):
+                factory = (lambda fabric, role, pair, at=at: RaisingPort(fabric, at, KeyboardInterrupt()) if (pair, role) == (0, sim.SETUP_ROLE) else ex.ObservationPort(fabric)) if at else None
+                try:
+                    with (mock.patch.object(sim.Batch, "write", after(suffix)) if suffix else contextlib.nullcontext()):
+                        res = self.run_with(factory)
+                    self.assertEqual((res["status"], res["exit_code"], res["stopped"]["kind"], res["stopped"]["stage"], res["stopped"]["role"]), ("incomplete", 3, "interrupted", "target_setup", sim.SETUP_ROLE), (name, res.get("reason")))
+                    out = Path(res["out"]); p0 = self.report(res)["pairs"][0]
+                    self.assertEqual((p0["status"], p0["task"], p0["task_prefix"], p0["task_quarantine"]), ("partial", task_state, prefix, None), name)
+                    self.assertEqual(sorted(p.name for p in (out / "pair_000").iterdir()), sorted(SETUP_FILES[:prefix]), name)
+                    self.assertEqual(sv.verify_run_dir(out, deep=True), {}, name)
+                finally:
+                    self.tearDown()
+        # the deadline at the check before the FIRST observation (the check before the second is the previous test's)
+        clock = Clock(step=0.0)
+
+        def expire_first(fabric, role, pair):
+            if (pair, role) == (0, sim.SETUP_ROLE):
+                clock.jump_at, clock.jump = clock.calls + 1, 10 ** 6
+            return ex.ObservationPort(fabric)
+        res = self.run_with(expire_first, dl=60, clock=clock)
+        self.assertEqual((res["status"], res["stopped"]["kind"], res["stopped"]["stage"]), ("incomplete", "deadline", "target_setup"))
+        out = Path(res["out"]); p0 = self.report(res)["pairs"][0]
+        self.assertEqual((p0["task"], p0["task_prefix"]), ("in_progress", 1)); self.assertEqual(sorted(p.name for p in (out / "pair_000").iterdir()), ["task_setup.json"])
         self.assertEqual(sv.verify_run_dir(out, deep=True), {})
 
     def test_the_deadline_inside_k9(self):
@@ -1291,6 +1396,81 @@ class TheArchiveVerifier(Base):
         self.assertEqual(sorted((p.name, sim.sha_file(p)) for p in old.iterdir() if p.is_file()), before, "the committed archive is untouched")
         self.assertEqual(self.findings(), {}, "restored")
 
+    def test_a_later_setup_file_without_its_prerequisite_is_refused_by_name(self):
+        """R3, the owner's forgeries: an invalid setup archive with target_search.json removed and a valid target_holdout.json put in its
+        place, every report digest refreshed — refused by name (the prefix file missing, the later file unaccounted for); a prefix-3 partial
+        with its holdout removed — refused; its task_prefix lowered to 2 — a genuine prefix again, clean; raised back to 3 — refused; a
+        quarantined return the plan does not carry — refused; an inconsistent state / prefix — refused by the report validator."""
+        def refresh(out):
+            rep = json.loads((out / "sim_report.json").read_text())
+            rep["files"] = [entry(p, str(p.relative_to(out))) for p in sorted(out.rglob("*")) if p.is_file() and p.name != "sim_report.json"]
+            rep["identity"]["seeds_sha256"] = sim.sha_file(out / "seeds.json"); rep["identity"]["manifest_sha256"] = sim.sha_file(out / "manifest.json")
+            (out / "sim_report.json").write_text(json.dumps(rep, sort_keys=True, indent=1) + "\n")
+
+        def set_plan(out, **kw):
+            rep = json.loads((out / "sim_report.json").read_text()); rep["pairs"][0].update(kw); rep["stopped"]["planned"][0].update(kw)
+            (out / "sim_report.json").write_text(json.dumps(rep, sort_keys=True, indent=1) + "\n")
+            st = json.loads((out / "STOPPED.json").read_text()); st["planned"][0].update(kw)
+            (out / "STOPPED.json").write_text(json.dumps(st, sort_keys=True, indent=1) + "\n")
+            refresh(out)
+
+        def names(out, *needles):
+            f = sv.verify_run_dir(out, deep=True)
+            for n in needles:
+                self.assertTrue(any(n in where or n in x for where, xs in f.items() for x in xs), (n, f))
+            return f
+
+        class Drifting(ex.ObservationPort):
+            def observe(self, config, stimulus):
+                t = super().observe(config, stimulus)
+                if self.calls == 2:
+                    t["fabric"] = dict(t["fabric"], effect_sha256="a" * 64)
+                return t
+        drift = self.run_with(lambda fabric, role, pair: Drifting(fabric) if (pair, role) == (0, sim.SETUP_ROLE) else ex.ObservationPort(fabric), out=self.ns / "b4-mech-1_drift_src")
+        self.assertEqual(drift["status"], "invalid"); self.tearDown()
+        forged = self.ns / "b4-mech-1_impossible_order"; shutil.copytree(drift["out"], forged)
+        (forged / "pair_000/target_search.json").unlink(); shutil.copy(self.out_dir / "pair_000/target_holdout.json", forged / "pair_000/target_holdout.json"); refresh(forged)
+        names(forged, "pair_000/target_search.json", "required by pair 0's recorded state", "not a file any pair's recorded state accounts for")
+        shutil.rmtree(forged)
+        q = self.ns / "b4-mech-1_quarantine_unrecorded"; shutil.copytree(drift["out"], q); set_plan(q, task_quarantine=None)
+        names(q, "not a file any pair's recorded state accounts for"); set_plan(q, task_quarantine="target_holdout", task_prefix=1)
+        names(q, "does not carry the durable ordered prefix"); shutil.rmtree(q); self.tearDown()
+        original = sim.Batch.write
+
+        def write(self_, rel, doc, validator):
+            e = original(self_, rel, doc, validator)
+            if rel.endswith("/target_holdout.json"):
+                raise KeyboardInterrupt()
+            return e
+        with mock.patch.object(sim.Batch, "write", write):
+            three = self.run_with(None, out=self.ns / "b4-mech-1_prefix3_src")
+        self.assertEqual((three["status"], self.report(three)["pairs"][0]["task_prefix"]), ("incomplete", 3)); self.tearDown()
+        p3 = self.ns / "b4-mech-1_prefix3_forged"; shutil.copytree(three["out"], p3)
+        (p3 / "pair_000/target_holdout.json").unlink(); refresh(p3)
+        names(p3, "pair_000/target_holdout.json", "required by pair 0's recorded state")
+        set_plan(p3, task_prefix=2); self.assertEqual(sv.verify_run_dir(p3, deep=True), {}, "a genuine prefix of two: the contract is the recorded prefix, not a list of allowed files")
+        set_plan(p3, task_prefix=3); names(p3, "required by pair 0's recorded state")
+        shutil.copy(three["out"] + "/pair_000/target_holdout.json", p3 / "pair_000/target_holdout.json"); set_plan(p3, task_prefix=2)
+        names(p3, "pair_000/target_holdout.json", "not a file any pair's recorded state accounts for")
+        set_plan(p3, task_prefix=4); names(p3, "does not carry the durable ordered prefix")
+        shutil.rmtree(p3); self.tearDown()
+
+    def test_the_archive_holds_real_files_in_pair_directories_only(self):
+        """A subdirectory inside a pair, a directory that is not a pair directory, a pair directory the plan does not have, a symlink — each
+        is named (a directory entry is not ignored because it holds no file)."""
+        out = self.out_dir
+        for make, undo, needle in (((out / "pair_000/junk").mkdir, (out / "pair_000/junk").rmdir, "not a pair directory"),
+                                   ((out / "junk").mkdir, (out / "junk").rmdir, "not a pair directory"),
+                                   ((out / "pair_007").mkdir, (out / "pair_007").rmdir, "the plan does not have"),
+                                   (lambda: (out / "pair_000/link.json").symlink_to(out / "pair_000/k7.json"), (out / "pair_000/link.json").unlink, "a symlink")):
+            make()
+            try:
+                f = sv.verify_run_dir(out, deep=False)
+                self.assertTrue(any(needle in x for xs in f.values() for x in xs), (needle, f))
+            finally:
+                undo()
+        self.assertEqual(self.findings(deep=False), {}, "restored")
+
     def test_the_cli_of_the_verifier(self):
         import io
         from contextlib import redirect_stdout
@@ -1336,9 +1516,31 @@ class TheSummaryAndTheValidators(unittest.TestCase):
         s2, _ = sim.summarise_batch(rows, 2)
         self.assertEqual((s2["k9"]["per_semantic"]["sr_kind"]["not_assessable_seeds"], s2["k9"]["per_semantic"]["sr_kind"]["median_coverage_over_all_S"]), (1, None), "one not-assessable seed: the median is not assessable")
 
+    def test_the_quarantine_record_carries_a_context_for_a_target_return_only_and_the_prefix_contract(self):
+        base = {"schema": "b4_sim_quarantine", "schema_version": "1.1.0", "pair": 0, "role": "R", "stage": "engine_return", "findings": ["x"], "raw": {"a": 1}, "raw_repr": "r", "context": None, "written_utc": "t"}
+        self.assertEqual(sc.quarantine_findings(base), [])
+        self.assertTrue(sc.quarantine_findings(dict(base, schema_version="1.0.0")), "the 1.0.0 record without a context is another version")
+        self.assertTrue(any("null for every quarantine" in x for x in sc.quarantine_findings(dict(base, context={}))))
+        ctx = {"phase": "target", "genome": 5, "genome_hex": ex.genome_hex(5, 21), "config_sha256": "0" * 64, "stimulus_sha256": "1" * 64, "expected_provenance_sha256": None, "returned_sha256": ex.sha256_json({"a": 1})}
+        t = dict(base, role="TARGET", stage="target_setup", context=ctx)
+        self.assertEqual(sc.quarantine_findings(t), [])
+        self.assertTrue(any("context" in x for x in sc.quarantine_findings(dict(t, context=None))))
+        self.assertTrue(any("returned_sha256" in x for x in sc.quarantine_findings(dict(t, context=dict(ctx, returned_sha256="2" * 64)))))
+        self.assertTrue(any("returned_sha256" in x for x in sc.quarantine_findings(dict(t, raw=None))))
+        self.assertEqual(sc.quarantine_findings(dict(t, raw=None, context=dict(ctx, returned_sha256=None))), [], "an unserialisable return: raw null, no digest")
+        self.assertTrue(any("target_setup" in x for x in sc.quarantine_findings(dict(t, stage="engine_return"))))
+        self.assertTrue(any("context" in x for x in sc.quarantine_findings(dict(t, context=dict(ctx, phase="x")))))
+        ok = sc.setup_prefix_ok
+        for state, prefixes in (("not_started", {0}), ("in_progress", {1}), ("partial", {2, 3}), ("complete", {4}), ("invalid", {1, 2, 3})):
+            for n in range(5):
+                self.assertEqual(ok(state, n, None), n in prefixes, (state, n))
+        self.assertTrue(ok("invalid", 1, "target")); self.assertTrue(ok("invalid", 2, "target_holdout"))
+        for state, n, q in (("invalid", 2, "target"), ("invalid", 1, "target_holdout"), ("invalid", 3, "target_holdout"), ("partial", 2, "target_holdout"), ("complete", 4, "target")):
+            self.assertFalse(ok(state, n, q), (state, n, q))
+
     def test_a_summary_with_a_verdict_key_is_refused_by_the_report_validator(self):
-        plan = {"pair": 0, "landscape_seed": 7, "operator_seed": 11, "status": "complete", "task": "complete", "arms": {r: "audited" for r in ROLES}, "k7": "complete", "k9": "complete", "k10": "complete"}
-        rep = {"schema": "b4_sim_report", "schema_version": "1.1.0", "status": "complete", "label": "b4-mech-1", "fixture": True, "count": 1, "head": "0" * 40, "generated_utc": "x",
+        plan = {"pair": 0, "landscape_seed": 7, "operator_seed": 11, "status": "complete", "task": "complete", "task_prefix": 4, "task_quarantine": None, "arms": {r: "audited" for r in ROLES}, "k7": "complete", "k9": "complete", "k10": "complete"}
+        rep = {"schema": "b4_sim_report", "schema_version": "1.2.0", "status": "complete", "label": "b4-mech-1", "fixture": True, "count": 1, "head": "0" * 40, "generated_utc": "x",
                "deadline": {"seconds": 60, "elapsed_s": 1.5, "checks": 3, "expired": False, "first_expired_at_s": None, "clock": "time.monotonic"},
                "standing": "not a gate verdict", "thresholds": {}, "identity": {"protocol_sha256": "0" * 64}, "pairs": [plan], "files": [], "stopped": None,
                "summary": {"k1_pass": True}, "missing": [], "self_validation": {}}

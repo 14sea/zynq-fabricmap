@@ -79,7 +79,7 @@ class ThePins(unittest.TestCase):
         """The new pin / identity contract (the owner's choice 6, 2026-10-20): the document's first line carries the revision the table was written
         against (an informational constant, not a table field); the table's source text carries no version; the thresholds digest and the
         protocol identity's digest do not move when the revision text moves."""
-        self.assertEqual(th.ARCHITECTURE_REVISION, "v0.2.0")
+        self.assertRegex(th.ARCHITECTURE_REVISION, th.ARCHITECTURE_REVISION_RE, "no revision literal here either: this test must stay green across a documentation-only revision (R1)")
         self.assertIn(f"(DRAFT {th.ARCHITECTURE_REVISION},", self.doc.splitlines()[0])
         self.assertNotIn("v0.", th.THRESHOLDS["source"]); self.assertNotIn("v0.", th.ARCHITECTURE_SECTION)
         self.assertNotIn("architecture_revision", th.THRESHOLDS)
@@ -87,6 +87,20 @@ class ThePins(unittest.TestCase):
         p = bp.identity(); q = dict(p, architecture_revision="v0.3.0")
         self.assertEqual(bp.protocol_sha256(p), bp.protocol_sha256(q)); self.assertEqual(bp.compare(q, p), [])
         self.assertEqual(p["architecture_revision"], th.ARCHITECTURE_REVISION)
+        # R1 (the owner's review of 04385ae): the revision is READ from b4/architecture_revision.json — a file outside the identity's inventory,
+        # not a tool file — so that a documentation-only revision touches no inventoried byte (the fresh-interpreter workflow is test_b4_protocol's)
+        self.assertEqual(th.read_architecture_revision(R), th.ARCHITECTURE_REVISION)
+        self.assertNotIn(th.ARCHITECTURE_REVISION_REL, bp.inventory()); self.assertFalse(th.ARCHITECTURE_REVISION_REL.startswith(("b4/host/", "b4/schemas/")))
+        for tool in sorted((R / "b4/host").glob("*.py")):
+            self.assertNotIn('ARCHITECTURE_REVISION = "v', tool.read_text(), f"{tool.name}: the revision literal is not in a tool file")
+        import tempfile
+        with tempfile.TemporaryDirectory(prefix="b4rev_") as tmp:
+            (Path(tmp) / "b4").mkdir()
+            with self.assertRaises(RuntimeError):
+                th.read_architecture_revision(Path(tmp))
+            (Path(tmp) / th.ARCHITECTURE_REVISION_REL).write_text('{"schema": "b4_architecture_revision", "document": "docs/b4_architecture.md", "revision": "0.2"}')
+            with self.assertRaises(RuntimeError):
+                th.read_architecture_revision(Path(tmp))
 
     def test_a_changed_number_would_be_caught(self):
         rows = dict(self.rows)

@@ -7,6 +7,7 @@ missing report, an archive of another version); NO PRODUCTION SET IS DERIVED (th
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -31,7 +32,7 @@ GRID = th.GRID
 
 
 def report(summary: dict | None, S=32, status="complete", label="b4-sim-9", fixture=False, pairs_complete=True) -> dict:
-    plan = [{"pair": r, "landscape_seed": 100 + r, "operator_seed": 200 + r, "status": "complete" if pairs_complete else "partial", "task": "complete",
+    plan = [{"pair": r, "landscape_seed": 100 + r, "operator_seed": 200 + r, "status": "complete" if pairs_complete else "partial", "task": "complete", "task_prefix": 4, "task_quarantine": None,
              "arms": {x: "audited" for x in sc.ROLES}, "k7": "complete", "k9": "complete", "k10": "complete"} for r in range(S)]
     return {"status": status, "label": label, "fixture": fixture, "count": S, "pairs": plan, "summary": summary, "head": "0" * 40, "generated_utc": "x"}
 
@@ -143,6 +144,55 @@ class EndToEnd(unittest.TestCase):
             (out / gg.DECISION_JSON).write_bytes(original); (out / gg.DECISION_MD).write_bytes(gg.render_md(json.loads(original)).encode("utf-8"))
         self.assertEqual(gg.verify_gonogo_dir(out, deep=False), {}, "restored")
         r2 = gg.write_decision(self.root, self.batch, out); self.assertEqual(r2["status"], "refused"); self.assertIn("new directory", r2["reason"])
+
+    def test_the_evidence_contract_is_held_exactly_in_type_namespace_and_entries(self):
+        """R5 of the owner's review of 04385ae, with every hash and the markdown refreshed after each alteration: count 1 -> 1.0, fixture
+        true -> 1, S 2 -> 2.0, the batch path escaping the root (`../escaped_batch`, an identical archive outside), an absolute path, a `..`
+        inside the namespace, a symlinked batch directory — each named by the record validator / the verifier AND refused by the CLI in a
+        fresh process; the gonogo directory's ENTRIES held: a subdirectory, an extra file, a symlink, an unfinished write — each named."""
+        out = self.gns / "b4-mech-1_contract"
+        r = gg.write_decision(self.root, self.batch, out); self.assertEqual(r["status"], "no_decision", r.get("reason"))
+        git(self.root, "add", "-A"); git(self.root, "commit", "-q", "-m", "gonogo contract")
+        original = (out / gg.DECISION_JSON).read_bytes()
+
+        def alter(mutate):
+            d = json.loads(original); mutate(d)
+            (out / gg.DECISION_MD).write_bytes(gg.render_md(d).encode("utf-8")); b = (out / gg.DECISION_MD).read_bytes()
+            d["files"] = [{"path": gg.DECISION_MD, "sha256": gg._sha(b), "size": len(b)}]
+            (out / gg.DECISION_JSON).write_bytes(sim.json_text(d)); return d
+        with tempfile.TemporaryDirectory(prefix="b4escaped_") as outside:
+            escaped = Path(outside) / "escaped_batch"; shutil.copytree(self.batch, escaped)
+            link = self.ns / "b4-mech-1_linked"; link.symlink_to(escaped)
+            try:
+                for name, mutate, needle in (("float count", lambda d: d["batch"].__setitem__("count", 1.0), "exact types"),
+                                             ("integer fixture", lambda d: d["batch"].__setitem__("fixture", 1), "exact types"),
+                                             ("float S", lambda d: d.__setitem__("S", 2.0), "label / S / fixture"),
+                                             ("escaped path", lambda d: d["batch"].__setitem__("path", "../escaped_batch"), "batch.path"),
+                                             ("absolute path", lambda d: d["batch"].__setitem__("path", str(self.batch)), "batch.path"),
+                                             ("dotdot inside", lambda d: d["batch"].__setitem__("path", f"{sim.SIM_REL}/../sim/{self.batch.name}"), "batch.path"),
+                                             ("symlinked batch directory", lambda d: d["batch"].__setitem__("path", f"{sim.SIM_REL}/b4-mech-1_linked"), "not a real directory")):
+                    with self.subTest(name):
+                        d = alter(mutate)
+                        if needle != "not a real directory":
+                            self.assertTrue(any(needle in x for x in gg.decision_findings(d)), (name, gg.decision_findings(d)))
+                        f = gg.verify_gonogo_dir(out, deep=False); self.assertTrue(any(needle in m for v in f.values() for m in v), (name, f))
+                        code, res = self.fresh(out, shallow=True); self.assertEqual(code, 1, name); self.assertFalse(res["clean"])
+            finally:
+                link.unlink()
+                (out / gg.DECISION_JSON).write_bytes(original); (out / gg.DECISION_MD).write_bytes(gg.render_md(json.loads(original)).encode("utf-8"))
+        self.assertEqual(gg.verify_gonogo_dir(out, deep=False), {}, "restored")
+        for make, undo, needle in (((out / "sub").mkdir, (out / "sub").rmdir, "no subdirectory"),
+                                   (lambda: (out / "extra.json").write_text("{}"), (out / "extra.json").unlink, "not a file of a gonogo directory"),
+                                   (lambda: (out / "link").symlink_to(out / gg.DECISION_MD), (out / "link").unlink, "no symlink"),
+                                   (lambda: (out / "gonogo.json.1.part").write_text(""), (out / "gonogo.json.1.part").unlink, "unfinished")):
+            make()
+            try:
+                f = gg.verify_gonogo_dir(out, deep=False); self.assertTrue(any(needle in m for v in f.values() for m in v), (needle, f))
+                code, res = self.fresh(out, shallow=True); self.assertEqual(code, 1, needle)
+            finally:
+                undo()
+        self.assertEqual(gg.verify_gonogo_dir(out, deep=False), {}, "restored")
+        self.assertFalse(git(self.root, "status", "--porcelain").strip(), "the hermetic tree is clean again")
 
     def test_refusals_write_nothing(self):
         before = sorted(p.name for p in self.gns.iterdir()) if self.gns.exists() else []

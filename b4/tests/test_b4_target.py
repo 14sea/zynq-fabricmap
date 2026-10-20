@@ -112,6 +112,70 @@ class ThePlan(Base):
         self.assertTrue(any("cannot be rebuilt" in x for x in f), f)
 
 
+class TheReturn(Base):
+    """R2 / R4 of the owner's review of 04385ae: what the port RETURNS is held in full before it becomes an observation — any None (the
+    init readout included), any non-0/1 cell, a malformed step, a non-object, a short grid, a malformed or drifting source identity —
+    raises ReturnRefusal CARRYING the returned object (the harness quarantines it); a kept record with a None is named by the validator
+    and by the offline reconstruction; the quarantine context carries the phase, the planted configuration and the digests."""
+
+    def alter(self, mutate, phase="target", expected=None):
+        class P(ex.ObservationPort):
+            def observe(self_, config, stimulus):
+                return mutate(super().observe(config, stimulus))
+        parts = bl.public_parts(L)
+        with self.assertRaises(bt.ReturnRefusal) as cm:
+            bt.observe_target(P(self.fab), self.plan["planted_genome"], parts["stimulus"] if phase == "target" else parts["holdout_stimulus"], self.m.addresses, phase, expected)
+        return cm.exception
+
+    def test_every_bad_return_is_refused_with_the_object_attached(self):
+        def init_none(t):
+            t["steps"][0]["q_after"][0] = None; return t
+        e = self.alter(init_none); self.assertTrue(any("step 0, element 0: None" in x for x in e.findings), e.findings); self.assertIsNone(e.returned["steps"][0]["q_after"][0])
+
+        def cell2(t):
+            t["steps"][3]["q_after"][4] = 2; return t
+        e = self.alter(cell2); self.assertTrue(any("2 is not 0 / 1" in x for x in e.findings), e.findings)
+
+        def malformed(t):
+            t["steps"][1] = {"owner_raw_marker": "m"}; return t
+        e = self.alter(malformed); self.assertTrue(any("no q_after" in x for x in e.findings)); self.assertEqual(e.returned["steps"][1]["owner_raw_marker"], "m")
+        e = self.alter(lambda t: ["not", "an", "object"]); self.assertTrue(any("not an object" in x for x in e.findings)); self.assertEqual(e.returned, ["not", "an", "object"])
+
+        def short(t):
+            t["steps"] = t["steps"][:2]; return t
+        e = self.alter(short); self.assertTrue(any("steps returned" in x for x in e.findings))
+
+        def bad_prov(t):
+            t["fabric"] = {"kind": "truth"}; return t
+        e = self.alter(bad_prov); self.assertTrue(any("source identity is malformed" in x for x in e.findings))
+        good = ex.sha256_json(self.r1["provenance"])
+
+        def drift(t):
+            t["fabric"] = dict(t["fabric"], effect_sha256="a" * 64); return t
+        e = self.alter(drift, "target_holdout", good); self.assertTrue(any("drift" in x for x in e.findings)); self.assertEqual(e.returned["fabric"]["effect_sha256"], "a" * 64)
+        parts = bl.public_parts(L)
+        genuine = ex.ObservationPort(self.fab).observe(ex.genome_to_config(self.plan["planted_genome"], self.m.addresses), list(parts["stimulus"]))
+        self.assertEqual(bt.observation_findings(genuine, len(parts["stimulus"]), good), [], "the genuine return is clean")
+        self.assertTrue(bt.observation_findings(genuine, len(parts["stimulus"]), "0" * 64), "the same return against another expected identity: a drift")
+        self.assertEqual(bt.observation_findings(None, 3), ["the returned object is not an object (NoneType)"])
+        self.assertTrue(isinstance(e, ex.SourceRefusal), "a ReturnRefusal is a SourceRefusal by name")
+
+    def test_the_quarantine_context_and_a_non_serialisable_return(self):
+        parts = bl.public_parts(L)
+        c = bt.quarantine_context("target", self.plan["planted_genome"], self.m.addresses, parts["stimulus"], {"steps": [1]}, "0" * 64)
+        self.assertEqual(set(c), sc.QUARANTINE_CONTEXT_KEYS); self.assertEqual(c["returned_sha256"], ex.sha256_json({"steps": [1]}))
+        self.assertEqual((c["config_sha256"], c["stimulus_sha256"], c["phase"], c["expected_provenance_sha256"]), (self.plan["planted_config_sha256"], self.plan["public"]["stimulus_sha256"], "target", "0" * 64))
+        c = bt.quarantine_context("target_holdout", self.plan["planted_genome"], self.m.addresses, parts["holdout_stimulus"], {"x": float("nan")}, None)
+        self.assertIsNone(c["returned_sha256"]); self.assertIsNone(c["expected_provenance_sha256"]); self.assertEqual(c["stimulus_sha256"], self.plan["public"]["holdout_stimulus_sha256"])
+
+    def test_a_kept_record_with_a_none_is_named_by_the_validator_and_the_reconstruction(self):
+        r1 = copy.deepcopy(self.r1); r1["q_grid"][0][0] = None; r1["trace_sha256"] = ex.sha256_json(r1["q_grid"])      # the init readout: outside the scored mask cells
+        self.assertNotIn((0, 0), set(self.task.mask), "the cell is not a scored one: the mask does not narrow the check")
+        self.assertTrue(any("None cell" in x for x in sc.target_observation_findings({"schema": bt.TARGET_SCHEMA[0], "schema_version": bt.TARGET_SCHEMA[1], "pair": 0, "written_utc": "x", **r1}, "target")))
+        f = bt.setup_findings(self.plan, r1, self.r2, None, self.m, self.prov, self.expect())
+        self.assertTrue(any("None cell" in x for x in f), f)
+
+
 class TheReconstruction(Base):
     def setUp(self):
         self.task_doc = bt.finish(self.plan, self.r1, self.r2, self.digests())[1]

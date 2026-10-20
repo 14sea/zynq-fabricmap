@@ -19,7 +19,9 @@ Files of a run directory `evidence/b4/sim/<label>_<UTC>/`:
     pair_NNN/target_holdout.json    b4_sim_target_observation 1.0.0   ... under the holdout stimulus
     pair_NNN/task.json              b4_sim_task 1.0.0          the PublicTask the seven arms received (no seed, no planted genome) with its digest and the setup files' digests
     pair_NNN/arm_<role>.result.json b4_sim_arm_result 1.0.0    the engine's RunResult as returned, written before any audit
-    pair_NNN/arm_<role>.result.QUARANTINE.json  b4_sim_quarantine 1.0.0  a returned RunResult that did NOT validate, kept raw with the findings
+    pair_NNN/target_search.QUARANTINE.json      b4_sim_quarantine 1.1.0  a target setup RETURN that is not a valid observation (malformed, a None / non-0-1 cell, a drift),
+    pair_NNN/target_holdout.QUARANTINE.json     ...                      kept raw with its findings and context BEFORE the pair is invalid; at most one, at the phase that failed
+    pair_NNN/arm_<role>.result.QUARANTINE.json  b4_sim_quarantine 1.1.0  a returned RunResult that did NOT validate, kept raw with the findings
     pair_NNN/arm_<role>.audit.json  b4_sim_arm_audit 1.0.0     completion checks, replay, recompute, states, view checks
     pair_NNN/controls.json          b4_sim_controls 1.0.0      the X / D / Omega / A0 inputs of the pair
     pair_NNN/k7.json                b4_sim_k7 1.0.0            arm O's prefix snapshots at every grid budget
@@ -28,9 +30,9 @@ Files of a run directory `evidence/b4/sim/<label>_<UTC>/`:
     pair_NNN/k9.QUARANTINE.json / k10.QUARANTINE.json          a partial that did not validate, kept raw
     pair_NNN/curves.json            b4_sim_curves 1.1.0        best-so-far at the grid per arm; F's end-to-end values; the non-triviality record (the target against R's base trace)
     pair_NNN/index.json             b4_sim_pair_index 1.1.0    the pair's files with digests and sizes (written last); the task setup's state
-    STOPPED.json                    b4_sim_stopped 1.1.0       any batch that did not complete (the planned records carry the task setup's state)
+    STOPPED.json                    b4_sim_stopped 1.2.0       any batch that did not complete (the planned records carry the task setup's state and its durable ordered prefix)
     INIT_FAILED.json                b4_sim_init_failed 1.0.0   an initialisation that failed after the directory was created
-    sim_report.json                 b4_sim_report 1.1.0        always: the status, the identity (with the protocol digest), the archive index; a summary only when complete
+    sim_report.json                 b4_sim_report 1.2.0        always: the status, the identity (with the protocol digest), the archive index; a summary only when complete
 """
 from __future__ import annotations
 
@@ -405,23 +407,39 @@ def arm_result_findings(doc, task=None, expect=None) -> list[str]:
     return f
 
 
-QUARANTINE_KEYS = {"schema", "schema_version", "pair", "role", "stage", "findings", "raw", "raw_repr", "written_utc"}
+QUARANTINE_KEYS = {"schema", "schema_version", "pair", "role", "stage", "findings", "raw", "raw_repr", "context", "written_utc"}
+QUARANTINE_CONTEXT_KEYS = {"phase", "genome", "genome_hex", "config_sha256", "stimulus_sha256", "expected_provenance_sha256", "returned_sha256"}
 
 
 @total
 def quarantine_findings(doc) -> list[str]:
     """A returned object that did not validate, kept as raw as JSON allows: the findings that refused it, the JSON-able
-    projection (`raw`, or null when the object could not be serialised) and `repr` of the object."""
+    projection (`raw`, or null when the object could not be serialised), `repr` of the object, and — for a TARGET setup return
+    (1.1.0, the owner's review of 04385ae R2) — the context: the phase, the planted configuration, the stimulus digest, the expected
+    source identity and the digest of the projection; null for every other quarantine."""
     f: list[str] = []
     if not _keys(doc, QUARANTINE_KEYS, f, "quarantine"):
         return f
-    _schema(doc, "b4_sim_quarantine", f)
+    _schema(doc, "b4_sim_quarantine", f, "1.1.0")
     if not _nonneg(doc["pair"]) or not (doc["role"] is None or doc["role"] in ROLES or doc["role"] in AUX_ROLES):
         f.append("pair / role")
     if not (isinstance(doc["stage"], str) and isinstance(doc["written_utc"], str) and isinstance(doc["raw_repr"], str)):
         f.append("stage / written_utc / raw_repr")
     if not (isinstance(doc["findings"], list) and doc["findings"] and all(isinstance(x, str) for x in doc["findings"])):
         f.append("findings: a quarantine names what refused the object")
+    c = doc["context"]
+    if doc["role"] == "TARGET":
+        if not (isinstance(c, dict) and set(c) == QUARANTINE_CONTEXT_KEYS and c["phase"] in bt.PHASES and _genome(c["genome"]) and c["genome_hex"] == ex.genome_hex(c["genome"], GENOME_BITS)
+                and all(isinstance(c[k], str) and HEX64.match(c[k]) for k in ("config_sha256", "stimulus_sha256"))
+                and (c["expected_provenance_sha256"] is None or (isinstance(c["expected_provenance_sha256"], str) and HEX64.match(c["expected_provenance_sha256"])))
+                and (c["returned_sha256"] is None or (isinstance(c["returned_sha256"], str) and HEX64.match(c["returned_sha256"])))):
+            f.append("context: a target quarantine carries the phase, the planted configuration, the stimulus digest, the expected source identity and the projection's digest")
+        elif doc["stage"] != "target_setup":
+            f.append("context: a target quarantine is written at the target_setup stage")
+        elif (doc["raw"] is None) is not (c["returned_sha256"] is None) or (doc["raw"] is not None and ex.sha256_json(doc["raw"]) != c["returned_sha256"]):
+            f.append("context.returned_sha256 is not the digest of the kept projection")
+    elif c is not None:
+        f.append("context: null for every quarantine but a target setup's")
     return f
 
 
@@ -734,7 +752,7 @@ def stopped_findings(doc) -> list[str]:
     f: list[str] = []
     if not _keys(doc, STOPPED_KEYS, f, "STOPPED"):
         return f
-    _schema(doc, "b4_sim_stopped", f, "1.1.0")
+    _schema(doc, "b4_sim_stopped", f, "1.2.0")
     if doc["status"] not in ("invalid", "incomplete"):
         f.append("status")
     if doc["kind"] not in STOP_KINDS:
@@ -754,12 +772,22 @@ def stopped_findings(doc) -> list[str]:
     return f
 
 
+def setup_prefix_ok(state: str, prefix: int, quarantine) -> bool:
+    """The durable ordered prefix a task state can carry (section 7.1; the owner's review of 04385ae R3): the files
+    task_setup -> target_search -> target_holdout -> task exist in this order and no other; `prefix` is how many; a quarantined
+    return exists only for an invalid setup, at the phase whose file is the next one not written."""
+    if quarantine is not None and (state != "invalid" or prefix != {"target": 1, "target_holdout": 2}[quarantine]):
+        return False
+    return prefix in {"not_started": (0,), "in_progress": (1,), "partial": (2, 3), "complete": (4,), "invalid": (1, 2, 3)}[state]
+
+
 def _planned(pl, f: list[str]) -> None:
     if not isinstance(pl, list):
         f.append("planned: not a list"); return
     for i, p in enumerate(pl):
-        if not (isinstance(p, dict) and {"pair", "landscape_seed", "operator_seed", "status", "task", "arms", "k7", "k9", "k10"} <= set(p) and p["pair"] == i
+        if not (isinstance(p, dict) and {"pair", "landscape_seed", "operator_seed", "status", "task", "task_prefix", "task_quarantine", "arms", "k7", "k9", "k10"} <= set(p) and p["pair"] == i
                 and _nonneg(p["landscape_seed"]) and _nonneg(p["operator_seed"]) and p["status"] in PAIR_STATES and p["task"] in SETUP_STATES
+                and _int(p["task_prefix"]) and 0 <= p["task_prefix"] <= len(bt.SETUP_FILES) and (p["task_quarantine"] is None or p["task_quarantine"] in bt.PHASES)
                 and isinstance(p["arms"], dict) and set(p["arms"]) == set(ROLES) and all(v in ARM_STATES for v in p["arms"].values())
                 and all(p[k] in DIAG_STATES for k in ("k7", "k9", "k10"))):
             f.append(f"planned[{i}]"); return
@@ -769,6 +797,9 @@ def _planned(pl, f: list[str]) -> None:
             f.append(f"planned[{i}]: an arm or a diagnostic started without a complete task setup"); return
         if p["status"] == "not_started" and p["task"] != "not_started":
             f.append(f"planned[{i}]: a pair whose task setup began is never not_started"); return
+        if not setup_prefix_ok(p["task"], p["task_prefix"], p["task_quarantine"]):
+            f.append(f"planned[{i}]: the task state {p['task']!r} does not carry the durable ordered prefix {p['task_prefix']} / quarantine {p['task_quarantine']!r} "
+                     "(not_started 0; in_progress 1; partial 2 or 3; complete 4; invalid 1-3, a quarantined search return at 1, a quarantined holdout return at 2)"); return
 
 
 REPORT_KEYS = {"schema", "schema_version", "status", "label", "fixture", "count", "head", "generated_utc", "deadline", "standing", "thresholds", "identity",
@@ -780,7 +811,7 @@ def report_findings(doc) -> list[str]:
     f: list[str] = []
     if not _keys(doc, REPORT_KEYS, f, "report"):
         return f
-    _schema(doc, "b4_sim_report", f, "1.1.0")
+    _schema(doc, "b4_sim_report", f, "1.2.0")
     if doc["status"] not in STATUSES:
         f.append("status")
     if not (isinstance(doc["identity"], dict) and isinstance(doc["identity"].get("protocol_sha256"), str) and HEX64.match(doc["identity"]["protocol_sha256"])):
@@ -909,6 +940,8 @@ def target_observation_findings(doc, phase: str | None = None) -> list[str]:
             f.append(f"{k} is not a sha256")
     if not _q_grid(doc["q_grid"], f, "q_grid"):
         return f
+    if any(c is None for row in doc["q_grid"] for c in row):
+        f.append("q_grid: a None cell — a formal target observation containing a None is invalid (kept in quarantine, never written as an observation; the whole grid, the init readout included)")
     if ex.sha256_json(doc["q_grid"]) != doc["trace_sha256"]:
         f.append("the q grid does not hash to trace_sha256")
     pf = ex.provenance_findings(doc["provenance"])

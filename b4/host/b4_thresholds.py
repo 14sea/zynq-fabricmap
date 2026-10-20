@@ -7,12 +7,15 @@ the architecture's thresholds are held consistent by a static test, never by eye
 BESIDE its numbers for reference; nothing here is a verdict and nothing in the harness computes one. A change to a number here
 is a change to section 9 — a revision with its reason, authorised separately; this table never follows a run.
 
-THE DOCUMENT'S REVISION IS NOT IN THE TABLE (the owner's choice 6, 2026-10-20): `ARCHITECTURE_REVISION` is an informational
-constant beside the table — carried by the protocol identity as provenance, excluded from the method's digest and from the
-equality (b4_protocol) — so that a documentation-only revision of the architecture does not change the method's identity.
+THE DOCUMENT'S REVISION IS NOT IN THE TABLE AND NOT IN THIS FILE (the owner's choice 6, 2026-10-20; the owner's review of 04385ae,
+R1): `ARCHITECTURE_REVISION` is READ from b4/architecture_revision.json — a provenance file outside the identity's inventory, not a
+tool file — carried by the protocol identity as provenance, excluded from the method's digest and from the equality (b4_protocol),
+so that a documentation-only revision of the architecture changes that file and the document and no inventoried byte.
 """
 from __future__ import annotations
 
+import json
+import re
 import sys
 from pathlib import Path
 
@@ -23,7 +26,26 @@ for p in (REPO_ROOT / "b4/host",):
 from b4_ff_hypothesis import HYPOTHESIS_SHA256  # noqa: E402
 
 ARCHITECTURE_REL = "docs/b4_architecture.md"
-ARCHITECTURE_REVISION = "v0.2.0"                               # informational: the document's revision this table was written against (not in the table, not in the identity's digest)
+ARCHITECTURE_REVISION_REL = "b4/architecture_revision.json"    # the provenance file OUTSIDE the identity's inventory (the owner's review of 04385ae, R1)
+ARCHITECTURE_REVISION_RE = re.compile(r"^v[0-9]+\.[0-9]+\.[0-9]+$")
+
+
+def read_architecture_revision(root: Path = REPO_ROOT) -> str:
+    """The document's revision this table was written against, read from b4/architecture_revision.json — a file that is NOT a
+    tool file (not under b4/host or b4/schemas), so that a documentation-only revision moves this value and the document and
+    nothing of the method's bytes. Strict: a missing, malformed or non-matching file is an error, never a default."""
+    p = Path(root) / ARCHITECTURE_REVISION_REL
+    try:
+        doc = json.loads(p.read_bytes())
+    except (OSError, ValueError) as exc:
+        raise RuntimeError(f"{ARCHITECTURE_REVISION_REL} is unreadable: {type(exc).__name__}: {exc}") from None
+    if not (isinstance(doc, dict) and doc.get("schema") == "b4_architecture_revision" and doc.get("document") == ARCHITECTURE_REL
+            and isinstance(doc.get("revision"), str) and ARCHITECTURE_REVISION_RE.match(doc["revision"])):
+        raise RuntimeError(f"{ARCHITECTURE_REVISION_REL} is not a b4_architecture_revision record naming {ARCHITECTURE_REL} with a revision vN.N.N")
+    return doc["revision"]
+
+
+ARCHITECTURE_REVISION = read_architecture_revision()           # informational: not in the table, not in the identity's digest, not in any tool file's bytes
 ARCHITECTURE_SECTION = "9"
 
 GRID = (8, 16, 24, 32, 48, 64, 96, 128, 192, 256)

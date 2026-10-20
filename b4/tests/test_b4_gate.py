@@ -38,6 +38,7 @@ import b4_gate_verify as gv  # noqa: E402
 import b4_k9 as k9  # noqa: E402
 import b4_seeds as bs  # noqa: E402
 import b4_sim as sim  # noqa: E402
+import b4_protocol as bp  # noqa: E402
 import b4_sim_schema as sc  # noqa: E402
 import b4_sim_verify as sv  # noqa: E402
 import b4_stats as st  # noqa: E402
@@ -662,7 +663,7 @@ class TheJudge(unittest.TestCase):
         self.assertEqual(sim.standing_for("b4-gate-1"), sim.STANDING_GATE); self.assertNotEqual(sim.STANDING_GATE, sim.STANDING)
         self.assertIn("not a gate verdict", sim.STANDING_GATE); self.assertIn("b4_gate.py", sim.STANDING_GATE)
         self.assertIn("protocol v0.2.0", sim.STANDING); self.assertIn("(b')", sim.STANDING)
-        self.assertTrue(any("1.1.0" in x for x in sc.report_findings(json.loads(SIM3_REPORT.read_bytes()))), "the committed v0.1.16 report is another schema version: not this tool's")
+        self.assertTrue(any(bp.RECORD_SCHEMAS["b4_sim_report"][0] in x for x in sc.report_findings(json.loads(SIM3_REPORT.read_bytes()))), "the committed v0.1.16 report is another schema version: not this tool's")
 
     def test_the_synthetic_summary_s_own_findings(self):
         d = synthetic_doc(synthetic_summary())

@@ -146,6 +146,19 @@ DECISION_KEYS = {"schema", "schema_version", "generated_utc", "head", "clean_tre
 BATCH_KEYS = {"path", "status", "label", "count", "fixture", "head", "generated_utc", "sha256", "seeds_sha256", "manifest_sha256"}
 
 
+def _int(v) -> bool:
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def batch_path_ok(path, label: str) -> bool:
+    """The publication contract of the evidence path: EXACTLY `evidence/b4/sim/<label>_<rest>` — relative, plain (normpath is itself),
+    four components, none empty or `.` / `..`, the last named after the label (the owner's review of 04385ae R5)."""
+    if not isinstance(path, str) or not path or path.startswith("/") or os.path.normpath(path) != path:
+        return False
+    parts = path.split("/")
+    return len(parts) == 4 and parts[:3] == sim.SIM_REL.split("/") and all(x and x not in (".", "..") for x in parts) and parts[3].startswith(label + "_")
+
+
 def decision_findings(doc) -> list[str]:
     f: list[str] = []
     if not isinstance(doc, dict) or set(doc) != DECISION_KEYS:
@@ -168,10 +181,13 @@ def decision_findings(doc) -> list[str]:
     if not isinstance(doc["standing"], str) or (doc["formal"] is False and "NOT A DECISION OF RECORD" not in doc["standing"]) or (doc["formal"] is True and "NOT A DECISION OF RECORD" in doc["standing"]):
         f.append("standing")
     b = doc["batch"]
-    if not (isinstance(b, dict) and set(b) == BATCH_KEYS and isinstance(b["path"], str) and b["path"] and not b["path"].startswith("/") and b["status"] in sc.STATUSES
-            and b["label"] == doc["label"] and b["count"] == doc["S"] and b["fixture"] == doc["fixture"] and isinstance(b["head"], str) and HEX40.match(b["head"])
+    if not (isinstance(b, dict) and set(b) == BATCH_KEYS and b["status"] in sc.STATUSES and b["label"] == doc["label"]
+            and _int(b["count"]) and b["count"] == doc["S"] and isinstance(b["fixture"], bool) and b["fixture"] is doc["fixture"]        # type-exact: 1.0 is not 1, 1 is not true (R5)
+            and isinstance(b["head"], str) and HEX40.match(b["head"]) and isinstance(b["generated_utc"], str)
             and all(isinstance(b[k], str) and HEX64.match(b[k]) for k in ("sha256", "seeds_sha256", "manifest_sha256"))):
-        f.append("batch: the evidence record")
+        f.append("batch: the evidence record (exact types)")
+    elif not batch_path_ok(b["path"], doc["label"]):
+        f.append(f"batch.path: not a direct archive path {sim.SIM_REL}/{doc['label']}_… written plainly (no absolute path, no `..`, no extra component)")
     ident = doc["identity"]
     if not (isinstance(ident, dict) and set(ident) == {"protocol_sha256", "architecture_revision", "policy_source"} and isinstance(ident["protocol_sha256"], str) and HEX64.match(ident["protocol_sha256"])
             and isinstance(ident["architecture_revision"], str) and ident["policy_source"] == th.THRESHOLDS["source"]):
@@ -310,7 +326,12 @@ def verify_gonogo_dir(gdir: Path, doc: dict | None = None, root: Path | None = N
         add("gonogo directory", f"not under the root {root}"); return F
     if str(rel.parent) != GONOGO_REL:
         add("gonogo directory", f"lies at {rel}, not directly under {GONOGO_REL}/"); return F
-    disk = {p.name: p for p in sorted(gdir.iterdir()) if p.is_file()}
+    disk = {p.name: p for p in sorted(gdir.iterdir()) if p.is_file() and not p.is_symlink()}
+    for sub in sorted(gdir.iterdir()):                                  # the directory's ENTRIES, not only its files: no subdirectory, no symlink, no unfinished write (R5)
+        if sub.is_symlink() or not sub.is_file():
+            add(sub.name, "a gonogo directory holds its two files only: no subdirectory, no symlink")
+        elif sub.name.endswith(".part"):
+            add(sub.name, "an unfinished write")
     from_disk = doc is None
     if from_disk:
         if DECISION_JSON not in disk:
@@ -346,8 +367,8 @@ def verify_gonogo_dir(gdir: Path, doc: dict | None = None, root: Path | None = N
             add(DECISION_MD, "the file's digest / size are not the index's")
     b = doc["batch"]
     bdir = root / b["path"]
-    if not bdir.is_dir():
-        add("batch", f"the batch archive {b['path']} does not exist under the root"); return F
+    if any(a.is_symlink() for a in sim.namespace_chain(root)) or bdir.is_symlink() or not bdir.is_dir() or bdir.resolve() != bdir:
+        add("batch", f"the batch archive {b['path']} is not a real directory directly under {sim.SIM_REL}/ of the root {root} (missing, a symlink, or reached through one)"); return F
     try:
         rep = json.loads((bdir / "sim_report.json").read_bytes()); raw = (bdir / "sim_report.json").read_bytes()
     except (OSError, ValueError) as exc:
@@ -361,8 +382,8 @@ def verify_gonogo_dir(gdir: Path, doc: dict | None = None, root: Path | None = N
     rfs = sc.report_findings(rep)
     if rfs:
         add("batch", "sim_report.json does not validate: " + "; ".join(rfs[:3])); return F
-    if not (rep["label"] == b["label"] and rep["count"] == b["count"] and rep["fixture"] == b["fixture"] and rep["status"] == b["status"] and rep["head"] == b["head"] and rep["generated_utc"] == b["generated_utc"]):
-        add("batch", "the archive's identity is not the recorded one")
+    if sc.canonical([rep[k] for k in ("label", "count", "fixture", "status", "head", "generated_utc")]) != sc.canonical([b[k] for k in ("label", "count", "fixture", "status", "head", "generated_utc")]):
+        add("batch", "the archive's identity is not the recorded one (exact in type)")
     add("batch: protocol", *bg.archive_identity_findings(bdir))
     if F:
         return F

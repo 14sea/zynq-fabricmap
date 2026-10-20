@@ -81,8 +81,9 @@ with the archive's own version of the tool.
 The v0.1.16 thresholds table ("section 9 (v0.1.16)") is embedded in every v0.1.16 manifest and compared by the verifier of that version as
 a whole; its static pin test also asserted the architecture document's first-line version. The v0.2.0 tool unit (`b4_protocol.py`, the
 owner's choice 6) implements the identity of §9.5: the method's digest no longer carries the document's revision text (the table of
-v0.2.0 is "section 9" with `ARCHITECTURE_REVISION` beside it, informational), the pin test holds the document's first line to that
-constant, and every v0.2.0 manifest records the identity and its digest. **What this means for the two archives of section 1:** the
+v0.2.0 is "section 9"; the revision is read from `b4/architecture_revision.json`, a provenance file outside the identity's inventory, so
+that a documentation-only revision touches no inventoried byte — the owner's review of 04385ae, R1), the pin test holds the document's
+first line to that file's value, and every v0.2.0 manifest records the identity and its digest. **What this means for the two archives of section 1:** the
 v0.2.0 verifiers (`b4_sim_verify.py`, `b4_gate_verify.py`), the judge (`b4_gate.py judge`) and the policy (`b4_gonogo.py decide`)
 refuse them **by name** at their first step — "the archive carries no protocol identity: written by a tool before the identity existed
 (its thresholds source … (v0.1.16) …, HEAD …) — re-verify it with its own tool at its recorded HEAD" — and write nothing; a v0.2.0 archive

@@ -55,32 +55,21 @@ def edit(rel, edits):
 MUTANTS = [
  ("M1 the private plan is persisted AFTER the first target call",
   edit(SIM, [('''        digests = {"task_setup.json": self.write(f"pair_{r:03d}/task_setup.json", setup, sc.task_setup_findings)["sha256"]}
-        plan["task"] = "in_progress"
-        port = self.port_factory(fabric, SETUP_ROLE, r)
-        parts = bl.public_parts(l)
-        recs: dict[str, dict] = {}
-        for phase, stim, name in (("target", parts["stimulus"], "target_search.json"), ("target_holdout", parts["holdout_stimulus"], "target_holdout.json")):
-            self.dl.check()                                                     # a deadline here is `incomplete` with what was written kept
-            try:
-                rec = bt.observe_target(port, setup["planted_genome"], stim, mapping.addresses, phase)''',
-             '''        digests = {}
-        plan["task"] = "in_progress"
-        port = self.port_factory(fabric, SETUP_ROLE, r)
-        parts = bl.public_parts(l)
-        recs: dict[str, dict] = {}
-        for phase, stim, name in (("target", parts["stimulus"], "target_search.json"), ("target_holdout", parts["holdout_stimulus"], "target_holdout.json")):
-            self.dl.check()                                                     # a deadline here is `incomplete` with what was written kept
-            try:
-                rec = bt.observe_target(port, setup["planted_genome"], stim, mapping.addresses, phase)
+        plan["task"], plan["task_prefix"] = "in_progress", 1''', '''        digests = {}
+        plan["task"], plan["task_prefix"] = "in_progress", 1'''),
+             ('''                rec = bt.observe_target(port, setup["planted_genome"], stim, mapping.addresses, phase, expected_prov)''',
+              '''                rec = bt.observe_target(port, setup["planted_genome"], stim, mapping.addresses, phase, expected_prov)
                 if "task_setup.json" not in digests:
                     digests["task_setup.json"] = self.write(f"pair_{r:03d}/task_setup.json", setup, sc.task_setup_findings)["sha256"]''')]),
   [T + "test_b4_sim.InvalidStops.test_a_domain_at_the_target_setup_is_target_invalid_with_the_plan_kept"]),
  ("M2 the first setup observation is not saved before the second call",
   edit(SIM, [('''            digests[name] = self.write(f"pair_{r:03d}/{name}", doc, lambda d, ph=phase: sc.target_observation_findings(d, ph))["sha256"]   # saved at once, before the next call
             recs[phase] = doc
-            plan["task"] = "partial"''',
+            plan["task"], plan["task_prefix"] = "partial", plan["task_prefix"] + 1
+            expected_prov = rec["provenance_sha256"]''',
              '''            recs[phase] = doc
-            plan["task"] = "partial"
+            plan["task"], plan["task_prefix"] = "partial", plan["task_prefix"] + 1
+            expected_prov = rec["provenance_sha256"]
         for phase, name in (("target", "target_search.json"), ("target_holdout", "target_holdout.json")):
             digests[name] = self.write(f"pair_{r:03d}/{name}", recs[phase], lambda d, ph=phase: sc.target_observation_findings(d, ph))["sha256"]''')]),
   [T + "test_b4_sim.IncompleteStops.test_an_interrupt_or_the_deadline_between_the_two_setup_observations_keeps_the_first"]),
@@ -195,7 +184,8 @@ MUTANTS = [
   [T + "test_b4_sim.InvalidStops.test_a_domain_at_the_target_setup_is_target_invalid_with_the_plan_kept"]),
  ("M31 the task state does not advance when the first setup observation is persisted (stays in_progress)",
   edit(SIM, [('''            recs[phase] = doc
-            plan["task"] = "partial"''', '''            recs[phase] = doc''')]),
+            plan["task"], plan["task_prefix"] = "partial", plan["task_prefix"] + 1''', '''            recs[phase] = doc
+            plan["task_prefix"] = plan["task_prefix"] + 1''')]),
   [T + "test_b4_sim.IncompleteStops.test_an_interrupt_or_the_deadline_between_the_two_setup_observations_keeps_the_first", T + "test_b4_sim.InvalidStops.test_a_domain_at_the_target_setup_is_target_invalid_with_the_plan_kept"]),
  ("M32 the task validator does not hold the planted scores to the ceilings",
   edit(SCH, [('''        elif v["fitness"] != ceiling or v["none_cells"] != 0:
@@ -206,7 +196,7 @@ MUTANTS = [
   edit(REP, [('''        if (t["task_digest"], t["operator_seed"], t["budget"]) != (r["task_digest"], r["operator_seed"], r["budget"]):''', '''        if (t["operator_seed"], t["budget"]) != (r["operator_seed"], r["budget"]):''')]),
   [T + "test_b4_replay.Replay.test_the_owner_s_nine_tampers_are_named"]),
  ("M34 a drift between the two setup observations is accepted",
-  edit(SIM, [('''            if recs and rec["provenance_sha256"] != recs["target"]["provenance_sha256"]:''', '''            if False:''')]),
+  edit(TGT, [('''    elif expected_provenance_sha256 is not None and ex.sha256_json(hdr) != expected_provenance_sha256:''', '''    elif False:''')]),
   [T + "test_b4_sim.InvalidStops.test_a_source_drift_inside_the_setup_and_a_setup_port_that_calls_more_than_twice"]),
  ("M35 the planned record's validator lets an arm start without a complete task setup",
   edit(SCH, [('''        if p["task"] != "complete" and (any(v != "not_started" for v in p["arms"].values()) or any(p[k] != "not_started" for k in ("k7", "k9", "k10"))):
@@ -215,6 +205,77 @@ MUTANTS = [
  ("M36 the pinned labels of the table are the consumed ones",
   edit(TH, [('''"gate_label": "b4-gate-2", "exploration_label": "b4-sim-4",''', '''"gate_label": "b4-gate-1", "exploration_label": "b4-sim-3",''')]),
   [T + "test_b4_thresholds.ThePins.test_the_numbers_are_the_document_s", T + "test_b4_thresholds.ThePins.test_every_pinned_text_is_in_its_row"]),
+ # ---- the correction round after the owner's HOLD on 04385ae (R1-R6)
+ ("M37 R1: the revision is a literal in a tool file again (not read from b4/architecture_revision.json)",
+  edit(TH, [('''ARCHITECTURE_REVISION = read_architecture_revision()''', '''ARCHITECTURE_REVISION = "v0.2.0"''')]),
+  [T + "test_b4_protocol.TheIdentity.test_a_documentation_only_revision_moves_nothing_of_the_method_in_fresh_interpreters", T + "test_b4_thresholds.ThePins.test_the_document_version_is_informational_outside_the_table_and_outside_the_method_digest"]),
+ ("M38 R2: a refused target return is dropped (no quarantine) before the pair is invalid",
+  edit(SIM, [('''                self.quarantine(qrel, r, SETUP_ROLE, "target_setup", exc.findings, exc.returned, context=ctx)
+                plan["task"], plan["task_quarantine"] = "invalid", phase''', '''                plan["task"] = "invalid"''')]),
+  [T + "test_b4_sim.InvalidStops.test_a_source_drift_inside_the_setup_and_a_setup_port_that_calls_more_than_twice", T + "test_b4_sim.InvalidStops.test_a_returned_object_that_is_not_a_target_observation_is_quarantined_then_invalid"]),
+ ("M39 R2/R3: the quarantine is written but the plan does not record it (task_quarantine stays null)",
+  edit(SIM, [('''                plan["task"], plan["task_quarantine"] = "invalid", phase
+                raise Invalid("target_invalid", f"the target setup observation ({phase}) returned an object''', '''                plan["task"] = "invalid"
+                raise Invalid("target_invalid", f"the target setup observation ({phase}) returned an object''')]),
+  [T + "test_b4_sim.InvalidStops.test_a_returned_object_that_is_not_a_target_observation_is_quarantined_then_invalid"]),
+ ("M40 R4: the producer's return check lets a None cell through (the validator's defence in depth catches it with another text)",
+  edit(TGT, [('''            if c is None:
+                f.append(f"step {i}, element {e}: None — not a target observation under T-i (invalid, never narrowed)")''', '''            if c is None:
+                pass''')]),
+  [T + "test_b4_sim.InvalidStops.test_a_returned_object_that_is_not_a_target_observation_is_quarantined_then_invalid", T + "test_b4_target.TheReturn.test_every_bad_return_is_refused_with_the_object_attached"]),
+ ("M41 R4: the record validator accepts a None cell in a kept target observation",
+  edit(SCH, [('''    if any(c is None for row in doc["q_grid"] for c in row):
+        f.append("q_grid: a None cell''', '''    if False:
+        f.append("q_grid: a None cell''')]),
+  [T + "test_b4_target.TheReturn.test_a_kept_record_with_a_none_is_named_by_the_validator_and_the_reconstruction"]),
+ ("M42 R4: the offline reconstruction accepts a None cell in a kept target observation",
+  edit(TGT, [('''            if any(c is None for row in grid for c in row):
+                f.append(f"{w}: the kept target observation carries a None cell''', '''            if False:
+                f.append(f"{w}: the kept target observation carries a None cell''')]),
+  [T + "test_b4_target.TheReturn.test_a_kept_record_with_a_none_is_named_by_the_validator_and_the_reconstruction"]),
+ ("M43 R3: the verifier allows every setup file for any state instead of the recorded ordered prefix",
+  edit(VER, [('''    must |= {pre + name for name in bt.SETUP_FILES[:plan.get("task_prefix", 0)]}''', '''    may |= {pre + name for name in bt.SETUP_FILES}''')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_later_setup_file_without_its_prerequisite_is_refused_by_name"]),
+ ("M44 R3: the state <-> prefix consistency is not held by the report validator",
+  edit(SCH, [('''    if quarantine is not None and (state != "invalid" or prefix != {"target": 1, "target_holdout": 2}[quarantine]):
+        return False
+    return prefix in''', '''    return True or prefix in''')]),
+  [T + "test_b4_sim.TheSummaryAndTheValidators.test_the_quarantine_record_carries_a_context_for_a_target_return_only_and_the_prefix_contract", T + "test_b4_sim.TheArchiveVerifier.test_a_later_setup_file_without_its_prerequisite_is_refused_by_name"]),
+ ("M45 R3: the producer records prefix 2 after the holdout write (the third file unaccounted for)",
+  edit(SIM, [('''            plan["task"], plan["task_prefix"] = "partial", plan["task_prefix"] + 1''', '''            plan["task"], plan["task_prefix"] = "partial", 2''')]),
+  [T + "test_b4_sim.IncompleteStops.test_an_interrupt_or_the_deadline_at_every_persistence_boundary_keeps_the_ordered_prefix"]),
+ ("M46 R5: the decision record's count / fixture are compared loosely (1.0 == 1, 1 == true)",
+  edit(GG, [('''            and _int(b["count"]) and b["count"] == doc["S"] and isinstance(b["fixture"], bool) and b["fixture"] is doc["fixture"]''', '''            and b["count"] == doc["S"] and b["fixture"] == doc["fixture"]''')]),
+  [T + "test_b4_gonogo.EndToEnd.test_the_evidence_contract_is_held_exactly_in_type_namespace_and_entries"]),
+ ("M47 R5: every batch path is accepted by the record validator",
+  edit(GG, [('''    if not isinstance(path, str) or not path or path.startswith("/") or os.path.normpath(path) != path:
+        return False''', '''    return True''')]),
+  [T + "test_b4_gonogo.EndToEnd.test_the_evidence_contract_is_held_exactly_in_type_namespace_and_entries"]),
+ ("M48 R5: the gonogo verifier ignores directory entries that are not files",
+  edit(GG, [('''        if sub.is_symlink() or not sub.is_file():
+            add(sub.name, "a gonogo directory holds its two files only: no subdirectory, no symlink")''', '''        if False:
+            pass''')]),
+  [T + "test_b4_gonogo.EndToEnd.test_the_evidence_contract_is_held_exactly_in_type_namespace_and_entries"]),
+ ("M49 R5: a symlinked batch directory is accepted by the gonogo verifier",
+  edit(GG, [('''    if any(a.is_symlink() for a in sim.namespace_chain(root)) or bdir.is_symlink() or not bdir.is_dir() or bdir.resolve() != bdir:''', '''    if not bdir.is_dir():''')]),
+  [T + "test_b4_gonogo.EndToEnd.test_the_evidence_contract_is_held_exactly_in_type_namespace_and_entries"]),
+ ("M50 the archive verifier ignores directory entries and symlinks",
+  edit(VER, [('''        if sub.is_symlink():
+            F.add(rel, "a symlink: the archive holds real files in real pair directories only")
+        elif sub.is_dir() and not re.fullmatch(r"pair_\\d{3}", rel):''', '''        if False:
+            pass
+        elif False:''')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_archive_holds_real_files_in_pair_directories_only"]),
+ # M31 and M45 mutate the producer's IN-MEMORY state only; since the correction round the stop reconciles that state from the files on
+ # disk (Batch.reconcile_setup, R3: the durable prefix is the record), so both are EQUIVALENT mutants — expected to SURVIVE, counted as
+ # survivors, not as kills. The reconciliation itself is attacked by M51 / M52.
+ ("M51 R3: the stop does not reconcile the prefix from the files on disk (the interrupt window after a write is unrecorded)",
+  edit(SIM, [('''            plan["task_prefix"] = n
+            if plan["task"] != "invalid":''', '''            if plan["task"] != "invalid":''')]),
+  [T + "test_b4_sim.IncompleteStops.test_an_interrupt_or_the_deadline_at_every_persistence_boundary_keeps_the_ordered_prefix"]),
+ ("M52 R3: the stop reconciles the prefix but not the task state",
+  edit(SIM, [('''                plan["task"] = "complete" if n == 4 else "partial" if n >= 2 else "in_progress" if n == 1 else plan["task"]''', '''                pass''')]),
+  [T + "test_b4_sim.IncompleteStops.test_an_interrupt_or_the_deadline_at_every_persistence_boundary_keeps_the_ordered_prefix"]),
 ]
 
 

@@ -1,91 +1,109 @@
-# B4 — the protocol revision v0.2.0, tool unit (2026-10-20): implementation and mechanics-fixture acceptance
+# B4 — the protocol revision v0.2.0, tool unit (2026-10-20): implementation, mechanics-fixture acceptance, and the correction round after the owner's HOLD on `04385ae`
 
 **What this unit is.** The implementation unit the owner authorised on 2026-10-20 after the PASS of the documents unit `8361068`
 ("v0.2.0 tool implementation and mechanics-fixture acceptance, the whole unit delivered for review at once"): the branch
-`b4-protocol-v2` continued from `8361068`, one local commit, holding the v0.2.0 tool stack, its schemas, replay, validators, tests and
-mutants, the refreshed import table, the three wording precisions of the owner's review of `8361068` folded into
-`docs/b4_architecture.md`, and this directory. **The model behaviour, the domain, the hypothesis, the certificate, the statistics and
+`b4-protocol-v2` continued from `8361068`, holding the v0.2.0 tool stack, its schemas, replay, validators, tests and mutants, the
+refreshed import table, the three wording precisions of the owner's review of `8361068` folded into `docs/b4_architecture.md`, and this
+directory. The first delivery was `04385ae`; the owner's review of it (HOLD, six reproducible findings R1–R6, archived in §6) authorised
+the corrections inside this unit; §5 records them. **The model behaviour, the domain, the hypothesis, the certificate, the statistics and
 the ruled numbers are unchanged.** Nothing production was run: no preflight, seed derivation, smoke, exploration or gate of any
-production label; no old archive, receipt, seed record or verdict touched (the e2e below checks the two named archives byte for byte
-before and after); no push, no merge, no full proof, no RTL, no board. Everything executed here is a **mechanics fixture** under the
-explicit `b4-mech-*` schedules; none of it is a result.
+production label; no old archive, receipt, seed record or verdict touched (the e2e checks the two named archives byte for byte before
+and after); no push, no merge, no full proof, no RTL, no board. Everything executed here is a **mechanics fixture** under the explicit
+`b4-mech-*` schedules; none of it is a result.
 
-## 1. What was implemented, by file
+## 1. What was implemented, by file (the state after the correction round)
 
 | file | what it now is |
 |---|---|
-| `b4/host/b4_landscape.py` | `TASK_VERSION = "task-v0.2"`; `SALT_TARGET = 0x54415247`; `PLANTED_RULE`; `public_parts(seed, k)`; `planted_genome(seed, storage_kind_bit)` (choice 3: storage_kind fixed to flip-flop, the other 20 bits drawn once, the base included, no redraw); `targets_from_grid`; `make_task(addresses, parts, target, holdout_target, target_source_sha256)`; `score_holdout_grid`. `TargetRefusal`. |
-| `b4/host/b4_target.py` (new) | the target setup: `SETUP_FILES` (`task_setup.json` → `target_search.json` → `target_holdout.json` → `task.json`), `SETUP_STATES` (not_started / in_progress / partial / complete / invalid), the `TARGET` port role with exactly two calls, `plan`, `observe_target`, the source fields and `target_source_sha256`, `rebuild_task`, `finish` (the task document with the planted scores), `setup_findings` for the offline reconstruction. |
-| `b4/host/b4_execution.py`, `b4_engine.py`, `b4_replay.py` | `PublicTask` without the seed and without `g*` (choice 2): the executing side gets the addresses, the parts, the two targets and `target_source_sha256`; `TerminalEvent` carries the task digest, not a seed; the replay binds the terminal event to the task digest. |
+| `b4/landscape` → `b4/host/b4_landscape.py` | `TASK_VERSION = "task-v0.2"`; `SALT_TARGET = 0x54415247`; `PLANTED_RULE`; `public_parts`; `planted_genome` (choice 3: storage_kind fixed to flip-flop, the other 20 bits drawn once, the base included, no redraw); `targets_from_grid`; `make_task(addresses, parts, target, holdout_target, target_source_sha256)`; `score_holdout_grid`; `TargetRefusal`. |
+| `b4/host/b4_target.py` (new) | the target setup: `SETUP_FILES` (`task_setup.json` → `target_search.json` → `target_holdout.json` → `task.json`), `SETUP_STATES`, the `TARGET` port role with exactly two calls, `plan`, **`observation_findings` (total over whatever the port returned: shape, every cell 0 / 1 — a None anywhere, the init readout included — the source identity well formed and the expected one), `ReturnRefusal` carrying the returned object, `quarantine_context`** (R2 / R4), `observe_target`, the source fields and `target_source_sha256`, `rebuild_task`, `finish`, `setup_findings` for the offline reconstruction (a None in a kept grid named). |
+| `b4/host/b4_execution.py`, `b4_engine.py`, `b4_replay.py` | `PublicTask` without the seed and without `g*` (choice 2); `TerminalEvent` carries the task digest; the replay binds to it. |
 | `b4/host/b4_controls.py`, `b4_k10.py` | the D view and K10 take the landscape seed from the harness, never from the task. |
-| `b4/host/b4_k9.py` | the two applicabilities (`applicable` all-panel, `applicable_sr_driven` conditional, reason `sr_tied_low`), the two summary records (`per_semantic` judged (b′), `per_semantic_all_panel` descriptive, `excluded_by_conditional_rule`), `JUDGED_ESTIMAND = "conditional_sr_driven"`, the recompute comparing both (choice 4; the owner's precision (a) and (b)). |
-| `b4/host/b4_seeds.py` | `CONSUMED_LABELS = {b4-sim-3, b4-gate-1}` beside the retired ones; `ConsumedLabelRefusal`; `EXPLORATION_LABEL = b4-sim-4`, `GATE_LABEL = b4-gate-2`. |
-| `b4/host/b4_thresholds.py` | the table of record "section 9" with `ARCHITECTURE_REVISION = "v0.2.0"` beside it (informational); K9's judged / descriptive applicabilities; the `task` and `gonogo` blocks (S = 32, B_go = 64, α_go = 0.20, conditional medians ≥ 0.50, every pair complete); the anchor labels; the PINS rows incl. §7.1. |
-| `b4/host/b4_protocol.py` (new) | the protocol identity (choice 6): the payload built from the trusted inventory (every `b4/host/*.py` and `b4/schemas/*` held to `b4/IMPORT.json`), the thresholds digest without `source`, task / K9 / K10 / statistics / engine / cartographer / stack / schemas / labels / inventory / `import_table_sha256`; `architecture_revision` carried but excluded from the digest and the equality; `compare` names the differing components; `refusal_for_missing`; the CLI. |
-| `b4/host/b4_gonogo.py` (new) | the go / no-go policy (choice 5): `decide`, `write_decision` (`evidence/b4/gonogo/`), `verify_gonogo_dir`, the CLI; no automatic successor. |
-| `b4/host/b4_sim.py` | the per-pair setup with step-wise persistence (the plan before the first call, the first observation saved before the second, a source-drift check before the second write, the call count held to two); the `task` state in the pair index; K9 with both records in the summary; manifest 1.2.0 with the identity; report 1.1.0 with `protocol_sha256`; the `target_invalid` stop. |
-| `b4/host/b4_sim_schema.py` | the setup records' validators, manifest 1.2.0, K9 1.2.0, curves / pair index / stopped / report 1.1.0, the task binding of every arm result. |
-| `b4/host/b4_sim_verify.py`, `b4_gate.py`, `b4_gate_verify.py` | the identity gate at step 0 (another identity, or none, is refused **by name** and pointed to `docs/b4_archive_reverification.md`); the setup reconstruction from the persisted files; the gate judging (b′) with the all-panel record carried; `run_gate` refusing consumed and retired labels by name; the gate report 1.1.0 with the identity. |
-| `b4/tests/` | every existing test module updated to the v0.2 task and the harness-held seed; new `test_b4_target.py`, `test_b4_protocol.py`, `test_b4_gonogo.py`; `b4_test_fixtures.v02_setup / v02_task`; the pin test re-implemented against the new identity contract (the document's first line held to `ARCHITECTURE_REVISION`), **not** by skipping the old version assertion. |
-| `b4/IMPORT.json` | refreshed (58 entries) by `refresh_import.py` (kept here); `evidence/b4/unit_2b4a_repair_2026_10_18/import_check.py`: file digests, base digests and copied-function digests all equal, no tracked file under `b4/` without an entry. |
-| `docs/b4_architecture.md` | the owner's three precisions on `8361068` folded: (a) the K9 row — `applicable_conditional = applicable_all_panel AND sr_mode_driven_at_both_endpoints`, the latch / x5FF exclusions kept, the other five semantics' conditional applicability = the old; (b) clause 6 — every pair has a record, the observation set is the old applicability's; (c) the precedence sentence — v0.2.0 items supersede older text, retained text and PINS are not two current methods. The "will fail at this commit" paragraph replaced by the implementation-status paragraph; `SALT_TARGET` in §7.1; the §9.2 formula block with the v0.2.0 labels. |
-| `docs/b4_archive_reverification.md` | §5: the identity implemented; the v0.2.0 verifiers, judge and policy refuse the v0.1.16 archives by name. |
+| `b4/host/b4_k9.py` | the two applicabilities (`applicable` all-panel, `applicable_sr_driven` conditional, reason `sr_tied_low`), the two summary records, `JUDGED_ESTIMAND = "conditional_sr_driven"` (choice 4; the owner's precisions (a) and (b)). |
+| `b4/host/b4_seeds.py` | `CONSUMED_LABELS = {b4-sim-3, b4-gate-1}`; `ConsumedLabelRefusal`; `EXPLORATION_LABEL = b4-sim-4`, `GATE_LABEL = b4-gate-2`. |
+| `b4/host/b4_thresholds.py`, **`b4/architecture_revision.json` (new)** | the table of record "section 9"; `ARCHITECTURE_REVISION` **read from `b4/architecture_revision.json`** — a provenance file outside the identity's inventory, not a tool file (R1); K9's judged / descriptive applicabilities; the `task` and `gonogo` blocks (S = 32, B_go = 64, α_go = 0.20, conditional medians ≥ 0.50, every pair complete); the anchor labels; the PINS rows incl. §7.1. |
+| `b4/host/b4_protocol.py` (new) | the protocol identity (choice 6): the payload from the trusted inventory (every `b4/host/*.py` and `b4/schemas/*` held to `b4/IMPORT.json`, and the table's entries for exactly those files — a test edit is not a method change, accepted by the owner), the thresholds digest without `source`, task / K9 / K10 / statistics / engine / cartographer / stack / schemas / labels / inventory; `architecture_revision` carried but excluded from the digest and the equality; `compare` names the differing components; `refusal_for_missing`; the CLI. |
+| `b4/host/b4_gonogo.py` (new) | the go / no-go policy (choice 5): `decide`, `write_decision`, `verify_gonogo_dir`, the CLI; no automatic successor; **exact types for the evidence record, `batch_path_ok` (a plain `evidence/b4/sim/<label>_…` path, in root, no `..`), the directory's entries held (no subdirectory, no symlink, no unfinished write), a symlinked or escaped batch directory refused** (R5). |
+| `b4/host/b4_sim.py` | the per-pair setup with step-wise persistence; **a refused target return quarantined raw with its findings and context before the pair is invalid; the planned record carries `task_prefix` / `task_quarantine`; `Batch.reconcile_setup` at the stop holds the recorded state and prefix to the files durably on disk** (R2 / R3 / R4); manifest 1.2.0 with the identity; stopped / report 1.2.0; the `target_invalid` stop. |
+| `b4/host/b4_sim_schema.py` | the setup records' validators (**a kept target observation has no None cell**), quarantine 1.1.0 with the target `context`, manifest 1.2.0, K9 1.2.0, curves / pair index 1.1.0, stopped / report 1.2.0, **`setup_prefix_ok` — the state ↔ prefix ↔ quarantine contract of every planned record**, the task binding of every arm result. |
+| `b4/host/b4_sim_verify.py`, `b4_gate.py`, `b4_gate_verify.py` | the identity gate at step 0 (another identity, or none, refused **by name**, pointed to `docs/b4_archive_reverification.md`); the setup reconstruction from the persisted files; **the pair's setup files held to exactly the recorded ordered prefix plus the one recorded quarantine; real files in `pair_NNN` directories only, no symlink, no stray directory**; the gate judging (b′) with the all-panel record carried; `run_gate` refusing consumed and retired labels by name; the gate report 1.1.0 with the identity. |
+| `b4/tests/` | every existing test module updated to the v0.2 task and the harness-held seed; `test_b4_target.py`, `test_b4_protocol.py`, `test_b4_gonogo.py`; `b4_test_fixtures.v02_setup / v02_task`; the pin test re-implemented against the identity contract, **with no revision literal anywhere** (R1). The correction round's tests are listed in §5. |
+| `b4/IMPORT.json` | refreshed (59 entries, the revision file added) by `refresh_import.py` (kept here); `evidence/b4/unit_2b4a_repair_2026_10_18/import_check.py`: file digests, base digests and copied-function digests all equal, no tracked file under `b4/` without an entry. |
+| `docs/b4_architecture.md` | the owner's three precisions on `8361068` folded (the K9 row, clause 6, the precedence sentence); §7.1 "Failure records" rewritten for the quarantine of a refused return, the whole-grid validity and the durable ordered prefix; §9.5 implemented, the revision file; the implementation-status paragraph; `SALT_TARGET` in §7.1; the §9.2 formula block with the v0.2.0 labels. |
+| `docs/b4_archive_reverification.md` | §5: the identity implemented; the revision file; the v0.2.0 verifiers, judge and policy refuse the v0.1.16 archives by name. |
 | `evidence/b4/unit_protocol_v2_design_2026_10_20/owner_review_8361068_PASS/` | the owner's review of `8361068` copied byte for byte, SHA256SUMS verified, `SOURCE.txt`. |
-
-**One implementation decision inside choice 6, disclosed for the owner.** `import_table_sha256` in the identity payload is the digest of
-the import table's entries **for the inventoried tool files only** (`b4/host`, `b4/schemas`), not of the whole table file. The table also
-lists the tests; with the whole-file digest, a test-only edit would have moved the method's identity and made every earlier mechanics
-archive "another version". The test `test_b4_protocol.py` holds this: a changed test entry leaves `protocol_sha256` unchanged, a changed
-tool file is refused as "not its inventory". If the owner wants a test edit to count as a method change, this is a one-line revert.
 
 ## 2. The verification record (all on the final tree of this commit)
 
 | record | file | result |
 |---|---|---|
-| the complete local test battery | `tests.txt` | every `b4/tests/test_*.py` module by name (the command is the file's second line): **Ran 313 tests, OK** (652 s, run concurrently with the battery and the e2e) |
-| the mutant battery | `v02_mutants.txt`, driver `b4_v02_mutants.py` | **36 / 36 killed**, each line `[Ran N > 0, FAILED]` with the killing tests named; the tree copied to a temporary root per mutant, never the working tree |
-| the end-to-end mechanics cases | `e2e/`, driver `e2e_fixtures_v02.py`, `e2e/summary.json` | `as_expected: true`; `production_derivation_calls: [0, 0]` |
-| the import table | (command in §1) | 58 entries, all equal |
+| the complete local test battery | `tests.txt` | every `b4/tests/test_*.py` module by name (the command is the file's second line): **Ran 323 tests, OK** |
+| the mutant battery | `v02_mutants.txt`, driver `b4_v02_mutants.py` | **50 / 52 killed**, each kill `[Ran N > 0, FAILED]` with the killing tests named; the two survivors M31 / M45 are **equivalent mutants** under the correction (§5, R3): they alter the producer's in-memory state only, which the stop now reconciles from the files on disk; the reconciliation itself is attacked by M51 / M52, both killed. Counted as survivors, not as kills. |
+| the end-to-end mechanics cases | `e2e_v2/` (driver `e2e_v2_fixtures.py`), `e2e_v2_repeat/` (the same driver, a fresh root, a later time), `e2e_v2_compare.txt` (`e2e_v2_compare.py`) | `as_expected: true` in both runs; `production_derivation_calls: [0, 0]`; the cross-run comparison and the semantic-tamper proof in §5 (R6) |
+| the import table | (command in §1) | 59 entries, all equal |
+| the records of the first delivery `04385ae`, retained | `tests_04385ae.txt` (313 OK), `v02_mutants_04385ae.txt` (36 / 36), `e2e/` with `e2e_fixtures_v02.py` | kept as they were; their comparison rule was not reproducible (R6) and is superseded by `e2e_v2`, not rewritten |
 
-**The mutant battery's history, by the proportionality rule.** The first full run on the pre-final tree killed 34 of 36; the two survivors
-were **M29** (a setup that observes a third time is not named) and **M31** (the state does not advance to `partial`). Both were real gaps in
-the tests, not in the tool: a test was added for each (`test_a_setup_that_observes_more_than_twice_is_named` mocks the target observation
-to call the port a third time; M31 was re-stated as the state transition and its test tightened). The targeted rerun killed both; the full
-rerun recorded here, on the final tree, is 36 / 36. No mutant was counted as killed on an EDIT-MISS, a non-green baseline or `Ran 0`.
+**The mutant battery's history, by the proportionality rule.** The first full run on the pre-final tree of `04385ae` killed 34 of 36; the
+two survivors (M29, M31 of that round) were test gaps, closed, and the final run was 36 / 36 (`v02_mutants_04385ae.txt`). The correction
+round rewrote M1 / M2 / M31 / M34 against the new setup code (their targets moved) and added M37–M52 for R1–R5 and the reconciliation;
+the first run of the 50 was 48 / 50 with M31 / M45 surviving as equivalents (above), M51 / M52 added, the final run 50 / 52. No mutant was
+counted as killed on an EDIT-MISS, a non-green baseline or `Ran 0`.
 
-**The e2e cases** (each in a hermetic copy of the tree; each archive re-verified by a **fresh-process** verifier CLI; the comparison strips
-the VOLATILE keys named at the top of the driver — times, wall-clock durations, the hermetic root's HEAD and path, the deadline record's
-elapsed / checks, the quarantine repr, a stop record's `reason` that may quote the root's path — and nothing else):
+## 3. The e2e cases (`e2e_v2/summary.json`; every archive re-verified by a fresh-process verifier CLI)
 
-| case | schedule | what happened | fresh verifier |
-|---|---|---|---|
-| `complete` | `b4-mech-1`, S = 2 | batch complete; gate verdict FAIL (K6 FAIL, K8 / K9 / K10 PASS, the rest not assessable at S = 2); the K9 row carries `judged_estimand`, the conditional judged record and the all-panel descriptive record; go / no-go: **no decision** (precondition S = 32 not met, exit 3) | batch 0, gate 0, gonogo 0 |
-| `complete_32` | `b4-mech-5`, 32 explicit pairs | batch complete; go / no-go **no-go** at B = 64: positives 7, negatives 12, ties 13, one-sided sign p 0.916 > 0.20; conditional K9 medians all ≥ 0.50 (ff_srval 0.708, the other six 1.0) beside the all-panel descriptive ones (ff_srval 0.354, sr_kind 0.500); `formal: false`; no successor named | batch 0, gonogo 0 |
-| `invalid` | S = 2, a DOMAIN at the audit of pair 1 | batch invalid, stop `domain` at stage `audit`; pair 0 complete, pair 1 partial with its task complete | 0 |
-| `incomplete` | S = 2, the deadline during K9 of pair 0 | batch incomplete, stop `deadline` at `k9`; pair 1 not started | 0 |
-| `target_partial` | the interrupt between the two setup observations | stop `interrupted`, role `TARGET`, stage `target_setup`; pair 0 task **partial** with `task_setup.json` + `target_search.json` kept, no `target_holdout.json`, no `task.json` | 0 |
-| `target_invalid` | a DOMAIN at the first setup observation | stop `target_invalid`; pair 0 task invalid with the plan kept | 0 |
-| `source_drift` | the source fields change between the two observations | stop `target_invalid` at the second write; the first observation kept, nothing after it written | 0 |
-
-**The six tampers** of the `complete` archive, each refused (exit 1) by the fresh verifier **with the component named**: the planted genome
-changed ("not what the seed, the rule and the mapping give"); a target-grid cell flipped ("rebuilt"); the task's target flipped; the protocol
-identity removed ("no protocol identity"); one identity component changed (`k9: judged`); the gate's identity digest changed ("not this
-tool's"). **The two named old archives** (`b4-sim-3`, `b4-gate-1`, and the gate-1 gate directory): the v0.2.0 verifiers, the judge and the
-policy refuse each by name ("the archive carries no protocol identity: written by a tool before the identity existed … re-verify it with its
-own tool at its recorded HEAD") and write nothing; `untouched: true` (every byte compared before and after).
+| case | what happened | fresh verifier |
+|---|---|---|
+| `complete` | S = 2 gate mode; verdict FAIL (K6 FAIL, K8 / K9 / K10 PASS, the rest not assessable); go / no-go **no decision** (S ≠ 32) | batch 0, gate 0, gonogo 0 |
+| `complete_32` | 32 explicit pairs; go / no-go **no-go** at B = 64: positives 7, negatives 12, ties 13, one-sided sign p 0.916 > 0.20; conditional K9 medians all ≥ 0.50 (ff_srval 0.708, the other six 1.0) beside the all-panel descriptive ones (ff_srval 0.354, sr_kind 0.500); `formal: false` | batch 0, gonogo 0 |
+| `invalid` / `incomplete` | a DOMAIN at the audit of pair 1 → invalid; the deadline inside K9 of pair 0 → incomplete | 0 / 0 |
+| `target_partial` | an interrupt at the second setup call → incomplete, task partial, **prefix 2** | 0 |
+| `interrupt_after_holdout` | the owner's R3 case: the interrupt right after `target_holdout.json` was durably written → incomplete, task partial, **prefix 3**, both target files kept, **verified clean** | 0 |
+| `target_invalid` | a DOMAIN at the first call → invalid, nothing returned, no quarantine, prefix 1 | 0 |
+| `source_drift` | the owner's R2 case 1: a valid-shaped second return with another fabric digest and a marker → invalid; the return kept in `target_holdout.QUARANTINE.json` (the marker found in it), prefix 2, `task_quarantine = target_holdout` | 0 |
+| `return_malformed` / `return_init_none` / `return_bad_cell` / `return_nonserialisable` | the owner's R2 case 2 and R4: a malformed first return (marker), a None in the unscored init row, a cell of 2, a non-finite cell → each kept in `target_search.QUARANTINE.json` with its finding (`step 0: no q_after row of 8 cells`; `step 0, element 0: None — not a target observation under T-i`; `step 2, element 5: 2 is not 0 / 1`; `nan is not 0 / 1` with `raw` null and the repr kept), invalid, prefix 1 | 0 each |
+| `impossible_order` | the owner's R3 forgery (search removed, a valid holdout put in, every hash refreshed) → the fresh verifier refuses, naming the missing prefix file and the unaccounted later file | 1 (expected) |
+| `gonogo_contract` | the owner's R5 probes with MD and hashes refreshed: count 1.0, fixture 1, path `../escaped_batch`, an extra subdirectory → each refused by name; restored → clean | 1, 1, 1, 1; 0 |
+| `identity_revision` | the owner's R1 probe in fresh interpreters: the revision file → v0.2.1 with its table entry refreshed: `protocol_sha256` unchanged (`d4fd2b7f…`), revision reported v0.2.1; a threshold number changed unrefreshed → refused "not its inventory"; refreshed → another digest | — |
+| `tampered/…` | the six tampers of the first delivery, each refused and named | 1 each |
+| `old_archives` | `b4-sim-3`, `b4-gate-1`: refused by name by the verifiers, the judge and the policy; `untouched: true` | 1 each |
 
 **What the fixtures establish, and what they do not.** They establish that the tool stack executes the v0.2.0 contract end to end on this
-tree — the setup persists step by step, the executing side never sees the seed, the records validate, the fresh-process verifiers reproduce
-the derived results and refuse the named tampers and the foreign versions, the policy applies the ruled numbers. They do not establish any
-property of the fabric: the mechanics labels are not production labels, their numbers are not results, and the `complete_32` no-go is the
-policy exercised on a fixture, not a finding about Ω − R.
+tree. They do not establish any property of the fabric: the mechanics labels are not production labels, their numbers are not results, and
+the `complete_32` no-go is the policy exercised on a fixture, not a finding about Ω − R.
 
-## 3. The gotcha worth keeping
+## 4. The gotcha worth keeping
 
-The identity binds the tree to `b4/IMPORT.json`: after **any** edit under `b4/`, run `refresh_import.py` (here) and the import check, or
-every v0.2.0 entry point refuses with "the tree is not its inventory". That refusal is the contract working, not a fault.
+The identity binds the tree to `b4/IMPORT.json`: after **any** edit under `b4/`, run `refresh_import.py` (here) and the import check, or every
+v0.2.0 entry point refuses with "the tree is not its inventory". That refusal is the contract working, not a fault. A documentation-only
+revision is: edit `docs/b4_architecture.md`'s first line, set the same revision in `b4/architecture_revision.json`, refresh that file's table
+entry — the pins stay green and the method's identity does not move (proven in `test_b4_protocol`).
 
-## 4. What this unit does not authorise
+## 5. The correction round after the owner's HOLD on `04385ae` (R1–R6)
+
+The owner's review (archived in §6) reproduced six gaps with independent probes; all six are corrected inside this unit, as authorised.
+Old logs are retained (§2); the contracts that changed are named here.
+
+| | the gap the owner reproduced | the correction | where it is proven |
+|---|---|---|---|
+| **R1** (P1) | the document's revision lived as a literal in `b4_thresholds.py`, an inventoried tool file: changing it and refreshing its entry moved the protocol digest (`2c207d51…` → `28cf2af9…`) | the revision moved to **`b4/architecture_revision.json`** (schema `b4_architecture_revision`), outside the inventory; `b4_thresholds.read_architecture_revision` reads it strictly; the pin test holds the document's first line to it **and asserts no revision literal exists in any tool file or in itself**; a documentation-only revision therefore changes the file and the document only | `test_b4_protocol…fresh_interpreters` (the real file / IMPORT workflow in subprocesses: the revision file changed → the same digest, the pins green against the document's new first line; a number changed → refused unrefreshed, another digest refreshed); the e2e `identity_revision` probe; mutant M37 |
+| **R2** (P1) | a drifting or malformed target return was lost: the run stopped invalid with no record of what came back | **`bt.observation_findings` + `ReturnRefusal`** carrying the returned object; the harness writes `target_search.QUARANTINE.json` / `target_holdout.QUARANTINE.json` (quarantine **1.1.0**, with `context`: phase, planted genome, config / stimulus digests, the expected source identity, the digest of the kept projection; `raw` null + repr when not serialisable) **before** the pair is invalid; never written as an observation, never redrawn; a DOMAIN (nothing returned) keeps no quarantine | `test_b4_sim…quarantined_then_invalid` (malformed, init None, cell 2, nan, a non-object at the second call, a short second grid), the drift test (R2 case 1, the marker found); `test_b4_target.TheReturn`; e2e `source_drift`, `return_*`; mutants M34, M38, M39 |
+| **R3** (P2) | an interrupt right after the second target write was refused by the verifier ("unaccounted for"); a holdout without its search, hashes refreshed, verified clean | every planned record carries **`task_prefix`** (the number of setup files durably written, in order) and **`task_quarantine`**; the verifier's must-set is exactly `SETUP_FILES[:task_prefix]` plus the one recorded quarantine; `sc.setup_prefix_ok` holds state ↔ prefix ↔ quarantine (not_started 0; in_progress 1; partial 2–3; complete 4; invalid 1–3 with a quarantined search return only at 1, a quarantined holdout return only at 2); **`Batch.reconcile_setup`** at the stop holds the state and prefix to the files on disk and indexes a file the interrupt kept out of the index (the window between a file's link and the in-memory update); report / stopped **1.2.0** | `test_b4_sim…every_persistence_boundary` (an interrupt right after each of the four writes, during each observation, the deadline before the first and the second observation: the recorded prefix equals the files on disk, every archive clean), `…without_its_prerequisite_is_refused_by_name` (the forgery; a prefix-3 partial with its holdout removed; the prefix lowered → a genuine prefix again; raised → refused; a quarantine not recorded → refused; an inconsistent state → refused by the validator), `…real_files_in_pair_directories_only`; e2e `interrupt_after_holdout`, `impossible_order`; mutants M31 / M45 (equivalent, survive), M43, M44, M51, M52 |
+| **R4** (P2) | a None in the unscored init row of the target grid was accepted (the mask narrowed the check) | the whole returned grid must be 0 / 1 — at the producer (`observation_findings`, → quarantine + invalid), at the record validator (`target_observation_findings`: a kept target observation has no None cell) and at the offline reconstruction (`setup_findings`); the mask, the ceilings, the scoring, the model's init semantics and ordinary candidate observations unchanged | `test_b4_target…a_none…validator_and_the_reconstruction` (the cell outside the mask asserted), the sim `init_none` case with the producer's exact text; e2e `return_init_none`; mutants M40, M41, M42 |
+| **R5** (P2) | the go / no-go verifier accepted `count 1.0`, `fixture 1`, a batch path outside the root, and ignored an empty subdirectory | `decision_findings`: `count` an int equal to `S`, `fixture` a bool identical to the record's, `batch_path_ok` (a plain `evidence/b4/sim/<label>_…` path: relative, normpath-stable, four components, none `.`/`..`); `verify_gonogo_dir`: every directory entry held (files only, no symlink, no `.part`), the batch directory real (no symlink in the chain, resolves to itself, under the root), the archive's identity compared type-exactly; the policy numbers and the decision rule untouched | `test_b4_gonogo…held_exactly_in_type_namespace_and_entries` (float count, integer fixture, float S, `../escaped_batch`, an absolute path, `..` inside the namespace, a symlinked batch directory, a subdirectory, an extra file, a symlink, an unfinished write — each named in process and refused by the fresh CLI); e2e `gonogo_contract`; mutants M46–M49. The archive verifier got the same entry discipline (M50). |
+| **R6** (P2) | the "canonical digest" comparison of `e2e/` dropped volatile keys but not their dependency chain: the owner's regeneration reproduced 811 of 908 digests | **`e2e_v2_fixtures.py`** normalises the dependency graph explicitly (its docstring states the rule before any comparison): volatile keys dropped; the hermetic HEADs and the root path symbolised; **every embedded raw digest replaced by the referenced file's normalised digest, to a fixed point** (19 passes on this root — the chain's depth is the number of archives, every `seeds.json` citing every earlier one through the registry; 4,290 references substituted over 995 files); the size of an indexed file whose digest was substituted is dropped too (a file carrying a wall-clock duration has a volatile length); the markdown renderings are not compared (the verifiers hold each to its JSON byte for byte). Raw links are validated in the live root (every file index entry resolves to a file with that digest and size: 98 in `complete`, 1,507 in `complete_32`, 0 unresolved anywhere) and by the fresh verifiers. The old `e2e/` record and driver are kept as they were, superseded, not rewritten | **the repeat** `e2e_v2_repeat/` (a fresh root at a later time) compared by `e2e_v2_compare.py` → `e2e_v2_compare.txt`: **PASS — 940 of 940 comparable normalised digests equal across the two runs (round 1 2026-10-20T19:32:28Z, round 2 2026-10-20T20:00:18Z, two different hermetic roots and HEADs), 0 different, 0 missing; the 5 markdown renderings skipped by rule (held to their JSON by the verifiers)**; **the semantic tamper** (`e2e_v2/semantic_tamper/record.json`): one target-grid cell flipped with its whole chain refreshed (trace digest, task.json's binding, the pair index, the report index) → exactly `pair_000/target_search.json`, `pair_000/task.json`, `pair_000/index.json`, `sim_report.json` differ and the other 47 files are equal (`localised: true`) |
+
+**What changed in the contracts, named.** The planned record (report / STOPPED) gained `task_prefix` and `task_quarantine` (report and
+stopped schemas 1.1.0 → 1.2.0); the quarantine record gained `context` (1.0.0 → 1.1.0); a target observation record with a None cell is now
+refused by its validator; `ARCHITECTURE_REVISION` is read from a file; the go / no-go record's `batch` block is type-exact and its path
+plain. Every v0.2.0 mechanics archive written by `04385ae` is therefore of another identity and would be refused by name — none is kept.
+
+**The one design note for the owner.** `Batch.reconcile_setup` makes the files on disk the authority for the recorded prefix at the stop.
+This is why M31 / M45 survive: a wrong in-memory state is overwritten by the disk truth before anything is written. The alternative — a
+window in which a durably written file is unrecorded — is the owner's R3 case. The reconciliation reads; it never writes a setup file.
+
+## 6. What this unit does not authorise, and the archived reviews
 
 No production label was derived, smoked, explored or gated; `b4-sim-4` and `b4-gate-2` are reserved names in the table, nothing more. The
-next unit, whatever it is, needs its own ruling.
+next unit, whatever it is, needs its own ruling. The owner's review of `8361068` is archived under
+`evidence/b4/unit_protocol_v2_design_2026_10_20/owner_review_8361068_PASS/`; the owner's review of `04385ae` (HOLD, R1–R6, with its
+probe driver and outputs) is archived here under `owner_review_04385ae_HOLD/` with `SOURCE.txt`, SHA256SUMS verified before and after the copy.

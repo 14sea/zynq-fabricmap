@@ -38,6 +38,12 @@
   }
  ],
  "files": {
+  "b4/architecture_revision.json": {
+   "kind": "new",
+   "note": "the owner's review of 04385ae, R1: the architecture document's revision the tool tree was written against — PROVENANCE outside the identity's inventory (not a tool file), read by b4_thresholds.ARCHITECTURE_REVISION and held to the document's first line by the static pin test; a documentation-only revision changes this file and the document, never a tool file, and the method's identity does not move. Listed here like every file under b4/; not in the identity's import_table_sha256 projection.",
+   "role": "provenance",
+   "sha256": "0ab47e312d16d1b31ec24e2ffef3fb6ab06d2562e66e8719348de14bc816c75d"
+  },
   "b4/host/b4_carto.py": {
    "base": "b3/host/b3_control_x.py",
    "base_sha256": "c9d8375374ddedf9e13b45a82eb711e3c32a762e7da0fd8f985020f8ff2d3c37",
@@ -123,7 +129,7 @@
    "kind": "new",
    "note": "protocol v0.2.0 (choice 5): the engineering go / no-go policy of section 9.4 applied to an exploration archive — S = 32, B_go = 64, the one-sided exact sign test on Omega - R with positives > negatives and p <= 0.20, the seven judged conditional K9 medians >= 0.50, every planned pair complete else no decision; a cost policy record with its own validator, verifier and markdown; never a gate verdict or an authorisation.",
    "role": "host",
-   "sha256": "4a6a046037fc5dd14635657c32aeff59f7fe9c4ac424407eeac77699184ba887"
+   "sha256": "ac654c44c407f76cf045ce5018e6cbf63558ccdf74933c461b9225bbb1f9fb75"
   },
   "b4/host/b4_k10.py": {
    "kind": "new",
@@ -153,7 +159,7 @@
    "kind": "new",
    "note": "protocol v0.2.0 (choice 6): the machine identity of the execution / judgement method, built from the tree's trusted inventory (every tool file held to this table's digest, the copied statistics by per-function digest, the thresholds table's digest without its source text, the task / K9 / K10 constants, the engine, every record schema by version and validator digest, the formal inputs, the labels); the document's revision carried as provenance and excluded from the digest and the equality; compare() names the differing components; an archive of another version is refused by name.",
    "role": "host",
-   "sha256": "d43eb03b1ea801c93f6929995e89d3942a2a16dd353940c5fb97a35aff3135b5"
+   "sha256": "230d0187546795bf617ae1358613344505ac4a910feb7c35ee4f5813b92b4516"
   },
   "b4/host/b4_replay.py": {
    "kind": "new",
@@ -181,19 +187,19 @@
    "kind": "new",
    "note": "unit 2b-4a C: the host-only exploration harness — a pre-flight that writes nothing on refusal (label b4-sim-<n>, a clean tree with no override, the formal source, the root's inputs at their pinned digests, every exclusion source, an output directory directly under evidence/b4/sim/ created exclusively); seeds.json then manifest.json then the first observation; per pair R > F > O > X > D > Omega > A0 on one worker, each RunResult written exclusively before its audit, the typed completion checks, replay, ledger recompute, given-view checks, D from F's rebuilt map, K7 prefixes, K9, K10, curves, the pair index, the HEAD / input checkpoint; fail-closed stops (invalid / incomplete) with STOPPED.json, a typed sim_report.json always and a pooled summary only when complete; values beside the section-9 thresholds, no verdict field; exit codes 0 / 1 / 2 / 3. Running it is a separate authorisation. Unit 2b-4 (the gate tool, 2026-10-19): mode \"gate\" (b4-gate-<n> labels, reached through b4_gate.py only; the exploration CLI unchanged), standing_for(label) — the gate's standing text for a gate label, the exploration's text (unchanged, as the archived summaries carry it) otherwise; summarise_batch takes the standing as a parameter; no constant changed.",
    "role": "host",
-   "sha256": "8c78e7162cba4ac8ecd11202ed45047697e474f2105c2f6f5ab72800beb1d5c2"
+   "sha256": "d1d0e46a556b599cf36b62ddd1bcf4b2e033b34f8cb464ca8fbb2c6d69e659fc"
   },
   "b4/host/b4_sim_schema.py": {
    "kind": "new",
    "note": "unit 2b-4a C: typed validators (named findings, total over keys, type-exact scalars) for every file the harness writes — seeds, manifest, arm result (the engine's shape check), arm audit, controls, k7, k9, k10, curves, pair index, STOPPED, INIT_FAILED, the report (a summary only when complete; no verdict-like key) — applied before each write and offline over a run directory.",
    "role": "host",
-   "sha256": "2ca50230da7c47fc55c82414b091283229ed069f90865b3af382826fb7b009a3"
+   "sha256": "c1299c6a376fd99cf0443d6580aff01c6c1409659f766827d8ba7df7cce58dc2"
   },
   "b4/host/b4_sim_verify.py": {
    "kind": "new",
    "note": "unit 2b-4a repair (the owner's HOLD on cdf2c53, F2 / F3 / F4): the archive-wide verifier of a run directory — the required file set of the recorded status and of every pair's state, no unlisted or duplicate file, every listed digest / size, seeds / manifest / report linkage, STOPPED exactly when not complete, every file against its typed validator with the pair's task bound, and (deep) every conclusion recomputed from the raw readouts on the formal model (arm re-audits, controls, K7 prefixes, K9 / K10, curves, the pooled summary); run by the batch on itself before the report is written; offline CLI; writes nothing; the authenticity limit of b4_replay stated. Second round (the owner's HOLD on f2c4bca, R1–R5): every record bound to the planned pair / role / seeds and the formal source, a complete pair's every arm re-audited whatever its recorded state, exact scalar types. Unit 2b-4: the report's standing bound to its label (standing_for) and the summary recomputed with it.",
    "role": "host",
-   "sha256": "18f4a1e976e5f1bcf61fcc0853bd84dce80eedfe72c61af4bd75a9e7223f3c81"
+   "sha256": "57c7137810bf87c5d62e4c931aeb198afc432fb87f26cd2f5ad54bcda78ea940"
   },
   "b4/host/b4_snapshot.py": {
    "kind": "new",
@@ -211,13 +217,13 @@
    "kind": "new",
    "note": "protocol v0.2.0 (the owner's rulings of 2026-10-20, choices 2-3 and the target-setup contract): the per-pair target setup of task-v0.2 — the private plan (seeds, the planted flip-flop genome by the fixed rule, the stimulus digests) persisted before the first target call, each setup observation of the planted configuration through the execution port saved on return, the PublicTask (no seed, no planted genome, no private record) and task.json last; the offline reconstruction (setup_findings) from the kept records, the fabric never asked again.",
    "role": "host",
-   "sha256": "b595f79a189c8cdf6dc505056e38afac655f224218fa345802439f6d899a373e"
+   "sha256": "c98fde40551203c427819b558314d504d10087ffc9e51808cf309f787819719a"
   },
   "b4/host/b4_thresholds.py": {
    "kind": "new",
    "note": "unit 2b-4a C: the machine table of docs/b4_architecture.md section 9's fixed thresholds, grid, anchor and control formulas, pinned field by field to the document's text by b4/tests/test_b4_thresholds.py; listed beside exploration values for reference; never a verdict.",
    "role": "host",
-   "sha256": "975afa4e2ae12019ef122ffba0cdc5f760ad57ef0cbe6da143477d72cb59ced4"
+   "sha256": "fdc99be7d651297cffe6bf73ec13fe5c70e23631f751e28b2d8ac191b1a55a4b"
   },
   "b4/hypothesis/ff_behaviour_v0.2.json": {
    "kind": "new",
@@ -311,7 +317,7 @@
    "kind": "new",
    "note": "unit 2b-4: the judge on synthetic summaries (the PASS path; every row's FAIL on its own number; the boundaries written with an equal sign; +inf d; no B*; invalid / incomplete; the summary contract; the formal identity; the committed S = 32 report as a read-only reference), end to end on a hermetic copy (a valid FAIL archive without B*, a synthetic PASS, an invalid and an incomplete archive; the verifier in process and in a fresh process; the tampering negatives with digests refreshed, the coordinated tamper of the evidence caught by the deep re-verification; refusals and persistence; the production-only CLI). Production derivation guarded and asserted never reached. After the HOLD on 4cdc0c1: the synthetic summary built coherently from primitives; every row's FAIL produced coherently; the owner's six reproductions and one case per binding as invalid judgements; the totality fuzz (every node replaced by every foreign value: never an exception, a null always a finding); the refreshed-hash negatives and the invalid positive controls end to end. After the second HOLD: the fixture's d by the production convention (sample standard deviation); the magnitude test (a concrete 200-value sequence against the production function, the owner's boundary 0.4987…, the special cases, the coordinated two-copy edit, the tolerance); the alias test (the five numerically-equal float aliases, bool aliases, a huge integer, an infinite literal, a NaN, the int-leaf alias fuzz); the totality fuzz extended with the numeric edges; the end-to-end negatives extended (the coordinated d, two aliases, the huge integer and the infinite literal — the last two refused at the evidence boundary). After the third HOLD: the derived-arithmetic test (1a, 1b, the safe implied d, the two whole-summary cases through validator, judge and artifact); the tolerance-limit disclosure test (the owner's integer sequence with d exactly 0.5; both copies at 0.5 − 5e-13 pass the consistency check and flip K5 — a documented limit, the frozen threshold unchanged); two more end-to-end negatives.",
    "role": "test",
-   "sha256": "19aefe86b222f57a4a79222b0fa3a15af4fa236ba8bb7e22bfcf8995223acd06"
+   "sha256": "5689665a2fd9e200c43467200e15fc8c57e66d4ddb8f5dbf231229966cbd2df4"
   },
   "b4/tests/test_b4_gate_stats.py": {
    "kind": "new",
@@ -321,7 +327,7 @@
   "b4/tests/test_b4_gonogo.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "7b8e492b01fd82f29de0ccf97cb5dab19bfc0cb8df9378b018a3c4c20cca4bd1"
+   "sha256": "6800b48947f14a4bfd2b6f0ce63ac5e31a33c46767a381caa9f4e3dc08cd1407"
   },
   "b4/tests/test_b4_k10.py": {
    "kind": "new",
@@ -347,7 +353,7 @@
   "b4/tests/test_b4_protocol.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "bf86472583a8c7588fb3dee6f59b28aed4fddcb681461bee2eb81913dfaffd0e"
+   "sha256": "2da62abf97d220b9650a3559ad8526d133271339d23d14074113c9aab53c7520"
   },
   "b4/tests/test_b4_replay.py": {
    "kind": "new",
@@ -368,7 +374,7 @@
   "b4/tests/test_b4_sim.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "c8d69b840cce8f5b8937beea55e6fc196943748be994cd4cb1985900e3bcc67c"
+   "sha256": "b6d47f3c15115646338a767278730db100984c97df7db48d2c29dd30600e1e8b"
   },
   "b4/tests/test_b4_snapshot.py": {
    "kind": "new",
@@ -383,12 +389,12 @@
   "b4/tests/test_b4_target.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "1513517b65d70290b7f8ce35bad472f072bccd2d14eeed66aea43b2ee5cb375c"
+   "sha256": "c14672e582b7313220fd6c641da38253e7f26b873e6e4bcde23d6aac6e79240b"
   },
   "b4/tests/test_b4_thresholds.py": {
    "kind": "new",
    "role": "test",
-   "sha256": "fbe4d4dca43bed083dbf5f8b93acde60941362bf882a8545110f2921f50fd872"
+   "sha256": "da73ebcfc9f1ad4b4b31f87dedfb52c2648e7d1d9bc3f6b250172eab45b88590"
   }
  },
  "repository_inputs": [

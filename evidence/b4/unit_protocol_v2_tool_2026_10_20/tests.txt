@@ -1,4 +1,4 @@
-# tree: 8361068 + working tree (b4-protocol-v2), 2026-10-20T13:58:51Z
+# tree: 04385ae + working tree (b4-protocol-v2, the correction round after the owner's HOLD on 04385ae), 2026-10-20T18:33:01Z
 # cmd: python3 -B -m unittest -v b4.tests.test_b4_carto b4.tests.test_b4_controls b4.tests.test_b4_deadline b4.tests.test_b4_engine b4.tests.test_b4_execution b4.tests.test_b4_ff_hypothesis b4.tests.test_b4_ff_mapping b4.tests.test_b4_ff_model b4.tests.test_b4_gate b4.tests.test_b4_gate_stats b4.tests.test_b4_gonogo b4.tests.test_b4_k10 b4.tests.test_b4_k9 b4.tests.test_b4_landscape b4.tests.test_b4_probe_latch_ginv b4.tests.test_b4_protocol b4.tests.test_b4_replay b4.tests.test_b4_rng b4.tests.test_b4_seeds b4.tests.test_b4_sim b4.tests.test_b4_snapshot b4.tests.test_b4_stats b4.tests.test_b4_target b4.tests.test_b4_thresholds 
 test_a0_d_and_omega (b4.tests.test_b4_carto.ControlX.test_a0_d_and_omega) ... ok
 test_permute_and_isomorphism (b4.tests.test_b4_carto.ControlX.test_permute_and_isomorphism) ... ok
@@ -170,6 +170,8 @@ test_the_source_text_of_every_copied_function_is_the_original_s (b4.tests.test_b
 test_a_fixture_batch_of_two_pairs_is_no_decision_written_verified_and_never_of_record (b4.tests.test_b4_gonogo.EndToEnd.test_a_fixture_batch_of_two_pairs_is_no_decision_written_verified_and_never_of_record) ... ok
 test_refusals_write_nothing (b4.tests.test_b4_gonogo.EndToEnd.test_refusals_write_nothing) ... ok
 test_the_cli (b4.tests.test_b4_gonogo.EndToEnd.test_the_cli) ... ok
+test_the_evidence_contract_is_held_exactly_in_type_namespace_and_entries (b4.tests.test_b4_gonogo.EndToEnd.test_the_evidence_contract_is_held_exactly_in_type_namespace_and_entries)
+R5 of the owner's review of 04385ae, with every hash and the markdown refreshed after each alteration: count 1 -> 1.0, fixture ... ok
 test_a_go_on_the_policy_and_every_budget_carried (b4.tests.test_b4_gonogo.ThePolicy.test_a_go_on_the_policy_and_every_budget_carried) ... ok
 test_each_condition_fails_on_its_own_number_and_the_boundaries (b4.tests.test_b4_gonogo.ThePolicy.test_each_condition_fails_on_its_own_number_and_the_boundaries) ... ok
 test_no_decision_when_the_precondition_is_not_met_and_nothing_is_interpreted (b4.tests.test_b4_gonogo.ThePolicy.test_no_decision_when_the_precondition_is_not_met_and_nothing_is_interpreted) ... ok
@@ -223,6 +225,8 @@ test_intrasite_on_the_intra_slice_d_nets_is_accepted_as_attempt_1_s_readbacks_ha
 test_the_real_attempt_1_readbacks_pass_the_cell_rule_and_nothing_else_changed (b4.tests.test_b4_probe_latch_ginv.RouteStatus.test_the_real_attempt_1_readbacks_pass_the_cell_rule_and_nothing_else_changed) ... ok
 test_any_other_difference_is_named (b4.tests.test_b4_probe_latch_ginv.Structure.test_any_other_difference_is_named) ... ok
 test_the_pair_differing_in_the_gate_inversion_alone_is_structurally_equal (b4.tests.test_b4_probe_latch_ginv.Structure.test_the_pair_differing_in_the_gate_inversion_alone_is_structurally_equal) ... ok
+test_a_documentation_only_revision_moves_nothing_of_the_method_in_fresh_interpreters (b4.tests.test_b4_protocol.TheIdentity.test_a_documentation_only_revision_moves_nothing_of_the_method_in_fresh_interpreters)
+R1 of the owner's review of 04385ae, on the REAL file / import-table workflow, every step a fresh interpreter: the revision lives ... ok
 test_a_tree_that_is_not_its_inventory_is_refused_by_name (b4.tests.test_b4_protocol.TheIdentity.test_a_tree_that_is_not_its_inventory_is_refused_by_name) ... ok
 test_it_is_deterministic_complete_and_excludes_the_document_revision_from_the_digest (b4.tests.test_b4_protocol.TheIdentity.test_it_is_deterministic_complete_and_excludes_the_document_revision_from_the_digest) ... ok
 test_the_cli_prints_the_digest (b4.tests.test_b4_protocol.TheIdentity.test_the_cli_prints_the_digest) ... ok
@@ -297,6 +301,8 @@ test_the_task_setup_files_the_planted_target_and_the_arms_task (b4.tests.test_b4
 task-v0.2 (section 7.1): per pair the private plan, the two setup observations and the public task; the planted configuration a ... ok
 test_a_stop_at_the_deadline_boundary_still_writes_stopped_json (b4.tests.test_b4_sim.IncompleteStops.test_a_stop_at_the_deadline_boundary_still_writes_stopped_json)
 The owner's review of 2026-10-19 (finding 2), the full-batch form: an external interrupt at the K9 entry while the ... ok
+test_an_interrupt_or_the_deadline_at_every_persistence_boundary_keeps_the_ordered_prefix (b4.tests.test_b4_sim.IncompleteStops.test_an_interrupt_or_the_deadline_at_every_persistence_boundary_keeps_the_ordered_prefix)
+R3 (the owner's review of 04385ae): at EVERY boundary of the setup — right after each of the four writes returned, during each ... ok
 test_an_interrupt_or_the_deadline_between_the_two_setup_observations_keeps_the_first (b4.tests.test_b4_sim.IncompleteStops.test_an_interrupt_or_the_deadline_between_the_two_setup_observations_keeps_the_first)
 Section 7.1: an external interrupt at the second target call — incomplete, the first observation on disk, the task `partial`, the ... ok
 test_the_deadline_expiring_before_finalisation_is_incomplete (b4.tests.test_b4_sim.IncompleteStops.test_the_deadline_expiring_before_finalisation_is_incomplete)
@@ -317,10 +323,12 @@ test_a_receipt_drift_during_the_batch_is_invalid (b4.tests.test_b4_sim.InvalidSt
 The exposure receipt changes during the batch: caught at the pair's input checkpoint as input_drift, never complete. ... ok
 test_a_refusal_inside_k9_keeps_the_partial (b4.tests.test_b4_sim.InvalidStops.test_a_refusal_inside_k9_keeps_the_partial)
 F6: a DOMAIN at K9's second observation — the first observation and the pair in progress are on disk, the plan says ... ok
+test_a_returned_object_that_is_not_a_target_observation_is_quarantined_then_invalid (b4.tests.test_b4_sim.InvalidStops.test_a_returned_object_that_is_not_a_target_observation_is_quarantined_then_invalid)
+R2 / R4: a malformed step at the first call, a None in the INIT readout (outside the scored mask), a cell of 2, a non-finite ... ok
 test_a_setup_that_observes_more_than_twice_is_named (b4.tests.test_b4_sim.InvalidStops.test_a_setup_that_observes_more_than_twice_is_named)
 Section 7.1: the setup makes exactly two port calls per pair; a setup observation routine that made a third call (here: the target ... ok
 test_a_source_drift_inside_the_setup_and_a_setup_port_that_calls_more_than_twice (b4.tests.test_b4_sim.InvalidStops.test_a_source_drift_inside_the_setup_and_a_setup_port_that_calls_more_than_twice)
-A second setup observation from another source identity (the fabric kind changed between the two calls) is `target_invalid`; the ... ok
+R2 (the owner's review of 04385ae): a second setup observation from another source identity — a VALID-SHAPED trace whose fabric ... ok
 test_an_input_drift_during_the_final_verification_is_invalid (b4.tests.test_b4_sim.InvalidStops.test_an_input_drift_during_the_final_verification_is_invalid)
 R5: the architecture document changes while the deep verification runs (after it returns clean) — the final ... ok
 test_an_unexpected_exception_and_the_three_drifts (b4.tests.test_b4_sim.InvalidStops.test_an_unexpected_exception_and_the_three_drifts) ... ok
@@ -342,12 +350,16 @@ test_a_downgraded_arm_state_cannot_switch_the_audit_off (b4.tests.test_b4_sim.Th
 R1: R's state set to `written` in the report and the pair index, its audit deleted, one bit of its final RNG state ... ok
 test_a_genuine_partial_diagnostic_cannot_belong_to_a_complete_batch (b4.tests.test_b4_sim.TheArchiveVerifier.test_a_genuine_partial_diagnostic_cannot_belong_to_a_complete_batch)
 Round 3, finding 1: a VALID partial K10 (the production driver stopped by StopWork after one unit) and a valid ... ok
+test_a_later_setup_file_without_its_prerequisite_is_refused_by_name (b4.tests.test_b4_sim.TheArchiveVerifier.test_a_later_setup_file_without_its_prerequisite_is_refused_by_name)
+R3, the owner's forgeries: an invalid setup archive with target_search.json removed and a valid target_holdout.json put in its ... ok
 test_a_malformed_diagnostic_is_a_named_finding_never_an_exception (b4.tests.test_b4_sim.TheArchiveVerifier.test_a_malformed_diagnostic_is_a_named_finding_never_an_exception)
 The owner's review of 2026-10-19 (finding 1): a K7 / K9 document replaced by a list, a K10 by a string, a K9 ... ok
 test_every_record_is_bound_to_the_planned_pair_and_the_formal_source (b4.tests.test_b4_sim.TheArchiveVerifier.test_every_record_is_bound_to_the_planned_pair_and_the_formal_source)
 R2: a self-consistent R from ANOTHER exposed operator seed (12) under a plan that says 11 — replay accepts it, the ... ok
 test_nested_scalars_are_exact_in_type (b4.tests.test_b4_sim.TheArchiveVerifier.test_nested_scalars_are_exact_in_type)
 R3: an observation id of false, a float interaction index, a float count — equal in Python, refused by the validators ... ok
+test_the_archive_holds_real_files_in_pair_directories_only (b4.tests.test_b4_sim.TheArchiveVerifier.test_the_archive_holds_real_files_in_pair_directories_only)
+A subdirectory inside a pair, a directory that is not a pair directory, a pair directory the plan does not have, a symlink — each ... ok
 test_the_cli_of_the_verifier (b4.tests.test_b4_sim.TheArchiveVerifier.test_the_cli_of_the_verifier) ... ok
 test_the_comparison_sets_and_the_cell_types_are_enforced_by_the_validators (b4.tests.test_b4_sim.TheArchiveVerifier.test_the_comparison_sets_and_the_cell_types_are_enforced_by_the_validators) ... ok
 test_the_deadline_records_are_consistent_and_bound_to_the_manifest (b4.tests.test_b4_sim.TheArchiveVerifier.test_the_deadline_records_are_consistent_and_bound_to_the_manifest)
@@ -364,6 +376,7 @@ test_the_untouched_archive_is_clean_and_every_tamper_is_named (b4.tests.test_b4_
 test_a_summary_with_a_verdict_key_is_refused_by_the_report_validator (b4.tests.test_b4_sim.TheSummaryAndTheValidators.test_a_summary_with_a_verdict_key_is_refused_by_the_report_validator) ... ok
 test_on_hand_rows_including_an_infinite_cohen_d (b4.tests.test_b4_sim.TheSummaryAndTheValidators.test_on_hand_rows_including_an_infinite_cohen_d) ... ok
 test_the_fixture_schedule_s_own_findings (b4.tests.test_b4_sim.TheSummaryAndTheValidators.test_the_fixture_schedule_s_own_findings) ... ok
+test_the_quarantine_record_carries_a_context_for_a_target_return_only_and_the_prefix_contract (b4.tests.test_b4_sim.TheSummaryAndTheValidators.test_the_quarantine_record_carries_a_context_for_a_target_return_only_and_the_prefix_contract) ... ok
 test_write_exclusive_never_overwrites_and_refuses_non_finite (b4.tests.test_b4_sim.TheSummaryAndTheValidators.test_write_exclusive_never_overwrites_and_refuses_non_finite) ... ok
 test_a_prefix_beyond_the_ledger_or_of_the_wrong_shape_is_a_finding_not_a_count (b4.tests.test_b4_snapshot.HandLedger.test_a_prefix_beyond_the_ledger_or_of_the_wrong_shape_is_a_finding_not_a_count) ... ok
 test_a_tampered_middle_record_is_found_where_it_lies (b4.tests.test_b4_snapshot.HandLedger.test_a_tampered_middle_record_is_found_where_it_lies) ... ok
@@ -386,6 +399,9 @@ test_the_task_is_rebuilt_from_the_records_and_the_planted_configuration_scores_i
 test_a_fixture_fabric_s_setup_is_named_against_the_formal_source (b4.tests.test_b4_target.TheReconstruction.test_a_fixture_fabric_s_setup_is_named_against_the_formal_source) ... ok
 test_every_tamper_is_named (b4.tests.test_b4_target.TheReconstruction.test_every_tamper_is_named) ... ok
 test_genuine_records_reconstruct_clean_with_or_without_the_task (b4.tests.test_b4_target.TheReconstruction.test_genuine_records_reconstruct_clean_with_or_without_the_task) ... ok
+test_a_kept_record_with_a_none_is_named_by_the_validator_and_the_reconstruction (b4.tests.test_b4_target.TheReturn.test_a_kept_record_with_a_none_is_named_by_the_validator_and_the_reconstruction) ... ok
+test_every_bad_return_is_refused_with_the_object_attached (b4.tests.test_b4_target.TheReturn.test_every_bad_return_is_refused_with_the_object_attached) ... ok
+test_the_quarantine_context_and_a_non_serialisable_return (b4.tests.test_b4_target.TheReturn.test_the_quarantine_context_and_a_non_serialisable_return) ... ok
 test_a_changed_number_would_be_caught (b4.tests.test_b4_thresholds.ThePins.test_a_changed_number_would_be_caught) ... ok
 test_every_pinned_text_is_in_its_row (b4.tests.test_b4_thresholds.ThePins.test_every_pinned_text_is_in_its_row) ... ok
 test_the_document_version_is_informational_outside_the_table_and_outside_the_method_digest (b4.tests.test_b4_thresholds.ThePins.test_the_document_version_is_informational_outside_the_table_and_outside_the_method_digest)
@@ -393,6 +409,6 @@ The new pin / identity contract (the owner's choice 6, 2026-10-20): the document
 test_the_numbers_are_the_document_s (b4.tests.test_b4_thresholds.ThePins.test_the_numbers_are_the_document_s) ... ok
 
 ----------------------------------------------------------------------
-Ran 313 tests in 652.850s
+Ran 323 tests in 634.543s
 
 OK

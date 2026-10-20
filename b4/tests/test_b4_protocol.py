@@ -8,6 +8,7 @@ from __future__ import annotations
 import copy
 import json
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -112,6 +113,33 @@ class TheIdentity(unittest.TestCase):
             msg = bp.refusal_for_missing(man)
             self.assertIn("no protocol identity", msg); self.assertIn(man["head"], msg); self.assertIn("b4_archive_reverification", msg); self.assertIn("v0.1.16", msg)
             self.assertEqual(path.read_bytes(), before)
+
+    def test_a_documentation_only_revision_moves_nothing_of_the_method_in_fresh_interpreters(self):
+        """R1 of the owner's review of 04385ae, on the REAL file / import-table workflow, every step a fresh interpreter: the revision lives
+        in b4/architecture_revision.json (not a tool file); changing it and refreshing ITS table entry leaves protocol_sha256 unchanged while
+        the identity reports the new revision, and the static pin test is GREEN against the document's new first line; a threshold number
+        changed without refreshing the table is refused as "not its inventory"; refreshed, the digest moves (a new method version)."""
+        def cli(root):
+            p = subprocess.run([sys.executable, "-B", str(root / "b4/host/b4_protocol.py")], capture_output=True, text=True)
+            return p.returncode, (json.loads(p.stdout) if p.returncode == 0 else p.stdout + p.stderr)
+
+        def refresh(root, rel):
+            t = json.loads((root / "b4/IMPORT.json").read_text()); t["files"][rel]["sha256"] = bp._sha((root / rel).read_bytes()); (root / "b4/IMPORT.json").write_text(json.dumps(t))
+        with tempfile.TemporaryDirectory(prefix="b4rev_") as tmp:
+            root = Path(tmp)
+            shutil.copytree(R / "b4", root / "b4", ignore=shutil.ignore_patterns("__pycache__")); (root / "docs").mkdir(); shutil.copy(R / th.ARCHITECTURE_REL, root / th.ARCHITECTURE_REL)
+            code, a = cli(root); self.assertEqual(code, 0, a); self.assertEqual((a["protocol_sha256"], a["architecture_revision"]), (bp.protocol_sha256(self.p), th.ARCHITECTURE_REVISION))
+            f = root / th.ARCHITECTURE_REVISION_REL; doc = json.loads(f.read_text()); doc["revision"] = "v0.2.1"; f.write_text(json.dumps(doc, indent=1) + "\n"); refresh(root, th.ARCHITECTURE_REVISION_REL)
+            d = root / th.ARCHITECTURE_REL; lines = d.read_text().split("\n"); self.assertIn("(DRAFT v0.2.0,", lines[0]); lines[0] = lines[0].replace("(DRAFT v0.2.0,", "(DRAFT v0.2.1,"); d.write_text("\n".join(lines))
+            code, b = cli(root); self.assertEqual(code, 0, b)
+            self.assertEqual((b["protocol_sha256"], b["architecture_revision"]), (a["protocol_sha256"], "v0.2.1"), "a documentation-only revision: the method's digest does not move")
+            pins = subprocess.run([sys.executable, "-B", "-m", "unittest", "b4.tests.test_b4_thresholds"], cwd=root, capture_output=True, text=True)
+            self.assertEqual(pins.returncode, 0, pins.stderr[-3000:]); self.assertIn("OK", pins.stderr); self.assertNotIn("Ran 0 tests", pins.stderr)
+            tf = root / "b4/host/b4_thresholds.py"; src = tf.read_text(); self.assertEqual(src.count('"median_coverage_per_semantic_min": 0.50'), 1)
+            tf.write_text(src.replace('"median_coverage_per_semantic_min": 0.50', '"median_coverage_per_semantic_min": 0.51'))
+            code, c = cli(root); self.assertNotEqual(code, 0); self.assertIn("not its inventory", c)
+            refresh(root, "b4/host/b4_thresholds.py")
+            code, e = cli(root); self.assertEqual(code, 0, e); self.assertNotEqual(e["protocol_sha256"], a["protocol_sha256"], "a number changed and the table refreshed: a new method version")
 
     def test_the_cli_prints_the_digest(self):
         import io

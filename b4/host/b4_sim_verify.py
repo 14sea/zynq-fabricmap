@@ -57,6 +57,7 @@ import b4_thresholds as th  # noqa: E402
 ROLES = sc.ROLES
 GRID = th.GRID
 TOP = ("seeds.json", "manifest.json")
+SETUP_QUARANTINES = {"target": "target_search.QUARANTINE.json", "target_holdout": "target_holdout.QUARANTINE.json"}   # a target setup return kept raw (R2)
 
 
 def _sha(b: bytes) -> str:
@@ -94,15 +95,12 @@ def expected_pair_files(plan: dict) -> tuple[set, set]:
     r = plan["pair"]
     pre = f"pair_{r:03d}/"
     must, may = set(), set()
-    t = plan.get("task", "not_started")
-    if t != "not_started":
-        must.add(f"{pre}task_setup.json")                       # persisted before the first target call: a setup that began has it
-    if t == "partial":
-        must.add(f"{pre}target_search.json")
-    elif t == "complete":
-        must |= {f"{pre}target_search.json", f"{pre}target_holdout.json", f"{pre}task.json"}
-    elif t == "invalid":
-        may |= {f"{pre}target_search.json", f"{pre}target_holdout.json"}   # whatever returned before the refusal; never task.json
+    # the task setup: EXACTLY the durable ordered prefix the planned record carries (task_setup -> target_search -> target_holdout -> task),
+    # plus the one quarantined return of an invalid setup, at the phase whose file is the next one not written (the owner's review of
+    # 04385ae R3); the state <-> prefix consistency is the report validator's (b4_sim_schema.setup_prefix_ok)
+    must |= {pre + name for name in bt.SETUP_FILES[:plan.get("task_prefix", 0)]}
+    if plan.get("task_quarantine") in bt.PHASES:
+        must.add(pre + SETUP_QUARANTINES[plan["task_quarantine"]])
     for role, state in plan["arms"].items():
         if state in ("written", "audited"):
             must.add(f"{pre}arm_{role}.result.json")
@@ -174,10 +172,18 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
     F = _F()
     if not out.is_dir():
         F.add("run directory", "does not exist"); return F.d
-    disk = {str(p.relative_to(out)): p for p in sorted(out.rglob("*")) if p.is_file()}
+    disk = {str(p.relative_to(out)): p for p in sorted(out.rglob("*")) if p.is_file() and not p.is_symlink()}
     for rel in disk:
         if rel.endswith(".part"):
             F.add(rel, "an unfinished write")
+    for sub in sorted(out.rglob("*")):
+        rel = str(sub.relative_to(out))
+        if sub.is_symlink():
+            F.add(rel, "a symlink: the archive holds real files in real pair directories only")
+        elif sub.is_dir() and not re.fullmatch(r"pair_\d{3}", rel):
+            F.add(rel, "a directory that is not a pair directory directly under the run directory")
+    if F:
+        return F.d
     # --- an initialisation failure: INIT_FAILED.json (with or without seeds.json) and nothing else
     if "INIT_FAILED.json" in disk:
         doc, err = _load(disk["INIT_FAILED.json"])
@@ -275,6 +281,14 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
     planned = report["pairs"]
     if _j([[p["landscape_seed"], p["operator_seed"]] for p in planned]) != _j(seeds["pairs"]):
         F.add("linkage", "the planned pairs are not seeds.json's")
+    states = {p["pair"]: p["status"] for p in planned}
+    for sub in sorted(out.iterdir()):
+        if sub.is_dir() and not sub.is_symlink():
+            r = int(sub.name[5:])
+            if r not in states:
+                F.add(sub.name, "a pair directory the plan does not have")
+            elif states[r] == "not_started":
+                F.add(sub.name, "a pair directory of a pair recorded not_started")
     if F:
         return F.d
     # --- the deadline records bound to the declared duration (the manifest's, written before the first observation)
@@ -346,6 +360,19 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
             if doc.get("pair") != r:
                 F.add(pre + name, f"names pair {doc.get('pair')!r}, lies in pair {r}"); continue
             docs_[name] = doc
+        for ph, qname in SETUP_QUARANTINES.items():                   # the quarantined target return of an invalid setup: its own validator, its context bound to the file and the plan
+            if pre + qname not in disk:
+                continue
+            doc, err = _load(disk[pre + qname])
+            f = [err] if err else sc.quarantine_findings(doc)
+            if f:
+                F.add(pre + qname, *f); continue
+            if doc.get("pair") != r or doc.get("role") != "TARGET" or doc.get("stage") != "target_setup" or (doc.get("context") or {}).get("phase") != ph:
+                F.add(pre + qname, f"not pair {r}'s TARGET quarantine of the {ph} return"); continue
+            if plan.get("task_quarantine") != ph or plan.get("task") != "invalid":
+                F.add(pre + qname, "a quarantined target return the planned record does not carry (task_quarantine) as an invalid setup"); continue
+            if docs_.get("task_setup.json") is not None and (doc["context"].get("genome") != docs_["task_setup.json"]["planted_genome"] or doc["context"].get("config_sha256") != docs_["task_setup.json"]["planted_config_sha256"]):
+                F.add(pre + qname, "the quarantine's context is not the plan's planted configuration")
         setup_docs[r] = docs_
         if plan["task"] == "complete" and all(n in docs_ for n in bt.SETUP_FILES):
             try:
@@ -366,7 +393,7 @@ def verify_run_dir(out: Path, report: dict | None = None, deep: bool = True) -> 
         if plan is None:
             F.add(rel, "a pair directory the plan does not have"); continue
         expect = None
-        if name in bt.SETUP_FILES:
+        if name in bt.SETUP_FILES or name in SETUP_QUARANTINES.values():
             continue                                                # validated above
         if r not in tasks:
             F.add(rel, "a file of a pair whose task setup is not complete"); continue

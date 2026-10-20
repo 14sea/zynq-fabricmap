@@ -282,14 +282,18 @@
 > 2026-10-20; mechanics fixtures only, no production derivation):** `b4_landscape` task-v0.2 (`public_parts`, `planted_genome`,
 > `targets_from_grid`, `make_task`); `b4_target` (the setup, its persistence and its offline reconstruction); `b4_execution.PublicTask`
 > without the seed, `TerminalEvent` with the task digest; `b4_engine` / `b4_replay` / `b4_controls` / `b4_k10` taking the seed from the
-> harness; `b4_k9` with both applicabilities and both records; `b4_sim` with the per-pair setup, the task state and the identity in the
-> manifest; `b4_sim_schema` (the setup records, manifest 1.2.0, K9 1.2.0, curves / index / stopped / report 1.1.0); `b4_sim_verify` with the
-> identity gate at step 0 and the setup reconstruction; `b4_gate` / `b4_gate_verify` judging (b′), carrying the protocol digest and
-> refusing other versions by name; `b4_gonogo` (§9.4); `b4_protocol` (§9.5); `b4_seeds` with the consumed labels; `b4_thresholds` =
-> "section 9" with no revision text, `ARCHITECTURE_REVISION = v0.2.0` beside it, the labels `b4-gate-2` / `b4-sim-4`, the K9
-> applicability fields, the task and go / no-go blocks; the static pin re-implemented (`test_b4_thresholds`: the first line of this
-> document against `ARCHITECTURE_REVISION`, the method digests unmoved by the revision text). The harness records this document's
-> digest in every manifest (`b4_sim.ROOT_INPUTS`) without pinning it, and the verifiers compare recorded values only. **Nothing here is
+> harness; `b4_k9` with both applicabilities and both records; `b4_sim` with the per-pair setup, the task state, the durable ordered
+> prefix (`task_prefix` / `task_quarantine`), the quarantine of a refused target return and the identity in the manifest; `b4_sim_schema`
+> (the setup records, manifest 1.2.0, quarantine 1.1.0 with the target context, K9 1.2.0, curves / index 1.1.0, stopped / report 1.2.0,
+> the state ↔ prefix contract); `b4_sim_verify` with the identity gate at step 0, the setup reconstruction, the exact prefix file set and
+> real files in pair directories only; `b4_gate` / `b4_gate_verify` judging (b′), carrying the protocol digest and refusing other versions
+> by name; `b4_gonogo` (§9.4; exact types, a plain in-root evidence path, the directory's entries held); `b4_protocol` (§9.5); `b4_seeds`
+> with the consumed labels; `b4_thresholds` = "section 9" with no revision text, `ARCHITECTURE_REVISION` read from
+> `b4/architecture_revision.json` (outside the inventory), the labels `b4-gate-2` / `b4-sim-4`, the K9 applicability fields, the task and
+> go / no-go blocks; the static pin re-implemented (`test_b4_thresholds`: the first line of this document against that file's value, no
+> revision literal in any tool file or test, the method digests unmoved by the revision). The harness records this document's digest in
+> every manifest (`b4_sim.ROOT_INPUTS`) without pinning it, and the verifiers compare recorded values only. The corrections after the
+> owner's HOLD on `04385ae` (R1–R6) are recorded in `evidence/b4/unit_protocol_v2_tool_2026_10_20/README.md` §5. **Nothing here is
 > authorised beyond the tool**: no derivation of any label, no exploration, no gate, no board, no push, no merge. The data influence of
 > `b4-sim-3`, `b4-gate-1` and the two scope drafts on every choice is tabulated in `evidence/b4/unit_protocol_v2_design_2026_10_20/README.md` §4.
 
@@ -844,11 +848,22 @@ return (`target_holdout.json`); (6) the `PublicTask` formed, its digest and the 
 (7) the seven arms, each on that one `PublicTask`, base observation first, in the existing order. The two setup observations must
 come from one source identity, and every arm's observation source must equal it (a difference is `invalid`, as an input drift is).
 
-**Failure records (no redraw, nothing fabricated).** A pair whose setup began is never recorded as "not started": `task_setup.json`
-carries `in_progress` / `partial` with the stop point (which of the two observations exists). A DOMAIN, a `SourceRefusal` or a
-provenance drift in the setup is **`invalid`** (§9.1: a contract break); the deadline or an external interrupt is **`incomplete`**;
-a first observation that succeeded is kept when the second does not happen; no task digest and no arm record is manufactured for a
-task that was not completed.
+**Failure records (no redraw, nothing fabricated).** A pair whose setup began is never recorded as "not started": the pair's planned
+record carries the setup state (`in_progress` / `partial` / `complete` / `invalid`) **and the durable ordered prefix** — `task_prefix`,
+how many of `task_setup.json` → `target_search.json` → `target_holdout.json` → `task.json` exist, in this order and no other — and
+`task_quarantine`, the phase whose *return* was kept in quarantine (or null). The verifier holds a pair's files to exactly that prefix:
+a later file never exists without its prerequisites, and a genuine prefix (an interrupt right after any of the four writes, during
+either observation, or at either deadline check — including both observations written and `task.json` not yet) re-verifies clean
+(the owner's review of 04385ae, R3). A DOMAIN (nothing returned), a `SourceRefusal` raised by the port, or a third port call is
+**`invalid`** (§9.1: a contract break). **A returned object that is not a valid target observation is never dropped and never written
+as an observation**: a malformed return, a `q` cell that is not 0 / 1 — **a None anywhere in the grid, the init readout included; the
+mask does not narrow this check** — or a source identity that is not the expected one (the batch's formal source for the first call,
+the first observation's for the second: a drift) is kept **raw** in `target_search.QUARANTINE.json` / `target_holdout.QUARANTINE.json`
+with the findings that refused it, the phase, the planted configuration, the stimulus digest, the expected source identity and the
+digest of the kept projection (`raw` null and the `repr` kept when it cannot be serialised), and *then* the pair is **`invalid`** with
+`task_quarantine` naming the phase (R2 / R4); the same check is made by the record validator and by the offline reconstruction. The
+deadline or an external interrupt is **`incomplete`**; whatever was durably written is kept; no task digest and no arm record is
+manufactured for a task that was not completed.
 
 **Isolation.** The target observations pass through no arm's ledger and no `learn`: they are pair-level records with their own
 offline reconstruction, never a specimen, never in the map, the population, a parent, the champion, the best-so-far trace or the
@@ -1226,7 +1241,7 @@ before the exploration, and not changed after it:
 own reasons and its own authorisation. Neither outcome is written as a scientific impossibility, and two FAILs do not prove that a
 third version would be overfitting — they only remove the automatic next step.
 
-### 9.5 The protocol identity (v0.2.0, DRAFT; the owner's choice 6; designed here, not implemented)
+### 9.5 The protocol identity (v0.2.0, DRAFT; the owner's choice 6; implemented by the v0.2.0 tool unit, `b4_protocol.py`)
 
 **The problem it answers.** The thresholds table's digest covers the numbers of this section and nothing else; the task version, the
 comparison set and its applicability, K10, the statistics copies, the engine, the cartographer, the execution boundary, the snapshot,
@@ -1241,8 +1256,13 @@ in it); `task` (version string and the generator's digest); `k9` (panel version,
 (`b4_gate`), the validators and verifiers (`b4_sim_schema`, `b4_sim_verify`, `b4_gate_verify`); every record schema by **content
 digest of its validator, not by its version string alone**; the hypothesis's and the certificate's digests; and, as a provenance
 field **excluded from the digest and from the equality**, `architecture_revision` (this document's revision text). The complete
-tool-file inventory may be cited so that no stage of the summary / judgement stack is left out. `protocol_sha256` is the digest of
-the payload without `architecture_revision`; the payload never contains its own digest.
+tool-file inventory is cited (every `b4/host` module and every `b4/schemas` file by digest, and the import table's entries for exactly
+those files) so that no stage of the summary / judgement stack is left out — and nothing else: an edit of a test file is not a change
+of the method. **The revision text lives outside the inventoried method bytes** — `b4/architecture_revision.json`, a provenance file
+that is not a tool file, read by `b4_thresholds.ARCHITECTURE_REVISION` and held to this document's first line by the static pin test —
+so that a documentation-only revision changes that file and this document, no byte under `b4/host`, and the method's identity does not
+move (the owner's review of 04385ae, R1; proven in fresh interpreters on the real file / import-table workflow by `test_b4_protocol`).
+`protocol_sha256` is the digest of the payload without `architecture_revision`; the payload never contains its own digest.
 
 **Where it is written and how it is compared.** The harness writes the payload and `protocol_sha256` into the manifest beside the
 inputs. A verifier **rebuilds the payload from its own trusted inventory** and compares it with the archive's — never merely re-checks
