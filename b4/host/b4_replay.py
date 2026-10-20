@@ -43,7 +43,7 @@ import b4_landscape as bl  # noqa: E402
 RESULT_KEYS = set(be.RunResult.__dataclass_fields__)
 ENTRY_KEYS = {"seq", "phase", "genome", "genome_hex", "config_sha256", "provenance_sha256", "fixture", "stimulus_sha256", "trace_sha256", "q_grid", "fitness",
               "none_cells", "map_version_before", "map_version_after", "map_commitment_after", "parent_born", "bits", "move_kind", "best"}
-TERMINAL_KEYS = {"code", "phase", "attempt", "genome", "config_sha256", "stimulus_sha256", "landscape_seed", "operator_seed", "budget",
+TERMINAL_KEYS = {"code", "phase", "attempt", "genome", "config_sha256", "stimulus_sha256", "task_digest", "operator_seed", "budget",
                  "successful_observations", "rng_state", "population_commitment", "map_commitment", "map_version"}
 REFUSAL_KEYS = {"kind", "message", "phase", "attempt"}
 CONTROL_FAILURE_KEYS = {"phase", "attempt", "seq", "findings", "successful_observations", "rng_state", "population_commitment", "map_version", "map_commitment", "shadow_commitment"}
@@ -150,7 +150,7 @@ def shape_findings(result, task: ex.PublicTask) -> list[str]:
     for k in ("task_digest", "map_commitment_final", "map_origin"):
         if not isinstance(r[k], str):
             f.append(f"{k} is not a string")
-    for k in ("landscape_seed", "operator_seed", "budget", "observations", "evals", "group_moves", "map_version_final", "map_specimens_final", "map_multi_bit_pairs_final", "rng_state_final"):
+    for k in ("operator_seed", "budget", "observations", "evals", "group_moves", "map_version_final", "map_specimens_final", "map_multi_bit_pairs_final", "rng_state_final"):
         if not _nonneg(r[k]):
             f.append(f"{k} is not a non-negative integer")
     for k in ("completed", "search_completed", "map_privileged"):
@@ -232,7 +232,7 @@ def shape_findings(result, task: ex.PublicTask) -> list[str]:
             f.append(f"ledger[{i}]: the q grid is not {want_rows} rows of {ELEMENTS} cells in 0 / 1 / None"); continue
     t = r["terminal"]
     if t is not None and not (isinstance(t, dict) and set(t) == TERMINAL_KEYS and isinstance(t["code"], str) and t["phase"] in ex.PHASES and _nonneg(t["attempt"]) and _nonneg(t["genome"]) and t["genome"] < (1 << n)
-                              and _hex64(t["config_sha256"]) and _hex64(t["stimulus_sha256"]) and all(_nonneg(t[k]) for k in ("landscape_seed", "operator_seed", "budget", "successful_observations", "rng_state", "map_version"))
+                              and _hex64(t["config_sha256"]) and _hex64(t["stimulus_sha256"]) and _hex64(t["task_digest"]) and all(_nonneg(t[k]) for k in ("operator_seed", "budget", "successful_observations", "rng_state", "map_version"))
                               and _hex64(t["population_commitment"]) and isinstance(t["map_commitment"], str)):
         f.append("terminal is not a complete, typed terminal event")
     o = r["other_refusal"]
@@ -253,8 +253,6 @@ def structural_findings(result: dict, task: ex.PublicTask) -> list[str]:
     r = result
     if r["task_digest"] != task.digest():
         f.append("the result was not produced under this task")
-    if r["landscape_seed"] != task.seed:
-        f.append("the landscape seed is not the task's")
     L = r["ledger"]
     for i, e in enumerate(L):
         if e["seq"] != i + 1:
@@ -316,8 +314,8 @@ def structural_findings(result: dict, task: ex.PublicTask) -> list[str]:
             f.append("the terminal attempt is not the observation after the ledger's last")
         if t["successful_observations"] != len(L):
             f.append(f"the terminal event counts {t['successful_observations']} observations, the ledger {len(L)}")
-        if (t["landscape_seed"], t["operator_seed"], t["budget"]) != (r["landscape_seed"], r["operator_seed"], r["budget"]):
-            f.append("the terminal event's seeds / budget are not the run's")
+        if (t["task_digest"], t["operator_seed"], t["budget"]) != (r["task_digest"], r["operator_seed"], r["budget"]):
+            f.append("the terminal event's task / seed / budget are not the run's")
         if r["rng_state_final"] != t["rng_state"]:
             f.append("the generator advanced after the terminal event")
         if (r["champion"] is not None) != (t["phase"] == "holdout"):

@@ -13,20 +13,24 @@ and source are checked against the document whenever a task is given (seed, dige
 
 Files of a run directory `evidence/b4/sim/<label>_<UTC>/`:
     seeds.json                      b4_sim_seeds 1.2.0         (b4_seeds.seeds_doc_findings; `fixture` False = production, True = mechanics; exclusion.exposure_receipt pinned)
-    manifest.json                   b4_sim_manifest 1.1.0      the provenance snapshot before the first observation (external sources, registry snapshot)
+    manifest.json                   b4_sim_manifest 1.2.0      the provenance snapshot before the first observation (external sources, registry snapshot, the PROTOCOL IDENTITY)
+    pair_NNN/task_setup.json        b4_sim_task_setup 1.0.0    task-v0.2: the pair's PRIVATE record, persisted before the first target observation (the seeds, the planted genome, the rule)
+    pair_NNN/target_search.json     b4_sim_target_observation 1.0.0   the planted configuration observed under the search stimulus (the full q grid, the provenance)
+    pair_NNN/target_holdout.json    b4_sim_target_observation 1.0.0   ... under the holdout stimulus
+    pair_NNN/task.json              b4_sim_task 1.0.0          the PublicTask the seven arms received (no seed, no planted genome) with its digest and the setup files' digests
     pair_NNN/arm_<role>.result.json b4_sim_arm_result 1.0.0    the engine's RunResult as returned, written before any audit
     pair_NNN/arm_<role>.result.QUARANTINE.json  b4_sim_quarantine 1.0.0  a returned RunResult that did NOT validate, kept raw with the findings
     pair_NNN/arm_<role>.audit.json  b4_sim_arm_audit 1.0.0     completion checks, replay, recompute, states, view checks
     pair_NNN/controls.json          b4_sim_controls 1.0.0      the X / D / Omega / A0 inputs of the pair
     pair_NNN/k7.json                b4_sim_k7 1.0.0            arm O's prefix snapshots at every grid budget
-    pair_NNN/k9.json                b4_sim_k9 1.1.0            b4_k9.coverage's result (complete, stopped or invalid — the partial is kept)
+    pair_NNN/k9.json                b4_sim_k9 1.2.0            b4_k9.coverage's result (complete, stopped or invalid — the partial is kept); the two applicabilities
     pair_NNN/k10.json               b4_sim_k10 1.0.0           b4_k10.seed_k10's result (complete, stopped or invalid — the partial is kept)
     pair_NNN/k9.QUARANTINE.json / k10.QUARANTINE.json          a partial that did not validate, kept raw
-    pair_NNN/curves.json            b4_sim_curves 1.0.0        best-so-far at the grid per arm; F's end-to-end values
-    pair_NNN/index.json             b4_sim_pair_index 1.0.0    the pair's files with digests and sizes (written last)
-    STOPPED.json                    b4_sim_stopped 1.0.0       any batch that did not complete
+    pair_NNN/curves.json            b4_sim_curves 1.1.0        best-so-far at the grid per arm; F's end-to-end values; the non-triviality record (the target against R's base trace)
+    pair_NNN/index.json             b4_sim_pair_index 1.1.0    the pair's files with digests and sizes (written last); the task setup's state
+    STOPPED.json                    b4_sim_stopped 1.1.0       any batch that did not complete (the planned records carry the task setup's state)
     INIT_FAILED.json                b4_sim_init_failed 1.0.0   an initialisation that failed after the directory was created
-    sim_report.json                 b4_sim_report 1.0.0        always: the status, the identity, the archive index; a summary only when complete
+    sim_report.json                 b4_sim_report 1.1.0        always: the status, the identity (with the protocol digest), the archive index; a summary only when complete
 """
 from __future__ import annotations
 
@@ -47,7 +51,10 @@ import b4_ff_mapping as bm  # noqa: E402
 import b4_ff_model as fm  # noqa: E402
 import b4_k10 as k10  # noqa: E402
 import b4_k9 as k9  # noqa: E402
+import b4_landscape as bl  # noqa: E402
+import b4_protocol as bp  # noqa: E402
 import b4_replay as br  # noqa: E402
+import b4_target as bt  # noqa: E402
 import b4_seeds as bs  # noqa: E402
 import b4_stats as st  # noqa: E402
 import b4_thresholds as th  # noqa: E402
@@ -57,10 +64,12 @@ HEX40 = re.compile(r"^[0-9a-f]{40}$")
 ROLES = ("R", "F", "O", "X", "D", "Omega", "A0")
 STATUSES = ("complete", "invalid", "incomplete")
 STOP_KINDS = ("deadline", "interrupted", "contract", "domain", "control_failure", "refusal", "input_drift", "schema", "unexpected_exception",
-              "k10_invalid", "k9_invalid", "self_validation")
+              "k10_invalid", "k9_invalid", "self_validation", "target_invalid")
 ARM_STATES = ("not_started", "in_flight", "written", "audited", "result_unavailable", "result_malformed")
 PAIR_STATES = ("not_started", "in_progress", "complete", "partial")
 DIAG_STATES = ("not_started", "in_progress", "complete", "partial", "invalid")
+SETUP_STATES = bt.SETUP_STATES                                       # the task setup: not_started / in_progress (planned, no observation) / partial (one) / complete / invalid
+AUX_ROLES = ("K9", "K10", "TARGET")                                   # the non-arm roles a stop or a quarantine may name
 GENOME_BITS = 21
 ELEMENTS = 8
 
@@ -169,11 +178,11 @@ def _memo(m, f: list[str], n_obs: int) -> None:
         f.append("memo.provenance: not the formal source's identity (hypothesis, mapping, truth fabric)")
 
 
-def _task_binding(doc, task, f: list[str]) -> None:
+def _task_binding(doc, task, f: list[str], landscape_seed=None) -> None:
+    if landscape_seed is not None and doc["landscape_seed"] != landscape_seed:
+        f.append(f"landscape_seed {doc['landscape_seed']!r} is not the planned pair's {landscape_seed}")
     if task is None:
         return
-    if doc["landscape_seed"] != task.seed:
-        f.append(f"landscape_seed {doc['landscape_seed']!r} is not the task's {task.seed}")
     if doc["task_digest"] != task.digest():
         f.append("task_digest is not the task's")
     if doc["stimulus_sha256"] != ex.sha256_json(list(task.stimulus)):
@@ -260,7 +269,7 @@ def init_failed_findings(doc) -> list[str]:
 
 
 MANIFEST_KEYS = {"schema", "schema_version", "label", "fixture", "count", "generated_utc", "head", "repo_root_kind", "code_root", "deadline_s", "arm_order", "engine_arm",
-                 "budget", "grid", "constants", "thresholds", "inputs", "external_inputs", "tool_files", "hypothesis", "mapping", "fabric", "exclusion", "seeds_sha256", "note"}
+                 "budget", "grid", "constants", "thresholds", "inputs", "external_inputs", "tool_files", "hypothesis", "mapping", "fabric", "exclusion", "seeds_sha256", "note", "protocol"}
 
 
 @total
@@ -268,7 +277,16 @@ def manifest_findings(doc) -> list[str]:
     f: list[str] = []
     if not _keys(doc, MANIFEST_KEYS, f, "manifest"):
         return f
-    _schema(doc, "b4_sim_manifest", f, "1.1.0")
+    _schema(doc, "b4_sim_manifest", f, "1.2.0")
+    pr = doc["protocol"]
+    if not (isinstance(pr, dict) and set(pr) == {"identity", "protocol_sha256"}):
+        f.append("protocol: keys")
+    else:
+        f += [f"protocol.identity: {x}" for x in bp.identity_findings(pr["identity"])]
+        if not (isinstance(pr["protocol_sha256"], str) and HEX64.match(pr["protocol_sha256"])):
+            f.append("protocol.protocol_sha256 is not a sha256")
+        elif isinstance(pr["identity"], dict) and not bp.identity_findings(pr["identity"]) and pr["protocol_sha256"] != bp.protocol_sha256(pr["identity"]):
+            f.append("protocol.protocol_sha256 is not the digest of the recorded identity")
     if not (isinstance(doc["label"], str) and bs.LABEL_RE.match(doc["label"])):
         f.append("label")
     if not isinstance(doc["fixture"], bool):
@@ -367,14 +385,14 @@ def arm_result_findings(doc, task=None, expect=None) -> list[str]:
     if isinstance(r, dict):
         if r.get("arm") != doc["engine_arm"]:
             f.append("result.arm is not engine_arm")
-        if canonical([r.get("landscape_seed"), r.get("operator_seed"), r.get("budget")]) != canonical([doc["landscape_seed"], doc["operator_seed"], doc["budget"]]):
-            f.append("result's seeds / budget are not the file's")
+        if canonical([r.get("operator_seed"), r.get("budget")]) != canonical([doc["operator_seed"], doc["budget"]]):
+            f.append("result's operator seed / budget are not the file's")
         if doc["role"] in ROLES and doc["engine_arm"] != ENGINE_ARM[doc["role"]]:
             f.append("engine_arm is not the role's")
         if doc["budget"] != th.B_MAX:
             f.append("budget is not the fixed B_max")
         if task is not None:
-            if r.get("task_digest") != task.digest() or r.get("landscape_seed") != task.seed:
+            if r.get("task_digest") != task.digest():
                 f.append("result: not the pair's task")
             if canonical(r.get("provenance")) != canonical(formal_provenance()) or r.get("fixture") is not False or r.get("fabric_fixture") is not False:
                 f.append("result: the provenance is not the formal source's")
@@ -398,7 +416,7 @@ def quarantine_findings(doc) -> list[str]:
     if not _keys(doc, QUARANTINE_KEYS, f, "quarantine"):
         return f
     _schema(doc, "b4_sim_quarantine", f)
-    if not _nonneg(doc["pair"]) or not (doc["role"] is None or doc["role"] in ROLES or doc["role"] in ("K9", "K10")):
+    if not _nonneg(doc["pair"]) or not (doc["role"] is None or doc["role"] in ROLES or doc["role"] in AUX_ROLES):
         f.append("pair / role")
     if not (isinstance(doc["stage"], str) and isinstance(doc["written_utc"], str) and isinstance(doc["raw_repr"], str)):
         f.append("stage / written_utc / raw_repr")
@@ -496,26 +514,29 @@ def k7_findings(doc) -> list[str]:
     return f
 
 
-K9_KEYS = {"panel_version", "landscape_seed", "task_digest", "stimulus_sha256", "backgrounds", "pairs_total", "pairs_done", "pairs", "observations", "memo",
-           "logical_observations", "complete", "stopped", "invalid", "summary", "note"}
-K9_PAIR_KEYS = {"bit", "address", "semantic", "element", "g0", "g1", "backgrounds", "applicable", "reason", "scope", "obs0", "obs1", "hit0", "hit1", "differences", "covered"}
+K9_KEYS = {"panel_version", "applicability_all_panel", "applicability_conditional", "judged_estimand", "landscape_seed", "task_digest", "stimulus_sha256", "backgrounds",
+           "pairs_total", "pairs_done", "pairs", "observations", "memo", "logical_observations", "complete", "stopped", "invalid", "summary", "note"}
+K9_PAIR_KEYS = {"bit", "address", "semantic", "element", "g0", "g1", "backgrounds", "applicable", "reason", "scope", "presence_allowed", "latch", "applicable_sr_driven", "reason_sr_driven",
+                "sr_driven", "obs0", "obs1", "hit0", "hit1", "differences", "covered"}
 
 
 @total
-def k9_findings(doc, task=None) -> list[str]:
+def k9_findings(doc, task=None, landscape_seed=None) -> list[str]:
     f: list[str] = []
     if not _keys(doc, K9_KEYS | {"schema", "schema_version", "pair"}, f, "k9"):
         return f
-    _schema(doc, "b4_sim_k9", f, "1.1.0")
+    _schema(doc, "b4_sim_k9", f, "1.2.0")
     mapping = bm.site_mapping()
     panel = k9.panel(mapping)
     if doc["backgrounds"] != panel:
         f.append("backgrounds: not the fixed 64-background panel")
     if doc["panel_version"] != k9.PANEL_VERSION:
         f.append("panel_version")
+    if doc["applicability_all_panel"] != k9.APPLICABILITY_ALL_PANEL or doc["applicability_conditional"] != k9.APPLICABILITY_CONDITIONAL or doc["judged_estimand"] != k9.JUDGED_ESTIMAND:
+        f.append("applicability_all_panel / applicability_conditional / judged_estimand are not this version's")
     if not (_nonneg(doc["landscape_seed"]) and isinstance(doc["task_digest"], str) and isinstance(doc["stimulus_sha256"], str) and HEX64.match(doc["stimulus_sha256"])):
         f.append("landscape_seed / task_digest / stimulus_sha256"); return f
-    _task_binding(doc, task, f)
+    _task_binding(doc, task, f, landscape_seed)
     if not isinstance(doc["complete"], bool):
         f.append("complete"); return f
     if doc["complete"] is not (doc["stopped"] is None and doc["invalid"] is None):
@@ -538,6 +559,16 @@ def k9_findings(doc, task=None) -> list[str]:
             f.append(f"pairs[{i}]: typing"); break
         if not isinstance(p["applicable"], bool) or (p["applicable"] and not isinstance(p["covered"], bool)) or (not p["applicable"] and p["covered"] is not None):
             f.append(f"pairs[{i}]: applicable / covered typing"); break
+        if not (isinstance(p["applicable_sr_driven"], bool) and (p["reason_sr_driven"] is None or isinstance(p["reason_sr_driven"], str)) and isinstance(p["presence_allowed"], bool)
+                and isinstance(p["latch"], list) and len(p["latch"]) == 2 and all(isinstance(x, bool) for x in p["latch"])
+                and isinstance(p["sr_driven"], list) and len(p["sr_driven"]) == 2 and all(isinstance(x, bool) for x in p["sr_driven"])):
+            f.append(f"pairs[{i}]: applicable_sr_driven / reason_sr_driven / presence_allowed / latch / sr_driven typing"); break
+        if p["applicable_sr_driven"] and not p["applicable"]:
+            f.append(f"pairs[{i}]: conditionally applicable but not applicable under the all-panel rule (the conditional rule never adds a pair)"); break
+        if p["applicable"] and not p["applicable_sr_driven"] and p["reason_sr_driven"] is None:
+            f.append(f"pairs[{i}]: excluded by the conditional rule without a reason"); break
+        if p["semantic"] not in k9.SR_SEMANTICS and p["applicable_sr_driven"] is not p["applicable"]:
+            f.append(f"pairs[{i}]: a non-SR semantic's conditional applicability is the all-panel one"); break
         if p["applicable"]:
             if not (_int(p["obs0"]) and _int(p["obs1"]) and p["obs0"] in obs and p["obs1"] in obs and isinstance(p["hit0"], bool) and isinstance(p["hit1"], bool)):
                 f.append(f"pairs[{i}]: an applicable pair's observations are not kept records"); break
@@ -553,7 +584,7 @@ def k9_findings(doc, task=None) -> list[str]:
     if not _int(doc["logical_observations"]) or doc["logical_observations"] != 2 * sum(1 for p in doc["pairs"] if p["applicable"]):
         f.append("logical_observations is not twice the applicable pairs")
     if doc["complete"] and canonical(doc["summary"]) != canonical(k9.summarise(doc["pairs"], mapping)):
-        f.append("the summary is not what the pairs give")
+        f.append("the summary (the judged conditional record and the all-panel record) is not what the pairs give")
     if doc["stopped"] is not None and not (isinstance(doc["stopped"], dict) and {"before_pair_index", "reason"} <= set(doc["stopped"]) and doc["stopped"]["before_pair_index"] == doc["pairs_done"]):
         f.append("stopped: not a record of the pair it stopped before")
     if doc["invalid"] is not None and not (isinstance(doc["invalid"], dict) and {"pair_index", "exception", "reason"} <= set(doc["invalid"]) and doc["invalid"]["pair_index"] == doc["pairs_done"]):
@@ -569,14 +600,14 @@ K10_UNIT_KEYS = {"background_index", "background", "a", "b", "comparable", "ille
 
 
 @total
-def k10_findings(doc, task=None) -> list[str]:
+def k10_findings(doc, task=None, landscape_seed=None) -> list[str]:
     f: list[str] = []
     if not _keys(doc, K10_KEYS | {"schema", "schema_version", "pair"}, f, "k10"):
         return f
     _schema(doc, "b4_sim_k10", f)
     if not (_nonneg(doc["landscape_seed"]) and isinstance(doc["task_digest"], str) and isinstance(doc["stimulus_sha256"], str) and HEX64.match(doc["stimulus_sha256"])):
         f.append("landscape_seed / task_digest / stimulus_sha256"); return f
-    _task_binding(doc, task, f)
+    _task_binding(doc, task, f, landscape_seed)
     if not (isinstance(doc["backgrounds"], list) and len(doc["backgrounds"]) == 2 and all(_genome(b) for b in doc["backgrounds"])):
         f.append("backgrounds"); return f
     if doc["backgrounds"] != k10.backgrounds(doc["landscape_seed"]):
@@ -640,7 +671,8 @@ def k10_findings(doc, task=None) -> list[str]:
     return f
 
 
-CURVES_KEYS = {"schema", "schema_version", "pair", "landscape_seed", "operator_seed", "grid", "base_fit", "best_at_grid", "f_end_to_end_at_grid", "holdout", "written_utc"}
+CURVES_KEYS = {"schema", "schema_version", "pair", "landscape_seed", "operator_seed", "grid", "base_fit", "best_at_grid", "f_end_to_end_at_grid", "holdout",
+               "target_equals_R_base_search_trace", "written_utc"}
 
 
 @total
@@ -648,9 +680,11 @@ def curves_findings(doc) -> list[str]:
     f: list[str] = []
     if not _keys(doc, CURVES_KEYS, f, "curves"):
         return f
-    _schema(doc, "b4_sim_curves", f)
+    _schema(doc, "b4_sim_curves", f, "1.1.0")
     if not _nonneg(doc["base_fit"]):
         f.append("base_fit")
+    if not isinstance(doc["target_equals_R_base_search_trace"], bool):
+        f.append("target_equals_R_base_search_trace is not a bool (the non-triviality record: the target against R's existing base observation)")
     g = doc["grid"]
     if not (isinstance(g, list) and all(_int(b) and b > 0 for b in g)):
         f.append("grid"); return f
@@ -669,7 +703,7 @@ def curves_findings(doc) -> list[str]:
     return f
 
 
-PAIR_INDEX_KEYS = {"schema", "schema_version", "pair", "landscape_seed", "operator_seed", "status", "arms", "files", "written_utc"}
+PAIR_INDEX_KEYS = {"schema", "schema_version", "pair", "landscape_seed", "operator_seed", "status", "task", "arms", "files", "written_utc"}
 
 
 @total
@@ -677,9 +711,13 @@ def pair_index_findings(doc) -> list[str]:
     f: list[str] = []
     if not _keys(doc, PAIR_INDEX_KEYS, f, "pair index"):
         return f
-    _schema(doc, "b4_sim_pair_index", f)
+    _schema(doc, "b4_sim_pair_index", f, "1.1.0")
     if doc["status"] not in PAIR_STATES:
         f.append("status")
+    if doc["task"] not in SETUP_STATES:
+        f.append("task")
+    elif doc["status"] == "complete" and doc["task"] != "complete":
+        f.append("a complete pair's index has its task setup complete")
     if not (isinstance(doc["arms"], dict) and set(doc["arms"]) == set(ROLES) and all(v in ARM_STATES for v in doc["arms"].values())):
         f.append("arms")
     elif doc["status"] == "complete" and any(v != "audited" for v in doc["arms"].values()):
@@ -696,7 +734,7 @@ def stopped_findings(doc) -> list[str]:
     f: list[str] = []
     if not _keys(doc, STOPPED_KEYS, f, "STOPPED"):
         return f
-    _schema(doc, "b4_sim_stopped", f)
+    _schema(doc, "b4_sim_stopped", f, "1.1.0")
     if doc["status"] not in ("invalid", "incomplete"):
         f.append("status")
     if doc["kind"] not in STOP_KINDS:
@@ -705,7 +743,7 @@ def stopped_findings(doc) -> list[str]:
         f.append("detail")
     if not (doc["pair"] is None or _nonneg(doc["pair"])):
         f.append("pair")
-    if not isinstance(doc["stage"], str) or not (doc["role"] is None or doc["role"] in ROLES or doc["role"] in ("K9", "K10")):
+    if not isinstance(doc["stage"], str) or not (doc["role"] is None or doc["role"] in ROLES or doc["role"] in AUX_ROLES):
         f.append("stage / role")
     f += deadline_findings(doc["deadline"])
     _planned(doc["planned"], f)
@@ -720,13 +758,17 @@ def _planned(pl, f: list[str]) -> None:
     if not isinstance(pl, list):
         f.append("planned: not a list"); return
     for i, p in enumerate(pl):
-        if not (isinstance(p, dict) and {"pair", "landscape_seed", "operator_seed", "status", "arms", "k7", "k9", "k10"} <= set(p) and p["pair"] == i
-                and _nonneg(p["landscape_seed"]) and _nonneg(p["operator_seed"]) and p["status"] in PAIR_STATES
+        if not (isinstance(p, dict) and {"pair", "landscape_seed", "operator_seed", "status", "task", "arms", "k7", "k9", "k10"} <= set(p) and p["pair"] == i
+                and _nonneg(p["landscape_seed"]) and _nonneg(p["operator_seed"]) and p["status"] in PAIR_STATES and p["task"] in SETUP_STATES
                 and isinstance(p["arms"], dict) and set(p["arms"]) == set(ROLES) and all(v in ARM_STATES for v in p["arms"].values())
                 and all(p[k] in DIAG_STATES for k in ("k7", "k9", "k10"))):
             f.append(f"planned[{i}]"); return
-        if p["status"] == "complete" and not (all(v == "audited" for v in p["arms"].values()) and all(p[k] == "complete" for k in ("k7", "k9", "k10"))):
-            f.append(f"planned[{i}]: a complete pair has every arm audited and K7 / K9 / K10 complete — a weaker state cannot be recorded as complete"); return
+        if p["status"] == "complete" and not (p["task"] == "complete" and all(v == "audited" for v in p["arms"].values()) and all(p[k] == "complete" for k in ("k7", "k9", "k10"))):
+            f.append(f"planned[{i}]: a complete pair has its task setup complete, every arm audited and K7 / K9 / K10 complete — a weaker state cannot be recorded as complete"); return
+        if p["task"] != "complete" and (any(v != "not_started" for v in p["arms"].values()) or any(p[k] != "not_started" for k in ("k7", "k9", "k10"))):
+            f.append(f"planned[{i}]: an arm or a diagnostic started without a complete task setup"); return
+        if p["status"] == "not_started" and p["task"] != "not_started":
+            f.append(f"planned[{i}]: a pair whose task setup began is never not_started"); return
 
 
 REPORT_KEYS = {"schema", "schema_version", "status", "label", "fixture", "count", "head", "generated_utc", "deadline", "standing", "thresholds", "identity",
@@ -738,9 +780,11 @@ def report_findings(doc) -> list[str]:
     f: list[str] = []
     if not _keys(doc, REPORT_KEYS, f, "report"):
         return f
-    _schema(doc, "b4_sim_report", f)
+    _schema(doc, "b4_sim_report", f, "1.1.0")
     if doc["status"] not in STATUSES:
         f.append("status")
+    if not (isinstance(doc["identity"], dict) and isinstance(doc["identity"].get("protocol_sha256"), str) and HEX64.match(doc["identity"]["protocol_sha256"])):
+        f.append("identity.protocol_sha256 is not a sha256")
     if not (isinstance(doc["label"], str) and bs.LABEL_RE.match(doc["label"])):
         f.append("label")
     if not isinstance(doc["fixture"], bool):
@@ -798,13 +842,147 @@ def _all_keys(obj, out=None) -> list[str]:
     return out
 
 
+# ------------------------------------------------------------------ the task setup records (task-v0.2)
+TASK_SETUP_KEYS = {"schema", "schema_version", "pair", "landscape_seed", "operator_seed", "task_version", "addresses", "rule", "planted_genome", "planted_genome_hex",
+                   "planted_config_sha256", "planted_is_base", "public", "planned", "status", "note", "written_utc"}
+RULE_KEYS = {"text", "salt", "storage_kind_bit", "storage_kind_address", "n_bits", "base_genome"}
+PUBLIC_KEYS = {"stimulus_sha256", "holdout_stimulus_sha256", "mask_sha256", "holdout_mask_sha256", "weights_sha256", "holdout_weights_sha256", "search_steps", "holdout_steps", "ceiling", "holdout_ceiling"}
+
+
+@total
+def task_setup_findings(doc) -> list[str]:
+    """The private record of a pair's task: typed; the planted genome a flip-flop configuration under the recorded rule; the seed
+    binding and the rule's re-derivation are the verifier's (b4_target.setup_findings)."""
+    f: list[str] = []
+    if not _keys(doc, TASK_SETUP_KEYS, f, "task setup"):
+        return f
+    _schema(doc, "b4_sim_task_setup", f)
+    if not (_nonneg(doc["pair"]) and _nonneg(doc["landscape_seed"]) and _nonneg(doc["operator_seed"])):
+        f.append("pair / seeds")
+    if doc["task_version"] != bl.TASK_VERSION:
+        f.append("task_version is not this version's")
+    if not (isinstance(doc["addresses"], list) and len(doc["addresses"]) == GENOME_BITS and all(isinstance(a, str) for a in doc["addresses"])):
+        f.append("addresses")
+    r = doc["rule"]
+    if not (isinstance(r, dict) and set(r) == RULE_KEYS and r["text"] == bl.PLANTED_RULE and r["salt"] == bl.SALT_TARGET and _int(r["salt"]) and _nonneg(r["storage_kind_bit"]) and r["storage_kind_bit"] < GENOME_BITS
+            and isinstance(r["storage_kind_address"], str) and r["n_bits"] == GENOME_BITS and _int(r["n_bits"]) and r["base_genome"] == 0 and _int(r["base_genome"])):
+        f.append("rule: not the fixed planted rule"); return f
+    if not _genome(doc["planted_genome"]):
+        f.append("planted_genome is not a 21-bit int"); return f
+    if (doc["planted_genome"] >> r["storage_kind_bit"]) & 1:
+        f.append("planted_genome is not a flip-flop configuration (T-i)")
+    if doc["planted_genome_hex"] != ex.genome_hex(doc["planted_genome"], GENOME_BITS) or not (isinstance(doc["planted_config_sha256"], str) and HEX64.match(doc["planted_config_sha256"])):
+        f.append("planted_genome_hex / planted_config_sha256")
+    if doc["planted_is_base"] is not (doc["planted_genome"] == 0):
+        f.append("planted_is_base")
+    pub = doc["public"]
+    if not (isinstance(pub, dict) and set(pub) == PUBLIC_KEYS and all(isinstance(pub[k], str) and HEX64.match(pub[k]) for k in PUBLIC_KEYS if k.endswith("_sha256"))
+            and all(_nonneg(pub[k]) for k in ("search_steps", "holdout_steps", "ceiling", "holdout_ceiling"))):
+        f.append("public: the digests of the seed-derived parts and their sizes")
+    if doc["planned"] != list(bt.PHASES):
+        f.append("planned: the two setup observations in order")
+    if doc["status"] != "in_progress":
+        f.append("status: the setup record says in_progress (its progress is the pair's planned record and the files that follow)")
+    if not (isinstance(doc["note"], str) and isinstance(doc["written_utc"], str)):
+        f.append("note / written_utc")
+    return f
+
+
+TARGET_OBS_KEYS = {"schema", "schema_version", "pair", "written_utc", "phase", "genome", "genome_hex", "config_sha256", "stimulus_sha256", "trace_sha256", "q_grid",
+                   "provenance", "provenance_sha256", "fixture", "fabric_kind"}
+
+
+@total
+def target_observation_findings(doc, phase: str | None = None) -> list[str]:
+    """One setup observation of the planted configuration: the full q grid hashing to its digest, the FORMAL source identity, a
+    flip-flop genome; the binding to the plan is the verifier's."""
+    f: list[str] = []
+    if not _keys(doc, TARGET_OBS_KEYS, f, "target observation"):
+        return f
+    _schema(doc, "b4_sim_target_observation", f)
+    if doc["phase"] not in bt.PHASES or (phase is not None and doc["phase"] != phase):
+        f.append(f"phase {doc['phase']!r}")
+    if not (_nonneg(doc["pair"]) and _genome(doc["genome"]) and doc["genome_hex"] == ex.genome_hex(doc["genome"], GENOME_BITS)):
+        f.append("pair / genome / genome_hex")
+    for k in ("config_sha256", "stimulus_sha256", "trace_sha256", "provenance_sha256"):
+        if not (isinstance(doc[k], str) and HEX64.match(doc[k])):
+            f.append(f"{k} is not a sha256")
+    if not _q_grid(doc["q_grid"], f, "q_grid"):
+        return f
+    if ex.sha256_json(doc["q_grid"]) != doc["trace_sha256"]:
+        f.append("the q grid does not hash to trace_sha256")
+    pf = ex.provenance_findings(doc["provenance"])
+    if pf:
+        f += [f"provenance: {x}" for x in pf]; return f
+    if ex.sha256_json(doc["provenance"]) != doc["provenance_sha256"]:
+        f.append("the provenance does not hash to provenance_sha256")
+    if canonical(doc["provenance"]) != canonical(formal_provenance()):
+        f.append("provenance: not the formal source's identity (hypothesis, mapping, truth fabric)")
+    if doc["fixture"] is not False or doc["fabric_kind"] != "truth":
+        f.append("not the formal source")
+    if not isinstance(doc["written_utc"], str):
+        f.append("written_utc")
+    return f
+
+
+TASK_KEYS = {"schema", "schema_version", "pair", "landscape_seed", "operator_seed", "public_task", "task_digest", "setup_files_sha256", "planted_search_score", "planted_holdout_score",
+             "status", "note", "written_utc"}
+PUBLIC_TASK_KEYS = {"label", "version", "addresses", "base_genome", "stimulus", "mask", "target", "weights", "holdout_stimulus", "holdout_mask", "holdout_target", "holdout_weights", "target_source_sha256"}
+
+
+@total
+def task_findings(doc) -> list[str]:
+    """The PublicTask the arms received, as a record: typed, the digest the task's own, the setup files' digests, the planted scores at the ceilings."""
+    f: list[str] = []
+    if not _keys(doc, TASK_KEYS, f, "task"):
+        return f
+    _schema(doc, "b4_sim_task", f)
+    if not (_nonneg(doc["pair"]) and _nonneg(doc["landscape_seed"]) and _nonneg(doc["operator_seed"])):
+        f.append("pair / seeds")
+    pt = doc["public_task"]
+    if not (isinstance(pt, dict) and set(pt) == PUBLIC_TASK_KEYS):
+        f.append("public_task: keys"); return f
+    ok = (isinstance(pt["label"], str) and pt["version"] == bl.TASK_VERSION and isinstance(pt["addresses"], list) and len(pt["addresses"]) == GENOME_BITS and all(isinstance(a, str) for a in pt["addresses"])
+          and pt["base_genome"] == 0 and _int(pt["base_genome"]) and isinstance(pt["stimulus"], list) and pt["stimulus"] and isinstance(pt["holdout_stimulus"], list) and pt["holdout_stimulus"]
+          and isinstance(pt["target_source_sha256"], str) and HEX64.match(pt["target_source_sha256"]))
+    for mk, tk, wk, stim in (("mask", "target", "weights", "stimulus"), ("holdout_mask", "holdout_target", "holdout_weights", "holdout_stimulus")):
+        m_, t_, w_ = pt[mk], pt[tk], pt[wk]
+        ok = ok and isinstance(m_, list) and isinstance(t_, list) and isinstance(w_, list) and len(m_) == len(t_) == len(w_) > 0 \
+            and all(isinstance(c, list) and len(c) == 2 and _nonneg(c[0]) and _nonneg(c[1]) and c[1] < ELEMENTS and (isinstance(pt[stim], list) and c[0] < len(pt[stim])) for c in m_) \
+            and all(_int(t) and t in (0, 1) for t in t_) and all(_int(w) and w >= 0 for w in w_)
+    if not ok:
+        f.append("public_task: typing"); return f
+    try:
+        task = bt.task_from_dict(pt)
+    except Exception as exc:  # noqa: BLE001
+        f.append(f"public_task cannot be rebuilt: {type(exc).__name__}: {exc}"); return f
+    if doc["task_digest"] != task.digest():
+        f.append("task_digest is not the public task's digest")
+    sf = doc["setup_files_sha256"]
+    if not (isinstance(sf, dict) and set(sf) == {"task_setup.json", "target_search.json", "target_holdout.json"} and all(isinstance(v, str) and HEX64.match(v) for v in sf.values())):
+        f.append("setup_files_sha256")
+    for k, ceiling in (("planted_search_score", task.ceiling), ("planted_holdout_score", task.holdout_ceiling)):
+        v = doc[k]
+        if not (isinstance(v, dict) and set(v) == {"fitness", "none_cells", "ceiling"} and all(_nonneg(v[x]) for x in v) and v["ceiling"] == ceiling):
+            f.append(f"{k}: fitness / none_cells / ceiling ({ceiling})")
+        elif v["fitness"] != ceiling or v["none_cells"] != 0:
+            f.append(f"{k}: the planted configuration reaches its own ceiling with no None (T-i: a None would have refused the target)")
+    if doc["status"] != "complete":
+        f.append("status")
+    if not (isinstance(doc["note"], str) and isinstance(doc["written_utc"], str)):
+        f.append("note / written_utc")
+    return f
+
+
 # ------------------------------------------------------------------ the run directory, offline, file by file
 VALIDATORS = {"seeds.json": seeds_findings, "manifest.json": manifest_findings, "STOPPED.json": stopped_findings, "INIT_FAILED.json": init_failed_findings,
-              "sim_report.json": report_findings, "controls.json": controls_findings, "k7.json": k7_findings, "curves.json": curves_findings, "index.json": pair_index_findings}
+              "sim_report.json": report_findings, "controls.json": controls_findings, "k7.json": k7_findings, "curves.json": curves_findings, "index.json": pair_index_findings,
+              "task_setup.json": task_setup_findings, "task.json": task_findings}
+TARGET_FILES = {"target_search.json": "target", "target_holdout.json": "target_holdout"}
 TASKED = {"k9.json": k9_findings, "k10.json": k10_findings}
 
 
-def validate_file(path: Path, task=None) -> list[str]:
+def validate_file(path: Path, task=None, landscape_seed=None) -> list[str]:
     try:
         doc = json.loads(path.read_bytes())
     except (OSError, ValueError) as exc:
@@ -817,7 +995,9 @@ def validate_file(path: Path, task=None) -> list[str]:
     if name.endswith(".audit.json"):
         return arm_audit_findings(doc)
     if name in TASKED:
-        return TASKED[name](doc, task)
+        return TASKED[name](doc, task, landscape_seed)
+    if name in TARGET_FILES:
+        return target_observation_findings(doc, TARGET_FILES[name])
     v = VALIDATORS.get(name)
     if v is None:
         return [f"{name}: no validator for this file"]
@@ -826,8 +1006,8 @@ def validate_file(path: Path, task=None) -> list[str]:
 
 def validate_run_dir(out: Path, task_of=None) -> dict:
     """Every JSON file under the run directory against its validator (a .part file is a finding: an unfinished write).
-    `task_of(pair_index)` gives the PublicTask for the pair's files. FILE BY FILE ONLY: the archive-wide checks (required
-    files, hashes, linkage, re-execution) are `b4_sim_verify.verify_run_dir`."""
+    `task_of(pair_index)` gives (PublicTask, landscape_seed) for the pair's files, or None for a pair whose task was not set up.
+    FILE BY FILE ONLY: the archive-wide checks (required files, hashes, linkage, re-execution) are `b4_sim_verify.verify_run_dir`."""
     out = Path(out)
     findings: dict = {}
     for p in sorted(out.rglob("*")):
@@ -838,14 +1018,15 @@ def validate_run_dir(out: Path, task_of=None) -> dict:
             findings[rel] = ["an unfinished write"]; continue
         if not p.name.endswith(".json"):
             findings[rel] = ["not a JSON file of the harness"]; continue
-        task = None
+        task, seed = None, None
         m = re.match(r"pair_(\d+)$", p.parent.name)
         if m and task_of is not None:
             try:
-                task = task_of(int(m.group(1)))
+                ts = task_of(int(m.group(1)))
+                task, seed = (ts if ts is not None else (None, None))
             except Exception as exc:  # noqa: BLE001
                 findings[rel] = [f"no task for this pair: {type(exc).__name__}: {exc}"]; continue
-        f = validate_file(p, task)
+        f = validate_file(p, task, seed)
         if f:
             findings[rel] = f
     return findings

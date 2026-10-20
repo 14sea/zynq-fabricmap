@@ -5,7 +5,7 @@ unit 2b-3 section 2 and on unit 2b-4a section 4.1): the two control generators a
     sx = x_control_seed(landscape_seed, operator_seed)        # int.from_bytes(sha256('b4-x-control-1|<l>|<o>')[:4], 'big')
     sd = d_shuffle_seed(landscape_seed, operator_seed)        # int.from_bytes(sha256('b4-d-control-1|<l>|<o>')[:4], 'big')
     fv = f_frozen_view(f_result_dict, task)                   # the SAME seed's F-learned frozen MapView, REBUILT and held to the record
-    dv, info = d_view(f_result_dict, task)                    # shuffled_view(fv, sd), with the permutation and the residual recorded
+    dv, info = d_view(f_result_dict, task, landscape_seed)    # shuffled_view(fv, sd), with the permutation and the residual recorded (the seed is the harness's, not the task's)
 
 Both seeds are UTF-8 decimal text with no spaces, each driving its own generator; neither consumes the task's or the
 operator's stream; a coincidence of the two values is recorded, never redrawn.
@@ -84,7 +84,7 @@ def f_frozen_view(result: dict, task: ex.PublicTask) -> bc.MapView:
     _require(result.get("terminal") is None and result.get("other_refusal") is None and result.get("control_failure") is None,
              "the F run carries a terminal event, a refusal or a control failure")
     _require(result.get("map_origin") == "learned" and result.get("map_privileged") is False, "the F result's map is not a learned, non-privileged map")
-    _require(result.get("task_digest") == task.digest() and result.get("landscape_seed") == task.seed, "the F result was not produced under this task")
+    _require(result.get("task_digest") == task.digest(), "the F result was not produced under this task")
     prov = result.get("provenance")
     _require(isinstance(prov, dict) and result.get("fixture") is False and result.get("fabric_fixture") is False
              and prov.get("hypothesis", {}).get("fixture") is False and prov.get("fabric", {}).get("kind") == "truth",
@@ -123,9 +123,9 @@ def shuffle_permutation(view: bc.MapView, seed: int) -> dict:
     return dict(zip(bits, perm))
 
 
-def d_view(f_result: dict, task: ex.PublicTask) -> tuple[bc.MapView, dict]:
+def d_view(f_result: dict, task: ex.PublicTask, landscape_seed: int) -> tuple[bc.MapView, dict]:
     fv = f_frozen_view(f_result, task)
-    seed = d_shuffle_seed(task.seed, f_result["operator_seed"])
+    seed = d_shuffle_seed(landscape_seed, f_result["operator_seed"])
     dv = bc.shuffled_view(fv, seed)
     relabel = shuffle_permutation(fv, seed)
     want = tuple(tuple(sorted(relabel[b] for b in g)) for g in fv.groups)
@@ -138,10 +138,10 @@ def d_view(f_result: dict, task: ex.PublicTask) -> tuple[bc.MapView, dict]:
     return dv, info
 
 
-def verify_d_view(given_view: dict, f_result: dict, task: ex.PublicTask) -> list[str]:
-    """The given view a D run recorded, held to the one `d_view` rebuilds for the same F result and task."""
+def verify_d_view(given_view: dict, f_result: dict, task: ex.PublicTask, landscape_seed: int) -> list[str]:
+    """The given view a D run recorded, held to the one `d_view` rebuilds for the same F result, task and landscape seed."""
     try:
-        dv, _ = d_view(f_result, task)
+        dv, _ = d_view(f_result, task, landscape_seed)
     except (ControlInputRefusal, ValueError) as exc:
         return [f"D's parent view cannot be rebuilt: {exc}"]
     f: list[str] = []

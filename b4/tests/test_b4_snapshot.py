@@ -24,6 +24,7 @@ import b4_ff_mapping as bm  # noqa: E402
 import b4_ff_model as fm  # noqa: E402
 import b4_landscape as bl  # noqa: E402
 import b4_snapshot as sn  # noqa: E402
+from b4_test_fixtures import v02_task  # noqa: E402
 
 L, O, B = 7, 11, 24
 A, Bg, C = [[0, 0]], [[1, 0]], [[0, 1]]      # one-step, two-element q grids
@@ -112,13 +113,13 @@ class Base(unittest.TestCase):
     def setUpClass(cls):
         cls.m, cls.h = bm.site_mapping(), hy.load()
         cls.fab = fm.Fabric(cls.m, cls.h)
-        cls.task = bl.make_task(L, cls.m.addresses)
+        cls.task = v02_task(L, cls.fab)
         P = lambda: ex.ObservationPort(cls.fab)  # noqa: E731
         cls.R = be.run("R", cls.task, P(), O, B).as_dict()
         cls.F = be.run("F", cls.task, P(), O, B).as_dict()
         cls.O = be.run("O", cls.task, P(), O, B).as_dict()
         cls.X = be.run("X", cls.task, P(), O, B, control_seed=ctl.x_control_seed(L, O)).as_dict()
-        dv, _ = ctl.d_view(cls.F, cls.task)
+        dv, _ = ctl.d_view(cls.F, cls.task, L)
         cls.D = be.run("F", cls.task, P(), O, B, view=dv).as_dict()
         cls.Om = be.run("F", cls.task, P(), O, B, view=bc.oracle_view(cls.m)).as_dict()
         cls.A0 = be.run("F", cls.task, P(), O, B, view=bc.address_only_view(cls.m.addresses)).as_dict()

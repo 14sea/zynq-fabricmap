@@ -2,7 +2,8 @@
 """B4-FF — the EXECUTION BOUNDARY (the revised 2b-2 scope, section 3; the owner's rulings of 2026-10-18).
 
 The executing side — engine, operators, cartographer, ledger — receives a `PublicTask` (the sorted addresses, the
-declared base, the stimulus, the public scoring, the seeds, the budget) and an `ObservationPort`, which exposes
+declared base, the two stimuli, the public scoring — masks, targets, weights — and the commitment to the target's source;
+task-v0.2 / H: NO landscape seed, NO planted configuration, NO private record) and an `ObservationPort`, which exposes
 `observe(config, stimulus)` and the addresses and NOTHING else: no mapping entries, no hypothesis, no effect
 table, no decode, no diagnose, no oracle. The port is built by the host assembler from a `Fabric`; the executing
 side never holds the fabric. A test's call spy (`SpyPort`) records every attribute an engine touches.
@@ -157,10 +158,11 @@ class SpyPort(ObservationPort):
 
 @dataclass(frozen=True)
 class PublicTask:
-    """What every arm receives — identical for all arms of a pair; nothing here was read from a mapping."""
+    """What every arm receives — identical for all arms of a pair; nothing here was read from a mapping. task-v0.2 (H): no
+    landscape seed, no planted genome, no private record — the targets are the planted configuration's observed traces and
+    `target_source_sha256` commits to the two setup observations (b4_target). A fixed-program access contract, not secrecy."""
     label: str
     version: str
-    seed: int
     addresses: tuple
     base_genome: int                 # declared: all-zero (the owner's ruling 3 of 2026-10-18)
     stimulus: tuple                  # the steps, as the model's validate_step accepts them
@@ -171,6 +173,7 @@ class PublicTask:
     holdout_mask: tuple
     holdout_target: tuple
     holdout_weights: tuple
+    target_source_sha256: str
 
     @property
     def ceiling(self) -> int:
@@ -181,10 +184,10 @@ class PublicTask:
         return sum(self.holdout_weights)
 
     def digest(self) -> str:
-        return sha256_json({"label": self.label, "version": self.version, "seed": self.seed, "addresses": list(self.addresses),
+        return sha256_json({"label": self.label, "version": self.version, "addresses": list(self.addresses),
                             "base_genome": self.base_genome, "stimulus": list(self.stimulus), "mask": list(self.mask), "target": list(self.target),
                             "weights": list(self.weights), "holdout_stimulus": list(self.holdout_stimulus), "holdout_mask": list(self.holdout_mask),
-                            "holdout_target": list(self.holdout_target), "holdout_weights": list(self.holdout_weights)})
+                            "holdout_target": list(self.holdout_target), "holdout_weights": list(self.holdout_weights), "target_source_sha256": self.target_source_sha256})
 
 
 def genome_to_config(genome: int, addresses: tuple) -> dict:
@@ -203,7 +206,7 @@ class TerminalEvent:
     genome: int
     config_sha256: str
     stimulus_sha256: str
-    landscape_seed: int
+    task_digest: str                 # the engine knows the task by its digest only (task-v0.2 / H): the pair's seeds are the harness's record
     operator_seed: int
     budget: int
     successful_observations: int
@@ -214,7 +217,7 @@ class TerminalEvent:
 
     def as_dict(self) -> dict:
         return {"code": self.code, "phase": self.phase, "attempt": self.attempt, "genome": self.genome, "config_sha256": self.config_sha256,
-                "stimulus_sha256": self.stimulus_sha256, "landscape_seed": self.landscape_seed, "operator_seed": self.operator_seed,
+                "stimulus_sha256": self.stimulus_sha256, "task_digest": self.task_digest, "operator_seed": self.operator_seed,
                 "budget": self.budget, "successful_observations": self.successful_observations, "rng_state": self.rng_state,
                 "population_commitment": self.population_commitment, "map_commitment": self.map_commitment, "map_version": self.map_version}
 
@@ -250,6 +253,6 @@ def observe_candidate(port: ObservationPort, genome: int, stimulus, phase: str, 
     except fm.DomainRefusal as exc:
         raise Terminated(TerminalEvent(
             code=exc.CODE, phase=phase, attempt=attempt, genome=genome, config_sha256=sha256_json(config),
-            stimulus_sha256=sha256_json(list(stimulus)), landscape_seed=context["landscape_seed"], operator_seed=context["operator_seed"],
+            stimulus_sha256=sha256_json(list(stimulus)), task_digest=context["task_digest"], operator_seed=context["operator_seed"],
             budget=context["budget"], successful_observations=context["successful_observations"], rng_state=context["rng_state"],
             population_commitment=context["population_commitment"], map_commitment=context["map_commitment"], map_version=context["map_version"])) from None

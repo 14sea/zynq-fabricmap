@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 
 R = Path(__file__).resolve().parents[2]
-for p in (R / "b4/host",):
+for p in (R / "b4/host", R / "b4/tests"):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 import b4_carto as bc  # noqa: E402
@@ -21,6 +21,7 @@ import b4_ff_hypothesis as hy  # noqa: E402
 import b4_ff_mapping as bm  # noqa: E402
 import b4_ff_model as fm  # noqa: E402
 import b4_landscape as bl  # noqa: E402
+from b4_test_fixtures import v02_task  # noqa: E402
 
 S1, S2 = "a" * 64, "b" * 64
 
@@ -95,7 +96,7 @@ class OverTheModel(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.m, cls.h = bm.site_mapping(), hy.load()
-        cls.task = bl.make_task(5, cls.m.addresses)
+        cls.task = v02_task(5, fm.Fabric(cls.m, cls.h))
         cls.stim = list(cls.task.stimulus)
         cls.ssha = ex.sha256_json(cls.stim)
 

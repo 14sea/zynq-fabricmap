@@ -63,7 +63,9 @@ SEEDS_SCHEMA = ("b4_sim_seeds", "1.2.0")                      # 1.1.0 (the repai
 SEEDS_SCHEMA_VERSIONS_READ = ("1.1.0", "1.2.0")                 # archived seed records of these versions are read by the registry (1.0.0 legacy records are not current-schema runs)
 FIXTURE_LABEL_RE = re.compile(r"^b4-mech-[1-9][0-9]*$")       # a MECHANICS fixture set: explicit, already-exposed values, no master
 RETIRED_LABELS = frozenset({"b4-sim-1", "b4-sim-2"})         # consumed by the pre-repair exposure (the owner's ruling of 2026-10-19, section 1): never derived again
-EXPLORATION_LABEL = "b4-sim-3"                                 # the next exploration label, reserved by that ruling before any value of it exists (not derived in the settlement)
+CONSUMED_LABELS = frozenset({"b4-sim-3", "b4-gate-1"})       # consumed by their archived records under evidence/b4/sim/ (protocol v0.2.0, section 9.2): never derived again
+EXPLORATION_LABEL = "b4-sim-4"                                 # the next exploration label of protocol v0.2.0 (a reserved name; no value of it exists)
+GATE_LABEL = "b4-gate-2"                                       # the next gate label of protocol v0.2.0 (a reserved name; no value of it exists)
 EXPOSURE_RECEIPT_REL = "evidence/b4/unit_2b4a_exposure_settlement_2026_10_19/exposure_receipt.json"
 EXPOSURE_RECEIPT_SHA256 = "68764bbc1a51ec2506bf9d9bcbb3f55f88f3d7642b5eb46c6fd3dd39f8dae146"
 RECEIPT_SCHEMA = ("b4_exposure_receipt", "1.0.0")
@@ -150,12 +152,19 @@ class RetiredLabelRefusal(ValueError):
     """A production derivation was asked under a retired label (`RETIRED_LABELS`): refused before any master is formed."""
 
 
+class ConsumedLabelRefusal(RetiredLabelRefusal):
+    """A production derivation was asked under a label consumed by its archived records (`CONSUMED_LABELS`): refused before any master is formed."""
+
+
 def check_label_not_retired(label) -> None:
     """The guard of the NEW-production-derivation path only (the harness's pre-flight and its init); never applied to the
-    registry's reading of archived records, which keeps every retired label's set in the pooled exclusion."""
+    registry's reading of archived records, which keeps every retired and consumed label's set in the pooled exclusion."""
     if label in RETIRED_LABELS:
         raise RetiredLabelRefusal(f"the label {label!r} is retired by the owner's ruling of 2026-10-19 (its prior derivations are the exposure receipt's); "
                                   f"the next exploration label is {EXPLORATION_LABEL!r}")
+    if label in CONSUMED_LABELS:
+        raise ConsumedLabelRefusal(f"the label {label!r} is consumed by its archived records under evidence/b4/sim/ (protocol v0.2.0, section 9.2); "
+                                   f"the next labels are {EXPLORATION_LABEL!r} (exploration) and {GATE_LABEL!r} (gate)")
 
 
 class ExclusionSourceRefusal(ValueError):

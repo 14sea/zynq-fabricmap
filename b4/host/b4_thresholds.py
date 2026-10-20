@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """B4 — the MACHINE TABLE of the thresholds docs/b4_architecture.md section 9 fixed in advance (unit 2b-3, the owner's rulings
-of 2026-10-18), pinned field by field to the document's text by `b4/tests/test_b4_thresholds.py` (the owner's ruling on
-unit 2b-4a, section 3.4: the manifest's constants and the architecture's thresholds are held consistent by a static test,
-never by eye). The exploration harness lists these values BESIDE its numbers for reference; nothing here is a verdict and
-nothing in the harness computes one. A change to a number here is a change to section 9 — a revision with its reason,
-authorised separately; this table never follows a run.
+of 2026-10-18; revised for protocol v0.2.0 by the owner's rulings of 2026-10-20 on the scope proposal v0.2 — the labels, the
+task version, K9's judged estimand and the go / no-go policy; NO NUMBER of K1-K10 changed), pinned field by field to the
+document's text by `b4/tests/test_b4_thresholds.py` (the owner's ruling on unit 2b-4a, section 3.4: the manifest's constants and
+the architecture's thresholds are held consistent by a static test, never by eye). The exploration harness lists these values
+BESIDE its numbers for reference; nothing here is a verdict and nothing in the harness computes one. A change to a number here
+is a change to section 9 — a revision with its reason, authorised separately; this table never follows a run.
+
+THE DOCUMENT'S REVISION IS NOT IN THE TABLE (the owner's choice 6, 2026-10-20): `ARCHITECTURE_REVISION` is an informational
+constant beside the table — carried by the protocol identity as provenance, excluded from the method's digest and from the
+equality (b4_protocol) — so that a documentation-only revision of the architecture does not change the method's identity.
 """
 from __future__ import annotations
 
@@ -18,7 +23,8 @@ for p in (REPO_ROOT / "b4/host",):
 from b4_ff_hypothesis import HYPOTHESIS_SHA256  # noqa: E402
 
 ARCHITECTURE_REL = "docs/b4_architecture.md"
-ARCHITECTURE_SECTION = "9 (v0.1.16)"
+ARCHITECTURE_REVISION = "v0.2.0"                               # informational: the document's revision this table was written against (not in the table, not in the identity's digest)
+ARCHITECTURE_SECTION = "9"
 
 GRID = (8, 16, 24, 32, 48, 64, 96, 128, 192, 256)
 B_MAX = 256
@@ -27,7 +33,7 @@ ADDRESSES = 21
 PROBES = 21
 
 THRESHOLDS = {
-    "source": f"{ARCHITECTURE_REL} section {ARCHITECTURE_SECTION}, fixed before any exploration or gate run",
+    "source": f"{ARCHITECTURE_REL} section {ARCHITECTURE_SECTION}, fixed before any exploration or gate run (the document's revision is an informational field of the protocol identity, outside this table)",
     "standing": ("engineering research criteria fixed in advance; no number is claimed to be empirically guaranteed, statistically "
                  "calibrated or valid for silicon; listed beside exploration values for reference only — never a gate verdict here"),
     "grid": list(GRID), "B_max": B_MAX, "lambda": LAMBDA, "addresses": ADDRESSES, "probes_per_F_run": PROBES,
@@ -44,15 +50,28 @@ THRESHOLDS = {
     "K8": {"replay": "no finding on every executed run; a broken tool contract is invalid under section 9.1"},
     "K9": {"seeds_with_all_seven_positive_controls_min": 0.90, "median_coverage_per_semantic_min": 0.50,
            "median_population": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
-           "panel": "section 9.3: 32 mode combinations x INIT/SRVAL all-0 / all-1 = 64 backgrounds", "semantics": 7},
+           "panel": "section 9.3: 32 mode combinations x INIT/SRVAL all-0 / all-1 = 64 backgrounds", "semantics": 7,
+           "judged_estimand": "conditional_sr_driven",
+           "applicability_judged": ("(b') conditional: applicable_conditional = applicable_all_panel AND sr_mode = driven at both endpoints, for ff_srval and sr_kind; "
+                                    "the five other semantics as the all-panel rule; the latch / x5FF exclusions kept"),
+           "applicability_descriptive": "(b) all-panel: section 9.3 clauses 4-5, recomputed from the same retained raw grids and reported beside (b')",
+           "positive_controls": "(a) unchanged: from the all-panel record"},
     "K10": {"tau": 2, "interacting": "max|I| > 2 (exactly 2 is nonzero below threshold)", "interacting_seeds_over_S_min": 0.50,
             "pairs_per_background": 210, "backgrounds": 2, "background_salt": 0x4C0A4E55, "background_rule": "0 and Rng((seed ^ salt) & 0xffffffff).uniform(1 << 21), the first call"},
     "B_star": {"rule": "the smallest N(B) x 3 x B among budgets where K1 holds and N(B) exists; ties to the smaller budget",
                "no_eligible_budget": "the budget rule FAILS; B* and N are not invented (exploration: candidate B* / N are null with the reason)"},
     "delta2_F_shift": PROBES,
+    "task": {"version": "task-v0.2",
+             "target": ("planted flip-flop configuration (T-i): storage_kind fixed to flip-flop, the other 20 bits drawn once by "
+                        "Rng((landscape_seed ^ 0x54415247) & 0xffffffff).uniform(1 << 20) onto the non-storage_kind bits in address order; the all-zero base included; nothing redrawn"),
+             "target_salt": 0x54415247, "setup_observations_per_pair": 2, "ceilings": {"search": 64, "holdout": 80}, "none_scores": "nothing (unchanged)",
+             "executing_side_input": "PublicTask without the landscape seed, the planted genome or the private record (H: a fixed-program access contract, not information hiding)"},
+    "gonogo": {"S": 32, "B_go": 64, "alpha_go": 0.20, "statistic": "one-sided exact sign test on Omega - R at B_go, ties excluded from n and counted; positives > negatives",
+               "k9_conditional_medians_min": 0.50, "precondition": "every planned pair complete and valid, else no decision",
+               "standing": "an engineering cost policy for spending the gate's budget: not a significance result, not a gate, not an authorisation; no automatic successor"},
     "anchor": {"rule": "int.from_bytes(sha256(utf8(label + '|' + anchor))[:4], 'big'), the label passed beside the anchor",
-               "hypothesis_sha256": HYPOTHESIS_SHA256, "gate_label": "b4-gate-1", "exploration_label": "b4-sim-3",
-               "retired_exploration_labels": ["b4-sim-1", "b4-sim-2"]},
+               "hypothesis_sha256": HYPOTHESIS_SHA256, "gate_label": "b4-gate-2", "exploration_label": "b4-sim-4",
+               "retired_exploration_labels": ["b4-sim-1", "b4-sim-2"], "consumed_labels": ["b4-sim-3", "b4-gate-1"]},
     "controls": {"x_control_seed": "int.from_bytes(sha256('b4-x-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')",
                  "d_shuffle_seed": "int.from_bytes(sha256('b4-d-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')"},
 }
@@ -71,10 +90,14 @@ PINS = (
     ("K7.recomputation_mismatches", "K7", "**zero recomputation mismatches**"), ("K7.o_prefix_median_not_unknown_min", "K7", "≥ 11` of 21"),
     ("K9.seeds_with_all_seven_positive_controls_min", "K9", "**≥ 90 % of all S seeds**"), ("K9.median_coverage_per_semantic_min", "K9", "**≥ 0.50**"),
     ("K9.median_population", "K9", "if a semantic is not assessable for even one seed, its median is *not assessable*"),
+    ("K9.judged_estimand", "K9", "conditional coverage under SR-driven backgrounds"),
+    ("K9.applicability_judged", "9.3", "`applicable_conditional = applicable_all_panel AND sr_mode_driven_at_both_endpoints`"),
     ("K10.tau", "K10", "τ = **2 fitness score units**"), ("K10.interacting", "K10", "**interacting** when `max|I| > 2`"), ("K10.interacting_seeds_over_S_min", "K10", "**interacting seeds / all S ≥ 0.50**"),
     ("K10.pairs_per_background", "K10", "**all 210 unordered pairs**"), ("K10.background_salt", "K10", "0x4C0A4E55"),
-    ("anchor.hypothesis_sha256", "9.2", HYPOTHESIS_SHA256), ("anchor.gate_label", "9.2", "'b4-gate-1|'"), ("anchor.exploration_label", "9.2", "'b4-sim-3'"),
-    ("anchor.retired_exploration_labels", "9.2", "`b4-sim-1` and `b4-sim-2` are retired"),
+    ("task.version", "7.1", "task-v0.2"), ("task.target_salt", "7.1", "0x54415247"), ("task.setup_observations_per_pair", "7.1", "Two setup observations per pair"),
+    ("gonogo.S", "9.3", "all **32** planned pairs"), ("gonogo.B_go", "9.3", "**B = 64**"), ("gonogo.alpha_go", "9.3", "p ≤ **0.20**"),
+    ("anchor.hypothesis_sha256", "9.2", HYPOTHESIS_SHA256), ("anchor.gate_label", "9.2", "'b4-gate-2|'"), ("anchor.exploration_label", "9.2", "'b4-sim-4'"),
+    ("anchor.retired_exploration_labels", "9.2", "`b4-sim-1` and `b4-sim-2` are retired"), ("anchor.consumed_labels", "9.2", "`b4-sim-3` and `b4-gate-1` are consumed"),
     ("controls.x_control_seed", "8", "sha256('b4-x-control-1|<landscape_seed>|<operator_seed>')"), ("controls.d_shuffle_seed", "8", "sha256('b4-d-control-1|<landscape_seed>|<operator_seed>')"),
     ("delta2_F_shift", "9-intro", "**21 probes, one per address of the slice's configuration-bit universe**"),
 )

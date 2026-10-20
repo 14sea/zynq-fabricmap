@@ -22,7 +22,7 @@ import b4_ff_hypothesis as hy  # noqa: E402
 import b4_ff_mapping as bm  # noqa: E402
 import b4_ff_model as fm  # noqa: E402
 import b4_landscape as bl  # noqa: E402
-from b4_test_fixtures import InjectingPort, mechanics_fabric  # noqa: E402
+from b4_test_fixtures import InjectingPort, mechanics_fabric, v02_task  # noqa: E402
 
 L, O, B = 7, 11, 16
 
@@ -36,7 +36,7 @@ class Base(unittest.TestCase):
     def setUpClass(cls):
         cls.m, cls.h = bm.site_mapping(), hy.load()
         cls.fab = fm.Fabric(cls.m, cls.h)
-        cls.task = bl.make_task(L, cls.m.addresses)
+        cls.task = v02_task(L, cls.fab)
         cls.F = be.run("F", cls.task, ex.ObservationPort(cls.fab), O, B).as_dict()
         assert cls.F["completed"] and cls.F["fixture"] is False
 
@@ -79,7 +79,7 @@ class FrozenView(Base):
         with self.assertRaises(ctl.ControlInputRefusal) as cm:
             ctl.f_frozen_view(given, self.task)
         self.assertIn("given view", str(cm.exception))
-        other = bl.make_task(8, self.m.addresses)
+        other = v02_task(8, self.fab)
         with self.assertRaises(ctl.ControlInputRefusal):
             ctl.f_frozen_view(self.F, other)
 
@@ -117,7 +117,7 @@ class FrozenView(Base):
 
 class ControlD(Base):
     def test_d_is_the_seeded_relabelling_of_f_s_view_with_its_parent_kept(self):
-        dv, info = ctl.d_view(self.F, self.task)
+        dv, info = ctl.d_view(self.F, self.task, L)
         fv = ctl.f_frozen_view(self.F, self.task)
         self.assertEqual((dv.origin, dv.provenance, dv.privileged, dv.base_commitment, dv.version), ("shuffled", ("learned", "shuffled"), False, fv.commitment, fv.version))
         self.assertEqual(sorted(len(g) for g in dv.groups), sorted(len(g) for g in fv.groups), "group sizes kept")
@@ -127,11 +127,11 @@ class ControlD(Base):
         self.assertEqual(set(info["permutation"]), {str(b) for g in fv.groups for b in g})
         self.assertEqual(set(info["residual_structure"]), {"partition_preserved", "groups_moved", "groups_true", "groups_x", "true_groups", "x_groups"})
         self.assertEqual((info["logical_cost_probes"], info["reobserved"]), (21, 0))
-        dv2, _ = ctl.d_view(self.F, self.task)
+        dv2, _ = ctl.d_view(self.F, self.task, L)
         self.assertEqual(dv.as_dict(), dv2.as_dict(), "deterministic from the record and the seed")
         d_run = be.run("F", self.task, self.port(), O, B, view=dv).as_dict()
-        self.assertEqual(ctl.verify_d_view(d_run["given_view"], self.F, self.task), [])
-        self.assertTrue(ctl.verify_d_view(bc.oracle_view(self.m).as_dict(), self.F, self.task))
+        self.assertEqual(ctl.verify_d_view(d_run["given_view"], self.F, self.task, L), [])
+        self.assertTrue(ctl.verify_d_view(bc.oracle_view(self.m).as_dict(), self.F, self.task, L))
 
     def test_an_identity_or_partition_preserving_shuffle_is_reported_never_redrawn(self):
         one = bc.MapView(((3,),), 1, bc.sha256_json([[3]]), False, "learned", ("learned",))

@@ -76,11 +76,15 @@ observation source, `docs/b4_architecture.md` §5.3). It is not a version select
 verifier that meets an archive of another identity refuses by name and points here; the person re-verifying then follows this page
 with the archive's own version of the tool.
 
-## 5. The coupling this page lives next to
+## 5. The coupling this page lives next to, and the identity now implemented
 
-The thresholds table of record (`b4/host/b4_thresholds.py`, "section 9 (v0.1.16)") is embedded in every manifest and compared by the
-verifier of that version as a whole; its static pin test also asserts the architecture document's first-line version. At the
-documents-only revision v0.2.0 that assertion fails by design (the architecture's v0.2.0 note says so); the archives' verification does
-not read the document and is unaffected. The identity of §9.5 moves the document's revision text out of the method's digest and out of
-the equality, which is the ruled resolution; until the tool unit implements it, the table and the verifier of record remain v0.1.16's,
-and both named archives are re-verified by this page with that version.
+The v0.1.16 thresholds table ("section 9 (v0.1.16)") is embedded in every v0.1.16 manifest and compared by the verifier of that version as
+a whole; its static pin test also asserted the architecture document's first-line version. The v0.2.0 tool unit (`b4_protocol.py`, the
+owner's choice 6) implements the identity of §9.5: the method's digest no longer carries the document's revision text (the table of
+v0.2.0 is "section 9" with `ARCHITECTURE_REVISION` beside it, informational), the pin test holds the document's first line to that
+constant, and every v0.2.0 manifest records the identity and its digest. **What this means for the two archives of section 1:** the
+v0.2.0 verifiers (`b4_sim_verify.py`, `b4_gate_verify.py`), the judge (`b4_gate.py judge`) and the policy (`b4_gonogo.py decide`)
+refuse them **by name** at their first step — "the archive carries no protocol identity: written by a tool before the identity existed
+(its thresholds source … (v0.1.16) …, HEAD …) — re-verify it with its own tool at its recorded HEAD" — and write nothing; a v0.2.0 archive
+whose identity differs from the verifier's is refused the same way, the differing components listed. Both named archives are therefore
+re-verified by this page with the v0.1.16 tool at their archive commits, never by the v0.2.0 tool.

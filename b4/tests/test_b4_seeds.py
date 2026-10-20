@@ -438,9 +438,15 @@ class TheExposureReceipt(unittest.TestCase):
         for label in ("b4-sim-1", "b4-sim-2"):
             with self.assertRaises(bs.RetiredLabelRefusal) as cm:
                 bs.check_label_not_retired(label)
-            self.assertIn("b4-sim-3", str(cm.exception))
-        bs.check_label_not_retired("b4-sim-3"); bs.check_label_not_retired(bs.EXPLORATION_LABEL)
-        self.assertNotIn(bs.EXPLORATION_LABEL, bs.RETIRED_LABELS); self.assertEqual(bs.RETIRED_LABELS, {"b4-sim-1", "b4-sim-2"})
+            self.assertIn("b4-sim-4", str(cm.exception)); self.assertNotIsInstance(cm.exception, bs.ConsumedLabelRefusal)
+        for label in ("b4-sim-3", "b4-gate-1"):                      # protocol v0.2.0: consumed by their archived records, never derived again
+            with self.assertRaises(bs.ConsumedLabelRefusal) as cm:
+                bs.check_label_not_retired(label)
+            self.assertIn("consumed", str(cm.exception)); self.assertIn("b4-sim-4", str(cm.exception)); self.assertIn("b4-gate-2", str(cm.exception))
+            self.assertIsInstance(cm.exception, bs.RetiredLabelRefusal, "a consumed label is refused on the same path as a retired one")
+        bs.check_label_not_retired("b4-sim-4"); bs.check_label_not_retired(bs.EXPLORATION_LABEL); bs.check_label_not_retired(bs.GATE_LABEL)
+        self.assertEqual((bs.EXPLORATION_LABEL, bs.GATE_LABEL), ("b4-sim-4", "b4-gate-2"))
+        self.assertNotIn(bs.EXPLORATION_LABEL, bs.RETIRED_LABELS | bs.CONSUMED_LABELS); self.assertEqual(bs.RETIRED_LABELS, {"b4-sim-1", "b4-sim-2"}); self.assertEqual(bs.CONSUMED_LABELS, {"b4-sim-3", "b4-gate-1"})
         v1 = next(v for v in self.doc["variants"] if v["id"] == "V1"); v8 = next(v for v in self.doc["variants"] if v["id"] == "V8")
         anchor = self.doc["historical_inputs"]["anchor_hypothesis_sha256"]
         with tempfile.TemporaryDirectory() as tmp:

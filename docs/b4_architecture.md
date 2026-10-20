@@ -270,16 +270,28 @@
 >   archive commit, repository inputs and external dependencies kept apart; the registry-at-start versus registry-at-archive
 >   relation stated correctly).
 >
-> **What this revision does to the existing tools, stated so that nobody is surprised:** the machine table of record stays
-> `b4/host/b4_thresholds.py` = "section 9 (v0.1.16)" with its pinned labels `b4-gate-1` / `b4-sim-3`; every pinned text of its `PINS`
-> is kept verbatim in the rows below, but its static test's assertion that this document's first line reads `(DRAFT v0.1.16,`
-> (`b4/tests/test_b4_thresholds.py::test_the_document_version_is_the_table_s`) **will fail at this commit** — that is the
-> document-version coupling named in the gate execution plan §6 and in the 2c skeleton §12 item 5, and §9.5 is its resolution; the
-> test was not run here and nothing was done to hide the failure. The harness records this document's digest in every manifest
-> (`b4_sim.ROOT_INPUTS`) without pinning it, and the verifiers compare recorded values only, so no archive's verification reads this
-> document; a future batch would simply record the new digest. **Nothing here is authorised beyond the documents**: no tool unit,
-> no derivation of any label, no exploration, no gate, no board, no push, no merge. The data influence of `b4-sim-3`, `b4-gate-1`
-> and the two scope drafts on every choice is tabulated in `evidence/b4/unit_protocol_v2_design_2026_10_20/README.md` §4.
+> **Precedence (the owner's review of `8361068`, item 3).** On the items they change, v0.2.0's §7.1, K9 (b′), §9.3 clause 6, §9.4 and
+> §9.5 **supersede** the older descriptions; the older requirements of §7 that are retained (the public rule from the seed, the
+> generator reading no certificate, map or operator, the base all-zero, None scoring nothing) **do not** forbid the approved T-i
+> target or the inclusion of the base as a planted outcome; retained historical text and the pinned strings of the thresholds table
+> do not make two current methods — there is one, v0.2.0 — and task-v0.1 is referenced only for the stimulus rule the ruling kept
+> unchanged (the sparse-SR sequence, K = 6 / 8, the two level steps). The v0.1.16 archives are read under their own version
+> (`docs/b4_archive_reverification.md`).
+>
+> **Implementation status (the v0.2.0 tool unit, delivered on the branch `b4-protocol-v2` after the owner's authorisation of
+> 2026-10-20; mechanics fixtures only, no production derivation):** `b4_landscape` task-v0.2 (`public_parts`, `planted_genome`,
+> `targets_from_grid`, `make_task`); `b4_target` (the setup, its persistence and its offline reconstruction); `b4_execution.PublicTask`
+> without the seed, `TerminalEvent` with the task digest; `b4_engine` / `b4_replay` / `b4_controls` / `b4_k10` taking the seed from the
+> harness; `b4_k9` with both applicabilities and both records; `b4_sim` with the per-pair setup, the task state and the identity in the
+> manifest; `b4_sim_schema` (the setup records, manifest 1.2.0, K9 1.2.0, curves / index / stopped / report 1.1.0); `b4_sim_verify` with the
+> identity gate at step 0 and the setup reconstruction; `b4_gate` / `b4_gate_verify` judging (b′), carrying the protocol digest and
+> refusing other versions by name; `b4_gonogo` (§9.4); `b4_protocol` (§9.5); `b4_seeds` with the consumed labels; `b4_thresholds` =
+> "section 9" with no revision text, `ARCHITECTURE_REVISION = v0.2.0` beside it, the labels `b4-gate-2` / `b4-sim-4`, the K9
+> applicability fields, the task and go / no-go blocks; the static pin re-implemented (`test_b4_thresholds`: the first line of this
+> document against `ARCHITECTURE_REVISION`, the method digests unmoved by the revision text). The harness records this document's
+> digest in every manifest (`b4_sim.ROOT_INPUTS`) without pinning it, and the verifiers compare recorded values only. **Nothing here is
+> authorised beyond the tool**: no derivation of any label, no exploration, no gate, no board, no push, no merge. The data influence of
+> `b4-sim-3`, `b4-gate-1` and the two scope drafts on every choice is tabulated in `evidence/b4/unit_protocol_v2_design_2026_10_20/README.md` §4.
 
 ## 0. The question, and why it is two studies
 
@@ -789,9 +801,9 @@ at this revision still implement task-v0.1.
 
 - the `storage_kind` address, as the certificate mapping identifies it (`b4_ff_mapping`), is **fixed to flip-flop**; the other
   **20 bits are drawn once** by a rule fixed before any draw — its own salt, its own generator, independent of the task stimulus,
-  the operator, the control and the K10 generators (the form `Rng((landscape_seed ^ SALT_TARGET) & 0xffffffff).uniform(1 << 20)`,
-  the first call, mapped onto the 20 non-`storage_kind` bits in address order; the constant and the mapping fixed by the tool unit
-  and named in the protocol identity, §9.5);
+  the operator, the control and the K10 generators: `Rng((landscape_seed ^ SALT_TARGET) & 0xffffffff).uniform(1 << 20)`, the first
+  call, mapped onto the 20 non-`storage_kind` bits in address order, with `SALT_TARGET` = 0x54415247 (an arbitrary constant, fixed
+  before any draw by the tool unit and named in the protocol identity, §9.5; `b4_landscape.planted_genome`);
 - the all-zero base is **not excluded**, and **nothing is redrawn** — not for a genotype equal to the base, not for a trace equal to
   the base's, not for a low score, not for a None;
 - the candidate search universe stays the **21 bits**; the search and holdout masks, weights and ceilings (**64 / 80**) and the rule
@@ -947,7 +959,7 @@ rather than hidden behind the word *reported*.
 | K6 no fixed-seed lock | **S = 200** and **N ≥ 8**; the gate's seeds derived once by §9.2's formula with the complete exclusion set. S is the number of seeds planned, never the number that completed | B2 G6 / B3 H6 | S = 200; N ≥ 8 |
 | K7 the map is a map | (a) **zero recomputation mismatches**: from the arm's own ledger, the single-flip pairs are recomputed — affected cells, presence, pair counts, contexts, evidence references, the map version and the map at that budget — and must equal what the run recorded. This is an internal-consistency check, not a claim about semantic truth. (b) coverage on **arm O's `B*` search prefix** — the ledger records from the base observation through O's `B*`-th search evaluation inclusive (arm O has no probe phase, so these are O's first `B* + 1` records), and the map state is the one the cartographer reached after ingesting exactly those records; nothing from after `B*` and nothing from the holdout; the snapshot is rebuilt from the true ledger prefix without re-running any candidate: `median_r(#addresses whose state is not unknown) ≥ 11` of 21. Per seed the 21 addresses are reported in the four states `unknown` / `effect_seen` / `no_effect_seen` / `context_dependent`, summing to 21; *not unknown* means the latter three and implies **neither** a usable grouping **nor** a decoded semantic. F's frozen post-probe map and the other controls are reported separately and never substitute for O's ≥ 11. The difference between the certificate-derived partition (Ω) and an observed partition is reported as a **diagnostic with no threshold**: the cartographer groups by the elements an address was *seen* to affect and puts every multi-element address in one group, so a slice-wide configuration bit that moved one element under one stimulus lands beside that element's address — that is not a defect, and the model never promised the two partitions agree. X's own relations are judged against its shadow under the X-A contract (§8), never against the certificate partition | B3 H7, extended by the `unknown` rule of §5.2 | 0 mismatches; median ≥ 11 |
 | K8 ledger replay | for **every** run actually executed (R / F / O / X / D / Ω / A0): the replay reports no finding, the recorded q grid recomputes the recorded fitness, X's shadow isomorphism holds and the source-identity / fixture boundary holds. A broken tool contract is `invalid` under §9.1 and is never packaged as an ordinary landscape failure | B3 H8 + §5.3 | holds |
-| K9 observability | computed on the fixed host-only comparison set of **§9.3** (the stimulus of `task-v0.1` as generated, the whole public `q_after` trace including the init readout, no champion and no holdout): (a) **≥ 90 % of all S seeds** have, for each of the seven semantics, at least one applicable address-and-background pair whose two readouts differ; (b) per semantic, the **median over all S seeds of the coverage fraction** (distinguishable applicable pairs / all applicable pairs) **≥ 0.50** — per semantic, never averaged across the seven. A semantic with an empty denominator for a seed is *not assessable* for that seed and is never recorded as 100 %; if a semantic is not assessable for even one seed, its median is *not assessable*, condition (b) is not met for that semantic, and the number of such seeds is reported. The seven semantics are those of §5.2: `ff_init`, `ff_srval`, `ce_mode`, `sr_mode`, `sr_kind`, `storage_kind`, `clock_mode`. `ff_init` is one of the seven and counts in (a) and (b) exactly as the others do; in addition its row carries the flag *conditional on A8* (§5.2), because a difference at the init readout rests on the model's atomic-initialisation abstraction **(b′) — v0.2.0 (DRAFT; the judged quantity once the tool unit of v0.2.0 is accepted — until then the table of record is v0.1.16 and judges (b)):** for `ff_srval` and `sr_kind` the **conditional coverage under SR-driven backgrounds** — only the pairs whose two endpoints both decode `sr_mode = driven` are applicable (§9.3 clause 6), the SR-tied-low pairs named and removed from the denominator with the reason `sr_tied_low` — per semantic the median over all S seeds **≥ 0.50**; the five other semantics as in (b); (a) unchanged at ≥ 90 %. (b) over all panel backgrounds is kept beside (b′) as a description, recomputed from the same retained raw grids under the old applicability (the latch / x5FF exclusions included) — never filled in with model-derived zeros for unobserved pairs; the two applicabilities, denominators, exclusion reasons, counts and fractions are recorded separately and are each recomputable offline. The old (b) judged v0.1.16 correctly by its own definition; (b′) is a different estimand, not a correction of it. The host decode and either applicability never enter the engine or the cartographer | new; §5.2 — the same wording as A2 | ≥ 90 % of seeds; median coverage ≥ 0.50 per semantic |
+| K9 observability | computed on the fixed host-only comparison set of **§9.3** (the stimulus of `task-v0.1` as generated, the whole public `q_after` trace including the init readout, no champion and no holdout): (a) **≥ 90 % of all S seeds** have, for each of the seven semantics, at least one applicable address-and-background pair whose two readouts differ; (b) per semantic, the **median over all S seeds of the coverage fraction** (distinguishable applicable pairs / all applicable pairs) **≥ 0.50** — per semantic, never averaged across the seven. A semantic with an empty denominator for a seed is *not assessable* for that seed and is never recorded as 100 %; if a semantic is not assessable for even one seed, its median is *not assessable*, condition (b) is not met for that semantic, and the number of such seeds is reported. The seven semantics are those of §5.2: `ff_init`, `ff_srval`, `ce_mode`, `sr_mode`, `sr_kind`, `storage_kind`, `clock_mode`. `ff_init` is one of the seven and counts in (a) and (b) exactly as the others do; in addition its row carries the flag *conditional on A8* (§5.2), because a difference at the init readout rests on the model's atomic-initialisation abstraction **(b′) — v0.2.0 (DRAFT; the judged quantity once the tool unit of v0.2.0 is accepted — until then the table of record is v0.1.16 and judges (b)):** for `ff_srval` and `sr_kind` the **conditional coverage under SR-driven backgrounds** — `applicable_conditional = applicable_all_panel AND sr_mode_driven_at_both_endpoints` (§9.3 clause 6; the latch / x5FF exclusions of the all-panel rule stay in force, and a new flag never overwrites an old exclusion), the SR-tied-low pairs named and removed from (b′)'s denominator with the reason `sr_tied_low` — per semantic the median over all S seeds **≥ 0.50**; for the five other semantics the conditional applicability IS the all-panel applicability; (a) unchanged at ≥ 90 %, from the all-panel record. (b) over all panel backgrounds is kept beside (b′) as a description, recomputed from the same retained raw grids under the old applicability — never filled in with model-derived zeros for unobserved pairs; the two applicabilities, denominators, exclusion reasons, counts and fractions are recorded separately and are each recomputable offline. The old (b) judged v0.1.16 correctly by its own definition; (b′) is a different estimand, not a correction of it. The host decode and either applicability never enter the engine or the cartographer. **Implemented** (the v0.2.0 tool unit): `b4_k9.applicability` records both (`applicable` / `applicable_sr_driven`), `b4_k9.summarise` writes both records, the summary and the judgement read (b′) as `judged_estimand = conditional_sr_driven` | new; §5.2 — the same wording as A2 | ≥ 90 % of seeds; median coverage ≥ 0.50 per semantic |
 | K10 real interaction | τ = **2 fitness score units** (the task's weights are all 1, so two scoring cells of 64). For each landscape seed, two fixed background configurations — `genome0 = 0` and `genome1 = Rng((landscape_seed ^ 0x4C0A4E55) & 0xffffffff).uniform(1 << 21)`, the first `uniform` call of that new generator, independent of the task, operator and control generators, drawn once and kept even if the two backgrounds coincide — and in each background **all 210 unordered pairs** of the 21 configuration-bit addresses: the four-corner index `I_ab = f11 − f10 − f01 + f00` with every other bit, the initial state and the stimulus held fixed across the four corners (`b4_stats.four_corner`), recording the background, the four corner configurations, their scores and `I`. `max|I|` per seed is taken over all comparable values of both backgrounds. Outcomes: **interacting** when `max|I| > 2` (exactly 2 falls in *nonzero below threshold*), *nonzero below threshold*, *no interaction seen among the tested comparisons*, *not assessable*; all four counts and the comparable / not-comparable counts are reported, and the criterion is **interacting seeds / all S ≥ 0.50** (not-assessable seeds stay in the denominator). Comparability here is **comparability inside the model's domain under hypothesis v0.3** — it is *not* a statement that a corner is buildable, writable or safe as a bitstream on a device; if 2c needs composition legality, that is a separate frozen condition and this result never stands in for it. Under hypothesis v0.3 every assignment of the 21 bits is in the domain (`ff_behaviour_v0.3.json`, the domain rule), so a corner can be *not comparable* only through a DOMAIN refusal: the expected not-comparable count is 0, and a DOMAIN refusal — the only way a nonzero count can arise — is `invalid` under §9.1, never absorbed as *not assessable* or as *not comparable* | new; §7 | τ = 2; ≥ 0.50 of S |
 
 **The budget grid and `B*`.** The grid is `G = {8, 16, 24, 32, 48, 64, 96, 128, 192, 256}` with
@@ -1004,8 +1016,9 @@ fails on valid complete data is a FAIL, and no threshold is adjusted in response
 into the anchor (which would put two labels in one string):
 
 ```
-gate master = int.from_bytes(sha256(utf8('b4-gate-1|' + HYPOTHESIS_SHA256)).digest()[:4], 'big')
-exploration = the same formula with the label 'b4-sim-3'   (b4-sim-1 and b4-sim-2 retired, 2026-10-19)
+gate master = int.from_bytes(sha256(utf8('b4-gate-2|' + HYPOTHESIS_SHA256)).digest()[:4], 'big')   # protocol v0.2.0 (b4-gate-1 consumed by its records, 2026-10-20)
+exploration = the same formula with the label 'b4-sim-4'   (b4-sim-1 and b4-sim-2 retired, 2026-10-19; b4-sim-3 consumed, 2026-10-20)
+v0.1.16 (the history): the labels 'b4-gate-1|' and 'b4-sim-3' with the same formula and the same anchor
 HYPOTHESIS_SHA256 = 59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8
 ```
 
@@ -1122,13 +1135,14 @@ any run. That a derivation is deterministic buys nothing here — a commit can b
 the hypothesis or the anchor does not license a redraw and retry: that needs its own ruling, and the
 earlier set and its results are kept.
 
-**v0.2.0 (DRAFT): labels, consumption and what the anchor does not carry.** `b4-sim-3` (S = 32, 2026-10-19) and `b4-gate-1`
-(S = 200, 2026-10-20) are **consumed by their records** under `evidence/b4/sim/` — their 65 and 401 values are in the registry and in the
+**v0.2.0: labels, consumption and what the anchor does not carry.** `b4-sim-3` and `b4-gate-1` are consumed by their archived
+records under `evidence/b4/sim/` (S = 32, 2026-10-19; S = 200, 2026-10-20) — their 65 and 401 values are in the registry and in the
 pooled exclusion of every later derivation (2 625 pooled values at this revision, read from the registry; nothing derived) — and the
-tool unit of v0.2.0 is to refuse a production derivation under either label before any tree is read, as it does for `b4-sim-1` and
-`b4-sim-2`. The names **`b4-sim-4`** (the next exploration) and **`b4-gate-2`** (the next gate) are *reserved proposal names only*:
-no value of either exists, none is derived by this revision, and the table of record (`b4_thresholds`, section 9 (v0.1.16)) still
-names `b4-gate-1` / `b4-sim-3` until the tool unit revises it. **The anchor formula is unchanged.** The protocol identity of §9.5 is
+tool unit refuses a production derivation under either label before any tree is read (`b4_seeds.CONSUMED_LABELS`,
+`ConsumedLabelRefusal`), as it does for the retired `b4-sim-1` and `b4-sim-2`. The names **`b4-sim-4`** (the next exploration) and
+**`b4-gate-2`** (the next gate) are the table's labels (`b4_thresholds`, `anchor.exploration_label` / `anchor.gate_label`) and
+*reserved names only*: no value of either exists and none is derived by the tool unit; their derivation and execution need their own
+rulings. **The anchor formula is unchanged.** The protocol identity of §9.5 is
 *not* part of the anchor: the same label under a new protocol would reproduce the same seed set, which is exactly why a new protocol
 version must use a new label and why the identity lives in the manifest, not in the anchor. Changing the hypothesis or the anchor
 still licenses no redraw.
@@ -1173,10 +1187,13 @@ so the method is fixed here (and executed by no code in this unit):
    slice-wide, so the two endpoints of any other address's pair agree on it); under `sr_mode = tied_low` the model's
    `sr_tied_low_when_not_driven` leaves SRVAL and the SR kind no path to the trace, and such a pair is named and removed from
    (b′)'s denominator with the reason `sr_tied_low` — exactly as the latch rule of clause 4 removes the x5FF elements' INIT / SRVAL
-   and `sr_kind`. The **old applicability of clauses 4–5 is kept and recorded separately** (its own `applicable` flag and reason,
-   the latch / x5FF exclusions included), every pair of the fixed set is still observed, and (b) and (b′) are both recomputed from
-   the same retained raw grids; an unobserved pair is never filled in as `covered = false` from the model. The five other semantics
-   keep clauses 4–5 unchanged.
+   and `sr_kind`: `applicable_conditional = applicable_all_panel AND sr_mode_driven_at_both_endpoints`. The **old applicability of
+   clauses 4–5 is kept and recorded separately** (its own `applicable` flag and reason, the latch / x5FF exclusions included); **every
+   pair of the fixed set has a record, and the set of pairs OBSERVED is the one the old applicability requires** — the conditional rule
+   adds no observation and removes none; (b) and (b′) are both computed from the same retained raw grids of the pairs actually observed,
+   and an unobserved pair is never filled in as `covered = false` from the model; the comparison set, the denominators' definitions and
+   the query contract are unchanged. For the five other semantics the conditional applicability equals the all-panel one, and a new flag
+   never overwrites an old exclusion.
 
 This set is an advance host-side engineering diagnostic. It is **not** the same contract as unit
 2c's board stimulus, and it says nothing about what is legal or safe to write to a device. An

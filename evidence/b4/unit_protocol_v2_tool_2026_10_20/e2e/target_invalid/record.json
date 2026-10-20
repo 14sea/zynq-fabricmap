@@ -1,0 +1,44 @@
+{
+ "digests": {
+  "batch": {
+   "STOPPED.json": {
+    "canonical_sha256": "2d668711c5fdff03c84889829aa1cc8fa89ed72c21ba141e2a3f6677b76fd45b",
+    "sha256": "e0a423f50b11996891ed83f7c14d30ff42764db8f20c7211c58a43d091c9a5bd",
+    "size": 1366
+   },
+   "manifest.json": {
+    "canonical_sha256": "5be65191f7cf6a15564a0fae2f326e7b88e294382d9ba347de530cd16044ee64",
+    "sha256": "b0aac16c008e5766bb2d0339848d072beb4f49e4cdee1476a20648663617e290",
+    "size": 40779
+   },
+   "pair_000/task_setup.json": {
+    "canonical_sha256": "588ec68e41643dcabff186104a63ae0ba5e4b4b417429bda327f682b2a61d19d",
+    "sha256": "5c0ed90ae9b7dde86cf4910f3477a80b6d7920b353d057ff91c0a76d67625292",
+    "size": 2118
+   },
+   "seeds.json": {
+    "canonical_sha256": "d390e91a07c08ff0dc4a4b337d30b00774b11303f26858f48881b5d75a2fb11b",
+    "sha256": "7afb271bc182d069836757386eb29c4600622283228b7b48290e628311601144",
+    "size": 132128
+   },
+   "sim_report.json": {
+    "canonical_sha256": "e7af1c4b318ac3950c40d5524fc8760d0c748ce8fb89861375b08621e46b0457",
+    "sha256": "3b68c5028afae77cd32a584c7d62c50be431ca174eb2a3025ae2162210f4a5d7",
+    "size": 14917
+   }
+  }
+ },
+ "exit_code": 1,
+ "fresh_batch_exit": 0,
+ "pair_000": {
+  "status": "partial",
+  "task": "invalid"
+ },
+ "pair_000_files": [
+  "task_setup.json"
+ ],
+ "status": "invalid",
+ "stopped_kind": "target_invalid",
+ "stopped_role": "TARGET",
+ "stopped_stage": "target_setup"
+}
