@@ -1,0 +1,12284 @@
+{
+ "arm": "O",
+ "complete": true,
+ "grid": [
+  8,
+  16,
+  24,
+  32,
+  48,
+  64,
+  96,
+  128,
+  192,
+  256
+ ],
+ "pair": 36,
+ "prefixes": {
+  "128": {
+   "arm": "O",
+   "budget": 128,
+   "findings": [],
+   "map_commitment": "49b552873d4f2031ce5df5fa336c91bce48020d86717626fd12c69551ce631ba",
+   "map_version": 62,
+   "not_unknown": 16,
+   "records": 129,
+   "relations": {
+    "0": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "1": {
+     "affected_cells": [
+      [
+       7,
+       1
+      ],
+      [
+       8,
+       1
+      ]
+     ],
+     "affected_elements": [
+      1
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       1,
+       4
+      ],
+      [
+       42,
+       81
+      ],
+      [
+       49,
+       81
+      ],
+      [
+       69,
+       81
+      ],
+      [
+       72,
+       81
+      ]
+     ],
+     "pairs_with_effect": 4,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "10": {
+     "affected_cells": [
+      [
+       4,
+       2
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       6,
+       4
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       8,
+       4
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       33,
+       38
+      ],
+      [
+       13,
+       57
+      ],
+      [
+       35,
+       57
+      ],
+      [
+       50,
+       67
+      ],
+      [
+       60,
+       67
+      ],
+      [
+       50,
+       68
+      ],
+      [
+       60,
+       68
+      ],
+      [
+       50,
+       70
+      ],
+      [
+       60,
+       70
+      ],
+      [
+       67,
+       73
+      ],
+      [
+       68,
+       73
+      ],
+      [
+       70,
+       73
+      ],
+      [
+       42,
+       84
+      ],
+      [
+       49,
+       84
+      ],
+      [
+       69,
+       84
+      ],
+      [
+       72,
+       84
+      ],
+      [
+       78,
+       88
+      ],
+      [
+       85,
+       88
+      ],
+      [
+       88,
+       107
+      ],
+      [
+       42,
+       108
+      ],
+      [
+       49,
+       108
+      ],
+      [
+       69,
+       108
+      ],
+      [
+       72,
+       108
+      ],
+      [
+       119,
+       121
+      ]
+     ],
+     "pairs_with_effect": 24,
+     "pairs_without_effect": 0,
+     "presence_cells": [
+      [
+       0,
+       1
+      ],
+      [
+       0,
+       3
+      ],
+      [
+       0,
+       5
+      ],
+      [
+       0,
+       7
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       1,
+       3
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       1
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       2,
+       7
+      ],
+      [
+       3,
+       1
+      ],
+      [
+       3,
+       3
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       3,
+       7
+      ],
+      [
+       4,
+       1
+      ],
+      [
+       4,
+       3
+      ],
+      [
+       4,
+       5
+      ],
+      [
+       4,
+       7
+      ],
+      [
+       5,
+       1
+      ],
+      [
+       5,
+       3
+      ],
+      [
+       5,
+       5
+      ],
+      [
+       5,
+       7
+      ],
+      [
+       6,
+       1
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       7
+      ],
+      [
+       7,
+       1
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       7,
+       7
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       3
+      ],
+      [
+       8,
+       5
+      ],
+      [
+       8,
+       7
+      ]
+     ],
+     "state": "effect_seen"
+    },
+    "11": {
+     "affected_cells": [
+      [
+       2,
+       4
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       5,
+       4
+      ],
+      [
+       6,
+       4
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       8,
+       4
+      ]
+     ],
+     "affected_elements": [
+      4
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       30,
+       40
+      ],
+      [
+       37,
+       42
+      ],
+      [
+       37,
+       49
+      ],
+      [
+       50,
+       56
+      ],
+      [
+       56,
+       60
+      ],
+      [
+       37,
+       69
+      ],
+      [
+       37,
+       72
+      ],
+      [
+       56,
+       73
+      ],
+      [
+       61,
+       78
+      ],
+      [
+       61,
+       85
+      ],
+      [
+       78,
+       96
+      ],
+      [
+       85,
+       96
+      ],
+      [
+       89,
+       97
+      ],
+      [
+       89,
+       104
+      ],
+      [
+       61,
+       107
+      ],
+      [
+       96,
+       107
+      ],
+      [
+       97,
+       110
+      ],
+      [
+       104,
+       110
+      ],
+      [
+       117,
+       126
+      ]
+     ],
+     "pairs_with_effect": 18,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "12": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "13": {
+     "affected_cells": [
+      [
+       0,
+       0
+      ],
+      [
+       1,
+       0
+      ],
+      [
+       2,
+       0
+      ]
+     ],
+     "affected_elements": [
+      0
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       51,
+       89
+      ],
+      [
+       78,
+       95
+      ],
+      [
+       85,
+       95
+      ],
+      [
+       95,
+       107
+      ],
+      [
+       51,
+       110
+      ],
+      [
+       42,
+       122
+      ],
+      [
+       49,
+       122
+      ],
+      [
+       69,
+       122
+      ],
+      [
+       72,
+       122
+      ],
+      [
+       71,
+       125
+      ]
+     ],
+     "pairs_with_effect": 10,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "14": {
+     "affected_cells": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       2,
+       1
+      ]
+     ],
+     "affected_elements": [
+      1
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       66,
+       82
+      ],
+      [
+       71,
+       122
+      ],
+      [
+       42,
+       125
+      ],
+      [
+       49,
+       125
+      ],
+      [
+       69,
+       125
+      ],
+      [
+       72,
+       125
+      ]
+     ],
+     "pairs_with_effect": 6,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "15": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "16": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "17": {
+     "affected_cells": [
+      [
+       0,
+       4
+      ],
+      [
+       1,
+       4
+      ]
+     ],
+     "affected_elements": [
+      4
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       13,
+       53
+      ],
+      [
+       35,
+       53
+      ],
+      [
+       37,
+       89
+      ],
+      [
+       78,
+       90
+      ],
+      [
+       85,
+       90
+      ],
+      [
+       42,
+       97
+      ],
+      [
+       49,
+       97
+      ],
+      [
+       69,
+       97
+      ],
+      [
+       72,
+       97
+      ],
+      [
+       78,
+       102
+      ],
+      [
+       85,
+       102
+      ],
+      [
+       42,
+       104
+      ],
+      [
+       49,
+       104
+      ],
+      [
+       69,
+       104
+      ],
+      [
+       72,
+       104
+      ],
+      [
+       90,
+       107
+      ],
+      [
+       102,
+       107
+      ],
+      [
+       37,
+       110
+      ]
+     ],
+     "pairs_with_effect": 18,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "18": {
+     "affected_cells": [
+      [
+       0,
+       5
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       4,
+       5
+      ]
+     ],
+     "affected_elements": [
+      5
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       13,
+       32
+      ],
+      [
+       33,
+       34
+      ],
+      [
+       32,
+       35
+      ],
+      [
+       13,
+       36
+      ],
+      [
+       35,
+       36
+      ],
+      [
+       22,
+       41
+      ],
+      [
+       42,
+       50
+      ],
+      [
+       49,
+       50
+      ],
+      [
+       37,
+       56
+      ],
+      [
+       42,
+       60
+      ],
+      [
+       49,
+       60
+      ],
+      [
+       62,
+       65
+      ],
+      [
+       58,
+       66
+      ],
+      [
+       50,
+       69
+      ],
+      [
+       60,
+       69
+      ],
+      [
+       50,
+       72
+      ],
+      [
+       60,
+       72
+      ],
+      [
+       42,
+       73
+      ],
+      [
+       49,
+       73
+      ],
+      [
+       69,
+       73
+      ],
+      [
+       72,
+       73
+      ],
+      [
+       65,
+       75
+      ],
+      [
+       65,
+       77
+      ],
+      [
+       65,
+       80
+      ],
+      [
+       67,
+       84
+      ],
+      [
+       68,
+       84
+      ],
+      [
+       70,
+       84
+      ],
+      [
+       62,
+       87
+      ],
+      [
+       75,
+       87
+      ],
+      [
+       77,
+       87
+      ],
+      [
+       80,
+       87
+      ],
+      [
+       62,
+       100
+      ],
+      [
+       75,
+       100
+      ],
+      [
+       77,
+       100
+      ],
+      [
+       80,
+       100
+      ],
+      [
+       66,
+       101
+      ],
+      [
+       67,
+       108
+      ],
+      [
+       68,
+       108
+      ],
+      [
+       70,
+       108
+      ]
+     ],
+     "pairs_with_effect": 33,
+     "pairs_without_effect": 6,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "19": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "2": {
+     "affected_cells": [
+      [
+       4,
+       3
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       8,
+       3
+      ]
+     ],
+     "affected_elements": [
+      3
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       42,
+       58
+      ],
+      [
+       49,
+       58
+      ],
+      [
+       50,
+       66
+      ],
+      [
+       60,
+       66
+      ],
+      [
+       58,
+       69
+      ],
+      [
+       58,
+       72
+      ],
+      [
+       66,
+       73
+      ],
+      [
+       42,
+       101
+      ],
+      [
+       49,
+       101
+      ],
+      [
+       69,
+       101
+      ],
+      [
+       72,
+       101
+      ],
+      [
+       78,
+       116
+      ],
+      [
+       85,
+       116
+      ],
+      [
+       107,
+       116
+      ]
+     ],
+     "pairs_with_effect": 14,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "20": {
+     "affected_cells": [
+      [
+       0,
+       6
+      ],
+      [
+       1,
+       6
+      ]
+     ],
+     "affected_elements": [
+      6
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       37,
+       61
+      ],
+      [
+       42,
+       78
+      ],
+      [
+       49,
+       78
+      ],
+      [
+       69,
+       78
+      ],
+      [
+       72,
+       78
+      ],
+      [
+       42,
+       85
+      ],
+      [
+       49,
+       85
+      ],
+      [
+       69,
+       85
+      ],
+      [
+       72,
+       85
+      ],
+      [
+       84,
+       88
+      ],
+      [
+       37,
+       96
+      ],
+      [
+       90,
+       97
+      ],
+      [
+       97,
+       102
+      ],
+      [
+       90,
+       104
+      ],
+      [
+       102,
+       104
+      ],
+      [
+       42,
+       107
+      ],
+      [
+       49,
+       107
+      ],
+      [
+       69,
+       107
+      ],
+      [
+       72,
+       107
+      ],
+      [
+       88,
+       108
+      ],
+      [
+       65,
+       113
+      ],
+      [
+       87,
+       113
+      ],
+      [
+       100,
+       113
+      ],
+      [
+       58,
+       116
+      ],
+      [
+       101,
+       116
+      ],
+      [
+       95,
+       122
+      ]
+     ],
+     "pairs_with_effect": 26,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "3": {
+     "affected_cells": [
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       2
+      ],
+      [
+       2,
+       4
+      ],
+      [
+       2,
+       6
+      ],
+      [
+       2,
+       7
+      ],
+      [
+       3,
+       0
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       3,
+       6
+      ],
+      [
+       4,
+       0
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       4,
+       6
+      ],
+      [
+       5,
+       0
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       6
+      ],
+      [
+       7,
+       0
+      ],
+      [
+       7,
+       1
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       7,
+       6
+      ],
+      [
+       8,
+       0
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       2
+      ],
+      [
+       8,
+       3
+      ],
+      [
+       8,
+       5
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       117,
+       121
+      ]
+     ],
+     "pairs_with_effect": 1,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "4": {
+     "affected_cells": [
+      [
+       1,
+       3
+      ],
+      [
+       1,
+       4
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       1,
+       6
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       3,
+       3
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       4,
+       5
+      ],
+      [
+       5,
+       0
+      ],
+      [
+       5,
+       1
+      ],
+      [
+       6,
+       1
+      ]
+     ],
+     "affected_elements": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       62,
+       94
+      ],
+      [
+       75,
+       94
+      ],
+      [
+       77,
+       94
+      ],
+      [
+       80,
+       94
+      ]
+     ],
+     "pairs_with_effect": 4,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "5": {
+     "affected_cells": [
+      [
+       6,
+       5
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       8,
+       5
+      ]
+     ],
+     "affected_elements": [
+      5
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       61,
+       127
+      ],
+      [
+       96,
+       127
+      ]
+     ],
+     "pairs_with_effect": 2,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "6": {
+     "affected_cells": [
+      [
+       2,
+       7
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       5,
+       3
+      ],
+      [
+       5,
+       5
+      ],
+      [
+       5,
+       6
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       7,
+       2
+      ]
+     ],
+     "affected_elements": [
+      2,
+      3,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       78,
+       99
+      ],
+      [
+       85,
+       99
+      ],
+      [
+       99,
+       107
+      ],
+      [
+       109,
+       115
+      ],
+      [
+       78,
+       129
+      ],
+      [
+       85,
+       129
+      ],
+      [
+       107,
+       129
+      ]
+     ],
+     "pairs_with_effect": 7,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "7": {
+     "affected_cells": [
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       7
+      ]
+     ],
+     "affected_elements": [
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       50,
+       62
+      ],
+      [
+       60,
+       62
+      ],
+      [
+       42,
+       65
+      ],
+      [
+       49,
+       65
+      ],
+      [
+       65,
+       69
+      ],
+      [
+       65,
+       72
+      ],
+      [
+       62,
+       73
+      ],
+      [
+       50,
+       75
+      ],
+      [
+       60,
+       75
+      ],
+      [
+       73,
+       75
+      ],
+      [
+       50,
+       77
+      ],
+      [
+       60,
+       77
+      ],
+      [
+       73,
+       77
+      ],
+      [
+       50,
+       80
+      ],
+      [
+       60,
+       80
+      ],
+      [
+       73,
+       80
+      ],
+      [
+       42,
+       87
+      ],
+      [
+       49,
+       87
+      ],
+      [
+       69,
+       87
+      ],
+      [
+       72,
+       87
+      ],
+      [
+       42,
+       100
+      ],
+      [
+       49,
+       100
+      ],
+      [
+       69,
+       100
+      ],
+      [
+       72,
+       100
+      ],
+      [
+       78,
+       113
+      ],
+      [
+       85,
+       113
+      ],
+      [
+       107,
+       113
+      ]
+     ],
+     "pairs_with_effect": 27,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "8": {
+     "affected_cells": [
+      [
+       3,
+       0
+      ],
+      [
+       4,
+       0
+      ],
+      [
+       5,
+       0
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       7,
+       0
+      ],
+      [
+       8,
+       0
+      ]
+     ],
+     "affected_elements": [
+      0
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       88,
+       119
+      ],
+      [
+       78,
+       121
+      ],
+      [
+       85,
+       121
+      ],
+      [
+       107,
+       121
+      ]
+     ],
+     "pairs_with_effect": 4,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "9": {
+     "affected_cells": [
+      [
+       2,
+       2
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       8,
+       2
+      ]
+     ],
+     "affected_elements": [
+      2
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       8,
+       12
+      ],
+      [
+       33,
+       37
+      ],
+      [
+       34,
+       56
+      ],
+      [
+       95,
+       115
+      ]
+     ],
+     "pairs_with_effect": 3,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    }
+   },
+   "states": {
+    "context_dependent": 4,
+    "effect_seen": 12,
+    "no_effect_seen": 0,
+    "unknown": 5
+   }
+  },
+  "16": {
+   "arm": "O",
+   "budget": 16,
+   "findings": [],
+   "map_commitment": "0a7583a0d13249d2fb137a284fbdbd7fc688ba374ef4ce8a42ab8b47312d057a",
+   "map_version": 2,
+   "not_unknown": 2,
+   "records": 17,
+   "relations": {
+    "0": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "1": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       1,
+       4
+      ]
+     ],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "no_effect_seen"
+    },
+    "10": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "11": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "12": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "13": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "14": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "15": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "16": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "17": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "18": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "19": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "2": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "20": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "3": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "4": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "5": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "6": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "7": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "8": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "9": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       8,
+       12
+      ]
+     ],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "no_effect_seen"
+    }
+   },
+   "states": {
+    "context_dependent": 0,
+    "effect_seen": 0,
+    "no_effect_seen": 2,
+    "unknown": 19
+   }
+  },
+  "192": {
+   "arm": "O",
+   "budget": 192,
+   "findings": [],
+   "map_commitment": "5ddc5edd78dcc8af864c3f3e2b0d2fb21b1592d9f85b96cb3cf98284b8c361fa",
+   "map_version": 103,
+   "not_unknown": 20,
+   "records": 193,
+   "relations": {
+    "0": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "1": {
+     "affected_cells": [
+      [
+       7,
+       1
+      ],
+      [
+       8,
+       1
+      ]
+     ],
+     "affected_elements": [
+      1
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       1,
+       4
+      ],
+      [
+       42,
+       81
+      ],
+      [
+       49,
+       81
+      ],
+      [
+       69,
+       81
+      ],
+      [
+       72,
+       81
+      ],
+      [
+       81,
+       168
+      ]
+     ],
+     "pairs_with_effect": 5,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "10": {
+     "affected_cells": [
+      [
+       2,
+       0
+      ],
+      [
+       2,
+       4
+      ],
+      [
+       2,
+       6
+      ],
+      [
+       4,
+       0
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       4,
+       6
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       6,
+       4
+      ],
+      [
+       6,
+       6
+      ],
+      [
+       7,
+       0
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       7,
+       6
+      ],
+      [
+       8,
+       2
+      ],
+      [
+       8,
+       4
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       33,
+       38
+      ],
+      [
+       13,
+       57
+      ],
+      [
+       35,
+       57
+      ],
+      [
+       50,
+       67
+      ],
+      [
+       60,
+       67
+      ],
+      [
+       50,
+       68
+      ],
+      [
+       60,
+       68
+      ],
+      [
+       50,
+       70
+      ],
+      [
+       60,
+       70
+      ],
+      [
+       67,
+       73
+      ],
+      [
+       68,
+       73
+      ],
+      [
+       70,
+       73
+      ],
+      [
+       42,
+       84
+      ],
+      [
+       49,
+       84
+      ],
+      [
+       69,
+       84
+      ],
+      [
+       72,
+       84
+      ],
+      [
+       78,
+       88
+      ],
+      [
+       85,
+       88
+      ],
+      [
+       88,
+       107
+      ],
+      [
+       42,
+       108
+      ],
+      [
+       49,
+       108
+      ],
+      [
+       69,
+       108
+      ],
+      [
+       72,
+       108
+      ],
+      [
+       119,
+       121
+      ],
+      [
+       78,
+       157
+      ],
+      [
+       85,
+       157
+      ],
+      [
+       107,
+       157
+      ],
+      [
+       86,
+       160
+      ],
+      [
+       84,
+       168
+      ],
+      [
+       108,
+       168
+      ],
+      [
+       156,
+       171
+      ],
+      [
+       78,
+       185
+      ],
+      [
+       85,
+       185
+      ],
+      [
+       107,
+       185
+      ]
+     ],
+     "pairs_with_effect": 34,
+     "pairs_without_effect": 0,
+     "presence_cells": [
+      [
+       0,
+       1
+      ],
+      [
+       0,
+       3
+      ],
+      [
+       0,
+       5
+      ],
+      [
+       0,
+       7
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       1,
+       3
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       1
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       2,
+       7
+      ],
+      [
+       3,
+       1
+      ],
+      [
+       3,
+       3
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       3,
+       7
+      ],
+      [
+       4,
+       1
+      ],
+      [
+       4,
+       3
+      ],
+      [
+       4,
+       5
+      ],
+      [
+       4,
+       7
+      ],
+      [
+       5,
+       1
+      ],
+      [
+       5,
+       3
+      ],
+      [
+       5,
+       5
+      ],
+      [
+       5,
+       7
+      ],
+      [
+       6,
+       1
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       7
+      ],
+      [
+       7,
+       1
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       7,
+       7
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       3
+      ],
+      [
+       8,
+       5
+      ],
+      [
+       8,
+       7
+      ]
+     ],
+     "state": "effect_seen"
+    },
+    "11": {
+     "affected_cells": [
+      [
+       2,
+       4
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       5,
+       4
+      ],
+      [
+       6,
+       4
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       8,
+       4
+      ]
+     ],
+     "affected_elements": [
+      4
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       30,
+       40
+      ],
+      [
+       37,
+       42
+      ],
+      [
+       37,
+       49
+      ],
+      [
+       50,
+       56
+      ],
+      [
+       56,
+       60
+      ],
+      [
+       37,
+       69
+      ],
+      [
+       37,
+       72
+      ],
+      [
+       56,
+       73
+      ],
+      [
+       61,
+       78
+      ],
+      [
+       61,
+       85
+      ],
+      [
+       78,
+       96
+      ],
+      [
+       85,
+       96
+      ],
+      [
+       89,
+       97
+      ],
+      [
+       89,
+       104
+      ],
+      [
+       61,
+       107
+      ],
+      [
+       96,
+       107
+      ],
+      [
+       97,
+       110
+      ],
+      [
+       104,
+       110
+      ],
+      [
+       117,
+       126
+      ],
+      [
+       37,
+       168
+      ]
+     ],
+     "pairs_with_effect": 19,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "12": {
+     "affected_cells": [
+      [
+       2,
+       6
+      ],
+      [
+       3,
+       6
+      ],
+      [
+       4,
+       6
+      ],
+      [
+       6,
+       6
+      ],
+      [
+       7,
+       6
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      6
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       121,
+       132
+      ],
+      [
+       78,
+       133
+      ],
+      [
+       85,
+       133
+      ],
+      [
+       107,
+       133
+      ],
+      [
+       42,
+       159
+      ],
+      [
+       49,
+       159
+      ],
+      [
+       69,
+       159
+      ],
+      [
+       72,
+       159
+      ],
+      [
+       122,
+       167
+      ],
+      [
+       159,
+       168
+      ],
+      [
+       167,
+       181
+      ]
+     ],
+     "pairs_with_effect": 11,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "13": {
+     "affected_cells": [
+      [
+       0,
+       0
+      ],
+      [
+       1,
+       0
+      ],
+      [
+       2,
+       0
+      ]
+     ],
+     "affected_elements": [
+      0
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       51,
+       89
+      ],
+      [
+       78,
+       95
+      ],
+      [
+       85,
+       95
+      ],
+      [
+       95,
+       107
+      ],
+      [
+       51,
+       110
+      ],
+      [
+       42,
+       122
+      ],
+      [
+       49,
+       122
+      ],
+      [
+       69,
+       122
+      ],
+      [
+       72,
+       122
+      ],
+      [
+       71,
+       125
+      ],
+      [
+       78,
+       130
+      ],
+      [
+       85,
+       130
+      ],
+      [
+       107,
+       130
+      ],
+      [
+       86,
+       150
+      ],
+      [
+       78,
+       158
+      ],
+      [
+       85,
+       158
+      ],
+      [
+       107,
+       158
+      ],
+      [
+       78,
+       165
+      ],
+      [
+       85,
+       165
+      ],
+      [
+       107,
+       165
+      ],
+      [
+       159,
+       167
+      ],
+      [
+       122,
+       168
+      ],
+      [
+       90,
+       171
+      ],
+      [
+       102,
+       171
+      ],
+      [
+       140,
+       171
+      ],
+      [
+       171,
+       178
+      ],
+      [
+       162,
+       180
+      ],
+      [
+       42,
+       181
+      ],
+      [
+       49,
+       181
+      ],
+      [
+       69,
+       181
+      ],
+      [
+       72,
+       181
+      ],
+      [
+       168,
+       181
+      ],
+      [
+       116,
+       190
+      ],
+      [
+       146,
+       190
+      ],
+      [
+       153,
+       190
+      ],
+      [
+       174,
+       190
+      ],
+      [
+       177,
+       190
+      ],
+      [
+       179,
+       190
+      ],
+      [
+       136,
+       191
+      ],
+      [
+       139,
+       191
+      ],
+      [
+       149,
+       191
+      ],
+      [
+       172,
+       191
+      ],
+      [
+       176,
+       191
+      ],
+      [
+       190,
+       193
+      ]
+     ],
+     "pairs_with_effect": 44,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "14": {
+     "affected_cells": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       2,
+       1
+      ]
+     ],
+     "affected_elements": [
+      1
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       66,
+       82
+      ],
+      [
+       71,
+       122
+      ],
+      [
+       42,
+       125
+      ],
+      [
+       49,
+       125
+      ],
+      [
+       69,
+       125
+      ],
+      [
+       72,
+       125
+      ],
+      [
+       78,
+       136
+      ],
+      [
+       85,
+       136
+      ],
+      [
+       107,
+       136
+      ],
+      [
+       78,
+       139
+      ],
+      [
+       85,
+       139
+      ],
+      [
+       107,
+       139
+      ],
+      [
+       78,
+       149
+      ],
+      [
+       85,
+       149
+      ],
+      [
+       107,
+       149
+      ],
+      [
+       125,
+       168
+      ],
+      [
+       78,
+       172
+      ],
+      [
+       85,
+       172
+      ],
+      [
+       107,
+       172
+      ],
+      [
+       78,
+       176
+      ],
+      [
+       85,
+       176
+      ],
+      [
+       107,
+       176
+      ],
+      [
+       71,
+       181
+      ],
+      [
+       95,
+       191
+      ],
+      [
+       130,
+       191
+      ],
+      [
+       158,
+       191
+      ],
+      [
+       165,
+       191
+      ]
+     ],
+     "pairs_with_effect": 27,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "15": {
+     "affected_cells": [
+      [
+       0,
+       3
+      ],
+      [
+       1,
+       3
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       3,
+       3
+      ]
+     ],
+     "affected_elements": [
+      3
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       78,
+       184
+      ],
+      [
+       85,
+       184
+      ],
+      [
+       107,
+       184
+      ]
+     ],
+     "pairs_with_effect": 3,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "16": {
+     "affected_cells": [
+      [
+       0,
+       2
+      ]
+     ],
+     "affected_elements": [
+      2
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       78,
+       192
+      ],
+      [
+       85,
+       192
+      ],
+      [
+       107,
+       192
+      ]
+     ],
+     "pairs_with_effect": 3,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "17": {
+     "affected_cells": [
+      [
+       0,
+       4
+      ],
+      [
+       1,
+       4
+      ]
+     ],
+     "affected_elements": [
+      4
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       13,
+       53
+      ],
+      [
+       35,
+       53
+      ],
+      [
+       37,
+       89
+      ],
+      [
+       78,
+       90
+      ],
+      [
+       85,
+       90
+      ],
+      [
+       42,
+       97
+      ],
+      [
+       49,
+       97
+      ],
+      [
+       69,
+       97
+      ],
+      [
+       72,
+       97
+      ],
+      [
+       78,
+       102
+      ],
+      [
+       85,
+       102
+      ],
+      [
+       42,
+       104
+      ],
+      [
+       49,
+       104
+      ],
+      [
+       69,
+       104
+      ],
+      [
+       72,
+       104
+      ],
+      [
+       90,
+       107
+      ],
+      [
+       102,
+       107
+      ],
+      [
+       37,
+       110
+      ],
+      [
+       78,
+       140
+      ],
+      [
+       85,
+       140
+      ],
+      [
+       107,
+       140
+      ],
+      [
+       97,
+       168
+      ],
+      [
+       104,
+       168
+      ],
+      [
+       95,
+       171
+      ],
+      [
+       130,
+       171
+      ],
+      [
+       158,
+       171
+      ],
+      [
+       165,
+       171
+      ],
+      [
+       78,
+       178
+      ],
+      [
+       85,
+       178
+      ],
+      [
+       107,
+       178
+      ]
+     ],
+     "pairs_with_effect": 30,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "18": {
+     "affected_cells": [
+      [
+       0,
+       5
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       4,
+       5
+      ]
+     ],
+     "affected_elements": [
+      5
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       13,
+       32
+      ],
+      [
+       33,
+       34
+      ],
+      [
+       32,
+       35
+      ],
+      [
+       13,
+       36
+      ],
+      [
+       35,
+       36
+      ],
+      [
+       22,
+       41
+      ],
+      [
+       42,
+       50
+      ],
+      [
+       49,
+       50
+      ],
+      [
+       37,
+       56
+      ],
+      [
+       42,
+       60
+      ],
+      [
+       49,
+       60
+      ],
+      [
+       62,
+       65
+      ],
+      [
+       58,
+       66
+      ],
+      [
+       50,
+       69
+      ],
+      [
+       60,
+       69
+      ],
+      [
+       50,
+       72
+      ],
+      [
+       60,
+       72
+      ],
+      [
+       42,
+       73
+      ],
+      [
+       49,
+       73
+      ],
+      [
+       69,
+       73
+      ],
+      [
+       72,
+       73
+      ],
+      [
+       65,
+       75
+      ],
+      [
+       65,
+       77
+      ],
+      [
+       65,
+       80
+      ],
+      [
+       67,
+       84
+      ],
+      [
+       68,
+       84
+      ],
+      [
+       70,
+       84
+      ],
+      [
+       62,
+       87
+      ],
+      [
+       75,
+       87
+      ],
+      [
+       77,
+       87
+      ],
+      [
+       80,
+       87
+      ],
+      [
+       62,
+       100
+      ],
+      [
+       75,
+       100
+      ],
+      [
+       77,
+       100
+      ],
+      [
+       80,
+       100
+      ],
+      [
+       66,
+       101
+      ],
+      [
+       67,
+       108
+      ],
+      [
+       68,
+       108
+      ],
+      [
+       70,
+       108
+      ],
+      [
+       50,
+       168
+      ],
+      [
+       60,
+       168
+      ],
+      [
+       73,
+       168
+      ]
+     ],
+     "pairs_with_effect": 36,
+     "pairs_without_effect": 6,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "19": {
+     "affected_cells": [
+      [
+       0,
+       7
+      ],
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       7
+      ]
+     ],
+     "affected_elements": [
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       117,
+       151
+      ],
+      [
+       78,
+       162
+      ],
+      [
+       85,
+       162
+      ],
+      [
+       107,
+       162
+      ],
+      [
+       95,
+       180
+      ],
+      [
+       130,
+       180
+      ],
+      [
+       158,
+       180
+      ],
+      [
+       165,
+       180
+      ],
+      [
+       113,
+       189
+      ],
+      [
+       175,
+       189
+      ]
+     ],
+     "pairs_with_effect": 10,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "2": {
+     "affected_cells": [
+      [
+       4,
+       3
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       8,
+       3
+      ]
+     ],
+     "affected_elements": [
+      3
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       42,
+       58
+      ],
+      [
+       49,
+       58
+      ],
+      [
+       50,
+       66
+      ],
+      [
+       60,
+       66
+      ],
+      [
+       58,
+       69
+      ],
+      [
+       58,
+       72
+      ],
+      [
+       66,
+       73
+      ],
+      [
+       42,
+       101
+      ],
+      [
+       49,
+       101
+      ],
+      [
+       69,
+       101
+      ],
+      [
+       72,
+       101
+      ],
+      [
+       78,
+       116
+      ],
+      [
+       85,
+       116
+      ],
+      [
+       107,
+       116
+      ],
+      [
+       78,
+       146
+      ],
+      [
+       85,
+       146
+      ],
+      [
+       107,
+       146
+      ],
+      [
+       78,
+       153
+      ],
+      [
+       85,
+       153
+      ],
+      [
+       107,
+       153
+      ],
+      [
+       58,
+       168
+      ],
+      [
+       101,
+       168
+      ],
+      [
+       78,
+       174
+      ],
+      [
+       85,
+       174
+      ],
+      [
+       107,
+       174
+      ],
+      [
+       78,
+       177
+      ],
+      [
+       85,
+       177
+      ],
+      [
+       107,
+       177
+      ],
+      [
+       78,
+       179
+      ],
+      [
+       85,
+       179
+      ],
+      [
+       107,
+       179
+      ],
+      [
+       95,
+       190
+      ],
+      [
+       130,
+       190
+      ],
+      [
+       158,
+       190
+      ],
+      [
+       165,
+       190
+      ],
+      [
+       78,
+       193
+      ],
+      [
+       85,
+       193
+      ],
+      [
+       107,
+       193
+      ]
+     ],
+     "pairs_with_effect": 38,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "20": {
+     "affected_cells": [
+      [
+       0,
+       6
+      ],
+      [
+       1,
+       6
+      ]
+     ],
+     "affected_elements": [
+      6
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       37,
+       61
+      ],
+      [
+       42,
+       78
+      ],
+      [
+       49,
+       78
+      ],
+      [
+       69,
+       78
+      ],
+      [
+       72,
+       78
+      ],
+      [
+       42,
+       85
+      ],
+      [
+       49,
+       85
+      ],
+      [
+       69,
+       85
+      ],
+      [
+       72,
+       85
+      ],
+      [
+       84,
+       88
+      ],
+      [
+       37,
+       96
+      ],
+      [
+       90,
+       97
+      ],
+      [
+       97,
+       102
+      ],
+      [
+       90,
+       104
+      ],
+      [
+       102,
+       104
+      ],
+      [
+       42,
+       107
+      ],
+      [
+       49,
+       107
+      ],
+      [
+       69,
+       107
+      ],
+      [
+       72,
+       107
+      ],
+      [
+       88,
+       108
+      ],
+      [
+       65,
+       113
+      ],
+      [
+       87,
+       113
+      ],
+      [
+       100,
+       113
+      ],
+      [
+       58,
+       116
+      ],
+      [
+       101,
+       116
+      ],
+      [
+       95,
+       122
+      ],
+      [
+       122,
+       130
+      ],
+      [
+       125,
+       136
+      ],
+      [
+       125,
+       139
+      ],
+      [
+       97,
+       140
+      ],
+      [
+       104,
+       140
+      ],
+      [
+       79,
+       145
+      ],
+      [
+       58,
+       146
+      ],
+      [
+       101,
+       146
+      ],
+      [
+       125,
+       149
+      ],
+      [
+       58,
+       153
+      ],
+      [
+       101,
+       153
+      ],
+      [
+       84,
+       157
+      ],
+      [
+       108,
+       157
+      ],
+      [
+       122,
+       158
+      ],
+      [
+       133,
+       159
+      ],
+      [
+       122,
+       165
+      ],
+      [
+       78,
+       168
+      ],
+      [
+       85,
+       168
+      ],
+      [
+       107,
+       168
+      ],
+      [
+       125,
+       172
+      ],
+      [
+       58,
+       174
+      ],
+      [
+       101,
+       174
+      ],
+      [
+       65,
+       175
+      ],
+      [
+       87,
+       175
+      ],
+      [
+       100,
+       175
+      ],
+      [
+       125,
+       176
+      ],
+      [
+       58,
+       177
+      ],
+      [
+       101,
+       177
+      ],
+      [
+       97,
+       178
+      ],
+      [
+       104,
+       178
+      ],
+      [
+       58,
+       179
+      ],
+      [
+       101,
+       179
+      ],
+      [
+       95,
+       181
+      ],
+      [
+       130,
+       181
+      ],
+      [
+       158,
+       181
+      ],
+      [
+       165,
+       181
+      ],
+      [
+       84,
+       185
+      ],
+      [
+       108,
+       185
+      ],
+      [
+       71,
+       191
+      ],
+      [
+       58,
+       193
+      ],
+      [
+       101,
+       193
+      ]
+     ],
+     "pairs_with_effect": 67,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "3": {
+     "affected_cells": [
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       2
+      ],
+      [
+       2,
+       4
+      ],
+      [
+       2,
+       6
+      ],
+      [
+       2,
+       7
+      ],
+      [
+       3,
+       0
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       3,
+       6
+      ],
+      [
+       4,
+       0
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       4,
+       3
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       4,
+       6
+      ],
+      [
+       5,
+       0
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       5,
+       4
+      ],
+      [
+       5,
+       6
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       6
+      ],
+      [
+       7,
+       0
+      ],
+      [
+       7,
+       1
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       7,
+       6
+      ],
+      [
+       8,
+       0
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       2
+      ],
+      [
+       8,
+       3
+      ],
+      [
+       8,
+       5
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       117,
+       121
+      ],
+      [
+       99,
+       148
+      ],
+      [
+       129,
+       148
+      ],
+      [
+       147,
+       160
+      ],
+      [
+       148,
+       166
+      ],
+      [
+       150,
+       186
+      ]
+     ],
+     "pairs_with_effect": 6,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "4": {
+     "affected_cells": [
+      [
+       1,
+       3
+      ],
+      [
+       1,
+       4
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       1,
+       6
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       3,
+       3
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       4,
+       5
+      ],
+      [
+       5,
+       0
+      ],
+      [
+       5,
+       1
+      ],
+      [
+       6,
+       1
+      ]
+     ],
+     "affected_elements": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       62,
+       94
+      ],
+      [
+       75,
+       94
+      ],
+      [
+       77,
+       94
+      ],
+      [
+       80,
+       94
+      ],
+      [
+       78,
+       186
+      ],
+      [
+       85,
+       186
+      ],
+      [
+       107,
+       186
+      ]
+     ],
+     "pairs_with_effect": 7,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "5": {
+     "affected_cells": [
+      [
+       6,
+       5
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       8,
+       5
+      ]
+     ],
+     "affected_elements": [
+      5
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       61,
+       127
+      ],
+      [
+       96,
+       127
+      ]
+     ],
+     "pairs_with_effect": 2,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "6": {
+     "affected_cells": [
+      [
+       2,
+       7
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       5,
+       3
+      ],
+      [
+       5,
+       5
+      ],
+      [
+       5,
+       6
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       7,
+       2
+      ]
+     ],
+     "affected_elements": [
+      2,
+      3,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       78,
+       99
+      ],
+      [
+       85,
+       99
+      ],
+      [
+       99,
+       107
+      ],
+      [
+       109,
+       115
+      ],
+      [
+       78,
+       129
+      ],
+      [
+       85,
+       129
+      ],
+      [
+       107,
+       129
+      ],
+      [
+       78,
+       166
+      ],
+      [
+       85,
+       166
+      ],
+      [
+       107,
+       166
+      ]
+     ],
+     "pairs_with_effect": 10,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "7": {
+     "affected_cells": [
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       7
+      ]
+     ],
+     "affected_elements": [
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       50,
+       62
+      ],
+      [
+       60,
+       62
+      ],
+      [
+       42,
+       65
+      ],
+      [
+       49,
+       65
+      ],
+      [
+       65,
+       69
+      ],
+      [
+       65,
+       72
+      ],
+      [
+       62,
+       73
+      ],
+      [
+       50,
+       75
+      ],
+      [
+       60,
+       75
+      ],
+      [
+       73,
+       75
+      ],
+      [
+       50,
+       77
+      ],
+      [
+       60,
+       77
+      ],
+      [
+       73,
+       77
+      ],
+      [
+       50,
+       80
+      ],
+      [
+       60,
+       80
+      ],
+      [
+       73,
+       80
+      ],
+      [
+       42,
+       87
+      ],
+      [
+       49,
+       87
+      ],
+      [
+       69,
+       87
+      ],
+      [
+       72,
+       87
+      ],
+      [
+       42,
+       100
+      ],
+      [
+       49,
+       100
+      ],
+      [
+       69,
+       100
+      ],
+      [
+       72,
+       100
+      ],
+      [
+       78,
+       113
+      ],
+      [
+       85,
+       113
+      ],
+      [
+       107,
+       113
+      ],
+      [
+       63,
+       143
+      ],
+      [
+       65,
+       168
+      ],
+      [
+       87,
+       168
+      ],
+      [
+       100,
+       168
+      ],
+      [
+       78,
+       175
+      ],
+      [
+       85,
+       175
+      ],
+      [
+       107,
+       175
+      ],
+      [
+       162,
+       189
+      ]
+     ],
+     "pairs_with_effect": 35,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "8": {
+     "affected_cells": [
+      [
+       3,
+       0
+      ],
+      [
+       4,
+       0
+      ],
+      [
+       5,
+       0
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       7,
+       0
+      ],
+      [
+       8,
+       0
+      ]
+     ],
+     "affected_elements": [
+      0
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       88,
+       119
+      ],
+      [
+       78,
+       121
+      ],
+      [
+       85,
+       121
+      ],
+      [
+       107,
+       121
+      ],
+      [
+       132,
+       133
+      ],
+      [
+       119,
+       157
+      ],
+      [
+       119,
+       185
+      ]
+     ],
+     "pairs_with_effect": 7,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "9": {
+     "affected_cells": [
+      [
+       2,
+       2
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       8,
+       2
+      ]
+     ],
+     "affected_elements": [
+      2
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       8,
+       12
+      ],
+      [
+       33,
+       37
+      ],
+      [
+       34,
+       56
+      ],
+      [
+       95,
+       115
+      ],
+      [
+       115,
+       130
+      ],
+      [
+       115,
+       158
+      ],
+      [
+       115,
+       165
+      ]
+     ],
+     "pairs_with_effect": 6,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    }
+   },
+   "states": {
+    "context_dependent": 4,
+    "effect_seen": 16,
+    "no_effect_seen": 0,
+    "unknown": 1
+   }
+  },
+  "24": {
+   "arm": "O",
+   "budget": 24,
+   "findings": [],
+   "map_commitment": "0a7583a0d13249d2fb137a284fbdbd7fc688ba374ef4ce8a42ab8b47312d057a",
+   "map_version": 2,
+   "not_unknown": 2,
+   "records": 25,
+   "relations": {
+    "0": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "1": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       1,
+       4
+      ]
+     ],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "no_effect_seen"
+    },
+    "10": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "11": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "12": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "13": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "14": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "15": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "16": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "17": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "18": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "19": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "2": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "20": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "3": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "4": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "5": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "6": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "7": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "8": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "9": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       8,
+       12
+      ]
+     ],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "no_effect_seen"
+    }
+   },
+   "states": {
+    "context_dependent": 0,
+    "effect_seen": 0,
+    "no_effect_seen": 2,
+    "unknown": 19
+   }
+  },
+  "256": {
+   "arm": "O",
+   "budget": 256,
+   "findings": [],
+   "map_commitment": "e8dfac80acd6b8758d7b8573a5178779077257fa002a3f46897fc8f538e54be5",
+   "map_version": 154,
+   "not_unknown": 21,
+   "records": 257,
+   "relations": {
+    "0": {
+     "affected_cells": [
+      [
+       2,
+       2
+      ],
+      [
+       2,
+       4
+      ],
+      [
+       2,
+       6
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       6
+      ],
+      [
+       7,
+       1
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       7,
+       6
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       2
+      ],
+      [
+       8,
+       3
+      ],
+      [
+       8,
+       5
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       50,
+       215
+      ],
+      [
+       60,
+       215
+      ],
+      [
+       73,
+       215
+      ],
+      [
+       162,
+       225
+      ],
+      [
+       95,
+       231
+      ],
+      [
+       130,
+       231
+      ],
+      [
+       158,
+       231
+      ],
+      [
+       165,
+       231
+      ]
+     ],
+     "pairs_with_effect": 8,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "1": {
+     "affected_cells": [
+      [
+       7,
+       1
+      ],
+      [
+       8,
+       1
+      ]
+     ],
+     "affected_elements": [
+      1
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       1,
+       4
+      ],
+      [
+       42,
+       81
+      ],
+      [
+       49,
+       81
+      ],
+      [
+       69,
+       81
+      ],
+      [
+       72,
+       81
+      ],
+      [
+       81,
+       168
+      ],
+      [
+       192,
+       245
+      ],
+      [
+       216,
+       245
+      ],
+      [
+       237,
+       245
+      ],
+      [
+       238,
+       245
+      ],
+      [
+       245,
+       252
+      ]
+     ],
+     "pairs_with_effect": 10,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "10": {
+     "affected_cells": [
+      [
+       2,
+       0
+      ],
+      [
+       2,
+       2
+      ],
+      [
+       2,
+       4
+      ],
+      [
+       2,
+       6
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       4,
+       0
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       4,
+       6
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       5,
+       6
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       6,
+       4
+      ],
+      [
+       6,
+       6
+      ],
+      [
+       7,
+       0
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       7,
+       6
+      ],
+      [
+       8,
+       2
+      ],
+      [
+       8,
+       4
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       33,
+       38
+      ],
+      [
+       13,
+       57
+      ],
+      [
+       35,
+       57
+      ],
+      [
+       50,
+       67
+      ],
+      [
+       60,
+       67
+      ],
+      [
+       50,
+       68
+      ],
+      [
+       60,
+       68
+      ],
+      [
+       50,
+       70
+      ],
+      [
+       60,
+       70
+      ],
+      [
+       67,
+       73
+      ],
+      [
+       68,
+       73
+      ],
+      [
+       70,
+       73
+      ],
+      [
+       42,
+       84
+      ],
+      [
+       49,
+       84
+      ],
+      [
+       69,
+       84
+      ],
+      [
+       72,
+       84
+      ],
+      [
+       78,
+       88
+      ],
+      [
+       85,
+       88
+      ],
+      [
+       88,
+       107
+      ],
+      [
+       42,
+       108
+      ],
+      [
+       49,
+       108
+      ],
+      [
+       69,
+       108
+      ],
+      [
+       72,
+       108
+      ],
+      [
+       119,
+       121
+      ],
+      [
+       78,
+       157
+      ],
+      [
+       85,
+       157
+      ],
+      [
+       107,
+       157
+      ],
+      [
+       86,
+       160
+      ],
+      [
+       84,
+       168
+      ],
+      [
+       108,
+       168
+      ],
+      [
+       156,
+       171
+      ],
+      [
+       78,
+       185
+      ],
+      [
+       85,
+       185
+      ],
+      [
+       107,
+       185
+      ],
+      [
+       156,
+       195
+      ],
+      [
+       147,
+       201
+      ],
+      [
+       78,
+       211
+      ],
+      [
+       85,
+       211
+      ],
+      [
+       107,
+       211
+      ],
+      [
+       119,
+       222
+      ],
+      [
+       144,
+       227
+      ],
+      [
+       204,
+       231
+      ],
+      [
+       97,
+       253
+      ],
+      [
+       104,
+       253
+      ],
+      [
+       162,
+       254
+      ]
+     ],
+     "pairs_with_effect": 45,
+     "pairs_without_effect": 0,
+     "presence_cells": [
+      [
+       0,
+       1
+      ],
+      [
+       0,
+       3
+      ],
+      [
+       0,
+       5
+      ],
+      [
+       0,
+       7
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       1,
+       3
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       1
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       2,
+       7
+      ],
+      [
+       3,
+       1
+      ],
+      [
+       3,
+       3
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       3,
+       7
+      ],
+      [
+       4,
+       1
+      ],
+      [
+       4,
+       3
+      ],
+      [
+       4,
+       5
+      ],
+      [
+       4,
+       7
+      ],
+      [
+       5,
+       1
+      ],
+      [
+       5,
+       3
+      ],
+      [
+       5,
+       5
+      ],
+      [
+       5,
+       7
+      ],
+      [
+       6,
+       1
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       7
+      ],
+      [
+       7,
+       1
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       7,
+       7
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       3
+      ],
+      [
+       8,
+       5
+      ],
+      [
+       8,
+       7
+      ]
+     ],
+     "state": "effect_seen"
+    },
+    "11": {
+     "affected_cells": [
+      [
+       2,
+       4
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       5,
+       4
+      ],
+      [
+       6,
+       4
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       8,
+       4
+      ]
+     ],
+     "affected_elements": [
+      4
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       30,
+       40
+      ],
+      [
+       37,
+       42
+      ],
+      [
+       37,
+       49
+      ],
+      [
+       50,
+       56
+      ],
+      [
+       56,
+       60
+      ],
+      [
+       37,
+       69
+      ],
+      [
+       37,
+       72
+      ],
+      [
+       56,
+       73
+      ],
+      [
+       61,
+       78
+      ],
+      [
+       61,
+       85
+      ],
+      [
+       78,
+       96
+      ],
+      [
+       85,
+       96
+      ],
+      [
+       89,
+       97
+      ],
+      [
+       89,
+       104
+      ],
+      [
+       61,
+       107
+      ],
+      [
+       96,
+       107
+      ],
+      [
+       97,
+       110
+      ],
+      [
+       104,
+       110
+      ],
+      [
+       117,
+       126
+      ],
+      [
+       37,
+       168
+      ],
+      [
+       63,
+       205
+      ],
+      [
+       63,
+       212
+      ],
+      [
+       63,
+       213
+      ],
+      [
+       63,
+       217
+      ]
+     ],
+     "pairs_with_effect": 23,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "12": {
+     "affected_cells": [
+      [
+       2,
+       6
+      ],
+      [
+       3,
+       6
+      ],
+      [
+       4,
+       6
+      ],
+      [
+       6,
+       6
+      ],
+      [
+       7,
+       6
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      6
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       121,
+       132
+      ],
+      [
+       78,
+       133
+      ],
+      [
+       85,
+       133
+      ],
+      [
+       107,
+       133
+      ],
+      [
+       42,
+       159
+      ],
+      [
+       49,
+       159
+      ],
+      [
+       69,
+       159
+      ],
+      [
+       72,
+       159
+      ],
+      [
+       122,
+       167
+      ],
+      [
+       159,
+       168
+      ],
+      [
+       167,
+       181
+      ],
+      [
+       132,
+       222
+      ],
+      [
+       78,
+       226
+      ],
+      [
+       85,
+       226
+      ],
+      [
+       107,
+       226
+      ],
+      [
+       42,
+       232
+      ],
+      [
+       49,
+       232
+      ],
+      [
+       69,
+       232
+      ],
+      [
+       72,
+       232
+      ],
+      [
+       168,
+       232
+      ],
+      [
+       78,
+       236
+      ],
+      [
+       85,
+       236
+      ],
+      [
+       107,
+       236
+      ],
+      [
+       78,
+       240
+      ],
+      [
+       85,
+       240
+      ],
+      [
+       107,
+       240
+      ]
+     ],
+     "pairs_with_effect": 26,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "13": {
+     "affected_cells": [
+      [
+       0,
+       0
+      ],
+      [
+       1,
+       0
+      ],
+      [
+       2,
+       0
+      ]
+     ],
+     "affected_elements": [
+      0
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       51,
+       89
+      ],
+      [
+       78,
+       95
+      ],
+      [
+       85,
+       95
+      ],
+      [
+       95,
+       107
+      ],
+      [
+       51,
+       110
+      ],
+      [
+       42,
+       122
+      ],
+      [
+       49,
+       122
+      ],
+      [
+       69,
+       122
+      ],
+      [
+       72,
+       122
+      ],
+      [
+       71,
+       125
+      ],
+      [
+       78,
+       130
+      ],
+      [
+       85,
+       130
+      ],
+      [
+       107,
+       130
+      ],
+      [
+       86,
+       150
+      ],
+      [
+       78,
+       158
+      ],
+      [
+       85,
+       158
+      ],
+      [
+       107,
+       158
+      ],
+      [
+       78,
+       165
+      ],
+      [
+       85,
+       165
+      ],
+      [
+       107,
+       165
+      ],
+      [
+       159,
+       167
+      ],
+      [
+       122,
+       168
+      ],
+      [
+       90,
+       171
+      ],
+      [
+       102,
+       171
+      ],
+      [
+       140,
+       171
+      ],
+      [
+       171,
+       178
+      ],
+      [
+       162,
+       180
+      ],
+      [
+       42,
+       181
+      ],
+      [
+       49,
+       181
+      ],
+      [
+       69,
+       181
+      ],
+      [
+       72,
+       181
+      ],
+      [
+       168,
+       181
+      ],
+      [
+       116,
+       190
+      ],
+      [
+       146,
+       190
+      ],
+      [
+       153,
+       190
+      ],
+      [
+       174,
+       190
+      ],
+      [
+       177,
+       190
+      ],
+      [
+       179,
+       190
+      ],
+      [
+       136,
+       191
+      ],
+      [
+       139,
+       191
+      ],
+      [
+       149,
+       191
+      ],
+      [
+       172,
+       191
+      ],
+      [
+       176,
+       191
+      ],
+      [
+       190,
+       193
+      ],
+      [
+       90,
+       195
+      ],
+      [
+       102,
+       195
+      ],
+      [
+       140,
+       195
+      ],
+      [
+       178,
+       195
+      ],
+      [
+       184,
+       196
+      ],
+      [
+       189,
+       197
+      ],
+      [
+       196,
+       200
+      ],
+      [
+       186,
+       201
+      ],
+      [
+       162,
+       202
+      ],
+      [
+       191,
+       207
+      ],
+      [
+       171,
+       208
+      ],
+      [
+       195,
+       208
+      ],
+      [
+       196,
+       219
+      ],
+      [
+       113,
+       221
+      ],
+      [
+       175,
+       221
+      ],
+      [
+       203,
+       221
+      ],
+      [
+       99,
+       227
+      ],
+      [
+       129,
+       227
+      ],
+      [
+       166,
+       227
+      ],
+      [
+       171,
+       229
+      ],
+      [
+       195,
+       229
+      ],
+      [
+       116,
+       230
+      ],
+      [
+       146,
+       230
+      ],
+      [
+       153,
+       230
+      ],
+      [
+       174,
+       230
+      ],
+      [
+       177,
+       230
+      ],
+      [
+       179,
+       230
+      ],
+      [
+       193,
+       230
+      ],
+      [
+       167,
+       232
+      ],
+      [
+       196,
+       233
+      ],
+      [
+       171,
+       234
+      ],
+      [
+       195,
+       234
+      ],
+      [
+       190,
+       235
+      ],
+      [
+       230,
+       235
+      ],
+      [
+       115,
+       244
+      ],
+      [
+       192,
+       246
+      ],
+      [
+       216,
+       246
+      ],
+      [
+       237,
+       246
+      ],
+      [
+       238,
+       246
+      ],
+      [
+       205,
+       247
+      ],
+      [
+       212,
+       247
+      ],
+      [
+       213,
+       247
+      ],
+      [
+       217,
+       247
+      ],
+      [
+       191,
+       248
+      ],
+      [
+       136,
+       251
+      ],
+      [
+       139,
+       251
+      ],
+      [
+       149,
+       251
+      ],
+      [
+       172,
+       251
+      ],
+      [
+       176,
+       251
+      ],
+      [
+       207,
+       251
+      ],
+      [
+       248,
+       251
+      ],
+      [
+       246,
+       252
+      ]
+     ],
+     "pairs_with_effect": 96,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "14": {
+     "affected_cells": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       2,
+       1
+      ]
+     ],
+     "affected_elements": [
+      1
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       66,
+       82
+      ],
+      [
+       71,
+       122
+      ],
+      [
+       42,
+       125
+      ],
+      [
+       49,
+       125
+      ],
+      [
+       69,
+       125
+      ],
+      [
+       72,
+       125
+      ],
+      [
+       78,
+       136
+      ],
+      [
+       85,
+       136
+      ],
+      [
+       107,
+       136
+      ],
+      [
+       78,
+       139
+      ],
+      [
+       85,
+       139
+      ],
+      [
+       107,
+       139
+      ],
+      [
+       78,
+       149
+      ],
+      [
+       85,
+       149
+      ],
+      [
+       107,
+       149
+      ],
+      [
+       125,
+       168
+      ],
+      [
+       78,
+       172
+      ],
+      [
+       85,
+       172
+      ],
+      [
+       107,
+       172
+      ],
+      [
+       78,
+       176
+      ],
+      [
+       85,
+       176
+      ],
+      [
+       107,
+       176
+      ],
+      [
+       71,
+       181
+      ],
+      [
+       95,
+       191
+      ],
+      [
+       130,
+       191
+      ],
+      [
+       158,
+       191
+      ],
+      [
+       165,
+       191
+      ],
+      [
+       78,
+       207
+      ],
+      [
+       85,
+       207
+      ],
+      [
+       107,
+       207
+      ],
+      [
+       78,
+       248
+      ],
+      [
+       85,
+       248
+      ],
+      [
+       107,
+       248
+      ],
+      [
+       192,
+       249
+      ],
+      [
+       216,
+       249
+      ],
+      [
+       237,
+       249
+      ],
+      [
+       238,
+       249
+      ],
+      [
+       95,
+       251
+      ],
+      [
+       130,
+       251
+      ],
+      [
+       158,
+       251
+      ],
+      [
+       165,
+       251
+      ],
+      [
+       249,
+       252
+      ]
+     ],
+     "pairs_with_effect": 42,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "15": {
+     "affected_cells": [
+      [
+       0,
+       3
+      ],
+      [
+       1,
+       3
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       3,
+       3
+      ]
+     ],
+     "affected_elements": [
+      3
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       78,
+       184
+      ],
+      [
+       85,
+       184
+      ],
+      [
+       107,
+       184
+      ],
+      [
+       95,
+       196
+      ],
+      [
+       130,
+       196
+      ],
+      [
+       158,
+       196
+      ],
+      [
+       165,
+       196
+      ],
+      [
+       78,
+       200
+      ],
+      [
+       85,
+       200
+      ],
+      [
+       107,
+       200
+      ],
+      [
+       116,
+       205
+      ],
+      [
+       146,
+       205
+      ],
+      [
+       153,
+       205
+      ],
+      [
+       174,
+       205
+      ],
+      [
+       177,
+       205
+      ],
+      [
+       179,
+       205
+      ],
+      [
+       193,
+       205
+      ],
+      [
+       116,
+       212
+      ],
+      [
+       146,
+       212
+      ],
+      [
+       153,
+       212
+      ],
+      [
+       174,
+       212
+      ],
+      [
+       177,
+       212
+      ],
+      [
+       179,
+       212
+      ],
+      [
+       193,
+       212
+      ],
+      [
+       116,
+       213
+      ],
+      [
+       146,
+       213
+      ],
+      [
+       153,
+       213
+      ],
+      [
+       174,
+       213
+      ],
+      [
+       177,
+       213
+      ],
+      [
+       179,
+       213
+      ],
+      [
+       193,
+       213
+      ],
+      [
+       116,
+       217
+      ],
+      [
+       146,
+       217
+      ],
+      [
+       153,
+       217
+      ],
+      [
+       174,
+       217
+      ],
+      [
+       177,
+       217
+      ],
+      [
+       179,
+       217
+      ],
+      [
+       193,
+       217
+      ],
+      [
+       78,
+       219
+      ],
+      [
+       85,
+       219
+      ],
+      [
+       107,
+       219
+      ],
+      [
+       120,
+       221
+      ],
+      [
+       78,
+       233
+      ],
+      [
+       85,
+       233
+      ],
+      [
+       107,
+       233
+      ],
+      [
+       205,
+       235
+      ],
+      [
+       212,
+       235
+      ],
+      [
+       213,
+       235
+      ],
+      [
+       217,
+       235
+      ],
+      [
+       190,
+       247
+      ],
+      [
+       230,
+       247
+      ]
+     ],
+     "pairs_with_effect": 51,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "16": {
+     "affected_cells": [
+      [
+       0,
+       2
+      ]
+     ],
+     "affected_elements": [
+      2
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       78,
+       192
+      ],
+      [
+       85,
+       192
+      ],
+      [
+       107,
+       192
+      ],
+      [
+       78,
+       216
+      ],
+      [
+       85,
+       216
+      ],
+      [
+       107,
+       216
+      ],
+      [
+       78,
+       237
+      ],
+      [
+       85,
+       237
+      ],
+      [
+       107,
+       237
+      ],
+      [
+       78,
+       238
+      ],
+      [
+       85,
+       238
+      ],
+      [
+       107,
+       238
+      ],
+      [
+       95,
+       246
+      ],
+      [
+       130,
+       246
+      ],
+      [
+       158,
+       246
+      ],
+      [
+       165,
+       246
+      ],
+      [
+       136,
+       249
+      ],
+      [
+       139,
+       249
+      ],
+      [
+       149,
+       249
+      ],
+      [
+       172,
+       249
+      ],
+      [
+       176,
+       249
+      ],
+      [
+       207,
+       249
+      ],
+      [
+       248,
+       249
+      ],
+      [
+       78,
+       252
+      ],
+      [
+       85,
+       252
+      ],
+      [
+       107,
+       252
+      ]
+     ],
+     "pairs_with_effect": 26,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "17": {
+     "affected_cells": [
+      [
+       0,
+       4
+      ],
+      [
+       1,
+       4
+      ]
+     ],
+     "affected_elements": [
+      4
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       13,
+       53
+      ],
+      [
+       35,
+       53
+      ],
+      [
+       37,
+       89
+      ],
+      [
+       78,
+       90
+      ],
+      [
+       85,
+       90
+      ],
+      [
+       42,
+       97
+      ],
+      [
+       49,
+       97
+      ],
+      [
+       69,
+       97
+      ],
+      [
+       72,
+       97
+      ],
+      [
+       78,
+       102
+      ],
+      [
+       85,
+       102
+      ],
+      [
+       42,
+       104
+      ],
+      [
+       49,
+       104
+      ],
+      [
+       69,
+       104
+      ],
+      [
+       72,
+       104
+      ],
+      [
+       90,
+       107
+      ],
+      [
+       102,
+       107
+      ],
+      [
+       37,
+       110
+      ],
+      [
+       78,
+       140
+      ],
+      [
+       85,
+       140
+      ],
+      [
+       107,
+       140
+      ],
+      [
+       97,
+       168
+      ],
+      [
+       104,
+       168
+      ],
+      [
+       95,
+       171
+      ],
+      [
+       130,
+       171
+      ],
+      [
+       158,
+       171
+      ],
+      [
+       165,
+       171
+      ],
+      [
+       78,
+       178
+      ],
+      [
+       85,
+       178
+      ],
+      [
+       107,
+       178
+      ],
+      [
+       95,
+       195
+      ],
+      [
+       130,
+       195
+      ],
+      [
+       158,
+       195
+      ],
+      [
+       165,
+       195
+      ],
+      [
+       162,
+       199
+      ],
+      [
+       78,
+       208
+      ],
+      [
+       85,
+       208
+      ],
+      [
+       107,
+       208
+      ],
+      [
+       78,
+       229
+      ],
+      [
+       85,
+       229
+      ],
+      [
+       107,
+       229
+      ],
+      [
+       78,
+       234
+      ],
+      [
+       85,
+       234
+      ],
+      [
+       107,
+       234
+      ],
+      [
+       84,
+       253
+      ],
+      [
+       108,
+       253
+      ]
+     ],
+     "pairs_with_effect": 46,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "18": {
+     "affected_cells": [
+      [
+       0,
+       5
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       4,
+       5
+      ]
+     ],
+     "affected_elements": [
+      5
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       13,
+       32
+      ],
+      [
+       33,
+       34
+      ],
+      [
+       32,
+       35
+      ],
+      [
+       13,
+       36
+      ],
+      [
+       35,
+       36
+      ],
+      [
+       22,
+       41
+      ],
+      [
+       42,
+       50
+      ],
+      [
+       49,
+       50
+      ],
+      [
+       37,
+       56
+      ],
+      [
+       42,
+       60
+      ],
+      [
+       49,
+       60
+      ],
+      [
+       62,
+       65
+      ],
+      [
+       58,
+       66
+      ],
+      [
+       50,
+       69
+      ],
+      [
+       60,
+       69
+      ],
+      [
+       50,
+       72
+      ],
+      [
+       60,
+       72
+      ],
+      [
+       42,
+       73
+      ],
+      [
+       49,
+       73
+      ],
+      [
+       69,
+       73
+      ],
+      [
+       72,
+       73
+      ],
+      [
+       65,
+       75
+      ],
+      [
+       65,
+       77
+      ],
+      [
+       65,
+       80
+      ],
+      [
+       67,
+       84
+      ],
+      [
+       68,
+       84
+      ],
+      [
+       70,
+       84
+      ],
+      [
+       62,
+       87
+      ],
+      [
+       75,
+       87
+      ],
+      [
+       77,
+       87
+      ],
+      [
+       80,
+       87
+      ],
+      [
+       62,
+       100
+      ],
+      [
+       75,
+       100
+      ],
+      [
+       77,
+       100
+      ],
+      [
+       80,
+       100
+      ],
+      [
+       66,
+       101
+      ],
+      [
+       67,
+       108
+      ],
+      [
+       68,
+       108
+      ],
+      [
+       70,
+       108
+      ],
+      [
+       50,
+       168
+      ],
+      [
+       60,
+       168
+      ],
+      [
+       73,
+       168
+      ],
+      [
+       78,
+       198
+      ],
+      [
+       85,
+       198
+      ],
+      [
+       107,
+       198
+      ]
+     ],
+     "pairs_with_effect": 39,
+     "pairs_without_effect": 6,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "19": {
+     "affected_cells": [
+      [
+       0,
+       7
+      ],
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       7
+      ]
+     ],
+     "affected_elements": [
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       117,
+       151
+      ],
+      [
+       78,
+       162
+      ],
+      [
+       85,
+       162
+      ],
+      [
+       107,
+       162
+      ],
+      [
+       95,
+       180
+      ],
+      [
+       130,
+       180
+      ],
+      [
+       158,
+       180
+      ],
+      [
+       165,
+       180
+      ],
+      [
+       113,
+       189
+      ],
+      [
+       175,
+       189
+      ],
+      [
+       90,
+       199
+      ],
+      [
+       102,
+       199
+      ],
+      [
+       140,
+       199
+      ],
+      [
+       178,
+       199
+      ],
+      [
+       95,
+       202
+      ],
+      [
+       130,
+       202
+      ],
+      [
+       158,
+       202
+      ],
+      [
+       165,
+       202
+      ],
+      [
+       189,
+       203
+      ],
+      [
+       199,
+       208
+      ],
+      [
+       197,
+       221
+      ],
+      [
+       199,
+       229
+      ],
+      [
+       199,
+       234
+      ],
+      [
+       88,
+       254
+      ],
+      [
+       157,
+       254
+      ],
+      [
+       185,
+       254
+      ],
+      [
+       211,
+       254
+      ]
+     ],
+     "pairs_with_effect": 23,
+     "pairs_without_effect": 4,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "2": {
+     "affected_cells": [
+      [
+       4,
+       3
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       8,
+       3
+      ]
+     ],
+     "affected_elements": [
+      3
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       42,
+       58
+      ],
+      [
+       49,
+       58
+      ],
+      [
+       50,
+       66
+      ],
+      [
+       60,
+       66
+      ],
+      [
+       58,
+       69
+      ],
+      [
+       58,
+       72
+      ],
+      [
+       66,
+       73
+      ],
+      [
+       42,
+       101
+      ],
+      [
+       49,
+       101
+      ],
+      [
+       69,
+       101
+      ],
+      [
+       72,
+       101
+      ],
+      [
+       78,
+       116
+      ],
+      [
+       85,
+       116
+      ],
+      [
+       107,
+       116
+      ],
+      [
+       78,
+       146
+      ],
+      [
+       85,
+       146
+      ],
+      [
+       107,
+       146
+      ],
+      [
+       78,
+       153
+      ],
+      [
+       85,
+       153
+      ],
+      [
+       107,
+       153
+      ],
+      [
+       58,
+       168
+      ],
+      [
+       101,
+       168
+      ],
+      [
+       78,
+       174
+      ],
+      [
+       85,
+       174
+      ],
+      [
+       107,
+       174
+      ],
+      [
+       78,
+       177
+      ],
+      [
+       85,
+       177
+      ],
+      [
+       107,
+       177
+      ],
+      [
+       78,
+       179
+      ],
+      [
+       85,
+       179
+      ],
+      [
+       107,
+       179
+      ],
+      [
+       95,
+       190
+      ],
+      [
+       130,
+       190
+      ],
+      [
+       158,
+       190
+      ],
+      [
+       165,
+       190
+      ],
+      [
+       78,
+       193
+      ],
+      [
+       85,
+       193
+      ],
+      [
+       107,
+       193
+      ],
+      [
+       184,
+       205
+      ],
+      [
+       200,
+       205
+      ],
+      [
+       184,
+       212
+      ],
+      [
+       200,
+       212
+      ],
+      [
+       184,
+       213
+      ],
+      [
+       200,
+       213
+      ],
+      [
+       184,
+       217
+      ],
+      [
+       200,
+       217
+      ],
+      [
+       205,
+       219
+      ],
+      [
+       212,
+       219
+      ],
+      [
+       213,
+       219
+      ],
+      [
+       217,
+       219
+      ],
+      [
+       95,
+       230
+      ],
+      [
+       130,
+       230
+      ],
+      [
+       158,
+       230
+      ],
+      [
+       165,
+       230
+      ],
+      [
+       205,
+       233
+      ],
+      [
+       212,
+       233
+      ],
+      [
+       213,
+       233
+      ],
+      [
+       217,
+       233
+      ],
+      [
+       78,
+       235
+      ],
+      [
+       85,
+       235
+      ],
+      [
+       107,
+       235
+      ],
+      [
+       196,
+       247
+      ]
+     ],
+     "pairs_with_effect": 62,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "20": {
+     "affected_cells": [
+      [
+       0,
+       6
+      ],
+      [
+       1,
+       6
+      ]
+     ],
+     "affected_elements": [
+      6
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       37,
+       61
+      ],
+      [
+       42,
+       78
+      ],
+      [
+       49,
+       78
+      ],
+      [
+       69,
+       78
+      ],
+      [
+       72,
+       78
+      ],
+      [
+       42,
+       85
+      ],
+      [
+       49,
+       85
+      ],
+      [
+       69,
+       85
+      ],
+      [
+       72,
+       85
+      ],
+      [
+       84,
+       88
+      ],
+      [
+       37,
+       96
+      ],
+      [
+       90,
+       97
+      ],
+      [
+       97,
+       102
+      ],
+      [
+       90,
+       104
+      ],
+      [
+       102,
+       104
+      ],
+      [
+       42,
+       107
+      ],
+      [
+       49,
+       107
+      ],
+      [
+       69,
+       107
+      ],
+      [
+       72,
+       107
+      ],
+      [
+       88,
+       108
+      ],
+      [
+       65,
+       113
+      ],
+      [
+       87,
+       113
+      ],
+      [
+       100,
+       113
+      ],
+      [
+       58,
+       116
+      ],
+      [
+       101,
+       116
+      ],
+      [
+       95,
+       122
+      ],
+      [
+       122,
+       130
+      ],
+      [
+       125,
+       136
+      ],
+      [
+       125,
+       139
+      ],
+      [
+       97,
+       140
+      ],
+      [
+       104,
+       140
+      ],
+      [
+       79,
+       145
+      ],
+      [
+       58,
+       146
+      ],
+      [
+       101,
+       146
+      ],
+      [
+       125,
+       149
+      ],
+      [
+       58,
+       153
+      ],
+      [
+       101,
+       153
+      ],
+      [
+       84,
+       157
+      ],
+      [
+       108,
+       157
+      ],
+      [
+       122,
+       158
+      ],
+      [
+       133,
+       159
+      ],
+      [
+       122,
+       165
+      ],
+      [
+       78,
+       168
+      ],
+      [
+       85,
+       168
+      ],
+      [
+       107,
+       168
+      ],
+      [
+       125,
+       172
+      ],
+      [
+       58,
+       174
+      ],
+      [
+       101,
+       174
+      ],
+      [
+       65,
+       175
+      ],
+      [
+       87,
+       175
+      ],
+      [
+       100,
+       175
+      ],
+      [
+       125,
+       176
+      ],
+      [
+       58,
+       177
+      ],
+      [
+       101,
+       177
+      ],
+      [
+       97,
+       178
+      ],
+      [
+       104,
+       178
+      ],
+      [
+       58,
+       179
+      ],
+      [
+       101,
+       179
+      ],
+      [
+       95,
+       181
+      ],
+      [
+       130,
+       181
+      ],
+      [
+       158,
+       181
+      ],
+      [
+       165,
+       181
+      ],
+      [
+       84,
+       185
+      ],
+      [
+       108,
+       185
+      ],
+      [
+       71,
+       191
+      ],
+      [
+       58,
+       193
+      ],
+      [
+       101,
+       193
+      ],
+      [
+       50,
+       198
+      ],
+      [
+       60,
+       198
+      ],
+      [
+       73,
+       198
+      ],
+      [
+       65,
+       203
+      ],
+      [
+       87,
+       203
+      ],
+      [
+       100,
+       203
+      ],
+      [
+       125,
+       207
+      ],
+      [
+       97,
+       208
+      ],
+      [
+       104,
+       208
+      ],
+      [
+       84,
+       211
+      ],
+      [
+       108,
+       211
+      ],
+      [
+       159,
+       226
+      ],
+      [
+       97,
+       229
+      ],
+      [
+       104,
+       229
+      ],
+      [
+       133,
+       232
+      ],
+      [
+       226,
+       232
+      ],
+      [
+       97,
+       234
+      ],
+      [
+       104,
+       234
+      ],
+      [
+       58,
+       235
+      ],
+      [
+       101,
+       235
+      ],
+      [
+       159,
+       236
+      ],
+      [
+       232,
+       236
+      ],
+      [
+       159,
+       240
+      ],
+      [
+       232,
+       240
+      ],
+      [
+       125,
+       248
+      ],
+      [
+       71,
+       251
+      ]
+     ],
+     "pairs_with_effect": 93,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "3": {
+     "affected_cells": [
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       2
+      ],
+      [
+       2,
+       4
+      ],
+      [
+       2,
+       6
+      ],
+      [
+       2,
+       7
+      ],
+      [
+       3,
+       0
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       3,
+       6
+      ],
+      [
+       4,
+       0
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       4,
+       3
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       4,
+       6
+      ],
+      [
+       5,
+       0
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       5,
+       4
+      ],
+      [
+       5,
+       6
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       6
+      ],
+      [
+       7,
+       0
+      ],
+      [
+       7,
+       1
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       7,
+       6
+      ],
+      [
+       8,
+       0
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       2
+      ],
+      [
+       8,
+       3
+      ],
+      [
+       8,
+       5
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       117,
+       121
+      ],
+      [
+       99,
+       148
+      ],
+      [
+       129,
+       148
+      ],
+      [
+       147,
+       160
+      ],
+      [
+       148,
+       166
+      ],
+      [
+       150,
+       186
+      ],
+      [
+       86,
+       201
+      ],
+      [
+       117,
+       222
+      ],
+      [
+       78,
+       255
+      ],
+      [
+       85,
+       255
+      ],
+      [
+       107,
+       255
+      ]
+     ],
+     "pairs_with_effect": 11,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "4": {
+     "affected_cells": [
+      [
+       1,
+       0
+      ],
+      [
+       1,
+       3
+      ],
+      [
+       1,
+       4
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       1,
+       6
+      ],
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       0
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       2,
+       4
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       2,
+       6
+      ],
+      [
+       2,
+       7
+      ],
+      [
+       3,
+       0
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       3,
+       3
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       3,
+       6
+      ],
+      [
+       4,
+       0
+      ],
+      [
+       4,
+       1
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       4,
+       3
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       4,
+       5
+      ],
+      [
+       4,
+       6
+      ],
+      [
+       5,
+       0
+      ],
+      [
+       5,
+       1
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       5,
+       5
+      ],
+      [
+       5,
+       6
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       6,
+       1
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       6
+      ],
+      [
+       7,
+       0
+      ],
+      [
+       7,
+       1
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       7,
+       6
+      ],
+      [
+       8,
+       0
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       2
+      ],
+      [
+       8,
+       5
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       62,
+       94
+      ],
+      [
+       75,
+       94
+      ],
+      [
+       77,
+       94
+      ],
+      [
+       80,
+       94
+      ],
+      [
+       78,
+       186
+      ],
+      [
+       85,
+       186
+      ],
+      [
+       107,
+       186
+      ],
+      [
+       95,
+       201
+      ],
+      [
+       130,
+       201
+      ],
+      [
+       158,
+       201
+      ],
+      [
+       165,
+       201
+      ],
+      [
+       150,
+       255
+      ],
+      [
+       160,
+       256
+      ],
+      [
+       148,
+       257
+      ]
+     ],
+     "pairs_with_effect": 14,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "5": {
+     "affected_cells": [
+      [
+       6,
+       5
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       8,
+       5
+      ]
+     ],
+     "affected_elements": [
+      5
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       61,
+       127
+      ],
+      [
+       96,
+       127
+      ],
+      [
+       95,
+       223
+      ],
+      [
+       130,
+       223
+      ],
+      [
+       158,
+       223
+      ],
+      [
+       165,
+       223
+      ],
+      [
+       90,
+       243
+      ],
+      [
+       102,
+       243
+      ],
+      [
+       140,
+       243
+      ],
+      [
+       178,
+       243
+      ],
+      [
+       208,
+       243
+      ],
+      [
+       229,
+       243
+      ],
+      [
+       234,
+       243
+      ]
+     ],
+     "pairs_with_effect": 13,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "6": {
+     "affected_cells": [
+      [
+       1,
+       3
+      ],
+      [
+       1,
+       4
+      ],
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       0
+      ],
+      [
+       2,
+       2
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       2,
+       4
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       2,
+       6
+      ],
+      [
+       2,
+       7
+      ],
+      [
+       3,
+       0
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       3,
+       3
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       3,
+       6
+      ],
+      [
+       4,
+       0
+      ],
+      [
+       4,
+       1
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       4,
+       3
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       4,
+       5
+      ],
+      [
+       4,
+       6
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       5,
+       3
+      ],
+      [
+       5,
+       4
+      ],
+      [
+       5,
+       5
+      ],
+      [
+       5,
+       6
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       6,
+       1
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       6
+      ],
+      [
+       7,
+       0
+      ],
+      [
+       7,
+       1
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       7,
+       6
+      ],
+      [
+       8,
+       0
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       3
+      ],
+      [
+       8,
+       5
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       78,
+       99
+      ],
+      [
+       85,
+       99
+      ],
+      [
+       99,
+       107
+      ],
+      [
+       109,
+       115
+      ],
+      [
+       78,
+       129
+      ],
+      [
+       85,
+       129
+      ],
+      [
+       107,
+       129
+      ],
+      [
+       78,
+       166
+      ],
+      [
+       85,
+       166
+      ],
+      [
+       107,
+       166
+      ],
+      [
+       76,
+       215
+      ],
+      [
+       95,
+       227
+      ],
+      [
+       130,
+       227
+      ],
+      [
+       158,
+       227
+      ],
+      [
+       165,
+       227
+      ],
+      [
+       148,
+       255
+      ],
+      [
+       150,
+       257
+      ]
+     ],
+     "pairs_with_effect": 17,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "7": {
+     "affected_cells": [
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       7
+      ]
+     ],
+     "affected_elements": [
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       50,
+       62
+      ],
+      [
+       60,
+       62
+      ],
+      [
+       42,
+       65
+      ],
+      [
+       49,
+       65
+      ],
+      [
+       65,
+       69
+      ],
+      [
+       65,
+       72
+      ],
+      [
+       62,
+       73
+      ],
+      [
+       50,
+       75
+      ],
+      [
+       60,
+       75
+      ],
+      [
+       73,
+       75
+      ],
+      [
+       50,
+       77
+      ],
+      [
+       60,
+       77
+      ],
+      [
+       73,
+       77
+      ],
+      [
+       50,
+       80
+      ],
+      [
+       60,
+       80
+      ],
+      [
+       73,
+       80
+      ],
+      [
+       42,
+       87
+      ],
+      [
+       49,
+       87
+      ],
+      [
+       69,
+       87
+      ],
+      [
+       72,
+       87
+      ],
+      [
+       42,
+       100
+      ],
+      [
+       49,
+       100
+      ],
+      [
+       69,
+       100
+      ],
+      [
+       72,
+       100
+      ],
+      [
+       78,
+       113
+      ],
+      [
+       85,
+       113
+      ],
+      [
+       107,
+       113
+      ],
+      [
+       63,
+       143
+      ],
+      [
+       65,
+       168
+      ],
+      [
+       87,
+       168
+      ],
+      [
+       100,
+       168
+      ],
+      [
+       78,
+       175
+      ],
+      [
+       85,
+       175
+      ],
+      [
+       107,
+       175
+      ],
+      [
+       162,
+       189
+      ],
+      [
+       120,
+       196
+      ],
+      [
+       180,
+       197
+      ],
+      [
+       197,
+       202
+      ],
+      [
+       78,
+       203
+      ],
+      [
+       85,
+       203
+      ],
+      [
+       107,
+       203
+      ],
+      [
+       95,
+       221
+      ],
+      [
+       130,
+       221
+      ],
+      [
+       158,
+       221
+      ],
+      [
+       165,
+       221
+      ]
+     ],
+     "pairs_with_effect": 45,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "8": {
+     "affected_cells": [
+      [
+       3,
+       0
+      ],
+      [
+       4,
+       0
+      ],
+      [
+       5,
+       0
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       7,
+       0
+      ],
+      [
+       8,
+       0
+      ]
+     ],
+     "affected_elements": [
+      0
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       88,
+       119
+      ],
+      [
+       78,
+       121
+      ],
+      [
+       85,
+       121
+      ],
+      [
+       107,
+       121
+      ],
+      [
+       132,
+       133
+      ],
+      [
+       119,
+       157
+      ],
+      [
+       119,
+       185
+      ],
+      [
+       135,
+       201
+      ],
+      [
+       119,
+       211
+      ],
+      [
+       78,
+       222
+      ],
+      [
+       85,
+       222
+      ],
+      [
+       107,
+       222
+      ],
+      [
+       132,
+       226
+      ],
+      [
+       132,
+       236
+      ],
+      [
+       132,
+       240
+      ],
+      [
+       227,
+       250
+      ],
+      [
+       117,
+       255
+      ]
+     ],
+     "pairs_with_effect": 16,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "9": {
+     "affected_cells": [
+      [
+       2,
+       2
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       8,
+       2
+      ]
+     ],
+     "affected_elements": [
+      2
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       8,
+       12
+      ],
+      [
+       33,
+       37
+      ],
+      [
+       34,
+       56
+      ],
+      [
+       95,
+       115
+      ],
+      [
+       115,
+       130
+      ],
+      [
+       115,
+       158
+      ],
+      [
+       115,
+       165
+      ],
+      [
+       109,
+       227
+      ],
+      [
+       78,
+       244
+      ],
+      [
+       85,
+       244
+      ],
+      [
+       107,
+       244
+      ]
+     ],
+     "pairs_with_effect": 10,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    }
+   },
+   "states": {
+    "context_dependent": 6,
+    "effect_seen": 15,
+    "no_effect_seen": 0,
+    "unknown": 0
+   }
+  },
+  "32": {
+   "arm": "O",
+   "budget": 32,
+   "findings": [],
+   "map_commitment": "ebf873d3b13c2ef378110abeabb95453e92c985a945892c401cf8a28231a9f78",
+   "map_version": 3,
+   "not_unknown": 3,
+   "records": 33,
+   "relations": {
+    "0": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "1": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       1,
+       4
+      ]
+     ],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "no_effect_seen"
+    },
+    "10": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "11": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "12": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "13": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "14": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "15": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "16": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "17": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "18": {
+     "affected_cells": [
+      [
+       0,
+       5
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       4,
+       5
+      ]
+     ],
+     "affected_elements": [
+      5
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       13,
+       32
+      ]
+     ],
+     "pairs_with_effect": 1,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "19": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "2": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "20": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "3": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "4": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "5": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "6": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "7": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "8": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "9": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       8,
+       12
+      ]
+     ],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "no_effect_seen"
+    }
+   },
+   "states": {
+    "context_dependent": 0,
+    "effect_seen": 1,
+    "no_effect_seen": 2,
+    "unknown": 18
+   }
+  },
+  "48": {
+   "arm": "O",
+   "budget": 48,
+   "findings": [],
+   "map_commitment": "9d968894f416877a1931cdb55b6cb2c3755a7dc5a2924e31e5a6a3cf4b6a0384",
+   "map_version": 12,
+   "not_unknown": 5,
+   "records": 49,
+   "relations": {
+    "0": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "1": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       1,
+       4
+      ]
+     ],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "no_effect_seen"
+    },
+    "10": {
+     "affected_cells": [
+      [
+       6,
+       4
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       8,
+       4
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      1,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       33,
+       38
+      ]
+     ],
+     "pairs_with_effect": 1,
+     "pairs_without_effect": 0,
+     "presence_cells": [
+      [
+       0,
+       1
+      ],
+      [
+       0,
+       3
+      ],
+      [
+       0,
+       5
+      ],
+      [
+       0,
+       7
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       1,
+       3
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       1
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       2,
+       7
+      ],
+      [
+       3,
+       1
+      ],
+      [
+       3,
+       3
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       3,
+       7
+      ],
+      [
+       4,
+       1
+      ],
+      [
+       4,
+       3
+      ],
+      [
+       4,
+       5
+      ],
+      [
+       4,
+       7
+      ],
+      [
+       5,
+       1
+      ],
+      [
+       5,
+       3
+      ],
+      [
+       5,
+       5
+      ],
+      [
+       5,
+       7
+      ],
+      [
+       6,
+       1
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       7
+      ],
+      [
+       7,
+       1
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       7,
+       7
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       3
+      ],
+      [
+       8,
+       5
+      ],
+      [
+       8,
+       7
+      ]
+     ],
+     "state": "effect_seen"
+    },
+    "11": {
+     "affected_cells": [
+      [
+       2,
+       4
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       5,
+       4
+      ],
+      [
+       6,
+       4
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       8,
+       4
+      ]
+     ],
+     "affected_elements": [
+      4
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       30,
+       40
+      ],
+      [
+       37,
+       42
+      ],
+      [
+       37,
+       49
+      ]
+     ],
+     "pairs_with_effect": 3,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "12": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "13": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "14": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "15": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "16": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "17": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "18": {
+     "affected_cells": [
+      [
+       0,
+       5
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       4,
+       5
+      ]
+     ],
+     "affected_elements": [
+      5
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       13,
+       32
+      ],
+      [
+       33,
+       34
+      ],
+      [
+       32,
+       35
+      ],
+      [
+       13,
+       36
+      ],
+      [
+       35,
+       36
+      ],
+      [
+       22,
+       41
+      ]
+     ],
+     "pairs_with_effect": 6,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "19": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "2": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "20": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "3": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "4": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "5": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "6": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "7": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "8": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "9": {
+     "affected_cells": [
+      [
+       2,
+       2
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       8,
+       2
+      ]
+     ],
+     "affected_elements": [
+      2
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       8,
+       12
+      ],
+      [
+       33,
+       37
+      ]
+     ],
+     "pairs_with_effect": 1,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    }
+   },
+   "states": {
+    "context_dependent": 1,
+    "effect_seen": 3,
+    "no_effect_seen": 1,
+    "unknown": 16
+   }
+  },
+  "64": {
+   "arm": "O",
+   "budget": 64,
+   "findings": [],
+   "map_commitment": "7c6e87e02dc56deec91602dffb6495d805e20ee20c0d42c9ae2b12ce1548c3a9",
+   "map_version": 21,
+   "not_unknown": 9,
+   "records": 65,
+   "relations": {
+    "0": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "1": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       1,
+       4
+      ]
+     ],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "no_effect_seen"
+    },
+    "10": {
+     "affected_cells": [
+      [
+       4,
+       2
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       6,
+       4
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       8,
+       4
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       33,
+       38
+      ],
+      [
+       13,
+       57
+      ],
+      [
+       35,
+       57
+      ]
+     ],
+     "pairs_with_effect": 3,
+     "pairs_without_effect": 0,
+     "presence_cells": [
+      [
+       0,
+       1
+      ],
+      [
+       0,
+       3
+      ],
+      [
+       0,
+       5
+      ],
+      [
+       0,
+       7
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       1,
+       3
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       1
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       2,
+       7
+      ],
+      [
+       3,
+       1
+      ],
+      [
+       3,
+       3
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       3,
+       7
+      ],
+      [
+       4,
+       1
+      ],
+      [
+       4,
+       3
+      ],
+      [
+       4,
+       5
+      ],
+      [
+       4,
+       7
+      ],
+      [
+       5,
+       1
+      ],
+      [
+       5,
+       3
+      ],
+      [
+       5,
+       5
+      ],
+      [
+       5,
+       7
+      ],
+      [
+       6,
+       1
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       7
+      ],
+      [
+       7,
+       1
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       7,
+       7
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       3
+      ],
+      [
+       8,
+       5
+      ],
+      [
+       8,
+       7
+      ]
+     ],
+     "state": "effect_seen"
+    },
+    "11": {
+     "affected_cells": [
+      [
+       2,
+       4
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       5,
+       4
+      ],
+      [
+       6,
+       4
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       8,
+       4
+      ]
+     ],
+     "affected_elements": [
+      4
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       30,
+       40
+      ],
+      [
+       37,
+       42
+      ],
+      [
+       37,
+       49
+      ],
+      [
+       50,
+       56
+      ],
+      [
+       56,
+       60
+      ]
+     ],
+     "pairs_with_effect": 5,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "12": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "13": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "14": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "15": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "16": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "17": {
+     "affected_cells": [
+      [
+       0,
+       4
+      ],
+      [
+       1,
+       4
+      ]
+     ],
+     "affected_elements": [
+      4
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       13,
+       53
+      ],
+      [
+       35,
+       53
+      ]
+     ],
+     "pairs_with_effect": 2,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "18": {
+     "affected_cells": [
+      [
+       0,
+       5
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       4,
+       5
+      ]
+     ],
+     "affected_elements": [
+      5
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       13,
+       32
+      ],
+      [
+       33,
+       34
+      ],
+      [
+       32,
+       35
+      ],
+      [
+       13,
+       36
+      ],
+      [
+       35,
+       36
+      ],
+      [
+       22,
+       41
+      ],
+      [
+       42,
+       50
+      ],
+      [
+       49,
+       50
+      ],
+      [
+       37,
+       56
+      ],
+      [
+       42,
+       60
+      ],
+      [
+       49,
+       60
+      ],
+      [
+       62,
+       65
+      ]
+     ],
+     "pairs_with_effect": 12,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "19": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "2": {
+     "affected_cells": [
+      [
+       4,
+       3
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       8,
+       3
+      ]
+     ],
+     "affected_elements": [
+      3
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       42,
+       58
+      ],
+      [
+       49,
+       58
+      ]
+     ],
+     "pairs_with_effect": 2,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "20": {
+     "affected_cells": [
+      [
+       0,
+       6
+      ],
+      [
+       1,
+       6
+      ]
+     ],
+     "affected_elements": [
+      6
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       37,
+       61
+      ]
+     ],
+     "pairs_with_effect": 1,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "3": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "4": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "5": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "6": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "7": {
+     "affected_cells": [
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       7
+      ]
+     ],
+     "affected_elements": [
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       50,
+       62
+      ],
+      [
+       60,
+       62
+      ],
+      [
+       42,
+       65
+      ],
+      [
+       49,
+       65
+      ]
+     ],
+     "pairs_with_effect": 4,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "8": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "9": {
+     "affected_cells": [
+      [
+       2,
+       2
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       8,
+       2
+      ]
+     ],
+     "affected_elements": [
+      2
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       8,
+       12
+      ],
+      [
+       33,
+       37
+      ],
+      [
+       34,
+       56
+      ]
+     ],
+     "pairs_with_effect": 2,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    }
+   },
+   "states": {
+    "context_dependent": 1,
+    "effect_seen": 7,
+    "no_effect_seen": 1,
+    "unknown": 12
+   }
+  },
+  "8": {
+   "arm": "O",
+   "budget": 8,
+   "findings": [],
+   "map_commitment": "6b656fc1e8f020e7a79209dc38527209377ec60e6658820228912d99ada02086",
+   "map_version": 1,
+   "not_unknown": 1,
+   "records": 9,
+   "relations": {
+    "0": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "1": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       1,
+       4
+      ]
+     ],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "no_effect_seen"
+    },
+    "10": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "11": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "12": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "13": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "14": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "15": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "16": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "17": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "18": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "19": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "2": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "20": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "3": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "4": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "5": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "6": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "7": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "8": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "9": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    }
+   },
+   "states": {
+    "context_dependent": 0,
+    "effect_seen": 0,
+    "no_effect_seen": 1,
+    "unknown": 20
+   }
+  },
+  "96": {
+   "arm": "O",
+   "budget": 96,
+   "findings": [],
+   "map_commitment": "695da828ac8fdce259e796ef247ffddc99e9bfe73d363c5b85ea125d9522cfb5",
+   "map_version": 44,
+   "not_unknown": 12,
+   "records": 97,
+   "relations": {
+    "0": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "1": {
+     "affected_cells": [
+      [
+       7,
+       1
+      ],
+      [
+       8,
+       1
+      ]
+     ],
+     "affected_elements": [
+      1
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       1,
+       4
+      ],
+      [
+       42,
+       81
+      ],
+      [
+       49,
+       81
+      ],
+      [
+       69,
+       81
+      ],
+      [
+       72,
+       81
+      ]
+     ],
+     "pairs_with_effect": 4,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "10": {
+     "affected_cells": [
+      [
+       4,
+       2
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       6,
+       4
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       8,
+       4
+      ],
+      [
+       8,
+       6
+      ]
+     ],
+     "affected_elements": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       33,
+       38
+      ],
+      [
+       13,
+       57
+      ],
+      [
+       35,
+       57
+      ],
+      [
+       50,
+       67
+      ],
+      [
+       60,
+       67
+      ],
+      [
+       50,
+       68
+      ],
+      [
+       60,
+       68
+      ],
+      [
+       50,
+       70
+      ],
+      [
+       60,
+       70
+      ],
+      [
+       67,
+       73
+      ],
+      [
+       68,
+       73
+      ],
+      [
+       70,
+       73
+      ],
+      [
+       42,
+       84
+      ],
+      [
+       49,
+       84
+      ],
+      [
+       69,
+       84
+      ],
+      [
+       72,
+       84
+      ],
+      [
+       78,
+       88
+      ],
+      [
+       85,
+       88
+      ]
+     ],
+     "pairs_with_effect": 18,
+     "pairs_without_effect": 0,
+     "presence_cells": [
+      [
+       0,
+       1
+      ],
+      [
+       0,
+       3
+      ],
+      [
+       0,
+       5
+      ],
+      [
+       0,
+       7
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       1,
+       3
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       1
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       2,
+       7
+      ],
+      [
+       3,
+       1
+      ],
+      [
+       3,
+       3
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       3,
+       7
+      ],
+      [
+       4,
+       1
+      ],
+      [
+       4,
+       3
+      ],
+      [
+       4,
+       5
+      ],
+      [
+       4,
+       7
+      ],
+      [
+       5,
+       1
+      ],
+      [
+       5,
+       3
+      ],
+      [
+       5,
+       5
+      ],
+      [
+       5,
+       7
+      ],
+      [
+       6,
+       1
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       6,
+       5
+      ],
+      [
+       6,
+       7
+      ],
+      [
+       7,
+       1
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       7,
+       5
+      ],
+      [
+       7,
+       7
+      ],
+      [
+       8,
+       1
+      ],
+      [
+       8,
+       3
+      ],
+      [
+       8,
+       5
+      ],
+      [
+       8,
+       7
+      ]
+     ],
+     "state": "effect_seen"
+    },
+    "11": {
+     "affected_cells": [
+      [
+       2,
+       4
+      ],
+      [
+       3,
+       4
+      ],
+      [
+       4,
+       4
+      ],
+      [
+       5,
+       4
+      ],
+      [
+       6,
+       4
+      ],
+      [
+       7,
+       4
+      ],
+      [
+       8,
+       4
+      ]
+     ],
+     "affected_elements": [
+      4
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       30,
+       40
+      ],
+      [
+       37,
+       42
+      ],
+      [
+       37,
+       49
+      ],
+      [
+       50,
+       56
+      ],
+      [
+       56,
+       60
+      ],
+      [
+       37,
+       69
+      ],
+      [
+       37,
+       72
+      ],
+      [
+       56,
+       73
+      ],
+      [
+       61,
+       78
+      ],
+      [
+       61,
+       85
+      ],
+      [
+       78,
+       96
+      ],
+      [
+       85,
+       96
+      ],
+      [
+       89,
+       97
+      ]
+     ],
+     "pairs_with_effect": 13,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "12": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "13": {
+     "affected_cells": [
+      [
+       0,
+       0
+      ],
+      [
+       1,
+       0
+      ],
+      [
+       2,
+       0
+      ]
+     ],
+     "affected_elements": [
+      0
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       51,
+       89
+      ],
+      [
+       78,
+       95
+      ],
+      [
+       85,
+       95
+      ]
+     ],
+     "pairs_with_effect": 3,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "14": {
+     "affected_cells": [
+      [
+       0,
+       1
+      ],
+      [
+       1,
+       1
+      ],
+      [
+       2,
+       1
+      ]
+     ],
+     "affected_elements": [
+      1
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       66,
+       82
+      ]
+     ],
+     "pairs_with_effect": 1,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "15": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "16": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "17": {
+     "affected_cells": [
+      [
+       0,
+       4
+      ],
+      [
+       1,
+       4
+      ]
+     ],
+     "affected_elements": [
+      4
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       13,
+       53
+      ],
+      [
+       35,
+       53
+      ],
+      [
+       37,
+       89
+      ],
+      [
+       78,
+       90
+      ],
+      [
+       85,
+       90
+      ],
+      [
+       42,
+       97
+      ],
+      [
+       49,
+       97
+      ],
+      [
+       69,
+       97
+      ],
+      [
+       72,
+       97
+      ]
+     ],
+     "pairs_with_effect": 9,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "18": {
+     "affected_cells": [
+      [
+       0,
+       5
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       4,
+       5
+      ]
+     ],
+     "affected_elements": [
+      5
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       13,
+       32
+      ],
+      [
+       33,
+       34
+      ],
+      [
+       32,
+       35
+      ],
+      [
+       13,
+       36
+      ],
+      [
+       35,
+       36
+      ],
+      [
+       22,
+       41
+      ],
+      [
+       42,
+       50
+      ],
+      [
+       49,
+       50
+      ],
+      [
+       37,
+       56
+      ],
+      [
+       42,
+       60
+      ],
+      [
+       49,
+       60
+      ],
+      [
+       62,
+       65
+      ],
+      [
+       58,
+       66
+      ],
+      [
+       50,
+       69
+      ],
+      [
+       60,
+       69
+      ],
+      [
+       50,
+       72
+      ],
+      [
+       60,
+       72
+      ],
+      [
+       42,
+       73
+      ],
+      [
+       49,
+       73
+      ],
+      [
+       69,
+       73
+      ],
+      [
+       72,
+       73
+      ],
+      [
+       65,
+       75
+      ],
+      [
+       65,
+       77
+      ],
+      [
+       65,
+       80
+      ],
+      [
+       67,
+       84
+      ],
+      [
+       68,
+       84
+      ],
+      [
+       70,
+       84
+      ],
+      [
+       62,
+       87
+      ],
+      [
+       75,
+       87
+      ],
+      [
+       77,
+       87
+      ],
+      [
+       80,
+       87
+      ]
+     ],
+     "pairs_with_effect": 28,
+     "pairs_without_effect": 3,
+     "presence_cells": [],
+     "state": "context_dependent"
+    },
+    "19": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "2": {
+     "affected_cells": [
+      [
+       4,
+       3
+      ],
+      [
+       6,
+       3
+      ],
+      [
+       7,
+       3
+      ],
+      [
+       8,
+       3
+      ]
+     ],
+     "affected_elements": [
+      3
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       42,
+       58
+      ],
+      [
+       49,
+       58
+      ],
+      [
+       50,
+       66
+      ],
+      [
+       60,
+       66
+      ],
+      [
+       58,
+       69
+      ],
+      [
+       58,
+       72
+      ],
+      [
+       66,
+       73
+      ]
+     ],
+     "pairs_with_effect": 7,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "20": {
+     "affected_cells": [
+      [
+       0,
+       6
+      ],
+      [
+       1,
+       6
+      ]
+     ],
+     "affected_elements": [
+      6
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       37,
+       61
+      ],
+      [
+       42,
+       78
+      ],
+      [
+       49,
+       78
+      ],
+      [
+       69,
+       78
+      ],
+      [
+       72,
+       78
+      ],
+      [
+       42,
+       85
+      ],
+      [
+       49,
+       85
+      ],
+      [
+       69,
+       85
+      ],
+      [
+       72,
+       85
+      ],
+      [
+       84,
+       88
+      ],
+      [
+       37,
+       96
+      ],
+      [
+       90,
+       97
+      ]
+     ],
+     "pairs_with_effect": 12,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "3": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "4": {
+     "affected_cells": [
+      [
+       1,
+       3
+      ],
+      [
+       1,
+       4
+      ],
+      [
+       1,
+       5
+      ],
+      [
+       1,
+       6
+      ],
+      [
+       2,
+       3
+      ],
+      [
+       2,
+       5
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       3,
+       3
+      ],
+      [
+       3,
+       5
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       4,
+       5
+      ],
+      [
+       5,
+       0
+      ],
+      [
+       5,
+       1
+      ],
+      [
+       6,
+       1
+      ]
+     ],
+     "affected_elements": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       62,
+       94
+      ],
+      [
+       75,
+       94
+      ],
+      [
+       77,
+       94
+      ],
+      [
+       80,
+       94
+      ]
+     ],
+     "pairs_with_effect": 4,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "5": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "6": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "7": {
+     "affected_cells": [
+      [
+       1,
+       7
+      ],
+      [
+       2,
+       7
+      ]
+     ],
+     "affected_elements": [
+      7
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       50,
+       62
+      ],
+      [
+       60,
+       62
+      ],
+      [
+       42,
+       65
+      ],
+      [
+       49,
+       65
+      ],
+      [
+       65,
+       69
+      ],
+      [
+       65,
+       72
+      ],
+      [
+       62,
+       73
+      ],
+      [
+       50,
+       75
+      ],
+      [
+       60,
+       75
+      ],
+      [
+       73,
+       75
+      ],
+      [
+       50,
+       77
+      ],
+      [
+       60,
+       77
+      ],
+      [
+       73,
+       77
+      ],
+      [
+       50,
+       80
+      ],
+      [
+       60,
+       80
+      ],
+      [
+       73,
+       80
+      ],
+      [
+       42,
+       87
+      ],
+      [
+       49,
+       87
+      ],
+      [
+       69,
+       87
+      ],
+      [
+       72,
+       87
+      ]
+     ],
+     "pairs_with_effect": 20,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "effect_seen"
+    },
+    "8": {
+     "affected_cells": [],
+     "affected_elements": [],
+     "contexts": [],
+     "evidence": [],
+     "pairs_with_effect": 0,
+     "pairs_without_effect": 0,
+     "presence_cells": [],
+     "state": "unknown"
+    },
+    "9": {
+     "affected_cells": [
+      [
+       2,
+       2
+      ],
+      [
+       3,
+       2
+      ],
+      [
+       4,
+       2
+      ],
+      [
+       5,
+       2
+      ],
+      [
+       6,
+       2
+      ],
+      [
+       7,
+       2
+      ],
+      [
+       8,
+       2
+      ]
+     ],
+     "affected_elements": [
+      2
+     ],
+     "contexts": [
+      "92ebc66ee2dbdee71bbb7c6d8dd23771b8de9580a61c202df4f1dc2b2141673b"
+     ],
+     "evidence": [
+      [
+       8,
+       12
+      ],
+      [
+       33,
+       37
+      ],
+      [
+       34,
+       56
+      ]
+     ],
+     "pairs_with_effect": 2,
+     "pairs_without_effect": 1,
+     "presence_cells": [],
+     "state": "context_dependent"
+    }
+   },
+   "states": {
+    "context_dependent": 3,
+    "effect_seen": 9,
+    "no_effect_seen": 0,
+    "unknown": 9
+   }
+  }
+ },
+ "schema": "b4_sim_k7",
+ "schema_version": "1.0.0",
+ "written_utc": "2026-10-20T10:27:48Z"
+}
