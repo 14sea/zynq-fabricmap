@@ -1,0 +1,59 @@
+{
+ "deadline": {
+  "checks": 8,
+  "clock": "time.monotonic",
+  "elapsed_s": 0.492,
+  "expired": false,
+  "first_expired_at_s": null,
+  "seconds": 3600
+ },
+ "detail": "the engine raised RuntimeError: boom",
+ "head_at_stop": "ea987288f09708eda7b2800d6496a5b16f1a1096",
+ "kind": "unexpected_exception",
+ "pair": 0,
+ "planned": [
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "audited",
+    "O": "result_unavailable",
+    "Omega": "not_started",
+    "R": "audited",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 2825126967,
+   "operator_seed": 1484069272,
+   "pair": 0,
+   "status": "partial"
+  },
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "not_started",
+    "O": "not_started",
+    "Omega": "not_started",
+    "R": "not_started",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 4263957882,
+   "operator_seed": 948989157,
+   "pair": 1,
+   "status": "not_started"
+  }
+ ],
+ "role": "O",
+ "schema": "b4_sim_stopped",
+ "schema_version": "1.0.0",
+ "stage": "engine",
+ "status": "invalid",
+ "stopped_utc": "2026-10-18T18:29:02Z",
+ "traceback": null
+}

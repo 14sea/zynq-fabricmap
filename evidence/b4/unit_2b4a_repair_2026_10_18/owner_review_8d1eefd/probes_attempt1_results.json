@@ -1,0 +1,110 @@
+{
+ "boundary_stopped_batch": {
+  "error_file_exists": false,
+  "exit_code": 3,
+  "findings": {
+   "sim_report.json": [
+    "stopped.deadline: expired with elapsed_s 59.99 < seconds 60",
+    "stopped.deadline: first_expired_at_s 60.01 is not within [seconds, elapsed_s]"
+   ]
+  },
+  "first_produced_record": {
+   "checks": 33,
+   "clock": "time.monotonic",
+   "elapsed_s": 59.99,
+   "expired": true,
+   "first_expired_at_s": 60.01,
+   "seconds": 60
+  },
+  "path": "/tmp/b4_owner_round3_probe_ofjow3ta/input/evidence/b4/sim/b4-mech-1_boundary_stop",
+  "report_error": null,
+  "report_exists": true,
+  "status": "incomplete",
+  "stopped_detail": "KeyboardInterrupt: an external interrupt, not a model event [STOPPED.json not written: STOPPED.json: deadline: expired with elapsed_s 59.99 < seconds 60; deadline: first_expired_at_s 60.01 is not within [seconds, elapsed_s]]",
+  "stopped_exists": false
+ },
+ "fresh_baseline": {
+  "exit_code": 0,
+  "findings": {},
+  "path": "/tmp/b4_owner_round3_probe_ofjow3ta/input/evidence/b4/sim/b4-mech-1_owner",
+  "status": "complete"
+ },
+ "late_positive": [],
+ "malformed_k10": {
+  "path": "/tmp/b4_owner_round3_probe_ofjow3ta/bad_k10",
+  "raised": "AttributeError: 'str' object has no attribute 'get'"
+ },
+ "malformed_k7": {
+  "path": "/tmp/b4_owner_round3_probe_ofjow3ta/bad_k7",
+  "raised": "AttributeError: 'list' object has no attribute 'get'"
+ },
+ "malformed_k9": {
+  "path": "/tmp/b4_owner_round3_probe_ofjow3ta/bad_k9",
+  "raised": "AttributeError: 'list' object has no attribute 'get'"
+ },
+ "previous_contradictory_deadline": {
+  "findings": {
+   "sim_report.json": [
+    "deadline: not expired with elapsed_s 10000.0 > seconds 3600",
+    "a complete report's deadline has not expired and its elapsed time is within the declared seconds"
+   ]
+  }
+ },
+ "previous_k10_corner_genome_bool": {
+  "findings": {
+   "pair_000/k10.json": [
+    "units[0].corners[00]: typing"
+   ]
+  }
+ },
+ "previous_k10_units_total_float": {
+  "findings": {
+   "pair_000/k10.json": [
+    "complete / units / units_total"
+   ]
+  }
+ },
+ "previous_k9_pairs_total_float": {
+  "findings": {
+   "pair_000/k9.json": [
+    "pairs / pairs_done / pairs_total"
+   ]
+  }
+ },
+ "previous_manifest_deadline_mismatch": {
+  "findings": {
+   "sim_report.json": [
+    "deadline.seconds 3600 is not the declared 1"
+   ]
+  }
+ },
+ "previous_partial_k10_complete_batch": {
+  "findings": {
+   "pair_000/": [
+    "k10: recorded complete, the document is not complete"
+   ]
+  }
+ },
+ "previous_valid_stop_deadline": {
+  "findings": {}
+ },
+ "previous_valid_stop_input_drift": {
+  "findings": {}
+ },
+ "producer_boundary": {
+  "record": {
+   "checks": 0,
+   "clock": "time.monotonic",
+   "elapsed_s": 59.99,
+   "expired": true,
+   "first_expired_at_s": 60.01,
+   "seconds": 60
+  },
+  "validator_findings": [
+   "deadline: expired with elapsed_s 59.99 < seconds 60",
+   "deadline: first_expired_at_s 60.01 is not within [seconds, elapsed_s]"
+  ]
+ },
+ "snapshot": "/tmp/b4_owner_8d1eefd_wz0tbo0p",
+ "temp": "/tmp/b4_owner_round3_probe_ofjow3ta"
+}

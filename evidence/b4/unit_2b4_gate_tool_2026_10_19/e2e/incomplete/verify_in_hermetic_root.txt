@@ -1,0 +1,10 @@
+HEAD 4f3806d92774d5b8cd1937465fb2a31c6c286b6f
+command: python3 -B b4/host/b4_gate_verify.py /tmp/b4gate_e2e_i4719bx5/evidence/b4/gate/b4-mech-1_incomplete
+exit 0
+
+{
+ "gate_dir": "/tmp/b4gate_e2e_i4719bx5/evidence/b4/gate/b4-mech-1_incomplete",
+ "findings": {},
+ "clean": true,
+ "limit": "a clean verification shows the judgement follows from its evidence under the fixed criteria; it is not itself a PASS, and a fixture or synthetic judgement is never a gate result"
+}

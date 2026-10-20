@@ -1,0 +1,40 @@
+{
+ "unaudited_bad_rng": {
+  "verify": {},
+  "direct_replay": [
+   "result.rng_state_final: recorded '14648451516798870' (int), reconstructed '14648451516798871' (int)"
+  ],
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7_extra_unaudited_bad_rng"
+ },
+ "bool_observation_id": {
+  "validator": [],
+  "verify": {},
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7_extra_bool_observation_id"
+ },
+ "float_interaction_index": {
+  "validator": [],
+  "verify": {},
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7_extra_float_interaction_index"
+ },
+ "manifest_source_mismatch": {
+  "validator": [],
+  "verify": {},
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7_extra_manifest_source_mismatch"
+ },
+ "full_run_finalisation": {
+  "status": "complete",
+  "exit_code": 0,
+  "actual_elapsed_s": 10000.0,
+  "reported_deadline": {
+   "seconds": 60,
+   "elapsed_s": 0.0,
+   "checks": 1654,
+   "expired": false,
+   "first_expired_at_s": null,
+   "clock": "time.monotonic"
+  },
+  "source_drifted": true,
+  "self_validation": {},
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7/evidence/b4/sim/b4-mech-2_owner_full_finalisation"
+ }
+}

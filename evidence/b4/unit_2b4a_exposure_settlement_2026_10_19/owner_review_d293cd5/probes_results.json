@@ -1,0 +1,80 @@
+{
+ "baseline": {
+  "deep_verify": {},
+  "linkage_with_record_validators_bypassed": {},
+  "manifest_findings": [],
+  "path": "/tmp/b4_owner_count_positive_urn6vwr3/restored",
+  "seeds_findings": []
+ },
+ "coordinated_count_0": {
+  "deep_verify": {
+   "manifest.json": [
+    "exclusion.exposure_receipt.count 0 is not the pinned receipt's pooled length 66"
+   ],
+   "seeds.json": [
+    "exclusion.exposure_receipt.count 0 is not the pinned receipt's pooled length 66"
+   ]
+  },
+  "linkage_with_record_validators_bypassed": {
+   "linkage": [
+    "the receipt count 0 recorded in seeds.json and manifest.json is not the pinned receipt's pooled length 66"
+   ]
+  },
+  "manifest_findings": [
+   "exclusion.exposure_receipt.count 0 is not the pinned receipt's pooled length 66"
+  ],
+  "path": "/tmp/b4_owner_receipt_4hpbntoo/wrong_count_0",
+  "seeds_findings": [
+   "exclusion.exposure_receipt.count 0 is not the pinned receipt's pooled length 66"
+  ]
+ },
+ "coordinated_count_1": {
+  "deep_verify": {
+   "manifest.json": [
+    "exclusion.exposure_receipt.count 1 is not the pinned receipt's pooled length 66"
+   ],
+   "seeds.json": [
+    "exclusion.exposure_receipt.count 1 is not the pinned receipt's pooled length 66"
+   ]
+  },
+  "linkage_with_record_validators_bypassed": {
+   "linkage": [
+    "the receipt count 1 recorded in seeds.json and manifest.json is not the pinned receipt's pooled length 66"
+   ]
+  },
+  "manifest_findings": [
+   "exclusion.exposure_receipt.count 1 is not the pinned receipt's pooled length 66"
+  ],
+  "path": "/tmp/b4_owner_receipt_4hpbntoo/wrong_count_1",
+  "seeds_findings": [
+   "exclusion.exposure_receipt.count 1 is not the pinned receipt's pooled length 66"
+  ]
+ },
+ "coordinated_count_67": {
+  "deep_verify": {
+   "manifest.json": [
+    "exclusion.exposure_receipt.count 67 is not the pinned receipt's pooled length 66"
+   ],
+   "seeds.json": [
+    "exclusion.exposure_receipt.count 67 is not the pinned receipt's pooled length 66"
+   ]
+  },
+  "linkage_with_record_validators_bypassed": {
+   "linkage": [
+    "the receipt count 67 recorded in seeds.json and manifest.json is not the pinned receipt's pooled length 66"
+   ]
+  },
+  "manifest_findings": [
+   "exclusion.exposure_receipt.count 67 is not the pinned receipt's pooled length 66"
+  ],
+  "path": "/tmp/b4_owner_receipt_4hpbntoo/wrong_count_67",
+  "seeds_findings": [
+   "exclusion.exposure_receipt.count 67 is not the pinned receipt's pooled length 66"
+  ]
+ },
+ "true_count": 66,
+ "unreadable_authority": [
+  "owner.count cannot be bound: the pinned receipt does not read (evidence/b4/unit_2b4a_exposure_settlement_2026_10_19/exposure_receipt.json: the exposure receipt hashes to 68764bbc1a51ec25\u2026, not its pinned 0000000000000000\u2026 (re-hashed or replaced; never skipped))"
+ ],
+ "valid_reference": []
+}

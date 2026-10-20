@@ -1,0 +1,40 @@
+{
+ "bool_observation_id": {
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7_extra_bool_observation_id",
+  "validator": [],
+  "verify": {}
+ },
+ "float_interaction_index": {
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7_extra_float_interaction_index",
+  "validator": [],
+  "verify": {}
+ },
+ "full_run_finalisation": {
+  "actual_elapsed_s": 10000.0,
+  "exit_code": 0,
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7/evidence/b4/sim/b4-mech-2_owner_full_finalisation",
+  "reported_deadline": {
+   "checks": 1654,
+   "clock": "time.monotonic",
+   "elapsed_s": 0.0,
+   "expired": false,
+   "first_expired_at_s": null,
+   "seconds": 60
+  },
+  "self_validation": {},
+  "source_drifted": true,
+  "status": "complete"
+ },
+ "manifest_source_mismatch": {
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7_extra_manifest_source_mismatch",
+  "validator": [],
+  "verify": {}
+ },
+ "unaudited_bad_rng": {
+  "direct_replay": [
+   "result.rng_state_final: recorded '14648451516798870' (int), reconstructed '14648451516798871' (int)"
+  ],
+  "path": "/tmp/b4_owner_repair_probe_ue7j_5m7_extra_unaudited_bad_rng",
+  "verify": {}
+ }
+}

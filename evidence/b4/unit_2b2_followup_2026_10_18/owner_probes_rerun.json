@@ -1,0 +1,124 @@
+{
+  "baseline": {
+    "complete_O": [],
+    "terminated_O": [],
+    "formal_terminated_F": []
+  },
+  "replay_tampers": {
+    "terminal_candidate_changed_to_base": {
+      "accepted": false,
+      "findings": [
+        "attempt 6: the terminal candidate / stimulus is not what the re-execution asked for",
+        "result.terminal.config_sha256: recorded 'a62e54ba3e0a61114627f2b3b36ddd48d9713656', reconstructed '00fa2ac8bc5e96767514ec4eb790eecd4bdcb465'",
+        "result.terminal.genome: recorded '0', reconstructed '10304'"
+      ]
+    },
+    "terminal_identity_phase_digest": {
+      "accepted": false,
+      "findings": [
+        "the terminal code is 'NOT_DOMAIN', not DOMAIN",
+        "the terminal event's seeds / budget are not the run's"
+      ]
+    },
+    "both_rng_states_forged": {
+      "accepted": false,
+      "findings": [
+        "result.rng_state_final: recorded '0', reconstructed '13017174734089658123'",
+        "result.terminal.rng_state: recorded '0', reconstructed '13017174734089658123'"
+      ]
+    },
+    "pending_children_removed": {
+      "accepted": false,
+      "findings": [
+        "result.pending_children: length 0 recorded, 4 reconstructed"
+      ]
+    },
+    "terminal_population_removed": {
+      "accepted": false,
+      "findings": [
+        "result.population: length 0 recorded, 4 reconstructed"
+      ]
+    },
+    "search_intervention_parent_forged": {
+      "accepted": false,
+      "findings": [
+        "result.ledger[1].bits: length 0 recorded, 4 reconstructed",
+        "result.ledger[1].move_kind: recorded 'oracle', reconstructed 'random'",
+        "result.ledger[1].parent_born: recorded '999', reconstructed '0'"
+      ]
+    },
+    "completed_champion_forged": {
+      "accepted": false,
+      "findings": [
+        "result.champion.born: recorded '999', reconstructed '5'",
+        "result.champion.fit: recorded '999', reconstructed '41'",
+        "result.champion.genome: recorded '0', reconstructed '136'"
+      ]
+    },
+    "evals_cost_map_final_forged": {
+      "accepted": false,
+      "findings": [
+        "result.cost.base: recorded '0', reconstructed '1'",
+        "result.cost.holdout: recorded '0', reconstructed '1'",
+        "result.cost.search: recorded '0', reconstructed '24'",
+        "result.evals: recorded '999', reconstructed '24'",
+        "result.map_commitment_final: recorded '0000000000000000000000000000000000000000', reconstructed '615bd77cc9c777103ee41abfc92b0210fc333f87'",
+        "result.map_specimens_final: recorded '999', reconstructed '25'",
+        "result.map_version_final: recorded '999', reconstructed '5'"
+      ]
+    },
+    "formal_F_map_history_corrupted": {
+      "accepted": false,
+      "findings": [
+        "result.ledger[1].map_commitment_after: recorded '0000000000000000000000000000000000000000', reconstructed 'd268def36adc9ae0d31ea9577949aebd1638cf80'",
+        "result.ledger[1].map_version_after: recorded '999', reconstructed '1'",
+        "result.ledger[1].map_version_before: recorded '999', reconstructed '0'"
+      ]
+    }
+  },
+  "fixture_provenance": {
+    "input_fixture": true,
+    "input_hypothesis_sha": "2ee63895f2768d3ff765fb1bdd33774b19c3cb1ce861729624cc80b4d9bd3e85",
+    "model_digest_in_serialised_result": true,
+    "fixture_key_in_result": true,
+    "fixture_key_in_ledger": true
+  },
+  "X_control": {
+    "shadow_groups": [
+      [
+        0,
+        1
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        4,
+        5
+      ]
+    ],
+    "X_groups": [
+      [
+        2,
+        3
+      ],
+      [
+        0,
+        1
+      ],
+      [
+        4,
+        5
+      ]
+    ],
+    "same_partition": true,
+    "isomorphism_findings": []
+  },
+  "privilege_provenance": {
+    "oracle_privileged": true,
+    "shuffled_oracle_privileged": true,
+    "shuffled_origin": "shuffled"
+  },
+  "IMPORT_mismatches": []
+}

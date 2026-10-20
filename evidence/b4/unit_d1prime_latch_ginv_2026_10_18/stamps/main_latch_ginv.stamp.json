@@ -1,0 +1,50 @@
+{
+  "completed": true,
+  "endpoint": "main_latch_ginv",
+  "mode": 7,
+  "ginv": 1,
+  "site": "SLICE_X2Y25",
+  "recipe": {
+    "b4/probes/latch_ginv/specimen_ff_latch_ginv.v": "d7f4eeccad88838e32610d0335a196113a4eb2201476d4122f9172663914125a",
+    "b4/probes/latch_ginv/build_ff_latch_ginv.tcl": "8e80e5a1389a7c6f0aac88df74104dcbf99bc623d85503a967d35f27c4aea288",
+    "b4/probes/latch_ginv/probe_latch_ginv.py": "63e6ed911e56a6428462816294606df56d50b87452288f293dc4d6adfebf49e5"
+  },
+  "borrowed": {
+    "scripts/bitstream_frames.py": "a55246e68e082cbb7d15833e6da134388059ffdb0497c29634a9b740eb9091b3",
+    "scripts/decode_groups.py": "70d9a276784406f1682257c18793b74e32d5135d2f6054139fb8d2a185a93f0e",
+    "scripts/gate_measure_ff.py": "9dcf41518c97ce8529375d0139574e14edc9eb95f02be63c0e14645711b7965a",
+    "scripts/specimen_diff.py": "effa4af1920b73818321bdb74ceba4f95ba32d7ba2f69e343441f6eac32ea950",
+    "scripts/frame_ecc.py": "e595c8e0467fd46de90d6f526792cedf09a4eafa1599b2c2c04a3bbcbb78a646",
+    "scripts/run_vivado.sh": "1c43f93cb362091fc4906b485d89ebc9721de26b7746451acf8f16a37bf4e4a5",
+    "data/prjxray/zynq7/xc7z010/tilegrid.json": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee",
+    "data/subset_spec.json": "ffe4fb9f6bdc118904a6dcbb5625f87d12b12e633ad4dee8c6772fbe45da8e37",
+    "data/prjxray/zynq7/segbits_clbll_l.db": "9bf6bdffdc814569a7da53c696e46207aab23ea66c9dd92c47e50a6211dd739b"
+  },
+  "command": [
+    "/home/test/zynq_fabricmap/scripts/run_vivado.sh",
+    "-mode",
+    "batch",
+    "-nojournal",
+    "-notrace",
+    "-log",
+    "/home/test/zynq_fabricmap/build/b4_ff_latch_ginv_probe/main_latch_ginv/vivado.log",
+    "-source",
+    "/home/test/zynq_fabricmap/b4/probes/latch_ginv/build_ff_latch_ginv.tcl",
+    "-tclargs",
+    "/home/test/zynq_fabricmap/build/b4_ff_latch_ginv_probe/main_latch_ginv",
+    "SLICE_X2Y25",
+    "7",
+    "AFF",
+    "1",
+    "SLICE_X4Y20",
+    "SLICE_X2Y20",
+    "1"
+  ],
+  "exit_code": 0,
+  "elapsed_s": 54.4,
+  "artifacts": {
+    "spec.bit": "68ae24ebc93d5e71ed3b23aaf9dd1f0a59889bddf68a8fe44cf8ca6d905683d7",
+    "readback.tsv": "214dc46b83e8b49e07b7ecc63754038d90af4224ab0bb8c492835063c616df5e",
+    "base.dcp": "8259aef6daeec512974d54e76a4a708fcc12c6ba1bc73e0f0271678fd4b4eda7"
+  }
+}

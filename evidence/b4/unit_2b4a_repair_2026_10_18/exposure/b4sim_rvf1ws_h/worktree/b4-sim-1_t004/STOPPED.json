@@ -1,0 +1,59 @@
+{
+ "deadline": {
+  "checks": 2,
+  "clock": "time.monotonic",
+  "elapsed_s": 0.185,
+  "expired": false,
+  "first_expired_at_s": null,
+  "seconds": 3600
+ },
+ "detail": "RuntimeError: audit crashed",
+ "head_at_stop": "baf165d0db29e3eb1c3481a48577913a3cc2c320",
+ "kind": "unexpected_exception",
+ "pair": 0,
+ "planned": [
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "not_started",
+    "O": "not_started",
+    "Omega": "not_started",
+    "R": "written",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 145141952,
+   "operator_seed": 1472419039,
+   "pair": 0,
+   "status": "partial"
+  },
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "not_started",
+    "O": "not_started",
+    "Omega": "not_started",
+    "R": "not_started",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 984548463,
+   "operator_seed": 3132814250,
+   "pair": 1,
+   "status": "not_started"
+  }
+ ],
+ "role": "R",
+ "schema": "b4_sim_stopped",
+ "schema_version": "1.0.0",
+ "stage": "arms",
+ "status": "invalid",
+ "stopped_utc": "2026-10-18T18:29:02Z",
+ "traceback": "Traceback (most recent call last):\n  File \"/tmp/b4_owner_cdf2c53_y9cov9it/b4/host/b4_sim.py\", line 652, in run_batch\n    batch.run_pair(r)\n  File \"/tmp/b4_owner_cdf2c53_y9cov9it/b4/host/b4_sim.py\", line 343, in run_pair\n    replay = br.replay(d, task)\n             ^^^^^^^^^^^^^^^^^^\n  File \"/tmp/b4_owner_cdf2c53_y9cov9it/b4/tests/test_b4_sim.py\", line 294, in boom\n    raise RuntimeError(\"audit crashed\")\nRuntimeError: audit crashed\n"
+}

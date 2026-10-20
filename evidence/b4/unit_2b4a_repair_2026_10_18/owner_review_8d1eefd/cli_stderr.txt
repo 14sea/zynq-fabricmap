@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/tmp/b4_owner_8d1eefd_wz0tbo0p/b4/host/b4_sim_verify.py", line 432, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/tmp/b4_owner_8d1eefd_wz0tbo0p/b4/host/b4_sim_verify.py", line 425, in main
+    f = verify_run_dir(Path(a.run_dir), deep=not a.shallow)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/b4_owner_8d1eefd_wz0tbo0p/b4/host/b4_sim_verify.py", line 312, in verify_run_dir
+    F.add(pre, *diagnostic_state_findings(plan, {k: _load(disk[pre + f"{k}.json"])[0] for k in ("k7", "k9", "k10") if pre + f"{k}.json" in disk}))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/b4_owner_8d1eefd_wz0tbo0p/b4/host/b4_sim_verify.py", line 121, in diagnostic_state_findings
+    if doc is None or doc.get("complete") is not True:
+                      ^^^^^^^
+AttributeError: 'list' object has no attribute 'get'

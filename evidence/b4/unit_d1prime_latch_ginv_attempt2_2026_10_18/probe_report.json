@@ -1,0 +1,921 @@
+{
+  "schema": "b4_latch_ginv_probe",
+  "schema_version": "1.1.0",
+  "attempt": 2,
+  "complete_route_status": [
+    "ROUTED",
+    "INTRASITE"
+  ],
+  "status": "host build / readback / bitstream correspondence on the mine site \u2014 exploration; not a certificate, not a silicon observation, not a domain verification",
+  "ruling": "build/wip/b4_f_domain_xa_owner_ruling_2026_10_18.md section 2 (D1'); ignored file, quoted in the evidence README",
+  "bit_class": "clb_ff_config",
+  "site": "SLICE_X2Y25",
+  "site_split": "mine (evidence already spent; can never score)",
+  "tile": "CLBLL_L_X2Y25",
+  "tile_type": "CLBLL_L",
+  "recipe": {
+    "b4/probes/latch_ginv/specimen_ff_latch_ginv.v": "d7f4eeccad88838e32610d0335a196113a4eb2201476d4122f9172663914125a",
+    "b4/probes/latch_ginv/build_ff_latch_ginv.tcl": "8e80e5a1389a7c6f0aac88df74104dcbf99bc623d85503a967d35f27c4aea288",
+    "b4/probes/latch_ginv/probe_latch_ginv.py": "62037078a6244f0960fe5fcf713ab6c405b87c85a067a75a684f8371beebe809"
+  },
+  "borrowed": {
+    "scripts/bitstream_frames.py": "a55246e68e082cbb7d15833e6da134388059ffdb0497c29634a9b740eb9091b3",
+    "scripts/decode_groups.py": "70d9a276784406f1682257c18793b74e32d5135d2f6054139fb8d2a185a93f0e",
+    "scripts/gate_measure_ff.py": "9dcf41518c97ce8529375d0139574e14edc9eb95f02be63c0e14645711b7965a",
+    "scripts/specimen_diff.py": "effa4af1920b73818321bdb74ceba4f95ba32d7ba2f69e343441f6eac32ea950",
+    "scripts/frame_ecc.py": "e595c8e0467fd46de90d6f526792cedf09a4eafa1599b2c2c04a3bbcbb78a646",
+    "scripts/run_vivado.sh": "1c43f93cb362091fc4906b485d89ebc9721de26b7746451acf8f16a37bf4e4a5",
+    "data/prjxray/zynq7/xc7z010/tilegrid.json": "db16874f2827fc05248ad4a7ef5769deaa8e70158a60c8dd40194c48713479ee",
+    "data/subset_spec.json": "ffe4fb9f6bdc118904a6dcbb5625f87d12b12e633ad4dee8c6772fbe45da8e37",
+    "data/prjxray/zynq7/segbits_clbll_l.db": "9bf6bdffdc814569a7da53c696e46207aab23ea66c9dd92c47e50a6211dd739b"
+  },
+  "originals_unchanged": {
+    "vivado/specimen/specimen_ff_probe.v": "e1ece6fe9635277b7307a97f4bff7a41c8f421a76d608349f67b6f10d98805d9",
+    "vivado/specimen/build_ff_probe.tcl": "889898db455343a8dc4f93a047f5e62173cec3e1ca4e531c055245300f74c5c9",
+    "scripts/gate_build_ff.py": "1ff5a6bf5150ad680063b9dbb8d93235de175b9bf715e1b9badb3fd797fb4387"
+  },
+  "endpoints": {
+    "main_latch": {
+      "mode": 7,
+      "ginv": 0,
+      "description": "four main LDCE, IS_G_INVERTED = 0 \u2014 the attested endpoint of docs/ff_latch_probe.md, rebuilt under this recipe",
+      "built": true,
+      "state": "reuse",
+      "why": "stamp matches",
+      "exit_code": 0,
+      "elapsed_s": 54.4,
+      "command": [
+        "/home/test/zynq_fabricmap/scripts/run_vivado.sh",
+        "-mode",
+        "batch",
+        "-nojournal",
+        "-notrace",
+        "-log",
+        "/home/test/zynq_fabricmap/build/b4_ff_latch_ginv_probe_attempt2/main_latch/vivado.log",
+        "-source",
+        "/home/test/zynq_fabricmap/b4/probes/latch_ginv/build_ff_latch_ginv.tcl",
+        "-tclargs",
+        "/home/test/zynq_fabricmap/build/b4_ff_latch_ginv_probe_attempt2/main_latch",
+        "SLICE_X2Y25",
+        "7",
+        "AFF",
+        "1",
+        "SLICE_X4Y20",
+        "SLICE_X2Y20",
+        "0"
+      ],
+      "bitstream": "build/b4_ff_latch_ginv_probe_attempt2/main_latch/spec.bit",
+      "bitstream_sha256": "5c2bed5c78b9c66dfc5bf6e977377c85e7d63261a7045c917214f45a45ff4303",
+      "checkpoint_sha256": "946e8b0d2d14f1d3c2eed9f35fc851054e8847c899043be9b18f9bb145930305",
+      "readback_sha256": "c5c6b978912afdacc2f0718404b11241ca862ce5534122f44b0151f5b7869daa",
+      "vivado_version": "2025.2",
+      "part": "xc7z010clg400-1",
+      "requested_ginv": "0",
+      "cells": [
+        {
+          "name": "g_full.g_store[0].g_used.g_latch.s",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "init": "1'b0",
+          "props": {
+            "IS_C_INVERTED": "",
+            "IS_G_INVERTED": "1'b0",
+            "IS_CLR_INVERTED": "1'b0",
+            "IS_R_INVERTED": "",
+            "IS_CE_INVERTED": "",
+            "IS_GE_INVERTED": "",
+            "IS_D_INVERTED": ""
+          },
+          "pins": {
+            "Q": {
+              "net": "g_full.qb[0]",
+              "belpin": "SLICE_X2Y25/AFF/Q",
+              "route_status": "ROUTED"
+            },
+            "CLR": {
+              "net": "rst_IBUF",
+              "belpin": "SLICE_X2Y25/AFF/SR",
+              "route_status": "ROUTED"
+            },
+            "D": {
+              "net": "o_OBUF",
+              "belpin": "SLICE_X2Y25/AFF/D",
+              "route_status": "ROUTED"
+            },
+            "G": {
+              "net": "clk_g",
+              "belpin": "SLICE_X2Y25/AFF/CK",
+              "route_status": "ROUTED"
+            },
+            "GE": {
+              "net": "ce_IBUF",
+              "belpin": "SLICE_X2Y25/AFF/CE",
+              "route_status": "ROUTED"
+            }
+          }
+        },
+        {
+          "name": "g_full.g_store[1].g_used.g_latch.s",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.BFF",
+          "init": "1'b0",
+          "props": {
+            "IS_C_INVERTED": "",
+            "IS_G_INVERTED": "1'b0",
+            "IS_CLR_INVERTED": "1'b0",
+            "IS_R_INVERTED": "",
+            "IS_CE_INVERTED": "",
+            "IS_GE_INVERTED": "",
+            "IS_D_INVERTED": ""
+          },
+          "pins": {
+            "Q": {
+              "net": "g_full.qb[1]",
+              "belpin": "SLICE_X2Y25/BFF/Q",
+              "route_status": "ROUTED"
+            },
+            "CLR": {
+              "net": "rst_IBUF",
+              "belpin": "SLICE_X2Y25/BFF/SR",
+              "route_status": "ROUTED"
+            },
+            "D": {
+              "net": "g_full.o6[1]",
+              "belpin": "SLICE_X2Y25/BFF/D",
+              "route_status": "INTRASITE"
+            },
+            "G": {
+              "net": "clk_g",
+              "belpin": "SLICE_X2Y25/BFF/CK",
+              "route_status": "ROUTED"
+            },
+            "GE": {
+              "net": "ce_IBUF",
+              "belpin": "SLICE_X2Y25/BFF/CE",
+              "route_status": "ROUTED"
+            }
+          }
+        },
+        {
+          "name": "g_full.g_store[2].g_used.g_latch.s",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.CFF",
+          "init": "1'b0",
+          "props": {
+            "IS_C_INVERTED": "",
+            "IS_G_INVERTED": "1'b0",
+            "IS_CLR_INVERTED": "1'b0",
+            "IS_R_INVERTED": "",
+            "IS_CE_INVERTED": "",
+            "IS_GE_INVERTED": "",
+            "IS_D_INVERTED": ""
+          },
+          "pins": {
+            "Q": {
+              "net": "g_full.qb[2]",
+              "belpin": "SLICE_X2Y25/CFF/Q",
+              "route_status": "ROUTED"
+            },
+            "CLR": {
+              "net": "rst_IBUF",
+              "belpin": "SLICE_X2Y25/CFF/SR",
+              "route_status": "ROUTED"
+            },
+            "D": {
+              "net": "g_full.o6[2]",
+              "belpin": "SLICE_X2Y25/CFF/D",
+              "route_status": "INTRASITE"
+            },
+            "G": {
+              "net": "clk_g",
+              "belpin": "SLICE_X2Y25/CFF/CK",
+              "route_status": "ROUTED"
+            },
+            "GE": {
+              "net": "ce_IBUF",
+              "belpin": "SLICE_X2Y25/CFF/CE",
+              "route_status": "ROUTED"
+            }
+          }
+        },
+        {
+          "name": "g_full.g_store[3].g_used.g_latch.s",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.DFF",
+          "init": "1'b0",
+          "props": {
+            "IS_C_INVERTED": "",
+            "IS_G_INVERTED": "1'b0",
+            "IS_CLR_INVERTED": "1'b0",
+            "IS_R_INVERTED": "",
+            "IS_CE_INVERTED": "",
+            "IS_GE_INVERTED": "",
+            "IS_D_INVERTED": ""
+          },
+          "pins": {
+            "Q": {
+              "net": "g_full.qb[3]",
+              "belpin": "SLICE_X2Y25/DFF/Q",
+              "route_status": "ROUTED"
+            },
+            "CLR": {
+              "net": "rst_IBUF",
+              "belpin": "SLICE_X2Y25/DFF/SR",
+              "route_status": "ROUTED"
+            },
+            "D": {
+              "net": "g_full.o6[3]",
+              "belpin": "SLICE_X2Y25/DFF/D",
+              "route_status": "INTRASITE"
+            },
+            "G": {
+              "net": "clk_g",
+              "belpin": "SLICE_X2Y25/DFF/CK",
+              "route_status": "ROUTED"
+            },
+            "GE": {
+              "net": "ce_IBUF",
+              "belpin": "SLICE_X2Y25/DFF/CE",
+              "route_status": "ROUTED"
+            }
+          }
+        }
+      ],
+      "cell_findings": [],
+      "structure": {
+        "part": "xc7z010clg400-1",
+        "vivado_version": "2025.2",
+        "mode": "7",
+        "site": "SLICE_X2Y25",
+        "lut_cells": [
+          {
+            "name": "g_full.g_hi[0].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.A6LUT"
+          },
+          {
+            "name": "g_full.g_hi[1].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.B6LUT"
+          },
+          {
+            "name": "g_full.g_hi[2].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.C6LUT"
+          },
+          {
+            "name": "g_full.g_hi[3].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.D6LUT"
+          },
+          {
+            "name": "g_full.g_lo[0].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.A5LUT"
+          },
+          {
+            "name": "g_full.g_lo[1].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.B5LUT"
+          },
+          {
+            "name": "g_full.g_lo[2].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.C5LUT"
+          },
+          {
+            "name": "g_full.g_lo[3].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.D5LUT"
+          }
+        ],
+        "occupied": [
+          [
+            "SLICE_X2Y25/A5LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/A6LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/AFF",
+            "LDCE"
+          ],
+          [
+            "SLICE_X2Y25/B5LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/B6LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/BFF",
+            "LDCE"
+          ],
+          [
+            "SLICE_X2Y25/C5LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/C6LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/CFF",
+            "LDCE"
+          ],
+          [
+            "SLICE_X2Y25/D5LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/D6LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/DFF",
+            "LDCE"
+          ]
+        ],
+        "anchors": {
+          "anchor.0.bel": "SLICEM.AFF",
+          "anchor.0.loc": "SLICE_X4Y20",
+          "anchor.0.name": "g_anchor.anchor_ff",
+          "anchor.0.ref": "FDRE",
+          "anchor.1.bel": "SLICEL.AFF",
+          "anchor.1.loc": "SLICE_X2Y20",
+          "anchor.1.name": "g_anchor.anchor_ff2",
+          "anchor.1.ref": "FDRE",
+          "anchor.2.bel": "SLICEM.A6LUT",
+          "anchor.2.loc": "SLICE_X4Y20",
+          "anchor.2.name": "g_anchor.anchor_lut1",
+          "anchor.2.ref": "LUT6",
+          "anchor.3.bel": "SLICEM.B6LUT",
+          "anchor.3.loc": "SLICE_X4Y20",
+          "anchor.3.name": "g_anchor.anchor_lut2",
+          "anchor.3.ref": "LUT6"
+        }
+      },
+      "site_bits": {
+        "latch": 1,
+        "clkinv": 1
+      }
+    },
+    "main_latch_ginv": {
+      "mode": 7,
+      "ginv": 1,
+      "description": "four main LDCE, IS_G_INVERTED = 1 \u2014 the endpoint under test",
+      "built": true,
+      "state": "reuse",
+      "why": "stamp matches",
+      "exit_code": 0,
+      "elapsed_s": 54.6,
+      "command": [
+        "/home/test/zynq_fabricmap/scripts/run_vivado.sh",
+        "-mode",
+        "batch",
+        "-nojournal",
+        "-notrace",
+        "-log",
+        "/home/test/zynq_fabricmap/build/b4_ff_latch_ginv_probe_attempt2/main_latch_ginv/vivado.log",
+        "-source",
+        "/home/test/zynq_fabricmap/b4/probes/latch_ginv/build_ff_latch_ginv.tcl",
+        "-tclargs",
+        "/home/test/zynq_fabricmap/build/b4_ff_latch_ginv_probe_attempt2/main_latch_ginv",
+        "SLICE_X2Y25",
+        "7",
+        "AFF",
+        "1",
+        "SLICE_X4Y20",
+        "SLICE_X2Y20",
+        "1"
+      ],
+      "bitstream": "build/b4_ff_latch_ginv_probe_attempt2/main_latch_ginv/spec.bit",
+      "bitstream_sha256": "4935cdf2ce2f9b970874667d7275b93daf8b48f3c5c8cd87fcb79042f2148475",
+      "checkpoint_sha256": "c6fe039e095737a00852163a65ba9949d3f60a02868dc3541c00d42a97ca3aa2",
+      "readback_sha256": "214dc46b83e8b49e07b7ecc63754038d90af4224ab0bb8c492835063c616df5e",
+      "vivado_version": "2025.2",
+      "part": "xc7z010clg400-1",
+      "requested_ginv": "1",
+      "cells": [
+        {
+          "name": "g_full.g_store[0].g_used.g_latch.s",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.AFF",
+          "init": "1'b0",
+          "props": {
+            "IS_C_INVERTED": "",
+            "IS_G_INVERTED": "1'b1",
+            "IS_CLR_INVERTED": "1'b0",
+            "IS_R_INVERTED": "",
+            "IS_CE_INVERTED": "",
+            "IS_GE_INVERTED": "",
+            "IS_D_INVERTED": ""
+          },
+          "pins": {
+            "Q": {
+              "net": "g_full.qb[0]",
+              "belpin": "SLICE_X2Y25/AFF/Q",
+              "route_status": "ROUTED"
+            },
+            "CLR": {
+              "net": "rst_IBUF",
+              "belpin": "SLICE_X2Y25/AFF/SR",
+              "route_status": "ROUTED"
+            },
+            "D": {
+              "net": "o_OBUF",
+              "belpin": "SLICE_X2Y25/AFF/D",
+              "route_status": "ROUTED"
+            },
+            "G": {
+              "net": "clk_g",
+              "belpin": "SLICE_X2Y25/AFF/CK",
+              "route_status": "ROUTED"
+            },
+            "GE": {
+              "net": "ce_IBUF",
+              "belpin": "SLICE_X2Y25/AFF/CE",
+              "route_status": "ROUTED"
+            }
+          }
+        },
+        {
+          "name": "g_full.g_store[1].g_used.g_latch.s",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.BFF",
+          "init": "1'b0",
+          "props": {
+            "IS_C_INVERTED": "",
+            "IS_G_INVERTED": "1'b1",
+            "IS_CLR_INVERTED": "1'b0",
+            "IS_R_INVERTED": "",
+            "IS_CE_INVERTED": "",
+            "IS_GE_INVERTED": "",
+            "IS_D_INVERTED": ""
+          },
+          "pins": {
+            "Q": {
+              "net": "g_full.qb[1]",
+              "belpin": "SLICE_X2Y25/BFF/Q",
+              "route_status": "ROUTED"
+            },
+            "CLR": {
+              "net": "rst_IBUF",
+              "belpin": "SLICE_X2Y25/BFF/SR",
+              "route_status": "ROUTED"
+            },
+            "D": {
+              "net": "g_full.o6[1]",
+              "belpin": "SLICE_X2Y25/BFF/D",
+              "route_status": "INTRASITE"
+            },
+            "G": {
+              "net": "clk_g",
+              "belpin": "SLICE_X2Y25/BFF/CK",
+              "route_status": "ROUTED"
+            },
+            "GE": {
+              "net": "ce_IBUF",
+              "belpin": "SLICE_X2Y25/BFF/CE",
+              "route_status": "ROUTED"
+            }
+          }
+        },
+        {
+          "name": "g_full.g_store[2].g_used.g_latch.s",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.CFF",
+          "init": "1'b0",
+          "props": {
+            "IS_C_INVERTED": "",
+            "IS_G_INVERTED": "1'b1",
+            "IS_CLR_INVERTED": "1'b0",
+            "IS_R_INVERTED": "",
+            "IS_CE_INVERTED": "",
+            "IS_GE_INVERTED": "",
+            "IS_D_INVERTED": ""
+          },
+          "pins": {
+            "Q": {
+              "net": "g_full.qb[2]",
+              "belpin": "SLICE_X2Y25/CFF/Q",
+              "route_status": "ROUTED"
+            },
+            "CLR": {
+              "net": "rst_IBUF",
+              "belpin": "SLICE_X2Y25/CFF/SR",
+              "route_status": "ROUTED"
+            },
+            "D": {
+              "net": "g_full.o6[2]",
+              "belpin": "SLICE_X2Y25/CFF/D",
+              "route_status": "INTRASITE"
+            },
+            "G": {
+              "net": "clk_g",
+              "belpin": "SLICE_X2Y25/CFF/CK",
+              "route_status": "ROUTED"
+            },
+            "GE": {
+              "net": "ce_IBUF",
+              "belpin": "SLICE_X2Y25/CFF/CE",
+              "route_status": "ROUTED"
+            }
+          }
+        },
+        {
+          "name": "g_full.g_store[3].g_used.g_latch.s",
+          "ref": "LDCE",
+          "loc": "SLICE_X2Y25",
+          "bel": "SLICEL.DFF",
+          "init": "1'b0",
+          "props": {
+            "IS_C_INVERTED": "",
+            "IS_G_INVERTED": "1'b1",
+            "IS_CLR_INVERTED": "1'b0",
+            "IS_R_INVERTED": "",
+            "IS_CE_INVERTED": "",
+            "IS_GE_INVERTED": "",
+            "IS_D_INVERTED": ""
+          },
+          "pins": {
+            "Q": {
+              "net": "g_full.qb[3]",
+              "belpin": "SLICE_X2Y25/DFF/Q",
+              "route_status": "ROUTED"
+            },
+            "CLR": {
+              "net": "rst_IBUF",
+              "belpin": "SLICE_X2Y25/DFF/SR",
+              "route_status": "ROUTED"
+            },
+            "D": {
+              "net": "g_full.o6[3]",
+              "belpin": "SLICE_X2Y25/DFF/D",
+              "route_status": "INTRASITE"
+            },
+            "G": {
+              "net": "clk_g",
+              "belpin": "SLICE_X2Y25/DFF/CK",
+              "route_status": "ROUTED"
+            },
+            "GE": {
+              "net": "ce_IBUF",
+              "belpin": "SLICE_X2Y25/DFF/CE",
+              "route_status": "ROUTED"
+            }
+          }
+        }
+      ],
+      "cell_findings": [],
+      "structure": {
+        "part": "xc7z010clg400-1",
+        "vivado_version": "2025.2",
+        "mode": "7",
+        "site": "SLICE_X2Y25",
+        "lut_cells": [
+          {
+            "name": "g_full.g_hi[0].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.A6LUT"
+          },
+          {
+            "name": "g_full.g_hi[1].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.B6LUT"
+          },
+          {
+            "name": "g_full.g_hi[2].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.C6LUT"
+          },
+          {
+            "name": "g_full.g_hi[3].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.D6LUT"
+          },
+          {
+            "name": "g_full.g_lo[0].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.A5LUT"
+          },
+          {
+            "name": "g_full.g_lo[1].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.B5LUT"
+          },
+          {
+            "name": "g_full.g_lo[2].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.C5LUT"
+          },
+          {
+            "name": "g_full.g_lo[3].l",
+            "ref": "LUT5",
+            "loc": "SLICE_X2Y25",
+            "bel": "SLICEL.D5LUT"
+          }
+        ],
+        "occupied": [
+          [
+            "SLICE_X2Y25/A5LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/A6LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/AFF",
+            "LDCE"
+          ],
+          [
+            "SLICE_X2Y25/B5LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/B6LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/BFF",
+            "LDCE"
+          ],
+          [
+            "SLICE_X2Y25/C5LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/C6LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/CFF",
+            "LDCE"
+          ],
+          [
+            "SLICE_X2Y25/D5LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/D6LUT",
+            "LUT5"
+          ],
+          [
+            "SLICE_X2Y25/DFF",
+            "LDCE"
+          ]
+        ],
+        "anchors": {
+          "anchor.0.bel": "SLICEM.AFF",
+          "anchor.0.loc": "SLICE_X4Y20",
+          "anchor.0.name": "g_anchor.anchor_ff",
+          "anchor.0.ref": "FDRE",
+          "anchor.1.bel": "SLICEL.AFF",
+          "anchor.1.loc": "SLICE_X2Y20",
+          "anchor.1.name": "g_anchor.anchor_ff2",
+          "anchor.1.ref": "FDRE",
+          "anchor.2.bel": "SLICEM.A6LUT",
+          "anchor.2.loc": "SLICE_X4Y20",
+          "anchor.2.name": "g_anchor.anchor_lut1",
+          "anchor.2.ref": "LUT6",
+          "anchor.3.bel": "SLICEM.B6LUT",
+          "anchor.3.loc": "SLICE_X4Y20",
+          "anchor.3.name": "g_anchor.anchor_lut2",
+          "anchor.3.ref": "LUT6"
+        }
+      },
+      "site_bits": {
+        "latch": 1,
+        "clkinv": 0
+      }
+    }
+  },
+  "pair": {
+    "pair": "latch_ginv",
+    "modes": [
+      "main_latch",
+      "main_latch_ginv"
+    ],
+    "question": "with four main LDCE on the mine site, does IS_G_INVERTED 0 -> 1 move the site's CLKINV bit 1 -> 0 and nothing else of this class?",
+    "raw_diff_bits": 10,
+    "raw_diff": [
+      {
+        "far": "0x00400A01",
+        "word": 50,
+        "bit": 0
+      },
+      {
+        "far": "0x00400A01",
+        "word": 50,
+        "bit": 1
+      },
+      {
+        "far": "0x00400A01",
+        "word": 50,
+        "bit": 4
+      },
+      {
+        "far": "0x00400A01",
+        "word": 50,
+        "bit": 5
+      },
+      {
+        "far": "0x00400A01",
+        "word": 50,
+        "bit": 6
+      },
+      {
+        "far": "0x00400A01",
+        "word": 50,
+        "bit": 7
+      },
+      {
+        "far": "0x00400A01",
+        "word": 50,
+        "bit": 8
+      },
+      {
+        "far": "0x00400A01",
+        "word": 50,
+        "bit": 11
+      },
+      {
+        "far": "0x00400A01",
+        "word": 50,
+        "bit": 12
+      },
+      {
+        "far": "0x00400A01",
+        "word": 52,
+        "bit": 19
+      }
+    ],
+    "counts": {
+      "in_scope": 1,
+      "frame_ecc": 9,
+      "db_attributed": 0,
+      "ownership_unknown": 0,
+      "unattributed": 0
+    },
+    "buckets": {
+      "in_scope": [
+        {
+          "far": "0x00400A01",
+          "word": 52,
+          "bit": 19
+        }
+      ],
+      "frame_ecc": [
+        {
+          "far": "0x00400A01",
+          "word": 50,
+          "bit": 0
+        },
+        {
+          "far": "0x00400A01",
+          "word": 50,
+          "bit": 1
+        },
+        {
+          "far": "0x00400A01",
+          "word": 50,
+          "bit": 4
+        },
+        {
+          "far": "0x00400A01",
+          "word": 50,
+          "bit": 5
+        },
+        {
+          "far": "0x00400A01",
+          "word": 50,
+          "bit": 6
+        },
+        {
+          "far": "0x00400A01",
+          "word": 50,
+          "bit": 7
+        },
+        {
+          "far": "0x00400A01",
+          "word": 50,
+          "bit": 8
+        },
+        {
+          "far": "0x00400A01",
+          "word": 50,
+          "bit": 11
+        },
+        {
+          "far": "0x00400A01",
+          "word": 50,
+          "bit": 12
+        }
+      ],
+      "db_attributed": [],
+      "ownership_unknown": [],
+      "unattributed": []
+    },
+    "preregistered_scope": [
+      {
+        "far": "0x00400A01",
+        "word": 52,
+        "bit": 19
+      }
+    ],
+    "class_claimed_out_of_scope": [],
+    "same_class_movers": [
+      {
+        "segbit": "01_51",
+        "address": {
+          "far": "0x00400A01",
+          "word": 52,
+          "bit": 19
+        },
+        "before": 1,
+        "after": 0,
+        "direction": "1->0",
+        "class_features": [
+          "CLBLL_L.SLICEL_X0.CLKINV",
+          "CLBLL_L.SLICEL_X0.NOCLKINV"
+        ],
+        "all_features": [
+          "CLBLL_L.SLICEL_X0.CLKINV",
+          "CLBLL_L.SLICEL_X0.NOCLKINV"
+        ]
+      }
+    ],
+    "latch": {
+      "feature": "CLBLL_L.SLICEL_X0.LATCH",
+      "segbit": "30_32",
+      "address": {
+        "far": "0x00400A1E",
+        "word": 52,
+        "bit": 0
+      }
+    },
+    "clkinv": {
+      "feature": "CLBLL_L.SLICEL_X0.CLKINV",
+      "segbit": "01_51",
+      "address": {
+        "far": "0x00400A01",
+        "word": 52,
+        "bit": 19
+      },
+      "expected_direction": "1->0"
+    },
+    "expectation": {
+      "clauses": {
+        "latch_set_in_both": true,
+        "clkinv_moves_1_to_0": true,
+        "clkinv_is_the_only_same_class_mover": true,
+        "clkinv_in_scope_once": true,
+        "no_bucket_but_in_scope_and_ecc": true,
+        "no_class_claim_out_of_scope": true
+      },
+      "met": true,
+      "latch_values": [
+        1,
+        1
+      ],
+      "clkinv_values": [
+        1,
+        0
+      ]
+    },
+    "structure_findings": []
+  },
+  "verdict": {
+    "expectation_met": true,
+    "findings": [],
+    "meaning_if_met": "for this recipe on this site, IS_G_INVERTED = 1 on four main LDCE clears the site's CLKINV bit; the reading 'latch, CLKINV = 0 => gate inverted' gains a host exploration source of the same kind as the attested CLKINV = 1 endpoint. Nothing about silicon, other combinations, or the 21-address domain.",
+    "on_miss": "archived as it came; the unit stops for review (no fallback to D1 / D2, no added condition, no other site)"
+  },
+  "commitment": "none; no hypothesis, HYPOTHESIS_SHA256, domain or F fact changed"
+}

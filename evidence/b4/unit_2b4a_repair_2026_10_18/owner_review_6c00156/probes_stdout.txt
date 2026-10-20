@@ -1,0 +1,70 @@
+{
+ "snapshot": "/tmp/b4_owner_6c00156_3mc7z1rw",
+ "temp": "/tmp/b4_owner_round2_probes_181h09_9",
+ "base": "/tmp/b4_owner_round2_probes_181h09_9/input_tree/evidence/b4/sim/b4-mech-1_owner",
+ "baseline": {},
+ "previous_complete_pair_without_R_audit": {
+  "sim_report.json": [
+   "planned[0]: a complete pair has every arm audited and K7 / K9 / K10 complete \u2014 a weaker state cannot be recorded as complete"
+  ]
+ },
+ "previous_wrong_R_operator_seed": {
+  "pair_000/arm_R.result.json": [
+   "the wrapper's pair / role / seeds are not the planned 0 / R / 7 / 11"
+  ]
+ },
+ "previous_wrong_pair_role": {
+  "pair_000/arm_R.result.json": [
+   "engine_arm is not the role's",
+   "the wrapper's pair / role / seeds are not the planned 0 / R / 7 / 11"
+  ]
+ },
+ "previous_bool_observation_id": {
+  "pair_000/k9.json": [
+   "observations[0]: id False is not the int 0 (ids are 0 .. n-1 in order)",
+   "pairs[0]: an applicable pair's observations are not kept records"
+  ]
+ },
+ "previous_float_interaction_index": {
+  "pair_000/k10.json": [
+   "units[0]: a comparable unit has four scores and index = f11 - f10 - f01 + f00"
+  ]
+ },
+ "previous_manifest_source_mismatch": {
+  "manifest.json": [
+   "mapping: not the formal mapping's site / certificate / addresses",
+   "fabric: not the truth fabric's descriptor"
+  ]
+ },
+ "previous_unaudited_bad_rng": {
+  "sim_report.json": [
+   "planned[0]: a complete pair has every arm audited and K7 / K9 / K10 complete \u2014 a weaker state cannot be recorded as complete"
+  ]
+ },
+ "partial_k10_complete_batch": {
+  "path": "/tmp/b4_owner_round2_probes_181h09_9/partial_k10_complete_batch",
+  "actual_complete": false,
+  "planned": "complete",
+  "units": 1,
+  "validator": [],
+  "verify": {},
+  "summary_k10": {
+   "tau": 2,
+   "S": 1,
+   "counts": {
+    "interacting": 0,
+    "nonzero_below_threshold": 0,
+    "no_interaction_seen_among_tested_comparisons": 0,
+    "not_assessable": 1
+   },
+   "fraction_interacting_over_S": 0.0,
+   "note": "a seed with no comparable pair is not assessable and stays in the denominator; all comparable pairs at zero means no interaction seen among the tested comparisons, not that every context is additive; with tau = 0 the nonzero-below-threshold class is empty by definition"
+  }
+ },
+ "manifest_deadline_mismatch": {
+  "path": "/tmp/b4_owner_round2_probes_181h09_9/manifest_deadline_mismatch",
+  "manifest_deadline_s": 1,
+  "report_deadline_s": 3600,
+  "verify": {}
+ }
+}

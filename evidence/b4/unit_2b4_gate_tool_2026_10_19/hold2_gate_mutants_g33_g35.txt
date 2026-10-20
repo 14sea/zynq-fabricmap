@@ -1,0 +1,7 @@
+HEAD 6431e9f73483a0849500c9d52fe77d9efecb1415 (b4_gate_mutants.py with G33's and G35's edit targets retargeted to the exact-type binding lines after the full run; committed with this evidence)
+command: python3 -B evidence/b4/unit_2b4_gate_tool_2026_10_19/b4_gate_mutants.py <out> G33,G35
+UTC 2026-10-19T18:44:36Z
+KILLED  G33 the at-B* Cohen's d is not bound to the per-budget delta1 record  [Ran 1, FAILED]  ['test_an_incoherent_or_malformed_summary_is_invalid_never_judged_and_never_an_exception']
+KILLED  G35 K9's fraction_of_S is not bound to its count and S  [Ran 2, FAILED]  ['test_an_incoherent_or_malformed_summary_is_invalid_never_judged_and_never_an_exception', 'test_an_incoherent_synthetic_summary_cannot_be_made_a_clean_pass_by_refreshed_hashes']
+# 2 / 2 killed (39 defined); 67 s
+UTC_END 2026-10-19T18:45:43Z

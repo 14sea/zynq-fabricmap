@@ -1,0 +1,11 @@
+HEAD 6431e9f73483a0849500c9d52fe77d9efecb1415
+expected: the tool exit 1 (verdict invalid), the verifier exit 0
+command: python3 -B b4/host/b4_gate_verify.py /tmp/b4gate_e2e_x5il7qoa/evidence/b4/gate/b4-mech-7_invalid_float_k10_tau
+exit 0
+
+{
+ "gate_dir": "/tmp/b4gate_e2e_x5il7qoa/evidence/b4/gate/b4-mech-7_invalid_float_k10_tau",
+ "findings": {},
+ "clean": true,
+ "limit": "a clean verification shows the judgement follows from its evidence under the fixed criteria; it is not itself a PASS, and a fixture or synthetic judgement is never a gate result"
+}

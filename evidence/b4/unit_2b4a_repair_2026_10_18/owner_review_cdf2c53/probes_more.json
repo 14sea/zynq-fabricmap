@@ -1,0 +1,25 @@
+{
+  "bad_k9_grid_runtime": {
+    "status": "complete",
+    "exit_code": 0,
+    "saved_q": 2,
+    "self_validation": {}
+  },
+  "nonempty_self_validation": {
+    "status": "complete",
+    "exit_code": 0,
+    "self_validation": {
+      "file": [
+        "injected corruption"
+      ]
+    },
+    "summary_present": true
+  },
+  "returned_invalid_result_lost": {
+    "status": "invalid",
+    "exit_code": 1,
+    "result_file_exists": false,
+    "stopped": "arm_R.result.json: result: completed is not a bool",
+    "arm_state": "in_flight"
+  }
+}

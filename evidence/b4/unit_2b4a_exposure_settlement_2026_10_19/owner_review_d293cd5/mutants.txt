@@ -1,0 +1,8 @@
+KILLED  M69 settlement: the receipt's digest is not held to the pinned one (a re-hashed receipt is read)  [Ran 1, FAILED]  ['test_a_missing_rehashed_or_malformed_receipt_is_refused_by_name']
+KILLED  M71 settlement: the receipt is not a root input (not held at the checkpoints)  [Ran 2, FAILED]  ['test_a_receipt_drift_during_the_batch_is_invalid', 'test_the_freezing_order_the_fixture_seeds_and_the_manifest']
+KILLED  M72 settlement: the manifest validator does not bind the receipt (digest, path, held input)  [Ran 1, FAILED]  ['test_the_exposure_receipt_is_bound_in_seeds_the_manifest_and_the_inputs']
+KILLED  M73 settlement: the verifier's linkage does not bind the receipt across seeds.json, the manifest and the inputs  [Ran 1, FAILED]  ['test_the_exposure_receipt_is_bound_in_seeds_the_manifest_and_the_inputs']
+KILLED  M75 settlement: a seeds record's receipt reference is not held to the pinned receipt  [Ran 1, FAILED]  ['test_the_seeds_document_shape']
+KILLED  M76 settlement P2: a record's receipt count is any non-negative int (not the pinned receipt's pooled length)  [Ran 2, FAILED]  ['test_a_coordinated_wrong_receipt_count_in_both_records_is_refused', 'test_the_pinned_receipt_reads_and_is_the_reconstruction_s']
+KILLED  M77 settlement P2: the verifier's linkage accepts two records agreeing on a receipt count without the authoritative length  [Ran 1, FAILED]  ['test_a_coordinated_wrong_receipt_count_in_both_records_is_refused']
+# 7 / 7 killed (77 defined); 96 s

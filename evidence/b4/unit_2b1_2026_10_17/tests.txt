@@ -1,0 +1,38 @@
+test_a_missing_or_doubled_feature_and_a_multi_bit_rule (b4.tests.test_b4_ff_mapping.Refusals.test_a_missing_or_doubled_feature_and_a_multi_bit_rule) ... ok
+test_a_reading_that_the_specimen_pair_does_not_support (b4.tests.test_b4_ff_mapping.Refusals.test_a_reading_that_the_specimen_pair_does_not_support) ... ok
+test_an_unreadable_file (b4.tests.test_b4_ff_mapping.Refusals.test_an_unreadable_file) ... ok
+test_status_schema_and_class (b4.tests.test_b4_ff_mapping.Refusals.test_status_schema_and_class) ... ok
+test_the_shared_address_rule (b4.tests.test_b4_ff_mapping.Refusals.test_the_shared_address_rule) ... ok
+test_a_mapping_is_the_same_object_twice (b4.tests.test_b4_ff_mapping.TheMapping.test_a_mapping_is_the_same_object_twice) ... ok
+test_every_element_and_semantic_of_the_class_exactly_once (b4.tests.test_b4_ff_mapping.TheMapping.test_every_element_and_semantic_of_the_class_exactly_once) ... ok
+test_the_addresses_are_in_numeric_order_and_the_v2_form (b4.tests.test_b4_ff_mapping.TheMapping.test_the_addresses_are_in_numeric_order_and_the_v2_form) ... ok
+test_the_bit_readings_are_the_plans_z_convention_held_to_the_specimen_pairs (b4.tests.test_b4_ff_mapping.TheMapping.test_the_bit_readings_are_the_plans_z_convention_held_to_the_specimen_pairs) ... ok
+test_the_count_is_21_addresses_for_22_feature_names (b4.tests.test_b4_ff_mapping.TheMapping.test_the_count_is_21_addresses_for_22_feature_names) ... ok
+test_the_site_tile_and_certificate_are_pinned (b4.tests.test_b4_ff_mapping.TheMapping.test_the_site_tile_and_certificate_are_pinned) ... ok
+test_shape (b4.tests.test_b4_ff_hypothesis.Refusals.test_shape) ... ok
+test_sources_are_rehashed (b4.tests.test_b4_ff_hypothesis.Refusals.test_sources_are_rehashed) ... ok
+test_a_swapped_reading_decodes_differently_and_is_another_object (b4.tests.test_b4_ff_hypothesis.TheFile.test_a_swapped_reading_decodes_differently_and_is_another_object) ... ok
+test_every_flag_is_read_through_the_object (b4.tests.test_b4_ff_hypothesis.TheFile.test_every_flag_is_read_through_the_object) ... ok
+test_it_loads_and_every_source_hashes (b4.tests.test_b4_ff_hypothesis.TheFile.test_it_loads_and_every_source_hashes) ... ok
+test_the_decode_of_the_base_configuration (b4.tests.test_b4_ff_hypothesis.TheFile.test_the_decode_of_the_base_configuration) ... ok
+test_asynchronous_sr_acts_on_the_level_and_synchronous_only_at_the_edge (b4.tests.test_b4_ff_model.CeEdgeAndKind.test_asynchronous_sr_acts_on_the_level_and_synchronous_only_at_the_edge) ... ok
+test_ce_driven_gates_the_capture_and_tied_high_does_not (b4.tests.test_b4_ff_model.CeEdgeAndKind.test_ce_driven_gates_the_capture_and_tied_high_does_not) ... ok
+test_the_capturing_edge_is_the_physical_rising_edge (b4.tests.test_b4_ff_model.CeEdgeAndKind.test_the_capturing_edge_is_the_physical_rising_edge) ... ok
+test_an_unknown_fixture_is_refused (b4.tests.test_b4_ff_model.Fixtures.test_an_unknown_fixture_is_refused) ... ok
+test_dropout_addresses_move_nothing (b4.tests.test_b4_ff_model.Fixtures.test_dropout_addresses_move_nothing) ... ok
+test_every_hypothesis_swap_changes_a_trace_the_truth_would_not (b4.tests.test_b4_ff_model.Fixtures.test_every_hypothesis_swap_changes_a_trace_the_truth_would_not) ... ok
+test_permuted_is_the_truth_re_addressed_and_not_the_truth (b4.tests.test_b4_ff_model.Fixtures.test_permuted_is_the_truth_re_addressed_and_not_the_truth) ... ok
+test_sr_not_driven_is_tied_low (b4.tests.test_b4_ff_model.InitAndSrAreTwoMechanisms.test_sr_not_driven_is_tied_low) ... ok
+test_the_init_readout_shows_init_and_the_sr_readout_shows_srval (b4.tests.test_b4_ff_model.InitAndSrAreTwoMechanisms.test_the_init_readout_shows_init_and_the_sr_readout_shows_srval) ... ok
+test_an_observation_starts_from_nothing_and_init_gives_the_value (b4.tests.test_b4_ff_model.Isolation.test_an_observation_starts_from_nothing_and_init_gives_the_value) ... ok
+test_the_fabric_keeps_no_state_between_observations (b4.tests.test_b4_ff_model.Isolation.test_the_fabric_keeps_no_state_between_observations) ... ok
+test_a_latch_with_ge_low_holds_and_its_sr_is_asynchronous (b4.tests.test_b4_ff_model.Latches.test_a_latch_with_ge_low_holds_and_its_sr_is_asynchronous) ... ok
+test_transparent_while_the_gate_is_high_hold_when_low_and_x5ff_not_applicable (b4.tests.test_b4_ff_model.Latches.test_transparent_while_the_gate_is_high_hold_when_low_and_x5ff_not_applicable) ... ok
+test_every_readout_carries_the_whole_context_and_the_trace_is_serialisable (b4.tests.test_b4_ff_model.TheTrace.test_every_readout_carries_the_whole_context_and_the_trace_is_serialisable) ... ok
+test_the_genome_order_is_the_mapping_s_and_bad_input_is_refused (b4.tests.test_b4_ff_model.TheTrace.test_the_genome_order_is_the_mapping_s_and_bad_input_is_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 32 tests in 0.478s
+
+OK
+exit 0

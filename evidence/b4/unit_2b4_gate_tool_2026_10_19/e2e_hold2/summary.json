@@ -1,0 +1,340 @@
+{
+ "cases": {
+  "fail": {
+   "batch_out": "evidence/b4/sim/b4-mech-1_fail",
+   "budget_rule": "FAIL",
+   "exit_code": 0,
+   "formal": false,
+   "fresh_verifier_exit_in_hermetic_root": 0,
+   "fresh_verifier_exit_on_the_evidence_copy": 0,
+   "gate_out": "evidence/b4/gate/b4-mech-1_fail",
+   "reason": null,
+   "rows": {
+    "K1": "not_assessable",
+    "K10": "PASS",
+    "K2": "not_assessable",
+    "K3": "not_assessable",
+    "K4": "not_assessable",
+    "K5": "not_assessable",
+    "K6": "FAIL",
+    "K7": "not_assessable",
+    "K8": "PASS",
+    "K9": "FAIL"
+   },
+   "status": "FAIL",
+   "verdict": {
+    "reason": "a complete, valid batch on which budget rule FAILS; K6 FAILS; K9 FAILS; not assessable: K1, K2, K3, K4, K5, K7 \u2014 no threshold is adjusted, no budget or sample repaired",
+    "status": "FAIL"
+   }
+  },
+  "fail_b_star": {
+   "batch_out": null,
+   "budget_rule": "PASS",
+   "exit_code": 0,
+   "formal": false,
+   "fresh_verifier_exit_in_hermetic_root": 0,
+   "fresh_verifier_exit_on_the_evidence_copy": 0,
+   "gate_out": "evidence/b4/gate/b4-mech-7_fail_b_star",
+   "reason": null,
+   "rows": {
+    "K1": "PASS",
+    "K10": "PASS",
+    "K2": "PASS",
+    "K3": "PASS",
+    "K4": "PASS",
+    "K5": "PASS",
+    "K6": "PASS",
+    "K7": "PASS",
+    "K8": "PASS",
+    "K9": "FAIL"
+   },
+   "status": "FAIL",
+   "verdict": {
+    "reason": "a complete, valid batch on which K9 FAILS \u2014 no threshold is adjusted, no budget or sample repaired",
+    "status": "FAIL"
+   }
+  },
+  "incomplete": {
+   "batch_out": "evidence/b4/sim/b4-mech-1_incomplete",
+   "budget_rule": "not_assessable",
+   "exit_code": 3,
+   "formal": false,
+   "fresh_verifier_exit_in_hermetic_root": 0,
+   "fresh_verifier_exit_on_the_evidence_copy": 0,
+   "gate_out": "evidence/b4/gate/b4-mech-1_incomplete",
+   "reason": null,
+   "rows": {
+    "K1": "not_assessable",
+    "K10": "not_assessable",
+    "K2": "not_assessable",
+    "K3": "not_assessable",
+    "K4": "not_assessable",
+    "K5": "not_assessable",
+    "K6": "not_assessable",
+    "K7": "not_assessable",
+    "K8": "not_assessable",
+    "K9": "not_assessable"
+   },
+   "status": "incomplete",
+   "verdict": {
+    "reason": "unfinished work is incomplete, never a result",
+    "status": "incomplete"
+   }
+  },
+  "invalid": {
+   "batch_out": "evidence/b4/sim/b4-mech-1_invalid",
+   "budget_rule": "not_assessable",
+   "exit_code": 1,
+   "formal": false,
+   "fresh_verifier_exit_in_hermetic_root": 0,
+   "fresh_verifier_exit_on_the_evidence_copy": 0,
+   "gate_out": "evidence/b4/gate/b4-mech-1_invalid",
+   "reason": null,
+   "rows": {
+    "K1": "not_assessable",
+    "K10": "not_assessable",
+    "K2": "not_assessable",
+    "K3": "not_assessable",
+    "K4": "not_assessable",
+    "K5": "not_assessable",
+    "K6": "not_assessable",
+    "K7": "not_assessable",
+    "K8": "not_assessable",
+    "K9": "not_assessable"
+   },
+   "status": "invalid",
+   "verdict": {
+    "reason": "a tool / source / replay / control contract break is invalid, never a landscape failure",
+    "status": "invalid"
+   }
+  },
+  "pass": {
+   "batch_out": null,
+   "budget_rule": "PASS",
+   "exit_code": 0,
+   "formal": false,
+   "fresh_verifier_exit_in_hermetic_root": 0,
+   "fresh_verifier_exit_on_the_evidence_copy": 0,
+   "gate_out": "evidence/b4/gate/b4-mech-7_pass",
+   "reason": null,
+   "rows": {
+    "K1": "PASS",
+    "K10": "PASS",
+    "K2": "PASS",
+    "K3": "PASS",
+    "K4": "PASS",
+    "K5": "PASS",
+    "K6": "PASS",
+    "K7": "PASS",
+    "K8": "PASS",
+    "K9": "PASS"
+   },
+   "status": "PASS",
+   "verdict": {
+    "reason": "the budget rule and every row PASS on a complete, valid batch \u2014 NOT a gate result (the evidence is synthetic_summary, not a batch archive; a fixture batch; the label 'b4-mech-7' is not the pinned gate label 'b4-gate-1')",
+    "status": "PASS"
+   }
+  }
+ },
+ "head": "6431e9f73483a0849500c9d52fe77d9efecb1415",
+ "invalid_controls": {
+  "B_star_as_float": {
+   "contract_findings": [
+    "candidate_B_star 64.0 is not the cheapest eligible budget 64 (ties to the smaller)"
+   ],
+   "fresh_verifier_exit": 0,
+   "tool_exit": 1,
+   "tool_status": "invalid",
+   "verdict": "invalid"
+  },
+  "D_over_F_null": {
+   "contract_findings": [
+    "k3.D_over_F: not an object"
+   ],
+   "fresh_verifier_exit": 0,
+   "tool_exit": 1,
+   "tool_status": "invalid",
+   "verdict": "invalid"
+  },
+  "K9_fraction_above_one": {
+   "contract_findings": [
+    "k9.fraction_of_S is not seeds_with_all_seven_positive_controls / S"
+   ],
+   "fresh_verifier_exit": 0,
+   "tool_exit": 1,
+   "tool_status": "invalid",
+   "verdict": "invalid"
+  },
+  "contradictory_delta1_d": {
+   "contract_findings": [
+    "per_budget[64].deltas.delta1_O_minus_R.cohen_d: d -1.0 is not the production statistic of its mean 5.0, population variance 4.0 and S = 200 (2.4937421679075005; sample standard deviation)"
+   ],
+   "fresh_verifier_exit": 0,
+   "tool_exit": 1,
+   "tool_status": "invalid",
+   "verdict": "invalid"
+  },
+  "coordinated_false_cohen_pass": {
+   "contract_findings": [
+    "per_budget[64].deltas.delta1_O_minus_R.cohen_d: d 0.9 is not the production statistic of its mean 0.5, population variance 4.0 and S = 200 (0.24937421679075003; sample standard deviation)"
+   ],
+   "fresh_verifier_exit": 0,
+   "tool_exit": 1,
+   "tool_status": "invalid",
+   "verdict": "invalid"
+  },
+  "empty_N_scan": {
+   "contract_findings": [
+    "per_budget[64].required_pairs: the scan does not end at N = 16"
+   ],
+   "fresh_verifier_exit": 0,
+   "tool_exit": 1,
+   "tool_status": "invalid",
+   "verdict": "invalid"
+  },
+  "float_at_k5_N": {
+   "contract_findings": [
+    "k5's N / cost are not the budget rule's"
+   ],
+   "fresh_verifier_exit": 0,
+   "tool_exit": 1,
+   "tool_status": "invalid",
+   "verdict": "invalid"
+  },
+  "float_at_k7_values": {
+   "contract_findings": [
+    "k7 at B* is not per_budget's K7 record"
+   ],
+   "fresh_verifier_exit": 0,
+   "tool_exit": 1,
+   "tool_status": "invalid",
+   "verdict": "invalid"
+  },
+  "float_bootstrap_seed": {
+   "contract_findings": [
+    "k2.bootstrap is not (N, 1000, 0.05, 7) exactly"
+   ],
+   "fresh_verifier_exit": 0,
+   "tool_exit": 1,
+   "tool_status": "invalid",
+   "verdict": "invalid"
+  },
+  "float_k10_tau": {
+   "contract_findings": [
+    "k10: tau / S are not the table's / the batch's (exactly)"
+   ],
+   "fresh_verifier_exit": 0,
+   "tool_exit": 1,
+   "tool_status": "invalid",
+   "verdict": "invalid"
+  },
+  "float_scan_n_min": {
+   "contract_findings": [
+    "per_budget[64].required_pairs: n_min / n_max are not 8 / S (exactly, as ints)"
+   ],
+   "fresh_verifier_exit": 0,
+   "tool_exit": 1,
+   "tool_status": "invalid",
+   "verdict": "invalid"
+  },
+  "huge_json_integer": {
+   "reason": "the synthetic summary is refused: synthetic summary.summary.per_budget.64.k1.omega_best_p95: an integer beyond \u00b12^63 is outside every numeric contract",
+   "tool_exit": 2,
+   "tool_status": "refused",
+   "written": false
+  },
+  "inconsistent_positive_infinity": {
+   "contract_findings": [
+    "per_budget[64].deltas.delta1_O_minus_R.cohen_d: special +inf carries a null value, not -100"
+   ],
+   "fresh_verifier_exit": 0,
+   "tool_exit": 1,
+   "tool_status": "invalid",
+   "verdict": "invalid"
+  },
+  "infinite_literal_in_thresholds": {
+   "reason": "the synthetic summary is refused: synthetic summary.summary.thresholds_for_reference.K10.tau: inf is not finite",
+   "tool_exit": 2,
+   "tool_status": "refused",
+   "written": false
+  }
+ },
+ "negatives": {
+  "B_star_as_float": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "D_over_F_null": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "K9_fraction_above_one": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "contradictory_delta1_d": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "coordinated_false_cohen_pass": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "empty_N_scan": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "float_at_k5_N": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "float_at_k7_values": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "float_bootstrap_seed": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "float_k10_tau": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "float_scan_n_min": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "huge_json_integer": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "inconsistent_positive_infinity": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  },
+  "infinite_literal_in_thresholds": {
+   "expected_verifier_exit": 1,
+   "fresh_verifier_exit_in_hermetic_root": 1,
+   "fresh_verifier_exit_on_the_evidence_copy": 1
+  }
+ },
+ "negatives_as_expected": true,
+ "production_derivation_calls": [
+  0,
+  0
+ ],
+ "utc": "2026-10-19T18:17:03Z"
+}

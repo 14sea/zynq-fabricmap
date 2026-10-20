@@ -1,0 +1,55 @@
+{
+  "latch_endpoint_q": [
+    [
+      1,
+      null,
+      1,
+      null,
+      1,
+      null,
+      1,
+      null
+    ],
+    [
+      1,
+      null,
+      1,
+      null,
+      1,
+      null,
+      1,
+      null
+    ],
+    [
+      0,
+      null,
+      0,
+      null,
+      0,
+      null,
+      0,
+      null
+    ]
+  ],
+  "public_refusal": "REFUSED: configuration outside the model's domain (DOMAIN)",
+  "external_hypothesis": {
+    "accepted": false,
+    "refusal": "TypeError: load() takes 0 positional arguments but 1 was given"
+  },
+  "coordinated_NOCLKINV": {
+    "accepted": false,
+    "refusal": "CLBLL_L.SLICEL_X0.NOCLKINV: the token's reading is negated but the row says negated = False"
+  },
+  "coordinated_AFF.ZINI": {
+    "accepted": false,
+    "refusal": "CLBLL_L.SLICEL_X0.AFF.ZINI: the token's reading is direct but the row says negated = True"
+  },
+  "unknown_in_flipflop_context": {
+    "accepted": false,
+    "refusal": "TypeError: load() takes 0 positional arguments but 1 was given"
+  },
+  "unknown_in_flipflop_context_as_fixture": {
+    "accepted": false,
+    "refusal": "decode.clock_mode.flipflop.bit_one: unknown is allowed only where no attestation exists \u2014 clock_mode under a latch"
+  }
+}

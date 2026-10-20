@@ -1,0 +1,175 @@
+{
+ "K10_1059.99": {
+  "diagnostic_file_present": false,
+  "diagnostic_state": "in_progress",
+  "exit_code": 3,
+  "kind": "interrupted",
+  "path": "/tmp/b4_owner_round4_in9u5ala/input/evidence/b4/sim/b4-mech-1_K10_1059990",
+  "report_deadline": {
+   "checks": 1218,
+   "clock": "time.monotonic",
+   "elapsed_s": 60.01,
+   "expired": true,
+   "first_expired_at_s": 60.01,
+   "seconds": 60
+  },
+  "status": "incomplete",
+  "stop_deadline": {
+   "checks": 1218,
+   "clock": "time.monotonic",
+   "elapsed_s": 59.99,
+   "expired": false,
+   "first_expired_at_s": null,
+   "seconds": 60
+  },
+  "summary": null,
+  "verify": {}
+ },
+ "K9_1059.99": {
+  "diagnostic_file_present": false,
+  "diagnostic_state": "in_progress",
+  "exit_code": 3,
+  "kind": "interrupted",
+  "path": "/tmp/b4_owner_round4_in9u5ala/input/evidence/b4/sim/b4-mech-1_K9_1059990",
+  "report_deadline": {
+   "checks": 33,
+   "clock": "time.monotonic",
+   "elapsed_s": 60.01,
+   "expired": true,
+   "first_expired_at_s": 60.01,
+   "seconds": 60
+  },
+  "status": "incomplete",
+  "stop_deadline": {
+   "checks": 33,
+   "clock": "time.monotonic",
+   "elapsed_s": 59.99,
+   "expired": false,
+   "first_expired_at_s": null,
+   "seconds": 60
+  },
+  "summary": null,
+  "verify": {}
+ },
+ "K9_1060.01": {
+  "diagnostic_file_present": false,
+  "diagnostic_state": "in_progress",
+  "exit_code": 3,
+  "kind": "interrupted",
+  "path": "/tmp/b4_owner_round4_in9u5ala/input/evidence/b4/sim/b4-mech-1_K9_1060010",
+  "report_deadline": {
+   "checks": 33,
+   "clock": "time.monotonic",
+   "elapsed_s": 60.03,
+   "expired": true,
+   "first_expired_at_s": 60.01,
+   "seconds": 60
+  },
+  "status": "incomplete",
+  "stop_deadline": {
+   "checks": 33,
+   "clock": "time.monotonic",
+   "elapsed_s": 60.01,
+   "expired": true,
+   "first_expired_at_s": 60.01,
+   "seconds": 60
+  },
+  "summary": null,
+  "verify": {}
+ },
+ "cli": {
+  "command": [
+   "/usr/bin/python3",
+   "-B",
+   "/tmp/b4_owner_43ca57d_f0ok808x/b4/host/b4_sim_verify.py",
+   "/tmp/b4_owner_round3_probe__3mnnggf/bad_k9"
+  ],
+  "exit_code": 1,
+  "stderr": "",
+  "stdout": {
+   "clean": false,
+   "findings": {
+    "pair_000/k9.json": [
+     "k9: not an object"
+    ]
+   },
+   "limit": "a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth",
+   "run_dir": "/tmp/b4_owner_round3_probe__3mnnggf/bad_k9"
+  }
+ },
+ "early_invalid_without_record": {
+  "diagnostic_state": "invalid",
+  "exit_code": 1,
+  "kind": "k9_invalid",
+  "path": "/tmp/b4_owner_round4_in9u5ala/input/evidence/b4/sim/b4-mech-1_early_refusal",
+  "self_validation": {
+   "pair_000/k9": [
+    "an invalid diagnostic keeps exactly one record: the partial or its quarantine"
+   ]
+  },
+  "status": "invalid",
+  "summary": null,
+  "verify": {
+   "pair_000/k9": [
+    "an invalid diagnostic keeps exactly one record: the partial or its quarantine"
+   ]
+  }
+ },
+ "malformed_k10": {
+  "pair_000/k10.json": [
+   "k10: not an object"
+  ]
+ },
+ "malformed_k7": {
+  "pair_000/k7.json": [
+   "k7: not an object"
+  ]
+ },
+ "malformed_k9": {
+  "pair_000/k9.json": [
+   "k9: not an object"
+  ]
+ },
+ "malformed_nested": {
+  "pair_000/k9.json": [
+   "pairs / pairs_done / pairs_total"
+  ]
+ },
+ "records": [
+  {
+   "findings": [],
+   "record": {
+    "checks": 0,
+    "clock": "time.monotonic",
+    "elapsed_s": 59.99,
+    "expired": false,
+    "first_expired_at_s": null,
+    "seconds": 60
+   }
+  },
+  {
+   "findings": [],
+   "record": {
+    "checks": 0,
+    "clock": "time.monotonic",
+    "elapsed_s": 60.01,
+    "expired": true,
+    "first_expired_at_s": 60.01,
+    "seconds": 60
+   }
+  },
+  {
+   "findings": [],
+   "record": {
+    "checks": 0,
+    "clock": "time.monotonic",
+    "elapsed_s": 60.03,
+    "expired": true,
+    "first_expired_at_s": 60.01,
+    "seconds": 60
+   }
+  }
+ ],
+ "snapshot": "/tmp/b4_owner_43ca57d_f0ok808x",
+ "temp": "/tmp/b4_owner_round4_in9u5ala"
+}

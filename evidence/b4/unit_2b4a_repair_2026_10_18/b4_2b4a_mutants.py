@@ -1,0 +1,362 @@
+#!/usr/bin/env python3
+"""Mutants for unit 2b-4a (hermetic tree copies; a kill only with Ran N > 0 and FAILED, the failing tests named).
+The copy carries b4/, the three pinned host modules the tests compare against by import, the formal inputs the loaders
+re-hash, the 38 exclusion sources and the architecture document — no other evidence. Each mutant breaks ONE contract the
+owner's ruling (2026-10-18, section 4.3) names, and the tests it names are run inside the copy."""
+import json, re, shutil, subprocess, sys, tempfile, pathlib, time
+def _repo_root() -> pathlib.Path:
+    """The repository root: the first ancestor of the working directory (then of this file) holding b4/host/b4_seeds.py.
+    Fails loudly instead of walking past / forever."""
+    for start in (pathlib.Path.cwd(), pathlib.Path(__file__).resolve().parent):
+        for cand in (start, *start.parents):
+            if (cand / "b4/host/b4_seeds.py").is_file():
+                return cand
+    raise SystemExit("run from inside the zynq_fabricmap repository: no ancestor holds b4/host/b4_seeds.py")
+
+
+R = _repo_root()
+sys.path.insert(0, str(R / "b4/host"))
+import b4_seeds as bs  # noqa: E402
+
+COPY = ["b4", "host/b1_carto.py", "host/b1_model.py", "host/b2_landscape.py", "host/b2_maps.py", "host/b2_gate.py", "host/b2_search.py", "docs/b4_architecture.md", "docs/ff_latch_probe.md",
+        "gate_runs/run_2026_08_05_ff/certificate.json", "evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json",
+        bs.EXPOSURE_RECEIPT_REL] + [f[0] for f in bs.FIELDS]
+SEEDS, CTL, SNAP, K9, K10, SIM, SCH, GS, TH, VER, DL = ("b4/host/b4_seeds.py", "b4/host/b4_controls.py", "b4/host/b4_snapshot.py", "b4/host/b4_k9.py", "b4/host/b4_k10.py",
+                                                        "b4/host/b4_sim.py", "b4/host/b4_sim_schema.py", "b4/host/b4_gate_stats.py", "b4/host/b4_thresholds.py", "b4/host/b4_sim_verify.py",
+                                                        "b4/host/b4_deadline.py")
+T = "b4.tests."
+
+
+class EditMiss(Exception):
+    """A mutant's target text is not in the file exactly once: the mutant is not applied and the battery records the miss."""
+
+
+def edit(rel, edits):
+    def apply(tree):
+        f = tree / rel; s = f.read_text()
+        for old, new in edits:
+            if s.count(old) != 1:
+                raise EditMiss(f"{rel}: {old[:70]!r} occurs {s.count(old)} times")
+            s = s.replace(old, new)
+        f.write_text(s)
+    return apply
+
+
+def multi(*applies):
+    def apply(tree):
+        for a in applies:
+            a(tree)
+    return apply
+
+
+MUTANTS = [
+ ("M1 the archived exploration sets are not pooled (evidence/b4/sim/*/seeds.json ignored)",
+  edit(SEEDS, [("    for r in registry:\n        pooled.update(r.values)\n", "    for r in registry:\n        pass\n")]),
+  [T + "test_b4_seeds.TheRegistry.test_every_archived_set_is_read_whatever_its_outcome", T + "test_b4_seeds.TheRegistry.test_a_fixture_set_in_the_registry_is_read_without_a_master"]),
+ ("M2 a run directory with no seed record is skipped instead of refused",
+  edit(SEEDS, [('            raise ExclusionSourceRefusal(f"{rel}: neither {SEEDS_FILE} nor {INIT_FAILED_FILE}; a run directory with no seed record is refused, never skipped")', "            continue")]),
+  [T + "test_b4_seeds.TheRegistry.test_a_damaged_or_missing_seed_record_is_refused_never_skipped"]),
+ ("M3 the pooled set screens the landscape position only",
+  edit(SEEDS, [("        if l_seed in seen or o_seed in seen or l_seed == o_seed:", "        if l_seed in seen or l_seed == o_seed:")]),
+  [T + "test_b4_seeds.ThePairs.test_the_copy_is_b2_s_pair_seeds", T + "test_b4_seeds.ThePairs.test_the_pooled_set_screens_both_positions"]),
+ ("M4 a re-hashed historical source only warns",
+  edit(SEEDS, [('        raise ExclusionSourceRefusal(f"{rel}: hashes to {got[:16]}…, not the recorded {expected_sha256[:16]}…")', "        pass")]),
+  [T + "test_b4_seeds.TheHistoricalSources.test_a_rehashed_or_missing_source_is_refused_by_name"]),
+ ("M5 f_frozen_view skips the replay",
+  edit(CTL, [('    findings = br.replay(result, task)\n    _require(not findings, "the F record does not replay: " + "; ".join(findings[:5]))\n', "")]),
+  [T + "test_b4_controls.FrozenView.test_a_tampered_record_is_refused"]),
+ ("M6 D built from the oracle view instead of F's rebuilt map",
+  edit(CTL, [("    fv = f_frozen_view(f_result, task)\n    seed = d_shuffle_seed", "    fv = bc.oracle_view(__import__('b4_ff_mapping').site_mapping())\n    seed = d_shuffle_seed")]),
+  [T + "test_b4_controls.ControlD.test_d_is_the_seeded_relabelling_of_f_s_view_with_its_parent_kept"]),
+ ("M7 the D shuffle seed drawn from the operator seed (not its own generator)",
+  edit(CTL, [('    return _control_seed(D_LABEL, landscape_seed, operator_seed)', '    return _seed_int(operator_seed, "operator_seed")')]),
+  [T + "test_b4_controls.ControlSeeds.test_the_two_formulas_by_hand"]),
+ ("M8 K7's prefix takes B records (the base dropped: off by one)",
+  edit(SNAP, [("    records = ledger[:budget + 1]", "    records = ledger[1:budget + 1]"), ('    if len(records) != budget + 1:', '    if len(records) != budget:'),
+              ('    elif [e["phase"] for e in records] != ["base"] + ["search"] * budget:', '    elif [e["phase"] for e in records] != ["search"] * budget:'),
+              ("    r = rebuild(result, task, upto=budget + 1)", "    r = rebuild(result, task, upto=budget)")]),
+  [T + "test_b4_snapshot.HandLedger.test_the_prefix_states_by_hand", T + "test_b4_snapshot.RealRuns.test_o_s_prefix_at_every_grid_budget_up_to_its_evals"]),
+ ("M9 F's search records fed to the cartographer as if the map kept learning",
+  edit(SNAP, [('        learned = [e for e in ledger if e["phase"] in ("base", "probe")]', '        learned = [e for e in ledger if e["phase"] in ("base", "probe", "search")]')]),
+  [T + "test_b4_snapshot.RealRuns.test_every_arm_mode_rebuilds_without_a_finding"]),
+ ("M10 X's cartographer rebuilt from the TRUE genome (not relabelled)",
+  edit(SNAP, [('            _ingest_checked(carto, e, bc.relabel_genome(e["genome"], perm), findings)', '            _ingest_checked(carto, e, e["genome"], findings)')]),
+  [T + "test_b4_snapshot.RealRuns.test_every_arm_mode_rebuilds_without_a_finding"]),
+ ("M11 K7 (a) checks only the last record's commitment",
+  edit(SNAP, [('    if (e["map_version_after"], e["map_commitment_after"]) != (carto.version, carto.commitment()):\n        findings.append(f"seq {e[\'seq\']}: the recorded map version / commitment after is not the rebuilt one")',
+               '    pass')]),
+  [T + "test_b4_snapshot.HandLedger.test_a_tampered_middle_record_is_found_where_it_lies"]),
+ ("M12 K9: a pair whose two traces are identical is dropped from the denominator",
+  edit(K9, [('            rec.update(obs0=id0, obs1=id1, hit0=hit0, hit1=hit1, differences=diffs, covered=bool(diffs))',
+             '            rec.update(obs0=id0, obs1=id1, hit0=hit0, hit1=hit1, differences=diffs, covered=bool(diffs) if diffs else None, applicable=bool(diffs))')]),
+  [T + "test_b4_k9.TheComputation.test_the_formal_model_end_to_end_on_an_exposed_seed"]),
+ ("M13 K9: ff_init left out of the seven (never a positive control)",
+  edit(K9, [('        c["positive_control"] = c["covered"] > 0', '        c["positive_control"] = c["covered"] > 0 and s != "ff_init"')]),
+  [T + "test_b4_k9.TheComputation.test_the_formal_model_end_to_end_on_an_exposed_seed", T + "test_b4_k9.TheComputation.test_recompute_names_a_tampered_record",
+   T + "test_b4_k9.TheComputation.test_summarise_by_hand_an_empty_denominator_is_not_assessable_and_never_a_positive_control"]),
+ ("M14 K9: an empty denominator recorded as 100 %",
+  edit(K9, [('        c["fraction"] = (c["covered"] / c["applicable"]) if c["applicable"] else None\n        c["assessable"] = c["applicable"] > 0',
+             '        c["fraction"] = (c["covered"] / c["applicable"]) if c["applicable"] else 1.0\n        c["assessable"] = True')]),
+  [T + "test_b4_k9.TheComputation.test_recompute_names_a_tampered_record", T + "test_b4_sim.TheSummaryAndTheValidators.test_on_hand_rows_including_an_infinite_cohen_d",
+   T + "test_b4_k9.TheComputation.test_summarise_by_hand_an_empty_denominator_is_not_assessable_and_never_a_positive_control"]),
+ ("M15 K9 ignores the deadline check",
+  edit(K9, [("        if check is not None:\n            try:\n                check()\n            except StopWork as exc:\n                stopped = {\"before_pair_index\": i, \"reason\": str(exc)}\n                break\n", "")]),
+  [T + "test_b4_k9.TheComputation.test_the_deadline_stops_between_pairs_and_the_partial_is_kept", T + "test_b4_sim.IncompleteStops.test_the_deadline_inside_k9"]),
+ ("M16 K10's driver absorbs a comparable = False return as 'not comparable' and continues",
+  edit(K10, [("            raise CornerRefused(genome, exc) from exc            # four_corner does not catch this: no further corner is observed", "            raise")]),
+  [T + "test_b4_k10.TheComputation.test_no_corner_is_observed_after_the_first_refused_one", T + "test_b4_sim.InvalidStops.test_a_control_failure_a_replay_finding_and_a_k10_domain"]),
+ ("M17 K10's second background drawn from the generator's SECOND call",
+  edit(K10, [("    return [0, rng.uniform(1 << 21)]", "    rng.uniform(1 << 21)\n    return [0, rng.uniform(1 << 21)]")]),
+  [T + "test_b4_k10.Backgrounds.test_by_hand_from_the_salted_generator_s_first_call"]),
+ ("M18 the statistics stage ignores the deadline",
+  edit(SIM, [("        self.summary, self.stats_record = summarise_batch(self.rows, self.c[\"count\"], check=self.dl.check)", "        self.summary, self.stats_record = summarise_batch(self.rows, self.c[\"count\"], check=None)")]),
+  [T + "test_b4_sim.IncompleteStops.test_the_deadline_in_the_statistics_and_an_interrupt"]),
+ ("M19 after an invalid audit the harness goes on to the next pair",
+  edit(SIM, [("        for r in range(count):\n            batch.run_pair(r)\n", "        for r in range(count):\n            try:\n                batch.run_pair(r)\n            except Invalid:\n                continue\n")]),
+  [T + "test_b4_sim.InvalidStops.test_domain_in_the_second_pair_s_o_arm", T + "test_b4_sim.InvalidStops.test_a_control_failure_a_replay_finding_and_a_k10_domain"]),
+ ("M20 the arm result is written only after the audit",
+  edit(SIM, [('            self.write(f"pair_{r:03d}/arm_{role}.result.json", doc, None)\n            plan["arms"][role] = "written"\n            results[role] = d\n            self.dl.check()\n            completion = completion_findings(d, role, task, port.calls, views.get(role))\n            replay = br.replay(d, task)\n',
+              '            results[role] = d\n            self.dl.check()\n            completion = completion_findings(d, role, task, port.calls, views.get(role))\n            replay = br.replay(d, task)\n            self.write(f"pair_{r:03d}/arm_{role}.result.json", doc, None)\n            plan["arms"][role] = "written"\n')]),
+  [T + "test_b4_sim.InvalidStops.test_a_crashing_audit_does_not_lose_the_run_that_returned"]),
+ ("M21 a dirty tree is recorded, not refused",
+  edit(SIM, [('    if dirty:\n        raise Refusal(f"the tree is not clean ({len(dirty)} entries; the first: {dirty[0]!r}); there is no override")', "    if dirty:\n        pass")]),
+  [T + "test_b4_sim.Preflight.test_refusals_write_nothing"]),
+ ("M22 the input-drift checkpoint is a no-op",
+  edit(SIM, [("    def hold_inputs(self, stage: str) -> None:\n        c = self.c\n", "    def hold_inputs(self, stage: str) -> None:\n        return None\n        c = self.c\n")]),
+  [T + "test_b4_sim.InvalidStops.test_an_unexpected_exception_and_the_three_drifts"]),
+ ("M23 a pooled summary written for an incomplete batch",
+  multi(edit(SIM, [('                  "summary": self.summary if status == "complete" else None, "missing": missing', '                  "summary": self.summary if status == "complete" else (self.summary or {"partial": True}), "missing": missing')]),
+        edit(SCH, [('        if doc["summary"] is not None:\n            f.append("a batch that did not complete carries no pooled numeric summary")', '        pass')])),
+  [T + "test_b4_sim.IncompleteStops.test_the_deadline_inside_k9", T + "test_b4_sim.TheSummaryAndTheValidators.test_a_summary_with_a_verdict_key_is_refused_by_the_report_validator"]),
+ ("M24 a final file overwritten instead of created exclusively",
+  edit(SIM, [("        os.link(part, path)", "        os.replace(part, path); return {\"path\": path.name, \"sha256\": sha_bytes(data), \"size\": len(data)}")]),
+  [T + "test_b4_sim.TheSummaryAndTheValidators.test_write_exclusive_never_overwrites_and_refuses_non_finite"]),
+ ("M25 a non-finite statistic written as a JSON literal (no finite check, allow_nan)",
+  edit(SIM, [("    nf = gs.finite_findings(doc)\n    if nf:\n        raise Invalid(\"schema\", f\"{path.name}: \" + \"; \".join(nf[:3]), stage=\"write\")\n", ""),
+             ("    return (json.dumps(doc, indent=1, sort_keys=True, allow_nan=False) + \"\\n\").encode(\"utf-8\")", "    return (json.dumps(doc, indent=1, sort_keys=True, allow_nan=True) + \"\\n\").encode(\"utf-8\")")]),
+  [T + "test_b4_sim.TheSummaryAndTheValidators.test_write_exclusive_never_overwrites_and_refuses_non_finite"]),
+ ("M26 cohen_d's +inf written as 0 (encode_stat collapses it)",
+  edit(GS, [('        if math.isinf(x):\n            return {"value": None, "special": "+inf" if x > 0 else "-inf"}', '        if math.isinf(x):\n            return {"value": 0, "special": None}')]),
+  [T + "test_b4_gate_stats.CohenD.test_encoding_for_json", T + "test_b4_sim.TheSummaryAndTheValidators.test_on_hand_rows_including_an_infinite_cohen_d"]),
+ ("M27 the power scan starts above n_min (a skipped candidate)",
+  edit(GS, [("    for n in range(n_min, n_max + 1):\n        if check is not None:", "    for n in range(n_min + 1, n_max + 1):\n        if check is not None:")]),
+  [T + "test_b4_gate_stats.Bootstrap.test_the_chunked_scan_equals_the_unchunked_one_and_stops_between_n"]),
+ ("M28 the sign test's ties counted in n (the copy altered)",
+  edit(GS, [("    n = pos + neg\n    if n == 0:\n        return 1.0, pos, neg, len(deltas)", "    n = len(deltas)\n    if pos + neg == 0:\n        return 1.0, pos, neg, len(deltas)")]),
+  [T + "test_b4_gate_stats.TheCopy.test_the_source_text_of_every_copied_function_is_the_original_s", T + "test_b4_gate_stats.SignTest.test_by_hand"]),
+ ("M29 the thresholds table's S changed to 199 (the document untouched)",
+  edit(TH, [('    "K6": {"S_gate": 200,', '    "K6": {"S_gate": 199,')]),
+  [T + "test_b4_thresholds.ThePins.test_the_numbers_are_the_document_s"]),
+ ("M30 the report validator lets a verdict-like key through",
+  edit(SCH, [('        verdict_like = re.compile(r"(^|_)(pass|passed|fail|failed|verdict|holds)($|_)")', '        verdict_like = re.compile(r"(^|_)(never_matches_anything)($|_)")')]),
+  [T + "test_b4_sim.TheSummaryAndTheValidators.test_a_summary_with_a_verdict_key_is_refused_by_the_report_validator"]),
+ ("M31 the harness accepts the gate's label",
+  edit(SIM, [('LABEL_RE = re.compile(r"^b4-sim-[1-9][0-9]*$")', 'LABEL_RE = re.compile(r"^b4-(sim|gate)-[1-9][0-9]*$")')]),
+  [T + "test_b4_sim.Preflight.test_refusals_write_nothing"]),
+ ("M32 the harness runs on the mechanics fixture hypothesis (a fixture source in the formal CLI path)",
+  edit(SIM, [("        hypothesis = hy.load()\n        mapping = bm.site_mapping()", "        hypothesis = hy.load().with_reading(\"clock_mode\", \"not_inverted\", \"not_inverted\", \"mechanics\", context=\"latch\")\n        mapping = bm.site_mapping()"),
+             ('    if hypothesis.fixture is not False or hypothesis.sha256 != hy.HYPOTHESIS_SHA256:\n        raise Refusal("the hypothesis is not the formal one")', "    pass")]),
+  [T + "test_b4_sim.CompleteBatch.test_complete_with_every_file_typed_and_no_verdict"]),
+ ("M33 F1: the fixture schedule accepts a value that is not already exposed",
+  edit(SIM, [("                if v not in bs.FIXTURE_VALUES:\n                    f.append", "                if False:\n                    f.append")]),
+  [T + "test_b4_sim.TheSummaryAndTheValidators.test_the_fixture_schedule_s_own_findings", T + "test_b4_sim.Preflight.test_refusals_write_nothing"]),
+ ("M34 F1: a production label runs on a fixture schedule (the label check inverted)",
+  edit(SIM, [('        if not isinstance(label, str) or not FIXTURE_LABEL_RE.match(label):\n            raise Refusal(f"a batch with a FixtureSchedule carries a mechanics label', '        if False:\n            raise Refusal(f"a batch with a FixtureSchedule carries a mechanics label'),
+             ('        if f or schedule.label != label:', '        if f:')]),
+  [T + "test_b4_sim.Preflight.test_refusals_write_nothing"]),
+ ("M35 F1: the harness derives a production master even for a fixture batch",
+  edit(SIM, [("        if c[\"schedule\"] is None:\n            bs.check_label_not_retired(c[\"label\"])", "        if True:\n            bs.check_label_not_retired(c[\"label\"])")]),
+  [T + "test_b4_sim.CompleteBatch.test_the_freezing_order_the_fixture_seeds_and_the_manifest"]),
+ ("M36 F1: a fixture seeds document with a production label passes the seeds validator",
+  edit(SEEDS, [('    elif fixture is not bool(FIXTURE_LABEL_RE.match(doc["label"])):\n        f.append("label: a fixture set has a b4-mech-<n> label and a production set has not")', "    elif False:\n        pass")]),
+  [T + "test_b4_seeds.TheRegistry.test_the_fixture_form_of_the_seeds_document", T + "test_b4_seeds.TheRegistry.test_the_seeds_document_shape"]),
+ ("M37 F7: the namespace chain is not checked for symlinks",
+  edit(SIM, [('    for anc in namespace_chain(root):\n        if anc.is_symlink():\n            raise Refusal(f"{anc.relative_to(root)} is a symlink: the exploration namespace must be a real directory chain under the root")', "    for anc in namespace_chain(root):\n        if False:\n            pass")]),
+  [T + "test_b4_sim.Preflight.test_a_symlinked_namespace_is_refused_at_every_level"]),
+ ("M38 F6: a malformed returned RunResult is dropped instead of quarantined",
+  edit(SIM, [('                self.quarantine(f"pair_{r:03d}/arm_{role}.result.QUARANTINE.json", r, role, "engine_return", f, doc)\n                raise Invalid("schema", f"arm_{role}.result.json: the returned RunResult does not validate (quarantined): "', '                raise Invalid("schema", f"arm_{role}.result.json: the returned RunResult does not validate (quarantined): "')]),
+  [T + "test_b4_sim.InvalidStops.test_a_malformed_returned_result_is_quarantined_not_lost"]),
+ ("M39 F6: the K9 partial is not kept on a refusal",
+  edit(SIM, [('            kept = self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "refusal")', '            kept = self._keep_partial(r, "k9", None, lambda doc: sc.k9_findings(doc, task), "K9", "refusal")')]),
+  [T + "test_b4_sim.InvalidStops.test_a_refusal_inside_k9_keeps_the_partial"]),
+ ("M40 F6: K9 raises without carrying its partial",
+  edit(K9, [("        except BaseException as exc:  # noqa: BLE001 — the evidence obtained so far travels with the exception, whatever it is\n            if isinstance(exc, KeyboardInterrupt):", "        except BaseException as exc:  # noqa: BLE001\n            raise\n            if isinstance(exc, KeyboardInterrupt):")]),
+  [T + "test_b4_k9.TheComputation.test_a_refusal_inside_a_pair_carries_the_partial_and_a_truncated_complete_record_is_named", T + "test_b4_sim.InvalidStops.test_a_refusal_inside_k9_keeps_the_partial"]),
+ ("M41 F4: a self-validation finding does not turn a complete batch invalid",
+  edit(SIM, [("        if status == \"complete\" and self_validation:\n            first = next(iter(self_validation.items()))", "        if False:\n            first = next(iter(self_validation.items()))")]),
+  [T + "test_b4_sim.InvalidStops.test_self_validation_findings_and_an_unwritable_report_are_never_complete"]),
+ ("M42 F4: an unwritable report keeps the batch's success status",
+  edit(SIM, [('            out.update(status="invalid", exit_code=1, report_error=msg, original_status=status)', '            out.update(report_error=msg, original_status=status)')]),
+  [T + "test_b4_sim.InvalidStops.test_self_validation_findings_and_an_unwritable_report_are_never_complete"]),
+ ("M43 F8: no deadline check before finalisation",
+  edit(SIM, [("        if status == \"complete\":\n            try:\n                self.dl.check()                                     # a finalisation unit never starts after the expiry", "        if False:\n            try:\n                self.dl.check()"),
+             ("        batch.dl.check()                                            # after the last statistics unit (F8)\n", ""),
+             ("        batch.dl.check()                                            # before the finalisation units (F8)\n", "")]),
+  [T + "test_b4_sim.IncompleteStops.test_the_deadline_expiring_before_finalisation_is_incomplete"]),
+ ("M44 F9: the external sources and the exclusion sources are not bound in the snapshot",
+  edit(SIM, [('            external[str(p)] = got\n', '            pass\n'), ("    for src in exclusion.sources:                                   # read against their digests already; bound here for the checkpoints\n        inputs[src.path] = src.sha256\n", "")]),
+  [T + "test_b4_sim.CompleteBatch.test_the_freezing_order_the_fixture_seeds_and_the_manifest", T + "test_b4_sim.InvalidStops.test_an_unexpected_exception_and_the_three_drifts"]),
+ ("M45 F9: the registry snapshot is not held at the checkpoints",
+  edit(SIM, [('        if now != c["registry"]:\n            raise Invalid("input_drift", f"the archived-set registry changed during the batch', '        if False:\n            raise Invalid("input_drift", f"the archived-set registry changed during the batch')]),
+  [T + "test_b4_sim.InvalidStops.test_an_unexpected_exception_and_the_three_drifts"]),
+ ("M46 F2: the verifier does not require the files of a pair's recorded state",
+  edit(VER, [('        for rel in sorted(must - on_disk):\n            F.add(rel, f"required by pair', '        for rel in sorted(set()):\n            F.add(rel, f"required by pair')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_untouched_archive_is_clean_and_every_tamper_is_named"]),
+ ("M47 F2: the verifier does not recompute the pooled summary",
+  edit(VER, [('                if _j(summary) != _j(report["summary"]):\n                    F.add("sim_report.json", "the pooled summary is not the one recomputed from the pairs\' files")', '                pass')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_untouched_archive_is_clean_and_every_tamper_is_named"]),
+ ("M48 F3: the fixed comparison sets are not enforced (K9 and K10 canonical checks removed)",
+  multi(edit(K9, [("    f += canonical_findings(result, mapping)\n    if len(result[\"pairs\"]) > len(want_pairs):\n        return f\n", "")]),
+        edit(K10, [("    f += canonical_findings(result)\n    if len(result[\"units\"]) > len(canonical_units()):\n        return f\n", "")]),
+        edit(SCH, [("    f += k9.canonical_findings(doc, mapping)\n", ""), ("    f += k10.canonical_findings(doc)\n", "")])),
+  [T + "test_b4_k9.TheComputation.test_a_refusal_inside_a_pair_carries_the_partial_and_a_truncated_complete_record_is_named",
+   T + "test_b4_k10.TheComputation.test_duplicated_or_missing_units_in_a_complete_record_are_named", T + "test_b4_sim.TheArchiveVerifier.test_the_comparison_sets_and_the_cell_types_are_enforced_by_the_validators"]),
+ ("M49 F3: a q cell of 2 passes the observation validator",
+  edit(SCH, [("        if not (isinstance(row, list) and len(row) == ELEMENTS and all(c is None or (c in (0, 1) and _int(c)) for c in row)):", "        if not (isinstance(row, list) and len(row) == ELEMENTS):")]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_comparison_sets_and_the_cell_types_are_enforced_by_the_validators", T + "test_b4_sim.InvalidStops.test_a_bad_q_cell_from_the_source_is_never_archived_as_complete"]),
+ ("M50 F3: a validator exception escapes instead of becoming a finding",
+  edit(SCH, [("        except Exception as exc:  # noqa: BLE001\n            return [f\"{fn.__name__}: the validator raised {type(exc).__name__}: {exc} — the document is malformed\"]", "        except ZeroDivisionError as exc:  # noqa: BLE001\n            return [f\"{fn.__name__}: the validator raised {type(exc).__name__}: {exc} — the document is malformed\"]"),
+             ('    if not (isinstance(doc["arm_order"], list) and tuple(doc["arm_order"]) == ROLES):', '    if tuple(doc["arm_order"]) != ROLES:')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_comparison_sets_and_the_cell_types_are_enforced_by_the_validators"]),
+ ("M51 R1: the planned-record validator lets a complete pair carry an unaudited arm",
+  edit(SCH, [('        if p["status"] == "complete" and not (all(v == "audited" for v in p["arms"].values()) and all(p[k] == "complete" for k in ("k7", "k9", "k10"))):', '        if False:')]),
+  [T + "test_b4_sim.TheSummaryAndTheValidators.test_a_summary_with_a_verdict_key_is_refused_by_the_report_validator", T + "test_b4_sim.TheArchiveVerifier.test_a_downgraded_arm_state_cannot_switch_the_audit_off"]),
+ ("M52 R1: the deep verifier skips the re-audit of an arm the plan does not call audited",
+  edit(VER, [('            if plan["status"] == "complete" and (plan["arms"][role] != "audited" or audit is None):\n                F.add(pre + f"arm_{role}.result.json", "a complete pair\'s arm is not audited (R1: a weaker recorded state cannot switch the audit off)")\n', ''),
+             ('            if (plan["status"] == "complete" or plan["arms"][role] == "audited") and (completion or replay or rc["findings"] or view_f):', '            if plan["arms"][role] == "audited" and (completion or replay or rc["findings"] or view_f):')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_deep_verifier_re_audits_even_if_the_record_validators_were_bypassed"]),
+ ("M53 R2: the arm wrapper is not bound to the planned pair / role / seeds",
+  edit(SCH, [("        if expect is not None:\n            if canonical([doc[\"pair\"], doc[\"role\"], doc[\"landscape_seed\"], doc[\"operator_seed\"]]) != canonical([expect[\"pair\"], expect[\"role\"], expect[\"landscape_seed\"], expect[\"operator_seed\"]]):", "        if expect is not None:\n            if False:")]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_every_record_is_bound_to_the_planned_pair_and_the_formal_source"]),
+ ("M54 R2: the manifest's descriptors are not bound to the formal inputs",
+  edit(SCH, [('    if not f:                                                           # R2: the descriptors are the FORMAL inputs\', not merely well-formed', '    if False:')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_every_record_is_bound_to_the_planned_pair_and_the_formal_source"]),
+ ("M55 R3: observation ids and indices compared by Python equality (false == 0, 2.0 == 2)",
+  edit(SCH, [("        if not _int(o[\"id\"]) or o[\"id\"] != i:", "        if o[\"id\"] != i:"),
+             ('            if u["illegal_corners"] != [] or any(v is None for v in sc_.values()) or not _int(u["index"]) or u["index"] != sc_["11"] - sc_["10"] - sc_["01"] + sc_["00"]:', '            if u["illegal_corners"] != [] or any(v is None for v in sc_.values()) or u["index"] != sc_["11"] - sc_["10"] - sc_["01"] + sc_["00"]:')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_nested_scalars_are_exact_in_type"]),
+ ("M56 R4: no deadline check after the final verification",
+  edit(SIM, [("            try:\n                self.dl.check()\n                self.hold_inputs(\"publication\")\n                self.hold_tree()\n                self.dl.check()\n", "            try:\n                self.hold_inputs(\"publication\")\n                self.hold_tree()\n")]),
+  [T + "test_b4_sim.IncompleteStops.test_the_deadline_expiring_during_the_final_verification_is_incomplete"]),
+ ("M57 R5: no input checkpoint after the final verification",
+  edit(SIM, [("                self.hold_inputs(\"publication\")\n                self.hold_tree()\n", "")]),
+  [T + "test_b4_sim.InvalidStops.test_an_input_drift_during_the_final_verification_is_invalid"]),
+ ("M58 round 3 / 1: the diagnostic state ↔ file contract is not enforced by the verifier",
+  edit(VER, [('        F.add(pre, *diagnostic_state_findings(plan, {rel[len(pre):-5]: _load(disk[rel])[0] for rel in present}))', '        pass')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_genuine_partial_diagnostic_cannot_belong_to_a_complete_batch"]),
+ ("M59 round 3 / 2: pairs_total / units_total / corner genomes compared by Python equality",
+  edit(SCH, [('    if not (isinstance(doc["pairs"], list) and _nonneg(doc["pairs_done"]) and len(doc["pairs"]) == doc["pairs_done"] and _int(doc["pairs_total"])):', '    if not (isinstance(doc["pairs"], list) and _nonneg(doc["pairs_done"]) and len(doc["pairs"]) == doc["pairs_done"]):'),
+             ('    if not isinstance(doc["complete"], bool) or not isinstance(doc["units"], list) or not _int(doc["units_total"]):', '    if not isinstance(doc["complete"], bool) or not isinstance(doc["units"], list):'),
+             ('            if not (isinstance(c, dict) and set(c) == {"genome", "score", "obs"} and _genome(c["genome"]) and c["genome"] == k10._corner_genome(u["background"], u["a"], u["b"], k)', '            if not (isinstance(c, dict) and set(c) == {"genome", "score", "obs"} and c["genome"] == k10._corner_genome(u["background"], u["a"], u["b"], k)')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_remaining_counts_and_genomes_are_exact_in_type"]),
+ ("M60 round 3 / 3: the deadline record's self-consistency is not checked",
+  edit(SCH, [('    if x and e < s - MS:\n        f.append(f"{where}: expired with elapsed_s {e} < seconds {s}")\n    if not x and e > s:\n        f.append(f"{where}: not expired with elapsed_s {e} > seconds {s}")\n', '')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_deadline_records_are_consistent_and_bound_to_the_manifest"]),
+ ("M61 round 3 / 3: the report's deadline is not bound to the manifest's declared duration",
+  edit(VER, [('    F.add("sim_report.json", *sc.deadline_findings(report["deadline"], manifest["deadline_s"], "deadline"))', '    F.add("sim_report.json", *sc.deadline_findings(report["deadline"], None, "deadline"))')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_deadline_records_are_consistent_and_bound_to_the_manifest"]),
+ # ---- round 4: the owner's review of 2026-10-19 on 8d1eefd (two P2 findings) and the gap found while fixing the second
+ ("M62 round 4 / 1: the diagnostic state ↔ file contract is asked about every document (malformed ones too) and raises on a non-object",
+  edit(VER, [('        if doc is not None and not isinstance(doc, dict):\n            f.append(f"{k}: the document is not an object"); continue\n', ''),
+             ('        if any(F.d.get(rel) for rel in present):\n            continue\n', '')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_malformed_diagnostic_is_a_named_finding_never_an_exception"]),
+ ("M63 round 4 / 1: the contract's nested set counts raise on a set that is not a list",
+  edit(VER, [('            if k == "k9" and not (isinstance(doc.get("pairs"), list) and len(doc["pairs"]) == 1184):', '            if k == "k9" and len(doc.get("pairs") or []) != 1184:'),
+             ('            if k == "k10" and not (isinstance(doc.get("units"), list) and len(doc["units"]) == 420):', '            if k == "k10" and len(doc.get("units") or []) != 420:')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_malformed_diagnostic_is_a_named_finding_never_an_exception"]),
+ ("M64 round 4 / 1: the verifier's CLI lets an exception escape as a traceback instead of a finding",
+  edit(VER, [('    try:\n        f = verify_run_dir(Path(a.run_dir), deep=not a.shallow)\n    except Exception as exc:  # noqa: BLE001 — the verifier failing is a finding, never a traceback in place of the result\n        f = {"verifier": [f"the archive verifier raised {type(exc).__name__}: {exc}"]}\n',
+              '    f = verify_run_dir(Path(a.run_dir), deep=not a.shallow)\n')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_malformed_diagnostic_is_a_named_finding_never_an_exception"]),
+ ("M65 round 4 / 2: the deadline record is several clock samples (elapsed, expired and the first expiry each sampled apart)",
+  edit(DL, [('        elapsed = self._sample()\n        expired = self._expired_at(elapsed)\n        return {"seconds": self.seconds, "elapsed_s": round(elapsed, 3), "checks": self.checks, "expired": expired,',
+             '        return {"seconds": self.seconds, "elapsed_s": round(self._sample(), 3), "checks": self.checks, "expired": self._expired_at(self._sample()),')]),
+  [T + "test_b4_deadline.TheDeadline.test_the_record_is_one_monotonic_sample", T + "test_b4_sim.IncompleteStops.test_a_stop_at_the_deadline_boundary_still_writes_stopped_json"]),
+ ("M66 round 4 / 2: the first expiry is a fresh clock sample, not the sample that expired the deadline",
+  edit(DL, [('            self.first_expired_at = elapsed', '            self.first_expired_at = self._sample()')]),
+  [T + "test_b4_deadline.TheDeadline.test_the_record_is_one_monotonic_sample"]),
+ ("M67 round 4 (found while fixing 2): an interrupt before any K9 record is recorded as `partial` without a document",
+  edit(SIM, [('            plan["k9"] = "partial" if self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "interrupt") else "in_progress"',
+              '            plan["k9"] = "partial"; self._keep_partial(r, "k9", getattr(exc, "k9_partial", None), lambda doc: sc.k9_findings(doc, task), "K9", "interrupt")')]),
+  [T + "test_b4_sim.IncompleteStops.test_a_stop_at_the_deadline_boundary_still_writes_stopped_json"]),
+ # ---- the exposure settlement (the owner's ruling of 2026-10-19 on the prior production-seed exposure)
+ ("M68 settlement: the exposure receipt's values are not pooled into the exclusion set",
+  edit(SEEDS, [("    pooled.update(receipt.values)\n", "")]),
+  [T + "test_b4_seeds.TheHistoricalSources.test_the_pool_holds_the_copy_the_exposed_values_and_every_source_value", T + "test_b4_seeds.TheExposureReceipt.test_the_receipt_s_values_are_screened_at_both_positions"]),
+ ("M69 settlement: the receipt's digest is not held to the pinned one (a re-hashed receipt is read)",
+  edit(SEEDS, [('    if got != EXPOSURE_RECEIPT_SHA256:\n        raise ExclusionSourceRefusal(f"{EXPOSURE_RECEIPT_REL}: the exposure receipt hashes to {got[:16]}…, not its pinned {EXPOSURE_RECEIPT_SHA256[:16]}… (re-hashed or replaced; never skipped)")\n', "")]),
+  [T + "test_b4_seeds.TheExposureReceipt.test_a_missing_rehashed_or_malformed_receipt_is_refused_by_name"]),
+ ("M70 settlement: a retired label is accepted by the pre-flight (the derivation path is open to b4-sim-1 / b4-sim-2)",
+  edit(SIM, [('        try:\n            bs.check_label_not_retired(label)                   # a retired label is refused here, before any tree is read and before any master is formed\n        except bs.RetiredLabelRefusal as exc:\n            raise Refusal(str(exc)) from None\n', "")]),
+  [T + "test_b4_sim.Preflight.test_a_retired_label_is_refused_before_the_tree_is_read", T + "test_b4_sim.Preflight.test_refusals_write_nothing"]),
+ ("M71 settlement: the receipt is not a root input (not held at the checkpoints)",
+  edit(SIM, [(', bs.EXPOSURE_RECEIPT_REL)   # the receipt: pinned, pooled, held at every checkpoint', ')'),
+             ('    if inputs[bs.EXPOSURE_RECEIPT_REL] != bs.EXPOSURE_RECEIPT_SHA256:\n        raise Refusal("the root\'s exposure receipt does not hash to the pinned digest")\n', '')]),
+  [T + "test_b4_sim.InvalidStops.test_a_receipt_drift_during_the_batch_is_invalid", T + "test_b4_sim.CompleteBatch.test_the_freezing_order_the_fixture_seeds_and_the_manifest"]),
+ ("M72 settlement: the manifest validator does not bind the receipt (digest, path, held input)",
+  edit(SCH, [('    else:\n        f.extend(bs.receipt_reference_findings(e["exposure_receipt"], "exclusion.exposure_receipt"))     # the pinned receipt, pooled into this batch\'s derivation\n    if isinstance(doc["inputs"], dict) and doc["inputs"].get(bs.EXPOSURE_RECEIPT_REL) != bs.EXPOSURE_RECEIPT_SHA256:\n        f.append("inputs: the exposure receipt is not held at its pinned digest")\n', '')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_exposure_receipt_is_bound_in_seeds_the_manifest_and_the_inputs"]),
+ ("M73 settlement: the verifier's linkage does not bind the receipt across seeds.json, the manifest and the inputs",
+  edit(VER, [('        F.add("linkage", "the exposure receipt is not the pinned one in seeds.json, manifest.json and the held inputs")\n', '        pass\n')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_the_exposure_receipt_is_bound_in_seeds_the_manifest_and_the_inputs"]),
+ ("M74 settlement: the thresholds table names a retired label as the exploration label",
+  edit(TH, [('"exploration_label": "b4-sim-3",', '"exploration_label": "b4-sim-1",')]),
+  [T + "test_b4_thresholds.ThePins.test_the_numbers_are_the_document_s", T + "test_b4_sim.Preflight.test_a_retired_label_is_refused_before_the_tree_is_read"]),
+ ("M75 settlement: a seeds record's receipt reference is not held to the pinned receipt",
+  edit(SEEDS, [('        if with_receipt:\n            f.extend(receipt_reference_findings(e["exposure_receipt"], "exclusion.exposure_receipt"))\n', '')]),
+  [T + "test_b4_seeds.TheRegistry.test_the_seeds_document_shape"]),
+ # ---- the owner's review of 2026-10-19 on 1d9525c (P2): the receipt count bound to the hash-verified receipt's pooled length
+ ("M76 settlement P2: a record's receipt count is any non-negative int (not the pinned receipt's pooled length)",
+  edit(SEEDS, [('    try:\n        n = pinned_receipt_count()\n    except ExclusionSourceRefusal as exc:\n        return f + [f"{where}.count cannot be bound: the pinned receipt does not read ({exc})"]\n    if ref["count"] != n:\n        f.append(f"{where}.count {ref[\'count\']} is not the pinned receipt\'s pooled length {n}")\n', '')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_coordinated_wrong_receipt_count_in_both_records_is_refused", T + "test_b4_seeds.TheExposureReceipt.test_the_pinned_receipt_reads_and_is_the_reconstruction_s"]),
+ ("M77 settlement P2: the verifier's linkage accepts two records agreeing on a receipt count without the authoritative length",
+  edit(VER, [('            if s_rc.get("count") != n:\n                F.add("linkage", f"the receipt count {s_rc.get(\'count\')!r} recorded in seeds.json and manifest.json is not the pinned receipt\'s pooled length {n}")\n', '            pass\n')]),
+  [T + "test_b4_sim.TheArchiveVerifier.test_a_coordinated_wrong_receipt_count_in_both_records_is_refused"]),
+]
+
+
+def run(tree, tests):
+    p = subprocess.run([sys.executable, "-m", "unittest", *tests], cwd=tree, capture_output=True, text=True)
+    out = p.stdout + p.stderr
+    m = re.search(r"Ran (\d+) tests?", out)
+    ran = int(m.group(1)) if m else 0
+    failed = [x for x in re.findall(r"^(?:FAIL|ERROR): (\S+)", out, re.M)]
+    status = "FAILED" if (p.returncode != 0 and ran > 0) else ("OK" if p.returncode == 0 else "NO-RUN")
+    return ran, status, failed, out
+
+
+def main(only=None):
+    lines = []
+    t0 = time.time()
+    chosen = [m for m in MUTANTS if only is None or m[0].split()[0] in only]
+    for name, apply, tests in chosen:
+        with tempfile.TemporaryDirectory(prefix="b4mut_") as tmp:
+            tree = pathlib.Path(tmp)
+            for rel in COPY:
+                src = R / rel
+                dst = tree / rel
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                (shutil.copytree if src.is_dir() else shutil.copy)(src, dst)
+            base_ran, base_status, _, _ = run(tree, tests)
+            if base_status != "OK" or base_ran == 0:
+                lines.append(f"BASELINE-NOT-GREEN  {name}  [Ran {base_ran}, {base_status}]"); print(lines[-1], flush=True); continue
+            try:
+                apply(tree)
+            except EditMiss as exc:
+                lines.append(f"EDIT-MISS  {name}  [{exc}]"); print(lines[-1], flush=True); continue
+            ran, status, failed, out = run(tree, tests)
+            verdict = "KILLED" if (status == "FAILED" and ran > 0) else "SURVIVED"
+            short = sorted({f.split(".")[-1] if "(" not in f else f.split(" ")[0] for f in failed})
+            lines.append(f"{verdict}  {name}  [Ran {ran}, {status}]  {short}")
+            print(lines[-1], flush=True)
+    lines.append(f"# {sum(1 for l in lines if l.startswith('KILLED'))} / {len(chosen)} killed ({len(MUTANTS)} defined); {time.time() - t0:.0f} s")
+    print(lines[-1])
+    return "\n".join(lines) + "\n"
+
+
+if __name__ == "__main__":
+    # usage: b4_2b4a_mutants.py [<out.txt> [M1,M2,...]]  — the optional third argument runs a subset (names by their M-number)
+    text = main(set(sys.argv[2].split(",")) if len(sys.argv) > 2 else None)
+    out = sys.argv[1] if len(sys.argv) > 1 else None
+    if out:
+        pathlib.Path(out).write_text(text)

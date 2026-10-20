@@ -1,0 +1,158 @@
+{
+  "legitimate_refusals": {
+    "provenance_drift": {
+      "record": {
+        "kind": "SourceRefusal",
+        "message": "the observation source's identity changed between observations",
+        "phase": "search",
+        "attempt": 3
+      },
+      "findings": []
+    },
+    "ValueError": {
+      "record": {
+        "kind": "ValueError",
+        "message": "value refusal",
+        "phase": "search",
+        "attempt": 3
+      },
+      "findings": []
+    }
+  },
+  "effect_identity": {
+    "headers_equal": true,
+    "fixture_markers": {
+      "truth": false,
+      "permuted": false,
+      "dropout": false
+    },
+    "effect_digests_differ": true,
+    "dropout": [
+      "0x00400a00/52/16",
+      "0x00400a1e/51/12",
+      "0x00400a1e/52/1",
+      "0x00400a1f/51/28",
+      "0x00400a1f/52/19"
+    ]
+  },
+  "malformed": {
+    "terminal_is_list": {
+      "findings": [
+        "terminal is not a complete, typed terminal event"
+      ]
+    },
+    "grid_truncated": {
+      "findings": [
+        "ledger[0]: the q grid is not 9 rows of 8 cells in 0 / 1 / None"
+      ]
+    },
+    "genome_wrong_type": {
+      "findings": [
+        "ledger[0]: a field has the wrong type or range"
+      ]
+    },
+    "given_view_invalid": {
+      "findings": [
+        "given_view is not a complete, typed view record"
+      ]
+    },
+    "integer_completed": {
+      "findings": [
+        "completed is not a bool"
+      ]
+    }
+  },
+  "malformed_identity": {
+    "completed": false,
+    "other_refusal": {
+      "kind": "SourceRefusal",
+      "message": "the observation source's identity is malformed: hypothesis identity: exactly path, sha256, version, fixture; mapping identity: exactly site, certificate, certificate_sha256",
+      "phase": "base",
+      "attempt": 1
+    },
+    "provenance": null,
+    "findings": []
+  },
+  "old_probe_fixes": {
+    "both_rng_forged": {
+      "findings": [
+        "result.rng_state_final: recorded '0' (int), reconstructed '13017174734089658123' (int)",
+        "result.terminal.rng_state: recorded '0' (int), reconstructed '13017174734089658123' (int)"
+      ]
+    },
+    "F_map_history": {
+      "findings": [
+        "result.ledger[1].map_commitment_after: recorded '0000000000000000000000000000000000000000' (str), reconstructed 'd268def36adc9ae0d31ea9577949aebd1638cf80' (str)",
+        "result.ledger[1].map_version_after: recorded '999' (int), reconstructed '1' (int)",
+        "result.ledger[1].map_version_before: recorded '999' (int), reconstructed '0' (int)"
+      ]
+    },
+    "pending_removed": {
+      "findings": [
+        "result.pending_children: length 0 recorded, 4 reconstructed"
+      ]
+    }
+  },
+  "shuffled_oracle": {
+    "privileged": true,
+    "provenance": [
+      "oracle",
+      "shuffled"
+    ],
+    "base_commitment": "e030d947b652f30c21d78ccf39dc2b8af3bc65012467e3505325081074880ec0"
+  },
+  "holdout": {
+    "completed": false,
+    "search_completed": true,
+    "findings": []
+  },
+  "X_A_counterexample": {
+    "group_sizes": [
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      2,
+      5
+    ],
+    "pi": [
+      3,
+      14,
+      15,
+      4,
+      6,
+      18,
+      10,
+      19,
+      13,
+      16,
+      0,
+      17,
+      20,
+      8,
+      1,
+      2,
+      9,
+      11,
+      5,
+      7,
+      12
+    ],
+    "fixed_points": [],
+    "same_partition": true,
+    "construction": "rotate within each of the eight two-address groups and within the five-address group; host-only algebraic counterexample, no search"
+  },
+  "IMPORT_mismatches": [
+    "b4/host/b4_engine.py",
+    "b4/host/b4_execution.py",
+    "b4/host/b4_ff_model.py",
+    "b4/host/b4_replay.py",
+    "b4/tests/test_b4_engine.py",
+    "b4/tests/test_b4_execution.py",
+    "b4/tests/test_b4_ff_model.py",
+    "b4/tests/test_b4_replay.py"
+  ]
+}

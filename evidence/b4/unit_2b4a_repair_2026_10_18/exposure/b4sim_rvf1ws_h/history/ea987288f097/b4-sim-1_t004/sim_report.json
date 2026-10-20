@@ -1,0 +1,260 @@
+{
+ "count": 2,
+ "deadline": {
+  "checks": 2,
+  "clock": "time.monotonic",
+  "elapsed_s": 0.203,
+  "expired": false,
+  "first_expired_at_s": null,
+  "seconds": 3600
+ },
+ "files": [
+  {
+   "path": "seeds.json",
+   "sha256": "968a35fe6b262a2a1da3ddbe5b9182e59e677fe052eebac94873c22fb897fe39",
+   "size": 131500
+  },
+  {
+   "path": "manifest.json",
+   "sha256": "12c992e5ed72f60207cadd968ce0210b3f5b9b987029aa660e07f476a64ef26a",
+   "size": 18030
+  },
+  {
+   "path": "pair_000/arm_R.result.json",
+   "sha256": "bc1036b2afee42b0b232bd2338607891cc9cc9aea85405578352b662d6a02c0c",
+   "size": 423044
+  },
+  {
+   "path": "STOPPED.json",
+   "sha256": "0b0e6385a33dbc0d331d1705ecdba5df04d8df664824c4eec47a61a7b720028f",
+   "size": 1690
+  }
+ ],
+ "generated_utc": "2026-10-18T18:29:02Z",
+ "head": "baf165d0db29e3eb1c3481a48577913a3cc2c320",
+ "identity": {
+  "certificate_sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef",
+  "hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+  "inputs": {
+   "b4/IMPORT.json": "503f35eca5fce4f04e70fdc0341680280d5aa2477a3c16b0348328013eda30fc",
+   "b4/hypothesis/ff_behaviour_v0.3.json": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "docs/b4_architecture.md": "8492b71ef7db62233d5a5b1313369c750efbbeb5bf2874c26bc788a938a55cec",
+   "docs/ff_latch_probe.md": "545bf34de94f83e39aa22b7e186a0797a0b7b2c92466bf55be8efecfd61efd27",
+   "evidence/b4/unit_d1prime_latch_ginv_attempt2_2026_10_18/probe_report.json": "af482824b10f5248db262bb5e6f417830f3b67a45c43e4c75d1dd3eae4a34e55",
+   "gate_runs/run_2026_08_05_ff/certificate.json": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef"
+  },
+  "manifest_sha256": "12c992e5ed72f60207cadd968ce0210b3f5b9b987029aa660e07f476a64ef26a",
+  "out": "evidence/b4/sim/b4-sim-1_t004",
+  "seeds_sha256": "968a35fe6b262a2a1da3ddbe5b9182e59e677fe052eebac94873c22fb897fe39"
+ },
+ "label": "b4-sim-1",
+ "missing": [
+  "no pooled numeric summary: the batch did not complete",
+  "pair 0: partial (arms {'R': 'written', 'F': 'not_started', 'O': 'not_started', 'X': 'not_started', 'D': 'not_started', 'Omega': 'not_started', 'A0': 'not_started'}, k7 not_started, k9 not_started, k10 not_started)",
+  "pair 1: not_started (arms {'R': 'not_started', 'F': 'not_started', 'O': 'not_started', 'X': 'not_started', 'D': 'not_started', 'Omega': 'not_started', 'A0': 'not_started'}, k7 not_started, k9 not_started, k10 not_started)"
+ ],
+ "pairs": [
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "not_started",
+    "O": "not_started",
+    "Omega": "not_started",
+    "R": "written",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 145141952,
+   "operator_seed": 1472419039,
+   "pair": 0,
+   "status": "partial"
+  },
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "not_started",
+    "O": "not_started",
+    "Omega": "not_started",
+    "R": "not_started",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 984548463,
+   "operator_seed": 3132814250,
+   "pair": 1,
+   "status": "not_started"
+  }
+ ],
+ "schema": "b4_sim_report",
+ "schema_version": "1.0.0",
+ "self_validation": {},
+ "standing": "exploration data under the label given, S as planned; not a gate verdict; the thresholds of docs/b4_architecture.md v0.1.14 section 9 are listed for reference only; candidate B* / N are estimates on this S, never the formal S = 200's",
+ "status": "invalid",
+ "stopped": {
+  "deadline": {
+   "checks": 2,
+   "clock": "time.monotonic",
+   "elapsed_s": 0.185,
+   "expired": false,
+   "first_expired_at_s": null,
+   "seconds": 3600
+  },
+  "detail": "RuntimeError: audit crashed",
+  "head_at_stop": "baf165d0db29e3eb1c3481a48577913a3cc2c320",
+  "kind": "unexpected_exception",
+  "pair": 0,
+  "planned": [
+   {
+    "arms": {
+     "A0": "not_started",
+     "D": "not_started",
+     "F": "not_started",
+     "O": "not_started",
+     "Omega": "not_started",
+     "R": "written",
+     "X": "not_started"
+    },
+    "k10": "not_started",
+    "k7": "not_started",
+    "k9": "not_started",
+    "landscape_seed": 145141952,
+    "operator_seed": 1472419039,
+    "pair": 0,
+    "status": "partial"
+   },
+   {
+    "arms": {
+     "A0": "not_started",
+     "D": "not_started",
+     "F": "not_started",
+     "O": "not_started",
+     "Omega": "not_started",
+     "R": "not_started",
+     "X": "not_started"
+    },
+    "k10": "not_started",
+    "k7": "not_started",
+    "k9": "not_started",
+    "landscape_seed": 984548463,
+    "operator_seed": 3132814250,
+    "pair": 1,
+    "status": "not_started"
+   }
+  ],
+  "role": "R",
+  "schema": "b4_sim_stopped",
+  "schema_version": "1.0.0",
+  "stage": "arms",
+  "status": "invalid",
+  "stopped_utc": "2026-10-18T18:29:02Z",
+  "traceback": "Traceback (most recent call last):\n  File \"/tmp/b4_owner_cdf2c53_y9cov9it/b4/host/b4_sim.py\", line 652, in run_batch\n    batch.run_pair(r)\n  File \"/tmp/b4_owner_cdf2c53_y9cov9it/b4/host/b4_sim.py\", line 343, in run_pair\n    replay = br.replay(d, task)\n             ^^^^^^^^^^^^^^^^^^\n  File \"/tmp/b4_owner_cdf2c53_y9cov9it/b4/tests/test_b4_sim.py\", line 294, in boom\n    raise RuntimeError(\"audit crashed\")\nRuntimeError: audit crashed\n"
+ },
+ "summary": null,
+ "thresholds": {
+  "B_max": 256,
+  "B_star": {
+   "no_eligible_budget": "the budget rule FAILS; B* and N are not invented (exploration: candidate B* / N are null with the reason)",
+   "rule": "the smallest N(B) x 3 x B among budgets where K1 holds and N(B) exists; ties to the smaller budget"
+  },
+  "K1": {
+   "medians": "median_r(best_R(B)) > median_r(base_r), two medians compared",
+   "omega_best_p95_lt": 64,
+   "percentile": 95
+  },
+  "K10": {
+   "background_rule": "0 and Rng((seed ^ salt) & 0xffffffff).uniform(1 << 21), the first call",
+   "background_salt": 1275743829,
+   "backgrounds": 2,
+   "interacting": "max|I| > 2 (exactly 2 is nonzero below threshold)",
+   "interacting_seeds_over_S_min": 0.5,
+   "pairs_per_background": 210,
+   "tau": 2
+  },
+  "K2": {
+   "alpha": 0.05,
+   "bootstrap_experiments": 1000,
+   "bootstrap_seed": 7,
+   "population_variance_gt": 0,
+   "rejection": "p <= 0.05",
+   "ties": "excluded from the sign test's n, kept in the resampled population",
+   "x_minus_r_nonrejection_min": 0.9
+  },
+  "K3": {
+   "alpha": 0.05,
+   "denominators": "mean(F - R) > 0 and mean(O - R) > 0 required; a non-positive denominator is not readable as satisfied",
+   "ratio_max": 0.1,
+   "sign_test_h1": "P(control - R > 0 | control - R != 0) > 1/2"
+  },
+  "K4": {
+   "f_over_omega_min": 0.5,
+   "omega_median_max": 57.6,
+   "omega_median_rule": "0.90 * 64"
+  },
+  "K5": {
+   "alpha": 0.05,
+   "bootstrap_experiments": 1000,
+   "bootstrap_seed_rule": "random.Random(1 + N)",
+   "cap_formula": "N x 3 x B*",
+   "cap_search_evaluations": 4000,
+   "cohen_d_min": 0.5,
+   "n_min": 8,
+   "n_scan": "every integer from 8 to S, ascending, no bisection",
+   "power_min": 0.9
+  },
+  "K6": {
+   "N_min": 8,
+   "S_gate": 200,
+   "note": "S is the number planned, never the number that completed"
+  },
+  "K7": {
+   "o_prefix_median_not_unknown_min": 11,
+   "of_addresses": 21,
+   "prefix": "arm O's first B* + 1 ledger records (base + B* search)",
+   "recomputation_mismatches": 0
+  },
+  "K8": {
+   "replay": "no finding on every executed run; a broken tool contract is invalid under section 9.1"
+  },
+  "K9": {
+   "median_coverage_per_semantic_min": 0.5,
+   "median_population": "all S seeds; one not-assessable seed makes the semantic's median not assessable",
+   "panel": "section 9.3: 32 mode combinations x INIT/SRVAL all-0 / all-1 = 64 backgrounds",
+   "seeds_with_all_seven_positive_controls_min": 0.9,
+   "semantics": 7
+  },
+  "addresses": 21,
+  "anchor": {
+   "exploration_label": "b4-sim-1",
+   "gate_label": "b4-gate-1",
+   "hypothesis_sha256": "59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8",
+   "rule": "int.from_bytes(sha256(utf8(label + '|' + anchor))[:4], 'big'), the label passed beside the anchor"
+  },
+  "controls": {
+   "d_shuffle_seed": "int.from_bytes(sha256('b4-d-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')",
+   "x_control_seed": "int.from_bytes(sha256('b4-x-control-1|<landscape_seed>|<operator_seed>')[:4], 'big')"
+  },
+  "delta2_F_shift": 21,
+  "grid": [
+   8,
+   16,
+   24,
+   32,
+   48,
+   64,
+   96,
+   128,
+   192,
+   256
+  ],
+  "lambda": 8,
+  "probes_per_F_run": 21,
+  "source": "docs/b4_architecture.md section 9 (v0.1.14), fixed before any exploration or gate run",
+  "standing": "engineering research criteria fixed in advance; no number is claimed to be empirically guaranteed, statistically calibrated or valid for silicon; listed beside exploration values for reference only \u2014 never a gate verdict here"
+ }
+}

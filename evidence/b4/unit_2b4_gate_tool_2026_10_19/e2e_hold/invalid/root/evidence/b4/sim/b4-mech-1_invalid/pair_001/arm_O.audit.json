@@ -1,0 +1,48 @@
+{
+ "audited_utc": "2026-10-19T15:03:06Z",
+ "completion_findings": [
+  "completed / search_completed are not the bool True",
+  "terminal is not None",
+  "evals / len(best_trace) are not exactly 256",
+  "cost {\"base\": 1, \"holdout\": 0, \"probes\": 0, \"search\": 28} is not the arm's {\"base\": 1, \"holdout\": 1, \"probes\": 0, \"search\": 256}",
+  "observations 29 / port calls 30 / ledger 29 are not all 258",
+  "the holdout is not exactly the last record, once",
+  "no holdout score"
+ ],
+ "invalid": true,
+ "pair": 1,
+ "recompute": {
+  "applicable": true,
+  "arm": "O",
+  "findings": [],
+  "map_commitment": "a13bcbc827cb94b76c8b1fe351c7199a9a78fce326f693f5c54e8e215ded3d33",
+  "map_version": 11,
+  "mode": "online",
+  "relations_final_sha256": "c643400c1e88e2107be312233eca3ccffa0940b29735d68e27577acbd1b8c8ca",
+  "states": {
+   "context_dependent": 0,
+   "effect_seen": 3,
+   "no_effect_seen": 3,
+   "unknown": 15
+  }
+ },
+ "replay_findings": [],
+ "role": "O",
+ "schema": "b4_sim_arm_audit",
+ "schema_version": "1.0.0",
+ "states": {
+  "applicable": true,
+  "arm": "O",
+  "findings": [],
+  "mode": "online",
+  "not_unknown": 6,
+  "note": "not K7 (b): K7 (b) is read on arm O's B* prefix only",
+  "states": {
+   "context_dependent": 0,
+   "effect_seen": 3,
+   "no_effect_seen": 3,
+   "unknown": 15
+  }
+ },
+ "view_findings": []
+}

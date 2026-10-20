@@ -1,0 +1,133 @@
+{
+  "observation_without_stimuli": {
+    "schema": "b4_ff_observation_trace",
+    "schema_version": "0.2.0",
+    "visibility": "executing_side",
+    "q_null_means": "no readout is given by the hypothesis for that element in that configuration, or the element was never initialised",
+    "hypothesis": {
+      "path": "b4/hypothesis/ff_behaviour_v0.2.json",
+      "sha256": "5105002b8fd3abd903324f00f7e73962203968f553f2ec154845bf471a97cde4",
+      "version": "0.2.0",
+      "fixture": false
+    },
+    "mapping": {
+      "site": "SLICE_X2Y25",
+      "certificate": "gate_runs/run_2026_08_05_ff/certificate.json",
+      "certificate_sha256": "c69e419f836684872c9edb3754cdb7c76591aaabf69859dab448454c6d78ceef"
+    },
+    "config": {
+      "0x00400a00/52/16": 1,
+      "0x00400a01/51/7": 1,
+      "0x00400a01/51/19": 1,
+      "0x00400a01/52/3": 1,
+      "0x00400a01/52/7": 1,
+      "0x00400a01/52/15": 1,
+      "0x00400a01/52/19": 0,
+      "0x00400a01/52/23": 1,
+      "0x00400a1e/51/12": 1,
+      "0x00400a1e/51/30": 1,
+      "0x00400a1e/52/0": 0,
+      "0x00400a1e/52/1": 1,
+      "0x00400a1e/52/18": 1,
+      "0x00400a1f/51/3": 0,
+      "0x00400a1f/51/6": 0,
+      "0x00400a1f/51/22": 0,
+      "0x00400a1f/51/28": 0,
+      "0x00400a1f/52/1": 0,
+      "0x00400a1f/52/9": 0,
+      "0x00400a1f/52/19": 0,
+      "0x00400a1f/52/26": 0
+    },
+    "config_sha256": "11099ab108b57d1ebdd027241ca37c4e01b53b12f1f77b49fb7583f2120b50c4",
+    "stimulus": [],
+    "initial": {
+      "clock": 0,
+      "ce": 0,
+      "sr": 0,
+      "d": 0,
+      "q": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ]
+    },
+    "elements": [
+      "AFF",
+      "A5FF",
+      "BFF",
+      "B5FF",
+      "CFF",
+      "C5FF",
+      "DFF",
+      "D5FF"
+    ],
+    "steps": []
+  },
+  "default_load_missing_source": {
+    "accepted": false,
+    "refusal": "source DOES_NOT_EXIST.v is absent at /home/test/Xilinx/2025.2/data/verilog/src/unisims/DOES_NOT_EXIST.v"
+  },
+  "unrecognised_decode": {
+    "accepted": true
+  },
+  "negative_word": {
+    "accepted": false,
+    "refusal": "the certificate /tmp/b4_owner_probe_cx91v285/negative_word.json hashes to 6720b8cc590ddafa\u2026, not the expected c69e419f83668487\u2026"
+  },
+  "missing_baseline": {
+    "accepted": false,
+    "refusal": "the certificate /tmp/b4_owner_probe_cx91v285/missing_baseline.json hashes to b2da85f0fd0075aa\u2026, not the expected c69e419f83668487\u2026"
+  },
+  "primary_value_contradicts_transition": {
+    "accepted": false,
+    "refusal": "the certificate /tmp/b4_owner_probe_cx91v285/primary_value_contradicts_transition.json hashes to 461a769d9a5e6450\u2026, not the expected c69e419f83668487\u2026"
+  },
+  "clock_2": {
+    "accepted": false,
+    "refusal": "step 1: clock = 2 is not an integer in [0, 1]"
+  },
+  "negative_sr": {
+    "accepted": false,
+    "refusal": "step 1: sr = -1 is not an integer in [0, 255]"
+  },
+  "latch_endpoint": {
+    "model_q_after": [
+      [
+        1,
+        null,
+        1,
+        null,
+        1,
+        null,
+        1,
+        null
+      ],
+      [
+        1,
+        null,
+        1,
+        null,
+        1,
+        null,
+        1,
+        null
+      ]
+    ],
+    "expected_for_cited_LDCE_IS_G_INVERTED_0_endpoint_at_G_0": [
+      1,
+      null,
+      1,
+      null,
+      1,
+      null,
+      1,
+      null
+    ],
+    "basis": "docs/ff_latch_probe.md: main_latch and CLKINV-context warning; UNISIM LDCE gate-level rule"
+  }
+}

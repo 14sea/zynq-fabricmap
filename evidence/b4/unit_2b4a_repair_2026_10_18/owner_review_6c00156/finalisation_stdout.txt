@@ -1,0 +1,113 @@
+{
+ "deadline": {
+  "archive_verify": {},
+  "deadline": {
+   "checks": 1655,
+   "clock": "time.monotonic",
+   "elapsed_s": 10000.0,
+   "expired": true,
+   "first_expired_at_s": 10000.0,
+   "seconds": 60
+  },
+  "exit_code": 3,
+  "status": "incomplete",
+  "stopped": {
+   "deadline": {
+    "checks": 1655,
+    "clock": "time.monotonic",
+    "elapsed_s": 10000.0,
+    "expired": true,
+    "first_expired_at_s": 10000.0,
+    "seconds": 60
+   },
+   "detail": "the deadline expired during the final verification: the soft deadline of 60 s passed after 10000.000 s (check 1655)",
+   "head_at_stop": "aac57840db5815f1e1403806598f32e31e7d23d7",
+   "kind": "deadline",
+   "pair": null,
+   "planned": [
+    {
+     "arms": {
+      "A0": "audited",
+      "D": "audited",
+      "F": "audited",
+      "O": "audited",
+      "Omega": "audited",
+      "R": "audited",
+      "X": "audited"
+     },
+     "k10": "complete",
+     "k7": "complete",
+     "k9": "complete",
+     "landscape_seed": 7,
+     "operator_seed": 11,
+     "pair": 0,
+     "status": "complete"
+    }
+   ],
+   "role": null,
+   "schema": "b4_sim_stopped",
+   "schema_version": "1.0.0",
+   "stage": "publication",
+   "status": "incomplete",
+   "stopped_utc": "2026-10-18T21:17:50Z",
+   "traceback": null
+  },
+  "summary": null
+ },
+ "input_drift": {
+  "archive_verify": {},
+  "deadline": {
+   "checks": 1655,
+   "clock": "time.monotonic",
+   "elapsed_s": 0.0,
+   "expired": false,
+   "first_expired_at_s": null,
+   "seconds": 60
+  },
+  "exit_code": 1,
+  "status": "invalid",
+  "stopped": {
+   "deadline": {
+    "checks": 1655,
+    "clock": "time.monotonic",
+    "elapsed_s": 0.0,
+    "expired": false,
+    "first_expired_at_s": null,
+    "seconds": 60
+   },
+   "detail": "the input docs/b4_architecture.md changed or disappeared during the batch (publication)",
+   "head_at_stop": "3d7054583a85fd57c4ac05517fddfc17e5e00752",
+   "kind": "input_drift",
+   "pair": null,
+   "planned": [
+    {
+     "arms": {
+      "A0": "audited",
+      "D": "audited",
+      "F": "audited",
+      "O": "audited",
+      "Omega": "audited",
+      "R": "audited",
+      "X": "audited"
+     },
+     "k10": "complete",
+     "k7": "complete",
+     "k9": "complete",
+     "landscape_seed": 7,
+     "operator_seed": 11,
+     "pair": 0,
+     "status": "complete"
+    }
+   ],
+   "role": null,
+   "schema": "b4_sim_stopped",
+   "schema_version": "1.0.0",
+   "stage": "publication",
+   "status": "invalid",
+   "stopped_utc": "2026-10-18T21:18:00Z",
+   "traceback": null
+  },
+  "summary": null
+ },
+ "root": "/tmp/b4_owner_round2_final_2iloilk6"
+}

@@ -1,0 +1,59 @@
+{
+ "deadline": {
+  "checks": 60,
+  "clock": "time.monotonic",
+  "elapsed_s": 61.0,
+  "expired": true,
+  "first_expired_at_s": 60.0,
+  "seconds": 60
+ },
+ "detail": "the soft deadline of 60 s passed after 60.000 s (check 60)",
+ "head_at_stop": "d496bd92d085a235578e2da025d4cf9425d21bc5",
+ "kind": "deadline",
+ "pair": 0,
+ "planned": [
+  {
+   "arms": {
+    "A0": "audited",
+    "D": "audited",
+    "F": "audited",
+    "O": "audited",
+    "Omega": "audited",
+    "R": "audited",
+    "X": "audited"
+   },
+   "k10": "not_started",
+   "k7": "complete",
+   "k9": "partial",
+   "landscape_seed": 7,
+   "operator_seed": 11,
+   "pair": 0,
+   "status": "partial"
+  },
+  {
+   "arms": {
+    "A0": "not_started",
+    "D": "not_started",
+    "F": "not_started",
+    "O": "not_started",
+    "Omega": "not_started",
+    "R": "not_started",
+    "X": "not_started"
+   },
+   "k10": "not_started",
+   "k7": "not_started",
+   "k9": "not_started",
+   "landscape_seed": 8,
+   "operator_seed": 12,
+   "pair": 1,
+   "status": "not_started"
+  }
+ ],
+ "role": "K9",
+ "schema": "b4_sim_stopped",
+ "schema_version": "1.0.0",
+ "stage": "k9",
+ "status": "incomplete",
+ "stopped_utc": "2026-10-19T15:03:21Z",
+ "traceback": null
+}
