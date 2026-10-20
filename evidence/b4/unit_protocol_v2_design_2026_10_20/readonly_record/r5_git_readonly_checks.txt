@@ -1,0 +1,11 @@
+# read-only git / file checks made in the 2026-10-20 session for the revision draft v0.2 section 5 (R5); no tracked file changed
+sim-3 archive commit 5c08536: parents = 933545a (the recorded execution HEAD)
+gate-1 archive commit 5070967: parents = a243ee8 (the recorded execution HEAD)
+git diff --stat 933545a 5c08536 -- . ':(exclude)evidence/b4/sim/b4-sim-3_20261019T121833Z'  -> empty (the archive commit's tree = the code HEAD's tree + the archive, nothing else)
+git diff --stat a243ee8 5070967 -- . ':(exclude)evidence/b4/sim/b4-gate-1_20261020T102526Z' ':(exclude)evidence/b4/gate/b4-gate-1_20261020T102526Z' -> empty
+git ls-tree 933545a evidence/b4/sim/ -> nothing (the sim-3 execution HEAD holds no evidence/b4/sim)
+git ls-tree a243ee8 evidence/b4/sim/ evidence/b4/gate/ -> only evidence/b4/sim/b4-sim-3_20261019T121833Z (no gate-1 archive, no gate dir)
+sim-3 manifest: head 933545a, 23 tool_files; every tool digest reproduced from the blobs of the 933545a tree (git cat-file): all equal
+gate-1 manifest: head a243ee8, 25 tool_files; b4/ byte-identical to 00336d0 (git diff --stat empty); import_check at a243ee8: 52 entries equal
+external_inputs of the gate-1 manifest (6 UNISIM files under /home/test/Xilinx/2025.2/data/verilog/src/unisims/): FDCE.v FDPE.v FDRE.v FDSE.v LDCE.v LDPE.v all present at the recorded sha256 on 2026-10-20
+verifier checks of the live tree: b4_sim_verify.py compares manifest["head"] with report["head"] (line 228) only; b4_gate_verify.py compares the gate report's head with the batch's recorded head (lines 154, 180); neither reads `git rev-parse HEAD` or `git status --porcelain`

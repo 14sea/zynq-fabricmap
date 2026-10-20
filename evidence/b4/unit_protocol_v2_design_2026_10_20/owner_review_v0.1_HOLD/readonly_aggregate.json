@@ -1,0 +1,233 @@
+{
+  "arm_at_256": {
+    "A0": {
+      "median": 41.0,
+      "max": 51
+    },
+    "D": {
+      "median": 41.0,
+      "max": 48
+    },
+    "F": {
+      "median": 41.0,
+      "max": 50
+    },
+    "O": {
+      "median": 41.0,
+      "max": 48
+    },
+    "Omega": {
+      "median": 41.0,
+      "max": 48
+    },
+    "R": {
+      "median": 41.0,
+      "max": 51
+    },
+    "X": {
+      "median": 41.0,
+      "max": 49
+    }
+  },
+  "omega_minus_R": {
+    "8": {
+      "mean": -1.01,
+      "positive": 33,
+      "negative": 81,
+      "tie": 86
+    },
+    "16": {
+      "mean": -0.91,
+      "positive": 43,
+      "negative": 83,
+      "tie": 74
+    },
+    "24": {
+      "mean": -0.82,
+      "positive": 49,
+      "negative": 95,
+      "tie": 56
+    },
+    "32": {
+      "mean": -0.77,
+      "positive": 52,
+      "negative": 90,
+      "tie": 58
+    },
+    "48": {
+      "mean": -0.59,
+      "positive": 55,
+      "negative": 90,
+      "tie": 55
+    },
+    "64": {
+      "mean": -0.49,
+      "positive": 56,
+      "negative": 95,
+      "tie": 49
+    },
+    "96": {
+      "mean": -0.535,
+      "positive": 44,
+      "negative": 82,
+      "tie": 74
+    },
+    "128": {
+      "mean": -0.525,
+      "positive": 50,
+      "negative": 73,
+      "tie": 77
+    },
+    "192": {
+      "mean": -0.425,
+      "positive": 49,
+      "negative": 61,
+      "tie": 90
+    },
+    "256": {
+      "mean": -0.395,
+      "positive": 38,
+      "negative": 53,
+      "tie": 109
+    }
+  },
+  "holdout_means": {
+    "A0": 40.485,
+    "D": 39.985,
+    "F": 39.83,
+    "O": 39.905,
+    "Omega": 39.96,
+    "R": 40.06,
+    "X": 40.245
+  },
+  "k9_counts": {
+    "ff_srval": {
+      "median": 0.40625,
+      "mean": 0.3934375,
+      "min": 0.20833333333333334,
+      "max": 0.4895833333333333,
+      "equal_half": 0
+    },
+    "sr_kind": {
+      "median": 0.5,
+      "mean": 0.45625,
+      "min": 0.25,
+      "max": 0.5,
+      "equal_half": 103
+    }
+  },
+  "k9_strata": [
+    {
+      "semantic": "ff_srval",
+      "driven": 0,
+      "sync": 0,
+      "latch": 0,
+      "applicable": 12800,
+      "covered": 0
+    },
+    {
+      "semantic": "ff_srval",
+      "driven": 0,
+      "sync": 0,
+      "latch": 1,
+      "applicable": 6400,
+      "covered": 0
+    },
+    {
+      "semantic": "ff_srval",
+      "driven": 0,
+      "sync": 1,
+      "latch": 0,
+      "applicable": 12800,
+      "covered": 0
+    },
+    {
+      "semantic": "ff_srval",
+      "driven": 0,
+      "sync": 1,
+      "latch": 1,
+      "applicable": 6400,
+      "covered": 0
+    },
+    {
+      "semantic": "ff_srval",
+      "driven": 1,
+      "sync": 0,
+      "latch": 0,
+      "applicable": 12800,
+      "covered": 11480
+    },
+    {
+      "semantic": "ff_srval",
+      "driven": 1,
+      "sync": 0,
+      "latch": 1,
+      "applicable": 6400,
+      "covered": 5688
+    },
+    {
+      "semantic": "ff_srval",
+      "driven": 1,
+      "sync": 1,
+      "latch": 0,
+      "applicable": 12800,
+      "covered": 7360
+    },
+    {
+      "semantic": "ff_srval",
+      "driven": 1,
+      "sync": 1,
+      "latch": 1,
+      "applicable": 6400,
+      "covered": 5688
+    },
+    {
+      "semantic": "sr_kind",
+      "driven": 0,
+      "sync": 0,
+      "latch": 0,
+      "applicable": 1600,
+      "covered": 0
+    },
+    {
+      "semantic": "sr_kind",
+      "driven": 1,
+      "sync": 0,
+      "latch": 0,
+      "applicable": 1600,
+      "covered": 1460
+    },
+    {
+      "semantic": "sr_mode",
+      "driven": 0,
+      "sync": 0,
+      "latch": 0,
+      "applicable": 1600,
+      "covered": 1586
+    },
+    {
+      "semantic": "sr_mode",
+      "driven": 0,
+      "sync": 0,
+      "latch": 1,
+      "applicable": 1600,
+      "covered": 1561
+    },
+    {
+      "semantic": "sr_mode",
+      "driven": 0,
+      "sync": 1,
+      "latch": 0,
+      "applicable": 1600,
+      "covered": 1462
+    },
+    {
+      "semantic": "sr_mode",
+      "driven": 0,
+      "sync": 1,
+      "latch": 1,
+      "applicable": 1600,
+      "covered": 1561
+    }
+  ]
+}

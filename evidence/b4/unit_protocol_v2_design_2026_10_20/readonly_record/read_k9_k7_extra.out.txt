@@ -1,0 +1,15 @@
+# output of read_k9_k7_extra.py as captured in the 2026-10-20 session (archive bytes = commit 5070967)
+sr_kind, SR-driven backgrounds only, per-seed fraction: median 1.00000 mean 0.91250 min 0.50000 max 1.00000; seeds >= 0.5: 200 / 200
+ff_srval, SR-driven backgrounds only, per-seed fraction: median 0.81250 mean 0.78687 min 0.41667 max 0.97917; seeds >= 0.5: 198 / 200
+K7 O not_unknown: median / seeds >= 11, per budget:
+  B8: median 2.0, >=11: 0/200, mean 1.8
+  B16: median 3.0, >=11: 0/200, mean 3.2
+  B24: median 4.5, >=11: 0/200, mean 4.5
+  B32: median 6.0, >=11: 4/200, mean 5.8
+  B48: median 8.0, >=11: 37/200, mean 8.2
+  B64: median 10.0, >=11: 87/200, mean 10.2
+  B96: median 14.0, >=11: 173/200, mean 13.7
+  B128: median 17.0, >=11: 198/200, mean 16.3
+  B192: median 19.0, >=11: 200/200, mean 19.1
+  B256: median 21.0, >=11: 200/200, mean 20.4
+O group_moves per run (of 256 evals): median 123.5 mean 123.3 min 99 max 145

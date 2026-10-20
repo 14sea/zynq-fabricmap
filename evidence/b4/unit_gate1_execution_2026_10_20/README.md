@@ -40,7 +40,7 @@ execution HEAD the ruling named (the manifest records the latter).
 | start (host, UTC) | 2026-10-20T10:25:26Z; the pre-flight / manifest `generated_utc` 2026-10-20T10:25:26Z |
 | sim_report written | 2026-10-20T10:48:18Z |
 | gate judgement written | 2026-10-20T10:48:18Z (then the gate's in-process self-validation) |
-| process end (host, UTC) | 2026-10-20T10:57:09Z — ≈ 31.7 min wall for batch + judgement, inside the plan's 50–70 min estimate |
+| process end (host, UTC) | 2026-10-20T10:57:09Z — **≈ 31.7 min** of wall time for the batch and the judgement (10:25:26Z → 10:57:09Z). **With the two fresh-process verifications of section 6 (10:57:35Z → 11:15:01Z) the executed unit took ≈ 49.6 min** (10:25:26Z → 11:15:01Z); the plan's 50–70 min estimate was for the whole unit including those verifications and is compared with the second figure only (the owner's P3 on `d19cc2f`, folded in here on 2026-10-20) |
 | deadline record | `elapsed_s` 1372.077 of 3600, 329747 checks, expired False, clock `time.monotonic` |
 | batch status | `complete`, count 200 / 200 pairs, stopped `None`, missing `[]`, fixture `False`; self-validation `{}` |
 | gate | verdict `FAIL`, formal `True`, formal_reasons `[]`, contract_findings `[]`, clean_tree `True`; self-validation `{}` |
@@ -171,3 +171,14 @@ clean gate verification is not itself a PASS.
 No push, no merge (`main` stays `a243ee8`; this branch `b4-gate-1-execution` is two commits ahead of it, both local); no change to any
 model, method, threshold, archive or program; no RTL, routing, placement or board work; no second batch, no `b4-gate-2`, no revision
 proposal. The disk cost of the archive in `.git` is disclosed as a fact for the owner, not optimised away.
+
+## 8. The owner's review of this unit (2026-10-20) and its archive
+
+The owner's review of `d19cc2f` is **PASS**: the executed unit is closed, the formal verdict stays a valid FAIL, no P1 / P2; one P3 (the
+timing sentence of section 2, corrected above). The review record as the owner provided it — its README, `independent_checks.json`
+(the owner's own re-aggregation of the 200 pair records: per-budget Δ1 means, sample Cohen's d, one-sided sign-test p and K7 medians;
+the per-semantic K9 medians from the per-address counts; K10 recomputed from the 84 000 four-corner units; the 401 archived gate values
+against the prior pool of 2 224 with zero collisions, the current pool 2 625; 45 inputs, 25 tool / schema entries and 6 external inputs
+equal; no seed derivation called), `review_metadata.json`, the owner's own fresh-process verifier outputs and its `SHA256SUMS` — is archived
+unchanged in `owner_review_d19cc2f_2026_10_20/` (see `SOURCE.txt` there for how it was obtained and verified). The review's numbers agree
+value for value with `gate_report.json`.
