@@ -302,6 +302,19 @@ silicon; the fixed methods, model and thresholds are unchanged; this closure is 
 change. The design issue recorded in sections 3 and 9 (the architecture's revision number inside the thresholds table that every archived
 batch binds) stays open for the owner before any architecture revision.
 
+## 12. The execution-plan unit (documents only; `docs/b4_gate_execution_plan.md`; the owner's reviews in `owner_reviews_gate_execution_plan.md`)
+
+After the tool's acceptance the owner authorised the plan of the production `b4-gate-1` execution as a documents-and-read-only-inventory
+unit: v0.1 (`6d4b339`) HOLD — the start order, the operator obligations versus tool enforcement, the refusal / initialisation-failure / abrupt-
+termination paths and the `seeds_derived` limit, the cost and verification-count alignment, K7's status, option B's cost, the diagram's
+arrow, the qualification node's stage, B4-R's shared prerequisites; v0.2 (`b15a572`) **PASS**, with two P3 wording corrections folded into
+the closure as v0.2.1: K7's descriptive count (six of the ten prefix medians below 11, the owner correcting a "five" of the preceding review)
+and the deep verification described as the replay against the recorded ledgers plus the re-audit — never a re-observation on the fabric, and
+not a proof that the source told the truth. The same review ruled the merge timing: `b4-prework` is the next integration candidate after this
+closure (an engineering milestone before the production gate); `b3-pinned-test-repair` stays an isolated, accepted repair tree — not merged
+into `main` (its default paths would replace B3's historical S3 identity with the repair's S0); the RED WIP branch neither merged nor
+deleted. Nothing of this authorises the actual merge or push, the gate's execution, a seed derivation, RTL, 2d or routing.
+
 ## 10. What this unit does not claim, and what remains withheld
 
 No gate result exists. The tool reports; it does not decide what the owner has not ruled. The production execution of `b4-gate-1`
