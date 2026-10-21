@@ -1,0 +1,126 @@
+{
+  "interrupt_before_index_1": {
+    "status": "incomplete",
+    "plan": {
+      "pair": 0,
+      "landscape_seed": 7,
+      "operator_seed": 11,
+      "status": "partial",
+      "task": "invalid",
+      "task_prefix": 1,
+      "task_quarantine": "target",
+      "arms": {
+        "R": "not_started",
+        "F": "not_started",
+        "O": "not_started",
+        "X": "not_started",
+        "D": "not_started",
+        "Omega": "not_started",
+        "A0": "not_started"
+      },
+      "k7": "not_started",
+      "k9": "not_started",
+      "k10": "not_started"
+    },
+    "findings": {},
+    "fresh_exit": 0,
+    "fresh_stdout": "{\n \"run_dir\": \"/tmp/owner_21db2de_probes/root/evidence/b4/sim/b4-mech-1_interrupt_before_index_1\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n"
+  },
+  "interrupt_before_index_2": {
+    "status": "incomplete",
+    "plan": {
+      "pair": 0,
+      "landscape_seed": 7,
+      "operator_seed": 11,
+      "status": "partial",
+      "task": "invalid",
+      "task_prefix": 2,
+      "task_quarantine": "target_holdout",
+      "arms": {
+        "R": "not_started",
+        "F": "not_started",
+        "O": "not_started",
+        "X": "not_started",
+        "D": "not_started",
+        "Omega": "not_started",
+        "A0": "not_started"
+      },
+      "k7": "not_started",
+      "k9": "not_started",
+      "k10": "not_started"
+    },
+    "findings": {},
+    "fresh_exit": 0,
+    "fresh_stdout": "{\n \"run_dir\": \"/tmp/owner_21db2de_probes/root/evidence/b4/sim/b4-mech-1_interrupt_before_index_2\",\n \"findings\": {},\n \"clean\": true,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n"
+  },
+  "target_stimulus": {
+    "findings": {
+      "pair_000/target_search.QUARANTINE.json": [
+        "context.stimulus_sha256 is not the digest of the target stimulus derived from the plan's seed"
+      ]
+    },
+    "fresh_exit": 1,
+    "fresh_stdout": "{\n \"run_dir\": \"/tmp/owner_21db2de_probes/root/evidence/b4/sim/b4-mech-1_extra_target_stimulus\",\n \"findings\": {\n  \"pair_000/target_search.QUARANTINE.json\": [\n   \"context.stimulus_sha256 is not the digest of the target stimulus derived from the plan's seed\"\n  ]\n },\n \"clean\": false,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n"
+  },
+  "target_source": {
+    "findings": {
+      "pair_000/target_search.QUARANTINE.json": [
+        "context.expected_provenance_sha256 is not the expected source identity (the formal source for the first call; the retained first observation's for the second); null is never accepted on this path"
+      ]
+    },
+    "fresh_exit": 1,
+    "fresh_stdout": "{\n \"run_dir\": \"/tmp/owner_21db2de_probes/root/evidence/b4/sim/b4-mech-1_extra_target_source\",\n \"findings\": {\n  \"pair_000/target_search.QUARANTINE.json\": [\n   \"context.expected_provenance_sha256 is not the expected source identity (the formal source for the first call; the retained first observation's for the second); null is never accepted on this path\"\n  ]\n },\n \"clean\": false,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n"
+  },
+  "target_null_source": {
+    "findings": {
+      "pair_000/target_search.QUARANTINE.json": [
+        "context.expected_provenance_sha256 is not the expected source identity (the formal source for the first call; the retained first observation's for the second); null is never accepted on this path"
+      ]
+    },
+    "fresh_exit": 1,
+    "fresh_stdout": "{\n \"run_dir\": \"/tmp/owner_21db2de_probes/root/evidence/b4/sim/b4-mech-1_extra_target_null_source\",\n \"findings\": {\n  \"pair_000/target_search.QUARANTINE.json\": [\n   \"context.expected_provenance_sha256 is not the expected source identity (the formal source for the first call; the retained first observation's for the second); null is never accepted on this path\"\n  ]\n },\n \"clean\": false,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n"
+  },
+  "target_holdout_stimulus": {
+    "findings": {
+      "pair_000/target_holdout.QUARANTINE.json": [
+        "context.stimulus_sha256 is not the digest of the target_holdout stimulus derived from the plan's seed"
+      ]
+    },
+    "fresh_exit": 1,
+    "fresh_stdout": "{\n \"run_dir\": \"/tmp/owner_21db2de_probes/root/evidence/b4/sim/b4-mech-1_extra_target_holdout_stimulus\",\n \"findings\": {\n  \"pair_000/target_holdout.QUARANTINE.json\": [\n   \"context.stimulus_sha256 is not the digest of the target_holdout stimulus derived from the plan's seed\"\n  ]\n },\n \"clean\": false,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n"
+  },
+  "target_holdout_source": {
+    "findings": {
+      "pair_000/target_holdout.QUARANTINE.json": [
+        "context.expected_provenance_sha256 is not the expected source identity (the formal source for the first call; the retained first observation's for the second); null is never accepted on this path"
+      ]
+    },
+    "fresh_exit": 1,
+    "fresh_stdout": "{\n \"run_dir\": \"/tmp/owner_21db2de_probes/root/evidence/b4/sim/b4-mech-1_extra_target_holdout_source\",\n \"findings\": {\n  \"pair_000/target_holdout.QUARANTINE.json\": [\n   \"context.expected_provenance_sha256 is not the expected source identity (the formal source for the first call; the retained first observation's for the second); null is never accepted on this path\"\n  ]\n },\n \"clean\": false,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n"
+  },
+  "target_holdout_null_source": {
+    "findings": {
+      "pair_000/target_holdout.QUARANTINE.json": [
+        "context.expected_provenance_sha256 is not the expected source identity (the formal source for the first call; the retained first observation's for the second); null is never accepted on this path"
+      ]
+    },
+    "fresh_exit": 1,
+    "fresh_stdout": "{\n \"run_dir\": \"/tmp/owner_21db2de_probes/root/evidence/b4/sim/b4-mech-1_extra_target_holdout_null_source\",\n \"findings\": {\n  \"pair_000/target_holdout.QUARANTINE.json\": [\n   \"context.expected_provenance_sha256 is not the expected source identity (the formal source for the first call; the retained first observation's for the second); null is never accepted on this path\"\n  ]\n },\n \"clean\": false,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n"
+  },
+  "coordinated_source": {
+    "findings": {
+      "pair_000/target_search.json": [
+        "provenance: not the formal source's identity (hypothesis, mapping, truth fabric)"
+      ],
+      "pair_000/target_holdout.QUARANTINE.json": [
+        "a quarantined holdout return without the retained first observation to bind its expected source to"
+      ]
+    },
+    "fresh_exit": 1,
+    "fresh_stdout": "{\n \"run_dir\": \"/tmp/owner_21db2de_probes/root/evidence/b4/sim/b4-mech-1_coordinated_source\",\n \"findings\": {\n  \"pair_000/target_search.json\": [\n   \"provenance: not the formal source's identity (hypothesis, mapping, truth fabric)\"\n  ],\n  \"pair_000/target_holdout.QUARANTINE.json\": [\n   \"a quarantined holdout return without the retained first observation to bind its expected source to\"\n  ]\n },\n \"clean\": false,\n \"limit\": \"a clean verification shows the archive follows from its raw readouts under the formal model, not that the source told the truth\"\n}\n"
+  },
+  "production_derivation_calls": [
+    0,
+    0
+  ]
+}

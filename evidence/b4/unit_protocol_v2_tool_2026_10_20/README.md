@@ -128,3 +128,32 @@ next unit, whatever it is, needs its own ruling. The owner's review of `8361068`
 `evidence/b4/unit_protocol_v2_design_2026_10_20/owner_review_8361068_PASS/`; the owner's review of `04385ae` (HOLD, R1–R6, with its
 probe driver and outputs) is archived here under `owner_review_04385ae_HOLD/`, and the owner's review of `b29b0fb` (HOLD, C1–C3 and the
 P3, with its probe drivers and outputs) under `owner_review_b29b0fb_HOLD/`, each with `SOURCE.txt`, SHA256SUMS verified before and after the copy.
+
+## 7. Closure — the owner's PASS on `21db2de` (2026-10-21)
+
+The owner's review of `21db2de` is **PASS: the v0.2.0 host-tool unit is accepted and closed** — C1, C2, C3 and the normalisation P3
+resolved, no blocking finding; the behaviour hypothesis, domain, mapping, statistical formulas, thresholds and the existing production
+archives preserved relative to `b29b0fb`; the tool / schema-only IMPORT identity kept accepted. The owner's independent verification
+(its section 2): 326 tests OK (574.339 s); a fresh e2e with every case `as_expected` and production derivations `[0, 0]`, compared
+966 / 966 normalised digests equal against the submitted `e2e_v2/` and, independently, the submitted pair equal 966 / 966; the C1
+counterexample (the float cell refused, the original return's marker and steps kept), the C2 counterexamples in both phases and the
+earlier publication window (an interrupt after the durable write, before the index — the same coherent recovery), the C3 refreshed-hash
+negatives (six, all refused) and a coordinated source tamper (refused against the formal source), the explanation normalisation
+(exactly `gate_report.json` differs) and the semantic normalisation (exactly four files differ); the selected mutants M51–M57 rerun and
+killed with M39 surviving as an equivalent; IMPORT 59 entries equal; the b29b0fb review archive compared byte for byte. The owner's fresh
+e2e used a wrapper that memoises the pure global normalisation (its cache keyed by root, HEAD set and every evidence file's bytes; a
+cached-versus-original equivalence test `CACHE_EQUIVALENCE_AND_INVALIDATION_OK`); every fixture, verifier and tamper case still executed,
+and the review states this is not an unmodified-driver invocation. The whitespace report of `git diff --check` is the preserved raw log
+`tests_b29b0fb.txt:2`; not a product finding; not edited.
+
+**Boundaries the review states:** the PASS covers host tool contracts, internal consistency and source binding — it does not prove that
+an observation source told the truth, establish silicon behaviour, pass a scientific gate, resolve A8 or freeze 2c; no production seed
+derived; push, merge, `b4-sim-4` / `b4-gate-2` seed derivation or execution, full proof, RTL, provisioning, purchasing and board / routing
+work remain unauthorised. **The next unit the review authorises** (its section 6): a pure-document `b4-sim-4` execution plan —
+`docs/b4_sim4_execution_plan.md`, the plan unit `evidence/b4/unit_sim4_plan_2026_10_21/`.
+
+The review record as the owner provided it — README, `review_metadata.json`, the full test log, the fresh e2e wrapper and logs, the fresh
+digest records, the probe drivers and outputs, the selected-mutant log, the comparison outputs, `SHA256SUMS` — is archived unchanged in
+`owner_review_21db2de_PASS/` (see `SOURCE.txt` there). This closure is a documentation commit: **no test, mutant or e2e was rerun for
+it** (the review's section 5: "Do not rerun tests or mutants for that pure closure documentation"); no program, table, archive or
+verdict changed.

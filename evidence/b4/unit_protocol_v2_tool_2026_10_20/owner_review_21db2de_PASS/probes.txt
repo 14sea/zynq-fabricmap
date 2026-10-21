@@ -1,0 +1,8 @@
+first_quarantine invalid {}
+second_quarantine invalid {}
+interrupt_first_quarantine incomplete {}
+interrupt_second_quarantine incomplete {}
+wrong_stimulus {'pair_000/target_holdout.QUARANTINE.json': ["context.stimulus_sha256 is not the digest of the target_holdout stimulus derived from the plan's seed"]}
+wrong_expected_source {'pair_000/target_holdout.QUARANTINE.json': ["context.expected_provenance_sha256 is not the expected source identity (the formal source for the first call; the retained first observation's for the second); null is never accepted on this path"]}
+missing_expected_source {'pair_000/target_holdout.QUARANTINE.json': ["context.expected_provenance_sha256 is not the expected source identity (the formal source for the first call; the retained first observation's for the second); null is never accepted on this path"]}
+semantic reasons equal False
