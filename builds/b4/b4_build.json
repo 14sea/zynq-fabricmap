@@ -1,7 +1,7 @@
 {"schema": "b4_carrier_build", "schema_version": "1.0.0", "part": "xc7z010clg400-1", "top": "b4_top",
- "vivado": "2025.2", "routed": true, "cell_isolation": "passed", "wns_ns": 7.426, "icape2_cells": 0,
- "startupe2_cells": 1, "ram32x1s_cells": 278, "bitstream": "b4.bit", "bitstream_sha256": "52f2ea56fddd6268ce6a3b5adcf9aede9d1ab953dc8d1e75b653054524178745", "nonce_seed": "0x9E3779B97F4A7C15",
+ "vivado": "2025.2", "routed": true, "cell_isolation": "passed", "wns_ns": 7.985, "icape2_cells": 0,
+ "startupe2_cells": 1, "ram32x1s_cells": 279, "bitstream": "b4.bit", "bitstream_sha256": "2a3b75c3b5052abc9c4cc9b35227df72050bd340756ad885cfa170d212ecfebb", "nonce_seed": "0x9E3779B97F4A7C15",
  "gate": "b4_gate (the B1 gate without the sweep; persistent nonce / armed / fault); VARIANT 0x2034 = 0x42340001",
- "init_mechanism": "(b) GSR through STARTUPE2, driven by b4_engine's LUTRAM pulse counter (PULSE clocks, hardware-timed); the key, nonce, fault, armed latch, samples, applied inputs and witnesses in RAM32X1S",
- "funcsim_netlist": "b4_core_funcsim.v", "axi_gates": "b4_axi_gate in front of the shim and at the core's Lite port",
- "key": "runtime-provisioned, write-once, persistent across the init event; not in this bitstream"}
+ "init_mechanism": "(b) GSR through STARTUPE2, driven by b4_engine; the key, nonce, fault, armed latch, samples and witnesses in RAM32X1S",
+ "key": "runtime-provisioned, write-once, persistent across the init event; not in this bitstream",
+ "resumed_from": "post_route.dcp (the isolation checker's BEL string corrected after the first routed build; no re-synthesis, no re-route)"}

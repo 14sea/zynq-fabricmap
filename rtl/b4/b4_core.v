@@ -12,7 +12,8 @@ module b4_core #(
     parameter integer RELEASE       = 16,
     parameter integer SAMPLE_OFFSET = 4,
     parameter integer SETTLE        = 4,
-    parameter integer HOLD          = 4
+    parameter integer HOLD          = 4,
+    parameter integer LITE_STALL    = 1    // 1: this core's Lite gate masks new AW / AR itself (no shim in front); 0: an outer gate does (b4_top)
 ) (
     input  wire        clk,
     input  wire        rst_n,
@@ -37,7 +38,7 @@ module b4_core #(
     // the Lite-side AXI gate
     wire g_awvalid, g_awready, g_wvalid, g_wready, g_arvalid, g_arready, quiet_lite;
     b4_axi_gate lite_gate (
-        .clk(clk), .rst_n(rst_n_eff), .stall(stall),
+        .clk(clk), .rst_n(rst_n_eff), .stall(stall), .enable(LITE_STALL[0]),
         .m_awvalid(s_awvalid), .m_awready(s_awready), .s_awvalid(g_awvalid), .s_awready(g_awready),
         .m_wvalid(s_wvalid),   .m_wready(s_wready),   .s_wvalid(g_wvalid),   .s_wready(g_wready),
         .m_arvalid(s_arvalid), .m_arready(s_arready), .s_arvalid(g_arvalid), .s_arready(g_arready),
@@ -47,7 +48,7 @@ module b4_core #(
     wire [639:0] payload; wire [127:0] tag; wire arm_strobe, arm_a5; wire [127:0] key; wire key_loaded;
     wire op_pre_sample, op_init_req, op_step, op_cleanup, op_restore_init, op_close, op_close_injection; wire [24:0] step_in; wire [4:0] slot_addr;
     wire gate_busy, tag_ok, recovery_required, cfg_valid_hw, armed; wire [3:0] fault_code; wire [63:0] nonce; wire [255:0] hw_commit;
-    wire engine_busy, step_done, pre_sampled, init_done, init_pending, cleanup_done, cleanup_edge, restore_pending, restore_done, injection_open, pre_context_a5, idle;
+    wire engine_busy, step_done, pre_sampled, init_done, init_pending, cleanup_done, cleanup_edge, restore_pending, restore_done, injection_open, pre_context_a5, pre_init_cleanup, idle;
     wire [4:0] slot_count, step_index; wire [7:0] q_live, slot_read, gsr_count, base_state; wire [31:0] slot_in_read;
     wire eng_fault_strobe; wire [3:0] eng_fault_code; wire close_strobe;
     reg  [31:0] heartbeat;
@@ -70,7 +71,7 @@ module b4_core #(
         .fault_code(fault_code), .nonce(nonce), .hw_commit(hw_commit),
         .engine_busy(engine_busy), .step_done(step_done), .pre_sampled(pre_sampled), .init_done(init_done), .init_pending(init_pending),
         .cleanup_done(cleanup_done), .cleanup_edge(cleanup_edge), .idle(idle),
-        .injection_open(injection_open), .restore_pending(restore_pending), .restore_done(restore_done), .pre_context_a5(pre_context_a5), .stall(stall),
+        .injection_open(injection_open), .restore_pending(restore_pending), .restore_done(restore_done), .pre_context_a5(pre_context_a5), .pre_init_cleanup(pre_init_cleanup), .stall(stall),
         .slot_count(slot_count), .step_index(step_index), .q_live(q_live), .slot_read(slot_read), .gsr_count(gsr_count), .base_state(base_state),
         .slot_in_read(slot_in_read), .in_live({slice_clk, slice_sr, slice_ce, slice_d}), .heartbeat(heartbeat));
 
@@ -88,7 +89,7 @@ module b4_core #(
         .step_in(step_in), .q_in(slice_q),
         .slice_clk(slice_clk), .slice_ce(slice_ce), .slice_sr(slice_sr), .slice_d(slice_d), .gsr_drive(gsr_drive), .stall(stall), .q_live(q_live),
         .pre_sampled(pre_sampled), .init_pending(init_pending), .init_done(init_done), .cleanup_done(cleanup_done), .cleanup_edge(cleanup_edge),
-        .restore_pending(restore_pending), .restore_done(restore_done), .injection_open(injection_open), .pre_context_a5(pre_context_a5),
+        .restore_pending(restore_pending), .restore_done(restore_done), .injection_open(injection_open), .pre_context_a5(pre_context_a5), .pre_init_cleanup(pre_init_cleanup),
         .gsr_count(gsr_count), .base_state(base_state), .step_index(step_index), .slot_count(slot_count),
         .busy(engine_busy), .step_done(step_done), .idle(idle),
         .slot_addr_host(slot_addr), .slot_q(slot_read), .slot_in_q(slot_in_read),

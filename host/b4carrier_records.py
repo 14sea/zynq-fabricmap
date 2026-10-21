@@ -119,7 +119,7 @@ def _closed(obj, schema: dict, where: str, optional=()) -> list:
 
 
 INSTRUMENT = {"variant": _t_hex(8), "carrier_sha256": _t_hex(64), "image_sha256": _t_hex(64)}
-INIT_PARAMS = {"assert_delay": _t_int(0, 255), "pulse_clocks": _t_int(1, 15), "gsr_count_after": _t_int(0, 255)}
+INIT_PARAMS = {"assert_delay": _t_int(0, 255), "pulse_clocks": _t_int(1, 15), "gsr_count_after": _t_int(0, 255), "pre_init_cleanup": lambda v: isinstance(v, bool)}
 INIT_EVENT = {"mechanism": _t_enum(*MECHANISM_NAMES.values()), "parameters": lambda v: isinstance(v, dict)}
 TIMING = {"settle": _t_int(1, 15), "hold": _t_int(1, 15), "release": _t_int(1, 255), "sample_offset": _t_int(1, 255)}
 PREDECESSOR = {"kind": _t_enum(*PREDECESSOR_KINDS), "seq": lambda v: v is None or _t_int(0)(v), "close_sha256": lambda v: v is None or _hex(v, 64)}
@@ -139,13 +139,13 @@ O_COMMON = {"schema": _t_enum(SCHEMA_O), "schema_version": _t_enum(VERSION), "in
 O_PHASE = {"P1": {"commit": _t_hex(64), "staging_readback_sha256": _t_hex(64)}, "P2": {"fabric_readback_sha256_pre_event": _t_hex(64)},
            "P3": {"initial": lambda v: isinstance(v, dict)}, "P4": {"fabric_readback_sha256_post_event": _t_hex(64)}, "P5": {}}
 F_SCHEMA = {"schema": _t_enum(SCHEMA_F), "schema_version": _t_enum(VERSION), "observation_sha256": _t_hex(64), "task_digest": _t_hex(64), "fitness": _t_int(0)}
-CLEANUP_STEP = {"clock_before": _t_int(0, 1), "clock_after": _t_enum(0), "edge": _t_enum("falling", None), "ce": _t_enum(0), "sr": _t_enum(0), "d": _t_enum(0), "q_after": _t_cells}
+CLEANUP_STEP = {"clock_before": _t_int(0, 1), "clock_after": _t_int(0, 0), "edge": _t_enum("falling", None), "ce": _t_int(0, 0), "sr": _t_int(0, 0), "d": _t_int(0, 0), "q_after": _t_cells}
 CLEANUP = {"steps": lambda v: isinstance(v, list) and len(v) == 1, "final_q": _t_cells}
 X_COMMON = {"schema": _t_enum(SCHEMA_X), "schema_version": _t_enum(VERSION), "observation_sha256": _t_hex(64), "seq": _t_int(0),
             "idle_status": _t_int(0, 1), "status": _t_enum("closed", "injection_open", "faulted")}
 X_CLOSED = {"cleanup": lambda v: isinstance(v, dict), "base_readback_sha256": _t_hex(64), "base_state_sample": _t_cells}
 X_FAULTED = {"fault": lambda v: isinstance(v, dict)}
-X_FAULT = {"code": _t_enum(*rm.FAULT_NAMES), "phase_reached": _t_enum("P6", "P7", "P8", "P9", "P10")}
+X_FAULT = {"code": _t_enum(*rm.FAULT_NAMES), "phase_reached": _t_enum("P7", "P9", "P10")}
 SO_SCHEMA = {"schema": _t_enum(SCHEMA_SO), "schema_version": _t_enum(VERSION), "instrument": lambda v: isinstance(v, dict),
              "startup_readback_sha256": _t_hex(64), "base_frames_reference_sha256": _t_hex(64), "status": _t_enum("open", "refused")}
 
@@ -204,6 +204,35 @@ def _slot_reads(evs: list[dict]) -> tuple[dict, dict]:
     return q, inp
 
 
+# ------------------------------------------------------------------ the P6 boundary
+def seal_index(evs: list[dict]) -> int:
+    """The index of the first event AFTER the observation's acquisition (the P6 boundary): the first CTRL write the register
+    file accepted naming cleanup / close / close_injection / restore_init, or the end. `O` is built from `evs[:seal_index]`
+    only, so nothing of P7–P10 — a later event's witness, a later fault — can rewrite it or its digest. Reads are never a
+    boundary: the slot store is persistent and the acquired samples may be read back after a fault stopped the
+    transaction (the fault itself is in the sealed prefix and makes O invalid at the phase it stopped)."""
+    for i, e in enumerate(evs):
+        if e.get("op") == "wr" and e.get("addr") == rm.CTRL and e.get("resp", 0) == 0:
+            if any((e["data"] >> rm.CTRL_BITS[op]) & 1 for op in ("cleanup", "close", "close_injection", "restore_init")):
+                return i
+    return len(evs)
+
+
+def _op_completed(evs: list[dict], i: int, op: str) -> bool:
+    """An MMIO acknowledgement (OKAY on the CTRL write at `i`) is not the operation's completion: the engine refuses
+    out-of-phase operations AFTER accepting the write. The completion witness is in the STATUS / FAULT reads that follow."""
+    after = evs[i + 1:]
+    faults = [e for e in after if e.get("op") == "rd" and e.get("addr") == rm.FAULT and (e.get("data") or 0) & 0xF]
+    statuses = [rm.decode_status(e["data"]) for e in after if e.get("op") == "rd" and e.get("addr") == rm.STATUS and e.get("data") is not None]
+    if faults:
+        return False
+    if op == "close":
+        return any(st["configuration_valid_hw"] == 0 and st["idle"] == 1 for st in statuses)
+    if op == "close_injection":
+        return any(st["configuration_valid_hw"] == 0 and st["injection_open"] == 1 for st in statuses)
+    return bool(statuses)
+
+
 # ------------------------------------------------------------------ the builders
 def _stim_item(applied: dict) -> dict:
     return {"kind": "set", "clock": applied["clock"], "ce": applied["ce"], "sr": applied["sr"], "d": applied["d"]}
@@ -215,10 +244,9 @@ def observation(evs: list[dict], links: dict, timing: dict, seq: int, session: s
     for k in ("instrument", "nonce", "commit", "staging_readback_sha256", "fabric_readback_sha256_pre_event", "fabric_readback_sha256_post_event", "config"):
         if k not in links:
             raise RecordRefusal(f"links: {k} missing (the instrument's PCAP path / manifest supplies it)")
+    evs = evs[:seal_index(evs)]                           # the P6 boundary: nothing after it enters O
     q, inp = _slot_reads(evs)
     status_words = [rm.decode_status(e["data"]) for e in _reads(evs, rm.STATUS)]
-    # the carrier's witnesses as SHOWN at any point of the transaction: a normal CLOSE clears the flags, so the last
-    # STATUS word says nothing about what the transaction acquired; `seen` keeps the high-water mark of each witness
     seen = {k: max((w[k] for w in status_words), default=0) for k in ("pre_sampled", "init_done", "cleanup_done", "restore_done", "step_index")}
     final = seen if status_words else None
     faults = [e["data"] & 0xF for e in _reads(evs, rm.FAULT)]
@@ -228,7 +256,8 @@ def observation(evs: list[dict], links: dict, timing: dict, seq: int, session: s
          "fabric_readback_sha256_pre_event": links["fabric_readback_sha256_pre_event"],
          "fabric_readback_sha256_post_event": links["fabric_readback_sha256_post_event"],
          "init_event": {"mechanism": MECHANISM_NAMES[rm.MECHANISM], "parameters": {"assert_delay": timing["assert_delay"], "pulse_clocks": timing.get("pulse", 2),
-                                                                                  "gsr_count_after": (witness[-1]["gsr_count"] if witness else 0)}},
+                                                                                  "gsr_count_after": (witness[-1]["gsr_count"] if witness else 0),
+                                                                                  "pre_init_cleanup": bool(witness and witness[-1].get("pre_init_cleanup"))}},
          "timing": {k: timing[k] for k in ("settle", "hold", "release", "sample_offset")},
          "predecessor": dict(predecessor), "config": list(links["config"]), "config_sha256": sha256_json(list(links["config"])),
          "stimulus": [dict(s) for s in declared_stimulus], "stimulus_sha256": sha256_json([dict(s) for s in declared_stimulus]),
@@ -311,38 +340,45 @@ def fitness(o: dict, task: dict) -> dict:
 
 
 def transaction_close(evs: list[dict], o: dict, seq: int, links: dict) -> dict:
-    """`X` from the trace after the observation: closed (a CLOSE the carrier accepted, after cleanup and the restore event
-    — the base-state sample is the carrier's BASE_STATE register), injection_open (an accepted CLOSE_INJECTION), or
-    faulted (a fault after P6). Without one of those the transaction is NOT closed and no X exists."""
+    """`X` from the trace AFTER the P6 seal: closed (a CLOSE the engine COMPLETED after cleanup and the restore event — the
+    base-state sample is the carrier's BASE_STATE register), injection_open (a CLOSE_INJECTION the engine completed), or
+    faulted (the engine latched a fault after P6, with the stop phase from its witnesses: cleanup not done -> P7; cleanup
+    done, restore not -> P9; restore done -> P10). A CTRL write the register file answered OKAY is NOT a completion.
+    Without any of those the transaction is not closed and no X exists."""
+    k = seal_index(evs)
+    after = evs[k:]
     q, inp = _slot_reads(evs)
-    status_words = [rm.decode_status(e["data"]) for e in _reads(evs, rm.STATUS)]
-    final = dict(status_words[-1]) if status_words else {}
-    for k in ("cleanup_edge", "cleanup_done"):                   # cleared by the close; the high-water mark is the witness
-        final[k] = max((w[k] for w in status_words), default=0)
+    status_words = [rm.decode_status(e["data"]) for e in _reads(after, rm.STATUS)]
+    seen = {key: max((w[key] for w in status_words), default=0) for key in ("cleanup_done", "cleanup_edge", "restore_done")}
+    last = status_words[-1] if status_words else {}
     osha = observation_sha256(o)
-    closed_at = _accepted_ctrl(evs, "close")
-    injected_at = _accepted_ctrl(evs, "close_injection")
-    faults = [e["data"] & 0xF for e in _reads(evs, rm.FAULT)]
-    if closed_at:
+    faults = [e["data"] & 0xF for e in _reads(after, rm.FAULT) if (e.get("data") or 0) & 0xF]
+    closes = [i for i in range(k, len(evs)) if evs[i].get("op") == "wr" and evs[i].get("addr") == rm.CTRL and evs[i].get("resp", 0) == 0 and (evs[i]["data"] >> rm.CTRL_BITS["close"]) & 1]
+    injections = [i for i in range(k, len(evs)) if evs[i].get("op") == "wr" and evs[i].get("addr") == rm.CTRL and evs[i].get("resp", 0) == 0 and (evs[i]["data"] >> rm.CTRL_BITS["close_injection"]) & 1]
+    if closes and _op_completed(evs, closes[-1], "close"):
         n_steps = len(o["steps"]) - 1
-        cleanup_slot = 2 + n_steps
-        fq = q.get(cleanup_slot)
-        base_reads = _reads(evs, rm.BASE_STATE)
+        fq = q.get(2 + n_steps)
+        base_reads = _reads(after, rm.BASE_STATE)
         if fq is None or not base_reads or "base_readback_sha256" not in links:
             raise RecordRefusal("a closed X needs the cleanup sample, the carrier's BASE_STATE read and the base readback")
-        edge = bool(final.get("cleanup_edge"))
+        edge = bool(seen["cleanup_edge"])
+        last_clock = o["steps"][-1]["clock_after"] if o["steps"] else 0
         return {"schema": SCHEMA_X, "schema_version": VERSION, "observation_sha256": osha, "seq": seq,
-                "cleanup": {"steps": [{"clock_before": 1 if edge else 0, "clock_after": 0, "edge": "falling" if edge else None, "ce": 0, "sr": 0, "d": 0, "q_after": fq}],
+                "cleanup": {"steps": [{"clock_before": last_clock, "clock_after": 0, "edge": "falling" if edge else None, "ce": 0, "sr": 0, "d": 0, "q_after": fq}],
                             "final_q": fq},
                 "base_readback_sha256": links["base_readback_sha256"], "base_state_sample": _cells_of(base_reads[-1]),
-                "idle_status": final.get("idle", 0), "status": "closed"}
-    if injected_at:
-        return {"schema": SCHEMA_X, "schema_version": VERSION, "observation_sha256": osha, "seq": seq, "idle_status": final.get("idle", 0), "status": "injection_open"}
-    if faults and faults[-1] != 0 and o.get("status") == "complete":
-        phase = "P9" if final.get("cleanup_done") else "P7"
-        return {"schema": SCHEMA_X, "schema_version": VERSION, "observation_sha256": osha, "seq": seq, "idle_status": final.get("idle", 0),
-                "fault": {"code": rm.FAULT_CODES[faults[-1]], "phase_reached": phase}, "status": "faulted"}
-    raise RecordRefusal("the transaction is not closed: no accepted CLOSE / CLOSE_INJECTION and no fault after the observation")
+                "idle_status": last.get("idle", 0), "status": "closed"}
+    if injections and _op_completed(evs, injections[-1], "close_injection"):
+        return {"schema": SCHEMA_X, "schema_version": VERSION, "observation_sha256": osha, "seq": seq, "idle_status": last.get("idle", 0), "status": "injection_open"}
+    if faults:
+        phase = "P10" if seen["restore_done"] else ("P9" if seen["cleanup_done"] else "P7")
+        x = {"schema": SCHEMA_X, "schema_version": VERSION, "observation_sha256": osha, "seq": seq, "idle_status": last.get("idle", 0),
+             "fault": {"code": rm.FAULT_CODES[faults[-1]], "phase_reached": phase}, "status": "faulted"}
+        if seen["cleanup_done"] and o["steps"] and q.get(2 + len(o["steps"]) - 1) is not None:
+            fq = q[2 + len(o["steps"]) - 1]
+            x["cleanup"] = {"steps": [{"clock_before": o["steps"][-1]["clock_after"], "clock_after": 0, "edge": "falling" if seen["cleanup_edge"] else None, "ce": 0, "sr": 0, "d": 0, "q_after": fq}], "final_q": fq}
+        return x
+    raise RecordRefusal("the transaction is not closed: no completed CLOSE / CLOSE_INJECTION and no fault after the observation")
 
 
 def session_open(instrument: dict, startup_readback_sha256, base_frames_reference_sha256) -> dict:
@@ -406,6 +442,13 @@ def validate_observation(o) -> list[str]:
         f.append("O.config_sha256 does not digest config under the carrier's encoding")
     if o["stimulus_sha256"] != sha256_json(o["stimulus"]):
         f.append("O.stimulus_sha256 does not digest the declared stimulus")
+    pic = o["init_event"]["parameters"].get("pre_init_cleanup", False)
+    if "initial" in o:
+        held = (o["initial"]["clock"], o["initial"]["ce"], o["initial"]["sr"], o["initial"]["d"]) != (0, 0, 0, 0)
+        if held != pic:
+            f.append("O.init_event.parameters.pre_init_cleanup must be true exactly when the pre-init sample was taken with held inputs")
+        if pic and o["initial"]["context"] != "a5_injection":
+            f.append("O: a pre-init cleanup belongs to the a5_injection context only")
     if status == "complete":
         if len(steps) == 0:
             f.append("O: a complete observation has at least the init step")
@@ -416,8 +459,15 @@ def validate_observation(o) -> list[str]:
     else:
         if len(steps) > len(stim):
             f.append("O: more applied steps than declared")
-        sr = o["fault"]["step_reached"]
-        if o["fault"]["phase_reached"] == "P5" and sr != len(steps) - 1:
+        ph, sr = o["fault"]["phase_reached"], o["fault"]["step_reached"]
+        # the phase table decides which ACQUISITIONS can exist, not only which readback keys (contract 4.2)
+        if ph in ("P1", "P2") and (steps or "initial" in o or sr is not None):
+            f.append(f"O: a stop in {ph} has no pre-init sample and no step")
+        if ph == "P3" and (steps or sr not in (None, 0)):
+            f.append("O: a stop in P3 has no step")
+        if ph == "P4" and (len(steps) != 1 or "initial" not in o):
+            f.append("O: a stop in P4 has the pre-init sample and exactly the init step")
+        if ph == "P5" and (len(steps) < 1 or sr != len(steps) - 1):
             f.append("O.fault.step_reached does not equal the acquired prefix")
     for i, s in enumerate(steps):
         if s["step"] != i:
@@ -496,6 +546,16 @@ def validate_close(x, o) -> list[str]:
         f.append("X: the observation it names is not structurally valid")
     elif x["observation_sha256"] != observation_sha256(o):
         f.append("X does not bind this O")
+    else:
+        if x["seq"] != o["seq"]:
+            f.append("X.seq is not the observation's seq")
+        if "cleanup" in x and o.get("steps"):
+            c = x["cleanup"]["steps"][0]
+            last_clock = o["steps"][-1]["clock_after"]
+            if c["clock_before"] != last_clock:
+                f.append("X.cleanup does not continue the observation's final clock")
+            if c["edge"] != ("falling" if last_clock == 1 else None):
+                f.append("X.cleanup.edge does not follow from the final clock")
     if status == "closed" and x["idle_status"] != 1:
         f.append("X: a closed transaction ends idle")
     if status == "injection_open" and x["idle_status"] != 0:
@@ -522,7 +582,8 @@ def validate_session_open(so) -> list[str]:
 # ------------------------------------------------------------------ layer 2: binding to the trusted context
 def validate_bound(o, ctx: dict, fr=None, x=None) -> list[str]:
     """`ctx`: instrument (the manifest's), session, stimulus (the task's declared steps), config (the planned genome
-    list), task_digest, predecessor_close_sha256 (None for the root), nonce (what the PL showed), mechanism 'b'."""
+    list), task (the TRUSTED task: mask, target, weights, digest — the fitness is recomputed from it), predecessor_close_sha256
+    and predecessor_seq (None for the root), nonce (what the PL showed), mechanism 'b', pulse_clocks."""
     f = validate_observation(o)
     if f:
         return f
@@ -546,10 +607,25 @@ def validate_bound(o, ctx: dict, fr=None, x=None) -> list[str]:
             f.append("bound: mechanism (b) frame invariance — staging, pre-event and post-event readbacks must be equal")
     if o["init_event"]["parameters"]["pulse_clocks"] != ctx.get("pulse_clocks", o["init_event"]["parameters"]["pulse_clocks"]):
         f.append("bound: pulse_clocks is not the identity page's")
+    if o["predecessor"]["kind"] != "session_root":
+        if ctx.get("predecessor_seq") is not None and o["predecessor"]["seq"] != ctx["predecessor_seq"]:
+            f.append("bound: O.predecessor.seq is not the previous close's seq")
+        if ctx.get("predecessor_seq") is not None and o["seq"] != ctx["predecessor_seq"] + 1:
+            f.append("bound: O.seq does not follow the previous close")
     if fr is not None:
         f += validate_fitness(fr, o)
-        if not f and fr["task_digest"] != ctx["task_digest"]:
-            f.append("bound: F.task_digest is not the task's")
+        task = ctx.get("task")
+        if not f and task is None:
+            f.append("bound: no trusted task in the context to recompute the fitness")
+        if not f:
+            if fr["task_digest"] != task["digest"]:
+                f.append("bound: F.task_digest is not the trusted task's")
+            else:
+                try:
+                    if fitness(o, task)["fitness"] != fr["fitness"]:
+                        f.append("bound: F.fitness is not the score recomputed over the full physical grid under the trusted task")
+                except RecordRefusal as e:
+                    f.append(f"bound: {e}")
     if x is not None:
         f += validate_close(x, o)
         if not f and x["status"] == "closed" and x["base_readback_sha256"] != ctx.get("base_readback_sha256", x["base_readback_sha256"]):
@@ -559,22 +635,37 @@ def validate_bound(o, ctx: dict, fr=None, x=None) -> list[str]:
 
 # ------------------------------------------------------------------ layer 3: the chain
 def validate_chain(so, records: list[dict]) -> list[str]:
-    """`records`: [{o, x, ctx}] in session order; the first is the root."""
+    """`records`: [{o, x, ctx, f?}] in session order; the first is the root. The session-opening record is bound to the
+    TRUSTED context of every transaction it covers: `ctx.instrument` (the manifest's) and `ctx.base_readback_sha256` (the
+    independently pinned loaded-frame reference the carrier restores to) — a session_open naming another carrier or a
+    reference of its own choosing opens nothing, whatever its two digests say to each other."""
     f = validate_session_open(so)
     if not f and so["status"] != "open":
         f.append("chain: the session did not open")
+    if not isinstance(records, list):
+        return f + ["chain: records is not a list"]
     prev_x = None
     for i, r in enumerate(records):
-        o, x, ctx = r["o"], r.get("x"), r["ctx"]
+        if not isinstance(r, dict) or not isinstance(r.get("o"), dict) or not isinstance(r.get("ctx"), dict):
+            f.append(f"chain[{i}]: a record entry is {{o, x, ctx}} with objects"); prev_x = None; continue
+        o, x, ctx = r["o"], r.get("x"), dict(r["ctx"])
+        if not f or so.get("status") == "open":
+            if so.get("instrument") != ctx.get("instrument"):
+                f.append(f"chain[{i}]: session_open.instrument is not the trusted context's instrument")
+            if so.get("base_frames_reference_sha256") != ctx.get("base_readback_sha256"):
+                f.append(f"chain[{i}]: session_open does not name the pinned loaded-frame reference the transaction restores to")
         if i == 0 and o.get("predecessor", {}).get("kind") != "session_root":
             f.append("chain: the first transaction is the session root")
         if i > 0:
-            want_kind = "a5_injection" if (prev_x and prev_x.get("status") == "injection_open") else "closed"
+            want_kind = "a5_injection" if (isinstance(prev_x, dict) and prev_x.get("status") == "injection_open") else "closed"
             if o.get("predecessor", {}).get("kind") != want_kind:
                 f.append(f"chain[{i}]: predecessor.kind must be {want_kind} after the previous close")
         exp_prev = sha256_json(prev_x) if prev_x is not None else None
-        f += [f"chain[{i}]: {m}" for m in validate_bound(o, {**ctx, "predecessor_close_sha256": exp_prev}, r.get("f"), x)]
+        exp_seq = prev_x.get("seq") if isinstance(prev_x, dict) else None
+        f += [f"chain[{i}]: {m}" for m in validate_bound(o, {**ctx, "predecessor_close_sha256": exp_prev, "predecessor_seq": exp_seq}, r.get("f"), x)]
         if x is None:
             f.append(f"chain[{i}]: no transaction close")
+        elif isinstance(x, dict) and x.get("status") == "faulted":
+            f.append(f"chain[{i}]: the transaction faulted at {x.get('fault', {}).get('phase_reached')}; the chain ends here")
         prev_x = x
     return f

@@ -5,8 +5,13 @@
 // master has not yet taken (the owner's reproduction: BREADY held low after INIT_REQ lost the write response).
 // This gate sits in front of a slave on every path the PS can take (b4_top: in front of the shim; b4_core: at the
 // Lite port) and does two things with the VALID / READY lines only (every other signal passes straight through):
-//   * STALL: while `stall` is high no new AW / W / AR is accepted — the valid is hidden from the slave and the
-//     ready is hidden from the master, so the master simply holds its VALID (AXI allows a slave to wait);
+//   * STALL: while `stall` is high no NEW transaction is accepted — AW and AR are hidden from the slave and their
+//     readies from the master, so the master simply holds its VALID (AXI allows a slave to wait). W is never masked:
+//     a W beat belongs to a transaction already accepted (the shim accepts AW first), and masking it would leave an
+//     accepted burst unable to drain while the engine waits for exactly that burst's B (the owner's reproduction of
+//     2026-10-21: a two-beat FIXED write whose first beat is INIT_REQ). `enable` = 0 turns the masking off and keeps
+//     the tracking: the core's Lite gate under the shim, where every Lite transfer is a beat of a transaction the
+//     outer gate has already admitted (b4_core LITE_STALL);
 //   * QUIET: `quiet` is high when nothing is outstanding on this path — no write between its AW acceptance and
 //     its B handshake, no read between its AR acceptance and its last-beat R handshake, no response pending.
 // The engine raises `stall` from the persisted `init_pending` (it survives the reset) and launches the event only
@@ -17,6 +22,7 @@ module b4_axi_gate (
     input  wire clk,
     input  wire rst_n,
     input  wire stall,
+    input  wire enable,    // 1: the stall masks new AW / AR; 0: track only (an outer gate does the masking)
     // master side (valid in, ready out)          slave side (valid out, ready in)
     input  wire m_awvalid, output wire m_awready,   output wire s_awvalid, input wire s_awready,
     input  wire m_wvalid,  output wire m_wready,    output wire s_wvalid,  input wire s_wready,
@@ -26,9 +32,10 @@ module b4_axi_gate (
     input  wire rvalid, input wire rready, input wire rlast,
     output wire quiet
 );
-    assign s_awvalid = m_awvalid && !stall;  assign m_awready = s_awready && !stall;
-    assign s_wvalid  = m_wvalid  && !stall;  assign m_wready  = s_wready  && !stall;
-    assign s_arvalid = m_arvalid && !stall;  assign m_arready = s_arready && !stall;
+    wire mask = stall && enable;
+    assign s_awvalid = m_awvalid && !mask;   assign m_awready = s_awready && !mask;
+    assign s_wvalid  = m_wvalid;             assign m_wready  = s_wready;             // W drains always
+    assign s_arvalid = m_arvalid && !mask;   assign m_arready = s_arready && !mask;
     reg wr_out, rd_out;
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin wr_out <= 1'b0; rd_out <= 1'b0; end

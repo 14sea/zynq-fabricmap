@@ -35,7 +35,8 @@ report_utilization   -file $outdir/post_route_util.rpt
 source $here/isolation_checks_b4.tcl
 b4_isolation_checks $outdir
 # the GSR-aware functional netlist of the core (every flip-flop a vendor FDxE), for the netlist bench of sim/b4/run.sh
-write_verilog -force -mode funcsim -cell [get_cells core] $outdir/b4_core_funcsim.v
+# (the `write_verilog -cell` export of the implemented core was superseded: it leaves the cell's constants undriven. The netlist
+#  of record is written by vivado/b4/netlist_core.tcl — run it AFTER this build; this script no longer touches b4_core_funcsim.v)
 write_bitstream -force $outdir/b4.bit
 set bit_sha [lindex [exec sha256sum $outdir/b4.bit] 0]
 set wns [get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup]]

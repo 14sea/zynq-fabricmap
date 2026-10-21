@@ -21,17 +21,17 @@ MUTANTS = [
  ('M06', 'rtl/b4/b4_core.v', "parameter [31:0]  VARIANT_WORD  = 32'h42340001,", "parameter [31:0]  VARIANT_WORD  = 32'h42310001,", 'bench', ['regs']),
  ('M07', 'rtl/b4/b4_gate.v', "if (arm_strobe && !busy && !recovery_required && (armed || (arm_a5 != injection_open))) begin", "if (1'b0) begin", 'bench', ['fault_double_arm', 'a5_wrong_context']),
  ('M08', 'rtl/b4/b4_engine.v', "if (!init_done || cleanup_done) refuse(F_SEQUENCE);\n                    else if (!ce_uniform", "if (1'b0) refuse(F_SEQUENCE);\n                    else if (!ce_uniform", 'bench', ['fault_sequence']),
- ('M09', 'rtl/b4/b4_engine.v', "flags_we <= 1'b1; flags_d <= 9'b010000000;             // injection_open; the inputs stay as they are", "flags_we <= 1'b1; flags_d <= 9'd0;", 'bench', ['a5']),
+ ('M09', 'rtl/b4/b4_engine.v', "flags_we <= 1'b1; flags_d <= 10'b0010000000;             // injection_open; the inputs stay as they are", "flags_we <= 1'b1; flags_d <= 10'd0;", 'bench', ['a5']),
  ('M10', 'rtl/b4/b4_engine.v', "write_sample(5'd1, 32'd0);", "slot_we <= 1'b1; slot_a_eng <= 5'd1; slot_d <= ~q_live; slot_in_d <= 32'd0;", 'bench', ['flow']),
  ('M11', 'rtl/b4/b4_gate.v', 'if (sh_tag == tag_in) begin', "if (1'b1) begin", 'bench', ['fault_unsigned']),
- ('M12', 'rtl/b4/b4_engine.v', "if (slice_clk) begin flags_we <= 1'b1; flags_d <= flags | 9'b000010000; end   // cleanup_edge: a falling edge\n                    slice_clk <= 1'b0;", "if (slice_clk) begin flags_we <= 1'b1; flags_d <= flags | 9'b000010000; end\n                    slice_clk <= slice_clk;", 'bench', ['flow']),
+ ('M12', 'rtl/b4/b4_engine.v', "if (slice_clk) begin flags_we <= 1'b1; flags_d <= flags | 10'b0000010000; end   // cleanup_edge: a falling edge\n                    slice_clk <= 1'b0;", "if (slice_clk) begin flags_we <= 1'b1; flags_d <= flags | 10'b0000010000; end\n                    slice_clk <= slice_clk;", 'bench', ['flow']),
  # the repair's own mutants
  ('M13', 'rtl/b4/b4_engine.v', "if (!restore_done) refuse(F_SEQUENCE);", "if (1'b0) refuse(F_SEQUENCE);", 'bench', ['open_close_refused', 'p9']),
  ('M14', 'rtl/b4/b4_engine.v', "cmd <= step_in; step_done <= 1'b0; state <= S_STEP_CTRL;   // the accepted command, latched", "step_done <= 1'b0; state <= S_STEP_CTRL;", 'bench', ['step_atomic']),
  ('M15', 'rtl/b4/b4_axil.v', "wire ctrl_accept = ctrl_one && ctrl_known && ctrl_a5_ok && !engine_busy && !gate_busy;", "wire ctrl_accept = ctrl_one && ctrl_known && ctrl_a5_ok;", 'bench', ['busy_refused']),
  ('M16', 'rtl/b4/b4_axil.v', "wire ctrl_one = (ctrl_ops != 9'd0) && ((ctrl_ops & (ctrl_ops - 9'd1)) == 9'd0);", "wire ctrl_one = (ctrl_ops != 9'd0);", 'bench', ['regs']),
  ('M17', 'rtl/b4/b4_engine.v', "if (!bus_quiet) cnt <= 8'd0;\n                else if", "if (1'b0) cnt <= 8'd0;\n                else if", 'bench', ['backpressure']),
- ('M18', 'rtl/b4/b4_axi_gate.v', "assign s_arvalid = m_arvalid && !stall;  assign m_arready = s_arready && !stall;", "assign s_arvalid = m_arvalid;  assign m_arready = s_arready;", 'bench', ['read_at_launch']),   # a first version removed the AW masking and survived backpressure / read_during_window: those pass without the stall; read_at_launch is the scenario the stall exists for
+ ('M18', 'rtl/b4/b4_axi_gate.v', "assign s_arvalid = m_arvalid && !mask;   assign m_arready = s_arready && !mask;", "assign s_arvalid = m_arvalid;  assign m_arready = s_arready;", 'bench', ['read_at_launch']),   # a first version removed the AW masking and survived backpressure / read_during_window: those pass without the stall; read_at_launch is the scenario the stall exists for
  ('M19', 'rtl/b4/b4_engine.v', "if (restoring) begin\n                        base_we <= 1'b1; base_d <= q_live;", "if (restoring) begin\n                        base_we <= 1'b1; base_d <= ~q_live;", 'bench', ['p9_ok', 'flow']),
  ('M20', 'rtl/b4/b4_engine.v', "assign idle = (state == S_IDLE) && !armed && !injection_open && (in_live[24:0] == 25'd0);", "assign idle = (state == S_IDLE) && !armed;", 'bench', ['a5', 'open_close_refused']),
  ('M21', 'rtl/b4/b4_engine.v', "wire [3:0] pulse_d = fire ? ((4'd1 << PULSE) - 4'd1) : (pulse_cnt >> 1);", "wire [3:0] pulse_d = fire ? 4'd1 : (pulse_cnt >> 1);", 'unisim', ['unisim']),
@@ -44,7 +44,23 @@ MUTANTS = [
  ('H07', 'host/b4carrier_records.py', "    if status == \"closed\" and x[\"idle_status\"] != 1:", "    if False:", 'test', ['tests.test_b4carrier_records']),
  ('H08', 'host/b4carrier_records.py', "    tf = validate_task(task, len(o[\"steps\"]))\n    if tf:\n        raise RecordRefusal(\"; \".join(tf))", "    tf = []", 'test', ['tests.test_b4carrier_records']),
  ('H09', 'host/b4carrier_records.py', "        if len(set(rb)) > 1:", "        if False:", 'test', ['tests.test_b4carrier_records']),
- ('H10', 'host/b4carrier_records.py', "    raise RecordRefusal(\"the transaction is not closed: no accepted CLOSE / CLOSE_INJECTION and no fault after the observation\")", "    return {\"schema\": SCHEMA_X, \"schema_version\": VERSION, \"observation_sha256\": osha, \"seq\": seq, \"idle_status\": 0, \"status\": \"injection_open\"}", 'test', ['tests.test_b4carrier_records']),
+ # round 3 (the owner's HOLD on aaf15ba): the burst drain, the P6 seal, the completion witnesses, the trusted binding, the schema rules, the pre-init cleanup
+ ('M22', 'rtl/b4/b4_axi_gate.v', "assign s_wvalid  = m_wvalid;             assign m_wready  = s_wready;             // W drains always", "assign s_wvalid  = m_wvalid && !mask;    assign m_wready  = s_wready && !mask;", 'axi3', ['axi3']),
+ ('M23', 'rtl/b4/b4_core.v', ".enable(LITE_STALL[0]),", ".enable(1'b1),", 'axi3', ['axi3']),
+ ('M24', 'rtl/b4/b4_engine.v', "else if (in_live[24:0] != 25'd0) begin\n                        // the inputs are held", "else if (1'b0) begin\n                        // the inputs are held", 'bench', ['a5']),
+ ('M25', 'rtl/b4/b4_axil.v', "s_rdata <= {4'd0, pre_init_cleanup, stall,", "s_rdata <= {4'd0, 1'b0, stall,", 'bench', ['a5']),
+ ('H11', 'host/b4carrier_records.py', "    evs = evs[:seal_index(evs)]                           # the P6 boundary: nothing after it enters O\n", "    evs = list(evs)\n", 'test', ['tests.test_b4carrier_records']),
+ ('H12', 'host/b4carrier_records.py', "    after = evs[i + 1:]\n    faults = [e for e in after", "    return True\n    after = evs[i + 1:]\n    faults = [e for e in after", 'test', ['tests.test_b4carrier_records']),
+ ('H13', 'host/b4carrier_records.py', "        if x[\"seq\"] != o[\"seq\"]:", "        if False:", 'test', ['tests.test_b4carrier_records']),
+ ('H14', 'host/b4carrier_records.py', "            if c[\"clock_before\"] != last_clock:", "            if False:", 'test', ['tests.test_b4carrier_records']),
+ ('H15', 'host/b4carrier_records.py', "\"clock_after\": _t_int(0, 0), \"edge\": _t_enum(\"falling\", None), \"ce\": _t_int(0, 0), \"sr\": _t_int(0, 0), \"d\": _t_int(0, 0)", "\"clock_after\": _t_enum(0), \"edge\": _t_enum(\"falling\", None), \"ce\": _t_enum(0), \"sr\": _t_enum(0), \"d\": _t_enum(0)", 'test', ['tests.test_b4carrier_records']),
+ ('H16', 'host/b4carrier_records.py', "            if so.get(\"instrument\") != ctx.get(\"instrument\"):", "            if False:", 'test', ['tests.test_b4carrier_records']),
+ ('H17', 'host/b4carrier_records.py', "                    if fitness(o, task)[\"fitness\"] != fr[\"fitness\"]:", "                    if False:", 'test', ['tests.test_b4carrier_records']),
+ ('H18', 'host/b4carrier_records.py', "        if not isinstance(r, dict) or not isinstance(r.get(\"o\"), dict) or not isinstance(r.get(\"ctx\"), dict):", "        if False:", 'test', ['tests.test_b4carrier_records']),
+ ('H19', 'host/b4carrier_records.py', "        if ph in (\"P1\", \"P2\") and (steps or \"initial\" in o or sr is not None):", "        if False:", 'test', ['tests.test_b4carrier_records']),
+ ('H20', 'host/b4carrier_records.py', "        if held != pic:", "        if False:", 'test', ['tests.test_b4carrier_records']),
+ ('H21', 'host/b4carrier_records.py', "        if ctx.get(\"predecessor_seq\") is not None and o[\"predecessor\"][\"seq\"] != ctx[\"predecessor_seq\"]:", "        if False:", 'test', ['tests.test_b4carrier_records']),
+ ('H10', 'host/b4carrier_records.py', "    raise RecordRefusal(\"the transaction is not closed: no completed CLOSE / CLOSE_INJECTION and no fault after the observation\")", "    return {\"schema\": SCHEMA_X, \"schema_version\": VERSION, \"observation_sha256\": osha, \"seq\": seq, \"idle_status\": 0, \"status\": \"injection_open\"}", 'test', ['tests.test_b4carrier_records']),
 ]
 results = []
 with tempfile.TemporaryDirectory(prefix='b4carrier_mutants_') as td:
@@ -54,6 +70,11 @@ with tempfile.TemporaryDirectory(prefix='b4carrier_mutants_') as td:
         if src.is_dir(): shutil.copytree(src, dst, dirs_exist_ok=True)
         else: shutil.copy2(src, dst)
     (T / 'sim/b4/out').mkdir(parents=True, exist_ok=True)
+    # the host tests read the bench TRACES (sim/b4/out/*.jsonl), produced by the unmutated benches: copied once from the
+    # repository's fresh full run (sim/b4/run.sh) so a host mutant does not re-run the whole suite; the traces are inputs,
+    # never judged, and no host mutant can change them (the RTL mutants run the benches themselves)
+    for j in (R / 'sim/b4/out').glob('*.jsonl'):
+        shutil.copy2(j, T / 'sim/b4/out' / j.name)
     # the runner must run from the copy: it cds to its own ../..
     for mid, rel, old, new, kind, targets in MUTANTS:
         f = T / rel; text = f.read_text(); n = text.count(old)
@@ -64,6 +85,11 @@ with tempfile.TemporaryDirectory(prefix='b4carrier_mutants_') as td:
             if kind == 'unisim':   # the vendor bench with the RTL core and glbl (the LUTRAM pulse)
                 p = subprocess.run(['bash', '-c', f'cd {T} && python3 -B tb/b4/gen_b4_fixture.py >/dev/null && iverilog -g2012 -I tb/b4 -o sim/b4/out/mu.vvp -y /home/test/Xilinx/2025.2/data/verilog/src/unisims /home/test/Xilinx/2025.2/data/verilog/src/glbl.v rtl/b1/p3_siphash.v rtl/b4/b4_gsr_reg.v rtl/b4/b4_slot_ram.v rtl/b4/b4_gsr_ram32.v rtl/b4/b4_axi_gate.v rtl/b4/b4_axil.v rtl/b4/b4_gate.v rtl/b4/b4_engine.v rtl/b4/b4_core.v rtl/b4/b4_target_slice.v tb/b4/tb_b4_unisim.v && vvp -N sim/b4/out/mu.vvp 2>&1 | grep -E "^TB_" | tail -1'], capture_output=True, text=True, timeout=600)
                 outs = [('unisim', p.stdout.strip(), p.returncode)]
+                ran = outs[0][1].startswith('TB_'); killed = ran and outs[0][1].startswith('TB_FAIL')
+                results.append({'id': mid, 'file': rel, 'status': 'KILLED' if killed else ('SURVIVED' if ran else 'NOT-RUN'), 'runs': outs})
+            elif kind == 'axi3':   # the PS path through the pinned shim (the burst cases)
+                p = subprocess.run(['bash', '-c', f'cd {T} && python3 -B tb/b4/gen_b4_fixture.py >/dev/null && iverilog -g2012 -I tb/b4 -o sim/b4/out/ma.vvp -y /home/test/Xilinx/2025.2/data/verilog/src/unisims rtl/b1/p3_siphash.v rtl/b4/b4_gsr_reg.v rtl/b4/b4_slot_ram.v rtl/b4/b4_gsr_ram32.v rtl/b4/b4_axi_gate.v rtl/b4/b4_axil.v rtl/b4/b4_gate.v rtl/b4/b4_engine.v rtl/b4/b4_core.v vivado/carrier/carrier_axi3_lite.v tb/b4/b4_target_slice_model.v tb/b4/tb_b4_axi3.v && timeout 600 vvp -N sim/b4/out/ma.vvp 2>&1 | grep -E "^TB_" | tail -1'], capture_output=True, text=True, timeout=900)
+                outs = [('axi3', p.stdout.strip(), p.returncode)]
                 ran = outs[0][1].startswith('TB_'); killed = ran and outs[0][1].startswith('TB_FAIL')
                 results.append({'id': mid, 'file': rel, 'status': 'KILLED' if killed else ('SURVIVED' if ran else 'NOT-RUN'), 'runs': outs})
             elif kind == 'bench':

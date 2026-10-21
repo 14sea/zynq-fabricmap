@@ -109,8 +109,8 @@ proc b4_isolation_checks {outdir} {
     }
     # ---- 1e. persistence: the store is LUTRAM, and all of it
     set ram_cells [get_cells -hierarchical -filter {REF_NAME == RAM32X1S}]
-    # key 128 + key_loaded 1 + nonce 64 + armed 1 + fault 4 + recovery 1 + flags 9 + gsr_count 8 + idx 10 + base_state 8 + pulse 4 + slots 8 + applied inputs 32
-    set expected_ram [expr {128 + 1 + 64 + 1 + 4 + 1 + 9 + 8 + 10 + 8 + 4 + 8 + 32}]
+    # key 128 + key_loaded 1 + nonce 64 + armed 1 + fault 4 + recovery 1 + flags 10 (pre_init_cleanup added, round 3) + gsr_count 8 + idx 10 + base_state 8 + pulse 4 + slots 8 + applied inputs 32
+    set expected_ram [expr {128 + 1 + 64 + 1 + 4 + 1 + 10 + 8 + 10 + 8 + 4 + 8 + 32}]
     if {[llength $ram_cells] != $expected_ram} { lappend problems "RAM32X1S cells: [llength $ram_cells], expected $expected_ram (a store bit became something else?)" }
     set ff_in_store [get_cells -quiet -hierarchical -filter {REF_NAME =~ "FD*" && (NAME =~ "*_store*" || NAME =~ "*slots*")}]
     if {[llength $ff_in_store]} { lappend problems "flip-flops inside the persistent store: $ff_in_store" }

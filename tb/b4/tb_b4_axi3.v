@@ -19,7 +19,7 @@ module tb_b4_axi3;
     wire [15:0] m_awaddr, m_araddr; wire [31:0] m_wdata, m_rdata; wire [3:0] m_wstrb;
     wire m_awvalid, m_awready, m_wvalid, m_wready, m_bvalid, m_bready, m_arvalid, m_arready, m_rvalid, m_rready; wire [1:0] m_bresp, m_rresp;
     wire rst_n_eff = rst_n & ~gsr_drive;
-    b4_axi_gate ps_gate (.clk(clk), .rst_n(rst_n_eff), .stall(stall),
+    b4_axi_gate ps_gate (.clk(clk), .rst_n(rst_n_eff), .stall(stall), .enable(1'b1),
         .m_awvalid(awvalid), .m_awready(awready), .s_awvalid(g_awvalid), .s_awready(g_awready),
         .m_wvalid(wvalid), .m_wready(wready), .s_wvalid(g_wvalid), .s_wready(g_wready),
         .m_arvalid(arvalid), .m_arready(arready), .s_arvalid(g_arvalid), .s_arready(g_arready),
@@ -34,7 +34,7 @@ module tb_b4_axi3;
         .m_bresp(m_bresp), .m_bvalid(m_bvalid), .m_bready(m_bready), .m_araddr(m_araddr), .m_arvalid(m_arvalid), .m_arready(m_arready),
         .m_rdata(m_rdata), .m_rresp(m_rresp), .m_rvalid(m_rvalid), .m_rready(m_rready));
     wire slice_clk, slice_ce, slice_sr; wire [7:0] slice_d, slice_q;
-    b4_core #(.NONCE_SEED(SEED)) dut (.clk(clk), .rst_n(rst_n),
+    b4_core #(.NONCE_SEED(SEED), .LITE_STALL(0)) dut (.clk(clk), .rst_n(rst_n),
         .s_awaddr(m_awaddr), .s_awvalid(m_awvalid), .s_awready(m_awready), .s_wdata(m_wdata), .s_wstrb(m_wstrb), .s_wvalid(m_wvalid), .s_wready(m_wready),
         .s_bresp(m_bresp), .s_bvalid(m_bvalid), .s_bready(m_bready), .s_araddr(m_araddr), .s_arvalid(m_arvalid), .s_arready(m_arready),
         .s_rdata(m_rdata), .s_rresp(m_rresp), .s_rvalid(m_rvalid), .s_rready(m_rready),
@@ -43,7 +43,7 @@ module tb_b4_axi3;
     b4_target_slice target (.slice_clk(slice_clk), .ce(slice_ce), .sr(slice_sr), .d(slice_d), .q(slice_q), .gsr(gsr_drive));
 
     integer fails = 0, responses = 0; reg [1:0] last_bresp; reg [31:0] last_rdata; reg verbose = 0;
-    initial begin if ($test$plusargs("VERBOSE")) verbose = 1; #3000000; $display("WATCHDOG: the AXI3 bench did not finish (fails so far %0d)", fails); $finish; end
+    initial begin if ($test$plusargs("VERBOSE")) verbose = 1; #3000000; $display("WATCHDOG: the AXI3 bench did not finish (fails so far %0d)", fails); $display("TB_FAIL axi3 (watchdog)"); $finish; end
     always @(posedge clk) if (bvalid && bready) responses = responses + 1;
     task check(input cond, input [255:0] what); begin if (!cond) begin fails = fails + 1; $display("FAIL: %0s [rdata=%h t=%0t]", what, last_rdata, $time); end end endtask
     // the shim's AWREADY / ARREADY / WREADY are combinational in the cycle the VALID is presented: sample them after the
@@ -63,7 +63,16 @@ module tb_b4_axi3;
     task provision(input [127:0] k); integer j; begin for (j = 0; j < 4; j = j + 1) wr(16'h2160 + 4*j, k[(3-j)*32 +: 32]); wr(16'h2000, 32'h100); end endtask
     task wait_gate; begin repeat (5) @(negedge clk); rd(16'h2004); while (last_rdata[0]) rd(16'h2004); end endtask
     task wait_engine; begin rd(16'h2004); while (last_rdata[3]) rd(16'h2004); end endtask
-    integer r0;
+    // a legal multi-beat FIXED write at one address (the PS can issue these): the beats drain whatever the engine does
+    task wr_burst2(input [15:0] a, input [31:0] d0, input [31:0] d1); begin
+        @(negedge clk); awaddr = {16'h4000, a}; awlen = 1; awburst = 0; awvalid = 1; #1; while (!awready) begin @(negedge clk); #1; end
+        @(negedge clk); awvalid = 0; awlen = 0; awburst = 1; wdata = d0; wvalid = 1; wlast = 0; #1; while (!wready) begin @(negedge clk); #1; end
+        @(negedge clk); wvalid = 0; repeat (12) @(negedge clk);                      // the second beat deliberately late
+        wdata = d1; wvalid = 1; wlast = 1; #1; while (!wready) begin @(negedge clk); #1; end
+        @(negedge clk); wvalid = 0; wlast = 1; while (!bvalid) @(negedge clk); last_bresp = bresp; @(negedge clk);
+        if (verbose) $display("  burst %h <= %h, %h resp %0d t=%0t", a, d0, d1, last_bresp, $time);
+    end endtask
+    integer r0, g0;
     initial begin
         @(negedge clk); rst_n = 0; repeat (3) @(negedge clk); rst_n = 1; repeat (2) @(negedge clk);
         rd(16'h2034); check(last_rdata == 32'h42340001, "VARIANT through the shim");
@@ -87,9 +96,25 @@ module tb_b4_axi3;
         wait_engine; rd(16'h2020); check(last_rdata[7:0] == 1, "exactly one event");
         rd(16'h2004); check(last_rdata[9] == 1 && last_rdata[2] == 1 && last_rdata[11] == 1, "init_done; armed and key persisted through the shim's reset");
         wr(16'h2038, 32'h0000FF00); wr(16'h2000, 32'h800); wait_engine; rd(16'h2010); check(last_rdata[7:0] == 8'hFF, "a step through the shim (clock 0: hold)");
-        wr(16'h2000, 32'h1000); wait_engine; wr(16'h2000, 32'h4000); repeat (QUIET) @(negedge clk); wait_engine;
+        wr(16'h2000, 32'h1000); wait_engine;
+        // the owner's burst reproduction (R1): a two-beat FIXED write at CTRL, RESTORE_INIT in beat 1 and a duplicate in beat 2:
+        // the accepted burst drains (the duplicate refused SLVERR by the busy rule, its transaction finished), then ONE event
+        r0 = responses; rd(16'h2020); g0 = last_rdata[7:0];
+        wr_burst2(16'h2000, 32'h4000, 32'h4000);
+        check(responses == r0 + 1, "the burst's response was delivered");
+        repeat (QUIET) @(negedge clk); wait_engine;
+        rd(16'h2020); check(last_rdata[7:0] == g0 + 1, "exactly one event after the burst drained");
         rd(16'h203C); check(last_rdata[7:0] == 8'hFF, "base-state sample"); wr(16'h2000, 32'h2000); wait_engine;
         rd(16'h2004); check(last_rdata[12] == 1, "idle after the close");
+        // and the event in the SECOND beat of a burst: beat 1 a harmless SLOT_ADDR-like refused command, beat 2 INIT_REQ
+        stage(VALID2); wr(16'h2000, 32'h40); wait_gate; wr(16'h2000, 32'h200); wait_engine;
+        r0 = responses; rd(16'h2020); g0 = last_rdata[7:0];
+        wr_burst2(16'h2000, 32'h0, 32'h400);                                          // beat 1 an empty command (SLVERR), beat 2 INIT_REQ
+        check(responses == r0 + 1, "the burst's response was delivered (event in beat 2)");
+        repeat (QUIET) @(negedge clk); wait_engine;
+        rd(16'h2020); check(last_rdata[7:0] == g0 + 1, "exactly one event when the request is the last beat");
+        rd(16'h2004); check(last_rdata[9] == 1, "init_done");
+        wr(16'h2000, 32'h1000); wait_engine; wr(16'h2000, 32'h4000); repeat (QUIET) @(negedge clk); wait_engine; wr(16'h2000, 32'h2000); wait_engine;
         if (fails == 0) $display("TB_PASS axi3"); else $display("TB_FAIL axi3 (%0d)", fails);
         $finish;
     end

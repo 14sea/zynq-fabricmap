@@ -3,7 +3,7 @@ ARCHITECTURE ERRATUM 001 is in force: the route inventory below is EVIDENCE, not
 VERDICTS
   target cells: 12 (must be exactly 12, at SLICE_X2Y25 on their BELs)
   flush cells:  0 (must be 0)
-  RAM32X1S:     278 (must be 278); flip-flops in the store: 0 (must be 0)
+  RAM32X1S:     279 (must be 279); flip-flops in the store: 0 (must be 0)
   STARTUPE2:    1 (must be 1, GSR driven); ICAPE2: 0 (must be 0)
 SAMPLING PATH
   target/target_ff_a5ff/D <- SLICE_X2Y25/AX
@@ -27,13 +27,13 @@ SAMPLING PATH
   SLICE_X2Y25/SR <- core/engine/slice_sr
 EVIDENCE
   target data nets:           24
-  nets over flush segments:   594
-  nets over target segments:  650
-  of those, foreign:          642
+  nets over flush segments:   964
+  nets over target segments:  1058
+  of those, foreign:          1050
   routed nodes sha256:        53ce2b6403a9011fe4375f094a941b1288159c1592e8b9b244fb59a62be8249c (164520 nodes)
   routed pips  sha256:        0b301d1a15138803eec1f19f1095fe9defa9a251e6e247a2e98f37ce20d19a03 (1555480 pips)
-  flush net inventory sha256: e4760ae23b8783479361ff8c979e00baad1bba02ec354995c3a5674361dce9aa
-  target net inventory sha256:91021bd31a6987d536dbd9dd06d4d1205fea186af4dc4508eed8d7cb0d02d955
+  flush net inventory sha256: 1ab53bd1daf171259a470e55fc9d71d3292eccb8fca2d8c105edcb2889bde8ff
+  target net inventory sha256:4eabbb2544b8c511d52aa1e61cb9602a8a5b71c4140a26bcc37bd0ffc72c517d
 target data nets:
   target/<const0>
   target/ce

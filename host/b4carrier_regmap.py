@@ -42,7 +42,7 @@ def ctrl_accepted(word: int) -> bool:
 STATUS_BITS = {"gate_busy": 0, "fault": 1, "configuration_valid_hw": 2, "engine_busy": 3, "step_done": 4, "pre_sampled": 5,
                "tag_ok": 6, "recovery_required": 7, "alive": 8, "init_done": 9, "init_pending": 10, "key_loaded": 11,
                "idle": 12, "cleanup_done": 13, "injection_open": 14, "cleanup_edge": 15, "restore_done": 26}
-WITNESS_BITS = {"restore_pending": 24, "pre_context_a5": 25, "stall": 26}
+WITNESS_BITS = {"restore_pending": 24, "pre_context_a5": 25, "stall": 26, "pre_init_cleanup": 27}
 WITNESS_FIELDS = {"gsr_count": (0, 8), "mechanism": (8, 8), "pulse": (16, 8)}
 STATUS_FIELDS = {"slot_count": (16, 5), "step_index": (21, 5)}
 FAULT_CODES = {0: "none", 5: "not_armed", 6: "not_realisable", 7: "sequence", 8: "slot_overflow", 12: "arm_nokey", 13: "arm_auth"}

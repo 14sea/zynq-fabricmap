@@ -29,11 +29,15 @@ def _h(label: str) -> str:
 
 INSTRUMENT = {"variant": f"{rm.VARIANT_WORD:08x}", "carrier_sha256": _h("carrier"), "image_sha256": _h("image")}
 FRAMES = _h("candidate-frames")          # mechanism (b): staging = pre-event = post-event (the write, then a frame-invariant event)
+STARTUP = _h("startup")                  # the pinned loaded-frame reference: read at session open, the base every transaction restores to
 LINKS = {"instrument": INSTRUMENT, "nonce": _h("nonce")[:16], "commit": _h("commit"), "staging_readback_sha256": FRAMES,
          "fabric_readback_sha256_pre_event": FRAMES, "fabric_readback_sha256_post_event": FRAMES, "config": [0] * 21,
-         "base_readback_sha256": _h("base-frames")}
+         "base_readback_sha256": STARTUP}
 TIMING = {**rm.decode_timing(rm.timing_word(8, 16, 4, 4, 4)), "pulse": 2}
 ROOT = {"kind": "session_root", "seq": None, "close_sha256": None}
+# the TRUSTED task of the bench's context: every cell of the seven set steps scored against 0 — the fitness a bound F must
+# equal when recomputed over the full physical grid (validate_bound), whatever F itself claims
+TASK = {"mask": [(s, e) for s in range(1, 8) for e in range(8)], "target": [0] * 56, "weights": [1] * 56, "digest": _h("task")}
 STIM7 = None   # the fixture stimuli (read from the fixture header)
 
 
@@ -57,7 +61,7 @@ def ensure_traces():
 
 
 def ctx_for(stim, seq_prev_close, config=None, session="bench"):
-    return {"instrument": INSTRUMENT, "session": session, "stimulus": stim, "config": config or [0] * 21, "task_digest": _h("task"),
+    return {"instrument": INSTRUMENT, "session": session, "stimulus": stim, "config": config or [0] * 21, "task_digest": _h("task"), "task": TASK,
             "predecessor_close_sha256": seq_prev_close, "nonce": LINKS["nonce"], "mechanism": "b", "pulse_clocks": 2,
             "base_readback_sha256": LINKS["base_readback_sha256"]}
 
@@ -99,8 +103,7 @@ class FromTheBench(unittest.TestCase):
                 self.assertEqual(x["idle_status"], 1)
                 self.assertEqual(rec.validate_close(x, o), [], i)
                 self.assertEqual(x["base_state_sample"], o["steps"][0]["q_after"])       # the restore event's sample on the base = the init sample
-                task = {"mask": [(s, e) for s in range(1, 8) for e in range(8)], "target": [0] * 56, "weights": [1] * 56, "digest": _h("task")}
-                fr = rec.fitness(o, task)
+                fr = rec.fitness(o, TASK)
                 self.assertEqual(rec.validate_fitness(fr, o), [])
                 self.assertEqual(fr["fitness"], sum(1 for s in o["steps"][1:] for c in s["q_after"] if c == 0))
                 self.assertEqual(rec.validate_bound(o, ctx_for(self.stim[i - 1], prev_close), fr, x), [], i)
@@ -160,6 +163,58 @@ class FromTheBench(unittest.TestCase):
                                     {"o": o3, "x": x3, "ctx": ctx_for(self.stim[0][:1], None)}])
         self.assertTrue(all("chain[0]" in f and ("initial" in f or "steps[0]" in f) for f in chain), chain)   # only the root's never-initialised pre-init sample (the bench's fabric)
 
+    def test_session_chain_from_the_bench_has_zero_findings(self):
+        """The `session` scenario: session open -> the init-only ROOT on genome 0 -> one candidate -> close, every record
+        rebuilt from its sorted-JSON serialization, validated at all three layers and as a chain with NO finding. The
+        bench's fabric starts at its INIT values for this scenario (the power-up state of a configured device, set on
+        the fabric, not on a record), so the root's pre-init sample is a real sample and no model null is converted."""
+        txs = rec.transactions(rec.load_trace(OUT / "session.jsonl"))
+        self.assertEqual(len(txs), 2)
+        root = roundtrip(rec.observation(txs[0], LINKS, TIMING, seq=1, session="bench", predecessor=ROOT, declared_stimulus=[{"kind": "init"}]))
+        self.assertEqual(root["status"], "complete"); self.assertEqual(len(root["steps"]), 1); self.assertEqual(root["initial"]["q"], [1] * 8)
+        self.assertFalse(root["init_event"]["parameters"]["pre_init_cleanup"])
+        self.assertEqual(rec.validate_observation(root), [])
+        rx = roundtrip(rec.transaction_close(txs[0], root, seq=1, links=LINKS))
+        self.assertEqual(rx["status"], "closed"); self.assertEqual(rec.validate_close(rx, root), [])
+        self.assertEqual(rx["cleanup"]["steps"][0]["edge"], None)                     # the init step leaves the clock low: no falling edge
+        pred = {"kind": "closed", "seq": 1, "close_sha256": rec.sha256_json(rx)}
+        cand = roundtrip(rec.observation(txs[1], LINKS, TIMING, seq=2, session="bench", predecessor=pred, declared_stimulus=self.stim[1]))
+        self.assertEqual(cand["status"], "complete"); self.assertEqual(len(cand["steps"]), 8); self.assertEqual(rec.validate_observation(cand), [])
+        cx = roundtrip(rec.transaction_close(txs[1], cand, seq=2, links=LINKS)); self.assertEqual(cx["status"], "closed")
+        cf = roundtrip(rec.fitness(cand, TASK)); self.assertEqual(rec.validate_fitness(cf, cand), [])
+        so = roundtrip(rec.session_open(INSTRUMENT, STARTUP, STARTUP))
+        chain = [{"o": root, "x": rx, "ctx": ctx_for([{"kind": "init"}], None)},
+                 {"o": cand, "x": cx, "f": cf, "ctx": ctx_for(self.stim[1], rec.sha256_json(rx))}]
+        self.assertEqual(rec.validate_chain(so, chain), [])
+        # the same chain is refused under a foreign session_open, a wrong X.seq, a wrong predecessor seq, a wrong fitness
+        foreign = copy.deepcopy(so); foreign["instrument"]["carrier_sha256"] = _h("foreign")
+        self.assertTrue(any("session_open.instrument" in m for m in rec.validate_chain(foreign, chain)))
+        own_ref = rec.session_open(INSTRUMENT, _h("own"), _h("own"))
+        self.assertTrue(any("pinned loaded-frame reference" in m for m in rec.validate_chain(own_ref, chain)))
+        bad = copy.deepcopy(chain); bad[1]["x"]["seq"] = 999
+        self.assertTrue(any("X.seq" in m for m in rec.validate_chain(so, bad)))
+        bad = copy.deepcopy(chain); bad[1]["o"]["predecessor"]["seq"] = 999; bad[1]["x"]["observation_sha256"] = rec.observation_sha256(bad[1]["o"])
+        self.assertTrue(any("predecessor.seq" in m for m in rec.validate_chain(so, bad)))
+        bad = copy.deepcopy(chain); bad[1]["f"]["fitness"] = 999
+        self.assertTrue(any("recomputed" in m for m in rec.validate_chain(so, bad)))
+
+    def test_post_p6_fault_leaves_o_sealed_and_x_faulted(self):
+        """The `post_fault` scenario (the owner's reproduction): a complete observation, then CLOSE before cleanup. The
+        register file answers OKAY, the engine refuses (F_SEQUENCE). O built from the whole transaction is the O sealed at
+        P6 (same digest, complete), and X is the faulted close with the real stop location (P7: cleanup not done)."""
+        tx = rec.transactions(rec.load_trace(OUT / "post_fault.jsonl"))[1]
+        cut = next(i for i, e in enumerate(tx) if e.get("mark") == "P6_sealed")
+        o_full = rec.observation(tx, LINKS, TIMING, seq=2, session="bench", predecessor=ROOT, declared_stimulus=self.stim[1])
+        o_p6 = rec.observation(tx[:cut], LINKS, TIMING, seq=2, session="bench", predecessor=ROOT, declared_stimulus=self.stim[1])
+        self.assertEqual(o_full["status"], "complete"); self.assertEqual(len(o_full["steps"]), 8)
+        self.assertEqual(rec.observation_sha256(o_full), rec.observation_sha256(o_p6))
+        self.assertEqual(rec.validate_observation(o_full), [])
+        x = rec.transaction_close(tx, o_full, seq=2, links=LINKS)
+        self.assertEqual(x["status"], "faulted"); self.assertEqual(x["fault"], {"code": "sequence", "phase_reached": "P7"})
+        self.assertNotIn("cleanup", x); self.assertEqual(rec.validate_close(x, o_full), [])
+        with self.assertRaises(rec.RecordRefusal):
+            rec.transaction_close(tx[:cut], o_p6, seq=2, links=LINKS)               # nothing after P6: not closed
+
     def test_x_cannot_be_sealed_before_close(self):
         tx = self.flow[1]
         cut = next(i for i, e in enumerate(tx) if e.get("op") == "wr" and e.get("addr") == rm.CTRL and e.get("data") == rm.ctrl_word("close"))
@@ -173,7 +228,7 @@ class ClosedSets(unittest.TestCase):
         stim = [{"kind": "init"}, {"kind": "set", "clock": 1, "ce": 255, "sr": 0, "d": 0x5A}]
         return {"schema": rec.SCHEMA_O, "schema_version": rec.VERSION, "instrument": dict(INSTRUMENT), "session": "s", "seq": 1, "nonce": LINKS["nonce"],
                 "commit": _h("c"), "staging_readback_sha256": FRAMES, "fabric_readback_sha256_pre_event": FRAMES, "fabric_readback_sha256_post_event": FRAMES,
-                "init_event": {"mechanism": "gsr_startupe2", "parameters": {"assert_delay": 8, "pulse_clocks": 2, "gsr_count_after": 1}},
+                "init_event": {"mechanism": "gsr_startupe2", "parameters": {"assert_delay": 8, "pulse_clocks": 2, "gsr_count_after": 1, "pre_init_cleanup": False}},
                 "timing": {"settle": 4, "hold": 4, "release": 16, "sample_offset": 4}, "predecessor": dict(ROOT),
                 "config": [0] * 21, "config_sha256": rec.sha256_json([0] * 21), "stimulus": stim, "stimulus_sha256": rec.sha256_json(stim),
                 "elements": list(rec.ELEMENTS), "initial": {"context": "idle", "clock": 0, "ce": 0, "sr": 0, "d": 0, "q": [1] * 8},
@@ -184,7 +239,7 @@ class ClosedSets(unittest.TestCase):
     def _x(self, o):
         return {"schema": rec.SCHEMA_X, "schema_version": rec.VERSION, "observation_sha256": rec.observation_sha256(o), "seq": 1,
                 "cleanup": {"steps": [{"clock_before": 1, "clock_after": 0, "edge": "falling", "ce": 0, "sr": 0, "d": 0, "q_after": rec.bits(0x5A)}], "final_q": rec.bits(0x5A)},
-                "base_readback_sha256": _h("base-frames"), "base_state_sample": [1] * 8, "idle_status": 1, "status": "closed"}
+                "base_readback_sha256": STARTUP, "base_state_sample": [1] * 8, "idle_status": 1, "status": "closed"}
 
     def test_valid_and_round_trip(self):
         o = self._o(); self.assertEqual(rec.validate_observation(o), [])
@@ -263,6 +318,42 @@ class ClosedSets(unittest.TestCase):
         so = rec.session_open(INSTRUMENT, _h("x"), _h("y")); self.assertEqual(so["status"], "refused")
         so = rec.session_open({}, None, None); self.assertEqual(so["status"], "refused"); self.assertTrue(rec.validate_session_open(so))
         so = rec.session_open(INSTRUMENT, _h("x"), _h("y")); so["status"] = "open"; self.assertTrue(rec.validate_session_open(so))
+
+    def test_round3_rules(self):
+        o = self._o(); x = self._x(o)
+        bad = copy.deepcopy(x); bad["seq"] = 999
+        self.assertTrue(any("X.seq" in m for m in rec.validate_close(bad, o)))
+        bad = copy.deepcopy(x); bad["cleanup"]["steps"][0].update(clock_before=0, edge=None)            # O's final clock is 1
+        f = rec.validate_close(bad, o); self.assertTrue(any("final clock" in m for m in f) and any("edge" in m for m in f), f)
+        bad = copy.deepcopy(x); bad["cleanup"]["steps"][0].update(ce=False, sr=0.0, d=False, clock_after=0.0)
+        self.assertEqual(len([m for m in rec.validate_close(bad, o) if "bad value" in m]), 4)
+        # pre_init_cleanup is a witness of the held-input context, not a free bit
+        held = self._o(); held["initial"].update(context="a5_injection", clock=1, ce=1); held["steps"][0]["clock_before"] = 1
+        self.assertTrue(any("pre_init_cleanup" in m for m in rec.validate_observation(held)))
+        held["init_event"]["parameters"]["pre_init_cleanup"] = True
+        self.assertEqual([m for m in rec.validate_observation(held) if "pre_init_cleanup" in m], [])
+        idle = self._o(); idle["init_event"]["parameters"]["pre_init_cleanup"] = True
+        self.assertTrue(any("pre_init_cleanup" in m for m in rec.validate_observation(idle)))
+        # the phase table governs the acquisitions, not only the readback keys
+        p2 = self._o(); p2.update(status="invalid", fault={"code": "sequence", "phase_reached": "P2", "step_reached": None}); p2.pop("initial"); p2.pop("fabric_readback_sha256_post_event")
+        self.assertTrue(any("stop in P2" in m for m in rec.validate_observation(p2)))
+        p2["steps"] = []; self.assertEqual(rec.validate_observation(p2), [])
+        p4 = self._o(); p4.update(status="invalid", fault={"code": "sequence", "phase_reached": "P4", "step_reached": None}); p4.pop("fabric_readback_sha256_post_event")
+        self.assertTrue(any("stop in P4" in m for m in rec.validate_observation(p4)))
+        # a malformed chain entry is a finding, never an exception; the session is bound to the trusted context
+        so = rec.session_open(INSTRUMENT, STARTUP, STARTUP); ctx = ctx_for(o["stimulus"], None, session="s")
+        self.assertTrue(any("record entry" in m for m in rec.validate_chain(so, [{"o": [], "x": x, "ctx": ctx}])))
+        self.assertEqual(rec.validate_chain(so, "records"), ["chain: records is not a list"])
+        foreign = rec.session_open({**INSTRUMENT, "carrier_sha256": _h("foreign")}, _h("own"), _h("own"))
+        f = rec.validate_chain(foreign, [{"o": o, "x": x, "ctx": ctx}])
+        self.assertTrue(any("session_open.instrument" in m for m in f) and any("pinned loaded-frame reference" in m for m in f), f)
+        # F is recomputed over the full grid from the TRUSTED task: an arbitrary score with the right digest is refused
+        task = {"mask": [(1, 1), (1, 0)], "target": [1, 1], "weights": [1, 1], "digest": _h("task")}
+        fr = rec.fitness(o, task); tctx = {**ctx, "task": task}
+        self.assertEqual(rec.validate_bound(o, tctx, fr, x), [])
+        fr["fitness"] = 999
+        self.assertTrue(any("recomputed" in m for m in rec.validate_bound(o, tctx, fr, x)))
+        self.assertTrue(any("no trusted task" in m for m in rec.validate_bound(o, {k: v for k, v in ctx.items() if k != "task"}, fr, x)))
 
     def test_binding_frame_invariance_and_task(self):
         o = self._o(); o["fabric_readback_sha256_post_event"] = _h("other")

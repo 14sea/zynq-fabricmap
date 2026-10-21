@@ -48,7 +48,7 @@
     ],
     [
      "a5",
-     "TB_FAIL a5 (5)",
+     "TB_FAIL a5 (4)",
      0
     ]
    ]
@@ -113,7 +113,7 @@
    "runs": [
     [
      "a5",
-     "TB_FAIL a5 (7)",
+     "TB_FAIL a5 (8)",
      0
     ]
    ]
@@ -149,7 +149,7 @@
    "runs": [
     [
      "flow",
-     "TB_FAIL flow (2)",
+     "TB_FAIL flow (4)",
      0
     ]
    ]
@@ -284,11 +284,11 @@
    "runs": [
     [
      "tests.test_b4carrier_records",
-     13,
+     16,
      true,
      1,
      [
-      "Ran 13 tests in 0.012s",
+      "Ran 16 tests in 0.026s",
       "",
       "FAILED (failures=5)"
      ]
@@ -302,13 +302,13 @@
    "runs": [
     [
      "tests.test_b4carrier_records",
-     13,
+     16,
      true,
      1,
      [
-      "Ran 13 tests in 0.013s",
+      "Ran 16 tests in 0.025s",
       "",
-      "FAILED (failures=5)"
+      "FAILED (failures=6)"
      ]
     ]
    ]
@@ -338,11 +338,11 @@
    "runs": [
     [
      "tests.test_b4carrier_records",
-     13,
+     16,
      true,
      1,
      [
-      "Ran 13 tests in 0.010s",
+      "Ran 16 tests in 0.024s",
       "",
       "FAILED (failures=6)"
      ]
@@ -374,11 +374,11 @@
    "runs": [
     [
      "tests.test_b4carrier_records",
-     13,
+     16,
      true,
      1,
      [
-      "Ran 13 tests in 0.012s",
+      "Ran 16 tests in 0.025s",
       "",
       "FAILED (failures=4)"
      ]
@@ -392,11 +392,11 @@
    "runs": [
     [
      "tests.test_b4carrier_records",
-     13,
+     16,
      true,
      1,
      [
-      "Ran 13 tests in 0.012s",
+      "Ran 16 tests in 0.026s",
       "",
       "FAILED (failures=5)"
      ]
@@ -410,11 +410,11 @@
    "runs": [
     [
      "tests.test_b4carrier_records",
-     13,
+     16,
      true,
      1,
      [
-      "Ran 13 tests in 0.012s",
+      "Ran 16 tests in 0.026s",
       "",
       "FAILED (failures=5)"
      ]
@@ -428,11 +428,257 @@
    "runs": [
     [
      "tests.test_b4carrier_records",
-     13,
+     16,
      true,
      1,
      [
-      "Ran 13 tests in 0.012s",
+      "Ran 16 tests in 0.026s",
+      "",
+      "FAILED (failures=5)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "M22",
+   "file": "rtl/b4/b4_axi_gate.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "axi3",
+     "TB_FAIL axi3 (watchdog)",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "M23",
+   "file": "rtl/b4/b4_core.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "axi3",
+     "TB_FAIL axi3 (watchdog)",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "M24",
+   "file": "rtl/b4/b4_engine.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "a5",
+     "TB_FAIL a5 (2)",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "M25",
+   "file": "rtl/b4/b4_axil.v",
+   "status": "KILLED",
+   "runs": [
+    [
+     "a5",
+     "TB_FAIL a5 (1)",
+     0
+    ]
+   ]
+  },
+  {
+   "id": "H11",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     16,
+     true,
+     1,
+     [
+      "Ran 16 tests in 0.026s",
+      "",
+      "FAILED (failures=5)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H12",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     16,
+     true,
+     1,
+     [
+      "Ran 16 tests in 0.027s",
+      "",
+      "FAILED (failures=4, errors=1)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H13",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     16,
+     true,
+     1,
+     [
+      "Ran 16 tests in 0.022s",
+      "",
+      "FAILED (failures=6)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H14",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     16,
+     true,
+     1,
+     [
+      "Ran 16 tests in 0.027s",
+      "",
+      "FAILED (failures=4)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H15",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     16,
+     true,
+     1,
+     [
+      "Ran 16 tests in 0.025s",
+      "",
+      "FAILED (failures=5)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H16",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     16,
+     true,
+     1,
+     [
+      "Ran 16 tests in 0.021s",
+      "",
+      "FAILED (failures=6)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H17",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     16,
+     true,
+     1,
+     [
+      "Ran 16 tests in 0.026s",
+      "",
+      "FAILED (failures=6)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H18",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     16,
+     true,
+     1,
+     [
+      "Ran 16 tests in 0.026s",
+      "",
+      "FAILED (failures=4, errors=1)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H19",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     16,
+     true,
+     1,
+     [
+      "Ran 16 tests in 0.025s",
+      "",
+      "FAILED (failures=5)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H20",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     16,
+     true,
+     1,
+     [
+      "Ran 16 tests in 0.025s",
+      "",
+      "FAILED (failures=4)"
+     ]
+    ]
+   ]
+  },
+  {
+   "id": "H21",
+   "file": "host/b4carrier_records.py",
+   "status": "KILLED",
+   "runs": [
+    [
+     "tests.test_b4carrier_records",
+     16,
+     true,
+     1,
+     [
+      "Ran 16 tests in 0.026s",
       "",
       "FAILED (failures=5)"
      ]
@@ -446,20 +692,20 @@
    "runs": [
     [
      "tests.test_b4carrier_records",
-     13,
+     16,
      true,
      1,
      [
-      "Ran 13 tests in 0.012s",
+      "Ran 16 tests in 0.027s",
       "",
-      "FAILED (failures=5)"
+      "FAILED (failures=6)"
      ]
     ]
    ]
   }
  ],
  "summary": {
-  "KILLED": 31,
+  "KILLED": 46,
   "SURVIVED": 0,
   "EDIT-MISS": 0,
   "NOT-RUN": 0

@@ -22,6 +22,7 @@
 //   0x201C  SLOT_ADDR W/R: bits4:0
 //   0x2020  WITNESS   R: bits7:0 gsr_count  bits15:8 mechanism (2 = GSR via STARTUPE2)  bits23:16 PULSE (clocks, LUTRAM-timed)
 //                        bit24 restore_pending  bit25 pre_context_a5  bit26 stall (the bus gates hold new accesses)
+//                        bit27 pre_init_cleanup (the recorded cleanup-like operation inside step 0, contract 5.6 J3)
 //   0x2024  TIMING    R: bits7:0 ASSERT_DELAY  bits15:8 RELEASE  bits23:16 SAMPLE_OFFSET  bits27:24 SETTLE  bits31:28 HOLD
 //   0x2028  HEARTBEAT R  (free-running; RESET BY EVERY EVENT — a witness that GSR occurred)
 //   0x202C  NONCE_LO  R   0x2030 NONCE_HI R  (persistent across the events)
@@ -63,7 +64,7 @@ module b4_axil #(
     input  wire [63:0]  nonce,
     input  wire [255:0] hw_commit,
     input  wire         engine_busy, step_done, pre_sampled, init_done, init_pending, cleanup_done, cleanup_edge, idle,
-    input  wire         injection_open, restore_pending, restore_done, pre_context_a5, stall,
+    input  wire         injection_open, restore_pending, restore_done, pre_context_a5, pre_init_cleanup, stall,
     input  wire [4:0]   slot_count, step_index,
     input  wire [7:0]   q_live, slot_read, gsr_count, base_state,
     input  wire [31:0]  slot_in_read,
@@ -162,7 +163,7 @@ module b4_axil #(
             else if (ra == 16'h2014) s_rdata <= {21'd0, in_live};
             else if (ra == 16'h2018) s_rdata <= {24'd0, slot_read};
             else if (ra == 16'h201C) s_rdata <= {27'd0, slot_addr};
-            else if (ra == 16'h2020) s_rdata <= {5'd0, stall, pre_context_a5, restore_pending, PULSE_WORD, MECHANISM, gsr_count};
+            else if (ra == 16'h2020) s_rdata <= {4'd0, pre_init_cleanup, stall, pre_context_a5, restore_pending, PULSE_WORD, MECHANISM, gsr_count};
             else if (ra == 16'h2024) s_rdata <= TIMING_WORD;
             else if (ra == 16'h2028) s_rdata <= heartbeat;
             else if (ra == 16'h202C) s_rdata <= nonce[31:0];

@@ -40,7 +40,7 @@ module b4_top #(
     // Lite side takes it, so the stall and the quiescence check must be applied on the PS side of it
     wire g_awvalid, g_awready, g_wvalid, g_wready, g_arvalid, g_arready;
     b4_axi_gate ps_gate (
-        .clk(clk), .rst_n(rst_n_eff), .stall(stall),
+        .clk(clk), .rst_n(rst_n_eff), .stall(stall), .enable(1'b1),
         .m_awvalid(ps_awvalid), .m_awready(ps_awready), .s_awvalid(g_awvalid), .s_awready(g_awready),
         .m_wvalid(ps_wvalid),   .m_wready(ps_wready),   .s_wvalid(g_wvalid),   .s_wready(g_wready),
         .m_arvalid(ps_arvalid), .m_arready(ps_arready), .s_arvalid(g_arvalid), .s_arready(g_arready),
@@ -61,7 +61,7 @@ module b4_top #(
         .m_rdata(m_rdata), .m_rresp(m_rresp), .m_rvalid(m_rvalid), .m_rready(m_rready));
 
     wire slice_clk, slice_ce, slice_sr; wire [7:0] slice_d, slice_q;
-    b4_core #(.NONCE_SEED(NONCE_SEED), .VARIANT_WORD(VARIANT_WORD)) core (
+    b4_core #(.NONCE_SEED(NONCE_SEED), .VARIANT_WORD(VARIANT_WORD), .LITE_STALL(0)) core (
         .clk(clk), .rst_n(rst_n),
         .s_awaddr(m_awaddr), .s_awvalid(m_awvalid), .s_awready(m_awready),
         .s_wdata(m_wdata), .s_wstrb(m_wstrb), .s_wvalid(m_wvalid), .s_wready(m_wready),

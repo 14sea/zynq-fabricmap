@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
-| Date         : Wed Oct 21 14:04:10 2026
+| Date         : Wed Oct 21 16:28:22 2026
 | Host         : H3C running 64-bit Ubuntu 24.04.4 LTS
 | Command      : report_timing_summary -file builds/b4/timing.rpt
 | Design       : b4_top
@@ -138,7 +138,7 @@ Table of Contents
 
     WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
     -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-      7.426        0.000                      0                 6771        0.019        0.000                      0                 6771        8.750        0.000                       0                  2302  
+      7.985        0.000                      0                 6776        0.035        0.000                      0                 6776        8.750        0.000                       0                  2304  
 
 
 All user specified timing constraints are met.
@@ -161,7 +161,7 @@ fclk0  {0.000 10.000}     20.000          50.000
 
 Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
 -----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
-fclk0               7.426        0.000                      0                 4756        0.019        0.000                      0                 4756        8.750        0.000                       0                  2302  
+fclk0               7.985        0.000                      0                 4760        0.035        0.000                      0                 4760        8.750        0.000                       0                  2304  
 
 
 ------------------------------------------------------------------------------------------------
@@ -180,7 +180,7 @@ From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS
 
 Path Group         From Clock         To Clock               WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
 ----------         ----------         --------               -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
-**async_default**  fclk0              fclk0                    8.023        0.000                      0                 2015        1.523        0.000                      0                 2015  
+**async_default**  fclk0              fclk0                    9.320        0.000                      0                 2016        1.583        0.000                      0                 2016  
 
 
 ------------------------------------------------------------------------------------------------
@@ -193,28 +193,28 @@ Path Group         From Clock         To Clock               WNS(ns)      TNS(ns
 From Clock:  fclk0
   To Clock:  fclk0
 
-Setup :            0  Failing Endpoints,  Worst Slack        7.426ns,  Total Violation        0.000ns
-Hold  :            0  Failing Endpoints,  Worst Slack        0.019ns,  Total Violation        0.000ns
+Setup :            0  Failing Endpoints,  Worst Slack        7.985ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.035ns,  Total Violation        0.000ns
 PW    :            0  Failing Endpoints,  Worst Slack        8.750ns,  Total Violation        0.000ns
 ---------------------------------------------------------------------------------------------------
 
 
 Max Delay Paths
 --------------------------------------------------------------------------------------
-Slack (MET) :             7.426ns  (required time - arrival time)
+Slack (MET) :             7.985ns  (required time - arrival time)
   Source:                 core/gate/siphash/rnd_reg[2]/C
                             (rising edge-triggered cell FDCE clocked by fclk0  {rise@0.000ns fall@10.000ns period=20.000ns})
-  Destination:            core/gate/siphash/v_reg[64]/D
+  Destination:            core/gate/siphash/v_reg[103]/D
                             (rising edge-triggered cell FDCE clocked by fclk0  {rise@0.000ns fall@10.000ns period=20.000ns})
   Path Group:             fclk0
   Path Type:              Setup (Max at Slow Process Corner)
   Requirement:            20.000ns  (fclk0 rise@20.000ns - fclk0 rise@0.000ns)
-  Data Path Delay:        12.431ns  (logic 1.064ns (8.559%)  route 11.367ns (91.441%))
+  Data Path Delay:        12.051ns  (logic 0.828ns (6.871%)  route 11.223ns (93.129%))
   Logic Levels:           3  (LUT3=1 LUT5=1 LUT6=1)
-  Clock Path Skew:        -0.139ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    2.691ns = ( 22.691 - 20.000 ) 
-    Source Clock Delay      (SCD):    2.959ns
-    Clock Pessimism Removal (CPR):    0.130ns
+  Clock Path Skew:        -0.005ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.687ns = ( 22.688 - 20.000 ) 
+    Source Clock Delay      (SCD):    2.957ns
+    Clock Pessimism Removal (CPR):    0.265ns
   Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
     Total System Jitter     (TSJ):    0.071ns
     Total Input Jitter      (TIJ):    0.000ns
@@ -227,34 +227,34 @@ Slack (MET) :             7.426ns  (required time - arrival time)
     PS7_X0Y0             PS7                          0.000     0.000 r                       ps7/FCLKCLK[0]
                          net (fo=1, routed)           1.207     1.207                         clk
     BUFGCTRL_X0Y15       BUFG (Prop_bufg_I_O)         0.101     1.308 r  pb_logic             clk_BUFG_inst/O
-                         net (fo=2302, routed)        1.651     2.959                         core/gate/siphash/clk
-    SLICE_X25Y26         FDCE                                         r  pb_logic             core/gate/siphash/rnd_reg[2]/C
+                         net (fo=2304, routed)        1.649     2.957                         core/gate/siphash/clk
+    SLICE_X22Y25         FDCE                                         r  pb_logic             core/gate/siphash/rnd_reg[2]/C
   -------------------------------------------------------------------    ----------------------------------------
-    SLICE_X25Y26         FDCE (Prop_fdce_C_Q)         0.456     3.415 r  pb_logic             core/gate/siphash/rnd_reg[2]/Q
-                         net (fo=94, routed)          5.435     8.850                         core/gate/siphash/p_0_in
-    SLICE_X22Y57         LUT5 (Prop_lut5_I2_O)        0.152     9.002 f  pb_logic             core/gate/siphash/v[255]_i_7/O
-                         net (fo=122, routed)         4.759    13.760                         core/gate/siphash/v[255]_i_7_n_0
-    SLICE_X15Y33         LUT6 (Prop_lut6_I0_O)        0.332    14.092 r  pb_logic             core/gate/siphash/v[64]_i_2/O
-                         net (fo=1, routed)           1.174    15.266                         core/gate/siphash/v[64]_i_2_n_0
-    SLICE_X14Y38         LUT3 (Prop_lut3_I2_O)        0.124    15.390 r  pb_logic             core/gate/siphash/v[64]_i_1/O
-                         net (fo=1, routed)           0.000    15.390                         core/gate/siphash/v[64]_i_1_n_0
-    SLICE_X14Y38         FDCE                                         r  pb_logic             core/gate/siphash/v_reg[64]/D
+    SLICE_X22Y25         FDCE (Prop_fdce_C_Q)         0.456     3.413 f  pb_logic             core/gate/siphash/rnd_reg[2]/Q
+                         net (fo=94, routed)          5.113     8.526                         core/gate/siphash/p_0_in
+    SLICE_X22Y54         LUT5 (Prop_lut5_I3_O)        0.124     8.650 r  pb_logic             core/gate/siphash/v[188]_i_5/O
+                         net (fo=222, routed)         4.511    13.161                         core/gate/siphash/v[188]_i_5_n_0
+    SLICE_X25Y31         LUT6 (Prop_lut6_I3_O)        0.124    13.285 r  pb_logic             core/gate/siphash/v[103]_i_2/O
+                         net (fo=1, routed)           1.599    14.884                         core/gate/siphash/v[103]_i_2_n_0
+    SLICE_X24Y43         LUT3 (Prop_lut3_I2_O)        0.124    15.008 r  pb_logic             core/gate/siphash/v[103]_i_1/O
+                         net (fo=1, routed)           0.000    15.008                         core/gate/siphash/v[103]_i_1_n_0
+    SLICE_X24Y43         FDCE                                         r  pb_logic             core/gate/siphash/v_reg[103]/D
   -------------------------------------------------------------------    ----------------------------------------
 
                          (clock fclk0 rise edge)     20.000    20.000 r                       
     PS7_X0Y0             PS7                          0.000    20.000 r                       ps7/FCLKCLK[0]
                          net (fo=1, routed)           1.101    21.101                         clk
     BUFGCTRL_X0Y15       BUFG (Prop_bufg_I_O)         0.091    21.192 r  pb_logic             clk_BUFG_inst/O
-                         net (fo=2302, routed)        1.498    22.691                         core/gate/siphash/clk
-    SLICE_X14Y38         FDCE                                         r  pb_logic             core/gate/siphash/v_reg[64]/C
-                         clock pessimism              0.130    22.820                           
-                         clock uncertainty           -0.035    22.785                           
-    SLICE_X14Y38         FDCE (Setup_fdce_C_D)        0.031    22.816    pb_logic               core/gate/siphash/v_reg[64]
+                         net (fo=2304, routed)        1.495    22.688                         core/gate/siphash/clk
+    SLICE_X24Y43         FDCE                                         r  pb_logic             core/gate/siphash/v_reg[103]/C
+                         clock pessimism              0.265    22.952                           
+                         clock uncertainty           -0.035    22.917                           
+    SLICE_X24Y43         FDCE (Setup_fdce_C_D)        0.077    22.994    pb_logic               core/gate/siphash/v_reg[103]
   -------------------------------------------------------------------
-                         required time                         22.816                           
-                         arrival time                         -15.390                           
+                         required time                         22.994                           
+                         arrival time                         -15.008                           
   -------------------------------------------------------------------
-                         slack                                  7.426                           
+                         slack                                  7.985                           
 
 
 
@@ -262,19 +262,19 @@ Slack (MET) :             7.426ns  (required time - arrival time)
 
 Min Delay Paths
 --------------------------------------------------------------------------------------
-Slack (MET) :             0.019ns  (arrival time - required time)
-  Source:                 core/axil/payload_reg[568]/C
+Slack (MET) :             0.035ns  (arrival time - required time)
+  Source:                 core/axil/payload_reg[588]/C
                             (rising edge-triggered cell FDCE clocked by fclk0  {rise@0.000ns fall@10.000ns period=20.000ns})
-  Destination:            core/gate/hw_commit_reg[184]/D
+  Destination:            core/gate/siphash/m_reg[52]/D
                             (rising edge-triggered cell FDCE clocked by fclk0  {rise@0.000ns fall@10.000ns period=20.000ns})
   Path Group:             fclk0
   Path Type:              Hold (Min at Fast Process Corner)
   Requirement:            0.000ns  (fclk0 rise@0.000ns - fclk0 rise@0.000ns)
-  Data Path Delay:        0.348ns  (logic 0.141ns (40.523%)  route 0.207ns (59.477%))
-  Logic Levels:           0  
-  Clock Path Skew:        0.263ns (DCD - SCD - CPR)
-    Destination Clock Delay (DCD):    1.198ns
-    Source Clock Delay      (SCD):    0.901ns
+  Data Path Delay:        0.390ns  (logic 0.186ns (47.702%)  route 0.204ns (52.298%))
+  Logic Levels:           1  (LUT6=1)
+  Clock Path Skew:        0.264ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.195ns
+    Source Clock Delay      (SCD):    0.897ns
     Clock Pessimism Removal (CPR):    0.034ns
 
     Location             Delay type                Incr(ns)  Path(ns)    PBlock               Netlist Resource(s)
@@ -283,27 +283,29 @@ Slack (MET) :             0.019ns  (arrival time - required time)
     PS7_X0Y0             PS7                          0.000     0.000 r                       ps7/FCLKCLK[0]
                          net (fo=1, routed)           0.315     0.315                         clk
     BUFGCTRL_X0Y15       BUFG (Prop_bufg_I_O)         0.026     0.341 r  pb_logic             clk_BUFG_inst/O
-                         net (fo=2302, routed)        0.560     0.901                         core/axil/clk
-    SLICE_X21Y6          FDCE                                         r  pb_logic             core/axil/payload_reg[568]/C
+                         net (fo=2304, routed)        0.556     0.897                         core/axil/clk
+    SLICE_X25Y13         FDCE                                         r  pb_logic             core/axil/payload_reg[588]/C
   -------------------------------------------------------------------    ----------------------------------------
-    SLICE_X21Y6          FDCE (Prop_fdce_C_Q)         0.141     1.042 r  pb_logic             core/axil/payload_reg[568]/Q
-                         net (fo=2, routed)           0.207     1.248                         core/gate/payload[568]
-    SLICE_X25Y5          FDCE                                         r  pb_logic             core/gate/hw_commit_reg[184]/D
+    SLICE_X25Y13         FDCE (Prop_fdce_C_Q)         0.141     1.038 r  pb_logic             core/axil/payload_reg[588]/Q
+                         net (fo=3, routed)           0.204     1.241                         core/gate/siphash/msg[588]
+    SLICE_X21Y14         LUT6 (Prop_lut6_I5_O)        0.045     1.286 r  pb_logic             core/gate/siphash/m[52]_i_1/O
+                         net (fo=1, routed)           0.000     1.286                         core/gate/siphash/m[52]_i_1_n_0
+    SLICE_X21Y14         FDCE                                         r  pb_logic             core/gate/siphash/m_reg[52]/D
   -------------------------------------------------------------------    ----------------------------------------
 
                          (clock fclk0 rise edge)      0.000     0.000 r                       
     PS7_X0Y0             PS7                          0.000     0.000 r                       ps7/FCLKCLK[0]
                          net (fo=1, routed)           0.341     0.341                         clk
     BUFGCTRL_X0Y15       BUFG (Prop_bufg_I_O)         0.029     0.370 r  pb_logic             clk_BUFG_inst/O
-                         net (fo=2302, routed)        0.828     1.198                         core/gate/clk
-    SLICE_X25Y5          FDCE                                         r  pb_logic             core/gate/hw_commit_reg[184]/C
-                         clock pessimism             -0.034     1.164                           
-    SLICE_X25Y5          FDCE (Hold_fdce_C_D)         0.066     1.230    pb_logic               core/gate/hw_commit_reg[184]
+                         net (fo=2304, routed)        0.825     1.195                         core/gate/siphash/clk
+    SLICE_X21Y14         FDCE                                         r  pb_logic             core/gate/siphash/m_reg[52]/C
+                         clock pessimism             -0.034     1.161                           
+    SLICE_X21Y14         FDCE (Hold_fdce_C_D)         0.091     1.252    pb_logic               core/gate/siphash/m_reg[52]
   -------------------------------------------------------------------
-                         required time                         -1.230                           
-                         arrival time                           1.248                           
+                         required time                         -1.252                           
+                         arrival time                           1.286                           
   -------------------------------------------------------------------
-                         slack                                  0.019                           
+                         slack                                  0.035                           
 
 
 
@@ -318,8 +320,8 @@ Sources:            { ps7/FCLKCLK[0] }
 
 Check Type        Corner  Lib Pin     Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location        Pin
 Min Period        n/a     BUFG/I      n/a            2.155         20.000      17.845     BUFGCTRL_X0Y15  clk_BUFG_inst/I
-Low Pulse Width   Slow    RAMS32/CLK  n/a            1.250         10.000      8.750      SLICE_X6Y23     core/axil/key_loaded_store/g[0].r/SP/CLK
-High Pulse Width  Slow    RAMS32/CLK  n/a            1.250         10.000      8.750      SLICE_X6Y23     core/axil/key_loaded_store/g[0].r/SP/CLK
+Low Pulse Width   Slow    RAMS32/CLK  n/a            1.250         10.000      8.750      SLICE_X0Y22     core/axil/key_loaded_store/g[0].r/SP/CLK
+High Pulse Width  Slow    RAMS32/CLK  n/a            1.250         10.000      8.750      SLICE_X0Y22     core/axil/key_loaded_store/g[0].r/SP/CLK
 
 
 
@@ -328,26 +330,26 @@ Path Group:  **async_default**
 From Clock:  fclk0
   To Clock:  fclk0
 
-Setup :            0  Failing Endpoints,  Worst Slack        8.023ns,  Total Violation        0.000ns
-Hold  :            0  Failing Endpoints,  Worst Slack        1.523ns,  Total Violation        0.000ns
+Setup :            0  Failing Endpoints,  Worst Slack        9.320ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        1.583ns,  Total Violation        0.000ns
 ---------------------------------------------------------------------------------------------------
 
 
 Max Delay Paths
 --------------------------------------------------------------------------------------
-Slack (MET) :             8.023ns  (required time - arrival time)
-  Source:                 core/engine/pulse_store/g[3].r/SP/CLK
+Slack (MET) :             9.320ns  (required time - arrival time)
+  Source:                 core/engine/pulse_store/g[2].r/SP/CLK
                             (rising edge-triggered cell RAMS32 clocked by fclk0  {rise@0.000ns fall@10.000ns period=20.000ns})
-  Destination:            core/axil/payload_reg[554]/CLR
+  Destination:            core/axil/payload_reg[172]/CLR
                             (recovery check against rising-edge clock fclk0  {rise@0.000ns fall@10.000ns period=20.000ns})
   Path Group:             **async_default**
   Path Type:              Recovery (Max at Slow Process Corner)
   Requirement:            20.000ns  (fclk0 rise@20.000ns - fclk0 rise@0.000ns)
-  Data Path Delay:        11.332ns  (logic 1.798ns (15.867%)  route 9.534ns (84.133%))
+  Data Path Delay:        10.028ns  (logic 1.799ns (17.940%)  route 8.229ns (82.060%))
   Logic Levels:           2  (LUT2=1 LUT4=1)
-  Clock Path Skew:        -0.205ns (DCD - SCD + CPR)
-    Destination Clock Delay (DCD):    2.685ns = ( 22.685 - 20.000 ) 
-    Source Clock Delay      (SCD):    3.020ns
+  Clock Path Skew:        -0.212ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.686ns = ( 22.687 - 20.000 ) 
+    Source Clock Delay      (SCD):    3.028ns
     Clock Pessimism Removal (CPR):    0.130ns
   Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
     Total System Jitter     (TSJ):    0.071ns
@@ -361,33 +363,33 @@ Slack (MET) :             8.023ns  (required time - arrival time)
     PS7_X0Y0             PS7                          0.000     0.000 r                       ps7/FCLKCLK[0]
                          net (fo=1, routed)           1.207     1.207                         clk
     BUFGCTRL_X0Y15       BUFG (Prop_bufg_I_O)         0.101     1.308 r  pb_logic             clk_BUFG_inst/O
-                         net (fo=2302, routed)        1.712     3.020                         core/engine/pulse_store/g[3].r/WCLK
-    SLICE_X0Y18          RAMS32                                       r  pb_logic             core/engine/pulse_store/g[3].r/SP/CLK
+                         net (fo=2304, routed)        1.720     3.028                         core/engine/pulse_store/g[2].r/WCLK
+    SLICE_X0Y11          RAMS32                                       r  pb_logic             core/engine/pulse_store/g[2].r/SP/CLK
   -------------------------------------------------------------------    ----------------------------------------
-    SLICE_X0Y18          RAMS32 (Prop_rams32_CLK_O)
-                                                      1.314     4.334 f  pb_logic             core/engine/pulse_store/g[3].r/SP/O
-                         net (fo=4, routed)           0.878     5.212                         core/engine/pulse_cnt[3]
-    SLICE_X1Y18          LUT4 (Prop_lut4_I0_O)        0.152     5.364 f  pb_logic             core/engine/gsr_drive_INST_0/O
-                         net (fo=4, routed)           1.196     6.560                         core/gsr_drive
-    SLICE_X1Y30          LUT2 (Prop_lut2_I1_O)        0.332     6.892 f  pb_logic             core/lite_gate_i_1/O
-                         net (fo=1932, routed)        7.460    14.352                         core/axil/s_bresp[1]_i_2_n_0
-    SLICE_X22Y9          FDCE                                         f  pb_logic             core/axil/payload_reg[554]/CLR
+    SLICE_X0Y11          RAMS32 (Prop_rams32_CLK_O)
+                                                      1.317     4.345 f  pb_logic             core/engine/pulse_store/g[2].r/SP/O
+                         net (fo=4, routed)           1.046     5.391                         core/engine/pulse_cnt[2]
+    SLICE_X1Y12          LUT4 (Prop_lut4_I3_O)        0.150     5.541 f  pb_logic             core/engine/gsr_drive_INST_0/O
+                         net (fo=4, routed)           1.268     6.809                         core/gsr_drive
+    SLICE_X1Y31          LUT2 (Prop_lut2_I1_O)        0.332     7.141 f  pb_logic             core/axil_i_1/O
+                         net (fo=1933, routed)        5.915    13.056                         core/axil/s_bresp[1]_i_2_n_0
+    SLICE_X25Y8          FDCE                                         f  pb_logic             core/axil/payload_reg[172]/CLR
   -------------------------------------------------------------------    ----------------------------------------
 
                          (clock fclk0 rise edge)     20.000    20.000 r                       
     PS7_X0Y0             PS7                          0.000    20.000 r                       ps7/FCLKCLK[0]
                          net (fo=1, routed)           1.101    21.101                         clk
     BUFGCTRL_X0Y15       BUFG (Prop_bufg_I_O)         0.091    21.192 r  pb_logic             clk_BUFG_inst/O
-                         net (fo=2302, routed)        1.493    22.686                         core/axil/clk
-    SLICE_X22Y9          FDCE                                         r  pb_logic             core/axil/payload_reg[554]/C
-                         clock pessimism              0.130    22.815                           
-                         clock uncertainty           -0.035    22.780                           
-    SLICE_X22Y9          FDCE (Recov_fdce_C_CLR)     -0.405    22.375    pb_logic               core/axil/payload_reg[554]
+                         net (fo=2304, routed)        1.494    22.687                         core/axil/clk
+    SLICE_X25Y8          FDCE                                         r  pb_logic             core/axil/payload_reg[172]/C
+                         clock pessimism              0.130    22.816                           
+                         clock uncertainty           -0.035    22.781                           
+    SLICE_X25Y8          FDCE (Recov_fdce_C_CLR)     -0.405    22.376    pb_logic               core/axil/payload_reg[172]
   -------------------------------------------------------------------
-                         required time                         22.375                           
-                         arrival time                         -14.352                           
+                         required time                         22.376                           
+                         arrival time                         -13.056                           
   -------------------------------------------------------------------
-                         slack                                  8.023                           
+                         slack                                  9.320                           
 
 
 
@@ -395,19 +397,19 @@ Slack (MET) :             8.023ns  (required time - arrival time)
 
 Min Delay Paths
 --------------------------------------------------------------------------------------
-Slack (MET) :             1.523ns  (arrival time - required time)
-  Source:                 core/engine/pulse_store/g[0].r/SP/CLK
+Slack (MET) :             1.583ns  (arrival time - required time)
+  Source:                 core/engine/pulse_store/g[3].r/SP/CLK
                             (rising edge-triggered cell RAMS32 clocked by fclk0  {rise@0.000ns fall@10.000ns period=20.000ns})
-  Destination:            core/axil/s_rresp_reg[1]/CLR
+  Destination:            core/axil/aw_addr_reg[10]/CLR
                             (removal check against rising-edge clock fclk0  {rise@0.000ns fall@10.000ns period=20.000ns})
   Path Group:             **async_default**
   Path Type:              Removal (Min at Fast Process Corner)
   Requirement:            0.000ns  (fclk0 rise@0.000ns - fclk0 rise@0.000ns)
-  Data Path Delay:        1.462ns  (logic 0.550ns (37.616%)  route 0.912ns (62.384%))
+  Data Path Delay:        1.520ns  (logic 0.542ns (35.662%)  route 0.978ns (64.338%))
   Logic Levels:           2  (LUT2=1 LUT4=1)
-  Clock Path Skew:        0.031ns (DCD - SCD - CPR)
-    Destination Clock Delay (DCD):    1.210ns
-    Source Clock Delay      (SCD):    0.917ns
+  Clock Path Skew:        0.029ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.213ns
+    Source Clock Delay      (SCD):    0.922ns
     Clock Pessimism Removal (CPR):    0.262ns
 
     Location             Delay type                Incr(ns)  Path(ns)    PBlock               Netlist Resource(s)
@@ -416,32 +418,32 @@ Slack (MET) :             1.523ns  (arrival time - required time)
     PS7_X0Y0             PS7                          0.000     0.000 r                       ps7/FCLKCLK[0]
                          net (fo=1, routed)           0.315     0.315                         clk
     BUFGCTRL_X0Y15       BUFG (Prop_bufg_I_O)         0.026     0.341 r  pb_logic             clk_BUFG_inst/O
-                         net (fo=2302, routed)        0.576     0.917                         core/engine/pulse_store/g[0].r/WCLK
-    SLICE_X0Y18          RAMS32                                       r  pb_logic             core/engine/pulse_store/g[0].r/SP/CLK
+                         net (fo=2304, routed)        0.581     0.922                         core/engine/pulse_store/g[3].r/WCLK
+    SLICE_X0Y11          RAMS32                                       r  pb_logic             core/engine/pulse_store/g[3].r/SP/CLK
   -------------------------------------------------------------------    ----------------------------------------
-    SLICE_X0Y18          RAMS32 (Prop_rams32_CLK_O)
-                                                      0.393     1.309 f  pb_logic             core/engine/pulse_store/g[0].r/SP/O
-                         net (fo=3, routed)           0.202     1.512                         core/engine/pulse_cnt[0]
-    SLICE_X1Y18          LUT4 (Prop_lut4_I1_O)        0.045     1.557 f  pb_logic             core/engine/gsr_drive_INST_0/O
-                         net (fo=4, routed)           0.485     2.041                         core/gsr_drive
-    SLICE_X1Y30          LUT2 (Prop_lut2_I1_O)        0.112     2.153 f  pb_logic             core/lite_gate_i_1/O
-                         net (fo=1932, routed)        0.225     2.379                         core/axil/s_bresp[1]_i_2_n_0
-    SLICE_X1Y29          FDCE                                         f  pb_logic             core/axil/s_rresp_reg[1]/CLR
+    SLICE_X0Y11          RAMS32 (Prop_rams32_CLK_O)
+                                                      0.386     1.308 f  pb_logic             core/engine/pulse_store/g[3].r/SP/O
+                         net (fo=4, routed)           0.215     1.522                         core/engine/pulse_cnt[3]
+    SLICE_X1Y12          LUT4 (Prop_lut4_I0_O)        0.044     1.566 f  pb_logic             core/engine/gsr_drive_INST_0/O
+                         net (fo=4, routed)           0.506     2.073                         core/gsr_drive
+    SLICE_X1Y31          LUT2 (Prop_lut2_I1_O)        0.112     2.185 f  pb_logic             core/axil_i_1/O
+                         net (fo=1933, routed)        0.257     2.441                         core/axil/s_bresp[1]_i_2_n_0
+    SLICE_X1Y32          FDCE                                         f  pb_logic             core/axil/aw_addr_reg[10]/CLR
   -------------------------------------------------------------------    ----------------------------------------
 
                          (clock fclk0 rise edge)      0.000     0.000 r                       
     PS7_X0Y0             PS7                          0.000     0.000 r                       ps7/FCLKCLK[0]
                          net (fo=1, routed)           0.341     0.341                         clk
     BUFGCTRL_X0Y15       BUFG (Prop_bufg_I_O)         0.029     0.370 r  pb_logic             clk_BUFG_inst/O
-                         net (fo=2302, routed)        0.840     1.210                         core/axil/clk
-    SLICE_X1Y29          FDCE                                         r  pb_logic             core/axil/s_rresp_reg[1]/C
-                         clock pessimism             -0.262     0.948                           
-    SLICE_X1Y29          FDCE (Remov_fdce_C_CLR)     -0.092     0.856    pb_logic               core/axil/s_rresp_reg[1]
+                         net (fo=2304, routed)        0.843     1.213                         core/axil/clk
+    SLICE_X1Y32          FDCE                                         r  pb_logic             core/axil/aw_addr_reg[10]/C
+                         clock pessimism             -0.262     0.951                           
+    SLICE_X1Y32          FDCE (Remov_fdce_C_CLR)     -0.092     0.859    pb_logic               core/axil/aw_addr_reg[10]
   -------------------------------------------------------------------
-                         required time                         -0.856                           
-                         arrival time                           2.379                           
+                         required time                         -0.858                           
+                         arrival time                           2.441                           
   -------------------------------------------------------------------
-                         slack                                  1.523                           
+                         slack                                  1.583                           
 
 
 

@@ -1,4 +1,4 @@
-"""The B4 carrier v2 benches (sim/b4/run.sh): the verbatim SipHash bench, the 21 core scenarios over the hypothesis model,
+"""The B4 carrier v2 benches (sim/b4/run.sh): the verbatim SipHash bench, the 24 core scenarios over the hypothesis model,
 the vendor-model bench over the RTL core and over the GSR-aware netlist of the core (the GSR pulse PULSE clocks on both), and
 the PS path through the pinned AXI3 shim — all must pass when iverilog, the instrument and the netlist are present."""
 from __future__ import annotations
@@ -13,7 +13,7 @@ HAVE = shutil.which("iverilog") is not None and shutil.which("vvp") is not None 
 SCENARIOS = ("regs", "flow", "fault_not_armed", "fault_nokey", "fault_unsigned", "fault_wrong_commit", "fault_wrong_key",
              "fault_sequence", "fault_double_arm", "fault_realisable", "a5", "a5_persist", "a5_wrong_context",
              "a5_flag_without_injection", "open_close_refused", "p9", "p9_ok", "busy_refused", "step_atomic", "backpressure",
-             "read_during_window", "read_at_launch")
+             "read_during_window", "read_at_launch", "session", "post_fault")
 
 
 @unittest.skipUnless(HAVE, "iverilog or the instrument absent")

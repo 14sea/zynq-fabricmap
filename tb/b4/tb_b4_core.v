@@ -30,16 +30,24 @@ module tb_b4_core;
 
     integer fails = 0, log_fd;
     initial begin #20000000; $display("WATCHDOG: scenario %0s did not finish (fails so far %0d)", scenario, fails); $display("TB_FAIL %0s (watchdog)", scenario); $finish; end
-    reg [1:0] last_bresp, last_rresp; reg [31:0] last_rdata;
+    reg [1:0] last_bresp, last_rresp; reg [31:0] last_rdata; reg aw_done = 0, w_done = 0;
     reg [255:0] scenario;
+    // the event's entry context (contract 5.1 step 0 / 5.6 J3): at every GSR assertion the inputs and the slice clock are 0
+    always @(posedge gsr_drive) if ({slice_clk, slice_sr, slice_ce, slice_d} != 11'd0) begin fails = fails + 1; $display("FAIL: GSR asserted with inputs held: clk=%0d ce=%0d sr=%0d d=%h [t=%0t]", slice_clk, slice_ce, slice_sr, slice_d, $time); end
     task check(input cond, input [255:0] what); begin
         if (!cond) begin fails = fails + 1; $display("FAIL: %0s   [rdata=%h rresp=%b bresp=%b t=%0t]", what, last_rdata, last_rresp, last_bresp, $time); end
     end endtask
     task mark(input [255:0] what); begin $fdisplay(log_fd, "{\"t\": %0d, \"mark\": \"%0s\"}", $time, what); end endtask
+    // AW and W are independent channels: each is held until its own ready (the gate masks AW while an event is pending
+    // and lets W through, so the two handshakes may complete in different cycles)
     task wr(input [15:0] a, input [31:0] d); begin
-        @(negedge clk); awaddr = a; wdata = d; awvalid = 1; wvalid = 1;
-        while (!(awready && wready)) @(negedge clk);
-        @(negedge clk); awvalid = 0; wvalid = 0;
+        @(negedge clk); awaddr = a; wdata = d; awvalid = 1; wvalid = 1; aw_done = 0; w_done = 0;
+        while (!(aw_done && w_done)) begin
+            #1;                                                   // the readies are combinational: sampled before the posedge
+            if (awvalid && awready) aw_done = 1;
+            if (wvalid && wready) w_done = 1;
+            @(negedge clk); if (aw_done) awvalid = 0; if (w_done) wvalid = 0;
+        end
         while (!bvalid) @(negedge clk);
         last_bresp = bresp; @(negedge clk);
         $fdisplay(log_fd, "{\"t\": %0d, \"op\": \"wr\", \"addr\": %0d, \"data\": %0d, \"resp\": %0d}", $time, a, d, last_bresp);
@@ -138,6 +146,7 @@ module tb_b4_core;
         rd(16'h2020); check(last_rdata[7:0] == gsr_before[7:0] + 8'd1 && last_rdata[15:8] == 8'd2 && last_rdata[23:16] == PULSE, "gsr_count + 1, mechanism 2, PULSE clocks");
         rd(16'h2004); check(last_rdata[11] == 1 && last_rdata[2] == 1, "key_loaded and armed persist across the init event");
         rd(16'h2014); check(last_rdata[10:0] == 11'd0, "inputs and slice clock are 0 after the init event");
+        rd(16'h2020); check(last_rdata[27] == 0, "no pre-init cleanup in an idle context");
         fixture_expect(k, 0, q, m); expect_slot(5'd1, q, m, what);                     // the init sample (step 0)
         slot_in(5'd0); slot_in(5'd1); check(last_rdata == 32'd0, "the init sample's applied inputs are 0");
         for (j = 0; j < FIX_STEPS; j = j + 1) begin
@@ -248,6 +257,7 @@ module tb_b4_core;
             slot_in(5'd0); check(last_rdata[24] == 1 && last_rdata[15:8] == 8'hFF && last_rdata[7:0] == 8'h00, "the applied-input record of the pre-init sample = the held inputs");
             init_event; slot(5'd1); check(last_rdata[7:0] == 8'hFF, "the init sample is INIT again: the injected state was cleared (A5 pass on this fabric)");
             rd(16'h2014); check(last_rdata[10:0] == 11'd0, "inputs 0 after the event");
+            rd(16'h2020); check(last_rdata[27] == 1 && last_rdata[25] == 1, "pre_init_cleanup and pre_context_a5 witnesses");
             cleanup; slot(5'd2); slot_in(5'd2); restore_event; rd(16'h203C); check(last_rdata[7:0] == 8'hFF, "J3 base-state sample");
             close; rd(16'h2004); check(last_rdata[14] == 0 && last_rdata[12] == 1, "J3 closed normally: injection cleared, idle"); mark("J3_end");
         end
@@ -335,6 +345,36 @@ module tb_b4_core;
                 rd(16'h2004); check(last_rdata[9] == 1, "init_done");
                 cleanup; restore_event; close;
             end
+        end
+        "session": begin
+            // the zero-finding chain for the host: session open -> the init-only ROOT on genome 0 -> one candidate -> close.
+            // The bench's fabric has no value before its first event (the model's null); here, as the vendor FDPEs do after
+            // the configuration GSR, the fabric starts at its INIT values — the power-up state of a configured device, set
+            // once on the fabric, never on a record.
+            target.genome = FIX0_GENOME; target.q = 8'hFF;
+            provision(KEY_A);
+            mark("transaction_begin"); stage(VALID1); arm; wait_gate; rd(16'h2004); check(last_rdata[2] == 1, "root armed");
+            rd(16'h2200); rd(16'h2028); rd(16'h2020);
+            pre_sample; slot(5'd0); slot_in(5'd0); init_event;
+            rd(16'h2004); rd(16'h2020); rd(16'h2014); slot(5'd1); slot_in(5'd1); rd(16'h2004);
+            cleanup; rd(16'h2004); rd(16'h2014); slot(5'd2); slot_in(5'd2); rd(16'h2020);
+            restore_event; rd(16'h2004); rd(16'h2020); rd(16'h203C); close; rd(16'h2004); check(last_rdata[12] == 1, "root closed, idle");
+            mark("transaction_end");
+            transaction(1, 1, "the candidate after the root");
+        end
+        "post_fault": begin
+            // a complete observation, then CLOSE before cleanup / restore: the engine latches F_SEQUENCE after P6 — the host's O
+            // is sealed at P6 unchanged and X is faulted, never a rewritten O
+            provision(KEY_A); target.genome = FIX0_GENOME; target.q = 8'hFF;
+            transaction(0, 1, "warm transaction");
+            mark("transaction_begin"); fixture_genome(1, g); target.genome = g; stage(VALID2); arm; wait_gate;
+            rd(16'h2200); rd(16'h2028); rd(16'h2020); pre_sample; slot(5'd0); slot_in(5'd0); init_event;
+            rd(16'h2004); rd(16'h2020); rd(16'h2014); slot(5'd1); slot_in(5'd1);
+            for (j = 0; j < FIX_STEPS; j = j + 1) begin fixture_inputs(1, j, s); step(s); slot(5'd2 + j); slot_in(5'd2 + j); end
+            rd(16'h2004); mark("P6_sealed");
+            close; expect_fault(7, "post-P6 CLOSE before restore is a sequence fault");
+            rd(16'h2004); check(last_rdata[2] == 0 && last_rdata[12] == 0, "unclosed: recovery, not idle");
+            mark("transaction_end");
         end
         "read_during_window": begin
             // a read presented while the window is open is stalled by the gate and served afterwards; nothing is lost
