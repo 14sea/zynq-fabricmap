@@ -9,7 +9,7 @@ cd "$(dirname "$0")/../.."
 PS=${PSORACLE_ROOT:-/home/test/zynq_psoracle}
 UNI=${UNISIM_ROOT:-/home/test/Xilinx/2025.2/data/verilog/src}
 RTL="rtl/b1/p3_siphash.v rtl/b4/b4_gsr_reg.v rtl/b4/b4_slot_ram.v rtl/b4/b4_gsr_ram32.v rtl/b4/b4_axi_gate.v rtl/b4/b4_axil.v rtl/b4/b4_gate.v rtl/b4/b4_engine.v rtl/b4/b4_core.v"
-SCENARIOS="regs flow fault_not_armed fault_nokey fault_unsigned fault_wrong_commit fault_wrong_key fault_sequence fault_double_arm fault_realisable a5 a5_persist a5_wrong_context a5_flag_without_injection open_close_refused p9 p9_ok busy_refused step_atomic backpressure read_during_window read_at_launch session post_fault"
+SCENARIOS="regs flow fault_not_armed fault_nokey fault_unsigned fault_wrong_commit fault_wrong_key fault_sequence fault_double_arm fault_realisable a5 a5_persist a5_wrong_context a5_flag_without_injection open_close_refused p9 p9_ok busy_refused step_atomic backpressure read_during_window read_at_launch session post_fault w_first w_first_early early_cleanup"
 python3 -B tb/b4/gen_b4_fixture.py >/dev/null || exit 1
 mkdir -p sim/b4/out
 rc=0

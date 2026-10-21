@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
-| Date         : Wed Oct 21 16:27:50 2026
+| Date         : Wed Oct 21 17:31:10 2026
 | Host         : H3C running 64-bit Ubuntu 24.04.4 LTS
 | Command      : report_utilization -file builds/b4/post_synth_util.rpt
 | Design       : b4_top
@@ -31,13 +31,13 @@ Table of Contents
 +----------------------------+------+-------+------------+-----------+-------+
 |          Site Type         | Used | Fixed | Prohibited | Available | Util% |
 +----------------------------+------+-------+------------+-----------+-------+
-| Slice LUTs*                | 3204 |     4 |          0 |     17600 | 18.20 |
-|   LUT as Logic             | 2925 |     4 |          0 |     17600 | 16.62 |
+| Slice LUTs*                | 3209 |     4 |          0 |     17600 | 18.23 |
+|   LUT as Logic             | 2930 |     4 |          0 |     17600 | 16.65 |
 |   LUT as Memory            |  279 |     0 |          0 |      6000 |  4.65 |
 |     LUT as Distributed RAM |  279 |     0 |            |           |       |
 |     LUT as Shift Register  |    0 |     0 |            |           |       |
-| Slice Registers            | 2032 |     8 |          0 |     35200 |  5.77 |
-|   Register as Flip Flop    | 2032 |     8 |          0 |     35200 |  5.77 |
+| Slice Registers            | 2034 |     8 |          0 |     35200 |  5.78 |
+|   Register as Flip Flop    | 2034 |     8 |          0 |     35200 |  5.78 |
 |   Register as Latch        |    0 |     0 |          0 |     35200 |  0.00 |
 | F7 Muxes                   |    0 |     0 |          0 |      8800 |  0.00 |
 | F8 Muxes                   |    0 |     0 |          0 |      4400 |  0.00 |
@@ -62,7 +62,7 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 | 0     |            _ |       Reset |            - |
 | 0     |          Yes |           - |            - |
 | 9     |          Yes |           - |          Set |
-| 2015  |          Yes |           - |        Reset |
+| 2017  |          Yes |           - |        Reset |
 | 0     |          Yes |         Set |            - |
 | 8     |          Yes |       Reset |            - |
 +-------+--------------+-------------+--------------+
@@ -153,13 +153,13 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 +-----------+------+----------------------+
 |  Ref Name | Used |  Functional Category |
 +-----------+------+----------------------+
-| FDCE      | 2015 |         Flop & Latch |
-| LUT6      | 1380 |                  LUT |
-| LUT3      |  786 |                  LUT |
-| LUT4      |  523 |                  LUT |
-| LUT2      |  356 |                  LUT |
+| FDCE      | 2017 |         Flop & Latch |
+| LUT6      | 1381 |                  LUT |
+| LUT3      |  792 |                  LUT |
+| LUT4      |  522 |                  LUT |
+| LUT2      |  355 |                  LUT |
 | RAMS32    |  279 |   Distributed Memory |
-| LUT5      |  210 |                  LUT |
+| LUT5      |  212 |                  LUT |
 | CARRY4    |  192 |           CarryLogic |
 | LUT1      |  153 |                  LUT |
 | FDPE      |    9 |         Flop & Latch |

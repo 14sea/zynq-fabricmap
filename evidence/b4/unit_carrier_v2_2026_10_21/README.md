@@ -19,12 +19,12 @@ numbers are, and what was not done.
 | area | files |
 |---|---|
 | RTL | `rtl/b4/b4_top.v`, `b4_core.v`, `b4_axil.v`, `b4_gate.v`, `b4_engine.v`, `b4_axi_gate.v`, `b4_gsr_reg.v`, `b4_slot_ram.v`, `b4_gsr_ram32.v`, `b4_target_slice.v` (+ `rtl/b1/p3_siphash.v` and `vivado/carrier/carrier_axi3_lite.v` by reference, unchanged) |
-| bench | `tb/b4/b4_target_slice_model.v`, `tb/b4/gen_b4_fixture.py`, `tb/b4/b4_fixture.vh` (generated), `tb/b4/tb_b4_core.v` (24 scenarios), `tb/b4/tb_b4_unisim.v` (run over the RTL core and over the netlist), `tb/b4/tb_b4_axi3.v` (the PS path through the pinned shim), `sim/b4/run.sh` |
+| bench | `tb/b4/b4_target_slice_model.v`, `tb/b4/gen_b4_fixture.py`, `tb/b4/b4_fixture.vh` (generated), `tb/b4/tb_b4_core.v` (27 scenarios), `tb/b4/tb_b4_unisim.v` (run over the RTL core and over the netlist), `tb/b4/tb_b4_axi3.v` (the PS path through the pinned shim), `sim/b4/run.sh` |
 | build | `vivado/b4/b4.xdc`, `vivado/b4/build_b4.tcl`, `vivado/b4/resume_b4.tcl`, `vivado/b4/isolation_checks_b4.tcl`, `vivado/b4/netlist_core.tcl`; `builds/b4/b4.bit`, `b4_build.json`, `b4_carrier_manifest.json`, `b4_core_funcsim.json`, `isolation.txt`, `timing.rpt`, `post_synth_util.rpt`, `post_route_util.rpt` (the checkpoints, the Vivado stdout and the 1.4 MB netlist are regenerated and ignored by `.gitignore`; the stdout and the netlist's record are archived here under `build/`) |
 | host | `host/b4carrier_regmap.py` (the register table, the CTRL bits, the fault names, the STEP_IN packing and realisability), `host/b4carrier_records.py` (O / F / X / session_open from a register trace; the carrier-branch validator), `host/b4carrier_manifest.py` (the 21 addresses read from the bitstream) |
 | tests | `tests/test_b4carrier_regmap.py`, `tests/test_b4carrier_records.py`, `tests/test_b4carrier_benches.py` |
 | documents | `docs/b4_carrier_v2.md`; `docs/b4_architecture.md` §13 (one row) and §14 (one line) |
-| this directory | `verification.txt` (every check in a fresh process; rounds 1, 2 and 3), `bench/` (the 21 + 3 scenario results and the 21 register traces the records are built from), `build/` (the Vivado stdout of the builds, the netlist synthesis, the manifest, the netlist record), `mutants/` (the battery, its script, its outputs), `owner_review_823f5b0_HOLD/` (the owner's review of round 1, 30 files, byte for byte, `SHA256SUMS` verified) |
+| this directory | `verification.txt` (every check in a fresh process; rounds 1, 2, 3 and 4), `bench/` (the 21 + 3 scenario results and the 21 register traces the records are built from), `build/` (the Vivado stdout of the builds, the netlist synthesis, the manifest, the netlist record), `mutants/` (the battery, its script, its outputs), `owner_review_823f5b0_HOLD/` (the owner's review of round 1, 30 files, byte for byte, `SHA256SUMS` verified) |
 
 ## 2. The design in five lines
 
@@ -185,3 +185,46 @@ model or board observation.
 
 **What stays as it was.** The finding of §5 and its protocol consequence for the owner; the unresolved items of `docs/b4_carrier_v2.md`
 §8; the contract document (v0.5) unchanged; no task, model, K9, threshold, archive or decision changed; nothing pushed or merged.
+
+## 10. Round 4 — the owner's HOLD on `ce3ca6d` (R1–R4), answered in the same unit
+
+The review is archived in `owner_review_ce3ca6d_HOLD/` (35 files, checksums verified). Its independent baseline (28 tests, 28
+benches, B1 pins, 21 addresses, the regenerated netlist, the previous reproducers) is accepted as the starting point. Its two new
+reproducers were rerun unchanged on a hermetic copy of the repaired tree (`verification.txt`, round 4), with the previous review's
+burst, A5 and phase reproducers:
+
+- `record_boundaries.py`: the honest chain with **distinct** loaded-image and restored-base references gives `[]`; every malformed
+  session_open (null, list, integer), O.predecessor (null, list, integer) and faulted X with `fault = 'bad'` gives named findings,
+  no exception. Its `ordinary_fixture_chain` now reports one finding: it opens the session with the test module's
+  restored-base digest as the loaded-image reference — the conflation R1 removed — so the finding is the repair.
+- `boundary_probes.py`, `owner_early_cleanup`: the RTL refuses the early CLEANUP as before; `transaction_close` now refuses to
+  build an X (`RecordRefusal: … never reached the P6 seal (premature_refused)`), which ends the probe script; the O it would
+  have built is checked in `test_a_premature_operation_is_not_a_seal` (invalid, `sequence` at P3, step 0, the pre-init sample
+  kept).
+- `boundary_probes.py`, `owner_wfirst`: its first check — "W accepted during event pending" — now FAILS, because the repaired
+  gate holds a W-first beat while the event is pending (WREADY = 0). The probe's master then drops WVALID after one cycle
+  without a handshake (AXI forbids withdrawing VALID), so no write occurs and its final line shows no response; the bench
+  scenario `w_first` holds WVALID as AXI requires and the write completes once after the event.
+- the aaf15ba burst, A5 and phase reproducers: `OWNER_NOT_REPRODUCED`; `clk=0 ce=0 sr=0 d=0` at every GSR; O complete, X faulted.
+
+| item | what was wrong at `ce3ca6d` | the repair | verified by |
+|---|---|---|---|
+| **R1** P1 — one reference for two commitments | `validate_chain` compared session_open with `ctx.base_readback_sha256`, the restored study-base reference every closed X binds; the tests made both one hash, so an honest session (loaded natural image ≠ signed base genome 0, by the two mux bits) was refused | two trusted fields in their own hash domains: `ctx.loaded_frames_reference_sha256` (the loaded natural carrier image) binds session_open; `ctx.base_readback_sha256` (signed base genome 0) binds each closed X; both required; never compared to each other; the tests use distinct values (`STARTUP` ≠ `BASE`); the contract (v0.5) unchanged | `test_session_chain_from_the_bench_has_zero_findings` (distinct references, chain `[]`; the restored base named as loaded image refused; each reference missing or different refused); the owner's record probe; H25, H28 killed |
+| **R2** P2 — seal by operation name | `seal_index` sealed at the first bus-accepted CLEANUP / CLOSE / CLOSE_INJECTION / RESTORE_INIT whatever had been acquired: an early CLEANUP before INIT_REQ gave a "complete" O with no step and an X faulted at P7 | `acquisition_boundary`: P6 is reached when the read witnesses show the init event done and the declared number of set steps applied; the seal is the first accepted P7+ operation after that. Before P6 the operation is premature — refused by the engine: O keeps everything through the FAULT read (prefix, named fault, actual phase); accepted by the carrier (it does not know the declared length): O ends before it, invalid with the host-recorded code `premature_operation`. A trace that ends before P6 with no fault is refused. X only after a seal | `early_cleanup` scenario; `test_a_premature_operation_is_not_a_seal` (refused: `sequence` P3, no X; accepted: `premature_operation` P5, no X; the same trace against its own stimulus seals); the post-P6 tests unchanged; H11, H22, H23, H24 killed |
+| **R3** P2 — standalone Lite lost a W-first beat | W passed the gate unconditionally and only AW was tracked: a W delivered first during the pending event was acknowledged, cleared by the GSR, and its later AW never answered | `b4_axi_gate` admits a write per half while the stall lasts: W only when its address is outstanding (`wr_out`: an accepted write's beats, every AXI3 burst beat, drain), AW only when its W was already accepted (`w_early`), AR never; a W accepted ahead of its AW is outstanding and holds the launch. The integrated top's burst fix kept | `w_first` (held during the event, then one response, the value applied once as the next step); `w_first_early` (a W taken in the cycle between INIT_REQ's response and the rising stall: the event waits, its AW is admitted, both responses once, then one event); `tb_b4_axi3` bursts; M22, M26, M27, M28 killed |
+| **R4** P2 — chain dereferenced malformed records | after a structural finding the chain still called `.get` on a null / list / integer session_open, O.predecessor or X.fault | `validate_chain` validates each source record's shape first (session_open, the entry, O, X); a malformed one is a named finding and ends the chain there; a refused session returns one finding; a well-formed faulted X ends the chain with its stop phase | `test_malformed_chain_sources_are_findings`; the owner's record probe; H26, H27 killed |
+| found on the way | the A5 chain's root carried the model's null (the bench fabric starts as `x`), which the shape-first chain now (correctly) stops at | the `a5` scenario sets the fabric at its INIT values before J1, as `session` does (on the fabric, never on a record); the J1 → J2 → J3 chain now validates with no finding | `test_a5_injection_and_context` asserts the chain is `[]` |
+
+**Verification** (`verification.txt`, round 4, fresh processes): 27 core scenarios + SipHash + the vendor bench over the RTL core +
+the PS path through the shim + the vendor bench over the regenerated GSR-aware netlist (1972 flip-flops, 279 RAM32X1S) —
+**31 × TB_PASS**, the GSR pulse 40 ns on every event on both vendor benches; `tests.test_b4carrier_regmap` (11) +
+`tests.test_b4carrier_records` (18) + `tests.test_b4carrier_benches` (1) — **Ran 30 … OK**; the rebuilt bitstream routed, WNS
++7.263 ns, target 12 / flush 0, RAM32X1S 279, STARTUPE2 1, ICAPE2 0, `b4.bit` `4e406f12…` (the file `resume_b4.tcl` wrote, as
+`b4_build.json` records); the 21 addresses at their expected values; B1 pins OK (3); the protected paths unchanged. **Mutants —
+the affected subset** (`mutants/mutants_round4.txt`, as the owner asked: not the whole battery again): 8 RTL (the gate and the
+launch) + 26 host (every records mutant), **34 / 34 killed**, 0 survived, 0 EDIT-MISS, 0 NOT-RUN; M18, M22, H11 and H16 re-aimed
+at their moved lines; the round-3 full battery (`mutants.txt`, 46 / 46) is kept as it was.
+
+**What stays as it was.** The shared CE / SR / CLK finding and its protocol consequence for the owner; A8 and the physical release
+skew; the firmware and PCAP integration; the B4Q plan; the contract document (v0.5); no task, model, K9, threshold, archive or
+no-go changed; nothing pushed or merged.

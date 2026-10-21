@@ -31,7 +31,7 @@ MUTANTS = [
  ('M15', 'rtl/b4/b4_axil.v', "wire ctrl_accept = ctrl_one && ctrl_known && ctrl_a5_ok && !engine_busy && !gate_busy;", "wire ctrl_accept = ctrl_one && ctrl_known && ctrl_a5_ok;", 'bench', ['busy_refused']),
  ('M16', 'rtl/b4/b4_axil.v', "wire ctrl_one = (ctrl_ops != 9'd0) && ((ctrl_ops & (ctrl_ops - 9'd1)) == 9'd0);", "wire ctrl_one = (ctrl_ops != 9'd0);", 'bench', ['regs']),
  ('M17', 'rtl/b4/b4_engine.v', "if (!bus_quiet) cnt <= 8'd0;\n                else if", "if (1'b0) cnt <= 8'd0;\n                else if", 'bench', ['backpressure']),
- ('M18', 'rtl/b4/b4_axi_gate.v', "assign s_arvalid = m_arvalid && !mask;   assign m_arready = s_arready && !mask;", "assign s_arvalid = m_arvalid;  assign m_arready = s_arready;", 'bench', ['read_at_launch']),   # a first version removed the AW masking and survived backpressure / read_during_window: those pass without the stall; read_at_launch is the scenario the stall exists for
+ ('M18', 'rtl/b4/b4_axi_gate.v', "assign s_arvalid = m_arvalid && !mask;     assign m_arready = s_arready && !mask;", "assign s_arvalid = m_arvalid;  assign m_arready = s_arready;", 'bench', ['read_at_launch']),   # a first version removed the AW masking and survived backpressure / read_during_window: those pass without the stall; read_at_launch is the scenario the stall exists for
  ('M19', 'rtl/b4/b4_engine.v', "if (restoring) begin\n                        base_we <= 1'b1; base_d <= q_live;", "if (restoring) begin\n                        base_we <= 1'b1; base_d <= ~q_live;", 'bench', ['p9_ok', 'flow']),
  ('M20', 'rtl/b4/b4_engine.v', "assign idle = (state == S_IDLE) && !armed && !injection_open && (in_live[24:0] == 25'd0);", "assign idle = (state == S_IDLE) && !armed;", 'bench', ['a5', 'open_close_refused']),
  ('M21', 'rtl/b4/b4_engine.v', "wire [3:0] pulse_d = fire ? ((4'd1 << PULSE) - 4'd1) : (pulse_cnt >> 1);", "wire [3:0] pulse_d = fire ? 4'd1 : (pulse_cnt >> 1);", 'unisim', ['unisim']),
@@ -45,23 +45,42 @@ MUTANTS = [
  ('H08', 'host/b4carrier_records.py', "    tf = validate_task(task, len(o[\"steps\"]))\n    if tf:\n        raise RecordRefusal(\"; \".join(tf))", "    tf = []", 'test', ['tests.test_b4carrier_records']),
  ('H09', 'host/b4carrier_records.py', "        if len(set(rb)) > 1:", "        if False:", 'test', ['tests.test_b4carrier_records']),
  # round 3 (the owner's HOLD on aaf15ba): the burst drain, the P6 seal, the completion witnesses, the trusted binding, the schema rules, the pre-init cleanup
- ('M22', 'rtl/b4/b4_axi_gate.v', "assign s_wvalid  = m_wvalid;             assign m_wready  = s_wready;             // W drains always", "assign s_wvalid  = m_wvalid && !mask;    assign m_wready  = s_wready && !mask;", 'axi3', ['axi3']),
+ ('M22', 'rtl/b4/b4_axi_gate.v', "wire mask_w  = mask && !wr_out;           // the beats of an accepted write address drain", "wire mask_w  = mask;", 'axi3', ['axi3']),
  ('M23', 'rtl/b4/b4_core.v', ".enable(LITE_STALL[0]),", ".enable(1'b1),", 'axi3', ['axi3']),
  ('M24', 'rtl/b4/b4_engine.v', "else if (in_live[24:0] != 25'd0) begin\n                        // the inputs are held", "else if (1'b0) begin\n                        // the inputs are held", 'bench', ['a5']),
  ('M25', 'rtl/b4/b4_axil.v', "s_rdata <= {4'd0, pre_init_cleanup, stall,", "s_rdata <= {4'd0, 1'b0, stall,", 'bench', ['a5']),
- ('H11', 'host/b4carrier_records.py', "    evs = evs[:seal_index(evs)]                           # the P6 boundary: nothing after it enters O\n", "    evs = list(evs)\n", 'test', ['tests.test_b4carrier_records']),
+ ('H11', 'host/b4carrier_records.py', "    evs = evs[:boundary]                                  # the terminal boundary: nothing after it enters O\n", "    evs = list(evs)\n", 'test', ['tests.test_b4carrier_records']),
  ('H12', 'host/b4carrier_records.py', "    after = evs[i + 1:]\n    faults = [e for e in after", "    return True\n    after = evs[i + 1:]\n    faults = [e for e in after", 'test', ['tests.test_b4carrier_records']),
  ('H13', 'host/b4carrier_records.py', "        if x[\"seq\"] != o[\"seq\"]:", "        if False:", 'test', ['tests.test_b4carrier_records']),
  ('H14', 'host/b4carrier_records.py', "            if c[\"clock_before\"] != last_clock:", "            if False:", 'test', ['tests.test_b4carrier_records']),
  ('H15', 'host/b4carrier_records.py', "\"clock_after\": _t_int(0, 0), \"edge\": _t_enum(\"falling\", None), \"ce\": _t_int(0, 0), \"sr\": _t_int(0, 0), \"d\": _t_int(0, 0)", "\"clock_after\": _t_enum(0), \"edge\": _t_enum(\"falling\", None), \"ce\": _t_enum(0), \"sr\": _t_enum(0), \"d\": _t_enum(0)", 'test', ['tests.test_b4carrier_records']),
- ('H16', 'host/b4carrier_records.py', "            if so.get(\"instrument\") != ctx.get(\"instrument\"):", "            if False:", 'test', ['tests.test_b4carrier_records']),
+ ('H16', 'host/b4carrier_records.py', "        if so[\"instrument\"] != ctx.get(\"instrument\"):", "        if False:", 'test', ['tests.test_b4carrier_records']),
  ('H17', 'host/b4carrier_records.py', "                    if fitness(o, task)[\"fitness\"] != fr[\"fitness\"]:", "                    if False:", 'test', ['tests.test_b4carrier_records']),
  ('H18', 'host/b4carrier_records.py', "        if not isinstance(r, dict) or not isinstance(r.get(\"o\"), dict) or not isinstance(r.get(\"ctx\"), dict):", "        if False:", 'test', ['tests.test_b4carrier_records']),
  ('H19', 'host/b4carrier_records.py', "        if ph in (\"P1\", \"P2\") and (steps or \"initial\" in o or sr is not None):", "        if False:", 'test', ['tests.test_b4carrier_records']),
  ('H20', 'host/b4carrier_records.py', "        if held != pic:", "        if False:", 'test', ['tests.test_b4carrier_records']),
  ('H21', 'host/b4carrier_records.py', "        if ctx.get(\"predecessor_seq\") is not None and o[\"predecessor\"][\"seq\"] != ctx[\"predecessor_seq\"]:", "        if False:", 'test', ['tests.test_b4carrier_records']),
+ # round 4 (the owner's HOLD on ce3ca6d): the W-first admission, the acquisition boundary, the two references, the shape-first chain
+ ('M26', 'rtl/b4/b4_axi_gate.v', "wire mask_w  = mask && !wr_out;           // the beats of an accepted write address drain", "wire mask_w  = 1'b0;", 'bench', ['w_first']),
+ ('M27', 'rtl/b4/b4_axi_gate.v', "assign quiet = !wr_out && !w_early && !rd_out && !bvalid && !rvalid;", "assign quiet = !wr_out && !rd_out && !bvalid && !rvalid;", 'bench', ['w_first_early']),
+ ('M28', 'rtl/b4/b4_axi_gate.v', "wire mask_aw = mask && !w_early;          // the AW of a W already accepted is admitted", "wire mask_aw = mask;", 'bench', ['w_first_early']),
+ ('H22', 'host/b4carrier_records.py', "            if init_done and step_idx >= n_declared - 1:\n                return i, \"sealed\"", "            if True:\n                return i, \"sealed\"", 'test', ['tests.test_b4carrier_records']),
+ ('H23', 'host/b4carrier_records.py', "                    return j + 1, \"premature_refused\"", "                    return i, \"premature_refused\"", 'test', ['tests.test_b4carrier_records']),
+ ('H24', 'host/b4carrier_records.py', "    if how != \"sealed\":\n        raise RecordRefusal(f\"no transaction close", "    if False:\n        raise RecordRefusal(f\"no transaction close", 'test', ['tests.test_b4carrier_records']),
+ ('H25', 'host/b4carrier_records.py', "        elif so[\"base_frames_reference_sha256\"] != ctx[\"loaded_frames_reference_sha256\"]:", "        elif so[\"base_frames_reference_sha256\"] != ctx.get(\"base_readback_sha256\"):", 'test', ['tests.test_b4carrier_records']),
+ ('H26', 'host/b4carrier_records.py', "        if shape:\n            f += [f\"chain[{i}]: {m}\" for m in shape]", "        if False:\n            f += [f\"chain[{i}]: {m}\" for m in shape]", 'test', ['tests.test_b4carrier_records']),
+ ('H27', 'host/b4carrier_records.py', "    if f:\n        return f + [\"chain: the session-opening record is malformed; no transaction can be bound to it\"]", "    if False:\n        return f", 'test', ['tests.test_b4carrier_records']),
+ ('H28', 'host/b4carrier_records.py', "            if not _hex(ctx.get(\"base_readback_sha256\"), 64):", "            if False:", 'test', ['tests.test_b4carrier_records']),
  ('H10', 'host/b4carrier_records.py', "    raise RecordRefusal(\"the transaction is not closed: no completed CLOSE / CLOSE_INJECTION and no fault after the observation\")", "    return {\"schema\": SCHEMA_X, \"schema_version\": VERSION, \"observation_sha256\": osha, \"seq\": seq, \"idle_status\": 0, \"status\": \"injection_open\"}", 'test', ['tests.test_b4carrier_records']),
 ]
+# optional: `run_mutants.py <tag> <id,id,...>` runs only those mutants and writes mutants_<tag>.json / .txt (a repair round's
+# affected subset); without arguments the whole battery runs and writes mutants.json / mutants.txt
+TAG = sys.argv[1] if len(sys.argv) > 2 else None
+if TAG:
+    ONLY = set(sys.argv[2].split(','))
+    unknown = ONLY - {m[0] for m in MUTANTS}
+    if unknown: sys.exit(f'unknown mutant ids: {sorted(unknown)}')
+    MUTANTS = [m for m in MUTANTS if m[0] in ONLY]
 results = []
 with tempfile.TemporaryDirectory(prefix='b4carrier_mutants_') as td:
     T = pathlib.Path(td)
@@ -113,7 +132,8 @@ with tempfile.TemporaryDirectory(prefix='b4carrier_mutants_') as td:
         finally:
             f.write_text(text)
 summary = {s: sum(1 for r in results if r['status'] == s) for s in ('KILLED', 'SURVIVED', 'EDIT-MISS', 'NOT-RUN')}
-(HERE / 'mutants.json').write_text(json.dumps({'results': results, 'summary': summary}, indent=1) + '\n')
+OUTN = f'mutants_{TAG}' if TAG else 'mutants'
+(HERE / f'{OUTN}.json').write_text(json.dumps({'results': results, 'summary': summary}, indent=1) + '\n')
 lines = [f"{r['id']:4} {r['status']:9} {r['file']}" + ('' if r['status'] == 'EDIT-MISS' else '  ' + '; '.join(str(x[:2]) for x in r.get('runs', []))) for r in results]
-(HERE / 'mutants.txt').write_text('\n'.join(lines) + f"\nsummary {summary}\n")
+(HERE / f'{OUTN}.txt').write_text('\n'.join(lines) + f"\nsummary {summary}\n")
 print('\n'.join(lines)); print('summary', summary)

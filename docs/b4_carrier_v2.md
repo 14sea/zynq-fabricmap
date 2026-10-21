@@ -1,4 +1,4 @@
-# B4 carrier v2 — design, mechanism selection, sampling path, interface and acceptance (v0.3, host-only, 2026-10-21)
+# B4 carrier v2 — design, mechanism selection, sampling path, interface and acceptance (v0.4, host-only, 2026-10-21)
 
 > **v0.1 → v0.2 (the owner's HOLD on `823f5b0`, R1–R5, 2026-10-21; the same unit, repaired).** R1 — P9 is the current
 > transaction's: `RESTORE_INIT` raises the declared event on the restored base and samples it into `BASE_STATE`; a normal
@@ -31,6 +31,23 @@
 > (5) The A5 exception enters the event in the contract's context: `INIT_REQ` with held inputs performs a **recorded pre-init
 > cleanup** inside step 0 (control to 0, a falling edge if the clock was high, then the launch), witnessed as `pre_init_cleanup`
 > (WITNESS bit 27, `O.init_event.parameters.pre_init_cleanup`) and checked at every GSR assertion on the bench (section 3).
+
+> **v0.3 → v0.4 (the owner's HOLD on `ce3ca6d`, four items, 2026-10-21; the same unit, repaired).** Three statements of the
+> v0.3 note above are superseded here. (1) **Two references, two bindings.** The session-opening record binds the trusted
+> **loaded-image** frame reference (the natural carrier image, `CEUSEDMUX = SRUSEDMUX = 1`, `ctx.loaded_frames_reference_sha256`);
+> every closed `X` binds the trusted **restored study-base** reference (signed base genome 0, `ctx.base_readback_sha256`). v0.3
+> compared session_open against the restored-base field and its test made both one hash — an honest session with distinct
+> references was refused. The two are never compared to each other (section 3). (2) **The seal is an acquisition state, not an
+> operation name.** P6 is reached when the carrier's witnesses show the init event done and as many set steps applied as the
+> declared stimulus holds; the seal is the first accepted P7+ operation after that. A P7+ operation before P6 is premature: if
+> the engine refuses it, `O` keeps the acquired prefix and the named fault at the phase actually reached; if the carrier accepts
+> it (it does not know the declared length), `O` ends before it, invalid with the host-recorded code `premature_operation`. No
+> `X` exists unless P6 was sealed (section 6). (3) **A write is admitted per half.** In the standalone AXI-Lite configuration a
+> master may deliver W before AW; v0.3 let W through unconditionally, the GSR cleared the acknowledged W and its later AW never
+> got a response. Now, while the stall lasts, W is admitted only when its AW is outstanding (the beats of an accepted write —
+> every AXI3 burst beat — still drain), AW only when its W was already accepted, and a W accepted ahead of its AW is outstanding
+> and holds the launch (section 4). (4) The chain validates every source record's shape before traversing it: a malformed
+> session_open, entry, `O` or `X` is a named finding and ends the chain there.
 
 > **Standing: the carrier v2 engineering unit (the owner's authorisation of 2026-10-21 after the 2c-obs closure), delivered for
 > one review.** It builds the observation contract `docs/b4_observation_contract.md` (v0.5, accepted as a document contract)
@@ -70,10 +87,10 @@ rtl/b4/b4_engine.v); it hides nothing and adapts nothing. Consequences, for the 
 | the AXI gate | `rtl/b4/b4_axi_gate.v` | VALID / READY masking while an event is pending, outstanding tracking (AW→B, AR→last R); one in front of the pinned shim (`b4_top`), one at the core's Lite port |
 | the register file | `rtl/b4/b4_axil.v`, `host/b4carrier_regmap.py` | the v2 map (section 4); the one CTRL acceptance rule; `VARIANT = 0x42340001` |
 | the top | `rtl/b4/b4_top.v`, `rtl/b4/b4_core.v` | PS7 + the instrument's AXI3→Lite shim (pinned, by reference) + `STARTUPE2` with `GSR` driven by the engine; no ICAPE2, no IO |
-| the bench | `tb/b4/` (`b4_target_slice_model.v`, `gen_b4_fixture.py`, `tb_b4_core.v`, `tb_b4_unisim.v`, `tb_b4_axi3.v`), `sim/b4/run.sh` | the hypothesis v0.3 in Verilog as the bench's fabric; six model fixtures from the formal `b4_ff_model`; 24 core scenarios (the owner's reproductions among them, with the repaired expectations); the vendor-model bench over the RTL core and over the GSR-aware netlist of the core, the GSR pulse width measured; the PS path through the pinned AXI3 shim |
-| the build | `vivado/b4/build_b4.tcl`, `resume_b4.tcl`, `isolation_checks_b4.tcl`, `netlist_core.tcl`, `builds/b4/` | routed (v0.3 rebuild), WNS +7.985 ns, target 12 / flush 0, RAM32X1S 279, STARTUPE2 1, ICAPE2 0; `b4.bit` sha256 `2a3b75c3…` (the file `resume_b4.tcl` writes from the routed checkpoint, recorded in `b4_build.json`); the post-synthesis out-of-context netlist of the core for the vendor bench (`b4_core_funcsim.json` records its digest and primitive counts) |
+| the bench | `tb/b4/` (`b4_target_slice_model.v`, `gen_b4_fixture.py`, `tb_b4_core.v`, `tb_b4_unisim.v`, `tb_b4_axi3.v`), `sim/b4/run.sh` | the hypothesis v0.3 in Verilog as the bench's fabric; six model fixtures from the formal `b4_ff_model`; 27 core scenarios (the owner's reproductions among them, with the repaired expectations); the vendor-model bench over the RTL core and over the GSR-aware netlist of the core, the GSR pulse width measured; the PS path through the pinned AXI3 shim |
+| the build | `vivado/b4/build_b4.tcl`, `resume_b4.tcl`, `isolation_checks_b4.tcl`, `netlist_core.tcl`, `builds/b4/` | routed (v0.4 rebuild), WNS +7.263 ns, target 12 / flush 0, RAM32X1S 279, STARTUPE2 1, ICAPE2 0; `b4.bit` sha256 `4e406f12…` (the file `resume_b4.tcl` writes from the routed checkpoint, recorded in `b4_build.json`); the post-synthesis out-of-context netlist of the core for the vendor bench (`b4_core_funcsim.json` records its digest and primitive counts) |
 | the manifest | `host/b4carrier_manifest.py`, `builds/b4/b4_carrier_manifest.json` | the 21 certified addresses read back from the bitstream: all at their expected natural values (section 5) |
-| the records | `host/b4carrier_records.py`, `tests/test_b4carrier_records.py` | `O` / `F` / `X` / `session_open` built from the register trace (the samples and the APPLIED inputs per slot, `BASE_STATE`) with the task's declared stimulus as input, `O` from the trace up to the P6 boundary only, `X` from the engine's completion witnesses after it; validated in three layers — structure (closed at every level, typed, order-independent, the phase table governing the acquisitions), binding to a trusted context (instrument, session, stimulus, config, nonce, predecessor digest and seq, frame invariance, the fitness recomputed from the trusted task), the chain (the session-opening record bound to the same context) |
+| the records | `host/b4carrier_records.py`, `tests/test_b4carrier_records.py` | `O` / `F` / `X` / `session_open` built from the register trace (the samples and the APPLIED inputs per slot, `BASE_STATE`) with the task's declared stimulus as input, `O` up to its terminal boundary only — the P6 seal established from the acquisition state (init done, every declared step applied), or the actual stop of a premature operation or fault — `X` from the engine's completion witnesses after the seal and never without it; validated in three layers — structure (closed at every level, typed, order-independent, the phase table governing the acquisitions), binding to a trusted context (instrument, session, stimulus, config, nonce, predecessor digest and seq, frame invariance, the fitness recomputed from the trusted task, the restored study-base reference), the chain (the session-opening record bound to the loaded-image reference and the instrument; every source record's shape validated before it is traversed) |
 
 ## 2. The initialisation mechanism: (b), GSR through STARTUPE2 — selected, with the reasons
 
@@ -110,7 +127,7 @@ pulse DOES on this die — release skew, the Q effect — stays **A8's board que
 | P3 step 0 | carrier | `CTRL.pre_sample` → slot 0 and `IN_LIVE` (the held inputs under J3); `CTRL.init_req` → the GSR sequence → slot 1 | `init_done`, `gsr_count + 1`, the heartbeat restart, `IN_LIVE = 0` |
 | P4 post-event readback | host (PCAP) | — | link 3 (host) |
 | P5 steps 1 … n | carrier | per step: `STEP_IN` staged, `CTRL.step` → the command latched, applied, sampled into slot 2 + k with the applied inputs; `step_done`; a CTRL write while the step runs is SLVERR | FAULT 6 (not realisable), 7 (sequence), 8 (overflow) |
-| P6a / P6b | host | `O` sealed from the slots and witnesses **at the P6 boundary** (the first accepted P7+ operation; nothing after it enters `O`); `F` from `O` under the trusted task (`b4carrier_records`) | `observation_sha256` |
+| P6a / P6b | host | `O` sealed from the slots and witnesses **at the P6 boundary**, established from the acquisition state (init done and every declared step applied; the seal is the first accepted P7+ operation after that, nothing after it enters `O`); a P7+ operation before P6 is premature and leaves `O` invalid at the phase actually reached; `F` from `O` under the trusted task (`b4carrier_records`) | `observation_sha256` |
 | P7 cleanup | carrier | `CTRL.cleanup` → inputs 0, clock 0 (a recorded falling edge if it was 1), sample | `cleanup_done`, `cleanup_edge`, the cleanup slot |
 | P8 base restore + readback | host (PCAP) | — | `X.base_readback_sha256` (host) |
 | P9 base-state witness | carrier | `CTRL.restore_init` → the declared event on the restored base (the same launch rule), the sample into `BASE_STATE`; `gsr_count + 1` — **in this transaction**, the last one included | `restore_done`; `X.base_state_sample` = `BASE_STATE` |
@@ -129,7 +146,10 @@ SRUSEDMUX = 1`, whose *frame-content* digest is what the manifest records per fr
 that same content, derived from the manifest before the session; (iii) the **signed base genome 0** the session root then
 writes as a candidate (links 1–3), which differs from (i) in exactly the two mux bits. A frame-table digest and a bitstream-file
 digest are different commitments again and bind nothing about Q. This clarification is carried into the contract's 5.5 as the
-owner allowed; it changes no task, model, method, threshold or evidence.
+owner allowed; it changes no task, model, method, threshold or evidence. **In the record layer** (v0.4) the trusted context
+carries (ii) as `loaded_frames_reference_sha256`, which `session_open` binds, and the readback of the restored study base —
+(iii), the P8 readback every closed `X` names — as `base_readback_sha256`; they differ in the two mux bits, live in their own
+hash domains and are never compared to each other (`validate_chain`, `validate_bound`).
 
 ## 4. The MMIO interface (rtl/b4/b4_axil.v; the table of record is host/b4carrier_regmap.py)
 
@@ -146,10 +166,14 @@ packing as the RTL has them — it is a check of this table, not of a PS applica
 
 **The bus and the event.** The two AXI gates (`b4_axi_gate`) make the launch safe without any host timing assumption: from the
 accepted `INIT_REQ` / `RESTORE_INIT` the gates hide new AW / AR from the slaves and their readies from the master (the PS
-simply holds its VALID) — **W is never masked**: a W beat belongs to a transaction the shim already accepted, and an accepted
-burst must drain whatever the engine is waiting for (the owner's two-beat FIXED write with `INIT_REQ` in beat 1 deadlocked v0.2:
-the stall hid the remaining beat while the engine waited for that burst's B; `tb_b4_axi3` now drives such bursts with the
-request in beat 1 and in beat 2 — one event, the burst's response delivered). Under the shim only the outer gate masks; the
+simply holds its VALID). **A write is admitted per half** (v0.4): W is admitted while a write address is outstanding — the
+beats of an accepted write always drain (the owner's two-beat FIXED write with `INIT_REQ` in beat 1 deadlocked v0.2: the stall
+hid the remaining beat while the engine waited for that burst's B; `tb_b4_axi3` drives such bursts with the request in beat 1
+and in beat 2 — one event, the burst's response delivered); a W with no outstanding address — an AXI-Lite master's W-first
+transfer — is held, never acknowledged into storage the GSR would clear (the owner's standalone reproduction of v0.3: the
+acknowledged W was lost and its later AW never answered; `w_first`); AW is admitted when its W was already accepted, and such
+an early W is outstanding, so the launch waits for that write's response (`w_first_early`: a W taken in the cycle between
+INIT_REQ's response and the rising stall). Under the shim only the outer gate masks; the
 core's Lite gate tracks outstanding transfers without masking (`LITE_STALL = 0`, since every Lite transfer there is a beat of a
 transaction the outer gate admitted). The engine fires only after ASSERT_DELAY consecutive cycles in which nothing is outstanding on
 either path — a response the master has not taken yet is delivered first, whatever BREADY does (`backpressure`, through the
@@ -176,7 +200,7 @@ the bench's fabric has none (the record tests show that refusal).
 | what | where | result |
 |---|---|---|
 | the verbatim SipHash bench | `sim/b4/run.sh` | TB_PASS |
-| 24 core scenarios over the hypothesis model: regs (incl. the CTRL rule), flow (six fixtures, two events per transaction, persistence, the replay refused after a reset), seven named refusals incl. the prefix retention, the A5 pass / persistence / wrong-context cases (the GSR entry context checked at every assertion), `open_close_refused`, `p9` / `p9_ok`, `busy_refused`, `step_atomic`, `backpressure`, `read_during_window`, `read_at_launch`, `session` (the zero-finding root → candidate chain), `post_fault` (CLOSE refused after P6: O sealed, X faulted) | `sim/b4/run.sh`, `sim/b4/out/*.result` | all TB_PASS |
+| 27 core scenarios over the hypothesis model: regs (incl. the CTRL rule), flow (six fixtures, two events per transaction, persistence, the replay refused after a reset), seven named refusals incl. the prefix retention, the A5 pass / persistence / wrong-context cases (the GSR entry context checked at every assertion), `open_close_refused`, `p9` / `p9_ok`, `busy_refused`, `step_atomic`, `backpressure`, `read_during_window`, `read_at_launch`, `session` (the zero-finding root → candidate chain), `post_fault` (CLOSE refused after P6: O sealed, X faulted), `w_first` (a W-first transfer during the pending event held, then answered once), `w_first_early` (a W taken just before the stall rises: the launch waits for its write), `early_cleanup` (CLEANUP before INIT_REQ: refused, O invalid at P3, no X) | `sim/b4/run.sh`, `sim/b4/out/*.result` | all TB_PASS |
 | the vendor-model bench over the RTL core and over the GSR-aware post-synthesis netlist of the core; the GSR width measured | `sim/b4/run.sh` | TB_PASS, 40 ns on every event, both |
 | the PS path through the pinned AXI3 shim (backpressure, a stalled read, a full transaction, two-beat FIXED bursts at CTRL with the event request in beat 1 and in beat 2) | `tb/b4/tb_b4_axi3.v` | TB_PASS |
 | the register table vs the RTL decode; the records from the bench traces incl. every owner counterexample (rounds 2 and 3), the serialization round trip, the zero-finding session chain from the bench, the sealed observation under a post-P6 fault; the benches | `tests/test_b4carrier_*.py` | OK |

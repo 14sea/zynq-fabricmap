@@ -129,7 +129,11 @@ STEP = {"step": _t_int(0), "kind": _t_enum("init", "set"), "prev_event": _t_enum
         "ce": _t_int(0, 255), "sr": _t_int(0, 255), "d": _t_int(0, 255), "q_before": _t_cells, "q_after": _t_cells}
 STIM_INIT = {"kind": _t_enum("init")}
 STIM_SET = {"kind": _t_enum("set"), "clock": _t_int(0, 1), "ce": _t_int(0, 255), "sr": _t_int(0, 255), "d": _t_int(0, 255)}
-FAULT = {"code": _t_enum(*rm.FAULT_NAMES), "phase_reached": _t_enum(*PHASES), "step_reached": lambda v: v is None or _t_int(0)(v)}
+# `premature_operation` is HOST-recorded, never a carrier register value: an operation of P7+ (cleanup / close / close_injection /
+# restore_init) that the carrier ACCEPTED before the acquisition reached P6 (the carrier does not know the declared stimulus
+# length, so it has no rule against a cleanup after fewer steps than declared). Every other code is the FAULT register's.
+O_FAULT_CODES = tuple(rm.FAULT_NAMES) + ("premature_operation",)
+FAULT = {"code": _t_enum(*O_FAULT_CODES), "phase_reached": _t_enum(*PHASES), "step_reached": lambda v: v is None or _t_int(0)(v)}
 O_COMMON = {"schema": _t_enum(SCHEMA_O), "schema_version": _t_enum(VERSION), "instrument": lambda v: isinstance(v, dict),
             "session": lambda v: isinstance(v, str) and 0 < len(v) <= 64, "seq": _t_int(0), "nonce": _t_hex(16),
             "predecessor": lambda v: isinstance(v, dict), "config": lambda v: isinstance(v, list) and len(v) == 21 and all(_is_int(c) and c in (0, 1) for c in v),
@@ -205,17 +209,54 @@ def _slot_reads(evs: list[dict]) -> tuple[dict, dict]:
 
 
 # ------------------------------------------------------------------ the P6 boundary
-def seal_index(evs: list[dict]) -> int:
-    """The index of the first event AFTER the observation's acquisition (the P6 boundary): the first CTRL write the register
-    file accepted naming cleanup / close / close_injection / restore_init, or the end. `O` is built from `evs[:seal_index]`
-    only, so nothing of P7–P10 — a later event's witness, a later fault — can rewrite it or its digest. Reads are never a
-    boundary: the slot store is persistent and the acquired samples may be read back after a fault stopped the
-    transaction (the fault itself is in the sealed prefix and makes O invalid at the phase it stopped)."""
+P7_OPS = ("cleanup", "close", "close_injection", "restore_init")
+
+
+def _accepted_p7(e: dict) -> bool:
+    return (e.get("op") == "wr" and e.get("addr") == rm.CTRL and e.get("resp", 0) == 0
+            and any((e["data"] >> rm.CTRL_BITS[op]) & 1 for op in P7_OPS))
+
+
+def acquisition_boundary(evs: list[dict], n_declared: int) -> tuple[int, str]:
+    """The observation's terminal boundary, established from the carrier's ACQUISITION STATE as the host read it — never
+    from an operation's name alone. Returns (index, how): `O` is built from `evs[:index]`.
+
+      sealed              P6 was reached: init_done witnessed and as many set steps applied (STATUS step_index) as the
+                          declared stimulus holds, no fault; the boundary is the first accepted P7+ operation after that
+                          (nothing of P7–P10 enters O);
+      stopped             the acquisition stopped at a fault the host read before any P7+ operation; the boundary is the
+                          first accepted P7+ operation after the fault, or the end (the persistent slots read after the fault
+                          belong to O's prefix);
+      premature_refused   a P7+ operation was accepted on the bus BEFORE P6 and the engine refused it (a non-zero FAULT read
+                          follows before the next CTRL write): O keeps everything up to and including that FAULT read — the
+                          acquired prefix and the named fault at the phase actually reached (the owner's 2026-10-21 early
+                          CLEANUP reproduction);
+      premature_accepted  a P7+ operation the carrier accepted before P6 (fewer steps applied than declared): O ends before it
+                          and is invalid with the host-recorded code `premature_operation`;
+      open                the trace ends with neither P6, a fault nor a P7+ operation.
+    A transaction close (X) exists only after `sealed`."""
+    init_done, step_idx, fault_seen = False, 0, False
     for i, e in enumerate(evs):
-        if e.get("op") == "wr" and e.get("addr") == rm.CTRL and e.get("resp", 0) == 0:
-            if any((e["data"] >> rm.CTRL_BITS[op]) & 1 for op in ("cleanup", "close", "close_injection", "restore_init")):
-                return i
-    return len(evs)
+        if e.get("op") == "rd" and e.get("resp", 0) == 0 and e.get("data") is not None:
+            if e.get("addr") == rm.STATUS:
+                st = rm.decode_status(e["data"])
+                init_done = init_done or bool(st["init_done"])
+                step_idx = max(step_idx, st["step_index"])
+            elif e.get("addr") == rm.FAULT and e["data"] & 0xF:
+                fault_seen = True
+        if _accepted_p7(e):
+            if fault_seen:
+                return i, "stopped"
+            if init_done and step_idx >= n_declared - 1:
+                return i, "sealed"
+            for j in range(i + 1, len(evs)):
+                ej = evs[j]
+                if ej.get("op") == "rd" and ej.get("addr") == rm.FAULT and ej.get("resp", 0) == 0 and (ej.get("data") or 0) & 0xF:
+                    return j + 1, "premature_refused"
+                if ej.get("op") == "wr" and ej.get("addr") == rm.CTRL:
+                    break
+            return i, "premature_accepted"
+    return len(evs), ("stopped" if fault_seen else "open")
 
 
 def _op_completed(evs: list[dict], i: int, op: str) -> bool:
@@ -244,7 +285,10 @@ def observation(evs: list[dict], links: dict, timing: dict, seq: int, session: s
     for k in ("instrument", "nonce", "commit", "staging_readback_sha256", "fabric_readback_sha256_pre_event", "fabric_readback_sha256_post_event", "config"):
         if k not in links:
             raise RecordRefusal(f"links: {k} missing (the instrument's PCAP path / manifest supplies it)")
-    evs = evs[:seal_index(evs)]                           # the P6 boundary: nothing after it enters O
+    if not isinstance(declared_stimulus, list) or not declared_stimulus:
+        raise RecordRefusal("the declared stimulus is a non-empty list (its step 0 is the init event)")
+    boundary, how = acquisition_boundary(evs, len(declared_stimulus))
+    evs = evs[:boundary]                                  # the terminal boundary: nothing after it enters O
     q, inp = _slot_reads(evs)
     status_words = [rm.decode_status(e["data"]) for e in _reads(evs, rm.STATUS)]
     seen = {k: max((w[k] for w in status_words), default=0) for k in ("pre_sampled", "init_done", "cleanup_done", "restore_done", "step_index")}
@@ -287,10 +331,13 @@ def observation(evs: list[dict], links: dict, timing: dict, seq: int, session: s
             prev_event, clock, q_prev = ("edge" if edge else "level"), c, q[2 + n - 1]
             n += 1
     o["steps"] = steps
-    if faults and faults[-1] != 0:
+    code = rm.FAULT_CODES[faults[-1]] if (faults and faults[-1] != 0) else ("premature_operation" if how == "premature_accepted" else None)
+    if code is None and how == "open" and len(steps) < len(declared_stimulus):
+        raise RecordRefusal("the trace ends before the acquisition reached P6 and no fault stopped it: nothing to seal yet")
+    if code is not None:
         phase = "P5" if init_done else ("P3" if pre_sampled else "P2")
         o["status"] = "invalid"
-        o["fault"] = {"code": rm.FAULT_CODES[faults[-1]], "phase_reached": phase,
+        o["fault"] = {"code": code, "phase_reached": phase,
                       "step_reached": (final["step_index"] if (final and phase == "P5") else (0 if phase == "P3" else None))}
         for ph in PHASES[PHASES.index(phase) + 1:]:
             for k in O_PHASE[ph]:
@@ -344,8 +391,11 @@ def transaction_close(evs: list[dict], o: dict, seq: int, links: dict) -> dict:
     base-state sample is the carrier's BASE_STATE register), injection_open (a CLOSE_INJECTION the engine completed), or
     faulted (the engine latched a fault after P6, with the stop phase from its witnesses: cleanup not done -> P7; cleanup
     done, restore not -> P9; restore done -> P10). A CTRL write the register file answered OKAY is NOT a completion.
-    Without any of those the transaction is not closed and no X exists."""
-    k = seal_index(evs)
+    Without any of those the transaction is not closed and no X exists — and none exists unless the acquisition reached the
+    P6 seal (`acquisition_boundary` = sealed): a premature operation or an acquisition fault leaves O invalid and no X."""
+    k, how = acquisition_boundary(evs, len(o["stimulus"]))
+    if how != "sealed":
+        raise RecordRefusal(f"no transaction close: the acquisition never reached the P6 seal ({how})")
     after = evs[k:]
     q, inp = _slot_reads(evs)
     status_words = [rm.decode_status(e["data"]) for e in _reads(after, rm.STATUS)]
@@ -583,7 +633,10 @@ def validate_session_open(so) -> list[str]:
 def validate_bound(o, ctx: dict, fr=None, x=None) -> list[str]:
     """`ctx`: instrument (the manifest's), session, stimulus (the task's declared steps), config (the planned genome
     list), task (the TRUSTED task: mask, target, weights, digest — the fitness is recomputed from it), predecessor_close_sha256
-    and predecessor_seq (None for the root), nonce (what the PL showed), mechanism 'b', pulse_clocks."""
+    and predecessor_seq (None for the root), nonce (what the PL showed), mechanism 'b', pulse_clocks, and two DISTINCT trusted
+    frame references in their own hash domains (contract 5.5, design section 3): `loaded_frames_reference_sha256` — the
+    loaded natural carrier image (CEUSEDMUX = SRUSEDMUX = 1), which session_open binds — and `base_readback_sha256` — the
+    restored study base (signed base genome 0) that every closed X's P8 readback binds. They differ by those mux bits."""
     f = validate_observation(o)
     if f:
         return f
@@ -628,44 +681,63 @@ def validate_bound(o, ctx: dict, fr=None, x=None) -> list[str]:
                     f.append(f"bound: {e}")
     if x is not None:
         f += validate_close(x, o)
-        if not f and x["status"] == "closed" and x["base_readback_sha256"] != ctx.get("base_readback_sha256", x["base_readback_sha256"]):
-            f.append("bound: X.base_readback_sha256 is not the session's base readback")
+        if not f and x["status"] == "closed":
+            if not _hex(ctx.get("base_readback_sha256"), 64):
+                f.append("bound: no trusted restored-base frame reference (ctx.base_readback_sha256) to bind X")
+            elif x["base_readback_sha256"] != ctx["base_readback_sha256"]:
+                f.append("bound: X.base_readback_sha256 is not the trusted restored study-base (signed base genome 0) frame reference")
     return f
 
 
 # ------------------------------------------------------------------ layer 3: the chain
 def validate_chain(so, records: list[dict]) -> list[str]:
-    """`records`: [{o, x, ctx, f?}] in session order; the first is the root. The session-opening record is bound to the
-    TRUSTED context of every transaction it covers: `ctx.instrument` (the manifest's) and `ctx.base_readback_sha256` (the
-    independently pinned loaded-frame reference the carrier restores to) — a session_open naming another carrier or a
-    reference of its own choosing opens nothing, whatever its two digests say to each other."""
+    """`records`: [{o, x, ctx, f?}] in session order; the first is the root.
+
+    The session-opening record binds the LOADED-IMAGE frame reference of every transaction's trusted context
+    (`ctx.loaded_frames_reference_sha256`, the loaded natural carrier image) and the manifest's instrument — a session_open
+    naming another carrier or a reference of its own choosing opens nothing, whatever its two digests say to each other.
+    The RESTORED STUDY-BASE reference (`ctx.base_readback_sha256`, signed base genome 0) is a different commitment in a
+    different hash domain, bound by each closed X (validate_bound); the two are never compared to each other.
+
+    Every source record's SHAPE is validated before it is traversed: a malformed session_open, entry, O or X is a named
+    finding and the terminal result for the chain at that point — nothing of a malformed value is dereferenced."""
     f = validate_session_open(so)
-    if not f and so["status"] != "open":
-        f.append("chain: the session did not open")
+    if f:
+        return f + ["chain: the session-opening record is malformed; no transaction can be bound to it"]
+    if so["status"] != "open":
+        return ["chain: the session did not open"]
     if not isinstance(records, list):
-        return f + ["chain: records is not a list"]
+        return ["chain: records is not a list"]
     prev_x = None
     for i, r in enumerate(records):
         if not isinstance(r, dict) or not isinstance(r.get("o"), dict) or not isinstance(r.get("ctx"), dict):
-            f.append(f"chain[{i}]: a record entry is {{o, x, ctx}} with objects"); prev_x = None; continue
-        o, x, ctx = r["o"], r.get("x"), dict(r["ctx"])
-        if not f or so.get("status") == "open":
-            if so.get("instrument") != ctx.get("instrument"):
-                f.append(f"chain[{i}]: session_open.instrument is not the trusted context's instrument")
-            if so.get("base_frames_reference_sha256") != ctx.get("base_readback_sha256"):
-                f.append(f"chain[{i}]: session_open does not name the pinned loaded-frame reference the transaction restores to")
-        if i == 0 and o.get("predecessor", {}).get("kind") != "session_root":
+            f.append(f"chain[{i}]: a record entry is {{o, x, ctx}} with objects; the chain ends here"); break
+        o, x, ctx = r["o"], r.get("x"), r["ctx"]
+        shape = validate_observation(o)
+        if not shape and x is not None:
+            shape = validate_close(x, o)
+        if shape:
+            f += [f"chain[{i}]: {m}" for m in shape]
+            f.append(f"chain[{i}]: a malformed record; the chain ends here"); break
+        if so["instrument"] != ctx.get("instrument"):
+            f.append(f"chain[{i}]: session_open.instrument is not the trusted context's instrument")
+        if not _hex(ctx.get("loaded_frames_reference_sha256"), 64):
+            f.append(f"chain[{i}]: no trusted loaded-image frame reference (ctx.loaded_frames_reference_sha256) to bind session_open")
+        elif so["base_frames_reference_sha256"] != ctx["loaded_frames_reference_sha256"]:
+            f.append(f"chain[{i}]: session_open does not name the pinned loaded-image frame reference")
+        kind = o["predecessor"]["kind"]                    # O's shape is valid: predecessor is a closed object
+        if i == 0 and kind != "session_root":
             f.append("chain: the first transaction is the session root")
         if i > 0:
-            want_kind = "a5_injection" if (isinstance(prev_x, dict) and prev_x.get("status") == "injection_open") else "closed"
-            if o.get("predecessor", {}).get("kind") != want_kind:
+            want_kind = "a5_injection" if prev_x["status"] == "injection_open" else "closed"
+            if kind != want_kind:
                 f.append(f"chain[{i}]: predecessor.kind must be {want_kind} after the previous close")
         exp_prev = sha256_json(prev_x) if prev_x is not None else None
-        exp_seq = prev_x.get("seq") if isinstance(prev_x, dict) else None
+        exp_seq = prev_x["seq"] if prev_x is not None else None
         f += [f"chain[{i}]: {m}" for m in validate_bound(o, {**ctx, "predecessor_close_sha256": exp_prev, "predecessor_seq": exp_seq}, r.get("f"), x)]
         if x is None:
-            f.append(f"chain[{i}]: no transaction close")
-        elif isinstance(x, dict) and x.get("status") == "faulted":
-            f.append(f"chain[{i}]: the transaction faulted at {x.get('fault', {}).get('phase_reached')}; the chain ends here")
+            f.append(f"chain[{i}]: no transaction close; the chain ends here"); break
+        if x["status"] == "faulted":                      # X's shape is valid: fault is a closed object
+            f.append(f"chain[{i}]: the transaction faulted at {x['fault']['phase_reached']}; the chain ends here"); break
         prev_x = x
     return f

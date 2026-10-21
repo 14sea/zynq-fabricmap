@@ -29,10 +29,12 @@ def _h(label: str) -> str:
 
 INSTRUMENT = {"variant": f"{rm.VARIANT_WORD:08x}", "carrier_sha256": _h("carrier"), "image_sha256": _h("image")}
 FRAMES = _h("candidate-frames")          # mechanism (b): staging = pre-event = post-event (the write, then a frame-invariant event)
-STARTUP = _h("startup")                  # the pinned loaded-frame reference: read at session open, the base every transaction restores to
+# two DISTINCT trusted frame references in their own hash domains (contract 5.5, design section 3):
+STARTUP = _h("startup")                  # the loaded natural carrier image (CEUSEDMUX = SRUSEDMUX = 1): session_open binds it
+BASE = _h("base-frames")                 # the restored study base, signed base genome 0 (the mux bits differ): every closed X binds it
 LINKS = {"instrument": INSTRUMENT, "nonce": _h("nonce")[:16], "commit": _h("commit"), "staging_readback_sha256": FRAMES,
          "fabric_readback_sha256_pre_event": FRAMES, "fabric_readback_sha256_post_event": FRAMES, "config": [0] * 21,
-         "base_readback_sha256": STARTUP}
+         "base_readback_sha256": BASE}
 TIMING = {**rm.decode_timing(rm.timing_word(8, 16, 4, 4, 4)), "pulse": 2}
 ROOT = {"kind": "session_root", "seq": None, "close_sha256": None}
 # the TRUSTED task of the bench's context: every cell of the seven set steps scored against 0 — the fitness a bound F must
@@ -63,7 +65,7 @@ def ensure_traces():
 def ctx_for(stim, seq_prev_close, config=None, session="bench"):
     return {"instrument": INSTRUMENT, "session": session, "stimulus": stim, "config": config or [0] * 21, "task_digest": _h("task"), "task": TASK,
             "predecessor_close_sha256": seq_prev_close, "nonce": LINKS["nonce"], "mechanism": "b", "pulse_clocks": 2,
-            "base_readback_sha256": LINKS["base_readback_sha256"]}
+            "base_readback_sha256": BASE, "loaded_frames_reference_sha256": STARTUP}
 
 
 def roundtrip(obj):
@@ -161,7 +163,7 @@ class FromTheBench(unittest.TestCase):
                                    [{"o": o1, "x": x1, "ctx": ctx_for(self.stim[0], None)},
                                     {"o": o2, "x": x2, "ctx": ctx_for(cprime, None)},
                                     {"o": o3, "x": x3, "ctx": ctx_for(self.stim[0][:1], None)}])
-        self.assertTrue(all("chain[0]" in f and ("initial" in f or "steps[0]" in f) for f in chain), chain)   # only the root's never-initialised pre-init sample (the bench's fabric)
+        self.assertEqual(chain, [])     # J1 (root) -> J2 (injection close) -> J3 (A5 context): every record bound, no finding
 
     def test_session_chain_from_the_bench_has_zero_findings(self):
         """The `session` scenario: session open -> the init-only ROOT on genome 0 -> one candidate -> close, every record
@@ -190,7 +192,18 @@ class FromTheBench(unittest.TestCase):
         foreign = copy.deepcopy(so); foreign["instrument"]["carrier_sha256"] = _h("foreign")
         self.assertTrue(any("session_open.instrument" in m for m in rec.validate_chain(foreign, chain)))
         own_ref = rec.session_open(INSTRUMENT, _h("own"), _h("own"))
-        self.assertTrue(any("pinned loaded-frame reference" in m for m in rec.validate_chain(own_ref, chain)))
+        self.assertTrue(any("pinned loaded-image frame reference" in m for m in rec.validate_chain(own_ref, chain)))
+        # the two references are distinct commitments: naming the restored base as the loaded image opens nothing
+        self.assertNotEqual(STARTUP, BASE)
+        as_base = rec.session_open(INSTRUMENT, BASE, BASE)
+        self.assertTrue(any("pinned loaded-image frame reference" in m for m in rec.validate_chain(as_base, chain)))
+        # each reference is required in the trusted context and bound to its own record
+        no_loaded = copy.deepcopy(chain); [c["ctx"].pop("loaded_frames_reference_sha256") for c in no_loaded]
+        self.assertTrue(any("no trusted loaded-image" in m for m in rec.validate_chain(so, no_loaded)))
+        no_base = copy.deepcopy(chain); [c["ctx"].pop("base_readback_sha256") for c in no_base]
+        self.assertTrue(any("no trusted restored-base" in m for m in rec.validate_chain(so, no_base)))
+        other_base = copy.deepcopy(chain); other_base[1]["ctx"]["base_readback_sha256"] = _h("another-base")
+        self.assertTrue(any("restored study-base" in m for m in rec.validate_chain(so, other_base)))
         bad = copy.deepcopy(chain); bad[1]["x"]["seq"] = 999
         self.assertTrue(any("X.seq" in m for m in rec.validate_chain(so, bad)))
         bad = copy.deepcopy(chain); bad[1]["o"]["predecessor"]["seq"] = 999; bad[1]["x"]["observation_sha256"] = rec.observation_sha256(bad[1]["o"])
@@ -214,6 +227,31 @@ class FromTheBench(unittest.TestCase):
         self.assertNotIn("cleanup", x); self.assertEqual(rec.validate_close(x, o_full), [])
         with self.assertRaises(rec.RecordRefusal):
             rec.transaction_close(tx[:cut], o_p6, seq=2, links=LINKS)               # nothing after P6: not closed
+
+    def test_a_premature_operation_is_not_a_seal(self):
+        """The owner's early-CLEANUP reproduction (`early_cleanup`): ARM + PRE_SAMPLE, then CLEANUP before INIT_REQ. The bus
+        accepts the write, the engine refuses it. O keeps the acquired prefix (the pre-init sample) and the named fault at
+        the phase actually reached (P3) — never a complete O — and no X exists (P6 was never reached)."""
+        tx = rec.transactions(rec.load_trace(OUT / "early_cleanup.jsonl"))[1]
+        self.assertEqual(rec.acquisition_boundary(tx, len(self.stim[1]))[1], "premature_refused")
+        o = rec.observation(tx, LINKS, TIMING, seq=2, session="bench", predecessor=ROOT, declared_stimulus=self.stim[1])
+        self.assertEqual(o["status"], "invalid")
+        self.assertEqual(o["fault"], {"code": "sequence", "phase_reached": "P3", "step_reached": 0})
+        self.assertIn("initial", o); self.assertEqual(o["steps"], [])
+        self.assertEqual(rec.validate_observation(o), [])
+        with self.assertRaises(rec.RecordRefusal):
+            rec.transaction_close(tx, o, seq=2, links=LINKS)
+        # a P7+ operation the carrier ACCEPTS before P6 (the root's CLEANUP after the init step, read against a declared
+        # stimulus of eight steps): O ends before it, invalid with the host-recorded code, and again no X
+        root = rec.transactions(rec.load_trace(OUT / "session.jsonl"))[0]
+        self.assertEqual(rec.acquisition_boundary(root, len(self.stim[1]))[1], "premature_accepted")
+        o = rec.observation(root, LINKS, TIMING, seq=1, session="bench", predecessor=ROOT, declared_stimulus=self.stim[1])
+        self.assertEqual(o["fault"], {"code": "premature_operation", "phase_reached": "P5", "step_reached": 0})
+        self.assertEqual(len(o["steps"]), 1); self.assertEqual(rec.validate_observation(o), [])
+        with self.assertRaises(rec.RecordRefusal):
+            rec.transaction_close(root, o, seq=1, links=LINKS)
+        # the same trace against its own declared stimulus (init only) reaches P6 and closes
+        self.assertEqual(rec.acquisition_boundary(root, 1)[1], "sealed")
 
     def test_x_cannot_be_sealed_before_close(self):
         tx = self.flow[1]
@@ -239,7 +277,7 @@ class ClosedSets(unittest.TestCase):
     def _x(self, o):
         return {"schema": rec.SCHEMA_X, "schema_version": rec.VERSION, "observation_sha256": rec.observation_sha256(o), "seq": 1,
                 "cleanup": {"steps": [{"clock_before": 1, "clock_after": 0, "edge": "falling", "ce": 0, "sr": 0, "d": 0, "q_after": rec.bits(0x5A)}], "final_q": rec.bits(0x5A)},
-                "base_readback_sha256": STARTUP, "base_state_sample": [1] * 8, "idle_status": 1, "status": "closed"}
+                "base_readback_sha256": BASE, "base_state_sample": [1] * 8, "idle_status": 1, "status": "closed"}
 
     def test_valid_and_round_trip(self):
         o = self._o(); self.assertEqual(rec.validate_observation(o), [])
@@ -346,7 +384,7 @@ class ClosedSets(unittest.TestCase):
         self.assertEqual(rec.validate_chain(so, "records"), ["chain: records is not a list"])
         foreign = rec.session_open({**INSTRUMENT, "carrier_sha256": _h("foreign")}, _h("own"), _h("own"))
         f = rec.validate_chain(foreign, [{"o": o, "x": x, "ctx": ctx}])
-        self.assertTrue(any("session_open.instrument" in m for m in f) and any("pinned loaded-frame reference" in m for m in f), f)
+        self.assertTrue(any("session_open.instrument" in m for m in f) and any("pinned loaded-image frame reference" in m for m in f), f)
         # F is recomputed over the full grid from the TRUSTED task: an arbitrary score with the right digest is refused
         task = {"mask": [(1, 1), (1, 0)], "target": [1, 1], "weights": [1, 1], "digest": _h("task")}
         fr = rec.fitness(o, task); tctx = {**ctx, "task": task}
@@ -354,6 +392,29 @@ class ClosedSets(unittest.TestCase):
         fr["fitness"] = 999
         self.assertTrue(any("recomputed" in m for m in rec.validate_bound(o, tctx, fr, x)))
         self.assertTrue(any("no trusted task" in m for m in rec.validate_bound(o, {k: v for k, v in ctx.items() if k != "task"}, fr, x)))
+
+    def test_malformed_chain_sources_are_findings(self):
+        """(the owner's 2026-10-21 record-boundary negatives) A malformed session_open, O.predecessor or X.fault is a named
+        finding and ends the chain there; nothing of the malformed value is dereferenced."""
+        o = self._o(); x = self._x(o); ctx = ctx_for(o["stimulus"], None, session="s")
+        so = rec.session_open(INSTRUMENT, STARTUP, STARTUP)
+        self.assertEqual(rec.validate_chain(so, [{"o": o, "x": x, "ctx": ctx}]), [])
+        for bad in (None, [], 5):
+            f = rec.validate_chain(bad, [{"o": o, "x": x, "ctx": ctx}])
+            self.assertTrue(f and any("session-opening record is malformed" in m for m in f), (bad, f))
+            z = copy.deepcopy(o); z["predecessor"] = bad
+            f = rec.validate_chain(so, [{"o": z, "x": x, "ctx": ctx}])
+            self.assertTrue(any("O.predecessor" in m for m in f) and any("malformed record" in m for m in f), (bad, f))
+        z = copy.deepcopy(x); z["status"] = "faulted"; z["fault"] = "bad"
+        f = rec.validate_chain(so, [{"o": o, "x": z, "ctx": ctx}])
+        self.assertTrue(any("malformed record" in m for m in f), f)
+        refused = rec.session_open(INSTRUMENT, STARTUP, BASE)
+        self.assertEqual(rec.validate_chain(refused, [{"o": o, "x": x, "ctx": ctx}]), ["chain: the session did not open"])
+        # a well-formed faulted close ends the chain with its real stop phase
+        fx = {"schema": rec.SCHEMA_X, "schema_version": rec.VERSION, "observation_sha256": rec.observation_sha256(o), "seq": 1,
+              "idle_status": 0, "fault": {"code": "sequence", "phase_reached": "P9"}, "status": "faulted"}
+        f = rec.validate_chain(so, [{"o": o, "x": fx, "ctx": ctx}, {"o": o, "x": x, "ctx": ctx}])
+        self.assertEqual(f, ["chain[0]: the transaction faulted at P9; the chain ends here"])
 
     def test_binding_frame_invariance_and_task(self):
         o = self._o(); o["fabric_readback_sha256_post_event"] = _h("other")

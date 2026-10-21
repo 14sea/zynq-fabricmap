@@ -31,6 +31,9 @@ module tb_b4_core;
     integer fails = 0, log_fd;
     initial begin #20000000; $display("WATCHDOG: scenario %0s did not finish (fails so far %0d)", scenario, fails); $display("TB_FAIL %0s (watchdog)", scenario); $finish; end
     reg [1:0] last_bresp, last_rresp; reg [31:0] last_rdata; reg aw_done = 0, w_done = 0;
+    // every write response the bench's master takes (the W-first scenarios count them: exactly one per write)
+    integer b_count = 0; always @(posedge clk) if (bvalid && bready) b_count = b_count + 1;
+    integer wf_t0, wf_b0, wf_g0; reg wf_w_taken, wf_w_stall;
     reg [255:0] scenario;
     // the event's entry context (contract 5.1 step 0 / 5.6 J3): at every GSR assertion the inputs and the slice clock are 0
     always @(posedge gsr_drive) if ({slice_clk, slice_sr, slice_ce, slice_d} != 11'd0) begin fails = fails + 1; $display("FAIL: GSR asserted with inputs held: clk=%0d ce=%0d sr=%0d d=%h [t=%0t]", slice_clk, slice_ce, slice_sr, slice_d, $time); end
@@ -243,6 +246,10 @@ module tb_b4_core;
         "a5": begin
             // J1: c observed and closed normally; J2: c-prime leaves every element opposite, inputs held, CLOSE_INJECTION;
             // J3: c again, ARM with the A5 context flag; the held inputs and the injected state recorded; cleared by the event
+            // the fabric at its INIT values before J1, as after the configuration GSR of a loaded device (set on the fabric,
+            // never on a record), so J1 — the session root of the host's chain J1 -> J2 -> J3 — is a real sample, not the
+            // model's null, and the whole A5 chain is validated record by record (tests.test_b4carrier_records)
+            target.q = 8'hFF;
             provision(KEY_A); transaction(0, 1, "J1 c");
             mark("J2_begin"); target.genome = FIX0_GENOME; stage(VALID2); arm; wait_gate; pre_sample; slot(5'd0); slot_in(5'd0); init_event; slot(5'd1);
             step(25'h100FF00);               // clock 1, ce all (bits 15:8), sr 0, d 0x00: every element captures 0 (opposite of INIT 1)
@@ -375,6 +382,73 @@ module tb_b4_core;
             close; expect_fault(7, "post-P6 CLOSE before restore is a sequence fault");
             rd(16'h2004); check(last_rdata[2] == 0 && last_rdata[12] == 0, "unclosed: recovery, not idle");
             mark("transaction_end");
+        end
+        "w_first": begin
+            // (the owner's standalone reproduction, 2026-10-21) INIT_REQ, then — while the event is pending — the next write's W
+            // FIRST, as independent AXI-Lite channels allow: it must be HELD (not acknowledged into storage the GSR clears);
+            // after the event its AW and W complete, one response, the value applied exactly once
+            provision(KEY_A); target.genome = FIX0_GENOME; stage(VALID1); arm; wait_gate; pre_sample;
+            rd(16'h2020); wf_g0 = last_rdata[7:0];
+            wr(16'h2000, 32'h400);
+            wf_b0 = b_count; wf_w_taken = 0;
+            @(negedge clk); awaddr = 16'h2038; wdata = 32'h0100FF5A; wvalid = 1; #1;
+            check(stall == 1 && wready == 0, "a W-first beat presented while the event is pending is held");
+            wf_t0 = 0;
+            while (!wf_w_taken && wf_t0 < 400) begin
+                #1; if (wvalid && wready) begin wf_w_taken = 1; wf_w_stall = stall; end
+                @(negedge clk); if (wf_w_taken) wvalid = 0; wf_t0 = wf_t0 + 1;
+            end
+            check(wf_w_taken && !wf_w_stall, "the held W is accepted only after the event");
+            check(dut.engine.gsr_count == wf_g0 + 1, "exactly one event, before the W was taken");
+            awvalid = 1; #1; wf_t0 = 0; while (!awready && wf_t0 < 100) begin @(negedge clk); #1; wf_t0 = wf_t0 + 1; end
+            @(negedge clk); awvalid = 0;
+            wf_t0 = 0; while (b_count == wf_b0 && wf_t0 < 100) begin @(negedge clk); wf_t0 = wf_t0 + 1; end
+            check(b_count == wf_b0 + 1, "the split write is answered, once, within a bounded time");
+            rd(16'h2038); check(last_rdata[24:0] == 25'h100FF5A, "STEP_IN holds the split write's value");
+            rd(16'h2004); check(last_rdata[9] == 1 && last_rdata[1] == 0, "init_done, no fault");
+            step(25'h100FF5A); slot(5'd2); slot_in(5'd2); check(last_rdata[24:0] == 25'h100FF5A, "applied once as the next step");
+        end
+        "w_first_early": begin
+            // a W-first beat taken in the cycle(s) after INIT_REQ's response and BEFORE the stall rises (the register file is
+            // free again): it is outstanding, the event waits for its write, its AW is admitted through the stall, and the
+            // write completes before the GSR — nothing acknowledged is lost
+            provision(KEY_A); target.genome = FIX0_GENOME; stage(VALID1); arm; wait_gate; pre_sample;
+            rd(16'h2020); wf_g0 = last_rdata[7:0];
+            @(negedge clk); awaddr = 16'h2000; wdata = 32'h400; awvalid = 1; wvalid = 1; aw_done = 0; w_done = 0;
+            while (!(aw_done && w_done)) begin
+                #1; if (awvalid && awready) aw_done = 1; if (wvalid && wready) w_done = 1;
+                @(negedge clk); if (aw_done) awvalid = 0; if (w_done) wvalid = 0;
+            end
+            wf_b0 = b_count;
+            wdata = 32'h0100FF5A; wvalid = 1; awaddr = 16'h2038; wf_w_taken = 0; wf_t0 = 0;   // the next W, offered at once
+            while (!wf_w_taken && wf_t0 < 400) begin
+                #1; if (wvalid && wready) begin wf_w_taken = 1; wf_w_stall = (dut.engine.gsr_count != wf_g0); end
+                @(negedge clk); if (wf_w_taken) wvalid = 0; wf_t0 = wf_t0 + 1;
+            end
+            check(wf_w_taken && !wf_w_stall, "the early W was taken before the event (the path under test)");
+            repeat (QUIET) @(negedge clk);
+            check(dut.engine.gsr_count == wf_g0, "no event while a W is accepted ahead of its AW");
+            awvalid = 1; #1; wf_t0 = 0; while (!awready && wf_t0 < 100) begin @(negedge clk); #1; wf_t0 = wf_t0 + 1; end
+            check(wf_t0 < 100, "the AW of an accepted W is admitted through the stall");
+            @(negedge clk); awvalid = 0;
+            wf_t0 = 0; while (b_count < wf_b0 + 2 && wf_t0 < 200) begin @(negedge clk); wf_t0 = wf_t0 + 1; end
+            check(b_count == wf_b0 + 2, "INIT_REQ's and the split write's responses, once each, bounded");
+            wait_engine;
+            check(dut.engine.gsr_count == wf_g0 + 1, "then exactly one event");
+            // the write completed (answered) BEFORE the event; the event then resets the staged register like every PL
+            // flip-flop — a write is delivered once and never replayed after the GSR (staging belongs after the event)
+            rd(16'h2038); check(last_rdata[24:0] == 25'd0, "STEP_IN cleared by the event that followed the completed write");
+            rd(16'h2004); check(last_rdata[9] == 1 && last_rdata[1] == 0, "init_done, no fault");
+        end
+        "early_cleanup": begin
+            // (the owner's reproduction, 2026-10-21) a warm transaction, then ARM + PRE_SAMPLE and a CLEANUP BEFORE INIT_REQ:
+            // the bus accepts the write, the engine refuses it (F_SEQUENCE). The record layer must keep the acquired prefix and
+            // the fault at P3 — no complete O, no X (tests.test_b4carrier_records)
+            provision(KEY_A); transaction(0, 1, "warm transaction");
+            mark("transaction_begin"); target.genome = FIX1_GENOME; stage(VALID2); arm; wait_gate;
+            rd(16'h2200); rd(16'h2028); rd(16'h2020); pre_sample; rd(16'h2004); slot(5'd0); slot_in(5'd0); rd(16'h2020);
+            cleanup; expect_fault(7, "CLEANUP before the init event is a sequence fault");
+            rd(16'h2004); mark("transaction_end");
         end
         "read_during_window": begin
             // a read presented while the window is open is stalled by the gate and served afterwards; nothing is lost
