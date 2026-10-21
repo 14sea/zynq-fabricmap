@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static checks of docs/b4_observation_contract.md against the owner's counterexamples: C1-C4 on d8ef6cf (v0.3) and R1-R4 on df3b65e (v0.4).
+"""Static checks of docs/b4_observation_contract.md against the owner's counterexamples: C1-C4 on d8ef6cf (v0.3), R1-R4 on df3b65e (v0.4) and the two P2 of 6927c24 (v0.5).
 Read-only. Reads one retained quarantine record's unchanged config/header fields (the owner's probe source), builds small synthetic
 Boolean records, and evaluates the contract's written rules as plain functions. Calls no model, fabric, seed generator, carrier,
 simulator or production verifier. Writes only static_contract_checks.txt beside itself."""
@@ -130,9 +130,12 @@ OUT['R2'] = {'stop': 'P3 sampling fault before P4', **r2, 'post_event_readback_r
              'pass': 'fabric_readback_sha256_post_event' in r2['absent'] and 'fabric_readback_sha256_pre_event' in r2['present_from_completed_phases']}
 
 # ---- R3 (df3b65e): the frame binding of 5.4 by mechanism x predecessor, on symbolic witnesses
-def frame_binding_ok(mech, pred, pre, post, staging, base_ref, cprime_post):
+def frame_binding_ok(mech, pred, pre, post, staging, base_ref, cprime_post, session_open_ref=None):
+    # 5.4 (v0.5): base_ref = the PREDECESSOR X.base_readback_sha256 (closed); session_open_ref = session_open.startup_readback_sha256,
+    # a record written before the root is signed (never the root's own X, never a predecessor)
     if mech in ('a', 'b'): return pre == staging and post == pre
-    if pred in ('closed', 'session_root'): return pre == base_ref and post == staging
+    if pred == 'closed': return base_ref is not None and pre == base_ref and post == staging
+    if pred == 'session_root': return session_open_ref is not None and pre == session_open_ref and post == staging
     if pred == 'a5_injection': return pre == cprime_post and post == staging
     return False
 base, cand, cp = 'base-frames', 'candidate-frames', 'cprime-frames'
@@ -140,7 +143,12 @@ r3 = {'c_normal_candidate_differs_from_base': frame_binding_ok('c', 'closed', ba
       'c_under_J3_prior_is_cprime': frame_binding_ok('c', 'a5_injection', cp, cand, cand, base, cp),
       'c_under_J3_fake_base_rejected': not frame_binding_ok('c', 'a5_injection', base, cand, cand, base, cp),
       'ab_event_changes_no_frame': frame_binding_ok('a', 'closed', cand, cand, cand, base, cp),
-      'ab_changed_frame_rejected': not frame_binding_ok('b', 'closed', cand, base, cand, base, cp)}
+      'ab_changed_frame_rejected': not frame_binding_ok('b', 'closed', cand, base, cand, base, cp),
+      # v0.5 R1: the (c) root binds to the session-opening record, available before its event; no predecessor X exists (None)
+      'c_root_binds_session_open': frame_binding_ok('c', 'session_root', 'startup-frames', base, base, None, None, session_open_ref='startup-frames'),
+      'c_root_without_session_open_rejected': not frame_binding_ok('c', 'session_root', 'startup-frames', base, base, None, None, session_open_ref=None),
+      'c_root_cannot_use_own_later_X': not frame_binding_ok('c', 'session_root', 'startup-frames', base, base, base_ref='root-own-X-not-yet-written', cprime_post=None, session_open_ref=None),
+      'session_open_refused_when_startup_differs': ('startup-frames' == 'pinned-base-frames') is False}
 OUT['R3'] = {**r3, 'pre_init_state_context_values': ['idle', 'a5_injection'], 'pass': all(r3.values())}
 
 # ---- R4 (df3b65e): 6.5 with a validated reference and planted priors; 6.7 quantities from per-corner readings
@@ -161,7 +169,7 @@ def classify(corners):   # corners: {(INIT,SRVAL): (i_c, s_c)}; predicted direct
     all_restore = kinds == {'restore'}
     vals = {c: r[1] for c, r in sr.items()} if all_restore else None
     srval_effect = all_restore and vals[(0,0)] != vals[(0,1)] and vals[(1,0)] != vals[(1,1)] and vals[(0,1)] == 1 and vals[(1,1)] == 1 and vals[(0,0)] == 0 and vals[(1,0)] == 0
-    srval_absent = kinds == {'capture'} or kinds == {'hold'}
+    srval_absent = kinds == {'capture'} or kinds == {'hold'} or (all_restore and vals[(0,0)] == vals[(0,1)] and vals[(1,0)] == vals[(1,1)])   # v0.5 R2: a constant restore
     cross = (i[(0,0)] != i[(0,1)] or i[(1,0)] != i[(1,1)]) or (all_restore and (vals[(0,0)] != vals[(1,0)] or vals[(0,1)] != vals[(1,1)]))
     inconsistent = (not init_effect and not init_absent) or (not srval_effect and not srval_absent)
     if cross or inconsistent: return 1
@@ -179,10 +187,16 @@ cases = {
  'restore_value_tracks_init': classify(corners(lambda a, b: a, lambda a, b: ('restore', a))),
  'one_corner_unknown_reference': classify({**corners(lambda a, b: a, lambda a, b: ('restore', b)), (1, 1): (1, ('unknown', None))}),
  'one_corner_fault': classify({**corners(lambda a, b: a, lambda a, b: ('restore', b)), (0, 0): ('fault', ('restore', 0))}),
+ # v0.5 R2: constant restores - valid references and priors in every corner, SR restores everywhere, the SRVAL bit has no effect
+ 'constant_restore_0_init_present': classify(corners(lambda a, b: a, lambda a, b: ('restore', 0))),
+ 'constant_restore_1_init_present': classify(corners(lambda a, b: a, lambda a, b: ('restore', 1))),
+ 'constant_restore_0_init_absent': classify(corners(lambda a, b: 0, lambda a, b: ('restore', 0))),
+ 'constant_restore_1_init_absent': classify(corners(lambda a, b: 0, lambda a, b: ('restore', 1))),
 }
 expected = {'both_effects': 2, 'srval_only_init_absent': 3, 'init_only_all_capture': 4, 'init_only_all_hold': 4, 'neither': 5,
             'mixed_restore_and_capture_across_corners': 1, 'init_sample_tracks_srval': 1, 'restore_value_tracks_init': 1,
-            'one_corner_unknown_reference': 0, 'one_corner_fault': 0}
+            'one_corner_unknown_reference': 0, 'one_corner_fault': 0,
+            'constant_restore_0_init_present': 4, 'constant_restore_1_init_present': 4, 'constant_restore_0_init_absent': 5, 'constant_restore_1_init_absent': 5}
 OUT['R4'] = {'stuck_reference_R0=R1=K0=K1=0': stuck, 'healthy_restore': healthy, 'capture': capture, 'hold': hold,
              'classification_cases': cases, 'expected': expected,
              'pass': stuck == ('unknown', None) and healthy == [('restore', 0), ('restore', 1)] and capture[0] == 'capture' and hold[0] == 'hold' and cases == expected}

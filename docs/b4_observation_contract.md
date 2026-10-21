@@ -1,5 +1,13 @@
-# B4-FF — the observation contract between the executing side and the host (DRAFT v0.4, host-only, documents only, 2026-10-21)
+# B4-FF — the observation contract between the executing side and the host (DRAFT v0.5, host-only, documents only, 2026-10-21)
 
+> **Revision v0.4 → v0.5 (2026-10-21, the owner's fourth HOLD, on `6927c24`, two P2; documents only; targeted edits).** R1 — the
+> mechanism-(c) **session root** no longer dereferences a predecessor it does not have: a **session-opening record** (`session_open`,
+> 5.5, 4.1) taken before anything is signed binds the fabric as loaded to the pinned carrier's base-frame reference (a trusted
+> manifest input), the root's pre-event readback binds to it (5.4's table, the `session_root` row split from `closed`), and a
+> mismatch refuses the session (a retained non-success record). R2 — a **constant restore** (all four corners `restore` to one
+> value) is an absent SRVAL effect (`srval_absent`, 6.7), landing in row 4 or 5, never row 1; the cross-tracking guard still fails a
+> value that changes with INIT.
+>
 > **Revision v0.3 → v0.4 (2026-10-21, the owner's third HOLD, on `df3b65e`, R1–R4; documents only; targeted edits, not a
 > rewrite).** R1 — 3.1 / 3.2 corrected to the code: the ledger's `trace_sha256` hashes the Q grid only; archived observations are
 > projections with four separate commitments; a full raw return is retained only in quarantine; the view's grid digest is
@@ -68,7 +76,7 @@
 | 2 the stimulus | the step grammar, the task-v0.2 shape (ending at clock 0), the application rule, the stimulus identity | the electrical timing numbers — the carrier-v2 unit's |
 | 3 the raw readout | the logical view with its `context`; the retained representations, what each holds and what each digest covers; the adapters and their scope; the sample points; D1 and the scoring-domain limit; the source binding | the board-study metric across the limit (2c) |
 | 4 the records | the three objects per transaction; the exact field set of each, with the phase-dependent sets of an invalid `O`; the field-aware A3 rule; D3 | the schema file names (provisional); the implementation (a later tool unit) |
-| 5 the transaction | P1–P10 with one initialisation = step 0; the readiness table with (c)'s pre-write sample; the cleanup; the frame binding conditional on mechanism and predecessor context; the session root; A5 as a decision table with a qualification-only injection protocol; faulted / interrupted retention with the stop location | the cleanup's and the injection's electrical realisation; the bench's and the board's *c′* |
+| 5 the transaction | P1–P10 with one initialisation = step 0; the readiness table with (c)'s pre-write sample; the cleanup; the frame binding conditional on mechanism and predecessor context; the session-opening record and the session root; A5 as a decision table with a qualification-only injection protocol; faulted / interrupted retention with the stop location | the cleanup's and the injection's electrical realisation; the bench's and the board's *c′* |
 | 6 INIT and SRVAL | two observation points; D2; the per-mechanism order and binding; the same-element 2 × 2 cross; the two-episode SR evidence with a validated reference and planted priors; G6; the per-corner readings → the quantities → the precedence-ordered table with a not-demonstrated row | **A8 itself**; the mechanism; the contexts a mechanism can observe |
 | 7 positive controls | the quantifiers; the rule as a revision proposal of choice 7 (D4); the nine pairs; the data influence | the board's result; the B4Q stimulus's own conditions |
 | 8 the two holdouts | two axes; the carrier's indifference | the whole-site instance |
@@ -241,6 +249,7 @@ by the fault's name with the prefix retained (5.7), never a partial trace scored
 | **`O` the observation** | the executing side | P3 (header) … P5 (last step) | **P6a** — before any scoring | the whole raw `O` (4.2) → `observation_sha256` | `predecessor` → the previous `X` (a reference, 5.5) |
 | **`F` the fitness** | the executing side | P6b | P6b | `{observation_sha256, task_digest, fitness}` | `observation_sha256` |
 | **`X` the transaction close** | the executing side | P7 (first cleanup sample) … P10 | **P10** (or at the fault, 5.7) | the whole raw `X` (4.2) → `close_sha256` | `observation_sha256`; the next `O.predecessor` → `close_sha256` |
+| **`session_open`** the session-opening record (5.5) | the runner, with the carrier | before the root is signed | at its write | `{instrument, startup_readback_sha256, base_frames_reference_sha256, status}` | the root's mechanism-(c) pre-event readback (5.4) |
 | the **decode** | the host only, after the session | — | — | keyed to `observation_sha256` | — |
 
 `O` is never extended after P6a; the values that only exist later (the cleanup, the current base readback, the current base-state
@@ -382,7 +391,8 @@ and are never required to equal each other):
 |---|---|---|---|
 | (a) / (b) — a separate event after the write | `closed` or `session_root` | `staging_readback_sha256` (the candidate, written) | `fabric_readback_sha256_pre_event` (the event changed no frame) |
 | (a) / (b) | `a5_injection` (J3) | the same | the same |
-| (c) — the write is the event | `closed` or `session_root` | the predecessor `X.base_readback_sha256` (the **base**, the prior configuration) | `staging_readback_sha256` (the candidate) |
+| (c) — the write is the event | `closed` | the predecessor `X.base_readback_sha256` (the **base**, the prior configuration) | `staging_readback_sha256` (the candidate) |
+| (c) | `session_root` | **`session_open.startup_readback_sha256`** — the session-opening record's readback of the fabric as loaded (5.5), itself equal to the manifest's pinned base-frame reference; **never** the root's own `X` (not yet written) and never a predecessor (there is none) | `staging_readback_sha256` (the base, written) |
 | (c) | `a5_injection` (J3) | **`O_c′.fabric_readback_sha256_post_event`** (the prior configuration is *c′*; no base restoration was performed and none is pretended) | `staging_readback_sha256` |
 
 Both witnesses of the table above are required for the next candidate to be signed (5.2); a failure of either closes `X` as
@@ -392,9 +402,22 @@ Both witnesses of the table above are required for the next candidate to be sign
 
 `O.predecessor` is a **reference** `{kind, seq, close_sha256}` to the previous transaction's `X`, whose fields hold that
 transaction's own restore witnesses (5.4); the current transaction's witnesses are in its own `X`, so **the last transaction of a
-session and every interruption window keep their own evidence** (5.7). The chain terminates at the **session root**: the session's
-first transaction, on the base configuration itself — P1–P4 (the base signed, written, read back; the mechanism raised; the pre-init
-and init samples taken), **no P5**, P6a (`O` with `steps = [steps[0]]`, `status = "complete"`), **no `F`** (nothing to score; `F`
+session and every interruption window keep their own evidence** (5.7).
+
+**The session-opening record (the bootstrap).** Before anything is signed — after the sha-gated carrier load and the identity page
+(B1Q's preamble) — the runner writes `session_open = {instrument, startup_readback_sha256, base_frames_reference_sha256, status}`:
+`startup_readback_sha256` is link 3's readback of the fabric **as loaded**, taken then; `base_frames_reference_sha256` is the
+**trusted input**: the base-frame content of the pinned carrier (the target frames the carrier manifest records as blank in the
+base — `frame_table_sha256`, `target_frames_nonzero_words`, the bitstream digest), pinned in the instrument manifest before the
+session, derived from no record of the session. `status = "open"` only when the two are equal; otherwise `"refused"` — **the
+session does not open, no root is signed, nothing follows**, and the refused record is retained as a non-success record. The
+root's mechanism-(c) pre-event readback binds to `session_open.startup_readback_sha256` (5.4's table), and the root's `O` names
+the record it binds to in `init_event.parameters.session_open_sha256`; the root never references its own later `X`, and a
+predecessor it does not have.
+
+The chain terminates at the **session root**: the session's first transaction, on the base configuration itself — P1–P4 (the base
+signed, written, read back; the mechanism raised; the pre-init and init samples taken; for (c) the pre-event readback is
+`session_open`'s, above), **no P5**, P6a (`O` with `steps = [steps[0]]`, `status = "complete"`), **no `F`** (nothing to score; `F`
 exists only for a task observation), P7 (trivial), P8 (the base is in place; the readback taken), P9 (the mechanism raised once more;
 **this sample is the session's base-state reference**), P10. Its `O.predecessor = {kind: "session_root", seq: null, close_sha256:
 null}` — the only `O` allowed that value; the first candidate's `predecessor = {kind: "closed", seq: <root seq>, close_sha256: <the
@@ -555,7 +578,7 @@ agreement with the model's atomic readout**. A8 stays unresolved by this section
 | `init_effect` | `i_00 ≠ i_10` and `i_01 ≠ i_11`, both in the predicted direction |
 | `init_absent` | `i_00 = i_10` and `i_01 = i_11` |
 | `srval_effect` | all four `s_c` are `restore` and `v_00 ≠ v_01` and `v_10 ≠ v_11`, both in the predicted direction |
-| `srval_absent` | all four `s_c` are `capture`, or all four are `hold` — a consistent non-restore in every corner, so there is no restore value and nothing to compare |
+| `srval_absent` | all four `s_c` are `capture`, or all four are `hold` (a consistent non-restore in every corner: no restore value to compare); **or all four are `restore` with `v_00 = v_01` and `v_10 = v_11`** (a **constant restore**: SR restores in every corner but the SRVAL bit has no effect on the value — an absent main effect, not an inconsistency; whether that constant value tracks INIT is `cross_tracking`'s question) |
 | `cross_tracking` | `i_00 ≠ i_01` or `i_10 ≠ i_11` (the init sample tracks SRVAL); or, when all four are `restore`, `v_00 ≠ v_10` or `v_01 ≠ v_11` (the restore value tracks INIT) |
 | `inconsistent` | neither `init_effect` nor `init_absent`; or neither `srval_effect` nor `srval_absent` (restore in some corners and not in others; a restore in all four with the values differing in one INIT-constant pair and not the other; any `s_c = inconsistent`) |
 
@@ -574,7 +597,9 @@ Rows 2–5 are the four combinations of `{init_effect, init_absent} × {srval_ef
 rows 0 and 1 do not take, because row 1's `inconsistent` takes exactly the cases where a kind has neither its effect nor its
 absence; so each raw corner data set lands in one row. An absent main effect alone (rows 3–5) is a reduced claim, not a failure;
 a readout that tracks the wrong bit, an effect present in one pair and absent in the other, or a mixed restore / non-restore
-across corners is a failure and is never read as a reduced claim; an invalid reference is neither. No row is a repair.
+across corners is a failure and is never read as a reduced claim; a **constant restore** (all four `restore` to one value) is an
+absent SRVAL effect — row 4 with INIT present, row 5 with INIT absent — unless its value changes with INIT, which is row 1; an
+invalid reference is neither. No row is a repair.
 
 ## 7. Positive controls — the quantifiers, the rule as a revision, the proposal, the data influence
 

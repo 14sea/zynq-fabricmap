@@ -1,0 +1,59 @@
+{
+  "reviewed_tip": "6927c2452ad7f8ead23d78a0061a3c201b872ac1",
+  "parent": "df3b65e8072eaab96d7c19d9d10e177b14e1ff9b",
+  "branch": "b4-2c-obs",
+  "utc": "2026-10-21T10:22:45.696022+00:00",
+  "verdict": "HOLD",
+  "findings": {
+    "R1": {
+      "priority": "P2",
+      "reason": "mechanism-c root requires nonexistent predecessor X reference"
+    },
+    "R2": {
+      "priority": "P2",
+      "reason": "constant restore without SRVAL contrast wrongly classified as inconsistent failure"
+    }
+  },
+  "previous_P1_findings_addressed": true,
+  "independent_pin_tests": {
+    "command": "python3 -B -m unittest b4.tests.test_b4_seeds b4.tests.test_b4_thresholds",
+    "exit": 0,
+    "count": 29,
+    "result": "OK"
+  },
+  "author_static_rerun_byte_identical": true,
+  "author_all_pass": true,
+  "prior_review_byte_identical": true,
+  "prior_review_files": 8,
+  "static_probes_command": "python3 -B build/wip/owner_review_6927c24_2026_10_21/static_contract_probes.py",
+  "static_probes_exit": 0,
+  "reviewer_changed_tracked_files": false,
+  "new_model_or_board_observations": false,
+  "new_production_seed_derivation": false,
+  "full_suite_mutants_or_production_verifiers_run": false,
+  "readonly_selection_scripts_rerun": false,
+  "protected_paths_unchanged": [
+    "b4/",
+    "b3/",
+    "host/",
+    "tests/",
+    "firmware/",
+    "manifests/",
+    "gate_runs/",
+    "evidence/b3/",
+    "evidence/b4/sim/",
+    "evidence/b4/gate/",
+    "evidence/b4/gonogo/"
+  ],
+  "diff_check": {
+    "exit": 2,
+    "only_issue": "extra EOF blank line from byte-identical prior owner stdout artifact; keep raw copy"
+  },
+  "source_sha256": {
+    "docs/b4_observation_contract.md": "ae2bcde0b9a1c5effe99f5209b4abbe08a4e8bf172f0dced5000ac6adcc3c8c6",
+    "docs/b4_architecture.md": "98065f5178bb081ee54db525b9ebe07a89db85831ae6f5f5cadd6d83da2d1344",
+    "docs/b4_preregistration.md": "b1fa324db49706780e568d54205780d01c734501fd68293136a3266c6907cecb",
+    "evidence/b4/unit_2c_obs_2026_10_21/static_contract_checks.py": "80e56394e40b159a178733c57c08e32fa09b7954e84a3ad13573c81908484273",
+    "evidence/b4/unit_2c_obs_2026_10_21/static_contract_checks.txt": "f61e29ecaf39048fca4ebe74879027cb2ed77760cc256fd2718889d6584147ec"
+  }
+}
