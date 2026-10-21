@@ -161,3 +161,17 @@ label; no change to any program, table, threshold, hypothesis, old archive, rece
 `21db2de` at every commit of this unit); the plan document and `docs/b4_architecture.md` §13 are not edited here (a routine documentation
 commit after the owner's review of this unit may record the executed status); no `b4-gate-2` plan; no RTL, 2d, routing, purchasing or
 board work. The unit is returned whole for the owner's review.
+
+## 9. Addendum — the owner's clarification received after the unit was complete, and the documentation commit that follows commit 3
+
+After commits 1–3 the owner clarified (verbatim in `owner_clarification_2026_10_21.txt`) that the calendar date, the branch name, the exact
+number of commits, the ban on documentation commits before a run, the ban on read-only work beside a run and keeping the machine awake while
+waiting were organisational suggestions that had been stated as gates, and are not; the substantive bounds (the fixed method and thresholds,
+S = 32, 3 600 s, one batch, no prior seed draw or smoke, stop on any anomaly without a redraw, every raw record kept, the verifications and
+the source binding) stand, and push / merge, `b4-gate-2` and board work are not widened. Nothing executed changes: the run met every
+substantive bound and, as it happened, every organisational one too. On that clarification's permission for documentation commits, the
+commit following commit 3 (documents only) archives the clarification here, applies the three P3 corrections of section 7 to the plan
+document itself (`docs/b4_sim4_execution_plan.md` v0.1.1 — the text of record remains the one accepted at `495cc36`; the revision changes
+no condition of the run and records the execution), and sets the `b4-sim-4` row of `docs/b4_architecture.md` §13 to executed / no-go.
+Section 8's sentence "the plan document and `docs/b4_architecture.md` §13 are not edited here" remains true of commit 3; this addendum is
+the correction of record for what the next commit does. No archive, decision, statistic, program, table or threshold is touched.

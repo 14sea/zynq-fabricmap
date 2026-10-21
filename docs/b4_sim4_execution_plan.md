@@ -1,4 +1,4 @@
-# B4 — the execution plan of the exploration `b4-sim-4` (DRAFT v0.1 — documents and a read-only inventory only, 2026-10-21)
+# B4 — the execution plan of the exploration `b4-sim-4` (v0.1.1 — **executed once on 2026-10-21: the batch complete, the policy no-go**; the plan text as accepted at `495cc36`, with the owner's three P3 wording corrections applied)
 
 > **Authorisation.** The owner's review of `21db2de` (2026-10-21, PASS: the protocol v0.2.0 host-tool unit accepted and closed), section 6:
 > "Proceed directly with a complete pure-document execution-plan unit … Read existing files and metadata only. This document unit does not
@@ -13,6 +13,19 @@
 > decision.** The precedent this plan follows is `docs/b4_gate_execution_plan.md` (v0.2.1, ACCEPTED); where v0.2.0 differs from v0.1.16
 > (the target setup, the quarantine, the ordered prefix, the protocol identity, the go / no-go policy, the consumed labels), the difference is
 > stated here and nowhere assumed.
+
+> **Status (2026-10-21, after the execution).** The owner's review of `495cc36` (PASS) authorised one execution: HEAD
+> `495cc360c97aba58bda959a2e867e6b43dbf4f7f`, S = 32, deadline 3 600 s, one batch. It ran on 2026-10-21 (06:53:39Z → 06:56:58Z): `complete`
+> 32 / 32, 199.256 s; `b4_gonogo.py decide` wrote **no-go** at B = 64 (positives 7, negatives 13, ties 12, p 0.9423; the seven conditional
+> K9 medians all ≥ 0.50). Archive commit `580c0e5`, decision commit `adce027`, unit record `196b358` on `b4-sim-4-execution`; the records
+> and the copied statistics are in `evidence/b4/unit_sim4_execution_2026_10_21/`. The label `b4-sim-4` is consumed by its records; a no-go
+> is the cost policy's stop and nothing follows from it automatically (sections 3.2 and 7). The owner's later clarification (archived there
+> as `owner_clarification_2026_10_21.txt`) separates the substantive bounds that remain — the fixed method and thresholds, S = 32, the
+> 3 600 s deadline, one batch, no prior seed draw or smoke, stop on any anomaly without a redraw, every raw record kept, the verifications
+> and the source binding — from organisational suggestions that are **not** gates: the calendar date, the branch name, the number of
+> commits (only "archive committed and tree clean before `decide`" is the tool's requirement), documentation commits before a run, read-only
+> work beside a run, and keeping the machine awake outside a running deadline-bound batch. This revision (v0.1.1) changes no condition
+> of the run; it records the execution and applies the three P3 corrections (1.1, 1.2, 2.4, 4) the review named.
 
 ## 0. Status index
 
@@ -47,7 +60,7 @@
 |---|---|---|---|
 | the batch, including its own deep self-verification | `b4-sim-3` (S = 32, v0.1.16): `elapsed_s` **209.702** of 3 600, 643 files, 193 MB; `b4-gate-1` (S = 200): 1 372.077 s, ≈ 6.9 s per pair | **≈ 4–10 min** | v0.2.0 adds per pair two target observations (64 in all, beside ≈ 1 827 arm observations per pair: six arms at B + 2 = 258 and F at B + 23 = 279), the four setup files and their reconstruction in the self-verification; the S = 32 mechanics fixture of the tool unit (`e2e_v2/complete_32`, 771 batch files) exercised exactly this path but its wall time is not a record of this plan; the range is an uncertainty, not a bound |
 | the deadline margin | — | **not proved**: 3 600 s against ≈ 4–10 min is ≈ 6–15× by extrapolation | an expiry is `incomplete` with everything on disk, never a loss |
-| one fresh-process batch verification (`b4_sim_verify.py`, deep: the setup reconstructed from the kept records, the two target observations re-executed through the replay port against the recorded traces, every arm re-executed against the ledger's recorded observations and re-audited — never re-observed on the fabric — K7's prefixes, K9 / K10 and the summary recomputed from the retained grids) | 79 s for `b4-sim-3` | ≈ 1.5–3 min | before commit 1 (section 5) |
+| one fresh-process batch verification (`b4_sim_verify.py`, deep: the setup reconstructed from the kept records, the two target records checked — the retained grids, provenance and digests — and the task rebuilt from them (the target observations are **not** re-executed through a replay port; P3 correction 2), every arm re-executed against the ledger's recorded observations and re-audited — never re-observed on the fabric — K7's prefixes, K9 / K10 and the summary recomputed from the retained grids) | 79 s for `b4-sim-3` | ≈ 1.5–3 min | before commit 1 (section 5) |
 | the decision (`b4_gonogo.py decide`), including its in-process self-validation (the batch re-verified deep, the decision recomputed) | — | ≈ 1.5–3 min | after commit 1; runs nothing on the model but the replay |
 | one fresh-process decision verification (`b4_gonogo.py verify`, deep: the batch re-verified, the decision recomputed, the markdown re-rendered) | — | ≈ 1.5–3 min | before commit 2; the batch's third deep pass is inherent to the verifier, not a second round of record |
 | disk, the working tree | 643 files / 193 MB at S = 32 (v0.1.16) | **≈ 770 files / ≈ 200 MB** (the fixture's 771 files), plus 2 files for the decision | `/home/test` had 516 GB free at this inventory |
@@ -57,8 +70,9 @@
 ### 1.2 The branch and the two refs, kept apart
 
 The v0.2.0 tool exists only on **`b4-protocol-v2`** (`21db2de` and its successors); `main` is `a243ee8` and carries the v0.1.16 tool, which
-refuses the label `b4-sim-4` by nothing but its grammar and has no identity, no task-v0.2 and no policy — the run cannot happen on `main`
-without a merge, and **a merge is not proposed here** (its timing is the owner's, as it was for `b4-prework`). The proposal: the execution
+**accepts** the syntax `b4-sim-4` (`^b4-sim-[1-9][0-9]*$`; its retired list holds `b4-sim-1` / `b4-sim-2` only — P3 correction 1) but has no
+identity, no task-v0.2 and no policy — the run must not happen on `main`, and what prevents it is the operator's exact-HEAD, `b4/`-bytes
+and protocol-digest checks of 2.3, not a label refusal; it cannot happen there as the v0.2.0 method without a merge, and **a merge is not proposed here** (its timing is the owner's, as it was for `b4-prework`). The proposal: the execution
 HEAD is a commit on `b4-protocol-v2`'s line **after the owner's PASS of this plan** (this plan's closure commit, or the commit the ruling
 names), the run performed on a branch `b4-sim-4-execution` created from that HEAD, so that the archive commits sit on their own branch
 exactly as `b4-gate-1-execution` did. **Two refs:** `21db2de` is the **accepted tool baseline** (the engineering PASS; the tool bytes the
@@ -138,8 +152,10 @@ A difference is reported to the owner; the run does not start; nothing is "fixed
 audit, the audits, the controls, `k7.json`, `k9.json`, `k10.json`, `curves.json`, `index.json` → the statistics → `sim_report.json` (status;
 the identity; the archive index; the pooled summary only when complete and clean; the self-validation) and, when the batch did not
 complete, `STOPPED.json` naming the kind, the pair, the stage and the whole planned list with every pair's setup state, prefix and
-quarantined phase. Then, after commit 1, the decision directory `gonogo.json` + `gonogo.md`. **Every raw target return — valid or
-quarantined — every seed, every partial, every quarantine and every stop record is kept**; nothing is redrawn, replaced, filled in,
+quarantined phase. Then, after commit 1, the decision directory `gonogo.json` + `gonogo.md`. **Every target record — a valid one as the
+projection the port trace is kept as (the complete `q_grid`, the provenance and the commitments; not every field of the port object), a refused
+one as the quarantined original returned object; neither proves the source's truth (P3 correction 2) — every seed, every partial, every
+quarantine and every stop record is kept**; nothing is redrawn, replaced, filled in,
 narrowed or deleted; the two commands' stdout / stderr / exit status are kept beside them.
 
 ## 3. The result paths — separate dispositions, none automatic
@@ -183,7 +199,8 @@ will show under task-v0.2 and (b′), and no number from them sets anything in t
   would not have been met on either sample; the task is different now (§7.1), and that record was the *motivation* of the new contract, not a
   validation of it (`evidence/b4/unit_protocol_v2_design_2026_10_20/README.md` §4).
 - **K9.** Under the old (b): `ff_srval` median 0.427 (`b4-sim-3`) and 0.40625 (`b4-gate-1`) against the configuration-only upper bound of 0.5
-  (the owner's audit of 2026-10-19); `sr_kind` exactly 0.5; the other five 1.0. Under (b′) nothing has been measured on a production
+  (the owner's audit of 2026-10-19); `sr_kind` exactly 0.5; `b4-sim-3`'s other five 1.0, `b4-gate-1`'s `sr_mode` 0.96875 and its other four 1.0 (P3 correction 3; the
+  owner's extraction `evidence/b4/unit_sim4_execution_2026_10_21/owner_review_495cc36_PASS/known_archive_values.json`). Under (b′) nothing has been measured on a production
   archive; the design unit's descriptive re-reading of `b4-gate-1`'s record (driven-only per-seed median 0.8125) is a description of the old
   sample under the new definition, recorded as post hoc and **not** a basis or a validation. The mechanics fixture `e2e_v2/complete_32` of the
   tool unit decided **no-go** at B = 64 (positives 7, negatives 12, p 0.916; conditional medians all ≥ 0.50) — the policy exercised on a
