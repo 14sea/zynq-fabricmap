@@ -1,0 +1,53 @@
+{
+  "reviewed_tip": "4fc3dc70b5a84355298e4f3f30ab3443f62a0cf1",
+  "parent": "6927c2452ad7f8ead23d78a0061a3c201b872ac1",
+  "branch": "b4-2c-obs",
+  "utc": "2026-10-21T10:53:35.675344+00:00",
+  "verdict": "PASS",
+  "scope": "2c-obs document engineering acceptance only; no physical qualification, gate result or preregistration freeze",
+  "remaining_P1_P2_findings": [],
+  "independent_pin_tests": {
+    "command": "python3 -B -m unittest b4.tests.test_b4_seeds b4.tests.test_b4_thresholds",
+    "count": 29,
+    "exit": 0,
+    "result": "OK"
+  },
+  "static_checks_command": "python3 -B build/wip/owner_review_4fc3dc7_2026_10_21/static_contract_checks.py",
+  "static_checks_exit": 0,
+  "author_static_rerun_byte_identical": true,
+  "previous_review_archive_byte_identical": true,
+  "previous_review_files": 9,
+  "protected_paths_unchanged": [
+    "b4/",
+    "b3/",
+    "host/",
+    "tests/",
+    "firmware/",
+    "manifests/",
+    "gate_runs/",
+    "evidence/b3/",
+    "evidence/b4/sim/",
+    "evidence/b4/gate/",
+    "evidence/b4/gonogo/"
+  ],
+  "architecture_before_section_13_unchanged": true,
+  "reviewer_modified_tracked_files": false,
+  "production_seed_derivations": false,
+  "new_model_or_board_observations": false,
+  "full_suite_mutants_or_production_verifiers_run": false,
+  "selection_scripts_rerun": false,
+  "D4_decision": "Accept 7.2 selection rule and 7.3 nine pairs as data-informed DRAFT A2 choice, with the stated limitations; synchronize choice-7 note during document-only closure",
+  "closure_authorized": "Archive review and update documentary status/selection note together; no additional review round or tests for only those edits",
+  "execution_push_merge_authorized": false,
+  "source_sha256": {
+    "docs/b4_observation_contract.md": "9cf4b43dd7156df4c74e61d54600f403c7a7d4b56d292697b762a9d828d50243",
+    "docs/b4_architecture.md": "a3b37a5da4fb5738ae456eefef7dff60d4e47b84a35a07179aa82a19d4a72946",
+    "docs/b4_preregistration.md": "bed7d10f5107b437e3e9de178dc93a2665dc901b2e71befa331d634fab82637e",
+    "evidence/b4/unit_2c_obs_2026_10_21/static_contract_checks.py": "cb4a12fd1e3f6eda4ab1cd85115d4ff2d8dc0cfef8bba3d61d5f9ebf3e20c401",
+    "evidence/b4/unit_2c_obs_2026_10_21/static_contract_checks.txt": "0a1713c49c7da94560a1f40577e23d89268e5c3c0f7d0c64ec9869c9681bc111"
+  },
+  "diff_check": {
+    "exit": 2,
+    "only_issues": "two unchanged archived owner stdout EOF blank lines; preserve raw copies"
+  }
+}

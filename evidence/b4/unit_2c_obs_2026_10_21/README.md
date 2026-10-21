@@ -1,4 +1,4 @@
-# B4 — the 2c-obs unit: the observation contract (documents and two read-only scripts only, 2026-10-21)
+# B4 — the 2c-obs unit: the observation contract (documents and read-only scripts only, 2026-10-21) — **CLOSED: the owner's PASS on `4fc3dc7`**
 
 **What this unit is.** The documents-only unit the owner authorised on 2026-10-21 after the PASS on the `b4-sim-4` execution unit
 (`196b358`, closed at `fceedd6`; the review's section 6: *what follows needs its own scientific or engineering purpose and explicit
@@ -14,8 +14,8 @@ for review once; push and merge are not authorised; read-only inventory and prop
 
 **Branch.** `b4-2c-obs`, created from `fceedd6` (= `b4-sim-4-execution`'s closure; `main` = `origin/main` = `a243ee8`). The first
 submission `e91650b` (v0.1) was held by the owner (section 6), the second `d8ef6cf` (v0.2) was held again (section 7), the third `df3b65e` (v0.3) was held again
-(section 8), the fourth `6927c24` (v0.4) was held on two P2 (section 9); the four correction rounds are the second to fifth commits
-of the same unit. Nothing pushed, nothing merged.
+(section 8), the fourth `6927c24` (v0.4) was held on two P2 (section 9); the fifth `4fc3dc7` (v0.5) **passed** (section 10); the four correction
+rounds are the second to fifth commits of the same unit and the closure the sixth. Nothing pushed, nothing merged.
 
 **Interruption, disclosed.** The first attempt to write the contract document in the preceding session was stopped by the
 assistant's safety classifier before the file existed; that text was not retained and, by instruction, not reproduced. The present
@@ -33,6 +33,7 @@ structure. The two read-only scripts predate the interruption (`k9_address_recor
 | `k9_address_record.py` / `.txt` | read-only: per address the K9 covered / applicable counts under (b′) and (b) summed over the 32 `pair_*/k9.json` of the committed `b4-sim-4` archive; the choice rule's first half |
 | `owner_authorisation_2026_10_21.txt` / `AUTHORISATION_SOURCE.txt` | the owner's authorisation of this unit and its source note, as supplied with the review of `e91650b` (byte-identical to the review directory's copies) |
 | `static_contract_checks.py` / `.txt` | read-only static checks against the owner's counterexamples — on `d8ef6cf` (C1–C4, v0.3), on `df3b65e` (R1–R4, v0.4) and on `6927c24` (two P2, v0.5: the (c) root binding to the session-opening record with its own later `X` and a missing record rejected; four constant-restore classifications; the R-section reads `pair_000`'s ledger and target records and the quarantine record's `fabric` block, and evaluates the written rules of 3.2, 4.2, 5.4 and 6.5–6.7 on symbolic / synthetic values); C1–C4: C1 the legacy quarantine record's dictionary config through the adapter (digest verified under its declared encoding only; the view's vector, genome and derived stimulus digest), the field-aware rule accepting `fabric.kind = "truth"` and the closed set refusing an extra `answer_bits`; C2 every field's earliest phase against its object's immutability phase and `O` holding nothing from P7 on; C3 the owner's A5 counterexample under the post-init projection (pass), a persisting state (fail), a non-arriving injection (not demonstrated); C4 the two-episode rule interpretable at both SRVAL values and the 6.7 classification total with one row per state. R1 the Q-grid digest, the projection's missing raw fields, the two config-digest encodings, the fabric keys / enum, a projection view marking derived and absent fields; R2 the P3 stop's present / absent sets; R3 the frame binding for (a) / (b), for (c) normal and under J3, a fake base under J3 rejected; R4 the stuck reference → `unknown`, healthy / capture / hold readings, ten classification cases incl. mixed restore / capture, both cross-tracking directions, an unknown corner and a faulted corner. No model, fabric, seed, carrier or verifier called; `all_pass: true` |
+| `owner_review_4fc3dc7_PASS/` | the owner's PASS review (v0.5), archived byte for byte (9 files incl. `SHA256SUMS`, verified after the copy): README, review_metadata.json, the pin-test output, the independent checks (script output and json), the author's static checks rerun and the copy of the script it ran, the diff check |
 | `owner_review_6927c24_HOLD/` | the owner's fourth HOLD review (v0.4), archived byte for byte (9 files incl. `SHA256SUMS`, verified after the copy): README, review_metadata.json, the pin-test output, the static contract probes (script, json, txt), the author's static checks rerun, the diff check |
 | `owner_review_df3b65e_HOLD/` | the owner's third HOLD review (v0.3), archived byte for byte (8 files incl. `SHA256SUMS`, verified after the copy): README, review_metadata.json, the pin-test output, the static contract probes (script, json, txt), the author's static checks rerun |
 | `owner_review_d8ef6cf_HOLD/` | the owner's second HOLD review (v0.2), archived byte for byte (7 files incl. `SHA256SUMS`, verified after the copy): README, review_metadata.json, the pin-test output, the static contract probes (script, json, txt) |
@@ -150,3 +151,31 @@ owner's own artefact) is followed: the raw copy is preserved untrimmed.
 
 Nothing in this round changed `b4/`, a hypothesis, a pinned surface, a statistic, an archive, a schema implementation, a legal-write
 rule or a threshold; choice 7 stays unchanged pending acceptance; the authorisation / source archive was not reopened.
+
+## 10. Closure — the owner's PASS on `4fc3dc7` (2026-10-21)
+
+The review is archived in `owner_review_4fc3dc7_PASS/`. Independent checks there: 29 pin tests OK; the author's static output
+reproduced byte for byte; eight root-bootstrap static cases (an opening bound to a preexisting trusted reference; its absence; a
+future / own-close reference; a startup mismatch; a self-declared wrong reference; a wrong root-to-opening hash; a drift of the
+root's pre-event value) and the four constant-restore cases independently derived (rows 4 / 4 / 5 / 5; restore values tracking
+INIT still row 1); the fourth review's nine files archived byte-identical; protected paths unchanged from `fceedd6`.
+
+**Accepted.** The document contract (every correction of sections 6–9 of this README) and **D4**: `docs/b4_observation_contract.md`
+§7.2's rule and §7.3's nine pairs as the data-informed DRAFT A2 qualification-selection choice for later B4Q planning, selected on
+host-model data as disclosed in §7.4.
+
+**Closure edits (documents only, as the review's section 3 allows; no test, static script, mutant or experiment rerun):**
+this review archived; the unit marked closed here and in `docs/b4_architecture.md` §13 / §14; the architecture's v0.2.0
+revision note's **choice 7** synchronised — the accepted rule, its reason and precedence appended, the gate-1 wording kept as the
+history of the first choice, nothing of the K9 panel, the applicabilities, the model, the method, the thresholds or the archives
+changed; the contract's heading and standing note carry the acceptance and its limits, §7.2's precedence paragraph marked
+resolved, unresolved item 7 struck as resolved; the skeleton's note and A2 pointer updated.
+
+**What the PASS does not establish** (the review's section 4, copied in substance): A8, a working initialisation mechanism,
+electrical timing, a schema / adapter implementation, carrier RTL, legal compositions, sampling feasibility on every
+configuration, silicon agreement, a gate result; the session-opening record and its base-frame reference are requirements on the
+future carrier / tool implementation, not something built or measured; the physical full-mask fitness / model-null comparison
+boundary stays explicit and unresolved for the board-study metric; N, `B*`, the prediction, the session partition, the whole-site
+holdout choice and 2c's freeze are not supplied. The sim-4 no-go and all existing evidence are unchanged. No production draw or
+run, `b4-gate-2`, protocol revision, RTL, board work, push or merge is authorised by it. The trailing blank lines in the two
+archived owner stdout files remain untrimmed, as the review asks.

@@ -1,0 +1,71 @@
+{
+  "head": "4fc3dc70b5a84355298e4f3f30ab3443f62a0cf1",
+  "root_bootstrap_cases": {
+    "opens_against_independent_preexisting_pin": true,
+    "root_without_predecessor_binds_available_opening": true,
+    "missing_opening_rejected": true,
+    "future_or_own_close_cannot_supply_opening": true,
+    "startup_mismatch_refused_and_root_rejected": true,
+    "self_declared_wrong_pin_rejected": true,
+    "root_hash_reference_mismatch_rejected": true,
+    "actual_root_pre_event_drift_rejected": true
+  },
+  "constant_restore_cases": [
+    {
+      "init_effect_present": true,
+      "constant_restore_value": 0,
+      "expected_row": 4,
+      "independent_row": 4,
+      "author_row": 4
+    },
+    {
+      "init_effect_present": true,
+      "constant_restore_value": 1,
+      "expected_row": 4,
+      "independent_row": 4,
+      "author_row": 4
+    },
+    {
+      "init_effect_present": false,
+      "constant_restore_value": 0,
+      "expected_row": 5,
+      "independent_row": 5,
+      "author_row": 5
+    },
+    {
+      "init_effect_present": false,
+      "constant_restore_value": 1,
+      "expected_row": 5,
+      "independent_row": 5,
+      "author_row": 5
+    }
+  ],
+  "restore_tracking_INIT_still_row_1": true,
+  "stuck_reference_still_unknown": true,
+  "A5_clear_and_persistence_cases_preserved": true,
+  "author_static_rerun_byte_identical": true,
+  "author_all_pass": true,
+  "previous_review_copy_byte_identical": true,
+  "previous_review_files": 9,
+  "protected_paths_unchanged": [
+    "b4/",
+    "b3/",
+    "host/",
+    "tests/",
+    "firmware/",
+    "manifests/",
+    "gate_runs/",
+    "evidence/b3/",
+    "evidence/b4/sim/",
+    "evidence/b4/gate/",
+    "evidence/b4/gonogo/"
+  ],
+  "architecture_sections_before_13_unchanged": true,
+  "choice_7_unchanged": true,
+  "selection_scripts_and_outputs_unchanged": true,
+  "new_model_or_board_observations": false,
+  "production_seed_derivation": false,
+  "production_B4_module_imports_in_this_script": false,
+  "tracked_tree_clean": true,
+  "scope": "Targeted static/manual examples only; not a generic validator or proof of physical behavior."
+}

@@ -1,4 +1,19 @@
-# B4-FF — the observation contract between the executing side and the host (DRAFT v0.5, host-only, documents only, 2026-10-21)
+# B4-FF — the observation contract between the executing side and the host (DRAFT v0.5, host-only, documents only, 2026-10-21; ACCEPTED as a document contract by the owner's review of `4fc3dc7`, 2026-10-21)
+
+> **Acceptance (2026-10-21, the owner's PASS on `4fc3dc7`; archived in `evidence/b4/unit_2c_obs_2026_10_21/owner_review_4fc3dc7_PASS/`).**
+> The 2c-obs document unit is closed. What the PASS covers: this document as a **contract** — the retained representations and
+> their commitments, the immutable `O` / `F` / `X` and the partial invalid `O`, the per-mechanism / context frame binding with the
+> session-opening record, A5's projection and qualification-only exception, the same-element A8 cross with the validated reference
+> and the bounded classification, the carrier samples apart from the model's `null` / scoring domain, the trusted source selection,
+> G6 explicit; and **D4 resolved**: §7.2's rule and §7.3's nine pairs are the data-informed DRAFT A2 qualification-selection choice
+> for later B4Q planning (the architecture's choice-7 note synchronised, the gate-1 choice kept as history). What it does **not**
+> cover: A8, a working initialisation mechanism, electrical timing, a schema / adapter implementation, carrier RTL, legal
+> compositions, sampling feasibility on every configuration, silicon agreement, a gate result; the session-opening record and its
+> base-frame reference are **requirements on the future carrier / tool implementation** (matching frame coverage and encoding; the
+> expected content derived and pinned independently before the session; a frame-table digest, a bitstream digest and a
+> frame-content readback digest are different commitments), not something built or measured. N, `B*`, the prediction, the session
+> partition, the whole-site holdout and 2c's freeze are not supplied by this unit. Push / merge, RTL, board and new execution
+> authorisations are unchanged.
 
 > **Revision v0.4 → v0.5 (2026-10-21, the owner's fourth HOLD, on `6927c24`, two P2; documents only; targeted edits).** R1 — the
 > mechanism-(c) **session root** no longer dereferences a predecessor it does not have: a **session-opening record** (`session_open`,
@@ -78,7 +93,7 @@
 | 4 the records | the three objects per transaction; the exact field set of each, with the phase-dependent sets of an invalid `O`; the field-aware A3 rule; D3 | the schema file names (provisional); the implementation (a later tool unit) |
 | 5 the transaction | P1–P10 with one initialisation = step 0; the readiness table with (c)'s pre-write sample; the cleanup; the frame binding conditional on mechanism and predecessor context; the session-opening record and the session root; A5 as a decision table with a qualification-only injection protocol; faulted / interrupted retention with the stop location | the cleanup's and the injection's electrical realisation; the bench's and the board's *c′* |
 | 6 INIT and SRVAL | two observation points; D2; the per-mechanism order and binding; the same-element 2 × 2 cross; the two-episode SR evidence with a validated reference and planted priors; G6; the per-corner readings → the quantities → the precedence-ordered table with a not-demonstrated row | **A8 itself**; the mechanism; the contexts a mechanism can observe |
-| 7 positive controls | the quantifiers; the rule as a revision proposal of choice 7 (D4); the nine pairs; the data influence | the board's result; the B4Q stimulus's own conditions |
+| 7 positive controls | the quantifiers; the rule as the accepted revision of choice 7 (D4, resolved on `4fc3dc7`); the nine pairs; the data influence | the board's result; the B4Q stimulus's own conditions |
 | 8 the two holdouts | two axes; the carrier's indifference | the whole-site instance |
 | 9 acceptance | the bench and board lists against A1–A8 | the ruling, the board, the B4Q plan |
 | 10 unresolved | the list | all of them |
@@ -619,9 +634,9 @@ only*, disclosed as tuning on gate-1, not executed. **What this document propose
 protocol the carrier will be qualified against; (ii) **address-first, by the pooled (b′) fraction over the 32 pairs** (ties in the
 mapping's address order), then the background covered in the most pairs (ties the lowest `g0`) — A2 asks for an *address* per
 semantic, and pooling over seeds prefers an address that discriminates across stimuli; (iii) for `ff_init` and `ff_srval` **one
-main-element and one x5FF-element address each**. **Precedence:** if the owner accepts this proposal it replaces choice 7's rule for
-the B4Q selection and the architecture's note is amended to say so with this reason; until then choice 7's wording stands as the
-recorded rule and this is a proposal beside it. The historical choice is not rewritten; the frozen K9 panel, both applicabilities,
+main-element and one x5FF-element address each**. **Precedence (resolved):** the owner's review of `4fc3dc7` (2026-10-21) **accepted** this rule as the
+B4Q qualification-selection choice; the architecture's choice-7 note now records it with this reason and precedence, and the
+gate-1 wording is kept there as the history of the first choice. The historical choice is not rewritten; the frozen K9 panel, both applicabilities,
 the host method and the old verdicts are unchanged.
 
 ### 7.3 The proposal (from `evidence/b4/unit_2c_obs_2026_10_21/positive_control_choice.txt`; a host-model record under v0.3)
@@ -713,7 +728,7 @@ session**: the plan, the demonstration stimulus vectors, *c′*, the ruling pair
 4. **The schema files and the adapter** (4.4): the owner for the names; a later tool unit for the implementation; nothing under `b4/` now.
 5. **The A5 injected state** *c′* for the bench and the board, and the plan's A5 ruling: the carrier unit and the B4Q plan.
 6. **The demonstration stimulus vectors** of 6.5 and 7.3: the B4Q plan; the grammar, the episodes and the joint rule are fixed here.
-7. **Whether the owner accepts the selection rule as the revision of choice 7** (7.2) and the nine pairs (7.3).
+7. ~~Whether the owner accepts the selection rule as the revision of choice 7 (7.2) and the nine pairs (7.3)~~ — **resolved**: accepted on `4fc3dc7` as the data-informed DRAFT A2 selection (not a certificate, a legal-composition rule, a whitelist, a stimulus guarantee or a board-demonstrated control).
 8. **The whole-site holdout's instance** (8): the preregistration.
 9. **The legal-composition rule** (architecture 4.2): 2c; the nine pairs are not made legal by 7.3.
 10. **The board-study metric across the scoring-domain limit** (3.4): 2c, with N, `B*` and the prediction.

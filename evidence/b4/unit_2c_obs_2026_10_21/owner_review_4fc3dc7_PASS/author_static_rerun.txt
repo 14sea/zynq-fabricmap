@@ -1,0 +1,167 @@
+{
+  "C1": {
+    "source": "evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/float_return.json",
+    "legacy_config_is_dict": true,
+    "legacy_digest_verified_under_declared_encoding": true,
+    "view_config_vector_len": 21,
+    "view_genome": 588756,
+    "view_stimulus_sha256_derived": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2",
+    "legacy_fabric_kind": "truth",
+    "legit_model_record_findings": [],
+    "answer_bits_extra_key_findings": [
+      "top-level keys != model raw set: extra ['answer_bits'] missing []"
+    ],
+    "pass": true
+  },
+  "C2": {
+    "immutability_phase": {
+      "O": 6.0,
+      "F": 6.5,
+      "X": 10
+    },
+    "fields_written_after_their_object_is_immutable": [],
+    "O_fields_from_P7_or_later": [],
+    "current_restore_witnesses_in_current_X": [
+      "cleanup",
+      "base_readback_sha256",
+      "base_state_sample",
+      "idle_status"
+    ],
+    "predecessor_is_reference": {
+      "kind": [
+        "session_root",
+        "closed",
+        "a5_injection"
+      ],
+      "holds_values": false,
+      "root_case": "kind=session_root, seq=null, close_sha256=null"
+    },
+    "pass": true
+  },
+  "C3": {
+    "owner_counterexample_verdict": "pass",
+    "persistence_verdict": "fail",
+    "injection_not_arrived_verdict": "not demonstrated",
+    "pass": true
+  },
+  "C4": {
+    "single_fixed_stimulus_two_episodes_interpretable_for_both_srval": true,
+    "classification_total": true,
+    "classification_single_row_each": true,
+    "rows_for_main_effect_absent_without_cross_or_inconsistency": {
+      "srval_only": 3,
+      "init_only": 4
+    },
+    "row_for_any_cross_tracking": [
+      1
+    ],
+    "pass": true
+  },
+  "R1": {
+    "ledger_trace_sha256_is_q_grid_digest": true,
+    "target_trace_sha256_is_q_grid_digest": true,
+    "ledger_is_projection_no_raw_fields": true,
+    "projection_config_sha256_canonical_over_reconstructed_dict": true,
+    "raw_config_sha256_default_separators": true,
+    "two_encodings_differ_for_same_config_rule": true,
+    "view_from_projection_marks_derived": true,
+    "fabric_descriptor_exact_keys_and_enum": true,
+    "actual_fabric_keys": [
+      "dropout_count",
+      "dropout_sha256",
+      "effect_sha256",
+      "kind",
+      "seed"
+    ],
+    "pass": true
+  },
+  "R2": {
+    "stop": "P3 sampling fault before P4",
+    "present_from_completed_phases": [
+      "commit",
+      "staging_readback_sha256",
+      "fabric_readback_sha256_pre_event"
+    ],
+    "absent": [
+      "fabric_readback_sha256_post_event",
+      "steps[1:]"
+    ],
+    "post_event_readback_required": false,
+    "pass": true
+  },
+  "R3": {
+    "c_normal_candidate_differs_from_base": true,
+    "c_under_J3_prior_is_cprime": true,
+    "c_under_J3_fake_base_rejected": true,
+    "ab_event_changes_no_frame": true,
+    "ab_changed_frame_rejected": true,
+    "c_root_binds_session_open": true,
+    "c_root_without_session_open_rejected": true,
+    "c_root_cannot_use_own_later_X": true,
+    "session_open_refused_when_startup_differs": true,
+    "pre_init_state_context_values": [
+      "idle",
+      "a5_injection"
+    ],
+    "pass": true
+  },
+  "R4": {
+    "stuck_reference_R0=R1=K0=K1=0": [
+      "unknown",
+      null
+    ],
+    "healthy_restore": [
+      [
+        "restore",
+        0
+      ],
+      [
+        "restore",
+        1
+      ]
+    ],
+    "capture": [
+      "capture",
+      null
+    ],
+    "hold": [
+      "hold",
+      null
+    ],
+    "classification_cases": {
+      "both_effects": 2,
+      "srval_only_init_absent": 3,
+      "init_only_all_capture": 4,
+      "init_only_all_hold": 4,
+      "neither": 5,
+      "mixed_restore_and_capture_across_corners": 1,
+      "init_sample_tracks_srval": 1,
+      "restore_value_tracks_init": 1,
+      "one_corner_unknown_reference": 0,
+      "one_corner_fault": 0,
+      "constant_restore_0_init_present": 4,
+      "constant_restore_1_init_present": 4,
+      "constant_restore_0_init_absent": 5,
+      "constant_restore_1_init_absent": 5
+    },
+    "expected": {
+      "both_effects": 2,
+      "srval_only_init_absent": 3,
+      "init_only_all_capture": 4,
+      "init_only_all_hold": 4,
+      "neither": 5,
+      "mixed_restore_and_capture_across_corners": 1,
+      "init_sample_tracks_srval": 1,
+      "restore_value_tracks_init": 1,
+      "one_corner_unknown_reference": 0,
+      "one_corner_fault": 0,
+      "constant_restore_0_init_present": 4,
+      "constant_restore_1_init_present": 4,
+      "constant_restore_0_init_absent": 5,
+      "constant_restore_1_init_absent": 5
+    },
+    "pass": true
+  },
+  "all_pass": true
+}
+
