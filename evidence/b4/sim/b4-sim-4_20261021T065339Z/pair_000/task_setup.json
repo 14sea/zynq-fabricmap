@@ -1,0 +1,62 @@
+{
+ "addresses": [
+  "0x00400a00/52/16",
+  "0x00400a01/51/7",
+  "0x00400a01/51/19",
+  "0x00400a01/52/3",
+  "0x00400a01/52/7",
+  "0x00400a01/52/15",
+  "0x00400a01/52/19",
+  "0x00400a01/52/23",
+  "0x00400a1e/51/12",
+  "0x00400a1e/51/30",
+  "0x00400a1e/52/0",
+  "0x00400a1e/52/1",
+  "0x00400a1e/52/18",
+  "0x00400a1f/51/3",
+  "0x00400a1f/51/6",
+  "0x00400a1f/51/22",
+  "0x00400a1f/51/28",
+  "0x00400a1f/52/1",
+  "0x00400a1f/52/9",
+  "0x00400a1f/52/19",
+  "0x00400a1f/52/26"
+ ],
+ "landscape_seed": 3002241838,
+ "note": "the private record of the pair's task: persisted before the first target observation; never read by an arm; the arms receive the PublicTask of task.json",
+ "operator_seed": 862155936,
+ "pair": 0,
+ "planned": [
+  "target",
+  "target_holdout"
+ ],
+ "planted_config_sha256": "a1972397a2097c49ad05ea7d66d16e7b272b7d910d66b9695110a3db7d37e719",
+ "planted_genome": 373536,
+ "planted_genome_hex": "05b320",
+ "planted_is_base": false,
+ "public": {
+  "ceiling": 64,
+  "holdout_ceiling": 80,
+  "holdout_mask_sha256": "27a24a14b746466db19bc486b278581da6803f528e3113f9e1b7b948c5ec8593",
+  "holdout_steps": 11,
+  "holdout_stimulus_sha256": "9411b4d7f3b76e8858e4f2dd5dc5904760bc8dd999d4ff46d5fe9680e21c09e3",
+  "holdout_weights_sha256": "5ba37a0fc0e3fcdf3a99e135edaab2dfd3e8c3286d255750fccc2a14e4506e9e",
+  "mask_sha256": "6fd456b277a4f8d6f8447b603299db38d7c2a33661b11e6eb3284921ce59c8a0",
+  "search_steps": 9,
+  "stimulus_sha256": "9f9ae07d093ba1f4d787fa058146036df3f05da6816c8a2e36807127744d6f21",
+  "weights_sha256": "ba1e52e365a6fa132081a7bef3fe2800e0a5a907bbdcb8f183b7f1783905ea31"
+ },
+ "rule": {
+  "base_genome": 0,
+  "n_bits": 21,
+  "salt": 1413567047,
+  "storage_kind_address": "0x00400a1e/52/0",
+  "storage_kind_bit": 10,
+  "text": "Rng((landscape_seed ^ 0x54415247) & 0xffffffff).uniform(1 << 20), the first call, mapped onto the 20 non-storage_kind bits in address order; the storage_kind bit fixed to 0 (flip-flop); the all-zero base included; nothing redrawn"
+ },
+ "schema": "b4_sim_task_setup",
+ "schema_version": "1.0.0",
+ "status": "in_progress",
+ "task_version": "task-v0.2",
+ "written_utc": "2026-10-21T06:53:39Z"
+}
