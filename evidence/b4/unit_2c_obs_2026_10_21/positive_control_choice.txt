@@ -1,0 +1,12 @@
+archive evidence/b4/sim/b4-sim-4_20261021T065339Z | pairs read 32 | sim_report.json sha256 01744b39598b10bbf7d4371be1e5b9355c08fc39a8877ef6957866ac8178f1fa
+semantic         address            element   (b′) frac    endpoints g0/g1 (hex)   covered/applicable at bg   bg idx
+ce_mode          0x00400a01/52/7    None          0.997            000000/000010                      32/32  [0, 16]
+clock_mode       0x00400a01/52/19   None          0.965            000000/000040                      32/32  [0, 64]
+sr_kind          0x00400a00/52/16   None          0.895            000008/000009                      32/32   [8, 9]
+sr_mode          0x00400a01/52/3    None          0.967            000000/000008                      32/32   [0, 8]
+storage_kind     0x00400a1e/52/0    None          1.000            000000/000400                      32/32 [0, 1024]
+ff_init (main)   0x00400a1f/51/3    AFF           1.000            000000/002000                      32/32      [0]
+ff_init (x5FF)   0x00400a1f/51/6    A5FF          1.000            000000/004000                      32/32      [0]
+ff_srval (main)  0x00400a1e/51/30   BFF           0.875            000008/000208                      31/32      [8]
+ff_srval (x5FF)  0x00400a01/52/15   C5FF          0.766            000008/000028                      30/32      [8]
+rule: highest (b′) fraction per semantic, ties in mapping address order; background = the endpoint pair covered in the most of the 32 pairs, ties the lowest g0; ff_init / ff_srval one main-element and one x5FF-element address each

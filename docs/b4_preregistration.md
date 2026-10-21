@@ -1,4 +1,6 @@
-# B4-FF — the flip-flop configuration-bit class on the board: preregistration (DRAFT v0.0.2 — a SKELETON, host-only, 2026-10-19)
+# B4-FF — the flip-flop configuration-bit class on the board: preregistration (DRAFT v0.0.3 — a SKELETON, host-only, 2026-10-19; pointer revision 2026-10-21)
+
+> **v0.0.2 → v0.0.3 (2026-10-21, the 2c-obs unit; a pointer, nothing resolved):** the observation contract that sections 5, 6 and 8 of this skeleton leave to 2c now exists as a DRAFT — `docs/b4_observation_contract.md` v0.1 (the stimulus, the raw readout, the evidence fields, the isolation, INIT / SRVAL observed and recovered separately with A8 unresolved, the positive-control rule and its nine proposed pairs with the data influence disclosed, the two holdouts, the bench / board acceptance lists). **Every `<unresolved>` of this skeleton stays unresolved**: the contract fixes no N, `B*`, prediction, session, seed, holdout instance or initialisation mechanism, and this skeleton is not frozen by it. Sections 5, 6 and 8 carry a one-line pointer each; nothing else changed.
 
 > **v0.0.1 → v0.0.2 (2026-10-19, the owner's P3 on `7cf6c7f`): the reference to B3's lifecycle corrected.** v0.0.1 wrote S0 as
 > "freeze: the pins, the seeds, the plan", S1 as "the prediction" and S2 / S3 as "the sessions and the adjudication". The production
@@ -92,6 +94,8 @@ is re-aimed at the FF names (section 5.4); the permuted fixture must make the ca
 
 ## 5. Raw observation versus scoring (architecture sections 5.1–5.4)
 
+> *v0.0.3 pointer:* the record's fields, the Q encoding on silicon, the three records and the A3 validator are drafted in `docs/b4_observation_contract.md` sections 3–4; the schema file's name is proposed there (D3), not decided.
+
 Every ledger entry carries the raw observation (the sampled outputs per step, or a digest with the full vector retrievable) **and**,
 separately, the fitness the board computed under the landscape rule (section 7); the adjudicator recomputes the fitness from the
 raw observation and a mismatch is a finding against the board, never corrected. The decode is a third thing, host-only. A semantic
@@ -99,6 +103,8 @@ the observation cannot resolve stays `unknown` (section 5.2), never decoded by a
 observation (A3: it forbids an expected value), its name under `b4/schemas/`, and the digest form of the per-step vector.
 
 ## 6. The carrier's obligations — A1 to A8 (architecture section 5.5; the design unit is judged against them)
+
+> *v0.0.3 pointer:* the A2 positive-control addresses are **proposed** (nine pairs, the rule and the data influence) in `docs/b4_observation_contract.md` section 7; A5's test form in its section 5.3; A8's two demonstrations, the three candidate initialisation mechanisms and what the claim loses under each outcome in its section 6 — A8 itself stays unresolved.
 
 | id | obligation (verbatim by reference) | what 2c must name |
 |---|---|---|
@@ -127,6 +133,8 @@ observation (A3: it forbids an expected value), its name under `b4/schemas/`, an
   template; whether B4 adds a stop on A8's demonstration is for the review.
 
 ## 8. Falsifiers — the kinds, to be sharpened against the carrier v2
+
+> *v0.0.3 pointer:* kinds 4–6 take their observable form from `docs/b4_observation_contract.md` sections 5.3, 6.4–6.5 and 7.3; the exact list is still this skeleton's to write.
 
 1. A fitness differs from its recomputation from the raw observation on any record — the image mis-computes or the model is wrong:
    a finding per record; KILL if the served observation contradicts the self-report.

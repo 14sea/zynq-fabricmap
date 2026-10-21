@@ -1,0 +1,24 @@
+archive evidence/b4/sim/b4-sim-4_20261021T065339Z sim_report.json sha256 01744b39598b10bbf7d4371be1e5b9355c08fc39a8877ef6957866ac8178f1fa | pairs read 32
+address              element  semantic       (b′) covered/applicable  fraction   (b) covered/applicable  fraction
+0x00400a01/52/7      None     ce_mode               1021/1024            0.997         1021/1024            0.997
+0x00400a01/52/19     None     clock_mode             988/1024            0.965          988/1024            0.965
+0x00400a1f/51/6      A5FF     ff_init               1024/1024            1.000         1024/1024            1.000
+0x00400a1f/51/3      AFF      ff_init               2048/2048            1.000         2048/2048            1.000
+0x00400a1f/51/22     B5FF     ff_init               1024/1024            1.000         1024/1024            1.000
+0x00400a1f/51/28     BFF      ff_init               2048/2048            1.000         2048/2048            1.000
+0x00400a1f/52/9      C5FF     ff_init               1024/1024            1.000         1024/1024            1.000
+0x00400a1f/52/1      CFF      ff_init               2048/2048            1.000         2048/2048            1.000
+0x00400a1f/52/19     D5FF     ff_init               1024/1024            1.000         1024/1024            1.000
+0x00400a1f/52/26     DFF      ff_init               2048/2048            1.000         2048/2048            1.000
+0x00400a01/51/7      A5FF     ff_srval               352/512             0.688          352/1024            0.344
+0x00400a1e/51/12     AFF      ff_srval               864/1024            0.844          864/2048            0.422
+0x00400a01/51/19     B5FF     ff_srval               356/512             0.695          356/1024            0.348
+0x00400a1e/51/30     BFF      ff_srval               896/1024            0.875          896/2048            0.438
+0x00400a01/52/15     C5FF     ff_srval               392/512             0.766          392/1024            0.383
+0x00400a1e/52/1      CFF      ff_srval               752/1024            0.734          752/2048            0.367
+0x00400a01/52/23     D5FF     ff_srval               380/512             0.742          380/1024            0.371
+0x00400a1e/52/18     DFF      ff_srval               804/1024            0.785          804/2048            0.393
+0x00400a00/52/16     None     sr_kind                229/256             0.895          229/512             0.447
+0x00400a01/52/3      None     sr_mode                990/1024            0.967          990/1024            0.967
+0x00400a1e/52/0      None     storage_kind          1024/1024            1.000         1024/1024            1.000
+choice rule (section 8): per semantic the address with the highest (b′) fraction; ties in address (genome-bit) order; for the two per-element semantics one main-element and one x5FF-element address each
