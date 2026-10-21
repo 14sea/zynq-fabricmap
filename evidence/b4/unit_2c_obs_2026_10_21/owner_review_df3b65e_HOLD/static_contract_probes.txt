@@ -1,0 +1,147 @@
+{
+  "R1": {
+    "retained_entry_source": "evidence/b4/sim/b4-sim-4_20261021T065339Z/pair_000/arm_R.result.json",
+    "ledger_trace_sha256": "5cd4aa74851515af0e30e8acb66c71905650f2ef1a3da67905308c687adfb6c5",
+    "q_grid_sha256": "5cd4aa74851515af0e30e8acb66c71905650f2ef1a3da67905308c687adfb6c5",
+    "whole_ledger_entry_sha256": "f55b27033eef502b8837f5bf3521e5e24b1eb9b77b47c6db4460c41fc26b4910",
+    "target_trace_hash_is_q_grid_hash": true,
+    "changing_stimulus_commitment_leaves_trace_sha256_unchanged": true,
+    "whole_raw_trace_hash_differs_from_raw_q_grid_hash": true,
+    "note": "The preserved quarantine trace has a deliberately malformed float cell. It is inspected only for hashing representation and source-header shape, never accepted as a valid observation.",
+    "ledger_missing_raw_fields": [
+      "config",
+      "initial",
+      "steps",
+      "stimulus",
+      "hypothesis",
+      "mapping",
+      "fabric"
+    ],
+    "actual_fabric_keys": [
+      "dropout_count",
+      "dropout_sha256",
+      "effect_sha256",
+      "kind",
+      "seed"
+    ],
+    "actual_source_kinds_from_source_reading": [
+      "truth",
+      "permuted",
+      "dropout",
+      "custom"
+    ],
+    "document_fabric_keys": [
+      "kind",
+      "effect_sha256",
+      "dropout",
+      "seed"
+    ],
+    "document_kind_omits_custom_and_adds_hypothesis_swap_names": true
+  },
+  "R3": {
+    "mechanism_c_pre_witness": "base-frame-witness",
+    "mechanism_c_post_witness": "different-candidate-frame-witness",
+    "staging_witness": "different-candidate-frame-witness",
+    "section_6_3_post_equals_staging": true,
+    "section_5_4_requires_pre_equals_post": false,
+    "effect": "A candidate different from the base satisfies 6.3 but necessarily violates 5.4; 6.7 requires 5.4 on every cross record.",
+    "additional_order_context": "The generic P3 pre-init-sample placement is after P2, while mechanism (c) requires an actual sample before the P2 write. The per-mechanism exception must be reflected in phase/readiness and frame rules; no new event/operation is requested.",
+    "A5_context_exception": "Section 3.1 view pre_init_state fixes clock/ce/sr/d to zero, while J3 explicitly copies nonzero held inputs into raw initial and 3.2 maps initial into the view. Make the already declared qualification exception explicit in the view contract, not an unrecorded cleanup or fabricated zero."
+  },
+  "R2": {
+    "synthetic_stop": "sampling fault during P3, before P4",
+    "future_required_fields_not_obtainable": [
+      "fabric_readback_sha256_post_init"
+    ],
+    "partial_observation": {
+      "status": "invalid",
+      "fault": {
+        "code": "sample_fault",
+        "step_reached": 0
+      },
+      "fabric_readback_sha256_pre_init": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "steps": []
+    },
+    "section_4_2": "O exactly requires both readback fields of type hex for complete and invalid; invalid adds fault, but no partial-field exception is defined.",
+    "section_5_7": "P1-P5 failure seals O invalid, preserving only the observed prefix and no invented future values.",
+    "required_resolution": "Define phase-dependent exact allowed/required key sets for invalid O (as already done for faulted X), or a distinct bound partial object. Complete O must retain all normal requirements."
+  },
+  "R4": {
+    "stuck_or_non_capturing_reference_case": {
+      "R0": 0,
+      "R1": 0,
+      "K0": 0,
+      "K1": 0
+    },
+    "written_reading": {
+      "kind": "restore",
+      "value": 0
+    },
+    "indistinguishable_SR_on_and_SR_off_records": [
+      {
+        "R0": 0,
+        "R1": 0,
+        "K0": 0,
+        "K1": 0,
+        "written_reading": {
+          "kind": "restore",
+          "value": 0
+        }
+      },
+      {
+        "R0": 1,
+        "R1": 1,
+        "K0": 1,
+        "K1": 1,
+        "written_reading": {
+          "kind": "restore",
+          "value": 1
+        }
+      }
+    ],
+    "limitation": "The rule declares restore even when its SR-off reference cannot distinguish either D. These data do not distinguish an SR restore from holding/no capture. A reference-validity prerequisite or a weaker, explicitly conditional evidence claim is needed.",
+    "capture_case": {
+      "kind": "capture",
+      "value": null
+    },
+    "healthy_restore_cases": [
+      {
+        "kind": "restore",
+        "value": 0
+      },
+      {
+        "kind": "restore",
+        "value": 1
+      }
+    ],
+    "six_seven_missing_evidence_case": "When 6.5 returns capture, no SR-restore evidence value exists. Define how 6.7 computes cross_tracking/paired effects from absent evidence, rather than merely classifying four precomputed booleans."
+  },
+  "author_static_checks": {
+    "exit": 0,
+    "byte_identical_to_committed_output": true,
+    "all_pass": true,
+    "scope_limit": "Does not check ledger-vs-whole-record hashing, mechanism-c frame invariance, failed SR-off reference captures, or deriving 6.7 quantities from missing evidence."
+  },
+  "checks": {
+    "head": "df3b65e8072eaab96d7c19d9d10e177b14e1ff9b",
+    "tree_clean": true,
+    "protected_paths_unchanged_since_fceedd6": [
+      "b4/",
+      "b3/",
+      "host/",
+      "tests/",
+      "firmware/",
+      "manifests/",
+      "gate_runs/",
+      "evidence/b3/",
+      "evidence/b4/sim/",
+      "evidence/b4/gonogo/",
+      "evidence/b4/gate/"
+    ],
+    "selection_scripts_and_outputs_unchanged": true,
+    "prior_review_copied_byte_identical": true,
+    "prior_review_files": 7,
+    "new_model_or_board_observations": false,
+    "new_production_seed_derivation": false
+  }
+}

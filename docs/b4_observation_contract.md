@@ -1,5 +1,17 @@
-# B4-FF — the observation contract between the executing side and the host (DRAFT v0.3, host-only, documents only, 2026-10-21)
+# B4-FF — the observation contract between the executing side and the host (DRAFT v0.4, host-only, documents only, 2026-10-21)
 
+> **Revision v0.3 → v0.4 (2026-10-21, the owner's third HOLD, on `df3b65e`, R1–R4; documents only; targeted edits, not a
+> rewrite).** R1 — 3.1 / 3.2 corrected to the code: the ledger's `trace_sha256` hashes the Q grid only; archived observations are
+> projections with four separate commitments; a full raw return is retained only in quarantine; the view's grid digest is
+> `q_grid_sha256`, a whole-record digest exists only for the new carrier record; the retained representations named with what each
+> holds, what each digest covers and which adapter reads it; the `fabric` descriptor copied exactly. R2 — an invalid `O` has
+> phase-dependent exact field sets with a bound stop location (4.2, 5.7). R3 — the readbacks renamed pre / post-**event**; the frame
+> binding conditional on mechanism and predecessor context (5.4), with (c)'s pre-write sample and prior-configuration readback in
+> 5.1 and 6.3 and *c′* as the prior configuration under J3; the view's `pre_init_state` carries a declared `context`. R4 — 6.5
+> requires a valid reference and planted prior values, reads restore / capture / hold / inconsistent, and yields `unknown` for an
+> invalid reference; 6.7 derives its quantities from the per-corner readings with a not-demonstrated row. The truncated sentence
+> of 6.5 folded in.
+>
 > **Revision v0.2 → v0.3 (2026-10-21, the owner's second HOLD, on `d8ef6cf`, C1–C4 and one P3; documents only).** C1 — the
 > "common payload" is now a **logical observation view** that every reader builds from a source's **raw wire format through a
 > declared adapter** (3.1–3.2): the legacy model trace's `config` is an address → bit dictionary and its `config_sha256` is the
@@ -25,7 +37,7 @@
 > candidate = the stimulus's step 0; a cleanup phase; the opening baseline; frame equality apart from Q restoration; G6 visible; A5
 > given a projection, roles and a specified injection; D2 as ruled. R3 — the A8 cross on the same element and background; SR
 > restore evidence distinguished from SR = 1; the outcome table conditional, attribution left to independent evidence. D4 — the
-> selection rule as a revision proposal of choice 7 (7.2). The v0.2 text is superseded where v0.3 restates it.
+> selection rule as a revision proposal of choice 7 (7.2). Earlier text is superseded where a later revision restates it.
 >
 > **Standing: a draft contract, not a preregistration, not a ruling, not RTL.** Written under the owner's authorisation of
 > 2026-10-21 (archived in `evidence/b4/unit_2c_obs_2026_10_21/owner_authorisation_2026_10_21.txt` with its source note), given
@@ -40,12 +52,13 @@
 > the v0.2.0 revision note's choice 7), `docs/b4_preregistration.md` v0.0.3, `docs/b1_carrier_contract.md` v0.1,
 > `docs/b1_carrier_qualification.md` v0.3, `host/b1_records.py` (`sign_reply.expected_tables`), `b4/hypothesis/ff_behaviour_v0.3.json`
 > (`observation_context`, `initialisation_event`, `applicable_semantics`; G6), `b4/host/b4_ff_model.py` (`validate_config`,
-> `observe()`'s return — the legacy wire format), `b4/host/b4_execution.py` (`sha256_json`, the ledger's derived `stimulus_sha256`),
-> `b4/host/b4_replay.py` (`ENTRY_KEYS`: `genome`, `config_sha256`, `stimulus_sha256`, `trace_sha256`), `b4/host/b4_landscape.py`
+> `observe()`'s return — the legacy wire format), `b4/host/b4_execution.py` (`sha256_json`, `genome_to_config`, `provenance_findings`), `b4/host/b4_engine.py` (the ledger
+> entry: `trace_sha256 = sha256_json(grid)`), `b4/host/b4_target.py` (the target record), `b4/host/b4_replay.py` (`ENTRY_KEYS`), `b4/host/b4_landscape.py`
 > (task-v0.2's stimulus shape), `docs/board_roles.md`, `docs/autonomous_cartography_roadmap.md` sections 4–5. The data read for
 > section 7 is the committed `b4-sim-4` archive through the two read-only scripts of `evidence/b4/unit_2c_obs_2026_10_21/`; the
-> counterexample of 3.4 is one retained observation of the same archive; the legacy-format facts of 3.2 are those the owner's
-> static probes of `d8ef6cf` read from a retained quarantine record (`float_return.json`), re-read by this unit's static checks.
+> counterexample of 3.4 is one retained observation of the same archive; the representation facts of 3.2 are those the owner's
+> static probes of `d8ef6cf` and `df3b65e` read from a retained quarantine record (`float_return.json`) and from `pair_000`'s
+> ledger and target records, re-read by this unit's static checks.
 
 ## 0. Status of every section (the index the review reads first)
 
@@ -53,10 +66,10 @@
 |---|---|---|
 | 1 position | what a contract is here and what it is not | — |
 | 2 the stimulus | the step grammar, the task-v0.2 shape (ending at clock 0), the application rule, the stimulus identity | the electrical timing numbers — the carrier-v2 unit's |
-| 3 the raw readout | the logical view; the two raw wire formats and the adapter, field by field with encodings and digests; the legacy trace kept as it is; the sample points; D1 and the scoring-domain limit; the source binding | the board-study metric across the limit (2c) |
-| 4 the records | the three objects per transaction and the session root; the exact field set of each with types and immutability points; the field-aware A3 rule; D3 | the schema file names (provisional); the implementation (a later tool unit) |
-| 5 the transaction | P1–P10 with one initialisation = step 0; the readiness table (which object, which phase, immutable when, digest covers what); the cleanup; frame equality vs Q restoration; the session root; A5 as a decision table with a qualification-only injection protocol; faulted / interrupted retention | the cleanup's and the injection's electrical realisation; the bench's and the board's *c′* |
-| 6 INIT and SRVAL | two observation points; D2; the per-mechanism order; the same-element 2 × 2 cross; the two-episode SR-restore evidence; G6; the precedence-ordered outcome table | **A8 itself**; the mechanism; the contexts a mechanism can observe |
+| 3 the raw readout | the logical view with its `context`; the retained representations, what each holds and what each digest covers; the adapters and their scope; the sample points; D1 and the scoring-domain limit; the source binding | the board-study metric across the limit (2c) |
+| 4 the records | the three objects per transaction; the exact field set of each, with the phase-dependent sets of an invalid `O`; the field-aware A3 rule; D3 | the schema file names (provisional); the implementation (a later tool unit) |
+| 5 the transaction | P1–P10 with one initialisation = step 0; the readiness table with (c)'s pre-write sample; the cleanup; the frame binding conditional on mechanism and predecessor context; the session root; A5 as a decision table with a qualification-only injection protocol; faulted / interrupted retention with the stop location | the cleanup's and the injection's electrical realisation; the bench's and the board's *c′* |
+| 6 INIT and SRVAL | two observation points; D2; the per-mechanism order and binding; the same-element 2 × 2 cross; the two-episode SR evidence with a validated reference and planted priors; G6; the per-corner readings → the quantities → the precedence-ordered table with a not-demonstrated row | **A8 itself**; the mechanism; the contexts a mechanism can observe |
 | 7 positive controls | the quantifiers; the rule as a revision proposal of choice 7 (D4); the nine pairs; the data influence | the board's result; the B4Q stimulus's own conditions |
 | 8 the two holdouts | two axes; the carrier's indifference | the whole-site instance |
 | 9 acceptance | the bench and board lists against A1–A8 | the ruling, the board, the B4Q plan |
@@ -112,50 +125,65 @@ identity page and recorded in every observation (4.2); equal on every record of 
 ### 2.4 The stimulus identity
 
 The **logical view** carries `stimulus_sha256` = `b4_execution.sha256_json(list(stimulus))` — sha256 over the canonical JSON
-(`sort_keys`, separators `,` `:`) of the step list. For the model this is a **derived** field (the ledger derives it today; the
-raw trace has no such field, 3.2); a carrier **writes** it, over the same canonical encoding of the same list. The host checks the
+(`sort_keys`, separators `,` `:`) of the step list. The model's projections (ledger, target, memo) carry it as a written
+commitment; the model's raw return has no `stimulus_sha256` field (it has `stimulus`), so there the reader **derives** it; a carrier
+**writes** it over the same canonical encoding of the same list. The host checks the
 view's value against the task's; a mismatch is a finding, never corrected.
 
-## 3. The raw readout — the logical view, the two wire formats and the adapter, D1 and the scoring-domain limit
+## 3. The raw readout — the logical view, the retained representations and the adapters, D1 and the scoring-domain limit
 
-### 3.1 The logical observation view (what every reader reads; built by the adapter of 3.2, never written as such by the model)
+### 3.1 The logical observation view (what every reader reads; built by an adapter of 3.2; never written as such by the model)
 
-| view field | type | derivation (per source, 3.2) |
-|---|---|---|
-| `source` | `{kind: "model" \| "carrier", raw_digest: hex, raw_digest_encoding: string}` | from the trusted context (3.5), **not** from the record |
-| `config_vector` | list of 21 ints in {0, 1} in the mapping's address order | model: `[config[a] for a in mapping.addresses]` from the raw dictionary; carrier: the raw list itself |
-| `genome` | int (the vector read as the ledger's genome integer, bit *i* = address *i*) | derived on both sources; equal to the ledger entry's `genome` |
-| `config_sha256_raw` | `{value: hex, encoding: string}` | the source's own raw config digest, **as written, under the encoding the source declares**; never recomputed under another encoding |
-| `stimulus` | list of steps per 2.1 | the raw field on both sources |
-| `stimulus_sha256` | hex | 2.4: derived for the model, written by the carrier |
-| `elements` | the fixed list `AFF, A5FF, BFF, B5FF, CFF, C5FF, DFF, D5FF` | the raw field on both sources |
-| `pre_init_state` | `{clock: 0, ce: 0, sr: 0, d: 0, q: [8 cells]}` | the raw `initial` on both sources — the model's `q` eight `null`, a carrier's its pre-init sample (6.3) |
-| `steps[]` | per step exactly `step, kind, prev_event, clock_before, clock_after, edge, ce, sr, d, q_before, q_after` | the raw field on both sources (`b4_ff_model.VISIBLE_STEP_KEYS`) |
-| `trace_sha256` | hex | sha256 over the canonical JSON of the **raw** record as the source wrote it — the ledger's `trace_sha256` for the model; the carrier's `observation_sha256` (4.2) |
+Per field: **R** = retained as the source wrote it, **D** = derived by the reader and labelled derived, **A** = absent.
 
-**The cell rule by source**: a cell is the int 0 or 1 on both sources; the model may additionally write `null` (its
-`q_null_means`); a carrier never writes `null` (3.4). The view is *rebuilt* from the raw record on every read and is never stored
-in place of it; a view field that is derived is **labelled derived** wherever it is reported.
+| view field | type | M-raw | M-proj (ledger / target / memo) | C-O (carrier) |
+|---|---|---|---|---|
+| `source` | `{kind: "model" \| "carrier", representation: 3.2's name}` | from the trusted context (3.5) | from the trusted context | from the trusted context |
+| `provenance` | the descriptor as written (model: `hypothesis`, `mapping`, `fabric`; carrier: `instrument`) | R | target: R (`provenance`); ledger / memo: A — only `provenance_sha256` R | R |
+| `config_vector` | 21 ints, the mapping's address order | D (from the dictionary) | D (from `genome`, `genome_to_config`) | R (`config`, a list) |
+| `genome` | int, bit *i* = address *i* | D | R | D |
+| `config_sha256_raw` | `{value, encoding}` | R, encoding `raw-dict-default` | R, encoding `proj-dict-canonical` | R, encoding `list-canonical` |
+| `stimulus` | the step list (2.1) | R | A — the pair's task stimulus is the reference, bound by `stimulus_sha256` | R |
+| `stimulus_sha256` | hex, `sha256_json(list(stimulus))` | D | R | R |
+| `elements` | the fixed list | R | D | R |
+| `pre_init_state` | `{context: "idle" \| "a5_injection", clock, ce, sr, d, q}` | R (`initial`), `context` D = `idle` | D (`q` eight `null` by the model's rule) | R (`initial`; under `idle` the inputs are 0 by 5.2's checked precondition; under `a5_injection` the **held** values, 5.6 J3) |
+| `steps[]` | 3.3's keys | R | `q_after` R (= `q_grid[step]`); every other key D from the task's step list and the previous `q_after` | R |
+| `q_grid_sha256` | hex, `sha256_json([q_after per step])` | D | R — **this is the ledger's `trace_sha256`**, which hashes the Q grid and nothing else | D |
+| `record_sha256` | hex, a whole-record digest | D (over the retained file bytes, if wanted) | **A — no whole-record digest of an archived observation exists, and none is claimed** | R (`observation_sha256`, **new**, 4.1) |
 
-### 3.2 The two raw wire formats and the adapter (field by field; the legacy trace kept as it is)
+The cell rule by source: an int 0 or 1 on both; the model may additionally write `null`; a carrier never does (3.4). A view is
+rebuilt on every read, never stored in place of the record, and a **D** field is never presented as something the source wrote.
 
-| raw field | model — `b4_ff_observation_trace` 0.2.0, as `observe()` writes it today (legacy, unchanged) | carrier — the v2 record `O` (proposed, 4.2) | adapter → view |
+### 3.2 The retained representations — what each holds, what each digest covers, and which adapter reads it (copied from the code)
+
+| name | where | fields | digests and **exactly what each covers** |
 |---|---|---|---|
-| `schema`, `schema_version` | `"b4_ff_observation_trace"`, `"0.2.0"` | the carrier schema name and version (4.4) | kept in the branch; not in the view |
-| `config` | **a dictionary** address string → int 0 / 1, exactly the mapping's 21 addresses (`validate_config`) | **a list** of 21 ints in the mapping's address order | model: the dictionary read out in `mapping.addresses` order → `config_vector`; carrier: identity. **The dictionary is not an instance of the list type and is not claimed to be** |
-| `config_sha256` | `sha256(json.dumps(config_dict, sort_keys=True))` — **Python's default separators**, over the dictionary (the owner's probe: recorded `b8b97998…` = this encoding; the canonical-dictionary and vector encodings give different values) | `sha256` over the canonical JSON (`sort_keys`, `,` `:`) of the raw list | → `config_sha256_raw = {value, encoding}` with `encoding` = `"json.dumps(dict, sort_keys=True), default separators"` for the model and `"canonical JSON of the list"` for the carrier; **the reader verifies the digest under its declared encoding only** and never rewrites it |
-| `stimulus_sha256` | **absent** | written (2.4) | model: **derived** by the reader as `sha256_json(list(stimulus))` — the ledger's existing rule — and bound to the raw record by `trace_sha256`; carrier: the written field, re-derived and compared |
-| `visibility`, `q_null_means` | `"executing_side"`, the fixed sentence | absent | branch only; validated by **equality to the fixed text** (4.3) |
-| `hypothesis` | `{path, sha256, version, fixture}` | **absent** — never on the executing side; the host binds the hypothesis to the session in the manifest | branch only |
-| `mapping` | `{site, certificate, certificate_sha256}` | **absent** — the site is in the identity page and the manifest | branch only |
-| `fabric` | `{kind ∈ {"truth","permuted","dropout", the swap names}, effect_sha256, dropout, seed}` — the model's **source identity**; `"truth"` is the formal source | absent; the carrier's identity is `instrument` | branch only; `kind` validated **against its enum** (4.3) |
-| `instrument`, `commit`, the readbacks, `nonce`, `seq`, `session`, `init_event`, `timing`, `predecessor` | absent — **never fabricated for a model trace** (absent, not `null`) | 4.2 | branch only |
-| `initial` | `{clock, ce, sr, d, q: [null × 8]}` | `{clock, ce, sr, d, q: [8 ints]}` | → `pre_init_state` |
-| `elements`, `stimulus`, `steps` | as 3.1 | as 3.1 | identity |
+| **M-raw** — `observe()`'s return, `b4_ff_observation_trace` 0.2.0 | **quarantine only** (a refused return kept whole, e.g. `float_return.json`); the engine archives no raw return | `schema, schema_version, visibility, q_null_means, hypothesis, mapping, fabric, config` (**a dictionary** address → bit, the 21 addresses), `config_sha256, stimulus, initial, elements, steps`; **no `stimulus_sha256` field** | `config_sha256` = `sha256(json.dumps(config_dict, sort_keys=True))`, Python's **default separators** |
+| **M-ledger** — the engine ledger entry (`b4_engine`; `b4_replay.ENTRY_KEYS`) | every `arm_*.result.json` | `seq, phase, genome, genome_hex, config_sha256, provenance_sha256, fixture, stimulus_sha256, trace_sha256, q_grid, fitness, none_cells, map_*` — **a projection**: no dictionary, no `initial`, no `stimulus`, no full `steps`, no descriptor blocks | `config_sha256` = `sha256_json(genome_to_config(genome, addresses))` (canonical JSON over the **reconstructed** dictionary — a different value from M-raw's for the same configuration); `provenance_sha256` = `sha256_json({hypothesis, mapping, fabric})`; `stimulus_sha256` = `sha256_json(list(stimulus))`; **`trace_sha256` = `sha256_json(q_grid)`** |
+| **M-target** — `b4_target`'s record | `target_search.json`, `target_holdout.json` | as M-ledger plus `provenance` (the descriptor retained), `fabric_kind` | as M-ledger |
+| **M-memo** — the K9 / K10 observation | `k9.json`, `k10.json` `observations[]` | `id, genome, genome_hex, config_sha256, provenance_sha256, fixture, fabric_kind, stimulus_sha256, trace_sha256, q_grid` | as M-ledger |
+| **C-O** — the carrier observation (proposed) | the B4Q / session evidence | 4.2 | `config_sha256` canonical JSON over the list; `stimulus_sha256` as 2.4; `observation_sha256` over the whole sealed `O` — the only whole-record digest in this contract, and new |
 
-**The legacy trace is represented as it is.** Every retained trace in `evidence/b4/sim/` and `evidence/b4/gate/` stays byte for
-byte what the archive holds, with its dictionary config, its default-separator digest and no stimulus field; the adapter reads it
-and **nothing is added, renamed, re-encoded or retagged**. A future envelope (4.4) wraps the raw record; it does not rewrite it.
+**Four separate commitments, not one.** An archived entry binds its configuration by `config_sha256`, its stimulus by
+`stimulus_sha256`, its source by `provenance_sha256` (checked against the batch's formal source, 3.5) and its Q grid by
+`trace_sha256`; changing one leaves the others unchanged (the owner's probe on `pair_000`: `trace_sha256` =
+`5cd4aa74…` = the Q-grid digest, unchanged under a changed stimulus commitment). The archive verifier and the replay check each
+commitment against its reference and the files against the archive's own digests. **Nothing in the archive is a full raw record or
+a hash of one.**
+
+**Adapters and scope.** The **M-raw adapter** reads a full return (quarantine, or a future batch that chooses to retain returns).
+The **M-proj adapter** reads a ledger / target / memo entry **with the pair's task** (its stimulus and addresses) and derives every
+step key but `q_after`, the pre-init state and the configuration, each labelled derived; it never claims a raw record was retained.
+Historical projections keep **their recorded version's reader** (`b4_replay`, `b4_sim_verify`) as the verification authority; the
+view is a reading aid beside it. The **carrier adapter** reads `C-O`. No adapter rewrites, re-encodes, re-digests or retags
+anything under `evidence/`; every digest is verified under the encoding its representation declares and never recomputed under
+another.
+
+**The `fabric` descriptor, copied exactly** (`b4_execution.provenance_findings`, `b4_ff_model.Fabric.source`): keys exactly
+`kind, effect_sha256, dropout_sha256, dropout_count, seed`; `kind ∈ {truth, permuted, dropout, custom}` (`SOURCE_KINDS`); the two
+digests 64-hex; `dropout_count` an int; `seed` an int or `null`. The hypothesis's fixture / swap identity is **separate** —
+`hypothesis = {path, sha256, version, fixture: bool}`; a swap fixture is another hypothesis file named there, never a fabric kind.
+`mapping` = exactly `site, certificate, certificate_sha256`.
 
 ### 3.3 The sample points (fixed by architecture 5.1 step 4)
 
@@ -191,8 +219,9 @@ results and method are untouched.
 ### 3.5 Binding the source to trusted identity (an untrusted record cannot grant itself `null`)
 
 The reader does not take `source.kind` from the record. For a **model** trace the expected source is the batch's formal source as
-the harness pinned it (`b4_sim`'s source identity; the hypothesis and certificate digests from the root inputs), and the raw
-`fabric` block must equal it; a trace is read under the model branch only when that context names it. For a **carrier** record the
+the harness pinned it (`b4_sim`'s source identity; the hypothesis and certificate digests from the root inputs), and the
+descriptor (M-raw's blocks; a projection's `provenance_sha256`) must equal it; a record is read under the model branch, in the
+representation the context names, only when that context names it. For a **carrier** record the
 expected source is the manifest's pinned carrier (`carrier_sha256`, `VARIANT`, the image digest) and the identity page as the run
 log recorded it; the raw `instrument` block must equal that, and `commit`, `nonce`, `seq` must reconcile with the notary log. A
 record that declares or implies a branch its context does not grant is refused by name.
@@ -229,12 +258,28 @@ mismatch is a finding against the board, never corrected.
 | `session`, `seq`, `nonce` | string, int, hex | the instrument's records; the notary log |
 | `commit` | hex | link 1 |
 | `staging_readback_sha256` | hex | link 2 |
-| `fabric_readback_sha256_pre_init`, `fabric_readback_sha256_post_init` | hex, hex | link 3 twice, as 6.3 orders them |
+| `fabric_readback_sha256_pre_event`, `fabric_readback_sha256_post_event` | hex, hex | link 3 twice; **what each must equal depends on the mechanism and the predecessor context** (5.4, 6.3) |
 | `init_event` | `{mechanism: enum of 6.2, parameters: closed per mechanism}` | the identity page's declared mechanism |
 | `timing` | `{settle, hold, release, sample_offset}` ints in the declared unit | the identity page |
 | `predecessor` | `{kind: "session_root" \| "closed" \| "a5_injection", seq: int \| null, close_sha256: hex \| null}` | 5.5, 5.6 |
 | `config` (list of 21 ints), `config_sha256`, `stimulus`, `stimulus_sha256`, `elements`, `initial`, `steps` | 3.2's carrier column | the payload |
-| `status` | `"complete" \| "invalid"`; with `invalid`: `fault: {code: enum, step_reached: int}` | 5.7 |
+| `status` | `"complete"` | — |
+
+**`O` — the observation, invalid (a stop in P1–P5): phase-dependent exact sets.** `status = "invalid"` and
+`fault = {code: enum, phase_reached: "P1" | "P2" | "P3" | "P4" | "P5", step_reached: int | null}`; the key set is **exactly** the
+always-present keys **plus the keys of every phase completed before the stop**, and nothing of a later phase — absent, never
+`null`, never a placeholder digest, never copied from another transaction:
+
+| stop in | always present | present (acquired before the stop) | absent |
+|---|---|---|---|
+| P1 | `schema`, `schema_version`, `instrument`, `session`, `seq`, `nonce`, `predecessor`, `config`, `config_sha256`, `stimulus`, `stimulus_sha256`, `elements`, `init_event`, `timing`, `status`, `fault` | `commit`, `staging_readback_sha256` **if** link 1 / 2 completed | both fabric readbacks, `initial`, `steps` |
+| P2 | the same | `commit`, `staging_readback_sha256`; `fabric_readback_sha256_pre_event` **if** the readback completed; for mechanism (c) also `initial` (the pre-write sample, 6.3) if taken | `fabric_readback_sha256_post_event`, `steps` (and `initial` where not yet taken) |
+| P3 | the same | the P2 fields; `initial` if the pre-init sample was taken; `steps` = `[]` or `[steps[0]]` as acquired (`step_reached` 0) | `fabric_readback_sha256_post_event` |
+| P4 | the same | the P3 fields with `steps = [steps[0]]` | `fabric_readback_sha256_post_event` if the readback did not complete |
+| P5 | the same | everything of a complete `O` except that `steps` is the prefix `steps[0 .. step_reached]` as acquired | — |
+
+`observation_sha256` is computed over the invalid `O` as sealed (5.7); the owner's static example — a sampling fault during P3,
+before P4 — is a P3 row: the pre-event readback present, the post-event readback absent, `steps` the acquired prefix.
 
 **`F` — the fitness**: exactly `{schema, schema_version, observation_sha256, task_digest, fitness: int}`; exists only when
 `O.status = "complete"`.
@@ -259,7 +304,7 @@ or 1, not `0.0`, `1.0`, `true`, `false` or `null`); every binding of 3.5 and 4.2
 
 | kind | fields | the rule |
 |---|---|---|
-| **enum** | model `fabric.kind` (`truth`, `permuted`, `dropout`, the swap names of `b4_ff_model.SWAPS`), `visibility`; carrier `init_event.mechanism`, `O.status`, `X.status`, `predecessor.kind`, `fault.code` | the value must be a member of the closed enum; **an enum member is never string-matched against the deny-list** — the model's formal source identity `fabric.kind = "truth"` is legitimate metadata, not a leaked answer |
+| **enum** | model `fabric.kind` (`truth`, `permuted`, `dropout`, `custom` — `SOURCE_KINDS`; a hypothesis swap is not a fabric kind), `visibility`; carrier `init_event.mechanism`, `O.status`, `X.status`, `predecessor.kind`, `fault.code` | the value must be a member of the closed enum; **an enum member is never string-matched against the deny-list** — the model's formal source identity `fabric.kind = "truth"` is legitimate metadata, not a leaked answer |
 | **fixed text** | model `q_null_means`, `schema`; carrier `schema` | equality to the fixed text |
 | **identity** | digests (hex of fixed length), paths (`hypothesis.path`, `mapping.certificate`, `fabric.effect_sha256`), `session`, `nonce` | the type and length rule, and the binding of 3.5 |
 
@@ -293,9 +338,9 @@ under `b4/` is written or changed by this unit.
 |---|---|---|---|
 | — | the previous `X` closed (or the session root, 5.5; or an `a5_injection` `X` under 5.6) and its `idle_status` idle | — | — |
 | P1 | sign (link 1), stage, staging re-read (link 2) | `O.commit`, `O.staging_readback_sha256`, `O.predecessor` (a reference to the previous `X`) | — |
-| P2 | write the candidate; fabric readback (link 3, PRE-INIT) — for mechanism (c) the write **is** the init event (6.3) | `O.fabric_readback_sha256_pre_init` | — |
-| P3 | stimulus step 0 = **the** initialisation event: pre-init sample → assert → release → init sample (6.3) | `O.initial`, `O.steps[0]` | — |
-| P4 | fabric readback (link 3, POST-INIT) | `O.fabric_readback_sha256_post_init` | — |
+| P2 | (a) / (b): write the candidate; fabric readback (link 3) = **pre-event**. (c): the **pre-write sample** (`O.initial`, 6.3) and the readback of the **prior configuration** = **pre-event**; then the write, which **is** the event | `O.fabric_readback_sha256_pre_event`; (c) also `O.initial` | — |
+| P3 | stimulus step 0 = **the** initialisation event: (a) / (b) pre-init sample → assert → release → init sample; (c) release after the write → init sample (6.3) | `O.initial` ((a) / (b)), `O.steps[0]` | — |
+| P4 | fabric readback (link 3) = **post-event** | `O.fabric_readback_sha256_post_event` | — |
 | P5 | stimulus steps 1 … n, exactly (2.3) — the scored observation ends here | `O.steps[1:]` | — |
 | **P6a** | `O.status = "complete"`; `O` sealed, `observation_sha256` computed | `O` | **`O`** |
 | **P6b** | the fitness computed from `O` | `F` | **`F`** |
@@ -327,10 +372,21 @@ recovered by nothing inside the stimulus — the next step may assert SR again �
 
 | witness | where | what it proves | what it does not prove |
 |---|---|---|---|
-| **frame equality** | `X.base_readback_sha256` = the session's base readback digest; `O`'s two readbacks equal to each other (6.3) | the configuration binding: the fabric holds the signed bits | anything about Q, which no frame readback reads |
+| **frame binding** (conditional, the table below) | `O`'s two readbacks each equal to **their own reference**; `X.base_readback_sha256` = the session's base readback digest | the configuration binding: the fabric held the prior configuration before the event and the signed candidate after it | anything about Q, which no frame readback reads |
 | **Q-state restoration** | `X.base_state_sample` = the session's **base-state reference** (the session root's `X.base_state_sample`, 5.5) | that the transaction returned the elements to the declared base state under the declared mechanism | that a *different* leftover would also have been cleared (5.6's limit); that the mechanism is the one the hypothesis models (section 6) |
 
-Both are required for the next candidate to be signed (5.2); a failure of either closes `X` as `faulted` with its code (5.7).
+**The frame binding, by mechanism and predecessor context** (R3: for (c) the two readbacks are of two *different* configurations
+and are never required to equal each other):
+
+| mechanism | `predecessor.kind` | `fabric_readback_sha256_pre_event` must equal | `fabric_readback_sha256_post_event` must equal |
+|---|---|---|---|
+| (a) / (b) — a separate event after the write | `closed` or `session_root` | `staging_readback_sha256` (the candidate, written) | `fabric_readback_sha256_pre_event` (the event changed no frame) |
+| (a) / (b) | `a5_injection` (J3) | the same | the same |
+| (c) — the write is the event | `closed` or `session_root` | the predecessor `X.base_readback_sha256` (the **base**, the prior configuration) | `staging_readback_sha256` (the candidate) |
+| (c) | `a5_injection` (J3) | **`O_c′.fabric_readback_sha256_post_event`** (the prior configuration is *c′*; no base restoration was performed and none is pretended) | `staging_readback_sha256` |
+
+Both witnesses of the table above are required for the next candidate to be signed (5.2); a failure of either closes `X` as
+`faulted` with its code (5.7).
 
 ### 5.5 The session root and the predecessor chain
 
@@ -365,7 +421,7 @@ under v0.2's.)
 |---|---|---|---|
 | J1 | observe *c* from a `closed` predecessor | P1–P10 entirely normal | `O_c1` (`status = "complete"`), `F` absent (a qualification observation is not a task observation — the record type is `a5_qualification`, 9.2), `X_c1` `closed` |
 | J2 | observe *c′* — the injecting transaction | P1–P6a **entirely normal**: signed, nonce, writability, link 2 / 3, the predecessor `X_c1` `closed` | *c′*'s stimulus is predeclared in the plan: its last step leaves every element at the value opposite to `O_c1.steps[0].q_after` on that element (`d` so chosen, `ce` asserted on every element, `sr` de-asserted, the clock at the level that captures on the configured edge), inputs held non-zero at the end. **P7–P9 deliberately omitted**: `X_c′` is written at once with `status = "injection_open"`, `cleanup` **absent**, `base_readback_sha256` **absent**, `base_state_sample` **absent**, `idle_status` the word as read (not idle). **`O_c′.steps[-1].q_after` is the injected state's record** |
-| J3 | observe *c* again | P1 normal (signed, nonce, writability) **with `predecessor = {kind: "a5_injection", seq: <c′>, close_sha256: <X_c′>}` — the one value under which a non-`closed` predecessor is accepted, and only inside a B4Q session under the plan's A5 ruling**; P2 the write of *c* — **the carrier changes no input and no clock between J2's last step and this write** (the inputs and clock stay as *c′* left them; recorded in `O_c2.initial.{clock, ce, sr, d}` as read, which for this record are therefore **not** 0); P3.1 the pre-init sample (= `initial.q`): for mechanisms (a) and (b) taken **after** the write of *c* and the pre-init readback, inputs then set to 0 and clock to 0 by a recorded cleanup-like step *inside* step 0's context (`init_event.parameters.pre_init_cleanup: true` — the only configuration where step 0 starts from non-zero inputs, and it is recorded); for mechanism (c) taken **before** the write (6.3) — **an actual sample, never the cached base-state reference**; then P3.2–P10 normal | `O_c2` (`status = "complete"`), `X_c2` `closed`; the next normal candidate requires `X_c2` `closed` and idle as usual |
+| J3 | observe *c* again | P1 normal (signed, nonce, writability) **with `predecessor = {kind: "a5_injection", seq: <c′>, close_sha256: <X_c′>}` — the one value under which a non-`closed` predecessor is accepted, and only inside a B4Q session under the plan's A5 ruling**; P2 the write of *c* — **the carrier changes no input and no clock between J2's last step and this write** (the inputs and clock stay as *c′* left them; recorded in `O_c2.initial.{clock, ce, sr, d}` as read, which for this record are therefore **not** 0); P3.1 the pre-init sample (= `initial.q`): for mechanisms (a) and (b) taken **after** the write of *c* and the pre-init readback, inputs then set to 0 and clock to 0 by a recorded cleanup-like step *inside* step 0's context (`init_event.parameters.pre_init_cleanup: true` — the only configuration where step 0 starts from non-zero inputs, and it is recorded); for mechanism (c) taken **before** the write (6.3) — **an actual sample, never the cached base-state reference** — and (c)'s pre-event readback is *c′*'s configuration (5.4's table), no base restoration inserted; then the event, the init sample, P4–P10 normal | `O_c2` (`status = "complete"`), `X_c2` `closed`; the next normal candidate requires `X_c2` `closed` and idle as usual |
 
 **The decision table** (per element and per cross-element; the whole record set retained whatever the row):
 
@@ -383,7 +439,7 @@ A1) and is **not** A5.
 
 | where it stops | what exists | status written | what is never done |
 |---|---|---|---|
-| in P1–P5 (a sampling fault, a link failure, a watchdog) | `O` with the steps taken so far | `O.status = "invalid"`, `fault = {code, step_reached}`; `O` sealed as such (`observation_sha256` over the invalid record); no `F`; `X` written at once as `faulted` with `phase_reached` | no `F`; no cell guessed; the prefix never scored, never a specimen, never compared under A5 |
+| in P1–P5 (a sampling fault, a link failure, a watchdog) | `O` with exactly the fields of the phases completed before the stop (4.2's phase table) | `O.status = "invalid"`, `fault = {code, phase_reached, step_reached}`; `O` sealed as such (`observation_sha256` over the invalid record); no `F`; `X` written at once as `faulted` with `phase_reached` | no `F`; no cell guessed; no field of a later phase; the prefix never scored, never a specimen, never compared under A5 |
 | in P7–P10 (after `O` sealed) | `O` complete, `F` (if a task observation), a partial `X` | `X.status = "faulted"`, `fault = {code, phase_reached}`, the fields it could not take absent | `O` and `F` untouched; the next candidate not signed (5.2) until the session's stop rule says what follows (the B4Q plan's) |
 | an external interruption (power, transport) | whatever objects were sealed | the objects that exist stay as they are; the missing ones are **missing**, recorded as such by the host from the notary log | no object reconstructed or completed by the host |
 
@@ -415,15 +471,15 @@ mechanism is selected or authorised to run here.
 
 | | (a) command | (b) net | (c) configuration |
 |---|---|---|---|
-| P2 | write; **PRE-INIT readback** | the same | the base readback before the write is the pre-write witness; the write **is** the event |
-| P3.1 pre-init sample (`initial.q`) | after the pre-init readback; inputs 0, clock 0 (or, in J3 of 5.6 only, the recorded `pre_init_cleanup`) | the same | **before the write**, an actual sample (in a normal transaction it equals the predecessor's base-state sample by 5.4, and is still taken, never copied) |
-| P3.2 assert | the command issued | the net driven | — |
-| P3.3 release | completion + the **release** interval | release + the **release** interval | the write's completion + the **release** interval |
-| P3.4 init sample (`steps[0].q_after`) | after the **sample offset** | the same | the same |
-| P4 | **POST-INIT readback** = PRE-INIT | the same | **POST-INIT readback** = link 3 of the write, equal to the staging re-read |
+| pre-event readback | after the write of the candidate (P2); = staging | the same | the readback of the **prior configuration before the write** (P2): the base in a normal transaction, *c′* under J3 (5.4's table) |
+| pre-init sample (`initial.q`) | after the pre-event readback; inputs 0, clock 0 under `context = idle`; the held values under `a5_injection` (5.6 J3, recorded) | the same | **before the write** (P2), an actual sample under the same context rule — in a normal transaction it equals the predecessor's base-state sample by 5.4 and is still taken, never copied |
+| assert | the command issued (P3) | the net driven (P3) | the write itself (P2) |
+| release | completion + the **release** interval | release + the **release** interval | the write's completion + the **release** interval (P3) |
+| init sample (`steps[0].q_after`) | after the **sample offset** | the same | the same |
+| post-event readback (P4) | of the candidate; = pre-event | the same | of the candidate; = staging |
 
-For (c) `fabric_readback_sha256_pre_init` holds the base's readback and `init_event.parameters.pre_init_is_base_readback = true`.
-Frame equality here proves the configuration binding only (5.4).
+For (c) `init_event.parameters.pre_event_is_prior_configuration = true`. Frame binding proves the configuration binding only
+(5.4); it never proves an event-to-Q effect (6.2).
 
 ### 6.4 The A8 cross — a 2 × 2 factorial on the same element and background
 
@@ -442,31 +498,38 @@ elements, and the main elements' init readout under an open inverted gate rests 
 value a second cross if the plan runs it, else **reported as not demonstrated for that context**. The A2 pairs of 7.3 need not serve
 as the cross.
 
-### 6.5 The SR-restore evidence — one fixed stimulus, two episodes, judged jointly
+### 6.5 The SR evidence — one fixed stimulus, a validated reference, known prior values, two episodes judged jointly
 
 SR = 1 is an input condition. For a synchronous element SR acts at a capture event (`sync_sr_acts_on_edge_only`, SR priority over
 capture); for an asynchronous one at level; **before mapping, `sr_kind` is unknown**. A single fixed `d` cannot be "opposite to
-SRVAL" for corners whose SRVAL differ (the owner's C4), so the demonstration stimulus — **the same for every corner** — contains
-**two SR-restore episodes**:
+SRVAL" for corners whose SRVAL differ, so the demonstration stimulus — **the same for every corner** — contains, for the element *e*
+(the other elements held at *b*'s inputs):
 
-| episode | the steps (for *e*; the other elements held at *b*'s inputs) | the sample |
+| part | steps | sample |
 |---|---|---|
-| E0 | `sr(e) = 1` asserted on a level step, held through the next capture edge of *e*'s clock, with `ce(e) = 1` and **`d(e) = 0`** at the edge | `R0` = `q_after[e]` of the edge step |
-| E1 | the same with **`d(e) = 1`** | `R1` |
-| C0, C1 (reference captures) | an edge with `ce(e) = 1`, `sr(e) = 0`, `d(e) = 0`, then one with `d(e) = 1` | `K0`, `K1` — the element's plain capture behaviour |
+| C0, C1 — the **reference captures** | an edge with `ce(e) = 1`, `sr(e) = 0`, `d(e) = 0`; then one with `d(e) = 1` | `K0`, `K1` |
+| E0 — episode 0 | a plain capture of **`d(e) = 1`** (so the prior value is 1), then `sr(e) = 1` asserted on a level step and held through the next capture edge of *e*'s clock with `ce(e) = 1` and **`d(e) = 0`** at the edge | `P0` (the prior value, the `q_after` before the SR level step), `R0` (the edge step's `q_after`) |
+| E1 — episode 1 | a plain capture of **`d(e) = 0`** (prior value 0), then SR asserted likewise with **`d(e) = 1`** at the edge | `P1`, `R1` |
 
-The joint rule, per corner, with no candidate-dependent adaptation:
+**The reference must be valid before any restore is read.** `K0 = 0` and `K1 = 1` show that *e* captures both values through a
+plain edge; `K0 = K1` means the reference does not discriminate (a held or non-capturing element, a sampling path that does not
+reach *e*, or an element that is not a storage element in *b*) and **no SR reading is made for that corner**: it is `unknown`,
+its raw samples retained. Likewise the prior values must be as planted (`P0 = 1`, `P1 = 0`), else `unknown`.
 
-| `R0`, `R1` | reading |
-|---|---|
-| `R0 = R1` | **a restore occurred**: the SR operation set *e* to one value regardless of `d`; **that value is the SR-restore evidence** for the cross (6.4) |
-| `R0 ≠ R1` and `(R0, R1) = (K0, K1)` | **ordinary data capture**: SR had no effect at this edge — no restore evidence; for the cross the SRVAL main effect is *absent* in this corner |
-| anything else (`R0 ≠ R1` not matching the plain captures; a sample fault) | **inconsistent**: recorded, the corner's SR evidence `unknown` |
+**The joint reading, per corner, with a valid reference and the planted priors** (no candidate-dependent adaptation):
 
-Because SR is asserted across a capture edge, the episode completes under either `sr_kind` (an asynchronous element restores at the
-level step already and still reads the same at the edge). The latch context and `sr_mode = tied_low` are excluded as architecture
-9.3's clauses 4 and 6 exclude them. The vectors and timing stay with the B4Q plan; these conditions are satisfiable for every
-corner and do not.
+| `(R0, R1)` | reading | why it is identifiable |
+|---|---|---|
+| `R0 = R1 = v` | **restore** to `v` — the SR evidence of the corner | with `K0 ≠ K1` the element captures `d`, and with `P0 ≠ P1` a hold would give `(1, 0)`; equal readouts across `d = 0 / 1` and priors `1 / 0` can only be the SR operation setting one value |
+| `(R0, R1) = (K0, K1) = (0, 1)` | **capture** — SR had no effect at this edge; no restore value | the element followed `d` as in the reference |
+| `(R0, R1) = (P0, P1) = (1, 0)` | **hold** — SR blocked the capture without setting a value; no restore value | the element kept its prior value |
+| any other pattern, or a sample fault | **inconsistent** | recorded; no restore value |
+
+The stuck case the owner's probe named (`R0 = R1 = K0 = K1`) is caught by the reference rule before the joint reading: it is
+`unknown`, never a restore. Because SR is asserted across a capture edge, an episode completes under either `sr_kind` (an
+asynchronous element restores at the level step already and reads the same at the edge). The latch context and `sr_mode =
+tied_low` are excluded as architecture 9.3's clauses 4 and 6 exclude them. The vectors and timing stay with the B4Q plan; the
+parts, the reference rule and the joint reading are fixed here and are satisfiable for every corner.
 
 ### 6.6 The G6 limit, kept visible
 
@@ -481,28 +544,37 @@ agreement with the model's atomic readout**. A8 stays unresolved by this section
 **Preconditions of every row.** A1–A7 met (9); the cross run in 6.4's scope; frame equality and Q-state restoration on every record
 (5.4). A row is read *for the demonstrated contexts only*; a context not run or not observable (6.6) is `unknown` whatever the row.
 
-**The four quantities per cross** (from the four corners `00, 01, 10, 11` = `(INIT, SRVAL)`):
+**Per-corner readings.** Each corner `c ∈ {00, 01, 10, 11}` = `(INIT, SRVAL)` yields `i_c` — the init sample of *e*
+(`steps[0].q_after[e]`, or `fault`) — and `s_c` — 6.5's reading: `restore(v)`, `capture`, `hold`, `inconsistent` or `unknown`.
+
+**The quantities, derived from the readings:**
 
 | quantity | definition |
 |---|---|
-| `init_effect` | the init sample of *e* differs between `0x` and `1x` **in both SRVAL-constant pairs** (`00` vs `10`, `01` vs `11`), in the predicted direction |
-| `srval_effect` | the SR-restore evidence of *e* (6.5, a restore in all four corners) differs between `x0` and `x1` **in both INIT-constant pairs** |
-| `cross_tracking` | the init sample differs between `x0` and `x1` in either INIT-constant pair, **or** the SR-restore evidence differs between `0x` and `1x` in either SRVAL-constant pair |
-| `inconsistent` | an effect present in one pair and absent in the other pair of the same kind; or a corner read `inconsistent` / `unknown` in 6.5; or a sample fault |
+| `not_assessable` | any `i_c = fault`, or any `s_c = unknown` (an invalid reference or a prior not as planted) |
+| `init_effect` | `i_00 ≠ i_10` and `i_01 ≠ i_11`, both in the predicted direction |
+| `init_absent` | `i_00 = i_10` and `i_01 = i_11` |
+| `srval_effect` | all four `s_c` are `restore` and `v_00 ≠ v_01` and `v_10 ≠ v_11`, both in the predicted direction |
+| `srval_absent` | all four `s_c` are `capture`, or all four are `hold` — a consistent non-restore in every corner, so there is no restore value and nothing to compare |
+| `cross_tracking` | `i_00 ≠ i_01` or `i_10 ≠ i_11` (the init sample tracks SRVAL); or, when all four are `restore`, `v_00 ≠ v_10` or `v_01 ≠ v_11` (the restore value tracks INIT) |
+| `inconsistent` | neither `init_effect` nor `init_absent`; or neither `srval_effect` nor `srval_absent` (restore in some corners and not in others; a restore in all four with the values differing in one INIT-constant pair and not the other; any `s_c = inconsistent`) |
 
 **The classification, applied in this order — the first matching row is the verdict and no later row applies:**
 
 | # | condition | verdict for the demonstrated context | what follows for 2c's claim |
 |---|---|---|---|
-| 1 | `cross_tracking` **or** `inconsistent` | **failed / unresolved** | the evidence preserved as it came; **no attribution**: mechanism, stimulus / timing, instrumentation / implementation or model mismatch are separated only by independent evidence (a second mechanism, a bench reproduction, a different stimulus, a second die); **no hypothesis revision and no carrier re-tuning follows automatically** — each would be its own unit under its own ruling |
+| 0 | `not_assessable` | **not demonstrated** | the cross did not produce evidence in this context: the samples are retained raw; the context stays `unknown`; whether it is re-run is the B4Q plan's rule, not an automatic retry; **not** a failure and **not** a reduced claim |
+| 1 | `cross_tracking` **or** `inconsistent` | **failed / unresolved** | the evidence preserved as it came; **no attribution**: mechanism, stimulus / timing, instrumentation / implementation or model mismatch are separated only by independent evidence; **no hypothesis revision and no carrier re-tuning follows automatically** |
 | 2 | `init_effect` and `srval_effect` | **both demonstrated** | `ff_init` and `ff_srval` observable in that context with the other five; undemonstrated contexts listed, their relations `unknown` |
-| 3 | `srval_effect` only | **SRVAL demonstrated; INIT not** | every `ff_init` relation `unknown`; the semantic claim and the certificate-map scoring exclude `ff_init`; the **raw task fitness is untouched** (the `ff_init` bits stay in the genome and score through the behaviour they cause); whether that reduced claim is a preregistration 2c wants is **2c's decision** |
-| 4 | `init_effect` only | **INIT demonstrated; SRVAL not** | likewise with `ff_srval` |
-| 5 | neither | **neither demonstrated** | both excluded from the semantic claim and the map scoring; fitness untouched; whether to run is the owner's |
+| 3 | `init_absent` and `srval_effect` | **SRVAL demonstrated; INIT not** | every `ff_init` relation `unknown`; the semantic claim and the certificate-map scoring exclude `ff_init`; the **raw task fitness is untouched**; whether that reduced claim is a preregistration 2c wants is **2c's decision** |
+| 4 | `init_effect` and `srval_absent` | **INIT demonstrated; SRVAL not** | likewise with `ff_srval` |
+| 5 | `init_absent` and `srval_absent` | **neither demonstrated** | both excluded from the semantic claim and the map scoring; fitness untouched; whether to run is the owner's |
 
-Rows 2–5 are the four values of `(init_effect, srval_effect)` and partition the non-failed cases; row 1 takes precedence, so an
-absent main effect **alone** (rows 3–5) is a reduced claim, not a failure, while a readout that tracks the wrong bit or an effect
-that is present in one pair and absent in the other is a failure and is never read as a reduced claim. No row is a repair.
+Rows 2–5 are the four combinations of `{init_effect, init_absent} × {srval_effect, srval_absent}` and partition every case that
+rows 0 and 1 do not take, because row 1's `inconsistent` takes exactly the cases where a kind has neither its effect nor its
+absence; so each raw corner data set lands in one row. An absent main effect alone (rows 3–5) is a reduced claim, not a failure;
+a readout that tracks the wrong bit, an effect present in one pair and absent in the other, or a mixed restore / non-restore
+across corners is a failure and is never read as a reduced claim; an invalid reference is neither. No row is a repair.
 
 ## 7. Positive controls — the quantifiers, the rule as a revision, the proposal, the data influence
 
@@ -587,7 +659,7 @@ field but `seq`, `nonce`, `predecessor`.
 | A3 | a record for a known fabric accepted by 4.3; injected breaks each refused by name: an extra key at each level of `O`, `F`, `X` (`answer_bits` among them); a `null` cell; a float cell; a missing header field; a `hypothesis` block; a value written into `O` that only exists at P7+; `fabric.kind = "truth"` on a **model** trace **accepted** (the field-aware rule) | the findings, one per break; the acceptance |
 | A4 | `VARIANT` reads the v2 word; the B1 application refuses it; the v2 application refuses the B1 word and the instrument's | the identity scenarios |
 | A5 | 5.6's protocol J1–J3 with the bench's *c′*; the three rows of the decision table each produced once (a bench fabric that clears, one that persists, one where the injection does not arrive) | the three verdicts, by name |
-| A6 | every B1 scenario that still applies; one per row of architecture 5.2; this contract's own: the stimulus applied exactly (a step inserted, dropped, reordered or initialised twice is seen); the cleanup recorded in `X` and P9's precondition witnessed; the two readbacks per mechanism (6.3); the holdout-indifference scenario (8); frame invariance; the sampling path (3.4); 6.5's two episodes producing `R0 = R1` on a restoring fabric and `(K0, K1)` on a non-restoring one; a faulted transaction retained per 5.7 | each scenario PASS, by name |
+| A6 | every B1 scenario that still applies; one per row of architecture 5.2; this contract's own: the stimulus applied exactly (a step inserted, dropped, reordered or initialised twice is seen); the cleanup recorded in `X` and P9's precondition witnessed; the two readbacks per mechanism (6.3); the holdout-indifference scenario (8); frame invariance; the sampling path (3.4); 6.5's reference and two episodes reading restore on a restoring fabric, capture on a non-restoring one, hold on a blocking one and `unknown` on a non-capturing reference; a faulted transaction retained per 5.7 | each scenario PASS, by name |
 | A7 | the MMIO allowlist against the RTL's AXI-Lite decode — mismatches only (architecture A7; `docs/b1_carrier_qualification.md` section 2's form) | the mismatch list empty |
 | A2, A8 | **not bench-verifiable**: the bench's fabric is the hypothesis; the bench witnesses the mechanism's *conditions* (6.2), never its Q effect | — |
 

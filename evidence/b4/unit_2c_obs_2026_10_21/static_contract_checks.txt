@@ -57,5 +57,98 @@
     ],
     "pass": true
   },
+  "R1": {
+    "ledger_trace_sha256_is_q_grid_digest": true,
+    "target_trace_sha256_is_q_grid_digest": true,
+    "ledger_is_projection_no_raw_fields": true,
+    "projection_config_sha256_canonical_over_reconstructed_dict": true,
+    "raw_config_sha256_default_separators": true,
+    "two_encodings_differ_for_same_config_rule": true,
+    "view_from_projection_marks_derived": true,
+    "fabric_descriptor_exact_keys_and_enum": true,
+    "actual_fabric_keys": [
+      "dropout_count",
+      "dropout_sha256",
+      "effect_sha256",
+      "kind",
+      "seed"
+    ],
+    "pass": true
+  },
+  "R2": {
+    "stop": "P3 sampling fault before P4",
+    "present_from_completed_phases": [
+      "commit",
+      "staging_readback_sha256",
+      "fabric_readback_sha256_pre_event"
+    ],
+    "absent": [
+      "fabric_readback_sha256_post_event",
+      "steps[1:]"
+    ],
+    "post_event_readback_required": false,
+    "pass": true
+  },
+  "R3": {
+    "c_normal_candidate_differs_from_base": true,
+    "c_under_J3_prior_is_cprime": true,
+    "c_under_J3_fake_base_rejected": true,
+    "ab_event_changes_no_frame": true,
+    "ab_changed_frame_rejected": true,
+    "pre_init_state_context_values": [
+      "idle",
+      "a5_injection"
+    ],
+    "pass": true
+  },
+  "R4": {
+    "stuck_reference_R0=R1=K0=K1=0": [
+      "unknown",
+      null
+    ],
+    "healthy_restore": [
+      [
+        "restore",
+        0
+      ],
+      [
+        "restore",
+        1
+      ]
+    ],
+    "capture": [
+      "capture",
+      null
+    ],
+    "hold": [
+      "hold",
+      null
+    ],
+    "classification_cases": {
+      "both_effects": 2,
+      "srval_only_init_absent": 3,
+      "init_only_all_capture": 4,
+      "init_only_all_hold": 4,
+      "neither": 5,
+      "mixed_restore_and_capture_across_corners": 1,
+      "init_sample_tracks_srval": 1,
+      "restore_value_tracks_init": 1,
+      "one_corner_unknown_reference": 0,
+      "one_corner_fault": 0
+    },
+    "expected": {
+      "both_effects": 2,
+      "srval_only_init_absent": 3,
+      "init_only_all_capture": 4,
+      "init_only_all_hold": 4,
+      "neither": 5,
+      "mixed_restore_and_capture_across_corners": 1,
+      "init_sample_tracks_srval": 1,
+      "restore_value_tracks_init": 1,
+      "one_corner_unknown_reference": 0,
+      "one_corner_fault": 0
+    },
+    "pass": true
+  },
   "all_pass": true
 }
