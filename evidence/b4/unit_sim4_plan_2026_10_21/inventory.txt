@@ -1,0 +1,24 @@
+UTC 2026-10-21T05:09:33Z
+HEAD 21db2de362b4f1f3bac635d01803ac765b931e3e branch b4-protocol-v2
+main a243ee8ab904d23706bd6b8fee0d76d6ccb200a5
+porcelain entries 77 (this unit's own untracked files, if any, listed): ['?? evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/README.md', '?? evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/SHA256SUMS', '?? evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/e2e.txt', '?? evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/e2e_cached.py', '?? evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/extra_probes.py', '?? evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/extra_probes.txt', '?? evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/extra_results.json', '?? evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/float.txt', '?? evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/float_return.json', '?? evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/float_return_probe.py']
+b4/ bytes vs baseline 21db2de: git diff --stat empty = True
+protocol_sha256 2f096d4adbd83e0ec6350e6da2942cc862e99df4e81539719fa7261dad5a258c | architecture_revision v0.2.0 (informational, excluded from the digest)
+IMPORT.json entries 59 sha256 a6af67efd18d47829a91f6041a53b98a240d2d16802cda8f45f233f7fbe91b4e
+architecture document sha256 ce2883243bd795e0123c1eb95511306aac11d6f3900835075133278cba1f204b (a root input recorded in the manifest, not pinned)
+labels: exploration b4-sim-4 | gate b4-gate-2 | retired ['b4-sim-1', 'b4-sim-2'] | consumed ['b4-gate-1', 'b4-sim-3']
+thresholds anchor labels b4-sim-4 b4-gate-2 | hypothesis 59948f9be3b4516547fbf039556d4aa6a4afd0b2dda2324619e4d40ef0651ed8
+gonogo policy {"B_go": 64, "S": 32, "alpha_go": 0.2, "k9_conditional_medians_min": 0.5, "precondition": "every planned pair complete and valid, else no decision", "standing": "an engineering cost policy for spending the gate's budget: not a significance result, not a gate, not an authorisation; no automatic successor", "statistic": "one-sided exact sign test on Omega - R at B_go, ties excluded from n and counted; positives > negatives"}
+task block {"ceilings": {"holdout": 80, "search": 64}, "setup_observations_per_pair": 2, "target_salt": 1413567047, "version": "task-v0.2"}
+exposure receipt 68764bbc1a51ec2506bf9d9bcbb3f55f88f3d7642b5eb46c6fd3dd39f8dae146 values 66 pinned 68764bbc1a51ec2506bf9d9bcbb3f55f88f3d7642b5eb46c6fd3dd39f8dae146 pinned count 66
+registry note: evidence/b4/sim/ holds 2 run directories
+  registry entry evidence/b4/sim/b4-gate-1_20261020T102526Z seeds 785e76988d4e6ec49cfb86b7b896358b484e5899d48700ee1bcfffd6e034bced values 401
+  registry entry evidence/b4/sim/b4-sim-3_20261019T121833Z seeds 1a0d1e7b91132ed6814a9e369e23f2c55f28886448fa5efd55d722182f50b17d values 65
+pooled exclusion 2625 | historical sources 38
+evidence/b4/sim exists  | entries ['b4-gate-1_20261020T102526Z', 'b4-sim-3_20261019T121833Z']
+evidence/b4/gate exists  | entries ['b4-gate-1_20261020T102526Z']
+evidence/b4/gonogo DOES NOT EXIST  | entries None
+evidence/b4/sim/b4-sim-3_20261019T121833Z files 643 bytes 193230267 | status complete | elapsed_s 209.702 of 3600
+evidence/b4/sim/b4-gate-1_20261020T102526Z files 4003 bytes 1202331492 | status complete | elapsed_s 1372.077 of 3600
+disk free GB 515.9 of 1081.1
+seed derivation called: NO (master_seed / pair_seeds not invoked by this inventory)
