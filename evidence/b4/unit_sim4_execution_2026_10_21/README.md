@@ -39,8 +39,9 @@ timestamp (`06:58:57Z`) is not the batch timestamp (`06:53:39Z`), as the owner's
 | commit 2 and its blob check | — | 07:01:47 | `blob_digest_check_commit2.txt`: EQUAL |
 
 Wall time from the batch start to the second blob check: ≈ 8.1 min (06:53:39Z → 07:01:47Z); the batch itself 199.256 s of the 3 600 s
-soft deadline (52 779 deadline checks, `expired false`). The plan's estimates (batch ≈ 4–10 min, each verification ≈ 1.5–3 min, ≈ 770
-files / ≈ 200 MB) held: 3.3 min, 74 s and 74 s, 771 files / 200.7 MB. One worker; no competing b4 process (checked by the stop script).
+soft deadline (52 779 deadline checks, `expired false`). The run was **faster than the plan's estimated ranges**: the batch 3.3 min against ≈ 4–10 min, each
+fresh verification 74 s against ≈ 1.5–3 min; the file count and size were close to the estimates (771 files / 200.7 MB against ≈ 770 /
+≈ 200 MB). This has no bearing on the soft deadline or on the evidence. One worker; no competing b4 process (checked by the stop script).
 
 ## 3. The operator's stop (plan §2.3; `operator_stop_check.py`, reads only — `master_seed` / `pair_seeds` never called, no seed printed)
 
@@ -116,8 +117,9 @@ one-sided sign-test p **0.9423408508300781**; `positives_gt_negatives false`, `p
 
 **What these numbers are and are not.** The sign test is the fixed policy statistic at one pre-named budget; the per-budget rows are
 descriptive and none of them is a second test. The K9 (b′) medians ≥ 0.50 mean the conditional-coverage precondition of the policy was
-met, under the v0.2.0 applicability — they are not a result about the all-panel coverage, whose medians for `ff_srval` and `sr_kind`
-remain below 0.5 as they were in `b4-sim-3` and `b4-gate-1` (plan §4). Beside the known records (plan §4: `b4-sim-3` at B = 64
+met, under the v0.2.0 applicability — they are not a result about the all-panel coverage: the present all-panel medians `ff_srval` 0.40625 and
+`sr_kind` 0.4375 are below 0.5; historically `ff_srval` was below 0.5 (0.427 in `b4-sim-3`, 0.40625 in `b4-gate-1`) while `sr_kind` was
+exactly 0.5 in both (plan §4, section 7 item 3). Beside the known records (plan §4: `b4-sim-3` at B = 64
 positives 10 / negatives 12 / ties 10 / p 0.738; `b4-gate-1` 56 / 95 / 49 / p 0.9995) this batch is a third record with the same sign of
 Ω − R at B = 64; the plan predicted no outcome and this README draws no conclusion from the three beyond what the policy wrote.
 
@@ -175,3 +177,28 @@ document itself (`docs/b4_sim4_execution_plan.md` v0.1.1 — the text of record 
 no condition of the run and records the execution), and sets the `b4-sim-4` row of `docs/b4_architecture.md` §13 to executed / no-go.
 Section 8's sentence "the plan document and `docs/b4_architecture.md` §13 are not edited here" remains true of commit 3; this addendum is
 the correction of record for what the next commit does. No archive, decision, statistic, program, table or threshold is touched.
+
+## 10. Closure — the owner's PASS on `196b358` (with `5b8aabc`), 2026-10-21
+
+The owner's review (archived byte-for-byte in `owner_review_196b358_PASS/`, SHA256SUMS checked before and after the copy, `diff -r`
+identical, SOURCE.txt added) accepts and closes the execution / delivery unit: **PASS; the policy's no-go stands as the decision of
+record.** The owner's independent verification: both fresh-process deep verifiers clean, exit 0 (75.596 s and 123.389 s); Ω − R at
+every budget recomputed from the ledger grids against each task's public mask / target / weights and the statistics recomputed with
+the standard library (7 / 13 / 12, p 0.9423408508 at B = 64, agreement at 1e-13 relative); both K9 applicabilities, K10 (32 / 32
+interacting, τ = 2) and K7 re-tallied from the retained grids; 771 + 2 committed blobs equal to the disk files; IMPORT 59 equal; 45
+recorded repository inputs matched to the execution HEAD's blobs, 28 tool files and 6 external files to current bytes; the review of
+`495cc36` verified byte-for-byte; **the new 65 master / pair values collide with nothing in the pool of 2 625, which is now 2 690**. The
+reviewer ran no production exploration, seed draw or fabric observation and reran no tests or mutants. The documentation commit
+`5b8aabc` was read and included in the acceptance; the reviewer's note that the architecture digest recorded by the batch matches
+`495cc36`'s blob and the later digest belongs to the later documentation tree is on record (`git_input_checks.json`) — not archive drift.
+
+Two P3 wording corrections of the review's section 5 are applied by this closure commit, in section 2 (the run was faster than the
+estimated ranges, not within them) and section 5 (historical `sr_kind` was exactly 0.5, not below it); the tables and the policy
+calculation were correct. Per the owner, this closure is one routine documentation commit: no review round, test or mutant rerun.
+
+**Boundaries restated by the acceptance.** Engineering acceptance of the delivery does not convert the no-go into a go and is not a
+scientific gate PASS; the no-go is the policy's stop for this proposed route to `b4-gate-2`, not evidence of impossibility, of an
+unobservable FF class or of silicon behaviour, and future work need not assume a negative claim from it. `b4-sim-4` is consumed by its
+records. Not authorised by this acceptance: a replacement label, a re-run, `b4-gate-2`, any operator / threshold / task adjustment, a
+next protocol version, push, merge, RTL, provisioning, purchasing, board or routing work. What follows needs its own purpose and its own
+explicit scope. No calendar expiry, prescribed branch name or prescribed commit count applies.

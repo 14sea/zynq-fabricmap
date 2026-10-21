@@ -1,0 +1,59 @@
+{
+  "status": "all independent assertions passed",
+  "at_64": {
+    "n": 32,
+    "positives": 7,
+    "negatives": 13,
+    "ties": 12,
+    "mean": -1.71875,
+    "median": 0.0,
+    "population_variance": 22.9521484375,
+    "cohen_d": -0.3531074633217678,
+    "sign_test_p": 0.9423408508300781
+  },
+  "K9": {
+    "conditional": {
+      "ce_mode": 1.0,
+      "clock_mode": 1.0,
+      "ff_init": 1.0,
+      "ff_srval": 0.8125,
+      "sr_kind": 0.875,
+      "sr_mode": 1.0,
+      "storage_kind": 1.0
+    },
+    "all_panel": {
+      "ce_mode": 1.0,
+      "clock_mode": 1.0,
+      "ff_init": 1.0,
+      "ff_srval": 0.40625,
+      "sr_kind": 0.4375,
+      "sr_mode": 1.0,
+      "storage_kind": 1.0
+    }
+  },
+  "K10": {
+    "interacting": 32
+  },
+  "blobs": {
+    "batch": {
+      "files": 771,
+      "bytes": 200674002,
+      "all_equal": true
+    },
+    "decision": {
+      "files": 2,
+      "bytes": 11359,
+      "all_equal": true
+    }
+  },
+  "exclusion": {
+    "before": 2625,
+    "new_values": 65,
+    "collisions": 0,
+    "after": 2690
+  },
+  "guards": {
+    "master_seed": 0,
+    "pair_seeds": 0
+  }
+}

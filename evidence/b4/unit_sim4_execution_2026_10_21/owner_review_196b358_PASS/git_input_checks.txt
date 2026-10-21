@@ -1,0 +1,84 @@
+{
+  "commit_path_boundaries": {
+    "archive": {
+      "parent": "495cc360c97aba58bda959a2e867e6b43dbf4f7f",
+      "expected_parent": "495cc360c97aba58bda959a2e867e6b43dbf4f7f",
+      "files": 771,
+      "only_expected_path": true
+    },
+    "decision": {
+      "parent": "580c0e5d06079dfe9ad885e69aaec23ff13ffcaa",
+      "expected_parent": "580c0e5d06079dfe9ad885e69aaec23ff13ffcaa",
+      "files": 2,
+      "only_expected_path": true
+    },
+    "unit": {
+      "parent": "adce0275e20681e1309f5719b2365e0c2ee631d3",
+      "expected_parent": "adce0275e20681e1309f5719b2365e0c2ee631d3",
+      "files": 27,
+      "only_expected_path": true
+    }
+  },
+  "protected_paths_unchanged": [
+    "b4/",
+    "b3/",
+    "host/",
+    "tests/",
+    "firmware/",
+    "manifests/",
+    "evidence/b3/",
+    "gate_runs/",
+    "evidence/b4/sim/b4-sim-3_20261019T121833Z/",
+    "evidence/b4/sim/b4-gate-1_20261020T102526Z/",
+    "evidence/b4/gate/"
+  ],
+  "baseline_b4_unchanged": true,
+  "input_bindings": {
+    "inputs": {
+      "count": 45,
+      "all_recorded_execution_blob_digests_equal": true,
+      "live_tool_digests_equal": null
+    },
+    "tool_files": {
+      "count": 28,
+      "all_recorded_execution_blob_digests_equal": true,
+      "live_tool_digests_equal": true
+    },
+    "external_inputs": {
+      "count": 6,
+      "all_equal": true
+    }
+  },
+  "post_execution_document_differences": [
+    {
+      "path": "docs/b4_architecture.md",
+      "recorded_sha256": "7cc509a13c67785fe961ace9df5197c5dd4505f09223cddc522f04add68f7681",
+      "execution_blob_sha256": "7cc509a13c67785fe961ace9df5197c5dd4505f09223cddc522f04add68f7681",
+      "live_sha256": "e12525dbcd0018ec6c318f870813b0a3ac3e235e8768d1b0a031235d98d533de",
+      "reason": "post-execution documentation commit 5b8aabc, method/archives unchanged"
+    }
+  ],
+  "prior_owner_review": {
+    "original_files": 7,
+    "checksum_entries": 6,
+    "all_copied_bytes_equal": true,
+    "all_checksums_equal": true
+  },
+  "refs": {
+    "HEAD": "5b8aabc6f3a7c1617767612e160ebc0da82a008d",
+    "main": "a243ee8ab904d23706bd6b8fee0d76d6ccb200a5",
+    "b4-protocol-v2": "495cc360c97aba58bda959a2e867e6b43dbf4f7f"
+  },
+  "status": "## b4-sim-4-execution\n",
+  "diff_check": "",
+  "additional_document_commit": {
+    "commit": "5b8aabc6f3a7c1617767612e160ebc0da82a008d",
+    "files": [
+      "docs/b4_architecture.md",
+      "docs/b4_sim4_execution_plan.md",
+      "evidence/b4/unit_sim4_execution_2026_10_21/README.md",
+      "evidence/b4/unit_sim4_execution_2026_10_21/owner_clarification_2026_10_21.txt"
+    ],
+    "method_and_archive_changes": false
+  }
+}
