@@ -119,6 +119,7 @@ module tb_b4_core;
         rd(16'h2200); check(last_rdata == p[767:736], "hw_commit = the signed commit");
         rd(16'h2028); hb_before = last_rdata; rd(16'h2020); gsr_before = last_rdata;
         pre_sample; rd(16'h2004); check(last_rdata[5] == 1, "pre_sampled");
+        slot(5'd0);                                                                     // the pre-init sample: recorded, not compared (x before the first event)
         init_event;
         rd(16'h2004); check(last_rdata[9] == 1 && last_rdata[10] == 0, "init_done, not pending");
         rd(16'h2028); check(last_rdata < hb_before, "heartbeat restarted by the init event (GSR witness)");
@@ -144,7 +145,7 @@ module tb_b4_core;
 
     initial begin
         if (!$value$plusargs("SCENARIO=%s", scenario)) scenario = "flow";
-        log_fd = $fopen({"sim/b4/out/", scenario, ".jsonl"}, "w");
+        log_fd = $fopen($sformatf("sim/b4/out/%0s.jsonl", scenario), "w");
         $fdisplay(log_fd, "{\"scenario\": \"%0s\", \"timing\": [%0d, %0d, %0d, %0d, %0d, %0d]}", scenario, ASSERT_DELAY, PULSE, RELEASE, SAMPLE_OFFSET, SETTLE, HOLD);
         reset;
         case (scenario)
@@ -201,6 +202,7 @@ module tb_b4_core;
             wr(16'h2038, 32'h0100_A5_00 | (32'h3C << 8)); wr(16'h2000, 32'h800); wait_engine;
             expect_fault(6, "a per-element ce vector that is not uniform -> F_NOT_REALISABLE");
             rd(16'h2004); check(last_rdata[25:21] == 2 && last_rdata[20:16] == 4, "the prefix retained: step_index 2, slot_count 4");
+            slot(5'd0); slot(5'd1); slot(5'd2);
             fixture_expect(0, 2, q, m); expect_slot(5'd3, q, m, "the last acquired step is intact");
             mark("invalid_prefix_retained");
         end

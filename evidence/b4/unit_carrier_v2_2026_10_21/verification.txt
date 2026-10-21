@@ -1,0 +1,68 @@
+=== fresh-process verification, 2026-10-21T11:41:10Z, tree aafffdb + working changes, branch b4-carrier-v2 ===
+
+--- bash sim/b4/run.sh
+tb_p3_siphash (verbatim): TB_PASS
+tb_b4_core regs:                TB_PASS regs
+tb_b4_core flow:                TB_PASS flow
+tb_b4_core fault_not_armed:     TB_PASS fault_not_armed
+tb_b4_core fault_nokey:         TB_PASS fault_nokey
+tb_b4_core fault_unsigned:      TB_PASS fault_unsigned
+tb_b4_core fault_wrong_commit:  TB_PASS fault_wrong_commit
+tb_b4_core fault_wrong_key:     TB_PASS fault_wrong_key
+tb_b4_core fault_sequence:      TB_PASS fault_sequence
+tb_b4_core fault_double_arm:    TB_PASS fault_double_arm
+tb_b4_core fault_realisable:    TB_PASS fault_realisable
+tb_b4_core a5:                  TB_PASS a5
+tb_b4_core a5_persist:          TB_PASS a5_persist
+tb_b4_unisim:            TB_PASS unisim
+exit: 0
+
+--- python3 -B -m unittest tests.test_b4carrier_regmap tests.test_b4carrier_records tests.test_b4carrier_benches
+....................
+----------------------------------------------------------------------
+Ran 20 tests in 1.317s
+
+OK
+exit: 0
+
+--- python3 -B host/b4carrier_manifest.py builds/b4/b4.bit
+0x00400a00/52/16   sr_kind       None  value 0 expected 0
+0x00400a01/51/7    ff_srval      A5FF  value 0 expected 0
+0x00400a01/51/19   ff_srval      B5FF  value 0 expected 0
+0x00400a01/52/3    sr_mode       None  value 1 expected 1
+0x00400a01/52/7    ce_mode       None  value 1 expected 1
+0x00400a01/52/15   ff_srval      C5FF  value 0 expected 0
+0x00400a01/52/19   clock_mode    None  value 0 expected 0
+0x00400a01/52/23   ff_srval      D5FF  value 0 expected 0
+0x00400a1e/51/12   ff_srval      AFF   value 0 expected 0
+0x00400a1e/51/30   ff_srval      BFF   value 0 expected 0
+0x00400a1e/52/0    storage_kind  None  value 0 expected 0
+0x00400a1e/52/1    ff_srval      CFF   value 0 expected 0
+0x00400a1e/52/18   ff_srval      DFF   value 0 expected 0
+0x00400a1f/51/3    ff_init       AFF   value 0 expected 0
+0x00400a1f/51/6    ff_init       A5FF  value 0 expected 0
+0x00400a1f/51/22   ff_init       B5FF  value 0 expected 0
+0x00400a1f/51/28   ff_init       BFF   value 0 expected 0
+0x00400a1f/52/1    ff_init       CFF   value 0 expected 0
+0x00400a1f/52/9    ff_init       C5FF  value 0 expected 0
+0x00400a1f/52/19   ff_init       D5FF  value 0 expected 0
+0x00400a1f/52/26   ff_init       DFF   value 0 expected 0
+mismatches: none
+exit: 0
+
+--- python3 -B -m unittest tests.test_b1_pins (the pinned B1 surface, untouched)
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.060s
+
+OK
+exit: 0
+
+--- git diff --name-only fceedd6 HEAD -- <protected paths>
+(none)
+
+--- sha256 of the build artefacts
+cbf5f95ce41471bc0bc7a252dae394831955f1dbb4b7f7c740abd76f7cc003a6  builds/b4/b4.bit
+4e6c9275274237bdf527a120ffb2ade438cf791fabfdfff07644c614eb708ea6  builds/b4/b4_build.json
+5d1d76bdf5820c2c52c6fbccd9e9da4a5e6efeec35f2ccb80722b4107ee43ae0  builds/b4/b4_carrier_manifest.json
+fbf421ceffcb0c12c3281c432058f4d2826d87daeba35ee5bc8220323f008c93  builds/b4/isolation.txt
