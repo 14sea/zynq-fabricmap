@@ -1,0 +1,61 @@
+{
+  "C1": {
+    "source": "evidence/b4/unit_protocol_v2_tool_2026_10_20/owner_review_21db2de_PASS/float_return.json",
+    "legacy_config_is_dict": true,
+    "legacy_digest_verified_under_declared_encoding": true,
+    "view_config_vector_len": 21,
+    "view_genome": 588756,
+    "view_stimulus_sha256_derived": "a1035b5a425323175a6a4bd7cd7b4ecd9a7d04f12b2fa0b4f158648491041ce2",
+    "legacy_fabric_kind": "truth",
+    "legit_model_record_findings": [],
+    "answer_bits_extra_key_findings": [
+      "top-level keys != model raw set: extra ['answer_bits'] missing []"
+    ],
+    "pass": true
+  },
+  "C2": {
+    "immutability_phase": {
+      "O": 6.0,
+      "F": 6.5,
+      "X": 10
+    },
+    "fields_written_after_their_object_is_immutable": [],
+    "O_fields_from_P7_or_later": [],
+    "current_restore_witnesses_in_current_X": [
+      "cleanup",
+      "base_readback_sha256",
+      "base_state_sample",
+      "idle_status"
+    ],
+    "predecessor_is_reference": {
+      "kind": [
+        "session_root",
+        "closed",
+        "a5_injection"
+      ],
+      "holds_values": false,
+      "root_case": "kind=session_root, seq=null, close_sha256=null"
+    },
+    "pass": true
+  },
+  "C3": {
+    "owner_counterexample_verdict": "pass",
+    "persistence_verdict": "fail",
+    "injection_not_arrived_verdict": "not demonstrated",
+    "pass": true
+  },
+  "C4": {
+    "single_fixed_stimulus_two_episodes_interpretable_for_both_srval": true,
+    "classification_total": true,
+    "classification_single_row_each": true,
+    "rows_for_main_effect_absent_without_cross_or_inconsistency": {
+      "srval_only": 3,
+      "init_only": 4
+    },
+    "row_for_any_cross_tracking": [
+      1
+    ],
+    "pass": true
+  },
+  "all_pass": true
+}
