@@ -8,8 +8,8 @@ set -u
 cd "$(dirname "$0")/../.."
 PS=${PSORACLE_ROOT:-/home/test/zynq_psoracle}
 UNI=${UNISIM_ROOT:-/home/test/Xilinx/2025.2/data/verilog/src}
-RTL="rtl/b1/p3_siphash.v rtl/b4/b4_gsr_reg.v rtl/b4/b4_slot_ram.v rtl/b4/b4_axil.v rtl/b4/b4_gate.v rtl/b4/b4_engine.v rtl/b4/b4_core.v"
-SCENARIOS="regs flow fault_not_armed fault_nokey fault_unsigned fault_wrong_commit fault_wrong_key fault_sequence fault_double_arm fault_realisable a5 a5_persist"
+RTL="rtl/b1/p3_siphash.v rtl/b4/b4_gsr_reg.v rtl/b4/b4_slot_ram.v rtl/b4/b4_gsr_ram32.v rtl/b4/b4_axi_gate.v rtl/b4/b4_axil.v rtl/b4/b4_gate.v rtl/b4/b4_engine.v rtl/b4/b4_core.v"
+SCENARIOS="regs flow fault_not_armed fault_nokey fault_unsigned fault_wrong_commit fault_wrong_key fault_sequence fault_double_arm fault_realisable a5 a5_persist a5_wrong_context a5_flag_without_injection open_close_refused p9 p9_ok busy_refused step_atomic backpressure read_during_window"
 python3 -B tb/b4/gen_b4_fixture.py >/dev/null || exit 1
 mkdir -p sim/b4/out
 rc=0
@@ -21,5 +21,16 @@ for s in $SCENARIOS; do
     printf 'tb_b4_core %-20s %s\n' "$s:" "$r"; [ "$r" = "TB_PASS $s" ] || rc=1
 done
 iverilog -g2012 -I tb/b4 -o sim/b4/out/unisim.vvp -y $UNI/unisims $UNI/glbl.v $RTL rtl/b4/b4_target_slice.v tb/b4/tb_b4_unisim.v 2> sim/b4/out/unisim.compile.log || { cat sim/b4/out/unisim.compile.log; exit 1; }
-r2=$(vvp -N sim/b4/out/unisim.vvp 2>&1 | grep -E '^TB_|^FAIL' | tee sim/b4/out/unisim.result | tail -1); echo "tb_b4_unisim:            $r2"; [ "$r2" = "TB_PASS unisim" ] || rc=1
+r2=$(vvp -N sim/b4/out/unisim.vvp 2>&1 | grep -E '^TB_|^FAIL|^GSR_PULSE' | tee sim/b4/out/unisim.result | tail -1); echo "tb_b4_unisim (RTL core):     $r2"; [ "$r2" = "TB_PASS unisim" ] || rc=1
+# the PS path through the pinned AXI3 shim
+iverilog -g2012 -I tb/b4 -o sim/b4/out/axi3.vvp -y $UNI/unisims $RTL vivado/carrier/carrier_axi3_lite.v tb/b4/b4_target_slice_model.v tb/b4/tb_b4_axi3.v 2> sim/b4/out/axi3.compile.log || { cat sim/b4/out/axi3.compile.log; exit 1; }
+r3=$(vvp -N sim/b4/out/axi3.vvp 2>&1 | grep -E '^TB_|^FAIL' | tee sim/b4/out/axi3.result | tail -1); echo "tb_b4_axi3 (shim):           $r3"; [ "$r3" = "TB_PASS axi3" ] || rc=1
+# the same vendor-model bench over the post-route FUNCSIM NETLIST of the core (every flip-flop a vendor FDxE under glbl.GSR)
+NET=builds/b4/b4_core_funcsim.v
+if [ -f $NET ]; then
+    iverilog -g2012 -I tb/b4 -o sim/b4/out/netlist.vvp -y $UNI/unisims $UNI/glbl.v $NET rtl/b4/b4_target_slice.v tb/b4/tb_b4_unisim.v 2> sim/b4/out/netlist.compile.log || { cat sim/b4/out/netlist.compile.log | head -20; exit 1; }
+    r4=$(vvp -N sim/b4/out/netlist.vvp 2>&1 | grep -E '^TB_|^FAIL|^GSR_PULSE' | tee sim/b4/out/netlist.result | tail -1); echo "tb_b4_unisim (NETLIST core): $r4"; [ "$r4" = "TB_PASS unisim" ] || rc=1
+else
+    echo "tb_b4_unisim (NETLIST core): SKIPPED — $NET absent (run the Vivado build)"; rc=1
+fi
 exit $rc

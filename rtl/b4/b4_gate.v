@@ -15,6 +15,8 @@ module b4_gate #(
     input  wire [639:0] payload,
     input  wire [127:0] tag_in,
     input  wire         arm_strobe,
+    input  wire         arm_a5,            // the A5 context flag (CTRL bit 7): required when an injection is open, refused otherwise
+    input  wire         injection_open,
     input  wire [127:0] key,
     input  wire         key_loaded,
     // from the engine
@@ -79,8 +81,10 @@ module b4_gate #(
             end
             case (state)
             1'b0: begin
-                if (arm_strobe && !busy && !recovery_required && armed) begin
-                    // an ARM while a transaction is open: a sequence fault, nonce untouched
+                if (arm_strobe && !busy && !recovery_required && (armed || (arm_a5 != injection_open))) begin
+                    // an ARM while a transaction is open, or an ARM whose context does not match the carrier's state
+                    // (the A5 flag without an open injection, or an open injection without the flag — contract 5.6):
+                    // a sequence fault, nonce untouched
                     fault_we <= 1'b1; fault_d <= F_SEQUENCE; recovery_d <= 1'b1;
                 end else if (arm_strobe && !busy && !recovery_required && !key_loaded) begin
                     // no key: the attempt is refused, consumes the nonce, and is a sticky fault

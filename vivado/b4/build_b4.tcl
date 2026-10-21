@@ -10,7 +10,7 @@ set repo   [file dirname [file dirname $here]]
 file mkdir $outdir
 create_project -in_memory -part $part
 set srcs [list $repo/rtl/b4/b4_top.v $repo/rtl/b4/b4_core.v $repo/rtl/b4/b4_axil.v $repo/rtl/b4/b4_gate.v $repo/rtl/b4/b4_engine.v \
-               $repo/rtl/b4/b4_gsr_reg.v $repo/rtl/b4/b4_slot_ram.v $repo/rtl/b4/b4_target_slice.v \
+               $repo/rtl/b4/b4_gsr_reg.v $repo/rtl/b4/b4_slot_ram.v $repo/rtl/b4/b4_gsr_ram32.v $repo/rtl/b4/b4_axi_gate.v $repo/rtl/b4/b4_target_slice.v \
                $repo/rtl/b1/p3_siphash.v $repo/vivado/carrier/carrier_axi3_lite.v]
 add_files -norecurse $srcs
 add_files -fileset constrs_1 -norecurse $here/b4.xdc
@@ -34,6 +34,8 @@ report_timing_summary -file $outdir/timing.rpt
 report_utilization   -file $outdir/post_route_util.rpt
 source $here/isolation_checks_b4.tcl
 b4_isolation_checks $outdir
+# the GSR-aware functional netlist of the core (every flip-flop a vendor FDxE), for the netlist bench of sim/b4/run.sh
+write_verilog -force -mode funcsim -cell [get_cells core] $outdir/b4_core_funcsim.v
 write_bitstream -force $outdir/b4.bit
 set bit_sha [lindex [exec sha256sum $outdir/b4.bit] 0]
 set wns [get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup]]
@@ -44,7 +46,8 @@ puts $fh "{\"schema\": \"b4_carrier_build\", \"schema_version\": \"1.0.0\", \"pa
 puts $fh " \"vivado\": \"[version -short]\", \"routed\": true, \"cell_isolation\": \"passed\", \"wns_ns\": $wns, \"icape2_cells\": $icap,"
 puts $fh " \"startupe2_cells\": 1, \"ram32x1s_cells\": $ram, \"bitstream\": \"b4.bit\", \"bitstream_sha256\": \"$bit_sha\", \"nonce_seed\": \"0x$seedhex\","
 puts $fh " \"gate\": \"b4_gate (the B1 gate without the sweep; persistent nonce / armed / fault); VARIANT 0x2034 = 0x42340001\","
-puts $fh " \"init_mechanism\": \"(b) GSR through STARTUPE2, driven by b4_engine; the key, nonce, fault, armed latch, samples and witnesses in RAM32X1S\","
+puts $fh " \"init_mechanism\": \"(b) GSR through STARTUPE2, driven by b4_engine's LUTRAM pulse counter (PULSE clocks, hardware-timed); the key, nonce, fault, armed latch, samples, applied inputs and witnesses in RAM32X1S\","
+puts $fh " \"funcsim_netlist\": \"b4_core_funcsim.v\", \"axi_gates\": \"b4_axi_gate in front of the shim and at the core's Lite port\","
 puts $fh " \"key\": \"runtime-provisioned, write-once, persistent across the init event; not in this bitstream\"}"
 close $fh
 puts "B4 BUILD OK -> $outdir/b4.bit ($bit_sha) WNS=$wns ICAPE2=$icap RAM32X1S=$ram"
