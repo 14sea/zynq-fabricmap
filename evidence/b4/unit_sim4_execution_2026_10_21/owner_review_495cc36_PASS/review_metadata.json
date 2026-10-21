@@ -1,0 +1,64 @@
+{
+  "utc": "2026-10-21T06:08:20.996727+00:00",
+  "reviewed_head": "495cc360c97aba58bda959a2e867e6b43dbf4f7f",
+  "verdict": "PASS",
+  "unit": "b4-sim-4 execution-plan documents",
+  "status": {
+    "command": [
+      "git",
+      "status",
+      "--short",
+      "--branch"
+    ],
+    "exit": 0,
+    "stdout": "## b4-protocol-v2\n",
+    "stderr": ""
+  },
+  "protected_diff": {
+    "command": [
+      "git",
+      "diff",
+      "--exit-code",
+      "21db2de",
+      "HEAD",
+      "--",
+      "b4/",
+      "b3/",
+      "host/",
+      "tests/",
+      "firmware/",
+      "manifests/",
+      "gate_runs/",
+      "evidence/b3/",
+      "evidence/b4/sim/",
+      "evidence/b4/gate/"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "closure_archive": {
+    "original_files": 75,
+    "copied_files": 76,
+    "missing": [],
+    "different": [],
+    "checksum_entries": 74,
+    "checksum_failures": []
+  },
+  "full_tests_run": false,
+  "model_or_fixture_runs": false,
+  "production_preflight_run": false,
+  "production_seed_derivation": false,
+  "tracked_changes_by_reviewer": false,
+  "execution_authorization": {
+    "head": "495cc360c97aba58bda959a2e867e6b43dbf4f7f",
+    "start_date_utc": "2026-10-22",
+    "label": "b4-sim-4",
+    "S": 32,
+    "deadline_s": 3600,
+    "branch": "b4-sim-4-execution",
+    "single_attempt": true,
+    "push": false,
+    "merge": false
+  }
+}
